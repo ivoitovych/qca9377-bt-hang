@@ -288,6 +288,20 @@ renamed only after verification passes. The logs in `evidence/baseline/` were pr
 The recovery path and udev rule could not be exercised because the controller was already
 in stage 2 when the work was done. They need a cold power-off to validate.
 
+## Development helpers
+
+Recurring tasks are scripted at a stable path outside this repo
+(`/root/exp/bin`, separately version-controlled) so they can be granted
+permission once rather than re-approved as ad-hoc commands:
+
+| Script | Purpose |
+|---|---|
+| `bt-state` | Bluetooth/USB/service state in one shot |
+| `bt-boots [N]` | per-boot failure counts |
+| `repo-scan <dir>` | refuse-to-publish scan: MACs, BSSIDs, UUIDs, AI attribution, binary captures |
+| `repo-validate <dir>` | `bash -n`, `systemd-analyze`, `udevadm verify`, `jq` |
+| `repo-save <dir> "<msg>"` | validate → scan → commit → push → verify remote matches |
+
 ## Contributing
 
 Useful data points, especially:
