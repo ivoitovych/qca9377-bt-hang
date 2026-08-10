@@ -1,0 +1,198 @@
+#!/bin/bash
+# bt-hang-watchdog — recover a wedged QCA9377 (ROME) Bluetooth controller.
+#
+# Why this exists:
+#   USB 13d3:3503 is absent from btusb_table in drivers/bluetooth/btusb.c, so it
+#   binds only via the generic USB-Bluetooth-class rule and gets driver_info = 0.
+#   It therefore never receives hdev->cmd_timeout = btusb_qca_cmd_timeout(), the
+#   handler that would USB-reset the controller after 5 consecutive HCI command
+#   timeouts. Measured on this host: 102 "tx timeout" events across 12 boots,
+#   0 automatic reset attempts.
+#
+#   This script performs, from userspace, what that missing handler would do.
+#
+# Timing matters: the controller degrades in two stages.
+#   stage 1 (soft) — HCI unresponsive, USB still fine  -> a USB reset RECOVERS it
+#   stage 2 (hard) — USB core unresponsive, chip drops off the bus
+#                    -> NOTHING in software works; needs a cold power-off,
+#                       because a warm reboot does not drop the M.2 power rail.
+#   On this host stage 1 lasted ~6 hours before decaying to stage 2. Acting
+#   early is the entire point.
+
+set -uo pipefail
+
+VID="${BT_VID:-13d3}"          # QCA9377 BT (IMC Networks)
+PID="${BT_PID:-3503}"
+THRESHOLD="${BT_THRESHOLD:-3}" # timeouts inside WINDOW before acting
+WINDOW="${BT_WINDOW:-60}"      # seconds
+COOLDOWN="${BT_COOLDOWN:-180}" # min seconds between recovery attempts
+MAX_FAILS="${BT_MAX_FAILS:-3}" # give up after this many failed recoveries
+
+log() { echo "$*"; }           # stdout is captured by journald
+
+# --- helpers ---------------------------------------------------------------
+
+# Locate the BT device by VID:PID. Echoes the sysfs name (e.g. "3-3").
+find_usb_dev() {
+    local d
+    for d in /sys/bus/usb/devices/*; do
+        [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
+        if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
+            basename "$d"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Is there an hci device that actually answers a command?
+# Presence in sysfs is NOT enough — during the hang the interface stays
+# UP RUNNING while the firmware answers nothing.
+hci_alive() {
+    local h
+    h=$(ls /sys/class/bluetooth/ 2>/dev/null | head -1)
+    [[ -n "$h" ]] || return 1
+    timeout 6 hciconfig "$h" name >/dev/null 2>&1
+}
+
+# USBDEVFS_RESET ioctl — the exact operation usb_queue_reset_device() performs.
+# This is the closest possible userspace equivalent of the missing kernel handler.
+usbfs_reset() {
+    local dev="$1" b n
+    b=$(<"/sys/bus/usb/devices/$dev/busnum") || return 1
+    n=$(<"/sys/bus/usb/devices/$dev/devnum") || return 1
+    python3 - "$b" "$n" <<'PYEOF'
+import fcntl, sys
+USBDEVFS_RESET = 0x5514          # _IO('U', 20)
+bus, dev = int(sys.argv[1]), int(sys.argv[2])
+with open("/dev/bus/usb/%03d/%03d" % (bus, dev), "wb") as f:
+    fcntl.ioctl(f, USBDEVFS_RESET, 0)
+PYEOF
+}
+
+# Best-effort desktop notification; never allowed to affect control flow.
+notify() {
+    local msg="$1" u bus
+    while read -r u; do
+        [[ -n "$u" ]] || continue
+        bus="/run/user/$(id -u "$u" 2>/dev/null)/bus"
+        [[ -S "$bus" ]] || continue
+        timeout 5 sudo -u "$u" \
+            DBUS_SESSION_BUS_ADDRESS="unix:path=$bus" \
+            notify-send -u critical "Bluetooth" "$msg" >/dev/null 2>&1
+    done < <(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $3}' | sort -u)
+    return 0
+}
+
+# --- recovery --------------------------------------------------------------
+
+recover() {
+    local dev
+    if ! dev=$(find_usb_dev); then
+        log "FATAL: $VID:$PID is no longer on the USB bus."
+        log "       The controller has reached the hard-hang stage. No software"
+        log "       recovery is possible — a full power-off (not a reboot) is"
+        log "       required, because a warm reboot does not drop the M.2 rail."
+        notify "Bluetooth chip has hard-hung. A full shutdown (not reboot) is needed."
+        return 1
+    fi
+
+    log "Recovering Bluetooth controller at $dev ..."
+    systemctl stop bluetooth >/dev/null 2>&1
+    sleep 1
+
+    # Step 1: USB device reset (what btusb_qca_cmd_timeout would have done).
+    if usbfs_reset "$dev" 2>/dev/null; then
+        log "  USBDEVFS_RESET issued"
+    else
+        log "  USBDEVFS_RESET failed"
+    fi
+    sleep 6
+
+    # Step 2: escalate to full re-enumeration if the reset was not enough.
+    if ! hci_alive; then
+        log "  escalating to USB unbind/bind"
+        echo "$dev" > /sys/bus/usb/drivers/usb/unbind 2>/dev/null
+        sleep 3
+        echo "$dev" > /sys/bus/usb/drivers/usb/bind   2>/dev/null
+        sleep 6
+    fi
+
+    systemctl start bluetooth >/dev/null 2>&1
+    sleep 3
+
+    if hci_alive; then
+        log "  RECOVERED — controller is responding again"
+        notify "Bluetooth controller recovered automatically."
+        return 0
+    fi
+    log "  RECOVERY FAILED — controller still unresponsive"
+    return 1
+}
+
+# --- main ------------------------------------------------------------------
+
+log "bt-hang-watchdog started (device $VID:$PID, threshold $THRESHOLD/${WINDOW}s, cooldown ${COOLDOWN}s)"
+if find_usb_dev >/dev/null; then
+    log "device present at $(find_usb_dev)"
+else
+    log "WARNING: $VID:$PID not currently on the USB bus — controller is already"
+    log "         hard-hung. Watchdog is armed but cannot act until a cold power-off."
+fi
+
+HITS=()
+last_recover=0
+fails=0
+gave_up=0
+
+# Process substitution (not a pipe) so the loop runs in THIS shell — otherwise
+# `fails`/`last_recover` would be confined to a subshell and `break` could not
+# stop the watchdog properly.
+# -n0 => only new messages, so a restart never replays old timeouts.
+while read -r line; do
+
+    # Kernel signatures of a wedged controller.
+    case "$line" in
+        *hci*"tx timeout"*)               ;;
+        *hci*"failed: -110"*)             ;;
+        *hci*"setting interface failed"*) ;;
+        *) continue ;;
+    esac
+
+    now=$(date +%s)
+
+    # Slide the window, then record this hit.
+    keep=()
+    for t in ${HITS[@]+"${HITS[@]}"}; do
+        (( now - t < WINDOW )) && keep+=("$t")
+    done
+    HITS=(${keep[@]+"${keep[@]}"} "$now")
+    n=${#HITS[@]}
+
+    (( n < THRESHOLD )) && continue
+    (( now - last_recover < COOLDOWN )) && continue
+
+    if (( fails >= MAX_FAILS )); then
+        log "Giving up: $MAX_FAILS consecutive recovery attempts failed."
+        log "A cold power-off is required. Watchdog is now idle until reboot."
+        gave_up=1
+        break
+    fi
+
+    log "Detected $n controller timeouts within ${WINDOW}s — intervening."
+    last_recover=$now
+    HITS=()
+
+    if recover; then
+        fails=0
+    else
+        ((fails++))
+        log "consecutive failed recoveries: $fails/$MAX_FAILS"
+    fi
+done < <(journalctl -kf -n0 --output=cat 2>/dev/null)
+
+# Do not let systemd's Restart=always immediately re-arm a hopeless watchdog.
+if (( gave_up )); then
+    log "idling — cold power-off required"
+    while :; do sleep 3600; done
+fi

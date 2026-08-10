@@ -1,0 +1,30 @@
+[Unit]
+Description=Bluetooth firmware-hang watchdog (QCA9377 / 13d3:3503)
+Documentation=file://docs/investigation.md
+After=bluetooth.service systemd-journald.service
+Wants=bluetooth.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/bt-hang-watchdog
+Restart=always
+RestartSec=10
+
+# Tunables (override with: systemctl edit bt-hang-watchdog)
+Environment=BT_VID=13d3
+Environment=BT_PID=3503
+Environment=BT_THRESHOLD=3
+Environment=BT_WINDOW=60
+Environment=BT_COOLDOWN=180
+Environment=BT_MAX_FAILS=3
+
+# Needs root for USBDEVFS_RESET and sysfs unbind/bind.
+# Everything else is locked down.
+ProtectHome=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictRealtime=yes
+MemoryMax=64M
+
+[Install]
+WantedBy=multi-user.target

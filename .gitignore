@@ -1,0 +1,23 @@
+# Local backups of system config — may contain unsanitised data
+backup-*/
+*.orig
+*.bak
+
+# Raw (unsanitised) logs — only *.sanitized.log may be committed
+data/logs/*.log
+!data/logs/*.sanitized.log
+
+# Collected metrics are host-specific runtime data
+metrics.tsv
+*.tsv.tmp
+
+# Editor / OS noise
+*~
+.DS_Store
+.vscode/
+.idea/
+
+# Agent/editor tooling directories — never publish
+.claude/
+.cursor/
+.aider*

@@ -1,0 +1,67 @@
+#!/bin/bash
+# bt-health-snapshot — append one row of Bluetooth health metrics.
+#
+# Run periodically by bt-health-snapshot.timer. Output is a TSV that survives
+# reboots, so the effectiveness of the mitigations can be judged over days
+# without relying on journal retention.
+#
+# Analyse with: /usr/local/bin/bt-health-report
+
+set -uo pipefail
+
+OUT=/var/log/bt-health/metrics.tsv
+VID=13d3
+PID=3503
+
+mkdir -p "$(dirname "$OUT")"
+
+if [[ ! -s "$OUT" ]]; then
+    printf 'timestamp\tboot_id\tkernel\tuptime_s\tdev_present\thci_alive\tusb_power_ctrl\tbtusb_autosusp\ttx_timeouts\tunexpected_evt\twd_interventions\twd_recovered\twd_failed\tconnected\n' > "$OUT"
+fi
+
+ts=$(date -Iseconds)
+boot_id=$(cut -c1-8 /proc/sys/kernel/random/boot_id 2>/dev/null || echo "-")
+kernel=$(uname -r)
+uptime_s=$(awk '{printf "%d", $1}' /proc/uptime)
+
+# --- device presence -------------------------------------------------------
+dev_present=0
+usb_ctrl="-"
+for d in /sys/bus/usb/devices/*; do
+    [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
+    if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
+        dev_present=1
+        usb_ctrl=$(cat "$d/power/control" 2>/dev/null || echo "-")
+        break
+    fi
+done
+
+# --- does the controller actually answer? ----------------------------------
+hci_alive=0
+h=$(ls /sys/class/bluetooth/ 2>/dev/null | head -1)
+if [[ -n "$h" ]] && timeout 6 hciconfig "$h" name >/dev/null 2>&1; then
+    hci_alive=1
+fi
+
+btusb_autosusp=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo "-")
+
+# --- failure counters, this boot -------------------------------------------
+tx_timeouts=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -c "tx timeout")
+unexpected=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -c "unexpected event for opcode")
+
+# --- watchdog activity, this boot ------------------------------------------
+wd_log=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)
+wd_int=$(grep -c "intervening" <<<"$wd_log")
+wd_rec=$(grep -c "RECOVERED" <<<"$wd_log")
+wd_fail=$(grep -c "RECOVERY FAILED\|FATAL:" <<<"$wd_log")
+
+# --- currently connected devices -------------------------------------------
+connected=0
+if (( hci_alive )); then
+    connected=$(timeout 8 bluetoothctl devices Connected 2>/dev/null | grep -c "^Device")
+fi
+
+printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$ts" "$boot_id" "$kernel" "$uptime_s" "$dev_present" "$hci_alive" \
+    "$usb_ctrl" "$btusb_autosusp" "$tx_timeouts" "$unexpected" \
+    "$wd_int" "$wd_rec" "$wd_fail" "$connected" >> "$OUT"

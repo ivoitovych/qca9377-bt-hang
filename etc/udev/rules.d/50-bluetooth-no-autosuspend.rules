@@ -1,0 +1,12 @@
+# Keep the QCA9377 Bluetooth radio (13d3:3503) permanently powered.
+#
+# Default state on this host was power/control=auto with a 2000 ms delay and
+# power/wakeup=disabled, i.e. the radio could runtime-suspend while the host
+# still had HCI commands in flight, and was not armed to wake the bus itself.
+#
+# Rollback: delete this file and run `udevadm control --reload`.
+#
+# Investigation: docs/investigation.md
+
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="13d3", ATTR{idProduct}=="3503", \
+  TEST=="power/control", ATTR{power/control}="on"

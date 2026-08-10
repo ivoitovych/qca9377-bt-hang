@@ -1,0 +1,10 @@
+[Unit]
+Description=Periodic Bluetooth health snapshot (every 15 min + at boot)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
