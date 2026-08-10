@@ -28,7 +28,10 @@ FILES=(
     /usr/local/bin/bt-health-report
     /usr/local/bin/bt-mark
     /usr/local/bin/bt-evidence
+    /usr/local/bin/bt-incident
+    /usr/local/bin/bt-postmortem
     /usr/local/bin/bt-sanitize-logs
+    /usr/local/share/qca9377-bt-hang/installed-at
     /usr/local/bin/bt-boot-list
     /usr/local/bin/bt-state
     /usr/local/bin/bt-boots
@@ -40,6 +43,7 @@ FILES=(
     /usr/local/share/qca9377-bt-hang/baseline.tsv
     /etc/systemd/system/bt-hang-watchdog.service
     /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf
+    /etc/systemd/system/bt-hang-watchdog.service.d/20-verbose.conf
     /etc/systemd/system/bt-health-snapshot.service.d/10-device.conf
     /etc/systemd/system/bt-health-snapshot.service
     /etc/systemd/system/bt-health-snapshot.timer
@@ -96,6 +100,15 @@ done
 for d in "${DIRS[@]}"; do
     if [[ -d "$d" ]]; then
         run rmdir --ignore-fail-on-non-empty "$d"
+        # rmdir --ignore-fail-on-non-empty is silent when it declines, which is
+        # how leftovers hide. A systemctl-edit override.conf, or a drop-in this
+        # script does not know about, would otherwise survive an "uninstall"
+        # that reported success.
+        if [[ -d "$d" ]]; then
+            echo "  ! $d still contains files not installed by this project:"
+            ls -A "$d" 2>/dev/null | sed 's/^/      /'
+            echo "      remove manually if you want a completely clean revert"
+        fi
     fi
 done
 echo

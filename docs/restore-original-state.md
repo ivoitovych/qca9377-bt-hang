@@ -49,9 +49,19 @@ sudo ./uninstall.sh --apply                  # revert
 sudo ./uninstall.sh --apply --purge-metrics  # also delete collected metrics
 ```
 
-Removes: the watchdog script and unit, the metrics collector, its service and timer,
-`bt-health-report`, `baseline.tsv`, any device drop-ins, the modprobe conf, and the udev
-rule; then reloads udev and systemd and restores `enable_autosuspend=Y`.
+Removes everything `install.sh` adds: the watchdog script and unit, the HCI capture
+service, the metrics collector with its service and timer, all the `bt-*` commands
+(`bt-diagnose`, `bt-state`, `bt-boots`, `bt-boot-list`, `bt-timeline`, `bt-mark`,
+`bt-evidence`, `bt-incident`, `bt-postmortem`, `bt-health-report`, `bt-sanitize-logs`),
+`baseline.tsv`, the first-install stamp, every drop-in it wrote (device selection and
+verbose/early mode), the modprobe conf and both udev rules; then reloads udev and
+systemd and restores `enable_autosuspend=Y`.
+
+If a drop-in directory still holds files this project did not install — a
+`systemctl edit` override of your own, for instance — uninstall now **says so** rather
+than leaving it silently behind.
+
+Verify nothing is left with `./tools/verify-restored.sh`.
 
 Verify:
 

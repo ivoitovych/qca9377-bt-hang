@@ -213,6 +213,33 @@ boots hung.**
 | `BT_WINDOW` | `60` | sliding window, seconds |
 | `BT_COOLDOWN` | `180` | minimum seconds between recovery attempts |
 | `BT_MAX_FAILS` | `3` | consecutive failures before idling until reboot |
+| `BT_VERBOSE` | `0` | log every detected signal and the window state |
+| `BT_EARLY` | `0` | also act on audio-teardown failures — see below |
+| `BT_EARLY_THRESHOLD` | `2` | early signals before intervening |
+| `BT_EARLY_WINDOW` | `90` | early sliding window, seconds |
+
+### `BT_EARLY` — resetting before the HCI timeout
+
+By default the watchdog waits for `tx timeout`, i.e. for the controller to already have
+stopped answering. The 2026-08-10 hang suggests that may be too late: a reset issued 20 s
+after the first timeout, and 33 s *before* any USB-level failure, did not recover the
+chip.
+
+bluetoothd sees trouble first. In that hang it logged audio-teardown failures **52 s**
+before the kernel noticed. `BT_EARLY=1` follows bluetoothd as well as the kernel and
+intervenes on those instead:
+
+```bash
+sudo systemctl edit bt-hang-watchdog     # Environment=BT_EARLY=1
+```
+
+Trigger patterns were selected by measured precision over 12 boots (appearances overall
+vs. appearances in boots that hung): `cancel_request() Suspend` 2/2, `Abort` 4/4,
+`avdtp_connect_cb` 5/5, `SDP record: Host is down` 10/10, `avdtp_close failed` 4/3.
+`Device or resource busy` is excluded at 3/9 — too noisy.
+
+⚠️ **Opt-in, and experimental.** A false positive resets a working controller and drops
+live connections. Raise `BT_EARLY_THRESHOLD` if it fires during normal use.
 
 ---
 
@@ -343,6 +370,21 @@ controller, not just `13d3:3503`.
 | `tools/sanitize-logs.sh` | Scrub MACs, BSSIDs, UUIDs and IPv4 from logs before publishing them |
 
 Installed to `/usr/local/bin` by `install.sh`, but none of them need it.
+
+### Investigating a hang
+
+Installed alongside the mitigation, for reproducing and recording failures:
+
+| Tool | Purpose |
+|---|---|
+| `bt-postmortem` | What happened during the last hang: timing, whether the watchdog fired, **whether the reset worked** |
+| `bt-incident <slug>` | Collect a hang that already happened into a sanitised evidence session |
+| `bt-timeline [-30m]` | Merge kernel, bluetoothd, watchdog, trace and your marks into one chronology |
+| `bt-mark "<text>"` | Annotate the journal with what you are doing, plus device state at that instant |
+| `bt-evidence start/note/cmd/stop` | Record a planned session, when you know the test in advance |
+| `bt-trace` (service) | Rotating btsnoop HCI capture via `btmon`; logs its own gaps |
+
+See [`evidence/README.md`](evidence/README.md) for how sessions are structured.
 
 ## Development helpers
 
