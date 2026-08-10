@@ -31,9 +31,15 @@ PID="${BT_PID:-3503}"
 
 # Timestamp the mitigations were installed; boots after this are tagged AFTER.
 # Defaults to the mtime of the watchdog unit if not set explicitly.
+# Prefer the stamp install.sh writes once. A unit file's mtime moves forward on
+# every reinstall, which would relabel already-mitigated boots as "before".
+STAMP=/usr/local/share/qca9377-bt-hang/installed-at
 if [[ -n "${BT_CHANGE_TIME:-}" ]]; then
     CHANGE_EPOCH=$(date -d "$BT_CHANGE_TIME" +%s 2>/dev/null || echo 0)
+elif [[ -s "$STAMP" ]]; then
+    CHANGE_EPOCH=$(cat "$STAMP")
 elif [[ -e /etc/systemd/system/bt-hang-watchdog.service ]]; then
+    # Fallback only; see above for why this can mislabel.
     CHANGE_EPOCH=$(stat -c %Y /etc/systemd/system/bt-hang-watchdog.service)
 else
     CHANGE_EPOCH=0
@@ -102,6 +108,9 @@ printf '   %-38s %s\n' "interventions attempted:" "$acts"
 printf '   %-38s %s\n' "  -> recovered without reboot:" "$recs"
 printf '   %-38s %s\n' "  -> failed (soft hang, reset ineffective):" "$fails"
 printf '   %-38s %s\n' "  -> hard hang (chip off bus, cold boot):" "$hard"
+wd_now=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)
+acts_now=$(grep -c "intervening" <<<"$wd_now")
+printf '   %-38s %s\n' "this boot only:" "$acts_now intervention(s)"
 echo
 if (( acts == 0 )); then
     echo "   VERDICT: no controller timeouts have occurred yet."
@@ -111,11 +120,18 @@ elif (( recs > 0 )); then
     echo "   VERDICT: WORKING. $recs hang(s) recovered automatically that would"
     echo "            previously have required a reboot or power-off."
 else
-    echo "   VERDICT: watchdog fired $acts time(s) but never recovered the chip."
-    echo "            If these are all FATAL, it was already hard-hung — the"
-    echo "            watchdog reacted too late or the chip degraded too fast."
-    echo "            Consider lowering BT_THRESHOLD to 2:"
-    echo "              systemctl edit bt-hang-watchdog"
+    if (( acts_now == 0 )); then
+        echo "   VERDICT: the $acts intervention(s) all predate the current boot."
+        echo "            They are the already-hard-hung controller from before the"
+        echo "            cold power-off, not a failure of the mitigation. Nothing"
+        echo "            has fired since. Keep measuring."
+    else
+        echo "   VERDICT: watchdog fired $acts_now time(s) THIS BOOT and never"
+        echo "            recovered the chip. If these are FATAL it was already"
+        echo "            hard-hung — it reacted too late, or the chip degraded"
+        echo "            too fast. Consider lowering BT_THRESHOLD to 2:"
+        echo "              systemctl edit bt-hang-watchdog"
+    fi
 fi
 hr
 

@@ -164,6 +164,26 @@ else
 fi
 echo
 
+# --- first-install stamp ---------------------------------------------------
+# bt-health-report needs the moment the mitigation FIRST went in, to split boots
+# into before/after. Deriving it from a unit file's mtime is wrong: every
+# reinstall or edit moves it forward, so already-mitigated boots get relabelled
+# "before" and contaminate the comparison. Write it once and never touch it again.
+STAMP=/usr/local/share/qca9377-bt-hang/installed-at
+if (( APPLY )); then
+    if [[ -s "$STAMP" ]]; then
+        echo "  first-install stamp preserved: $(cat "$STAMP")"
+    else
+        mkdir -p "$(dirname "$STAMP")" && date +%s > "$STAMP" \
+            && echo "  + wrote first-install stamp $STAMP ($(cat "$STAMP"))" \
+            || { echo "    ERROR: could not write $STAMP" >&2; FAILED=1; }
+    fi
+else
+    [[ -s "$STAMP" ]] && echo "  would keep existing stamp: $(cat "$STAMP")" \
+                      || echo "  would write first-install stamp: $STAMP"
+fi
+echo
+
 # --- activate --------------------------------------------------------------
 echo "[6/6] activate"
 run udevadm control --reload-rules
