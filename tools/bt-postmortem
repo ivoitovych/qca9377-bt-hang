@@ -35,7 +35,11 @@ if [[ -z "$t_first" ]]; then
     exit 0
 fi
 
-t_act=$(journalctl "${W[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "intervening"       | awk '{printf "%.2f",$1}')
+# Match both trigger modes: late logs "... timeouts within 60s — intervening",
+# early logs "EARLY intervention: ...". Matching only the first reported an
+# intervention count of 0 next to a successful recovery.
+t_act=$(journalctl "${W[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 -E "intervening|EARLY intervention" | awk '{printf "%.2f",$1}')
+t_early=$(journalctl "${W[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "EARLY intervention" | awk '{printf "%.2f",$1}')
 t_usb=$(journalctl "${K[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "descriptor read"   | awk '{printf "%.2f",$1}')
 t_gone=$(journalctl "${K[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "USB disconnect"   | awk '{printf "%.2f",$1}')
 t_rec=$(journalctl "${W[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "RECOVERED"         | awk '{printf "%.2f",$1}')
@@ -48,7 +52,9 @@ printf '%-34s %-10s %s\n' "device left the bus"        "$(hm "$t_gone")" "$(delt
 printf '%-34s %-10s %s\n' "controller recovered"       "$(hm "$t_rec")"  "$(delta "$t_first" "$t_rec")"
 
 n_to=$(journalctl "${K[@]}" --no-pager 2>/dev/null | grep -c "tx timeout" || true)
-n_act=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "intervening" || true)
+n_act=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention" || true)
+n_early=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "EARLY intervention" || true)
+n_eok=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "EARLY recovery SUCCEEDED" || true)
 n_rec=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "RECOVERED" || true)
 n_rf=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "USBDEVFS_RESET failed" || true)
 n_fatal=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "FATAL:" || true)
@@ -65,6 +71,16 @@ if [[ -z "$t_act" ]]; then
     echo "  ${Y}The watchdog never fired${O} despite $n_to timeout(s)."
     echo "  Either it was not running, or the timeouts never reached BT_THRESHOLD"
     echo "  within BT_WINDOW. Check: journalctl -u bt-hang-watchdog -b $BOOT"
+elif (( ${n_eok:-0} > 0 )); then
+    echo "  ${G}${B}RECOVERED VIA EARLY INTERVENTION.${O}"
+    echo "  The reset was issued on an audio-teardown failure, BEFORE any HCI"
+    echo "  command timed out, and the controller came back."
+    echo
+    echo "  This does NOT support the kernel-patch claim — it undercuts it."
+    echo "  btusb_qca_cmd_timeout() fires only AFTER commands start timing out."
+    echo "  A reset at that point failed under the same conditions (2026-08-10);"
+    echo "  a reset before it succeeded. cmd_timeout is too late a hook for this"
+    echo "  failure mode, whatever device IDs btusb matches."
 elif (( ${n_rec:-0} > 0 )); then
     echo "  ${G}RECOVERED.${O} The watchdog detected the stall $(delta "$t_first" "$t_act") after the first"
     echo "  timeout and brought the controller back without a reboot."

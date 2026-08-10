@@ -82,8 +82,13 @@ count() { local n; n=$(grep -c "$1" "$2" 2>/dev/null || true); echo "${n:-0}" | 
     echo "window=$SINCE"
     echo "kernel=$(uname -r)"
     echo "tx_timeouts=$(count 'tx timeout' "$DIR/kernel.log")"
-    echo "wd_interventions=$(count 'intervening' "$DIR/watchdog.log")"
+    # Late mode logs "intervening"; EARLY mode logs "EARLY intervention". Counting
+    # only the former reported 0 interventions alongside 1 recovery.
+    echo "wd_interventions_late=$(count 'timeouts within' "$DIR/watchdog.log")"
+    echo "wd_interventions_early=$(count 'EARLY intervention' "$DIR/watchdog.log")"
+    echo "wd_early_signals=$(count 'early signal' "$DIR/watchdog.log")"
     echo "wd_recovered=$(count 'RECOVERED' "$DIR/watchdog.log")"
+    echo "wd_recovered_early=$(count 'EARLY recovery SUCCEEDED' "$DIR/watchdog.log")"
     echo "wd_reset_failed=$(count 'USBDEVFS_RESET failed' "$DIR/watchdog.log")"
     echo "wd_fatal=$(count 'FATAL:' "$DIR/watchdog.log")"
     echo "usb_descriptor_errors=$(count 'descriptor read' "$DIR/kernel.log")"

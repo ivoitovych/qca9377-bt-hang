@@ -1,0 +1,27 @@
+Aug 10 18:56:58.404488 n systemd[1]: Started bt-hang-watchdog.service - Bluetooth firmware-hang watchdog (QCA9377 / 13d3:3503).
+Aug 10 18:56:58.473602 n bt-hang-watchdog[1245]: bt-hang-watchdog started (device 13d3:3503, threshold 3/60s, cooldown 180s)
+Aug 10 18:56:58.473975 n bt-hang-watchdog[1245]: liveness probe: hciconfig
+Aug 10 18:56:58.473975 n bt-hang-watchdog[1245]: verbose mode ON — every detected signal will be logged
+Aug 10 18:56:58.482164 n bt-hang-watchdog[1245]: device present at 3-3 (hci0)
+Aug 10 18:56:58.482264 n bt-hang-watchdog[1245]: EARLY mode ON — also watching bluetoothd for audio-teardown failures
+Aug 10 18:56:58.482264 n bt-hang-watchdog[1245]:   threshold 2 in 90s; resets BEFORE any HCI timeout
+Aug 10 18:58:37.437725 n bt-hang-watchdog[1245]: early signal: profiles/audio/avdtp.c:avdtp_connect_cb() connect to AA:BB:CC:00:00:01: Connection refused (111)
+Aug 10 18:58:37.437725 n bt-hang-watchdog[1245]:   early window: 1/2 in last 90s
+Aug 10 18:58:40.437158 n bt-hang-watchdog[1245]: early signal: profiles/audio/avdtp.c:avdtp_connect_cb() connect to AA:BB:CC:00:00:01: Connection refused (111)
+Aug 10 18:58:40.437158 n bt-hang-watchdog[1245]:   early window: 2/2 in last 90s
+Aug 10 18:58:40.437509 n bt-hang-watchdog[1245]: EARLY intervention: 2 audio-teardown failure(s) in 90s — resetting BEFORE any HCI timeout.
+Aug 10 18:58:40.438916 n bt-hang-watchdog[1245]: Recovering Bluetooth controller at 3-3 ...
+Aug 10 18:58:41.770950 n bt-hang-watchdog[1245]:   USBDEVFS_RESET issued
+Aug 10 18:58:50.825646 n bt-hang-watchdog[1245]:   RECOVERED — controller is responding again
+Aug 10 18:58:50.833230 n bt-hang-watchdog[1245]:   EARLY recovery SUCCEEDED — this is the result that matters
+Aug 10 18:58:50.840062 n bt-hang-watchdog[1245]: early signal: profiles/audio/avdtp.c:avdtp_connect_cb() connect to AA:BB:CC:00:00:01: Connection refused (111)
+Aug 10 18:58:50.840096 n bt-hang-watchdog[1245]:   early window: 1/2 in last 90s
+Aug 10 18:58:51.186984 n bt-hang-watchdog[1245]: early signal: profiles/audio/avdtp.c:avdtp_connect_cb() connect to AA:BB:CC:00:00:01: Connection refused (111)
+Aug 10 18:58:51.187060 n bt-hang-watchdog[1245]:   early window: 2/2 in last 90s
+Aug 10 18:58:51.187060 n bt-hang-watchdog[1245]: EARLY threshold reached (2/2) but suppressed by cooldown (169s remaining)
+Aug 10 18:59:23.187532 n bt-hang-watchdog[1245]: early signal: src/profile.c:record_cb() Unable to get Hands-Free Voice gateway SDP record: Host is down
+Aug 10 18:59:23.187532 n bt-hang-watchdog[1245]:   early window: 3/2 in last 90s
+Aug 10 18:59:23.187532 n bt-hang-watchdog[1245]: EARLY threshold reached (3/2) but suppressed by cooldown (137s remaining)
+Aug 10 18:59:29.437128 n bt-hang-watchdog[1245]: early signal: src/profile.c:record_cb() Unable to get Hands-Free Voice gateway SDP record: Host is down
+Aug 10 18:59:29.437128 n bt-hang-watchdog[1245]:   early window: 4/2 in last 90s
+Aug 10 18:59:29.437464 n bt-hang-watchdog[1245]: EARLY threshold reached (4/2) but suppressed by cooldown (131s remaining)

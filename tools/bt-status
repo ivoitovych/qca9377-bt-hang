@@ -1,0 +1,125 @@
+#!/bin/bash
+# bt-status — one-shot answer to "what do we have by now?"
+#
+#   bt-status            full situation report
+#   bt-status --brief    just the headline verdict
+#
+# Combines what was previously six separate ad-hoc command blocks: controller
+# state, per-boot history, whether Bluetooth was actually exercised, what the
+# watchdog saw and did, capture health, and repo status.
+#
+# "No hang" is only meaningful if Bluetooth was used, so usage is reported
+# alongside the failure counts rather than left for the reader to assume.
+#
+# Read-only.
+
+set -uo pipefail
+
+BRIEF=0
+[[ "${1:-}" == "--brief" ]] && BRIEF=1
+
+G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
+[[ -t 1 ]] || { G=""; R=""; Y=""; B=""; O=""; }
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# When run from a clone, the repo is one level up. When run from /usr/local/bin
+# it is not — "$HERE/.." is /usr/local, which is not a checkout. Fall back to
+# known locations instead of reporting "not a git repo" about the install path.
+REPO="${BT_REPO:-}"
+if [[ -z "$REPO" ]]; then
+    for c in "$HERE/.." /root/exp/qca9377-bt-hang "$HOME/qca9377-bt-hang" "$PWD"; do
+        [[ -d "$c/.git" && -e "$c/tools/bt-status" ]] && { REPO=$(cd "$c" && pwd); break; }
+    done
+fi
+have() { command -v "$1" >/dev/null 2>&1; }
+cnt()  { local n; n=$(grep -c "$1" <<<"$2" 2>/dev/null || true); echo "${n:-0}" | head -1; }
+
+WD=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null || true)
+BD=$(journalctl -u bluetooth        -b 0 --no-pager 2>/dev/null || true)
+KE=$(journalctl -k                  -b 0 --no-pager 2>/dev/null || true)
+
+early_sig=$(cnt "early signal"          "$WD")
+early_act=$(cnt "EARLY intervention"    "$WD")
+early_ok=$(cnt  "EARLY recovery SUCCEEDED" "$WD")
+acts=$(cnt      "intervening"           "$WD")
+recs=$(cnt      "RECOVERED"             "$WD")
+fatal=$(cnt     "FATAL:"                "$WD")
+rfail=$(cnt     "USBDEVFS_RESET failed" "$WD")
+tx=$(cnt        "tx timeout"            "$KE")
+audio=$(grep -ciE 'avdtp|sco|a2dp|Hands-Free' <<<"$BD" 2>/dev/null || true)
+
+verdict() {
+    if (( ${early_ok:-0} > 0 )); then
+        echo "${G}${B}EARLY RECOVERY WORKS${O} — ${early_ok} success(es) this boot."
+        echo "A reset issued on audio-teardown failure, BEFORE any HCI command"
+        echo "timed out, recovered the controller. The late trigger (tx timeout)"
+        echo "failed on 2026-08-10 under the same conditions."
+        echo
+        echo "Implication: cmd_timeout fires too late for this failure mode, so"
+        echo "adding the device to btusb's quirks table would not be sufficient."
+    elif (( ${early_act:-0} > 0 )); then
+        echo "${R}Early intervention fired ${early_act}x but did not recover.${O}"
+    elif (( ${tx:-0} > 0 && ${acts:-0} == 0 )); then
+        echo "${Y}Timeouts occurred but the watchdog never intervened.${O}"
+    elif (( ${tx:-0} > 0 )); then
+        echo "${Y}${acts} intervention(s), ${recs} recovery(ies).${O}"
+    elif (( ${audio:-0} > 0 )); then
+        echo "${G}No failures this boot${O}, and Bluetooth audio WAS exercised"
+        echo "(${audio} audio/profile events) — so this is a real clean run."
+    else
+        echo "${Y}No failures — but no Bluetooth audio activity either.${O}"
+        echo "A clean boot proves nothing if the trigger was never attempted."
+    fi
+}
+
+if (( BRIEF )); then verdict; exit 0; fi
+
+echo "${B}BLUETOOTH SITUATION REPORT${O} — $(date -Iseconds)"
+echo "═════════════════════════════════════════════════════════════"
+echo
+echo "${B}1. Controller${O}"
+have bt-state && bt-state | sed 's/^/  /' || echo "  (bt-state not installed)"
+
+echo
+echo "${B}2. This boot${O}   (up $(uptime -p | sed 's/^up //'))"
+printf '  %-30s %s\n' "HCI command timeouts:"      "${tx:-0}"
+printf '  %-30s %s\n' "'unexpected event' (LE):"   "$(cnt 'unexpected event for opcode' "$KE")"
+printf '  %-30s %s\n' "audio/profile events:"      "${audio:-0}"
+printf '  %-30s %s\n' "early signals seen:"        "${early_sig:-0}"
+printf '  %-30s %s\n' "early interventions:"       "${early_act:-0}"
+printf '  %-30s %s\n' "  -> recovered:"            "${early_ok:-0}"
+printf '  %-30s %s\n' "late interventions:"        "${acts:-0}"
+printf '  %-30s %s\n' "reset failures:"            "${rfail:-0}"
+printf '  %-30s %s\n' "hard hangs (off the bus):"  "${fatal:-0}"
+
+echo
+echo "${B}3. Recent boots${O}"
+have bt-boots && bt-boots 8 | sed 's/^/  /' || echo "  (bt-boots not installed)"
+
+echo
+echo "${B}4. Capture health${O}"
+if [[ -d /var/log/bt-health/trace ]]; then
+    printf '  %-30s %s\n' "btsnoop files:" "$(ls -1 /var/log/bt-health/trace/*.btsnoop 2>/dev/null | wc -l)"
+    printf '  %-30s %s\n' "disk used:"     "$(du -sh /var/log/bt-health 2>/dev/null | cut -f1)"
+    printf '  %-30s %s\n' "capture gaps logged:" "$(wc -l < /var/log/bt-health/trace/gaps.log 2>/dev/null || echo 0)"
+else
+    echo "  (no trace directory)"
+fi
+
+echo
+echo "${B}5. Repo${O}"
+if [[ -n "$REPO" && -d "$REPO/.git" ]]; then
+    printf '  %-30s %s\n' "checkout:" "$REPO"
+    d=$(cd "$REPO" && git status --porcelain | wc -l)
+    l=$(cd "$REPO" && git rev-parse --short HEAD 2>/dev/null)
+    r=$(cd "$REPO" && git rev-parse --short '@{upstream}' 2>/dev/null || echo "?")
+    printf '  %-30s %s\n' "uncommitted files:" "$d"
+    printf '  %-30s %s\n' "local / remote:"    "$l / $r$([[ "$l" == "$r" ]] && echo "  (in sync)" || echo "  ${R}DIVERGED${O}")"
+else
+    echo "  no checkout found (set BT_REPO=/path/to/clone)"
+fi
+
+echo
+echo "═════════════════════════════════════════════════════════════"
+echo "${B}VERDICT${O}"
+verdict | sed 's/^/  /'

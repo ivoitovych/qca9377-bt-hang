@@ -30,6 +30,7 @@ FILES=(
     /usr/local/bin/bt-evidence
     /usr/local/bin/bt-incident
     /usr/local/bin/bt-postmortem
+    /usr/local/bin/bt-status
     /usr/local/bin/bt-sanitize-logs
     /usr/local/share/qca9377-bt-hang/installed-at
     /usr/local/bin/bt-boot-list

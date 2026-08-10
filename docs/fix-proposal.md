@@ -58,10 +58,21 @@ would be sufficient — see §3a.**
 
 ---
 
-## 3a. ⚠️ The central assumption failed its first test
+## 3a. ⚠️ The central assumption failed — and the follow-up experiment explains why
 
 This proposal was written on the assumption that a USB reset during stage 1 recovers the
-controller. On 2026-08-10 that was tested directly and **it did not**.
+controller. On 2026-08-10 that was tested directly and **it did not**. A later test
+showed the assumption was not wrong about resets — it was wrong about *timing*.
+
+**Both directions have now been tested:**
+
+| Reset issued | Outcome |
+|---|---|
+| 20 s after the first HCI timeout (where `cmd_timeout` acts) | ❌ failed — chip left the bus |
+| before any HCI timeout, on bluetoothd's audio-teardown failure | ✅ **recovered**, and no `tx timeout` occurred at all |
+
+The recoverable window appears to close *before* the condition `cmd_timeout` triggers
+on. See §3b.
 
 A userspace watchdog issued `USBDEVFS_RESET` — the same operation
 `usb_queue_reset_device()` performs, through the same kernel path — **20 s after the
@@ -105,14 +116,51 @@ would have prevented the hang.**
 
 Still worth reporting: a device silently receiving no vendor quirks is a real defect,
 and the reporter has seen the same behaviour on several laptops. But it should be
-submitted as *"this device is unmatched"*, not *"this fixes the hang"* — and the failed
-reset should be stated plainly, because a maintainer will want to know that the obvious
-remedy was tried and did not work.
+submitted as *"this device is unmatched"*, not *"this fixes the hang"* — and both test
+results stated plainly, because the second one is the more interesting.
 
-Open question for maintainers: would a reset issued **earlier** — during the audio
-teardown, before any HCI command times out — succeed where this one failed? If the chip
-is already unrecoverable by the time the first command times out, then `cmd_timeout` is
-structurally too late for this failure mode, whatever device IDs are in the table.
+---
+
+## 3b. The answer to that open question: earlier works
+
+The question §3a left open — *would a reset issued during the audio teardown, before any
+HCI command times out, succeed where the late one failed?* — was tested on 2026-08-10/11.
+
+**It succeeded.**
+
+bluetoothd sees the failure first. In the 08-10 hang it logged audio-teardown errors
+**52 s** before the kernel's first `tx timeout`. The watchdog was changed to trigger on
+those instead (`BT_EARLY=1`), using patterns selected by measured precision over 12
+boots. Result over a 5 h 21 m boot with 145 audio/profile events:
+
+```
+EARLY intervention: 2 audio-teardown failure(s) in 90s — resetting BEFORE any HCI timeout.
+  EARLY recovery SUCCEEDED
+```
+
+with **zero `tx timeout` events for the whole boot**. `cmd_timeout` would never have
+fired: the stall was cleared before it could reach the state that hook watches for.
+
+### Consequence for this patch
+
+Adding `13d3:3503` to the quirks table remains **correct** — the device really does get
+no vendor quirks — but on this evidence it is **not sufficient**. `hdev->cmd_timeout`
+only fires once HCI commands are already timing out, and by then the controller is past
+saving.
+
+The more valuable thing to raise with maintainers is therefore the **timing boundary**:
+
+- there is a window in which this controller is recoverable by a USB reset;
+- it closes before the first HCI command timeout;
+- the signal marking its start is at the bluetoothd/AVDTP layer, not the HCI layer;
+- no kernel hook currently fires inside it.
+
+Whether that warrants a new hook, an mgmt-level signal, or is simply out of scope for
+the kernel is a question for `linux-bluetooth`, not for this document.
+
+⚠️ **n = 1 in each direction.** Do not present this as settled. Attach both sessions:
+`evidence/sessions/20260810-072445-first-real-hang/` (late reset failed) and
+`evidence/sessions/20260811-002052-early-mode-SUCCESS/` (early reset worked).
 
 ---
 

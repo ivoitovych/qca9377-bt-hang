@@ -1,8 +1,8 @@
-# Bug report — btusb: QCA9377 (13d3:3503) gets no `cmd_timeout` handler, degrading a recoverable firmware stall into a hard hang
+# Bug report — btusb/QCA9377: `hdev->cmd_timeout` fires too late to recover a stalled controller
 
 **Subsystem:** `drivers/bluetooth/btusb.c`
 **Reporter contact:** yaroslav.voytovych@gmail.com
-**Date:** 2026-08-10
+**Date:** 2026-08-11
 **Suggested recipients:** `linux-bluetooth@vger.kernel.org`, `linux-kernel@vger.kernel.org`
 **Maintainers:** Marcel Holtmann, Luiz Augusto von Dentz
 **Regression:** No — reproduced on 6.17.0-29, 6.17.0-35, 6.17.0-40 and 7.0.0-28, over 10 weeks
@@ -11,27 +11,39 @@
 
 ## Summary
 
-USB Bluetooth device `13d3:3503` (Qualcomm Atheros QCA9377 / ROME, IMC Networks module)
-appears not to be matched by btusb's vendor quirks table. It therefore probes with
-`driver_info = 0` and never receives
-`hdev->cmd_timeout = btusb_qca_cmd_timeout`.
+Two findings, one of which may be the more useful.
 
-When the controller firmware stalls, nothing resets it. The kernel logs command timeouts
-indefinitely while the chip decays from HCI-unresponsive (USB still healthy) into
-USB-unresponsive, dropping off the bus. The latter cannot be cleared by any software
-means — not by driver rebind, not by USB port power-cycle, and not by a warm reboot,
+**1. A QCA9377 (`13d3:3503`) receives no vendor quirks at all.** It is matched by no
+entry in btusb's quirks table, so it probes with `driver_info = 0`, gets no
+`hdev->cmd_timeout = btusb_qca_cmd_timeout` and no firmware download. Measured across
+**34 boots and four kernel versions: 287 HCI command timeouts, zero reset attempts,
+zero firmware loads.** 13 of those 34 boots hung.
+
+**2. Installing that handler would probably not have helped, because `cmd_timeout`
+fires too late.** This was tested directly, in both directions:
+
+| Reset issued | Result |
+|---|---|
+| **20 s after** the first HCI timeout — 33 s *before* any USB-level failure, i.e. where `cmd_timeout` would act | ❌ **failed**; controller dropped off the bus, cold power-off required |
+| **Before any HCI timeout**, on the bluetoothd-level audio-teardown failure that precedes it | ✅ **recovered**; no `tx timeout` occurred at all that boot |
+
+Same hardware, same trigger condition, same operation (`USBDEVFS_RESET`, i.e. what
+`usb_queue_reset_device()` performs). The only variable is *when*.
+
+So there appears to be a window in which this controller is still recoverable, it closes
+before the first HCI command times out, and **no existing kernel hook fires inside it**.
+The signal that opens the window is visible to bluetoothd (AVDTP/SCO teardown failure),
+not to the kernel — which may be why no such hook exists.
+
+When the stall is not caught inside that window, the chip decays from HCI-unresponsive
+(USB still healthy) to USB-unresponsive and leaves the bus. That state cannot be cleared
+by any software means — not driver rebind, not xHCI port power-cycle, not a warm reboot,
 because that does not drop the M.2 power rail. A full power-off is required.
 
-Measured: **287 HCI command timeouts across 34 boots and four kernel versions, with zero
-reset attempts.** 13 of those 34 boots hung.
-
-> ⚠️ **Scope of the claim.** A direct test (§"What the missing handler does and does not
-> explain") found that a `USBDEVFS_RESET` issued 20 s after the first timeout — well
-> inside the window when the device still answered USB — did **not** recover the
-> controller. Since `btusb_qca_cmd_timeout()` performs the equivalent
-> `usb_queue_reset_device()`, installing the handler may not prevent this failure. The
-> defect reported here is that **no handler is installed at all**; whether installing it
-> is sufficient is an open question this report does not answer.
+> ⚠️ **Confidence.** Finding 1 is verified three ways and is solid. Finding 2 rests on
+> **one** failed late reset and **one** successful early reset. It is offered as a
+> hypothesis with evidence, not a settled result — the two hangs may not have been of
+> equal severity. Full logs for both are attached.
 
 ---
 
@@ -238,13 +250,47 @@ The reset failed and the device went on to drop off the bus:
 `btusb_qca_cmd_timeout()` fires after 5 consecutive timeouts and would have acted at
 roughly the same moment, doing roughly the same thing.
 
-So the honest claim is narrower than "adding this ID would fix the hang":
+### The positive control: an earlier reset succeeded
 
-- **Established:** this device is matched by no vendor quirks entry, so it gets
-  `driver_info = 0`, no `cmd_timeout` handler, and no firmware download. The kernel
-  logs 287 command timeouts across 34 boots and never once attempts a reset.
-- **Not established:** that installing the handler would prevent the failure. The one
-  direct test of that proposition failed.
+The obvious follow-up was to try the same reset *earlier*. bluetoothd sees the failure
+before the kernel does — in the 08-10 hang it logged audio-teardown errors **52 s**
+before the first `tx timeout`:
+
+```
+07:23:53  bluetoothd: Unable to get Hands-Free Voice gateway SDP record: Host is down
+07:24:36  bluetoothd: No matching connection for device
+07:24:41  bluetoothd: a2dp.c:a2dp_config() avdtp_close failed
+07:24:45  kernel:     Bluetooth: hci0: command tx timeout        <- cmd_timeout's earliest possible trigger
+```
+
+The watchdog was changed to reset on those bluetoothd signals instead. On the boot of
+2026-08-10 18:56 — 5 h 21 m, 145 audio/profile events, the failure path entered 6 times:
+
+```
+EARLY intervention: 2 audio-teardown failure(s) in 90s — resetting BEFORE any HCI timeout.
+  EARLY recovery SUCCEEDED
+```
+
+**Zero `tx timeout` events occurred that entire boot.** The early reset did not just
+recover the controller after a stall; it kept the stall from ever reaching the state
+`cmd_timeout` watches for. That hook would never have fired.
+
+### What this suggests
+
+| Claim | Status |
+|---|---|
+| The device is matched by no vendor quirks entry | ✅ verified in upstream source and shipped binary; 287 timeouts / 0 resets / 34 boots |
+| A reset *after* the first HCI timeout recovers it | ❌ tested once — failed |
+| A reset *before* the first HCI timeout recovers it | ✅ tested once — succeeded |
+| Adding the device ID alone would fix the hang | ❌ not supported |
+
+If this holds up, `hdev->cmd_timeout` is **architecturally too late** for this failure
+mode: the recoverable window closes before the condition it triggers on exists. The
+opening signal is at the bluetoothd/AVDTP layer, not the HCI layer.
+
+⚠️ **n = 1 in each direction.** The two hangs may not have been equally severe, and the
+cooldown suppressed three further early interventions whose necessity is unknown. This
+is a hypothesis with supporting evidence, not a proven result.
 
 Two further corrections from the same session, both to assumptions stated earlier in
 this report:

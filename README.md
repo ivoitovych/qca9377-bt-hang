@@ -252,13 +252,18 @@ A one-line kernel patch — add the device to btusb's QCA ROME quirks:
 +						     BTUSB_WIDEBAND_SPEECH },
 ```
 
-> ⚠️ **This probably would NOT have fixed the hang — measured, not assumed.**
-> `btusb_qca_cmd_timeout()` calls `usb_queue_reset_device()`. On 2026-08-10 the watchdog
-> issued `USBDEVFS_RESET` — the same operation, same kernel path — **20 seconds** after
-> the first timeout and **33 seconds before** any USB-level failure, and the controller
-> did not come back. The kernel handler would have fired at roughly the same moment and
-> done roughly the same thing.
-> See [`evidence/sessions/20260810-072445-first-real-hang/`](evidence/sessions/20260810-072445-first-real-hang/).
+> ⚠️ **Correct, but on current evidence not sufficient — measured, not assumed.**
+> `btusb_qca_cmd_timeout()` only fires *after* HCI commands start timing out, and by
+> then the controller appears to be past saving. Both directions were tested:
+>
+> | Reset issued | Result |
+> |---|---|
+> | 20 s after the first HCI timeout (where `cmd_timeout` acts) | ❌ failed — chip left the bus |
+> | before any HCI timeout, on bluetoothd's audio-teardown failure | ✅ **recovered** |
+>
+> Sessions: [late reset failed](evidence/sessions/20260810-072445-first-real-hang/) ·
+> [early reset worked](evidence/sessions/20260811-002052-early-mode-SUCCESS/).
+> This is the `BT_EARLY` mode described above. **n = 1 in each direction.**
 >
 > ⚠️ **Also untested and risky in its own right.** `BTUSB_QCA_ROME` enables the rampatch
 > firmware download path; if this module is not a true ROME variant, probe can fail and
@@ -377,6 +382,7 @@ Installed alongside the mitigation, for reproducing and recording failures:
 
 | Tool | Purpose |
 |---|---|
+| `bt-status` | **"What do we have by now?"** — controller, per-boot history, whether Bluetooth was actually used, watchdog activity, verdict |
 | `bt-postmortem` | What happened during the last hang: timing, whether the watchdog fired, **whether the reset worked** |
 | `bt-incident <slug>` | Collect a hang that already happened into a sanitised evidence session |
 | `bt-timeline [-30m]` | Merge kernel, bluetoothd, watchdog, trace and your marks into one chronology |

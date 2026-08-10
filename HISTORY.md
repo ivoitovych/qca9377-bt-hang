@@ -344,6 +344,59 @@ this phase, after collecting the incident by hand made it obvious they should ex
 
 ---
 
+## Phase 10 — The early reset works (2026-08-10 18:56 → 08-11 00:21)
+
+`BT_EARLY=1` was armed after the previous phase, watching bluetoothd for audio-teardown
+failures instead of waiting for the kernel's `tx timeout`. Several reboots later —
+including time spent in Windows — a 5 h 21 m boot with 145 audio/profile events produced
+the result:
+
+```
+EARLY intervention: 2 audio-teardown failure(s) in 90s — resetting BEFORE any HCI timeout.
+  EARLY recovery SUCCEEDED
+```
+
+**Zero `tx timeout` events for the entire boot.** The reset did not merely recover the
+controller after a stall — it stopped the stall reaching the state `cmd_timeout` watches
+for. That hook would never have fired.
+
+Together with Phase 9 this gives a controlled pair on the same hardware, same trigger,
+same operation (`USBDEVFS_RESET`), differing only in *when*:
+
+| Reset issued | Result |
+|---|---|
+| 20 s after the first HCI timeout — where `cmd_timeout` acts | ❌ chip left the bus, cold power-off |
+| before any HCI timeout, on the bluetoothd signal | ✅ recovered |
+
+**So the headline finding changed.** It is no longer "a device ID is missing from
+btusb". It is: *there is a window in which this controller is recoverable, it closes
+before the first HCI command times out, and no kernel hook fires inside it.* The signal
+that opens it lives at the bluetoothd/AVDTP layer, which may be exactly why.
+
+The missing device ID is still real and still worth fixing — it is just **correct but
+insufficient**, and presenting it as the fix would have misled maintainers. The bug
+report was rewritten around the timing boundary, with the device ID demoted to finding 1
+of 2.
+
+Discipline note: this is stated as a hypothesis with evidence, not a result. **n = 1 in
+each direction**, the two hangs may not have been equally severe, and the cooldown
+suppressed three further early interventions whose necessity is unknown.
+
+Two tooling bugs surfaced while writing this up, both of the same shape — counters that
+matched only the old code path:
+
+- `bt-incident` reported `wd_interventions=0` beside `wd_recovered=1`, because it counted
+  the string `intervening` (late mode) and missed `EARLY intervention`.
+- `bt-postmortem` had the same blind spot, and would have printed the late-mode verdict
+  for an early-mode recovery.
+
+`bt-status` was written this phase, after a third "check what we have by now" request was
+answered with yet another ad-hoc command block. It reports **usage alongside failures**,
+because "no hang" is meaningless if Bluetooth was never exercised — the trap that boots
+-3, -2 and -1 would otherwise have set.
+
+---
+
 ## Recurring lessons
 
 - **Measure before capping.** `MemoryMax=64M` and the 15-minute metrics interval were
@@ -361,3 +414,10 @@ this phase, after collecting the incident by hand made it obvious they should ex
 - **Check what a number actually measures.** "Stage 1 lasts 6 hours" was true of an idle,
   untouched controller and false of a recoverable window. The same figure, two different
   quantities.
+- **A failed experiment is a direction, not a dead end.** The late reset failing was the
+  most useful result of the project: it reframed the question from *"which device ID is
+  missing?"* to *"when does the recoverable window close?"* — and that question had a
+  better answer.
+- **Report usage next to failures.** Three consecutive clean boots meant nothing, because
+  Bluetooth had barely been used. A metric that cannot distinguish "it worked" from "it
+  was never tried" invites exactly the wrong conclusion.
