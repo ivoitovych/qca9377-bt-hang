@@ -4,7 +4,9 @@ Description=Periodic Bluetooth health snapshot (every 15 min + at boot)
 [Timer]
 OnBootSec=2min
 OnUnitActiveSec=15min
-Persistent=true
+# NOTE: Persistent= is intentionally absent. It only has an effect on timers
+# with OnCalendar=; on a purely monotonic timer like this one it is a no-op,
+# so claiming catch-up-after-downtime would be false.
 
 [Install]
 WantedBy=timers.target

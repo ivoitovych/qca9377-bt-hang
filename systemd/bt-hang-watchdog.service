@@ -1,6 +1,6 @@
 [Unit]
 Description=Bluetooth firmware-hang watchdog (QCA9377 / 13d3:3503)
-Documentation=file://docs/investigation.md
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
 After=bluetooth.service systemd-journald.service
 Wants=bluetooth.service
 
@@ -11,12 +11,17 @@ Restart=always
 RestartSec=10
 
 # Tunables (override with: systemctl edit bt-hang-watchdog)
-Environment=BT_VID=13d3
-Environment=BT_PID=3503
 Environment=BT_THRESHOLD=3
 Environment=BT_WINDOW=60
 Environment=BT_COOLDOWN=180
 Environment=BT_MAX_FAILS=3
+
+# BT_VID / BT_PID are deliberately NOT set here. The script defaults to
+# 13d3:3503, and install.sh writes a drop-in at
+#   /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf
+# when a different device is requested. Hardcoding them in this unit would
+# silently override the documented
+#   BT_VID=... BT_PID=... sudo -E ./install.sh --apply
 
 # Needs root for USBDEVFS_RESET and sysfs unbind/bind.
 # Everything else is locked down.

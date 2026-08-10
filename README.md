@@ -114,8 +114,9 @@ sudo ./install.sh --apply
 Uninstall is complete — every installed file is new, nothing pre-existing is touched:
 
 ```bash
-sudo ./uninstall.sh          # dry run
+sudo ./uninstall.sh                          # dry run
 sudo ./uninstall.sh --apply
+sudo ./uninstall.sh --apply --purge-metrics  # also delete collected metrics
 ```
 
 ### What it installs
@@ -133,6 +134,10 @@ the window in which the stall happens.
 
 **3. A metrics collector** (optional, `--no-metrics` to skip) — snapshots health every
 15 min to `/var/log/bt-health/metrics.tsv`, surviving reboots.
+
+Confirming a recovery worked needs `hciconfig` or `btmgmt` (package `bluez`). Without
+either, the watchdog still resets the controller but logs the attempt as unverified
+rather than counting it as a failure — so a missing tool cannot make it disable itself.
 
 ### Different controller?
 
@@ -245,8 +250,11 @@ logs through the sanitiser before attaching them anywhere:
 ./tools/sanitize-logs.sh /path/to/kernel.log
 ```
 
-It replaces MACs, BSSIDs, UUIDs and IPv4 addresses with deterministic placeholders, then
-verifies none survived. The logs in `data/logs/` were produced this way.
+It replaces MACs and BSSIDs (**colon or dash separated**), UUIDs and IPv4 addresses with
+deterministic placeholders, then verifies none survived — checking every form it
+substitutes, so a missed form cannot produce a false all-clear. It is safe to run in
+place (`sanitize-logs.sh kernel.log kernel.log`): output is built in a temp file and
+renamed only after verification passes. The logs in `data/logs/` were produced this way.
 
 ---
 

@@ -1,26 +1,46 @@
 #!/bin/bash
 # uninstall.sh — remove everything install.sh added.
 #
-# Usage:
-#   ./uninstall.sh          dry run — print what would happen, change nothing
-#   ./uninstall.sh --apply  actually revert
+#   ./uninstall.sh                          dry run — print what would happen
+#   ./uninstall.sh --apply                  actually revert
+#   ./uninstall.sh --apply --purge-metrics  also delete collected metrics
 #
 # See docs/changes-applied.md for the full protocol.
 
 set -uo pipefail
 
 APPLY=0
-[[ "${1:-}" == "--apply" ]] && APPLY=1
+PURGE_METRICS=0
+for a in "$@"; do
+    case "$a" in
+        --apply)          APPLY=1 ;;
+        --purge-metrics)  PURGE_METRICS=1 ;;
+        -h|--help)        sed -n '2,9p' "$0"; exit 0 ;;
+        *) echo "unknown option: $a" >&2
+           echo "usage: $0 [--apply] [--purge-metrics]" >&2
+           exit 1 ;;
+    esac
+done
 
 FILES=(
     /usr/local/sbin/bt-hang-watchdog
     /usr/local/sbin/bt-health-snapshot
+    /usr/local/bin/bt-health-report
+    /usr/local/share/qca9377-bt-hang/baseline.tsv
     /etc/systemd/system/bt-hang-watchdog.service
+    /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf
+    /etc/systemd/system/bt-health-snapshot.service.d/10-device.conf
     /etc/systemd/system/bt-health-snapshot.service
     /etc/systemd/system/bt-health-snapshot.timer
     /etc/modprobe.d/btusb-qca9377.conf
     /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules
-    /usr/local/bin/bt-health-report
+)
+
+# Directories to remove only if empty after the files above are gone.
+DIRS=(
+    /etc/systemd/system/bt-hang-watchdog.service.d
+    /etc/systemd/system/bt-health-snapshot.service.d
+    /usr/local/share/qca9377-bt-hang
 )
 
 UNITS=(
@@ -28,26 +48,19 @@ UNITS=(
     bt-health-snapshot.timer
 )
 
-# Collected metrics are DATA, not configuration. Kept by default so the
-# effectiveness record survives a rollback; pass --purge-metrics to remove.
-PURGE_METRICS=0
-[[ "${2:-}" == "--purge-metrics" || "${1:-}" == "--purge-metrics" ]] && PURGE_METRICS=1
-
 run() {
-    if (( APPLY )); then
-        echo "  + $*"
-        "$@"
-    else
-        echo "  would run: $*"
-    fi
+    if (( APPLY )); then echo "  + $*"; "$@"
+    else echo "  would run: $*"; fi
 }
 
 if (( APPLY )); then
     echo "=== UNINSTALL (applying) ==="
+    [[ $EUID -eq 0 ]] || { echo "must run as root" >&2; exit 1; }
 else
     echo "=== UNINSTALL (DRY RUN — nothing will be changed) ==="
     echo "    re-run with --apply to actually revert"
 fi
+(( PURGE_METRICS )) && echo "    --purge-metrics: /var/log/bt-health will also be removed"
 echo
 
 echo "[1/5] stop and disable added systemd units"
@@ -66,6 +79,11 @@ for f in "${FILES[@]}"; do
         run rm -f "$f"
     else
         echo "  (absent, nothing to do: $f)"
+    fi
+done
+for d in "${DIRS[@]}"; do
+    if [[ -d "$d" ]]; then
+        run rmdir --ignore-fail-on-non-empty "$d"
     fi
 done
 echo

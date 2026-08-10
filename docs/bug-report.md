@@ -72,9 +72,11 @@ occurred in **6 of 12 consecutive boots** under ordinary daily use.
 
 ### Stage 1 — firmware stalls, USB still healthy
 
+The first two lines are **bluetoothd**, the rest **kernel** — the stream below is interleaved from both.
+
 ```
-Aug 09 20:19:59 kernel: profiles/audio/avdtp.c:cancel_request() Suspend: Connection timed out (110)
-Aug 09 20:20:11 kernel: profiles/audio/avdtp.c:cancel_request() Abort:   Connection timed out (110)
+Aug 09 20:19:59 bluetoothd[36567]: profiles/audio/avdtp.c:cancel_request() Suspend: Connection timed out (110)
+Aug 09 20:20:11 bluetoothd[36567]: profiles/audio/avdtp.c:cancel_request() Abort:   Connection timed out (110)
 Aug 09 20:20:43 kernel: Bluetooth: hci0: command 0x0406 tx timeout      <-- firmware wedges
 Aug 09 20:20:49 kernel: Bluetooth: hci0: setting interface failed (110)
 Aug 09 20:33:51 kernel: Bluetooth: hci0: link tx timeout

@@ -11,8 +11,8 @@
 
 **Every persistent change is a NEW file. No pre-existing file was modified or deleted.**
 
-That makes rollback trivial and total: delete four files, drop one symlink, reload two
-daemons. Nothing touched disk layout, the bootloader, GRUB, initramfs, kernel packages,
+That makes rollback trivial and total: delete the installed files, drop the unit
+symlinks, reload two daemons — see §5, or just run `./uninstall.sh --apply`. Nothing touched disk layout, the bootloader, GRUB, initramfs, kernel packages,
 fstab or any existing config. **There is no bootability risk from any change here.**
 
 | Category | Touched? |
@@ -21,7 +21,7 @@ fstab or any existing config. **There is no bootability risk from any change her
 | Kernel packages, `/boot` | ❌ no |
 | Partitions, fstab, disk | ❌ no |
 | Existing config files | ❌ no — none modified |
-| New files added | ✅ 7 |
+| New files added | ✅ 9 (+1 for a non-default device) |
 | systemd units enabled | ✅ 2 |
 
 ---
@@ -43,7 +43,15 @@ fstab or any existing config. **There is no bootability risk from any change her
 |---|---|---|---|
 | 5 | `/usr/local/sbin/bt-health-snapshot` | Appends a metrics row to `/var/log/bt-health/metrics.tsv` | `0755` |
 | 6 | `/etc/systemd/system/bt-health-snapshot.service` | oneshot unit for the above | `0644` |
-| 7 | `/etc/systemd/system/bt-health-snapshot.timer` | every 15 min + 2 min after boot, `Persistent=true` | `0644` |
+| 7 | `/etc/systemd/system/bt-health-snapshot.timer` | every 15 min + 2 min after boot (monotonic) | `0644` |
+| 8 | `/usr/local/bin/bt-health-report` | effectiveness analysis command | `0755` |
+| 9 | `/usr/local/share/qca9377-bt-hang/baseline.tsv` | pre-mitigation counts, for comparison | `0644` |
+
+Installed **only when a non-default controller is targeted** (`BT_VID`/`BT_PID`):
+
+| # | Path | Purpose | Perms |
+|---|---|---|---|
+| 10 | `/etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf` | `Environment=BT_VID/BT_PID` override | `0644` |
 
 Plus symlinks created by `systemctl enable`:
 
@@ -145,15 +153,38 @@ systemctl status bt-hang-watchdog              # expect: active, "device present
 ### Manual — the complete set
 
 ```bash
+# units
 systemctl disable --now bt-hang-watchdog
-rm -f /etc/systemd/system/bt-hang-watchdog.service
+systemctl disable --now bt-health-snapshot.timer
+
+# watchdog
 rm -f /usr/local/sbin/bt-hang-watchdog
+rm -f /etc/systemd/system/bt-hang-watchdog.service
+rm -f /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf
+rmdir --ignore-fail-on-non-empty /etc/systemd/system/bt-hang-watchdog.service.d
+
+# autosuspend
 rm -f /etc/modprobe.d/btusb-qca9377.conf
 rm -f /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules
+
+# metrics collector
+rm -f /usr/local/sbin/bt-health-snapshot
+rm -f /usr/local/bin/bt-health-report
+rm -f /etc/systemd/system/bt-health-snapshot.service
+rm -f /etc/systemd/system/bt-health-snapshot.timer
+rm -f /usr/local/share/qca9377-bt-hang/baseline.tsv
+rmdir --ignore-fail-on-non-empty /usr/local/share/qca9377-bt-hang
+# collected data (optional):
+# rm -rf /var/log/bt-health
+
 systemctl daemon-reload
 udevadm control --reload-rules
 modprobe -r btusb && modprobe btusb     # restores enable_autosuspend=Y
 ```
+
+⚠️ Omitting the metrics units — as an earlier version of this list did — leaves
+`bt-health-snapshot.timer` enabled and firing every 15 minutes after an otherwise
+"complete" manual rollback.
 
 ### Partial rollback
 

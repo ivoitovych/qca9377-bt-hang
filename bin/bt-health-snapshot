@@ -10,8 +10,8 @@
 set -uo pipefail
 
 OUT=/var/log/bt-health/metrics.tsv
-VID=13d3
-PID=3503
+VID="${BT_VID:-13d3}"
+PID="${BT_PID:-3503}"
 
 mkdir -p "$(dirname "$OUT")"
 
@@ -27,19 +27,30 @@ uptime_s=$(awk '{printf "%d", $1}' /proc/uptime)
 # --- device presence -------------------------------------------------------
 dev_present=0
 usb_ctrl="-"
+usb_path=""
 for d in /sys/bus/usb/devices/*; do
     [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
     if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
         dev_present=1
+        usb_path="$d"
         usb_ctrl=$(cat "$d/power/control" 2>/dev/null || echo "-")
         break
     fi
 done
 
 # --- does the controller actually answer? ----------------------------------
+# Resolve the hci node belonging to OUR device. Taking the first adapter in
+# /sys/class/bluetooth would report on a spare USB dongle instead, silently
+# falsifying this column in exactly the situation it exists to measure.
 hci_alive=0
-h=$(ls /sys/class/bluetooth/ 2>/dev/null | head -1)
-if [[ -n "$h" ]] && timeout 6 hciconfig "$h" name >/dev/null 2>&1; then
+h=""
+if [[ -n "$usb_path" ]]; then
+    for p in "$usb_path"/*/bluetooth/hci*; do
+        [[ -e "$p" ]] && { h=$(basename "$p"); break; }
+    done
+fi
+if [[ -n "$h" ]] && command -v hciconfig >/dev/null 2>&1 \
+   && timeout 6 hciconfig "$h" name >/dev/null 2>&1; then
     hci_alive=1
 fi
 

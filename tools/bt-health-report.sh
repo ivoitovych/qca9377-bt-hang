@@ -76,7 +76,10 @@ for b in $(seq "$first" 0); do
     t=$(journalctl -k -b "$b" 2>/dev/null | grep -c "tx timeout")
     u=$(journalctl -k -b "$b" 2>/dev/null | grep -c "unexpected event for opcode")
     w=$(journalctl -u bt-hang-watchdog -b "$b" 2>/dev/null | grep -c "intervening")
-    bstart=$(journalctl -k -b "$b" -n1 -o short-unix 2>/dev/null | awk '{printf "%d",$1}')
+    # FIRST entry of the boot, not -n1 (which returns the LAST). Using the
+    # last entry tags the install boot as AFTER and drags its pre-install
+    # timeout counts into the after column, contaminating the comparison.
+    bstart=$(journalctl -k -b "$b" -o short-unix 2>/dev/null | head -1 | awk '{printf "%d",$1}')
     phase="before"
     [[ -n "${bstart:-}" ]] && (( bstart > CHANGE_EPOCH )) && phase="AFTER"
     printf '   %-6s %-22s %-9s %-9s %-8s %s\n' "$b" "$k" "$t" "$u" "$w" "$phase"

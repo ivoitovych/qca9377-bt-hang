@@ -2,11 +2,11 @@
 # bt-hang-watchdog — recover a wedged QCA9377 (ROME) Bluetooth controller.
 #
 # Why this exists:
-#   USB 13d3:3503 is absent from btusb_table in drivers/bluetooth/btusb.c, so it
-#   binds only via the generic USB-Bluetooth-class rule and gets driver_info = 0.
-#   It therefore never receives hdev->cmd_timeout = btusb_qca_cmd_timeout(), the
-#   handler that would USB-reset the controller after 5 consecutive HCI command
-#   timeouts. Measured on this host: 102 "tx timeout" events across 12 boots,
+#   USB 13d3:3503 appears not to be matched by btusb's vendor quirks table, so
+#   it binds via the generic USB-Bluetooth-class rule with driver_info = 0 and
+#   never receives hdev->cmd_timeout = btusb_qca_cmd_timeout(), the handler
+#   that USB-resets the controller after 5 consecutive HCI command timeouts.
+#   Measured on the affected host: 102 "tx timeout" events across 12 boots,
 #   0 automatic reset attempts.
 #
 #   This script performs, from userspace, what that missing handler would do.
@@ -16,8 +16,8 @@
 #   stage 2 (hard) — USB core unresponsive, chip drops off the bus
 #                    -> NOTHING in software works; needs a cold power-off,
 #                       because a warm reboot does not drop the M.2 power rail.
-#   On this host stage 1 lasted ~6 hours before decaying to stage 2. Acting
-#   early is the entire point.
+#   On the affected host stage 1 lasted ~6 hours before decaying to stage 2.
+#   Acting early is the entire point.
 
 set -uo pipefail
 
@@ -26,9 +26,20 @@ PID="${BT_PID:-3503}"
 THRESHOLD="${BT_THRESHOLD:-3}" # timeouts inside WINDOW before acting
 WINDOW="${BT_WINDOW:-60}"      # seconds
 COOLDOWN="${BT_COOLDOWN:-180}" # min seconds between recovery attempts
-MAX_FAILS="${BT_MAX_FAILS:-3}" # give up after this many failed recoveries
+MAX_FAILS="${BT_MAX_FAILS:-3}" # give up after this many CONFIRMED failures
 
 log() { echo "$*"; }           # stdout is captured by journald
+
+# --- capability probe ------------------------------------------------------
+# hci_alive() needs a way to ask the controller a question. Without one we can
+# still recover, we just cannot confirm it worked — and must NOT then count
+# every attempt as a failure, or the watchdog disables itself while healthy.
+PROBE=none
+if command -v hciconfig >/dev/null 2>&1; then
+    PROBE=hciconfig
+elif command -v btmgmt >/dev/null 2>&1; then
+    PROBE=btmgmt
+fi
 
 # --- helpers ---------------------------------------------------------------
 
@@ -45,28 +56,54 @@ find_usb_dev() {
     return 1
 }
 
-# Is there an hci device that actually answers a command?
-# Presence in sysfs is NOT enough — during the hang the interface stays
+# Resolve the hci name belonging to OUR usb device, not merely the first
+# adapter in the system. A spare USB dongle plugged in while the QCA is wedged
+# is frequently hci0, and probing that would report the wrong radio healthy.
+hci_for_dev() {
+    local dev="$1" p
+    for p in /sys/bus/usb/devices/"$dev"/*/bluetooth/hci*; do
+        [[ -e "$p" ]] || continue
+        basename "$p"
+        return 0
+    done
+    return 1
+}
+
+# 0 = responds, 1 = does not respond, 2 = cannot tell (no probe tool / no hci).
+# Presence in sysfs is NOT aliveness: during the hang the interface stays
 # UP RUNNING while the firmware answers nothing.
 hci_alive() {
-    local h
-    h=$(ls /sys/class/bluetooth/ 2>/dev/null | head -1)
-    [[ -n "$h" ]] || return 1
-    timeout 6 hciconfig "$h" name >/dev/null 2>&1
+    local dev h idx
+    dev=$(find_usb_dev) || return 1          # off the bus == definitely dead
+    h=$(hci_for_dev "$dev") || return 1      # enumerated but no hci yet
+    case "$PROBE" in
+        hciconfig) timeout 6 hciconfig "$h" name >/dev/null 2>&1 && return 0 || return 1 ;;
+        btmgmt)    idx="${h#hci}"
+                   timeout 6 btmgmt --index "$idx" info >/dev/null 2>&1 && return 0 || return 1 ;;
+        *)         return 2 ;;
+    esac
 }
 
 # USBDEVFS_RESET ioctl — the exact operation usb_queue_reset_device() performs.
-# This is the closest possible userspace equivalent of the missing kernel handler.
+# The closest possible userspace equivalent of the missing kernel handler.
 usbfs_reset() {
     local dev="$1" b n
     b=$(<"/sys/bus/usb/devices/$dev/busnum") || return 1
     n=$(<"/sys/bus/usb/devices/$dev/devnum") || return 1
     python3 - "$b" "$n" <<'PYEOF'
-import fcntl, sys
+import fcntl, os, sys
 USBDEVFS_RESET = 0x5514          # _IO('U', 20)
 bus, dev = int(sys.argv[1]), int(sys.argv[2])
-with open("/dev/bus/usb/%03d/%03d" % (bus, dev), "wb") as f:
-    fcntl.ioctl(f, USBDEVFS_RESET, 0)
+path = "/dev/bus/usb/%03d/%03d" % (bus, dev)
+# os.open without O_CREAT: if the device vanished between find_usb_dev() and
+# here — exactly the stage-1 -> stage-2 transition this races — fail cleanly
+# instead of creating a bogus regular file on devtmpfs that would later
+# collide with the real node when the device re-enumerates.
+fd = os.open(path, os.O_WRONLY)
+try:
+    fcntl.ioctl(fd, USBDEVFS_RESET, 0)
+finally:
+    os.close(fd)
 PYEOF
 }
 
@@ -85,9 +122,10 @@ notify() {
 }
 
 # --- recovery --------------------------------------------------------------
+# Returns 0 = recovered, 1 = confirmed failure, 2 = attempted but unverifiable.
 
 recover() {
-    local dev
+    local dev rc
     if ! dev=$(find_usb_dev); then
         log "FATAL: $VID:$PID is no longer on the USB bus."
         log "       The controller has reached the hard-hang stage. No software"
@@ -109,8 +147,11 @@ recover() {
     fi
     sleep 6
 
-    # Step 2: escalate to full re-enumeration if the reset was not enough.
-    if ! hci_alive; then
+    # Step 2: escalate to full re-enumeration unless we can confirm it worked.
+    # With no probe available we always escalate — skipping it on an unverified
+    # guess is how the wrong radio gets declared healthy.
+    hci_alive; rc=$?
+    if (( rc != 0 )); then
         log "  escalating to USB unbind/bind"
         echo "$dev" > /sys/bus/usb/drivers/usb/unbind 2>/dev/null
         sleep 3
@@ -121,20 +162,33 @@ recover() {
     systemctl start bluetooth >/dev/null 2>&1
     sleep 3
 
-    if hci_alive; then
-        log "  RECOVERED — controller is responding again"
-        notify "Bluetooth controller recovered automatically."
-        return 0
-    fi
-    log "  RECOVERY FAILED — controller still unresponsive"
-    return 1
+    hci_alive; rc=$?
+    case $rc in
+        0) log "  RECOVERED — controller is responding again"
+           notify "Bluetooth controller recovered automatically."
+           return 0 ;;
+        2) log "  recovery attempted; cannot verify (no probe tool — install bluez)"
+           return 2 ;;
+        *) log "  RECOVERY FAILED — controller still unresponsive"
+           return 1 ;;
+    esac
 }
 
 # --- main ------------------------------------------------------------------
 
 log "bt-hang-watchdog started (device $VID:$PID, threshold $THRESHOLD/${WINDOW}s, cooldown ${COOLDOWN}s)"
-if find_usb_dev >/dev/null; then
-    log "device present at $(find_usb_dev)"
+if [[ "$PROBE" == none ]]; then
+    log "WARNING: neither hciconfig nor btmgmt found. Recovery will still run,"
+    log "         but its success cannot be confirmed. Install the 'bluez' package."
+else
+    log "liveness probe: $PROBE"
+fi
+if dev=$(find_usb_dev); then
+    if h=$(hci_for_dev "$dev"); then
+        log "device present at $dev ($h)"
+    else
+        log "device present at $dev (no hci node yet)"
+    fi
 else
     log "WARNING: $VID:$PID not currently on the USB bus — controller is already"
     log "         hard-hung. Watchdog is armed but cannot act until a cold power-off."
@@ -183,12 +237,13 @@ while read -r line; do
     last_recover=$now
     HITS=()
 
-    if recover; then
-        fails=0
-    else
-        ((fails++))
-        log "consecutive failed recoveries: $fails/$MAX_FAILS"
-    fi
+    recover; rc=$?
+    case $rc in
+        0) fails=0 ;;
+        2) ;;   # unverifiable: do not count as failure, do not reset either
+        *) ((fails++))
+           log "consecutive failed recoveries: $fails/$MAX_FAILS" ;;
+    esac
 done < <(journalctl -kf -n0 --output=cat 2>/dev/null)
 
 # Do not let systemd's Restart=always immediately re-arm a hopeless watchdog.
@@ -196,3 +251,9 @@ if (( gave_up )); then
     log "idling — cold power-off required"
     while :; do sleep 3600; done
 fi
+
+# Falling out of the loop any other way means the journal reader died. Silent
+# respawn every RestartSec with no diagnostic is worse than a loud failure.
+log "ERROR: journal reader terminated unexpectedly (journalctl -kf exited)."
+log "       Check that systemd-journald is running and readable."
+exit 1
