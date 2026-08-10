@@ -143,6 +143,12 @@ systemctl status bt-hang-watchdog              # expect: active, "device present
 
 ## 5. Rollback
 
+> For the complete picture — including the changes this document does not cover, such as
+> collected metrics and settings changed outside the repo — see
+> [`restore-original-state.md`](restore-original-state.md), and verify with
+> `./tools/verify-restored.sh`.
+
+
 ### Automatic
 
 ```bash

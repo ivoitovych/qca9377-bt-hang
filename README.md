@@ -117,7 +117,12 @@ Uninstall is complete — every installed file is new, nothing pre-existing is t
 sudo ./uninstall.sh                          # dry run
 sudo ./uninstall.sh --apply
 sudo ./uninstall.sh --apply --purge-metrics  # also delete collected metrics
+./tools/verify-restored.sh                   # confirm nothing is left behind
 ```
+
+[`docs/restore-original-state.md`](docs/restore-original-state.md) documents the full
+path back to the pre-install state, including the few things `uninstall.sh` deliberately
+does not touch (collected metrics, and settings changed outside this repo).
 
 ### What it installs
 
@@ -229,12 +234,13 @@ Rolling back the kernel does not help.
 bin/                  watchdog + metrics collector
 systemd/              unit files
 etc/                  modprobe + udev configuration
-tools/                health report, log sanitiser
+tools/                health report, log sanitiser, restoration verifier
 docs/
   investigation.md    full investigation, every measurement
   bug-report.md       ready to file with linux-bluetooth
   fix-proposal.md     the patch, its risks, validation plan
   changes-applied.md  exact system changes + rollback
+  restore-original-state.md  full path back to the pre-install state
 data/
   baseline.tsv        pre-mitigation failure counts
   logs/               sanitised kernel + bluetoothd logs
