@@ -29,7 +29,14 @@ ProtectHome=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes
 RestrictRealtime=yes
-MemoryMax=64M
+
+# journalctl -kf mmaps the journal files and sits around 45 MB RSS on a host
+# with ~850 MB of retained journal; it grows with journal size. An earlier
+# 64M cap was hit 21 times in the first 3 minutes on real hardware (cgroup
+# memory.events "max"), forcing reclaim and swap. A watchdog that gets
+# OOM-killed under memory pressure fails exactly when it is most needed, so
+# the cap is set well clear of normal use rather than snugly around it.
+MemoryMax=256M
 
 [Install]
 WantedBy=multi-user.target
