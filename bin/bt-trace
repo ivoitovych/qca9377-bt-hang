@@ -19,8 +19,10 @@ set -uo pipefail
 DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
 MAX_MB="${BT_TRACE_MAX_MB:-128}"    # rotate when the current file exceeds this
 KEEP="${BT_TRACE_KEEP:-30}"         # how many rotated files to retain (~3.8 GB)
-CHECK_SEC="${BT_TRACE_CHECK_SEC:-30}"
+CHECK_SEC="${BT_TRACE_CHECK_SEC:-30}"       # size / disk checks (expensive-ish)
+POLL_SEC="${BT_TRACE_POLL_SEC:-1}"          # liveness checks (cheap, must be fast)
 MIN_FREE_GB="${BT_TRACE_MIN_FREE_GB:-10}"   # never let the filesystem get tighter than this
+GAPLOG="${BT_TRACE_GAPLOG:-$DIR/gaps.log}"  # when capture was NOT running
 
 # Rough sizing: A2DP streaming produces roughly 150 MB/hour of HCI traffic, so
 # the default budget covers about a day of continuous playback. The disk guard
@@ -104,23 +106,44 @@ log "filesystem has $(free_gb)GB free"
 start_capture
 prune
 
-while :; do
-    sleep "$CHECK_SEC"
-    disk_guard
+elapsed=0
+crashes=0
+blind_total=0
 
-    # btmon died (adapter removed, OOM, crash) — restart rather than go silent.
+while :; do
+    sleep "$POLL_SEC"
+    elapsed=$(( elapsed + POLL_SEC ))
+
+    # --- liveness, checked every POLL_SEC ---------------------------------
+    # btmon in bluez 5.72 aborts with "*** buffer overflow detected ***"
+    # (SIGABRT) every few minutes on this host — a bug in btmon itself, not in
+    # the controller. Polling slowly meant up to CHECK_SEC of blindness; a hang
+    # unfolds in ~50 s, so a 30 s hole could swallow the entire event. Detect
+    # within POLL_SEC and record the gap, because evidence that silently omits
+    # the moment is worse than evidence that admits it was not looking.
     if ! kill -0 "$BTMON_PID" 2>/dev/null; then
-        log "btmon exited unexpectedly — restarting capture"
+        crashes=$(( crashes + 1 ))
+        blind_total=$(( blind_total + POLL_SEC ))
+        log "btmon exited (#$crashes) — restarting within ${POLL_SEC}s; ~${POLL_SEC}s of capture lost"
+        printf '%s\tbtmon-exit\tgap<=%ss\ttotal_blind=%ss\tcrashes=%s\n' \
+            "$(date -Iseconds)" "$POLL_SEC" "$blind_total" "$crashes" >> "$GAPLOG" 2>/dev/null
         start_capture
         prune
         continue
     fi
+
+    # --- size and disk, checked every CHECK_SEC ---------------------------
+    (( elapsed < CHECK_SEC )) && continue
+    elapsed=0
+    disk_guard
 
     if [[ -f "$CURRENT" ]]; then
         sz=$(( $(stat -c %s "$CURRENT" 2>/dev/null || echo 0) / 1024 / 1024 ))
         if (( sz >= MAX_MB )); then
             log "rotating at ${sz}MB"
             kill "$BTMON_PID" 2>/dev/null; wait "$BTMON_PID" 2>/dev/null
+            printf '%s\trotate\tgap<1s\ttotal_blind=%ss\tcrashes=%s\n' \
+                "$(date -Iseconds)" "$blind_total" "$crashes" >> "$GAPLOG" 2>/dev/null
             start_capture
             prune
         fi

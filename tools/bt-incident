@@ -60,6 +60,18 @@ done
     echo
     find /var/log/bt-health/trace -name '*.btsnoop' -newermt "$SINCE" 2>/dev/null \
       | sort | while read -r f; do printf '  %10s  %s\n' "$(stat -c %s "$f")" "$f"; done
+    echo
+    echo "# CAPTURE GAPS in this window — moments when nothing was being recorded."
+    echo "# btmon (bluez 5.72) aborts with a buffer overflow every few minutes; the"
+    echo "# supervisor restarts it within ~1 s, but a gap can still straddle an event."
+    echo "# An empty list below means the window was covered continuously."
+    if [[ -f /var/log/bt-health/trace/gaps.log ]]; then
+        awk -v since="$(date -d "$SINCE" -Iseconds 2>/dev/null)" \
+            'since=="" || $1 >= since' /var/log/bt-health/trace/gaps.log \
+          | sed 's/^/  /' || true
+    else
+        echo "  (no gap log — bt-trace may predate gap tracking)"
+    fi
 } > "$DIR/hci-captures.txt"
 
 count() { local n; n=$(grep -c "$1" "$2" 2>/dev/null || true); echo "${n:-0}" | head -1; }
