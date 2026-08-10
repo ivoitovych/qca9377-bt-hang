@@ -281,7 +281,12 @@ $ modinfo btusb | grep "icE0isc01ip01"
 alias: usb:v*p*d*dc*dsc*dp*icE0isc01ip01in*
 ```
 
-> ⚠️ **Correction — this `modinfo` evidence is not sufficient on its own.**
+> ✅ **Since confirmed directly.** `0x3503` is absent from upstream `btusb.c` (v7.0)
+> and from the shipped `btusb.ko` (byte-scan for the little-endian pair `d3 13 03 35`;
+> method validated by locating `d3 13 62 33` = 13d3:3362). 78 `13d3` entries in both,
+> so no distro patch adds it.
+>
+> ⚠️ **The `modinfo` evidence below was not sufficient on its own.**
 > `modinfo` exposes only `btusb_table`, the `MODULE_DEVICE_TABLE`. btusb keeps its
 > vendor quirks in a **separate, non-exported table** consulted via `usb_match_id()`
 > inside `btusb_probe()`. An ID missing from `modinfo` output therefore says nothing

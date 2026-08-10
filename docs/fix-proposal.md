@@ -137,9 +137,10 @@ HWE and has 24 kernels installed, so manual rebuilds are not sustainable.
    git log --oneline -S "0x3503" -- drivers/bluetooth/btusb.c
    grep -n "13d3, 0x3503" drivers/bluetooth/btusb.c
    ```
-2. **Confirm against the actual quirks table**, not `modinfo`. As noted in the bug report,
-   `modinfo` exposes only `btusb_table`; the vendor quirks are in a separate
-   non-exported table. This premise still needs source-level confirmation.
+2. ~~Confirm against the actual quirks table~~ — **done**. `0x3503` is absent from
+   upstream `btusb.c` (v7.0) and from the shipped `btusb.ko` binary (byte-scan for
+   `d3 13 03 35`, method validated against `d3 13 62 33`). Still worth re-checking
+   against current master before sending, in case it has been added since.
 3. **Verify the ODM part.** `13d3:3503` is an IMC Networks module ID; confirm it is a
    QCA9377 across vendors, since the same USB ID can be reused.
 4. Run `scripts/checkpatch.pl --strict` on the generated patch.
@@ -191,7 +192,7 @@ entire class of missing-ID bugs self-limiting instead of catastrophic.
 
 | Step | State |
 |---|---|
-| Root cause identified | ✅ (behavioural evidence; source-level confirmation pending) |
+| Root cause identified | ✅ confirmed — behavioural, upstream source, and shipped binary |
 | Patch written | ✅ (§1, anchor needs regenerating against target tree) |
 | Built out-of-tree | ❌ blocked — controller hard-hung, needs cold power-off |
 | Tested on hardware | ❌ blocked |

@@ -203,10 +203,15 @@ A one-line kernel patch — add the device to btusb's QCA ROME quirks:
 > See [`docs/fix-proposal.md`](docs/fix-proposal.md) for the validation plan and
 > [`docs/bug-report.md`](docs/bug-report.md) for the full report.
 
-Also unverified: whether the ID is genuinely absent from the quirks table. `modinfo`
-cannot answer this — it exposes only `btusb_table`, while the quirks live in a separate
-non-exported table matched via `usb_match_id()`. The conclusion here rests on the
-behavioural evidence above, and still wants source-level confirmation.
+**Confirmed at source level.** `0x3503` does not appear anywhere in upstream
+`drivers/bluetooth/btusb.c` (v7.0), which carries 78 other `0x13d3` entries — the vendor
+is well covered, this product ID simply is not. The running `btusb.ko` agrees: a scan for
+the little-endian `usb_device_id` pair `d3 13 03 35` finds nothing, while `d3 13 62 33`
+(13d3:3362, a known entry) is found, validating the method. Ubuntu added no extra IDs —
+78 in the binary, 78 in upstream.
+
+Note `modinfo` cannot answer this: it exposes only `btusb_table`, while the quirks live
+in a separate non-exported `quirks_table` matched via `usb_match_id()` (btusb.c:4046).
 
 Longer term, the QCA9377 is a weak 2015-era part with a long history of this failure. On
 most laptops it is an M.2 2230 card that swaps directly for an Intel AX200/AX210 — far

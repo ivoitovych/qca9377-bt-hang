@@ -193,13 +193,19 @@ The device consequently binds via the generic Bluetooth-class entry
 (`bInterfaceClass=E0, SubClass=01, Protocol=01`) with `driver_info = 0`, receiving no
 vendor quirks at all.
 
-> ⚠️ **Verification note.** `modinfo btusb` exposes only `btusb_table`
+**4. Confirmed against the source and the shipped binary.**
+`0x3503` appears nowhere in upstream `drivers/bluetooth/btusb.c` (v7.0), a file that
+carries 78 other `0x13d3` entries. Scanning the distribution's own `btusb.ko` for the
+little-endian `usb_device_id` byte pair `d3 13 03 35` finds no match, while
+`d3 13 62 33` (13d3:3362, `BTUSB_ATH3012`) is found — validating the scan. The binary
+and upstream both contain exactly 78 `13d3` entries, so no distro patch adds it.
+
+> ⚠️ **Note on `modinfo`.** `modinfo btusb` exposes only `btusb_table`
 > (the `MODULE_DEVICE_TABLE`); the vendor quirks live in a separate, non-exported table
 > consulted via `usb_match_id()` inside `btusb_probe()`. The absence of a `13d3:3503`
 > alias in `modinfo` output is therefore **not** by itself proof of a missing quirks
-> entry. The conclusion above rests on the three behavioural observations, not on the
-> alias list. A maintainer with the source at hand should confirm directly against the
-> quirks table.
+> entry. The behavioural observations above are corroborated by the direct
+> source and binary checks in item 4.
 
 ### Why this matters more than a missed optimisation
 
