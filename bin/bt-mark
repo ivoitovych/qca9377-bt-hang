@@ -1,0 +1,38 @@
+#!/bin/bash
+# bt-mark — annotate the journal so manual test steps appear in the same
+# timeline as kernel, bluetoothd and watchdog events.
+#
+#   bt-mark "connecting MOMENTUM 4"
+#   bt-mark "playing audio"
+#   bt-mark "POWERING HEADSET OFF MID-STREAM"
+#
+# Without these, a reproduction session is a wall of side effects with no record
+# of what was actually done. Read them back with bt-timeline.
+
+set -uo pipefail
+MSG="${*:?usage: bt-mark <message>}"
+VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
+
+# Compact state at the moment of the mark, so each step carries its own context.
+dev="absent"; ctrl="-"; hci="-"; alive="?"
+for d in /sys/bus/usb/devices/*; do
+    [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
+    if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
+        dev=$(basename "$d"); ctrl=$(cat "$d/power/control" 2>/dev/null)
+        for p in "$d"/*/bluetooth/hci*; do [[ -e "$p" ]] && hci=$(basename "$p") && break; done
+        break
+    fi
+done
+if [[ "$hci" != "-" ]] && command -v hciconfig >/dev/null 2>&1; then
+    timeout 6 hciconfig "$hci" name >/dev/null 2>&1 && alive=yes || alive=no
+fi
+# grep -c already prints 0 when it matches nothing; it just exits 1 doing so.
+# An "|| echo 0" here appends a SECOND zero, making $conn "0\n0" and logger
+# emit a stray line into the journal. Swallow the exit status instead.
+conn=$(timeout 8 bluetoothctl devices Connected 2>/dev/null | grep -c '^Device' || true)
+conn=${conn//$'\n'/}
+
+logger -t bt-mark -p user.notice \
+  "$MSG | usb=$dev ctrl=$ctrl hci=$hci responds=$alive connected=$conn"
+echo "marked: $MSG"
+echo "  usb=$dev ctrl=$ctrl hci=$hci responds=$alive connected=$conn"

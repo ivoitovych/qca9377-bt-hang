@@ -1,0 +1,14 @@
+# Take a health snapshot the moment the Bluetooth topology changes, instead of
+# waiting up to 15 minutes for the timer. A stall unfolds in ~30 seconds; at
+# timer resolution the interesting transition falls between two samples.
+#
+# --no-block so udev is never held up by the snapshot's journalctl queries.
+
+SUBSYSTEM=="bluetooth", ACTION=="add", \
+  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot.service"
+SUBSYSTEM=="bluetooth", ACTION=="remove", \
+  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot.service"
+SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="13d3", ATTR{idProduct}=="3503", \
+  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot.service"
+SUBSYSTEM=="usb", ACTION=="remove", ENV{PRODUCT}=="13d3/3503*", \
+  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot.service"

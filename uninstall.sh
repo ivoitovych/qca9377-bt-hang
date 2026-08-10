@@ -26,6 +26,11 @@ FILES=(
     /usr/local/sbin/bt-hang-watchdog
     /usr/local/sbin/bt-health-snapshot
     /usr/local/bin/bt-health-report
+    /usr/local/bin/bt-mark
+    /usr/local/bin/bt-timeline
+    /usr/local/sbin/bt-trace
+    /etc/systemd/system/bt-trace.service
+    /etc/udev/rules.d/51-bluetooth-health-snapshot.rules
     /usr/local/share/qca9377-bt-hang/baseline.tsv
     /etc/systemd/system/bt-hang-watchdog.service
     /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf
@@ -46,6 +51,7 @@ DIRS=(
 UNITS=(
     bt-hang-watchdog.service
     bt-health-snapshot.timer
+    bt-trace.service
 )
 
 run() {

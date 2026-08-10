@@ -68,7 +68,7 @@ echo "    target device: $VID:$PID"
 echo
 
 # --- preflight -------------------------------------------------------------
-echo "[1/6] preflight"
+echo "[1/7] preflight"
 found=0
 for d in /sys/bus/usb/devices/*; do
     [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
@@ -93,14 +93,14 @@ fi
 echo
 
 # --- watchdog --------------------------------------------------------------
-echo "[2/6] watchdog"
+echo "[2/7] watchdog"
 install_file "$SRC/bin/bt-hang-watchdog" /usr/local/sbin/bt-hang-watchdog 0755
 install_file "$SRC/systemd/bt-hang-watchdog.service" \
              /etc/systemd/system/bt-hang-watchdog.service 0644
 echo
 
 # --- device override -------------------------------------------------------
-echo "[3/6] device selection"
+echo "[3/7] device selection"
 DROPIN=/etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf
 SNAP_DROPIN=/etc/systemd/system/bt-health-snapshot.service.d/10-device.conf
 if [[ "$VID" != "$DEFAULT_VID" || "$PID" != "$DEFAULT_PID" ]]; then
@@ -128,7 +128,7 @@ fi
 echo
 
 # --- autosuspend -----------------------------------------------------------
-echo "[4/6] disable USB autosuspend for the radio"
+echo "[4/7] disable USB autosuspend for the radio"
 install_file "$SRC/etc/modprobe.d/btusb-qca9377.conf" \
              /etc/modprobe.d/btusb-qca9377.conf 0644
 # The udev rule matches on idVendor/idProduct, so it must be generated for the
@@ -148,8 +148,38 @@ else
 fi
 echo
 
+# --- observability ---------------------------------------------------------
+echo "[5/7] tracing and observability"
+install_file "$SRC/bin/bt-mark"          /usr/local/bin/bt-mark        0755
+install_file "$SRC/tools/bt-timeline.sh" /usr/local/bin/bt-timeline    0755
+if command -v btmon >/dev/null 2>&1; then
+    install_file "$SRC/bin/bt-trace"            /usr/local/sbin/bt-trace                    0755
+    install_file "$SRC/systemd/bt-trace.service" /etc/systemd/system/bt-trace.service       0644
+    TRACE=1
+else
+    echo "  WARNING: btmon not found (package: bluez) — HCI capture not installed"
+    TRACE=0
+fi
+# Event-driven snapshots: a stall unfolds faster than the 15-minute timer.
+if (( METRICS )); then
+    UDEV_SNAP=/etc/udev/rules.d/51-bluetooth-health-snapshot.rules
+    if (( APPLY )); then
+        if sed -e "s/idVendor}==\"$DEFAULT_VID\"/idVendor}==\"$VID\"/" \
+               -e "s/idProduct}==\"$DEFAULT_PID\"/idProduct}==\"$PID\"/" \
+               -e "s|$DEFAULT_VID/$DEFAULT_PID\*|$VID/$PID*|" \
+               "$SRC/etc/udev/rules.d/51-bluetooth-health-snapshot.rules" > "$UDEV_SNAP"; then
+            chmod 0644 "$UDEV_SNAP"; echo "  + wrote $UDEV_SNAP"
+        else
+            echo "    ERROR: could not write $UDEV_SNAP" >&2; FAILED=1
+        fi
+    else
+        echo "  would write: $UDEV_SNAP"
+    fi
+fi
+echo
+
 # --- metrics ---------------------------------------------------------------
-echo "[5/6] health metrics collector"
+echo "[6/7] health metrics collector"
 if (( METRICS )); then
     install_file "$SRC/bin/bt-health-snapshot" /usr/local/sbin/bt-health-snapshot 0755
     install_file "$SRC/systemd/bt-health-snapshot.service" \
@@ -185,11 +215,12 @@ fi
 echo
 
 # --- activate --------------------------------------------------------------
-echo "[6/6] activate"
+echo "[7/7] activate"
 run udevadm control --reload-rules
 run systemctl daemon-reload
 run systemctl enable --now bt-hang-watchdog
 (( METRICS )) && run systemctl enable --now bt-health-snapshot.timer
+(( TRACE ))   && run systemctl enable --now bt-trace
 
 # Apply the autosuspend setting immediately when it is safe to do so:
 # reloading btusb while it is in use would drop live connections.
@@ -225,6 +256,9 @@ echo "  cat /sys/module/btusb/parameters/enable_autosuspend    # expect N"
 echo "  cat /sys/bus/usb/devices/*/power/control               # expect on for the radio"
 echo
 echo "Watch it work:   journalctl -u bt-hang-watchdog -f"
+echo "Timeline:        bt-timeline"
+echo "Annotate a test: bt-mark \"connecting headset\""
+(( TRACE )) && echo "HCI captures:    /var/log/bt-health/trace/ (btmon -r <file>)"
 (( METRICS )) && echo "Effectiveness:   bt-health-report"
 echo
 echo "NOTE: the udev rule fires on device 'add', so power/control only flips"

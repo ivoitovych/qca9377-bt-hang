@@ -27,8 +27,10 @@ THRESHOLD="${BT_THRESHOLD:-3}" # timeouts inside WINDOW before acting
 WINDOW="${BT_WINDOW:-60}"      # seconds
 COOLDOWN="${BT_COOLDOWN:-180}" # min seconds between recovery attempts
 MAX_FAILS="${BT_MAX_FAILS:-3}" # give up after this many CONFIRMED failures
+VERBOSE="${BT_VERBOSE:-0}"     # 1 = log every detected signal and window state
 
 log() { echo "$*"; }           # stdout is captured by journald
+vlog() { (( VERBOSE )) && echo "$*"; return 0; }
 
 # --- capability probe ------------------------------------------------------
 # hci_alive() needs a way to ask the controller a question. Without one we can
@@ -183,6 +185,11 @@ if [[ "$PROBE" == none ]]; then
 else
     log "liveness probe: $PROBE"
 fi
+if (( VERBOSE )); then
+    log "verbose mode ON — every detected signal will be logged"
+else
+    log "verbose mode off (set BT_VERBOSE=1 via 'systemctl edit bt-hang-watchdog' when reproducing)"
+fi
 if dev=$(find_usb_dev); then
     if h=$(hci_for_dev "$dev"); then
         log "device present at $dev ($h)"
@@ -223,8 +230,20 @@ while read -r line; do
     HITS=(${keep[@]+"${keep[@]}"} "$now")
     n=${#HITS[@]}
 
-    (( n < THRESHOLD )) && continue
-    (( now - last_recover < COOLDOWN )) && continue
+    vlog "signal: ${line:0:120}"
+    vlog "  window: $n/$THRESHOLD hit(s) in last ${WINDOW}s"
+
+    if (( n < THRESHOLD )); then
+        continue
+    fi
+
+    # Threshold met but suppressed. Always logged, not just in verbose mode:
+    # "watchdog did nothing" and "watchdog wanted to act but was rate-limited"
+    # are completely different diagnoses and must not look identical.
+    if (( now - last_recover < COOLDOWN )); then
+        log "threshold reached ($n/$THRESHOLD) but suppressed by cooldown ($(( COOLDOWN - (now - last_recover) ))s remaining)"
+        continue
+    fi
 
     if (( fails >= MAX_FAILS )); then
         log "Giving up: $MAX_FAILS consecutive recovery attempts failed."

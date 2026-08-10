@@ -1,0 +1,24 @@
+[Unit]
+Description=Bluetooth HCI trace capture (rotating btsnoop)
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+After=bluetooth.service
+Wants=bluetooth.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/bt-trace
+Restart=always
+RestartSec=10
+
+Environment=BT_TRACE_DIR=/var/log/bt-health/trace
+Environment=BT_TRACE_MAX_MB=64
+Environment=BT_TRACE_KEEP=10
+
+# btmon reads the HCI monitor socket; needs raw network access.
+ProtectHome=yes
+ProtectKernelModules=yes
+RestrictRealtime=yes
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

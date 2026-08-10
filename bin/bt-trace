@@ -1,0 +1,91 @@
+#!/bin/bash
+# bt-trace — continuously capture HCI traffic to rotating btsnoop files.
+#
+# Run by bt-trace.service. Analyse a capture with:
+#   btmon -r /var/log/bt-health/trace/<file>.btsnoop
+#
+# WHY: the kernel log tells you a command timed out. It does not tell you which
+# commands preceded it, what the controller returned, or where the AVDTP state
+# machine was when the firmware stalled. btsnoop does, and it is the artefact
+# linux-bluetooth maintainers ask for when reviewing a controller bug.
+#
+# ⚠️ PRIVACY: a btsnoop capture contains device addresses, device names, pairing
+# exchanges and potentially audio/AVRCP payload. Treat it like a packet capture.
+# Never commit one; tools/sanitize-logs.sh does NOT parse binary btsnoop.
+# The trace directory is mode 0700 and gitignored.
+
+set -uo pipefail
+
+DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
+MAX_MB="${BT_TRACE_MAX_MB:-64}"     # rotate when the current file exceeds this
+KEEP="${BT_TRACE_KEEP:-10}"         # how many rotated files to retain
+CHECK_SEC="${BT_TRACE_CHECK_SEC:-30}"
+
+log() { echo "$*"; }
+
+command -v btmon >/dev/null || { log "FATAL: btmon not found (package: bluez)"; exit 1; }
+
+mkdir -p "$DIR"; chmod 0700 "$DIR"
+
+# btmon creates the capture itself, so a chmod after launching it races file
+# creation and can leave a window at the default 0644. Set the umask instead so
+# the file is 0600 the instant it exists. Captures contain device addresses,
+# names, pairing exchanges and payload.
+umask 077
+
+BTMON_PID=""
+CURRENT=""
+
+start_capture() {
+    CURRENT="$DIR/bt-$(date +%Y%m%d-%H%M%S).btsnoop"
+    btmon -w "$CURRENT" >/dev/null 2>&1 &
+    BTMON_PID=$!
+    chmod 0600 "$CURRENT" 2>/dev/null   # belt and braces; umask already covers it
+    log "capturing to $(basename "$CURRENT")"
+}
+
+prune() {
+    # Keep the newest $KEEP rotated files; delete the rest.
+    local n
+    n=$(ls -1t "$DIR"/bt-*.btsnoop 2>/dev/null | wc -l)
+    if (( n > KEEP )); then
+        ls -1t "$DIR"/bt-*.btsnoop 2>/dev/null | tail -n +$((KEEP+1)) | while read -r f; do
+            log "pruning $(basename "$f")"
+            rm -f "$f"
+        done
+    fi
+}
+
+cleanup() {
+    [[ -n "$BTMON_PID" ]] && kill "$BTMON_PID" 2>/dev/null
+    wait "$BTMON_PID" 2>/dev/null
+    log "stopped"
+    exit 0
+}
+trap cleanup TERM INT
+
+log "bt-trace started (dir=$DIR rotate=${MAX_MB}MB keep=$KEEP)"
+start_capture
+prune
+
+while :; do
+    sleep "$CHECK_SEC"
+
+    # btmon died (adapter removed, OOM, crash) — restart rather than go silent.
+    if ! kill -0 "$BTMON_PID" 2>/dev/null; then
+        log "btmon exited unexpectedly — restarting capture"
+        start_capture
+        prune
+        continue
+    fi
+
+    if [[ -f "$CURRENT" ]]; then
+        sz=$(( $(stat -c %s "$CURRENT" 2>/dev/null || echo 0) / 1024 / 1024 ))
+        if (( sz >= MAX_MB )); then
+            log "rotating at ${sz}MB"
+            kill "$BTMON_PID" 2>/dev/null; wait "$BTMON_PID" 2>/dev/null
+            start_capture
+            prune
+        fi
+    fi
+done
