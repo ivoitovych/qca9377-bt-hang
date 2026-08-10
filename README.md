@@ -174,7 +174,7 @@ the watchdog caught it. Lower the threshold and re-measure:
 sudo systemctl edit bt-hang-watchdog     # BT_THRESHOLD=2, BT_WINDOW=30
 ```
 
-Baseline for comparison (`data/baseline.tsv`): **102 timeouts across 12 boots, 6 of 12
+Baseline for comparison (`evidence/baseline/baseline.tsv`): **102 timeouts across 12 boots, 6 of 12
 boots hung.**
 
 ### Tunables
@@ -246,6 +246,11 @@ docs/
   fix-proposal.md     the patch, its risks, validation plan
   changes-applied.md  exact system changes + rollback
   restore-original-state.md  full path back to the pre-install state
+evidence/
+  baseline/           the failing boot, before any mitigation
+  diagnosis/          reproducible transcripts proving the root cause
+  sessions/           one directory per reproduction session
+HISTORY.md            chronological development record, wrong turns included
 data/
   baseline.tsv        pre-mitigation failure counts
   logs/               sanitised kernel + bluetoothd logs
@@ -265,7 +270,7 @@ It replaces MACs and BSSIDs (**colon or dash separated**), UUIDs and IPv4 addres
 deterministic placeholders, then verifies none survived — checking every form it
 substitutes, so a missed form cannot produce a false all-clear. It is safe to run in
 place (`sanitize-logs.sh kernel.log kernel.log`): output is built in a temp file and
-renamed only after verification passes. The logs in `data/logs/` were produced this way.
+renamed only after verification passes. The logs in `evidence/baseline/` were produced this way.
 
 ---
 

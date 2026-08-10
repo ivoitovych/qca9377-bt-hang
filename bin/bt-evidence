@@ -1,0 +1,203 @@
+#!/bin/bash
+# bt-evidence — record a reproduction session as durable, sanitised evidence.
+#
+#   bt-evidence start <slug>     begin a session, snapshot the "before" state
+#   bt-evidence note "<text>"    annotate (also emits a bt-mark)
+#   bt-evidence cmd <command…>   run a command AND record it with its output
+#   bt-evidence stop             collect filtered logs, snapshot "after", finish
+#   bt-evidence status           show whether a session is open
+#
+# WHY: journald rotates, terminal scrollback dies with the window, and a claim
+# in a bug report without an attached transcript is just an assertion. A kernel
+# maintainer needs to see what was run, what the machine did, and in what order.
+#
+# Everything written here is passed through the log sanitiser, so sessions are
+# safe to commit. Binary btsnoop captures are NOT collected — they cannot be
+# sanitised and stay in /var/log/bt-health/trace/.
+
+set -uo pipefail
+
+REPO="${BT_EVIDENCE_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)}"
+[[ -d "$REPO/evidence" ]] || REPO="${BT_EVIDENCE_REPO:-/root/exp/qca9377-bt-hang}"
+SESSIONS="$REPO/evidence/sessions"
+STATE=/run/bt-evidence
+CUR="$STATE/current"
+
+SANITIZE=""
+for c in "$REPO/tools/sanitize-logs.sh" /usr/local/bin/bt-sanitize-logs; do
+    [[ -x "$c" ]] && { SANITIZE="$c"; break; }
+done
+
+die() { echo "$*" >&2; exit 1; }
+
+# Single-value line count. See the manifest comment: never "grep -c … || echo 0".
+count() { local n; n=$(grep -c "$1" "$2" 2>/dev/null || true); echo "${n:-0}" | head -1; }
+
+snapshot_state() { # -> stdout
+    local VID="${BT_VID:-13d3}" PID="${BT_PID:-3503}" d dev=absent ctrl=- hci=- alive=?
+    echo "# state snapshot $(date -Iseconds)"
+    echo "## uptime"; uptime -p
+    echo "## kernel"; uname -r
+    echo "## boot_id"; cut -c1-8 /proc/sys/kernel/random/boot_id
+    for d in /sys/bus/usb/devices/*; do
+        [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
+        if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
+            dev=$(basename "$d"); ctrl=$(cat "$d/power/control" 2>/dev/null)
+            for p in "$d"/*/bluetooth/hci*; do [[ -e "$p" ]] && hci=$(basename "$p") && break; done
+            break
+        fi
+    done
+    if [[ "$hci" != "-" ]] && command -v hciconfig >/dev/null 2>&1; then
+        timeout 6 hciconfig "$hci" name >/dev/null 2>&1 && alive=yes || alive=no
+    fi
+    echo "## device"
+    echo "usb_path=$dev power_control=$ctrl hci=$hci responds=$alive"
+    echo "## btusb params"
+    for f in /sys/module/btusb/parameters/*; do echo "$(basename "$f")=$(cat "$f" 2>/dev/null)"; done
+    echo "## services"
+    for u in bluetooth bt-hang-watchdog bt-trace bt-health-snapshot.timer; do
+        echo "$u=$(systemctl is-active "$u" 2>&1)"
+    done
+    echo "## counters this boot"
+    echo "tx_timeouts=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -c 'tx timeout')"
+    echo "unexpected_evt=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -c 'unexpected event for opcode')"
+    echo "wd_interventions=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -c intervening)"
+    echo "## connected"
+    timeout 8 bluetoothctl devices Connected 2>/dev/null || true
+}
+
+sanitize_inplace() {
+    local f="$1"
+    [[ -n "$SANITIZE" && -s "$f" ]] || return 0
+    "$SANITIZE" "$f" "$f" >/dev/null 2>&1 || echo "  WARNING: could not sanitise $(basename "$f")" >&2
+}
+
+case "${1:-}" in
+
+start)
+    slug="${2:?usage: bt-evidence start <slug>}"
+    [[ -e "$CUR" ]] && die "a session is already open: $(grep '^dir=' "$CUR" | cut -d= -f2-)"
+    mkdir -p "$STATE"
+    dir="$SESSIONS/$(date +%Y%m%d-%H%M%S)-${slug//[^a-zA-Z0-9._-]/_}"
+    mkdir -p "$dir"
+    { echo "start=$(date +%s)"; echo "slug=$slug"; echo "dir=$dir"; } > "$CUR"
+    snapshot_state > "$dir/state-before.txt"
+    : > "$dir/commands.log"
+    cat > "$dir/NOTES.md" <<EOF
+# Session: $slug
+
+**Started:** $(date -Iseconds)
+
+## Goal
+
+<what this session is trying to establish>
+
+## Method
+
+<what you did, by hand>
+
+## Result
+
+<what happened — fill in after>
+EOF
+    command -v bt-mark >/dev/null && bt-mark "EVIDENCE SESSION START: $slug" >/dev/null 2>&1
+    echo "session started: $dir"
+    echo "  bt-evidence note \"...\"   annotate"
+    echo "  bt-evidence cmd <cmd>     run and record"
+    echo "  bt-evidence stop          collect and finish"
+    ;;
+
+note)
+    [[ -e "$CUR" ]] || die "no session open (bt-evidence start <slug>)"
+    msg="${2:?usage: bt-evidence note <text>}"
+    dir=$(grep '^dir=' "$CUR" | cut -d= -f2-)
+    printf '[%s] NOTE: %s\n' "$(date -Iseconds)" "$msg" >> "$dir/commands.log"
+    command -v bt-mark >/dev/null && bt-mark "$msg" >/dev/null 2>&1
+    echo "noted: $msg"
+    ;;
+
+cmd)
+    [[ -e "$CUR" ]] || die "no session open (bt-evidence start <slug>)"
+    shift; [[ $# -gt 0 ]] || die "usage: bt-evidence cmd <command…>"
+    dir=$(grep '^dir=' "$CUR" | cut -d= -f2-)
+    {
+        printf '\n[%s] $ %s\n' "$(date -Iseconds)" "$*"
+        "$@" 2>&1 | sed 's/^/    /'
+        printf '    [exit %s]\n' "${PIPESTATUS[0]}"
+    } >> "$dir/commands.log"
+    tail -n +2 "$dir/commands.log" >/dev/null
+    echo "recorded: $*"
+    ;;
+
+stop)
+    [[ -e "$CUR" ]] || die "no session open"
+    start=$(grep '^start=' "$CUR" | cut -d= -f2)
+    slug=$(grep '^slug=' "$CUR" | cut -d= -f2-)
+    dir=$(grep '^dir=' "$CUR" | cut -d= -f2-)
+    since=$(date -d "@$start" '+%Y-%m-%d %H:%M:%S')
+
+    command -v bt-mark >/dev/null && bt-mark "EVIDENCE SESSION END: $slug" >/dev/null 2>&1
+    sleep 1
+    snapshot_state > "$dir/state-after.txt"
+
+    # Filtered log subsets — the point is a readable subset, not a dump.
+    journalctl -k --since "$since" --no-pager -o short-precise 2>/dev/null \
+      | grep -iE "hci|btusb|bluetooth|usb [0-9]+-[0-9]|xhci" > "$dir/kernel.log" || true
+    journalctl -u bt-hang-watchdog --since "$since" --no-pager -o short-precise 2>/dev/null \
+      > "$dir/watchdog.log" || true
+    journalctl -u bluetooth --since "$since" --no-pager -o short-precise 2>/dev/null \
+      | grep -vE "Endpoint (registered|unregistered)" > "$dir/bluetoothd.log" || true
+    command -v bt-timeline >/dev/null \
+      && bt-timeline "$since" --raw > "$dir/timeline.txt" 2>/dev/null || true
+
+    for f in "$dir"/*.log "$dir"/*.txt; do [[ -f "$f" ]] && sanitize_inplace "$f"; done
+
+    # Which HCI captures cover this window? Referenced, never copied.
+    : > "$dir/hci-captures.txt"
+    {
+        echo "# btsnoop captures covering this session (NOT committed — they contain"
+        echo "# addresses, names, pairing exchanges and payload; sanitize-logs.sh"
+        echo "# cannot parse binary formats). Inspect with: btmon -r <file>"
+        echo
+        find /var/log/bt-health/trace -name '*.btsnoop' -newermt "@$((start-120))" 2>/dev/null \
+          | sort | sed 's/^/  /' || true
+    } >> "$dir/hci-captures.txt"
+
+    {
+        echo "# Session manifest"
+        echo "slug=$slug"
+        echo "start=$(date -d "@$start" -Iseconds)"
+        echo "end=$(date -Iseconds)"
+        echo "duration_s=$(( $(date +%s) - start ))"
+        echo "kernel=$(uname -r)"
+        # grep -c already prints 0 when nothing matches; it merely exits 1 doing
+        # so. "|| echo 0" appends a SECOND zero and corrupts the manifest.
+        echo "tx_timeouts_in_window=$(count 'tx timeout' "$dir/kernel.log")"
+        echo "wd_interventions=$(count 'intervening' "$dir/watchdog.log")"
+        echo "wd_recovered=$(count 'RECOVERED' "$dir/watchdog.log")"
+        echo "wd_fatal=$(count 'FATAL:' "$dir/watchdog.log")"
+        echo "sanitised=$([[ -n "$SANITIZE" ]] && echo yes || echo NO-SANITISER-FOUND)"
+    } > "$dir/MANIFEST.txt"
+
+    rm -f "$CUR"
+    echo "session closed: $dir"
+    echo
+    cat "$dir/MANIFEST.txt" | sed 's/^/  /'
+    echo
+    echo "Now fill in $dir/NOTES.md — the transcript records what happened,"
+    echo "only you can record what it means."
+    ;;
+
+status)
+    if [[ -e "$CUR" ]]; then
+        echo "session OPEN:"; sed 's/^/  /' "$CUR"
+        echo "  elapsed: $(( $(date +%s) - $(grep '^start=' "$CUR" | cut -d= -f2) ))s"
+    else
+        echo "no session open"
+    fi
+    ;;
+
+*)
+    sed -n '2,17p' "$0"
+    exit 1 ;;
+esac

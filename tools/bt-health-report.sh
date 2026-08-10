@@ -7,7 +7,7 @@
 # Data sources:
 #   /var/log/bt-health/metrics.tsv   periodic snapshots (survive reboots)
 #   journalctl                        per-boot failure counts (35 boots retained)
-#   data/baseline.tsv                      pre-mitigation measurements, for comparison
+#   evidence/baseline/baseline.tsv                      pre-mitigation measurements, for comparison
 
 set -uo pipefail
 
@@ -19,8 +19,8 @@ METRICS=/var/log/bt-health/metrics.tsv
 BASELINE=""
 for cand in \
     "${BT_BASELINE:-}" \
-    "$DIR/data/baseline.tsv" \
-    "$DIR/../data/baseline.tsv" \
+    "$DIR/evidence/baseline/baseline.tsv" \
+    "$DIR/../evidence/baseline/baseline.tsv" \
     /usr/local/share/qca9377-bt-hang/baseline.tsv \
     /var/log/bt-health/baseline.tsv
 do

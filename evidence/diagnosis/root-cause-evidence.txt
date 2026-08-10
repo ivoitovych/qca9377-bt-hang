@@ -1,0 +1,58 @@
+# Root-cause evidence: 13d3:3503 receives no cmd_timeout handler
+# Captured 2026-08-10T06:55:15+02:00 on kernel 7.0.0-28-generic
+# Every command below is reproducible on an affected machine.
+
+## 1. The device, and what it reports over HCI
+$ lsusb | grep 13d3
+    Bus 003 Device 002: ID 13d3:3503 IMC Networks 
+$ bluetoothctl show | grep -E 'Manufacturer|Version'
+    	Manufacturer: 0x001d (29)
+    	Version: 0x07 (7)
+    # 0x001D = Qualcomm, 0x07 = Bluetooth 4.2 -> QCA9377/ROME
+$ cat /sys/bus/usb/devices/3-3/../*/modalias  (interface 0)
+    usb:v13D3p3503d0001dcE0dsc01dp01icE0isc01ip01in00
+
+## 2. The companion Wi-Fi half of the same combo chip
+$ journalctl -k -b 0 | grep -m1 qca9377
+    Aug 10 06:22:55 n kernel: ath10k_pci 0000:02:00.0: qca9377 hw1.1 target 0x05020001 chip_id 0x003821ff sub 1a3b:2b51
+
+## 3. The reset handler and QCA firmware paths ARE compiled into this build
+$ zstd -dc btusb.ko.zst | strings | grep -E 'Resetting usb device|rampatch|nvm_usb'
+    %s: Resetting usb device.
+    qca/%s/rampatch_usb_%08x.bin
+    qca/rampatch_usb_%08x.bin
+    %s: using rampatch file: %s
+    qca/%s/nvm_usb_%08x
+    qca/nvm_usb_%08x
+    %s: failed to request rampatch file: %s (%d)
+    %s: rampatch file version did not match with firmware
+    qca_rampatch_version
+    rampatch_hdr
+    btusb_setup_qca_load_rampatch
+    __pfx_btusb_setup_qca_load_rampatch
+    # so their absence at runtime reflects DEVICE MATCHING, not kernel config
+
+## 4. The ID is absent from the shipped binary's tables
+# usb_device_id is little-endian: idVendor 0x13d3 -> 'd3 13'
+$ xxd -p btusb.ko | tr -d '\n' | grep -o d3136233   # 13d3:3362, a KNOWN entry
+    d3136233
+    # ^ found: the byte-scan method works
+$ xxd -p btusb.ko | tr -d '\n' | grep -o d3130335   # 13d3:3503, OUR device
+    (no match)
+    # ^ absent: the device gets driver_info = 0
+
+## 5. Absent from upstream source too
+$ curl .../btusb.c?h=v7.0 | grep -c 0x13d3   ; grep -c 0x3503
+    0x13d3 entries: 78
+    0x3503 entries: 0
+0
+$ grep -n 'quirks_table\|usb_match_id' btusb.c
+    180:static const struct usb_device_id quirks_table[] = {
+    4046:		match = usb_match_id(intf, quirks_table);
+    # modinfo cannot see quirks_table: it is not a MODULE_DEVICE_TABLE
+
+## 6. The consequence, measured across 12 boots (pre-mitigation)
+    total 'tx timeout' events                          : 102
+    occurrences of 'Multiple cmd timeouts'/'Resetting'  : 0
+    boots that hung                                     : 6 of 12
+    (per-boot detail: evidence/baseline/baseline.tsv)

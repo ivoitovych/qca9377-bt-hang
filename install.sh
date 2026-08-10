@@ -151,6 +151,8 @@ echo
 # --- observability ---------------------------------------------------------
 echo "[5/7] tracing and observability"
 install_file "$SRC/bin/bt-mark"          /usr/local/bin/bt-mark        0755
+install_file "$SRC/bin/bt-evidence"      /usr/local/bin/bt-evidence    0755
+install_file "$SRC/tools/sanitize-logs.sh" /usr/local/bin/bt-sanitize-logs 0755
 install_file "$SRC/tools/bt-timeline.sh" /usr/local/bin/bt-timeline    0755
 if command -v btmon >/dev/null 2>&1; then
     install_file "$SRC/bin/bt-trace"            /usr/local/sbin/bt-trace                    0755
@@ -187,7 +189,7 @@ if (( METRICS )); then
     install_file "$SRC/systemd/bt-health-snapshot.timer" \
                  /etc/systemd/system/bt-health-snapshot.timer 0644
     install_file "$SRC/tools/bt-health-report.sh" /usr/local/bin/bt-health-report 0755
-    install_file "$SRC/data/baseline.tsv" \
+    install_file "$SRC/evidence/baseline/baseline.tsv" \
                  /usr/local/share/qca9377-bt-hang/baseline.tsv 0644
 else
     echo "  skipped (--no-metrics)"
@@ -258,6 +260,7 @@ echo
 echo "Watch it work:   journalctl -u bt-hang-watchdog -f"
 echo "Timeline:        bt-timeline"
 echo "Annotate a test: bt-mark \"connecting headset\""
+echo "Record a session: bt-evidence start <slug> ... bt-evidence stop"
 (( TRACE )) && echo "HCI captures:    /var/log/bt-health/trace/ (btmon -r <file>)"
 (( METRICS )) && echo "Effectiveness:   bt-health-report"
 echo

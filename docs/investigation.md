@@ -486,7 +486,7 @@ every 15 min plus 2 min after boot, appending TSV rows to
 failure counts tagged before/AFTER, watchdog effectiveness with a verdict, recent
 snapshots, and the pre-change baseline side by side.
 
-**Baseline:** `data/baseline.tsv` — 12 boots, 102 timeouts, **6 of 12 boots hung**.
+**Baseline:** `evidence/baseline/baseline.tsv` — 12 boots, 102 timeouts, **6 of 12 boots hung**.
 
 Journald already persists (`/var/log/journal` present, 35 boots retained), so no logging
 configuration was changed.

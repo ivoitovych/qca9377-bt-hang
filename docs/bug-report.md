@@ -260,10 +260,10 @@ Both are documented in `docs/changes-applied.md`. Effectiveness measurement is o
 
 ## Attachments to include when filing
 
-- `data/logs/kernel-boot0.sanitized.log` — full kernel log for the failing boot
-- `data/logs/bluetoothd-boot0.sanitized.log` — corresponding bluetoothd log
+- `evidence/baseline/kernel-boot0.sanitized.log` — full kernel log for the failing boot
+- `evidence/baseline/bluetoothd-boot0.sanitized.log` — corresponding bluetoothd log
 - `docs/investigation.md` — complete investigation with all measurements
-- `data/baseline.tsv` — per-boot failure counts across 12 boots
+- `evidence/baseline/baseline.tsv` — per-boot failure counts across 12 boots
 
 ✅ **The published logs are clean.** They were captured at 02:54 on 2026-08-10, *before*
 the 3 synthetic `tx timeout` lines were injected into `/dev/kmsg` at ~03:07 to test the

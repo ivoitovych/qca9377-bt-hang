@@ -116,7 +116,7 @@ They are indistinguishable from real hardware events in `journalctl -k -b 0`, wh
 shows **25** `tx timeout` events where the hardware produced **22**.
 
 - They vanish on reboot (they exist only in this boot's journal).
-- The sanitised logs committed in `data/logs/` were captured at 02:54, *before* the
+- The sanitised logs committed in `evidence/baseline/` were captured at 02:54, *before* the
   injection, so the published evidence contains only the 22 genuine events.
 - If you quote live journal output anywhere, subtract them or note them.
 
@@ -167,7 +167,7 @@ Checks each item above and reports what is still in place. Run it after
 ## 9. What cannot be restored
 
 - **The raw, unsanitised logs** from the failing boot. Their content survives in
-  `data/logs/*.sanitized.log`; what is gone is the real MAC addresses, the Wi-Fi AP
+  `evidence/baseline/*.sanitized.log`; what is gone is the real MAC addresses, the Wi-Fi AP
   BSSID and the root filesystem UUID. Losing exactly those was the intent.
 - **The hardware state.** The controller was already hard-hung when the investigation
   began. Only a full power-off recovers it — a warm reboot does not drop the M.2 rail.
