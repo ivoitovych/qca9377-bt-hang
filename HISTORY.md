@@ -74,6 +74,7 @@ multiple laptops. Testing that hypothesis with the 24 kernels installed:
 
 | Kernel | Hangs? |
 |---|---|
+| 6.17.0-29 | yes |
 | 6.17.0-35 | yes |
 | 6.17.0-40 | yes |
 | 7.0.0-28 | yes |
@@ -86,7 +87,7 @@ HCI command timeouts, and is installed only when `driver_info` carries `BTUSB_QC
 The logs say it never ran:
 
 ```
-"tx timeout" events across 12 boots : 102
+"tx timeout" events across 34 boots : 287
 automatic reset attempts            :   0
 ```
 
@@ -239,11 +240,46 @@ before/after state, filtered logs and a manifest into `evidence/sessions/`.
 
 ---
 
+## Phase 8 — Reusable tooling, and a bigger evidence base (07:00 – 07:40)
+
+Recurring one-liners were extracted into parameterised scripts so they could be approved
+once instead of retyped as novel commands each time — the practice that had already
+produced two copies of the same `grep -c … || echo 0` bug.
+
+The genuinely portable ones moved **into** the repo, since anyone hitting this bug needs
+them: `bt-state`, `bt-boots`, and a new `bt-diagnose` that auto-detects any USB Bluetooth
+controller and returns a verdict. Git-workflow helpers (`repo-scan`, `repo-validate`,
+`repo-save`) stayed outside — useful to contributors, not to users.
+
+**Building `bt-diagnose` exposed a latent bug and, through it, much stronger evidence.**
+
+`journalctl --list-boots --no-legend` prints *nothing* on this systemd — the entire
+listing is the legend. Three scripts had their own copy of that idiom and silently fell
+back to a hardcoded range. `bt-diagnose` examined **1 boot**, found no timeouts, and
+reported "signature NOT present" on a machine whose evidence lived in the previous boot.
+A failure mode that produces a confident wrong answer.
+
+Fixed by extracting `tools/bt-boot-list`, which tries JSON, then `-q`, then header-stripped
+plain output, and *says so* rather than guessing if none work. With correct enumeration:
+
+| | Before | After |
+|---|---|---|
+| Boots examined | 12 | **34** (back to 2026-05-31) |
+| Command timeouts | 102 | **287** |
+| Boots that hung | 6 of 12 | **13 of 34 (38%)** |
+| Kernel versions | 3 | **4** (6.17.0-29 also affected) |
+| Automatic resets | 0 | **0** |
+
+Ten weeks, four kernel versions, 287 timeouts, not one reset attempt. Substantially
+better grounds for the bug report than the original window.
+
+---
+
 ## Current state
 
 | | |
 |---|---|
-| Root cause identified | ✅ confirmed behaviourally, in upstream source, and in the shipped binary |
+| Root cause identified | ✅ confirmed behaviourally (34 boots), in upstream source, and in the shipped binary |
 | Workaround installed | ✅ watchdog + autosuspend, live and armed |
 | Workaround **proven** | ❌ nothing has hung since the power-off |
 | Kernel patch | ❌ written, never built or tested |

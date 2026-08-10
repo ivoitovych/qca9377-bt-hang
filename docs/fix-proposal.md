@@ -158,7 +158,7 @@ gets hdev->cmd_timeout = btusb_qca_cmd_timeout().
 
 Without that handler nothing resets the controller when its firmware
 stalls. On the affected system a stall provoked by an ungraceful A2DP
-teardown produced 102 "command tx timeout" events across 12 boots and
+teardown produced 287 "command tx timeout" events across 34 boots and
 zero reset attempts. The host keeps submitting commands to a stalled
 controller for hours, and the firmware degrades from HCI-unresponsive
 (recoverable by a USB reset) to USB-unresponsive, at which point the

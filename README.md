@@ -10,7 +10,33 @@ Affects Qualcomm Atheros **QCA9377** (ROME) Bluetooth, USB ID `13d3:3503`, on Li
 
 ## Do you have this bug?
 
-You probably do if **all** of these are true:
+One command, no installation, nothing written:
+
+```bash
+git clone https://github.com/ivoitovych/qca9377-bt-hang
+cd qca9377-bt-hang
+./tools/bt-diagnose
+```
+
+It auto-detects your USB Bluetooth controller (any vendor, not just this one), checks
+whether it still answers HCI commands, and scans every retained boot for the signature.
+Exit 0 = not affected, 1 = signature present, 2 = cannot determine.
+
+```
+Log evidence
+  boots examined            : 34
+  HCI command timeouts      : 287
+  automatic reset attempts  : 0        <-- this is the bug
+```
+
+Timeouts with **zero** resets means the kernel logged the failures and did nothing:
+`btusb_qca_cmd_timeout()` is only installed for devices matched by btusb's vendor quirks
+table, and yours is not in it.
+
+<details>
+<summary>Or check by hand</summary>
+
+You probably have it if **all** of these are true:
 
 ```bash
 # 1. Bluetooth settings spins forever and never lists devices
@@ -31,6 +57,8 @@ $ dmesg | grep -i "Resetting usb device"
 
 Point 4 is the bug. Point 2's `errors:0` means USB is perfectly healthy — the chip
 just stopped answering.
+
+</details>
 
 Confirm the hardware:
 
@@ -54,7 +82,7 @@ after 5 consecutive HCI command timeouts.
 Measured on the affected machine:
 
 ```
-"tx timeout" events across 12 boots : 102
+"tx timeout" events across 34 boots : 287
 automatic reset attempts            :   0
 ```
 
@@ -174,7 +202,7 @@ the watchdog caught it. Lower the threshold and re-measure:
 sudo systemctl edit bt-hang-watchdog     # BT_THRESHOLD=2, BT_WINDOW=30
 ```
 
-Baseline for comparison (`evidence/baseline/baseline.tsv`): **102 timeouts across 12 boots, 6 of 12
+Baseline for comparison (`evidence/baseline/baseline.tsv`): **287 timeouts across 34 boots, 13 of 34
 boots hung.**
 
 ### Tunables
@@ -225,11 +253,13 @@ Tested across every kernel available on the affected machine:
 
 | Kernel | Hangs? |
 |---|---|
+| 6.17.0-29 | yes |
+| 6.17.0-29 | yes |
 | 6.17.0-35 | yes |
 | 6.17.0-40 | yes |
 | 7.0.0-28 | yes |
 
-Rolling back the kernel does not help.
+Four kernel versions over ten weeks. Rolling back the kernel does not help.
 
 ---
 
@@ -287,6 +317,21 @@ renamed only after verification passes. The logs in `evidence/baseline/` were pr
 
 The recovery path and udev rule could not be exercised because the controller was already
 in stage 2 when the work was done. They need a cold power-off to validate.
+
+## Diagnostic tools
+
+Standalone — clone and run, no installation required. All work with any USB Bluetooth
+controller, not just `13d3:3503`.
+
+| Tool | Purpose |
+|---|---|
+| `tools/bt-diagnose` | **Do you have this bug?** Auto-detects the controller, scans all boots, gives a verdict |
+| `tools/bt-state` | Current controller/USB/service state in one shot |
+| `tools/bt-boots [N]` | Per-boot failure counts across retained boots |
+| `tools/bt-boot-list` | Robust journal boot enumeration (see its header — the obvious versions fail silently) |
+| `tools/sanitize-logs.sh` | Scrub MACs, BSSIDs, UUIDs and IPv4 from logs before publishing them |
+
+Installed to `/usr/local/bin` by `install.sh`, but none of them need it.
 
 ## Development helpers
 

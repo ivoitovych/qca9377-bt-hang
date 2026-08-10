@@ -153,6 +153,10 @@ echo "[5/7] tracing and observability"
 install_file "$SRC/bin/bt-mark"          /usr/local/bin/bt-mark        0755
 install_file "$SRC/bin/bt-evidence"      /usr/local/bin/bt-evidence    0755
 install_file "$SRC/tools/sanitize-logs.sh" /usr/local/bin/bt-sanitize-logs 0755
+install_file "$SRC/tools/bt-boot-list"   /usr/local/bin/bt-boot-list   0755
+install_file "$SRC/tools/bt-state"       /usr/local/bin/bt-state       0755
+install_file "$SRC/tools/bt-boots"       /usr/local/bin/bt-boots       0755
+install_file "$SRC/tools/bt-diagnose"    /usr/local/bin/bt-diagnose    0755
 install_file "$SRC/tools/bt-timeline.sh" /usr/local/bin/bt-timeline    0755
 if command -v btmon >/dev/null 2>&1; then
     install_file "$SRC/bin/bt-trace"            /usr/local/sbin/bt-trace                    0755

@@ -5,7 +5,7 @@
 **Date:** 2026-08-10
 **Suggested recipients:** `linux-bluetooth@vger.kernel.org`, `linux-kernel@vger.kernel.org`
 **Maintainers:** Marcel Holtmann, Luiz Augusto von Dentz
-**Regression:** No — reproduced identically on 6.17.0-35, 6.17.0-40 and 7.0.0-28
+**Regression:** No — reproduced on 6.17.0-29, 6.17.0-35, 6.17.0-40 and 7.0.0-28, over 10 weeks
 
 ---
 
@@ -33,7 +33,7 @@ hardware-power-cycle event, several times a week.**
 ```
 Distribution : Ubuntu 24.04.4 LTS (noble)
 Kernel       : 7.0.0-28-generic #28~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC x86_64
-              (also reproduced on 6.17.0-35-generic and 6.17.0-40-generic)
+              (also reproduced on 6.17.0-29, 6.17.0-35 and 6.17.0-40-generic)
 BlueZ        : 5.72
 Platform     : AMD Renoir/Cezanne laptop
 BT device    : usb 13d3:3503, full-speed, on xhci_hcd 0000:03:00.4 (bus 3, port 3)
@@ -64,7 +64,7 @@ Modalias     : usb:v13D3p3503d0001dcE0dsc01dp01icE0isc01ip01in00
 5. That command never completes. The controller is stalled from this point on.
 
 Not reliably reproducible on demand — it depends on the timing of the teardown — but it
-occurred in **6 of 12 consecutive boots** under ordinary daily use.
+occurred in **13 of 34 consecutive boots** under ordinary daily use.
 
 ---
 
@@ -166,10 +166,10 @@ It is installed only when `driver_info` carries `BTUSB_QCA_ROME` (or `BTUSB_QCA_
 
 ### Evidence that it is not installed for this device
 
-**1. The handler never fired, across 102 timeouts in 12 boots.**
+**1. The handler never fired, across 287 timeouts in 34 boots.**
 
 ```
-total "tx timeout" events across 12 retained boots : 102
+total "tx timeout" events across 34 retained boots : 287
 occurrences of "Multiple cmd timeouts" / "Resetting usb device" : 0
 ```
 
@@ -226,7 +226,7 @@ would have been a brief audio dropout instead of a forced shutdown.
 - Bluetooth becomes unusable until a full power-off; a reboot is often not enough.
 - GNOME Settings shows a Bluetooth panel spinning forever (the MGMT request never
   completes), with no error surfaced to the user.
-- Occurred in 6 of 12 consecutive boots under normal daily use.
+- Occurred in 13 of 34 consecutive boots under normal daily use.
 - The reporter observes the same pattern on **multiple different laptops**, suggesting
   either this device ID is widespread or other IDs are similarly unmatched.
 
@@ -263,7 +263,7 @@ Both are documented in `docs/changes-applied.md`. Effectiveness measurement is o
 - `evidence/baseline/kernel-boot0.sanitized.log` — full kernel log for the failing boot
 - `evidence/baseline/bluetoothd-boot0.sanitized.log` — corresponding bluetoothd log
 - `docs/investigation.md` — complete investigation with all measurements
-- `evidence/baseline/baseline.tsv` — per-boot failure counts across 12 boots
+- `evidence/baseline/baseline.tsv` — per-boot failure counts across 34 boots
 
 ✅ **The published logs are clean.** They were captured at 02:54 on 2026-08-10, *before*
 the 3 synthetic `tx timeout` lines were injected into `/dev/kmsg` at ~03:07 to test the

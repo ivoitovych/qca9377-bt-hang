@@ -1,0 +1,34 @@
+#!/bin/bash
+# bt-boots — per-boot Bluetooth failure counts, oldest to newest.
+#
+#   bt-boots            all retained boots
+#   bt-boots 5          last 5 boots
+#
+# Replaces the repeated "for b in $(seq -11 0); do journalctl -k -b $b | grep -c ..."
+set -uo pipefail
+LIMIT="${1:-0}"
+# Locate bt-boot-list next to this script, then on PATH. Enumerating boots is
+# subtle enough (see that script's header) that it must not be reimplemented.
+_here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BOOTLIST=""
+for c in "$_here/bt-boot-list" "$_here/../tools/bt-boot-list" /usr/local/bin/bt-boot-list; do
+    [[ -x "$c" ]] && { BOOTLIST="$c"; break; }
+done
+[[ -n "$BOOTLIST" ]] || BOOTLIST=""
+boot_indices() {
+    if [[ -n "$BOOTLIST" ]]; then "$BOOTLIST" ${1:+-n "$1"}
+    else journalctl --list-boots 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}' | sort -n; fi
+}
+
+
+printf '%-6s %-22s %-10s %-10s %-8s %s\n' BOOT KERNEL TIMEOUTS UNEXPECT WD-ACTS DATE
+for b in $( (( LIMIT > 0 )) && boot_indices "$LIMIT" || boot_indices ); do
+    k=$(journalctl -k -b "$b" 2>/dev/null | grep -m1 -oE "Linux version [0-9][^ ]*" | awk '{print $3}')
+    [[ -z "${k:-}" ]] && continue
+    t=$(journalctl -k -b "$b" 2>/dev/null | grep -c "tx timeout" || true)
+    u=$(journalctl -k -b "$b" 2>/dev/null | grep -c "unexpected event for opcode" || true)
+    w=$(journalctl -u bt-hang-watchdog -b "$b" 2>/dev/null | grep -c "intervening" || true)
+    d=$(journalctl -k -b "$b" -o short-unix 2>/dev/null | head -1 | awk '{printf "%d",$1}')
+    ds=$([[ -n "$d" ]] && date -d "@$d" '+%m-%d %H:%M' || echo "?")
+    printf '%-6s %-22s %-10s %-10s %-8s %s\n' "$b" "$k" "${t:-0}" "${u:-0}" "${w:-0}" "$ds"
+done

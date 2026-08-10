@@ -45,6 +45,20 @@ else
     CHANGE_EPOCH=0
 fi
 
+
+# Locate bt-boot-list next to this script, then on PATH. Enumerating boots is
+# subtle enough (see that script's header) that it must not be reimplemented.
+_here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BOOTLIST=""
+for c in "$_here/bt-boot-list" "$_here/../tools/bt-boot-list" /usr/local/bin/bt-boot-list; do
+    [[ -x "$c" ]] && { BOOTLIST="$c"; break; }
+done
+[[ -n "$BOOTLIST" ]] || BOOTLIST=""
+boot_indices() {
+    if [[ -n "$BOOTLIST" ]]; then "$BOOTLIST" ${1:+-n "$1"}
+    else journalctl --list-boots 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}' | sort -n; fi
+}
+
 hr() { printf '%s\n' "────────────────────────────────────────────────────────────────"; }
 
 echo "BLUETOOTH MITIGATION EFFECTIVENESS REPORT"
@@ -74,9 +88,7 @@ hr
 echo "2. PER-BOOT FAILURE COUNTS (all retained boots)"
 echo
 printf '   %-6s %-22s %-9s %-9s %-8s %s\n' BOOT KERNEL TIMEOUTS UNEXPECT WD-ACTS PHASE
-first=$(journalctl --list-boots --no-legend 2>/dev/null | head -1 | awk '{print $1}')
-[[ -z "${first:-}" ]] && first=-10
-for b in $(seq "$first" 0); do
+for b in $(boot_indices); do
     k=$(journalctl -k -b "$b" 2>/dev/null | grep -m1 -oE "Linux version [0-9][^ ]*" | awk '{print $3}')
     [[ -z "${k:-}" ]] && continue
     t=$(journalctl -k -b "$b" 2>/dev/null | grep -c "tx timeout")

@@ -1,0 +1,150 @@
+#!/bin/bash
+# bt-diagnose — does this machine have the "no cmd_timeout handler" Bluetooth bug?
+#
+#   ./tools/bt-diagnose
+#
+# Standalone: no installation, no configuration, nothing written. Clone the
+# repo and run it. Works with any USB Bluetooth controller — the affected
+# device is auto-detected rather than assumed.
+#
+# THE SIGNATURE it looks for:
+#   1. HCI command timeouts in the logs           ("tx timeout")
+#   2. ZERO automatic reset attempts in response  ("Resetting usb device")
+#   3. no vendor firmware load for the controller
+#
+# (1) without (2) is the bug: btusb_qca_cmd_timeout() resets a controller after
+# repeated command timeouts, but it is only installed when the device is matched
+# by btusb's vendor quirks table. A device missing from that table gets
+# driver_info = 0 and no handler, so a firmware stall that the kernel is
+# designed to recover from decays instead into a state only a cold power-off
+# clears — a warm reboot does not drop an M.2 card's power rail.
+#
+# Exit: 0 = signature not present, 1 = signature present, 2 = cannot determine.
+
+set -uo pipefail
+
+G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
+# Locate bt-boot-list next to this script, then on PATH. Enumerating boots is
+# subtle enough (see that script's header) that it must not be reimplemented.
+_here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BOOTLIST=""
+for c in "$_here/bt-boot-list" "$_here/../tools/bt-boot-list" /usr/local/bin/bt-boot-list; do
+    [[ -x "$c" ]] && { BOOTLIST="$c"; break; }
+done
+[[ -n "$BOOTLIST" ]] || BOOTLIST=""
+boot_indices() {
+    if [[ -n "$BOOTLIST" ]]; then "$BOOTLIST" ${1:+-n "$1"}
+    else journalctl --list-boots 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}' | sort -n; fi
+}
+
+[[ -t 1 ]] || { G=""; R=""; Y=""; B=""; O=""; }
+
+echo "${B}Bluetooth controller diagnosis${O}"
+echo "─────────────────────────────────────────────────────────────"
+
+# ── 1. Find the Bluetooth controller(s) ───────────────────────────────────
+# Auto-detect: any USB device with a bluetooth/hci child. Beats hardcoding an
+# ID, and means this works on controllers other than the one that motivated it.
+found=0
+declare -a DEVS=()
+for d in /sys/bus/usb/devices/*; do
+    [[ -f "$d/idVendor" ]] || continue
+    for p in "$d"/*/bluetooth/hci*; do
+        [[ -e "$p" ]] || continue
+        DEVS+=("$d|$(basename "$p")")
+        found=1; break
+    done
+done
+
+if (( ! found )); then
+    echo "${Y}No USB Bluetooth controller with an hci node found.${O}"
+    echo
+    echo "If Bluetooth used to work and the adapter has now vanished entirely,"
+    echo "that is itself the advanced form of this bug: the controller has stopped"
+    echo "answering USB and dropped off the bus. Try a full POWER-OFF (not a"
+    echo "reboot) — a warm reset does not drop an M.2 card's power rail."
+    echo
+    lsusb 2>/dev/null | grep -iE "bluetooth|wireless" | sed 's/^/  /'
+    exit 2
+fi
+
+for entry in "${DEVS[@]}"; do
+    d="${entry%|*}"; hci="${entry#*|}"
+    vid=$(<"$d/idVendor"); pid=$(<"$d/idProduct")
+    echo "controller: ${B}$vid:$pid${O} at $(basename "$d")  ($hci)"
+    [[ -r "$d/power/control" ]] && echo "  usb power/control : $(cat "$d/power/control")"
+    lsusb -d "$vid:$pid" 2>/dev/null | sed 's/^/  /'
+done
+VID=$(<"${DEVS[0]%|*}/idVendor"); PID=$(<"${DEVS[0]%|*}/idProduct")
+HCI="${DEVS[0]#*|}"
+
+# ── 2. Does the controller answer? ────────────────────────────────────────
+echo
+alive=unknown
+if command -v hciconfig >/dev/null 2>&1; then
+    timeout 6 hciconfig "$HCI" name >/dev/null 2>&1 && alive=yes || alive=no
+elif command -v btmgmt >/dev/null 2>&1; then
+    timeout 6 btmgmt --index "${HCI#hci}" info >/dev/null 2>&1 && alive=yes || alive=no
+fi
+case "$alive" in
+    yes) echo "  ${G}✓${O} controller responds to HCI commands" ;;
+    no)  echo "  ${R}✗${O} controller does NOT respond — it is stalled right now" ;;
+    *)   echo "  ${Y}•${O} cannot probe (install 'bluez' for hciconfig/btmgmt)" ;;
+esac
+
+# ── 3. The signature ──────────────────────────────────────────────────────
+echo
+echo "${B}Log evidence${O}"
+if ! command -v journalctl >/dev/null 2>&1; then
+    echo "  ${Y}•${O} journalctl not available — cannot check history"
+    echo "     Try instead: dmesg | grep -E 'tx timeout|Resetting usb device'"
+    exit 2
+fi
+
+timeouts=0; resets=0; fw=0; boots=0
+for b in $(boot_indices); do
+    journalctl -k -b "$b" >/dev/null 2>&1 || continue
+    boots=$((boots+1))
+    t=$(journalctl -k -b "$b" --no-pager 2>/dev/null | grep -c "tx timeout" || true)
+    r=$(journalctl -k -b "$b" --no-pager 2>/dev/null | grep -ciE "Resetting usb device|Multiple cmd timeouts" || true)
+    f=$(journalctl -k -b "$b" --no-pager 2>/dev/null | grep -ciE "using rampatch|nvm_usb|Failed to load .*firmware" || true)
+    timeouts=$((timeouts + ${t:-0})); resets=$((resets + ${r:-0})); fw=$((fw + ${f:-0}))
+done
+
+printf '  boots examined            : %s\n' "$boots"
+printf '  HCI command timeouts      : %s\n' "$timeouts"
+printf '  automatic reset attempts  : %s\n' "$resets"
+printf '  vendor firmware loads     : %s\n' "$fw"
+
+# ── 4. Verdict ────────────────────────────────────────────────────────────
+echo
+echo "─────────────────────────────────────────────────────────────"
+if (( timeouts == 0 )); then
+    echo "${G}Signature NOT present.${O}"
+    echo "No HCI command timeouts recorded. Either this controller is healthy,"
+    echo "or the journal does not go back far enough — check 'journalctl --list-boots'."
+    exit 0
+fi
+
+if (( resets > 0 )); then
+    echo "${Y}Timeouts present, but the kernel IS resetting the controller.${O}"
+    echo "$timeouts timeout(s) and $resets reset attempt(s): the cmd_timeout handler"
+    echo "is installed and doing its job. Your controller may still be unreliable,"
+    echo "but not for the reason this repository documents."
+    exit 0
+fi
+
+echo "${R}${B}Signature PRESENT.${O}"
+echo
+echo "$timeouts HCI command timeout(s) across $boots boot(s), and ${B}zero${O} automatic"
+echo "reset attempts. The kernel logged the failures and did nothing about them."
+(( fw == 0 )) && echo "No vendor firmware load either, consistent with driver_info = 0."
+echo
+echo "Confirm the device is missing from btusb's quirks table:"
+echo "  zstd -dcf /lib/modules/\$(uname -r)/kernel/drivers/bluetooth/btusb.ko.zst \\"
+echo "    | xxd -p | tr -d '\\n' | grep -o '$(printf '%s' "${VID:2:2}${VID:0:2}${PID:2:2}${PID:0:2}" | tr 'A-Z' 'a-z')'"
+echo "  (no output = this device gets no vendor quirks)"
+echo
+echo "See README.md for the workaround, and docs/bug-report.md to report it"
+echo "with your own device ID."
+exit 1

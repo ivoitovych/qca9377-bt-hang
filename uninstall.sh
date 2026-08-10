@@ -29,6 +29,10 @@ FILES=(
     /usr/local/bin/bt-mark
     /usr/local/bin/bt-evidence
     /usr/local/bin/bt-sanitize-logs
+    /usr/local/bin/bt-boot-list
+    /usr/local/bin/bt-state
+    /usr/local/bin/bt-boots
+    /usr/local/bin/bt-diagnose
     /usr/local/bin/bt-timeline
     /usr/local/sbin/bt-trace
     /etc/systemd/system/bt-trace.service

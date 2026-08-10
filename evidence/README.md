@@ -22,7 +22,7 @@ evidence/
 |---|---|
 | `kernel-boot0.sanitized.log` | Full kernel log of the boot that hung (2026-08-08 → 08-10) |
 | `bluetoothd-boot0.sanitized.log` | Matching bluetoothd log, incl. the AVDTP teardown that triggered it |
-| `baseline.tsv` | Per-boot failure counts across 12 boots: **102 timeouts, 6 of 12 boots hung** |
+| `baseline.tsv` | Per-boot failure counts across 34 boots (2026-05-31 → 08-10): **287 timeouts, 13 of 34 boots hung, zero resets** |
 
 Captured at 02:54 on 2026-08-10, *before* the three synthetic `tx timeout` lines were
 injected at 03:07 to test watchdog detection. The 22 timeouts in this log are all
@@ -39,7 +39,7 @@ machine, establishing in order:
 3. the reset handler and QCA firmware paths **are** compiled into the shipped `btusb.ko`
 4. the ID is **absent** from that binary's tables — byte-scan validated against a known ID
 5. it is absent from upstream `btusb.c` too, which carries 78 other `0x13d3` entries
-6. across 12 boots: 102 command timeouts, **zero** reset attempts
+6. across 34 boots and four kernel versions: 287 command timeouts, **zero** reset attempts
 
 Points 3 and 4 together are the argument: the code exists, it simply never runs for
 this device.

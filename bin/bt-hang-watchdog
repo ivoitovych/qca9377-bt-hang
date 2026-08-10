@@ -6,7 +6,7 @@
 #   it binds via the generic USB-Bluetooth-class rule with driver_info = 0 and
 #   never receives hdev->cmd_timeout = btusb_qca_cmd_timeout(), the handler
 #   that USB-resets the controller after 5 consecutive HCI command timeouts.
-#   Measured on the affected host: 102 "tx timeout" events across 12 boots,
+#   Measured on the affected host: 287 "tx timeout" events across 34 boots,
 #   0 automatic reset attempts.
 #
 #   This script performs, from userspace, what that missing handler would do.

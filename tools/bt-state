@@ -1,0 +1,57 @@
+#!/bin/bash
+# bt-state — one-shot Bluetooth/USB/service state dump.
+#
+#   bt-state            human readable
+#   bt-state --tsv      single tab-separated line (for logging/diffing)
+#
+# Auto-detects any USB Bluetooth controller (a USB device with a bluetooth/hci
+# child), so it is not tied to the chip that motivated this repo. Override with
+# BT_VID / BT_PID to pin a specific device.
+set -uo pipefail
+VID="${BT_VID:-}"; PID="${BT_PID:-}"
+if [[ -z "$VID" || -z "$PID" ]]; then
+    for d in /sys/bus/usb/devices/*; do
+        [[ -f "$d/idVendor" ]] || continue
+        for p in "$d"/*/bluetooth/hci*; do
+            [[ -e "$p" ]] && { VID=$(<"$d/idVendor"); PID=$(<"$d/idProduct"); break 2; }
+        done
+    done
+fi
+VID="${VID:-13d3}"; PID="${PID:-3503}"   # fall back to the documented device
+TSV=0; [[ "${1:-}" == "--tsv" ]] && TSV=1
+
+dev=absent; ctrl=-; hci=-; alive=?
+for d in /sys/bus/usb/devices/*; do
+    [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
+    if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
+        dev=$(basename "$d"); ctrl=$(cat "$d/power/control" 2>/dev/null)
+        for p in "$d"/*/bluetooth/hci*; do [[ -e "$p" ]] && hci=$(basename "$p") && break; done
+        break
+    fi
+done
+if [[ "$hci" != "-" ]]; then
+    if command -v hciconfig >/dev/null 2>&1; then
+        timeout 6 hciconfig "$hci" name >/dev/null 2>&1 && alive=yes || alive=no
+    elif command -v btmgmt >/dev/null 2>&1; then
+        timeout 6 btmgmt --index "${hci#hci}" info >/dev/null 2>&1 && alive=yes || alive=no
+    fi
+fi
+autosusp=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo "-")
+tx=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -c "tx timeout" || true)
+wd=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -c "intervening" || true)
+conn=$(timeout 8 bluetoothctl devices Connected 2>/dev/null | grep -c '^Device' || true)
+
+if (( TSV )); then
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+      "$(date -Iseconds)" "$dev" "$ctrl" "$hci" "$alive" "$autosusp" "${tx:-0}" "${wd:-0}" "${conn:-0}"
+    exit 0
+fi
+printf 'device %s:%s\n' "$VID" "$PID"
+printf '  usb path        %s\n  power/control   %s\n  hci             %s\n  responds        %s\n' \
+       "$dev" "$ctrl" "$hci" "$alive"
+printf '  autosuspend     %s\n  tx timeouts     %s (this boot)\n  wd interventions %s\n  connected       %s\n' \
+       "$autosusp" "${tx:-0}" "${wd:-0}" "${conn:-0}"
+echo "services"
+for u in bluetooth bt-hang-watchdog bt-trace bt-health-snapshot.timer; do
+    printf '  %-26s %s\n' "$u" "$(systemctl is-active "$u" 2>&1)"
+done

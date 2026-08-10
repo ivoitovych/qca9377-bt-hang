@@ -188,7 +188,7 @@ Three of the last five boots hit the hang. The two clean boots were the two *sho
 sessions (1 h and 3 h) — consistent with "it happens once you actually use Bluetooth for
 a while," not with a random cosmic-ray event.
 
-Reboot history also shows the machine is rebooted very frequently (12 boots in a month,
+Reboot history also shows the machine is rebooted very frequently (34 boots in ten weeks,
 several per day on Aug 7–8), which corroborates the reported daily-routine workaround.
 
 ---
@@ -312,11 +312,11 @@ branch, so the device never gets:
 ### Confirmed by the logs — the auto-reset never once fired ✅
 
 ```
-total "tx timeout" events across all 12 boots : 102
+total "tx timeout" events across all 34 boots : 287
 total auto-reset attempts                     :   0
 ```
 
-Across **102 command timeouts in 12 boots**, the kernel logged
+Across **287 command timeouts in 34 boots**, the kernel logged
 `"Multiple cmd timeouts"` / `"Resetting usb device"` **zero times**. No `cmd_timeout`
 handler is installed. The kernel just prints the timeout and does nothing.
 
@@ -486,7 +486,7 @@ every 15 min plus 2 min after boot, appending TSV rows to
 failure counts tagged before/AFTER, watchdog effectiveness with a verdict, recent
 snapshots, and the pre-change baseline side by side.
 
-**Baseline:** `evidence/baseline/baseline.tsv` — 12 boots, 102 timeouts, **6 of 12 boots hung**.
+**Baseline:** `evidence/baseline/baseline.tsv` — 34 boots, 287 timeouts, **13 of 34 boots hung**.
 
 Journald already persists (`/var/log/journal` present, 35 boots retained), so no logging
 configuration was changed.
