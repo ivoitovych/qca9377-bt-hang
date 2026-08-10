@@ -28,6 +28,9 @@ WINDOW="${BT_WINDOW:-60}"      # seconds
 COOLDOWN="${BT_COOLDOWN:-180}" # min seconds between recovery attempts
 MAX_FAILS="${BT_MAX_FAILS:-3}" # give up after this many CONFIRMED failures
 VERBOSE="${BT_VERBOSE:-0}"     # 1 = log every detected signal and window state
+EARLY="${BT_EARLY:-0}"                        # 1 = also act on audio-teardown failures
+EARLY_THRESHOLD="${BT_EARLY_THRESHOLD:-2}"    # early signals before intervening
+EARLY_WINDOW="${BT_EARLY_WINDOW:-90}"         # seconds
 
 log() { echo "$*"; }           # stdout is captured by journald
 vlog() { (( VERBOSE )) && echo "$*"; return 0; }
@@ -201,7 +204,15 @@ else
     log "         hard-hung. Watchdog is armed but cannot act until a cold power-off."
 fi
 
+if (( EARLY )); then
+    log "EARLY mode ON — also watching bluetoothd for audio-teardown failures"
+    log "  threshold $EARLY_THRESHOLD in ${EARLY_WINDOW}s; resets BEFORE any HCI timeout"
+else
+    log "early mode off (set BT_EARLY=1 to reset on audio-teardown failures)"
+fi
+
 HITS=()
+EHITS=()
 last_recover=0
 fails=0
 gave_up=0
@@ -212,15 +223,73 @@ gave_up=0
 # -n0 => only new messages, so a restart never replays old timeouts.
 while read -r line; do
 
-    # Kernel signatures of a wedged controller.
+    class=""
+
+    # LATE signals — the controller has already stopped answering HCI commands.
     case "$line" in
-        *hci*"tx timeout"*)               ;;
-        *hci*"failed: -110"*)             ;;
-        *hci*"setting interface failed"*) ;;
-        *) continue ;;
+        *hci*"tx timeout"*)               class=late ;;
+        *hci*"failed: -110"*)             class=late ;;
+        *hci*"setting interface failed"*) class=late ;;
     esac
 
+    # EARLY signals — bluetoothd failing to tear an audio stream down, which
+    # precedes the HCI stall. In the 2026-08-10 hang these appeared up to 52 s
+    # before the first tx timeout; by the time a LATE signal fires the chip may
+    # already be beyond recovery (that hang's USB reset, issued 20 s after the
+    # first timeout, failed).
+    #
+    # Patterns chosen by measured precision over the last 12 boots — how often
+    # each appears at all versus how often it appears in a boot that hung:
+    #   cancel_request() Suspend   2/2    avdtp_connect_cb        5/5
+    #   cancel_request() Abort     4/4    SDP record: Host is down 10/10
+    #   avdtp_close failed         4/3
+    # "Device or resource busy" is deliberately EXCLUDED at 3/9 — too noisy to
+    # justify resetting a controller that may be healthy.
+    if (( EARLY )) && [[ -z "$class" ]]; then
+        case "$line" in
+            *"cancel_request() Suspend"*)  class=early ;;
+            *"cancel_request() Abort"*)    class=early ;;
+            *avdtp_connect_cb*)            class=early ;;
+            *"avdtp_close failed"*)        class=early ;;
+            *"SDP record: Host is down"*)  class=early ;;
+        esac
+    fi
+
+    [[ -n "$class" ]] || continue
+
     now=$(date +%s)
+
+    # Early signals get their own window and threshold: they are rarer, and the
+    # whole point is to act before the LATE evidence exists.
+    if [[ "$class" == early ]]; then
+        ekeep=()
+        for t in ${EHITS[@]+"${EHITS[@]}"}; do
+            (( now - t < EARLY_WINDOW )) && ekeep+=("$t")
+        done
+        EHITS=(${ekeep[@]+"${ekeep[@]}"} "$now")
+        en=${#EHITS[@]}
+        vlog "early signal: ${line:0:110}"
+        vlog "  early window: $en/$EARLY_THRESHOLD in last ${EARLY_WINDOW}s"
+
+        (( en < EARLY_THRESHOLD )) && continue
+        if (( now - last_recover < COOLDOWN )); then
+            log "EARLY threshold reached ($en/$EARLY_THRESHOLD) but suppressed by cooldown ($(( COOLDOWN - (now - last_recover) ))s remaining)"
+            continue
+        fi
+        if (( fails >= MAX_FAILS )); then
+            log "Giving up: $MAX_FAILS consecutive recovery attempts failed."
+            gave_up=1; break
+        fi
+        log "EARLY intervention: $en audio-teardown failure(s) in ${EARLY_WINDOW}s — resetting BEFORE any HCI timeout."
+        last_recover=$now; EHITS=(); HITS=()
+        recover; rc=$?
+        case $rc in
+            0) log "  EARLY recovery SUCCEEDED — this is the result that matters"; fails=0 ;;
+            2) ;;
+            *) ((fails++)); log "consecutive failed recoveries: $fails/$MAX_FAILS" ;;
+        esac
+        continue
+    fi
 
     # Slide the window, then record this hit.
     keep=()
@@ -263,7 +332,17 @@ while read -r line; do
         *) ((fails++))
            log "consecutive failed recoveries: $fails/$MAX_FAILS" ;;
     esac
-done < <(journalctl -kf -n0 --output=cat 2>/dev/null)
+done < <(
+    if (( EARLY )); then
+        # Follow the kernel AND bluetoothd. journalctl ORs separate matches with
+        # "+", so this is one stream carrying both — the early signals live in
+        # bluetoothd, the late ones in the kernel.
+        journalctl -f -n0 --output=cat \
+            _TRANSPORT=kernel + _SYSTEMD_UNIT=bluetooth.service 2>/dev/null
+    else
+        journalctl -kf -n0 --output=cat 2>/dev/null
+    fi
+)
 
 # Do not let systemd's Restart=always immediately re-arm a hopeless watchdog.
 if (( gave_up )); then
