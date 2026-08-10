@@ -254,12 +254,12 @@ Tested across every kernel available on the affected machine:
 | Kernel | Hangs? |
 |---|---|
 | 6.17.0-29 | yes |
-| 6.17.0-29 | yes |
 | 6.17.0-35 | yes |
 | 6.17.0-40 | yes |
 | 7.0.0-28 | yes |
 
-Four kernel versions over ten weeks. Rolling back the kernel does not help.
+Four kernel versions across ten weeks and 34 boots. Rolling back the kernel does not
+help. Per-boot detail: [`evidence/diagnosis/per-boot-history.txt`](evidence/diagnosis/per-boot-history.txt).
 
 ---
 
