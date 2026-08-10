@@ -295,6 +295,55 @@ require temporarily re-enabling autosuspend.
 
 ---
 
+## Phase 9 — The first real hang, and the claim it broke (07:24 – 07:30)
+
+The user reproduced the failure by hand, manipulating a headset. It was the first hang
+with the watchdog armed, verbose logging on, and an HCI trace running — and it tested the
+single proposition everything else rested on.
+
+**The watchdog worked.** Detected at 3 timeouts in 20 seconds; intervened 33 seconds
+before the first USB-level failure. Not too slow.
+
+**The USB reset failed.** The controller did not recover and left the bus 123 seconds
+after the first timeout.
+
+```
+07:24:45  first HCI command timeout
+07:25:05  watchdog intervened                 (+20 s)
+07:25:23  usb 3-3: reset ... device number 2  (+38 s)
+07:25:38  device descriptor read/64, -110     (+53 s)   <- stage 2 begins
+07:26:48  USB disconnect                      (+123 s)
+```
+
+`btusb_qca_cmd_timeout()` calls `usb_queue_reset_device()` — the same operation, via the
+same kernel path, that had just failed. **So the proposed patch would most likely not
+have prevented this hang.** The finding that the device is unmatched by btusb's quirks
+table still stands, verified three ways; what collapsed was the claimed *benefit* of
+fixing it. Corrected in README, the bug report and the fix proposal, which now
+distinguish "no handler is installed" (established) from "installing one would help"
+(not established, and contradicted once).
+
+Two further assumptions fell in the same session:
+
+- **Stage 1 lasted 53 seconds, not ~6 hours.** The earlier figure measured how long an
+  *untouched* controller stayed enumerated while idle — not how long it stays
+  recoverable. Conflating those was a mistake, and it made the failure look far more
+  leisurely than it is.
+- **The trigger is not A2DP-specific.** The capture — which began one second after the
+  first timeout — shows hundreds of `SCO Data TX` packets (HFP voice), then
+  `Start Discovery` returning `Authentication Failed (0x05)`, a `Disconnect`, and
+  `Set Powered: Disabled`. The common factor is an audio stream torn down while active.
+  That `Authentication Failed` status also appears in the original logs, and now reads as
+  a symptom of the stalling controller rather than a real authentication problem.
+
+Every piece of instrumentation built in Phase 7 earned its place here: the verbose
+watchdog showed `1/3 → 2/3 → 3/3` then the intervention; cooldown suppression logging
+distinguished "ignored the next 14 timeouts" from "rate-limited"; and only the HCI
+capture revealed the SCO detail. `bt-incident` and `bt-postmortem` were written during
+this phase, after collecting the incident by hand made it obvious they should exist.
+
+---
+
 ## Recurring lessons
 
 - **Measure before capping.** `MemoryMax=64M` and the 15-minute metrics interval were
@@ -306,3 +355,9 @@ require temporarily re-enabling autosuspend.
   timestamp (`-n1`, unit mtime) silently corrupted the before/after split.
 - **The premise deserves the same scrutiny as the conclusion.** The root cause was right,
   but the first evidence offered for it (`modinfo`) could not support it.
+- **A confident diagnosis is not a validated fix.** The missing device ID was real and
+  verified three ways. The inference that adding it would help was neither — and the
+  first direct test contradicted it.
+- **Check what a number actually measures.** "Stage 1 lasts 6 hours" was true of an idle,
+  untouched controller and false of a recoverable window. The same figure, two different
+  quantities.

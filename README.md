@@ -225,11 +225,22 @@ A one-line kernel patch — add the device to btusb's QCA ROME quirks:
 +						     BTUSB_WIDEBAND_SPEECH },
 ```
 
-> ⚠️ **Untested — do not ship this blindly.** `BTUSB_QCA_ROME` also enables the rampatch
-> firmware download path. If this module is not a true ROME variant, probe can fail and
-> leave you with *no* Bluetooth, which is worse than the current intermittent failure.
-> See [`docs/fix-proposal.md`](docs/fix-proposal.md) for the validation plan and
-> [`docs/bug-report.md`](docs/bug-report.md) for the full report.
+> ⚠️ **This probably would NOT have fixed the hang — measured, not assumed.**
+> `btusb_qca_cmd_timeout()` calls `usb_queue_reset_device()`. On 2026-08-10 the watchdog
+> issued `USBDEVFS_RESET` — the same operation, same kernel path — **20 seconds** after
+> the first timeout and **33 seconds before** any USB-level failure, and the controller
+> did not come back. The kernel handler would have fired at roughly the same moment and
+> done roughly the same thing.
+> See [`evidence/sessions/20260810-072445-first-real-hang/`](evidence/sessions/20260810-072445-first-real-hang/).
+>
+> ⚠️ **Also untested and risky in its own right.** `BTUSB_QCA_ROME` enables the rampatch
+> firmware download path; if this module is not a true ROME variant, probe can fail and
+> leave you with *no* Bluetooth. See [`docs/fix-proposal.md`](docs/fix-proposal.md).
+
+**What the missing ID does and does not explain.** That the device receives no
+`cmd_timeout` handler is verified three ways (below) and is a real defect worth
+reporting. What is *not* established is that installing the handler would prevent this
+failure — the one direct test of that said otherwise.
 
 **Confirmed at source level.** `0x3503` does not appear anywhere in upstream
 `drivers/bluetooth/btusb.c` (v7.0), which carries 78 other `0x13d3` entries — the vendor

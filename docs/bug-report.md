@@ -17,14 +17,21 @@ appears not to be matched by btusb's vendor quirks table. It therefore probes wi
 `hdev->cmd_timeout = btusb_qca_cmd_timeout`.
 
 When the controller firmware stalls, nothing resets it. The kernel logs command timeouts
-indefinitely while the chip decays from a *recoverable* state (HCI unresponsive, USB
-healthy) into an *unrecoverable* one (USB core unresponsive, device drops off the bus).
-The latter cannot be cleared by any software means — not by driver rebind, not by USB
-port power-cycle, and not by a warm reboot, because that does not drop the M.2 power
-rail. A full power-off is required.
+indefinitely while the chip decays from HCI-unresponsive (USB still healthy) into
+USB-unresponsive, dropping off the bus. The latter cannot be cleared by any software
+means — not by driver rebind, not by USB port power-cycle, and not by a warm reboot,
+because that does not drop the M.2 power rail. A full power-off is required.
 
-**The missing quirk turns a stall the kernel is already designed to recover from into a
-hardware-power-cycle event, several times a week.**
+Measured: **287 HCI command timeouts across 34 boots and four kernel versions, with zero
+reset attempts.** 13 of those 34 boots hung.
+
+> ⚠️ **Scope of the claim.** A direct test (§"What the missing handler does and does not
+> explain") found that a `USBDEVFS_RESET` issued 20 s after the first timeout — well
+> inside the window when the device still answered USB — did **not** recover the
+> controller. Since `btusb_qca_cmd_timeout()` performs the equivalent
+> `usb_queue_reset_device()`, installing the handler may not prevent this failure. The
+> defect reported here is that **no handler is installed at all**; whether installing it
+> is sufficient is an open question this report does not answer.
 
 ---
 
@@ -207,17 +214,54 @@ and upstream both contain exactly 78 `13d3` entries, so no distro patch adds it.
 > entry. The behavioural observations above are corroborated by the direct
 > source and binary checks in item 4.
 
-### Why this matters more than a missed optimisation
+### What the missing handler does and does not explain
 
-Without the handler there is no back-pressure of any kind. The host continues submitting
-commands to a stalled controller for hours (22 timeouts over ~6 h in the logged instance).
-Whatever internal state causes the stall is never cleared, and the firmware degrades
-until the USB core itself stops responding — past the point where any software remedy
-exists.
+Without it there is no back-pressure of any kind: the host keeps submitting commands to
+a stalled controller and nothing ever tries to clear the condition.
 
-With the handler, a USB reset would have been queued within seconds of the first stall,
-during the window when the device still answered USB perfectly. The user-visible bug
-would have been a brief audio dropout instead of a forced shutdown.
+**However — a direct test does not support the assumption that the handler would have
+recovered the controller.**
+
+On 2026-08-10 a hang was reproduced with instrumentation running. A userspace watchdog
+issued `USBDEVFS_RESET` — the same operation `usb_queue_reset_device()` performs — **20 s
+after the first HCI timeout**, which was **33 s before** the first USB-level failure.
+The reset failed and the device went on to drop off the bus:
+
+```
+07:24:45  Bluetooth: hci0: command tx timeout          <- first timeout
+07:25:05  watchdog: 3/3 in window -> intervening        (+20 s)
+07:25:23  usb 3-3: reset full-speed USB device number 2 (+38 s)
+07:25:38  usb 3-3: device descriptor read/64, error -110 (+53 s)
+07:26:48  usb 3-3: USB disconnect, device number 2      (+123 s)
+```
+
+`btusb_qca_cmd_timeout()` fires after 5 consecutive timeouts and would have acted at
+roughly the same moment, doing roughly the same thing.
+
+So the honest claim is narrower than "adding this ID would fix the hang":
+
+- **Established:** this device is matched by no vendor quirks entry, so it gets
+  `driver_info = 0`, no `cmd_timeout` handler, and no firmware download. The kernel
+  logs 287 command timeouts across 34 boots and never once attempts a reset.
+- **Not established:** that installing the handler would prevent the failure. The one
+  direct test of that proposition failed.
+
+Two further corrections from the same session, both to assumptions stated earlier in
+this report:
+
+- **Stage 1 is short.** It lasted **53 s**, not the ~6 h originally inferred. The
+  6-hour figure measured how long an *untouched* controller stayed enumerated while
+  idle — not how long it remains recoverable.
+- **The trigger is not A2DP-specific.** The HCI capture shows hundreds of `SCO Data TX`
+  packets (HFP voice), then `Start Discovery` returning `Authentication Failed (0x05)`,
+  a `Disconnect`, and `Set Powered: Disabled`. The common factor is an active audio
+  stream being torn down, not A2DP as such. That `Authentication Failed` status also
+  appears in the original logs and now looks like a symptom of the stalling controller
+  rather than a genuine authentication problem.
+
+Maintainers are better placed to say whether an earlier or different reset — issued
+during the audio teardown, before any HCI command times out — would succeed where this
+one did not.
 
 ---
 

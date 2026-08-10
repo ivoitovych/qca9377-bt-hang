@@ -1,0 +1,104 @@
+#!/bin/bash
+# bt-incident — capture a hang that has ALREADY happened as a sanitised evidence session.
+#
+#   bt-incident <slug>                 collect the last 15 minutes
+#   bt-incident <slug> --since "07:20" collect from a specific time
+#   bt-incident <slug> --since -1h
+#
+# bt-evidence requires you to start a session BEFORE the event. Hangs do not
+# announce themselves, so this collects retroactively from the journal.
+#
+# Writes evidence/sessions/<timestamp>-<slug>/ with filtered, sanitised logs,
+# a merged timeline, current state, a manifest, and a NOTES.md skeleton.
+# Binary btsnoop captures are referenced, never copied — they cannot be sanitised.
+
+set -uo pipefail
+
+SLUG="${1:?usage: bt-incident <slug> [--since <time>]}"; shift || true
+SINCE="-15min"
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --since) SINCE="${2:?--since needs a value}"; shift ;;
+        -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+        *) echo "unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="${BT_EVIDENCE_REPO:-$(cd "$HERE/.." && pwd)}"
+[[ -d "$REPO/evidence" ]] || REPO=/root/exp/qca9377-bt-hang
+DIR="$REPO/evidence/sessions/$(date +%Y%m%d-%H%M%S)-${SLUG//[^a-zA-Z0-9._-]/_}"
+mkdir -p "$DIR" || { echo "cannot create $DIR" >&2; exit 1; }
+
+SAN=""
+for c in "$HERE/sanitize-logs.sh" /usr/local/bin/bt-sanitize-logs; do
+    [[ -x "$c" ]] && { SAN="$c"; break; }
+done
+
+echo "collecting since '$SINCE' into $DIR"
+
+journalctl -k --since "$SINCE" --no-pager -o short-precise 2>/dev/null \
+  | grep -iE "hci|btusb|bluetooth|usb [0-9]+-[0-9]|xhci" > "$DIR/kernel.log" || true
+journalctl -u bt-hang-watchdog --since "$SINCE" --no-pager -o short-precise 2>/dev/null \
+  > "$DIR/watchdog.log" || true
+journalctl -u bluetooth --since "$SINCE" --no-pager -o short-precise 2>/dev/null \
+  | grep -vE "Endpoint (registered|unregistered)" > "$DIR/bluetoothd.log" || true
+journalctl -u bt-trace --since "$SINCE" --no-pager -o short-precise 2>/dev/null \
+  > "$DIR/trace-service.log" || true
+command -v bt-timeline >/dev/null 2>&1 && bt-timeline "$SINCE" --raw > "$DIR/timeline.txt" 2>/dev/null || true
+command -v bt-state    >/dev/null 2>&1 && bt-state > "$DIR/state-now.txt" 2>&1 || true
+
+for f in "$DIR"/*.log "$DIR"/*.txt; do
+    [[ -f "$f" && -s "$f" && -n "$SAN" ]] && "$SAN" "$f" "$f" >/dev/null 2>&1
+done
+
+{
+    echo "# btsnoop captures overlapping this window (NOT committed — they contain"
+    echo "# device addresses, names, pairing exchanges and audio payload)."
+    echo "# Inspect: btmon -r <file>"
+    echo
+    find /var/log/bt-health/trace -name '*.btsnoop' -newermt "$SINCE" 2>/dev/null \
+      | sort | while read -r f; do printf '  %10s  %s\n' "$(stat -c %s "$f")" "$f"; done
+} > "$DIR/hci-captures.txt"
+
+count() { local n; n=$(grep -c "$1" "$2" 2>/dev/null || true); echo "${n:-0}" | head -1; }
+{
+    echo "# Incident manifest"
+    echo "slug=$SLUG"
+    echo "collected=$(date -Iseconds)"
+    echo "window=$SINCE"
+    echo "kernel=$(uname -r)"
+    echo "tx_timeouts=$(count 'tx timeout' "$DIR/kernel.log")"
+    echo "wd_interventions=$(count 'intervening' "$DIR/watchdog.log")"
+    echo "wd_recovered=$(count 'RECOVERED' "$DIR/watchdog.log")"
+    echo "wd_reset_failed=$(count 'USBDEVFS_RESET failed' "$DIR/watchdog.log")"
+    echo "wd_fatal=$(count 'FATAL:' "$DIR/watchdog.log")"
+    echo "usb_descriptor_errors=$(count 'descriptor read' "$DIR/kernel.log")"
+    echo "usb_disconnect=$(count 'USB disconnect' "$DIR/kernel.log")"
+    echo "sanitised=$([[ -n "$SAN" ]] && echo yes || echo NO-SANITISER)"
+} > "$DIR/MANIFEST.txt"
+
+[[ -f "$DIR/NOTES.md" ]] || cat > "$DIR/NOTES.md" <<EOF
+# Incident: $SLUG
+
+**Collected:** $(date -Iseconds) (window: $SINCE)
+
+## What was being done
+
+<what you were doing when it hung>
+
+## What happened
+
+<see MANIFEST.txt and timeline.txt>
+
+## What it means
+
+<interpretation — the transcript cannot write this>
+EOF
+
+echo
+sed 's/^/  /' "$DIR/MANIFEST.txt"
+echo
+echo "  -> $DIR"
+echo "  fill in NOTES.md; run bt-postmortem for the timing analysis"

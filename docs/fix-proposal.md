@@ -53,7 +53,66 @@ The HCI version rules out the plausible alternatives: MediaTek would report manu
    `linux-firmware` on the affected system.
 3. **`BTUSB_WIDEBAND_SPEECH`** — mSBC wideband speech for HFP.
 
-Item 1 is what converts a permanent, power-cycle-only failure into a transient one.
+Item 1 was the motivation for this patch. **A direct test now casts doubt on whether it
+would be sufficient — see §3a.**
+
+---
+
+## 3a. ⚠️ The central assumption failed its first test
+
+This proposal was written on the assumption that a USB reset during stage 1 recovers the
+controller. On 2026-08-10 that was tested directly and **it did not**.
+
+A userspace watchdog issued `USBDEVFS_RESET` — the same operation
+`usb_queue_reset_device()` performs, through the same kernel path — **20 s after the
+first HCI timeout**, which was **33 s before** the first USB-level failure. It was well
+inside the window in which the device still answered USB. The reset failed and the chip
+went on to leave the bus:
+
+```
+07:24:45  Bluetooth: hci0: command tx timeout           <- first timeout
+07:25:05  watchdog: 3/3 in window -> intervening         (+20 s)
+07:25:23  usb 3-3: reset full-speed USB device number 2  (+38 s)
+07:25:38  usb 3-3: device descriptor read/64, error -110 (+53 s)
+07:26:48  usb 3-3: USB disconnect, device number 2       (+123 s)
+```
+
+Full record: [`evidence/sessions/20260810-072445-first-real-hang/`](../evidence/sessions/20260810-072445-first-real-hang/),
+including a btsnoop capture beginning one second after the first timeout.
+
+`btusb_qca_cmd_timeout()` fires on the 5th consecutive timeout — roughly the same moment
+— and does roughly the same thing. **There is therefore no evidence that this patch
+would have prevented the hang.**
+
+### What survives, and what does not
+
+| Claim | Status |
+|---|---|
+| The device is matched by no vendor quirks entry | ✅ verified in upstream source and the shipped binary |
+| It therefore gets no `cmd_timeout` handler and no firmware download | ✅ 287 timeouts, 0 reset attempts, 0 firmware loads across 34 boots |
+| Adding the ID would prevent the hang | ❌ **not supported** — the one direct test failed |
+
+### Two related corrections
+
+- **Stage 1 lasts ~53 s, not ~6 h.** The earlier figure measured how long an *untouched*
+  controller stayed enumerated while idle, which is not the same as how long it stays
+  recoverable.
+- **The trigger is not A2DP-specific.** The capture shows SCO/HFP voice traffic, then
+  `Start Discovery` → `Authentication Failed (0x05)`, `Disconnect`, `Set Powered:
+  Disabled`. The common factor is an audio stream torn down while active.
+
+### Where that leaves the patch
+
+Still worth reporting: a device silently receiving no vendor quirks is a real defect,
+and the reporter has seen the same behaviour on several laptops. But it should be
+submitted as *"this device is unmatched"*, not *"this fixes the hang"* — and the failed
+reset should be stated plainly, because a maintainer will want to know that the obvious
+remedy was tried and did not work.
+
+Open question for maintainers: would a reset issued **earlier** — during the audio
+teardown, before any HCI command times out — succeed where this one failed? If the chip
+is already unrecoverable by the time the first command times out, then `cmd_timeout` is
+structurally too late for this failure mode, whatever device IDs are in the table.
 
 ---
 
@@ -192,13 +251,23 @@ entire class of missing-ID bugs self-limiting instead of catastrophic.
 
 | Step | State |
 |---|---|
-| Root cause identified | ✅ confirmed — behavioural, upstream source, and shipped binary |
+| Device is unmatched by btusb's quirks table | ✅ confirmed — behavioural, upstream source, and shipped binary |
+| Trigger reproduced with instrumentation | ✅ 2026-08-10, full HCI capture |
+| **Would the patch prevent the hang?** | ❌ **no evidence — the equivalent reset failed (§3a)** |
 | Patch written | ✅ (§1, anchor needs regenerating against target tree) |
-| Built out-of-tree | ❌ blocked — controller hard-hung, needs cold power-off |
-| Tested on hardware | ❌ blocked |
-| Trigger reproduced post-patch | ❌ blocked |
+| Built out-of-tree | ❌ not done |
+| Tested on hardware | ❌ not done |
 | Checked against current mainline | ❌ not done |
-| Submitted upstream | ❌ not done — **do not submit before §5 and §6** |
+| Submitted upstream | ❌ not done — **and the claim must be narrowed first (§3a)** |
 
-Meanwhile the userspace watchdog in `docs/changes-applied.md` provides the same recovery
-behaviour without touching the kernel, and is already active.
+The userspace watchdog reproduces the same recovery behaviour without touching the
+kernel. It is active, it detects the stall in ~20 s — and on the one occasion it has
+faced a real hang, **it did not recover the controller either**, for the same reason the
+patch is now in doubt. Both approaches rest on the same assumption, and that assumption
+has failed once under measurement.
+
+Next experiment worth running: intervene on the *audio-teardown* signature (AVDTP/SCO
+errors in bluetoothd) rather than on `tx timeout`, i.e. reset before the first HCI
+command times out. If that recovers the chip, `cmd_timeout` is simply too late a hook
+for this failure mode and the finding is worth far more to maintainers than a device-ID
+addition.

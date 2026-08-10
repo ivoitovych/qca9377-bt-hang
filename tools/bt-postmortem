@@ -1,0 +1,98 @@
+#!/bin/bash
+# bt-postmortem — what happened during the most recent controller hang, and
+# what it means for the two claims this project makes.
+#
+#   bt-postmortem            this boot
+#   bt-postmortem -b -1      a previous boot
+#
+# Answers, from the logs alone:
+#   * when the stall started, and how fast it progressed
+#   * whether the watchdog detected it, how quickly, and whether it recovered
+#   * whether the USB reset worked — the claim the kernel patch depends on
+#
+# Read-only.
+
+set -uo pipefail
+
+BOOT="0"
+[[ "${1:-}" == "-b" ]] && BOOT="${2:?-b needs a boot index}"
+
+R=$'\033[31m'; G=$'\033[32m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
+[[ -t 1 ]] || { R=""; G=""; Y=""; B=""; O=""; }
+
+ts_of() { journalctl "$@" -o short-unix --no-pager 2>/dev/null | head -1 | awk '{printf "%.2f", $1}'; }
+hm()    { [[ -n "${1:-}" ]] && date -d "@${1%.*}" '+%H:%M:%S' || echo "—"; }
+delta() { [[ -n "${1:-}" && -n "${2:-}" ]] && awk -v a="$1" -v b="$2" 'BEGIN{printf "%+.0fs", b-a}' || echo "—"; }
+
+echo "${B}Controller hang postmortem (boot $BOOT)${O}"
+echo "─────────────────────────────────────────────────────────────"
+
+K=(-k -b "$BOOT"); W=(-u bt-hang-watchdog -b "$BOOT")
+
+t_first=$(journalctl "${K[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "tx timeout" | awk '{printf "%.2f",$1}')
+if [[ -z "$t_first" ]]; then
+    echo "${G}No controller timeouts in this boot — nothing to analyse.${O}"
+    exit 0
+fi
+
+t_act=$(journalctl "${W[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "intervening"       | awk '{printf "%.2f",$1}')
+t_usb=$(journalctl "${K[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "descriptor read"   | awk '{printf "%.2f",$1}')
+t_gone=$(journalctl "${K[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "USB disconnect"   | awk '{printf "%.2f",$1}')
+t_rec=$(journalctl "${W[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "RECOVERED"         | awk '{printf "%.2f",$1}')
+
+printf '\n%-34s %-10s %s\n' "EVENT" "TIME" "Δ from first timeout"
+printf '%-34s %-10s %s\n' "first HCI command timeout" "$(hm "$t_first")" "0s"
+printf '%-34s %-10s %s\n' "watchdog intervened"        "$(hm "$t_act")"  "$(delta "$t_first" "$t_act")"
+printf '%-34s %-10s %s\n' "first USB-level failure"    "$(hm "$t_usb")"  "$(delta "$t_first" "$t_usb")"
+printf '%-34s %-10s %s\n' "device left the bus"        "$(hm "$t_gone")" "$(delta "$t_first" "$t_gone")"
+printf '%-34s %-10s %s\n' "controller recovered"       "$(hm "$t_rec")"  "$(delta "$t_first" "$t_rec")"
+
+n_to=$(journalctl "${K[@]}" --no-pager 2>/dev/null | grep -c "tx timeout" || true)
+n_act=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "intervening" || true)
+n_rec=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "RECOVERED" || true)
+n_rf=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "USBDEVFS_RESET failed" || true)
+n_fatal=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "FATAL:" || true)
+
+echo
+echo "${B}Counts${O}"
+printf '  timeouts %s   interventions %s   recovered %s   reset-failed %s   fatal %s\n' \
+  "${n_to:-0}" "${n_act:-0}" "${n_rec:-0}" "${n_rf:-0}" "${n_fatal:-0}"
+
+echo
+echo "${B}Verdict${O}"
+
+if [[ -z "$t_act" ]]; then
+    echo "  ${Y}The watchdog never fired${O} despite $n_to timeout(s)."
+    echo "  Either it was not running, or the timeouts never reached BT_THRESHOLD"
+    echo "  within BT_WINDOW. Check: journalctl -u bt-hang-watchdog -b $BOOT"
+elif (( ${n_rec:-0} > 0 )); then
+    echo "  ${G}RECOVERED.${O} The watchdog detected the stall $(delta "$t_first" "$t_act") after the first"
+    echo "  timeout and brought the controller back without a reboot."
+    echo
+    echo "  This SUPPORTS the kernel-patch claim: a USB reset during stage 1"
+    echo "  recovers the controller, which is exactly what"
+    echo "  btusb_qca_cmd_timeout() -> usb_queue_reset_device() would have done."
+else
+    echo "  ${R}NOT recovered.${O} The watchdog intervened $(delta "$t_first" "$t_act") after the first timeout"
+    [[ -n "$t_usb" ]] && echo "  — that is $(awk -v a="$t_act" -v b="$t_usb" 'BEGIN{printf "%.0f", b-a}')s BEFORE the first USB-level failure, so it was not too slow."
+    echo
+    if (( ${n_rf:-0} > 0 )); then
+        echo "  ${B}The USB reset itself failed.${O}"
+        echo
+        echo "  This does NOT support the kernel-patch claim. btusb_qca_cmd_timeout()"
+        echo "  calls usb_queue_reset_device() — the same operation that just failed."
+        echo "  Adding the device ID to btusb's quirks table would likely not have"
+        echo "  prevented this hang."
+        echo
+        echo "  The device IS missing from that table — that finding stands. What is"
+        echo "  not supported is the claimed benefit of adding it."
+    fi
+    (( ${n_fatal:-0} > 0 )) && echo "  Reached stage 2 (off the bus): a cold power-off is required."
+fi
+
+if [[ -n "$t_first" && -n "$t_usb" ]]; then
+    echo
+    echo "${B}Stage 1 duration${O}: $(awk -v a="$t_first" -v b="$t_usb" 'BEGIN{printf "%.0f", b-a}')s"
+    echo "  (first HCI timeout -> first USB failure: how long the chip stayed"
+    echo "   USB-responsive, i.e. the window in which any reset could work)"
+fi
