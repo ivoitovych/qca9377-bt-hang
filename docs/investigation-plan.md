@@ -11,19 +11,42 @@ Ordered by risk. Everything in phases A and B is reversible and touches no code.
 
 ## Phase A — zero risk, no code, no rebuild
 
-### A1. Firmware identity under both operating systems ⭐ decisive
+### A0. Confirm Ubuntu's own `hci_cmd_timeout()` ⭐ do this first
+
+The whole interpretation of the recovery experiments now rests on one source fact, so do
+not infer it. Upstream v7.0 `net/bluetooth/hci_core.c` reads:
+
+```c
+	if (hdev->reset)
+		hdev->reset(hdev);
+```
+
+with no threshold — verified. And `tools/bt-verify-kernel-mechanism` confirms the shipped
+`btusb.ko` exports `btusb_qca_reset`, not `btusb_qca_cmd_timeout`. What remains is to read
+**Ubuntu's `7.0.0-28` source** and confirm it is not patched here. Requires enabling
+`deb-src` and `apt-get source`; changes nothing on the running system.
+
+### A1. Firmware identity under both operating systems — strong, not decisive
 
 The controller reports HCI revision and LMP subversion. Read them under Linux, then under
 Windows 11 on the same machine.
 
-- **If they differ**, the two systems are demonstrably running different firmware on the
-  same silicon, and [`firmware-hypothesis.md`](firmware-hypothesis.md) stops being a
-  hypothesis.
+- **If they differ**, that is strong evidence the controller reports a different
+  firmware/version state under the two systems.
+- ⚠️ It does **not** establish that the difference *causes* the hang, and equal version
+  fields would not prove identical binary firmware either. An earlier revision called
+  this "decisive"; that was too strong.
 - Costs one reboot. Changes nothing.
 
 Linux: `hciconfig -a` / `HCI_Read_Local_Version`.
 Windows: Device Manager → Bluetooth adapter → Details → *Firmware/LMP version*, or the
 vendor tool.
+
+**More direct, and QCA-specific:** `btusb_setup_qca()` asks the controller for its
+Qualcomm target version and patch status before deciding whether to load the rampatch.
+Getting that answer out of the device tells us far more than a version-field comparison —
+and Build B in [`fix-proposal.md`](fix-proposal.md) §5a produces it as a side effect,
+including if it refuses to proceed.
 
 ### A2. Driver dynamic debug
 
@@ -71,12 +94,29 @@ works. Requires running with it off for a period and comparing. Lower value than
 
 ---
 
-## Phase C — only after A and B
+## Phase C — after A0 and A4, not necessarily after all of B
 
-### C1. Build `btusb` out-of-tree with the device ID added
+**Revised 2026-08-11.** An external review argued for bringing the builds forward, and
+that is right: with the mechanism correction in hand, the A/B experiment is the sharpest
+instrument available, and waiting on the remaining Phase-B items would not sharpen it.
 
-Confirm `using rampatch file: qca/rampatch_usb_00000302.bin` appears, then test whether
-the reproducer from A4 still triggers the hang.
+The gating prerequisites are **A0** (confirm Ubuntu's timeout path) and **A4** (a
+deterministic reproducer — without one, neither build can be evaluated).
+
+### C1. The A/B build — see [`fix-proposal.md`](fix-proposal.md) §5a
+
+Two builds, not one, because `BTUSB_QCA_ROME` changes two things at once:
+
+- **A: reset only** — install `hdev->reset = btusb_qca_reset`, no firmware setup
+- **B: full `BTUSB_QCA_ROME`** — reset callback *and* `btusb_setup_qca()`
+
+If A fixes it, immediate kernel-side recovery was the missing piece. If A hangs and B
+fixes it, firmware initialisation is the cause. If both hang, the controller is poisoned
+before the first timeout. If B refuses to probe, its ROM-version query tells us what the
+controller reports about itself — also a result.
+
+Confirm `using rampatch file: qca/rampatch_usb_00000302.bin` appears in B, then test
+whether the A4 reproducer still triggers the hang.
 
 ⚠️ Risk, unchanged from [`fix-proposal.md`](fix-proposal.md) §4: if this module is not a
 true ROME variant, `btusb_setup_qca()` may fail at probe and leave the machine with **no

@@ -299,13 +299,21 @@ ends up with `driver_info = 0`, i.e. **no vendor quirks**.
 
 ### What the device is therefore denied
 
+> ⚠️ **This section described the mechanism incorrectly and is corrected below.** It is
+> kept because this document is a record of the investigation as it happened. The
+> authoritative description is in
+> [`fix-proposal.md`](fix-proposal.md) §3a. In short: v7.0 uses
+> `hdev->reset = btusb_qca_reset`, invoked by `hci_cmd_timeout()` on the **first**
+> timeout with no threshold — not a `cmd_timeout` handler counting to five. Verified from
+> upstream source and by `tools/bt-verify-kernel-mechanism` against the shipped module.
+
 Because `driver_info` lacks `BTUSB_QCA_ROME`, `btusb_probe()` never enters the QCA
 branch, so the device never gets:
 
-1. **`hdev->cmd_timeout = btusb_qca_cmd_timeout`** ← the critical one.
-   Upstream `btusb_qca_cmd_timeout()` counts consecutive HCI command timeouts and, on
-   the 5th, calls `usb_queue_reset_device()` to force a USB reset of the controller,
-   logging `"Multiple cmd timeouts seen. Resetting usb device."`
+1. ~~**`hdev->cmd_timeout = btusb_qca_cmd_timeout`**~~ — **corrected:**
+   `hdev->reset = btusb_qca_reset`, called from `hci_cmd_timeout()` on the first command
+   timeout. With the entry missing, `hdev->reset` stays NULL and the kernel logs the
+   timeout without acting.
 2. QCA rampatch / NVM firmware download (`qca/rampatch_usb_*.bin`, `qca/nvm_usb_*.bin`)
 3. `BTUSB_WIDEBAND_SPEECH` and related quirks
 
@@ -353,11 +361,12 @@ AVDTP Suspend + Abort time out                          (Aug 09 20:19:59–20:20
         ▼
 host sends HCI_Disconnect (0x0406) — firmware wedges    (Aug 09 20:20:43)
         │
-        ├── WITH the correct ID:  5 timeouts → btusb_qca_cmd_timeout()
-        │                          → usb_queue_reset_device() → chip re-enumerates
-        │                          → RECOVERED automatically, user never notices
+        ├── WITH the correct ID:  1st timeout → hci_cmd_timeout() calls
+        │                          hdev->reset() = btusb_qca_reset()
+        │                          → usb_queue_reset_device()
+        │                          → outcome UNKNOWN; never tested (see fix-proposal §3a)
         │
-        └── WHAT ACTUALLY HAPPENS: no cmd_timeout handler exists.
+        └── WHAT ACTUALLY HAPPENS: hdev->reset is NULL, so the `if` is not taken.
             Kernel logs the timeout and does nothing. Host keeps hammering a dead
             chip for hours (22 timeouts over ~6 h)
         │
@@ -419,7 +428,7 @@ plus `options btusb enable_autosuspend=0` in `/etc/modprobe.d/btusb.conf`.
 **B. Early-warning watchdog.** Since recovery is impossible *after* the hard hang but a
 USB reset during the ~6 h soft-hang window would likely work, a small service that
 watches the kernel log for `tx timeout` and immediately issues a `btusb` unbind/rebind
-reproduces — in userspace — exactly what the missing `btusb_qca_cmd_timeout` would have
+approximates — in userspace, but ~11–33 s later — what the missing `btusb_qca_reset` would have
 done. This is the highest-value mitigation available without patching the kernel.
 
 **C. Reduce LE churn.** All three paired devices are BR/EDR audio

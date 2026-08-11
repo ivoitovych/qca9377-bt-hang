@@ -29,9 +29,10 @@ Log evidence
   automatic reset attempts  : 0        <-- this is the bug
 ```
 
-Timeouts with **zero** resets means the kernel logged the failures and did nothing:
-`btusb_qca_cmd_timeout()` is only installed for devices matched by btusb's vendor quirks
-table, and yours is not in it.
+Timeouts with **zero** resets means the kernel logged the failures and did nothing.
+`hci_cmd_timeout()` calls `hdev->reset(hdev)` on the first timeout — but `hdev->reset` is
+only installed for devices matched by btusb's vendor quirks table. For an unmatched
+device it is NULL, so the branch is never taken.
 
 <details>
 <summary>Or check by hand</summary>
@@ -74,10 +75,18 @@ $ bluetoothctl show | grep -E "Manufacturer|Version"
 
 ## What's actually wrong
 
-`13d3:3503` appears not to be matched by btusb's vendor quirks table. It binds through
-the generic USB-Bluetooth-class rule with `driver_info = 0`, so it never receives
-`hdev->cmd_timeout = btusb_qca_cmd_timeout` — the handler that USB-resets a controller
-after 5 consecutive HCI command timeouts.
+`13d3:3503` is matched by no entry in btusb's vendor quirks table. It binds through the
+generic USB-Bluetooth-class rule with `driver_info = 0`, so it receives **neither** of
+the two things `BTUSB_QCA_ROME` provides:
+
+- **`hdev->reset = btusb_qca_reset`** — the callback `hci_cmd_timeout()` invokes on the
+  *first* command timeout (no threshold; see `net/bluetooth/hci_core.c`)
+- **`btusb_setup_qca()`** — rampatch/NVM firmware download, so the controller runs
+  factory ROM firmware on every boot
+
+Neighbouring IDs are covered — `13d3:3491`, `3496`, `3501`, `3563` are all present in the
+shipped module, while `3502`, `3503` and `3504` are absent. Check your own kernel with
+`tools/bt-verify-kernel-mechanism`.
 
 Measured on the affected machine:
 
@@ -286,19 +295,20 @@ A one-line kernel patch — add the device to btusb's QCA ROME quirks:
 +						     BTUSB_WIDEBAND_SPEECH },
 ```
 
-> ⚠️ **Correct, but on current evidence not sufficient — measured, not assumed.**
-> `btusb_qca_cmd_timeout()` only fires *after* HCI commands start timing out, and by
-> then the controller appears to be past saving. Both directions were tested:
+> ⚠️ **Untested — and our experiments did not test it.** Our userspace resets fired
+> **+11 s to +33 s** after the first timeout and all five failed. But `hci_cmd_timeout()`
+> calls `hdev->reset(hdev)` *synchronously with the timeout it reports*, with no
+> threshold — so a patched kernel acts at **+0 s**. Every experiment we ran was late
+> relative to the thing being proposed.
 >
 > | Reset issued | Result |
 > |---|---|
-> | **+20 s** after the first HCI timeout (where `cmd_timeout` acts) | ❌ failed — chip left the bus |
-> | **+11 s** after the first HCI timeout — near the limit of log-driven reaction | ❌ failed — chip left the bus |
-> | **before** any HCI timeout, on bluetoothd's audio-teardown failure | ✅ **recovered** |
+> | **+0 s** — what the patch would do | ❓ **never tested** |
+> | **+11 s … +33 s** after the first timeout | ❌ five attempts, all failed |
+> | **before** any timeout, on bluetoothd's audio-teardown signal | ✅ **recovered** |
 >
-> Three for three, a reset after the first HCI timeout has failed. The recoverable
-> window appears to close at or before exactly the point `cmd_timeout` becomes
-> eligible to fire.
+> The window closes sharply; where exactly, relative to the first timeout, is unknown —
+> because no experiment has yet put a reset there.
 >
 > Sessions: [late reset failed](evidence/sessions/20260810-072445-first-real-hang/) ·
 > [early reset worked](evidence/sessions/20260811-002156-early-mode-SUCCESS/) ·
@@ -308,10 +318,12 @@ A one-line kernel patch — add the device to btusb's QCA ROME quirks:
 > firmware download path; if this module is not a true ROME variant, probe can fail and
 > leave you with *no* Bluetooth. See [`docs/fix-proposal.md`](docs/fix-proposal.md).
 
-**What the missing ID does and does not explain.** That the device receives no
-`cmd_timeout` handler is verified three ways (below) and is a real defect worth
-reporting. What is *not* established is that installing the handler would prevent this
-failure — the one direct test of that said otherwise.
+**Why the missing ID matters twice.** It withholds *recovery* — `hdev->reset` is NULL, so
+`hci_cmd_timeout()` logs each timeout and does nothing — **and** *prevention*, because
+`btusb_setup_qca()` never runs and the controller carries factory ROM firmware on every
+boot. The first is verified three ways; the second is the
+[firmware hypothesis](docs/firmware-hypothesis.md), and it is the better explanation for
+why the same hardware never faults under Windows.
 
 **Confirmed at source level.** `0x3503` does not appear anywhere in upstream
 `drivers/bluetooth/btusb.c` (v7.0), which carries 78 other `0x13d3` entries — the vendor

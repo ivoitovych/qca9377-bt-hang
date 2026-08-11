@@ -1,0 +1,96 @@
+#!/bin/bash
+# bt-verify-kernel-mechanism — which reset mechanism does THIS kernel's btusb use?
+#
+#   bt-verify-kernel-mechanism [kernel-release]
+#
+# Settles, against the shipped binary rather than against an assumption:
+#
+#   1. Does btusb define btusb_qca_cmd_timeout (an hdev->cmd_timeout handler,
+#      which historically counted 5 consecutive timeouts before resetting)?
+#   2. Or does it define btusb_qca_reset (an hdev->reset callback, which
+#      hci_cmd_timeout() invokes immediately on the FIRST command timeout)?
+#
+# This distinction decides how to interpret every recovery experiment in this
+# repository. A userspace reset issued +20 s after the first timeout is a fair
+# proxy for a handler that waits for five timeouts. It is NOT a fair proxy for
+# a callback that fires during the first one.
+#
+# Also checks which neighbouring IMC Networks IDs are present, to show whether
+# this device's absence is an isolated gap.
+#
+# Read-only. Writes only to a temp file it removes.
+
+set -uo pipefail
+
+KREL="${1:-$(uname -r)}"
+KO="/lib/modules/$KREL/kernel/drivers/bluetooth/btusb.ko"
+TMP=$(mktemp /tmp/btusb-verify.XXXXXX.ko)
+trap 'rm -f "$TMP"' EXIT
+
+G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
+[[ -t 1 ]] || { G=""; R=""; Y=""; B=""; O=""; }
+
+if   [[ -f "$KO" ]];        then cp "$KO" "$TMP"
+elif [[ -f "$KO.zst" ]];    then zstd -dcf "$KO.zst" > "$TMP" 2>/dev/null
+elif [[ -f "$KO.xz" ]];     then xz -dc "$KO.xz" > "$TMP" 2>/dev/null
+else echo "btusb module not found for $KREL" >&2; exit 2; fi
+
+echo "${B}btusb reset mechanism${O} — kernel $KREL"
+echo "─────────────────────────────────────────────────────────────"
+echo "  module: $KO ($(stat -c %s "$TMP") bytes uncompressed)"
+echo
+
+syms=$(strings "$TMP")
+
+echo "${B}1. Which QCA reset symbol is present?${O}"
+has_cmdto=0; has_reset=0
+grep -q "btusb_qca_cmd_timeout" <<<"$syms" && has_cmdto=1
+grep -q "btusb_qca_reset"       <<<"$syms" && has_reset=1
+
+if (( has_cmdto )); then
+    echo "  ${Y}•${O} btusb_qca_cmd_timeout  PRESENT  (hdev->cmd_timeout path)"
+else
+    echo "  ${G}✓${O} btusb_qca_cmd_timeout  absent"
+fi
+if (( has_reset )); then
+    echo "  ${G}✓${O} btusb_qca_reset        PRESENT  (hdev->reset path)"
+else
+    echo "  ${Y}•${O} btusb_qca_reset        absent"
+fi
+echo
+if (( has_reset && ! has_cmdto )); then
+    echo "  ${B}=> hdev->reset mechanism.${O} hci_cmd_timeout() calls it on the"
+    echo "     FIRST command timeout — no 5-timeout threshold."
+    echo "     A userspace reset issued seconds later is NOT an equivalent test."
+elif (( has_cmdto && ! has_reset )); then
+    echo "  ${B}=> hdev->cmd_timeout mechanism${O} (older 5-timeout counter)."
+elif (( has_cmdto && has_reset )); then
+    echo "  ${B}=> both symbols present${O} — inspect the source for which is assigned."
+else
+    echo "  ${R}=> neither symbol found${O} — module may be stripped."
+fi
+
+echo
+echo "${B}2. Supporting strings${O}"
+for s in "Resetting usb device" "rampatch" "nvm_usb" "using rampatch file" "qca_read_soc_version" "ROM version"; do
+    if grep -qi "$s" <<<"$syms"; then printf '  %s✓%s %s\n' "$G" "$O" "$s"
+    else printf '  %s·%s %s (absent)\n' "$Y" "$O" "$s"; fi
+done
+
+echo
+echo "${B}3. IMC Networks (13d3) device IDs in this binary${O}"
+echo "  usb_device_id is little-endian: 13d3:XXYY -> bytes d3 13 YY XX"
+hexdump -ve '1/1 "%02x"' "$TMP" > "$TMP.hex" 2>/dev/null
+for id in 3491 3496 3501 3502 3503 3504 3562 3563; do
+    lo="${id:2:2}"; hi="${id:0:2}"
+    pat="d313${lo}${hi}"
+    if grep -qo "$pat" "$TMP.hex" 2>/dev/null; then
+        printf '  %s✓%s 13d3:%s  present\n' "$G" "$O" "$id"
+    else
+        printf '  %s✗%s 13d3:%s  ABSENT\n' "$R" "$O" "$id"
+    fi
+done
+rm -f "$TMP.hex"
+echo
+echo "  (neighbouring IDs present while this device's is absent = an isolated gap,"
+echo "   not a vendor the driver simply does not cover)"

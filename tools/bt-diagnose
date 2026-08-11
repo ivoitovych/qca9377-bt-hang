@@ -12,12 +12,12 @@
 #   2. ZERO automatic reset attempts in response  ("Resetting usb device")
 #   3. no vendor firmware load for the controller
 #
-# (1) without (2) is the bug: btusb_qca_cmd_timeout() resets a controller after
-# repeated command timeouts, but it is only installed when the device is matched
-# by btusb's vendor quirks table. A device missing from that table gets
-# driver_info = 0 and no handler, so a firmware stall that the kernel is
-# designed to recover from decays instead into a state only a cold power-off
-# clears — a warm reboot does not drop an M.2 card's power rail.
+# (1) without (2) is the bug. hci_cmd_timeout() calls hdev->reset(hdev) on the
+# FIRST command timeout, with no threshold. But hdev->reset is only installed
+# for devices matched by btusb's vendor quirks table; an unmatched device gets
+# driver_info = 0 and hdev->reset stays NULL, so the kernel logs each timeout
+# and does nothing. The same missing entry also skips btusb_setup_qca(), so the
+# controller never receives its firmware patch either.
 #
 # Exit: 0 = signature not present, 1 = signature present, 2 = cannot determine.
 
@@ -128,7 +128,7 @@ fi
 
 if (( resets > 0 )); then
     echo "${Y}Timeouts present, but the kernel IS resetting the controller.${O}"
-    echo "$timeouts timeout(s) and $resets reset attempt(s): the cmd_timeout handler"
+    echo "$timeouts timeout(s) and $resets reset attempt(s): the reset callback"
     echo "is installed and doing its job. Your controller may still be unreliable,"
     echo "but not for the reason this repository documents."
     exit 0

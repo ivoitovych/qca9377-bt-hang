@@ -1,12 +1,26 @@
-# Related reports — this is not one device
+# Related reports — the same *phenotype* elsewhere
 
 Prior art gathered 2026-08-11, after the operator observed the same behaviour across
 multiple laptops over several years and asked how widespread it is.
 
-**It is not specific to this chip, this vendor, or this laptop.** The same signature —
-`hci0: command tx timeout` during A2DP activity, adapter unusable afterwards — is
-reported across Qualcomm and Intel controllers, on multiple distributions, over at least
-seven years.
+**The same failure phenotype** — `hci0: command tx timeout` during A2DP activity, adapter
+unusable afterwards — is reported across Qualcomm and Intel controllers, on multiple
+distributions, over at least seven years.
+
+> ⚠️ **Phenotype, not proven common cause.** `command tx timeout` is an endpoint symptom,
+> roughly like "disk I/O timeout": it says the controller stopped answering, not why.
+> Intel 7260 and this QCA9377 may have entirely different underlying bugs that converge
+> on the same visible signature:
+>
+> ```
+> audio state change → controller stops answering HCI → command tx timeout
+> ```
+>
+> An earlier revision of this file asserted "this is not specific to this chip or vendor"
+> and "the underlying fault has been open since 2019 across vendors". That overstated the
+> causal claim on the strength of a shared symptom, and has been corrected. Conservative
+> language matters here: a maintainer will discount a report that claims more than its
+> evidence supports.
 
 ---
 
@@ -61,9 +75,10 @@ Recurring details across these:
 
 ## What this changes about the submission
 
-1. **Scope.** This should not be framed as "please add one device ID." The device ID is
-   real and worth fixing, but the underlying fault has been open since 2019 across at
-   least two vendors.
+1. **Scope.** The device ID is real and worth fixing. Separately, a failure *of this
+   shape* has been reported since 2019 on other vendors' hardware — useful context for
+   why the symptom deserves attention, but not evidence that those reports share a cause
+   with this one. Present them as prior art for the phenotype, nothing more.
 2. **Trigger.** Multiple independent reporters point at **A2DP stream state transitions**
    — pause/play, codec/mode switching. That is far more specific than "Bluetooth
    sometimes hangs", and it matches this operator's most reliable reproducer.

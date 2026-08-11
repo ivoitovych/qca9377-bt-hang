@@ -4,8 +4,8 @@
 # Why this exists:
 #   USB 13d3:3503 appears not to be matched by btusb's vendor quirks table, so
 #   it binds via the generic USB-Bluetooth-class rule with driver_info = 0 and
-#   never receives hdev->cmd_timeout = btusb_qca_cmd_timeout(), the handler
-#   that USB-resets the controller after 5 consecutive HCI command timeouts.
+#   never receives hdev->reset = btusb_qca_reset(), the callback that
+#   hci_cmd_timeout() invokes on the FIRST HCI command timeout (no threshold).
 #   Measured on the affected host: 287 "tx timeout" events across 34 boots,
 #   0 automatic reset attempts.
 #
@@ -150,7 +150,9 @@ recover() {
     systemctl stop bluetooth >/dev/null 2>&1
     sleep 1
 
-    # Step 1: USB device reset (what btusb_qca_cmd_timeout would have done).
+    # Step 1: USB device reset. NOTE: this is a proxy for btusb_qca_reset(), not
+    # an equivalent. The kernel would act at +0 s inside hci_cmd_timeout(); this
+    # fires whenever the journal reader gets here, measured at +11 s to +33 s.
     if usbfs_reset "$dev" 2>/dev/null; then
         log "  USBDEVFS_RESET issued"
     else

@@ -229,7 +229,9 @@ Defaults, and what they mean:
 | `BT_COOLDOWN` | `180` | minimum seconds between recovery attempts |
 | `BT_MAX_FAILS` | `3` | consecutive failures before going idle until reboot |
 
-The kernel's own `btusb_qca_cmd_timeout()` uses a threshold of 5 consecutive timeouts.
+⚠️ Corrected 2026-08-11: an earlier note here claimed the kernel uses a threshold of 5
+consecutive timeouts. It does not — `hci_cmd_timeout()` calls `hdev->reset()` on the
+first one, with no threshold.
 `3` is deliberately more aggressive, because on this host the soft-hang window is the
 only chance to recover and there is no downside to resetting an already-broken radio.
 

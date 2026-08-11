@@ -584,6 +584,95 @@ a patched module.
 
 ---
 
+## Phase 16 — External review: the kernel mechanism was documented wrong (2026-08-11)
+
+A reviewer reading the repository against current upstream source found that the whole
+project had been describing the wrong mechanism, and that the error had propagated into
+its central conclusion.
+
+**What the repository claimed:** `BTUSB_QCA_ROME` installs
+`hdev->cmd_timeout = btusb_qca_cmd_timeout`, which waits for **five consecutive** command
+timeouts before resetting.
+
+**What v7.0 actually does** — verified verbatim from `net/bluetooth/hci_core.c`:
+
+```c
+static void hci_cmd_timeout(struct work_struct *work)
+{
+	...
+	bt_dev_err(hdev, "command 0x%4.4x tx timeout", opcode);
+	hci_cmd_sync_cancel_sync(hdev, ETIMEDOUT);
+	...
+	if (hdev->reset)
+		hdev->reset(hdev);
+	...
+}
+```
+
+No counter, no threshold. And `btusb` installs `hdev->reset = btusb_qca_reset`, not a
+`cmd_timeout` handler. Confirmed independently against the shipped binary by a new tool,
+`tools/bt-verify-kernel-mechanism`:
+
+```
+btusb_qca_cmd_timeout  absent
+btusb_qca_reset        PRESENT
+```
+
+### Why this mattered so much
+
+Every recovery experiment fired a userspace reset **+11 s to +33 s** after the first
+timeout. Under the real mechanism a patched kernel resets at **+0 s**, in the same call
+frame that emits the log line the watchdog reacts to.
+
+> **The five failed late resets never tested the patch.** They tested a reset eleven or
+> more seconds late. Given the window closes sharply, that difference may be decisive.
+
+So the conclusion "adding the device ID would not have helped" was wrong — and the ID is
+interesting again for **two independent reasons**: firmware initialisation (prevention)
+and immediate reset (recovery).
+
+The irony is worth recording: Phase 15 corrected one reasoning error while carrying
+another one forward inside the correction.
+
+### Other corrections from the same review
+
+- `USBDEVFS_RESET` and `usb_queue_reset_device()` were described as "the same operation
+  through the same kernel path". Too strong — the former goes via `proc_resetdevice()` →
+  `usb_reset_device()`, the latter queues a reset on the interface. Same machinery,
+  different timing and context; a useful proxy, not an equivalent.
+- The cross-vendor claim ("not specific to this chip or vendor", "the underlying fault
+  has been open since 2019 across vendors") overstated causation from a shared symptom.
+  `command tx timeout` is an endpoint symptom, like "disk I/O timeout". Reworded to
+  *same failure phenotype, useful prior art*.
+- Investigation-plan A1 was called "decisive". Differing HCI/LMP version fields would be
+  strong evidence of differing firmware state, but would not establish causation, and
+  equal fields would not prove identical binary firmware. Downgraded, with a note that
+  `btusb_setup_qca()`'s own ROM-version query is the more direct probe.
+
+### And a better experiment
+
+The reviewer proposed splitting the build in two, which is sharper than what was planned:
+
+- **A: reset only** — install `hdev->reset`, no firmware setup
+- **B: full `BTUSB_QCA_ROME`** — reset callback *and* `btusb_setup_qca()`
+
+A fixing it means immediate recovery was the missing piece; A hanging but B fixing it
+means firmware initialisation is the cause; both hanging points before the first timeout.
+And B refusing to probe is itself informative, since the QCA setup path queries the
+controller's ROM version before deciding to load firmware.
+
+Adopted in `fix-proposal.md` §5a. Also noted: `qca_read_soc_version` and the ROM-version
+strings are **absent** from the shipped `btusb.ko`, which is worth understanding before
+assuming the firmware path would engage.
+
+### Verification discipline
+
+The reviewer explicitly asked not to be treated as the sole source of truth, and was
+taken at their word: every claim was checked against upstream source and against this
+machine's own binary before the repository was changed.
+
+---
+
 ## Recurring lessons
 
 - **Measure before capping.** `MemoryMax=64M` and the 15-minute metrics interval were
@@ -614,6 +703,15 @@ a patched module.
 - **One reproduction is one failure path.** The early-warning window looked general after
   a single success; a differently-provoked hang had no such window at all. Vary the
   trigger before generalising.
+- **Read the mechanism from source before reasoning about it.** Fifteen phases were built
+  on a remembered API (`hdev->cmd_timeout`, five-timeout threshold) that v7.0 does not
+  use. One `grep` of the shipped module would have caught it on day one, and the error
+  silently invalidated the project's headline conclusion.
+- **A correction can carry a second error forward.** Phase 15 fixed the recovery/
+  prevention conflation while still assuming the wrong timeout mechanism — so the
+  "corrected" conclusion was also wrong.
+- **Distinguish phenotype from cause.** `command tx timeout` is an endpoint symptom;
+  shared symptoms across vendors are prior art, not evidence of a shared root cause.
 - **Disproving one mechanism does not disprove the change that carries it.** Adding the
   device ID does two things; five phases were spent refuting one of them, and the
   conclusion "the patch would not help" was drawn without testing the other.

@@ -11,24 +11,43 @@ The same silicon, in the same laptop, **never exhibits this fault under Windows*
 operator has also seen the same behaviour on several other laptops across years of use.
 
 That single fact invalidates a conclusion this project had drifted toward — that the
-QCA9377 is simply a weak part and should be replaced. If the chip is capable of running
-indefinitely without stalling under one OS, the hardware is not the explanation.
-**Something Linux does, or fails to do, puts it in that state.**
+QCA9377 is simply a weak part and should be replaced. If the chip runs indefinitely
+without stalling under one OS, **hardware alone is not a sufficient explanation**;
+some OS/driver/firmware/command-sequence difference is necessary to produce the failure.
+
+⚠️ An earlier revision said "the hardware is not the explanation". That is too strong,
+and the distinction matters. The hardware can still *participate*:
+
+```
+silicon or ROM-firmware defect
+        +
+Linux-specific command sequence, or a missing rampatch
+        =
+hang
+```
+
+Windows may simply avoid the sequence, or repair the defect by loading the patch. Either
+way, "replace the card because the QCA9377 is poor" is no longer a supportable
+conclusion.
 
 ## What we already knew and mis-filed
 
 `BTUSB_QCA_ROME` in `driver_info` makes `btusb_probe()` install **two** things:
 
-1. `hdev->cmd_timeout = btusb_qca_cmd_timeout` — the reset-on-timeout handler
+1. `hdev->reset = btusb_qca_reset` — the callback `hci_cmd_timeout()` invokes on the
+   first command timeout
 2. **`btusb_setup_qca()` — download `qca/rampatch_usb_*.bin` and `qca/nvm_usb_*.bin`
    to the controller**
 
 Earlier work established, and verified three ways, that this device matches no quirks
-entry — so neither runs. Item 1 was investigated exhaustively: a reset issued after the
-first HCI timeout fails, five for five, so installing that handler would not have helped.
+entry — so neither runs. Item 1 was investigated at length: a reset issued 11–33 s after
+the first HCI timeout fails, five for five.
 
-**From that, the project concluded the patch would not help. That was a non-sequitur.**
-Item 2 was never tested. Item 1 is about *recovery*. Item 2 is about *prevention*.
+**From that, the project concluded the patch would not help. That was a non-sequitur,
+twice over.** Item 2 was never tested at all — and item 1 was never tested either, since
+the kernel would reset at +0 s rather than +11 s (see
+[`fix-proposal.md`](fix-proposal.md) §3a). Item 1 is about *recovery*, item 2 about
+*prevention*, and both remain open.
 
 The absence of firmware loading had been recorded since the second hour of the
 investigation — as *corroborating evidence that the device is unmatched*. The obvious
