@@ -241,6 +241,20 @@ vs. appearances in boots that hung): `cancel_request() Suspend` 2/2, `Abort` 4/4
 ⚠️ **Opt-in, and experimental.** A false positive resets a working controller and drops
 live connections. Raise `BT_EARLY_THRESHOLD` if it fires during normal use.
 
+⚠️ **It only covers one of at least two failure paths.** In a hang provoked by repeated
+connect/disconnect cycles and mode changes (2026-08-11), the bluetoothd signal arrived
+**133 s *after*** the first HCI timeout — there was no early-warning window at all, and
+`BT_EARLY` had nothing to trigger on.
+
+| | Path A — audio teardown | Path B — connect/disconnect + mode changes |
+|---|---|---|
+| bluetoothd warning | 52 s **before** the first timeout | 133 s **after** it |
+| Early reset possible | yes — and it recovered | **no** |
+
+So `BT_EARLY` helps when the failure starts in the audio layer, and cannot help when it
+starts at HCI. Enable it if your hangs follow audio teardown; expect nothing from it
+otherwise.
+
 ---
 
 ## The real fix
@@ -258,12 +272,17 @@ A one-line kernel patch — add the device to btusb's QCA ROME quirks:
 >
 > | Reset issued | Result |
 > |---|---|
-> | 20 s after the first HCI timeout (where `cmd_timeout` acts) | ❌ failed — chip left the bus |
-> | before any HCI timeout, on bluetoothd's audio-teardown failure | ✅ **recovered** |
+> | **+20 s** after the first HCI timeout (where `cmd_timeout` acts) | ❌ failed — chip left the bus |
+> | **+11 s** after the first HCI timeout — near the limit of log-driven reaction | ❌ failed — chip left the bus |
+> | **before** any HCI timeout, on bluetoothd's audio-teardown failure | ✅ **recovered** |
+>
+> Three for three, a reset after the first HCI timeout has failed. The recoverable
+> window appears to close at or before exactly the point `cmd_timeout` becomes
+> eligible to fire.
 >
 > Sessions: [late reset failed](evidence/sessions/20260810-072445-first-real-hang/) ·
-> [early reset worked](evidence/sessions/20260811-002052-early-mode-SUCCESS/).
-> This is the `BT_EARLY` mode described above. **n = 1 in each direction.**
+> [early reset worked](evidence/sessions/20260811-002156-early-mode-SUCCESS/) ·
+> [+11 s also failed, no early warning](evidence/sessions/20260811-060910-mode-change-hang/)
 >
 > ⚠️ **Also untested and risky in its own right.** `BTUSB_QCA_ROME` enables the rampatch
 > firmware download path; if this module is not a true ROME variant, probe can fail and

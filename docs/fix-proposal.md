@@ -158,9 +158,38 @@ The more valuable thing to raise with maintainers is therefore the **timing boun
 Whether that warrants a new hook, an mgmt-level signal, or is simply out of scope for
 the kernel is a question for `linux-bluetooth`, not for this document.
 
-⚠️ **n = 1 in each direction.** Do not present this as settled. Attach both sessions:
-`evidence/sessions/20260810-072445-first-real-hang/` (late reset failed) and
-`evidence/sessions/20260811-002052-early-mode-SUCCESS/` (early reset worked).
+### ⚠️ A third incident narrows this further
+
+On 2026-08-11 a hang provoked by **repeated connect/disconnect cycles and mode changes**
+(rather than a mid-stream teardown) produced no early-warning window at all:
+
+```
+06:06:25  first HCI command timeout
+06:06:36  watchdog intervened      (+11 s)   <- reset failed
+06:07:09  first USB-level failure  (+45 s)
+06:08:19  device left the bus     (+115 s)
+06:08:38  first EARLY signal      (+133 s)   <- two minutes too late
+```
+
+Two consequences:
+
+1. **`BT_EARLY` is not a general answer.** There are at least two failure paths. The
+   bluetoothd audio-teardown signal precedes the stall on one and trails it badly on the
+   other. A userspace workaround built on that signal covers only the first.
+2. **The late-reset result is now stronger, not weaker.** This reset went out **+11 s**
+   after the first timeout — near the limit of what a log-driven watchdog can do — and
+   still failed. Three for three, a reset after the first HCI timeout has failed.
+
+That sharpens the question for maintainers: the recoverable window appears to close at
+or before the first HCI command timeout, which is exactly when `cmd_timeout` becomes
+eligible. If so, no amount of tuning that hook helps, and the useful discussion is
+whether an earlier kernel-side signal is available at all.
+
+⚠️ **Small n.** Two failed late resets, one successful early reset, one incident with no
+early signal. Attach all three sessions:
+`evidence/sessions/20260810-072445-first-real-hang/` (late reset failed),
+`evidence/sessions/20260811-002156-early-mode-SUCCESS/` (early reset worked),
+`evidence/sessions/20260811-060910-mode-change-hang/` (+11 s failed, no early warning).
 
 ---
 

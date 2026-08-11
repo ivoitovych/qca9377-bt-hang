@@ -65,6 +65,24 @@ sessions/20260810-071500-mid-stream-teardown/
 A session that produces **no** hang is still evidence: it records how hard the trigger
 was to hit and how close the watchdog came to firing.
 
+`sessions/latest` is a symlink to the most recently collected session (host-local, not
+committed). Use it rather than retyping a timestamp — twice a write-up was saved to a
+guessed directory name that was one second off, silently creating a new directory
+holding only `NOTES.md` while the evidence sat elsewhere.
+
+### The sessions so far
+
+| Session | What it shows |
+|---|---|
+| `20260810-072445-first-real-hang` | reset **+20 s** after the first HCI timeout — **failed** |
+| `20260811-002156-early-mode-SUCCESS` | reset **before** any timeout, on the bluetoothd signal — **recovered**; no `tx timeout` occurred at all |
+| `20260811-060910-mode-change-hang` | reset **+11 s** — **failed**; and the bluetoothd signal arrived **+133 s**, i.e. no early-warning window existed |
+| `20260810-065803-observability-selftest` | tooling self-check, no hardware event |
+
+Read together: every reset after the first HCI timeout has failed, the only one issued
+before a timeout succeeded, and the early warning that made that possible is **not
+always present**.
+
 ### Using it
 
 ```bash
