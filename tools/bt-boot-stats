@@ -1,0 +1,87 @@
+#!/bin/bash
+# bt-boot-stats — one row per boot: did the controller misbehave, and did it hang?
+#
+# The point of this table is to keep correlations honest. It is easy to notice a
+# dramatic-looking log signature in a boot that hung and conclude it caused the
+# hang. The only way to know is to ask how often the signature appears in boots
+# that did NOT hang, and how often boots hang WITHOUT it. Those are the two
+# columns a maintainer will look for, so they are the two this table exists to
+# provide.
+#
+# Columns:
+#   BOOT     journalctl boot offset
+#   DATE     date the boot began
+#   HOURS    length of the boot's journal coverage
+#   DESYNC   count of "unexpected event for opcode" (HCI pipeline desync)
+#   TIMEOUT  count of "tx timeout" (controller stopped answering)
+#   BUSLOST  count of "USB disconnect" for the controller (stage 2 — cold boot
+#            required)
+#   HUNG     yes if the boot recorded any command timeout
+#
+# Usage: bt-boot-stats [--tsv]
+
+set -uo pipefail
+
+TSV=0
+[[ "${1:-}" == "--tsv" ]] && TSV=1
+
+BOOTLIST="${BT_BOOT_LIST:-/usr/local/bin/bt-boot-list}"
+if [[ ! -x "$BOOTLIST" ]]; then
+    BOOTLIST="$(dirname "$0")/bt-boot-list"
+fi
+[[ -x "$BOOTLIST" ]] || { echo "bt-boot-stats: bt-boot-list not found" >&2; exit 1; }
+
+if (( TSV )); then
+    printf 'boot\tdate\thours\tdesync\ttimeout\tbuslost\thung\n'
+else
+    printf '%-5s %-12s %6s %8s %8s %8s %5s\n' BOOT DATE HOURS DESYNC TIMEOUT BUSLOST HUNG
+    printf -- '---------------------------------------------------------------\n'
+fi
+
+tot=0; hung=0; desync_hung=0; desync_ok=0; nodesync_hung=0
+
+for b in $("$BOOTLIST" 2>/dev/null); do
+    log=$(journalctl -k -b "$b" --no-pager -o short-iso-precise 2>/dev/null)
+    [[ -n "$log" ]] || continue
+
+    nd=$(grep -c "unexpected event for opcode" <<<"$log" || true)
+    nt=$(grep -c "tx timeout" <<<"$log" || true)
+    nb=$(grep -c "USB disconnect, device number" <<<"$log" || true)
+
+    first=$(head -1 <<<"$log" | cut -d' ' -f1)
+    last=$(tail -1 <<<"$log" | cut -d' ' -f1)
+    d=${first%%T*}
+    hours=$(awk -v a="$first" -v b="$last" '
+        function s(t,   p, q, r) { split(t, p, "T"); split(p[2], q, /[:.+]/); split(p[1], r, "-")
+                                   return ((r[3]*24 + q[1])*3600) + q[2]*60 + q[3] }
+        BEGIN { printf "%.1f", (s(b) - s(a)) / 3600 }')
+
+    h=no
+    if (( nt > 0 )); then h=yes; fi
+
+    tot=$((tot + 1))
+    (( nt > 0 )) && hung=$((hung + 1))
+    if (( nd > 0 && nt > 0 )); then desync_hung=$((desync_hung + 1)); fi
+    if (( nd > 0 && nt == 0 )); then desync_ok=$((desync_ok + 1)); fi
+    if (( nd == 0 && nt > 0 )); then nodesync_hung=$((nodesync_hung + 1)); fi
+
+    if (( TSV )); then
+        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$b" "$d" "$hours" "$nd" "$nt" "$nb" "$h"
+    else
+        printf '%-5s %-12s %6s %8s %8s %8s %5s\n' "$b" "$d" "$hours" "$nd" "$nt" "$nb" "$h"
+    fi
+done
+
+(( TSV )) && exit 0
+
+echo
+printf 'boots examined            %d\n' "$tot"
+printf 'boots that hung           %d\n' "$hung"
+echo
+echo 'Is the desync signature a predictor of the hang?'
+printf '  desync present AND hung   %d\n' "$desync_hung"
+printf '  desync present, NO hang   %d   <- false positives\n' "$desync_ok"
+printf '  NO desync, hung anyway    %d   <- false negatives\n' "$nodesync_hung"
+echo
+echo '  A signature with both false positives and false negatives is a'
+echo '  companion symptom, not a cause. Report it as such.'

@@ -1,0 +1,201 @@
+#!/bin/bash
+# bt-exhibit — capture one piece of evidence as a self-verifying markdown exhibit.
+#
+# An exhibit is the unit of factual material for the kernel bug report. It
+# carries four things:
+#
+#   1. the CLAIM it supports
+#   2. the EXTRACTION METHOD — the exact shell command, verbatim
+#   3. the OUTPUT of that command, unedited
+#   4. why the output is RELEVANT to the claim
+#
+# WHY THIS TOOL EXISTS RATHER THAN WRITING THE MARKDOWN BY HAND:
+# a maintainer cannot verify a summary, but can re-run a command. For that to
+# be worth anything the command shown must be the command that produced the
+# output shown. If a human types the command into the document and pastes the
+# output beside it, the two can drift — the command gets tidied, the output
+# gets truncated, and the exhibit quietly becomes a claim again. This tool runs
+# the command and writes both in a single pass, so drift is not possible.
+#
+# Usage:
+#   bt-exhibit new <slug> --claim "..." [--why "..."] --cmd '<shell pipeline>'
+#   bt-exhibit list
+#   bt-exhibit index          regenerate evidence/exhibits/README.md
+#
+# Example:
+#   bt-exhibit new reset-insufficient \
+#     --claim "A USB-level reset re-enumerates the controller but does not clear the fault." \
+#     --why  "MGMT re-initialises 315 ms after the reset, and the desync recurs 107 ms later." \
+#     --cmd  "journalctl -k -b 0 -o short-precise | grep -A3 'reset full-speed'"
+
+set -uo pipefail
+
+REPO="${BT_REPO:-/root/exp/qca9377-bt-hang}"
+DIR="$REPO/evidence/exhibits"
+SANITIZE="$REPO/tools/sanitize-logs.sh"
+
+die() { echo "bt-exhibit: $*" >&2; exit 1; }
+
+# ---------------------------------------------------------------------------
+cmd_new() {
+    local slug="${1:-}"; shift || true
+    [[ -n "$slug" ]] || die "usage: bt-exhibit new <slug> --claim ... --cmd ..."
+    [[ "$slug" =~ ^[a-z0-9-]+$ ]] || die "slug must be lower-case kebab-case: $slug"
+
+    local claim="" why="" cmd=""
+    while (( $# )); do
+        case "$1" in
+            --claim) claim="${2:-}"; shift 2 ;;
+            --why)   why="${2:-}";   shift 2 ;;
+            --cmd)   cmd="${2:-}";   shift 2 ;;
+            *) die "unknown argument: $1" ;;
+        esac
+    done
+    [[ -n "$claim" ]] || die "--claim is required"
+    [[ -n "$cmd"   ]] || die "--cmd is required"
+
+    mkdir -p "$DIR"
+
+    # Next sequence number. Exhibits are numbered so the bug report can cite
+    # them stably (EX-007) even if slugs are later renamed.
+    local n=1 f
+    for f in "$DIR"/[0-9][0-9][0-9]-*.md; do
+        [[ -e "$f" ]] || continue
+        local b; b=$(basename "$f")
+        local num=$((10#${b:0:3}))
+        (( num >= n )) && n=$((num + 1))
+    done
+    local id; id=$(printf 'EX-%03d' "$n")
+    local out; out=$(printf '%s/%03d-%s.md' "$DIR" "$n" "$slug")
+    [[ -e "$out" ]] && die "refusing to overwrite $out"
+
+    # --- run the command -----------------------------------------------------
+    local raw rc
+    raw=$(mktemp) || die "mktemp failed"
+    bash -c "$cmd" > "$raw" 2>&1
+    rc=$?
+
+    local lines; lines=$(wc -l < "$raw")
+
+    # --- sanitise ------------------------------------------------------------
+    # The repository is public. MACs and BSSIDs must not ship: a Wi-Fi BSSID is
+    # indexed by public geolocation databases and would disclose where this
+    # machine physically is.
+    local redacted=no
+    if [[ -x "$SANITIZE" ]]; then
+        local clean; clean=$(mktemp)
+        if "$SANITIZE" "$raw" "$clean" >/dev/null 2>&1; then
+            if ! cmp -s "$raw" "$clean"; then redacted=yes; fi
+            mv "$clean" "$raw"
+        else
+            rm -f "$clean"
+            echo "bt-exhibit: WARNING — sanitiser failed; exhibit NOT written" >&2
+            rm -f "$raw"
+            exit 1
+        fi
+    else
+        echo "bt-exhibit: WARNING — sanitiser not found at $SANITIZE" >&2
+    fi
+
+    # --- write ---------------------------------------------------------------
+    {
+        echo "# $id — $slug"
+        echo
+        echo "**Claim.** $claim"
+        echo
+        [[ -n "$why" ]] && { echo "**Relevance.** $why"; echo; }
+        echo "## Extraction method"
+        echo
+        echo "Re-runnable as-is on the affected machine:"
+        echo
+        echo '```console'
+        echo "\$ $cmd"
+        echo '```'
+        echo
+        echo "## Output"
+        echo
+        printf 'Verbatim, %s line(s), exit status %s.\n' "$lines" "$rc"
+        if [[ "$redacted" == yes ]]; then
+            echo
+            echo '> **Redaction notice.** MAC addresses, BSSIDs, UUIDs and IPv4'
+            echo '> addresses were replaced with stable placeholders'
+            echo '> (`AA:BB:CC:00:00:NN`, `<UUID-NN>`, `<IPV4-NN>`) before publication.'
+            echo '> The same real value always maps to the same placeholder, so'
+            echo '> cross-references within the output remain readable. Nothing'
+            echo '> else was altered. Re-running the command locally will show the'
+            echo '> real addresses in these positions.'
+        fi
+        echo
+        echo '```'
+        cat "$raw"
+        echo '```'
+        echo
+        echo "## Provenance"
+        echo
+        echo '| field | value |'
+        echo '|---|---|'
+        printf '| captured | `%s` |\n' "$(date -Iseconds)"
+        printf '| kernel | `%s` |\n' "$(uname -r)"
+        printf '| boot id | `%s` |\n' "$(cut -c1-8 /proc/sys/kernel/random/boot_id 2>/dev/null || echo -)"
+        printf '| device | `13d3:3503` QCA9377 (ROME) |\n'
+        printf '| exit status | `%s` |\n' "$rc"
+        printf '| redacted | `%s` |\n' "$redacted"
+    } > "$out"
+
+    rm -f "$raw"
+    echo "$out"
+    cmd_index >/dev/null
+}
+
+# ---------------------------------------------------------------------------
+cmd_list() {
+    local f found=0
+    for f in "$DIR"/[0-9][0-9][0-9]-*.md; do
+        [[ -e "$f" ]] || continue
+        found=1
+        local b; b=$(basename "$f" .md)
+        local claim; claim=$(grep -m1 '^\*\*Claim\.\*\*' "$f" | sed 's/^\*\*Claim\.\*\* //')
+        printf 'EX-%s  %-34s %s\n' "${b:0:3}" "${b:4}" "$claim"
+    done
+    (( found )) || echo "no exhibits yet"
+    return 0
+}
+
+# ---------------------------------------------------------------------------
+cmd_index() {
+    mkdir -p "$DIR"
+    local idx="$DIR/README.md"
+    {
+        echo "# Evidence exhibits"
+        echo
+        echo "Each exhibit states a claim, the exact command that produced the"
+        echo "supporting output, that output verbatim, and why it is relevant."
+        echo "The command and the output were captured in a single pass by"
+        echo "\`tools/bt-exhibit\`, so the command shown is provably the command"
+        echo "that produced the output shown."
+        echo
+        echo "Regenerate this index with \`bt-exhibit index\`."
+        echo
+        echo '| # | exhibit | claim |'
+        echo '|---|---|---|'
+        local f found=0
+        for f in "$DIR"/[0-9][0-9][0-9]-*.md; do
+            [[ -e "$f" ]] || continue
+            found=1
+            local b; b=$(basename "$f" .md)
+            local claim; claim=$(grep -m1 '^\*\*Claim\.\*\*' "$f" | sed 's/^\*\*Claim\.\*\* //')
+            printf '| EX-%s | [%s](%s.md) | %s |\n' "${b:0:3}" "${b:4}" "$b" "$claim"
+        done
+        (( found )) || echo '| — | _none yet_ | |'
+    } > "$idx"
+    echo "$idx"
+}
+
+# ---------------------------------------------------------------------------
+case "${1:-}" in
+    new)   shift; cmd_new "$@" ;;
+    list)  cmd_list ;;
+    index) cmd_index ;;
+    -h|--help|"") sed -n '2,30p' "$0" ;;
+    *) die "unknown subcommand: $1" ;;
+esac

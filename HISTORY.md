@@ -826,3 +826,77 @@ model built on top of them has not. Read the source, then reason.
   written up as though their triggers were known, when they were reconstructed from logs
   of unrecorded, arbitrary activity. Claims about the *controller's response* survived;
   claims about *which trigger causes which behaviour* did not.
+
+---
+
+## Phase 18 — reconstruct the session from logs, not from memory
+
+The operator returned from a Windows session, re-paired the headset there, and came back
+to Linux to find the device would not connect. The recovery attempt — forget the device,
+re-pair, power-cycle the headset — ended with the headset appearing as *hands-free /
+mono* rather than as a stereo audio device, and the controller died shortly after.
+
+The account was necessarily approximate: nobody types a log while debugging. The
+operator's suggestion was to stop relying on recollection and **reconstruct the sequence
+from the logs themselves** — the factual record, with timestamps. That produced
+`tools/bt-actions`.
+
+**What the reconstruction found immediately.** Opening the GNOME Bluetooth settings panel
+is followed, within 0.06–10 s, by an HCI command-pipeline desync
+(`unexpected event for opcode 0x2005`, `HCI_LE_Set_Random_Address`), which then repeats at
+an **exact 16.0 s cadence** for as long as the panel stays open — runs of 228, 487 and
+2480 repeats were recorded. This holds on every boot examined. After months of
+"it hangs eventually", this is the project's first *deterministic, seconds-to-reproduce*
+misbehaviour, and it explains the original reported symptom — "the ring is not rolling in
+the Bluetooth settings" — as the scanning cycle that drives it.
+
+**And what kept it honest.** The obvious next step was to call it the cause. Instead
+`tools/bt-boot-stats` cross-tabulated the signature against the hang over all 34 boots:
+
+|  | hung | did not hang |
+|---|---|---|
+| desync present | 16 | **8** |
+| desync absent | **2** | 8 |
+
+Eight boots carried the signature and never hung — one with 6250 occurrences across 45
+hours. Two hung with none. Both false positives and false negatives: a **companion
+symptom, not a cause**, and it must be offered upstream as exactly that.
+
+**The measurement that reshaped the fix.** This incident contained the first EARLY reset
+ever captured — the watchdog fired 134 s *before* any HCI timeout. It worked, in the
+narrow sense: the device re-enumerated and the HCI stack re-registered 315 ms later. Then
+the same desync recurred **107 ms after that**, and the controller hung completely 132 s
+later and left the bus.
+
+That is a direct measurement of the thing the fix proposal had assumed but never tested.
+`btusb_qca_reset()` falls back to `usb_queue_reset_device()` when no `bt_en` GPIO exists —
+the same class of operation. So *a reset callback alone would not have prevented this
+hang.* What it does is isolate the one remaining untested variable: re-running
+`btusb_setup_qca()` on re-enumeration to redownload rampatch and NVM firmware, which a
+device outside the quirks table never does. The firmware hypothesis is now the primary
+one, not a footnote.
+
+**Evidence discipline.** At the operator's suggestion, factual material for the bug report
+is now captured as numbered **exhibits** (`evidence/exhibits/`, `tools/bt-exhibit`), each
+carrying its claim, the exact extraction command, that command's verbatim output, and the
+relevance. The tool runs the command and writes both in one pass — a maintainer cannot
+verify a summary, but can re-run a command, and that only means something if the command
+shown provably produced the output shown. Hand-pasting the two separately lets them drift.
+
+### Lessons added
+
+- **Reconstruct the session from logs before writing down what happened.** The operator's
+  account had the *shape* right and the *order* wrong; the logs had both. Anything
+  destined for a bug report should be derived from the record, not from recall.
+- **A signature that is dramatic in a failing run may be present in every passing one.**
+  Cross-tabulate against non-failures before believing any correlation. The desync looked
+  like the answer for about ten minutes.
+- **A deterministic minor bug beats a random major one, for reporting purposes.** A
+  maintainer can reproduce the panel-triggered desync in seconds; nobody can reproduce
+  "it hangs after several hours".
+- **Timestamps must carry their date.** Sorting a merged timeline on time-of-day silently
+  reordered a session that straddled midnight, hiding the first hour. This is the third
+  distinct timestamp bug in the project.
+- **Check the units of a fraction.** `journalctl` prints microseconds; treating them as
+  milliseconds inflated every computed cadence by 1000× and briefly produced "every 340
+  seconds" for events 0.34 s apart.

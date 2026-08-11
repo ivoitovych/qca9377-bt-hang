@@ -34,6 +34,9 @@ FILES=(
     /usr/local/bin/bt-verify-install
     /usr/local/bin/bt-verify-kernel-mechanism
     /usr/local/bin/bt-trial
+    /usr/local/bin/bt-actions
+    /usr/local/bin/bt-boot-stats
+    /usr/local/bin/bt-exhibit
     /usr/local/bin/bt-sanitize-logs
     /usr/local/share/qca9377-bt-hang/installed-at
     /usr/local/bin/bt-boot-list

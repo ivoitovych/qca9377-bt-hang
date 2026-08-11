@@ -164,6 +164,9 @@ install_file "$SRC/tools/bt-status"      /usr/local/bin/bt-status      0755
 install_file "$SRC/tools/bt-verify-install" /usr/local/bin/bt-verify-install 0755
 install_file "$SRC/tools/bt-verify-kernel-mechanism" /usr/local/bin/bt-verify-kernel-mechanism 0755
 install_file "$SRC/tools/bt-trial"       /usr/local/bin/bt-trial       0755
+install_file "$SRC/tools/bt-actions"     /usr/local/bin/bt-actions     0755
+install_file "$SRC/tools/bt-boot-stats"  /usr/local/bin/bt-boot-stats  0755
+install_file "$SRC/tools/bt-exhibit"     /usr/local/bin/bt-exhibit     0755
 if command -v btmon >/dev/null 2>&1; then
     install_file "$SRC/bin/bt-trace"            /usr/local/sbin/bt-trace                    0755
     install_file "$SRC/systemd/bt-trace.service" /etc/systemd/system/bt-trace.service       0644

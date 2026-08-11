@@ -1,0 +1,264 @@
+#!/bin/bash
+# bt-actions — reconstruct what actually happened, from the logs rather than
+# from memory.
+#
+# Testing sessions are not tidy. The operator connects, disconnects, opens a
+# settings panel, power-cycles the headset, switches a codec — and afterwards
+# has to describe the sequence from recollection. Recollection is not evidence,
+# and for a kernel bug report the sequence matters: a maintainer needs to know
+# what was done, in what order, and how the controller responded at each step.
+#
+# This tool merges every source that records an operator-attributable action or
+# a stack response, in wall-clock order:
+#
+#   USER   things a person did      GNOME panel launches, MGMT pair/remove/
+#                                   disconnect commands from the HCI capture
+#   STACK  how BlueZ/PipeWire replied   profile connects, AVDTP timeouts,
+#                                   transport acquire failures, auth failures
+#   CTRL   what the controller did  command timeouts, opcode desyncs, USB
+#                                   resets, descriptor-read failures, bus loss
+#   WDOG   what the watchdog did    interventions and their outcome
+#
+# Consecutive identical events are collapsed into a single row with a count and
+# a cadence. Without that the timeline is unreadable: a single boot can carry
+# thousands of repeats of one line, and the interesting one-off events are lost
+# among them. The cadence is itself informative — a fault that repeats on an
+# exact period is a different animal from one that fires erratically.
+#
+# Usage:
+#   bt-actions [-b <boot>] [--since <time>] [--until <time>] [--raw]
+#
+#   -b <boot>    journal boot offset (default 0, the current boot)
+#   --since      passed to journalctl, e.g. "00:09:00" or "-30min"
+#   --until      passed to journalctl
+#   --raw        do not collapse repeats
+#
+# Times are the machine's local wall clock, matching journalctl output, so any
+# row can be traced back to the source log.
+
+set -uo pipefail
+
+BOOT=0
+SINCE=""
+UNTIL=""
+RAW=0
+TRACE_DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
+
+while (( $# )); do
+    case "$1" in
+        -b)       BOOT="${2:-0}"; shift 2 ;;
+        --since)  SINCE="${2:-}"; shift 2 ;;
+        --until)  UNTIL="${2:-}"; shift 2 ;;
+        --raw)    RAW=1; shift ;;
+        -h|--help) sed -n '2,36p' "$0"; exit 0 ;;
+        *) echo "bt-actions: unknown argument: $1" >&2; exit 1 ;;
+    esac
+done
+
+JARGS=(-b "$BOOT" --no-pager -o short-iso-precise)
+[[ -n "$SINCE" ]] && JARGS+=(--since "$SINCE")
+[[ -n "$UNTIL" ]] && JARGS+=(--until "$UNTIL")
+
+STREAM=$(mktemp) || exit 1
+trap 'rm -f "$STREAM"' EXIT
+
+# ---------------------------------------------------------------------------
+# Pass 1 — journal. Emit "HH:MM:SS.mmm<TAB>CLASS<TAB>label".
+#
+# Classification lives in one awk program so that adding a new signal means
+# adding one rule, not touching several greps that must stay in sync.
+# ---------------------------------------------------------------------------
+journalctl "${JARGS[@]}" 2>/dev/null | awk -F' ' '
+{
+    # Full ISO timestamp, not time-of-day: a hang session routinely straddles
+    # midnight, and a time-of-day sort silently reorders the whole timeline.
+    ts = $1
+    line = $0
+    cls = ""; lbl = ""
+
+    # --- USER: things a person physically did ---------------------------------
+    if (line ~ /app-gnome-gnome\\x2dbluetooth\\x2dpanel.*\.scope/ && line ~ /Started/) {
+        cls = "USER"; lbl = "opened the Bluetooth settings panel"
+    }
+    else if (line ~ /app-gnome-gnome\\x2dcontrol\\x2dcenter.*\.scope/ && line ~ /Started/) {
+        cls = "USER"; lbl = "opened GNOME Settings"
+    }
+
+    # --- STACK: how BlueZ / PipeWire responded --------------------------------
+    else if (line ~ /Failed to set mode: Authentication Failed/) {
+        cls = "STACK"; lbl = "adapter mode change REJECTED — authentication failed (0x05)"
+    }
+    else if (line ~ /Failed to set mode: Failed \(0x03\)/) {
+        cls = "STACK"; lbl = "adapter mode change FAILED (0x03)"
+    }
+    else if (line ~ /ext_connect\(\).*Hands-Free Voice gateway failed connect/) {
+        cls = "STACK"; lbl = "HFP (hands-free) connect REFUSED by remote (111)"
+    }
+    else if (line ~ /avdtp_connect_cb\(\) connect to.*Connection refused/) {
+        cls = "STACK"; lbl = "A2DP/AVDTP connect REFUSED by remote (111)"
+    }
+    else if (line ~ /avdtp\.c:cancel_request\(\) Abort: Connection timed out/) {
+        cls = "STACK"; lbl = "A2DP/AVDTP Abort TIMED OUT (110) — controller not answering"
+    }
+    else if (line ~ /avdtp\.c:cancel_request\(\) Start: Connection timed out/) {
+        cls = "STACK"; lbl = "A2DP/AVDTP Start TIMED OUT (110) — stream never began"
+    }
+    else if (line ~ /Acquire .*returned error/) {
+        cls = "STACK"; lbl = "audio transport ACQUIRE failed — sink cannot open"
+    }
+    else if (line ~ /Failure in Bluetooth audio transport/) {
+        cls = "STACK"; lbl = "Bluetooth audio transport FAILED"
+    }
+    else if (line ~ /bluez_output.*running -> error/) {
+        cls = "STACK"; lbl = "audio sink died (running -> error)"
+    }
+    else if (line ~ /No matching connection for device/) {
+        cls = "STACK"; lbl = "profile teardown: no matching connection"
+    }
+    else if (line ~ /Bluetooth daemon 5\./) {
+        cls = "STACK"; lbl = "bluetoothd STARTED"
+    }
+    else if (line ~ /bluetoothd.*Terminating/) {
+        cls = "STACK"; lbl = "bluetoothd terminating"
+    }
+
+    # --- WDOG: watchdog decisions --------------------------------------------
+    else if (line ~ /EARLY intervention/) {
+        cls = "WDOG"; lbl = "EARLY intervention — reset BEFORE any HCI timeout"
+    }
+    else if (line ~ /Detected .* controller timeouts within/) {
+        cls = "WDOG"; lbl = "threshold intervention — reset AFTER timeouts"
+    }
+    else if (line ~ /USBDEVFS_RESET issued/) {
+        cls = "WDOG"; lbl = "  USBDEVFS_RESET issued"
+    }
+    else if (line ~ /USBDEVFS_RESET failed/) {
+        cls = "WDOG"; lbl = "  USBDEVFS_RESET FAILED"
+    }
+    else if (line ~ /escalating to USB unbind/) {
+        cls = "WDOG"; lbl = "  escalating to USB unbind/bind"
+    }
+    else if (line ~ /RECOVERED — controller is responding/) {
+        cls = "WDOG"; lbl = "  RECOVERED — controller answers again"
+    }
+    else if (line ~ /RECOVERY FAILED/) {
+        cls = "WDOG"; lbl = "  RECOVERY FAILED — still unresponsive"
+    }
+
+    # --- CTRL: what the controller itself did ---------------------------------
+    else if (line ~ /unexpected event for opcode/) {
+        op = line; sub(/.*unexpected event for opcode /, "", op); sub(/ .*/, "", op)
+        cls = "CTRL"; lbl = "HCI desync: unexpected event for opcode " op
+    }
+    else if (line ~ /command .* tx timeout/) {
+        op = line; sub(/.*command /, "", op); sub(/ tx timeout.*/, "", op)
+        cls = "CTRL"; lbl = "HCI COMMAND TIMEOUT " op
+    }
+    else if (line ~ /command tx timeout/) {
+        cls = "CTRL"; lbl = "HCI COMMAND TIMEOUT (opcode unknown)"
+    }
+    else if (line ~ /Opcode .* failed: -110/) {
+        op = line; sub(/.*Opcode /, "", op); sub(/ failed.*/, "", op)
+        cls = "CTRL"; lbl = "opcode " op " failed -110 (timeout)"
+    }
+    else if (line ~ /setting interface failed/) {
+        cls = "CTRL"; lbl = "USB setting interface FAILED"
+    }
+    else if (line ~ /Error when powering off device on rfkill/) {
+        cls = "CTRL"; lbl = "rfkill power-off FAILED (-110)"
+    }
+    else if (line ~ /reset full-speed USB device/) {
+        cls = "CTRL"; lbl = "USB port reset performed"
+    }
+    else if (line ~ /device descriptor read\/64, error/) {
+        cls = "CTRL"; lbl = "USB descriptor read FAILED — device not answering USB core"
+    }
+    else if (line ~ /device not accepting address/) {
+        cls = "CTRL"; lbl = "USB device NOT ACCEPTING ADDRESS"
+    }
+    else if (line ~ /Timeout while waiting for setup device command/) {
+        cls = "CTRL"; lbl = "xHCI setup device command TIMEOUT"
+    }
+    else if (line ~ /usb .*: USB disconnect/) {
+        cls = "CTRL"; lbl = "*** DEVICE LEFT THE USB BUS ***"
+    }
+    else if (line ~ /new full-speed USB device number/) {
+        cls = "CTRL"; lbl = "USB re-enumeration attempt"
+    }
+    else if (line ~ /Bluetooth: MGMT ver/) {
+        cls = "CTRL"; lbl = "HCI stack re-registered (MGMT up)"
+    }
+
+    if (cls != "") printf "%s\t%s\t%s\n", ts, cls, lbl
+}
+' >> "$STREAM"
+
+# ---------------------------------------------------------------------------
+# Pass 2 — HCI capture. MGMT commands are the closest thing to a record of
+# operator intent: bluetoothd emits them in direct response to a click.
+# Discovery/UUID churn is excluded — it is bookkeeping, not intent.
+# ---------------------------------------------------------------------------
+if [[ -d "$TRACE_DIR" ]] && command -v btmon >/dev/null 2>&1; then
+    for f in "$TRACE_DIR"/*.btsnoop; do
+        [[ -e "$f" ]] || continue
+        # btmon abbreviates command names to fit the terminal ("Start Discovery"
+        # becomes "S.."), so force a wide one.
+        COLUMNS=200 btmon -T -r "$f" 2>/dev/null | awk '
+        /MGMT Command: (Pair Device|Remove Device|Unpair|Disconnect|Set Powered|Block Device|Unblock Device|User Confirmation|Set Discoverable|Set Connectable)/ {
+            # btmon prints "<date> <time>" as the last two fields.
+            ts = $(NF-1) "T" $NF
+            name = $0
+            sub(/.*MGMT Command: /, "", name)
+            sub(/ \(0x[0-9a-f]+\).*/, "", name)
+            if ($(NF-1) ~ /^[0-9]{4}-/) printf "%s\tUSER\tMGMT: %s\n", ts, name
+        }' >> "$STREAM"
+    done
+fi
+
+# ---------------------------------------------------------------------------
+# Render. Collapse consecutive identical labels, reporting count and cadence.
+# ---------------------------------------------------------------------------
+if [[ ! -s "$STREAM" ]]; then
+    echo "bt-actions: no recognised events in boot $BOOT"
+    exit 0
+fi
+
+echo "Reconstructed action timeline — boot $BOOT"
+echo "USER = operator action   STACK = BlueZ/PipeWire   CTRL = controller   WDOG = watchdog"
+echo "──────────────────────────────────────────────────────────────────────────────────────"
+
+sort -k1,1 "$STREAM" | awk -v raw="$RAW" '
+# Absolute seconds from an ISO timestamp. The fractional part is MICROseconds
+# (journalctl prints six digits), so it divides by 1e6 — treating it as
+# milliseconds inflates every cadence by a factor of 1000.
+function tosec(t,   d, a, b) {
+    split(t, d, "T")
+    split(d[1], b, "-")
+    split(d[2], a, /[:.+]/)
+    return ((b[3] * 24 + a[1]) * 3600) + a[2] * 60 + a[3] + a[4] / 1000000
+}
+function disp(t,   d, s) { split(t, d, "T"); s = d[2]; sub(/[+-][0-9:]+$/, "", s); return substr(s, 1, 12) }
+function flush(   span, cad) {
+    if (n == 0) return
+    if (n == 1) {
+        printf "%-13s %-5s  %s\n", disp(ft), fc, fl
+    } else {
+        span = tosec(lt) - tosec(ft)
+        cad = span / (n - 1)
+        if (cad >= 1)
+            printf "%-13s %-5s  %s\n                          x%d until %s, every ~%.1fs\n", disp(ft), fc, fl, n, disp(lt), cad
+        else
+            printf "%-13s %-5s  %s\n                          x%d until %s (burst, %.2fs apart)\n", disp(ft), fc, fl, n, disp(lt), cad
+    }
+    n = 0
+}
+{
+    ts = $1; cls = $2
+    lbl = $0; sub(/^[^\t]*\t[^\t]*\t/, "", lbl)
+    if (raw == 1) { printf "%-13s %-5s  %s\n", disp(ts), cls, lbl; next }
+    if (lbl == fl && cls == fc) { n++; lt = ts; next }
+    flush()
+    ft = ts; lt = ts; fc = cls; fl = lbl; n = 1
+}
+END { flush() }
+'
