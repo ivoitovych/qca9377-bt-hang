@@ -1,52 +1,133 @@
 #!/bin/bash
-# repo-scan — check a repo for data that must never be published.
+# repo-scan — refuse-to-publish scan for data that must never leave the machine.
 #
-#   repo-scan [dir]            scan staged changes (or whole tree if nothing staged)
-#   repo-scan [dir] --all      scan every tracked file regardless of staging
+#   repo-scan [dir] [--all] [--quiet]
 #
-# Exits non-zero if anything suspicious is found. Checks:
-#   real MAC addresses / BSSIDs (colon or dash), UUIDs, IPv4, emails,
-#   binary captures, and AI attribution.
+#   default   scan STAGED ADDITIONS (what this commit would introduce)
+#   --all     scan every tracked file in the whole repository
 #
-# Allowed placeholders / documented test vectors: AA:BB:CC:*, 11:11:11:*,
-# 00:11:22:* (sanitiser self-test), 3C:37:12:* and DE:AD:BE:* (doc examples).
+# Exits non-zero if anything suspicious is found.
+#
+# Checks: MAC addresses / BSSIDs (colon or dash), UUIDs, IPv4 addresses,
+# email addresses, AI attribution, and tracked binary captures.
+#
+# WHY: this repository publishes logs. Kernel logs contain the Wi-Fi access
+# point BSSID, which public geolocation databases index — publishing one can
+# reveal where a machine physically is.
+
 set -uo pipefail
-DIR="${1:-.}"; [[ "$DIR" == --* ]] && DIR="."
-ALL=0; for a in "$@"; do [[ "$a" == "--all" ]] && ALL=1; done
-cd "$DIR" || { echo "no such dir: $DIR" >&2; exit 2; }
+
+DIR="."; ALL=0; QUIET=0; seen_dir=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --all)   ALL=1 ;;
+        --quiet) QUIET=1 ;;
+        -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
+        -*) echo "unknown option: $1" >&2; exit 2 ;;
+        # Positional. Previously only $1 was inspected, so "repo-scan --all DIR"
+        # silently discarded DIR and scanned the current directory instead,
+        # reporting success for the wrong tree.
+        *) (( seen_dir )) && { echo "unexpected second directory: $1" >&2; exit 2; }
+           DIR="$1"; seen_dir=1 ;;
+    esac
+    shift
+done
+
+cd "$DIR" 2>/dev/null || { echo "no such dir: $DIR" >&2; exit 2; }
 git rev-parse --git-dir >/dev/null 2>&1 || { echo "not a git repo: $DIR" >&2; exit 2; }
 
-if (( ALL )) || [[ -z "$(git diff --cached --name-only)" ]]; then
-    CONTENT=$(git ls-files -z | xargs -0 cat 2>/dev/null); SCOPE="all tracked files"
+# Always operate from the repository root. git ls-files and git diff are
+# cwd-relative, so scanning from a subdirectory silently covered a fraction of
+# the tree while still printing "scan clean".
+ROOT=$(git rev-parse --show-toplevel) || exit 2
+cd "$ROOT" || exit 2
+
+if (( ALL )); then
+    CONTENT=$(git ls-files -z | xargs -0 cat 2>/dev/null)
+    SCOPE="all tracked files ($(git ls-files | wc -l) files, from $ROOT)"
 else
-    CONTENT=$(git diff --cached); SCOPE="staged changes"
+    # ONLY ADDED LINES. Scanning the whole diff meant a commit that REMOVES a
+    # leaked secret still contained it on the '-' lines, so the scan failed and
+    # blocked the very remediation it exists to enable.
+    CONTENT=$(git diff --cached | grep '^+' | sed 's/^+//')
+    SCOPE="staged additions"
+    if [[ -z "$(git diff --cached --name-only)" ]]; then
+        CONTENT=$(git ls-files -z | xargs -0 cat 2>/dev/null)
+        SCOPE="all tracked files (nothing staged)"
+    fi
 fi
+
+# An empty read is not a clean read. Any failure above — bad pathspec, xargs
+# error swallowed by 2>/dev/null — would otherwise report success.
+if [[ -z "$CONTENT" ]]; then
+    echo "  ✗ nothing to scan ($SCOPE) — refusing to report clean" >&2
+    exit 1
+fi
+
 fail=0
 report() { echo "  ✗ $1"; shift; printf '      %s\n' "$@"; fail=1; }
+pass()   { (( QUIET )) || echo "  ✓ $1"; }
 
+# --- MAC addresses / BSSIDs ------------------------------------------------
+# Normalise dash to colon before applying the allowlist: the detector accepts
+# both separators, so an allowlist anchored on colons rejected the documented
+# placeholders written in dash form.
 macs=$(grep -oEi '[0-9a-f]{2}([:-][0-9a-f]{2}){5,}' <<<"$CONTENT" \
-       | grep -viE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be)' | sort -u)
-[[ -n "$macs" ]] && report "real MAC/BSSID found:" $macs || echo "  ✓ no unexpected MACs"
+       | tr 'A-F-' 'a-f:' \
+       | grep -vE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be)' \
+       | sort -u)
+[[ -n "$macs" ]] && report "real MAC/BSSID found:" $macs || pass "no unexpected MACs"
 
-uuids=$(grep -oEi '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' <<<"$CONTENT" | sort -u)
-[[ -n "$uuids" ]] && report "UUID found:" $uuids || echo "  ✓ no UUIDs"
+# --- UUIDs -----------------------------------------------------------------
+# Bluetooth SIG assigns the 0000xxxx-0000-1000-8000-00805f9b34fb base family;
+# those are public constants and appear in every bluetoothd log this project
+# publishes. Flagging them blocked ordinary commits and trained people to
+# bypass the gate. Filesystem/machine UUIDs are still caught.
+uuids=$(grep -oEi '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' <<<"$CONTENT" \
+        | grep -viE '^0000[0-9a-f]{4}-0000-1000-8000-00805f9b34fb$' \
+        | grep -viE '^(00000000-0000-0000-0000-000000000000)$' \
+        | sort -u)
+[[ -n "$uuids" ]] && report "UUID found (non-SIG):" $uuids || pass "no UUIDs"
 
+# --- IPv4 ------------------------------------------------------------------
+# Documented as a refuse-to-publish check in three places, but previously only
+# printed an informational line and never set fail. Now it fails, as advertised.
 ips=$(grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' <<<"$CONTENT" \
-      | grep -vE '^(0\.0\.0\.0|127\.0\.0\.1|255\.|0\.)' | sort -u)
-[[ -n "$ips" ]] && echo "  • IPv4 present (check intent): $(tr '\n' ' ' <<<"$ips")" || echo "  ✓ no IPv4"
+      | grep -vE '^(0\.0\.0\.0|127\.0\.0\.1|255\.255\.255\.255)$' \
+      | sort -u)
+[[ -n "$ips" ]] && report "IPv4 address found:" $ips || pass "no IPv4"
 
-# Skip lines that are themselves grep pattern definitions. Since this script now
-# lives inside the repository it scans, its own pattern list would otherwise
-# match and report an attribution that does not exist — a false positive that
-# blocks every commit. Excluding the definition line is narrow enough that real
-# attribution anywhere else, including elsewhere in this file, is still caught.
-ai=$(grep -vE 'grep -[a-z]*cE' <<<"$CONTENT" \
-     | grep -icE 'co-authored-by: *claude|generated with .*claude|anthropic' || true)
-(( ${ai:-0} > 0 )) && report "AI attribution present ($ai match(es))" || echo "  ✓ no AI attribution"
+# --- Email addresses -------------------------------------------------------
+# The header claimed this was checked; it was not. Implemented rather than
+# quietly dropped from the contract. The maintainer's own address and public
+# kernel mailing lists are expected in a bug report.
+# Default to the repo's configured committer address rather than hardcoding one.
+# Embedding it literally made this script match itself: the shell default-value
+# syntax ${VAR:-addr} puts a '-' directly before the address, so the extracted
+# token was "-addr", the exact-match allowlist missed it, and the scan failed on
+# its own source. Deriving it also means forks get their own maintainer for free.
+ALLOW_MAIL="${REPO_SCAN_ALLOW_MAIL:-$(git config user.email 2>/dev/null || echo '')}"
+mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
+        | grep -viE '@(vger\.kernel\.org|lists\.linux\.dev|kernel\.org|example\.(com|org))$' \
+        | grep -viE '^(noreply|no-reply)@' \
+        | { [[ -n "$ALLOW_MAIL" ]] && grep -viF "$ALLOW_MAIL" || cat; } \
+        | grep -viE '^modprobe@|^systemd-' \
+        | sort -u)
+[[ -n "$mails" ]] && report "email address found:" $mails || pass "no unexpected emails"
 
+# --- AI attribution --------------------------------------------------------
+# The pattern strings are assembled from fragments so this file does not itself
+# contain a literal match. The previous approach — excluding lines that looked
+# like grep definitions — worked but broke if the pattern list was ever
+# reformatted, and a false positive here blocks every commit.
+_c='cla'; _c+='ude'; _a='anthro'; _a+='pic'
+ai=$(grep -icE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$CONTENT" || true)
+(( ${ai:-0} > 0 )) && report "AI attribution present ($ai match(es))" || pass "no AI attribution"
+
+# --- binary captures -------------------------------------------------------
 bins=$(git ls-files | grep -cE '\.(btsnoop|pcap|pcapng)$' || true)
 (( ${bins:-0} > 0 )) && report "binary capture tracked ($bins) — cannot be sanitised" \
-                     || echo "  ✓ no binary captures tracked"
+                     || pass "no binary captures tracked"
 
 echo
 if (( fail )); then echo "SCAN FAILED ($SCOPE)"; exit 1; fi

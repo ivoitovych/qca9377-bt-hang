@@ -5,38 +5,111 @@
 #   repo-save <dir> -F <file>          message from a file
 #   repo-save <dir> "<msg>" --no-push  commit only
 #
-# Refuses to commit if repo-validate or repo-scan fails. Replaces the
-# add/commit/push/fetch/compare-hashes sequence done by hand each time — where
-# the easiest step to skip is the one that proves the push actually landed.
+# Refuses to commit if repo-validate or repo-scan fails. Scans the commit
+# message as well as the content, then confirms the remote hash equals the
+# local one — the step most often skipped by hand, and the only thing that
+# proves a push actually landed.
+
 set -uo pipefail
-DIR="${1:?usage: repo-save <dir> <message|-F file> [--no-push]}"; shift
-PUSH=1; MSGFILE=""; MSG=""
+
+# Resolve this script's directory BEFORE any cd. Computing it afterwards made
+# every relative invocation from another directory fail to find its siblings,
+# and the failure was reported as "validation failed", blaming the target repo.
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+DIR="${1:-}"; shift || true
+[[ -n "$DIR" ]] || { echo "usage: repo-save <dir> <message|-F file> [--no-push]" >&2; exit 2; }
+
+PUSH=1; MSGFILE=""; MSG=""; seen_msg=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --no-push) PUSH=0 ;;
-        -F) MSGFILE="${2:?-F needs a file}"; shift ;;
-        *) MSG="$1" ;;
-    esac; shift
+        -F) MSGFILE="${2:?-F needs a file}"
+            # Resolve now, before the cd below, so a relative path means what
+            # the caller typed rather than something inside the target repo.
+            [[ "$MSGFILE" == /* || "$MSGFILE" == /dev/* ]] || MSGFILE="$PWD/$MSGFILE"
+            shift ;;
+        -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+        # Unknown flags previously became the commit message: "repo-save . --amend
+        # 'fix'" silently dropped --amend and created a new commit instead.
+        -*) echo "unknown option: $1" >&2; exit 2 ;;
+        *) (( seen_msg )) && { echo "unexpected second message argument: $1" >&2; exit 2; }
+           MSG="$1"; seen_msg=1 ;;
+    esac
+    shift
 done
-cd "$DIR" || { echo "no such dir: $DIR" >&2; exit 2; }
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+cd "$DIR" 2>/dev/null || { echo "no such dir: $DIR" >&2; exit 2; }
+git rev-parse --git-dir >/dev/null 2>&1 || { echo "not a git repo: $DIR" >&2; exit 2; }
+
+[[ -x "$HERE/repo-validate" && -x "$HERE/repo-scan" ]] \
+    || { echo "cannot find repo-validate/repo-scan next to $0" >&2; exit 2; }
+
+# --- stage FIRST -----------------------------------------------------------
+# Validation and scanning both enumerate through git, so anything not yet in
+# the index is invisible to them. Staging afterwards meant a commit's brand-new
+# files were never syntax-checked — including the commit that added these very
+# scripts.
+echo "── stage ────────────────────────────────────────────"
+if ! git add -A; then
+    echo "ABORT: git add -A failed (stale index.lock? unreadable file?)" >&2
+    exit 1
+fi
+if [[ -z "$(git diff --cached --name-only)" ]]; then
+    echo "  nothing to commit"; exit 0
+fi
+echo "  staged: $(git diff --cached --name-only | wc -l) file(s)"
 
 echo "── validate ─────────────────────────────────────────"
-"$HERE/repo-validate" . >/dev/null || { "$HERE/repo-validate" .; echo "ABORT: validation failed" >&2; exit 1; }
-echo "  ✓ all checks passed"
+"$HERE/repo-validate" . || { echo "ABORT: validation failed — nothing committed" >&2; exit 1; }
 
-git add -A
 echo "── scan ─────────────────────────────────────────────"
 "$HERE/repo-scan" . || { echo "ABORT: scan failed — nothing committed" >&2; exit 1; }
 
-if [[ -z "$(git diff --cached --name-only)" ]]; then echo "nothing to commit"; exit 0; fi
+# --- scan the commit message too -------------------------------------------
+# repo-scan reads files and diffs. A Co-Authored-By trailer lives in neither, so
+# the single most likely vector for the thing being screened for sat outside the
+# screen entirely.
+echo "── message ──────────────────────────────────────────"
+if [[ -n "$MSGFILE" ]]; then
+    [[ -r "$MSGFILE" ]] || { echo "ABORT: cannot read message file: $MSGFILE" >&2; exit 2; }
+    # Snapshot to a temp file and commit from THAT. Reading the source twice —
+    # once to scan, once for git commit -F — silently produced an empty commit
+    # message when the source was a stream such as /dev/stdin or a pipe, because
+    # the first read consumed it.
+    MSGTMP=$(mktemp); trap 'rm -f "$MSGTMP"' EXIT
+    cat "$MSGFILE" > "$MSGTMP"
+    MSGTEXT=$(cat "$MSGTMP")
+    MSGFILE="$MSGTMP"
+    [[ -s "$MSGTMP" ]] || { echo "ABORT: commit message is empty" >&2; exit 2; }
+elif [[ -n "$MSG" ]]; then
+    MSGTEXT="$MSG"
+else
+    echo "ABORT: no commit message given" >&2; exit 2
+fi
+_c='cla'; _c+='ude'; _a='anthro'; _a+='pic'
+if grep -qiE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$MSGTEXT"; then
+    echo "  ✗ commit message contains AI attribution" >&2
+    grep -inE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$MSGTEXT" | sed 's/^/      /' >&2
+    echo "ABORT: nothing committed" >&2
+    exit 1
+fi
+if grep -oEi '[0-9a-f]{2}([:-][0-9a-f]{2}){5,}' <<<"$MSGTEXT" \
+   | tr 'A-F-' 'a-f:' | grep -qvE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be)'; then
+    echo "  ✗ commit message contains a real MAC/BSSID" >&2
+    echo "ABORT: nothing committed" >&2
+    exit 1
+fi
+echo "  ✓ message clean"
+
 echo "── commit ───────────────────────────────────────────"
 if [[ -n "$MSGFILE" ]]; then git commit -q -F "$MSGFILE" || exit 1
-else [[ -n "$MSG" ]] || { echo "no commit message given" >&2; exit 2; }; git commit -q -m "$MSG" || exit 1; fi
+else                         git commit -q -m "$MSG"     || exit 1; fi
 echo "  $(git log -1 --format='%h  %s')"
 echo "  author: $(git log -1 --format='%an <%ae>')"
 
 (( PUSH )) || { echo "── not pushed (--no-push) ──"; exit 0; }
+
 echo "── push ─────────────────────────────────────────────"
 br=$(git branch --show-current)
 git push -q origin "$br" 2>&1 | tail -3
