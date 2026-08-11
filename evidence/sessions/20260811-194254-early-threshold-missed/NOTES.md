@@ -3,7 +3,7 @@
 **When:** 2026-08-11 19:39:48 – 19:42:11 CEST
 **Kernel:** 7.0.0-28-generic
 **Preceded by:** a cold power-off, so the controller started healthy
-**Trigger:** manual — "a few manipulations"
+**Reported activity:** (ad-hoc, not a procedure) "a few manipulations"
 **Config:** `BT_EARLY=1`, `BT_EARLY_THRESHOLD=2`, `BT_EARLY_WINDOW=90`
 **Outcome:** ❌ stage 2, off the bus, cold power-off required
 

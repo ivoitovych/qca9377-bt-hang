@@ -509,6 +509,42 @@ shifted decisively from the workaround to the characterisation.
 
 ---
 
+## Phase 14 — A methodological correction (2026-08-11)
+
+The operator disclosed that the reproductions were **not a controlled procedure**:
+Bluetooth actions were ad-hoc and essentially arbitrary — connecting, disconnecting,
+toggling modes, starting and interrupting audio — with no fixed sequence and no record
+of the exact steps.
+
+This matters, because several claims had been written as though the inputs were known.
+
+**Corrected in README, bug report, fix proposal and evidence/README:**
+
+- Trigger attributions ("provoked by a mid-stream teardown", "by connect/disconnect and
+  mode changes") are **inferences read backwards out of bluetoothd's logs**, not
+  descriptions of a script that was followed.
+- The "two distinct failure paths" framing was overstated. What was actually observed is
+  **two distinct log signatures**. Whether they are different mechanisms — or the same
+  mechanism reached by different unrecorded inputs — is not established.
+- The incidents are **not matched pairs**, so differences between them cannot carry the
+  weight of a controlled comparison.
+- The bug report's `Reproducer` section became "What provokes it (approximate)", since
+  no deterministic reproducer exists.
+
+**What survives untouched**, because none of it depends on knowing the trigger — all of
+it describes the controller's *response*:
+
+- the device is matched by no entry in btusb's quirks table (source and binary)
+- 287 command timeouts across 34 boots, zero reset attempts
+- **five for five, every reset after the first HCI timeout failed** (+11 s … +33 s)
+- stage 1 measured at 45–66 s in every instrumented case
+
+That distinction — between what the operator did (unknown) and how the controller
+responded (measured) — is what keeps the central finding intact. It was worth stating
+before a maintainer inferred a rigour that was not there.
+
+---
+
 ## Recurring lessons
 
 - **Measure before capping.** `MemoryMax=64M` and the 15-minute metrics interval were
@@ -539,3 +575,7 @@ shifted decisively from the workaround to the characterisation.
 - **One reproduction is one failure path.** The early-warning window looked general after
   a single success; a differently-provoked hang had no such window at all. Vary the
   trigger before generalising.
+- **Know whether the input was controlled before comparing outputs.** Five incidents were
+  written up as though their triggers were known, when they were reconstructed from logs
+  of unrecorded, arbitrary activity. Claims about the *controller's response* survived;
+  claims about *which trigger causes which behaviour* did not.

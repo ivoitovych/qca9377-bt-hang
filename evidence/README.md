@@ -83,6 +83,20 @@ Read together: every reset after the first HCI timeout has failed, the only one 
 before a timeout succeeded, and the early warning that made that possible is **not
 always present**.
 
+### ⚠️ How these sessions were produced
+
+**Ad-hoc, not to a procedure.** The operator's Bluetooth activity was arbitrary —
+connecting and disconnecting devices, toggling modes, playing and interrupting audio —
+with no fixed sequence and no record of the exact actions.
+
+So the `Trigger:` line in each `NOTES.md` is an **inference from the logs**, or the
+operator's rough recollection. The sessions are **not matched pairs**: a difference
+between two of them may be a difference in unrecorded input rather than in mechanism.
+
+What survives this, because it does not depend on knowing the trigger: the controller's
+*response* — reset outcomes, stage-1 durations, whether a warning preceded the stall.
+Those are measured in every session regardless of what provoked it.
+
 ### Using it
 
 ```bash

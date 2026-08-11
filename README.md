@@ -261,19 +261,19 @@ arrived 7 s ahead, a threshold of 2 was never reached, and the controller was lo
 A 7-second window also sets a hard bound on how slow *any* recovery mechanism can
 afford to be — including a kernel one.
 
-⚠️ **It only covers one of at least two failure paths.** In a hang provoked by repeated
-connect/disconnect cycles and mode changes (2026-08-11), the bluetoothd signal arrived
-**133 s *after*** the first HCI timeout — there was no early-warning window at all, and
-`BT_EARLY` had nothing to trigger on.
+⚠️ **In two of five hangs there was no usable warning at all**, so `BT_EARLY` cannot be
+relied on. In one, bluetoothd's signal arrived **133 s *after*** the first HCI timeout;
+in another it never appeared.
 
-| | Path A — audio teardown | Path B — connect/disconnect + mode changes |
-|---|---|---|
-| bluetoothd warning | 52 s **before** the first timeout | 133 s **after** it |
-| Early reset possible | yes — and it recovered | **no** |
+`BT_EARLY` seems to help when the failure is preceded by audio-layer trouble, and cannot
+help when the stall reaches HCI first. Enable it if your logs show AVDTP errors before
+the timeouts; expect nothing from it otherwise.
 
-So `BT_EARLY` helps when the failure starts in the audio layer, and cannot help when it
-starts at HCI. Enable it if your hangs follow audio teardown; expect nothing from it
-otherwise.
+> ⚠️ **These are log signatures, not controlled comparisons.** The reproductions were
+> ad-hoc — arbitrary connect/disconnect/mode-change activity, no fixed procedure, exact
+> actions unrecorded. Differences between incidents may reflect different (unknown)
+> actions rather than different mechanisms. See
+> [`docs/bug-report.md`](docs/bug-report.md#-methodological-caveat--read-before-weighing-the-comparisons).
 
 ---
 

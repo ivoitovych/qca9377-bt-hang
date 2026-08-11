@@ -99,18 +99,59 @@ Modalias     : usb:v13D3p3503d0001dcE0dsc01dp01icE0isc01ip01in00
 
 ---
 
-## Reproducer
+## ⚠️ Methodological caveat — read before weighing the comparisons
 
-1. Pair a classic (BR/EDR) A2DP audio device — reproduced with Sennheiser MOMENTUM 4,
-   Lenovo thinkplus GM2 pro, Tronsmart T8.
-2. Start audio playback.
-3. **While the stream is active**, power the device off or walk out of range — i.e. force
-   an ungraceful teardown rather than a clean disconnect.
-4. AVDTP `Suspend` and `Abort` time out; ~30 s later the host issues `HCI_Disconnect`.
-5. That command never completes. The controller is stalled from this point on.
+**The reproductions were not a controlled procedure.** The operator's Bluetooth actions
+were ad-hoc and essentially arbitrary: connecting and disconnecting devices, toggling
+modes, playing audio, in no fixed sequence and without recording the exact steps.
 
-Not reliably reproducible on demand — it depends on the timing of the teardown — but it
-occurred in **13 of 34 consecutive boots** under ordinary daily use.
+Consequences for what follows:
+
+- **Trigger attributions are inferences from logs**, not from a known script. Where this
+  report says a hang followed "an A2DP teardown" or "connect/disconnect cycles", that is
+  read backwards out of bluetoothd's output. The actual keystrokes are unknown.
+- **The incidents are not matched pairs.** Differences between them may reflect different
+  (unrecorded) actions rather than different mechanisms. Any statement here of the form
+  "trigger X behaves differently from trigger Y" should be read as *"these two log
+  signatures differ"*, not as a controlled comparison.
+- **Not reproducible on demand.** No deterministic reproducer exists. Frequency and
+  timing therefore cannot be treated as measurements of the fault, only of this operator's
+  usage.
+
+What this does **not** weaken, because none of it depends on knowing the trigger:
+
+- the device is matched by no entry in btusb's quirks table (verified in source and binary)
+- 287 command timeouts across 34 boots with zero reset attempts
+- **every reset issued after the first HCI timeout failed, five for five**
+- stage 1 measured at 45–66 s in every instrumented case
+
+Those are properties of the controller's response, observed regardless of what provoked it.
+
+---
+
+## What provokes it (approximate — see the caveat above)
+
+**There is no deterministic reproducer.** What is known is that ad-hoc Bluetooth activity
+provokes it fairly readily on this machine: connecting and disconnecting classic (BR/EDR)
+audio devices, toggling modes, starting and interrupting playback. Devices involved:
+Sennheiser MOMENTUM 4, Lenovo thinkplus GM2 pro, Tronsmart T8.
+
+It occurred in **13 of 34 boots**, and in one instrumented case **two minutes into a
+freshly power-cycled boot** under light use — so it needs neither prolonged uptime nor
+accumulated state.
+
+The clearest logged sequence, from the first instrumented hang, was an ungraceful A2DP
+teardown:
+
+1. audio streaming to a paired device
+2. the device goes away mid-stream (powered off / out of range) rather than disconnecting
+   cleanly
+3. AVDTP `Suspend` and `Abort` time out
+4. ~30 s later the host issues `HCI_Disconnect` (0x0406), which never completes
+
+⚠️ That sequence is **reconstructed from logs**, not from a recorded procedure, and other
+hangs showed no AVDTP involvement at all — in two of five, bluetoothd said nothing before
+the controller stalled. Treat step 1–4 as one observed path, not as *the* trigger.
 
 ---
 

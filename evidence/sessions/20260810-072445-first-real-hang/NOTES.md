@@ -2,7 +2,7 @@
 
 **When:** 2026-08-10 07:24:45 – 07:26:48 CEST
 **Kernel:** 7.0.0-28-generic
-**Trigger:** manual — manipulating a headset (connect/disconnect cycles)
+**Reported activity:** (ad-hoc, not a procedure) manipulating a headset (connect/disconnect cycles)
 **Outcome:** controller reached stage 2. **The watchdog fired correctly and the
 USB reset did not recover it.**
 

@@ -26,9 +26,9 @@ because the previous hang produced exactly one early signal against a threshold 
 bluetoothd logged nothing but routine startup messages before the failure. The stall
 began at HCI with no precursor at the audio layer.
 
-## Path B is not rare
+## The "no early warning" signature is not rare
 
-| # | Date | Trigger | Early lead | Early fired | Outcome |
+| # | Date | Log signature (inferred, not a controlled trigger) | Early lead | Early fired | Outcome |
 |---|---|---|---|---|---|
 | 1 | 08-10 07:24 | audio teardown | −52 s | n/a (not built yet) | ❌ |
 | 2 | 08-10 ~19:00 | audio teardown | ≥2 signals | ✅ | ✅ **recovered** |
@@ -38,6 +38,11 @@ began at HCI with no precursor at the audio layer.
 
 Two of five incidents had **no** usable early warning. `BT_EARLY` is not a general
 mitigation; on this evidence it addresses roughly the audio-teardown subset only.
+
+⚠️ The "signature" column is read out of the logs, not from a recorded procedure — the
+operator's Bluetooth activity was ad-hoc throughout. These rows are not matched pairs,
+and a difference between them may be a difference in unrecorded input rather than in
+mechanism.
 
 ## What is now very well supported
 

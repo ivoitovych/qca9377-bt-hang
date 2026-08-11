@@ -2,7 +2,7 @@
 
 **When:** 2026-08-11 06:06:25 – 06:08:19 CEST
 **Kernel:** 7.0.0-28-generic
-**Trigger:** manual — repeated connect/disconnect cycles and **mode changes**
+**Reported activity:** (ad-hoc, not a procedure) repeated connect/disconnect cycles and **mode changes**
 **Mode:** `BT_EARLY=1` armed, threshold 2 in 90 s
 **Outcome:** ❌ stage 2, controller off the bus, cold power-off required
 
@@ -25,7 +25,7 @@ The audio-teardown signal (`avdtp.c:cancel_request() Abort`) arrived **133 secon
 the first timeout — two minutes too late to be a warning of anything. `BT_EARLY` could
 not have helped here. It had nothing to trigger on until the controller was already gone.
 
-## So there are (at least) two distinct failure paths
+## Two distinct log signatures (not necessarily two mechanisms)
 
 | | Path A — audio teardown | Path B — this incident |
 |---|---|---|

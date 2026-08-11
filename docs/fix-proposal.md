@@ -173,9 +173,15 @@ On 2026-08-11 a hang provoked by **repeated connect/disconnect cycles and mode c
 
 Two consequences:
 
-1. **`BT_EARLY` is not a general answer.** There are at least two failure paths. The
-   bluetoothd audio-teardown signal precedes the stall on one and trails it badly on the
-   other. A userspace workaround built on that signal covers only the first.
+1. **`BT_EARLY` is not a general answer.** In two of five instrumented hangs the
+   bluetoothd audio-teardown signal was unusable — arriving 133 s late in one case and
+   never in another. A userspace workaround built on that signal covers only the subset
+   where audio-layer trouble comes first.
+
+   ⚠️ Whether these are genuinely *different mechanisms* is not established. The
+   reproductions were ad-hoc, with no fixed procedure and no record of the exact
+   actions, so a differing log signature may reflect a differing (unknown) input rather
+   than a different failure path.
 2. **The late-reset result is now stronger, not weaker.** This reset went out **+11 s**
    after the first timeout — near the limit of what a log-driven watchdog can do — and
    still failed. Three for three, a reset after the first HCI timeout has failed.
