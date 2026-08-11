@@ -673,6 +673,97 @@ machine's own binary before the repository was changed.
 
 ---
 
+## Phase 17 — Second review pass: the A/B experiment could not have isolated anything
+
+The same reviewer (GPT 5.6 Sol) re-read the repository against current upstream source
+after the Phase-16 corrections landed, and found one substantive design flaw plus several
+factual errors. All verified locally before acting.
+
+### The design flaw: `BTUSB_QCA_ROME` is six behaviours, not two
+
+The A/B pair adopted in Phase 16 assumed the flag means "reset callback + firmware setup".
+It does not. `btusb_probe()` installs:
+
+```c
+data->setup_on_usb  = btusb_setup_qca;
+hdev->shutdown      = btusb_shutdown_qca;
+hdev->set_bdaddr    = btusb_set_bdaddr_ath3012;
+hdev->reset         = btusb_qca_reset;
+HCI_QUIRK_SIMULTANEOUS_DISCOVERY;
+btusb_check_needs_reset_resume(intf);
+```
+
+So the planned inference — *"A hangs, B fixes it → firmware is the cause"* — was invalid.
+It would only have licensed *"something in the QCA ROME path fixes it"*. A cure, not a
+cause.
+
+Replaced with a four-step ladder (`fix-proposal.md` §5a): **A** reset only, **B** reset +
+`setup_on_usb`, **C** full `BTUSB_QCA_ROME`, **D** production candidate adding
+`BTUSB_WIDEBAND_SPEECH`. WBS is deliberately held back to D, because it changes advertised
+HFP wideband capability and the reproducer is built on audio profile and mode transitions —
+introducing it earlier would confound the thing being measured.
+
+### My `qca_read_soc_version` concern was a red herring
+
+Phase 16 flagged that symbol as absent from `btusb.ko` and suggested it was "worth
+understanding before assuming the firmware path would engage". It lives in `btqca.c`,
+built as a **separate `btqca.ko`** under `CONFIG_BT_QCA` — verified: the module is right
+there in `/lib/modules/.../bluetooth/`. `btusb_setup_qca()` has its own independent USB
+mechanism (`QCA_GET_TARGET_VERSION` → `qca_devices_table` → `QCA_CHECK_STATUS`). The
+concern was groundless and has been removed.
+
+Related: `strings btusb.ko` was also used to look for "ROM version" labels. Those are C
+comments; they never survive compilation. Both checks are gone from
+`tools/bt-verify-kernel-mechanism`.
+
+### `13d3:3563` is MediaTek, not a QCA comparator
+
+The "neighbouring IDs" evidence listed `3491`, `3496`, `3501` and `3563` together.
+Verified against upstream v7.0: the first three are
+`BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH`; **`3563` is `BTUSB_MEDIATEK`**. It has been
+removed from the argument and is now cited for the opposite point — `13d3` is IMC
+Networks, an ODM shipping modules around several vendors' silicon, so numerical proximity
+alone proves nothing about a device's family.
+
+### "Refuses to probe" was the wrong description
+
+`setup_on_usb` is not run during USB probe. `btusb_open()` calls it when the HCI device is
+opened, before HCI URBs start. If `btusb_setup_qca()` finds an unsupported ROM version and
+returns `-ENODEV`, the USB device stays bound to `btusb` and it is *HCI open/setup* that
+fails. Reworded — the distinction matters when reading logs that clearly show a successful
+probe.
+
+### Stale mechanism text still contradicting the correction
+
+Phase 16 did not purge everything. `fix-proposal.md` still described
+`hdev->cmd_timeout = btusb_qca_cmd_timeout` and "5 consecutive timeouts", still expected
+`Multiple cmd timeouts seen. Resetting usb device.` in its validation section, and the
+README still said "threshold is 3 rather than the kernel's 5". A maintainer would have
+met the corrected mechanism at the top and the disproven one five minutes later. Purged.
+
+### Two more over-claims softened
+
+- *"the controller runs factory ROM firmware on every boot"* → what is established is
+  that **no rampatch/NVM download happens through that path**. What state the firmware is
+  actually in is exactly what build B's version queries would reveal.
+- *"`errors:0` means USB is perfectly healthy"* → **no errors in those HCI counters**.
+  USB health is established separately, from USB-level evidence.
+
+### One useful instrumentation note
+
+`btusb_qca_reset()` has two paths: toggle a `bt_en` GPIO if present, else fall back to
+`btusb_reset()` → `usb_queue_reset_device()`. Build A must record **which** ran —
+`Reset qca device via bt_en gpio` or `Resetting usb device.` — because that determines
+whether it is even comparable to the earlier `USBDEVFS_RESET` attempts.
+
+### Standing lesson
+
+Two review passes have now found errors that invalidated conclusions, both times in the
+mechanism rather than the measurements. The measurements have held up throughout; the
+model built on top of them has not. Read the source, then reason.
+
+---
+
 ## Recurring lessons
 
 - **Measure before capping.** `MemoryMax=64M` and the 15-minute metrics interval were
@@ -703,6 +794,12 @@ machine's own binary before the repository was changed.
 - **One reproduction is one failure path.** The early-warning window looked general after
   a single success; a differently-provoked hang had no such window at all. Vary the
   trigger before generalising.
+- **A flag is not its headline behaviour.** `BTUSB_QCA_ROME` reads like "QCA quirks" but
+  installs six separate things. An experiment that toggles it isolates nothing; it takes
+  one build per behaviour to attribute a cause.
+- **Absence in a binary proves nothing until you know where the symbol lives.**
+  `qca_read_soc_version` is in a different module; C comments never survive compilation.
+  Two "findings" evaporated on that basis.
 - **Read the mechanism from source before reasoning about it.** Fifteen phases were built
   on a remembered API (`hdev->cmd_timeout`, five-timeout threshold) that v7.0 does not
   use. One `grep` of the shipped module would have caught it on day one, and the error

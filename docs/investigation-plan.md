@@ -68,14 +68,30 @@ That is the first controlled variable this investigation has had. Capture a full
 trace of connecting each, and diff them. Whatever the Sennheiser does differently is
 already visible in traces we are recording.
 
-### A4. Codec / transmission-mode switching
+### A4. Codec / transmission-mode switching ⭐ the gate
 
 The operator reports that changing transmission mode (HQ ↔ XQ) kills the controller
 **immediately**. Independent reporters point at the same class of event — kernel bug
 203535 is triggered by *pausing and playing* A2DP.
 
-If mode switching is reliable, it is a **deterministic reproducer**, which this
-investigation has never had and which is worth more to maintainers than any analysis.
+This must become a **quantified protocol**, not an anecdote:
+
+```
+cold boot
+start btmon + kernel log capture      (bt-trace is already running)
+bt-mark "trial N start"
+connect Momentum 4
+perform operation X
+perform operation Y
+perform operation Z
+record: hang / no hang
+```
+
+Run it on **stock** first and establish a failure rate — target something like **5/5**.
+Without a denominator, "the patched build ran for an hour" means nothing, and this
+project has already mistaken absence of observed failure for a fix more than once.
+
+Nothing in Phase C should be built until this exists.
 
 ---
 
@@ -103,20 +119,24 @@ instrument available, and waiting on the remaining Phase-B items would not sharp
 The gating prerequisites are **A0** (confirm Ubuntu's timeout path) and **A4** (a
 deterministic reproducer — without one, neither build can be evaluated).
 
-### C1. The A/B build — see [`fix-proposal.md`](fix-proposal.md) §5a
+### C1. The four-step ladder — see [`fix-proposal.md`](fix-proposal.md) §5a
 
-Two builds, not one, because `BTUSB_QCA_ROME` changes two things at once:
+**Not** a two-build A/B. `BTUSB_QCA_ROME` installs six distinct behaviours, so toggling it
+wholesale would show a cure without isolating a cause:
 
-- **A: reset only** — install `hdev->reset = btusb_qca_reset`, no firmware setup
-- **B: full `BTUSB_QCA_ROME`** — reset callback *and* `btusb_setup_qca()`
+- **A** — `hdev->reset = btusb_qca_reset` only
+- **B** — A + `data->setup_on_usb = btusb_setup_qca`
+- **C** — full `BTUSB_QCA_ROME`
+- **D** — C + `BTUSB_WIDEBAND_SPEECH` (production candidate; held back so it cannot
+  confound an audio-transition reproducer)
 
-If A fixes it, immediate kernel-side recovery was the missing piece. If A hangs and B
-fixes it, firmware initialisation is the cause. If both hang, the controller is poisoned
-before the first timeout. If B refuses to probe, its ROM-version query tells us what the
-controller reports about itself — also a result.
+Each step attributes the effect to one added behaviour. Confirm
+`using rampatch file: qca/rampatch_usb_00000302.bin` appears at B, and record which reset
+path fires at A (`bt_en gpio` vs `Resetting usb device.`).
 
-Confirm `using rampatch file: qca/rampatch_usb_00000302.bin` appears in B, then test
-whether the A4 reproducer still triggers the hang.
+Note that B may bind successfully and then fail at **HCI open**, not at probe —
+`setup_on_usb` runs from `btusb_open()`. An `-ENODEV` there, with the reported ROM
+version, is a result worth capturing rather than a failed experiment.
 
 ⚠️ Risk, unchanged from [`fix-proposal.md`](fix-proposal.md) §4: if this module is not a
 true ROME variant, `btusb_setup_qca()` may fail at probe and leave the machine with **no

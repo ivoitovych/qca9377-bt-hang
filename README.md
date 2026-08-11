@@ -56,8 +56,10 @@ $ dmesg | grep -i "Resetting usb device"
 <nothing>
 ```
 
-Point 4 is the bug. Point 2's `errors:0` means USB is perfectly healthy — the chip
-just stopped answering.
+Point 4 is the bug. Point 2's `errors:0` means **no errors are reflected in those HCI
+counters** — the chip is accepting bytes and simply not answering. (USB health at this
+stage is established separately, from USB-level evidence: descriptor reads still succeed
+until stage 2.)
 
 </details>
 
@@ -81,12 +83,22 @@ the two things `BTUSB_QCA_ROME` provides:
 
 - **`hdev->reset = btusb_qca_reset`** — the callback `hci_cmd_timeout()` invokes on the
   *first* command timeout (no threshold; see `net/bluetooth/hci_core.c`)
-- **`btusb_setup_qca()`** — rampatch/NVM firmware download, so the controller runs
-  factory ROM firmware on every boot
+- **`btusb_setup_qca()`** — the QCA USB init path, so **no rampatch or NVM download is
+  ever performed for this device through that path**
 
-Neighbouring IDs are covered — `13d3:3491`, `3496`, `3501`, `3563` are all present in the
-shipped module, while `3502`, `3503` and `3504` are absent. Check your own kernel with
+  (What firmware state the controller is actually in — pristine ROM, or something with
+  persistent patch state — is not established. `btusb_setup_qca()`'s own
+  `QCA_GET_TARGET_VERSION` / `QCA_CHECK_STATUS` queries would tell us; see
+  [`docs/fix-proposal.md`](docs/fix-proposal.md) §5a build B.)
+
+Three genuine QCA ROME comparators from the same ODM are covered while this one is not —
+`13d3:3491`, `3496` and `3501` are all `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH` in
+upstream v7.0; `3502`, `3503` and `3504` appear nowhere. Check your own kernel with
 `tools/bt-verify-kernel-mechanism`.
+
+⚠️ Numerical proximity alone proves nothing: `13d3:3563` *is* present but is
+`BTUSB_MEDIATEK`. `13d3` is IMC Networks, an ODM shipping modules built around several
+vendors' silicon.
 
 Measured on the affected machine:
 
@@ -165,10 +177,13 @@ does not touch (collected metrics, and settings changed outside this repo).
 
 **1. A watchdog** (`bt-hang-watchdog.service`) — reimplements the missing kernel handler
 in userspace. It tails the kernel log and, after 3 controller timeouts in 60 s, issues
-`USBDEVFS_RESET` (the same ioctl `usb_queue_reset_device()` performs), escalating to USB
-unbind/bind if needed. Threshold is 3 rather than the kernel's 5, deliberately: there is
-no downside to resetting an already-broken radio, and reacting during stage 1 is the
-whole point.
+`USBDEVFS_RESET`, escalating to USB unbind/bind if needed.
+
+⚠️ This is a **proxy, not an equivalent**. `USBDEVFS_RESET` goes via `proc_resetdevice()`
+→ `usb_reset_device()`, while the kernel path queues a reset on the interface
+(`usb_queue_reset_device()`). More importantly the *timing* differs: the kernel resets at
++0 s inside `hci_cmd_timeout()`, whereas a journal-tailing watchdog has measured +11 s to
++33 s. Every late reset failed; the +0 s case has never been tested.
 
 **2. USB autosuspend disabled** for the radio — `btusb enable_autosuspend=0` plus a udev
 rule pinning `power/control=on`. Runtime suspend racing with in-flight HCI traffic widens

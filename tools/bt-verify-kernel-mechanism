@@ -72,25 +72,44 @@ fi
 
 echo
 echo "${B}2. Supporting strings${O}"
-for s in "Resetting usb device" "rampatch" "nvm_usb" "using rampatch file" "qca_read_soc_version" "ROM version"; do
+# Only strings that actually live in btusb.o. Do NOT test for qca_read_soc_version:
+# it is in btqca.c, built as a separate btqca.ko under CONFIG_BT_QCA, so its
+# absence here means nothing. btusb_setup_qca() has its own independent USB
+# mechanism (QCA_GET_TARGET_VERSION / QCA_CHECK_STATUS vendor requests).
+# Likewise do not test for "ROM version" — the Rome 3.x labels in the source are
+# C comments and never survive compilation.
+for s in "Resetting usb device" "rampatch" "nvm_usb" "using rampatch file"; do
     if grep -qi "$s" <<<"$syms"; then printf '  %s✓%s %s\n' "$G" "$O" "$s"
     else printf '  %s·%s %s (absent)\n' "$Y" "$O" "$s"; fi
 done
+if [[ -e "/lib/modules/$KREL/kernel/drivers/bluetooth/btqca.ko" || \
+      -e "/lib/modules/$KREL/kernel/drivers/bluetooth/btqca.ko.zst" ]]; then
+    printf '  %s✓%s btqca.ko present as a separate module (expected)\n' "$G" "$O"
+fi
 
 echo
 echo "${B}3. IMC Networks (13d3) device IDs in this binary${O}"
 echo "  usb_device_id is little-endian: 13d3:XXYY -> bytes d3 13 YY XX"
+echo "  Vendor classification is from upstream v7.0 btusb.c, NOT inferred from the binary:"
 hexdump -ve '1/1 "%02x"' "$TMP" > "$TMP.hex" 2>/dev/null
-for id in 3491 3496 3501 3502 3503 3504 3562 3563; do
-    lo="${id:2:2}"; hi="${id:0:2}"
-    pat="d313${lo}${hi}"
-    if grep -qo "$pat" "$TMP.hex" 2>/dev/null; then
-        printf '  %s✓%s 13d3:%s  present\n' "$G" "$O" "$id"
+check_id() {
+    local id="$1" note="$2"
+    local lo="${id:2:2}" hi="${id:0:2}"
+    if grep -qo "d313${lo}${hi}" "$TMP.hex" 2>/dev/null; then
+        printf '  %s✓%s 13d3:%s  present   %s\n' "$G" "$O" "$id" "$note"
     else
-        printf '  %s✗%s 13d3:%s  ABSENT\n' "$R" "$O" "$id"
+        printf '  %s✗%s 13d3:%s  ABSENT    %s\n' "$R" "$O" "$id" "$note"
     fi
-done
+}
+check_id 3491 "BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH"
+check_id 3496 "BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH"
+check_id 3501 "BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH"
+check_id 3502 "not in upstream"
+check_id 3503 "not in upstream  <-- THIS DEVICE"
+check_id 3504 "not in upstream"
+check_id 3563 "BTUSB_MEDIATEK — different silicon, NOT a QCA comparator"
 rm -f "$TMP.hex"
 echo
-echo "  (neighbouring IDs present while this device's is absent = an isolated gap,"
-echo "   not a vendor the driver simply does not cover)"
+echo "  3491/3496/3501 are genuine QCA ROME comparators. 3563 is MediaTek: 13d3 is"
+echo "  IMC Networks, an ODM shipping modules built around several vendors' silicon,"
+echo "  so numerical proximity alone proves nothing about a device's family."
