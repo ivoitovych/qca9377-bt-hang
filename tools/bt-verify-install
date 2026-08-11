@@ -1,0 +1,113 @@
+#!/bin/bash
+# bt-verify-install — is what is RUNNING the same as what is COMMITTED?
+#
+#   bt-verify-install [repo-dir]
+#
+# Compares every installed artifact against its source in the checkout and
+# reports drift. Exits non-zero if anything differs or is missing.
+#
+# WHY: scripts get edited and installed by hand mid-debugging, and the change
+# then exists only on the machine. Twice in this project a tool was installed
+# but never added to install.sh, so a fresh clone would not have reproduced the
+# running system. A reboot is the worst time to discover that.
+#
+# Read-only.
+
+set -uo pipefail
+
+REPO="${1:-}"
+if [[ -z "$REPO" ]]; then
+    HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    for c in "$HERE/.." /root/exp/qca9377-bt-hang "$PWD"; do
+        [[ -d "$c/.git" && -e "$c/install.sh" ]] && { REPO=$(cd "$c" && pwd); break; }
+    done
+fi
+[[ -n "$REPO" && -d "$REPO" ]] || { echo "no checkout found; pass one as an argument" >&2; exit 2; }
+
+G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
+[[ -t 1 ]] || { G=""; R=""; Y=""; B=""; O=""; }
+
+same=0; drift=0; missing=0
+
+# source-in-repo : installed-path
+PAIRS=(
+    "bin/bt-hang-watchdog:/usr/local/sbin/bt-hang-watchdog"
+    "bin/bt-health-snapshot:/usr/local/sbin/bt-health-snapshot"
+    "bin/bt-trace:/usr/local/sbin/bt-trace"
+    "bin/bt-mark:/usr/local/bin/bt-mark"
+    "bin/bt-evidence:/usr/local/bin/bt-evidence"
+    "tools/bt-boot-list:/usr/local/bin/bt-boot-list"
+    "tools/bt-state:/usr/local/bin/bt-state"
+    "tools/bt-boots:/usr/local/bin/bt-boots"
+    "tools/bt-diagnose:/usr/local/bin/bt-diagnose"
+    "tools/bt-status:/usr/local/bin/bt-status"
+    "tools/bt-incident:/usr/local/bin/bt-incident"
+    "tools/bt-postmortem:/usr/local/bin/bt-postmortem"
+    "tools/bt-verify-install:/usr/local/bin/bt-verify-install"
+    "tools/bt-timeline.sh:/usr/local/bin/bt-timeline"
+    "tools/bt-health-report.sh:/usr/local/bin/bt-health-report"
+    "tools/sanitize-logs.sh:/usr/local/bin/bt-sanitize-logs"
+    "systemd/bt-hang-watchdog.service:/etc/systemd/system/bt-hang-watchdog.service"
+    "systemd/bt-health-snapshot.service:/etc/systemd/system/bt-health-snapshot.service"
+    "systemd/bt-health-snapshot.timer:/etc/systemd/system/bt-health-snapshot.timer"
+    "systemd/bt-trace.service:/etc/systemd/system/bt-trace.service"
+    "etc/modprobe.d/btusb-qca9377.conf:/etc/modprobe.d/btusb-qca9377.conf"
+)
+
+echo "${B}Install verification${O} — checkout: $REPO"
+echo "─────────────────────────────────────────────────────────────"
+for p in "${PAIRS[@]}"; do
+    src="$REPO/${p%%:*}"; dst="${p##*:}"
+    if [[ ! -e "$src" ]]; then
+        printf '  %s?%s missing in repo: %s\n' "$Y" "$O" "${p%%:*}"; continue
+    fi
+    if [[ ! -e "$dst" ]]; then
+        printf '  %s✗%s NOT INSTALLED: %s\n' "$R" "$O" "$dst"; missing=$((missing+1)); continue
+    fi
+    if cmp -s "$src" "$dst"; then
+        same=$((same+1))
+    else
+        printf '  %s✗%s DRIFT: %s\n' "$R" "$O" "$dst"
+        printf '        differs from %s\n' "${p%%:*}"
+        drift=$((drift+1))
+    fi
+done
+
+# The udev rules are generated from templates with the device ID substituted,
+# so a byte comparison is wrong; check they exist and name the right device.
+echo
+VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
+for r in 50-bluetooth-no-autosuspend 51-bluetooth-health-snapshot; do
+    f="/etc/udev/rules.d/$r.rules"
+    if [[ ! -e "$f" ]]; then
+        printf '  %s✗%s NOT INSTALLED: %s\n' "$R" "$O" "$f"; missing=$((missing+1))
+    elif grep -q "$VID" "$f" && grep -q "$PID" "$f"; then
+        same=$((same+1))
+    else
+        printf '  %s✗%s %s does not reference %s:%s\n' "$R" "$O" "$f" "$VID" "$PID"; drift=$((drift+1))
+    fi
+done
+
+echo
+echo "${B}Services${O}"
+for u in bluetooth bt-hang-watchdog bt-trace bt-health-snapshot.timer; do
+    st=$(systemctl is-active "$u" 2>&1); en=$(systemctl is-enabled "$u" 2>&1)
+    if [[ "$st" == active && "$en" == enabled ]]; then
+        printf '  %s✓%s %-26s %s/%s\n' "$G" "$O" "$u" "$st" "$en"
+    else
+        printf '  %s✗%s %-26s %s/%s\n' "$R" "$O" "$u" "$st" "$en"; drift=$((drift+1))
+    fi
+done
+
+echo
+echo "${B}Effective watchdog config${O}"
+systemctl show bt-hang-watchdog -p Environment --value 2>/dev/null | tr ' ' '\n' | grep '^BT_' | sed 's/^/  /'
+
+echo
+echo "─────────────────────────────────────────────────────────────"
+if (( drift || missing )); then
+    printf '%s%d in sync, %d drifted, %d not installed%s\n' "$R" "$same" "$drift" "$missing" "$O"
+    echo "Run: sudo ./install.sh --apply"
+    exit 1
+fi
+printf '%s%d artifacts in sync; running system matches the checkout%s\n' "$G" "$same" "$O"

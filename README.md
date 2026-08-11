@@ -418,6 +418,7 @@ Installed alongside the mitigation, for reproducing and recording failures:
 | Tool | Purpose |
 |---|---|
 | `bt-status` | **"What do we have by now?"** — controller, per-boot history, whether Bluetooth was actually used, watchdog activity, verdict |
+| `bt-verify-install` | is the running system the same as the checkout? catches hand-installed drift |
 | `bt-postmortem` | What happened during the last hang: timing, whether the watchdog fired, **whether the reset worked** |
 | `bt-incident <slug>` | Collect a hang that already happened into a sanitised evidence session |
 | `bt-timeline [-30m]` | Merge kernel, bluetoothd, watchdog, trace and your marks into one chronology |
