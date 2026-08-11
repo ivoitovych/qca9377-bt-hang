@@ -1,0 +1,53 @@
+#!/bin/bash
+# repo-scan — check a repo for data that must never be published.
+#
+#   repo-scan [dir]            scan staged changes (or whole tree if nothing staged)
+#   repo-scan [dir] --all      scan every tracked file regardless of staging
+#
+# Exits non-zero if anything suspicious is found. Checks:
+#   real MAC addresses / BSSIDs (colon or dash), UUIDs, IPv4, emails,
+#   binary captures, and AI attribution.
+#
+# Allowed placeholders / documented test vectors: AA:BB:CC:*, 11:11:11:*,
+# 00:11:22:* (sanitiser self-test), 3C:37:12:* and DE:AD:BE:* (doc examples).
+set -uo pipefail
+DIR="${1:-.}"; [[ "$DIR" == --* ]] && DIR="."
+ALL=0; for a in "$@"; do [[ "$a" == "--all" ]] && ALL=1; done
+cd "$DIR" || { echo "no such dir: $DIR" >&2; exit 2; }
+git rev-parse --git-dir >/dev/null 2>&1 || { echo "not a git repo: $DIR" >&2; exit 2; }
+
+if (( ALL )) || [[ -z "$(git diff --cached --name-only)" ]]; then
+    CONTENT=$(git ls-files -z | xargs -0 cat 2>/dev/null); SCOPE="all tracked files"
+else
+    CONTENT=$(git diff --cached); SCOPE="staged changes"
+fi
+fail=0
+report() { echo "  ✗ $1"; shift; printf '      %s\n' "$@"; fail=1; }
+
+macs=$(grep -oEi '[0-9a-f]{2}([:-][0-9a-f]{2}){5,}' <<<"$CONTENT" \
+       | grep -viE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be)' | sort -u)
+[[ -n "$macs" ]] && report "real MAC/BSSID found:" $macs || echo "  ✓ no unexpected MACs"
+
+uuids=$(grep -oEi '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' <<<"$CONTENT" | sort -u)
+[[ -n "$uuids" ]] && report "UUID found:" $uuids || echo "  ✓ no UUIDs"
+
+ips=$(grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' <<<"$CONTENT" \
+      | grep -vE '^(0\.0\.0\.0|127\.0\.0\.1|255\.|0\.)' | sort -u)
+[[ -n "$ips" ]] && echo "  • IPv4 present (check intent): $(tr '\n' ' ' <<<"$ips")" || echo "  ✓ no IPv4"
+
+# Skip lines that are themselves grep pattern definitions. Since this script now
+# lives inside the repository it scans, its own pattern list would otherwise
+# match and report an attribution that does not exist — a false positive that
+# blocks every commit. Excluding the definition line is narrow enough that real
+# attribution anywhere else, including elsewhere in this file, is still caught.
+ai=$(grep -vE 'grep -[a-z]*cE' <<<"$CONTENT" \
+     | grep -icE 'co-authored-by: *claude|generated with .*claude|anthropic' || true)
+(( ${ai:-0} > 0 )) && report "AI attribution present ($ai match(es))" || echo "  ✓ no AI attribution"
+
+bins=$(git ls-files | grep -cE '\.(btsnoop|pcap|pcapng)$' || true)
+(( ${bins:-0} > 0 )) && report "binary capture tracked ($bins) — cannot be sanitised" \
+                     || echo "  ✓ no binary captures tracked"
+
+echo
+if (( fail )); then echo "SCAN FAILED ($SCOPE)"; exit 1; fi
+echo "scan clean ($SCOPE)"

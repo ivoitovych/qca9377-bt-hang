@@ -1,0 +1,36 @@
+#!/bin/bash
+# repo-validate — syntax-check everything checkable in a repo.
+#
+#   repo-validate [dir]
+#
+# bash -n on shell scripts, systemd-analyze on units, udevadm on rules,
+# jq on JSON, python compile on .py. Exits non-zero on any failure.
+set -uo pipefail
+DIR="${1:-.}"; cd "$DIR" || { echo "no such dir: $DIR" >&2; exit 2; }
+fail=0
+ok(){ printf '  ✓ %s\n' "$1"; }
+bad(){ printf '  ✗ %s\n' "$1"; fail=1; }
+
+while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    if head -1 "$f" | grep -q '^#!.*\(bash\|sh\)'; then
+        bash -n "$f" 2>/dev/null && ok "bash  $f" || { bad "bash  $f"; bash -n "$f"; }
+    fi
+done < <(git ls-files 2>/dev/null || find . -type f)
+
+for f in $(git ls-files '*.service' '*.timer' '*.socket' 2>/dev/null); do
+    out=$(systemd-analyze verify "./$f" 2>&1 | grep -v "is not executable" || true)
+    [[ -z "$out" ]] && ok "unit  $f" || { bad "unit  $f"; echo "$out" | sed 's/^/      /'; }
+done
+for f in $(git ls-files '*.rules' 2>/dev/null); do
+    udevadm verify "./$f" >/dev/null 2>&1 && ok "udev  $f" || bad "udev  $f"
+done
+for f in $(git ls-files '*.json' 2>/dev/null); do
+    jq -e . "$f" >/dev/null 2>&1 && ok "json  $f" || bad "json  $f"
+done
+for f in $(git ls-files '*.py' 2>/dev/null); do
+    python3 -m py_compile "$f" 2>/dev/null && ok "py    $f" || bad "py    $f"
+done
+echo
+(( fail )) && { echo "VALIDATION FAILED"; exit 1; }
+echo "all checks passed"

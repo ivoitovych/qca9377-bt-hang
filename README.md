@@ -331,7 +331,8 @@ help. Per-boot detail: [`evidence/diagnosis/per-boot-history.txt`](evidence/diag
 bin/                  watchdog + metrics collector
 systemd/              unit files
 etc/                  modprobe + udev configuration
-tools/                health report, log sanitiser, restoration verifier
+tools/                diagnostics, incident capture, log sanitiser
+devtools/             contributor tooling (scan, validate, commit+verify)
 docs/
   investigation.md    full investigation, every measurement
   bug-report.md       ready to file with linux-bluetooth
@@ -411,19 +412,20 @@ Installed alongside the mitigation, for reproducing and recording failures:
 
 See [`evidence/README.md`](evidence/README.md) for how sessions are structured.
 
-## Development helpers
+## Contributing tooling
 
-Recurring tasks are scripted at a stable path outside this repo
-(`/root/exp/bin`, separately version-controlled) so they can be granted
-permission once rather than re-approved as ad-hoc commands:
+[`devtools/`](devtools/) holds scripts for working **on** this repository — not for
+diagnosing Bluetooth:
 
 | Script | Purpose |
 |---|---|
-| `bt-state` | Bluetooth/USB/service state in one shot |
-| `bt-boots [N]` | per-boot failure counts |
-| `repo-scan <dir>` | refuse-to-publish scan: MACs, BSSIDs, UUIDs, AI attribution, binary captures |
-| `repo-validate <dir>` | `bash -n`, `systemd-analyze`, `udevadm verify`, `jq` |
-| `repo-save <dir> "<msg>"` | validate → scan → commit → push → verify remote matches |
+| `devtools/repo-scan <dir>` | refuse-to-publish scan: MACs, BSSIDs, UUIDs, IPv4, AI attribution, binary captures |
+| `devtools/repo-validate <dir>` | `bash -n`, `systemd-analyze`, `udevadm verify`, `jq`, `py_compile` |
+| `devtools/repo-save <dir> "<msg>"` | validate → scan → commit → push → verify the remote hash matches |
+
+This repo publishes logs, and kernel logs carry the Wi-Fi AP BSSID — which public
+geolocation databases index. `repo-scan` is the last check before that leaves the
+machine. Not installed by `install.sh`.
 
 ## Contributing
 

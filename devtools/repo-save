@@ -1,0 +1,46 @@
+#!/bin/bash
+# repo-save — validate, scan, commit and push, verifying the remote matches.
+#
+#   repo-save <dir> "<commit message>"
+#   repo-save <dir> -F <file>          message from a file
+#   repo-save <dir> "<msg>" --no-push  commit only
+#
+# Refuses to commit if repo-validate or repo-scan fails. Replaces the
+# add/commit/push/fetch/compare-hashes sequence done by hand each time — where
+# the easiest step to skip is the one that proves the push actually landed.
+set -uo pipefail
+DIR="${1:?usage: repo-save <dir> <message|-F file> [--no-push]}"; shift
+PUSH=1; MSGFILE=""; MSG=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --no-push) PUSH=0 ;;
+        -F) MSGFILE="${2:?-F needs a file}"; shift ;;
+        *) MSG="$1" ;;
+    esac; shift
+done
+cd "$DIR" || { echo "no such dir: $DIR" >&2; exit 2; }
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo "── validate ─────────────────────────────────────────"
+"$HERE/repo-validate" . >/dev/null || { "$HERE/repo-validate" .; echo "ABORT: validation failed" >&2; exit 1; }
+echo "  ✓ all checks passed"
+
+git add -A
+echo "── scan ─────────────────────────────────────────────"
+"$HERE/repo-scan" . || { echo "ABORT: scan failed — nothing committed" >&2; exit 1; }
+
+if [[ -z "$(git diff --cached --name-only)" ]]; then echo "nothing to commit"; exit 0; fi
+echo "── commit ───────────────────────────────────────────"
+if [[ -n "$MSGFILE" ]]; then git commit -q -F "$MSGFILE" || exit 1
+else [[ -n "$MSG" ]] || { echo "no commit message given" >&2; exit 2; }; git commit -q -m "$MSG" || exit 1; fi
+echo "  $(git log -1 --format='%h  %s')"
+echo "  author: $(git log -1 --format='%an <%ae>')"
+
+(( PUSH )) || { echo "── not pushed (--no-push) ──"; exit 0; }
+echo "── push ─────────────────────────────────────────────"
+br=$(git branch --show-current)
+git push -q origin "$br" 2>&1 | tail -3
+git fetch -q origin 2>/dev/null
+l=$(git rev-parse "$br"); r=$(git rev-parse "origin/$br" 2>/dev/null || echo none)
+if [[ "$l" == "$r" ]]; then echo "  ✓ remote matches: ${l:0:8}"; else
+    echo "  ✗ MISMATCH local=${l:0:8} remote=${r:0:8}" >&2; exit 1; fi
