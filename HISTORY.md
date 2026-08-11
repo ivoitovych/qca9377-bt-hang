@@ -794,6 +794,13 @@ model built on top of them has not. Read the source, then reason.
 - **One reproduction is one failure path.** The early-warning window looked general after
   a single success; a differently-provoked hang had no such window at all. Vary the
   trigger before generalising.
+- **Kernel work is hostile to reasoning from names.** `cmd_timeout`,
+  `qca_read_soc_version`, "ROME quirk", "USB reset" — each is descriptive enough that a
+  plausible mental model forms automatically, and ten lines of real source then destroy
+  it. The rule that would have prevented both review findings, applied mechanically:
+  > whenever an inference depends on *"function X probably does Y"* — **read X**;
+  > whenever it depends on *"flag X probably enables Y"* — **enumerate every branch
+  > that tests X**.
 - **A flag is not its headline behaviour.** `BTUSB_QCA_ROME` reads like "QCA quirks" but
   installs six separate things. An experiment that toggles it isolates nothing; it takes
   one build per behaviour to attribute a cause.

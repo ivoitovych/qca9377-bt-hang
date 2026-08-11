@@ -449,6 +449,7 @@ Installed alongside the mitigation, for reproducing and recording failures:
 
 | Tool | Purpose |
 |---|---|
+| `bt-trial` | **run one numbered trial of the fixed reproduction protocol**; tracks failure rate per build so every comparison has a denominator |
 | `bt-status` | **"What do we have by now?"** — controller, per-boot history, whether Bluetooth was actually used, watchdog activity, verdict |
 | `bt-verify-install` | is the running system the same as the checkout? catches hand-installed drift |
 | `bt-postmortem` | What happened during the last hang: timing, whether the watchdog fired, **whether the reset worked** |

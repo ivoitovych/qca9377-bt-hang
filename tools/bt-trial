@@ -1,0 +1,196 @@
+#!/bin/bash
+# bt-trial — run one numbered trial of the fixed reproduction protocol.
+#
+#   bt-trial protocol                 print the protocol and stop
+#   bt-trial start <build>            begin a trial of <build> (e.g. stock, A, B, C, D)
+#   bt-trial step "<what you did>"    mark a protocol step (optional but recommended)
+#   bt-trial hang                     record: the controller hung
+#   bt-trial ok                       record: it survived (verifies the controller answers)
+#   bt-trial abort                    discard the open trial
+#   bt-trial report                   failure rate per build — the denominators
+#
+# WHY: "the patched build ran for an hour" means nothing without a baseline. This
+# project has mistaken absence-of-observed-failure for a fix more than once. Every
+# build must be measured against the SAME protocol, and stock must be measured
+# first — target 5/5 failures before anything is compiled.
+#
+# Each trial records its own before/after state, the operator's steps with
+# timestamps, and (on a hang) an automatic bt-incident collection.
+
+set -uo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="${BT_REPO:-}"
+if [[ -z "$REPO" ]]; then
+    for c in "$HERE/.." /root/exp/qca9377-bt-hang "$PWD"; do
+        [[ -d "$c/.git" && -e "$c/install.sh" ]] && { REPO=$(cd "$c" && pwd); break; }
+    done
+fi
+[[ -n "$REPO" ]] || { echo "no checkout found; set BT_REPO" >&2; exit 2; }
+
+TRIALS="$REPO/evidence/trials"
+RESULTS="$TRIALS/results.tsv"
+STATE=/run/bt-trial
+CUR="$STATE/current"
+
+G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
+[[ -t 1 ]] || { G=""; R=""; Y=""; B=""; O=""; }
+
+# ── THE PROTOCOL ──────────────────────────────────────────────────────────
+# Fixed. Changing it invalidates comparison with every trial already recorded;
+# if it must change, bump PROTOCOL_VERSION so old and new trials are not mixed.
+PROTOCOL_VERSION=1
+protocol() {
+cat <<'EOF'
+PROTOCOL v1 — one trial
+
+  0. Cold-boot the machine (power-off, not reboot) if the controller is down.
+  1. bt-trial start <build>
+  2. Connect the Sennheiser Momentum 4.
+  3. Start audio playback. Let it run ~10 s.
+  4. Switch transmission mode / codec (HQ <-> XQ).
+  5. If still alive: switch back.
+  6. If still alive: disconnect, reconnect, play again.
+  7. bt-trial hang    (controller died)
+     bt-trial ok      (survived all steps)
+
+  Record each step you actually perform with:
+     bt-trial step "switched to XQ"
+
+  Run the SAME steps for every build. Deviations make the comparison worthless —
+  note them with `bt-trial step` if they happen.
+EOF
+}
+
+hci_alive() {
+    local d dev="" h=""
+    for d in /sys/bus/usb/devices/*; do
+        [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
+        [[ "$(<"$d/idVendor")" == "${BT_VID:-13d3}" && "$(<"$d/idProduct")" == "${BT_PID:-3503}" ]] \
+            && { dev="$d"; break; }
+    done
+    [[ -n "$dev" ]] || return 1
+    for p in "$dev"/*/bluetooth/hci*; do [[ -e "$p" ]] && h=$(basename "$p") && break; done
+    [[ -n "$h" ]] || return 1
+    command -v hciconfig >/dev/null 2>&1 || return 2
+    timeout 6 hciconfig "$h" name >/dev/null 2>&1
+}
+
+next_trial_no() {
+    local build="$1" n
+    n=$(awk -F'\t' -v b="$build" '$2==b {c++} END{print c+0}' "$RESULTS" 2>/dev/null)
+    echo $(( ${n:-0} + 1 ))
+}
+
+case "${1:-}" in
+
+protocol) protocol ;;
+
+start)
+    build="${2:?usage: bt-trial start <build>   (stock, A, B, C, D)}"
+    [[ -e "$CUR" ]] && { echo "a trial is already open:"; sed 's/^/  /' "$CUR"; exit 1; }
+    if ! hci_alive; then
+        echo "${R}Controller is not responding.${O} Cold power-off first — a trial that"
+        echo "starts on a dead controller measures nothing."
+        exit 1
+    fi
+    mkdir -p "$STATE" "$TRIALS"
+    n=$(next_trial_no "$build")
+    dir="$TRIALS/$build/trial-$(printf '%02d' "$n")"
+    mkdir -p "$dir"
+    { echo "start=$(date +%s)"; echo "build=$build"; echo "n=$n"; echo "dir=$dir"; } > "$CUR"
+    command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-before.txt" 2>&1
+    : > "$dir/steps.log"
+    command -v bt-mark >/dev/null 2>&1 && bt-mark "TRIAL $build #$n START (protocol v$PROTOCOL_VERSION)" >/dev/null 2>&1
+    echo "${B}Trial $build #$n started${O}  (protocol v$PROTOCOL_VERSION)"
+    echo "  uptime: $(uptime -p)"
+    echo
+    protocol | sed -n '3,10p'
+    echo
+    echo "  then: bt-trial hang   |   bt-trial ok"
+    ;;
+
+step)
+    [[ -e "$CUR" ]] || { echo "no trial open" >&2; exit 1; }
+    what="${2:?usage: bt-trial step \"<what you did>\"}"
+    dir=$(grep '^dir=' "$CUR" | cut -d= -f2-)
+    start=$(grep '^start=' "$CUR" | cut -d= -f2)
+    printf '[+%ss] %s\n' "$(( $(date +%s) - start ))" "$what" >> "$dir/steps.log"
+    command -v bt-mark >/dev/null 2>&1 && bt-mark "TRIAL step: $what" >/dev/null 2>&1
+    echo "recorded (+$(( $(date +%s) - start ))s): $what"
+    ;;
+
+hang|ok)
+    [[ -e "$CUR" ]] || { echo "no trial open" >&2; exit 1; }
+    outcome="$1"
+    build=$(grep '^build=' "$CUR" | cut -d= -f2-)
+    n=$(grep '^n=' "$CUR" | cut -d= -f2)
+    dir=$(grep '^dir=' "$CUR" | cut -d= -f2-)
+    start=$(grep '^start=' "$CUR" | cut -d= -f2)
+    dur=$(( $(date +%s) - start ))
+
+    if [[ "$outcome" == ok ]]; then
+        if hci_alive; then
+            echo "${G}verified: controller still responds${O}"
+        else
+            echo "${R}Controller does NOT respond — recording as 'hang', not 'ok'.${O}"
+            outcome=hang
+        fi
+    fi
+
+    command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-after.txt" 2>&1
+    command -v bt-mark  >/dev/null 2>&1 && bt-mark "TRIAL $build #$n RESULT: $outcome" >/dev/null 2>&1
+
+    [[ -s "$RESULTS" ]] || printf 'timestamp\tbuild\ttrial\tprotocol\toutcome\tduration_s\tkernel\n' > "$RESULTS"
+    printf '%s\t%s\t%s\tv%s\t%s\t%s\t%s\n' \
+        "$(date -Iseconds)" "$build" "$n" "$PROTOCOL_VERSION" "$outcome" "$dur" "$(uname -r)" >> "$RESULTS"
+
+    if [[ "$outcome" == hang ]] && command -v bt-incident >/dev/null 2>&1; then
+        echo "collecting incident evidence..."
+        bt-incident "trial-$build-$n" --since "@$(( start - 60 ))" >/dev/null 2>&1 \
+            && echo "  -> evidence/sessions/latest"
+    fi
+
+    rm -f "$CUR"
+    if [[ "$outcome" == hang ]]; then
+        echo "${R}${B}Trial $build #$n: HANG${O} after ${dur}s"
+        echo "  cold power-off required before the next trial"
+    else
+        echo "${G}${B}Trial $build #$n: survived${O} (${dur}s)"
+    fi
+    echo
+    "$0" report
+    ;;
+
+abort)
+    [[ -e "$CUR" ]] || { echo "no trial open"; exit 0; }
+    dir=$(grep '^dir=' "$CUR" | cut -d= -f2-)
+    rm -rf "$dir"; rm -f "$CUR"
+    echo "trial discarded"
+    ;;
+
+report)
+    if [[ ! -s "$RESULTS" ]]; then echo "no trials recorded yet"; exit 0; fi
+    echo "${B}Trial results${O}  ($RESULTS)"
+    echo "─────────────────────────────────────────────────────────────"
+    awk -F'\t' 'NR>1 {
+        tot[$2]++; if ($5=="hang") h[$2]++; sum[$2]+=$6
+    } END {
+        printf "  %-8s %-10s %-10s %s\n", "BUILD", "HANGS", "RATE", "mean duration"
+        for (b in tot) {
+            rate = (tot[b] ? 100*h[b]/tot[b] : 0)
+            printf "  %-8s %-10s %-10s %.0fs\n", b, (h[b]+0)"/"tot[b], sprintf("%.0f%%", rate), sum[b]/tot[b]
+        }
+    }' "$RESULTS"
+    echo
+    echo "  Gate: stock must reach a high, stable failure rate (target 5/5) before"
+    echo "  any build is compiled. Compare every build against the SAME protocol."
+    ;;
+
+status)
+    if [[ -e "$CUR" ]]; then echo "trial OPEN:"; sed 's/^/  /' "$CUR"
+    else echo "no trial open"; fi
+    ;;
+
+*)  sed -n '2,18p' "$0"; exit 1 ;;
+esac
