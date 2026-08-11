@@ -439,6 +439,38 @@ produced a confidently wrong answer.
 
 ---
 
+## Phase 12 — The window can be 7 seconds wide (2026-08-11 19:39)
+
+Reproduced after a cold power-off, with "a few manipulations". This time the
+early-warning window **existed** — and the watchdog still missed it, for a reason that
+was purely a tuning choice:
+
+```
+19:39:48  early signal: avdtp.c:cancel_request() Abort
+          early window: 1/2 in last 90s     <- threshold was 2; never reached
+19:39:55  first HCI command timeout          (+7 s)
+19:40:28  watchdog intervened (LATE)        (+33 s)  -> reset failed
+19:42:11  device left the bus              (+136 s)
+```
+
+Exactly one usable signal, seven seconds ahead, against a threshold of two.
+
+Lead times measured so far: **−52 s**, enough-for-two, **none at all (+133 s)**, **−7 s**.
+A threshold of 2 is unusable against a 7-second window carrying one signal.
+
+`BT_EARLY_THRESHOLD` default lowered from 2 to **1**. The precision data supports it —
+`cancel_request() Abort` 4/4, `Suspend` 2/2, `avdtp_connect_cb` 5/5 occurrences fell in
+boots that hung — but the cost is real and was accepted deliberately: a false positive
+now resets a working controller and drops live connections. The alternative is a
+guaranteed power-off, which is worse.
+
+The core claim is unchanged and slightly stronger: **four for four**, every reset after
+the first HCI timeout has failed (+11 s, +20 s, +33 s, and the original). What this adds
+is a bound on the window — as little as **7 seconds** — which constrains how slow *any*
+recovery mechanism can be, a kernel hook included.
+
+---
+
 ## Recurring lessons
 
 - **Measure before capping.** `MemoryMax=64M` and the 15-minute metrics interval were

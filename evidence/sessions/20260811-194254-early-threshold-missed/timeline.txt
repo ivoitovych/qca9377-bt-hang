@@ -1,0 +1,126 @@
+BLUETOOTH TIMELINE — 2026-08-11 19:35
+─────────────────────────────────────────────────────────────────────────
+--  MARK  No entries --
+19:39:36  TRACE /usr/local/sbin/bt-trace: line 151: 70429 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+19:39:36  TRACE btmon exited (#45) — restarting within 1s; ~1s of capture lost
+19:39:36  TRACE capturing to bt-20260811-193936.btsnoop
+19:39:36  TRACE pruning bt-20260811-134013.btsnoop
+19:39:40  KERN  Bluetooth: hci0: unexpected event for opcode 0x2005
+19:39:45  BLUED profiles/audio/avdtp.c:avdtp_close() avdtp_close: rejecting since close is already initiated
+19:39:45  BLUED profiles/audio/avdtp.c:cancel_request() Close: Operation canceled (125)
+19:39:45  BLUED profiles/audio/avdtp.c:session_cb() Transaction label doesn't match
+19:39:47  BLUED profiles/audio/avdtp.c:cancel_request() Abort: Connection timed out (110)
+19:39:47  KERN  bluetoothd[1158]: segfault at fffffffffffffff9 ip 00007b440feade55 sp 00007ffdb4928180 error 5 in libc.so.6[ade55,7b440fe28000+188000] likely on CPU 0 (core 0, socket 0)
+19:39:48  WDOG  early signal: profiles/audio/avdtp.c:cancel_request() Abort: Connection timed out (110)
+19:39:48  WDOG  early window: 1/2 in last 90s
+19:39:49  BLUED bluetooth.service: Main process exited, code=dumped, status=11/SEGV
+19:39:49  BLUED bluetooth.service: Failed with result 'core-dump'.
+19:39:49  BLUED bluetooth.service: Scheduled restart job, restart counter is at 1.
+19:39:49  BLUED Starting bluetooth.service - Bluetooth service...
+19:39:49  BLUED bluetooth.service: ConfigurationDirectory 'bluetooth' already exists but the mode is different. (File system: 755 ConfigurationDirectoryMode: 555)
+19:39:49  BLUED Bluetooth daemon 5.72
+19:39:49  BLUED Started bluetooth.service - Bluetooth service.
+19:39:49  BLUED Starting SDP server
+19:39:49  BLUED src/plugin.c:plugin_init() System does not support csip plugin
+19:39:49  BLUED profiles/audio/micp.c:micp_init() D-Bus experimental not enabled
+19:39:49  BLUED src/plugin.c:plugin_init() System does not support micp plugin
+19:39:49  BLUED src/plugin.c:plugin_init() System does not support vcp plugin
+19:39:49  BLUED src/plugin.c:plugin_init() System does not support mcp plugin
+19:39:49  BLUED src/plugin.c:plugin_init() System does not support bass plugin
+19:39:49  BLUED src/plugin.c:plugin_init() System does not support bap plugin
+19:39:49  BLUED Bluetooth management interface 1.23 initialized
+19:39:49  BLUED Battery Provider Manager created
+19:39:49  BLUED profiles/sap/server.c:sap_server_register() Sap driver initialization failed.
+19:39:49  BLUED sap-server: Operation not permitted (1)
+19:39:49  BLUED Failed to set privacy: Rejected (0x0b)
+19:39:49  TRACE /usr/local/sbin/bt-trace: line 151: 71507 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+19:39:49  TRACE btmon exited (#46) — restarting within 1s; ~1s of capture lost
+19:39:49  TRACE capturing to bt-20260811-193949.btsnoop
+19:39:49  TRACE pruning bt-20260811-135515.btsnoop
+19:39:51  KERN  Bluetooth: hci0: unexpected event for opcode 0x2005
+19:39:55  KERN  Bluetooth: hci0: command tx timeout
+19:39:55  WDOG  signal: Bluetooth: hci0: command tx timeout
+19:39:55  WDOG  window: 1/3 hit(s) in last 60s
+19:40:25  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+19:40:26  WDOG  signal: Bluetooth: hci0: command 0x0406 tx timeout
+19:40:26  WDOG  window: 2/3 hit(s) in last 60s
+19:40:26  TRACE /usr/local/sbin/bt-trace: line 151: 71685 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+19:40:26  TRACE btmon exited (#47) — restarting within 1s; ~1s of capture lost
+19:40:26  TRACE capturing to bt-20260811-194026.btsnoop
+19:40:26  TRACE pruning bt-20260811-141017.btsnoop
+19:40:27  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+19:40:28  WDOG  signal: Bluetooth: hci0: command 0x0406 tx timeout
+19:40:28  WDOG  window: 3/3 hit(s) in last 60s
+19:40:28  WDOG  Detected 3 controller timeouts within 60s — intervening.
+19:40:28  WDOG  Recovering Bluetooth controller at 3-3 ...
+19:40:28  BLUED Terminating
+19:40:28  BLUED Stopping bluetooth.service - Bluetooth service...
+19:40:29  BLUED profiles/audio/avdtp.c:cancel_request() Close: Connection timed out (110)
+19:40:30  BLUED Failed to set mode: Authentication Failed (0x05)
+19:40:30  KERN  Bluetooth: hci0: Opcode 0x0c1a failed: -110
+19:40:30  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+19:40:30  KERN  Bluetooth: hci0: setting interface failed (110)
+19:40:31  BLUED profiles/audio/avdtp.c:cancel_request() Abort: Connection timed out (110)
+19:40:35  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+19:40:38  BLUED Battery Provider Manager destroyed
+19:40:38  BLUED Stopping SDP server
+19:40:38  BLUED Exit
+19:40:38  BLUED bluetooth.service: Deactivated successfully.
+19:40:38  BLUED Stopped bluetooth.service - Bluetooth service.
+19:40:38  BLUED bluetooth.service: ConfigurationDirectory 'bluetooth' already exists but the mode is different. (File system: 755 ConfigurationDirectoryMode: 555)
+19:40:38  BLUED Starting bluetooth.service - Bluetooth service...
+19:40:39  BLUED Bluetooth daemon 5.72
+19:40:39  BLUED Started bluetooth.service - Bluetooth service.
+19:40:39  BLUED Starting SDP server
+19:40:39  BLUED src/plugin.c:plugin_init() System does not support csip plugin
+19:40:39  BLUED profiles/audio/micp.c:micp_init() D-Bus experimental not enabled
+19:40:39  BLUED src/plugin.c:plugin_init() System does not support micp plugin
+19:40:39  BLUED src/plugin.c:plugin_init() System does not support vcp plugin
+19:40:39  BLUED src/plugin.c:plugin_init() System does not support mcp plugin
+19:40:39  BLUED src/plugin.c:plugin_init() System does not support bass plugin
+19:40:39  BLUED src/plugin.c:plugin_init() System does not support bap plugin
+19:40:39  BLUED Bluetooth management interface 1.23 initialized
+19:40:41  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+19:40:41  BLUED Failed to read exp features info: Invalid Index (0x11)
+19:40:41  BLUED Failed to read info for index 0: Invalid Index (0x11)
+19:40:41  BLUED src/adapter.c:index_removed() Ignoring index removal for a non-existent adapter
+19:40:46  KERN  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+19:41:01  KERN  usb 3-3: device descriptor read/64, error -110
+19:41:17  KERN  usb 3-3: device descriptor read/64, error -110
+19:41:17  KERN  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+19:41:33  KERN  usb 3-3: device descriptor read/64, error -110
+19:41:49  KERN  usb 3-3: device descriptor read/64, error -110
+19:41:49  KERN  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+19:41:54  KERN  xhci_hcd 0000:03:00.4: Timeout while waiting for setup device command
+19:42:00  KERN  xhci_hcd 0000:03:00.4: Timeout while waiting for setup device command
+19:42:00  KERN  usb 3-3: device not accepting address 2, error -62
+19:42:00  KERN  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+19:42:06  KERN  xhci_hcd 0000:03:00.4: Timeout while waiting for setup device command
+19:42:11  KERN  xhci_hcd 0000:03:00.4: Timeout while waiting for setup device command
+19:42:11  KERN  usb 3-3: device not accepting address 2, error -62
+19:42:11  KERN  usb 3-3: USB disconnect, device number 2
+19:42:11  WDOG  USBDEVFS_RESET failed
+19:42:12  KERN  usb 3-3: new full-speed USB device number 4 using xhci_hcd
+19:42:17  WDOG  escalating to USB unbind/bind
+19:42:27  KERN  usb 3-3: device descriptor read/64, error -110
+19:42:29  WDOG  consecutive failed recoveries: 1/3
+19:42:29  WDOG  RECOVERY FAILED — controller still unresponsive
+19:42:29  WDOG  signal: Bluetooth: hci0: Opcode 0x0c1a failed: -110
+19:42:29  WDOG  window: 1/3 hit(s) in last 60s
+19:42:29  WDOG  signal: Bluetooth: hci0: command 0x0406 tx timeout
+19:42:29  WDOG  window: 2/3 hit(s) in last 60s
+19:42:29  WDOG  signal: Bluetooth: hci0: setting interface failed (110)
+19:42:29  WDOG  window: 3/3 hit(s) in last 60s
+19:42:29  WDOG  threshold reached (3/3) but suppressed by cooldown (59s remaining)
+19:42:29  WDOG  early signal: profiles/audio/avdtp.c:cancel_request() Abort: Connection timed out (110)
+19:42:29  WDOG  early window: 1/2 in last 90s
+19:42:29  WDOG  signal: Bluetooth: hci0: command 0x0406 tx timeout
+19:42:29  WDOG  threshold reached (4/3) but suppressed by cooldown (59s remaining)
+19:42:29  WDOG  window: 4/3 hit(s) in last 60s
+19:42:30  WDOG  signal: Bluetooth: hci0: command 0x0406 tx timeout
+19:42:30  WDOG  window: 5/3 hit(s) in last 60s
+19:42:30  WDOG  threshold reached (5/3) but suppressed by cooldown (59s remaining)
+19:42:43  KERN  usb 3-3: device descriptor read/64, error -110
+19:42:43  KERN  usb 3-3: new full-speed USB device number 5 using xhci_hcd
+─────────────────────────────────────────────────────────────────────────
+events: 122   (MARK=1 KERN=30 BLUED=50 WDOG=29)

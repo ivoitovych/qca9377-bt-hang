@@ -215,7 +215,7 @@ boots hung.**
 | `BT_MAX_FAILS` | `3` | consecutive failures before idling until reboot |
 | `BT_VERBOSE` | `0` | log every detected signal and the window state |
 | `BT_EARLY` | `0` | also act on audio-teardown failures — see below |
-| `BT_EARLY_THRESHOLD` | `2` | early signals before intervening |
+| `BT_EARLY_THRESHOLD` | `1` | early signals before intervening |
 | `BT_EARLY_WINDOW` | `90` | early sliding window, seconds |
 
 ### `BT_EARLY` — resetting before the HCI timeout
@@ -240,6 +240,21 @@ vs. appearances in boots that hung): `cancel_request() Suspend` 2/2, `Abort` 4/4
 
 ⚠️ **Opt-in, and experimental.** A false positive resets a working controller and drops
 live connections. Raise `BT_EARLY_THRESHOLD` if it fires during normal use.
+
+**The warning is short and its length varies wildly.** Measured lead times between the
+first bluetoothd signal and the first HCI timeout:
+
+| Incident | Lead time |
+|---|---|
+| audio teardown | −52 s |
+| audio teardown (recovered) | enough for ≥2 signals |
+| connect/disconnect + mode changes | **+133 s** — no window at all |
+| "a few manipulations" | **−7 s** |
+
+That is why the default threshold is **1**, not 2. On 2026-08-11 exactly one signal
+arrived 7 s ahead, a threshold of 2 was never reached, and the controller was lost.
+A 7-second window also sets a hard bound on how slow *any* recovery mechanism can
+afford to be — including a kernel one.
 
 ⚠️ **It only covers one of at least two failure paths.** In a hang provoked by repeated
 connect/disconnect cycles and mode changes (2026-08-11), the bluetoothd signal arrived

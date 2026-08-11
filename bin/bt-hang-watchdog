@@ -29,7 +29,13 @@ COOLDOWN="${BT_COOLDOWN:-180}" # min seconds between recovery attempts
 MAX_FAILS="${BT_MAX_FAILS:-3}" # give up after this many CONFIRMED failures
 VERBOSE="${BT_VERBOSE:-0}"     # 1 = log every detected signal and window state
 EARLY="${BT_EARLY:-0}"                        # 1 = also act on audio-teardown failures
-EARLY_THRESHOLD="${BT_EARLY_THRESHOLD:-2}"    # early signals before intervening
+# Default 1, not 2. Measured lead times between the first audio-teardown signal
+# and the first HCI timeout: 52 s, "enough", none at all, and 7 s. On 2026-08-11
+# exactly one signal arrived 7 s ahead; a threshold of 2 was never reached, the
+# late trigger fired instead, and the controller was lost. Precision justifies
+# acting on one: cancel_request() Abort 4/4, Suspend 2/2, avdtp_connect_cb 5/5
+# occurrences fell in boots that hung.
+EARLY_THRESHOLD="${BT_EARLY_THRESHOLD:-1}"    # early signals before intervening
 EARLY_WINDOW="${BT_EARLY_WINDOW:-90}"         # seconds
 
 log() { echo "$*"; }           # stdout is captured by journald
