@@ -9,6 +9,13 @@
 
 ---
 
+> 🔬 **Under active revision.** The hardware is reported to work flawlessly under Windows
+> on this same laptop. That points at a cause this report does not yet cover: the device
+> also never receives its **firmware patch** under Linux, because the same missing quirks
+> entry that skips the `cmd_timeout` handler also skips `btusb_setup_qca()`. See
+> [`firmware-hypothesis.md`](firmware-hypothesis.md). Do not submit this report until
+> that line of investigation is resolved — it may change the framing substantially.
+
 ## Summary
 
 Two findings, one of which may be the more useful.

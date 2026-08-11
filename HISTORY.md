@@ -545,6 +545,45 @@ before a maintainer inferred a rigour that was not there.
 
 ---
 
+## Phase 15 — "It works on Windows", and a non-sequitur exposed (2026-08-11)
+
+The operator pushed back on the suggestion that the QCA9377 is simply a weak part to be
+replaced, with an argument that settles it: **the same silicon in the same laptop never
+faults under Windows**, and the same behaviour has recurred across several laptops over
+years. If the chip can run indefinitely under one OS, the hardware is not the
+explanation.
+
+That forced a re-reading of our own evidence, and exposed a bad inference.
+
+`BTUSB_QCA_ROME` installs **two** things: the `cmd_timeout` reset handler, *and*
+`btusb_setup_qca()`, which downloads `rampatch_usb_*.bin` and `nvm_usb_*.bin` to the
+controller. Phases 9–13 disproved the value of the first — five for five, a reset after
+the first HCI timeout fails. **The project then concluded the patch would not help. That
+does not follow.** The second was never tested. One is recovery; the other is prevention.
+
+"No QCA firmware ever loaded" had been sitting in the evidence since the second hour,
+recorded as *corroboration that the device is unmatched*. Nobody asked the next question:
+**what is the controller running instead?** Its factory ROM firmware — on every Linux
+boot, for the life of the machine. Windows loads Qualcomm's patch, which is most of what
+the vendor driver package is.
+
+So the two operating systems are not running the same firmware on the same silicon, and
+the stall may be a ROM-firmware defect the rampatch fixes. Written up in
+`docs/firmware-hypothesis.md`; the bug report now carries a do-not-submit banner until
+this resolves.
+
+Also newly reported, and the most useful reproduction data so far: **failure rate is
+device-dependent.** A Sennheiser headset provokes the hang almost immediately; a Lenovo
+one runs for hours or days. That is the first controlled variable this investigation has
+had, after fifteen phases of arbitrary activity.
+
+The methodological decision, at the operator's insistence and correctly: **collect data
+before changing code.** Read the firmware identifiers under both OSes, enable driver
+dynamic debug, compare the two headsets — all zero-risk — and only then consider building
+a patched module.
+
+---
+
 ## Recurring lessons
 
 - **Measure before capping.** `MemoryMax=64M` and the 15-minute metrics interval were
@@ -575,6 +614,12 @@ before a maintainer inferred a rigour that was not there.
 - **One reproduction is one failure path.** The early-warning window looked general after
   a single success; a differently-provoked hang had no such window at all. Vary the
   trigger before generalising.
+- **Disproving one mechanism does not disprove the change that carries it.** Adding the
+  device ID does two things; five phases were spent refuting one of them, and the
+  conclusion "the patch would not help" was drawn without testing the other.
+- **"It works on the other OS" is decisive evidence about the hardware.** It was
+  mentioned early and under-weighted for fifteen phases, during which the investigation
+  drifted toward blaming the chip.
 - **Know whether the input was controlled before comparing outputs.** Five incidents were
   written up as though their triggers were known, when they were reconstructed from logs
   of unrecorded, arbitrary activity. Claims about the *controller's response* survived;
