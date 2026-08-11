@@ -419,7 +419,7 @@ diagnosing Bluetooth:
 
 | Script | Purpose |
 |---|---|
-| `devtools/repo-scan <dir>` | refuse-to-publish scan: MACs, BSSIDs, UUIDs, IPv4, AI attribution, binary captures |
+| `devtools/repo-scan <dir>` | refuse-to-publish scan: MACs, BSSIDs, UUIDs, IPv4, emails, AI attribution, binary captures |
 | `devtools/repo-validate <dir>` | `bash -n`, `systemd-analyze`, `udevadm verify`, `jq`, `py_compile` |
 | `devtools/repo-save <dir> "<msg>"` | validate → scan → commit → push → verify the remote hash matches |
 

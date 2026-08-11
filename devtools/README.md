@@ -8,7 +8,7 @@ directory touches Bluetooth.
 
 | Script | Purpose |
 |---|---|
-| `repo-scan <dir> [--all]` | Refuse-to-publish scan: MAC addresses, BSSIDs, UUIDs, IPv4, AI attribution, binary captures |
+| `repo-scan <dir> [--all]` | Refuse-to-publish scan: MAC addresses, BSSIDs, UUIDs, IPv4, **email addresses**, AI attribution, binary captures |
 | `repo-validate <dir>` | `bash -n`, `systemd-analyze verify`, `udevadm verify`, `jq`, `py_compile` over every tracked file |
 | `repo-save <dir> "<msg>"` | validate → scan → commit → push → **verify the remote hash actually matches** |
 
@@ -28,6 +28,23 @@ physically is. They also contain device addresses, device names and filesystem U
 `repo-scan` is the last line of defence before that data leaves the machine. It knows
 which placeholders are legitimate (`AA:BB:CC:*`, `11:11:11:*`, and the documented test
 vectors used by `tools/sanitize-logs.sh`) and fails on anything else.
+
+Deliberate allowlists, so the gate stays usable rather than being routinely bypassed:
+
+- **Bluetooth SIG base UUIDs** (`0000xxxx-0000-1000-8000-00805f9b34fb`) are public
+  constants that appear in every `bluetoothd` log this project publishes. Filesystem and
+  machine UUIDs are still caught.
+- **MAC separator form is normalised**, so the documented placeholders are accepted
+  written either `AA:BB:CC:…` or `AA-BB-CC-…`.
+- **Email**: the committer's own address (from `git config user.email`), public kernel
+  mailing lists, and `example.com` are allowed; anything else fails.
+- **Default mode scans added lines only.** Scanning the whole staged diff meant a commit
+  that *removed* a leaked secret still matched it on the `-` lines — so the tool blocked
+  the one commit it exists to enable.
+
+`repo-save` also scans the **commit message**, which `repo-scan` cannot see. A
+`Co-Authored-By` trailer lives in neither a file nor a diff, so the likeliest vector for
+the thing being screened for previously sat outside the screen entirely.
 
 `repo-save` refuses to commit if validation or the scan fails, then confirms the remote
 hash equals the local one. That last step is the one most often skipped by hand, and it
