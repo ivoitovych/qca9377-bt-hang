@@ -109,7 +109,14 @@ while true; do
     ts=$(date +%Y%m%d-%H%M%S)
     out="$DIR/usbmon-${ts}.pcap"
     log "capturing to $(basename "$out")"
-    tcpdump -i "$IFACE" -s 0 -w "$out" -C "$MAX_MB" -W 1 >/dev/null 2>&1
+    # -Z root: Ubuntu's tcpdump drops privileges to the unprivileged "tcpdump"
+    # user as soon as the capture handle is open, and then cannot create its own
+    # output file in a root-owned directory. It reports "Permission denied" and
+    # exits 1, which under Restart=always looks like a capture loop rather than
+    # a permissions problem. Keeping it as root is correct here: the capture
+    # directory must stay root-only, because USB traffic to a Bluetooth
+    # controller carries link keys.
+    tcpdump -i "$IFACE" -s 0 -w "$out" -C "$MAX_MB" -W 1 -Z root >/dev/null 2>&1
     rc=$?
     # tcpdump appends a running index when -C is used; normalise it back.
     [[ -e "${out}0" ]] && mv -f "${out}0" "$out"

@@ -458,6 +458,12 @@ Installed alongside the mitigation, for reproducing and recording failures:
 | `bt-mark "<text>"` | Annotate the journal with what you are doing, plus device state at that instant |
 | `bt-evidence start/note/cmd/stop` | Record a planned session, when you know the test in advance |
 | `bt-trace` (service) | Rotating btsnoop HCI capture via `btmon`; logs its own gaps |
+| `bt-actions` | **Reconstruct what actually happened** — merges operator actions, BlueZ/PipeWire responses, controller failures and watchdog decisions into one wall-clock timeline, collapsing repeats. Use this instead of describing a session from memory |
+| `bt-context` | The inverse filter: shows what sits *next to* a failure that nothing yet explains. Finds signals nobody thought to grep for |
+| `bt-boot-stats` | One row per boot, and the cross-tab that tells you whether a signature actually predicts the hang or just accompanies it |
+| `bt-exhibit` | Capture evidence as a numbered exhibit: claim, exact extraction command, verbatim output, relevance — command and output captured in one pass so they cannot drift |
+| `bt-dyndbg on\|off\|status` | Kernel `pr_debug` for `btusb` and the HCI core. `--packets` adds the per-packet files, which perturb the timing being measured |
+| `bt-usbmon` (service) | Rotating pcap of the controller's USB bus — the only record of stage 2, where the kernel logs that a request went unanswered but not what was on the wire |
 
 See [`evidence/README.md`](evidence/README.md) for how sessions are structured.
 
