@@ -1,0 +1,46 @@
+# btsnoop captures overlapping this window (NOT committed — they contain
+# device addresses, names, pairing exchanges and audio payload).
+# Inspect: btmon -r <file>
+
+       67677  /var/log/bt-health/trace/bt-20260811-054431.btsnoop
+        2377  /var/log/bt-health/trace/bt-20260811-055936.btsnoop
+        7386  /var/log/bt-health/trace/bt-20260811-055958.btsnoop
+    16411438  /var/log/bt-health/trace/bt-20260811-060012.btsnoop
+        5702  /var/log/bt-health/trace/bt-20260811-060349.btsnoop
+      623189  /var/log/bt-health/trace/bt-20260811-060400.btsnoop
+        1117  /var/log/bt-health/trace/bt-20260811-060409.btsnoop
+      188157  /var/log/bt-health/trace/bt-20260811-060413.btsnoop
+       23454  /var/log/bt-health/trace/bt-20260811-060416.btsnoop
+     1384599  /var/log/bt-health/trace/bt-20260811-060432.btsnoop
+       41062  /var/log/bt-health/trace/bt-20260811-060453.btsnoop
+     2454345  /var/log/bt-health/trace/bt-20260811-060511.btsnoop
+        1175  /var/log/bt-health/trace/bt-20260811-060544.btsnoop
+      160277  /var/log/bt-health/trace/bt-20260811-060545.btsnoop
+         988  /var/log/bt-health/trace/bt-20260811-060548.btsnoop
+     2036938  /var/log/bt-health/trace/bt-20260811-060550.btsnoop
+      129631  /var/log/bt-health/trace/bt-20260811-060624.btsnoop
+         287  /var/log/bt-health/trace/bt-20260811-060634.btsnoop
+        5352  /var/log/bt-health/trace/bt-20260811-060635.btsnoop
+
+# CAPTURE GAPS in this window — moments when nothing was being recorded.
+# btmon (bluez 5.72) aborts with a buffer overflow every few minutes; the
+# supervisor restarts it within ~1 s, but a gap can still straddle an event.
+# An empty list below means the window was covered continuously.
+  2026-08-11T05:59:36+02:00	btmon-exit	gap<=1s	total_blind=53s	crashes=53
+  2026-08-11T05:59:58+02:00	btmon-exit	gap<=1s	total_blind=54s	crashes=54
+  2026-08-11T06:00:12+02:00	btmon-exit	gap<=1s	total_blind=55s	crashes=55
+  2026-08-11T06:03:49+02:00	btmon-exit	gap<=1s	total_blind=56s	crashes=56
+  2026-08-11T06:04:00+02:00	btmon-exit	gap<=1s	total_blind=57s	crashes=57
+  2026-08-11T06:04:09+02:00	btmon-exit	gap<=1s	total_blind=58s	crashes=58
+  2026-08-11T06:04:13+02:00	btmon-exit	gap<=1s	total_blind=59s	crashes=59
+  2026-08-11T06:04:16+02:00	btmon-exit	gap<=1s	total_blind=60s	crashes=60
+  2026-08-11T06:04:32+02:00	btmon-exit	gap<=1s	total_blind=61s	crashes=61
+  2026-08-11T06:04:53+02:00	btmon-exit	gap<=1s	total_blind=62s	crashes=62
+  2026-08-11T06:05:11+02:00	btmon-exit	gap<=1s	total_blind=63s	crashes=63
+  2026-08-11T06:05:44+02:00	btmon-exit	gap<=1s	total_blind=64s	crashes=64
+  2026-08-11T06:05:45+02:00	btmon-exit	gap<=1s	total_blind=65s	crashes=65
+  2026-08-11T06:05:48+02:00	btmon-exit	gap<=1s	total_blind=66s	crashes=66
+  2026-08-11T06:05:50+02:00	btmon-exit	gap<=1s	total_blind=67s	crashes=67
+  2026-08-11T06:06:24+02:00	btmon-exit	gap<=1s	total_blind=68s	crashes=68
+  2026-08-11T06:06:34+02:00	btmon-exit	gap<=1s	total_blind=69s	crashes=69
+  2026-08-11T06:06:35+02:00	btmon-exit	gap<=1s	total_blind=70s	crashes=70

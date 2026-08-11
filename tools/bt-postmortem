@@ -1,114 +1,171 @@
 #!/bin/bash
-# bt-postmortem — what happened during the most recent controller hang, and
-# what it means for the two claims this project makes.
+# bt-postmortem — analyse the MOST RECENT controller hang and say what it means.
 #
-#   bt-postmortem            this boot
-#   bt-postmortem -b -1      a previous boot
+#   bt-postmortem                 most recent incident this boot
+#   bt-postmortem -b -1           most recent incident in a previous boot
+#   bt-postmortem --since "06:00" incidents after a given time
+#   bt-postmortem --all           list every incident in the boot, then analyse the last
 #
-# Answers, from the logs alone:
-#   * when the stall started, and how fast it progressed
-#   * whether the watchdog detected it, how quickly, and whether it recovered
-#   * whether the USB reset worked — the claim the kernel patch depends on
+# WHY INCIDENT SCOPING MATTERS: an earlier version took the first matching line
+# of the whole boot with grep -m1. On an 11-hour boot containing a successful
+# recovery in the evening and a failed one the next morning, it mixed the two
+# and reported "RECOVERED" with a delta of -40065 seconds while the controller
+# was off the bus. Timestamps must come from ONE incident.
+#
+# Timeouts are clustered with a gap threshold: consecutive timeouts more than
+# GAP seconds apart belong to different incidents.
 #
 # Read-only.
 
 set -uo pipefail
 
-BOOT="0"
-[[ "${1:-}" == "-b" ]] && BOOT="${2:?-b needs a boot index}"
+BOOT="0"; SINCE=""; SHOW_ALL=0
+GAP="${BT_INCIDENT_GAP:-600}"     # seconds between clusters
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -b) BOOT="${2:?-b needs a boot index}"; shift ;;
+        --since) SINCE="${2:?--since needs a time}"; shift ;;
+        --all) SHOW_ALL=1 ;;
+        -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+        *) echo "unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
 
 R=$'\033[31m'; G=$'\033[32m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
 [[ -t 1 ]] || { R=""; G=""; Y=""; B=""; O=""; }
 
-ts_of() { journalctl "$@" -o short-unix --no-pager 2>/dev/null | head -1 | awk '{printf "%.2f", $1}'; }
-hm()    { [[ -n "${1:-}" ]] && date -d "@${1%.*}" '+%H:%M:%S' || echo "—"; }
-delta() { [[ -n "${1:-}" && -n "${2:-}" ]] && awk -v a="$1" -v b="$2" 'BEGIN{printf "%+.0fs", b-a}' || echo "—"; }
+if [[ -n "$SINCE" ]]; then KSEL=(-k --since "$SINCE"); WSEL=(-u bt-hang-watchdog --since "$SINCE")
+else                       KSEL=(-k -b "$BOOT");        WSEL=(-u bt-hang-watchdog -b "$BOOT"); fi
 
-echo "${B}Controller hang postmortem (boot $BOOT)${O}"
+hm()    { [[ -n "${1:-}" && "${1:-0}" != "0" ]] && date -d "@${1%.*}" '+%H:%M:%S' || echo "—"; }
+delta() { [[ -n "${1:-}" && -n "${2:-}" && "${2:-0}" != "0" ]] && awk -v a="$1" -v b="$2" 'BEGIN{printf "%+.0fs", b-a}' || echo "—"; }
+# First event in [start,end]; empty if none. Never searches outside the incident.
+inwin() { awk -v s="$1" -v e="$2" '$1>=s && $1<=e {printf "%.2f",$1; exit}'; }
+
+echo "${B}Controller hang postmortem${O} (boot $BOOT${SINCE:+, since $SINCE})"
 echo "─────────────────────────────────────────────────────────────"
 
-K=(-k -b "$BOOT"); W=(-u bt-hang-watchdog -b "$BOOT")
-
-t_first=$(journalctl "${K[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "tx timeout" | awk '{printf "%.2f",$1}')
-if [[ -z "$t_first" ]]; then
-    echo "${G}No controller timeouts in this boot — nothing to analyse.${O}"
-    exit 0
+mapfile -t TO < <(journalctl "${KSEL[@]}" -o short-unix --no-pager 2>/dev/null \
+                  | grep "tx timeout" | awk '{printf "%.2f\n",$1}')
+if (( ${#TO[@]} == 0 )); then
+    echo "${G}No controller timeouts in range — nothing to analyse.${O}"; exit 0
 fi
 
-# Match both trigger modes: late logs "... timeouts within 60s — intervening",
-# early logs "EARLY intervention: ...". Matching only the first reported an
-# intervention count of 0 next to a successful recovery.
-t_act=$(journalctl "${W[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 -E "intervening|EARLY intervention" | awk '{printf "%.2f",$1}')
-t_early=$(journalctl "${W[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "EARLY intervention" | awk '{printf "%.2f",$1}')
-t_usb=$(journalctl "${K[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "descriptor read"   | awk '{printf "%.2f",$1}')
-t_gone=$(journalctl "${K[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "USB disconnect"   | awk '{printf "%.2f",$1}')
-t_rec=$(journalctl "${W[@]}" -o short-unix --no-pager 2>/dev/null | grep -m1 "RECOVERED"         | awk '{printf "%.2f",$1}')
+# Cluster into incidents.
+starts=(); ends=(); cs="${TO[0]}"; prev="${TO[0]}"
+for t in "${TO[@]:1}"; do
+    if awk -v a="$prev" -v b="$t" -v g="$GAP" 'BEGIN{exit !(b-a>g)}'; then
+        starts+=("$cs"); ends+=("$prev"); cs="$t"
+    fi
+    prev="$t"
+done
+starts+=("$cs"); ends+=("$prev")
+n=${#starts[@]}
+
+if (( SHOW_ALL )); then
+    echo
+    echo "${B}Incidents found: $n${O}"
+    for ((i=0;i<n;i++)); do
+        printf '  %d. %s → %s\n' "$((i+1))" "$(hm "${starts[i]}")" "$(hm "${ends[i]}")"
+    done
+    echo
+fi
+(( n > 1 )) && echo "  (${n} separate incidents in range; analysing the most recent)"
+
+t_first="${starts[n-1]}"; t_last="${ends[n-1]}"
+WIN_A=$(awk -v a="$t_first" 'BEGIN{printf "%.2f", a-180}')   # a little before
+WIN_B=$(awk -v b="$t_last"  'BEGIN{printf "%.2f", b+600}')   # and after
+
+KLOG=$(journalctl "${KSEL[@]}" -o short-unix --no-pager 2>/dev/null)
+WLOG=$(journalctl "${WSEL[@]}" -o short-unix --no-pager 2>/dev/null)
+
+t_act=$(grep -E "intervening|EARLY intervention" <<<"$WLOG"    | inwin "$WIN_A" "$WIN_B")
+t_early=$(grep "EARLY intervention"              <<<"$WLOG"    | inwin "$WIN_A" "$WIN_B")
+t_usb=$(grep "descriptor read"                   <<<"$KLOG"    | inwin "$t_first" "$WIN_B")
+t_gone=$(grep "USB disconnect"                   <<<"$KLOG"    | inwin "$t_first" "$WIN_B")
+t_rec=$(grep "RECOVERED"                         <<<"$WLOG"    | inwin "$WIN_A" "$WIN_B")
+t_esig=$(grep "early signal"                     <<<"$WLOG"    | inwin "$WIN_A" "$WIN_B")
 
 printf '\n%-34s %-10s %s\n' "EVENT" "TIME" "Δ from first timeout"
-printf '%-34s %-10s %s\n' "first HCI command timeout" "$(hm "$t_first")" "0s"
-printf '%-34s %-10s %s\n' "watchdog intervened"        "$(hm "$t_act")"  "$(delta "$t_first" "$t_act")"
-printf '%-34s %-10s %s\n' "first USB-level failure"    "$(hm "$t_usb")"  "$(delta "$t_first" "$t_usb")"
-printf '%-34s %-10s %s\n' "device left the bus"        "$(hm "$t_gone")" "$(delta "$t_first" "$t_gone")"
-printf '%-34s %-10s %s\n' "controller recovered"       "$(hm "$t_rec")"  "$(delta "$t_first" "$t_rec")"
+printf '%-34s %-10s %s\n' "first HCI command timeout"  "$(hm "$t_first")" "0s"
+printf '%-34s %-10s %s\n' "first EARLY signal seen"    "$(hm "$t_esig")"  "$(delta "$t_first" "$t_esig")"
+printf '%-34s %-10s %s\n' "watchdog intervened"        "$(hm "$t_act")"   "$(delta "$t_first" "$t_act")"
+printf '%-34s %-10s %s\n' "first USB-level failure"    "$(hm "$t_usb")"   "$(delta "$t_first" "$t_usb")"
+printf '%-34s %-10s %s\n' "device left the bus"        "$(hm "$t_gone")"  "$(delta "$t_first" "$t_gone")"
+printf '%-34s %-10s %s\n' "controller recovered"       "$(hm "$t_rec")"   "$(delta "$t_first" "$t_rec")"
 
-n_to=$(journalctl "${K[@]}" --no-pager 2>/dev/null | grep -c "tx timeout" || true)
-n_act=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention" || true)
-n_early=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "EARLY intervention" || true)
-n_eok=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "EARLY recovery SUCCEEDED" || true)
-n_rec=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "RECOVERED" || true)
-n_rf=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "USBDEVFS_RESET failed" || true)
-n_fatal=$(journalctl "${W[@]}" --no-pager 2>/dev/null | grep -c "FATAL:" || true)
+# Counts scoped to this incident only.
+cwin() { awk -v s="$WIN_A" -v e="$WIN_B" '$1>=s && $1<=e' | grep -c "$1" || true; }
+n_to=$(awk -v s="$t_first" -v e="$t_last" '$1>=s && $1<=e' <<<"$(grep 'tx timeout' <<<"$KLOG")" | wc -l)
+n_act=$(cwin "intervening"            <<<"$WLOG")
+n_early=$(cwin "EARLY intervention"   <<<"$WLOG")
+n_rec=$(cwin "RECOVERED"              <<<"$WLOG")
+n_eok=$(cwin "EARLY recovery SUCCEEDED" <<<"$WLOG")
+n_rf=$(cwin "USBDEVFS_RESET failed"   <<<"$WLOG")
+n_fatal=$(cwin "FATAL:"               <<<"$WLOG")
 
 echo
-echo "${B}Counts${O}"
-printf '  timeouts %s   interventions %s   recovered %s   reset-failed %s   fatal %s\n' \
-  "${n_to:-0}" "${n_act:-0}" "${n_rec:-0}" "${n_rf:-0}" "${n_fatal:-0}"
+echo "${B}This incident${O}"
+printf '  timeouts %s   interventions %s (early %s)   recovered %s   reset-failed %s   fatal %s\n' \
+  "${n_to:-0}" "${n_act:-0}" "${n_early:-0}" "${n_rec:-0}" "${n_rf:-0}" "${n_fatal:-0}"
+
+# Live state beats log inference: an earlier success must never mask a dead controller.
+hci_now=$(ls -A /sys/class/bluetooth/ 2>/dev/null | head -1)
+on_bus=no
+for d in /sys/bus/usb/devices/*; do
+    [[ -f "$d/idVendor" ]] || continue
+    [[ "$(<"$d/idVendor")" == "${BT_VID:-13d3}" && "$(<"$d/idProduct")" == "${BT_PID:-3503}" ]] && on_bus=yes && break
+done
 
 echo
 echo "${B}Verdict${O}"
-
-if [[ -z "$t_act" ]]; then
-    echo "  ${Y}The watchdog never fired${O} despite $n_to timeout(s)."
-    echo "  Either it was not running, or the timeouts never reached BT_THRESHOLD"
-    echo "  within BT_WINDOW. Check: journalctl -u bt-hang-watchdog -b $BOOT"
-elif (( ${n_eok:-0} > 0 )); then
-    echo "  ${G}${B}RECOVERED VIA EARLY INTERVENTION.${O}"
-    echo "  The reset was issued on an audio-teardown failure, BEFORE any HCI"
-    echo "  command timed out, and the controller came back."
-    echo
-    echo "  This does NOT support the kernel-patch claim — it undercuts it."
-    echo "  btusb_qca_cmd_timeout() fires only AFTER commands start timing out."
-    echo "  A reset at that point failed under the same conditions (2026-08-10);"
-    echo "  a reset before it succeeded. cmd_timeout is too late a hook for this"
-    echo "  failure mode, whatever device IDs btusb matches."
-elif (( ${n_rec:-0} > 0 )); then
-    echo "  ${G}RECOVERED.${O} The watchdog detected the stall $(delta "$t_first" "$t_act") after the first"
-    echo "  timeout and brought the controller back without a reboot."
-    echo
-    echo "  This SUPPORTS the kernel-patch claim: a USB reset during stage 1"
-    echo "  recovers the controller, which is exactly what"
-    echo "  btusb_qca_cmd_timeout() -> usb_queue_reset_device() would have done."
-else
-    echo "  ${R}NOT recovered.${O} The watchdog intervened $(delta "$t_first" "$t_act") after the first timeout"
-    [[ -n "$t_usb" ]] && echo "  — that is $(awk -v a="$t_act" -v b="$t_usb" 'BEGIN{printf "%.0f", b-a}')s BEFORE the first USB-level failure, so it was not too slow."
-    echo
-    if (( ${n_rf:-0} > 0 )); then
-        echo "  ${B}The USB reset itself failed.${O}"
-        echo
-        echo "  This does NOT support the kernel-patch claim. btusb_qca_cmd_timeout()"
-        echo "  calls usb_queue_reset_device() — the same operation that just failed."
-        echo "  Adding the device ID to btusb's quirks table would likely not have"
-        echo "  prevented this hang."
-        echo
-        echo "  The device IS missing from that table — that finding stands. What is"
-        echo "  not supported is the claimed benefit of adding it."
+if [[ -z "$hci_now" ]]; then
+    echo "  ${R}${B}CONTROLLER IS DOWN RIGHT NOW${O} — no hci device exists."
+    echo "  on USB bus: $on_bus"
+    if [[ "$on_bus" == no ]]; then
+        echo "  It left the bus: stage 2. A full POWER-OFF is required — a warm"
+        echo "  reboot does not drop the M.2 power rail."
+    else
+        echo "  Enumerated but btusb has not created an adapter."
     fi
-    (( ${n_fatal:-0} > 0 )) && echo "  Reached stage 2 (off the bus): a cold power-off is required."
+    echo
+fi
+
+if (( ${n_eok:-0} > 0 )); then
+    echo "  Recovered via EARLY intervention (reset before any HCI timeout)."
+elif (( ${n_act:-0} == 0 )); then
+    echo "  ${Y}The watchdog never intervened in this incident${O} despite ${n_to} timeout(s)."
+    echo "  Check the threshold/cooldown: journalctl -u bt-hang-watchdog"
+elif (( ${n_rec:-0} > 0 )); then
+    echo "  ${G}Recovered${O} $(delta "$t_first" "$t_rec") after the first timeout."
+else
+    echo "  ${R}NOT recovered.${O} Intervened $(delta "$t_first" "$t_act") after the first timeout."
+    (( ${n_rf:-0} > 0 )) && echo "  The USB reset itself failed."
+fi
+
+# Did the early signal actually arrive early? This is the load-bearing question
+# for the "cmd_timeout is too late" hypothesis, and it is not always true.
+if [[ -n "$t_esig" ]]; then
+    if awk -v a="$t_esig" -v b="$t_first" 'BEGIN{exit !(a<b)}'; then
+        echo
+        echo "  Early signal preceded the first timeout by $(delta "$t_esig" "$t_first" | tr -d '+') — the"
+        echo "  early-warning window existed in this incident."
+    else
+        echo
+        echo "  ${Y}${B}NOTE: the early signal arrived $(delta "$t_first" "$t_esig") — AFTER the first timeout.${O}"
+        echo "  There was no early-warning window in this incident, so BT_EARLY"
+        echo "  could not have helped. The audio-teardown signal does not always"
+        echo "  precede the stall; this failure mode reaches HCI first."
+    fi
+else
+    echo
+    echo "  ${Y}No early signal at all in this incident${O} — bluetoothd gave no"
+    echo "  audio-teardown warning, so BT_EARLY had nothing to trigger on."
 fi
 
 if [[ -n "$t_first" && -n "$t_usb" ]]; then
     echo
     echo "${B}Stage 1 duration${O}: $(awk -v a="$t_first" -v b="$t_usb" 'BEGIN{printf "%.0f", b-a}')s"
-    echo "  (first HCI timeout -> first USB failure: how long the chip stayed"
-    echo "   USB-responsive, i.e. the window in which any reset could work)"
+    echo "  (first HCI timeout -> first USB failure: the window any reset must fit in)"
 fi

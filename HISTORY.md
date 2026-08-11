@@ -397,6 +397,48 @@ because "no hang" is meaningless if Bluetooth was never exercised — the trap t
 
 ---
 
+## Phase 11 — A second failure path, with no early warning (2026-08-11 06:06)
+
+Provoked deliberately, this time by **repeated connect/disconnect cycles and mode
+changes** rather than a mid-stream audio teardown. The result contradicted part of
+Phase 10:
+
+```
+06:06:25  first HCI command timeout       <- the failure starts here
+06:06:36  watchdog intervened     (+11 s)
+06:07:09  first USB-level failure (+45 s)
+06:08:19  device left the bus    (+115 s)
+06:08:38  first EARLY signal     (+133 s) <- arrives two minutes too late
+```
+
+`BT_EARLY` could not have helped: bluetoothd gave no warning until long after the
+controller was gone. **There are at least two distinct failure paths**, and watching
+bluetoothd only covers the teardown-triggered one.
+
+What the incident *strengthened* is the core claim. The reset here was issued **+11 s**
+after the first timeout — about as fast as a log-driven watchdog can react — and still
+failed. Every reset after the first HCI timeout has now failed, three for three, while
+the only reset issued before one succeeded. The recoverable window closes at or before
+the moment `hdev->cmd_timeout` becomes eligible to fire.
+
+### The tooling reported the opposite of reality
+
+Both diagnostic tools said the controller was fine while it was off the bus:
+
+- **`bt-postmortem` mixed two incidents.** `grep -m1` over an 11-hour boot picked up the
+  previous evening's *successful* recovery and printed `RECOVERED VIA EARLY INTERVENTION`
+  with a delta of **−40065 s**. It now clusters timeouts into incidents (gap > 600 s),
+  analyses only the most recent, and scopes every timestamp and count to that window.
+- **`bt-status` had the same masking flaw** — cumulative per-boot counters meant one
+  early success made the whole boot look healthy.
+
+Both now check live state — is there an `hci` node, is the device on the bus — *before*
+interpreting any counter. A tool that confidently reports success during a failure is
+worse than no tool, and this is the second time in the project that aggregate counting
+produced a confidently wrong answer.
+
+---
+
 ## Recurring lessons
 
 - **Measure before capping.** `MemoryMax=64M` and the 15-minute metrics interval were
@@ -421,3 +463,9 @@ because "no hang" is meaningless if Bluetooth was never exercised — the trap t
 - **Report usage next to failures.** Three consecutive clean boots meant nothing, because
   Bluetooth had barely been used. A metric that cannot distinguish "it worked" from "it
   was never tried" invites exactly the wrong conclusion.
+- **Scope an analysis to one incident.** Aggregating a whole boot let an evening success
+  mask a morning failure, twice, in two different tools. Always check live state before
+  interpreting a counter.
+- **One reproduction is one failure path.** The early-warning window looked general after
+  a single success; a differently-provoked hang had no such window at all. Vary the
+  trigger before generalising.

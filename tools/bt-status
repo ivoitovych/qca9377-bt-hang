@@ -49,6 +49,27 @@ tx=$(cnt        "tx timeout"            "$KE")
 audio=$(grep -ciE 'avdtp|sco|a2dp|Hands-Free' <<<"$BD" 2>/dev/null || true)
 
 verdict() {
+    # Live state first. Counts are cumulative for the boot, so an early success
+    # in the evening would otherwise mask a controller that is dead right now —
+    # which is exactly what happened on 2026-08-11.
+    local hci_now on_bus=no d
+    hci_now=$(ls -A /sys/class/bluetooth/ 2>/dev/null | head -1)
+    for d in /sys/bus/usb/devices/*; do
+        [[ -f "$d/idVendor" ]] || continue
+        [[ "$(<"$d/idVendor")" == "${BT_VID:-13d3}" && "$(<"$d/idProduct")" == "${BT_PID:-3503}" ]] \
+            && { on_bus=yes; break; }
+    done
+    if [[ -z "$hci_now" ]]; then
+        echo "${R}${B}CONTROLLER IS DOWN RIGHT NOW${O} — no hci device."
+        if [[ "$on_bus" == no ]]; then
+            echo "Off the USB bus (stage 2): a full POWER-OFF is required."
+        else
+            echo "Enumerated but btusb has created no adapter."
+        fi
+        (( ${early_ok:-0} > 0 )) && \
+            echo "(There was an earlier successful early recovery this boot — see bt-postmortem.)"
+        return
+    fi
     if (( ${early_ok:-0} > 0 )); then
         echo "${G}${B}EARLY RECOVERY WORKS${O} — ${early_ok} success(es) this boot."
         echo "A reset issued on audio-teardown failure, BEFORE any HCI command"

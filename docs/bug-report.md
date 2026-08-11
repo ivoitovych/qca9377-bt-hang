@@ -24,11 +24,13 @@ fires too late.** This was tested directly, in both directions:
 
 | Reset issued | Result |
 |---|---|
-| **20 s after** the first HCI timeout — 33 s *before* any USB-level failure, i.e. where `cmd_timeout` would act | ❌ **failed**; controller dropped off the bus, cold power-off required |
-| **Before any HCI timeout**, on the bluetoothd-level audio-teardown failure that precedes it | ✅ **recovered**; no `tx timeout` occurred at all that boot |
+| **+20 s** after the first HCI timeout — 33 s *before* any USB-level failure | ❌ **failed**; controller left the bus |
+| **+11 s** after the first HCI timeout — about as fast as a log-driven watchdog can react | ❌ **failed**; controller left the bus |
+| **Before any HCI timeout**, on a bluetoothd audio-teardown failure | ✅ **recovered**; no `tx timeout` occurred at all |
 
-Same hardware, same trigger condition, same operation (`USBDEVFS_RESET`, i.e. what
-`usb_queue_reset_device()` performs). The only variable is *when*.
+Same hardware, same operation (`USBDEVFS_RESET`, i.e. what `usb_queue_reset_device()`
+performs). The only variable is *when*. Three for three, a reset after the first HCI
+timeout has failed — including one issued 11 seconds after it.
 
 So there appears to be a window in which this controller is still recoverable, it closes
 before the first HCI command times out, and **no existing kernel hook fires inside it**.
@@ -41,9 +43,15 @@ by any software means — not driver rebind, not xHCI port power-cycle, not a wa
 because that does not drop the M.2 power rail. A full power-off is required.
 
 > ⚠️ **Confidence.** Finding 1 is verified three ways and is solid. Finding 2 rests on
-> **one** failed late reset and **one** successful early reset. It is offered as a
-> hypothesis with evidence, not a settled result — the two hangs may not have been of
-> equal severity. Full logs for both are attached.
+> two failed late resets (+20 s and +11 s) and one successful early reset. Offered as a
+> hypothesis with evidence, not a settled result. Full logs for all three are attached.
+>
+> ⚠️ **An important limitation.** The bluetoothd warning is **not always available.** In
+> a third hang (2026-08-11, provoked by repeated connect/disconnect cycles and mode
+> changes rather than a mid-stream teardown) the audio-teardown signal arrived **133 s
+> *after* the first HCI timeout** — there was no early-warning window at all. That
+> failure path reaches HCI first. So watching bluetoothd is not a general substitute for
+> a kernel-level mechanism; it only covers the teardown-triggered path.
 
 ---
 
