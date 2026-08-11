@@ -250,6 +250,11 @@ first bluetoothd signal and the first HCI timeout:
 | audio teardown (recovered) | enough for ≥2 signals |
 | connect/disconnect + mode changes | **+133 s** — no window at all |
 | "a few manipulations" | **−7 s** |
+| light use, 2 min into a fresh boot | **none at all** |
+
+**Two of five hangs had no usable warning**, so this is not a general mitigation — it
+covers roughly the audio-teardown subset. The late trigger has never once succeeded:
+five for five, a reset after the first HCI timeout failed.
 
 That is why the default threshold is **1**, not 2. On 2026-08-11 exactly one signal
 arrived 7 s ahead, a threshold of 2 was never reached, and the controller was lost.

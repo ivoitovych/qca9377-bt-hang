@@ -30,8 +30,13 @@ fires too late.** This was tested directly, in both directions:
 | **Before any HCI timeout**, on a bluetoothd audio-teardown failure | ✅ **recovered**; no `tx timeout` occurred at all |
 
 Same hardware, same operation (`USBDEVFS_RESET`, i.e. what `usb_queue_reset_device()`
-performs). The only variable is *when*. **Four for four**, a reset after the first HCI
-timeout has failed — including one issued 11 seconds after it.
+performs). The only variable is *when*.
+
+**Five for five, a reset issued after the first HCI timeout has failed** — at +11 s,
++16 s, +20 s, +20 s and +33 s. The latency varied by a factor of three with no effect on
+the outcome, and every one of those resets landed inside the 45–66 s window during which
+the device still answered USB. The single success came from a reset issued *before* any
+timeout.
 
 **How narrow is the window?** The lead time between the first bluetoothd audio-teardown
 signal and the first HCI timeout has been measured at **−52 s**, **−7 s**, and in one
@@ -52,12 +57,20 @@ because that does not drop the M.2 power rail. A full power-off is required.
 > two failed late resets (+20 s and +11 s) and one successful early reset. Offered as a
 > hypothesis with evidence, not a settled result. Full logs for all three are attached.
 >
-> ⚠️ **An important limitation.** The bluetoothd warning is **not always available.** In
-> a third hang (2026-08-11, provoked by repeated connect/disconnect cycles and mode
-> changes rather than a mid-stream teardown) the audio-teardown signal arrived **133 s
-> *after* the first HCI timeout** — there was no early-warning window at all. That
-> failure path reaches HCI first. So watching bluetoothd is not a general substitute for
-> a kernel-level mechanism; it only covers the teardown-triggered path.
+> ⚠️ **An important limitation.** The bluetoothd warning is **not always available**, and
+> its lead time varies enormously. Across five instrumented hangs:
+>
+> | Trigger | Early-warning lead |
+> |---|---|
+> | audio teardown | −52 s |
+> | audio teardown (the one recovery) | enough for ≥2 signals |
+> | connect/disconnect + mode changes | **+133 s** — arrived after the controller had gone |
+> | "a few manipulations" | −7 s |
+> | light use, 2 min into a fresh boot | **none at all** |
+>
+> Two of five had no usable warning. Watching bluetoothd is therefore not a general
+> substitute for a kernel-level mechanism — it covers roughly the teardown-triggered
+> subset. A −7 s case also bounds how slow any mechanism can be.
 
 ---
 

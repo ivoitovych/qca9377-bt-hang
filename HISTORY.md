@@ -471,6 +471,44 @@ recovery mechanism can be, a kernel hook included.
 
 ---
 
+## Phase 13 — Threshold 1 armed, and no signal arrived (2026-08-11 19:51)
+
+The first test of `BT_EARLY_THRESHOLD=1` never happened: the controller hung **two
+minutes into a freshly power-cycled boot**, with light use and **zero** early signals.
+bluetoothd logged nothing but routine startup before the stall.
+
+```
+19:49     cold boot; healthy and verified responding at 19:50
+19:51:20  first HCI command timeout      <- no precursor of any kind
+19:51:36  watchdog intervened  (+16 s)   -> reset failed
+19:53:19  device left the bus (+119 s)
+```
+
+That makes **two of five** instrumented hangs with no usable early warning. `BT_EARLY`
+is not a general mitigation — it covers roughly the audio-teardown subset.
+
+What the incident does do is push the central result close to unambiguous:
+
+> **Five for five**, a reset issued after the first HCI timeout has failed — at +11 s,
+> +16 s, +20 s, +20 s and +33 s. A factor of three in latency, no difference in outcome,
+> and every one of those resets landed inside the 45–66 s window in which the device
+> still answered USB.
+
+Stage 1 has now been measured at 45, 49, 53 and 66 seconds. The reset is never late in
+wall-clock terms. It is late in *state* terms: whatever the controller loses, it has
+already lost by the time it misses its first command.
+
+### Honest status of the workaround
+
+- the early trigger recovered the controller **once**
+- it could not act in two of five incidents
+- the late trigger has **never** succeeded
+
+For a user, the hang still happens and still needs a power-off. The project's value has
+shifted decisively from the workaround to the characterisation.
+
+---
+
 ## Recurring lessons
 
 - **Measure before capping.** `MemoryMax=64M` and the 15-minute metrics interval were

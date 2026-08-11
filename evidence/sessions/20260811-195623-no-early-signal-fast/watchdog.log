@@ -1,0 +1,35 @@
+Aug 11 19:49:26.328036 n systemd[1]: Started bt-hang-watchdog.service - Bluetooth firmware-hang watchdog (QCA9377 / 13d3:3503).
+Aug 11 19:49:26.376959 n bt-hang-watchdog[1248]: bt-hang-watchdog started (device 13d3:3503, threshold 3/60s, cooldown 180s)
+Aug 11 19:49:26.376959 n bt-hang-watchdog[1248]: liveness probe: hciconfig
+Aug 11 19:49:26.376959 n bt-hang-watchdog[1248]: verbose mode ON — every detected signal will be logged
+Aug 11 19:49:26.384305 n bt-hang-watchdog[1248]: device present at 3-3 (hci0)
+Aug 11 19:49:26.384364 n bt-hang-watchdog[1248]: EARLY mode ON — also watching bluetoothd for audio-teardown failures
+Aug 11 19:49:26.384411 n bt-hang-watchdog[1248]:   threshold 1 in 90s; resets BEFORE any HCI timeout
+Aug 11 19:51:20.467051 n bt-hang-watchdog[1248]: signal: Bluetooth: hci0: command tx timeout
+Aug 11 19:51:20.467051 n bt-hang-watchdog[1248]:   window: 1/3 hit(s) in last 60s
+Aug 11 19:51:34.466921 n bt-hang-watchdog[1248]: signal: Bluetooth: hci0: command tx timeout
+Aug 11 19:51:34.466921 n bt-hang-watchdog[1248]:   window: 2/3 hit(s) in last 60s
+Aug 11 19:51:36.217121 n bt-hang-watchdog[1248]: signal: Bluetooth: hci0: command 0x0406 tx timeout
+Aug 11 19:51:36.217121 n bt-hang-watchdog[1248]:   window: 3/3 hit(s) in last 60s
+Aug 11 19:51:36.217477 n bt-hang-watchdog[1248]: Detected 3 controller timeouts within 60s — intervening.
+Aug 11 19:51:36.219365 n bt-hang-watchdog[1248]: Recovering Bluetooth controller at 3-3 ...
+Aug 11 19:53:19.571438 n bt-hang-watchdog[1248]:   USBDEVFS_RESET failed
+Aug 11 19:53:25.574671 n bt-hang-watchdog[1248]:   escalating to USB unbind/bind
+Aug 11 19:53:37.586182 n bt-hang-watchdog[1248]:   RECOVERY FAILED — controller still unresponsive
+Aug 11 19:53:37.586529 n bt-hang-watchdog[1248]: consecutive failed recoveries: 1/3
+Aug 11 19:53:37.587559 n bt-hang-watchdog[1248]: signal: Bluetooth: hci0: command 0x0406 tx timeout
+Aug 11 19:53:37.587559 n bt-hang-watchdog[1248]:   window: 1/3 hit(s) in last 60s
+Aug 11 19:53:37.588549 n bt-hang-watchdog[1248]: signal: Bluetooth: hci0: Opcode 0x0c1a failed: -110
+Aug 11 19:53:37.588549 n bt-hang-watchdog[1248]:   window: 2/3 hit(s) in last 60s
+Aug 11 19:53:37.589822 n bt-hang-watchdog[1248]: signal: Bluetooth: hci0: command 0x0406 tx timeout
+Aug 11 19:53:37.589822 n bt-hang-watchdog[1248]:   window: 3/3 hit(s) in last 60s
+Aug 11 19:53:37.589875 n bt-hang-watchdog[1248]: threshold reached (3/3) but suppressed by cooldown (59s remaining)
+Aug 11 19:53:37.590873 n bt-hang-watchdog[1248]: signal: Bluetooth: hci0: setting interface failed (110)
+Aug 11 19:53:37.590873 n bt-hang-watchdog[1248]:   window: 4/3 hit(s) in last 60s
+Aug 11 19:53:37.590946 n bt-hang-watchdog[1248]: threshold reached (4/3) but suppressed by cooldown (59s remaining)
+Aug 11 19:53:37.591980 n bt-hang-watchdog[1248]: signal: Bluetooth: hci0: command 0x0406 tx timeout
+Aug 11 19:53:37.591980 n bt-hang-watchdog[1248]:   window: 5/3 hit(s) in last 60s
+Aug 11 19:53:37.592043 n bt-hang-watchdog[1248]: threshold reached (5/3) but suppressed by cooldown (59s remaining)
+Aug 11 19:53:37.594833 n bt-hang-watchdog[1248]: signal: Bluetooth: hci0: command 0x0406 tx timeout
+Aug 11 19:53:37.594833 n bt-hang-watchdog[1248]:   window: 6/3 hit(s) in last 60s
+Aug 11 19:53:37.594897 n bt-hang-watchdog[1248]: threshold reached (6/3) but suppressed by cooldown (59s remaining)
