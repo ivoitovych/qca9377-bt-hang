@@ -1,0 +1,19 @@
+[Unit]
+Description=Enable Bluetooth kernel dynamic debug for the QCA9377 investigation
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+DefaultDependencies=no
+After=sysinit.target systemd-modules-load.service
+Before=bluetooth.service
+ConditionPathIsReadWrite=/sys/kernel/debug/dynamic_debug/control
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Must run before the controller is first opened: btusb_setup_qca() and the
+# initial HCI command exchange happen at adapter bring-up, and those are the
+# lines this exists to capture. Enabling debug afterwards misses them.
+ExecStart=/usr/local/sbin/bt-dyndbg on
+ExecStop=/usr/local/sbin/bt-dyndbg off
+
+[Install]
+WantedBy=sysinit.target

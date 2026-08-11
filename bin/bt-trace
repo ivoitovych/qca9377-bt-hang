@@ -18,7 +18,14 @@ set -uo pipefail
 
 DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
 MAX_MB="${BT_TRACE_MAX_MB:-128}"    # rotate when the current file exceeds this
-KEEP="${BT_TRACE_KEEP:-30}"         # how many rotated files to retain (~3.8 GB)
+# Retention is a file COUNT, but files do not rotate only on size: btmon in
+# bluez 5.72 aborts regularly (a buffer overflow in its own decoder), and every
+# abort forces a new file. In practice the average file is ~2 MB rather than the
+# 128 MB rotation threshold, so a count of 30 bought only a few hours of history
+# instead of the intended days — and it pruned away the pairing sequence of a
+# session that was being actively investigated. The free-space floor below is
+# the real bound, so this count can be generous.
+KEEP="${BT_TRACE_KEEP:-400}"        # rotated files to retain (floor-bounded)
 CHECK_SEC="${BT_TRACE_CHECK_SEC:-30}"       # size / disk checks (expensive-ish)
 POLL_SEC="${BT_TRACE_POLL_SEC:-1}"          # liveness checks (cheap, must be fast)
 MIN_FREE_GB="${BT_TRACE_MIN_FREE_GB:-10}"   # never let the filesystem get tighter than this

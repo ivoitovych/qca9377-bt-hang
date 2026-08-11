@@ -1,0 +1,121 @@
+#!/bin/bash
+# bt-usbmon — capture the USB transport under the Bluetooth controller.
+#
+# WHY THIS EXISTS. The failure has two stages. Stage 1 is visible: HCI commands
+# time out, and btmon records exactly which ones. Stage 2 is not: the controller
+# stops answering the USB core itself, the kernel logs
+#
+#     usb 3-3: device descriptor read/64, error -110
+#     usb 3-3: device not accepting address 2, error -62
+#
+# and the device leaves the bus. Those two lines are the entire record of the
+# most important part of the bug. They say a request was not answered; they do
+# not say what was actually on the wire — whether the device NAKs forever,
+# STALLs, returns a short descriptor, or goes electrically silent. For a report
+# whose central claim is "the device stops responding at the USB level", that
+# distinction is the evidence.
+#
+# usbmon records every URB submission and completion on the bus, which is
+# precisely that missing layer. Captured as pcap so it opens in Wireshark,
+# which decodes both the USB and the embedded HCI framing.
+#
+# VOLUME. The controller is a full-speed (12 Mbit/s) device and most of its
+# traffic is small interrupt and bulk transfers. Capture is still rotated and
+# capped, and the free-space floor is honoured, because an unbounded capture on
+# a working laptop is a way to fill a root filesystem.
+#
+# Usage: bt-usbmon   (runs in the foreground; managed by bt-usbmon.service)
+
+set -uo pipefail
+
+DIR="${BT_USBMON_DIR:-/var/log/bt-health/usbmon}"
+VID="${BT_VID:-13d3}"
+PID="${BT_PID:-3503}"
+MAX_MB="${BT_USBMON_MAX_MB:-64}"      # rotate at this size
+KEEP="${BT_USBMON_KEEP:-60}"          # retain this many files (~3.8 GB)
+MIN_FREE_GB="${BT_USBMON_MIN_FREE_GB:-15}"
+
+log() { echo "$*"; }
+
+mkdir -p "$DIR"
+
+# --- which USB bus is the controller on? -----------------------------------
+# usbmon instances are per-bus. Capturing every bus would multiply the volume
+# for no benefit, so resolve the controller's own bus number.
+find_bus() {
+    local d
+    for d in /sys/bus/usb/devices/*; do
+        [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
+        if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
+            cat "$d/busnum" 2>/dev/null
+            return 0
+        fi
+    done
+    return 1
+}
+
+modprobe usbmon 2>/dev/null
+
+BUS=$(find_bus)
+if [[ -z "${BUS:-}" ]]; then
+    # The device is absent — which is itself the state this investigation cares
+    # about. Fall back to the bus recorded at install time, if known, so the
+    # capture is running when the device comes back after a cold boot.
+    BUS="${BT_USBMON_BUS:-}"
+    if [[ -z "$BUS" ]]; then
+        log "controller $VID:$PID not present and no BT_USBMON_BUS set — nothing to capture"
+        exit 0
+    fi
+    log "controller absent; using configured bus $BUS"
+fi
+
+IFACE="usbmon${BUS}"
+if [[ ! -e "/sys/kernel/debug/usb/usbmon/${BUS}u" ]]; then
+    log "ERROR: ${IFACE} not available (is debugfs mounted and usbmon loaded?)"
+    exit 1
+fi
+
+prune() {
+    local n f
+    n=$(ls -1 "$DIR"/usbmon-*.pcap 2>/dev/null | wc -l)
+    if (( n > KEEP )); then
+        ls -1t "$DIR"/usbmon-*.pcap 2>/dev/null | tail -n +$((KEEP + 1)) | while read -r f; do
+            log "pruning $(basename "$f")"
+            rm -f "$f"
+        done
+    fi
+    # Free-space floor, enforced regardless of KEEP: a retention count is a
+    # guess about file size, and this is the check that cannot be wrong.
+    local free oldest
+    while true; do
+        free=$(df -BG --output=avail "$DIR" | tail -1 | tr -dc '0-9')
+        (( free < MIN_FREE_GB )) || break
+        oldest=$(ls -1t "$DIR"/usbmon-*.pcap 2>/dev/null | tail -1)
+        [[ -n "$oldest" ]] || { log "ERROR: under ${MIN_FREE_GB}GB free with nothing left to prune"; break; }
+        log "low disk (${free}GB free): pruning $(basename "$oldest")"
+        rm -f "$oldest"
+    done
+}
+
+log "bt-usbmon starting on $IFACE (device $VID:$PID, bus $BUS)"
+log "  rotate=${MAX_MB}MB keep=$KEEP max~$((MAX_MB * KEEP / 1024))GB floor=${MIN_FREE_GB}GB"
+
+prune
+
+# tcpdump handles rotation itself (-C megabytes, -W ring). Using its ring would
+# reuse fixed names; instead rotate by size with a timestamped name so files
+# sort chronologically and prune() can reason about age.
+while true; do
+    ts=$(date +%Y%m%d-%H%M%S)
+    out="$DIR/usbmon-${ts}.pcap"
+    log "capturing to $(basename "$out")"
+    tcpdump -i "$IFACE" -s 0 -w "$out" -C "$MAX_MB" -W 1 >/dev/null 2>&1
+    rc=$?
+    # tcpdump appends a running index when -C is used; normalise it back.
+    [[ -e "${out}0" ]] && mv -f "${out}0" "$out"
+    prune
+    if (( rc != 0 )); then
+        log "tcpdump exited (rc=$rc) — retrying in 5s"
+        sleep 5
+    fi
+done

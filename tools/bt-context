@@ -1,0 +1,115 @@
+#!/bin/bash
+# bt-context — read what is NEXT TO the failures, not just the failures.
+#
+# Every other tool here searches for signals that are already known: bt-actions
+# classifies about forty message shapes, bt-boot-stats counts three. That makes
+# them blind in a specific way — they cannot report anything nobody thought to
+# look for, and the message that explains this bug may well be one nobody has
+# looked at yet, sitting two lines above a timeout in a log read a hundred times.
+#
+# This tool inverts the filter. It takes the moments where the controller
+# demonstrably failed, pulls the surrounding window, and then removes everything
+# already understood. What remains is the unexplained neighbourhood of the
+# failure: the candidate list for the next thing to investigate.
+#
+# Usage:
+#   bt-context [-b <boot>] [-C <lines>] [--all] [--full]
+#
+#   -b <boot>   journal boot offset (default 0)
+#   -C <lines>  context lines each side of an anchor (default 12)
+#   --all       do not suppress messages already classified by bt-actions
+#   --full      print every anchor window, not just the novel-message summary
+#
+# Anchors are the first HCI command timeout, the first USB-level failure, and
+# the moment the device left the bus — the three transitions that define the
+# failure. Repeats are not anchors; the interesting context is at the edges.
+
+set -uo pipefail
+
+BOOT=0
+CTX=12
+SHOW_ALL=0
+FULL=0
+
+while (( $# )); do
+    case "$1" in
+        -b)     BOOT="${2:-0}"; shift 2 ;;
+        -C)     CTX="${2:-12}"; shift 2 ;;
+        --all)  SHOW_ALL=1; shift ;;
+        --full) FULL=1; shift ;;
+        -h|--help) sed -n '2,27p' "$0"; exit 0 ;;
+        *) echo "bt-context: unknown argument: $1" >&2; exit 1 ;;
+    esac
+done
+
+# Messages already understood. A line matching one of these is not news, so it
+# is removed from the "novel" summary — it would otherwise dominate it, because
+# the known failures are by construction the most frequent thing near an anchor.
+KNOWN='unexpected event for opcode|tx timeout|Opcode 0x[0-9a-f]+ failed|device descriptor read|not accepting address|USB disconnect|reset full-speed|Timeout while waiting for setup device|new full-speed USB device|setting interface failed|Error when powering off device|MGMT ver|Endpoint (un)?registered|plugin_init|Rejected send message|Battery Provider Manager|SDP server|sap_server_register|sap-server|bluetooth.service|ConfigurationDirectory|Bluetooth daemon|bluetoothd\[[0-9]+\]: (Terminating|Exit)|bt-hang-watchdog|bt-health-snapshot|bt-trace|gnome-shell|Gjs_ui|stack_position|systemd\[[0-9]+\]: (Starting|Started|Stopping|Stopped|Finished|Reached|Created|Removed)|audit|apparmor|kernel: perf|cron|CRON|dbus-daemon.*Activating|snapd|NetworkManager.*<info>|wpa_supplicant.*CTRL|sysstat'
+
+LOG=$(mktemp); ANCH=$(mktemp)
+trap 'rm -f "$LOG" "$ANCH"' EXIT
+
+journalctl -b "$BOOT" --no-pager -o short-iso-precise 2>/dev/null > "$LOG"
+if [[ ! -s "$LOG" ]]; then
+    echo "bt-context: no journal for boot $BOOT" >&2
+    exit 1
+fi
+
+# --- anchors: the first of each failure transition -------------------------
+{
+    grep -n -m1 -E "command( 0x[0-9a-f]+)? tx timeout" "$LOG" | cut -d: -f1 | sed 's/$/\tfirst HCI command timeout/'
+    grep -n -m1 -E "device descriptor read/64, error" "$LOG" | cut -d: -f1 | sed 's/$/\tfirst USB-level failure/'
+    grep -n -m1 -E "USB disconnect, device number" "$LOG" | cut -d: -f1 | sed 's/$/\tdevice left the USB bus/'
+    grep -n -m1 -E "unexpected event for opcode" "$LOG" | cut -d: -f1 | sed 's/$/\tfirst HCI desync/'
+} > "$ANCH" 2>/dev/null
+
+if [[ ! -s "$ANCH" ]]; then
+    echo "bt-context: boot $BOOT records no controller failure — nothing to anchor on"
+    exit 0
+fi
+
+total=$(wc -l < "$LOG")
+echo "bt-context — boot $BOOT, ${total} journal lines, ±${CTX} lines per anchor"
+echo
+
+# --- optional: the raw windows ---------------------------------------------
+if (( FULL )); then
+    while IFS=$'\t' read -r ln label; do
+        [[ -n "$ln" ]] || continue
+        lo=$(( ln > CTX ? ln - CTX : 1 ))
+        hi=$(( ln + CTX ))
+        echo "══ $label  (line $ln) ═══════════════════════════════════════════"
+        sed -n "${lo},${hi}p" "$LOG" | sed -E "s/[0-9A-F]{2}(:[0-9A-F]{2}){5}/<MAC>/g"
+        echo
+    done < "$ANCH"
+fi
+
+# --- the point of the tool: what is near a failure and NOT understood -------
+echo "Unclassified messages within ±${CTX} lines of a failure transition"
+echo "─────────────────────────────────────────────────────────────────────"
+echo "(each shape listed once, with a count; these are candidates to explain)"
+echo
+
+{
+    while IFS=$'\t' read -r ln label; do
+        [[ -n "$ln" ]] || continue
+        lo=$(( ln > CTX ? ln - CTX : 1 ))
+        hi=$(( ln + CTX ))
+        sed -n "${lo},${hi}p" "$LOG"
+    done < "$ANCH"
+} | {
+    if (( SHOW_ALL )); then cat; else grep -Ev "$KNOWN"; fi
+} | sed -E "
+    s/^[^ ]+ [^ ]+ //;                                   # drop timestamp+host
+    s/\[[0-9]+\]/[]/g;                                   # collapse PIDs
+    s/[0-9A-F]{2}(:[0-9A-F]{2}){5}/<MAC>/g;
+    s/\b[0-9]+\b/N/g;                                    # collapse numbers
+" | sort | uniq -c | sort -rn | head -40
+
+echo
+echo "Anchors used:"
+sed 's/^/  line /' "$ANCH"
+echo
+echo "Nothing here is a finding yet. A shape that looks relevant should be"
+echo "re-read in full with:  bt-context -b $BOOT --full"

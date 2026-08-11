@@ -240,3 +240,52 @@ Watch it work:
 ```bash
 journalctl -u bt-hang-watchdog -f
 ```
+
+---
+
+## 2026-08-12 — logging depth increase (Phase 18a)
+
+Four new sources, added because reconstructing a test session from the journal showed
+that the layer between "the operator did something" and "the controller stopped
+answering" was almost entirely unrecorded.
+
+| Change | File | Effect | Revert |
+|---|---|---|---|
+| kernel dynamic debug | `/usr/local/sbin/bt-dyndbg` + `bt-dyndbg.service` | 214 `pr_debug` sites in `btusb.c`, `hci_core.c`, `hci_sync.c`, `hci_conn.c` | `bt-dyndbg off`, or disable the unit |
+| bluetoothd debug | `/etc/systemd/system/bluetooth.service.d/10-debug.conf` | `bluetoothd -d`: connect, disconnect, pairing, profile transitions | delete file, `daemon-reload` |
+| USB transport capture | `/usr/local/sbin/bt-usbmon` + `bt-usbmon.service` | rotating pcap of the controller's USB bus | disable the unit |
+| journal size cap | `/etc/systemd/journald.conf.d/10-bt-investigation.conf` | `SystemMaxUse=16G`, `SystemKeepFree=20G` | delete file, restart `systemd-journald` |
+
+Also: `bt-trace` retention raised from 30 files to 400. The count was never the real
+bound — `btmon` in bluez 5.72 aborts frequently and each abort forces a rotation, so the
+average file is ~2 MB rather than the 128 MB rotation threshold, and 30 files bought
+hours rather than days. The free-space floor is the actual bound.
+
+### What is deliberately NOT enabled
+
+`hci_event.c` (196 sites) and `l2cap_core.c` (168 sites) fire per received HCI event and
+per L2CAP packet. During A2DP playback that is hundreds of lines per second. They are
+excluded for two reasons, and the second matters more than the first: the volume is
+unaffordable, and the logging work itself lands on the receive path of a bug that is
+characterised by timing. Measurements taken with them enabled would not be comparable to
+the baseline taken without.
+
+Enable them deliberately and temporarily when a specific question needs them:
+
+```bash
+bt-dyndbg on --packets     # and turn it off again afterwards
+```
+
+### ⚠️ Data loss during this change
+
+The journal drop-in initially also set `MaxRetentionSec=1month`. That is not a bound — it
+is an instruction to delete anything older, acted on at journald restart. It permanently
+removed every boot before 2026-07-12, taking the hang history from **34 boots to 18**, in
+a change whose purpose was to retain more. The files are unrecoverable.
+
+`MaxRetentionSec` has been removed and the file now carries a warning against
+reintroducing it. `SystemMaxUse` discards oldest-first only on reaching the cap;
+`MaxRetentionSec` discards immediately and unconditionally.
+
+The 34-boot dataset survives in `evidence/exhibits/003-desync-is-not-the-cause.md`,
+captured nine minutes earlier. That exhibit is annotated as no longer re-runnable.

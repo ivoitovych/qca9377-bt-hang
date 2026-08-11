@@ -900,3 +900,33 @@ shown provably produced the output shown. Hand-pasting the two separately lets t
 - **Check the units of a fraction.** `journalctl` prints microseconds; treating them as
   milliseconds inflated every computed cadence by 1000× and briefly produced "every 340
   seconds" for events 0.34 s apart.
+
+### Phase 18a — the logging upgrade that destroyed evidence
+
+Acting on the operator's question about whether enough logging was enabled, four sources
+were added: kernel dynamic debug on `btusb`/`hci_core`/`hci_sync`/`hci_conn` (214 sites,
+deliberately excluding the 364 per-packet sites in `hci_event.c` and `l2cap_core.c`, which
+would flood the log *and* perturb the timing being measured), `bluetoothd -d`, a `usbmon`
+pcap capture of the USB transport, and a raised journal size cap.
+
+The journal drop-in also set `MaxRetentionSec=1month`, intended as a generous bound. It is
+not a bound. journald applied it on restart and permanently deleted every boot before
+2026-07-12 — **34 boots of hang history reduced to 18**, in a change whose sole purpose was
+to retain more. The files are gone; there is no recovery.
+
+The dataset survived only because `EX-003` had been generated nine minutes earlier and
+contains the full 34-boot table inline. The exhibit has been annotated to say it is no
+longer re-runnable, since it now makes a claim the machine can no longer reproduce.
+
+- **A size cap and an age cap are opposite instructions.** `SystemMaxUse` discards
+  oldest-first *only when the cap is reached*. `MaxRetentionSec` discards *immediately and
+  unconditionally* on the next restart. Reaching for both because each sounds like a limit
+  is how a retention increase becomes a deletion.
+- **Verify what a config change did, not just that it applied.** The journal shrinking from
+  770 MB to 416 MB was visible in the very next command; it was noticed only because the
+  disk-usage figure happened to be printed. A change intended to grow storage should have
+  been checked by counting boots before and after.
+- **Evidence captured is evidence kept; evidence regenerable is evidence at risk.** The
+  exhibit convention was adopted an hour before it saved this dataset. Anything that
+  matters should be captured now, not left as a command to re-run later — the machine
+  it runs against is the thing under investigation, and it changes.

@@ -167,6 +167,7 @@ install_file "$SRC/tools/bt-trial"       /usr/local/bin/bt-trial       0755
 install_file "$SRC/tools/bt-actions"     /usr/local/bin/bt-actions     0755
 install_file "$SRC/tools/bt-boot-stats"  /usr/local/bin/bt-boot-stats  0755
 install_file "$SRC/tools/bt-exhibit"     /usr/local/bin/bt-exhibit     0755
+install_file "$SRC/tools/bt-context"     /usr/local/bin/bt-context     0755
 if command -v btmon >/dev/null 2>&1; then
     install_file "$SRC/bin/bt-trace"            /usr/local/sbin/bt-trace                    0755
     install_file "$SRC/systemd/bt-trace.service" /etc/systemd/system/bt-trace.service       0644
@@ -174,6 +175,29 @@ if command -v btmon >/dev/null 2>&1; then
 else
     echo "  WARNING: btmon not found (package: bluez) — HCI capture not installed"
     TRACE=0
+fi
+
+# Kernel dynamic debug: the driver's own account of its decisions. Must be
+# enabled before bluetooth.service opens the adapter, hence a sysinit oneshot.
+install_file "$SRC/bin/bt-dyndbg"                 /usr/local/sbin/bt-dyndbg              0755
+install_file "$SRC/systemd/bt-dyndbg.service"     /etc/systemd/system/bt-dyndbg.service  0644
+
+# bluetoothd debug: the layer recording what the operator actually did.
+install_file "$SRC/etc/systemd/bluetooth.service.d/10-debug.conf" \
+             /etc/systemd/system/bluetooth.service.d/10-debug.conf 0644
+
+# Journal size cap: verbose logging is only useful if it survives to be read.
+install_file "$SRC/etc/systemd/journald.conf.d/10-bt-investigation.conf" \
+             /etc/systemd/journald.conf.d/10-bt-investigation.conf 0644
+
+# USB transport capture: the one layer with no record during stage 2.
+if command -v tcpdump >/dev/null 2>&1; then
+    install_file "$SRC/bin/bt-usbmon"             /usr/local/sbin/bt-usbmon              0755
+    install_file "$SRC/systemd/bt-usbmon.service" /etc/systemd/system/bt-usbmon.service  0644
+    USBMON=1
+else
+    echo "  WARNING: tcpdump not found — USB transport capture not installed"
+    USBMON=0
 fi
 # Event-driven snapshots: a stall unfolds faster than the 15-minute timer.
 if (( METRICS )); then
@@ -236,6 +260,16 @@ run systemctl daemon-reload
 run systemctl enable --now bt-hang-watchdog
 (( METRICS )) && run systemctl enable --now bt-health-snapshot.timer
 (( TRACE ))   && run systemctl enable --now bt-trace
+run systemctl enable --now bt-dyndbg
+(( USBMON ))  && run systemctl enable --now bt-usbmon
+# Picks up the raised journal size cap. Restarting journald is safe: clients
+# reconnect to the socket, and nothing already written is lost.
+run systemctl restart systemd-journald
+# Applies the bluetoothd -d override. Deliberately NOT restarted here when the
+# controller is mid-failure: restarting bluetoothd against a wedged controller
+# adds a burst of timing-out commands to the log for no benefit. It will pick
+# the override up on the next boot regardless.
+run systemctl daemon-reload
 
 # Apply the autosuspend setting immediately when it is safe to do so:
 # reloading btusb while it is in use would drop live connections.

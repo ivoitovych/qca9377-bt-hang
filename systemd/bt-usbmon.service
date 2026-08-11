@@ -1,0 +1,26 @@
+[Unit]
+Description=Capture the USB transport under the Bluetooth controller (QCA9377 investigation)
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+After=sysinit.target
+Wants=bluetooth.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/bt-usbmon
+Restart=always
+RestartSec=5s
+Nice=5
+
+# The controller sits on bus 3 on this machine. bt-usbmon resolves the bus from
+# the device itself when present; this is the fallback for the case that matters
+# most — the device has already left the bus, so it cannot be resolved, and the
+# capture must nevertheless be running when it returns after a cold boot.
+Environment=BT_USBMON_BUS=3
+
+# Capture volume is bounded by the script (rotation, retention, free-space
+# floor). This is a second, independent bound: if the script's own accounting is
+# ever wrong, the cgroup limit stops it from taking the machine down with it.
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,93 @@
+#!/bin/bash
+# bt-dyndbg — turn on the kernel's built-in Bluetooth debug statements.
+#
+# The btusb driver and the HCI core ship hundreds of pr_debug() sites that are
+# compiled in but switched off. They are the driver's own account of what it
+# decided and why — exactly the layer this investigation has been reasoning
+# about indirectly, from its side effects, for eighteen phases.
+#
+# WHY NOT SIMPLY ENABLE EVERYTHING:
+# two files would drown the rest and, worse, change what is being measured.
+#
+#   hci_event.c   196 sites, one or more per received HCI event
+#   l2cap_core.c  168 sites, one or more per L2CAP packet — during A2DP
+#                 playback that is hundreds of lines per second
+#
+# The failure under investigation is a timing-sensitive one: the controller
+# stops answering within a window of tens of seconds. Logging that adds
+# meaningful work to the receive path risks moving that window, which would
+# make every measurement taken with it enabled incomparable to the baseline
+# taken without. So the per-packet files stay off by default and the
+# command-and-connection-level files go on:
+#
+#   btusb.c     27 sites   driver decisions: setup, reset, suspend, URB errors
+#   hci_core.c  85 sites   command submission, timeout handling, device state
+#   hci_sync.c  60 sites   the synchronous request machinery that times out
+#   hci_conn.c  42 sites   connection setup and teardown
+#
+# Usage:
+#   bt-dyndbg on            enable the default (command-level) set
+#   bt-dyndbg on --packets  also enable hci_event.c and l2cap_core.c
+#   bt-dyndbg off           disable every Bluetooth debug site
+#   bt-dyndbg status        show how many sites are currently enabled
+
+set -uo pipefail
+
+CTL=/sys/kernel/debug/dynamic_debug/control
+DEFAULT_FILES=(btusb.c hci_core.c hci_sync.c hci_conn.c)
+PACKET_FILES=(hci_event.c l2cap_core.c)
+ALL_FILES=(btusb.c hci_core.c hci_sync.c hci_conn.c hci_event.c l2cap_core.c
+           mgmt.c sco.c l2cap_sock.c hci_sock.c hci_sysfs.c btqca.c)
+
+[[ -w "$CTL" ]] || { echo "bt-dyndbg: $CTL not writable (need root, and debugfs mounted)" >&2; exit 1; }
+
+set_files() {
+    local flag="$1"; shift
+    local f n=0
+    for f in "$@"; do
+        if echo "file $f $flag" > "$CTL" 2>/dev/null; then
+            n=$((n + 1))
+        fi
+    done
+    echo "$n"
+}
+
+count_enabled() {
+    # A site is enabled when its flag field is anything other than "=_".
+    # Match on the source path, not on a file-name alternation: an alternation
+    # like (btusb|hci_)\.c silently matches only the branches that happen to be
+    # complete file names, and undercounts everything else.
+    grep -cE '^(drivers|net)/bluetooth/[a-z0-9_]+\.c:[0-9]+ .* =[a-z]+ ' "$CTL" 2>/dev/null || true
+}
+
+case "${1:-status}" in
+    on)
+        files=("${DEFAULT_FILES[@]}")
+        if [[ "${2:-}" == "--packets" ]]; then
+            files+=("${PACKET_FILES[@]}")
+            echo "bt-dyndbg: INCLUDING per-packet files — expect high volume and"
+            echo "           be aware this may perturb the timing being measured."
+        fi
+        n=$(set_files +p "${files[@]}")
+        echo "bt-dyndbg: enabled debug in $n file(s): ${files[*]}"
+        echo "bt-dyndbg: $(count_enabled) site(s) now active"
+        echo "bt-dyndbg: output goes to the kernel log — journalctl -k -f"
+        ;;
+    off)
+        n=$(set_files -p "${ALL_FILES[@]}")
+        echo "bt-dyndbg: disabled debug in $n file(s)"
+        echo "bt-dyndbg: $(count_enabled) site(s) still active"
+        ;;
+    status)
+        echo "enabled sites: $(count_enabled)"
+        for f in "${ALL_FILES[@]}"; do
+            tot=$(grep -c "^[^ ]*$f:" "$CTL" 2>/dev/null || true)
+            (( tot == 0 )) && continue
+            on=$(awk -v f="$f" '$1 ~ f":" && / =[a-z]+/ {n++} END {print n+0}' "$CTL")
+            printf '  %-14s %4s / %-4s enabled\n' "$f" "$on" "$tot"
+        done
+        ;;
+    *)
+        sed -n '2,32p' "$0"
+        ;;
+esac

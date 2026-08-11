@@ -23,6 +23,12 @@ for a in "$@"; do
 done
 
 FILES=(
+    /usr/local/sbin/bt-dyndbg
+    /usr/local/sbin/bt-usbmon
+    /etc/systemd/system/bt-dyndbg.service
+    /etc/systemd/system/bt-usbmon.service
+    /etc/systemd/system/bluetooth.service.d/10-debug.conf
+    /etc/systemd/journald.conf.d/10-bt-investigation.conf
     /usr/local/sbin/bt-hang-watchdog
     /usr/local/sbin/bt-health-snapshot
     /usr/local/bin/bt-health-report
@@ -37,6 +43,7 @@ FILES=(
     /usr/local/bin/bt-actions
     /usr/local/bin/bt-boot-stats
     /usr/local/bin/bt-exhibit
+    /usr/local/bin/bt-context
     /usr/local/bin/bt-sanitize-logs
     /usr/local/share/qca9377-bt-hang/installed-at
     /usr/local/bin/bt-boot-list
@@ -60,6 +67,8 @@ FILES=(
 
 # Directories to remove only if empty after the files above are gone.
 DIRS=(
+    /etc/systemd/system/bluetooth.service.d
+    /etc/systemd/journald.conf.d
     /etc/systemd/system/bt-hang-watchdog.service.d
     /etc/systemd/system/bt-health-snapshot.service.d
     /usr/local/share/qca9377-bt-hang
@@ -69,6 +78,8 @@ UNITS=(
     bt-hang-watchdog.service
     bt-health-snapshot.timer
     bt-trace.service
+    bt-dyndbg.service
+    bt-usbmon.service
 )
 
 run() {
@@ -136,6 +147,9 @@ echo
 echo "[4/5] reload daemons"
 run systemctl daemon-reload
 run udevadm control --reload-rules
+# Drops the raised journal size cap and the bluetoothd -d override. Existing
+# journal files are kept; systemd will simply trim to the default cap over time.
+run systemctl restart systemd-journald
 echo
 
 echo "[5/5] restore btusb default (enable_autosuspend=Y)"

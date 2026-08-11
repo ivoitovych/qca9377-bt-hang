@@ -66,6 +66,23 @@ Is the desync signature a predictor of the hang?
   companion symptom, not a cause. Report it as such.
 ```
 
+## Integrity note — this exhibit is NO LONGER re-runnable as captured
+
+This output was captured at 00:45 on 2026-08-12, covering **34 boots** back to
+2026-06-16. At 00:54 the same night, a journald configuration change that
+mistakenly included `MaxRetentionSec=1month` was applied; journald acted on it
+during restart and permanently vacuumed every boot before 2026-07-12. The
+journal now holds **18 boots**, so re-running the command above will produce a
+smaller table with different totals.
+
+The output above is the complete original dataset and remains the evidence of
+record. It is preserved here only because it had already been captured — which
+is the entire argument for capturing evidence as exhibits rather than as
+instructions for regenerating it later.
+
+Nothing in the numbers was edited. The mistake was in the retention change, not
+in this measurement.
+
 ## Provenance
 
 | field | value |
