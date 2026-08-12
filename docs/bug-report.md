@@ -9,6 +9,11 @@
 
 ---
 
+> ⛔ **Do not send this without working through
+> [`pre-submission-checklist.md`](pre-submission-checklist.md).** It collects every
+> outstanding blocker — unmet evidence gates, content that must be excluded, and a
+> deferred privacy cleanup of git history — that would otherwise be found only by chance.
+
 > 🔬 **Under active revision.** The hardware is reported to work flawlessly under Windows
 > on this same laptop. That points at a cause this report does not yet cover: the device
 > also never receives its **firmware patch** under Linux, because the same missing quirks

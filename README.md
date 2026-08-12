@@ -422,15 +422,26 @@ renamed only after verification passes. The logs in `evidence/baseline/` were pr
 
 | | |
 |---|---|
-| Root cause identified | ✅ behavioural evidence; source-level confirmation pending |
-| Watchdog detection | ✅ tested end-to-end via `/dev/kmsg` injection |
-| Watchdog recovery path | ⚠️ **untested** — needs a live controller |
-| Autosuspend setting | ✅ applied and verified |
-| udev rule | ⚠️ untested — fires on next device `add` |
+| Device unmatched by btusb quirks table | ✅ upstream v7.0 source **and** shipped binary |
+| Reset mechanism is `hdev->reset`, on the first timeout | ✅ source + binary |
+| Triggering command identified | ⚠️ `HCI_Setup_Synchronous_Connection` (0x0428) — **one observation**, see `EX-007` |
+| USB healthy at HCI failure | ✅ measured — first URB error is 31 s later (`EX-008`) |
+| Watchdog detection | ✅ tested end-to-end |
+| Watchdog recovery path | ✅ exercised — succeeds early, fails once timeouts begin |
+| Autosuspend setting, udev rule | ✅ applied and verified |
+| **Quantified reproducer (A4)** | ❌ **gate — not done.** No denominator yet |
 | Kernel patch | ❌ written, not built or tested |
 
-The recovery path and udev rule could not be exercised because the controller was already
-in stage 2 when the work was done. They need a cold power-off to validate.
+> ⛔ **Before submitting anything upstream**, work through
+> [`docs/pre-submission-checklist.md`](docs/pre-submission-checklist.md): unmet evidence
+> gates, content that must be excluded, and a deferred purge of Bluetooth addresses from
+> git history.
+
+The strongest current lead is that the hang is triggered by audio **stopping** — when the
+A2DP stream goes idle, PipeWire switches the device to the HFP profile and the SCO setup
+command that follows is never answered. That requires no user action, which is why the
+failure looked random for months. It rests on a single observation and needs replication
+before it can be called a finding.
 
 ## Diagnostic tools
 

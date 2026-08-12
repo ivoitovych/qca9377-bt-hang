@@ -587,6 +587,11 @@ Mixing them risks losing a well-evidenced small patch inside an under-evidenced 
 
 ## 8. Current status
 
+> ⛔ Before sending anything upstream, work through
+> [`pre-submission-checklist.md`](pre-submission-checklist.md) — evidence gates, content
+> that must be excluded (including §7 of this document), and a deferred purge of Bluetooth
+> addresses from git history.
+
 | Step | State |
 |---|---|
 | Device is unmatched by btusb's quirks table | ✅ confirmed — upstream source and shipped binary |
