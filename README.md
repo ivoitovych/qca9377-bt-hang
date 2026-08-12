@@ -437,6 +437,12 @@ renamed only after verification passes. The logs in `evidence/baseline/` were pr
 > gates, content that must be excluded, and a deferred purge of Bluetooth addresses from
 > git history.
 
+**This is not one bug.** [`docs/issues.md`](docs/issues.md) tracks five distinct defects
+observed on this machine, separately, because filing them under one heading actively
+slowed the work — evidence for one kept being read as evidence for another. Two of them
+(`BT-2`, the panel-triggered 16 s command desync, and `BT-4`, `btmon` aborting mid-capture)
+are reportable **now**, independently of the hang.
+
 The strongest current lead is that the hang is triggered by audio **stopping** — when the
 A2DP stream goes idle, PipeWire switches the device to the HFP profile and the SCO setup
 command that follows is never answered. That requires no user action, which is why the

@@ -56,6 +56,20 @@ patch.
 
 ---
 
+## 2a. Submit the separable issues separately
+
+[`issues.md`](issues.md) tracks five distinct defects. They must not be bundled: a small,
+deterministic, well-evidenced bug is far more likely to be fixed than a large intermittent
+one, and bundling means the weakest member sets the pace for all.
+
+| Issue | Ready? |
+|---|---|
+| `BT-2` panel-triggered 16.0 s HCI desync | ✅ deterministic, reproducible in seconds, cross-tabbed |
+| `BT-4` `btmon` aborts mid-capture (bluez 5.72) | ✅ to BlueZ, once a minimal reproducer and backtrace exist |
+| `BT-3` missing `13d3:3503` quirks entry | ⚠️ patch trivial, justification missing |
+| `BT-1` the hang | ❌ blocked on the gates above |
+| `BT-5` SCO link silent after setup | ❌ one observation |
+
 ## 3. Content that must NOT be sent
 
 - **`fix-proposal.md` §7** — the proposal that all unmatched Bluetooth devices receive a
