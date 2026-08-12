@@ -169,6 +169,7 @@ install_file "$SRC/tools/bt-boot-stats"  /usr/local/bin/bt-boot-stats  0755
 install_file "$SRC/tools/bt-exhibit"     /usr/local/bin/bt-exhibit     0755
 install_file "$SRC/tools/bt-context"     /usr/local/bin/bt-context     0755
 install_file "$SRC/tools/bt-logvolume"   /usr/local/bin/bt-logvolume   0755
+install_file "$SRC/tools/bt-phase"       /usr/local/bin/bt-phase       0755
 if command -v btmon >/dev/null 2>&1; then
     install_file "$SRC/bin/bt-trace"            /usr/local/sbin/bt-trace                    0755
     install_file "$SRC/systemd/bt-trace.service" /etc/systemd/system/bt-trace.service       0644

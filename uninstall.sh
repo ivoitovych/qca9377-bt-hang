@@ -45,6 +45,7 @@ FILES=(
     /usr/local/bin/bt-exhibit
     /usr/local/bin/bt-context
     /usr/local/bin/bt-logvolume
+    /usr/local/bin/bt-phase
     /usr/local/bin/bt-sco
     /usr/local/bin/bt-capdiff
     /usr/local/sbin/bt-capture

@@ -1,0 +1,184 @@
+#!/bin/bash
+# bt-phase — did failures cluster near the liveness probe, or does it only look
+#            that way because the probe never stops running?
+#
+# THE TRAP THIS EXISTS TO PREVENT.
+#
+# `bt-trial` records `probe_to_timeout_s`, the interval from the last liveness
+# probe to the first HCI timeout. That number is NOT interpretable on its own.
+# The probe fires periodically, so *every* timeout is necessarily within one
+# probe interval of a probe. If probes fire every 30 s, then
+#
+#     "all fatal transitions occurred within 30 s of a probe"
+#
+# is not a finding. It is arithmetic. And a run of small values —
+# 0.17, 2.4, 1.1 — will look thrilling long before it means anything.
+#
+# The question is whether the observed intervals are CONCENTRATED relative to
+# the exposure available at each distance from a probe. So this tool does not
+# report the raw interval. For each failure it locates the probe gap containing
+# it and reports the failure's PHASE within that gap:
+#
+#     phase = (t_failure - t_previous_probe) / (t_next_probe - t_previous_probe)
+#
+# Under the null hypothesis — failures independent of probing — phase is
+# uniform on [0, 1] regardless of how irregular the probe cadence is, because
+# each event is normalised by the gap it actually fell in. That handles cadence
+# drift from load, service restarts and controller operations without needing to
+# assume a fixed period.
+#
+#   phases scattered across [0,1]          -> no observer effect visible
+#   phases tightly clustered near 0        -> worth investigating
+#   too few events to tell                 -> which is the usual answer, and is
+#                                             stated rather than glossed over
+#
+# Usage:
+#   bt-phase [-b <boot>]        analyse one boot (default: all retained boots)
+
+set -uo pipefail
+
+BOOT=""
+[[ "${1:-}" == "-b" ]] && { BOOT="${2:-0}"; }
+
+BOOTLIST="${BT_BOOT_LIST:-/usr/local/bin/bt-boot-list}"
+[[ -x "$BOOTLIST" ]] || BOOTLIST="$(dirname "$0")/bt-boot-list"
+
+PROBES=$(mktemp); FAILS=$(mktemp)
+trap 'rm -f "$PROBES" "$FAILS"' EXIT
+
+collect() {
+    local b="$1"
+    journalctl -u bt-health-snapshot -b "$b" --no-pager -o short-iso-precise 2>/dev/null \
+        | grep "Snapshot Bluetooth health metrics" | cut -d' ' -f1 >> "$PROBES"
+    journalctl -k -b "$b" --no-pager -o short-iso-precise 2>/dev/null \
+        | grep "command tx timeout" | cut -d' ' -f1 >> "$FAILS"
+}
+
+if [[ -n "$BOOT" ]]; then
+    collect "$BOOT"
+else
+    for b in $("$BOOTLIST" 2>/dev/null); do collect "$b"; done
+fi
+
+sort -o "$PROBES" "$PROBES"
+sort -o "$FAILS" "$FAILS"
+
+# ---------------------------------------------------------------------------
+# THE PROBE IS NOT EXOGENOUS, AND THAT INVALIDATES THE NAIVE STATISTIC.
+#
+# bt-health-snapshot runs from two sources:
+#
+#   bt-health-snapshot.timer                     every 15 min  — EXOGENOUS
+#   51-bluetooth-health-snapshot.rules (udev)    on bluetooth/USB add+remove
+#                                                              — ENDOGENOUS
+#
+# The udev rule fires on exactly the events a failing controller generates:
+# the hci device going away, the USB device disappearing and re-enumerating. So
+# during an incident, probes fire densely *because the incident is happening*.
+#
+# Run naively over all probes, this produced mean phase 0.084 with 6 of 8
+# failures inside the first 10% of their gap — a result that looks like a strong
+# observer effect and is in fact **reverse causation**. The tell was in the gap
+# lengths: 2.7 s, 6.8 s, 9.2 s. A 15-minute timer cannot produce a 2.7-second
+# gap; those were incident-triggered bursts.
+#
+# So the exposure baseline must be built only from probes that could not have
+# been caused by the thing being measured. Probes closer together than
+# MIN_GAP are treated as incident-driven bursts and dropped.
+MIN_GAP="${BT_PHASE_MIN_GAP:-600}"
+
+EXO=$(mktemp)
+trap 'rm -f "$PROBES" "$FAILS" "$EXO"' EXIT
+
+awk -v mingap="$MIN_GAP" '
+function s(t,   p, q, r) {
+    split(t, p, "T"); split(p[2], q, /[:.+]/); split(p[1], r, "-")
+    return ((r[3] * 24 + q[1]) * 3600) + q[2] * 60 + q[3] + q[4] / 1000000
+}
+{ t = s($0); if (last == 0 || t - last >= mingap) { print; last = t } }
+' "$PROBES" > "$EXO"
+
+nall=$(wc -l < "$PROBES")
+nexo=$(wc -l < "$EXO")
+mv "$EXO" "$PROBES"
+
+nf=$(wc -l < "$FAILS"); np=$nexo
+
+echo "Probe-phase analysis"
+echo "══════════════════════════════════════════════════════════════════"
+printf '  liveness probes (all)        %s\n' "$nall"
+printf '  exogenous only (>=%ss apart) %s   <- the valid baseline\n' "$MIN_GAP" "$nexo"
+printf '  command timeouts             %s\n' "$nf"
+echo
+echo "  Probes closer together than ${MIN_GAP}s are dropped: the udev rule fires"
+echo "  bt-health-snapshot on bluetooth and USB add/remove, which a FAILING"
+echo "  controller generates, so those probes are caused by the event under"
+echo "  study. Including them measures reverse causation, not an observer effect."
+echo
+
+if (( np < 2 )); then
+    echo "  Fewer than two probes — no gaps to normalise against. Nothing to say."
+    exit 0
+fi
+if (( nf == 0 )); then
+    echo "  No timeouts recorded. Nothing to place within a probe cycle."
+    echo "  This is the expected state most of the time; it is not a result."
+    exit 0
+fi
+
+awk -v np="$np" '
+function s(t,   p, q, r) {
+    split(t, p, "T"); split(p[2], q, /[:.+]/); split(p[1], r, "-")
+    return ((r[3] * 24 + q[1]) * 3600) + q[2] * 60 + q[3] + q[4] / 1000000
+}
+NR == FNR { probe[++n] = s($0); next }
+{
+    f = s($0)
+    # Locate the gap containing this failure.
+    lo = 0; hi = 0
+    for (i = 1; i <= n; i++) {
+        if (probe[i] <= f) lo = probe[i]
+        if (probe[i] > f)  { hi = probe[i]; break }
+    }
+    if (lo == 0 || hi == 0) { edge++; next }      # outside the probed range
+    gap = hi - lo
+    if (gap <= 0) next
+    ph = (f - lo) / gap
+    total++
+    printf "  phase %.3f   (%.1fs into a %.1fs gap)\n", ph, f - lo, gap
+    sum += ph
+    if (ph < 0.10) near++
+    bucket[int(ph * 5)]++
+}
+END {
+    print ""
+    if (total == 0) {
+        print "  No failure fell inside a probe gap — nothing to normalise."
+        exit
+    }
+    printf "  events placed      %d", total
+    if (edge) printf "   (%d outside the probed range, excluded)", edge
+    print ""
+    printf "  mean phase         %.3f   (0.5 expected if independent)\n", sum / total
+    printf "  within first 10%%   %d of %d\n", near + 0, total
+    print ""
+    print "  distribution across the gap:"
+    for (i = 0; i <= 4; i++)
+        printf "    %.1f-%.1f  %s\n", i / 5, (i + 1) / 5, (bucket[i] ? bucket[i] : 0)
+    print ""
+    if (total < 8) {
+        print "  ⚠ Too few events for this to mean anything. With fewer than"
+        print "    roughly eight independent failures, any pattern here is"
+        print "    consistent with chance. Recorded so the question can be"
+        print "    answered later, not so it can be answered now."
+    } else if (near > total * 0.5) {
+        print "  ⚠ Over half the failures fall in the first 10% of their gap."
+        print "    That is NOT expected under independence and is worth"
+        print "    investigating as a possible observer effect."
+    } else {
+        print "  Phases are spread across the interval. No observer effect is"
+        print "  visible in this data — which is a real negative result, not an"
+        print "  absence of one."
+    }
+}
+' "$PROBES" "$FAILS"

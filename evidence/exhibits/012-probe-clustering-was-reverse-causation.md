@@ -1,0 +1,56 @@
+# EX-012 — probe-clustering-was-reverse-causation
+
+**Claim.** An apparent observer effect — 6 of 8 HCI timeouts falling in the first 10% of their liveness-probe gap, mean phase 0.084 against 0.5 expected under independence — is an artifact of REVERSE CAUSATION, not evidence that probing perturbs the controller. Restricted to exogenous timer-driven probes, the clustering disappears.
+
+**Relevance.** A near-miss worth recording. The statistic was computed correctly and the tool's warning fired exactly as designed; the INPUT was invalid, because the probe is not independent of the event under study. A udev rule fires the health probe on bluetooth and USB add/remove — precisely the events a failing controller generates — so probes cluster around incidents because the incident causes them. The tell was in the gap lengths: 2.7 s, 6.8 s, 9.2 s, where a 15-minute timer cannot produce a 2.7-second gap. General rule: an exposure denominator must be built only from events that could not have been caused by the thing being measured.
+
+## Extraction method
+
+Re-runnable as-is on the affected machine:
+
+```console
+$ echo 'timer cadence (the only exogenous probe source):'; systemctl cat bt-health-snapshot.timer | grep -E 'OnUnitActiveSec|OnBootSec'; echo; echo 'udev rule — fires the SAME probe on controller failure events:'; grep -v '^#' /etc/udev/rules.d/51-bluetooth-health-snapshot.rules | grep -E 'ACTION' ; echo; echo 'exogenous-only analysis of a boot that hung:'; bt-phase -b -2 2>/dev/null | tail -14
+```
+
+## Output
+
+Verbatim, 25 line(s), exit status 0.
+
+```
+timer cadence (the only exogenous probe source):
+OnBootSec=2min
+OnUnitActiveSec=15min
+
+udev rule — fires the SAME probe on controller failure events:
+SUBSYSTEM=="bluetooth", ACTION=="add", \
+SUBSYSTEM=="bluetooth", ACTION=="remove", \
+SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="13d3", ATTR{idProduct}=="3503", \
+SUBSYSTEM=="usb", ACTION=="remove", ENV{PRODUCT}=="13d3/3503*", \
+
+exogenous-only analysis of a boot that hung:
+  mean phase         0.816   (0.5 expected if independent)
+  within first 10%   0 of 1
+
+  distribution across the gap:
+    0.0-0.2  0
+    0.2-0.4  0
+    0.4-0.6  0
+    0.6-0.8  0
+    0.8-1.0  1
+
+  ⚠ Too few events for this to mean anything. With fewer than
+    roughly eight independent failures, any pattern here is
+    consistent with chance. Recorded so the question can be
+    answered later, not so it can be answered now.
+```
+
+## Provenance
+
+| field | value |
+|---|---|
+| captured | `2026-08-12T19:45:00+02:00` |
+| kernel | `7.0.0-28-generic` |
+| boot id | `d28ebac2` |
+| device | `13d3:3503` QCA9377 (ROME) |
+| exit status | `0` |
+| redacted | `no` |

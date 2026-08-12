@@ -23,8 +23,15 @@ which gives three distinct states rather than the naive two:
 | | Reading |
 |---|---|
 | **both paths saw it** | strongly corroborated |
-| **one path saw it** | the event almost certainly occurred; the discrepancy is an *instrumentation* finding |
+| **one path saw it** | *evidence* the event occurred, and a discrepancy requiring instrumentation accounting — it does **not** by itself say which observer is right |
 | **neither path saw it** | possibly absent — subject to what coverage each path actually had |
+
+The asymmetry is the point: **agreement raises confidence in the event; disagreement tells
+you something about the measurement system, not which observer to believe.** Either path can
+in principle omit, duplicate, misdecode or mis-frame. In the `EX-010`/`EX-011` case btmon was
+identified as the losing observer only because of *additional* structure — a restart in its
+own log, the chronology, an intact second path, and finally a deterministic reproducer — not
+because one path showing an event settles it.
 
 Before redundancy existed, absence in the capture silently became absence in the inferred
 history. `tools/bt-capdiff` exists to make the middle row visible, and on its first run it
