@@ -1156,3 +1156,49 @@ devices that cannot be switched off. A manually opened trial had already missed 
   trials record `survived`, never `ok`, because they say only that the machine did not
   hang — not that any protocol was carried out. The denominator they build is
   observational and is labelled that way in the code, the README and the register.
+
+---
+
+## What actually changed, in method rather than findings
+
+Two shifts did more for this investigation than any single measurement.
+
+### Negative evidence became first-class data
+
+For most of this project, observations that failed to reproduce the bug were treated as
+wasted runs. They are the opposite: they are the only thing that kills a hypothesis.
+
+| Observation | Formerly | Now |
+|---|---|---|
+| 3 synchronous setups survived | an unhelpful session | the control group — proves setup is not sufficient |
+| 8 boots with the desync, no hang | noise | destroys the desync-causes-it hypothesis |
+| 5 IDLE transitions, no SCO | nothing happened | refutes the playback-stop trigger |
+| GNOME Settings active, no SCO | nothing happened | refutes the settings-panel trigger |
+
+Every hypothesis this project has killed died to a *non-event*. The 2×2 in `bt-trial` and
+the cross-tab in `bt-boot-stats` exist because counting non-events had to stop depending on
+anyone remembering to.
+
+### The instrumentation stopped requiring a human
+
+While trials had to be armed by hand, the probability of observing a failure was entangled
+with whether anyone had armed the instrumentation — and rare failures are precisely the ones
+that arrive when nobody is watching. Three hangs occurred with no trial open. That is
+selection bias by construction, not bad luck.
+
+Auto-trials remove the human from the arming path, so ordinary use generates observations.
+
+### And corrections belong in the machinery, not in the notes
+
+The repeated failure of this project was converting temporal adjacency into cause. Writing
+that down as a lesson did not stop it happening a fourth time. What stopped it was building
+the check into the tools: `bt-trial` now asks "was the stimulus applied?" automatically, and
+`bt-sco --window` shows the surrounding path rather than the isolated fields, because
+
+> **Compare paths, not fields.**
+
+With synchronous audio the variables are structurally entangled — mSBC implies eSCO implies
+a packet type implies an alternate setting implies a teardown path — so a five-row dataset
+can manufacture extremely persuasive nonsense from a single field comparison. A note saying
+"be careful" would be forgotten in the excitement of the next failure. A tool that presents
+the path instead of the field changes what is seen in the first place.
