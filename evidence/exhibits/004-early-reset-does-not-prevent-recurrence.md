@@ -1,8 +1,12 @@
-# EX-004 — usb-reset-alone-is-insufficient
+# EX-004 — early-reset-does-not-prevent-recurrence
 
-**Claim.** A USB-level reset applied BEFORE any HCI command timeout does re-enumerate the controller and bring the HCI stack back up, but does not clear the controller's fault: the same desync recurs 107 ms later and the controller hangs completely 132 s afterwards.
+**Claim.** A USB-level reset applied 133 s BEFORE any HCI command timeout successfully re-enumerated the controller and brought the HCI stack back up 315 ms later — and the controller nevertheless went on to hang completely 132 s after that and leave the USB bus.
 
-**Relevance.** This is the first direct measurement of an EARLY reset, previously untested. It matters because btusb_qca_reset() falls back to usb_queue_reset_device() when no bt_en GPIO is present, which is the same class of operation performed here. The measurement therefore indicates that adding a reset callback alone would not have prevented this hang, and isolates the untested remaining variable: re-running btusb_setup_qca() to redownload rampatch and NVM firmware on re-enumeration, which a device outside the quirks table never does.
+**Relevance.** The first direct measurement of an early reset. It establishes that recovering the controller at one moment does not immunise it against failing later: at 00:09:38 it was demonstrably *not* irrecoverably damaged, and by 00:11:50 it had stopped answering. That raises the QCA initialisation and firmware-download hypothesis from a footnote to a strong prevention candidate, because a device outside the quirks table never re-runs `btusb_setup_qca()` on re-enumeration and so comes back with whatever state it had.
+
+**⚠️ What this exhibit does NOT establish.** It does not test the fix. `hdev->reset` is reached from the HCI command-timeout path and fires at **+0 s**, synchronously with the first timeout. This reset landed 133 s earlier, when no timeout had occurred and the callback would not have been invoked at all. A reset at +0 s remains untested, and **Build A of the experimental ladder remains live**. An earlier version of this exhibit claimed that "a reset callback alone would not have prevented this hang"; that claim is withdrawn as an inference from the wrong experiment.
+
+The mechanism proxy is nevertheless sound, and is why this measurement is worth keeping. From v7.0 source: `hci_cmd_timeout()` calls `hdev->reset(hdev)`; for `BTUSB_QCA_ROME` that is `btusb_qca_reset()`, which with no `bt_en` GPIO falls through to `btusb_reset()` → `usb_queue_reset_device(data->intf)`. `btusb_driver` declares no `.pre_reset` or `.post_reset`, so USB core unbinds and rebinds the interface around the reset — matching the observed stack disappearance and re-registration. The watchdog therefore performed the same *kind* of reset the fix would perform, at a different *time*.
 
 ## Extraction method
 

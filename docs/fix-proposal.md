@@ -257,6 +257,27 @@ eleven seconds after the timeout. `hci_cmd_timeout()` calls `hdev->reset()` at t
 of that interval — which is precisely the point no experiment has yet occupied. Build A
 in §5a puts a reset exactly there.
 
+**Update 2026-08-12 — an early reset was finally captured, and it does not change the
+above.** In the incident of that night the watchdog reset the device **133 s before** any
+HCI timeout (`EX-004`). The reset worked: the device re-enumerated and the HCI stack
+re-registered 315 ms later. The controller then hung anyway, 132 s afterwards, and left
+the bus.
+
+This is evidence about *durability of recovery*, not about Build A. `hdev->reset` is
+invoked from the command-timeout path at **+0 s**; at 00:09:37 no timeout had occurred and
+the callback would not have run. The tested point remains unoccupied, so **Build A stays in
+the ladder unchanged**. What the result does do is raise Build B: recovering the controller
+without re-running `btusb_setup_qca()` returned it to service in the state it was already
+in, and it failed again — which is what the firmware-reload hypothesis predicts. Build B is
+now the strongest *prevention* candidate, but "strongest candidate" is not "only remaining
+variable", and A must still be run to know whether the +0 s position alone suffices.
+
+The mechanism proxy holds, verified against v7.0 source: `btusb_qca_reset()` with no
+`bt_en` GPIO falls through to `btusb_reset()` → `usb_queue_reset_device()`, and since
+`btusb_driver` declares no `.pre_reset`/`.post_reset`, USB core unbinds and rebinds the
+interface around it. The watchdog performed the same *kind* of reset the fix performs. Only
+the timing differed — and in this bug, timing has been decisive every time it was measured.
+
 ⚠️ **Small n.** Two failed late resets, one successful early reset, one incident with no
 early signal. Attach all three sessions:
 `evidence/sessions/20260810-072445-first-real-hang/` (late reset failed),

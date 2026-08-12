@@ -868,13 +868,51 @@ narrow sense: the device re-enumerated and the HCI stack re-registered 315 ms la
 the same desync recurred **107 ms after that**, and the controller hung completely 132 s
 later and left the bus.
 
-That is a direct measurement of the thing the fix proposal had assumed but never tested.
-`btusb_qca_reset()` falls back to `usb_queue_reset_device()` when no `bt_en` GPIO exists —
-the same class of operation. So *a reset callback alone would not have prevented this
-hang.* What it does is isolate the one remaining untested variable: re-running
-`btusb_setup_qca()` on re-enumeration to redownload rampatch and NVM firmware, which a
-device outside the quirks table never does. The firmware hypothesis is now the primary
-one, not a footnote.
+**⚠️ This paragraph originally overreached and has been corrected.** What it first said was
+that "a reset callback alone would not have prevented this hang", and that firmware reload
+was therefore "the one remaining untested variable". Both claims are withdrawn. The
+corrected reading follows; the reasoning error is dissected below because it is the third
+instance of one species.
+
+What the early reset licenses, exactly:
+
+> A USB reset at 00:09:37 did not permanently prevent a *different* failure from
+> developing 133 s later.
+
+What it does **not** license:
+
+> A USB reset at 00:11:50 — the first HCI command timeout — would have failed to recover
+> the controller.
+
+Those are different experiments, and Build A is the second one. `hdev->reset` is reached
+from the command-timeout path; it fires at **+0 s**, synchronously with the log line. The
+watchdog's reset landed 133 s *earlier*, at a moment when no timeout had occurred and
+`hdev->reset` would not have been called at all. **Build A remains untested and stays in
+the ladder.**
+
+The mechanism verification does hold, and is worth keeping. Read from v7.0 source:
+`hci_cmd_timeout()` calls `hdev->reset(hdev)`; for a `BTUSB_QCA_ROME` device that is
+`btusb_qca_reset()`, which with no `bt_en` GPIO falls through to `btusb_reset()` and
+`usb_queue_reset_device(data->intf)`. `btusb_driver` defines no `.pre_reset` or
+`.post_reset`, so USB core unbinds and rebinds the interface around the reset — which is
+precisely the stack disappearance and re-registration the log shows. So the watchdog's
+`USBDEVFS_RESET` is a sound proxy for the **kind** of reset Build A requests. It is not a
+proxy for **when** Build A requests it, and this project has already demonstrated that
+timing is decisive: five late resets failed and one early one succeeded.
+
+Corrected conclusion: *the successful early reset shows that a USB reset does not
+permanently eliminate the controller's tendency to fail — after recovering, it entered the
+fatal failure again. That raises the QCA initialisation/firmware hypothesis from a
+footnote to a strong prevention candidate. It does not eliminate first-timeout recovery,
+because that point remains unoccupied by any experiment.*
+
+**How the error was made.** The chain was: reset → desync returns 107 ms later → eventual
+hang → therefore reset-only cannot work. That chain runs entirely through the desync — and
+this same phase had just established, with 8 false positives and 2 false negatives, that
+the desync is neither necessary nor sufficient for the hang. The argument quietly promoted
+the desync back to a causal marker in the paragraph immediately after demoting it. Worse,
+the resulting claim contradicted `docs/fix-proposal.md`, which had it right and was left
+untouched — so the repository asserted both readings at once for one commit.
 
 **Evidence discipline.** At the operator's suggestion, factual material for the bug report
 is now captured as numbered **exhibits** (`evidence/exhibits/`, `tools/bt-exhibit`), each
@@ -894,6 +932,25 @@ shown provably produced the output shown. Hand-pasting the two separately lets t
 - **A deterministic minor bug beats a random major one, for reporting purposes.** A
   maintainer can reproduce the panel-triggered desync in seconds; nobody can reproduce
   "it hangs after several hours".
+- **An intervention at time T tells you nothing about the same intervention at time T+133s
+  — least of all in a bug you have already shown to be timing-sensitive.** The early reset
+  was read as a test of Build A. It is not; Build A fires at the first HCI timeout, which
+  had not happened yet. A proxy for the *kind* of operation is not a proxy for its
+  *position in time*.
+- **A demoted marker cannot be used in the very next argument.** Having proved the desync
+  is neither necessary nor sufficient for the hang, the next paragraph used "the desync
+  came back" as evidence that the hang was inevitable. If a signal is not causal, it
+  cannot carry a causal inference three sentences later.
+- **Check a new conclusion against the documents that already disagree with it.**
+  `docs/fix-proposal.md` stated the correct position throughout and was never consulted
+  while `HISTORY.md` was being written to contradict it. A contradiction inside one
+  repository is cheaper to find than one found by a maintainer.
+- **The interval between a successful recovery and the next failure is the most
+  informative window available, and it has never been instrumented.** 00:09:38 to 00:11:50:
+  the controller was demonstrably *not* poisoned at the start of it and demonstrably dead
+  at the end. With `usbmon`, `bluetoothd -d` and 214 dynamic-debug sites now live, the next
+  reproduction can show what crosses that gap — which is more informative than watching the
+  death again.
 - **Timestamps must carry their date.** Sorting a merged timeline on time-of-day silently
   reordered a session that straddled midnight, hiding the first hour. This is the third
   distinct timestamp bug in the project.

@@ -16,7 +16,16 @@
 #   TIMEOUT  count of "tx timeout" (controller stopped answering)
 #   BUSLOST  count of "USB disconnect" for the controller (stage 2 — cold boot
 #            required)
-#   HUNG     yes if the boot recorded any command timeout
+#   TMO      yes if the boot recorded any command timeout
+#
+# NOTE ON "TMO" vs "hung". This column means "recorded at least one HCI command
+# timeout", which is the ONSET of stage 1. It is not the same as "the controller
+# died and needed a cold boot" — that is the BUSLOST column. Figures quoted
+# elsewhere in this repository as "N of 34 boots hung" come from
+# evidence/baseline/baseline.tsv, a frozen snapshot over a DIFFERENT date range
+# (from 2026-05-31). This tool reports whatever the journal currently retains,
+# which changes as boots age out. The two are not comparable and neither should
+# be used to correct the other.
 #
 # Usage: bt-boot-stats [--tsv]
 
@@ -32,13 +41,13 @@ fi
 [[ -x "$BOOTLIST" ]] || { echo "bt-boot-stats: bt-boot-list not found" >&2; exit 1; }
 
 if (( TSV )); then
-    printf 'boot\tdate\thours\tdesync\ttimeout\tbuslost\thung\n'
+    printf 'boot\tdate\thours\tdesync\ttimeout\tbuslost\ttmo\n'
 else
-    printf '%-5s %-12s %6s %8s %8s %8s %5s\n' BOOT DATE HOURS DESYNC TIMEOUT BUSLOST HUNG
+    printf '%-5s %-12s %6s %8s %8s %8s %5s\n' BOOT DATE HOURS DESYNC TIMEOUT BUSLOST TMO
     printf -- '---------------------------------------------------------------\n'
 fi
 
-tot=0; hung=0; desync_hung=0; desync_ok=0; nodesync_hung=0
+tot=0; hung=0; lost=0; desync_hung=0; desync_ok=0; nodesync_hung=0
 
 for b in $("$BOOTLIST" 2>/dev/null); do
     log=$(journalctl -k -b "$b" --no-pager -o short-iso-precise 2>/dev/null)
@@ -61,6 +70,7 @@ for b in $("$BOOTLIST" 2>/dev/null); do
 
     tot=$((tot + 1))
     (( nt > 0 )) && hung=$((hung + 1))
+    (( nb > 0 )) && lost=$((lost + 1))
     if (( nd > 0 && nt > 0 )); then desync_hung=$((desync_hung + 1)); fi
     if (( nd > 0 && nt == 0 )); then desync_ok=$((desync_ok + 1)); fi
     if (( nd == 0 && nt > 0 )); then nodesync_hung=$((nodesync_hung + 1)); fi
@@ -75,8 +85,13 @@ done
 (( TSV )) && exit 0
 
 echo
-printf 'boots examined            %d\n' "$tot"
-printf 'boots that hung           %d\n' "$hung"
+printf 'boots examined                    %d\n' "$tot"
+printf 'boots with >=1 command timeout    %d\n' "$hung"
+printf 'boots where the device left bus   %d\n' "$lost"
+echo
+echo 'This covers only the boots the journal still retains. It is NOT the'
+echo 'frozen baseline in evidence/baseline/baseline.tsv, which spans a'
+echo 'different date range; do not compare the two totals.'
 echo
 echo 'Is the desync signature a predictor of the hang?'
 printf '  desync present AND hung   %d\n' "$desync_hung"

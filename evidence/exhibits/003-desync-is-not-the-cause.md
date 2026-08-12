@@ -83,6 +83,13 @@ instructions for regenerating it later.
 Nothing in the numbers was edited. The mistake was in the retention change, not
 in this measurement.
 
+**The conclusion replicates on what survived.** Re-running the command against
+the remaining 18 boots gives 12 boots with at least one command timeout, 8 where
+the device left the bus, and — the point at issue — **2 false positives and 2
+false negatives** for the desync signature. Weaker than 8 and 2, but the same
+finding: the signature is neither necessary nor sufficient. The claim does not
+rest solely on data the machine can no longer produce.
+
 ## Provenance
 
 | field | value |
