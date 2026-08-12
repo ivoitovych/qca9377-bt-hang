@@ -229,10 +229,23 @@ hang|ok)
     tmo=$(jk | grep -c "command tx timeout" || true)
     usb_gone=$(jk | grep -c "USB disconnect, device number" || true)
 
-    # Time from the SCO request to the first command timeout. If the command was
-    # answered normally this stays empty, which is itself the interesting case.
-    t_sco=$(jk | grep -m1 "opcode 0x0428" | cut -d' ' -f1)
+    # Pair the RIGHT synchronous setup with the timeout.
+    #
+    # An earlier version took the first 0x0428 of the trial and the first
+    # timeout of the trial and subtracted them. Under protocol v2 there are up
+    # to ten profile switches, so the first setup may have been serviced
+    # perfectly and the seventh been fatal — pairing the first with the first
+    # measures the interval between two unrelated events and reports it as if
+    # it were the failure's timing.
+    #
+    # What is wanted is the setup immediately PRECEDING the first timeout.
     t_tmo=$(jk | grep -m1 "command tx timeout" | cut -d' ' -f1)
+    if [[ -n "$t_tmo" ]]; then
+        t_sco=$(jk | grep "opcode 0x0428" | cut -d' ' -f1 \
+                | awk -v lim="$t_tmo" '$1 < lim' | tail -1)
+    else
+        t_sco=$(jk | grep "opcode 0x0428" | cut -d' ' -f1 | head -1)
+    fi
     sco_to_tmo="?"
     if [[ -n "$t_sco" && -n "$t_tmo" ]]; then
         sco_to_tmo=$(awk -v a="$t_sco" -v b="$t_tmo" '
@@ -247,15 +260,49 @@ hang|ok)
     # depend on a particular parameterisation (voice setting, packet type,
     # retransmission effort) rather than on synchronous setup as such. The
     # kernel log gives only the opcode and length; btmon decodes the payload.
+    # SCO parameters, SCOPED TO THIS TRIAL and drawn from BOTH capture paths.
+    #
+    # Two defects fixed here. The previous version grepped every retained
+    # capture with no time bound, so a file named as this trial's request
+    # parameters could contain requests from other trials and other boots — the
+    # precise confusion that makes a five-row parameter comparison worthless.
+    # And it read only the btmon path, which is the one known to lose events
+    # (BT-4); the decode-free capture exists because that path drops data.
+    #
+    # Records are filtered to the trial window by their own decoded timestamp,
+    # and each source is labelled so a discrepancy between the paths is visible
+    # rather than silently merged.
     : > "$dir/sco-params.txt"
+    t_start=$(date -d "@$start" '+%Y-%m-%d %H:%M:%S')
+    t_end=$(date '+%Y-%m-%d %H:%M:%S')
     if command -v btmon >/dev/null 2>&1 && (( sco_sent > 0 )); then
-        for f in /var/log/bt-health/trace/*.btsnoop; do
-            [[ -e "$f" ]] || continue
-            COLUMNS=200 btmon -T -r "$f" 2>/dev/null \
-                | grep -A 12 "Setup Synchronous Connection" >> "$dir/sco-params.txt" || true
-        done
+        {
+            printf '# trial window: %s .. %s\n' "$t_start" "$t_end"
+            printf '# both capture paths are shown; a request present in only one\n'
+            printf '# is an instrumentation finding, not evidence about the controller.\n\n'
+            for src in "${BT_CAPTURE_DIR:-/var/log/bt-health/capture}" \
+                       "${BT_TRACE_DIR:-/var/log/bt-health/trace}"; do
+                printf '===== source: %s =====\n' "$src"
+                for f in "$src"/*.btsnoop; do
+                    [[ -e "$f" ]] || continue
+                    COLUMNS=200 btmon -T -r "$f" 2>/dev/null
+                done | awk -v lo="$t_start" -v hi="$t_end" '
+                    # Carry the last seen full timestamp forward: indented
+                    # parameter lines have none of their own.
+                    match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}/) {
+                        cur = substr($0, RSTART, 19)
+                    }
+                    /HCI Command: Setup Synchronous Connection/ { keep = (cur >= lo && cur <= hi) }
+                    /HCI Event: Synchronous Connect Complete/   { keep = (cur >= lo && cur <= hi) }
+                    /^[<>@=!]/ && !/Setup Synchronous|Synchronous Connect Complete/ { keep = 0 }
+                    keep { print }'
+                echo
+            done
+        } > "$dir/sco-params.txt"
     fi
-    [[ -s "$dir/sco-params.txt" ]] || echo "(no Setup Synchronous Connection found in retained captures)" > "$dir/sco-params.txt"
+    [[ -s "$dir/sco-params.txt" ]] || \
+        echo "(no Setup Synchronous Connection inside this trial's window in either capture path)" \
+        > "$dir/sco-params.txt"
 
     # --- the observer as an experimental intervention -----------------------
     # The liveness probe is not observationally inert. `hciconfig <dev> name`
@@ -273,20 +320,36 @@ hang|ok)
     # thousands of probes, that is negative evidence against an observer effect,
     # which is worth just as much.
     #
-    # bt-health-snapshot is the systematic, timer-driven probe and is counted
-    # from the journal. btmon aborts are counted as an independent corroborator:
-    # per EX-011 they stand in a 1:1 relation to raw-HCI probes, so a large
-    # divergence between the two columns is itself an instrumentation signal.
-    probes=$(journalctl -u bt-health-snapshot --since "$since" --no-pager -o cat 2>/dev/null \
+    # ⚠ THIS COLUMN IS NOT "ALL LIVENESS INTERVENTIONS". It counts
+    # bt-health-snapshot invocations, which are the systematic, journal-visible
+    # source. Other raw-HCI probes happen and are NOT counted here:
+    #   * bt-trial's own hci_alive(), which runs `hciconfig <hci> name`
+    #   * every bt-state invocation, which does the same
+    # Those are operator- or script-driven and leave no dedicated journal entry,
+    # so the column is a lower bound on the intervention count. Treating it as
+    # the total would understate the exposure it exists to measure.
+    #
+    # btmon aborts are counted alongside as a partial corroborator. EX-011 found
+    # one abort per raw-HCI exchange when probes were spaced far enough apart
+    # for btmon to have finished restarting; unspaced probes produce fewer. So
+    # the relation is "consistent with 1:1 under spaced observation", NOT an
+    # established 1:1, and the abort count is itself a lower bound.
+    probes=$(journalctl -u bt-health-snapshot.service -u bt-health-snapshot-event.service \
+             --since "$since" --no-pager -o cat 2>/dev/null \
              | grep -c "Snapshot Bluetooth health metrics" || true)
     aborts=$(journalctl -u bt-trace --since "$since" --no-pager -o cat 2>/dev/null \
              | grep -c "exited" || true)
 
     # Distance from the last probe preceding the first timeout. Empty when there
     # was no timeout; "?" when a timeout occurred with no probe before it.
+    # Only the TIMER-driven unit is used. The udev-driven one fires on the
+    # controller's own failure events, so measuring a timeout's distance from it
+    # measures outcome-dependent sampling — see EX-012. This raw interval is
+    # still not interpretable alone; `bt-phase` normalises it against the
+    # exposure distribution, and that is where any conclusion belongs.
     probe_to_tmo="?"
     if [[ -n "$t_tmo" ]]; then
-        t_probe=$(journalctl -u bt-health-snapshot --since "$since" --until "$t_tmo" \
+        t_probe=$(journalctl -u bt-health-snapshot.service --since "$since" --until "$t_tmo" \
                   --no-pager -o short-iso-precise 2>/dev/null \
                   | grep "Snapshot Bluetooth health" | tail -1 | cut -d' ' -f1)
         if [[ -n "$t_probe" ]]; then
@@ -309,9 +372,24 @@ hang|ok)
         fi
     done
 
-    [[ -s "$RESULTS" ]] || printf 'timestamp\tbuild\ttrial\tprotocol\toutcome\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\n' > "$RESULTS"
-    printf '%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-        "$(date -Iseconds)" "$build" "$n" "$PROTOCOL_VERSION" "$outcome" "$dur" \
+    # TRIAL TYPE IS FIRST-CLASS DATA, not implied by the outcome string.
+    #
+    # An observational boot and a controlled protocol run produce different
+    # kinds of evidence and must never share a denominator. Previously the
+    # distinction lived only in the outcome ("survived" vs "ok"), so a hang was
+    # indistinguishable between the two — and a hang is exactly the row that
+    # drives the failure rate the A/B/C/D gate depends on. A stock hang during
+    # ordinary use would have been pooled with a stock hang under protocol v2.
+    #
+    # Recording the type explicitly means the two can be separated whatever the
+    # outcome, and cannot be silently merged by a later reporting change.
+    if (( auto )); then trial_type=observational_boot
+    else                trial_type="controlled_v$PROTOCOL_VERSION"
+    fi
+
+    [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\ttrial\tprotocol\toutcome\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\n' > "$RESULTS"
+    printf '%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$(date -Iseconds)" "$trial_type" "$build" "$n" "$PROTOCOL_VERSION" "$outcome" "$dur" \
         "${sco_sent:-?}" "$sco_to_tmo" "${tmo:-?}" "$resp_after" "$usb_present" \
         "${usb_gone:-?}" "${probes:-?}" "$probe_to_tmo" "${aborts:-?}" \
         "$(uname -r)" >> "$RESULTS"
@@ -354,14 +432,32 @@ report)
     if [[ ! -s "$RESULTS" ]]; then echo "no trials recorded yet"; exit 0; fi
     echo "${B}Trial results${O}  ($RESULTS)"
     echo "─────────────────────────────────────────────────────────────"
-    awk -F'\t' 'NR>1 {
-        tot[$2]++; if ($5=="hang") h[$2]++; sum[$2]+=$6
-    } END {
-        printf "  %-8s %-10s %-10s %s\n", "BUILD", "HANGS", "RATE", "mean duration"
-        for (b in tot) {
-            rate = (tot[b] ? 100*h[b]/tot[b] : 0)
-            printf "  %-8s %-10s %-10s %.0fs\n", b, (h[b]+0)"/"tot[b], sprintf("%.0f%%", rate), sum[b]/tot[b]
+    # Keyed on (trial_type, build), never on build alone. Column positions are
+    # resolved from the header rather than hardcoded, so adding a field cannot
+    # silently shift what is being counted — which is how a denominator gets
+    # corrupted without anyone editing the arithmetic.
+    awk -F'\t' '
+    NR == 1 { for (i = 1; i <= NF; i++) c[$i] = i; next }
+    {
+        ty = (c["trial_type"] ? $c["trial_type"] : "unknown_pre_schema")
+        b  = $c["build"]; k = ty "|" b
+        tot[k]++; if ($c["outcome"] == "hang") h[k]++; sum[k] += $c["duration_s"]
+    }
+    END {
+        printf "  %-20s %-8s %-10s %-8s %s\n", "TRIAL TYPE", "BUILD", "HANGS", "RATE", "mean duration"
+        for (k in tot) {
+            split(k, p, "|")
+            rate = 100 * (h[k] + 0) / tot[k]
+            printf "  %-20s %-8s %-10s %-8s %.0fs\n", p[1], p[2],
+                   (h[k] + 0) "/" tot[k], sprintf("%.0f%%", rate), sum[k] / tot[k]
         }
+        print ""
+        print "  These rows must never be added together. An observational boot"
+        print "  and a controlled protocol run are different evidence: the first"
+        print "  says the machine did or did not hang during ordinary use, the"
+        print "  second says the reproduction protocol was applied and the"
+        print "  controller withstood it or did not. Only controlled_* rows can"
+        print "  satisfy the A/B/C/D gate."
     }' "$RESULTS"
     echo
     echo "${B}Was the SCO stimulus actually applied, and did it matter?${O}"

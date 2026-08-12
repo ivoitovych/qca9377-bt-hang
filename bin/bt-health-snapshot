@@ -62,7 +62,12 @@ unexpected=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -c "unexpected eve
 
 # --- watchdog activity, this boot ------------------------------------------
 wd_log=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)
-wd_int=$(grep -c "intervening" <<<"$wd_log")
+# Both intervention forms. The watchdog logs a threshold intervention as
+# "... — intervening." and an early one as "EARLY intervention: ...". Matching
+# only "intervening" silently missed every EARLY intervention — the column has
+# been undercounting since BT_EARLY was added, in a metric whose whole purpose
+# is to say how often the watchdog acted.
+wd_int=$(grep -cE "intervening|EARLY intervention" <<<"$wd_log")
 wd_rec=$(grep -c "RECOVERED" <<<"$wd_log")
 wd_fail=$(grep -c "RECOVERY FAILED\|FATAL:" <<<"$wd_log")
 

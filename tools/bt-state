@@ -38,7 +38,7 @@ if [[ "$hci" != "-" ]]; then
 fi
 autosusp=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo "-")
 tx=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -c "tx timeout" || true)
-wd=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -c "intervening" || true)
+wd=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention" || true)
 conn=$(timeout 8 bluetoothctl devices Connected 2>/dev/null | grep -c '^Device' || true)
 
 if (( TSV )); then

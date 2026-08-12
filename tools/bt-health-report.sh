@@ -93,7 +93,7 @@ for b in $(boot_indices); do
     [[ -z "${k:-}" ]] && continue
     t=$(journalctl -k -b "$b" 2>/dev/null | grep -c "tx timeout")
     u=$(journalctl -k -b "$b" 2>/dev/null | grep -c "unexpected event for opcode")
-    w=$(journalctl -u bt-hang-watchdog -b "$b" 2>/dev/null | grep -c "intervening")
+    w=$(journalctl -u bt-hang-watchdog -b "$b" 2>/dev/null | grep -cE "intervening|EARLY intervention")
     # FIRST entry of the boot, not -n1 (which returns the LAST). Using the
     # last entry tags the install boot as AFTER and drags its pre-install
     # timeout counts into the after column, contaminating the comparison.
@@ -112,7 +112,7 @@ hr
 echo "3. WATCHDOG EFFECTIVENESS (the number that matters)"
 echo
 wd=$(journalctl -u bt-hang-watchdog --no-pager 2>/dev/null)
-acts=$(grep -c "intervening"      <<<"$wd")
+acts=$(grep -cE "intervening|EARLY intervention"      <<<"$wd")
 recs=$(grep -c "RECOVERED"        <<<"$wd")
 fails=$(grep -c "RECOVERY FAILED" <<<"$wd")
 hard=$(grep -c "FATAL:"           <<<"$wd")
@@ -121,7 +121,7 @@ printf '   %-38s %s\n' "  -> recovered without reboot:" "$recs"
 printf '   %-38s %s\n' "  -> failed (soft hang, reset ineffective):" "$fails"
 printf '   %-38s %s\n' "  -> hard hang (chip off bus, cold boot):" "$hard"
 wd_now=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)
-acts_now=$(grep -c "intervening" <<<"$wd_now")
+acts_now=$(grep -cE "intervening|EARLY intervention" <<<"$wd_now")
 printf '   %-38s %s\n' "this boot only:" "$acts_now intervention(s)"
 echo
 if (( acts == 0 )); then

@@ -1,7 +1,7 @@
 # Issue register
 
 This investigation began as "the Bluetooth controller hangs". It is now clear that is not
-one defect. At least five distinct problems have been observed on this machine, and
+one defect. At least six distinct problems have been observed on this machine, and
 filing them under a single heading has actively slowed the work: evidence for one kept
 being read as evidence for another, and three hypotheses were killed only after being
 mistaken for the main bug.
@@ -242,7 +242,8 @@ it degrades the evidence available for every other Bluetooth bug. It also caused
 loss here — the aggressive rotation pruned away the pairing sequence of a session under
 active investigation before retention was raised.
 
-Not yet reported. Needs a minimal reproducer and a backtrace before it is worth filing.
+Not yet reported. The minimal reproducer now exists (below); a backtrace from the
+aborting process and a check against current BlueZ are still outstanding.
 
 ---
 

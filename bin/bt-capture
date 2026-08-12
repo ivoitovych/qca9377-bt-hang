@@ -167,6 +167,18 @@ def main():
         opcode, index, _plen = struct.unpack_from("<HHH", data, 0)
         payload = data[6:]
 
+        # ⚠ CLOCK SEMANTICS. This is USERSPACE RECEIVE TIME — the moment this
+        # process was scheduled and returned from recv() — not the kernel
+        # timestamp of the original HCI event. The kernel monitor header
+        # (hci_mon_hdr) carries no timestamp field, so the event time is not
+        # available here without a different interface.
+        #
+        # Harmless for statements at the scale this investigation currently
+        # makes ("USB failed 31 s later"). NOT harmless if analysis ever starts
+        # distinguishing 2 ms from 20 ms ordering between capture paths: against
+        # btmon's kernel-derived timestamps these will differ by a variable
+        # scheduling delay. bt-capdiff therefore matches with a tolerance rather
+        # than on equality. Do not treat these as kernel ground truth.
         us = int((time.time() - UNIX_2000) * 1_000_000) + BTSNOOP_TS_OFFSET
         # In monitor format the btsnoop "flags" field carries index and opcode.
         flags = (index << 16) | opcode

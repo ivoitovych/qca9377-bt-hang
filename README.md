@@ -1,10 +1,27 @@
 # qca9377-bt-hang
 
 **Your Bluetooth dies after a while and only a full power-off brings it back.**
-This repo explains exactly why, and ships a workaround that fixes it without a
-kernel patch.
 
 Affects Qualcomm Atheros **QCA9377** (ROME) Bluetooth, USB ID `13d3:3503`, on Linux.
+
+This repository is an **open investigation**, not an explanation. It ships
+diagnostics and a userspace watchdog that mitigates the failure; it does not yet
+know why the failure happens. What is currently established:
+
+> The controller sometimes enters a non-responsive HCI state during
+> synchronous-audio (SCO/eSCO) link transitions. Generic USB transport failure
+> follows about 31 seconds later rather than initiating the event.
+
+That is a statement about **when and where**, not **why**. The mechanism is not
+established, and several confident-sounding explanations in this repository's
+history have already been refuted — by this repository. See
+[`docs/issues.md`](docs/issues.md) for what is currently believed and what has
+been killed, and [`HISTORY.md`](HISTORY.md) for how each wrong turn was found.
+
+⚠️ **Sections below this point were written earlier and are being rewritten.**
+Where a section states a cause ("the trigger", "the real fix", "this is the
+bug"), treat `docs/issues.md` as authoritative — it is kept current and this
+front page is not yet.
 
 ---
 
@@ -26,7 +43,7 @@ Exit 0 = not affected, 1 = signature present, 2 = cannot determine.
 Log evidence
   boots examined            : 34
   HCI command timeouts      : 287
-  automatic reset attempts  : 0        <-- this is the bug
+  automatic reset attempts  : 0        <-- a real gap; not established as the cause
 ```
 
 Timeouts with **zero** resets means the kernel logged the failures and did nothing.
@@ -56,7 +73,7 @@ $ dmesg | grep -i "Resetting usb device"
 <nothing>
 ```
 
-Point 4 is the bug. Point 2's `errors:0` means **no errors are reflected in those HCI
+Point 4 is a real gap in the driver (`BT-3`), but has NOT been shown to cause the hang. Point 2's `errors:0` means **no errors are reflected in those HCI
 counters** — the chip is accepting bytes and simply not answering. (USB health at this
 stage is established separately, from USB-level evidence: descriptor reads still succeed
 until stage 2.)
@@ -119,9 +136,11 @@ The controller fails in two stages:
 | 1 — soft | HCI unresponsive, USB fine | **yes** — a USB reset clears it |
 | 2 — hard | USB core unresponsive, device drops off the bus | **no** — cold power-off only |
 
-With the quirk, a reset fires within seconds of stage 1 and you notice nothing but an
-audio dropout. Without it, the host hammers a stalled controller for hours until it
-decays into stage 2.
+⚠️ It is tempting to write "with the quirk, a reset fires within seconds and you notice
+nothing but an audio dropout" — an earlier version of this file did. That is **not
+established**. The one early reset ever measured did recover the controller, and it failed
+again 132 seconds later (`EX-004`). A reset at the exact moment `hdev->reset` would fire —
+the first HCI timeout — has still never been tested. See `docs/fix-proposal.md` §5a.
 
 On the logged instance, **stage 1 lasted ~6 hours** before decaying. That entire window
 was a free recovery nobody took.
@@ -138,7 +157,11 @@ usb usb3-port3: unable to enumerate USB device
 **A warm reboot is often not enough** — it doesn't drop the M.2 power rail. That is why
 you sometimes need a full shutdown.
 
-### The trigger
+### An earlier hypothesis about the trigger — SINCE REFUTED
+
+> ⚠️ Kept for the record. The A2DP-teardown trigger described below does not
+> hold: the transport reached IDLE five times in one boot with no SCO setup and
+> no failure. See `docs/issues.md` BT-1 and `EX-007`.
 
 Tearing down an **A2DP stream mid-playback** — powering headphones off or walking out of
 range while music is playing.
@@ -301,7 +324,7 @@ the timeouts; expect nothing from it otherwise.
 
 ---
 
-## The real fix
+## A candidate fix — NOT established as the fix
 
 A one-line kernel patch — add the device to btusb's QCA ROME quirks:
 
@@ -438,13 +461,13 @@ renamed only after verification passes. The logs in `evidence/baseline/` were pr
 > gates, content that must be excluded, and a deferred purge of Bluetooth addresses from
 > git history.
 
-**This is not one bug.** [`docs/issues.md`](docs/issues.md) tracks five distinct defects
+**This is not one bug.** [`docs/issues.md`](docs/issues.md) tracks six distinct defects
 observed on this machine, separately, because filing them under one heading actively
 slowed the work — evidence for one kept being read as evidence for another. Two of them
 (`BT-2`, the panel-triggered 16 s command desync, and `BT-4`, `btmon` aborting mid-capture)
 are reportable **now**, independently of the hang.
 
-The strongest current lead is that the hang is triggered by audio **stopping** — when the
+~~The strongest current lead is that the hang is triggered by audio stopping — when the~~
 A2DP stream goes idle, PipeWire switches the device to the HFP profile and the SCO setup
 command that follows is never answered. That requires no user action, which is why the
 failure looked random for months. It rests on a single observation and needs replication

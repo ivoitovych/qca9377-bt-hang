@@ -1283,3 +1283,44 @@ invalid.**
 - **Disagreement between observers is a fact about the instruments, not a verdict on which
   is right.** btmon was convicted only through additional structure: a restart in its own
   log, the chronology, an intact second path, and finally a deterministic reproducer.
+
+---
+
+## Phase 22 — a repository review finds the prose ahead of the machinery
+
+An external review read the repository at `fd24995` rather than the reports about it, and
+found that **the documented discipline was not enforced by the code**. The prose said the
+phase analysis was "restricted to exogenous timer-driven probes"; the implementation kept
+probes 600 seconds apart and called that exogeneity. Spacing is not provenance. That is the
+lesson of `EX-012` failing to be implemented inside the tool written to teach it.
+
+Nine further defects followed from reading the code rather than the summaries:
+
+| | Defect | Consequence |
+|---|---|---|
+| `bt-phase` | counted timeout **lines**, not incidents | one hang emits a burst; n was inflated and the events were not independent. Validated: **8 lines were 7 incidents** |
+| `bt-phase` | timestamps ignored year and month; boots concatenated | a "probe gap" could span a reboot |
+| `bt-trial` | no `trial_type` column | an observational hang and a controlled hang pooled into one failure rate — corrupting the exact gate A/B/C/D depends on |
+| `bt-trial` | paired the *first* SCO setup with the *first* timeout | with ten profile switches those can be unrelated events |
+| `bt-trial` | `sco-params.txt` unscoped and single-path | a trial's "parameters" could contain other boots' requests, read only from the capture path known to lose them |
+| `bt-trial` | probe count presented as all interventions | its own `hci_alive()` and every `bt-state` call are uncounted; it is a lower bound |
+| `bt-sco` | `--window` discarded the date | a window near midnight splices unrelated days — in the tool built to compare *paths* |
+| `bt-capdiff` | claimed "independent" captures | they share the kernel monitor socket and the offline decoder |
+| all metrics | `grep -c "intervening"` | misses `EARLY intervention:` entirely — every early intervention has been absent from the metrics since `BT_EARLY` existed. Six call sites |
+
+### Lessons added
+
+- **Review the artefact, not the account of it.** Every one of these was invisible in the
+  commit messages, which described the intended behaviour accurately. The gap was between
+  intent and implementation, and only reading the implementation could find it.
+- **A tool that teaches a lesson must obey it.** `bt-phase` existed to prevent an
+  invalid denominator and built one.
+- **When a comparison will not come clean, stop tuning it.** `bt-capdiff` still reports
+  ~1400 unmatched records after excluding per-attach bookkeeping. The temptation is to keep
+  excluding categories until the number looks right; that is fitting the instrument to the
+  desired answer. It now refuses to give a verdict and states the three known reasons two
+  recordings of one stream legitimately differ.
+- **Raising precision can expose a defect that coarseness was hiding.** Comparing capture
+  paths on `HH:MM:SS` looked plausible. Comparing on full timestamps revealed the two paths
+  do not share a clock at all — `bt-capture` stamps at userspace receive time, btmon at
+  kernel time. That is now documented at the point the timestamp is written.
