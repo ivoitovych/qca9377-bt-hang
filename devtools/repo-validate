@@ -114,19 +114,41 @@ fi
 # machinery, not the notes. This is a warning rather than a failure — some
 # commits genuinely need no narrative — but it makes the drift visible at the
 # moment of committing instead of at the moment of being asked.
+#
+# ⚠ THIS IS AN ALARM, NOT A PROOF OF SYNCHRONISATION. Two limits are inherent:
+#
+#   * It compares timestamps, so it can establish "code changed after docs" but
+#     never the converse. An unrelated documentation edit made after a
+#     significant code change clears the condition without documenting anything.
+#   * Documentation can be updated and still contain a stale claim elsewhere.
+#     At 1990a45 the README opened with the correct, cautious framing and its
+#     Status table still named a triggering command that had already been
+#     refuted. This check would have said nothing.
+#
+# One path set, used for BOTH the count and the timestamp. An earlier version
+# counted install.sh and uninstall.sh as code but excluded them from the
+# timestamp, so a change to either was described as code in the message while
+# being unable to raise the alarm. etc/, tests/ and devtools/ were watched by
+# neither, though a udev rule under etc/ can change measurement provenance —
+# which is what EX-012 turned on — and tests/ and devtools/ change what the
+# repository claims to validate.
+KNOWLEDGE_PATHS=(tools bin systemd etc tests devtools install.sh uninstall.sh)
+DOC_PATHS=(HISTORY.md docs README.md)
+
 if git -C "$ROOT" rev-parse HEAD >/dev/null 2>&1; then
-    code_commits=$(git -C "$ROOT" log --oneline -20 --pretty=%H -- \
-                   tools bin systemd install.sh uninstall.sh 2>/dev/null | head -20 | wc -l)
-    doc_commits=$(git -C "$ROOT" log --oneline -20 --pretty=%H -- \
-                  HISTORY.md docs 2>/dev/null | head -20 | wc -l)
-    last_code=$(git -C "$ROOT" log -1 --pretty=%ct -- tools bin systemd 2>/dev/null)
-    last_doc=$(git -C "$ROOT" log -1 --pretty=%ct -- HISTORY.md docs 2>/dev/null)
+    code_commits=$(git -C "$ROOT" log -20 --pretty=%H -- "${KNOWLEDGE_PATHS[@]}" 2>/dev/null | wc -l)
+    doc_commits=$(git -C "$ROOT" log -20 --pretty=%H -- "${DOC_PATHS[@]}" 2>/dev/null | wc -l)
+    last_code=$(git -C "$ROOT" log -1 --pretty=%ct -- "${KNOWLEDGE_PATHS[@]}" 2>/dev/null)
+    last_doc=$(git -C "$ROOT" log -1 --pretty=%ct -- "${DOC_PATHS[@]}" 2>/dev/null)
     if [[ -n "${last_code:-}" && -n "${last_doc:-}" ]] && (( last_code > last_doc )); then
         gap=$(( (last_code - last_doc) / 3600 ))
-        echo "  ! documentation drift: tools/bin/systemd changed more recently than"
-        echo "    HISTORY.md or docs/ (by ${gap}h). If this batch of work changed what"
-        echo "    the project knows or how it measures, HISTORY.md is behind."
-        echo "    (${code_commits} of the last 20 commits touched code, ${doc_commits} touched docs)"
+        echo "  ! documentation drift: an implementation path changed more recently"
+        echo "    than HISTORY.md, docs/ or README.md (by ${gap}h). If this batch of"
+        echo "    work changed what the project knows or how it measures, the"
+        echo "    epistemic record is behind."
+        echo "    watched: ${KNOWLEDGE_PATHS[*]}"
+        echo "    (${code_commits} of the last 20 commits touched those, ${doc_commits} touched docs)"
+        echo "    This is an alarm, not proof of synchronisation — see the source."
         echo
     fi
 fi

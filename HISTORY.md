@@ -1378,4 +1378,49 @@ loaded at all; only the 2-against-1 case had the power to fail.
 - **A schema change breaks positional access somewhere you did not look.** Adding
   `trial_type` shifted `build` from field 2 to field 3. The report was guarded by
   header-name lookup; `next_trial_no` was not, and would have restarted trial numbering at
-  1 and overwritten an existing trial directory.
+  1 and overwritten an existing trial directory. A later review found a *third* consumer
+  still reading `$5` for outcome — and that block additionally contained an awk syntax
+  error, so it had never executed at all. The rule is now enforced by permuting the header
+  in a fixture and requiring the report to be byte-identical.
+
+### The drift detector is an alarm, not a proof
+
+Reviewed and found half-wired: it counted `install.sh` and `uninstall.sh` as code but
+excluded them from the timestamp comparison, so a change to either was *described* as a
+code change in the warning while being unable to raise it. `etc/`, `tests/` and `devtools/`
+were watched by neither — though a udev rule under `etc/` can change measurement
+provenance, which is exactly what `EX-012` turned on.
+
+One path list now serves both, and the test suite asserts there is only one. But two limits
+are inherent and are now stated in the source:
+
+- it compares timestamps, so it can establish *"code changed after docs"* and never the
+  converse — an unrelated documentation edit clears the condition without documenting
+  anything;
+- documentation can be current in one place and stale in another. At `1990a45` the README
+  opened with the correct cautious framing while its Status table still named a triggering
+  command that had already been refuted. The detector said nothing, correctly.
+
+### No single mechanism makes a repository trustworthy
+
+The sequence of this project's own quality work reads:
+
+> understand what the code should do → write comments saying so → write tests proving
+> specific invariants → make validation run them → warn when implementation and record
+> move apart
+
+And after all of it, a separate report block still violated a schema rule implemented
+correctly thirty lines above. That is not a failure of the approach; it is the shape of the
+answer. Trust comes from **overlapping checks that fail differently**:
+
+| Check | Catches |
+|---|---|
+| exhibits carrying their own extraction command | reasoning that outran the evidence |
+| a second capture path | acquisition loss |
+| `tests/run-tests` | algorithms that compute the wrong thing |
+| adversarial fixtures (2-vs-1, tolerance zero) | tests that cannot fail |
+| external repository review | integration — code that never runs, prose ahead of machinery |
+| documentation-drift warning | the written record falling behind |
+
+Each is weak alone. Every serious defect in this project was caught by exactly one of them,
+and never the one that was supposed to.

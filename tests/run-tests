@@ -233,6 +233,46 @@ iv2=$(awk -f tools/lib/timestamp.awk -f tools/lib/interval.awk \
     || bad "expected empty output on bad input, got '$iv2'"
 
 echo
+echo "documentation-drift detector"
+echo "──────────────────────────────────────────────────────────────"
+
+# The detector previously counted install.sh and uninstall.sh as code but
+# excluded them from the timestamp comparison, so a change to either was
+# described as a code change in the warning text while being unable to raise
+# it. Two path lists that must agree, maintained separately, is the same
+# species of defect as two timestamp parsers that must agree.
+#
+# Assert there is ONE list, used for both. Testing the git-history behaviour
+# directly would depend on this repository's own commit times, which change
+# every commit.
+V=devtools/repo-validate
+uses=$(grep -c 'KNOWLEDGE_PATHS\[@\]' "$V" || true)
+if [[ "$uses" == "2" ]]; then
+    ok "one path set used for both the count and the timestamp"
+else
+    bad "expected KNOWLEDGE_PATHS used exactly twice, found $uses"
+fi
+
+if grep -qE 'log (-1 |-20 )?--pretty=%ct -- (tools|bin|systemd)( |$)' "$V"; then
+    bad "a git path list is still spelled inline instead of using the array"
+else
+    ok "no inline path list bypasses the shared array"
+fi
+
+# The paths that can change what the project knows must all be watched. etc/
+# carries the udev rules whose provenance EX-012 turned on; tests/ and devtools/
+# change what the repository claims to validate.
+missing=""
+for pth in tools bin systemd etc tests devtools install.sh uninstall.sh; do
+    grep -q "KNOWLEDGE_PATHS=(.*\b${pth}\b" "$V" || missing="$missing $pth"
+done
+if [[ -z "$missing" ]]; then
+    ok "every knowledge-changing path is watched"
+else
+    bad "unwatched implementation paths:$missing"
+fi
+
+echo
 if (( fail )); then
     echo "FAILED: $fail of $((pass + fail)) invariants"
     exit 1
