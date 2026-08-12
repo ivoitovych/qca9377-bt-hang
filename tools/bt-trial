@@ -147,9 +147,27 @@ env_fingerprint() {
         wd="off"
     fi
     probes=$(systemctl is-active bt-health-snapshot.timer 2>/dev/null || echo inactive)
-    commit=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo '?')
-    printf 'autosusp=%s,power=%s,wd=%s,probes=%s,instr=%s' \
-        "${autosusp:-?}" "$power" "$wd" "$probes" "$commit"
+    printf 'autosusp=%s,power=%s,wd=%s,probes=%s' \
+        "${autosusp:-?}" "$power" "$wd" "$probes"
+}
+
+# MEASUREMENT PROVENANCE IS NOT TREATMENT.
+#
+# The instrumentation revision belongs in the record but must NOT key the
+# denominator. Every tooling fix would otherwise open a new experimental cell —
+# a report-formatting change would split trials that are the same experiment,
+# and a five-trial series would fragment into five singletons.
+#
+# The distinction is what a change can affect:
+#   treatment   can alter how the CONTROLLER behaves — autosuspend, power
+#               policy, watchdog mode and thresholds, active health probes.
+#               Mixing these in one rate is a category error.
+#   measurement can alter what we SEE — parser versions, capture code, report
+#               layout. Recorded so a discrepancy can be traced, and pooled
+#               across unless a specific change altered event detection, which
+#               is a judgement to make explicitly rather than automatically.
+measurement_revision() {
+    git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo '?'
 }
 
 next_trial_no() {
@@ -283,9 +301,39 @@ hang|ok)
     # These are now separate questions:
     #   incidence of BT-1                  (hang + recovered)
     #   BT-1 reaching unrecovered failure  (hang)
+    # Note the condition: a timeout must have been OBSERVED. "recovered" means
+    # confirmed BT-1 that was then rescued, not "the watchdog did something".
     if [[ "$outcome" == survived || "$outcome" == ok ]] \
        && [[ "${tmo:-0}" =~ ^[0-9]+$ ]] && (( tmo > 0 )); then
         outcome=recovered
+    fi
+
+    # CENSORED: early intervention BEFORE any timeout. The counterfactual is
+    # destroyed, so this belongs in neither column.
+    #
+    # BT_EARLY exists to reset the controller on audio-teardown heuristics
+    # BEFORE an HCI timeout. When it fires and no timeout is ever observed, the
+    # honest reading is not "BT-1 happened and was recovered" — no defining
+    # failure was seen — and not "the boot was fine" either, because the natural
+    # trajectory was interrupted. The controller might have wedged; it might
+    # have been perfectly healthy. The intervention removed the evidence.
+    #
+    # This project already established that its supposed early precursors are
+    # NOT reliable causal markers: the audio-teardown signature, the 16 s
+    # desync and the A2DP-idle trigger were each refuted. So an early
+    # intervention cannot be taken as proof that BT-1 was imminent.
+    #
+    # Counting these as occurrences would let the mitigation manufacture the
+    # very statistic it exists to measure: fire early 20 times, call all 20
+    # "rescued BT-1", and the incidence rate is whatever the heuristic's
+    # trigger rate happens to be. Counting them as survivals is the mirror
+    # error. They are censored observations and are excluded from rates.
+    early_int=$(journalctl -u bt-hang-watchdog --since "$since" --no-pager -o cat 2>/dev/null \
+                | grep -c "EARLY intervention" || true)
+    if [[ "$outcome" == survived || "$outcome" == ok ]] \
+       && [[ "${early_int:-0}" =~ ^[0-9]+$ ]] && (( early_int > 0 )) \
+       && [[ "${tmo:-0}" == 0 ]]; then
+        outcome=censored
     fi
 
     if [[ "$outcome" == ok || "$outcome" == survived ]]; then
@@ -472,9 +520,9 @@ hang|ok)
     else                trial_type="controlled_v$PROTOCOL_VERSION"
     fi
 
-    [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\tenvironment\ttrial\tprotocol\toutcome\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\n' > "$RESULTS"
-    printf '%s\t%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-        "$(date -Iseconds)" "$trial_type" "$build" "$(env_fingerprint)" "$n" "$PROTOCOL_VERSION" "$outcome" "$dur" \
+    [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\ttreatment\tmeasurement_rev\ttrial\tprotocol\toutcome\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\n' > "$RESULTS"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$(date -Iseconds)" "$trial_type" "$build" "$(env_fingerprint)" "$(measurement_revision)" "$n" "$PROTOCOL_VERSION" "$outcome" "$dur" \
         "${sco_sent:-?}" "$sco_to_tmo" "${tmo:-?}" "$resp_after" "$usb_present" \
         "${usb_gone:-?}" "${probes:-?}" "$probe_to_tmo" "${aborts:-?}" \
         "$(uname -r)" >> "$RESULTS"

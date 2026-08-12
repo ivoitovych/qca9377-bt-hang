@@ -170,9 +170,13 @@ R1=$(BT_REPO="$RD" tools/bt-trial report 2>&1)
 # by exactly the watchdog success rate, which is the quantity the mitigation
 # exists to maximise. Reading outcome positionally puts every row in the
 # survived column; a crashed cross-tab prints nothing at all.
+# T1 hang, T4 hang, T6 recovered -> 3 hung with SCO. T5 ok -> 1 survived with
+# SCO. T2 survived without SCO. T3 censored is EXCLUDED entirely; were it
+# counted it would appear in one of these cells and change a number.
 if grep -qE 'SCO setup requested +3 +1' <<<"$R1" \
-   && grep -qE 'no SCO setup +0 +1' <<<"$R1"; then
-    ok "SCO 2x2 counts recovered as a BT-1 occurrence (3/1 with SCO, 0/1 without)"
+   && grep -qE 'no SCO setup +0 +1' <<<"$R1" \
+   && grep -q 'censored by early watchdog intervention' <<<"$R1"; then
+    ok "SCO 2x2 counts recovered as BT-1 and excludes censored (3/1, 0/1)"
 else
     bad "SCO 2x2 wrong or missing — outcome read by position, recovered miscounted, or awk failed:"
     grep -A4 'hung' <<<"$R1" | head -6
@@ -191,6 +195,29 @@ if grep -q 'BT-1 INC' <<<"$R1"; then
     ok "report separates BT-1 incidence from unrecovered failure"
 else
     bad "report shows only unrecovered failures — incidence is hidden"
+fi
+
+# CENSORED observations must be visible AND excluded from the rate. An early
+# watchdog intervention before any observed timeout destroys the counterfactual:
+# counting it as an occurrence lets the mitigation manufacture the incidence it
+# is measuring; counting it as a survival is the mirror error.
+if grep -qE 'observational_boot +stock +1/2 +1/2 .*1/3' <<<"$R1"; then
+    ok "censored row is shown but excluded from the denominator (1/2 of 3 seen)"
+else
+    bad "censored handling wrong — expected rate over 2 with 1/3 censored:"
+    grep -E 'observational_boot' <<<"$R1" | head -2
+fi
+grep -q 'CENSORED trial(s), excluded from every rate' <<<"$R1" \
+    && ok "report explains why censored trials are excluded" \
+    || bad "censored trials excluded silently"
+
+# Measurement revision must NOT split the denominator. T1 and T2 share a
+# treatment but differ in measurement_rev; a tooling fix must not fragment a
+# series into singletons.
+if grep -qE 'observational_boot +stock +1/2' <<<"$R1"; then
+    ok "differing measurement revisions pool into one denominator"
+else
+    bad "measurement revision fragmented the denominator"
 fi
 
 grep -q 'observational_boot' <<<"$R1" && grep -q 'controlled_v2' <<<"$R1" \

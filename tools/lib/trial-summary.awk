@@ -31,7 +31,7 @@ BEGIN { FS = "\t" }
 # existed are still legitimate data and are labelled unknown_pre_schema.
 NR == 1 {
     for (i = 1; i <= NF; i++) c[$i] = i
-    split("build outcome duration_s environment", need, " ")
+    split("build outcome duration_s treatment", need, " ")
     for (k in need)
         if (!(need[k] in c)) missing = missing " " need[k]
     if (missing != "") {
@@ -44,25 +44,34 @@ NR == 1 {
 {
     ty = (c["trial_type"] ? $c["trial_type"] : "unknown_pre_schema")
     b  = $c["build"]
-    # THE ENVIRONMENT IS PART OF THE TREATMENT, so it is part of the key.
+    # THE TREATMENT IS PART OF THE KEY; the measurement revision is NOT.
     # `build=stock` names the kernel only. Trials taken with autosuspend
     # disabled, or with a recovery watchdog able to rescue the controller, are
     # not the same experiment as trials taken without — pooling them under one
     # build name produces a denominator that mixes treatments silently.
-    e  = $c["environment"]
+    e  = $c["treatment"]
     k  = ty "|" b "|" e
     envs[e] = 1
+    if (c["measurement_rev"]) mrevs[$c["measurement_rev"]] = 1
     # DOMAIN CHECK. An unrecognised outcome must not be silently folded into
     # "not hung". Miscounting a failure as a survival moves the denominator in
     # the direction that makes any build look better, which is the one
     # direction an error here must never take.
     o = $c["outcome"]
-    if (o != "hang" && o != "ok" && o != "survived" && o != "recovered") {
+    if (o != "hang" && o != "ok" && o != "survived" && o != "recovered" && o != "censored") {
         printf "trial-summary: unrecognised outcome \"%s\" on line %d\n", o, NR > "/dev/stderr"
         print  "  Refusing to report rather than counting it as a survival." > "/dev/stderr"
         abort = 1; exit 1
     }
-    tot[k]++; sum[k] += $c["duration_s"]
+    # CENSORED rows are counted, shown, and EXCLUDED FROM THE RATE. An early
+    # watchdog intervention before any observed timeout destroyed the
+    # counterfactual: the controller might have wedged, or might have been
+    # fine. Putting them in the numerator lets the mitigation manufacture the
+    # incidence it is measuring; putting them in the denominator understates
+    # it. They belong in neither, and must stay visible so the denominator is
+    # never quietly smaller than the sample.
+    if (o == "censored") { cen[k]++; seen[k]++; next }
+    tot[k]++; sum[k] += $c["duration_s"]; seen[k]++
     # Two different questions, kept apart:
     #   h[]   BT-1 reached UNRECOVERED failure (cold power-off needed)
     #   inc[] BT-1 OCCURRED at all — hang plus watchdog-rescued
@@ -78,14 +87,15 @@ END {
     # a plausible report AND a non-zero status, and the report is what gets
     # read. Bail before printing anything.
     if (abort) exit 1
-    printf "  %-20s %-7s %-9s %-9s %-8s %s\n", "TRIAL TYPE", "BUILD", "UNRECOV", "BT-1 INC", "RATE", "mean dur"
+    printf "  %-18s %-6s %-8s %-8s %-7s %-8s %s\n", "TRIAL TYPE", "BUILD", "UNRECOV", "BT-1 INC", "RATE", "CENSORED", "mean dur"
     for (k in tot) {
         split(k, p, "|")
-        rate = 100 * (inc[k] + 0) / tot[k]
-        printf "  %-20s %-7s %-9s %-9s %-8s %.0fs\n", p[1], p[2],
-               (h[k] + 0) "/" tot[k], (inc[k] + 0) "/" tot[k],
-               sprintf("%.0f%%", rate), sum[k] / tot[k]
-        printf "      env: %s\n", p[3]
+        rate = (tot[k] ? 100 * (inc[k] + 0) / tot[k] : 0)
+        printf "  %-18s %-6s %-8s %-8s %-7s %-8s %.0fs\n", p[1], p[2],
+               (h[k] + 0) "/" (tot[k] + 0), (inc[k] + 0) "/" (tot[k] + 0),
+               (tot[k] ? sprintf("%.0f%%", rate) : "n/a"),
+               (cen[k] + 0) "/" (seen[k] + 0), (tot[k] ? sum[k] / tot[k] : 0)
+        printf "      treatment: %s\n", p[3]
     }
     print ""
     print "  These rows must never be added together. An observational boot"
@@ -105,5 +115,18 @@ END {
         print  "     the controller and can change the outcome, so a kernel comparison"
         print  "     across them measures the mitigation as much as the kernel."
         print  "     `build` names only the kernel; the treatment is build + env."
+    }
+
+    tc = 0
+    for (k in cen) tc += cen[k]
+    if (tc > 0) {
+        print ""
+        printf "  !! %d CENSORED trial(s), excluded from every rate above.\n", tc
+        print  "     An early watchdog intervention fired before any timeout was"
+        print  "     observed, so the natural outcome is unknowable: the controller"
+        print  "     might have wedged, or might have been fine. Early precursors in"
+        print  "     this project have repeatedly turned out NOT to be causal, so an"
+        print  "     early intervention is not evidence that BT-1 was imminent."
+        print  "     For a controlled comparison, run with the watchdog OFF."
     }
 }

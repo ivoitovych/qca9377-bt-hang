@@ -70,6 +70,37 @@ one, and bundling means the weakest member sets the pace for all.
 | `BT-1` the hang | ❌ blocked on the gates above |
 | `BT-5` SCO link silent after setup | ❌ one observation |
 
+## 2b. The controlled environment for A/B/C/D
+
+Every trial that compares kernel builds must change **only the kernel build**. On this
+machine that is not the current state: since 2026-08-10 it has run a stock kernel inside a
+mitigated environment (`EX-013`).
+
+Before the first controlled trial, set the treatment to the least behaviour-changing
+configuration that still yields evidence, and keep it identical for stock and for every
+build:
+
+| | Setting | Why |
+|---|---|---|
+| watchdog | **off** | it can recover a controller that would otherwise have hung, concealing the difference the kernel change is meant to make — and with `BT_EARLY=1` it can act *before* any timeout, censoring the outcome entirely |
+| USB autosuspend | **restored to `Y`** | disabling it changes the controller's operating conditions from boot onward; it is a workaround under test, not a constant |
+| `power/control` | **restored to `auto`** | same |
+| periodic health probes | **off** | they inject real HCI exchanges (`EX-011`) and demonstrably perturb one observer already; passive capture plus the protocol's own liveness checks are sufficient |
+| passive capture | **on** | `bt-capture`, `bt-trace`, `usbmon`, dyndbg — observation, not intervention |
+
+If autosuspend is worth testing as a factor, make it an explicit row in the design rather
+than a silent background condition:
+
+```text
+kernel   autosuspend   result
+stock    Y (default)   ...
+stock    N             ...
+A        Y (default)   ...
+```
+
+`bt-trial` records the treatment per trial and the report refuses to pool differing
+treatments, so a mistake here is visible rather than silent — but it is still a mistake.
+
 ## 3. Content that must NOT be sent
 
 - **`fix-proposal.md` §7** — the proposal that all unmatched Bluetooth devices receive a

@@ -51,7 +51,7 @@ NR==1 {
     # rather than merely discouraged.
     s = (col["sco_sent"]  ? $col["sco_sent"]  : "?")
     o = $col["outcome"]
-    if (o != "hang" && o != "ok" && o != "survived" && o != "recovered") {
+    if (o != "hang" && o != "ok" && o != "survived" && o != "recovered" && o != "censored") {
         printf "trial-sco-table: unrecognised outcome \"%s\" on line %d\n", o, NR > "/dev/stderr"
         print  "  Refusing to report rather than counting it as a survival." > "/dev/stderr"
         abort = 1; exit 1
@@ -59,6 +59,10 @@ NR==1 {
     # "recovered" counts as a FAILURE here: BT-1 occurred and the watchdog
     # rescued it. Counting it as a survival would understate the incidence of
     # the bug by exactly the watchdog success rate.
+    # Censored rows cannot be classified as hung or survived — the early
+    # intervention removed the outcome — so they are excluded from the 2x2
+    # rather than being assigned to whichever cell looks harmless.
+    if (o == "censored") { censored++; next }
     f = (o == "hang" || o == "recovered")
     if (s == "?" ) { unknown++; next }
     if (s+0 > 0) { if (f) a++; else b++ } else { if (f) c++; else d++ }
@@ -73,6 +77,7 @@ END {
     printf "  %-22s %8d %12d\n", "SCO setup requested", a+0, b+0
     printf "  %-22s %8d %12d\n", "no SCO setup", c+0, d+0
     if (unknown) printf "\n  (%d trial(s) with no SCO field — recorded before this was tracked)\n", unknown
+    if (censored) printf "  (%d trial(s) censored by early watchdog intervention — excluded)\n", censored
     print ""
     # Braces are mandatory here. Written without them, the second and third
     # print statements fell OUTSIDE the if, leaving `else` with no matching
