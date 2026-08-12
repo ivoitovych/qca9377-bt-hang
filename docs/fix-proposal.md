@@ -38,22 +38,54 @@ this text literally.
 | USB vendor `13d3` | IMC Networks | standard ODM for QCA9377 M.2 modules |
 | USB speed | full-speed (12 Mb/s) | consistent with ROME-era BT |
 
-The HCI version rules out the plausible alternatives: MediaTek would report manufacturer
-`0x0046` and HCI 5.2+, Realtek `0x005D`.
+The identification rests on the **manufacturer code** `0x001D` (Qualcomm) and the
+companion `ath10k` Wi-Fi half of the same combo part, not on the HCI version. An earlier
+draft argued that the HCI version "rules out" MediaTek and Realtek because they "would
+report" particular versions. That is not a valid inference — an HCI protocol version is
+not a vendor identifier, and no device-specific evidence was gathered for either vendor.
+The manufacturer code alone is sufficient here, so the weaker argument is withdrawn rather
+than repaired.
 
 ## 3. What the quirk restores
 
-`BTUSB_QCA_ROME` in `driver_info` causes `btusb_probe()` to install:
+`BTUSB_QCA_ROME` in `driver_info` causes `btusb_probe()` to install **six** things.
+Verbatim from v7.0 `drivers/bluetooth/btusb.c`:
+
+```c
+	if (id->driver_info & BTUSB_QCA_ROME) {
+		data->setup_on_usb = btusb_setup_qca;
+		hdev->shutdown = btusb_shutdown_qca;
+		hdev->set_bdaddr = btusb_set_bdaddr_ath3012;
+		hdev->reset = btusb_qca_reset;
+		hci_set_quirk(hdev, HCI_QUIRK_SIMULTANEOUS_DISCOVERY);
+		btusb_check_needs_reset_resume(intf);
+	}
+```
+
+Of those, two are the reasons to add the ID:
 
 1. **`hdev->reset = btusb_qca_reset`** — invoked by `hci_cmd_timeout()` on the **first**
    command timeout. `btusb_qca_reset()` falls back to `btusb_reset()`, which queues a USB
-   device reset when no hardware reset GPIO is available.
-2. **`btusb_setup_qca()`** — rampatch and NVM firmware download
+   device reset when no hardware reset GPIO is available. → **recovery**
+2. **`data->setup_on_usb = btusb_setup_qca`** — rampatch and NVM firmware download
    (`qca/rampatch_usb_*.bin`, `qca/nvm_usb_*.bin`). Both are already present in
-   `linux-firmware` on the affected system.
-3. **`BTUSB_WIDEBAND_SPEECH`** — mSBC wideband speech for HFP.
+   `linux-firmware` on the affected system. → **prevention**
 
-Items 1 and 2 are independent reasons to add the ID: **recovery** and **prevention**.
+The other four (`shutdown`, `set_bdaddr`, `SIMULTANEOUS_DISCOVERY`, `needs_reset_resume`)
+come along with the flag and are why a single build toggling `BTUSB_QCA_ROME` isolates
+nothing — see the ladder in §5a.
+
+⚠️ **`BTUSB_WIDEBAND_SPEECH` is not part of this.** An earlier draft listed it as a third
+thing `BTUSB_QCA_ROME` installs. It is a separate `driver_info` bit (`BIT(21)`) tested on
+its own, sixty lines further down `btusb_probe()`:
+
+```c
+	if (id->driver_info & BTUSB_WIDEBAND_SPEECH)
+		hci_set_quirk(hdev, HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED);
+```
+
+The neighbouring IDs carry `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH` — two flags, not one.
+Whether to set the second is a separate decision, deliberately deferred to build D.
 
 ---
 
@@ -163,8 +195,11 @@ than one:
 
 1. **Recovery.** `hdev->reset` is never installed, so `hci_cmd_timeout()` has nothing to
    call. Untested — every experiment was 11–33 s late.
-2. **Prevention.** `btusb_setup_qca()` never runs, so the controller carries factory ROM
-   firmware forever. See [`firmware-hypothesis.md`](firmware-hypothesis.md).
+2. **Prevention.** `btusb_setup_qca()` never runs, so Linux never performs the QCA
+   rampatch/NVM download for this ID. What the controller therefore *runs* is not
+   established — only that this driver does not load anything into it. An earlier draft
+   said it "carries factory ROM firmware forever"; that overstates what was measured, and
+   is withdrawn. See [`firmware-hypothesis.md`](firmware-hypothesis.md).
 
 The next step is the A/B build in §5a, which separates them.
 
@@ -173,15 +208,22 @@ The next step is the A/B build in §5a, which separates them.
 `tools/bt-verify-kernel-mechanism` on the shipped `btusb.ko` (7.0.0-28-generic):
 
 ```
-✓ 13d3:3491  present        ✗ 13d3:3502  ABSENT
-✓ 13d3:3496  present        ✗ 13d3:3503  ABSENT   <- this device
-✓ 13d3:3501  present        ✗ 13d3:3504  ABSENT
-✓ 13d3:3563  present
+✓ 13d3:3491  present  BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH
+✓ 13d3:3496  present  BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH
+✓ 13d3:3501  present  BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH
+✗ 13d3:3502  ABSENT
+✗ 13d3:3503  ABSENT   <- this device
+✗ 13d3:3504  ABSENT
 ```
 
-Neighbouring IMC Networks IDs on both sides are covered. This is a hole in the table,
-not a vendor the driver declines to support — which is the shape of an oversight rather
-than a decision.
+Three consecutive IMC Networks IDs immediately below the gap carry the QCA ROME quirk;
+three consecutive IDs starting at `3502` carry nothing. This is a hole in the table, not a
+vendor the driver declines to support — the shape of an oversight rather than a decision.
+
+⚠️ **`13d3:3563` is not evidence here and has been removed from this comparison.** Earlier
+drafts cited it as a fourth covered neighbour. It is present in the table, but as
+`BTUSB_MEDIATEK` — different silicon, and therefore not a QCA comparator at all. Its
+presence says nothing about QCA coverage in either direction.
 
 ---
 
@@ -321,7 +363,10 @@ it while establishing causation would confound exactly the thing under test.
 ### Decision tree
 
 ```
-stock fails (established: 13 of 34 boots)
+A4: stock protocol establishes a reproducible baseline (target 5/5)
+  |   NOT the 13-of-34 historical incidence — that is an observational
+  |   rate from uncontrolled daily use, not a controlled reproducer, and
+  |   it cannot serve as the denominator any build is compared against
   |
   +-- A works   -> immediate reset is sufficient; the +0 s vs +11 s gap is the whole story
   |
@@ -373,8 +418,15 @@ stock fails (established: 13 of 34 boots)
 
 `BTUSB_QCA_ROME` also enables the rampatch/NVM download path. If this module is *not* a
 true ROME variant — or expects different firmware filenames — then `btusb_setup_qca()`
-can fail during probe and leave the machine with **no Bluetooth at all**, which is worse
-than the current intermittent failure.
+can fail and leave the machine with **no Bluetooth at all**, which is worse than the
+current intermittent failure.
+
+⚠️ **Corrected: this failure would not happen "during probe".** `BTUSB_QCA_ROME` sets
+`data->setup_on_usb`, which is consumed later at HCI open/setup, not inside
+`btusb_probe()`. The practical difference matters for how the risk presents: the device
+still enumerates and binds, and the failure surfaces when the adapter is brought up. It is
+recoverable by booting the previous kernel, which is why §5 pins a fallback entry rather
+than treating this as unbootable-class risk.
 
 The device is currently hard-hung and off the USB bus, so **nothing here has been
 validated on hardware.** A cold power-off is required before any of §5 can be attempted.
@@ -382,8 +434,14 @@ validated on hardware.** A cold power-off is required before any of §5 can be a
 ### A more conservative first step
 
 If the firmware download proves problematic, `BTUSB_QCA_ROME` alone (dropping
-`BTUSB_WIDEBAND_SPEECH`) isolates the recovery behaviour from the audio-codec change and
-narrows the variables.
+`BTUSB_WIDEBAND_SPEECH`) removes the wideband-speech confound.
+
+⚠️ **It does not "isolate the recovery behaviour"** — an earlier draft claimed it did.
+Dropping WBS removes one variable; full `BTUSB_QCA_ROME` still changes five others at once
+(`setup_on_usb`, `shutdown`, `set_bdaddr`, `reset`, `SIMULTANEOUS_DISCOVERY`, plus
+`needs_reset_resume`). That is build **C**, not an isolation experiment. Only builds A and
+B isolate anything, and they do it by adding one field at a time rather than by removing
+one flag from six.
 
 ---
 
@@ -473,16 +531,16 @@ The QCA9377 Bluetooth controller with USB ID 13d3:3503 is not matched by
 btusb's vendor quirks table, so it probes with driver_info = 0 and gets
 neither hdev->reset = btusb_qca_reset nor btusb_setup_qca().
 
-Neighbouring IMC Networks IDs are present -- 13d3:3491, 3496, 3501 and
-3563 all appear in the quirks table -- while 3502, 3503 and 3504 do not.
+Neighbouring IMC Networks IDs are present -- 13d3:3491, 3496 and 3501
+all carry BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH -- while the three
+consecutive IDs 3502, 3503 and 3504 carry nothing.
 
 Two consequences. hci_cmd_timeout() calls hdev->reset(hdev) on the first
 command timeout, but hdev->reset is NULL here, so the kernel logs the
 timeout and does nothing: 287 "command tx timeout" events across 34
 boots with zero reset attempts. Separately, btusb_setup_qca() never
-runs, so the controller carries its factory ROM firmware indefinitely --
-no rampatch or NVM is ever downloaded, though both files are present in
-linux-firmware on the affected system.
+runs, so the QCA rampatch/NVM download is never performed for this ID,
+though both files are present in linux-firmware on the affected system.
 
 The observed failure follows an audio-layer state change (ungraceful
 A2DP/SCO teardown, or a codec/mode switch). The controller stops
@@ -500,18 +558,30 @@ Signed-off-by: ...
 
 ---
 
-## 7. Wider question for maintainers
+## 7. Wider question for maintainers — ⛔ NOT part of the first submission
 
 An unmatched QCA controller does not merely lose an optimisation — it can reach a state
 that **no software can recover**, requiring physical intervention. That seems a harsh
 consequence for a missing table entry, and the failure mode is silent: the user sees only
 a Bluetooth panel that spins forever.
 
-It may be worth installing a default `hdev->reset` for devices that bind through the
-generic Bluetooth-class entry. A USB reset of a controller that has just missed a command
-completion is cheap and carries little risk, and it would make this entire class of
-missing-ID bugs self-limiting rather than catastrophic — every unmatched device currently
-leaves `hdev->reset` NULL, so `hci_cmd_timeout()` logs and returns.
+It *may* be worth installing a default `hdev->reset` for devices that bind through the
+generic Bluetooth-class entry, so this class of missing-ID bugs is self-limiting rather
+than catastrophic — every unmatched device currently leaves `hdev->reset` NULL, so
+`hci_cmd_timeout()` logs and returns.
+
+⚠️ **Do not send this with the patch.** An earlier draft argued a generic default reset is
+"cheap and carries little risk". That is an assertion about every Bluetooth controller
+Linux supports, made from evidence about exactly one device, and it enlarges the review
+surface of a three-line device-ID addition into a change of core behaviour for all
+unmatched hardware. The two must be separated:
+
+1. establish the A/B/C/D result for `13d3:3503`
+2. submit the minimal causal fix for that device
+3. *then*, separately, raise generic fallback behaviour as its own discussion, with
+   whatever evidence step 1 actually produced
+
+Mixing them risks losing a well-evidenced small patch inside an under-evidenced large one.
 
 ---
 
@@ -524,7 +594,8 @@ leaves `hdev->reset` NULL, so `hci_cmd_timeout()` logs and returns.
 | Reset mechanism is `hdev->reset`, fired on the first timeout | ✅ source + binary (§3a) |
 | Hang reproduced with full instrumentation | ✅ five incidents, HCI captures |
 | **Quantified reproducer (A0/A4)** | ❌ **gate — not done** |
-| **Would the patch prevent the hang?** | ❓ **untested** — every reset tried was ≥11 s late |
+| Early reset (−133 s) recovers, but not durably | ✅ measured once — `EX-004` |
+| **Would a reset at +0 s prevent the hang?** | ❓ **untested** — resets tried were −133 s or ≥+11 s, never at the timeout |
 | Patch written | ✅ (§1, anchor needs regenerating against target tree) |
 | Builds A/B/C/D | ❌ not done — see §5a |
 | Checked against current mainline | ⚠️ `3503` still absent as of 2026-08-11 |
@@ -535,8 +606,17 @@ but only approximately: it reacts +11 s to +33 s after the first timeout where t
 would act at +0 s. It has never recovered a controller from a late intervention. That is
 evidence about *late* resets, not about this patch.
 
-Next experiment worth running: intervene on the *audio-teardown* signature (AVDTP/SCO
-errors in bluetoothd) rather than on `tx timeout`, i.e. reset before the first HCI
-command times out. If that recovers the chip, `cmd_timeout` is simply too late a hook
-for this failure mode and the finding is worth far more to maintainers than a device-ID
-addition.
+✅ **That experiment has now run** (2026-08-12, `EX-004`). The watchdog was rearmed to
+trigger on the audio-teardown signature and fired **133 s before** the first HCI timeout.
+The reset succeeded — the device re-enumerated and the HCI stack re-registered 315 ms
+later. The controller then failed anyway 132 s afterwards and left the bus.
+
+Read carefully, that result says: **recovery at that moment was possible, but not
+durable.** It does not say a reset at +0 s fails, because +0 s was never occupied — no
+timeout had happened when the watchdog fired, which is precisely why `hdev->reset` would
+not have been called there either. Build A is still the experiment that answers this.
+
+The interval it opened up is the most informative thing currently available: between
+00:09:38 (stack demonstrably healthy) and 00:11:50 (first timeout), something crossed the
+gap. `usbmon`, `bluetoothd -d` and 214 dynamic-debug sites are now enabled from boot
+specifically to capture that window on the next reproduction.

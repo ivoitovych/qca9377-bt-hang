@@ -330,13 +330,17 @@ A one-line kernel patch — add the device to btusb's QCA ROME quirks:
 > [+11 s also failed, no early warning](evidence/sessions/20260811-060910-mode-change-hang/)
 >
 > ⚠️ **Also untested and risky in its own right.** `BTUSB_QCA_ROME` enables the rampatch
-> firmware download path; if this module is not a true ROME variant, probe can fail and
-> leave you with *no* Bluetooth. See [`docs/fix-proposal.md`](docs/fix-proposal.md).
+> firmware download path; if this module is not a true ROME variant, adapter setup can
+> fail and leave you with *no* Bluetooth. (Setup runs at HCI open, not at USB probe, so
+> the device still enumerates — the failure appears when the adapter is brought up, and
+> booting the previous kernel recovers it.) See
+> [`docs/fix-proposal.md`](docs/fix-proposal.md).
 
 **Why the missing ID matters twice.** It withholds *recovery* — `hdev->reset` is NULL, so
 `hci_cmd_timeout()` logs each timeout and does nothing — **and** *prevention*, because
-`btusb_setup_qca()` never runs and the controller carries factory ROM firmware on every
-boot. The first is verified three ways; the second is the
+`btusb_setup_qca()` never runs, so Linux never performs the QCA rampatch/NVM download for
+this ID. (What the controller runs instead is *not* established — only that this driver
+loads nothing into it.) The first is verified three ways; the second is the
 [firmware hypothesis](docs/firmware-hypothesis.md), and it is the better explanation for
 why the same hardware never faults under Windows.
 

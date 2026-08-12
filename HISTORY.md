@@ -890,6 +890,21 @@ watchdog's reset landed 133 s *earlier*, at a moment when no timeout had occurre
 `hdev->reset` would not have been called at all. **Build A remains untested and stays in
 the ladder.**
 
+**A wrong aside, corrected.** While making the above correction, the claim was made that
+v6.12's `btusb_reset()` — which opens `if (hdev->reset) { hdev->reset(hdev); return; }` —
+"would recurse for a QCA device". It would not. v6.12 has QCA ROME table entries but
+installs `hdev->cmd_timeout = btusb_qca_cmd_timeout`, and **nothing in v6.12's `btusb.c`
+assigns `hdev->reset` at all** — the only occurrences are that read. So the delegation
+never fired for any btusb device and there was no QCA recursion path. The accurate
+statement is: *v6.12's `btusb_reset()` contained a delegation that would be recursive if a
+reset callback re-entered it; QCA ROME did not use such a callback there. v7.0 removes the
+delegation and adds the QCA reset callback.*
+
+This is the fourth instance of the same species, made **while correcting the third** — a
+code path inferred from a structure without checking whether the assignment that would
+activate it exists. Reading the function was not enough; the rule needs the second half:
+whenever an inference depends on *"this callback would be X"* — **grep for the assignment**.
+
 The mechanism verification does hold, and is worth keeping. Read from v7.0 source:
 `hci_cmd_timeout()` calls `hdev->reset(hdev)`; for a `BTUSB_QCA_ROME` device that is
 `btusb_qca_reset()`, which with no `bt_en` GPIO falls through to `btusb_reset()` and
@@ -945,6 +960,24 @@ shown provably produced the output shown. Hand-pasting the two separately lets t
   `docs/fix-proposal.md` stated the correct position throughout and was never consulted
   while `HISTORY.md` was being written to contradict it. A contradiction inside one
   repository is cheaper to find than one found by a maintainer.
+- **A document is not corrected until its residues are.** `fix-proposal.md` still carried
+  text from at least three superseded models of the bug — `13d3:3563` cited as a QCA
+  neighbour, "carries factory ROM firmware forever", `BTUSB_WIDEBAND_SPEECH` listed as one
+  of the things `BTUSB_QCA_ROME` installs, `btusb_setup_qca()` failing "during probe", and
+  a claim that dropping WBS "isolates the recovery behaviour". Each had been corrected
+  *somewhere else* in the repository, which is what made them invisible: the correction
+  felt done. Corrections must be applied by grepping the whole tree for the wrong claim,
+  not by writing the right one in the nearest paragraph.
+- **A statistic from uncontrolled use is not a baseline.** The decision tree opened with
+  "stock fails (established: 13 of 34 boots)" while A4 simultaneously said no quantified
+  reproducer exists. Both were in the same document. An observational incidence rate and a
+  controlled failure rate under a fixed protocol are different numbers and only one can be
+  a denominator.
+- **Scope discipline is part of the evidence.** §7 proposed a default `hdev->reset` for all
+  unmatched Bluetooth devices as "cheap and carries little risk" — an assertion about every
+  controller Linux supports, drawn from one device. It is now explicitly excluded from the
+  first submission. A three-line device-ID fix with strong evidence should not be carried
+  into review alongside a core-behaviour change with none.
 - **The interval between a successful recovery and the next failure is the most
   informative window available, and it has never been instrumented.** 00:09:38 to 00:11:50:
   the controller was demonstrably *not* poisoned at the start of it and demonstrably dead

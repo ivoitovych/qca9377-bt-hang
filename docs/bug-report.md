@@ -24,8 +24,10 @@ with `driver_info = 0`, and therefore receives **neither** of the two things
 
 1. **`hdev->reset = btusb_qca_reset`** — the callback `hci_cmd_timeout()` invokes on the
    first HCI command timeout. Without it, `hdev->reset` is NULL and nothing is attempted.
-2. **`btusb_setup_qca()`** — rampatch and NVM firmware download. Without it the
-   controller runs its factory ROM firmware on every boot, indefinitely.
+2. **`data->setup_on_usb = btusb_setup_qca`** — rampatch and NVM firmware download.
+   Without it, Linux never performs the QCA rampatch/NVM download for this ID. What the
+   controller runs instead is not established by this report; only that this driver loads
+   nothing into it.
 
 Measured across **34 boots and four kernel versions: 287 HCI command timeouts, zero
 reset attempts, zero firmware loads.** 13 of those 34 boots hung, each requiring a full
@@ -33,8 +35,13 @@ power-off — driver unbind/rebind, xHCI port power-cycle and warm reboot were a
 and all failed.
 
 The gap is isolated rather than a vendor the driver declines to support. In the shipped
-`btusb.ko`, `13d3:3491`, `3496`, `3501` and `3563` are all present; `3502`, `3503` and
-`3504` are absent.
+`btusb.ko`, `13d3:3491`, `3496` and `3501` all carry
+`BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH`, while the three consecutive IDs `3502`, `3503`
+and `3504` carry nothing.
+
+(`13d3:3563` is also present in the table but is **not** a comparator: it is
+`BTUSB_MEDIATEK`, different silicon. Earlier drafts of this report cited it as a fourth
+QCA neighbour, which was wrong.)
 
 ### The failure
 
