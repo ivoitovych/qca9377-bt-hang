@@ -1,0 +1,31 @@
+[Unit]
+Description=Open a Bluetooth trial for this boot, and close it at shutdown
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+After=sysinit.target
+# Must open BEFORE the stack comes up. Bluetooth starts with the system and
+# begins scanning immediately, and the environment contains discoverable devices
+# that cannot be switched off — so a trial opened once someone reaches a
+# terminal has already missed an uncontrolled set of events. Ordering it here
+# means the trial covers the boot from before the first HCI command.
+Before=bluetooth.service
+Wants=bluetooth.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+# BT_BUILD names which kernel build this boot is testing. Leave it as "stock"
+# until an experimental btusb is installed, then override with:
+#   systemctl edit bt-trial-auto    ->  [Service] Environment=BT_BUILD=A
+# Getting this wrong silently pools results from different builds, which is the
+# one mistake that would make the whole comparison worthless.
+Environment=BT_BUILD=stock
+
+ExecStart=/usr/local/bin/bt-trial autostart
+# systemd runs this at shutdown. It classifies by whether the controller still
+# answers, so a boot that ended with a dead controller is recorded as a hang
+# even if nobody was watching when it died.
+ExecStop=/usr/local/bin/bt-trial autostop
+
+[Install]
+WantedBy=multi-user.target

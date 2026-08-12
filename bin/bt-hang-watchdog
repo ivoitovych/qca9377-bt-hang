@@ -143,6 +143,14 @@ recover() {
         log "       recovery is possible — a full power-off (not a reboot) is"
         log "       required, because a warm reboot does not drop the M.2 rail."
         notify "Bluetooth chip has hard-hung. A full shutdown (not reboot) is needed."
+        # Close the boot's auto-trial here rather than leaving it to the
+        # shutdown hook. Both would classify it as a hang, but only this one
+        # records the duration and the surrounding state at the moment it
+        # happened; by shutdown the machine may have sat dead for hours, which
+        # would put a meaningless number in the results file.
+        if command -v bt-trial >/dev/null 2>&1; then
+            bt-trial hang >/dev/null 2>&1 && log "  auto-trial closed as HANG"
+        fi
         return 1
     fi
 

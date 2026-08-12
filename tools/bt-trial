@@ -127,6 +127,51 @@ start)
     echo "  then: bt-trial hang   |   bt-trial ok"
     ;;
 
+autostart)
+    # Open a trial automatically at boot.
+    #
+    # WHY. Asking the operator to run `bt-trial start` by hand loses the window
+    # that matters. Bluetooth comes up with the system and begins scanning
+    # before anyone can reach a terminal, and the environment contains devices
+    # that cannot be switched off — so by the time a trial was opened manually,
+    # an uncontrolled and unrecorded set of events had already happened. Worse,
+    # in practice no trial was ever open when the controller died, so the
+    # structured fields captured nothing on the three occasions they were built
+    # for.
+    #
+    # Every boot is therefore a trial, opened by bt-trial-auto.service before
+    # bluetooth.service starts. It is closed either by the watchdog when the
+    # controller dies, or at shutdown by `autostop`.
+    #
+    # NOTE ON WHAT THIS MEASURES. The denominator this produces is
+    # observational — boots-with-a-hang over total boots under ordinary use —
+    # not a controlled protocol. It is weaker evidence than a fixed reproducer
+    # and must be reported as such. It is also real data, where the manual
+    # protocol produced none.
+    build="${2:-${BT_BUILD:-stock}}"
+    [[ -e "$CUR" ]] && exit 0          # already open; nothing to do
+    mkdir -p "$STATE" "$TRIALS"
+    n=$(next_trial_no "$build")
+    dir="$TRIALS/$build/trial-$(printf '%02d' "$n")"
+    mkdir -p "$dir"
+    { echo "start=$(date +%s)"; echo "build=$build"; echo "n=$n"; echo "dir=$dir"
+      echo "auto=1"; } > "$CUR"
+    command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-before.txt" 2>&1
+    : > "$dir/steps.log"
+    echo "auto-trial $build #$n opened at boot"
+    ;;
+
+autostop)
+    # Close an auto-opened trial at shutdown, classifying by what the controller
+    # is actually doing rather than by what anyone intended.
+    [[ -e "$CUR" ]] || exit 0
+    if hci_alive; then
+        exec "$0" ok
+    else
+        exec "$0" hang
+    fi
+    ;;
+
 step)
     [[ -e "$CUR" ]] || { echo "no trial open" >&2; exit 1; }
     what="${2:?usage: bt-trial step \"<what you did>\"}"
@@ -144,9 +189,20 @@ hang|ok)
     n=$(grep '^n=' "$CUR" | cut -d= -f2)
     dir=$(grep '^dir=' "$CUR" | cut -d= -f2-)
     start=$(grep '^start=' "$CUR" | cut -d= -f2)
+    auto=$(grep -c '^auto=1' "$CUR" || true)
     dur=$(( $(date +%s) - start ))
 
-    if [[ "$outcome" == ok ]]; then
+    # An auto-opened trial that ends alive is recorded as "survived", not "ok".
+    # They are different claims: "ok" asserts the reproduction protocol was
+    # carried out and the controller withstood it, while "survived" only says
+    # the machine ran for a while and did not hang. Collapsing the two would
+    # inflate the protocol's apparent pass rate with boots where the stimulus
+    # was never applied.
+    if (( auto )) && [[ "$outcome" == ok ]]; then
+        outcome=survived
+    fi
+
+    if [[ "$outcome" == ok || "$outcome" == survived ]]; then
         if hci_alive; then
             echo "${G}verified: controller still responds${O}"
         else

@@ -429,7 +429,8 @@ renamed only after verification passes. The logs in `evidence/baseline/` were pr
 | Watchdog detection | ✅ tested end-to-end |
 | Watchdog recovery path | ✅ exercised — succeeds early, fails once timeouts begin |
 | Autosuspend setting, udev rule | ✅ applied and verified |
-| **Quantified reproducer (A4)** | ❌ **gate — not done.** No denominator yet |
+| **Quantified reproducer (A4)** | ❌ **gate — not done.** No controlled denominator yet |
+| Observational denominator | ⏳ accruing — every boot is now a trial, opened automatically |
 | Kernel patch | ❌ written, not built or tested |
 
 > ⛔ **Before submitting anything upstream**, work through
@@ -470,7 +471,9 @@ Installed alongside the mitigation, for reproducing and recording failures:
 
 | Tool | Purpose |
 |---|---|
-| `bt-trial` | **run one numbered trial of the fixed reproduction protocol**; tracks failure rate per build so every comparison has a denominator |
+| `bt-trial` | Numbered trials with a failure rate per build, so every comparison has a denominator. **A trial now opens automatically at each boot** (`bt-trial-auto.service`, ordered before `bluetooth.service`) and is closed by the watchdog on a hang or by systemd at shutdown — a manually started trial missed the window that mattered, because Bluetooth is scanning before anyone can reach a terminal. Auto trials record `survived` rather than `ok`: they say the machine did not hang, not that the reproduction protocol was carried out |
+| `bt-capture` (service) | Decode-free HCI capture straight from the kernel monitor socket. Runs alongside `bt-trace` because `btmon` aborts frequently (`BT-4`) and took the SCO parameters with it |
+| `bt-sco` | Every synchronous-link setup with its decoded parameters and completion — the comparison that matters now that SCO setup alone is known not to be sufficient |
 | `bt-status` | **"What do we have by now?"** — controller, per-boot history, whether Bluetooth was actually used, watchdog activity, verdict |
 | `bt-verify-install` | is the running system the same as the checkout? catches hand-installed drift |
 | `bt-postmortem` | What happened during the last hang: timing, whether the watchdog fired, **whether the reset worked** |

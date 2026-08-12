@@ -184,6 +184,11 @@ fi
 install_file "$SRC/bin/bt-capture"             /usr/local/sbin/bt-capture             0755
 install_file "$SRC/systemd/bt-capture.service" /etc/systemd/system/bt-capture.service 0644
 
+# Every boot is a trial. Opened before bluetooth.service so it covers the boot
+# from before the first HCI command, closed by the watchdog on a hang or by
+# systemd at shutdown.
+install_file "$SRC/systemd/bt-trial-auto.service" /etc/systemd/system/bt-trial-auto.service 0644
+
 # Kernel dynamic debug: the driver's own account of its decisions. Must be
 # enabled before bluetooth.service opens the adapter, hence a sysinit oneshot.
 install_file "$SRC/bin/bt-dyndbg"                 /usr/local/sbin/bt-dyndbg              0755
@@ -268,6 +273,7 @@ run systemctl enable --now bt-hang-watchdog
 (( METRICS )) && run systemctl enable --now bt-health-snapshot.timer
 (( TRACE ))   && run systemctl enable --now bt-trace
 run systemctl enable --now bt-capture
+run systemctl enable --now bt-trial-auto
 run systemctl enable --now bt-dyndbg
 (( USBMON ))  && run systemctl enable --now bt-usbmon
 # Picks up the raised journal size cap. Restarting journald is safe: clients
