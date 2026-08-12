@@ -60,6 +60,15 @@ repeated connect/disconnect/mode-change cycles, tested 2026-08-11. Hardware alon
 therefore not a sufficient explanation; some OS/driver/firmware/command-sequence
 difference is necessary to produce it.
 
+This is deliberately *not* stated as "the hardware is fine and Linux is broken". Windows
+may upload different firmware, initialise the controller differently, choose different
+synchronous-connection parameters, reset the device at a different point, or leave a
+vendor register in another state. The defect may well live in the controller or its
+firmware, with Linux simply being the environment that reaches the state which exposes it.
+The accurate formulation, and the more useful one, is: **Linux drives this controller into
+a state that Windows does not.** Which of the two is at fault follows from that, not the
+other way round.
+
 ### What has and has not been tested
 
 A userspace watchdog issued `USBDEVFS_RESET` at **+11 s, +16 s, +20 s, +20 s and +33 s**

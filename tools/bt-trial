@@ -158,9 +158,74 @@ hang|ok)
     command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-after.txt" 2>&1
     command -v bt-mark  >/dev/null 2>&1 && bt-mark "TRIAL $build #$n RESULT: $outcome" >/dev/null 2>&1
 
-    [[ -s "$RESULTS" ]] || printf 'timestamp\tbuild\ttrial\tprotocol\toutcome\tduration_s\tkernel\n' > "$RESULTS"
-    printf '%s\t%s\t%s\tv%s\t%s\t%s\t%s\n' \
-        "$(date -Iseconds)" "$build" "$n" "$PROTOCOL_VERSION" "$outcome" "$dur" "$(uname -r)" >> "$RESULTS"
+    # --- structured SCO record ----------------------------------------------
+    # Pass/fail alone cannot distinguish "the stimulus was applied and the
+    # controller survived it" from "the stimulus never happened". Those are
+    # different rows of the 2x2 that decides whether 0x0428 is causal, and a
+    # trial that does not record which one it was is wasted.
+    #
+    # Each field is measured, never inferred, and "?" means not determined
+    # rather than "no" — a blank cell must not read as a negative result.
+    since="@$(( start - 5 ))"
+    jk() { journalctl -k --since "$since" --no-pager -o short-iso-precise 2>/dev/null; }
+
+    sco_sent=$(jk | grep -c "opcode 0x0428" || true)
+    tmo=$(jk | grep -c "command tx timeout" || true)
+    usb_gone=$(jk | grep -c "USB disconnect, device number" || true)
+
+    # Time from the SCO request to the first command timeout. If the command was
+    # answered normally this stays empty, which is itself the interesting case.
+    t_sco=$(jk | grep -m1 "opcode 0x0428" | cut -d' ' -f1)
+    t_tmo=$(jk | grep -m1 "command tx timeout" | cut -d' ' -f1)
+    sco_to_tmo="?"
+    if [[ -n "$t_sco" && -n "$t_tmo" ]]; then
+        sco_to_tmo=$(awk -v a="$t_sco" -v b="$t_tmo" '
+            function s(t,   p,q,r){split(t,p,"T");split(p[2],q,/[:.+]/);split(p[1],r,"-")
+                                   return ((r[3]*24+q[1])*3600)+q[2]*60+q[3]+q[4]/1000000}
+            BEGIN{printf "%.3f", s(b)-s(a)}')
+    elif (( sco_sent > 0 )); then
+        sco_to_tmo="none"     # SCO requested and NO timeout followed — survival under stimulus
+    fi
+
+    # Full parameters of the request. The reviewer's point: the failure may
+    # depend on a particular parameterisation (voice setting, packet type,
+    # retransmission effort) rather than on synchronous setup as such. The
+    # kernel log gives only the opcode and length; btmon decodes the payload.
+    : > "$dir/sco-params.txt"
+    if command -v btmon >/dev/null 2>&1 && (( sco_sent > 0 )); then
+        for f in /var/log/bt-health/trace/*.btsnoop; do
+            [[ -e "$f" ]] || continue
+            COLUMNS=200 btmon -T -r "$f" 2>/dev/null \
+                | grep -A 12 "Setup Synchronous Connection" >> "$dir/sco-params.txt" || true
+        done
+    fi
+    [[ -s "$dir/sco-params.txt" ]] || echo "(no Setup Synchronous Connection found in retained captures)" > "$dir/sco-params.txt"
+
+    hci_alive && resp_after=yes || resp_after=no
+    # Resolve the device by VID/PID rather than by bus path: after a reset it
+    # can re-enumerate at a different address, and a hardcoded path would then
+    # report "gone" for a device that is present and working.
+    usb_present=no
+    for d in /sys/bus/usb/devices/*; do
+        [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
+        if [[ "$(<"$d/idVendor")" == "${BT_VID:-13d3}" && "$(<"$d/idProduct")" == "${BT_PID:-3503}" ]]; then
+            usb_present=yes; break
+        fi
+    done
+
+    [[ -s "$RESULTS" ]] || printf 'timestamp\tbuild\ttrial\tprotocol\toutcome\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tkernel\n' > "$RESULTS"
+    printf '%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$(date -Iseconds)" "$build" "$n" "$PROTOCOL_VERSION" "$outcome" "$dur" \
+        "${sco_sent:-?}" "$sco_to_tmo" "${tmo:-?}" "$resp_after" "$usb_present" \
+        "${usb_gone:-?}" "$(uname -r)" >> "$RESULTS"
+
+    echo
+    echo "  SCO setup requested   : ${sco_sent:-?}"
+    echo "  SCO -> first timeout  : $sco_to_tmo s"
+    echo "  command timeouts      : ${tmo:-?}"
+    echo "  responds afterwards   : $resp_after"
+    echo "  still on the USB bus  : $usb_present   (bus-loss events: ${usb_gone:-?})"
+    echo "  request parameters    : $dir/sco-params.txt"
 
     if [[ "$outcome" == hang ]] && command -v bt-incident >/dev/null 2>&1; then
         echo "collecting incident evidence..."
@@ -200,8 +265,39 @@ report)
         }
     }' "$RESULTS"
     echo
+    echo "${B}Was the SCO stimulus actually applied, and did it matter?${O}"
+    echo "─────────────────────────────────────────────────────────────"
+    awk -F'\t' '
+    NR==1 { for (i=1; i<=NF; i++) col[$i] = i; next }
+    {
+        s = (col["sco_sent"] ? $col["sco_sent"] : "?")
+        f = ($5 == "hang")
+        if (s == "?" ) { unknown++; next }
+        if (s+0 > 0) { if (f) a++; else b++ } else { if (f) c++; else d++ }
+    }
+    END {
+        printf "  %-22s %8s %12s\n", "", "hung", "survived"
+        printf "  %-22s %8d %12d\n", "SCO setup requested", a+0, b+0
+        printf "  %-22s %8d %12d\n", "no SCO setup", c+0, d+0
+        if (unknown) printf "\n  (%d trial(s) with no SCO field — recorded before this was tracked)\n", unknown
+        print ""
+        if ((a+b) == 0)
+            print "  No trial has yet applied the stimulus. Until one does, nothing here"
+            print "  distinguishes a build that fixes the bug from a run that never"
+            print "  provoked it."
+        else if ((c+d) == 0)
+            print "  Every trial provoked SCO setup. The bottom row is empty, so this"
+            print "  cannot yet separate the stimulus from the passage of time."
+        else if (b+0 > 0 && a+0 > 0)
+            print "  SCO setup has been survived AND followed by failure. The request"
+            print "  alone is therefore not sufficient — look at its parameters."
+    }' "$RESULTS"
+    echo
     echo "  Gate: stock must reach a high, stable failure rate (target 5/5) before"
     echo "  any build is compiled. Compare every build against the SAME protocol."
+    echo
+    echo "  A trial that survives WITHOUT provoking SCO setup proves nothing about"
+    echo "  the build. Check the top row is filling before drawing conclusions."
     ;;
 
 status)

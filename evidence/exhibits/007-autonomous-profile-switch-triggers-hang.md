@@ -22,7 +22,10 @@ without the consequent.
 
 **What survives, and it is the part that matters upstream:** `HCI_Setup_Synchronous_Connection`
 (0x0428) was issued exactly once across every boot examined, and that single occurrence was
-never answered and hung the controller permanently. Whatever prompted BlueZ to send it is a
+never answered, and the controller's failure began at that boundary. ("Began at that
+boundary" rather than "was caused by it": with a single observation, 0x0428 may be the
+trigger, or merely the first command to expose a state that was already broken.)
+Whatever prompted BlueZ to send it is a
 userspace scheduling detail; a controller that stops responding to a standard HCI command
 is a driver/firmware defect regardless of what caused the command to be sent.
 
