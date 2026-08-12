@@ -2,6 +2,13 @@
 
 **Claim.** `HCI_Setup_Synchronous_Connection` (opcode 0x0428, SCO/eSCO link setup for HFP) was submitted, never answered, and timed out 2.169 s later. The controller's loss of HCI responsiveness begins at that boundary.
 
+**⚠️ Superseded in part by [`EX-009`](009-sco-teardown-not-setup-in-this-incident.md).** A
+later instrumented failure shows the controller answering 0x0428 correctly within 2 ms and
+establishing the SCO link; there it was the *teardown* (Disconnect, 0x0406) that went
+unanswered. So this exhibit records one incident, not a general rule about SCO setup. What
+the two share is SCO link handling and the USB alternate-setting switch that accompanies
+it — not any single opcode.
+
 **⚠️ Deliberately not claimed: that 0x0428 *causes* the hang.** This is one observation. The command may be the trigger, or it may simply be the first command to expose a controller state that was already broken, or the failure may depend on the specific *parameters* of this synchronous-connection request rather than on the request as such. Establishing cause needs repeated deliberate provocation — see `tools/bt-trial`, which records the SCO fields per trial so the 2×2 (provoked / not provoked × failed / survived) can actually be filled in.
 
 **Relevance.** This is the first identification of a specific command at the moment of failure, made possible by kernel dynamic debug enabled from boot. It fits every prior observation: the operator switches profile between A2DP and HFP in GNOME Sound, SCO data packets are present in the preceding seconds, earlier incidents showed AVDTP/HFP fallback to mono, and 'setting interface failed' recurs across incidents — that error is btusb changing the USB alternate setting to allocate isochronous bandwidth for SCO. It suggests a minimal reproducer: force an HFP profile switch while ACL audio is streaming.
