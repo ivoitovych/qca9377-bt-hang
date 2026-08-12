@@ -39,20 +39,37 @@ G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
 # ── THE PROTOCOL ──────────────────────────────────────────────────────────
 # Fixed. Changing it invalidates comparison with every trial already recorded;
 # if it must change, bump PROTOCOL_VERSION so old and new trials are not mixed.
-PROTOCOL_VERSION=1
+PROTOCOL_VERSION=2
 protocol() {
 cat <<'EOF'
-PROTOCOL v1 — one trial
+PROTOCOL v2 — one trial
 
-  0. Cold-boot the machine (power-off, not reboot) if the controller is down.
+  0. Cold-boot the machine (POWER-OFF, not reboot) if the controller is down.
+     A warm reboot does not drop the M.2 power rail and will not recover it.
   1. bt-trial start <build>
-  2. Connect the Sennheiser Momentum 4.
+  2. Connect the Sennheiser Momentum 4. Wait until it appears as an audio
+     device in Settings -> Sound.
   3. Start audio playback. Let it run ~10 s.
-  4. Switch transmission mode / codec (HQ <-> XQ).
-  5. If still alive: switch back.
-  6. If still alive: disconnect, reconnect, play again.
+  4. In Settings -> Sound, switch the device PROFILE:
+        High Fidelity Playback (A2DP)  <->  Headset Head Unit (HFP)
+     Wait ~5 s after each switch, with audio still playing.
+  5. Repeat step 4 up to TEN times, alternating back and forth.
+     Stop early the moment the controller dies.
+  6. If still alive after ten switches: disconnect, reconnect, play again.
+     Do that THREE times.
   7. bt-trial hang    (controller died)
-     bt-trial ok      (survived all steps)
+     bt-trial ok      (survived all of the above)
+
+  WHY THE COUNTS ARE FIXED. A trial only produces a denominator if "ok"
+  means something definite. "I stopped and it was still working" is not a
+  survival — it is an unfinished trial. Ten switches plus three reconnect
+  cycles is drawn from the operator's estimate that failure normally
+  arrives within several cycles, so it should sit comfortably beyond the
+  usual failure point without running indefinitely.
+
+  If a trial survives the full protocol repeatedly, the protocol is too
+  short and must be lengthened — but lengthen it BEFORE the next trial and
+  restart the count, never mid-series.
 
   Record each step you actually perform with:
      bt-trial step "switched to XQ"
