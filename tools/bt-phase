@@ -31,10 +31,21 @@
 #      antecedents: an outcome-triggered CLOSING boundary still lets the event
 #      choose the interval it is measured inside.
 #
-#   3. INCIDENTS, NOT LINES. One hung controller emits a burst of
+#   3. CLUSTERS, NOT LINES. One hung controller emits a burst of
 #      `command tx timeout` lines. Counting lines as events inflates n and
 #      destroys independence — the statistical caveat printed below assumes
-#      independent failures. Only the FIRST timeout of each incident counts.
+#      independent failures. Only the FIRST timeout of each cluster counts.
+#
+#      ⚠ A CLUSTER IS NOT YET A PROVEN INCIDENT. The boundary here is purely
+#      temporal: timeouts more than INCIDENT_GAP apart start a new cluster.
+#      That is the same species of inference this project spends its time
+#      eliminating — temporal proximity standing in for identity. It could
+#      merge two genuine failures separated by a successful recovery, or split
+#      one persistent bad state that happened to fall quiet. A real incident
+#      boundary would be marked by evidence: controller recovery, USB
+#      disappearance and re-enumeration, a new trial, a cold boot. Until the
+#      output says clusters, and the count is a lower bound on distinct
+#      failures rather than a measurement of them.
 #
 #   4. WITHIN A BOOT. A probe interval cannot span a reboot. Timestamps carry
 #      full dates and every boot is analysed separately; an earlier version
@@ -92,8 +103,9 @@ fi
 echo "Probe-phase analysis"
 echo "══════════════════════════════════════════════════════════════════"
 echo "  intervals are built ONLY from timer-driven probes, at both boundaries,"
-echo "  within a single boot, against the FIRST timeout of each incident."
-echo "  (incident = timeouts separated by less than ${INCIDENT_GAP}s)"
+echo "  within a single boot, against the FIRST timeout of each cluster."
+echo "  (cluster = timeouts within ${INCIDENT_GAP}s of each other — a TEMPORAL"
+echo "   grouping, not an established incident boundary; see the header)"
 echo
 
 awk -v igap="$INCIDENT_GAP" -v period="$TIMER_PERIOD" '
@@ -179,11 +191,11 @@ END {
         print  ""
     }
     printf "  timeout LINES      %d\n", totlines + 0
-    printf "  incidents          %d   <- the actual event count\n", totinc + 0
+    printf "  timeout CLUSTERS   %d   <- grouped by a %ds gap, NOT proven incidents\n", totinc + 0, igap
     if (edge) printf "  outside probe range %d (excluded)\n", edge
     print ""
     if (total == 0) {
-        print "  No incident could be placed inside a timer-driven probe gap."
+        print "  No timeout cluster could be placed inside a timer-driven probe gap."
         print "  Nothing to report — this is a coverage statement, not a result."
         exit
     }
@@ -199,7 +211,7 @@ END {
         print "  ⚠ Too few events for this to mean anything. Recorded so the"
         print "    question can be answered later, not so it can be answered now."
     } else if (near > total * 0.5) {
-        print "  ⚠ Over half the incidents fall in the first 10% of their gap."
+        print "  ⚠ Over half the clusters fall in the first 10% of their gap."
         print "    Not expected under independence; worth investigating."
     } else {
         print "  No evidence of an observer effect in this data. Note that this"

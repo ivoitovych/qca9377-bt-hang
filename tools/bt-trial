@@ -19,6 +19,13 @@
 
 set -uo pipefail
 
+# Shared civil-date arithmetic. Two intervals here previously used
+# (day_of_month * 24 + hour) arithmetic, silently catastrophic across a month
+# boundary. bt-phase was fixed in isolation, leaving these wrong and a second
+# implementation to maintain; see tools/lib/timestamp.awk.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/timestamp.awk" ]] || { echo "bt-trial: missing $LIBDIR/timestamp.awk" >&2; exit 1; }
+
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${BT_REPO:-}"
 if [[ -z "$REPO" ]]; then
@@ -94,9 +101,20 @@ hci_alive() {
 }
 
 next_trial_no() {
+    # Resolve the column from the header, never by position. Adding trial_type
+    # shifted `build` from field 2 to field 3, and a hardcoded $2 would silently
+    # have counted trial_type values instead — restarting numbering at 1 and
+    # overwriting an existing trial directory. The report was already guarded
+    # this way; this call site was not.
     local build="$1" n
-    n=$(awk -F'\t' -v b="$build" '$2==b {c++} END{print c+0}' "$RESULTS" 2>/dev/null)
-    echo $(( ${n:-0} + 1 ))
+    n=$(awk -F'\t' -v b="$build" '
+        NR == 1 { for (i = 1; i <= NF; i++) c[$i] = i
+                  if (!("build" in c)) { print "NOHEADER"; exit 1 }
+                  next }
+        $c["build"] == b { n++ }
+        END { print n + 0 }' "$RESULTS" 2>/dev/null)
+    [[ "$n" == "NOHEADER" || -z "$n" ]] && n=0
+    echo $(( n + 1 ))
 }
 
 case "${1:-}" in
@@ -229,7 +247,7 @@ hang|ok)
     tmo=$(jk | grep -c "command tx timeout" || true)
     usb_gone=$(jk | grep -c "USB disconnect, device number" || true)
 
-    # Pair the RIGHT synchronous setup with the timeout.
+    # Select the NEAREST PRECEDING synchronous setup — not "the right one".
     #
     # An earlier version took the first 0x0428 of the trial and the first
     # timeout of the trial and subtracted them. Under protocol v2 there are up
@@ -238,7 +256,12 @@ hang|ok)
     # measures the interval between two unrelated events and reports it as if
     # it were the failure's timing.
     #
-    # What is wanted is the setup immediately PRECEDING the first timeout.
+    # What is recorded is the setup immediately PRECEDING the first timeout.
+    # Better than first-of-trial, but a heuristic and not an established
+    # pairing: EX-009 is a case where the setup completed successfully and the
+    # command that actually went unanswered was a later Disconnect. This field
+    # means "nearest preceding synchronous setup" and must NOT be read as "the
+    # setup belonging to this failure".
     t_tmo=$(jk | grep -m1 "command tx timeout" | cut -d' ' -f1)
     if [[ -n "$t_tmo" ]]; then
         t_sco=$(jk | grep "opcode 0x0428" | cut -d' ' -f1 \
@@ -248,10 +271,7 @@ hang|ok)
     fi
     sco_to_tmo="?"
     if [[ -n "$t_sco" && -n "$t_tmo" ]]; then
-        sco_to_tmo=$(awk -v a="$t_sco" -v b="$t_tmo" '
-            function s(t,   p,q,r){split(t,p,"T");split(p[2],q,/[:.+]/);split(p[1],r,"-")
-                                   return ((r[3]*24+q[1])*3600)+q[2]*60+q[3]+q[4]/1000000}
-            BEGIN{printf "%.3f", s(b)-s(a)}')
+        sco_to_tmo=$(awk -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/interval.awk" -v a="$t_sco" -v b="$t_tmo")
     elif (( sco_sent > 0 )); then
         sco_to_tmo="none"     # SCO requested and NO timeout followed — survival under stimulus
     fi
@@ -353,10 +373,7 @@ hang|ok)
                   --no-pager -o short-iso-precise 2>/dev/null \
                   | grep "Snapshot Bluetooth health" | tail -1 | cut -d' ' -f1)
         if [[ -n "$t_probe" ]]; then
-            probe_to_tmo=$(awk -v a="$t_probe" -v b="$t_tmo" '
-                function s(t,   p,q,r){split(t,p,"T");split(p[2],q,/[:.+]/);split(p[1],r,"-")
-                                       return ((r[3]*24+q[1])*3600)+q[2]*60+q[3]+q[4]/1000000}
-                BEGIN{printf "%.3f", s(b)-s(a)}')
+            probe_to_tmo=$(awk -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/interval.awk" -v a="$t_probe" -v b="$t_tmo")
         fi
     fi
 

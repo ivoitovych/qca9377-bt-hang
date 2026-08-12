@@ -92,7 +92,7 @@ $ bluetoothctl show | grep -E "Manufacturer|Version"
 
 ---
 
-## What's actually wrong
+## Established driver mismatch
 
 `13d3:3503` is matched by no entry in btusb's vendor quirks table. It binds through the
 generic USB-Bluetooth-class rule with `driver_info = 0`, so it receives **neither** of
@@ -127,13 +127,13 @@ automatic reset attempts            :   0
 Both the reset handler and the QCA firmware path *are* compiled into the running
 `btusb.ko` (verified with `strings`). They simply never run for this device.
 
-### Why that turns a glitch into a power-cycle
+### Observed two-stage failure, and the missing reset path
 
 The controller fails in two stages:
 
 | Stage | State | Recoverable? |
 |---|---|---|
-| 1 — soft | HCI unresponsive, USB fine | **yes** — a USB reset clears it |
+| 1 — soft | HCI unresponsive, USB fine | observed **once** to recover transiently; durability unknown (`EX-004`) |
 | 2 — hard | USB core unresponsive, device drops off the bus | **no** — cold power-off only |
 
 ⚠️ It is tempting to write "with the quirk, a reset fires within seconds and you notice

@@ -11,7 +11,7 @@
 # that was violated by a real, shipped version of a tool here, and each fixture
 # is built so the OLD behaviour fails it:
 #
-#   sampling unit   a burst of timeout lines is one incident, not many
+#   sampling unit   a burst of timeout lines is one cluster, not many
 #   boot locality   no interval may span a reboot
 #   date arithmetic a gap across a month boundary must be positive and correct
 #   provenance      a contaminated probe set must be REFUSED, not reported
@@ -50,9 +50,9 @@ OUT=$(awk -v igap=600 -v period=900 -f "$AWK" tests/phase-invariants.data 2>&1)
 # and one in another. A version counting lines reports 5 "failures", inflating n
 # and destroying the independence the statistical caveat assumes.
 lines=$(grep -oP 'timeout LINES\s+\K[0-9]+' <<<"$OUT")
-inc=$(grep -oP 'incidents\s+\K[0-9]+' <<<"$OUT")
+inc=$(grep -oP 'timeout CLUSTERS\s+\K[0-9]+' <<<"$OUT")
 [[ "$lines" == "5" ]] && ok "counts 5 timeout lines" || bad "expected 5 lines, got ${lines:-none}"
-[[ "$inc"  == "2" ]] && ok "collapses them to 2 incidents" || bad "expected 2 incidents, got ${inc:-none}"
+[[ "$inc"  == "2" ]] && ok "collapses them to 2 timeout clusters" || bad "expected 2 clusters, got ${inc:-none}"
 
 # --- date arithmetic -------------------------------------------------------
 # Boot -1's incident falls between probes at 23:15 on 31 July and 00:30 on
@@ -72,7 +72,7 @@ grep -q 'boot 0 .*900.0s gap' <<<"$OUT" \
 # Only EXO records appear in the fixture, so any interval built from an ENDO
 # record would be a construction error. Two incidents, two placements.
 placed=$(grep -oP 'placed\s+\K[0-9]+' <<<"$OUT")
-[[ "$placed" == "2" ]] && ok "places both incidents in exogenous gaps" \
+[[ "$placed" == "2" ]] && ok "places both clusters in exogenous gaps" \
     || bad "expected 2 placed, got ${placed:-none}"
 
 # --- provenance refusal ----------------------------------------------------
@@ -82,6 +82,95 @@ REF=$(awk -v igap=600 -v period=100000 -f "$AWK" tests/phase-invariants.data 2>&
 grep -q 'SKIPPED — provenance check failed' <<<"$REF" \
     && ok "refuses to report when claimed provenance is impossible" \
     || bad "did not refuse on a contaminated probe set"
+
+echo
+echo "bt-capdiff matching"
+echo "──────────────────────────────────────────────────────────────"
+
+# The false-agreement case. Two records on one side, one on the other, all
+# within tolerance. A matcher that asks "is there ANY counterpart within
+# tolerance?" without consuming it reports zero unmatched in both directions and
+# announces that the paths agree — while the multiplicity is 2 against 1.
+FA=$(mktemp); FB=$(mktemp); OA=$(mktemp); OB=$(mktemp)
+trap 'rm -f "$AWK" "$FA" "$FB" "$OA" "$OB"' EXIT
+
+# The matcher lives in tools/lib/capdiff-match.awk and is used here exactly as
+# bt-capdiff uses it. Testing the real file rather than a copy extracted from
+# the caller means the test cannot pass against a matcher the tool no longer
+# runs — which is precisely how the -f trap slipped through: an extracted copy
+# worked in the test while the shipped invocation silently loaded nothing.
+MATCH=tools/lib/capdiff-match.awk
+[[ -r "$MATCH" ]] || bad "missing $MATCH"
+
+printf '2026-08-12T12:00:00.100 > HCI Event: EVENT X\n2026-08-12T12:00:00.110 > HCI Event: EVENT X\n' > "$FA"
+printf '2026-08-12T12:00:00.105 > HCI Event: EVENT X\n' > "$FB"
+: > "$OA"; : > "$OB"
+
+awk -f tools/lib/timestamp.awk -f "$MATCH" -v tol=0.5 -v outA="$OA" -v outB="$OB" "$FA" "$FB"
+
+ua=$(wc -l < "$OA"); ub=$(wc -l < "$OB")
+if [[ "$ua" == "1" && "$ub" == "0" ]]; then
+    ok "2-against-1 leaves exactly one record unmatched (no false agreement)"
+else
+    bad "expected 1 unmatched in A and 0 in B; got $ua and $ub"
+fi
+
+# And the genuine-agreement case must still report zero, or the matcher would be
+# useless in the direction that matters.
+printf '2026-08-12T12:00:00.100 > HCI Event: EVENT X\n' > "$FA"
+printf '2026-08-12T12:00:00.105 > HCI Event: EVENT X\n' > "$FB"
+: > "$OA"; : > "$OB"
+awk -f tools/lib/timestamp.awk -f "$MATCH" -v tol=0.5 -v outA="$OA" -v outB="$OB" "$FA" "$FB"
+if [[ "$(wc -l < "$OA")" == "0" && "$(wc -l < "$OB")" == "0" ]]; then
+    ok "1-against-1 within tolerance matches cleanly"
+else
+    bad "genuine agreement reported as a difference"
+fi
+
+# Shared timestamp arithmetic must survive a month boundary, which is the bug
+# that survived in bt-trial after bt-phase was fixed in isolation.
+printf '2026-08-31T23:59:59.000 > HCI Event: EVENT Y\n' > "$FA"
+printf '2026-09-01T00:00:02.000 > HCI Event: EVENT Y\n' > "$FB"
+: > "$OA"; : > "$OB"
+awk -f tools/lib/timestamp.awk -f "$MATCH" -v tol=5 -v outA="$OA" -v outB="$OB" "$FA" "$FB"
+if [[ "$(wc -l < "$OA")" == "0" && "$(wc -l < "$OB")" == "0" ]]; then
+    ok "3s apart across a month boundary is within a 5s tolerance"
+else
+    bad "month-boundary arithmetic wrong: records 3s apart treated as unmatched"
+fi
+
+echo
+echo "awk program-loading (the -f trap)"
+echo "──────────────────────────────────────────────────────────────"
+
+# `awk -f lib.awk 'program' input` does NOT run 'program'. With -f present, awk
+# takes the program only from the -f files and treats the positional string as
+# an INPUT FILENAME. Sharing the date arithmetic via -f therefore silently
+# disabled bt-capdiff's matcher and both of bt-trial's interval computations:
+# no error, no output, and bt-capdiff reported perfect agreement between paths
+# differing by 278 records.
+#
+# Nothing about that is visible in a syntax check or a code reading that does
+# not know the rule. So: assert that no tool passes an inline program alongside
+# -f, and that the interval helper actually returns a number.
+offenders=$(grep -rnE "awk[^|]*-f [^ ]+\.awk[^|]*'" tools/ bin/ 2>/dev/null \
+            | grep -vE "^tools/lib/|-f \"\\\$LIBDIR/[a-z-]+\.awk\" -f " || true)
+if [[ -z "$offenders" ]]; then
+    ok "no tool passes an inline program alongside awk -f"
+else
+    bad "inline program alongside -f (it will be read as a filename):"
+    sed 's/^/      /' <<<"$offenders"
+fi
+
+iv=$(awk -f tools/lib/timestamp.awk -f tools/lib/interval.awk \
+        -v a="2026-08-31T23:59:59.000000+02:00" -v b="2026-09-01T00:00:02.000000+02:00" </dev/null)
+[[ "$iv" == "3.000" ]] && ok "interval.awk spans a month boundary (3.000s)" \
+    || bad "expected 3.000 across month boundary, got '${iv:-empty}'"
+
+iv2=$(awk -f tools/lib/timestamp.awk -f tools/lib/interval.awk \
+        -v a="not-a-timestamp" -v b="2026-09-01T00:00:02.000000+02:00" </dev/null)
+[[ -z "$iv2" ]] && ok "interval.awk prints nothing on an unparseable timestamp" \
+    || bad "expected empty output on bad input, got '$iv2'"
 
 echo
 if (( fail )); then

@@ -46,6 +46,9 @@ FILES=(
     /usr/local/bin/bt-context
     /usr/local/bin/bt-logvolume
     /usr/local/bin/bt-phase
+    /usr/local/bin/lib/timestamp.awk
+    /usr/local/bin/lib/interval.awk
+    /usr/local/bin/lib/capdiff-match.awk
     /usr/local/bin/bt-sco
     /usr/local/bin/bt-capdiff
     /usr/local/sbin/bt-capture
@@ -75,6 +78,7 @@ FILES=(
 
 # Directories to remove only if empty after the files above are gone.
 DIRS=(
+    /usr/local/bin/lib
     /etc/systemd/system/bluetooth.service.d
     /etc/systemd/journald.conf.d
     /etc/systemd/system/bt-hang-watchdog.service.d
