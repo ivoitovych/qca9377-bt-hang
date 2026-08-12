@@ -1,0 +1,107 @@
+#!/bin/bash
+# bt-logvolume — what is filling the kernel log, and how fast?
+#
+# WHY THIS EXISTS. Verbose Bluetooth debugging is the only way to see what the
+# controller was doing when it failed, and it is also capable of destroying the
+# evidence it exists to collect: one boot produced 1.56 million kernel lines in
+# 16 minutes, enough to exhaust a 16 GB journal cap in under three hours.
+#
+# Keeping that under control needs one question answered repeatedly — "what is
+# producing the volume?" — and the answer has twice been a debug site whose
+# function name gave no hint it ran per packet. Reading names does not work.
+# Counting does.
+#
+# It is also a script rather than a pipeline for a practical reason: an ad-hoc
+# `journalctl | awk | sort | uniq -c` is a different command string every time,
+# so it can never accumulate in a permission allowlist and prompts on every use.
+# A named tool is approved once.
+#
+# Usage:
+#   bt-logvolume [-b <boot>] [--since <time>] [-n <count>] [--user]
+#
+#   -b <boot>    journal boot offset (default 0)
+#   --since      only count from this time, e.g. "-10min"
+#   -n <count>   how many message shapes to list (default 15)
+#   --user       include userspace log lines too, not only the kernel
+#
+# Message shapes are formed by replacing numbers, hex values and pointers with
+# N, so a million variations of one message collapse to a single row.
+
+set -uo pipefail
+
+BOOT=0
+SINCE=""
+TOP=15
+KONLY=1
+
+while (( $# )); do
+    case "$1" in
+        -b)      BOOT="${2:-0}"; shift 2 ;;
+        --since) SINCE="${2:-}"; shift 2 ;;
+        -n)      TOP="${2:-15}"; shift 2 ;;
+        --user)  KONLY=0; shift ;;
+        -h|--help) sed -n '2,29p' "$0"; exit 0 ;;
+        *) echo "bt-logvolume: unknown argument: $1" >&2; exit 1 ;;
+    esac
+done
+
+JARGS=(-b "$BOOT" --no-pager -o cat)
+(( KONLY )) && JARGS=(-k "${JARGS[@]}")
+[[ -n "$SINCE" ]] && JARGS+=(--since "$SINCE")
+
+TMP=$(mktemp) || exit 1
+trap 'rm -f "$TMP"' EXIT
+
+journalctl "${JARGS[@]}" 2>/dev/null > "$TMP"
+total=$(wc -l < "$TMP")
+
+if (( total == 0 )); then
+    echo "bt-logvolume: no lines for boot $BOOT${SINCE:+ since $SINCE}"
+    exit 0
+fi
+
+# Rate over the window actually covered, plus the rate right now. These differ a
+# lot and confusing them is how a fixed problem gets reported as still broken:
+# a boot average includes the start-up burst long after the steady rate is fine.
+if [[ -z "$SINCE" ]]; then
+    span=$(awk '{printf "%d", $1}' /proc/uptime)
+else
+    span=""
+fi
+
+now=$(journalctl "${JARGS[@]:0:$(( KONLY ? 4 : 3 ))}" --since "-60s" 2>/dev/null | wc -l)
+
+echo "Kernel log volume — boot $BOOT${SINCE:+, since $SINCE}"
+echo "──────────────────────────────────────────────────────────────────"
+printf '  total lines        %s\n' "$total"
+if [[ -n "$span" && "$span" -gt 0 ]]; then
+    printf '  boot average       %.1f lines/s   (over %d s uptime)\n' \
+        "$(awk -v a="$total" -v b="$span" 'BEGIN{print a/b}')" "$span"
+fi
+printf '  last 60 s          %s lines/min\n' "$now"
+echo
+printf '  Projected at the current rate: %.2f GB/day\n' \
+    "$(awk -v n="$now" 'BEGIN{print n*60*24*80/1073741824}')"
+echo "  (assuming ~80 bytes/line; the journal cap is 16 GB)"
+echo
+echo "Top $TOP message shapes"
+echo "──────────────────────────────────────────────────────────────────"
+
+awk -v tot="$total" '
+{
+    gsub(/0x[0-9a-fA-F]+/, "N")
+    gsub(/[0-9a-f]{8,}/, "N")
+    gsub(/[0-9]+/, "N")
+    print
+}' "$TMP" | sort | uniq -c | sort -rn | head -"$TOP" | awk -v tot="$total" '
+{
+    n = $1
+    $1 = ""
+    sub(/^ /, "")
+    printf "  %8d  %5.1f%%  %s\n", n, 100*n/tot, $0
+}'
+
+echo
+echo "A shape at the top of this list is a debug site running per packet."
+echo "Suppress it by function name in bin/bt-dyndbg (NOISY_FUNCS), not by file:"
+echo "the hottest sites so far had names that gave no hint they were hot."

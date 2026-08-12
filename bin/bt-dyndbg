@@ -62,6 +62,16 @@ NOISY_FUNCS=(
     btusb_tx_complete btusb_isoc_complete btusb_isoc_tx_complete
     btusb_bulk_complete btusb_intr_complete btusb_diag_complete
     btusb_send_frame
+    # Second pass, found by measuring rather than by reading names. These four
+    # produced 189,274 of the 193,506 lines in one boot — 98% — and none of
+    # them look per-packet from the function name alone:
+    #   hci_rx_work              once per received HCI packet ("Event packet")
+    #   hci_send_frame           once per transmitted packet ("type %d len %d")
+    #   hci_conn_enter_active_mode  once per ACL packet, to exit sniff mode
+    #   hci_conn_idle            the matching idle transition
+    # The lesson is the same one that produced this list: the only reliable way
+    # to find a hot debug site is to count what the log actually contains.
+    hci_rx_work hci_send_frame hci_conn_enter_active_mode hci_conn_idle
 )
 PACKET_FILES=(hci_event.c l2cap_core.c)
 ALL_FILES=(btusb.c hci_core.c hci_sync.c hci_conn.c hci_event.c l2cap_core.c

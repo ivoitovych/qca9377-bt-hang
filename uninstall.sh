@@ -44,6 +44,7 @@ FILES=(
     /usr/local/bin/bt-boot-stats
     /usr/local/bin/bt-exhibit
     /usr/local/bin/bt-context
+    /usr/local/bin/bt-logvolume
     /usr/local/bin/bt-sanitize-logs
     /usr/local/share/qca9377-bt-hang/installed-at
     /usr/local/bin/bt-boot-list

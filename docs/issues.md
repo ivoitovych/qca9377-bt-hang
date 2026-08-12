@@ -111,6 +111,33 @@ second instance makes it a pattern.
 
 ---
 
+## BT-6 — Controller delivers ACL data for a connection handle the host does not know
+
+**Status:** observed once.
+**Reportable:** ❌ no — a single occurrence with no mechanism and no second instance.
+
+```
+2026-08-12T08:27:36.996046  hci0 evt 2
+2026-08-12T08:27:36.996084  Bluetooth: hci0: ACL packet for unknown connection handle 1
+```
+
+The controller sent ACL data on handle 1 while the host had no such connection. That is a
+host/controller **state disagreement**, and it is a different signature from the `0x2005`
+desync in BT-2 — that one is a command/event mismatch, this is a data channel the host has
+no record of.
+
+Recorded rather than investigated. It may be noise, it may be a symptom of BT-1, or it may
+be a third independent state-tracking defect. Deciding which needs a second instance, and
+this register exists partly so a second instance is recognised as such instead of being
+read as new.
+
+Worth noting the family resemblance without leaning on it: BT-2 and BT-6 are both the host
+and the controller disagreeing about state, and BT-1's failures both occur during SCO link
+transitions, which are state changes. Whether that is one underlying fault or three
+unrelated ones is exactly what is not yet known.
+
+---
+
 ## On the wider claim
 
 It is tempting — and this investigation supplies plenty of emotional support for it — to
