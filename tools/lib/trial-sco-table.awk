@@ -18,7 +18,25 @@
 # report to be byte-identical.
 
 BEGIN { FS = "\t" }
-NR==1 { for (i=1; i<=NF; i++) col[$i] = i; next }
+# REQUIRED SCHEMA — see trial-summary.awk for the reasoning.
+#
+# `outcome` is mandatory. Without it the classification below silently makes
+# every row not-hung, producing a table that says the stimulus never coincided
+# with a failure. That is precisely the wrong answer this cross-tab exists to
+# avoid, delivered with a clean exit status.
+#
+# `sco_sent` is optional on purpose: rows recorded before the SCO fields were
+# tracked are real trials, and the code represents them as "?" rather than
+# pretending to know. That is a deliberate unknown, not a missing precondition.
+NR==1 {
+    for (i=1; i<=NF; i++) col[$i] = i
+    if (!("outcome" in col)) {
+        print "trial-sco-table: results.tsv has no `outcome` column." > "/dev/stderr"
+        print "  Refusing to report: every row would be classified as survived." > "/dev/stderr"
+        abort = 1; exit 1
+    }
+    next
+}
 {
     # BY HEADER NAME, NEVER BY POSITION. This line read `$5 == "hang"`
     # until 2026-08-13. Inserting trial_type made field 5 `protocol`, so the
@@ -32,11 +50,22 @@ NR==1 { for (i=1; i<=NF; i++) col[$i] = i; next }
     # unchanged: positional assumptions are then mechanically impossible
     # rather than merely discouraged.
     s = (col["sco_sent"]  ? $col["sco_sent"]  : "?")
-    f = (col["outcome"] && $col["outcome"] == "hang")
+    o = $col["outcome"]
+    if (o != "hang" && o != "ok" && o != "survived") {
+        printf "trial-sco-table: unrecognised outcome \"%s\" on line %d\n", o, NR > "/dev/stderr"
+        print  "  Refusing to report rather than counting it as a survival." > "/dev/stderr"
+        abort = 1; exit 1
+    }
+    f = (o == "hang")
     if (s == "?" ) { unknown++; next }
     if (s+0 > 0) { if (f) a++; else b++ } else { if (f) c++; else d++ }
 }
 END {
+    # awk runs END even after `exit` from another rule, so a refusal would
+    # still print the table it is refusing to justify — the caller would see
+    # a plausible report AND a non-zero status, and the report is what gets
+    # read. Bail before printing anything.
+    if (abort) exit 1
     printf "  %-22s %8s %12s\n", "", "hung", "survived"
     printf "  %-22s %8d %12d\n", "SCO setup requested", a+0, b+0
     printf "  %-22s %8d %12d\n", "no SCO setup", c+0, d+0
@@ -49,9 +78,6 @@ END {
     # never ran at all from the day it was written. The separately reported
     # defect — outcome read by field position — was real, but in code that
     # was never reached.
-    #
-    # (And note this comment cannot contain an apostrophe: the whole awk
-    # program is a single-quoted shell string, so one would end it.)
     if ((a+b) == 0) {
         print "  No trial has yet applied the stimulus. Until one does, nothing here"
         print "  distinguishes a build that fixes the bug from a run that never"

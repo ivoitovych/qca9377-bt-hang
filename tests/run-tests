@@ -282,6 +282,69 @@ fi
 rm -rf "$BROKEN2"
 
 echo
+echo "analysis refuses data that cannot justify it"
+echo "──────────────────────────────────────────────────────────────"
+
+# THE INVARIANT: an evidence-producing program must fail non-zero not only when
+# its code cannot execute, but when its INPUT SCHEMA cannot justify the
+# calculation.
+#
+# Resolving columns by name is only half the guarantee. If a required name is
+# absent, awk turns the lookup into field 0 or an empty string and the program
+# computes plausible nonsense while exiting successfully — the same wrong answer
+# as reading the wrong field, reached by a different route. In the SCO table
+# specifically, a missing `outcome` makes every row not-hung: a cross-tab
+# asserting the stimulus never coincided with a failure.
+SCHEMA=$(mktemp -d)
+mkdir -p "$SCHEMA/evidence/trials"; touch "$SCHEMA/install.sh"; git -C "$SCHEMA" init -q 2>/dev/null
+
+# 1. Required column removed entirely.
+python3 - tests/trial-results.tsv "$SCHEMA/evidence/trials/results.tsv" <<'PY'
+import sys
+rows = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
+i = rows[0].index("outcome")
+with open(sys.argv[2], "w") as f:
+    for r in rows:
+        f.write("\t".join(v for j, v in enumerate(r) if j != i) + "\n")
+PY
+rc=0
+BT_REPO="$SCHEMA" tools/bt-trial report >/dev/null 2>&1 || rc=$?
+if (( rc != 0 )); then
+    ok "report refuses a schema with no outcome column (rc=$rc)"
+else
+    bad "report accepted a schema with no outcome column — every row counts as survived"
+fi
+
+# And it must not print the table it is refusing to stand behind. awk runs END
+# even after `exit`, so a naive refusal emits a plausible report alongside the
+# non-zero status — and the report is what a human reads.
+out=$(BT_REPO="$SCHEMA" tools/bt-trial report 2>/dev/null)
+if grep -qE 'SCO setup requested|TRIAL TYPE .*HANGS' <<<"$out"; then
+    bad "a refused report still printed its table"
+else
+    ok "a refused report prints no table"
+fi
+
+# 2. Required column present, value outside the known domain.
+python3 - tests/trial-results.tsv "$SCHEMA/evidence/trials/results.tsv" <<'PY'
+import sys
+rows = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
+i = rows[0].index("outcome")
+rows[1][i] = "potato"
+with open(sys.argv[2], "w") as f:
+    for r in rows:
+        f.write("\t".join(r) + "\n")
+PY
+rc=0
+BT_REPO="$SCHEMA" tools/bt-trial report >/dev/null 2>&1 || rc=$?
+if (( rc != 0 )); then
+    ok "report refuses an unrecognised outcome value (rc=$rc)"
+else
+    bad "an unrecognised outcome was silently counted as a survival"
+fi
+rm -rf "$SCHEMA"
+
+echo
 echo "documentation-drift detector"
 echo "──────────────────────────────────────────────────────────────"
 

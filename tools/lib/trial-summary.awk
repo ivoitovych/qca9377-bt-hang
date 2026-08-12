@@ -18,13 +18,50 @@
 # report to be byte-identical.
 
 BEGIN { FS = "\t" }
-NR == 1 { for (i = 1; i <= NF; i++) c[$i] = i; next }
+# REQUIRED SCHEMA. Resolving columns by name is only half the guarantee: if a
+# required name is ABSENT, awk turns the lookup into field 0 or an empty value
+# and the program computes plausible nonsense while exiting successfully. That
+# is the same epistemic failure as reading the wrong field, arriving by a
+# different route.
+#
+# So the schema is a precondition, checked once, and its absence is fatal. A
+# report that cannot justify its own arithmetic must not print it.
+#
+# trial_type is deliberately NOT required: rows written before that column
+# existed are still legitimate data and are labelled unknown_pre_schema.
+NR == 1 {
+    for (i = 1; i <= NF; i++) c[$i] = i
+    split("build outcome duration_s", need, " ")
+    for (k in need)
+        if (!(need[k] in c)) missing = missing " " need[k]
+    if (missing != "") {
+        printf "trial-summary: results.tsv is missing required column(s):%s\n", missing > "/dev/stderr"
+        print  "  Refusing to report. The denominators cannot be justified from this schema." > "/dev/stderr"
+        abort = 1; exit 1
+    }
+    next
+}
 {
     ty = (c["trial_type"] ? $c["trial_type"] : "unknown_pre_schema")
     b  = $c["build"]; k = ty "|" b
-    tot[k]++; if ($c["outcome"] == "hang") h[k]++; sum[k] += $c["duration_s"]
+    # DOMAIN CHECK. An unrecognised outcome must not be silently folded into
+    # "not hung". Miscounting a failure as a survival moves the denominator in
+    # the direction that makes any build look better, which is the one
+    # direction an error here must never take.
+    o = $c["outcome"]
+    if (o != "hang" && o != "ok" && o != "survived") {
+        printf "trial-summary: unrecognised outcome \"%s\" on line %d\n", o, NR > "/dev/stderr"
+        print  "  Refusing to report rather than counting it as a survival." > "/dev/stderr"
+        abort = 1; exit 1
+    }
+    tot[k]++; if (o == "hang") h[k]++; sum[k] += $c["duration_s"]
 }
 END {
+    # awk runs END even after `exit` from another rule, so a refusal would
+    # still print the table it is refusing to justify — the caller would see
+    # a plausible report AND a non-zero status, and the report is what gets
+    # read. Bail before printing anything.
+    if (abort) exit 1
     printf "  %-20s %-8s %-10s %-8s %s\n", "TRIAL TYPE", "BUILD", "HANGS", "RATE", "mean duration"
     for (k in tot) {
         split(k, p, "|")

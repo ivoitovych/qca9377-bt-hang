@@ -1422,8 +1422,11 @@ answer. Trust comes from **overlapping checks that fail differently**:
 | external repository review | integration — code that never runs, prose ahead of machinery |
 | documentation-drift warning | the written record falling behind |
 
-Each is weak alone. Every serious defect in this project was caught by exactly one of them,
-and never the one that was supposed to.
+Each is weak alone. So far most serious defects here have been caught by one mechanism
+rather than several — and often not the one that seemed designed for them. That is a
+description of where the coverage currently is, not a property to be proud of: the goal is
+for a future defect to be caught by **more than one** independent check, because that is
+what makes a miss unlikely rather than lucky.
 
 ### Correctness has layers, and a check at one does not establish the next
 
@@ -1448,6 +1451,16 @@ Two invariants follow, and they are separate:
   header and requiring byte-identical output.
 - **execution** — the analysis actually ran. Enforced by making every evidence-producing
   command fatal to its caller, and tested by removing the program and by breaking it.
+- **admissibility** — the input can justify the calculation. Resolving columns by name is
+  only half a guarantee: if a required name is *absent*, awk turns the lookup into field 0
+  and computes plausible nonsense while exiting successfully. A missing `outcome` made the
+  SCO cross-tab classify every row as survived. Required columns are now a precondition,
+  unrecognised `outcome` values are fatal rather than folded into "not hung", and `END` is
+  guarded — awk runs it even after `exit`, so a naive refusal prints the very table it is
+  refusing to stand behind, and the table is what a human reads.
+
+The endpoint that follows: **a trustworthy analysis does not merely prove that its program
+ran; it proves the program received data from which its claimed result is defined.**
 
 `bt-trial` deliberately does not use `set -e`: it probes things allowed to fail, and
 errexit's semantics are treacherous. So the analysis commands are made explicitly fatal
