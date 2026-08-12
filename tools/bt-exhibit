@@ -154,7 +154,7 @@ cmd_list() {
         [[ -e "$f" ]] || continue
         found=1
         local b; b=$(basename "$f" .md)
-        local claim; claim=$(grep -m1 '^\*\*Claim\.\*\*' "$f" | sed 's/^\*\*Claim\.\*\* //')
+        local claim; claim=$(grep -m1 '^\*\*Claim' "$f" | sed -E 's/^\*\*Claim[^*]*\*\* //')
         printf 'EX-%s  %-34s %s\n' "${b:0:3}" "${b:4}" "$claim"
     done
     (( found )) || echo "no exhibits yet"
@@ -183,7 +183,7 @@ cmd_index() {
             [[ -e "$f" ]] || continue
             found=1
             local b; b=$(basename "$f" .md)
-            local claim; claim=$(grep -m1 '^\*\*Claim\.\*\*' "$f" | sed 's/^\*\*Claim\.\*\* //')
+            local claim; claim=$(grep -m1 '^\*\*Claim' "$f" | sed -E 's/^\*\*Claim[^*]*\*\* //')
             printf '| EX-%s | [%s](%s.md) | %s |\n' "${b:0:3}" "${b:4}" "$b" "$claim"
         done
         (( found )) || echo '| — | _none yet_ | |'
