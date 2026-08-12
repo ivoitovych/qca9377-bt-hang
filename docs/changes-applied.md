@@ -289,3 +289,39 @@ reintroducing it. `SystemMaxUse` discards oldest-first only on reaching the cap;
 
 The 34-boot dataset survives in `evidence/exhibits/003-desync-is-not-the-cause.md`,
 captured nine minutes earlier. That exhibit is annotated as no longer re-runnable.
+
+---
+
+## 2026-08-12 (later) — capture that survives, trials that arm themselves
+
+| Change | File | Effect | Revert |
+|---|---|---|---|
+| Decode-free HCI capture | `/usr/local/sbin/bt-capture` + `bt-capture.service` | rotating btsnoop written without decoding, so btmon's decoder crash cannot end it | disable the unit |
+| Auto-opened trials | `bt-trial-auto.service` | opens a trial each boot before `bluetooth.service`; closed by the watchdog on a hang or by systemd at shutdown | disable the unit |
+| SCO parameter reader | `/usr/local/bin/bt-sco` | pairs each synchronous setup with its completion and decoded parameters | remove the file |
+| Log volume reporter | `/usr/local/bin/bt-logvolume` | what is filling the kernel log, and at what rate | remove the file |
+| Per-packet debug suppressed | `/usr/local/sbin/bt-dyndbg` | four more hot sites switched off; 174 → 166 active | `bt-dyndbg on --packets` |
+
+Capture directories are root-only (`0700`, `UMask=0077`): HCI captures contain link keys
+and device addresses.
+
+### ⚠️ A documented change that was never in effect
+
+`bin/bt-trace`'s `KEEP` default was raised 30 → 400 earlier that day and recorded here as
+done. It was not: `bt-trace.service` sets `BT_TRACE_KEEP=30` explicitly, which silently
+overrode the default. **The service kept 30 files the whole time while this document
+claimed 400**, and the btsnoop captures for a session under active investigation were
+rotated away roughly nine hours before anyone looked for them.
+
+Now set in the unit, where it takes effect, and verified:
+
+```console
+$ systemctl show bt-trace -p Environment --value
+BT_TRACE_DIR=/var/log/bt-health/trace BT_TRACE_MAX_MB=128 BT_TRACE_KEEP=400 BT_TRACE_MIN_FREE_GB=15
+```
+
+The free-space floor was raised 10 → 15 GB at the same time; it is enforced on every check
+regardless of the file count, and is the bound that cannot be wrong.
+
+**Rule taken from this:** a change to a default is not applied until the value *in effect*
+has been read back. Record the verification command alongside the change, not the intent.

@@ -1085,3 +1085,70 @@ occur without the consequent?*
   in under three hours and rotate away the evidence it existed to preserve. "File" was the
   wrong granularity: volume tracks a call site's position in the data path, not which file
   it lives in.
+
+---
+
+## Phase 20 — the instrumentation fails, three ways
+
+A session with the Lenovo earbuds produced the most informative result so far and then
+demonstrated that the apparatus could not record it.
+
+**The result.** Three synchronous-link setups were issued and the controller survived all
+three. That fills the cell of the 2×2 that had been empty and **refutes the simplest
+reading of the two failures**: SCO setup alone does not hang this controller.
+
+| | hung | survived |
+|---|---|---|
+| SCO setup requested | 2 | **3** |
+| no SCO setup | 0 | several |
+
+Whatever distinguishes the fatal cases must therefore be in the *parameters* of the
+request — voice setting, packet type, maximum latency, retransmission effort — which exist
+only in the btsnoop capture and never in the kernel log.
+
+**Failure 1: the captures were gone.** `btmon` had aborted **67 times** in that boot
+(`BT-4`), and the retained files covering the relevant window had been rotated away. BT-4
+stopped being a nuisance the moment it destroyed the only copy of the data the
+investigation now depends on.
+
+**Failure 2: a retention fix that never took effect.** `bin/bt-trace`'s `KEEP` default had
+been raised 30 → 400 days earlier, and `changes-applied.md` recorded it as done. But
+`bt-trace.service` sets `BT_TRACE_KEEP=30` explicitly, silently overriding the default. The
+service kept 30 files the entire time while the documentation claimed 400. **Changing a
+default is worthless when the caller sets the variable**, and the documentation asserted a
+state that was never true.
+
+**Failure 3: no trial was ever open.** The structured SCO fields added to `bt-trial` — which
+exist precisely to record whether the stimulus was applied — captured nothing on all three
+occasions a hang occurred, because opening a trial required the operator to type a command.
+The operator pointed out why that could never work: Bluetooth starts with the system and
+begins scanning before anyone can reach a terminal, and the environment holds discoverable
+devices that cannot be switched off. A manually opened trial had already missed the window.
+
+### What was built in response
+
+- `bin/bt-capture` — a decode-free HCI capture. The crash is in btmon's *decoder*, so this
+  reads raw frames from the kernel monitor socket and writes btsnoop without parsing any of
+  them. Verified readable by `btmon -r`. Runs alongside btmon rather than replacing it.
+- `tools/bt-sco` — pairs each setup request with its completion and prints decoded
+  parameters, the comparison that now matters.
+- `tools/bt-logvolume` — answers "what is filling the log" as a tool rather than a
+  retyped pipeline.
+- `bt-trial-auto.service` — **every boot is a trial**, opened before `bluetooth.service`,
+  closed by the watchdog on a hang or by systemd at shutdown.
+
+### Lessons added
+
+- **A fix to a default is not a fix if the caller overrides it.** Verify the value in
+  effect, not the value in the source. The same evidence was lost twice, and the second
+  loss happened under a documented "fix".
+- **Instrumentation that requires a human to arm it will be unarmed when it matters.**
+  Three hangs, three times no trial open. The apparatus must default to recording.
+- **A diagnostic tool's own bugs are load-bearing.** `BT-4` was filed as a low-priority
+  annoyance in a tool nobody was investigating; it then became the sole reason a finding
+  could not be pursued. Bugs in the measuring instrument outrank bugs of equal size
+  elsewhere.
+- **Record what the experiment measures, not what it was hoped to measure.** Auto-opened
+  trials record `survived`, never `ok`, because they say only that the machine did not
+  hang — not that any protocol was carried out. The denominator they build is
+  observational and is labelled that way in the code, the README and the register.

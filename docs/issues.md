@@ -79,8 +79,22 @@ or a vendor reason for omitting exactly those three IDs. Absence is suggestive, 
 
 ## BT-4 — `btmon` aborts repeatedly while capturing (bluez 5.72)
 
-**Status:** observed continuously; worked around, not diagnosed.
+**Status:** ⬆️ **escalated 2026-08-12 — this blocked the investigation, it is not cosmetic.**
+Mitigated by an independent capture; still not diagnosed.
 **Reportable:** ✅ yes, to BlueZ — and it is entirely separate from the controller.
+
+**Why the priority changed.** 67 aborts in a single boot. When the SCO request parameters
+became the only remaining candidate for what distinguishes a fatal synchronous setup from a
+survived one, the captures containing them were gone — partly to these crashes, partly to a
+retention setting that was not in effect (see `changes-applied.md`). A bug in the measuring
+instrument outranks a bug of equal size elsewhere, because it removes the ability to
+investigate anything else.
+
+**Mitigation, not a fix.** `bin/bt-capture` now records the same stream independently: it
+reads raw frames from the kernel's HCI monitor socket and writes btsnoop **without decoding
+them**, so a decoder bug cannot end the capture. btmon still runs alongside it for live
+decoding. The underlying crash is untouched and still needs a minimal reproducer and a
+backtrace before it is worth filing.
 
 `btmon -w` aborts with a core dump during capture, frequently enough that the capture
 rotates on crash rather than on size. Files average ~2 MB against a 128 MB rotation
