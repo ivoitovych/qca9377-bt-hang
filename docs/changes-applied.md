@@ -369,3 +369,23 @@ The probe timestamps are **execution** times, not scheduled due times. A timer i
 delayed by system load — or by controller trouble — moves the measuring ruler in a direction
 the system under study can influence. Reconstructing due times from `OnUnitActiveSec` is the
 next refinement and is not yet done.
+
+
+---
+
+## 2026-08-13 — shared awk programs
+
+| Change | File | Effect | Revert |
+|---|---|---|---|
+| Shared civil-date arithmetic | `/usr/local/bin/lib/timestamp.awk` | one `iso_secs()` for every analysis tool | removed by `uninstall.sh` |
+| Interval helper | `/usr/local/bin/lib/interval.awk` | seconds between two ISO timestamps | as above |
+| Capture-path matcher | `/usr/local/bin/lib/capdiff-match.awk` | one-to-one pairing for `bt-capdiff` | as above |
+
+These are data files, not executables, and they must live in `<dir of the tool>/lib`
+because the tools load them with `awk -f`. `uninstall.sh` removes them and then removes
+`/usr/local/bin/lib` if empty.
+
+**Why they exist as files rather than inline.** `awk -f lib.awk 'program' input` does not
+run `'program'` — with `-f` present, awk takes the program only from the `-f` files and
+treats the positional string as an input filename. Inlining a program alongside a shared
+`-f` library silently disables it. `tests/run-tests` asserts no tool does this.

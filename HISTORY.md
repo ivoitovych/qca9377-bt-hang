@@ -1324,3 +1324,58 @@ Nine further defects followed from reading the code rather than the summaries:
   paths on `HH:MM:SS` looked plausible. Comparing on full timestamps revealed the two paths
   do not share a clock at all — `bt-capture` stamps at userspace receive time, btmon at
   kernel time. That is now documented at the point the timestamp is written.
+
+---
+
+## Phase 23 — a fix that silently disabled itself
+
+A second repository review found five defects. Four were straightforward; the fifth was a
+**false agreement**, and repairing it produced the most instructive bug in the project.
+
+**The reported defect.** `bt-capdiff`'s matcher asked, for each record, "is there ANY
+counterpart with this descriptor within tolerance?" — without consuming the match. Two
+records could both claim the same single counterpart, both directions report zero
+unmatched, and the tool announce that the paths agree while the multiplicity was 2 to 1.
+It could only ever manufacture agreement, never the conservative refusal, but agreement is
+the one verdict the tool exists to give.
+
+**The repair, and its own defect.** Matching was made consumptive, and the civil-date
+arithmetic — which three tools had grown separate, subtly different copies of — was shared
+as `tools/lib/timestamp.awk`, loaded with `awk -f`. Verifying with `BT_CAPDIFF_TOL=0`,
+which cannot possibly match anything, reported:
+
+```
+only in btmon        0   (no match within 0s)
+only in decode-free  0   (no match within 0s)
+```
+
+`awk -f lib.awk 'program' input` **does not run `'program'`**. With `-f` present awk takes
+the program only from the `-f` files and treats the positional string as an *input
+filename*. No error, no output. The matcher never ran; the output files were created empty
+by a later `touch`; and `bt-capdiff` reported perfect agreement between paths differing by
+278 records. The same trap had silently disabled both of `bt-trial`'s interval
+computations.
+
+**Why the test did not catch it.** `tests/run-tests` extracted a *copy* of the matcher and
+ran it with `-f`. The copy worked. The shipped invocation loaded nothing. The test also
+contained a case — "1-against-1 matches cleanly" — that passed *vacuously* with no program
+loaded at all; only the 2-against-1 case had the power to fail.
+
+### Lessons added
+
+- **A shared-library refactor can disable the thing it refactors.** Nothing about
+  `awk -f lib.awk 'program'` looks wrong, it passes every syntax check, and it fails
+  silently. `tests/run-tests` now greps for the pattern across all tools.
+- **Test the artefact the tool actually runs, not a copy of it.** Extracting logic into a
+  fixture tests the extraction. The capdiff test now drives `tools/lib/capdiff-match.awk`
+  directly, which is the file the tool loads.
+- **A test that cannot fail is not a test.** "1-against-1 matches cleanly" asserts zero
+  unmatched, which an empty program satisfies perfectly. Every assertion needs a fixture on
+  which the wrong behaviour produces the wrong answer.
+- **Verify a fix with an input that must break it.** The consumptive matcher looked correct
+  and the counts looked plausible. Setting the tolerance to zero — where everything must
+  mismatch — is what exposed that no matching was happening at all.
+- **A schema change breaks positional access somewhere you did not look.** Adding
+  `trial_type` shifted `build` from field 2 to field 3. The report was guarded by
+  header-name lookup; `next_trial_no` was not, and would have restarted trial numbering at
+  1 and overwritten an existing trial directory.
