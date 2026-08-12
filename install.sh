@@ -170,6 +170,7 @@ install_file "$SRC/tools/bt-exhibit"     /usr/local/bin/bt-exhibit     0755
 install_file "$SRC/tools/bt-context"     /usr/local/bin/bt-context     0755
 install_file "$SRC/tools/bt-logvolume"   /usr/local/bin/bt-logvolume   0755
 install_file "$SRC/tools/bt-phase"       /usr/local/bin/bt-phase       0755
+install_file "$SRC/tools/bt-env-history" /usr/local/bin/bt-env-history 0755
 # Shared awk programs. These are loaded with `awk -f`, so they must sit where
 # the tools look: <dir of the tool>/lib.
 install_file "$SRC/tools/lib/timestamp.awk"     /usr/local/bin/lib/timestamp.awk     0644

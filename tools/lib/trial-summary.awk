@@ -31,7 +31,7 @@ BEGIN { FS = "\t" }
 # existed are still legitimate data and are labelled unknown_pre_schema.
 NR == 1 {
     for (i = 1; i <= NF; i++) c[$i] = i
-    split("build outcome duration_s", need, " ")
+    split("build outcome duration_s environment", need, " ")
     for (k in need)
         if (!(need[k] in c)) missing = missing " " need[k]
     if (missing != "") {
@@ -43,18 +43,34 @@ NR == 1 {
 }
 {
     ty = (c["trial_type"] ? $c["trial_type"] : "unknown_pre_schema")
-    b  = $c["build"]; k = ty "|" b
+    b  = $c["build"]
+    # THE ENVIRONMENT IS PART OF THE TREATMENT, so it is part of the key.
+    # `build=stock` names the kernel only. Trials taken with autosuspend
+    # disabled, or with a recovery watchdog able to rescue the controller, are
+    # not the same experiment as trials taken without — pooling them under one
+    # build name produces a denominator that mixes treatments silently.
+    e  = $c["environment"]
+    k  = ty "|" b "|" e
+    envs[e] = 1
     # DOMAIN CHECK. An unrecognised outcome must not be silently folded into
     # "not hung". Miscounting a failure as a survival moves the denominator in
     # the direction that makes any build look better, which is the one
     # direction an error here must never take.
     o = $c["outcome"]
-    if (o != "hang" && o != "ok" && o != "survived") {
+    if (o != "hang" && o != "ok" && o != "survived" && o != "recovered") {
         printf "trial-summary: unrecognised outcome \"%s\" on line %d\n", o, NR > "/dev/stderr"
         print  "  Refusing to report rather than counting it as a survival." > "/dev/stderr"
         abort = 1; exit 1
     }
-    tot[k]++; if (o == "hang") h[k]++; sum[k] += $c["duration_s"]
+    tot[k]++; sum[k] += $c["duration_s"]
+    # Two different questions, kept apart:
+    #   h[]   BT-1 reached UNRECOVERED failure (cold power-off needed)
+    #   inc[] BT-1 OCCURRED at all — hang plus watchdog-rescued
+    # Reporting only h[] would understate the incidence of the bug by exactly
+    # the watchdog success rate, which is the quantity the mitigation exists to
+    # maximise. A build could then look better purely because recovery worked.
+    if (o == "hang")      { h[k]++;   inc[k]++ }
+    if (o == "recovered") { rec[k]++; inc[k]++ }
 }
 END {
     # awk runs END even after `exit` from another rule, so a refusal would
@@ -62,12 +78,14 @@ END {
     # a plausible report AND a non-zero status, and the report is what gets
     # read. Bail before printing anything.
     if (abort) exit 1
-    printf "  %-20s %-8s %-10s %-8s %s\n", "TRIAL TYPE", "BUILD", "HANGS", "RATE", "mean duration"
+    printf "  %-20s %-7s %-9s %-9s %-8s %s\n", "TRIAL TYPE", "BUILD", "UNRECOV", "BT-1 INC", "RATE", "mean dur"
     for (k in tot) {
         split(k, p, "|")
-        rate = 100 * (h[k] + 0) / tot[k]
-        printf "  %-20s %-8s %-10s %-8s %.0fs\n", p[1], p[2],
-               (h[k] + 0) "/" tot[k], sprintf("%.0f%%", rate), sum[k] / tot[k]
+        rate = 100 * (inc[k] + 0) / tot[k]
+        printf "  %-20s %-7s %-9s %-9s %-8s %.0fs\n", p[1], p[2],
+               (h[k] + 0) "/" tot[k], (inc[k] + 0) "/" tot[k],
+               sprintf("%.0f%%", rate), sum[k] / tot[k]
+        printf "      env: %s\n", p[3]
     }
     print ""
     print "  These rows must never be added together. An observational boot"
@@ -76,4 +94,16 @@ END {
     print "  second says the reproduction protocol was applied and the"
     print "  controller withstood it or did not. Only controlled_* rows can"
     print "  satisfy the A/B/C/D gate."
+
+    ne = 0
+    for (e in envs) ne++
+    if (ne > 1) {
+        print ""
+        printf "  !! %d DISTINCT ENVIRONMENTS above.\n", ne
+        print  "     Rows with different env: lines are different EXPERIMENTS and must"
+        print  "     not be added together. Autosuspend state and watchdog mode change"
+        print  "     the controller and can change the outcome, so a kernel comparison"
+        print  "     across them measures the mitigation as much as the kernel."
+        print  "     `build` names only the kernel; the treatment is build + env."
+    }
 }

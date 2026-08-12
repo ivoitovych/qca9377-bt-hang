@@ -1,0 +1,109 @@
+#!/bin/bash
+# bt-env-history — which workarounds were active during which boot?
+#
+# THE QUESTION THIS ANSWERS. Almost all evidence in this project comes from log
+# analysis, and the logs span a period during which the machine was being
+# progressively modified: USB autosuspend was disabled, the radio was pinned
+# power/control=on, a recovery watchdog was installed and later given an early
+# mode that resets the controller BEFORE any HCI timeout, and periodic health
+# probes began issuing real HCI commands.
+#
+# So "34 boots, 287 timeouts" is not 34 samples of one system. It is samples of
+# several systems, and until now nothing said which was which. A denominator
+# built across them measures the mitigation as much as the kernel.
+#
+# WHAT IS RECOVERABLE, AND HOW. Each fact below is read from evidence the
+# machine recorded at the time, not inferred from what is installed now:
+#
+#   watchdog       bt-hang-watchdog logs a startup banner, and logs `EARLY mode
+#                  ON` or `early mode off` explicitly — both states are positive
+#                  evidence. No banner at all means it was not running.
+#   autosuspend    /var/log/bt-health/metrics.tsv records btusb_autosusp and
+#                  usb_power_ctrl per snapshot, keyed by boot_id.
+#   health probes  presence of bt-health-snapshot invocations in that boot.
+#
+# WHAT IS NOT RECOVERABLE is printed as `?` rather than guessed. Boots predating
+# the metrics collector have no autosuspend record at all — and the collector
+# was installed as part of the mitigation, so its absence is itself weak
+# evidence that the mitigation was not yet present. Weak evidence is still not a
+# measurement, so it is shown as unknown.
+#
+# Usage: bt-env-history [-n <boots>]
+
+set -uo pipefail
+
+N="${1:-}"
+[[ "$N" == "-n" ]] && N="${2:-}"
+LIMIT="${N:-40}"
+METRICS="${BT_METRICS:-/var/log/bt-health/metrics.tsv}"
+
+printf '%-5s %-12s %-16s %-11s %-7s %s\n' \
+    BOOT DATE WATCHDOG AUTOSUSP POWER PROBES
+printf -- '─────────────────────────────────────────────────────────────────────────\n'
+
+# journalctl --list-boots gives "IDX BOOTID FIRST... LAST...". The boot id is
+# needed to join against metrics.tsv, which stores its first 8 characters.
+journalctl --list-boots --no-pager 2>/dev/null \
+| awk 'NF >= 3 && $1 ~ /^-?[0-9]+$/ { print $1, $2 }' \
+| tail -n "$LIMIT" \
+| while read -r idx bootid; do
+    short="${bootid:0:8}"
+    date=$(journalctl -b "$idx" -n1 --no-pager -o short-iso 2>/dev/null | cut -dT -f1)
+
+    wd_log=$(journalctl -u bt-hang-watchdog -b "$idx" --no-pager -o cat 2>/dev/null)
+    if [[ -z "$wd_log" ]] || ! grep -q "bt-hang-watchdog started" <<<"$wd_log"; then
+        wd="off"
+    elif grep -q "EARLY mode ON" <<<"$wd_log"; then
+        thr=$(grep -o "threshold [0-9]*/[0-9]*s" <<<"$wd_log" | head -1 | tr -d 'threshold ')
+        wd="early+late/${thr:-?}"
+    elif grep -q "early mode off" <<<"$wd_log"; then
+        thr=$(grep -o "threshold [0-9]*/[0-9]*s" <<<"$wd_log" | head -1 | tr -d 'threshold ')
+        wd="late/${thr:-?}"
+    else
+        wd="on/?"
+    fi
+
+    # Autosuspend and power control, from what the machine recorded THEN.
+    autos="?"; power="?"
+    if [[ -r "$METRICS" && -n "$short" ]]; then
+        vals=$(awk -F'\t' -v b="$short" '
+            NR == 1 { for (i = 1; i <= NF; i++) c[$i] = i; next }
+            $c["boot_id"] == b {
+                a[$c["btusb_autosusp"]] = 1
+                p[$c["usb_power_ctrl"]] = 1
+            }
+            END {
+                as = ""; for (k in a) if (k != "-") as = as (as ? "/" : "") k
+                pw = ""; for (k in p) if (k != "-") pw = pw (pw ? "/" : "") k
+                print (as == "" ? "?" : as), (pw == "" ? "?" : pw)
+            }' "$METRICS")
+        autos=$(cut -d' ' -f1 <<<"$vals")
+        power=$(cut -d' ' -f2 <<<"$vals")
+    fi
+
+    probes=$(journalctl -u bt-health-snapshot.service -u bt-health-snapshot-event.service \
+             -b "$idx" --no-pager -o cat 2>/dev/null | grep -c "Snapshot Bluetooth health" || true)
+    [[ "${probes:-0}" -gt 0 ]] && pr="${probes}" || pr="none"
+
+    printf '%-5s %-12s %-16s %-11s %-7s %s\n' \
+        "$idx" "${date:--}" "$wd" "$autos" "$power" "$pr"
+done
+
+cat <<'EOF'
+
+  WATCHDOG   off = no startup banner in that boot. early+late means it could
+             reset the controller BEFORE any HCI timeout, so even the
+             pre-timeout window in that boot is not passive observation.
+  AUTOSUSP   btusb enable_autosuspend as recorded at the time. Original
+             Ubuntu default is Y; N is this project's workaround.
+  POWER      the radio's power/control. Default auto; on is the workaround.
+  PROBES     count of health-snapshot invocations — each issues a real HCI
+             command (EX-011), so this is a count of active interventions.
+  ?          not recorded for that boot. NOT the same as "default", and not
+             the same as "off". Boots predating the metrics collector have no
+             record; the collector arrived with the mitigation, which is
+             suggestive but is not a measurement.
+
+  Rows differing in any column are DIFFERENT EXPERIMENTS. Combining their
+  timeout counts into one rate measures the workarounds as much as the kernel.
+EOF

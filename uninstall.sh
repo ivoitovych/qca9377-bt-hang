@@ -46,6 +46,7 @@ FILES=(
     /usr/local/bin/bt-context
     /usr/local/bin/bt-logvolume
     /usr/local/bin/bt-phase
+    /usr/local/bin/bt-env-history
     /usr/local/bin/lib/timestamp.awk
     /usr/local/bin/lib/interval.awk
     /usr/local/bin/lib/capdiff-match.awk

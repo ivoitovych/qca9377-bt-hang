@@ -100,6 +100,58 @@ hci_alive() {
     timeout 6 hciconfig "$h" name >/dev/null 2>&1
 }
 
+# ── EXPERIMENTAL ENVIRONMENT FINGERPRINT ──────────────────────────────────
+#
+# `build=stock` names the KERNEL and nothing else. The machine this runs on is
+# not a pristine Ubuntu Bluetooth system — it is a stock kernel inside an
+# instrumented and partially mitigated environment:
+#
+#   * USB autosuspend is disabled for btusb and the radio is pinned
+#     power/control=on. Original state was Y and auto. This changes the
+#     controller's operating conditions from boot onward, so EVERY observation
+#     here — failure or survival — happens under it.
+#   * A recovery watchdog is running. It can stop bluetooth, issue
+#     USBDEVFS_RESET, unbind/rebind the device and restart the stack. Anything
+#     after the first timeout is therefore partly our doing: whether stage 2 was
+#     reached, how long stage 1 lasted, whether the boot ended with a live
+#     controller.
+#   * On this host BT_EARLY=1 via a drop-in, so the watchdog can reset the
+#     controller BEFORE any HCI timeout, on audio-teardown heuristics. Even the
+#     pre-timeout window is not passive.
+#   * Periodic health probes issue a real HCI command (EX-011), and dynamic
+#     debug plus tracing alter timing and load.
+#
+# Without recording this, trials taken under different mitigation states pool
+# under one build name and the denominator silently mixes treatments. The
+# project made measurement provenance first-class; this makes TREATMENT
+# provenance first-class, which is the same discipline applied to the other
+# half of the experiment.
+env_fingerprint() {
+    local autosusp power wd early thr probes commit dev
+    autosusp=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo '?')
+    power='?'
+    for dev in /sys/bus/usb/devices/*; do
+        [[ -f "$dev/idVendor" && -f "$dev/idProduct" ]] || continue
+        if [[ "$(<"$dev/idVendor")" == "${BT_VID:-13d3}" && "$(<"$dev/idProduct")" == "${BT_PID:-3503}" ]]; then
+            power=$(cat "$dev/power/control" 2>/dev/null || echo '?'); break
+        fi
+    done
+    if systemctl is-active --quiet bt-hang-watchdog 2>/dev/null; then
+        early=$(systemctl show bt-hang-watchdog -p Environment --value 2>/dev/null \
+                | tr ' ' '\n' | grep -m1 '^BT_EARLY=' | cut -d= -f2)
+        thr=$(systemctl show bt-hang-watchdog -p Environment --value 2>/dev/null \
+              | tr ' ' '\n' | grep -m1 '^BT_THRESHOLD=' | cut -d= -f2)
+        wd=$([[ "${early:-0}" == "1" ]] && echo "early+late" || echo "late")
+        wd="$wd/thr${thr:-?}"
+    else
+        wd="off"
+    fi
+    probes=$(systemctl is-active bt-health-snapshot.timer 2>/dev/null || echo inactive)
+    commit=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo '?')
+    printf 'autosusp=%s,power=%s,wd=%s,probes=%s,instr=%s' \
+        "${autosusp:-?}" "$power" "$wd" "$probes" "$commit"
+}
+
 next_trial_no() {
     # Resolve the column from the header, never by position. Adding trial_type
     # shifted `build` from field 2 to field 3, and a hardcoded $2 would silently
@@ -218,6 +270,22 @@ hang|ok)
     # was never applied.
     if (( auto )) && [[ "$outcome" == ok ]]; then
         outcome=survived
+    fi
+
+    # RECOVERED IS NOT SURVIVED. Once a recovery watchdog exists, "the
+    # controller is alive at the end" stops meaning "BT-1 did not happen".
+    # A boot where the controller wedged and the watchdog rescued it would
+    # otherwise be recorded identically to a boot where nothing went wrong,
+    # and the denominator would understate the incidence of BT-1 by exactly
+    # the watchdog's success rate — which is the quantity a userspace
+    # mitigation is designed to maximise.
+    #
+    # These are now separate questions:
+    #   incidence of BT-1                  (hang + recovered)
+    #   BT-1 reaching unrecovered failure  (hang)
+    if [[ "$outcome" == survived || "$outcome" == ok ]] \
+       && [[ "${tmo:-0}" =~ ^[0-9]+$ ]] && (( tmo > 0 )); then
+        outcome=recovered
     fi
 
     if [[ "$outcome" == ok || "$outcome" == survived ]]; then
@@ -404,9 +472,9 @@ hang|ok)
     else                trial_type="controlled_v$PROTOCOL_VERSION"
     fi
 
-    [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\ttrial\tprotocol\toutcome\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\n' > "$RESULTS"
-    printf '%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-        "$(date -Iseconds)" "$trial_type" "$build" "$n" "$PROTOCOL_VERSION" "$outcome" "$dur" \
+    [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\tenvironment\ttrial\tprotocol\toutcome\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\n' > "$RESULTS"
+    printf '%s\t%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$(date -Iseconds)" "$trial_type" "$build" "$(env_fingerprint)" "$n" "$PROTOCOL_VERSION" "$outcome" "$dur" \
         "${sco_sent:-?}" "$sco_to_tmo" "${tmo:-?}" "$resp_after" "$usb_present" \
         "${usb_gone:-?}" "${probes:-?}" "$probe_to_tmo" "${aborts:-?}" \
         "$(uname -r)" >> "$RESULTS"

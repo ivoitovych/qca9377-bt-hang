@@ -51,12 +51,15 @@ NR==1 {
     # rather than merely discouraged.
     s = (col["sco_sent"]  ? $col["sco_sent"]  : "?")
     o = $col["outcome"]
-    if (o != "hang" && o != "ok" && o != "survived") {
+    if (o != "hang" && o != "ok" && o != "survived" && o != "recovered") {
         printf "trial-sco-table: unrecognised outcome \"%s\" on line %d\n", o, NR > "/dev/stderr"
         print  "  Refusing to report rather than counting it as a survival." > "/dev/stderr"
         abort = 1; exit 1
     }
-    f = (o == "hang")
+    # "recovered" counts as a FAILURE here: BT-1 occurred and the watchdog
+    # rescued it. Counting it as a survival would understate the incidence of
+    # the bug by exactly the watchdog success rate.
+    f = (o == "hang" || o == "recovered")
     if (s == "?" ) { unknown++; next }
     if (s+0 > 0) { if (f) a++; else b++ } else { if (f) c++; else d++ }
 }

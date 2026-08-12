@@ -90,6 +90,32 @@ false negatives** for the desync signature. Weaker than 8 and 2, but the same
 finding: the signature is neither necessary nor sufficient. The claim does not
 rest solely on data the machine can no longer produce.
 
+
+## ⚠️ Treatment contamination — added 2026-08-13
+
+This 34-boot cross-tabulation spans the mitigation installation of 2026-08-10
+(`EX-013`). It therefore mixes two experimental environments:
+
+| | before 2026-08-10 | after |
+|---|---|---|
+| watchdog | none | active, and able to reset *before* any HCI timeout |
+| USB autosuspend | Ubuntu default (`Y`) | disabled (`N`) |
+| radio `power/control` | `auto` | pinned `on` |
+| active HCI health probes | none | 2–200 per boot |
+
+`build=stock` named only the kernel. It did not name the treatment.
+
+**What survives.** The finding itself — that the desync signature has both false
+positives and false negatives against the hang — is a statement about
+co-occurrence within each boot, and a companion symptom does not become a cause
+because the environment changed. Both eras contribute boots to both error
+columns.
+
+**What does not.** Any *rate* drawn from this table. "8 of 34" pools two
+treatments, and the watchdog in the later era could recover a controller that
+would otherwise have hung, so the two halves do not even measure the same
+outcome. Use `bt-env-history` to partition before quoting a rate.
+
 ## Provenance
 
 | field | value |
