@@ -280,70 +280,73 @@ hang|ok)
     auto=$(grep -c '^auto=1' "$CUR" || true)
     dur=$(( $(date +%s) - start ))
 
-    # An auto-opened trial that ends alive is recorded as "survived", not "ok".
-    # They are different claims: "ok" asserts the reproduction protocol was
-    # carried out and the controller withstood it, while "survived" only says
-    # the machine ran for a while and did not hang. Collapsing the two would
-    # inflate the protocol's apparent pass rate with boots where the stimulus
-    # was never applied.
-    if (( auto )) && [[ "$outcome" == ok ]]; then
-        outcome=survived
-    fi
+    # ── TWO AXES, NOT ONE FIELD ───────────────────────────────────────────
+    #
+    # `outcome` used to answer two different questions at once, and once an
+    # intervening watchdog exists they stop agreeing:
+    #
+    #   bt1_status    what the EVIDENCE says about the defect
+    #   trial_result  what happened to the CONTROLLER by the end
+    #
+    # The dangerous row is early intervention before any observed timeout.
+    # Recording that as `recovered` would read as "a failure was recovered"
+    # when nobody knows whether the failure would have occurred; recording it
+    # as `survived` hides that the natural trajectory was interrupted. On two
+    # axes it states exactly what is true: censored evidence, recovered
+    # controller.
+    #
+    #   bt1_status     not_observed | confirmed | censored_pre_failure | unknown
+    #   trial_result   survived | failed | recovered | aborted
+    #
+    # The BT-1 numerator then becomes mechanical — bt1_status == confirmed —
+    # and censored observations cannot leak into either side of a rate.
+    #
+    # The old ok/survived distinction is gone: it was doing trial_type's job.
+    # Whether the reproduction protocol was carried out is what
+    # controlled_v* vs observational_boot already says.
 
-    # RECOVERED IS NOT SURVIVED. Once a recovery watchdog exists, "the
-    # controller is alive at the end" stops meaning "BT-1 did not happen".
-    # A boot where the controller wedged and the watchdog rescued it would
-    # otherwise be recorded identically to a boot where nothing went wrong,
-    # and the denominator would understate the incidence of BT-1 by exactly
-    # the watchdog's success rate — which is the quantity a userspace
-    # mitigation is designed to maximise.
-    #
-    # These are now separate questions:
-    #   incidence of BT-1                  (hang + recovered)
-    #   BT-1 reaching unrecovered failure  (hang)
-    # Note the condition: a timeout must have been OBSERVED. "recovered" means
-    # confirmed BT-1 that was then rescued, not "the watchdog did something".
-    if [[ "$outcome" == survived || "$outcome" == ok ]] \
-       && [[ "${tmo:-0}" =~ ^[0-9]+$ ]] && (( tmo > 0 )); then
-        outcome=recovered
-    fi
-
-    # CENSORED: early intervention BEFORE any timeout. The counterfactual is
-    # destroyed, so this belongs in neither column.
-    #
-    # BT_EARLY exists to reset the controller on audio-teardown heuristics
-    # BEFORE an HCI timeout. When it fires and no timeout is ever observed, the
-    # honest reading is not "BT-1 happened and was recovered" — no defining
-    # failure was seen — and not "the boot was fine" either, because the natural
-    # trajectory was interrupted. The controller might have wedged; it might
-    # have been perfectly healthy. The intervention removed the evidence.
-    #
-    # This project already established that its supposed early precursors are
-    # NOT reliable causal markers: the audio-teardown signature, the 16 s
-    # desync and the A2DP-idle trigger were each refuted. So an early
-    # intervention cannot be taken as proof that BT-1 was imminent.
-    #
-    # Counting these as occurrences would let the mitigation manufacture the
-    # very statistic it exists to measure: fire early 20 times, call all 20
-    # "rescued BT-1", and the incidence rate is whatever the heuristic's
-    # trigger rate happens to be. Counting them as survivals is the mirror
-    # error. They are censored observations and are excluded from rates.
     early_int=$(journalctl -u bt-hang-watchdog --since "$since" --no-pager -o cat 2>/dev/null \
                 | grep -c "EARLY intervention" || true)
-    if [[ "$outcome" == survived || "$outcome" == ok ]] \
-       && [[ "${early_int:-0}" =~ ^[0-9]+$ ]] && (( early_int > 0 )) \
-       && [[ "${tmo:-0}" == 0 ]]; then
-        outcome=censored
+    any_int=$(journalctl -u bt-hang-watchdog --since "$since" --no-pager -o cat 2>/dev/null \
+              | grep -cE "EARLY intervention|Detected .* controller timeouts within" || true)
+
+    # --- axis 1: what the evidence says about BT-1 --------------------------
+    if [[ ! "${tmo:-}" =~ ^[0-9]+$ ]]; then
+        bt1_status=unknown          # could not read the journal; do not guess
+    elif (( tmo > 0 )); then
+        bt1_status=confirmed        # HCI non-responsiveness was observed
+    elif [[ "${early_int:-0}" =~ ^[0-9]+$ ]] && (( early_int > 0 )); then
+        # The watchdog reset the controller on a heuristic BEFORE any timeout.
+        # Every early precursor this project has tested — the audio-teardown
+        # signature, the 16 s desync, the A2DP-idle trigger — was refuted as a
+        # causal marker, so firing early is not evidence BT-1 was imminent. The
+        # intervention destroyed the counterfactual.
+        bt1_status=censored_pre_failure
+    else
+        bt1_status=not_observed
     fi
 
-    if [[ "$outcome" == ok || "$outcome" == survived ]]; then
-        if hci_alive; then
-            echo "${G}verified: controller still responds${O}"
-        else
-            echo "${R}Controller does NOT respond — recording as 'hang', not 'ok'.${O}"
-            outcome=hang
-        fi
+    # --- axis 2: what happened to the controller ----------------------------
+    if [[ "$1" == hang ]] || ! hci_alive; then
+        trial_result=failed
+    elif [[ "${any_int:-0}" =~ ^[0-9]+$ ]] && (( any_int > 0 )); then
+        trial_result=recovered      # alive, but only after intervention
+    else
+        trial_result=survived       # alive, untouched
     fi
+
+    # Kept for humans reading a single column; every rate is computed from the
+    # two axes above, never from this.
+    outcome="$trial_result"
+
+    # The liveness check now happens inside the axis-2 classification above, so
+    # a claimed survival cannot be recorded against a dead controller. This just
+    # reports what was determined.
+    case "$trial_result" in
+        survived)  echo "${G}verified: controller responds, no intervention${O}" ;;
+        recovered) echo "${Y}controller responds, but only after intervention${O}" ;;
+        failed)    echo "${R}controller does NOT respond${O}" ;;
+    esac
 
     command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-after.txt" 2>&1
     command -v bt-mark  >/dev/null 2>&1 && bt-mark "TRIAL $build #$n RESULT: $outcome" >/dev/null 2>&1
@@ -520,9 +523,9 @@ hang|ok)
     else                trial_type="controlled_v$PROTOCOL_VERSION"
     fi
 
-    [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\ttreatment\tmeasurement_rev\ttrial\tprotocol\toutcome\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\n' > "$RESULTS"
-    printf '%s\t%s\t%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-        "$(date -Iseconds)" "$trial_type" "$build" "$(env_fingerprint)" "$(measurement_revision)" "$n" "$PROTOCOL_VERSION" "$outcome" "$dur" \
+    [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\ttreatment\tmeasurement_rev\ttrial\tprotocol\tbt1_status\ttrial_result\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\n' > "$RESULTS"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$(date -Iseconds)" "$trial_type" "$build" "$(env_fingerprint)" "$(measurement_revision)" "$n" "$PROTOCOL_VERSION" "$bt1_status" "$trial_result" "$dur" \
         "${sco_sent:-?}" "$sco_to_tmo" "${tmo:-?}" "$resp_after" "$usb_present" \
         "${usb_gone:-?}" "${probes:-?}" "$probe_to_tmo" "${aborts:-?}" \
         "$(uname -r)" >> "$RESULTS"

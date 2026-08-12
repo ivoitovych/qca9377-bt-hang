@@ -31,7 +31,7 @@ BEGIN { FS = "\t" }
 # existed are still legitimate data and are labelled unknown_pre_schema.
 NR == 1 {
     for (i = 1; i <= NF; i++) c[$i] = i
-    split("build outcome duration_s treatment", need, " ")
+    split("build bt1_status trial_result duration_s treatment", need, " ")
     for (k in need)
         if (!(need[k] in c)) missing = missing " " need[k]
     if (missing != "") {
@@ -57,10 +57,18 @@ NR == 1 {
     # "not hung". Miscounting a failure as a survival moves the denominator in
     # the direction that makes any build look better, which is the one
     # direction an error here must never take.
-    o = $c["outcome"]
-    if (o != "hang" && o != "ok" && o != "survived" && o != "recovered" && o != "censored") {
-        printf "trial-summary: unrecognised outcome \"%s\" on line %d\n", o, NR > "/dev/stderr"
-        print  "  Refusing to report rather than counting it as a survival." > "/dev/stderr"
+    # Both axes are domain-checked. An unrecognised value must not be folded
+    # into whichever bucket looks harmless — miscounting a failure as a
+    # survival moves the denominator in the direction that makes any build look
+    # better, which is the one direction an error here must never take.
+    bs = $c["bt1_status"]
+    if (bs != "not_observed" && bs != "confirmed" && bs != "censored_pre_failure" && bs != "unknown") {
+        printf "trial-summary: unrecognised bt1_status \"%s\" on line %d\n", bs, NR > "/dev/stderr"
+        abort = 1; exit 1
+    }
+    tr = $c["trial_result"]
+    if (tr != "survived" && tr != "failed" && tr != "recovered" && tr != "aborted") {
+        printf "trial-summary: unrecognised trial_result \"%s\" on line %d\n", tr, NR > "/dev/stderr"
         abort = 1; exit 1
     }
     # CENSORED rows are counted, shown, and EXCLUDED FROM THE RATE. An early
@@ -70,7 +78,10 @@ NR == 1 {
     # incidence it is measuring; putting them in the denominator understates
     # it. They belong in neither, and must stay visible so the denominator is
     # never quietly smaller than the sample.
-    if (o == "censored") { cen[k]++; seen[k]++; next }
+    # Censored and unknown evidence cannot enter a BT-1 rate in either
+    # direction; they are counted, shown, and excluded from the denominator.
+    if (bs == "censored_pre_failure") { cen[k]++; seen[k]++; next }
+    if (bs == "unknown")              { unk[k]++; seen[k]++; next }
     tot[k]++; sum[k] += $c["duration_s"]; seen[k]++
     # Two different questions, kept apart:
     #   h[]   BT-1 reached UNRECOVERED failure (cold power-off needed)
@@ -78,8 +89,14 @@ NR == 1 {
     # Reporting only h[] would understate the incidence of the bug by exactly
     # the watchdog success rate, which is the quantity the mitigation exists to
     # maximise. A build could then look better purely because recovery worked.
-    if (o == "hang")      { h[k]++;   inc[k]++ }
-    if (o == "recovered") { rec[k]++; inc[k]++ }
+    # THE NUMERATOR IS MECHANICAL: the defect occurred iff the evidence says
+    # so. Whether the controller was subsequently rescued is a different fact,
+    # on the other axis, and does not change whether BT-1 happened.
+    if (bs == "confirmed") {
+        inc[k]++
+        if (tr == "failed")    h[k]++      # confirmed and unrecovered
+        if (tr == "recovered") rec[k]++    # confirmed, then rescued
+    }
 }
 END {
     # awk runs END even after `exit` from another rule, so a refusal would

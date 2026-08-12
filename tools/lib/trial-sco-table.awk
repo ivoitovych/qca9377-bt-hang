@@ -30,8 +30,8 @@ BEGIN { FS = "\t" }
 # pretending to know. That is a deliberate unknown, not a missing precondition.
 NR==1 {
     for (i=1; i<=NF; i++) col[$i] = i
-    if (!("outcome" in col)) {
-        print "trial-sco-table: results.tsv has no `outcome` column." > "/dev/stderr"
+    if (!("bt1_status" in col)) {
+        print "trial-sco-table: results.tsv has no `bt1_status` column." > "/dev/stderr"
         print "  Refusing to report: every row would be classified as survived." > "/dev/stderr"
         abort = 1; exit 1
     }
@@ -50,9 +50,9 @@ NR==1 {
     # unchanged: positional assumptions are then mechanically impossible
     # rather than merely discouraged.
     s = (col["sco_sent"]  ? $col["sco_sent"]  : "?")
-    o = $col["outcome"]
-    if (o != "hang" && o != "ok" && o != "survived" && o != "recovered" && o != "censored") {
-        printf "trial-sco-table: unrecognised outcome \"%s\" on line %d\n", o, NR > "/dev/stderr"
+    o = $col["bt1_status"]
+    if (o != "not_observed" && o != "confirmed" && o != "censored_pre_failure" && o != "unknown") {
+        printf "trial-sco-table: unrecognised bt1_status \"%s\" on line %d\n", o, NR > "/dev/stderr"
         print  "  Refusing to report rather than counting it as a survival." > "/dev/stderr"
         abort = 1; exit 1
     }
@@ -62,8 +62,11 @@ NR==1 {
     # Censored rows cannot be classified as hung or survived — the early
     # intervention removed the outcome — so they are excluded from the 2x2
     # rather than being assigned to whichever cell looks harmless.
-    if (o == "censored") { censored++; next }
-    f = (o == "hang" || o == "recovered")
+    if (o == "censored_pre_failure" || o == "unknown") { censored++; next }
+    # "hung" here means the DEFECT occurred, regardless of whether the
+    # controller was later rescued. Recovery is a fact about the mitigation,
+    # not about whether the stimulus coincided with a failure.
+    f = (o == "confirmed")
     if (s == "?" ) { unknown++; next }
     if (s+0 > 0) { if (f) a++; else b++ } else { if (f) c++; else d++ }
 }

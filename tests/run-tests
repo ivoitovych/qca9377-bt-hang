@@ -170,9 +170,11 @@ R1=$(BT_REPO="$RD" tools/bt-trial report 2>&1)
 # by exactly the watchdog success rate, which is the quantity the mitigation
 # exists to maximise. Reading outcome positionally puts every row in the
 # survived column; a crashed cross-tab prints nothing at all.
-# T1 hang, T4 hang, T6 recovered -> 3 hung with SCO. T5 ok -> 1 survived with
-# SCO. T2 survived without SCO. T3 censored is EXCLUDED entirely; were it
-# counted it would appear in one of these cells and change a number.
+# bt1_status confirmed on T1, T4, T6 — all with SCO -> 3 "hung", meaning the
+# DEFECT occurred, regardless of whether the controller was later rescued.
+# T5 not_observed with SCO -> 1 survived. T2 not_observed without SCO.
+# T3 (censored_pre_failure) is EXCLUDED entirely; were it counted it would land
+# in a cell and change a number.
 if grep -qE 'SCO setup requested +3 +1' <<<"$R1" \
    && grep -qE 'no SCO setup +0 +1' <<<"$R1" \
    && grep -q 'censored by early watchdog intervention' <<<"$R1"; then
@@ -338,7 +340,7 @@ echo "────────────────────────�
 # absent, awk turns the lookup into field 0 or an empty string and the program
 # computes plausible nonsense while exiting successfully — the same wrong answer
 # as reading the wrong field, reached by a different route. In the SCO table
-# specifically, a missing `outcome` makes every row not-hung: a cross-tab
+# specifically, a missing `bt1_status` makes every row not-hung: a cross-tab
 # asserting the stimulus never coincided with a failure.
 SCHEMA=$(mktemp -d)
 mkdir -p "$SCHEMA/evidence/trials"; touch "$SCHEMA/install.sh"; git -C "$SCHEMA" init -q 2>/dev/null
@@ -347,7 +349,7 @@ mkdir -p "$SCHEMA/evidence/trials"; touch "$SCHEMA/install.sh"; git -C "$SCHEMA"
 python3 - tests/trial-results.tsv "$SCHEMA/evidence/trials/results.tsv" <<'PY'
 import sys
 rows = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
-i = rows[0].index("outcome")
+i = rows[0].index("bt1_status")
 with open(sys.argv[2], "w") as f:
     for r in rows:
         f.write("\t".join(v for j, v in enumerate(r) if j != i) + "\n")
@@ -355,9 +357,9 @@ PY
 rc=0
 BT_REPO="$SCHEMA" tools/bt-trial report >/dev/null 2>&1 || rc=$?
 if (( rc != 0 )); then
-    ok "report refuses a schema with no outcome column (rc=$rc)"
+    ok "report refuses a schema with no bt1_status column (rc=$rc)"
 else
-    bad "report accepted a schema with no outcome column — every row counts as survived"
+    bad "report accepted a schema with no bt1_status column"
 fi
 
 # And it must not print the table it is refusing to stand behind. awk runs END
@@ -374,7 +376,7 @@ fi
 python3 - tests/trial-results.tsv "$SCHEMA/evidence/trials/results.tsv" <<'PY'
 import sys
 rows = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
-i = rows[0].index("outcome")
+i = rows[0].index("bt1_status")
 rows[1][i] = "potato"
 with open(sys.argv[2], "w") as f:
     for r in rows:
@@ -383,9 +385,9 @@ PY
 rc=0
 BT_REPO="$SCHEMA" tools/bt-trial report >/dev/null 2>&1 || rc=$?
 if (( rc != 0 )); then
-    ok "report refuses an unrecognised outcome value (rc=$rc)"
+    ok "report refuses an unrecognised bt1_status value (rc=$rc)"
 else
-    bad "an unrecognised outcome was silently counted as a survival"
+    bad "an unrecognised bt1_status was silently counted"
 fi
 rm -rf "$SCHEMA"
 
