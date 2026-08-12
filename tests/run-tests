@@ -140,6 +140,66 @@ else
 fi
 
 echo
+echo "bt-trial report — schema invariants"
+echo "──────────────────────────────────────────────────────────────"
+
+# THE RULE: no consumer of results.tsv may address a column by position.
+#
+# Inserting trial_type has now caused two real defects in a file whose own
+# comments state that rule: next_trial_no kept using $2 for build, and the SCO
+# cross-tab kept using $5 for outcome — so every hang was counted as survived
+# while the denominator table above it stayed correct.
+#
+# Grepping for "$5" would only test today's spelling of the bug. Permuting the
+# header and asserting the report is byte-identical tests the invariant, and
+# makes positional assumptions mechanically impossible instead of merely
+# discouraged.
+FIX=tests/trial-results.tsv
+[[ -r "$FIX" ]] || bad "missing $FIX"
+
+RD=$(mktemp -d); trap 'rm -rf "$AWK" "$FA" "$FB" "$OA" "$OB" "$RD"' EXIT
+mkdir -p "$RD/evidence/trials" && touch "$RD/install.sh" && git -C "$RD" init -q 2>/dev/null
+cp "$FIX" "$RD/evidence/trials/results.tsv"
+R1=$(BT_REPO="$RD" tools/bt-trial report 2>&1)
+
+# The fixture holds 2 hangs: one observational, one controlled. If outcome is
+# read positionally both are missed and the SCO table shows zero hung.
+# The fixture holds 5 rows: 2 hangs (both with SCO), 1 survived-with-SCO, and
+# 2 survived-without. Reading outcome positionally puts every row in the
+# survived column; a crashed cross-tab prints nothing at all.
+if grep -qE 'SCO setup requested +2 +1' <<<"$R1" \
+   && grep -qE 'no SCO setup +0 +2' <<<"$R1"; then
+    ok "SCO 2x2 classifies hangs correctly (2/1 with SCO, 0/2 without)"
+else
+    bad "SCO 2x2 wrong or missing — outcome read by position, or awk failed:"
+    grep -A4 'hung' <<<"$R1" | head -6
+fi
+
+grep -q 'observational_boot' <<<"$R1" && grep -q 'controlled_v2' <<<"$R1" \
+    && ok "observational and controlled rows reported separately" \
+    || bad "trial types not separated in the report"
+
+# Permute the columns. Same data, different order, identical report required.
+python3 - "$FIX" "$RD/evidence/trials/results.tsv" <<'PY'
+import sys, random
+rows = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
+hdr = rows[0]
+order = list(range(len(hdr)))
+random.Random(20260813).shuffle(order)
+with open(sys.argv[2], "w") as f:
+    for r in rows:
+        f.write("\t".join(r[i] for i in order) + "\n")
+PY
+R2=$(BT_REPO="$RD" tools/bt-trial report 2>&1)
+
+if [[ "$R1" == "$R2" ]]; then
+    ok "report is identical under an arbitrary column permutation"
+else
+    bad "report changed when columns were reordered — a consumer reads by position"
+    diff <(echo "$R1") <(echo "$R2") | head -12 | sed 's/^/      /'
+fi
+
+echo
 echo "awk program-loading (the -f trap)"
 echo "──────────────────────────────────────────────────────────────"
 

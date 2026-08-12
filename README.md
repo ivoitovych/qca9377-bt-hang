@@ -447,7 +447,7 @@ renamed only after verification passes. The logs in `evidence/baseline/` were pr
 |---|---|
 | Device unmatched by btusb quirks table | ✅ upstream v7.0 source **and** shipped binary |
 | Reset mechanism is `hdev->reset`, on the first timeout | ✅ source + binary |
-| Triggering command identified | ⚠️ `HCI_Setup_Synchronous_Connection` (0x0428) — **one observation**, see `EX-007` |
+| Failure localised to synchronous-audio link transitions | ⚠️ both instrumented failures occur there — setup unanswered in one (`EX-006`), teardown in the other (`EX-009`). **No single triggering opcode**: three SCO setups were survived |
 | USB healthy at HCI failure | ✅ measured — first URB error is 31 s later (`EX-008`) |
 | Watchdog detection | ✅ tested end-to-end |
 | Watchdog recovery path | ✅ exercised — succeeds early, fails once timeouts begin |
@@ -467,11 +467,15 @@ slowed the work — evidence for one kept being read as evidence for another. Tw
 (`BT-2`, the panel-triggered 16 s command desync, and `BT-4`, `btmon` aborting mid-capture)
 are reportable **now**, independently of the hang.
 
-~~The strongest current lead is that the hang is triggered by audio stopping — when the~~
-A2DP stream goes idle, PipeWire switches the device to the HFP profile and the SCO setup
-command that follows is never answered. That requires no user action, which is why the
-failure looked random for months. It rests on a single observation and needs replication
-before it can be called a finding.
+**The strongest current lead**, stated at the strength the evidence supports: the
+failure occurs during synchronous-audio (SCO/eSCO) link transitions. It is *not* a single
+command — three setups were serviced correctly and survived, one went unanswered, and one
+completed successfully before a later `Disconnect` went unanswered instead. What the two
+failures share is the transition and the USB alternate-setting switch that accompanies it,
+not an opcode.
+
+Earlier drafts named an A2DP-idle trigger and then a specific SCO setup command. Both were
+refuted here; see `docs/issues.md` BT-1.
 
 ## Diagnostic tools
 
