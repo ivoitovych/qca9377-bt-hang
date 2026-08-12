@@ -109,6 +109,25 @@ journalctl "${JARGS[@]}" 2>/dev/null | awk -F' ' '
         cls = "STACK"; lbl = "adapter power state -> " st
     }
 
+    # --- PLAY: whether audio is actually flowing ------------------------------
+    # This is the layer the current lead turns on. A2DP transport reaching IDLE
+    # is the moment PipeWire may re-evaluate the profile, and in the fatal
+    # incident of 2026-08-12 the SCO setup that hung the controller followed
+    # that transition by 36 ms. Classifying it makes the relationship visible
+    # in the timeline instead of requiring an ad-hoc pipeline each time.
+    else if (line ~ /media_player_set_status\(\)/) {
+        st = line; sub(/.*media_player_set_status\(\) /, "", st)
+        cls = "PLAY"; lbl = "media player reports: " st
+    }
+    else if (line ~ /transport_set_state\(\) State changed/) {
+        st = line; sub(/.*TRANSPORT_STATE_/, "", st); gsub(/TRANSPORT_STATE_/, "", st)
+        cls = "PLAY"; lbl = "audio transport: " st
+    }
+    else if (line ~ /sink\.c:sink_set_state\(\)/ && line ~ /SINK_STATE_/) {
+        st = line; sub(/.*SINK_STATE_/, "", st); gsub(/SINK_STATE_/, "", st)
+        cls = "PLAY"; lbl = "sink: " st
+    }
+
     # --- STACK: how BlueZ / PipeWire responded --------------------------------
     else if (line ~ /Failed to set mode: Authentication Failed/) {
         cls = "STACK"; lbl = "adapter mode change REJECTED — authentication failed (0x05)"

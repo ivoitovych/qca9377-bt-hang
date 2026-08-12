@@ -1,8 +1,41 @@
 # EX-007 — autonomous-profile-switch-triggers-hang
 
-**Claim.** The hang requires NO operator action. It is triggered by audio playback STOPPING: when the A2DP stream goes idle, PipeWire switches the device to the HFP profile 36 ms later, BlueZ issues HCI_Setup_Synchronous_Connection, and the controller never answers it.
+**Claim (CORRECTED — see the refutation below).** The hang requires no operator action at the moment it occurs. In this incident BlueZ issued `HCI_Setup_Synchronous_Connection` 36 ms after the A2DP transport went idle, and **the controller never answered it**. What is established is the *consequence*; the claim originally made here about the *cause* of that command has been refuted.
 
 **Relevance.** This explains why the failure appeared random and why it resisted deliberate reproduction — the operator kept it alive by interacting with it, and it died 77 s after they stopped, when a video ended. It also unifies every previously unexplained symptom: the hands-free/mono fallback, the recurring 'setting interface failed' (btusb changing the USB alternate setting to allocate isochronous bandwidth for SCO), and the AVDTP-teardown early-warning signature. It yields a minimal reproducer: play audio to a headset, stop it, wait.
+
+## ⚠️ Refuted on 2026-08-12, one boot later
+
+The original claim — that the A2DP transport reaching IDLE causes PipeWire to switch to
+HFP and issue SCO setup — **does not hold**. In the following boot the transport reached
+IDLE at least five times (05:49:03, 05:49:07, 05:49:16, 05:51:33, 05:53:37) and **no SCO
+setup followed any of them**. The controller survived.
+
+A second candidate, that the GNOME Settings Sound panel being the active PipeWire client
+is the trigger, also fails the same test: that boot logged 15 `[GNOME Settings]` client
+entries and two Bluetooth-panel launches, again with no SCO setup.
+
+So the 36 ms adjacency was real but not causal, and the trigger for the SCO setup remains
+**unidentified**. This is the same error the project has now made four times: converting a
+temporal adjacency into a causal claim without checking how often the antecedent occurs
+without the consequent.
+
+**What survives, and it is the part that matters upstream:** `HCI_Setup_Synchronous_Connection`
+(0x0428) was issued exactly once across every boot examined, and that single occurrence was
+never answered and hung the controller permanently. Whatever prompted BlueZ to send it is a
+userspace scheduling detail; a controller that stops responding to a standard HCI command
+is a driver/firmware defect regardless of what caused the command to be sent.
+
+**Consequence for testing.** Waiting for the trigger to recur by chance is now known to be
+unreliable. The command should be provoked deliberately instead — forcing the HFP profile
+issues SCO setup directly:
+
+```console
+$ pactl set-card-profile bluez_card.<ADDR> headset-head-unit
+```
+
+or the equivalent profile change in Settings → Sound, which is step 4 of the trial protocol
+and is the step that most needs running.
 
 ## Extraction method
 
