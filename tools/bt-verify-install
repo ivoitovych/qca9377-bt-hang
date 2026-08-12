@@ -29,30 +29,36 @@ G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
 
 same=0; drift=0; missing=0
 
-# source-in-repo : installed-path
-PAIRS=(
-    "bin/bt-hang-watchdog:/usr/local/sbin/bt-hang-watchdog"
-    "bin/bt-health-snapshot:/usr/local/sbin/bt-health-snapshot"
-    "bin/bt-trace:/usr/local/sbin/bt-trace"
-    "bin/bt-mark:/usr/local/bin/bt-mark"
-    "bin/bt-evidence:/usr/local/bin/bt-evidence"
-    "tools/bt-boot-list:/usr/local/bin/bt-boot-list"
-    "tools/bt-state:/usr/local/bin/bt-state"
-    "tools/bt-boots:/usr/local/bin/bt-boots"
-    "tools/bt-diagnose:/usr/local/bin/bt-diagnose"
-    "tools/bt-status:/usr/local/bin/bt-status"
-    "tools/bt-incident:/usr/local/bin/bt-incident"
-    "tools/bt-postmortem:/usr/local/bin/bt-postmortem"
-    "tools/bt-verify-install:/usr/local/bin/bt-verify-install"
-    "tools/bt-timeline.sh:/usr/local/bin/bt-timeline"
-    "tools/bt-health-report.sh:/usr/local/bin/bt-health-report"
-    "tools/sanitize-logs.sh:/usr/local/bin/bt-sanitize-logs"
-    "systemd/bt-hang-watchdog.service:/etc/systemd/system/bt-hang-watchdog.service"
-    "systemd/bt-health-snapshot.service:/etc/systemd/system/bt-health-snapshot.service"
-    "systemd/bt-health-snapshot.timer:/etc/systemd/system/bt-health-snapshot.timer"
-    "systemd/bt-trace.service:/etc/systemd/system/bt-trace.service"
-    "etc/modprobe.d/btusb-qca9377.conf:/etc/modprobe.d/btusb-qca9377.conf"
+# source-in-repo : installed-path, DERIVED FROM install.sh.
+#
+# This list used to be maintained by hand, and it drifted the moment tools were
+# added: six tools installed on 2026-08-12 were absent from it, so the verifier
+# reported "running system matches the checkout" while not checking a quarter of
+# what was installed. A verifier that silently omits artefacts is worse than no
+# verifier, because it converts an unknown into a false all-clear.
+#
+# install.sh is the single source of truth for what gets installed, so the list
+# is now parsed from its install_file calls. Adding a tool there extends this
+# automatically, and the two cannot disagree.
+mapfile -t PAIRS < <(
+    # Join backslash continuations first: install.sh wraps longer calls across
+    # two lines, and parsing line-by-line yields "\" as the destination path —
+    # which then reports as seven phantom missing artefacts.
+    awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' \
+        "$REPO/install.sh" 2>/dev/null \
+    | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"[[:space:]]+[^[:space:]]+' \
+    | awk '{
+        src = $2; dst = $3
+        gsub(/^"\$SRC\//, "", src); gsub(/"$/, "", src)
+        if (dst ~ /^\//) print src ":" dst
+      }'
 )
+
+if (( ${#PAIRS[@]} == 0 )); then
+    echo "${R}FAIL${O}: could not parse install_file entries from $REPO/install.sh" >&2
+    echo "       refusing to report success on an empty artefact list" >&2
+    exit 1
+fi
 
 echo "${B}Install verification${O} — checkout: $REPO"
 echo "─────────────────────────────────────────────────────────────"
@@ -90,7 +96,16 @@ done
 
 echo
 echo "${B}Services${O}"
-for u in bluetooth bt-hang-watchdog bt-trace bt-health-snapshot.timer; do
+# Same drift risk as the artefact list had: units added later were not listed
+# here, so the verifier printed a clean Services block while saying nothing
+# about two of them. Derived from the units install.sh enables, plus bluetooth
+# itself, which the project does not install but does depend on.
+mapfile -t UNITS < <(
+    { echo bluetooth
+      grep -oE 'systemctl enable --now [a-z0-9.-]+' "$REPO/install.sh" 2>/dev/null | awk '{print $NF}'
+    } | sort -u
+)
+for u in "${UNITS[@]}"; do
     st=$(systemctl is-active "$u" 2>&1); en=$(systemctl is-enabled "$u" 2>&1)
     if [[ "$st" == active && "$en" == enabled ]]; then
         printf '  %s✓%s %-26s %s/%s\n' "$G" "$O" "$u" "$st" "$en"

@@ -1020,3 +1020,68 @@ longer re-runnable, since it now makes a claim the machine can no longer reprodu
   exhibit convention was adopted an hour before it saved this dataset. Anything that
   matters should be captured now, not left as a command to re-run later — the machine
   it runs against is the thing under investigation, and it changes.
+
+---
+
+## Phase 19 — the SCO path, and three hypotheses killed in one night
+
+Dynamic debug from boot made it possible, for the first time, to name the command in
+flight when the controller stopped answering. Two failures were captured, and they say
+different things.
+
+**Failure 1 (05:00:16).** `HCI_Setup_Synchronous_Connection` (0x0428, the SCO/eSCO link
+setup for HFP) was submitted 36 ms after the A2DP transport went idle, was never answered,
+and timed out 2.169 s later. It was the only 0x0428 in that entire boot. Recorded as
+`EX-006`, `EX-007`.
+
+**Failure 2 (06:26:25).** The same command was answered **within 2 ms**. The link reached
+`handle 0x0003`, btusb switched the USB alternate setting (`Looking for Alt no :6 / :3`),
+and the link came up cleanly. What went unanswered was the **Disconnect (0x0406)** tearing
+it down seven seconds later. Recorded as `EX-009`.
+
+So the constant across both is **not an opcode**. Setup went unanswered once, teardown the
+other time. What they share is SCO link handling and the USB alternate-setting switch btusb
+performs to obtain isochronous bandwidth — the same path that produces the
+`setting interface failed (110)` line recurring since the earliest logs. The target moved
+from "a specific HCI command" to **the SCO/isochronous path in btusb**.
+
+**And a third measurement that constrains the mechanism.** At the moment HCI stopped
+answering, every URB was completing with status 0; the first non-zero URB status came
+**31.4 s later** and descriptor-read failures later still (`EX-008`). The onset is not a
+transport wedge. The device keeps servicing USB while refusing to answer HCI, and the USB
+collapse is downstream. That eliminates a large class of explanations.
+
+### Three hypotheses killed
+
+Each looked compelling, and each died to the same test — *how often does the antecedent
+occur without the consequent?*
+
+| Hypothesis | Killed by |
+|---|---|
+| The 16.0 s desync causes the hang | 8 boots had it and never hung; 2 hung without it |
+| Playback stopping triggers the hang | Transport reached IDLE ≥5 times in one boot, no SCO setup followed |
+| GNOME Settings being the active client triggers it | 15 client entries and two panel opens in that same boot, still nothing |
+
+### Lessons added
+
+- **The same reasoning error four times means the rule was never mechanised.** Every one
+  was a temporal adjacency promoted to a causal claim. Noticing the pattern did not stop
+  it; only building the 2×2 into `bt-trial` did, so the question is asked automatically
+  rather than remembered.
+- **A trial must record the stimulus, not only the outcome.** A 20-minute survival that
+  never provoked SCO setup was indistinguishable in the results file from a survival that
+  did. Those are different rows of the table and the difference is the whole experiment.
+- **Check what a count measures before narrating it.** "Audio flowed for 7 seconds" was
+  written from the gap between setup and teardown; the packet count says 11 packets in
+  30 ms, then silence. SCO at 8 kHz carries hundreds per second. The seven seconds were
+  seven seconds of *nothing* — a different fact, and possibly a more interesting one.
+- **A verifier derived by hand will drift; derive it from the thing it verifies.**
+  `bt-verify-install` reported "running system matches the checkout" over a hand-written
+  list that had gone six tools stale — a false all-clear, worse than no check. Both its
+  artefact list and its unit list are now parsed from `install.sh`. On the first run of the
+  fixed version it immediately found a genuinely drifted binary.
+- **Log verbosity has a cost that must itself be measured.** Enabling per-packet debug
+  produced 1.56 M kernel lines in 16 minutes — 5.8 GB/h, enough to exhaust the journal cap
+  in under three hours and rotate away the evidence it existed to preserve. "File" was the
+  wrong granularity: volume tracks a call site's position in the data path, not which file
+  it lives in.
