@@ -124,8 +124,41 @@ investigate anything else.
 **Mitigation, not a fix.** `bin/bt-capture` now records the same stream independently: it
 reads raw frames from the kernel's HCI monitor socket and writes btsnoop **without decoding
 them**, so a decoder bug cannot end the capture. btmon still runs alongside it for live
-decoding. The underlying crash is untouched and still needs a minimal reproducer and a
-backtrace before it is worth filing.
+decoding.
+
+**✅ Minimal reproducer found** (`EX-011`), which was the blocker on reporting this:
+
+```console
+$ hciconfig hci0 name     # one abort, every time
+```
+
+Triangulated: `hciconfig hci0` (ioctl only, no HCI command) does **not** abort it, and
+`bluetoothctl show` (same query via MGMT) does **not** abort it. The trigger is a
+command/response exchange on a **raw HCI socket** observed by the monitor — not a specific
+opcode, and not merely opening the socket.
+
+Found by `tools/bt-capdiff` comparing the two capture paths: the decode-free capture had
+retained the exchange that btmon lost one second before each of its restarts. That is the
+measurement-redundancy argument paying off — a discrepancy between independent capture
+paths was an instrumentation finding, exactly as intended.
+
+**Still needed before filing:** a backtrace from the aborting process, and a check against
+current BlueZ (5.72 is not the latest).
+
+### ⚠️ This project's own probes are the main cause of the crash rate
+
+`bt-state` on every invocation, and `bt-health-snapshot` on a timer, use
+`hciconfig <dev> name` as a liveness check — so the monitoring has been continuously
+crashing the capture it depends on. That accounts for the bulk of the 67–85 aborts per boot.
+
+The probe is nevertheless **kept**. It is a genuine end-to-end test: it sends a command and
+waits for the controller to answer, which is exactly what detecting a wedged controller
+requires. An MGMT-based probe would avoid the crash but could report "alive" from cached
+daemon state while HCI is wedged — trading a capture bug for a false negative in the thing
+the watchdog exists to detect.
+
+That trade is only acceptable because `bt-capture` is now crash-immune. Before it existed,
+this was a genuine self-inflicted wound.
 
 `btmon -w` aborts with a core dump during capture, frequently enough that the capture
 rotates on crash rather than on size. Files average ~2 MB against a 128 MB rotation

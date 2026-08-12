@@ -1,0 +1,134 @@
+#!/bin/bash
+# bt-capdiff — do the two independent HCI capture paths agree?
+#
+# WHY THIS EXISTS. There are now two capture systems recording the same stream
+# from the same kernel monitor socket:
+#
+#   bt-trace    btmon, decoding as it writes        -> /var/log/bt-health/trace
+#   bt-capture  raw frames, decoded later if at all -> /var/log/bt-health/capture
+#
+# The second was built because the first crashes (BT-4, 74 aborts in one boot).
+# But redundancy bought something beyond crash tolerance, and it is worth using
+# deliberately: when the next BT-1 event is captured, agreement between two
+# independent paths raises confidence in the reconstructed chronology, and
+# DISAGREEMENT becomes an instrumentation finding rather than quietly
+# contaminating a conclusion about the controller.
+#
+# That second case is the one that matters. A missing event in one path could be
+# read as "the controller did not do X" when the truth is "one capture path lost
+# X". This tool exists so that question is asked before a chronology is trusted,
+# not afterwards.
+#
+# Usage:
+#   bt-capdiff [--since "HH:MM:SS"] [--until "HH:MM:SS"] [-n <count>]
+#
+# Compares only the overlapping time range covered by both paths — outside it a
+# difference means "not captured", not "disagreement", and reporting that as
+# disagreement would be worse than saying nothing.
+
+set -uo pipefail
+
+TRACE_DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
+CAP_DIR="${BT_CAPTURE_DIR:-/var/log/bt-health/capture}"
+SINCE=""
+UNTIL=""
+TOP=20
+
+while (( $# )); do
+    case "$1" in
+        --since) SINCE="${2:-}"; shift 2 ;;
+        --until) UNTIL="${2:-}"; shift 2 ;;
+        -n)      TOP="${2:-20}"; shift 2 ;;
+        -h|--help) sed -n '2,28p' "$0"; exit 0 ;;
+        *) echo "bt-capdiff: unknown argument: $1" >&2; exit 1 ;;
+    esac
+done
+
+command -v btmon >/dev/null 2>&1 || { echo "bt-capdiff: btmon not found" >&2; exit 1; }
+
+A=$(mktemp); B=$(mktemp)
+trap 'rm -f "$A" "$B"' EXIT
+
+# Reduce each path to "HH:MM:SS <event descriptor>" for top-level records only.
+# Indented parameter lines are excluded: they carry no timestamp of their own and
+# would make identical events look different purely through decoding detail.
+extract() {
+    local dir="$1" out="$2"
+    shopt -s nullglob
+    local files=("$dir"/*.btsnoop)
+    shopt -u nullglob
+    (( ${#files[@]} )) || { : > "$out"; return; }
+    local f
+    for f in "${files[@]}"; do
+        COLUMNS=200 btmon -T -r "$f" 2>/dev/null
+    done | awk '
+        /^[<>@=!]/ {
+            if (match($0, /[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+/) == 0) next
+            t = substr($0, RSTART, 8)
+            ev = $0
+            sub(/ *[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]+ *$/, "", ev)
+            sub(/ +$/, "", ev)
+            print t " " ev
+        }' | sort > "$out"
+}
+
+extract "$TRACE_DIR" "$A"
+extract "$CAP_DIR"   "$B"
+
+na=$(wc -l < "$A"); nb=$(wc -l < "$B")
+
+echo "Capture path agreement"
+echo "══════════════════════════════════════════════════════════════════════"
+printf '  btmon      (%s)  %s records\n' "$TRACE_DIR" "$na"
+printf '  decode-free(%s)  %s records\n' "$CAP_DIR" "$nb"
+
+if (( na == 0 || nb == 0 )); then
+    echo
+    echo "  One path has no records. Nothing to compare — this is a coverage"
+    echo "  question, not a disagreement."
+    exit 0
+fi
+
+# Overlap only. Outside the range both paths cover, a difference means one
+# simply was not recording, which is not evidence about anything.
+lo_a=$(head -1 "$A" | cut -c1-8); hi_a=$(tail -1 "$A" | cut -c1-8)
+lo_b=$(head -1 "$B" | cut -c1-8); hi_b=$(tail -1 "$B" | cut -c1-8)
+lo=$lo_a; [[ "$lo_b" > "$lo" ]] && lo=$lo_b
+hi=$hi_a; [[ "$hi_b" < "$hi" ]] && hi=$hi_b
+[[ -n "$SINCE" ]] && lo="$SINCE"
+[[ -n "$UNTIL" ]] && hi="$UNTIL"
+
+printf '  overlap    %s .. %s\n' "$lo" "$hi"
+echo
+
+win() { awk -v lo="$lo" -v hi="$hi" '{ t = substr($0,1,8); if (t >= lo && t <= hi) print }' "$1"; }
+
+wa=$(mktemp); wb=$(mktemp)
+trap 'rm -f "$A" "$B" "$wa" "$wb"' EXIT
+win "$A" > "$wa"; win "$B" > "$wb"
+
+ca=$(wc -l < "$wa"); cb=$(wc -l < "$wb")
+only_a=$(comm -23 "$wa" "$wb" | wc -l)
+only_b=$(comm -13 "$wa" "$wb" | wc -l)
+
+printf '  in overlap: btmon %s, decode-free %s\n' "$ca" "$cb"
+printf '  only in btmon        %s\n' "$only_a"
+printf '  only in decode-free  %s\n' "$only_b"
+echo
+
+if (( only_a == 0 && only_b == 0 )); then
+    echo "  ✓ The paths agree across the overlap. A chronology drawn from"
+    echo "    either is corroborated by an independent capture."
+    exit 0
+fi
+
+echo "  ⚠ The paths disagree. Treat this as an INSTRUMENTATION finding first."
+echo "    An event missing from one path is not evidence the controller did"
+echo "    not do it. Resolve the discrepancy before drawing any conclusion"
+echo "    about the controller from either capture."
+echo
+echo "  Present only in btmon (first $TOP):"
+comm -23 "$wa" "$wb" | head -"$TOP" | sed 's/^/    /'
+echo
+echo "  Present only in the decode-free capture (first $TOP):"
+comm -13 "$wa" "$wb" | head -"$TOP" | sed 's/^/    /'

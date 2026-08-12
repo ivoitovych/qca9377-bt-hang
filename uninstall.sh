@@ -46,6 +46,7 @@ FILES=(
     /usr/local/bin/bt-context
     /usr/local/bin/bt-logvolume
     /usr/local/bin/bt-sco
+    /usr/local/bin/bt-capdiff
     /usr/local/sbin/bt-capture
     /etc/systemd/system/bt-capture.service
     /etc/systemd/system/bt-trial-auto.service

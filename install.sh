@@ -173,6 +173,7 @@ if command -v btmon >/dev/null 2>&1; then
     install_file "$SRC/bin/bt-trace"            /usr/local/sbin/bt-trace                    0755
     install_file "$SRC/systemd/bt-trace.service" /etc/systemd/system/bt-trace.service       0644
     install_file "$SRC/tools/bt-sco"            /usr/local/bin/bt-sco                       0755
+    install_file "$SRC/tools/bt-capdiff"        /usr/local/bin/bt-capdiff                   0755
     TRACE=1
 else
     echo "  WARNING: btmon not found (package: bluez) — btmon-based capture not installed"
