@@ -43,13 +43,21 @@ BOOT=""
 BOOTLIST="${BT_BOOT_LIST:-/usr/local/bin/bt-boot-list}"
 [[ -x "$BOOTLIST" ]] || BOOTLIST="$(dirname "$0")/bt-boot-list"
 
-PROBES=$(mktemp); FAILS=$(mktemp)
-trap 'rm -f "$PROBES" "$FAILS"' EXIT
+PROBES=$(mktemp); FAILS=$(mktemp); ENDO=$(mktemp)
+trap 'rm -f "$PROBES" "$FAILS" "$ENDO"' EXIT
 
 collect() {
     local b="$1"
-    journalctl -u bt-health-snapshot -b "$b" --no-pager -o short-iso-precise 2>/dev/null \
+    # EXOGENOUS ONLY, BY PROVENANCE. bt-health-snapshot.service is driven by
+    # bt-health-snapshot.timer, whose schedule exists independently of Bluetooth
+    # state. bt-health-snapshot-event.service is the udev-driven one and is
+    # deliberately NOT collected here: its timing is determined partly by the
+    # outcome under study, so including it would let the controller choose the
+    # ruler it is measured against.
+    journalctl -u bt-health-snapshot.service -b "$b" --no-pager -o short-iso-precise 2>/dev/null \
         | grep "Snapshot Bluetooth health metrics" | cut -d' ' -f1 >> "$PROBES"
+    journalctl -u bt-health-snapshot-event.service -b "$b" --no-pager -o short-iso-precise 2>/dev/null \
+        | grep "Snapshot Bluetooth health metrics" | cut -d' ' -f1 >> "$ENDO"
     journalctl -k -b "$b" --no-pager -o short-iso-precise 2>/dev/null \
         | grep "command tx timeout" | cut -d' ' -f1 >> "$FAILS"
 }
@@ -82,39 +90,81 @@ sort -o "$FAILS" "$FAILS"
 # lengths: 2.7 s, 6.8 s, 9.2 s. A 15-minute timer cannot produce a 2.7-second
 # gap; those were incident-triggered bursts.
 #
-# So the exposure baseline must be built only from probes that could not have
-# been caused by the thing being measured. Probes closer together than
-# MIN_GAP are treated as incident-driven bursts and dropped.
-MIN_GAP="${BT_PHASE_MIN_GAP:-600}"
-
-EXO=$(mktemp)
-trap 'rm -f "$PROBES" "$FAILS" "$EXO"' EXIT
-
-awk -v mingap="$MIN_GAP" '
-function s(t,   p, q, r) {
-    split(t, p, "T"); split(p[2], q, /[:.+]/); split(p[1], r, "-")
-    return ((r[3] * 24 + q[1]) * 3600) + q[2] * 60 + q[3] + q[4] / 1000000
-}
-{ t = s($0); if (last == 0 || t - last >= mingap) { print; last = t } }
-' "$PROBES" > "$EXO"
-
-nall=$(wc -l < "$PROBES")
-nexo=$(wc -l < "$EXO")
-mv "$EXO" "$PROBES"
+# THE INVARIANT, stated explicitly because it is easy to half-implement:
+# BOTH boundaries of every interval must come from the exogenous sequence. It is
+# not enough to stop treating endogenous probes as candidate antecedents — if
+# the *closing* boundary is outcome-triggered, the denominator has still been
+# chosen by the event being located inside it. This tool therefore builds its
+# gaps from the exogenous file alone; the endogenous probes are collected and
+# counted, but never enter interval construction.
+#
+# Provenance now comes from the unit name rather than from inter-probe spacing.
+# The earlier version guessed, dropping probes closer together than a threshold.
+# That worked on the data at hand but was a heuristic standing in for a fact the
+# system can simply record.
+sort -o "$ENDO" "$ENDO"
+nexo=$(wc -l < "$PROBES")
+nendo=$(wc -l < "$ENDO")
+nall=$(( nexo + nendo ))
 
 nf=$(wc -l < "$FAILS"); np=$nexo
 
 echo "Probe-phase analysis"
 echo "══════════════════════════════════════════════════════════════════"
-printf '  liveness probes (all)        %s\n' "$nall"
-printf '  exogenous only (>=%ss apart) %s   <- the valid baseline\n' "$MIN_GAP" "$nexo"
-printf '  command timeouts             %s\n' "$nf"
+printf '  liveness probes (all)     %s\n' "$nall"
+printf '    exogenous  (timer)      %s   <- builds the intervals\n' "$nexo"
+printf '    endogenous (udev)       %s   <- counted, never used as a boundary\n' "$nendo"
+printf '  command timeouts          %s\n' "$nf"
 echo
-echo "  Probes closer together than ${MIN_GAP}s are dropped: the udev rule fires"
-echo "  bt-health-snapshot on bluetooth and USB add/remove, which a FAILING"
-echo "  controller generates, so those probes are caused by the event under"
-echo "  study. Including them measures reverse causation, not an observer effect."
+echo "  Only timer-driven probes construct the intervals, at BOTH boundaries."
+echo "  udev fires the same probe on bluetooth and USB add/remove — events a"
+echo "  failing controller generates — so their timing is chosen partly by the"
+echo "  outcome. Using them would be outcome-dependent interval construction:"
+echo "  the statistic stays mathematically correct and becomes meaningless."
 echo
+echo "  KNOWN LIMITATION: these are EXECUTION timestamps, not scheduled due"
+echo "  times. A timer invocation delayed by load or by controller trouble moves"
+echo "  the ruler slightly, in a direction the system under study can influence."
+echo "  Reconstructing due times from OnUnitActiveSec is the next refinement."
+echo
+
+# SELF-CHECK ON THE PROVENANCE CLAIM.
+#
+# Unit-name provenance only exists for data recorded after the units were split.
+# Before that, udev-triggered and timer-triggered probes both landed in
+# bt-health-snapshot.service and are indistinguishable by name — so an older
+# boot would report every probe as "exogenous" and quietly reintroduce the exact
+# contamination the split was made to remove.
+#
+# The timer runs at OnUnitActiveSec=15min, so a genuinely exogenous sequence
+# cannot contain short gaps. Any gap far below that period is proof the set is
+# not what it claims to be, whatever the unit name says.
+TIMER_PERIOD="${BT_PHASE_TIMER_PERIOD:-900}"
+short=$(awk -v lim="$(( TIMER_PERIOD / 2 ))" '
+function s(t,   p, q, r) {
+    split(t, p, "T"); split(p[2], q, /[:.+]/); split(p[1], r, "-")
+    return ((r[3] * 24 + q[1]) * 3600) + q[2] * 60 + q[3] + q[4] / 1000000
+}
+{ t = s($0); if (last && t - last < lim) n++; last = t }
+END { print n + 0 }' "$PROBES")
+
+if (( short > 0 )); then
+    echo "  ⛔ PROVENANCE CHECK FAILED — refusing to report a phase statistic."
+    echo
+    printf '  %s of the %s probes claimed exogenous are less than %ss apart,\n' \
+        "$short" "$nexo" "$(( TIMER_PERIOD / 2 ))"
+    printf '  but the timer period is %ss. They cannot all be timer-driven.\n' "$TIMER_PERIOD"
+    echo
+    echo "  Almost certainly this boot predates the split of"
+    echo "  bt-health-snapshot.service from bt-health-snapshot-event.service,"
+    echo "  so udev-triggered probes are indistinguishable by unit name and the"
+    echo "  set is contaminated with outcome-dependent timestamps."
+    echo
+    echo "  Reporting a number here would repeat EX-012 exactly. Use boots"
+    echo "  recorded after the split, where provenance is recorded rather than"
+    echo "  inferred."
+    exit 2
+fi
 
 if (( np < 2 )); then
     echo "  Fewer than two probes — no gaps to normalise against. Nothing to say."
@@ -176,9 +226,13 @@ END {
         print "    That is NOT expected under independence and is worth"
         print "    investigating as a possible observer effect."
     } else {
-        print "  Phases are spread across the interval. No observer effect is"
-        print "  visible in this data — which is a real negative result, not an"
-        print "  absence of one."
+        print "  Phases are spread across the interval. No evidence of an"
+        print "  observer effect in this data."
+        print ""
+        print "  Note what that does and does not say. A spread of phases does"
+        print "  not DEMONSTRATE independence — with few events it cannot. What"
+        print "  it establishes is the absence of evidence for clustering, which"
+        print "  is worth stating plainly and is not the same claim."
     }
 }
 ' "$PROBES" "$FAILS"

@@ -67,6 +67,7 @@ FILES=(
     /etc/systemd/system/bt-hang-watchdog.service.d/20-verbose.conf
     /etc/systemd/system/bt-health-snapshot.service.d/10-device.conf
     /etc/systemd/system/bt-health-snapshot.service
+    /etc/systemd/system/bt-health-snapshot-event.service
     /etc/systemd/system/bt-health-snapshot.timer
     /etc/modprobe.d/btusb-qca9377.conf
     /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules

@@ -5,10 +5,10 @@
 # --no-block so udev is never held up by the snapshot's journalctl queries.
 
 SUBSYSTEM=="bluetooth", ACTION=="add", \
-  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot.service"
+  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot-event.service"
 SUBSYSTEM=="bluetooth", ACTION=="remove", \
-  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot.service"
+  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot-event.service"
 SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="13d3", ATTR{idProduct}=="3503", \
-  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot.service"
+  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot-event.service"
 SUBSYSTEM=="usb", ACTION=="remove", ENV{PRODUCT}=="13d3/3503*", \
-  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot.service"
+  RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot-event.service"

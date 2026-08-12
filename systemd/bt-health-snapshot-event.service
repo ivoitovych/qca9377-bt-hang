@@ -1,0 +1,26 @@
+[Unit]
+Description=Snapshot Bluetooth health metrics (event-triggered)
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+
+# IDENTICAL to bt-health-snapshot.service except for its name, and the name is
+# the entire point: it records the PROVENANCE of the probe.
+#
+# udev fires a health snapshot on bluetooth and USB add/remove — exactly the
+# events a failing controller generates. Those probes are therefore ENDOGENOUS:
+# their timing is determined partly by the outcome under study. Probes from
+# bt-health-snapshot.timer are EXOGENOUS: their schedule exists independently of
+# Bluetooth state.
+#
+# Running both through one unit made them indistinguishable in the journal, and
+# analysing them as a single exposure clock produced a spectacular false result
+# — mean phase 0.084, 6 of 8 failures in the first 10% of their gap — which was
+# outcome-dependent interval construction, not an observer effect (EX-012).
+#
+# Splitting the unit means bt-phase can select by provenance instead of guessing
+# from inter-probe spacing, which was only ever a heuristic. Endogenous probes
+# are NOT discarded: they are real events and useful chronology. They simply
+# cannot define the null exposure distribution.
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/bt-health-snapshot

@@ -239,6 +239,12 @@ if (( METRICS )); then
                  /etc/systemd/system/bt-health-snapshot.service 0644
     install_file "$SRC/systemd/bt-health-snapshot.timer" \
                  /etc/systemd/system/bt-health-snapshot.timer 0644
+    # Same script, separate unit name, so the journal records WHY each probe
+    # exists. udev fires this one; the timer fires the other. Without that
+    # distinction the two are indistinguishable and an exposure analysis
+    # silently mixes outcome-dependent timestamps into its baseline (EX-012).
+    install_file "$SRC/systemd/bt-health-snapshot-event.service" \
+                 /etc/systemd/system/bt-health-snapshot-event.service 0644
     install_file "$SRC/tools/bt-health-report.sh" /usr/local/bin/bt-health-report 0755
     install_file "$SRC/evidence/baseline/baseline.tsv" \
                  /usr/local/share/qca9377-bt-hang/baseline.tsv 0644
