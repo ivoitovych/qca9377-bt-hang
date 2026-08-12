@@ -9,6 +9,54 @@ mistaken for the main bug.
 Each issue below is tracked separately, with its own evidence and its own reportability.
 They are numbered `BT-n` so exhibits and commits can cite them.
 
+---
+
+## Evidence model
+
+Two rules govern how anything here is read. Both were bought with mistakes.
+
+**1. An event missing from one capture path is not evidence the controller did not do it.**
+
+There are two independent HCI capture paths (`bt-trace` via btmon, `bt-capture` decode-free),
+which gives three distinct states rather than the naive two:
+
+| | Reading |
+|---|---|
+| **both paths saw it** | strongly corroborated |
+| **one path saw it** | the event almost certainly occurred; the discrepancy is an *instrumentation* finding |
+| **neither path saw it** | possibly absent — subject to what coverage each path actually had |
+
+Before redundancy existed, absence in the capture silently became absence in the inferred
+history. `tools/bt-capdiff` exists to make the middle row visible, and on its first run it
+was the middle row that exposed the btmon crash trigger.
+
+**2. The liveness probe is an intervention, not an observation.**
+
+`hciconfig <dev> name` — used by `bt-state` and by `bt-health-snapshot` on a timer — injects
+an HCI command/response exchange into the controller under study, and is *proven* to
+deterministically abort an active btmon capture (`EX-011`). Something that demonstrably
+perturbs one observer cannot be assumed inert toward the subject.
+
+There is **no evidence** the probe contributes to BT-1, and it is not a suspect. It is
+recorded so the question stays answerable: every trial now logs probe count, btmon abort
+count, and the interval from the last probe to the first HCI timeout. If fatal transitions
+ever cluster shortly after probes, that appears in a column. If they fall at arbitrary
+distances across thousands of probes, that is negative evidence against an observer effect —
+worth exactly as much.
+
+The causal graph therefore carries one more antecedent, with its question mark intact:
+
+```
+   monitoring probe  --?-->  controller state  -->  synchronous-audio transition
+                                                          |
+                                                          v
+                                                   HCI non-response
+                                                          |
+                                                     ~31 s later
+                                                          v
+                                              observable USB errors --> device gone
+```
+
 **Independence matters for submission.** A small, deterministic, well-evidenced bug is far
 more likely to be fixed than a large intermittent one, and bundling them means the weakest
 member sets the pace for all. `BT-2` and `BT-4` are reportable *today*; `BT-1` is not.
@@ -145,6 +193,18 @@ paths was an instrumentation finding, exactly as intended.
 **Still needed before filing:** a backtrace from the aborting process, and a check against
 current BlueZ (5.72 is not the latest).
 
+### Two separate facts, which must not be merged in the report
+
+| | |
+|---|---|
+| **The defect** | a raw-HCI command/response exchange reproducibly aborts an active btmon capture. One command, deterministic. This is the BlueZ-facing bug. |
+| **The rate here** | 67–85 aborts per boot, because *this project's* health probe fires the trigger on a timer. This is a property of the environment, not of the defect. |
+
+Filing "btmon crashes 80 times during normal Bluetooth operation" would have been a badly
+characterised report — a reader would reasonably infer that ordinary desktop use produces
+that rate. It does not. What produces it is a monitoring loop that happens to invoke the
+trigger repeatedly.
+
 ### ⚠️ This project's own probes are the main cause of the crash rate
 
 `bt-state` on every invocation, and `bt-health-snapshot` on a timer, use
@@ -159,6 +219,12 @@ the watchdog exists to detect.
 
 That trade is only acceptable because `bt-capture` is now crash-immune. Before it existed,
 this was a genuine self-inflicted wound.
+
+**Treat it as a known, temporary measurement perturbation — not the final architecture.**
+The trade today is: *measure controller health, knowingly sacrifice btmon continuity, retain
+independent raw evidence anyway.* The ideal is a controller round-trip liveness test that
+destroys neither capture path. Whether one exists is a separate problem, and it does not
+block BT-1. Until then the perturbation is recorded per trial rather than assumed away.
 
 `btmon -w` aborts with a core dump during capture, frequently enough that the capture
 rotates on crash rather than on size. Files average ~2 MB against a 128 MB rotation

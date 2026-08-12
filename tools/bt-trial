@@ -257,6 +257,46 @@ hang|ok)
     fi
     [[ -s "$dir/sco-params.txt" ]] || echo "(no Setup Synchronous Connection found in retained captures)" > "$dir/sco-params.txt"
 
+    # --- the observer as an experimental intervention -----------------------
+    # The liveness probe is not observationally inert. `hciconfig <dev> name`
+    # injects an HCI command/response exchange into the same controller whose
+    # rare state transitions are under study, and it is already proven to
+    # deterministically abort an active btmon capture (EX-011). Something that
+    # demonstrably perturbs one observer cannot be assumed harmless to the
+    # subject.
+    #
+    # There is NO evidence the probe contributes to BT-1, and it is not being
+    # treated as a suspect. It is being recorded so the question is answerable
+    # rather than assumed. If a pattern ever emerges — every fatal transition
+    # shortly after a probe — it will be visible in this column instead of being
+    # discovered weeks later. If failures fall at arbitrary distances from
+    # thousands of probes, that is negative evidence against an observer effect,
+    # which is worth just as much.
+    #
+    # bt-health-snapshot is the systematic, timer-driven probe and is counted
+    # from the journal. btmon aborts are counted as an independent corroborator:
+    # per EX-011 they stand in a 1:1 relation to raw-HCI probes, so a large
+    # divergence between the two columns is itself an instrumentation signal.
+    probes=$(journalctl -u bt-health-snapshot --since "$since" --no-pager -o cat 2>/dev/null \
+             | grep -c "Snapshot Bluetooth health metrics" || true)
+    aborts=$(journalctl -u bt-trace --since "$since" --no-pager -o cat 2>/dev/null \
+             | grep -c "exited" || true)
+
+    # Distance from the last probe preceding the first timeout. Empty when there
+    # was no timeout; "?" when a timeout occurred with no probe before it.
+    probe_to_tmo="?"
+    if [[ -n "$t_tmo" ]]; then
+        t_probe=$(journalctl -u bt-health-snapshot --since "$since" --until "$t_tmo" \
+                  --no-pager -o short-iso-precise 2>/dev/null \
+                  | grep "Snapshot Bluetooth health" | tail -1 | cut -d' ' -f1)
+        if [[ -n "$t_probe" ]]; then
+            probe_to_tmo=$(awk -v a="$t_probe" -v b="$t_tmo" '
+                function s(t,   p,q,r){split(t,p,"T");split(p[2],q,/[:.+]/);split(p[1],r,"-")
+                                       return ((r[3]*24+q[1])*3600)+q[2]*60+q[3]+q[4]/1000000}
+                BEGIN{printf "%.3f", s(b)-s(a)}')
+        fi
+    fi
+
     hci_alive && resp_after=yes || resp_after=no
     # Resolve the device by VID/PID rather than by bus path: after a reset it
     # can re-enumerate at a different address, and a hardcoded path would then
@@ -269,11 +309,12 @@ hang|ok)
         fi
     done
 
-    [[ -s "$RESULTS" ]] || printf 'timestamp\tbuild\ttrial\tprotocol\toutcome\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tkernel\n' > "$RESULTS"
-    printf '%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    [[ -s "$RESULTS" ]] || printf 'timestamp\tbuild\ttrial\tprotocol\toutcome\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\n' > "$RESULTS"
+    printf '%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
         "$(date -Iseconds)" "$build" "$n" "$PROTOCOL_VERSION" "$outcome" "$dur" \
         "${sco_sent:-?}" "$sco_to_tmo" "${tmo:-?}" "$resp_after" "$usb_present" \
-        "${usb_gone:-?}" "$(uname -r)" >> "$RESULTS"
+        "${usb_gone:-?}" "${probes:-?}" "$probe_to_tmo" "${aborts:-?}" \
+        "$(uname -r)" >> "$RESULTS"
 
     echo
     echo "  SCO setup requested   : ${sco_sent:-?}"
@@ -282,6 +323,8 @@ hang|ok)
     echo "  responds afterwards   : $resp_after"
     echo "  still on the USB bus  : $usb_present   (bus-loss events: ${usb_gone:-?})"
     echo "  request parameters    : $dir/sco-params.txt"
+    echo "  liveness probes       : ${probes:-?}   (btmon aborts: ${aborts:-?})"
+    echo "  last probe -> timeout : $probe_to_tmo s"
 
     if [[ "$outcome" == hang ]] && command -v bt-incident >/dev/null 2>&1; then
         echo "collecting incident evidence..."
