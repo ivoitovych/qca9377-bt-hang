@@ -172,11 +172,17 @@ install_file "$SRC/tools/bt-logvolume"   /usr/local/bin/bt-logvolume   0755
 if command -v btmon >/dev/null 2>&1; then
     install_file "$SRC/bin/bt-trace"            /usr/local/sbin/bt-trace                    0755
     install_file "$SRC/systemd/bt-trace.service" /etc/systemd/system/bt-trace.service       0644
+    install_file "$SRC/tools/bt-sco"            /usr/local/bin/bt-sco                       0755
     TRACE=1
 else
-    echo "  WARNING: btmon not found (package: bluez) — HCI capture not installed"
+    echo "  WARNING: btmon not found (package: bluez) — btmon-based capture not installed"
     TRACE=0
 fi
+
+# Decode-free capture. Independent of btmon, and specifically of btmon crashing:
+# 67 aborts in one boot lost the SCO parameters this investigation now needs.
+install_file "$SRC/bin/bt-capture"             /usr/local/sbin/bt-capture             0755
+install_file "$SRC/systemd/bt-capture.service" /etc/systemd/system/bt-capture.service 0644
 
 # Kernel dynamic debug: the driver's own account of its decisions. Must be
 # enabled before bluetooth.service opens the adapter, hence a sysinit oneshot.
@@ -261,6 +267,7 @@ run systemctl daemon-reload
 run systemctl enable --now bt-hang-watchdog
 (( METRICS )) && run systemctl enable --now bt-health-snapshot.timer
 (( TRACE ))   && run systemctl enable --now bt-trace
+run systemctl enable --now bt-capture
 run systemctl enable --now bt-dyndbg
 (( USBMON ))  && run systemctl enable --now bt-usbmon
 # Picks up the raised journal size cap. Restarting journald is safe: clients

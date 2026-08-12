@@ -12,8 +12,17 @@ RestartSec=10
 
 Environment=BT_TRACE_DIR=/var/log/bt-health/trace
 Environment=BT_TRACE_MAX_MB=128
-Environment=BT_TRACE_KEEP=30
-Environment=BT_TRACE_MIN_FREE_GB=10
+# Raised from 30 on 2026-08-12, for the second time — the first attempt changed
+# only the default inside bin/bt-trace, which this line silently overrode. The
+# service therefore kept 30 files while the documentation claimed 400, and the
+# btsnoop captures for a session under active investigation were rotated away
+# roughly nine hours before anyone looked for them. Changing a default is
+# pointless when the caller sets the variable explicitly.
+Environment=BT_TRACE_KEEP=400
+# The real bound. 400 files at the observed ~9 MB average is ~3.6 GB, but file
+# size varies with activity, so the free-space floor is what actually protects
+# the filesystem — and it is enforced on every check regardless of KEEP.
+Environment=BT_TRACE_MIN_FREE_GB=15
 
 # btmon reads the HCI monitor socket; needs raw network access.
 ProtectHome=yes

@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+"""bt-capture — decode-free HCI capture that survives btmon crashing.
+
+WHY THIS EXISTS
+---------------
+btmon in bluez 5.72 aborts repeatedly while capturing (issue BT-4 in
+docs/issues.md): 67 crashes in a single boot on this machine. Each abort ends
+the current capture file and loses roughly a second of traffic.
+
+That was treated as a nuisance until it blocked the investigation. The question
+that matters now is what distinguishes a synchronous-connection setup the
+controller survives from one it does not, and the answer is in the *parameters*
+of the request -- which live only in the btsnoop capture, not in the kernel log.
+When those captures were finally consulted, the relevant window was gone.
+
+The crash is in btmon's decoder, not in its writer. So this tool does not
+decode. It reads raw frames from the kernel's HCI monitor socket and appends
+them to a btsnoop file, and there is no packet it can fail to parse because it
+never parses one. It runs *alongside* btmon rather than replacing it: btmon
+stays for its live decoding, and this is the copy that is still there afterwards.
+
+Multiple readers may hold the monitor socket open simultaneously, so both can
+run without interfering.
+
+Usage:
+  bt-capture [--dir DIR] [--max-mb N] [--keep N] [--min-free-gb N]
+"""
+
+import argparse
+import os
+import socket
+import struct
+import sys
+import time
+
+HCI_DEV_NONE = 0xFFFF
+HCI_CHANNEL_MONITOR = 2
+
+# btsnoop header: magic, version, datalink type.
+BTSNOOP_MAGIC = b"btsnoop\x00"
+BTSNOOP_VERSION = 1
+BTSNOOP_TYPE_MONITOR = 2001
+
+# btsnoop timestamps count microseconds from year 0. bluez derives them from
+# seconds since 2000-01-01 plus this offset; matching it exactly is what makes
+# the output readable by btmon -r and by Wireshark.
+BTSNOOP_TS_OFFSET = 0x00E03AB44A676000
+UNIX_2000 = 946684800
+
+
+def log(msg):
+    print(msg, flush=True)
+
+
+def open_monitor():
+    """Bind the HCI monitor channel.
+
+    Python's socket.bind() rejects the (device, channel) tuple for BTPROTO_HCI
+    on this build ("bind(): wrong format"), and binding with the device alone
+    would silently attach to HCI_CHANNEL_RAW instead of the monitor -- a
+    different stream, and one that would look plausible while missing exactly
+    the events wanted. So the sockaddr_hci is constructed and passed to libc's
+    bind() directly:
+
+        struct sockaddr_hci { unsigned short hci_family, hci_dev, hci_channel; }
+    """
+    import ctypes
+    import ctypes.util
+
+    s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_RAW, socket.BTPROTO_HCI)
+    libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True)
+    addr = struct.pack("<HHH", socket.AF_BLUETOOTH, HCI_DEV_NONE, HCI_CHANNEL_MONITOR)
+    if libc.bind(s.fileno(), addr, len(addr)) != 0:
+        err = ctypes.get_errno()
+        raise OSError(err, os.strerror(err))
+    return s
+
+
+def new_file(path):
+    f = open(path, "wb", buffering=0)
+    f.write(BTSNOOP_MAGIC + struct.pack(">II", BTSNOOP_VERSION, BTSNOOP_TYPE_MONITOR))
+    return f
+
+
+def prune(directory, keep, min_free_gb):
+    files = sorted(
+        (os.path.join(directory, n) for n in os.listdir(directory) if n.endswith(".btsnoop")),
+        key=os.path.getmtime,
+    )
+    while len(files) > keep:
+        victim = files.pop(0)
+        log(f"pruning {os.path.basename(victim)}")
+        try:
+            os.unlink(victim)
+        except OSError:
+            pass
+
+    # Free-space floor, enforced independently of the file count: a count is a
+    # guess about file size, and this is the check that cannot be wrong.
+    while files:
+        st = os.statvfs(directory)
+        free_gb = st.f_bavail * st.f_frsize / (1 << 30)
+        if free_gb >= min_free_gb:
+            break
+        victim = files.pop(0)
+        log(f"low disk ({free_gb:.1f}GB free): pruning {os.path.basename(victim)}")
+        try:
+            os.unlink(victim)
+        except OSError:
+            pass
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dir", default=os.environ.get("BT_CAPTURE_DIR", "/var/log/bt-health/capture"))
+    ap.add_argument("--max-mb", type=int, default=int(os.environ.get("BT_CAPTURE_MAX_MB", "64")))
+    ap.add_argument("--keep", type=int, default=int(os.environ.get("BT_CAPTURE_KEEP", "400")))
+    ap.add_argument("--min-free-gb", type=int,
+                    default=int(os.environ.get("BT_CAPTURE_MIN_FREE_GB", "15")))
+    # A self-terminating mode, so testing this does not need a `timeout` prefix.
+    # That matters for a mundane reason: wrapping a command in `timeout` puts a
+    # different program at the front of the command line, so it no longer
+    # matches any permission rule written for this one and prompts every time.
+    # A bound the tool enforces itself keeps the invocation matchable.
+    ap.add_argument("--duration", type=int, default=0,
+                    help="stop after N seconds (0 = run until killed)")
+    args = ap.parse_args()
+
+    os.makedirs(args.dir, mode=0o700, exist_ok=True)
+
+    try:
+        sock = open_monitor()
+    except OSError as e:
+        log(f"ERROR: cannot open HCI monitor socket: {e}")
+        return 1
+
+    log(f"bt-capture started (dir={args.dir} rotate={args.max_mb}MB "
+        f"keep={args.keep} floor={args.min_free_gb}GB)")
+    prune(args.dir, args.keep, args.min_free_gb)
+
+    limit = args.max_mb * 1024 * 1024
+    path = os.path.join(args.dir, time.strftime("hci-%Y%m%d-%H%M%S.btsnoop"))
+    out = new_file(path)
+    log(f"capturing to {os.path.basename(path)}")
+    written = 0
+
+    deadline = time.time() + args.duration if args.duration else None
+    if deadline:
+        sock.settimeout(1.0)
+
+    while True:
+        if deadline and time.time() >= deadline:
+            out.close()
+            log(f"duration reached; wrote {written} bytes to {os.path.basename(path)}")
+            return 0
+        try:
+            data = sock.recv(65536)
+        except socket.timeout:
+            continue
+        except OSError as e:
+            log(f"ERROR: monitor socket read failed: {e}")
+            return 1
+        if len(data) < 6:
+            continue
+
+        # struct hci_mon_hdr { __le16 opcode; __le16 index; __le16 len; }
+        opcode, index, _plen = struct.unpack_from("<HHH", data, 0)
+        payload = data[6:]
+
+        us = int((time.time() - UNIX_2000) * 1_000_000) + BTSNOOP_TS_OFFSET
+        # In monitor format the btsnoop "flags" field carries index and opcode.
+        flags = (index << 16) | opcode
+        rec = struct.pack(">IIIIq", len(payload), len(payload), flags, 0, us)
+
+        try:
+            out.write(rec + payload)
+        except OSError as e:
+            log(f"ERROR: write failed: {e}")
+            return 1
+        written += len(rec) + len(payload)
+
+        if written >= limit:
+            out.close()
+            prune(args.dir, args.keep, args.min_free_gb)
+            path = os.path.join(args.dir, time.strftime("hci-%Y%m%d-%H%M%S.btsnoop"))
+            out = new_file(path)
+            log(f"rotated to {os.path.basename(path)}")
+            written = 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        sys.exit(0)

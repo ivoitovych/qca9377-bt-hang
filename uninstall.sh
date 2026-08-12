@@ -45,6 +45,9 @@ FILES=(
     /usr/local/bin/bt-exhibit
     /usr/local/bin/bt-context
     /usr/local/bin/bt-logvolume
+    /usr/local/bin/bt-sco
+    /usr/local/sbin/bt-capture
+    /etc/systemd/system/bt-capture.service
     /usr/local/bin/bt-sanitize-logs
     /usr/local/share/qca9377-bt-hang/installed-at
     /usr/local/bin/bt-boot-list
@@ -81,6 +84,7 @@ UNITS=(
     bt-trace.service
     bt-dyndbg.service
     bt-usbmon.service
+    bt-capture.service
 )
 
 run() {

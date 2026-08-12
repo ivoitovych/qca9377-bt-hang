@@ -1,0 +1,96 @@
+#!/bin/bash
+# bt-sco — every synchronous (SCO/eSCO) link setup, its parameters, and its fate.
+#
+# WHY THIS EXISTS. Both instrumented hangs occurred during SCO link transitions,
+# but SCO setup is NOT sufficient to cause one: a later session issued three of
+# them and the controller survived. So the question stopped being "was SCO used?"
+# and became "what was different about the ones that killed it?".
+#
+# The kernel log answers neither. It shows `opcode 0x0428 plen 17` and nothing
+# of the payload — but the payload is where the candidate answers live: voice
+# setting (CVSD vs mSBC), packet type (SCO vs eSCO, EV3/2-EV3/3-EV3), maximum
+# latency, and retransmission effort. A controller that wedges on one
+# parameterisation and not another would look, from the kernel log alone, like a
+# controller that wedges at random.
+#
+# btmon decodes the payload from the btsnoop captures, so this tool pairs each
+# request with its completion event and prints them together.
+#
+# Usage:
+#   bt-sco [--dir <trace-dir>] [--raw]
+#
+#   --dir   btsnoop directory (default /var/log/bt-health/trace)
+#   --raw   print btmon's blocks unfiltered, for anything this misses
+
+set -uo pipefail
+
+DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
+RAW=0
+
+while (( $# )); do
+    case "$1" in
+        --dir) DIR="${2:-}"; shift 2 ;;
+        --raw) RAW=1; shift ;;
+        -h|--help) sed -n '2,26p' "$0"; exit 0 ;;
+        *) echo "bt-sco: unknown argument: $1" >&2; exit 1 ;;
+    esac
+done
+
+command -v btmon >/dev/null 2>&1 || { echo "bt-sco: btmon not found (package: bluez)" >&2; exit 1; }
+[[ -d "$DIR" ]] || { echo "bt-sco: no capture directory at $DIR" >&2; exit 1; }
+
+TMP=$(mktemp) || exit 1
+trap 'rm -f "$TMP"' EXIT
+
+shopt -s nullglob
+files=("$DIR"/*.btsnoop)
+shopt -u nullglob
+if (( ${#files[@]} == 0 )); then
+    echo "bt-sco: no .btsnoop files in $DIR"
+    exit 0
+fi
+
+for f in "${files[@]}"; do
+    COLUMNS=200 btmon -T -r "$f" 2>/dev/null
+done > "$TMP"
+
+if (( RAW )); then
+    grep -A 12 -E "HCI Command: Setup Synchronous|Synchronous Connect Complete" "$TMP"
+    exit 0
+fi
+
+echo "Synchronous (SCO/eSCO) link activity — captures in $DIR"
+echo "══════════════════════════════════════════════════════════════════════"
+
+# Match on "HCI Command:" / "HCI Event:" specifically. A bare grep for
+# "Setup Synchronous Connection" also matches the supported-commands bitmap
+# that the controller reports at startup, which lists the command name once per
+# adapter and has nothing to do with any actual request.
+awk '
+/HCI Command: Setup Synchronous Connection/ { insetup = 1; incompl = 0
+    print "\n── REQUEST ─────────────────────────────────────────────────"
+    print; next }
+/HCI Event: Synchronous Connect Complete/ { incompl = 1; insetup = 0
+    print "   ↳ COMPLETION"
+    print; next }
+/^[<>@=!]/ { insetup = 0; incompl = 0; next }
+(insetup || incompl) && /^ / { print }
+' "$TMP"
+
+req=$(grep -c "HCI Command: Setup Synchronous Connection" "$TMP" || true)
+cpl=$(grep -c "HCI Event: Synchronous Connect Complete" "$TMP" || true)
+
+echo
+echo "══════════════════════════════════════════════════════════════════════"
+printf '  setup requests      %s\n' "${req:-0}"
+printf '  completion events   %s\n' "${cpl:-0}"
+if [[ "${req:-0}" -gt "${cpl:-0}" ]]; then
+    echo
+    echo "  ⚠  $(( req - cpl )) request(s) received no completion event."
+    echo "     An unanswered synchronous setup is the signature of the hang —"
+    echo "     but check the retained captures actually span the incident before"
+    echo "     concluding one went missing rather than being rotated away."
+fi
+echo
+echo "  Compare the parameters of requests that were survived against those"
+echo "  that were not. Setup alone is not sufficient to hang this controller."

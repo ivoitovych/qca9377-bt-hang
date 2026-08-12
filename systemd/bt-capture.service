@@ -1,0 +1,31 @@
+[Unit]
+Description=Decode-free HCI capture (survives btmon crashing) — QCA9377 investigation
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+After=sysinit.target
+Wants=bluetooth.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/bt-capture
+Restart=always
+RestartSec=2s
+Nice=5
+
+Environment=BT_CAPTURE_DIR=/var/log/bt-health/capture
+Environment=BT_CAPTURE_MAX_MB=64
+Environment=BT_CAPTURE_KEEP=400
+Environment=BT_CAPTURE_MIN_FREE_GB=15
+
+# Runs ALONGSIDE bt-trace, not instead of it. btmon gives richer live decoding;
+# this gives a capture that is still there afterwards. Multiple readers may hold
+# the HCI monitor channel open at once, so the two do not interfere.
+#
+# Captures contain link keys and device addresses, so the directory is root-only
+# and this unit must not be relaxed to run unprivileged.
+UMask=0077
+
+# Independent bound in case the script's own accounting is ever wrong.
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target
