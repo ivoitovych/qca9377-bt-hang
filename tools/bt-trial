@@ -453,79 +453,17 @@ report)
     # resolved from the header rather than hardcoded, so adding a field cannot
     # silently shift what is being counted — which is how a denominator gets
     # corrupted without anyone editing the arithmetic.
-    awk -F'\t' '
-    NR == 1 { for (i = 1; i <= NF; i++) c[$i] = i; next }
-    {
-        ty = (c["trial_type"] ? $c["trial_type"] : "unknown_pre_schema")
-        b  = $c["build"]; k = ty "|" b
-        tot[k]++; if ($c["outcome"] == "hang") h[k]++; sum[k] += $c["duration_s"]
+    awk -f "$LIBDIR/trial-summary.awk" "$RESULTS" || {
+        echo "bt-trial: denominator report FAILED — refusing to print a partial report" >&2
+        exit 1
     }
-    END {
-        printf "  %-20s %-8s %-10s %-8s %s\n", "TRIAL TYPE", "BUILD", "HANGS", "RATE", "mean duration"
-        for (k in tot) {
-            split(k, p, "|")
-            rate = 100 * (h[k] + 0) / tot[k]
-            printf "  %-20s %-8s %-10s %-8s %.0fs\n", p[1], p[2],
-                   (h[k] + 0) "/" tot[k], sprintf("%.0f%%", rate), sum[k] / tot[k]
-        }
-        print ""
-        print "  These rows must never be added together. An observational boot"
-        print "  and a controlled protocol run are different evidence: the first"
-        print "  says the machine did or did not hang during ordinary use, the"
-        print "  second says the reproduction protocol was applied and the"
-        print "  controller withstood it or did not. Only controlled_* rows can"
-        print "  satisfy the A/B/C/D gate."
-    }' "$RESULTS"
     echo
     echo "${B}Was the SCO stimulus actually applied, and did it matter?${O}"
     echo "─────────────────────────────────────────────────────────────"
-    awk -F'\t' '
-    NR==1 { for (i=1; i<=NF; i++) col[$i] = i; next }
-    {
-        # BY HEADER NAME, NEVER BY POSITION. This line read `$5 == "hang"`
-        # until 2026-08-13. Inserting trial_type made field 5 `protocol`, so the
-        # test was always false and EVERY hang in this cross-tab was silently
-        # classified as survived — while the denominator table thirty lines
-        # above, which does resolve by name, stayed correct.
-        #
-        # That is the second defect caused by one schema change (next_trial_no
-        # was the first), in a file whose own comments state the rule. Hence
-        # tests/run-tests permutes the header and asserts the report is
-        # unchanged: positional assumptions are then mechanically impossible
-        # rather than merely discouraged.
-        s = (col["sco_sent"]  ? $col["sco_sent"]  : "?")
-        f = (col["outcome"] && $col["outcome"] == "hang")
-        if (s == "?" ) { unknown++; next }
-        if (s+0 > 0) { if (f) a++; else b++ } else { if (f) c++; else d++ }
+    awk -f "$LIBDIR/trial-sco-table.awk" "$RESULTS" || {
+        echo "bt-trial: SCO cross-tab FAILED — refusing to print a partial report" >&2
+        exit 1
     }
-    END {
-        printf "  %-22s %8s %12s\n", "", "hung", "survived"
-        printf "  %-22s %8d %12d\n", "SCO setup requested", a+0, b+0
-        printf "  %-22s %8d %12d\n", "no SCO setup", c+0, d+0
-        if (unknown) printf "\n  (%d trial(s) with no SCO field — recorded before this was tracked)\n", unknown
-        print ""
-        # Braces are mandatory here. Written without them, the second and third
-        # print statements fell OUTSIDE the if, leaving `else` with no matching
-        # `if` — an awk syntax error that killed this entire block. It failed on
-        # stderr while the surrounding shell reported success, so the cross-tab
-        # never ran at all from the day it was written. The separately reported
-        # defect — outcome read by field position — was real, but in code that
-        # was never reached.
-        #
-        # (And note this comment cannot contain an apostrophe: the whole awk
-        # program is a single-quoted shell string, so one would end it.)
-        if ((a+b) == 0) {
-            print "  No trial has yet applied the stimulus. Until one does, nothing here"
-            print "  distinguishes a build that fixes the bug from a run that never"
-            print "  provoked it."
-        } else if ((c+d) == 0) {
-            print "  Every trial provoked SCO setup. The bottom row is empty, so this"
-            print "  cannot yet separate the stimulus from the passage of time."
-        } else if (b+0 > 0 && a+0 > 0) {
-            print "  SCO setup has been survived AND followed by failure. The request"
-            print "  alone is therefore not sufficient — look at its parameters."
-        }
-    }' "$RESULTS"
     echo
     echo "  Gate: stock must reach a high, stable failure rate (target 5/5) before"
     echo "  any build is compiled. Compare every build against the SAME protocol."

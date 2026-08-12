@@ -79,6 +79,34 @@ while IFS= read -r f; do
     else bad "py    $f"; sed 's/^/      /' <<<"$out"; fi
 done < <(files)
 
+# --- awk programs ----------------------------------------------------------
+# These are checkable ONLY because they live in files. The SCO cross-tab spent
+# its whole life as an inline shell string containing a braceless `if` followed
+# by `else` — a parse error that killed the entire END block. It failed on
+# stderr while the enclosing command returned success, so the report simply
+# omitted a section and nobody could tell. Nothing validated it because nothing
+# could reach it.
+#
+# Parsing against /dev/null runs the program over empty input: syntax errors
+# surface, BEGIN/END blocks execute harmlessly, and no repository file is read.
+while read -r f; do
+    [[ -f "$f" ]] || continue
+    case "$f" in *.awk) ;; *) continue ;; esac
+    if ! command -v awk >/dev/null 2>&1; then
+        printf '  • awk   %s (skipped: awk not installed)\n' "$f"; continue
+    fi
+    # Judge on the DIAGNOSTIC, not the exit status. A program that parses may
+    # legitimately exit non-zero — interval.awk exits 1 when handed an
+    # unparseable timestamp, which is deliberate and is itself under test. Only
+    # awk's own parse diagnostics indicate a broken program.
+    out=$(awk -f "$f" /dev/null 2>&1 >/dev/null)
+    if grep -qiE "syntax error|unexpected|can't open source file|unterminated" <<<"$out"; then
+        bad "awk   $f"; sed 's/^/      /' <<<"$out"
+    else
+        ok "awk   $f"
+    fi
+done < <(files)
+
 echo
 # "All checks passed" after checking nothing is a false assurance — but there
 # are two different nothings, and conflating them is its own bug (it made a

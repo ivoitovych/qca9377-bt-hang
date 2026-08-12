@@ -49,6 +49,8 @@ FILES=(
     /usr/local/bin/lib/timestamp.awk
     /usr/local/bin/lib/interval.awk
     /usr/local/bin/lib/capdiff-match.awk
+    /usr/local/bin/lib/trial-summary.awk
+    /usr/local/bin/lib/trial-sco-table.awk
     /usr/local/bin/bt-sco
     /usr/local/bin/bt-capdiff
     /usr/local/sbin/bt-capture

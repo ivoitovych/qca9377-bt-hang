@@ -1424,3 +1424,47 @@ answer. Trust comes from **overlapping checks that fail differently**:
 
 Each is weak alone. Every serious defect in this project was caught by exactly one of them,
 and never the one that was supposed to.
+
+### Correctness has layers, and a check at one does not establish the next
+
+The dead cross-tab is the clearest case this project has produced:
+
+1. the file contained the correct methodological comment;
+2. one report block implemented it;
+3. another violated it with `$5`;
+4. that violation did not matter at runtime —
+5. because the whole block was an awk parse error;
+6. which did not make the parent command fail;
+7. so the report looked fine while omitting an entire section;
+8. and a permutation test now catches both the omission and the positional read.
+
+Reading upward: **algorithm → implementation → invocation → execution → interpretation**,
+with **host-language representation** underneath all of it — correct awk becomes invalid
+shell simply by being embedded badly, which an apostrophe in a comment demonstrated.
+
+Two invariants follow, and they are separate:
+
+- **semantic** — fields are addressed by meaning, not position. Enforced by permuting the
+  header and requiring byte-identical output.
+- **execution** — the analysis actually ran. Enforced by making every evidence-producing
+  command fatal to its caller, and tested by removing the program and by breaking it.
+
+`bt-trial` deliberately does not use `set -e`: it probes things allowed to fail, and
+errexit's semantics are treacherous. So the analysis commands are made explicitly fatal
+instead, which is narrower and does not depend on shell subtleties.
+
+### When a constraint must be remembered, change the representation
+
+The apostrophe incident produced a comment saying *"this comment cannot contain an
+apostrophe"*. That is a fragile constraint documented rather than removed. The report
+programs now live in `tools/lib/*.awk`, which ends the class outright:
+
+| | Inline shell string | File |
+|---|---|---|
+| comment punctuation | can terminate the program | irrelevant |
+| syntax checking | impossible | `repo-validate` parses every `.awk` |
+| exit status | swallowed by the enclosing command | directly observable |
+| what tests exercise | a copy | the file production loads |
+
+The same move had already paid off for `capdiff-match.awk`. Doing it once and not
+generalising is how the second instance survived.

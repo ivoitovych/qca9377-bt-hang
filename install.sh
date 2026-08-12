@@ -175,6 +175,8 @@ install_file "$SRC/tools/bt-phase"       /usr/local/bin/bt-phase       0755
 install_file "$SRC/tools/lib/timestamp.awk"     /usr/local/bin/lib/timestamp.awk     0644
 install_file "$SRC/tools/lib/interval.awk"      /usr/local/bin/lib/interval.awk      0644
 install_file "$SRC/tools/lib/capdiff-match.awk" /usr/local/bin/lib/capdiff-match.awk 0644
+install_file "$SRC/tools/lib/trial-summary.awk"   /usr/local/bin/lib/trial-summary.awk   0644
+install_file "$SRC/tools/lib/trial-sco-table.awk" /usr/local/bin/lib/trial-sco-table.awk 0644
 if command -v btmon >/dev/null 2>&1; then
     install_file "$SRC/bin/bt-trace"            /usr/local/sbin/bt-trace                    0755
     install_file "$SRC/systemd/bt-trace.service" /etc/systemd/system/bt-trace.service       0644

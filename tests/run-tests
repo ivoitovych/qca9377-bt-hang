@@ -233,6 +233,55 @@ iv2=$(awk -f tools/lib/timestamp.awk -f tools/lib/interval.awk \
     || bad "expected empty output on bad input, got '$iv2'"
 
 echo
+echo "analysis commands fail loudly"
+echo "──────────────────────────────────────────────────────────────"
+
+# THE INVARIANT: if an evidence-producing calculation fails, the enclosing
+# command must exit non-zero.
+#
+# bt-trial runs under `set -uo pipefail` and deliberately NOT `set -e` — it
+# probes things that are allowed to fail (hci_alive, optional commands), and
+# errexit's semantics are treacherous. The consequence, before this fix, was
+# that an awk syntax error printed to stderr, the script carried on through
+# later echoes, and `bt-trial report` returned 0 while silently omitting an
+# entire analytical section.
+#
+# Schema-position independence and successful execution are SEPARATE
+# invariants. The permutation test happens to catch this one for this table,
+# because missing output fails the expected-count assertion — but that is a
+# coincidence of that fixture, not a general guarantee. This tests the general
+# property by making the analysis program unreachable.
+BROKEN=$(mktemp -d)
+mkdir -p "$BROKEN/lib"
+cp tools/lib/timestamp.awk "$BROKEN/lib/"
+cp tools/bt-trial "$BROKEN/"
+# Every lib file present except the report programs: the tool must fail rather
+# than print a report with a section missing.
+rc=0
+BT_REPO="$RD" BT_LIBDIR="$BROKEN/lib" "$BROKEN/bt-trial" report >/dev/null 2>&1 || rc=$?
+if (( rc != 0 )); then
+    ok "report exits non-zero when an analysis program is missing (rc=$rc)"
+else
+    bad "report returned 0 with its analysis program missing — a partial report passed as success"
+fi
+rm -rf "$BROKEN"
+
+# And a syntactically broken program must be fatal too, not merely noisy.
+BROKEN2=$(mktemp -d)
+mkdir -p "$BROKEN2/lib"
+cp tools/lib/*.awk "$BROKEN2/lib/"
+cp tools/bt-trial "$BROKEN2/"
+printf 'BEGIN { if (1)\n  print "a"\n  print "b"\nelse print "c" }\n' > "$BROKEN2/lib/trial-sco-table.awk"
+rc=0
+BT_REPO="$RD" BT_LIBDIR="$BROKEN2/lib" "$BROKEN2/bt-trial" report >/dev/null 2>&1 || rc=$?
+if (( rc != 0 )); then
+    ok "report exits non-zero when an analysis program has a syntax error (rc=$rc)"
+else
+    bad "report returned 0 despite an awk parse error — exactly the original defect"
+fi
+rm -rf "$BROKEN2"
+
+echo
 echo "documentation-drift detector"
 echo "──────────────────────────────────────────────────────────────"
 
