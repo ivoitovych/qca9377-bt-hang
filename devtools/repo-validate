@@ -90,6 +90,20 @@ if (( enumerated == 0 )); then
     echo "VALIDATION INCONCLUSIVE — git enumerated no files in $ROOT" >&2
     exit 1
 fi
+# --- analysis invariants ---------------------------------------------------
+# Syntax checks prove a script parses, not that it means what its comments say.
+# The gap between those two is where this project's worst defects have lived —
+# a phase analysis that documented exogenous-probe selection and implemented a
+# spacing heuristic passed every syntax check ever run against it.
+if [[ -x "$ROOT/tests/run-tests" ]]; then
+    if out=$("$ROOT/tests/run-tests" 2>&1); then
+        ok "tests $(tail -1 <<<"$out")"
+    else
+        bad "tests FAILED"
+        sed 's/^/      /' <<<"$out"
+    fi
+fi
+
 # --- documentation drift ---------------------------------------------------
 # Three times in a row the answer to "is everything updated, committed and
 # pushed?" was "the code is, the documentation is not". Code landed with good

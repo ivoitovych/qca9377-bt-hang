@@ -1,0 +1,91 @@
+#!/bin/bash
+# run-tests — assert the analysis invariants, rather than trusting the comments.
+#
+# WHY THIS EXISTS. An external review of this repository found that its prose
+# had run ahead of its code: `bt-phase`'s header stated it used only exogenous
+# timer-driven probes while the implementation kept probes 600 seconds apart and
+# called that provenance. Every commit message described the intended behaviour
+# correctly. Only reading the implementation found the gap.
+#
+# Comments cannot be executed. These can. Each test below encodes an invariant
+# that was violated by a real, shipped version of a tool here, and each fixture
+# is built so the OLD behaviour fails it:
+#
+#   sampling unit   a burst of timeout lines is one incident, not many
+#   boot locality   no interval may span a reboot
+#   date arithmetic a gap across a month boundary must be positive and correct
+#   provenance      a contaminated probe set must be REFUSED, not reported
+#
+# Usage: tests/run-tests
+
+set -uo pipefail
+
+cd "$(dirname "$0")/.." || exit 1
+pass=0; fail=0
+
+ok()   { echo "  ✓ $*"; pass=$((pass + 1)); }
+bad()  { echo "  ✗ $*"; fail=$((fail + 1)); }
+
+# Extract bt-phase's analysis body so it can be driven with a fixture instead of
+# the live journal. Testing through journalctl would make these tests depend on
+# the machine's history, which is the thing under investigation.
+AWK=$(mktemp); trap 'rm -f "$AWK"' EXIT
+python3 - "$AWK" <<'PY'
+import re, sys, pathlib
+s = pathlib.Path('tools/bt-phase').read_text()
+m = re.search(r"awk -v igap=\"\$INCIDENT_GAP\" -v period=\"\$TIMER_PERIOD\" '(.*)' \"\$DATA\"\s*$", s, re.S)
+if not m:
+    sys.exit("could not extract analysis body from tools/bt-phase")
+pathlib.Path(sys.argv[1]).write_text(m.group(1).replace("'\"'\"'", "'"))
+PY
+[[ -s "$AWK" ]] || { echo "FAILED to extract bt-phase analysis body"; exit 1; }
+
+echo "bt-phase invariants"
+echo "──────────────────────────────────────────────────────────────"
+
+OUT=$(awk -v igap=600 -v period=900 -f "$AWK" tests/phase-invariants.data 2>&1)
+
+# --- sampling unit ---------------------------------------------------------
+# The fixture has five timeout lines: a burst of four inside 60 s in one boot,
+# and one in another. A version counting lines reports 5 "failures", inflating n
+# and destroying the independence the statistical caveat assumes.
+lines=$(grep -oP 'timeout LINES\s+\K[0-9]+' <<<"$OUT")
+inc=$(grep -oP 'incidents\s+\K[0-9]+' <<<"$OUT")
+[[ "$lines" == "5" ]] && ok "counts 5 timeout lines" || bad "expected 5 lines, got ${lines:-none}"
+[[ "$inc"  == "2" ]] && ok "collapses them to 2 incidents" || bad "expected 2 incidents, got ${inc:-none}"
+
+# --- date arithmetic -------------------------------------------------------
+# Boot -1's incident falls between probes at 23:15 on 31 July and 00:30 on
+# 1 August: 4500 s. Day-of-month arithmetic makes that negative.
+grep -q '4500.0s gap' <<<"$OUT" \
+    && ok "computes a 4500s gap across a month boundary" \
+    || bad "month-boundary gap wrong; got: $(grep -o '[0-9.]*s gap' <<<"$OUT" | tr '\n' ' ')"
+
+# --- boot locality ---------------------------------------------------------
+# Boot 0's probes are 900 s apart. If intervals could span boots, its incident
+# would be placed in some other, larger gap.
+grep -q 'boot 0 .*900.0s gap' <<<"$OUT" \
+    && ok "keeps intervals within a single boot" \
+    || bad "boot-0 interval not boot-local"
+
+# --- both boundaries exogenous --------------------------------------------
+# Only EXO records appear in the fixture, so any interval built from an ENDO
+# record would be a construction error. Two incidents, two placements.
+placed=$(grep -oP 'placed\s+\K[0-9]+' <<<"$OUT")
+[[ "$placed" == "2" ]] && ok "places both incidents in exogenous gaps" \
+    || bad "expected 2 placed, got ${placed:-none}"
+
+# --- provenance refusal ----------------------------------------------------
+# With the timer period claimed as 100000 s, the fixture's 900 s gaps are far
+# too short to be timer-driven. The tool must refuse rather than report.
+REF=$(awk -v igap=600 -v period=100000 -f "$AWK" tests/phase-invariants.data 2>&1)
+grep -q 'SKIPPED — provenance check failed' <<<"$REF" \
+    && ok "refuses to report when claimed provenance is impossible" \
+    || bad "did not refuse on a contaminated probe set"
+
+echo
+if (( fail )); then
+    echo "FAILED: $fail of $((pass + fail)) invariants"
+    exit 1
+fi
+echo "all $pass invariants hold"

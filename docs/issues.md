@@ -64,6 +64,28 @@ The causal graph therefore carries one more antecedent, with its question mark i
                                               observable USB errors --> device gone
 ```
 
+### The five levels a timestamp has to survive
+
+Each level below was reached by getting the one before it wrong, in this repository, on
+real data. They are listed because the failures are not obvious in advance and each one
+produced a confident, clean-looking, wrong number.
+
+| Level | Question | How it was failed here |
+|---|---|---|
+| **1 — timestamp** | what happened, when? | day-of-month arithmetic; gaps spanning a reboot |
+| **2 — provenance** | *why does this timestamp exist?* | udev- and timer-driven probes indistinguishable in one unit |
+| **3 — independence** | could the measured phenomenon have caused it to exist? | probes fired by the controller's own failure events (`EX-012`) |
+| **4 — exposure geometry** | are **both** boundaries of the denominator independent? | an outcome-triggered *closing* probe still lets the event pick its own interval |
+| **5 — sampling unit** | are these N independent events, or N records from fewer events? | 8 `tx timeout` lines counted as 8 failures; they were 7 incidents |
+
+The goal is not software that usually produces the right statistic. It is software that
+says **"I cannot justify this statistic from the provenance of the available data, so I
+will not print it."** `bt-phase` does that: it refuses when its probe set cannot be
+timer-driven, rather than reporting a number that would look better than the data
+deserves. `tests/run-tests` asserts each level with a fixture built so the old behaviour
+fails it, and `devtools/repo-validate` runs them — because a comment claiming an invariant
+cannot be executed, and this repository has already shipped one that was false.
+
 **Independence matters for submission.** A small, deterministic, well-evidenced bug is far
 more likely to be fixed than a large intermittent one, and bundling them means the weakest
 member sets the pace for all. `BT-2` and `BT-4` are reportable *today*; `BT-1` is not.
