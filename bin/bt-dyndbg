@@ -35,6 +35,34 @@ set -uo pipefail
 
 CTL=/sys/kernel/debug/dynamic_debug/control
 DEFAULT_FILES=(btusb.c hci_core.c hci_sync.c hci_conn.c)
+
+# Per-packet functions inside the files above, switched back OFF after the file
+# is enabled.
+#
+# WHY THIS LIST EXISTS. Excluding hci_event.c and l2cap_core.c was not enough.
+# hci_core.c also contains the transmit scheduler — hci_tx_work, hci_sched_*,
+# hci_chan_sent, hci_acldata_packet — which runs per packet, and btusb.c
+# contains the URB completion handlers, which run per transfer. Enabling those
+# two files therefore reinstated exactly the per-packet flood the exclusion was
+# meant to avoid: measured at 1,561,719 kernel lines in 16 minutes (~5.8 GB/h),
+# which would have exhausted the 16 GB journal cap in under three hours and
+# begun rotating away the evidence the logging exists to preserve.
+#
+# "File" was the wrong granularity. Volume tracks the call site's position in
+# the data path, not which file it happens to live in.
+#
+# Losing the per-URB lines costs nothing: usbmon already records that layer as
+# compact binary pcap (tens of KB where this was tens of MB), so the transport
+# view survives in a better form.
+NOISY_FUNCS=(
+    hci_tx_work hci_sched_acl hci_sched_acl_pkt hci_sched_sco hci_sched_le
+    hci_sched_iso hci_chan_sent hci_low_sent hci_prio_recalculate
+    hci_queue_acl hci_queue_iso hci_acldata_packet hci_scodata_packet
+    hci_isodata_packet hci_send_acl hci_send_sco hci_send_iso
+    btusb_tx_complete btusb_isoc_complete btusb_isoc_tx_complete
+    btusb_bulk_complete btusb_intr_complete btusb_diag_complete
+    btusb_send_frame
+)
 PACKET_FILES=(hci_event.c l2cap_core.c)
 ALL_FILES=(btusb.c hci_core.c hci_sync.c hci_conn.c hci_event.c l2cap_core.c
            mgmt.c sco.c l2cap_sock.c hci_sock.c hci_sysfs.c btqca.c)
@@ -70,6 +98,17 @@ case "${1:-status}" in
         fi
         n=$(set_files +p "${files[@]}")
         echo "bt-dyndbg: enabled debug in $n file(s): ${files[*]}"
+
+        # Order matters: files first, then suppress the per-packet functions
+        # inside them. Doing it the other way round would re-enable them.
+        if [[ "${2:-}" != "--packets" ]]; then
+            q=0
+            for fn in "${NOISY_FUNCS[@]}"; do
+                echo "func $fn -p" > "$CTL" 2>/dev/null && q=$((q + 1))
+            done
+            echo "bt-dyndbg: suppressed $q per-packet function(s) (use --packets to keep them)"
+        fi
+
         echo "bt-dyndbg: $(count_enabled) site(s) now active"
         echo "bt-dyndbg: output goes to the kernel log — journalctl -k -f"
         ;;
