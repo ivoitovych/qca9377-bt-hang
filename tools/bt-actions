@@ -84,6 +84,31 @@ journalctl "${JARGS[@]}" 2>/dev/null | awk -F' ' '
         cls = "USER"; lbl = "opened GNOME Settings"
     }
 
+    # The Bluetooth toggle in the GNOME quick-settings drop-down (top-right of
+    # the screen) drives an rfkill soft block. That makes it one of the very few
+    # operator actions the system records unambiguously: soft 1 is the switch
+    # going off, soft 0 is it coming back on. Requires bluetoothd -d.
+    else if (line ~ /rfkill_event\(\) RFKILL event/ && line ~ /soft 1/) {
+        cls = "USER"; lbl = "*** turned Bluetooth OFF (quick-settings toggle) ***"
+    }
+    else if (line ~ /rfkill_event\(\) RFKILL event/ && line ~ /soft 0/) {
+        cls = "USER"; lbl = "*** turned Bluetooth ON (quick-settings toggle) ***"
+    }
+
+    # --- PROFILE: which audio profile the device is actually in ---------------
+    # This is the layer the operator manipulates from Settings -> Sound, and the
+    # one that matters: a2dp-sink is stereo playback, and anything headset/hfp
+    # is the mono voice path whose SCO setup is implicated in the hang.
+    else if (line ~ /service\.c:change_state\(\).*profile .* state changed:/) {
+        prof = line; sub(/.*profile /, "", prof); sub(/ state changed.*/, "", prof)
+        trans = line; sub(/.* state changed: /, "", trans); sub(/ \([0-9-]+\)$/, "", trans)
+        cls = "PROF"; lbl = prof ": " trans
+    }
+    else if (line ~ /adapter_set_power_state\(\)/) {
+        st = line; sub(/.*adapter_set_power_state\(\) /, "", st)
+        cls = "STACK"; lbl = "adapter power state -> " st
+    }
+
     # --- STACK: how BlueZ / PipeWire responded --------------------------------
     else if (line ~ /Failed to set mode: Authentication Failed/) {
         cls = "STACK"; lbl = "adapter mode change REJECTED — authentication failed (0x05)"
@@ -153,6 +178,19 @@ journalctl "${JARGS[@]}" 2>/dev/null | awk -F' ' '
     else if (line ~ /command .* tx timeout/) {
         op = line; sub(/.*command /, "", op); sub(/ tx timeout.*/, "", op)
         cls = "CTRL"; lbl = "HCI COMMAND TIMEOUT " op
+    }
+    # Command submission, from kernel dynamic debug. Naming the opcodes that
+    # matter turns the timeline into something readable without a spec to hand;
+    # 0x0428 in particular is the SCO setup implicated in the hang.
+    else if (line ~ /hci0 opcode 0x[0-9a-f]+ plen/) {
+        op = line; sub(/.*opcode /, "", op); sub(/ plen.*/, "", op)
+        nm = ""
+        if (op == "0x0428") nm = "  Setup Synchronous Connection (SCO/HFP)"
+        else if (op == "0x0429") nm = "  Accept Synchronous Connection"
+        else if (op == "0x0406") nm = "  Disconnect"
+        else if (op == "0x0405") nm = "  Create Connection"
+        else if (op == "0x041d") nm = "  Read Remote Supported Features"
+        if (nm != "") { cls = "CTRL"; lbl = "HCI cmd " op nm }
     }
     else if (line ~ /command tx timeout/) {
         cls = "CTRL"; lbl = "HCI COMMAND TIMEOUT (opcode unknown)"
