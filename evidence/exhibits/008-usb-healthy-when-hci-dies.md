@@ -2,7 +2,16 @@
 
 **Claim.** At the moment HCI stops answering, the USB transport is entirely healthy — every URB completes with status 0. The first non-zero URB status appears 31.4 s LATER; USB descriptor-read failures later still.
 
-**Relevance.** Separates two hypotheses the kernel log alone cannot distinguish. The onset is NOT a USB transport wedge: the device keeps accepting and completing USB transfers while refusing to answer an HCI command. USB-level collapse (-108 ESHUTDOWN, then descriptor read -110) is a downstream consequence tens of seconds afterwards. That points at controller firmware/protocol state rather than at the link, and is consistent with the QCA firmware-download hypothesis.
+**Relevance.** Establishes the ordering: **HCI non-response precedes any observable USB failure by 31.4 seconds.** The device keeps accepting and completing USB transfers while refusing to answer an HCI command; USB-level collapse (-108 ESHUTDOWN, then descriptor read -110) follows tens of seconds later.
+
+**What this rules out, stated narrowly:** *USB transport failure as the immediate cause of the first HCI timeout.* The kernel log alone cannot distinguish that from the actual ordering, and this settles it.
+
+**⚠️ What it does NOT rule out.** An earlier draft said this "eliminates the entire class of USB transport wedge explanations", which is broader than the evidence supports. A stream of ordinary URBs completing normally says nothing about a *configuration* action on the same bus. In particular, btusb switches the USB interface alternate setting to obtain isochronous bandwidth for SCO (`Looking for Alt no :6 / :3`, and the recurring `setting interface failed (110)`), and an alternate-setting transition is a different proposition from bulk/interrupt traffic succeeding. It remains possible that a USB-side configuration action places the controller into the state in which it later stops answering HCI. Two adjacent candidate layers are still live:
+
+1. **HCI/controller synchronous-link state**, and
+2. **btusb USB isochronous-interface state.**
+
+This exhibit constrains the *ordering* of the collapse. It does not adjudicate between those two.
 
 ## Extraction method
 

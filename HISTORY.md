@@ -1049,7 +1049,11 @@ from "a specific HCI command" to **the SCO/isochronous path in btusb**.
 answering, every URB was completing with status 0; the first non-zero URB status came
 **31.4 s later** and descriptor-read failures later still (`EX-008`). The onset is not a
 transport wedge. The device keeps servicing USB while refusing to answer HCI, and the USB
-collapse is downstream. That eliminates a large class of explanations.
+collapse is downstream. Stated narrowly — and the narrow form is the defensible one — this
+rules out **USB transport failure as the immediate cause of the first HCI timeout**. It does
+not exonerate the USB side entirely: an alternate-setting transition is a configuration
+action rather than ordinary traffic, and could still leave the controller in the state that
+later stops answering.
 
 ### Three hypotheses killed
 

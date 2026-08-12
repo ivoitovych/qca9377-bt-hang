@@ -24,9 +24,40 @@ The controller stops answering HCI commands; 45–66 s later it stops answering 
 transfers; then it leaves the bus. Only a cold power-off recovers it — a warm reboot does
 not drop the M.2 power rail.
 
+**Current formulation — everything the evidence earns, and nothing more:**
+
+> The controller sometimes enters a non-responsive HCI state during synchronous-audio link
+> transitions; generic USB transport failure follows later rather than initiating the event.
+
+That is deliberately a statement about *when and where*, not *why*. The failure is now
+well localised in time and in subsystem behaviour, and not at all in mechanism. Anything
+phrased as a mechanism is currently a hypothesis, and the register above is the place to
+find out which ones have already died.
+
+**The leading discriminant** — not "the remaining candidate", which is too strong — is the
+request and link parameters together with the surrounding SCO state. At least five
+logically distinct possibilities still live in that region:
+
+1. the HCI request parameters themselves;
+2. the negotiated SCO/eSCO link properties;
+3. the ordering and timing of setup, traffic and teardown;
+4. the USB interface alternate-setting transition;
+5. controller state established earlier that only becomes observable during SCO operations.
+
+Comparing the fatal runs against the survived ones must therefore compare the whole event
+window, not the parameter fields — `bt-sco --window` exists for exactly that. With two
+fatal and three survived observations, a parameter difference will be found whether or not
+it matters, and a parameter almost never varies alone: mSBC rather than CVSD implies eSCO
+rather than SCO, implies a different packet type, a different alternate setting, a
+different isochronous packet size and a different teardown.
+
 What is established:
 - At onset the USB transport is **healthy** — every URB completing status 0, first error
-  31.4 s later (`EX-008`). It is not a transport wedge; USB collapse is downstream.
+  31.4 s later (`EX-008`). That rules out USB transport failure as the **immediate cause of
+  the first HCI timeout** — stated narrowly on purpose. It does not exonerate every USB-side
+  state transition involved in SCO: the alternate-setting switch btusb performs for
+  isochronous bandwidth is a configuration action, not ordinary traffic, and could still
+  place the controller into the state in which it later stops answering.
 - Both instrumented failures involve **SCO link handling** and the USB alternate-setting
   switch btusb performs for isochronous bandwidth — setup unanswered in one case
   (`EX-006`), teardown unanswered in the other (`EX-009`). The constant is the path, not
