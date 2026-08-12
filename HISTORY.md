@@ -1202,3 +1202,84 @@ a packet type implies an alternate setting implies a teardown path — so a five
 can manufacture extremely persuasive nonsense from a single field comparison. A note saying
 "be careful" would be forgotten in the excitement of the next failure. A tool that presents
 the path instead of the field changes what is seen in the first place.
+
+---
+
+## Phase 21 — the instrument finds the instrument's bug, then nearly fools everyone
+
+Two capture paths now record the same HCI stream: `bt-trace` (btmon, decoding as it writes)
+and `bt-capture` (raw frames, never parsed). That redundancy was built for crash tolerance
+and turned out to be a **discovery mechanism**.
+
+**`bt-capdiff` compares them.** On its first run the decode-free path was found to hold an
+HCI exchange that btmon had lost one second before each of its restarts. That pointed
+straight at the trigger, and BT-4 went from *"aborts ~70 times per boot for unknown
+reasons"* to a one-line reproducer:
+
+```console
+$ hciconfig hci0 name        # one btmon abort, every time
+```
+
+Triangulated rather than assumed — and the first explanation was wrong:
+
+| Probe | HCI command? | Socket | Aborts |
+|---|---|---|---|
+| `hciconfig hci0 name` | yes | raw HCI | 3/3 |
+| `hciconfig hci0 version` | yes | raw HCI | 3/3 |
+| `hciconfig hci0` | no, ioctl only | raw HCI | 0/3 |
+| `bluetoothctl show` | yes, via MGMT | D-Bus | 0/3 |
+
+So neither a specific opcode nor merely opening the socket: a **command/response exchange
+on a raw HCI socket**, observed by the monitor.
+
+**And this project's own probes cause most of the aborts.** `bt-state` and
+`bt-health-snapshot` use `hciconfig <dev> name` as a liveness check. The monitoring was
+continuously crashing the capture it depends on. The probe is kept — it is a genuine
+end-to-end test, and an MGMT alternative could report "alive" from cached daemon state
+while HCI is wedged — but it is now recorded as a **known measurement perturbation** rather
+than assumed inert.
+
+### The near-miss that matters most
+
+Recording the probe as an intervention meant asking whether failures cluster near probes.
+`bt-phase` normalises each failure by the probe gap containing it. First run:
+
+```
+mean phase 0.084   (0.5 expected under independence)
+6 of 8 failures inside the first 10% of their gap
+```
+
+That is the sort of number that becomes a working theory. It was **outcome-dependent
+sampling**: a udev rule fires the same probe on bluetooth and USB add/remove — exactly the
+events a failing controller generates — so probes cluster around incidents *because the
+incident causes them*. The tell was in the gap lengths, 2.7 s and 6.8 s, against a
+15-minute timer.
+
+The statistic was computed correctly. The tool's warning fired as designed. **The input was
+invalid.**
+
+### Lessons added
+
+- **An exposure denominator must be built from events whose timing is independent of the
+  outcome, its precursors, and ideally any shared cause.** "Not caused by the outcome" is
+  not sufficient: a probe triggered by audio activity would share an ancestor with
+  synchronous-link transitions and manufacture clustering without any reverse causation at
+  all.
+- **Both boundaries of an interval are part of the denominator.** Excluding endogenous
+  probes as *antecedents* is not enough; an outcome-triggered *closing* boundary still lets
+  the event choose the interval it is measured inside.
+- **Record why a measurement event exists, not only when.** Provenance now comes from unit
+  name — `bt-health-snapshot.service` (timer, exogenous) versus
+  `bt-health-snapshot-event.service` (udev, endogenous) — instead of being guessed from
+  inter-probe spacing.
+- **A tool that cannot verify its own preconditions should refuse, not report.** Provenance
+  exists only for data recorded after the split, so older boots would present as entirely
+  exogenous. `bt-phase` now checks the claim against the known timer period and refuses when
+  it fails, because a clean-looking number from a contaminated baseline is worse than no
+  number.
+- **Absence of evidence is not evidence of independence.** After correction one event
+  remained placeable. What vanished was the dramatic *evidence for* clustering — not a
+  demonstration that none exists.
+- **Disagreement between observers is a fact about the instruments, not a verdict on which
+  is right.** btmon was convicted only through additional structure: a restart in its own
+  log, the chronology, an intact second path, and finally a deterministic reproducer.

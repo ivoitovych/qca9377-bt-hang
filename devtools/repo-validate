@@ -90,6 +90,33 @@ if (( enumerated == 0 )); then
     echo "VALIDATION INCONCLUSIVE — git enumerated no files in $ROOT" >&2
     exit 1
 fi
+# --- documentation drift ---------------------------------------------------
+# Three times in a row the answer to "is everything updated, committed and
+# pushed?" was "the code is, the documentation is not". Code landed with good
+# commit messages while HISTORY.md and docs/ stayed several phases behind, and
+# each time it was noticed only because someone asked.
+#
+# The project's own rule applies to the project: corrections belong in the
+# machinery, not the notes. This is a warning rather than a failure — some
+# commits genuinely need no narrative — but it makes the drift visible at the
+# moment of committing instead of at the moment of being asked.
+if git -C "$ROOT" rev-parse HEAD >/dev/null 2>&1; then
+    code_commits=$(git -C "$ROOT" log --oneline -20 --pretty=%H -- \
+                   tools bin systemd install.sh uninstall.sh 2>/dev/null | head -20 | wc -l)
+    doc_commits=$(git -C "$ROOT" log --oneline -20 --pretty=%H -- \
+                  HISTORY.md docs 2>/dev/null | head -20 | wc -l)
+    last_code=$(git -C "$ROOT" log -1 --pretty=%ct -- tools bin systemd 2>/dev/null)
+    last_doc=$(git -C "$ROOT" log -1 --pretty=%ct -- HISTORY.md docs 2>/dev/null)
+    if [[ -n "${last_code:-}" && -n "${last_doc:-}" ]] && (( last_code > last_doc )); then
+        gap=$(( (last_code - last_doc) / 3600 ))
+        echo "  ! documentation drift: tools/bin/systemd changed more recently than"
+        echo "    HISTORY.md or docs/ (by ${gap}h). If this batch of work changed what"
+        echo "    the project knows or how it measures, HISTORY.md is behind."
+        echo "    (${code_commits} of the last 20 commits touched code, ${doc_commits} touched docs)"
+        echo
+    fi
+fi
+
 if (( fail )); then echo "VALIDATION FAILED ($checked checked)"; exit 1; fi
 if (( checked == 0 )); then
     echo "no checkable files ($enumerated tracked/staged, none are scripts, units, rules, json or python)"

@@ -325,3 +325,47 @@ regardless of the file count, and is the bound that cannot be wrong.
 
 **Rule taken from this:** a change to a default is not applied until the value *in effect*
 has been read back. Record the verification command alongside the change, not the intent.
+
+---
+
+## 2026-08-12 (later still) — probe provenance
+
+| Change | File | Effect | Revert |
+|---|---|---|---|
+| Event-triggered snapshot unit | `/etc/systemd/system/bt-health-snapshot-event.service` | identical script under a second unit name, so the journal records *why* each probe fired | delete file, `daemon-reload` |
+| udev now targets it | `/etc/udev/rules.d/51-bluetooth-health-snapshot.rules` | 4 `RUN+=` lines point at the `-event` unit | reinstall from the checkout |
+| Capture-path comparison | `/usr/local/bin/bt-capdiff` | agreement/disagreement between the two HCI capture paths | remove the file |
+| Exposure analysis | `/usr/local/bin/bt-phase` | failure phase within the probe cycle, exogenous probes only | remove the file |
+
+### Why the units were split
+
+`bt-health-snapshot` runs from two sources with completely different epistemic status: a
+15-minute timer whose schedule is independent of Bluetooth state, and a udev rule that fires
+on `bluetooth`/`usb` add and remove — the very events a failing controller generates.
+
+Running both through one unit made them indistinguishable in the journal. Analysing them as
+a single exposure clock produced an apparently dramatic observer effect (mean phase 0.084,
+6 of 8 failures in the first 10% of their gap) which was entirely an artifact of
+outcome-dependent timestamps. See `EX-012`.
+
+Endogenous probes are **not** disabled or discarded. They are useful chronology. They simply
+cannot define a null exposure distribution.
+
+**Verification** — provenance is only recorded from the split onward, so `bt-phase` checks
+its own precondition and refuses on older data:
+
+```console
+$ bt-phase -b 0
+⛔ PROVENANCE CHECK FAILED — refusing to report a phase statistic.
+  95 of the 140 probes claimed exogenous are less than 450s apart,
+  but the timer period is 900s. They cannot all be timer-driven.
+```
+
+That is the intended behaviour on pre-split boots, not a fault.
+
+### Known limitation, recorded rather than accepted
+
+The probe timestamps are **execution** times, not scheduled due times. A timer invocation
+delayed by system load — or by controller trouble — moves the measuring ruler in a direction
+the system under study can influence. Reconstructing due times from `OnUnitActiveSec` is the
+next refinement and is not yet done.
