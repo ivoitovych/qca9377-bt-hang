@@ -72,13 +72,59 @@ OUT="${2:-${IN%.log}.sanitized.log}"
 
 [[ -r "$IN" ]] || { echo "cannot read $IN" >&2; exit 1; }
 
-# The patterns rely on ERE interval expressions ({n}, {n,}). Some awk builds
-# (older mawk) silently treat them as literals, which would pass everything
-# through untouched while still reporting success. Refuse to run on those.
-if ! echo "00:11:22:33:44:55:66:77" \
-     | awk '{exit !(match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) && RLENGTH == 23)}'; then
-    echo "FAIL: this awk does not support ERE interval expressions correctly." >&2
-    echo "      Install gawk (or mawk >= 1.3.4) and retry." >&2
+# AWK CAPABILITY GATE. The patterns rely on ERE interval expressions applied to
+# GROUPS — `(...){5,}`, `(...){3}`. Not every awk implements them, and the ways
+# they fail are not symmetric:
+#
+#   * gawk           correct.
+#   * mawk 1.3.4     BROKEN, two different ways, neither of them an error:
+#                      - `[0-9a-fA-F]{2}(...){5,}` aborts the regex compiler
+#                        outright ("REcompile() - panic: values still on machine
+#                        stack"), which at least fails loudly;
+#                      - an interval on a group is otherwise treated as `+`, so
+#                        `(X){3}` matches ONE repetition. `11:22` — two hex
+#                        pairs, not an address — matches the MAC pattern and
+#                        would be REPLACED, and `([0-9]{1,3}\.){3}[0-9]{1,3}`
+#                        matches `01.1`, so a placeholder written by pass 2
+#                        gets partly overwritten by pass 3.
+#
+# The second mode is the dangerous one, and it is why this gate is not a
+# positive test. A probe that only asks "does a real MAC match?" is answered
+# correctly BY ACCIDENT on mawk: `(X){5,}` degraded to `(X)+` still matches a
+# full address, greedily, at the right length. The engine looks fine and is not.
+#
+# So each pattern is probed BOTH ways: a string that must match at an exact
+# length, and a string that must NOT match at all. That is the same lesson the
+# header block records about verification — "verification only tested the forms
+# the substituter already knew" — applied to the engine instead of the input.
+#
+# Do NOT try to make these patterns mawk-safe by expanding the inner intervals.
+# That was attempted: it stops the panic, so the tool appears to work, while
+# `(group){n}` stays degraded and the over-matching above is live. Refusing to
+# run is the correct outcome on an engine that cannot express the patterns.
+MAC_RE='/[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/'
+UUID_RE='/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/'
+IPV4_RE='/([0-9]{1,3}\.){3}[0-9]{1,3}/'
+
+# must_match <input> <exact RLENGTH> <pattern> ; must_miss <input> <pattern>
+must_match() { echo "$1" | awk -v w="$2" "{exit !(match(\$0, $3) && RLENGTH == w)}" 2>/dev/null; }
+must_miss()  { echo "$1" | awk               "{exit  (match(\$0, $2) != 0)}"        2>/dev/null; }
+
+awk_ok=1
+must_match "00:11:22:33:44:55:66:77" 23 "$MAC_RE"                  || awk_ok=0
+must_miss  "11:22"                       "$MAC_RE"                 || awk_ok=0
+must_miss  "aa:bb:cc"                    "$MAC_RE"                 || awk_ok=0
+must_match "00000000-0000-0000-0000-000000000000" 36 "$UUID_RE"    || awk_ok=0
+must_match "255.255.255.255" 15 "$IPV4_RE"                         || awk_ok=0
+must_miss  "01.1"                        "$IPV4_RE"                || awk_ok=0
+
+if (( ! awk_ok )); then
+    echo "FAIL: this awk mishandles ERE intervals on groups; refusing to run." >&2
+    echo "      Redaction would be wrong in BOTH directions — short hex runs" >&2
+    echo "      replaced as if they were addresses, and real addresses only" >&2
+    echo "      partly replaced. Neither is visible in the output." >&2
+    echo "      Install gawk and re-run:  sudo apt install gawk" >&2
+    echo "      (mawk 1.3.4 is NOT sufficient, despite earlier advice here.)" >&2
     exit 1
 fi
 
