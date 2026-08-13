@@ -165,7 +165,9 @@ fi
 # which is what EX-012 turned on — and tests/ and devtools/ change what the
 # repository claims to validate.
 KNOWLEDGE_PATHS=(tools bin systemd etc tests devtools install.sh uninstall.sh)
-DOC_PATHS=(HISTORY.md docs README.md)
+# reviews/ carries the review->fixes->verification chain — epistemic record,
+# same standing as HISTORY.md for the drift comparison.
+DOC_PATHS=(HISTORY.md docs README.md reviews)
 
 if git -C "$ROOT" rev-parse HEAD >/dev/null 2>&1; then
     code_commits=$(git -C "$ROOT" log -20 --pretty=%H -- "${KNOWLEDGE_PATHS[@]}" 2>/dev/null | wc -l)

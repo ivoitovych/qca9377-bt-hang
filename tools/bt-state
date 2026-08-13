@@ -30,6 +30,10 @@ for d in /sys/bus/usb/devices/*; do
     fi
 done
 if [[ "$hci" != "-" ]]; then
+    # This probe is an INTERVENTION, not an observation: a raw-HCI
+    # command/response exchange, proven to abort an active btmon capture
+    # (EX-011) and counted per trial as a measurement perturbation. It is kept
+    # because it is a genuine end-to-end liveness test — see issues.md BT-4.
     if command -v hciconfig >/dev/null 2>&1; then
         timeout 6 hciconfig "$hci" name >/dev/null 2>&1 && alive=yes || alive=no
     elif command -v btmgmt >/dev/null 2>&1; then

@@ -10,5 +10,9 @@ SUBSYSTEM=="bluetooth", ACTION=="remove", \
   RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot-event.service"
 SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="13d3", ATTR{idProduct}=="3503", \
   RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot-event.service"
+# PRODUCT is kernel-formatted %x/%x/%x — lowercase, no leading zeros
+# (usb_uevent in drivers/usb/core/driver.c). install.sh substitutes the
+# stripped form for non-default devices; 13d3/3503 happens to be identical
+# in both forms.
 SUBSYSTEM=="usb", ACTION=="remove", ENV{PRODUCT}=="13d3/3503*", \
   RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot-event.service"

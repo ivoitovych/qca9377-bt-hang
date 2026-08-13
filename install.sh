@@ -306,10 +306,20 @@ fi
 # Event-driven snapshots: a stall unfolds faster than the 15-minute timer.
 if (( METRICS )); then
     UDEV_SNAP=/etc/udev/rules.d/51-bluetooth-health-snapshot.rules
+    # The remove rule matches ENV{PRODUCT}, which the kernel formats as
+    # PRODUCT=%x/%x/%x (drivers/usb/core/driver.c, usb_uevent) — lowercase hex
+    # with NO leading zeros. The attribute matches keep the sysfs zero-padded
+    # form, but the PRODUCT substitution must use the stripped form: a device
+    # like 0cf3:e300 appears as PRODUCT=cf3/e300/..., and a rule written
+    # "0cf3/e300*" never fires, silently losing every remove-event snapshot
+    # for a non-default device. (13d3:3503 has no leading zeros, which is why
+    # the default never exposed this.)
+    VID_X=$(printf '%x' "$((16#$VID))")
+    PID_X=$(printf '%x' "$((16#$PID))")
     if (( APPLY )); then
         if sed -e "s/idVendor}==\"$DEFAULT_VID\"/idVendor}==\"$VID\"/" \
                -e "s/idProduct}==\"$DEFAULT_PID\"/idProduct}==\"$PID\"/" \
-               -e "s|$DEFAULT_VID/$DEFAULT_PID\*|$VID/$PID*|" \
+               -e "s|$DEFAULT_VID/$DEFAULT_PID\*|$VID_X/$PID_X*|" \
                "$SRC/etc/udev/rules.d/51-bluetooth-health-snapshot.rules" > "$UDEV_SNAP"; then
             chmod 0644 "$UDEV_SNAP"; echo "  + wrote $UDEV_SNAP"
         else

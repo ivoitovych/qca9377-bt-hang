@@ -34,6 +34,7 @@ PID="${BT_PID:-3503}"
 MAX_MB="${BT_USBMON_MAX_MB:-64}"      # rotate at this size
 KEEP="${BT_USBMON_KEEP:-60}"          # retain this many files (~3.8 GB)
 MIN_FREE_GB="${BT_USBMON_MIN_FREE_GB:-15}"
+GAPLOG="${BT_USBMON_GAPLOG:-$DIR/gaps.log}"   # when capture was NOT running
 
 log() { echo "$*"; }
 
@@ -155,6 +156,10 @@ while true; do
     if ! kill -0 "$TPID" 2>/dev/null; then
         wait "$TPID" 2>/dev/null; rc=$?
         log "tcpdump exited (rc=${rc:-?}) — restarting in 5s"
+        # Evidence that admits when it was not looking — same contract as
+        # bt-trace's gap log. A crash hole here can be up to CHECK_SEC+5s wide.
+        printf '%s\ttcpdump-exit\trc=%s\tgap<=%ss\n' \
+            "$(date -Iseconds)" "${rc:-?}" "$(( CHECK_SEC + 5 ))" >> "$GAPLOG" 2>/dev/null
         sleep 5
         prune
         start_capture
@@ -164,6 +169,7 @@ while true; do
     if (( sz >= MAX_MB )); then
         log "rotating at ${sz}MB"
         kill "$TPID" 2>/dev/null; wait "$TPID" 2>/dev/null
+        printf '%s\trotate\tgap<1s\n' "$(date -Iseconds)" >> "$GAPLOG" 2>/dev/null
         prune
         start_capture
     fi

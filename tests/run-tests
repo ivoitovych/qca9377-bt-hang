@@ -1040,6 +1040,37 @@ else
 fi
 
 echo
+echo "exhibit extraction commands are re-runnable, not session-local"
+echo "──────────────────────────────────────────────────────────────"
+
+# THE INVARIANT: an exhibit's "Re-runnable as-is" command may not reference a
+# session-temporary path. EX-018 shipped reading its journal dump from an
+# editor-tooling scratchpad under /tmp — a path that leaked tooling metadata,
+# carried a session UUID the publication scan flags, and exists on no machine.
+# Stable machine-local paths stay legal: /var/tmp/ survives reboots and is the
+# documented cache location, and /root/exp/... backups are the provenance of
+# real captures. What is banned is the class that cannot outlive the session
+# that wrote it: /tmp/ (but not /var/tmp/), mktemp, and scratchpad paths.
+EXBAD=""
+for ex in evidence/exhibits/[0-9][0-9][0-9]-*.md; do
+    [[ -r "$ex" ]] || continue
+    # Only the fenced command block is scanned. Prose in the same section may
+    # legitimately NAME a banned path while explaining its removal — EX-018's
+    # edit note does exactly that, and the first version of this check flagged
+    # the explanation of the defect as the defect.
+    hit=$(sed -n '/^## Extraction method/,/^## Output/p' "$ex" \
+          | sed -n '/^```console/,/^```$/p' \
+          | grep -nE '(^|[^a-z])/tmp/|mktemp|scratchpad' || true)
+    [[ -n "$hit" ]] && EXBAD="$EXBAD$ex: $hit"$'\n'
+done
+if [[ -z "$EXBAD" ]]; then
+    ok "no exhibit extraction command references a session-temporary path"
+else
+    bad "session-temporary paths in extraction commands:"
+    while IFS= read -r l; do [[ -n "$l" ]] && echo "        $l"; done <<<"$EXBAD"
+fi
+
+echo
 echo "the tests may not write to the real evidence tree"
 echo "──────────────────────────────────────────────────────────────"
 

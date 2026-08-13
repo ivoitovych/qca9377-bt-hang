@@ -24,7 +24,9 @@ boot_indices() {
 printf '%-6s %-22s %-10s %-10s %-8s %s\n' BOOT KERNEL TIMEOUTS UNEXPECT WD-ACTS DATE
 for b in $( (( LIMIT > 0 )) && boot_indices "$LIMIT" || boot_indices ); do
     k=$(journalctl -k -b "$b" 2>/dev/null | grep -m1 -oE "Linux version [0-9][^ ]*" | awk '{print $3}')
-    [[ -z "${k:-}" ]] && continue
+    # A boot whose "Linux version" banner rotated away is still a boot; a row
+    # of ?s keeps it visible instead of silently shrinking the table.
+    [[ -z "${k:-}" ]] && k="?"
     # HCI command timeouts, opcode-named or not. NOT bare "tx timeout": that
     # also matches `link tx timeout` (ACL supervision, a different layer), of
     # which this machine has logged 7 against 173 real command timeouts. See
