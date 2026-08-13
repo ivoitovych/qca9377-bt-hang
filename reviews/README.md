@@ -22,6 +22,19 @@ register below.**
 The date is UTC and the time is included because two assessments of the same thing on the
 same day is a normal outcome, not an unusual one.
 
+## Two document classes
+
+**Reports** are snapshots: `<UTC timestamp>-<topic>.md`, never edited after writing.
+
+**Work logs** are append-only journals of an effort, keyed to the timestamp of the report
+that opened it, so every artifact of one effort sorts together. Nothing already written
+in a log is revised or deleted — corrections appear as later entries. A log records the
+wrong turns, which a clean summary loses.
+
+| Log | Effort |
+|---|---|
+| [Coverage effort work log](2026-08-13T1214Z-coverage-effort-worklog.md) | the test-coverage effort opened by the 12:14Z assessment |
+
 ## Reports
 
 | Written | Report | Covers | Verdict |
