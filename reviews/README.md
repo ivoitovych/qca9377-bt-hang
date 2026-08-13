@@ -27,6 +27,7 @@ same day is a normal outcome, not an unusual one.
 | Written | Report | Covers | Verdict |
 |---|---|---|---|
 | 2026-08-13T12:14Z | [Unit testing](2026-08-13T1214Z-unit-testing-assessment.md) | the tree at `6c0491c` | The suite is good; its *reach* is 13.1% of the shipped shell |
+| 2026-08-13T12:44Z | [Coverage strategy](2026-08-13T1244Z-coverage-strategy.md) | the tree at `10404b2` | Re-prioritises the above: 31% of the code needs **no** seam. Supersedes its §5 ordering |
 
 ---
 
@@ -55,6 +56,20 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | UT-11 | `lib/phase.awk`; delete the Python extractor | done | `d016249` | `test -r tools/lib/phase.awk`; extractor gone: `grep -c re.search tests/run-tests` → 0 |
 | UT-12 | Split `tests/run-tests` into per-area files | **open** | — | `wc -l tests/run-tests` — 1353 at `d016249`, was 1038 |
 | UT-13 | Settle `repo-scan`'s pre-existing hits, then add to CI | **blocked** | — | see below |
+
+### From `2026-08-13T1244Z-coverage-strategy.md`
+
+| ID | Item | Status | Landed | Verify |
+|---|---|---|---|---|
+| CS-01 | Test `sanitize-logs.sh` (+ fix its awk gate) | done | this commit | `tests/run-tests --section "sanitize-logs"` |
+| CS-02 | Test `install.sh` / `uninstall.sh` dry run | **open** | — | `./install.sh >/dev/null; echo $?` → 0, writes nothing |
+| CS-03 | Test the devtools against a scratch repo | **open** | — | `devtools/coverage \| grep devtools/` — expect non-zero rows |
+| CS-04 | Test `bt-capdiff`/`bt-sco`/`bt-context`/`bt-incident` via `BT_*` overrides | **open** | — | as above for `tools/` rows |
+| CS-05 | Convert + test `bt-actions` (seam) | **open** | — | `grep -c journal.sh tools/bt-actions` → 1 |
+| CS-06 | `bt-logvolume`, `bt-boot-stats`, `bt-timeline.sh` | **open** | — | as CS-05 |
+| CS-07 | `bt-env-history`, `bt-boot-list`, `bt-boots` | **open** | — | as CS-05 |
+| CS-08 | A sysfs/device seam, then `bin/bt-hang-watchdog` | **open** | — | `devtools/coverage \| grep bt-hang-watchdog` |
+| CS-09 | Argument/refusal paths only for the hardware-bound five | **open** | — | judgement call; see the report |
 
 ### Check every row at once
 
