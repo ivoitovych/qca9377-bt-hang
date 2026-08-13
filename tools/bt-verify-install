@@ -68,6 +68,13 @@ for p in "${PAIRS[@]}"; do
         printf '  %s?%s missing in repo: %s\n' "$Y" "$O" "${p%%:*}"; continue
     fi
     if [[ ! -e "$dst" ]]; then
+        # A file moved aside by `bt-mode experiment` is deliberately absent, not
+        # missing. Reporting it as drift would push the reader toward
+        # ./install.sh --apply, which silently reverts the controlled baseline —
+        # the tools must not send each other into a loop.
+        if [[ -e "$dst.disabled" ]]; then
+            printf '  %s~%s disabled by bt-mode: %s\n' "$Y" "$O" "$dst"; continue
+        fi
         printf '  %s✗%s NOT INSTALLED: %s\n' "$R" "$O" "$dst"; missing=$((missing+1)); continue
     fi
     if cmp -s "$src" "$dst"; then
@@ -86,7 +93,12 @@ VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
 for r in 50-bluetooth-no-autosuspend 51-bluetooth-health-snapshot; do
     f="/etc/udev/rules.d/$r.rules"
     if [[ ! -e "$f" ]]; then
-        printf '  %s✗%s NOT INSTALLED: %s\n' "$R" "$O" "$f"; missing=$((missing+1))
+        if [[ -e "$f.disabled" ]]; then
+            # Deliberately disabled by `bt-mode experiment`, not missing.
+            printf '  %s~%s disabled by bt-mode: %s\n' "$Y" "$O" "$f"
+        else
+            printf '  %s✗%s NOT INSTALLED: %s\n' "$R" "$O" "$f"; missing=$((missing+1))
+        fi
     elif grep -q "$VID" "$f" && grep -q "$PID" "$f"; then
         same=$((same+1))
     else
@@ -105,10 +117,27 @@ mapfile -t UNITS < <(
       grep -oE 'systemctl enable --now [a-z0-9.-]+' "$REPO/install.sh" 2>/dev/null | awk '{print $NF}'
     } | sort -u
 )
+# In experiment mode the intervening units are stopped ON PURPOSE. Counting
+# that as drift would tell the reader to run install.sh, which reverts the
+# controlled baseline — so the two tools would push the machine back and forth
+# between modes, each one "fixing" the other.
+EXPERIMENT=0
+if [[ -r /usr/local/share/qca9377-bt-hang/mode ]] \
+   && grep -q '^experiment' /usr/local/share/qca9377-bt-hang/mode 2>/dev/null; then
+    EXPERIMENT=1
+fi
+# These intervene with the controller; experiment mode exists to stop them.
+# Everything else is passive acquisition and must be running in BOTH modes.
+# Match on the bare unit name: the list mixes .service and .timer, so
+# normalising to one suffix silently missed the timer.
+INTERVENING=" bt-hang-watchdog bt-health-snapshot.timer bt-hang-watchdog.service "
+
 for u in "${UNITS[@]}"; do
     st=$(systemctl is-active "$u" 2>&1); en=$(systemctl is-enabled "$u" 2>&1)
     if [[ "$st" == active && "$en" == enabled ]]; then
         printf '  %s✓%s %-26s %s/%s\n' "$G" "$O" "$u" "$st" "$en"
+    elif (( EXPERIMENT )) && [[ "$INTERVENING" == *" $u "* ]]; then
+        printf '  %s~%s %-26s %s/%s  (stopped by bt-mode experiment)\n' "$Y" "$O" "$u" "$st" "$en"
     else
         printf '  %s✗%s %-26s %s/%s\n' "$R" "$O" "$u" "$st" "$en"; drift=$((drift+1))
     fi

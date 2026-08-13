@@ -140,7 +140,12 @@ env_fingerprint() {
             power=$(cat "$dev/power/control" 2>/dev/null || echo '?'); break
         fi
     done
-    if systemctl is-active --quiet bt-hang-watchdog 2>/dev/null; then
+    # Every probe inside this function has BOTH streams redirected. The
+    # function's stdout IS the fingerprint, so anything else that prints lands
+    # inside the value — and a newline there corrupts the TSV row. `--quiet`
+    # already suppresses output for real systemctl; this makes the guarantee
+    # structural rather than dependent on a flag behaving as documented.
+    if systemctl is-active --quiet bt-hang-watchdog >/dev/null 2>&1; then
         early=$(systemctl show bt-hang-watchdog -p Environment --value 2>/dev/null \
                 | tr ' ' '\n' | grep -m1 '^BT_EARLY=' | cut -d= -f2)
         thr=$(systemctl show bt-hang-watchdog -p Environment --value 2>/dev/null \
@@ -155,7 +160,7 @@ env_fingerprint() {
     # treatment fingerprint and therefore inside the TSV row. The A/B/C/D
     # checklist requires probes OFF, which is exactly the state that triggered
     # it. A boolean test yields a canonical token instead.
-    if systemctl is-active --quiet bt-health-snapshot.timer 2>/dev/null; then
+    if systemctl is-active --quiet bt-health-snapshot.timer >/dev/null 2>&1; then
         probes=on
     else
         probes=off
@@ -345,7 +350,7 @@ hang|ok)
     # controller.
     #
     #   bt1_status     not_observed | confirmed | censored_pre_failure | unknown
-    #   trial_result   survived | failed | recovered | aborted
+    #   trial_result   survived | failed | alive_after_intervention | aborted
     #
     # The BT-1 numerator then becomes mechanical — bt1_status == confirmed —
     # and censored observations cannot leak into either side of a rate.
@@ -385,14 +390,36 @@ hang|ok)
         measurement_rev="${mrev_start}..${mrev_end}"
     fi
 
-    early_int=$(journalctl -u bt-hang-watchdog --since "$since" --no-pager -o cat 2>/dev/null \
-                | grep -c "EARLY intervention" || true)
-    any_int=$(journalctl -u bt-hang-watchdog --since "$since" --no-pager -o cat 2>/dev/null \
-              | grep -cE "EARLY intervention|Detected .* controller timeouts within" || true)
+    # CHECKED ACQUISITION, for the same reason as the kernel journal above.
+    # This was still `journalctl | grep -c ... || true` after that one was
+    # fixed: a failed read makes grep print 0, `|| true` swallows the failed
+    # pipeline, and an intervention that DID happen becomes zero — so a
+    # censored trial silently becomes `not_observed + survived`. Unreadable
+    # evidence must not become negative evidence.
+    WJ=$(mktemp) || { echo "bt-trial: mktemp failed" >&2; exit 1; }
+    if journalctl -u bt-hang-watchdog --since "$since" --no-pager -o cat > "$WJ" 2>/dev/null; then
+        wd_journal_ok=1
+        early_int=$(grep -c "EARLY intervention" "$WJ" || true)
+        any_int=$(grep -cE "EARLY intervention|Detected .* controller timeouts within" "$WJ" || true)
+    else
+        wd_journal_ok=0
+        early_int=""; any_int=""
+    fi
+    rm -f "$WJ"
 
     # --- axis 1: what the evidence says about BT-1 --------------------------
+    # A watchdog that is off logs nothing, so an empty read is expected and
+    # not a failure. It is only unreadable evidence from a RUNNING watchdog
+    # that leaves the censoring state unknown.
+    wd_running=0
+    systemctl is-active --quiet bt-hang-watchdog 2>/dev/null && wd_running=1
+
     if (( ! journal_ok )) || [[ ! "${tmo:-}" =~ ^[0-9]+$ ]]; then
         bt1_status=unknown          # could not read the journal; do not guess
+    elif (( wd_running && ! wd_journal_ok )); then
+        # Timeouts readable, interventions not. Cannot distinguish
+        # not_observed from censored_pre_failure, so claim neither.
+        bt1_status=unknown
     elif (( tmo > 0 )); then
         bt1_status=confirmed        # HCI non-responsiveness was observed
     elif [[ "${early_int:-0}" =~ ^[0-9]+$ ]] && (( early_int > 0 )); then
@@ -437,7 +464,8 @@ hang|ok)
     # reports what was determined.
     case "$trial_result" in
         survived)  echo "${G}verified: controller responds, no intervention${O}" ;;
-        recovered) echo "${Y}controller responds, but only after intervention${O}" ;;
+        alive_after_intervention)
+                   echo "${Y}controller responds, but only after intervention${O}" ;;
         failed)    echo "${R}controller does NOT respond${O}" ;;
     esac
 

@@ -391,7 +391,7 @@ if [[ -s "$LC/evidence/trials/results.tsv" ]]; then
         *)  bad "bt1_status is '${bs:-empty}' — outside its domain" ;;
     esac
     case "$tr" in
-        survived|failed|recovered|aborted)
+        survived|failed|alive_after_intervention|aborted)
             ok "trial_result populated from its domain ($tr)" ;;
         *)  bad "trial_result is '${tr:-empty}' — outside its domain" ;;
     esac
@@ -439,6 +439,107 @@ if [[ -e "$LC/incident-was-called" ]]; then
 else
     bad "hang did NOT invoke bt-incident — control flow keyed on a dead value"
 fi
+# ── THE ONTOLOGY ITSELF, through the production producer ──────────────────
+#
+# Individual paths were tested; the combinations were not. These four are the
+# meaningful ones, and each is driven by faking exactly the evidence the
+# classifier reads — kernel timeouts and watchdog interventions — via a stub
+# journalctl ahead of the real one on PATH.
+#
+#   no timeout, no intervention          -> not_observed + survived
+#   timeout, controller dead             -> confirmed + failed
+#   timeout, intervention, alive         -> confirmed + alive_after_intervention
+#   early intervention, no timeout       -> censored_pre_failure + alive_after_intervention
+#
+# The last row is the one the whole ontology exists for: the intervention
+# destroyed the counterfactual, so the evidence axis says censored while the
+# controller axis says it is alive. Recording that as a survival or as a
+# recovery would each state something untrue.
+mkdir -p "$LC/bin"
+printf '#!/bin/sh\ntouch "%s/incident-was-called"\n' "$LC" > "$LC/bin/bt-incident"
+chmod +x "$LC/bin/bt-incident"
+
+combo() {
+    local name="$1" ktext="$2" wtext="$3" close="$4" want_bs="$5" want_tr="$6"
+    # A stub journalctl returning the requested evidence. -k selects the kernel
+    # stream, -u bt-hang-watchdog the watchdog stream; anything else is empty.
+    cat > "$LC/bin/journalctl" <<STUB
+#!/bin/sh
+for a in "\$@"; do
+  case "\$a" in
+    -k) printf '%s' "$ktext"; exit 0 ;;
+    bt-hang-watchdog) printf '%s' "$wtext"; exit 0 ;;
+  esac
+done
+exit 0
+STUB
+    chmod +x "$LC/bin/journalctl"
+    rm -f "$LC/evidence/trials/results.tsv" "$LC/state/current"
+    PATH="$LC/bin:$PATH" BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial autostart stock >/dev/null 2>&1
+    PATH="$LC/bin:$PATH" BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial "$close" >/dev/null 2>&1
+    local bs tr
+    bs=$(awk -F"\t" 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} END{print $c["bt1_status"]}' "$LC/evidence/trials/results.tsv" 2>/dev/null)
+    tr=$(awk -F"\t" 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} END{print $c["trial_result"]}' "$LC/evidence/trials/results.tsv" 2>/dev/null)
+    if [[ "$bs" == "$want_bs" && "$tr" == "$want_tr" ]]; then
+        ok "$name -> $bs + $tr"
+    else
+        bad "$name expected $want_bs + $want_tr, got '${bs:-empty}' + '${tr:-empty}'"
+    fi
+}
+
+TMO_LINE='2026-08-13T01:00:00.000000+02:00 n kernel: Bluetooth: hci0: command tx timeout
+'
+EARLY_LINE='EARLY intervention: 1 audio-teardown failure(s) in 90s
+'
+LATE_LINE='Detected 6 controller timeouts within 60s - intervening.
+'
+
+combo "no timeout, no intervention" ""          ""                        ok   not_observed          survived
+combo "timeout, closed as hang"      "$TMO_LINE" ""                        hang confirmed             failed
+combo "timeout + intervention"       "$TMO_LINE" "$LATE_LINE"              ok   confirmed             alive_after_intervention
+combo "early intervention only"      ""          "$EARLY_LINE"             ok   censored_pre_failure  alive_after_intervention
+
+# UNREADABLE WATCHDOG EVIDENCE MUST NOT BECOME NEGATIVE EVIDENCE.
+#
+# With a watchdog RUNNING, failing to read its journal means we cannot tell
+# not_observed from censored_pre_failure. Before the fix, the failed read
+# produced 0 via `grep -c ... || true` and the trial recorded a clean
+# not_observed + survived — an intervention that may have happened, erased.
+cat > "$LC/bin/systemctl" <<'STUB'
+#!/bin/sh
+# Report the watchdog as running; everything else inactive/empty.
+case "$*" in
+  *"is-active --quiet bt-hang-watchdog"*) exit 0 ;;
+  *"show bt-hang-watchdog"*)              echo "BT_EARLY=1 BT_THRESHOLD=3"; exit 0 ;;
+  *is-active*)                            exit 3 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/bin/systemctl"
+cat > "$LC/bin/journalctl" <<'STUB'
+#!/bin/sh
+# Kernel stream readable and empty; watchdog stream UNREADABLE.
+for a in "$@"; do
+  case "$a" in
+    -k)               exit 0 ;;
+    bt-hang-watchdog) exit 1 ;;
+  esac
+done
+exit 0
+STUB
+chmod +x "$LC/bin/journalctl"
+rm -f "$LC/evidence/trials/results.tsv" "$LC/state/current"
+PATH="$LC/bin:$PATH" BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial autostart stock >/dev/null 2>&1
+PATH="$LC/bin:$PATH" BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial ok >/dev/null 2>&1
+ubs=$(awk -F"\t" 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} END{print $c["bt1_status"]}' \
+      "$LC/evidence/trials/results.tsv" 2>/dev/null)
+if [[ "$ubs" == "unknown" ]]; then
+    ok "unreadable watchdog journal with watchdog running -> unknown"
+else
+    bad "unreadable watchdog journal gave '${ubs:-empty}', expected unknown"
+fi
+
+rm -f "$LC/bin/journalctl" "$LC/bin/systemctl"
 rm -rf "$LC"
 
 echo
