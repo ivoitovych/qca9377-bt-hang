@@ -26,8 +26,43 @@ while [[ $# -gt 0 ]]; do
 done
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO="${BT_EVIDENCE_REPO:-$(cd "$HERE/.." && pwd)}"
-[[ -d "$REPO/evidence" ]] || REPO=/root/exp/qca9377-bt-hang
+
+# AN EXPLICIT BT_EVIDENCE_REPO IS OBEYED, ALWAYS.
+#
+# This was:
+#
+#     REPO="${BT_EVIDENCE_REPO:-$(cd "$HERE/.." && pwd)}"
+#     [[ -d "$REPO/evidence" ]] || REPO=/root/exp/qca9377-bt-hang
+#
+# The second line silently discarded an EXPLICIT override whenever the named
+# directory did not already contain evidence/, and redirected the write to a
+# hardcoded absolute path belonging to one machine. Two consequences, both
+# bad:
+#
+#   * It defeated the sandbox. BT_EVIDENCE_REPO is the mechanism the test
+#     suite's fourth house rule depends on to keep fabricated incidents out
+#     of the real evidence tree — the rule written after ten of them
+#     accumulated there. A caller who set it correctly, to a fresh scratch
+#     directory, got their collection written to the real repository instead,
+#     because a fresh directory is exactly the case with no evidence/ in it.
+#     Found by pointing it at a temp dir and watching three incident
+#     directories appear somewhere else entirely.
+#   * It shipped one machine's home-directory layout in a public repository.
+#
+# An override is now honoured whether or not evidence/ exists yet; the
+# directory is created, as it would be for a first collection in a new
+# checkout. Only the UNSET case falls back, and it falls back to the
+# checkout this script lives in — never to an absolute path off it.
+if [[ -n "${BT_EVIDENCE_REPO:-}" ]]; then
+    REPO="$BT_EVIDENCE_REPO"
+else
+    REPO="$(cd "$HERE/.." && pwd)"
+    if [[ ! -d "$REPO/evidence" ]]; then
+        echo "bt-incident: $REPO has no evidence/ directory." >&2
+        echo "  Run this from a checkout, or set BT_EVIDENCE_REPO to the target repo." >&2
+        exit 1
+    fi
+fi
 DIR="$REPO/evidence/sessions/$(date +%Y%m%d-%H%M%S)-${SLUG//[^a-zA-Z0-9._-]/_}"
 mkdir -p "$DIR" || { echo "cannot create $DIR" >&2; exit 1; }
 

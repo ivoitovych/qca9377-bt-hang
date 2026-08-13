@@ -1598,6 +1598,41 @@ EHOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-env-history 2>&1); ehrc=$?
 (( ehrc == 0 )) && ok "bt-env-history runs over a fixture without a journal" \
                 || bad "bt-env-history failed (rc=$ehrc)"
 
+# ── bt-incident: the sandbox override must actually sandbox ───────────────
+#
+# THE DEFECT THIS ENCODES. bt-incident resolved its destination as:
+#
+#     REPO="${BT_EVIDENCE_REPO:-...}"
+#     [[ -d "$REPO/evidence" ]] || REPO=/root/exp/qca9377-bt-hang
+#
+# so an EXPLICIT override pointing at a fresh scratch directory — the only
+# kind a test would ever use — was silently discarded, and the collection
+# landed in a hardcoded absolute path instead. BT_EVIDENCE_REPO is the exact
+# mechanism this file's fourth house rule relies on to keep fabricated
+# incidents out of the real evidence tree, the rule written after ten of them
+# accumulated there. The override was the sandbox, and it did not hold.
+#
+# The suite never caught it because it stubs bt-incident away entirely (which
+# is correct — a failed trial must not collect during a test run). Stubbing a
+# tool protects the suite from it; it does not test it. This runs the real
+# one, pointed at a temp directory, and asserts the write landed inside.
+INC=$(mktemp -d)
+mkdir -p "$INC/repo"
+BT_EVIDENCE_REPO="$INC/repo" tools/bt-incident suite-sandbox-check >/dev/null 2>&1
+inside=$(find "$INC/repo" -type d -name '*suite-sandbox-check*' 2>/dev/null | wc -l)
+(( ${inside:-0} == 1 )) \
+    && ok "bt-incident writes inside an explicit BT_EVIDENCE_REPO" \
+    || bad "bt-incident did NOT write into its sandbox — the override is being ignored"
+
+# And the specific escape route, by name: nothing may land at the old
+# hardcoded path. Asserted separately from the positive case because "wrote
+# somewhere inside the sandbox" and "wrote nowhere else" are different claims,
+# and it was the second that failed.
+[[ ! -e /root/exp/qca9377-bt-hang ]] \
+    && ok "bt-incident writes to no hardcoded absolute path" \
+    || bad "a collection reached the hardcoded /root/exp path — the escape is back"
+rm -rf "$INC"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is
