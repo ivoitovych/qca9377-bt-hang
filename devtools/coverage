@@ -1,0 +1,268 @@
+#!/bin/bash
+# coverage — how much of the shell this repository ships does the suite execute?
+#
+#   devtools/coverage              per-file table, worst first, plus a total
+#   devtools/coverage --min 25     also exit non-zero if the total falls below 25%
+#   devtools/coverage --quiet      totals only
+#
+# WHY THIS EXISTS.
+#
+# `tests/run-tests` reports "all 65 invariants hold", and `repo-validate`
+# reports that every shell file parses. Neither answers the question a reader
+# actually has: how much of this code has ever been RUN by the suite. Those two
+# green lines are compatible with 38 of 42 scripts never executing a single
+# statement under test, which is what was in fact the case when this was first
+# measured.
+#
+# The number was previously asserted from reading — counting which tools the
+# suite mentions. That is the same class of claim this repository has been
+# wrong about four times: a hand-derived list standing in for a measurement.
+# So it is measured, by running the suite and recording every line bash
+# actually executed.
+#
+# HOW IT WORKS.
+#
+# bash cannot be told to trace a child script from the parent: PS4 is reset to
+# its default at startup and is not inherited, so an exported PS4 carrying
+# ${BASH_SOURCE}/${LINENO} silently produces an untagged, unattributable trace.
+# BASH_ENV is the seam — a non-interactive bash sources it before running its
+# script — so the tagged PS4, the trace descriptor AND xtrace itself are all
+# installed there.
+#
+# xtrace is enabled inside BASH_ENV rather than propagated from here through an
+# exported SHELLOPTS. Both appear to work; only one does so reliably. The
+# SHELLOPTS route depends on the invoking shell's own exported environment and
+# was observed to produce a SILENTLY EMPTY trace — BASH_ENV still sourced, the
+# suite still green, and every file reported at 0%. A measurement whose failure
+# mode is "everything looks uncovered" is worse than no measurement, because it
+# reads as a finding. Enabling the option in the file that is definitely
+# sourced removes the dependency.
+#
+# The trace goes to a dedicated file descriptor rather than stderr, because
+# tests/run-tests captures stderr in several assertions and a trace mixed into
+# it would change the results being measured.
+#
+# WHAT THE DENOMINATOR MEANS.
+#
+# bash traces simple commands, not syntax. Blank lines, comments, bare keywords
+# (`fi`, `done`, `else`), function-definition headers, here-document bodies and
+# backslash-continuation lines can never appear in a trace, so counting them as
+# coverable would understate every file. They are excluded.
+#
+# What is NOT excluded, and what therefore makes every figure here a
+# CONSERVATIVE LOWER BOUND:
+#
+#   * a command spanning several lines is traced once, at its first line, so
+#     its remaining lines count as uncovered;
+#   * `case` pattern labels are counted but never traced.
+#
+# So a file's true coverage is somewhat higher than printed. The number is
+# useful for ranking files and for watching a trend, and it is honest about
+# which direction it errs. It is NOT a percentage to quote as if exact.
+#
+# Nothing here writes to the repository: the trace and the instrumented
+# BASH_ENV live in a temp directory removed on every exit path.
+
+set -uo pipefail
+
+cd "$(dirname "$0")/.." || exit 1
+
+MIN=""; QUIET=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --min)   MIN="${2:?--min needs a percentage}"; shift ;;
+        --quiet) QUIET=1 ;;
+        -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+        # An unknown flag previously became a positional and was ignored, so a
+        # mistyped --min silently reported success. Refuse instead.
+        *) echo "unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+for req in git awk bash; do
+    if ! command -v "$req" >/dev/null 2>&1; then
+        echo "coverage: $req is required but not installed" >&2
+        exit 2
+    fi
+done
+[[ -x tests/run-tests ]] || { echo "coverage: tests/run-tests not executable" >&2; exit 2; }
+
+WORK=$(mktemp -d) || exit 1
+trap 'rm -rf "$WORK"' EXIT INT TERM
+
+# ── the files under measurement ───────────────────────────────────────────
+#
+# DERIVED, not hand-written. `tests/run-tests` learned this the hard way: a
+# hand-maintained `tools bin devtools` omitted install.sh, which held the very
+# defect the check was hunting. Same shebang scan, same source of truth, and
+# built without a pipeline so the detector cannot be bitten by the pipefail
+# inversion it exists alongside.
+SHFILES=()
+while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    IFS= read -r shebang < "$f" || continue
+    case "$shebang" in
+        '#!'*bash*|'#!'*/sh|'#!'*' sh') SHFILES+=("$f") ;;
+    esac
+done < <(git ls-files 2>/dev/null)
+
+if (( ${#SHFILES[@]} == 0 )); then
+    echo "coverage: no shell files found (not a git checkout?)" >&2
+    exit 2
+fi
+
+# ── run the suite under trace ─────────────────────────────────────────────
+printf 'running tests/run-tests under trace (%d shell files)...\n' "${#SHFILES[@]}" >&2
+
+printf 'PS4=%s\nBASH_XTRACEFD=9\nset -o xtrace\n' \
+       "'+@@C@@\${BASH_SOURCE}@@\${LINENO}@@'" > "$WORK/bashenv"
+
+(
+    exec 9>"$WORK/trace"
+    export BASH_ENV="$WORK/bashenv"
+    tests/run-tests
+) >"$WORK/suite.out" 2>"$WORK/suite.err"
+SUITE_RC=$?
+
+# An empty trace means the instrumentation did not take, NOT that nothing ran.
+# Reporting 0% here would be a fabricated finding; refuse instead.
+if [[ ! -s "$WORK/trace" ]]; then
+    echo "coverage: the trace is empty — instrumentation failed, refusing to report 0%" >&2
+    echo "          (BASH_ENV=$WORK/bashenv was not honoured by the suite's shell)" >&2
+    exit 2
+fi
+
+# The suite's own verdict is reported alongside the coverage figure. A coverage
+# number measured from a RED suite describes which lines ran on the way to
+# failing, which is not the same claim, and reporting it silently would invite
+# the reader to treat it as the healthy baseline.
+SUITE_TAIL=$(tail -1 "$WORK/suite.out" 2>/dev/null)
+
+# Executed (file, line) pairs. Absolute paths and anything outside the checkout
+# (the temp sandboxes the suite builds, /usr/local/bin copies) are dropped:
+# this measures the repository, not its installed image.
+grep -oE '@@C@@[^@]*@@[0-9]+@@' "$WORK/trace" 2>/dev/null \
+  | sed -E 's/^@@C@@//; s/@@$//; s/@@/\t/' \
+  | awk -F'\t' 'NF == 2 && $1 !~ /^\// && $1 !~ /^\.\./ { print $1 "\t" $2 }' \
+  | sort -u > "$WORK/executed"
+
+# ── coverable lines per file ──────────────────────────────────────────────
+: > "$WORK/coverable"
+for f in "${SHFILES[@]}"; do
+    awk -v file="$f" '
+        # Here-document bodies are data, never traced. Track the terminator
+        # from the opening line and skip until it is seen alone.
+        heredoc != "" {
+            t = $0; sub(/^[ \t]*/, "", t); sub(/[ \t]*$/, "", t)
+            if (t == heredoc) heredoc = ""
+            next
+        }
+        {
+            line = $0
+            s = line; sub(/^[ \t]*/, "", s); sub(/[ \t]*$/, "", s)
+
+            # A continuation of the previous line is part of that command and
+            # carries no LINENO of its own.
+            if (cont) { cont = (line ~ /\\$/); next }
+            cont = (line ~ /\\$/)
+
+            if (match(line, /<<-?[ \t]*"?'"'"'?[A-Za-z_][A-Za-z0-9_]*"?'"'"'?/)) {
+                h = substr(line, RSTART, RLENGTH)
+                sub(/^<<-?[ \t]*/, "", h); gsub(/["'"'"']/, "", h)
+                heredoc = h
+            }
+
+            if (s == "")                     next   # blank
+            if (s ~ /^#/)                    next   # comment
+            if (s ~ /^(fi|done|else|esac|do|then|\{|\}|;;|\))$/) next
+            if (s ~ /^(fi|done);$/)          next
+            if (s ~ /^[A-Za-z_][A-Za-z0-9_-]*\(\)[ \t]*\{?$/)   next  # func header
+            if (s ~ /^\}[ \t]*(<|>|\||&|$)/) next   # closing brace w/ redirect
+
+            n++
+        }
+        END { printf "%s\t%d\n", file, n + 0 }
+    ' "$f" >> "$WORK/coverable"
+done
+
+# ── join, report ──────────────────────────────────────────────────────────
+awk -F'\t' -v quiet="$QUIET" '
+    FNR == NR { hit[$1]++; next }
+    {
+        file = $1; total = $2
+        h = ($1 in hit) ? hit[$1] : 0
+        if (h > total) h = total          # trace can tag a line the heuristic excluded
+        pct = (total > 0) ? (100 * h / total) : 0
+        rows[++n] = sprintf("%6.1f%%  %5d/%-5d  %s", pct, h, total, file)
+        sort_key[n] = pct
+        sum_h += h; sum_t += total
+        if (h == 0) zero++
+    }
+    END {
+        # insertion sort, worst coverage first — that is the actionable end
+        for (i = 2; i <= n; i++) {
+            kr = rows[i]; kk = sort_key[i]; j = i - 1
+            while (j > 0 && sort_key[j] > kk) {
+                rows[j+1] = rows[j]; sort_key[j+1] = sort_key[j]; j--
+            }
+            rows[j+1] = kr; sort_key[j+1] = kk
+        }
+        if (!quiet) {
+            print  ""
+            printf "%-7s  %-12s %s\n", "cover", "lines", "file"
+            print  "──────────────────────────────────────────────────────────────"
+            for (i = 1; i <= n; i++) print rows[i]
+            print  ""
+        }
+        printf "files with zero executed lines: %d of %d\n", zero + 0, n
+        printf "TOTAL: %.1f%% (%d of %d coverable lines)\n", \
+               (sum_t > 0 ? 100 * sum_h / sum_t : 0), sum_h, sum_t
+        printf "%d\n", (sum_t > 0 ? int(100 * sum_h / sum_t) : 0) > "/dev/stderr"
+    }
+' "$WORK/executed" "$WORK/coverable" 2> "$WORK/pct"
+
+TOTAL_PCT=$(cat "$WORK/pct" 2>/dev/null | tr -d '[:space:]')
+TOTAL_PCT=${TOTAL_PCT:-0}
+
+# ── awk libraries ─────────────────────────────────────────────────────────
+#
+# Statement-level coverage of an awk program needs gawk --profile, and this
+# machine ships mawk, which has no profiler. What CAN be measured exactly, from
+# the trace already captured, is how many times the suite loaded each library
+# with -f. That is invocation count, not line coverage, and is labelled as
+# such: a library invoked once is exercised along exactly one path through it.
+if (( ! QUIET )) && compgen -G "tools/lib/*.awk" >/dev/null 2>&1; then
+    echo
+    printf '%-9s %s\n' "loads" "awk library (invocations by the suite, not line coverage)"
+    echo  "──────────────────────────────────────────────────────────────"
+    for lib in tools/lib/*.awk; do
+        # Counted, not `grep -q`: under pipefail a matching `grep -q` pipeline
+        # exits non-zero, which is the inversion tests/run-tests forbids.
+        loads=$(grep -c -- "-f $lib" "$WORK/trace" 2>/dev/null)
+        loads=${loads:-0}
+        lines=$(awk 'END { print NR }' "$lib")
+        if (( loads == 0 )); then
+            printf '%-9s %s  (%s lines) — NEVER LOADED\n' "0" "$lib" "$lines"
+        else
+            printf '%-9s %s  (%s lines)\n' "$loads" "$lib" "$lines"
+        fi
+    done
+fi
+
+echo
+if (( SUITE_RC == 0 )); then
+    echo "suite: ${SUITE_TAIL:-passed} (measurement taken from a green run)"
+else
+    echo "suite: FAILED (rc=$SUITE_RC) — these figures describe a red run" >&2
+fi
+
+if [[ -n "$MIN" ]]; then
+    if (( TOTAL_PCT < MIN )); then
+        echo "coverage ${TOTAL_PCT}% is below the --min ${MIN}% floor" >&2
+        exit 1
+    fi
+    echo "coverage ${TOTAL_PCT}% meets the --min ${MIN}% floor"
+fi
+
+exit $(( SUITE_RC != 0 ))

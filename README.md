@@ -406,7 +406,9 @@ bin/                  watchdog + metrics collector
 systemd/              unit files
 etc/                  modprobe + udev configuration
 tools/                diagnostics, incident capture, log sanitiser
-devtools/             contributor tooling (scan, validate, commit+verify)
+tests/                run-tests — the analysis invariants, plus their fixtures
+devtools/             contributor tooling (check, scan, validate, coverage, commit+verify)
+reviews/              assessments of the repository itself
 docs/
   investigation.md    full investigation, every measurement
   bug-report.md       ready to file with linux-bluetooth
@@ -525,13 +527,31 @@ diagnosing Bluetooth:
 
 | Script | Purpose |
 |---|---|
+| `devtools/check` | the one command to run before committing |
 | `devtools/repo-scan <dir>` | refuse-to-publish scan: MACs, BSSIDs, UUIDs, IPv4, emails, AI attribution, binary captures |
 | `devtools/repo-validate <dir>` | `bash -n`, `systemd-analyze`, `udevadm verify`, `jq`, `py_compile` |
 | `devtools/repo-save <dir> "<msg>"` | validate → scan → commit → push → verify the remote hash matches |
+| `devtools/coverage` | how much of the shipped shell the test suite actually executes |
+| `devtools/assert-test-catches` | prove a test really fails when its invariant is broken |
 
 This repo publishes logs, and kernel logs carry the Wi-Fi AP BSSID — which public
 geolocation databases index. `repo-scan` is the last check before that leaves the
 machine. Not installed by `install.sh`.
+
+### Tests
+
+```bash
+tests/run-tests                    # 65 invariants, ~1.8 s
+tests/run-tests --section "stage2" # one block, without a sed range
+devtools/coverage                  # what fraction of the shell those 65 actually run
+```
+
+Each invariant in `tests/run-tests` encodes a defect that really shipped here, with a
+fixture built so the old behaviour fails it. Coverage of the shipped shell is currently
+**13.1%** — 41 of 43 scripts execute no line under test, because the tools call
+`journalctl` directly and so cannot be driven from a fixture.
+[`reviews/unit-testing-assessment.md`](reviews/unit-testing-assessment.md) measures this
+and proposes a staged way out.
 
 ## Contributing
 
