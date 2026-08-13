@@ -329,6 +329,84 @@ fi
 rm -rf "$BROKEN2"
 
 echo
+echo "trial lifecycle — the PRODUCER, not just the report"
+echo "──────────────────────────────────────────────────────────────"
+
+# WHY THIS EXISTS. Every other bt-trial test drives `report` against a prebuilt
+# results.tsv. That validates the consumer. It cannot notice that the producer
+# is broken — and it was: the classifier read $tmo before it was collected and
+# dereferenced $since before assignment, so under `set -u` trial closure aborted
+# and no row was ever written. The outcome ontology was correct in the fixture
+# and unreachable in production.
+#
+# So this drives the real path: open a trial, close it, and require a row.
+LC=$(mktemp -d)
+mkdir -p "$LC/evidence/trials" "$LC/state"; touch "$LC/install.sh"
+git -C "$LC" init -q 2>/dev/null
+
+rc=0
+BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial autostart stock >/dev/null 2>&1 || rc=$?
+if (( rc == 0 )) && [[ -e "$LC/state/current" ]]; then
+    ok "autostart opens a trial"
+else
+    bad "autostart failed (rc=$rc) or wrote no state file"
+fi
+
+rc=0
+out=$(BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial ok 2>&1) || rc=$?
+if (( rc == 0 )); then
+    ok "closing a trial completes without error"
+else
+    bad "closing a trial FAILED (rc=$rc):"
+    tail -3 <<<"$out" | sed 's/^/      /'
+fi
+
+if [[ -s "$LC/evidence/trials/results.tsv" ]]; then
+    ok "closing a trial writes a results row"
+else
+    bad "no results row written — the producer path is broken"
+fi
+
+# The row must carry both axes, populated with values from their domains. A
+# blank or missing field here would make every later report refuse.
+if [[ -s "$LC/evidence/trials/results.tsv" ]]; then
+    bs=$(awk -F'\t' 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} NR==2{print $c["bt1_status"]}' \
+         "$LC/evidence/trials/results.tsv")
+    tr=$(awk -F'\t' 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} NR==2{print $c["trial_result"]}' \
+         "$LC/evidence/trials/results.tsv")
+    # `unknown` is a legitimate value — but not here. This host has a readable
+    # journal, so `unknown` means evidence collection failed, and that is
+    # exactly how the ordering bug manifested: $tmo was consulted before it was
+    # assigned, every trial classified `unknown`, and every trial was excluded
+    # from every rate. The denominator would have been permanently zero while
+    # the report printed cleanly.
+    #
+    # Domain-membership alone would have passed that, since `unknown` is in the
+    # domain. The assertion has to be that collection SUCCEEDED.
+    case "$bs" in
+        not_observed|confirmed|censored_pre_failure)
+            ok "bt1_status populated from evidence ($bs)" ;;
+        unknown)
+            bad "bt1_status is 'unknown' on a host with a readable journal — evidence collection failed (classifier ordered before collection?)" ;;
+        *)  bad "bt1_status is '${bs:-empty}' — outside its domain" ;;
+    esac
+    case "$tr" in
+        survived|failed|recovered|aborted)
+            ok "trial_result populated from its domain ($tr)" ;;
+        *)  bad "trial_result is '${tr:-empty}' — outside its domain" ;;
+    esac
+
+    # And the report must accept what the producer just wrote. Producer and
+    # consumer agreeing separately with a fixture is not the same as agreeing
+    # with each other.
+    rc=0
+    BT_REPO="$LC" tools/bt-trial report >/dev/null 2>&1 || rc=$?
+    (( rc == 0 )) && ok "report accepts a row the producer wrote" \
+        || bad "report rejected the producer's own row (rc=$rc)"
+fi
+rm -rf "$LC"
+
+echo
 echo "analysis refuses data that cannot justify it"
 echo "──────────────────────────────────────────────────────────────"
 

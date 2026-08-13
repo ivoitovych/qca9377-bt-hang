@@ -52,6 +52,10 @@ NR == 1 {
     e  = $c["treatment"]
     k  = ty "|" b "|" e
     envs[e] = 1
+    # A trial whose treatment changed mid-run was not conducted under one
+    # condition. It is counted and shown, never pooled into a rate — the same
+    # discipline as a censored observation, applied to the treatment axis.
+    if (e ~ /^CHANGED:/) drift[k]++
     if (c["measurement_rev"]) mrevs[$c["measurement_rev"]] = 1
     # DOMAIN CHECK. An unrecognised outcome must not be silently folded into
     # "not hung". Miscounting a failure as a survival moves the denominator in
@@ -145,5 +149,16 @@ END {
         print  "     this project have repeatedly turned out NOT to be causal, so an"
         print  "     early intervention is not evidence that BT-1 was imminent."
         print  "     For a controlled comparison, run with the watchdog OFF."
+    }
+
+    td = 0
+    for (k in drift) td += drift[k]
+    if (td > 0) {
+        print ""
+        printf "  !! %d trial(s) whose TREATMENT CHANGED mid-run.\n", td
+        print  "     Their treatment string begins CHANGED: so it matches no other"
+        print  "     trial and cannot pool into any denominator. A trial that was"
+        print  "     reconfigured while running was not conducted under one"
+        print  "     condition, and no rate computed from it means anything."
     }
 }

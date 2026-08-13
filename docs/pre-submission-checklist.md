@@ -52,20 +52,20 @@ patch.
 | **A4 — quantified reproducer** | Until stock has a measured failure rate under a fixed protocol, no build result means anything. There is no denominator. See `tools/bt-trial`. |
 | **A0 — read Ubuntu's own 7.0.0-28 source** | The mechanism is verified against upstream v7.0 and the shipped binary, but not against the distribution's actual tree. |
 | **Builds A/B/C/D** | The report currently asserts a cause that has never been tested. See `fix-proposal.md` §5a. |
-| **Confirm the SCO finding reproduces** | `EX-007` identifies `HCI_Setup_Synchronous_Connection` (0x0428) as the wedging command, from **one** occurrence in one boot. One observation is a lead, not a finding. |
+| **Confirm the SCO localisation reproduces** | `EX-006`/`EX-009` localise the failure to synchronous-audio link transitions — setup unanswered in one incident, teardown in the other, and **three SCO setups survived**. There is no single identified triggering opcode; `EX-007`'s causal claim was refuted. What needs reproducing is the localisation, not a command. |
 
 ---
 
 ## 2a. Submit the separable issues separately
 
-[`issues.md`](issues.md) tracks five distinct defects. They must not be bundled: a small,
+[`issues.md`](issues.md) tracks six distinct defects. They must not be bundled: a small,
 deterministic, well-evidenced bug is far more likely to be fixed than a large intermittent
 one, and bundling means the weakest member sets the pace for all.
 
 | Issue | Ready? |
 |---|---|
 | `BT-2` panel-triggered 16.0 s HCI desync | ✅ deterministic, reproducible in seconds, cross-tabbed |
-| `BT-4` `btmon` aborts mid-capture (bluez 5.72) | ✅ to BlueZ, once a minimal reproducer and backtrace exist |
+| `BT-4` `btmon` aborts mid-capture (bluez 5.72) | ✅ minimal reproducer found (`hciconfig hci0 name`, EX-011); still needs a backtrace |
 | `BT-3` missing `13d3:3503` quirks entry | ⚠️ patch trivial, justification missing |
 | `BT-1` the hang | ❌ blocked on the gates above |
 | `BT-5` SCO link silent after setup | ❌ one observation |

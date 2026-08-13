@@ -37,7 +37,11 @@ fi
 
 TRIALS="$REPO/evidence/trials"
 RESULTS="$TRIALS/results.tsv"
-STATE=/run/bt-trial
+# Overridable so tests can drive the REAL trial lifecycle — open, close,
+# classify, write a row — without touching the live auto-trial. Testing the
+# report against a prebuilt results.tsv proved insufficient: it validated the
+# consumer while the producer was broken.
+STATE="${BT_STATE:-/run/bt-trial}"
 CUR="$STATE/current"
 
 G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
@@ -203,7 +207,9 @@ start)
     n=$(next_trial_no "$build")
     dir="$TRIALS/$build/trial-$(printf '%02d' "$n")"
     mkdir -p "$dir"
-    { echo "start=$(date +%s)"; echo "build=$build"; echo "n=$n"; echo "dir=$dir"; } > "$CUR"
+    { echo "start=$(date +%s)"; echo "build=$build"; echo "n=$n"; echo "dir=$dir"
+      echo "treat_start=$(env_fingerprint)"
+      echo "mrev_start=$(measurement_revision)"; } > "$CUR"
     command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-before.txt" 2>&1
     : > "$dir/steps.log"
     command -v bt-mark >/dev/null 2>&1 && bt-mark "TRIAL $build #$n START (protocol v$PROTOCOL_VERSION)" >/dev/null 2>&1
@@ -242,8 +248,15 @@ autostart)
     n=$(next_trial_no "$build")
     dir="$TRIALS/$build/trial-$(printf '%02d' "$n")"
     mkdir -p "$dir"
+    # Captured AT START. The row must answer "what was this trial exposed to?",
+    # not "what existed when it ended". An auto-trial spans a whole boot, and
+    # this project reconfigures and reinstalls instrumentation while one is
+    # open — so closing-time capture could describe a three-hour boot by the
+    # configuration of its last minute.
     { echo "start=$(date +%s)"; echo "build=$build"; echo "n=$n"; echo "dir=$dir"
-      echo "auto=1"; } > "$CUR"
+      echo "auto=1"
+      echo "treat_start=$(env_fingerprint)"
+      echo "mrev_start=$(measurement_revision)"; } > "$CUR"
     command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-before.txt" 2>&1
     : > "$dir/steps.log"
     echo "auto-trial $build #$n opened at boot"
@@ -280,6 +293,20 @@ hang|ok)
     auto=$(grep -c '^auto=1' "$CUR" || true)
     dur=$(( $(date +%s) - start ))
 
+    # ── COLLECT EVIDENCE FIRST, THEN CLASSIFY ─────────────────────────────
+    #
+    # Order is load-bearing. An earlier version classified the outcome using
+    # $tmo and $since before either was assigned: under `set -u` the unbound
+    # $since aborted trial closure outright, so no row was ever written. The
+    # report tests passed throughout because they drive a prebuilt results.tsv
+    # — they validated the consumer while the producer was dead.
+    since="@$(( start - 5 ))"
+    jk() { journalctl -k --since "$since" --no-pager -o short-iso-precise 2>/dev/null; }
+
+    sco_sent=$(jk | grep -c "opcode 0x0428" || true)
+    tmo=$(jk | grep -c "command tx timeout" || true)
+    usb_gone=$(jk | grep -c "USB disconnect, device number" || true)
+
     # ── TWO AXES, NOT ONE FIELD ───────────────────────────────────────────
     #
     # `outcome` used to answer two different questions at once, and once an
@@ -304,6 +331,37 @@ hang|ok)
     # The old ok/survived distinction is gone: it was doing trial_type's job.
     # Whether the reproduction protocol was carried out is what
     # controlled_v* vs observational_boot already says.
+
+    # TREATMENT DRIFT. If the treatment changed mid-trial, the trial was not
+    # run under one condition and cannot enter a controlled rate. Recording only
+    # the closing state would silently attribute the whole trial to whichever
+    # configuration happened to exist at the end.
+    #
+    # Start-vs-end equality is not perfect — a change and revert inside the
+    # window escapes it — but it catches the case that actually happens here,
+    # which is reconfiguring while an auto-trial is open.
+    treat_start=$(grep '^treat_start=' "$CUR" | cut -d= -f2- || true)
+    mrev_start=$(grep '^mrev_start=' "$CUR" | cut -d= -f2- || true)
+    treat_end=$(env_fingerprint)
+    mrev_end=$(measurement_revision)
+
+    if [[ -z "$treat_start" ]]; then
+        treatment="$treat_end"           # trial opened before this was recorded
+    elif [[ "$treat_start" == "$treat_end" ]]; then
+        treatment="$treat_start"
+    else
+        # Deliberately not a valid treatment string: it must not match any other
+        # trial, so it cannot pool into a denominator with them.
+        treatment="CHANGED:${treat_start}->${treat_end}"
+    fi
+
+    if [[ -z "$mrev_start" || "$mrev_start" == "$mrev_end" ]]; then
+        measurement_rev="${mrev_start:-$mrev_end}"
+    else
+        # A tooling change mid-trial does not invalidate the treatment, so this
+        # is recorded as a range rather than attributed to the ending commit.
+        measurement_rev="${mrev_start}..${mrev_end}"
+    fi
 
     early_int=$(journalctl -u bt-hang-watchdog --since "$since" --no-pager -o cat 2>/dev/null \
                 | grep -c "EARLY intervention" || true)
@@ -359,12 +417,6 @@ hang|ok)
     #
     # Each field is measured, never inferred, and "?" means not determined
     # rather than "no" — a blank cell must not read as a negative result.
-    since="@$(( start - 5 ))"
-    jk() { journalctl -k --since "$since" --no-pager -o short-iso-precise 2>/dev/null; }
-
-    sco_sent=$(jk | grep -c "opcode 0x0428" || true)
-    tmo=$(jk | grep -c "command tx timeout" || true)
-    usb_gone=$(jk | grep -c "USB disconnect, device number" || true)
 
     # Select the NEAREST PRECEDING synchronous setup — not "the right one".
     #
@@ -525,7 +577,7 @@ hang|ok)
 
     [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\ttreatment\tmeasurement_rev\ttrial\tprotocol\tbt1_status\ttrial_result\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\n' > "$RESULTS"
     printf '%s\t%s\t%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-        "$(date -Iseconds)" "$trial_type" "$build" "$(env_fingerprint)" "$(measurement_revision)" "$n" "$PROTOCOL_VERSION" "$bt1_status" "$trial_result" "$dur" \
+        "$(date -Iseconds)" "$trial_type" "$build" "$treatment" "$measurement_rev" "$n" "$PROTOCOL_VERSION" "$bt1_status" "$trial_result" "$dur" \
         "${sco_sent:-?}" "$sco_to_tmo" "${tmo:-?}" "$resp_after" "$usb_present" \
         "${usb_gone:-?}" "${probes:-?}" "$probe_to_tmo" "${aborts:-?}" \
         "$(uname -r)" >> "$RESULTS"
