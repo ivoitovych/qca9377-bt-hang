@@ -58,6 +58,8 @@ FILES=(
     /usr/local/bin/lib/trial-summary.awk
     /usr/local/bin/lib/trial-sco-table.awk
     /usr/local/bin/lib/stage2.awk
+    /usr/local/bin/lib/phase.awk
+    /usr/local/bin/lib/journal.sh
     /usr/local/bin/bt-sco
     /usr/local/bin/bt-capdiff
     /usr/local/sbin/bt-capture
