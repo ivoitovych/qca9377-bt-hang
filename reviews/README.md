@@ -28,6 +28,7 @@ same day is a normal outcome, not an unusual one.
 |---|---|---|---|
 | 2026-08-13T12:14Z | [Unit testing](2026-08-13T1214Z-unit-testing-assessment.md) | the tree at `6c0491c` | The suite is good; its *reach* is 13.1% of the shipped shell |
 | 2026-08-13T12:44Z | [Coverage strategy](2026-08-13T1244Z-coverage-strategy.md) | the tree at `10404b2` | Re-prioritises the above: 31% of the code needs **no** seam. Supersedes its §5 ordering |
+| 2026-08-13T15:17Z | [Test classes & mocks](2026-08-13T1517Z-test-classes-and-mocks.md) | the tree at 28.5% | Assesses the owner's two proposals; settles CS-08's design; adds the system round trip |
 
 ---
 
@@ -49,10 +50,10 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | UT-04 | CI: validate + suite + coverage floor | done | `d016249` | `test -r .github/workflows/checks.yml` |
 | UT-05 | Table-driven awk fixture harness | done | `d016249` | `tests/run-tests --section "awk libraries"` |
 | UT-06 | Fixtures for `trial-summary.awk` | done | `d016249` | `ls tests/fixtures/trial-summary/*.in \| wc -l` → 5 |
-| UT-07 | Fixtures for `trial-sco-table.awk`, `stage2.awk` | **open** | — | `ls tests/fixtures/` — expect a directory per library |
+| UT-07 | Fixtures for `trial-sco-table.awk`, `stage2.awk` | done | this commit | `tests/run-tests --section "awk libraries"` — 17 cases across 3 libraries |
 | UT-08 | Journal seam `tools/lib/journal.sh` | done | `d016249` | `test -r tools/lib/journal.sh` |
 | UT-09 | Convert `bt-phase`, `bt-boot-provenance` | done | `d016249` | `tests/run-tests --section "whole tools" \| grep 'journal seam'` |
-| UT-10 | Convert the remaining journal-reading tools | **partial** 2/21 | `d016249` | `sh reviews/verify.sh` — prints converted vs remaining |
+| UT-10 | Convert the remaining journal-reading tools | **partial** 3/21 | this commit | `sh reviews/verify.sh` — prints converted vs remaining |
 | UT-11 | `lib/phase.awk`; delete the Python extractor | done | `d016249` | `test -r tools/lib/phase.awk`; extractor gone: `grep -c re.search tests/run-tests` → 0 |
 | UT-12 | Split `tests/run-tests` into per-area files | **open** | — | `wc -l tests/run-tests` — 1353 at `d016249`, was 1038 |
 | UT-13 | Settle `repo-scan`'s pre-existing hits, then add to CI | **blocked** | — | see below |
@@ -62,14 +63,22 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | ID | Item | Status | Landed | Verify |
 |---|---|---|---|---|
 | CS-01 | Test `sanitize-logs.sh` (+ fix its awk gate) | done | this commit | `tests/run-tests --section "sanitize-logs"` |
-| CS-02 | Test `install.sh` / `uninstall.sh` dry run | **open** | — | `./install.sh >/dev/null; echo $?` → 0, writes nothing |
-| CS-03 | Test the devtools against a scratch repo | **open** | — | `devtools/coverage \| grep devtools/` — expect non-zero rows |
+| CS-02 | Test `install.sh` / `uninstall.sh` dry run | done | this commit | `tests/run-tests --section "install.sh and uninstall"` |
+| CS-03 | Test the devtools against a scratch repo | done | this commit | `tests/run-tests --section "publish gates"` |
 | CS-04 | Test `bt-capdiff`/`bt-sco`/`bt-context`/`bt-incident` via `BT_*` overrides | **open** | — | as above for `tools/` rows |
-| CS-05 | Convert + test `bt-actions` (seam) | **open** | — | `grep -c journal.sh tools/bt-actions` → 1 |
+| CS-05 | Convert + test `bt-actions` (seam) | done | this commit | `grep -c 'journal.sh' tools/bt-actions` → 2; `tests/run-tests --section "whole tools"` |
 | CS-06 | `bt-logvolume`, `bt-boot-stats`, `bt-timeline.sh` | **open** | — | as CS-05 |
 | CS-07 | `bt-env-history`, `bt-boot-list`, `bt-boots` | **open** | — | as CS-05 |
-| CS-08 | A sysfs/device seam, then `bin/bt-hang-watchdog` | **open** | — | `devtools/coverage \| grep bt-hang-watchdog` |
+| CS-08 | A sysfs/device seam, then `bin/bt-hang-watchdog` | **open** — design settled by TC-01 | — | `devtools/coverage \| grep bt-hang-watchdog` |
 | CS-09 | Argument/refusal paths only for the hardware-bound five | **open** | — | judgement call; see the report |
+
+### From `2026-08-13T1517Z-test-classes-and-mocks.md`
+
+| ID | Item | Status | Landed | Verify |
+|---|---|---|---|---|
+| TC-01 | `tools/lib/device.sh` action seam + spy; convert `bt-hang-watchdog` | **open** (= CS-08) | — | `test -r tools/lib/device.sh` |
+| TC-02 | CI-gated system round trip (`--apply` both ways) | **open** | — | separate step in `checks.yml`, gated on `BT_SYSTEM_TEST=1` |
+| TC-03 | Fixture provenance comments + real-tool contract check | **open** | — | judgement; see the report |
 
 ### Check every row at once
 
@@ -85,9 +94,11 @@ comment rather than a heading, one asserted `python3` had left `run-tests` when 
 legitimate uses remain, and two quoted counts that were simply wrong. A register nobody
 runs rots exactly like the documentation it was meant to replace.
 
-Coverage was **13.1%** (503/3846 lines) when the report was written and **18.3%**
-(713/3898) at `d016249`. If `devtools/coverage` prints materially less than that,
-something regressed and the register is stale.
+Coverage was **13.1%** (503/3846) when the report was written, **18.3%** at `d016249`,
+and **28.5%** (1195/4197) after UT-07 + CS-02/03/05 landed. If `devtools/coverage`
+prints materially less than the last figure, something regressed and the register is
+stale. (Two of those points are not comparable naively: main's merge and the `./`-prefix
+join fix in `devtools/coverage` both moved the denominator — the trend is what matters.)
 
 ### UT-13 — what is blocked, and on what
 

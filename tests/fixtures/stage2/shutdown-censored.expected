@@ -1,0 +1,20 @@
+Stage 1 -> stage 2: how long, and what ended the observation?
+──────────────────────────────────────────────────────────────
+
+  boot 333333333333   first HCI timeout 2026-08-31T23:59:00.000000+02:00
+      stage-1 window: 720.00s (12m 0s)  shutdown
+      RIGHT-CENSORED — true survival time is longer than this
+
+──────────────────────────────────────────────────────────────
+  boots reaching stage 1        1
+    ended naturally             0   <- the only ones that measure the fault
+    ended by our intervention   0
+    ended by shutdown           1
+    still running               0
+
+  No natural progression to stage 2 has been observed.
+  Every stage-1 window so far was ended by us or by shutdown, so
+  the fault's untreated trajectory is UNKNOWN — not 45-66s, not
+  indefinite. The experiment that settles it is a boot left
+  strictly alone after BT-1 until the device leaves the bus.
+  longest window of any kind       720.00s (12m 0s, shutdown)

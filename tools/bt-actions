@@ -38,6 +38,16 @@
 
 set -uo pipefail
 
+# The journal is read through bt_journal so this tool can be driven over a
+# fixture. 167 lines of classification rules and a collapse/cadence renderer,
+# and none of it had ever executed under test — the classifiers especially are
+# the kind of code that silently rots as log formats drift, which is exactly
+# what a fixture pins.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-actions: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
 BOOT=0
 SINCE=""
 UNTIL=""
@@ -68,7 +78,7 @@ trap 'rm -f "$STREAM"' EXIT
 # Classification lives in one awk program so that adding a new signal means
 # adding one rule, not touching several greps that must stay in sync.
 # ---------------------------------------------------------------------------
-journalctl "${JARGS[@]}" 2>/dev/null | awk -F' ' '
+bt_journal "${JARGS[@]}" 2>/dev/null | awk -F' ' '
 {
     # Full ISO timestamp, not time-of-day: a hang session routinely straddles
     # midnight, and a time-of-day sort silently reorders the whole timeline.

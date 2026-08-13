@@ -1163,6 +1163,22 @@ for libdir in tests/fixtures/*/; do
         bad "fixture directory $libdir has no library $lib"
         continue
     fi
+    # Optional DEPS file: extra libraries to load with -f BEFORE the one under
+    # test, one basename per line. stage2.awk needs iso_secs() from
+    # timestamp.awk — exactly as bt-stage2 loads it — and running it alone
+    # fails at the first timestamp. The dependency list lives with the
+    # fixtures, not here, so adding a library never means editing the harness.
+    depargs=()
+    if [[ -r "$libdir/DEPS" ]]; then
+        while IFS= read -r dep; do
+            [[ -n "$dep" ]] || continue
+            if [[ ! -r "tools/lib/$dep" ]]; then
+                bad "$(basename "$libdir")/DEPS names a missing library: $dep"
+                continue 2
+            fi
+            depargs+=(-f "tools/lib/$dep")
+        done < "$libdir/DEPS"
+    fi
     ncase=0
     for in in "$libdir"*.in; do
         [[ -e "$in" ]] || continue
@@ -1172,7 +1188,7 @@ for libdir in tests/fixtures/*/; do
             bad "$(basename "$libdir")/$case_name: missing .expected or .rc"
             continue
         fi
-        got=$(awk -f "$lib" "$in" 2>&1); got_rc=$?
+        got=$(awk "${depargs[@]}" -f "$lib" "$in" 2>&1); got_rc=$?
         want=$(cat "$exp"); want_rc=$(cat "$rcf")
         if [[ "$got" == "$want" && "$got_rc" == "$want_rc" ]]; then
             ok "$(basename "$libdir")/$case_name"
@@ -1357,6 +1373,46 @@ BPL=$(BT_LIBDIR=/nonexistent BT_JOURNAL_FIXTURE="$BP" tools/bt-boot-provenance 2
     && ok "bt-boot-provenance refuses without its journal library" \
     || bad "bt-boot-provenance ran without journal.sh"
 
+# ── bt-actions ────────────────────────────────────────────────────────────
+# The classifier bank and the collapse/cadence renderer, over a fixture that
+# exercises one rule from each class plus a repeat burst. Classifiers rot
+# silently as log formats drift; a pinned fixture is what notices.
+BA=tests/journal/actions
+AOUT=$(BT_JOURNAL_FIXTURE="$BA" tools/bt-actions 2>&1); arc=$?
+(( arc == 0 )) && ok "bt-actions renders a timeline from a fixture" \
+               || bad "bt-actions failed (rc=$arc)"
+
+for want in "turned Bluetooth OFF" "a2dp-sink: connecting -> connected" \
+            "HCI COMMAND TIMEOUT 0x0406" "EARLY intervention" \
+            "DEVICE LEFT THE USB BUS"; do
+    if [[ "$AOUT" == *"$want"* ]]; then
+        ok "bt-actions classifies: $want"
+    else
+        bad "bt-actions no longer classifies: $want"
+    fi
+done
+
+# The collapse is the tool's whole reason to exist — thousands of repeats of
+# one line are unreadable — and the cadence divides microseconds by 1e6, which
+# an earlier version got wrong by a factor of 1000.
+[[ "$AOUT" == *"x3 until"* && "$AOUT" == *"every ~10.0s"* ]] \
+    && ok "bt-actions collapses a repeat burst and computes its cadence" \
+    || bad "collapse/cadence wrong: $(grep 'x3' <<<"$AOUT" || echo none)"
+
+ARAW=$(BT_JOURNAL_FIXTURE="$BA" tools/bt-actions --raw 2>&1)
+n=$(grep -c 'HCI COMMAND TIMEOUT 0x0406' <<<"$ARAW")
+(( ${n:-0} == 3 )) && ok "bt-actions --raw shows all three repeats uncollapsed" \
+                   || bad "--raw showed $n of 3 repeats"
+
+AEMPTY=$(BT_JOURNAL_FIXTURE="$BA" tools/bt-actions -b 7 2>&1); aerc=$?
+(( aerc == 0 )) && [[ "$AEMPTY" == *"no recognised events"* ]] \
+    && ok "bt-actions reports an empty boot instead of an empty table" \
+    || bad "empty-boot path wrong (rc=$aerc): $AEMPTY"
+
+tools/bt-actions --bogus >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-actions rejects an unknown argument" \
+              || bad "bt-actions accepted an unknown argument"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is
@@ -1397,6 +1453,83 @@ else
 fi
 
 rm -rf "$EMPTYLIB" "$EMPTYDUMP"
+
+echo
+echo "install.sh and uninstall.sh — the dry run is the contract"
+echo "──────────────────────────────────────────────────────────────"
+#
+# The two largest untested files in the repository (255 + 144 lines), and the
+# cheapest to test: both default to a dry run in which run() echoes instead of
+# executing and the root check sits inside the APPLY branch. A dry run that
+# writes anything, or exits non-zero on a healthy tree, is a broken contract —
+# and it is the contract the README tells every new user to rely on first.
+#
+# The write check is a stamp-file comparison over every tree the installer
+# touches, not a reading of run()'s code. run() being correct today does not
+# bind the next edit; a stray `mkdir -p` outside run() would pass any reading
+# of the run() wrapper and fail this.
+INSTALL_STAMP=$(mktemp)
+IOUT=$(./install.sh 2>&1); irc=$?
+if (( irc == 0 )); then
+    ok "install.sh dry run exits 0 as an ordinary user"
+else
+    bad "install.sh dry run failed (rc=$irc):"
+    tail -3 <<<"$IOUT" | sed 's/^/      /'
+fi
+[[ "$IOUT" == *"DRY RUN"* && "$IOUT" == *"would run:"* ]] \
+    && ok "install.sh announces the dry run and echoes rather than executes" \
+    || bad "install.sh dry-run output lacks the DRY RUN banner or 'would run:' lines"
+
+# `install -D`, `systemctl`, `tee` appearing OUTSIDE a 'would run:' line would
+# mean the dry run executed something.
+n=$(grep -cE '^\s*\+ ' <<<"$IOUT")
+(( ${n:-0} == 0 )) && ok "install.sh dry run executes no command (no '+' lines)" \
+                   || bad "install.sh dry run EXECUTED $n command(s)"
+
+WROTE=$(find /usr/local /etc/systemd/system /etc/modprobe.d /etc/udev/rules.d \
+             -newer "$INSTALL_STAMP" -type f 2>/dev/null | head -5)
+[[ -z "$WROTE" ]] && ok "install.sh dry run wrote nothing under the install trees" \
+                  || bad "install.sh dry run WROTE: $WROTE"
+
+./install.sh --bogus >/dev/null 2>&1
+(( $? != 0 )) && ok "install.sh rejects an unknown option" \
+              || bad "install.sh accepted an unknown option"
+
+# A non-default device must produce the per-unit device drop-ins, and the
+# default device must NOT — a drop-in for the defaults would shadow future
+# script-default changes for no reason, which is why install.sh avoids it.
+IDEV=$(BT_VID=0cf3 BT_PID=e300 ./install.sh 2>&1)
+[[ "$IDEV" == *"0cf3:e300"* && "$IDEV" == *"non-default device"* \
+   && "$IDEV" == *"10-device.conf (BT_VID=0cf3 BT_PID=e300)"* ]] \
+    && ok "install.sh honours BT_VID/BT_PID and plans the device drop-ins" \
+    || bad "install.sh ignored the device override"
+IDEF=$(./install.sh 2>&1)
+[[ "$IDEF" == *"no drop-in needed"* ]] \
+    && ok "install.sh plans no drop-in for the default device" \
+    || bad "install.sh planned a drop-in for the defaults"
+
+# The experiment-mode refusal, via the BT_MODE_STAMP seam. This is the guard
+# that protects a controlled baseline from being silently reverted; it must
+# refuse BEFORE anything else — even a dry run prints install plans a reader
+# may follow by hand.
+MODEF=$(mktemp); echo "experiment since=2026-08-13" > "$MODEF"
+MOUT=$(BT_MODE_STAMP="$MODEF" ./install.sh 2>&1); mrc=$?
+if (( mrc == 3 )) && [[ "$MOUT" == *"EXPERIMENT"* ]]; then
+    ok "install.sh refuses (rc=3) when the machine is in experiment mode"
+else
+    bad "experiment-mode guard did not refuse (rc=$mrc)"
+fi
+rm -f "$MODEF" "$INSTALL_STAMP"
+
+UOUT=$(./uninstall.sh 2>&1); urc=$?
+if (( urc == 0 )) && [[ "$UOUT" == *"DRY RUN COMPLETE"* ]]; then
+    ok "uninstall.sh dry run exits 0 and completes"
+else
+    bad "uninstall.sh dry run failed (rc=$urc)"
+fi
+./uninstall.sh --bogus >/dev/null 2>&1
+(( $? != 0 )) && ok "uninstall.sh rejects an unknown option" \
+              || bad "uninstall.sh accepted an unknown option"
 
 echo
 echo "sanitize-logs — the gate between a kernel log and a public repo"
@@ -1510,6 +1643,81 @@ tools/sanitize-logs.sh -i >/dev/null 2>&1
               || bad "sanitize-logs -i accepted an empty file list"
 
 rm -f "$SANOUT"
+
+echo
+
+echo
+echo "the publish gates, driven over scratch repositories"
+echo "──────────────────────────────────────────────────────────────"
+#
+# repo-scan and repo-validate guard every commit, and until now the suite had
+# only ever seen them PASS — on this repository, which is kept clean precisely
+# because they run. A gate that has never been observed to go red is the
+# "printed a tick" failure this file's own header warns about, applied to the
+# gate itself. So: scratch repositories, one clean and several deserving
+# refusal, each planted with a specific class of leak the scanner claims to
+# catch.
+#
+# The planted MAC uses a prefix OUTSIDE the placeholder allowlist
+# (aa:bb:cc, 11:11:11, 00:11:22, de:ad:be, …). It is assembled from fragments
+# so this test file itself stays clean under the very scan it is testing —
+# the same trick repo-scan uses for its own AI-attribution patterns.
+SCRATCH=$(mktemp -d)
+scratch_repo() {   # <dir> ; creates an empty repo with an identity
+    git -C "$1" init -q 2>/dev/null
+    git -C "$1" config user.email test@example.com
+    git -C "$1" config user.name test
+}
+
+_m1='fe:ed'; _m2='fa:ce'; _m3='ca:fe'
+LEAK_MAC="$_m1:$_m2:$_m3"
+
+mkdir -p "$SCRATCH/leak"; scratch_repo "$SCRATCH/leak"
+printf 'kernel: wlan0: authenticate with %s\n' "$LEAK_MAC" > "$SCRATCH/leak/boot.log"
+git -C "$SCRATCH/leak" add -A
+devtools/repo-scan "$SCRATCH/leak" >/dev/null 2>&1
+(( $? != 0 )) && ok "repo-scan refuses a staged real MAC" \
+              || bad "repo-scan PASSED a repo with a real MAC staged"
+
+mkdir -p "$SCRATCH/ip"; scratch_repo "$SCRATCH/ip"
+# Assembled from fragments, like the MAC above: a private-range address the
+# scanner must flag (internal topology is disclosure too). The first version
+# planted a TEST-NET address literally — and the full-tree gate caught this
+# very file, which settled the question of whether RFC 5737 space should be
+# allowlisted (it now is, in repo-scan, for the example.com reason) and what a
+# refusal fixture must therefore use instead.
+_i1='10.99'; _i2='88.77'
+printf 'dhcp: bound %s\n' "$_i1.$_i2" > "$SCRATCH/ip/net.log"
+git -C "$SCRATCH/ip" add -A
+devtools/repo-scan "$SCRATCH/ip" >/dev/null 2>&1
+(( $? != 0 )) && ok "repo-scan refuses a staged IPv4 address" \
+              || bad "repo-scan PASSED a repo with an IPv4 address staged"
+
+mkdir -p "$SCRATCH/clean"; scratch_repo "$SCRATCH/clean"
+printf 'placeholder device 11:11:11:22:33:44 and loopback 127.0.0.1\n' > "$SCRATCH/clean/ok.log"
+git -C "$SCRATCH/clean" add -A
+devtools/repo-scan "$SCRATCH/clean" >/dev/null 2>&1
+(( $? == 0 )) && ok "repo-scan passes documented placeholders" \
+              || bad "repo-scan refused the placeholder forms it documents"
+
+# The REMOVAL of a leak must be commit-able: default mode scans added lines
+# only, because blocking the remediating commit is the one thing this gate
+# must never do. Commit the leak, then stage its deletion.
+git -C "$SCRATCH/leak" -c commit.gpgsign=false commit -qm x
+git -C "$SCRATCH/leak" rm -q boot.log
+devtools/repo-scan "$SCRATCH/leak" >/dev/null 2>&1
+(( $? == 0 )) && ok "repo-scan does not block the commit that REMOVES a leak" \
+              || bad "repo-scan blocked a remediation — the failure it exists to avoid"
+
+# repo-validate: a planted bash syntax error must fail the whole validation.
+mkdir -p "$SCRATCH/badsh"; scratch_repo "$SCRATCH/badsh"
+printf '#!/bin/bash\nif true; then echo unclosed\n' > "$SCRATCH/badsh/broken.sh"
+git -C "$SCRATCH/badsh" add -A
+devtools/repo-validate "$SCRATCH/badsh" >/dev/null 2>&1
+(( $? != 0 )) && ok "repo-validate fails on a planted bash syntax error" \
+              || bad "repo-validate PASSED a repo with unparseable shell"
+
+rm -rf "$SCRATCH"
 
 echo
 echo "the tests may not write to the real evidence tree"
