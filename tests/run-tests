@@ -1561,6 +1561,36 @@ EHOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-env-history 2>&1); ehrc=$?
 (( ehrc == 0 )) && ok "bt-env-history runs over a fixture without a journal" \
                 || bad "bt-env-history failed (rc=$ehrc)"
 
+# ── bt-context: the tool that reports what nobody thought to look for ─────
+#
+# Its whole value is inverted filtering — anchor on a demonstrated failure,
+# then SUBTRACT everything already classified, and report the remainder. Two
+# ways that goes silently wrong: the subtraction removes too much (the tool
+# reports nothing and looks like a clean bill of health), or it removes too
+# little (the operator is handed the whole log back). The fixture pins both
+# directions: two lines that must survive, one anchor that must be found.
+CX=tests/journal/context
+CXOUT=$(BT_JOURNAL_FIXTURE="$CX" tools/bt-context 2>&1); cxrc=$?
+(( cxrc == 0 )) && ok "bt-context runs over a fixture" || bad "bt-context failed (rc=$cxrc)"
+
+[[ "$CXOUT" == *"first HCI command timeout"* ]] \
+    && ok "bt-context anchors on the demonstrated failure" \
+    || bad "bt-context found no anchor in a fixture that contains one"
+
+for want in 'qca9377 firmware quirk observed on rail' 'an unexplained neighbour line'; do
+    if [[ "$CXOUT" == *"$want"* ]]; then
+        ok "bt-context surfaces the unclassified neighbour: ${want:0:32}…"
+    else
+        bad "bt-context subtracted a line it should have surfaced: $want"
+    fi
+done
+
+# The complement: a line the project HAS classified must not be handed back as
+# unexplained, or the report is just the log again.
+[[ "$CXOUT" != *"command 0x0406 tx timeout"* ]] \
+    && ok "bt-context subtracts the already-classified timeout line" \
+    || bad "bt-context reported a known signal as unexplained"
+
 # ── bt-incident: the sandbox override must actually sandbox ───────────────
 #
 # THE DEFECT THIS ENCODES. bt-incident resolved its destination as:

@@ -26,6 +26,13 @@
 
 set -uo pipefail
 
+# Journal reads go through bt_journal so this tool can be driven over a
+# fixture; see tools/lib/journal.sh.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-context: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
 BOOT=0
 CTX=12
 SHOW_ALL=0
@@ -50,7 +57,7 @@ KNOWN='unexpected event for opcode|tx timeout|Opcode 0x[0-9a-f]+ failed|device d
 LOG=$(mktemp); ANCH=$(mktemp)
 trap 'rm -f "$LOG" "$ANCH"' EXIT
 
-journalctl -b "$BOOT" --no-pager -o short-iso-precise 2>/dev/null > "$LOG"
+bt_journal -b "$BOOT" --no-pager -o short-iso-precise 2>/dev/null > "$LOG"
 if [[ ! -s "$LOG" ]]; then
     echo "bt-context: no journal for boot $BOOT" >&2
     exit 1
