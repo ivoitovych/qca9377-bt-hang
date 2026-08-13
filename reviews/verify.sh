@@ -94,7 +94,7 @@ fi
 echo
 printf 'coverage: '
 devtools/coverage --quiet 2>/dev/null | grep TOTAL || echo "(coverage tool failed)"
-echo "  baseline 13.1% (503/3846) at report time; 18.3% (713/3898) at d016249"
+echo "  baseline 13.1% at report time; 18.3% at d016249; 38.3% at 2fcef33"
 
 echo
 if (( fail )); then
