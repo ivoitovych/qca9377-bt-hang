@@ -21,6 +21,13 @@
 
 set -uo pipefail
 
+# Journal reads go through bt_journal so this tool can be driven over a
+# fixture; see tools/lib/journal.sh.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-boot-list: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
 N=0
 COUNT=0
 while [[ $# -gt 0 ]]; do
@@ -33,13 +40,25 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-command -v journalctl >/dev/null 2>&1 || { echo "journalctl not available" >&2; exit 2; }
+# CAPABILITY PROBE, VIA THE SEAM RATHER THAN AROUND IT.
+#
+# This was `command -v journalctl`, which after the seam conversion the suite
+# flagged as a bypass — correctly, and for a subtler reason than a missed
+# call site: naming journalctl directly reintroduces the dependency the seam
+# exists to remove, so a fixture-driven run on a journal-less host would abort
+# even though bt_journal could have served it perfectly.
+#
+# Asking bt_journal itself is both the fix and the better probe: it answers
+# for whichever backend is actually in play.
+if ! bt_journal --list-boots --no-pager >/dev/null 2>&1; then
+    echo "no journal available (and no BT_JOURNAL_FIXTURE set)" >&2; exit 2
+fi
 
 indices=""
 
 # 1. JSON — unambiguous where supported.
 if [[ -z "$indices" ]]; then
-    j=$(journalctl --list-boots -o json 2>/dev/null) || j=""
+    j=$(bt_journal --list-boots -o json 2>/dev/null) || j=""
     if [[ -n "$j" ]] && command -v python3 >/dev/null 2>&1; then
         indices=$(python3 -c '
 import json,sys
@@ -53,12 +72,12 @@ fi
 
 # 2. -q suppresses the header on systemd versions that honour it.
 if [[ -z "$indices" ]]; then
-    indices=$(journalctl --list-boots -q 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}')
+    indices=$(bt_journal --list-boots -q 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}')
 fi
 
 # 3. Plain output, discarding any row whose first field is not numeric.
 if [[ -z "$indices" ]]; then
-    indices=$(journalctl --list-boots 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}')
+    indices=$(bt_journal --list-boots 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}')
 fi
 
 # 4. Nothing worked. Report the current boot only, and say so — a caller that

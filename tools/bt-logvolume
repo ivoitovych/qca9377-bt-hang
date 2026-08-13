@@ -29,6 +29,13 @@
 
 set -uo pipefail
 
+# Journal reads go through bt_journal so this tool can be driven over a
+# fixture; see tools/lib/journal.sh.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-logvolume: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
 BOOT=0
 SINCE=""
 TOP=15
@@ -52,7 +59,7 @@ JARGS=(-b "$BOOT" --no-pager -o cat)
 TMP=$(mktemp) || exit 1
 trap 'rm -f "$TMP"' EXIT
 
-journalctl "${JARGS[@]}" 2>/dev/null > "$TMP"
+bt_journal "${JARGS[@]}" 2>/dev/null > "$TMP"
 total=$(wc -l < "$TMP")
 
 if (( total == 0 )); then
@@ -69,7 +76,7 @@ else
     span=""
 fi
 
-now=$(journalctl "${JARGS[@]:0:$(( KONLY ? 4 : 3 ))}" --since "-60s" 2>/dev/null | wc -l)
+now=$(bt_journal "${JARGS[@]:0:$(( KONLY ? 4 : 3 ))}" --since "-60s" 2>/dev/null | wc -l)
 
 echo "Kernel log volume — boot $BOOT${SINCE:+, since $SINCE}"
 echo "──────────────────────────────────────────────────────────────────"

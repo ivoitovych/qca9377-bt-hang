@@ -31,6 +31,13 @@
 
 set -uo pipefail
 
+# Journal reads go through bt_journal so this tool can be driven over a
+# fixture; see tools/lib/journal.sh.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-boot-stats: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
 TSV=0
 [[ "${1:-}" == "--tsv" ]] && TSV=1
 
@@ -50,7 +57,7 @@ fi
 tot=0; hung=0; lost=0; desync_hung=0; desync_ok=0; nodesync_hung=0
 
 for b in $("$BOOTLIST" 2>/dev/null); do
-    log=$(journalctl -k -b "$b" --no-pager -o short-iso-precise 2>/dev/null)
+    log=$(bt_journal -k -b "$b" --no-pager -o short-iso-precise 2>/dev/null)
     [[ -n "$log" ]] || continue
 
     nd=$(grep -c "unexpected event for opcode" <<<"$log" || true)
