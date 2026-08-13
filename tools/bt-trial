@@ -403,6 +403,40 @@ hang|ok)
         treatment="CHANGED:${treat_start}->${treat_end}"
     fi
 
+    # TWO ENDPOINTS DO NOT DESCRIBE THE INTERIOR.
+    #
+    # The comparison above samples the treatment at open and at close. An
+    # intervention that restores the state it changed is invisible to it: a
+    # btusb reload unbinds the device, resets it and rebinds it, and leaves both
+    # fingerprints identical. On 2026-08-13 `install.sh --apply` did exactly
+    # that in the middle of trial stock #2, and the row would have recorded a
+    # clean, ordinary, comparable trial.
+    #
+    # This is the exposure-geometry mistake from the five-levels table, arriving
+    # in the treatment axis instead of the measurement axis: both boundaries can
+    # be sound while the interval between them is not.
+    #
+    # So the WINDOW is scanned, not its ends. Anything found here makes the
+    # treatment string unmatchable, which is what keeps a perturbed trial out of
+    # every denominator.
+    perturbed=none
+    if (( journal_ok )); then
+        pert=()
+        jk | grep -q 'deregistering interface driver btusb' && pert+=(btusb_reload)
+        jk | grep -q 'usb_queue_reset_device\|Resetting usb device' && pert+=(usb_reset)
+        if (( ${#pert[@]} )); then
+            perturbed=$(IFS=+; echo "${pert[*]}")
+            case "$treatment" in
+                CHANGED:*) treatment="${treatment}+PERTURBED:${perturbed}" ;;
+                *)         treatment="PERTURBED:${perturbed}:${treatment}" ;;
+            esac
+        fi
+    else
+        # An unreadable journal cannot certify the interior either way, and
+        # `none` would be a claim we have no basis for.
+        perturbed=unknown
+    fi
+
     if [[ -z "$mrev_start" || "$mrev_start" == "$mrev_end" ]]; then
         measurement_rev="${mrev_start:-$mrev_end}"
     else
@@ -688,12 +722,12 @@ hang|ok)
         enum_at_boot=no
     fi
 
-    [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\ttreatment\tmeasurement_rev\ttrial\tprotocol\tbt1_status\ttrial_result\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\tprev_shutdown\tenum_at_boot\n' > "$RESULTS"
-    printf '%s\t%s\t%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\ttreatment\tmeasurement_rev\ttrial\tprotocol\tbt1_status\ttrial_result\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\tprev_shutdown\tenum_at_boot\tperturbed\n' > "$RESULTS"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
         "$(date -Iseconds)" "$trial_type" "$build" "$treatment" "$measurement_rev" "$n" "$PROTOCOL_VERSION" "$bt1_status" "$trial_result" "$dur" \
         "${sco_sent:-?}" "$sco_to_tmo" "${tmo:-?}" "$resp_after" "$usb_present" \
         "${usb_gone:-?}" "${probes:-?}" "$probe_to_tmo" "${aborts:-?}" \
-        "$(uname -r)" "$prev_shutdown" "$enum_at_boot" >> "$RESULTS"
+        "$(uname -r)" "$prev_shutdown" "$enum_at_boot" "$perturbed" >> "$RESULTS"
 
     echo
     echo "  SCO setup requested   : ${sco_sent:-?}"
@@ -705,6 +739,7 @@ hang|ok)
     echo "  liveness probes       : ${probes:-?}   (btmon aborts: ${aborts:-?})"
     echo "  last probe -> timeout : $probe_to_tmo s"
     echo "  previous shutdown     : $prev_shutdown   (controller enumerated this boot: $enum_at_boot)"
+    [[ "$perturbed" == none ]] || echo "  ${R}mid-trial perturbation: $perturbed — this trial is not comparable${O}"
 
     if [[ "$trial_result" == failed ]] && command -v bt-incident >/dev/null 2>&1; then
         echo "collecting incident evidence..."
@@ -758,8 +793,44 @@ report)
     ;;
 
 status)
-    if [[ -e "$CUR" ]]; then echo "trial OPEN:"; sed 's/^/  /' "$CUR"
-    else echo "no trial open"; fi
+    # Reports what the open trial has ALREADY accumulated, so the question
+    # "is this trial still clean?" can be asked at any point instead of being
+    # discovered at close. It also removes the reason to hand-write
+    # `journalctl --since "@$(grep ^start= /run/bt-trial/current | cut -d= -f2)"`,
+    # which is unanalysable by the command allowlist and cost an approval every
+    # time someone wanted to look.
+    if [[ ! -e "$CUR" ]]; then echo "no trial open"; exit 0; fi
+    echo "${B}trial OPEN${O}"
+    sed 's/^/  /' "$CUR"
+    st=$(grep '^start=' "$CUR" | cut -d= -f2-)
+    if [[ -n "$st" ]]; then
+        now=$(date +%s)
+        printf '  elapsed=%ss\n' "$(( now - st ))"
+        W=$(mktemp) || exit 1
+        if journalctl -k --since "@$(( st - 5 ))" --no-pager -o short-iso-precise > "$W" 2>/dev/null; then
+            t=$(grep -cE 'command( 0x[0-9a-f]+)? tx timeout' "$W" || true)
+            sc=$(grep -c 'opcode 0x0428' "$W" || true)
+            ug=$(grep -c 'USB disconnect, device number' "$W" || true)
+            rl=$(grep -c 'deregistering interface driver btusb' "$W" || true)
+            rs=$(grep -cE 'usb_queue_reset_device|Resetting usb device' "$W" || true)
+            echo
+            printf '  HCI command timeouts  %s\n' "$t"
+            printf '  SCO setups requested  %s\n' "$sc"
+            printf '  USB disconnects       %s\n' "$ug"
+            echo
+            if (( rl || rs )); then
+                printf '  %s!! PERTURBED%s  btusb reloads=%s  resets=%s\n' "$R" "$O" "$rl" "$rs"
+                echo "     Something reset the controller inside this trial's window."
+                echo "     The row will be written with a PERTURBED: treatment and"
+                echo "     excluded from every denominator. Consider: bt-trial abort"
+            else
+                printf '  %sclean%s — no reset or reload inside the window\n' "$G" "$O"
+            fi
+        else
+            echo "  (journal unreadable — cannot certify this trial's interior)"
+        fi
+        rm -f "$W"
+    fi
     ;;
 
 *)  sed -n '2,18p' "$0"; exit 1 ;;

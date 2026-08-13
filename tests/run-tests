@@ -780,13 +780,30 @@ fi
 # And the producer's header must carry the columns the producer writes. A row
 # printf and a header printf that drift apart is the same defect arriving by a
 # different route.
-for col in prev_shutdown enum_at_boot bt1_status trial_result; do
+for col in prev_shutdown enum_at_boot perturbed bt1_status trial_result; do
     if head -1 evidence/trials/results.tsv 2>/dev/null | grep -q "$col"; then
         ok "results.tsv header declares $col"
     else
         bad "results.tsv header is missing $col"
     fi
 done
+
+# A trial perturbed mid-run must be excluded from every denominator, exactly as
+# a treatment-changed one is. The endpoint comparison cannot see an intervention
+# that restores what it changed — a btusb reload leaves both fingerprints
+# identical — so this is the only thing standing between a reset controller and
+# a clean-looking row in a rate table.
+PERT=$(mktemp)
+{ head -1 evidence/trials/results.tsv
+  printf 'x\tcontrolled_v2\tstock\tPERTURBED:btusb_reload:a=1\tr\t9\tv2\tconfirmed\tfailed\t10\t1\t1\t1\tno\tyes\t0\t0\t?\t0\tk\treboot\tyes\tbtusb_reload\n'
+} > "$PERT"
+PO=$(awk -f tools/lib/trial-summary.awk "$PERT" 2>&1)
+if grep -q 'CHANGED or PERTURBED' <<<"$PO" && ! grep -q 'PERTURBED:btusb_reload:a=1' <<<"$PO"; then
+    ok "a perturbed trial is excluded and reported, not given its own rate"
+else
+    bad "perturbed trial was not excluded from the rate table"
+fi
+rm -f "$PERT"
 
 echo
 echo "bt-stage2 — censoring is not a measurement"

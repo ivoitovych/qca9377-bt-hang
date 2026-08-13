@@ -60,7 +60,13 @@ NR == 1 {
     # rate — and a trial reconfigured while running was not conducted under any
     # single condition, so no rate computed from it means anything. The comment
     # said "cannot enter a controlled rate"; without this `next` it did.
-    if (e ~ /^CHANGED:/) { drift[k]++; seen[k]++; next }
+    #
+    # PERTURBED: is the same exclusion for a different cause. CHANGED: means the
+    # treatment differed at the two endpoints; PERTURBED: means something acted
+    # on the controller BETWEEN them and put the state back, which the endpoint
+    # comparison cannot see. Both mean the trial was not conducted under one
+    # condition, so both are excluded rather than given a one-row denominator.
+    if (e ~ /^(CHANGED|PERTURBED):/) { drift[k]++; seen[k]++; next }
     if (c["measurement_rev"]) mrevs[$c["measurement_rev"]] = 1
     # DOMAIN CHECK. An unrecognised outcome must not be silently folded into
     # "not hung". Miscounting a failure as a survival moves the denominator in
@@ -160,10 +166,12 @@ END {
     for (k in drift) td += drift[k]
     if (td > 0) {
         print ""
-        printf "  !! %d trial(s) whose TREATMENT CHANGED mid-run.\n", td
-        print  "     Their treatment string begins CHANGED: so it matches no other"
-        print  "     trial and cannot pool into any denominator. A trial that was"
-        print  "     reconfigured while running was not conducted under one"
-        print  "     condition, and no rate computed from it means anything."
+        printf "  !! %d trial(s) CHANGED or PERTURBED mid-run.\n", td
+        print  "     Their treatment string begins CHANGED: or PERTURBED: so it"
+        print  "     matches no other trial and cannot pool into any denominator."
+        print  "     A trial that was reconfigured while running, or whose"
+        print  "     controller was reset by something other than the protocol,"
+        print  "     was not conducted under one condition, and no rate computed"
+        print  "     from it means anything."
     }
 }
