@@ -20,6 +20,18 @@ Verbatim, 1 line(s), exit status 127.
 bash: line 1: bt-boot-provenance: command not found
 ```
 
+> ⚠️ **This exhibit's captured command DID NOT RUN** — exit 127, the tool was
+> not yet on PATH when the exhibit was generated. The one-pass discipline held
+> (the failure was recorded verbatim, as designed), but the Reading table below
+> is therefore **hand-transcribed from an earlier interactive run of the same
+> command**, not the product of the extraction above — precisely the
+> command/output drift `bt-exhibit` exists to prevent. The numbers agree with
+> the `bt-boot-provenance` table quoted in `EX-017`, which is their actual
+> provenance. Re-capture this exhibit on the affected machine
+> (`bt-exhibit new firmware-time-does-not-discriminate-2 …`) before citing it
+> upstream. `bt-exhibit` now refuses to write an exhibit whose command exits
+> 126/127, so this class cannot recur silently.
+
 ## Reading
 
 | boot | prev end | firmware |

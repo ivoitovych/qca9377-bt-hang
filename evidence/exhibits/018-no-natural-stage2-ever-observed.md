@@ -6,11 +6,21 @@
 
 ## Extraction method
 
-Re-runnable as-is on the affected machine:
+Re-runnable on the affected machine (several minutes — it reads the whole
+retained kernel journal, 3.3 M lines; `--cache` keeps the dump for re-analysis):
 
 ```console
-$ bt-stage2 --from /tmp/claude-0/-root-exp/8d94b53c-710a-4c0f-894d-07017b2a124e/scratchpad/stage2.log 2>/dev/null | tail -14
+$ bt-stage2 --cache /var/tmp/stage2.log 2>/dev/null | tail -14
 ```
+
+> **Edited 2026-08-13, after capture.** The command originally recorded here
+> read the journal dump from a machine-local temporary cache whose path leaked
+> editor-tooling metadata (a scratchpad directory name and session id) and was
+> re-runnable on no machine, including this one — both against this
+> repository's own publication rules. The command above is the equivalent
+> documented invocation from "Reproducing this" below; the **output is
+> unchanged** and remains the verbatim product of the original run over the
+> same cached dump.
 
 ## Output
 

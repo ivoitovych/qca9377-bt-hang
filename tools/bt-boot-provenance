@@ -45,7 +45,10 @@ VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
 B=$'\033[1m'; O=$'\033[0m'; Y=$'\033[33m'
 [[ -t 1 ]] || { B=""; O=""; Y=""; }
 
-mapfile -t BOOTS < <(journalctl --list-boots --no-pager 2>/dev/null | tail -n "$N")
+# Numeric rows only: with fewer than N boots retained, `tail` would include
+# the header row, and `$((off - 1))` on the literal "IDX" is a bash error.
+mapfile -t BOOTS < <(journalctl --list-boots --no-pager 2>/dev/null \
+                     | awk '$1 ~ /^-?[0-9]+$/' | tail -n "$N")
 if (( ${#BOOTS[@]} == 0 )); then
     echo "bt-boot-provenance: could not list boots" >&2; exit 1
 fi

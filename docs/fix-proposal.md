@@ -139,8 +139,10 @@ have acted at **+0 s**, synchronously with the log line those experiments trigge
 | Call path | `USBDEVFS_RESET` → `proc_resetdevice()` → `usb_reset_device()` | `btusb_qca_reset()` → `btusb_reset()` → `usb_queue_reset_device()` |
 
 Those are a useful proxy but **not the same experiment**. Given the evidence that the
-recoverable window closes sharply — stage 1 measured at 45–66 s, and every reset inside
-it still failed — the difference between +0 s and +11 s could be decisive.
+recoverable window closes sharply — every reset issued at +11 s or later failed, while
+the one issued before any timeout succeeded — the difference between +0 s and +11 s
+could be decisive. (An earlier revision here cited "stage 1 measured at 45–66 s"; that
+figure was the watchdog's own reaction time and is withdrawn — `EX-018`.)
 
 > **The five failed late resets do not rule out this patch as a recovery fix. They rule
 > out a reset issued eleven or more seconds late.** The patch has never been tested.
@@ -544,11 +546,12 @@ though both files are present in linux-firmware on the affected system.
 
 The observed failure follows an audio-layer state change (ungraceful
 A2DP/SCO teardown, or a codec/mode switch). The controller stops
-answering HCI, then ~45-66 s later stops answering USB control
-transfers, then leaves the bus. Neither driver rebind, nor an xHCI port
-power cycle, nor a warm reboot recovers it -- only a full power-off,
-since a warm reset does not drop the M.2 power rail. The same hardware
-shows no fault under Windows on the same machine.
+answering HCI while remaining USB-enumerated; with no intervention it
+has stayed in that state, free of USB-level errors, for over an hour.
+In incidents where it went on to stop answering USB and leave the bus,
+neither driver rebind nor an xHCI port power cycle recovered it -- only
+a full power-off. The same hardware shows no fault under Windows on the
+same machine.
 
 Add the device to the QCA ROME entries so the standard command-timeout
 reset path applies.

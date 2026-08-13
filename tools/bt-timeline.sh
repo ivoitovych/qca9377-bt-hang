@@ -52,7 +52,10 @@ TMP=$(mktemp); trap 'rm -f "$TMP"' EXIT
 # each stream be filtered on its own terms (the kernel one needs it badly).
 grab() { # tag, extra journalctl args...
     local tag="$1"; shift
+    # journalctl prints "-- No entries --" to stdout for an empty stream; as a
+    # pseudo-event it sorted to the top of every timeline (ts "--").
     journalctl "${SEL[@]}" -o short-unix --no-pager "$@" 2>/dev/null \
+      | grep -v '^-- No entries --' \
       | awk -v t="$tag" '{ ts=$1; $1=""; sub(/^ /,""); printf "%s\t%s\t%s\n", ts, t, $0 }'
 }
 

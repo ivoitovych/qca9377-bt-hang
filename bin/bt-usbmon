@@ -64,7 +64,9 @@ if [[ -z "${BUS:-}" ]]; then
     BUS="${BT_USBMON_BUS:-}"
     if [[ -z "$BUS" ]]; then
         log "controller $VID:$PID not present and no BT_USBMON_BUS set — nothing to capture"
-        exit 0
+        # Idle rather than exit 0: under Restart=always a clean exit respawns
+        # this every RestartSec forever, filling the journal with the same line.
+        while :; do sleep 3600; done
     fi
     log "controller absent; using configured bus $BUS"
 fi
@@ -92,6 +94,13 @@ prune() {
         (( free < MIN_FREE_GB )) || break
         oldest=$(ls -1t "$DIR"/usbmon-*.pcap 2>/dev/null | tail -1)
         [[ -n "$oldest" ]] || { log "ERROR: under ${MIN_FREE_GB}GB free with nothing left to prune"; break; }
+        # Never delete the file being written: tcpdump keeps the unlinked
+        # inode open, so the space would not be reclaimed anyway and the loop
+        # would then eat every OTHER file while freeing nothing.
+        if [[ "$oldest" == "${CURRENT:-}" ]]; then
+            log "ERROR: only the live capture remains and the floor is still breached"
+            break
+        fi
         log "low disk (${free}GB free): pruning $(basename "$oldest")"
         rm -f "$oldest"
     done
@@ -102,13 +111,23 @@ log "  rotate=${MAX_MB}MB keep=$KEEP max~$((MAX_MB * KEEP / 1024))GB floor=${MIN
 
 prune
 
-# tcpdump handles rotation itself (-C megabytes, -W ring). Using its ring would
-# reuse fixed names; instead rotate by size with a timestamped name so files
-# sort chronologically and prune() can reason about age.
-while true; do
-    ts=$(date +%Y%m%d-%H%M%S)
-    out="$DIR/usbmon-${ts}.pcap"
-    log "capturing to $(basename "$out")"
+# ROTATION IS DONE HERE, NOT BY tcpdump. The first version used `-C $MAX_MB
+# -W 1` and relied on tcpdump EXITING at the size limit so this loop could
+# start a fresh timestamped file. That is not what -C with -W does: it is a
+# RING — with -W 1, tcpdump overwrites its single file from the beginning and
+# never exits. Consequences of the old code, on any long-running boot: the
+# loop body never advanced, prune() and the free-space floor never ran again,
+# retention silently collapsed from KEEP files to one 64 MB ring, and older
+# USB history — the only record of stage 2 — was destroyed at every wrap.
+# So this supervises tcpdump the way bt-trace supervises btmon: run it with a
+# plain -w, poll the file size, and rotate by restarting it. The ~1 s gap per
+# rotation is logged-by-construction (the timestamps in the filenames) and is
+# the price of retention that actually retains.
+CURRENT=""
+TPID=""
+
+start_capture() {
+    CURRENT="$DIR/usbmon-$(date +%Y%m%d-%H%M%S).pcap"
     # -Z root: Ubuntu's tcpdump drops privileges to the unprivileged "tcpdump"
     # user as soon as the capture handle is open, and then cannot create its own
     # output file in a root-owned directory. It reports "Permission denied" and
@@ -116,13 +135,36 @@ while true; do
     # a permissions problem. Keeping it as root is correct here: the capture
     # directory must stay root-only, because USB traffic to a Bluetooth
     # controller carries link keys.
-    tcpdump -i "$IFACE" -s 0 -w "$out" -C "$MAX_MB" -W 1 -Z root >/dev/null 2>&1
-    rc=$?
-    # tcpdump appends a running index when -C is used; normalise it back.
-    [[ -e "${out}0" ]] && mv -f "${out}0" "$out"
-    prune
-    if (( rc != 0 )); then
-        log "tcpdump exited (rc=$rc) — retrying in 5s"
+    tcpdump -i "$IFACE" -s 0 -w "$CURRENT" -Z root >/dev/null 2>&1 &
+    TPID=$!
+    log "capturing to $(basename "$CURRENT")"
+}
+
+cleanup() {
+    [[ -n "$TPID" ]] && kill "$TPID" 2>/dev/null
+    wait "$TPID" 2>/dev/null
+    log "stopped"
+    exit 0
+}
+trap cleanup TERM INT
+
+start_capture
+CHECK_SEC="${BT_USBMON_CHECK_SEC:-30}"
+while true; do
+    sleep "$CHECK_SEC"
+    if ! kill -0 "$TPID" 2>/dev/null; then
+        wait "$TPID" 2>/dev/null; rc=$?
+        log "tcpdump exited (rc=${rc:-?}) — restarting in 5s"
         sleep 5
+        prune
+        start_capture
+        continue
+    fi
+    sz=$(( $(stat -c %s "$CURRENT" 2>/dev/null || echo 0) / 1024 / 1024 ))
+    if (( sz >= MAX_MB )); then
+        log "rotating at ${sz}MB"
+        kill "$TPID" 2>/dev/null; wait "$TPID" 2>/dev/null
+        prune
+        start_capture
     fi
 done

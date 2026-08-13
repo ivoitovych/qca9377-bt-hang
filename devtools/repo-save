@@ -101,8 +101,8 @@ fi
 # taken the "clean" branch. Twenty addresses reached public commits once
 # already, through a pattern that did not match underscores; this would have
 # been the same outcome by a different mechanism.
-n_real=$(grep -oEi '[0-9a-f]{2}([:-][0-9a-f]{2}){5,}' <<<"$MSGTEXT" \
-         | tr 'A-F-' 'a-f:' \
+n_real=$(grep -oEi '[0-9a-f]{2}([:_-][0-9a-f]{2}){5,}' <<<"$MSGTEXT" \
+         | tr 'A-F_-' 'a-f::' \
          | grep -cvE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be)' || true)
 if (( ${n_real:-0} > 0 )); then
     echo "  ✗ commit message contains a real MAC/BSSID" >&2

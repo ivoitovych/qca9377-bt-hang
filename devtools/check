@@ -48,6 +48,12 @@ step() {
 step "repo-validate (syntax, awk parse, invariants, doc drift)" \
      devtools/repo-validate
 
+# Staged-additions scanning (repo-save) lets anything ALREADY committed ride
+# along forever: the tree carried two real device addresses and a leaked
+# tooling path for days, visible only to --all, and nobody was running --all.
+step "repo-scan --all (full tree, not just staged additions)" \
+     devtools/repo-scan . --all --quiet
+
 if (( ! QUICK )); then
     # Not a correctness gate — it reports whether the RUNNING machine matches
     # the checkout, which a commit does not change. Failure here is a prompt to

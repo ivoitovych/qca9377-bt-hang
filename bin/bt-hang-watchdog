@@ -11,13 +11,19 @@
 #
 #   This script performs, from userspace, what that missing handler would do.
 #
-# Timing matters: the controller degrades in two stages.
-#   stage 1 (soft) — HCI unresponsive, USB still fine  -> a USB reset RECOVERS it
-#   stage 2 (hard) — USB core unresponsive, chip drops off the bus
-#                    -> NOTHING in software works; needs a cold power-off,
-#                       because a warm reboot does not drop the M.2 power rail.
-#   On the affected host stage 1 lasted ~6 hours before decaying to stage 2.
-#   Acting early is the entire point.
+# Timing matters. What is measured (see docs/issues.md BT-1, EX-016/EX-018):
+#   stage 1 — HCI unresponsive, USB still healthy. A USERSPACE reset issued
+#             11 s or more after the first timeout has failed five for five;
+#             the one reset issued BEFORE any timeout recovered the controller.
+#   stage 2 — USB core unresponsive, chip off the bus. Only a full power-off
+#             has been OBSERVED to recover it; whether a warm reboot can is
+#             untested (EX-017/EX-019 — the M.2-rail explanation is an
+#             inference, not a measurement).
+#   Natural progression from stage 1 to stage 2 has NEVER been observed
+#   without one of our own resets in between (EX-018); uncensored stage-1
+#   windows have run 72 minutes and 6.5 hours with no USB-level error.
+#   Acting early is the point — and this watchdog's reaction time is itself a
+#   sampling rule (HISTORY Phase 25): its resets end the windows it acts on.
 
 set -uo pipefail
 
@@ -140,9 +146,9 @@ recover() {
     if ! dev=$(find_usb_dev); then
         log "FATAL: $VID:$PID is no longer on the USB bus."
         log "       The controller has reached the hard-hang stage. No software"
-        log "       recovery is possible — a full power-off (not a reboot) is"
-        log "       required, because a warm reboot does not drop the M.2 rail."
-        notify "Bluetooth chip has hard-hung. A full shutdown (not reboot) is needed."
+        log "       recovery is possible. A full power-off certainly recovers it;"
+        log "       whether a warm reboot can is untested (EX-017)."
+        notify "Bluetooth chip has hard-hung. Power the machine fully off (a reboot may not be enough)."
         # Close the boot's auto-trial here rather than leaving it to the
         # shutdown hook. Both would classify it as a hang, but only this one
         # records the duration and the surrounding state at the moment it
@@ -242,6 +248,14 @@ while read -r line; do
     class=""
 
     # LATE signals — the controller has already stopped answering HCI commands.
+    #
+    # DELIBERATELY BROADER than the canonical BT-1 counting pattern. Analysis
+    # tools count `command( 0x…)? tx timeout` only (EX-015); this TRIGGER also
+    # accepts `link tx timeout` and every -110 form, because any of them can
+    # accompany a stalling controller and a missed trigger costs a power-off.
+    # The cost is real and accepted: a burst of ACL supervision timeouts from a
+    # healthy controller (a device walking out of range) can reset a working
+    # radio. Detection breadth and measurement precision are different jobs.
     case "$line" in
         *hci*"tx timeout"*)               class=late ;;
         *hci*"failed: -110"*)             class=late ;;

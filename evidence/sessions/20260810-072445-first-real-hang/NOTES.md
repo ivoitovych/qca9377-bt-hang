@@ -1,5 +1,16 @@
 # Session: first real hang with full instrumentation
 
+> ⚠️ **CORRECTION BANNER — added 2026-08-13, text below kept as the record.**
+> "What this means for the patch" below rests on a mechanism this project later
+> found to be wrong (`btusb_qca_cmd_timeout`, a five-timeout threshold, "the
+> kernel handler would have fired at roughly the same moment"). v7.0 installs
+> `hdev->reset`, invoked at **+0 s** inside `hci_cmd_timeout()` — a point this
+> session's +20 s reset did not test. The conclusion "adding 13d3:3503 would
+> most likely not have prevented this hang" is **withdrawn**; the sign of the
+> patch's effect is unmeasured. See `docs/fix-proposal.md` §3a and
+> `docs/issues.md` BT-3.
+
+
 **When:** 2026-08-10 07:24:45 – 07:26:48 CEST
 **Kernel:** 7.0.0-28-generic
 **Reported activity:** (ad-hoc, not a procedure) manipulating a headset (connect/disconnect cycles)

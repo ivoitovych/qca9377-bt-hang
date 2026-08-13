@@ -11,6 +11,8 @@ directory touches Bluetooth.
 | `repo-scan <dir> [--all]` | Refuse-to-publish scan: MAC addresses, BSSIDs, UUIDs, IPv4, **email addresses**, AI attribution, binary captures |
 | `repo-validate <dir>` | `bash -n`, `systemd-analyze verify`, `udevadm verify`, `jq`, `py_compile` over every tracked file |
 | `repo-save <dir> "<msg>"` | validate → scan → commit → push → **verify the remote hash actually matches** |
+| `check [--quick]` | the one pre-commit command: repo-validate (incl. tests) + a full-tree scan + install state |
+| `assert-test-catches <file> <line> <substr>` | prove a suite invariant actually fails when violated |
 
 ```bash
 ./devtools/repo-validate .

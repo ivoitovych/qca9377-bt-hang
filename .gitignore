@@ -4,8 +4,9 @@ backup-*/
 *.bak
 
 # Raw (unsanitised) logs — only *.sanitized.log may be committed
-data/logs/*.log
-!data/logs/*.sanitized.log
+# (guards evidence/ too: tools sanitise before writing there, and repo-scan is
+# the backstop; the old data/ paths no longer exist)
+evidence/**/*.raw.log
 
 # Collected metrics are host-specific runtime data
 metrics.tsv

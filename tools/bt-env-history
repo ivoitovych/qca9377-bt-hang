@@ -48,16 +48,22 @@ journalctl --list-boots --no-pager 2>/dev/null \
 | tail -n "$LIMIT" \
 | while read -r idx bootid; do
     short="${bootid:0:8}"
-    date=$(journalctl -b "$idx" -n1 --no-pager -o short-iso 2>/dev/null | cut -dT -f1)
+    # FIRST entry of the boot — `-n1` returns the LAST, which relabels a boot
+    # spanning midnight with its end date. The same -n1 trap this repository
+    # documented in 2026-08-10 and fixed in two other tools.
+    date=$(journalctl -b "$idx" --no-pager -o short-iso 2>/dev/null | head -1 | cut -dT -f1)
 
     wd_log=$(journalctl -u bt-hang-watchdog -b "$idx" --no-pager -o cat 2>/dev/null)
     if [[ -z "$wd_log" ]] || ! grep -q "bt-hang-watchdog started" <<<"$wd_log"; then
         wd="off"
     elif grep -q "EARLY mode ON" <<<"$wd_log"; then
-        thr=$(grep -o "threshold [0-9]*/[0-9]*s" <<<"$wd_log" | head -1 | tr -d 'threshold ')
+        # sed, not `tr -d 'threshold '`: tr deletes a CHARACTER SET, and only
+        # worked here because no digit is in it — any banner wording change
+        # breaks it silently.
+        thr=$(grep -o "threshold [0-9]*/[0-9]*s" <<<"$wd_log" | head -1 | sed -E 's/threshold ([0-9]+)\/([0-9]+)s/\1\/\2/')
         wd="early+late/${thr:-?}"
     elif grep -q "early mode off" <<<"$wd_log"; then
-        thr=$(grep -o "threshold [0-9]*/[0-9]*s" <<<"$wd_log" | head -1 | tr -d 'threshold ')
+        thr=$(grep -o "threshold [0-9]*/[0-9]*s" <<<"$wd_log" | head -1 | sed -E 's/threshold ([0-9]+)\/([0-9]+)s/\1\/\2/')
         wd="late/${thr:-?}"
     else
         wd="on/?"

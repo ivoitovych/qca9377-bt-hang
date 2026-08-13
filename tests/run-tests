@@ -905,21 +905,25 @@ echo "────────────────────────�
 # which the watchdog reset the controller in between. The watchdog fired on
 # precisely the boots that progressed, and it fired first.
 #
-# The fixture has five boots — natural disconnect, disconnect after our btusb
-# unload, no terminator at all, disconnect after a reset we issued, and a
-# `link tx timeout` that is not a BT-1 event.
+# The fixture has eight boots — natural disconnect, disconnect after our btusb
+# unload, no terminator at all, disconnect after a reset we issued, a
+# `link tx timeout` that is not a BT-1 event, a natural progression with a
+# pre-terminator bus error, a clean reset in the boot AFTER that error (the
+# dev_error cross-boot leak: under the old code the stale flag classified that
+# reset as hub recovery and its disconnect as NATURAL), and a window in which
+# only a FOREIGN device (usb 1-2) disconnects.
 S2=$(awk -f tools/lib/timestamp.awk -f tools/lib/stage2.awk \
      tests/stage2-invariants.data 2>&1)
 
 nat=$(grep -oP 'ended naturally\s+\K[0-9]+' <<<"$S2")
 inv=$(grep -oP 'ended by our intervention\s+\K[0-9]+' <<<"$S2")
 shd=$(grep -oP 'ended by shutdown\s+\K[0-9]+' <<<"$S2")
-[[ "$nat" == "1" ]] && ok "counts exactly the one naturally-ended window" \
-    || bad "expected 1 natural, got ${nat:-none}"
-[[ "$inv" == "2" ]] && ok "counts both intervened windows as intervened" \
-    || bad "expected 2 intervened, got ${inv:-none}"
-[[ "$shd" == "1" ]] && ok "a boot that simply ended is censored, not natural" \
-    || bad "expected 1 shutdown, got ${shd:-none}"
+[[ "$nat" == "2" ]] && ok "counts exactly the two naturally-ended windows" \
+    || bad "expected 2 natural, got ${nat:-none} — dev_error leaking across boots?"
+[[ "$inv" == "3" ]] && ok "counts all three intervened windows as intervened" \
+    || bad "expected 3 intervened, got ${inv:-none} — a clean reset after an errored boot must be OURS"
+[[ "$shd" == "2" ]] && ok "a boot that simply ended is censored, not natural" \
+    || bad "expected 2 shutdown, got ${shd:-none} — a foreign device's disconnect must not terminate a window"
 
 # The headline figure must come from the natural window (50 s) and NOT from the
 # longest one (4331.99 s, ended by shutdown). Reporting the larger number as the
@@ -929,15 +933,21 @@ grep -q 'longest NATURAL stage-1 window   50.00s' <<<"$S2" \
     || bad "natural maximum wrong: $(grep -o 'longest NATURAL[^\n]*' <<<"$S2")"
 
 # Every censored row must say so where it is read, not only in the summary.
-[[ "$(grep -c 'RIGHT-CENSORED' <<<"$S2")" == "3" ]] \
+[[ "$(grep -c 'RIGHT-CENSORED' <<<"$S2")" == "5" ]] \
     && ok "each censored window is labelled at the point of use" \
-    || bad "expected 3 RIGHT-CENSORED labels, got $(grep -c 'RIGHT-CENSORED' <<<"$S2")"
+    || bad "expected 5 RIGHT-CENSORED labels, got $(grep -c 'RIGHT-CENSORED' <<<"$S2")"
 
 # A `link tx timeout` boot must not open a window at all — it is an ACL
 # supervision timeout, and counting it would invent a stage-1 event.
-grep -q 'boots reaching stage 1        4' <<<"$S2" \
+grep -q 'boots reaching stage 1        7' <<<"$S2" \
     && ok "link tx timeout does not open a stage-1 window" \
     || bad "wrong boot count: $(grep -o 'boots reaching stage 1[^\n]*' <<<"$S2")"
+
+# Boots with no enumeration line for the device run unfiltered, and the summary
+# must SAY so rather than present their classification as anchored.
+grep -q 'had no enumeration line naming 13d3:3503' <<<"$S2" \
+    && ok "unanchored boots are disclosed in the summary" \
+    || bad "unfiltered classification not disclosed for boots lacking an enumeration line"
 
 echo
 echo "one spelling of the BT-1 timeout"
@@ -962,8 +972,19 @@ echo "────────────────────────�
 # grep-family call anywhere may spell it any other way.
 # Scans the derived set, not `tools bin devtools`. install.sh matches this
 # pattern too, and was outside the old list.
-STRAY=$(grep -n -- '-c\?E\?[[:space:]]*"[^"]*tx timeout' "${SHFILES[@]}" 2>/dev/null \
-        | grep -v 'command( 0x\[0-9a-f\]+)? tx timeout' \
+#
+# THE SCAN MUST SEE EVERY QUOTING AND CALLING FORM. The first version matched
+# only `-c`/`-cE` immediately before a DOUBLE-quoted pattern — so six live call
+# sites passed under its green tick: single-quoted patterns ('tx timeout'),
+# bare `grep "tx timeout"` with no flag, and the count()/cnt() helper wrappers
+# whose grep lives elsewhere. A check that cannot fail is not a check; this one
+# was proven blind by feeding it each of those forms. It now matches any
+# grep/count/cnt invocation with a quoted string containing the phrase, in
+# either quoting style, and excludes only the canonical spelling and comments.
+# ${TT} is assembled so this file's own scanner lines cannot self-match.
+TT='tx timeout'
+STRAY=$(grep -nE "(grep|count|cnt)[^|#]*['\"][^'\"]*${TT}" "${SHFILES[@]}" 2>/dev/null \
+        | grep -vF "command( 0x[0-9a-f]+)? ${TT}" \
         | grep -v '^[^:]*:[0-9]*:[[:space:]]*#')
 if [[ -z "$STRAY" ]]; then
     ok "every BT-1 timeout count uses the opcode-aware pattern"
@@ -987,6 +1008,36 @@ else
     bad "pattern matched $n of 3 fixture lines, expected 2"
 fi
 rm -f "$PATFIX"
+
+echo
+echo "uninstall.sh removes everything install.sh installs"
+echo "──────────────────────────────────────────────────────────────"
+
+# THE INVARIANT: every install_file destination appears in uninstall.sh's
+# FILES list. The two lists are maintained in different files by different
+# edits, which is the hand-written-list class this repository has now shipped
+# five times — most recently as four artifacts (bt-interval, bt-stage2,
+# bt-boot-provenance, lib/stage2.awk) that install.sh shipped and uninstall.sh
+# left behind while printing "Uninstall is a complete restoration".
+#
+# One-directional on purpose: uninstall may legitimately list MORE (generated
+# udev rules, drop-ins written outside install_file, mode stamps).
+INSTALLED=$(awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' \
+                install.sh 2>/dev/null \
+            | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"[[:space:]]+[^[:space:]]+' \
+            | awk '{print $3}' | sort -u)
+UNFILES=$(sed -n '/^FILES=(/,/^)/p' uninstall.sh | grep -oE '/[a-zA-Z0-9._/-]+' | sort -u)
+if [[ -z "$INSTALLED" || -z "$UNFILES" ]]; then
+    bad "could not parse install/uninstall file lists — refusing to report this check as passed"
+else
+    ORPHANS=$(comm -23 <(printf '%s\n' "$INSTALLED") <(printf '%s\n' "$UNFILES"))
+    if [[ -z "$ORPHANS" ]]; then
+        ok "every install_file destination is in uninstall.sh's FILES list ($(wc -l <<<"$INSTALLED") checked)"
+    else
+        bad "installed but never uninstalled:"
+        while IFS= read -r l; do echo "        $l"; done <<<"$ORPHANS"
+    fi
+fi
 
 echo
 echo "the tests may not write to the real evidence tree"

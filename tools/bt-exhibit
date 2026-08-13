@@ -30,7 +30,17 @@
 
 set -uo pipefail
 
-REPO="${BT_REPO:-/root/exp/qca9377-bt-hang}"
+# Resolve the checkout relative to this script first, like bt-evidence and
+# bt-incident do; the previous hardcoded default meant an installed bt-exhibit
+# died on any machine that is not the original one.
+_here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="${BT_REPO:-}"
+if [[ -z "$REPO" ]]; then
+    for c in "$_here/.." /root/exp/qca9377-bt-hang "$PWD"; do
+        [[ -d "$c/evidence" ]] && { REPO=$(cd "$c" && pwd); break; }
+    done
+fi
+[[ -n "$REPO" ]] || { echo "bt-exhibit: no checkout found; set BT_REPO" >&2; exit 2; }
 DIR="$REPO/evidence/exhibits"
 SANITIZE="$REPO/tools/sanitize-logs.sh"
 
@@ -74,6 +84,19 @@ cmd_new() {
     raw=$(mktemp) || die "mktemp failed"
     bash -c "$cmd" > "$raw" 2>&1
     rc=$?
+
+    # 127/126 mean the command DID NOT RUN (not found / not executable). An
+    # exhibit records evidence, and a command that never executed produced
+    # none — EX-019 shipped exactly this way, its output reading "command not
+    # found" while its table was hand-transcribed from elsewhere. Non-zero
+    # exits other than these stay allowed: a grep counting zero matches exits
+    # 1 and that CAN be the evidence.
+    if (( rc == 127 || rc == 126 )); then
+        echo "bt-exhibit: REFUSING — the command did not run (exit $rc):" >&2
+        sed 's/^/    /' "$raw" >&2
+        rm -f "$raw"
+        exit 1
+    fi
 
     local lines; lines=$(wc -l < "$raw")
 

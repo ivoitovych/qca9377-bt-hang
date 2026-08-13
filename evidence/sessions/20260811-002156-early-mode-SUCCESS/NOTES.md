@@ -1,5 +1,16 @@
 # Incident: early-mode recovery SUCCEEDED
 
+> ⚠️ **CORRECTION BANNER — added 2026-08-13, text below kept as the record.**
+> "What it means for the kernel" below claims `hdev->cmd_timeout` is
+> "architecturally too late" and the quirks-table entry "correct but
+> insufficient". Both rested on the wrong mechanism: v7.0 installs
+> `hdev->reset`, which fires at **+0 s** with no threshold — a point no
+> experiment (including this one) has occupied. The measured result stands —
+> a pre-timeout reset recovered the controller and every post-timeout
+> userspace reset failed — but the inference about the patch is **withdrawn**.
+> See `docs/fix-proposal.md` §3a and `docs/issues.md` BT-3.
+
+
 **Boot:** 2026-08-10 18:56 → 2026-08-11 00:21 (5 h 21 m, still up)
 **Kernel:** 7.0.0-28-generic
 **Mode:** `BT_EARLY=1`, threshold 2 in 90 s

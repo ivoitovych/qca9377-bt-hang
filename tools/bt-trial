@@ -623,9 +623,14 @@ hang|ok)
             done
         } > "$dir/sco-params.txt"
     fi
-    [[ -s "$dir/sco-params.txt" ]] || \
+    # The header block above is always written when captures were read, so the
+    # emptiness test must ask "did any RECORD survive the filter?", not "is the
+    # file empty?" — the earlier -s test made this fallback unreachable and a
+    # no-SCO trial shipped a file of bare section headers with no explanation.
+    if ! grep -q 'HCI Command: Setup Synchronous Connection' "$dir/sco-params.txt" 2>/dev/null; then
         echo "(no Setup Synchronous Connection inside this trial's window in either capture path)" \
-        > "$dir/sco-params.txt"
+            > "$dir/sco-params.txt"
+    fi
 
     # --- the observer as an experimental intervention -----------------------
     # The liveness probe is not observationally inert. `hciconfig <dev> name`
