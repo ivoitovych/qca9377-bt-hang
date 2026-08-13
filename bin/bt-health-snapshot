@@ -57,7 +57,11 @@ fi
 btusb_autosusp=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo "-")
 
 # --- failure counters, this boot -------------------------------------------
-tx_timeouts=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -c "tx timeout")
+# HCI command timeouts, opcode-named or not. NOT bare "tx timeout": that
+# also matches `link tx timeout` (ACL supervision, a different layer), of
+# which this machine has logged 7 against 173 real command timeouts. See
+# evidence/exhibits/015-timeout-pattern-undercount.md.
+tx_timeouts=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout")
 unexpected=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -c "unexpected event for opcode")
 
 # --- watchdog activity, this boot ------------------------------------------

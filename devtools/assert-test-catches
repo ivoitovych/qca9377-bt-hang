@@ -1,0 +1,74 @@
+#!/bin/bash
+# assert-test-catches — prove a test actually fails when its invariant is broken.
+#
+#   assert-test-catches <file> <violating-line> <expected-substring>
+#
+#   assert-test-catches tools/bt-state 'x=$(journalctl -k | grep -c "tx timeout")' \
+#                       "spelling the timeout pattern differently"
+#
+# Appends the violating line to <file>, runs tests/run-tests, and asserts that a
+# failure line containing <expected-substring> appeared. The file is restored
+# unconditionally, including on interrupt.
+#
+# WHY THIS EXISTS.
+#
+# A test that has never been observed to fail is not evidence that the invariant
+# holds — it is evidence that the test ran. This repository has shipped several
+# checks that could not fail: the SCO cross-tab never executed at all (a
+# braceless `if`), the lifecycle assertions passed against a fixture whose
+# timeout line the shipped pattern did not match, and `bt-verify-install`
+# reported a clean system from a hand-maintained list missing six tools. Each
+# printed a tick.
+#
+# So the discipline is: after adding a check, break the thing it checks and
+# watch it go red. Doing that by hand is a `cp`, an append, a run and a restore
+# — a compound shell line that cannot be statically analysed, costs an
+# interactive approval every time, and leaves the working tree dirty if it is
+# interrupted between the append and the restore. Naming it fixes all three.
+#
+# Exits 0 if the test caught the violation, 1 if it did not.
+
+set -uo pipefail
+
+cd "$(dirname "$0")/.." || exit 1
+
+usage() {
+    echo "usage: assert-test-catches <file> <violating-line> <expected-substring>" >&2
+    exit 2
+}
+
+[[ $# -eq 3 ]] || usage
+FILE="$1"; LINE="$2"; WANT="$3"
+
+[[ -f "$FILE" ]] || { echo "assert-test-catches: no such file: $FILE" >&2; exit 2; }
+[[ -x tests/run-tests ]] || { echo "assert-test-catches: tests/run-tests not executable" >&2; exit 2; }
+
+BACKUP=$(mktemp) || exit 1
+cp -p "$FILE" "$BACKUP" || exit 1
+
+# Restore on ANY exit path. The window between the append and the restore is
+# short but it holds a deliberately broken tool, and this repository's tools are
+# installed onto a machine that is mid-experiment.
+restore() { cp -p "$BACKUP" "$FILE"; rm -f "$BACKUP"; }
+trap restore EXIT INT TERM
+
+printf '%s\n' "$LINE" >> "$FILE"
+
+OUT=$(tests/run-tests 2>&1)
+rc=$?
+
+# Look for the substring on a FAILING line specifically. Matching anywhere in
+# the output would also match the check's own description, so a test that
+# merely mentions the invariant would look like a test that enforces it.
+if grep -q "✗.*$WANT" <<<"$OUT"; then
+    echo "PASS: the suite caught the violation"
+    grep "✗.*$WANT" <<<"$OUT" | sed 's/^/  /'
+    exit 0
+fi
+
+echo "FAIL: appending to $FILE did not produce a failure matching:" >&2
+echo "  $WANT" >&2
+echo "  (suite exited $rc)" >&2
+echo "--- suite output ---" >&2
+echo "$OUT" >&2
+exit 1

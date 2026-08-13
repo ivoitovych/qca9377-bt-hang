@@ -1,0 +1,24 @@
+# btsnoop captures overlapping this window (NOT committed — they contain
+# device addresses, names, pairing exchanges and audio payload).
+# Inspect: btmon -r <file>
+
+   134991826  /var/log/bt-health/trace/bt-20260813-030025.btsnoop
+   136191914  /var/log/bt-health/trace/bt-20260813-033200.btsnoop
+   136193797  /var/log/bt-health/trace/bt-20260813-040103.btsnoop
+   136191976  /var/log/bt-health/trace/bt-20260813-043006.btsnoop
+    66206856  /var/log/bt-health/trace/bt-20260813-045910.btsnoop
+         421  /var/log/bt-health/trace/bt-20260813-051626.btsnoop
+        2963  /var/log/bt-health/trace/bt-20260813-051642.btsnoop
+         477  /var/log/bt-health/trace/bt-20260813-051939.btsnoop
+
+# CAPTURE GAPS in this window — moments when nothing was being recorded.
+# btmon (bluez 5.72) aborts with a buffer overflow every few minutes; the
+# supervisor restarts it within ~1 s, but a gap can still straddle an event.
+# An empty list below means the window was covered continuously.
+  2026-08-13T03:32:00+02:00	rotate	gap<1s	total_blind=0s	crashes=0
+  2026-08-13T04:01:03+02:00	rotate	gap<1s	total_blind=0s	crashes=0
+  2026-08-13T04:30:06+02:00	rotate	gap<1s	total_blind=0s	crashes=0
+  2026-08-13T04:59:10+02:00	rotate	gap<1s	total_blind=0s	crashes=0
+  2026-08-13T05:16:26+02:00	btmon-exit	gap<=1s	total_blind=1s	crashes=1
+  2026-08-13T05:16:42+02:00	btmon-exit	gap<=1s	total_blind=2s	crashes=2
+  2026-08-13T05:19:39+02:00	btmon-exit	gap<=1s	total_blind=3s	crashes=3

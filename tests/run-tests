@@ -23,6 +23,10 @@ set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 pass=0; fail=0
 
+# Baseline for the last check in this file: running the tests must not add
+# anything to the real evidence tree. Taken before anything else runs.
+SESSIONS_BEFORE=$(ls -1 evidence/sessions 2>/dev/null | wc -l)
+
 ok()   { echo "  ✓ $*"; pass=$((pass + 1)); }
 bad()  { echo "  ✗ $*"; fail=$((fail + 1)); }
 
@@ -341,11 +345,55 @@ echo "────────────────────────�
 #
 # So this drives the real path: open a trial, close it, and require a row.
 LC=$(mktemp -d)
-mkdir -p "$LC/evidence/trials" "$LC/state"; touch "$LC/install.sh"
+mkdir -p "$LC/evidence/trials" "$LC/state" "$LC/bin"; touch "$LC/install.sh"
 git -C "$LC" init -q 2>/dev/null
 
+# ── THE SANDBOX, BUILT BEFORE THE FIRST INVOCATION ────────────────────────
+#
+# These tests drive the REAL bt-trial, which on a failed trial runs the REAL
+# bt-incident — a tool that copies journals, captures and state into
+# evidence/sessions/. It resolves its own destination from BT_EVIDENCE_REPO,
+# not BT_REPO, so redirecting the trial did not redirect the collector.
+#
+# For one run that is invisible. It became visible when the machine's own
+# controller died: `ok` closures started reclassifying to `failed`, the failure
+# branch fired, and every `tests/run-tests` deposited a fabricated incident
+# directory into the real evidence tree. Ten accumulated, indistinguishable at
+# a glance from the one genuine collection beside them.
+#
+# The stubs and the fake device therefore exist BEFORE the first bt-trial call,
+# and every call goes through trial() below. An invocation that forgets one
+# variable is no longer possible, because there is nowhere to forget it.
+printf '#!/bin/sh\ntouch "%s/incident-was-called"\n' "$LC" > "$LC/bin/bt-incident"
+chmod +x "$LC/bin/bt-incident"
+
+# A fabricated controller, so the classifier is under test and not the radio.
+# hci_alive() reads the live device tree; before this, every `ok` closure
+# asserted against whatever the machine's real controller happened to be doing,
+# and with the radio dead — the state this project exists to study — four
+# invariants failed for reasons unrelated to the code.
+mkdir -p "$LC/sysfs/3-3/3-3:1.0/bluetooth/hci0" "$LC/sysfs/3-3/power"
+echo 13d3 > "$LC/sysfs/3-3/idVendor"
+echo 3503 > "$LC/sysfs/3-3/idProduct"
+echo on   > "$LC/sysfs/3-3/power/control"
+# Answers unless a test stages a dead controller on purpose.
+cat > "$LC/bin/hciconfig" <<STUB
+#!/bin/sh
+[ -e "$LC/controller-dead" ] && exit 1
+exit 0
+STUB
+chmod +x "$LC/bin/hciconfig"
+
+# The ONLY way these tests may invoke bt-trial.
+trial() {
+    PATH="$LC/bin:$PATH" \
+    BT_REPO="$LC" BT_EVIDENCE_REPO="$LC" \
+    BT_STATE="$LC/state" BT_SYSFS_USB="$LC/sysfs" \
+    tools/bt-trial "$@"
+}
+
 rc=0
-BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial autostart stock >/dev/null 2>&1 || rc=$?
+trial autostart stock >/dev/null 2>&1 || rc=$?
 if (( rc == 0 )) && [[ -e "$LC/state/current" ]]; then
     ok "autostart opens a trial"
 else
@@ -353,7 +401,7 @@ else
 fi
 
 rc=0
-out=$(BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial ok 2>&1) || rc=$?
+out=$(trial ok 2>&1) || rc=$?
 if (( rc == 0 )); then
     ok "closing a trial completes without error"
 else
@@ -400,7 +448,7 @@ if [[ -s "$LC/evidence/trials/results.tsv" ]]; then
     # consumer agreeing separately with a fixture is not the same as agreeing
     # with each other.
     rc=0
-    BT_REPO="$LC" tools/bt-trial report >/dev/null 2>&1 || rc=$?
+    trial report >/dev/null 2>&1 || rc=$?
     (( rc == 0 )) && ok "report accepts a row the producer wrote" \
         || bad "report rejected the producer's own row (rc=$rc)"
 fi
@@ -413,13 +461,10 @@ fi
 # A stub bt-incident, ahead of the real one on PATH. It makes the test fast and
 # turns "did the failure branch fire?" into a file that either exists or does
 # not, rather than a string match on prose that could be reworded.
-mkdir -p "$LC/bin"
-printf '#!/bin/sh\ntouch "%s/incident-was-called"\n' "$LC" > "$LC/bin/bt-incident"
-chmod +x "$LC/bin/bt-incident"
 
-BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial autostart stock >/dev/null 2>&1
+trial autostart stock >/dev/null 2>&1
 rc=0
-out=$(PATH="$LC/bin:$PATH" BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial hang 2>&1) || rc=$?
+out=$(trial hang 2>&1) || rc=$?
 if (( rc == 0 )); then
     ok "closing a trial as hang completes without error"
 else
@@ -455,9 +500,29 @@ fi
 # destroyed the counterfactual, so the evidence axis says censored while the
 # controller axis says it is alive. Recording that as a survival or as a
 # recovery would each state something untrue.
-mkdir -p "$LC/bin"
-printf '#!/bin/sh\ntouch "%s/incident-was-called"\n' "$LC" > "$LC/bin/bt-incident"
-chmod +x "$LC/bin/bt-incident"
+
+# A FABRICATED CONTROLLER, so the classifier is tested and not the radio.
+#
+# hci_alive() reads the live device tree, so before this existed every `ok`
+# closure below asserted against whatever the machine's real controller was
+# doing. With the radio dead — the state this project studies — all four `ok`
+# rows reclassified to `failed` and the suite reported invariant failures that
+# said nothing about the code. The tests now supply their own device via
+# BT_SYSFS_USB and their own `hciconfig`, so the verdict is an input, not an
+# accident of when the suite is run.
+FAKEUSB="$LC/sysfs"
+mkdir -p "$FAKEUSB/3-3/3-3:1.0/bluetooth/hci0" "$FAKEUSB/3-3/power"
+echo 13d3 > "$FAKEUSB/3-3/idVendor"
+echo 3503 > "$FAKEUSB/3-3/idProduct"
+echo on   > "$FAKEUSB/3-3/power/control"
+# Answers unless the caller asks it not to, so a test can stage a DEAD
+# controller as deliberately as a live one.
+cat > "$LC/bin/hciconfig" <<STUB
+#!/bin/sh
+[ -e "$LC/controller-dead" ] && exit 1
+exit 0
+STUB
+chmod +x "$LC/bin/hciconfig"
 
 combo() {
     local name="$1" ktext="$2" wtext="$3" close="$4" want_bs="$5" want_tr="$6"
@@ -475,8 +540,8 @@ exit 0
 STUB
     chmod +x "$LC/bin/journalctl"
     rm -f "$LC/evidence/trials/results.tsv" "$LC/state/current"
-    PATH="$LC/bin:$PATH" BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial autostart stock >/dev/null 2>&1
-    PATH="$LC/bin:$PATH" BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial "$close" >/dev/null 2>&1
+    trial autostart stock >/dev/null 2>&1
+    trial "$close" >/dev/null 2>&1
     local bs tr
     bs=$(awk -F"\t" 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} END{print $c["bt1_status"]}' "$LC/evidence/trials/results.tsv" 2>/dev/null)
     tr=$(awk -F"\t" 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} END{print $c["trial_result"]}' "$LC/evidence/trials/results.tsv" 2>/dev/null)
@@ -489,6 +554,22 @@ STUB
 
 TMO_LINE='2026-08-13T01:00:00.000000+02:00 n kernel: Bluetooth: hci0: command tx timeout
 '
+# THE FORM THE KERNEL ACTUALLY EMITS. hci_cmd_timeout() names the opcode
+# whenever it has one, so `command 0x0406 tx timeout` is the common case and the
+# bare form above is the rare one. The stub used only the bare form, so the
+# lifecycle tests passed against a pattern that matched NOTHING in the real
+# journal: the first uncensored baseline trial recorded bt1_status=not_observed
+# and timeouts=0 for a controller that had died with five of these.
+#
+# A fixture must be drawn from the log it claims to model, not from the shape
+# the code happens to expect.
+TMO_OPCODE_LINE='2026-08-13T01:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout
+'
+# NOT a command timeout: ACL link supervision, a different event on a different
+# layer. Widening the pattern to a bare "tx timeout" would silently fold these
+# into the BT-1 count.
+LINK_TMO_LINE='2026-08-13T01:00:00.000000+02:00 n kernel: Bluetooth: hci0: link tx timeout
+'
 EARLY_LINE='EARLY intervention: 1 audio-teardown failure(s) in 90s
 '
 LATE_LINE='Detected 6 controller timeouts within 60s - intervening.
@@ -498,6 +579,8 @@ combo "no timeout, no intervention" ""          ""                        ok   n
 combo "timeout, closed as hang"      "$TMO_LINE" ""                        hang confirmed             failed
 combo "timeout + intervention"       "$TMO_LINE" "$LATE_LINE"              ok   confirmed             alive_after_intervention
 combo "early intervention only"      ""          "$EARLY_LINE"             ok   censored_pre_failure  alive_after_intervention
+combo "opcode-form timeout, hang"    "$TMO_OPCODE_LINE" ""                 hang confirmed             failed
+combo "link timeout is not BT-1"     "$LINK_TMO_LINE"   ""                 ok   not_observed          survived
 
 # UNREADABLE WATCHDOG EVIDENCE MUST NOT BECOME NEGATIVE EVIDENCE.
 #
@@ -529,8 +612,8 @@ exit 0
 STUB
 chmod +x "$LC/bin/journalctl"
 rm -f "$LC/evidence/trials/results.tsv" "$LC/state/current"
-PATH="$LC/bin:$PATH" BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial autostart stock >/dev/null 2>&1
-PATH="$LC/bin:$PATH" BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial ok >/dev/null 2>&1
+trial autostart stock >/dev/null 2>&1
+trial ok >/dev/null 2>&1
 ubs=$(awk -F"\t" 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} END{print $c["bt1_status"]}' \
       "$LC/evidence/trials/results.tsv" 2>/dev/null)
 if [[ "$ubs" == "unknown" ]]; then
@@ -643,6 +726,95 @@ if [[ -z "$missing" ]]; then
     ok "every knowledge-changing path is watched"
 else
     bad "unwatched implementation paths:$missing"
+fi
+
+echo
+echo "one spelling of the BT-1 timeout"
+echo "──────────────────────────────────────────────────────────────"
+
+# THE INVARIANT: every tool that counts BT-1 timeouts must use the same pattern,
+# and that pattern must be `command( 0x[0-9a-f]+)? tx timeout`.
+#
+# Ten call sites across nine files each carried their own literal, and they
+# disagreed in both directions against the same journal:
+#
+#   "command tx timeout"    matched 8 of 173 real command timeouts — the
+#                           kernel names the opcode whenever it has one, so the
+#                           first uncensored baseline trial recorded timeouts=0
+#                           for a controller that had died with five
+#   "tx timeout"            matched 180, folding in 7 `link tx timeout` lines —
+#                           ACL supervision, a different layer entirely
+#
+# A shared file would be the usual fix, but these ship to three different
+# directories and two are invoked by udev before /usr/local is interesting. So
+# the literal is repeated and the repetition is policed here instead: no
+# grep-family call anywhere may spell it any other way.
+STRAY=$(grep -rn -- '-c\?E\?[[:space:]]*"[^"]*tx timeout' tools bin devtools 2>/dev/null \
+        | grep -v 'command( 0x\[0-9a-f\]+)? tx timeout' \
+        | grep -v '^[^:]*:[0-9]*:[[:space:]]*#')
+if [[ -z "$STRAY" ]]; then
+    ok "every BT-1 timeout count uses the opcode-aware pattern"
+else
+    bad "call sites spelling the timeout pattern differently:"
+    while IFS= read -r l; do echo "        $l"; done <<<"$STRAY"
+fi
+
+# And the pattern itself must do what the comment claims, against lines taken
+# verbatim from this machine's journal.
+PATFIX=$(mktemp)
+cat > "$PATFIX" <<'FIX'
+Bluetooth: hci0: command 0x0406 tx timeout
+Bluetooth: hci0: command tx timeout
+Bluetooth: hci0: link tx timeout
+FIX
+n=$(grep -cE 'command( 0x[0-9a-f]+)? tx timeout' "$PATFIX")
+if [[ "$n" == "2" ]]; then
+    ok "pattern accepts both command forms and rejects link tx timeout"
+else
+    bad "pattern matched $n of 3 fixture lines, expected 2"
+fi
+rm -f "$PATFIX"
+
+echo
+echo "the tests may not write to the real evidence tree"
+echo "──────────────────────────────────────────────────────────────"
+
+# THE INVARIANT: this file invokes bt-trial only through trial().
+#
+# bt-trial runs the real bt-incident on a failed trial, and bt-incident resolves
+# its destination from BT_EVIDENCE_REPO — a different variable from the BT_REPO
+# the tests were redirecting. One invocation here was missing the PATH stub, so
+# once the machine's own controller died and `ok` closures began reclassifying
+# to `failed`, every run of this suite deposited a fabricated incident directory
+# into evidence/sessions/. Ten accumulated beside one genuine collection and
+# were indistinguishable from it without reading timestamps.
+#
+# Enumerating the variables at each call site is what failed. The check is that
+# there are no call sites to enumerate.
+# Matched POSITIVELY on the lifecycle verbs, not by subtracting exceptions. The
+# subtractive version needed a new exclusion for `report`, for `cp`, and for its
+# own grep line, and each exclusion is a hole someone can park a real call in.
+# `report` is genuinely safe — read-only, never reaches the failure branch — so
+# it is simply not in the list.
+LOOSE=$(grep -nE 'tools/bt-trial +(autostart|start|ok|hang|abort|step)\b' "$0" \
+        | grep -v "^[0-9]*:[[:space:]]*#")
+if [[ -z "$LOOSE" ]]; then
+    ok "every bt-trial invocation goes through the sandboxed trial() helper"
+else
+    bad "bt-trial invoked outside trial() — may write to the real evidence tree:"
+    while IFS= read -r l; do echo "        $l"; done <<<"$LOOSE"
+fi
+
+# And the structural check is only worth what the observation behind it is
+# worth, so observe it directly: the real evidence tree must hold exactly what
+# it held before this suite started. Counted at the top of the file, compared
+# here, after every trial in it has opened and closed.
+SESSIONS_AFTER=$(ls -1 evidence/sessions 2>/dev/null | wc -l)
+if [[ "$SESSIONS_AFTER" == "$SESSIONS_BEFORE" ]]; then
+    ok "evidence/sessions/ unchanged by the test run ($SESSIONS_AFTER entries)"
+else
+    bad "the test run changed evidence/sessions/: $SESSIONS_BEFORE -> $SESSIONS_AFTER"
+    bad "  a test wrote into the real evidence tree; the newest entries are fabricated"
 fi
 
 echo

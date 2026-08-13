@@ -1,0 +1,54 @@
+#!/bin/bash
+# bt-interval — seconds between two log timestamps, using the shipped arithmetic.
+#
+#   bt-interval <earlier> <later>
+#   bt-interval 2026-08-13T05:14:16.715095+02:00 2026-08-13T05:14:30.461003+02:00
+#     -> 13.746
+#
+# WHY THIS EXISTS. Two reasons, both practical.
+#
+# 1. It is the SAME arithmetic bt-trial and bt-phase use — tools/lib/timestamp.awk
+#    plus tools/lib/interval.awk — so a figure quoted in an exhibit or a commit
+#    message cannot silently disagree with a figure in results.tsv. Hand-computing
+#    a difference "just to check" is how the two implementations diverged before,
+#    and one of them was wrong across a month boundary for weeks.
+#
+# 2. `awk -f a.awk -f b.awk -v ...` cannot be statically analysed by the command
+#    allowlist, so every ad-hoc interval calculation cost an interactive
+#    permission prompt. A named tool with positional arguments can be approved
+#    once. The same reasoning produced bt-exhibit, bt-dyndbg and the rest: a
+#    command worth running twice is worth naming.
+#
+# Read-only. Prints the interval in seconds to stdout and nothing else.
+
+set -uo pipefail
+
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+
+usage() {
+    echo "usage: bt-interval <earlier-timestamp> <later-timestamp>" >&2
+    echo "       timestamps as journalctl -o short-iso-precise prints them" >&2
+    exit 2
+}
+
+[[ $# -eq 2 ]] || usage
+a="$1"; b="$2"
+
+for f in timestamp.awk interval.awk; do
+    [[ -r "$LIBDIR/$f" ]] || { echo "bt-interval: missing $LIBDIR/$f" >&2; exit 1; }
+done
+
+# A negative result means the arguments are the wrong way round, or that one of
+# them was not parsed. Either way the caller is about to quote a wrong number in
+# evidence, so say so rather than printing it.
+out=$(awk -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/interval.awk" -v a="$a" -v b="$b") || {
+    echo "bt-interval: arithmetic failed" >&2; exit 1
+}
+case "$out" in
+    ''|*[!0-9.-]*) echo "bt-interval: could not parse one of the timestamps" >&2
+                   echo "  a=$a" >&2; echo "  b=$b" >&2; exit 1 ;;
+esac
+case "$out" in
+    -*) echo "bt-interval: negative interval ($out s) — arguments reversed?" >&2; exit 1 ;;
+esac
+echo "$out"

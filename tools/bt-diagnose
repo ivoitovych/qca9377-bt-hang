@@ -97,7 +97,7 @@ echo
 echo "${B}Log evidence${O}"
 if ! command -v journalctl >/dev/null 2>&1; then
     echo "  ${Y}•${O} journalctl not available — cannot check history"
-    echo "     Try instead: dmesg | grep -E 'tx timeout|Resetting usb device'"
+    echo "     Try instead: dmesg | grep -E 'command( 0x[0-9a-f]+)? tx timeout|Resetting usb device'"
     exit 2
 fi
 
@@ -105,7 +105,11 @@ timeouts=0; resets=0; fw=0; boots=0
 for b in $(boot_indices); do
     journalctl -k -b "$b" >/dev/null 2>&1 || continue
     boots=$((boots+1))
-    t=$(journalctl -k -b "$b" --no-pager 2>/dev/null | grep -c "tx timeout" || true)
+    # HCI command timeouts, opcode-named or not. NOT bare "tx timeout": that
+    # also matches `link tx timeout` (ACL supervision, a different layer), of
+    # which this machine has logged 7 against 173 real command timeouts. See
+    # evidence/exhibits/015-timeout-pattern-undercount.md.
+    t=$(journalctl -k -b "$b" --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
     r=$(journalctl -k -b "$b" --no-pager 2>/dev/null | grep -ciE "Resetting usb device|Multiple cmd timeouts" || true)
     f=$(journalctl -k -b "$b" --no-pager 2>/dev/null | grep -ciE "using rampatch|nvm_usb|Failed to load .*firmware" || true)
     timeouts=$((timeouts + ${t:-0})); resets=$((resets + ${r:-0})); fw=$((fw + ${f:-0}))

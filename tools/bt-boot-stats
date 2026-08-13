@@ -54,7 +54,11 @@ for b in $("$BOOTLIST" 2>/dev/null); do
     [[ -n "$log" ]] || continue
 
     nd=$(grep -c "unexpected event for opcode" <<<"$log" || true)
-    nt=$(grep -c "tx timeout" <<<"$log" || true)
+    # HCI command timeouts, opcode-named or not. NOT bare "tx timeout": that
+    # also matches `link tx timeout` (ACL supervision, a different layer), of
+    # which this machine has logged 7 against 173 real command timeouts. See
+    # evidence/exhibits/015-timeout-pattern-undercount.md.
+    nt=$(grep -cE "command( 0x[0-9a-f]+)? tx timeout" <<<"$log" || true)
     nb=$(grep -c "USB disconnect, device number" <<<"$log" || true)
 
     first=$(head -1 <<<"$log" | cut -d' ' -f1)

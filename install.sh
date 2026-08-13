@@ -79,6 +79,34 @@ if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null; th
     echo "   BT_FORCE_INSTALL=1 — continuing. Re-apply the mode afterwards:"
     echo "       sudo bt-mode experiment"
     echo
+    # THE INSTALLER IS NOT PASSIVE, EVEN WHEN WHAT IT INSTALLS IS.
+    #
+    # The guard above asks "will this change the treatment?" and the force flag
+    # answers "no, these are read-only tools". Both can be true while the
+    # install itself still resets the device: it reloads btusb.
+    #
+    # On 2026-08-13 that ended a live observation. The controller had been in
+    # stage 1 — HCI dead, USB healthy — for 72 minutes with no intervention,
+    # the first such window in the project, and the only USB-layer line in the
+    # whole of it was this script's `deregistering interface driver btusb`.
+    # Everything after was recovery noise from our own action (EX-016).
+    #
+    # A dead controller cannot be made worse, so this warns rather than
+    # refuses; the operator has to be the one who decides the window is over.
+    if journalctl -k -b 0 --no-pager 2>/dev/null \
+       | grep -qE 'command( 0x[0-9a-f]+)? tx timeout'; then
+        echo "!! THIS BOOT HAS ALREADY LOGGED AN HCI COMMAND TIMEOUT."
+        echo "   Installing reloads btusb, which resets the controller and ENDS"
+        echo "   any stage-1 observation currently in progress. If you are"
+        echo "   timing how long the controller survives on the USB bus after"
+        echo "   it stopped answering HCI, that measurement stops here and"
+        echo "   becomes right-censored."
+        echo
+        echo "   Record it first:   bt-exhibit new ... --cmd '...'"
+        echo "   Continuing in 10 s — Ctrl-C to stop."
+        sleep 10
+        echo
+    fi
 fi
 
 if (( APPLY )); then
@@ -196,6 +224,7 @@ install_file "$SRC/tools/bt-logvolume"   /usr/local/bin/bt-logvolume   0755
 install_file "$SRC/tools/bt-phase"       /usr/local/bin/bt-phase       0755
 install_file "$SRC/tools/bt-env-history" /usr/local/bin/bt-env-history 0755
 install_file "$SRC/tools/bt-mode"        /usr/local/bin/bt-mode        0755
+install_file "$SRC/tools/bt-interval"    /usr/local/bin/bt-interval    0755
 # Shared awk programs. These are loaded with `awk -f`, so they must sit where
 # the tools look: <dir of the tool>/lib.
 install_file "$SRC/tools/lib/timestamp.awk"     /usr/local/bin/lib/timestamp.awk     0644

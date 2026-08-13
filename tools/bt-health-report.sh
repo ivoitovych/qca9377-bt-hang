@@ -91,7 +91,11 @@ printf '   %-6s %-22s %-9s %-9s %-8s %s\n' BOOT KERNEL TIMEOUTS UNEXPECT WD-ACTS
 for b in $(boot_indices); do
     k=$(journalctl -k -b "$b" 2>/dev/null | grep -m1 -oE "Linux version [0-9][^ ]*" | awk '{print $3}')
     [[ -z "${k:-}" ]] && continue
-    t=$(journalctl -k -b "$b" 2>/dev/null | grep -c "tx timeout")
+    # HCI command timeouts, opcode-named or not. NOT bare "tx timeout": that
+    # also matches `link tx timeout` (ACL supervision, a different layer), of
+    # which this machine has logged 7 against 173 real command timeouts. See
+    # evidence/exhibits/015-timeout-pattern-undercount.md.
+    t=$(journalctl -k -b "$b" 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout")
     u=$(journalctl -k -b "$b" 2>/dev/null | grep -c "unexpected event for opcode")
     w=$(journalctl -u bt-hang-watchdog -b "$b" 2>/dev/null | grep -cE "intervening|EARLY intervention")
     # FIRST entry of the boot, not -n1 (which returns the LAST). Using the

@@ -87,7 +87,7 @@ collect() {
         | grep "Snapshot Bluetooth health metrics" | cut -d' ' -f1 \
         | while read -r t; do echo "$b ENDO $t"; done >> "$DATA"
     journalctl -k -b "$b" --no-pager -o short-iso-precise 2>/dev/null \
-        | grep "command tx timeout" | cut -d' ' -f1 \
+        | grep -E "command( 0x[0-9a-f]+)? tx timeout" | cut -d' ' -f1 \
         | while read -r t; do echo "$b TMO $t"; done >> "$DATA"
 }
 

@@ -77,6 +77,14 @@ produced a confident, clean-looking, wrong number.
 | **3 — independence** | could the measured phenomenon have caused it to exist? | probes fired by the controller's own failure events (`EX-012`) |
 | **4 — exposure geometry** | are **both** boundaries of the denominator independent? | an outcome-triggered *closing* probe still lets the event pick its own interval |
 | **5 — sampling unit** | are these N independent events, or N records from fewer events? | 8 `tx timeout` lines counted as 8 failures; they were 7 incidents |
+| **0 — recognition** | does the filter match the event at all? | `command tx timeout` found 8 of 173 real timeouts; the kernel names the opcode (`EX-015`) |
+
+Level 0 was added last and sits beneath the rest, because it is the one that fails
+silently in the safe-looking direction: a filter that matches nothing yields a clean zero,
+and a zero reads as *nothing happened* rather than as *nothing was looked at*. It was
+caught only because two independently-sourced axes of the same record contradicted each
+other — see `HISTORY.md`, Phase 24.
+
 
 The goal is not software that usually produces the right statistic. It is software that
 says **"I cannot justify this statistic from the provenance of the available data, so I

@@ -1481,3 +1481,101 @@ programs now live in `tools/lib/*.awk`, which ends the class outright:
 
 The same move had already paid off for `capdiff-match.awk`. Doing it once and not
 generalising is how the second instance survived.
+
+## Phase 24 — the first uncensored baseline, and the pattern that nearly erased it
+
+The machine was cold-booted into experiment mode — no watchdog, no health probes, USB
+autosuspend restored to `Y`, radio `power/control=auto` — and driven to failure. This is
+the first observation in the project's history where nothing of ours intervened between
+the stimulus and the outcome.
+
+What the journal holds for that trial:
+
+```
+05:14:16.715  hci0 opcode 0x0428 plen 17          SCO/eSCO setup
+05:14:30.461  Bluetooth: hci0: command 0x0406 tx timeout
+05:14:35.710  Bluetooth: hci0: setting interface failed (110)
+```
+
+13.746 s from synchronous-link setup to the first unanswered command; five command
+timeouts in all; **no `USB disconnect` for the remaining 4 m 48 s of the boot.**
+
+`bt-trial` recorded it as `bt1_status=not_observed`, `timeouts=0`.
+
+### The defect
+
+`hci_cmd_timeout()` names the opcode whenever it has one. The classifier grepped for the
+literal `command tx timeout`, which the kernel emits only when it cannot. Across the 23
+retained boots:
+
+| pattern | matches | what it is |
+|---|---:|---|
+| `command tx timeout` | 8 | the rare unnamed form — what the code looked for |
+| `command 0x…… tx timeout` | 165 | the normal form — invisible to it |
+| `link tx timeout` | 7 | ACL supervision, a different layer |
+| `tx timeout` | 180 | all three, conflated |
+
+The shipped pattern found 8 of 173 real command timeouts: a 95% undercount. Seven other
+tools used the bare form and therefore over-counted by folding in the link timeouts. Ten
+call sites across nine files, each with its own literal, disagreeing in both directions
+against the same journal.
+
+### Why the trial was still recorded as a failure
+
+Because the two axes have independent sources. `bt1_status` reads the journal;
+`trial_result` reads the controller through `hci_alive()`. The journal axis said
+`not_observed` while the controller axis said `failed`, and a controller cannot be both
+untroubled and dead. The contradiction is what exposed the pattern.
+
+A single-outcome schema — the design this project started with — would have written
+`survived` and been believed. **The two-axis ontology was introduced to keep intervention
+from being scored as recovery; it turned out to also be an error detector, because two
+independent measurements of the same object can disagree and one measurement cannot.**
+
+### Why the repetition was policed instead of removed
+
+The obvious fix is one shared definition. These ten call sites ship to three directories
+and two run from udev, so a shared file buys a load-order problem in exchange for the
+duplication. The literal stays duplicated and `tests/run-tests` now rejects any
+grep-family call in `tools/`, `bin/` or `devtools/` that spells it differently. The
+constraint is enforced where it can be enforced cheaply rather than designed away
+expensively — the opposite call from the `.awk` extraction one phase earlier, and for the
+opposite reason.
+
+### A test suite that only passed while the hardware was healthy
+
+Fixing the pattern turned four lifecycle invariants red — for an unrelated reason.
+`hci_alive()` reads the live device tree, so every `ok` closure in the tests had been
+asserting against whatever the machine's real controller was doing. With the radio dead
+— the exact state the project exists to study — all four reclassified to `failed`.
+
+They had been passing because the controller happened to be up when they were written.
+`bt-trial` now takes its sysfs root from `BT_SYSFS_USB`, and the tests supply a fabricated
+device and their own `hciconfig`. The verdict is an input.
+
+**A test suite that cannot run while the fault is present cannot report on the fault.**
+
+### What is now believed, and what is not
+
+Believed: with no watchdog, the controller reached stage 1 and stayed there — enumerated,
+no USB-level error at all — for **4331.99 s, one hour twelve minutes** (`EX-016`). Every
+previously documented progression to stage 2 within 45–66 s had one of our resets in
+between. This window had none and showed no progression.
+
+The observation is **right-censored, by us**. `install.sh --apply` was run to deploy the
+pattern fix above; it reloads btusb, and the only USB-layer line in the entire 72 minutes
+is that unload. Everything after — descriptor read errors, `device not accepting address`,
+`USB disconnect` — followed our own action.
+
+The mode guard in `install.sh` had asked the right question and got the right answer: the
+tools being installed were passive. It was guarding the treatment and not the *installer*,
+which resets the device regardless of what it carries. Corrected: the force path now
+detects a boot that has already logged an HCI timeout and warns that continuing ends a
+stage-1 measurement.
+
+**A guard that checks what is being delivered will not notice what the delivery does.**
+
+Not believed yet: that the reset *causes* the progression to stage 2. n=1, censored, and
+the alternative — that stage 2 arrives on its own after some interval longer than 72
+minutes — is not excluded. The trial that tests it is a boot left strictly alone until
+the device leaves the bus or the operator stops.

@@ -90,9 +90,21 @@ PROTOCOL v2 — one trial
 EOF
 }
 
+# The USB sysfs root, overridable so the lifecycle tests can drive the real
+# detection logic against a fabricated device tree.
+#
+# WHY THIS SEAM EXISTS. The lifecycle tests close trials with `ok` and assert
+# the resulting classification. hci_alive() reads the live machine, so those
+# assertions silently depended on the controller being UP: with the radio dead
+# — the exact state the project exists to study — every `ok` was reclassified
+# `failed` and four invariants failed for a reason that had nothing to do with
+# the code under test. A test suite that only passes while the hardware is
+# healthy cannot be trusted to report on the hardware.
+SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+
 hci_alive() {
     local d dev="" h=""
-    for d in /sys/bus/usb/devices/*; do
+    for d in "$SYSFS_USB"/*; do
         [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
         [[ "$(<"$d/idVendor")" == "${BT_VID:-13d3}" && "$(<"$d/idProduct")" == "${BT_PID:-3503}" ]] \
             && { dev="$d"; break; }
@@ -134,7 +146,7 @@ env_fingerprint() {
     local autosusp power wd early thr probes commit dev
     autosusp=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo '?')
     power='?'
-    for dev in /sys/bus/usb/devices/*; do
+    for dev in "$SYSFS_USB"/*; do
         [[ -f "$dev/idVendor" && -f "$dev/idProduct" ]] || continue
         if [[ "$(<"$dev/idVendor")" == "${BT_VID:-13d3}" && "$(<"$dev/idProduct")" == "${BT_PID:-3503}" ]]; then
             power=$(cat "$dev/power/control" 2>/dev/null || echo '?'); break
@@ -331,7 +343,16 @@ hang|ok)
     jk() { cat "$KJ"; }
 
     sco_sent=$(jk | grep -c "opcode 0x0428" || true)
-    tmo=$(jk | grep -c "command tx timeout" || true)
+    # HCI command timeouts appear in TWO forms: `command tx timeout` when the
+    # kernel could not name the opcode, and `command 0x0406 tx timeout` when it
+    # could. Matching the literal "command tx timeout" misses every opcode-carrying
+    # line — which is most of them. The first real trial recorded bt1_status
+    # not_observed against a controller that was demonstrably dead with five
+    # timeouts, because all five named an opcode.
+#
+    # Bare "tx timeout" would over-match instead: `link tx timeout` is an ACL link
+    # supervision timeout, a different event.
+    tmo=$(jk | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
     usb_gone=$(jk | grep -c "USB disconnect, device number" || true)
 
     # ── TWO AXES, NOT ONE FIELD ───────────────────────────────────────────
@@ -496,7 +517,7 @@ hang|ok)
     # command that actually went unanswered was a later Disconnect. This field
     # means "nearest preceding synchronous setup" and must NOT be read as "the
     # setup belonging to this failure".
-    t_tmo=$(jk | grep -m1 "command tx timeout" | cut -d' ' -f1)
+    t_tmo=$(jk | grep -m1 -E "command( 0x[0-9a-f]+)? tx timeout" | cut -d' ' -f1)
     if [[ -n "$t_tmo" ]]; then
         t_sco=$(jk | grep "opcode 0x0428" | cut -d' ' -f1 \
                 | awk -v lim="$t_tmo" '$1 < lim' | tail -1)
@@ -616,7 +637,7 @@ hang|ok)
     # can re-enumerate at a different address, and a hardcoded path would then
     # report "gone" for a device that is present and working.
     usb_present=no
-    for d in /sys/bus/usb/devices/*; do
+    for d in "$SYSFS_USB"/*; do
         [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
         if [[ "$(<"$d/idVendor")" == "${BT_VID:-13d3}" && "$(<"$d/idProduct")" == "${BT_PID:-3503}" ]]; then
             usb_present=yes; break
