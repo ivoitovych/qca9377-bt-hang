@@ -53,7 +53,7 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | UT-07 | Fixtures for `trial-sco-table.awk`, `stage2.awk` | done | this commit | `tests/run-tests --section "awk libraries"` — 17 cases across 3 libraries |
 | UT-08 | Journal seam `tools/lib/journal.sh` | done | `d016249` | `test -r tools/lib/journal.sh` |
 | UT-09 | Convert `bt-phase`, `bt-boot-provenance` | done | `d016249` | `tests/run-tests --section "whole tools" \| grep 'journal seam'` |
-| UT-10 | Convert the remaining journal-reading tools | **partial** 4/21 | this commit | `sh reviews/verify.sh` — prints converted vs remaining |
+| UT-10 | Convert the remaining journal-reading tools | **partial** 10/21 | `def19bc` | `sh reviews/verify.sh` — prints converted vs remaining |
 | UT-11 | `lib/phase.awk`; delete the Python extractor | done | `d016249` | `test -r tools/lib/phase.awk`; extractor gone: `grep -c re.search tests/run-tests` → 0 |
 | UT-12 | Split `tests/run-tests` into per-area files | **open** | — | `wc -l tests/run-tests` — 1353 at `d016249`, was 1038 |
 | UT-13 | Settle `repo-scan`'s pre-existing hits, then add to CI | **blocked** | — | see below |
@@ -67,8 +67,8 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | CS-03 | Test the devtools against a scratch repo | done | this commit | `tests/run-tests --section "publish gates"` |
 | CS-04 | Test `bt-capdiff`/`bt-sco`/`bt-context`/`bt-incident` via `BT_*` overrides | **open** | — | as above for `tools/` rows |
 | CS-05 | Convert + test `bt-actions` (seam) | done | this commit | `grep -c 'journal.sh' tools/bt-actions` → 2; `tests/run-tests --section "whole tools"` |
-| CS-06 | `bt-logvolume`, `bt-boot-stats`, `bt-timeline.sh` | **open** | — | as CS-05 |
-| CS-07 | `bt-env-history`, `bt-boot-list`, `bt-boots` | **open** | — | as CS-05 |
+| CS-06 | `bt-logvolume`, `bt-boot-stats`, `bt-timeline.sh` | done | `def19bc` | `tests/run-tests --section "whole tools"` |
+| CS-07 | `bt-env-history`, `bt-boot-list`, `bt-boots` | done | `def19bc` | `tests/run-tests --section "whole tools"` |
 | CS-08 | A sysfs/device seam, then `bin/bt-hang-watchdog` | done | this commit | `devtools/coverage \| grep bt-hang-watchdog` → 81.8% |
 | CS-09 | Argument/refusal paths only for the hardware-bound five | **open** | — | judgement call; see the report |
 
@@ -77,9 +77,9 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | ID | Item | Status | Landed | Verify |
 |---|---|---|---|---|
 | TC-01 | Action-tool mocks + spy for the watchdog | done — **not as `device.sh`** | this commit | `tests/run-tests --section "bt-hang-watchdog"` |
-| TC-02 | CI-gated system round trip (`--apply` both ways) | **open** | — | separate step in `checks.yml`, gated on `BT_SYSTEM_TEST=1` |
+| TC-02 | CI-gated system round trip (`--apply` both ways) | done | this commit | `BT_SYSTEM_TEST=1 tests/system-roundtrip`; CI step in `checks.yml` |
 | TC-03 | Fixture provenance comments + real-tool contract check | **partial** | this commit | `devtools/journal-contract` |
-| TC-04 | Mock-equivalence: real journalctl over a BUILT journal, diffed vs fixtures | **partial** — shape contract shipped; byte equivalence blocked | this commit | `devtools/journal-contract`; blocker noted in its header |
+| TC-04 | Mock-equivalence: real journalctl over a BUILT journal, diffed vs fixtures | done | `def19bc` | `devtools/journal-contract` — phase 2 runs without a host journal |
 
 **TC-01 deviated from its report's design, deliberately.** The report proposed
 `tools/lib/device.sh` wrapper functions; the implementation uses PATH stubs written by

@@ -70,6 +70,21 @@ jobs:
       - name: journal contract
         run: devtools/journal-contract
 
+      # THE SYSTEM ROUND TRIP — the only step here that writes to the machine.
+      #
+      # It installs for real, verifies, uninstalls for real, and verifies that
+      # nothing is left behind: the README's front-page claim that
+      # "uninstalling is a complete restoration", which no amount of reading
+      # either script can settle because it is a property of the PAIR.
+      #
+      # Safe HERE and nowhere else by construction. The runner is an ephemeral
+      # VM with a live systemd; the test refuses unless BT_SYSTEM_TEST=1 is set
+      # explicitly AND the host carries no existing installation, no open trial
+      # and no experiment mode. The investigation machine fails those gates
+      # even if someone sets the variable.
+      - name: system round trip (installs for real, then removes itself)
+        run: sudo BT_SYSTEM_TEST=1 tests/system-roundtrip
+
       # The full-tree scan, which this workflow originally had to leave out.
       #
       # It was omitted because `repo-scan` falls back to scanning ALL tracked
