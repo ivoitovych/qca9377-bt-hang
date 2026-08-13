@@ -93,6 +93,27 @@ if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null; th
     #
     # A dead controller cannot be made worse, so this warns rather than
     # refuses; the operator has to be the one who decides the window is over.
+    #
+    # AN OPEN TRIAL IS THE OTHER THING THIS MUST NOT WALK OVER, and the first
+    # version of this guard missed it by asking only about the controller's
+    # health. On 2026-08-13 that let an install reload btusb in the middle of
+    # trial stock #2 — the controller was fine, so the timeout check passed, and
+    # the trial silently acquired an intervention its `treatment` column does
+    # not mention. The step log records it; the trial is contaminated anyway.
+    #
+    # The guard asks about the EXPERIMENT now, not only about the device.
+    if [[ -e "${BT_STATE:-/run/bt-trial}/current" ]]; then
+        echo "!! A TRIAL IS OPEN ($(grep -m1 '^build=' "${BT_STATE:-/run/bt-trial}/current" 2>/dev/null))."
+        echo "   Installing reloads btusb. That is an intervention this trial's"
+        echo "   treatment column does not record, and it makes the trial"
+        echo "   non-comparable with the rest of the series."
+        echo
+        echo "   Close it first:    bt-trial ok    (or: bt-trial abort)"
+        echo "   Or record it:      bt-trial step \"install.sh reloaded btusb\""
+        echo "   Continuing in 10 s — Ctrl-C to stop."
+        sleep 10
+        echo
+    fi
     if journalctl -k -b 0 --no-pager 2>/dev/null \
        | grep -qE 'command( 0x[0-9a-f]+)? tx timeout'; then
         echo "!! THIS BOOT HAS ALREADY LOGGED AN HCI COMMAND TIMEOUT."
@@ -225,6 +246,7 @@ install_file "$SRC/tools/bt-phase"       /usr/local/bin/bt-phase       0755
 install_file "$SRC/tools/bt-env-history" /usr/local/bin/bt-env-history 0755
 install_file "$SRC/tools/bt-mode"        /usr/local/bin/bt-mode        0755
 install_file "$SRC/tools/bt-interval"    /usr/local/bin/bt-interval    0755
+install_file "$SRC/tools/bt-stage2"      /usr/local/bin/bt-stage2      0755
 # Shared awk programs. These are loaded with `awk -f`, so they must sit where
 # the tools look: <dir of the tool>/lib.
 install_file "$SRC/tools/lib/timestamp.awk"     /usr/local/bin/lib/timestamp.awk     0644
@@ -232,6 +254,7 @@ install_file "$SRC/tools/lib/interval.awk"      /usr/local/bin/lib/interval.awk 
 install_file "$SRC/tools/lib/capdiff-match.awk" /usr/local/bin/lib/capdiff-match.awk 0644
 install_file "$SRC/tools/lib/trial-summary.awk"   /usr/local/bin/lib/trial-summary.awk   0644
 install_file "$SRC/tools/lib/trial-sco-table.awk" /usr/local/bin/lib/trial-sco-table.awk 0644
+install_file "$SRC/tools/lib/stage2.awk"        /usr/local/bin/lib/stage2.awk        0644
 if command -v btmon >/dev/null 2>&1; then
     install_file "$SRC/bin/bt-trace"            /usr/local/sbin/bt-trace                    0755
     install_file "$SRC/systemd/bt-trace.service" /etc/systemd/system/bt-trace.service       0644
@@ -355,11 +378,40 @@ run systemctl restart systemd-journald
 # the override up on the next boot regardless.
 run systemctl daemon-reload
 
-# Apply the autosuspend setting immediately when it is safe to do so:
-# reloading btusb while it is in use would drop live connections.
+# Apply the autosuspend setting immediately when it is safe to do so.
+#
+# THE ORIGINAL GUARD ASKED THE WRONG QUESTION, AND ITS ANSWER WAS INVERTED.
+#
+# "Is btusb in use?" was meant to protect live audio connections: usecount 0
+# means nothing is connected, so a reload drops nothing. But a controller that
+# has stopped answering HCI has no connections *because it is wedged*. Its
+# usecount is 0. The guard therefore read the one state in which a reload is
+# most destructive as the state in which it is safest.
+#
+# On 2026-08-13 that ended the first uncensored stage-1 observation in this
+# project: the controller had been HCI-dead but USB-healthy for 72 minutes with
+# no intervention of any kind, and the only USB-layer line in the whole window
+# is this block's `modprobe -r btusb`. Everything after it — descriptor read
+# errors, `device not accepting address`, `USB disconnect` — was our own
+# recovery noise, and whether the device would ever have left the bus on its
+# own is now an open question (EX-016).
+#
+# So the guard now asks both questions: is anything connected, AND has the
+# controller already failed this boot? The second is the one that mattered.
 if (( APPLY )); then
     uc=$(awk '/^btusb/ {print $3}' /proc/modules 2>/dev/null)
-    if [[ "${uc:-}" == "0" ]]; then
+    failed_this_boot=0
+    journalctl -k -b 0 --no-pager 2>/dev/null \
+        | grep -qE 'command( 0x[0-9a-f]+)? tx timeout' && failed_this_boot=1
+
+    if (( failed_this_boot )); then
+        echo "  btusb NOT reloaded — this boot has logged an HCI command timeout."
+        echo "    A wedged controller has usecount 0, so the old 'is it in use?'"
+        echo "    check would have called this safe. Reloading here resets the"
+        echo "    device and destroys any stage-1 observation in progress."
+        echo "    The autosuspend setting applies at the next boot."
+        echo "    To reload anyway: sudo modprobe -r btusb && sudo modprobe btusb"
+    elif [[ "${uc:-}" == "0" ]]; then
         run modprobe -r btusb
         run modprobe btusb
     elif [[ -n "${uc:-}" ]]; then

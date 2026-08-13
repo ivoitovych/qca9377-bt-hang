@@ -1579,3 +1579,85 @@ Not believed yet: that the reset *causes* the progression to stage 2. n=1, censo
 the alternative — that stage 2 arrives on its own after some interval longer than 72
 minutes — is not excluded. The trial that tests it is a boot left strictly alone until
 the device leaves the bus or the operator stops.
+
+## Phase 25 — the instrument was the measurement
+
+Phase 24 closed on a single striking observation: one boot, 72 minutes in stage 1, no
+progression, censored by our own `install.sh`. `bt-stage2` was written to ask the same
+question of the whole retained journal — 3,283,493 kernel lines, 22 boots — because one
+observation is an anecdote and the tool to check the rest did not exist.
+
+**Fourteen boots reached stage 1. Zero progressed to stage 2 uncensored.**
+
+Nine were ended by one of our resets. Five by shutdown. The project has never once
+watched this controller leave the USB bus on its own.
+
+| first HCI timeout | window | ended by |
+|---|---:|---|
+| 2026-07-25 03:25 | 5 h 33 m | shutdown |
+| 2026-08-09 20:20 | **6 h 26 m** | our reset |
+| 2026-08-10 07:24 | 37.75 s | our reset |
+| 2026-08-11 06:06 | 29.30 s | our reset |
+| 2026-08-12 06:26 | 121.65 s | our reset |
+| 2026-08-13 05:14 | **1 h 12 m** | our btusb unload |
+
+(Eight further rows in `EX-018`.)
+
+### The 45–66 s was our own latency
+
+The short windows cluster at 29–121 s because that is how fast the watchdog reacts. The
+two boots where nothing fired promptly ran 1 h 12 m and 6 h 26 m — enumerated, no USB
+error, throughout both. The figure quoted for months as the fault's timing was a property
+of `bt-hang-watchdog`.
+
+This is outcome-dependent sampling arriving through a door the project had already locked
+twice. `bt-phase` was built because probes fired by the controller's own failure events
+cannot bound an exposure interval. The five-levels table has an entry for it. And the
+watchdog — the most obviously outcome-triggered thing on the machine, whose entire purpose
+is to act when the controller fails — sat outside that analysis because it was categorised
+as *treatment*, not as *measurement*.
+
+**Nothing that acts on the subject is outside the measurement.** A recovery mechanism is an
+observer with a hand on the apparatus, and its reaction time is a sampling rule.
+
+### Every rule this project has, restated
+
+The three defects of Phase 24 and 25 are one defect at three altitudes:
+
+| | the filter | the finding |
+|---|---|---|
+| **grep** | `command tx timeout` | matched 8 of 173 events; a clean zero read as *nothing happened* |
+| **test suite** | `hci_alive()` on the live radio | passed only while the hardware was healthy |
+| **watchdog** | reset on failure | ended every stage-1 window before it could be observed |
+
+Each is an instrument that stops the thing it is measuring, or fails to see it, in a way
+that produces a plausible number rather than an error. None announced itself. Each was
+found by a contradiction between two independent views — journal against controller,
+short windows against long ones — and none would have been found by looking harder at
+either view alone.
+
+### What is now true of BT-1
+
+Stage 1 is established: the controller stops answering HCI during synchronous-audio link
+transitions, while remaining USB-enumerated.
+
+Stage 2 is **unresolved**. Not refuted — fourteen censored observations exclude nothing
+beyond their own durations, and the longest says only that stage 1 can last at least six
+and a half hours. But the sequence "HCI dies, then USB dies" has never been observed
+without us in the middle of it.
+
+### And BT-3 is no longer pointed in a known direction
+
+The missing `13d3:3503` quirk installs `hdev->reset`, which `hci_cmd_timeout()` calls on
+the **first** timeout. The argument for it was: no reset callback, therefore the controller
+eventually disappears. The last step is gone. Supplying the callback would make the kernel
+do automatically, on the first timeout, the thing we currently do by hand — and the thing
+we do by hand is the only event ever observed to precede a stage-2 collapse.
+
+That does not make the patch harmful. `EX-004` — an early reset *did* recover the
+controller — supports the opposite reading, that a prompt reset is a genuine fix and our
+hand-issued ones were simply late. The honest statement is that the sign of the effect is
+unmeasured, and that build B cannot be scored until untreated stage 1 has a baseline.
+
+**The project spent months trying to find what causes the failure. It has just discovered
+it did not know what the failure is.**

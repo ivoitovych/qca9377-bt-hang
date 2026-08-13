@@ -659,12 +659,41 @@ hang|ok)
     else                trial_type="controlled_v$PROTOCOL_VERSION"
     fi
 
-    [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\ttreatment\tmeasurement_rev\ttrial\tprotocol\tbt1_status\ttrial_result\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\n' > "$RESULTS"
-    printf '%s\t%s\t%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    # HOW THE MACHINE GOT INTO THIS BOOT, AND WHETHER THE CONTROLLER CAME BACK.
+    #
+    # The protocol's step 0 states that a warm reboot cannot recover the
+    # controller because it does not drop the M.2 power rail. That is a
+    # plausible hardware inference which entered the documentation as fact and
+    # was never tested — no exhibit supports it.
+    #
+    # On 2026-08-13 the controller recovered across a shutdown that reached
+    # reboot.target (EX-017). The gap was long enough that an unlogged
+    # power-off is not excluded, so it settles nothing — which is the point:
+    # the question was unanswerable because nobody was recording the answer.
+    # Two fields make it accumulate instead.
+    #
+    # Read from the tail of the previous boot: the shutdown targets are among
+    # the last messages, so a bounded read is both correct and fast.
+    prev_shutdown=unknown
+    case "$(journalctl -b -1 -n 400 --no-pager 2>/dev/null \
+            | grep -oE 'Reached target (reboot|poweroff|halt)' | tail -1)" in
+        *reboot)   prev_shutdown=reboot   ;;
+        *poweroff) prev_shutdown=poweroff ;;
+        *halt)     prev_shutdown=halt     ;;
+    esac
+    if journalctl -k -b 0 --no-pager 2>/dev/null \
+       | grep -q "idVendor=${BT_VID:-13d3}, idProduct=${BT_PID:-3503}"; then
+        enum_at_boot=yes
+    else
+        enum_at_boot=no
+    fi
+
+    [[ -s "$RESULTS" ]] || printf 'timestamp\ttrial_type\tbuild\ttreatment\tmeasurement_rev\ttrial\tprotocol\tbt1_status\ttrial_result\tduration_s\tsco_sent\tsco_to_timeout_s\ttimeouts\tresponds_after\tusb_present\tusb_lost\tprobes\tprobe_to_timeout_s\tbtmon_aborts\tkernel\tprev_shutdown\tenum_at_boot\n' > "$RESULTS"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\tv%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
         "$(date -Iseconds)" "$trial_type" "$build" "$treatment" "$measurement_rev" "$n" "$PROTOCOL_VERSION" "$bt1_status" "$trial_result" "$dur" \
         "${sco_sent:-?}" "$sco_to_tmo" "${tmo:-?}" "$resp_after" "$usb_present" \
         "${usb_gone:-?}" "${probes:-?}" "$probe_to_tmo" "${aborts:-?}" \
-        "$(uname -r)" >> "$RESULTS"
+        "$(uname -r)" "$prev_shutdown" "$enum_at_boot" >> "$RESULTS"
 
     echo
     echo "  SCO setup requested   : ${sco_sent:-?}"
@@ -675,6 +704,7 @@ hang|ok)
     echo "  request parameters    : $dir/sco-params.txt"
     echo "  liveness probes       : ${probes:-?}   (btmon aborts: ${aborts:-?})"
     echo "  last probe -> timeout : $probe_to_tmo s"
+    echo "  previous shutdown     : $prev_shutdown   (controller enumerated this boot: $enum_at_boot)"
 
     if [[ "$trial_result" == failed ]] && command -v bt-incident >/dev/null 2>&1; then
         echo "collecting incident evidence..."

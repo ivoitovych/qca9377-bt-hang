@@ -1,0 +1,79 @@
+#!/bin/bash
+# bt-stage2 — after the controller stops answering HCI, how long does it stay
+# on the USB bus, and what ended the observation?
+#
+#   bt-stage2                    analyse every retained boot (slow: minutes)
+#   bt-stage2 --cache FILE       write the journal dump to FILE, or reuse it
+#   bt-stage2 --from FILE        analyse a dump made earlier
+#
+# WHY. The project's oldest "established" fact was a two-stage failure: HCI
+# goes silent, then 45-66 s later the device leaves the USB bus. That figure
+# came from boots in which our watchdog reset the controller in between. The
+# first boot without any intervention showed no progression for 72 minutes
+# (EX-016), and it ended only because install.sh reloaded btusb.
+#
+# So the interval alone is not evidence. It has to be reported with what
+# terminated it, and every terminator that is ours makes the observation
+# right-censored — a lower bound, not a measurement. This tool refuses to
+# average the two together, and says so when nothing natural has been seen.
+#
+# Read-only: it reads the journal and writes nothing but its own cache file.
+
+set -uo pipefail
+
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+for f in timestamp.awk stage2.awk; do
+    [[ -r "$LIBDIR/$f" ]] || { echo "bt-stage2: missing $LIBDIR/$f" >&2; exit 1; }
+done
+
+CACHE=""; FROM=""
+while (( $# )); do
+    case "$1" in
+        --cache) CACHE="${2:-}"; shift 2 || exit 2 ;;
+        --from)  FROM="${2:-}";  shift 2 || exit 2 ;;
+        -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+        *) echo "bt-stage2: unknown argument: $1" >&2; exit 2 ;;
+    esac
+done
+
+DUMP=""
+cleanup() { [[ -n "$DUMP" && -z "$CACHE" && -z "$FROM" ]] && rm -f "$DUMP"; }
+trap cleanup EXIT
+
+if [[ -n "$FROM" ]]; then
+    [[ -r "$FROM" ]] || { echo "bt-stage2: cannot read $FROM" >&2; exit 1; }
+    DUMP="$FROM"
+elif [[ -n "$CACHE" && -s "$CACHE" ]]; then
+    echo "reusing cache: $CACHE" >&2
+    DUMP="$CACHE"
+else
+    DUMP="${CACHE:-$(mktemp)}"
+    # Built under a temporary name and renamed only on success.
+    #
+    # The read takes minutes. The first attempt was killed halfway by a reboot,
+    # leaving 2.6M lines in the cache file — and the cache branch above would
+    # have reused it without complaint, analysing a truncated history as if it
+    # were the whole record. That is the same failure as the timeout pattern:
+    # a partial read produces a clean, plausible, wrong answer.
+    TMP="$DUMP.partial"
+    # -b all is required. Plain `journalctl -k` returned only the current boot
+    # here, which silently reduced a 23-boot history to one and would make this
+    # tool report a single window as if it were the whole record.
+    echo "reading the kernel journal across all boots (this takes minutes)..." >&2
+    if ! journalctl -k -b all --no-pager -o short-iso-precise > "$TMP" 2>/dev/null; then
+        echo "bt-stage2: journalctl failed; refusing to report on a partial read" >&2
+        rm -f "$TMP"; exit 1
+    fi
+    mv -f "$TMP" "$DUMP" || { echo "bt-stage2: could not finalise $DUMP" >&2; exit 1; }
+fi
+
+lines=$(wc -l < "$DUMP")
+boots=$(grep -c '^-- Boot ' "$DUMP" || true)
+if (( lines == 0 )); then
+    echo "bt-stage2: empty journal dump; nothing to report" >&2
+    exit 1
+fi
+echo "source: $lines lines, $((boots + 1)) boot(s)" >&2
+echo >&2
+
+awk -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/stage2.awk" "$DUMP"

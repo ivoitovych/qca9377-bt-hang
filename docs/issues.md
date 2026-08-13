@@ -57,12 +57,20 @@ The causal graph therefore carries one more antecedent, with its question mark i
    monitoring probe  --?-->  controller state  -->  synchronous-audio transition
                                                           |
                                                           v
-                                                   HCI non-response
+                                                   HCI non-response          <-- STAGE 1, established
                                                           |
-                                                     ~31 s later
-                                                          v
-                                              observable USB errors --> device gone
+                                    +---------------------+---------------------+
+                                    |                                           |
+                              our reset / rebind                        left alone
+                                    |                                           |
+                                    v                                           v
+                        observable USB errors --> device gone        still enumerated at 72 min,
+                                                                     then WE ended the observation
+                              (every case so far)                          (n = 1, censored)
 ```
+
+The right-hand branch has been walked exactly once (`EX-016`) and never to its end, so the
+arrow below it is missing on purpose. Whether one exists is the open question in BT-1.
 
 ### The five levels a timestamp has to survive
 
@@ -100,24 +108,81 @@ member sets the pace for all. `BT-2` and `BT-4` are reportable *today*; `BT-1` i
 
 ---
 
-## BT-1 — Controller stops answering HCI, then leaves the USB bus
+## BT-1 — Controller stops answering HCI, and may or may not then leave the USB bus
 
 **Status:** under investigation — the original bug, and the hardest.
 **Reportable:** ❌ not yet. No quantified reproducer (`docs/pre-submission-checklist.md`).
 
-The controller stops answering HCI commands; 45–66 s later it stops answering USB control
-transfers; then it leaves the bus. Only a cold power-off recovers it — a warm reboot does
-not drop the M.2 power rail.
+The controller stops answering HCI commands. It has often been observed to stop answering
+USB control transfers and leave the bus some time later, after which only a cold power-off
+recovers it — a warm reboot does not drop the M.2 power rail.
 
 **Current formulation — everything the evidence earns, and nothing more:**
 
 > The controller sometimes enters a non-responsive HCI state during synchronous-audio link
-> transitions; generic USB transport failure follows later rather than initiating the event.
+> transitions, while remaining USB-enumerated. Later USB collapse has so far only been
+> observed after a reset, rebind or driver reload; whether it belongs to the fault's
+> untreated trajectory is **unresolved**.
 
 That is deliberately a statement about *when and where*, not *why*. The failure is now
 well localised in time and in subsystem behaviour, and not at all in mechanism. Anything
 phrased as a mechanism is currently a hypothesis, and the register above is the place to
 find out which ones have already died.
+
+### ⚠️ The two-stage model is no longer established — only stage 1 is
+
+This section previously opened *"45–66 s later it stops answering USB control transfers"*
+as settled fact. It is not. Every observation behind that figure contained one of our own
+resets between the HCI timeout and the USB collapse. The watchdog was designed to recover
+the controller, so it fired on exactly the boots that progressed, and it fired *first*.
+
+The first observation with no intervention of any kind (`EX-016`, stock kernel, watchdog
+off, probes off, stock power management) showed **no progression at all for 4331.99 s —
+one hour twelve minutes** — and ended only because `install.sh` reloaded btusb. The only
+USB-layer line in the entire window is our own driver unload.
+
+Then the whole retained journal was checked the same way (`EX-018`, 3,283,493 kernel lines,
+22 boots). **Fourteen boots reached stage 1. Zero progressed to stage 2 uncensored** — nine
+were ended by one of our resets, five by shutdown. There is no observation anywhere in the
+record of this controller leaving the USB bus on its own.
+
+Worse, the 45–66 s figure is visibly an artefact of the instrument. The short windows
+cluster at 29–121 s because that is the watchdog's reaction time; the two boots where
+nothing fired promptly ran **1 h 12 m** and **6 h 26 m**, enumerated and error-free
+throughout. The watchdog exists to reset a failed controller, so it fires on exactly the
+boots that progress, and it fires first. Averaging what follows measures our software.
+
+So the causal picture has two live readings:
+
+| | sequence |
+|---|---|
+| what was assumed | audio transition → HCI dies → 45–66 s → USB dies |
+| equally consistent | audio transition → HCI dies → stays enumerated → **our reset** → USB dies |
+
+`n=1` and right-censored, so natural progression is **not excluded** — the device may
+leave the bus on its own after some interval longer than 72 minutes. What *is* excluded is
+continuing to quote 45–66 s as the fault's natural trajectory.
+
+**The four alternatives now open**, none of them eliminated:
+
+- **A** — a reset recovers stage 1 safely if issued at the right moment;
+- **B** — a reset sometimes recovers it but leaves controller state unstable;
+- **C** — a reset actively pushes the controller from HCI-only failure into USB failure;
+- **D** — stage 2 happens naturally anyway, and the reset timing in earlier runs was
+  coincidental.
+
+`EX-016` raises **C** substantially relative to where it stood, without proving it. It
+also re-reads `EX-004` — *"an early reset recovers, then it dies again 132 s later"* —
+which was filed as *the reset is not durable* and is equally consistent with *the reset
+changed the trajectory*.
+
+**The experiment that settles it** requires no new instrumentation and no new build: cold
+boot into experiment mode, use the machine normally, and when BT-1 occurs **do nothing** —
+no `hciconfig`, no rfkill toggle, no btusb reload, no reinstall, no mode change. Record
+whether the device leaves the bus on its own, and at what interval; if the operator gives
+up first, that observation is right-censored at whatever duration they tolerated. A
+handful of such boots answers a question the project had considered closed for months.
+`bt-stage2` reports the accumulating record, classified by what ended each window.
 
 **The leading discriminant** — not "the remaining candidate", which is too strong — is the
 request and link parameters together with the surrounding SCO state. At least five
@@ -148,10 +213,14 @@ What is established:
   (`EX-006`), teardown unanswered in the other (`EX-009`). The constant is the path, not
   the opcode.
 - An early reset recovers the controller but not durably (`EX-004`); once timeouts begin,
-  nothing recovers it (`EX-005`).
+  nothing recovers it (`EX-005`). Both are observations about resets, and both are now
+  ambiguous in the direction described above.
+- With no intervention, the controller remained enumerated and free of any USB-level error
+  for 4331.99 s after HCI went silent (`EX-016`). Right-censored by us.
 
-Still unknown: whether a reset at +0 s helps, whether firmware download prevents it, and
-what makes a given SCO operation fatal when others succeed.
+Still unknown: whether a reset at +0 s helps *or harms*, whether stage 2 occurs at all
+without intervention, whether firmware download prevents the fault, and what makes a given
+SCO operation fatal when others succeed.
 
 ---
 
@@ -190,6 +259,34 @@ ID is a three-line patch, but submitting it as a *fix* requires showing it fixes
 
 Note the gap could also be deliberate: a silicon revision, a firmware architecture change,
 or a vendor reason for omitting exactly those three IDs. Absence is suggestive, not proof.
+
+### ⚠️ The expected DIRECTION of this patch is no longer clear
+
+The quirk installs `hdev->reset`, which `hci_cmd_timeout()` calls on the **first** timeout.
+The reasoning was: timeout happens → no reset callback → the controller eventually
+disappears → therefore the missing callback is why it disappears.
+
+`EX-016` breaks the last step. The controller that nobody reset did **not** disappear — it
+stayed enumerated and error-free for 72 minutes, and the collapse followed our reset in
+every case where a collapse was seen at all. If resetting a stage-1 QCA9377 is itself
+capable of driving it off the bus, then supplying the missing callback would make the
+kernel do automatically, on the first timeout, what we currently do by hand.
+
+That is **not** a claim that the patch is harmful. Alternative **A** — a reset recovers
+stage 1 safely when issued promptly, and our late hand-issued resets were simply too late —
+remains fully alive, and `EX-004` (an early reset *did* recover the controller) is direct
+support for it. The honest position is that the sign of the effect is unmeasured.
+
+What this changes in practice:
+
+- BT-3 stays a **real and interesting driver difference**, worth documenting either way.
+- It is no longer described as the *likely fix* for BT-1.
+- Build **B** (quirk added) must therefore be judged on more than "did it hang?" — it has
+  to record whether the automatic reset recovers the controller, and whether boots under B
+  reach stage 2 *more* often than boots under stock-with-no-intervention.
+- The stage-2 natural-history question is a **prerequisite** for reading the B result at
+  all: without knowing what untreated stage 1 does, there is no baseline against which an
+  automatic reset can be scored as recovery or as harm.
 
 ---
 

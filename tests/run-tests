@@ -21,6 +21,30 @@
 set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
+
+# ── --section: print one block instead of all of them ─────────────────────
+#
+# Reading a single section out of the full output was being done with
+# `sed -n '/heading/,/next heading/p'`, which is read-only but indistinguishable
+# from a rewrite to a static analyser, so it cost an interactive approval every
+# time. The suite knows where its own sections begin and end; asking it is both
+# cheaper and more accurate than pattern-matching its output from outside.
+#
+# The exit status is the SUITE's, not the filter's — a section that happens to
+# contain no failures must not report success for a run that failed elsewhere.
+if [[ "${1:-}" == --section ]]; then
+    [[ -n "${2:-}" ]] || { echo "usage: run-tests --section <text from a heading>" >&2; exit 2; }
+    out=$("$0"); rc=$?
+    awk -v want="$2" '
+        index($0, want) && !started { started = 1 }
+        started && printed && /^$/  { started = 0 }
+        started                     { print; if ($0 !~ /^$/) printed = 1 }
+        /^all [0-9]+ invariants hold$/ || /^FAILED: /  { tail = $0 }
+        END { if (tail != "") { print ""; print tail } }
+    ' <<<"$out"
+    exit $rc
+fi
+
 pass=0; fail=0
 
 # Baseline for the last check in this file: running the tests must not add
@@ -727,6 +751,88 @@ if [[ -z "$missing" ]]; then
 else
     bad "unwatched implementation paths:$missing"
 fi
+
+echo
+echo "results.tsv — header and rows must stay the same width"
+echo "──────────────────────────────────────────────────────────────"
+
+# THE INVARIANT: every data row has exactly as many fields as the header.
+#
+# Columns are resolved by NAME everywhere, which is the right rule and is
+# separately enforced above. But name resolution silently degrades when the
+# widths disagree: awk maps the header names onto positions once, and a row
+# with two extra fields shifts nothing while a row with two missing fields
+# hands back empty strings for real columns. Adding prev_shutdown and
+# enum_at_boot to the producer without migrating the existing file would have
+# produced exactly that — a 20-field header over a 22-field row, every value
+# after `kernel` unreachable and every value before it still looking correct.
+#
+# The live file is checked, not a fixture: the migration is the thing at risk.
+WIDTH=$(awk -F'\t' 'NR==1{n=NF; next} NF && NF!=n {print NR": "NF" vs "n}' \
+        evidence/trials/results.tsv 2>/dev/null)
+if [[ -z "$WIDTH" ]]; then
+    ok "every row in results.tsv matches the header width"
+else
+    bad "results.tsv row/header width mismatch:"
+    while IFS= read -r l; do echo "        line $l fields"; done <<<"$WIDTH"
+fi
+
+# And the producer's header must carry the columns the producer writes. A row
+# printf and a header printf that drift apart is the same defect arriving by a
+# different route.
+for col in prev_shutdown enum_at_boot bt1_status trial_result; do
+    if head -1 evidence/trials/results.tsv 2>/dev/null | grep -q "$col"; then
+        ok "results.tsv header declares $col"
+    else
+        bad "results.tsv header is missing $col"
+    fi
+done
+
+echo
+echo "bt-stage2 — censoring is not a measurement"
+echo "──────────────────────────────────────────────────────────────"
+
+# THE INVARIANT: a stage-1 window that WE ended may never be counted as an
+# observation of how long the controller survives.
+#
+# This is the mistake the tool exists to prevent, and the project made it for
+# months: "45-66 s from HCI silence to USB collapse" was computed over boots in
+# which the watchdog reset the controller in between. The watchdog fired on
+# precisely the boots that progressed, and it fired first.
+#
+# The fixture has five boots — natural disconnect, disconnect after our btusb
+# unload, no terminator at all, disconnect after a reset we issued, and a
+# `link tx timeout` that is not a BT-1 event.
+S2=$(awk -f tools/lib/timestamp.awk -f tools/lib/stage2.awk \
+     tests/stage2-invariants.data 2>&1)
+
+nat=$(grep -oP 'ended naturally\s+\K[0-9]+' <<<"$S2")
+inv=$(grep -oP 'ended by our intervention\s+\K[0-9]+' <<<"$S2")
+shd=$(grep -oP 'ended by shutdown\s+\K[0-9]+' <<<"$S2")
+[[ "$nat" == "1" ]] && ok "counts exactly the one naturally-ended window" \
+    || bad "expected 1 natural, got ${nat:-none}"
+[[ "$inv" == "2" ]] && ok "counts both intervened windows as intervened" \
+    || bad "expected 2 intervened, got ${inv:-none}"
+[[ "$shd" == "1" ]] && ok "a boot that simply ended is censored, not natural" \
+    || bad "expected 1 shutdown, got ${shd:-none}"
+
+# The headline figure must come from the natural window (50 s) and NOT from the
+# longest one (4331.99 s, ended by shutdown). Reporting the larger number as the
+# survival time is the exact error, with the sign reversed.
+grep -q 'longest NATURAL stage-1 window   50.00s' <<<"$S2" \
+    && ok "headline survival time is taken from the uncensored window" \
+    || bad "natural maximum wrong: $(grep -o 'longest NATURAL[^\n]*' <<<"$S2")"
+
+# Every censored row must say so where it is read, not only in the summary.
+[[ "$(grep -c 'RIGHT-CENSORED' <<<"$S2")" == "3" ]] \
+    && ok "each censored window is labelled at the point of use" \
+    || bad "expected 3 RIGHT-CENSORED labels, got $(grep -c 'RIGHT-CENSORED' <<<"$S2")"
+
+# A `link tx timeout` boot must not open a window at all — it is an ACL
+# supervision timeout, and counting it would invent a stage-1 event.
+grep -q 'boots reaching stage 1        4' <<<"$S2" \
+    && ok "link tx timeout does not open a stage-1 window" \
+    || bad "wrong boot count: $(grep -o 'boots reaching stage 1[^\n]*' <<<"$S2")"
 
 echo
 echo "one spelling of the BT-1 timeout"
