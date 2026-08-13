@@ -8,18 +8,44 @@ directory touches Bluetooth.
 
 | Script | Purpose |
 |---|---|
+| `check [--quick]` | **The one command to run before committing** — syntax, invariants, drift, install state |
 | `repo-scan <dir> [--all]` | Refuse-to-publish scan: MAC addresses, BSSIDs, UUIDs, IPv4, **email addresses**, AI attribution, binary captures |
 | `repo-validate <dir>` | `bash -n`, `systemd-analyze verify`, `udevadm verify`, `jq`, `py_compile` over every tracked file |
 | `repo-save <dir> "<msg>"` | validate → scan → commit → push → **verify the remote hash actually matches** |
 | `check [--quick]` | the one pre-commit command: repo-validate (incl. tests) + a full-tree scan + install state |
+| `coverage [--min N]` | How much of the shell this repo ships does `tests/run-tests` actually execute |
 | `assert-test-catches <file> <line> <substr>` | prove a suite invariant actually fails when violated |
 
 ```bash
+./devtools/check
 ./devtools/repo-validate .
 ./devtools/repo-scan . --all
 ./devtools/repo-save . "commit message"
 ./devtools/repo-save . -F message.txt --no-push
+./devtools/coverage
+./devtools/coverage --quiet --min 12
 ```
+
+## Knowing whether a test is worth anything
+
+Two of these answer questions a green test suite cannot.
+
+`assert-test-catches` breaks a thing on purpose and asserts the suite goes red. A test
+that has never been observed to fail is evidence that the test ran, not that the
+invariant holds — this repository has shipped several checks that could not fail, and
+each printed a tick.
+
+`coverage` answers the other one: how much of the code has ever been *run*. It executes
+the suite under `xtrace` and records every line bash actually reached. When first
+measured, 41 of 43 tracked shell scripts had **zero** executed lines and the total was
+13.1% — with `tests/run-tests` and `tools/bt-trial` the only two files contributing
+anything. See [`reviews/unit-testing-assessment.md`](../reviews/unit-testing-assessment.md)
+for what that means and what to do about it.
+
+The figures are a deliberate **lower bound** — multi-line commands are traced once, at
+their first line — so the tool is for ranking files and watching a trend, not for quoting
+an exact percentage. If instrumentation fails it exits 2 rather than reporting 0%, because
+a silent "everything is uncovered" reads like a finding.
 
 ## Why these exist
 
