@@ -1412,6 +1412,130 @@ tools/bt-actions --bogus >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-actions rejects an unknown argument" \
               || bad "bt-actions accepted an unknown argument"
 
+echo
+echo "bt-hang-watchdog — the decisions, never the actuation"
+echo "──────────────────────────────────────────────────────────────"
+#
+# A PRINTED heading, not only a comment: --section addresses printed output,
+# and a mutation run earlier grepped a comment-only heading, matched nothing,
+# and reported two live mutations as caught-nothing. The filter can only find
+# what the suite says out loud.
+# The watchdog decides whether to reset a live controller. The DECISIONS —
+# threshold, window, cooldown, escalation order, give-up — are what these
+# tests reach; the actuation is exactly what they must never perform. So the
+# journal is a fixture, the sysfs tree is fake, and the action tools are PATH
+# stubs that RECORD their invocation to a spy log instead of doing anything.
+# The spy log is the assertion surface: "systemctl stop bluetooth" appearing
+# in it is the test that the watchdog decided to act.
+#
+# The stubbed `sleep` returns instantly (recover() alone carries ~19 s of real
+# sleeps) EXCEPT for the give-up idle loop's 3600 s, which stays real so the
+# loop parks instead of busy-spinning; that scenario is bounded by timeout(1).
+WD=$(mktemp -d)
+mkdir -p "$WD/stub" "$WD/sysfs/3-3/3-3:1.0/bluetooth/hci0" "$WD/drv"
+echo 13d3 > "$WD/sysfs/3-3/idVendor";  echo 3503 > "$WD/sysfs/3-3/idProduct"
+echo 3    > "$WD/sysfs/3-3/busnum";    echo 99   > "$WD/sysfs/3-3/devnum"
+
+cat > "$WD/stub/systemctl" <<STUB
+#!/bin/sh
+echo "systemctl \$*" >> "$WD/spy.log"; exit 0
+STUB
+cat > "$WD/stub/sleep" <<STUB
+#!/bin/sh
+echo "sleep \$1" >> "$WD/spy.log"
+[ "\${1:-0}" -ge 3600 ] 2>/dev/null && exec /bin/sleep "\$1"
+exit 0
+STUB
+# Liveness is scripted per scenario: `dead` = always dead, `dead-once` = dead
+# for one probe then alive (drives the escalation path exactly once).
+cat > "$WD/stub/hciconfig" <<STUB
+#!/bin/sh
+echo "hciconfig \$*" >> "$WD/spy.log"
+[ -e "$WD/dead" ] && exit 1
+if [ -e "$WD/dead-once" ]; then rm -f "$WD/dead-once"; exit 1; fi
+exit 0
+STUB
+printf '#!/bin/sh\nexit 0\n' > "$WD/stub/loginctl"
+chmod +x "$WD/stub"/*
+
+wd_run() {   # <timeout-s> [env overrides...] — runs the watchdog over the fixture
+    local t="$1"; shift
+    timeout "$t" env PATH="$WD/stub:$PATH" \
+        BT_JOURNAL_FIXTURE=tests/journal/watchdog \
+        BT_SYSFS_USB="$WD/sysfs" BT_SYSFS_DRIVERS="$WD/drv" \
+        BT_COOLDOWN=99999 "$@" bin/bt-hang-watchdog 2>&1
+}
+
+# Scenario 1: threshold -> intervene -> escalate once -> recover; then the
+# remaining fixture signals re-reach the threshold and hit the cooldown.
+: > "$WD/spy.log"; touch "$WD/dead-once"
+WOUT=$(wd_run 10); wrc=$?
+[[ "$WOUT" == *"Detected 3 controller timeouts within 60s — intervening."* ]] \
+    && ok "watchdog intervenes at the threshold" \
+    || bad "watchdog did not intervene at 3/60s"
+[[ "$WOUT" == *"USBDEVFS_RESET failed"* ]] \
+    && ok "watchdog logs the failed USB reset (no device node here, by design)" \
+    || bad "USB reset outcome not logged"
+[[ "$WOUT" == *"escalating to USB unbind/bind"* ]] \
+    && ok "watchdog escalates when the controller stays dead after reset" \
+    || bad "escalation path not taken"
+[[ "$WOUT" == *"RECOVERED — controller is responding again"* ]] \
+    && ok "watchdog confirms recovery through the probe" \
+    || bad "recovery not confirmed"
+[[ "$WOUT" == *"suppressed by cooldown"* ]] \
+    && ok "watchdog suppresses a re-trigger inside the cooldown, loudly" \
+    || bad "cooldown suppression missing or silent"
+# The spy log is the proof no decision was skipped and nothing real was run.
+grep -c 'systemctl stop bluetooth' "$WD/spy.log" >/dev/null \
+    && grep -c 'systemctl start bluetooth' "$WD/spy.log" >/dev/null \
+    && ok "spy log shows the bluetooth service stop/start pair" \
+    || bad "spy log missing the systemctl pair"
+u=$(cat "$WD/drv/unbind" 2>/dev/null); bnd=$(cat "$WD/drv/bind" 2>/dev/null)
+[[ "$u" == "3-3" && "$bnd" == "3-3" ]] \
+    && ok "escalation unbinds and rebinds the right device (3-3)" \
+    || bad "unbind/bind wrote '$u'/'$bnd', expected 3-3"
+# The fixture ends; the reader terminating must be loud, never a silent respawn.
+(( wrc == 1 )) && [[ "$WOUT" == *"journal reader terminated unexpectedly"* ]] \
+    && ok "watchdog exits loudly when the journal stream ends" \
+    || bad "stream-end exit wrong (rc=$wrc)"
+
+# Scenario 2: every recovery fails -> give up after MAX_FAILS, then idle.
+: > "$WD/spy.log"; touch "$WD/dead"; rm -f "$WD/drv/unbind" "$WD/drv/bind"
+GOUT=$(wd_run 3 BT_COOLDOWN=0 BT_MAX_FAILS=1); grc=$?
+[[ "$GOUT" == *"RECOVERY FAILED"* && "$GOUT" == *"Giving up: 1 consecutive recovery attempts failed."* ]] \
+    && ok "watchdog gives up after MAX_FAILS confirmed failures" \
+    || bad "give-up path not reached"
+[[ "$GOUT" == *"idling — cold power-off required"* ]] && (( grc == 124 )) \
+    && ok "given up, the watchdog idles instead of respawning (killed by test timeout)" \
+    || bad "idle path wrong (rc=$grc)"
+rm -f "$WD/dead"
+
+# Scenario 3: EARLY mode acts on one audio-teardown signal, before any timeout.
+# The early stream is the merged kernel+bluetoothd query, which the seam
+# resolves to default.log — carrying exactly one cancel_request() Abort.
+: > "$WD/spy.log"
+EOUT=$(wd_run 10 BT_EARLY=1)
+[[ "$EOUT" == *"EARLY intervention: 1 audio-teardown failure(s)"* \
+   && "$EOUT" == *"resetting BEFORE any HCI timeout"* ]] \
+    && ok "EARLY mode intervenes on a single teardown signal" \
+    || bad "EARLY intervention not taken"
+[[ "$EOUT" == *"EARLY recovery SUCCEEDED"* ]] \
+    && ok "EARLY recovery is confirmed and celebrated as the result that matters" \
+    || bad "EARLY recovery outcome wrong"
+
+# Scenario 4: the device is off the bus when the threshold trips — stage 2.
+# The watchdog must say so in the terms the operator needs (power-off, not
+# reboot), not attempt a recovery against nothing.
+EMPTYSYS=$(mktemp -d)
+FOUT=$(timeout 10 env PATH="$WD/stub:$PATH" \
+        BT_JOURNAL_FIXTURE=tests/journal/watchdog \
+        BT_SYSFS_USB="$EMPTYSYS" BT_SYSFS_DRIVERS="$WD/drv" \
+        BT_COOLDOWN=99999 bin/bt-hang-watchdog 2>&1)
+[[ "$FOUT" == *"FATAL"* && "$FOUT" == *"full power-off"* ]] \
+    && ok "watchdog reports the hard hang instead of resetting a ghost" \
+    || bad "hard-hang path wrong"
+rm -rf "$WD" "$EMPTYSYS"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is
