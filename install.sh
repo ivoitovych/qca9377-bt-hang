@@ -94,26 +94,6 @@ if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null; th
     # A dead controller cannot be made worse, so this warns rather than
     # refuses; the operator has to be the one who decides the window is over.
     #
-    # AN OPEN TRIAL IS THE OTHER THING THIS MUST NOT WALK OVER, and the first
-    # version of this guard missed it by asking only about the controller's
-    # health. On 2026-08-13 that let an install reload btusb in the middle of
-    # trial stock #2 — the controller was fine, so the timeout check passed, and
-    # the trial silently acquired an intervention its `treatment` column does
-    # not mention. The step log records it; the trial is contaminated anyway.
-    #
-    # The guard asks about the EXPERIMENT now, not only about the device.
-    if [[ -e "${BT_STATE:-/run/bt-trial}/current" ]]; then
-        echo "!! A TRIAL IS OPEN ($(grep -m1 '^build=' "${BT_STATE:-/run/bt-trial}/current" 2>/dev/null))."
-        echo "   Installing reloads btusb. That is an intervention this trial's"
-        echo "   treatment column does not record, and it makes the trial"
-        echo "   non-comparable with the rest of the series."
-        echo
-        echo "   Close it first:    bt-trial ok    (or: bt-trial abort)"
-        echo "   Or record it:      bt-trial step \"install.sh reloaded btusb\""
-        echo "   Continuing in 10 s — Ctrl-C to stop."
-        sleep 10
-        echo
-    fi
     # Counted, not `grep -q` — see the note at the btusb reload below.
     n_tmo_warn=$(journalctl -k -b 0 --no-pager 2>/dev/null \
                  | grep -cE 'command( 0x[0-9a-f]+)? tx timeout' || true)
@@ -130,6 +110,27 @@ if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null; th
         sleep 10
         echo
     fi
+fi
+
+# ── OPEN-TRIAL GUARD — EVERY APPLY, NOT ONLY EXPERIMENT MODE ─────────────
+# The first version of this guard lived inside the experiment-mode branch
+# above, so in mitigation mode — the default, and the mode in which
+# bt-trial-auto opens a trial on EVERY boot — an install reloaded btusb
+# mid-trial with no warning at all. The trial's own interior-perturbation scan
+# catches it after the fact (the row becomes PERTURBED: and pools with
+# nothing), but a contaminated trial detected at close is still a trial lost.
+# On 2026-08-13 exactly this contaminated trial stock #2.
+if (( APPLY )) && [[ -e "${BT_STATE:-/run/bt-trial}/current" ]]; then
+    echo "!! A TRIAL IS OPEN ($(grep -m1 '^build=' "${BT_STATE:-/run/bt-trial}/current" 2>/dev/null))."
+    echo "   Installing reloads btusb. That is an intervention this trial's"
+    echo "   treatment column does not record, and it makes the trial"
+    echo "   non-comparable with the rest of the series."
+    echo
+    echo "   Close it first:    bt-trial ok    (or: bt-trial abort)"
+    echo "   Or record it:      bt-trial step \"install.sh reloaded btusb\""
+    echo "   Continuing in 10 s — Ctrl-C to stop."
+    sleep 10
+    echo
 fi
 
 if (( APPLY )); then

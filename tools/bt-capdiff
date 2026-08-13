@@ -34,7 +34,12 @@
 # not afterwards.
 #
 # Usage:
-#   bt-capdiff [--since "HH:MM:SS"] [--until "HH:MM:SS"] [-n <count>]
+#   bt-capdiff [--since <ISO>] [--until <ISO>] [-n <count>]
+#
+#   --since/--until take FULL timestamps of the form 2026-08-12T06:26:25.001
+#   (the record keys), compared lexically. A bare HH:MM:SS never matches any
+#   key and silently empties the window — the earlier usage text suggested
+#   exactly that form.
 #
 # Compares only the overlapping time range covered by both paths — outside it a
 # difference means "not captured", not "disagreement", and reporting that as

@@ -72,13 +72,35 @@ BEGIN {
     print "Stage 1 -> stage 2: how long, and what ended the observation?"
     print "──────────────────────────────────────────────────────────────"
     boot_id = "first-boot"
+    if (vid == "") vid = "13d3"
+    if (pid == "") pid = "3503"
 }
 
 /^-- Boot / {
     emit()
     boot_id = $3
-    have_tmo = 0; intervened = 0; term_kind = ""; nev = 0
+    # dev_error is per-boot state and MUST reset here. Before it did, the first
+    # boot in the journal with any bus error poisoned every later boot: their
+    # resets classified as "hub recovery" (dev_error looked already set), so
+    # intervened stayed 0 and a following disconnect printed NATURAL — a false
+    # observation of the exact event this tool exists to say has never been
+    # seen. Verified with a two-boot fixture before fixing.
+    have_tmo = 0; intervened = 0; term_kind = ""; nev = 0; dev_error = 0
+    devpath = ""
     next
+}
+
+# Learn which usb path is OUR device, from its enumeration line. The USB-layer
+# patterns below carry no VID:PID, only a path ("usb 3-3: ..."), and without
+# this anchor ANY device's disconnect — a mouse unplugged mid-window — would
+# terminate a stage-1 window, possibly as NATURAL. vid/pid arrive via -v from
+# bt-stage2 (BT_VID/BT_PID); when no enumeration line names the device in a
+# boot, the old unfiltered behaviour is kept rather than silently dropping
+# coverage, and the summary says so.
+$0 ~ ("idVendor=" vid ", idProduct=" pid) {
+    if (match($0, / usb [0-9][0-9.-]*:/)) {
+        devpath = substr($0, RSTART + 5, RLENGTH - 6)
+    }
 }
 
 { last_ts = $1 }
@@ -88,6 +110,7 @@ BEGIN {
 /command( 0x[0-9a-f]+)? tx timeout/ {
     if (!have_tmo) {
         have_tmo = 1; tmo_ts = $1; intervened = 0; term_kind = ""; nev = 0
+        dev_error = 0
     }
     next
 }
@@ -95,7 +118,17 @@ BEGIN {
 !have_tmo { next }
 term_kind != "" { next }
 
+# Is this USB-layer line about OUR device? When the boot named the device's
+# path, require it; when it did not, accept the line and count the boot as
+# unanchored so the summary can say the classification ran unfiltered there.
+function ours(line) {
+    if (devpath == "") { unanchored[boot_id] = 1; return 1 }
+    return index(line, " usb " devpath ":") > 0
+}
+
 # Ours, unambiguously: nothing else in the system unloads the driver.
+# (Driver-level, carries no device path — no ours() check is possible or
+# needed; unloading btusb detaches every controller it drives.)
 /deregistering interface driver btusb/ {
     note("usbcore: deregistering interface driver btusb", "  <-- OURS")
     intervened = 1; term_kind = "unload"; term_ts = $1
@@ -106,6 +139,7 @@ term_kind != "" { next }
 # own errors, so a reset that follows a descriptor-read failure is a symptom
 # rather than an intervention — recorded, but it does not set term_kind.
 /reset (full|high|low)-speed USB device/ {
+    if (!ours($0)) next
     if (dev_error) { note("usb: reset after descriptor errors (hub recovery)", "") }
     else {
         note("usb: reset issued", "  <-- OURS (no preceding bus error)")
@@ -116,12 +150,14 @@ term_kind != "" { next }
 
 # Bus-level symptoms. These are the fault progressing, not an intervention.
 /device descriptor read|device not accepting address|error -110|error -62/ {
+    if (!ours($0)) next
     if (!dev_error) note("usb: first bus-level error", "")
     dev_error = 1
     next
 }
 
 /USB disconnect, device number/ {
+    if (!ours($0)) next
     note("usb: USB disconnect", intervened ? "" : "  <-- NATURAL")
     term_kind = "disconnect"; term_ts = $1
     next
@@ -150,4 +186,13 @@ END {
         print "  strictly alone after BT-1 until the device leaves the bus."
     }
     printf "  longest window of any kind       %.2fs (%s, %s)\n", max_any, hms(max_any), max_any_cls
+    nu = 0
+    for (b in unanchored) nu++
+    if (nu > 0) {
+        print ""
+        printf "  ⚠ %d boot(s) had no enumeration line naming %s:%s, so their\n", nu, vid, pid
+        print  "    USB-layer events were classified WITHOUT a device filter —"
+        print  "    a disconnect from any USB device could have terminated those"
+        print  "    windows. Treat their classification as weaker."
+    }
 }

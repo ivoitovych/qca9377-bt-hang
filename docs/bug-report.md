@@ -52,8 +52,17 @@ QCA neighbour, which was wrong.)
 
 An audio-layer state change — an ungraceful A2DP/SCO teardown, or a codec/transmission
 mode switch — is followed within seconds by `hci0: command tx timeout`. From that point
-the controller answers no HCI command. Roughly 45–66 s later it stops answering USB
-control transfers, and shortly after that it leaves the bus.
+the controller answers no HCI command, while remaining USB-enumerated and error-free.
+
+⚠️ Earlier revisions continued "…45–66 s later it stops answering USB control transfers
+and leaves the bus", as the fault's trajectory. That figure is **withdrawn**: every
+observation behind it had one of our own USB resets between the HCI timeout and the USB
+collapse, and the 29–121 s clustering is the watchdog's reaction time, not the device's
+survival time (`EX-018`). In the observations with no intervention the controller stayed
+enumerated with no USB-level error for 1 h 12 m and 6 h 26 m, right-censored by us
+(`EX-016`). Whether the USB collapse belongs to the fault's untreated trajectory at all
+is **unresolved** — it has only ever been observed downstream of a reset, rebind or
+driver reload.
 
 **The same hardware in the same laptop shows no fault under Windows 11** under deliberate
 repeated connect/disconnect/mode-change cycles, tested 2026-08-11. Hardware alone is
@@ -85,10 +94,12 @@ difference may be decisive.
 See §"What the missing entry does and does not explain" for the mechanism, and
 [`firmware-hypothesis.md`](firmware-hypothesis.md) for the prevention side.
 
-When the stall is not caught inside that window, the chip decays from HCI-unresponsive
-(USB still healthy) to USB-unresponsive and leaves the bus. That state cannot be cleared
-by any software means — not driver rebind, not xHCI port power-cycle, not a warm reboot,
-because that does not drop the M.2 power rail. A full power-off is required.
+In every incident where the chip reached the USB-unresponsive state and left the bus,
+that state could not be cleared by any software means — not driver rebind, not an xHCI
+port power-cycle. A full power-off recovers it. (Whether a warm reboot can is untested;
+the common "the M.2 rail is not dropped" explanation is an inference, not a
+measurement — `EX-017`, `EX-019`. And whether the USB collapse occurs at all without a
+reset in between is the open question above.)
 
 > ⚠️ **Confidence.** Finding 1 is verified three ways and is solid. Finding 2 rests on
 > two failed late resets (+20 s and +11 s) and one successful early reset. Offered as a
@@ -160,7 +171,9 @@ What this does **not** weaken, because none of it depends on knowing the trigger
 - the device is matched by no entry in btusb's quirks table (verified in source and binary)
 - 287 command timeouts across 34 boots with zero reset attempts
 - **every reset issued after the first HCI timeout failed, five for five**
-- stage 1 measured at 45–66 s in every instrumented case
+- with no intervention, stage 1 persisted 1 h 12 m and 6 h 26 m with no USB-level
+  error (`EX-016`, `EX-018`); the once-quoted "45–66 s to USB collapse" was our own
+  watchdog's reaction time and is withdrawn
 
 Those are properties of the controller's response, observed regardless of what provoked it.
 

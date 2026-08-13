@@ -29,23 +29,58 @@ echo "════════════════════════�
 
 echo
 echo "1. Installed files removed"
-for f in /usr/local/sbin/bt-hang-watchdog \
-         /usr/local/sbin/bt-health-snapshot \
-         /usr/local/bin/bt-health-report \
-         /usr/local/share/qca9377-bt-hang/baseline.tsv \
-         /etc/systemd/system/bt-hang-watchdog.service \
-         /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf \
-         /etc/systemd/system/bt-health-snapshot.service \
-         /etc/systemd/system/bt-health-snapshot.service.d/10-device.conf \
-         /etc/systemd/system/bt-health-snapshot.timer \
-         /etc/modprobe.d/btusb-qca9377.conf \
-         /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules; do
-    if [[ -e "$f" ]]; then bad "still present: $f"; else ok "removed: $f"; fi
+# DERIVED from install.sh, not hand-written. The list this replaces was frozen
+# at the original 11-file install and reported "matches its pre-investigation
+# state" while ~30 later artifacts — the capture stack, dyndbg, the awk libs,
+# the trial machinery — were still on the machine. Same derivation as
+# bt-verify-install: install.sh is the single source of truth for what got
+# installed, so it is also the source of truth for what "removed" means.
+HERE_VR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALL_SH=""
+for c in "$HERE_VR/../install.sh" ./install.sh /root/exp/qca9377-bt-hang/install.sh; do
+    [[ -r "$c" ]] && { INSTALL_SH="$c"; break; }
 done
+if [[ -z "$INSTALL_SH" ]]; then
+    bad "cannot find install.sh to derive the artifact list — restoration NOT verifiable"
+else
+    # install_file destinations, plus the generated udev rules, drop-ins and
+    # stamps that install.sh writes outside install_file.
+    mapfile -t VR_FILES < <(
+        { awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' \
+              "$INSTALL_SH" \
+          | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"[[:space:]]+[^[:space:]]+' \
+          | awk '{print $3}'
+          printf '%s\n' \
+              /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules \
+              /etc/udev/rules.d/51-bluetooth-health-snapshot.rules \
+              /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf \
+              /etc/systemd/system/bt-health-snapshot.service.d/10-device.conf \
+              /usr/local/share/qca9377-bt-hang/installed-at \
+              /usr/local/share/qca9377-bt-hang/mode
+        } | sort -u)
+    if (( ${#VR_FILES[@]} < 10 )); then
+        bad "derived only ${#VR_FILES[@]} artifact(s) from $INSTALL_SH — refusing a false all-clear"
+    else
+        for f in "${VR_FILES[@]}"; do
+            if [[ -e "$f" ]]; then bad "still present: $f"
+            elif [[ -e "$f.disabled" ]]; then
+                # bt-mode experiment moves files aside; uninstall removes only
+                # the active names, so these survive the experiment->uninstall
+                # path and a clean revert must catch them.
+                bad "still present (moved aside by bt-mode): $f.disabled"
+            else ok "removed: $f"; fi
+        done
+    fi
+fi
 
 echo
 echo "2. Services stopped and disabled"
-for u in bt-hang-watchdog.service bt-health-snapshot.timer; do
+# Unit list derived from what install.sh enables, for the same reason.
+mapfile -t VR_UNITS < <(
+    { [[ -n "${INSTALL_SH:-}" ]] && grep -oE 'systemctl enable --now [a-z0-9.-]+' "$INSTALL_SH" | awk '{print $NF}'
+      printf '%s\n' bt-hang-watchdog bt-health-snapshot.timer
+    } | sort -u)
+for u in "${VR_UNITS[@]}"; do
     st=$(systemctl is-active "$u" 2>/dev/null || true)
     en=$(systemctl is-enabled "$u" 2>/dev/null || true)
     if [[ "$st" == "active" || "$en" == "enabled" ]]; then

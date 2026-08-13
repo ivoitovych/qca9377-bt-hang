@@ -128,7 +128,23 @@ wd_now=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)
 acts_now=$(grep -cE "intervening|EARLY intervention" <<<"$wd_now")
 printf '   %-38s %s\n' "this boot only:" "$acts_now intervention(s)"
 echo
-if (( acts == 0 )); then
+# LIVE STATE BEFORE COUNTERS. The counters above span the whole retained
+# journal, so one historical recovery would otherwise print "WORKING" while
+# the controller is off the bus right now — the exact masking flaw fixed in
+# bt-status and bt-postmortem after 2026-08-11, surviving here as a third
+# instance. A tool that reports success during a failure is worse than none.
+hci_now=$(ls -A /sys/class/bluetooth/ 2>/dev/null | head -1)
+if [[ -z "$hci_now" ]]; then
+    on_bus=no
+    for d in /sys/bus/usb/devices/*; do
+        [[ -f "$d/idVendor" ]] || continue
+        [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]] \
+            && { on_bus=yes; break; }
+    done
+    echo "   VERDICT: CONTROLLER IS DOWN RIGHT NOW — no hci device exists."
+    echo "            (on USB bus: $on_bus. Historical counters above cannot"
+    echo "            outrank live state; see bt-postmortem for this incident.)"
+elif (( acts == 0 )); then
     echo "   VERDICT: no controller timeouts have occurred yet."
     echo "            Either the autosuspend fix is preventing them, or Bluetooth"
     echo "            has not been used enough. Check 'connected' in the metrics."

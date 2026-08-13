@@ -61,8 +61,8 @@ if (( ! found )); then
     echo
     echo "If Bluetooth used to work and the adapter has now vanished entirely,"
     echo "that is itself the advanced form of this bug: the controller has stopped"
-    echo "answering USB and dropped off the bus. Try a full POWER-OFF (not a"
-    echo "reboot) — a warm reset does not drop an M.2 card's power rail."
+    echo "answering USB and dropped off the bus. Try a full POWER-OFF — it"
+    echo "certainly recovers it; whether a plain reboot can is untested (EX-017)."
     echo
     lsusb 2>/dev/null | grep -iE "bluetooth|wireless" | sed 's/^/  /'
     exit 2

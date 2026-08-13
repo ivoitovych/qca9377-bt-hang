@@ -76,4 +76,7 @@ fi
 echo "source: $lines lines, $((boots + 1)) boot(s)" >&2
 echo >&2
 
-awk -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/stage2.awk" "$DUMP"
+# vid/pid anchor the USB-layer patterns to OUR device's path; without them any
+# USB device's disconnect could terminate (even "naturally") a stage-1 window.
+awk -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/stage2.awk" \
+    -v vid="${BT_VID:-13d3}" -v pid="${BT_PID:-3503}" "$DUMP"

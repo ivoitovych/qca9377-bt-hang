@@ -20,7 +20,7 @@
 BEGIN { FS = "\t" }
 # REQUIRED SCHEMA — see trial-summary.awk for the reasoning.
 #
-# `outcome` is mandatory. Without it the classification below silently makes
+# `bt1_status` is mandatory. Without it the classification below silently makes
 # every row not-hung, producing a table that says the stimulus never coincided
 # with a failure. That is precisely the wrong answer this cross-tab exists to
 # avoid, delivered with a clean exit status.
@@ -72,7 +72,11 @@ NR==1 {
     # reconfiguration during the trial is itself a candidate cause — reinstalling
     # reloads btusb, restarting the watchdog resets state. Co-occurrence inside
     # a trial that was two experiments cannot be attributed to the stimulus.
-    if ($col["treatment"] ~ /^CHANGED:/) { censored++; next }
+    # CHANGED: endpoints differ; PERTURBED: something acted on the controller
+    # between matching endpoints. trial-summary.awk excludes BOTH; excluding
+    # only CHANGED here let an interior-perturbed trial into this 2x2 while
+    # the rate table alongside it refused the same row.
+    if ($col["treatment"] ~ /^(CHANGED|PERTURBED):/) { censored++; next }
     if (o == "censored_pre_failure" || o == "unknown") { censored++; next }
     # "hung" here means the DEFECT occurred, regardless of whether the
     # controller was later rescued. Recovery is a fact about the mitigation,

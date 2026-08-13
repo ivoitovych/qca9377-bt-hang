@@ -8,12 +8,12 @@ directory touches Bluetooth.
 
 | Script | Purpose |
 |---|---|
-| `check [--quick]` | **The one command to run before committing** — syntax, invariants, drift, install state |
+| `check [--quick]` | the one pre-commit command: repo-validate (incl. tests) + a full-tree scan + install state |
 | `repo-scan <dir> [--all]` | Refuse-to-publish scan: MAC addresses, BSSIDs, UUIDs, IPv4, **email addresses**, AI attribution, binary captures |
 | `repo-validate <dir>` | `bash -n`, `systemd-analyze verify`, `udevadm verify`, `jq`, `py_compile` over every tracked file |
 | `repo-save <dir> "<msg>"` | validate → scan → commit → push → **verify the remote hash actually matches** |
 | `coverage [--min N]` | How much of the shell this repo ships does `tests/run-tests` actually execute |
-| `assert-test-catches <file> <line> <substr>` | Prove a test really fails when its invariant is broken |
+| `assert-test-catches <file> <line> <substr>` | prove a suite invariant actually fails when violated |
 
 ```bash
 ./devtools/check

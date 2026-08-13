@@ -16,8 +16,8 @@ with a known-unfinished item in it costs more than one that arrives late.
 
 Twenty occurrences of the operator's headset address, plus a second device address, were
 committed and pushed publicly before the sanitiser understood underscore-separated MACs.
-The working tree is clean and the sanitiser is fixed (`tools/sanitize-logs.sh`), but the
-addresses remain reachable in **git history**.
+The sanitiser is fixed (`tools/sanitize-logs.sh`), but the addresses remain reachable in
+**git history**.
 
 Assessed as low severity and deliberately deferred: these are Bluetooth device addresses,
 not Wi-Fi BSSIDs, so they are not indexed by the public geolocation databases that make a
@@ -25,18 +25,34 @@ BSSID leak serious. That justifies deferring the cleanup. It does not justify sk
 a kernel patch submission draws attention to the repository, which is exactly when a
 leaked identifier stops being theoretical.
 
+> ⚠️ **The addresses must not be spelled in this document.** The first version of this
+> section wrote them out literally as the `filter-repo` arguments — re-leaking into the
+> working tree, in both separator forms, the exact strings the section schedules for
+> purging from history, while opening with the claim "the working tree is clean".
+> `devtools/repo-scan . --all` failed on them, and it was a full-tree review that
+> noticed, because `repo-save` scans staged additions only. The address list lives
+> **outside the repository**, derived from history at purge time.
+
 What to do:
 
 ```bash
-# verify the working tree is still clean first
-grep -rhoEi "[0-9a-f]{2}([:_-][0-9a-f]{2}){5,}" --include="*.md" --include="*.log" \
-     --include="*.txt" --include="*.tsv" . | grep -viE "^AA[:_-]BB[:_-]CC|^11:11:11" | sort -u
-# expect: no output
+# 1. Derive the leaked addresses from history into a LOCAL, uncommitted file.
+#    (They are exactly the MAC-like strings in historical blobs that are not
+#    documented placeholders.)
+git log --all -p -- 'evidence/*' 'docs/*' \
+  | grep -oEi '[0-9a-f]{2}([:_-][0-9a-f]{2}){5}' \
+  | grep -viE '^(aa|AA)[:_-]?(bb|BB)|^11[:_-]11' | sort -u > /root/mac-purge-list
+# review /root/mac-purge-list by hand — expect the two device addresses,
+# each in colon and underscore form
 
-# then rewrite history (git-filter-repo preferred over filter-branch)
-git filter-repo --replace-text <(printf '%s==><MAC>\n' 80:C3:BA:9D:26:95 80_C3_BA_9D_26_95 \
-                                                       41:42:FF:F2:08:BD 41_42_FF_F2_08_BD)
+# 2. Rewrite history (git-filter-repo preferred over filter-branch)
+sed -i 's/$/==><MAC>/' /root/mac-purge-list
+git filter-repo --replace-text /root/mac-purge-list
 git push --force-with-lease
+rm /root/mac-purge-list
+
+# 3. Confirm the tree and history are clean
+devtools/repo-scan . --all
 ```
 
 ⚠️ This rewrites every commit hash and requires a force-push to a public repository. Do it

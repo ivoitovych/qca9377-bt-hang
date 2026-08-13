@@ -32,7 +32,8 @@ if [[ -z "$REPO" ]]; then
     done
 fi
 have() { command -v "$1" >/dev/null 2>&1; }
-cnt()  { local n; n=$(grep -c "$1" <<<"$2" 2>/dev/null || true); echo "${n:-0}" | head -1; }
+# -E, so callers can pass the opcode-aware timeout pattern and alternations.
+cnt()  { local n; n=$(grep -cE "$1" <<<"$2" 2>/dev/null || true); echo "${n:-0}" | head -1; }
 
 WD=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null || true)
 BD=$(journalctl -u bluetooth        -b 0 --no-pager 2>/dev/null || true)
@@ -45,7 +46,8 @@ acts=$(cnt      "intervening"           "$WD")
 recs=$(cnt      "RECOVERED"             "$WD")
 fatal=$(cnt     "FATAL:"                "$WD")
 rfail=$(cnt     "USBDEVFS_RESET failed" "$WD")
-tx=$(cnt        "tx timeout"            "$KE")
+# Canonical spelling (EX-015): bare "tx timeout" folds in link timeouts.
+tx=$(cnt        "command( 0x[0-9a-f]+)? tx timeout" "$KE")
 audio=$(grep -ciE 'avdtp|sco|a2dp|Hands-Free' <<<"$BD" 2>/dev/null || true)
 
 verdict() {
@@ -73,11 +75,13 @@ verdict() {
     if (( ${early_ok:-0} > 0 )); then
         echo "${G}${B}EARLY RECOVERY WORKS${O} — ${early_ok} success(es) this boot."
         echo "A reset issued on audio-teardown failure, BEFORE any HCI command"
-        echo "timed out, recovered the controller. The late trigger (tx timeout)"
-        echo "failed on 2026-08-10 under the same conditions."
+        echo "timed out, recovered the controller. Every USERSPACE reset issued"
+        echo "11 s or more after the first timeout has failed."
         echo
-        echo "Implication: cmd_timeout fires too late for this failure mode, so"
-        echo "adding the device to btusb's quirks table would not be sufficient."
+        echo "NOT implied: that the kernel patch would fail. hci_cmd_timeout()"
+        echo "calls hdev->reset at +0 s, a point no experiment has occupied —"
+        echo "the direction of that patch's effect is unmeasured. See"
+        echo "docs/fix-proposal.md §3a and issues.md BT-3."
     elif (( ${early_act:-0} > 0 )); then
         echo "${R}Early intervention fired ${early_act}x but did not recover.${O}"
     elif (( ${tx:-0} > 0 && ${acts:-0} == 0 )); then

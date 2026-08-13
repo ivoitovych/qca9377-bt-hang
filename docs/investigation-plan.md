@@ -139,9 +139,10 @@ Note that B may bind successfully and then fail at **HCI open**, not at probe �
 version, is a result worth capturing rather than a failed experiment.
 
 ⚠️ Risk, unchanged from [`fix-proposal.md`](fix-proposal.md) §4: if this module is not a
-true ROME variant, `btusb_setup_qca()` may fail at probe and leave the machine with **no
-Bluetooth**. Recoverable with `modprobe -r btusb; modprobe btusb` — no reboot — and the
-test module is loaded with `insmod`, never installed.
+true ROME variant, `btusb_setup_qca()` may fail — at **HCI open**, not at probe (the
+device stays enumerated and bound; bring-up is what fails) — and leave the machine with
+**no Bluetooth**. Recoverable with `modprobe -r btusb; modprobe btusb` — no reboot — and
+the test module is loaded with `insmod`, never installed.
 
 By this point we would know what we expect it to change, which is the difference between
 an experiment and a guess.

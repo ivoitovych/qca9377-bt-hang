@@ -99,7 +99,7 @@ for r in 50-bluetooth-no-autosuspend 51-bluetooth-health-snapshot; do
         else
             printf '  %s✗%s NOT INSTALLED: %s\n' "$R" "$O" "$f"; missing=$((missing+1))
         fi
-    elif grep -q "$VID" "$f" && grep -q "$PID" "$f"; then
+    elif grep -q "idVendor}==\"$VID\"" "$f" && grep -q "idProduct}==\"$PID\"" "$f"; then
         same=$((same+1))
     else
         printf '  %s✗%s %s does not reference %s:%s\n' "$R" "$O" "$f" "$VID" "$PID"; drift=$((drift+1))

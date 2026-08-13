@@ -63,24 +63,18 @@ jobs:
       - name: coverage floor
         run: devtools/coverage --quiet --min 15
 
-      # NO repo-scan STEP, DELIBERATELY, AND THIS IS NOT AN OVERSIGHT.
+      # The full-tree scan, which this workflow originally had to leave out.
       #
-      # repo-scan defaults to staged additions and falls back to ALL tracked
-      # files when nothing is staged — which is exactly the state of a CI
-      # checkout. Run here it currently fails on content that predates this
-      # workflow:
+      # It was omitted because `repo-scan` falls back to scanning ALL tracked
+      # files when nothing is staged — the state of a CI checkout — and it then
+      # failed on two items that predated the workflow: a kernel MODULE_AUTHOR
+      # address and a filesystem UUID carried in a sanitised log. Neither was a
+      # leak, but settling them was a publish-safety decision rather than a
+      # testing one, and a step that is red on its first run teaches everyone
+      # to ignore it.
       #
-      #   evidence/baseline/kernel-boot0.sanitized.log   a kernel maintainer's address
-      #                                                  a filesystem UUID
-      #
-      # That address is a kernel MODULE_AUTHOR string carried in a sanitised
-      # log, not a leak, but repo-scan's allowlist covers mailing lists and
-      # example.com rather than individual maintainers. Whether to widen the
-      # allowlist, redact the line, or leave both as they are is a
-      # publish-safety policy decision for the repository owner, and adding a
-      # step that is red on its first run would train everyone to ignore it —
-      # the same failure this workflow's systemd-analyze guard exists to avoid.
-      #
-      # The scan is NOT skipped in practice: devtools/repo-save runs it, over
-      # the staged diff where it is precise, and repo-save is how commits are
-      # made here. Add the step once the pre-existing hits are settled.
+      # They have since been settled on main, and `devtools/check` now gates on
+      # `repo-scan . --all` locally. CI enforces the same thing, so a pull
+      # request from a fork is screened before anyone reads it.
+      - name: repo-scan (publish safety, full tree)
+        run: devtools/repo-scan . --all

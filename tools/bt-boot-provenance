@@ -55,7 +55,16 @@ source "$LIBDIR/journal.sh"
 B=$'\033[1m'; O=$'\033[0m'; Y=$'\033[33m'
 [[ -t 1 ]] || { B=""; O=""; Y=""; }
 
-mapfile -t BOOTS < <(bt_journal --list-boots --no-pager 2>/dev/null | tail -n "$N")
+# Numeric rows only: with fewer than N boots retained, `tail` would include
+# the header row, and `$((off - 1))` on the literal "IDX" is a bash error.
+#
+# Through bt_journal, not journalctl. The two halves of this line arrived from
+# opposite directions and both are needed: the seam makes the tool drivable
+# from a fixture at all, and the numeric filter fixes a real crash the fixture
+# did not model — tests/journal/provenance/list-boots.log had no header row, so
+# nothing here would have caught it. The fixture now carries one.
+mapfile -t BOOTS < <(bt_journal --list-boots --no-pager 2>/dev/null \
+                     | awk '$1 ~ /^-?[0-9]+$/' | tail -n "$N")
 if (( ${#BOOTS[@]} == 0 )); then
     echo "bt-boot-provenance: could not list boots" >&2; exit 1
 fi

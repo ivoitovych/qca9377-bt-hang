@@ -154,8 +154,11 @@ usb usb3-port3: attempt power cycle                 # xHCI port power cycle
 usb usb3-port3: unable to enumerate USB device
 ```
 
-**A warm reboot is often not enough** — it doesn't drop the M.2 power rail. That is why
-you sometimes need a full shutdown.
+**A warm reboot is often reported not to be enough**, and a full shutdown certainly
+works. Why is *not established*: "a warm reboot does not drop the M.2 power rail" is an
+inference this project recorded as untested (`EX-017`, `EX-019`) — one controller
+recovery across a `reboot.target` shutdown is on record, with an unlogged power-off not
+excluded.
 
 ### An earlier hypothesis about the trigger — SINCE REFUTED
 
@@ -422,9 +425,10 @@ evidence/
   diagnosis/          reproducible transcripts proving the root cause
   sessions/           one directory per reproduction session
 HISTORY.md            chronological development record, wrong turns included
-data/
-  baseline.tsv        pre-mitigation failure counts
-  logs/               sanitised kernel + bluetoothd logs
+tests/                invariants, each anchored to a real shipped defect
+tools/lib/            shared awk programs (timestamps, matching, reports)
+evidence/exhibits/    numbered, self-verifying evidence exhibits
+evidence/trials/      numbered trials and results.tsv (the denominators)
 ```
 
 ### Publishing logs

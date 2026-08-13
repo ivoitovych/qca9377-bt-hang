@@ -22,7 +22,7 @@ evidence/
 |---|---|
 | `kernel-boot0.sanitized.log` | Full kernel log of the boot that hung (2026-08-08 → 08-10) |
 | `bluetoothd-boot0.sanitized.log` | Matching bluetoothd log, incl. the AVDTP teardown that triggered it |
-| `baseline.tsv` | Per-boot failure counts across 34 boots (2026-05-31 → 08-10): **287 timeouts, 13 of 34 boots hung, zero resets** |
+| `baseline.tsv` | Per-boot failure counts across 34 boots (2026-05-31 → 08-10): **287 timeouts, 13 of 34 boots hung, zero resets**. "Hung" here means ≥1 command timeout. EX-003 counts 18 such boots — same criterion, different (later) retention window; the two totals are not comparable and neither corrects the other |
 
 Captured at 02:54 on 2026-08-10, *before* the three synthetic `tx timeout` lines were
 injected at 03:07 to test watchdog detection. The 22 timeouts in this log are all
@@ -71,6 +71,10 @@ guessed directory name that was one second off, silently creating a new director
 holding only `NOTES.md` while the evidence sat elsewhere.
 
 ### The sessions so far
+
+*(This table lists the first four; later sessions — the threshold-missed and
+no-early-signal hangs of 2026-08-11, and the 2026-08-13 stock trials — follow the same
+layout and carry their own NOTES.)*
 
 | Session | What it shows |
 |---|---|
@@ -129,8 +133,11 @@ btmon -r /var/log/bt-health/trace/bt-YYYYmmdd-HHMMSS.btsnoop
 If you attach a capture to a bug report, review it first. There is no automated scrubber
 for btsnoop.
 
-**Budget:** 128 MB × 30 ≈ 3.8 GB, plus a hard floor — capture prunes, then stops, rather
-than let free space fall below 10 GB.
+**Budget:** rotation 128 MB, retention 400 files, plus a hard floor — capture prunes,
+then stops, rather than let free space fall below 15 GB. (The count is generous on
+purpose: btmon aborts force early rotations, so files average ~2 MB; the floor is the
+real bound. An earlier 30-file/10 GB setting is what rotated away a session under
+investigation.)
 
 ---
 

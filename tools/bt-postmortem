@@ -46,8 +46,13 @@ inwin() { awk -v s="$1" -v e="$2" '$1>=s && $1<=e {printf "%.2f",$1; exit}'; }
 echo "${B}Controller hang postmortem${O} (boot $BOOT${SINCE:+, since $SINCE})"
 echo "─────────────────────────────────────────────────────────────"
 
+# Canonical spelling (EX-015). Bare "tx timeout" also matched `link tx
+# timeout` (ACL supervision, fired by a healthy controller when a device walks
+# out of range) — a burst of those would fabricate an incident, and one
+# adjacent to a real incident shifts t_first, the anchor every Δ below is
+# measured from.
 mapfile -t TO < <(journalctl "${KSEL[@]}" -o short-unix --no-pager 2>/dev/null \
-                  | grep "tx timeout" | awk '{printf "%.2f\n",$1}')
+                  | grep -E "command( 0x[0-9a-f]+)? tx timeout" | awk '{printf "%.2f\n",$1}')
 if (( ${#TO[@]} == 0 )); then
     echo "${G}No controller timeouts in range — nothing to analyse.${O}"; exit 0
 fi
@@ -97,7 +102,7 @@ printf '%-34s %-10s %s\n' "controller recovered"       "$(hm "$t_rec")"   "$(del
 
 # Counts scoped to this incident only.
 cwin() { awk -v s="$WIN_A" -v e="$WIN_B" '$1>=s && $1<=e' | grep -c "$1" || true; }
-n_to=$(awk -v s="$t_first" -v e="$t_last" '$1>=s && $1<=e' <<<"$(grep 'tx timeout' <<<"$KLOG")" | wc -l)
+n_to=$(awk -v s="$t_first" -v e="$t_last" '$1>=s && $1<=e' <<<"$(grep -E 'command( 0x[0-9a-f]+)? tx timeout' <<<"$KLOG")" | wc -l)
 n_act=$(cwin "intervening"            <<<"$WLOG")
 n_early=$(cwin "EARLY intervention"   <<<"$WLOG")
 n_rec=$(cwin "RECOVERED"              <<<"$WLOG")
@@ -124,8 +129,8 @@ if [[ -z "$hci_now" ]]; then
     echo "  ${R}${B}CONTROLLER IS DOWN RIGHT NOW${O} — no hci device exists."
     echo "  on USB bus: $on_bus"
     if [[ "$on_bus" == no ]]; then
-        echo "  It left the bus: stage 2. A full POWER-OFF is required — a warm"
-        echo "  reboot does not drop the M.2 power rail."
+        echo "  It left the bus: stage 2. A full POWER-OFF certainly recovers it;"
+        echo "  whether a warm reboot can is untested (EX-017/EX-019)."
     else
         echo "  Enumerated but btusb has not created an adapter."
     fi

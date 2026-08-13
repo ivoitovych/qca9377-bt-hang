@@ -66,6 +66,16 @@ Is the desync signature a predictor of the hang?
   companion symptom, not a cause. Report it as such.
 ```
 
+## Known instrument defect visible in this table — annotated 2026-08-13
+
+Rows `-26` (**-678.4**) and `-15` (**-538.6**) carry impossible negative HOURS.
+That column was computed with day-of-month time arithmetic, which goes wrong
+for a boot spanning a month boundary (June 29 → July 1; July 25 → August 2).
+The defect was in `bt-boot-stats`' duration column only — it does not touch the
+DESYNC/TIMEOUT counts or the cross-tabulation this exhibit exists for, which
+count lines within a boot regardless of its duration. The tool now uses full
+civil-date arithmetic; the table is preserved as captured.
+
 ## Integrity note — this exhibit is NO LONGER re-runnable as captured
 
 This output was captured at 00:45 on 2026-08-12, covering **34 boots** back to

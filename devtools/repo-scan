@@ -72,8 +72,11 @@ pass()   { (( QUIET )) || echo "  ✓ $1"; }
 # Normalise dash to colon before applying the allowlist: the detector accepts
 # both separators, so an allowlist anchored on colons rejected the documented
 # placeholders written in dash form.
-macs=$(grep -oEi '[0-9a-f]{2}([:-][0-9a-f]{2}){5,}' <<<"$CONTENT" \
-       | tr 'A-F-' 'a-f:' \
+# [:_-]: the underscore form is the one that carried the historical 20-address
+# leak (BlueZ D-Bus paths), and it was the one separator this last-line-of-
+# defence scan did not match while the sanitiser did.
+macs=$(grep -oEi '[0-9a-f]{2}([:_-][0-9a-f]{2}){5,}' <<<"$CONTENT" \
+       | tr 'A-F_-' 'a-f::' \
        | grep -vE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be)' \
        | sort -u)
 [[ -n "$macs" ]] && report "real MAC/BSSID found:" $macs || pass "no unexpected MACs"
@@ -109,6 +112,7 @@ ips=$(grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' <<<"$CONTENT" \
 ALLOW_MAIL="${REPO_SCAN_ALLOW_MAIL:-$(git config user.email 2>/dev/null || echo '')}"
 mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
         | grep -viE '@(vger\.kernel\.org|lists\.linux\.dev|kernel\.org|example\.(com|org))$' \
+        | grep -viFx 'giometti@linux.it' \
         | grep -viE '^(noreply|no-reply)@' \
         | { [[ -n "$ALLOW_MAIL" ]] && grep -viF "$ALLOW_MAIL" || cat; } \
         | grep -viE '^modprobe@|^systemd-' \

@@ -158,7 +158,14 @@ function pseudo(kind, key, arr,   n) {
     out = ""
     while (match(line, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/)) {
         raw  = substr(line, RSTART, RLENGTH)
-        key  = tolower(raw); gsub(/-/, ":", key)   # dash and colon forms alias
+        # ALL separator forms alias to one key. Colon (kernel), underscore
+        # (BlueZ D-Bus paths, PipeWire node names) and dash spellings of the
+        # same address must receive the SAME placeholder, or the documented
+        # cross-reference property breaks exactly at the kernel<->bluetoothd
+        # boundary a maintainer follows in a merged timeline. Underscore was
+        # missing here even after the underscore LEAK was fixed: the
+        # substitution learned the form, the aliasing did not.
+        key  = tolower(raw); gsub(/[_-]/, ":", key)
         out  = out substr(line, 1, RSTART-1) pseudo("mac", key, M)
         line = substr(line, RSTART + RLENGTH)
     }

@@ -69,7 +69,8 @@ check UT-09 done "seam invariant asserted by the suite" \
 check UT-11 done "phase.awk extracted, Python extractor gone" \
       bash -c 'test -r tools/lib/phase.awk && ! grep -q "re.search" tests/run-tests'
 check UT-12 open "tests/run-tests split into per-area files" true
-check UT-13 blocked "repo-scan added to CI (needs a publish-safety decision)" true
+check UT-13 done "repo-scan runs clean on the full tree, and in CI" \
+      bash -c 'devtools/repo-scan . --all >/dev/null 2>&1 && grep -q "repo-scan" .github/workflows/checks.yml'
 
 # UT-10 is a ratio, not a yes/no: report it rather than pass/fail it.
 if [[ -z "$WANT" || "$WANT" == UT-10 ]]; then
