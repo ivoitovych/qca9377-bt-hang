@@ -1281,8 +1281,21 @@ BPL=$(BT_LIBDIR=/nonexistent BT_JOURNAL_FIXTURE="$BP" tools/bt-boot-provenance 2
 # only worth anything if it is the ONLY way in. Derived from the tools that
 # source journal.sh, so the list cannot drift out of date — the failure mode
 # this repository has hit four times with hand-written lists.
+#
+# SCOPED TO tools/ AND bin/, which is where the shipped diagnostics live and the
+# only place the seam is a rule. The first version scanned every shell file and
+# immediately flagged reviews/verify.sh — a script that GREPS FOR the seam in
+# order to report on its adoption. It matched `source "$LIBDIR/journal.sh"`
+# inside a grep pattern, was classified as converted, and was then failed for
+# containing the word journalctl in the counting greps beside it.
+#
+# That is the detector being fooled by its own subject matter, which is the
+# hazard this file already names elsewhere: "using `head | grep -q` here would
+# make the detector vulnerable to the very defect it detects." A tool that
+# measures the seam is not a tool that must use it.
 CONVERTED=()
 for f in "${SHFILES[@]}"; do
+    case "$f" in tools/*|bin/*) ;; *) continue ;; esac
     n=$(grep -c 'source "\$LIBDIR/journal.sh"' "$f" 2>/dev/null)
     (( ${n:-0} > 0 )) && CONVERTED+=("$f")
 done

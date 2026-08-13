@@ -22,7 +22,7 @@ directory touches Bluetooth.
 ./devtools/repo-save . "commit message"
 ./devtools/repo-save . -F message.txt --no-push
 ./devtools/coverage
-./devtools/coverage --quiet --min 12
+./devtools/coverage --quiet --min 15
 ```
 
 ## Knowing whether a test is worth anything
@@ -38,7 +38,7 @@ each printed a tick.
 the suite under `xtrace` and records every line bash actually reached. When first
 measured, 41 of 43 tracked shell scripts had **zero** executed lines and the total was
 13.1% — with `tests/run-tests` and `tools/bt-trial` the only two files contributing
-anything. See [`reviews/unit-testing-assessment.md`](../reviews/unit-testing-assessment.md)
+anything. See [the unit-testing assessment](../reviews/2026-08-13T1214Z-unit-testing-assessment.md)
 for what that means and what to do about it.
 
 The figures are a deliberate **lower bound** — multi-line commands are traced once, at
