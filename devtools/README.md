@@ -23,7 +23,7 @@ directory touches Bluetooth.
 ./devtools/repo-save . "commit message"
 ./devtools/repo-save . -F message.txt --no-push
 ./devtools/coverage
-./devtools/coverage --quiet --min 15
+./devtools/coverage --quiet --min 30
 ```
 
 ## Knowing whether a test is worth anything
