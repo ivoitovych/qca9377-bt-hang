@@ -1,0 +1,157 @@
+#!/bin/bash
+# bt-mode — switch between daily-use mitigation and a clean experimental
+#           baseline, reversibly, and record which one is active.
+#
+# WHY TWO MODES.
+#
+# This machine has been running a stock kernel inside a mitigated environment
+# since 2026-08-10 (EX-013): USB autosuspend disabled, the radio pinned
+# power/control=on, periodic health probes issuing real HCI commands, and a
+# watchdog that on this host resets the controller BEFORE any HCI timeout.
+#
+# That is a reasonable configuration for using the laptop. It is a bad one for
+# observing the defect, and specifically it can prevent the observation the
+# investigation is waiting for:
+#
+#   * the early watchdog fires on precursors this project has already REFUTED
+#     as causal markers — the audio-teardown signature, the 16 s desync, the
+#     A2DP-idle trigger — so it resets the controller on evidence that does not
+#     predict failure, and destroys the trajectory that would have shown what
+#     does. Those trials are recorded `censored_pre_failure` and enter no rate.
+#   * late-mode recovery changes whether a boot ends with a live controller, so
+#     it changes the outcome as well as the observation.
+#   * autosuspend and power policy alter the controller's operating conditions
+#     from boot onward, so they are workarounds under test, not constants.
+#
+#   mitigation   keep Bluetooth working; accept censored observations
+#   experiment   observe the defect; accept that a hang needs a cold power-off
+#
+# Passive capture (bt-capture, bt-trace, bt-usbmon, dynamic debug) stays on in
+# BOTH modes. Those observe; they do not intervene.
+#
+# EVERYTHING HERE IS REVERSIBLE. Config files are moved aside with a .disabled
+# suffix rather than edited or deleted, and `bt-mode mitigation` puts them back.
+#
+# Usage:
+#   bt-mode status        what is active now
+#   bt-mode experiment    clean baseline (no recovery, original power policy)
+#   bt-mode mitigation    restore the working-laptop configuration
+
+set -uo pipefail
+
+VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
+MODPROBE_CONF=/etc/modprobe.d/btusb-qca9377.conf
+UDEV_RULE=/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules
+STAMP=/usr/local/share/qca9377-bt-hang/mode
+
+need_root() { [[ $EUID -eq 0 ]] || { echo "bt-mode: must run as root" >&2; exit 1; }; }
+
+radio_dir() {
+    local d
+    for d in /sys/bus/usb/devices/*; do
+        [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
+        [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]] && { echo "$d"; return 0; }
+    done
+    return 1
+}
+
+show_status() {
+    local d autos power wd probes
+    autos=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo '?')
+    power='?'; d=$(radio_dir) && power=$(cat "$d/power/control" 2>/dev/null || echo '?')
+    if systemctl is-active --quiet bt-hang-watchdog 2>/dev/null; then
+        if systemctl show bt-hang-watchdog -p Environment --value 2>/dev/null | grep -q 'BT_EARLY=1'
+        then wd="on (early+late)"; else wd="on (late only)"; fi
+    else wd="off"; fi
+    systemctl is-active --quiet bt-health-snapshot.timer 2>/dev/null && probes=on || probes=off
+
+    echo "Bluetooth experiment mode"
+    echo "──────────────────────────────────────────────────────────"
+    printf '  recorded mode        %s\n' "$(cat "$STAMP" 2>/dev/null || echo '(never set)')"
+    printf '  recovery watchdog    %s\n' "$wd"
+    printf '  periodic HCI probes  %s\n' "$probes"
+    printf '  btusb autosuspend    %s   (Ubuntu default Y)\n' "$autos"
+    printf '  radio power/control  %s   (Ubuntu default auto)\n' "$power"
+    printf '  persistent overrides %s\n' \
+        "$( [[ -e "$MODPROBE_CONF" ]] && echo 'modprobe conf ACTIVE' || echo 'modprobe conf disabled')"
+    printf '                       %s\n' \
+        "$( [[ -e "$UDEV_RULE" ]] && echo 'udev pin ACTIVE' || echo 'udev pin disabled')"
+    echo
+    echo "  Passive capture is unaffected by mode and should stay on:"
+    for u in bt-capture bt-trace bt-usbmon bt-dyndbg; do
+        printf '    %-12s %s\n' "$u" "$(systemctl is-active "$u" 2>/dev/null || echo inactive)"
+    done
+}
+
+set_experiment() {
+    need_root
+    echo "Switching to EXPERIMENT mode"
+    echo
+
+    echo "[1/4] stop recovery and active probing"
+    systemctl disable --now bt-hang-watchdog 2>/dev/null && echo "  + watchdog stopped and disabled"
+    systemctl disable --now bt-health-snapshot.timer 2>/dev/null && echo "  + probe timer stopped and disabled"
+    # The udev-driven probe fires on controller events; leaving it armed would
+    # keep injecting HCI commands at exactly the moments under study.
+    if [[ -e /etc/udev/rules.d/51-bluetooth-health-snapshot.rules ]]; then
+        mv /etc/udev/rules.d/51-bluetooth-health-snapshot.rules{,.disabled} \
+            && echo "  + event-driven probe rule disabled"
+    fi
+
+    echo "[2/4] restore Ubuntu power management"
+    [[ -e "$MODPROBE_CONF" ]] && mv "$MODPROBE_CONF"{,.disabled} && echo "  + modprobe autosuspend override disabled"
+    [[ -e "$UDEV_RULE" ]] && mv "$UDEV_RULE"{,.disabled} && echo "  + udev power/control pin disabled"
+    # Runtime, so the current boot matches the persistent config rather than
+    # waiting for a reload. Writing the module parameter affects devices bound
+    # from now on; the radio's own control file is set directly.
+    echo Y > /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null \
+        && echo "  + enable_autosuspend=Y"
+    if d=$(radio_dir); then
+        echo auto > "$d/power/control" 2>/dev/null && echo "  + power/control=auto"
+    fi
+
+    echo "[3/4] reload rules"
+    udevadm control --reload-rules 2>/dev/null && echo "  + udev rules reloaded"
+    systemctl daemon-reload 2>/dev/null
+
+    echo "[4/4] record the mode"
+    mkdir -p "$(dirname "$STAMP")"
+    printf 'experiment since %s\n' "$(date -Iseconds)" > "$STAMP"
+    echo "  + $STAMP"
+    echo
+    echo "⚠ THE WATCHDOG IS OFF. A hang now requires a full POWER-OFF — a warm"
+    echo "  reboot does not drop the M.2 rail. That is the point: the failure"
+    echo "  will be observed rather than rescued."
+    echo
+    echo "Passive capture is untouched. Trials opened from now record"
+    echo "treatment=autosusp=Y,power=auto,wd=off,probes=off and are directly"
+    echo "comparable with the A/B/C/D builds."
+}
+
+set_mitigation() {
+    need_root
+    echo "Switching to MITIGATION mode"
+    echo
+    for f in "$MODPROBE_CONF" "$UDEV_RULE" /etc/udev/rules.d/51-bluetooth-health-snapshot.rules; do
+        [[ -e "$f.disabled" ]] && mv "$f.disabled" "$f" && echo "  + restored $f"
+    done
+    echo 0 > /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null \
+        && echo "  + enable_autosuspend=N"
+    if d=$(radio_dir); then echo on > "$d/power/control" 2>/dev/null && echo "  + power/control=on"; fi
+    udevadm control --reload-rules 2>/dev/null
+    systemctl enable --now bt-hang-watchdog 2>/dev/null && echo "  + watchdog running"
+    systemctl enable --now bt-health-snapshot.timer 2>/dev/null && echo "  + probe timer running"
+    mkdir -p "$(dirname "$STAMP")"
+    printf 'mitigation since %s\n' "$(date -Iseconds)" > "$STAMP"
+    echo
+    echo "Recovery is active again. Observations may be censored by early"
+    echo "intervention; bt-trial records them as such."
+}
+
+case "${1:-status}" in
+    status)     show_status ;;
+    experiment) set_experiment ;;
+    mitigation) set_mitigation ;;
+    -h|--help)  sed -n '2,36p' "$0" ;;
+    *) echo "bt-mode: unknown mode: $1" >&2; echo "usage: bt-mode [status|experiment|mitigation]" >&2; exit 1 ;;
+esac

@@ -57,6 +57,30 @@ install_file() {
     run install -D -m "$mode" "$src" "$dst"
 }
 
+
+# ── EXPERIMENT MODE GUARD ─────────────────────────────────────────────────
+# install.sh reinstalls the workarounds — modprobe override, udev pin, watchdog,
+# probe timer. If the machine is deliberately in experiment mode, that silently
+# reverts the baseline the current measurements depend on, and the reversion is
+# invisible unless someone runs `bt-mode status` afterwards. It happened once.
+MODE_STAMP=/usr/local/share/qca9377-bt-hang/mode
+if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null; then
+    echo "!! This machine is in EXPERIMENT mode ($(cat "$MODE_STAMP"))."
+    echo "   Installing would re-enable the watchdog, the probe timer, the"
+    echo "   modprobe autosuspend override and the udev power pin — reverting"
+    echo "   the controlled baseline without saying so."
+    echo
+    if [[ "${BT_FORCE_INSTALL:-0}" != 1 ]]; then
+        echo "   Refusing. To update tooling while staying in experiment mode:"
+        echo "       sudo BT_FORCE_INSTALL=1 ./install.sh --apply && sudo bt-mode experiment"
+        echo "   Or leave experiment mode first:  sudo bt-mode mitigation"
+        exit 3
+    fi
+    echo "   BT_FORCE_INSTALL=1 — continuing. Re-apply the mode afterwards:"
+    echo "       sudo bt-mode experiment"
+    echo
+fi
+
 if (( APPLY )); then
     echo "=== INSTALL ==="
     [[ $EUID -eq 0 ]] || { echo "must run as root" >&2; exit 1; }
@@ -171,6 +195,7 @@ install_file "$SRC/tools/bt-context"     /usr/local/bin/bt-context     0755
 install_file "$SRC/tools/bt-logvolume"   /usr/local/bin/bt-logvolume   0755
 install_file "$SRC/tools/bt-phase"       /usr/local/bin/bt-phase       0755
 install_file "$SRC/tools/bt-env-history" /usr/local/bin/bt-env-history 0755
+install_file "$SRC/tools/bt-mode"        /usr/local/bin/bt-mode        0755
 # Shared awk programs. These are loaded with `awk -f`, so they must sit where
 # the tools look: <dir of the tool>/lib.
 install_file "$SRC/tools/lib/timestamp.awk"     /usr/local/bin/lib/timestamp.awk     0644

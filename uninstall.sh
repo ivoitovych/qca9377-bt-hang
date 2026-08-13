@@ -47,6 +47,8 @@ FILES=(
     /usr/local/bin/bt-logvolume
     /usr/local/bin/bt-phase
     /usr/local/bin/bt-env-history
+    /usr/local/bin/bt-mode
+    /usr/local/share/qca9377-bt-hang/mode
     /usr/local/bin/lib/timestamp.awk
     /usr/local/bin/lib/interval.awk
     /usr/local/bin/lib/capdiff-match.awk
