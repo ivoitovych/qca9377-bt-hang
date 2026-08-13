@@ -1,0 +1,176 @@
+#!/bin/bash
+# system-roundtrip — install for real, verify, uninstall for real, verify.
+#
+#   BT_SYSTEM_TEST=1 tests/system-roundtrip
+#
+# THE ONE TEST CLASS THE SUITE WAS MISSING. Everything in tests/run-tests
+# drives tools over fixtures, seams and dry runs. Nothing had ever executed
+# install.sh's APPLY branch — the `run()` path that actually installs, the
+# generated drop-ins, uninstall.sh's removal loop — which is roughly 40% of
+# install.sh and 70% of uninstall.sh, and it is the half a user's first
+# command exercises.
+#
+# The claim under test is the one the README makes on the front page:
+#
+#     "Every file installed is NEW. Nothing pre-existing is modified, so
+#      uninstalling is a complete restoration."
+#
+# That is a system-level claim. It cannot be checked by reading either script,
+# because it is a property of the PAIR — and this repository has already
+# shipped the pair out of step: four artifacts that install.sh installed and
+# uninstall.sh left behind, while printing "complete restoration".
+#
+# ── WHY THIS IS NOT PART OF tests/run-tests ───────────────────────────────
+#
+# Because it writes to /usr/local, /etc/systemd/system, /etc/modprobe.d and
+# /etc/udev/rules.d, and reloads systemd. On the investigation machine that
+# would reinstall the workarounds mid-experiment: exactly the contamination
+# this project's whole testing effort exists to prevent, performed by the
+# tests themselves. install.sh's own experiment-mode guard exists for the
+# human version of this mistake.
+#
+# So it is gated three ways, and refuses unless ALL hold:
+#
+#   1. BT_SYSTEM_TEST=1 must be set explicitly. No default, no --yes flag
+#      that a shell history could replay by accident.
+#   2. No existing installation. If /usr/local/share/qca9377-bt-hang exists,
+#      this machine has a deployment and is not a scratch host.
+#   3. No open trial and no experiment mode — the two states in which an
+#      install is known to destroy a measurement in progress.
+#
+# CI sets the variable on a fresh container. A developer machine never runs
+# it unasked, and the investigation machine fails gate 2 even if someone sets
+# the variable.
+
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+
+pass=0; fail=0
+ok()  { echo "  ✓ $*"; pass=$((pass + 1)); }
+bad() { echo "  ✗ $*"; fail=$((fail + 1)); }
+
+echo "system round trip — install --apply, verify, uninstall --apply, verify"
+echo "──────────────────────────────────────────────────────────────────────"
+
+# ── gates ─────────────────────────────────────────────────────────────────
+if [[ "${BT_SYSTEM_TEST:-0}" != "1" ]]; then
+    echo "  · refusing: set BT_SYSTEM_TEST=1 to run (this test INSTALLS, for real)"
+    exit 0
+fi
+if [[ -e /usr/local/share/qca9377-bt-hang ]]; then
+    echo "  ✗ refusing: this machine already has an installation." >&2
+    echo "    A round trip here would reinstall the workarounds over a live" >&2
+    echo "    deployment and could end a measurement in progress." >&2
+    exit 1
+fi
+if [[ -e "${BT_STATE:-/run/bt-trial}/current" ]]; then
+    echo "  ✗ refusing: a trial is open — installing reloads btusb." >&2
+    exit 1
+fi
+if [[ -r /usr/local/share/qca9377-bt-hang/mode ]]; then
+    echo "  ✗ refusing: this machine is in experiment mode." >&2
+    exit 1
+fi
+if [[ $EUID -ne 0 ]]; then
+    echo "  · refusing: --apply needs root, and this is not root"
+    exit 0
+fi
+
+# ── host capability, not a safety gate ────────────────────────────────────
+# install.sh --apply writes udev rules and drives systemctl. Without a running
+# systemd it cannot succeed — "Failed to connect to bus: Host is down" — and
+# reporting that as a FAILED system check would be blaming the installer for
+# the container it was run in. A GitHub ubuntu-latest runner is a VM with a
+# live systemd and does satisfy this; a docker container generally does not.
+if ! systemctl is-system-running >/dev/null 2>&1 || [[ ! -d /etc/udev/rules.d ]]; then
+    echo "  · skipped: no running systemd or no /etc/udev/rules.d — install --apply"
+    echo "    cannot complete here, and its failure would describe the host"
+    echo
+    echo "skipped cleanly; run on a host with a live systemd (a CI VM qualifies)"
+    exit 0
+fi
+
+# ── the round trip ────────────────────────────────────────────────────────
+# Every step's exit status is asserted. A step that fails does NOT abort the
+# script: uninstall must still run, or a failed install would leave the host
+# dirty for every later job on it.
+IOUT=$(./install.sh --apply 2>&1); irc=$?
+(( irc == 0 )) && ok "install.sh --apply completed" \
+               || { bad "install.sh --apply failed (rc=$irc)"; tail -5 <<<"$IOUT" | sed 's/^/      /'; }
+
+# The installer's own claim: what is running matches what is committed. This
+# is the check that catches an artifact installed by hand but never added to
+# install.sh — twice shipped here.
+#
+# CONDITIONAL ON btmon, and that exposed a real limitation. install.sh installs
+# bt-trace, bt-sco, bt-capdiff and bt-usbmon only `if command -v btmon`;
+# bt-verify-install's expectations are UNCONDITIONAL, so on a host without
+# btmon it reports five artifacts as NOT INSTALLED when install.sh correctly
+# skipped them. It cannot distinguish "should be here and is missing" from
+# "correctly not installed here" — worth fixing in bt-verify-install, recorded
+# rather than papered over, and not something this test should weaken its
+# assertions to accommodate. So the check runs only where its premise holds.
+if command -v btmon >/dev/null 2>&1; then
+    VOUT=$(tools/bt-verify-install . 2>&1); vrc=$?
+    (( vrc == 0 )) && ok "bt-verify-install reports the running system matches the checkout" \
+                   || { bad "bt-verify-install found drift after a fresh install (rc=$vrc)"; \
+                        grep -E '✗|drift|MISSING' <<<"$VOUT" | head -5 | sed 's/^/      /'; }
+else
+    echo "  · bt-verify-install skipped: btmon absent, so install.sh conditionally"
+    echo "    skipped 5 artifacts that bt-verify-install expects unconditionally"
+fi
+
+# Spot-check the artifacts most recently orphaned, by name. bt-verify-install
+# derives its list from install.sh, so it cannot notice a file that install.sh
+# installs and uninstall.sh forgets — which is the failure this pair had.
+for f in /usr/local/bin/lib/journal.sh /usr/local/bin/lib/phase.awk; do
+    [[ -e "$f" ]] && ok "installed: $f" || bad "install.sh did not deliver $f"
+done
+
+UOUT=$(./uninstall.sh --apply 2>&1); urc=$?
+(( urc == 0 )) && ok "uninstall.sh --apply completed" \
+               || { bad "uninstall.sh --apply failed (rc=$urc)"; tail -5 <<<"$UOUT" | sed 's/^/      /'; }
+
+# THE CLAIM ITSELF. Not "uninstall exited 0" — "nothing is left behind".
+#
+# verify-restored.sh asks a broader question than this test can answer in a
+# container: it checks that the machine is back to a working Bluetooth host —
+# bluetooth.service active, dpkg -V bluez clean. A container was never that,
+# so its failures there describe the container, not the uninstall. Where a
+# real bluez and a running systemd exist, it is the authoritative check.
+if command -v hciconfig >/dev/null 2>&1 && systemctl is-system-running >/dev/null 2>&1; then
+    ROUT=$(tools/verify-restored.sh 2>&1); rrc=$?
+    (( rrc == 0 )) && ok "verify-restored.sh confirms the machine is back to its prior state" \
+                   || { bad "RESIDUE after uninstall — 'complete restoration' is false (rc=$rrc)"; \
+                        grep '✗' <<<"$ROUT" | head -8 | sed 's/^/      /'; }
+else
+    echo "  · verify-restored.sh skipped: no running systemd / no bluez, so its"
+    echo "    checks would describe this container rather than the uninstall"
+fi
+
+# And independently of any tool's opinion, by direct inspection: every path
+# install.sh writes must be gone. Derived from install.sh, never a
+# hand-written list — the failure mode this repository has hit six times.
+#
+# THIS IS THE ENVIRONMENT-INDEPENDENT CHECK, and therefore the one that must
+# never be skipped. It needs no bluez, no systemd and no btmon: it asks only
+# whether the files this checkout installs are still on disk. When the two
+# checks above skip, this is the whole assertion.
+LEFT=$(awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' \
+           install.sh 2>/dev/null \
+       | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"[[:space:]]+[^[:space:]]+' \
+       | awk '{print $3}' | sort -u \
+       | while read -r p; do [[ -e "$p" ]] && echo "$p"; done)
+if [[ -z "$LEFT" ]]; then
+    ok "no install_file destination survives the uninstall (checked directly)"
+else
+    bad "files left behind:"
+    sed 's/^/      /' <<<"$LEFT"
+fi
+
+echo
+if (( fail )); then
+    echo "FAILED: $fail of $((pass + fail)) system checks"
+    exit 1
+fi
+echo "all $pass system checks pass"
