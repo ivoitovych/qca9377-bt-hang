@@ -65,7 +65,7 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | CS-01 | Test `sanitize-logs.sh` (+ fix its awk gate) | done | this commit | `tests/run-tests --section "sanitize-logs"` |
 | CS-02 | Test `install.sh` / `uninstall.sh` dry run | done | this commit | `tests/run-tests --section "install.sh and uninstall"` |
 | CS-03 | Test the devtools against a scratch repo | done | this commit | `tests/run-tests --section "publish gates"` |
-| CS-04 | Test `bt-capdiff`/`bt-sco`/`bt-context`/`bt-incident` via `BT_*` overrides | **open** | — | as above for `tools/` rows |
+| CS-04 | Test `bt-capdiff`/`bt-sco`/`bt-context`/`bt-incident` via `BT_*` overrides | **partial** — `bt-incident` done (and its sandbox fixed); `bt-sco`/`bt-capdiff` need btmon | `2fcef33` | `tests/run-tests --section "whole tools"` |
 | CS-05 | Convert + test `bt-actions` (seam) | done | this commit | `grep -c 'journal.sh' tools/bt-actions` → 2; `tests/run-tests --section "whole tools"` |
 | CS-06 | `bt-logvolume`, `bt-boot-stats`, `bt-timeline.sh` | done | `def19bc` | `tests/run-tests --section "whole tools"` |
 | CS-07 | `bt-env-history`, `bt-boot-list`, `bt-boots` | done | `def19bc` | `tests/run-tests --section "whole tools"` |
@@ -104,7 +104,8 @@ legitimate uses remain, and two quoted counts that were simply wrong. A register
 runs rots exactly like the documentation it was meant to replace.
 
 Coverage was **13.1%** (503/3846) when the report was written, **18.3%** at `d016249`,
-and **28.5%** (1195/4197) after UT-07 + CS-02/03/05 landed. If `devtools/coverage`
+**28.5%** after UT-07 + CS-02/03/05, and **38.3%** (1692/4423) after the watchdog, the
+six seam conversions and `bt-incident`. If `devtools/coverage`
 prints materially less than the last figure, something regressed and the register is
 stale. (Two of those points are not comparable naively: main's merge and the `./`-prefix
 join fix in `devtools/coverage` both moved the denominator — the trend is what matters.)
