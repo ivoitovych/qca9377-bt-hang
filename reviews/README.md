@@ -66,10 +66,10 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | UT-07 | Fixtures for `trial-sco-table.awk`, `stage2.awk` | done | this commit | `tests/run-tests --section "awk libraries"` — 17 cases across 3 libraries |
 | UT-08 | Journal seam `tools/lib/journal.sh` | done | `d016249` | `test -r tools/lib/journal.sh` |
 | UT-09 | Convert `bt-phase`, `bt-boot-provenance` | done | `d016249` | `tests/run-tests --section "whole tools" \| grep 'journal seam'` |
-| UT-10 | Convert the remaining journal-reading tools | **partial** 10/21 | `def19bc` | `sh reviews/verify.sh` — prints converted vs remaining |
+| UT-10 | Convert the remaining journal-reading tools | **partial** 10/21 | `def19bc` | `reviews/verify.sh` — prints converted vs remaining |
 | UT-11 | `lib/phase.awk`; delete the Python extractor | done | `d016249` | `test -r tools/lib/phase.awk`; extractor gone: `grep -c re.search tests/run-tests` → 0 |
 | UT-12 | Split `tests/run-tests` into per-area files | **open** | — | `wc -l tests/run-tests` — 1353 at `d016249`, was 1038 |
-| UT-13 | Settle `repo-scan`'s pre-existing hits, then add to CI | **blocked** | — | see below |
+| UT-13 | Settle `repo-scan`'s pre-existing hits, then add to CI | done | `383b991` + merge | `devtools/repo-scan . --all` → clean; step present in `checks.yml` |
 
 ### From `2026-08-13T1244Z-coverage-strategy.md`
 
@@ -105,7 +105,7 @@ what was built, and why it differs.
 ### Check every row at once
 
 ```bash
-sh reviews/verify.sh           # runs every row's check and prints pass/fail
+reviews/verify.sh              # runs every row's check and prints pass/fail
 devtools/check                 # syntax, invariants, drift, install state
 devtools/coverage              # the number UT-05..UT-11 were meant to move
 ```
@@ -123,26 +123,16 @@ prints materially less than the last figure, something regressed and the registe
 stale. (Two of those points are not comparable naively: main's merge and the `./`-prefix
 join fix in `devtools/coverage` both moved the denominator — the trend is what matters.)
 
-### UT-13 — what is blocked, and on what
+### UT-13 — closed, from the other side
 
-`devtools/repo-scan` cannot yet run in CI. With nothing staged it falls back to scanning
-every tracked file, where it fails on two pre-existing items in
-`evidence/baseline/kernel-boot0.sanitized.log`: a kernel maintainer's address carried in
-a `MODULE_AUTHOR` string, and a filesystem UUID.
+This was blocked on a publish-safety decision, not on work: `repo-scan . --all` failed on
+a kernel `MODULE_AUTHOR` address and a filesystem UUID in a sanitised log, and choosing
+between widening the allowlist, redacting, or dropping the check was the owner's call.
 
-Neither is a leak. But `repo-scan`'s email allowlist covers mailing lists and
-`example.com`, not individual maintainers, so the scan is red on the current tree.
-
-**This is a publish-safety policy decision, not a testing one**, which is why it is
-blocked rather than open. Three coherent answers:
-
-1. Widen the allowlist to accept addresses that appear inside quoted kernel log lines.
-2. Redact the two items in the sanitised log, as `tools/sanitize-logs.sh` does elsewhere.
-3. Leave both, and keep `repo-scan` out of CI permanently — `devtools/repo-save` runs it
-   on every commit over the staged diff, where it is precise.
-
-Once one is chosen, add the step back to `.github/workflows/checks.yml`; the reason it
-was left out is recorded in the workflow itself.
+Main settled it (`b9cbf9e`..`383b991`) and went further — `devtools/check` now gates on
+`repo-scan . --all` locally. The CI step has been added to match, so a pull request from a
+fork is screened before anyone reads it. `devtools/repo-scan . --all` is clean on the
+merged tree.
 
 ## Adding a report
 
