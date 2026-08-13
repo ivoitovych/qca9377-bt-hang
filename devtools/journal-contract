@@ -1,0 +1,109 @@
+#!/bin/bash
+# journal-contract — do the real journalctl's output shapes still match what
+# the test fixtures claim they are?
+#
+#   devtools/journal-contract          check every claim the fixtures rely on
+#
+# WHY THIS EXISTS. Every fixture under tests/journal/ is a CLAIM about what
+# `journalctl <args>` prints, and the seam (tools/lib/journal.sh) serves those
+# claims to the tools under test. A mock is only as good as its fidelity to
+# the real tool, and such claims rot in a specific, quiet way: the provenance
+# fixture originally lacked `--list-boots`'s HEADER ROW, so every fixture-
+# driven test passed while the real tool crashed on real output. The fixture
+# was missing a case, not wrong in one — the failure mode no amount of
+# fixture-driven testing can see, because the fixture is the world.
+#
+# So the claims are checked against the real tool, on a machine that has a
+# real journal. Each check below names the fixture that depends on it. On a
+# host with no usable journal (CI containers), every check SKIPS LOUDLY and
+# the exit is 0 — an absent journal is not a broken contract.
+#
+# THE STRONGER FORM IS KNOWN AND BLOCKED. Building a real journal from
+# committed text (systemd-journal-remote) and diffing real journalctl output
+# against the fixture byte-for-byte would prove equivalence rather than shape;
+# systemd-journal-remote 255.x rejected every export-format input tried
+# ("Finishing after writing 0 entries"), and the reason is not yet understood.
+# Revisit; the register tracks it as the open half of TC-04.
+#
+# Read-only.
+
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+
+pass=0; fail=0; skip=0
+ok()   { echo "  ✓ $*"; pass=$((pass + 1)); }
+bad()  { echo "  ✗ $*"; fail=$((fail + 1)); }
+note() { echo "  · $*"; skip=$((skip + 1)); }
+
+echo "journal contract — real journalctl vs the shapes the fixtures claim"
+echo "──────────────────────────────────────────────────────────────────"
+
+if ! command -v journalctl >/dev/null 2>&1; then
+    note "journalctl not installed — nothing to check against (exit 0)"
+    exit 0
+fi
+
+# A usable journal has at least one boot. Counted, never `grep -q`.
+LB=$(journalctl --list-boots --no-pager 2>/dev/null)
+nboots=$(awk '$1 ~ /^-?[0-9]+$/' <<<"$LB" | wc -l)
+if [[ "${nboots:-0}" -eq 0 ]]; then
+    note "no boots in the host journal (CI container?) — contract checks skipped"
+    echo
+    echo "skipped cleanly; run this on a machine with a real journal"
+    exit 0
+fi
+
+# ── claim 1: --list-boots carries a non-numeric header row ────────────────
+# Relied on by tests/journal/provenance/list-boots.log, which carries one so
+# that bt-boot-provenance's numeric filter is actually exercised. If a future
+# systemd drops the header, the fixture is claiming a shape the tool no
+# longer emits, and the filter is dead weight the tests still "cover".
+hdr=$(head -1 <<<"$LB" | awk '$1 ~ /^-?[0-9]+$/ { print "numeric" }')
+if [[ -z "$hdr" ]]; then
+    ok "--list-boots still prints a header row (provenance fixture carries one)"
+else
+    bad "--list-boots no longer prints a header — update the provenance fixture AND bt-boot-provenance"
+fi
+
+# ── claim 2: numeric rows have the offset in field 1, timestamps in 4-5/8-9 ─
+row=$(awk '$1 ~ /^-?[0-9]+$/ { print; exit }' <<<"$LB")
+f4=$(awk '{print $4}' <<<"$row"); f5=$(awk '{print $5}' <<<"$row")
+if [[ "$f4" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ && "$f5" =~ ^[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]]; then
+    ok "--list-boots rows carry date+time at fields 4-5 (bt-boot-provenance reads them there)"
+else
+    bad "--list-boots row layout changed: field4='$f4' field5='$f5'"
+fi
+
+# ── claim 3: short-iso-precise starts lines with the ISO timestamp ────────
+# Every kernel.log / unit-*.log fixture starts lines this way, and every
+# converted tool cuts field 1 as the timestamp.
+line=$(journalctl -b "$(awk '$1 ~ /^-?[0-9]+$/ {print $1; exit}' <<<"$LB")" \
+       -n 1 --no-pager -o short-iso-precise 2>/dev/null | tail -1)
+ts=$(awk '{print $1}' <<<"$line")
+if [[ "$ts" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6} ]]; then
+    ok "short-iso-precise puts a microsecond ISO timestamp in field 1"
+else
+    bad "short-iso-precise field 1 is '$ts' — every fixture and field-1 cut is now wrong"
+fi
+
+# ── claim 4: -b all emits '-- Boot <id> --' separators ────────────────────
+# stage2.awk keys its boot-locality on these; tests/stage2-invariants.data
+# and tests/fixtures/stage2/* all carry them.
+if (( nboots > 1 )); then
+    seps=$(journalctl -k -b all --no-pager -o short-iso-precise 2>/dev/null \
+           | head -5000 | grep -c '^-- Boot ')
+    if [[ "${seps:-0}" -gt 0 ]]; then
+        ok "-b all still separates boots with '-- Boot <id> --' (stage2 fixtures claim it)"
+    else
+        bad "-b all no longer emits boot separators — stage2 boot-locality is broken"
+    fi
+else
+    note "single boot retained — separator claim unchecked this run"
+fi
+
+echo
+if (( fail )); then
+    echo "CONTRACT BROKEN: a fixture claims a shape the real journalctl no longer emits"
+    exit 1
+fi
+echo "contract holds: $pass claim(s) verified, $skip skipped"

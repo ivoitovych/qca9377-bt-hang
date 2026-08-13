@@ -78,7 +78,8 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 |---|---|---|---|---|
 | TC-01 | Action-tool mocks + spy for the watchdog | done — **not as `device.sh`** | this commit | `tests/run-tests --section "bt-hang-watchdog"` |
 | TC-02 | CI-gated system round trip (`--apply` both ways) | **open** | — | separate step in `checks.yml`, gated on `BT_SYSTEM_TEST=1` |
-| TC-03 | Fixture provenance comments + real-tool contract check | **open** | — | judgement; see the report |
+| TC-03 | Fixture provenance comments + real-tool contract check | **partial** | this commit | `devtools/journal-contract` |
+| TC-04 | Mock-equivalence: real journalctl over a BUILT journal, diffed vs fixtures | **partial** — shape contract shipped; byte equivalence blocked | this commit | `devtools/journal-contract`; blocker noted in its header |
 
 **TC-01 deviated from its report's design, deliberately.** The report proposed
 `tools/lib/device.sh` wrapper functions; the implementation uses PATH stubs written by

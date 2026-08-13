@@ -54,6 +54,9 @@ step "repo-validate (syntax, awk parse, invariants, doc drift)" \
 step "repo-scan --all (full tree, not just staged additions)" \
      devtools/repo-scan . --all --quiet
 
+step "journal contract (fixture shapes vs the real journalctl)" \
+     devtools/journal-contract
+
 if (( ! QUICK )); then
     # Not a correctness gate — it reports whether the RUNNING machine matches
     # the checkout, which a commit does not change. Failure here is a prompt to

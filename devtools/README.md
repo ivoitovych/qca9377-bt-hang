@@ -14,6 +14,7 @@ directory touches Bluetooth.
 | `repo-save <dir> "<msg>"` | validate → scan → commit → push → **verify the remote hash actually matches** |
 | `coverage [--min N]` | How much of the shell this repo ships does `tests/run-tests` actually execute |
 | `assert-test-catches <file> <line> <substr>` | prove a suite invariant actually fails when violated |
+| `journal-contract` | do the journal fixtures still match the shapes the REAL journalctl emits |
 
 ```bash
 ./devtools/check

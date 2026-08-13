@@ -63,6 +63,12 @@ jobs:
       - name: coverage floor
         run: devtools/coverage --quiet --min 30
 
+      # Skips cleanly on a journal-less runner; on any machine with a real
+      # journal it verifies the shapes the test fixtures claim journalctl
+      # emits. The fixture that lacked --list-boots's header row is why.
+      - name: journal contract
+        run: devtools/journal-contract
+
       # The full-tree scan, which this workflow originally had to leave out.
       #
       # It was omitted because `repo-scan` falls back to scanning ALL tracked
