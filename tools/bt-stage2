@@ -17,6 +17,10 @@
 # right-censored — a lower bound, not a measurement. This tool refuses to
 # average the two together, and says so when nothing natural has been seen.
 #
+# Reset provenance requires more than the kernel's generic "reset ... USB
+# device" line. The default acquisition therefore merges kernel records with
+# bt-hang-watchdog.service. A kernel-only --from cache remains accepted, but
+# unmarked clean resets are reported as unknown-origin and censored separately.
 # Read-only: it reads the journal and writes nothing but its own cache file.
 
 set -uo pipefail
@@ -59,8 +63,10 @@ else
     # -b all is required. Plain `journalctl -k` returned only the current boot
     # here, which silently reduced a 23-boot history to one and would make this
     # tool report a single window as if it were the whole record.
-    echo "reading the kernel journal across all boots (this takes minutes)..." >&2
-    if ! journalctl -k -b all --no-pager -o short-iso-precise > "$TMP" 2>/dev/null; then
+    echo "reading kernel + watchdog journals across all boots (this takes minutes)..." >&2
+    if ! journalctl -b all --no-pager -o short-iso-precise \
+            _TRANSPORT=kernel + _SYSTEMD_UNIT=bt-hang-watchdog.service \
+            > "$TMP" 2>/dev/null; then
         echo "bt-stage2: journalctl failed; refusing to report on a partial read" >&2
         rm -f "$TMP"; exit 1
     fi

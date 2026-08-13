@@ -130,10 +130,12 @@ recovers it.
 
 **Current formulation — everything the evidence earns, and nothing more:**
 
+<!-- BT1-CURRENT-BEGIN -->
 > The controller sometimes enters a non-responsive HCI state during synchronous-audio link
 > transitions, while remaining USB-enumerated. Later USB collapse has so far only been
 > observed after a reset, rebind or driver reload; whether it belongs to the fault's
 > untreated trajectory is **unresolved**.
+<!-- BT1-CURRENT-END -->
 
 That is deliberately a statement about *when and where*, not *why*. The failure is now
 well localised in time and in subsystem behaviour, and not at all in mechanism. Anything
@@ -152,10 +154,13 @@ off, probes off, stock power management) showed **no progression at all for 4331
 one hour twelve minutes** — and ended only because `install.sh` reloaded btusb. The only
 USB-layer line in the entire window is our own driver unload.
 
-Then the whole retained journal was checked the same way (`EX-018`, 3,283,493 kernel lines,
-22 boots). **Fourteen boots reached stage 1. Zero progressed to stage 2 uncensored** — nine
-were ended by one of our resets, five by shutdown. There is no observation anywhere in the
-record of this controller leaving the USB bus on its own.
+Then the whole retained journal was checked (`EX-018`/`EX-020`, about 3.3 million kernel
+lines, 22 boots). The historical classifier reported 14 stage-1 boots, zero uncensored USB
+losses, nine resets and five shutdowns. A later review found that “our reset” was inferred
+from absence of a recognized preceding bus error rather than positive provenance. That 9/5
+breakdown is therefore pending re-capture under the positive/kernel/unknown reset categories.
+No curated exhibit currently establishes an uncensored USB loss, but the whole-journal
+zero must not be cited as mechanically re-verified until that re-capture is done.
 
 Worse, the 45–66 s figure is visibly an artefact of the instrument. The short windows
 cluster at 29–121 s because that is the watchdog's reaction time; the two boots where
@@ -294,7 +299,7 @@ What this changes in practice:
 - It is no longer described as the *likely fix* for BT-1.
 - Build **B** (quirk added) must therefore be judged on more than "did it hang?" — it has
   to record whether the automatic reset recovers the controller, and whether boots under B
-  reach stage 2 *more* often than boots under stock-with-no-intervention.
+  reach USB absence *more* often than boots under stock-with-no-intervention.
 - The stage-2 natural-history question is a **prerequisite** for reading the B result at
   all: without knowing what untreated stage 1 does, there is no baseline against which an
   automatic reset can be scored as recovery or as harm.

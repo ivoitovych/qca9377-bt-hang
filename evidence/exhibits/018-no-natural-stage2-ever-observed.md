@@ -1,8 +1,8 @@
 # EX-018 — no-natural-stage2-ever-observed
 
-**Claim.** Across the entire retained journal — 3,283,493 kernel lines, 22 boots — 14 boots reached stage 1 and ZERO of them progressed to stage 2 without our intervention first. There is no uncensored observation of the controller leaving the USB bus on its own.
+**Historical claim.** The then-current classifier reported 14 stage-1 boots across the retained journal and zero uncensored USB-loss transitions. Its 9 reset / 5 shutdown breakdown requires re-capture because reset provenance was still inferred rather than positively established.
 
-**Relevance.** The two-stage failure model and its 45-66 s figure rest on 9 boots in which we reset the controller and 5 in which the machine was shut down. The 29-121 s cluster is the watchdog's reaction time, not the device's survival time — visible directly in the two boots where nothing fired for 1 h 12 m and 6 h 26 m.
+**Relevance.** This was the first whole-journal challenge to the two-stage model and its 45–66 s figure. The short intervals still cannot be read as natural survival times, but the exact terminator categories below are historical until re-captured with positive/kernel/unknown reset provenance.
 
 ## Extraction method
 
@@ -75,12 +75,13 @@ window as if it were the whole record.
 | 2026-08-12 06:26 | 121.65 s | our reset |
 | 2026-08-13 05:14 | **1 h 12 m** | our btusb unload |
 
-> **Superseded as a record by `EX-020`, but not contradicted by it.** The output
-> above was produced by a classifier since found to be biased toward false
-> naturals (review finding F2), and this exhibit's command line was later edited
-> to an equivalent that had not been run. `EX-020` re-captures the same analysis
-> under the corrected classifier, in one pass, and the full body is
-> **byte-identical**. Cite `EX-020`; this remains as the original record.
+> **Superseded twice.** `EX-020` re-captured this output after the F2 classifier fixes,
+> but a later review found that both versions still inferred reset origin from absence of
+> recognized bus errors. The current classifier separates positive intervention,
+> kernel-treatment reset and unknown-origin reset. Do not cite the 9/5 terminator breakdown
+> until the affected machine re-captures the retained journal under those categories.
+> This and `EX-020` remain historical records of successive classifiers; `EX-016` is the
+> directly checked uncensored-by-reset observation that remains current.
 
 ## Reading
 

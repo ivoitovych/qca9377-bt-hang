@@ -91,7 +91,8 @@ sort -n -k1,1 "$TMP" | while IFS=$'\t' read -r ts tag msg; do
         *)     col="$C_TRC"  ;;
     esac
     # Highlight the signatures that matter, whatever stream they came from.
-    if [[ "$msg" == *"tx timeout"* || "$msg" == *"RECOVERED"* || "$msg" == *"FATAL"* \
+    if [[ "$msg" == *"tx timeout"* || "$msg" == *"RECOVERED"* \
+       || "$msg" == *"CONTROLLER RESPONDS AFTER EARLY INTERVENTION"* || "$msg" == *"FATAL"* \
        || "$msg" == *"RECOVERY FAILED"* || "$msg" == *"intervening"* \
        || "$msg" == *"not accepting address"* || "$msg" == *"Connection timed out"* ]]; then
         col="$C_HOT"

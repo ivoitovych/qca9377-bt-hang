@@ -41,7 +41,7 @@ KE=$(journalctl -k                  -b 0 --no-pager 2>/dev/null || true)
 
 early_sig=$(cnt "early signal"          "$WD")
 early_act=$(cnt "EARLY intervention"    "$WD")
-early_ok=$(cnt  "EARLY recovery SUCCEEDED" "$WD")
+early_ok=$(cnt  "EARLY recovery SUCCEEDED|CONTROLLER RESPONDS AFTER EARLY INTERVENTION" "$WD")
 acts=$(cnt      "intervening"           "$WD")
 recs=$(cnt      "RECOVERED"             "$WD")
 fatal=$(cnt     "FATAL:"                "$WD")
@@ -64,7 +64,8 @@ verdict() {
     if [[ -z "$hci_now" ]]; then
         echo "${R}${B}CONTROLLER IS DOWN RIGHT NOW${O} — no hci device."
         if [[ "$on_bus" == no ]]; then
-            echo "Off the USB bus (stage 2): a full POWER-OFF is required."
+            echo "Off the USB bus. This outcome has only been observed after intervention."
+            echo "A full power-off is the demonstrated recovery; warm reboot is unresolved."
         else
             echo "Enumerated but btusb has created no adapter."
         fi
@@ -73,14 +74,14 @@ verdict() {
         return
     fi
     if (( ${early_ok:-0} > 0 )); then
-        echo "${G}${B}EARLY RECOVERY WORKS${O} — ${early_ok} success(es) this boot."
-        echo "A reset issued on audio-teardown failure, BEFORE any HCI command"
-        echo "timed out, recovered the controller. Every USERSPACE reset issued"
-        echo "11 s or more after the first timeout has failed."
+        echo "${G}${B}CONTROLLER ANSWERED AFTER EARLY INTERVENTION${O} — ${early_ok} time(s)."
+        echo "A reset was issued on an audio-teardown heuristic before any observed"
+        echo "HCI timeout. It censored whether BT-1 was actually imminent. Later"
+        echo "userspace resets did not restore HCI and were followed by USB loss."
         echo
         echo "NOT implied: that the kernel patch would fail. hci_cmd_timeout()"
         echo "calls hdev->reset at +0 s, a point no experiment has occupied —"
-        echo "the direction of that patch's effect is unmeasured. See"
+        echo "the direction of that patch's effect — benefit or harm — is unmeasured. See"
         echo "docs/fix-proposal.md §3a and issues.md BT-3."
     elif (( ${early_act:-0} > 0 )); then
         echo "${R}Early intervention fired ${early_act}x but did not recover.${O}"

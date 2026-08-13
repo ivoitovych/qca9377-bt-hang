@@ -1,8 +1,8 @@
 # EX-005 — late-reset-fails-device-leaves-bus
 
-**Claim.** Once HCI command timeouts have begun, no software recovery succeeds: USBDEVFS_RESET fails, USB unbind/bind fails, and the device leaves the USB bus entirely, after which only a cold power-off restores it.
+**Claim.** In this intervention sequence, HCI command timeouts were followed by a watchdog reset attempt that did not restore HCI service, then USB errors, device disappearance, and a failed unbind/bind attempt. A later full power-off restored the device.
 
-**Relevance.** Establishes the recovery deadline. The reset must land inside the window between the first HCI timeout and the first USB-level failure; after that the controller stops answering the USB core itself and no amount of re-enumeration helps. A cold power-off recovers it. (This exhibit originally added "because a warm reboot does not drop the M.2 power rail" — an untested hardware inference, not an observation; see EX-017 and EX-019. The reset-deadline claim above does not depend on it.)
+**Relevance.** Establishes what happened after one late intervention, not a natural recovery deadline. Because USB disappearance has only been observed downstream of reset/rebind/reload, the record is compatible both with “the reset was too late” and “the reset changed the trajectory.” A full power-off is a demonstrated recovery; warm-reboot behavior and the M.2-rail explanation remain unmeasured (`EX-017`, `EX-019`).
 
 ## Extraction method
 

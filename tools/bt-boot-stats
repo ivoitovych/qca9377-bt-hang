@@ -14,8 +14,8 @@
 #   HOURS    length of the boot's journal coverage
 #   DESYNC   count of "unexpected event for opcode" (HCI pipeline desync)
 #   TIMEOUT  count of "tx timeout" (controller stopped answering)
-#   BUSLOST  count of "USB disconnect" for the controller (stage 2 — cold boot
-#            required)
+#   BUSLOST  count of controller USB disconnects; intervention provenance must
+#            be checked before interpreting one as untreated progression
 #   TMO      yes if the boot recorded any command timeout
 #
 # NOTE ON "TMO" vs "hung". This column means "recorded at least one HCI command

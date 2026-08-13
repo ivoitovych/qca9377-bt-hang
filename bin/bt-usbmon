@@ -1,19 +1,20 @@
 #!/bin/bash
 # bt-usbmon — capture the USB transport under the Bluetooth controller.
 #
-# WHY THIS EXISTS. The failure has two stages. Stage 1 is visible: HCI commands
-# time out, and btmon records exactly which ones. Stage 2 is not: the controller
-# stops answering the USB core itself, the kernel logs
+# WHY THIS EXISTS. BT-1 is established at the HCI layer while USB remains
+# enumerated. USB-level errors and disappearance have also been observed, but
+# so far only downstream of reset/rebind/reload interventions; whether they are
+# part of the untreated fault is unresolved. When USB stops answering, the
+# kernel logs only
 #
 #     usb 3-3: device descriptor read/64, error -110
 #     usb 3-3: device not accepting address 2, error -62
 #
-# and the device leaves the bus. Those two lines are the entire record of the
-# most important part of the bug. They say a request was not answered; they do
-# not say what was actually on the wire — whether the device NAKs forever,
+# and the device may leave the bus. Those lines say a request was not answered;
+# they do not say what was actually on the wire — whether the device NAKs forever,
 # STALLs, returns a short descriptor, or goes electrically silent. For a report
-# whose central claim is "the device stops responding at the USB level", that
-# distinction is the evidence.
+# that distinction is evidence needed to separate untreated progression from
+# the effects of an intervention.
 #
 # usbmon records every URB submission and completion on the bus, which is
 # precisely that missing layer. Captured as pcap so it opens in Wireshark,
@@ -119,7 +120,7 @@ prune
 # never exits. Consequences of the old code, on any long-running boot: the
 # loop body never advanced, prune() and the free-space floor never ran again,
 # retention silently collapsed from KEEP files to one 64 MB ring, and older
-# USB history — the only record of stage 2 — was destroyed at every wrap.
+# USB history needed to interpret the post-HCI trajectory was destroyed at every wrap.
 # So this supervises tcpdump the way bt-trace supervises btmon: run it with a
 # plain -w, poll the file size, and rotate by restarting it. The ~1 s gap per
 # rotation is logged-by-construction (the timestamps in the filenames) and is

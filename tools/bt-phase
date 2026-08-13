@@ -14,8 +14,10 @@
 #
 #     phase = (t_failure - t_prev_probe) / (t_next_probe - t_prev_probe)
 #
-# Under independence that is uniform on [0,1] whatever the cadence irregularity,
-# because each event is normalised by the gap it actually fell in.
+# Under a constant-hazard event-time null independent of the probe schedule,
+# that phase is uniform on [0,1] even when probe cadence is irregular. Probe
+# independence alone is not enough: hazard that varies with boot age, audio
+# activity or time of day can make phase nonuniform without any probe effect.
 #
 # FOUR INVARIANTS, each of which was violated by an earlier version of this
 # tool and each of which silently produces a confident wrong answer:
@@ -34,7 +36,8 @@
 #   3. CLUSTERS, NOT LINES. One hung controller emits a burst of
 #      `command tx timeout` lines. Counting lines as events inflates n and
 #      destroys independence — the statistical caveat printed below assumes
-#      independent failures. Only the FIRST timeout of each cluster counts.
+#      independent failure clusters and approximately constant hazard within
+#      probe gaps. Only the FIRST timeout of each cluster counts.
 #
 #      ⚠ A CLUSTER IS NOT YET A PROVEN INCIDENT. The boundary here is purely
 #      temporal: timeouts more than INCIDENT_GAP apart start a new cluster.
@@ -104,6 +107,7 @@ echo "Probe-phase analysis"
 echo "══════════════════════════════════════════════════════════════════"
 echo "  intervals are built ONLY from timer-driven probes, at both boundaries,"
 echo "  within a single boot, against the FIRST timeout of each cluster."
+echo "  null: constant failure hazard within gaps, independent of probe schedule."
 echo "  (cluster = timeouts within ${INCIDENT_GAP}s of each other — a TEMPORAL"
 echo "   grouping, not an established incident boundary; see the header)"
 echo
@@ -200,7 +204,7 @@ END {
         exit
     }
     printf "  placed             %d\n", total
-    printf "  mean phase         %.3f   (0.5 expected under independence)\n", sum / total
+    printf "  mean phase         %.3f   (0.5 under the constant-hazard independent null)\n", sum / total
     printf "  within first 10%%   %d of %d\n", near + 0, total
     print ""
     print "  distribution across the gap:"
@@ -212,11 +216,13 @@ END {
         print "    question can be answered later, not so it can be answered now."
     } else if (near > total * 0.5) {
         print "  ⚠ Over half the clusters fall in the first 10% of their gap."
-        print "    Not expected under independence; worth investigating."
+        print "    Not expected under the stated null; worth investigating."
+        print "    A probe relationship and time-varying failure hazard are both"
+        print "    possible explanations; this statistic does not choose between them."
     } else {
-        print "  No evidence of an observer effect in this data. Note that this"
-        print "  is an absence of evidence for clustering, NOT a demonstration"
-        print "  of independence — with few events it cannot be that."
+        print "  No departure from the stated null is visible in this data. This"
+        print "  is NOT a demonstration of probe independence or constant hazard —"
+        print "  with few events it cannot establish either one."
     }
 }
 ' "$DATA"

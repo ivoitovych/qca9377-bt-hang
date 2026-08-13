@@ -1,12 +1,22 @@
 # EX-020 — stage2-recaptured-corrected-classifier
 
-**Claim.** Re-run of the whole-journal stage-2 analysis under the CORRECTED classifier (review finding F2): 14 boots reached stage 1, zero progressed to stage 2 uncensored. Byte-identical to the pre-fix run.
+**Historical claim.** The re-run after review finding F2 reported 14 boots reaching stage 1 and zero progressing to USB loss uncensored. The output was byte-identical to the pre-F2 run.
 
-**Relevance.** EX-018's recorded output was produced by a classifier biased toward FALSE naturals - dev_error was never reset at a boot boundary, and the USB patterns matched any device. A tool that invents naturals found none, and now the fixed tool finds none either, on the same journal.
+**Relevance.** EX-018's output was produced by a classifier biased toward false naturals: `dev_error` crossed boot boundaries and USB patterns matched any device. This recapture fixed those defects, but a later review found an opposite-direction provenance assumption still present.
 
-## Extraction method
+> **Superseded as a current classification.** This version labelled any target-device USB
+> reset with no recognized preceding bus error as `OURS`. Absence of a recognized error is
+> not positive intervention provenance; an automatic or otherwise unrecognized reset could
+> be misclassified and censor a natural-history window. `bt-stage2` now merges watchdog
+> markers with kernel records and separates positive intervention, kernel-treatment reset,
+> and unknown-origin reset. The retained journal must be re-captured on the affected machine
+> before the 9/5 terminator breakdown is cited again. The recorded output below remains
+> verbatim historical evidence, not a result of the new classifier.
 
-Re-runnable as-is on the affected machine:
+## Extraction method used at capture
+
+This is the command that produced the historical output. Running it with the current
+classifier intentionally produces different reset-provenance categories:
 
 ```console
 $ bt-stage2 --from /var/tmp/stage2.log | tail -14
@@ -54,7 +64,7 @@ found by a full-tree review:
 This exhibit fixes both: the command above is the command that produced the
 output above, under the corrected classifier.
 
-## The result did not move
+## The result did not move under the F2-only correction
 
 The full analysis bodies are byte-identical, pre-fix and post-fix:
 
@@ -63,14 +73,17 @@ $ diff old-body.txt new-body.txt && echo IDENTICAL
 IDENTICAL
 ```
 
-That is the expected direction. **Both halves of F2 bias toward false
+That was the expected direction for F2. **Both halves of F2 bias toward false
 naturals** — an unreset `dev_error` makes our resets look like passive hub
 recovery, and unanchored USB patterns let an unrelated device's disconnect end
 a window. A classifier that can only invent naturals found zero of them. The
 corrected one, which cannot, also finds zero.
 
-So the headline survives *a fortiori* rather than by luck, and it survives for
-a reason that can be stated without reference to this particular journal.
+The later provenance defect has the opposite direction: a clean reset of unknown
+origin was labelled intervention, which can hide rather than invent a natural
+trajectory. Therefore the old *a fortiori* argument does not settle the current
+classifier question. The 14/0 result may survive re-capture, but this exhibit cannot
+establish that in advance.
 
 **What was genuinely at risk** was the individual window durations, since a
 stray disconnect could have truncated one. They are unchanged too, and the

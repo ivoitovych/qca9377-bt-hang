@@ -130,6 +130,70 @@ grep -q 'SKIPPED — provenance check failed' <<<"$REF" \
     && ok "refuses to report when claimed provenance is impossible" \
     || bad "did not refuse on a contaminated probe set"
 
+if grep -q 'constant-hazard independent null' <<<"$OUT" \
+   && ! grep -q 'expected under independence' tools/bt-phase; then
+    ok "states the constant-hazard null instead of equating it with independence"
+else
+    bad "bt-phase still overstates independence as sufficient for a uniform phase"
+fi
+
+echo
+echo "bt-diagnose — phenotype is not a causal verdict"
+echo "──────────────────────────────────────────────────────────────"
+
+DOUT=$(bash -c 'source tools/bt-diagnose; diagnose_verdict 12 3 0 4' 2>&1)
+DRC=$?
+if (( DRC == 1 )) && grep -q 'phenotype observed' <<<"$DOUT"; then
+    ok "timeouts remain reportable even when aggregate reset messages exist"
+else
+    bad "reset messages suppressed the timeout phenotype (rc=$DRC)"
+fi
+if grep -q 'aggregate, unpaired, system-wide counts' <<<"$DOUT" \
+   && ! grep -qE 'callback is installed|kernel logged the failures and did nothing|driver_info = 0' <<<"$DOUT"; then
+    ok "aggregate history carries no callback, reset-origin or firmware-table verdict"
+else
+    bad "bt-diagnose still converts aggregate counts into a causal verdict"
+fi
+
+DZERO=$(bash -c 'source tools/bt-diagnose; diagnose_verdict 0 0 0 4' 2>&1)
+DZRC=$?
+if (( DZRC == 0 )) && grep -q 'no observation' <<<"$DZERO" \
+   && ! grep -qi 'controller is healthy' <<<"$DZERO"; then
+    ok "zero retained timeouts is absence of observation, not proof of health"
+else
+    bad "zero-timeout verdict overclaims health (rc=$DZRC)"
+fi
+
+echo
+echo "BT-1 current formulation — one mechanically checked statement"
+echo "──────────────────────────────────────────────────────────────"
+
+bt1_block() {
+    awk '/BT1-CURRENT-BEGIN/{inside=1; next}
+         /BT1-CURRENT-END/{inside=0}
+         inside' "$1"
+}
+BT1_CANON=$(bt1_block docs/issues.md)
+same=yes
+for f in README.md docs/bug-report.md docs/fix-proposal.md; do
+    [[ "$(bt1_block "$f")" == "$BT1_CANON" ]] || same=no
+done
+if [[ -n "$BT1_CANON" && "$same" == yes ]]; then
+    ok "README, bug report and fix proposal reproduce issues.md's canonical BT-1 paragraph"
+else
+    bad "current BT-1 paragraph drifted between authoritative user-facing documents"
+fi
+
+BT1_CURRENT_FILES=(README.md docs/bug-report.md docs/fix-proposal.md
+                   bin/bt-usbmon bin/bt-hang-watchdog tools/bt-status
+                   tools/bt-postmortem tools/bt-health-report.sh)
+retired=$(rg -n -i 'failure has two stages|controller fails in two stages|recoverable window closes|window closes sharply|exact operation usb_queue_reset_device|autosuspend was the trigger|stage 1 lasted ~6 hours|reached stage 2 before|cheap and safe' "${BT1_CURRENT_FILES[@]}" || true)
+if [[ -z "$retired" ]]; then
+    ok "current-facing docs and tools contain no retired BT-1/reset assertions"
+else
+    bad "retired BT-1/reset assertion remains: $retired"
+fi
+
 echo
 echo "bt-capdiff matching"
 echo "──────────────────────────────────────────────────────────────"
@@ -905,43 +969,49 @@ echo "────────────────────────�
 # which the watchdog reset the controller in between. The watchdog fired on
 # precisely the boots that progressed, and it fired first.
 #
-# The fixture has eight boots — natural disconnect, disconnect after our btusb
-# unload, no terminator at all, disconnect after a reset we issued, a
+# The fixture has ten boots — natural disconnect, disconnect after our btusb
+# unload, no terminator at all, a clean reset of UNKNOWN origin, a
 # `link tx timeout` that is not a BT-1 event, a natural progression with a
 # pre-terminator bus error, a clean reset in the boot AFTER that error (the
-# dev_error cross-boot leak: under the old code the stale flag classified that
-# reset as hub recovery and its disconnect as NATURAL), and a window in which
-# only a FOREIGN device (usb 1-2) disconnects.
+# dev_error cross-boot leak, now preceded by a positive watchdog marker), a
+# window in which only a FOREIGN device (usb 1-2) disconnects, a boot with no
+# failure, and an automatic kernel-treatment reset.
 S2=$(awk -f tools/lib/timestamp.awk -f tools/lib/stage2.awk \
      tests/stage2-invariants.data 2>&1)
 
 nat=$(grep -oP 'ended naturally\s+\K[0-9]+' <<<"$S2")
-inv=$(grep -oP 'ended by our intervention\s+\K[0-9]+' <<<"$S2")
+inv=$(grep -oP 'ended by positive intervention\s+\K[0-9]+' <<<"$S2")
+krs=$(grep -oP 'ended by kernel treatment reset\s+\K[0-9]+' <<<"$S2")
+urs=$(grep -oP 'ended by unknown-origin reset\s+\K[0-9]+' <<<"$S2")
 shd=$(grep -oP 'ended by shutdown\s+\K[0-9]+' <<<"$S2")
 [[ "$nat" == "2" ]] && ok "counts exactly the two naturally-ended windows" \
     || bad "expected 2 natural, got ${nat:-none} — dev_error leaking across boots?"
-[[ "$inv" == "3" ]] && ok "counts all three intervened windows as intervened" \
-    || bad "expected 3 intervened, got ${inv:-none} — a clean reset after an errored boot must be OURS"
+[[ "$inv" == "2" ]] && ok "counts only positively established interventions as intervened" \
+    || bad "expected 2 positive interventions, got ${inv:-none}"
+[[ "$krs" == "1" ]] && ok "separates an automatic kernel-treatment reset" \
+    || bad "expected 1 kernel-treatment reset, got ${krs:-none}"
+[[ "$urs" == "1" ]] && ok "a clean USB reset without provenance remains unknown" \
+    || bad "expected 1 unknown-origin reset, got ${urs:-none}"
 [[ "$shd" == "2" ]] && ok "a boot that simply ended is censored, not natural" \
     || bad "expected 2 shutdown, got ${shd:-none} — a foreign device's disconnect must not terminate a window"
 
 # The headline figure must come from the natural window (50 s) and NOT from the
 # longest one (4331.99 s, ended by shutdown). Reporting the larger number as the
 # survival time is the exact error, with the sign reversed.
-grep -q 'longest NATURAL stage-1 window   50.00s' <<<"$S2" \
+grep -q 'longest uncensored HCI-to-USB-loss window   50.00s' <<<"$S2" \
     && ok "headline survival time is taken from the uncensored window" \
-    || bad "natural maximum wrong: $(grep -o 'longest NATURAL[^\n]*' <<<"$S2")"
+    || bad "natural maximum wrong: $(grep -o 'longest uncensored[^\n]*' <<<"$S2")"
 
 # Every censored row must say so where it is read, not only in the summary.
-[[ "$(grep -c 'RIGHT-CENSORED' <<<"$S2")" == "5" ]] \
+[[ "$(grep -c 'RIGHT-CENSORED' <<<"$S2")" == "6" ]] \
     && ok "each censored window is labelled at the point of use" \
-    || bad "expected 5 RIGHT-CENSORED labels, got $(grep -c 'RIGHT-CENSORED' <<<"$S2")"
+    || bad "expected 6 RIGHT-CENSORED labels, got $(grep -c 'RIGHT-CENSORED' <<<"$S2")"
 
 # A `link tx timeout` boot must not open a window at all — it is an ACL
 # supervision timeout, and counting it would invent a stage-1 event.
-grep -q 'boots reaching stage 1        7' <<<"$S2" \
-    && ok "link tx timeout does not open a stage-1 window" \
-    || bad "wrong boot count: $(grep -o 'boots reaching stage 1[^\n]*' <<<"$S2")"
+grep -q 'boots with HCI non-response   8' <<<"$S2" \
+    && ok "link tx timeout does not open an HCI-nonresponse window" \
+    || bad "wrong boot count: $(grep -o 'boots with HCI non-response[^\n]*' <<<"$S2")"
 
 # Boots with no enumeration line for the device run unfiltered, and the summary
 # must SAY so rather than present their classification as anchored.

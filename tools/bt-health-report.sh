@@ -112,18 +112,22 @@ if [[ -n "${BT_SYNTHETIC_NOTE:-}" ]]; then
 fi
 hr
 
-# ── 3. Watchdog effectiveness — the headline number ───────────────────────
-echo "3. WATCHDOG EFFECTIVENESS (the number that matters)"
+# ── 3. Watchdog outcomes — kept separate from causal interpretation ───────
+echo "3. WATCHDOG OUTCOMES"
 echo
 wd=$(journalctl -u bt-hang-watchdog --no-pager 2>/dev/null)
 acts=$(grep -cE "intervening|EARLY intervention"      <<<"$wd")
-recs=$(grep -c "RECOVERED"        <<<"$wd")
+confirmed_recs=$(grep -c "RECOVERED — confirmed stalled controller" <<<"$wd")
+legacy_recs=$(grep -c "RECOVERED — controller is responding again" <<<"$wd")
+early_recs=$(grep -cE "EARLY recovery SUCCEEDED|CONTROLLER RESPONDS AFTER EARLY INTERVENTION" <<<"$wd")
 fails=$(grep -c "RECOVERY FAILED" <<<"$wd")
 hard=$(grep -c "FATAL:"           <<<"$wd")
 printf '   %-38s %s\n' "interventions attempted:" "$acts"
-printf '   %-38s %s\n' "  -> recovered without reboot:" "$recs"
-printf '   %-38s %s\n' "  -> failed (soft hang, reset ineffective):" "$fails"
-printf '   %-38s %s\n' "  -> hard hang (chip off bus, cold boot):" "$hard"
+printf '   %-38s %s\n' "  -> confirmed post-timeout recovery:" "$confirmed_recs"
+printf '   %-38s %s\n' "  -> answered after early action:" "$early_recs"
+printf '   %-38s %s\n' "  -> legacy RECOVERED (context mixed):" "$legacy_recs"
+printf '   %-38s %s\n' "  -> HCI not restored:" "$fails"
+printf '   %-38s %s\n' "  -> controller observed USB-absent:" "$hard"
 wd_now=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)
 acts_now=$(grep -cE "intervening|EARLY intervention" <<<"$wd_now")
 printf '   %-38s %s\n' "this boot only:" "$acts_now intervention(s)"
@@ -145,24 +149,27 @@ if [[ -z "$hci_now" ]]; then
     echo "            (on USB bus: $on_bus. Historical counters above cannot"
     echo "            outrank live state; see bt-postmortem for this incident.)"
 elif (( acts == 0 )); then
-    echo "   VERDICT: no controller timeouts have occurred yet."
-    echo "            Either the autosuspend fix is preventing them, or Bluetooth"
-    echo "            has not been used enough. Check 'connected' in the metrics."
-elif (( recs > 0 )); then
-    echo "   VERDICT: WORKING. $recs hang(s) recovered automatically that would"
-    echo "            previously have required a reboot or power-off."
+    echo "   VERDICT: no watchdog intervention is recorded."
+    echo "            This does not imply that no timeout occurred; inspect the"
+    echo "            per-boot timeout and usage counts separately."
+elif (( confirmed_recs > 0 )); then
+    echo "   VERDICT: $confirmed_recs confirmed post-timeout HCI recovery event(s) recorded."
+    echo "            Compare incidence and later USB state separately."
+elif (( legacy_recs > 0 )); then
+    echo "   VERDICT: $legacy_recs legacy RECOVERED marker(s) have mixed context."
+    echo "            Aggregate old logs cannot separate early-action responses"
+    echo "            from post-timeout recovery; inspect incident chronology."
 else
     if (( acts_now == 0 )); then
         echo "   VERDICT: the $acts intervention(s) all predate the current boot."
-        echo "            They are the already-hard-hung controller from before the"
+        echo "            They are historical interventions from before the"
         echo "            cold power-off, not a failure of the mitigation. Nothing"
         echo "            has fired since. Keep measuring."
     else
         echo "   VERDICT: watchdog fired $acts_now time(s) THIS BOOT and never"
-        echo "            recovered the chip. If these are FATAL it was already"
-        echo "            hard-hung — it reacted too late, or the chip degraded"
-        echo "            too fast. Consider lowering BT_THRESHOLD to 2:"
-        echo "              systemctl edit bt-hang-watchdog"
+        echo "            restored HCI. If USB absence followed, do not assume the"
+        echo "            controller naturally degraded or that lowering the threshold"
+        echo "            is safer; reset may itself alter the trajectory."
     fi
 fi
 hr
@@ -191,16 +198,14 @@ hr
 
 echo "6. WHAT TO LOOK FOR"
 cat <<'EOF'
-   Success looks like ONE of:
-     a) tx-timeout counts drop to ~0 per boot
-        -> the autosuspend fix removed the trigger entirely
-     b) timeouts still occur, but every one is followed by "RECOVERED"
-        -> the watchdog is doing the kernel's missing job
-   Failure looks like:
-     c) "FATAL: no longer on the USB bus" appears
-        -> the chip still degraded to a hard hang before the watchdog caught it.
-           Lower BT_THRESHOLD to 2 and BT_WINDOW to 30, then re-measure.
-     d) uptimes stay short and reboots frequent -> nothing improved
+   Keep four quantities separate:
+     a) BT-1 incidence under a controlled exposure denominator
+     b) confirmed HCI recovery after timeout
+     c) USB errors/disappearance after intervention
+     d) final controller state
 
-   Live view:  journalctl -u bt-hang-watchdog -f
+   A lower timeout count does not identify autosuspend as the cause. USB absence
+   after a reset does not prove natural progression or justify a lower threshold.
+
+   Live view: journalctl -u bt-hang-watchdog -f
 EOF
