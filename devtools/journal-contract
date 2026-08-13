@@ -18,12 +18,13 @@
 # host with no usable journal (CI containers), every check SKIPS LOUDLY and
 # the exit is 0 — an absent journal is not a broken contract.
 #
-# THE STRONGER FORM IS KNOWN AND BLOCKED. Building a real journal from
-# committed text (systemd-journal-remote) and diffing real journalctl output
-# against the fixture byte-for-byte would prove equivalence rather than shape;
-# systemd-journal-remote 255.x rejected every export-format input tried
-# ("Finishing after writing 0 entries"), and the reason is not yet understood.
-# Revisit; the register tracks it as the open half of TC-04.
+# TWO PHASES. Phase 1 checks shapes against the HOST's journal and skips
+# where there is none. Phase 2 needs no host journal at all: it builds a real
+# journal from generated text and diffs real journalctl output byte-for-byte
+# against the grammar the fixtures are written in — mock-equivalence checked
+# by the tool itself, in any container. (This was briefly documented here as
+# blocked: systemd-journal-remote drops entries without _BOOT_ID, saying so
+# only at debug log level while exiting 0. Supplying boot IDs was the fix.)
 #
 # Read-only.
 
@@ -46,13 +47,17 @@ fi
 # A usable journal has at least one boot. Counted, never `grep -q`.
 LB=$(journalctl --list-boots --no-pager 2>/dev/null)
 nboots=$(awk '$1 ~ /^-?[0-9]+$/' <<<"$LB" | wc -l)
+HOST_JOURNAL=1
 if [[ "${nboots:-0}" -eq 0 ]]; then
-    note "no boots in the host journal (CI container?) — contract checks skipped"
-    echo
-    echo "skipped cleanly; run this on a machine with a real journal"
-    exit 0
+    # Phase 1 needs a real host journal; phase 2 BUILDS its own and runs
+    # anywhere systemd-journal-remote exists — a CI container included. The
+    # first version exited here, which silently skipped the one phase that
+    # was designed to work exactly where this branch is taken.
+    note "no boots in the host journal — phase-1 shape checks skipped"
+    HOST_JOURNAL=0
 fi
 
+if (( HOST_JOURNAL )); then
 # ── claim 1: --list-boots carries a non-numeric header row ────────────────
 # Relied on by tests/journal/provenance/list-boots.log, which carries one so
 # that bt-boot-provenance's numeric filter is actually exercised. If a future
@@ -99,6 +104,69 @@ if (( nboots > 1 )); then
     fi
 else
     note "single boot retained — separator claim unchecked this run"
+fi
+
+fi   # HOST_JOURNAL
+
+# ── phase 2: byte equivalence over a BUILT journal ────────────────────────
+#
+# The strong form of the contract, unblocked once the refusal was understood:
+# systemd-journal-remote silently drops any entry without a _BOOT_ID
+# ("Empty boot ID, refusing entry" — visible only at debug log level, while
+# the exit status stays 0 and the summary says "Finishing after writing 0
+# entries"). With boot IDs supplied, committed TEXT becomes a real journal,
+# the REAL journalctl runs over it, and its output is diffed against the
+# exact bytes the fixture model predicts. This checks the mock's output
+# grammar against the tool itself, with no hardware and no host journal.
+#
+# It already found one divergence: `-b all` prints `-- Boot <id> --` only
+# BETWEEN boots, never before the first, while the stage2 fixtures carry a
+# leading separator. stage2.awk treats separators as state resets so a
+# leading one is harmless to it — but the fixtures claim a shape the real
+# tool does not emit, and that asymmetry is recorded here rather than
+# discovered again.
+JR=""
+for c in /usr/lib/systemd/systemd-journal-remote /lib/systemd/systemd-journal-remote; do
+    [[ -x "$c" ]] && { JR="$c"; break; }
+done
+if [[ -z "$JR" ]]; then
+    note "systemd-journal-remote not installed — byte-equivalence phase skipped"
+else
+    W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
+    B1=11111111111111111111111111111111
+    B2=22222222222222222222222222222222
+    # Epochs chosen so the expected ISO strings are static under TZ=UTC.
+    {
+      printf '__REALTIME_TIMESTAMP=1786694400000000\n_BOOT_ID=%s\n_TRANSPORT=kernel\nSYSLOG_IDENTIFIER=kernel\n_HOSTNAME=host\nMESSAGE=Bluetooth: hci0: command 0x0406 tx timeout\n\n' "$B1"
+      printf '__REALTIME_TIMESTAMP=1786694410000000\n_BOOT_ID=%s\n_SYSTEMD_UNIT=bt-health-snapshot.service\nSYSLOG_IDENTIFIER=systemd\n_HOSTNAME=host\nMESSAGE=Snapshot Bluetooth health metrics\n\n' "$B1"
+      printf '__REALTIME_TIMESTAMP=1786694500000000\n_BOOT_ID=%s\n_TRANSPORT=kernel\nSYSLOG_IDENTIFIER=kernel\n_HOSTNAME=host\nMESSAGE=usb 3-3: USB disconnect, device number 2\n\n' "$B2"
+    } > "$W/export.txt"
+    if ! "$JR" --split-mode=none -o "$W/built.journal" "$W/export.txt" >/dev/null 2>&1        || [[ ! -s "$W/built.journal" ]]; then
+        bad "could not build a journal from export text — the equivalence phase is broken"
+    else
+        # Claim 5: the exact line grammar the fixtures are written in.
+        cat > "$W/want-all" <<'WANT'
+2026-08-14T08:00:00.000000+00:00 host kernel: Bluetooth: hci0: command 0x0406 tx timeout
+2026-08-14T08:00:10.000000+00:00 host systemd: Snapshot Bluetooth health metrics
+-- Boot 22222222222222222222222222222222 --
+2026-08-14T08:01:40.000000+00:00 host kernel: usb 3-3: USB disconnect, device number 2
+WANT
+        TZ=UTC journalctl --file="$W/built.journal" -b all --no-pager -o short-iso-precise             > "$W/got-all" 2>/dev/null
+        if diff -q "$W/want-all" "$W/got-all" >/dev/null 2>&1; then
+            ok "real journalctl output is byte-identical to the fixture grammar (-b all)"
+        else
+            bad "journalctl output diverged from the fixture grammar:"
+            diff "$W/want-all" "$W/got-all" | head -6 | sed 's/^/      /'
+        fi
+        # Claim 6: a unit filter selects exactly the unit's lines — the model
+        # bt_journal implements as unit-<name>.log files.
+        n=$(TZ=UTC journalctl --file="$W/built.journal" -u bt-health-snapshot.service                 --no-pager -o cat 2>/dev/null | grep -c 'Snapshot Bluetooth health metrics')
+        [[ "${n:-0}" == "1" ]]             && ok "unit filtering matches the per-unit fixture-file model"             || bad "-u selected $n line(s), expected exactly 1"
+        # Claim 7: no separator precedes the FIRST boot. The stage2 fixtures
+        # carry a leading one; recorded divergence, see the header note.
+        first=$(head -1 "$W/got-all")
+        [[ "$first" != "-- Boot"* ]]             && ok "no separator before the first boot (stage2 fixtures diverge here, knowingly)"             || bad "journalctl now emits a LEADING boot separator — update the fixtures and this note"
+    fi
 fi
 
 echo

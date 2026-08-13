@@ -1537,6 +1537,67 @@ FOUT=$(timeout 10 env PATH="$WD/stub:$PATH" \
     || bad "hard-hang path wrong"
 rm -rf "$WD" "$EMPTYSYS"
 
+# ── the six journal-only tools (CS-06 / CS-07) ────────────────────────────
+#
+# Small tools, converted together because they share one shape: read the
+# journal, count or tabulate, print. Each assertion below is a NUMBER the
+# fixture determines, not merely "it ran" — a tool that reads the journal and
+# prints an empty table exits 0 too.
+BJ=tests/journal/boots
+
+# bt-boots: one row per boot, kernel version and timeout count per row. The
+# counts differ per boot (1 and 2) so a tool that reads the wrong boot's log,
+# or the same log twice, cannot pass.
+BOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-boots 2>&1); brc=$?
+(( brc == 0 )) && ok "bt-boots tabulates over a fixture" || bad "bt-boots failed (rc=$brc)"
+r1=$(awk '$1 == "-1" {print $2, $3}' <<<"$BOUT")
+r0=$(awk '$1 == "0"  {print $2, $3}' <<<"$BOUT")
+[[ "$r1" == "7.0.0-28-generic 1" ]] \
+    && ok "bt-boots reads boot -1's own kernel and timeout count" \
+    || bad "boot -1 row wrong: '$r1'"
+[[ "$r0" == "7.0.0-29-generic 2" ]] \
+    && ok "bt-boots reads boot 0's own kernel and timeout count" \
+    || bad "boot 0 row wrong: '$r0'"
+
+# bt-boot-list: numeric offsets only, header row excluded — the same header
+# that crashed bt-boot-provenance. The fixture carries one.
+BLOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-boot-list 2>&1)
+[[ "$(tr '\n' ' ' <<<"$BLOUT" | tr -s ' ')" == "-1 0 " ]] \
+    && ok "bt-boot-list emits exactly the numeric offsets, header excluded" \
+    || bad "bt-boot-list emitted: $(tr '\n' ' ' <<<"$BLOUT")"
+
+# bt-boot-stats: per-boot timeout counts again, through a different reader.
+BSOUT=$(BT_JOURNAL_FIXTURE="$BJ" BT_BOOT_LIST=tests/journal/boots/boot-list tools/bt-boot-stats 2>&1)
+[[ "$(awk '$1 == "-1" {print $5}' <<<"$BSOUT")" == "1" \
+   && "$(awk '$1 == "0" {print $5}' <<<"$BSOUT")" == "2" ]] \
+    && ok "bt-boot-stats counts timeouts per boot from the fixture" \
+    || bad "bt-boot-stats timeout column wrong"
+
+# bt-timeline.sh: the current boot only, and it must classify the kernel
+# timeout lines rather than dumping the log.
+TLOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-timeline.sh 2>&1)
+# The opcode-aware spelling, like every other counting site in this
+# repository — the repo-wide invariant flagged this line when it was written
+# with a bare opcode, which is the check working on the tests themselves.
+n=$(grep -cE 'command( 0x[0-9a-f]+)? tx timeout' <<<"$TLOUT")
+(( ${n:-0} == 2 )) && ok "bt-timeline.sh renders this boot's kernel events" \
+                   || bad "bt-timeline.sh showed $n of 2 timeout lines"
+
+# bt-logvolume: a rate computed from a line count. The count is what the
+# fixture fixes; the rate depends on uptime and is not asserted.
+LVOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-logvolume 2>&1)
+[[ "$(awk '/total lines/ {print $3}' <<<"$LVOUT")" == "3" ]] \
+    && ok "bt-logvolume counts the fixture's lines" \
+    || bad "bt-logvolume total wrong: $(grep 'total lines' <<<"$LVOUT")"
+
+# bt-env-history: reads per-boot watchdog and probe state. Asserted only to
+# run and produce a row per boot — its columns come from units this fixture
+# deliberately does not carry, and asserting "-" everywhere would pin
+# absence rather than behaviour.
+EHOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-env-history 2>&1); ehrc=$?
+(( ehrc == 0 )) && ok "bt-env-history runs over a fixture without a journal" \
+                || bad "bt-env-history failed (rc=$ehrc)"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is

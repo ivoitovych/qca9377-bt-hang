@@ -34,8 +34,8 @@ jobs:
       # which is correct but means the redaction assertions would SKIP on every
       # CI run. The gate that keeps Wi-Fi BSSIDs out of a public repository is
       # not one to leave untested because of the default awk.
-      - name: Install gawk
-        run: sudo apt-get install -y gawk
+      - name: Install gawk and systemd-journal-remote
+        run: sudo apt-get install -y gawk systemd-journal-remote
 
       - name: Show the tool versions the results depend on
         run: |
@@ -63,9 +63,10 @@ jobs:
       - name: coverage floor
         run: devtools/coverage --quiet --min 30
 
-      # Skips cleanly on a journal-less runner; on any machine with a real
-      # journal it verifies the shapes the test fixtures claim journalctl
-      # emits. The fixture that lacked --list-boots's header row is why.
+      # Phase 1 (host-journal shapes) skips on a journal-less runner; phase 2
+      # builds a real journal from text and byte-compares real journalctl
+      # output against the fixture grammar — that phase runs HERE, which is
+      # why systemd-journal-remote is installed above.
       - name: journal contract
         run: devtools/journal-contract
 
