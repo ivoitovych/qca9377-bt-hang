@@ -1,0 +1,18 @@
+  TRIAL TYPE         BUILD  UNRECOV  BT-1 INC RATE    CENSORED mean dur
+  controlled_hang    stock  1/2      1/2      50%     1/3      100s
+      treatment: autosusp=N
+
+  These rows must never be added together. An observational boot
+  and a controlled protocol run are different evidence: the first
+  says the machine did or did not hang during ordinary use, the
+  second says the reproduction protocol was applied and the
+  controller withstood it or did not. Only controlled_* rows can
+  satisfy the A/B/C/D gate.
+
+  !! 1 CENSORED trial(s), excluded from every rate above.
+     An early watchdog intervention fired before any timeout was
+     observed, so the natural outcome is unknowable: the controller
+     might have wedged, or might have been fine. Early precursors in
+     this project have repeatedly turned out NOT to be causal, so an
+     early intervention is not evidence that BT-1 was imminent.
+     For a controlled comparison, run with the watchdog OFF.

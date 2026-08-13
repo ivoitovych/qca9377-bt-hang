@@ -406,7 +406,9 @@ bin/                  watchdog + metrics collector
 systemd/              unit files
 etc/                  modprobe + udev configuration
 tools/                diagnostics, incident capture, log sanitiser
-tests/                run-tests — the analysis invariants, plus their fixtures
+tests/                run-tests — the analysis invariants
+  fixtures/           table-driven cases for the awk libraries
+  journal/            canned journals for driving tools without a machine
 devtools/             contributor tooling (check, scan, validate, coverage, commit+verify)
 reviews/              assessments of the repository itself
 docs/
@@ -541,17 +543,24 @@ machine. Not installed by `install.sh`.
 ### Tests
 
 ```bash
-tests/run-tests                    # 65 invariants, ~1.8 s
+tests/run-tests                    # 96 invariants, ~2 s
 tests/run-tests --section "stage2" # one block, without a sed range
-devtools/coverage                  # what fraction of the shell those 65 actually run
+devtools/coverage                  # what fraction of the shell those 96 actually run
 ```
 
-Each invariant in `tests/run-tests` encodes a defect that really shipped here, with a
-fixture built so the old behaviour fails it. Coverage of the shipped shell is currently
-**13.1%** — 41 of 43 scripts execute no line under test, because the tools call
-`journalctl` directly and so cannot be driven from a fixture.
+Each of the 96 invariants in `tests/run-tests` encodes a defect that really shipped
+here, with a fixture built so the old behaviour fails it. Coverage of the shipped shell
+is **18.3%**, up from 13.1% when it was first measured; 38 of 44 scripts still execute no
+line under test, because most tools call `journalctl` directly and so cannot be driven
+from a fixture. Tools that read the journal through
+[`tools/lib/journal.sh`](tools/lib/journal.sh) can be:
+
+```bash
+BT_JOURNAL_FIXTURE=tests/journal/provenance tools/bt-boot-provenance
+```
+
 [`reviews/unit-testing-assessment.md`](reviews/unit-testing-assessment.md) measures this
-and proposes a staged way out.
+and tracks what remains.
 
 ## Contributing
 

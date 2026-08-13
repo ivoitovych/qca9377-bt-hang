@@ -1,0 +1,76 @@
+# The gate that devtools/check runs locally, run on every push and PR.
+#
+# WHY. Nothing in this repository ran unless a human remembered to run it, and
+# the history says that is not enough: the pipefail/grep -q inversion reached
+# six shipped decisions, and a hand-written path list missed install.sh twice.
+# Both were caught by review, later, after the wrong numbers had been quoted.
+#
+# The suite is ~2 s and hermetic — it sandboxes bt-trial, stubs bt-incident and
+# asserts that evidence/sessions/ is unchanged afterwards — so there is no
+# reason for it not to run on every push.
+
+name: checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The invariants derive the file set from `git ls-files`, so the checkout
+      # must be a real repository. actions/checkout gives one at depth 1, which
+      # is enough — nothing here reads history.
+      - name: Show the tool versions the results depend on
+        run: |
+          bash --version | head -1
+          awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1
+          command -v systemd-analyze >/dev/null && echo "systemd-analyze: present" \
+                                                || echo "systemd-analyze: absent (unit checks will skip)"
+
+      # bash -n, awk parse, unit/udev/json/python validation, and the suite.
+      # repo-validate skips any checker that is not installed rather than
+      # failing — a runner without systemd must not turn nine unit files red.
+      - name: repo-validate (syntax, awk parse, invariants, doc drift)
+        run: devtools/repo-validate .
+
+      # Belt and braces: repo-validate runs the suite, but a failure there is
+      # reported as one line. Running it directly puts the failing invariant in
+      # the log where the annotation points.
+      - name: tests/run-tests
+        run: tests/run-tests
+
+      # A RATCHET, NOT A TARGET. The floor sits a little below the current
+      # figure so ordinary work cannot trip it, and it rises only when a stage
+      # lands. Its job is to stop coverage falling silently as tools grow —
+      # "every test encodes a defect that shipped" remains the actual rule.
+      - name: coverage floor
+        run: devtools/coverage --quiet --min 15
+
+      # NO repo-scan STEP, DELIBERATELY, AND THIS IS NOT AN OVERSIGHT.
+      #
+      # repo-scan defaults to staged additions and falls back to ALL tracked
+      # files when nothing is staged — which is exactly the state of a CI
+      # checkout. Run here it currently fails on content that predates this
+      # workflow:
+      #
+      #   evidence/baseline/kernel-boot0.sanitized.log   a kernel maintainer's address
+      #                                                  a filesystem UUID
+      #
+      # That address is a kernel MODULE_AUTHOR string carried in a sanitised
+      # log, not a leak, but repo-scan's allowlist covers mailing lists and
+      # example.com rather than individual maintainers. Whether to widen the
+      # allowlist, redact the line, or leave both as they are is a
+      # publish-safety policy decision for the repository owner, and adding a
+      # step that is red on its first run would train everyone to ignore it —
+      # the same failure this workflow's systemd-analyze guard exists to avoid.
+      #
+      # The scan is NOT skipped in practice: devtools/repo-save runs it, over
+      # the staged diff where it is precise, and repo-save is how commits are
+      # made here. Add the step once the pre-existing hits are settled.
