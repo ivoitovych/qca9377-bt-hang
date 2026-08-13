@@ -89,6 +89,33 @@ Only tools that source `journal.sh` can be driven this way. An invariant asserts
 that no converted tool has quietly regained a direct `journalctl` call, because
 the seam is worth nothing if it is not the only way in.
 
+## The system round trip
+
+`tests/system-roundtrip` is the one test that writes to the machine: it runs
+`install.sh --apply`, verifies, runs `uninstall.sh --apply`, and checks that
+nothing survives. It tests the README's front-page claim — *"uninstalling is a
+complete restoration"* — which is a property of the install/uninstall PAIR and
+so cannot be established by reading either script. The pair has already shipped
+out of step, twice.
+
+It is **not** part of `tests/run-tests`, and it refuses to run unless every
+gate holds:
+
+```bash
+BT_SYSTEM_TEST=1 tests/system-roundtrip     # plus root, and see below
+```
+
+- `BT_SYSTEM_TEST=1` set explicitly — no default, no flag a shell history could
+  replay by accident
+- no existing installation (`/usr/local/share/qca9377-bt-hang` absent)
+- no open trial, no experiment mode — the two states in which an install is
+  known to destroy a measurement in progress
+- a live systemd, or it skips: without one `install.sh --apply` cannot succeed
+  and the failure would describe the host, not the installer
+
+The investigation machine fails the second gate even if the variable is set.
+CI runs it on an ephemeral VM.
+
 ## Coverage
 
 `devtools/coverage` runs the suite under `xtrace` and records every line bash
