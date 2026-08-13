@@ -42,12 +42,28 @@ N="${1:-8}"
 
 VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
 
+# Reads go through bt_journal so this tool can be driven over a fixture. It is
+# the one that most needed it: `hci=no` was printed for all six boots, including
+# boots whose journal plainly contains the device, for the tool's entire life —
+# a `| grep -q` pipeline inverted under pipefail. Thirty-six lines, and one
+# fixture would have caught it on the first run.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-boot-provenance: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
 B=$'\033[1m'; O=$'\033[0m'; Y=$'\033[33m'
 [[ -t 1 ]] || { B=""; O=""; Y=""; }
 
 # Numeric rows only: with fewer than N boots retained, `tail` would include
 # the header row, and `$((off - 1))` on the literal "IDX" is a bash error.
-mapfile -t BOOTS < <(journalctl --list-boots --no-pager 2>/dev/null \
+#
+# Through bt_journal, not journalctl. The two halves of this line arrived from
+# opposite directions and both are needed: the seam makes the tool drivable
+# from a fixture at all, and the numeric filter fixes a real crash the fixture
+# did not model — tests/journal/provenance/list-boots.log had no header row, so
+# nothing here would have caught it. The fixture now carries one.
+mapfile -t BOOTS < <(bt_journal --list-boots --no-pager 2>/dev/null \
                      | awk '$1 ~ /^-?[0-9]+$/' | tail -n "$N")
 if (( ${#BOOTS[@]} == 0 )); then
     echo "bt-boot-provenance: could not list boots" >&2; exit 1
@@ -70,13 +86,13 @@ for row in "${BOOTS[@]}"; do
 
     # Shutdown target of the PREVIOUS boot. The targets are among the last
     # messages, so a bounded tail is both correct and fast.
-    pe=$(journalctl -b "$((off - 1))" -n 400 --no-pager 2>/dev/null \
+    pe=$(bt_journal -b "$((off - 1))" -n 400 --no-pager 2>/dev/null \
          | grep -oE 'Reached target (reboot|poweroff|halt)' | tail -1 | awk '{print $3}')
     [[ -n "$pe" ]] || pe="?"
 
     # Filtering by identifier uses the index; a full-boot grep does not and
     # takes minutes on a journal this size.
-    fw=$(journalctl -b "$off" -t systemd --no-pager 2>/dev/null \
+    fw=$(bt_journal -b "$off" -t systemd --no-pager 2>/dev/null \
          | grep -m1 -oE '[0-9.]+m?s \(firmware\)' | awk '{print $1}')
     [[ -n "$fw" ]] || fw="?"
 
@@ -102,7 +118,7 @@ for row in "${BOOTS[@]}"; do
     else
         until_t=""
     fi
-    nhci=$(journalctl -k -b "$off" ${until_t:+--until "$until_t"} --no-pager 2>/dev/null \
+    nhci=$(bt_journal -k -b "$off" ${until_t:+--until "$until_t"} --no-pager 2>/dev/null \
            | grep -c "idVendor=$VID, idProduct=$PID" || true)
     if [[ "${nhci:-0}" -gt 0 ]]; then hci=yes; else hci=no; fi
 

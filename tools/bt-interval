@@ -41,11 +41,29 @@ done
 # A negative result means the arguments are the wrong way round, or that one of
 # them was not parsed. Either way the caller is about to quote a wrong number in
 # evidence, so say so rather than printing it.
-out=$(awk -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/interval.awk" -v a="$a" -v b="$b") || {
-    echo "bt-interval: arithmetic failed" >&2; exit 1
-}
+#
+# THE NON-ZERO EXIT *IS* THE PARSE FAILURE. interval.awk's contract, stated in
+# its own header, is to print nothing and exit non-zero when a timestamp does
+# not parse — so this branch, not the `case` below, is the one an unparseable
+# argument actually reaches. It previously said only "arithmetic failed", and
+# the diagnostic that names the offending values sat in the `case`, which that
+# input can never reach. Both messages existed; the caller got the one that
+# does not say which argument was wrong.
+#
+# `</dev/null` because awk with no input file reads stdin. Without it the tool
+# inherits the caller's stdin and, in a context where that is a terminal or a
+# pipe still open, blocks instead of answering.
+if ! out=$(awk -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/interval.awk" \
+                -v a="$a" -v b="$b" </dev/null); then
+    echo "bt-interval: could not parse one of the timestamps" >&2
+    echo "  a=$a" >&2; echo "  b=$b" >&2
+    exit 1
+fi
+# Retained as a distinct failure: awk succeeded but produced something that is
+# not a number. That is no longer the unparseable case above — it would mean the
+# library returned an unexpected shape — so it keeps its own message.
 case "$out" in
-    ''|*[!0-9.-]*) echo "bt-interval: could not parse one of the timestamps" >&2
+    ''|*[!0-9.-]*) echo "bt-interval: non-numeric result from interval.awk: '$out'" >&2
                    echo "  a=$a" >&2; echo "  b=$b" >&2; exit 1 ;;
 esac
 case "$out" in

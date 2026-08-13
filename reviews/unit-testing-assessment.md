@@ -13,8 +13,8 @@ mentions.
 ## Summary
 
 This repository **already has a test suite, and it is better than most shell projects
-ever get.** `tests/run-tests` asserts 65 invariants in 1.8 seconds, every one of them
-derived from a defect that actually shipped here. `devtools/assert-test-catches` is
+ever get.** `tests/run-tests` asserted 65 invariants in 1.8 seconds (96 now, after the work in
+§7), every one of them derived from a defect that actually shipped here. `devtools/assert-test-catches` is
 mutation testing. `devtools/check` is a single pre-commit gate. That is a real testing
 culture, not a gesture toward one.
 
@@ -23,30 +23,33 @@ suite not reaching, and what does it cost to reach it"**.
 
 Measured, not estimated:
 
-| | |
-|---|---|
-| Tracked shell scripts | 43 |
-| Scripts executing **at least one line** under the suite | **2** — `tests/run-tests` (84.0%) and `tools/bt-trial` (62.4%) |
-| Scripts with **zero** executed lines | **41 of 43** |
-| Total line coverage | **13.1%** (503 of 3846 coverable lines) |
-| Coverage of shipped code, excluding the suite itself | **5.6%** (194 of 3478) |
-| awk libraries | 6 (543 lines), all loaded, most on a single path |
-| Unmediated `journalctl` call sites | **109, across 27 files** |
-| CI | **none** — no `.github/` |
+| | Before | After stages 1–4 (partial) |
+|---|---|---|
+| Tracked shell scripts | 43 | 44 |
+| Scripts executing **at least one line** | **2** | **6** |
+| Scripts with **zero** executed lines | **41 of 43** | **38 of 44** |
+| Total line coverage | **13.1%** (503/3846) | **18.3%** (713/3898) |
+| Excluding the suite itself | **5.6%** (194/3478) | **9.0%** (307/3407) |
+| Invariants asserted | 65 | **96** |
+| CI | none | `.github/workflows/checks.yml` |
+| awk libraries | 6 (543 lines), most on a single path | 7, table-driven fixtures added |
+| Unmediated `journalctl` call sites | **109, across 27 files** | 105, across 25 — seam in place |
 
-One structural fact explains nearly all of it: **the tools call `journalctl` directly,
-with no seam.** A script that shells out to the host journal on line 37 cannot be run
-against a fixture, so it cannot be tested — only syntax-checked. Everything else in this
-report follows from that.
+One structural fact explained nearly all of the original figure: **the tools call
+`journalctl` directly, with no seam.** A script that shells out to the host journal on
+line 37 cannot be run against a fixture, so it cannot be tested — only syntax-checked.
+[`tools/lib/journal.sh`](../tools/lib/journal.sh) is that seam, and §7 records what
+converting the first two tools was worth.
 
-My recommendation is **yes, extend testing — but in four staged steps, and do not adopt
-a test framework.** Details in [Recommendations](#5-recommendations).
+The recommendation was **yes, extend testing — in four staged steps, and do not adopt a
+test framework.** Stages 1, 2 and 4 are now done and Stage 3 is started; what remains is
+listed in §7.
 
 ---
 
 ## 1. What exists today
 
-### 1.1 `tests/run-tests` — 1038 lines, 65 invariants, 1.8 s
+### 1.1 `tests/run-tests` — 1038 lines, 65 invariants, 1.8 s *(at assessment time)*
 
 Four sections: `bt-phase` invariants, `bt-capdiff` matching, the sandbox, and the
 ontology through the production producer. The design principles are stated in its own
@@ -401,7 +404,82 @@ Stages 1 and 2 are worth doing regardless of whether Stage 3 is ever started.
 
 ---
 
-## 7. Verification behind this report
+## 7. What was implemented, and what it was worth
+
+### Done
+
+**Stage 1 — visibility and CI.**
+`systemd-analyze` is now guarded in `repo-validate` like the four checkers around it;
+verified by running with it off PATH — previously nine false unit failures and `rc=1`,
+now nine clean skips and `rc=0`. `.github/workflows/checks.yml` runs repo-validate, the
+suite, and a coverage floor on every push. `tests/README.md` documents the house rules.
+
+**Stage 2 — awk fixtures.** A table-driven harness reads
+`tests/fixtures/<lib>/<case>.{in,expected,rc}` and compares stdout, stderr and exit
+status byte for byte. Five cases for `trial-summary.awk`, chosen for the paths nothing
+reached before: the two domain refusals, the missing-column refusal, censored exclusion,
+and CHANGED/PERTURBED exclusion. Its load count went from 2 to 7.
+
+**Stage 4 — the extraction hack is gone.** `bt-phase`'s analysis body now lives in
+`tools/lib/phase.awk`, loaded with `-f` by both the tool and the suite, so a test can no
+longer pass against a program the tool does not run. The move was verified byte-identical
+on both the reporting and the refusal path before the Python extractor was deleted. The
+program also stopped carrying its own `days()`/`s()` pair and now calls `iso_secs()` from
+`timestamp.awk` — that shared file's own header names bt-phase as the reason it exists,
+and bt-phase was still running the second implementation.
+
+**Stage 3 — the seam, started.** `tools/lib/journal.sh` provides `bt_journal`, which is
+`journalctl` argument-for-argument unless `BT_JOURNAL_FIXTURE` names a directory, in
+which case the query is answered from a file chosen by the query. `bt-phase` and
+`bt-boot-provenance` are converted. An invariant derives the converted set from the tools
+that source the library and fails if any of them regains a direct `journalctl` call.
+
+### What it was worth, per file
+
+| File | Before | After |
+|---|---|---|
+| `tools/bt-phase` | 0.0% of 117 | **100.0%** of 35 |
+| `tools/bt-boot-provenance` | 0.0% of 36 | **94.9%** |
+| `tools/bt-interval` | 0.0% of 17 | **89.5%** |
+| `tools/bt-stage2` | 0.0% of 35 | **68.6%** |
+
+`bt-phase`'s denominator fell because 82 lines of inline awk became a library; the
+library is covered separately and by the same fixtures.
+
+Two of those needed **no production change at all** — `bt-interval` takes its inputs as
+arguments and `bt-stage2` already had `--from FILE`. They were simply never tested. That
+is worth separating from the seam work: a third of the gain here was untaken, not blocked.
+
+### Two defects the new tests found
+
+- **`bt-interval`'s diagnostic was unreachable.** `interval.awk` exits non-zero on an
+  unparseable timestamp, so the `case` branch that names the offending values could never
+  fire; callers got "arithmetic failed" instead. The message that says *which* argument
+  was wrong now fires on the path that actually reaches it. The tool also read stdin when
+  awk was given no input file, and would block in a context where stdin stayed open;
+  `</dev/null` closes that.
+- **`repo-scan` cannot yet run in CI.** With nothing staged it falls back to scanning all
+  tracked files, where it fails on `a kernel maintainer's address` and a filesystem UUID in
+  `evidence/baseline/kernel-boot0.sanitized.log`. The address is a kernel `MODULE_AUTHOR`
+  string, not a leak, but the allowlist covers mailing lists rather than individual
+  maintainers. Whether to widen the allowlist, redact the line, or leave both is a
+  publish-safety decision for the owner, so the CI step is deliberately absent with the
+  reason recorded in the workflow. `repo-save` still runs the scan on every commit, over
+  the staged diff, where it is precise.
+
+### Remaining
+
+- **The rest of Stage 3.** 105 `journalctl` call sites across 25 files are unconverted.
+  The order in §5 still holds: `bt-state`, then `bt-status`, `bt-actions`, and
+  `bin/bt-hang-watchdog` — 183 lines deciding whether to intervene on a live controller,
+  still with no line executed under test, and still the sharpest number in this report.
+- **More awk fixtures.** `trial-sco-table.awk` (114 lines) is still entered exactly once
+  and `stage2.awk` (153 lines) twice. The harness exists now; the cases do not.
+- **Splitting `tests/run-tests`.** It has grown from 1038 to 1491 lines in the course of
+  this work, which makes the case stronger rather than weaker. Deliberately not attempted
+  in the same pass as the changes above.
+
+## 8. Verification behind this report
 
 Everything above was measured on this checkout, not inferred:
 

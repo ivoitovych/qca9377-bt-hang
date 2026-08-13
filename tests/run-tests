@@ -73,24 +73,26 @@ while IFS= read -r f; do
     esac
 done < <(git ls-files 2>/dev/null)
 
-# Extract bt-phase's analysis body so it can be driven with a fixture instead of
-# the live journal. Testing through journalctl would make these tests depend on
-# the machine's history, which is the thing under investigation.
-AWK=$(mktemp); trap 'rm -f "$AWK"' EXIT
-python3 - "$AWK" <<'PY'
-import re, sys, pathlib
-s = pathlib.Path('tools/bt-phase').read_text()
-m = re.search(r"awk -v igap=\"\$INCIDENT_GAP\" -v period=\"\$TIMER_PERIOD\" '(.*)' \"\$DATA\"\s*$", s, re.S)
-if not m:
-    sys.exit("could not extract analysis body from tools/bt-phase")
-pathlib.Path(sys.argv[1]).write_text(m.group(1).replace("'\"'\"'", "'"))
-PY
-[[ -s "$AWK" ]] || { echo "FAILED to extract bt-phase analysis body"; exit 1; }
+# THE ANALYSIS IS NOW A FILE, AND THIS RUNS THE FILE.
+#
+# It used to be extracted: a Python regex pulled the awk program out of
+# tools/bt-phase's SOURCE and the tests drove the reconstructed copy. That is
+# the `-f` trap wearing a different hat. An extracted copy of bt-capdiff's
+# matcher once passed every test while the shipped invocation silently loaded
+# nothing, and bt-capdiff reported perfect agreement between paths differing by
+# 278 records. The same shape here could not detect a bt-phase that had stopped
+# loading its analysis at all.
+#
+# tools/lib/phase.awk is now loaded by bt-phase with -f and by these tests with
+# -f, from the same path, so a test can no longer pass against a program the
+# tool does not run. The extraction produced byte-identical output on both the
+# reporting and the refusal path at the commit that moved it.
+PHASEAWK=(-f tools/lib/timestamp.awk -f tools/lib/phase.awk)
 
 echo "bt-phase invariants"
 echo "──────────────────────────────────────────────────────────────"
 
-OUT=$(awk -v igap=600 -v period=900 -f "$AWK" tests/phase-invariants.data 2>&1)
+OUT=$(awk -v igap=600 -v period=900 "${PHASEAWK[@]}" tests/phase-invariants.data 2>&1)
 
 # --- sampling unit ---------------------------------------------------------
 # The fixture has five timeout lines: a burst of four inside 60 s in one boot,
@@ -125,10 +127,65 @@ placed=$(grep -oP 'placed\s+\K[0-9]+' <<<"$OUT")
 # --- provenance refusal ----------------------------------------------------
 # With the timer period claimed as 100000 s, the fixture's 900 s gaps are far
 # too short to be timer-driven. The tool must refuse rather than report.
-REF=$(awk -v igap=600 -v period=100000 -f "$AWK" tests/phase-invariants.data 2>&1)
+REF=$(awk -v igap=600 -v period=100000 "${PHASEAWK[@]}" tests/phase-invariants.data 2>&1)
 grep -q 'SKIPPED — provenance check failed' <<<"$REF" \
     && ok "refuses to report when claimed provenance is impossible" \
     || bad "did not refuse on a contaminated probe set"
+
+# --- the SCRIPT, not just the analysis it loads ----------------------------
+#
+# Everything above drives phase.awk directly. These drive tools/bt-phase, over a
+# journal fixture, through bt_journal. They are what the extraction approach
+# could never do: assert that the shipped script collects the right records,
+# hands them to the right program, and reaches the same numbers.
+PJ=tests/journal/phase
+PH=$(BT_JOURNAL_FIXTURE="$PJ" BT_BOOT_LIST="$PJ/boot-list" tools/bt-phase 2>&1); ph_rc=$?
+
+if (( ph_rc == 0 )) && [[ "$PH" == *"timeout CLUSTERS   2"* ]]; then
+    ok "bt-phase collects and clusters through the full script path"
+else
+    bad "bt-phase end-to-end wrong (rc=$ph_rc):"
+    tail -4 <<<"$PH" | sed 's/^/      /'
+fi
+
+# The same month-boundary gap the analysis section asserts, but arrived at by
+# the script reading a journal rather than by awk reading a record file. A
+# collect() that lost the date, or paired probes across boots, breaks here.
+if [[ "$PH" == *"4500.0s gap"* ]]; then
+    ok "bt-phase preserves the month-boundary gap end to end"
+else
+    bad "bt-phase lost the 4500s month-boundary gap through the script path"
+fi
+
+# -b selects one boot. With boot 0 alone the -1 records must not appear, which
+# is the invariant that a probe interval cannot span a reboot, enforced at the
+# collection layer rather than in the arithmetic.
+PH0=$(BT_JOURNAL_FIXTURE="$PJ" tools/bt-phase -b 0 2>&1)
+if [[ "$PH0" == *"boot 0 "* && "$PH0" != *"boot -1"* ]]; then
+    ok "bt-phase -b restricts collection to one boot"
+else
+    bad "bt-phase -b 0 did not restrict to boot 0"
+fi
+
+# An empty journal is a legitimate state, not a crash: the tool must say so and
+# exit 0 rather than reporting on nothing.
+EMPTYJ=$(mktemp -d)
+PHE=$(BT_JOURNAL_FIXTURE="$EMPTYJ" tools/bt-phase -b 0 2>&1); phe_rc=$?
+if (( phe_rc == 0 )) && [[ "$PHE" == *"no probe or timeout records"* ]]; then
+    ok "bt-phase reports an empty journal instead of analysing nothing"
+else
+    bad "bt-phase on an empty journal: rc=$phe_rc out=$PHE"
+fi
+rmdir "$EMPTYJ"
+
+tools/bt-phase --bogus >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-phase rejects an unknown argument" \
+              || bad "bt-phase accepted an unknown argument"
+
+PHL=$(BT_LIBDIR=/nonexistent BT_JOURNAL_FIXTURE="$PJ" tools/bt-phase -b 0 2>&1)
+[[ "$PHL" == *"missing"* ]] \
+    && ok "bt-phase refuses when its libraries are absent" \
+    || bad "bt-phase ran without its libraries: $PHL"
 
 echo
 echo "bt-capdiff matching"
@@ -139,7 +196,7 @@ echo "────────────────────────�
 # tolerance?" without consuming it reports zero unmatched in both directions and
 # announces that the paths agree — while the multiplicity is 2 against 1.
 FA=$(mktemp); FB=$(mktemp); OA=$(mktemp); OB=$(mktemp)
-trap 'rm -f "$AWK" "$FA" "$FB" "$OA" "$OB"' EXIT
+trap 'rm -f "$FA" "$FB" "$OA" "$OB"' EXIT
 
 # The matcher lives in tools/lib/capdiff-match.awk and is used here exactly as
 # bt-capdiff uses it. Testing the real file rather than a copy extracted from
@@ -204,7 +261,7 @@ echo "────────────────────────�
 FIX=tests/trial-results.tsv
 [[ -r "$FIX" ]] || bad "missing $FIX"
 
-RD=$(mktemp -d); trap 'rm -rf "$AWK" "$FA" "$FB" "$OA" "$OB" "$RD"' EXIT
+RD=$(mktemp -d); trap 'rm -rf "$FA" "$FB" "$OA" "$OB" "$RD"' EXIT
 mkdir -p "$RD/evidence/trials" && touch "$RD/install.sh" && git -C "$RD" init -q 2>/dev/null
 cp "$FIX" "$RD/evidence/trials/results.tsv"
 R1=$(BT_REPO="$RD" tools/bt-trial report 2>&1)
@@ -1069,6 +1126,264 @@ else
     bad "session-temporary paths in extraction commands:"
     while IFS= read -r l; do [[ -n "$l" ]] && echo "        $l"; done <<<"$EXBAD"
 fi
+
+echo
+echo "awk libraries, case by case"
+echo "──────────────────────────────────────────────────────────────"
+#
+# TABLE-DRIVEN, because the alternative is what the rest of this file does:
+# hand-written assertions, one per behaviour, which is fine for an invariant
+# that needs a paragraph of explanation and wasteful for a library that simply
+# has to produce the right bytes for a given input.
+#
+# `devtools/coverage` showed why this section exists. All six awk libraries were
+# loaded by the suite, but the three LARGEST were the three least exercised —
+# trial-sco-table.awk is 114 lines entered exactly once, trial-summary.awk is
+# 177 lines entered twice. Load count is not line coverage, and a 177-line
+# program with domain checks and three exclusion paths entered twice is not
+# covered by any definition.
+#
+# Layout, per library directory under tests/fixtures/:
+#   <case>.in        the input file the library is given
+#   <case>.expected  stdout AND stderr, combined, byte for byte
+#   <case>.rc        the exit status
+#
+# stderr is captured because the refusals ARE the behaviour here: a report that
+# cannot justify its arithmetic must not print it, and "printed nothing, exited
+# 1" is the assertion.
+#
+# ONE GROUP KEY PER FIXTURE. trial-summary iterates `for (k in tot)`, and awk's
+# hash order is not specified, so a fixture with two group keys could emit its
+# rows in either order and fail intermittently. Split such a case into two
+# fixtures rather than sorting the output, which would destroy the row/treatment
+# pairing the report prints.
+for libdir in tests/fixtures/*/; do
+    lib="tools/lib/$(basename "$libdir").awk"
+    if [[ ! -r "$lib" ]]; then
+        bad "fixture directory $libdir has no library $lib"
+        continue
+    fi
+    ncase=0
+    for in in "$libdir"*.in; do
+        [[ -e "$in" ]] || continue
+        case_name=$(basename "${in%.in}")
+        exp="${in%.in}.expected"; rcf="${in%.in}.rc"
+        if [[ ! -r "$exp" || ! -r "$rcf" ]]; then
+            bad "$(basename "$libdir")/$case_name: missing .expected or .rc"
+            continue
+        fi
+        got=$(awk -f "$lib" "$in" 2>&1); got_rc=$?
+        want=$(cat "$exp"); want_rc=$(cat "$rcf")
+        if [[ "$got" == "$want" && "$got_rc" == "$want_rc" ]]; then
+            ok "$(basename "$libdir")/$case_name"
+            ncase=$((ncase + 1))
+        else
+            bad "$(basename "$libdir")/$case_name (rc $got_rc, want $want_rc)"
+            diff <(echo "$want") <(echo "$got") | head -8 | sed 's/^/        /'
+        fi
+    done
+    (( ncase == 0 )) && bad "$(basename "$libdir"): no cases ran"
+done
+
+echo
+echo "whole tools, not just the awk they call"
+echo "──────────────────────────────────────────────────────────────"
+#
+# WHY THIS SECTION EXISTS.
+#
+# `devtools/coverage` measured what this suite actually executes: 41 of 43
+# tracked shell scripts never ran a single line, and the total was 13.1%. The
+# awk was well covered; the shell around it was not covered at all. bt-phase
+# was the clearest case — the suite pulled its awk body out with a regex and
+# tested that, so the file that ships had 0.0% of 117 lines executed.
+#
+# The two tools below need no seam to be driven from a fixture: bt-interval
+# takes its inputs as arguments, and bt-stage2 already accepts `--from FILE`.
+# They were untested anyway. Everything here exercises the SHELL — argument
+# parsing, the library-presence guards, and the refusal paths — because that is
+# the part no awk fixture can reach.
+
+# ── bt-interval ───────────────────────────────────────────────────────────
+# The arithmetic is already asserted above through interval.awk directly. What
+# is asserted here is the wrapper's contract: that it forwards, validates, and
+# REFUSES rather than printing a number the caller would quote into evidence.
+iv_out=$(tools/bt-interval 2026-08-13T05:14:16.715095+02:00 2026-08-13T05:14:30.461003+02:00 2>&1); iv_rc=$?
+if (( iv_rc == 0 )) && [[ "$iv_out" == "13.746" ]]; then
+    ok "bt-interval prints the interval and exits 0"
+else
+    bad "bt-interval: expected 13.746 rc=0, got '$iv_out' rc=$iv_rc"
+fi
+
+# A reversed pair is the caller's most likely mistake and the most damaging:
+# a negative interval quoted as a duration. It must not reach stdout.
+iv_out=$(tools/bt-interval 2026-08-13T05:14:30.461003+02:00 2026-08-13T05:14:16.715095+02:00 2>&1); iv_rc=$?
+if (( iv_rc != 0 )) && [[ "$iv_out" == *"negative interval"* ]]; then
+    ok "bt-interval refuses a reversed pair instead of printing a negative"
+else
+    bad "bt-interval accepted reversed arguments (rc=$iv_rc): $iv_out"
+fi
+
+iv_out=$(tools/bt-interval not-a-timestamp 2026-08-13T05:14:16.715095+02:00 2>&1); iv_rc=$?
+if (( iv_rc != 0 )) && [[ "$iv_out" == *"could not parse"* ]]; then
+    ok "bt-interval refuses an unparseable timestamp"
+else
+    bad "bt-interval accepted an unparseable timestamp (rc=$iv_rc): $iv_out"
+fi
+
+tools/bt-interval 2026-08-13T05:14:16.715095+02:00 >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-interval exits 2 on wrong argument count" \
+              || bad "bt-interval did not exit 2 on a single argument"
+
+# The library guard. A tool that silently computes nothing when its shipped awk
+# is missing is exactly the `-f` trap this repository was bitten by: no error,
+# no output, and a caller that reads the empty result as a valid answer.
+EMPTYLIB=$(mktemp -d)
+iv_out=$(BT_LIBDIR="$EMPTYLIB" tools/bt-interval \
+         2026-08-13T05:14:16.715095+02:00 2026-08-13T05:14:30.461003+02:00 2>&1); iv_rc=$?
+if (( iv_rc != 0 )) && [[ "$iv_out" == *"missing"* ]]; then
+    ok "bt-interval refuses when its awk library is absent"
+else
+    bad "bt-interval ran without its library (rc=$iv_rc): $iv_out"
+fi
+
+# ── bt-stage2 ─────────────────────────────────────────────────────────────
+# Driven through the SCRIPT with --from, over the same fixture the awk section
+# above drives directly. The awk assertions prove the analysis; these prove the
+# script that ships actually reaches it and hands it the right file.
+S2W=$(tools/bt-stage2 --from tests/stage2-invariants.data 2>&1); s2_rc=$?
+if (( s2_rc == 0 )); then
+    ok "bt-stage2 --from analyses a fixture without touching the journal"
+else
+    bad "bt-stage2 --from failed (rc=$s2_rc):"
+    tail -3 <<<"$S2W" | sed 's/^/      /'
+fi
+
+# The headline number must survive the trip through the script, not just the
+# awk. If the wrapper ever hands the analysis the wrong file — a cache, a
+# partial dump — this is what notices.
+if [[ "$S2W" == *"longest NATURAL stage-1 window   50.00s"* ]]; then
+    ok "bt-stage2 reports the natural window through the full script path"
+else
+    bad "bt-stage2 lost the natural maximum through the script path"
+fi
+
+# An empty dump must refuse. The cache branch would otherwise reuse a journal
+# read that a reboot truncated to nothing and report on it as if complete —
+# the failure the tool's own header calls out.
+EMPTYDUMP=$(mktemp)
+tools/bt-stage2 --from "$EMPTYDUMP" >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-stage2 refuses an empty journal dump" \
+              || bad "bt-stage2 reported on an empty dump"
+
+tools/bt-stage2 --from /nonexistent/dump >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-stage2 refuses an unreadable --from" \
+              || bad "bt-stage2 accepted an unreadable --from"
+
+tools/bt-stage2 --bogus >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-stage2 exits 2 on an unknown argument" \
+              || bad "bt-stage2 did not exit 2 on an unknown argument"
+
+s2_out=$(BT_LIBDIR="$EMPTYLIB" tools/bt-stage2 --from tests/stage2-invariants.data 2>&1)
+if [[ "$s2_out" == *"missing"* ]]; then
+    ok "bt-stage2 refuses when its awk libraries are absent"
+else
+    bad "bt-stage2 ran without its libraries: $s2_out"
+fi
+
+# ── bt-boot-provenance ────────────────────────────────────────────────────
+#
+# THE INVARIANT THIS TOOL EXISTS TO GET RIGHT, AND SHIPPED WRONG.
+#
+# It printed `hci=no` for all six boots, including boots whose journal plainly
+# contains the device, for its entire life. `journalctl ... | grep -q` exits
+# non-zero exactly when the pattern IS found — grep leaves at the first match,
+# journalctl dies of SIGPIPE, pipefail propagates it — so the answer was
+# inverted rather than missing, which is the kind of wrong that reads as a
+# result. The fixture below puts the device in boot 0 and not in boot -1, so a
+# re-inversion cannot pass.
+BP=tests/journal/provenance
+PROV=$(BT_JOURNAL_FIXTURE="$BP" tools/bt-boot-provenance 2>&1); prov_rc=$?
+
+if (( prov_rc == 0 )); then
+    ok "bt-boot-provenance runs to completion over a fixture"
+else
+    bad "bt-boot-provenance failed (rc=$prov_rc):"
+    tail -3 <<<"$PROV" | sed 's/^/      /'
+fi
+
+# Read the hci column per row rather than grepping the whole output, so a tool
+# that prints `yes` somewhere unrelated cannot satisfy this.
+#
+# Field 9, not 7: `started` and `ended` are each a date AND a time, so they take
+# two fields apiece — boot, date, time, date, time, gap, prev end, firmware,
+# hci. Counting the COLUMNS in the header rather than the fields in the row is
+# how the first version of this check read `prev end` and announced that the
+# inversion was back when it was not.
+hci0=$(awk '$1 == "0"  { print $9 }' <<<"$PROV" | head -1)
+hcim1=$(awk '$1 == "-1" { print $9 }' <<<"$PROV" | head -1)
+if [[ "$hci0" == "yes" ]]; then
+    ok "bt-boot-provenance reports hci=yes for a boot that HAS the device"
+else
+    bad "the grep -q inversion is back: boot 0 has the device but reported '${hci0:-none}'"
+fi
+if [[ "$hcim1" == "no" ]]; then
+    ok "bt-boot-provenance reports hci=no for a boot without the device"
+else
+    bad "boot -1 has no device but reported '${hcim1:-none}'"
+fi
+
+# The gap is the arithmetic EX-017 turned on: 11:30:00 to 11:31:38 is 98 s.
+# Computed with date(1) across two rows, so an off-by-one row would show it.
+if [[ "$PROV" == *"98s"* ]]; then
+    ok "bt-boot-provenance computes the inter-boot gap"
+else
+    bad "inter-boot gap wrong; expected 98s"
+fi
+
+# prev end is the PREVIOUS boot's shutdown target, not this one's. Reading the
+# current boot would put reboot on the wrong row and invert the recovery mark.
+if [[ "$PROV" == *"reboot"* && "$PROV" == *"poweroff"* ]]; then
+    ok "bt-boot-provenance attributes each shutdown target to the previous boot"
+else
+    bad "shutdown-target attribution wrong"
+fi
+
+tools/bt-boot-provenance not-a-number >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-boot-provenance exits 2 on a non-numeric count" \
+              || bad "bt-boot-provenance accepted a non-numeric count"
+
+BPL=$(BT_LIBDIR=/nonexistent BT_JOURNAL_FIXTURE="$BP" tools/bt-boot-provenance 2>&1)
+[[ "$BPL" == *"missing"* ]] \
+    && ok "bt-boot-provenance refuses without its journal library" \
+    || bad "bt-boot-provenance ran without journal.sh"
+
+# ── the seam itself ───────────────────────────────────────────────────────
+#
+# A converted tool must not quietly regain a direct journalctl call: the seam is
+# only worth anything if it is the ONLY way in. Derived from the tools that
+# source journal.sh, so the list cannot drift out of date — the failure mode
+# this repository has hit four times with hand-written lists.
+CONVERTED=()
+for f in "${SHFILES[@]}"; do
+    n=$(grep -c 'source "\$LIBDIR/journal.sh"' "$f" 2>/dev/null)
+    (( ${n:-0} > 0 )) && CONVERTED+=("$f")
+done
+if (( ${#CONVERTED[@]} > 0 )); then
+    ok "the journal seam is in use by ${#CONVERTED[@]} tool(s)"
+    RAW=$(grep -nE '(^|[^_[:alnum:]])journalctl ' "${CONVERTED[@]}" 2>/dev/null \
+          | grep -v '^[^:]*:[0-9]*:[[:space:]]*#' \
+          | grep -v 'journalctl "\$@"')
+    if [[ -z "$RAW" ]]; then
+        ok "no converted tool calls journalctl directly"
+    else
+        bad "a converted tool bypassed bt_journal — it is untestable again:"
+        while IFS= read -r l; do echo "        $l"; done <<<"$RAW"
+    fi
+else
+    bad "no tool sources journal.sh — the seam is not wired up"
+fi
+
+rm -rf "$EMPTYLIB" "$EMPTYDUMP"
 
 echo
 echo "the tests may not write to the real evidence tree"
