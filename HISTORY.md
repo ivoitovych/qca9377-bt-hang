@@ -1661,3 +1661,28 @@ unmeasured, and that build B cannot be scored until untreated stage 1 has a base
 
 **The project spent months trying to find what causes the failure. It has just discovered
 it did not know what the failure is.**
+
+### Postscript: the sweep that was supposed to be repo-wide
+
+The `grep -q` fix above shipped with an invariant scanning `tools bin devtools` — a
+hand-written list. A reviewer checked the commit and found `install.sh` still holding two
+instances, one of them the `failed_this_boot` guard whose only purpose is to stop a btusb
+reload from destroying a stage-1 observation. Against a journal of millions of lines — the
+size at which the producer is certainly still writing when `grep -q` exits — that guard
+would have reported *safe to reload* in exactly the state it exists to protect.
+
+So the defect was not the six pipelines. It was the fourth hand-written path list in this
+repository:
+
+| where | the list | what it missed |
+|---|---|---|
+| `bt-verify-install` | installed artefacts | six tools, reported as a clean system |
+| `repo-validate` | knowledge paths, twice | count and timestamp could disagree |
+| `run-tests` | `tools bin devtools` | `install.sh`, twice over |
+
+Each was corrected by deriving the set instead: from `install.sh`'s own calls, from one
+shared array, and now from every git-tracked file carrying a shell shebang — 42 of them,
+against the three directories named before.
+
+**A list that must be remembered will eventually not be.** The rule this repository keeps
+rediscovering is that the enumeration is the bug, not the entries.

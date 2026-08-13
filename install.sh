@@ -114,8 +114,10 @@ if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null; th
         sleep 10
         echo
     fi
-    if journalctl -k -b 0 --no-pager 2>/dev/null \
-       | grep -qE 'command( 0x[0-9a-f]+)? tx timeout'; then
+    # Counted, not `grep -q` — see the note at the btusb reload below.
+    n_tmo_warn=$(journalctl -k -b 0 --no-pager 2>/dev/null \
+                 | grep -cE 'command( 0x[0-9a-f]+)? tx timeout' || true)
+    if (( ${n_tmo_warn:-0} > 0 )); then
         echo "!! THIS BOOT HAS ALREADY LOGGED AN HCI COMMAND TIMEOUT."
         echo "   Installing reloads btusb, which resets the controller and ENDS"
         echo "   any stage-1 observation currently in progress. If you are"
@@ -402,9 +404,25 @@ run systemctl daemon-reload
 # controller already failed this boot? The second is the one that mattered.
 if (( APPLY )); then
     uc=$(awk '/^btusb/ {print $3}' /proc/modules 2>/dev/null)
+    # COUNTED, NOT `grep -q`, AND THIS IS THE SITE WHERE IT MATTERS MOST.
+    #
+    # Under `set -o pipefail` a `producer | grep -q` pipeline exits NON-ZERO
+    # exactly when the pattern is found: grep leaves at the first match,
+    # journalctl dies of SIGPIPE, pipefail propagates it. `&& failed_this_boot=1`
+    # would then fire only when there was NO timeout — and the journal this
+    # scans is millions of lines, which is precisely the size at which the
+    # producer is still writing when grep exits.
+    #
+    # So this guard, whose entire purpose is to stop a btusb reload from
+    # destroying a stage-1 observation, would have reported `safe to reload` in
+    # exactly the state it exists to protect. Six sites in tools/, bin/ and
+    # devtools/ were fixed for this in 96c3c90; the invariant that found them
+    # did not scan install.sh, so this one survived the sweep that was supposed
+    # to be repo-wide.
+    n_tmo=$(journalctl -k -b 0 --no-pager 2>/dev/null \
+            | grep -cE 'command( 0x[0-9a-f]+)? tx timeout' || true)
     failed_this_boot=0
-    journalctl -k -b 0 --no-pager 2>/dev/null \
-        | grep -qE 'command( 0x[0-9a-f]+)? tx timeout' && failed_this_boot=1
+    (( ${n_tmo:-0} > 0 )) && failed_this_boot=1
 
     if (( failed_this_boot )); then
         echo "  btusb NOT reloaded — this boot has logged an HCI command timeout."

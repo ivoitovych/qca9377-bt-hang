@@ -172,7 +172,12 @@ run systemctl restart systemd-journald
 echo
 
 echo "[5/5] restore btusb default (enable_autosuspend=Y)"
-if lsmod | grep -q "^btusb"; then
+# Counted, not `grep -q`: under pipefail the pipeline exits non-zero exactly
+# when the module IS loaded, so the restore would be skipped precisely when it
+# is needed. lsmod's output is short enough that it usually finishes writing
+# first — which makes the failure intermittent rather than absent.
+n_btusb=$(lsmod | grep -c "^btusb" || true)
+if (( ${n_btusb:-0} > 0 )); then
     uc=$(awk '/^btusb/ {print $3}' /proc/modules)
     if [[ "${uc:-0}" == "0" ]]; then
         run modprobe -r btusb

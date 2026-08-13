@@ -54,6 +54,25 @@ SESSIONS_BEFORE=$(ls -1 evidence/sessions 2>/dev/null | wc -l)
 ok()   { echo "  ✓ $*"; pass=$((pass + 1)); }
 bad()  { echo "  ✗ $*"; fail=$((fail + 1)); }
 
+# ── THE SHELL SCRIPTS THIS REPOSITORY SHIPS ───────────────────────────────
+#
+# Every repo-wide check below scans this set. It is DERIVED, because the
+# hand-written alternative has now failed here four times, most recently as
+# `tools bin devtools` — which omitted install.sh, where the guard protecting
+# stage-1 observations from a btusb reload held the exact defect the check was
+# hunting. A list that must be remembered will eventually not be.
+#
+# Built with bash pattern matching and no pipeline: using `head | grep -q` here
+# would make the detector vulnerable to the very defect it detects.
+SHFILES=()
+while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    IFS= read -r shebang < "$f" || continue
+    case "$shebang" in
+        '#!'*bash*|'#!'*/sh|'#!'*' sh') SHFILES+=("$f") ;;
+    esac
+done < <(git ls-files 2>/dev/null)
+
 # Extract bt-phase's analysis body so it can be driven with a fixture instead of
 # the live journal. Testing through journalctl would make these tests depend on
 # the machine's history, which is the thing under investigation.
@@ -768,19 +787,49 @@ echo "────────────────────────�
 #
 # Every script here sets `set -uo pipefail`, so this is a property of the
 # repository, not of one tool. Counted output compared against zero is immune.
-QGREP=$(grep -rn -- '| *grep -q' tools bin devtools 2>/dev/null \
-        | grep -v "^[^:]*:[0-9]*:[[:space:]]*#")
-if [[ -z "$QGREP" ]]; then
-    ok "no yes/no decision is made by a grep -q pipeline"
+#
+# THE FILE SET IS DERIVED, NOT LISTED. The first version of this check scanned
+# `tools bin devtools` — a hand-written list, which is the defect this
+# repository has now shipped four times. It missed install.sh and uninstall.sh,
+# both of which set pipefail, and install.sh held TWO instances including the
+# `failed_this_boot` guard whose sole purpose is to stop a btusb reload from
+# destroying a stage-1 observation. That guard would have reported "safe to
+# reload" in exactly the state it exists to protect, against a journal of
+# millions of lines — the size at which the producer is certain to still be
+# writing when grep exits.
+#
+# So the set is every file in the repository carrying a shell shebang. A script
+# added anywhere is covered the moment it exists.
+if (( ${#SHFILES[@]} == 0 )); then
+    bad "could not enumerate shell scripts — refusing to report this check as passed"
 else
-    bad "grep -q at the end of a pipeline — inverted under pipefail:"
-    while IFS= read -r l; do echo "        $l"; done <<<"$QGREP"
+    # PIPEFAIL-DEMO marks the single deliberate instance below, which exists to
+    # demonstrate the inversion. An exemption has to be visible in the source it
+    # exempts, not hidden in the checker.
+    QGREP=$(grep -n -- '| *grep -q' "${SHFILES[@]}" 2>/dev/null \
+            | grep -v "^[^:]*:[0-9]*:[[:space:]]*#" \
+            | grep -v 'PIPEFAIL-DEMO')
+    if [[ -z "$QGREP" ]]; then
+        ok "no grep -q pipeline in any of the ${#SHFILES[@]} shell scripts tracked here"
+    else
+        bad "grep -q at the end of a pipeline — inverted under pipefail:"
+        while IFS= read -r l; do echo "        $l"; done <<<"$QGREP"
+    fi
+    # And the derivation must actually reach the files a hand-written list
+    # missed, or it is the same check wearing a better comment.
+    for must in install.sh uninstall.sh; do
+        if [[ " ${SHFILES[*]} " == *" $must "* ]]; then
+            ok "the derived set includes $must"
+        else
+            bad "$must is not in the derived shell-script set"
+        fi
+    done
 fi
 
 # The behaviour itself, so the rule above is anchored to something demonstrable
 # rather than to a claim in a comment.
 ( set -o pipefail
-  yes x | grep -q x ) 2>/dev/null
+  yes x | grep -q x ) 2>/dev/null   # PIPEFAIL-DEMO: the one deliberate instance
 if (( $? != 0 )); then
     ok "confirmed: a matching grep -q pipeline exits non-zero under pipefail"
 else
@@ -816,7 +865,11 @@ fi
 # printf and a header printf that drift apart is the same defect arriving by a
 # different route.
 for col in prev_shutdown enum_at_boot perturbed bt1_status trial_result; do
-    if head -1 evidence/trials/results.tsv 2>/dev/null | grep -q "$col"; then
+    # Counted: `head | grep -q` is the inverted-pipeline pattern, and a header
+    # check that reports "column missing" when the column is present would fail
+    # this suite for the opposite of the real reason.
+    n_col=$(head -1 evidence/trials/results.tsv 2>/dev/null | grep -c "$col" || true)
+    if (( ${n_col:-0} > 0 )); then
         ok "results.tsv header declares $col"
     else
         bad "results.tsv header is missing $col"
@@ -907,7 +960,9 @@ echo "────────────────────────�
 # directories and two are invoked by udev before /usr/local is interesting. So
 # the literal is repeated and the repetition is policed here instead: no
 # grep-family call anywhere may spell it any other way.
-STRAY=$(grep -rn -- '-c\?E\?[[:space:]]*"[^"]*tx timeout' tools bin devtools 2>/dev/null \
+# Scans the derived set, not `tools bin devtools`. install.sh matches this
+# pattern too, and was outside the old list.
+STRAY=$(grep -n -- '-c\?E\?[[:space:]]*"[^"]*tx timeout' "${SHFILES[@]}" 2>/dev/null \
         | grep -v 'command( 0x\[0-9a-f\]+)? tx timeout' \
         | grep -v '^[^:]*:[0-9]*:[[:space:]]*#')
 if [[ -z "$STRAY" ]]; then
