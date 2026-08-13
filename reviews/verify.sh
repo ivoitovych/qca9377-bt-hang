@@ -62,7 +62,8 @@ check UT-05 done "awk fixture harness runs cases" \
       bash -c 'n=$(tests/run-tests --section "awk libraries" 2>&1 | grep -c "✓"); [ "${n:-0}" -ge 5 ]'
 check UT-06 done "trial-summary.awk has fixtures" \
       bash -c '[ "$(ls tests/fixtures/trial-summary/*.in 2>/dev/null | wc -l)" -ge 5 ]'
-check UT-07 open "fixtures for trial-sco-table.awk and stage2.awk" true
+check UT-07 done "fixtures for trial-sco-table.awk and stage2.awk" \
+      bash -c '[ -d tests/fixtures/trial-sco-table ] && [ -d tests/fixtures/stage2 ]'
 check UT-08 done "journal seam library present" test -r tools/lib/journal.sh
 check UT-09 done "seam invariant asserted by the suite" \
       bash -c 'tests/run-tests --section "whole tools" 2>&1 | grep -c "journal seam" >/dev/null'
