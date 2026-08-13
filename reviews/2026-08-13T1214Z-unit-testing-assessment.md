@@ -1,12 +1,52 @@
 # Unit testing in this repository — an assessment
 
-**Date:** 2026-08-13
+**Written:** 2026-08-13T12:14Z
+**Covers:** the tree at `6c0491c`; implementation status as of `d016249`
 **Scope:** whether to introduce unit testing, in what form, and how much of the code the
 existing suite actually covers
 **Method:** read every tracked shell script and awk program; ran `tests/run-tests`,
 `devtools/repo-validate` and `devtools/check`; then **measured** line coverage by
 executing the suite under trace rather than inferring it from which tools the suite
 mentions.
+
+> **This file is a snapshot and is not edited after the fact.** Its filename carries the
+> time it was written, and a timestamp on a document that keeps changing is a lie. The
+> *live* status of every recommendation below — including work done after this was
+> written — is tracked in [`reviews/README.md`](README.md), keyed by the `UT-nn` IDs used
+> here. If the two ever disagree, the register is current and this is history.
+>
+> Every recommendation carries an ID and a **verify** command. Nothing here has to be
+> taken on trust: run the command and see.
+>
+> **Two figures were corrected when this snapshot was frozen**, and the originals are
+> recorded so the change is not silent. The `journalctl` count was given as *109 across
+> 27 files*; that was every **mention** of the word, comments and prose included. The
+> real figure is **75 call sites across 21 files** at `6c0491c`. And the suite's grown
+> length was given as 1491 lines; it is **1353**. Both were found by running the
+> register's own verify commands, which is what the register is for. No conclusion in
+> this report depends on either number.
+
+---
+
+## The register, in brief
+
+Full detail in §5 and §7; current status in [`reviews/README.md`](README.md).
+
+| ID | Recommendation | Status at `d016249` |
+|---|---|---|
+| UT-01 | Guard `systemd-analyze` in `repo-validate` | done |
+| UT-02 | Document `tests/` and the devtools in both READMEs | done |
+| UT-03 | Add `tests/README.md` with the house rules | done |
+| UT-04 | CI running validate + suite + coverage floor | done |
+| UT-05 | Table-driven awk fixture harness | done |
+| UT-06 | Fixtures for `trial-summary.awk` | done |
+| UT-07 | Fixtures for `trial-sco-table.awk` and `stage2.awk` | **not started** |
+| UT-08 | Journal seam (`tools/lib/journal.sh`) | done |
+| UT-09 | Convert `bt-phase` and `bt-boot-provenance` to the seam | done |
+| UT-10 | Convert the remaining 25 journal-reading tools | **partial** — 2 of 27 |
+| UT-11 | Move `bt-phase`'s awk to `lib/phase.awk`, delete the extractor | done |
+| UT-12 | Split `tests/run-tests` into per-area files | **not started** |
+| UT-13 | Settle `repo-scan`'s pre-existing hits, then add it to CI | **blocked** — owner decision |
 
 ---
 
@@ -33,7 +73,7 @@ Measured, not estimated:
 | Invariants asserted | 65 | **96** |
 | CI | none | `.github/workflows/checks.yml` |
 | awk libraries | 6 (543 lines), most on a single path | 7, table-driven fixtures added |
-| Unmediated `journalctl` call sites | **109, across 27 files** | 105, across 25 — seam in place |
+| Unmediated `journalctl` call sites | **75, across 21 files** | 68, across 19 — seam in place |
 
 One structural fact explained nearly all of the original figure: **the tools call
 `journalctl` directly, with no seam.** A script that shells out to the host journal on
@@ -186,7 +226,7 @@ not meaningfully covered by any definition.
 
 ### 2.4 The `journalctl` coupling is the blocker
 
-109 call sites in 27 files, invoked directly:
+75 call sites across 21 files, invoked directly:
 
 ```
 tools/bt-stage2:63    journalctl -k -b all --no-pager -o short-iso-precise > "$TMP"
@@ -314,18 +354,25 @@ Ordered by value per unit of risk. Stages 1 and 2 need no production changes at 
 
 ### Stage 1 — make the existing suite visible and automatic *(low risk)*
 
-1. Guard `systemd-analyze` in `repo-validate` with `command -v`, matching the four checks
-   around it. Verified necessary (§2.6).
-2. Add `tests/` to the README's Repository layout block, and `check`, `coverage` and
-   `assert-test-catches` to the `devtools/README.md` table. *(Done in this commit.)*
-3. Add `tests/README.md`: how to run, how to add an invariant, and the house rule that a
-   new check must be observed to fail via `assert-test-catches` before it counts.
-4. Add a GitHub Actions workflow running `devtools/repo-validate`, `tests/run-tests` and
-   `devtools/coverage --min 12`. The suite is 1.8 s and hermetic — it sandboxes
+1. **UT-01** — Guard `systemd-analyze` in `repo-validate` with `command -v`, matching the
+   four checks around it. Verified necessary (§2.6).
+   *verify:* `grep -c 'command -v systemd-analyze' devtools/repo-validate` → `1`
+2. **UT-02** — Add `tests/` to the README's Repository layout block, and `check`,
+   `coverage` and `assert-test-catches` to the `devtools/README.md` table.
+   *verify:* `grep -c 'tests/' README.md` and `grep -c 'coverage' devtools/README.md` → both `> 0`
+3. **UT-03** — Add `tests/README.md`: how to run, how to add an invariant, and the house
+   rule that a new check must be observed to fail via `assert-test-catches` first.
+   *verify:* `test -r tests/README.md`
+4. **UT-04** — Add a GitHub Actions workflow running `devtools/repo-validate`,
+   `tests/run-tests` and `devtools/coverage --min 15`.
+   *verify:* `test -r .github/workflows/checks.yml` The suite is 1.8 s and hermetic — it sandboxes
    `bt-trial` and asserts it wrote nothing to the evidence tree — so it is genuinely
    CI-safe today. Do item 1 first.
 
 ### Stage 2 — widen awk-library coverage *(low risk, highest value per hour)*
+
+**UT-05** (the harness) and **UT-06** / **UT-07** (the cases).
+*verify:* `tests/run-tests --section "awk libraries"`
 
 Give each of the six libraries a fixture directory and a table-driven runner:
 `tests/fixtures/<lib>/<case>.in` + `.expected`, compared with `diff`. Start with
@@ -337,7 +384,9 @@ change to any shipped tool.
 
 ### Stage 3 — introduce a journal seam *(the unlock; do it incrementally)*
 
-Add one sourceable helper:
+**UT-08** — add one sourceable helper.
+*verify:* `test -r tools/lib/journal.sh`
+
 
 ```sh
 # tools/lib/journal.sh
@@ -353,7 +402,11 @@ bt_journal() {
 Then every tool becomes runnable against a canned journal, and the other 41 scripts
 become testable at all. This is where the 13% → ~29% comes from.
 
-**Do not convert all 109 sites at once.** These tools are installed on a machine that is
+**UT-09** / **UT-10** — convert the tools, incrementally.
+*verify:* `tests/run-tests --section "the seam itself"`, and
+`grep -rlc 'source "$LIBDIR/journal.sh"' tools bin` to list what is converted.
+
+**Do not convert all 75 sites at once.** These tools are installed on a machine that is
 mid-experiment, and a bad conversion corrupts observations rather than merely failing.
 Convert in order of consequence — the tools whose numbers reach exhibits first:
 `bt-state` (34 lines), `bt-stage2` (35), `bt-boot-provenance` (36), `bt-interval` (17),
@@ -367,15 +420,17 @@ rot into a hand-maintained list.
 
 ### Stage 4 — retire the extraction hack, and split the suite
 
-1. Move `bt-phase`'s analysis body to `tools/lib/phase.awk` and load it with `-f`,
+1. **UT-11** — Move `bt-phase`'s analysis body to `tools/lib/phase.awk` and load with `-f`,
    exactly as `bt-capdiff` loads `capdiff-match.awk`. Delete the Python extractor. This
    closes the one place where the test runs a copy rather than the shipped code — the
    failure mode this repository has already been bitten by once.
    Note `install.sh` installs `tools/lib/*.awk` explicitly by name (lines 256-261), so
    the new library needs a line there, and the existing "no tool loads a `-f` library it
    does not ship" invariant will catch it if forgotten.
-2. Split `tests/run-tests` into per-area files with a thin runner. It is the largest file
-   in the repository and has already concealed two of its own defects.
+   *verify:* `test -r tools/lib/phase.awk` and `grep -c 'python3' tests/run-tests` → `0`
+2. **UT-12** — Split `tests/run-tests` into per-area files with a thin runner. It is the
+   largest file in the repository and has already concealed two of its own defects.
+   *verify:* `wc -l tests/run-tests`
 
 ### What I recommend against
 
@@ -469,13 +524,13 @@ is worth separating from the seam work: a third of the gain here was untaken, no
 
 ### Remaining
 
-- **The rest of Stage 3.** 105 `journalctl` call sites across 25 files are unconverted.
+- **The rest of Stage 3.** 68 `journalctl` call sites across 19 files are unconverted.
   The order in §5 still holds: `bt-state`, then `bt-status`, `bt-actions`, and
   `bin/bt-hang-watchdog` — 183 lines deciding whether to intervene on a live controller,
   still with no line executed under test, and still the sharpest number in this report.
 - **More awk fixtures.** `trial-sco-table.awk` (114 lines) is still entered exactly once
   and `stage2.awk` (153 lines) twice. The harness exists now; the cases do not.
-- **Splitting `tests/run-tests`.** It has grown from 1038 to 1491 lines in the course of
+- **Splitting `tests/run-tests`.** It has grown from 1038 to 1353 lines in the course of
   this work, which makes the case stronger rather than weaker. Deliberately not attempted
   in the same pass as the changes above.
 

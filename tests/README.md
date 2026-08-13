@@ -98,5 +98,5 @@ as an exact figure.
 
 Coverage is not a target. "Every test encodes a defect that shipped" is the
 rule; the percentage is a ratchet in CI to stop it falling silently as tools
-grow. See [`reviews/unit-testing-assessment.md`](../reviews/unit-testing-assessment.md)
+grow. See [the unit-testing assessment](../reviews/2026-08-13T1214Z-unit-testing-assessment.md)
 for the measurement and what remains.

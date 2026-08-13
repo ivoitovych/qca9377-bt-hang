@@ -563,7 +563,7 @@ from a fixture. Tools that read the journal through
 BT_JOURNAL_FIXTURE=tests/journal/provenance tools/bt-boot-provenance
 ```
 
-[`reviews/unit-testing-assessment.md`](reviews/unit-testing-assessment.md) measures this
+[the unit-testing assessment](reviews/2026-08-13T1214Z-unit-testing-assessment.md) measures this
 and tracks what remains.
 
 ## Contributing
