@@ -95,8 +95,15 @@ uuids=$(grep -oEi '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 # --- IPv4 ------------------------------------------------------------------
 # Documented as a refuse-to-publish check in three places, but previously only
 # printed an informational line and never set fail. Now it fails, as advertised.
+# RFC 5737 TEST-NET ranges (192.0.2/24, 198.51.100/24, 203.0.113/24) are
+# reserved for documentation and never routed — the IPv4 analogue of the
+# example.com rule three checks down, admitted for the same reason: test
+# fixtures for the tools that REDACT addresses must contain address-shaped
+# data, and a fixture that cannot be committed gets the gate widened ad hoc
+# or bypassed. A documented placeholder space is the third option.
 ips=$(grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' <<<"$CONTENT" \
       | grep -vE '^(0\.0\.0\.0|127\.0\.0\.1|255\.255\.255\.255)$' \
+      | grep -vE '^(192\.0\.2|198\.51\.100|203\.0\.113)\.' \
       | sort -u)
 [[ -n "$ips" ]] && report "IPv4 address found:" $ips || pass "no IPv4"
 

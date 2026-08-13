@@ -142,8 +142,14 @@ SUITE_TAIL=$(tail -1 "$WORK/suite.out" 2>/dev/null)
 # Executed (file, line) pairs. Absolute paths and anything outside the checkout
 # (the temp sandboxes the suite builds, /usr/local/bin copies) are dropped:
 # this measures the repository, not its installed image.
+# `./install.sh` and `install.sh` are the same file but different strings, and
+# the join below is a string join. The suite invokes the installer as
+# `./install.sh`, so its every executed line was recorded under a name the
+# coverable table does not contain, and the file reported 0.0% WHILE ITS TESTS
+# WERE VISIBLY RUNNING IT. A measurement tool's failure mode is once again
+# "looks like a finding": strip the ./ prefix at normalisation.
 grep -oE '@@C@@[^@]*@@[0-9]+@@' "$WORK/trace" 2>/dev/null \
-  | sed -E 's/^@@C@@//; s/@@$//; s/@@/\t/' \
+  | sed -E 's/^@@C@@//; s/@@$//; s/@@/\t/; s/^\.\///' \
   | awk -F'\t' 'NF == 2 && $1 !~ /^\// && $1 !~ /^\.\./ { print $1 "\t" $2 }' \
   | sort -u > "$WORK/executed"
 

@@ -63,7 +63,12 @@ install_file() {
 # probe timer. If the machine is deliberately in experiment mode, that silently
 # reverts the baseline the current measurements depend on, and the reversion is
 # invisible unless someone runs `bt-mode status` afterwards. It happened once.
-MODE_STAMP=/usr/local/share/qca9377-bt-hang/mode
+# Overridable for the same reason BT_STATE is, twenty lines below: the guard
+# is a refusal path, and a refusal path that can only be reached by writing the
+# real machine's mode stamp is a refusal path no test may ever exercise —
+# writing that stamp on the investigation machine would fake an experiment
+# marker, which is worse than leaving the guard untested.
+MODE_STAMP="${BT_MODE_STAMP:-/usr/local/share/qca9377-bt-hang/mode}"
 if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null; then
     echo "!! This machine is in EXPERIMENT mode ($(cat "$MODE_STAMP"))."
     echo "   Installing would re-enable the watchdog, the probe timer, the"
