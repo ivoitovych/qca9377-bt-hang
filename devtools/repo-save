@@ -94,8 +94,17 @@ if grep -qiE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$MSGTEXT"; then
     echo "ABORT: nothing committed" >&2
     exit 1
 fi
-if grep -oEi '[0-9a-f]{2}([:-][0-9a-f]{2}){5,}' <<<"$MSGTEXT" \
-   | tr 'A-F-' 'a-f:' | grep -qvE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be)'; then
+# COUNTED, NOT `grep -qv`. This is the guard that keeps real MAC addresses and
+# BSSIDs out of a PUBLIC repository, and under `set -o pipefail` a `| grep -q`
+# pipeline exits non-zero exactly when it matches — grep leaves at the first
+# hit and `tr` dies of SIGPIPE. A real address in a commit message would have
+# taken the "clean" branch. Twenty addresses reached public commits once
+# already, through a pattern that did not match underscores; this would have
+# been the same outcome by a different mechanism.
+n_real=$(grep -oEi '[0-9a-f]{2}([:-][0-9a-f]{2}){5,}' <<<"$MSGTEXT" \
+         | tr 'A-F-' 'a-f:' \
+         | grep -cvE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be)' || true)
+if (( ${n_real:-0} > 0 )); then
     echo "  ✗ commit message contains a real MAC/BSSID" >&2
     echo "ABORT: nothing committed" >&2
     exit 1

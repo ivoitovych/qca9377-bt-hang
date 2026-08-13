@@ -40,22 +40,41 @@ Between those two facts the system reached **`reboot.target`**, not
 power-off/power-on, reached `poweroff.target` — so the two are distinguishable
 in the log, and this one is recorded as a reboot.
 
-| transition | shutdown target | gap | controller after |
-|---|---|---|---|
-| −5 → −4 | (not checked) | 25 s | — |
-| −4 → −3 | (not checked) | 22 s | — |
-| −3 → −2 | (not checked) | 34 s | — |
-| −2 → −1 | `poweroff.target` | 61 s | recovered |
-| −1 → 0 | **`reboot.target`** | **98 s** | **recovered** |
+Filled in with `bt-boot-provenance`, which reads all six rows in two seconds:
+
+| transition | shutdown target | gap | firmware | controller after |
+|---|---|---|---|---|
+| −5 → −4 | `poweroff.target` | 25 s | 3.922 s | enumerated |
+| −4 → −3 | `poweroff.target` | 22 s | 3.914 s | enumerated |
+| −3 → −2 | `poweroff.target` | 34 s | 3.910 s | enumerated |
+| −2 → −1 | `poweroff.target` | 61 s | 3.909 s | enumerated |
+| −1 → 0 | **`reboot.target`** | **98 s** | 4.020 s | **enumerated** |
+
+## CORRECTION to an earlier reading of this exhibit
+
+The first version of this analysis described the 22–34 s gaps as "warm reboots
+on record" and argued that 98 s was three to four times longer, so the machine
+had probably been powered off. **Every one of those rows is a `poweroff.target`
+shutdown.** There is no warm reboot anywhere in the retained history to compare
+against.
+
+The gap argument therefore runs the other way, and not far: 98 s is *longer*
+than this operator's usual power-off-and-back-on turnaround of 22–61 s, which
+says nothing useful about whether power was applied during it. The comparison
+class was wrong, so the conclusion drawn from it was worthless — an error the
+`bt-boot-provenance` table makes hard to repeat, because the shutdown target is
+now printed beside every gap instead of being assumed.
 
 ## What this does and does not establish
 
-**Does not establish** that a warm reboot recovers the controller. The 98 s gap
-is three to four times the warm reboots on record and longer than the confirmed
-power cycle, so the machine plausibly spent that window powered off — the
-operator reports the action as "rebooted or power-cycled, which one is unknown",
-and a power-off performed *after* the OS reached `reboot.target` leaves exactly
-this trace.
+**Does not establish** that a warm reboot recovers the controller. The operator
+reports the action as "rebooted or power-cycled, which one is unknown", and a
+power-off performed *after* the OS reached `reboot.target` leaves exactly this
+trace. Nothing in the journal distinguishes the two.
+
+Firmware initialisation time was checked as a possible independent witness — a
+cold start might re-initialise more than a warm one — and it does not
+discriminate on this machine (`EX-019`).
 
 **Does establish** that the claim was never tested. `bt-trial protocol` step 0
 states that a warm reboot "does not drop the M.2 power rail and will not recover
@@ -71,10 +90,19 @@ part of how stage 2 is explained.
 ## What was changed as a result
 
 `bt-trial` now records the previous boot's shutdown target and whether the
-controller enumerated at the start of the current boot, so the question is
-answered by accumulation instead of by recall. The next time the controller dies
-and the machine is restarted, the log will say which kind of restart it was
-without anyone having to remember.
+controller enumerated at the start of the current boot, and `bt-boot-provenance`
+prints the same across every retained boot.
+
+**Read that field as shutdown-target provenance, not power-cycle provenance.**
+It records the operating system's shutdown trajectory. Reaching `reboot.target`
+does not prove power stayed applied afterwards — this very exhibit is the case
+where it may not have. The field cannot retrospectively determine electrical
+power loss, and no field in the journal can.
+
+What it *does* do is accumulate the ordinary cases honestly. If a boot preceded
+by `reboot.target`, with no operator intervention in between, is followed by a
+recovered controller, that is the observation the protocol's step 0 claims is
+impossible — and it will be sitting in a column rather than in someone's memory.
 
 ## Provenance
 

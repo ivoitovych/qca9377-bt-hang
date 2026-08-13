@@ -56,7 +56,12 @@ cat <<'EOF'
 PROTOCOL v2 — one trial
 
   0. Cold-boot the machine (POWER-OFF, not reboot) if the controller is down.
-     A warm reboot does not drop the M.2 power rail and will not recover it.
+     BELIEVED, NOT MEASURED: that a warm reboot does not drop the M.2 power
+     rail and so will not recover it. That is hardware reasoning which entered
+     this protocol as fact; no exhibit supports it, and on 2026-08-13 the
+     controller did recover across a shutdown that reached reboot.target
+     (EX-017, EX-019). Keep powering off — it certainly works, and a failed
+     recovery costs a trial — but do not repeat the claim as established.
   1. bt-trial start <build>
   2. Connect the Sennheiser Momentum 4. Wait until it appears as an audio
      device in Settings -> Sound.
@@ -421,9 +426,18 @@ hang|ok)
     # every denominator.
     perturbed=none
     if (( journal_ok )); then
+        # COUNTED, NOT `grep -q`. Under `set -o pipefail` a `producer | grep -q`
+        # pipeline exits NON-ZERO when the pattern is found: grep leaves at the
+        # first match, the producer dies of SIGPIPE, and pipefail propagates
+        # that. `&& pert+=(...)` therefore records the perturbation only when
+        # there was none — and only sometimes, because a producer that finishes
+        # writing before grep exits never sees SIGPIPE. Nondeterministically
+        # inverted is worse than wrong.
         pert=()
-        jk | grep -q 'deregistering interface driver btusb' && pert+=(btusb_reload)
-        jk | grep -q 'usb_queue_reset_device\|Resetting usb device' && pert+=(usb_reset)
+        n_reload=$(jk | grep -c 'deregistering interface driver btusb' || true)
+        n_reset=$(jk | grep -cE 'usb_queue_reset_device|Resetting usb device' || true)
+        (( ${n_reload:-0} > 0 )) && pert+=(btusb_reload)
+        (( ${n_reset:-0}  > 0 )) && pert+=(usb_reset)
         if (( ${#pert[@]} )); then
             perturbed=$(IFS=+; echo "${pert[*]}")
             case "$treatment" in
@@ -715,8 +729,11 @@ hang|ok)
         *poweroff) prev_shutdown=poweroff ;;
         *halt)     prev_shutdown=halt     ;;
     esac
-    if journalctl -k -b 0 --no-pager 2>/dev/null \
-       | grep -q "idVendor=${BT_VID:-13d3}, idProduct=${BT_PID:-3503}"; then
+    # Counted, for the pipefail reason above: `| grep -q` would have reported
+    # `no` exactly when the controller HAD enumerated.
+    n_enum=$(journalctl -k -b 0 --no-pager 2>/dev/null \
+             | grep -c "idVendor=${BT_VID:-13d3}, idProduct=${BT_PID:-3503}" || true)
+    if (( ${n_enum:-0} > 0 )); then
         enum_at_boot=yes
     else
         enum_at_boot=no

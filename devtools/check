@@ -1,0 +1,65 @@
+#!/bin/bash
+# check — the one command to run before committing.
+#
+#   devtools/check              syntax + invariants + drift + install state
+#   devtools/check --quick      skip the install-state comparison
+#
+# WHY THIS EXISTS. There are four separate gates in this repository, and the
+# habit was to reassemble them by hand each time:
+#
+#   for f in a b c; do bash -n "$f"; done
+#   tests/run-tests 2>&1 | sed -n '/section/,/next/p'
+#   devtools/repo-validate | tail -5
+#   tools/bt-verify-install | tail -3
+#
+# Every one of those forms — a `for` loop over a variable, a `sed` range, a
+# pipeline assembled inline — is indistinguishable from a destructive command
+# to a static analyser, so each cost an interactive approval. Worse, the loop
+# was redundant: repo-validate already parses every shell script and every awk
+# program in the tree, so hand-listing four files checked fewer of them.
+#
+# One named command, approved once, that checks strictly more than the
+# hand-assembled version did.
+
+set -uo pipefail
+
+cd "$(dirname "$0")/.." || exit 1
+
+QUICK=0
+[[ "${1:-}" == --quick ]] && QUICK=1
+
+G=$'\033[32m'; R=$'\033[31m'; B=$'\033[1m'; O=$'\033[0m'
+[[ -t 1 ]] || { G=""; R=""; B=""; O=""; }
+
+rc=0
+step() {
+    local name="$1"; shift
+    printf '%s>> %s%s\n' "$B" "$name" "$O"
+    if "$@"; then
+        printf '   %sok%s\n\n' "$G" "$O"
+    else
+        printf '   %sFAILED%s\n\n' "$R" "$O"
+        rc=1
+    fi
+}
+
+# repo-validate runs tests/run-tests itself and parses every shell and awk file,
+# so it subsumes both the syntax loop and the test suite.
+step "repo-validate (syntax, awk parse, invariants, doc drift)" \
+     devtools/repo-validate
+
+if (( ! QUICK )); then
+    # Not a correctness gate — it reports whether the RUNNING machine matches
+    # the checkout, which a commit does not change. Failure here is a prompt to
+    # install, not a reason to withhold a commit, so it does not set rc.
+    printf '%s>> install state (informational)%s\n' "$B" "$O"
+    tools/bt-verify-install | tail -3
+    echo
+fi
+
+if (( rc )); then
+    printf '%sNOT READY TO COMMIT%s\n' "$R" "$O"
+else
+    printf '%sready%s\n' "$G" "$O"
+fi
+exit $rc

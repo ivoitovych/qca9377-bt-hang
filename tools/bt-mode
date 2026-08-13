@@ -60,7 +60,11 @@ show_status() {
     autos=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo '?')
     power='?'; d=$(radio_dir) && power=$(cat "$d/power/control" 2>/dev/null || echo '?')
     if systemctl is-active --quiet bt-hang-watchdog 2>/dev/null; then
-        if systemctl show bt-hang-watchdog -p Environment --value 2>/dev/null | grep -q 'BT_EARLY=1'
+        # Counted: `| grep -q` inverts under pipefail (see tests/run-tests),
+        # which would report the watchdog as late-only whenever BT_EARLY=1.
+        n_early=$(systemctl show bt-hang-watchdog -p Environment --value 2>/dev/null \
+                  | grep -c 'BT_EARLY=1' || true)
+        if (( ${n_early:-0} > 0 ))
         then wd="on (early+late)"; else wd="on (late only)"; fi
     else wd="off"; fi
     systemctl is-active --quiet bt-health-snapshot.timer 2>/dev/null && probes=on || probes=off
@@ -120,7 +124,7 @@ set_experiment() {
     echo "  + $STAMP"
     echo
     echo "⚠ THE WATCHDOG IS OFF. A hang now requires a full POWER-OFF — a warm"
-    echo "  reboot does not drop the M.2 rail. That is the point: the failure"
+    echo "  reboot is believed not to recover it (untested — EX-017). The failure"
     echo "  will be observed rather than rescued."
     echo
     echo "Passive capture is untouched. Trials opened from now record"

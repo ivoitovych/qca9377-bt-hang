@@ -153,7 +153,8 @@ done
 if (( ! found )); then
     echo "  WARNING: $VID:$PID not on the USB bus right now."
     echo "           If the controller is already hung, a full POWER-OFF (not a"
-    echo "           reboot) is needed — a warm reset does not drop the M.2 rail."
+    echo "           reboot) is needed. A warm reboot is BELIEVED not to recover"
+    echo "           it, but that has never been tested — see EX-017 and EX-019."
     echo "           Installing anyway; the watchdog arms itself at boot."
 fi
 for c in python3 journalctl; do
@@ -247,6 +248,7 @@ install_file "$SRC/tools/bt-env-history" /usr/local/bin/bt-env-history 0755
 install_file "$SRC/tools/bt-mode"        /usr/local/bin/bt-mode        0755
 install_file "$SRC/tools/bt-interval"    /usr/local/bin/bt-interval    0755
 install_file "$SRC/tools/bt-stage2"      /usr/local/bin/bt-stage2      0755
+install_file "$SRC/tools/bt-boot-provenance" /usr/local/bin/bt-boot-provenance 0755
 # Shared awk programs. These are loaded with `awk -f`, so they must sit where
 # the tools look: <dir of the tool>/lib.
 install_file "$SRC/tools/lib/timestamp.awk"     /usr/local/bin/lib/timestamp.awk     0644

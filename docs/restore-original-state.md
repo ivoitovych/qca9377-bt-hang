@@ -180,5 +180,5 @@ Checks each item above and reports what is still in place. Run it after
   `evidence/baseline/*.sanitized.log`; what is gone is the real MAC addresses, the Wi-Fi AP
   BSSID and the root filesystem UUID. Losing exactly those was the intent.
 - **The hardware state.** The controller was already hard-hung when the investigation
-  began. Only a full power-off recovers it — a warm reboot does not drop the M.2 rail.
+  began. A full power-off recovers it. (Whether a warm reboot also does is untested — see EX-017.)
   That predates and is independent of everything documented here.

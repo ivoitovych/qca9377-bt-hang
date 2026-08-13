@@ -2,7 +2,7 @@
 
 **Claim.** Once HCI command timeouts have begun, no software recovery succeeds: USBDEVFS_RESET fails, USB unbind/bind fails, and the device leaves the USB bus entirely, after which only a cold power-off restores it.
 
-**Relevance.** Establishes the recovery deadline. The reset must land inside the window between the first HCI timeout and the first USB-level failure; after that the controller stops answering the USB core itself and no amount of re-enumeration helps. A warm reboot does not recover it because it does not drop the M.2 power rail.
+**Relevance.** Establishes the recovery deadline. The reset must land inside the window between the first HCI timeout and the first USB-level failure; after that the controller stops answering the USB core itself and no amount of re-enumeration helps. A cold power-off recovers it. (This exhibit originally added "because a warm reboot does not drop the M.2 power rail" — an untested hardware inference, not an observation; see EX-017 and EX-019. The reset-deadline claim above does not depend on it.)
 
 ## Extraction method
 

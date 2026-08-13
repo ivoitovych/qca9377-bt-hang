@@ -1,0 +1,120 @@
+#!/bin/bash
+# bt-boot-provenance — how did the machine get into each boot, and did the
+# controller come back?
+#
+#   bt-boot-provenance [N]        the last N boots (default 8)
+#
+# Columns:
+#   boot        journalctl offset and short id
+#   started     when this boot began
+#   gap         seconds between the previous boot's last message and this one's
+#               first — long gaps suggest the machine sat powered off
+#   prev end    the last shutdown target the PREVIOUS boot reached
+#   firmware    firmware initialisation time reported by systemd
+#   hci         did 13d3:3503 enumerate in this boot?
+#
+# WHAT THIS CAN AND CANNOT TELL YOU.
+#
+# It records the OPERATING SYSTEM'S shutdown trajectory, not the electrical
+# state of the M.2 rail. Reaching `reboot.target` does not prove power stayed
+# applied afterwards: an operator can hold the power button during the restart,
+# and the log looks identical. Read the column as *shutdown-target provenance*.
+#
+# The `firmware` column was added to see whether it could supply the missing
+# electrical evidence — a cold start re-initialising more than a warm one. On
+# this machine it does not: across six boots including a confirmed power cycle
+# and a confirmed `reboot.target`, firmware time spans 3.909-4.043 s with the
+# two cases 0.11 s apart, well inside the noise. It is kept because a NEGATIVE
+# result that is measured beats an assumption that is not, and because another
+# machine may behave differently.
+#
+# The claim this exists to stop being repeated from memory is the protocol's
+# step 0: "a warm reboot does not drop the M.2 power rail and will not recover
+# it". That is hardware reasoning which entered the documentation as fact and
+# has never been tested. See EX-017 and EX-019.
+#
+# Read-only.
+
+set -uo pipefail
+
+N="${1:-8}"
+[[ "$N" =~ ^[0-9]+$ ]] || { echo "usage: bt-boot-provenance [N]" >&2; exit 2; }
+
+VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
+
+B=$'\033[1m'; O=$'\033[0m'; Y=$'\033[33m'
+[[ -t 1 ]] || { B=""; O=""; Y=""; }
+
+mapfile -t BOOTS < <(journalctl --list-boots --no-pager 2>/dev/null | tail -n "$N")
+if (( ${#BOOTS[@]} == 0 )); then
+    echo "bt-boot-provenance: could not list boots" >&2; exit 1
+fi
+
+# `journalctl --list-boots` already prints both boundary timestamps:
+#   <offset> <id> Tue 2026-08-11 22:26:00 CEST Wed 2026-08-12 04:40:05 CEST
+# Taking them from here costs nothing. The first version asked the journal for
+# each boot's first line instead, which is a full scan per boot — minutes on a
+# journal this size — and it used `-n1`, which returns the LAST line, so every
+# "started" column showed the time the boot ENDED.
+printf '%sboot  started           ended             gap       prev end   firmware  hci%s\n' "$B" "$O"
+printf -- '──────────────────────────────────────────────────────────────────────────────\n'
+
+prev_end_epoch=""
+for row in "${BOOTS[@]}"; do
+    off=$(awk '{print $1}' <<<"$row")
+    first=$(awk '{print $4" "$5}' <<<"$row")
+    last=$(awk '{print $8" "$9}' <<<"$row")
+
+    # Shutdown target of the PREVIOUS boot. The targets are among the last
+    # messages, so a bounded tail is both correct and fast.
+    pe=$(journalctl -b "$((off - 1))" -n 400 --no-pager 2>/dev/null \
+         | grep -oE 'Reached target (reboot|poweroff|halt)' | tail -1 | awk '{print $3}')
+    [[ -n "$pe" ]] || pe="?"
+
+    # Filtering by identifier uses the index; a full-boot grep does not and
+    # takes minutes on a journal this size.
+    fw=$(journalctl -b "$off" -t systemd --no-pager 2>/dev/null \
+         | grep -m1 -oE '[0-9.]+m?s \(firmware\)' | awk '{print $1}')
+    [[ -n "$fw" ]] || fw="?"
+
+    # COUNTED, NOT `grep -q`, AND THAT IS NOT A STYLE CHOICE.
+    #
+    # Under `set -o pipefail`, `journalctl ... | grep -q PATTERN` reports
+    # FAILURE precisely when the pattern is found: grep exits at the first
+    # match, journalctl dies of SIGPIPE, and pipefail propagates its status.
+    # The first version of this tool printed `no` for every boot, including
+    # boots whose journal plainly contains the device — the answer was
+    # inverted, not missing, which is the kind of wrong that reads as a result.
+    # Bounded to the first three minutes of the boot. The controller either
+    # enumerates during startup or it is not there; scanning a whole boot to
+    # learn that costs a full journal pass per row and made this tool take
+    # minutes to print six lines.
+    # Via epoch, NOT `date -d "$first + 180 seconds"`. GNU date reads the `+180`
+    # in that string as a timezone offset rather than an interval, and returns a
+    # time twenty minutes BEFORE the input — silently. Every row then reported
+    # `no`, including boots whose device is plainly in the journal.
+    first_epoch=$(date -d "$first" +%s 2>/dev/null)
+    if [[ -n "$first_epoch" ]]; then
+        until_t=$(date -d "@$(( first_epoch + 180 ))" '+%Y-%m-%d %H:%M:%S')
+    else
+        until_t=""
+    fi
+    nhci=$(journalctl -k -b "$off" ${until_t:+--until "$until_t"} --no-pager 2>/dev/null \
+           | grep -c "idVendor=$VID, idProduct=$PID" || true)
+    if [[ "${nhci:-0}" -gt 0 ]]; then hci=yes; else hci=no; fi
+
+    gap="?"
+    if [[ -n "$prev_end_epoch" ]]; then
+        s=$(date -d "$first" +%s 2>/dev/null) && gap="$(( s - prev_end_epoch ))s"
+    fi
+    prev_end_epoch=$(date -d "$last" +%s 2>/dev/null) || prev_end_epoch=""
+
+    mark=""
+    [[ "$pe" == reboot && "$hci" == yes ]] && mark="$Y  <- recovered across a reboot target$O"
+    printf '%4s  %-17s %-17s %-9s %-10s %-9s %-4s%s\n' \
+        "$off" "$first" "$last" "$gap" "$pe" "$fw" "$hci" "$mark"
+done
+
+echo
+echo "The 'prev end' column is the OS shutdown trajectory, not proof that the"
+echo "M.2 rail lost power — a power-off after reboot.target leaves this trace."

@@ -114,8 +114,19 @@ member sets the pace for all. `BT-2` and `BT-4` are reportable *today*; `BT-1` i
 **Reportable:** ❌ not yet. No quantified reproducer (`docs/pre-submission-checklist.md`).
 
 The controller stops answering HCI commands. It has often been observed to stop answering
-USB control transfers and leave the bus some time later, after which only a cold power-off
-recovers it — a warm reboot does not drop the M.2 power rail.
+USB control transfers and leave the bus some time later, after which a cold power-off
+recovers it.
+
+> **Untested assumption, flagged rather than removed.** Everywhere this project says *"a
+> warm reboot does not drop the M.2 power rail and will not recover it"* — the protocol's
+> step 0, `bt-mode`, `install.sh`, `EX-005`, `docs/related-reports.md` — that is hardware
+> reasoning which entered the documentation as fact. No exhibit supports it. On 2026-08-13
+> the controller recovered across a shutdown that reached `reboot.target`, though an
+> unlogged power-off in the 98 s gap is not excluded (`EX-017`), and firmware time cannot
+> tell the two apart (`EX-019`). No field in the journal witnesses the rail, so this can
+> only be settled by a deliberate trial: hang the controller, warm-reboot without touching
+> the power, look. That trial is **secondary** — it would consume a hang that the stage-2
+> question needs first.
 
 **Current formulation — everything the evidence earns, and nothing more:**
 

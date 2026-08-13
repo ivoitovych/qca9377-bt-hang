@@ -50,7 +50,7 @@ cycle.
 On the Intel hardware, reloading `btusb` restores the adapter. On this QCA9377 it does
 not: driver unbind/rebind, xHCI port power-cycle, and warm reboot were all tested and all
 failed (`evidence/sessions/20260810-072445-first-real-hang/`). Only a full power-off
-recovers it, because that is what drops the M.2 rail.
+recovers it. The usual explanation — that only a power-off drops the M.2 rail — is an untested inference here (EX-017, EX-019).
 
 So the *same trigger class* produces a *more severe outcome* on this device — consistent
 with it running unpatched ROM firmware while the Intel part loads its firmware normally.

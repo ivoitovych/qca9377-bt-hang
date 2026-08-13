@@ -753,6 +753,41 @@ else
 fi
 
 echo
+echo "pipefail inverts grep -q"
+echo "──────────────────────────────────────────────────────────────"
+
+# THE INVARIANT: no tool here decides a yes/no question with
+# `<producer> | grep -q PATTERN` under `set -o pipefail`.
+#
+# grep -q exits at the first match. The producer then dies of SIGPIPE, pipefail
+# propagates its non-zero status, and the pipeline reports FAILURE precisely
+# when the pattern was found. bt-boot-provenance printed `no` for every boot on
+# its first run, including boots whose journal plainly contains the device —
+# the answer was inverted, not missing, which reads as a result rather than as
+# an error.
+#
+# Every script here sets `set -uo pipefail`, so this is a property of the
+# repository, not of one tool. Counted output compared against zero is immune.
+QGREP=$(grep -rn -- '| *grep -q' tools bin devtools 2>/dev/null \
+        | grep -v "^[^:]*:[0-9]*:[[:space:]]*#")
+if [[ -z "$QGREP" ]]; then
+    ok "no yes/no decision is made by a grep -q pipeline"
+else
+    bad "grep -q at the end of a pipeline — inverted under pipefail:"
+    while IFS= read -r l; do echo "        $l"; done <<<"$QGREP"
+fi
+
+# The behaviour itself, so the rule above is anchored to something demonstrable
+# rather than to a claim in a comment.
+( set -o pipefail
+  yes x | grep -q x ) 2>/dev/null
+if (( $? != 0 )); then
+    ok "confirmed: a matching grep -q pipeline exits non-zero under pipefail"
+else
+    ok "grep -q pipeline is not inverted on this shell — rule kept regardless"
+fi
+
+echo
 echo "results.tsv — header and rows must stay the same width"
 echo "──────────────────────────────────────────────────────────────"
 

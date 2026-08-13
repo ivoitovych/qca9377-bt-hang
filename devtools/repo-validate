@@ -29,7 +29,11 @@ files() { { git ls-files; git diff --cached --name-only --diff-filter=d; } | sor
 
 while IFS= read -r f; do
     [[ -f "$f" ]] || continue
-    if head -1 "$f" 2>/dev/null | grep -q '^#!.*\(bash\|sh\)'; then
+    # Counted: `| grep -q` inverts under pipefail. Here it would mean shell
+    # scripts silently stop being syntax-checked — the validator would report
+    # a clean repository by checking nothing.
+    n_sh=$(head -1 "$f" 2>/dev/null | grep -cE '^#!.*(bash|sh)' || true)
+    if (( ${n_sh:-0} > 0 )); then
         if bash -n "$f" 2>/dev/null; then ok "bash  $f"
         else bad "bash  $f"; bash -n "$f" 2>&1 | sed 's/^/      /'; fi
     fi
