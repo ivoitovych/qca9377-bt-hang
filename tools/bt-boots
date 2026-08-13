@@ -6,6 +6,13 @@
 #
 # Replaces the repeated "for b in $(seq -11 0); do journalctl -k -b $b | grep -c ..."
 set -uo pipefail
+
+# Journal reads go through bt_journal so this tool can be driven over a
+# fixture; see tools/lib/journal.sh.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-boots: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
 LIMIT="${1:-0}"
 # Locate bt-boot-list next to this script, then on PATH. Enumerating boots is
 # subtle enough (see that script's header) that it must not be reimplemented.
@@ -17,13 +24,13 @@ done
 [[ -n "$BOOTLIST" ]] || BOOTLIST=""
 boot_indices() {
     if [[ -n "$BOOTLIST" ]]; then "$BOOTLIST" ${1:+-n "$1"}
-    else journalctl --list-boots 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}' | sort -n; fi
+    else bt_journal --list-boots 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}' | sort -n; fi
 }
 
 
 printf '%-6s %-22s %-10s %-10s %-8s %s\n' BOOT KERNEL TIMEOUTS UNEXPECT WD-ACTS DATE
 for b in $( (( LIMIT > 0 )) && boot_indices "$LIMIT" || boot_indices ); do
-    k=$(journalctl -k -b "$b" 2>/dev/null | grep -m1 -oE "Linux version [0-9][^ ]*" | awk '{print $3}')
+    k=$(bt_journal -k -b "$b" 2>/dev/null | grep -m1 -oE "Linux version [0-9][^ ]*" | awk '{print $3}')
     # A boot whose "Linux version" banner rotated away is still a boot; a row
     # of ?s keeps it visible instead of silently shrinking the table.
     [[ -z "${k:-}" ]] && k="?"
@@ -31,10 +38,10 @@ for b in $( (( LIMIT > 0 )) && boot_indices "$LIMIT" || boot_indices ); do
     # also matches `link tx timeout` (ACL supervision, a different layer), of
     # which this machine has logged 7 against 173 real command timeouts. See
     # evidence/exhibits/015-timeout-pattern-undercount.md.
-    t=$(journalctl -k -b "$b" 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
-    u=$(journalctl -k -b "$b" 2>/dev/null | grep -c "unexpected event for opcode" || true)
-    w=$(journalctl -u bt-hang-watchdog -b "$b" 2>/dev/null | grep -cE "intervening|EARLY intervention" || true)
-    d=$(journalctl -k -b "$b" -o short-unix 2>/dev/null | head -1 | awk '{printf "%d",$1}')
+    t=$(bt_journal -k -b "$b" 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
+    u=$(bt_journal -k -b "$b" 2>/dev/null | grep -c "unexpected event for opcode" || true)
+    w=$(bt_journal -u bt-hang-watchdog -b "$b" 2>/dev/null | grep -cE "intervening|EARLY intervention" || true)
+    d=$(bt_journal -k -b "$b" -o short-unix 2>/dev/null | head -1 | awk '{printf "%d",$1}')
     ds=$([[ -n "$d" ]] && date -d "@$d" '+%m-%d %H:%M' || echo "?")
     printf '%-6s %-22s %-10s %-10s %-8s %s\n' "$b" "$k" "${t:-0}" "${u:-0}" "${w:-0}" "$ds"
 done

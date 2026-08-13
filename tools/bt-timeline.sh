@@ -19,6 +19,13 @@
 
 set -uo pipefail
 
+# Journal reads go through bt_journal so this tool can be driven over a
+# fixture; see tools/lib/journal.sh.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-timeline.sh: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
 RAW=0
 ALL=0
 SINCE=""
@@ -50,11 +57,11 @@ TMP=$(mktemp); trap 'rm -f "$TMP"' EXIT
 # Each stream is collected separately with epoch timestamps, tagged, then merged
 # by sort. Doing it in one journalctl call would work, but separate calls let
 # each stream be filtered on its own terms (the kernel one needs it badly).
-grab() { # tag, extra journalctl args...
+grab() { # tag, extra bt_journal args...
     local tag="$1"; shift
     # journalctl prints "-- No entries --" to stdout for an empty stream; as a
     # pseudo-event it sorted to the top of every timeline (ts "--").
-    journalctl "${SEL[@]}" -o short-unix --no-pager "$@" 2>/dev/null \
+    bt_journal "${SEL[@]}" -o short-unix --no-pager "$@" 2>/dev/null \
       | grep -v '^-- No entries --' \
       | awk -v t="$tag" '{ ts=$1; $1=""; sub(/^ /,""); printf "%s\t%s\t%s\n", ts, t, $0 }'
 }

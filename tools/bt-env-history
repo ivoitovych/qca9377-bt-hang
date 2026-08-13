@@ -32,6 +32,13 @@
 
 set -uo pipefail
 
+# Journal reads go through bt_journal so this tool can be driven over a
+# fixture; see tools/lib/journal.sh.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-env-history: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
 N="${1:-}"
 [[ "$N" == "-n" ]] && N="${2:-}"
 LIMIT="${N:-40}"
@@ -43,7 +50,7 @@ printf -- '───────────────────────
 
 # journalctl --list-boots gives "IDX BOOTID FIRST... LAST...". The boot id is
 # needed to join against metrics.tsv, which stores its first 8 characters.
-journalctl --list-boots --no-pager 2>/dev/null \
+bt_journal --list-boots --no-pager 2>/dev/null \
 | awk 'NF >= 3 && $1 ~ /^-?[0-9]+$/ { print $1, $2 }' \
 | tail -n "$LIMIT" \
 | while read -r idx bootid; do
@@ -51,9 +58,9 @@ journalctl --list-boots --no-pager 2>/dev/null \
     # FIRST entry of the boot — `-n1` returns the LAST, which relabels a boot
     # spanning midnight with its end date. The same -n1 trap this repository
     # documented in 2026-08-10 and fixed in two other tools.
-    date=$(journalctl -b "$idx" --no-pager -o short-iso 2>/dev/null | head -1 | cut -dT -f1)
+    date=$(bt_journal -b "$idx" --no-pager -o short-iso 2>/dev/null | head -1 | cut -dT -f1)
 
-    wd_log=$(journalctl -u bt-hang-watchdog -b "$idx" --no-pager -o cat 2>/dev/null)
+    wd_log=$(bt_journal -u bt-hang-watchdog -b "$idx" --no-pager -o cat 2>/dev/null)
     if [[ -z "$wd_log" ]] || ! grep -q "bt-hang-watchdog started" <<<"$wd_log"; then
         wd="off"
     elif grep -q "EARLY mode ON" <<<"$wd_log"; then
@@ -87,7 +94,7 @@ journalctl --list-boots --no-pager 2>/dev/null \
         power=$(cut -d' ' -f2 <<<"$vals")
     fi
 
-    probes=$(journalctl -u bt-health-snapshot.service -u bt-health-snapshot-event.service \
+    probes=$(bt_journal -u bt-health-snapshot.service -u bt-health-snapshot-event.service \
              -b "$idx" --no-pager -o cat 2>/dev/null | grep -c "Snapshot Bluetooth health" || true)
     [[ "${probes:-0}" -gt 0 ]] && pr="${probes}" || pr="none"
 
