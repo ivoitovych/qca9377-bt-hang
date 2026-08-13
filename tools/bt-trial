@@ -150,7 +150,16 @@ env_fingerprint() {
     else
         wd="off"
     fi
-    probes=$(systemctl is-active bt-health-snapshot.timer 2>/dev/null || echo inactive)
+    # `systemctl is-active` PRINTS "inactive" and RETURNS non-zero, so
+    # `... || echo inactive` emitted it twice — putting a newline inside the
+    # treatment fingerprint and therefore inside the TSV row. The A/B/C/D
+    # checklist requires probes OFF, which is exactly the state that triggered
+    # it. A boolean test yields a canonical token instead.
+    if systemctl is-active --quiet bt-health-snapshot.timer 2>/dev/null; then
+        probes=on
+    else
+        probes=off
+    fi
     printf 'autosusp=%s,power=%s,wd=%s,probes=%s' \
         "${autosusp:-?}" "$power" "$wd" "$probes"
 }
@@ -301,7 +310,20 @@ hang|ok)
     # report tests passed throughout because they drive a prebuilt results.tsv
     # — they validated the consumer while the producer was dead.
     since="@$(( start - 5 ))"
-    jk() { journalctl -k --since "$since" --no-pager -o short-iso-precise 2>/dev/null; }
+
+    # CAPTURE ONCE, WITH A CHECKED STATUS. Previously each count was
+    # `journalctl ... | grep -c ... || true`. If journalctl failed, grep still
+    # printed 0 and `|| true` swallowed the failed pipeline, so the classifier
+    # received a perfectly numeric zero and concluded `not_observed` — a clean
+    # survival manufactured from an unreadable journal. `unknown` cannot protect
+    # against a failure it never learns about.
+    KJ=$(mktemp) || { echo "bt-trial: mktemp failed" >&2; exit 1; }
+    if journalctl -k --since "$since" --no-pager -o short-iso-precise > "$KJ" 2>/dev/null; then
+        journal_ok=1
+    else
+        journal_ok=0
+    fi
+    jk() { cat "$KJ"; }
 
     sco_sent=$(jk | grep -c "opcode 0x0428" || true)
     tmo=$(jk | grep -c "command tx timeout" || true)
@@ -369,7 +391,7 @@ hang|ok)
               | grep -cE "EARLY intervention|Detected .* controller timeouts within" || true)
 
     # --- axis 1: what the evidence says about BT-1 --------------------------
-    if [[ ! "${tmo:-}" =~ ^[0-9]+$ ]]; then
+    if (( ! journal_ok )) || [[ ! "${tmo:-}" =~ ^[0-9]+$ ]]; then
         bt1_status=unknown          # could not read the journal; do not guess
     elif (( tmo > 0 )); then
         bt1_status=confirmed        # HCI non-responsiveness was observed
@@ -388,13 +410,26 @@ hang|ok)
     if [[ "$1" == hang ]] || ! hci_alive; then
         trial_result=failed
     elif [[ "${any_int:-0}" =~ ^[0-9]+$ ]] && (( any_int > 0 )); then
-        trial_result=recovered      # alive, but only after intervention
+        # NOT "recovered". That word asserts a recovery happened, which is only
+        # true when a failure was confirmed. Paired with
+        # bt1_status=censored_pre_failure it would invent the very failure the
+        # censoring says we cannot know about. This states only what was seen:
+        # the controller answers, and an intervention occurred first.
+        #
+        #   confirmed + alive_after_intervention  -> mitigation worked
+        #   censored_pre_failure + alive_after_intervention -> unknowable
+        trial_result=alive_after_intervention
     else
         trial_result=survived       # alive, untouched
     fi
 
     # Kept for humans reading a single column; every rate is computed from the
     # two axes above, never from this.
+    # Deliberately NOT reused for control flow. An earlier version assigned
+    # trial_result here and then still tested `$outcome == hang` further down —
+    # a value that can no longer occur — so a real failure skipped bt-incident
+    # and printed the survival branch. Every decision below keys on
+    # $trial_result.
     outcome="$trial_result"
 
     # The liveness check now happens inside the axis-2 classification above, so
@@ -592,14 +627,14 @@ hang|ok)
     echo "  liveness probes       : ${probes:-?}   (btmon aborts: ${aborts:-?})"
     echo "  last probe -> timeout : $probe_to_tmo s"
 
-    if [[ "$outcome" == hang ]] && command -v bt-incident >/dev/null 2>&1; then
+    if [[ "$trial_result" == failed ]] && command -v bt-incident >/dev/null 2>&1; then
         echo "collecting incident evidence..."
         bt-incident "trial-$build-$n" --since "@$(( start - 60 ))" >/dev/null 2>&1 \
             && echo "  -> evidence/sessions/latest"
     fi
 
     rm -f "$CUR"
-    if [[ "$outcome" == hang ]]; then
+    if [[ "$trial_result" == failed ]]; then
         echo "${R}${B}Trial $build #$n: HANG${O} after ${dur}s"
         echo "  cold power-off required before the next trial"
     else

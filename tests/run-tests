@@ -173,8 +173,8 @@ R1=$(BT_REPO="$RD" tools/bt-trial report 2>&1)
 # bt1_status confirmed on T1, T4, T6 — all with SCO -> 3 "hung", meaning the
 # DEFECT occurred, regardless of whether the controller was later rescued.
 # T5 not_observed with SCO -> 1 survived. T2 not_observed without SCO.
-# T3 (censored_pre_failure) is EXCLUDED entirely; were it counted it would land
-# in a cell and change a number.
+# T3 (censored_pre_failure) and T7 (CHANGED treatment) are EXCLUDED entirely;
+# were either counted it would land in a cell and change a number.
 if grep -qE 'SCO setup requested +3 +1' <<<"$R1" \
    && grep -qE 'no SCO setup +0 +1' <<<"$R1" \
    && grep -q 'censored by early watchdog intervention' <<<"$R1"; then
@@ -403,6 +403,41 @@ if [[ -s "$LC/evidence/trials/results.tsv" ]]; then
     BT_REPO="$LC" tools/bt-trial report >/dev/null 2>&1 || rc=$?
     (( rc == 0 )) && ok "report accepts a row the producer wrote" \
         || bad "report rejected the producer's own row (rc=$rc)"
+fi
+
+# THE HANG PATH, which no test reached until now — and which was broken.
+# Classification assigns trial_result, then `outcome` was reused for control
+# flow and still tested for the value `hang`, which the new ontology can never
+# produce. A real failure therefore skipped bt-incident and printed the
+# survival branch. The successful-close test could not see it.
+# A stub bt-incident, ahead of the real one on PATH. It makes the test fast and
+# turns "did the failure branch fire?" into a file that either exists or does
+# not, rather than a string match on prose that could be reworded.
+mkdir -p "$LC/bin"
+printf '#!/bin/sh\ntouch "%s/incident-was-called"\n' "$LC" > "$LC/bin/bt-incident"
+chmod +x "$LC/bin/bt-incident"
+
+BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial autostart stock >/dev/null 2>&1
+rc=0
+out=$(PATH="$LC/bin:$PATH" BT_REPO="$LC" BT_STATE="$LC/state" tools/bt-trial hang 2>&1) || rc=$?
+if (( rc == 0 )); then
+    ok "closing a trial as hang completes without error"
+else
+    bad "closing as hang FAILED (rc=$rc):"; tail -3 <<<"$out" | sed 's/^/      /'
+fi
+
+hr=$(awk -F'\t' 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} END{print $c["trial_result"]}' \
+     "$LC/evidence/trials/results.tsv")
+[[ "$hr" == "failed" ]] && ok "an explicit hang records trial_result=failed" \
+    || bad "hang recorded trial_result='${hr:-empty}', expected failed"
+
+# The failure branch must actually invoke the incident collector. This is the
+# defect that hid here: control flow tested `$outcome == hang`, a value the new
+# ontology can never produce, so a real failure silently collected nothing.
+if [[ -e "$LC/incident-was-called" ]]; then
+    ok "a hang invokes the incident collector"
+else
+    bad "hang did NOT invoke bt-incident — control flow keyed on a dead value"
 fi
 rm -rf "$LC"
 

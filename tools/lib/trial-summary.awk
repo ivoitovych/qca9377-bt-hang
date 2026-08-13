@@ -55,7 +55,12 @@ NR == 1 {
     # A trial whose treatment changed mid-run was not conducted under one
     # condition. It is counted and shown, never pooled into a rate — the same
     # discipline as a censored observation, applied to the treatment axis.
-    if (e ~ /^CHANGED:/) drift[k]++
+    # EXCLUDED, not merely unpooled. A unique treatment key stops it mixing
+    # with other trials but still gives it its own one-row denominator and a
+    # rate — and a trial reconfigured while running was not conducted under any
+    # single condition, so no rate computed from it means anything. The comment
+    # said "cannot enter a controlled rate"; without this `next` it did.
+    if (e ~ /^CHANGED:/) { drift[k]++; seen[k]++; next }
     if (c["measurement_rev"]) mrevs[$c["measurement_rev"]] = 1
     # DOMAIN CHECK. An unrecognised outcome must not be silently folded into
     # "not hung". Miscounting a failure as a survival moves the denominator in
@@ -71,7 +76,7 @@ NR == 1 {
         abort = 1; exit 1
     }
     tr = $c["trial_result"]
-    if (tr != "survived" && tr != "failed" && tr != "recovered" && tr != "aborted") {
+    if (tr != "survived" && tr != "failed" && tr != "alive_after_intervention" && tr != "aborted") {
         printf "trial-summary: unrecognised trial_result \"%s\" on line %d\n", tr, NR > "/dev/stderr"
         abort = 1; exit 1
     }
@@ -99,7 +104,7 @@ NR == 1 {
     if (bs == "confirmed") {
         inc[k]++
         if (tr == "failed")    h[k]++      # confirmed and unrecovered
-        if (tr == "recovered") rec[k]++    # confirmed, then rescued
+        if (tr == "alive_after_intervention") rec[k]++   # confirmed, then rescued
     }
 }
 END {

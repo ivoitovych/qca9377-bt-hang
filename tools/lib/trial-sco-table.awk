@@ -30,6 +30,11 @@ BEGIN { FS = "\t" }
 # pretending to know. That is a deliberate unknown, not a missing precondition.
 NR==1 {
     for (i=1; i<=NF; i++) col[$i] = i
+    if (!("treatment" in col)) {
+        print "trial-sco-table: results.tsv has no `treatment` column." > "/dev/stderr"
+        print "  Refusing: trials reconfigured mid-run cannot be identified." > "/dev/stderr"
+        abort = 1; exit 1
+    }
     if (!("bt1_status" in col)) {
         print "trial-sco-table: results.tsv has no `bt1_status` column." > "/dev/stderr"
         print "  Refusing to report: every row would be classified as survived." > "/dev/stderr"
@@ -62,6 +67,12 @@ NR==1 {
     # Censored rows cannot be classified as hung or survived — the early
     # intervention removed the outcome — so they are excluded from the 2x2
     # rather than being assigned to whichever cell looks harmless.
+    # A trial whose treatment changed mid-run is excluded here too. The
+    # cross-tab asks whether the stimulus coincided with a failure, and a
+    # reconfiguration during the trial is itself a candidate cause — reinstalling
+    # reloads btusb, restarting the watchdog resets state. Co-occurrence inside
+    # a trial that was two experiments cannot be attributed to the stimulus.
+    if ($col["treatment"] ~ /^CHANGED:/) { censored++; next }
     if (o == "censored_pre_failure" || o == "unknown") { censored++; next }
     # "hung" here means the DEFECT occurred, regardless of whether the
     # controller was later rescued. Recovery is a fact about the mitigation,
