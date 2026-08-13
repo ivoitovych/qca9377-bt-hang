@@ -27,6 +27,35 @@
 
 set -uo pipefail
 
+# The journal is read through bt_journal (tools/lib/journal.sh) so the
+# DECISION LOGIC — thresholds, windows, cooldown, escalation, give-up — can be
+# driven over a fixture. The decisions are what tests can and must reach; the
+# actuation (a real USB reset on a real controller) is what they never may.
+# 183 lines that choose whether to reset a live radio had never executed under
+# test before this seam existed.
+#
+# Two library locations, because this file is installed to /usr/local/sbin
+# while the libraries land in /usr/local/bin/lib — from the repo checkout the
+# path is ../tools/lib instead. A missing library is fatal on purpose: a
+# watchdog silently running without its journal seam would be reading nothing.
+_WD_DIR="$(dirname "$(readlink -f "$0")")"
+LIBDIR="${BT_LIBDIR:-}"
+if [[ -z "$LIBDIR" ]]; then
+    for _cand in "$_WD_DIR/../tools/lib" "$_WD_DIR/../bin/lib"; do
+        [[ -r "$_cand/journal.sh" ]] && { LIBDIR="$_cand"; break; }
+    done
+fi
+[[ -n "$LIBDIR" && -r "$LIBDIR/journal.sh" ]] \
+    || { echo "bt-hang-watchdog: cannot find lib/journal.sh (checked ../tools/lib, ../bin/lib)" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
+# The sysfs roots, overridable for the same reason and on the same names
+# bt-trial already uses: a fake device tree is how the classifier is tested
+# without a radio. Defaults are the real kernel paths, byte for byte.
+SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+SYSFS_DRV="${BT_SYSFS_DRIVERS:-/sys/bus/usb/drivers/usb}"
+
 VID="${BT_VID:-13d3}"          # QCA9377 BT (IMC Networks)
 PID="${BT_PID:-3503}"
 THRESHOLD="${BT_THRESHOLD:-3}" # timeouts inside WINDOW before acting
@@ -63,7 +92,7 @@ fi
 # Locate the BT device by VID:PID. Echoes the sysfs name (e.g. "3-3").
 find_usb_dev() {
     local d
-    for d in /sys/bus/usb/devices/*; do
+    for d in "$SYSFS_USB"/*; do
         [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
         if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
             basename "$d"
@@ -78,7 +107,7 @@ find_usb_dev() {
 # is frequently hci0, and probing that would report the wrong radio healthy.
 hci_for_dev() {
     local dev="$1" p
-    for p in /sys/bus/usb/devices/"$dev"/*/bluetooth/hci*; do
+    for p in "$SYSFS_USB/$dev"/*/bluetooth/hci*; do
         [[ -e "$p" ]] || continue
         basename "$p"
         return 0
@@ -105,8 +134,8 @@ hci_alive() {
 # The closest possible userspace equivalent of the missing kernel handler.
 usbfs_reset() {
     local dev="$1" b n
-    b=$(<"/sys/bus/usb/devices/$dev/busnum") || return 1
-    n=$(<"/sys/bus/usb/devices/$dev/devnum") || return 1
+    b=$(<"$SYSFS_USB/$dev/busnum") || return 1
+    n=$(<"$SYSFS_USB/$dev/devnum") || return 1
     python3 - "$b" "$n" <<'PYEOF'
 import fcntl, os, sys
 USBDEVFS_RESET = 0x5514          # _IO('U', 20)
@@ -180,9 +209,9 @@ recover() {
     hci_alive; rc=$?
     if (( rc != 0 )); then
         log "  escalating to USB unbind/bind"
-        echo "$dev" > /sys/bus/usb/drivers/usb/unbind 2>/dev/null
+        echo "$dev" > "$SYSFS_DRV/unbind" 2>/dev/null
         sleep 3
-        echo "$dev" > /sys/bus/usb/drivers/usb/bind   2>/dev/null
+        echo "$dev" > "$SYSFS_DRV/bind"   2>/dev/null
         sleep 6
     fi
 
@@ -367,10 +396,10 @@ done < <(
         # Follow the kernel AND bluetoothd. journalctl ORs separate matches with
         # "+", so this is one stream carrying both — the early signals live in
         # bluetoothd, the late ones in the kernel.
-        journalctl -f -n0 --output=cat \
+        bt_journal -f -n0 --output=cat \
             _TRANSPORT=kernel + _SYSTEMD_UNIT=bluetooth.service 2>/dev/null
     else
-        journalctl -kf -n0 --output=cat 2>/dev/null
+        bt_journal -k -f -n0 --output=cat 2>/dev/null
     fi
 )
 
@@ -382,6 +411,6 @@ fi
 
 # Falling out of the loop any other way means the journal reader died. Silent
 # respawn every RestartSec with no diagnostic is worse than a loud failure.
-log "ERROR: journal reader terminated unexpectedly (journalctl -kf exited)."
+log "ERROR: journal reader terminated unexpectedly (the journal stream exited)."
 log "       Check that systemd-journald is running and readable."
 exit 1

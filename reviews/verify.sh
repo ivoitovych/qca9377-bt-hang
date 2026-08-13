@@ -66,7 +66,7 @@ check UT-07 done "fixtures for trial-sco-table.awk and stage2.awk" \
       bash -c '[ -d tests/fixtures/trial-sco-table ] && [ -d tests/fixtures/stage2 ]' 
 check UT-08 done "journal seam library present" test -r tools/lib/journal.sh
 check UT-09 done "seam invariant asserted by the suite" \
-      bash -c 'tests/run-tests --section "whole tools" 2>&1 | grep -c "journal seam" >/dev/null'
+      bash -c 'n=$(tests/run-tests --section "bt-hang-watchdog" 2>&1 | grep -c "journal seam"); [ "${n:-0}" -gt 0 ]'
 check UT-11 done "phase.awk extracted, Python extractor gone" \
       bash -c 'test -r tools/lib/phase.awk && ! grep -q "re.search" tests/run-tests'
 check UT-12 open "tests/run-tests split into per-area files" true
@@ -85,6 +85,11 @@ if [[ -z "$WANT" || "$WANT" == UT-10 ]]; then
     printf '         converted: %s tool(s)\n' "$conv"
     printf '         remaining: %s direct journalctl call site(s) in %s file(s)\n' "$remaining" "$rfiles"
     printf '         baseline at 6c0491c: 75 sites in 21 files\n'
+fi
+
+if [[ -z "$WANT" || "$WANT" == CS-08 ]]; then
+    pct=$(devtools/coverage --quiet 2>/dev/null | grep -oE 'TOTAL: [0-9]+' | grep -oE '[0-9]+')
+    printf '%s◐ %-6s watchdog + total coverage%s: total %s%%\n' "$Y" "CS-08" "$O" "${pct:-?}"
 fi
 
 echo
