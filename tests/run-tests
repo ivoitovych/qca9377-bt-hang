@@ -1399,6 +1399,119 @@ fi
 rm -rf "$EMPTYLIB" "$EMPTYDUMP"
 
 echo
+echo "sanitize-logs — the gate between a kernel log and a public repo"
+echo "──────────────────────────────────────────────────────────────"
+#
+# WHY THIS IS TESTED AT ALL, AND WHY IT IS FIRST AMONG THE UNTESTED.
+#
+# It is a pure file-to-file text transform — the single most unit-testable
+# thing in this repository — and it had ZERO coverage. It is also the highest
+# consequence: a Wi-Fi BSSID in a published kernel log is indexed by public
+# geolocation databases, so a miss reveals where the machine physically is.
+# The repository already has one instance on record — 20 unsanitised addresses
+# reached a public commit on 2026-08-12, because the underscore form was
+# unknown to both the substituter AND the verification that was supposed to
+# catch it.
+#
+# Simply trying to write these tests found that the tool DOES NOT RUN on the
+# default awk of most Linux distributions.
+
+SAN=tests/sanitize-invariants.log
+SANOUT=$(mktemp)
+
+# Does this awk implement ERE intervals on groups? Ask the same way the tool
+# does, including the negative probe — a positive-only check is answered
+# correctly by accident on mawk, which is the trap the tool's gate documents.
+awk_intervals_ok=1
+echo "00:11:22:33:44:55:66:77" | awk '{exit !(match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) && RLENGTH == 23)}' 2>/dev/null || awk_intervals_ok=0
+echo "11:22" | awk '{exit (match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) != 0)}' 2>/dev/null || awk_intervals_ok=0
+
+if (( awk_intervals_ok )); then
+    # The engine can express the patterns, so assert the redaction itself.
+    san_ran=0
+    if tools/sanitize-logs.sh "$SAN" "$SANOUT" >/dev/null 2>&1 && [[ -s "$SANOUT" ]]; then
+        ok "sanitize-logs runs and self-verifies on a capable awk"
+        san_ran=1
+    else
+        bad "sanitize-logs failed on an awk that passes its own gate"
+        bad "  (its own verification refused — a redaction pattern is incomplete)"
+    fi
+fi
+
+# The property assertions run only if there IS an output file. Asserting
+# "the wlan address does not appear" against an EMPTY file passes trivially,
+# and asserting "127.0.0.1 is preserved" against it fails for a reason that has
+# nothing to do with the loopback address. Both were observed while
+# mutation-testing this section: re-introducing the 2026-08-12 underscore
+# defect produced three cascading failures that named the wrong things, and
+# buried the one line that named the right one.
+if (( awk_intervals_ok )) && (( san_ran )); then
+    # PROPERTIES, not a golden file. Placeholder numbering is an implementation
+    # detail that may legitimately change; "no real address survives" may not.
+    # Every value below is drawn from the placeholder space devtools/repo-scan
+    # already allows (11:11:11, de:ad:be, 00:11:22, the nil UUID, the broadcast
+    # address). A fixture for a redaction tool must LOOK like the data it
+    # redacts, and the first draft of this file used realistic-but-arbitrary
+    # addresses — which repo-scan then refused to publish, correctly. Choosing
+    # the documented placeholders keeps the fixture both realistic in form and
+    # publishable, instead of widening the gate to admit the test.
+    for form in '11:11:11:22:33:44' 'de_ad_be_ef_00_11' '00-11-22-33-44-55' \
+                '00000000-0000-0000-0000-000000000000' '255.255.255.255'; do
+        n=$(grep -c -- "$form" "$SANOUT" 2>/dev/null)
+        (( ${n:-0} == 0 )) && ok "redacted: $form" \
+                           || bad "SURVIVED sanitisation: $form"
+    done
+
+    # Kept deliberately: they identify no one and removing them destroys the
+    # meaning of the line.
+    for keep in '127.0.0.1' '0.0.0.0'; do
+        n=$(grep -c -- "$keep" "$SANOUT" 2>/dev/null)
+        (( ${n:-0} > 0 )) && ok "preserved: $keep" || bad "wrongly redacted: $keep"
+    done
+
+    # Determinism: the same address must map to the same placeholder, or
+    # cross-references inside the log stop being followable.
+    first=$(grep -m1 -oE 'AA:BB:CC:00:00:[0-9]{2}' "$SANOUT")
+    n=$(grep -c -- "$first" "$SANOUT" 2>/dev/null)
+    (( ${n:-0} >= 2 )) && ok "the same address maps to the same placeholder" \
+                       || bad "placeholder not stable across occurrences"
+
+    # `11:22` is two hex pairs, not an address. Replacing it would corrupt
+    # ordinary log text — the over-matching failure mode of a degraded engine.
+    n=$(grep -c 'version 11:22 is not an address' "$SANOUT" 2>/dev/null)
+    (( ${n:-0} == 1 )) && ok "a short hex run is left alone" \
+                       || bad "a non-address hex run was replaced"
+else
+    # THE ENGINE CANNOT EXPRESS THE PATTERNS. The only thing that matters then
+    # is that the tool REFUSES. Silently producing a half-redacted file is the
+    # outcome with real-world consequences, so that is what is asserted.
+    tools/sanitize-logs.sh "$SAN" "$SANOUT" >/dev/null 2>&1
+    rc=$?
+    if (( rc != 0 )); then
+        ok "sanitize-logs refuses on an awk that cannot express its patterns"
+    else
+        bad "sanitize-logs RAN on an incapable awk — output may be half-redacted"
+    fi
+    if [[ ! -s "$SANOUT" ]]; then
+        ok "a refused run writes no output file"
+    else
+        bad "a refused run left a partially sanitised file behind"
+    fi
+    echo "  · redaction assertions SKIPPED: this awk lacks ERE intervals on groups"
+    echo "    (install gawk to run them; mawk 1.3.4 is not sufficient)"
+fi
+
+tools/sanitize-logs.sh /nonexistent/input.log >/dev/null 2>&1
+(( $? != 0 )) && ok "sanitize-logs refuses an unreadable input" \
+              || bad "sanitize-logs accepted an unreadable input"
+
+tools/sanitize-logs.sh -i >/dev/null 2>&1
+(( $? != 0 )) && ok "sanitize-logs -i with no files is a usage error" \
+              || bad "sanitize-logs -i accepted an empty file list"
+
+rm -f "$SANOUT"
+
+echo
 echo "the tests may not write to the real evidence tree"
 echo "──────────────────────────────────────────────────────────────"
 

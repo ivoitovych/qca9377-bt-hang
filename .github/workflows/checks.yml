@@ -27,6 +27,16 @@ jobs:
       # The invariants derive the file set from `git ls-files`, so the checkout
       # must be a real repository. actions/checkout gives one at depth 1, which
       # is enough — nothing here reads history.
+      # gawk, because ubuntu-latest ships mawk as `awk` and mawk 1.3.4 cannot
+      # express the redaction patterns in tools/sanitize-logs.sh — it treats an
+      # interval on a group as `+`, so `11:22` matches the MAC pattern while a
+      # real address is only partly replaced. The tool detects that and refuses,
+      # which is correct but means the redaction assertions would SKIP on every
+      # CI run. The gate that keeps Wi-Fi BSSIDs out of a public repository is
+      # not one to leave untested because of the default awk.
+      - name: Install gawk
+        run: sudo apt-get install -y gawk
+
       - name: Show the tool versions the results depend on
         run: |
           bash --version | head -1
