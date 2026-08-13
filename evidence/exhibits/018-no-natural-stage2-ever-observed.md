@@ -75,6 +75,13 @@ window as if it were the whole record.
 | 2026-08-12 06:26 | 121.65 s | our reset |
 | 2026-08-13 05:14 | **1 h 12 m** | our btusb unload |
 
+> **Superseded as a record by `EX-020`, but not contradicted by it.** The output
+> above was produced by a classifier since found to be biased toward false
+> naturals (review finding F2), and this exhibit's command line was later edited
+> to an equivalent that had not been run. `EX-020` re-captures the same analysis
+> under the corrected classifier, in one pass, and the full body is
+> **byte-identical**. Cite `EX-020`; this remains as the original record.
+
 ## Reading
 
 **Nothing in this table measures the fault.** Every row is right-censored: a
