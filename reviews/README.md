@@ -165,7 +165,8 @@ what was built, and why it differs.
 
 | ID | Item | Status | Landed | Verify |
 |---|---|---|---|---|
-| SE-01 | PATH guard for every bare-name project tool, derived from the sources | done | `251a6cb` | reverse the guard's PATH order → 3 invariants fail |
+| SE-01 | PATH guard for every bare-name project tool | done | `251a6cb`, corrected `6f12ad3` | reverse the guard's PATH order → 3 invariants fail |
+| SE-06 | Derive the guard from `install.sh`, not from call-site spellings | done — the first derivation missed `bt-boots`, invoked via a `have()` wrapper | `6f12ad3` | break the derivation → the suite exits 2 rather than running unguarded |
 | SE-02 | Decoy behind the guard, so the hazard is constructed not inherited | done | `251a6cb` | `tests/run-tests` — "no bare-name call reached a tool behind the guard" |
 | SE-03 | Route every `install.sh` dry run through `BT_MODE_STAMP` | done | `251a6cb` | `grep -n './install.sh' tests/run-tests` → only via `install_dry()` |
 | SE-04 | Replace the unsatisfiable `/root/exp` assertion | done | `251a6cb` | reinstate the discarding fallback in `bt-incident` → 4 invariants fail |

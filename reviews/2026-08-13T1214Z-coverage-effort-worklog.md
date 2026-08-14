@@ -1268,3 +1268,39 @@ not reproduced; it is live on the current tip, and that reading was of `032f081`
 |---|---|---|
 | Invariants | 396 | **401** |
 
+
+### The guard's own derivation had the bug it warned about · `6f12ad3`
+
+The maintainer found the hole within the hour. `tools/bt-status` wraps the probe —
+`have() { command -v "$1" …; }` then `have bt-boots && bt-boots 8` — so the tool name is
+an **argument** and never appears after `command -v`. My guard grepped for that literal,
+so `bt-boots` was invoked by bare name and not guarded at all; `bt-state` was guarded only
+by accident, because another file spells it literally.
+
+Their words for it are the right ones: **a derivation that sees one spelling is a
+hand-written list wearing a grep.** The comment above my own guard claimed derivation as
+the fix for hand-written lists, and then derived from the one place that cannot be
+complete.
+
+The list now comes from `install.sh`'s `install_file` destinations under
+`/usr/local/{bin,sbin}` — 34 names, complete regardless of *how* a tool is invoked,
+because it answers "what could a bare name resolve to?" rather than "who calls this?".
+Same derivation `bt-verify-install` adopted after the same class of bug.
+
+**And while making that change I reproduced the empty-trace failure inside the suite.**
+The guard function was briefly undefined: the loops read nothing, no stub was written, and
+the invariant that checks the guard **reported success over a list of zero tools**. In the
+one file whose job is to notice measurements that fail into a pass. It now refuses below
+20 derived names and reports the count it checked.
+
+That makes **three** assertions of mine unable to fail for environmental reasons, on top
+of five unable to fail for logical ones. The narrower lesson, which I had available and
+did not use: *derive from the thing that is complete by construction*, not from the thing
+that is convenient to grep.
+
+**Containment, measured by the maintainer rather than estimated by me:** 549 injected
+`bt-mark` markers since 2026-08-13, not nine per run. Zero of them in any committed
+session `timeline.txt`, and `bt-stage2` acquires only `_TRANSPORT=kernel` +
+`_SYSTEMD_UNIT=bt-hang-watchdog.service`, which excludes `logger`-tagged marks by
+construction. EX-016, EX-018 and EX-020 unaffected; "14 boots, 0 natural" stands. The
+contamination is confined to the live journal.

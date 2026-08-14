@@ -22,6 +22,33 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
+# ── REFUSE TO RUN WHILE A REAL TRIAL IS OPEN ──────────────────────────────
+#
+# The suite's job includes driving tools that ACT — the watchdog decides to
+# reset, bt-trial opens and closes trials, bt-incident collects. The PATH guard
+# below stops those reaching the installed copies, but no guard makes a suite
+# whose purpose is exercising actuators into a read-only observer, and pretending
+# otherwise is how the last escape was rationalised.
+#
+# So the standing rule is mechanical rather than remembered: if a trial is open
+# on this machine, the suite does not run. That is the single check which would
+# have prevented the 2026-08-14 incident outright — a 2-hour clean trial was
+# closed mid-experiment by a coverage measurement — independently of whether the
+# escape had been found.
+#
+# Reads the REAL state directory, not a sandbox: $BT_STATE is what the tests
+# themselves override per-invocation, and this runs before any of them.
+BT_REAL_TRIAL_STATE="${BT_TRIAL_STATE_DIR:-/run/bt-trial}"
+if [[ -e "$BT_REAL_TRIAL_STATE/current" && "${BT_ALLOW_OPEN_TRIAL:-0}" != 1 ]]; then
+    echo "run-tests: a trial is OPEN on this machine — refusing to run." >&2
+    sed 's/^/           /' "$BT_REAL_TRIAL_STATE/current" >&2 2>/dev/null
+    echo "           This suite drives tools that act. Close the trial, or wait" >&2
+    echo "           for it to close, and run again." >&2
+    echo "           BT_ALLOW_OPEN_TRIAL=1 overrides — only when the state file" >&2
+    echo "           is stale, e.g. after a crash." >&2
+    exit 2
+fi
+
 # ── THE PATH GUARD, BEFORE ANYTHING ELSE RUNS ─────────────────────────────
 #
 # THE ESCAPE THIS CLOSES, WHICH HAPPENED.
