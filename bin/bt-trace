@@ -38,6 +38,23 @@ GAPLOG="${BT_TRACE_GAPLOG:-$DIR/gaps.log}"  # when capture was NOT running
 
 log() { echo "$*"; }
 
+# --check: verify the prerequisites, report the resolved configuration, run the
+# retention pass once, and exit without capturing.
+#
+# This is an operator command before it is a test seam. "The capture is not
+# running and I do not know why" is answered by btmon's absence, a missing
+# debugfs mount, a directory that cannot be created, or a filesystem already
+# under the floor — and each of those is a silent exit or an idle loop inside a
+# systemd unit whose journal says only "starting". It is also how to reclaim
+# space on demand. install.sh and uninstall.sh both have a dry run and the
+# suite calls it their contract; the two capture daemons had none.
+CHECK=0
+case "${1:-}" in
+    --check) CHECK=1 ;;
+    "") ;;
+    *) log "bt-trace: unknown argument: $1"; exit 1 ;;
+esac
+
 command -v btmon >/dev/null || { log "FATAL: btmon not found (package: bluez)"; exit 1; }
 
 mkdir -p "$DIR"; chmod 0700 "$DIR"
@@ -99,6 +116,18 @@ disk_guard() {
         while :; do sleep 3600; done
     fi
 }
+
+if (( CHECK )); then
+    log "bt-trace --check (nothing will be captured)"
+    log "  directory      $DIR"
+    log "  rotate at      ${MAX_MB}MB"
+    log "  retain         $KEEP file(s)"
+    log "  free-space     $(free_gb)GB (floor ${MIN_FREE_GB}GB)"
+    log "  captures held  $(ls -1 "$DIR"/bt-*.btsnoop 2>/dev/null | wc -l)"
+    prune
+    log "bt-trace --check complete"
+    exit 0
+fi
 
 cleanup() {
     [[ -n "$BTMON_PID" ]] && kill "$BTMON_PID" 2>/dev/null

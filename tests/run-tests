@@ -1096,6 +1096,27 @@ else
     fi
 fi
 
+# EXECUTABLE IN THE REPOSITORY, not only after installation.
+#
+# bin/bt-usbmon was tracked mode 100644 — the only script in the tree that was
+# not executable. install.sh gives it 0755 at its destination, so an installed
+# system was fine and nothing noticed; but `bin/bt-usbmon` from a checkout
+# exits 126, and the README tells a reader to clone and run these directly.
+# Found by writing the first test that ever tried to run it.
+#
+# Derived from the shebang, so a script added tomorrow is covered without
+# anyone maintaining a list — the failure mode every hand-written list in this
+# repository has already hit.
+NOTEXEC=""
+while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    [[ "$(head -c2 "$f" 2>/dev/null)" == "#!" ]] || continue
+    [[ -x "$f" ]] || NOTEXEC="$NOTEXEC $f"
+done < <(git ls-files 2>/dev/null | grep -vE '\.(md|awk|conf|service|timer|rules|json|ya?ml|log|tsv|txt|in|expected|rc)$')
+[[ -z "$NOTEXEC" ]] \
+    && ok "every tracked script with a shebang is executable" \
+    || bad "tracked but not executable (runs as exit 126 from a checkout):$NOTEXEC"
+
 echo
 echo "exhibit extraction commands are re-runnable, not session-local"
 echo "──────────────────────────────────────────────────────────────"
@@ -3115,6 +3136,93 @@ tools/bt-capdiff --bogus >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-capdiff rejects an unknown argument" \
               || bad "bt-capdiff accepted an unknown argument"
 rm -rf "$CD"
+
+# ── bt-trace / bt-usbmon: the two capture daemons, via --check ────────────
+#
+# Both run in the foreground under systemd and never return, so nothing here
+# could ever run them. Both were given `--check`: verify the prerequisites,
+# report the resolved configuration, run the retention pass once, exit.
+#
+# That is an operator command before it is a test seam. "The capture is not
+# running and I do not know why" is answered by btmon's absence, a missing
+# debugfs mount, or a filesystem already under the floor — and each of those is
+# a silent exit or an IDLE LOOP inside a unit whose journal says only
+# "starting". install.sh, uninstall.sh and now bt-mode all have a dry run and
+# the suite calls it their contract; these two had none.
+#
+# What it reaches is the retention logic, and that is where both scripts carry
+# recorded defects: bt-trace's retention count once "pruned away the pairing
+# sequence of a session that was being actively investigated", and bt-usbmon's
+# free-space loop had to learn not to delete the file being written, because
+# tcpdump holds the unlinked inode open and the space is never reclaimed — so
+# the loop would eat every OTHER file while freeing nothing.
+CP=$(mktemp -d); mkdir -p "$CP/trace" "$CP/usb" "$CP/stub" "$CP/dbg" "$CP/dev/3-3"
+printf '#!/bin/sh\nexit 0\n' > "$CP/stub/btmon"
+printf '#!/bin/sh\nexit 0\n' > "$CP/stub/tcpdump"
+printf '#!/bin/sh\nexit 0\n' > "$CP/stub/modprobe"
+chmod +x "$CP/stub"/*
+echo 13d3 > "$CP/dev/3-3/idVendor"; echo 3503 > "$CP/dev/3-3/idProduct"
+echo 3 > "$CP/dev/3-3/busnum"
+: > "$CP/dbg/3u"
+for i in 1 2 3 4 5; do
+    : > "$CP/trace/bt-2026081$i-000000.btsnoop"
+    : > "$CP/usb/usbmon-2026081$i-000000.pcap"
+done
+
+TRCHK=$(env PATH="$CP/stub:$PATH" BT_TRACE_DIR="$CP/trace" BT_TRACE_KEEP=3 \
+            bin/bt-trace --check 2>&1); trrc=$?
+trleft=$(ls -1 "$CP/trace"/bt-*.btsnoop 2>/dev/null | wc -l)
+(( trrc == 0 && ${trleft:-0} == 3 )) && [[ "$TRCHK" == *"captures held  5"* ]] \
+    && ok "bt-trace --check reports its configuration and prunes to KEEP" \
+    || bad "bt-trace --check left $trleft file(s) of 5 with KEEP=3 (rc=$trrc)"
+
+# It must not capture. A --check that starts btmon is not a check, and on the
+# investigation machine it would add a second reader to the monitor socket.
+[[ "$TRCHK" != *"capturing to"* && "$(ls -1 "$CP/trace"/bt-*.btsnoop | wc -l)" == "3" ]] \
+    && ok "bt-trace --check starts no capture and creates no file" \
+    || bad "--check began a capture"
+
+# btmon absent is the most common reason the unit is silently dead, and it is
+# the one thing --check exists to say out loud.
+TRNOBT=$(env PATH="$CP/dbg:/nonexistent" BT_TRACE_DIR="$CP/trace" \
+             bin/bt-trace --check 2>&1); trnrc=$?
+(( trnrc != 0 )) && [[ "$TRNOBT" == *"btmon not found"* ]] \
+    && ok "bt-trace --check names btmon's absence instead of exiting silently" \
+    || bad "a missing btmon did not produce a stated failure (rc=$trnrc)"
+
+bin/bt-trace --bogus >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-trace rejects an unknown argument" \
+              || bad "bt-trace accepted an unknown argument"
+
+USCHK=$(env PATH="$CP/stub:$PATH" BT_USBMON_DIR="$CP/usb" BT_USBMON_KEEP=2 \
+            BT_SYSFS_USB="$CP/dev" BT_USBMON_DEBUGFS="$CP/dbg" \
+            bin/bt-usbmon --check 2>&1); usrc=$?
+usleft=$(ls -1 "$CP/usb"/usbmon-*.pcap 2>/dev/null | wc -l)
+(( usrc == 0 && ${usleft:-0} == 2 )) && [[ "$USCHK" == *"interface      usbmon3"* ]] \
+    && ok "bt-usbmon --check resolves the controller's bus and prunes to KEEP" \
+    || bad "bt-usbmon --check left $usleft file(s) of 5 with KEEP=2 (rc=$usrc)"
+
+# usbmon instances are per-bus, so resolving the WRONG bus captures a bus the
+# controller is not on — a capture that looks healthy and contains nothing.
+[[ "$USCHK" == *"bus 3"* ]] \
+    && ok "bt-usbmon --check names the bus it resolved" \
+    || bad "the resolved bus is not reported — a wrong one would look identical"
+
+# Device absent with no configured bus is the state this investigation cares
+# about, and in service mode it deliberately IDLES rather than exiting, so
+# --check must answer instead of hanging. Bounded by timeout: if the guard is
+# ever removed, this hangs the suite, and a hang is the failure to catch.
+USGONE=$(timeout 20 env PATH="$CP/stub:$PATH" BT_USBMON_DIR="$CP/usb" \
+             BT_SYSFS_USB="$CP/empty" BT_USBMON_DEBUGFS="$CP/dbg" \
+             bin/bt-usbmon --check 2>&1); usgrc=$?
+(( usgrc == 0 )) && [[ "$USGONE" == *"not present"* ]] \
+    && ok "bt-usbmon --check returns when the controller is absent, not idles" \
+    || bad "--check hung or failed on an absent controller (rc=$usgrc)"
+
+bin/bt-usbmon --bogus >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-usbmon rejects an unknown argument" \
+              || bad "bt-usbmon accepted an unknown argument"
+rm -rf "$CP"
 
 # ── the seam itself ───────────────────────────────────────────────────────
 #
