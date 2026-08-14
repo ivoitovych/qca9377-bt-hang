@@ -258,3 +258,60 @@ check that could not fail, a measurement whose failure mode reads as a result, a
 that was missing a case, a tool protected from testing by being stubbed. In every one the
 code had been read carefully — several carried accurate comments about that exact hazard —
 and only *running* it said so.
+
+---
+
+## Session 2 — 2026-08-13, 18:xxZ
+
+### Assessment of the rebase attempt · branch `…-rebase-attempt-20260813-181317-utc`
+
+A parallel effort rebased this branch onto `origin/main` at `d8b7abe`, producing
+`e9f4967`. Assessed by measurement rather than by reading the summary. **Verdict: correct
+in substance, with one real regression that must be fixed before the branch is used.**
+
+**What is right.** Linear on `origin/main`; main's three new commits (`a57a450`,
+`617476d`, `d8b7abe`) fully intact with nothing of main's removed; all 11 journal seams
+present; `repo-scan --all` and the journal-contract CI steps present; `system-roundtrip`,
+the work log, and the `bt-incident` sandbox fix present; install/uninstall parity check
+present and passing (55 destinations, both new libraries listed); register content
+equivalent; coverage equivalent (39.3%, 1749/4445 here vs 1744/4435 on this branch — the
++10 denominator is main's new lines); author and committer correct, no AI attribution.
+Two incidental improvements over this branch: `sh reviews/verify.sh` → `reviews/verify.sh`
+(the script is bash and was being run under `sh`) and a trailing space removed.
+
+**The regression — three assertions lost.** A static comparison of every `ok`/`bad`
+message in `tests/run-tests` (296 on this branch, 292 on the rebase) isolates exactly six
+message lines, i.e. three assertions, all absent from the rebase:
+
+```
+bt-boot-provenance emits one row per boot, header excluded
+no negative inter-boot gap reaches the table
+bt-boot-provenance runs without shell errors on stderr
+```
+
+The rebase gains main's one new assertion (`no exhibit extraction command references a
+session-temporary path`). Nothing else differs — 178 − 3 + 1 = 176, which is what both
+suites report when run in the same environment.
+
+**Why it matters, demonstrated rather than argued.** The production fix (the numeric
+filter) and the fixture (its header row) both survived; only the assertions are gone. So
+the branch still behaves correctly while no longer *detecting* the defect. Removing the
+numeric filter on the rebase branch reproduces the original bug — a junk `IDX` row and a
+`-313200s` inter-boot gap, in the column EX-017 argues from — and the suite reports
+**"all 176 invariants hold"**. The same mutation on this branch goes red three ways.
+
+**Root cause, and the general lesson.** `git rebase` replays individual commits and
+discards merge commits, so any conflict resolution recorded *only* in a merge commit is
+lost. Merge `942cb26` carried six such resolutions. The patch-up commit `e9f4967`
+("Preserve merge resolutions in test rebase") restored five of them — it touches
+`bt-boot-provenance`, the provenance fixture, both READMEs and `verify.sh` — but **does
+not touch `tests/run-tests` at all**, which is where the three assertions lived. The
+production code and the fixture were restored; the checks that give them meaning were
+not. That asymmetry is the thing to watch for whenever a merge is rebased away: a
+resolution is usually a *pair* — a fix and the assertion that pins it — and restoring
+only the visible half leaves a green suite over an unprotected defect.
+
+**Fix.** Cherry-pick the three assertions from `903a908`'s `tests/run-tests` into the
+rebase branch (they sit immediately after the "computes the inter-boot gap" assertion in
+the `whole tools` section), then confirm the mutation goes red. Not applied here: the
+rebase branch is not this session's designated branch.
