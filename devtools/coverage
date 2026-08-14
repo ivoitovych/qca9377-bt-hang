@@ -268,7 +268,21 @@ for f in "${SHFILES[@]}"; do
             if (s ~ /^#/)                    next   # comment
             if (s ~ /^(fi|done|else|esac|do|then|\{|\}|;;|\))$/) next
             if (s ~ /^(fi|done);$/)          next
-            if (s ~ /^[A-Za-z_][A-Za-z0-9_-]*\(\)[ \t]*\{?$/)   next  # func header
+            # A block terminator carrying a REDIRECT is still not a command:
+            # `done < file`, `done <<<"$v"`, `fi > /dev/null` are all part of
+            # the compound above them and are traced at its opening line.
+            #
+            # EXCEPT when the redirect contains a process substitution. `done <
+            # <(cmd)` IS traced, because <(cmd) is itself a command bash runs
+            # at that line. Derived by tracing both forms rather than reasoned
+            # about — the two previous attempts to state a tracing rule by eye
+            # in coverage-exclude were both wrong.
+            if (s ~ /^(fi|done|esac)[ \t]*[<>]/ && s !~ /[<>]\(/) next
+            # A bare function header is never traced, with or without a
+            # trailing comment. A ONE-LINE definition is a different thing —
+            # `g() { echo g; }` reports line g when called — so the body must
+            # not be allowed to appear before the optional comment.
+            if (s ~ /^[A-Za-z_][A-Za-z0-9_-]*\(\)[ \t]*\{?[ \t]*(#.*)?$/) next  # func header
             if (s ~ /^\}[ \t]*(<|>|\||&|$)/) next   # closing brace w/ redirect
 
             # Excluded AFTER the structural rules, so the exclusion count is
@@ -372,12 +386,39 @@ if (( SHOWUNCOV )); then
     exit 0
 fi
 
+# ── THE NUMERATOR IS AN INTERSECTION, NOT A COUNT ────────────────────────
+#
+# It used to be `hit[file]++` over the raw trace, clamped to the file's
+# coverable total. That is not "how many coverable lines ran": the trace also
+# tags lines the classifier removed from the denominator — excluded ranges,
+# structural lines, embedded-program openers — so a file could be credited for
+# executing lines that were never in the denominator, and the clamp then hid
+# the surplus by capping the result at 100%.
+#
+# It reported bin/bt-trace at 100.0% (92/92) while `--uncovered bin/bt-trace`
+# named an uncovered line, and tests/run-tests at 100.0% (1781/1781) with 174
+# uncovered. The summary and the detail disagreed, which is precisely what the
+# comment above --uncovered claims cannot happen — the two were never computed
+# from the same tables.
+#
+# So the covered set is now the INTERSECTION of what ran with what counts,
+# joined on (file, line): the same join --uncovered inverts. A file can no
+# longer be credited for a line that is not in its denominator, the clamp
+# below is unreachable by construction, and the two views cannot contradict
+# each other because they are two halves of one computation.
+awk -F'\t' 'FNR == NR { ran[$1 "\t" $2] = 1; next } ($1 "\t" $2) in ran' \
+    "$WORK/executed" "$WORK/coverable-lines" > "$WORK/covered-lines"
+
 awk -F'\t' -v quiet="$QUIET" '
     FNR == NR { hit[$1]++; next }
     {
         file = $1; total = $2
         h = ($1 in hit) ? hit[$1] : 0
-        if (h > total) h = total          # trace can tag a line the heuristic excluded
+        # Unreachable now that h counts an intersection with `total`s own
+        # source. Kept as an assertion rather than deleted: if it ever fires,
+        # the two tables have drifted apart again.
+        if (h > total) { printf "coverage: %s counted %d of %d — tables disagree\n", \
+                                file, h, total > "/dev/stderr"; exit 2 }
         pct = (total > 0) ? (100 * h / total) : 0
         rows[++n] = sprintf("%6.1f%%  %5d/%-5d  %s", pct, h, total, file)
         sort_key[n] = pct
@@ -405,7 +446,7 @@ awk -F'\t' -v quiet="$QUIET" '
                (sum_t > 0 ? 100 * sum_h / sum_t : 0), sum_h, sum_t
         printf "%d\n", (sum_t > 0 ? int(100 * sum_h / sum_t) : 0) > "/dev/stderr"
     }
-' "$WORK/executed" "$WORK/coverable" 2> "$WORK/pct"
+' "$WORK/covered-lines" "$WORK/coverable" 2> "$WORK/pct"
 
 # The exclusions are printed, always. A number computed against a hidden
 # exclusion list is the failure this whole file is meant to prevent, so the
