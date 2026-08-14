@@ -249,9 +249,41 @@ for f in "${SHFILES[@]}"; do
             if (t == heredoc) heredoc = ""
             next
         }
+        function nchar(str, ch,   i, n) {
+            n = 0
+            for (i = 1; i <= length(str); i++) if (substr(str, i, 1) == ch) n++
+            return n
+        }
         {
             line = $0
             s = line; sub(/^[ \t]*/, "", s); sub(/[ \t]*$/, "", s)
+
+            # A MULTI-LINE ARRAY LITERAL is traced at its CLOSING line, and
+            # nowhere else. Derived by tracing all three forms:
+            #
+            #   A=(one two)          one line   -> traced at that line
+            #   B=(\n three \n )      spanning  -> traced at the line holding `)`
+            #   C=(five\n six)        spanning  -> traced at the line holding `six)`
+            #
+            # So the opener and every interior line are uncoverable by
+            # construction — operands of one assignment, exactly like the body
+            # of a multi-line embedded program. The closing line falls through
+            # to the normal rules, which is why `)` alone is dropped as
+            # structural while `six)` is counted and can be covered.
+            #
+            # This replaced two per-file shape exclusions for uninstall.sh
+            # FILES/DIRS/UNITS. A rule about the language beats a pattern about
+            # one file: the patterns had to be written twice, were both wrong
+            # about indentation the first time, and could never have covered
+            # the arrays of bare function names in bin/bt-dyndbg.
+            if (arrdepth > 0) {
+                arrdepth += nchar(s, "(") - nchar(s, ")")
+                if (arrdepth > 0) next          # interior operand line
+                arrdepth = 0                    # closing line: classify it
+            } else if (s ~ /^[A-Za-z_][A-Za-z0-9_]*\+?=\(/) {
+                d = nchar(s, "(") - nchar(s, ")")
+                if (d > 0) { arrdepth = d; next }
+            }
 
             # A continuation of the previous line is part of that command and
             # carries no LINENO of its own.
