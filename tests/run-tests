@@ -2583,6 +2583,109 @@ BSHUM=$(bs_run)
     || bad "the human-readable form is missing a section"
 rm -rf "$BS"
 
+# ── bt-health-snapshot: the writer of the series, against its own header ──
+#
+# metrics.tsv survives reboots and is the record bt-health-report reads back to
+# answer whether the mitigation works. The header is written ONCE, on the first
+# run, and rows are appended forever after — so a row that stops matching the
+# header corrupts every reading from that point on, and the file itself cannot
+# show it: fields are bare strings and only the first line names them.
+HS=$(mktemp -d)
+mkdir -p "$HS/usb/3-3/power" "$HS/usb/3-3/3-3:1.0/bluetooth/hci0" \
+         "$HS/usb/2-1/2-1:1.0/bluetooth/hci1" "$HS/mod" "$HS/stub" "$HS/jrn"
+echo 13d3 > "$HS/usb/3-3/idVendor"; echo 3503 > "$HS/usb/3-3/idProduct"
+echo on   > "$HS/usb/3-3/power/control"; echo N > "$HS/mod/enable_autosuspend"
+# A spare dongle: different device, its own hci node, ahead of ours in sort
+# order. The column it exists to falsify is hci_alive.
+echo 0a12 > "$HS/usb/2-1/idVendor"; echo 0001 > "$HS/usb/2-1/idProduct"
+cat > "$HS/jrn/kernel.b0.log" <<'HSJ'
+2026-08-10T09:10:00.000000+02:00 host kernel: Bluetooth: hci0: command 0x0406 tx timeout
+2026-08-10T09:10:10.000000+02:00 host kernel: Bluetooth: hci0: command 0x0428 tx timeout
+2026-08-10T09:10:11.000000+02:00 host kernel: Bluetooth: hci0: unexpected event for opcode 0x0c1a
+2026-08-10T09:11:00.000000+02:00 host kernel: Bluetooth: hci0: link tx timeout
+HSJ
+cat > "$HS/jrn/unit-bt-hang-watchdog.b0.log" <<'HSW'
+Aug 10 09:12:00 host bt-hang-watchdog: 3 timeouts in 60s — intervening.
+Aug 10 09:12:30 host bt-hang-watchdog: EARLY intervention: desync signature
+Aug 10 09:12:40 host bt-hang-watchdog: RECOVERED after usb reset
+HSW
+printf '#!/bin/sh\nexit 0\n' > "$HS/stub/hciconfig"
+printf '#!/bin/sh\necho "Device AA:BB:CC:00:00:01 Phone"\n' > "$HS/stub/bluetoothctl"
+chmod +x "$HS/stub"/*
+
+hs_run() { env PATH="$HS/stub:$PATH" BT_METRICS="$HS/metrics.tsv" \
+    BT_SYSFS_USB="${1:-$HS/usb}" BT_SYSFS_MODULE="$HS/mod" \
+    BT_JOURNAL_FIXTURE="$HS/jrn" bin/bt-health-snapshot 2>&1; }
+
+hs_run >/dev/null; hsrc=$?
+(( hsrc == 0 )) && [[ -s "$HS/metrics.tsv" ]] \
+    && ok "bt-health-snapshot writes a metrics file" \
+    || bad "bt-health-snapshot produced nothing (rc=$hsrc)"
+
+# THE INVARIANT THE FILE FORMAT RESTS ON. The header is written once and never
+# again; the row is written every run. If the two ever disagree on width, every
+# reader silently reassigns columns from that row onward, and re-reading the
+# file cannot reveal it — only the first line carries names.
+hs_hdr=$(awk -F'\t' 'NR==1 {print NF}' "$HS/metrics.tsv")
+hs_row=$(awk -F'\t' 'NR==2 {print NF}' "$HS/metrics.tsv")
+[[ "$hs_hdr" == "14" && "$hs_row" == "14" ]] \
+    && ok "bt-health-snapshot's row width matches its header (14 columns)" \
+    || bad "header has $hs_hdr columns, the row has $hs_row — the series is misaligned"
+
+# AND no field may be empty, which the width check alone cannot see. Dropping
+# an ARGUMENT from the printf while leaving its %s in the format string still
+# produces 14 fields — the last one empty — so the width assertion passed a
+# mutation that silently blanked a column. It was proven blind by feeding it
+# exactly that, which is the failure mode this suite keeps rediscovering: a
+# check that cannot fail for the reason its name gives. Unknown values are
+# written as "-" or 0 by design, so an empty field is always a defect.
+hs_blank=$(awk -F'\t' 'NR==2 { for (i=1;i<=NF;i++) if ($i == "") { print i; exit } }' \
+           "$HS/metrics.tsv")
+[[ -z "$hs_blank" ]] \
+    && ok "no column in the row is blank (unknowns are '-' or 0, never empty)" \
+    || bad "column $hs_blank is empty — a printf argument is missing, not its %s"
+
+# Second run appends only. A re-written header mid-file would be read back as a
+# data row of literal column names.
+hs_run >/dev/null
+lines=$(wc -l < "$HS/metrics.tsv"); heads=$(grep -c '^timestamp' "$HS/metrics.tsv")
+(( ${lines:-0} == 3 && ${heads:-0} == 1 )) \
+    && ok "bt-health-snapshot appends rows and writes the header only once" \
+    || bad "metrics.tsv has $lines line(s) and $heads header(s) after two runs"
+
+# Columns by NAME, resolved from the header rather than hardcoded, so this
+# assertion survives a deliberate column addition and fails a reordering.
+hs_col() { awk -F'\t' -v want="$1" \
+    'NR==1 { for (i=1;i<=NF;i++) if ($i==want) c=i } NR==2 && c { print $c }' "$HS/metrics.tsv"; }
+[[ "$(hs_col tx_timeouts)" == "2" && "$(hs_col unexpected_evt)" == "1" ]] \
+    && ok "bt-health-snapshot counts command timeouts, excluding ACL supervision" \
+    || bad "tx=$(hs_col tx_timeouts) unexpected=$(hs_col unexpected_evt), want 2 and 1"
+
+# THE DOCUMENTED UNDERCOUNT. The watchdog logs a threshold intervention as
+# "— intervening." and an early one as "EARLY intervention:". Matching only the
+# first missed every early one, in the column whose entire purpose is to say
+# how often the watchdog acted. The fixture carries one of each; 2 is the only
+# answer that means the fix is still there.
+[[ "$(hs_col wd_interventions)" == "2" && "$(hs_col wd_recovered)" == "1" ]] \
+    && ok "bt-health-snapshot counts both intervention forms" \
+    || bad "wd_interventions=$(hs_col wd_interventions), want 2 — EARLY was missed again"
+
+[[ "$(hs_col dev_present)" == "1" && "$(hs_col hci_alive)" == "1" \
+   && "$(hs_col usb_power_ctrl)" == "on" && "$(hs_col btusb_autosusp)" == "N" ]] \
+    && ok "bt-health-snapshot records presence, liveness and power state" \
+    || bad "device columns wrong: present=$(hs_col dev_present) alive=$(hs_col hci_alive)"
+
+# THE SPARE-DONGLE FALSIFICATION, by name. The hci node must be resolved from
+# OUR device's USB path. Taking the first adapter in the tree would report the
+# spare dongle's hci1 as alive in exactly the situation this column exists to
+# measure: our controller gone, something else still answering.
+rm -rf "$HS/usb/3-3"
+: > "$HS/metrics.tsv"; hs_run >/dev/null
+[[ "$(hs_col dev_present)" == "0" && "$(hs_col hci_alive)" == "0" ]] \
+    && ok "a spare dongle's adapter is not reported as our controller's liveness" \
+    || bad "hci_alive=$(hs_col hci_alive) with our device absent — it read another adapter"
+rm -rf "$HS"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is

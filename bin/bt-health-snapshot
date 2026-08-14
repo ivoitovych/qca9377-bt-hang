@@ -9,7 +9,19 @@
 
 set -uo pipefail
 
-OUT=/var/log/bt-health/metrics.tsv
+# Seams, real paths by default. This is the WRITER of metrics.tsv — the series
+# bt-health-report reads back to answer whether the mitigation works — and it
+# had never been run under test, so nothing checked that the header it writes
+# once and the row it appends forever have the same shape.
+_BHS_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../tools/lib"
+[[ -r "$_BHS_LIB/journal.sh" ]] || _BHS_LIB=/usr/local/bin/lib
+[[ -r "$_BHS_LIB/journal.sh" ]] || { echo "bt-health-snapshot: missing journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$_BHS_LIB/journal.sh"
+
+OUT="${BT_METRICS:-/var/log/bt-health/metrics.tsv}"
+SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+SYSFS_MOD="${BT_SYSFS_MODULE:-/sys/module/btusb/parameters}"
 VID="${BT_VID:-13d3}"
 PID="${BT_PID:-3503}"
 
@@ -28,7 +40,7 @@ uptime_s=$(awk '{printf "%d", $1}' /proc/uptime)
 dev_present=0
 usb_ctrl="-"
 usb_path=""
-for d in /sys/bus/usb/devices/*; do
+for d in "$SYSFS_USB"/*; do
     [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
     if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
         dev_present=1
@@ -54,18 +66,18 @@ if [[ -n "$h" ]] && command -v hciconfig >/dev/null 2>&1 \
     hci_alive=1
 fi
 
-btusb_autosusp=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo "-")
+btusb_autosusp=$(cat "$SYSFS_MOD/enable_autosuspend" 2>/dev/null || echo "-")
 
 # --- failure counters, this boot -------------------------------------------
 # HCI command timeouts, opcode-named or not. NOT bare "tx timeout": that
 # also matches `link tx timeout` (ACL supervision, a different layer), of
 # which this machine has logged 7 against 173 real command timeouts. See
 # evidence/exhibits/015-timeout-pattern-undercount.md.
-tx_timeouts=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout")
-unexpected=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -c "unexpected event for opcode")
+tx_timeouts=$(bt_journal -k -b 0 --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout")
+unexpected=$(bt_journal -k -b 0 --no-pager 2>/dev/null | grep -c "unexpected event for opcode")
 
 # --- watchdog activity, this boot ------------------------------------------
-wd_log=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)
+wd_log=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)
 # Both intervention forms. The watchdog logs a threshold intervention as
 # "... — intervening." and an early one as "EARLY intervention: ...". Matching
 # only "intervening" silently missed every EARLY intervention — the column has
