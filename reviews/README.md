@@ -161,6 +161,8 @@ what was built, and why it differs.
 | HC-06 | Work the long tail with `--uncovered` (~266 lines, ~25 tools) | **open** | — | `devtools/coverage --uncovered` |
 | HC-07 | Extract remaining inline awk to `tools/lib/*.awk` | **open** | — | shrinks the exclusion list rather than growing it |
 | HC-08 | Raise both floors to 100% | **blocked** on HC-05..07 | — | judgement call; see §5 |
+| HC-09 | The numerator counted traced lines per file and clamped to the total | done — every total before this was inflated | this commit | `devtools/coverage` vs `--uncovered`: (coverable − covered) must equal the uncovered count, for every file |
+| HC-10 | `done`/`fi` with a redirect, and commented function headers, were in the denominator | done — untraceable by construction, derived by tracing both forms | this commit | `bash -x` a loop with `done < f` and with `done < <(cmd)`: only the second is traced |
 
 ### From `2026-08-14T1328Z-sandbox-escape-postmortem.md`
 
