@@ -27,6 +27,15 @@ G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
 # Locate bt-boot-list next to this script, then on PATH. Enumerating boots is
 # subtle enough (see that script's header) that it must not be reimplemented.
 _here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# The seam. bt-diagnose is the tool people CLONE THE REPO TO RUN — the
+# standalone entry point that decides whether a stranger's machine has this
+# bug — and its three verdicts had never been executed. BT_SYSFS_USB and the
+# journal seam make all three drivable; both default to the real thing.
+LIBDIR="${BT_LIBDIR:-$_here/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-diagnose: missing $LIBDIR/journal.sh" >&2; exit 2; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
 BOOTLIST=""
 for c in "$_here/bt-boot-list" "$_here/../tools/bt-boot-list" /usr/local/bin/bt-boot-list; do
     [[ -x "$c" ]] && { BOOTLIST="$c"; break; }
@@ -34,7 +43,7 @@ done
 [[ -n "$BOOTLIST" ]] || BOOTLIST=""
 boot_indices() {
     if [[ -n "$BOOTLIST" ]]; then "$BOOTLIST" ${1:+-n "$1"}
-    else journalctl --list-boots 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}' | sort -n; fi
+    else bt_journal --list-boots 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}' | sort -n; fi
 }
 
 [[ -t 1 ]] || { G=""; R=""; Y=""; B=""; O=""; }
@@ -47,7 +56,7 @@ echo "────────────────────────�
 # ID, and means this works on controllers other than the one that motivated it.
 found=0
 declare -a DEVS=()
-for d in /sys/bus/usb/devices/*; do
+for d in "$SYSFS_USB"/*; do
     [[ -f "$d/idVendor" ]] || continue
     for p in "$d"/*/bluetooth/hci*; do
         [[ -e "$p" ]] || continue
@@ -95,23 +104,26 @@ esac
 # ── 3. The signature ──────────────────────────────────────────────────────
 echo
 echo "${B}Log evidence${O}"
-if ! command -v journalctl >/dev/null 2>&1; then
-    echo "  ${Y}•${O} journalctl not available — cannot check history"
+if ! bt_journal_available; then
+    # A message about the HOST, printed when no journal of any kind is
+    # reachable. The seam governs what this script EXECUTES; this line names
+    # the thing that is missing, so it has to say journalctl.
+    echo "  ${Y}•${O} journalctl not available — cannot check history"  # SEAM-ADVICE
     echo "     Try instead: dmesg | grep -E 'command( 0x[0-9a-f]+)? tx timeout|Resetting usb device'"
     exit 2
 fi
 
 timeouts=0; resets=0; fw=0; boots=0
 for b in $(boot_indices); do
-    journalctl -k -b "$b" >/dev/null 2>&1 || continue
+    bt_journal -k -b "$b" >/dev/null 2>&1 || continue
     boots=$((boots+1))
     # HCI command timeouts, opcode-named or not. NOT bare "tx timeout": that
     # also matches `link tx timeout` (ACL supervision, a different layer), of
     # which this machine has logged 7 against 173 real command timeouts. See
     # evidence/exhibits/015-timeout-pattern-undercount.md.
-    t=$(journalctl -k -b "$b" --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
-    r=$(journalctl -k -b "$b" --no-pager 2>/dev/null | grep -ciE "Resetting usb device|Multiple cmd timeouts" || true)
-    f=$(journalctl -k -b "$b" --no-pager 2>/dev/null | grep -ciE "using rampatch|nvm_usb|Failed to load .*firmware" || true)
+    t=$(bt_journal -k -b "$b" --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
+    r=$(bt_journal -k -b "$b" --no-pager 2>/dev/null | grep -ciE "Resetting usb device|Multiple cmd timeouts" || true)
+    f=$(bt_journal -k -b "$b" --no-pager 2>/dev/null | grep -ciE "using rampatch|nvm_usb|Failed to load .*firmware" || true)
     timeouts=$((timeouts + ${t:-0})); resets=$((resets + ${r:-0})); fw=$((fw + ${f:-0}))
 done
 
@@ -126,7 +138,7 @@ echo "────────────────────────�
 if (( timeouts == 0 )); then
     echo "${G}Signature NOT present.${O}"
     echo "No HCI command timeouts recorded. Either this controller is healthy,"
-    echo "or the journal does not go back far enough — check 'journalctl --list-boots'."
+    echo "or the journal does not go back far enough — check 'journalctl --list-boots'."   # SEAM-ADVICE
     exit 0
 fi
 

@@ -2258,6 +2258,75 @@ VREMPTY=$(vr_run); vremprc=$?
     || bad "an underived list reported restoration (rc=$vremprc)"
 rm -rf "$VR"
 
+# ── bt-diagnose: the tool a stranger runs before trusting any of this ─────
+#
+# The standalone entry point. Someone with an unreliable Bluetooth controller
+# clones the repo and runs this, and its answer decides whether they go on
+# reading. It has three documented exit codes — 0 not present, 1 present,
+# 2 cannot determine — and none of the three had ever been executed.
+#
+# The distinction it draws is the substance of this project's claim: timeouts
+# WITHOUT resets is the bug (hdev->reset is NULL because the device is missing
+# from btusb's quirks table); timeouts WITH resets is a different problem that
+# this repository does not document. Telling a stranger they have this bug when
+# they do not is the worst thing this tool can do, so both sides are asserted,
+# and each fixture also carries the near-miss the counting must reject.
+DG=$(mktemp -d)
+mkdir -p "$DG/usb/3-3/3-3:1.0/bluetooth/hci0" "$DG/empty"
+echo 13d3 > "$DG/usb/3-3/idVendor"; echo 3503 > "$DG/usb/3-3/idProduct"
+
+dg_run() { BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$DG/usb" \
+           tools/bt-diagnose 2>&1; }
+
+DGSIG=$(dg_run diagnose-signature); dgsigrc=$?
+(( dgsigrc == 1 )) && [[ "$DGSIG" == *"Signature PRESENT"* ]] \
+    && ok "bt-diagnose reports the signature and exits 1" \
+    || bad "signature fixture gave rc=$dgsigrc, not the documented 1"
+
+# `link tx timeout` is ACL supervision — a different layer. This machine has
+# logged 7 of them against 173 real command timeouts, and counting them would
+# inflate the headline number in the direction that flatters the claim. The
+# fixture carries one; the count must be 3, not 4.
+# The fixture splits 2 timeouts into boot -1 and 1 into boot 0, so a total of
+# 3 also proves the per-boot totals are summed rather than one boot reported.
+[[ "$DGSIG" == *"HCI command timeouts      : 3"* ]] \
+    && ok "bt-diagnose sums command timeouts across boots, excluding ACL supervision" \
+    || bad "the headline total is wrong — an ACL supervision line was included, or a boot was dropped"
+
+[[ "$DGSIG" == *"No vendor firmware load either"* ]] \
+    && ok "bt-diagnose notes the absent firmware load (driver_info = 0)" \
+    || bad "the firmware-load corroboration was not reported"
+
+# Timeouts AND resets: the callback is installed and working. Whatever is wrong
+# with that controller, it is not what this repository documents — so this must
+# exit 0, and it must not say the signature is present.
+DGRES=$(dg_run diagnose-reset); dgresrc=$?
+(( dgresrc == 0 )) && [[ "$DGRES" == *"kernel IS resetting"* && "$DGRES" != *"Signature PRESENT"* ]] \
+    && ok "bt-diagnose clears a controller the kernel does reset" \
+    || bad "a resetting controller was diagnosed with this bug (rc=$dgresrc)"
+
+DGCLEAN=$(dg_run diagnose-clean); dgcleanrc=$?
+(( dgcleanrc == 0 )) && [[ "$DGCLEAN" == *"Signature NOT present"* ]] \
+    && ok "bt-diagnose exits 0 when no command timeout was ever logged" \
+    || bad "a clean journal did not exit 0 (rc=$dgcleanrc)"
+
+# No controller at all. This is the ONE case where "cannot determine" is the
+# honest answer, and it is also the advanced form of the bug — the chip has
+# stopped answering USB — so the exit code must not be confused with health.
+DGNONE=$(BT_JOURNAL_FIXTURE=tests/journal/diagnose-signature BT_SYSFS_USB="$DG/empty" \
+         tools/bt-diagnose 2>&1); dgnonerc=$?
+(( dgnonerc == 2 )) && [[ "$DGNONE" == *"POWER-OFF"* ]] \
+    && ok "bt-diagnose exits 2 with no controller on the bus, and says power-off" \
+    || bad "absent controller gave rc=$dgnonerc, not the documented 2"
+
+# The three codes must be distinct, asserted as one claim: a caller branching
+# on them is the reason they are documented, and two verdicts collapsing onto
+# one code is invisible in any single-scenario check.
+[[ "$dgsigrc$dgcleanrc$dgnonerc" == "102" ]] \
+    && ok "bt-diagnose's three exit codes are distinct (1/0/2)" \
+    || bad "exit codes collapsed: present=$dgsigrc absent=$dgcleanrc unknown=$dgnonerc"
+rm -rf "$DG"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is

@@ -45,6 +45,16 @@
 # anything at load time — its callers set their own `set -uo pipefail` and would
 # inherit whatever it changed.
 
+# "Is a journal reachable at all?" belongs to the seam, not to its callers. The
+# seam decides WHERE the journal comes from, so it is the only thing that can
+# answer whether there is one; a caller asking `command -v journalctl` is asking
+# about the host even when the host is not the source, and would refuse to run
+# over a fixture on a machine that has no systemd.
+bt_journal_available() {
+    [[ -n "${BT_JOURNAL_FIXTURE:-}" ]] && return 0
+    command -v journalctl >/dev/null 2>&1
+}
+
 bt_journal() {
     if [[ -z "${BT_JOURNAL_FIXTURE:-}" ]]; then
         journalctl "$@"
