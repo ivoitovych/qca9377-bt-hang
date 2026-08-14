@@ -2521,6 +2521,68 @@ tools/bt-verify-kernel-mechanism 9.9.9-nonexistent >/dev/null 2>&1
               || bad "a missing btusb module did not exit 2"
 rm -rf "$KM"
 
+# ── bt-state: the row every later comparison is computed from ─────────────
+#
+# `bt-state --tsv` is what bt-health-snapshot appends to metrics.tsv, so these
+# nine fields ARE the measurement series — the before/after tables, the
+# baseline comparison, the trial treatments all read them back. A field in the
+# wrong column silently reassigns every value after it, and nothing downstream
+# can notice: the file has no header per row and every field is a bare string.
+BS=$(mktemp -d)
+mkdir -p "$BS/usb/3-3/power" "$BS/usb/3-3/3-3:1.0/bluetooth/hci0" "$BS/mod" "$BS/stub" "$BS/jrn"
+echo 13d3 > "$BS/usb/3-3/idVendor"; echo 3503 > "$BS/usb/3-3/idProduct"
+echo on > "$BS/usb/3-3/power/control"; echo N > "$BS/mod/enable_autosuspend"
+cat > "$BS/jrn/kernel.b0.log" <<'BSJ'
+2026-08-10T09:10:00.000000+02:00 host kernel: Bluetooth: hci0: command 0x0406 tx timeout
+2026-08-10T09:10:10.000000+02:00 host kernel: Bluetooth: hci0: command 0x0428 tx timeout
+2026-08-10T09:11:00.000000+02:00 host kernel: Bluetooth: hci0: link tx timeout
+BSJ
+printf 'Aug 10 09:12:00 host bt-hang-watchdog: intervening now\n' \
+    > "$BS/jrn/unit-bt-hang-watchdog.b0.log"
+# hciconfig is an INTERVENTION, not an observation — a raw HCI exchange that
+# has aborted a live btmon capture (EX-011). Stubbing it is not only for speed.
+printf '#!/bin/sh\nexit 0\n' > "$BS/stub/hciconfig"
+printf '#!/bin/sh\necho "Device AA:BB:CC:00:00:01 Phone"\n' > "$BS/stub/bluetoothctl"
+chmod +x "$BS/stub"/*
+
+bs_run() { env PATH="$BS/stub:$PATH" BT_SYSFS_USB="$BS/usb" BT_SYSFS_MODULE="$BS/mod" \
+               BT_JOURNAL_FIXTURE="$BS/jrn" tools/bt-state "$@" 2>&1; }
+
+BSTSV=$(bs_run --tsv); bstsvrc=$?
+# Field by field, by POSITION. Grepping for the values would pass on a row
+# whose columns had been reordered, which is the failure that cannot be seen
+# downstream: metrics.tsv rows carry no per-row header.
+IFS=$'\t' read -r f_ts f_dev f_ctrl f_hci f_alive f_as f_tx f_wd f_conn <<<"$BSTSV"
+(( bstsvrc == 0 )) && [[ "$f_dev" == "3-3" && "$f_ctrl" == "on" && "$f_hci" == "hci0" \
+                      && "$f_alive" == "yes" && "$f_as" == "N" ]] \
+    && ok "bt-state --tsv puts device/power/hci/liveness in their documented columns" \
+    || bad "TSV columns wrong: dev=$f_dev ctrl=$f_ctrl hci=$f_hci alive=$f_alive as=$f_as"
+
+# 2, not 3: the fixture's `link tx timeout` is ACL supervision, a different
+# layer. Inflating this column inflates every before/after table built on it.
+[[ "$f_tx" == "2" && "$f_wd" == "1" && "$f_conn" == "1" ]] \
+    && ok "bt-state --tsv counts timeouts, interventions and connections correctly" \
+    || bad "counts wrong: tx=$f_tx wd=$f_wd conn=$f_conn (want 2 1 1)"
+
+n_fields=$(awk -F'\t' '{print NF}' <<<"$BSTSV")
+(( ${n_fields:-0} == 9 )) \
+    && ok "bt-state --tsv emits exactly 9 fields on one line" \
+    || bad "TSV row has $n_fields field(s), not 9 — every column after the gap shifts"
+
+# A controller that has dropped off the bus is the advanced form of the hang,
+# and it is a row metrics.tsv must still be able to carry: absent, not crashed.
+BSGONE=$(env PATH="$BS/stub:$PATH" BT_SYSFS_USB="$BS/empty" BT_SYSFS_MODULE="$BS/mod" \
+             BT_JOURNAL_FIXTURE="$BS/jrn" tools/bt-state --tsv 2>&1); bsgrc=$?
+(( bsgrc == 0 )) && [[ "$(awk -F'\t' '{print $2}' <<<"$BSGONE")" == "absent" ]] \
+    && ok "bt-state records an absent controller as a row, not a failure" \
+    || bad "a vanished controller broke the sampler (rc=$bsgrc)"
+
+BSHUM=$(bs_run)
+[[ "$BSHUM" == *"device 13d3:3503"* && "$BSHUM" == *"responds"* && "$BSHUM" == *"services"* ]] \
+    && ok "bt-state's human form reports the device, liveness and services" \
+    || bad "the human-readable form is missing a section"
+rm -rf "$BS"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is

@@ -8,9 +8,20 @@
 # child), so it is not tied to the chip that motivated this repo. Override with
 # BT_VID / BT_PID to pin a specific device.
 set -uo pipefail
+
+# Seams, real paths by default. bt-state is the sampler behind --tsv, which is
+# what bt-health-snapshot writes into metrics.tsv — so the columns below are
+# the numbers every later comparison is computed from, and none of it had run
+# under test.
+_BTS_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib"
+[[ -r "$_BTS_LIB/journal.sh" ]] || { echo "bt-state: missing $_BTS_LIB/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$_BTS_LIB/journal.sh"
+SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+SYSFS_MOD="${BT_SYSFS_MODULE:-/sys/module/btusb/parameters}"
 VID="${BT_VID:-}"; PID="${BT_PID:-}"
 if [[ -z "$VID" || -z "$PID" ]]; then
-    for d in /sys/bus/usb/devices/*; do
+    for d in "$SYSFS_USB"/*; do
         [[ -f "$d/idVendor" ]] || continue
         for p in "$d"/*/bluetooth/hci*; do
             [[ -e "$p" ]] && { VID=$(<"$d/idVendor"); PID=$(<"$d/idProduct"); break 2; }
@@ -21,7 +32,7 @@ VID="${VID:-13d3}"; PID="${PID:-3503}"   # fall back to the documented device
 TSV=0; [[ "${1:-}" == "--tsv" ]] && TSV=1
 
 dev=absent; ctrl=-; hci=-; alive=?
-for d in /sys/bus/usb/devices/*; do
+for d in "$SYSFS_USB"/*; do
     [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
     if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
         dev=$(basename "$d"); ctrl=$(cat "$d/power/control" 2>/dev/null)
@@ -40,13 +51,13 @@ if [[ "$hci" != "-" ]]; then
         timeout 6 btmgmt --index "${hci#hci}" info >/dev/null 2>&1 && alive=yes || alive=no
     fi
 fi
-autosusp=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo "-")
+autosusp=$(cat "$SYSFS_MOD/enable_autosuspend" 2>/dev/null || echo "-")
 # HCI command timeouts, opcode-named or not. NOT bare "tx timeout": that
 # also matches `link tx timeout` (ACL supervision, a different layer), of
 # which this machine has logged 7 against 173 real command timeouts. See
 # evidence/exhibits/015-timeout-pattern-undercount.md.
-tx=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
-wd=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention" || true)
+tx=$(bt_journal -k -b 0 --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
+wd=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention" || true)
 conn=$(timeout 8 bluetoothctl devices Connected 2>/dev/null | grep -c '^Device' || true)
 
 if (( TSV )); then
