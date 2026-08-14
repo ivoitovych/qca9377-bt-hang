@@ -2007,6 +2007,65 @@ EOUT=$(wd_run 10 BT_EARLY=1)
     && ok "an early intervention records a response, not a prevented failure" \
     || bad "EARLY recovery outcome wrong"
 
+# ── the capability probe, which decides whether recovery can be CONFIRMED ─
+#
+# Without a probe the watchdog can still reset the controller; it just cannot
+# tell whether that worked. The dangerous outcome is not "unconfirmed" — it is
+# counting every unconfirmable attempt as a FAILURE, because MAX_FAILS then
+# disables the watchdog on a perfectly healthy machine. So the unverifiable
+# case is a third answer, not a lost coin toss.
+WDNOP="$WD/noprobe"; mkdir -p "$WDNOP"
+cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WDNOP/" 2>/dev/null
+NOPOUT=$(: > "$WD/spy.log"; touch "$WD/dead"
+    timeout 10 env PATH="$WDNOP:/usr/bin:/bin" \
+        BT_JOURNAL_FIXTURE=tests/journal/watchdog \
+        BT_SYSFS_USB="$WD/sysfs" BT_SYSFS_DRIVERS="$WD/drv" \
+        BT_COOLDOWN=99999 bin/bt-hang-watchdog 2>&1)
+[[ "$NOPOUT" == *"neither hciconfig nor btmgmt found"* \
+   && "$NOPOUT" == *"cannot be confirmed"* ]] \
+    && ok "with no probe tool the watchdog warns that recovery is unconfirmable" \
+    || bad "the no-probe warning did not appear"
+[[ "$NOPOUT" != *"consecutive failed recoveries"* ]] \
+    && ok "an unverifiable recovery is not counted as a failure" \
+    || bad "unconfirmable recoveries were counted as failures — MAX_FAILS would disable the watchdog"
+
+# btmgmt is the fallback probe. It is selected only when hciconfig is absent,
+# so a stub directory holding one and not the other is the whole test.
+WDBM="$WD/btmgmt-only"; mkdir -p "$WDBM"
+cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WDBM/" 2>/dev/null
+printf '#!/bin/sh\necho "btmgmt $*" >> "%s/spy.log"\nexit 0\n' "$WD" > "$WDBM/btmgmt"
+printf '#!/bin/sh\nexec /usr/bin/timeout "$@"\n' > "$WDBM/timeout" 2>/dev/null
+chmod +x "$WDBM"/* 2>/dev/null
+: > "$WD/spy.log"; rm -f "$WD/dead"
+BMOUT=$(timeout 10 env PATH="$WDBM:/usr/bin:/bin" \
+        BT_JOURNAL_FIXTURE=tests/journal/watchdog \
+        BT_SYSFS_USB="$WD/sysfs" BT_SYSFS_DRIVERS="$WD/drv" \
+        BT_COOLDOWN=99999 bin/bt-hang-watchdog 2>&1)
+[[ "$BMOUT" != *"neither hciconfig nor btmgmt"* ]] && grep -q '^btmgmt ' "$WD/spy.log" \
+    && ok "btmgmt is used as the probe when hciconfig is absent" \
+    || bad "the btmgmt fallback probe was not selected or not called"
+
+# ── verbose mode, which is what an operator turns on to see the window ────
+: > "$WD/spy.log"; rm -f "$WD/dead"
+VBOUT=$(wd_run 10 BT_VERBOSE=1)
+[[ "$VBOUT" == *"verbose mode ON"* ]] \
+    && ok "verbose mode announces itself rather than changing behaviour silently" \
+    || bad "BT_VERBOSE=1 did not announce itself"
+
+# ── the give-up path ─────────────────────────────────────────────────────
+#
+# After MAX_FAILS CONFIRMED failures the watchdog stops trying. That is
+# correct — repeatedly resetting a controller that will not come back adds
+# perturbation to an investigation without adding information — but it must
+# SAY so, because a silent give-up is indistinguishable from a watchdog that
+# is working.
+: > "$WD/spy.log"; touch "$WD/dead"
+GUOUT=$(wd_run 15 BT_MAX_FAILS=1 BT_COOLDOWN=0)
+[[ "$GUOUT" == *"Giving up:"* && "$GUOUT" == *"consecutive recovery attempts failed"* ]] \
+    && ok "the watchdog says when it gives up, rather than falling silent" \
+    || bad "MAX_FAILS was reached without a give-up message"
+rm -f "$WD/dead"
+
 # Scenario 4: the device is off the bus when the threshold trips — stage 2.
 # The watchdog must say so in the terms the operator needs (power-off, not
 # reboot), not attempt a recovery against nothing.
@@ -5469,6 +5528,76 @@ git -C "$SCRATCH/badsh" add -A
 devtools/repo-validate "$SCRATCH/badsh" >/dev/null 2>&1
 (( $? != 0 )) && ok "repo-validate fails on a planted bash syntax error" \
               || bad "repo-validate PASSED a repo with unparseable shell"
+
+# ── EVERY VALIDATOR, AGAINST A FILE OF ITS OWN KIND ──────────────────────
+#
+# repo-validate dispatches by extension: units to systemd-analyze, rules to
+# udevadm, .json to jq, .py to python3, .awk to awk -f. Only the shell branch
+# had ever run, because the scratch repos only ever contained shell — so five
+# validators were shipped untested, and a validator that silently matches
+# nothing is the empty-input failure this project has now met six times.
+#
+# Each is driven twice: a good file must be reported checked, a broken one must
+# FAIL the whole run. Each also skips cleanly when its tool is absent, which is
+# the normal state of a minimal container and must not read as a pass.
+mkdir -p "$SCRATCH/kinds"; scratch_repo "$SCRATCH/kinds"
+printf '[Unit]\nDescription=x\n\n[Service]\nExecStart=/bin/true\n' > "$SCRATCH/kinds/a.service"
+printf 'ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="13d3"\n' > "$SCRATCH/kinds/a.rules"
+printf '{"a": 1}\n' > "$SCRATCH/kinds/a.json"
+printf 'import sys\nprint(sys.argv)\n' > "$SCRATCH/kinds/a.py"
+printf '{ print $1 }\n' > "$SCRATCH/kinds/a.awk"
+printf '#!/bin/bash\necho ok\n' > "$SCRATCH/kinds/a.sh"
+git -C "$SCRATCH/kinds" add -A
+KOUT=$(devtools/repo-validate "$SCRATCH/kinds" 2>&1); krc=$?
+# Each validator either CHECKED its file or SKIPPED for a named missing tool.
+# Both are acceptable answers; silence about the file is not, because that is
+# what a validator matching nothing looks like from outside.
+kmiss=""
+for kf in a.service a.rules a.json a.py a.awk a.sh; do
+    grep -qE "(✓|•).*$kf" <<<"$KOUT" || kmiss="$kmiss; $kf"
+done
+(( krc == 0 )) && [[ -z "$kmiss" ]] \
+    && ok "repo-validate reaches all 6 file kinds — checked or explicitly skipped" \
+    || bad "repo-validate said nothing about (rc=$krc):$kmiss"
+
+# And the failure direction, per kind, for the validators whose tools exist
+# here. A validator that cannot fail is the same as no validator.
+kbad=0; kran=0
+kcheck() {   # <name> <content> <tool>
+    command -v "$3" >/dev/null 2>&1 || return 0
+    kran=$((kran + 1))
+    local d="$SCRATCH/bad-$1"; mkdir -p "$d"; scratch_repo "$d"
+    printf '%s' "$2" > "$d/broken.$1"
+    git -C "$d" add -A
+    devtools/repo-validate "$d" >/dev/null 2>&1 && kbad=$((kbad + 1))
+}
+kcheck json '{"a": ' jq
+kcheck py   'def (' python3
+kcheck awk  'BEGIN { print "unterminated' awk
+(( kbad == 0 )) && (( kran >= 2 )) \
+    && ok "each of $kran validators present here FAILS its own broken file" \
+    || bad "$kbad of $kran validator(s) passed a file that does not parse"
+
+# ── an empty enumeration is INCONCLUSIVE, not a pass ─────────────────────
+#
+# This is the distinction the rest of this suite was rebuilt around, and it
+# lives here first: ENUMERATED == 0 means the question was never asked, and a
+# tool that answers "all checks passed" to a question it never asked is worse
+# than one that crashes.
+mkdir -p "$SCRATCH/empty"; scratch_repo "$SCRATCH/empty"
+EOUT=$(devtools/repo-validate "$SCRATCH/empty" 2>&1); erc=$?
+(( erc == 1 )) && [[ "$EOUT" == *"VALIDATION INCONCLUSIVE"* && "$EOUT" == *"enumerated no files"* ]] \
+    && ok "an empty repository is INCONCLUSIVE (exit 1), never 'all checks passed'" \
+    || bad "empty-repo validation returned rc=$erc: $(head -1 <<<"$EOUT")"
+
+# CHECKED == 0 with files enumerated is a different answer, and it is fine.
+mkdir -p "$SCRATCH/nocheck"; scratch_repo "$SCRATCH/nocheck"
+printf 'just prose\n' > "$SCRATCH/nocheck/NOTES.md"
+git -C "$SCRATCH/nocheck" add -A
+NOUT=$(devtools/repo-validate "$SCRATCH/nocheck" 2>&1); nrc=$?
+(( nrc == 0 )) && [[ "$NOUT" == *"no checkable files"* ]] \
+    && ok "files enumerated but none checkable is a pass, and says which it is" \
+    || bad "a prose-only repo was not distinguished from an empty one (rc=$nrc)"
 
 # ── devtools/status: COMMITTED is not DEPLOYED ───────────────────────────
 #
