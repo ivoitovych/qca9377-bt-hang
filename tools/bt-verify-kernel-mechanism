@@ -23,7 +23,12 @@
 set -uo pipefail
 
 KREL="${1:-$(uname -r)}"
-KO="/lib/modules/$KREL/kernel/drivers/bluetooth/btusb.ko"
+# BT_MODULES_DIR defaults to the real tree. The seam exists because this tool
+# settles the single question every recovery experiment in this repository is
+# interpreted against — reset callback or 5-timeout counter — and it had never
+# been run against a module whose contents the test controls.
+MODULES_DIR="${BT_MODULES_DIR:-/lib/modules}"
+KO="$MODULES_DIR/$KREL/kernel/drivers/bluetooth/btusb.ko"
 TMP=$(mktemp /tmp/btusb-verify.XXXXXX.ko)
 trap 'rm -f "$TMP"' EXIT
 
@@ -82,8 +87,8 @@ for s in "Resetting usb device" "rampatch" "nvm_usb" "using rampatch file"; do
     if grep -qi "$s" <<<"$syms"; then printf '  %s✓%s %s\n' "$G" "$O" "$s"
     else printf '  %s·%s %s (absent)\n' "$Y" "$O" "$s"; fi
 done
-if [[ -e "/lib/modules/$KREL/kernel/drivers/bluetooth/btqca.ko" || \
-      -e "/lib/modules/$KREL/kernel/drivers/bluetooth/btqca.ko.zst" ]]; then
+if [[ -e "$MODULES_DIR/$KREL/kernel/drivers/bluetooth/btqca.ko" || \
+      -e "$MODULES_DIR/$KREL/kernel/drivers/bluetooth/btqca.ko.zst" ]]; then
     printf '  %s✓%s btqca.ko present as a separate module (expected)\n' "$G" "$O"
 fi
 
@@ -91,8 +96,31 @@ echo
 echo "${B}3. IMC Networks (13d3) device IDs in this binary${O}"
 echo "  usb_device_id is little-endian: 13d3:XXYY -> bytes d3 13 YY XX"
 echo "  Vendor classification is from upstream v7.0 btusb.c, NOT inferred from the binary:"
-hexdump -ve '1/1 "%02x"' "$TMP" > "$TMP.hex" 2>/dev/null
+# hexdump(1) lives in bsdextrautils and is absent from minimal images — the
+# same package as the column(1) gap found in bt-health-report, and with a worse
+# consequence here. The redirect was silenced, so on a machine without it the
+# hex file never appeared, every grep missed, and the tool printed ABSENT for
+# ALL SEVEN device IDs — including 3491/3496/3501, which are genuinely in the
+# table. A reader would have concluded the comparators are missing too, which
+# is the exact opposite of the argument this section exists to make: that this
+# device's absence is an isolated gap. od(1) is coreutils and always present.
+hexed=0
+if command -v hexdump >/dev/null 2>&1; then
+    hexdump -ve '1/1 "%02x"' "$TMP" > "$TMP.hex" 2>/dev/null && hexed=1
+fi
+if (( ! hexed )); then
+    od -An -v -tx1 "$TMP" 2>/dev/null | tr -d ' \n' > "$TMP.hex" && hexed=1
+fi
+# An empty hex dump for a non-empty module means the dump failed, whatever the
+# exit status said. Reporting nothing is honest; reporting ABSENT is not.
+[[ -s "$TMP.hex" ]] || hexed=0
+
 check_id() {
+    if (( ! hexed )); then
+        printf '  %s?%s 13d3:%s  UNKNOWN   (no hexdump or od — cannot read the binary)\n' \
+               "$Y" "$O" "$1"
+        return 0
+    fi
     local id="$1" note="$2"
     local lo="${id:2:2}" hi="${id:0:2}"
     if grep -qo "d313${lo}${hi}" "$TMP.hex" 2>/dev/null; then

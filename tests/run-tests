@@ -2449,6 +2449,78 @@ bm_run frobnicate >/dev/null 2>&1
     || bad "A SEAM LEAKED: bt-mode disabled a real override on this machine"
 rm -rf "$BM"
 
+# ── bt-verify-kernel-mechanism: the fact every experiment is read against ─
+#
+# Whether btusb defines btusb_qca_reset (hci_cmd_timeout() invokes it on the
+# FIRST timeout) or btusb_qca_cmd_timeout (the older 5-timeout counter) decides
+# how to interpret every recovery experiment here: a userspace reset issued
+# +20 s later is a fair proxy for the second and not for the first. The tool
+# that settles it against the shipped binary had never been run against a
+# binary whose contents a test controls.
+#
+# BT_MODULES_DIR is the only seam needed — the kernel release is already an
+# argument — so a fabricated btusb.ko drives every verdict.
+KM=$(mktemp -d)
+mkdir -p "$KM/mods/7.0.0-test/kernel/drivers/bluetooth" \
+         "$KM/mods/5.0.0-old/kernel/drivers/bluetooth"
+
+# A fake module: the symbol strings the tool greps, plus usb_device_id entries
+# in the little-endian byte order it documents (13d3:3491 -> d3 13 91 34).
+# 3491/3496/3501 present, 3503 absent — the repository's central claim.
+km_id() { printf '\xd3\x13'; printf "\\x${1:2:2}\\x${1:0:2}"; }
+{ printf 'btusb_qca_reset\0Resetting usb device\0rampatch\0nvm_usb\0using rampatch file\0'
+  km_id 3491; km_id 3496; km_id 3501; km_id 3563
+} > "$KM/mods/7.0.0-test/kernel/drivers/bluetooth/btusb.ko"
+printf 'btusb_qca_cmd_timeout\0nothing else here\0' \
+    > "$KM/mods/5.0.0-old/kernel/drivers/bluetooth/btusb.ko"
+
+km_run() { BT_MODULES_DIR="$KM/mods" tools/bt-verify-kernel-mechanism "$1" 2>&1; }
+
+KMNEW=$(km_run 7.0.0-test); kmrc=$?
+(( kmrc == 0 )) && [[ "$KMNEW" == *"=> hdev->reset mechanism."* ]] \
+    && ok "bt-verify-kernel-mechanism identifies the hdev->reset path" \
+    || bad "reset-callback module was not identified (rc=$kmrc)"
+
+# The sentence that stops a wrong experiment being believed.
+[[ "$KMNEW" == *"NOT an equivalent test"* ]] \
+    && ok "it says a delayed userspace reset is not an equivalent test" \
+    || bad "the hdev->reset verdict omitted the proxy warning"
+
+KMOLD=$(km_run 5.0.0-old)
+[[ "$KMOLD" == *"hdev->cmd_timeout mechanism"* && "$KMOLD" != *"hdev->reset mechanism."* ]] \
+    && ok "bt-verify-kernel-mechanism identifies the older 5-timeout counter" \
+    || bad "cmd_timeout module was misread"
+
+# THE CLAIM ITSELF: the comparators are in the ID table and this device is not.
+# Asserted as one pair, because "3503 absent" is only evidence of a gap if the
+# neighbours are present — a tool that found nothing at all would satisfy half
+# of it and mean the opposite.
+[[ "$KMNEW" == *"13d3:3491  present"* && "$KMNEW" == *"13d3:3501  present"* \
+   && "$KMNEW" == *"13d3:3503  ABSENT"* ]] \
+    && ok "device IDs are read from the binary: comparators present, 3503 absent" \
+    || bad "the ID table read is wrong — the isolated-gap argument does not hold"
+
+# THE DEFECT THIS FOUND. hexdump(1) is in bsdextrautils, absent from minimal
+# images — the same package as the column(1) gap in bt-health-report, with a
+# worse consequence. The redirect was silenced, so with no hexdump the hex file
+# never appeared, every grep missed, and ALL SEVEN IDs printed ABSENT,
+# including the three that are genuinely there. That reads as "the comparators
+# are missing too", the exact opposite of what the section argues.
+KMNOHEX=$(mktemp -d); mkdir -p "$KMNOHEX/bin"
+for t in od hexdump; do printf '#!/bin/sh\nexit 127\n' > "$KMNOHEX/bin/$t"; done
+chmod +x "$KMNOHEX/bin"/*
+KMBLIND=$(env PATH="$KMNOHEX/bin:$PATH" BT_MODULES_DIR="$KM/mods" \
+              tools/bt-verify-kernel-mechanism 7.0.0-test 2>&1)
+[[ "$KMBLIND" == *"13d3:3491  UNKNOWN"* && "$KMBLIND" != *"13d3:3491  ABSENT"* ]] \
+    && ok "an unreadable binary reports UNKNOWN, never ABSENT" \
+    || bad "a failed hex dump was reported as the device IDs being absent"
+rm -rf "$KMNOHEX"
+
+tools/bt-verify-kernel-mechanism 9.9.9-nonexistent >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-verify-kernel-mechanism exits 2 when the module is not there" \
+              || bad "a missing btusb module did not exit 2"
+rm -rf "$KM"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is
