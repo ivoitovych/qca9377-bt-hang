@@ -5322,6 +5322,57 @@ fi
 rm -rf "$SR" "$SS" "$SS2" "$SRG" "$SRT" "$SRT2" "$SMS"
 
 echo
+echo "bt-context — what sits next to a failure that nothing here explains"
+echo "──────────────────────────────────────────────────────────────────────"
+#
+# The tool exists to surface what is NOT understood near a controller failure —
+# so its value is the unclassified set, and an empty unclassified set is
+# indistinguishable from a tool that classified nothing. Both ends are asserted.
+BCX=tests/journal/context-anchors
+BCOUT=$(BT_JOURNAL_FIXTURE="$BCX" tools/bt-context -b 0 2>&1)
+
+# The normaliser collapses PIDs, numbers and addresses so that repetitions of
+# one shape count as one candidate rather than as many.
+[[ "$BCOUT" == *"<MAC>"* && "$BCOUT" != *"AA:BB:CC:00:00:01"* ]] \
+    && ok "an address in an unclassified line is redacted before it is shown" \
+    || bad "bt-context printed a raw address in its summary"
+BCF=$(BT_JOURNAL_FIXTURE="$BCX" tools/bt-context -b 0 --full -C 2 2>&1)
+[[ "$BCF" == *"══ first HCI command timeout"* ]] \
+   && [[ "$BCF" != *"AA:BB:CC:00:00:01"* ]] \
+    && ok "--full prints the raw window per anchor, with addresses redacted" \
+    || bad "--full did not print a redacted window"
+
+BCC=$(BT_JOURNAL_FIXTURE=tests/journal/context-clean tools/bt-context -b 0 2>&1); bccrc=$?
+(( bccrc == 0 )) && [[ "$BCC" == *"records no controller failure"* ]] \
+    && ok "a boot with no failure is reported as such, and exits 0" \
+    || bad "a clean boot was not distinguished from a failure (rc=$bccrc)"
+
+BCN=$(BT_JOURNAL_FIXTURE=tests/journal/nonexistent tools/bt-context -b 0 2>&1); bcnrc=$?
+(( bcnrc == 1 )) && [[ "$BCN" == *"no journal for boot"* ]] \
+    && ok "an empty journal is an error, not a boot with nothing wrong" \
+    || bad "a missing journal was not refused (rc=$bcnrc)"
+
+BT_JOURNAL_FIXTURE="$BCX" tools/bt-context --bogus >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-context rejects an unknown argument" \
+              || bad "bt-context accepted an unknown argument"
+BCH=$(tools/bt-context --help 2>&1); bchrc=$?
+(( bchrc == 0 )) && [[ -n "$BCH" ]] \
+    && ok "bt-context --help prints its own usage" \
+    || bad "bt-context --help failed (rc=$bchrc)"
+
+# bt-dyndbg has its own section above, which covers the three verbs and the
+# per-packet warning. The one path it does not reach is an unknown verb, which
+# must print the usage rather than silently doing nothing to a measurement
+# decision.
+BDD=$(mktemp -d); BDCTL="$BDD/control"
+printf 'drivers/bluetooth/btusb.c:100 [btusb]foo =_ "x"\n' > "$BDCTL"
+BDU=$(BT_DYNDBG_CTL="$BDCTL" bin/bt-dyndbg frobnicate 2>&1)
+[[ "$BDU" == *"bt-dyndbg"* ]] \
+    && ok "bt-dyndbg prints its usage for an unknown verb instead of acting" \
+    || bad "bt-dyndbg said nothing for an unknown verb"
+rm -rf "$BDD"
+
+echo
 echo "sanitize-logs — the gate between a kernel log and a public repo"
 echo "──────────────────────────────────────────────────────────────"
 #
@@ -5458,6 +5509,104 @@ scratch_repo() {   # <dir> ; creates an empty repo with an identity
     git -C "$1" config user.email test@example.com
     git -C "$1" config user.name test
 }
+
+# ── the three refusals that stand between a kernel log and a public repo ─
+#
+# The substituter is tested above against every representation. These test what
+# happens when it is WRONG, which is the case that matters: a Wi-Fi BSSID in a
+# published kernel log is indexed by public geolocation databases, so an
+# under-redaction reveals where this machine physically is. The verifier is the
+# only thing that notices, and until now it had never run.
+#
+# An under-redacting substituter cannot be produced by feeding odd input — the
+# real one handles every form. So awk itself is replaced by a PASS-THROUGH that
+# still answers the capability probe correctly. That is exactly the failure the
+# verifier exists for: a substituter that runs, exits 0, and quietly changes
+# nothing.
+SANW=$(mktemp -d); mkdir -p "$SANW/bin"
+cat > "$SANW/bin/awk" <<'SANAWK'
+#!/bin/sh
+# Discriminated by whether awk was given a FILE. The capability probes read one
+# line from a PIPE and communicate only through their exit status, so they are
+# deferred to the real awk — a probe this stub failed would exercise the
+# capability refusal instead of the verifier. The substituter is the only
+# invocation with a file operand, and for that one the stub copies the input
+# through untouched.
+#
+# Matching on the program text was the first attempt and it did not work: the
+# substituter contains the word `match` too, so the stub deferred everything to
+# the real awk and the run came out perfectly sanitised.
+last=""
+for a in "$@"; do last="$a"; done
+[ -f "$last" ] && exec cat "$last"
+exec /usr/bin/awk "$@"
+SANAWK
+chmod +x "$SANW/bin/awk"
+SANPASS="$SANW/out.log"
+printf 'kernel: wlan0: authenticate with 00:11:22:33:44:55\n' > "$SANW/in.log"
+SANPOUT=$(PATH="$SANW/bin:$PATH" tools/sanitize-logs.sh "$SANW/in.log" "$SANPASS" 2>&1); sanprc=$?
+(( sanprc == 1 )) && [[ "$SANPOUT" == *"unsanitised MAC-like strings remain"* ]] \
+    && ok "a substituter that silently changes nothing is caught by the verifier" \
+    || bad "an under-redacting substituter was not refused (rc=$sanprc)"
+[[ ! -e "$SANPASS" ]] && [[ "$SANPOUT" == *"left untouched"* ]] \
+    && ok "a failed verification writes no output at all, and says so" \
+    || bad "a half-sanitised file was written despite verification failing"
+
+printf 'dev 0000180a-0000-1000-8000-00805f9b34fb\n' > "$SANW/in.log"
+SANU=$(PATH="$SANW/bin:$PATH" tools/sanitize-logs.sh "$SANW/in.log" "$SANW/u.log" 2>&1)
+[[ "$SANU" == *"raw UUIDs remain"* ]] \
+    && ok "the verifier catches a UUID the substituter missed" \
+    || bad "a raw UUID survived verification"
+
+# RFC 5737 TEST-NET-1, which repo-scan allowlists as documentation space. A
+# routable-looking address here would be committed to a repository that
+# publishes its logs, and repo-scan refused exactly that when this fixture
+# first used a 192.168 address. The scanner is the last line of defence and
+# gets to win; the fixture changes, not the allowlist.
+printf 'connected to 192.0.2.31 port 22\n' > "$SANW/in.log"
+SANI=$(PATH="$SANW/bin:$PATH" tools/sanitize-logs.sh "$SANW/in.log" "$SANW/i.log" 2>&1)
+[[ "$SANI" == *"raw IPv4 addresses remain"* ]] \
+    && ok "the verifier catches an IPv4 address the substituter missed" \
+    || bad "a raw IPv4 address survived verification"
+
+# THE CAPABILITY REFUSAL. mawk 1.3.4 mishandles ERE intervals on groups, which
+# would redact wrongly in BOTH directions — short hex runs replaced as if they
+# were addresses, real addresses only partly replaced — and neither is visible
+# in the output. Refusing is the only safe answer, so it has to be tested.
+cat > "$SANW/bin/awk" <<'SANBAD'
+#!/bin/sh
+exit 1
+SANBAD
+chmod +x "$SANW/bin/awk"
+SANC=$(PATH="$SANW/bin:$PATH" tools/sanitize-logs.sh "$SANW/in.log" "$SANW/c.log" 2>&1); sancrc=$?
+(( sancrc == 1 )) && [[ "$SANC" == *"mishandles ERE intervals on groups"* \
+                     && "$SANC" == *"Install gawk"* ]] \
+    && ok "an awk that fails the interval probe is refused, not used" \
+    || bad "sanitize-logs ran on an awk it could not trust (rc=$sancrc)"
+
+# ── -i, the batch mode that exists to keep the call statically analysable ─
+SANB=$(mktemp -d)
+printf 'a 00:11:22:33:44:55\n' > "$SANB/one.log"
+printf 'b AA:BB:CC:DD:EE:FF\n' > "$SANB/two.log"
+tools/sanitize-logs.sh -i "$SANB/one.log" "$SANB/two.log" >/dev/null 2>&1; sanbrc=$?
+# Asserted on the ORIGINAL addresses, not on MAC SHAPE: the substituter
+# replaces with documented placeholders in the reserved AA:BB:CC space, which
+# are themselves MAC-shaped. A shape check calls a correct sanitisation a
+# failure — it did, on the first run of this assertion.
+(( sanbrc == 0 )) \
+   && ! grep -q '00:11:22:33:44:55' "$SANB/one.log" \
+   && ! grep -qi 'AA:BB:CC:DD:EE:FF' "$SANB/two.log" \
+   && [[ -s "$SANB/one.log" && -s "$SANB/two.log" ]] \
+    && ok "-i sanitises every file it is given, in place" \
+    || bad "batch mode left an original address behind (rc=$sanbrc)"
+
+tools/sanitize-logs.sh -i "$SANB/nonexistent.log" >/dev/null 2>&1
+(( $? != 0 )) && ok "-i reports a file it cannot read instead of skipping it silently" \
+              || bad "batch mode returned 0 for an unreadable file"
+tools/sanitize-logs.sh -i >/dev/null 2>&1
+(( $? != 0 )) && ok "-i with no files is a usage error, not a no-op success" \
+              || bad "batch mode accepted an empty file list"
+rm -rf "$SANW" "$SANB"
 
 _m1='fe:ed'; _m2='fa:ce'; _m3='ca:fe'
 LEAK_MAC="$_m1:$_m2:$_m3"
