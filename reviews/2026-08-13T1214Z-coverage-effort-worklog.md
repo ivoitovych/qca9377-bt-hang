@@ -1177,3 +1177,43 @@ have gone unnoticed.
 | awk statements | 88.2% | **88.2%** (1386/1572) |
 
 All gates pass: `repo-validate`, `repo-scan --all`, both coverage floors, `verify.sh`.
+
+### Second upstream check · `c9959ea` merge, `67ae475` tests
+
+`origin/main` advanced one commit (`7a09765..65d0241`) adding `devtools/status`, a new
+110-line file. **Merged clean — no conflicts.** It answers "is everything updated,
+rebuilt, logged, collected, committed, pushed?" and exists to keep one distinction
+visible: **committed is not deployed.**
+
+It arrived at 0% and took the total 84.9% → 84.0%. That is the ordinary cost of upstream
+adding code to a branch whose job is measuring it, and the right response is to test the
+file rather than to widen anything.
+
+The tool states its own contract in its header — *deployment drift is reported but does
+not set the exit status, because it is a fact about the machine and not a defect in the
+commit* — and that is precisely what could not be checked against the real host: it needs
+an installation that has drifted, and manufacturing one on the investigation machine is
+the opposite of a read-only check. One seam (`BT_STATUS_REPO`), then a scratch repository
+with a **real local remote** and stubbed tools inside it. The pushed-ness question is
+asked of the remote via `ls-remote`, and a `file://` remote answers it offline, so no
+network round trip enters the suite.
+
+Seven invariants, one per state the tool distinguishes. Two are worth naming:
+
+- **The unreachable remote.** Main's commit message calls the stale tracking ref the
+  source of a false all-clear. In the fixture that ref still exists and still points at
+  the old head — exactly that stale state — and the assertion requires the tool to say it
+  could not confirm, while forbidding it to report a hash comparison it did not make.
+- **The no-drift case**, asserted because the drift row is only meaningful if the tool is
+  capable of *not* printing it.
+
+`devtools/status` is now at zero uncovered lines.
+
+| | before | after |
+|---|---|---|
+| Invariants | 388 | **396** |
+| Shell coverage | 84.9% of 4618 | **85.1%** of 4701 |
+| awk statements | 88.2% | **88.2%** |
+
+Four files now stand at zero uncovered lines: `bt-status`, `bt-postmortem`,
+`bt-health-report.sh`, `devtools/status` — plus the `bt-actions` classifier at 172/172.
