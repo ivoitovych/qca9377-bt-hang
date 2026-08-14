@@ -43,6 +43,7 @@ wrong turns, which a clean summary loses.
 | 2026-08-13T12:44Z | [Coverage strategy](2026-08-13T1244Z-coverage-strategy.md) | the tree at `10404b2` | Re-prioritises the above: 31% of the code needs **no** seam. Supersedes its §5 ordering |
 | 2026-08-13T15:17Z | [Test classes & mocks](2026-08-13T1517Z-test-classes-and-mocks.md) | the tree at 28.5% | Assesses the owner's two proposals; settles CS-08's design; adds the system round trip |
 | 2026-08-14T04:43Z | [Why 100% is hard here](2026-08-14T0443Z-why-100-percent-is-hard-here.md) | the tree at `331e7a2` | A third of the "untested" was **unmeasurable by construction**. Adds a second coverage tool for awk, an uncovered-line report, and an exclusion list a 100% floor can stand on |
+| 2026-08-14T13:28Z | [Sandbox escape postmortem](2026-08-14T1328Z-sandbox-escape-postmortem.md) | `251a6cb` | The suite **closed a live trial** on the investigation machine. A bare-name `bt-trial` in the watchdog, invisible on any checkout with nothing installed. Guard + decoy; four of the maintainer's findings dispositioned |
 
 ---
 
@@ -159,6 +160,16 @@ what was built, and why it differs.
 | HC-06 | Work the long tail with `--uncovered` (~266 lines, ~25 tools) | **open** | — | `devtools/coverage --uncovered` |
 | HC-07 | Extract remaining inline awk to `tools/lib/*.awk` | **open** | — | shrinks the exclusion list rather than growing it |
 | HC-08 | Raise both floors to 100% | **blocked** on HC-05..07 | — | judgement call; see §5 |
+
+### From `2026-08-14T1328Z-sandbox-escape-postmortem.md`
+
+| ID | Item | Status | Landed | Verify |
+|---|---|---|---|---|
+| SE-01 | PATH guard for every bare-name project tool, derived from the sources | done | `251a6cb` | reverse the guard's PATH order → 3 invariants fail |
+| SE-02 | Decoy behind the guard, so the hazard is constructed not inherited | done | `251a6cb` | `tests/run-tests` — "no bare-name call reached a tool behind the guard" |
+| SE-03 | Route every `install.sh` dry run through `BT_MODE_STAMP` | done | `251a6cb` | `grep -n './install.sh' tests/run-tests` → only via `install_dry()` |
+| SE-04 | Replace the unsatisfiable `/root/exp` assertion | done | `251a6cb` | reinstate the discarding fallback in `bt-incident` → 4 invariants fail |
+| SE-05 | Run the suite only in a worktree on the investigation machine | **open** — a habit, not a patch | — | see §7 of the report |
 
 ### Check every row at once
 

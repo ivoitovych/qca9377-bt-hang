@@ -1217,3 +1217,54 @@ Seven invariants, one per state the tool distinguishes. Two are worth naming:
 
 Four files now stand at zero uncovered lines: `bt-status`, `bt-postmortem`,
 `bt-health-report.sh`, `devtools/status` — plus the `bt-actions` classifier at 172/172.
+
+### The suite escaped its sandbox on the investigation machine · `251a6cb`
+
+The maintainer ran this branch's suite on the live machine to measure its coverage. It
+**closed a running 2-hour trial**, wrote a results row whose treatment fingerprint was
+fabricated by test stubs, and made a real `bt-incident` collection. Full account in the
+[postmortem](2026-08-14T1328Z-sandbox-escape-postmortem.md); the parts that belong in this
+log are the ones about how I test.
+
+**The mechanism was a bare name.** `bin/bt-hang-watchdog` closes the boot's auto-trial
+with `command -v bt-trial && bt-trial hang` — resolved from `PATH`, finding the installed
+copy. The watchdog scenarios stub `systemctl`, `sleep` and `hciconfig` and never
+redirected `bt-trial`, because **bt-trial is not called by the test; it is called by the
+tool under test.**
+
+**The invariant I wrote to prevent this was shaped like the last escape.** It enumerates
+`tools/bt-trial <verb>` call sites in the test file — and the comment above it says, in
+so many words, that enumerating call sites is what failed the previous time. Then it
+enumerates a different thing. The general property was available and I did not reach for
+it: every legitimate invocation in the suite uses an explicit path, so a bare name
+resolving during a test run is an escape *by construction*.
+
+**And it could not have failed here.** On a development checkout nothing is installed, so
+the bare name resolves to nothing and the `&&` short-circuits. Green suite, real defect.
+Reversing the new guard's `PATH` order changed no result at all until I put poisoned tools
+*behind* it to stand in for the installed copies. **The hazard has to be constructed, not
+inherited from the environment** — that is the lesson, and it generalises past this bug.
+
+**The fix found something the report did not.** With the decoy in place, the log named
+every bare-name call the suite makes — and `bt-mark` was among them, unstubbed in the
+trial sandbox, invoked three times per trial lifecycle, running `logger -t bt-mark`. On
+the investigation machine every `trial()` call in this suite has been **injecting
+operator-action markers into the evidence journal**, nine per run, of exactly the shape
+`bt-timeline` and `bt-actions` classify as things a person did.
+
+**Two assertions of mine have now been found unable to fail for ENVIRONMENTAL reasons** —
+this one and `[[ ! -e /root/exp/qca9377-bt-hang ]]`, which is vacuous on a checkout living
+elsewhere and *unsatisfiable* where the repository is that path. That is a second category
+alongside the five found unable to fail for logical reasons. Both categories share a
+shape: the check passes because of where it runs rather than because of what the code
+does.
+
+Also fixed, from the same report: four `./install.sh` dry runs called bare, which exit 3
+on a machine in experiment mode and produced four failures saying nothing about
+`install.sh`. All now route through `install_dry()`. `INSTALL_STAMP` was reported unused —
+not reproduced; it is live on the current tip, and that reading was of `032f081`.
+
+| | before | after |
+|---|---|---|
+| Invariants | 396 | **401** |
+
