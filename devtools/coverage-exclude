@@ -112,6 +112,32 @@ tests/run-tests:192-197       # inline --section extractor; same
 # wrong, and the self-check caught both. Whole-file entries above already
 # cover devtools/coverage's and devtools/awk-coverage's own inline programs.
 
+# ── 4b. Elements of a multi-line array literal ───────────────────────────
+#
+# Same cause as the embedded programs above, and as standalone `case` labels:
+# bash traces COMMANDS. `FILES=( ... )` spanning 62 lines is ONE assignment,
+# reported at the line it opens on. The 62 path lines inside it are operands,
+# not commands, and no test can ever make them appear in a trace — they are
+# uncoverable by construction rather than untested.
+#
+# They are not unchecked, either, which is the point of excluding them rather
+# than shrugging at them. tests/run-tests asserts that every path in FILES is
+# one install.sh actually creates, and that every file a maximal install
+# creates appears in FILES. The array's CONTENT has a test; its lines have no
+# trace.
+#
+# Matched by SHAPE — an indented bare absolute path, or an indented bare unit
+# name — so an entry added tomorrow is covered and no line number can rot.
+# Written as two narrow patterns rather than one loose one: `/^\S+$/`
+# would also swallow any indented single-word command.
+# NOTE THE ANCHORS. devtools/coverage calls its matcher with the line ALREADY
+# TRIMMED of leading and trailing whitespace, so a pattern written `^    /usr/`
+# — the shape these lines actually have in the file — matches nothing at all
+# and excludes nothing, silently. That was the first draft of both entries.
+# The dead-entry check now refuses that, and it was written because of this.
+uninstall.sh:/^\/[a-zA-Z0-9._\/-]+$/   # FILES=() and DIRS=() elements: operands of one assignment
+uninstall.sh:/^[a-z0-9-]+\.(service|timer)$/  # UNITS=() elements: same
+
 # ── 5. Reachable only from an installed machine, not from a checkout ─────
 #
 # These three branches exist FOR the installed layout — bt-health-report at

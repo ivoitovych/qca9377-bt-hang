@@ -28,6 +28,35 @@ done
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# ── BT_DESTDIR — a staging prefix, so --apply can be tested for real ──────
+#
+# WHAT THIS IS FOR. Roughly 40% of this script and 70% of uninstall.sh had
+# never been executed by any test, and that half is the one a user's first
+# command runs. The only test that reached it, tests/system-roundtrip,
+# installs to the real /usr/local and /etc — so it is gated on a live systemd,
+# on nothing being installed already, and on no experiment being in progress.
+# Every one of those gates holds on the investigation machine and in a
+# container, which means in practice the branch was tested nowhere.
+#
+# With a prefix set, --apply performs the SAME operations — real `install -D`,
+# real modes, real generated drop-ins, real udev substitution — under a
+# throwaway root. What that buys is not a number: it makes the claim on the
+# front page of the README checkable, that "every file installed is NEW" and
+# uninstalling is "a complete restoration". That is a property of the PAIR,
+# unreadable from either script alone, and this repository has already shipped
+# the pair out of step once.
+#
+# EMPTY BY DEFAULT, so a real install is byte-for-byte what it was. When it is
+# NOT empty the banner below says so on every run, because the one dangerous
+# way to misread this script's output is to think it wrote to the system when
+# it wrote somewhere else.
+DESTDIR="${BT_DESTDIR:-}"
+if [[ -n "$DESTDIR" ]]; then
+    echo "!! BT_DESTDIR=$DESTDIR — staging install; the SYSTEM WILL NOT BE TOUCHED."
+    echo "   Nothing under / is modified: no units are loaded, no rules applied."
+    echo
+fi
+
 # Device this install targets. The defaults must match the script defaults in
 # bin/bt-hang-watchdog; a drop-in is written only when they differ.
 DEFAULT_VID=13d3
@@ -53,8 +82,12 @@ run() {
 install_file() {
     local src="$1" dst="$2" mode="$3"
     [[ -e "$src" ]] || { echo "  ERROR: missing source file: $src" >&2; FAILED=1; return 1; }
-    [[ -e "$dst" ]] && echo "  ! $dst already exists — will be OVERWRITTEN"
-    run install -D -m "$mode" "$src" "$dst"
+    # The overwrite warning must inspect the path actually being written, not
+    # the system path it shadows — otherwise a staging install reports on files
+    # it will never touch, and the "every file installed is NEW" check reads
+    # the wrong tree.
+    [[ -e "$DESTDIR$dst" ]] && echo "  ! $dst already exists — will be OVERWRITTEN"
+    run install -D -m "$mode" "$src" "$DESTDIR$dst"
 }
 
 
@@ -140,7 +173,8 @@ fi
 
 if (( APPLY )); then
     echo "=== INSTALL ==="
-    [[ $EUID -eq 0 ]] || { echo "must run as root" >&2; exit 1; }
+    # A staging root needs no privilege; the system one does.
+    [[ $EUID -eq 0 || -n "$DESTDIR" ]] || { echo "must run as root" >&2; exit 1; }
 else
     echo "=== INSTALL (DRY RUN — nothing will change) ==="
     echo "    re-run with --apply to install"
@@ -183,8 +217,8 @@ echo
 
 # --- device override -------------------------------------------------------
 echo "[3/7] device selection"
-DROPIN=/etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf
-SNAP_DROPIN=/etc/systemd/system/bt-health-snapshot.service.d/10-device.conf
+DROPIN=$DESTDIR/etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf
+SNAP_DROPIN=$DESTDIR/etc/systemd/system/bt-health-snapshot.service.d/10-device.conf
 if [[ "$VID" != "$DEFAULT_VID" || "$PID" != "$DEFAULT_PID" ]]; then
     echo "  non-default device — writing $DROPIN"
     if (( APPLY )); then
@@ -215,8 +249,14 @@ install_file "$SRC/etc/modprobe.d/btusb-qca9377.conf" \
              /etc/modprobe.d/btusb-qca9377.conf 0644
 # The udev rule matches on idVendor/idProduct, so it must be generated for the
 # device actually being targeted rather than copied verbatim.
-UDEV=/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules
+UDEV=$DESTDIR/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules
+# `install -D` creates the destination directory; a `>` redirect does not, and
+# these two rules are the only files here written by redirect because they are
+# GENERATED for the target device rather than copied. On a system with udev
+# that directory always exists, so the assumption was invisible until an
+# install ran somewhere that had no /etc at all.
 if (( APPLY )); then
+    mkdir -p "$(dirname "$UDEV")"
     if sed -e "s/idVendor}==\"$DEFAULT_VID\"/idVendor}==\"$VID\"/" \
            -e "s/idProduct}==\"$DEFAULT_PID\"/idProduct}==\"$PID\"/" \
            "$SRC/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules" > "$UDEV"; then
@@ -317,7 +357,7 @@ else
 fi
 # Event-driven snapshots: a stall unfolds faster than the 15-minute timer.
 if (( METRICS )); then
-    UDEV_SNAP=/etc/udev/rules.d/51-bluetooth-health-snapshot.rules
+    UDEV_SNAP=$DESTDIR/etc/udev/rules.d/51-bluetooth-health-snapshot.rules
     # The remove rule matches ENV{PRODUCT}, which the kernel formats as
     # PRODUCT=%x/%x/%x (drivers/usb/core/driver.c, usb_uevent) — lowercase hex
     # with NO leading zeros. The attribute matches keep the sysfs zero-padded
@@ -329,6 +369,7 @@ if (( METRICS )); then
     VID_X=$(printf '%x' "$((16#$VID))")
     PID_X=$(printf '%x' "$((16#$PID))")
     if (( APPLY )); then
+        mkdir -p "$(dirname "$UDEV_SNAP")"
         if sed -e "s/idVendor}==\"$DEFAULT_VID\"/idVendor}==\"$VID\"/" \
                -e "s/idProduct}==\"$DEFAULT_PID\"/idProduct}==\"$PID\"/" \
                -e "s|$DEFAULT_VID/$DEFAULT_PID\*|$VID_X/$PID_X*|" \
@@ -370,7 +411,7 @@ echo
 # into before/after. Deriving it from a unit file's mtime is wrong: every
 # reinstall or edit moves it forward, so already-mitigated boots get relabelled
 # "before" and contaminate the comparison. Write it once and never touch it again.
-STAMP=/usr/local/share/qca9377-bt-hang/installed-at
+STAMP=$DESTDIR/usr/local/share/qca9377-bt-hang/installed-at
 if (( APPLY )); then
     if [[ -s "$STAMP" ]]; then
         echo "  first-install stamp preserved: $(cat "$STAMP")"
