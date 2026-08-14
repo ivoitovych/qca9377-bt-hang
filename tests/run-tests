@@ -1633,6 +1633,61 @@ EHOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-env-history 2>&1); ehrc=$?
 (( ehrc == 0 )) && ok "bt-env-history runs over a fixture without a journal" \
                 || bad "bt-env-history failed (rc=$ehrc)"
 
+# ── bt-status: the verdict an operator acts on ────────────────────────────
+#
+# Its whole output is a judgement about RIGHT NOW, and the failure that matters
+# is the one its own comments record: a summary computed from a boot's history
+# masking a controller that is dead at this moment. The two verdicts are driven
+# from a fake device tree, because the difference between them — "power the
+# machine fully off" versus "it is fine" — is what a person does next.
+ST=tests/journal/status
+STSYS=$(mktemp -d); mkdir -p "$STSYS/usb" "$STSYS/bt"
+
+# Stage 2: nothing on the bus, no adapter.
+SOUT=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+       tools/bt-status 2>&1); src=$?
+(( src == 0 )) && ok "bt-status runs over a fixture and a fake device tree" \
+               || bad "bt-status failed (rc=$src)"
+
+# THE SAME VERDICT MUST NOT PRODUCE TWO EXIT CODES. Before this was asserted,
+# a down controller exited 1 in full mode and 0 under --brief, because the full
+# path had no explicit exit and inherited whatever ran last. A caller writing
+# `bt-status && ...` got different behaviour from a DISPLAY flag.
+BRC=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+      tools/bt-status --brief >/dev/null 2>&1; echo $?)
+[[ "$src" == "$BRC" ]] \
+    && ok "bt-status exit status is the same in full and --brief mode" \
+    || bad "exit differs by display flag: full=$src brief=$BRC"
+[[ "$SOUT" == *"CONTROLLER IS DOWN RIGHT NOW"* ]] \
+    && ok "bt-status reports a dead controller from present state, not history" \
+    || bad "bt-status missed a controller that is down right now"
+[[ "$SOUT" == *"full POWER-OFF is required"* ]] \
+    && ok "bt-status names the stage-2 remedy (power-off, not reboot)" \
+    || bad "bt-status did not name the power-off remedy for an off-bus device"
+
+# Enumerated but no adapter: a DIFFERENT diagnosis, and the operator's next
+# step differs with it — btusb never bound, rather than the chip being gone.
+mkdir -p "$STSYS/usb/3-3"; echo 13d3 > "$STSYS/usb/3-3/idVendor"; echo 3503 > "$STSYS/usb/3-3/idProduct"
+SENUM=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+        tools/bt-status 2>&1)
+[[ "$SENUM" == *"btusb has created no adapter"* && "$SENUM" != *"full POWER-OFF is required"* ]] \
+    && ok "bt-status distinguishes 'enumerated, no adapter' from stage 2" \
+    || bad "bt-status gave the stage-2 diagnosis for a device still on the bus"
+
+# Healthy: an adapter exists, so no down-right-now verdict at all.
+mkdir -p "$STSYS/bt/hci0"
+SOK=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+      tools/bt-status 2>&1)
+[[ "$SOK" != *"CONTROLLER IS DOWN RIGHT NOW"* ]] \
+    && ok "bt-status does not cry down when an adapter is present" \
+    || bad "bt-status reported a dead controller while an adapter exists"
+
+# The journal-derived counts must still come from the fixture, not the host.
+[[ "$SOK" == *"2"* ]] \
+    && ok "bt-status counts this boot's timeouts from the fixture" \
+    || bad "bt-status lost the fixture-derived timeout count"
+rm -rf "$STSYS"
+
 # ── bt-context: the tool that reports what nobody thought to look for ─────
 #
 # Its whole value is inverted filtering — anchor on a demonstrated failure,

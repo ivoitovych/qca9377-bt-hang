@@ -31,13 +31,24 @@ if [[ -z "$REPO" ]]; then
         [[ -d "$c/.git" && -e "$c/tools/bt-status" ]] && { REPO=$(cd "$c" && pwd); break; }
     done
 fi
+# Journal and sysfs both go through seams so the VERDICT — "controller is down
+# right now", "off the bus, stage 2, power-off required" — can be driven from a
+# fixture. That verdict is what an operator acts on; it had never been executed
+# under test.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-status: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+SYSFS_BT="${BT_SYSFS_BT:-/sys/class/bluetooth}"
+
 have() { command -v "$1" >/dev/null 2>&1; }
 # -E, so callers can pass the opcode-aware timeout pattern and alternations.
 cnt()  { local n; n=$(grep -cE "$1" <<<"$2" 2>/dev/null || true); echo "${n:-0}" | head -1; }
 
-WD=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null || true)
-BD=$(journalctl -u bluetooth        -b 0 --no-pager 2>/dev/null || true)
-KE=$(journalctl -k                  -b 0 --no-pager 2>/dev/null || true)
+WD=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null || true)
+BD=$(bt_journal -u bluetooth        -b 0 --no-pager 2>/dev/null || true)
+KE=$(bt_journal -k                  -b 0 --no-pager 2>/dev/null || true)
 
 early_sig=$(cnt "early signal"          "$WD")
 early_act=$(cnt "EARLY intervention"    "$WD")
@@ -55,8 +66,8 @@ verdict() {
     # in the evening would otherwise mask a controller that is dead right now —
     # which is exactly what happened on 2026-08-11.
     local hci_now on_bus=no d
-    hci_now=$(ls -A /sys/class/bluetooth/ 2>/dev/null | head -1)
-    for d in /sys/bus/usb/devices/*; do
+    hci_now=$(ls -A "$SYSFS_BT" 2>/dev/null | head -1)
+    for d in "$SYSFS_USB"/*; do
         [[ -f "$d/idVendor" ]] || continue
         [[ "$(<"$d/idVendor")" == "${BT_VID:-13d3}" && "$(<"$d/idProduct")" == "${BT_PID:-3503}" ]] \
             && { on_bus=yes; break; }
@@ -148,3 +159,12 @@ echo
 echo "═════════════════════════════════════════════════════════════"
 echo "${B}VERDICT${O}"
 verdict | sed 's/^/  /'
+
+# EXPLICIT, because it was accidental. With no final exit the script returned
+# whatever the last command happened to leave behind: the SAME verdict exited 1
+# in full mode and 0 under --brief, which already exits 0 by hand. A caller
+# writing `bt-status && ...` therefore got different behaviour from a display
+# flag. This is a report, not a check — bt-diagnose is the tool with documented
+# 0/1/2 semantics — so it always succeeds, and the verdict is the output.
+exit 0
+
