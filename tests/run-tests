@@ -3533,6 +3533,92 @@ devtools/repo-validate "$SCRATCH/badsh" >/dev/null 2>&1
 (( $? != 0 )) && ok "repo-validate fails on a planted bash syntax error" \
               || bad "repo-validate PASSED a repo with unparseable shell"
 
+# ── repo-save, the gate that actually commits ────────────────────────────
+#
+# It stages, validates, scans, scans the MESSAGE, commits, and verifies the
+# remote. Everything below runs with --no-push against a scratch repo, so
+# nothing here can reach a remote — the assertion after the group checks that.
+#
+# Its message scan exists because repo-scan reads files and diffs, and a
+# commit-message trailer lives in neither: the single most likely vector for
+# the thing being screened for sat outside the screen entirely.
+mkdir -p "$SCRATCH/save"; scratch_repo "$SCRATCH/save"
+printf 'placeholder 11:11:11:22:33:44\n' > "$SCRATCH/save/notes.log"
+
+save() { devtools/repo-save "$SCRATCH/save" "$@" --no-push 2>&1; }
+
+# THE RULE THIS REPOSITORY IS HELD TO, asserted rather than assumed. Assembled
+# from fragments for the same reason repo-scan and repo-save assemble theirs:
+# so this file stays clean under the scan it is testing.
+_ai='cla'; _ai+='ude'
+SVAI=$(save "fix the thing
+
+Co-Authored-By: $_ai <noreply@example.com>"); svairc=$?
+(( svairc != 0 )) && [[ "$SVAI" == *"AI attribution"* ]] \
+    && ok "repo-save refuses a commit message carrying an attribution trailer" \
+    || bad "an attribution trailer was committed (rc=$svairc)"
+
+svn=$(git -C "$SCRATCH/save" rev-list --count HEAD 2>/dev/null || echo 0)
+(( ${svn:-0} == 0 )) \
+    && ok "the refused message left no commit behind" \
+    || bad "repo-save reported a refusal and committed anyway"
+
+# A real address in a message would once have taken the "clean" branch: the
+# check was `| grep -qv`, and under pipefail that pipeline exits non-zero
+# exactly when it MATCHES, because grep leaves at the first hit and tr dies of
+# SIGPIPE. Twenty addresses reached public commits once already by a different
+# mechanism; this would have been the same outcome.
+_s1='fe:ed'; _s2='fa:ce'; _s3='ca:fe'
+SVMAC=$(save "seen on $_s1:$_s2:$_s3 during the trial"); svmacrc=$?
+(( svmacrc != 0 )) && [[ "$SVMAC" == *"real MAC"* ]] \
+    && ok "repo-save refuses a real MAC in the commit message" \
+    || bad "a real address in a commit message was committed (rc=$svmacrc)"
+
+# Unknown flags used to BECOME the commit message: `repo-save . --amend 'fix'`
+# silently dropped --amend and created a new commit instead of amending.
+devtools/repo-save "$SCRATCH/save" --amend "fix" --no-push >/dev/null 2>&1
+(( $? != 0 )) && ok "repo-save rejects an unknown flag instead of committing it" \
+              || bad "an unknown flag was accepted — it becomes the message"
+
+devtools/repo-save "$SCRATCH/save" "one" "two" --no-push >/dev/null 2>&1
+(( $? != 0 )) && ok "repo-save rejects a second message argument" \
+              || bad "two message arguments were accepted"
+
+# -F from a STREAM. Reading the source twice — once to scan, once for
+# `git commit -F` — produced an empty commit message when the source was a pipe
+# or /dev/stdin, because the first read consumed it. It is snapshotted now.
+SVPIPE=$(printf 'message from a stream\n\nbody line\n' \
+         | devtools/repo-save "$SCRATCH/save" -F /dev/stdin --no-push 2>&1); svprc=$?
+svsubj=$(git -C "$SCRATCH/save" log -1 --format=%s 2>/dev/null)
+(( svprc == 0 )) && [[ "$svsubj" == "message from a stream" ]] \
+    && ok "repo-save -F reads a streamed message once and commits it intact" \
+    || bad "streamed message came through as '$svsubj' (rc=$svprc)"
+
+# Staging happens FIRST, so a brand-new file is inside the validation and the
+# scan. Staging afterwards meant a commit's new files were never syntax
+# checked — including the commit that added these very scripts.
+printf 'kernel: wlan0: authenticate with %s\n' "$LEAK_MAC" > "$SCRATCH/save/new-leak.log"
+SVNEW=$(save "add a file that has never been staged"); svnewrc=$?
+(( svnewrc != 0 )) && [[ "$SVNEW" == *"scan failed"* ]] \
+    && ok "repo-save stages before scanning, so a brand-new file is screened" \
+    || bad "an unstaged new file bypassed the scan (rc=$svnewrc)"
+rm -f "$SCRATCH/save/new-leak.log"
+
+SVNONE=$(save "nothing changed since the last commit"); svnrc=$?
+(( svnrc == 0 )) && [[ "$SVNONE" == *"nothing to commit"* ]] \
+    && ok "repo-save exits 0 with nothing staged rather than making an empty commit" \
+    || bad "an empty tree did not report 'nothing to commit' (rc=$svnrc)"
+
+devtools/repo-save "$SCRATCH/not-a-repo" "msg" --no-push >/dev/null 2>&1
+(( $? != 0 )) && ok "repo-save refuses a directory that is not a git repo" \
+              || bad "repo-save accepted a non-repository"
+
+# Nothing above may have configured or contacted a remote. --no-push is the
+# only thing standing between this block and a push from a test run.
+[[ -z "$(git -C "$SCRATCH/save" remote 2>/dev/null)" ]] \
+    && ok "the repo-save scratch repo has no remote — nothing could be pushed" \
+    || bad "a remote exists on the scratch repo used to test repo-save"
+
 rm -rf "$SCRATCH"
 
 echo
