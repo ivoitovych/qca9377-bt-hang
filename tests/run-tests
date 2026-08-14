@@ -1633,6 +1633,51 @@ EHOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-env-history 2>&1); ehrc=$?
 (( ehrc == 0 )) && ok "bt-env-history runs over a fixture without a journal" \
                 || bad "bt-env-history failed (rc=$ehrc)"
 
+# ── bt-health-report: the judgement on whether the mitigation works ───────
+#
+# This is the tool whose output would be quoted to answer "did the fix help?",
+# computed from per-boot counts. A miscount here is a wrong claim about the
+# mitigation — the conclusion this project most needs to be right — and none of
+# its 116 lines had ever executed under test.
+#
+# The fixture makes the boots DIFFER: boot -1 carries four timeouts, boot 0
+# carries none. A tool that read the wrong boot, or summed them, cannot produce
+# both numbers.
+HR=tests/journal/health
+HRSYS=$(mktemp -d); mkdir -p "$HRSYS/usb/3-3" "$HRSYS/mod"
+echo 13d3 > "$HRSYS/usb/3-3/idVendor"; echo 3503 > "$HRSYS/usb/3-3/idProduct"
+echo N > "$HRSYS/mod/enable_autosuspend"
+HROUT=$(BT_JOURNAL_FIXTURE="$HR" BT_SYSFS_USB="$HRSYS/usb" BT_SYSFS_MODULE="$HRSYS/mod" \
+        BT_METRICS=/nonexistent tools/bt-health-report.sh 2>&1); hrrc=$?
+(( hrrc == 0 )) && ok "bt-health-report runs over a fixture" \
+                || bad "bt-health-report failed (rc=$hrrc)"
+
+# Per-boot counts, read from the table by boot id — not grepped from anywhere
+# in the output, so a number appearing on the wrong row cannot satisfy this.
+tm1=$(awk '$1 == "-1" { print $3 }' <<<"$HROUT" | head -1)
+t0=$(awk  '$1 == "0"  { print $3 }' <<<"$HROUT" | head -1)
+[[ "$tm1" == "4" && "$t0" == "0" ]] \
+    && ok "bt-health-report counts timeouts per boot, not pooled" \
+    || bad "per-boot timeout counts wrong: boot-1=$tm1 boot0=$t0 (want 4 and 0)"
+
+[[ "$HROUT" == *"7.0.0-28-generic"* ]] \
+    && ok "bt-health-report reads each boot's kernel version" \
+    || bad "kernel version column empty"
+
+# The report must not tell the operator to run an internal shell function. A
+# blanket seam conversion rewrote this advice line to `bt_journal -u ... -f`,
+# which no user can execute — caught by reading the output, and pinned here.
+[[ "$HROUT" == *"journalctl -u bt-hang-watchdog -f"* ]] \
+    && ok "bt-health-report's operator advice names a real command" \
+    || bad "advice line names something the operator cannot run"
+
+# column(1) is absent from minimal images; its error must not land in the
+# middle of a report someone is reading for a verdict.
+[[ "$HROUT" != *"column: command not found"* ]] \
+    && ok "bt-health-report degrades cleanly without column(1)" \
+    || bad "column(1) error leaked into the report body"
+rm -rf "$HRSYS"
+
 # ── bt-postmortem: the conclusion drawn about a hang that already happened ─
 #
 # Reconstructs an incident from the journal and states what it means. The

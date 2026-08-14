@@ -11,8 +11,25 @@
 
 set -uo pipefail
 
+# column(1) lives in bsdextrautils and is absent from minimal images. Without a
+# guard the table section prints "column: command not found" into the middle of
+# a report someone is reading for a verdict — the same class as the
+# systemd-analyze gap in repo-validate, which produced nine false failures.
+col() { if command -v column >/dev/null 2>&1; then column -t -s $'\t'; else cat; fi; }
+
+# Seams. This tool's output is a JUDGEMENT — "are the mitigations working?" —
+# computed from per-boot counts, and a wrong count here becomes a wrong claim
+# about whether the fix helps. That is the conclusion this repository most
+# needs to be right, and none of it had ever executed under test.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-health-report: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+SYSFS_MOD="${BT_SYSFS_MODULE:-/sys/module/btusb/parameters}"
+
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-METRICS=/var/log/bt-health/metrics.tsv
+METRICS="${BT_METRICS:-/var/log/bt-health/metrics.tsv}"
 
 # The baseline ships with the repo but this script may be installed to
 # /usr/local/bin, so look in the likely places rather than assuming $DIR.
@@ -56,7 +73,7 @@ done
 [[ -n "$BOOTLIST" ]] || BOOTLIST=""
 boot_indices() {
     if [[ -n "$BOOTLIST" ]]; then "$BOOTLIST" ${1:+-n "$1"}
-    else journalctl --list-boots 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}' | sort -n; fi
+    else bt_journal --list-boots 2>/dev/null | awk '$1 ~ /^-?[0-9]+$/ {print $1}' | sort -n; fi
 }
 
 hr() { printf '%s\n' "────────────────────────────────────────────────────────────────"; }
@@ -69,10 +86,10 @@ hr
 echo "1. MITIGATION STATE"
 printf '   %-34s %s\n' "watchdog service:" "$(systemctl is-active bt-hang-watchdog 2>/dev/null)"
 printf '   %-34s %s\n' "metrics timer:" "$(systemctl is-active bt-health-snapshot.timer 2>/dev/null)"
-printf '   %-34s %s\n' "btusb enable_autosuspend:" "$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo 'module not loaded')"
+printf '   %-34s %s\n' "btusb enable_autosuspend:" "$(cat "$SYSFS_MOD/enable_autosuspend" 2>/dev/null || echo 'module not loaded')"
 
 ctrl="device absent"
-for d in /sys/bus/usb/devices/*; do
+for d in "$SYSFS_USB"/*; do
     [[ -f "$d/idVendor" ]] || continue
     if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
         ctrl="$(cat "$d/power/control" 2>/dev/null)  [$(basename "$d")]"
@@ -89,19 +106,19 @@ echo "2. PER-BOOT FAILURE COUNTS (all retained boots)"
 echo
 printf '   %-6s %-22s %-9s %-9s %-8s %s\n' BOOT KERNEL TIMEOUTS UNEXPECT WD-ACTS PHASE
 for b in $(boot_indices); do
-    k=$(journalctl -k -b "$b" 2>/dev/null | grep -m1 -oE "Linux version [0-9][^ ]*" | awk '{print $3}')
+    k=$(bt_journal -k -b "$b" 2>/dev/null | grep -m1 -oE "Linux version [0-9][^ ]*" | awk '{print $3}')
     [[ -z "${k:-}" ]] && continue
     # HCI command timeouts, opcode-named or not. NOT bare "tx timeout": that
     # also matches `link tx timeout` (ACL supervision, a different layer), of
     # which this machine has logged 7 against 173 real command timeouts. See
     # evidence/exhibits/015-timeout-pattern-undercount.md.
-    t=$(journalctl -k -b "$b" 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout")
-    u=$(journalctl -k -b "$b" 2>/dev/null | grep -c "unexpected event for opcode")
-    w=$(journalctl -u bt-hang-watchdog -b "$b" 2>/dev/null | grep -cE "intervening|EARLY intervention")
+    t=$(bt_journal -k -b "$b" 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout")
+    u=$(bt_journal -k -b "$b" 2>/dev/null | grep -c "unexpected event for opcode")
+    w=$(bt_journal -u bt-hang-watchdog -b "$b" 2>/dev/null | grep -cE "intervening|EARLY intervention")
     # FIRST entry of the boot, not -n1 (which returns the LAST). Using the
     # last entry tags the install boot as AFTER and drags its pre-install
     # timeout counts into the after column, contaminating the comparison.
-    bstart=$(journalctl -k -b "$b" -o short-unix 2>/dev/null | head -1 | awk '{printf "%d",$1}')
+    bstart=$(bt_journal -k -b "$b" -o short-unix 2>/dev/null | head -1 | awk '{printf "%d",$1}')
     phase="before"
     [[ -n "${bstart:-}" ]] && (( bstart > CHANGE_EPOCH )) && phase="AFTER"
     printf '   %-6s %-22s %-9s %-9s %-8s %s\n' "$b" "$k" "$t" "$u" "$w" "$phase"
@@ -115,7 +132,7 @@ hr
 # ── 3. Watchdog effectiveness — the headline number ───────────────────────
 echo "3. WATCHDOG EFFECTIVENESS (the number that matters)"
 echo
-wd=$(journalctl -u bt-hang-watchdog --no-pager 2>/dev/null)
+wd=$(bt_journal -u bt-hang-watchdog --no-pager 2>/dev/null)
 acts=$(grep -cE "intervening|EARLY intervention"      <<<"$wd")
 recs=$(grep -c "RECOVERED"        <<<"$wd")
 fails=$(grep -c "RECOVERY FAILED" <<<"$wd")
@@ -124,7 +141,7 @@ printf '   %-38s %s\n' "interventions attempted:" "$acts"
 printf '   %-38s %s\n' "  -> recovered without reboot:" "$recs"
 printf '   %-38s %s\n' "  -> failed (soft hang, reset ineffective):" "$fails"
 printf '   %-38s %s\n' "  -> hard hang (chip off bus, cold boot):" "$hard"
-wd_now=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)
+wd_now=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)
 acts_now=$(grep -cE "intervening|EARLY intervention" <<<"$wd_now")
 printf '   %-38s %s\n' "this boot only:" "$acts_now intervention(s)"
 echo
@@ -171,7 +188,7 @@ hr
 echo "4. RECENT SNAPSHOTS (last 15)"
 echo
 if [[ -s "$METRICS" ]]; then
-    { head -1 "$METRICS"; tail -n +2 "$METRICS" | tail -15; } | column -t -s $'\t' | sed 's/^/   /'
+    { head -1 "$METRICS"; tail -n +2 "$METRICS" | tail -15; } | col | sed 's/^/   /'
     echo
     echo "   rows collected: $(( $(wc -l < "$METRICS") - 1 ))"
 else
@@ -183,7 +200,7 @@ hr
 echo "5. BASELINE (measured before any mitigation)"
 echo
 if [[ -n "$BASELINE" && -s "$BASELINE" ]]; then
-    column -t -s $'\t' "$BASELINE" | sed 's/^/   /'
+    col < "$BASELINE" | sed 's/^/   /'
 else
     echo "   baseline not found (set BT_BASELINE=/path/to/baseline.tsv)"
 fi
@@ -202,5 +219,10 @@ cat <<'EOF'
            Lower BT_THRESHOLD to 2 and BT_WINDOW to 30, then re-measure.
      d) uptimes stay short and reboots frequent -> nothing improved
 
-   Live view:  journalctl -u bt-hang-watchdog -f
 EOF
+# Outside the heredoc so the marker can be a shell comment rather than printed
+# text: inside a quoted heredoc every character reaches the operator, and a
+# test-infrastructure token has no business in a report someone reads for a
+# verdict. The line names a command the USER runs by hand; the seam governs
+# what this script executes, which is bt_journal only.
+echo "   Live view:  journalctl -u bt-hang-watchdog -f"   # SEAM-ADVICE
