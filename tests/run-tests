@@ -220,6 +220,39 @@ while IFS= read -r f; do
     esac
 done < <(git ls-files 2>/dev/null)
 
+# AN EMPTY DERIVATION IS A REFUSAL, NOT A PASS.
+#
+# SHFILES is the work-list for four repo-wide invariants: the timeout-pattern
+# scan, the awk `-f` trap, the seam check and the executable-bit check. If it
+# ever came back empty — a broken `git ls-files`, a shebang match that stopped
+# matching, this file running outside a checkout — all four would iterate
+# nothing and print four green ticks. One silent derivation failure, four
+# invariants disabled, no output that looks wrong.
+#
+# THIS IS THE FIFTH INSTANCE OF ONE SHAPE in this codebase, and the maintainer
+# named it: an empty input set reported as success. devtools/coverage did it
+# with an empty trace (every file at 0%, which reads as a finding);
+# bt-verify-install did it with a hand-list missing six tools ("running system
+# matches the checkout"); the timeout grep did it with 0 matches of 173 events;
+# the SCO cross-tab did it with an awk parse error and a silently omitted
+# section; and the PATH guard did it three commits ago with a list of zero
+# tools.
+#
+# devtools/repo-validate already encodes the correct distinction, with a
+# comment on why conflating the two nothings is its own bug: ENUMERATED == 0 is
+# a refusal, CHECKED == 0 is fine. That rule belongs wherever a check derives
+# its own work-list — because a derivation IS the new hand-written list the
+# moment it can come back empty.
+#
+# So: refuse here, and below, every derived check reports the SIZE of what it
+# checked rather than only the absence of hits. A zero then reads as a zero.
+if (( ${#SHFILES[@]} < 20 )); then
+    echo "run-tests: derived only ${#SHFILES[@]} shell file(s) from git ls-files" >&2
+    echo "           four repo-wide invariants scan this set; refusing to run" >&2
+    echo "           and report them green over nothing" >&2
+    exit 2
+fi
+
 # THE ANALYSIS IS NOW A FILE, AND THIS RUNS THE FILE.
 #
 # It used to be extracted: a Python regex pulled the awk program out of
@@ -578,7 +611,7 @@ echo "────────────────────────�
 offenders=$(grep -rnE "awk[^|]*-f [^ ]+\.awk[^|]*'" tools/ bin/ 2>/dev/null \
             | grep -vE "^tools/lib/|-f \"\\\$LIBDIR/[a-z-]+\.awk\" -f " || true)
 if [[ -z "$offenders" ]]; then
-    ok "no tool passes an inline program alongside awk -f"
+    ok "no tool passes an inline program alongside awk -f (${#SHFILES[@]} files)"
 else
     bad "inline program alongside -f (it will be read as a filename):"
     sed 's/^/      /' <<<"$offenders"
@@ -1269,7 +1302,7 @@ STRAY=$(grep -nE "(grep|count|cnt)[^|#]*['\"][^'\"]*${TT}" "${SHFILES[@]}" 2>/de
         | grep -vF "command( 0x[0-9a-f]+)? ${TT}" \
         | grep -v '^[^:]*:[0-9]*:[[:space:]]*#')
 if [[ -z "$STRAY" ]]; then
-    ok "every BT-1 timeout count uses the opcode-aware pattern"
+    ok "every BT-1 timeout count uses the opcode-aware pattern (${#SHFILES[@]} files)"
 else
     bad "call sites spelling the timeout pattern differently:"
     while IFS= read -r l; do echo "        $l"; done <<<"$STRAY"
@@ -1332,15 +1365,16 @@ fi
 # Derived from the shebang, so a script added tomorrow is covered without
 # anyone maintaining a list — the failure mode every hand-written list in this
 # repository has already hit.
-NOTEXEC=""
+NOTEXEC=""; NEXEC=0
 while IFS= read -r f; do
     [[ -f "$f" ]] || continue
     [[ "$(head -c2 "$f" 2>/dev/null)" == "#!" ]] || continue
+    NEXEC=$((NEXEC + 1))
     [[ -x "$f" ]] || NOTEXEC="$NOTEXEC $f"
 done < <(git ls-files 2>/dev/null | grep -vE '\.(md|awk|conf|service|timer|rules|json|ya?ml|log|tsv|txt|in|expected|rc)$')
-[[ -z "$NOTEXEC" ]] \
-    && ok "every tracked script with a shebang is executable" \
-    || bad "tracked but not executable (runs as exit 126 from a checkout):$NOTEXEC"
+[[ -z "$NOTEXEC" ]] && (( NEXEC >= 20 )) \
+    && ok "all $NEXEC tracked scripts with a shebang are executable" \
+    || bad "checked $NEXEC script(s); not executable:$NOTEXEC"
 
 echo
 echo "exhibit extraction commands are re-runnable, not session-local"
@@ -4614,8 +4648,10 @@ echo "────────────────────────�
 # it is simply not in the list.
 LOOSE=$(grep -nE 'tools/bt-trial +(autostart|start|ok|hang|abort|step)\b' "$0" \
         | grep -v "^[0-9]*:[[:space:]]*#")
-if [[ -z "$LOOSE" ]]; then
-    ok "every bt-trial invocation goes through the sandboxed trial() helper"
+# Counted, so a pattern that stops matching reads as 0 rather than as a tick.
+TRIALCALLS=$(grep -cE 'tools/bt-trial +(autostart|start|ok|hang|abort|step|report)\b' "$0")
+if [[ -z "$LOOSE" ]] && (( ${TRIALCALLS:-0} > 0 )); then
+    ok "all $TRIALCALLS bt-trial invocations go through the sandboxed trial() helper"
 else
     bad "bt-trial invoked outside trial() — may write to the real evidence tree:"
     while IFS= read -r l; do echo "        $l"; done <<<"$LOOSE"
