@@ -4370,6 +4370,359 @@ fi
 (( $? != 0 )) && ok "uninstall.sh rejects an unknown option" \
               || bad "uninstall.sh accepted an unknown option"
 
+
+echo
+echo "install.sh / uninstall.sh — the APPLY path, for real, into a staging root"
+echo "─────────────────────────────────────────────────────────────────────────"
+#
+# WHAT WAS UNTESTED, AND WHY IT STAYED THAT WAY.
+#
+# Roughly 40% of install.sh and 70% of uninstall.sh is the --apply branch, and
+# it is the half a user's first command runs. Nothing had ever executed it.
+# tests/system-roundtrip reaches it, but installs to the real /usr/local and
+# /etc, so it is gated on a live systemd, on nothing being installed already,
+# and on no experiment being in progress. Those gates hold on the investigation
+# machine and in every container — so the branch was, in practice, tested
+# nowhere, and the number said so at 0%.
+#
+# BT_DESTDIR is a staging prefix. --apply then performs the SAME operations —
+# real `install -D`, real modes, real generated drop-ins, real udev
+# substitution — under a throwaway root, on any machine, with no privilege.
+#
+# THE CLAIM UNDER TEST is the one on the front page of the README:
+#
+#     "Every file installed is NEW. Nothing pre-existing is modified, so
+#      uninstalling is a complete restoration."
+#
+# That is a property of the PAIR. Neither script can be read to establish it,
+# and this repository has already shipped the two out of step — four artifacts
+# installed and never removed, while the summary printed "complete
+# restoration".
+#
+# ── WHY THIS IS SAFE TO RUN ANYWHERE, INCLUDING ON THE MACHINE ───────────
+#
+# It runs a real installer. Two things make that safe, and both are mechanical
+# rather than remembered:
+#
+#   1. BT_DESTDIR is non-empty by construction — a mktemp -d — and
+#      stage_install() REFUSES if it is not. Every write goes under it.
+#   2. The activation commands are not writes to a prefix; `systemctl
+#      daemon-reload` and `systemctl restart systemd-journald` would act on
+#      the real machine. So stage_install() verifies the stub actually WINS on
+#      PATH before running anything, and returns without invoking the
+#      installer if it does not. A pre-flight check, not a post-mortem: by the
+#      time a spy log could tell you the stub lost, journald has restarted.
+SR=$(mktemp -d)                        # the staging root
+SS=$(mktemp -d); mkdir -p "$SS/bin"    # stubs for everything an install activates
+for c in systemctl udevadm modprobe sleep journalctl btmon tcpdump; do
+    printf '#!/bin/sh\necho "%s $*" >> "%s/spy.log"\nexit 0\n' "$c" "$SS" > "$SS/bin/$c"
+    chmod +x "$SS/bin/$c"
+done
+: > "$SS/spy.log"
+
+# btmon and tcpdump are present as stubs on purpose: their absence is what
+# skips bt-trace, bt-sco, bt-capdiff and bt-usbmon, and the MAXIMAL install is
+# the one where install.sh and uninstall.sh can be out of step.
+stage_guard() {   # refuse unless the staging root and the stubs are both real
+    [[ -n "${SR:-}" && -d "$SR" ]] || { echo "stage: no staging root" >&2; return 99; }
+    # `command` is a shell builtin, so this needs a shell, not env(1).
+    local got; got=$(PATH="$SS/bin:$PATH" bash -c 'command -v systemctl')
+    [[ "$got" == "$SS/bin/systemctl" ]] || {
+        echo "stage: systemctl resolves to $got, not the stub — refusing to --apply" >&2
+        return 99; }
+}
+stage_install()   { stage_guard || return 99
+                    env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode \
+                        BT_STATE="$SR/no-such-trial" BT_DESTDIR="$SR" \
+                        "$@" ./install.sh --apply 2>&1; }
+stage_uninstall() { stage_guard || return 99
+                    env PATH="$SS/bin:$PATH" BT_DESTDIR="$SR" \
+                        "$@" ./uninstall.sh --apply 2>&1; }
+
+# The real system's fingerprint, taken BEFORE the first staged install and
+# compared after the last. Snapshot rather than absolute state: on the
+# investigation machine these paths EXIST, and a check that demanded their
+# absence would fail there for the machine's correct configuration — which is
+# the defect class this suite has now produced seven times.
+real_install_state() {
+    local p
+    for p in /usr/local/bin/bt-trial /usr/local/sbin/bt-hang-watchdog \
+             /usr/local/share/qca9377-bt-hang/installed-at \
+             /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules \
+             /etc/systemd/system/bt-hang-watchdog.service; do
+        if [[ -e "$p" ]]; then echo "$p $(stat -c '%Y %s' "$p" 2>/dev/null)"
+        else echo "$p absent"; fi
+    done
+}
+REAL_BEFORE=$(real_install_state)
+
+SIOUT=$(stage_install BT_VID=0cf3 BT_PID=e300); sirc=$?
+SIERR=$(grep -c 'ERROR' <<<"$SIOUT")
+SIN=$(find "$SR" -type f 2>/dev/null | wc -l)
+if (( sirc == 0 && ${SIERR:-1} == 0 && SIN >= 50 )); then
+    ok "install.sh --apply completes into a staging root ($SIN files, 0 errors)"
+else
+    bad "staged install failed (rc=$sirc, $SIERR error line(s), $SIN file(s)):"
+    bad "  $(grep -m1 ERROR <<<"$SIOUT")"
+fi
+
+# THE MODES ARE DERIVED FROM install.sh, not listed here. A hand-written table
+# of expected modes is a second copy of the installer that rots against it; the
+# question is whether the file on disk carries the mode the installer DECLARED.
+IMODES=$(awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' install.sh \
+    | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"[[:space:]]+[^[:space:]]+[[:space:]]+0[0-7]{3}' \
+    | awk '{print $3, $4}')
+badmode=""; nmode=0
+while read -r dst mode; do
+    [[ -n "$dst" && -e "$SR$dst" ]] || continue
+    nmode=$((nmode + 1))
+    got=$(stat -c '%a' "$SR$dst" 2>/dev/null)
+    [[ "$got" == "${mode#0}" ]] || badmode="$badmode; $dst want ${mode#0} got $got"
+done <<<"$IMODES"
+# Counted, so a derivation that stops matching reads as 0 rather than as a tick.
+[[ -z "$badmode" ]] && (( nmode >= 40 )) \
+    && ok "all $nmode staged files carry the mode install.sh declares" \
+    || bad "checked $nmode file mode(s):$badmode"
+
+# AND THE DECLARATION ITSELF HAS TO BE RIGHT, which the comparison above cannot
+# tell you: it reads disk against install.sh, so changing install.sh moves both
+# sides and the check stays green. Mutating a declared 0755 to 0644 passed it.
+#
+# The policy is derived from where the file LANDS, which is independent of what
+# install.sh says about it:
+#
+#   /usr/local/{bin,sbin}/<name>   invoked by bare name  -> must be 0755
+#   anything else (lib/*.awk, lib/*.sh, units, rules, conf, baseline) -> 0644
+#
+# That set is the same one guard_names derives, for the same reason: what a
+# bare name can resolve to is exactly what has to be executable. This
+# repository has already shipped bin/bt-usbmon tracked 100644, which exits 126
+# the moment anything runs it; the installed side deserves the same check.
+badpol=""; npol=0
+while read -r dst mode; do
+    [[ -n "$dst" ]] || continue
+    npol=$((npol + 1))
+    if [[ "$dst" =~ ^/usr/local/(bin|sbin)/[^/]+$ ]]; then want=0755; else want=0644; fi
+    [[ "$mode" == "$want" ]] || badpol="$badpol; $dst declared $mode, must be $want"
+done <<<"$IMODES"
+[[ -z "$badpol" ]] && (( npol >= 40 )) \
+    && ok "all $npol install_file declarations follow the executable-bit policy" \
+    || bad "checked $npol declaration(s):$badpol"
+
+# EVERYTHING INSTALLED MUST BE REMOVABLE. This is the direction that matters:
+# a file install.sh creates and uninstall.sh does not know about survives a
+# "complete restoration" forever. The reverse direction is fine — uninstall.sh
+# lists conditional artifacts (btmon-dependent tools, drop-ins for a
+# non-default device) that a given install may not have produced.
+mapfile -t SUNF < <(sed -n '/^FILES=(/,/^)/p' uninstall.sh | grep -oE '/[a-zA-Z0-9._/-]+')
+orph=""; nstaged=0
+while IFS= read -r f; do
+    rel="${f#"$SR"}"; nstaged=$((nstaged + 1)); hit=0
+    for u in "${SUNF[@]}"; do [[ "$rel" == "$u" ]] && { hit=1; break; }; done
+    (( hit )) || orph="$orph; $rel"
+done < <(find "$SR" -type f 2>/dev/null)
+[[ -z "$orph" ]] && (( nstaged >= 50 )) && (( ${#SUNF[@]} >= 40 )) \
+    && ok "all $nstaged installed files are removable by uninstall.sh (${#SUNF[@]} listed)" \
+    || bad "installed but not removable (of $nstaged, ${#SUNF[@]} listed):$orph"
+
+# ── the device the install was generated FOR ─────────────────────────────
+SUDEV="$SR/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules"
+[[ -s "$SUDEV" ]] && grep -q 'idVendor}=="0cf3"' "$SUDEV" && grep -q 'idProduct}=="e300"' "$SUDEV" \
+    && ok "the udev power rule is generated for the target device, not copied" \
+    || bad "udev rule was not substituted for 0cf3:e300"
+
+# THE STRIPPED-HEX TRAP, asserted because it fails SILENTLY. The kernel formats
+# PRODUCT as %x/%x/%x with no leading zeros (usb_uevent), so 0cf3:e300 appears
+# as PRODUCT=cf3/e300/... A rule written "0cf3/e300*" never fires and every
+# remove-event snapshot is lost with nothing in any log to say so. The default
+# device 13d3:3503 has no leading zeros, which is exactly why the default could
+# never expose this.
+SSNAP="$SR/etc/udev/rules.d/51-bluetooth-health-snapshot.rules"
+grep -q 'ENV{PRODUCT}=="cf3/e300\*"' "$SSNAP" 2>/dev/null \
+    && ok "the remove-rule PRODUCT match uses the kernel's stripped hex (cf3/e300)" \
+    || bad "PRODUCT match kept the zero-padded form — remove-event snapshots would be lost"
+
+SDROP="$SR/etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf"
+SSDROP="$SR/etc/systemd/system/bt-health-snapshot.service.d/10-device.conf"
+[[ -s "$SDROP" ]] && grep -q 'BT_VID=0cf3' "$SDROP" && grep -q 'BT_PID=e300' "$SDROP" \
+   && [[ -s "$SSDROP" ]] && grep -q 'BT_PID=e300' "$SSDROP" \
+    && ok "both systemd drop-ins carry the non-default device" \
+    || bad "a drop-in is missing or does not name 0cf3:e300"
+
+# ── "nothing pre-existing is modified" ───────────────────────────────────
+# A file this project does not own, in a directory it writes into. It must come
+# through both the second install and the uninstall untouched.
+printf 'not ours\n' > "$SR/etc/systemd/system/unrelated.service"
+SSTAMP1=$(cat "$SR/usr/local/share/qca9377-bt-hang/installed-at" 2>/dev/null)
+SIOUT2=$(stage_install BT_VID=0cf3 BT_PID=e300); sirc2=$?
+SSTAMP2=$(cat "$SR/usr/local/share/qca9377-bt-hang/installed-at" 2>/dev/null)
+
+(( sirc2 == 0 )) && [[ -n "$SSTAMP1" && "$SSTAMP1" == "$SSTAMP2" ]] \
+    && ok "the first-install stamp survives a re-install ($SSTAMP1)" \
+    || bad "re-install moved the first-install stamp: '$SSTAMP1' -> '$SSTAMP2'"
+# Deriving the change time from a unit file's mtime is the bug this stamp
+# exists to avoid: every reinstall would move it forward and relabel
+# already-mitigated boots as "before", contaminating the comparison.
+
+[[ "$SIOUT2" == *"already exists — will be OVERWRITTEN"* ]] \
+    && ok "a re-install names the files it is about to overwrite" \
+    || bad "the overwrite warning did not fire on a second install"
+
+# ── the round trip closes ────────────────────────────────────────────────
+SDIR_MADE=$(while read -r d; do [[ -n "$d" && -d "$SR$d" ]] && echo "$d"; done \
+            < <(sed -n '/^DIRS=(/,/^)/p' uninstall.sh | grep -oE '/[a-zA-Z0-9._/-]+') | grep -c .)
+SUOUT=$(stage_uninstall); surc=$?
+SLEFT=$(find "$SR" -type f ! -name unrelated.service 2>/dev/null | wc -l)
+(( surc == 0 && ${SLEFT:-1} == 0 )) \
+    && ok "uninstall.sh --apply removes every file install.sh created" \
+    || bad "uninstall left $SLEFT file(s) behind (rc=$surc)"
+
+[[ "$(cat "$SR/etc/systemd/system/unrelated.service" 2>/dev/null)" == "not ours" ]] \
+    && ok "a file this project did not install is neither modified nor removed" \
+    || bad "uninstall.sh touched a file it did not install — not a restoration"
+
+sdleft=""; ndir=0
+while read -r d; do
+    [[ -n "$d" ]] || continue
+    ndir=$((ndir + 1))
+    [[ -d "$SR$d" ]] && sdleft="$sdleft; $d"
+done < <(sed -n '/^DIRS=(/,/^)/p' uninstall.sh | grep -oE '/[a-zA-Z0-9._/-]+')
+# SDIR_MADE is counted BEFORE the uninstall. Without it this check passes over
+# an empty staging root — "all the directories are gone" is trivially true of
+# directories that were never created, which is how it read when the install
+# above was failing.
+[[ -z "$sdleft" ]] && (( ndir >= 5 )) && (( ${SDIR_MADE:-0} >= 5 )) \
+    && ok "all $SDIR_MADE of $ndir directories the install created are gone too" \
+    || bad "install created $SDIR_MADE of $ndir dir(s); left after uninstall:$sdleft"
+
+SUOUT2=$(stage_uninstall); surc2=$?
+(( surc2 == 0 )) && [[ "$SUOUT2" == *"absent, nothing to do"* ]] \
+    && ok "uninstall.sh on an already-clean root is idempotent" \
+    || bad "a second uninstall was not a clean no-op (rc=$surc2)"
+
+# ── the branches a plain round trip never reaches ────────────────────────
+#
+# A LEFTOVER IN A DIRECTORY THIS PROJECT CREATED. `rmdir
+# --ignore-fail-on-non-empty` is SILENT when it declines, which is how a
+# systemctl-edit override.conf survives an uninstall that reports success.
+# The warning is the only thing standing between that and a false "complete
+# restoration".
+SRL=$(mktemp -d)
+stage_at() { env PATH="$SS/bin:$PATH" BT_DESTDIR="$1" "${@:2}" ./uninstall.sh --apply 2>&1; }
+mkdir -p "$SRL/usr/local/bin/lib"
+printf 'hand-written\n' > "$SRL/usr/local/bin/lib/override.conf"
+SRLOUT=$(stage_at "$SRL")
+[[ "$SRLOUT" == *"still contains files not installed by this project"* \
+   && "$SRLOUT" == *"override.conf"* ]] \
+    && ok "uninstall.sh names a directory it could not remove, and what is in it" \
+    || bad "a non-empty project directory was left without a word being said"
+
+# --purge-metrics, which deletes collected DATA rather than configuration and
+# is therefore the one destructive option either script has.
+SRM=$(mktemp -d); mkdir -p "$SRM/var/log/bt-health"
+printf 'ts\tvalue\n' > "$SRM/var/log/bt-health/metrics.tsv"
+SRMK=$(stage_at "$SRM")
+[[ -e "$SRM/var/log/bt-health/metrics.tsv" ]] && [[ "$SRMK" == *"KEEPING /var/log/bt-health"* ]] \
+    && ok "uninstall.sh keeps collected metrics by default" \
+    || bad "metrics were removed without --purge-metrics"
+SRMP=$(env PATH="$SS/bin:$PATH" BT_DESTDIR="$SRM" ./uninstall.sh --apply --purge-metrics 2>&1)
+[[ ! -e "$SRM/var/log/bt-health" ]] && [[ "$SRMP" == *"--purge-metrics"* ]] \
+    && ok "--purge-metrics deletes the collected metrics it warns about" \
+    || bad "--purge-metrics did not remove /var/log/bt-health"
+
+# THE btusb RESTORE, both branches. They differ by the module's USECOUNT, and
+# forcing a real usecount means holding the controller open — the one thing
+# these tests may never do to the device under investigation. So /proc/modules
+# is a seam and lsmod is a stub, and both branches are driven from text.
+SPM=$(mktemp -d); mkdir -p "$SPM/bin"; cp "$SS/bin"/* "$SPM/bin/"
+printf '#!/bin/sh\necho "btusb                  73728  0"\nexit 0\n' > "$SPM/bin/lsmod"
+printf '#!/bin/sh\necho "modprobe $*" >> "%s/spy.log"\nexit 0\n' "$SPM" > "$SPM/bin/modprobe"
+chmod +x "$SPM/bin"/*
+SFREE=$(mktemp); printf 'btusb 73728 0 - Live 0x0000000000000000\n' > "$SFREE"
+SBUSY=$(mktemp); printf 'btusb 73728 3 - Live 0x0000000000000000\n' > "$SBUSY"
+SRB=$(mktemp -d)
+SPMF=$(env PATH="$SPM/bin:$PATH" BT_DESTDIR="$SRB" BT_PROC_MODULES="$SFREE" \
+           ./uninstall.sh --apply 2>&1)
+[[ "$SPMF" == *"modprobe -r btusb"* && "$SPMF" == *"+ modprobe btusb"* ]] \
+    && ok "an idle btusb is reloaded, restoring the kernel default in place" \
+    || bad "uninstall.sh did not reload an idle btusb"
+SPMB=$(env PATH="$SPM/bin:$PATH" BT_DESTDIR="$SRB" BT_PROC_MODULES="$SBUSY" \
+           ./uninstall.sh --apply 2>&1)
+[[ "$SPMB" == *"btusb is in use (usecount=3)"* && "$SPMB" != *"modprobe -r"* ]] \
+    && ok "a btusb in use is left alone rather than force-unloaded" \
+    || bad "uninstall.sh tried to unload a module that was in use"
+
+rm -rf "$SRL" "$SRM" "$SPM" "$SRB" "$SFREE" "$SBUSY"
+
+# ── the guards on --apply, which only --apply can reach ──────────────────
+#
+# Each of these protects a measurement in progress, and none of them had ever
+# been executed: the experiment-mode refusal was covered only in its dry-run
+# form, and the two warnings below exist solely on the apply path.
+SRG=$(mktemp -d); SMS=$(mktemp); echo "experiment since=2026-08-13T12:22:10" > "$SMS"
+GEX=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP="$SMS" BT_DESTDIR="$SRG" \
+          BT_STATE="$SRG/none" ./install.sh --apply 2>&1); gexrc=$?
+GEXN=$(find "$SRG" -type f 2>/dev/null | wc -l)
+(( gexrc == 3 && ${GEXN:-1} == 0 )) && [[ "$GEX" == *"EXPERIMENT"* ]] \
+    && ok "install.sh --apply refuses in experiment mode and stages nothing" \
+    || bad "the experiment guard did not stop --apply (rc=$gexrc, $GEXN file(s) written)"
+
+GFO=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP="$SMS" BT_DESTDIR="$SRG" \
+          BT_FORCE_INSTALL=1 BT_STATE="$SRG/none" ./install.sh --apply 2>&1); gforc=$?
+(( gforc == 0 )) && [[ "$GFO" == *"BT_FORCE_INSTALL=1 — continuing"* ]] \
+    && ok "BT_FORCE_INSTALL=1 continues past the experiment guard and says so" \
+    || bad "the forced install did not proceed (rc=$gforc)"
+
+# The warning that a forced install ENDS a stage-1 observation. It fires only
+# when this boot has already logged an HCI timeout, so the journal has to say
+# so — a stub that prints one line, which is the only way this branch can be
+# reached at all on a healthy machine.
+SS2=$(mktemp -d); mkdir -p "$SS2/bin"; cp "$SS/bin"/* "$SS2/bin/"
+printf '#!/bin/sh\necho "kernel: Bluetooth: hci0: command 0x0c1a tx timeout"\nexit 0\n' \
+    > "$SS2/bin/journalctl"; chmod +x "$SS2/bin/journalctl"
+SRT=$(mktemp -d)
+GTO=$(env PATH="$SS2/bin:$PATH" BT_MODE_STAMP="$SMS" BT_DESTDIR="$SRT" \
+          BT_FORCE_INSTALL=1 BT_STATE="$SRT/none" ./install.sh --apply 2>&1)
+[[ "$GTO" == *"ALREADY LOGGED AN HCI COMMAND TIMEOUT"* && "$GTO" == *"right-censored"* ]] \
+    && ok "a forced install warns that it ends a stage-1 observation in progress" \
+    || bad "the right-censoring warning did not fire with a timeout in the journal"
+
+# The open-trial guard, which deliberately lives OUTSIDE the experiment branch:
+# in mitigation mode — the default, and the mode in which bt-trial-auto opens a
+# trial every boot — the first version of this guard warned about nothing.
+SRT2=$(mktemp -d); mkdir -p "$SRT2/state"
+printf 'start=1786700000\nbuild=stock\nn=2\n' > "$SRT2/state/current"
+GTR=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_DESTDIR="$SRT2" \
+          BT_STATE="$SRT2/state" ./install.sh --apply 2>&1)
+[[ "$GTR" == *"A TRIAL IS OPEN"* && "$GTR" == *"build=stock"* ]] \
+    && ok "install.sh --apply warns that it perturbs an open trial, in any mode" \
+    || bad "the open-trial guard did not fire on --apply"
+
+# ── and the whole section touched nothing real ───────────────────────────
+[[ "$(real_install_state)" == "$REAL_BEFORE" ]] \
+    && ok "no staged install changed anything under the real /usr/local or /etc" \
+    || bad "SEAM LEAKED: a staged install wrote outside its BT_DESTDIR"
+
+# THE INVARIANT: this file runs install.sh --apply only through the helpers.
+# Enumerating call sites is what failed twice before, so the check is that
+# there are none to enumerate — matched positively on `--apply`, and counted so
+# that a pattern which stops matching reads as a zero rather than as a tick.
+# Joined across continuations first: every invocation here sets BT_DESTDIR on
+# a line above the one naming the script, and a line-by-line scan sees the two
+# halves separately — reporting each correctly-staged call as a leak.
+SLOOSE=$(awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' "$0" \
+         | grep -nE '^[^#]*\./(install|uninstall)\.sh --apply' \
+         | grep -v 'BT_DESTDIR')
+SAPPLY=$(grep -cE '\./(install|uninstall)\.sh --apply' "$0")
+if [[ -z "$SLOOSE" ]] && (( ${SAPPLY:-0} >= 4 )); then
+    ok "all $SAPPLY install --apply invocations set BT_DESTDIR to a staging root"
+else
+    bad "install.sh --apply invoked without a staging root:"
+    bad "  $(head -1 <<<"$SLOOSE")"
+fi
+
+rm -rf "$SR" "$SS" "$SS2" "$SRG" "$SRT" "$SRT2" "$SMS"
+
 echo
 echo "sanitize-logs — the gate between a kernel log and a public repo"
 echo "──────────────────────────────────────────────────────────────"
