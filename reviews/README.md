@@ -101,8 +101,20 @@ Not a new report: these close CS-08's successors and the Group 1/2 work describe
 | `verify-restored.sh` | 0% | 86.1% | `BT_INSTALL_SH`, `BT_HEALTH_DIR`, sysfs, journal | — |
 | `bt-diagnose` | 0% | 91.8% | `BT_SYSFS_USB`, journal | — (added `bt_journal_available`) |
 | `bt-mode` | 0% | 98.0% | every path, plus `--dry-run` | — |
+| `bt-verify-kernel-mechanism` | 0% | 95.9% | `BT_MODULES_DIR` | `hexdump` absent ⇒ every device ID reported ABSENT |
+| `bt-state` | 0% | 94.9% | sysfs + journal | — |
+| `bt-health-snapshot` | 0% | 100% | `BT_METRICS`, sysfs, journal | — |
+| `bt-evidence` | 0% | 92.8% | `BT_EVIDENCE_STATE`, `BT_TRACE_DIR`, sysfs, journal | — |
+| `bt-mark` | 0% | 100% | `BT_SYSFS_USB` | — |
+| `bt-dyndbg` | 0% | 73.6% | `BT_DYNDBG_CTL`, append-writes | — |
 
-Verify: `tests/run-tests` (250 invariants) and `devtools/coverage`.
+Verify: `tests/run-tests` (292 invariants) and `devtools/coverage`.
+
+**Three assertions written during this work could not fail for the reason their names
+gave** — a row-width check blind to a blank column, a sandbox check using `[[ -e ]]` with
+a glob, and a `PIPESTATUS` check that `$?` satisfied under `pipefail`. All three were
+written carefully and all three passed. They are recorded in the work log, and they are
+the argument for mutation-testing *every* new check rather than the interesting ones.
 
 ### From `2026-08-13T1517Z-test-classes-and-mocks.md`
 
@@ -137,7 +149,7 @@ runs rots exactly like the documentation it was meant to replace.
 
 Coverage was **13.1%** (503/3846) when the report was written, **18.3%** at `d016249`,
 **28.5%** after UT-07 + CS-02/03/05, **38.3%** (1692/4423) after the watchdog, the six
-seam conversions and `bt-incident`, and **58.7%** (2785/4747) after session 3's eight
+seam conversions and `bt-incident`, and **66.7%** (3287/4926) after session 3's fifteen
 tools. The CI floor is a ratchet below the current figure — 30 until session 3, now 55.
 If `devtools/coverage` prints materially less than the last figure, something regressed
 and the register is stale. (Two of those points are not comparable naively: main's merge and the `./`-prefix

@@ -629,3 +629,110 @@ Findings across session 3: 5 in Group 1, 0 in Group 2. That asymmetry is itself 
 recording — Group 2's four tools were **correct**, and the whole cost of proving it was
 parameterising paths that were hardcoded for no reason other than that nobody had needed
 them otherwise. The seams are the deliverable there, not the bug list.
+
+### Session 3, part 3 — the capture and evidence stack
+
+Group 3 is `bin/` — the things systemd runs, which write to `/run`, `/var/log` and
+debugfs. Testing them at all required deciding, for each, what a test is allowed to
+touch. Every one got path seams defaulting to the real location; none had its logic
+changed except where noted.
+
+#### Correction to the `bt-state` entry — `71dc1c4`
+
+That commit message says `bt-state --tsv` "is what bt-health-snapshot appends to
+metrics.tsv". **It is not.** `bt-health-snapshot` computes its own fourteen-column row
+and never calls `bt-state`. `bt-state` is called by `bt-trial` (`state-before.txt`,
+`state-after.txt`), by `bt-incident` (`state-now.txt`) and by `bt-status`.
+
+The claim about *why the column order matters* survives the correction — a reordered
+row still silently reassigns every value in the per-trial evidence files — but the
+consumer named was wrong, and the commit is pushed and immutable, so the correction
+lives here. Checked with `grep -rn bt-state bin tools install.sh`, which is what should
+have been run before writing the sentence.
+
+#### `bt-verify-kernel-mechanism` · `692d46b` · 0% → 95.9%
+
+Whether btusb defines `btusb_qca_reset` or `btusb_qca_cmd_timeout` decides how every
+recovery experiment here is interpreted. `BT_MODULES_DIR` was the only seam needed — the
+kernel release is already an argument — so a fabricated `btusb.ko` carrying chosen symbol
+strings and `usb_device_id` byte sequences drives every verdict.
+
+**Finding — the tool was blind on this machine.** `hexdump(1)` is in `bsdextrautils`, the
+same package as the `column(1)` gap found in Group 1, and the redirect was silenced. With
+no hexdump the hex file never appeared, every grep missed, and **all seven device IDs
+printed ABSENT — including 13d3:3491, 3496 and 3501, which are genuinely in the table.**
+That reads as "the comparators are missing too", the exact opposite of the argument the
+section exists to make: that this device's absence is an isolated gap. The machine this
+was written on has no hexdump, so it has presumably been reporting that since it was
+written. Now falls back to `od(1)`, treats an empty dump as failure whatever the exit
+status said, and reports UNKNOWN rather than ABSENT.
+
+The central claim is asserted as **one pair** — comparators present *and* 3503 absent —
+because "3503 absent" is evidence of an isolated gap only if the neighbours are present,
+and a tool finding nothing at all satisfies half of it while meaning the opposite.
+
+#### `bt-health-snapshot` · `3f50262` · 0% → 100%
+
+The writer of `metrics.tsv`. Header written once, rows appended forever; a row that stops
+matching the header corrupts every reading from that point on and the file cannot show it.
+
+**A check of mine that could not fail for the reason its name gave.** "Row width matches
+the header (14 columns)" was mutation-tested by deleting the last printf *argument* while
+leaving its `%s`. printf emits an empty field for the missing argument, so the row still
+had fourteen fields and the assertion passed a mutation that silently blanked a column.
+A no-blank-field check catches that; deleting a `%s` is caught by the width check. Two
+mutations, two assertions, neither sufficient alone.
+
+#### `bt-evidence` + `bt-mark` · `15e47d3` · 0% → 92.8% / 100%
+
+**Two more checks of mine that could not fail**, both found by asking what would turn them
+red rather than by watching them pass:
+
+1. The sandbox check was `[[ ! -e evidence/sessions/*probe-session* ]]`. `[[ -e ]]` does
+   not expand globs — it tested a path containing literal asterisks, which never exists,
+   so it passed unconditionally. Now counted with `find`, and proven red by planting a
+   directory.
+2. "Records the command's exit status, not the pipeline's" was satisfied by `$?` as well
+   as `${PIPESTATUS[0]}`, because under `pipefail` they agree for a *failing* command. The
+   two diverge only when the sed fails and the command did not, so that is now driven
+   directly with a sed stub that copies its input and exits 1.
+
+Three of my own assertions in one session have now been found unable to fail. That is the
+argument for mutation-testing every new check rather than the interesting ones: all three
+were written carefully, and all three passed.
+
+#### `bt-dyndbg` · `2a1cb97` · 0% → 73.6%
+
+Which debug sites are enabled is a measurement decision, not a convenience — logging on
+the receive path moves the timing window under study. The selection has been wrong twice,
+and both fixes are lists in the script that nothing checked.
+
+Two production changes. `BT_DYNDBG_CTL` seams the debugfs path. And control writes now
+**append**: each write is a command and debugfs has no truncate operation, so `>` and `>>`
+are identical against the real target — they differ only against a regular file, where `>`
+would leave just the last command of the run. Free in production, and it is what makes the
+selection observable at all.
+
+The ordering the source states in a comment — files first, then the per-packet functions
+inside them — is asserted by line position in the command stream, because the reverse
+order re-enables every one of them and returns silently to the 5.8 GB/h flood.
+
+### Where session 3 stands now
+
+| | end of session 2 | Group 1 | Group 2 | now |
+|---|---|---|---|---|
+| Coverage | 38.3% | 49.9% | 61.3% | **66.7%** (3287/4926) |
+| Invariants | 179 | 214 | 261 | **292** |
+| Zero-coverage files | 26 of 48 | 23 | 19 | 14 of 48 |
+| Journal seam | 13 tools | 13 | 16 | 19 |
+
+**Still at zero:** `bt-capdiff` and `bt-sco` (need `btmon`), `bt-trace` and `bt-usbmon`
+(foreground capture daemons — they need a run-one-iteration seam, which is a design
+decision, not a mechanical one), the devtools that run the suite (`coverage`, `check`,
+`assert-test-catches`, `journal-contract`, `repo-save`), `reviews/verify.sh`, and
+`tests/system-roundtrip`, which is CI-gated by design.
+
+Findings across session 3: **7** — one exit-code inconsistency, two missing-dependency
+blindnesses (`column`, `hexdump`, both from `bsdextrautils`), one self-inflicted output
+corruption, two publish-safety holes in `bt-exhibit`, and one dry-run gap in the tool
+that turns the watchdog off. Plus three of my own checks that could not fail.
