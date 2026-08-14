@@ -4300,6 +4300,285 @@ fi
 
 
 
+
+echo
+echo "bt-usbmon — the supervision loop, run rather than reasoned about"
+echo "────────────────────────────────────────────────────────────────"
+#
+# WHY THIS LOOP DESERVES A REAL TEST RATHER THAN A --check.
+#
+# The first version rotated with `tcpdump -C $MAX_MB -W 1` and relied on
+# tcpdump EXITING at the size limit. That is not what -C with -W does: it is a
+# RING. tcpdump overwrote its single file from the beginning and never exited,
+# so the loop body never advanced — prune() and the free-space floor never ran
+# again, retention silently collapsed from KEEP files to one 64 MB ring, and
+# the older USB history needed to interpret the post-HCI trajectory was
+# destroyed at every wrap.
+#
+# Nothing about that is visible in a static read, and --check does not enter
+# the loop. It is visible in about four seconds of actually running it. So this
+# runs the daemon, with a stub tcpdump standing in for the capture, and asserts
+# on the files and the gap log it leaves behind.
+UM=$(mktemp -d); mkdir -p "$UM/bin" "$UM/cap" "$UM/dbg"
+mkdir -p "$UM/sysfs/3-3"
+echo 13d3 > "$UM/sysfs/3-3/idVendor"; echo 3503 > "$UM/sysfs/3-3/idProduct"
+echo 3    > "$UM/sysfs/3-3/busnum"
+: > "$UM/dbg/3u"                      # the usbmon debugfs node for bus 3
+printf '#!/bin/sh\nexit 0\n' > "$UM/bin/modprobe"
+# df reports whatever a test asks for, so the free-space floor is reachable
+# without filling a real disk.
+cat > "$UM/bin/df" <<UMDF
+#!/bin/sh
+echo "Avail"
+echo "\$(cat "$UM/freegb" 2>/dev/null || echo 999)G"
+UMDF
+# A tcpdump that behaves like tcpdump: creates its -w file, grows it, and stays
+# alive until killed. Size and lifetime are controlled by files, so one stub
+# covers the rotation case and the crash case.
+cat > "$UM/bin/tcpdump" <<UMTD
+#!/bin/sh
+out=""
+while [ \$# -gt 0 ]; do case "\$1" in -w) out="\$2"; shift ;; esac; shift; done
+[ -e "$UM/tcpdump-dies" ] && exit 3
+[ -n "\$out" ] && dd if=/dev/zero of="\$out" bs=1024 count="\$(cat "$UM/capkb" 2>/dev/null || echo 4)" 2>/dev/null
+while :; do sleep 1; done
+UMTD
+chmod +x "$UM/bin"/*
+
+# Every seam defaults here but yields to whatever the caller set, so a test
+# overrides ONE of them — `BT_SYSFS_USB="$UM/empty" um --check` — without
+# restating the other four. The first version took the overrides as positional
+# arguments and handed `--check` to the shell as a command name.
+um() {
+    PATH="$UM/bin:$PATH" \
+    BT_SYSFS_USB="${BT_SYSFS_USB:-$UM/sysfs}" \
+    BT_USBMON_DIR="${BT_USBMON_DIR:-$UM/cap}" \
+    BT_USBMON_DEBUGFS="${BT_USBMON_DEBUGFS:-$UM/dbg}" \
+    BT_USBMON_GAPLOG="${BT_USBMON_GAPLOG:-$UM/cap/gaps.log}" \
+    bin/bt-usbmon "$@" 2>&1
+}
+um_wait() {   # <file> <pattern> <tenths> — poll instead of guessing a sleep
+    local i=0
+    while (( i < $3 )); do grep -q "$2" "$1" 2>/dev/null && return 0; sleep 0.1; i=$((i+1)); done
+    return 1
+}
+
+# ── the resolution paths, before anything is captured ────────────────────
+UMA=$(BT_SYSFS_USB="$UM/empty" um --check); umarc=$?
+(( umarc == 0 )) && [[ "$UMA" == *"not present and no BT_USBMON_BUS set"* ]] \
+    && ok "bt-usbmon --check reports an absent controller instead of idling" \
+    || bad "absent-controller path wrong under --check (rc=$umarc)"
+
+UMB=$(BT_SYSFS_USB="$UM/empty" BT_USBMON_BUS=3 um --check)
+[[ "$UMB" == *"controller absent; using configured bus 3"* && "$UMB" == *"usbmon3"* ]] \
+    && ok "an absent controller falls back to the bus recorded at install time" \
+    || bad "the configured-bus fallback did not resolve usbmon3"
+# That fallback is the difference between capturing the moment the device comes
+# back after a cold boot and capturing nothing at all.
+
+UMC=$(BT_USBMON_DEBUGFS="$UM/nodbg" um --check); umcrc=$?
+(( umcrc == 1 )) && [[ "$UMC" == *"is debugfs mounted and usbmon loaded"* ]] \
+    && ok "a missing usbmon interface is an error, not a silent no-capture" \
+    || bad "the debugfs check did not refuse (rc=$umcrc)"
+
+um --bogus >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-usbmon rejects an unknown argument" \
+              || bad "bt-usbmon accepted an unknown argument"
+
+# ── retention by count ───────────────────────────────────────────────────
+for i in 1 2 3 4 5; do
+    : > "$UM/cap/usbmon-2026080$i-000000.pcap"
+    touch -d "2026-08-0$i 00:00:00" "$UM/cap/usbmon-2026080$i-000000.pcap"
+done
+UMK=$(BT_USBMON_KEEP=2 um --check)
+UMKN=$(ls -1 "$UM/cap"/usbmon-*.pcap 2>/dev/null | wc -l)
+(( UMKN == 2 )) && [[ "$UMK" == *"pruning usbmon-20260801"* ]] \
+   && [[ -e "$UM/cap/usbmon-20260805-000000.pcap" ]] \
+    && ok "retention keeps the newest KEEP captures and names what it prunes" \
+    || bad "retention left $UMKN file(s), or pruned the wrong end"
+
+# ── the free-space floor, which overrides the count ──────────────────────
+#
+# A retention COUNT is a guess about file size; the floor is the check that
+# cannot be wrong. It has two refusal branches, and both matter: one when
+# there is nothing left to delete, and one when the only file left is the
+# capture currently being written — where deleting it would free nothing,
+# because tcpdump holds the inode open, and the loop would then eat every
+# other file forever while the floor stayed breached.
+echo 1 > "$UM/freegb"
+UMF=$(BT_USBMON_KEEP=99 BT_USBMON_MIN_FREE_GB=15 um --check)
+UMFN=$(ls -1 "$UM/cap"/usbmon-*.pcap 2>/dev/null | wc -l)
+(( UMFN == 0 )) && [[ "$UMF" == *"low disk (1GB free): pruning"* ]] \
+   && [[ "$UMF" == *"nothing left to prune"* ]] \
+    && ok "the free-space floor prunes past KEEP and says when it runs out" \
+    || bad "the floor left $UMFN file(s) or did not report exhaustion"
+echo 999 > "$UM/freegb"
+
+# ── THE LOOP ITSELF ──────────────────────────────────────────────────────
+# Rotation happens HERE, not in tcpdump. Run it, and check the files.
+echo 2048 > "$UM/capkb"                 # each capture is 2 MB
+: > "$UM/cap/gaps.log"
+PATH="$UM/bin:$PATH" BT_SYSFS_USB="$UM/sysfs" BT_USBMON_DIR="$UM/cap" \
+    BT_USBMON_DEBUGFS="$UM/dbg" BT_USBMON_GAPLOG="$UM/cap/gaps.log" \
+    BT_USBMON_MAX_MB=1 BT_USBMON_CHECK_SEC=1 BT_USBMON_KEEP=99 \
+    bin/bt-usbmon > "$UM/daemon.log" 2>&1 &
+UMPID=$!
+um_wait "$UM/daemon.log" "rotating at" 60
+sleep 1.2                                # let the rotation complete a new file
+UMROT=$(ls -1 "$UM/cap"/usbmon-*.pcap 2>/dev/null | wc -l)
+kill -TERM "$UMPID" 2>/dev/null; wait "$UMPID" 2>/dev/null
+UMLOG=$(cat "$UM/daemon.log")
+
+(( UMROT >= 2 )) && [[ "$UMLOG" == *"rotating at"* ]] \
+    && ok "the loop rotates by restarting tcpdump, leaving $UMROT distinct captures" \
+    || bad "rotation produced $UMROT capture file(s) — the ring bug would leave 1"
+# The ring bug leaves exactly one file forever. Two is the whole difference.
+
+grep -q 'rotate' "$UM/cap/gaps.log" \
+    && ok "every rotation records its gap, so the record is never silently partial" \
+    || bad "a rotation left no entry in the gap log"
+
+[[ "$UMLOG" == *"stopped"* ]] \
+    && ok "SIGTERM stops the capture cleanly rather than orphaning tcpdump" \
+    || bad "the daemon did not run its cleanup on TERM"
+
+# ── and when the capture process dies under it ───────────────────────────
+# 67 btmon aborts in one boot lost the SCO parameters this investigation now
+# needs. A supervisor that does not notice its child died is the same failure
+# with a different process name.
+touch "$UM/tcpdump-dies"
+: > "$UM/cap/gaps.log"
+PATH="$UM/bin:$PATH" BT_SYSFS_USB="$UM/sysfs" BT_USBMON_DIR="$UM/cap" \
+    BT_USBMON_DEBUGFS="$UM/dbg" BT_USBMON_GAPLOG="$UM/cap/gaps.log" \
+    BT_USBMON_CHECK_SEC=1 BT_USBMON_KEEP=99 \
+    bin/bt-usbmon > "$UM/dead.log" 2>&1 &
+UMPID2=$!
+um_wait "$UM/dead.log" "tcpdump exited" 60
+kill -TERM "$UMPID2" 2>/dev/null; wait "$UMPID2" 2>/dev/null
+UMDEAD=$(cat "$UM/dead.log")
+[[ "$UMDEAD" == *"tcpdump exited (rc=3) — restarting"* ]] \
+    && ok "a capture process that dies is noticed, with its exit status" \
+    || bad "the supervisor did not report a dead tcpdump"
+grep -q 'tcpdump-exit' "$UM/cap/gaps.log" \
+    && ok "the gap left by a dead capture is recorded, not inferred later" \
+    || bad "a capture crash left no gap-log entry"
+rm -f "$UM/tcpdump-dies"
+
+rm -rf "$UM"
+
+echo
+echo "bt-trace — the other supervision loop, and the floor that stops it"
+echo "──────────────────────────────────────────────────────────────────"
+#
+# Same shape as bt-usbmon and a different failure history: 67 btmon aborts in
+# one boot lost the SCO parameters this investigation now needs, which is why
+# the loop counts crashes and blind time rather than merely restarting. And it
+# has one branch bt-usbmon does not — when the filesystem is under the floor
+# with nothing left to prune, it STOPS CAPTURING and idles, because a service
+# writing continuously must not be able to fill the root filesystem of a
+# working machine.
+TR=$(mktemp -d); mkdir -p "$TR/bin" "$TR/cap"
+cat > "$TR/bin/df" <<TRDF
+#!/bin/sh
+echo "Avail"
+echo "\$(cat "$TR/freegb" 2>/dev/null || echo 999)G"
+TRDF
+cat > "$TR/bin/btmon" <<TRBM
+#!/bin/sh
+out=""
+while [ \$# -gt 0 ]; do case "\$1" in -w) out="\$2"; shift ;; esac; shift; done
+[ -e "$TR/btmon-dies" ] && exit 5
+[ -n "\$out" ] && dd if=/dev/zero of="\$out" bs=1024 count="\$(cat "$TR/capkb" 2>/dev/null || echo 4)" 2>/dev/null
+while :; do sleep 1; done
+TRBM
+chmod +x "$TR/bin"/*
+echo 999 > "$TR/freegb"
+
+tr_daemon() {   # <marker> <tenths> [env...] — run the loop until the marker, then TERM
+    local marker="$1" tenths="$2"; shift 2
+    : > "$TR/cap/gaps.log"; : > "$TR/daemon.log"
+    # env(1), not a bare assignment prefix: `VAR=1 cmd` is recognised
+    # SYNTACTICALLY, so words arriving through "$@" are not assignments — the
+    # first one becomes the command name and the daemon never runs. env also
+    # execs, so $! stays the daemon's pid and the TERM below reaches its trap.
+    env PATH="$TR/bin:$PATH" BT_TRACE_DIR="$TR/cap" BT_TRACE_GAPLOG="$TR/cap/gaps.log" \
+        BT_TRACE_POLL_SEC=1 "$@" bin/bt-trace > "$TR/daemon.log" 2>&1 &
+    local pid=$! i=0
+    while (( i < tenths )); do grep -q "$marker" "$TR/daemon.log" 2>/dev/null && break; sleep 0.1; i=$((i+1)); done
+    sleep 0.3
+    kill -TERM "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
+    cat "$TR/daemon.log"
+}
+
+echo 2048 > "$TR/capkb"
+TRR=$(tr_daemon "rotating at" 80 BT_TRACE_MAX_MB=1 BT_TRACE_CHECK_SEC=1)
+TRN=$(ls -1 "$TR/cap"/bt-*.btsnoop 2>/dev/null | wc -l)
+(( TRN >= 2 )) && [[ "$TRR" == *"rotating at"* && "$TRR" == *"stopped"* ]] \
+    && ok "bt-trace rotates by restarting btmon, leaving $TRN distinct captures" \
+    || bad "bt-trace rotation produced $TRN capture file(s)"
+
+# THE CAPTURES ARE 0600. They contain the contents of Bluetooth traffic, and
+# this repository publishes from the same tree it captures into.
+TRMODE=$(stat -c '%a' "$(ls -1t "$TR/cap"/bt-*.btsnoop | head -1)" 2>/dev/null)
+[[ "$TRMODE" == "600" ]] \
+    && ok "captures are written unreadable to other users (0600)" \
+    || bad "a capture was written mode $TRMODE"
+
+grep -q 'rotate' "$TR/cap/gaps.log" \
+    && ok "bt-trace records the gap at every rotation, with the running blind total" \
+    || bad "a bt-trace rotation left no gap-log entry"
+
+# ── the crash counter, which is the point of this supervisor ─────────────
+touch "$TR/btmon-dies"
+TRC=$(tr_daemon "btmon exited" 80 BT_TRACE_CHECK_SEC=30)
+[[ "$TRC" == *"btmon exited (#1)"* && "$TRC" == *"of capture lost"* ]] \
+    && ok "a btmon crash is counted and the lost capture time is stated" \
+    || bad "bt-trace did not report a btmon crash"
+grep -q 'total_blind=' "$TR/cap/gaps.log" \
+    && ok "the gap log carries a running blind total, not just isolated events" \
+    || bad "the crash gap entry has no cumulative blind time"
+rm -f "$TR/btmon-dies"
+
+# ── the floor, and what it does when pruning cannot help ─────────────────
+#
+# Stopping the capture is the correct answer here and it is a severe one, so it
+# has to be the tested one: the alternative is a service that fills the root
+# filesystem of a machine someone is working on.
+# AND IT MUST STILL STOP. The idle loop that follows runs AFTER `trap cleanup
+# TERM INT`, and bash defers a trapped signal until the running foreground
+# command returns — so `while :; do sleep 3600; done` there would swallow
+# SIGTERM for up to an hour. `systemctl stop bt-trace` would hang until
+# TimeoutStopSec expired and systemd would SIGKILL the unit, leaving btmon
+# orphaned and still holding the capture file. Found by this test hanging.
+echo 1 > "$TR/freegb"
+: > "$TR/cap/gaps.log"; : > "$TR/daemon.log"
+env PATH="$TR/bin:$PATH" BT_TRACE_DIR="$TR/cap" BT_TRACE_GAPLOG="$TR/cap/gaps.log" \
+    BT_TRACE_POLL_SEC=1 BT_TRACE_MIN_FREE_GB=15 BT_TRACE_CHECK_SEC=1 \
+    bin/bt-trace > "$TR/daemon.log" 2>&1 &
+TRPID=$!
+tri=0
+while (( tri < 80 )); do grep -q "nothing left to prune" "$TR/daemon.log" 2>/dev/null && break
+                         sleep 0.1; tri=$((tri + 1)); done
+kill -TERM "$TRPID" 2>/dev/null
+trj=0
+while (( trj < 30 )) && kill -0 "$TRPID" 2>/dev/null; do sleep 0.1; trj=$((trj + 1)); done
+if kill -0 "$TRPID" 2>/dev/null; then
+    kill -9 "$TRPID" 2>/dev/null
+    bad "a floor-stopped bt-trace ignored SIGTERM — systemctl stop would time out"
+else
+    ok "a bt-trace idling after the disk floor still stops on SIGTERM"
+fi
+wait "$TRPID" 2>/dev/null
+TRF=$(cat "$TR/daemon.log")
+[[ "$TRF" == *"only 1GB free"* && "$TRF" == *"pruning captures"* ]] \
+   && [[ "$TRF" == *"Stopping capture rather than filling the filesystem"* ]] \
+   && [[ "$TRF" == *"systemctl restart bt-trace"* ]] \
+    && ok "under the floor with nothing to prune, bt-trace stops and says how to resume" \
+    || bad "the disk floor did not stop the capture"
+echo 999 > "$TR/freegb"
+
+rm -rf "$TR"
+
 echo
 echo "bt-trial — the whole lifecycle, not just the two ends of it"
 echo "───────────────────────────────────────────────────────────"
