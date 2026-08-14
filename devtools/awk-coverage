@@ -1,0 +1,269 @@
+#!/bin/bash
+# awk-coverage — statement coverage for the awk this repository computes in.
+#
+#   devtools/awk-coverage                 per-program table, worst first
+#   devtools/awk-coverage --uncovered     the statements that never ran
+#   devtools/awk-coverage --min 90        exit non-zero below that percentage
+#
+# WHY THIS EXISTS, AND WHY IT IS SEPARATE FROM devtools/coverage.
+#
+# devtools/coverage measures bash, using xtrace. bash traces COMMANDS, and a
+# 180-line awk program is one command — so `tools/bt-actions` reported 16.4%
+# with 143 of its 149 uncovered lines inside a single awk classifier that the
+# suite does in fact drive. Repository-wide, 302 of 1648 uncovered lines are
+# awk. They were not untested; they were unmeasured, and the two look identical
+# from a percentage.
+#
+# That matters more here than the ratio suggests. The awk is where this project
+# computes its ANSWERS: interval arithmetic, timeout clustering, per-boot
+# counts, the trial summary, the capture comparison. A shell line that never
+# ran prints the wrong thing; an awk branch that never ran produces the wrong
+# NUMBER, and a wrong number in a kernel bug report is the failure this whole
+# effort exists to prevent.
+#
+# HOW IT WORKS. gawk --profile writes the program back out with an execution
+# count against every statement it ran, and nothing against the ones it did
+# not. So: put an `awk` shim on PATH that execs `gawk --profile=<unique>`, run
+# the suite through it, and read the profiles back.
+#
+# WHY PROFILES ARE GROUPED BY PROGRAM SHAPE. The same statement text occurs in
+# different programs — `next`, `n++`, `print` — so merging coverage by text
+# would let one program's execution mark another's dead branch as covered, in
+# the direction that reports success. Each profile is therefore canonicalised
+# (counts stripped) and hashed; profiles sharing a hash are the same program
+# and merge positionally, line by line. Different programs never merge.
+#
+# WHAT THIS IS NOT. gawk's profile is pretty-printed, not the original source,
+# so a statement is reported by its TEXT and its position in the program, never
+# by a source line number. It answers "did this statement ever run", which is
+# the coverage question; it does not give you a line to click.
+
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+
+MIN=""; SHOWUNCOV=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --min)       MIN="${2:?--min needs a percentage}"; shift ;;
+        --uncovered) SHOWUNCOV=1 ;;
+        -h|--help)   sed -n '2,6p' "$0"; exit 0 ;;
+        *) echo "unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+# gawk specifically: mawk has no profiler, and this repository's own gate
+# already refuses to run the sanitiser on mawk. Skipping loudly rather than
+# reporting a number computed from nothing — the empty-trace failure mode that
+# once made devtools/coverage report every file at 0% and look like a finding.
+if ! command -v gawk >/dev/null 2>&1; then
+    echo "awk-coverage: gawk is required (mawk has no profiler) — skipping" >&2
+    exit 0
+fi
+[[ -x tests/run-tests ]] || { echo "awk-coverage: tests/run-tests not executable" >&2; exit 2; }
+
+WORK=$(mktemp -d) || exit 1
+trap 'rm -rf "$WORK"' EXIT INT TERM
+mkdir -p "$WORK/shim" "$WORK/prof"
+
+# The shim must be reentrant: the suite runs awk hundreds of times, some of
+# them concurrently through pipelines. $$ alone collides across a fork, so the
+# nanosecond field disambiguates.
+# The sidecar records the CALLER. An inline awk program has no name — the
+# profile is just its text — so a low-coverage program could be located only by
+# grepping the tree for a statement out of it. /proc/<ppid>/cmdline names the
+# script that ran it, which turns "program 33953112231299 is at 41%" into
+# "tools/bt-trial is at 41%".
+cat > "$WORK/shim/awk" <<SHIM
+#!/bin/sh
+id="\$\$.\$(date +%N)"
+tr '\\0' ' ' < /proc/\$PPID/cmdline 2>/dev/null > "$WORK/prof/p.\$id.src"
+exec gawk --profile="$WORK/prof/p.\$id" "\$@"
+SHIM
+chmod +x "$WORK/shim/awk"
+
+echo "running tests/run-tests with awk profiling..." >&2
+PATH="$WORK/shim:$PATH" tests/run-tests >"$WORK/suite.out" 2>&1
+SUITE_TAIL=$(tail -1 "$WORK/suite.out" 2>/dev/null)
+
+# Excluding the .src sidecars, which would double every count and make the
+# "no profiles were written" guard pass on a run that wrote none.
+nprof=$(ls -1 "$WORK/prof" 2>/dev/null | grep -vc '\.src$')
+if (( ${nprof:-0} == 0 )); then
+    echo "awk-coverage: no profiles were written — the shim was not used" >&2
+    echo "              (a tool calling gawk or /usr/bin/awk directly bypasses PATH)" >&2
+    exit 2
+fi
+
+# ── canonicalise, group, merge ────────────────────────────────────────────
+#
+# A profile line is one of:
+#   "  1234  \tstatement"   executed, with its count
+#   "\tstatement"           present in the program, never executed
+#   "\t}" / "" / "\t# ..."  structure, not a statement
+#
+# Strip the count column to get the canonical program; hash that; merge counts
+# positionally within a hash group.
+: > "$WORK/facts"
+
+# function name -> defining library, derived from the sources rather than
+# hand-listed: a library gaining a function is covered without anyone
+# remembering, which is the failure mode every hand-written list in this
+# repository has already hit.
+: > "$WORK/owners"
+for lib in tools/lib/*.awk; do
+    [[ -r "$lib" ]] || continue
+    grep -oE '^function[[:space:]]+[A-Za-z_][A-Za-z0-9_]*' "$lib" 2>/dev/null \
+        | awk -v l="$lib" '{ print $2 "\t" l }' >> "$WORK/owners"
+done
+
+for p in "$WORK/prof"/*; do
+    [[ "$p" == *.src ]] && continue
+    [[ -s "$p" ]] || continue
+    # Caller, for naming the inline programs. Reduced to the repository path it
+    # names, because the full command line carries fixture paths that differ
+    # between runs and would split one program across many labels.
+    # The interpreter is dropped: cmdline is "/bin/bash tools/bt-actions ...",
+    # and matching greedily labelled every program "bin/bash".
+    caller=$(tr -s " " "\n" < "$p.src" 2>/dev/null \
+             | grep -oE "(tools|bin|devtools|tests)/[a-zA-Z0-9._-]+|(^|/)(install|uninstall)\.sh" \
+             | grep -vE "^(/usr)?/?bin/(bash|sh|dash)$" | head -1 || true)
+    caller="${caller#/}"
+    [[ -n "$caller" ]] || caller="(unknown)"
+
+    # Drop the generated-at header line: it carries a timestamp and would make
+    # every profile of the same program hash differently.
+    sed -e '1{/# gawk profile, created/d}' "$p" > "$WORK/body"
+    # Two normalisations, not one. The count column is obvious. The second is
+    # not: gawk appends a rule-number comment (`{ # 3`) to rules it EXECUTED
+    # and omits it from rules it did not — so the same program hashed
+    # differently depending on whether it ran, the profiles never merged, and
+    # tools/bt-actions' 172-statement classifier reported 0/172 while its tests
+    # were visibly passing. A grouping key that changes with the thing being
+    # measured groups nothing.
+    # THREE normalisations, and each one was found by the hash failing to group.
+    #
+    #   1. the count column itself;
+    #   2. gawk's rule-number comment (`{ # 3`), which it appends to rules it
+    #      EXECUTED and omits from rules it did not;
+    #   3. leading indentation — the count column REPLACES one tab, so the same
+    #      statement is one tab shallower when it ran than when it did not.
+    #
+    # Each of the three made the canonical form depend on whether the program
+    # executed, which is the thing being measured. tools/bt-actions' 172
+    # statement classifier reported 0/172 through all three, while its tests
+    # passed and its output was correct: the runs that executed and the runs
+    # that did not were being filed as different programs, and only the empty
+    # ones were left holding the name.
+    canon=$(sed -E 's/^[[:space:]]*[0-9]+[[:space:]]+//; s/^[[:space:]]+//; s/\{[[:space:]]*#[[:space:]]*[0-9]+[[:space:]]*$/{/' "$WORK/body")
+    h=$(printf '%s' "$canon" | cksum | tr -d ' ')
+    label="$caller#${h: -6}"
+    awk -v h="$label" -v owners="$WORK/owners" '
+        # ATTRIBUTION. A library loaded with -f appears in EVERY profile of
+        # every tool that loads it, so counting statements per profile makes
+        # tools/lib/timestamp.awk contribute once per caller — nineteen times
+        # for the journal seam alone. The denominator would then be a count of
+        # invocations wearing the costume of a line count.
+        #
+        # gawk pretty-prints a given function identically in every profile, so
+        # a statement inside a library function has a stable identity:
+        # (function name, position within that function). Merging on that
+        # counts each library statement exactly once, however many tools load
+        # it. Statements outside any library function belong to the inline
+        # program and keep the per-profile hash as their scope.
+        BEGIN {
+            while ((getline o < owners) > 0) { split(o, op, "\t"); own[op[1]] = op[2] }
+            close(owners)
+            scope = "prog:" h; idx = 0
+        }
+        {
+            executed = ($0 ~ /^[[:space:]]*[0-9]+[[:space:]]+/) ? 1 : 0
+            s = $0
+            sub(/^[[:space:]]*[0-9]+[[:space:]]+/, "", s)
+            sub(/^[[:space:]]+/, "", s); sub(/[[:space:]]+$/, "", s)
+            sub(/\{[[:space:]]*#[[:space:]]*[0-9]+$/, "{", s)
+
+            if (match(s, /^function[[:space:]]+[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\(/)) {
+                fn = s; sub(/^function[[:space:]]+/, "", fn); sub(/[[:space:]]*\(.*$/, "", fn)
+                if (fn in own) { scope = "lib:" own[fn] ":" fn } else { scope = "fn:" h ":" fn }
+                idx = 0
+            }
+            idx++
+            if (s == "") next
+            if (s ~ /^#/) next
+            # Structure carries no execution of its own: a closing brace, a
+            # bare `else {`, a rule header already counted on its pattern.
+            if (s ~ /^[{}]$/ || s ~ /^\}[[:space:]]*else[[:space:]]*\{$/) next
+            print scope "\t" idx "\t" executed "\t" s
+        }
+    ' "$WORK/body" >> "$WORK/facts"
+done
+
+# ── report ────────────────────────────────────────────────────────────────
+sort -u "$WORK/facts" > "$WORK/facts.u"
+
+awk -F'\t' -v showunc="$SHOWUNCOV" '
+    {
+        k = $1 "\t" $2
+        text[k] = $4
+        if ($3 == 1) ran[k] = 1
+        seen[k] = 1
+    }
+    END {
+        for (k in seen) {
+            split(k, kp, "\t"); h = kp[1]
+            tot[h]++; total++
+            if (ran[k]) { hit[h]++; hits++ }
+            else        { unc[h] = unc[h] "\n    " text[k] }
+        }
+        if (showunc) {
+            for (h in tot) {
+                if (hit[h] == tot[h]) continue
+                printf "program %s  (%d/%d statements)\n", h, hit[h] + 0, tot[h]
+                print substr(unc[h], 2)
+                print ""
+            }
+            printf "%d of %d awk statements never ran\n", total - hits, total
+            exit 0
+        }
+        printf "\n%-7s  %-12s %s\n", "cover", "statements", "program"
+        print  "──────────────────────────────────────────────────────────────"
+        n = 0
+        for (h in tot) {
+            pct = 100 * (hit[h] + 0) / tot[h]
+            rows[++n] = sprintf("%6.1f%%  %5d/%-5d  %s", pct, hit[h] + 0, tot[h], h)
+            sortkey[n] = pct
+        }
+        # NOT named `key`: that is a scalar in the rule above, and awk treats a
+        # name used as both scalar and array as a fatal error. The report awk
+        # died on it, its stderr went to the file holding the percentage, and
+        # the tool printed an empty table with no total and exit status 0 —
+        # a measurement failure that reads as "nothing to report".
+        for (i = 2; i <= n; i++) {
+            kr = rows[i]; kk = sortkey[i]; j = i - 1
+            while (j > 0 && sortkey[j] > kk) { rows[j+1] = rows[j]; sortkey[j+1] = sortkey[j]; j-- }
+            rows[j+1] = kr; sortkey[j+1] = kk
+        }
+        for (i = 1; i <= n; i++) print rows[i]
+        printf "\ndistinct awk programs profiled: %d\n", n
+        printf "TOTAL: %.1f%% (%d of %d statements)\n", \
+               (total ? 100 * hits / total : 0), hits, total
+        printf "%d\n", (total ? int(100 * hits / total) : 0) > "/dev/stderr"
+    }
+' "$WORK/facts.u" 2> "$WORK/pct"
+
+(( SHOWUNCOV )) && exit 0
+
+echo
+echo "suite: $SUITE_TAIL"
+echo "profiles collected: $nprof"
+
+TOTAL_PCT=$(tr -d '[:space:]' < "$WORK/pct" 2>/dev/null)
+TOTAL_PCT=${TOTAL_PCT:-0}
+if [[ -n "$MIN" ]]; then
+    if (( TOTAL_PCT < MIN )); then
+        echo "awk statement coverage ${TOTAL_PCT}% is below the --min ${MIN}% floor" >&2
+        exit 1
+    fi
+    echo "awk statement coverage ${TOTAL_PCT}% meets the --min ${MIN}% floor"
+fi
