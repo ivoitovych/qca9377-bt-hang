@@ -112,7 +112,7 @@ END {
         exit
     }
     printf "  placed             %d\n", total
-    printf "  mean phase         %.3f   (0.5 expected under independence)\n", sum / total
+    printf "  mean phase         %.3f   (0.5 under the constant-hazard independent null)\n", sum / total
     printf "  within first 10%%   %d of %d\n", near + 0, total
     print ""
     print "  distribution across the gap:"
@@ -124,10 +124,12 @@ END {
         print "    question can be answered later, not so it can be answered now."
     } else if (near > total * 0.5) {
         print "  ⚠ Over half the clusters fall in the first 10% of their gap."
-        print "    Not expected under independence; worth investigating."
+        print "    Not expected under the stated null; worth investigating."
+        print "    A probe relationship and time-varying failure hazard are both"
+        print "    possible explanations; this statistic does not choose between them."
     } else {
-        print "  No evidence of an observer effect in this data. Note that this"
-        print "  is an absence of evidence for clustering, NOT a demonstration"
-        print "  of independence — with few events it cannot be that."
+        print "  No departure from the stated null is visible in this data. This"
+        print "  is NOT a demonstration of probe independence or constant hazard —"
+        print "  with few events it cannot establish either one."
     }
 }

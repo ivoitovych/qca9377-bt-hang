@@ -1100,3 +1100,80 @@ Open, in the order the report recommends: fold the CI-gated round trip into the
 measurement (206 lines, and the code is already tested); work the remaining long tail with
 `--uncovered`; extract the remaining inline awk to `tools/lib/` so exclusion ranges become
 library files with fixture cases; then raise both floors to 100%.
+
+### Upstream drift, merged · `11c4042`
+
+`origin/main` advanced two commits (`d8b7abe..7a09765`) resolving six external review
+findings, all about **over-interpretation**. It touched 28 files, nine of which this
+branch had converted to seams.
+
+**Merged, not rebased.** 51 commits replayed against semantic changes to the same files
+is 51 chances to mis-resolve; a merge is one resolution with both sides in view. Five
+conflict hunks across four files.
+
+#### The finding that matters: two of my tests encoded the defect main removed
+
+Main rewrote `bt-diagnose` to report a **phenotype rather than a cause** — kernel
+timeout/reset/firmware lines are aggregate, unpaired and not VID:PID-scoped across boots,
+so they cannot say which timeout a reset answered or whether a callback is installed for
+the controller in front of you.
+
+Two assertions written in this branch last session required the opposite:
+
+```
+"bt-diagnose clears a controller the kernel does reset"          (expected exit 0)
+"bt-diagnose notes the absent firmware load (driver_info = 0)"
+```
+
+**Had upstream landed after them, they would have reported a correctness fix as a
+regression.** That is a failure mode this log has not recorded before, and it arrives from
+the direction nobody watches: not an untested defect, but a *tested* one. A test is a
+claim about what the code should do, and writing one does not make the claim true — it
+makes it durable, which is worse when the claim is wrong.
+
+They are replaced by their negation, which is the property actually worth holding: reset
+messages must **not** suppress the phenotype, and the report must draw no mechanism
+conclusion from counts that cannot support one. Both are now asserted positively.
+
+#### Everything else was the same correction in wording
+
+Each assertion was re-anchored to what it is about rather than deleted:
+
+| was | now |
+|---|---|
+| stage 1 / stage 2 | HCI non-response / USB loss |
+| "EARLY RECOVERY WORKS" | "CONTROLLER ANSWERED AFTER EARLY INTERVENTION" — the intervention censors the counterfactual |
+| "VERDICT: WORKING" | a count of *confirmed* post-timeout recoveries; legacy markers reported as mixed-context |
+| "lower BT_THRESHOLD" after a failed intervention | removed — reset may itself alter the trajectory, so "intervene sooner" does not follow |
+
+The five `stage2` golden files were regenerated **after** confirming every duration is
+identical across the change. The numbers did not move; only the language and the new
+provenance categories.
+
+#### Two resolutions worth naming
+
+`bt-phase` conflicted because main edited the **inline awk this branch had already
+extracted** to `tools/lib/phase.awk` (UT-11). Main's null-hypothesis change — constant
+hazard, not mere probe independence — is ported into the library, and main's new check is
+widened to scan the library too: it greps `tools/bt-phase` for wording that no longer
+lives there, and would otherwise have been a check that cannot fail for the reason its
+name gives.
+
+`bt-health-report`'s merge would have silently reverted `bt_journal` to `journalctl` on
+one line, because main edited the pre-seam copy.
+
+#### The self-check earned itself twice more
+
+It caught the `bt-actions` exclusion ranges going stale as main's edits shifted line
+numbers — and it caught `tests/run-tests` appearing three times in the coverable table,
+which turned out to be **unmerged index stages**, not duplicated content. A merge is
+exactly when a line-number-based exclusion list rots, and this is the run where that would
+have gone unnoticed.
+
+| | before the merge | after |
+|---|---|---|
+| Invariants | 378 | **388** |
+| Shell coverage | 84.7% of 4550 | **84.9%** of 4618 |
+| awk statements | 88.2% | **88.2%** (1386/1572) |
+
+All gates pass: `repo-validate`, `repo-scan --all`, both coverage floors, `verify.sh`.

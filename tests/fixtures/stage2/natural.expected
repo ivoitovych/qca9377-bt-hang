@@ -1,18 +1,20 @@
-Stage 1 -> stage 2: how long, and what ended the observation?
+HCI non-response -> USB loss: how long, and what ended the observation?
 ──────────────────────────────────────────────────────────────
 
   boot 111111111111   first HCI timeout 2026-08-01T10:00:00.000000+02:00
       +    50.00s  usb: USB disconnect                                   <-- NATURAL
-      stage-1 window: 50.00s (50s)  NATURAL
+      HCI-nonresponse window: 50.00s (50s)  NATURAL
 
 ──────────────────────────────────────────────────────────────
-  boots reaching stage 1        1
-    ended naturally             1   <- the only ones that measure the fault
-    ended by our intervention   0
+  boots with HCI non-response   1
+    ended naturally             1   <- uncensored untreated transitions
+    ended by positive intervention 0
+    ended by kernel treatment reset 0
+    ended by unknown-origin reset   0
     ended by shutdown           0
     still running               0
 
-  longest NATURAL stage-1 window   50.00s (50s)
+  longest uncensored HCI-to-USB-loss window   50.00s (50s)
   longest window of any kind       50.00s (50s, NATURAL)
 
   ⚠ 1 boot(s) had no enumeration line naming 13d3:3503, so their

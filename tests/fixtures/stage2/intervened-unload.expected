@@ -1,20 +1,23 @@
-Stage 1 -> stage 2: how long, and what ended the observation?
+HCI non-response -> USB loss: how long, and what ended the observation?
 ──────────────────────────────────────────────────────────────
 
   boot 222222222222   first HCI timeout 2026-08-02T10:00:00.000000+02:00
-      +    30.00s  usbcore: deregistering interface driver btusb         <-- OURS
-      stage-1 window: 30.00s (30s)  intervened
+      +    30.00s  usbcore: deregistering interface driver btusb         <-- POSITIVE INTERVENTION
+      HCI-nonresponse window: 30.00s (30s)  intervened
       RIGHT-CENSORED — true survival time is longer than this
 
 ──────────────────────────────────────────────────────────────
-  boots reaching stage 1        1
-    ended naturally             0   <- the only ones that measure the fault
-    ended by our intervention   1
+  boots with HCI non-response   1
+    ended naturally             0   <- uncensored untreated transitions
+    ended by positive intervention 1
+    ended by kernel treatment reset 0
+    ended by unknown-origin reset   0
     ended by shutdown           0
     still running               0
 
-  No natural progression to stage 2 has been observed.
-  Every stage-1 window so far was ended by us or by shutdown, so
+  No uncensored HCI-nonresponse-to-USB-loss transition was observed.
+  Every HCI-nonresponse window was ended by intervention, a reset of
+  known treatment or unknown origin, or shutdown. Therefore
   the fault's untreated trajectory is UNKNOWN — not 45-66s, not
   indefinite. The experiment that settles it is a boot left
   strictly alone after BT-1 until the device leaves the bus.

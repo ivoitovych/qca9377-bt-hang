@@ -1,15 +1,18 @@
-Stage 1 -> stage 2: how long, and what ended the observation?
+HCI non-response -> USB loss: how long, and what ended the observation?
 ──────────────────────────────────────────────────────────────
 
 ──────────────────────────────────────────────────────────────
-  boots reaching stage 1        0
-    ended naturally             0   <- the only ones that measure the fault
-    ended by our intervention   0
+  boots with HCI non-response   0
+    ended naturally             0   <- uncensored untreated transitions
+    ended by positive intervention 0
+    ended by kernel treatment reset 0
+    ended by unknown-origin reset   0
     ended by shutdown           0
     still running               0
 
-  No natural progression to stage 2 has been observed.
-  Every stage-1 window so far was ended by us or by shutdown, so
+  No uncensored HCI-nonresponse-to-USB-loss transition was observed.
+  Every HCI-nonresponse window was ended by intervention, a reset of
+  known treatment or unknown origin, or shutdown. Therefore
   the fault's untreated trajectory is UNKNOWN — not 45-66s, not
   indefinite. The experiment that settles it is a boot left
   strictly alone after BT-1 until the device leaves the bus.
