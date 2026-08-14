@@ -134,10 +134,15 @@ have bt-boots && bt-boots 8 | sed 's/^/  /' || echo "  (bt-boots not installed)"
 
 echo
 echo "${B}4. Capture health${O}"
-if [[ -d /var/log/bt-health/trace ]]; then
-    printf '  %-30s %s\n' "btsnoop files:" "$(ls -1 /var/log/bt-health/trace/*.btsnoop 2>/dev/null | wc -l)"
-    printf '  %-30s %s\n' "disk used:"     "$(du -sh /var/log/bt-health 2>/dev/null | cut -f1)"
-    printf '  %-30s %s\n' "capture gaps logged:" "$(wc -l < /var/log/bt-health/trace/gaps.log 2>/dev/null || echo 0)"
+# BT_TRACE_DIR, the name bt-actions, bt-sco and bt-evidence already use for
+# this directory. Hardcoded here, it was the one part of the status report no
+# test could reach — and "is the capture actually running?" is half of what an
+# operator opens this tool to find out.
+TRACE_DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
+if [[ -d "$TRACE_DIR" ]]; then
+    printf '  %-30s %s\n' "btsnoop files:" "$(ls -1 "$TRACE_DIR"/*.btsnoop 2>/dev/null | wc -l)"
+    printf '  %-30s %s\n' "disk used:"     "$(du -sh "$TRACE_DIR" 2>/dev/null | cut -f1)"
+    printf '  %-30s %s\n' "capture gaps logged:" "$(wc -l < "$TRACE_DIR/gaps.log" 2>/dev/null || echo 0)"
 else
     echo "  (no trace directory)"
 fi

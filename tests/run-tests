@@ -1821,7 +1821,98 @@ PMOUT3=$(BT_JOURNAL_FIXTURE="$PM" BT_SYSFS_USB="$PMSYS2/usb" BT_SYSFS_BT="$PMSYS
    && "$PMOUT3" == *"POWER-OFF"* ]] \
     && ok "bt-postmortem reports stage 2 and its remedy when the device is gone" \
     || bad "stage-2 verdict wrong"
-rm -rf "$PMSYS2" "$PMSYS"
+
+# Enumerated but no adapter is a DIFFERENT state from off-the-bus, and it has a
+# different remedy — btusb never bound, so a power cycle is not the answer.
+# Same empty /sys/class/bluetooth, device still present on the USB tree.
+mkdir -p "$PMSYS2/usb/3-3"
+echo 13d3 > "$PMSYS2/usb/3-3/idVendor"; echo 3503 > "$PMSYS2/usb/3-3/idProduct"
+PMENUM=$(BT_JOURNAL_FIXTURE="$PM" BT_SYSFS_USB="$PMSYS2/usb" BT_SYSFS_BT="$PMSYS2/bt" \
+         tools/bt-postmortem 2>&1)
+[[ "$PMENUM" == *"btusb has not created an adapter"* && "$PMENUM" != *"stage 2"* ]] \
+    && ok "bt-postmortem distinguishes enumerated-without-adapter from stage 2" \
+    || bad "an enumerated controller was reported as having left the bus"
+rm -rf "$PMSYS2"
+
+# ── the remaining incident verdicts ──────────────────────────────────────
+#
+# Four mutually exclusive outcomes and two early-signal readings, each its own
+# fixture. The early-signal pair is the load-bearing one: "cmd_timeout is too
+# late" rests on there being a warning BEFORE the first timeout, and this tool
+# is what says whether there was. It is not always true, and a tool that
+# assumed it would confirm the hypothesis it was built to test.
+pmf() { BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$PMSYS/usb" \
+        BT_SYSFS_BT="$PMSYS/bt" tools/bt-postmortem "${@:2}" 2>&1; }
+
+PMEARLY=$(pmf pm-early)
+[[ "$PMEARLY" == *"Recovered via EARLY intervention"* \
+   && "$PMEARLY" == *"Early signal preceded the first timeout by 10s"* ]] \
+    && ok "bt-postmortem reports early recovery and the window that allowed it" \
+    || bad "the early-intervention incident was misread"
+
+# Stage 1 duration is the window any reset has to fit inside — the number the
+# fix proposal is argued from. 60s here: first timeout to first USB failure.
+[[ "$PMEARLY" == *"Stage 1 duration"*"60s"* ]] \
+    && ok "bt-postmortem measures stage 1 from first timeout to first USB failure" \
+    || bad "stage-1 duration wrong or absent"
+
+PMNR=$(pmf pm-notrec)
+[[ "$PMNR" == *"NOT recovered."* && "$PMNR" == *"The USB reset itself failed."* ]] \
+    && ok "bt-postmortem reports a failed recovery and a failed reset separately" \
+    || bad "the unrecovered incident lost one of its two facts"
+
+# THE READING THAT REFUTES THE HYPOTHESIS, and therefore the one that must
+# work. The signal arrives 30s AFTER the first timeout: no early-warning
+# window existed, so BT_EARLY could not have helped in this incident.
+[[ "$PMNR" == *"AFTER the first timeout"* \
+   && "$PMNR" == *"could not have helped"* \
+   && "$PMNR" != *"early-warning window existed"* ]] \
+    && ok "bt-postmortem says when the early signal came too late to help" \
+    || bad "a late early-signal was reported as an early-warning window"
+
+# Two clusters an hour apart are two incidents, not one 60-minute incident:
+# GAP is what separates them, and merging them would stretch every Δ measured
+# from t_first across an hour of healthy operation.
+PMTWO=$(pmf pm-two --all)
+[[ "$PMTWO" == *"Incidents found: 2"* && "$PMTWO" == *"2 separate incidents"* ]] \
+    && ok "bt-postmortem clusters distant timeouts into separate incidents" \
+    || bad "two clusters an hour apart were not separated"
+
+PMNONE=$(pmf pm-none); pmnrc=$?
+(( pmnrc == 0 )) && [[ "$PMNONE" == *"nothing to analyse"* ]] \
+    && ok "bt-postmortem exits 0 with nothing to analyse rather than an empty report" \
+    || bad "a range with no timeouts did not report cleanly (rc=$pmnrc)"
+
+# The fixture's lone `link tx timeout` is ACL supervision — a healthy
+# controller losing a device that walked out of range. A burst of those would
+# fabricate an incident, and one adjacent to a real incident shifts t_first,
+# the anchor every delta above is measured from.
+[[ "$PMNONE" != *"Incidents found"* ]] \
+    && ok "an ACL link timeout does not fabricate an incident" \
+    || bad "a link tx timeout was clustered as a controller incident"
+
+tools/bt-postmortem --bogus >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-postmortem exits 2 on an unknown option" \
+              || bad "bt-postmortem did not refuse an unknown option with 2"
+
+PMHELP=$(tools/bt-postmortem --help 2>&1); pmhrc=$?
+(( pmhrc == 0 )) && [[ -n "$PMHELP" ]] \
+    && ok "bt-postmortem --help prints usage and exits 0" \
+    || bad "--help did not print usage (rc=$pmhrc)"
+
+# -b names the boot explicitly. Worth its own case rather than relying on the
+# default: the default and the explicit form take different branches, and the
+# fixture answers both selector shapes the way a real journal does.
+PMBOOT=$(pmf pm-early -b 0)
+[[ "$PMBOOT" == *"Recovered via EARLY intervention"* ]] \
+    && ok "bt-postmortem accepts an explicit -b boot index" \
+    || bad "-b 0 changed or suppressed the analysis"
+
+PMSINCE=$(pmf pm-early --since "2026-08-13 00:00:00")
+[[ "$PMSINCE" == *"Recovered via EARLY intervention"* ]] \
+    && ok "bt-postmortem accepts --since and still analyses the incident" \
+    || bad "--since changed or suppressed the analysis"
+rm -rf "$PMSYS"
 
 # ── bt-status: the verdict an operator acts on ────────────────────────────
 #
@@ -1873,9 +1964,83 @@ SOK=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt"
     || bad "bt-status reported a dead controller while an adapter exists"
 
 # The journal-derived counts must still come from the fixture, not the host.
-[[ "$SOK" == *"2"* ]] \
+# Anchored to the LABEL: the first version of this asserted that "2" appeared
+# anywhere in the output, which any timestamp, count or version string
+# satisfies. It could not have failed if the count had come from the host.
+[[ "$SOK" == *"HCI command timeouts"*"2"* || "$SOK" == *"timeouts"*": 2"* ]] \
     && ok "bt-status counts this boot's timeouts from the fixture" \
     || bad "bt-status lost the fixture-derived timeout count"
+
+# ── the five remaining verdicts ──────────────────────────────────────────
+#
+# With an adapter present, bt-status chooses between five sentences, and they
+# are the whole product: a person reads one and decides whether to power the
+# machine off, keep testing, or stop trusting the run. Four had never executed.
+#
+# Each pair (kernel + watchdog + bluetoothd) is a fixture directory, because
+# the verdicts differ by which of those three logs carries what — not by a flag.
+sv() { BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$STSYS/usb" \
+       BT_SYSFS_BT="$STSYS/bt" tools/bt-status --brief 2>&1; }
+
+SVEOK=$(sv status-early-ok)
+[[ "$SVEOK" == *"EARLY RECOVERY WORKS"* && "$SVEOK" == *"no experiment has occupied"* ]] \
+    && ok "bt-status reports early recovery WITH the claim it does not support" \
+    || bad "the early-recovery verdict lost its 'NOT implied' qualification"
+
+# That qualification is the assertion, not decoration. "Early recovery works"
+# invites the reading that the kernel patch is unnecessary; the tool says in
+# the same breath that hci_cmd_timeout() calls hdev->reset at +0 s, a point no
+# experiment has occupied. Dropping those four lines would leave a true
+# sentence that supports a false conclusion.
+
+SVEF=$(sv status-early-fail)
+[[ "$SVEF" == *"did not recover"* && "$SVEF" != *"EARLY RECOVERY WORKS"* ]] \
+    && ok "bt-status separates an early intervention that fired from one that worked" \
+    || bad "an intervention that failed was reported as recovery"
+
+SVNI=$(sv status-no-intervention)
+[[ "$SVNI" == *"never intervened"* ]] \
+    && ok "bt-status reports timeouts the watchdog did not answer" \
+    || bad "timeouts with no intervention produced the wrong verdict"
+
+# THE DISTINCTION THIS TOOL EXISTS TO DRAW, and the easiest one to get wrong:
+# a boot with no failures means nothing unless the trigger was attempted. Both
+# fixtures are failure-free; only one exercised audio.
+SVCA=$(sv status-clean-audio)
+[[ "$SVCA" == *"real clean run"* ]] \
+    && ok "a failure-free boot WITH audio is called a real clean run" \
+    || bad "a genuinely clean run was not credited as one"
+
+SVCQ=$(sv status-clean-quiet)
+[[ "$SVCQ" == *"proves nothing if the trigger was never attempted"* \
+   && "$SVCQ" != *"real clean run"* ]] \
+    && ok "a failure-free boot WITHOUT audio is refused as evidence" \
+    || bad "an untriggered boot was reported as a clean run — the strongest wrong answer"
+
+# Capture health, both ways. "Is the capture running?" is half of what an
+# operator opens this tool to answer, and the directory was hardcoded.
+STTR=$(mktemp -d); : > "$STTR/a.btsnoop"; : > "$STTR/b.btsnoop"
+printf 'gap 1\ngap 2\ngap 3\n' > "$STTR/gaps.log"
+SVTR=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+       BT_TRACE_DIR="$STTR" tools/bt-status 2>&1)
+[[ "$SVTR" == *"btsnoop files:"*"2"* && "$SVTR" == *"capture gaps logged:"*"3"* ]] \
+    && ok "bt-status counts the captures and the logged capture gaps" \
+    || bad "capture health did not report 2 files and 3 gaps"
+rm -rf "$STTR"
+
+SVNOTR=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+         BT_TRACE_DIR=/nonexistent tools/bt-status 2>&1)
+[[ "$SVNOTR" == *"no trace directory"* ]] \
+    && ok "bt-status says so when there is no capture directory at all" \
+    || bad "a missing trace directory produced no statement either way"
+
+# No checkout: the tool must say which variable to set rather than printing an
+# empty section, because it is run from anywhere and often from /.
+SVNOREPO=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+           BT_REPO=/nonexistent/checkout tools/bt-status 2>&1)
+[[ "$SVNOREPO" == *"no checkout found"* && "$SVNOREPO" == *"BT_REPO="* ]] \
+    && ok "bt-status names the override when it cannot find a checkout" \
+    || bad "the no-checkout branch did not name BT_REPO"
 rm -rf "$STSYS"
 
 # ── bt-context: the tool that reports what nobody thought to look for ─────
