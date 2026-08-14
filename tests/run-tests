@@ -4349,6 +4349,288 @@ fi
               || bad "uninstall.sh accepted an unknown option"
 
 
+
+echo
+echo "bt-trial — the whole lifecycle, not just the two ends of it"
+echo "───────────────────────────────────────────────────────────"
+#
+# WHAT WAS COVERED AND WHAT WAS NOT. The sandbox above drives `autostart` and
+# `ok`/`hang`, which is the path bt-trial-auto takes. The verbs an OPERATOR
+# uses — start, step, abort — and the shutdown path `autostop` had never run,
+# and neither had the two classifications that decide whether a trial may be
+# POOLED with the others: a treatment that changed while the trial was open,
+# and a perturbation inside the window.
+#
+# Those two matter more than the verbs. A trial whose treatment string is wrong
+# does not fail; it joins a denominator it does not belong in, and every
+# comparison computed from that denominator is quietly wrong afterwards. There
+# is no error message for that anywhere in this project.
+TL=$(mktemp -d)
+mkdir -p "$TL/bin" "$TL/state" "$TL/evidence/trials" "$TL/tools"
+touch "$TL/install.sh"; git -C "$TL" init -q 2>/dev/null
+# hci_alive() walks $dev/*/bluetooth/hci* — without the node it reports a
+# dead controller, and every close reclassifies to `failed`.
+mkdir -p "$TL/sysfs/3-3/power" "$TL/sysfs/3-3/3-3:1.0/bluetooth/hci0"
+echo 13d3 > "$TL/sysfs/3-3/idVendor"; echo 3503 > "$TL/sysfs/3-3/idProduct"
+echo on   > "$TL/sysfs/3-3/power/control"
+
+# A controller that answers unless a test kills it on purpose, so the
+# classification under test is bt-trial's and not the machine's radio.
+cat > "$TL/bin/hciconfig" <<TLSTUB
+#!/bin/sh
+[ -e "$TL/dead" ] && exit 1
+exit 0
+TLSTUB
+# THE TREATMENT FINGERPRINT IS DRIVEN FROM HERE. Both watchdog branches and
+# both probe branches are selected by files, because on a real machine they are
+# selected by whether services are running — and a test may not start the
+# recovery watchdog on the host it is running on.
+cat > "$TL/bin/systemctl" <<TLSTUB
+#!/bin/sh
+case "\$*" in
+  *"is-active --quiet bt-hang-watchdog"*)      [ -e "$TL/wd-on" ]    && exit 0; exit 3 ;;
+  *"is-active --quiet bt-health-snapshot"*)    [ -e "$TL/probes-on" ] && exit 0; exit 3 ;;
+  *"show bt-hang-watchdog -p Environment"*)    echo "BT_EARLY=1 BT_THRESHOLD=5"; exit 0 ;;
+esac
+exit 0
+TLSTUB
+printf '#!/bin/sh\necho "up 1 hour"\n' > "$TL/bin/uptime"
+printf '#!/bin/sh\nexit 0\n' > "$TL/bin/bt-incident"
+# bt-trial reads the kernel journal through journalctl DIRECTLY, not through
+# tools/lib/journal.sh — it is one of the ten tools UT-10 has not converted.
+# So the window's contents are a stub reading a file this section writes.
+: > "$TL/kjournal"
+cat > "$TL/bin/journalctl" <<TLJC
+#!/bin/sh
+case "\$*" in
+  *"-b -1"*) cat "$TL/prevboot" 2>/dev/null; exit 0 ;;
+esac
+[ -e "$TL/journal-unreadable" ] && exit 1
+cat "$TL/kjournal"
+exit 0
+TLJC
+: > "$TL/prevboot"
+chmod +x "$TL/bin"/*
+
+# The ONLY way this section may invoke bt-trial. Same rule as the sandbox
+# above, and the same reason: an invocation that forgets BT_EVIDENCE_REPO
+# writes a fabricated incident into the real evidence tree.
+tl() {
+    PATH="$TL/bin:$PATH" \
+    BT_REPO="$TL" BT_EVIDENCE_REPO="$TL" \
+    BT_STATE="$TL/state" BT_SYSFS_USB="$TL/sysfs" \
+    tools/bt-trial "$@" 2>&1
+}
+tl_row() { tail -1 "$TL/evidence/trials/results.tsv" 2>/dev/null; }
+tl_field() { tl_row | cut -f"$1"; }
+
+TLP=$(tl protocol); tlprc=$?
+(( tlprc == 0 )) && [[ "$TLP" == *"bt-trial start"* ]] \
+    && ok "bt-trial protocol prints the procedure without opening anything" \
+    || bad "protocol did not print the procedure (rc=$tlprc)"
+[[ ! -e "$TL/state/current" ]] \
+    && ok "printing the protocol opens no trial" \
+    || bad "protocol left a trial open"
+
+# ── start: the verb an operator uses ─────────────────────────────────────
+touch "$TL/wd-on" "$TL/probes-on"
+TLS=$(tl start stock); tlsrc=$?
+TLDIR=$(grep '^dir=' "$TL/state/current" 2>/dev/null | cut -d= -f2-)
+(( tlsrc == 0 )) && [[ -e "$TL/state/current" && -d "$TLDIR" && -e "$TLDIR/steps.log" ]] \
+    && [[ "$TLS" == *"Trial stock #1 started"* ]] \
+    || bad "start did not open a trial (rc=$tlsrc, dir=$TLDIR)"
+(( tlsrc == 0 )) && [[ -e "$TLDIR/steps.log" ]] \
+    && ok "bt-trial start opens a numbered trial with its own directory"
+
+# THE FINGERPRINT IS TAKEN AT START. An auto-trial spans a whole boot and this
+# project reconfigures instrumentation while one is open, so a fingerprint read
+# at close would describe a three-hour boot by the configuration of its last
+# minute.
+TLTS=$(grep '^treat_start=' "$TL/state/current" | cut -d= -f2-)
+[[ "$TLTS" == *"wd=early+late/thr5"* && "$TLTS" == *"probes=on"* ]] \
+    && ok "the treatment fingerprint reads the watchdog's actual configuration" \
+    || bad "fingerprint did not describe a running watchdog: '$TLTS'"
+
+TLS2=$(tl start stock); tls2rc=$?
+(( tls2rc == 1 )) && [[ "$TLS2" == *"already open"* ]] \
+    && ok "a second start refuses rather than overwriting the open trial" \
+    || bad "start did not refuse with a trial already open (rc=$tls2rc)"
+
+# ── step: the operator's record of what they did ─────────────────────────
+TLST=$(tl step "plugged in the headset"); tlstrc=$?
+(( tlstrc == 0 )) && grep -qE '^\[\+[0-9]+s\] plugged in the headset$' "$TLDIR/steps.log" \
+    && ok "bt-trial step records what was done, stamped from the trial's start" \
+    || bad "step did not append a stamped line (rc=$tlstrc)"
+
+tl step >/dev/null 2>&1
+(( $? != 0 )) && ok "step without a description refuses instead of recording nothing" \
+              || bad "step accepted an empty description"
+
+# ── abort: the trial that must not become a row ──────────────────────────
+TLA=$(tl abort); tlarc=$?
+(( tlarc == 0 )) && [[ ! -e "$TL/state/current" && ! -d "$TLDIR" ]] \
+    && [[ "$TLA" == *"discarded"* ]] \
+    && ok "abort discards the trial directory and writes no results row" \
+    || bad "abort left state behind (rc=$tlarc)"
+
+TLA2=$(tl abort); tla2rc=$?
+(( tla2rc == 0 )) && [[ "$TLA2" == *"no trial open"* ]] \
+    && ok "abort with nothing open is a no-op, not an error" \
+    || bad "abort without a trial was not a clean no-op (rc=$tla2rc)"
+
+TLSTEP=$(tl step "nothing is open"); tlsteprc=$?
+(( tlsteprc == 1 )) && [[ "$TLSTEP" == *"no trial open"* ]] \
+    && ok "step with nothing open refuses rather than creating a stray log" \
+    || bad "step without a trial did not refuse (rc=$tlsteprc)"
+
+# ── a dead controller must not start a trial ─────────────────────────────
+touch "$TL/dead"
+TLD=$(tl start stock); tldrc=$?
+(( tldrc == 1 )) && [[ "$TLD" == *"not responding"* && "$TLD" == *"measures nothing"* ]] \
+    && [[ ! -e "$TL/state/current" ]] \
+    && ok "start on a dead controller refuses — a trial from there measures nothing" \
+    || bad "start proceeded on a dead controller (rc=$tldrc)"
+
+# ── autostop: what shutdown does, classified by the controller ───────────
+TLAS=$(tl autostop); tlasrc=$?
+(( tlasrc == 0 )) && [[ -z "$TLAS" ]] \
+    && ok "autostop with no trial open exits quietly" \
+    || bad "autostop without a trial was not silent (rc=$tlasrc): $TLAS"
+
+rm -f "$TL/dead"
+tl autostart stock >/dev/null 2>&1
+tl autostop >/dev/null 2>&1
+[[ "$(tl_field 9)" == "survived" ]] \
+    && ok "autostop on a responding controller closes the trial as survived" \
+    || bad "autostop misclassified a live controller as '$(tl_field 9)'"
+
+tl autostart stock >/dev/null 2>&1
+touch "$TL/dead"
+tl autostop >/dev/null 2>&1
+# `failed` is the tool's word for it — the three trial_result values are
+# survived / failed / alive_after_intervention, and `hang` is the VERB that
+# produces the second. Asserting "hang" here tested the vocabulary this check
+# expected rather than the one the results file uses.
+[[ "$(tl_field 9)" == "failed" ]] \
+    && ok "autostop on a dead controller closes the trial through the hang path" \
+    || bad "autostop misclassified a dead controller as '$(tl_field 9)'"
+rm -f "$TL/dead"
+
+# ── the two classifications that decide whether a row may be POOLED ──────
+#
+# A trial whose treatment changed mid-window, or which was perturbed inside it,
+# must not join a denominator with the others. Neither is an error and neither
+# prints a warning; the only defence is that the treatment string is made
+# deliberately unmatchable. If that stops working, the rows still look ordinary
+# and every comparison built on them is silently wrong.
+tl autostart stock >/dev/null 2>&1
+rm -f "$TL/probes-on"                      # the treatment changes mid-trial
+tl ok >/dev/null 2>&1
+TLTR=$(tl_field 4)
+[[ "$TLTR" == CHANGED:* && "$TLTR" == *"probes=on"* && "$TLTR" == *"probes=off"* ]] \
+    && ok "a treatment that changed mid-trial is recorded as CHANGED, with both ends" \
+    || bad "a mid-trial treatment change was recorded as an ordinary row: '$TLTR'"
+
+# THE INTERIOR, WHICH TWO ENDPOINTS CANNOT DESCRIBE. A btusb reload unbinds the
+# device, resets it and rebinds it, leaving both fingerprints identical. On
+# 2026-08-13 install.sh --apply did exactly that inside trial stock #2, and the
+# row would otherwise have read as clean, ordinary and comparable.
+cat > "$TL/kjournal" <<'TLJRN'
+2026-08-13T09:00:00.000000+0200 host kernel: usb 3-3: new full-speed USB device number 2 using xhci_hcd
+2026-08-13T09:00:10.000000+0200 host kernel: usbcore: deregistering interface driver btusb
+2026-08-13T09:00:20.000000+0200 host kernel: Bluetooth: MGMT ver 1.22
+TLJRN
+tl autostart stock >/dev/null 2>&1
+tl ok >/dev/null 2>&1
+TLPR=$(tl_field 4)
+[[ "$TLPR" == *"PERTURBED:btusb_reload"* ]] \
+    && ok "a btusb reload inside the window makes the treatment unpoolable" \
+    || bad "an interior perturbation left the row comparable: '$TLPR'"
+# Column 23 is `perturbed`, resolved from the header rather than counted by
+# eye — the first draft of this check read column 17, which is `probes`, and
+# asserted a true thing about the wrong field.
+TLPCOL=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^perturbed$' | cut -d: -f1)
+[[ -n "$TLPCOL" ]] && [[ "$(tl_row | cut -f"$TLPCOL")" == "btusb_reload" ]] \
+    && ok "the perturbation is named in the perturbed column (field $TLPCOL)" \
+    || bad "perturbed column $TLPCOL read '$(tl_row | cut -f"${TLPCOL:-1}")'"
+
+# ── status: the view that decides whether to abort a trial in progress ───
+#
+# The one command an operator runs WHILE a trial is open, and the only place
+# the project warns that a trial has already been spoiled. Untested until now,
+# including the warning itself.
+TLNS=$(tl status); tlnsrc=$?
+(( tlnsrc == 0 )) && [[ "$TLNS" == *"no trial open"* ]] \
+    && ok "bt-trial status with nothing open says so and exits 0" \
+    || bad "status without a trial was not a clean report (rc=$tlnsrc)"
+
+cat > "$TL/kjournal" <<'TLCLEAN'
+2026-08-13T09:00:00.000000+0200 host kernel: Bluetooth: hci0: command 0x0c1a tx timeout
+2026-08-13T09:00:05.000000+0200 host kernel: Bluetooth: hci0 opcode 0x0428 plen 17
+TLCLEAN
+tl start stock >/dev/null 2>&1
+TLSC=$(tl status); tlscrc=$?
+(( tlscrc == 0 )) && [[ "$TLSC" == *"trial OPEN"* && "$TLSC" == *"elapsed="* ]] \
+   && [[ "$TLSC" == *"HCI command timeouts  1"* && "$TLSC" == *"SCO setups requested  1"* ]] \
+    && ok "status counts what has happened inside the window so far" \
+    || bad "status did not report the window's counts (rc=$tlscrc)"
+[[ "$TLSC" == *"clean"* && "$TLSC" != *"PERTURBED"* ]] \
+    && ok "status calls an unperturbed window clean" \
+    || bad "status warned of a perturbation that was not there"
+
+# The warning that saves a trial: something reset the controller inside the
+# window, so the row is already destined for a PERTURBED treatment and every
+# denominator will exclude it. Telling the operator NOW is the difference
+# between an aborted trial and a wasted boot.
+cat >> "$TL/kjournal" <<'TLPERT'
+2026-08-13T09:00:10.000000+0200 host kernel: usbcore: deregistering interface driver btusb
+TLPERT
+TLSP=$(tl status)
+[[ "$TLSP" == *"PERTURBED"* && "$TLSP" == *"btusb reloads=1"* \
+   && "$TLSP" == *"bt-trial abort"* ]] \
+    && ok "status warns mid-trial that the window is already spoiled, and what to do" \
+    || bad "status did not warn about a btusb reload inside the window"
+
+touch "$TL/journal-unreadable"
+TLSU=$(tl status)
+[[ "$TLSU" == *"cannot certify this trial's interior"* ]] \
+    && ok "an unreadable journal is reported as uncertifiable, not as clean" \
+    || bad "status treated an unreadable journal as an absence of perturbation"
+rm -f "$TL/journal-unreadable"
+tl abort >/dev/null 2>&1
+
+# ── the previous shutdown, which decides whether a boot is comparable ────
+: > "$TL/kjournal"
+# systemd's own wording: the classifier matches `Reached target <kind>`, and a
+# fixture saying `systemd-shutdown: poweroff` exercises only the unknown
+# branch — a real answer, just not the one under test.
+printf 'systemd[1]: Reached target poweroff.target - System Power Off.\n' > "$TL/prevboot"
+tl autostart stock >/dev/null 2>&1; tl ok >/dev/null 2>&1
+TLPSCOL=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^prev_shutdown$' | cut -d: -f1)
+[[ -n "$TLPSCOL" ]] && [[ "$(tl_row | cut -f"$TLPSCOL")" == "poweroff" ]] \
+    && ok "the previous boot's shutdown kind is classified from its own journal" \
+    || bad "prev_shutdown read '$(tl_row | cut -f"${TLPSCOL:-1}")', not poweroff"
+
+printf 'systemd[1]: Reached target reboot.target - System Reboot.\n' > "$TL/prevboot"
+tl autostart stock >/dev/null 2>&1; tl ok >/dev/null 2>&1
+[[ "$(tl_row | cut -f"$TLPSCOL")" == "reboot" ]] \
+    && ok "a reboot and a power-off are distinguished, not merged" \
+    || bad "a reboot was recorded as '$(tl_row | cut -f"$TLPSCOL")'"
+
+# enum_at_boot: whether the controller appeared on the bus at all this boot.
+printf 'kernel: usb 3-3: New USB device found, idVendor=13d3, idProduct=3503, bcdDevice= 0.01\n' >> "$TL/kjournal"
+tl autostart stock >/dev/null 2>&1; tl ok >/dev/null 2>&1
+TLECOL=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^enum_at_boot$' | cut -d: -f1)
+[[ -n "$TLECOL" ]] && [[ "$(tl_row | cut -f"$TLECOL")" == "yes" ]] \
+    && ok "a controller that enumerated this boot is recorded as having done so" \
+    || bad "enum_at_boot read '$(tl_row | cut -f"${TLECOL:-1}")' with the device in the journal"
+
+tl xyzzy >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-trial rejects an unknown verb rather than doing nothing quietly" \
+              || bad "bt-trial accepted an unknown verb"
+
+rm -rf "$TL"
+
 echo
 echo "install.sh / uninstall.sh — the APPLY path, for real, into a staging root"
 echo "─────────────────────────────────────────────────────────────────────────"
