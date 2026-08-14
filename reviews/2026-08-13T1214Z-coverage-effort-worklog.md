@@ -736,3 +736,104 @@ Findings across session 3: **7** — one exit-code inconsistency, two missing-de
 blindnesses (`column`, `hexdump`, both from `bsdextrautils`), one self-inflicted output
 corruption, two publish-safety holes in `bt-exhibit`, and one dry-run gap in the tool
 that turns the watchdog off. Plus three of my own checks that could not fail.
+
+### Session 3, part 4 — btmon was never the blocker
+
+CS-04 had carried "`bt-sco`/`bt-capdiff` need btmon" as a blocker since session 1. That
+was wrong, and it was wrong in a way worth naming: **the blocker was stated in terms of a
+missing program rather than in terms of what the tools actually consume.** `btmon` reads
+btsnoop, which is binary and cannot be committed — `sanitize-logs.sh` cannot parse binary
+formats and `repo-scan` refuses it. But `btmon` *emits decoded text*, and everything that
+needed testing in these two tools is text parsing. So the seam is `btmon` itself, on
+`PATH`, and the fixtures are its output.
+
+The stub deliberately ignores its arguments (bt-sco) or reads only `-r` (bt-capdiff). A
+stub that asserted the full call shape would be testing the invocation rather than the
+parsing, and would break the day a flag is added.
+
+`tests/btmon/README.md` records the provenance **and the limit**, which closes the open
+half of TC-03: these fixtures pin how the tools read btmon's format; they cannot pin that
+the format is still what btmon emits. `devtools/journal-contract` closes that gap for the
+journal by building a real journal and diffing real `journalctl` output against the
+fixture grammar. The equivalent needs a committable btsnoop, which the publish rules
+forbid — so the gap is **recorded rather than closed**, and it is why `--raw` exists in
+both tools.
+
+#### `bt-sco` · `e5883d4` · 0% → 59.0%
+
+Eleven invariants. The one that matters most is the hang signature — a setup with no
+completion — asserted in both directions: present on the unanswered fixture, and *absent*
+on the paired one, so an ordinary capture cannot grow a warning that means nothing.
+
+The startup supported-commands bitmap gets its own fixture, because a bare grep for
+"Setup Synchronous Connection" matches it too: the controller names the command once per
+adapter with no request behind it. Widening that grep fails three invariants.
+
+**One of my assertions was wrong on the first run.** It required the second setup to fall
+outside a ±2 s window — but a setup always sits inside its own window. The fixture now
+carries a Number of Completed Packets event 5.6 minutes from either mark, which is a
+record the bound can actually exclude.
+
+#### `bt-capdiff` · `7276bb0` · 0% → 86.6%
+
+**Finding — the overlap bound manufactured its own disagreement.** `lo` and `hi` came from
+raw first/last timestamps on two clocks that differ by a variable scheduling delay — the
+delay the matcher exists to absorb. A pair straddling a boundary had one member inside the
+window and one outside, and the one inside was reported unmatched. That happened at **both
+edges of every comparison**, so two perfectly agreeing captures could not report agreement
+unless their boundary records aligned exactly. Now widened by the tolerance and compared
+numerically via `iso_secs`.
+
+**Finding — "Unmatched records in both directions" was printed unconditionally**, including
+when every unmatched record was on one side. One-sided is the reading that matters: it says
+one path missed traffic the other caught, where two-sided is usually the clock or the
+decoding differing.
+
+**And the suite caught me writing an old defect back in.** My first version of the widened
+filter passed an inline awk program alongside `-f` — which awk reads as an input filename.
+That is the exact trap `tests/run-tests` scans for, and the one that once made *this tool*
+report perfect agreement between paths differing by 278 records. It went red on my comment
+text before it could go red on my code, which is a fair description of how these invariants
+earn their keep: the rule was written down as an executable check by someone who had been
+bitten, and it bit the next person on the same line.
+
+### Session 3 close
+
+| | session 2 end | Group 1 | Group 2 | Group 3 | now |
+|---|---|---|---|---|---|
+| Coverage | 38.3% | 49.9% | 61.3% | 66.7% | **69.9%** (3479/4978) |
+| Invariants | 179 | 214 | 261 | 292 | **310** |
+| Zero-coverage files | 26 of 48 | 23 | 19 | 14 | 12 of 48 |
+| Journal seam | 13 tools | 13 | 16 | 19 | 19 |
+| CI floor | 30 | 30 | 55 | 55 | **65** |
+
+**Nine findings this session**, all of them in code that had been read carefully and in
+several cases carried an accurate comment about the very hazard that bit it:
+
+| Tool | Finding |
+|---|---|
+| `bt-status` | one verdict, two exit codes — a *display* flag changed the code |
+| `bt-health-report.sh` | `column(1)` unguarded; and my own seam pass corrupted the operator advice |
+| `bt-exhibit` | a missing sanitiser was treated as safe; an address in `--cmd` shipped verbatim |
+| `bt-mode` | no dry run on the tool that turns the watchdog off |
+| `bt-verify-kernel-mechanism` | `hexdump` absent ⇒ every device ID reported ABSENT, including the comparators |
+| `bt-capdiff` | the overlap bound invented disagreements at both edges; one-sided loss mislabelled |
+
+Two of those — `column(1)` and `hexdump(1)` — are the **same package**, `bsdextrautils`,
+absent from minimal images, silenced by a redirect, turning into wrong *content* rather
+than a visible error. That is now a pattern worth grepping for rather than a coincidence.
+
+**Four of my own assertions could not fail** for the reason their names gave: a row-width
+check blind to a blank column, a sandbox check using `[[ -e ]]` with a glob, a `PIPESTATUS`
+check that `$?` satisfied under `pipefail`, and a `--window` check whose excluded record
+was itself a window mark. All four were written carefully; all four passed; all four were
+found by asking what would turn them red. That ratio — four bad checks against nine real
+findings — is the argument for mutation-testing every new assertion rather than the
+interesting ones.
+
+**Still at zero:** `bt-trace` and `bt-usbmon` (foreground capture daemons — they need a
+run-one-iteration seam, which is a design decision rather than a mechanical one), the
+devtools that wrap the suite (`coverage`, `check`, `assert-test-catches`,
+`journal-contract`, `repo-save` — testing them from inside the suite they run is a
+recursion problem, not a seam problem), `reviews/verify.sh`, and `tests/system-roundtrip`,
+which is CI-gated by design.
