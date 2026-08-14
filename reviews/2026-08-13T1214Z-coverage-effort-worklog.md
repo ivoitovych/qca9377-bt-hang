@@ -525,3 +525,107 @@ reason are the same defect seen from two sides, and this session produced one of
 Findings this session: 5 (one exit-code inconsistency, one missing-dependency crash,
 one self-inflicted output corruption, two publish-safety holes). Production diff to get
 them: roughly 60 lines, all of it guards and refusals.
+
+### Session 3, continued — the tools that could only run on the sick machine
+
+Group 1 was the *reporting* tools. This group is the ones that could not be tested
+because running them meant doing the thing they do: verifying an installation,
+verifying a restoration, diagnosing a stranger's hardware, switching the machine
+between observing and protecting itself. All four needed seams; none needed logic
+changed.
+
+**`bt-verify-install` · `a1f1142` · 0% → 82.4%.** The tool whose only failure mode is a
+false all-clear, and it has hit it twice: a hand-written artefact list that omitted six
+tools installed on 2026-08-12, and a line-by-line parse of `install.sh` that turned every
+backslash-continued call into a destination of `\`, reporting seven phantom missing
+files. Both were fixed by deriving the list from `install.sh`; neither fix had a test.
+
+Almost nothing was needed — the checkout is already an argument and the destinations come
+out of *that* checkout's `install.sh`. Only `BT_UDEV_DIR` and `BT_MODE_STAMP` were added,
+and only because the success path was otherwise unreachable.
+
+The continuation bug is pinned **by consequence, not by output shape**: a destination
+parsed as `\` is dropped for not being absolute, so the file is never compared and its
+drift is invisible. The fixture's continued entry is made to drift and the report must
+name it. Reverting the awk join fails that assertion and nothing else.
+
+Two of the nine are negative controls. `bt-mode experiment` stops the intervening units
+on purpose, and counting that as drift would tell the reader to run `install.sh --apply`,
+which reverts the controlled baseline — the two tools would push the machine back and
+forth, each "fixing" the other. So the suite also asserts that stopped units *are* drift
+with no mode stamp, and that experiment mode does *not* exempt `bluetooth.service`.
+Without those, "exempts intervening units" is satisfied by an exemption that swallows the
+whole Services block.
+
+**`verify-restored.sh` · `621917d` · 0% → 86.1%.** "Yes, the machine is back to normal" —
+the one claim nobody re-checks by hand, because checking it by hand is the work this
+script replaced.
+
+The six artifacts it names literally are deliberately **not** overridable: they are the
+revert contract, and a test that redirects them tests nothing. That makes the
+fully-restored assertion depend on host state, so it is **gated rather than faked** — on
+the investigation machine, with the project installed, "restored" is legitimately false
+and the case says so out loud instead of passing.
+
+The assertion that matters most covers the gap *between* two tools rather than inside
+either: `bt-mode experiment` moves files aside to `<name>.disabled`, `uninstall.sh`
+removes only the active names, so an experiment → uninstall sequence leaves every
+disabled file on disk. A check testing only `-e` would call that a clean revert.
+
+**`bt-diagnose` · `8abfd75` · 0% → 91.8%.** The standalone entry point: a stranger clones
+the repo, runs this, and its answer decides whether they keep reading. Three documented
+exit codes, none ever executed.
+
+The distinction it draws *is* the project's claim — timeouts without resets is the bug,
+timeouts with resets is a different problem this repository does not document. Telling a
+stranger they have this bug when they do not is the worst thing the tool can do, so both
+sides are asserted. The signature fixture splits 2 timeouts into boot −1 and 1 into boot
+0, so the expected total of 3 proves the per-boot counts are summed; and it carries one
+`link tx timeout` line — ACL supervision, a different layer — which must be excluded. The
+three exit codes are additionally asserted as **one** claim, because two verdicts
+collapsing onto one code is invisible in any single-scenario check.
+
+New in the seam library: `bt_journal_available()`. "Is a journal reachable at all?"
+belongs to the seam, not its callers — the seam decides where the journal comes from, so
+it is the only thing that can answer whether there is one.
+
+**`bt-mode` · `5907be5` · 0% → 98.0%.** The switch that turns the safety net off. If its
+restore is incomplete the machine stays in experiment mode while everything reports
+normal: watchdog off, nobody told, next hang is a cold boot.
+
+Added `--dry-run`, which `install.sh` and `uninstall.sh` have and which this suite already
+calls their contract. **Opt-in, not the default** — defaulting to a dry run would silently
+turn `bt-mode experiment` into a no-op, and an operator who believes the watchdog is off
+while it is still rescuing the controller collects censored trials without knowing. A
+wrong answer about the mode contaminates the evidence, which is worse than no answer.
+
+Every mutation goes through `run()` or `write_to()`, so the dry run cannot drift from
+apply: they are the same call site with one branch between them.
+
+One deliberate behaviour change: mitigation wrote `0` to `enable_autosuspend` while
+printing `enable_autosuspend=N`. The kernel accepts both for a bool parameter, so nothing
+was wrong — the code now writes what it says, and matches the `Y` its counterpart writes.
+
+**The last assertion in that block is the sandbox itself.** This suite runs as root on the
+machine under investigation and every bt-mode assertion runs in APPLY mode, so the block
+ends by checking that no real override was moved aside. A leaked seam there disables the
+watchdog on the host — the one failure that must not be discovered later. It is the same
+shape as the `bt-incident` sandbox assertion, written for the same reason.
+
+### CI floor raised 30 → 55
+
+A ratchet, not a target: it sits below the current 58.7% so ordinary work cannot trip it,
+and it rises only when a stage lands. Its job is to stop coverage falling silently as
+tools grow. "Every test encodes a defect that shipped" remains the actual rule.
+
+| | end of session 2 | after Group 1 | now |
+|---|---|---|---|
+| Coverage | 38.3% | 49.9% | **58.7%** (2785/4747) |
+| Invariants | 179 | 214 | **250** |
+| Zero-coverage files | 26 of 48 | 23 of 48 | 19 of 48 |
+| Journal seam | 13 tools | 13 | 15 |
+
+Findings across session 3: 5 in Group 1, 0 in Group 2. That asymmetry is itself worth
+recording — Group 2's four tools were **correct**, and the whole cost of proving it was
+parameterising paths that were hardcoded for no reason other than that nobody had needed
+them otherwise. The seams are the deliverable there, not the bug list.

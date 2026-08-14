@@ -66,9 +66,9 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | UT-07 | Fixtures for `trial-sco-table.awk`, `stage2.awk` | done | this commit | `tests/run-tests --section "awk libraries"` — 17 cases across 3 libraries |
 | UT-08 | Journal seam `tools/lib/journal.sh` | done | `d016249` | `test -r tools/lib/journal.sh` |
 | UT-09 | Convert `bt-phase`, `bt-boot-provenance` | done | `d016249` | `tests/run-tests --section "whole tools" \| grep 'journal seam'` |
-| UT-10 | Convert the remaining journal-reading tools | **partial** 10/21 | `def19bc` | `reviews/verify.sh` — prints converted vs remaining |
+| UT-10 | Convert the remaining journal-reading tools | **partial** 15/25 | `8abfd75` | `reviews/verify.sh` — prints converted vs remaining |
 | UT-11 | `lib/phase.awk`; delete the Python extractor | done | `d016249` | `test -r tools/lib/phase.awk`; extractor gone: `grep -c re.search tests/run-tests` → 0 |
-| UT-12 | Split `tests/run-tests` into per-area files | **open** | — | `wc -l tests/run-tests` — 1353 at `d016249`, was 1038 |
+| UT-12 | Split `tests/run-tests` into per-area files | **open** — now the single largest file in the repo | — | `wc -l tests/run-tests` |
 | UT-13 | Settle `repo-scan`'s pre-existing hits, then add to CI | done | `383b991` + merge | `devtools/repo-scan . --all` → clean; step present in `checks.yml` |
 
 ### From `2026-08-13T1244Z-coverage-strategy.md`
@@ -83,7 +83,26 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | CS-06 | `bt-logvolume`, `bt-boot-stats`, `bt-timeline.sh` | done | `def19bc` | `tests/run-tests --section "whole tools"` |
 | CS-07 | `bt-env-history`, `bt-boot-list`, `bt-boots` | done | `def19bc` | `tests/run-tests --section "whole tools"` |
 | CS-08 | A sysfs/device seam, then `bin/bt-hang-watchdog` | done | this commit | `devtools/coverage \| grep bt-hang-watchdog` → 81.8% |
-| CS-09 | Argument/refusal paths only for the hardware-bound five | **open** | — | judgement call; see the report |
+| CS-09 | Argument/refusal paths only for the hardware-bound five | **partial** — `bt-sco`/`bt-capdiff` remain (need `btmon`) | `8abfd75` | `tests/run-tests --section "whole tools"` |
+
+### From session 3 — the reporting tools and the machine-bound tools
+
+Not a new report: these close CS-08's successors and the Group 1/2 work described in the
+[work log](2026-08-13T1214Z-coverage-effort-worklog.md). Each row is a tool that was at
+0% and the seam that reached it.
+
+| Tool | Was | Now | Seam added | Findings |
+|---|---|---|---|---|
+| `bt-status` | 0% | 81.7% | `BT_SYSFS_USB`, `BT_SYSFS_BT`, journal | one verdict, two exit codes |
+| `bt-postmortem` | 0% | 73.2% | sysfs + journal | — (introduced `SEAM-ADVICE`) |
+| `bt-health-report.sh` | 0% | 78.0% | `BT_SYSFS_MODULE`, `BT_METRICS`, journal | `column(1)` unguarded; advice line corrupted by my own seam pass |
+| `bt-exhibit` | 0% | 94.7% | none needed (`BT_REPO` existed) | missing sanitiser treated as safe; address in `--cmd` published verbatim |
+| `bt-verify-install` | 0% | 82.4% | `BT_UDEV_DIR`, `BT_MODE_STAMP` | — |
+| `verify-restored.sh` | 0% | 86.1% | `BT_INSTALL_SH`, `BT_HEALTH_DIR`, sysfs, journal | — |
+| `bt-diagnose` | 0% | 91.8% | `BT_SYSFS_USB`, journal | — (added `bt_journal_available`) |
+| `bt-mode` | 0% | 98.0% | every path, plus `--dry-run` | — |
+
+Verify: `tests/run-tests` (250 invariants) and `devtools/coverage`.
 
 ### From `2026-08-13T1517Z-test-classes-and-mocks.md`
 
@@ -117,10 +136,11 @@ legitimate uses remain, and two quoted counts that were simply wrong. A register
 runs rots exactly like the documentation it was meant to replace.
 
 Coverage was **13.1%** (503/3846) when the report was written, **18.3%** at `d016249`,
-**28.5%** after UT-07 + CS-02/03/05, and **38.3%** (1692/4423) after the watchdog, the
-six seam conversions and `bt-incident`. If `devtools/coverage`
-prints materially less than the last figure, something regressed and the register is
-stale. (Two of those points are not comparable naively: main's merge and the `./`-prefix
+**28.5%** after UT-07 + CS-02/03/05, **38.3%** (1692/4423) after the watchdog, the six
+seam conversions and `bt-incident`, and **58.7%** (2785/4747) after session 3's eight
+tools. The CI floor is a ratchet below the current figure — 30 until session 3, now 55.
+If `devtools/coverage` prints materially less than the last figure, something regressed
+and the register is stale. (Two of those points are not comparable naively: main's merge and the `./`-prefix
 join fix in `devtools/coverage` both moved the denominator — the trend is what matters.)
 
 ### UT-13 — closed, from the other side
