@@ -1697,6 +1697,42 @@ BLOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-boot-list 2>&1)
     && ok "bt-boot-list emits exactly the numeric offsets, header excluded" \
     || bad "bt-boot-list emitted: $(tr '\n' ' ' <<<"$BLOUT")"
 
+# The rest of bt-boot-list's surface. Boot enumeration is subtle enough that
+# every other tool defers to this one rather than reimplementing it (its own
+# header says so), which makes each of these paths load-bearing for tools that
+# never touch a journal themselves.
+BLC=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-boot-list --count 2>&1)
+[[ "$BLC" == "2" ]] \
+    && ok "bt-boot-list --count reports how many boots it found" \
+    || bad "--count said '$BLC', not 2"
+
+BLN=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-boot-list -n 1 2>&1)
+[[ "$BLN" == "0" ]] \
+    && ok "bt-boot-list -n takes the most recent boots, not the oldest" \
+    || bad "-n 1 returned '$BLN' — expected the newest boot, 0"
+
+BLH=$(tools/bt-boot-list --help 2>&1); blhrc=$?
+(( blhrc == 0 )) && [[ -n "$BLH" ]] \
+    && ok "bt-boot-list --help prints usage and exits 0" \
+    || bad "--help failed (rc=$blhrc)"
+
+tools/bt-boot-list --bogus >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-boot-list exits 2 on an unknown option" \
+              || bad "bt-boot-list did not refuse an unknown option with 2"
+
+# THE FALLBACK CHAIN'"'"'S LAST RUNG. An empty fixture directory answers
+# --list-boots with nothing, so JSON, the table reader and the plain reader all
+# come up empty. The tool must then say it is assuming the current boot only —
+# a caller that silently assumed more history than exists draws conclusions
+# from boots that were never examined, which is the failure this warning
+# exists to prevent.
+BLEMPTY=$(mktemp -d)
+BLW=$(BT_JOURNAL_FIXTURE="$BLEMPTY" tools/bt-boot-list 2>&1); blwrc=$?
+(( blwrc == 0 )) && [[ "$BLW" == *"could not enumerate boots"* && "$BLW" == *"0"* ]] \
+    && ok "bt-boot-list warns out loud when it can enumerate nothing" \
+    || bad "empty enumeration was silent (rc=$blwrc): $BLW"
+rm -rf "$BLEMPTY"
+
 # bt-boot-stats: per-boot timeout counts again, through a different reader.
 BSOUT=$(BT_JOURNAL_FIXTURE="$BJ" BT_BOOT_LIST=tests/journal/boots/boot-list tools/bt-boot-stats 2>&1)
 [[ "$(awk '$1 == "-1" {print $5}' <<<"$BSOUT")" == "1" \

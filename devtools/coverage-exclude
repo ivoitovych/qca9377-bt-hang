@@ -69,18 +69,45 @@ tests/run-tests:/^(\|\| *)?bad /   # failure branches: unreachable in a green ru
 # measured by devtools/awk-coverage, which reads gawk --profile and reports
 # statement coverage, and which is gated in CI in its own right.
 #
-# Ranges START ONE LINE AFTER the command's first line, because that first line
-# IS traced. The self-check catches the off-by-one: an excluded line that
-# executed is an error.
+# WHICH LINE OF THE CONSTRUCT IS TRACED DEPENDS ON THE CONSTRUCT, and getting
+# that wrong is how the first draft of this section was wrong twice.
+#
+#   a multi-line SIMPLE command       — traced at its FIRST line
+#   a multi-line COMMAND SUBSTITUTION — traced at its LAST
+#
+# `bt_journal … | awk '…' >> "$F"` reports the line the PIPELINE starts on;
+# `indices=$(python3 -c '…' <<<"$j")` and a bare `awk '…' "$TMP"` both report
+# the line they CLOSE on. So a range leaves out whichever end bash reports,
+# and which end that is depends on the construct.
+#
+# No attempt is made to state the rule exhaustively here, because two attempts
+# to do so were both wrong. The self-check is the arbiter: propose a range,
+# run devtools/coverage, and it names any line that is excluded and executed.
+# Every entry below has been through that loop. That is the useful property —
+# not that the rule was derived correctly, but that a wrong range cannot
+# survive a single run.
 # Two of these five ranges were wrong when written by eye, and the self-check
 # refused both: bt-sco's started three lines late and sanitize-logs.sh's
 # swallowed the awk-capability probe, which is live shell that runs on every
 # invocation. They are now derived from where each quoted program actually
 # opens and closes.
-tools/bt-actions:82-260     # inline classifier; see devtools/awk-coverage
-tools/bt-actions:274-280    # inline collapse helper; same
-tools/bt-actions:298-344    # inline cadence renderer; same
-tools/bt-sco:93-125         # inline event-window selector; same
+tools/bt-actions:82-261     # inline classifier; see devtools/awk-coverage
+tools/bt-actions:274-281    # inline collapse helper; same
+tools/bt-actions:298-345    # inline cadence renderer; same
+tools/bt-sco:93-126         # inline event-window selector; same
 tools/bt-sco:138-145        # inline request/completion block filter; same
 tools/bt-capdiff:88-108     # inline record extractor; same
 tools/sanitize-logs.sh:137-185  # inline substituter and its verifier; same
+tools/bt-boot-list:63-68    # inline JSON boot-index reader; same
+tools/bt-boot-stats:76-86   # inline per-boot aggregator; same
+tools/bt-env-history:82-91  # inline metrics.tsv column reader; same
+tools/bt-logvolume:98-102   # inline message normaliser; same
+tools/bt-trial:215-219      # inline treatment formatter; same
+tools/bt-trial:613-621      # inline summary selector; same
+tools/bt-verify-install:51-54   # inline install_file parser; same
+tests/run-tests:39-44       # inline --section extractor; same
+
+# Derived by scanning for quoted programs that open on one line and close on
+# another, NOT read off by eye — the two entries written by hand were both
+# wrong, and the self-check caught both. Whole-file entries above already
+# cover devtools/coverage's and devtools/awk-coverage's own inline programs.
