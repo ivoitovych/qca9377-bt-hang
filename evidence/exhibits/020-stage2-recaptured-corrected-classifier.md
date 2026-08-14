@@ -61,8 +61,12 @@ found by a full-tree review:
    never been run, which is precisely the command/output drift `bt-exhibit`
    exists to prevent.
 
-This exhibit fixes both: the command above is the command that produced the
-output above, under the corrected classifier.
+This exhibit fixed both **as of its capture**: the command above is the command
+that produced the output above, under the F2-corrected classifier of the time.
+It is not the current classifier — see the supersession banner above, which
+governs. This sentence is kept because it records what was true at capture; a
+later reviewer flagged that, read alone, it now reads as a claim about the
+present.
 
 ## The result did not move under the F2-only correction
 

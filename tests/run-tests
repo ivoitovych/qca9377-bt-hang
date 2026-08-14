@@ -972,10 +972,18 @@ echo "────────────────────────�
 # The fixture has ten boots — natural disconnect, disconnect after our btusb
 # unload, no terminator at all, a clean reset of UNKNOWN origin, a
 # `link tx timeout` that is not a BT-1 event, a natural progression with a
-# pre-terminator bus error, a clean reset in the boot AFTER that error (the
-# dev_error cross-boot leak, now preceded by a positive watchdog marker), a
+# pre-terminator bus error, a clean reset in the boot AFTER that error, a
 # window in which only a FOREIGN device (usb 1-2) disconnects, a boot with no
 # failure, and an automatic kernel-treatment reset.
+#
+# NOT covered here, and deliberately said out loud: the `dev_error` cross-boot
+# leak. That boot now carries a positive watchdog marker, which sets term_kind
+# first, so the reset line is skipped by the first-terminator-wins guard and
+# the leak is never exercised. Mutating away either `dev_error = 0` reset
+# leaves this section green — verified. The guard against that regression is
+# the boot-separator reset itself, which no assertion here can fail on; a
+# fixture boot with a bus error followed, in the NEXT boot, by an unmarked
+# clean reset and a disconnect would be needed to close it.
 S2=$(awk -f tools/lib/timestamp.awk -f tools/lib/stage2.awk \
      tests/stage2-invariants.data 2>&1)
 
