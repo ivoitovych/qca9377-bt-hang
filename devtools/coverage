@@ -307,6 +307,51 @@ if [[ -n "$LIVE_EXCLUDED" ]]; then
     echo "          fix devtools/coverage-exclude, do not widen it" >&2
     exit 2
 fi
+
+# ── AN ENTRY THAT EXCLUDES NOTHING IS AN ERROR ───────────────────────────
+#
+# The self-check above catches an exclusion that hides LIVE code. It cannot
+# catch the opposite failure: an entry that matches nothing at all. That one is
+# worse, because it reads as a considered decision and nothing can disagree
+# with it — the reviewer sees a reason, the tool sees no lines, and the two
+# never meet. It has now happened three times in this file:
+#
+#   tools/bt-health-report.sh:212-212  a range over a BLANK line, since written
+#   uninstall.sh:/^    \/.../          a pattern anchored on indentation, which
+#                                      cannot match because excluded() is
+#                                      called with the line already TRIMMED
+#   (and the `path:61` parse trap the header describes, which yields 61-0)
+#
+# So the empty-input rule applies here too: an entry that ENUMERATES zero lines
+# is a refusal, not a silent pass. Ranges and patterns are checked against what
+# they actually removed; a whole-file entry is checked for the file existing at
+# all.
+DEAD_ENTRY=$(awk -F'\t' '
+    FNR == NR { n++; exf[n] = $1; exl[n] = $2; ext[n] = $3; next }
+    {
+        c = 0
+        for (i = 1; i <= n; i++) {
+            if (exf[i] != $1) continue
+            if ($2 == "~") { if (ext[i] ~ $3) c++ }
+            else if (exl[i] + 0 >= $2 + 0 && exl[i] + 0 <= $3 + 0) c++
+        }
+        if (c == 0) print "  " $1 ":" ($2 == "~" ? "/" $3 "/" : $2 "-" $3)
+    }
+' "$WORK/excluded-lines" "$WORK/excl-ranges")
+while IFS= read -r wf; do
+    [[ -n "$wf" ]] || continue
+    [[ -e "$wf" ]] || DEAD_ENTRY="$DEAD_ENTRY
+  $wf  (no such file)"
+done < "$WORK/excl-files"
+if [[ -n "${DEAD_ENTRY// }" ]]; then
+    echo "coverage: these exclusion entries matched NOTHING —" >&2
+    echo "          each reads as a decision and removes no line:" >&2
+    printf '%s\n' "$DEAD_ENTRY" >&2
+    echo "          fix or delete them; an exclusion that excludes nothing is" >&2
+    echo "          indistinguishable from one that worked" >&2
+    exit 2
+fi
+
 EXCLUDED_N=$(grep -c . "$WORK/excluded-lines" 2>/dev/null || echo 0)
 
 if (( SHOWUNCOV )); then
