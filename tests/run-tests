@@ -1356,6 +1356,30 @@ else
     bad "inter-boot gap wrong; expected 98s"
 fi
 
+# `journalctl --list-boots` PRINTS A HEADER ROW, and the fixture now carries
+# one. Without a numeric filter the header is taken for a boot: `IDX` reaches
+# `$((off - 1))`, and the consequence is not the unbound-variable message on
+# stderr — it is that the header becomes a ROW, and the next real boot's gap is
+# computed against its garbage timestamp. Boot -1 printed `-226800s`.
+#
+# A NEGATIVE INTER-BOOT GAP IS THE FAILURE THAT MATTERS. This column is what
+# EX-017 argues from. The first version of these tests asserted only that "98s"
+# appeared somewhere and that the two known boots had the right hci values —
+# all still true with a junk row above them and a negative gap beside them. The
+# fixture had no header, so nothing modelled it; the check came from the other
+# side of a merge, and the fixture was extended to meet it.
+rows=$(awk '$1 ~ /^-?[0-9]+$/ { n++ } END { print n + 0 }' <<<"$PROV")
+[[ "$rows" == "2" ]] && ok "bt-boot-provenance emits one row per boot, header excluded" \
+                     || bad "expected 2 boot rows, got $rows — a header row became a boot?"
+
+neg=$(grep -cE '(^|[[:space:]])-[0-9]+s([[:space:]]|$)' <<<"$PROV")
+(( ${neg:-0} == 0 )) && ok "no negative inter-boot gap reaches the table" \
+                     || bad "a NEGATIVE gap was printed — the column EX-017 argues from"
+
+PROVERR=$(BT_JOURNAL_FIXTURE="$BP" tools/bt-boot-provenance 2>&1 >/dev/null)
+[[ -z "$PROVERR" ]] && ok "bt-boot-provenance runs without shell errors on stderr" \
+                    || bad "stderr not clean: $(head -1 <<<"$PROVERR")"
+
 # prev end is the PREVIOUS boot's shutdown target, not this one's. Reading the
 # current boot would put reboot on the wrong row and invert the recovery mark.
 if [[ "$PROV" == *"reboot"* && "$PROV" == *"poweroff"* ]]; then

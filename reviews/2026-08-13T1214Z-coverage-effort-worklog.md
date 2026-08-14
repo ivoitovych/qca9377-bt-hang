@@ -315,3 +315,38 @@ only the visible half leaves a green suite over an unprotected defect.
 rebase branch (they sit immediately after the "computes the inter-boot gap" assertion in
 the `whole tools` section), then confirm the mutation goes red. Not applied here: the
 rebase branch is not this session's designated branch.
+
+### Own rebase onto `d8b7abe`, and what it proved
+
+Backup taken first: `tests/unit-testing-assessment-backup-20260814-013523-utc`, pushed and
+verified identical at `9cf2a9d`.
+
+Before starting, the merge commit's true resolution content was extracted mechanically
+with `git show --cc 942cb26` — **8 files, 56 lines belonging to neither parent**. That is
+exactly what a flat rebase discards, and having it as a checklist is the difference
+between the two attempts.
+
+Six conflicts, resolved on the same principle as the original merge — keep both sides
+where they are additive:
+
+| Conflict | Resolution |
+|---|---|
+| `devtools/README.md` | one `check` row (main's wording) + the `coverage` row |
+| `tools/bt-boot-provenance` | `bt_journal` seam **and** main's numeric filter |
+| `tests/run-tests` (×2) | both test sections; second time, dropped a duplicated parity block |
+| `.github/workflows/checks.yml` | journal-contract step **and** the full-tree repo-scan step |
+| `tools/bt-boots` | `bt_journal` seam **and** main's `k="?"` fix |
+
+**The rebase lost the same three assertions the other attempt lost.** That is the finding
+worth recording: it is not a mistake the other context made, it is an inherent property
+of flat-rebasing a branch whose merge commit carried resolutions. The assertion-set diff
+caught it immediately; the checklist then showed four more losses in the same class —
+the fixture header row, `uninstall.sh`'s two new libraries, the register's UT-13 row and
+`verify.sh`'s UT-13 check. All restored from the backup, having first confirmed main's new
+commits touched none of those four files.
+
+Verified afterwards: assertion set a strict superset of pre-rebase (296 → 298, zero lost);
+runtime invariants 178 → 179, zero lost; `repo-validate`, `repo-scan --all`, and the
+journal contract all clean; register 11 verified; coverage 39.5% (1757/4453); linear on
+`origin/main`; single author; no attribution strings. Decisively, re-introducing the
+header-row bug now **fails 2 invariants** where the other attempt reported all green.
