@@ -9,18 +9,18 @@
 #   Measured on the affected host: 287 "tx timeout" events across 34 boots,
 #   0 automatic reset attempts.
 #
-#   This script performs, from userspace, what that missing handler would do.
+#   This script is a userspace recovery proxy for that missing handler. Its
+#   timing and USB call path differ from the kernel callback.
 #
 # Timing matters. What is measured (see docs/issues.md BT-1, EX-016/EX-018):
 #   stage 1 — HCI unresponsive, USB still healthy. A USERSPACE reset issued
 #             11 s or more after the first timeout has failed five for five;
 #             the one reset issued BEFORE any timeout recovered the controller.
-#   stage 2 — USB core unresponsive, chip off the bus. Only a full power-off
-#             has been OBSERVED to recover it; whether a warm reboot can is
-#             untested (EX-017/EX-019 — the M.2-rail explanation is an
-#             inference, not a measurement).
-#   Natural progression from stage 1 to stage 2 has NEVER been observed
-#   without one of our own resets in between (EX-018); uncensored stage-1
+#   USB-absent outcome — observed only after reset/rebind/reload. A full
+#             power-off has recovered it; whether a warm reboot can is untested
+#             (EX-017/EX-019). Reset may help or harm; its sign is unmeasured.
+#   Natural progression from HCI non-response to USB absence has NEVER been
+#   observed without an intervention in between (EX-018); uncensored HCI-only
 #   windows have run 72 minutes and 6.5 hours with no USB-level error.
 #   Acting early is the point — and this watchdog's reaction time is itself a
 #   sampling rule (HISTORY Phase 25): its resets end the windows it acts on.
@@ -63,13 +63,12 @@ WINDOW="${BT_WINDOW:-60}"      # seconds
 COOLDOWN="${BT_COOLDOWN:-180}" # min seconds between recovery attempts
 MAX_FAILS="${BT_MAX_FAILS:-3}" # give up after this many CONFIRMED failures
 VERBOSE="${BT_VERBOSE:-0}"     # 1 = log every detected signal and window state
-EARLY="${BT_EARLY:-0}"                        # 1 = also act on audio-teardown failures
-# Default 1, not 2. Measured lead times between the first audio-teardown signal
-# and the first HCI timeout: 52 s, "enough", none at all, and 7 s. On 2026-08-11
-# exactly one signal arrived 7 s ahead; a threshold of 2 was never reached, the
-# late trigger fired instead, and the controller was lost. Precision justifies
-# acting on one: cancel_request() Abort 4/4, Suspend 2/2, avdtp_connect_cb 5/5
-# occurrences fell in boots that hung.
+EARLY="${BT_EARLY:-0}"                        # 1 = also act on audio-teardown heuristics
+# Default 1 preserves the deliberately aggressive, opt-in mitigation behaviour.
+# It is NOT a probability claim: boot-level historical ratios did not establish
+# these signals as predictors, and an early intervention destroys the
+# counterfactual that would tell us whether BT-1 was imminent. Experiment mode
+# disables this path; mitigation mode accepts an occasional unnecessary reset.
 EARLY_THRESHOLD="${BT_EARLY_THRESHOLD:-1}"    # early signals before intervening
 EARLY_WINDOW="${BT_EARLY_WINDOW:-90}"         # seconds
 
@@ -130,8 +129,9 @@ hci_alive() {
     esac
 }
 
-# USBDEVFS_RESET ioctl — the exact operation usb_queue_reset_device() performs.
-# The closest possible userspace equivalent of the missing kernel handler.
+# USBDEVFS_RESET ioctl — a proxy, not the operation usb_queue_reset_device()
+# performs. This reaches usb_reset_device() synchronously through usbfs, whereas
+# the kernel callback queues an interface reset in another context.
 usbfs_reset() {
     local dev="$1" b n
     b=$(<"$SYSFS_USB/$dev/busnum") || return 1
@@ -171,13 +171,13 @@ notify() {
 # Returns 0 = recovered, 1 = confirmed failure, 2 = attempted but unverifiable.
 
 recover() {
-    local dev rc
+    local context="${1:-confirmed}" dev rc
     if ! dev=$(find_usb_dev); then
         log "FATAL: $VID:$PID is no longer on the USB bus."
-        log "       The controller has reached the hard-hang stage. No software"
-        log "       recovery is possible. A full power-off certainly recovers it;"
+        log "       The controller is in the observed USB-absent state. No software"
+        log "       recovery has succeeded there. A full power-off recovers it;"
         log "       whether a warm reboot can is untested (EX-017)."
-        notify "Bluetooth chip has hard-hung. Power the machine fully off (a reboot may not be enough)."
+        notify "Bluetooth controller is absent from USB. A full power-off is the demonstrated recovery."
         # Close the boot's auto-trial here rather than leaving it to the
         # shutdown hook. Both would classify it as a hang, but only this one
         # records the duration and the surrounding state at the moment it
@@ -220,8 +220,13 @@ recover() {
 
     hci_alive; rc=$?
     case $rc in
-        0) log "  RECOVERED — controller is responding again"
-           notify "Bluetooth controller recovered automatically."
+        0) if [[ "$context" == early ]]; then
+               log "  CONTROLLER RESPONDS AFTER EARLY INTERVENTION — BT-1 counterfactual censored"
+               notify "Bluetooth controller responds after an early intervention; no claim that a hang was imminent."
+           else
+               log "  RECOVERED — confirmed stalled controller is responding again"
+               notify "Bluetooth controller recovered automatically."
+           fi
            return 0 ;;
         2) log "  recovery attempted; cannot verify (no probe tool — install bluez)"
            return 2 ;;
@@ -252,7 +257,7 @@ if dev=$(find_usb_dev); then
     fi
 else
     log "WARNING: $VID:$PID not currently on the USB bus — controller is already"
-    log "         hard-hung. Watchdog is armed but cannot act until a cold power-off."
+    log "         USB-absent. Watchdog is armed but cannot act until it returns."
 fi
 
 if (( EARLY )); then
@@ -291,14 +296,12 @@ while read -r line; do
         *hci*"setting interface failed"*) class=late ;;
     esac
 
-    # EARLY signals — bluetoothd failing to tear an audio stream down, which
-    # precedes the HCI stall. In the 2026-08-10 hang these appeared up to 52 s
-    # before the first tx timeout; by the time a LATE signal fires the chip may
-    # already be beyond recovery (that hang's USB reset, issued 20 s after the
-    # first timeout, failed).
+    # EARLY signals — bluetoothd audio-teardown errors that preceded some historical
+    # stalls and followed or never appeared in others. They are mitigation
+    # heuristics, not established causal markers or predictors. Acting on one
+    # censors whether BT-1 would have occurred without the reset.
     #
-    # Patterns chosen by measured precision over the last 12 boots — how often
-    # each appears at all versus how often it appears in a boot that hung:
+    # Historical boot-level associations, retained only to explain the heuristic:
     #   cancel_request() Suspend   2/2    avdtp_connect_cb        5/5
     #   cancel_request() Abort     4/4    SDP record: Host is down 10/10
     #   avdtp_close failed         4/3
@@ -341,9 +344,9 @@ while read -r line; do
         fi
         log "EARLY intervention: $en audio-teardown failure(s) in ${EARLY_WINDOW}s — resetting BEFORE any HCI timeout."
         last_recover=$now; EHITS=(); HITS=()
-        recover; rc=$?
+        recover early; rc=$?
         case $rc in
-            0) log "  EARLY recovery SUCCEEDED — this is the result that matters"; fails=0 ;;
+            0) log "  EARLY action completed — no claim that BT-1 was imminent"; fails=0 ;;
             2) ;;
             *) ((fails++)); log "consecutive failed recoveries: $fails/$MAX_FAILS" ;;
         esac
@@ -384,7 +387,7 @@ while read -r line; do
     last_recover=$now
     HITS=()
 
-    recover; rc=$?
+    recover confirmed; rc=$?
     case $rc in
         0) fails=0 ;;
         2) ;;   # unverifiable: do not count as failure, do not reset either

@@ -1,8 +1,10 @@
 # stage2.awk — per boot, how long did the controller stay on the USB bus after
 # it stopped answering HCI, and what ended the observation?
 #
-# Reads `journalctl -k -b all -o short-iso-precise`, including the
-# `-- Boot <id> --` separators. Requires tools/lib/timestamp.awk for iso_secs().
+# Reads a chronological merge of the kernel journal and watchdog service,
+# including `-- Boot <id> --` separators. Kernel-only historical caches are
+# accepted, but a reset with no positive origin marker is then UNKNOWN rather
+# than silently attributed to the operator. Requires timestamp.awk.
 #
 # THE QUESTION THIS EXISTS TO ANSWER. The project believed the fault had two
 # stages: HCI goes silent, then 45-66 s later the device leaves the USB bus.
@@ -10,16 +12,18 @@
 # The first observation without one showed no progression for 72 minutes.
 #
 # So the interval is only meaningful together with what TERMINATED it, and the
-# terminator is the thing that was never recorded. Four kinds:
+# terminator is the thing that was never recorded. Six kinds:
 #
-#   natural       USB disconnect with no intervention before it
-#   intervened    we unloaded btusb or issued a reset first
-#   shutdown      the boot ended with the device still enumerated
-#   ongoing       the current boot, still running
+#   natural         USB disconnect with no intervention before it
+#   intervened      watchdog or btusb-unload provenance positively establishes it
+#   kernel-reset    the experimental kernel's hdev->reset path positively fires
+#   unknown-reset   a USB reset occurred but its origin is not established
+#   shutdown        the boot ended with the device still enumerated
+#   ongoing         the current boot, still running
 #
-# Only `natural` measures the fault. The rest are right-censored, and a
-# censored observation is a LOWER BOUND on the true survival time, never an
-# estimate of it. Averaging the four together is how the 45-66 s figure was
+# Only `natural` measures an uncensored untreated transition. The rest are
+# right-censored. A censored observation is a LOWER BOUND on the true survival
+# time, never an estimate of it. Averaging unlike terminators is how the 45-66 s figure was
 # produced.
 
 function emit(   dur, cls, note) {
@@ -37,16 +41,16 @@ function emit(   dur, cls, note) {
     dur = iso_secs(term_ts) - iso_secs(tmo_ts)
     if (dur < 0) dur = 0
 
-    if (term_kind == "disconnect" && !intervened) { cls = "NATURAL";   n_natural++ }
-    else if (term_kind == "disconnect")           { cls = "intervened"; n_intervened++ }
-    else if (term_kind == "unload")               { cls = "intervened"; n_intervened++ }
-    else if (term_kind == "reset")                { cls = "intervened"; n_intervened++ }
-    else if (term_kind == "ongoing")              { cls = "ongoing";    n_ongoing++ }
-    else                                          { cls = "shutdown";   n_shutdown++ }
+    if (term_kind == "disconnect")         { cls = "NATURAL";       n_natural++ }
+    else if (term_kind == "intervention")  { cls = "intervened";    n_intervened++ }
+    else if (term_kind == "kernel_reset")  { cls = "kernel-reset";  n_kernel_reset++ }
+    else if (term_kind == "unknown_reset") { cls = "unknown-reset"; n_unknown_reset++ }
+    else if (term_kind == "ongoing")       { cls = "ongoing";       n_ongoing++ }
+    else                                    { cls = "shutdown";      n_shutdown++ }
 
     printf "\n  boot %-14s first HCI timeout %s\n", substr(boot_id, 1, 12), tmo_ts
     for (i = 1; i <= nev; i++) printf "%s\n", ev[i]
-    printf "      stage-1 window: %.2fs (%s)  %s\n", dur, hms(dur), cls
+    printf "      HCI-nonresponse window: %.2fs (%s)  %s\n", dur, hms(dur), cls
     if (cls != "NATURAL")
         printf "      RIGHT-CENSORED — true survival time is longer than this\n"
 
@@ -69,7 +73,7 @@ function note(label, mark,   t) {
 }
 
 BEGIN {
-    print "Stage 1 -> stage 2: how long, and what ended the observation?"
+    print "HCI non-response -> USB loss: how long, and what ended the observation?"
     print "──────────────────────────────────────────────────────────────"
     boot_id = "first-boot"
     if (vid == "") vid = "13d3"
@@ -85,7 +89,7 @@ BEGIN {
     # intervened stayed 0 and a following disconnect printed NATURAL — a false
     # observation of the exact event this tool exists to say has never been
     # seen. Verified with a two-boot fixture before fixing.
-    have_tmo = 0; intervened = 0; term_kind = ""; nev = 0; dev_error = 0
+    have_tmo = 0; term_kind = ""; nev = 0; dev_error = 0
     devpath = ""
     next
 }
@@ -109,7 +113,7 @@ $0 ~ ("idVendor=" vid ", idProduct=" pid) {
 # timeouts in the same boot are part of the same failure, not new ones.
 /command( 0x[0-9a-f]+)? tx timeout/ {
     if (!have_tmo) {
-        have_tmo = 1; tmo_ts = $1; intervened = 0; term_kind = ""; nev = 0
+        have_tmo = 1; tmo_ts = $1; term_kind = ""; nev = 0
         dev_error = 0
     }
     next
@@ -126,24 +130,42 @@ function ours(line) {
     return index(line, " usb " devpath ":") > 0
 }
 
-# Ours, unambiguously: nothing else in the system unloads the driver.
-# (Driver-level, carries no device path — no ours() check is possible or
-# needed; unloading btusb detaches every controller it drives.)
-/deregistering interface driver btusb/ {
-    note("usbcore: deregistering interface driver btusb", "  <-- OURS")
-    intervened = 1; term_kind = "unload"; term_ts = $1
+# Positive userspace provenance. The default bt-stage2 acquisition includes
+# this service alongside the kernel. Historical kernel-only caches do not, so
+# their clean USB reset lines deliberately fall into unknown_reset below.
+/bt-hang-watchdog.*(EARLY intervention|Detected .*intervening|Recovering Bluetooth controller)/ {
+    note("watchdog intervention marker", "  <-- POSITIVE PROVENANCE")
+    term_kind = "intervention"; term_ts = $1
     next
 }
 
-# A reset the kernel was ASKED to perform. The hub driver also resets after its
-# own errors, so a reset that follows a descriptor-read failure is a symptom
-# rather than an intervention — recorded, but it does not set term_kind.
+# Positive driver-unload provenance. Driver-level, carries no device path — no
+# ours() check is possible; unloading btusb detaches every controller it drives.
+/deregistering interface driver btusb/ {
+    note("usbcore: deregistering interface driver btusb", "  <-- POSITIVE INTERVENTION")
+    term_kind = "intervention"; term_ts = $1
+    next
+}
+
+# Positive treatment provenance from a kernel built with hdev->reset. This is
+# neither natural history nor an operator action: it is the treatment whose
+# effect Builds A/B/C/D are intended to measure.
+/Bluetooth: hci[0-9]+: (Resetting usb device|Reset qca device via bt_en gpio)/ {
+    note("kernel command-timeout reset callback", "  <-- TREATMENT")
+    term_kind = "kernel_reset"; term_ts = $1
+    next
+}
+
+# A USB reset line does not contain its origin. A reset after a recognized bus
+# error remains part of the stock hub-recovery trajectory. A clean reset with
+# no positive marker is NOT thereby "ours": its origin is unknown, and it
+# censors the natural-history window in its own category.
 /reset (full|high|low)-speed USB device/ {
     if (!ours($0)) next
     if (dev_error) { note("usb: reset after descriptor errors (hub recovery)", "") }
     else {
-        note("usb: reset issued", "  <-- OURS (no preceding bus error)")
-        intervened = 1; term_kind = "reset"; term_ts = $1
+        note("usb: reset issued; origin not established", "  <-- UNKNOWN")
+        term_kind = "unknown_reset"; term_ts = $1
     }
     next
 }
@@ -158,7 +180,7 @@ function ours(line) {
 
 /USB disconnect, device number/ {
     if (!ours($0)) next
-    note("usb: USB disconnect", intervened ? "" : "  <-- NATURAL")
+    note("usb: USB disconnect", "  <-- NATURAL")
     term_kind = "disconnect"; term_ts = $1
     next
 }
@@ -170,17 +192,20 @@ END {
 
     print ""
     print "──────────────────────────────────────────────────────────────"
-    printf "  boots reaching stage 1        %d\n", n_boots_with_tmo + 0
-    printf "    ended naturally             %d   <- the only ones that measure the fault\n", n_natural + 0
-    printf "    ended by our intervention   %d\n", n_intervened + 0
+    printf "  boots with HCI non-response   %d\n", n_boots_with_tmo + 0
+    printf "    ended naturally             %d   <- uncensored untreated transitions\n", n_natural + 0
+    printf "    ended by positive intervention %d\n", n_intervened + 0
+    printf "    ended by kernel treatment reset %d\n", n_kernel_reset + 0
+    printf "    ended by unknown-origin reset   %d\n", n_unknown_reset + 0
     printf "    ended by shutdown           %d\n", n_shutdown + 0
     printf "    still running               %d\n", n_ongoing + 0
     print ""
     if (n_natural > 0)
-        printf "  longest NATURAL stage-1 window   %.2fs (%s)\n", max_nat, hms(max_nat)
+        printf "  longest uncensored HCI-to-USB-loss window   %.2fs (%s)\n", max_nat, hms(max_nat)
     else {
-        print "  No natural progression to stage 2 has been observed."
-        print "  Every stage-1 window so far was ended by us or by shutdown, so"
+        print "  No uncensored HCI-nonresponse-to-USB-loss transition was observed."
+        print "  Every HCI-nonresponse window was ended by intervention, a reset of"
+        print "  known treatment or unknown origin, or shutdown. Therefore"
         print "  the fault's untreated trajectory is UNKNOWN — not 45-66s, not"
         print "  indefinite. The experiment that settles it is a boot left"
         print "  strictly alone after BT-1 until the device leaves the bus."

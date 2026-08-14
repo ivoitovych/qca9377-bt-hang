@@ -192,8 +192,11 @@ bt_journal "${JARGS[@]}" 2>/dev/null | awk -F' ' '
     else if (line ~ /escalating to USB unbind/) {
         cls = "WDOG"; lbl = "  escalating to USB unbind/bind"
     }
-    else if (line ~ /RECOVERED — controller is responding/) {
+    else if (line ~ /RECOVERED — (confirmed stalled )?controller is responding/) {
         cls = "WDOG"; lbl = "  RECOVERED — controller answers again"
+    }
+    else if (line ~ /CONTROLLER RESPONDS AFTER EARLY INTERVENTION/) {
+        cls = "WDOG"; lbl = "  controller answers after early intervention (counterfactual censored)"
     }
     else if (line ~ /RECOVERY FAILED/) {
         cls = "WDOG"; lbl = "  RECOVERY FAILED — still unresponsive"

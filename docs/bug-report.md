@@ -34,10 +34,13 @@ with `driver_info = 0`, and therefore receives **neither** of the two things
    controller runs instead is not established by this report; only that this driver loads
    nothing into it.
 
-Measured across **34 boots and four kernel versions: 287 HCI command timeouts, zero
-reset attempts, zero firmware loads.** 13 of those 34 boots hung, each requiring a full
-power-off — driver unbind/rebind, xHCI port power-cycle and warm reboot were all tried
-and all failed.
+The aggregate retained history contains **287 HCI command timeouts across 34 boots and
+four kernel versions**, with no reset-like or firmware-load message found by the original
+scan. Those unpaired counts are context, not proof of the per-device mechanism; the missing
+QCA match and its consequences are established separately from source and module inspection.
+Thirteen of the 34 boots recorded the historical hang classification. In the documented
+USB-absent incidents, USB loss followed an intervention and a full power-off recovered the
+controller. A deliberate warm-reboot recovery trial has not been performed.
 
 The gap is isolated rather than a vendor the driver declines to support. In the shipped
 `btusb.ko`, `13d3:3491`, `3496` and `3501` all carry
@@ -50,9 +53,15 @@ QCA neighbour, which was wrong.)
 
 ### The failure
 
-An audio-layer state change — an ungraceful A2DP/SCO teardown, or a codec/transmission
-mode switch — is followed within seconds by `hci0: command tx timeout`. From that point
-the controller answers no HCI command, while remaining USB-enumerated and error-free.
+<!-- BT1-CURRENT-BEGIN -->
+> The controller sometimes enters a non-responsive HCI state during synchronous-audio link
+> transitions, while remaining USB-enumerated. Later USB collapse has so far only been
+> observed after a reset, rebind or driver reload; whether it belongs to the fault's
+> untreated trajectory is **unresolved**.
+<!-- BT1-CURRENT-END -->
+
+The onset is followed within seconds by `hci0: command tx timeout`. From that point the
+controller answers no HCI command, while remaining USB-enumerated and initially error-free.
 
 ⚠️ Earlier revisions continued "…45–66 s later it stops answering USB control transfers
 and leaves the bus", as the fault's trajectory. That figure is **withdrawn**: every
@@ -81,15 +90,16 @@ other way round.
 ### What has and has not been tested
 
 A userspace watchdog issued `USBDEVFS_RESET` at **+11 s, +16 s, +20 s, +20 s and +33 s**
-after the first timeout. All five failed. One reset issued *before* any timeout, on a
-bluetoothd audio-teardown signal, recovered the controller.
+after the first timeout. None restored HCI service, and USB loss followed. After one reset
+issued *before* any timeout, on a bluetoothd audio-teardown signal, the controller answered;
+that intervention censored whether a failure was imminent.
 
 ⚠️ **Those experiments do not test the proposed patch.** `hci_cmd_timeout()` calls
 `hdev->reset(hdev)` unconditionally on the **first** timeout, with no threshold — so a
 patched kernel would act at **+0 s**, synchronously with the log line the watchdog reacts
-to. Every experiment above was 11 s or more late. Whether an immediate reset lands inside
-the window is **unknown**, and given how sharply the window appears to close, the
-difference may be decisive.
+to. Every post-timeout experiment above was 11 s or more late. The +0 s point is **unknown**:
+an immediate reset may recover the controller or may contribute to later USB loss, so both
+benefit and harm must be measured.
 
 See §"What the missing entry does and does not explain" for the mechanism, and
 [`firmware-hypothesis.md`](firmware-hypothesis.md) for the prevention side.
@@ -239,10 +249,12 @@ hci0:   Type: Primary  Bus: USB
 never produces an event in reply. This is precisely the situation `hdev->reset` exists to
 handle — and on this device it is NULL, so nothing is attempted.
 
-### Stage 2 — degradation to hard hang
+### USB loss after intervention — not an established second stage
 
-Roughly six hours later the chip stopped answering USB control transfers as well.
-Recovery attempts, in escalating order, all failed:
+In this incident, the controller remained HCI-nonresponsive and USB-enumerated for roughly
+six hours. The operator then unbound/rebound the device; after that intervention it stopped
+answering USB control transfers. The following recovery attempts failed. This chronology
+does not establish that the untreated controller would have left the bus:
 
 ```
 # unbind / rebind the USB device
@@ -279,8 +291,8 @@ $ ls /sys/class/bluetooth/
 remained fully functional throughout. The host controller and bus are fine — the fault is
 confined to the QCA9377 Bluetooth silicon.
 
-Only a full power-off recovers it. A warm reboot is frequently insufficient, consistent
-with the M.2 rail not being dropped on warm reset.
+A full power-off recovered it. Whether a warm reboot can do so is unmeasured; the M.2-rail
+explanation is an untested hardware inference (`EX-017`, `EX-019`).
 
 ---
 
@@ -419,11 +431,11 @@ where the kernel would have noticed at all.
 | A reset **at +0 s**, i.e. what a patched kernel would do | ❓ **never tested** |
 | Adding the device ID would fix the hang | ❓ **open** — see the row above |
 
-What the data supports is that the recoverable window closes *sharply*. What it does
-**not** establish is where exactly it closes relative to the first timeout, because no
-experiment has yet placed a reset there. `hci_cmd_timeout()` calls `hdev->reset()`
-synchronously with the timeout it reports, so a patched kernel occupies precisely the
-untested point.
+The tested timings have different observed outcomes, but they do not establish a
+one-directional recovery deadline. A reset may recover the controller, leave it unstable,
+or contribute to the later USB collapse. `hci_cmd_timeout()` calls `hdev->reset()`
+synchronously with the timeout it reports, so a patched kernel occupies the untested +0 s
+point and must be scored for both recovery and harm.
 
 ⚠️ **Small n throughout.** Five failed late resets, one successful early reset, two hangs
 with no early warning at all. The incidents were not controlled reproductions (see the
@@ -432,9 +444,9 @@ methodological caveat above). Treat all of this as evidence, not proof.
 Two further corrections from the same session, both to assumptions stated earlier in
 this report:
 
-- **Stage 1 is short.** It lasted **53 s**, not the ~6 h originally inferred. The
-  6-hour figure measured how long an *untouched* controller stayed enumerated while
-  idle — not how long it remains recoverable.
+- **No recovery deadline is established.** The 53 s interval ended in our intervention;
+  the ~6 h interval was another censored lower bound while the controller stayed
+  enumerated. Neither measures how long the untreated state remains recoverable.
 - **The trigger is not A2DP-specific.** The HCI capture shows hundreds of `SCO Data TX`
   packets (HFP voice), then `Start Discovery` returning `Authentication Failed (0x05)`,
   a `Disconnect`, and `Set Powered: Disabled`. The common factor is an active audio
@@ -450,7 +462,8 @@ one did not.
 
 ## Impact
 
-- Bluetooth becomes unusable until a full power-off; a reboot is often not enough.
+- Bluetooth becomes unusable; a full power-off has recovered it. Warm-reboot behavior is
+  unresolved (`EX-017`, `EX-019`).
 - GNOME Settings shows a Bluetooth panel spinning forever (the MGMT request never
   completes), with no error surfaced to the user.
 - Occurred in 13 of 34 consecutive boots under normal daily use.
@@ -464,11 +477,10 @@ one did not.
 Add `13d3:3503` to btusb's QCA ROME quirks entries. See `docs/fix-proposal.md` for the patch,
 its justification and the validation plan.
 
-A broader question for maintainers: given that an unmatched QCA controller degrades to a
-**hardware-power-cycle-only** state, would it be worth installing a generic
-`cmd_timeout` reset handler for *any* device binding through the generic Bluetooth-class
-entry? A USB reset is cheap and safe on an already-unresponsive controller, and would
-make the whole class of "missing device ID" bugs self-limiting rather than catastrophic.
+A broader question for maintainers, separate from this device-specific report, is whether
+generic-class devices should receive a default timeout reset. The present evidence cannot
+justify that change: even on this one controller the sign of a reset at +0 s is unmeasured,
+and no claim about safety across other controllers follows from these incidents.
 
 ---
 
@@ -477,9 +489,8 @@ make the whole class of "missing device ID" bugs self-limiting rather than catas
 A userspace watchdog reproduces the missing handler: it tails the kernel log, and after
 3 controller timeouts within 60 s issues `USBDEVFS_RESET` on the device, escalating to
 USB unbind/bind if that is insufficient. Additionally, USB autosuspend is disabled for
-the device (`btusb enable_autosuspend=0` plus a udev rule pinning `power/control=on`),
-since runtime suspend racing with in-flight HCI traffic appears to widen the window in
-which the stall occurs.
+the device (`btusb enable_autosuspend=0` plus a udev rule pinning `power/control=on`).
+That setting is an unproven mitigation variable, not an established trigger mechanism.
 
 Both are documented in `docs/changes-applied.md`. Effectiveness measurement is ongoing.
 

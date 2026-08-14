@@ -5,6 +5,11 @@
 **Status legend:** ✅ confirmed by direct measurement · ⚠️ inferred · ❓ open
 
 > This file is appended to as findings arrive, so nothing is lost across a reboot.
+>
+> ⚠️ **Historical chronology, not current authority.** Early sections intentionally preserve
+> conclusions later refuted by new evidence. Use [`issues.md`](issues.md), especially the
+> marked BT-1 current formulation, for present claims; do not quote an unannotated section
+> below as the repository's current position.
 
 ---
 
@@ -532,4 +537,3 @@ Pristine config captured **before any change** at
 were runtime driver unbind/rebind and a port power-cycle attempt — both fully reset by a
 reboot, and neither touches disk, initramfs, bootloader or kernel packages. There is no
 bootability risk from anything done during this investigation.
-

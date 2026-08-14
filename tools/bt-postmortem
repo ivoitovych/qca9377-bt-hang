@@ -111,12 +111,12 @@ printf '%-34s %-10s %s\n' "device left the bus"        "$(hm "$t_gone")"  "$(del
 printf '%-34s %-10s %s\n' "controller recovered"       "$(hm "$t_rec")"   "$(delta "$t_first" "$t_rec")"
 
 # Counts scoped to this incident only.
-cwin() { awk -v s="$WIN_A" -v e="$WIN_B" '$1>=s && $1<=e' | grep -c "$1" || true; }
+cwin() { awk -v s="$WIN_A" -v e="$WIN_B" '$1>=s && $1<=e' | grep -cE "$1" || true; }
 n_to=$(awk -v s="$t_first" -v e="$t_last" '$1>=s && $1<=e' <<<"$(grep -E 'command( 0x[0-9a-f]+)? tx timeout' <<<"$KLOG")" | wc -l)
 n_act=$(cwin "intervening"            <<<"$WLOG")
 n_early=$(cwin "EARLY intervention"   <<<"$WLOG")
 n_rec=$(cwin "RECOVERED"              <<<"$WLOG")
-n_eok=$(cwin "EARLY recovery SUCCEEDED" <<<"$WLOG")
+n_eok=$(cwin "EARLY recovery SUCCEEDED|CONTROLLER RESPONDS AFTER EARLY INTERVENTION" <<<"$WLOG")
 n_rf=$(cwin "USBDEVFS_RESET failed"   <<<"$WLOG")
 n_fatal=$(cwin "FATAL:"               <<<"$WLOG")
 
@@ -139,7 +139,8 @@ if [[ -z "$hci_now" ]]; then
     echo "  ${R}${B}CONTROLLER IS DOWN RIGHT NOW${O} — no hci device exists."
     echo "  on USB bus: $on_bus"
     if [[ "$on_bus" == no ]]; then
-        echo "  It left the bus: stage 2. A full POWER-OFF certainly recovers it;"
+        echo "  It left the bus after an intervention; untreated progression is unresolved."
+        echo "  A full POWER-OFF recovers it;"
         echo "  whether a warm reboot can is untested (EX-017/EX-019)."
     else
         echo "  Enumerated but btusb has not created an adapter."
@@ -148,7 +149,7 @@ if [[ -z "$hci_now" ]]; then
 fi
 
 if (( ${n_eok:-0} > 0 )); then
-    echo "  Recovered via EARLY intervention (reset before any HCI timeout)."
+    echo "  Controller answered after EARLY intervention; BT-1 counterfactual censored."
 elif (( ${n_act:-0} == 0 )); then
     echo "  ${Y}The watchdog never intervened in this incident${O} despite ${n_to} timeout(s)."
     # ADVICE-ONLY: printed for the operator, never executed. Marked because the
@@ -186,6 +187,7 @@ fi
 
 if [[ -n "$t_first" && -n "$t_usb" ]]; then
     echo
-    echo "${B}Stage 1 duration${O}: $(awk -v a="$t_first" -v b="$t_usb" 'BEGIN{printf "%.0f", b-a}')s"
-    echo "  (first HCI timeout -> first USB failure: the window any reset must fit in)"
+    echo "${B}HCI-to-first-USB-event interval${O}: $(awk -v a="$t_first" -v b="$t_usb" 'BEGIN{printf "%.0f", b-a}')s"
+    echo "  Check intervention provenance before interpreting this interval; it is"
+    echo "  not automatically a natural stage duration or a recovery deadline."
 fi

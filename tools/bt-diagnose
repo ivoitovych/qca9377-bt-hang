@@ -1,25 +1,18 @@
 #!/bin/bash
-# bt-diagnose — does this machine have the "no cmd_timeout handler" Bluetooth bug?
+# bt-diagnose — has this machine recorded the HCI command-timeout phenotype?
 #
 #   ./tools/bt-diagnose
 #
 # Standalone: no installation, no configuration, nothing written. Clone the
-# repo and run it. Works with any USB Bluetooth controller — the affected
-# device is auto-detected rather than assumed.
+# repo and run it. It displays the currently attached USB Bluetooth controller
+# and reports system-wide historical log counts.
 #
-# THE SIGNATURE it looks for:
-#   1. HCI command timeouts in the logs           ("tx timeout")
-#   2. ZERO automatic reset attempts in response  ("Resetting usb device")
-#   3. no vendor firmware load for the controller
+# IMPORTANT LIMIT. Kernel timeout/reset/firmware lines do not carry a stable
+# VID:PID identity across retained boots. They also do not say which timeout a
+# reset answered or why a reset occurred. The counts below are therefore a
+# phenotype report, not a device-table or causal diagnosis.
 #
-# (1) without (2) is the bug. hci_cmd_timeout() calls hdev->reset(hdev) on the
-# FIRST command timeout, with no threshold. But hdev->reset is only installed
-# for devices matched by btusb's vendor quirks table; an unmatched device gets
-# driver_info = 0 and hdev->reset stays NULL, so the kernel logs each timeout
-# and does nothing. The same missing entry also skips btusb_setup_qca(), so the
-# controller never receives its firmware patch either.
-#
-# Exit: 0 = signature not present, 1 = signature present, 2 = cannot determine.
+# Exit: 0 = phenotype not observed, 1 = phenotype observed, 2 = cannot determine.
 
 set -uo pipefail
 
@@ -48,6 +41,41 @@ boot_indices() {
 
 [[ -t 1 ]] || { G=""; R=""; Y=""; B=""; O=""; }
 
+diagnose_verdict() {
+    local timeouts="$1" resets="$2" fw="$3" boots="$4"
+
+    echo "─────────────────────────────────────────────────────────────"
+    if (( timeouts == 0 )); then
+        echo "${G}HCI command-timeout phenotype NOT observed.${O}"
+        echo "No HCI command timeouts were found in the retained kernel journal."
+        echo "That means only that the available history contains no observation;"
+        echo "it does not prove the controller or its driver configuration is healthy."
+        return 0
+    fi
+
+    echo "${R}${B}HCI command-timeout phenotype observed.${O}"
+    echo
+    echo "$timeouts HCI command timeout(s) across $boots retained boot(s)."
+    if (( resets > 0 )); then
+        echo "$resets reset-like kernel message(s) also appear in that history."
+    else
+        echo "No reset-like kernel messages appear in that history."
+    fi
+    if (( fw > 0 )); then
+        echo "$fw vendor-firmware message(s) also appear in that history."
+    else
+        echo "No vendor-firmware messages appear in that history."
+    fi
+    echo
+    echo "These are aggregate, unpaired, system-wide counts. They do NOT establish"
+    echo "that a reset answered any counted timeout, that a reset callback is or is"
+    echo "not installed for the current controller, or that firmware setup did or"
+    echo "did not run for it. Establish those facts from the device table, source or"
+    echo "shipped module, scoped to the exact VID:PID."
+    return 1
+}
+
+main() {
 echo "${B}Bluetooth controller diagnosis${O}"
 echo "─────────────────────────────────────────────────────────────"
 
@@ -69,9 +97,9 @@ if (( ! found )); then
     echo "${Y}No USB Bluetooth controller with an hci node found.${O}"
     echo
     echo "If Bluetooth used to work and the adapter has now vanished entirely,"
-    echo "that is itself the advanced form of this bug: the controller has stopped"
-    echo "answering USB and dropped off the bus. Try a full POWER-OFF — it"
-    echo "certainly recovers it; whether a plain reboot can is untested (EX-017)."
+    echo "the current absence may itself be relevant, but it does not identify a"
+    echo "cause. A full power-off has recovered this repository's QCA9377; whether"
+    echo "a warm reboot can recover it remains deliberately untested (EX-017)."
     echo
     lsusb 2>/dev/null | grep -iE "bluetooth|wireless" | sed 's/^/  /'
     exit 2
@@ -101,7 +129,7 @@ case "$alive" in
     *)   echo "  ${Y}•${O} cannot probe (install 'bluez' for hciconfig/btmgmt)" ;;
 esac
 
-# ── 3. The signature ──────────────────────────────────────────────────────
+# ── 3. Historical phenotype ───────────────────────────────────────────────
 echo
 echo "${B}Log evidence${O}"
 if ! bt_journal_available; then
@@ -129,38 +157,29 @@ done
 
 printf '  boots examined            : %s\n' "$boots"
 printf '  HCI command timeouts      : %s\n' "$timeouts"
-printf '  automatic reset attempts  : %s\n' "$resets"
-printf '  vendor firmware loads     : %s\n' "$fw"
+printf '  reset-like kernel messages: %s\n' "$resets"
+printf '  vendor firmware messages  : %s\n' "$fw"
+echo "  scope                     : aggregate across retained boots; not VID:PID-paired"
 
 # ── 4. Verdict ────────────────────────────────────────────────────────────
 echo
-echo "─────────────────────────────────────────────────────────────"
-if (( timeouts == 0 )); then
-    echo "${G}Signature NOT present.${O}"
-    echo "No HCI command timeouts recorded. Either this controller is healthy,"
-    echo "or the journal does not go back far enough — check 'journalctl --list-boots'."   # SEAM-ADVICE
-    exit 0
-fi
+diagnose_verdict "$timeouts" "$resets" "$fw" "$boots"
+verdict_rc=$?
 
-if (( resets > 0 )); then
-    echo "${Y}Timeouts present, but the kernel IS resetting the controller.${O}"
-    echo "$timeouts timeout(s) and $resets reset attempt(s): the reset callback"
-    echo "is installed and doing its job. Your controller may still be unreliable,"
-    echo "but not for the reason this repository documents."
-    exit 0
+if (( verdict_rc == 1 )); then
+    echo
+    if [[ "$VID:$PID" == "13d3:3503" ]]; then
+        echo "For 13d3:3503, verify the separate static mechanism with:"
+        echo "  ./tools/bt-verify-kernel-mechanism"
+    else
+        echo "For $VID:$PID, inspect the matching btusb device-table entry and the"
+        echo "running module before drawing a driver-mechanism conclusion."
+    fi
+    echo "See docs/issues.md for the evidence model and current open questions."
 fi
+return "$verdict_rc"
+}
 
-echo "${R}${B}Signature PRESENT.${O}"
-echo
-echo "$timeouts HCI command timeout(s) across $boots boot(s), and ${B}zero${O} automatic"
-echo "reset attempts. The kernel logged the failures and did nothing about them."
-(( fw == 0 )) && echo "No vendor firmware load either, consistent with driver_info = 0."
-echo
-echo "Confirm the device is missing from btusb's quirks table:"
-echo "  zstd -dcf /lib/modules/\$(uname -r)/kernel/drivers/bluetooth/btusb.ko.zst \\"
-echo "    | xxd -p | tr -d '\\n' | grep -o '$(printf '%s' "${VID:2:2}${VID:0:2}${PID:2:2}${PID:0:2}" | tr 'A-Z' 'a-z')'"
-echo "  (no output = this device gets no vendor quirks)"
-echo
-echo "See README.md for the workaround, and docs/bug-report.md to report it"
-echo "with your own device ID."
-exit 1
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi

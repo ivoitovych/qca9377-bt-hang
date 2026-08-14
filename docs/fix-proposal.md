@@ -4,6 +4,13 @@
 **File:** `drivers/bluetooth/btusb.c`
 **Status:** proposed — **not yet built or tested.** See §4 before submitting anything.
 
+<!-- BT1-CURRENT-BEGIN -->
+> The controller sometimes enters a non-responsive HCI state during synchronous-audio link
+> transitions, while remaining USB-enumerated. Later USB collapse has so far only been
+> observed after a reset, rebind or driver reload; whether it belongs to the fault's
+> untreated trajectory is **unresolved**.
+<!-- BT1-CURRENT-END -->
+
 ---
 
 ## 1. The change
@@ -66,10 +73,10 @@ Of those, two are the reasons to add the ID:
 
 1. **`hdev->reset = btusb_qca_reset`** — invoked by `hci_cmd_timeout()` on the **first**
    command timeout. `btusb_qca_reset()` falls back to `btusb_reset()`, which queues a USB
-   device reset when no hardware reset GPIO is available. → **recovery**
+   device reset when no hardware reset GPIO is available. → **treatment whose sign is unmeasured**
 2. **`data->setup_on_usb = btusb_setup_qca`** — rampatch and NVM firmware download
    (`qca/rampatch_usb_*.bin`, `qca/nvm_usb_*.bin`). Both are already present in
-   `linux-firmware` on the affected system. → **prevention**
+   `linux-firmware` on the affected system. → **initialisation/prevention candidate**
 
 The other four (`shutdown`, `set_bdaddr`, `SIMULTANEOUS_DISCOVERY`, `needs_reset_resume`)
 come along with the flag and are why a single build toggling `BTUSB_QCA_ROME` isolates
@@ -138,14 +145,15 @@ have acted at **+0 s**, synchronously with the log line those experiments trigge
 | Latency | +11 s … +33 s | ~0 s, same call frame |
 | Call path | `USBDEVFS_RESET` → `proc_resetdevice()` → `usb_reset_device()` | `btusb_qca_reset()` → `btusb_reset()` → `usb_queue_reset_device()` |
 
-Those are a useful proxy but **not the same experiment**. Given the evidence that the
-recoverable window closes sharply — every reset issued at +11 s or later failed, while
-the one issued before any timeout succeeded — the difference between +0 s and +11 s
-could be decisive. (An earlier revision here cited "stage 1 measured at 45–66 s"; that
-figure was the watchdog's own reaction time and is withdrawn — `EX-018`.)
+Those are a useful proxy but **not the same experiment**. The tested timings had different
+outcomes, so +0 s must be measured directly. They do not establish a one-way recovery
+deadline: because every observed USB collapse followed intervention, a reset at +0 s may
+recover, destabilise, or push the controller toward USB loss. (The earlier 45–66 s figure
+measured watchdog reaction time and is withdrawn — `EX-018`.)
 
-> **The five failed late resets do not rule out this patch as a recovery fix. They rule
-> out a reset issued eleven or more seconds late.** The patch has never been tested.
+> **The five late resets did not restore HCI service and were followed by USB loss.** They
+> neither test +0 s nor prove that reset timing alone caused the outcome. The patch has
+> never been tested, and its effect may be beneficial or harmful.
 
 ⚠️ Note also that `USBDEVFS_RESET` and `usb_queue_reset_device()` are not literally the
 same path — the former calls `usb_reset_device()` directly from `proc_resetdevice()`,
@@ -178,7 +186,7 @@ were late relative to what the patch would do**, which is the point of §3a.
 | Claim | Status |
 |---|---|
 | The device is matched by no vendor quirks entry | ✅ verified in upstream source and the shipped binary |
-| It therefore gets no reset callback and no firmware download | ✅ 287 timeouts, 0 reset attempts, 0 firmware loads across 34 boots |
+| It therefore gets no reset callback and no QCA setup path | ✅ verified in source and shipped module; aggregate log counts are supporting context, not the proof |
 | Adding the ID would prevent the hang | ❓ **untested** — every reset we tried was late relative to the kernel's |
 
 ### Two related corrections
@@ -246,8 +254,9 @@ EARLY intervention: 2 audio-teardown failure(s) in 90s — resetting BEFORE any 
   EARLY recovery SUCCEEDED
 ```
 
-with **zero `tx timeout` events for the whole boot**: the stall was cleared before the
-kernel would have noticed it at all.
+with **zero `tx timeout` events for the whole boot**. Because intervention came before the
+observable BT-1 endpoint, this is `censored_pre_failure`: the controller answered after the
+reset, but the record cannot establish that a stall was imminent or prevented.
 
 ### Consequence for this patch
 
@@ -255,18 +264,17 @@ Adding `13d3:3503` to the quirks table is **correct** — the device really does
 vendor quirks. Whether it is *sufficient* is unknown, because the reset it would install
 fires at +0 s and no experiment has tested that point.
 
-What can be said is that the recoverable window closes **sharply**:
+What can be said without inventing the counterfactual:
 
-- a reset before any HCI timeout recovered the controller (once);
-- resets at +11 s … +33 s all failed (five times);
-- the boundary between those lies somewhere in the first eleven seconds, and
-  `hci_cmd_timeout()` fires at the very start of that interval.
+- after one reset before any timeout, the controller answered; whether BT-1 was imminent is
+  unknowable because the intervention censored it;
+- resets at +11 s … +33 s did not restore HCI service and were followed by USB loss;
+- a reset at +0 s is untested, and its sign cannot be inferred from either group.
 
-⚠️ **Revised 2026-08-11.** The last bullet is now known to be wrong in general: with
-`hdev->reset` installed, `hci_cmd_timeout()` *does* fire a reset — at the very moment
-the first timeout is detected. What is true of this device is that the hook is never
-installed, because the ID is missing. Whether a reset at +0 s lands inside the window is
-exactly what §5a is designed to answer.
+⚠️ **Historical correction, 2026-08-11.** An earlier revision described the reset hook as
+if it waited for multiple timeouts. v7.0 source shows that, when installed,
+`hci_cmd_timeout()` fires it on the first timeout. This device lacks the hook because its ID
+is missing; whether treatment at that +0 s point helps or harms is what §5a must answer.
 
 ### ⚠️ A third incident narrows this further
 
@@ -292,14 +300,14 @@ Two consequences:
    reproductions were ad-hoc, with no fixed procedure and no record of the exact
    actions, so a differing log signature may reflect a differing (unknown) input rather
    than a different failure path.
-2. **The late-reset result is now stronger, not weaker.** This reset went out **+11 s**
-   after the first timeout — near the limit of what a log-driven watchdog can do — and
-   still failed. Three for three, a reset after the first HCI timeout has failed.
+2. **This adds a +11 s treatment observation.** The reset did not restore HCI, and USB
+   errors followed. Three post-timeout interventions in this subset did not restore HCI;
+   their timing differs from +0 s, and their downstream USB outcome may include harm from
+   the intervention itself.
 
-That sharpens the question: the recoverable window appears to close within the first
-eleven seconds after the timeout. `hci_cmd_timeout()` calls `hdev->reset()` at the start
-of that interval — which is precisely the point no experiment has yet occupied. Build A
-in §5a puts a reset exactly there.
+That isolates the question without answering it: `hci_cmd_timeout()` calls `hdev->reset()`
+at +0 s, precisely the point no experiment has occupied. Build A in §5a must record not
+only whether HCI returns, but also whether automatic reset increases later USB loss.
 
 **Update 2026-08-12 — an early reset was finally captured, and it does not change the
 above.** In the incident of that night the watchdog reset the device **133 s before** any
@@ -307,20 +315,21 @@ HCI timeout (`EX-004`). The reset worked: the device re-enumerated and the HCI s
 re-registered 315 ms later. The controller then hung anyway, 132 s afterwards, and left
 the bus.
 
-This is evidence about *durability of recovery*, not about Build A. `hdev->reset` is
+This is evidence about controller state after intervention, not about Build A. `hdev->reset` is
 invoked from the command-timeout path at **+0 s**; at 00:09:37 no timeout had occurred and
 the callback would not have run. The tested point remains unoccupied, so **Build A stays in
 the ladder unchanged**. What the result does do is raise Build B: recovering the controller
 without re-running `btusb_setup_qca()` returned it to service in the state it was already
-in, and it failed again — which is what the firmware-reload hypothesis predicts. Build B is
-now the strongest *prevention* candidate, but "strongest candidate" is not "only remaining
-variable", and A must still be run to know whether the +0 s position alone suffices.
+in, and HCI failure appeared later. That is compatible both with a non-durable reset and
+with reset altering the trajectory. Build B remains a prevention candidate, but A must be
+run and scored for both recovery and harm before either interpretation is preferred.
 
 The mechanism proxy holds, verified against v7.0 source: `btusb_qca_reset()` with no
 `bt_en` GPIO falls through to `btusb_reset()` → `usb_queue_reset_device()`, and since
 `btusb_driver` declares no `.pre_reset`/`.post_reset`, USB core unbinds and rebinds the
-interface around it. The watchdog performed the same *kind* of reset the fix performs. Only
-the timing differed — and in this bug, timing has been decisive every time it was measured.
+interface around it. The watchdog exercised a related reset primitive, not the same call
+path or execution context. Timing also differed. The observations therefore motivate the
+direct A/B/C/D comparison but do not isolate which difference produced the outcomes.
 
 ⚠️ **Small n.** Two failed late resets, one successful early reset, one incident with no
 early signal. Attach all three sessions:
@@ -362,28 +371,22 @@ through them.
 capability, and the reproducer involves audio profile and mode transitions — introducing
 it while establishing causation would confound exactly the thing under test.
 
-### Decision tree
+### Decision rules — benefit and harm are separate axes
 
-```
-A4: stock protocol establishes a reproducible baseline (target 5/5)
-  |   NOT the 13-of-34 historical incidence — that is an observational
-  |   rate from uncontrolled daily use, not a controlled reproducer, and
-  |   it cannot serve as the denominator any build is compared against
-  |
-  +-- A works   -> immediate reset is sufficient; the +0 s vs +11 s gap is the whole story
-  |
-  +-- A fails
-        |
-        +-- B works   -> QCA USB initialisation / firmware setup is sufficient
-        |
-        +-- B fails
-              |
-              +-- C works   -> some other ROME behaviour matters (shutdown? reset_resume?
-              |                SIMULTANEOUS_DISCOVERY?) — narrow it further
-              |
-              +-- C fails   -> the missing-ID quirk does not cure this failure path;
-                               look before the first timeout
-```
+The controlled stock protocol (target 5/5) supplies the denominator; the historical 13/34
+rate does not. Score every build on both BT-1 incidence and final USB/controller state:
+
+| Result | Interpretation |
+|---|---|
+| reset fires, HCI returns, no excess USB loss | evidence of useful immediate recovery |
+| reset fires, USB loss rises versus untreated stock | evidence the treatment is harmful |
+| BT-1 falls before any reset is needed | evidence of prevention, not reset recovery |
+| BT-1 persists with no material outcome change | added behavior is insufficient |
+
+Only after A is shown safe but insufficient does B isolate QCA setup; only after B does C
+add the remaining ROME behaviors, and D finally adds wideband speech. `bt-stage2` records
+automatic kernel reset, positive watchdog intervention, and unknown-origin reset as
+separate censoring categories so a treatment cannot masquerade as natural history.
 
 ### Instrumentation notes
 
@@ -430,7 +433,7 @@ still enumerates and binds, and the failure surfaces when the adapter is brought
 recoverable by booting the previous kernel, which is why §5 pins a fallback entry rather
 than treating this as unbootable-class risk.
 
-The device is currently hard-hung and off the USB bus, so **nothing here has been
+The device is currently absent from the USB bus after intervention, so **nothing here has been
 validated on hardware.** A cold power-off is required before any of §5 can be attempted.
 
 ### A more conservative first step
@@ -488,8 +491,9 @@ hciconfig -a               # local name reads back without timeout
 #         Bluetooth: hci0: Resetting usb device.        <- btusb_reset() fallback
 #       or
 #         Bluetooth: hci0: Reset qca device via bt_en gpio
-#     followed by re-enumeration and a working controller.
-#     Before the patch: timeouts, no reset attempt, then a hard hang.
+#     Then record BOTH axes: whether HCI returns and whether the device later
+#     develops USB errors or leaves the bus. A reset followed by USB loss is a
+#     possible harmful treatment outcome, not merely a failed recovery.
 ```
 
 ⚠️ The expected string is `Resetting usb device.` — **not** "Multiple cmd timeouts seen",
@@ -497,8 +501,9 @@ which belonged to the `btusb_qca_cmd_timeout()` mechanism this document previous
 described in error and which v7.0 does not use.
 
 Criterion (c) is the one that matters, and only against a **quantified** baseline: run
-the same protocol on stock first and record the failure rate (target 5/5). (a) and (b)
-only establish that the patch did not break anything.
+the same protocol on stock first and record BT-1 incidence, reset provenance, HCI outcome
+and USB-loss outcome (target 5/5 exposure). (a) and (b) only establish that setup ran and
+basic operation survived; neither establishes benefit.
 
 ### Making it survive kernel updates
 
@@ -537,21 +542,21 @@ Neighbouring IMC Networks IDs are present -- 13d3:3491, 3496 and 3501
 all carry BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH -- while the three
 consecutive IDs 3502, 3503 and 3504 carry nothing.
 
-Two consequences. hci_cmd_timeout() calls hdev->reset(hdev) on the first
-command timeout, but hdev->reset is NULL here, so the kernel logs the
-timeout and does nothing: 287 "command tx timeout" events across 34
-boots with zero reset attempts. Separately, btusb_setup_qca() never
-runs, so the QCA rampatch/NVM download is never performed for this ID,
-though both files are present in linux-firmware on the affected system.
+Two consequences, verified from source and the shipped module.
+hci_cmd_timeout() calls hdev->reset(hdev) on the first command timeout,
+but hdev->reset is NULL for this ID. Separately, btusb_setup_qca() never
+runs, so the QCA rampatch/NVM download is never performed through that
+path, though both files are present in linux-firmware on the affected
+system. Aggregate journal counts are consistent with these facts but do
+not establish them by themselves.
 
-The observed failure follows an audio-layer state change (ungraceful
-A2DP/SCO teardown, or a codec/mode switch). The controller stops
-answering HCI while remaining USB-enumerated; with no intervention it
-has stayed in that state, free of USB-level errors, for over an hour.
-In incidents where it went on to stop answering USB and leave the bus,
-neither driver rebind nor an xHCI port power cycle recovered it -- only
-a full power-off. The same hardware shows no fault under Windows on the
-same machine.
+The controller sometimes stops answering HCI during synchronous-audio
+link transitions while remaining USB-enumerated. With no intervention
+it has stayed in that state, free of USB-level errors, for over an hour.
+Every observed USB-loss incident occurred after reset, rebind or driver
+reload, so whether USB loss belongs to the untreated fault is unresolved.
+A full power-off has restored it; warm-reboot behavior is unmeasured.
+The same hardware shows no fault under Windows on the same machine.
 
 Add the device to the QCA ROME entries so the standard command-timeout
 reset path applies.

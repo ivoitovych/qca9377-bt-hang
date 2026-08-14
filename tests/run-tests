@@ -187,6 +187,70 @@ PHL=$(BT_LIBDIR=/nonexistent BT_JOURNAL_FIXTURE="$PJ" tools/bt-phase -b 0 2>&1)
     && ok "bt-phase refuses when its libraries are absent" \
     || bad "bt-phase ran without its libraries: $PHL"
 
+if grep -q 'constant-hazard independent null' <<<"$OUT" \
+   && ! grep -q 'expected under independence' tools/bt-phase tools/lib/phase.awk; then
+    ok "states the constant-hazard null instead of equating it with independence"
+else
+    bad "bt-phase still overstates independence as sufficient for a uniform phase"
+fi
+
+echo
+echo "bt-diagnose — phenotype is not a causal verdict"
+echo "──────────────────────────────────────────────────────────────"
+
+DOUT=$(bash -c 'source tools/bt-diagnose; diagnose_verdict 12 3 0 4' 2>&1)
+DRC=$?
+if (( DRC == 1 )) && grep -q 'phenotype observed' <<<"$DOUT"; then
+    ok "timeouts remain reportable even when aggregate reset messages exist"
+else
+    bad "reset messages suppressed the timeout phenotype (rc=$DRC)"
+fi
+if grep -q 'aggregate, unpaired, system-wide counts' <<<"$DOUT" \
+   && ! grep -qE 'callback is installed|kernel logged the failures and did nothing|driver_info = 0' <<<"$DOUT"; then
+    ok "aggregate history carries no callback, reset-origin or firmware-table verdict"
+else
+    bad "bt-diagnose still converts aggregate counts into a causal verdict"
+fi
+
+DZERO=$(bash -c 'source tools/bt-diagnose; diagnose_verdict 0 0 0 4' 2>&1)
+DZRC=$?
+if (( DZRC == 0 )) && grep -q 'no observation' <<<"$DZERO" \
+   && ! grep -qi 'controller is healthy' <<<"$DZERO"; then
+    ok "zero retained timeouts is absence of observation, not proof of health"
+else
+    bad "zero-timeout verdict overclaims health (rc=$DZRC)"
+fi
+
+echo
+echo "BT-1 current formulation — one mechanically checked statement"
+echo "──────────────────────────────────────────────────────────────"
+
+bt1_block() {
+    awk '/BT1-CURRENT-BEGIN/{inside=1; next}
+         /BT1-CURRENT-END/{inside=0}
+         inside' "$1"
+}
+BT1_CANON=$(bt1_block docs/issues.md)
+same=yes
+for f in README.md docs/bug-report.md docs/fix-proposal.md; do
+    [[ "$(bt1_block "$f")" == "$BT1_CANON" ]] || same=no
+done
+if [[ -n "$BT1_CANON" && "$same" == yes ]]; then
+    ok "README, bug report and fix proposal reproduce issues.md's canonical BT-1 paragraph"
+else
+    bad "current BT-1 paragraph drifted between authoritative user-facing documents"
+fi
+
+BT1_CURRENT_FILES=(README.md docs/bug-report.md docs/fix-proposal.md
+                   bin/bt-usbmon bin/bt-hang-watchdog tools/bt-status
+                   tools/bt-postmortem tools/bt-health-report.sh)
+retired=$(rg -n -i 'failure has two stages|controller fails in two stages|recoverable window closes|window closes sharply|exact operation usb_queue_reset_device|autosuspend was the trigger|stage 1 lasted ~6 hours|reached stage 2 before|cheap and safe' "${BT1_CURRENT_FILES[@]}" || true)
+if [[ -z "$retired" ]]; then
+    ok "current-facing docs and tools contain no retired BT-1/reset assertions"
+else
+    bad "retired BT-1/reset assertion remains: $retired"
+fi
+
 echo
 echo "bt-capdiff matching"
 echo "──────────────────────────────────────────────────────────────"
@@ -962,43 +1026,57 @@ echo "────────────────────────�
 # which the watchdog reset the controller in between. The watchdog fired on
 # precisely the boots that progressed, and it fired first.
 #
-# The fixture has eight boots — natural disconnect, disconnect after our btusb
-# unload, no terminator at all, disconnect after a reset we issued, a
+# The fixture has ten boots — natural disconnect, disconnect after our btusb
+# unload, no terminator at all, a clean reset of UNKNOWN origin, a
 # `link tx timeout` that is not a BT-1 event, a natural progression with a
-# pre-terminator bus error, a clean reset in the boot AFTER that error (the
-# dev_error cross-boot leak: under the old code the stale flag classified that
-# reset as hub recovery and its disconnect as NATURAL), and a window in which
-# only a FOREIGN device (usb 1-2) disconnects.
+# pre-terminator bus error, a clean reset in the boot AFTER that error, a
+# window in which only a FOREIGN device (usb 1-2) disconnects, a boot with no
+# failure, and an automatic kernel-treatment reset.
+#
+# NOT covered here, and deliberately said out loud: the `dev_error` cross-boot
+# leak. That boot now carries a positive watchdog marker, which sets term_kind
+# first, so the reset line is skipped by the first-terminator-wins guard and
+# the leak is never exercised. Mutating away either `dev_error = 0` reset
+# leaves this section green — verified. The guard against that regression is
+# the boot-separator reset itself, which no assertion here can fail on; a
+# fixture boot with a bus error followed, in the NEXT boot, by an unmarked
+# clean reset and a disconnect would be needed to close it.
 S2=$(awk -f tools/lib/timestamp.awk -f tools/lib/stage2.awk \
      tests/stage2-invariants.data 2>&1)
 
 nat=$(grep -oP 'ended naturally\s+\K[0-9]+' <<<"$S2")
-inv=$(grep -oP 'ended by our intervention\s+\K[0-9]+' <<<"$S2")
+inv=$(grep -oP 'ended by positive intervention\s+\K[0-9]+' <<<"$S2")
+krs=$(grep -oP 'ended by kernel treatment reset\s+\K[0-9]+' <<<"$S2")
+urs=$(grep -oP 'ended by unknown-origin reset\s+\K[0-9]+' <<<"$S2")
 shd=$(grep -oP 'ended by shutdown\s+\K[0-9]+' <<<"$S2")
 [[ "$nat" == "2" ]] && ok "counts exactly the two naturally-ended windows" \
     || bad "expected 2 natural, got ${nat:-none} — dev_error leaking across boots?"
-[[ "$inv" == "3" ]] && ok "counts all three intervened windows as intervened" \
-    || bad "expected 3 intervened, got ${inv:-none} — a clean reset after an errored boot must be OURS"
+[[ "$inv" == "2" ]] && ok "counts only positively established interventions as intervened" \
+    || bad "expected 2 positive interventions, got ${inv:-none}"
+[[ "$krs" == "1" ]] && ok "separates an automatic kernel-treatment reset" \
+    || bad "expected 1 kernel-treatment reset, got ${krs:-none}"
+[[ "$urs" == "1" ]] && ok "a clean USB reset without provenance remains unknown" \
+    || bad "expected 1 unknown-origin reset, got ${urs:-none}"
 [[ "$shd" == "2" ]] && ok "a boot that simply ended is censored, not natural" \
     || bad "expected 2 shutdown, got ${shd:-none} — a foreign device's disconnect must not terminate a window"
 
 # The headline figure must come from the natural window (50 s) and NOT from the
 # longest one (4331.99 s, ended by shutdown). Reporting the larger number as the
 # survival time is the exact error, with the sign reversed.
-grep -q 'longest NATURAL stage-1 window   50.00s' <<<"$S2" \
+grep -q 'longest uncensored HCI-to-USB-loss window   50.00s' <<<"$S2" \
     && ok "headline survival time is taken from the uncensored window" \
-    || bad "natural maximum wrong: $(grep -o 'longest NATURAL[^\n]*' <<<"$S2")"
+    || bad "natural maximum wrong: $(grep -o 'longest uncensored[^\n]*' <<<"$S2")"
 
 # Every censored row must say so where it is read, not only in the summary.
-[[ "$(grep -c 'RIGHT-CENSORED' <<<"$S2")" == "5" ]] \
+[[ "$(grep -c 'RIGHT-CENSORED' <<<"$S2")" == "6" ]] \
     && ok "each censored window is labelled at the point of use" \
-    || bad "expected 5 RIGHT-CENSORED labels, got $(grep -c 'RIGHT-CENSORED' <<<"$S2")"
+    || bad "expected 6 RIGHT-CENSORED labels, got $(grep -c 'RIGHT-CENSORED' <<<"$S2")"
 
 # A `link tx timeout` boot must not open a window at all — it is an ACL
 # supervision timeout, and counting it would invent a stage-1 event.
-grep -q 'boots reaching stage 1        7' <<<"$S2" \
-    && ok "link tx timeout does not open a stage-1 window" \
-    || bad "wrong boot count: $(grep -o 'boots reaching stage 1[^\n]*' <<<"$S2")"
+grep -q 'boots with HCI non-response   8' <<<"$S2" \
+    && ok "link tx timeout does not open an HCI-nonresponse window" \
+    || bad "wrong boot count: $(grep -o 'boots with HCI non-response[^\n]*' <<<"$S2")"
 
 # Boots with no enumeration line for the device run unfiltered, and the summary
 # must SAY so rather than present their classification as anchored.
@@ -1298,7 +1376,7 @@ fi
 # The headline number must survive the trip through the script, not just the
 # awk. If the wrapper ever hands the analysis the wrong file — a cache, a
 # partial dump — this is what notices.
-if [[ "$S2W" == *"longest NATURAL stage-1 window   50.00s"* ]]; then
+if [[ "$S2W" == *"longest uncensored HCI-to-USB-loss window   50.00s"* ]]; then
     ok "bt-stage2 reports the natural window through the full script path"
 else
     bad "bt-stage2 lost the natural maximum through the script path"
@@ -1611,8 +1689,8 @@ WOUT=$(wd_run 10); wrc=$?
 [[ "$WOUT" == *"escalating to USB unbind/bind"* ]] \
     && ok "watchdog escalates when the controller stays dead after reset" \
     || bad "escalation path not taken"
-[[ "$WOUT" == *"RECOVERED — controller is responding again"* ]] \
-    && ok "watchdog confirms recovery through the probe" \
+[[ "$WOUT" == *"RECOVERED — confirmed stalled controller is responding again"* ]] \
+    && ok "watchdog confirms recovery of a CONFIRMED stall through the probe" \
     || bad "recovery not confirmed"
 [[ "$WOUT" == *"suppressed by cooldown"* ]] \
     && ok "watchdog suppresses a re-trigger inside the cooldown, loudly" \
@@ -1651,8 +1729,15 @@ EOUT=$(wd_run 10 BT_EARLY=1)
    && "$EOUT" == *"resetting BEFORE any HCI timeout"* ]] \
     && ok "EARLY mode intervenes on a single teardown signal" \
     || bad "EARLY intervention not taken"
-[[ "$EOUT" == *"EARLY recovery SUCCEEDED"* ]] \
-    && ok "EARLY recovery is confirmed and celebrated as the result that matters" \
+# An early intervention fires BEFORE any HCI timeout, so a controller that
+# answers afterwards cannot show that BT-1 was imminent — the counterfactual is
+# censored by the act of intervening. The message used to call that outcome a
+# success; it now records what was actually observed and says what it cannot
+# tell you. The assertion follows, and requires the qualification: without it
+# the log would again read as evidence that early intervention prevents BT-1.
+[[ "$EOUT" == *"CONTROLLER RESPONDS AFTER EARLY INTERVENTION"* \
+   && "$EOUT" == *"counterfactual censored"* ]] \
+    && ok "an early intervention records a response, not a prevented failure" \
     || bad "EARLY recovery outcome wrong"
 
 # Scenario 4: the device is off the bus when the threshold trips — stage 2.
@@ -1818,7 +1903,10 @@ mkdir -p "$HRSYS/bt/hci0"
 hrv() { BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$HRSYS/usb"         BT_SYSFS_MODULE="$HRSYS/mod" BT_SYSFS_BT="$HRSYS/bt"         BT_METRICS="${2:-/nonexistent}" tools/bt-health-report.sh 2>&1; }
 
 HRV1=$(hrv hr-none)
-[[ "$HRV1" == *"no controller timeouts have occurred yet"*    && "$HRV1" == *"has not been used enough"* ]]     && ok "bt-health-report will not call an unused Bluetooth stack a success"     || bad "zero interventions was reported without its alternative explanation"
+[[ "$HRV1" == *"no watchdog intervention is recorded"* \
+   && "$HRV1" == *"does not imply that no timeout occurred"* ]] \
+    && ok "bt-health-report will not read an absent intervention as an absent fault" \
+    || bad "zero interventions was reported without its alternative explanation"
 
 # That qualification is the assertion. "No timeouts" reads as the mitigation
 # working, and the tool says in the same breath that it also reads as nobody
@@ -1826,7 +1914,27 @@ HRV1=$(hrv hr-none)
 # absence of evidence.
 
 HRV2=$(hrv hr-working)
-[[ "$HRV2" == *"VERDICT: WORKING"* && "$HRV2" == *"1 hang(s) recovered"* ]]     && ok "bt-health-report reports WORKING only with a recovery to point at"     || bad "the WORKING verdict did not fire or lost its count"
+# Upstream retired the "WORKING" verdict: a recovery event is a recorded
+# observation, not a demonstration that the mitigation works, and the two
+# readings differ by exactly the counterfactual nobody has.
+[[ "$HRV2" == *"1 confirmed post-timeout HCI recovery event(s) recorded"* \
+   && "$HRV2" != *"VERDICT: WORKING"* ]] \
+    && ok "a confirmed recovery is counted as an observation, not as proof the fix works" \
+    || bad "the WORKING verdict did not fire or lost its count"
+
+# The legacy marker is the same log line the old watchdog wrote for BOTH an
+# early-action response and a post-timeout recovery. Its context cannot be
+# recovered from aggregate logs, and saying so is the point — treating it as a
+# confirmed recovery is what the split exists to stop.
+HRV2L=$(hrv hr-legacy)
+# Anchored to the VERDICT line, not the whole report: the counter block prints
+# "confirmed post-timeout recovery: 0" on every run, so a whole-output check
+# for that phrase fails on a report where the verdict is already correct.
+hr_verdict=$(grep -m1 'VERDICT:' <<<"$HRV2L")
+[[ "$hr_verdict" == *"legacy RECOVERED marker(s) have mixed context"* \
+   && "$hr_verdict" != *"confirmed post-timeout"* ]] \
+    && ok "a legacy RECOVERED marker is reported as ambiguous, not as a recovery" \
+    || bad "a legacy marker was counted as a confirmed recovery"
 
 # INTERVENED BUT NEVER RECOVERED splits two ways, and the split matters: a
 # controller that was already hard-hung before the last cold boot is not a
@@ -1837,7 +1945,14 @@ HRV3=$(hrv hr-stale)
 [[ "$HRV3" == *"all predate the current boot"* && "$HRV3" == *"Keep measuring"* ]]     && ok "interventions from before the last cold boot are not counted against the fix"     || bad "stale interventions were read as a live failure"
 
 HRV4=$(hrv hr-thisboot)
-[[ "$HRV4" == *"THIS BOOT and never"* && "$HRV4" == *"BT_THRESHOLD"* ]]     && ok "interventions THIS boot that recovered nothing name the knob to turn"     || bad "the live-failure verdict did not fire or gave no next step"
+# Upstream also removed the advice to lower BT_THRESHOLD here. Reset may itself
+# alter the trajectory, so "intervene sooner" is not a safe conclusion from
+# "intervention did not restore HCI" — the verdict says so instead of naming a
+# knob.
+[[ "$HRV4" == *"THIS BOOT and never"* && "$HRV4" == *"reset may itself alter the trajectory"* \
+   && "$HRV4" != *"BT_THRESHOLD"* ]] \
+    && ok "a failed intervention does not become an argument for intervening sooner" \
+    || bad "the live-failure verdict did not fire or gave no next step"
 
 # The metrics table and the row count, from a real file rather than the
 # absent-file branch every other case here takes.
@@ -1949,7 +2064,7 @@ rm -rf "$PMQ"
 PMSYS2=$(mktemp -d); mkdir -p "$PMSYS2/usb" "$PMSYS2/bt"
 PMOUT3=$(BT_JOURNAL_FIXTURE="$PM" BT_SYSFS_USB="$PMSYS2/usb" BT_SYSFS_BT="$PMSYS2/bt" \
          tools/bt-postmortem 2>&1)
-[[ "$PMOUT3" == *"CONTROLLER IS DOWN RIGHT NOW"* && "$PMOUT3" == *"stage 2"* \
+[[ "$PMOUT3" == *"CONTROLLER IS DOWN RIGHT NOW"* && "$PMOUT3" == *"left the bus"* \
    && "$PMOUT3" == *"POWER-OFF"* ]] \
     && ok "bt-postmortem reports stage 2 and its remedy when the device is gone" \
     || bad "stage-2 verdict wrong"
@@ -1977,14 +2092,14 @@ pmf() { BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$PMSYS/usb" \
         BT_SYSFS_BT="$PMSYS/bt" tools/bt-postmortem "${@:2}" 2>&1; }
 
 PMEARLY=$(pmf pm-early)
-[[ "$PMEARLY" == *"Recovered via EARLY intervention"* \
+[[ "$PMEARLY" == *"answered after EARLY intervention"* \
    && "$PMEARLY" == *"Early signal preceded the first timeout by 10s"* ]] \
     && ok "bt-postmortem reports early recovery and the window that allowed it" \
     || bad "the early-intervention incident was misread"
 
 # Stage 1 duration is the window any reset has to fit inside — the number the
 # fix proposal is argued from. 60s here: first timeout to first USB failure.
-[[ "$PMEARLY" == *"Stage 1 duration"*"60s"* ]] \
+[[ "$PMEARLY" == *"HCI-to-first-USB-event interval"*"60s"* ]] \
     && ok "bt-postmortem measures stage 1 from first timeout to first USB failure" \
     || bad "stage-1 duration wrong or absent"
 
@@ -2036,12 +2151,12 @@ PMHELP=$(tools/bt-postmortem --help 2>&1); pmhrc=$?
 # default: the default and the explicit form take different branches, and the
 # fixture answers both selector shapes the way a real journal does.
 PMBOOT=$(pmf pm-early -b 0)
-[[ "$PMBOOT" == *"Recovered via EARLY intervention"* ]] \
+[[ "$PMBOOT" == *"answered after EARLY intervention"* ]] \
     && ok "bt-postmortem accepts an explicit -b boot index" \
     || bad "-b 0 changed or suppressed the analysis"
 
 PMSINCE=$(pmf pm-early --since "2026-08-13 00:00:00")
-[[ "$PMSINCE" == *"Recovered via EARLY intervention"* ]] \
+[[ "$PMSINCE" == *"answered after EARLY intervention"* ]] \
     && ok "bt-postmortem accepts --since and still analyses the incident" \
     || bad "--since changed or suppressed the analysis"
 rm -rf "$PMSYS"
@@ -2074,8 +2189,14 @@ BRC=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt"
 [[ "$SOUT" == *"CONTROLLER IS DOWN RIGHT NOW"* ]] \
     && ok "bt-status reports a dead controller from present state, not history" \
     || bad "bt-status missed a controller that is down right now"
-[[ "$SOUT" == *"full POWER-OFF is required"* ]] \
-    && ok "bt-status names the stage-2 remedy (power-off, not reboot)" \
+# Main's rewrite removed the causal "stage 2" claim and split the remedy over
+# two lines: the demonstrated recovery is a power-off, and whether a warm
+# reboot works is deliberately unresolved rather than known-negative. The
+# assertion keeps both halves, because dropping the second would let the tool
+# go back to asserting more than has been observed.
+[[ "$SOUT" == *"Off the USB bus"* && "$SOUT" == *"full power-off is the demonstrated recovery"* \
+   && "$SOUT" == *"warm reboot is unresolved"* ]] \
+    && ok "bt-status names the demonstrated remedy and leaves warm reboot unresolved" \
     || bad "bt-status did not name the power-off remedy for an off-bus device"
 
 # Enumerated but no adapter: a DIFFERENT diagnosis, and the operator's next
@@ -2115,7 +2236,8 @@ sv() { BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$STSYS/usb" \
        BT_SYSFS_BT="$STSYS/bt" tools/bt-status --brief 2>&1; }
 
 SVEOK=$(sv status-early-ok)
-[[ "$SVEOK" == *"EARLY RECOVERY WORKS"* && "$SVEOK" == *"no experiment has occupied"* ]] \
+[[ "$SVEOK" == *"CONTROLLER ANSWERED AFTER EARLY INTERVENTION"* \
+   && "$SVEOK" == *"no experiment has occupied"* ]] \
     && ok "bt-status reports early recovery WITH the claim it does not support" \
     || bad "the early-recovery verdict lost its 'NOT implied' qualification"
 
@@ -2126,7 +2248,7 @@ SVEOK=$(sv status-early-ok)
 # sentence that supports a false conclusion.
 
 SVEF=$(sv status-early-fail)
-[[ "$SVEF" == *"did not recover"* && "$SVEF" != *"EARLY RECOVERY WORKS"* ]] \
+[[ "$SVEF" == *"did not recover"* && "$SVEF" != *"CONTROLLER ANSWERED AFTER EARLY"* ]] \
     && ok "bt-status separates an early intervention that fired from one that worked" \
     || bad "an intervention that failed was reported as recovery"
 
@@ -2672,49 +2794,66 @@ dg_run() { BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$DG/usb" \
            tools/bt-diagnose 2>&1; }
 
 DGSIG=$(dg_run diagnose-signature); dgsigrc=$?
-(( dgsigrc == 1 )) && [[ "$DGSIG" == *"Signature PRESENT"* ]] \
-    && ok "bt-diagnose reports the signature and exits 1" \
+(( dgsigrc == 1 )) && [[ "$DGSIG" == *"phenotype observed"* ]] \
+    && ok "bt-diagnose reports the timeout phenotype and exits 1" \
     || bad "signature fixture gave rc=$dgsigrc, not the documented 1"
 
 # `link tx timeout` is ACL supervision — a different layer. This machine has
 # logged 7 of them against 173 real command timeouts, and counting them would
 # inflate the headline number in the direction that flatters the claim. The
-# fixture carries one; the count must be 3, not 4.
-# The fixture splits 2 timeouts into boot -1 and 1 into boot 0, so a total of
-# 3 also proves the per-boot totals are summed rather than one boot reported.
+# fixture splits 2 timeouts into boot -1 and 1 into boot 0, so a total of 3
+# also proves the per-boot totals are summed rather than one boot reported.
 [[ "$DGSIG" == *"HCI command timeouts      : 3"* ]] \
     && ok "bt-diagnose sums command timeouts across boots, excluding ACL supervision" \
     || bad "the headline total is wrong — an ACL supervision line was included, or a boot was dropped"
 
-[[ "$DGSIG" == *"No vendor firmware load either"* ]] \
-    && ok "bt-diagnose notes the absent firmware load (driver_info = 0)" \
-    || bad "the firmware-load corroboration was not reported"
-
-# Timeouts AND resets: the callback is installed and working. Whatever is wrong
-# with that controller, it is not what this repository documents — so this must
-# exit 0, and it must not say the signature is present.
+# THE INFERENCE THIS TOOL NO LONGER MAKES, asserted as an absence.
+#
+# Two assertions here previously required the opposite of what follows: that a
+# controller with reset messages in its history be CLEARED ("the kernel IS
+# resetting the controller", exit 0), and that zero firmware messages be read
+# as driver_info = 0. Upstream removed both as unsound — the kernel lines are
+# aggregate, unpaired and not VID:PID-scoped across boots, so they cannot say
+# which timeout a reset answered or whether a callback is installed for the
+# controller in front of you.
+#
+# Those two assertions were written in this branch and they encoded the defect.
+# Had upstream landed after them, they would have reported a correctness fix as
+# a regression. They are replaced by their negation, which is the property
+# worth holding: reset messages must NOT suppress the phenotype, and the report
+# must not draw a mechanism conclusion from counts that cannot support one.
 DGRES=$(dg_run diagnose-reset); dgresrc=$?
-(( dgresrc == 0 )) && [[ "$DGRES" == *"kernel IS resetting"* && "$DGRES" != *"Signature PRESENT"* ]] \
-    && ok "bt-diagnose clears a controller the kernel does reset" \
-    || bad "a resetting controller was diagnosed with this bug (rc=$dgresrc)"
+(( dgresrc == 1 )) && [[ "$DGRES" == *"phenotype observed"* ]] \
+    && ok "reset messages in the history do not suppress the timeout phenotype" \
+    || bad "a controller with resets in its history was cleared (rc=$dgresrc)"
+
+[[ "$DGRES" == *"aggregate, unpaired, system-wide counts"* \
+   && "$DGRES" != *"driver_info = 0"* && "$DGRES" != *"did nothing about them"* ]] \
+    && ok "bt-diagnose draws no callback or firmware-table conclusion from aggregate counts" \
+    || bad "aggregate counts were converted into a mechanism verdict"
 
 DGCLEAN=$(dg_run diagnose-clean); dgcleanrc=$?
-(( dgcleanrc == 0 )) && [[ "$DGCLEAN" == *"Signature NOT present"* ]] \
+(( dgcleanrc == 0 )) && [[ "$DGCLEAN" == *"phenotype NOT observed"* ]] \
     && ok "bt-diagnose exits 0 when no command timeout was ever logged" \
     || bad "a clean journal did not exit 0 (rc=$dgcleanrc)"
 
+# ...and zero is an absence of observation, not a clean bill of health. The
+# retained journal may simply not go back far enough.
+[[ "$DGCLEAN" == *"does not prove"* ]] \
+    && ok "a zero count is reported as absence of observation, not health" \
+    || bad "the zero-timeout verdict overclaimed health"
+
 # No controller at all. This is the ONE case where "cannot determine" is the
-# honest answer, and it is also the advanced form of the bug — the chip has
-# stopped answering USB — so the exit code must not be confused with health.
+# honest answer, and its exit code must not be confused with health.
 DGNONE=$(BT_JOURNAL_FIXTURE=tests/journal/diagnose-signature BT_SYSFS_USB="$DG/empty" \
          tools/bt-diagnose 2>&1); dgnonerc=$?
-(( dgnonerc == 2 )) && [[ "$DGNONE" == *"POWER-OFF"* ]] \
+(( dgnonerc == 2 )) && [[ "$DGNONE" == *"power-off"* ]] \
     && ok "bt-diagnose exits 2 with no controller on the bus, and says power-off" \
     || bad "absent controller gave rc=$dgnonerc, not the documented 2"
 
-# The three codes must be distinct, asserted as one claim: a caller branching
-# on them is the reason they are documented, and two verdicts collapsing onto
-# one code is invisible in any single-scenario check.
+# The three codes must be distinct, asserted as ONE claim: a caller branching
+# on them is why they are documented, and two verdicts collapsing onto one code
+# is invisible in any single-scenario check.
 [[ "$dgsigrc$dgcleanrc$dgnonerc" == "102" ]] \
     && ok "bt-diagnose's three exit codes are distinct (1/0/2)" \
     || bad "exit codes collapsed: present=$dgsigrc absent=$dgcleanrc unknown=$dgnonerc"

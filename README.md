@@ -1,6 +1,6 @@
 # qca9377-bt-hang
 
-**Your Bluetooth dies after a while and only a full power-off brings it back.**
+**Your Bluetooth controller sometimes stops answering HCI during audio transitions.**
 
 Affects Qualcomm Atheros **QCA9377** (ROME) Bluetooth, USB ID `13d3:3503`, on Linux.
 
@@ -8,9 +8,12 @@ This repository is an **open investigation**, not an explanation. It ships
 diagnostics and a userspace watchdog that mitigates the failure; it does not yet
 know why the failure happens. What is currently established:
 
-> The controller sometimes enters a non-responsive HCI state during
-> synchronous-audio (SCO/eSCO) link transitions. Generic USB transport failure
-> follows about 31 seconds later rather than initiating the event.
+<!-- BT1-CURRENT-BEGIN -->
+> The controller sometimes enters a non-responsive HCI state during synchronous-audio link
+> transitions, while remaining USB-enumerated. Later USB collapse has so far only been
+> observed after a reset, rebind or driver reload; whether it belongs to the fault's
+> untreated trajectory is **unresolved**.
+<!-- BT1-CURRENT-END -->
 
 That is a statement about **when and where**, not **why**. The mechanism is not
 established, and several confident-sounding explanations in this repository's
@@ -25,7 +28,7 @@ front page is not yet.
 
 ---
 
-## Do you have this bug?
+## Does this machine show the phenotype?
 
 One command, no installation, nothing written:
 
@@ -35,26 +38,30 @@ cd qca9377-bt-hang
 ./tools/bt-diagnose
 ```
 
-It auto-detects your USB Bluetooth controller (any vendor, not just this one), checks
-whether it still answers HCI commands, and scans every retained boot for the signature.
-Exit 0 = not affected, 1 = signature present, 2 = cannot determine.
+It displays the currently attached USB Bluetooth controller, checks whether it answers
+now, and scans retained boots for HCI command timeouts. Historical kernel lines are not
+stably attributable to the current VID:PID and are not paired causally with resets or
+firmware messages. The tool therefore reports a **phenotype**, not “this bug.” Exit 0 =
+phenotype not observed in retained history, 1 = observed, 2 = cannot determine.
 
 ```
 Log evidence
   boots examined            : 34
   HCI command timeouts      : 287
-  automatic reset attempts  : 0        <-- a real gap; not established as the cause
+  reset-like kernel messages: 0
+  scope                     : aggregate across retained boots; not VID:PID-paired
 ```
 
-Timeouts with **zero** resets means the kernel logged the failures and did nothing.
-`hci_cmd_timeout()` calls `hdev->reset(hdev)` on the first timeout — but `hdev->reset` is
-only installed for devices matched by btusb's vendor quirks table. For an unmatched
-device it is NULL, so the branch is never taken.
+For this repository's exact `13d3:3503` controller, a separate source/module inspection
+establishes that `hdev->reset` is absent. Aggregate timeout/reset counts alone do not:
+events may come from different boots, configurations, controllers or reset origins. Use
+`tools/bt-verify-kernel-mechanism` for the static QCA9377 mechanism check.
 
 <details>
 <summary>Or check by hand</summary>
 
-You probably have it if **all** of these are true:
+You have observed the same phenotype if the controller stops answering and the kernel
+records HCI command timeouts. The missing reset callback is a separate static question:
 
 ```bash
 # 1. Bluetooth settings spins forever and never lists devices
@@ -68,15 +75,16 @@ hci0:   UP RUNNING PSCAN
 $ dmesg | grep "tx timeout"
 Bluetooth: hci0: command 0x0406 tx timeout
 
-# 4. And this NEVER appears, no matter how many timeouts you get:
+# 4. Context only — absence here does not identify the device-table mechanism:
 $ dmesg | grep -i "Resetting usb device"
 <nothing>
 ```
 
-Point 4 is a real gap in the driver (`BT-3`), but has NOT been shown to cause the hang. Point 2's `errors:0` means **no errors are reflected in those HCI
+For `13d3:3503`, BT-3 is confirmed by source and module inspection, not by point 4.
+Point 2's `errors:0` means **no errors are reflected in those HCI
 counters** — the chip is accepting bytes and simply not answering. (USB health at this
 stage is established separately, from USB-level evidence: descriptor reads still succeed
-until stage 2.)
+at HCI failure onset.)
 
 </details>
 
@@ -127,14 +135,15 @@ automatic reset attempts            :   0
 Both the reset handler and the QCA firmware path *are* compiled into the running
 `btusb.ko` (verified with `strings`). They simply never run for this device.
 
-### Observed two-stage failure, and the missing reset path
+### Established HCI failure; unresolved USB-loss trajectory
 
-The controller fails in two stages:
+Only the HCI-nonresponsive state is established as part of untreated BT-1:
 
-| Stage | State | Recoverable? |
-|---|---|---|
-| 1 — soft | HCI unresponsive, USB fine | observed **once** to recover transiently; durability unknown (`EX-004`) |
-| 2 — hard | USB core unresponsive, device drops off the bus | **no** — cold power-off only |
+| Observation | Current interpretation |
+|---|---|
+| HCI unresponsive while USB remains healthy | BT-1, established |
+| USB errors/disappearance after reset, rebind or reload | observed outcome after intervention; cause unresolved |
+| Untreated HCI failure progressing to USB disappearance | never observed uncensored |
 
 ⚠️ It is tempting to write "with the quirk, a reset fires within seconds and you notice
 nothing but an audio dropout" — an earlier version of this file did. That is **not
@@ -142,10 +151,11 @@ established**. The one early reset ever measured did recover the controller, and
 again 132 seconds later (`EX-004`). A reset at the exact moment `hdev->reset` would fire —
 the first HCI timeout — has still never been tested. See `docs/fix-proposal.md` §5a.
 
-On the logged instance, **stage 1 lasted ~6 hours** before decaying. That entire window
-was a free recovery nobody took.
+Without prompt intervention, HCI non-response persisted for 72 minutes and 6.5 hours
+while the controller remained USB-enumerated. Those are censored lower bounds, not a
+decay time or proof that the state lasts indefinitely.
 
-Once in stage 2, none of this works — all verified, all failed:
+In the intervened incidents that reached USB absence, these attempts failed:
 
 ```
 usb 3-3: device descriptor read/64, error -110      # driver unbind/rebind
@@ -154,11 +164,10 @@ usb usb3-port3: attempt power cycle                 # xHCI port power cycle
 usb usb3-port3: unable to enumerate USB device
 ```
 
-**A warm reboot is often reported not to be enough**, and a full shutdown certainly
-works. Why is *not established*: "a warm reboot does not drop the M.2 power rail" is an
-inference this project recorded as untested (`EX-017`, `EX-019`) — one controller
-recovery across a `reboot.target` shutdown is on record, with an unlogged power-off not
-excluded.
+A full shutdown has recovered the controller. Warm-reboot recovery is unmeasured: one
+controller recovery across a `reboot.target` shutdown is on record, but an unlogged
+power-off is not excluded (`EX-017`, `EX-019`). The claim that a warm reboot does not drop
+the M.2 power rail remains an inference, not evidence.
 
 ### An earlier hypothesis about the trigger — SINCE REFUTED
 
@@ -212,8 +221,9 @@ in userspace. It tails the kernel log and, after 3 controller timeouts in 60 s, 
 +33 s. Every late reset failed; the +0 s case has never been tested.
 
 **2. USB autosuspend disabled** for the radio — `btusb enable_autosuspend=0` plus a udev
-rule pinning `power/control=on`. Runtime suspend racing with in-flight HCI traffic widens
-the window in which the stall happens.
+rule pinning `power/control=on`. This is an experimental mitigation, not an established
+mechanism: the repository has not measured that autosuspend triggers BT-1 or changes its
+frequency, and `EX-014` records uncertainty about the original runtime value.
 
 **3. A metrics collector** (optional, `--no-metrics` to skip) — snapshots health every
 15 min to `/var/log/bt-health/metrics.tsv`, surviving reboots.
@@ -239,18 +249,18 @@ bt-health-report            # full analysis
 journalctl -u bt-hang-watchdog -f    # live
 ```
 
-Success is either of:
+Report these outcomes separately rather than converting them into one success verdict:
 
-- **tx-timeout counts drop to ~0 per boot** — autosuspend was the trigger
+- **tx-timeout counts change under a controlled denominator** — evidence about incidence,
+  not proof of which treatment component caused the change
 - **timeouts still happen, but each is followed by `RECOVERED`** — the watchdog is doing
-  the kernel's job
+  useful mitigation for a confirmed HCI stall
+- **USB errors/disappearance follow intervention** — an adverse post-intervention outcome;
+  it does not prove the controller naturally reached a second stage or that the watchdog
+  merely acted too late
 
-Failure is `FATAL: no longer on the USB bus` reappearing: the chip reached stage 2 before
-the watchdog caught it. Lower the threshold and re-measure:
-
-```bash
-sudo systemctl edit bt-hang-watchdog     # BT_THRESHOLD=2, BT_WINDOW=30
-```
+Do not lower thresholds on the assumption that USB absence is natural progression. A
+reset at +0 s may help or harm; that sign remains an experiment, not a tuning fact.
 
 Baseline for comparison (`evidence/baseline/baseline.tsv`): **287 timeouts across 34 boots, 13 of 34
 boots hung.**
@@ -283,10 +293,14 @@ intervenes on those instead:
 sudo systemctl edit bt-hang-watchdog     # Environment=BT_EARLY=1
 ```
 
-Trigger patterns were selected by measured precision over 12 boots (appearances overall
+Trigger patterns were selected from historical boot-level associations (appearances overall
 vs. appearances in boots that hung): `cancel_request() Suspend` 2/2, `Abort` 4/4,
 `avdtp_connect_cb` 5/5, `SDP record: Host is down` 10/10, `avdtp_close failed` 4/3.
 `Device or resource busy` is excluded at 3/9 — too noisy.
+
+Those ratios are **not predictive precision**. An early reset prevents observation of the
+counterfactual, and every proposed early marker has failed causal tests elsewhere in this
+repository. The mode is an aggressive mitigation heuristic, not evidence BT-1 was imminent.
 
 ⚠️ **Opt-in, and experimental.** A false positive resets a working controller and drops
 live connections. Raise `BT_EARLY_THRESHOLD` if it fires during normal use.
@@ -315,9 +329,8 @@ afford to be — including a kernel one.
 relied on. In one, bluetoothd's signal arrived **133 s *after*** the first HCI timeout;
 in another it never appeared.
 
-`BT_EARLY` seems to help when the failure is preceded by audio-layer trouble, and cannot
-help when the stall reaches HCI first. Enable it if your logs show AVDTP errors before
-the timeouts; expect nothing from it otherwise.
+`BT_EARLY` can leave the controller answering after an intervention, but cannot say whether
+BT-1 would otherwise have occurred. It is off in experiment mode for that reason.
 
 > ⚠️ **These are log signatures, not controlled comparisons.** The reproductions were
 > ad-hoc — arbitrary connect/disconnect/mode-change activity, no fixed procedure, exact
@@ -348,8 +361,9 @@ A one-line kernel patch — add the device to btusb's QCA ROME quirks:
 > | **+11 s … +33 s** after the first timeout | ❌ five attempts, all failed |
 > | **before** any timeout, on bluetoothd's audio-teardown signal | ✅ **recovered** |
 >
-> The window closes sharply; where exactly, relative to the first timeout, is unknown —
-> because no experiment has yet put a reset there.
+> The tested reset timings had different outcomes, but do not establish a one-way recovery
+> deadline: a reset may recover, destabilise, or drive USB loss. The +0 s treatment is
+> untested and must be scored for both benefit and harm.
 >
 > Sessions: [late reset failed](evidence/sessions/20260810-072445-first-real-hang/) ·
 > [early reset worked](evidence/sessions/20260811-002156-early-mode-SUCCESS/) ·
@@ -458,7 +472,7 @@ renamed only after verification passes. The logs in `evidence/baseline/` were pr
 | Failure localised to synchronous-audio link transitions | ⚠️ both instrumented failures occur there — setup unanswered in one (`EX-006`), teardown in the other (`EX-009`). **No single triggering opcode**: three SCO setups were survived |
 | USB healthy at HCI failure | ✅ measured — first URB error is 31 s later (`EX-008`) |
 | Watchdog detection | ✅ tested end-to-end |
-| Watchdog recovery path | ✅ exercised — succeeds early, fails once timeouts begin |
+| Watchdog intervention path | ✅ exercised — controller answered after one early intervention; late interventions were followed by USB loss, with causality unresolved |
 | Autosuspend setting, udev rule | ✅ applied and verified |
 | **Quantified reproducer (A4)** | ❌ **gate — not done.** No controlled denominator yet |
 | Observational denominator | ⏳ accruing — every boot is now a trial, opened automatically |
@@ -522,7 +536,7 @@ Installed alongside the mitigation, for reproducing and recording failures:
 | `bt-boot-stats` | One row per boot, and the cross-tab that tells you whether a signature actually predicts the hang or just accompanies it |
 | `bt-exhibit` | Capture evidence as a numbered exhibit: claim, exact extraction command, verbatim output, relevance — command and output captured in one pass so they cannot drift |
 | `bt-dyndbg on\|off\|status` | Kernel `pr_debug` for `btusb` and the HCI core. `--packets` adds the per-packet files, which perturb the timing being measured |
-| `bt-usbmon` (service) | Rotating pcap of the controller's USB bus — the only record of stage 2, where the kernel logs that a request went unanswered but not what was on the wire |
+| `bt-usbmon` (service) | Rotating pcap of the controller's USB bus — records whether post-HCI USB behavior is untreated progression, hub recovery, or intervention aftermath |
 
 See [`evidence/README.md`](evidence/README.md) for how sessions are structured.
 
