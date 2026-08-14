@@ -1037,3 +1037,66 @@ file in the tree; it was 85% covered. The other said the classifier inside it wa
 and the missing branches were the ones that see the controller leave the bus. One number
 was wrong and comfortable, the other right and alarming — and a single percentage over a
 codebase written in two languages cannot be anything else.
+
+### Session 4, continued — driving the tail with the new report
+
+With `--uncovered` naming lines instead of ranking files, the work changed character
+entirely: pick a file, read its list, write the fixture. Three files reached **zero
+uncovered lines** — `bt-status`, `bt-postmortem`, `bt-health-report.sh` — plus the
+`bt-actions` classifier at 172/172.
+
+Every one of the gaps was a **verdict branch**. These are tools whose entire product is
+one sentence a person reads before deciding whether to power the machine off, keep
+testing, or stop trusting the run, and between them fourteen of those sentences had never
+been executed.
+
+**The two that would have been worst to get wrong**, both now pinned in *both*
+directions:
+
+- `bt-postmortem` has a branch for "the early signal arrived AFTER the first timeout, so
+  BT_EARLY could not have helped in this incident". The "cmd_timeout is too late"
+  hypothesis rests on a warning arriving *before* the first timeout, and this tool is what
+  says whether one did. **It had only ever exercised the confirming reading.**
+- `bt-status` refuses to credit a failure-free boot where no audio was exercised — "a
+  clean boot proves nothing if the trigger was never attempted". Both fixtures are
+  failure-free; only the verdicts differ.
+
+**Two more findings, both the same shape as session 3's:** `bt-health-report`'s live-state
+check read `/sys/class/bluetooth` and `/sys/bus/usb/devices` directly while `SYSFS_USB`
+was already defined at the top of the same file — a seam added and one block missed, in
+the check that outranks every counter above it. And `bt-status`'s capture-health section
+had `/var/log/bt-health/trace` hardcoded, so "is the capture running?" — half of what an
+operator opens the tool for — could not be tested at all.
+
+**A correction to one of my own assertions.** "bt-status counts this boot's timeouts from
+the fixture" tested that `2` appeared *anywhere* in the output, which any timestamp or
+version string satisfies. It could not have failed had the count come from the host. That
+is the fifth check of mine this effort has found unable to fail for the reason its name
+gave.
+
+**Two properties of the exclusion format learned by getting them wrong:**
+
+- Testing a *copy* of a script does not register as coverage. The trace records the copy
+  under an absolute temp path and `devtools/coverage` counts only repository-relative
+  paths — deliberately, so a tool's installed image is never confused with its source.
+  The installed-layout test is still worth having; it just cannot close the line.
+- A single line must be written as a one-line **range**. `path:61` parses as `61-0` and
+  matches nothing — a quiet no-op, which is the one failure an exclusion file must not
+  have, because it looks exactly like an exclusion that worked.
+
+### Where session 4 ends
+
+| | at the question | now |
+|---|---|---|
+| Shell coverage | 71.0% of 5217 | **84.7%** of 4550 |
+| awk statements | *not measured* | **88.2%** (1353/1534) |
+| Invariants | 334 | **378** |
+| Files at zero uncovered | — | `bt-status`, `bt-postmortem`, `bt-health-report.sh` |
+| CI floors | 65% shell | **80% shell + 85% awk** |
+
+From the effort's opening baseline: **13.1% → 84.7%**, **65 → 378 invariants**.
+
+Open, in the order the report recommends: fold the CI-gated round trip into the
+measurement (206 lines, and the code is already tested); work the remaining long tail with
+`--uncovered`; extract the remaining inline awk to `tools/lib/` so exclusion ranges become
+library files with fixture cases; then raise both floors to 100%.
