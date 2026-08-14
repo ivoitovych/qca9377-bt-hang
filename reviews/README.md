@@ -66,7 +66,7 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | UT-07 | Fixtures for `trial-sco-table.awk`, `stage2.awk` | done | this commit | `tests/run-tests --section "awk libraries"` — 17 cases across 3 libraries |
 | UT-08 | Journal seam `tools/lib/journal.sh` | done | `d016249` | `test -r tools/lib/journal.sh` |
 | UT-09 | Convert `bt-phase`, `bt-boot-provenance` | done | `d016249` | `tests/run-tests --section "whole tools" \| grep 'journal seam'` |
-| UT-10 | Convert the remaining journal-reading tools | **partial** 10/21 | `def19bc` | `sh reviews/verify.sh` — prints converted vs remaining |
+| UT-10 | Convert the remaining journal-reading tools | **partial** 10/21 | `def19bc` | `reviews/verify.sh` — prints converted vs remaining |
 | UT-11 | `lib/phase.awk`; delete the Python extractor | done | `d016249` | `test -r tools/lib/phase.awk`; extractor gone: `grep -c re.search tests/run-tests` → 0 |
 | UT-12 | Split `tests/run-tests` into per-area files | **open** | — | `wc -l tests/run-tests` — 1353 at `d016249`, was 1038 |
 | UT-13 | Settle `repo-scan`'s pre-existing hits, then add to CI | done | `383b991` + merge | `devtools/repo-scan . --all` → clean; step present in `checks.yml` |
@@ -105,7 +105,7 @@ what was built, and why it differs.
 ### Check every row at once
 
 ```bash
-sh reviews/verify.sh           # runs every row's check and prints pass/fail
+reviews/verify.sh              # runs every row's check and prints pass/fail
 devtools/check                 # syntax, invariants, drift, install state
 devtools/coverage              # the number UT-05..UT-11 were meant to move
 ```

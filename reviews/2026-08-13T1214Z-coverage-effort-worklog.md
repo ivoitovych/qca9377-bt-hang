@@ -350,3 +350,19 @@ runtime invariants 178 → 179, zero lost; `repo-validate`, `repo-scan --all`, a
 journal contract all clean; register 11 verified; coverage 39.5% (1757/4453); linear on
 `origin/main`; single author; no attribution strings. Decisively, re-introducing the
 header-row bug now **fails 2 invariants** where the other attempt reported all green.
+
+### Head-to-head, and adopting the other attempt's improvements
+
+With both rebases complete, the content diff between them is four files:
+
+| File | Difference |
+|---|---|
+| `tests/run-tests` | 27 lines — the three assertions they lost, which mine has |
+| worklog | 92 lines — entries written after their branch was cut; not a defect |
+| `reviews/README.md` | `sh reviews/verify.sh` → `reviews/verify.sh` — **their improvement** |
+| `reviews/verify.sh` | a trailing space removed — **their improvement** |
+
+The assertion sets differ in one direction only: mine is a strict superset. Their two
+improvements are real — `verify.sh` is a bash script and running it under `sh` is wrong —
+and are adopted here. Nothing else separates the two branches, which is the useful
+conclusion: the other attempt was sound work with one systematic gap, not a flawed one.
