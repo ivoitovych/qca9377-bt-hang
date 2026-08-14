@@ -34,13 +34,22 @@ METRICS="${BT_METRICS:-/var/log/bt-health/metrics.tsv}"
 
 # The baseline ships with the repo but this script may be installed to
 # /usr/local/bin, so look in the likely places rather than assuming $DIR.
+#
+# The two SYSTEM candidates are seamed, and that is not decoration. Hardcoded,
+# the not-found branch is unreachable on any machine where the project is
+# installed — which is every machine this branch exists for. The test that
+# covers it passed on a bare checkout and failed on the investigation machine,
+# for the machine's correct configuration. A search path that cannot be pointed
+# elsewhere is a search path whose failure case cannot be tested.
+# BT_HEALTH_DIR is the name tools/verify-restored.sh already uses for the same
+# directory; BT_SHARE_DIR is install.sh's own destination for baseline.tsv.
 BASELINE=""
 for cand in \
     "${BT_BASELINE:-}" \
     "$DIR/evidence/baseline/baseline.tsv" \
     "$DIR/../evidence/baseline/baseline.tsv" \
-    /usr/local/share/qca9377-bt-hang/baseline.tsv \
-    /var/log/bt-health/baseline.tsv
+    "${BT_SHARE_DIR:-/usr/local/share/qca9377-bt-hang}/baseline.tsv" \
+    "${BT_HEALTH_DIR:-/var/log/bt-health}/baseline.tsv"
 do
     [[ -n "$cand" && -s "$cand" ]] && { BASELINE="$cand"; break; }
 done

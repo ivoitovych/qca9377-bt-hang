@@ -41,7 +41,7 @@ cd "$(dirname "$0")/.." || exit 1
 BT_REAL_TRIAL_STATE="${BT_TRIAL_STATE_DIR:-/run/bt-trial}"
 if [[ -e "$BT_REAL_TRIAL_STATE/current" && "${BT_ALLOW_OPEN_TRIAL:-0}" != 1 ]]; then
     echo "run-tests: a trial is OPEN on this machine — refusing to run." >&2
-    sed 's/^/           /' "$BT_REAL_TRIAL_STATE/current" >&2 2>/dev/null
+    awk '{ print "           " $0 }' "$BT_REAL_TRIAL_STATE/current" >&2 2>/dev/null
     echo "           This suite drives tools that act. Close the trial, or wait" >&2
     echo "           for it to close, and run again." >&2
     echo "           BT_ALLOW_OPEN_TRIAL=1 overrides — only when the state file" >&2
@@ -108,12 +108,19 @@ fi
 # Joined across backslash continuations first: install.sh wraps its longer
 # calls, and a line-by-line parse yields "\" as the destination — the phantom
 # that cost bt-verify-install seven false "not installed" reports.
+#
+# The basename step is `awk -F/`, not `sed 's|.*/||'`, for a reason that is not
+# style: a reviewer re-deriving this list independently — which is exactly what
+# should happen to a safety control — has to paste the pipeline, and a static
+# analyser cannot tell a pure `s///` substitution from a rewrite, so the paste
+# costs an interactive approval. The --section block below carries the same note
+# for the same reason. A control nobody can cheaply reproduce gets checked once.
 guard_names() {
     awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' install.sh \
     | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"[[:space:]]+[^[:space:]]+' \
     | awk '{print $3}' \
     | grep -E '^/usr/local/(bin|sbin)/[^/]+$' \
-    | sed 's|.*/||' | sort -u
+    | awk -F/ '{print $NF}' | sort -u
 }
 
 # An empty list is not an empty risk. With guard_names undefined the loops
@@ -197,6 +204,31 @@ pass=0; fail=0
 # Baseline for the last check in this file: running the tests must not add
 # anything to the real evidence tree. Taken before anything else runs.
 SESSIONS_BEFORE=$(ls -1 evidence/sessions 2>/dev/null | wc -l)
+
+# And the same for the trial state, because the refusal at the top of this file
+# is a WINDOW CHECK, not an isolation guarantee — it reads /run/bt-trial once,
+# before anything runs, and nothing re-reads it afterwards. The maintainer named
+# that gap while verifying the refusal, and it is real: a trial opening mid-run
+# is invisible to a check that has already happened.
+#
+# This does not prevent that. It DETECTS it — which is the difference between an
+# incident found by a red test at 15:08 and one found by a person noticing a
+# missing trial days later, which is how the last one was found.
+#
+# Fingerprints the two things the 2026-08-14 escape actually mutated: the open
+# marker (removed when the live trial was closed) and the results file (a row
+# appended whose treatment fingerprint came from test stubs). evidence/sessions
+# above is the third. Repo-relative, like SESSIONS_BEFORE, because the checkout
+# on the investigation machine IS the evidence repository.
+real_trial_footprint() {
+    if [[ -e "$BT_REAL_TRIAL_STATE/current" ]]; then
+        echo "open=yes:$(cksum < "$BT_REAL_TRIAL_STATE/current" 2>/dev/null)"
+    else
+        echo "open=no"
+    fi
+    echo "rows=$(wc -l < evidence/trials/results.tsv 2>/dev/null || echo 0)"
+}
+TRIAL_FOOTPRINT_BEFORE=$(real_trial_footprint)
 
 ok()   { echo "  ✓ $*"; pass=$((pass + 1)); }
 bad()  { echo "  ✗ $*"; fail=$((fail + 1)); }
@@ -2242,9 +2274,15 @@ HRNB=$(mktemp -d); mkdir -p "$HRNB/bin"
 cp tools/bt-health-report.sh "$HRNB/bin/"
 cp -r tools/lib "$HRNB/bin/lib"
 mkdir -p "$HRNB/sys/usb" "$HRNB/sys/mod" "$HRNB/sys/bt/hci0"
+# The two SYSTEM candidates are pointed at the empty temp tree as well. Without
+# that this assertion passed here and FAILED on the investigation machine, which
+# has /usr/local/share/qca9377-bt-hang/baseline.tsv installed: the branch was
+# never taken, so the message never appeared. A missing-baseline test that only
+# works where the baseline was never installed tests the wrong machine.
 HRV8=$(BT_JOURNAL_FIXTURE=tests/journal/health BT_SYSFS_USB="$HRNB/sys/usb" \
        BT_SYSFS_MODULE="$HRNB/sys/mod" BT_SYSFS_BT="$HRNB/sys/bt" BT_METRICS=/nonexistent \
        BT_BASELINE=/nonexistent/baseline.tsv \
+       BT_SHARE_DIR="$HRNB/none" BT_HEALTH_DIR="$HRNB/none" \
        "$HRNB/bin/bt-health-report.sh" 2>&1)
 [[ "$HRV8" == *"baseline not found"* && "$HRV8" == *"BT_BASELINE"* ]] \
     && ok "bt-health-report names the override when no baseline is anywhere" \
@@ -3127,6 +3165,30 @@ rm -rf "$DG"
 # means doing that. Now every path is a seam, so the round trip runs inside a
 # temp tree — and the last assertion here is that the real ones were untouched,
 # because this suite runs as root on the investigation machine.
+#
+# THE STATE OF THE REAL OVERRIDES, SNAPSHOT BEFORE ANY OF IT RUNS. The check at
+# the end of this section compares against this rather than against an absolute
+# expectation. The first version asserted the three `.disabled` files did not
+# exist, which is FALSE on a machine legitimately in experiment mode — moving
+# exactly those files aside is what `bt-mode experiment` is for. It failed on
+# the investigation machine for the machine's correct configuration.
+#
+# Same defect class as the `/root/exp` assertion: coupled to the environment
+# rather than to the code, and therefore wrong precisely where it matters. What
+# a leak looks like is a CHANGE across this section, in either direction.
+real_override_state() {
+    local f live dis
+    for f in /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules \
+             /etc/udev/rules.d/51-bluetooth-health-snapshot.rules \
+             /etc/modprobe.d/btusb-qca9377.conf; do
+        live=no; dis=no
+        [[ -e "$f" ]] && live=yes
+        [[ -e "$f.disabled" ]] && dis=yes
+        echo "${f##*/} live=$live disabled=$dis"
+    done
+}
+BM_OVERRIDES_BEFORE=$(real_override_state)
+
 BM=$(mktemp -d)
 mkdir -p "$BM/udev" "$BM/mod" "$BM/stub" "$BM/usb/3-3/power" "$BM/share"
 echo 13d3 > "$BM/usb/3-3/idVendor"; echo 3503 > "$BM/usb/3-3/idProduct"
@@ -3229,11 +3291,17 @@ bm_run frobnicate >/dev/null 2>&1
 # investigation, and every assertion above ran bt-mode in APPLY mode. If a seam
 # leaked, the watchdog on this host was just disabled and its udev rules moved
 # aside — which is the one failure that must never be discovered later.
-[[ ! -e /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules.disabled \
-   && ! -e /etc/udev/rules.d/51-bluetooth-health-snapshot.rules.disabled \
-   && ! -e /etc/modprobe.d/btusb-qca9377.conf.disabled ]] \
-    && ok "bt-mode's seams held — no real override was moved aside" \
-    || bad "A SEAM LEAKED: bt-mode disabled a real override on this machine"
+BM_OVERRIDES_AFTER=$(real_override_state)
+BM_OVN=$(grep -c . <<<"$BM_OVERRIDES_AFTER")
+if [[ "$BM_OVERRIDES_AFTER" == "$BM_OVERRIDES_BEFORE" ]] && (( ${BM_OVN:-0} == 3 )); then
+    ok "bt-mode's seams held — all $BM_OVN real overrides in the state they started in"
+elif (( ${BM_OVN:-0} != 3 )); then
+    bad "the override state function reported $BM_OVN path(s), not 3 — check is blind"
+else
+    bad "A SEAM LEAKED: bt-mode changed a real override on this machine:"
+    bad "  before: $(tr '\n' ' ' <<<"$BM_OVERRIDES_BEFORE")"
+    bad "  after:  $(tr '\n' ' ' <<<"$BM_OVERRIDES_AFTER")"
+fi
 rm -rf "$BM"
 
 # ── bt-verify-kernel-mechanism: the fact every experiment is read against ─
@@ -4667,6 +4735,20 @@ if [[ "$SESSIONS_AFTER" == "$SESSIONS_BEFORE" ]]; then
 else
     bad "the test run changed evidence/sessions/: $SESSIONS_BEFORE -> $SESSIONS_AFTER"
     bad "  a test wrote into the real evidence tree; the newest entries are fabricated"
+fi
+
+# The same observation for the trial state, closing the window the startup
+# refusal leaves open. Reports what it compared, so a footprint function that
+# stops seeing anything reads as `open=no rows=0` rather than as a tick.
+TRIAL_FOOTPRINT_AFTER=$(real_trial_footprint)
+if [[ "$TRIAL_FOOTPRINT_AFTER" == "$TRIAL_FOOTPRINT_BEFORE" ]]; then
+    ok "real trial state unchanged by the test run ($(tr '\n' ' ' <<<"$TRIAL_FOOTPRINT_AFTER"))"
+else
+    bad "the test run changed the REAL trial state:"
+    bad "  before: $(tr '\n' ' ' <<<"$TRIAL_FOOTPRINT_BEFORE")"
+    bad "  after:  $(tr '\n' ' ' <<<"$TRIAL_FOOTPRINT_AFTER")"
+    bad "  a live trial was opened, closed or recorded by this suite —"
+    bad "  the affected results row is fabricated by test stubs, not measured"
 fi
 
 echo

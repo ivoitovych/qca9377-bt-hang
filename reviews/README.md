@@ -171,6 +171,10 @@ what was built, and why it differs.
 | SE-03 | Route every `install.sh` dry run through `BT_MODE_STAMP` | done | `251a6cb` | `grep -n './install.sh' tests/run-tests` → only via `install_dry()` |
 | SE-04 | Replace the unsatisfiable `/root/exp` assertion | done | `251a6cb` | reinstate the discarding fallback in `bt-incident` → 4 invariants fail |
 | SE-05 | Run the suite only in a worktree on the investigation machine | **open** — a habit, not a patch | — | see §7 of the report |
+| SE-07 | The open-trial refusal is a window check — nothing re-reads the state | done — detection, not prevention | this commit | snapshot a trial after the baseline is taken → the closing check goes red |
+| SE-08 | `bt-mode` seam check asserted absolute state, not a change | done — failed on the investigation machine for its correct configuration | this commit | delete a real `.disabled` mid-section → "A SEAM LEAKED" names the file |
+| SE-09 | Missing-baseline branch unreachable where the project is installed | done — `BT_SHARE_DIR` / `BT_HEALTH_DIR` seams | this commit | drop the two seams with `baseline.tsv` installed → the assertion fails |
+| SE-10 | An exclusion entry pointing at a blank line, excluding nothing | done | this commit | `devtools/coverage --uncovered tools/bt-health-report.sh` → 0, not 1 |
 
 ### Check every row at once
 
