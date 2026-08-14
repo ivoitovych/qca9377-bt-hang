@@ -70,7 +70,7 @@ done
 command -v btmon >/dev/null 2>&1 || { echo "bt-capdiff: btmon not found" >&2; exit 1; }
 
 A=$(mktemp); B=$(mktemp)
-trap 'rm -f "$A" "$B"' EXIT
+trap 'rm -f "$A" "$B" "${WINPROG:-}"' EXIT
 
 # Reduce each path to "HH:MM:SS <event descriptor>" for top-level records only.
 # Indented parameter lines are excluded: they carry no timestamp of their own and
@@ -138,12 +138,39 @@ hi=$hi_a; [[ "$hi_b" < "$hi" ]] && hi=$hi_b
 printf '  overlap    %s .. %s\n' "$lo" "$hi"
 echo
 
-# Full ISO keys sort and compare lexically, so no numeric conversion is
-# needed and no precision is lost.
-win() { awk -v lo="$lo" -v hi="$hi" '{ if ($1 >= lo && $1 <= hi) print }' "$1"; }
+TOL="${BT_CAPDIFF_TOL:-0.5}"
+
+# WIDENED BY THE TOLERANCE, and this is not a refinement.
+#
+# lo and hi come from RAW first/last timestamps on two clocks that differ by a
+# variable scheduling delay — the same delay the matcher exists to absorb. A
+# pair that straddles a boundary therefore has one member inside the window and
+# one outside, and the one inside is reported as unmatched. That happens at
+# BOTH edges of every comparison, so two perfectly agreeing captures could not
+# report agreement unless their boundary records aligned exactly. The bound was
+# manufacturing the disagreement it was meant to exclude.
+#
+# Compared numerically via iso_secs rather than lexically, because widening a
+# timestamp by a fraction of a second is arithmetic, not string editing — and
+# doing it by hand on the string is how the day-of-month bugs in this
+# repository's history were written.
+# The filter is a FILE, not an inline program. Once awk is given -f it takes
+# the program only from the -f files and treats any following positional string
+# as an input FILENAME — so a quoted program there is read as data and matches
+# nothing, silently, in the direction that reports agreement. That is the trap
+# tests/run-tests scans for, and it is how this tool once reported perfect
+# agreement between paths differing by 278 records. Written to a temp file,
+# alongside the others, so the rule is not tempting to break.
+WINPROG=$(mktemp)
+cat > "$WINPROG" <<'WINEOF'
+BEGIN { losec = iso_secs(lo) - tol; hisec = iso_secs(hi) + tol }
+{ t = iso_secs($1); if (t >= losec && t <= hisec) print }
+WINEOF
+win() { awk -f "$LIBDIR/timestamp.awk" -f "$WINPROG" \
+            -v lo="$lo" -v hi="$hi" -v tol="$TOL" "$1"; }
 
 wa=$(mktemp); wb=$(mktemp)
-trap 'rm -f "$A" "$B" "$wa" "$wb" "${wa}.only" "${wb}.only"' EXIT
+trap 'rm -f "$A" "$B" "$wa" "$wb" "${wa}.only" "${wb}.only" "$WINPROG"' EXIT
 win "$A" > "$wa"; win "$B" > "$wb"
 
 # MATCH WITH A TOLERANCE, because the two paths do not share a clock.
@@ -157,8 +184,8 @@ win "$A" > "$wa"; win "$B" > "$wb"
 # precision exposed it.)
 #
 # So an event matches if the same descriptor appears in the other path within
-# TOL seconds. Unmatched events are the real finding.
-TOL="${BT_CAPDIFF_TOL:-0.5}"
+# TOL seconds. Unmatched events are the real finding. (TOL is set above, where
+# the comparison window is widened by it.)
 
 # ONE-TO-ONE MATCHING. An earlier version asked, for each record, "is there ANY
 # record with this descriptor within tolerance on the other side?" — and did not
@@ -201,7 +228,17 @@ if (( only_a == 0 && only_b == 0 )); then
     exit 0
 fi
 
-echo "  ⚠ Unmatched records in both directions."
+# Say which direction(s). "in both directions" was printed unconditionally,
+# including when every unmatched record sat on one side — and one-sided loss is
+# the reading that matters: it says one path missed traffic the other caught,
+# where two-sided is usually the clock or the decoding differing.
+if (( only_a > 0 && only_b > 0 )); then
+    echo "  ⚠ Unmatched records in both directions."
+elif (( only_a > 0 )); then
+    echo "  ⚠ Unmatched records in btmon only — the decode-free path did not record them."
+else
+    echo "  ⚠ Unmatched records in the decode-free path only — btmon did not record them."
+fi
 echo
 echo "  ⛔ DO NOT READ THIS AS 'the paths disagree about the controller'."
 echo "     Cross-path event identity is NOT yet validated. Known reasons two"

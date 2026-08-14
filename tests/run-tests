@@ -3038,6 +3038,84 @@ tools/bt-sco --bogus >/dev/null 2>&1
               || bad "bt-sco accepted an unknown argument"
 rm -rf "$SC"
 
+# ── bt-capdiff: the tool that says whether either capture path lost traffic ─
+#
+# Two acquisition paths record the same kernel monitor socket. This compares
+# them, and its verdict — "the paths agree across the overlap" — is what makes
+# a chronology drawn from either one corroborated rather than merely recorded.
+# The awk matcher has fixtures; the shell around it (extraction, the overlap
+# bound, the verdict) had none, and both defects below live there.
+CD=$(mktemp -d); mkdir -p "$CD/stub" "$CD/trace" "$CD/cap"
+cat > "$CD/stub/btmon" <<'CDSTUB'
+#!/bin/sh
+while [ $# -gt 0 ]; do case "$1" in -r) f="$2"; shift 2 ;; *) shift ;; esac; done
+cat "$f.txt" 2>/dev/null
+CDSTUB
+chmod +x "$CD/stub/btmon"
+: > "$CD/trace/x.btsnoop"; : > "$CD/cap/x.btsnoop"
+cd_run() { cp "tests/btmon/$1.txt" "$CD/trace/x.btsnoop.txt"
+           cp "tests/btmon/$2.txt" "$CD/cap/x.btsnoop.txt"
+           env PATH="$CD/stub:$PATH" BT_TRACE_DIR="$CD/trace" BT_CAPTURE_DIR="$CD/cap" \
+               tools/bt-capdiff "${@:3}" 2>&1; }
+
+# FINDING 1 — the overlap bound manufactured its own disagreement. lo and hi
+# came from RAW first/last timestamps on two clocks that differ by a variable
+# scheduling delay, which is the delay the matcher exists to absorb. A pair
+# straddling a boundary had one member inside the window and one outside, and
+# the one inside was reported unmatched. That happened at BOTH edges of every
+# comparison, so two perfectly agreeing captures could not report agreement
+# unless their boundary records aligned exactly.
+#
+# The fixtures are that shape on purpose: every A record has a B counterpart
+# within tolerance, and the first and last pairs straddle the raw bound.
+CDOK=$(cd_run capdiff-a capdiff-b); cdrc=$?
+(( cdrc == 0 )) && [[ "$CDOK" == *"The paths agree across the overlap"* ]] \
+    && ok "bt-capdiff reports agreement when every record has a counterpart" \
+    || bad "agreeing captures did not report agreement (rc=$cdrc)"
+
+[[ "$CDOK" == *"only in btmon        0"* && "$CDOK" == *"only in decode-free  0"* ]] \
+    && ok "no record is stranded by the overlap bound at either edge" \
+    || bad "boundary records were reported unmatched — the bound is not widened by the tolerance"
+
+# THE FALSE-AGREEMENT SHAPE the matcher's one-to-one pairing exists to catch:
+# A holds the same descriptor twice, B holds it once. Asking "is there ANY
+# record within tolerance on the other side?" answers yes both ways and prints
+# "the paths agree" while the real multiplicity is 2 against 1.
+CDDUP=$(cd_run capdiff-dup-a capdiff-dup-b)
+[[ "$CDDUP" == *"only in btmon        1"* && "$CDDUP" != *"The paths agree"* ]] \
+    && ok "bt-capdiff pairs one-to-one — 2 against 1 is not agreement" \
+    || bad "a 2-against-1 multiplicity was reported as agreement"
+
+# FINDING 2 — "Unmatched records in both directions" was printed
+# unconditionally, including when every unmatched record was on one side. That
+# is the reading that matters: one-sided means a path missed traffic the other
+# caught, where two-sided is usually the clock or the decoding.
+[[ "$CDDUP" == *"in btmon only"* && "$CDDUP" != *"in both directions"* ]] \
+    && ok "bt-capdiff names which path is missing records" \
+    || bad "one-sided loss was described as a disagreement in both directions"
+
+# Monitor bookkeeping is delivered to each reader AS IT ATTACHES, so a path
+# that attached 74 times legitimately holds 74 copies while one that attached
+# once holds one. Comparing them measures how often btmon crashed. The two
+# fixtures carry deliberately different bookkeeping; it must not show up.
+[[ "$CDOK" != *"New Index"* && "$CDOK" != *"Index Info"* ]] \
+    && ok "per-attach bookkeeping is excluded from the comparison" \
+    || bad "monitor session records were compared as controller traffic"
+
+# One path empty is a coverage question, not a disagreement — and saying so is
+# the difference between "we did not look" and "we looked and they differ".
+: > "$CD/cap/x.btsnoop.txt"
+CDNONE=$(env PATH="$CD/stub:$PATH" BT_TRACE_DIR="$CD/trace" BT_CAPTURE_DIR="$CD/cap" \
+             tools/bt-capdiff 2>&1); cdnrc=$?
+(( cdnrc == 0 )) && [[ "$CDNONE" == *"coverage"* && "$CDNONE" != *"paths agree"* ]] \
+    && ok "bt-capdiff calls an empty path a coverage question, not agreement" \
+    || bad "an empty capture path was folded into the verdict (rc=$cdnrc)"
+
+tools/bt-capdiff --bogus >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-capdiff rejects an unknown argument" \
+              || bad "bt-capdiff accepted an unknown argument"
+rm -rf "$CD"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is
