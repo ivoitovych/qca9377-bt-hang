@@ -837,3 +837,104 @@ devtools that wrap the suite (`coverage`, `check`, `assert-test-catches`,
 `journal-contract`, `repo-save` — testing them from inside the suite they run is a
 recursion problem, not a seam problem), `reviews/verify.sh`, and `tests/system-roundtrip`,
 which is CI-gated by design.
+
+### Session 3, part 5 — the daemons, the publish gate, and one change backed out
+
+#### `bt-trace` / `bt-usbmon` · `a4b190c` · 0% → 38.0% / 53.1%
+
+Both run in the foreground under systemd and never return, so nothing could run them.
+Both were given `--check`: verify the prerequisites, report the resolved configuration,
+run the retention pass once, exit.
+
+**That is an operator command before it is a test seam,** which is the bar a new mode has
+to clear. "The capture is not running and I do not know why" is answered by btmon's
+absence, a missing debugfs mount, or a filesystem already under the floor — and each of
+those is a silent exit or an *idle loop* inside a unit whose journal says only "starting".
+`bt-usbmon` idles deliberately (a clean exit respawns it under `Restart=always` and fills
+the journal with one line), so there was no way to ask it what it had resolved without
+waiting on it.
+
+**Finding — `bin/bt-usbmon` was tracked mode 100644.** The only script in the tree that was
+not executable. `install.sh` gives it 0755 at its destination, so an installed system was
+fine and nothing noticed; but `bin/bt-usbmon` from a checkout exits 126, and the README
+tells a reader to clone and run these directly. It was found by writing the first test that
+ever tried to run it — the first run failed with rc=126 rather than with anything about
+capture. A new repo-wide invariant derives the script list from the shebang, so one added
+tomorrow is covered without anyone maintaining a list.
+
+#### `devtools/repo-save` · `c7920d8` · 0% → 83.3%
+
+The gate that enforces **this repository's own attribution rule**, and it had never been
+executed by anything. Nine invariants, all `--no-push` against a scratch repo, and the
+group ends by asserting that scratch repo has no remote at all — so `--no-push` is not the
+only thing standing between a test run and a push.
+
+Each of its recorded defects is now pinned to an assertion: staging before scanning
+(neutering `git add -A` fails four invariants), `-F` from a stream snapshotted before
+scanning, unknown flags rejected rather than becoming the message, and the MAC check
+counted rather than `| grep -qv` — under pipefail that pipeline exits non-zero exactly
+when it *matches*, so a real address would have taken the clean branch.
+
+#### A change to the measuring instrument, made and then backed out
+
+`tools/bt-actions` reports **16.4%**, worst in the tree. That is a measurement artifact,
+not a coverage gap: 179 of its 177 "coverable" lines are a single inline awk classifier,
+and bash traces a multi-line command once, at its opening line. The suite does drive that
+classifier from a fixture. The number says "least tested" about the file whose analysis is
+pinned by a table of cases.
+
+`devtools/coverage` already excludes here-document bodies for exactly this reason, so
+excluding inline single-quoted program bodies looked like closing an inconsistency rather
+than moving a goalpost. Implemented, it moved the headline 72.6% → 76.6% and `bt-actions`
+16.4% → 85.3%.
+
+**It was backed out**, because the numerator also moved: 3685 executed lines → 3679, and
+the six lines could not be accounted for. Adding a guard that refuses to exclude any line
+the trace shows was executed did not recover them, and a direct check of the one region
+the heuristic touches showed bash traces only its first and last lines — so the six are
+still unexplained.
+
+Six lines out of 3685 is 0.16%, and the change would have improved the number. Both of
+those are arguments for shipping it, and both are the wrong argument. This is the
+instrument every other figure in this log is measured with; an unexplained discrepancy in
+it is the same class of defect as the empty trace that once reported every file at 0% and
+looked like a finding. A conservative lower bound whose bias is documented is worth more
+than a tighter number with a hole in it.
+
+So the artifact is recorded here instead: **`bt-actions` at 16.4% and `bt-trial` at 62.2%
+are floors set by embedded awk, not gaps to chase.** The real remedy is the one already
+applied to `phase.awk` — extract the classifier to `tools/lib/actions.awk` and give it
+fixture cases — which is work, not a measurement change, and is left open.
+
+### Session 3 final
+
+| | session 2 end | now |
+|---|---|---|
+| Coverage | 38.3% (1692/4423) | **72.6%** (3685/5073) |
+| Invariants | 179 | **329** |
+| Zero-coverage files | 26 of 48 | **8 of 48** |
+| Journal seam | 13 tools | 19 |
+| CI floor | 30 | 65 |
+
+From the opening assessment's baseline: **13.1% → 72.6%**, **65 → 329 invariants**,
+**41 of 43 files at zero → 8 of 48**.
+
+**Still at zero, and why** — all eight are the harness, not the product:
+`devtools/coverage`, `devtools/check`, `devtools/assert-test-catches` and
+`reviews/verify.sh` all *run the suite*, so testing them from inside it is a recursion
+problem rather than a seam problem; `devtools/journal-contract` is independent but already
+a CI step and would double the suite's runtime; `tests/system-roundtrip` is CI-gated by
+design; and two `tests/journal/*/boot-list` files are three-line fixtures.
+
+**Ten findings this session**, every one in code that had been read carefully, and several
+carrying an accurate comment about the exact hazard that bit it. Two of them —
+`column(1)` and `hexdump(1)` — are the same package, `bsdextrautils`, absent from minimal
+images, silenced by a redirect, turning into wrong *content* rather than a visible error.
+That is a pattern to grep for, not a coincidence.
+
+**Four of my own assertions could not fail** for the reason their names gave, and one more
+asserted something impossible. All were written carefully; all passed. Against ten real
+findings, that ratio is the argument for mutation-testing every new check rather than the
+interesting ones — and for the two occasions this session when the suite's own invariants
+caught me: once for writing an inline awk program alongside `-f`, the exact trap that made
+`bt-capdiff` report agreement between paths differing by 278 records.

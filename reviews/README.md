@@ -109,8 +109,19 @@ Not a new report: these close CS-08's successors and the Group 1/2 work describe
 | `bt-dyndbg` | 0% | 73.6% | `BT_DYNDBG_CTL`, append-writes | — |
 | `bt-sco` | 0% | 59.0% | **btmon on `PATH`** | — |
 | `bt-capdiff` | 0% | 86.6% | **btmon on `PATH`** | overlap bound manufactured disagreements at both edges; one-sided loss described as two-sided |
+| `bt-trace` | 0% | 38.0% | `--check` | — |
+| `bt-usbmon` | 0% | 53.1% | `--check`, `BT_USBMON_DEBUGFS` | tracked mode 100644 — exits 126 from a checkout |
+| `devtools/repo-save` | 0% | 83.3% | none needed (scratch repo + `--no-push`) | — |
 
-Verify: `tests/run-tests` (310 invariants) and `devtools/coverage`.
+**Two figures in the table below are floors, not gaps.** `tools/bt-actions` (16.4%) and
+`tools/bt-trial` (62.2%) embed large inline awk programs, and bash traces a multi-line
+command once at its opening line — so the bodies count as uncovered and can never be
+otherwise. `devtools/coverage` documents this bias in its own header. A change to exclude
+them was implemented and **backed out** when it moved the numerator by six unexplained
+lines; see the work log. The remedy is extraction to `tools/lib/`, as was done for
+`phase.awk`, and it is open.
+
+Verify: `tests/run-tests` (329 invariants) and `devtools/coverage`.
 
 **Three assertions written during this work could not fail for the reason their names
 gave** — a row-width check blind to a blank column, a sandbox check using `[[ -e ]]` with
@@ -151,7 +162,7 @@ runs rots exactly like the documentation it was meant to replace.
 
 Coverage was **13.1%** (503/3846) when the report was written, **18.3%** at `d016249`,
 **28.5%** after UT-07 + CS-02/03/05, **38.3%** (1692/4423) after the watchdog, the six
-seam conversions and `bt-incident`, and **69.9%** (3479/4978) after session 3's seventeen
+seam conversions and `bt-incident`, and **72.6%** (3685/5073) after session 3's twenty
 tools. The CI floor is a ratchet below the current figure — 30 until session 3, now 65.
 If `devtools/coverage` prints materially less than the last figure, something regressed
 and the register is stale. (Two of those points are not comparable naively: main's merge and the `./`-prefix
