@@ -90,8 +90,14 @@ done
 # so a byte comparison is wrong; check they exist and name the right device.
 echo
 VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
+# BT_UDEV_DIR / BT_MODE_STAMP: real paths by default, overridable so the
+# verifier can be pointed at a scratch tree. The install_file destinations are
+# already parameterised — they come out of $REPO/install.sh — so these two
+# hardcoded paths were the only thing keeping the SUCCESS path untestable, and
+# "reports in sync only when everything is" is this tool's entire claim.
+UDEV_DIR="${BT_UDEV_DIR:-/etc/udev/rules.d}"
 for r in 50-bluetooth-no-autosuspend 51-bluetooth-health-snapshot; do
-    f="/etc/udev/rules.d/$r.rules"
+    f="$UDEV_DIR/$r.rules"
     if [[ ! -e "$f" ]]; then
         if [[ -e "$f.disabled" ]]; then
             # Deliberately disabled by `bt-mode experiment`, not missing.
@@ -122,8 +128,8 @@ mapfile -t UNITS < <(
 # controlled baseline — so the two tools would push the machine back and forth
 # between modes, each one "fixing" the other.
 EXPERIMENT=0
-if [[ -r /usr/local/share/qca9377-bt-hang/mode ]] \
-   && grep -q '^experiment' /usr/local/share/qca9377-bt-hang/mode 2>/dev/null; then
+MODE_STAMP="${BT_MODE_STAMP:-/usr/local/share/qca9377-bt-hang/mode}"
+if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null; then
     EXPERIMENT=1
 fi
 # These intervene with the controller; experiment mode exists to stop them.

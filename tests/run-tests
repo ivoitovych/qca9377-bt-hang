@@ -2025,6 +2025,128 @@ exhibit frobnicate >/dev/null 2>&1
     || bad "a test exhibit landed in evidence/exhibits/"
 rm -rf "$EXR"
 
+# ── bt-verify-install: the tool whose only failure mode is a false all-clear ─
+#
+# It answers "is what is RUNNING the same as what is COMMITTED?", and it has
+# been wrong twice in exactly the way that matters: a hand-written artefact
+# list omitted six tools installed on 2026-08-12, so it printed "running
+# system matches the checkout" while not checking a quarter of what was
+# installed; and parsing install.sh line-by-line yielded "\" as a destination
+# for every backslash-continued call, reporting seven phantom missing files.
+# Both were fixed by DERIVING the list from install.sh. Neither fix was tested.
+#
+# The source side was already parameterised — bt-verify-install takes the
+# checkout as an argument, and the destinations come out of that checkout's
+# install.sh, so a scratch install.sh puts them under a temp tree. Only the
+# udev directory and the mode stamp were hardcoded; both are now BT_* overrides
+# (real paths by default), which is what makes the SUCCESS path reachable.
+VI=$(mktemp -d)
+mkdir -p "$VI/repo/tools" "$VI/dest" "$VI/udev" "$VI/stopped"
+
+for t in alpha beta gamma; do printf '#!/bin/sh\necho %s\n' "$t" > "$VI/repo/tools/$t"; done
+# gamma's install_file call is BACKSLASH-CONTINUED, which is the shape that
+# produced the phantom-destination bug. install.sh really does wrap its longer
+# calls, so a fixture without one tests the easy half.
+cat > "$VI/repo/install.sh" <<VIEOF
+install_file "\$SRC/tools/alpha" $VI/dest/alpha
+install_file "\$SRC/tools/beta" $VI/dest/beta
+install_file "\$SRC/tools/gamma" \\
+             $VI/dest/gamma
+systemctl enable --now bt-hang-watchdog
+systemctl enable --now bt-health-snapshot.timer
+VIEOF
+cp "$VI/repo/tools"/* "$VI/dest/"
+for r in 50-bluetooth-no-autosuspend 51-bluetooth-health-snapshot; do
+    printf 'ATTR{idVendor}=="13d3", ATTR{idProduct}=="3503"\n' > "$VI/udev/$r.rules"
+done
+# systemctl is scripted by presence of a file per unit, so each scenario is a
+# touch rather than a rewritten stub.
+mkdir -p "$VI/stub"
+cat > "$VI/stub/systemctl" <<VISTUB
+#!/bin/sh
+case "\$1" in
+  is-active)  if [ -e "$VI/stopped/\$2" ]; then echo inactive; exit 3; fi; echo active ;;
+  is-enabled) if [ -e "$VI/stopped/\$2" ]; then echo disabled; exit 1; fi; echo enabled ;;
+esac
+exit 0
+VISTUB
+chmod +x "$VI/stub/systemctl"
+
+vi_run() { env PATH="$VI/stub:$PATH" BT_UDEV_DIR="$VI/udev" \
+               BT_MODE_STAMP="${1:-/nonexistent}" tools/bt-verify-install "$VI/repo" 2>&1; }
+
+VIOUT=$(vi_run); virc=$?
+(( virc == 0 )) && [[ "$VIOUT" == *"running system matches the checkout"* ]] \
+    && ok "bt-verify-install reports in sync when everything is" \
+    || bad "clean tree did not verify (rc=$virc)"
+
+# THE CONTINUATION BUG, pinned by consequence rather than by output shape: a
+# destination parsed as "\" is dropped for not being absolute, so the file is
+# never compared and its drift is invisible. Make gamma — the continued one —
+# differ, and require that it is reported.
+echo 'edited on the machine' >> "$VI/dest/gamma"
+VIDRIFT=$(vi_run); vidrc=$?
+(( vidrc != 0 )) && [[ "$VIDRIFT" == *"DRIFT: $VI/dest/gamma"* ]] \
+    && ok "bt-verify-install compares backslash-continued install_file entries" \
+    || bad "drift in a continued entry went unreported (rc=$vidrc) — destinations parsed as '\\'"
+cp "$VI/repo/tools/gamma" "$VI/dest/gamma"
+
+rm -f "$VI/dest/beta"
+VIMISS=$(vi_run); vimrc=$?
+(( vimrc != 0 )) && [[ "$VIMISS" == *"NOT INSTALLED: $VI/dest/beta"* ]] \
+    && ok "bt-verify-install reports an artifact that was never installed" \
+    || bad "a missing artifact was not reported (rc=$vimrc)"
+
+# A file moved aside by `bt-mode experiment` is deliberately absent, not
+# missing. Reporting it as drift tells the reader to run install.sh --apply,
+# which reverts the controlled baseline — the two tools would then push the
+# machine back and forth, each "fixing" the other.
+touch "$VI/dest/beta.disabled"
+VIDIS=$(vi_run); vidisrc=$?
+(( vidisrc == 0 )) && [[ "$VIDIS" == *"disabled by bt-mode: $VI/dest/beta"* ]] \
+    && ok "bt-verify-install distinguishes bt-mode-disabled from not-installed" \
+    || bad "a bt-mode-disabled file counted as drift (rc=$vidisrc)"
+rm -f "$VI/dest/beta.disabled"; cp "$VI/repo/tools/beta" "$VI/dest/beta"
+
+# Same argument one layer up: in experiment mode the INTERVENING units are
+# stopped on purpose. Everything else is passive acquisition and must still be
+# running in both modes.
+touch "$VI/stopped/bt-hang-watchdog" "$VI/stopped/bt-health-snapshot.timer"
+VIEXPOFF=$(vi_run); viexpoffrc=$?
+(( viexpoffrc != 0 )) \
+    && ok "stopped intervening units are drift when NOT in experiment mode" \
+    || bad "stopped units passed with no mode stamp — the exemption is unconditional"
+
+echo experiment > "$VI/mode"
+VIEXP=$(vi_run "$VI/mode"); viexprc=$?
+(( viexprc == 0 )) && [[ "$VIEXP" == *"stopped by bt-mode experiment"* ]] \
+    && ok "bt-verify-install exempts intervening units in experiment mode" \
+    || bad "experiment mode still reported drift (rc=$viexprc)"
+
+# And the exemption must not cover everything: bluetooth itself is not an
+# intervention, so it stays required in both modes. Without this the previous
+# assertion is satisfied by an exemption that swallows the whole Services block.
+touch "$VI/stopped/bluetooth"
+VIEXP2=$(vi_run "$VI/mode"); viexp2rc=$?
+(( viexp2rc != 0 )) \
+    && ok "experiment mode does not exempt bluetooth.service" \
+    || bad "experiment mode exempted a unit that is not an intervention"
+rm -f "$VI/stopped"/*
+
+# THE FALSE ALL-CLEAR, refused. An install.sh it cannot parse means it knows
+# nothing about what is installed, and "nothing to check" must never render as
+# "everything is fine" — the failure that motivated deriving the list at all.
+: > "$VI/repo/install.sh"
+VIEMPTY=$(vi_run); viempc=$?
+(( viempc != 0 )) && [[ "$VIEMPTY" == *"refusing to report success on an empty artefact list"* ]] \
+    && ok "bt-verify-install refuses an unparseable install.sh" \
+    || bad "an empty artefact list reported success (rc=$viempc)"
+
+tools/bt-verify-install "$VI/no-such-checkout" >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-verify-install rejects a checkout that is not there" \
+              || bad "bt-verify-install accepted a nonexistent checkout"
+rm -rf "$VI"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is
