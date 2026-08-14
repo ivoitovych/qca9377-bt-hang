@@ -147,6 +147,25 @@ hci_alive() {
 # project made measurement provenance first-class; this makes TREATMENT
 # provenance first-class, which is the same discipline applied to the other
 # half of the experiment.
+# True when treat_end differs from treat_start ONLY by fields that became `?`.
+#
+# Compares field by field. A field that holds a real value at open and `?` at
+# close became UNREADABLE; any other difference is a real change. Both strings
+# are comma-separated key=value, produced by env_fingerprint above.
+treatment_only_became_unreadable() {
+    local a="$1" b="$2" i
+    local -a fa fb
+    IFS=',' read -r -a fa <<< "$a"
+    IFS=',' read -r -a fb <<< "$b"
+    (( ${#fa[@]} == ${#fb[@]} )) || return 1
+    for i in "${!fa[@]}"; do
+        [[ "${fa[$i]}" == "${fb[$i]}" ]] && continue
+        # Same key, and the closing value is `?` — unreadable, not changed.
+        [[ "${fa[$i]%%=*}" == "${fb[$i]%%=*}" && "${fb[$i]#*=}" == "?" ]] || return 1
+    done
+    return 0
+}
+
 env_fingerprint() {
     local autosusp power wd early thr probes commit dev
     autosusp=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo '?')
@@ -401,6 +420,24 @@ hang|ok)
     if [[ -z "$treat_start" ]]; then
         treatment="$treat_end"           # trial opened before this was recorded
     elif [[ "$treat_start" == "$treat_end" ]]; then
+        treatment="$treat_start"
+    elif treatment_only_became_unreadable "$treat_start" "$treat_end"; then
+        # UNREADABLE IS NOT CHANGED, AND THE DIFFERENCE DECIDES A DENOMINATOR.
+        #
+        # env_fingerprint reads power/control out of the device's sysfs
+        # directory. When the controller has left the USB bus that directory is
+        # gone, so the field reads `?` — and the endpoint comparison saw
+        # `power=auto` -> `power=?` as a treatment change and prefixed the row
+        # CHANGED:, which excludes it from every rate.
+        #
+        # The effect was exactly backwards: a trial is marked CHANGED precisely
+        # BECAUSE it reached stage 2, so the failures that matter most were the
+        # ones silently dropped from the failure rate. Observed on trial stock #2,
+        # 2026-08-14, whose only "change" was the device being absent at close.
+        #
+        # A trial's treatment is what it RAN UNDER. A field becoming unreadable
+        # at close is a fact about the device's presence — already recorded in
+        # usb_present — not a reconfiguration.
         treatment="$treat_start"
     else
         # Deliberately not a valid treatment string: it must not match any other

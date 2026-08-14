@@ -208,3 +208,27 @@ controller, warm-reboot without touching the power, and look.
 a classification — a window ended by shutdown is right-censored whichever kind it was.
 What changes is that the *next* boot's recovery becomes readable from the evidence
 instead of from someone's memory.
+
+### BL-02 — the operator action that triggers the fault is not in the exhibit that describes it
+
+`bt-actions` reconstructs the operator trail from the journal and classifies it into four
+streams — `USER` (settings panel, quick-settings toggle), `PROF` (BlueZ profile
+transitions), `PLAY` (PipeWire), `CTRL`/`WDOG`. On 2026-08-14 it recovered the whole
+sequence: panel opened, `Hands-Free Voice gateway` transition, `HCI cmd 0x0428`, timeout.
+
+That trail reaches `evidence/sessions/*/timeline.txt` through `bt-incident`. It does **not**
+reach the exhibits, which are built from the kernel stream alone — so the exhibit that
+describes a fault triggered by a profile switch does not contain the profile switch.
+
+**Why it is worth closing.** For an upstream report, *"switch A2DP→HFP and it dies, here
+is the trace"* is a different class of claim from a timing correlation, and the operator
+action is what makes it reproducible by someone else. `EX-021` states the trigger in prose
+and cites the kernel line; the `USER`/`PROF` lines that corroborate the operator's account
+live only in the session directory beside it.
+
+**Shape of the work.** Let `bt-exhibit` accept a second extraction command, or let an
+exhibit cite a session's `timeline.txt` range, so a single exhibit can carry both streams —
+what the operator did, and what the controller did about it.
+
+**Not urgent.** The evidence exists and is collected; this is about where a reader finds
+it. Do it before the upstream submission, not before the next trial.

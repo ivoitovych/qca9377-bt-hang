@@ -51,6 +51,7 @@ FILES=(
     /usr/local/share/qca9377-bt-hang/mode
     /usr/local/bin/bt-interval
     /usr/local/bin/bt-stage2
+    /usr/local/bin/bt-window
     /usr/local/bin/bt-boot-provenance
     /usr/local/bin/lib/timestamp.awk
     /usr/local/bin/lib/interval.awk

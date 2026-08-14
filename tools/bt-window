@@ -1,0 +1,111 @@
+#!/bin/bash
+# bt-window — how long has the controller been in HCI non-response, and has
+#              anything touched it since?
+#
+#   bt-window
+#
+# Answers the one question that matters while an untreated observation is
+# running, and answers it WITHOUT PROBING THE CONTROLLER. That exclusion is the
+# whole point: `bt-status` and `bt-state` run `hciconfig <dev> name`, which is a
+# real HCI command/response exchange and is proven to abort an active btmon
+# capture (EX-011). Asking "is it still alive?" with a probe would end the
+# observation it is asking about.
+#
+# Everything here comes from the journal and from sysfs enumeration, both of
+# which are passive.
+#
+# WHY A TOOL AND NOT A PIPELINE. During the 2026-08-14 window this was
+# reassembled by hand every time it was asked, as a compound line containing
+# `$(date ...)` — which the command allowlist cannot analyse, so it prompted on
+# every check. A question asked repeatedly during an experiment must be cheap to
+# ask, or it gets asked less often than it should.
+#
+# Exit 0 while the device is still enumerated, 1 once it has left the bus.
+
+set -uo pipefail
+
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
+INTERVAL="$(dirname "$(readlink -f "$0")")/bt-interval"
+[[ -x "$INTERVAL" ]] || INTERVAL=bt-interval
+
+B=$'\033[1m'; G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; O=$'\033[0m'
+[[ -t 1 ]] || { B=""; G=""; R=""; Y=""; O=""; }
+
+TMO_RE='command( 0x[0-9a-f]+)? tx timeout'
+
+first=$(journalctl -k -b 0 --no-pager -o short-iso-precise 2>/dev/null \
+        | grep -m1 -E "$TMO_RE" | awk '{print $1}')
+
+if [[ -z "$first" ]]; then
+    printf '%sNo HCI command timeout this boot.%s The controller has not entered\n' "$G" "$O"
+    printf 'HCI non-response — there is no window to report.\n'
+    exit 0
+fi
+
+n_tmo=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE "$TMO_RE" || true)
+
+# Anything at the USB layer AFTER the fault. Silence here is the finding: it
+# means the transport is healthy while HCI is not.
+usb=$(journalctl -k -b 0 --since "${first%%.*}" --no-pager 2>/dev/null \
+      | grep -cE 'usb [0-9]+-[0-9]+|xhci_hcd|USB disconnect' || true)
+
+# Anything that TOUCHED the controller. A window with one of these in it is
+# censored, not a measurement — that distinction is the whole of EX-018.
+#
+# TWO CLASSES, AND THE SECOND WAS MISSING. The first version of this grep
+# matched only OUR TOOLING — watchdog markers, btusb unload, USB reset. On
+# 2026-08-14 the operator toggled Bluetooth off in the Settings panel 30 minutes
+# into an untreated window; the rfkill block matched nothing here, so this tool
+# printed "✓ no intervention" about a window that had just been intervened upon,
+# and kept printing it after the device left the bus.
+#
+# An operator action is an intervention. The panel, the quick-settings toggle
+# and rfkill are the ones a person can reach without a terminal, and they are
+# exactly the ones a tool watching for `modprobe -r` will never see.
+iv_tool=$(journalctl -b 0 --since "${first%%.*}" --no-pager 2>/dev/null \
+     | grep -cE 'deregistering interface driver btusb|Resetting usb device|usb_queue_reset_device|intervening|EARLY intervention' || true)
+iv_user=$(journalctl -b 0 --since "${first%%.*}" --no-pager 2>/dev/null \
+     | grep -cE 'name hci[0-9]+ blocked|powering off device on rfkill|RFKILL event|rfkill_event' || true)
+iv=$(( ${iv_tool:-0} + ${iv_user:-0} ))
+
+present=$(lsusb 2>/dev/null | grep -c "$VID:$PID" || true)
+
+now=$(date '+%Y-%m-%dT%H:%M:%S.000000%:z')
+elapsed=$("$INTERVAL" "$first" "$now" 2>/dev/null || echo '?')
+
+printf '%sHCI non-response window%s\n' "$B" "$O"
+printf '  first timeout      %s\n' "$first"
+printf '  now                %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%:z')"
+printf '  elapsed            %ss\n' "$elapsed"
+printf '  command timeouts   %s\n' "${n_tmo:-?}"
+echo
+
+if (( ${present:-0} > 0 )); then
+    printf '  %s✓ still enumerated%s  %s:%s is on the USB bus\n' "$G" "$O" "$VID" "$PID"
+else
+    printf '  %s✗ GONE FROM THE BUS%s  — stage 2 reached\n' "$R" "$O"
+fi
+
+if (( ${usb:-0} == 0 )); then
+    printf '  %s✓ USB layer silent%s  no bus-level line since the fault\n' "$G" "$O"
+else
+    printf '  %s! %s USB-layer line(s)%s since the fault — read them before concluding\n' "$Y" "${usb}" "$O"
+fi
+
+if (( iv == 0 )); then
+    printf '  %s✓ no intervention%s  neither tooling nor operator has touched it\n' "$G" "$O"
+else
+    printf '  %s✗ %s INTERVENTION(S)%s — this window is CENSORED, not a measurement\n' "$R" "$iv" "$O"
+    (( ${iv_tool:-0} > 0 )) && printf '      %s tooling (watchdog / btusb unload / USB reset)\n' "$iv_tool"
+    (( ${iv_user:-0} > 0 )) && printf '      %s operator (rfkill / Settings toggle)\n' "$iv_user"
+    printf '      the window measures time-to-intervention, NOT time-to-USB-loss\n'
+fi
+
+echo
+if (( ${present:-0} > 0 && ${iv:-0} == 0 )); then
+    echo "  Untreated and running. Every second of this is worth more than any"
+    echo "  censored window in the record. Do not touch Bluetooth."
+    exit 0
+fi
+exit 1

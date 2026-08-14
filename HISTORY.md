@@ -1686,3 +1686,78 @@ against the three directories named before.
 
 **A list that must be remembered will eventually not be.** The rule this repository keeps
 rediscovering is that the enumeration is the bug, not the entries.
+
+## Phase 26 — half an hour of nothing, and twelve seconds of something
+
+The machine was cold-booted into the frozen baseline — stock kernel, watchdog off, probes
+off, Ubuntu power defaults, tooling deployed and verified in sync — and the operator used
+Bluetooth normally. Switching the headset from A2DP to hands-free killed the controller.
+
+It was not the first action of the session, and that matters for reproduction. `bt-actions`
+recovers the preceding exposure from the journal — the Settings panel opened at 20:30:25, a
+quick-settings Bluetooth OFF at 20:30:30 and ON at 20:30:36, profiles reconnecting, audio
+playing and stopping. The controller answered normally throughout, up to and including
+20:32:19. Whoever reproduces this should expect to warm it up, not to kill it on the first
+switch.
+
+```
+20:32:14.329  hci0 opcode 0x0428 plen 17          the profile switch
+20:32:21.903  command 0x0406 tx timeout           7.574 s later, no answer
+              ┃
+              ┃   30 m 36 s   not one USB-layer line. no intervention of any kind.
+              ┃
+21:02:58      operator opened the Bluetooth settings panel
+21:03:23      name hci0 blocked 1                 rfkill toggle OFF
+              ┃   12.8 s
+21:03:35.809  usb 3-3: reset full-speed USB device   first USB event of the window
+21:04:50      device not accepting address 2, error -62 — gone
+```
+
+### What this settles, and what it does not
+
+`EX-018` established that no uncensored progression to USB loss had ever been observed —
+fourteen windows, every one ended by an intervention or a shutdown before any USB event.
+The objection to reading anything into that was fair: absence of the observation is not
+evidence about what the observation would have shown.
+
+This window answers the objection in the only way it can be answered. **Half an hour of
+untreated stage 1 produced nothing at all** — no reset, no bus error, no disconnect, not a
+single line at the USB layer — and the collapse began **12.8 seconds** after the first
+thing to touch the device.
+
+It does not prove causation. The reset at 21:03:35 carries no origin in the log, and
+`bt-stage2` classifies it `unknown-reset`, which is correct. What it does is retire the
+45–66 s figure completely: that number is now **24× smaller** than an untreated window
+that showed no progression whatever, and it was always our watchdog's reaction time
+wearing the fault's clothes.
+
+Across fifteen windows, a USB collapse has never begun before something touched the
+controller. That is not a proof; it is the continued absence of the counterexample.
+
+### The trigger is now operator-attributable
+
+The operator reported switching to hands-free and the log agrees: `0x0428` — Setup
+Synchronous Connection — at the moment described, with the teardown unanswered 7.6 s
+later. Identical in shape to `EX-016` (`0x0428` → `0x0406 tx timeout`, 13.7 s). For an
+upstream report, *"switch A2DP→HFP and it dies, here is the trace"* is a different class of
+claim from a timing correlation.
+
+### Two defects the observation found in our own instruments
+
+**`bt-window` reported `✓ no intervention` after the toggle.** It was written during this
+window to report on it, and its intervention scan covered watchdog markers, btusb unloads
+and USB resets — not rfkill, not operator actions. A window that had just been intervened
+upon read as clean, and kept reading clean after the device left the bus. The scan now
+counts tooling and operator interventions separately and names which occurred.
+
+**A stage-2 trial excluded itself from its own statistics.** `env_fingerprint` reads
+`power/control` from the device's sysfs directory; when the controller leaves the bus that
+directory is gone and the field reads `?`. The endpoint comparison saw `power=auto` →
+`power=?` as a treatment change and prefixed the row `CHANGED:` — which excludes it from
+every rate. So a trial was dropped from the failure statistics **because** it reached
+stage 2, and the trials that mattered most were the ones being discarded. A treatment is
+what a trial RAN UNDER; a field becoming unreadable at close is a fact about the device's
+presence, already recorded in `usb_present`.
+
+Both are the house pattern: an instrument whose silence reads as a finding. The first was
+introduced *during* the observation it was built to watch.

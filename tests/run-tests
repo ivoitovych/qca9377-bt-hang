@@ -1188,6 +1188,38 @@ echo "────────────────────────�
 WIDTH=$(awk -F'\t' 'NR==1{n=NF; next} NF && NF!=n {print NR": "NF" vs "n}' \
         evidence/trials/results.tsv 2>/dev/null)
 if [[ -z "$WIDTH" ]]; then
+
+# UNREADABLE IS NOT CHANGED — and the difference decides a denominator.
+#
+# env_fingerprint reads power/control out of the device's sysfs directory. When
+# the controller has left the USB bus that directory is gone and the field reads
+# `?`. The endpoint comparison treated `power=auto` -> `power=?` as a treatment
+# change, prefixed the row CHANGED:, and CHANGED: rows are excluded from every
+# rate — so a trial was dropped from the failure statistics BECAUSE it reached
+# stage 2. Observed on trial stock #2, 2026-08-14.
+#
+# The helper is sourced from the tool itself rather than copied, so this cannot
+# pass against a version bt-trial no longer runs.
+eval "$(awk '/^treatment_only_became_unreadable\(\)/,/^}/' tools/bt-trial)"
+TS_A="autosusp=Y,power=auto,wd=off,probes=off"
+if treatment_only_became_unreadable "$TS_A" "autosusp=Y,power=?,wd=off,probes=off"; then
+    ok "a field becoming unreadable at close is not a treatment change"
+else
+    bad "device-absent power=? still counts as CHANGED — stage-2 trials excluded from rates"
+fi
+if treatment_only_became_unreadable "$TS_A" "autosusp=N,power=auto,wd=off,probes=off"; then
+    bad "a REAL treatment change was accepted as merely unreadable"
+else
+    ok "a real treatment change is still CHANGED"
+fi
+# And a field going the other way — unreadable at open, real at close — is a
+# change, not a recovery of the same treatment.
+if treatment_only_became_unreadable "autosusp=Y,power=?,wd=off,probes=off" "$TS_A"; then
+    bad "unreadable-at-open to readable-at-close was accepted as unchanged"
+else
+    ok "unreadable at open, readable at close is still CHANGED"
+fi
+
     ok "every row in results.tsv matches the header width"
 else
     bad "results.tsv row/header width mismatch:"
@@ -3449,7 +3481,25 @@ chmod +x "$BSMG/bin"/*
 # must simply not contain one; the branch under test is the one taken when
 # hciconfig is not there at all.
 mkdir -p "$BSMG/bin2"; cp "$BSMG/bin/btmgmt" "$BSMG/bin/bluetoothctl" "$BSMG/bin2/"
-BSMGOUT=$(env PATH="$BSMG/bin2:/usr/bin:/bin" \
+# /usr/bin MUST NOT be on the PATH here, and leaving it there is not a detail.
+#
+# hciconfig lives in /usr/bin on any machine with bluez installed — which is
+# every machine this project runs on. With /usr/bin on the PATH the branch under
+# test was never reached: bt-state found the REAL hciconfig and probed the REAL
+# controller, so the assertion reported whatever that controller happened to be
+# doing. On the investigation machine, mid-failure, that is `no`.
+#
+# A symlink farm of /usr/bin minus hciconfig keeps every other tool bt-state
+# needs while making the one under test genuinely absent. Found by running this
+# suite on a host where bluez is installed; it passes on a bare checkout.
+#
+# AND /bin MUST GO TOO. On Ubuntu /bin is a symlink to usr/bin, so /bin/hciconfig
+# is the same file by another name — removing /usr/bin from the PATH while
+# leaving /bin closes one door and leaves the other open. The farm carries
+# everything /bin would have supplied, because it IS /usr/bin.
+ln -s /usr/bin/* "$BSMG/bin2/" 2>/dev/null || true
+rm -f "$BSMG/bin2/hciconfig"
+BSMGOUT=$(env PATH="$BSMG/bin2" \
               BT_SYSFS_USB="$BS/usb" BT_SYSFS_MODULE="$BS/mod" \
               BT_JOURNAL_FIXTURE="$BS/jrn" tools/bt-state --tsv 2>&1)
 [[ "$(awk -F'\t' '{print $5}' <<<"$BSMGOUT")" == "yes" ]] \

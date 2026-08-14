@@ -64,13 +64,22 @@ The causal graph therefore carries one more antecedent, with its question mark i
                               our reset / rebind                        left alone
                                     |                                           |
                                     v                                           v
-                        observable USB errors --> device gone        still enumerated at 72 min,
-                                                                     then WE ended the observation
-                              (every case so far)                          (n = 1, censored)
+                        observable USB errors --> device gone        still enumerated, USB layer
+                                                                     SILENT, then WE ended it
+                              (every case so far)                        (n = 2, both censored)
 ```
 
-The right-hand branch has been walked exactly once (`EX-016`) and never to its end, so the
-arrow below it is missing on purpose. Whether one exists is the open question in BT-1.
+The right-hand branch has been walked twice — `EX-016` (72 min, ended by our `install.sh`
+reloading btusb) and `EX-021` (30 m 36 s, ended by an operator rfkill toggle) — and never
+to its end, so the arrow below it is missing on purpose. Whether one exists is the open
+question in BT-1.
+
+**`EX-021` is the sharpest instance and adds a timing that the graph cannot draw.** The
+controller sat in the right-hand branch for 30 m 36 s with **not one bus-level line**, and
+the USB collapse began **12.8 s after the operator's rfkill power-off attempt** — the
+first thing to touch the device in that entire window. Across fifteen windows, a USB
+collapse has never once begun before something touched the controller. That is not proof
+of causation; it is the complete absence of the counterexample that would refute it.
 
 ### The five levels a timestamp has to survive
 

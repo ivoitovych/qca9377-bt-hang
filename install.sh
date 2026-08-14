@@ -256,6 +256,7 @@ install_file "$SRC/tools/bt-env-history" /usr/local/bin/bt-env-history 0755
 install_file "$SRC/tools/bt-mode"        /usr/local/bin/bt-mode        0755
 install_file "$SRC/tools/bt-interval"    /usr/local/bin/bt-interval    0755
 install_file "$SRC/tools/bt-stage2"      /usr/local/bin/bt-stage2      0755
+install_file "$SRC/tools/bt-window"      /usr/local/bin/bt-window      0755
 install_file "$SRC/tools/bt-boot-provenance" /usr/local/bin/bt-boot-provenance 0755
 # Shared awk programs. These are loaded with `awk -f`, so they must sit where
 # the tools look: <dir of the tool>/lib.
