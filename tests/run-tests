@@ -2839,6 +2839,104 @@ evstray=$(find evidence/sessions -maxdepth 1 -name '*probe-session*' 2>/dev/null
     || bad "$evstray test session(s) were written into evidence/sessions/"
 rm -rf "$EV"
 
+# ── bt-dyndbg: which debug sites are on IS a measurement decision ─────────
+#
+# The failure under investigation is timing-sensitive — the controller stops
+# answering within tens of seconds — so logging that adds work to the receive
+# path moves the window being measured, and every measurement taken with it on
+# becomes incomparable to the baseline taken without.
+#
+# The selection has been wrong twice. First at file granularity: excluding
+# hci_event.c and l2cap_core.c was not enough, because hci_core.c also holds
+# the transmit scheduler and btusb.c the URB completion handlers — 1,561,719
+# kernel lines in 16 minutes, which would have exhausted the 16 GB journal cap
+# in under three hours and rotated away the evidence the logging exists to
+# preserve. Then again for four functions that do not look per-packet from
+# their names (hci_rx_work, hci_send_frame, hci_conn_enter_active_mode,
+# hci_conn_idle) and produced 98% of one boot's output.
+#
+# Both fixes are lists in the script, and nothing checked either of them.
+DD=$(mktemp -d)
+# A control file shaped like debugfs: source:line, function, flags.
+cat > "$DD/control" <<'DDC'
+drivers/bluetooth/btusb.c:1042 [btusb]btusb_setup_qca =_ "setup\012"
+drivers/bluetooth/btusb.c:2210 [btusb]btusb_bulk_complete =p "complete\012"
+net/bluetooth/hci_core.c:0812 [bluetooth]hci_cmd_timeout =p "timeout\012"
+net/bluetooth/hci_core.c:1533 [bluetooth]hci_tx_work =_ "tx\012"
+net/bluetooth/hci_sync.c:0300 [bluetooth]hci_cmd_sync =_ "sync\012"
+net/bluetooth/hci_event.c:4001 [bluetooth]hci_event_packet =_ "evt\012"
+DDC
+dd_run() { BT_DYNDBG_CTL="$DD/control" bin/bt-dyndbg "$@" 2>&1; }
+
+DDON=$(dd_run on); ddrc=$?
+(( ddrc == 0 )) && [[ "$DDON" == *"enabled debug in 4 file(s)"* ]] \
+    && ok "bt-dyndbg on enables exactly the four command-level files" \
+    || bad "default set was not four files (rc=$ddrc)"
+
+# The per-packet files must NOT be in the default set — that is the whole
+# argument of the header, and enabling them changes what is measured.
+ddcmds=$(grep -E '^(file|func) ' "$DD/control")
+[[ "$ddcmds" != *"file hci_event.c +p"* && "$ddcmds" != *"file l2cap_core.c +p"* ]] \
+    && ok "bt-dyndbg on leaves the per-packet files off by default" \
+    || bad "hci_event.c or l2cap_core.c was enabled without --packets"
+
+# THE SECOND FIX, by name. These four produced 189,274 of 193,506 lines in one
+# boot and none of them reads as per-packet from the function name, which is
+# exactly why the list has to be asserted rather than reviewed.
+ddmissing=""
+for fn in hci_rx_work hci_send_frame hci_conn_enter_active_mode hci_conn_idle \
+          hci_tx_work btusb_bulk_complete btusb_intr_complete; do
+    [[ "$ddcmds" == *"func $fn -p"* ]] || ddmissing="$ddmissing $fn"
+done
+[[ -z "$ddmissing" ]] \
+    && ok "bt-dyndbg suppresses every measured-hot function by name" \
+    || bad "these hot sites were left enabled:$ddmissing"
+
+# ORDER MATTERS, and it is stated as a comment in the source: files are enabled
+# first, then the per-packet functions inside them are switched back off. The
+# reverse order re-enables every one of them, which is a silent return to the
+# 5.8 GB/h flood. Compared by line number in the command stream.
+dd_first_func=$(grep -n '^func ' "$DD/control" | head -1 | cut -d: -f1)
+dd_last_file=$(grep -n '^file .* +p$' "$DD/control" | tail -1 | cut -d: -f1)
+(( ${dd_first_func:-0} > ${dd_last_file:-0} )) \
+    && ok "file enables precede function suppressions — the order that holds" \
+    || bad "a function was suppressed before a file enable re-enabled it"
+
+# --packets is the opt-in, and it must say what it costs.
+: > "$DD/control"; cat >> "$DD/control" <<'DDC2'
+net/bluetooth/hci_event.c:4001 [bluetooth]hci_event_packet =_ "evt\012"
+DDC2
+DDPKT=$(dd_run on --packets)
+[[ "$DDPKT" == *"enabled debug in 6 file(s)"* && "$DDPKT" == *"perturb the timing"* ]] \
+    && ok "bt-dyndbg on --packets adds the per-packet files and warns why" \
+    || bad "--packets did not enable six files or omitted the timing warning"
+
+[[ "$(grep -c '^func ' "$DD/control")" == "0" ]] \
+    && ok "--packets does not then suppress the functions it was asked for" \
+    || bad "--packets enabled the per-packet files and immediately muted them"
+
+: > "$DD/control"
+DDOFF=$(dd_run off)
+[[ "$DDOFF" == *"disabled debug in 12 file(s)"* \
+   && "$(grep -c ' -p$' "$DD/control")" == "12" ]] \
+    && ok "bt-dyndbg off disables all twelve files, not only the four it enables" \
+    || bad "off did not cover every file that on could have touched"
+
+# count_enabled matches on the SOURCE PATH, not a file-name alternation: an
+# alternation like (btusb|hci_)\.c matches only the branches that are complete
+# file names and undercounts the rest. The seeded control file has 2 sites with
+# a flag other than "=_".
+cat > "$DD/control" <<'DDC3'
+drivers/bluetooth/btusb.c:2210 [btusb]btusb_bulk_complete =p "complete\012"
+net/bluetooth/hci_core.c:0812 [bluetooth]hci_cmd_timeout =pfl "timeout\012"
+net/bluetooth/hci_sync.c:0300 [bluetooth]hci_cmd_sync =_ "sync\012"
+DDC3
+DDSTAT=$(dd_run status)
+[[ "$DDSTAT" == *"enabled sites: 2"* ]] \
+    && ok "bt-dyndbg status counts enabled sites by source path" \
+    || bad "site count wrong: $(head -1 <<<"$DDSTAT")"
+rm -rf "$DD"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is

@@ -33,7 +33,13 @@
 
 set -uo pipefail
 
-CTL=/sys/kernel/debug/dynamic_debug/control
+# BT_DYNDBG_CTL defaults to the real debugfs control file. The seam exists
+# because WHICH sites this tool enables is a measurement-validity question, not
+# a convenience: the header spends thirty lines on it, and the answer was wrong
+# twice — first at file granularity, then again for four functions that do not
+# look per-packet from their names and produced 98% of one boot's output. A
+# fake control file is the only way to assert the selection without a kernel.
+CTL="${BT_DYNDBG_CTL:-/sys/kernel/debug/dynamic_debug/control}"
 DEFAULT_FILES=(btusb.c hci_core.c hci_sync.c hci_conn.c)
 
 # Per-packet functions inside the files above, switched back OFF after the file
@@ -79,11 +85,18 @@ ALL_FILES=(btusb.c hci_core.c hci_sync.c hci_conn.c hci_event.c l2cap_core.c
 
 [[ -w "$CTL" ]] || { echo "bt-dyndbg: $CTL not writable (need root, and debugfs mounted)" >&2; exit 1; }
 
+# APPEND, not truncate. Each write to the debugfs control file is a command
+# and the file has no truncate operation, so `>` and `>>` are identical against
+# the real target. They are not identical against a regular file, which is what
+# a test can supply: `>` would leave only the last command of the run. Writing
+# with `>>` costs nothing in production and makes the selection observable.
+ctl_write() { printf '%s\n' "$*" >> "$CTL" 2>/dev/null; }
+
 set_files() {
     local flag="$1"; shift
     local f n=0
     for f in "$@"; do
-        if echo "file $f $flag" > "$CTL" 2>/dev/null; then
+        if ctl_write "file $f $flag"; then
             n=$((n + 1))
         fi
     done
@@ -114,13 +127,13 @@ case "${1:-status}" in
         if [[ "${2:-}" != "--packets" ]]; then
             q=0
             for fn in "${NOISY_FUNCS[@]}"; do
-                echo "func $fn -p" > "$CTL" 2>/dev/null && q=$((q + 1))
+                ctl_write "func $fn -p" && q=$((q + 1))
             done
             echo "bt-dyndbg: suppressed $q per-packet function(s) (use --packets to keep them)"
         fi
 
         echo "bt-dyndbg: $(count_enabled) site(s) now active"
-        echo "bt-dyndbg: output goes to the kernel log — journalctl -k -f"
+        echo "bt-dyndbg: output goes to the kernel log — journalctl -k -f"  # SEAM-ADVICE
         ;;
     off)
         n=$(set_files -p "${ALL_FILES[@]}")
