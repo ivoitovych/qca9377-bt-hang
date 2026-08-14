@@ -4142,6 +4142,127 @@ devtools/repo-validate "$SCRATCH/badsh" >/dev/null 2>&1
 (( $? != 0 )) && ok "repo-validate fails on a planted bash syntax error" \
               || bad "repo-validate PASSED a repo with unparseable shell"
 
+# ── devtools/status: COMMITTED is not DEPLOYED ───────────────────────────
+#
+# The tool exists to keep one distinction visible, and states one contract:
+# deployment drift is REPORTED but does NOT set the exit status, because it is
+# a fact about the machine and not a defect in the commit. That contract cannot
+# be checked against the real host — it needs an installation that has drifted,
+# and manufacturing one on the investigation machine is the opposite of a
+# read-only check. So: a scratch repository with a real local remote, and
+# stubbed tools inside it.
+#
+# The pushed-ness question is asked of the REMOTE via ls-remote rather than of
+# a tracking ref, which is what once produced a false all-clear from a ref that
+# had since been pruned. A file:// remote answers it offline, so no network
+# round trip enters the suite.
+ST=$(mktemp -d)
+git init -q --bare "$ST/remote.git"
+mkdir -p "$ST/repo/tools"; scratch_repo "$ST/repo"
+git -C "$ST/repo" remote add origin "$ST/remote.git"
+printf 'seed\n' > "$ST/repo/README.md"
+# A checkout that is AHEAD of what is installed — the state the tool was built
+# to stop hiding behind "everything is pushed". Committed BEFORE the seed push,
+# because an untracked tools/ is itself an uncommitted change and would make
+# every case below report a dirty tree.
+printf '#!/bin/sh\necho "  3 in sync, 1 drifted, 0 not installed"\n' > "$ST/repo/tools/bt-verify-install"
+printf '#!/bin/sh\necho "  recorded mode        mitigation since 2026-08-10"\n' > "$ST/repo/tools/bt-mode"
+printf '#!/bin/sh\necho "no trial open"\n' > "$ST/repo/tools/bt-trial"
+chmod +x "$ST/repo/tools"/*
+git -C "$ST/repo" add -A
+git -C "$ST/repo" -c commit.gpgsign=false commit -qm seed
+git -C "$ST/repo" push -q origin HEAD:refs/heads/"$(git -C "$ST/repo" rev-parse --abbrev-ref HEAD)"
+mkdir -p "$ST/stub"; printf '#!/bin/sh\nexit 1\n' > "$ST/stub/lsusb"; chmod +x "$ST/stub/lsusb"
+
+st_run() { env PATH="$ST/stub:$PATH" BT_STATUS_REPO="$ST/repo" devtools/status 2>&1; }
+
+STOUT=$(st_run); strc=$?
+# THE CONTRACT. Clean, pushed, and the installed tooling has drifted — exit 0.
+(( strc == 0 )) && [[ "$STOUT" == *"everything committed and pushed"* ]] \
+    && ok "devtools/status exits 0 on a clean, pushed tree" \
+    || bad "a clean pushed tree did not exit 0 (rc=$strc)"
+
+[[ "$STOUT" == *"drifted"* && "$STOUT" == *"checkout is AHEAD of what is running"* ]] \
+    && ok "deployment drift is reported alongside a clean repository verdict" \
+    || bad "drift was not reported next to the committed/pushed answer"
+
+# ...and reported WITHOUT changing the verdict. This is the assertion the tool
+# was written for: for most of 2026-08-13 the checkout ran several fixes ahead
+# of the installed tooling — including a bt-usbmon whose retention was known
+# broken — while every report said "everything is pushed", which was true and
+# not what anyone meant. Folding drift into the exit status would make the
+# opposite error, failing a commit for the state of a machine.
+[[ "$STOUT" == *"Deployment is reported above, separately"* ]] \
+    && ok "drift does not set the exit status, and the report says so" \
+    || bad "deployment drift changed the repository verdict"
+
+# A dirty tree is a defect in the commit, and does set it.
+printf 'uncommitted\n' > "$ST/repo/scratch.txt"
+STDIRTY=$(st_run); stdrc=$?
+(( stdrc == 1 )) && [[ "$STDIRTY" == *"uncommitted change(s)"* \
+                    && "$STDIRTY" == *"NOT everything is committed and pushed"* ]] \
+    && ok "devtools/status exits 1 on an uncommitted change" \
+    || bad "a dirty tree did not exit 1 (rc=$stdrc)"
+rm -f "$ST/repo/scratch.txt"
+
+# Committed but not pushed is the other half, and the count matters: "ahead by
+# N" is what tells someone whether they forgot one commit or a day's work.
+printf 'more\n' >> "$ST/repo/README.md"
+git -C "$ST/repo" add -A
+git -C "$ST/repo" -c commit.gpgsign=false commit -qm second
+STAHEAD=$(st_run); stahrc=$?
+(( stahrc == 1 )) && [[ "$STAHEAD" == *"local is 1 commit(s) ahead"* ]] \
+    && ok "devtools/status counts how far ahead of the remote the branch is" \
+    || bad "an unpushed commit was not reported with its count (rc=$stahrc)"
+
+# AND THE FALSE ALL-CLEAR IT WAS WRITTEN AGAINST. With the remote gone, the
+# tool must say it could not confirm — not fall back to a tracking ref and
+# report success. The tracking ref still exists here and still points at the
+# old head, which is exactly the stale state that once answered "all pushed".
+git -C "$ST/repo" remote set-url origin "$ST/no-such-remote.git"
+STNOREM=$(st_run)
+[[ "$STNOREM" == *"could not reach origin — cannot confirm"* \
+   && "$STNOREM" != *"pushed"*"=="* ]] \
+    && ok "an unreachable remote is reported as unconfirmed, never as pushed" \
+    || bad "an unreachable remote produced a pushed verdict from a stale ref"
+git -C "$ST/repo" remote set-url origin "$ST/remote.git"
+git -C "$ST/repo" push -q origin HEAD 2>/dev/null
+
+# The all-clear side of the machine section: nothing drifted, and the
+# controller is on the bus. Asserted because the drift row above is only
+# meaningful if the tool is capable of NOT printing it.
+printf '#!/bin/sh\necho "  4 artifacts in sync; running system matches the checkout"\n' \
+    > "$ST/repo/tools/bt-verify-install"
+printf '#!/bin/sh\necho "Bus 003 Device 002: ID 13d3:3503 IMC Networks Bluetooth"\n' \
+    > "$ST/stub/lsusb"
+chmod +x "$ST/repo/tools/bt-verify-install" "$ST/stub/lsusb"
+git -C "$ST/repo" add -A
+git -C "$ST/repo" -c commit.gpgsign=false commit -qm insync
+git -C "$ST/repo" push -q origin HEAD 2>/dev/null
+STSYNC=$(st_run); stsrc=$?
+(( stsrc == 0 )) && [[ "$STSYNC" == *"running system matches the checkout"* \
+                    && "$STSYNC" != *"checkout is AHEAD"* \
+                    && "$STSYNC" == *"controller"*"enumerated"* ]] \
+    && ok "devtools/status reports an in-sync installation and a present controller" \
+    || bad "the no-drift path did not report cleanly (rc=$stsrc)"
+
+# A remote branch carrying work that is not on HEAD. Worth surfacing: this
+# repository has run several parallel branches at once, and a rebase attempt
+# that nobody merged is exactly the thing a status check should mention rather
+# than leave to memory.
+git -C "$ST/repo" checkout -q -b sidebranch
+printf 'side work\n' > "$ST/repo/side.txt"
+git -C "$ST/repo" add -A
+git -C "$ST/repo" -c commit.gpgsign=false commit -qm side
+git -C "$ST/repo" push -q origin sidebranch 2>/dev/null
+git -C "$ST/repo" checkout -q -
+git -C "$ST/repo" fetch -q origin 2>/dev/null
+STUNMERGED=$(st_run)
+[[ "$STUNMERGED" == *"carrying unmerged work"* && "$STUNMERGED" == *"sidebranch"* ]] \
+    && ok "devtools/status names remote branches carrying unmerged work" \
+    || bad "an unmerged remote branch was not surfaced"
+rm -rf "$ST"
+
 # ── repo-save, the gate that actually commits ────────────────────────────
 #
 # It stages, validates, scans, scans the MESSAGE, commits, and verifies the

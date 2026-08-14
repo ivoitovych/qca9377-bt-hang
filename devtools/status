@@ -23,7 +23,12 @@
 
 set -uo pipefail
 
-cd "$(dirname "$0")/.." || exit 1
+# BT_STATUS_REPO, defaulting to this script's own checkout. The seam exists
+# because the one contract this tool states — deployment drift is REPORTED but
+# does not set the exit status — cannot be checked against the real machine: it
+# needs an installation that has drifted, and manufacturing one on the
+# investigation host is the opposite of a read-only check.
+cd "${BT_STATUS_REPO:-$(dirname "$0")/..}" || exit 1
 
 G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
 [[ -t 1 ]] || { G=""; R=""; Y=""; B=""; O=""; }
