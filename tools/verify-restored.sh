@@ -10,8 +10,22 @@
 
 set -uo pipefail
 
+# Seams, all defaulting to the real thing. This script's answer is "yes, the
+# machine is back to normal" — the one claim nobody re-checks by hand, because
+# checking it by hand is exactly what the script replaced. It could not be run
+# anywhere except on a machine mid-investigation, so it had never been run
+# under test at all.
+_HERE_VR_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib"
+[[ -r "$_HERE_VR_LIB/journal.sh" ]] || {
+    echo "verify-restored.sh: missing $_HERE_VR_LIB/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$_HERE_VR_LIB/journal.sh"
+
 VID="${BT_VID:-13d3}"
 PID="${BT_PID:-3503}"
+SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+SYSFS_MOD="${BT_SYSFS_MODULE:-/sys/module/btusb/parameters}"
+HEALTH_DIR="${BT_HEALTH_DIR:-/var/log/bt-health}"
 
 pass=0; fail=0; note=0
 
@@ -37,7 +51,7 @@ echo "1. Installed files removed"
 # installed, so it is also the source of truth for what "removed" means.
 HERE_VR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_SH=""
-for c in "$HERE_VR/../install.sh" ./install.sh /root/exp/qca9377-bt-hang/install.sh; do
+for c in "${BT_INSTALL_SH:-}" "$HERE_VR/../install.sh" ./install.sh /root/exp/qca9377-bt-hang/install.sh; do
     [[ -r "$c" ]] && { INSTALL_SH="$c"; break; }
 done
 if [[ -z "$INSTALL_SH" ]]; then
@@ -92,7 +106,7 @@ done
 
 echo
 echo "3. Original settings restored"
-as=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo "-")
+as=$(cat "$SYSFS_MOD/enable_autosuspend" 2>/dev/null || echo "-")
 case "$as" in
     Y) ok  "btusb enable_autosuspend = Y (original)" ;;
     N) bad "btusb enable_autosuspend = N — still the mitigation value" ;;
@@ -100,7 +114,7 @@ case "$as" in
 esac
 
 ctrl=""
-for d in /sys/bus/usb/devices/*; do
+for d in "$SYSFS_USB"/*; do
     [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
     if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
         ctrl=$(cat "$d/power/control" 2>/dev/null); break
@@ -132,11 +146,11 @@ fi
 
 echo
 echo "5. Leftover data (not removed by default)"
-if [[ -e /var/log/bt-health ]]; then
-    rows=$(( $(wc -l < /var/log/bt-health/metrics.tsv 2>/dev/null || echo 1) - 1 ))
-    info "/var/log/bt-health still present ($rows metric rows) — rm -rf to clear"
+if [[ -e "$HEALTH_DIR" ]]; then
+    rows=$(( $(wc -l < "$HEALTH_DIR/metrics.tsv" 2>/dev/null || echo 1) - 1 ))
+    info "$HEALTH_DIR still present ($rows metric rows) — rm -rf to clear"
 else
-    ok "/var/log/bt-health removed"
+    ok "$HEALTH_DIR removed"
 fi
 
 echo
@@ -145,7 +159,7 @@ echo "6. Synthetic log entries (cleared by reboot)"
 # also matches `link tx timeout` (ACL supervision, a different layer), of
 # which this machine has logged 7 against 173 real command timeouts. See
 # evidence/exhibits/015-timeout-pattern-undercount.md.
-tx=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
+tx=$(bt_journal -k -b 0 --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
 up=$(awk '{printf "%.1f", $1/3600}' /proc/uptime)
 info "this boot shows $tx 'tx timeout' events (uptime ${up} h)"
 info "  if this is still the 2026-08-10 boot, 3 of them are synthetic test lines"

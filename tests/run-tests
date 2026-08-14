@@ -2147,6 +2147,117 @@ tools/bt-verify-install "$VI/no-such-checkout" >/dev/null 2>&1
               || bad "bt-verify-install accepted a nonexistent checkout"
 rm -rf "$VI"
 
+# ── verify-restored.sh: the claim nobody re-checks by hand ────────────────
+#
+# "Yes, the machine is back to normal." Nobody verifies that verdict
+# independently, because verifying it by hand is the work this script replaced.
+# It had also never been run under test, because it could only run on a machine
+# mid-investigation — the definition of the code this effort exists to reach.
+#
+# Its predecessor list was frozen at the original 11-file install and reported
+# "matches its pre-investigation state" while roughly 30 later artifacts — the
+# capture stack, dyndbg, the awk libs, the trial machinery — were still on the
+# machine. The list is now derived from install.sh; that fix is what these
+# assertions hold in place.
+VR=$(mktemp -d)
+mkdir -p "$VR/repo" "$VR/dest" "$VR/stub" "$VR/mod" "$VR/usb/3-3/power" "$VR/jrn"
+{ for i in $(seq 1 12); do
+      printf 'install_file "$SRC/tools/t%02d" %s/dest/t%02d\n' "$i" "$VR" "$i"
+  done
+  echo 'systemctl enable --now bt-hang-watchdog'
+} > "$VR/repo/install.sh"
+
+echo Y > "$VR/mod/enable_autosuspend"
+echo 13d3 > "$VR/usb/3-3/idVendor"; echo 3503 > "$VR/usb/3-3/idProduct"
+echo auto > "$VR/usb/3-3/power/control"
+cat > "$VR/stub/systemctl" <<VRSTUB
+#!/bin/sh
+[ "\$2" = bluetooth ] || { echo inactive; exit 3; }
+case "\$1" in is-active) echo active ;; is-enabled) echo enabled ;; esac
+exit 0
+VRSTUB
+printf '#!/bin/sh\nexit 0\n' > "$VR/stub/dpkg"
+chmod +x "$VR/stub"/*
+
+vr_run() { env PATH="$VR/stub:$PATH" BT_INSTALL_SH="$VR/repo/install.sh" \
+               BT_SYSFS_MODULE="$VR/mod" BT_SYSFS_USB="$VR/usb" \
+               BT_HEALTH_DIR="$VR/no-health" BT_JOURNAL_FIXTURE="$VR/jrn" \
+               tools/verify-restored.sh 2>&1; }
+
+# The six artifacts the script names literally — the udev rules, the drop-ins
+# and the stamps install.sh writes outside install_file — are NOT overridable,
+# deliberately: they are the revert contract, and a test that redirects them
+# tests nothing. That makes the fully-restored assertion depend on host state,
+# so it is gated rather than faked. On the investigation machine itself, with
+# the project installed, "restored" is legitimately false.
+vr_host_clean=1
+for f in /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules \
+         /etc/udev/rules.d/51-bluetooth-health-snapshot.rules \
+         /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf \
+         /etc/systemd/system/bt-health-snapshot.service.d/10-device.conf \
+         /usr/local/share/qca9377-bt-hang/installed-at \
+         /usr/local/share/qca9377-bt-hang/mode; do
+    [[ -e "$f" || -e "$f.disabled" ]] && vr_host_clean=0
+done
+
+if (( vr_host_clean )); then
+    VROUT=$(vr_run); vrrc=$?
+    (( vrrc == 0 )) && [[ "$VROUT" == *"matches its pre-investigation state"* ]] \
+        && ok "verify-restored reports a clean machine restored" \
+        || bad "a fully restored tree did not verify (rc=$vrrc)"
+else
+    ok "verify-restored: clean-machine case skipped (project is installed here)"
+fi
+
+# THE FROZEN-LIST DEFECT, in the form the fix takes: the artifacts come out of
+# install.sh, so a tool added there is checked without anyone remembering to
+# add it here. t07 exists only in the scratch install.sh.
+touch "$VR/dest/t07"
+VRLEFT=$(vr_run); vrlrc=$?
+(( vrlrc != 0 )) && [[ "$VRLEFT" == *"still present: $VR/dest/t07"* ]] \
+    && ok "verify-restored derives its artifact list from install.sh" \
+    || bad "a leftover named only in install.sh was not reported (rc=$vrlrc)"
+rm -f "$VR/dest/t07"
+
+# THE GAP BETWEEN THE TWO TOOLS. `bt-mode experiment` moves files aside to
+# <name>.disabled; uninstall.sh removes only the active names. So an
+# experiment -> uninstall sequence leaves every disabled file on disk, and a
+# restoration check that only tested -e would call that a clean revert.
+touch "$VR/dest/t03.disabled"
+VRDIS=$(vr_run); vrdisrc=$?
+(( vrdisrc != 0 )) && [[ "$VRDIS" == *"moved aside by bt-mode"* ]] \
+    && ok "verify-restored catches files uninstall.sh cannot see (.disabled)" \
+    || bad "an experiment->uninstall leftover passed as restored (rc=$vrdisrc)"
+rm -f "$VR/dest/t03.disabled"
+
+# The mitigation value itself. N is what this project sets; Y is the original.
+echo N > "$VR/mod/enable_autosuspend"
+VRAS=$(vr_run); vrasrc=$?
+(( vrasrc != 0 )) && [[ "$VRAS" == *"still the mitigation value"* ]] \
+    && ok "verify-restored reports btusb autosuspend still disabled" \
+    || bad "the mitigation value passed as restored (rc=$vrasrc)"
+echo Y > "$VR/mod/enable_autosuspend"
+
+# A module that is not loaded is neither restored nor not — it is unknown, and
+# the defaults apply at next load. Informational, not a failure, or every
+# check on a machine with bluetooth off would read as outstanding work.
+rm -f "$VR/mod/enable_autosuspend"
+VRNOMOD=$(vr_run)
+[[ "$VRNOMOD" == *"btusb not loaded"* ]] \
+    && ok "verify-restored treats an unloaded btusb as informational" \
+    || bad "unloaded btusb was scored rather than noted"
+echo Y > "$VR/mod/enable_autosuspend"
+
+# THE FALSE ALL-CLEAR, refused — the same refusal bt-verify-install makes, for
+# the same reason. An install.sh it cannot parse means it does not know what
+# was installed, and it must not answer "restored" from an empty list.
+: > "$VR/repo/install.sh"
+VREMPTY=$(vr_run); vremprc=$?
+(( vremprc != 0 )) && [[ "$VREMPTY" == *"refusing a false all-clear"* ]] \
+    && ok "verify-restored refuses to report success from a short artifact list" \
+    || bad "an underived list reported restoration (rc=$vremprc)"
+rm -rf "$VR"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is
