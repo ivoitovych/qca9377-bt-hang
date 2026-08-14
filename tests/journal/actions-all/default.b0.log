@@ -1,0 +1,46 @@
+2026-08-13T09:00:00.000000+02:00 host systemd[1000]: Started app-gnome-gnome\x2dbluetooth\x2dpanel-1234.scope - Bluetooth panel.
+2026-08-13T09:00:01.000000+02:00 host systemd[1000]: Started app-gnome-gnome\x2dcontrol\x2dcenter-1235.scope - GNOME Settings.
+2026-08-13T09:00:02.000000+02:00 host bluetoothd[900]: src/rfkill.c:rfkill_event() RFKILL event idx 1 type 2 op 2 soft 1 hard 0
+2026-08-13T09:00:03.000000+02:00 host bluetoothd[900]: src/rfkill.c:rfkill_event() RFKILL event idx 1 type 2 op 2 soft 0 hard 0
+2026-08-13T09:00:04.000000+02:00 host bluetoothd[900]: src/service.c:change_state() 0x55 profile headset state changed: connecting -> connected (0)
+2026-08-13T09:00:05.000000+02:00 host bluetoothd[900]: src/adapter.c:adapter_set_power_state() 1
+2026-08-13T09:00:06.000000+02:00 host bluetoothd[900]: profiles/audio/avrcp.c:media_player_set_status() Playing
+2026-08-13T09:00:07.000000+02:00 host bluetoothd[900]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/fd0: TRANSPORT_STATE_IDLE -> TRANSPORT_STATE_ACTIVE
+2026-08-13T09:00:08.000000+02:00 host pipewire[1100]: sink.c:sink_set_state() SINK_STATE_RUNNING
+2026-08-13T09:00:09.000000+02:00 host bluetoothd[900]: Failed to set mode: Authentication Failed (0x05)
+2026-08-13T09:00:10.000000+02:00 host bluetoothd[900]: Failed to set mode: Failed (0x03)
+2026-08-13T09:00:11.000000+02:00 host bluetoothd[900]: profiles/audio/hfp.c:ext_connect() Hands-Free Voice gateway failed connect to remote: Connection refused (111)
+2026-08-13T09:00:12.000000+02:00 host bluetoothd[900]: profiles/audio/avdtp.c:avdtp_connect_cb() connect to AA:BB:CC:00:00:01: Connection refused (111)
+2026-08-13T09:00:13.000000+02:00 host bluetoothd[900]: profiles/audio/avdtp.c:cancel_request() Abort: Connection timed out (110)
+2026-08-13T09:00:14.000000+02:00 host bluetoothd[900]: profiles/audio/avdtp.c:cancel_request() Start: Connection timed out (110)
+2026-08-13T09:00:15.000000+02:00 host pipewire[1100]: spa.bluez5: Acquire /org/bluez/hci0/fd0 returned error: Input/output error
+2026-08-13T09:00:16.000000+02:00 host pipewire[1100]: Failure in Bluetooth audio transport
+2026-08-13T09:00:17.000000+02:00 host pipewire[1100]: bluez_output.aa_bb_cc_00_00_01.1: node state changed running -> error
+2026-08-13T09:00:18.000000+02:00 host bluetoothd[900]: src/device.c: No matching connection for device
+2026-08-13T09:00:19.000000+02:00 host bluetoothd[900]: Bluetooth daemon 5.72
+2026-08-13T09:00:20.000000+02:00 host bluetoothd[900]: bluetoothd[900]: Terminating
+2026-08-13T09:00:21.000000+02:00 host bt-hang-watchdog[950]: EARLY intervention — audio teardown signature
+2026-08-13T09:00:22.000000+02:00 host bt-hang-watchdog[950]: Detected 3 controller timeouts within 60s — intervening.
+2026-08-13T09:00:23.000000+02:00 host bt-hang-watchdog[950]: USBDEVFS_RESET issued on 3-3
+2026-08-13T09:00:24.000000+02:00 host bt-hang-watchdog[950]: USBDEVFS_RESET failed (-110)
+2026-08-13T09:00:25.000000+02:00 host bt-hang-watchdog[950]: escalating to USB unbind/bind
+2026-08-13T09:00:26.000000+02:00 host bt-hang-watchdog[950]: RECOVERED — controller is responding
+2026-08-13T09:00:27.000000+02:00 host bt-hang-watchdog[950]: RECOVERY FAILED — controller still unresponsive
+2026-08-13T09:00:28.000000+02:00 host kernel: Bluetooth: hci0: unexpected event for opcode 0x0c1a
+2026-08-13T09:00:29.000000+02:00 host kernel: Bluetooth: hci0: command 0x0428 tx timeout
+2026-08-13T09:00:30.000000+02:00 host kernel: Bluetooth: hci0 opcode 0x0428 plen 17
+2026-08-13T09:00:31.000000+02:00 host kernel: Bluetooth: hci0 opcode 0x0429 plen 21
+2026-08-13T09:00:32.000000+02:00 host kernel: Bluetooth: hci0 opcode 0x0406 plen 3
+2026-08-13T09:00:33.000000+02:00 host kernel: Bluetooth: hci0 opcode 0x0405 plen 13
+2026-08-13T09:00:34.000000+02:00 host kernel: Bluetooth: hci0 opcode 0x041d plen 2
+2026-08-13T09:00:35.000000+02:00 host kernel: Bluetooth: hci0: command tx timeout
+2026-08-13T09:00:36.000000+02:00 host bluetoothd[900]: Opcode 0x0c1a failed: -110
+2026-08-13T09:00:37.000000+02:00 host kernel: usb 3-3: setting interface failed (-110)
+2026-08-13T09:00:38.000000+02:00 host bluetoothd[900]: Error when powering off device on rfkill: Connection timed out
+2026-08-13T09:00:39.000000+02:00 host kernel: usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+2026-08-13T09:00:40.000000+02:00 host kernel: usb 3-3: device descriptor read/64, error -110
+2026-08-13T09:00:41.000000+02:00 host kernel: usb 3-3: device not accepting address 2, error -62
+2026-08-13T09:00:42.000000+02:00 host kernel: xhci_hcd 0000:00:14.0: Timeout while waiting for setup device command
+2026-08-13T09:00:43.000000+02:00 host kernel: usb 3-3: USB disconnect, device number 2
+2026-08-13T09:00:44.000000+02:00 host kernel: usb 3-3: new full-speed USB device number 3 using xhci_hcd
+2026-08-13T09:00:45.000000+02:00 host kernel: Bluetooth: MGMT ver 1.22

@@ -1469,6 +1469,81 @@ tools/bt-actions --bogus >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-actions rejects an unknown argument" \
               || bad "bt-actions accepted an unknown argument"
 
+# ── every classifier rule, against a line it must match ──────────────────
+#
+# WHY THIS FIXTURE IS EXHAUSTIVE RATHER THAN REPRESENTATIVE.
+#
+# devtools/awk-coverage — which measures the awk this project computes in,
+# something devtools/coverage structurally cannot — reported this classifier at
+# 39% of 172 statements, and named the branches that had never executed:
+#
+#   "USB descriptor read FAILED — device not answering USB core"
+#   "USB device NOT ACCEPTING ADDRESS"
+#   "xHCI setup device command TIMEOUT"
+#   the AVDTP Abort/Start timeouts, the HFP and A2DP connect refusals
+#
+# Those are STAGE 2 — the controller leaving the USB bus, which is the part of
+# this bug the kernel log barely records and the part the report turns on. The
+# rules for it existed and nothing had ever run them. A pattern that does not
+# match is not a wrong answer; it is silence, and the timeline simply would not
+# contain the most important event in the capture.
+#
+# So: one fixture line per rule, in source order, and the invariant is that
+# EVERY line classifies. A rule added later without a line makes the counts
+# disagree, and awk-coverage names it.
+ACTALL=tests/journal/actions-all
+AAOUT=$(BT_JOURNAL_FIXTURE="$ACTALL" tools/bt-actions -b 0 --raw 2>&1); aarc=$?
+# The table starts after the three header lines.
+aarows=$(sed -n '4,$p' <<<"$AAOUT" | grep -c .)
+aalines=$(grep -c . "$ACTALL/default.b0.log")
+(( aarc == 0 && aarows == aalines )) \
+    && ok "every line of the exhaustive fixture is classified ($aarows rules)" \
+    || bad "classified $aarows of $aalines fixture lines (rc=$aarc) — a rule matched nothing"
+
+# THE STAGE-2 SIGNATURES, by name. These are the four the coverage report found
+# unexercised, and they are the ones a maintainer reads the timeline for.
+aamissing=""
+while IFS= read -r want; do
+    [[ "$AAOUT" == *"$want"* ]] || aamissing="$aamissing; $want"
+done <<'WANTS'
+USB descriptor read FAILED — device not answering USB core
+USB device NOT ACCEPTING ADDRESS
+xHCI setup device command TIMEOUT
+*** DEVICE LEFT THE USB BUS ***
+WANTS
+[[ -z "$aamissing" ]] \
+    && ok "the stage-2 USB signatures classify from real kernel log text" \
+    || bad "stage 2 went unclassified:$aamissing"
+
+# 0x0428 is the SCO setup implicated in the hang; naming it is what makes the
+# timeline readable without a spec to hand, and mis-naming it would point a
+# maintainer at the wrong command.
+[[ "$AAOUT" == *"HCI cmd 0x0428  Setup Synchronous Connection (SCO/HFP)"* \
+   && "$AAOUT" == *"HCI cmd 0x0406  Disconnect"* ]] \
+    && ok "bt-actions names the opcodes it claims to name" \
+    || bad "the opcode naming table did not fire"
+
+# A COMMAND TIMEOUT AND A COMMAND SUBMISSION ARE DIFFERENT EVENTS, and the
+# submission rule matches `hci0 opcode 0x... plen` while the timeout rule
+# matches `command 0x... tx timeout`. Confusing them would report every
+# submitted command as a timeout — the count this whole repository turns on.
+aa_to=$(grep -c 'HCI COMMAND TIMEOUT' <<<"$AAOUT")
+aa_cmd=$(grep -c 'HCI cmd 0x' <<<"$AAOUT")
+(( ${aa_to:-0} == 2 && ${aa_cmd:-0} == 5 )) \
+    && ok "command submissions and command timeouts stay distinct (5 and 2)" \
+    || bad "submission/timeout confusion: timeouts=$aa_to submissions=$aa_cmd"
+
+# An unrecognised line must produce NO row. A classifier that emits a row for
+# everything turns a timeline into the log it was meant to reduce.
+AANOISE=$(mktemp -d)
+printf '2026-08-13T09:00:00.000000+02:00 host kernel: something entirely unrelated\n' \
+    > "$AANOISE/default.b0.log"
+AANOUT=$(BT_JOURNAL_FIXTURE="$AANOISE" tools/bt-actions -b 0 --raw 2>&1)
+[[ "$AANOUT" != *"entirely unrelated"* ]] \
+    && ok "an unrecognised line produces no timeline row" \
+    || bad "the classifier emitted a row for a line no rule matches"
+rm -rf "$AANOISE"
+
 echo
 echo "bt-hang-watchdog — the decisions, never the actuation"
 echo "──────────────────────────────────────────────────────────────"
