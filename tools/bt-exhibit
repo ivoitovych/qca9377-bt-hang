@@ -64,6 +64,34 @@ cmd_new() {
     [[ -n "$claim" ]] || die "--claim is required"
     [[ -n "$cmd"   ]] || die "--cmd is required"
 
+    # --- the prose and the command are published too --------------------------
+    # Only the captured OUTPUT used to be sanitised. The extraction method is
+    # written verbatim, and the natural way to extract per-device evidence is
+    # to grep for that device — `journalctl -u bluetooth | grep dev_de_ad_...`
+    # is exactly the BlueZ D-Bus form that carried the 20-address leak of
+    # 2026-08-12. So an address in the command shipped untouched, in the one
+    # field the format guarantees is verbatim.
+    #
+    # REFUSING rather than redacting, because the two guarantees are otherwise
+    # incompatible: the document promises the command is "re-runnable as-is",
+    # and a redacted command is not. An exhibit whose extraction method needs
+    # an address should match a pattern instead of a literal — which is better
+    # evidence anyway, since it does not depend on one machine's hardware.
+    if [[ -x "$SANITIZE" ]]; then
+        local hdr hclean
+        hdr=$(mktemp); hclean=$(mktemp)
+        printf '%s\n%s\n%s\n' "$claim" "$why" "$cmd" > "$hdr"
+        if "$SANITIZE" "$hdr" "$hclean" >/dev/null 2>&1 && ! cmp -s "$hdr" "$hclean"; then
+            echo "bt-exhibit: REFUSING — an address appears in the claim, relevance" >&2
+            echo "  or extraction method. Those are published verbatim, so they" >&2
+            echo "  cannot be redacted without breaking 're-runnable as-is'." >&2
+            echo "  Match a pattern rather than a literal address." >&2
+            rm -f "$hdr" "$hclean"
+            exit 1
+        fi
+        rm -f "$hdr" "$hclean"
+    fi
+
     mkdir -p "$DIR"
 
     # Next sequence number. Exhibits are numbered so the bug report can cite
@@ -104,20 +132,32 @@ cmd_new() {
     # The repository is public. MACs and BSSIDs must not ship: a Wi-Fi BSSID is
     # indexed by public geolocation databases and would disclose where this
     # machine physically is.
+    #
+    # A MISSING sanitiser and a FAILING sanitiser mean the same thing — this
+    # output has not been redacted — so they get the same answer. Previously
+    # only the failing case refused; the missing case printed a warning to
+    # stderr and wrote the exhibit anyway, with the raw command output in it.
+    # bt-exhibit prints the exhibit path on stdout and is meant to be used in a
+    # pipeline, so that warning is exactly the thing a caller does not see. The
+    # asymmetry made "the sanitiser is not here" the safest-looking failure and
+    # the only unsafe one.
     local redacted=no
-    if [[ -x "$SANITIZE" ]]; then
-        local clean; clean=$(mktemp)
-        if "$SANITIZE" "$raw" "$clean" >/dev/null 2>&1; then
-            if ! cmp -s "$raw" "$clean"; then redacted=yes; fi
-            mv "$clean" "$raw"
-        else
-            rm -f "$clean"
-            echo "bt-exhibit: WARNING — sanitiser failed; exhibit NOT written" >&2
-            rm -f "$raw"
-            exit 1
-        fi
+    [[ -x "$SANITIZE" ]] || {
+        echo "bt-exhibit: REFUSING — no sanitiser at $SANITIZE" >&2
+        echo "  An exhibit is published material; unredacted output must not be" >&2
+        echo "  written to disk as one. Set BT_REPO to the checkout." >&2
+        rm -f "$raw"
+        exit 1
+    }
+    local clean; clean=$(mktemp)
+    if "$SANITIZE" "$raw" "$clean" >/dev/null 2>&1; then
+        if ! cmp -s "$raw" "$clean"; then redacted=yes; fi
+        mv "$clean" "$raw"
     else
-        echo "bt-exhibit: WARNING — sanitiser not found at $SANITIZE" >&2
+        rm -f "$clean"
+        echo "bt-exhibit: REFUSING — the sanitiser failed; exhibit NOT written" >&2
+        rm -f "$raw"
+        exit 1
     fi
 
     # --- write ---------------------------------------------------------------

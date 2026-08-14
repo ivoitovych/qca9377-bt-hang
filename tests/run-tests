@@ -1847,6 +1847,184 @@ inside=$(find "$INC/repo" -type d -name '*suite-sandbox-check*' 2>/dev/null | wc
     || bad "a collection reached the hardcoded /root/exp path — the escape is back"
 rm -rf "$INC"
 
+# ── bt-exhibit: the thing that actually gets published ────────────────────
+#
+# Every other tool here produces output somebody reads. bt-exhibit produces
+# FILES THAT SHIP — the exhibits are the factual material of a public kernel
+# bug report, and the repository's whole argument is that a maintainer can
+# re-run the command shown and get the output shown. 134 lines, 0% executed.
+#
+# It needs no seam: BT_REPO already parameterises the destination, so the real
+# tool runs against a scratch checkout. That is the whole cost of testability
+# here — the parameter was already there and nobody had used it.
+EXR=$(mktemp -d)
+mkdir -p "$EXR/evidence/exhibits" "$EXR/tools"
+cp tools/sanitize-logs.sh "$EXR/tools/sanitize-logs.sh"
+
+# Same probe the sanitiser's own gate uses, positive AND negative: mawk 1.3.4
+# answers the positive form correctly by accident. An engine that cannot
+# express the redaction patterns makes the sanitiser refuse, which makes
+# bt-exhibit refuse — correctly — so the expectations below split on it.
+ex_awk_ok=1
+echo "00:11:22:33:44:55:66:77" | awk '{exit !(match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) && RLENGTH == 23)}' 2>/dev/null || ex_awk_ok=0
+echo "11:22" | awk '{exit (match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) != 0)}' 2>/dev/null || ex_awk_ok=0
+
+exhibit() { BT_REPO="$EXR" tools/bt-exhibit "$@"; }
+
+if (( ex_awk_ok )); then
+    # THE CENTRAL CLAIM, and the reason the tool exists rather than a template:
+    # the command shown and the output shown came from one pass. Assert both
+    # halves in the same file — a tool that recorded the command but not the
+    # output, or the reverse, is the hand-written exhibit this replaced.
+    exp=$(exhibit new probe-one --claim "The probe emits its marker." \
+                  --why "Because the marker is unique to this run." \
+                  --cmd 'echo marker-9d3f-emitted' 2>/dev/null)
+    exrc=$?
+    (( exrc == 0 )) && [[ -f "$EXR/evidence/exhibits/001-probe-one.md" ]] \
+        && ok "bt-exhibit new writes a numbered exhibit" \
+        || bad "bt-exhibit new failed (rc=$exrc, path='$exp')"
+
+    exbody=$(cat "$EXR/evidence/exhibits/001-probe-one.md" 2>/dev/null)
+    [[ "$exbody" == *'$ echo marker-9d3f-emitted'* && "$exbody" == *'marker-9d3f-emitted'* ]] \
+        && ok "bt-exhibit records the command AND its output in one pass" \
+        || bad "exhibit is missing the command or the output it produced"
+
+    [[ "$exbody" == *"exit status | \`0\`"* ]] \
+        && ok "bt-exhibit records the command's exit status" \
+        || bad "exhibit did not record an exit status"
+
+    # THE PUBLISH-SAFETY PROPERTY. A Wi-Fi BSSID in a published exhibit is
+    # indexed by geolocation databases and discloses where this machine is.
+    # The addresses used below sit in the prefix space repo-scan documents for
+    # fixtures, so committing this file does not itself leak.
+    #
+    # The address is produced by a shell loop rather than written into the
+    # command, because the command is published verbatim and an address there
+    # is now refused outright — see the assertion after this group.
+    exhibit new probe-mac --claim "Association names a BSSID." \
+            --cmd 'printf "wlan0: authenticate with de:ad:be:ef:00:%02d\n" 17' >/dev/null 2>&1
+    macbody=$(cat "$EXR/evidence/exhibits/002-probe-mac.md" 2>/dev/null)
+    # AA:BB:CC:00:00:01 and not AA:BB:CC:00:00:NN — the boilerplate redaction
+    # notice contains the NN form, so matching the prefix alone would pass on
+    # an exhibit where nothing was actually substituted.
+    [[ "$macbody" != *"de:ad:be:ef:00:17"* && "$macbody" == *"AA:BB:CC:00:00:01"* ]] \
+        && ok "bt-exhibit sanitises the captured output before writing it" \
+        || bad "a MAC/BSSID reached an exhibit unredacted"
+
+    # THE SECOND LEAK CHANNEL, found by the assertion above failing for the
+    # wrong reason: the ORIGINAL address survived, in the extraction method.
+    # Only the output was ever sanitised, and grepping for a device's D-Bus
+    # path is the ordinary way to extract evidence about that device.
+    exhibit new probe-cmd-mac --claim "c" \
+            --cmd 'journalctl -u bluetooth | grep dev_de_ad_be_ef_00_11' >/dev/null 2>&1
+    cmdmacrc=$?
+    cmdmac=$(ls "$EXR/evidence/exhibits/"*probe-cmd-mac* 2>/dev/null | wc -l)
+    (( cmdmacrc != 0 && ${cmdmac:-0} == 0 )) \
+        && ok "bt-exhibit refuses an address in the extraction method" \
+        || bad "an address in the command reached an exhibit verbatim (rc=$cmdmacrc)"
+
+    exhibit new probe-claim-mac --claim "The device de:ad:be:ef:00:11 disconnects." \
+            --cmd 'echo x' >/dev/null 2>&1
+    (( $? != 0 )) && ok "bt-exhibit refuses an address in the claim" \
+                  || bad "an address in the claim reached an exhibit verbatim"
+
+    # A redaction the reader is not told about is a doctored exhibit: the
+    # command shown no longer reproduces the output shown, which is the one
+    # guarantee the format makes.
+    [[ "$macbody" == *"Redaction notice"* ]] \
+        && ok "bt-exhibit discloses that it redacted" \
+        || bad "output was altered with no redaction notice"
+
+    # Numbering must advance, because the bug report cites exhibits by number.
+    [[ -f "$EXR/evidence/exhibits/002-probe-mac.md" ]] \
+        && ok "bt-exhibit numbers exhibits in sequence" \
+        || bad "second exhibit was not numbered 002"
+
+    # A non-zero exit that is not 126/127 is legitimate evidence: grep exits 1
+    # when it counts zero matches, and zero matches can be the finding.
+    exhibit new probe-empty --claim "No such line exists." \
+            --cmd 'echo haystack | grep needle' >/dev/null 2>&1
+    emptyrc=$?
+    (( emptyrc == 0 )) && [[ -f "$EXR/evidence/exhibits/003-probe-empty.md" ]] \
+        && ok "bt-exhibit accepts a command that exits 1 — zero matches is evidence" \
+        || bad "bt-exhibit refused a legitimate non-zero exit (rc=$emptyrc)"
+
+    # THE EX-019 DEFECT, pinned. 127/126 mean the command never ran, so it
+    # produced no evidence at all. EX-019 shipped with "command not found" as
+    # its output and a table transcribed from somewhere else.
+    exhibit new probe-absent --claim "This must not become an exhibit." \
+            --cmd 'definitely-not-a-real-command-9d3f' >/dev/null 2>&1
+    absrc=$?
+    absent=$(ls "$EXR/evidence/exhibits/"*probe-absent* 2>/dev/null | wc -l)
+    (( absrc != 0 && ${absent:-0} == 0 )) \
+        && ok "bt-exhibit refuses a command that did not run, and writes nothing" \
+        || bad "a never-ran command became an exhibit (rc=$absrc, files=$absent)"
+
+    # list and index read the exhibits back. index is what the bug report
+    # links to, so an exhibit missing from it is an exhibit nobody finds.
+    exlist=$(exhibit list 2>/dev/null)
+    [[ "$exlist" == *"EX-001"* && "$exlist" == *"The probe emits its marker."* ]] \
+        && ok "bt-exhibit list reports each exhibit with its claim" \
+        || bad "bt-exhibit list lost an exhibit or its claim"
+
+    exhibit index >/dev/null 2>&1
+    exidx=$(cat "$EXR/evidence/exhibits/README.md" 2>/dev/null)
+    rows=$(grep -c '^| EX-' <<<"$exidx")
+    (( ${rows:-0} == 3 )) \
+        && ok "bt-exhibit index lists every exhibit (3 rows)" \
+        || bad "index has $rows row(s), expected 3"
+else
+    # Not a skip. On an engine that cannot express the redaction patterns the
+    # correct behaviour is to produce nothing, and that is worth asserting.
+    exhibit new probe-one --claim "c" --cmd 'echo hi' >/dev/null 2>&1
+    exrc=$?
+    (( exrc != 0 )) && [[ ! -f "$EXR/evidence/exhibits/001-probe-one.md" ]] \
+        && ok "bt-exhibit writes no exhibit when the sanitiser cannot run" \
+        || bad "an unsanitised exhibit was written on an incapable awk"
+fi
+
+# THE DEFECT THIS BLOCK FOUND. A missing sanitiser and a failing sanitiser
+# both mean "this output was not redacted", but only the failing case refused.
+# The missing case printed a warning on stderr and wrote the raw output as a
+# published exhibit — and bt-exhibit prints the path on stdout precisely so it
+# can be used in a pipeline, where nobody reads stderr. The safest-looking
+# failure was the only unsafe one.
+EXN=$(mktemp -d); mkdir -p "$EXN/evidence"
+BT_REPO="$EXN" tools/bt-exhibit new probe-nosan --claim "c" \
+        --cmd 'echo "wlan0: authenticate with de:ad:be:ef:00:11"' >/dev/null 2>&1
+nosanrc=$?
+nosan=$(ls "$EXN/evidence/exhibits/" 2>/dev/null | wc -l)
+(( nosanrc != 0 && ${nosan:-0} == 0 )) \
+    && ok "bt-exhibit refuses when the sanitiser is absent, as when it fails" \
+    || bad "an unsanitised exhibit was written with no sanitiser present (rc=$nosanrc)"
+rm -rf "$EXN"
+
+# Argument handling. A slug is a filename and a citation key; anything outside
+# kebab-case makes one or the other unstable.
+exhibit new Bad_Slug --claim "c" --cmd 'echo x' >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-exhibit rejects a non-kebab-case slug" \
+              || bad "bt-exhibit accepted a slug that is not kebab-case"
+
+exhibit new no-claim-here --cmd 'echo x' >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-exhibit requires --claim" \
+              || bad "bt-exhibit wrote an exhibit with no claim"
+
+exhibit new no-cmd-here --claim "c" >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-exhibit requires --cmd" \
+              || bad "bt-exhibit wrote an exhibit with no extraction method"
+
+exhibit frobnicate >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-exhibit rejects an unknown subcommand" \
+              || bad "bt-exhibit accepted an unknown subcommand"
+
+# The real evidence tree must be untouched by any of the above — the same
+# rule that bt-incident's sandbox test enforces, asserted for the tool whose
+# output is literally the published material.
+[[ ! -e evidence/exhibits/001-probe-one.md ]] \
+    && ok "bt-exhibit wrote nothing into the real evidence tree" \
+    || bad "a test exhibit landed in evidence/exhibits/"
+rm -rf "$EXR"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is
