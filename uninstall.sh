@@ -107,6 +107,25 @@ UNITS=(
     bt-trial-auto.service
 )
 
+# ── BT_DESTDIR — the same staging prefix install.sh takes ────────────────
+#
+# The pair has to be tested as a pair. "Uninstalling is a complete
+# restoration" is a claim about what install.sh CREATES and uninstall.sh
+# REMOVES, and neither script can be read to establish it — this repository
+# has already shipped the two out of step, with four artifacts installed and
+# never removed while the summary printed "complete restoration".
+#
+# Applied to the arrays rather than at each use site, so a path added to
+# FILES or DIRS tomorrow is covered without anyone remembering to prefix it.
+# Empty by default: a real uninstall is unchanged.
+DESTDIR="${BT_DESTDIR:-}"
+if [[ -n "$DESTDIR" ]]; then
+    echo "!! BT_DESTDIR=$DESTDIR — staging uninstall; the SYSTEM WILL NOT BE TOUCHED."
+    echo
+    for i in "${!FILES[@]}"; do FILES[i]="$DESTDIR${FILES[i]}"; done
+    for i in "${!DIRS[@]}";  do DIRS[i]="$DESTDIR${DIRS[i]}";  done
+fi
+
 run() {
     if (( APPLY )); then echo "  + $*"; "$@"
     else echo "  would run: $*"; fi
@@ -114,7 +133,8 @@ run() {
 
 if (( APPLY )); then
     echo "=== UNINSTALL (applying) ==="
-    [[ $EUID -eq 0 ]] || { echo "must run as root" >&2; exit 1; }
+    # A staging root needs no privilege; the system one does.
+    [[ $EUID -eq 0 || -n "$DESTDIR" ]] || { echo "must run as root" >&2; exit 1; }
 else
     echo "=== UNINSTALL (DRY RUN — nothing will be changed) ==="
     echo "    re-run with --apply to actually revert"
@@ -124,7 +144,7 @@ echo
 
 echo "[1/5] stop and disable added systemd units"
 for u in "${UNITS[@]}"; do
-    if [[ -e "/etc/systemd/system/$u" ]]; then
+    if [[ -e "$DESTDIR/etc/systemd/system/$u" ]]; then
         run systemctl disable --now "$u"
     else
         echo "  (not present, skipping: $u)"
@@ -157,9 +177,9 @@ done
 echo
 
 echo "[3/5] collected metrics"
-if [[ -e /var/log/bt-health ]]; then
+if [[ -e "$DESTDIR/var/log/bt-health" ]]; then
     if (( PURGE_METRICS )); then
-        run rm -rf /var/log/bt-health
+        run rm -rf "$DESTDIR/var/log/bt-health"
     else
         echo "  KEEPING /var/log/bt-health (data, not config)"
         echo "  pass --purge-metrics to delete it as well"
@@ -184,7 +204,12 @@ echo "[5/5] restore btusb default (enable_autosuspend=Y)"
 # first — which makes the failure intermittent rather than absent.
 n_btusb=$(lsmod | grep -c "^btusb" || true)
 if (( ${n_btusb:-0} > 0 )); then
-    uc=$(awk '/^btusb/ {print $3}' /proc/modules)
+    # Seamed for the same reason every other kernel-state read here is: the
+    # two branches below differ by whether the module is IN USE, and that is
+    # not a state a test may create on a real machine — forcing a usecount
+    # means holding the controller open, which is the one thing this project's
+    # tests must never do to the device under investigation.
+    uc=$(awk '/^btusb/ {print $3}' "${BT_PROC_MODULES:-/proc/modules}")
     if [[ "${uc:-0}" == "0" ]]; then
         run modprobe -r btusb
         run modprobe btusb
