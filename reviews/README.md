@@ -44,6 +44,7 @@ wrong turns, which a clean summary loses.
 | 2026-08-13T15:17Z | [Test classes & mocks](2026-08-13T1517Z-test-classes-and-mocks.md) | the tree at 28.5% | Assesses the owner's two proposals; settles CS-08's design; adds the system round trip |
 | 2026-08-14T04:43Z | [Why 100% is hard here](2026-08-14T0443Z-why-100-percent-is-hard-here.md) | the tree at `331e7a2` | A third of the "untested" was **unmeasurable by construction**. Adds a second coverage tool for awk, an uncovered-line report, and an exclusion list a 100% floor can stand on |
 | 2026-08-14T13:28Z | [Sandbox escape postmortem](2026-08-14T1328Z-sandbox-escape-postmortem.md) | `251a6cb` | The suite **closed a live trial** on the investigation machine. A bare-name `bt-trial` in the watchdog, invisible on any checkout with nothing installed. Guard + decoy; four of the maintainer's findings dispositioned |
+| 2026-08-14T16:03Z | [Verified on the investigation machine](2026-08-14T1603Z-verified-on-the-investigation-machine.md) | the tree at `795705e`, now `main` | 402/402 green where the tools are installed; `bt-mark` injections **549 → 0**. Two more environment-coupled checks found *by that host*. Supersedes §7 of the postmortem; **SE-05 stays open** |
 
 ---
 
@@ -65,7 +66,7 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 | UT-04 | CI: validate + suite + coverage floor | done | `d016249` | `test -r .github/workflows/checks.yml` |
 | UT-05 | Table-driven awk fixture harness | done | `d016249` | `tests/run-tests --section "awk libraries"` |
 | UT-06 | Fixtures for `trial-summary.awk` | done | `d016249` | `ls tests/fixtures/trial-summary/*.in \| wc -l` → 5 |
-| UT-07 | Fixtures for `trial-sco-table.awk`, `stage2.awk` | done | this commit | `tests/run-tests --section "awk libraries"` — 17 cases across 3 libraries |
+| UT-07 | Fixtures for `trial-sco-table.awk`, `stage2.awk` | done | `795705e` | `tests/run-tests --section "awk libraries"` — 17 cases across 3 libraries |
 | UT-08 | Journal seam `tools/lib/journal.sh` | done | `d016249` | `test -r tools/lib/journal.sh` |
 | UT-09 | Convert `bt-phase`, `bt-boot-provenance` | done | `d016249` | `tests/run-tests --section "whole tools" \| grep 'journal seam'` |
 | UT-10 | Convert the remaining journal-reading tools | **partial** 15/25 | `8abfd75` | `reviews/verify.sh` — prints converted vs remaining |
@@ -77,14 +78,14 @@ Legend: **done** · **partial** · **open** · **blocked** (waiting on a decisio
 
 | ID | Item | Status | Landed | Verify |
 |---|---|---|---|---|
-| CS-01 | Test `sanitize-logs.sh` (+ fix its awk gate) | done | this commit | `tests/run-tests --section "sanitize-logs"` |
-| CS-02 | Test `install.sh` / `uninstall.sh` dry run | done | this commit | `tests/run-tests --section "install.sh and uninstall"` |
-| CS-03 | Test the devtools against a scratch repo | done | this commit | `tests/run-tests --section "publish gates"` |
+| CS-01 | Test `sanitize-logs.sh` (+ fix its awk gate) | done | `795705e` | `tests/run-tests --section "sanitize-logs"` |
+| CS-02 | Test `install.sh` / `uninstall.sh` dry run | done | `795705e` | `tests/run-tests --section "install.sh and uninstall"` |
+| CS-03 | Test the devtools against a scratch repo | done | `795705e` | `tests/run-tests --section "publish gates"` |
 | CS-04 | Test `bt-capdiff`/`bt-sco`/`bt-context`/`bt-incident` via `BT_*` overrides | **done** — btmon was never the blocker; it emits text, so it is a `PATH` stub | `7276bb0` | `tests/run-tests`; fixtures in `tests/btmon/` |
-| CS-05 | Convert + test `bt-actions` (seam) | done | this commit | `grep -c 'journal.sh' tools/bt-actions` → 2; `tests/run-tests --section "whole tools"` |
+| CS-05 | Convert + test `bt-actions` (seam) | done | `795705e` | `grep -c 'journal.sh' tools/bt-actions` → 2; `tests/run-tests --section "whole tools"` |
 | CS-06 | `bt-logvolume`, `bt-boot-stats`, `bt-timeline.sh` | done | `def19bc` | `tests/run-tests --section "whole tools"` |
 | CS-07 | `bt-env-history`, `bt-boot-list`, `bt-boots` | done | `def19bc` | `tests/run-tests --section "whole tools"` |
-| CS-08 | A sysfs/device seam, then `bin/bt-hang-watchdog` | done | this commit | `devtools/coverage \| grep bt-hang-watchdog` → 81.8% |
+| CS-08 | A sysfs/device seam, then `bin/bt-hang-watchdog` | done | `795705e` | `devtools/coverage \| grep bt-hang-watchdog` → 81.8% |
 | CS-09 | Argument/refusal paths only for the hardware-bound five | **partial** — `bt-sco`/`bt-capdiff` remain (need `btmon`) | `8abfd75` | `tests/run-tests --section "whole tools"` |
 
 ### From session 3 — the reporting tools and the machine-bound tools
@@ -135,9 +136,9 @@ the argument for mutation-testing *every* new check rather than the interesting 
 
 | ID | Item | Status | Landed | Verify |
 |---|---|---|---|---|
-| TC-01 | Action-tool mocks + spy for the watchdog | done — **not as `device.sh`** | this commit | `tests/run-tests --section "bt-hang-watchdog"` |
-| TC-02 | CI-gated system round trip (`--apply` both ways) | done | this commit | `BT_SYSTEM_TEST=1 tests/system-roundtrip`; CI step in `checks.yml` |
-| TC-03 | Fixture provenance comments + real-tool contract check | **partial** | this commit | `devtools/journal-contract` |
+| TC-01 | Action-tool mocks + spy for the watchdog | done — **not as `device.sh`** | `795705e` | `tests/run-tests --section "bt-hang-watchdog"` |
+| TC-02 | CI-gated system round trip (`--apply` both ways) | done | `795705e` | `BT_SYSTEM_TEST=1 tests/system-roundtrip`; CI step in `checks.yml` |
+| TC-03 | Fixture provenance comments + real-tool contract check | **partial** | `795705e` | `devtools/journal-contract` |
 | TC-04 | Mock-equivalence: real journalctl over a BUILT journal, diffed vs fixtures | done | `def19bc` | `devtools/journal-contract` — phase 2 runs without a host journal |
 
 **TC-01 deviated from its report's design, deliberately.** The report proposed
@@ -171,10 +172,10 @@ what was built, and why it differs.
 | SE-03 | Route every `install.sh` dry run through `BT_MODE_STAMP` | done | `251a6cb` | `grep -n './install.sh' tests/run-tests` → only via `install_dry()` |
 | SE-04 | Replace the unsatisfiable `/root/exp` assertion | done | `251a6cb` | reinstate the discarding fallback in `bt-incident` → 4 invariants fail |
 | SE-05 | Run the suite only in a worktree on the investigation machine | **open** — a habit, not a patch | — | see §7 of the report |
-| SE-07 | The open-trial refusal is a window check — nothing re-reads the state | done — detection, not prevention | this commit | snapshot a trial after the baseline is taken → the closing check goes red |
-| SE-08 | `bt-mode` seam check asserted absolute state, not a change | done — failed on the investigation machine for its correct configuration | this commit | delete a real `.disabled` mid-section → "A SEAM LEAKED" names the file |
-| SE-09 | Missing-baseline branch unreachable where the project is installed | done — `BT_SHARE_DIR` / `BT_HEALTH_DIR` seams | this commit | drop the two seams with `baseline.tsv` installed → the assertion fails |
-| SE-10 | An exclusion entry pointing at a blank line, excluding nothing | done | this commit | `devtools/coverage --uncovered tools/bt-health-report.sh` → 0, not 1 |
+| SE-07 | The open-trial refusal is a window check — nothing re-reads the state | done — detection, not prevention | `795705e` | snapshot a trial after the baseline is taken → the closing check goes red |
+| SE-08 | `bt-mode` seam check asserted absolute state, not a change | done — failed on the investigation machine for its correct configuration | `795705e` | delete a real `.disabled` mid-section → "A SEAM LEAKED" names the file |
+| SE-09 | Missing-baseline branch unreachable where the project is installed | done — `BT_SHARE_DIR` / `BT_HEALTH_DIR` seams | `795705e` | drop the two seams with `baseline.tsv` installed → the assertion fails |
+| SE-10 | An exclusion entry pointing at a blank line, excluding nothing | done | `795705e` | `devtools/coverage --uncovered tools/bt-health-report.sh` → 0, not 1 |
 
 ### Check every row at once
 
