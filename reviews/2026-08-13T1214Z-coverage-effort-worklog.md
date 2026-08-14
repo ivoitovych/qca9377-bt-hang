@@ -938,3 +938,102 @@ findings, that ratio is the argument for mutation-testing every new check rather
 interesting ones — and for the two occasions this session when the suite's own invariants
 caught me: once for writing an inline awk program alongside `-f`, the exact trap that made
 `bt-capdiff` report agreement between paths differing by 278 records.
+
+---
+
+## Session 4 — 2026-08-14 · "why is 100% hard here?"
+
+Opened by the owner's question: other projects reach 100% easily, this one does not.
+The full analysis is [its own report](2026-08-14T0443Z-why-100-percent-is-hard-here.md).
+The short version is that **the premise was right and the diagnosis was not what it looked
+like**: three different things were being added together under one percentage, and only
+one of them was a testing problem.
+
+### What the measurement was actually saying
+
+Of 1648 uncovered lines: 302 were inside embedded awk programs, ~310 were in files that
+*run the suite*, 72 were the suite's own `bad` branches, 206 were the installer's
+`--apply` path (covered by a CI-gated test the measurement excluded), 102 were capture
+loops. **Roughly a third was unmeasurable by construction, and the tool had no way to say
+so.** A percentage cannot distinguish "nobody tested this" from "this instrument cannot
+see this", and the two demand opposite responses.
+
+Separating them moved the figure 71.0% → 84.0% **without writing a test.**
+
+### The four things that were missing · `7e9e9f2` `eeef93d` `d58866f` `331e7a2`
+
+**A list of the uncovered lines.** `devtools/coverage` printed a ranking of files and
+never printed which lines. That is the single biggest reason this felt hard, and it is
+why three sessions ran by guessing which tool was untested and reading it. `--uncovered`
+now prints them, generated from the same two tables as the ratio so the detail cannot
+contradict the summary.
+
+**Coverage of the second language.** `devtools/awk-coverage` reads `gawk --profile`: 884
+profiles from one run, 1534 statements, 105 distinct programs.
+
+**A denominator of reachable lines only**, and **an exclusion list with reasons** that a
+100% floor could stand on.
+
+### The finding · `744b855`
+
+`awk-coverage`'s first output was the point of the whole session. `tools/bt-actions`'
+classifier stood at 39%, and the branches that had never executed were the ones that
+recognise **stage 2** — `USB descriptor read FAILED`, `device NOT ACCEPTING ADDRESS`,
+`xHCI setup device command TIMEOUT`, the AVDTP timeouts. The controller leaving the USB
+bus is the part of this bug the kernel log barely records and the part the report turns
+on. The rules existed and nothing had run them.
+
+**A pattern that does not match is not a wrong answer, it is silence.** The reconstructed
+timeline would not have contained the most important event in the capture, and nothing
+would have looked wrong. Now 172/172, against a fixture carrying one line per rule.
+
+### Four bugs in my own new tool, all the same shape
+
+`awk-coverage` reported that classifier at **0 of 172** while its tests passed and its
+output was correct. Three separate normalisations were missing, and each one made the
+grouping key depend on the thing being measured: the count column; gawk's rule-number
+comment (`{ # 3`), appended to rules it *executed* and omitted from those it did not; and
+leading indentation, because the count column *replaces* one tab. Runs that executed and
+runs that did not were filed as different programs, and only the empty ones kept the
+name. A fourth was a scalar/array name clash that killed the report awk — whose stderr
+went to the file holding the percentage, so the tool printed an empty table, no total,
+and exit 0.
+
+### The self-check earned itself six times
+
+An excluded line that the suite *actually executed* aborts the run. It rejected a
+whole-file entry for `tests/run-tests` (1200 executed lines would have left the
+denominator while staying in the numerator) and five ranges that got the traced-line
+convention backwards. Which line of a multi-line construct bash reports turns out to
+depend on the construct — a pipeline reports where it starts, a command substitution and
+a bare simple command report where they close — and **two attempts to state that rule in
+advance were both wrong.**
+
+The exclusion file now says so rather than claiming a rule. The useful property is not
+that the derivation was right; it is that a wrong range cannot survive one run.
+
+### And one change made and backed out, again
+
+The instinct to fix the denominator by heuristic came back, and was refused for the same
+reason as in session 3: it moved the numerator by six lines that could not be accounted
+for. The explicit, reviewed, self-checked list is slower to write and is the one that can
+carry a hard floor.
+
+### Session 4 close
+
+| | at the question | now |
+|---|---|---|
+| Shell coverage | 71.0% of 5217 | **84.0%** of 4520 |
+| awk statements | *not measured* | **88.2%** (1353/1534) |
+| Invariants | 334 | **370** |
+| CI floors | 65% shell | **80% shell + 85% awk** |
+
+`bt-status`, `bt-postmortem` and the `bt-actions` classifier are at **zero uncovered
+lines** — the first files to clear a hard cut.
+
+**The thing worth remembering.** Two coverage tools now measure this repository and they
+disagreed about the most important file in it. One said `bt-actions` was the worst-covered
+file in the tree; it was 85% covered. The other said the classifier inside it was at 39%,
+and the missing branches were the ones that see the controller leave the bus. One number
+was wrong and comfortable, the other right and alarming — and a single percentage over a
+codebase written in two languages cannot be anything else.

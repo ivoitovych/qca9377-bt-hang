@@ -42,6 +42,7 @@ wrong turns, which a clean summary loses.
 | 2026-08-13T12:14Z | [Unit testing](2026-08-13T1214Z-unit-testing-assessment.md) | the tree at `6c0491c` | The suite is good; its *reach* is 13.1% of the shipped shell |
 | 2026-08-13T12:44Z | [Coverage strategy](2026-08-13T1244Z-coverage-strategy.md) | the tree at `10404b2` | Re-prioritises the above: 31% of the code needs **no** seam. Supersedes its §5 ordering |
 | 2026-08-13T15:17Z | [Test classes & mocks](2026-08-13T1517Z-test-classes-and-mocks.md) | the tree at 28.5% | Assesses the owner's two proposals; settles CS-08's design; adds the system round trip |
+| 2026-08-14T04:43Z | [Why 100% is hard here](2026-08-14T0443Z-why-100-percent-is-hard-here.md) | the tree at `331e7a2` | A third of the "untested" was **unmeasurable by construction**. Adds a second coverage tool for awk, an uncovered-line report, and an exclusion list a 100% floor can stand on |
 
 ---
 
@@ -146,10 +147,25 @@ call site in the single most safety-critical tool; PATH resolution substitutes t
 tools with a two-line production diff. The report stays as written — the register records
 what was built, and why it differs.
 
+### From `2026-08-14T0443Z-why-100-percent-is-hard-here.md`
+
+| ID | Item | Status | Landed | Verify |
+|---|---|---|---|---|
+| HC-01 | `devtools/coverage --uncovered` — list the missing lines | done | `7e9e9f2` | `devtools/coverage --uncovered tools/bt-sco` |
+| HC-02 | `devtools/awk-coverage` — statement coverage via `gawk --profile` | done | `eeef93d` | `devtools/awk-coverage` → 88.2% |
+| HC-03 | Exclusion list with reasons + executed-line self-check | done | `d58866f` | add a bogus entry; the run aborts |
+| HC-04 | Two CI floors, one per language | done | `331e7a2` | `--min 80` shell, `--min 85` awk in `checks.yml` |
+| HC-05 | Fold the CI-gated round trip into the measurement (206 lines) | **open** — recommended first | — | see §5 of the report |
+| HC-06 | Work the long tail with `--uncovered` (~266 lines, ~25 tools) | **open** | — | `devtools/coverage --uncovered` |
+| HC-07 | Extract remaining inline awk to `tools/lib/*.awk` | **open** | — | shrinks the exclusion list rather than growing it |
+| HC-08 | Raise both floors to 100% | **blocked** on HC-05..07 | — | judgement call; see §5 |
+
 ### Check every row at once
 
 ```bash
 reviews/verify.sh              # runs every row's check and prints pass/fail
+devtools/coverage --uncovered  # WHICH lines are missing, not just how many
+devtools/awk-coverage          # the other language, measured separately
 devtools/check                 # syntax, invariants, drift, install state
 devtools/coverage              # the number UT-05..UT-11 were meant to move
 ```
