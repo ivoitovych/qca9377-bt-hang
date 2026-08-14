@@ -1808,6 +1808,102 @@ t0=$(awk  '$1 == "0"  { print $3 }' <<<"$HROUT" | head -1)
 [[ "$HROUT" != *"column: command not found"* ]] \
     && ok "bt-health-report degrades cleanly without column(1)" \
     || bad "column(1) error leaked into the report body"
+
+# ── the four verdicts, which ARE the answer to "did the fix help?" ───────
+#
+# A live adapter, so the report gets past the down-right-now check and reaches
+# the counters. Each fixture differs only in what the watchdog log contains,
+# because that is the only thing separating the four sentences.
+mkdir -p "$HRSYS/bt/hci0"
+hrv() { BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$HRSYS/usb"         BT_SYSFS_MODULE="$HRSYS/mod" BT_SYSFS_BT="$HRSYS/bt"         BT_METRICS="${2:-/nonexistent}" tools/bt-health-report.sh 2>&1; }
+
+HRV1=$(hrv hr-none)
+[[ "$HRV1" == *"no controller timeouts have occurred yet"*    && "$HRV1" == *"has not been used enough"* ]]     && ok "bt-health-report will not call an unused Bluetooth stack a success"     || bad "zero interventions was reported without its alternative explanation"
+
+# That qualification is the assertion. "No timeouts" reads as the mitigation
+# working, and the tool says in the same breath that it also reads as nobody
+# having used Bluetooth — which is the difference between evidence and an
+# absence of evidence.
+
+HRV2=$(hrv hr-working)
+[[ "$HRV2" == *"VERDICT: WORKING"* && "$HRV2" == *"1 hang(s) recovered"* ]]     && ok "bt-health-report reports WORKING only with a recovery to point at"     || bad "the WORKING verdict did not fire or lost its count"
+
+# INTERVENED BUT NEVER RECOVERED splits two ways, and the split matters: a
+# controller that was already hard-hung before the last cold boot is not a
+# failure of the mitigation, and reading it as one would retire a fix that
+# works. The two fixtures differ ONLY in whether the interventions appear in
+# boot 0.
+HRV3=$(hrv hr-stale)
+[[ "$HRV3" == *"all predate the current boot"* && "$HRV3" == *"Keep measuring"* ]]     && ok "interventions from before the last cold boot are not counted against the fix"     || bad "stale interventions were read as a live failure"
+
+HRV4=$(hrv hr-thisboot)
+[[ "$HRV4" == *"THIS BOOT and never"* && "$HRV4" == *"BT_THRESHOLD"* ]]     && ok "interventions THIS boot that recovered nothing name the knob to turn"     || bad "the live-failure verdict did not fire or gave no next step"
+
+# The metrics table and the row count, from a real file rather than the
+# absent-file branch every other case here takes.
+HRM=$(mktemp)
+printf 'timestamp	tx_timeouts
+2026-08-10T09:00:00	0
+2026-08-10T09:05:00	2
+' > "$HRM"
+HRV5=$(hrv hr-working "$HRM")
+[[ "$HRV5" == *"rows collected: 2"* ]]     && ok "bt-health-report reports how many metric rows it read"     || bad "the metrics row count is wrong or absent"
+rm -f "$HRM"
+
+# BT_CHANGE_TIME decides which boots are labelled before/after the mitigation,
+# and mislabelling drags a pre-install boot's timeout counts into the after
+# column — contaminating the one comparison the report exists to make.
+# The hr-phase fixture is EPOCH-formatted, because this tool asks for the same
+# records twice — `-k -b N` for the kernel version and `-k -b N -o short-unix`
+# for the boot start — and one fixture file has to answer both. The seam
+# answers formatting flags by being the text it is, so the text has to be the
+# form the arithmetic needs.
+hrp() { BT_JOURNAL_FIXTURE=tests/journal/hr-phase BT_SYSFS_USB="$HRSYS/usb" \
+        BT_SYSFS_MODULE="$HRSYS/mod" BT_SYSFS_BT="$HRSYS/bt" BT_METRICS=/nonexistent \
+        BT_CHANGE_TIME="$1" tools/bt-health-report.sh 2>&1; }
+# Boot -1 starts at epoch 1786690800. A change time before that makes the boot
+# AFTER the mitigation; one after it makes the boot BEFORE. Both directions,
+# because a column that always says the same thing is not a comparison — and
+# mislabelling drags a pre-install boot's timeout counts into the after column.
+HRV6=$(hrp "@1786600000")
+HRV6B=$(hrp "@1786699999")
+hr_a=$(awk '$1 == "-1" { print $6 }' <<<"$HRV6"  | head -1)
+hr_b=$(awk '$1 == "-1" { print $6 }' <<<"$HRV6B" | head -1)
+[[ "$hr_a" == "AFTER" && "$hr_b" == "before" ]] \
+    && ok "BT_CHANGE_TIME moves boots across the before/after boundary, both ways" \
+    || bad "phase labelling did not follow the change time (got '$hr_a' then '$hr_b')"
+
+HRV7=$(BT_JOURNAL_FIXTURE=tests/journal/health BT_SYSFS_USB="$HRSYS/usb" \
+       BT_SYSFS_MODULE="$HRSYS/mod" BT_SYSFS_BT="$HRSYS/bt" BT_METRICS=/nonexistent \
+       BT_BASELINE=/nonexistent/baseline.tsv \
+       BT_SYNTHETIC_NOTE="3 of these are injected test lines" tools/bt-health-report.sh 2>&1)
+[[ "$HRV7" == *"note: 3 of these are injected test lines"* ]] \
+    && ok "bt-health-report carries a synthetic-data note into the report" \
+    || bad "BT_SYNTHETIC_NOTE did not appear — injected lines would read as real"
+
+# THE BASELINE IS SEARCHED FOR IN FIVE PLACES, and BT_BASELINE is only the
+# first — the tool is installed to /usr/local/bin and has to find the file
+# without assuming a checkout. So the not-found branch cannot be reached by
+# pointing the variable at nothing; it needs the script running somewhere with
+# no evidence tree beside it, which is exactly the installed case it exists
+# for. Copied rather than symlinked, because $DIR resolves through the copy.
+# The lib is copied ALONGSIDE the script rather than pointed at with
+# BT_LIBDIR, so this case depends on nothing outside its own temp tree — which
+# is also exactly the shape of a real installation: bt-health-report at
+# /usr/local/bin with lib/ beside it and no checkout anywhere.
+HRNB=$(mktemp -d); mkdir -p "$HRNB/bin"
+cp tools/bt-health-report.sh "$HRNB/bin/"
+cp -r tools/lib "$HRNB/bin/lib"
+mkdir -p "$HRNB/sys/usb" "$HRNB/sys/mod" "$HRNB/sys/bt/hci0"
+HRV8=$(BT_JOURNAL_FIXTURE=tests/journal/health BT_SYSFS_USB="$HRNB/sys/usb" \
+       BT_SYSFS_MODULE="$HRNB/sys/mod" BT_SYSFS_BT="$HRNB/sys/bt" BT_METRICS=/nonexistent \
+       BT_BASELINE=/nonexistent/baseline.tsv \
+       "$HRNB/bin/bt-health-report.sh" 2>&1)
+[[ "$HRV8" == *"baseline not found"* && "$HRV8" == *"BT_BASELINE"* ]] \
+    && ok "bt-health-report names the override when no baseline is anywhere" \
+    || bad "the missing-baseline branch did not name BT_BASELINE"
+rm -rf "$HRNB"
+
 rm -rf "$HRSYS"
 
 # ── bt-postmortem: the conclusion drawn about a hang that already happened ─

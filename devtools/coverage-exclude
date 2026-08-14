@@ -111,3 +111,24 @@ tests/run-tests:39-44       # inline --section extractor; same
 # another, NOT read off by eye — the two entries written by hand were both
 # wrong, and the self-check caught both. Whole-file entries above already
 # cover devtools/coverage's and devtools/awk-coverage's own inline programs.
+
+# ── 5. Reachable only from an installed machine, not from a checkout ─────
+#
+# These three branches exist FOR the installed layout — bt-health-report at
+# /usr/local/bin with no repository beside it — and a checkout cannot take
+# them, because the very files they fall back from are present in a checkout.
+#
+# tests/run-tests DOES exercise all three, by copying the script and its lib
+# into a temp tree with no evidence/ beside them. That is the honest test and
+# it is worth having. It cannot close these lines: the trace records the copy
+# under an absolute temp path, and devtools/coverage counts only
+# repository-relative paths — deliberately, so a tool's installed image is
+# never confused with its source.
+# Single lines are written as one-line RANGES. `path:61` alone parses as
+# 61-0 and silently matches nothing — which is a quiet no-op, the one failure
+# an exclusion file must not have, since it looks exactly like an exclusion
+# that worked.
+tools/bt-health-report.sh:58-58    # install stamp: only present on an installed machine
+tools/bt-health-report.sh:61-61    # /etc unit mtime: only when the stamp is absent AND the unit installed
+tools/bt-health-report.sh:77-77    # --list-boots fallback: only when bt-boot-list is not beside the script
+tools/bt-health-report.sh:212-212  # no-baseline branch: a checkout always ships one

@@ -27,6 +27,7 @@ LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
 source "$LIBDIR/journal.sh"
 SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
 SYSFS_MOD="${BT_SYSFS_MODULE:-/sys/module/btusb/parameters}"
+SYSFS_BT="${BT_SYSFS_BT:-/sys/class/bluetooth}"
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 METRICS="${BT_METRICS:-/var/log/bt-health/metrics.tsv}"
@@ -150,10 +151,16 @@ echo
 # the controller is off the bus right now — the exact masking flaw fixed in
 # bt-status and bt-postmortem after 2026-08-11, surviving here as a third
 # instance. A tool that reports success during a failure is worse than none.
-hci_now=$(ls -A /sys/class/bluetooth/ 2>/dev/null | head -1)
+# BOTH paths through the seams. The USB one was hardcoded here while
+# SYSFS_USB was already defined at the top of this same file — the seam was
+# added and this block was missed, so on a machine driving the tool through
+# BT_SYSFS_USB the live-state check silently read the real sysfs instead. It
+# is the check that outranks every counter above it, so it was the worst place
+# in the file to be reading something other than what the caller asked for.
+hci_now=$(ls -A "$SYSFS_BT" 2>/dev/null | head -1)
 if [[ -z "$hci_now" ]]; then
     on_bus=no
-    for d in /sys/bus/usb/devices/*; do
+    for d in "$SYSFS_USB"/*; do
         [[ -f "$d/idVendor" ]] || continue
         [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]] \
             && { on_bus=yes; break; }
