@@ -2327,6 +2327,128 @@ DGNONE=$(BT_JOURNAL_FIXTURE=tests/journal/diagnose-signature BT_SYSFS_USB="$DG/e
     || bad "exit codes collapsed: present=$dgsigrc absent=$dgcleanrc unknown=$dgnonerc"
 rm -rf "$DG"
 
+# ── bt-mode: the switch that turns the safety net off ─────────────────────
+#
+# `bt-mode experiment` stops the recovery watchdog on a machine where a hang
+# then needs a physical power-off, moves the power-policy overrides aside, and
+# records the mode. `bt-mode mitigation` is supposed to put all of it back. If
+# the restore is incomplete, the machine stays in experiment mode while
+# everything reports normal — the watchdog is off, nobody is told, and the next
+# hang is a cold boot.
+#
+# It had never been executed under test for the obvious reason: executing it
+# means doing that. Now every path is a seam, so the round trip runs inside a
+# temp tree — and the last assertion here is that the real ones were untouched,
+# because this suite runs as root on the investigation machine.
+BM=$(mktemp -d)
+mkdir -p "$BM/udev" "$BM/mod" "$BM/stub" "$BM/usb/3-3/power" "$BM/share"
+echo 13d3 > "$BM/usb/3-3/idVendor"; echo 3503 > "$BM/usb/3-3/idProduct"
+echo on > "$BM/usb/3-3/power/control"; echo N > "$BM/mod/enable_autosuspend"
+printf 'options btusb enable_autosuspend=0\n' > "$BM/modprobe.conf"
+printf 'ATTR{idVendor}=="13d3"\n' > "$BM/udev/50-bluetooth-no-autosuspend.rules"
+printf 'ATTR{idVendor}=="13d3"\n' > "$BM/udev/51-bluetooth-health-snapshot.rules"
+cat > "$BM/stub/systemctl" <<BMSTUB
+#!/bin/sh
+echo "systemctl \$*" >> "$BM/spy.log"; exit 0
+BMSTUB
+printf '#!/bin/sh\necho "udevadm $*" >> "%s/spy.log"\nexit 0\n' "$BM" > "$BM/stub/udevadm"
+chmod +x "$BM/stub"/*
+
+bm_run() { env PATH="$BM/stub:$PATH" \
+    BT_MODPROBE_CONF="$BM/modprobe.conf" BT_UDEV_DIR="$BM/udev" \
+    BT_MODE_STAMP="$BM/share/mode" BT_SYSFS_USB="$BM/usb" \
+    BT_SYSFS_MODULE="$BM/mod" tools/bt-mode "$@" 2>&1; }
+
+# The dry run first, and specifically that it changes NOTHING — the same
+# contract install.sh and uninstall.sh are held to. A dry run that acts is
+# worse than no dry run, because it is asked for by someone being careful.
+BMDRY=$(bm_run experiment --dry-run); bmdryrc=$?
+(( bmdryrc == 0 )) && [[ "$BMDRY" == *"would run: systemctl disable --now bt-hang-watchdog"* ]] \
+    && ok "bt-mode --dry-run prints the plan" \
+    || bad "bt-mode --dry-run did not describe stopping the watchdog (rc=$bmdryrc)"
+
+[[ -e "$BM/udev/50-bluetooth-no-autosuspend.rules" && ! -e "$BM/share/mode" \
+   && ! -s "$BM/spy.log" ]] \
+    && ok "bt-mode --dry-run changes nothing and runs nothing" \
+    || bad "the dry run moved a file, wrote the stamp, or invoked a tool"
+
+# Now the real switch, inside the sandbox.
+BMEXP=$(bm_run experiment); bmexprc=$?
+(( bmexprc == 0 )) && ok "bt-mode experiment completes" \
+                  || bad "bt-mode experiment failed (rc=$bmexprc)"
+
+# Moved aside, not deleted: the header's promise is that everything is
+# reversible, and a deleted udev rule is not.
+[[ -e "$BM/udev/50-bluetooth-no-autosuspend.rules.disabled" \
+   && -e "$BM/udev/51-bluetooth-health-snapshot.rules.disabled" \
+   && -e "$BM/modprobe.conf.disabled" ]] \
+    && ok "bt-mode experiment moves the overrides aside rather than deleting them" \
+    || bad "an override was deleted or left in place instead of being disabled"
+
+[[ ! -e "$BM/udev/50-bluetooth-no-autosuspend.rules" && ! -e "$BM/modprobe.conf" ]] \
+    && ok "bt-mode experiment leaves no active override behind" \
+    || bad "an override survived under its active name"
+
+# The watchdog must actually be stopped AND disabled — a stop alone comes back
+# at the next boot, in the middle of an experiment nobody would re-check.
+[[ "$(cat "$BM/spy.log")" == *"systemctl disable --now bt-hang-watchdog"* ]] \
+    && ok "bt-mode experiment disables the watchdog, not only stops it" \
+    || bad "the watchdog was not disabled — it returns at the next boot"
+
+[[ "$(cat "$BM/mod/enable_autosuspend")" == "Y" \
+   && "$(cat "$BM/usb/3-3/power/control")" == "auto" ]] \
+    && ok "bt-mode experiment restores the stock power policy at runtime" \
+    || bad "runtime power policy still holds the mitigation values"
+
+[[ "$(cat "$BM/share/mode" 2>/dev/null)" == experiment* ]] \
+    && ok "bt-mode records that experiment mode is active" \
+    || bad "the mode stamp does not say experiment"
+
+# THE ROUND TRIP, which is the whole reversibility claim. Every file must come
+# back under its active name, with nothing left disabled — the .disabled
+# leftovers are exactly what verify-restored.sh has to hunt for afterwards
+# because uninstall.sh cannot see them.
+BMMIT=$(bm_run mitigation); bmmitrc=$?
+left=$(ls "$BM/udev"/*.disabled "$BM"/*.disabled 2>/dev/null | wc -l)
+(( bmmitrc == 0 && ${left:-0} == 0 )) \
+   && [[ -e "$BM/udev/50-bluetooth-no-autosuspend.rules" \
+      && -e "$BM/udev/51-bluetooth-health-snapshot.rules" \
+      && -e "$BM/modprobe.conf" ]] \
+    && ok "bt-mode mitigation restores every file experiment moved aside" \
+    || bad "the round trip left $left file(s) disabled (rc=$bmmitrc)"
+
+[[ "$(cat "$BM/mod/enable_autosuspend")" == "N" \
+   && "$(cat "$BM/usb/3-3/power/control")" == "on" ]] \
+    && ok "bt-mode mitigation re-applies the runtime power policy" \
+    || bad "runtime power policy was not returned to the mitigation values"
+
+[[ "$(cat "$BM/spy.log")" == *"systemctl enable --now bt-hang-watchdog"* ]] \
+    && ok "bt-mode mitigation brings the watchdog back enabled" \
+    || bad "the watchdog was not re-enabled — the machine stays unprotected"
+
+# status is read-only and must survive a machine where nothing is set up: it is
+# the command someone runs to find out what state they are in, and it answering
+# with an error is the same as not answering.
+BMSTAT=$(bm_run status); bmstatrc=$?
+(( bmstatrc == 0 )) && [[ "$BMSTAT" == *"recorded mode"*"mitigation"* ]] \
+    && ok "bt-mode status reports the recorded mode" \
+    || bad "bt-mode status did not report the mode (rc=$bmstatrc)"
+
+bm_run frobnicate >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-mode rejects an unknown mode" \
+              || bad "bt-mode accepted an unknown mode"
+
+# THE SANDBOX ITSELF. This suite runs as root on the machine under
+# investigation, and every assertion above ran bt-mode in APPLY mode. If a seam
+# leaked, the watchdog on this host was just disabled and its udev rules moved
+# aside — which is the one failure that must never be discovered later.
+[[ ! -e /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules.disabled \
+   && ! -e /etc/udev/rules.d/51-bluetooth-health-snapshot.rules.disabled \
+   && ! -e /etc/modprobe.d/btusb-qca9377.conf.disabled ]] \
+    && ok "bt-mode's seams held — no real override was moved aside" \
+    || bad "A SEAM LEAKED: bt-mode disabled a real override on this machine"
+rm -rf "$BM"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is
