@@ -17,11 +17,28 @@
 
 set -uo pipefail
 
+# Seams, real paths by default. A reproduction session is the transcript a
+# kernel maintainer reads instead of taking a claim on trust, and every stage
+# of producing one — the before/after snapshots, the command recorder, the log
+# filtering, the manifest counters, the sanitiser pass — had never executed
+# under test. BT_EVIDENCE_REPO already existed; the rest are new.
+_BEV_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../tools/lib"
+[[ -r "$_BEV_LIB/journal.sh" ]] || _BEV_LIB=/usr/local/bin/lib
+[[ -r "$_BEV_LIB/journal.sh" ]] || { echo "bt-evidence: missing journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$_BEV_LIB/journal.sh"
+
 REPO="${BT_EVIDENCE_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)}"
 [[ -d "$REPO/evidence" ]] || REPO="${BT_EVIDENCE_REPO:-/root/exp/qca9377-bt-hang}"
 SESSIONS="$REPO/evidence/sessions"
-STATE=/run/bt-evidence
+# /run is root-owned and machine-global: a test that used the real path would
+# collide with a live session on the investigation machine, which is the one
+# thing a test of the evidence recorder must never do.
+STATE="${BT_EVIDENCE_STATE:-/run/bt-evidence}"
 CUR="$STATE/current"
+SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+SYSFS_MOD="${BT_SYSFS_MODULE:-/sys/module/btusb/parameters}"
+TRACE_DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
 
 SANITIZE=""
 for c in "$REPO/tools/sanitize-logs.sh" /usr/local/bin/bt-sanitize-logs; do
@@ -41,7 +58,7 @@ snapshot_state() { # -> stdout
     echo "## uptime"; uptime -p
     echo "## kernel"; uname -r
     echo "## boot_id"; cut -c1-8 /proc/sys/kernel/random/boot_id
-    for d in /sys/bus/usb/devices/*; do
+    for d in "$SYSFS_USB"/*; do
         [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
         if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
             dev=$(basename "$d"); ctrl=$(cat "$d/power/control" 2>/dev/null)
@@ -55,7 +72,7 @@ snapshot_state() { # -> stdout
     echo "## device"
     echo "usb_path=$dev power_control=$ctrl hci=$hci responds=$alive"
     echo "## btusb params"
-    for f in /sys/module/btusb/parameters/*; do echo "$(basename "$f")=$(cat "$f" 2>/dev/null)"; done
+    for f in "$SYSFS_MOD"/*; do echo "$(basename "$f")=$(cat "$f" 2>/dev/null)"; done
     echo "## services"
     for u in bluetooth bt-hang-watchdog bt-trace bt-health-snapshot.timer; do
         echo "$u=$(systemctl is-active "$u" 2>&1)"
@@ -63,9 +80,9 @@ snapshot_state() { # -> stdout
     echo "## counters this boot"
     # HCI command timeouts, opcode-named or not — NOT bare "tx timeout", which
     # also matches `link tx timeout` (ACL supervision, a different layer). EX-015.
-    echo "tx_timeouts=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE 'command( 0x[0-9a-f]+)? tx timeout')"
-    echo "unexpected_evt=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -c 'unexpected event for opcode')"
-    echo "wd_interventions=$(journalctl -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention")"
+    echo "tx_timeouts=$(bt_journal -k -b 0 --no-pager 2>/dev/null | grep -cE 'command( 0x[0-9a-f]+)? tx timeout')"
+    echo "unexpected_evt=$(bt_journal -k -b 0 --no-pager 2>/dev/null | grep -c 'unexpected event for opcode')"
+    echo "wd_interventions=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention")"
     echo "## connected"
     timeout 8 bluetoothctl devices Connected 2>/dev/null || true
 }
@@ -144,11 +161,11 @@ stop)
     snapshot_state > "$dir/state-after.txt"
 
     # Filtered log subsets — the point is a readable subset, not a dump.
-    journalctl -k --since "$since" --no-pager -o short-precise 2>/dev/null \
+    bt_journal -k --since "$since" --no-pager -o short-precise 2>/dev/null \
       | grep -iE "hci|btusb|bluetooth|usb [0-9]+-[0-9]|xhci" > "$dir/kernel.log" || true
-    journalctl -u bt-hang-watchdog --since "$since" --no-pager -o short-precise 2>/dev/null \
+    bt_journal -u bt-hang-watchdog --since "$since" --no-pager -o short-precise 2>/dev/null \
       > "$dir/watchdog.log" || true
-    journalctl -u bluetooth --since "$since" --no-pager -o short-precise 2>/dev/null \
+    bt_journal -u bluetooth --since "$since" --no-pager -o short-precise 2>/dev/null \
       | grep -vE "Endpoint (registered|unregistered)" > "$dir/bluetoothd.log" || true
     command -v bt-timeline >/dev/null \
       && bt-timeline "$since" --raw > "$dir/timeline.txt" 2>/dev/null || true
@@ -162,7 +179,7 @@ stop)
         echo "# addresses, names, pairing exchanges and payload; sanitize-logs.sh"
         echo "# cannot parse binary formats). Inspect with: btmon -r <file>"
         echo
-        find /var/log/bt-health/trace -name '*.btsnoop' -newermt "@$((start-120))" 2>/dev/null \
+        find "$TRACE_DIR" -name '*.btsnoop' -newermt "@$((start-120))" 2>/dev/null \
           | sort | sed 's/^/  /' || true
     } >> "$dir/hci-captures.txt"
 

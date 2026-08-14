@@ -12,10 +12,11 @@
 set -uo pipefail
 MSG="${*:?usage: bt-mark <message>}"
 VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
+SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
 
 # Compact state at the moment of the mark, so each step carries its own context.
 dev="absent"; ctrl="-"; hci="-"; alive="?"
-for d in /sys/bus/usb/devices/*; do
+for d in "$SYSFS_USB"/*; do
     [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
     if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
         dev=$(basename "$d"); ctrl=$(cat "$d/power/control" 2>/dev/null)

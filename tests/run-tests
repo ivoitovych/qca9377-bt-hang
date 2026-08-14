@@ -2686,6 +2686,159 @@ rm -rf "$HS/usb/3-3"
     || bad "hci_alive=$(hs_col hci_alive) with our device absent — it read another adapter"
 rm -rf "$HS"
 
+# ── bt-mark and bt-evidence: producing the transcript, end to end ─────────
+#
+# A reproduction session is what a kernel maintainer reads instead of taking a
+# claim on trust: what was run, what the machine did, in what order. Every
+# stage of producing one — the before/after snapshots, the command recorder,
+# the log filtering, the manifest counters, the sanitiser pass — had never
+# executed. 135 lines across the two, at 0%.
+EV=$(mktemp -d)
+mkdir -p "$EV/repo/evidence/sessions" "$EV/repo/tools" "$EV/state" "$EV/usb/3-3/power" \
+         "$EV/usb/3-3/3-3:1.0/bluetooth/hci0" "$EV/mod" "$EV/stub" "$EV/jrn" "$EV/trace"
+cp tools/sanitize-logs.sh "$EV/repo/tools/sanitize-logs.sh"
+echo 13d3 > "$EV/usb/3-3/idVendor"; echo 3503 > "$EV/usb/3-3/idProduct"
+echo on > "$EV/usb/3-3/power/control"; echo N > "$EV/mod/enable_autosuspend"
+cat > "$EV/jrn/kernel.log" <<'EVJ'
+Aug 10 09:10:00 host kernel: Bluetooth: hci0: command 0x0406 tx timeout
+Aug 10 09:10:10 host kernel: Bluetooth: hci0: command 0x0428 tx timeout
+Aug 10 09:11:00 host kernel: Bluetooth: hci0: link tx timeout
+EVJ
+cp "$EV/jrn/kernel.log" "$EV/jrn/kernel.b0.log"
+cat > "$EV/jrn/unit-bt-hang-watchdog.log" <<'EVW'
+Aug 10 09:12:00 host bt-hang-watchdog: 3 timeouts in 60s — intervening.
+Aug 10 09:12:30 host bt-hang-watchdog: EARLY intervention: desync signature
+EVW
+cp "$EV/jrn/unit-bt-hang-watchdog.log" "$EV/jrn/unit-bt-hang-watchdog.b0.log"
+printf '#!/bin/sh\nexit 0\n' > "$EV/stub/hciconfig"
+printf '#!/bin/sh\nexit 0\n' > "$EV/stub/bluetoothctl"
+printf '#!/bin/sh\nexit 0\n' > "$EV/stub/logger"
+printf '#!/bin/sh\nexit 0\n' > "$EV/stub/systemctl"
+printf '#!/bin/sh\necho "up 1 hour"\n' > "$EV/stub/uptime"
+chmod +x "$EV/stub"/*
+
+ev_env=(PATH="$EV/stub:$PATH" BT_EVIDENCE_REPO="$EV/repo" BT_EVIDENCE_STATE="$EV/state"
+        BT_SYSFS_USB="$EV/usb" BT_SYSFS_MODULE="$EV/mod" BT_JOURNAL_FIXTURE="$EV/jrn"
+        BT_TRACE_DIR="$EV/trace")
+ev() { env "${ev_env[@]}" bin/bt-evidence "$@" 2>&1; }
+
+# bt-mark first: it is what stamps a manual step into the journal so the step
+# and the machine's reaction share one timeline.
+MK=$(env PATH="$EV/stub:$PATH" BT_SYSFS_USB="$EV/usb" bin/bt-mark "connecting headset" 2>&1); mkrc=$?
+(( mkrc == 0 )) && [[ "$MK" == *"marked: connecting headset"* && "$MK" == *"usb=3-3"* \
+                   && "$MK" == *"hci=hci0"* ]] \
+    && ok "bt-mark stamps the step together with the state at that moment" \
+    || bad "bt-mark did not report the mark with its context (rc=$mkrc)"
+
+bin/bt-mark >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-mark refuses an empty message" \
+              || bad "bt-mark accepted a mark with no text"
+
+# Refusals before anything is open. Recording into no session would write to a
+# path derived from an absent state file.
+ev note "orphan" >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-evidence note refuses with no session open" \
+              || bad "a note was recorded outside a session"
+ev stop >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-evidence stop refuses with no session open" \
+              || bad "stop succeeded with nothing open"
+
+EVSTART=$(ev start probe-session); evsrc=$?
+evdir=$(sed -n 's/^dir=//p' "$EV/state/current" 2>/dev/null)
+(( evsrc == 0 )) && [[ -n "$evdir" && -s "$evdir/state-before.txt" && -f "$evdir/NOTES.md" ]] \
+    && ok "bt-evidence start opens a session with a before-snapshot and notes stub" \
+    || bad "session did not open properly (rc=$evsrc, dir='$evdir')"
+
+# A second start must not silently begin a session that overwrites the first
+# one's state pointer — the transcript of the open session would be orphaned.
+ev start second-session >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-evidence refuses to open a second session over an open one" \
+              || bad "a second session was opened, orphaning the first"
+
+# THE RECORDER'S CENTRAL PROPERTY, the same one bt-exhibit makes: the command
+# and its output are written in one pass, so they cannot drift. And the exit
+# status recorded must be the COMMAND's, not the sed(1) it is piped through —
+# PIPESTATUS[0] is doing real work here, and "$?" would record 0 for every
+# failure the session was opened to capture.
+ev cmd sh -c 'echo hello-from-evidence; exit 3' >/dev/null 2>&1
+evlog=$(cat "$evdir/commands.log")
+[[ "$evlog" == *'$ sh -c echo hello-from-evidence; exit 3'* && "$evlog" == *"hello-from-evidence"* ]] \
+    && ok "bt-evidence cmd records the command and its output in one pass" \
+    || bad "commands.log is missing the command or its output"
+[[ "$evlog" == *"[exit 3]"* ]] \
+    && ok "bt-evidence records a failing command's exit status" \
+    || bad "a failing command was recorded with the wrong exit status"
+
+# AND that the status is the COMMAND's rather than the pipeline's. The
+# recorder is `"$@" 2>&1 | sed …`, so PIPESTATUS[0] is doing real work — but
+# under `set -o pipefail` a plain "$?" gives the same answer for a failing
+# command, so replacing it passes the assertion above unchanged. It was proven
+# indistinguishable by making exactly that substitution.
+#
+# The two diverge only when the SED fails and the command did not, which is
+# what this drives: a sed that copies its input and exits 1. "$?" would then
+# record a failure for a command that succeeded, in a transcript whose purpose
+# is to show what the machine actually did.
+mkdir -p "$EV/sedstub"
+printf '#!/bin/sh\ncat\nexit 1\n' > "$EV/sedstub/sed"; chmod +x "$EV/sedstub/sed"
+env "${ev_env[@]}" PATH="$EV/sedstub:$EV/stub:$PATH" \
+    bin/bt-evidence cmd sh -c 'echo fine' >/dev/null 2>&1
+[[ "$(cat "$evdir/commands.log")" == *"[exit 0]"* ]] \
+    && ok "the recorded status is the command's, not a failing pipeline stage's" \
+    || bad "a successful command was recorded as failed because sed did"
+
+ev note "headset powered off" >/dev/null 2>&1
+[[ "$(cat "$evdir/commands.log")" == *"NOTE: headset powered off"* ]] \
+    && ok "bt-evidence note lands in the transcript" \
+    || bad "the note was not written to commands.log"
+
+# A MAC in recorded output must not survive into a session that gets committed.
+# This is the same geolocation exposure as everywhere else, on the path that
+# produces the largest volume of published text.
+ev cmd sh -c 'printf "assoc de:ad:be:ef:00:%02d\n" 23' >/dev/null 2>&1
+
+EVSTOP=$(ev stop); evstoprc=$?
+(( evstoprc == 0 )) && [[ ! -e "$EV/state/current" && -s "$evdir/MANIFEST.txt" \
+                       && -s "$evdir/state-after.txt" ]] \
+    && ok "bt-evidence stop closes the session and writes a manifest" \
+    || bad "stop left the session open or wrote no manifest (rc=$evstoprc)"
+
+evman=$(cat "$evdir/MANIFEST.txt")
+# 2, not 3: the fixture's `link tx timeout` is ACL supervision. And 2 for the
+# watchdog, because the Phase-22 defect — matching only "intervening" and so
+# missing every EARLY intervention — survived into this manifest path too.
+[[ "$evman" == *"tx_timeouts_in_window=2"* && "$evman" == *"wd_interventions=2"* ]] \
+    && ok "the manifest counts timeouts and both intervention forms correctly" \
+    || bad "manifest counters wrong: $(grep -E 'tx_timeouts|wd_interv' <<<"$evman" | tr '\n' ' ')"
+
+[[ "$evman" == *"sanitised=yes"* ]] \
+    && ok "the manifest declares whether the session was sanitised" \
+    || bad "the manifest does not record the sanitiser state"
+
+# Only assert the redaction where the sanitiser can actually run; on an engine
+# that cannot express the patterns it refuses, and the manifest says NO.
+if (( ex_awk_ok )); then
+    [[ "$(cat "$evdir/commands.log")" != *"de:ad:be:ef:00:23"* ]] \
+        && ok "bt-evidence sanitises the transcript before the session is closed" \
+        || bad "a MAC survived into a committed session transcript"
+fi
+
+# THE HOUSE RULE, asserted rather than assumed: nothing above may reach the
+# real evidence tree. Ten fabricated collections accumulated there once, which
+# is why the rule exists.
+#
+# Counted with find, NOT `[[ ! -e evidence/sessions/*probe-session* ]]`, which
+# is what this check said first. `[[ -e ]]` does not expand globs — it tests a
+# path containing literal asterisks, which never exists, so the assertion
+# passed unconditionally and could not have failed had a session escaped. It
+# was caught by asking what would make it go red, which is the question every
+# check in this file has to survive.
+evstray=$(find evidence/sessions -maxdepth 1 -name '*probe-session*' 2>/dev/null | wc -l)
+(( ${evstray:-0} == 0 )) \
+    && ok "no test session landed in the real evidence tree" \
+    || bad "$evstray test session(s) were written into evidence/sessions/"
+rm -rf "$EV"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is
