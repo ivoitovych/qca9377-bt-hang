@@ -61,7 +61,16 @@ jobs:
       # lands. Its job is to stop coverage falling silently as tools grow —
       # "every test encodes a defect that shipped" remains the actual rule.
       - name: coverage floor
-        run: devtools/coverage --quiet --min 65
+        run: devtools/coverage --quiet --min 80
+
+      # A SECOND MEASUREMENT, of a different language. devtools/coverage
+      # measures bash with xtrace, and bash traces commands — a 180-line awk
+      # program is one command, so the awk this project computes its answers in
+      # was invisible to it. This reads gawk --profile instead and reports
+      # statement coverage. It found that the classifier branches for stage 2
+      # of the bug had never executed.
+      - name: awk statement coverage floor
+        run: devtools/awk-coverage --min 85
 
       # Phase 1 (host-journal shapes) skips on a journal-less runner; phase 2
       # builds a real journal from text and byte-compares real journalctl

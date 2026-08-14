@@ -2878,7 +2878,105 @@ BSHUM=$(bs_run)
 [[ "$BSHUM" == *"device 13d3:3503"* && "$BSHUM" == *"responds"* && "$BSHUM" == *"services"* ]] \
     && ok "bt-state's human form reports the device, liveness and services" \
     || bad "the human-readable form is missing a section"
+# btmgmt is the fallback when hciconfig is absent, and it is the one that runs
+# on a modern bluez where hciconfig has been removed. A liveness column that
+# silently reads "?" on those machines makes every row of metrics.tsv useless
+# for the question the column exists to answer.
+BSMG=$(mktemp -d); mkdir -p "$BSMG/bin"
+printf '#!/bin/sh\nexit 0\n'   > "$BSMG/bin/btmgmt"
+printf '#!/bin/sh\nexit 0\n'   > "$BSMG/bin/bluetoothctl"
+chmod +x "$BSMG/bin"/*
+# btmgmt and bluetoothctl only — no hciconfig anywhere on PATH. A stub that
+# EXISTS is still found by `command -v`, so the directory holding the stubs
+# must simply not contain one; the branch under test is the one taken when
+# hciconfig is not there at all.
+mkdir -p "$BSMG/bin2"; cp "$BSMG/bin/btmgmt" "$BSMG/bin/bluetoothctl" "$BSMG/bin2/"
+BSMGOUT=$(env PATH="$BSMG/bin2:/usr/bin:/bin" \
+              BT_SYSFS_USB="$BS/usb" BT_SYSFS_MODULE="$BS/mod" \
+              BT_JOURNAL_FIXTURE="$BS/jrn" tools/bt-state --tsv 2>&1)
+[[ "$(awk -F'\t' '{print $5}' <<<"$BSMGOUT")" == "yes" ]] \
+    && ok "bt-state falls back to btmgmt where hciconfig has been removed" \
+    || bad "liveness was not probed without hciconfig: $(awk -F'\t' '{print $5}' <<<"$BSMGOUT")"
+rm -rf "$BSMG"
 rm -rf "$BS"
+
+# ── the help and refusal paths, together ─────────────────────────────────
+#
+# Every tool here has a --help and an unknown-argument refusal, and almost none
+# of them had ever been executed. They are worth a block rather than a shrug:
+# --help is the only documentation a tool carries onto an installed machine,
+# where the repository is not present, and a `sed -n '2,26p' "$0"` range that
+# has drifted past the header prints the wrong thing silently.
+help_ok() {   # <tool> [expected-substring]
+    local out rc
+    out=$("$1" --help 2>&1); rc=$?
+    if (( rc == 0 )) && [[ -n "$out" ]] && { [[ -z "${2:-}" ]] || [[ "$out" == *"$2"* ]]; }; then
+        ok "$(basename "$1") --help prints its own usage"
+    else
+        bad "$(basename "$1") --help failed (rc=$rc) or lost '${2:-}'"
+    fi
+}
+help_ok tools/bt-phase   "bt-phase"
+help_ok tools/bt-sco     "bt-sco"
+help_ok tools/bt-actions "bt-actions"
+help_ok tools/bt-mode    "bt-mode"
+
+# bt-actions' time selectors are passed through to the journal, so they must at
+# minimum not break the run — and the fixture answers whatever is asked.
+AASINCE=$(BT_JOURNAL_FIXTURE=tests/journal/actions tools/bt-actions -b 0 \
+          --since "2026-08-13 00:00:00" --until "2026-08-14 00:00:00" 2>&1); aasrc=$?
+(( aasrc == 0 )) && [[ "$AASINCE" == *"USER"* ]] \
+    && ok "bt-actions accepts --since and --until and still classifies" \
+    || bad "the time selectors broke the run (rc=$aasrc)"
+
+# bt-phase's incident gap is the parameter that decides what counts as ONE
+# incident — the same clustering question bt-postmortem answers with GAP — so
+# it is a number worth being able to set.
+PHGAP=$(BT_JOURNAL_FIXTURE=tests/journal/phase tools/bt-phase --incident-gap 300 2>&1); phgrc=$?
+(( phgrc == 0 )) && ok "bt-phase accepts --incident-gap" \
+                 || bad "--incident-gap broke bt-phase (rc=$phgrc)"
+
+# THE REFUSAL bt-interval keeps as distinct from an unparseable timestamp: awk
+# succeeded but returned something that is not a number, which would mean the
+# library changed shape under it. Driven with a stub library, because that is
+# the only way the branch can be reached without breaking the real one.
+IVLIB=$(mktemp -d)
+cp tools/lib/timestamp.awk "$IVLIB/"
+printf 'BEGIN { print "not-a-number"; exit 0 }\n' > "$IVLIB/interval.awk"
+IVOUT=$(BT_LIBDIR="$IVLIB" tools/bt-interval "2026-08-13T10:00:00+02:00" \
+                                             "2026-08-13T10:01:00+02:00" 2>&1); ivrc=$?
+(( ivrc != 0 )) && [[ "$IVOUT" == *"non-numeric result"* && "$IVOUT" == *"a="* ]] \
+    && ok "bt-interval refuses a non-numeric result and names both arguments" \
+    || bad "the non-numeric branch did not fire (rc=$ivrc): $IVOUT"
+rm -rf "$IVLIB"
+
+# bt-verify-kernel-mechanism's two remaining verdicts. Both are real states of
+# a shipped module — a kernel carrying both symbols, and one stripped of
+# both — and each demands a different next step from the reader.
+KMB=$(mktemp -d); mkdir -p "$KMB/mods/both/kernel/drivers/bluetooth" \
+                           "$KMB/mods/none/kernel/drivers/bluetooth"
+printf 'btusb_qca_reset\0btusb_qca_cmd_timeout\0' \
+    > "$KMB/mods/both/kernel/drivers/bluetooth/btusb.ko"
+printf 'nothing useful here\0' > "$KMB/mods/none/kernel/drivers/bluetooth/btusb.ko"
+: > "$KMB/mods/both/kernel/drivers/bluetooth/btqca.ko"
+KMBOTH=$(BT_MODULES_DIR="$KMB/mods" tools/bt-verify-kernel-mechanism both 2>&1)
+[[ "$KMBOTH" == *"both symbols present"* && "$KMBOTH" == *"btqca.ko present"* ]] \
+    && ok "bt-verify-kernel-mechanism reports a module carrying both symbols" \
+    || bad "the both-symbols verdict did not fire"
+KMNONE=$(BT_MODULES_DIR="$KMB/mods" tools/bt-verify-kernel-mechanism none 2>&1)
+[[ "$KMNONE" == *"neither symbol found"* && "$KMNONE" == *"stripped"* ]] \
+    && ok "bt-verify-kernel-mechanism says a stripped module proves nothing" \
+    || bad "the neither-symbol verdict did not fire"
+rm -rf "$KMB"
+
+# bt-boot-provenance must refuse rather than tabulate nothing: an empty boot
+# table reads as "no boots to worry about", which is the opposite of "I could
+# not find out".
+BPEMPTY=$(mktemp -d)
+BT_JOURNAL_FIXTURE="$BPEMPTY" BT_BOOT_LIST=/nonexistent tools/bt-boot-provenance >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-boot-provenance refuses when it cannot list boots" \
+              || bad "an unlistable journal produced a boot table anyway"
+rm -rf "$BPEMPTY"
 
 # ── bt-health-snapshot: the writer of the series, against its own header ──
 #
