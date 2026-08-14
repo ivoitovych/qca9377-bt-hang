@@ -1,0 +1,110 @@
+#!/bin/bash
+# status — "is everything updated, rebuilt, logged, collected, committed, pushed?"
+#
+#   devtools/status
+#
+# That question has been asked at every natural break in this project, and the
+# answer was reassembled by hand each time from `git status`, `git rev-parse`,
+# `bt-verify-install`, `bt-mode status` and `bt-trial status`. Six commands in
+# one compound line, which the permission layer cannot analyse, so it prompted
+# every time — and worse, the composition drifted: some runs checked the remote,
+# some did not, and one reported "all pushed" from a stale tracking ref.
+#
+# The distinction this tool exists to keep visible: COMMITTED is not DEPLOYED.
+# A clean tree pushed to the remote says nothing about what /usr/local is
+# running. On 2026-08-13 the checkout was several fixes ahead of the installed
+# tooling for most of a day, including a bt-usbmon whose retention was known
+# broken, while every report said "everything is pushed" — which was true, and
+# not the question anyone actually meant.
+#
+# Read-only. Exit 0 if repository state is clean and synced; 1 otherwise.
+# Deployment drift is reported but does NOT set the exit status: it is a fact
+# about the machine, not a defect in the commit.
+
+set -uo pipefail
+
+cd "$(dirname "$0")/.." || exit 1
+
+G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
+[[ -t 1 ]] || { G=""; R=""; Y=""; B=""; O=""; }
+
+rc=0
+row() { printf '  %s %-22s %s\n' "$1" "$2" "$3"; }
+
+echo "${B}Repository${O}"
+
+# --- working tree ---
+dirty=$(git status --porcelain 2>/dev/null | wc -l)
+if (( dirty == 0 )); then
+    row "${G}✓${O}" "working tree" "clean"
+else
+    row "${R}✗${O}" "working tree" "$dirty uncommitted change(s)"
+    git status --short 2>/dev/null | head -8 | sed 's/^/        /'
+    rc=1
+fi
+
+# --- pushed? asked of the REMOTE, not of a tracking ref ---
+#
+# The tracking ref can be pruned or stale, and a stale ref answers "yes" to a
+# question nobody asked. ls-remote costs one network round trip and cannot be
+# wrong about what the remote holds.
+local_head=$(git rev-parse HEAD 2>/dev/null)
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+remote_head=$(git ls-remote --heads origin "$branch" 2>/dev/null | awk '{print $1}')
+if [[ -z "$remote_head" ]]; then
+    row "${Y}?${O}" "remote $branch" "could not reach origin — cannot confirm"
+elif [[ "$local_head" == "$remote_head" ]]; then
+    row "${G}✓${O}" "pushed" "origin/$branch == ${local_head:0:7}"
+else
+    ahead=$(git rev-list --count "$remote_head..HEAD" 2>/dev/null || echo '?')
+    row "${R}✗${O}" "pushed" "local is $ahead commit(s) ahead of origin/$branch"
+    rc=1
+fi
+
+# --- branches carrying work that is not on this one ---
+unmerged=$(git branch -r --no-merged HEAD 2>/dev/null | grep -v 'HEAD ->' | wc -l)
+if (( unmerged == 0 )); then
+    row "${G}✓${O}" "other branches" "nothing unmerged"
+else
+    row "${Y}~${O}" "other branches" "$unmerged carrying unmerged work"
+    git branch -r --no-merged HEAD 2>/dev/null | grep -v 'HEAD ->' | sed 's/^/        /'
+fi
+
+echo
+echo "${B}Machine${O}"
+
+# --- deployed? the question "pushed" does not answer ---
+if [[ -x tools/bt-verify-install ]]; then
+    vi=$(tools/bt-verify-install 2>/dev/null | tail -3 | grep -E 'in sync|drifted' | tail -1)
+    if grep -q 'drifted' <<<"$vi"; then
+        row "${Y}~${O}" "installed tooling" "${vi# }"
+        printf '        %sthe checkout is AHEAD of what is running%s — sudo ./install.sh --apply\n' "$Y" "$O"
+    else
+        row "${G}✓${O}" "installed tooling" "${vi# }"
+    fi
+fi
+
+# --- experimental state ---
+if command -v bt-mode >/dev/null 2>&1 || [[ -x tools/bt-mode ]]; then
+    m=$(tools/bt-mode status 2>/dev/null | grep -m1 'recorded mode' | sed 's/.*recorded mode *//')
+    row "${G}·${O}" "mode" "${m:-unknown}"
+fi
+if [[ -x tools/bt-trial ]]; then
+    t=$(tools/bt-trial status 2>/dev/null | head -1)
+    row "${G}·${O}" "trial" "${t:-unknown}"
+fi
+present=$(lsusb 2>/dev/null | grep -c "${BT_VID:-13d3}:${BT_PID:-3503}" || true)
+if (( ${present:-0} > 0 )); then
+    row "${G}·${O}" "controller" "enumerated"
+else
+    row "${Y}·${O}" "controller" "NOT on the bus — cold power-off required"
+fi
+
+echo
+if (( rc )); then
+    printf '%sNOT everything is committed and pushed%s\n' "$R" "$O"
+else
+    printf '%sRepository: everything committed and pushed.%s' "$G" "$O"
+    echo " Deployment is reported above, separately."
+fi
+exit $rc
