@@ -2937,6 +2937,107 @@ DDSTAT=$(dd_run status)
     || bad "site count wrong: $(head -1 <<<"$DDSTAT")"
 rm -rf "$DD"
 
+# ── bt-sco: the parameters of the links that killed the controller ───────
+#
+# Both instrumented hangs happened during SCO link transitions, and SCO setup
+# is NOT sufficient to cause one — a later session issued three and survived.
+# So the question became "what was different about the ones that killed it?",
+# and this is the tool that answers it. The kernel log shows `opcode 0x0428
+# plen 17` and none of the payload; btmon decodes the payload.
+#
+# THE SEAM IS btmon ITSELF, on PATH. btmon reads btsnoop, which is binary, and
+# binary captures are not committed — they carry addresses, names, pairing
+# exchanges and payload, and sanitize-logs.sh cannot parse binary, so repo-scan
+# refuses them. What is under test is the PARSING, and the parsing consumes
+# text. See tests/btmon/README.md for what that does and does not pin.
+SC=$(mktemp -d); mkdir -p "$SC/stub" "$SC/trace"
+: > "$SC/trace/session.btsnoop"
+# The stub ignores its arguments and prints the file named by BTMON_FIXTURE.
+# btmon's real invocation here is `btmon -T -r <file>`; a stub that parsed the
+# arguments would be asserting the call shape, which is not what these tests
+# are about, and would break silently when a flag is added.
+cat > "$SC/stub/btmon" <<'SCSTUB'
+#!/bin/sh
+cat "$BTMON_FIXTURE"
+SCSTUB
+chmod +x "$SC/stub/btmon"
+sco_run() { env PATH="$SC/stub:$PATH" BTMON_FIXTURE="tests/btmon/$1.txt" \
+                tools/bt-sco --dir "$SC/trace" "${@:2}" 2>&1; }
+
+SCOUT=$(sco_run sco-paired); scorc=$?
+(( scorc == 0 )) && [[ "$SCOUT" == *"setup requests      2"* \
+                    && "$SCOUT" == *"completion events   2"* ]] \
+    && ok "bt-sco counts synchronous setups and their completions" \
+    || bad "paired capture miscounted (rc=$scorc)"
+
+# The parameters are the entire point — a controller that wedges on one
+# parameterisation and not another looks random from the kernel log alone.
+[[ "$SCOUT" == *"REQUEST"* && "$SCOUT" == *"Voice setting: 0x0060"* \
+   && "$SCOUT" == *"COMPLETION"* && "$SCOUT" == *"Link type: eSCO"* ]] \
+    && ok "bt-sco prints each request's parameters and its completion block" \
+    || bad "a request or completion block lost its indented parameters"
+
+# THE SIGNATURE OF THE HANG: a setup with no completion. This is the one
+# reading the tool exists to surface, and the count has to be exact — the
+# warning is phrased as "N request(s) received no completion event".
+SCGONE=$(sco_run sco-unanswered)
+[[ "$SCGONE" == *"setup requests      2"* && "$SCGONE" == *"completion events   1"* \
+   && "$SCGONE" == *"1 request(s) received no completion event"* ]] \
+    && ok "bt-sco reports an unanswered setup — the hang signature" \
+    || bad "the unanswered synchronous setup was not surfaced"
+
+# ...and it must not claim one when the counts match, or every ordinary
+# capture grows a warning that means nothing.
+[[ "$SCOUT" != *"received no completion event"* ]] \
+    && ok "bt-sco does not warn when every setup was answered" \
+    || bad "a fully paired capture produced the missing-completion warning"
+
+# THE STARTUP BITMAP. A bare grep for "Setup Synchronous Connection" also
+# matches the supported-commands bitmap the controller reports at startup,
+# which names the command once per adapter and has nothing to do with any
+# request. Counting it manufactures setups on a capture containing none.
+SCBIT=$(sco_run sco-bitmap-only)
+[[ "$SCBIT" == *"setup requests      0"* ]] \
+    && ok "bt-sco does not count the startup supported-commands bitmap" \
+    || bad "the commands bitmap was counted as a synchronous setup"
+
+# --window is the mode the header says to use, because a parameter almost never
+# varies alone and comparing fields finds a difference whether or not one
+# matters. It selects by TIME, so the assertion is that a record 3.7 minutes
+# from the nearest setup is excluded at +/-2s and included at a wide window.
+# The excluded record has to be one that is NOT itself a setup — a setup always
+# sits inside its own window. The fixture carries a Number of Completed Packets
+# event at 09:20:00, 5.6 minutes from the nearer of the two marks.
+SCW=$(sco_run sco-unanswered --window 2)
+[[ "$SCW" == *"09:14:22.101234"* && "$SCW" == *"09:31:44.002000"* \
+   && "$SCW" != *"Number of Completed Packets"* ]] \
+    && ok "bt-sco --window keeps both setups and drops what is far from either" \
+    || bad "the +/-2s window did not bound what it printed"
+SCW2=$(sco_run sco-unanswered --window 3600)
+[[ "$SCW2" == *"Number of Completed Packets"* ]] \
+    && ok "a wider window admits the record a narrow one excluded" \
+    || bad "widening the window changed nothing — the bound is not time-based"
+
+SCRAW=$(sco_run sco-paired --raw)
+[[ "$SCRAW" == *"Setup Synchronous Connection"* && "$SCRAW" == *"Max latency"* ]] \
+    && ok "bt-sco --raw passes btmon's blocks through unfiltered" \
+    || bad "--raw dropped the block content it exists to preserve"
+
+env PATH="$SC/stub:$PATH" BTMON_FIXTURE=/dev/null tools/bt-sco --dir "$SC/nope" >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-sco refuses a capture directory that is not there" \
+              || bad "bt-sco accepted a missing capture directory"
+
+SCEMPTY=$(env PATH="$SC/stub:$PATH" BTMON_FIXTURE=/dev/null \
+              tools/bt-sco --dir "$SC/stub" 2>&1); scemprc=$?
+(( scemprc == 0 )) && [[ "$SCEMPTY" == *"no .btsnoop files"* ]] \
+    && ok "bt-sco reports an empty capture directory instead of an empty table" \
+    || bad "a directory with no captures was not reported (rc=$scemprc)"
+
+tools/bt-sco --bogus >/dev/null 2>&1
+(( $? != 0 )) && ok "bt-sco rejects an unknown argument" \
+              || bad "bt-sco accepted an unknown argument"
+rm -rf "$SC"
+
 # ── the seam itself ───────────────────────────────────────────────────────
 #
 # A converted tool must not quietly regain a direct journalctl call: the seam is
