@@ -167,11 +167,81 @@ grep -oE '@@C@@[^@]*@@[0-9]+@@' "$WORK/trace" 2>/dev/null \
   | awk -F'\t' 'NF == 2 && $1 !~ /^\// && $1 !~ /^\.\./ { print $1 "\t" $2 }' \
   | sort -u > "$WORK/executed"
 
+# ── the exclusion list ────────────────────────────────────────────────────
+#
+# See devtools/coverage-exclude. Parsed into two tables: whole files, and
+# explicit line ranges. Both require a reason; an entry without one is refused
+# rather than defaulted, because an unexplained exclusion is the mechanism by
+# which a coverage number stops meaning anything.
+EXCLUDE_FILE="${BT_COVERAGE_EXCLUDE:-devtools/coverage-exclude}"
+: > "$WORK/excl-files"; : > "$WORK/excl-ranges"
+if [[ -r "$EXCLUDE_FILE" ]]; then
+    bad_entry=$(awk '
+        /^[[:space:]]*(#|$)/ { next }
+        {
+            entry = $0
+            i = index(entry, "#")
+            reason = (i ? substr(entry, i + 1) : "")
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", reason)
+            if (reason == "") print FNR ": " $0
+        }' "$EXCLUDE_FILE")
+    if [[ -n "$bad_entry" ]]; then
+        echo "coverage: exclusion entries without a reason — refusing to apply them" >&2
+        printf '  %s\n' "$bad_entry" >&2
+        exit 2
+    fi
+    awk '
+        /^[[:space:]]*(#|$)/ { next }
+        {
+            entry = $0
+            i = index(entry, "#"); if (i) entry = substr(entry, 1, i - 1)
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", entry)
+            if (entry == "") next
+            # path:/regex/ — matches by line SHAPE rather than line number, so
+            # it stays correct as the file moves. The only form that can
+            # express "every failure branch" without a list that rots.
+            if (match(entry, /:\/.*\/$/)) {
+                f = substr(entry, 1, RSTART - 1)
+                re = substr(entry, RSTART + 2, RLENGTH - 3)
+                print f "\t~\t" re > "/dev/stderr"
+                next
+            }
+            n = split(entry, p, ":")
+            if (n == 2) {
+                split(p[2], r, "-")
+                print p[1] "\t" (r[1] + 0) "\t" (r[2] + 0) > "/dev/stderr"
+            } else {
+                print entry
+            }
+        }' "$EXCLUDE_FILE" > "$WORK/excl-files" 2> "$WORK/excl-ranges"
+fi
+EXCL_FILES_N=$(grep -c . "$WORK/excl-files" 2>/dev/null || echo 0)
+EXCL_RANGES_N=$(grep -c . "$WORK/excl-ranges" 2>/dev/null || echo 0)
+
 # ── coverable lines per file ──────────────────────────────────────────────
 : > "$WORK/coverable"
 : > "$WORK/coverable-lines"
+: > "$WORK/excluded-lines"
 for f in "${SHFILES[@]}"; do
-    awk -v file="$f" -v lines_out="$WORK/coverable-lines" '
+    awk -v file="$f" -v lines_out="$WORK/coverable-lines" \
+        -v excl_files="$WORK/excl-files" -v excl_ranges="$WORK/excl-ranges" \
+        -v excl_out="$WORK/excluded-lines" '
+        BEGIN {
+            while ((getline e < excl_files) > 0) if (e == file) whole = 1
+            close(excl_files)
+            while ((getline e < excl_ranges) > 0) {
+                if (split(e, ep, "\t") != 3 || ep[1] != file) continue
+                if (ep[2] == "~") { npat++; pat[npat] = ep[3] }
+                else { nr++; lo[nr] = ep[2] + 0; hi[nr] = ep[3] + 0 }
+            }
+            close(excl_ranges)
+        }
+        function excluded(n, text,   i) {
+            if (whole) return 1
+            for (i = 1; i <= nr; i++) if (n >= lo[i] && n <= hi[i]) return 1
+            for (i = 1; i <= npat; i++) if (text ~ pat[i]) return 1
+            return 0
+        }
         # Here-document bodies are data, never traced. Track the terminator
         # from the opening line and skip until it is seen alone.
         heredoc != "" {
@@ -201,6 +271,11 @@ for f in "${SHFILES[@]}"; do
             if (s ~ /^[A-Za-z_][A-Za-z0-9_-]*\(\)[ \t]*\{?$/)   next  # func header
             if (s ~ /^\}[ \t]*(<|>|\||&|$)/) next   # closing brace w/ redirect
 
+            # Excluded AFTER the structural rules, so the exclusion count is
+            # a count of real coverable lines and not of blank lines that were
+            # never in the denominator to begin with.
+            if (excluded(FNR, s)) { print file "\t" FNR "\t" s >> excl_out; next }
+
             n++
             print file "\t" FNR "\t" s >> lines_out
         }
@@ -209,6 +284,31 @@ for f in "${SHFILES[@]}"; do
 done
 
 # ── join, report ──────────────────────────────────────────────────────────
+# ── the exclusion self-check ──────────────────────────────────────────────
+#
+# An excluded line that the suite ACTUALLY EXECUTED is an error, not a saving.
+# It means the range is stale — the file moved under it, or a test now reaches
+# code the list still claims is unreachable — and every such line is one the
+# denominator lost while the numerator kept it, which flatters the total in the
+# one direction nobody checks.
+#
+# This is what makes the list safe to grant a 100% floor to. It cannot stop
+# someone excluding code that ought to be tested; nothing mechanical can, which
+# is why each entry carries a reason a reviewer can reject. It does stop the
+# list from silently rotting into a place where live code hides.
+LIVE_EXCLUDED=$(awk -F'\t' '
+    FNR == NR { ran[$1 "\t" $2] = 1; next }
+    ($1 "\t" $2) in ran { print "  " $1 ":" $2 "  " $3 }
+' "$WORK/executed" "$WORK/excluded-lines" | head -20)
+if [[ -n "$LIVE_EXCLUDED" ]]; then
+    echo "coverage: these EXCLUDED lines were executed by the suite —" >&2
+    echo "          the exclusion is stale and is hiding live code:" >&2
+    printf '%s\n' "$LIVE_EXCLUDED" >&2
+    echo "          fix devtools/coverage-exclude, do not widen it" >&2
+    exit 2
+fi
+EXCLUDED_N=$(grep -c . "$WORK/excluded-lines" 2>/dev/null || echo 0)
+
 if (( SHOWUNCOV )); then
     # Same two tables the ratio is computed from, so the list cannot disagree
     # with the percentage it explains — a separate walk of the sources could,
@@ -261,6 +361,14 @@ awk -F'\t' -v quiet="$QUIET" '
         printf "%d\n", (sum_t > 0 ? int(100 * sum_h / sum_t) : 0) > "/dev/stderr"
     }
 ' "$WORK/executed" "$WORK/coverable" 2> "$WORK/pct"
+
+# The exclusions are printed, always. A number computed against a hidden
+# exclusion list is the failure this whole file is meant to prevent, so the
+# count and the file are named next to the total that depends on them.
+if (( ! QUIET )); then
+    printf 'excluded: %d line(s) — %d file(s), %d range/pattern entr(ies) in %s\n' \
+           "${EXCLUDED_N:-0}" "${EXCL_FILES_N:-0}" "${EXCL_RANGES_N:-0}" "$EXCLUDE_FILE"
+fi
 
 TOTAL_PCT=$(cat "$WORK/pct" 2>/dev/null | tr -d '[:space:]')
 TOTAL_PCT=${TOTAL_PCT:-0}

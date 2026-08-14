@@ -1,0 +1,86 @@
+# coverage-exclude — lines devtools/coverage must not count, and why.
+#
+# THE POINT OF THIS FILE IS THE REASONS, NOT THE EXCLUSIONS.
+#
+# A coverage floor of 65% says "some of this is untested and we have agreed not
+# to say which". A floor of 100% against an explicit exclusion list says "every
+# line is either executed by the suite or listed here with a reason a reviewer
+# can reject". The second is a hard cut; the first is a mood. Moving to the
+# second is only honest if this file stays small, specific, and argued.
+#
+# FORMAT
+#   path/to/file              # reason        whole file
+#   path/to/file:120-260      # reason        an inclusive line range
+#
+# Every entry needs a reason. An entry without one is an error, not a default.
+#
+# SELF-CHECKING. devtools/coverage fails if any excluded line was actually
+# EXECUTED by the suite. That makes the file impossible to use for hiding live
+# code behind a stale range: the moment a test reaches an excluded line, the
+# exclusion has to go. It does not stop someone excluding code that ought to be
+# tested — nothing mechanical can — which is why each entry has to argue.
+
+# ── 1. Cannot appear in their own trace ──────────────────────────────────
+#
+# These RUN the suite. devtools/coverage starts tests/run-tests under xtrace
+# and reads the trace back; a line of the harness executes before or after that
+# child process, never inside it. Measuring them requires a second harness
+# measuring the first, which is a regress, not a test.
+devtools/coverage           # runs the suite under trace; cannot trace itself
+devtools/awk-coverage       # runs the suite under gawk --profile; same regress
+devtools/check              # runs repo-validate and the suite
+devtools/assert-test-catches  # runs the suite once per mutation, by design
+reviews/verify.sh           # runs the suite and coverage to check the register
+
+# ── 2. Gated, and gated on purpose ───────────────────────────────────────
+#
+# tests/system-roundtrip installs to the real system and reverts it. It runs
+# only with BT_SYSTEM_TEST=1 and only when nothing is already installed,
+# because running it by accident on the investigation machine would stop the
+# watchdog mid-experiment. The gate is the feature; the suite must not defeat
+# it to raise a number.
+tests/system-roundtrip      # CI-gated install/revert; must not run by accident
+
+# devtools/journal-contract builds a real journal with systemd-journal-remote
+# and diffs real journalctl output against the fixture grammar. It is a CI step
+# in its own right — the mock-fidelity check TC-04 — and folding it into the
+# suite would double the suite's runtime to re-run what CI already runs.
+devtools/journal-contract   # separate CI step; builds a real journal
+
+# ── 3. The suite's own failure branches ──────────────────────────────────
+#
+# Every assertion in tests/run-tests is `ok "..."` or `bad "..."`. In a green
+# run the `bad` branch of every passing check is by construction unexecuted —
+# 72 lines of it. Covering them means failing the suite, and a suite that must
+# fail to be fully covered has the wrong incentive at its centre.
+#
+# NOT excluded wholesale. The first draft of this entry named the whole file,
+# and the self-check refused it immediately: 1200 executed lines would have
+# left the denominator while staying in the numerator. Only the failure
+# branches go, matched by SHAPE rather than by line number, so a `bad` added
+# tomorrow is covered and a list of numbers cannot rot.
+tests/run-tests:/^(\|\| *)?bad /   # failure branches: unreachable in a green run
+
+# ── 4. Another language, measured by another tool ────────────────────────
+#
+# bash traces COMMANDS. A multi-line awk program is one command: bash reports
+# its first line and nothing else, so every remaining line counts as uncovered
+# for as long as the program exists. Those lines are not untested — they are
+# measured by devtools/awk-coverage, which reads gawk --profile and reports
+# statement coverage, and which is gated in CI in its own right.
+#
+# Ranges START ONE LINE AFTER the command's first line, because that first line
+# IS traced. The self-check catches the off-by-one: an excluded line that
+# executed is an error.
+# Two of these five ranges were wrong when written by eye, and the self-check
+# refused both: bt-sco's started three lines late and sanitize-logs.sh's
+# swallowed the awk-capability probe, which is live shell that runs on every
+# invocation. They are now derived from where each quoted program actually
+# opens and closes.
+tools/bt-actions:82-260     # inline classifier; see devtools/awk-coverage
+tools/bt-actions:274-280    # inline collapse helper; same
+tools/bt-actions:298-344    # inline cadence renderer; same
+tools/bt-sco:93-125         # inline event-window selector; same
+tools/bt-sco:138-145        # inline request/completion block filter; same
+tools/bt-capdiff:88-108     # inline record extractor; same
+tools/sanitize-logs.sh:137-185  # inline substituter and its verifier; same
