@@ -161,3 +161,50 @@ The operator's reasoning, which is correct:
 A1 and A4 are the two that could each independently transform the submission: one proves
 the firmware divergence, the other supplies a deterministic reproducer. Neither requires
 building anything.
+
+---
+
+## Backlog — instrumentation gaps, not investigation steps
+
+Recorded so they are not rediscovered. None of these is urgent; none should be done while
+a trial is open.
+
+### BL-01 — boot provenance is recorded per trial, but not in the evidence a reader sees
+
+`bt-trial` writes `prev_shutdown` (reboot | poweroff | halt | unknown) and `enum_at_boot`
+into `results.tsv` (columns 21–22), added after `EX-017`. Two consumers do not carry it:
+
+| where | state |
+|---|---|
+| `evidence/trials/results.tsv` | ✅ recorded per trial |
+| `tools/bt-incident` session collections | ❌ not captured |
+| `tools/lib/stage2.awk` | ❌ `shutdown` is one bucket; poweroff and reboot are not distinguished |
+
+**Why it is worth closing.** It is the only data that can settle a claim this project
+asserts in three places and has never tested: *"a warm reboot does not drop the M.2 power
+rail and will not recover it"* — protocol step 0, `docs/bug-report.md`, and
+`docs/fix-proposal.md`. The last two are text intended to go upstream, so the claim is
+load-bearing for the submission, not internal.
+
+It is already producing signal against that claim. Of the three boots to 2026-08-14
+18:21, two ended at `reboot.target` and **the controller recovered across both** —
+`bt-boot-provenance` flags these as `<- recovered across a reboot target`. The claim says
+that should not happen.
+
+Sessions are what exhibits cite. A session collected months from now records the kernel
+log, the timeline and the state, and says nothing about how its boot began — so the
+boundary that matters for the rail question is invisible exactly where a reader looks.
+
+**The limitation must travel with the field, or it becomes another unearned fact.**
+`prev_shutdown` records the OPERATING SYSTEM'S shutdown trajectory, not the electrical
+state of the rail. A power-off performed after the OS reached `reboot.target` leaves an
+identical trace — the 2026-08-13 case (`EX-017`) is exactly that ambiguity, and `EX-019`
+established that firmware initialisation time cannot discriminate either. The field is
+suggestive; it is never proof. Settling the rail claim needs a deliberate trial: hang the
+controller, warm-reboot without touching the power, and look.
+
+**Shape of the work.** Add the two fields to `bt-incident`'s manifest, and let
+`bt-stage2` report the shutdown subtype alongside its `shutdown` bucket. Neither changes
+a classification — a window ended by shutdown is right-censored whichever kind it was.
+What changes is that the *next* boot's recovery becomes readable from the evidence
+instead of from someone's memory.
