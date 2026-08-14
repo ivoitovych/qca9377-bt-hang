@@ -22,6 +22,85 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
+# ── THE PATH GUARD, BEFORE ANYTHING ELSE RUNS ─────────────────────────────
+#
+# THE ESCAPE THIS CLOSES, WHICH HAPPENED.
+#
+# On 2026-08-14 this suite was run on the investigation machine to measure its
+# coverage. It closed a live 2-hour trial, wrote a results row whose treatment
+# fingerprint was fabricated by test stubs (`wd=late/thr?` from a stubbed
+# systemctl, `power=?` from a fake sysfs tree), and ran a real bt-incident
+# collection into evidence/sessions/.
+#
+# The mechanism was not a missing environment override. bin/bt-hang-watchdog
+# closes the boot's auto-trial on the device-absent path with:
+#
+#     if command -v bt-trial >/dev/null 2>&1; then bt-trial hang; fi
+#
+# — a BARE NAME, resolved from PATH, which finds the INSTALLED copy. The
+# watchdog scenarios below put a stub directory on PATH for systemctl, sleep
+# and hciconfig, and inherit BT_SYSFS_USB; they never redirected bt-trial,
+# because bt-trial is not called by the test, it is called by the tool under
+# test. So the real bt-trial ran against the real /run/bt-trial and the real
+# evidence tree, with the stubs supplying its treatment fingerprint.
+#
+# The existing invariant could not see it. It scans THIS FILE for
+# `tools/bt-trial <verb>` — and the call is not in this file at all.
+#
+# WHY A GUARD AND NOT ANOTHER STUB. Adding bt-trial to one stub directory
+# fixes one scenario. The shipped tools invoke five project tools by bare name
+# (bt-trial, bt-incident, bt-mark, bt-state, bt-timeline), any of which a
+# future test could reach the same way. Every legitimate invocation in this
+# file uses an explicit path — tools/bt-trial, bin/bt-hang-watchdog — so a
+# bare name resolving during a test run is an escape BY CONSTRUCTION, and can
+# be intercepted rather than reasoned about case by case.
+#
+# The list is DERIVED from the sources, so a bare-name call added tomorrow is
+# guarded without anyone remembering — the failure mode every hand-written
+# list in this repository has already hit.
+GUARD=$(mktemp -d)
+mkdir -p "$GUARD/bin"
+GUARD_LOG="$GUARD/calls.log"; : > "$GUARD_LOG"
+while IFS= read -r tool; do
+    [[ -n "$tool" ]] || continue
+    cat > "$GUARD/bin/$tool" <<GUARDSTUB
+#!/bin/sh
+# Installed by tests/run-tests. Records the call and does nothing.
+echo "$tool \$*" >> "$GUARD_LOG"
+exit 0
+GUARDSTUB
+    chmod +x "$GUARD/bin/$tool"
+done < <(grep -rhoE 'command -v (bt-[a-z-]+)' tools bin 2>/dev/null          | awk '{print $3}' | sort -u)
+
+# A DECOY, standing in for the installed copies.
+#
+# Without this the guard cannot be tested anywhere it matters. On a development
+# checkout nothing is installed, so a bare name resolves to nothing, the
+# watchdog's `&&` short-circuits, and the escape cannot happen — which is why
+# it was invisible here and fired on the investigation machine. Reversing the
+# guard's PATH order changed no result at all until this existed.
+#
+# So the hazardous condition is CONSTRUCTED: poisoned tools sitting BEHIND the
+# guard on PATH, each touching a marker if it ever runs. Any machine now
+# reproduces the investigation machine's arrangement, and the assertion in the
+# watchdog section goes red if the guard stops winning — on a bare checkout as
+# readily as on an installed host.
+mkdir -p "$GUARD/decoy"
+DECOY_HIT="$GUARD/decoy-was-reached"
+while IFS= read -r tool; do
+    [[ -n "$tool" ]] || continue
+    cat > "$GUARD/decoy/$tool" <<DECOYSTUB
+#!/bin/sh
+echo "$tool \$*" >> "$DECOY_HIT"
+exit 0
+DECOYSTUB
+    chmod +x "$GUARD/decoy/$tool"
+done < <(grep -rhoE 'command -v (bt-[a-z-]+)' tools bin 2>/dev/null \
+         | awk '{print $3}' | sort -u)
+
+export PATH="$GUARD/bin:$PATH:$GUARD/decoy"
+trap 'rm -rf "$GUARD"' EXIT
+
 # ── --section: print one block instead of all of them ─────────────────────
 #
 # Reading a single section out of the full output was being done with
@@ -1751,6 +1830,56 @@ FOUT=$(timeout 10 env PATH="$WD/stub:$PATH" \
 [[ "$FOUT" == *"FATAL"* && "$FOUT" == *"full power-off"* ]] \
     && ok "watchdog reports the hard hang instead of resetting a ghost" \
     || bad "hard-hang path wrong"
+
+# THE ESCAPE, NOW A TESTED DECISION.
+#
+# This is the scenario that ran the real bt-trial on the investigation machine
+# and closed a live trial. The watchdog closes the boot's auto-trial here on
+# purpose — leaving it to the shutdown hook would record a meaningless
+# duration after the machine has sat dead for hours — and it does so through a
+# BARE NAME resolved from PATH.
+#
+# So the decision is worth asserting, and the actuation must not happen. The
+# PATH guard at the top of this file supplies a recording bt-trial; the spy
+# log is what proves the watchdog took the decision, and the guard is what
+# proves it did not reach the installed copy.
+[[ "$FOUT" == *"auto-trial closed as HANG"* ]] \
+    && ok "watchdog closes the boot's auto-trial on the hard-hang path" \
+    || bad "the auto-trial was not closed — the decision was not taken"
+
+grep -q '^bt-trial hang$' "$GUARD_LOG" \
+    && ok "that closure went to the guard, not to the installed bt-trial" \
+    || bad "bt-trial hang was not intercepted — it may have reached the real tool"
+
+# AND THE GUARD ITSELF, asserted where it cannot depend on the machine.
+#
+# THIS IS WHY THE ESCAPE WAS INVISIBLE HERE. On a development checkout nothing
+# is installed, so `command -v bt-trial` finds nothing, the watchdog's `&&`
+# short-circuits, and the escape cannot happen — the suite is green and the
+# defect is real. It only fires where the tools ARE installed, which is the
+# investigation machine, which is the one place it must never fire.
+#
+# So the guard is asserted directly rather than through its effect: every name
+# the shipped code invokes bare must resolve INSIDE the guard. That check gives
+# the same answer on a bare checkout and on the installed machine, which is the
+# property the original invariant lacked.
+guard_leaks=""
+while IFS= read -r tool; do
+    [[ -n "$tool" ]] || continue
+    where=$(command -v "$tool" 2>/dev/null || true)
+    [[ "$where" == "$GUARD/bin/$tool" ]] || guard_leaks="$guard_leaks $tool->${where:-none}"
+done < <(grep -rhoE 'command -v (bt-[a-z-]+)' tools bin 2>/dev/null | awk '{print $3}' | sort -u)
+[[ -z "$guard_leaks" ]] \
+    && ok "every bare-name project tool resolves inside the suite's PATH guard" \
+    || bad "a bare-name tool resolves outside the guard:$guard_leaks"
+
+# And the decoy — standing in for the installed copies — was never reached.
+# This is the assertion that would have gone red on the investigation machine
+# before the guard existed, and unlike the two above it goes red on a bare
+# checkout too, because the hazard is constructed rather than inherited.
+[[ ! -e "$DECOY_HIT" ]] \
+    && ok "no bare-name call reached a tool behind the guard" \
+    || bad "the guard was bypassed: $(tr '\n' ' ' < "$DECOY_HIT")"
 rm -rf "$WD" "$EMPTYSYS"
 
 # ── the six journal-only tools (CS-06 / CS-07) ────────────────────────────
@@ -2353,13 +2482,36 @@ inside=$(find "$INC/repo" -type d -name '*suite-sandbox-check*' 2>/dev/null | wc
     && ok "bt-incident writes inside an explicit BT_EVIDENCE_REPO" \
     || bad "bt-incident did NOT write into its sandbox — the override is being ignored"
 
-# And the specific escape route, by name: nothing may land at the old
-# hardcoded path. Asserted separately from the positive case because "wrote
-# somewhere inside the sandbox" and "wrote nowhere else" are different claims,
-# and it was the second that failed.
-[[ ! -e /root/exp/qca9377-bt-hang ]] \
-    && ok "bt-incident writes to no hardcoded absolute path" \
-    || bad "a collection reached the hardcoded /root/exp path — the escape is back"
+# THE SECOND CLAIM — "wrote nowhere else" — restated so it can actually fail.
+#
+# This asserted `[[ ! -e /root/exp/qca9377-bt-hang ]]`: that a particular
+# absolute path does not exist. It is wrong in both directions. On a checkout
+# living anywhere else it passes without testing anything, which is how it read
+# green here for its whole life. On the machine where the repository IS
+# /root/exp/qca9377-bt-hang it can never pass, because the path is the
+# repository — so it reported a failure that looked like an escape and was not,
+# and its real message was drowned by a check that cannot be satisfied.
+#
+# The defect it was written for is precise: an explicit BT_EVIDENCE_REPO was
+# discarded by `[[ -d "$REPO/evidence" ]] || REPO=<hardcoded>`, so a sandbox
+# with no evidence/ subdirectory silently became the hardcoded path. That is
+# the property to assert — the override must survive a target that does not
+# look like a checkout — and it is checkable on any machine.
+INC2=$(mktemp -d)              # deliberately WITHOUT an evidence/ subdirectory
+BT_EVIDENCE_REPO="$INC2" tools/bt-incident suite-override-survives >/dev/null 2>&1
+inc2=$(find "$INC2" -type d -name '*suite-override-survives*' 2>/dev/null | wc -l)
+(( ${inc2:-0} == 1 )) \
+    && ok "an explicit BT_EVIDENCE_REPO survives a target with no evidence/ tree" \
+    || bad "the override was discarded for a hardcoded fallback — the escape is back"
+rm -rf "$INC2"
+
+# And the source-level half, which no single run can show: a fallback must not
+# be able to overwrite an override. Matched on the shape that caused it.
+FALLBACK=$(grep -rnE '\|\|[[:space:]]*REPO=/' tools bin 2>/dev/null \
+           | grep -v 'BT_EVIDENCE_REPO' | grep -vE ':[0-9]+:[[:space:]]*#' || true)
+[[ -z "$FALLBACK" ]] \
+    && ok "no tool overwrites its repo override with an unconditional fallback" \
+    || bad "an override can be discarded by a hardcoded fallback:$FALLBACK"
 rm -rf "$INC"
 
 # ── bt-exhibit: the thing that actually gets published ────────────────────
@@ -3894,7 +4046,26 @@ echo "────────────────────────�
 # bind the next edit; a stray `mkdir -p` outside run() would pass any reading
 # of the run() wrapper and fail this.
 INSTALL_STAMP=$(mktemp)
-IOUT=$(./install.sh 2>&1); irc=$?
+
+# EVERY dry run below goes through this, and the reason is a real failure.
+#
+# install.sh refuses with rc=3 when the machine is in experiment mode — the
+# guard that stops a controlled baseline being silently reverted. It reads the
+# REAL /usr/local/share/qca9377-bt-hang/mode unless BT_MODE_STAMP redirects it.
+#
+# Four dry runs here called ./install.sh bare. On a development checkout that
+# is harmless, because no mode stamp is installed and the guard never fires.
+# On the investigation machine — which is in experiment mode, which is the
+# whole point of experiment mode — all four exited 3 and the suite reported
+# four failures that say nothing about install.sh. The seam already existed and
+# was used correctly by the experiment-mode test twenty lines below.
+#
+# Pointing it at a nonexistent path is not a workaround: a dry run's contract
+# is "print what would happen and change nothing", and it must hold whatever
+# mode the machine happens to be in. The mode guard has its own test.
+install_dry() { BT_MODE_STAMP=/nonexistent/mode ./install.sh "$@" 2>&1; }
+
+IOUT=$(install_dry); irc=$?
 if (( irc == 0 )); then
     ok "install.sh dry run exits 0 as an ordinary user"
 else
@@ -3916,19 +4087,19 @@ WROTE=$(find /usr/local /etc/systemd/system /etc/modprobe.d /etc/udev/rules.d \
 [[ -z "$WROTE" ]] && ok "install.sh dry run wrote nothing under the install trees" \
                   || bad "install.sh dry run WROTE: $WROTE"
 
-./install.sh --bogus >/dev/null 2>&1
+install_dry --bogus >/dev/null 2>&1
 (( $? != 0 )) && ok "install.sh rejects an unknown option" \
               || bad "install.sh accepted an unknown option"
 
 # A non-default device must produce the per-unit device drop-ins, and the
 # default device must NOT — a drop-in for the defaults would shadow future
 # script-default changes for no reason, which is why install.sh avoids it.
-IDEV=$(BT_VID=0cf3 BT_PID=e300 ./install.sh 2>&1)
+IDEV=$(BT_VID=0cf3 BT_PID=e300 install_dry)
 [[ "$IDEV" == *"0cf3:e300"* && "$IDEV" == *"non-default device"* \
    && "$IDEV" == *"10-device.conf (BT_VID=0cf3 BT_PID=e300)"* ]] \
     && ok "install.sh honours BT_VID/BT_PID and plans the device drop-ins" \
     || bad "install.sh ignored the device override"
-IDEF=$(./install.sh 2>&1)
+IDEF=$(install_dry)
 [[ "$IDEF" == *"no drop-in needed"* ]] \
     && ok "install.sh plans no drop-in for the default device" \
     || bad "install.sh planned a drop-in for the defaults"
