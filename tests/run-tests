@@ -1368,9 +1368,20 @@ fi
 # all still true with a junk row above them and a negative gap beside them. The
 # fixture had no header, so nothing modelled it; the check came from the other
 # side of a merge, and the fixture was extended to meet it.
-rows=$(awk '$1 ~ /^-?[0-9]+$/ { n++ } END { print n + 0 }' <<<"$PROV")
-[[ "$rows" == "2" ]] && ok "bt-boot-provenance emits one row per boot, header excluded" \
-                     || bad "expected 2 boot rows, got $rows — a header row became a boot?"
+# THE TABLE REGION, not "lines whose first field is numeric". The first
+# version of this check counted numeric-first-field rows and asserted there
+# were two — which is true WITH the header-row bug present, because `IDX` is
+# not numeric and so was never counted. It passed while claiming "header
+# excluded", the exact shape of check this suite exists to eliminate: one that
+# cannot fail for the reason its name gives. Caught by an outside reviewer of
+# the rebase, not by this suite. Now it reads every row the table actually
+# prints and requires each one to be a boot.
+tbl=$(awk '/^──/ { inb = 1; next } inb && NF == 0 { inb = 0 } inb { print }' <<<"$PROV")
+rows=$(grep -c . <<<"$tbl")
+nonnum=$(awk '$1 !~ /^-?[0-9]+$/ { n++ } END { print n + 0 }' <<<"$tbl")
+[[ "$rows" == "2" && "$nonnum" == "0" ]] \
+    && ok "bt-boot-provenance emits one row per boot, header excluded" \
+    || bad "table has $rows row(s), $nonnum non-numeric — a header row became a boot?"
 
 neg=$(grep -cE '(^|[[:space:]])-[0-9]+s([[:space:]]|$)' <<<"$PROV")
 (( ${neg:-0} == 0 )) && ok "no negative inter-boot gap reaches the table" \

@@ -366,3 +366,45 @@ The assertion sets differ in one direction only: mine is a strict superset. Thei
 improvements are real — `verify.sh` is a bash script and running it under `sh` is wrong —
 and are adopted here. Nothing else separates the two branches, which is the useful
 conclusion: the other attempt was sound work with one systematic gap, not a flawed one.
+
+### Correction — an assertion of mine could not fail for the reason it named
+
+The implementer of the other rebase attempt reviewed both branches, agreed the newer one
+should be the continuation point, and raised two corrections to the entries above. Both
+were checked here rather than accepted. **Both are right, and the first is not a
+documentation nit — it is a defect in one of my tests.**
+
+**1. "The mutation goes red three ways" was false when written.** It went red *two* ways.
+The third assertion —
+
+```sh
+rows=$(awk '$1 ~ /^-?[0-9]+$/ { n++ } END { print n + 0 }' <<<"$PROV")
+[[ "$rows" == "2" ]] && ok "bt-boot-provenance emits one row per boot, header excluded"
+```
+
+— counts rows whose first field is numeric. `IDX` is not numeric, so the header row it
+claims to exclude was never counted, and the count stayed 2 **with the bug present**. It
+passed while asserting "header excluded". That is precisely the shape this suite exists
+to eliminate: a check that cannot fail for the reason its name gives. It was written in
+the same commit as the two that do work, and its passing alongside their failing is what
+made "three ways" look true at a glance.
+
+Rewritten to read the table region and require every printed row to be a boot:
+
+```sh
+tbl=$(awk '/^──/ { inb = 1; next } inb && NF == 0 { inb = 0 } inb { print }' <<<"$PROV")
+rows=$(grep -c . <<<"$tbl"); nonnum=$(awk '$1 !~ /^-?[0-9]+$/ { n++ } END { print n + 0 }' <<<"$tbl")
+```
+
+With the bug re-introduced it now reports `table has 4 row(s), 2 non-numeric`, and the
+mutation fails **3 of 179** invariants. The claim is true now; it was not before.
+
+**2. The 27-line `run-tests` difference is not all assertion block.** Measured: 21
+substantive lines and 6 bare-`echo`/blank spacing lines. The earlier entry's "principally
+three provenance assertions" was right in emphasis and loose in arithmetic.
+
+**Worth recording about the review itself.** This suite, its mutation testing, and its
+executable register all ran green over an assertion that did nothing — for the same
+reason the original defect survived: everything agreed with everything else. An outside
+reader with no stake in the branch found it in one pass. That is an argument for external
+review sitting alongside, not behind, the automated gates.
