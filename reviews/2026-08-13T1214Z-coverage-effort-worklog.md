@@ -408,3 +408,120 @@ executable register all ran green over an assertion that did nothing — for the
 reason the original defect survived: everything agreed with everything else. An outside
 reader with no stake in the branch found it in one pass. That is an argument for external
 review sitting alongside, not behind, the automated gates.
+
+---
+
+## Session 3 — 2026-08-14
+
+Resumed after the rebase settled. `origin/main` had not advanced past `d8b7abe`, so
+this session is pure coverage work: the *reporting* tools, which had 0% between them
+and which are the ones whose output a person quotes when deciding what to do.
+
+The pattern for the whole session, stated once: **each of these four tools was read
+carefully before it was tested, and three of them turned out to be wrong in a way the
+reading did not surface.** That is the same lesson as session 1 and it is recorded again
+because it kept being true.
+
+### `bt-status` · `0e453cb` — the verdict an operator acts on
+
+98 lines whose entire output is a judgement about right now. Converted to `bt_journal`
+plus `BT_SYSFS_USB` / `BT_SYSFS_BT` (real kernel paths by default), so a fake device
+tree drives the verdicts. Asserted the three that differ in what a person does next:
+stage 2 (off the bus, power cycle required), enumerated-but-no-adapter (btusb never
+bound), and healthy.
+
+**Finding — one verdict, two exit codes.** The full path had no explicit `exit` and
+returned whatever the last command left behind, so a down controller exited 1;
+`--brief`, which exits 0 by hand, reported 0 for the identical state. A caller writing
+`bt-status && …` got different behaviour from a *display* flag. This is a report, not a
+check — `bt-diagnose` is the tool with documented 0/1/2 semantics — so it now exits 0
+explicitly and an invariant asserts the two modes agree.
+
+`0.0% of 98 → 81.7% of 104`; suite 186.
+
+### `bt-postmortem` · `d776b84` — the conclusion drawn about a hang
+
+Four mutually exclusive verdicts, each now driven by its own fixture. Introduced the
+`SEAM-ADVICE` marker: the seam invariant forbids a direct `journalctl` call in
+`tools/` and `bin/`, but some lines are advice *for the operator to type*, and those
+must name a real command. The marker exempts them visibly rather than by weakening the
+rule.
+
+`0.0% of 100 → 73.2% of 112`; suite 191.
+
+### `bt-health-report.sh` · `ef8f017` — "did the fix help?"
+
+The tool whose output settles whether the mitigation works, computed from per-boot
+counts. A miscount here is a wrong claim about the one conclusion this repository
+exists to reach.
+
+The fixture makes the two boots **differ** — boot −1 carries four timeouts, boot 0
+carries none — so a tool that read the wrong boot, or pooled them, cannot produce both
+numbers. The assertion reads the counts out of the table *by boot id* rather than
+grepping the whole output, so a right number on the wrong row still fails. That shape
+is a direct consequence of the correction at the end of session 2.
+
+**Finding 1 — `column(1)`.** Sections 4 and 5 piped through it unguarded. It lives in
+`bsdextrautils` and is absent from minimal images, so `column: command not found` would
+land in the middle of a report someone is reading for a verdict. Now behind `col()`,
+which falls back to `cat` — the same shape as the `systemd-analyze` guard in
+`repo-validate`.
+
+**Finding 2 — self-inflicted, and worth recording as such.** My own blanket seam
+replacement rewrote the closing operator advice to `bt_journal -u bt-hang-watchdog -f`.
+`bt_journal` is an internal shell function; no user can run that. Caught by reading the
+output rather than by any test, which is why an invariant now pins the advice line. The
+line also moved out of the quoted heredoc so the `SEAM-ADVICE` marker could be a shell
+comment instead of printed text — inside a quoted heredoc every character reaches the
+operator, and a test-infrastructure token has no business in a report.
+
+`0.0% of 116 → 78.0% of 123`; suite 196.
+
+### `bt-exhibit` · `7a5b802` — the tool whose output actually ships
+
+Exhibits are the factual material of a public kernel bug report. 134 lines, never
+executed. **It needed no seam:** `BT_REPO` already parameterised the destination and
+nobody had ever pointed it anywhere. That is the whole cost of testability here.
+
+Running it found that "the output is sanitised" was true and insufficient.
+
+**Finding 1 — a missing sanitiser was treated as safe.** A *failing* sanitiser refused
+and wrote nothing; an *absent* one printed a warning on stderr and wrote the raw output
+as a published exhibit. Both mean the same thing. `bt-exhibit` prints the exhibit path
+on stdout precisely so it can be used in a pipeline, which is where nobody reads
+stderr — the safest-looking failure was the only unsafe one. Both refuse now.
+
+**Finding 2 — only the *output* was ever sanitised.** The extraction method is written
+verbatim by design, and the ordinary way to extract evidence about one device is to
+grep for it: `journalctl -u bluetooth | grep dev_de_ad_…` is the BlueZ D-Bus form that
+carried the 20-address leak of 2026-08-12. An address in `--cmd`, `--claim` or `--why`
+shipped untouched through the one field the format guarantees is verbatim.
+
+This **refuses rather than redacts**, because the two guarantees are otherwise
+incompatible: the document promises the command is "re-runnable as-is", and a redacted
+command is not. An exhibit needing an address should match a pattern instead — better
+evidence anyway, since it does not depend on one machine's hardware. Checked before
+shipping the refusal: none of the 21 existing exhibits has an address in its command,
+so nothing that exists is broken.
+
+**How finding 2 surfaced, which matters more than the finding.** The redaction
+assertion failed — and failed for the *wrong reason*. The output had been redacted
+correctly; the original address survived in the command line above it. The same
+assertion was also satisfiable by the boilerplate redaction notice, which itself
+contains `AA:BB:CC:00:00:NN`; it now requires a substituted placeholder rather than the
+prefix. A test that passes for the wrong reason and a test that fails for the wrong
+reason are the same defect seen from two sides, and this session produced one of each.
+
+`0.0% of 134 → 94.7% of 150`; suite 214.
+
+### Where session 3 stands
+
+| | end of session 2 | now |
+|---|---|---|
+| Coverage | 38.3% (1692/4423) | **49.9%** (2291/4591) |
+| Invariants | 179 | **214** |
+| Zero-coverage files | 26 of 48 | 23 of 48 |
+
+Findings this session: 5 (one exit-code inconsistency, one missing-dependency crash,
+one self-inflicted output corruption, two publish-safety holes). Production diff to get
+them: roughly 60 lines, all of it guards and refusals.
