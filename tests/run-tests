@@ -1633,6 +1633,55 @@ EHOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-env-history 2>&1); ehrc=$?
 (( ehrc == 0 )) && ok "bt-env-history runs over a fixture without a journal" \
                 || bad "bt-env-history failed (rc=$ehrc)"
 
+# ── bt-postmortem: the conclusion drawn about a hang that already happened ─
+#
+# Reconstructs an incident from the journal and states what it means. The
+# interesting property is that its verdicts are MUTUALLY EXCLUSIVE and chosen
+# by counting: recovered-early, never-intervened, recovered, not-recovered.
+# Picking the wrong branch would put a false account of an intervention into
+# the record — the class of error this repository exists to avoid. Each branch
+# is driven from its own fixture rather than asserted from one.
+PM=tests/journal/postmortem
+PMSYS=$(mktemp -d); mkdir -p "$PMSYS/usb/3-3" "$PMSYS/bt/hci0"
+echo 13d3 > "$PMSYS/usb/3-3/idVendor"; echo 3503 > "$PMSYS/usb/3-3/idProduct"
+pm() { BT_JOURNAL_FIXTURE="$1" BT_SYSFS_USB="$PMSYS/usb" BT_SYSFS_BT="$PMSYS/bt" \
+       tools/bt-postmortem 2>&1; }
+
+PMOUT=$(pm "$PM"); pmrc=$?
+(( pmrc == 0 )) && ok "bt-postmortem reconstructs an incident from a fixture" \
+                || bad "bt-postmortem failed (rc=$pmrc)"
+
+# The counts drive every verdict below, so they are asserted first.
+[[ "$PMOUT" == *"timeouts 3"* && "$PMOUT" == *"interventions 1"* && "$PMOUT" == *"recovered 1"* ]] \
+    && ok "bt-postmortem counts timeouts, interventions and recoveries" \
+    || bad "incident counts wrong: $(grep -o 'timeouts .*' <<<"$PMOUT" | head -1)"
+
+# The elapsed figure is the one a reader quotes. 08:00:00 first timeout,
+# 08:00:45 recovery — the arithmetic must survive the whole pipeline.
+[[ "$PMOUT" == *"Recovered"* && "$PMOUT" == *"+45s after the first timeout"* ]] \
+    && ok "bt-postmortem times the recovery from the first timeout" \
+    || bad "recovery verdict or elapsed time wrong"
+
+# A watchdog that never acted is a DIFFERENT diagnosis from one that acted and
+# failed, and the operator's next step differs: check threshold/cooldown,
+# rather than conclude that reset does not work.
+PMQ=$(mktemp -d); cp "$PM"/kernel.b0.log "$PMQ/"
+PMOUT2=$(pm "$PMQ")
+[[ "$PMOUT2" == *"watchdog never intervened"* ]] \
+    && ok "bt-postmortem distinguishes 'never intervened' from 'intervened and failed'" \
+    || bad "silent-watchdog verdict missing"
+rm -rf "$PMQ"
+
+# Stage 2 reached: no adapter and off the bus. The remedy must be named.
+PMSYS2=$(mktemp -d); mkdir -p "$PMSYS2/usb" "$PMSYS2/bt"
+PMOUT3=$(BT_JOURNAL_FIXTURE="$PM" BT_SYSFS_USB="$PMSYS2/usb" BT_SYSFS_BT="$PMSYS2/bt" \
+         tools/bt-postmortem 2>&1)
+[[ "$PMOUT3" == *"CONTROLLER IS DOWN RIGHT NOW"* && "$PMOUT3" == *"stage 2"* \
+   && "$PMOUT3" == *"POWER-OFF"* ]] \
+    && ok "bt-postmortem reports stage 2 and its remedy when the device is gone" \
+    || bad "stage-2 verdict wrong"
+rm -rf "$PMSYS2" "$PMSYS"
+
 # ── bt-status: the verdict an operator acts on ────────────────────────────
 #
 # Its whole output is a judgement about RIGHT NOW, and the failure that matters
@@ -1779,7 +1828,12 @@ for f in "${SHFILES[@]}"; do
 done
 if (( ${#CONVERTED[@]} > 0 )); then
     ok "the journal seam is in use by ${#CONVERTED[@]} tool(s)"
+    # SEAM-ADVICE marks a line that PRINTS the word for an operator and never
+    # runs it. Deliberately a visible marker rather than a clever pattern: a
+    # rule that tried to recognise "inside a quoted echo" would be a hole a
+    # real call could hide in. Same convention as PIPEFAIL-DEMO above.
     RAW=$(grep -nE '(^|[^_[:alnum:]])journalctl ' "${CONVERTED[@]}" 2>/dev/null \
+          | grep -v 'SEAM-ADVICE' \
           | grep -v '^[^:]*:[0-9]*:[[:space:]]*#' \
           | grep -v 'journalctl "\$@"')
     if [[ -z "$RAW" ]]; then

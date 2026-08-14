@@ -19,6 +19,16 @@
 
 set -uo pipefail
 
+# Seams: journal and sysfs. This tool's output is a CONCLUSION about a hang
+# that already happened — which stage it reached, whether the watchdog acted,
+# whether it worked — and conclusions are what this project must not get wrong.
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-postmortem: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+SYSFS_BT="${BT_SYSFS_BT:-/sys/class/bluetooth}"
+
 BOOT="0"; SINCE=""; SHOW_ALL=0
 GAP="${BT_INCIDENT_GAP:-600}"     # seconds between clusters
 while [[ $# -gt 0 ]]; do
@@ -51,7 +61,7 @@ echo "────────────────────────�
 # out of range) — a burst of those would fabricate an incident, and one
 # adjacent to a real incident shifts t_first, the anchor every Δ below is
 # measured from.
-mapfile -t TO < <(journalctl "${KSEL[@]}" -o short-unix --no-pager 2>/dev/null \
+mapfile -t TO < <(bt_journal "${KSEL[@]}" -o short-unix --no-pager 2>/dev/null \
                   | grep -E "command( 0x[0-9a-f]+)? tx timeout" | awk '{printf "%.2f\n",$1}')
 if (( ${#TO[@]} == 0 )); then
     echo "${G}No controller timeouts in range — nothing to analyse.${O}"; exit 0
@@ -82,8 +92,8 @@ t_first="${starts[n-1]}"; t_last="${ends[n-1]}"
 WIN_A=$(awk -v a="$t_first" 'BEGIN{printf "%.2f", a-180}')   # a little before
 WIN_B=$(awk -v b="$t_last"  'BEGIN{printf "%.2f", b+600}')   # and after
 
-KLOG=$(journalctl "${KSEL[@]}" -o short-unix --no-pager 2>/dev/null)
-WLOG=$(journalctl "${WSEL[@]}" -o short-unix --no-pager 2>/dev/null)
+KLOG=$(bt_journal "${KSEL[@]}" -o short-unix --no-pager 2>/dev/null)
+WLOG=$(bt_journal "${WSEL[@]}" -o short-unix --no-pager 2>/dev/null)
 
 t_act=$(grep -E "intervening|EARLY intervention" <<<"$WLOG"    | inwin "$WIN_A" "$WIN_B")
 t_early=$(grep "EARLY intervention"              <<<"$WLOG"    | inwin "$WIN_A" "$WIN_B")
@@ -116,9 +126,9 @@ printf '  timeouts %s   interventions %s (early %s)   recovered %s   reset-faile
   "${n_to:-0}" "${n_act:-0}" "${n_early:-0}" "${n_rec:-0}" "${n_rf:-0}" "${n_fatal:-0}"
 
 # Live state beats log inference: an earlier success must never mask a dead controller.
-hci_now=$(ls -A /sys/class/bluetooth/ 2>/dev/null | head -1)
+hci_now=$(ls -A "$SYSFS_BT" 2>/dev/null | head -1)
 on_bus=no
-for d in /sys/bus/usb/devices/*; do
+for d in "$SYSFS_USB"/*; do
     [[ -f "$d/idVendor" ]] || continue
     [[ "$(<"$d/idVendor")" == "${BT_VID:-13d3}" && "$(<"$d/idProduct")" == "${BT_PID:-3503}" ]] && on_bus=yes && break
 done
@@ -141,7 +151,12 @@ if (( ${n_eok:-0} > 0 )); then
     echo "  Recovered via EARLY intervention (reset before any HCI timeout)."
 elif (( ${n_act:-0} == 0 )); then
     echo "  ${Y}The watchdog never intervened in this incident${O} despite ${n_to} timeout(s)."
-    echo "  Check the threshold/cooldown: journalctl -u bt-hang-watchdog"
+    # ADVICE-ONLY: printed for the operator, never executed. Marked because the
+    # seam invariant is deliberately strict — it matches the token anywhere in
+    # code, since an exclusion that guessed at "this one is only a string"
+    # would be a hole a real call could hide in. An exemption should be visible
+    # in the source it exempts, as PIPEFAIL-DEMO already is.
+    echo "  Check the threshold/cooldown: journalctl -u bt-hang-watchdog"  # SEAM-ADVICE
 elif (( ${n_rec:-0} > 0 )); then
     echo "  ${G}Recovered${O} $(delta "$t_first" "$t_rec") after the first timeout."
 else
