@@ -55,9 +55,51 @@ cd "$(dirname "$0")/.." || exit 1
 # bare name resolving during a test run is an escape BY CONSTRUCTION, and can
 # be intercepted rather than reasoned about case by case.
 #
-# The list is DERIVED from the sources, so a bare-name call added tomorrow is
-# guarded without anyone remembering — the failure mode every hand-written
-# list in this repository has already hit.
+# THE LIST COMES FROM install.sh, NOT FROM CALL SITES.
+#
+# The first version derived it by grepping `command -v bt-*` in tools/ and
+# bin/. The maintainer found the hole within the hour: tools/bt-status wraps
+# the probe —
+#
+#     have() { command -v "$1" >/dev/null 2>&1; }
+#     have bt-boots && bt-boots 8 | sed 's/^/  /'
+#
+# — so the tool name is an ARGUMENT and never appears after `command -v`.
+# bt-boots was invoked by bare name and was not guarded; bt-state was guarded
+# only by accident, because another file happens to spell that one literally.
+# A derivation that sees one spelling is a hand-written list wearing a grep,
+# and it fails the same way: silently, for the entry nobody thought of.
+#
+# install_file destinations under /usr/local/bin and /usr/local/sbin are the
+# complete set of names this project puts on PATH. That is complete regardless
+# of HOW a tool is invoked — through a wrapper, a variable, an eval — because
+# the question it answers is not "who calls this?" but "what could a bare name
+# resolve to?". It is the derivation bt-verify-install adopted after the same
+# class of bug, from the source of truth uninstall.sh is already checked
+# against.
+#
+# Joined across backslash continuations first: install.sh wraps its longer
+# calls, and a line-by-line parse yields "\" as the destination — the phantom
+# that cost bt-verify-install seven false "not installed" reports.
+guard_names() {
+    awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' install.sh \
+    | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"[[:space:]]+[^[:space:]]+' \
+    | awk '{print $3}' \
+    | grep -E '^/usr/local/(bin|sbin)/[^/]+$' \
+    | sed 's|.*/||' | sort -u
+}
+
+# An empty list is not an empty risk. With guard_names undefined the loops
+# below read nothing, every stub went unwritten, and the invariant that checks
+# the guard reported success over a list of zero tools — the empty-trace
+# failure mode, in the one file whose job is to notice it.
+GUARD_N=$(guard_names | grep -c .)
+if (( ${GUARD_N:-0} < 20 )); then
+    echo "run-tests: derived only ${GUARD_N:-0} guarded tool name(s) from install.sh" >&2
+    echo "           refusing to run with an unguarded PATH" >&2
+    exit 2
+fi
+
 GUARD=$(mktemp -d)
 mkdir -p "$GUARD/bin"
 GUARD_LOG="$GUARD/calls.log"; : > "$GUARD_LOG"
@@ -70,7 +112,7 @@ echo "$tool \$*" >> "$GUARD_LOG"
 exit 0
 GUARDSTUB
     chmod +x "$GUARD/bin/$tool"
-done < <(grep -rhoE 'command -v (bt-[a-z-]+)' tools bin 2>/dev/null          | awk '{print $3}' | sort -u)
+done < <(guard_names)
 
 # A DECOY, standing in for the installed copies.
 #
@@ -95,8 +137,7 @@ echo "$tool \$*" >> "$DECOY_HIT"
 exit 0
 DECOYSTUB
     chmod +x "$GUARD/decoy/$tool"
-done < <(grep -rhoE 'command -v (bt-[a-z-]+)' tools bin 2>/dev/null \
-         | awk '{print $3}' | sort -u)
+done < <(guard_names)
 
 export PATH="$GUARD/bin:$PATH:$GUARD/decoy"
 trap 'rm -rf "$GUARD"' EXIT
@@ -1868,10 +1909,11 @@ while IFS= read -r tool; do
     [[ -n "$tool" ]] || continue
     where=$(command -v "$tool" 2>/dev/null || true)
     [[ "$where" == "$GUARD/bin/$tool" ]] || guard_leaks="$guard_leaks $tool->${where:-none}"
-done < <(grep -rhoE 'command -v (bt-[a-z-]+)' tools bin 2>/dev/null | awk '{print $3}' | sort -u)
-[[ -z "$guard_leaks" ]] \
-    && ok "every bare-name project tool resolves inside the suite's PATH guard" \
-    || bad "a bare-name tool resolves outside the guard:$guard_leaks"
+done < <(guard_names)
+guard_checked=$(guard_names | grep -c .)
+[[ -z "$guard_leaks" ]] && (( ${guard_checked:-0} >= 20 )) \
+    && ok "all $guard_checked PATH-installed tools resolve inside the suite's guard" \
+    || bad "guard covers $guard_checked tool(s); leaks:$guard_leaks"
 
 # And the decoy — standing in for the installed copies — was never reached.
 # This is the assertion that would have gone red on the investigation machine
