@@ -189,9 +189,20 @@ while true; do
         log "tcpdump exited (rc=${rc:-?}) — restarting in 5s"
         # Evidence that admits when it was not looking — same contract as
         # bt-trace's gap log. A crash hole here can be up to CHECK_SEC+5s wide.
+        # The bound is computed with awk, not with $(( )). Bash arithmetic is
+        # integer-only, so a fractional BT_USBMON_CHECK_SEC made this expansion
+        # fail, the printf never ran, and the gap record silently disappeared —
+        # in the one file whose job is to admit when the capture was not
+        # looking. A gap log that drops entries under some settings is worse
+        # than none, because its silence reads as coverage.
+        gap_bound=$(awk -v c="$CHECK_SEC" 'BEGIN { printf "%g", c + 5 }')
         printf '%s\ttcpdump-exit\trc=%s\tgap<=%ss\n' \
-            "$(date -Iseconds)" "${rc:-?}" "$(( CHECK_SEC + 5 ))" >> "$GAPLOG" 2>/dev/null
-        sleep 5
+            "$(date -Iseconds)" "${rc:-?}" "$gap_bound" >> "$GAPLOG" 2>/dev/null
+        # Interruptible, for the reason the idle loops are: bash defers a
+        # trapped signal until the running foreground command returns, so a
+        # SIGTERM landing in this backoff waited out the full five seconds
+        # before cleanup ran. Minor next to an hour, and the same defect.
+        sleep 5 & wait $!
         prune
         start_capture
         continue

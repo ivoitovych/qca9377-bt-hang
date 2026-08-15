@@ -1198,9 +1198,21 @@ if [[ -z "$WIDTH" ]]; then
 # rate — so a trial was dropped from the failure statistics BECAUSE it reached
 # stage 2. Observed on trial stock #2, 2026-08-14.
 #
-# The helper is sourced from the tool itself rather than copied, so this cannot
+# The helper is taken from the tool itself rather than copied, so this cannot
 # pass against a version bt-trial no longer runs.
-eval "$(awk '/^treatment_only_became_unreadable\(\)/,/^}/' tools/bt-trial)"
+#
+# EXTRACTED TO A FILE AND SOURCED, not eval'd. Code entering the shell through
+# `eval` is attributed by xtrace to line numbers in THIS file that have nothing
+# to do with what ran — calling the helper tagged line 1208, a `bad` branch of
+# an assertion that passed, and devtools/coverage then reported an excluded
+# line as executed. Sourcing a temp file gives the trace an absolute path,
+# which coverage ignores by design, so the phantom hits go away and the
+# property this comment claims is unchanged.
+TUW=$(mktemp)
+awk '/^treatment_only_became_unreadable\(\)/,/^}/' tools/bt-trial > "$TUW"
+[[ -s "$TUW" ]] || bad "could not extract treatment_only_became_unreadable from tools/bt-trial"
+# shellcheck disable=SC1090
+source "$TUW"; rm -f "$TUW"
 TS_A="autosusp=Y,power=auto,wd=off,probes=off"
 if treatment_only_became_unreadable "$TS_A" "autosusp=Y,power=?,wd=off,probes=off"; then
     ok "a field becoming unreadable at close is not a treatment change"
@@ -1935,6 +1947,42 @@ STUB
 printf '#!/bin/sh\nexit 0\n' > "$WD/stub/loginctl"
 chmod +x "$WD/stub"/*
 
+# WHY A MARKER AND NOT A TIMEOUT, for the scenarios that keep retrying.
+#
+# The watchdog reads its journal with `-f`, so it never ends on its own; a
+# scenario is over when the line under test has been printed, not when a clock
+# expires. With the controller dead and no cooldown it retries until something
+# kills it, so `wd_run 15` spent the full 15 seconds to observe a message that
+# appeared in the first tenth of one — 18 of the suite's 52 seconds sat in two
+# such waits.
+#
+# This polls the output and stops the moment the marker appears, which is both
+# faster and stricter: a fixed timeout passes whenever the message shows up
+# within the ceiling, while this fails if it never shows up at all.
+wd_until() {   # <marker> <max-tenths> [env overrides...] — stop as soon as it says it
+    local marker="$1" tenths="$2"; shift 2
+    local out; out=$(mktemp)
+    env PATH="$WD/stub:$PATH" BT_JOURNAL_FIXTURE=tests/journal/watchdog \
+        BT_SYSFS_USB="$WD/sysfs" BT_SYSFS_DRIVERS="$WD/drv" \
+        "$@" bin/bt-hang-watchdog > "$out" 2>&1 &
+    local pid=$! i=0
+    while (( i < tenths )); do
+        grep -q "$marker" "$out" 2>/dev/null && break
+        kill -0 "$pid" 2>/dev/null || break
+        sleep 0.1; i=$((i + 1))
+    done
+    # WAS IT STILL RUNNING when we stopped it? That is the property the
+    # give-up scenario actually cares about — "it idles rather than exiting" —
+    # and it used to be inferred from `timeout` returning 124. Stated directly
+    # it is both clearer and stricter: 124 only says the clock won the race.
+    # Recorded in a FILE, not a variable: wd_until is called inside $( ), which
+    # is a subshell, so an assignment here never reaches the caller. The first
+    # version set WD_ALIVE and the caller read it as unset.
+    kill -0 "$pid" 2>/dev/null && echo 1 > "$WD/alive" || echo 0 > "$WD/alive"
+    kill -TERM "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
+    cat "$out"; rm -f "$out"
+}
+
 wd_run() {   # <timeout-s> [env overrides...] — runs the watchdog over the fixture
     local t="$1"; shift
     timeout "$t" env PATH="$WD/stub:$PATH" \
@@ -1978,13 +2026,13 @@ u=$(cat "$WD/drv/unbind" 2>/dev/null); bnd=$(cat "$WD/drv/bind" 2>/dev/null)
 
 # Scenario 2: every recovery fails -> give up after MAX_FAILS, then idle.
 : > "$WD/spy.log"; touch "$WD/dead"; rm -f "$WD/drv/unbind" "$WD/drv/bind"
-GOUT=$(wd_run 3 BT_COOLDOWN=0 BT_MAX_FAILS=1); grc=$?
+GOUT=$(wd_until "Giving up" 60 BT_COOLDOWN=0 BT_MAX_FAILS=1)
 [[ "$GOUT" == *"RECOVERY FAILED"* && "$GOUT" == *"Giving up: 1 consecutive recovery attempts failed."* ]] \
     && ok "watchdog gives up after MAX_FAILS confirmed failures" \
     || bad "give-up path not reached"
-[[ "$GOUT" == *"idling — cold power-off required"* ]] && (( grc == 124 )) \
-    && ok "given up, the watchdog idles instead of respawning (killed by test timeout)" \
-    || bad "idle path wrong (rc=$grc)"
+[[ "$GOUT" == *"idling — cold power-off required"* ]] && [[ "$(cat "$WD/alive" 2>/dev/null)" == 1 ]] \
+    && ok "given up, the watchdog idles instead of exiting and respawning" \
+    || bad "idle path wrong (still running: $(cat "$WD/alive" 2>/dev/null))"
 rm -f "$WD/dead"
 
 # Scenario 3: EARLY mode acts on one audio-teardown signal, before any timeout.
@@ -2016,11 +2064,11 @@ EOUT=$(wd_run 10 BT_EARLY=1)
 # case is a third answer, not a lost coin toss.
 WDNOP="$WD/noprobe"; mkdir -p "$WDNOP"
 cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WDNOP/" 2>/dev/null
-NOPOUT=$(: > "$WD/spy.log"; touch "$WD/dead"
-    timeout 10 env PATH="$WDNOP:/usr/bin:/bin" \
-        BT_JOURNAL_FIXTURE=tests/journal/watchdog \
-        BT_SYSFS_USB="$WD/sysfs" BT_SYSFS_DRIVERS="$WD/drv" \
-        BT_COOLDOWN=99999 bin/bt-hang-watchdog 2>&1)
+# PATH is passed THROUGH wd_until: env applies assignments left to right, so a
+# later PATH= wins over the helper's default. That keeps one waiting mechanism
+# in this section instead of two.
+: > "$WD/spy.log"; touch "$WD/dead"
+NOPOUT=$(wd_until "cannot be confirmed" 60 PATH="$WDNOP:/usr/bin:/bin" BT_COOLDOWN=99999)
 [[ "$NOPOUT" == *"neither hciconfig nor btmgmt found"* \
    && "$NOPOUT" == *"cannot be confirmed"* ]] \
     && ok "with no probe tool the watchdog warns that recovery is unconfirmable" \
@@ -2037,10 +2085,7 @@ printf '#!/bin/sh\necho "btmgmt $*" >> "%s/spy.log"\nexit 0\n' "$WD" > "$WDBM/bt
 printf '#!/bin/sh\nexec /usr/bin/timeout "$@"\n' > "$WDBM/timeout" 2>/dev/null
 chmod +x "$WDBM"/* 2>/dev/null
 : > "$WD/spy.log"; rm -f "$WD/dead"
-BMOUT=$(timeout 10 env PATH="$WDBM:/usr/bin:/bin" \
-        BT_JOURNAL_FIXTURE=tests/journal/watchdog \
-        BT_SYSFS_USB="$WD/sysfs" BT_SYSFS_DRIVERS="$WD/drv" \
-        BT_COOLDOWN=99999 bin/bt-hang-watchdog 2>&1)
+BMOUT=$(wd_until "RECOVER" 60 PATH="$WDBM:/usr/bin:/bin" BT_COOLDOWN=99999)
 [[ "$BMOUT" != *"neither hciconfig nor btmgmt"* ]] && grep -q '^btmgmt ' "$WD/spy.log" \
     && ok "btmgmt is used as the probe when hciconfig is absent" \
     || bad "the btmgmt fallback probe was not selected or not called"
@@ -2060,7 +2105,7 @@ VBOUT=$(wd_run 10 BT_VERBOSE=1)
 # SAY so, because a silent give-up is indistinguishable from a watchdog that
 # is working.
 : > "$WD/spy.log"; touch "$WD/dead"
-GUOUT=$(wd_run 15 BT_MAX_FAILS=1 BT_COOLDOWN=0)
+GUOUT=$(wd_until "Giving up" 60 BT_MAX_FAILS=1 BT_COOLDOWN=0)
 [[ "$GUOUT" == *"Giving up:"* && "$GUOUT" == *"consecutive recovery attempts failed"* ]] \
     && ok "the watchdog says when it gives up, rather than falling silent" \
     || bad "MAX_FAILS was reached without a give-up message"
@@ -4551,12 +4596,20 @@ echo 2048 > "$UM/capkb"                 # each capture is 2 MB
 : > "$UM/cap/gaps.log"
 PATH="$UM/bin:$PATH" BT_SYSFS_USB="$UM/sysfs" BT_USBMON_DIR="$UM/cap" \
     BT_USBMON_DEBUGFS="$UM/dbg" BT_USBMON_GAPLOG="$UM/cap/gaps.log" \
-    BT_USBMON_MAX_MB=1 BT_USBMON_CHECK_SEC=1 BT_USBMON_KEEP=99 \
+    BT_USBMON_MAX_MB=1 BT_USBMON_CHECK_SEC=0.3 BT_USBMON_KEEP=99 \
     bin/bt-usbmon > "$UM/daemon.log" 2>&1 &
 UMPID=$!
-um_wait "$UM/daemon.log" "rotating at" 60
-sleep 1.2                                # let the rotation complete a new file
-UMROT=$(ls -1 "$UM/cap"/usbmon-*.pcap 2>/dev/null | wc -l)
+# POLLED ON THE THING BEING ASSERTED, not on a log line plus a sleep. The
+# first version waited for "rotating at" and then slept for the new file to
+# appear; whether it had appeared was a race, and tightening the check interval
+# lost it. Waiting for the file count is exact and cannot be tuned into a
+# false failure — or, worse, a false pass.
+umi=0
+while (( umi < 100 )); do
+    UMROT=$(ls -1 "$UM/cap"/usbmon-*.pcap 2>/dev/null | wc -l)
+    (( UMROT >= 2 )) && break
+    sleep 0.1; umi=$((umi + 1))
+done
 kill -TERM "$UMPID" 2>/dev/null; wait "$UMPID" 2>/dev/null
 UMLOG=$(cat "$UM/daemon.log")
 
@@ -4581,10 +4634,12 @@ touch "$UM/tcpdump-dies"
 : > "$UM/cap/gaps.log"
 PATH="$UM/bin:$PATH" BT_SYSFS_USB="$UM/sysfs" BT_USBMON_DIR="$UM/cap" \
     BT_USBMON_DEBUGFS="$UM/dbg" BT_USBMON_GAPLOG="$UM/cap/gaps.log" \
-    BT_USBMON_CHECK_SEC=1 BT_USBMON_KEEP=99 \
+    BT_USBMON_CHECK_SEC=0.3 BT_USBMON_KEEP=99 \
     bin/bt-usbmon > "$UM/dead.log" 2>&1 &
 UMPID2=$!
-um_wait "$UM/dead.log" "tcpdump exited" 60
+# Waits for the GAP-LOG entry, which is written after the log line and is what
+# the second assertion below reads. Stopping at the log line raced the printf.
+um_wait "$UM/cap/gaps.log" "tcpdump-exit" 100
 kill -TERM "$UMPID2" 2>/dev/null; wait "$UMPID2" 2>/dev/null
 UMDEAD=$(cat "$UM/dead.log")
 [[ "$UMDEAD" == *"tcpdump exited (rc=3) — restarting"* ]] \
