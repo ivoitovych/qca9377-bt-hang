@@ -414,12 +414,12 @@ fix or a test. Findings:
   ring, not an exit) documents a real trap, and the supervise-and-rotate
   design matches `bt-trace`'s. The never-delete-the-live-file rule is
   enforced in both floor loops.
-- **[LOW] `bt-trace` and `bt-usbmon` disagree with their units on
-  `MIN_FREE_GB` defaults** (script defaults 10; units set 15). Harmless
-  while the units always set it — but that is precisely the
-  `BT_TRACE_KEEP=30` pattern the repo documented: a script default that
-  differs from the value in effect will mislead the next person who runs
-  the script by hand. Align the defaults.
+- **[LOW] `bt-trace`'s script default `MIN_FREE_GB=10` disagrees with the
+  value its unit sets (15).** (`bt-usbmon` is consistent: script default
+  15, unit silent.) Harmless while the unit always sets it — but that is
+  precisely the `BT_TRACE_KEEP=30` pattern the repo documented: a script
+  default that differs from the value in effect misleads the next person
+  who runs the script by hand. Align the default with the unit.
 - **[NOTE] `bt-trace`'s gap log can grow one line per second** if btmon
   respawn-fails persistently (e.g. Bluetooth support absent); bounded in
   practice, unbounded in principle. A repeated-failure backoff would cap it.
