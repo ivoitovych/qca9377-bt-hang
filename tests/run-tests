@@ -5454,8 +5454,26 @@ TRBM
 chmod +x "$TR/bin"/*
 echo 999 > "$TR/freegb"
 
-tr_daemon() {   # <marker> <tenths> [env...] — run the loop until the marker, then TERM
-    local marker="$1" tenths="$2"; shift 2
+# WAIT UNTIL THE SCENARIO IS FINISHED, NOT UNTIL IT IS RECOGNISABLE.
+#
+# This waited for the marker and then slept 0.3s before killing. The sleep was
+# not decoration: both callers assert on things that happen AFTER their marker
+# line — the rotation caller counts capture files, which `start_capture`
+# creates two statements later, and the crash caller reads gaps.log, written
+# between the log line and `start_capture`. The marker said "this scenario has
+# begun"; the assertions needed "this scenario has finished".
+#
+# A fixed sleep is the clock-based waiting this suite removed everywhere else,
+# and it fails the same way: it passes on a fast machine and loses the race on a
+# loaded one. The floor test below was the same defect without the sleep, and it
+# is what failed on the investigation machine while passing here every time.
+#
+# Both of bt-trace's restart paths end in `start_capture`, which logs AFTER
+# creating the file, so waiting for the SECOND `capturing to` covers the log
+# line, the gaps.log write and the new capture file in one condition — by
+# construction rather than by being quick enough.
+tr_daemon() {   # <marker> <tenths> <count> [env...] — until the marker has appeared <count> times
+    local marker="$1" tenths="$2" want="$3"; shift 3
     : > "$TR/cap/gaps.log"; : > "$TR/daemon.log"
     # env(1), not a bare assignment prefix: `VAR=1 cmd` is recognised
     # SYNTACTICALLY, so words arriving through "$@" are not assignments — the
@@ -5463,15 +5481,18 @@ tr_daemon() {   # <marker> <tenths> [env...] — run the loop until the marker, 
     # execs, so $! stays the daemon's pid and the TERM below reaches its trap.
     env PATH="$TR/bin:$PATH" BT_TRACE_DIR="$TR/cap" BT_TRACE_GAPLOG="$TR/cap/gaps.log" \
         BT_TRACE_POLL_SEC=1 "$@" bin/bt-trace > "$TR/daemon.log" 2>&1 &
-    local pid=$! i=0
-    while (( i < tenths )); do grep -q "$marker" "$TR/daemon.log" 2>/dev/null && break; sleep 0.1; i=$((i+1)); done
-    sleep 0.3
+    local pid=$! i=0 n=0
+    while (( i < tenths )); do
+        n=$(grep -c "$marker" "$TR/daemon.log" 2>/dev/null || true)
+        (( ${n:-0} >= want )) && break
+        sleep 0.1; i=$((i + 1))
+    done
     kill -TERM "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
     cat "$TR/daemon.log"
 }
 
 echo 2048 > "$TR/capkb"
-TRR=$(tr_daemon "rotating at" 80 BT_TRACE_MAX_MB=1 BT_TRACE_CHECK_SEC=1)
+TRR=$(tr_daemon "capturing to" 80 2 BT_TRACE_MAX_MB=1 BT_TRACE_CHECK_SEC=1)
 TRN=$(ls -1 "$TR/cap"/bt-*.btsnoop 2>/dev/null | wc -l)
 (( TRN >= 2 )) && [[ "$TRR" == *"rotating at"* && "$TRR" == *"stopped"* ]] \
     && ok "bt-trace rotates by restarting btmon, leaving $TRN distinct captures" \
@@ -5490,7 +5511,7 @@ grep -q 'rotate' "$TR/cap/gaps.log" \
 
 # ── the crash counter, which is the point of this supervisor ─────────────
 touch "$TR/btmon-dies"
-TRC=$(tr_daemon "btmon exited" 80 BT_TRACE_CHECK_SEC=30)
+TRC=$(tr_daemon "capturing to" 80 2 BT_TRACE_CHECK_SEC=30)
 [[ "$TRC" == *"btmon exited (#1)"* && "$TRC" == *"of capture lost"* ]] \
     && ok "a btmon crash is counted and the lost capture time is stated" \
     || bad "bt-trace did not report a btmon crash"
@@ -5516,8 +5537,22 @@ env PATH="$TR/bin:$PATH" BT_TRACE_DIR="$TR/cap" BT_TRACE_GAPLOG="$TR/cap/gaps.lo
     BT_TRACE_POLL_SEC=1 BT_TRACE_MIN_FREE_GB=15 BT_TRACE_CHECK_SEC=1 \
     bin/bt-trace > "$TR/daemon.log" 2>&1 &
 TRPID=$!
+# WAIT FOR THE LAST MESSAGE OF THE SCENARIO, NOT THE FIRST RECOGNISABLE ONE.
+#
+# This polled for "nothing left to prune" and then killed the daemon. Two more
+# messages follow it — "Stopping capture rather than filling the filesystem",
+# then a kill of btmon, an unlink, and only then "Free space, then: systemctl
+# restart bt-trace" — and all three are asserted below. A SIGTERM landing in
+# that gap leaves the log short and the assertion fails on timing rather than on
+# behaviour.
+#
+# It passed here every time and failed on the investigation machine, which is
+# the environment-coupling family again in its cheapest form: a race this
+# container happened to win. `systemctl restart bt-trace` is the last line the
+# floor path writes, so waiting for it means the log is complete by
+# construction rather than by being fast enough.
 tri=0
-while (( tri < 80 )); do grep -q "nothing left to prune" "$TR/daemon.log" 2>/dev/null && break
+while (( tri < 80 )); do grep -q "systemctl restart bt-trace" "$TR/daemon.log" 2>/dev/null && break
                          sleep 0.1; tri=$((tri + 1)); done
 kill -TERM "$TRPID" 2>/dev/null
 trj=0
