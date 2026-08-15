@@ -36,8 +36,11 @@ B=$'\033[1m'; G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; O=$'\033[0m'
 
 TMO_RE='command( 0x[0-9a-f]+)? tx timeout'
 USB_RE='usb [0-9]+-[0-9]+|xhci_hcd|USB disconnect'
-IVT_RE='deregistering interface driver btusb|Resetting usb device|usb_queue_reset_device|intervening|EARLY intervention'
-IVU_RE='name hci[0-9]+ blocked|powering off device on rfkill|RFKILL event|rfkill_event'
+# From the seam, not copied. The two copies that used to live here were wrong in
+# opposite directions at the same time — see journal.sh for what each missed and
+# how they cancelled on a real window.
+IVT_RE="$BT_RE_INTERVENTION_TOOL"
+IVU_RE="$BT_RE_INTERVENTION_USER"
 
 # ── COST MUST NOT GROW WITH THE WINDOW ───────────────────────────────────
 #

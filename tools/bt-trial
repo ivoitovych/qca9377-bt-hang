@@ -472,7 +472,15 @@ hang|ok)
         # inverted is worse than wrong.
         pert=()
         n_reload=$(jk | grep -c 'deregistering interface driver btusb' || true)
-        n_reset=$(jk | grep -cE 'usb_queue_reset_device|Resetting usb device' || true)
+        # THE KERNEL'S WORDING, NOT ONLY OUR OWN. `Resetting usb device` is
+        # bt-hang-watchdog's message and `usb_queue_reset_device` is the request;
+        # a reset issued from outside this project — an ioctl, as the controlled
+        # reset tests are — appears ONLY as `usb 3-3: reset full-speed USB device
+        # number 2 using xhci_hcd`. Without it, a trial perturbed by a deliberate
+        # reset records as CLEAN, which puts a censored window into the rate
+        # denominators. Same root cause as the bt-window mis-attribution of
+        # 2026-08-15; see tools/lib/journal.sh.
+        n_reset=$(jk | grep -cE 'usb_queue_reset_device|Resetting usb device|reset (full|high|low)-speed USB device' || true)
         (( ${n_reload:-0} > 0 )) && pert+=(btusb_reload)
         (( ${n_reset:-0}  > 0 )) && pert+=(usb_reset)
         if (( ${#pert[@]} )); then
@@ -892,7 +900,7 @@ status)
             sc=$(grep -c 'opcode 0x0428' "$W" || true)
             ug=$(grep -c 'USB disconnect, device number' "$W" || true)
             rl=$(grep -c 'deregistering interface driver btusb' "$W" || true)
-            rs=$(grep -cE 'usb_queue_reset_device|Resetting usb device' "$W" || true)
+            rs=$(grep -cE 'usb_queue_reset_device|Resetting usb device|reset (full|high|low)-speed USB device' "$W" || true)
             echo
             printf '  HCI command timeouts  %s\n' "$t"
             printf '  SCO setups requested  %s\n' "$sc"

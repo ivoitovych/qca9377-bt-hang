@@ -45,6 +45,49 @@
 # anything at load time — its callers set their own `set -uo pipefail` and would
 # inherit whatever it changed.
 
+# ── WHAT AN INTERVENTION LOOKS LIKE IN THE JOURNAL ───────────────────────
+#
+# Here, once, because every hand-written copy of these has been wrong in the
+# same direction: matched on WHAT OUR TOOLING LOGS rather than on what the
+# KERNEL logs. That is the same mistake as `PATH="$STUB:/usr/bin"` and the
+# a.rules fixture — a pattern written on a machine where the other half never
+# appears — and this is its fifth instance.
+#
+# bt-window carried its own copies and both were wrong at once, in opposite
+# directions, on the investigation machine on 2026-08-15:
+#
+#   FALSE NEGATIVE  a real USBDEVFS_RESET was INVISIBLE. The copy matched
+#                   `Resetting usb device`, which is bt-hang-watchdog's wording;
+#                   the kernel writes `usb 3-3: reset full-speed USB device
+#                   number 2 using xhci_hcd`. A window ended by a raw reset with
+#                   no rfkill traffic would have read "no intervention" — the
+#                   exact failure the tool had been rewritten to prevent.
+#   FALSE POSITIVE  a PASSIVE rfkill observation counted as an operator action.
+#                   `RFKILL event idx 0 type 2 op 1 soft 0 hard 0` is bluetoothd
+#                   watching the switch disappear as the device is torn down —
+#                   op 1 is RFKILL_OP_DEL, and `soft 0 hard 0` says nothing was
+#                   blocked. It is a CONSEQUENCE of the reset, not a cause.
+#
+# They cancelled on that window: correctly CENSORED, entirely the wrong reason.
+# Two errors that cancel are worse than one that does not, because the output
+# looks right and nothing prompts anyone to check.
+#
+# Both facts were already in this tree, in tools/bt-actions — it matches the
+# kernel's `reset full-speed USB device`, and it separates `soft 1` from
+# `soft 0`. The knowledge was not missing; it was not shared.
+#
+# TOOLING interventions: this project acting on the controller. The kernel's
+# reset wording covers all three speeds; usb_queue_reset_device is the request,
+# `reset …-speed USB device` is the kernel carrying it out, and only the second
+# appears for a reset issued by ioctl from outside this project.
+BT_RE_INTERVENTION_TOOL='deregistering interface driver btusb|usb_queue_reset_device|Resetting usb device|reset (full|high|low)-speed USB device|intervening|EARLY intervention'
+
+# OPERATOR interventions: a person reaching the controller without a terminal.
+# Qualified by an ACTUAL BLOCK — `soft 1` or `hard 1` — because bare `RFKILL
+# event` fires on teardown and would count the fault's own aftermath as its
+# cause.
+BT_RE_INTERVENTION_USER='name hci[0-9]+ blocked|powering off device on rfkill|RFKILL event.*(soft 1|hard 1)'
+
 # "Is a journal reachable at all?" belongs to the seam, not to its callers. The
 # seam decides WHERE the journal comes from, so it is the only thing that can
 # answer whether there is one; a caller asking `command -v journalctl` is asking
