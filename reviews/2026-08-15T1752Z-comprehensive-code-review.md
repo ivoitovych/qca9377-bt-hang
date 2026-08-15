@@ -686,3 +686,29 @@ workflow. Findings:
 
 - **[LOW] `devtools/README.md` spot-checked** against the actual tool list
   — consistent; no drift found there.
+
+## 6. Prior reviews — `reviews/`
+
+Read: `README.md` (the register), `verify.sh` in full; the six reports and
+the work log skimmed for structure and cross-checked against the register's
+claims. Ran `reviews/verify.sh`: **11 verified, 1 open, 0 stale rows** —
+the register is honest about itself. Its coverage line prints "(coverage
+tool failed)", consistent with §5's HIGH finding.
+
+- **[GOOD] The append-only report + live register + executable verifier
+  design solves the exact drift problem the rest of the repo fights.**
+  Reports are immutable snapshots; the register is current truth; every row
+  carries a command that decides its own status; `verify.sh` exists because
+  four of the first draft's verify commands were themselves wrong. This is
+  the pattern the docs/ tree should envy (compare §1.5's fossilised
+  "two failed late resets").
+- **[NOTE] Genuinely open items, correctly recorded as open:** UT-10
+  (journal-seam adoption 15 tools converted, 21 direct call sites left in
+  8 files), UT-12 (split the 4831-line run-tests), CS-09 partial, HC-05..07
+  (fold the round trip into measurement; work the uncovered tail; extract
+  the remaining inline awk — HC-07 is the same fix as §3.1's civil-date
+  duplication finding), HC-08 (100% floors, blocked on those), SE-05
+  (worktree habit). Nothing recorded "done" was found to be undone.
+- **[NOTE] The register's coverage trend footnote (85.0% at `251a6cb`)
+  is the number README's "18.3%" should be quoting** — the front page is
+  not just stale, it understates the repo's own achievement by 4–5×.
