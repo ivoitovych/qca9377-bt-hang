@@ -2386,14 +2386,27 @@ EOUT=$(wd_run 10 BT_EARLY=1)
 farm_dir() {   # <dir> [tool-to-omit...] — symlinks only; NEVER written into
     local d="$1"; shift
     local f b omit
+    local -a keep=()
     mkdir -p "$d"
     for f in /usr/bin/*; do
         b=${f##*/}
         omit=0
         for t in "$@"; do [[ "$b" == "$t" ]] && { omit=1; break; }; done
         (( omit )) && continue
-        ln -s "$f" "$d/$b" 2>/dev/null || true
+        keep+=("$f")
     done
+    # ONE ln, NOT ONE PER FILE. /usr/bin holds ~1100 entries here, and a
+    # per-file `ln -s` forked ~1100 processes per farm — 2.5 s each, three
+    # farms, 19% of the whole run spent on symlinks. `ln -s -t` takes the whole
+    # list in a single exec and costs about a hundredth of that.
+    #
+    # The omitted tools are filtered OUT OF THE LIST rather than linked and then
+    # removed. Link-everything-then-`rm` would be correct today — rm unlinks the
+    # symlink and never touches its target — but it is the ordering-dependent
+    # shape that destroyed three system binaries here, and "safe until someone
+    # adds a line after it" is exactly what that was.
+    (( ${#keep[@]} )) && ln -s -t "$d" "${keep[@]}" 2>/dev/null
+    return 0
 }
 # No probe tool at all: neither hciconfig nor btmgmt is linked in, and the
 # stub directory beside it carries the rest.
@@ -5835,6 +5848,80 @@ TLRN=$(tlpert '2026-08-13T09:00:00.000000+0200 host kernel: Bluetooth: hci0: com
 [[ "$TLRN" == "none" ]] \
     && ok "an untouched window is still recorded as none — the detector discriminates" \
     || bad "a clean window recorded perturbed='$TLRN'"
+
+# ── bt-trial audit: recheck the record against the journal ──────────────
+#
+# The hand audit that found two of three rows wrong depended on someone
+# thinking to look, at the right moment, with the right query. It also produced
+# two confident zeros from wrong queries — a boot index counted backwards, and
+# a journalctl call without -b that returned only the current boot — either of
+# which would have reported the record clean.
+#
+# So the tool is tested for what it must do when it CANNOT answer, as much as
+# for what it reports when it can. A silent skip is the failure it exists to
+# catch.
+TAF=tests/journal/trial-audit
+ta_repo() {   # <perturbed-for-row-1> -> a repo whose row 1 sits in fixture boot -1
+    local d; d=$(mktemp -d); mkdir -p "$d/evidence/trials"
+    { head -1 evidence/trials/results.tsv
+      awk -v h="$(head -1 evidence/trials/results.tsv)" -v p="$1" 'BEGIN {
+        n = split(h, c, "\t"); for (i = 1; i <= n; i++) f[i] = "-"
+        for (i = 1; i <= n; i++) {
+            if      (c[i] == "timestamp")   f[i] = "2026-08-14T21:16:56+02:00"
+            else if (c[i] == "duration_s")  f[i] = 10000
+            else if (c[i] == "perturbed")   f[i] = p
+            else if (c[i] == "bt1_status")  f[i] = "confirmed"
+            else if (c[i] == "trial_result") f[i] = "failed"
+            else if (c[i] == "treatment")   f[i] = "probes=off"
+        }
+        s = f[1]; for (i = 2; i <= n; i++) s = s "\t" f[i]; print s }'
+    } > "$d/evidence/trials/results.tsv"
+    echo "$d"
+}
+ta_run() { BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$1" tools/bt-trial-audit 2>&1; }
+
+# The row this was built for: the window holds two kernel resets and the row
+# says none. That is the exact shape of the two real rows.
+TAD=$(ta_repo none); TAOUT=$(ta_run "$TAD"); tarc=$?
+if (( tarc == 1 )) && [[ "$TAOUT" == *"perturbed DISAGREES"* && "$TAOUT" == *"journal:  usb_reset"* ]]; then
+    ok "bt-trial audit catches a row recorded perturbed=none over a window holding resets"
+else
+    bad "the audit missed the defect it exists to catch (rc=$tarc): $(grep -c DISAGREES <<<"$TAOUT") disagreement(s)"
+fi
+rm -rf "$TAD"
+
+# And it must not cry wolf: the same window with the row recording what actually
+# happened has to come back clean, or the check above proves only that it fires.
+TAA=$(ta_repo usb_reset); TAOK=$(ta_run "$TAA"); tarc2=$?
+(( tarc2 == 0 )) && [[ "$TAOK" == *"disagreed   0"* ]] \
+    && ok "a row that records the reset it actually had is left alone" \
+    || bad "the audit disagreed with a correct row (rc=$tarc2)"
+rm -rf "$TAA"
+
+# A ROW WHOSE BOOT CANNOT BE RESOLVED IS A REFUSAL, NOT A SKIP. The journal for
+# an old trial rotates away, and an audit that quietly passed over those rows
+# would report "0 disagreements" about a file it had barely read.
+TAU=$(mktemp -d); mkdir -p "$TAU/evidence/trials"
+{ head -1 evidence/trials/results.tsv
+  head -2 evidence/trials/results.tsv | tail -1; } > "$TAU/evidence/trials/results.tsv"
+TAUO=$(BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$TAU" tools/bt-trial-audit 2>&1); tarc3=$?
+(( tarc3 == 2 )) && [[ "$TAUO" == *"UNRESOLVED"* && "$TAUO" == *"not a pass"* ]] \
+    && ok "a row whose boot has rotated away is refused, not silently skipped" \
+    || bad "an unauditable row was reported as clean (rc=$tarc3)"
+rm -rf "$TAU"
+
+# THE POSITIVE CONTROL, WHICH IS THE WHOLE ANSWER TO A CONFIDENT ZERO. Every
+# answer this tool gives is a count, and zero is what both a correct row and a
+# broken detector look like. Breaking the detector must fail loudly here rather
+# than produce a clean report.
+TAP=$(ta_repo none)
+sed "s|^RE_RESET=.*|RE_RESET='ZZZ-no-such-message'|" tools/bt-trial-audit > "$TAP/audit"
+chmod +x "$TAP/audit"
+TAPO=$(BT_LIBDIR="$PWD/tools/lib" BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$TAP" "$TAP/audit" 2>&1); tarc4=$?
+(( tarc4 == 2 )) && [[ "$TAPO" == *"positive control"* ]] \
+    && ok "a detector that has stopped matching refuses instead of reporting every row clean" \
+    || bad "a broken detector produced a report (rc=$tarc4): $(head -1 <<<"$TAPO")"
+rm -rf "$TAP"
 
 # ── status: the view that decides whether to abort a trial in progress ───
 #

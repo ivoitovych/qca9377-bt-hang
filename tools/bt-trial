@@ -8,6 +8,7 @@
 #   bt-trial ok                       record: it survived (verifies the controller answers)
 #   bt-trial abort                    discard the open trial
 #   bt-trial report                   failure rate per build — the denominators
+#   bt-trial audit                    recheck every recorded row against the journal
 #
 # WHY: "the patched build ran for an hour" means nothing without a baseline. This
 # project has mistaken absence-of-observed-failure for a fix more than once. Every
@@ -244,6 +245,19 @@ next_trial_no() {
 case "${1:-}" in
 
 protocol) protocol ;;
+
+# Delegated rather than implemented here. The audit must NOT share this file's
+# detectors — an audit built on the same regex as the tool it audits can only
+# ever agree with itself, and the defect it exists to catch was exactly a
+# pattern that matched this project's wording and not the kernel's. Keeping it
+# in a separate file that reads the journal through the seam also makes it
+# drivable from a fixture, which this one is not.
+audit)
+    shift
+    _a="$(dirname "$(readlink -f "$0")")/bt-trial-audit"
+    [[ -x "$_a" ]] || _a=/usr/local/bin/bt-trial-audit
+    [[ -x "$_a" ]] || { echo "bt-trial: bt-trial-audit not found beside this script" >&2; exit 2; }
+    exec "$_a" "$@" ;;
 
 start)
     build="${2:?usage: bt-trial start <build>   (stock, A, B, C, D)}"
