@@ -115,7 +115,15 @@ fi
 # that reads it.
 SEAMS_DRIVEN=$(grep -ohE '\bBT_[A-Z0-9_]+=' tests/run-tests | sort -u | tr -d '=')
 
-printf '%-30s %-9s %-9s %-9s %-9s %s\n' unit modes refusals seams branches score
+# Assertions NAMING the unit. Attribution is by name because sections are
+# prose and a line has no other link to a tool — so an assertion that exercises
+# a unit without mentioning it is not counted here. That makes this column a
+# LOWER bound on how much is asserted, which is the safe direction: it can
+# understate work done, never overstate it.
+TOTAL_ASSERTS=$(grep -cE '^[^#]*(^|[ \t]|\|\| )(ok|bad) "' tests/run-tests)
+
+printf '%-30s %-7s %-9s %-9s %-9s %-9s %s\n' \
+       unit asserts modes refusals seams branches score
 printf '%s\n' "──────────────────────────────────────────────────────────────────────────────"
 
 : > "$WORK/rows"; : > "$WORK/gaps"; : > "$WORK/unmeasured"
@@ -238,12 +246,14 @@ for u in "${UNITS[@]}"; do
     # the instrument written to detect it.
     if (( measured == 0 )); then
         lang=$(head -1 "$u" | sed -E "s|^#!||; s|.*/env +||; s|.*/||; s| .*||")
-        printf '%-30s %-9s %-9s %-9s %-9s %s\n' "$u" "—" "—" "—" "—" \
-            "UNMEASURED (${lang:-unknown})" >> "$WORK/unmeasured"
+        nassert=$(grep -cE '(ok|bad) "[^"]*'"$(basename "$u")" tests/run-tests)
+        printf '%-30s %-7s %-9s %-9s %-9s %-9s %s\n' "$u" "${nassert:-0}" \
+            "—" "—" "—" "—" "UNMEASURED (${lang:-unknown})" >> "$WORK/unmeasured"
         continue
     fi
 
-    printf '%-30s %-9s %-9s %-9s %-9s %d%%\n' "$u" \
+    nassert=$(grep -cE '(ok|bad) "[^"]*'"$(basename "$u" | sed 's/\./\\./g')" tests/run-tests)
+    printf '%-30s %-7s %-9s %-9s %-9s %-9s %d%%\n' "$u" "${nassert:-0}" \
         "$nmode_hit/$nmode" "$nref_hit/$nref" "$nseam_hit/$nseam" "$cov/$tot" "$worst" \
         >> "$WORK/rows"
     # A LITERAL DASH FOR AN EMPTY FIELD, because tab is IFS *whitespace* and a
@@ -253,7 +263,7 @@ for u in "${UNITS[@]}"; do
         "${modegap:--}" "${refgap:--}" "${seamgap:--}" >> "$WORK/gaps"
 done
 
-sort -t% -k1 -n "$WORK/rows" 2>/dev/null | sort -n -k6 | head -100
+sort -t% -k1 -n "$WORK/rows" 2>/dev/null | sort -n -k7 | head -100
 echo
 if [[ -s "$WORK/unmeasured" ]]; then
     echo "not measurable by these instruments — a language nothing here traces"
@@ -279,8 +289,8 @@ done
 TOTAL=$(awk '{ s += $1; n++ } END { if (n) printf "%d", s/n; else print 0 }' "$WORK/gaps")
 WEAKEST=$(sort -n "$WORK/gaps" | head -1 | cut -f1)
 echo
-printf 'units measured: %d   mean weakest-dimension score: %d%%   worst unit: %d%%\n' \
-       "$(grep -c . "$WORK/gaps")" "${TOTAL:-0}" "${WEAKEST:-0}"
+printf 'units measured: %d   assertions in the suite: %d   mean weakest-dimension: %d%%   worst unit: %d%%\n' \
+       "$(grep -c . "$WORK/gaps")" "${TOTAL_ASSERTS:-0}" "${TOTAL:-0}" "${WEAKEST:-0}"
 
 if [[ -n "$MIN" ]]; then
     if (( ${WEAKEST:-0} < MIN )); then
