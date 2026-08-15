@@ -56,18 +56,19 @@ IVU_RE='name hci[0-9]+ blocked|powering off device on rfkill|RFKILL event|rfkill
 # greps were re-reading identical ranges.
 #
 # What is left is one read that must reach back to the fault to find it. That is
-# irreducible without asking a different question, so it is handed to journalctl
-# instead of to grep: --grep filters inside the journal, so non-matching entries
-# are never formatted or written. Probed rather than assumed, and purely an
-# optimisation — the local match below is what decides, in both worlds, so a
-# journal without --grep and a fixture (where the seam ignores it) give the same
-# answer by the same code.
-JGREP=()
-bt_journal_supports_grep && JGREP=(--grep="$TMO_RE")
-
+# irreducible without asking a different question, so it goes through
+# bt_journal_first, which hands the pattern to journalctl via --grep where the
+# source supports it — non-matching entries are never formatted or written.
+#
+# That plumbing lives in the seam and not here, and the first version of this
+# tool had it the other way round. Whether the source can filter server-side is
+# a property of the source, and open-coding it left a whole-boot read that the
+# suite's own rule about whole-boot reads then needed an exception for. An
+# exception in that rule is where the next instance would hide.
+#
 # One line, not two: bash traces a backslash-continued assignment at its last
 # line, so wrapping this puts its opener in the coverage denominator forever.
-first=$(bt_journal -k -b 0 --no-pager -o short-iso-precise "${JGREP[@]}" 2>/dev/null | grep -m1 -E "$TMO_RE" | awk '{print $1}')
+first=$(bt_journal_first "$TMO_RE" -k -b 0 -o short-iso-precise | awk '{print $1}')
 
 if [[ -z "$first" ]]; then
     printf '%sNo HCI command timeout this boot.%s The controller has not entered\n' "$G" "$O"

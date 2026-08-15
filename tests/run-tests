@@ -1424,6 +1424,44 @@ else
     while IFS= read -r l; do echo "        $l"; done <<<"$UNBOUNDED"
 fi
 
+# AND THE SAME RULE FOR EVERY OTHER TOOL, BECAUSE IT WAS NEVER ONLY bt-trial.
+#
+# The check above was written for the tool that lost EX-023's row, and it was
+# scoped to that tool. The shape then turned up twice more: bt-window scanned
+# the whole boot twice per invocation and timed out during a live window, and
+# bt-health-snapshot — which runs EVERY 15 MINUTES — scanned the whole kernel
+# journal twice on each firing, so its cost grew for the life of the boot on the
+# machine carrying the experiment. bt-status was worse in a different way: it
+# held the entire boot's kernel journal in a shell variable to take one count.
+#
+# Whole-boot COUNTS are legitimate — "how many timeouts this boot" needs the
+# boot. What is not legitimate is reading it through a pipe. bt_journal_count
+# hands the pattern to journalctl via --grep, so non-matching entries are never
+# formatted or written, and still matches locally so a fixture answers the same.
+#
+# Derived over every tracked shell file rather than a named list, because the
+# named list is exactly what let this survive in five other files after it was
+# found in the first.
+#
+# SHFILES is the derived work-list, and it is checked for emptiness here for the
+# reason its own header gives: the first draft of this check named an array that
+# does not exist, grep received no file arguments, and the invariant printed a
+# green tick having examined nothing. Enumerated zero is a refusal.
+if (( ${#SHFILES[@]} == 0 )); then
+    bad "SHFILES is empty — the whole-boot scan check examined nothing"
+else
+    KSCAN=$(grep -nE '(^|[^_[:alnum:]])bt_journal +-k +-b 0' "${SHFILES[@]}" 2>/dev/null \
+            | grep -v -- '--until' | grep -v -- '--since' | grep -v -- ' -n ' \
+            | grep -v -- '--grep' | grep -v 'SEAM-ADVICE' \
+            | grep -v '^[^:]*:[0-9]*:[[:space:]]*#')
+    if [[ -z "$KSCAN" ]]; then
+        ok "none of the ${#SHFILES[@]} shell files pipes a whole-boot kernel journal — counts go through bt_journal_count"
+    else
+        bad "unbounded whole-boot kernel read outside bt_journal_count:"
+        while IFS= read -r l; do bad "      $l"; done <<<"$KSCAN"
+    fi
+fi
+
     ok "every row in results.tsv matches the header width"
 else
     bad "results.tsv row/header width mismatch:"
@@ -4995,6 +5033,56 @@ if (( ${#CONVERTED[@]} > 0 )); then
 else
     bad "no tool sources journal.sh — the seam is not wired up"
 fi
+
+# ── --grep IS AN OPTIMISATION, WHICH MEANS THE ANSWER MUST NOT DEPEND ON IT ──
+#
+# bt_journal_count and bt_journal_first hand the pattern to journalctl when the
+# source supports --grep, so entries that cannot match are never formatted or
+# written. That is the entire reason whole-boot counting is affordable, and it
+# is only safe while the two paths agree. If a journal filtered server-side by a
+# subtly different regex — PCRE2 there, ERE here — the count would quietly
+# depend on which machine asked, and this project has already been burned by a
+# number that meant different things in different places.
+#
+# So: the same fixture, counted twice, through two stubs that differ ONLY in
+# whether they advertise --grep. The answers must be identical, and must equal
+# the number of matching lines actually in the file.
+JG=$(mktemp -d); mkdir -p "$JG/bin"
+printf 'a: command 0x0406 tx timeout\nb: unrelated\nc: command tx timeout\nd: noise\ne: command 0x0409 tx timeout\n' > "$JG/kernel.log"
+# WITH --grep: advertises it AND honours it, so a caller that stopped matching
+# locally would still pass while a caller that mis-built the flag would not.
+cat > "$JG/bin/journalctl" <<'JGJ'
+#!/bin/sh
+case " $* " in *" --help "*) [ -n "$JGHASGREP" ] && echo "  --grep=PATTERN"; exit 0 ;; esac
+pat=""
+for a in "$@"; do case "$a" in --grep=*) pat=${a#--grep=} ;; esac; done
+if [ -n "$pat" ]; then grep -E "$pat" "$JGDIR/kernel.log" 2>/dev/null
+else                   cat "$JGDIR/kernel.log" 2>/dev/null; fi
+exit 0
+JGJ
+chmod +x "$JG/bin/journalctl"
+JGCOUNT=$(cat <<'JGC'
+source tools/lib/journal.sh
+bt_journal_count 'command( 0x[0-9a-f]+)? tx timeout' -k -b 0
+bt_journal_first 'command( 0x[0-9a-f]+)? tx timeout' -k -b 0
+JGC
+)
+JGWITH=$(PATH="$JG/bin:$PATH" JGDIR="$JG" JGHASGREP=1 bash -c "$JGCOUNT" 2>&1)
+JGWITHOUT=$(PATH="$JG/bin:$PATH" JGDIR="$JG" JGHASGREP="" bash -c "$JGCOUNT" 2>&1)
+if [[ "$JGWITH" == "$JGWITHOUT" && "$JGWITH" == "3"* && "$JGWITH" == *"a: command 0x0406 tx timeout"* ]]; then
+    ok "bt_journal_count/_first give the same answer with and without server-side --grep"
+else
+    bad "the --grep path and the pipe path disagree — the count depends on the machine:"
+    bad "  with --grep:    $(tr '\n' '|' <<<"$JGWITH")"
+    bad "  without --grep: $(tr '\n' '|' <<<"$JGWITHOUT")"
+fi
+# And a fixture must answer the same as either, since the seam ignores --grep
+# there and the local match is all that runs.
+JGFIX=$(BT_JOURNAL_FIXTURE="$JG" bash -c "$JGCOUNT" 2>&1)
+[[ "$JGFIX" == "$JGWITHOUT" ]] \
+    && ok "a journal fixture answers identically — the local match is the semantics" \
+    || bad "fixture disagrees with the live path: $(tr '\n' '|' <<<"$JGFIX")"
+rm -rf "$JG"
 
 rm -rf "$EMPTYLIB" "$EMPTYDUMP"
 

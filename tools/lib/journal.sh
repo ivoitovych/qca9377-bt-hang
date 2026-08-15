@@ -73,6 +73,54 @@ bt_journal_supports_grep() {
     [[ "$h" == *"--grep"* ]]
 }
 
+# ── COUNTING OVER A WHOLE BOOT, WITHOUT READING A WHOLE BOOT ─────────────
+#
+# "How many command timeouts this boot" is the one question that genuinely
+# cannot be bounded — it needs the boot. It can still be made cheap, and it has
+# to be, because this defect has now cost this project three separate things:
+#
+#   bt-trial   an unbounded scan sat between the auxiliary files and the results
+#              row; systemd's stop timeout killed the close mid-way and the
+#              record of the project's longest untreated window was lost (ed82166)
+#   bt-window  five scans per invocation, two unbounded; it timed out during a
+#              live window at the moment the window became interesting
+#   snapshot   bt-health-snapshot runs every 15 minutes and scans the whole
+#              kernel journal twice each time, so the cost grows for the life of
+#              the boot on the machine carrying the experiment
+#
+# Three instances is where this repository stops fixing sites and fixes the
+# shape. --grep filters INSIDE journalctl: non-matching entries are never
+# formatted, never written, never piped. On a long boot with dynamic debug on,
+# that is the difference between minutes and under a second.
+#
+# The local match still decides, so a fixture (where the seam ignores --grep)
+# and an older journalctl give the same answer through the same code — the
+# server-side filter is an optimisation and never the semantics.
+#
+# Counted rather than `grep -q` for the reason the whole repository counts:
+# `grep -c` exits 1 on zero matches, so under pipefail the caller would fail
+# exactly when the answer is "none", which is the common case.
+bt_journal_count() {   # <ere> <journalctl selector args...>
+    local re="$1"; shift
+    local g=() n
+    bt_journal_supports_grep && g=(--grep="$re")
+    n=$(bt_journal "$@" "${g[@]}" --no-pager 2>/dev/null | grep -cE "$re" || true)
+    echo "${n:-0}"
+}
+
+# The other unbounded question, and the last one: "when did this first happen?"
+# — the onset of a fault, which cannot be bounded because finding it is the
+# point. Same treatment, and here for the same reason: bt-window open-coded the
+# --grep dance itself, which left a whole-boot read that the suite's own rule
+# then had to make an exception for. An exception in a rule about whole-boot
+# reads is where the next one hides, so the caller does not get to open-code it.
+bt_journal_first() {   # <ere> <journalctl selector args...> — first match, or empty
+    local re="$1"; shift
+    local g=()
+    bt_journal_supports_grep && g=(--grep="$re")
+    bt_journal "$@" "${g[@]}" --no-pager 2>/dev/null | grep -m1 -E "$re"
+}
+
 bt_journal() {
     if [[ -z "${BT_JOURNAL_FIXTURE:-}" ]]; then
         journalctl "$@"

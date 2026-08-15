@@ -56,7 +56,7 @@ autosusp=$(cat "$SYSFS_MOD/enable_autosuspend" 2>/dev/null || echo "-")
 # also matches `link tx timeout` (ACL supervision, a different layer), of
 # which this machine has logged 7 against 173 real command timeouts. See
 # evidence/exhibits/015-timeout-pattern-undercount.md.
-tx=$(bt_journal -k -b 0 --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
+tx=$(bt_journal_count "command( 0x[0-9a-f]+)? tx timeout" -k -b 0)
 wd=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention" || true)
 conn=$(timeout 8 bluetoothctl devices Connected 2>/dev/null | grep -c '^Device' || true)
 

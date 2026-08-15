@@ -80,8 +80,8 @@ snapshot_state() { # -> stdout
     echo "## counters this boot"
     # HCI command timeouts, opcode-named or not — NOT bare "tx timeout", which
     # also matches `link tx timeout` (ACL supervision, a different layer). EX-015.
-    echo "tx_timeouts=$(bt_journal -k -b 0 --no-pager 2>/dev/null | grep -cE 'command( 0x[0-9a-f]+)? tx timeout')"
-    echo "unexpected_evt=$(bt_journal -k -b 0 --no-pager 2>/dev/null | grep -c 'unexpected event for opcode')"
+    echo "tx_timeouts=$(bt_journal_count 'command( 0x[0-9a-f]+)? tx timeout' -k -b 0)"
+    echo "unexpected_evt=$(bt_journal_count 'unexpected event for opcode' -k -b 0)"
     echo "wd_interventions=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention")"
     echo "## connected"
     timeout 8 bluetoothctl devices Connected 2>/dev/null || true

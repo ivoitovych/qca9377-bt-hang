@@ -48,7 +48,10 @@ cnt()  { local n; n=$(grep -cE "$1" <<<"$2" 2>/dev/null || true); echo "${n:-0}"
 
 WD=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null || true)
 BD=$(bt_journal -u bluetooth        -b 0 --no-pager 2>/dev/null || true)
-KE=$(bt_journal -k                  -b 0 --no-pager 2>/dev/null || true)
+# NOT captured into a variable. This held the entire boot's kernel journal in
+# memory to take one count from it; with dynamic debug on a long boot that is
+# hundreds of megabytes in a shell string. WD and BD stay — a unit journal is
+# small and each is counted several times below.
 
 early_sig=$(cnt "early signal"          "$WD")
 early_act=$(cnt "EARLY intervention"    "$WD")
@@ -58,7 +61,7 @@ recs=$(cnt      "RECOVERED"             "$WD")
 fatal=$(cnt     "FATAL:"                "$WD")
 rfail=$(cnt     "USBDEVFS_RESET failed" "$WD")
 # Canonical spelling (EX-015): bare "tx timeout" folds in link timeouts.
-tx=$(cnt        "command( 0x[0-9a-f]+)? tx timeout" "$KE")
+tx=$(bt_journal_count "command( 0x[0-9a-f]+)? tx timeout" -k -b 0)
 audio=$(grep -ciE 'avdtp|sco|a2dp|Hands-Free' <<<"$BD" 2>/dev/null || true)
 
 verdict() {
