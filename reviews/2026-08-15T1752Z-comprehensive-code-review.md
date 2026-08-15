@@ -347,3 +347,130 @@ consistently holds the phenotype/cause line. **[GOOD]**.
 
 GPL-2.0 text as stated in README. Not read line-by-line; length and header
 match the canonical text.
+
+## 2. Deployed runtime — `bin/`, `systemd/`, `etc/`, install/uninstall
+
+Read in full: `bt-hang-watchdog`, `bt-health-snapshot`, `bt-capture`,
+`bt-trace`, `bt-usbmon`, `bt-dyndbg`, `bt-mark`, `bt-evidence`, all nine
+unit files, all five `etc/` configs, `install.sh`, `uninstall.sh`,
+`tools/verify-restored.sh`. Overall: this layer is in notably good shape —
+the seams (`BT_JOURNAL_FIXTURE`, `BT_SYSFS_USB`, `BT_DYNDBG_CTL`) are
+principled, the load-bearing comments carry their measured justification,
+and every past defect class I could think to probe (grep -c/-q pipefail,
+chmod races, ring-buffer rotation, `awk -f` inlining) already has either a
+fix or a test. Findings:
+
+### 2.1 `bin/bt-hang-watchdog`
+
+- **[LOW] `python3` is a hard dependency of the primary reset path but the
+  watchdog never checks for it.** The capability probe covers
+  `hciconfig`/`btmgmt` and logs a warning when absent; `usbfs_reset()`
+  needs `python3` and, if it is missing, every intervention silently takes
+  the "USBDEVFS_RESET failed" branch and escalates to unbind/bind — a
+  *different treatment* than documented, with no startup warning.
+  `install.sh` preflights python3, so the gap only bites hand-deployed
+  copies — but the watchdog's own banner is the right place for the check,
+  same as PROBE.
+- **[LOW] The give-up message differs between paths.** The late path logs
+  "Giving up… / A cold power-off is required. Watchdog is now idle until
+  reboot."; the early path logs only the first line. Any log-scraping
+  tool keying on the second line sees only late-path give-ups.
+- **[GOOD]** The `O_CREAT`-less `os.open` note in `usbfs_reset` (avoiding a
+  bogus devtmpfs file during the exact race it protects against), the
+  wrong-radio guard in `hci_for_dev()`, and the loud
+  reader-died exit path are all careful work.
+
+### 2.2 `bin/bt-health-snapshot`
+
+- **[MED] An early-intervention success is invisible in the metrics.**
+  `wd_int` counts both "intervening" and "EARLY intervention" (the
+  Phase-22 fix), and `wd_fail` counts both paths' failures — but `wd_rec`
+  counts only "RECOVERED", which the early path deliberately never logs
+  (it says "CONTROLLER RESPONDS AFTER EARLY INTERVENTION"). So an early
+  intervention that left the controller answering produces
+  `wd_interventions=1, wd_recovered=0, wd_failed=0` — indistinguishable
+  from "attempted, unverifiable". The epistemic caution (not calling a
+  censored outcome a recovery) is right, but the schema then needs a
+  fourth counter (e.g. `wd_early_responds`) or the distinction is lost in
+  the TSV that `bt-health-report` reads. This is the same species as the
+  Phase-10 `wd_interventions=0 beside wd_recovered=1` bug, in mirror image.
+  The same asymmetry exists in `bt-evidence`'s MANIFEST (`wd_recovered`
+  line) — fix both.
+- **[NOTE] The 15-minute timer pays an unbounded `journalctl -k -b 0` scan
+  twice per tick** (timeouts + unexpected-event counts). On a long boot
+  with dyndbg on, that is minutes of journal reading per snapshot. The
+  ed82166 commit bounded exactly this pattern in `bt-trial`'s close path;
+  the snapshot's counters genuinely need the whole boot, so this is a
+  cost to know about, not a bug — but worth measuring once.
+
+### 2.3 Capture stack (`bt-capture`, `bt-trace`, `bt-usbmon`, `bt-dyndbg`)
+
+- **[GOOD] `bt-capture`'s btsnoop writer is correct** against the BlueZ
+  monitor format (checked: magic/version/type 2001, `flags = index<<16 |
+  opcode`, the 0x00E03AB44A676000 timestamp offset, record field order),
+  and the clock-semantics warning at the timestamp write site is exactly
+  where it belongs.
+- **[GOOD] `bt-usbmon`'s ring-vs-rotate comment** (tcpdump `-C -W 1` is a
+  ring, not an exit) documents a real trap, and the supervise-and-rotate
+  design matches `bt-trace`'s. The never-delete-the-live-file rule is
+  enforced in both floor loops.
+- **[LOW] `bt-trace` and `bt-usbmon` disagree with their units on
+  `MIN_FREE_GB` defaults** (script defaults 10; units set 15). Harmless
+  while the units always set it — but that is precisely the
+  `BT_TRACE_KEEP=30` pattern the repo documented: a script default that
+  differs from the value in effect will mislead the next person who runs
+  the script by hand. Align the defaults.
+- **[NOTE] `bt-trace`'s gap log can grow one line per second** if btmon
+  respawn-fails persistently (e.g. Bluetooth support absent); bounded in
+  practice, unbounded in principle. A repeated-failure backoff would cap it.
+
+### 2.4 `etc/` and unit files
+
+- **[GOOD]** The modprobe dyndbg-at-module-load rationale, the udev
+  `PRODUCT=%x/%x/%x` leading-zero comment (with `install.sh` actually
+  substituting the stripped form), the journald drop-in's
+  "DO NOT ADD MaxRetentionSec" warning, and the split snapshot units for
+  probe provenance are each small pieces of unusually careful engineering.
+- **[NOTE] `bt-hang-watchdog.service` hardening is modest** (no
+  `ProtectSystem=`, no `PrivateTmp=`). `NoNewPrivileges` is off the table
+  (notify uses `sudo -u`), and sysfs/usbfs writes need root, but
+  `ProtectSystem=full` + `PrivateTmp=yes` would hold. Low value, low cost.
+
+### 2.5 `install.sh`
+
+- **[GOOD]** The three-guard structure (experiment mode, failed-this-boot,
+  open-trial), the counted-not-`grep -q` discipline with its pipefail
+  explanation at the exact site, the write-once install stamp, and
+  derived-vs-hand-written device substitution in generated udev rules are
+  all right. The FAILED accumulator + "INSTALL FAILED" exit honours the
+  Phase-5 fix.
+- **[NOTE] Guard override env var naming is subtle but sound**: the tools
+  use `BT_STATE`; `tests/run-tests`' refuse-while-trial-open guard reads
+  `BT_TRIAL_STATE_DIR` *deliberately*, so a test's sandbox override cannot
+  defeat the suite-level guard. Recorded here so nobody "unifies" them.
+
+### 2.6 `uninstall.sh`
+
+- **[MED] No failure tracking — "UNINSTALL COMPLETE" prints even if steps
+  failed.** `run()` reports errors to the eye but nothing accumulates
+  them; a failed `systemctl disable` or an unremovable file still ends in
+  the success banner. `install.sh` had exactly this defect and got the
+  `FAILED` accumulator in the Phase-5 review; the uninstaller never did.
+  Symmetric fix: track failures, exit non-zero, and point at
+  `verify-restored.sh` (which does catch leftovers — the safety net
+  exists, but the tool should still tell the truth about itself).
+- **[NOTE] The FILES/UNITS lists are hand-written**, the repo's
+  known-recidivist defect class — but here it is acceptable because
+  `tests/run-tests` asserts the uninstall set against `install.sh` (the
+  "Guard derived from install.sh" commit) and `verify-restored.sh`
+  independently derives its list. Three overlapping checks; fine.
+
+### 2.7 `bin/bt-evidence` and `tools/verify-restored.sh`
+
+- **[GOOD] `verify-restored.sh` derives both its file list and unit list
+  from `install.sh`**, refuses a false all-clear when the derivation looks
+  broken (<10 artifacts), and knows about `bt-mode`'s `.disabled` moved-
+  aside names. The `(( x++ ))` exit-status comment is a correct and
+  little-known bash trap, worth the seven lines.
+- **[LOW] `bt-evidence stop` records `wd_recovered` with the same early-
+  success blind spot as §2.2** (counted there; noted here for the fix list).
