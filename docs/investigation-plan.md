@@ -232,3 +232,29 @@ what the operator did, and what the controller did about it.
 
 **Not urgent.** The evidence exists and is collected; this is about where a reader finds
 it. Do it before the upstream submission, not before the next trial.
+
+### BL-03 — `bt-trial abort` deletes tracked evidence without saying so
+
+`bt-trial abort` does `rm -rf "$dir"` on the trial directory unconditionally. That is
+right for its designed use — discarding a trial opened moments ago — and wrong once the
+directory has been committed.
+
+On 2026-08-15 aborting a perturbed trial deleted `evidence/trials/stock/trial-03/`, whose
+`sco-params.txt`, `state-after.txt` and `state-before.txt` were tracked in `ed82166` and
+were the **only surviving artifacts of the trial whose results row was lost** (see
+`EX-023`). Recovered with `git checkout`, so nothing was lost — but the tool printed
+`trial discarded` and said nothing about having removed files under version control.
+
+**Why it matters beyond the one incident.** The recovery depended on the directory being
+committed *and* on someone noticing. `git status` showed three ` D ` lines that would have
+been swept up by the next `git add -A`, which this project runs routinely before
+committing. The window between "abort" and "commit" is where the loss becomes permanent.
+
+**Shape of the work.** Before removing, ask git whether the path is tracked
+(`git ls-files --error-unmatch`), and if it is, refuse — or move aside and report — rather
+than delete. The same reasoning as `bt-mode`, which moves configuration to `.disabled`
+instead of editing it.
+
+**Adjacent, same class:** `bt-trial abort` is also the only way to clear a trial the
+suite refuses to run alongside, so the pressure to use it is highest exactly when a trial
+has accumulated something worth keeping.
