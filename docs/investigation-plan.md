@@ -232,3 +232,84 @@ what the operator did, and what the controller did about it.
 
 **Not urgent.** The evidence exists and is collected; this is about where a reader finds
 it. Do it before the upstream submission, not before the next trial.
+### BL-03 — `bt-trial abort` deletes tracked evidence without saying so
+
+`bt-trial abort` does `rm -rf "$dir"` on the trial directory unconditionally. That is
+right for its designed use — discarding a trial opened moments ago — and wrong once the
+directory has been committed.
+
+On 2026-08-15 aborting a perturbed trial deleted `evidence/trials/stock/trial-03/`, whose
+`sco-params.txt`, `state-after.txt` and `state-before.txt` were tracked in `ed82166` and
+were the **only surviving artifacts of the trial whose results row was lost** (see
+`EX-023`). Recovered with `git checkout`, so nothing was lost — but the tool printed
+`trial discarded` and said nothing about having removed files under version control.
+
+**Why it matters beyond the one incident.** The recovery depended on the directory being
+committed *and* on someone noticing. `git status` showed three ` D ` lines that would have
+been swept up by the next `git add -A`, which this project runs routinely before
+committing. The window between "abort" and "commit" is where the loss becomes permanent.
+
+**Shape of the work.** Before removing, ask git whether the path is tracked
+(`git ls-files --error-unmatch`), and if it is, refuse — or move aside and report — rather
+than delete. The same reasoning as `bt-mode`, which moves configuration to `.disabled`
+instead of editing it.
+
+**Adjacent, same class:** `bt-trial abort` is also the only way to clear a trial the
+suite refuses to run alongside, so the pressure to use it is highest exactly when a trial
+has accumulated something worth keeping.
+
+### BL-04 — the perturbation scans match our own log strings, not the kernel's
+
+`tools/bt-trial` and `tools/bt-window` both decide whether a window was disturbed by
+grepping for:
+
+```
+usb_queue_reset_device | Resetting usb device
+```
+
+`Resetting usb device` is **`bt-hang-watchdog`'s own message**. The kernel writes
+something else entirely:
+
+```
+usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+```
+
+So both tools detect an intervention by our watchdog and are **blind to a raw
+`USBDEVFS_RESET`** — which is the operation the controlled tests use, and the one
+`usb_queue_reset_device()` performs, and therefore the one `BT-3`'s proposed quirk would
+make the kernel issue on every first timeout.
+
+**Demonstrated, not inferred.** On 2026-08-15 a deliberate `USBDEVFS_RESET` was issued at
+21:12:44 into an open trial. The trial row records `perturbed=none`. `bt-window` reports
+`iv_tool=0`.
+
+**And there is a second error, in the opposite direction.** `bt-window` reported
+`1 operator (rfkill / Settings toggle)` for that same window. Nobody touched rfkill. The
+matched line is:
+
+```
+21:12:38  bluetoothd: rfkill_event() RFKILL event idx 0 type 2 op 1 soft 0 hard 0
+```
+
+`op 1` is `RFKILL_OP_DEL` — bluetoothd *observing* the switch disappear as the device was
+torn down, six seconds before the reset. A consequence, counted as a cause. `soft 0 hard 0`
+says nothing was blocked.
+
+The two errors cancelled here: the window is correctly marked CENSORED for entirely the
+wrong reason. They will not cancel elsewhere — a window ended by a raw reset with no rfkill
+traffic reads `✓ no intervention`, which is precisely the failure `bt-window` was rewritten
+to prevent three days ago.
+
+**Shape of the work.**
+
+- Add `reset (full|high|low)-speed USB device` to the tooling pattern in both tools. That
+  is the kernel's wording, and `tools/lib/stage2.awk` already matches it — so the same
+  event is recognised by one analysis tool and missed by two others.
+- Narrow the operator pattern to rfkill lines indicating a **block** (`soft 1`,
+  `blocked 1`), not bare `RFKILL event`, which fires on teardown.
+- The fixture is free: this boot carries a real reset at 21:12:44 and a real `op 1`
+  observation at 21:12:38, six seconds apart, pinning both directions at once.
+
+**Fourth instance of one family.** The timeout grep that matched 8 of 173 events, the
+`bt-window` rfkill blind spot, the `bt-state` PATH tests, and now this — every one a
+pattern derived from what *our* tools log rather than what the *kernel* logs.
