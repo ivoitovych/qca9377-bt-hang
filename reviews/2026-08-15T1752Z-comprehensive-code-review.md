@@ -474,3 +474,118 @@ fix or a test. Findings:
   little-known bash trap, worth the seven lines.
 - **[LOW] `bt-evidence stop` records `wd_recovered` with the same early-
   success blind spot as §2.2** (counted there; noted here for the fix list).
+
+## 3. Diagnostic tools — `tools/`, `tools/lib/`
+
+Read in full: all 27 scripts and all 8 library files. Verified the Hinnant
+`days_from_civil` algorithm in `timestamp.awk` against the reference
+formulation; verified `bt-capture`'s btsnoop encoding against the BlueZ
+monitor format; traced the consumptive two-pointer matcher in
+`capdiff-match.awk`; checked the awk header-name resolution and refusal
+paths in both trial report programs. The layer is strong. Findings, most
+significant first:
+
+### 3.1 Cross-cutting
+
+- **[MED] `bt-trial` leaks its kernel-journal temp file on every `hang`/`ok`
+  close.** `KJ=$(mktemp)` at line 361 receives the boot's entire kernel
+  journal since trial start; `$WJ`, `$CUR` and the `status` verb's `$W` are
+  all removed, but `$KJ` never is (verified: no `rm` references it). On the
+  investigation machine `/tmp` is tmpfs, and a long dyndbg boot's kernel
+  journal runs to hundreds of MB — RAM held until reboot, one file per
+  mid-boot close. Add it to a trap alongside the others.
+
+- **[MED] The civil-date arithmetic exists in four copies, three of them
+  inline.** `tools/lib/timestamp.awk` opens with "one civil-date
+  implementation, shared by every analysis tool" — but `bt-actions`
+  (`days()`/`tosec()`), `bt-sco --window` (`days()`/`ts()`), and
+  `bt-boot-stats` (`days()`/`s()`) each embed a private copy inside an
+  inline awk string. All three copies are currently correct (checked
+  against the lib), but this is the precise divergence risk the shared file
+  was created to end — and inline strings are additionally the
+  cannot-be-syntax-checked form the repo moved its report programs out of.
+  `bt-capdiff` shows the fix: write the program to a temp file (or lib) and
+  load `-f timestamp.awk -f <prog>`.
+
+- **[MED] Probe counts derived from `journalctl -u <unit> | grep -c
+  "<Description text>"` appear to double-count.** `bt-trial`'s `probes`
+  column and `bt-env-history`'s `PROBES` column count matches of "Snapshot
+  Bluetooth health metrics" in the units' journals — but `journalctl -u`
+  includes systemd's own "Starting <desc>..." *and* "Finished <desc>."
+  lines for a oneshot, i.e. two matches per invocation (the snapshot script
+  itself prints nothing). The columns are documented as lower bounds on
+  intervention exposure; a 2× overcount is the opposite direction. Verify
+  once on the machine (`journalctl -u bt-health-snapshot.service -o cat -n
+  20`) and either divide by the lifecycle-line pair or match only one form.
+  Similarly `bt-trial`'s `btmon_aborts` greps `-u bt-trace` for "exited",
+  which also matches systemd's "Main process exited" lines on service stop
+  — a smaller overcount, same fix.
+
+- **[NOTE] Not every tool reads the journal through the `bt_journal` seam.**
+  `bt-trial`, `bt-window`, `bt-incident` call `journalctl` directly (their
+  test strategy is PATH stubs and sandbox dirs instead). This looks
+  deliberate — actuating tools get the sandbox treatment, analysis tools
+  get the fixture seam — but nothing writes that rule down; a one-line note
+  in `journal.sh`'s header would stop a future cleanup "fixing" it.
+
+### 3.2 Individual tools
+
+- **[MED] `trial-summary.awk` counts two buckets it never shows.** `rec[k]`
+  ("confirmed, then rescued") is incremented and never referenced in END —
+  the report has no column for watchdog-rescued confirmed failures, though
+  the comment block argues that omitting it "understates the incidence …
+  by exactly the watchdog success rate". And `unk[k]` (bt1_status=unknown)
+  rows are excluded from every rate but appear in no output at all; a
+  (type,build,treatment) key whose rows are *all* unknown vanishes from the
+  report entirely, because the END loop iterates `tot`. Both contradict the
+  file's own stated rule ("counted, shown, and excluded"). Add an UNKNOWN
+  column (or a footer line) and either print `rec` or delete it.
+
+- **[LOW] `trial-sco-table.awk` folds four distinct exclusion reasons into
+  one `censored` counter** and prints them all as "censored by early
+  watchdog intervention — excluded", which is wrong for CHANGED:/PERTURBED:
+  and unknown rows. Split the message or the counter.
+
+- **[LOW] `bt-trial` `next_trial_no` treats a headerless/foreign
+  `results.tsv` as "no trials"** (NOHEADER → n=0 → numbering restarts at 1),
+  which can overwrite `trial-01`'s auxiliary files. House style elsewhere is
+  to refuse on an unjustifiable schema; this call site quietly starts over.
+
+- **[LOW] `bt-verify-kernel-mechanism`'s byte-pair scan can match at a
+  nibble boundary.** The module is rendered as one continuous hex string
+  and `grep -qo "d313${lo}${hi}"` does not require even alignment, so a
+  4-byte pattern can in principle match straddling two unrelated bytes —
+  a false "present" in the tool whose job is proving absence. Probability
+  is tiny (~2⁻³² per position) but the fix is one line: dump with offsets
+  or require even offset before accepting a match.
+
+- **[LOW] `bt-postmortem` labels `n_act` ("intervening" only) as
+  "interventions" while `t_act` includes early ones** — the count and the
+  timestamp row can disagree in an early-intervention incident. Cosmetic
+  but confusing in the one report meant to be read under stress.
+
+- **[LOW] `bt-logvolume`'s last-60s rate re-slices its argument array**
+  (`${JARGS[@]:0:...}`) in a way that drops `-o cat` along with `--since`,
+  so an empty last-minute window counts journalctl's "-- No entries --"
+  line as 1 line/min. Rebuild the args instead of slicing.
+
+- **[NOTE] `bt-mark`, `bt-boots`, `bt-boot-list`, `bt-context`,
+  `bt-interval`, `bt-timeline`, `bt-state`, `bt-diagnose`, `bt-stage2`,
+  `bt-window`, `bt-incident`, `bt-exhibit`, `bt-mode`, `bt-env-history`,
+  `bt-health-report`, `bt-verify-install`: read in full, no defects found**
+  beyond those above. Standouts worth naming: `bt-exhibit`'s three refusal
+  paths (address in verbatim fields; command-did-not-run; missing/failing
+  sanitiser treated identically), `bt-boot-list`'s four-stage fallback with
+  loud degradation, `bt-verify-install`'s derived artifact/unit lists with
+  the bt-mode interlock (two tools prevented from "fixing" each other in a
+  loop), and `bt-mode`'s dry-run-through-the-same-call-site design.
+
+- **[GOOD] `tools/sanitize-logs.sh` is the best small sanitiser I have
+  reviewed.** The awk capability gate probes the regex engine in both
+  directions (must-match-at-exact-length AND must-not-match) before
+  trusting it; substitution and verification cover different form sets by
+  construction; placeholders alias all three separator spellings to one
+  key so cross-references survive; in-place use is atomic-rename-after-
+  verify. One cosmetic note: past 99 distinct MACs the `%02d` placeholder
+  grows a third digit ("AA:BB:CC:00:00:100") — still safe and still
+  excluded by verification, just odd-looking.
