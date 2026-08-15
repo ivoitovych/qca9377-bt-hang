@@ -632,3 +632,57 @@ Findings:
 - **[NOTE] tests/README.md, tests/btmon/README.md and the fixture
   .in/.expected/.rc corpus were spot-checked for structure and
   consistency** with the harness's documented layout; consistent.
+
+## 5. Contributor tooling and CI — `devtools/`, `.github/workflows/checks.yml`
+
+Read in full: `check`, `coverage`, `coverage-exclude`, `awk-coverage`
+(header + shim), `journal-contract`, `repo-scan`, `repo-save`,
+`repo-validate`, `status`, `assert-test-catches`, the README, and the CI
+workflow. Findings:
+
+- **[HIGH] HEAD fails its own commit gate and its own CI.**
+  `devtools/coverage` exits 2 on this checkout: its exclusion self-check
+  reports three stale entries ("EXCLUDED lines were executed"), so
+  `devtools/check` fails and the CI "coverage floor" step
+  (`devtools/coverage --quiet --min 80`) fails. The cause is the final
+  commit `ed82166`, which inserted lines into `tools/bt-trial` (shifting
+  the `tools/bt-trial:613-621` exclusion range onto live code at 613/615)
+  and edited `tests/run-tests`, without re-running the gate or updating
+  `coverage-exclude`. The repository whose README calls `devtools/check`
+  "the one command to run before committing" is currently red under it.
+  Fix: re-derive the bt-trial range (the inline summary selector now
+  starts ~10 lines later) and re-run `devtools/coverage`.
+
+- **[MED] The third stale entry (`tests/run-tests:1208`) looks like an
+  xtrace-attribution artifact worth root-causing, not just re-ranging.**
+  Line 1208 is a `bad` branch, excluded by the shape rule and — in a green
+  run — never executed. The likely mechanism: line ~1203 `eval`s the
+  `treatment_only_became_unreadable` function out of `tools/bt-trial`, and
+  bash attributes the eval'd body's LINENO relative to the eval site, so
+  executing the function's Nth line lands on `tests/run-tests:1203+N` ≈
+  1208 in the trace. If so, eval'd code can both falsely trip and falsely
+  satisfy every line-pinned mechanism (exclusions *and* coverage). Sourcing
+  the helper from a temp file instead of `eval` would restore honest
+  attribution.
+
+- **[NOTE] `coverage-exclude`'s line-pinned ranges rot by design** — the
+  file says so itself and names the self-check as the arbiter. That is a
+  defensible contract, but the failure mode just demonstrated is "CI goes
+  red one commit after the edit", i.e. the arbiter fires post-hoc. The
+  shape-based form (`path:/regex/`) already exists; migrating the inline-awk
+  ranges to open/close-marker shapes would end the rot class.
+
+- **[GOOD]** Too much to list briefly: `coverage`'s empty-trace refusal and
+  `./install.sh` name-normalisation lesson; `awk-coverage`'s
+  profile-hash-merge design and `/proc/$PPID/cmdline` sidecar;
+  `journal-contract`'s phase-2 byte-equivalence over a built journal
+  (including the recorded leading-separator divergence); `repo-save`'s
+  message scanning with the counted-not-`grep -qv` fix; `repo-scan`'s
+  assembled-from-fragments self-exemption and refuse-on-empty-read;
+  `status`'s committed-vs-deployed contract; `assert-test-catches` as
+  institutionalised mutation testing. The CI workflow's step ordering and
+  its system-roundtrip gating (BT_SYSTEM_TEST=1 + clean-host predicates)
+  are correct.
+
+- **[LOW] `devtools/README.md` spot-checked** against the actual tool list
+  — consistent; no drift found there.
