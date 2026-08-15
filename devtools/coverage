@@ -68,7 +68,7 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
-MIN=""; QUIET=0; UNCOV=""; SHOWUNCOV=0
+MIN=""; QUIET=0; UNCOV=""; SHOWUNCOV=0; DUMPDIR=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --min)   MIN="${2:?--min needs a percentage}"; shift ;;
@@ -86,6 +86,13 @@ while [[ $# -gt 0 ]]; do
         --uncovered) SHOWUNCOV=1
                      if [[ "${2:-}" == "" || "${2:-}" == -* ]]; then UNCOV="."
                      else UNCOV="$2"; shift; fi ;;
+        # --dump writes the two tables the ratio is computed from, so another
+        # instrument can ask questions of them without running the suite again.
+        # devtools/test-comprehension needs to know not just HOW MANY lines ran
+        # but WHICH, and re-deriving that would give it a second opinion about
+        # the same run — the failure this file already had once, when the
+        # summary and --uncovered disagreed.
+        --dump) DUMPDIR="${2:?--dump needs a directory}"; shift ;;
         -h|--help) sed -n '2,9p' "$0"; exit 0 ;;
         # An unknown flag previously became a positional and was ignored, so a
         # mistyped --min silently reported success. Refuse instead.
@@ -398,6 +405,16 @@ if [[ -n "${DEAD_ENTRY// }" ]]; then
     exit 2
 fi
 
+awk -F'\t' 'FNR == NR { ran[$1 "\t" $2] = 1; next } ($1 "\t" $2) in ran' \
+    "$WORK/executed" "$WORK/coverable-lines" > "$WORK/covered-lines"
+
+if [[ -n "$DUMPDIR" ]]; then
+    mkdir -p "$DUMPDIR"
+    cp "$WORK/coverable-lines" "$DUMPDIR/coverable-lines"
+    cp "$WORK/covered-lines"   "$DUMPDIR/covered-lines" 2>/dev/null || :
+    cp "$WORK/excluded-lines"  "$DUMPDIR/excluded-lines"
+fi
+
 EXCLUDED_N=$(grep -c . "$WORK/excluded-lines" 2>/dev/null || echo 0)
 
 if (( SHOWUNCOV )); then
@@ -438,9 +455,6 @@ fi
 # longer be credited for a line that is not in its denominator, the clamp
 # below is unreachable by construction, and the two views cannot contradict
 # each other because they are two halves of one computation.
-awk -F'\t' 'FNR == NR { ran[$1 "\t" $2] = 1; next } ($1 "\t" $2) in ran' \
-    "$WORK/executed" "$WORK/coverable-lines" > "$WORK/covered-lines"
-
 awk -F'\t' -v quiet="$QUIET" '
     FNR == NR { hit[$1]++; next }
     {

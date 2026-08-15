@@ -1,0 +1,291 @@
+#!/bin/bash
+# test-comprehension — per-unit COMPREHENSIVENESS, which is not line coverage.
+#
+#   devtools/test-comprehension              every shipped unit, worst first
+#   devtools/test-comprehension bt-trial     one unit, with its gaps named
+#   devtools/test-comprehension --min 70     CI floor on the weakest dimension
+#
+# WHY THIS EXISTS, WHEN devtools/coverage ALREADY REPORTS 90%.
+#
+# Line coverage answers "did this line run". It cannot answer "was this unit
+# exercised in every mode it has", and those come apart badly. A tool with one
+# `case` dispatch and ten verbs can reach 90% of its lines while nine verbs were
+# never invoked, because the shared setup above the dispatch is most of the file.
+#
+# Every defect this suite has found in the last week was an UNEXERCISED MODE,
+# not an unexecuted line:
+#
+#   five repo-validate validators that no scratch repo ever fed a file of their
+#   kind; bt-usbmon dropping its gap record under a fractional check interval;
+#   a SIGTERM deferred through a five-second backoff; bt-trace idling for an
+#   hour past `systemctl stop`; install.sh writing a udev rule into a directory
+#   it assumed existed.
+#
+# None of those is visible in a percentage. Each is visible as a mode, a
+# boundary or a stimulus that nothing drove.
+#
+# ── WHAT IT MEASURES, AND WHAT IT CANNOT ─────────────────────────────────
+#
+# Four dimensions, derived from the unit's own source and from the trace of a
+# real suite run — never from a hand-written list, which is the failure mode
+# this repository has hit four times:
+#
+#   MODES     top-level dispatch labels (verbs and flags). A mode counts as
+#             exercised when at least one line of its branch was traced.
+#   REFUSALS  every `exit <non-zero>`. These are the paths where the tool
+#             declines to answer, and a refusal nobody has driven is a refusal
+#             nobody knows works.
+#   SEAMS     every BT_* override the unit reads. A seam counts as exercised
+#             when the suite sets it — an unset seam means the unit was only
+#             ever run against this machine's real state.
+#   BRANCHES  the unit's ordinary line coverage, carried over so one table
+#             holds both axes.
+#
+# IT CANNOT SEE WHETHER AN ASSERTION IS ANY GOOD. A mode that ran under a test
+# asserting nothing scores the same as one checked to the letter. That is what
+# devtools/assert-test-catches is for, and the report generated from this tool
+# says so rather than letting the number imply otherwise.
+#
+# IT ALSO CANNOT SEE COMBINATIONS. Ten verbs and four flags is forty
+# interactions, and this counts fourteen things. Where a unit's modes interact
+# — install.sh's --apply with --no-metrics, bt-dyndbg's on with --packets — the
+# score is an upper bound on what has actually been established.
+
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+
+MIN=""; WANT=""; DUMP=""
+while (( $# )); do
+    case "$1" in
+        --min)  MIN="${2:?--min needs a number}"; shift ;;
+        --dump) DUMP="${2:?--dump needs a directory}"; shift ;;
+        -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+        -*) echo "test-comprehension: unknown option: $1" >&2; exit 2 ;;
+        *)  WANT="$1" ;;
+    esac
+    shift
+done
+
+WORK=$(mktemp -d) || exit 1
+trap 'rm -rf "$WORK"' EXIT
+
+# ── the trace, from devtools/coverage rather than from a second run ──────
+#
+# Asking coverage for its tables instead of re-deriving them means the two
+# instruments cannot disagree about the same run. They did once: the summary
+# said bin/bt-trace was at 100% while --uncovered named an uncovered line,
+# because the numerator was a count and not an intersection.
+if [[ -n "$DUMP" ]]; then
+    COV="$DUMP"
+else
+    COV="$WORK/cov"
+    echo "running the suite under trace (devtools/coverage --dump)..." >&2
+    devtools/coverage --quiet --dump "$COV" >/dev/null 2>&1 || {
+        echo "test-comprehension: coverage run failed; cannot measure" >&2; exit 2; }
+fi
+for t in coverable-lines covered-lines; do
+    [[ -s "$COV/$t" ]] || { echo "test-comprehension: $COV/$t missing or empty" >&2; exit 2; }
+done
+
+# ── the units, derived from install.sh — complete by construction ────────
+#
+# The same derivation guard_names uses in tests/run-tests, and for the same
+# reason: install.sh knows every file this project ships, whereas a list of
+# call sites or a glob knows only what somebody remembered. Shared awk
+# libraries are excluded — they are measured by devtools/awk-coverage, which
+# reports statements rather than modes.
+units() {
+    awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' install.sh \
+    | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"' \
+    | sed 's|.*\$SRC/||; s|"||' \
+    | grep -vE '\.awk$|^tools/lib/|\.service$|\.timer$|\.conf$|\.rules$|\.tsv$' \
+    | sort -u
+}
+mapfile -t UNITS < <(units)
+# An empty derivation is a refusal, not a pass — the rule this repository
+# arrived at after five checks that reported success over nothing.
+if (( ${#UNITS[@]} < 20 )); then
+    echo "test-comprehension: derived only ${#UNITS[@]} unit(s) from install.sh" >&2
+    echo "                    refusing to report comprehensiveness over nothing" >&2
+    exit 2
+fi
+
+# Which BT_* seams the suite drives. Read once; a seam is "exercised" when the
+# suite sets it anywhere, because a seam set for one unit is set for every unit
+# that reads it.
+SEAMS_DRIVEN=$(grep -ohE '\bBT_[A-Z0-9_]+=' tests/run-tests | sort -u | tr -d '=')
+
+printf '%-30s %-9s %-9s %-9s %-9s %s\n' unit modes refusals seams branches score
+printf '%s\n' "──────────────────────────────────────────────────────────────────────────────"
+
+: > "$WORK/rows"; : > "$WORK/gaps"; : > "$WORK/unmeasured"
+for u in "${UNITS[@]}"; do
+    [[ -f "$u" ]] || continue
+    [[ -z "$WANT" || "$u" == *"$WANT"* ]] || continue
+
+    # ── MODES: the labels of the argument dispatch, and nothing else ─────
+    #
+    # Anchored on the case whose subject is $1, so nested classification cases
+    # — bt-trial's survived/failed, bt-diagnose's verdicts — are not counted as
+    # modes. Those are outcomes, and they are already measured as branches.
+    awk -v file="$u" '
+        function trim(x) { sub(/^[ \t]+/, "", x); sub(/[ \t]+$/, "", x); return x }
+        !inc && /^[ \t]*case[ \t]+"?\$\{?1[:}"]?/ {
+            inc = 1; depth = 0; ind = match($0, /[^ \t]/); next
+        }
+        inc {
+            t = trim($0)
+            if (t ~ /^case /) { depth++; next }
+            if (t ~ /^esac/)  { if (depth == 0) { inc = 0 } else depth--; next }
+            if (depth > 0) next
+            # A LABEL LINE, matched tightly. The first draft used "starts with
+            # a non-space and contains a )", which matched `if (( journal_ok`
+            # and every echo with a bracket in it — a mode list full of prose.
+            # A case label is one or more shell patterns joined by |, then `)`,
+            # and the pattern alphabet is small.
+            if (t ~ /^[A-Za-z0-9_*?.\/-]+(\|[A-Za-z0-9_*?.\/-]+)*\)/) {
+                lbl = t; sub(/\).*/, "", lbl)
+                print FNR "\t" lbl
+            }
+        }
+    ' "$u" > "$WORK/modes"
+
+    nmode=0; nmode_hit=0; modegap=""
+    if [[ -s "$WORK/modes" ]]; then
+        # A mode is exercised when any line between its label and the next was
+        # traced. The label itself is never traced — it is a pattern, not a
+        # command — so the branch body is the only evidence there is.
+        mapfile -t MLINES < <(cut -f1 "$WORK/modes")
+        mapfile -t MNAMES < <(cut -f2 "$WORK/modes")
+        for i in "${!MLINES[@]}"; do
+            lo=${MLINES[$i]}
+            hi=$(( ${MLINES[$((i+1))]:-0} ))
+            (( hi == 0 )) && hi=$(( lo + 40 ))
+            nmode=$((nmode + 1))
+            # `>= lo`, not `> lo`. A one-line branch — `protocol) protocol ;;`
+            # or `*) usage; exit 1 ;;` — has its body ON the label line, and an
+            # exclusive bound reported both of bt-trial's as never exercised
+            # while the suite was driving them. For a label on its own line the
+            # bound costs nothing: a bare pattern is never traced.
+            if awk -F'\t' -v f="$u" -v a="$lo" -v b="$hi" \
+                   '$1 == f && $2 >= a && $2 < b { found = 1 } END { exit !found }' \
+                   "$COV/covered-lines"; then
+                nmode_hit=$((nmode_hit + 1))
+            else
+                modegap="$modegap ${MNAMES[$i]}"
+            fi
+        done
+    fi
+
+    # ── REFUSALS: every non-zero exit, and whether anything reached it ───
+    nref=0; nref_hit=0; refgap=""
+    while read -r ln; do
+        [[ -n "$ln" ]] || continue
+        nref=$((nref + 1))
+        # `exit 0` inside a RULE does not end the program: awk jumps to END,
+        # and END's own exit status wins. The first draft used it and every
+        # refusal in the repository read as never-driven.
+        if awk -F'\t' -v f="$u" -v n="$ln" \
+               '$1 == f && $2 == n { found = 1 } END { exit !found }' \
+               "$COV/covered-lines"; then
+            nref_hit=$((nref_hit + 1))
+        else
+            refgap="$refgap $ln"
+        fi
+    done < <(grep -nE '(^|[ \t;&|])exit[ \t]+[1-9]' "$u" | cut -d: -f1 \
+             | while read -r c; do
+                   # An `exit 1` inside an EMBEDDED AWK PROGRAM is awk leaving,
+                   # not the tool refusing. Those lines are already known: they
+                   # are the ones devtools/coverage excludes as program bodies,
+                   # so the filter is the exclusion list rather than a second
+                   # guess about where quoting starts and ends.
+                   awk -F'\t' -v f="$u" -v n="$c" \
+                       '$1 == f && $2 == n { found = 1 } END { exit !found }' \
+                       "$COV/excluded-lines" || echo "$c"
+               done)
+
+    # ── SEAMS: every BT_* the unit reads, and whether the suite drives it ─
+    nseam=0; nseam_hit=0; seamgap=""
+    for v in $(grep -ohE '\$\{BT_[A-Z0-9_]+' "$u" | sed 's/\${//' | sort -u); do
+        nseam=$((nseam + 1))
+        if grep -qx "$v" <<<"$SEAMS_DRIVEN"; then nseam_hit=$((nseam_hit + 1))
+        else seamgap="$seamgap $v"; fi
+    done
+
+    # ── BRANCHES: ordinary line coverage, from the same tables ───────────
+    read -r cov tot < <(awk -F'\t' -v f="$u" '
+        FNR == NR { if ($1 == f) c++; next }
+        $1 == f { t++ }
+        END { print c + 0, t + 0 }' "$COV/covered-lines" "$COV/coverable-lines")
+
+    pct() { (( $2 == 0 )) && echo "—" || awk -v a="$1" -v b="$2" 'BEGIN{printf "%d%%", 100*a/b}'; }
+    # The score is the WEAKEST dimension, not the average. A unit whose every
+    # line ran but whose refusals were never driven is not 75% verified; it is
+    # a unit with untested refusals, and averaging hides exactly that.
+    worst=100; measured=0
+    for pair in "$nmode_hit:$nmode" "$nref_hit:$nref" "$nseam_hit:$nseam" "$cov:$tot"; do
+        a=${pair%%:*}; b=${pair##*:}
+        (( b == 0 )) && continue
+        measured=$((measured + 1))
+        v=$(( 100 * a / b )); (( v < worst )) && worst=$v
+    done
+    # A UNIT WITH NOTHING MEASURED IS NOT A UNIT AT 100%.
+    #
+    # bin/bt-capture scored 100% on its first run with 0/0 in every column: it
+    # is PYTHON, and neither devtools/coverage (shell) nor devtools/awk-coverage
+    # measures it, so there was nothing to be right about. That is the
+    # empty-input failure this repository has now met six times, produced by
+    # the instrument written to detect it.
+    if (( measured == 0 )); then
+        lang=$(head -1 "$u" | sed -E "s|^#!||; s|.*/env +||; s|.*/||; s| .*||")
+        printf '%-30s %-9s %-9s %-9s %-9s %s\n' "$u" "—" "—" "—" "—" \
+            "UNMEASURED (${lang:-unknown})" >> "$WORK/unmeasured"
+        continue
+    fi
+
+    printf '%-30s %-9s %-9s %-9s %-9s %d%%\n' "$u" \
+        "$nmode_hit/$nmode" "$nref_hit/$nref" "$nseam_hit/$nseam" "$cov/$tot" "$worst" \
+        >> "$WORK/rows"
+    # A LITERAL DASH FOR AN EMPTY FIELD, because tab is IFS *whitespace* and a
+    # run of IFS whitespace is one delimiter — so `read` silently collapsed
+    # \t\t and every gap label below was attributed to the wrong dimension.
+    printf '%d\t%s\t%s\t%s\t%s\n' "$worst" "$u" \
+        "${modegap:--}" "${refgap:--}" "${seamgap:--}" >> "$WORK/gaps"
+done
+
+sort -t% -k1 -n "$WORK/rows" 2>/dev/null | sort -n -k6 | head -100
+echo
+if [[ -s "$WORK/unmeasured" ]]; then
+    echo "not measurable by these instruments — a language nothing here traces"
+    echo "──────────────────────────────────────────────────────────────────────────────"
+    cat "$WORK/unmeasured"
+    echo
+fi
+
+# ── the gaps, named ──────────────────────────────────────────────────────
+# A score without the specific hole is a ranking, and a ranking improves by
+# testing whatever is cheapest. The list of what was never driven is the part
+# that changes what anyone does next.
+echo "never exercised"
+echo "──────────────────────────────────────────────────────────────────────────────"
+sort -n "$WORK/gaps" | while IFS=$'\t' read -r sc unit mg rg sg; do
+    [[ "$mg$rg$sg" == "---" ]] && continue
+    printf '%s\n' "$unit"
+    [[ "$mg" != "-" ]] && printf '    modes     %s\n' "$(echo "$mg" | tr -s ' ')"
+    [[ "$rg" != "-" ]] && printf '    refusals  line(s)%s\n' "$rg"
+    [[ "$sg" != "-" ]] && printf '    seams     %s\n' "$(echo "$sg" | tr -s ' ')"
+done
+
+TOTAL=$(awk '{ s += $1; n++ } END { if (n) printf "%d", s/n; else print 0 }' "$WORK/gaps")
+WEAKEST=$(sort -n "$WORK/gaps" | head -1 | cut -f1)
+echo
+printf 'units measured: %d   mean weakest-dimension score: %d%%   worst unit: %d%%\n' \
+       "$(grep -c . "$WORK/gaps")" "${TOTAL:-0}" "${WEAKEST:-0}"
+
+if [[ -n "$MIN" ]]; then
+    if (( ${WEAKEST:-0} < MIN )); then
+        echo "test-comprehension: a unit scores ${WEAKEST}%, below the floor of ${MIN}%" >&2
+        exit 1
+    fi
+    echo "every unit is at or above the ${MIN}% floor"
+fi
