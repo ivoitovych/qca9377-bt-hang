@@ -101,3 +101,73 @@ places where the prose has drifted behind the code — the exact failure mode
   "+0 s never tested" table is exactly the right shape, and the warning that
   `BTUSB_QCA_ROME` can brick setup if the module is not a true ROME variant
   is the kind of caveat most fix-proposals omit.
+
+#### §1.1 addendum — coverage claim could not be re-measured
+
+Attempting to verify README's "18.3%" coverage figure: `devtools/coverage`
+**exits 2 on this HEAD** because its exclusion list is stale — it reports
+three lines as "EXCLUDED but executed by the suite" (`tests/run-tests:1208`,
+`tools/bt-trial:613`, `tools/bt-trial:615`) and refuses to print a total.
+Filed as finding §5.x under devtools; consequence here is that the README
+coverage number is both stale *and* currently unre-measurable with the
+repo's own tool.
+
+### 1.2 `HISTORY.md`
+
+Read in full (1763 lines). As a document class this is exceptional: wrong
+turns are preserved, corrections are dated, and the "Lessons added" blocks
+distil each failure into a rule. The findings are about internal
+consistency, not about the narrative.
+
+- **[MED] "Current state" section is five days stale and contradicts the
+  repository's present position.** The section titled "Current state"
+  (lines 278–294) sits between Phase 8 and Phase 9 and freezes the world as
+  of 2026-08-10 07:40: "Root cause identified ✅ confirmed", "nothing has
+  hung since the power-off". Both were overturned by later phases (Phase 16
+  demoted the mechanism claim; five hangs followed). A reader who lands
+  here by search — and "current state" is exactly what one searches for —
+  gets the refuted 2026-08-10 world presented in the present tense with no
+  banner. Retitle it ("State as of end of Phase 8, 2026-08-10 — superseded")
+  or add the same ⚠️-correction header used elsewhere in the file.
+
+- **[LOW] Early phases carry later-refuted claims without forward pointers,
+  inconsistently with the file's own convention.** The document *does*
+  annotate some superseded passages in place (Phase 2's modinfo caveat,
+  Phase 18's "⚠️ This paragraph originally overreached"). But Phase 1's
+  foundational blockquote ("stage 1 … ~6 hours before decaying", "A warm
+  reboot does not drop the M.2 power rail") and Phase 2/3's mechanism
+  description (`btusb_qca_cmd_timeout()` after "5 consecutive" timeouts;
+  watchdog threshold "3 rather than the kernel's 5"; `USBDEVFS_RESET` "the
+  same ioctl") are all later corrected — Phases 9, 16 and 17 respectively —
+  yet carry no marker. Chronology is a defensible design, but the file
+  already mixes in-place corrections with chronological ones; a one-line
+  "(superseded — see Phase 16)" on the known-wrong statements would cost
+  nothing and match README's treatment of refuted content.
+
+- **[LOW] Dangling commit reference.** Phase 5 says the 14 review findings
+  were "all fixed in `4c4047d`" — that hash does not exist in this
+  repository's history (checked with `git cat-file`; `fd24995` and
+  `1990a45`, cited in Phases 22 and 23, do exist). Presumably lost in a
+  history rewrite during publication. Either update the hash or drop it.
+
+- **[NOTE] The README `BT_EARLY` ratio inconsistency (§1.1) is resolvable
+  from this file.** Phase 12 uses the form "`cancel_request() Abort` 4/4,
+  `Suspend` 2/2, `avdtp_connect_cb` 5/5 occurrences **fell in boots that
+  hung**" — i.e. the notation is hung-boot-appearances *of* total, which
+  makes README's "3/9 too noisy" coherent (3 of 9 in hung boots) and makes
+  README's stated definition ("appearances overall vs. appearances in boots
+  that hung") backwards, and its `avdtp_close failed` **4/3** the
+  transposed datum. The fix is to correct README's definition order and the
+  4/3 figure against whatever produced Phase 12's numbers.
+
+- **[NOTE] Retained-boot counts drift across phases (34 → 18 → 23 → 22).**
+  These are all correct at their respective times (journald retention rolls,
+  and Phase 18a documents the deletion), but nothing in the text of Phases
+  24–25 reminds the reader why the denominator changed since Phase 18a.
+  Fine as is; flagged only so nobody "fixes" the numbers into agreement.
+
+- **[GOOD] The lessons are mechanised, not just recorded.** Repeatedly the
+  file notes that writing a lesson down did not prevent recurrence, and the
+  fix was moving the rule into a tool or test (the 2×2 in `bt-trial`, the
+  awk-`-f` grep in `run-tests`, provenance from unit names). That loop —
+  lesson → invariant — is the repository's most transferable practice.
