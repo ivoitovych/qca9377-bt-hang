@@ -134,6 +134,24 @@ if (( ${GUARD_N:-0} < 20 )); then
     exit 2
 fi
 
+# ── ONE TEMP ROOT, SO CLEANUP IS BY CONSTRUCTION ─────────────────────────
+#
+# This file calls mktemp in 80 places. Three of them were cleaned up, by three
+# separate EXIT traps that overwrote each other; the other 77 have leaked into
+# /tmp on every run, on every machine, since they were written — sixteen
+# directories per run, measured. On the investigation machine, which has run
+# this suite dozens of times while carrying a months-long experiment, that is
+# the kind of quiet accumulation that eventually fills a disk during a trial.
+#
+# Registering 77 paths by hand is the failure mode this repository has been
+# burned by four times over, and it would be wrong again the first time someone
+# added the 78th. So the rule is about the language instead: point TMPDIR at one
+# suite-owned directory BEFORE anything else runs, and every mktemp in this file
+# — and in every tool it drives — lands inside it. Removing that one directory
+# removes all of them, including the ones nobody has written yet.
+SUITE_TMP=$(mktemp -d)
+export TMPDIR="$SUITE_TMP"
+
 GUARD=$(mktemp -d)
 mkdir -p "$GUARD/bin"
 GUARD_LOG="$GUARD/calls.log"; : > "$GUARD_LOG"
@@ -174,7 +192,44 @@ DECOYSTUB
 done < <(guard_names)
 
 export PATH="$GUARD/bin:$PATH:$GUARD/decoy"
-trap 'rm -rf "$GUARD"' EXIT
+
+# ── ONE EXIT TRAP, BECAUSE BASH ONLY HAS ONE ─────────────────────────────
+#
+# A SECOND `trap ... EXIT` REPLACES THE FIRST — it does not add to it. This file
+# set three, so the two written later silently discarded this one and $GUARD —
+# a temp tree holding the PATH guard's stubs and decoys — was never removed. It
+# has leaked one directory per run, on every machine, since the guard was added.
+# Nothing noticed because a leak is invisible from inside the thing leaking.
+#
+# So cleanups REGISTER here instead of installing their own trap, and there is a
+# source-level invariant near the end of this file that no second EXIT trap is
+# added. A list of paths cannot be replaced by forgetting.
+CLEANUP_PATHS=("$SUITE_TMP")   # $GUARD and all 79 other mktemps live inside it
+
+# THE OTHER HALF OF WHY THIS IS A TRAP AND NOT A LINE AT THE END.
+#
+# The three checks that compare the real machine before and after — the evidence
+# tree, the trial state, and /usr/bin — used to be straight-line code at the
+# bottom. A run that did not REACH the bottom therefore reported nothing, and
+# the maintainer's suite was killed mid-run today: the one run most likely to
+# have left something half-done was the one run that said nothing about it.
+#
+# bash runs an EXIT trap on SIGTERM (verified: rc=143 and the trap fires), so
+# this covers the ordinary kill. REPORTED makes it idempotent — the normal path
+# calls the report explicitly before the summary, so its findings still land in
+# `fail` and still set the exit status; the trap is the fallback for every path
+# that never gets there.
+REPORTED=0
+on_exit() {
+    if (( ! REPORTED )) && declare -F final_resource_report >/dev/null; then
+        echo
+        echo "  ** RUN DID NOT FINISH — interrupted, or exited early. The checks"
+        echo "     below are the only account of what it touched. **"
+        final_resource_report
+    fi
+    (( ${#CLEANUP_PATHS[@]} )) && rm -rf "${CLEANUP_PATHS[@]}"
+}
+trap on_exit EXIT
 
 # ── --section: print one block instead of all of them ─────────────────────
 #
@@ -277,6 +332,73 @@ bin_footprint_diff() {   # <before> <after> — names what changed, and how
 
 BIN_FOOTPRINT_BEFORE=$(real_bin_footprint)
 BIN_COUNT_BEFORE=$(grep -c . <<<"$BIN_FOOTPRINT_BEFORE" || true)
+
+# ── THE THREE REAL RESOURCES, COMPARED AGAINST THE SNAPSHOTS ABOVE ───────
+#
+# A FUNCTION, DEFINED HERE RATHER THAN AT THE BOTTOM, because it is also the
+# EXIT trap's fallback and a trap can only call what is already defined. It
+# used to be straight-line code at the end of the file, which meant a run that
+# was interrupted said nothing at all about what it had touched — and an
+# interrupted run is the one whose footprint you most want.
+#
+# Called explicitly on the normal path, before the summary, so its findings
+# still reach `fail` and the exit status. REPORTED keeps it single-shot.
+final_resource_report() {
+    (( REPORTED )) && return 0
+    REPORTED=1
+    # And the structural check is only worth what the observation behind it is
+    # worth, so observe it directly: the real evidence tree must hold exactly what
+    # it held before this suite started. Counted at the top of the file, compared
+    # here, after every trial in it has opened and closed.
+    SESSIONS_AFTER=$(ls -1 evidence/sessions 2>/dev/null | wc -l)
+    if [[ "$SESSIONS_AFTER" == "$SESSIONS_BEFORE" ]]; then
+        ok "evidence/sessions/ unchanged by the test run ($SESSIONS_AFTER entries)"
+    else
+        bad "the test run changed evidence/sessions/: $SESSIONS_BEFORE -> $SESSIONS_AFTER"
+        bad "  a test wrote into the real evidence tree; the newest entries are fabricated"
+    fi
+
+    # The same observation for the trial state, closing the window the startup
+    # refusal leaves open. Reports what it compared, so a footprint function that
+    # stops seeing anything reads as `open=no rows=0` rather than as a tick.
+    TRIAL_FOOTPRINT_AFTER=$(real_trial_footprint)
+    if [[ "$TRIAL_FOOTPRINT_AFTER" == "$TRIAL_FOOTPRINT_BEFORE" ]]; then
+        ok "real trial state unchanged by the test run ($(tr '\n' ' ' <<<"$TRIAL_FOOTPRINT_AFTER"))"
+    else
+        bad "the test run changed the REAL trial state:"
+        bad "  before: $(tr '\n' ' ' <<<"$TRIAL_FOOTPRINT_BEFORE")"
+        bad "  after:  $(tr '\n' ' ' <<<"$TRIAL_FOOTPRINT_AFTER")"
+        bad "  a live trial was opened, closed or recorded by this suite —"
+        bad "  the affected results row is fabricated by test stubs, not measured"
+    fi
+
+    # The system binaries, compared against the snapshot taken before anything ran.
+    #
+    # ENUMERATED == 0 IS A REFUSAL. An empty snapshot means find or -printf is not
+    # what this expects, and a comparison of nothing against nothing would tick —
+    # reporting "no binary was damaged" on the strength of never having looked. The
+    # suite has shipped that mistake before; it is a fail here, not a pass.
+    if (( ${BIN_COUNT_BEFORE:-0} == 0 )); then
+        bad "could not fingerprint /usr/bin — the system-binary check did not run"
+        bad "  (find -printf unavailable?) this check is the one that catches a"
+        bad "  farm written through, so a suite that cannot take it is not clean"
+    else
+        BIN_FOOTPRINT_AFTER=$(real_bin_footprint)
+        if [[ "$BIN_FOOTPRINT_AFTER" == "$BIN_FOOTPRINT_BEFORE" ]]; then
+            ok "no system binary changed while the suite ran ($BIN_COUNT_BEFORE checked)"
+        else
+            bad "the test run CHANGED system binaries under /usr/bin, /bin or /sbin:"
+            # Names the paths rather than the stat rows: a size/mtime diff is noise
+            # next to the one fact that matters, which file.
+            while IFS= read -r p; do bad "      $p"; done < <(
+                bin_footprint_diff "$BIN_FOOTPRINT_BEFORE" "$BIN_FOOTPRINT_AFTER")
+            bad "  something wrote THROUGH a symlink farm, or replaced a real tool."
+            bad "  Restore from the owning package before running anything else:"
+            bad "    dpkg -S <path>  then  apt-get install --reinstall <package>"
+        fi
+    fi
+}
+
 
 ok()   { echo "  ✓ $*"; pass=$((pass + 1)); }
 bad()  { echo "  ✗ $*"; fail=$((fail + 1)); }
@@ -520,7 +642,7 @@ echo "────────────────────────�
 # tolerance?" without consuming it reports zero unmatched in both directions and
 # announces that the paths agree — while the multiplicity is 2 against 1.
 FA=$(mktemp); FB=$(mktemp); OA=$(mktemp); OB=$(mktemp)
-trap 'rm -f "$FA" "$FB" "$OA" "$OB"' EXIT
+CLEANUP_PATHS+=("$FA" "$FB" "$OA" "$OB")   # registered, not trapped — see on_exit
 
 # The matcher lives in tools/lib/capdiff-match.awk and is used here exactly as
 # bt-capdiff uses it. Testing the real file rather than a copy extracted from
@@ -585,7 +707,7 @@ echo "────────────────────────�
 FIX=tests/trial-results.tsv
 [[ -r "$FIX" ]] || bad "missing $FIX"
 
-RD=$(mktemp -d); trap 'rm -rf "$FA" "$FB" "$OA" "$OB" "$RD"' EXIT
+RD=$(mktemp -d); CLEANUP_PATHS+=("$RD")
 mkdir -p "$RD/evidence/trials" && touch "$RD/install.sh" && git -C "$RD" init -q 2>/dev/null
 cp "$FIX" "$RD/evidence/trials/results.tsv"
 R1=$(BT_REPO="$RD" tools/bt-trial report 2>&1)
@@ -6815,6 +6937,27 @@ FARMF=$(grep -nE '^[^#]*ln -s.? +/(usr/)?bin/\*' "$0" | grep -v 'farm_dir')
     && ok "every symlink farm is built by farm_dir(), which is never written into" \
     || bad "a raw symlink farm — a later cp or > writes through the link: $(head -1 <<<"$FARMF")"
 
+# THE INVARIANT: exactly one EXIT trap in this file.
+#
+# bash has one. A second `trap ... EXIT` REPLACES the first rather than adding
+# to it, and this file had three — so the two later ones silently discarded the
+# cleanup of $GUARD, which leaked a directory per run on every machine for as
+# long as the guard has existed. Nothing noticed, because a leak is invisible
+# from inside the thing that leaks.
+#
+# The replacement is not "remember to compose": cleanups append to
+# CLEANUP_PATHS and the single trap owns them. This makes the rule mechanical,
+# because the next person to need a cleanup will reach for `trap` first — it is
+# the obvious thing, and it is silently destructive here.
+EXITT=$(grep -nE '^[^#]*\btrap\b[^#]*\bEXIT\b' "$0" | grep -v 'EXITT=')
+EXITN=$(grep -c . <<<"$EXITT" || true)
+if (( EXITN == 1 )); then
+    ok "exactly one EXIT trap — cleanups register in CLEANUP_PATHS instead of replacing it"
+else
+    bad "$EXITN EXIT traps in this file; a second one REPLACES the first and its cleanup is lost:"
+    while IFS= read -r l; do bad "      $l"; done <<<"$EXITT"
+fi
+
 # The ban above catches the SHAPE of the hazard, in one spelling, in this file.
 # The check at the end of this file catches the EFFECT — it fingerprints
 # /usr/bin before and after the run and fails if anything moved. That check is
@@ -6863,57 +7006,7 @@ else
     while IFS= read -r l; do echo "        $l"; done <<<"$LOOSE"
 fi
 
-# And the structural check is only worth what the observation behind it is
-# worth, so observe it directly: the real evidence tree must hold exactly what
-# it held before this suite started. Counted at the top of the file, compared
-# here, after every trial in it has opened and closed.
-SESSIONS_AFTER=$(ls -1 evidence/sessions 2>/dev/null | wc -l)
-if [[ "$SESSIONS_AFTER" == "$SESSIONS_BEFORE" ]]; then
-    ok "evidence/sessions/ unchanged by the test run ($SESSIONS_AFTER entries)"
-else
-    bad "the test run changed evidence/sessions/: $SESSIONS_BEFORE -> $SESSIONS_AFTER"
-    bad "  a test wrote into the real evidence tree; the newest entries are fabricated"
-fi
-
-# The same observation for the trial state, closing the window the startup
-# refusal leaves open. Reports what it compared, so a footprint function that
-# stops seeing anything reads as `open=no rows=0` rather than as a tick.
-TRIAL_FOOTPRINT_AFTER=$(real_trial_footprint)
-if [[ "$TRIAL_FOOTPRINT_AFTER" == "$TRIAL_FOOTPRINT_BEFORE" ]]; then
-    ok "real trial state unchanged by the test run ($(tr '\n' ' ' <<<"$TRIAL_FOOTPRINT_AFTER"))"
-else
-    bad "the test run changed the REAL trial state:"
-    bad "  before: $(tr '\n' ' ' <<<"$TRIAL_FOOTPRINT_BEFORE")"
-    bad "  after:  $(tr '\n' ' ' <<<"$TRIAL_FOOTPRINT_AFTER")"
-    bad "  a live trial was opened, closed or recorded by this suite —"
-    bad "  the affected results row is fabricated by test stubs, not measured"
-fi
-
-# The system binaries, compared against the snapshot taken before anything ran.
-#
-# ENUMERATED == 0 IS A REFUSAL. An empty snapshot means find or -printf is not
-# what this expects, and a comparison of nothing against nothing would tick —
-# reporting "no binary was damaged" on the strength of never having looked. The
-# suite has shipped that mistake before; it is a fail here, not a pass.
-if (( ${BIN_COUNT_BEFORE:-0} == 0 )); then
-    bad "could not fingerprint /usr/bin — the system-binary check did not run"
-    bad "  (find -printf unavailable?) this check is the one that catches a"
-    bad "  farm written through, so a suite that cannot take it is not clean"
-else
-    BIN_FOOTPRINT_AFTER=$(real_bin_footprint)
-    if [[ "$BIN_FOOTPRINT_AFTER" == "$BIN_FOOTPRINT_BEFORE" ]]; then
-        ok "no system binary changed while the suite ran ($BIN_COUNT_BEFORE checked)"
-    else
-        bad "the test run CHANGED system binaries under /usr/bin, /bin or /sbin:"
-        # Names the paths rather than the stat rows: a size/mtime diff is noise
-        # next to the one fact that matters, which file.
-        while IFS= read -r p; do bad "      $p"; done < <(
-            bin_footprint_diff "$BIN_FOOTPRINT_BEFORE" "$BIN_FOOTPRINT_AFTER")
-        bad "  something wrote THROUGH a symlink farm, or replaced a real tool."
-        bad "  Restore from the owning package before running anything else:"
-        bad "    dpkg -S <path>  then  apt-get install --reinstall <package>"
-    fi
-fi
+final_resource_report
 
 # ── WHAT THIS HOST COULD NOT ASK ─────────────────────────────────────────
 #

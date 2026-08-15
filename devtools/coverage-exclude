@@ -105,7 +105,7 @@ tools/bt-logvolume:98-102   # inline message normaliser; same
 tools/bt-trial:234-238      # inline treatment formatter; same
 tools/bt-trial:650-658      # inline summary selector; same
 tools/bt-verify-install:51-54   # inline install_file parser; same
-tests/run-tests:192-197       # inline --section extractor; same
+tests/run-tests:248-253       # inline --section extractor; same
 
 # Derived by scanning for quoted programs that open on one line and close on
 # another, NOT read off by eye — the two entries written by hand were both
@@ -162,7 +162,7 @@ tools/bt-health-report.sh:228-228  # no-baseline branch: exercised only through 
 # branches on every run. Mutating any one of the three turns that assertion red
 # — verified by doing it. The range starts one line INSIDE the program because
 # the construct is a pipeline, which bash traces at the line it opens on.
-tests/run-tests:268-274     # inline footprint differ; driven and pinned by the assertion above
+tests/run-tests:323-329     # inline footprint differ; driven and pinned by the assertion above
 
 # THE REPORTING LOOP runs only when a binary actually changed, which on an
 # undamaged machine is never — the same category as the `bad` lines section 3
@@ -170,4 +170,4 @@ tests/run-tests:268-274     # inline footprint differ; driven and pinned by the 
 # matches lines that BEGIN with `bad` and this loop calls it mid-line. Its
 # argument, the differ, is driven directly by the assertion above, so what is
 # unreachable is the printing and not the logic.
-tests/run-tests:6911-6912   # damage report: reached only when /usr/bin actually changed
+tests/run-tests:393-394     # damage report: reached only when /usr/bin actually changed
