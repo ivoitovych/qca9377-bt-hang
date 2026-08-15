@@ -85,6 +85,37 @@ It is an argument that **the direction of the patch's effect is unmeasured**, wh
 what `docs/issues.md` now says, and that Build B must be scored on whether it reaches
 stage 2 more often than untreated stock, not merely on whether it hangs.
 
+## This trial has no row in results.tsv, and the reason is a defect
+
+`bt-trial-auto`'s shutdown-triggered close ran at 05:08, wrote `state-after.txt`
+and `sco-params.txt`, and was then killed by systemd's stop timeout before it
+reached the results row. The auxiliary files survived; the record did not.
+
+The cause was an unbounded `journalctl -k -b 0` scan added to compute
+`enum_at_boot` after `EX-017`. On this boot — 6 h 35 m with dynamic debug
+enabled — that scan takes minutes, and it sits between the auxiliary files and
+the row. **The most important artifact was written last, so it was the first
+thing lost.** Fixed by bounding the scan to the first three minutes of the boot,
+which is the only window in which the controller can enumerate.
+
+**No row has been reconstructed by hand.** A hand-made row would be
+indistinguishable from a tool-produced one in a file whose whole value is that
+its rows were produced by the instrument. The facts are recoverable from the
+journal and recorded here instead:
+
+| | |
+|---|---:|
+| Boot | `22:33:05` → `05:10:18` |
+| HCI command timeouts | 7 |
+| SCO setups requested (`0x0428`) | 6 |
+| USB disconnects | 1 — the deliberate reset above |
+| Untreated window | 12107.392 s |
+| Reset → disconnect | 11.152 s |
+
+The consequence is a real gap: the `observational_boot` denominator is one short,
+and the A/B/C/D gate must account for that rather than assume the file is
+complete.
+
 ## Provenance
 
 | field | value |

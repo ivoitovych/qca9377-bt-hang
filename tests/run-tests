@@ -1220,6 +1220,28 @@ else
     ok "unreadable at open, readable at close is still CHANGED"
 fi
 
+
+# NO UNBOUNDED JOURNAL SCAN IN bt-trial's CLOSE PATH.
+#
+# The close writes auxiliary files first and the results row last. Anything slow
+# in between is a window in which a shutdown-triggered close can be killed with
+# the row unwritten — the most important artifact lost, the disposable ones
+# kept. That happened on 2026-08-15 and cost the record of the project's longest
+# untreated window (EX-023): an unbounded `journalctl -k -b 0` scan added for
+# enum_at_boot took minutes on a 6 h boot with dynamic debug on.
+#
+# Every whole-boot read in bt-trial must therefore be bounded — by --until, or
+# by --since, or by -n.
+UNBOUNDED=$(grep -n 'journalctl -k -b 0' tools/bt-trial \
+            | grep -v -- '--until' | grep -v -- '--since' | grep -v -- ' -n ' \
+            | grep -v "^[0-9]*:[[:space:]]*#")
+if [[ -z "$UNBOUNDED" ]]; then
+    ok "bt-trial's close path has no unbounded whole-boot journal scan"
+else
+    bad "unbounded journalctl -k -b 0 in bt-trial — a slow close loses the row:"
+    while IFS= read -r l; do echo "        $l"; done <<<"$UNBOUNDED"
+fi
+
     ok "every row in results.tsv matches the header width"
 else
     bad "results.tsv row/header width mismatch:"

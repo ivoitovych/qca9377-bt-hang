@@ -773,7 +773,28 @@ hang|ok)
     esac
     # Counted, for the pipefail reason above: `| grep -q` would have reported
     # `no` exactly when the controller HAD enumerated.
-    n_enum=$(journalctl -k -b 0 --no-pager 2>/dev/null \
+    #
+    # BOUNDED TO THE FIRST THREE MINUTES, AND THAT IS NOT AN OPTIMISATION.
+    #
+    # Unbounded, this scans the whole boot's kernel journal. On a long boot with
+    # dynamic debug enabled that is minutes of work, and it sits between the
+    # auxiliary files and the results row. During a shutdown-triggered close,
+    # systemd's stop timeout killed bt-trial here: state-after.txt and
+    # sco-params.txt survived, and the row — the actual record — did not.
+    #
+    # That is exactly the wrong thing to lose, and it lost the record of the
+    # project's longest untreated window (2026-08-15, 12107 s, EX-023). The
+    # controller either enumerates during startup or it is not there, so three
+    # minutes answers the question a whole-boot scan was answering slowly.
+    # --list-boots already carries boot 0's first timestamp, so this costs one
+    # index read rather than a journal scan.
+    boot_start=$(journalctl --list-boots --no-pager 2>/dev/null | awk '$1=="0"{print $4" "$5}')
+    enum_until=""
+    if [[ -n "$boot_start" ]]; then
+        bs=$(date -d "$boot_start" +%s 2>/dev/null) \
+            && enum_until=$(date -d "@$(( bs + 180 ))" '+%Y-%m-%d %H:%M:%S')
+    fi
+    n_enum=$(journalctl -k -b 0 ${enum_until:+--until "$enum_until"} --no-pager 2>/dev/null \
              | grep -c "idVendor=${BT_VID:-13d3}, idProduct=${BT_PID:-3503}" || true)
     if (( ${n_enum:-0} > 0 )); then
         enum_at_boot=yes
