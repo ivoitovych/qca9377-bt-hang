@@ -1,5 +1,13 @@
 # Comprehensive code review — 2026-08-15T1752Z
 
+**Covers:** the tree at `ed8216676e0f5d5473f9afefa805fd8a89f25268` —
+`main` and this review branch's base at the moment the review began
+("The close writes the record last, so the record is what a slow close
+loses"). Verified at review start via `git rev-parse HEAD origin/main`
+(both equal) and re-verified via `git merge-base`; see the addendum at the
+end of this file. Every line number, count and measurement below refers to
+that tree.
+
 Full-repository review, every file, in priority order. Findings are appended
 per item immediately after each item is reviewed, so nothing depends on
 reviewer memory. The overall summary is written last, after all items.
