@@ -4221,6 +4221,131 @@ CDNONE=$(env PATH="$CD/stub:$PATH" BT_TRACE_DIR="$CD/trace" BT_CAPTURE_DIR="$CD/
 tools/bt-capdiff --bogus >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-capdiff rejects an unknown argument" \
               || bad "bt-capdiff accepted an unknown argument"
+
+# ── bt-logvolume: every mode, because the mode CHANGES THE DENOMINATOR ───
+#
+# The tool reports a rate, and a rate is only meaningful against a stated
+# population. `--user` drops `-k` and counts the whole journal; `-b` moves to
+# another boot. Both change the number this tool exists to produce, and until
+# now only the default had ever been run — so five of six modes could have
+# silently counted the wrong population.
+#
+# The fixture carries a kernel log of 3 lines and a full journal of 6, so the
+# two populations are distinguishable by value rather than by inspection.
+LVF=tests/journal/logvolume
+lv() { BT_JOURNAL_FIXTURE="$LVF" tools/bt-logvolume "$@" 2>&1; }
+lv_total() { awk '/total lines/ {print $3}' <<<"$(lv "$@")"; }
+
+[[ "$(lv_total)" == 3 ]] \
+    && ok "bt-logvolume counts the KERNEL journal by default (3 of 6 lines)" \
+    || bad "default population wrong: $(lv_total)"
+[[ "$(lv_total --user)" == 6 ]] \
+    && ok "--user widens the population to the whole journal (6 lines)" \
+    || bad "--user did not change the population: $(lv_total --user)"
+[[ "$(lv_total -b -1)" == 1 ]] \
+    && ok "-b selects another boot, and the count follows it" \
+    || bad "-b did not move to the previous boot: $(lv_total -b -1)"
+
+# -n bounds the table, not the total. A flag that quietly changed the total
+# would make two runs of the same boot disagree.
+LVN1=$(lv -n 1); LVN9=$(lv -n 9)
+lvrows() { awk '/^ *[0-9]+ / {n++} END {print n+0}' <<<"$1"; }
+(( $(lvrows "$LVN1") <= $(lvrows "$LVN9") )) \
+   && [[ "$(awk '/total lines/ {print $3}' <<<"$LVN1")" == "3" ]] \
+    && ok "-n bounds the listed rows without changing the total" \
+    || bad "-n changed the total or did not bound the rows"
+
+# --since is journald's filter, not this tool's arithmetic: under a fixture it
+# has nothing to filter. Asserted as ACCEPTED rather than as effective, because
+# claiming to test the filtering here would be testing the seam.
+LVS=$(lv --since "2026-08-10 00:00:00"); lvsrc=$?
+(( lvsrc == 0 )) && [[ "$LVS" == *"total lines"* ]] \
+    && ok "--since is accepted and still produces a report" \
+    || bad "--since broke the run (rc=$lvsrc)"
+
+LVH=$(lv --help); lvhrc=$?
+(( lvhrc == 0 )) && [[ "$LVH" == *"bt-logvolume"* ]] \
+    && ok "bt-logvolume --help prints its own usage" \
+    || bad "--help failed (rc=$lvhrc)"
+lv --bogus >/dev/null 2>&1
+(( $? == 1 )) && ok "bt-logvolume rejects an unknown argument with exit 1" \
+              || bad "bt-logvolume accepted an unknown argument"
+
+# ── bt-capdiff: the window flags, on the tool that says whether the ──────
+# ── evidence is complete ─────────────────────────────────────────────────
+#
+# bt-capdiff decides whether either capture path LOST TRAFFIC. Narrowing to an
+# incident is how anyone would actually use it, and --since/--until/-n had
+# never been passed. A window flag that silently excluded everything would
+# report perfect agreement between two paths that agree about nothing — the
+# exact failure this tool already shipped once, from a different cause.
+CDW=$(cd_run capdiff-a capdiff-a --since "2026-08-10 12:00:00" --until "2026-08-10 12:00:05")
+[[ "$CDW" == *"agree"* || "$CDW" == *"agreement"* ]] \
+    && ok "bt-capdiff accepts an explicit window and still compares inside it" \
+    || bad "an explicit --since/--until window broke the comparison"
+
+# A window that excludes EVERYTHING must not read as agreement. Two empty sets
+# match perfectly, and that is the one answer this tool must never give
+# silently.
+CDE=$(cd_run capdiff-a capdiff-a --since "2030-01-01 00:00:00" --until "2030-01-02 00:00:00")
+[[ "$CDE" == *"No records fall inside the overlap"* && "$CDE" == *"coverage question, not agreement"* ]] \
+   && [[ "$CDE" != *"The paths agree"* ]] \
+    && ok "a window containing no records is a coverage question, not agreement" \
+    || bad "an empty overlap was reported as agreement — corroboration from nothing"
+[[ "$CDE" == *"window was narrowed explicitly"* ]] \
+    && ok "an empty overlap from an explicit window says the window was narrowed" \
+    || bad "the empty-overlap message did not distinguish a narrowed window"
+
+CDN=$(cd_run capdiff-dup-a capdiff-dup-b -n 1)
+[[ -n "$CDN" ]] \
+    && ok "bt-capdiff -n bounds how many unmatched records are listed" \
+    || bad "-n produced no report"
+CDH=$(tools/bt-capdiff --help 2>&1); cdhrc=$?
+(( cdhrc == 0 )) && [[ "$CDH" == *"bt-capdiff"* ]] \
+    && ok "bt-capdiff --help prints its own usage" \
+    || bad "bt-capdiff --help failed (rc=$cdhrc)"
+
+# ── bt-incident: the refusal that protects the evidence tree ────────────
+#
+# Its most important behaviour is where it REFUSES to write. Run from a tree
+# with no evidence/ beside it and no BT_EVIDENCE_REPO, it must stop rather than
+# create one somewhere arbitrary — the tool deposits kernel logs and pairing
+# exchanges, and the wrong directory is a disclosure, not a mess.
+#
+# Reached by copying the script into a temp tree, which is the only way: from
+# this checkout the fallback always finds evidence/ and the branch is
+# unreachable by construction.
+INCR=$(mktemp -d); mkdir -p "$INCR/tools"
+cp tools/bt-incident "$INCR/tools/"
+INCROUT=$(cd "$INCR" && ./tools/bt-incident no-evidence-tree 2>&1); increrc=$?
+(( increrc == 1 )) && [[ "$INCROUT" == *"has no evidence/ directory"* \
+                      && "$INCROUT" == *"set BT_EVIDENCE_REPO"* ]] \
+    && ok "bt-incident refuses to collect where there is no evidence tree" \
+    || bad "bt-incident did not refuse without an evidence tree (rc=$increrc)"
+[[ -z "$(find "$INCR" -name 'sessions' -type d 2>/dev/null)" ]] \
+    && ok "the refusal wrote nothing — no session directory was created" \
+    || bad "bt-incident created a session directory while refusing"
+
+# OPTIONS BEFORE THE SLUG. `SLUG="${1:?...}"` took the first argument
+# unconditionally, so `bt-incident --help` did not print usage — it COLLECTED
+# AN INCIDENT named `--help`, and so did every mistyped flag. Two real session
+# directories appeared in evidence/sessions/ the first time this assertion ran,
+# and the suite's own evidence-tree check is what named them.
+INCSESS_BEFORE=$(ls -1 evidence/sessions 2>/dev/null | wc -l)
+tools/bt-incident --bogus >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-incident rejects an unknown option with exit 2" \
+              || bad "bt-incident accepted an unknown option"
+INCH=$(tools/bt-incident --help 2>&1); inchrc=$?
+(( inchrc == 0 )) && [[ "$INCH" == *"bt-incident"* ]] \
+    && ok "bt-incident --help prints its own usage" \
+    || bad "bt-incident --help failed (rc=$inchrc)"
+tools/bt-incident >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-incident with no slug is a usage error, not a collection" \
+              || bad "bt-incident collected an incident with no slug"
+[[ "$(ls -1 evidence/sessions 2>/dev/null | wc -l)" == "$INCSESS_BEFORE" ]] \
+    && ok "no usage path collects anything — evidence/sessions/ is untouched" \
+    || bad "a usage or refusal path wrote a session directory"
+rm -rf "$INCR"
 rm -rf "$CD"
 
 # ── bt-trace / bt-usbmon: the two capture daemons, via --check ────────────
@@ -5375,6 +5500,183 @@ else
 fi
 
 rm -rf "$SR" "$SS" "$SS2" "$SRG" "$SRT" "$SRT2" "$SMS"
+
+
+echo
+echo "bt-window — the question asked WHILE an untreated window is running"
+echo "───────────────────────────────────────────────────────────────────"
+#
+# SHIPPED AND NEVER EXECUTED until this section. install.sh puts it on PATH; no
+# test had ever invoked it. The installer round trip covered its packaging,
+# which is exactly why nothing looked wrong.
+#
+# It is also the tool with the least margin for error in the whole project. It
+# is what an operator runs during a live untreated observation, and its answer
+# decides whether they keep their hands off the machine. Getting "no
+# intervention" wrong does not produce a wrong number later — it produces a
+# wasted window now, and windows are the scarcest thing this investigation has.
+#
+# THE SCENARIO SPACE, enumerated before any of it was written. bt-window takes
+# no arguments, so its modes are not verbs; they are the states of four
+# independent axes, and the verdict is a function of all four:
+#
+#   timeout this boot   none | present   (and BOTH spellings of the line)
+#   device on the bus   enumerated | gone (stage 2)
+#   USB lines since     silent | present
+#   intervention        none | tooling | operator | both
+#
+# Everything below is one of those cells, plus the exit-code contract and the
+# elapsed arithmetic.
+BW=$(mktemp -d); mkdir -p "$BW/bin"
+# journalctl is stubbed rather than seamed: bt-window is one of the ten tools
+# UT-10 has not converted, and it reads the kernel journal and the full journal
+# for different questions. The stub answers by which one was asked for. --since
+# is journald's filtering, not this tool's logic, so the fixtures are written as
+# the post-fault window directly.
+cat > "$BW/bin/journalctl" <<'BWJ'
+#!/bin/sh
+kern=0
+for a in "$@"; do [ "$a" = "-k" ] && kern=1; done
+if [ "$kern" = 1 ]; then cat "$BWDIR/kernel.log" 2>/dev/null
+else                     cat "$BWDIR/full.log"   2>/dev/null; fi
+exit 0
+BWJ
+printf '#!/bin/sh\ncat "$BWDIR/lsusb.txt" 2>/dev/null\nexit 0\n' > "$BW/bin/lsusb"
+chmod +x "$BW/bin"/*
+: > "$BW/kernel.log"; : > "$BW/full.log"; : > "$BW/lsusb.txt"
+
+bw() { PATH="$BW/bin:$PATH" BWDIR="$BW" tools/bt-window 2>&1; }
+bw_rc() { PATH="$BW/bin:$PATH" BWDIR="$BW" tools/bt-window >/dev/null 2>&1; echo $?; }
+bw_present() { printf 'Bus 003 Device 002: ID 13d3:3503 IMC Networks Bluetooth\n' > "$BW/lsusb.txt"; }
+bw_gone()    { : > "$BW/lsusb.txt"; }
+
+# ── axis 1: no timeout at all ────────────────────────────────────────────
+# There is no window, and saying so is not the same as saying "no
+# intervention" — a tool that reported a clean window here would invite an
+# operator to keep waiting for a fault that has not happened.
+bw_present
+BWNONE=$(bw); bwnonerc=$(bw_rc)
+(( bwnonerc == 0 )) && [[ "$BWNONE" == *"No HCI command timeout this boot"* \
+                       && "$BWNONE" == *"no window to report"* ]] \
+    && ok "bt-window reports the absence of a window rather than an empty one" \
+    || bad "no-timeout path wrong (rc=$bwnonerc)"
+[[ "$BWNONE" != *"no intervention"* ]] \
+    && ok "with no window open, no verdict about intervention is offered" \
+    || bad "bt-window judged a window that does not exist"
+
+# ── the two spellings of the fault line ──────────────────────────────────
+# The kernel writes `command tx timeout` when it could not name the opcode and
+# `command 0x0406 tx timeout` when it could. A pattern that sees one spelling
+# reports "no window" through a live fault — this repository has shipped that
+# bug in a counting expression four times.
+for form in "Bluetooth: hci0: command tx timeout" \
+            "Bluetooth: hci0: command 0x0406 tx timeout"; do
+    printf '2026-08-14T21:00:00.000000+02:00 host kernel: %s\n' "$form" > "$BW/kernel.log"
+    cp "$BW/kernel.log" "$BW/full.log"
+    BWF=$(bw)
+    [[ "$BWF" == *"HCI non-response window"* && "$BWF" == *"first timeout      2026-08-14T21:00:00"* ]] \
+        && ok "the window opens on '${form##*: }'" \
+        || bad "bt-window did not recognise: $form"
+done
+
+# ── the untreated window: the answer the operator is waiting for ─────────
+cat > "$BW/kernel.log" <<'BWK'
+2026-08-14T21:00:00.000000+02:00 host kernel: Bluetooth: hci0: command 0x0406 tx timeout
+2026-08-14T21:00:05.000000+02:00 host kernel: Bluetooth: hci0: command 0x0406 tx timeout
+2026-08-14T21:00:10.000000+02:00 host kernel: Bluetooth: hci0: command tx timeout
+BWK
+cp "$BW/kernel.log" "$BW/full.log"
+bw_present
+BWOK=$(bw); bwokrc=$(bw_rc)
+(( bwokrc == 0 )) && [[ "$BWOK" == *"✓ still enumerated"* && "$BWOK" == *"✓ USB layer silent"* \
+                     && "$BWOK" == *"✓ no intervention"* && "$BWOK" == *"Do not touch Bluetooth"* ]] \
+    && ok "an untreated running window reports clean on all three axes, exit 0" \
+    || bad "the untreated verdict is wrong (rc=$bwokrc)"
+[[ "$BWOK" == *"command timeouts   3"* ]] \
+    && ok "every timeout is counted, not just the first" \
+    || bad "the timeout count is wrong"
+[[ "$BWOK" == *"elapsed"* ]] && [[ "$BWOK" != *"elapsed            ?s"* ]] \
+    && ok "the elapsed window is computed with the shipped interval arithmetic" \
+    || bad "elapsed was not computed"
+
+# ── axis 2: gone from the bus is stage 2, and it is the finding ─────────
+bw_gone
+BWG=$(bw); bwgrc=$(bw_rc)
+(( bwgrc == 1 )) && [[ "$BWG" == *"GONE FROM THE BUS"* && "$BWG" == *"stage 2 reached"* ]] \
+    && ok "a controller off the bus is reported as stage 2, exit 1" \
+    || bad "stage-2 detection wrong (rc=$bwgrc)"
+[[ "$BWG" != *"Do not touch Bluetooth"* ]] \
+    && ok "once the device is gone the advice to keep waiting is withdrawn" \
+    || bad "bt-window told the operator to keep waiting after stage 2"
+bw_present
+
+# ── axis 3: USB-layer traffic since the fault ───────────────────────────
+# Silence at the USB layer IS the finding — it is what "HCI dead, transport
+# healthy" looks like — so noise there has to be surfaced rather than averaged
+# away.
+# Appended to the KERNEL log, which is where bt-window counts USB lines from
+# (`journalctl -k`). The first draft put it in the full journal, where the tool
+# looks for interventions and not for bus traffic — a fixture that exercised
+# the wrong axis and reported the right tool as broken.
+cp "$BW/kernel.log" "$BW/kernel-usb.log"
+printf '2026-08-14T21:05:00.000000+02:00 host kernel: usb 3-3: reset full-speed USB device number 2\n' >> "$BW/kernel-usb.log"
+cp "$BW/kernel-usb.log" "$BW/kernel.log"; cp "$BW/kernel.log" "$BW/full.log"
+BWU=$(bw)
+[[ "$BWU" == *"USB-layer line(s)"* && "$BWU" == *"read them before concluding"* ]] \
+    && ok "USB-layer traffic after the fault is surfaced, not summarised away" \
+    || bad "a USB-layer line since the fault was not reported"
+# Back to a silent kernel log: the intervention scenarios below assert on the
+# intervention axis and must not inherit this one's noise.
+sed -i '/reset full-speed USB device/d' "$BW/kernel.log"
+
+# ── axis 4: intervention, in BOTH classes ───────────────────────────────
+#
+# THE REGRESSION THIS TOOL WAS CORRECTED FOR. The first version matched only
+# our own tooling. On 2026-08-14 the operator toggled Bluetooth off in the
+# Settings panel 30 minutes into an untreated window; nothing here matched, so
+# it printed "✓ no intervention" about a window that had just been intervened
+# upon — and kept printing it after the device left the bus. An operator action
+# is an intervention, and the ones a person can reach without a terminal are
+# exactly the ones a tool watching for `modprobe -r` will never see.
+cp "$BW/kernel.log" "$BW/full.log"
+printf '2026-08-14T21:10:00.000000+02:00 host kernel: usbcore: deregistering interface driver btusb\n' >> "$BW/full.log"
+BWT=$(bw); bwtrc=$(bw_rc)
+(( bwtrc == 1 )) && [[ "$BWT" == *"INTERVENTION(S)"* && "$BWT" == *"CENSORED, not a measurement"* \
+                    && "$BWT" == *"tooling (watchdog / btusb unload / USB reset)"* ]] \
+    && ok "a tooling intervention censors the window and is named as tooling" \
+    || bad "tooling intervention not detected (rc=$bwtrc)"
+
+cp "$BW/kernel.log" "$BW/full.log"
+printf '2026-08-14T21:10:00.000000+02:00 host bluetoothd[900]: src/rfkill.c:rfkill_event() RFKILL event idx 1 type 2 op 2 soft 1 hard 0\n' >> "$BW/full.log"
+BWO=$(bw); bworc=$(bw_rc)
+(( bworc == 1 )) && [[ "$BWO" == *"CENSORED"* && "$BWO" == *"operator (rfkill / Settings toggle)"* ]] \
+    && ok "an operator toggle censors the window and is named as operator" \
+    || bad "the 2026-08-14 miss is back: an operator action read as no intervention (rc=$bworc)"
+
+cp "$BW/kernel.log" "$BW/full.log"
+printf '2026-08-14T21:10:00.000000+02:00 host kernel: usbcore: deregistering interface driver btusb\n' >> "$BW/full.log"
+printf '2026-08-14T21:11:00.000000+02:00 host bluetoothd[900]: Error when powering off device on rfkill: Connection timed out\n' >> "$BW/full.log"
+BWB=$(bw)
+[[ "$BWB" == *"tooling"* && "$BWB" == *"operator"* && "$BWB" == *"2 INTERVENTION(S)"* ]] \
+    && ok "both classes are counted and reported separately, not merged" \
+    || bad "the two intervention classes were not distinguished"
+[[ "$BWB" == *"time-to-intervention, NOT time-to-USB-loss"* ]] \
+    && ok "a censored window says which quantity it actually measured" \
+    || bad "a censored window did not say what its elapsed time means"
+
+# ── the exit-code contract, which is what a script would branch on ──────
+# Documented as "exit 0 while the device is still enumerated, 1 once it has
+# left the bus" — but the code also exits 1 when the device is PRESENT and the
+# window has been intervened upon, which is the more useful contract and the
+# one asserted here: exit 0 means "still worth waiting on".
+cp "$BW/kernel.log" "$BW/full.log"
+printf '2026-08-14T21:10:00.000000+02:00 host kernel: usbcore: deregistering interface driver btusb\n' >> "$BW/full.log"
+bw_present
+(( $(bw_rc) == 1 )) \
+    && ok "exit 0 means 'untreated and still running', not merely 'still on the bus'" \
+    || bad "an intervened-upon window still exited 0"
+
+rm -rf "$BW"
 
 echo
 echo "bt-context — what sits next to a failure that nothing here explains"
