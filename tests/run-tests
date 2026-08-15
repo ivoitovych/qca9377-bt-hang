@@ -1358,6 +1358,24 @@ echo "────────────────────────�
 WIDTH=$(awk -F'\t' 'NR==1{n=NF; next} NF && NF!=n {print NR": "NF" vs "n}' \
         evidence/trials/results.tsv 2>/dev/null)
 if [[ -z "$WIDTH" ]]; then
+    ok "every row in results.tsv matches the header width"
+else
+    bad "results.tsv row/header width mismatch:"
+    while IFS= read -r l; do echo "        line $l fields"; done <<<"$WIDTH"
+fi
+
+# ── EVERYTHING BELOW WAS NESTED INSIDE THE WIDTH CHECK ABOVE ─────────────
+#
+# The `if [[ -z "$WIDTH" ]]` opener sat a hundred lines above its own `ok`,
+# with these invariants in between — written at column 0, so they read as
+# top-level code. One malformed row in results.tsv would have skipped all of
+# them silently, including both whole-boot-scan checks, and the suite would
+# have reported a smaller total that nobody had reason to question. It is the
+# silent-skip family again, in the file that hunts it.
+#
+# Found by the 2026-08-15T1752Z review, which counted five. There were more by
+# the time it was fixed, because I added two to the same block without noticing
+# it was a branch. The width check now closes where it opens.
 
 # UNREADABLE IS NOT CHANGED — and the difference decides a denominator.
 #
@@ -1462,11 +1480,6 @@ else
     fi
 fi
 
-    ok "every row in results.tsv matches the header width"
-else
-    bad "results.tsv row/header width mismatch:"
-    while IFS= read -r l; do echo "        line $l fields"; done <<<"$WIDTH"
-fi
 
 # And the producer's header must carry the columns the producer writes. A row
 # printf and a header printf that drift apart is the same defect arriving by a
