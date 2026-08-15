@@ -712,3 +712,105 @@ tool failed)", consistent with §5's HIGH finding.
 - **[NOTE] The register's coverage trend footnote (85.0% at `251a6cb`)
   is the number README's "18.3%" should be quoting** — the front page is
   not just stale, it understates the repo's own achievement by 4–5×.
+
+## 7. Evidence corpus — `evidence/`
+
+Read: `evidence/README.md`, `evidence/exhibits/README.md` + spot-read
+exhibits (EX-015, EX-018, EX-023 headers), `baseline/baseline.tsv`,
+`trials/results.tsv` in full, session directory structure. Sanitisation
+verified via `devtools/repo-scan . --all` (clean) — only placeholder-space
+addresses appear anywhere in the tree.
+
+- **[MED] Half the observational denominator is excluded by a
+  since-fixed classifier bug, and the row was never re-emitted.**
+  `evidence/trials/results.tsv` holds two data rows. Row 2 (trial stock
+  #2, 2026-08-14, the 30-minute untreated window of EX-021/EX-022) carries
+  `treatment=CHANGED:…power=auto->…power=?` — the exact "device-absent
+  reads as treatment change" misclassification that HISTORY Phase 26
+  documents and that `bt-trial` has since fixed (`treatment_only_became_
+  unreadable`, with a test). The fix corrected the classifier, not the
+  record: the row still pools with nothing and is excluded from every
+  rate, so the observational record is currently 1 usable row of 2 — and
+  trial stock #3's row was lost separately (documented in the final
+  commit). The repo's no-hand-editing rule is right, but this needs a
+  *tool-mediated* re-emission (or a documented standing correction the
+  report applies), otherwise the A/B/C/D gate reads a denominator that
+  silently omits the two most informative failures.
+
+- **[LOW] EX-018's index row has an empty claim cell.** The exhibit was
+  annotated (correctly, per the register discipline) by retitling its
+  claim "**Historical claim.**" — which `bt-exhibit list/index` greps as
+  `^\*\*Claim` and now misses, so `exhibits/README.md` shows EX-018 with
+  no claim text. Either teach the grep the "Historical claim." form or
+  keep the `**Claim.**` prefix and add the historical marker after it.
+
+- **[NOTE] `20260810-072445-first-real-hang` predates the full session
+  layout** (no MANIFEST.txt, no state-before/after) — collected by hand
+  before `bt-evidence` existed. Consistent with HISTORY; fine, but worth a
+  one-line README note so nobody reads the missing manifest as data loss.
+
+- **[GOOD]** The baseline README's 34-vs-18-boots incomparability note,
+  the 22-vs-25 synthetic-line arithmetic repeated at every point of use,
+  the exhibits' single-pass command+output capture, and EX-018's
+  historical-annotation-instead-of-silent-edit are all the right calls.
+
+## 8. Cross-cutting observations and overall summary
+
+### Cross-cutting
+
+- **Prose-behind-code is the dominant defect class in this repo, and it is
+  concentrated in exactly the places no invariant reaches**: README's test
+  and coverage figures, the BT_EARLY ratio table, bug-report/fix-proposal's
+  fossilised "two failed late resets", firmware-hypothesis's "two things",
+  restore-original-state's 11-tool list. The machinery (BT1-CURRENT sync,
+  retired-assertion scans, drift alarm) protects the claims someone thought
+  to encode; everything found in §1 sits outside that fence. The cheapest
+  systematic fix: extend the retired-assertion invariant with the handful
+  of numeric claims ("96 invariants", "18.3%", "two failed late resets")
+  the same way BT1-CURRENT is fenced.
+- **The one rule the repo teaches but hasn't finished applying to itself**
+  is "derive, don't enumerate": four inline copies of the civil-date
+  arithmetic (§3.1), a hand-frozen uninstall list in prose (§1.10),
+  line-pinned coverage exclusions (§5). Each has a derived counterpart
+  elsewhere in the tree to copy.
+- **Counting sites that read `journalctl -u <unit>` output as if it were
+  only the unit's own lines** (probes ×2, aborts, §3.1) are the one
+  uncorrected measurement-validity issue found; everything else of that
+  species has already been caught by the repo's own history.
+
+### Verdict
+
+This is the most rigorously self-policing repository I have reviewed. The
+epistemics — censoring discipline, refusal semantics, two-axis outcomes,
+exhibits that carry their own extraction, tests that encode shipped
+defects and are themselves mutation-tested — are consistently excellent,
+and the shell/awk implementation quality is far above typical for the
+genre. No finding in this review touches the central claims: the BT-3
+device-table facts, the five-for-five late-reset record, the censoring
+reclassification of the two-stage model, and the A/B/C/D gate logic all
+survived adversarial reading intact.
+
+### Findings by severity (fix in this order)
+
+1. **[HIGH §5]** HEAD fails `devtools/check`/CI: stale `coverage-exclude`
+   ranges from `ed82166`. One-line fixes; then root-cause the
+   eval-attribution artifact (§5 MED).
+2. **[MED §7]** results.tsv row 2's `CHANGED:` residue — re-emit via tool
+   or the gate's denominator is wrong by construction.
+3. **[MED §4]** Five invariants nested inside the width check's success
+   branch in `tests/run-tests` (~lines 1190–1249).
+4. **[MED §3.1]** `bt-trial` `$KJ` tmpfs leak; probe/abort double-count;
+   civil-date ×4 duplication.
+5. **[MED §3.2]** `trial-summary.awk`: dead `rec[]`, invisible `unknown`
+   bucket (contradicts its own "counted, shown, excluded").
+6. **[MED §2.2]** Early-intervention success invisible in metrics
+   (`wd_rec` asymmetry, also in bt-evidence MANIFEST).
+7. **[MED §1.x]** Documentation drift batch: README test/coverage figures
+   and BT_EARLY ratios; bug-report + fix-proposal "two failed late
+   resets" fossil; firmware-hypothesis "two things"; HISTORY "Current
+   state" retitle; restore-original-state derived list.
+8. **[LOW]** Everything else above, none urgent.
+
+The review file itself: every item was written immediately after its
+inspection, per the method stated in the plan; nothing in this file was
+reconstructed from memory at the end.
