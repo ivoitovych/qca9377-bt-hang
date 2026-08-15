@@ -230,6 +230,54 @@ real_trial_footprint() {
 }
 TRIAL_FOOTPRINT_BEFORE=$(real_trial_footprint)
 
+# And the third real resource this suite has damaged: the system binaries.
+#
+# WHAT HAPPENED, AND WHY THE SOURCE-LEVEL CHECK IS NOT ENOUGH. The suite builds
+# PATH farms by symlinking /usr/bin/* into a scratch directory, and separately
+# writes stub executables. Neither is dangerous. Pointed at the SAME directory
+# they compose into one: `cp` and `>` both write THROUGH a symlink to its
+# target, so `printf ... > "$D/timeout"` overwrote /usr/bin/timeout with a
+# script that exec'd itself — an infinite recursion that hung the suite and apt
+# on the investigation machine. /usr/bin/systemctl and /usr/bin/btmgmt became
+# stubs the same way. All three were restored from packages by hand.
+#
+# There is already a source-level invariant near the end of this file requiring
+# every farm to go through farm_dir(). That catches the SHAPE — one spelling of
+# it, in this file, at review time. It would not have caught a farm written with
+# `find -exec ln`, a stub copied by a helper two calls deep, or the same mistake
+# in devtools/. This catches the EFFECT, whatever the shape: if a byte of
+# /usr/bin changed while the suite ran, the suite says so and fails.
+#
+# Cheap enough to be unconditional: stat, not hashing, over ~1300 entries in
+# roughly 80 ms per pass. Inode is included because a farm that unlinks and
+# replaces a target changes it while size and mtime could coincide.
+real_bin_footprint() {
+    find /usr/bin /usr/sbin /bin /sbin -maxdepth 1 \( -type f -o -type l \) \
+        -printf '%p\t%s\t%T@\t%i\n' 2>/dev/null | LC_ALL=C sort
+}
+
+# Separate from the snapshot so it can be DRIVEN. The comparison is the part
+# with logic in it, and on a healthy machine the interesting branches never run
+# — which is the standing argument for an exclusion, and the wrong answer here.
+# A damage report that misses the damage is worse than none: it converts "I did
+# not look" into "I looked and it was fine". So the differ takes two footprints
+# as arguments and a test below feeds it synthetic ones, covering all three
+# directions on every run, on an undamaged machine.
+bin_footprint_diff() {   # <before> <after> — names what changed, and how
+    awk -F'\t' '
+        FNR == NR { before[$1] = $2 FS $3 FS $4; gone[$1] = 1; next }
+        {
+            if (!($1 in before))                     print $1 "  (appeared)"
+            else if (before[$1] != $2 FS $3 FS $4)   print $1 "  (rewritten)"
+            delete gone[$1]
+        }
+        END { for (p in gone) print p "  (removed)" }
+    ' <(printf '%s\n' "$1") <(printf '%s\n' "$2") | LC_ALL=C sort
+}
+
+BIN_FOOTPRINT_BEFORE=$(real_bin_footprint)
+BIN_COUNT_BEFORE=$(grep -c . <<<"$BIN_FOOTPRINT_BEFORE" || true)
+
 ok()   { echo "  ✓ $*"; pass=$((pass + 1)); }
 bad()  { echo "  ✗ $*"; fail=$((fail + 1)); }
 
@@ -6419,11 +6467,37 @@ devtools/repo-validate "$SCRATCH/badsh" >/dev/null 2>&1
 # the normal state of a minimal container and must not read as a pass.
 mkdir -p "$SCRATCH/kinds"; scratch_repo "$SCRATCH/kinds"
 printf '[Unit]\nDescription=x\n\n[Service]\nExecStart=/bin/true\n' > "$SCRATCH/kinds/a.service"
-printf 'ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="13d3"\n' > "$SCRATCH/kinds/a.rules"
+# COPIED FROM THE RULE THIS PROJECT SHIPS, not written by hand.
+#
+# The hand-written version was `ACTION=="add", SUBSYSTEM=="usb",
+# ATTR{idVendor}=="13d3"` — all match conditions and no action. `udevadm verify`
+# rejects that outright ("The line has no effect, ignoring"), so repo-validate
+# correctly failed the fixture and this assertion went red on the investigation
+# machine. It passed HERE only because udevadm is not installed on this
+# container, which turns the kind into a named skip that the loop below accepts.
+#
+# Fourth instance of one family: a test that passes where the tool is missing
+# and fails where it is installed, written on the machine that cannot see it.
+# The three before it were PATH constructions and got a source-level invariant.
+# This one gets something better than a check — the second copy is deleted. The
+# fixture is now the file we actually install, so it is valid exactly when what
+# we ship is valid, and there is no hand-written rule left to drift. If the
+# shipped rule ever stops verifying, repo-validate fails on the real file,
+# which is where that failure belongs.
+UDEVSRC=etc/udev/rules.d/50-bluetooth-no-autosuspend.rules
+cp "$UDEVSRC" "$SCRATCH/kinds/a.rules" 2>/dev/null || :
 printf '{"a": 1}\n' > "$SCRATCH/kinds/a.json"
 printf 'import sys\nprint(sys.argv)\n' > "$SCRATCH/kinds/a.py"
 printf '{ print $1 }\n' > "$SCRATCH/kinds/a.awk"
 printf '#!/bin/bash\necho ok\n' > "$SCRATCH/kinds/a.sh"
+# The derivation is itself an invariant: a `cp` that silently did nothing would
+# turn the .rules kind into "no such file", and the loop below would report that
+# as repo-validate saying nothing — blaming the tool for a missing fixture.
+if [[ -s "$SCRATCH/kinds/a.rules" ]] && cmp -s "$UDEVSRC" "$SCRATCH/kinds/a.rules"; then
+    ok "the .rules fixture is the rule this project ships, not a second hand-written copy"
+else
+    bad "the .rules fixture is not a copy of $UDEVSRC — the shipped rule is missing or unreadable"
+fi
 git -C "$SCRATCH/kinds" add -A
 KOUT=$(devtools/repo-validate "$SCRATCH/kinds" 2>&1); krc=$?
 # Each validator either CHECKED its file or SKIPPED for a named missing tool.
@@ -6741,6 +6815,38 @@ FARMF=$(grep -nE '^[^#]*ln -s.? +/(usr/)?bin/\*' "$0" | grep -v 'farm_dir')
     && ok "every symlink farm is built by farm_dir(), which is never written into" \
     || bad "a raw symlink farm — a later cp or > writes through the link: $(head -1 <<<"$FARMF")"
 
+# The ban above catches the SHAPE of the hazard, in one spelling, in this file.
+# The check at the end of this file catches the EFFECT — it fingerprints
+# /usr/bin before and after the run and fails if anything moved. That check is
+# only worth its comparison, and on an undamaged machine the comparison returns
+# nothing every time, so a differ that had quietly stopped working would look
+# exactly like a clean run. Drive it with synthetic footprints instead, where
+# all three outcomes are reachable without touching a real binary.
+#
+# The rewritten case uses the real numbers: /usr/bin/timeout is 39880 bytes,
+# and the recursion that replaced it on the investigation machine was 31.
+BFB=$(printf '/usr/bin/keep\t10\t100\t1\n/usr/bin/timeout\t39880\t100\t2\n/usr/bin/vanish\t20\t100\t3\n')
+BFA=$(printf '/usr/bin/keep\t10\t100\t1\n/usr/bin/timeout\t31\t200\t2\n/usr/bin/newcomer\t5\t300\t9\n')
+# Written with printf rather than a multi-line quoted literal, to match the two
+# inputs above and because bash traces such a literal only at its closing line,
+# which would put its opener and interior into the coverage denominator as lines
+# nothing can ever reach.
+BFEXPECT=$(printf '/usr/bin/newcomer  (appeared)\n/usr/bin/timeout  (rewritten)\n/usr/bin/vanish  (removed)')
+BFGOT=$(bin_footprint_diff "$BFB" "$BFA")
+if [[ "$BFGOT" == "$BFEXPECT" ]]; then
+    ok "the binary-damage differ reports rewritten, appeared and removed, and ignores unchanged"
+else
+    bad "the binary-damage differ is wrong — the end-of-run check cannot be trusted:"
+    bad "  expected: $(tr '\n' '; ' <<<"$BFEXPECT")"
+    bad "  got:      $(tr '\n' '; ' <<<"$BFGOT")"
+fi
+# Identity must be silent, or every run would cry damage and the check would be
+# switched off within a week — which is the usual way a real alarm dies.
+BFSAME=$(bin_footprint_diff "$BFB" "$BFB")
+[[ -z "$BFSAME" ]] \
+    && ok "an unchanged /usr/bin produces no damage report" \
+    || bad "the differ reports damage for identical footprints: $(tr '\n' '; ' <<<"$BFSAME")"
+
 PATHBUILDS=$(grep -cE '^[^#]*PATH="' "$0")
 BADPATH=$(grep -nE '^[^#]*PATH="[^"]*:/(usr/)?bin' "$0")
 if [[ -z "$BADPATH" ]] && (( ${PATHBUILDS:-0} >= 10 )); then
@@ -6781,6 +6887,106 @@ else
     bad "  after:  $(tr '\n' ' ' <<<"$TRIAL_FOOTPRINT_AFTER")"
     bad "  a live trial was opened, closed or recorded by this suite —"
     bad "  the affected results row is fabricated by test stubs, not measured"
+fi
+
+# The system binaries, compared against the snapshot taken before anything ran.
+#
+# ENUMERATED == 0 IS A REFUSAL. An empty snapshot means find or -printf is not
+# what this expects, and a comparison of nothing against nothing would tick —
+# reporting "no binary was damaged" on the strength of never having looked. The
+# suite has shipped that mistake before; it is a fail here, not a pass.
+if (( ${BIN_COUNT_BEFORE:-0} == 0 )); then
+    bad "could not fingerprint /usr/bin — the system-binary check did not run"
+    bad "  (find -printf unavailable?) this check is the one that catches a"
+    bad "  farm written through, so a suite that cannot take it is not clean"
+else
+    BIN_FOOTPRINT_AFTER=$(real_bin_footprint)
+    if [[ "$BIN_FOOTPRINT_AFTER" == "$BIN_FOOTPRINT_BEFORE" ]]; then
+        ok "no system binary changed while the suite ran ($BIN_COUNT_BEFORE checked)"
+    else
+        bad "the test run CHANGED system binaries under /usr/bin, /bin or /sbin:"
+        # Names the paths rather than the stat rows: a size/mtime diff is noise
+        # next to the one fact that matters, which file.
+        while IFS= read -r p; do bad "      $p"; done < <(
+            bin_footprint_diff "$BIN_FOOTPRINT_BEFORE" "$BIN_FOOTPRINT_AFTER")
+        bad "  something wrote THROUGH a symlink farm, or replaced a real tool."
+        bad "  Restore from the owning package before running anything else:"
+        bad "    dpkg -S <path>  then  apt-get install --reinstall <package>"
+    fi
+fi
+
+# ── WHAT THIS HOST COULD NOT ASK ─────────────────────────────────────────
+#
+# THE FAMILY THIS EXISTS FOR. Four assertions in this suite have now passed on
+# a bare container and failed on the investigation machine: the bt-state btmgmt
+# fallback, both watchdog probe tests, and the a.rules fixture. The maintainer
+# named the shape after the fourth, and it is not "these tests are fragile":
+#
+#   a test whose subject is a tool's behaviour cannot be validated where the
+#   tool is missing, and the skip path that makes the suite portable is the
+#   same path that makes the assertion vacuous.
+#
+# Skipping is still right — the suite must run on a bare checkout. What is
+# wrong is skipping SILENTLY, because "all N invariants hold" then means two
+# different things on two machines and reads identically on both. Three of the
+# four escaped for months on exactly that ambiguity.
+#
+# So this does not fail and does not add an assertion for each absent tool. It
+# makes the ambiguity impossible to miss: the run states which tools it
+# conditioned on and which were not here, so a green run on a thin host cannot
+# be mistaken for a green run on a complete one. It is the empty-input rule —
+# ENUMERATED == 0 is a refusal — applied to the environment rather than to a
+# fixture.
+#
+# DERIVED FROM THE TWO PLACES THAT ENCODE THE FAMILY, not hand-listed — a
+# hand-kept list would rot exactly like the four this repository has already
+# been burned by. Grepping `command -v` was the first attempt and it does not
+# work: nearly every guard here is indirect (`command -v "$tool"`), so it
+# derived three names, one of them a fragment of its own source.
+#
+#   1. The tools the symlink farms HIDE. `farm_dir "$D" hciconfig btmgmt` means
+#      "prove the tool behaves correctly when hciconfig is absent". If it is
+#      absent for real, the farm removes nothing and the test proves nothing.
+#      That is three of the four instances, exactly.
+#   2. The tools repo-validate's validators need. Its skip messages name them
+#      in its own source, so the set is complete rather than only the ones
+#      missing on whatever host asks. That is the fourth instance.
+#
+# Anchored at `^farm_dir "` so the call sites match and this line does not.
+# Both on one line each: bash traces a backslash-continued assignment at its
+# LAST line, so a wrapped version puts its own opening line in the coverage
+# denominator as something nothing can ever reach.
+FARMTOOLS=$(grep -hE '^farm_dir "' "$0" | sed 's/^farm_dir "[^"]*" *//' | tr ' ' '\n' | grep -E '^[a-z][a-z0-9-]+$')
+VALTOOLS=$(grep -oE 'skipped: [a-zA-Z0-9_.-]+ not installed' devtools/repo-validate | awk '{ print $2 }')
+GUARDED=$(printf '%s\n%s\n' "$FARMTOOLS" "$VALTOOLS" | grep -E '.' | LC_ALL=C sort -u)
+GUARDN=$(grep -c . <<<"$GUARDED" || true)
+# Counted per source, not only in total: the union is non-empty while either
+# half is broken, so a total-only check would keep printing a confident report
+# after one of the two derivations had silently stopped matching.
+FARMN=$(grep -c . <<<"$FARMTOOLS" || true)
+VALN=$(grep -c . <<<"$VALTOOLS" || true)
+MISSING=""
+if (( GUARDN > 0 )); then
+    while IFS= read -r t; do
+        [[ -z "$t" ]] && continue
+        command -v "$t" >/dev/null 2>&1 || MISSING="$MISSING $t"
+    done <<<"$GUARDED"
+fi
+
+echo
+if (( FARMN == 0 || VALN == 0 )); then
+    # Nothing enumerated means a derivation broke, and a vacuity report that
+    # enumerated nothing would print the reassuring line every time.
+    bad "the vacuity report derived $FARMN farm-hidden and $VALN validator tools"
+    bad "  a zero on either side means the derivation stopped matching, and the"
+    bad "  report below is not evidence that nothing was skipped"
+elif [[ -n "$MISSING" ]]; then
+    echo "  NOT ASKED HERE: of $GUARDN guarded tools, these are absent:$MISSING"
+    echo "                  every assertion whose subject is one of them SKIPPED."
+    echo "                  A green run on this host is weaker than a green run"
+    echo "                  where they are installed. Verify there before merging."
+else
+    ok "all $GUARDN tools this suite conditions on are present — nothing skipped for absence"
 fi
 
 echo
