@@ -5127,7 +5127,10 @@ fi
 # whether they advertise --grep. The answers must be identical, and must equal
 # the number of matching lines actually in the file.
 JG=$(mktemp -d); mkdir -p "$JG/bin"
-printf 'a: command 0x0406 tx timeout\nb: unrelated\nc: command tx timeout\nd: noise\ne: command 0x0409 tx timeout\n' > "$JG/kernel.log"
+# Carries all three intervention shapes as well as the timeouts, because
+# bt_journal_lines filters by the UNION of several patterns and then counts each
+# separately — an alternation is where a PCRE2/ERE divergence would show first.
+printf 'a: command 0x0406 tx timeout\nb: unrelated\nc: command tx timeout\nd: noise\ne: command 0x0409 tx timeout\nf: usb 3-3: reset full-speed USB device number 2 using xhci_hcd\ng: usbcore: deregistering interface driver btusb\n' > "$JG/kernel.log"
 # WITH --grep: advertises it AND honours it, so a caller that stopped matching
 # locally would still pass while a caller that mis-built the flag would not.
 cat > "$JG/bin/journalctl" <<'JGJ'
@@ -5144,6 +5147,7 @@ JGCOUNT=$(cat <<'JGC'
 source tools/lib/journal.sh
 bt_journal_count 'command( 0x[0-9a-f]+)? tx timeout' -k -b 0
 bt_journal_first 'command( 0x[0-9a-f]+)? tx timeout' -k -b 0
+bt_journal_lines 'reset (full|high|low)-speed USB device|deregistering interface driver btusb|command( 0x[0-9a-f]+)? tx timeout' -k -b 0 | wc -l
 JGC
 )
 JGWITH=$(PATH="$JG/bin:$PATH" JGDIR="$JG" JGHASGREP=1 bash -c "$JGCOUNT" 2>&1)
@@ -5914,6 +5918,47 @@ rm -rf "$TAU"
 # answer this tool gives is a count, and zero is what both a correct row and a
 # broken detector look like. Breaking the detector must fail loudly here rather
 # than produce a clean report.
+# ── AND ITS COST MUST NOT SCALE WITH THE WINDOW ─────────────────────────
+#
+# The first version read each row's window UNFILTERED and grepped it three
+# times in the shell. A trial window is a whole boot — 3 h 22 m for the row this
+# tool exists to catch — and those journals carry dynamic-debug output at about
+# a million lines an hour, so counting four reset lines meant formatting and
+# discarding tens of millions. It took minutes per row on the machine that has
+# the data and was instant on these fixtures: the same defect found in bt-window
+# that morning, shipped again here the same day, and invisible to every test
+# because fixtures are small.
+#
+# Speed is not assertable — this container would hide it exactly as it did
+# before. The shape is: the read that scans a row's window must hand its pattern
+# to journalctl rather than to a pipe.
+TAS=$(ta_repo none); mkdir -p "$TAS/bin"
+cat > "$TAS/bin/journalctl" <<'TASJ'
+#!/bin/sh
+echo "$*" >> "$TASDIR/calls.log"
+case " $* " in
+    *" --help "*)        echo "  --grep=PATTERN  Show entries matching"; exit 0 ;;
+    *" --list-boots "*)  cat "$TASFIX/list-boots.log" 2>/dev/null; exit 0 ;;
+esac
+b=""; prev=""
+for a in "$@"; do [ "$prev" = "-b" ] && b="$a"; prev="$a"; done
+cat "$TASFIX/kernel.b$b.log" 2>/dev/null
+exit 0
+TASJ
+chmod +x "$TAS/bin/journalctl"; : > "$TAS/calls.log"
+PATH="$TAS/bin:$PATH" TASDIR="$TAS" TASFIX="$PWD/$TAF" BT_LIBDIR="$PWD/tools/lib" \
+    BT_EVIDENCE_REPO="$TAS" tools/bt-trial-audit >/dev/null 2>&1
+# The window read is the one carrying --since; it must also carry --grep.
+TASWIN=$(grep -- '--since' "$TAS/calls.log" | grep -c . || true)
+TASRAW=$(grep -- '--since' "$TAS/calls.log" | grep -vc -- '--grep' || true)
+if (( ${TASWIN:-0} > 0 && ${TASRAW:-0} == 0 )); then
+    ok "bt-trial-audit filters each window inside journalctl — $TASWIN read(s), none piped raw"
+else
+    bad "bt-trial-audit scans a window through a pipe — cost grows with the window it audits:"
+    while IFS= read -r l; do bad "      journalctl $l"; done < <(grep -- '--since' "$TAS/calls.log" | grep -v -- '--grep')
+fi
+rm -rf "$TAS"
+
 TAP=$(ta_repo none)
 sed "s|^RE_RESET=.*|RE_RESET='ZZZ-no-such-message'|" tools/bt-trial-audit > "$TAP/audit"
 chmod +x "$TAP/audit"
