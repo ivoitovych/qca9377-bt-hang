@@ -176,7 +176,23 @@ while IFS=$'\t' read -r -a f; do
     # the CURRENT boot on this host, whatever the man page implies — documented
     # in bt-stage2's header, and the second of the two errors that produced a
     # false clean answer during the hand audit.
-    W=$(bt_journal -k -b "$b" --since "@$open" --until "@$close" --no-pager -o short-iso-precise 2>/dev/null)
+    #
+    # AND FILTERED INSIDE journalctl. The first version of this read the window
+    # unfiltered and grepped it three times in the shell. A trial window is a
+    # whole boot — 3 h 22 m for the row this tool was written to catch — and
+    # those journals carry dynamic-debug output at roughly a million lines an
+    # hour, so counting four reset lines meant formatting and discarding tens of
+    # millions. Minutes per row on the machine that has the data, instantly fast
+    # on a fixture: the cost scaled with the window, which is the defect this
+    # project had already found in bt-window that morning and which I then
+    # shipped again here within the day.
+    #
+    # One read, filtered by the union of the three patterns; the counts below
+    # are taken from what comes back. The local matches decide, so they can only
+    # ever select a subset of the union — the server-side filter is a speed-up
+    # and never the semantics.
+    W=$(bt_journal_lines "$RE_RESET|$RE_RELOAD|$RE_TIMEOUT" \
+        -k -b "$b" --since "@$open" --until "@$close" -o short-iso-precise)
 
     n_reset=$(grep -cE "$RE_RESET" <<<"$W" || true)
     n_reload=$(grep -cE "$RE_RELOAD" <<<"$W" || true)

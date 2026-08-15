@@ -157,6 +157,24 @@ bt_journal_count() {   # <ere> <journalctl selector args...>
 # --grep dance itself, which left a whole-boot read that the suite's own rule
 # then had to make an exception for. An exception in a rule about whole-boot
 # reads is where the next one hides, so the caller does not get to open-code it.
+# And the third form: every matching line, for a caller that needs to take more
+# than one count from the same window. bt-trial-audit wants three — resets,
+# reloads and timeouts — and its first version read the window UNFILTERED and
+# piped it to grep three times. On the investigation machine that meant scanning
+# a 3h22m boot carrying dynamic-debug output at roughly a million lines an hour,
+# to count a handful of matches: minutes per row, and the tool was hours old
+# when it reproduced the exact defect it had been written after.
+#
+# One read, filtered inside journalctl by the UNION of the patterns, then
+# counted locally per pattern. The union is what makes this safe: the local
+# match still decides, and it can only ever select a subset of what came back.
+bt_journal_lines() {   # <ere> <journalctl selector args...> — the matching lines
+    local re="$1"; shift
+    local g=()
+    bt_journal_supports_grep && g=(--grep="$re")
+    bt_journal "$@" "${g[@]}" --no-pager 2>/dev/null | grep -E "$re"
+}
+
 bt_journal_first() {   # <ere> <journalctl selector args...> — first match, or empty
     local re="$1"; shift
     local g=()
