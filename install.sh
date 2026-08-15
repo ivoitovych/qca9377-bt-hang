@@ -53,7 +53,8 @@ SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DESTDIR="${BT_DESTDIR:-}"
 if [[ -n "$DESTDIR" ]]; then
     echo "!! BT_DESTDIR=$DESTDIR — staging install; the SYSTEM WILL NOT BE TOUCHED."
-    echo "   Nothing under / is modified: no units are loaded, no rules applied."
+    echo "   Files go under the prefix, and every system command — systemctl,"
+    echo "   udevadm, modprobe — is skipped and printed instead of run."
     echo
 fi
 
@@ -67,6 +68,35 @@ PID="${BT_PID:-$DEFAULT_PID}"
 FAILED=0
 
 run() {
+    # STAGING MUST GATE THE COMMANDS, NOT ONLY THE PATHS.
+    #
+    # BT_DESTDIR prefixes every file path, and the banner above promises the
+    # system will not be touched. That promise was FALSE. `systemctl enable
+    # --now bt-hang-watchdog`, `udevadm control --reload-rules` and the btusb
+    # reload take no path argument, so a prefix could never reach them: a
+    # staging --apply re-armed the watchdog and the probe timer against the
+    # live machine, and `modprobe -r btusb` reset the controller — while the
+    # operator read that nothing was touched. On the investigation machine
+    # that destroys experiment mode and whatever window is open.
+    #
+    # THE SUITE COULD NOT SEE IT. Its staging helper puts stubs for
+    # systemctl/udevadm/modprobe on PATH and verifies the stub wins, so the
+    # commands were harmless THERE. The guard was in the test, not in the
+    # tool — it protected every run except a human's. Same shape as the escape
+    # that closed a live trial: a control that holds where it is developed and
+    # not where it is used. Found by the maintainer, on the machine.
+    #
+    # DENY BY DEFAULT. The allowlist is the file-mutating commands this script
+    # actually hands to run() — install, rm, rmdir — and nothing else. A
+    # command added tomorrow is skipped in staging, so the staged round trip
+    # fails loudly; the alternative failure direction is a system command
+    # executing silently, and only one of those is recoverable.
+    if (( APPLY )) && [[ -n "$DESTDIR" ]]; then
+        case "${1:-}" in
+            install|rm|rmdir|mkdir) ;;
+            *) echo "  staging: NOT executed (system command): $*"; return 0 ;;
+        esac
+    fi
     if (( APPLY )); then
         echo "  + $*"
         if ! "$@"; then

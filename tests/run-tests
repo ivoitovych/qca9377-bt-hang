@@ -5462,7 +5462,21 @@ echo "────────────────────────�
 #      installer if it does not. A pre-flight check, not a post-mortem: by the
 #      time a spy log could tell you the stub lost, journald has restarted.
 SR=$(mktemp -d)                        # the staging root
-SS=$(mktemp -d); mkdir -p "$SS/bin"    # stubs for everything an install activates
+# THE STUBS ARE TRIPWIRES, NOT SHIELDS. This distinction is the whole finding
+# below, and the first version of this section got it backwards.
+#
+# A stub that absorbs `systemctl enable --now bt-hang-watchdog` makes the
+# command harmless HERE and proves nothing about the tool. install.sh gated
+# nothing: BT_DESTDIR prefixed the file paths and every system command ran, so
+# a human typing `BT_DESTDIR=/tmp/x ./install.sh --apply` re-armed the watchdog
+# and the probe timer on their live machine while reading "the SYSTEM WILL NOT
+# BE TOUCHED". The maintainer found it on the investigation machine, by running
+# the dangerous command deliberately, which is the only place it was visible.
+#
+# The guard was in the test and not in the tool: it protected every run except
+# a human's. So the stubs still exist — the harness must not be able to damage
+# a machine either — but the ASSERTION is now that they were never reached.
+SS=$(mktemp -d); mkdir -p "$SS/bin"    # tripwires for everything an install activates
 for c in systemctl udevadm modprobe sleep journalctl btmon tcpdump; do
     printf '#!/bin/sh\necho "%s $*" >> "%s/spy.log"\nexit 0\n' "$c" "$SS" > "$SS/bin/$c"
     chmod +x "$SS/bin/$c"
@@ -5692,9 +5706,16 @@ SBUSY=$(mktemp); printf 'btusb 73728 3 - Live 0x0000000000000000\n' > "$SBUSY"
 SRB=$(mktemp -d)
 SPMF=$(env PATH="$SPM/bin:$PATH" BT_DESTDIR="$SRB" BT_PROC_MODULES="$SFREE" \
            ./uninstall.sh --apply 2>&1)
-[[ "$SPMF" == *"modprobe -r btusb"* && "$SPMF" == *"+ modprobe btusb"* ]] \
-    && ok "an idle btusb is reloaded, restoring the kernel default in place" \
-    || bad "uninstall.sh did not reload an idle btusb"
+# ASSERTED AS A DECISION, NOT AS AN EXECUTION. Staging now withholds every
+# system command, so `modprobe` cannot run here — and must not, since this
+# suite runs on the investigation machine and that reload resets the
+# controller. What is testable is that the idle branch was CHOSEN: the tool
+# names the command it withheld, which is the same evidence with none of the
+# consequence.
+[[ "$SPMF" == *"modprobe -r btusb"* && "$SPMF" == *"modprobe btusb"* ]] \
+   && [[ "$SPMF" == *"staging: NOT executed"* ]] \
+    && ok "an idle btusb takes the reload branch, and staging withholds the reload" \
+    || bad "uninstall.sh did not choose the idle-btusb reload branch"
 SPMB=$(env PATH="$SPM/bin:$PATH" BT_DESTDIR="$SRB" BT_PROC_MODULES="$SBUSY" \
            ./uninstall.sh --apply 2>&1)
 [[ "$SPMB" == *"btusb is in use (usecount=3)"* && "$SPMB" != *"modprobe -r"* ]] \
@@ -5746,6 +5767,31 @@ GTR=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_DESTDIR="$SRT2
 [[ "$GTR" == *"A TRIAL IS OPEN"* && "$GTR" == *"build=stock"* ]] \
     && ok "install.sh --apply warns that it perturbs an open trial, in any mode" \
     || bad "the open-trial guard did not fire on --apply"
+
+# ── THE TOOL'S OWN GUARD, not the harness's ─────────────────────────────
+#
+# Every system command the pair issues — systemctl, udevadm, modprobe — must
+# have been SKIPPED BY install.sh AND uninstall.sh, not merely absorbed by a
+# stub. The tripwire log is the evidence: if the gate is removed, these names
+# appear in it, and on a real machine they would have run.
+# `grep -c` prints 0 AND exits 1 when it matches nothing, so `|| echo 0`
+# appended a SECOND zero and the arithmetic below saw "0 0".
+STRIPPED=$(grep -cE '^(systemctl|udevadm|modprobe) ' "$SS/spy.log" 2>/dev/null || true)
+(( ${STRIPPED:-1} == 0 )) \
+    && ok "a staged install/uninstall issued NO system command — the tool gated them" \
+    || bad "the tool ran $STRIPPED system command(s) in staging: $(grep -m1 -E '^(systemctl|udevadm|modprobe) ' "$SS/spy.log")"
+
+# And it says so, rather than gating silently. An operator reading the output
+# has to be able to see which commands were withheld.
+[[ "$SIOUT" == *"staging: NOT executed (system command)"* ]] \
+    && ok "the staged run names the system commands it withheld" \
+    || bad "system commands were skipped without saying so"
+
+# The banner's claim is now the tool's behaviour. It previously promised "no
+# units are loaded, no rules applied" while loading units and applying rules.
+[[ "$SIOUT" == *"skipped and printed instead of run"* ]] \
+    && ok "the staging banner describes what the tool actually does" \
+    || bad "the staging banner still promises more than the tool delivers"
 
 # ── and the whole section touched nothing real ───────────────────────────
 [[ "$(real_install_state)" == "$REAL_BEFORE" ]] \
