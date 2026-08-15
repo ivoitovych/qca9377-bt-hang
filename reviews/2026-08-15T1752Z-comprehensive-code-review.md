@@ -171,3 +171,91 @@ consistency, not about the narrative.
   fix was moving the rule into a tool or test (the 2×2 in `bt-trial`, the
   awk-`-f` grep in `run-tests`, provenance from unit names). That loop —
   lesson → invariant — is the repository's most transferable practice.
+
+### 1.3 `docs/issues.md`
+
+The register does what it promises: six defects, separately evidenced,
+separately reportable, with the evidence model stated up front. Checked the
+cross-tab numbers against `HISTORY.md` Phase 18 (16/8/2/8 — consistent), the
+"fifteen windows" count against EX-018 + EX-021 (14 + 1 — consistent), and
+the BT1-CURRENT block against the README's marker-delimited copy
+(byte-identical).
+
+- **[LOW] BT-4 contains two generations of text, imperfectly merged.**
+  "Still needed before filing: a backtrace … and a check against current
+  BlueZ" appears at line ~351 and again at line ~397 ("Not yet reported. The
+  minimal reproducer now exists (below); a backtrace … still outstanding")
+  — and that second passage says "(below)" although the reproducer is
+  *above* it. The trailing paragraphs from "btmon -w aborts with a core
+  dump…" read as the original section body left in place after the newer
+  material was prepended. Fold the tail into the newer structure.
+
+- **[NOTE] The "five levels" table is actually six rows (0–5) with level 0
+  appended after 5.** The text explains why (added last, sits beneath), so
+  this is deliberate; flagged only because the heading "five levels" now
+  undercounts its own table — same species as the "96 invariants" drift,
+  cheap to fix by renaming the section.
+
+- **[GOOD] The BT-3 section argues both directions.** "Absence is
+  suggestive, not proof" plus the deliberate-omission alternative, and the
+  sign-of-effect honesty ("not a claim that the patch is harmful") — this
+  is the discipline that makes the register credible.
+
+- **[GOOD] The 9/5 reset-provenance caveat (lines ~166–172)** — the
+  register refuses to cite its own headline zero ("no uncensored USB loss")
+  as mechanically re-verified until the reclassification is re-captured.
+  Exactly right.
+
+### 1.4 `docs/investigation.md`
+
+Explicitly a historical chronology with a do-not-quote banner and in-place
+corrections (§10's strikethrough treatment of the `cmd_timeout` error is the
+right pattern). Findings:
+
+- **[LOW] Timeout counts for boot 0 disagree internally: 19 vs 22.** §4 says
+  "Nineteen `tx timeout` lines this boot" and §7's table has boot 0 = 19; §9's
+  table and §10's causal chain say 22. The published baseline log
+  (`evidence/baseline/kernel-boot0.sanitized.log`) contains 22 `tx timeout`
+  lines. The 19 was presumably an earlier snapshot of a live boot, but nothing
+  says so — a one-line note ("counts grew as the boot continued; final count
+  22") would stop a careful reader treating it as an error. Note the 22
+  decomposes as 21 command timeouts + 1 link timeout (see §1.5 below).
+- **[LOW] §13 says "35 boots retained" where every other figure in the repo
+  says 34.** Likely 35 = 34 retained + current; worth normalising.
+- **[LOW] Stray doubled horizontal rule** between §7 and §8 (lines 200–202).
+- **[NOTE] §8's "no software recovery is possible / warm reboot does not drop
+  the M.2 rail" is stated with a ✅** and is one of the places the
+  warm-reboot inference appears as fact. `docs/issues.md` enumerates the
+  locations of that untested assumption ("step 0, `bt-mode`, `install.sh`,
+  `EX-005`, `related-reports.md`") but does **not** list this file — the
+  enumeration itself is stale. The file-level banner covers it generically,
+  so this is about completing the issues.md list, not editing history.
+- **[GOOD] §13's synthetic-line disclosure** (3 injected `tx timeout` lines,
+  with time and reason) is exactly the level of honesty attachments need.
+
+### 1.5 `docs/bug-report.md`
+
+Strong report; the do-not-submit banner, methodological caveat, and the
+"what has and has not been tested" table are all in good shape. Findings:
+
+- **[MED] The "Confidence" note contradicts the report's own count.** Line
+  ~114: "Finding 2 rests on **two** failed late resets (+20 s and +11 s) and
+  one successful early reset … Full logs for all **three** are attached."
+  The same document says five failed late resets ("+11 s, +16 s, +20 s,
+  +20 s and +33 s", line ~92; "five for five", line ~183). The note is a
+  fossil from when n=3. In a document aimed at maintainers, an internal
+  contradiction in the headline evidence count is the first thing a skeptical
+  reader will find. Update the note (and its attachment count).
+- **[LOW] The attachments section quotes the conflated timeout count.** "The
+  22 `tx timeout` events they contain are all genuine" — per the repo's own
+  Level-0 lesson (`EX-015`), the bare pattern conflates command and link
+  timeouts; the published log holds 21 command + 1 link. Given this project
+  built a test to stop exactly this conflation, its flagship report should
+  say "21 command timeouts and 1 link timeout".
+- **[NOTE] §"What provokes it" device list names three consumer devices** —
+  deliberate, presumably, since they identify hardware not people; fine
+  under the sanitisation policy, just confirming it was considered.
+- **[GOOD] The Windows comparison is framed exactly right** ("Linux drives
+  this controller into a state that Windows does not") — neither
+  hardware-blaming nor Linux-blaming, and the report says which follows from
+  which.
