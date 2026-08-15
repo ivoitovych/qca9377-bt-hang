@@ -1,0 +1,245 @@
+#!/bin/bash
+# bt-trial-audit — recompute every gating field in results.tsv from the journal
+#                  and report where the recorded row and the journal disagree.
+#
+#   bt-trial-audit              audit every row
+#   bt-trial-audit --row N      audit one row (1 = first data row)
+#
+# WHY THIS EXISTS. On 2026-08-15 a hand audit of results.tsv found TWO OF THREE
+# ROWS carrying a false `perturbed=none`: trial 2 with three kernel resets
+# inside its window, trial 3 with four. Both were censored windows recorded as
+# clean observations, and `perturbed` is what decides whether a row enters a
+# rate denominator — so both would have pooled into a failure rate as though
+# nothing had touched the controller.
+#
+# The defect was found because someone thought to look. That is not a control.
+# With Builds A/B/C/D producing rows, a gate that silently mislabels one arm
+# makes every comparison wrong while the output looks ordinary.
+#
+# IT DOES NOT SHARE bt-trial's DETECTORS, AND THAT IS THE POINT. An audit built
+# on the same regex as the tool it audits can only ever agree with itself: the
+# bug above was a pattern that matched this project's own wording and not the
+# kernel's, and an audit importing that pattern would have confirmed all three
+# rows as correct. The patterns below are written independently, against the
+# kernel's messages, and proved to fire before any zero they produce is
+# believed — see the positive control.
+#
+# Exit 0 when every audited row agrees, 1 on any disagreement, 2 on a refusal.
+
+set -uo pipefail
+
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-trial-audit: missing $LIBDIR/journal.sh" >&2; exit 2; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
+REPO="${BT_EVIDENCE_REPO:-${BT_REPO:-$(dirname "$(readlink -f "$0")")/..}}"
+TSV="$REPO/evidence/trials/results.tsv"
+
+ONLY=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --row)     ONLY="${2:?--row needs a number}"; shift ;;
+        -h|--help) sed -n '2,7p' "$0"; exit 0 ;;
+        *) echo "bt-trial-audit: unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+# ── the detectors, written against the KERNEL's messages ─────────────────
+#
+# `reset (full|high|low)-speed USB device` is what the kernel writes when it
+# carries out a reset, and the ONLY thing that appears when the reset was
+# issued from outside this project — an ioctl, as every controlled reset test
+# is. `Resetting usb device` is bt-hang-watchdog's own message and appears only
+# for resets this project performed; matching solely on it is the defect that
+# put two wrong rows in the record.
+RE_RESET='reset (full|high|low)-speed USB device|Resetting usb device|usb_queue_reset_device'
+RE_RELOAD='deregistering interface driver btusb'
+RE_TIMEOUT='command( 0x[0-9a-f]+)? tx timeout'
+
+refuse() { echo "bt-trial-audit: REFUSING — $*" >&2; exit 2; }
+
+[[ -r "$TSV" ]] || refuse "no results file at $TSV"
+
+# ── POSITIVE CONTROL, BEFORE ANY ZERO IS BELIEVED ────────────────────────
+#
+# Every one of this audit's answers is a count, and a count of zero is what a
+# correct row and a broken query look like from the outside. The hand audit
+# that prompted this tool produced two confident zeros — one from a wrong boot
+# index, one from a journalctl invocation that silently returned only the
+# current boot — and both read as "no resets, the row is correct". They were
+# caught by luck, because a zero happened to contradict a known exhibit.
+#
+# So the detectors are run against lines known to match before they are run
+# against anything real. A regex that has stopped matching fails here, loudly,
+# instead of reporting that every row is fine.
+CONTROL=$(printf '%s\n' \
+    '2000-01-01T00:00:00.000000+00:00 h kernel: usb 3-3: reset full-speed USB device number 2 using xhci_hcd' \
+    '2000-01-01T00:00:01.000000+00:00 h kernel: usbcore: deregistering interface driver btusb' \
+    '2000-01-01T00:00:02.000000+00:00 h kernel: Bluetooth: hci0: command 0x0406 tx timeout')
+for probe in "RE_RESET:$RE_RESET" "RE_RELOAD:$RE_RELOAD" "RE_TIMEOUT:$RE_TIMEOUT"; do
+    name=${probe%%:*}; pat=${probe#*:}
+    n=$(grep -cE "$pat" <<<"$CONTROL" || true)
+    (( ${n:-0} > 0 )) || refuse "$name matched nothing in its own positive control — every count below would be a false zero"
+done
+
+# ── boots, resolved by CONTAINMENT rather than counted backwards ──────────
+#
+# A row's boot is the one whose time range contains its close timestamp. The
+# hand audit counted backwards and used -b -3 where the answer was -b -4, which
+# returned a clean zero for a window that in fact held three resets.
+#
+# Indices are also not stable: they shift on every reboot, so an index is only
+# meaningful at the moment it is derived. That is why it is derived here, per
+# run, and never stored.
+#
+# Enumeration goes through bt-boot-list because getting the boot list right is
+# subtle enough to have its own tool — `--list-boots --no-legend` prints
+# nothing at all on systemd 257, and callers that used it fell back to a
+# hardcoded range while appearing to succeed.
+BOOTLIST=""
+for c in "$(dirname "$(readlink -f "$0")")/bt-boot-list" /usr/local/bin/bt-boot-list; do
+    [[ -x "$c" ]] && { BOOTLIST="$c"; break; }
+done
+[[ -n "$BOOTLIST" ]] || refuse "bt-boot-list not found — boot enumeration must not be reimplemented here"
+
+BOOTS=$("$BOOTLIST" 2>/dev/null)
+[[ -n "$BOOTS" ]] || refuse "bt-boot-list enumerated no boots — nothing can be resolved"
+
+# start and end of each boot, as epoch seconds. `-n 1` is a hint the fixture
+# ignores, so the local head/tail is what decides in both worlds.
+declare -A BSTART BEND
+while IFS= read -r b; do
+    [[ -n "$b" ]] || continue
+    s=$(bt_journal -k -b "$b" -o short-unix --no-pager 2>/dev/null | head -1 | awk '{printf "%d", $1}')
+    e=$(bt_journal -k -b "$b" -o short-unix --no-pager 2>/dev/null | tail -1 | awk '{printf "%d", $1}')
+    [[ -n "$s" && -n "$e" ]] || continue
+    BSTART[$b]=$s; BEND[$b]=$e
+done <<<"$BOOTS"
+
+(( ${#BSTART[@]} > 0 )) || refuse "no boot could be given a time range — the journal is unreadable or empty"
+
+boot_for() {   # <epoch> -> the index whose range contains it, or empty
+    local t="$1" b
+    for b in "${!BSTART[@]}"; do
+        (( t >= BSTART[$b] && t <= BEND[$b] )) && { echo "$b"; return 0; }
+    done
+    return 1
+}
+
+# ── the rows ─────────────────────────────────────────────────────────────
+#
+# Columns are resolved BY NAME. Inserting trial_type once broke two consumers
+# that read $2 and $5, and a positional audit would be the same defect in the
+# thing meant to catch it.
+HDR=$(head -1 "$TSV")
+col() { tr '\t' '\n' <<<"$HDR" | grep -n "^$1\$" | cut -d: -f1; }
+C_TS=$(col timestamp); C_DUR=$(col duration_s); C_PERT=$(col perturbed)
+C_BT1=$(col bt1_status); C_RES=$(col trial_result); C_TRE=$(col treatment)
+for c in C_TS C_DUR C_PERT C_BT1 C_RES C_TRE; do
+    [[ -n "${!c}" ]] || refuse "results.tsv has no column for $c — schema changed, audit cannot resolve fields"
+done
+
+rows=0; bad=0; unresolved=0
+echo "bt-trial-audit — $TSV"
+echo
+
+n=0
+while IFS=$'\t' read -r -a f; do
+    n=$((n + 1))
+    (( n == 1 )) && continue                       # header
+    [[ -n "${f[0]:-}" ]] || continue
+    (( ONLY > 0 && n - 1 != ONLY )) && continue
+    rows=$((rows + 1))
+
+    ts="${f[$((C_TS - 1))]}"
+    dur="${f[$((C_DUR - 1))]}"
+    close=$(date -d "$ts" +%s 2>/dev/null)
+    if [[ -z "$close" ]]; then
+        echo "  row $((n - 1)): UNRESOLVED — close timestamp '$ts' is not a date"
+        unresolved=$((unresolved + 1)); continue
+    fi
+    open=$(( close - ${dur%%.*} ))
+
+    b=$(boot_for "$close")
+    if [[ -z "$b" ]]; then
+        # A row whose boot cannot be found is NOT skipped quietly. An audit that
+        # silently drops rows is the failure it exists to catch — the same shape
+        # as the denominator that got smaller without saying so.
+        echo "  row $((n - 1)): UNRESOLVED — no retained boot contains $ts"
+        echo "                  the journal for that boot has rotated away; this row cannot be audited"
+        unresolved=$((unresolved + 1)); continue
+    fi
+
+    # EXPLICIT -b. `journalctl -k --since X --until Y` without it returns only
+    # the CURRENT boot on this host, whatever the man page implies — documented
+    # in bt-stage2's header, and the second of the two errors that produced a
+    # false clean answer during the hand audit.
+    W=$(bt_journal -k -b "$b" --since "@$open" --until "@$close" --no-pager -o short-iso-precise 2>/dev/null)
+
+    n_reset=$(grep -cE "$RE_RESET" <<<"$W" || true)
+    n_reload=$(grep -cE "$RE_RELOAD" <<<"$W" || true)
+    n_tmo=$(grep -cE "$RE_TIMEOUT" <<<"$W" || true)
+
+    exp=()
+    (( ${n_reload:-0} > 0 )) && exp+=(btusb_reload)
+    (( ${n_reset:-0}  > 0 )) && exp+=(usb_reset)
+    if (( ${#exp[@]} )); then expect=$(IFS=+; echo "${exp[*]}"); else expect=none; fi
+    got="${f[$((C_PERT - 1))]}"
+
+    disagreed=0
+    if [[ "$got" != "$expect" ]]; then
+        echo "  row $((n - 1)) (boot $b, $ts): perturbed DISAGREES"
+        echo "                  recorded: $got"
+        echo "                  journal:  $expect  ($n_reset reset line(s), $n_reload reload line(s))"
+        disagreed=1
+    fi
+
+    # bt1_status is not recomputed — its classifier weighs SCO, early
+    # intervention and probe provenance, and a second implementation of that
+    # would be a copy that drifts. What IS checked is the one thing the journal
+    # settles on its own: `confirmed` claims BT-1 occurred, `not_observed`
+    # claims it did not, and the timeout count decides between them.
+    bt1="${f[$((C_BT1 - 1))]}"
+    case "$bt1" in
+        confirmed)
+            (( ${n_tmo:-0} == 0 )) && {
+                echo "  row $((n - 1)) (boot $b, $ts): bt1_status DISAGREES"
+                echo "                  recorded: confirmed, but the window holds no command timeout"
+                disagreed=1; }
+            ;;
+        not_observed)
+            (( ${n_tmo:-0} > 0 )) && {
+                echo "  row $((n - 1)) (boot $b, $ts): bt1_status DISAGREES"
+                echo "                  recorded: not_observed, but the window holds $n_tmo command timeout(s)"
+                disagreed=1; }
+            ;;
+    esac
+
+    (( disagreed )) && bad=$((bad + 1))
+done < "$TSV"
+
+echo
+# ENUMERATED == 0 IS A REFUSAL. An audit that examined no rows and printed
+# "everything agrees" is worse than one that crashes.
+if (( rows == 0 )); then
+    refuse "no rows examined — results.tsv is empty, or --row selected nothing"
+fi
+
+echo "  audited     $rows row(s)"
+echo "  disagreed   $bad"
+echo "  unresolved  $unresolved"
+echo
+echo "  Gates recomputed from the journal: perturbed, and bt1_status against the"
+echo "  timeout count. NOT audited: treatment's CHANGED:/PERTURBED: prefixes and"
+echo "  trial_result, which are decided by endpoint state the journal does not"
+echo "  carry. Those remain the tool's word, and this report does not cover them."
+
+if (( unresolved > 0 )); then
+    echo
+    echo "  $unresolved row(s) could not be audited. That is not a pass."
+    exit 2
+fi
+(( bad > 0 )) && exit 1
+exit 0

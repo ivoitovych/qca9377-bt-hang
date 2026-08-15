@@ -174,4 +174,32 @@ END {
         print  "     was not conducted under one condition, and no rate computed"
         print  "     from it means anything."
     }
+
+    # UNKNOWN WAS COUNTED AND NEVER SHOWN.
+    #
+    # `unk[k]++` has been incremented since this exclusion was written and read
+    # nowhere — no loop, no warning, no line of output. The comment beside the
+    # exclusion says censored and unknown rows are "counted, shown, and excluded
+    # from the denominator", and the censored half was true. A trial whose
+    # evidence could not be read simply disappeared, and the denominator became
+    # quietly smaller than the sample: the exact failure the censored block two
+    # above exists to prevent, in the branch nobody printed.
+    #
+    # It matters most where it has not happened yet. `unknown` is what a trial
+    # gets when the journal is unreadable at close, so a build whose collection
+    # breaks loses trials silently and its rate is computed over the survivors —
+    # a smaller n that looks like a real one. With A/B/C/D that is a comparison
+    # between builds where one has been quietly filtered.
+    tu = 0
+    for (k in unk) tu += unk[k]
+    if (tu > 0) {
+        print ""
+        printf "  !! %d trial(s) with UNKNOWN evidence, excluded from every rate above.\n", tu
+        print  "     bt1_status is `unknown` when the journal could not be read"
+        print  "     when the trial closed, so neither a hang nor a survival was"
+        print  "     established. The trial happened; the observation did not."
+        print  "     These are not survivals. Counting them as such understates"
+        print  "     the incidence, and dropping them without saying so makes the"
+        print  "     denominator smaller than the sample with nothing to show it."
+    }
 }
