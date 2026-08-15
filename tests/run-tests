@@ -1232,6 +1232,59 @@ if (( rc != 0 )); then
 else
     bad "an unrecognised bt1_status was silently counted"
 fi
+
+# THE OTHER AXIS, WHICH HAD THE SAME CHECK AND NO TEST.
+#
+# trial-summary domain-checks BOTH columns, five lines apart, for the same
+# stated reason: an unrecognised value must not be folded into whichever bucket
+# looks harmless. Only one of the two was ever driven. That asymmetry is how the
+# perturbed gap survived as well — the mode that had happened got a test, the
+# mode that had not stayed theoretical until it corrupted two rows.
+rc=0
+python3 - "$FIX" "$SCHEMA/evidence/trials/results.tsv" <<'PY'
+import sys
+rows = [l.rstrip("\n").split("\t") for l in open(sys.argv[1])]
+i = rows[0].index("trial_result")
+rows[1][i] = "potato"
+with open(sys.argv[2], "w") as f:
+    for r in rows:
+        f.write("\t".join(r) + "\n")
+PY
+BT_REPO="$SCHEMA" tools/bt-trial report >/dev/null 2>&1 || rc=$?
+(( rc != 0 )) \
+    && ok "report refuses an unrecognised trial_result value (rc=$rc)" \
+    || bad "an unrecognised trial_result was silently counted"
+
+# ── EXCLUDED IS NOT THE SAME AS DISAPPEARED ──────────────────────────────
+#
+# `unknown` is what bt1_status gets when the journal could not be read when the
+# trial closed. trial-summary excludes those rows from every rate, which is
+# right, and counted them into `unk` — which nothing read. No loop, no warning,
+# no output. The row left the denominator and the report said nothing, so the
+# denominator was quietly smaller than the sample: precisely what the CENSORED
+# block a few lines above exists to prevent, in the branch nobody printed.
+#
+# The cost is in front of us rather than behind: a build whose evidence
+# collection breaks loses trials silently, and its rate is computed over the
+# survivors as though that were the sample. Across A/B/C/D that is a comparison
+# in which one arm has been filtered without anyone being told.
+python3 - "$FIX" "$SCHEMA/evidence/trials/results.tsv" <<'PY'
+import sys
+rows = [l.rstrip("\n").split("\t") for l in open(sys.argv[1])]
+i = rows[0].index("bt1_status")
+rows[1][i] = "unknown"
+with open(sys.argv[2], "w") as f:
+    for r in rows:
+        f.write("\t".join(r) + "\n")
+PY
+UNKOUT=$(BT_REPO="$SCHEMA" tools/bt-trial report 2>&1)
+if grep -qE '1 trial\(s\) with UNKNOWN evidence' <<<"$UNKOUT" \
+   && grep -q 'excluded from every rate' <<<"$UNKOUT"; then
+    ok "a trial with unreadable evidence is excluded AND reported, not silently dropped"
+else
+    bad "an unknown-evidence trial left the denominator without a word:"
+    bad "  $(grep -cE '!!' <<<"$UNKOUT") warning line(s), none naming it"
+fi
 rm -rf "$SCHEMA"
 
 echo
