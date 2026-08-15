@@ -259,3 +259,91 @@ Strong report; the do-not-submit banner, methodological caveat, and the
   this controller into a state that Windows does not") — neither
   hardware-blaming nor Linux-blaming, and the report says which follows from
   which.
+
+### 1.6 `docs/fix-proposal.md`
+
+- **[MED] Stale small-n fossil, same as bug-report.md.** §3b ends "⚠️ Small
+  n. Two failed late resets, one successful early reset, one incident with
+  no early signal. Attach all three sessions" — while §3a in the same file
+  says five late resets (+11/+16/+20/+20/+33 s). Two documents now carry the
+  same fossilised count (see §1.5); fix both in one pass, and grep the tree
+  for "two failed late resets" while at it — the Phase-17 lesson ("apply
+  corrections by grepping the whole tree") applies to its own artefacts.
+- **[LOW] Section numbering is out of order:** §1, §2, §3, §3a, §3b, then
+  **§5a**, then §4, §5, §6, §7, §8. A reader following "see §5a" scrolls past
+  §4 to find it *before* §4. Renumber or reorder.
+- **[GOOD] §3's six-behaviour enumeration with verbatim source**, the WBS
+  separation, and §5a's decision-rules table (benefit and harm as separate
+  axes) are the strongest technical writing in the repo.
+- **[GOOD] The suggested commit message** is properly conservative —
+  "aggregate journal counts are consistent with these facts but do not
+  establish them by themselves" is a sentence most submitters would not write.
+
+### 1.7 `docs/firmware-hypothesis.md`
+
+- **[MED] Carries the refuted "two things" model of `BTUSB_QCA_ROME`.** "What
+  we already knew and mis-filed" states the flag "makes `btusb_probe()`
+  install **two** things". Phase 17 established it installs six, and
+  `fix-proposal.md` §3/§5a was corrected accordingly — this file was not.
+  This is precisely the residue class HISTORY's own lesson describes ("a
+  document is not corrected until its residues are"), in the very document
+  `bug-report.md`'s do-not-submit banner sends readers to. The hypothesis
+  itself only needs items 1 and 2, so the fix is one sentence ("two of the
+  six things it installs — see fix-proposal §3").
+- **[LOW] "Consequence for the bug report"** still phrases the current
+  report as "this device gets no `cmd_timeout` handler" — the pre-Phase-16
+  mechanism vocabulary. Cosmetic, but it is the one place a reader will
+  compare before/after framings.
+
+### 1.8 `docs/investigation-plan.md`
+
+No defects found. The A1 downgrade note, the A4 gate, and the C1 ladder all
+agree with fix-proposal §5a. The Backlog items (BL-01, BL-02) are unusually
+well-formed: each states why it matters, what limitation travels with the
+data, and when it must be done by. **[GOOD]** overall.
+
+### 1.9 `docs/changes-applied.md`
+
+- **[LOW] §0 "Summary of blast radius" reads as document-wide but is
+  2026-08-10-scoped.** "New files added: ✅ 9 (+1)" was true on day one; the
+  dated addenda below add roughly a dozen more scripts, four units, two
+  drop-ins and a udev rule. The sections are individually complete, but the
+  table a reader trusts first now under-reports the footprint several-fold.
+  Add "as of 2026-08-10 — see dated sections below for the current total" or
+  recompute the total from install.sh.
+- **[GOOD] The "documented change that was never in effect" section**
+  (BT_TRACE_KEEP) records the verification command alongside the fix — the
+  rule it derives is applied in the same paragraph that states it.
+
+### 1.10 `docs/restore-original-state.md`
+
+- **[MED] §2's enumeration of what `uninstall.sh` removes is a stale
+  hand-written list.** It names 11 commands; `install.sh` currently installs
+  ~35 commands plus 8 `lib/` files (verified by deriving the set from
+  `install.sh` itself). The sentence opens correctly ("Removes everything
+  `install.sh` adds") — but then freezes an early manifest. This repository
+  has documented four times that "the enumeration is the bug"
+  (`HISTORY.md` Phase 25 postscript); the fix that matches house style is to
+  *drop* the list and point at `bt-verify-install` / `install.sh` as the
+  derived source of truth, not to update it by hand a fifth time.
+- **[NOTE] §4 and two sibling passages disclose the development tooling by
+  name** (`restore-original-state.md` §4, `HISTORY.md` Phase 4,
+  `pre-submission-checklist.md` §5). `devtools/repo-scan`'s attribution
+  check only blocks trailer forms (`co-authored-by:`/`generated with` plus
+  the vendor name), so these pass the scan while still disclosing. If the
+  policy is "no attribution trailers", the tree is consistent; if the intent
+  is broader non-disclosure, these three are the residue. Owner's decision —
+  flagged, not judged.
+
+### 1.11 `docs/pre-submission-checklist.md` and `docs/related-reports.md`
+
+No defects found in either. The checklist's §1 purge procedure derives the
+address list from history rather than spelling it (after documenting the
+first version's self-re-leak — a valuable warning), §2b's controlled-
+environment table is the right prerequisite discipline, and related-reports
+consistently holds the phenotype/cause line. **[GOOD]**.
+
+### 1.12 `LICENSE`
+
+GPL-2.0 text as stated in README. Not read line-by-line; length and header
+match the canonical text.
