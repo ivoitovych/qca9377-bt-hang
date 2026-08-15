@@ -5690,6 +5690,64 @@ TLPCOL=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^pe
     && ok "the perturbation is named in the perturbed column (field $TLPCOL)" \
     || bad "perturbed column $TLPCOL read '$(tl_row | cut -f"${TLPCOL:-1}")'"
 
+# ── THE OTHER PERTURBATION, WHICH NOTHING HERE HAD EVER DRIVEN ───────────
+#
+# `perturbed` has three outcomes and this section tested one. The untested one
+# corrupted the record: on 2026-08-15 the maintainer audited results.tsv against
+# the journal and found TWO OF THREE ROWS carrying a false `perturbed=none` —
+# trial 2 with three kernel resets inside its window, trial 3 with four. Both
+# were censored windows entering the evidence as clean observations, poolable
+# into a failure-rate denominator as though nothing had touched the controller.
+#
+# The cause was that the detector matched `Resetting usb device`, which is
+# bt-hang-watchdog's message, and not `usb 3-3: reset full-speed USB device
+# number 2 using xhci_hcd`, which is what the KERNEL writes and the only thing
+# that appears when the reset comes from outside this project — as it does for
+# every controlled reset test, which issue USBDEVFS_RESET by ioctl.
+#
+# A source-level rule about the pattern now exists, and it is not enough on its
+# own: it asserts the regex contains some text, not that the tool reaches the
+# right conclusion. Both spellings are driven through the real close path here,
+# because that is the thing that was actually wrong.
+tlpert() {   # <journal-body> -> the perturbed column after one closed trial
+    printf '%s' "$1" > "$TL/kjournal"
+    tl autostart stock >/dev/null 2>&1
+    tl ok >/dev/null 2>&1
+    tl_row | cut -f"${TLPCOL:-1}"
+}
+TLRK=$(tlpert '2026-08-13T09:00:00.000000+0200 host kernel: usb 3-3: new full-speed USB device number 2 using xhci_hcd
+2026-08-13T09:00:10.000000+0200 host kernel: usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+2026-08-13T09:00:20.000000+0200 host kernel: Bluetooth: MGMT ver 1.22
+')
+[[ "$TLRK" == "usb_reset" ]] \
+    && ok "a reset in the KERNEL's wording is recorded as usb_reset — the two rows this got wrong" \
+    || bad "a kernel-issued USB reset inside the window recorded perturbed='$TLRK', not usb_reset"
+
+TLRW=$(tlpert '2026-08-13T09:00:10.000000+0200 host kernel: Bluetooth: hci0: Resetting usb device
+')
+[[ "$TLRW" == "usb_reset" ]] \
+    && ok "a reset in the watchdog's wording is still recorded as usb_reset" \
+    || bad "the watchdog's own reset message recorded perturbed='$TLRW'"
+
+# Both at once, because a btusb reload and a USB reset are different events and
+# a window can carry both — the row has to say so rather than pick one.
+TLRB=$(tlpert '2026-08-13T09:00:10.000000+0200 host kernel: usbcore: deregistering interface driver btusb
+2026-08-13T09:00:15.000000+0200 host kernel: usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+')
+[[ "$TLRB" == "btusb_reload+usb_reset" ]] \
+    && ok "a window carrying both perturbations names both, not the first one found" \
+    || bad "reload+reset recorded perturbed='$TLRB'"
+
+# And the negative, which is the case every real row claimed: a window with
+# nothing in it must still say `none`, or the three above prove only that the
+# detector fires, not that it discriminates.
+TLRN=$(tlpert '2026-08-13T09:00:00.000000+0200 host kernel: Bluetooth: hci0: command 0x0406 tx timeout
+2026-08-13T09:00:20.000000+0200 host kernel: Bluetooth: MGMT ver 1.22
+')
+[[ "$TLRN" == "none" ]] \
+    && ok "an untouched window is still recorded as none — the detector discriminates" \
+    || bad "a clean window recorded perturbed='$TLRN'"
+
 # ── status: the view that decides whether to abort a trial in progress ───
 #
 # The one command an operator runs WHILE a trial is open, and the only place
@@ -6354,6 +6412,66 @@ if [[ "$BWF" == *"2026-08-15T21:02:31.230123"* && "$BWF" == *"command timeouts  
     ok "bt-window answers from a journal fixture — counts, onset and both verdicts"
 else
     bad "bt-window over BT_JOURNAL_FIXTURE (rc=$bwfrc): $(head -4 <<<"$BWF" | tr '\n' ' ')"
+fi
+
+# ── WHO ENDED THE WINDOW, WHICH IS THE WHOLE POINT OF CENSORING ──────────
+#
+# On 2026-08-15 this tool reported a window CENSORED by an OPERATOR when what
+# had actually ended it was a deliberate USBDEVFS_RESET. Two wrong patterns,
+# failing in opposite directions, cancelling into a verdict that looked right:
+# the kernel's own reset wording was not matched at all, and a passive rfkill
+# teardown observation was counted as a person. See journal.sh.
+#
+# Both fixtures are the REAL 2026-08-15 lines, six seconds apart on that
+# machine, so one scenario pins both directions and neither can be satisfied by
+# a pattern that matches everything.
+BWR=$(BT_JOURNAL_FIXTURE=tests/journal/window-reset tools/bt-window 2>&1)
+if [[ "$BWR" == *"1 INTERVENTION(S)"* && "$BWR" == *"1 tooling"* && "$BWR" != *"operator"* ]]; then
+    ok "a deliberate USB reset is attributed to TOOLING, and the rfkill teardown beside it is not an operator"
+else
+    bad "reset window mis-attributed — the kernel's reset wording or the rfkill qualifier is wrong:"
+    while IFS= read -r l; do bad "      $l"; done < <(grep -E 'INTERVENTION|intervention|tooling|operator' <<<"$BWR")
+fi
+BWK=$(BT_JOURNAL_FIXTURE=tests/journal/window-rfkill tools/bt-window 2>&1)
+if [[ "$BWK" == *"1 INTERVENTION(S)"* && "$BWK" == *"1 operator"* && "$BWK" != *"tooling"* ]]; then
+    ok "an rfkill block that actually blocks (soft 1) is attributed to the OPERATOR"
+else
+    bad "operator window mis-attributed:"
+    while IFS= read -r l; do bad "      $l"; done < <(grep -E 'INTERVENTION|intervention|tooling|operator' <<<"$BWK")
+fi
+
+# AND EVERY PLACE THAT DETECTS A RESET MUST KNOW THE KERNEL'S WORDING.
+#
+# The first draft of this check excluded four tools by name to make itself pass,
+# which is the hand-written list this repository keeps being burned by — and one
+# of the four, bt-trial, turned out to have the identical defect. It counts
+# resets to decide whether a trial was PERTURBED, and a trial perturbed by a
+# deliberate reset was recording as CLEAN, putting a censored window into the
+# rate denominators. Worse than bt-window's, because bt-window reports and
+# bt-trial writes the record.
+#
+# So the rule is derived instead of listed: `usb_queue_reset_device` is the
+# REQUEST, and any site matching it is trying to detect a reset, so it must also
+# match the kernel CARRYING ONE OUT — which is the only thing that appears when
+# the reset comes from outside this project, as every controlled reset test does.
+#
+# Scoped to the SHIPPED tools — `tools/*` and `bin/*`, the same split the seam
+# check above derives — because a reset detector is a thing a tool does. This
+# file also names `usb_queue_reset_device`, twice: once in the retired-prose
+# scan, and once in this check's own grep. Neither detects a reset, and both
+# would be silenced by a name-based exclusion that then hid a real tool.
+TOOLFILES=()
+for f in "${SHFILES[@]}"; do case "$f" in tools/*|bin/*) TOOLFILES+=("$f") ;; esac; done
+RESETSITE=$(grep -nE 'usb_queue_reset_device' "${TOOLFILES[@]}" 2>/dev/null \
+            | grep -vE '^[^:]*:[0-9]*:[[:space:]]*#' \
+            | grep -vE 'reset \(full\|high\|low\)-speed')
+if (( ${#TOOLFILES[@]} == 0 )); then
+    bad "no tool files derived — the reset-wording check examined nothing"
+elif [[ -z "$RESETSITE" ]]; then
+    ok "every reset detector matches the kernel's wording, not only this project's"
+else
+    bad "a reset detector matches only this project's wording — an external reset is invisible:"
+    while IFS= read -r l; do bad "      $l"; done <<<"$RESETSITE"
 fi
 
 # ── COST MUST NOT GROW WITH THE WINDOW, AND THAT IS AN ASSERTION ─────────
