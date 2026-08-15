@@ -814,3 +814,18 @@ survived adversarial reading intact.
 The review file itself: every item was written immediately after its
 inspection, per the method stated in the plan; nothing in this file was
 reconstructed from memory at the end.
+
+---
+
+## Addendum — the tree this review covers
+
+Omitted from the header when the review was opened, and added here as an
+appended correction rather than an edit (per the register's append-only
+convention): **this review covers the tree at
+`ed8216676e0f5d5473f9afefa805fd8a89f25268`** ("The close writes the record
+last, so the record is what a slow close loses"), which was both `main` and
+the tip this review branch was created from on 2026-08-15. Every line
+number, count, measurement (386 invariants, ~16 s suite, coverage exit 2)
+and finding in this file refers to that tree. The review's own commits on
+`review/2026-08-15T1752Z` change only `reviews/`, so the findings remain
+valid for any tree whose non-`reviews/` content matches `ed82166`.
