@@ -44,8 +44,9 @@ wrong turns, which a clean summary loses.
 | 2026-08-13T15:17Z | [Test classes & mocks](2026-08-13T1517Z-test-classes-and-mocks.md) | the tree at 28.5% | Assesses the owner's two proposals; settles CS-08's design; adds the system round trip |
 | 2026-08-14T04:43Z | [Why 100% is hard here](2026-08-14T0443Z-why-100-percent-is-hard-here.md) | the tree at `331e7a2` | A third of the "untested" was **unmeasurable by construction**. Adds a second coverage tool for awk, an uncovered-line report, and an exclusion list a 100% floor can stand on |
 | 2026-08-14T13:28Z | [Sandbox escape postmortem](2026-08-14T1328Z-sandbox-escape-postmortem.md) | `251a6cb` | The suite **closed a live trial** on the investigation machine. A bare-name `bt-trial` in the watchdog, invisible on any checkout with nothing installed. Guard + decoy; four of the maintainer's findings dispositioned |
-| 2026-08-15T00:18Z | [Suite runtime](2026-08-15T0018Z-suite-runtime.md) | the tree at `ce854c0` | 81% of a 52-second run was waiting on clocks, not working. 52 s -> 28 s. Every slow test was slow because it waited for time instead of a condition — and was a weaker assertion for the same reason. Exposed two `bt-usbmon` defects |
 | 2026-08-14T16:03Z | [Verified on the investigation machine](2026-08-14T1603Z-verified-on-the-investigation-machine.md) | the tree at `795705e`, now `main` | 402/402 green where the tools are installed; `bt-mark` injections **549 → 0**. Two more environment-coupled checks found *by that host*. Supersedes §7 of the postmortem; **SE-05 stays open** |
+| 2026-08-15T00:18Z | [Suite runtime](2026-08-15T0018Z-suite-runtime.md) | the tree at `ce854c0` | 81% of a 52-second run was waiting on clocks, not working. 52 s -> 28 s. Every slow test was slow because it waited for time instead of a condition — and was a weaker assertion for the same reason. Exposed two `bt-usbmon` defects |
+| 2026-08-15T01:42Z | [Test comprehensiveness](2026-08-15T0142Z-test-comprehensiveness.md) | the tree at `eaa9a14` | 90.1% line coverage, **76% mean comprehensiveness**. `bt-window` shipped and never executed; `bt-capdiff` at 93% of lines and **1 of 5 modes**; `bin/bt-capture` is Python and no instrument sees it. Adds `devtools/test-comprehension` |
 
 ---
 
@@ -164,6 +165,17 @@ what was built, and why it differs.
 | HC-08 | Raise both floors to 100% | **blocked** on HC-05..07 | — | judgement call; see §5 |
 | HC-09 | The numerator counted traced lines per file and clamped to the total | done — every total before this was inflated | this commit | `devtools/coverage` vs `--uncovered`: (coverable − covered) must equal the uncovered count, for every file |
 | HC-10 | `done`/`fi` with a redirect, and commented function headers, were in the denominator | done — untraceable by construction, derived by tracing both forms | this commit | `bash -x` a loop with `done < f` and with `done < <(cmd)`: only the second is traced |
+
+### From `2026-08-15T0142Z-test-comprehensiveness.md`
+
+| ID | Item | Status | Landed | Verify |
+|---|---|---|---|---|
+| TX-01 | `tools/bt-window` is shipped and has never been executed | **open** — 0 of 45 lines | — | `devtools/test-comprehension bt-window` |
+| TX-02 | Drive every mode of the four units below 35% (16 verbs/flags) | **open** | — | `devtools/test-comprehension --min 50` |
+| TX-03 | Drive the 14 refusal paths nothing has reached | **open** | — | `devtools/test-comprehension` — "never exercised" section |
+| TX-04 | `bin/bt-capture` is Python; no instrument here measures it | **open** — decide: instrument or state it | — | `devtools/test-comprehension` — "not measurable" section |
+| TX-05 | Untested watchdog seams decide WHEN it intervenes (`BT_WINDOW`, `BT_EARLY_*`) | **open** | — | `devtools/test-comprehension bt-hang-watchdog` |
+| TX-06 | A comprehensiveness floor in CI | **blocked** on TX-01..03 | — | `devtools/test-comprehension --min 70` |
 
 ### From `2026-08-14T1328Z-sandbox-escape-postmortem.md`
 
