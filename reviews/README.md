@@ -44,6 +44,7 @@ wrong turns, which a clean summary loses.
 | 2026-08-13T15:17Z | [Test classes & mocks](2026-08-13T1517Z-test-classes-and-mocks.md) | the tree at 28.5% | Assesses the owner's two proposals; settles CS-08's design; adds the system round trip |
 | 2026-08-14T04:43Z | [Why 100% is hard here](2026-08-14T0443Z-why-100-percent-is-hard-here.md) | the tree at `331e7a2` | A third of the "untested" was **unmeasurable by construction**. Adds a second coverage tool for awk, an uncovered-line report, and an exclusion list a 100% floor can stand on |
 | 2026-08-14T13:28Z | [Sandbox escape postmortem](2026-08-14T1328Z-sandbox-escape-postmortem.md) | `251a6cb` | The suite **closed a live trial** on the investigation machine. A bare-name `bt-trial` in the watchdog, invisible on any checkout with nothing installed. Guard + decoy; four of the maintainer's findings dispositioned |
+| 2026-08-15T00:18Z | [Suite runtime](2026-08-15T0018Z-suite-runtime.md) | the tree at `ce854c0` | 81% of a 52-second run was waiting on clocks, not working. 52 s -> 28 s. Every slow test was slow because it waited for time instead of a condition — and was a weaker assertion for the same reason. Exposed two `bt-usbmon` defects |
 | 2026-08-14T16:03Z | [Verified on the investigation machine](2026-08-14T1603Z-verified-on-the-investigation-machine.md) | the tree at `795705e`, now `main` | 402/402 green where the tools are installed; `bt-mark` injections **549 → 0**. Two more environment-coupled checks found *by that host*. Supersedes §7 of the postmortem; **SE-05 stays open** |
 
 ---
