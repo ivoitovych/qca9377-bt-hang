@@ -2173,6 +2173,29 @@ guard_checked=$(guard_names | grep -c .)
 [[ ! -e "$DECOY_HIT" ]] \
     && ok "no bare-name call reached a tool behind the guard" \
     || bad "the guard was bypassed: $(tr '\n' ' ' < "$DECOY_HIT")"
+# ── the watchdog's thresholds, which decide WHEN it acts ─────────────────
+#
+# BT_WINDOW is the span in which timeouts must fall to count as a burst — and
+# it is measured against ARRIVAL time, not the timestamp in the line. A fixture
+# is consumed in milliseconds, so every signal arrives inside any window of a
+# second or more: BT_WINDOW=1 was the first attempt here and it changed
+# nothing, because the fixture cannot spread arrivals out.
+#
+# BT_WINDOW=0 is the value that discriminates. `now - t < 0` is never true, so
+# every timestamp is pruned as soon as it is recorded and the count can never
+# reach the threshold. It proves the seam is read, which is what an untested
+# parameter needs to establish.
+: > "$WD/spy.log"; rm -f "$WD/dead"; touch "$WD/dead-once"
+WDNARROW=$(wd_run 10 BT_WINDOW=0 BT_THRESHOLD=3)
+[[ "$WDNARROW" != *"— intervening."* ]] \
+    && ok "BT_WINDOW is connected: a window too short to hold the burst suppresses it" \
+    || bad "the watchdog intervened with a window that cannot contain the threshold"
+
+: > "$WD/spy.log"; rm -f "$WD/dead"; touch "$WD/dead-once"
+WDEARLY=$(wd_run 10 BT_EARLY=1 BT_EARLY_THRESHOLD=99 BT_EARLY_WINDOW=1)
+[[ "$WDEARLY" != *"EARLY intervention"* ]] \
+    && ok "BT_EARLY_THRESHOLD is connected: a threshold above the signal count suppresses EARLY" \
+    || bad "EARLY fired with a threshold no fixture could reach"
 rm -rf "$WD" "$EMPTYSYS"
 
 # ── the six journal-only tools (CS-06 / CS-07) ────────────────────────────
@@ -3966,6 +3989,20 @@ evstray=$(find evidence/sessions -maxdepth 1 -name '*probe-session*' 2>/dev/null
 (( ${evstray:-0} == 0 )) \
     && ok "no test session landed in the real evidence tree" \
     || bad "$evstray test session(s) were written into evidence/sessions/"
+# ── bt-evidence: status, and the unknown verb ───────────────────────────
+EVS=$(ev status 2>&1)
+[[ "$EVS" == *"no session open"* ]] \
+    && ok "bt-evidence status reports no session when none is open" \
+    || bad "status did not report an absent session"
+ev start status-probe >/dev/null 2>&1
+EVS2=$(ev status 2>&1)
+[[ "$EVS2" == *"session OPEN"* && "$EVS2" == *"elapsed:"* ]] \
+    && ok "bt-evidence status reports an open session and how long it has run" \
+    || bad "status did not report the open session"
+ev abort >/dev/null 2>&1 || ev stop >/dev/null 2>&1
+ev frobnicate >/dev/null 2>&1
+(( $? == 1 )) && ok "bt-evidence prints usage and exits 1 for an unknown verb" \
+              || bad "bt-evidence accepted an unknown verb"
 rm -rf "$EV"
 
 # ── bt-dyndbg: which debug sites are on IS a measurement decision ─────────
@@ -4326,6 +4363,218 @@ CDH=$(tools/bt-capdiff --help 2>&1); cdhrc=$?
 (( cdhrc == 0 )) && [[ "$CDH" == *"bt-capdiff"* ]] \
     && ok "bt-capdiff --help prints its own usage" \
     || bad "bt-capdiff --help failed (rc=$cdhrc)"
+
+echo
+echo "the parameters that decide the answers, and the refusals nothing drove"
+echo "─────────────────────────────────────────────────────────────────────"
+#
+# Two classes the comprehensiveness pass found together, because they fail the
+# same way: nothing had ever set them to anything but their defaults, and
+# nothing had ever reached them at all.
+#
+# A SEAM THAT IS NEVER SET is a parameter whose effect on the answer has never
+# been observed. BT_WINDOW decides when the watchdog intervenes; BT_CAPDIFF_TOL
+# decides whether two captures are called equal; BT_PHASE_INCIDENT_GAP decides
+# what counts as one incident. Each is a number that changes a verdict, and a
+# verdict-changing number tested only at its default is a constant.
+#
+# A REFUSAL THAT IS NEVER REACHED is worse: it is the path taken when the tool
+# cannot support an answer, and it exists precisely for the case nobody
+# rehearses.
+
+# ── BT_CAPDIFF_TOL: the number that decides whether two captures agree ───
+#
+# The fixtures differ by 40 ms of scheduling delay, which is what the tolerance
+# exists to absorb. Above it the paths agree; below it the same two files
+# become a disagreement. Testing only the default never establishes that the
+# knob is connected to anything.
+CDTOL_LOOSE=$(cd_run capdiff-a capdiff-b)
+CDTOL_TIGHT=$(BT_CAPDIFF_TOL=0.001 cd_run capdiff-a capdiff-b)
+[[ "$CDTOL_LOOSE" == *"paths agree"* ]] \
+    && ok "at the default tolerance the two capture paths agree" \
+    || bad "the fixtures no longer agree at the default tolerance"
+[[ "$CDTOL_TIGHT" != *"paths agree"* ]] \
+    && ok "BT_CAPDIFF_TOL is connected: a tighter bound makes the same files disagree" \
+    || bad "tightening the tolerance changed nothing — the seam is inert"
+
+# ── bt-phase: the two numbers that define an incident and a probe ────────
+#
+# INCIDENT_GAP decides how far apart two timeouts may be and still be one
+# incident. Collapsing the gap must split a cluster; a parameter that does not
+# change the grouping is not being read.
+PHG=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-phase 2>&1)
+PHG1=$(BT_JOURNAL_FIXTURE="$BJ" BT_PHASE_INCIDENT_GAP=1 tools/bt-phase 2>&1)
+PHG9=$(BT_JOURNAL_FIXTURE="$BJ" BT_PHASE_INCIDENT_GAP=99999 tools/bt-phase 2>&1)
+[[ "$PHG1" != "$PHG9" ]] \
+    && ok "BT_PHASE_INCIDENT_GAP is connected: it changes how events group" \
+    || bad "the incident gap made no difference — the seam is inert"
+PHT=$(BT_JOURNAL_FIXTURE="$BJ" BT_PHASE_TIMER_PERIOD=1 tools/bt-phase 2>&1); phtrc=$?
+(( phtrc == 0 )) && [[ -n "$PHT" ]] \
+    && ok "BT_PHASE_TIMER_PERIOD is accepted and the report still computes" \
+    || bad "an explicit timer period broke bt-phase (rc=$phtrc)"
+
+# ── bt-stage2: --cache, and the refusal that protects a partial read ────
+#
+# The dump takes minutes, so --cache exists to reuse one. A cache that is
+# silently ignored would make an operator believe they re-read the journal; a
+# cache that is silently trusted when the read FAILED would report on a partial
+# record, which is the failure the refusal below exists for.
+S2=$(mktemp -d)
+cat > "$S2/cache.log" <<'S2C'
+2026-08-13T09:00:00.000000+0200 host kernel: Bluetooth: hci0: command 0x0406 tx timeout
+2026-08-13T09:00:01.000000+0200 host kernel: usb 3-3: USB disconnect, device number 2
+S2C
+S2OUT=$(tools/bt-stage2 --cache "$S2/cache.log" 2>&1); s2rc=$?
+(( s2rc == 0 )) && [[ "$S2OUT" != *"this takes minutes"* ]] \
+    && ok "bt-stage2 --cache reuses an existing dump instead of re-reading" \
+    || bad "--cache re-read the journal or failed (rc=$s2rc)"
+
+# journalctl fails -> refuse rather than report on what was written before the
+# failure. A partial read produces a clean, plausible, wrong answer.
+mkdir -p "$S2/bin"; printf '#!/bin/sh\nexit 1\n' > "$S2/bin/journalctl"; chmod +x "$S2/bin/journalctl"
+S2F=$(PATH="$S2/bin:$PATH" tools/bt-stage2 --cache "$S2/fresh.log" 2>&1); s2frc=$?
+(( s2frc == 1 )) && [[ "$S2F" == *"refusing to report on a partial read"* ]] \
+    && ok "bt-stage2 refuses to report when the journal read failed" \
+    || bad "a failed journal read did not stop bt-stage2 (rc=$s2frc)"
+[[ ! -e "$S2/fresh.log" ]] \
+    && ok "the refused read leaves no dump behind to be reused later" \
+    || bad "bt-stage2 left a partial dump after refusing"
+
+S2H=$(tools/bt-stage2 --help 2>&1); s2hrc=$?
+(( s2hrc == 0 )) && [[ "$S2H" == *"bt-stage2"* ]] \
+    && ok "bt-stage2 --help prints its own usage" \
+    || bad "bt-stage2 --help failed (rc=$s2hrc)"
+rm -rf "$S2"
+
+# ── the refusals that fire when there is no journal at all ──────────────
+#
+# Driven by removing journalctl from PATH rather than by pointing a seam at
+# nothing: these branches are about the HOST lacking the tool, and a fixture
+# that is merely empty exercises a different question.
+NOJ=$(mktemp -d); mkdir -p "$NOJ/bin"
+for c in grep awk sed cat sort head tail wc date cut tr basename dirname readlink stat mktemp rm; do
+    [[ -x "/usr/bin/$c" ]] && ln -sf "/usr/bin/$c" "$NOJ/bin/$c" 2>/dev/null
+    [[ -x "/bin/$c" ]] && ln -sf "/bin/$c" "$NOJ/bin/$c" 2>/dev/null
+done
+# A sysfs tree with the device in it, because bt-diagnose exits 2 at its
+# no-device-found path long before it reaches the journal check — on a host
+# without a QCA9377 that branch fires first, and the assertion below would pass
+# its exit code while testing an entirely different refusal.
+mkdir -p "$NOJ/sysfs/3-3/3-3:1.0/bluetooth/hci0" "$NOJ/sysfs/3-3/power"
+echo 13d3 > "$NOJ/sysfs/3-3/idVendor"; echo 3503 > "$NOJ/sysfs/3-3/idProduct"
+echo on   > "$NOJ/sysfs/3-3/power/control"
+
+BLOUT=$(PATH="$NOJ/bin" tools/bt-boot-list 2>&1); blrc=$?
+(( blrc != 0 )) && [[ "$BLOUT" == *"no journal available"* ]] \
+    && ok "bt-boot-list refuses when there is no journal and no fixture" \
+    || bad "bt-boot-list did not refuse without a journal (rc=$blrc)"
+
+DGOUT=$(PATH="$NOJ/bin" BT_SYSFS_USB="$NOJ/sysfs" tools/bt-diagnose 2>&1); dgrc=$?
+(( dgrc == 2 )) && [[ "$DGOUT" == *"journalctl not available"* && "$DGOUT" == *"Try instead: dmesg"* ]] \
+    && ok "bt-diagnose names the missing tool and offers dmesg instead" \
+    || bad "bt-diagnose did not report an unavailable journal (rc=$dgrc)"
+rm -rf "$NOJ"
+
+# ── bt-env-history: the three watchdog states, per boot ─────────────────
+#
+# Every row answers "what was protecting this boot, and what was the power
+# policy" — the treatment axis for every historical comparison. Only the "off"
+# state had ever rendered, so two of three watchdog classifications and the
+# whole metrics join were unexercised. A row that says `on/?` where the truth
+# is `early+late/3/60` misdescribes a boot that could reset the controller
+# before any timeout, which is the difference between passive observation and
+# an intervention.
+EHF=tests/journal/envhist
+EHR=$(BT_JOURNAL_FIXTURE="$EHF" BT_METRICS="$EHF/metrics.tsv" tools/bt-env-history 2>&1)
+[[ "$EHR" == *"early+late/3/60"* ]] \
+    && ok "a boot with EARLY mode on is reported as early+late, with its threshold" \
+    || bad "the EARLY watchdog state was not classified"
+[[ "$EHR" == *"late/5/90"* ]] \
+    && ok "a boot with early mode off is reported as late, with its own threshold" \
+    || bad "the late-only watchdog state was not classified"
+[[ "$EHR" == *"on/?"* ]] \
+    && ok "a watchdog that started without announcing a threshold reads on/?" \
+    || bad "the unknown-threshold state was not classified"
+# The threshold is parsed with sed, not `tr -d`: tr deletes a CHARACTER SET and
+# only worked because no digit appears in "threshold ". Asserting the value
+# rather than its presence is what pins that.
+[[ "$EHR" != *"early+late/?"* && "$EHR" != *"late/?"* ]] \
+    && ok "the threshold is extracted, not dropped to ?" \
+    || bad "a threshold present in the log was reported as unknown"
+[[ "$EHR" == *"N"*"on"* ]] \
+    && ok "autosuspend and power policy are joined from the metrics of that boot" \
+    || bad "the metrics join produced no values"
+
+# ── bt-timeline.sh: its modes ───────────────────────────────────────────
+tl_() { BT_JOURNAL_FIXTURE="$BJ" tools/bt-timeline.sh "$@" 2>&1; }
+TLR=$(tl_ --raw); TLD=$(tl_)
+[[ -n "$TLR" && "$TLR" != "$TLD" ]] \
+    && ok "bt-timeline.sh --raw renders differently from the classified view" \
+    || bad "--raw produced the same output as the default"
+TLA=$(tl_ --all)
+[[ -n "$TLA" ]] \
+    && ok "bt-timeline.sh --all includes the noise the default filters out" \
+    || bad "--all produced nothing"
+TLH=$(tl_ --help); tlhrc=$?
+(( tlhrc == 0 )) && [[ "$TLH" == *"bt-timeline"* ]] \
+    && ok "bt-timeline.sh --help prints its own usage" \
+    || bad "bt-timeline.sh --help failed (rc=$tlhrc)"
+# A bare argument is a --since value, not an error. The empty result must say
+# so rather than printing a header over nothing.
+TLE=$(tl_ "2030-01-01 00:00:00"); tlerc=$?
+(( tlerc == 0 )) && [[ "$TLE" == *"no events in range"* ]] \
+    && ok "a positional argument is taken as --since, and an empty range says so" \
+    || bad "an empty time range did not report itself (rc=$tlerc)"
+
+# ── the watchdog without its journal library ────────────────────────────
+#
+# bin/bt-hang-watchdog sources tools/lib/journal.sh. Installed, the two travel
+# together; from a copy they need not, and a watchdog that starts without its
+# library must refuse rather than run blind — it is the one tool here that acts
+# on what it reads.
+WDL=$(mktemp -d); cp bin/bt-hang-watchdog "$WDL/"
+WDLOUT=$("$WDL/bt-hang-watchdog" 2>&1); wdlrc=$?
+(( wdlrc != 0 )) && [[ "$WDLOUT" == *"cannot find lib/journal.sh"* ]] \
+    && ok "the watchdog refuses to start without its journal library" \
+    || bad "a watchdog with no journal library did not refuse (rc=$wdlrc)"
+rm -rf "$WDL"
+
+# ── bt-incident: the option paths that follow a valid slug ──────────────
+# The pre-check only inspects $1, so options AFTER the slug still go through
+# the loop — including its own -h|--help and its unknown-option refusal.
+INCSESS2=$(ls -1 evidence/sessions 2>/dev/null | wc -l)
+tools/bt-incident a-slug --bogus >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-incident rejects an unknown option after the slug" \
+              || bad "an unknown option after the slug was accepted"
+INCH2=$(tools/bt-incident a-slug --help 2>&1); inch2rc=$?
+(( inch2rc == 0 )) && [[ "$INCH2" == *"bt-incident"* ]] \
+    && ok "--help after a slug prints usage instead of collecting" \
+    || bad "--help after a slug did not print usage (rc=$inch2rc)"
+tools/bt-incident a-slug --since >/dev/null 2>&1
+(( $? != 0 )) && ok "--since with no value is refused rather than defaulted" \
+              || bad "--since accepted a missing value"
+[[ "$(ls -1 evidence/sessions 2>/dev/null | wc -l)" == "$INCSESS2" ]] \
+    && ok "none of the option paths collected an incident" \
+    || bad "an option path wrote a session directory"
+
+# ── bt-exhibit: the sanitiser FAILING, not merely missing ───────────────
+#
+# A missing sanitiser is already refused. A sanitiser that RUNS AND FAILS is
+# the more dangerous case: the raw text exists at that moment, and the only
+# correct outcome is that neither it nor a half-cleaned copy survives.
+EXF=$(mktemp -d); mkdir -p "$EXF/tools" "$EXF/evidence/exhibits"
+cp tools/bt-exhibit "$EXF/tools/"
+printf '#!/bin/bash\nexit 1\n' > "$EXF/tools/sanitize-logs.sh"; chmod +x "$EXF/tools/sanitize-logs.sh"
+git -C "$EXF" init -q 2>/dev/null; touch "$EXF/install.sh"
+EXFOUT=$(BT_REPO="$EXF" "$EXF/tools/bt-exhibit" new failing-sanitiser \
+         --cmd 'echo hello' --claim 'x' --why 'y' 2>&1); exfrc=$?
+(( exfrc == 1 )) && [[ "$EXFOUT" == *"REFUSING"* && "$EXFOUT" == *"sanitiser failed"* ]] \
+    && ok "bt-exhibit refuses when the sanitiser fails, rather than publishing raw" \
+    || bad "a failing sanitiser did not stop bt-exhibit (rc=$exfrc)"
+[[ -z "$(find "$EXF/evidence" -name '*.txt' -o -name '*.log' 2>/dev/null)" ]] \
+    && ok "nothing unsanitised survives the refusal — raw and partial both removed" \
+    || bad "bt-exhibit left text behind after refusing to publish"
+rm -rf "$EXF"
 
 # ── bt-incident: the refusal that protects the evidence tree ────────────
 #

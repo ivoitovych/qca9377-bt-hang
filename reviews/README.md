@@ -170,12 +170,12 @@ what was built, and why it differs.
 
 | ID | Item | Status | Landed | Verify |
 |---|---|---|---|---|
-| TX-01 | `tools/bt-window` is shipped and has never been executed | **open** — 0 of 45 lines | — | `devtools/test-comprehension bt-window` |
-| TX-02 | Drive every mode of the four units below 35% (16 verbs/flags) | **open** | — | `devtools/test-comprehension --min 50` |
-| TX-03 | Drive the 14 refusal paths nothing has reached | **open** | — | `devtools/test-comprehension` — "never exercised" section |
+| TX-01 | `tools/bt-window` is shipped and has never been executed | done — 0% → 91%, 15 scenarios | this commit | `devtools/test-comprehension bt-window` |
+| TX-02 | Drive every mode of the four units below 35% (16 verbs/flags) | done — worst unit is now 80% | this commit | `devtools/test-comprehension --min 75` |
+| TX-03 | Drive the 14 refusal paths nothing has reached | done — 2 remain, both argued | this commit | `devtools/test-comprehension` — "never exercised" section |
 | TX-04 | `bin/bt-capture` is Python; no instrument here measures it | **open** — decide: instrument or state it | — | `devtools/test-comprehension` — "not measurable" section |
-| TX-05 | Untested watchdog seams decide WHEN it intervenes (`BT_WINDOW`, `BT_EARLY_*`) | **open** | — | `devtools/test-comprehension bt-hang-watchdog` |
-| TX-06 | A comprehensiveness floor in CI | **blocked** on TX-01..03 | — | `devtools/test-comprehension --min 70` |
+| TX-05 | Untested watchdog seams decide WHEN it intervenes (`BT_WINDOW`, `BT_EARLY_*`) | done — 13/13 seams driven | this commit | `devtools/test-comprehension bt-hang-watchdog` |
+| TX-06 | A comprehensiveness floor in CI | done — `--min 75`, a ratchet below the current 80 | this commit | `grep -c "comprehensiveness floor" .github/workflows/checks.yml` → 1 |
 
 ### From `2026-08-14T1328Z-sandbox-escape-postmortem.md`
 

@@ -190,10 +190,22 @@ for u in "${UNITS[@]}"; do
     while read -r ln; do
         [[ -n "$ln" ]] || continue
         nref=$((nref + 1))
-        # `exit 0` inside a RULE does not end the program: awk jumps to END,
-        # and END's own exit status wins. The first draft used it and every
-        # refusal in the repository read as never-driven.
-        if awk -F'\t' -v f="$u" -v n="$ln" \
+        # A REFUSAL ON A CONTINUATION LINE BELONGS TO ITS COMMAND.
+        #
+        #     [[ -n "$LIBDIR" && -r "$LIBDIR/journal.sh" ]] \
+        #         || { echo "cannot find lib/journal.sh" >&2; exit 1; }
+        #
+        # The `exit 1` is on the second line, which carries no LINENO of its
+        # own and is not in the coverable set at all — so asking whether it ran
+        # always answered no, and bin/bt-hang-watchdog reported an untested
+        # refusal that the suite drives. The question is whether the COMMAND
+        # ran, so the line is mapped to the nearest coverable line at or above
+        # it before being looked up.
+        cln=$(awk -F'\t' -v f="$u" -v n="$ln" \
+                  '$1 == f && $2 <= n && $2 > best { best = $2 } END { print best + 0 }' \
+                  "$COV/coverable-lines")
+        (( cln == 0 )) && cln="$ln"
+        if awk -F'\t' -v f="$u" -v n="$cln" \
                '$1 == f && $2 == n { found = 1 } END { exit !found }' \
                "$COV/covered-lines"; then
             nref_hit=$((nref_hit + 1))
