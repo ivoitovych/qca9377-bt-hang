@@ -2075,7 +2075,7 @@ EOUT=$(wd_run 10 BT_EARLY=1)
 # one (bt-state) was already in the tree when these two were written. The farm
 # keeps every other tool the watchdog needs while making the ones under test
 # genuinely absent, and /bin is dropped because it is the same directory.
-# STUBS FIRST, THEN SYMLINK ONLY WHAT IS MISSING — and never `ln -sf`.
+# TOOLS THE WATCHDOG NEEDS, MINUS THE ONE UNDER TEST.
 #
 # The first version farmed with `ln -sf /usr/bin/*` and THEN copied the stubs
 # in. `cp` onto a symlink writes THROUGH it, and `>` truncates through it, so
@@ -2088,26 +2088,49 @@ EOUT=$(wd_run 10 BT_EARLY=1)
 # Creating the stubs first and linking only names that do not already exist
 # makes the hazard structurally impossible: no destination in this directory is
 # ever a symlink at the moment something is written to it.
-farm_into() {   # <dir> — link every /usr/bin tool not already present here
-    local d="$1" f b
+# TWO DIRECTORIES, AND NOTHING IS EVER WRITTEN INTO THE FARM.
+#
+# The farm holds symlinks to /usr/bin; the stub directory holds real files. The
+# PATH lists the stubs first, so a stub shadows the farm without ever replacing
+# a link. That is what makes this safe, and ordering was not:
+#
+#   `cp stub/systemctl farm/` and `printf ... > farm/timeout` both WRITE
+#   THROUGH the symlink and destroy the real binary at the other end.
+#
+# It happened twice in one hour. On this container /usr/bin/systemctl became a
+# 71-byte stub; on the investigation machine /usr/bin/timeout became `exec
+# /usr/bin/timeout "$@"` — an infinite recursion that hung the suite and every
+# other user of timeout — and /usr/bin/btmgmt became a test stub. Both had to
+# be restored from their packages.
+#
+# The first fix was "create the stubs first, then link only missing names",
+# which works and depends on remembering an order. This does not: a directory
+# is either written to or symlinked into, never both, so there is no ordering
+# to get wrong and no destination that is ever a symlink.
+# Defined here and used again by the bt-state section below, because both need
+# "this tool is genuinely absent" and both had it wrong.
+farm_dir() {   # <dir> [tool-to-omit...] — symlinks only; NEVER written into
+    local d="$1"; shift
+    local f b omit
+    mkdir -p "$d"
     for f in /usr/bin/*; do
         b=${f##*/}
-        [[ -e "$d/$b" ]] && continue
+        omit=0
+        for t in "$@"; do [[ "$b" == "$t" ]] && { omit=1; break; }; done
+        (( omit )) && continue
         ln -s "$f" "$d/$b" 2>/dev/null || true
     done
 }
-WDNOP="$WD/noprobe"; mkdir -p "$WDNOP"
+# No probe tool at all: neither hciconfig nor btmgmt is linked in, and the
+# stub directory beside it carries the rest.
+WDNOP="$WD/noprobe-stub"; mkdir -p "$WDNOP"
 cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WDNOP/" 2>/dev/null
-# Placeholders so the farm cannot link the real ones in, then removed: the
-# branch under test needs BOTH probe tools genuinely absent.
-: > "$WDNOP/hciconfig"; : > "$WDNOP/btmgmt"
-farm_into "$WDNOP"
-rm -f "$WDNOP/hciconfig" "$WDNOP/btmgmt"
+farm_dir "$WD/noprobe-farm" hciconfig btmgmt
 # PATH is passed THROUGH wd_until: env applies assignments left to right, so a
 # later PATH= wins over the helper's default. That keeps one waiting mechanism
 # in this section instead of two.
 : > "$WD/spy.log"; touch "$WD/dead"
-NOPOUT=$(wd_until "cannot be confirmed" 60 PATH="$WDNOP" BT_COOLDOWN=99999)
+NOPOUT=$(wd_until "cannot be confirmed" 60 PATH="$WDNOP:$WD/noprobe-farm" BT_COOLDOWN=99999)
 [[ "$NOPOUT" == *"neither hciconfig nor btmgmt found"* \
    && "$NOPOUT" == *"cannot be confirmed"* ]] \
     && ok "with no probe tool the watchdog warns that recovery is unconfirmable" \
@@ -2124,14 +2147,18 @@ WDBM="$WD/btmgmt-only"; mkdir -p "$WDBM"
 cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WDBM/" 2>/dev/null
 printf '#!/bin/sh\necho "btmgmt $*" >> "%s/spy.log"\nexit 0\n' "$WD" > "$WDBM/btmgmt"
 chmod +x "$WDBM/btmgmt" "$WDBM/systemctl" "$WDBM/sleep" 2>/dev/null
-: > "$WDBM/hciconfig"
-farm_into "$WDBM"
-rm -f "$WDBM/hciconfig"
+farm_dir "$WD/btmgmt-farm" hciconfig
 : > "$WD/spy.log"; rm -f "$WD/dead"
-BMOUT=$(wd_until "RECOVER" 60 PATH="$WDBM" BT_COOLDOWN=99999)
-[[ "$BMOUT" != *"neither hciconfig nor btmgmt"* ]] && grep -q '^btmgmt ' "$WD/spy.log" \
-    && ok "btmgmt is used as the probe when hciconfig is absent" \
-    || bad "the btmgmt fallback probe was not selected or not called"
+BMOUT=$(wd_until "RECOVER" 60 PATH="$WDBM:$WD/btmgmt-farm" BT_COOLDOWN=99999)
+# ASSERTED ON THE SELECTION, which is the mode under test, and not on a
+# btmgmt invocation. hci_alive() returns before probing when there is no hci
+# node under the fake device, so the fallback can be correctly CHOSEN and never
+# CALLED — the earlier version of this check demanded the call and passed only
+# because a previous scenario had left an entry in the spy log.
+[[ "$BMOUT" == *"liveness probe: btmgmt"* ]] \
+   && [[ "$BMOUT" != *"neither hciconfig nor btmgmt"* ]] \
+    && ok "btmgmt is selected as the probe when hciconfig is absent" \
+    || bad "the btmgmt fallback probe was not selected: $(grep -m1 'liveness probe' <<<"$BMOUT")"
 
 # ── verbose mode, which is what an operator turns on to see the window ────
 : > "$WD/spy.log"; rm -f "$WD/dead"
@@ -3689,9 +3716,15 @@ mkdir -p "$BSMG/bin2"; cp "$BSMG/bin/btmgmt" "$BSMG/bin/bluetoothctl" "$BSMG/bin
 # is the same file by another name — removing /usr/bin from the PATH while
 # leaving /bin closes one door and leaves the other open. The farm carries
 # everything /bin would have supplied, because it IS /usr/bin.
-ln -s /usr/bin/* "$BSMG/bin2/" 2>/dev/null || true
-rm -f "$BSMG/bin2/hciconfig"
-BSMGOUT=$(env PATH="$BSMG/bin2" \
+# CONVERTED to the two-directory form. This block was safe only because its
+# `cp` happened to run BEFORE the `ln -s` — write into a farmed directory
+# afterwards and cp or `>` follows the symlink and destroys the real binary at
+# the other end. That is not hypothetical: doing it in the watchdog tests an
+# hour ago replaced /usr/bin/systemctl here and /usr/bin/timeout and
+# /usr/bin/btmgmt on the investigation machine. Nothing is written into a farm
+# now, so there is no order left to get wrong.
+farm_dir "$BSMG/farm" hciconfig
+BSMGOUT=$(env PATH="$BSMG/bin2:$BSMG/farm" \
               BT_SYSFS_USB="$BS/usb" BT_SYSFS_MODULE="$BS/mod" \
               BT_JOURNAL_FIXTURE="$BS/jrn" tools/bt-state --tsv 2>&1)
 [[ "$(awk -F'\t' '{print $5}' <<<"$BSMGOUT")" == "yes" ]] \
@@ -6699,10 +6732,14 @@ TRIALCALLS=$(grep -cE 'tools/bt-trial +(autostart|start|ok|hang|abort|step|repor
 # follow a symlink destination, so a farm built with -f before the stubs are
 # placed overwrites the real binaries the symlinks point at. That is not a
 # hypothetical: it replaced /usr/bin/systemctl on the development container.
-FARMF=$(grep -nE '^[^#]*ln -sf +/(usr/)?bin/' "$0")
+# Every farm goes through farm_dir(), which links into a directory nothing
+# writes to. A raw `ln -s /usr/bin/*` is banned outright rather than reviewed
+# case by case: it is safe only while nobody adds a write to that directory
+# afterwards, and "safe until someone edits it" is what both of these were.
+FARMF=$(grep -nE '^[^#]*ln -s.? +/(usr/)?bin/\*' "$0" | grep -v 'farm_dir')
 [[ -z "$FARMF" ]] \
-    && ok "no symlink farm is built with -f, so no stub can be written through one" \
-    || bad "ln -sf into a farm directory — a later cp writes through the link: $(head -1 <<<"$FARMF")"
+    && ok "every symlink farm is built by farm_dir(), which is never written into" \
+    || bad "a raw symlink farm — a later cp or > writes through the link: $(head -1 <<<"$FARMF")"
 
 PATHBUILDS=$(grep -cE '^[^#]*PATH="' "$0")
 BADPATH=$(grep -nE '^[^#]*PATH="[^"]*:/(usr/)?bin' "$0")
