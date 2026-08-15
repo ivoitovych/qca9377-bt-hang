@@ -220,6 +220,28 @@ printf '  only in btmon        %s   (no match within %ss)\n' "$only_a" "$TOL"
 printf '  only in decode-free  %s   (no match within %ss)\n' "$only_b" "$TOL"
 echo
 
+# AN EMPTY OVERLAP IS NOT AGREEMENT. Two empty sets match perfectly, so
+# `only_a == 0 && only_b == 0` was true and this printed "✓ The paths agree
+# across the overlap" — a corroboration claim computed from nothing.
+#
+# The check above catches an empty PATH. It cannot catch an empty OVERLAP,
+# which is what a narrowed --since/--until produces, and narrowing to an
+# incident is the normal way to use this tool. So the strongest statement it
+# can make was reachable by asking about a window where nothing happened.
+#
+# Same rule as everywhere else here: ENUMERATED == 0 is a refusal, CHECKED == 0
+# is a result. Nothing enumerated inside the window means there is nothing to
+# corroborate.
+if (( ca == 0 && cb == 0 )); then
+    echo "  No records fall inside the overlap. Nothing to compare — this is a"
+    echo "  coverage question, not agreement."
+    if [[ -n "$SINCE" || -n "$UNTIL" ]]; then
+        echo "  The window was narrowed explicitly; widen it, or check that the"
+        echo "  captures cover the period being asked about."
+    fi
+    exit 0
+fi
+
 if (( only_a == 0 && only_b == 0 )); then
     echo "  ✓ The paths agree across the overlap. A chronology drawn from"
     echo "    either is corroborated against capture-time loss by a second"

@@ -14,7 +14,21 @@
 
 set -uo pipefail
 
-SLUG="${1:?usage: bt-incident <slug> [--since <time>]}"; shift || true
+# OPTIONS ARE READ BEFORE THE SLUG, and a slug may not look like one.
+#
+# `SLUG="${1:?...}"` took the first argument unconditionally, so `bt-incident
+# --help` did not print usage — it COLLECTED AN INCIDENT named `--help`, and
+# so did every mistyped flag. This tool copies kernel logs, bluetoothd logs
+# and pairing exchanges into evidence/sessions/; a typo that silently produces
+# a session directory is the wrong failure for it to have, and it produced two
+# of them the first time a test asked for --help.
+case "${1:-}" in
+    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+    "")        echo "usage: bt-incident <slug> [--since <time>]" >&2; exit 2 ;;
+    -*)        echo "bt-incident: first argument is the slug, not an option: $1" >&2
+               echo "usage: bt-incident <slug> [--since <time>]" >&2; exit 2 ;;
+esac
+SLUG="$1"; shift || true
 SINCE="-15min"
 while [[ $# -gt 0 ]]; do
     case "$1" in
