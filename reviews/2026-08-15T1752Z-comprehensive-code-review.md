@@ -589,3 +589,46 @@ significant first:
   verify. One cosmetic note: past 99 distinct MACs the `%02d` placeholder
   grows a third digit ("AA:BB:CC:00:00:100") — still safe and still
   excluded by verification, just odd-looking.
+
+## 4. Test harness — `tests/`
+
+`tests/run-tests` read in full (4831 lines), plus the fixture layout, the
+btmon text fixtures, and the journal corpus structure. Ran the suite: all
+386 invariants pass in ~16 s. This file is the strongest artifact in the
+repository — the PATH guard + decoy construction, the refuse-on-empty-
+derivation rule, the sandboxed `trial()` discipline, the evidence-tree
+footprint comparison, and the practice of asserting *qualifications* in
+tool output (not just results) are all genuinely novel test engineering.
+Findings:
+
+- **[MED] Five invariants are accidentally nested inside the results.tsv
+  width check's success branch.** At line ~1190, `if [[ -z "$WIDTH" ]];
+  then` opens; its `ok "every row in results.tsv matches the header
+  width"` does not arrive until line ~1245. In between sit the three
+  `treatment_only_became_unreadable` tests (lines ~1203–1221) and the
+  no-unbounded-journal-scan invariant (~1235–1243) — all inside the
+  then-branch. If the live `results.tsv` ever has a row/width mismatch,
+  those five invariants are silently skipped: the suite prints the `bad`
+  for the width and never runs them, and since nothing pins the total
+  count, the shrinkage is invisible. This is precisely the "check that
+  cannot fail for the reason its name gives" class the file itself hunts.
+  The interleaving looks like an editing accident (the "UNREADABLE IS NOT
+  CHANGED" comment block was inserted between `then` and `ok`). Move the
+  `ok/else/bad` up against the `WIDTH` computation.
+
+- **[NOTE] The suite's self-guards held up under adversarial reading.** I
+  specifically probed: the `--section` filter preserving the suite's exit
+  code; the GUARDSTUB/DECOY heredoc expansions (correct quoting); the
+  `combo()` stub-journalctl argument dispatch; the width-vs-blank-field
+  distinction (the mutation-proofing note at ~3660); and the positive
+  lifecycle-verb match for `trial()` enforcement. No further defects found.
+
+- **[GOOD] Fixtures are drawn from the log they model, not from the shape
+  the code expects** — the TMO_OPCODE_LINE lesson is applied throughout,
+  and fixture addresses come from the documented placeholder space so the
+  publish gate can stay strict. The refusal branches (mawk gate, empty
+  derivations, unreadable journals) are asserted as behaviour, not skipped.
+
+- **[NOTE] tests/README.md, tests/btmon/README.md and the fixture
+  .in/.expected/.rc corpus were spot-checked for structure and
+  consistency** with the harness's documented layout; consistent.
