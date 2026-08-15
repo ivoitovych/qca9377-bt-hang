@@ -6091,11 +6091,13 @@ echo "────────────────────────�
 # Everything below is one of those cells, plus the exit-code contract and the
 # elapsed arithmetic.
 BW=$(mktemp -d); mkdir -p "$BW/bin"
-# journalctl is stubbed rather than seamed: bt-window is one of the ten tools
-# UT-10 has not converted, and it reads the kernel journal and the full journal
-# for different questions. The stub answers by which one was asked for. --since
-# is journald's filtering, not this tool's logic, so the fixtures are written as
-# the post-fault window directly.
+# journalctl is stubbed on PATH here rather than seamed. That WAS forced —
+# bt-window called journalctl directly — and is now a choice: the tool reads
+# through bt_journal, and a fixture-driven case sits at the end of this section.
+# The stub is kept because these scenarios vary the KERNEL and FULL streams
+# independently, and answering by which one was asked for is the cheapest way to
+# cover the axes below. --since is journald's filtering rather than this tool's
+# logic, so the fixtures are written as the post-fault window directly.
 cat > "$BW/bin/journalctl" <<'BWJ'
 #!/bin/sh
 kern=0
@@ -6238,6 +6240,68 @@ bw_present
 (( $(bw_rc) == 1 )) \
     && ok "exit 0 means 'untreated and still running', not merely 'still on the bus'" \
     || bad "an intervened-upon window still exited 0"
+
+# ── the tool now reads through the seam, so drive it from a fixture ──────
+#
+# Everything above stubs journalctl on PATH, which was the only option while
+# bt-window called it directly. It reads through bt_journal now, so the same
+# questions can be asked without a stub at all — and the fixture is the form
+# another machine can reproduce.
+BWF=$(BT_JOURNAL_FIXTURE=tests/journal/window tools/bt-window 2>&1); bwfrc=$?
+if [[ "$BWF" == *"2026-08-15T21:02:31.230123"* && "$BWF" == *"command timeouts   3"* \
+   && "$BWF" == *"no intervention"* && "$BWF" == *"1 USB-layer line"* ]]; then
+    ok "bt-window answers from a journal fixture — counts, onset and both verdicts"
+else
+    bad "bt-window over BT_JOURNAL_FIXTURE (rc=$bwfrc): $(head -4 <<<"$BWF" | tr '\n' ' ')"
+fi
+
+# ── COST MUST NOT GROW WITH THE WINDOW, AND THAT IS AN ASSERTION ─────────
+#
+# On 2026-08-15 this tool timed out on the investigation machine at the moment
+# the window it was reporting became interesting: fourteen hours of boot with
+# dynamic debug on, five journal scans per invocation, two of them over the
+# whole boot. The output was correct and the tool was useless.
+#
+# Speed is not directly assertable — a fast machine would hide a slow tool. What
+# IS assertable is the shape that made it slow, so this counts the journal reads
+# and where each one starts. The rule: exactly one read may be unbounded, the
+# one that must reach back to find the fault, and every read that COUNTS
+# something must start at the fault. Re-adding a whole-boot count fails here
+# rather than on a machine three hours into an observation.
+BWS=$(mktemp -d); mkdir -p "$BWS/bin"
+cat > "$BWS/bin/journalctl" <<'BWSJ'
+#!/bin/sh
+echo "$*" >> "$BWSDIR/calls.log"
+case " $* " in *" --help "*) echo "  --grep=PATTERN  Show entries matching"; exit 0 ;; esac
+kern=0
+for a in "$@"; do [ "$a" = "-k" ] && kern=1; done
+if [ "$kern" = 1 ]; then cat "$BWSDIR/kernel.log" 2>/dev/null
+else                     cat "$BWSDIR/full.log"   2>/dev/null; fi
+exit 0
+BWSJ
+printf '#!/bin/sh\nexit 0\n' > "$BWS/bin/lsusb"
+chmod +x "$BWS/bin"/*
+cp tests/journal/window/kernel.b0.log "$BWS/kernel.log"
+cp tests/journal/window/default.b0.log "$BWS/full.log"
+: > "$BWS/calls.log"
+PATH="$BWS/bin:$PATH" BWSDIR="$BWS" tools/bt-window >/dev/null 2>&1
+# --help is the seam's capability probe, not a journal read; the rest are reads.
+BWREADS=$(grep -v -- '--help' "$BWS/calls.log" | grep -c . || true)
+BWUNBOUND=$(grep -v -- '--help' "$BWS/calls.log" | grep -vc -- '--since' || true)
+BWSINCE=$(grep -c -- '--since' "$BWS/calls.log" || true)
+if (( BWREADS > 0 && BWUNBOUND == 1 && BWSINCE >= 2 )); then
+    ok "bt-window makes $BWREADS journal reads: 1 unbounded to find the fault, $BWSINCE bounded to it"
+else
+    bad "bt-window's reads are not bounded to the fault — $BWUNBOUND unbounded, $BWSINCE since-bounded:"
+    while IFS= read -r l; do bad "      journalctl $l"; done < "$BWS/calls.log"
+fi
+# And the one unbounded read must hand the filter to the journal rather than to
+# a pipe, which is the whole reason it is affordable at all.
+BWG=$(grep -v -- '--help' "$BWS/calls.log" | grep -v -- '--since' | grep -c -- '--grep' || true)
+(( BWG == 1 )) \
+    && ok "the unbounded read filters inside journalctl (--grep), not over a pipe" \
+    || bad "the fault-finding read scans the whole boot through a pipe"
+rm -rf "$BWS"
 
 rm -rf "$BW"
 

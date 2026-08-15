@@ -171,3 +171,14 @@ tests/run-tests:323-329     # inline footprint differ; driven and pinned by the 
 # argument, the differ, is driven directly by the assertion above, so what is
 # unreachable is the printing and not the logic.
 tests/run-tests:393-394     # damage report: reached only when /usr/bin actually changed
+
+# ── 7. bt-window's two counting passes ───────────────────────────────────
+#
+# Same case as section 4 — an inline awk body inside a pipeline, which bash
+# traces at the line the pipeline opens on. These two replaced four separate
+# journalctl scans that re-read identical ranges; the counts they produce are
+# asserted directly by the fixture-driven case in tests/run-tests (3 timeouts,
+# 1 USB line, 0 interventions), and the SHAPE that made the tool time out on a
+# 14-hour boot is asserted separately by counting its journal reads.
+tools/bt-window:85-87       # inline timeout/USB counter; counts asserted from a fixture
+tools/bt-window:107-109     # inline intervention counter; same

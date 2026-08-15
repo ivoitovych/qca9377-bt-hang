@@ -55,6 +55,24 @@ bt_journal_available() {
     command -v journalctl >/dev/null 2>&1
 }
 
+# "Can the source filter server-side?" belongs here for the same reason
+# bt_journal_available does: the seam decides WHERE the journal comes from, so
+# it is the only thing that can say what that source supports. A caller probing
+# `journalctl --help` itself would be asking about the host even when the host
+# is not the source — and would be a converted tool reaching around the seam,
+# which the suite rejects by invariant.
+#
+# --grep is an OPTIMISATION ONLY. Callers must still match locally, because a
+# fixture answers with the whole file and an older journalctl has no --grep. It
+# earns its place on a large boot: journalctl formats and writes only matching
+# entries, instead of handing every line of fourteen hours to a pipe.
+bt_journal_supports_grep() {
+    [[ -n "${BT_JOURNAL_FIXTURE:-}" ]] && return 1
+    local h
+    h=$(journalctl --help 2>/dev/null || true)
+    [[ "$h" == *"--grep"* ]]
+}
+
 bt_journal() {
     if [[ -z "${BT_JOURNAL_FIXTURE:-}" ]]; then
         journalctl "$@"

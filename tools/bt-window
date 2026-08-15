@@ -25,6 +25,8 @@
 set -uo pipefail
 
 LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-window: missing $LIBDIR/journal.sh" >&2; exit 1; }
+source "$LIBDIR/journal.sh"
 VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
 INTERVAL="$(dirname "$(readlink -f "$0")")/bt-interval"
 [[ -x "$INTERVAL" ]] || INTERVAL=bt-interval
@@ -33,9 +35,39 @@ B=$'\033[1m'; G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; O=$'\033[0m'
 [[ -t 1 ]] || { B=""; G=""; R=""; Y=""; O=""; }
 
 TMO_RE='command( 0x[0-9a-f]+)? tx timeout'
+USB_RE='usb [0-9]+-[0-9]+|xhci_hcd|USB disconnect'
+IVT_RE='deregistering interface driver btusb|Resetting usb device|usb_queue_reset_device|intervening|EARLY intervention'
+IVU_RE='name hci[0-9]+ blocked|powering off device on rfkill|RFKILL event|rfkill_event'
 
-first=$(journalctl -k -b 0 --no-pager -o short-iso-precise 2>/dev/null \
-        | grep -m1 -E "$TMO_RE" | awk '{print $1}')
+# ── COST MUST NOT GROW WITH THE WINDOW ───────────────────────────────────
+#
+# THE FAILURE THIS FIXES, WHICH HAPPENED. This tool is asked repeatedly during a
+# live untreated window — that is its entire purpose — and on 2026-08-15 it
+# timed out at the moment the window became interesting. Fourteen hours of boot
+# with dynamic debug enabled, five separate journalctl scans per invocation, two
+# of them over the whole boot. A tool that answers "still untouched, N seconds
+# elapsed" has to cost the same at three hours as at thirty seconds, or it stops
+# answering exactly when the answer is worth something.
+#
+# Two changes. Every count is now taken from the FAULT FORWARD rather than from
+# the boot: the first timeout is by definition the earliest, so counting
+# timeouts since it is the same number over a fraction of the journal. And the
+# four counts are computed in two single passes rather than four scans — the
+# greps were re-reading identical ranges.
+#
+# What is left is one read that must reach back to the fault to find it. That is
+# irreducible without asking a different question, so it is handed to journalctl
+# instead of to grep: --grep filters inside the journal, so non-matching entries
+# are never formatted or written. Probed rather than assumed, and purely an
+# optimisation — the local match below is what decides, in both worlds, so a
+# journal without --grep and a fixture (where the seam ignores it) give the same
+# answer by the same code.
+JGREP=()
+bt_journal_supports_grep && JGREP=(--grep="$TMO_RE")
+
+# One line, not two: bash traces a backslash-continued assignment at its last
+# line, so wrapping this puts its opener in the coverage denominator forever.
+first=$(bt_journal -k -b 0 --no-pager -o short-iso-precise "${JGREP[@]}" 2>/dev/null | grep -m1 -E "$TMO_RE" | awk '{print $1}')
 
 if [[ -z "$first" ]]; then
     printf '%sNo HCI command timeout this boot.%s The controller has not entered\n' "$G" "$O"
@@ -43,12 +75,16 @@ if [[ -z "$first" ]]; then
     exit 0
 fi
 
-n_tmo=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE "$TMO_RE" || true)
+SINCE="${first%%.*}"
 
-# Anything at the USB layer AFTER the fault. Silence here is the finding: it
-# means the transport is healthy while HCI is not.
-usb=$(journalctl -k -b 0 --since "${first%%.*}" --no-pager 2>/dev/null \
-      | grep -cE 'usb [0-9]+-[0-9]+|xhci_hcd|USB disconnect' || true)
+# Kernel stream, once: the timeout count and the USB-layer count come from the
+# same lines. Silence in the second is the finding — the transport is healthy
+# while HCI is not.
+read -r n_tmo usb < <(bt_journal -k -b 0 --since "$SINCE" --no-pager 2>/dev/null \
+    | awk -v tmo="$TMO_RE" -v usb="$USB_RE" '
+        $0 ~ tmo { t++ }
+        $0 ~ usb { u++ }
+        END { print t + 0, u + 0 }')
 
 # Anything that TOUCHED the controller. A window with one of these in it is
 # censored, not a measurement — that distinction is the whole of EX-018.
@@ -63,10 +99,14 @@ usb=$(journalctl -k -b 0 --since "${first%%.*}" --no-pager 2>/dev/null \
 # An operator action is an intervention. The panel, the quick-settings toggle
 # and rfkill are the ones a person can reach without a terminal, and they are
 # exactly the ones a tool watching for `modprobe -r` will never see.
-iv_tool=$(journalctl -b 0 --since "${first%%.*}" --no-pager 2>/dev/null \
-     | grep -cE 'deregistering interface driver btusb|Resetting usb device|usb_queue_reset_device|intervening|EARLY intervention' || true)
-iv_user=$(journalctl -b 0 --since "${first%%.*}" --no-pager 2>/dev/null \
-     | grep -cE 'name hci[0-9]+ blocked|powering off device on rfkill|RFKILL event|rfkill_event' || true)
+#
+# One pass over the full stream — kernel AND units, because half of these are
+# emitted by this project's own tooling and by rfkill, not by the kernel.
+read -r iv_tool iv_user < <(bt_journal -b 0 --since "$SINCE" --no-pager 2>/dev/null \
+    | awk -v t="$IVT_RE" -v u="$IVU_RE" '
+        $0 ~ t { a++ }
+        $0 ~ u { b++ }
+        END { print a + 0, b + 0 }')
 iv=$(( ${iv_tool:-0} + ${iv_user:-0} ))
 
 present=$(lsusb 2>/dev/null | grep -c "$VID:$PID" || true)
