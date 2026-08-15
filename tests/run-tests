@@ -2062,13 +2062,52 @@ EOUT=$(wd_run 10 BT_EARLY=1)
 # counting every unconfirmable attempt as a FAILURE, because MAX_FAILS then
 # disables the watchdog on a perfectly healthy machine. So the unverifiable
 # case is a third answer, not a lost coin toss.
+# A SYMLINK FARM OF /usr/bin MINUS THE TOOL, not /usr/bin ON THE PATH.
+#
+# `PATH="$WDNOP:/usr/bin:/bin"` was the first version and it cannot work:
+# hciconfig and btmgmt LIVE in /usr/bin, and on Ubuntu /bin is a symlink to it,
+# so "no probe tool" was never achieved on any machine with bluez installed.
+# The watchdog found the real hciconfig, probed the real controller, and the
+# branch under test was never reached — passing on a bare checkout, failing on
+# the investigation machine.
+#
+# THIRD INSTANCE of this exact mistake here, and the correction for the second
+# one (bt-state) was already in the tree when these two were written. The farm
+# keeps every other tool the watchdog needs while making the ones under test
+# genuinely absent, and /bin is dropped because it is the same directory.
+# STUBS FIRST, THEN SYMLINK ONLY WHAT IS MISSING — and never `ln -sf`.
+#
+# The first version farmed with `ln -sf /usr/bin/*` and THEN copied the stubs
+# in. `cp` onto a symlink writes THROUGH it, and `>` truncates through it, so
+# copying a stub named systemctl over the symlink `farm/systemctl ->
+# /usr/bin/systemctl` overwrites the REAL BINARY. It did: /usr/bin/systemctl
+# became a 71-byte stub on this container and had to be restored from the
+# package. On the investigation machine the same code would have destroyed
+# /usr/bin/systemctl and /usr/bin/btmgmt.
+#
+# Creating the stubs first and linking only names that do not already exist
+# makes the hazard structurally impossible: no destination in this directory is
+# ever a symlink at the moment something is written to it.
+farm_into() {   # <dir> — link every /usr/bin tool not already present here
+    local d="$1" f b
+    for f in /usr/bin/*; do
+        b=${f##*/}
+        [[ -e "$d/$b" ]] && continue
+        ln -s "$f" "$d/$b" 2>/dev/null || true
+    done
+}
 WDNOP="$WD/noprobe"; mkdir -p "$WDNOP"
 cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WDNOP/" 2>/dev/null
+# Placeholders so the farm cannot link the real ones in, then removed: the
+# branch under test needs BOTH probe tools genuinely absent.
+: > "$WDNOP/hciconfig"; : > "$WDNOP/btmgmt"
+farm_into "$WDNOP"
+rm -f "$WDNOP/hciconfig" "$WDNOP/btmgmt"
 # PATH is passed THROUGH wd_until: env applies assignments left to right, so a
 # later PATH= wins over the helper's default. That keeps one waiting mechanism
 # in this section instead of two.
 : > "$WD/spy.log"; touch "$WD/dead"
-NOPOUT=$(wd_until "cannot be confirmed" 60 PATH="$WDNOP:/usr/bin:/bin" BT_COOLDOWN=99999)
+NOPOUT=$(wd_until "cannot be confirmed" 60 PATH="$WDNOP" BT_COOLDOWN=99999)
 [[ "$NOPOUT" == *"neither hciconfig nor btmgmt found"* \
    && "$NOPOUT" == *"cannot be confirmed"* ]] \
     && ok "with no probe tool the watchdog warns that recovery is unconfirmable" \
@@ -2079,13 +2118,17 @@ NOPOUT=$(wd_until "cannot be confirmed" 60 PATH="$WDNOP:/usr/bin:/bin" BT_COOLDO
 
 # btmgmt is the fallback probe. It is selected only when hciconfig is absent,
 # so a stub directory holding one and not the other is the whole test.
+# Same farm, keeping btmgmt and removing ONLY hciconfig — the branch under
+# test is the fallback, so btmgmt must be present and hciconfig must not.
 WDBM="$WD/btmgmt-only"; mkdir -p "$WDBM"
 cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WDBM/" 2>/dev/null
 printf '#!/bin/sh\necho "btmgmt $*" >> "%s/spy.log"\nexit 0\n' "$WD" > "$WDBM/btmgmt"
-printf '#!/bin/sh\nexec /usr/bin/timeout "$@"\n' > "$WDBM/timeout" 2>/dev/null
-chmod +x "$WDBM"/* 2>/dev/null
+chmod +x "$WDBM/btmgmt" "$WDBM/systemctl" "$WDBM/sleep" 2>/dev/null
+: > "$WDBM/hciconfig"
+farm_into "$WDBM"
+rm -f "$WDBM/hciconfig"
 : > "$WD/spy.log"; rm -f "$WD/dead"
-BMOUT=$(wd_until "RECOVER" 60 PATH="$WDBM:/usr/bin:/bin" BT_COOLDOWN=99999)
+BMOUT=$(wd_until "RECOVER" 60 PATH="$WDBM" BT_COOLDOWN=99999)
 [[ "$BMOUT" != *"neither hciconfig nor btmgmt"* ]] && grep -q '^btmgmt ' "$WD/spy.log" \
     && ok "btmgmt is used as the probe when hciconfig is absent" \
     || bad "the btmgmt fallback probe was not selected or not called"
@@ -6634,6 +6677,42 @@ LOOSE=$(grep -nE 'tools/bt-trial +(autostart|start|ok|hang|abort|step)\b' "$0" \
         | grep -v "^[0-9]*:[[:space:]]*#")
 # Counted, so a pattern that stops matching reads as 0 rather than as a tick.
 TRIALCALLS=$(grep -cE 'tools/bt-trial +(autostart|start|ok|hang|abort|step|report)\b' "$0")
+# THE INVARIANT: no test builds a replacement PATH that still contains /usr/bin
+# or /bin.
+#
+# A test that means "tool X is absent" and writes `PATH="$STUB:/usr/bin:/bin"`
+# achieves nothing: the tools it is hiding LIVE in /usr/bin, and on Ubuntu /bin
+# is a symlink to the same directory. The tool under test finds the real one,
+# the branch is never reached, and the assertion passes on a bare checkout
+# while failing on any machine that has the package installed.
+#
+# THIS HAS NOW HAPPENED THREE TIMES — bt-state, then both watchdog probe tests
+# — and the correction for the second was already in the tree when the third
+# was written. It is not a mistake anyone will stop making by remembering.
+#
+# It is also a defect this checkout CANNOT DETECT BY RUNNING: hciconfig and
+# btmgmt are not installed here, so the absent-tool condition is satisfied by
+# accident and every such test passes. A source-level check is the only defence
+# that works from the environment where the mistake gets made. The fix is a
+# symlink farm — mirror /usr/bin, remove the tools under test, drop /bin.
+# AND NO `ln -sf` INTO A DIRECTORY STUBS ARE WRITTEN TO. cp and `>` both
+# follow a symlink destination, so a farm built with -f before the stubs are
+# placed overwrites the real binaries the symlinks point at. That is not a
+# hypothetical: it replaced /usr/bin/systemctl on the development container.
+FARMF=$(grep -nE '^[^#]*ln -sf +/(usr/)?bin/' "$0")
+[[ -z "$FARMF" ]] \
+    && ok "no symlink farm is built with -f, so no stub can be written through one" \
+    || bad "ln -sf into a farm directory — a later cp writes through the link: $(head -1 <<<"$FARMF")"
+
+PATHBUILDS=$(grep -cE '^[^#]*PATH="' "$0")
+BADPATH=$(grep -nE '^[^#]*PATH="[^"]*:/(usr/)?bin' "$0")
+if [[ -z "$BADPATH" ]] && (( ${PATHBUILDS:-0} >= 10 )); then
+    ok "none of the $PATHBUILDS PATH constructions re-adds /usr/bin or /bin"
+else
+    bad "a test PATH still contains /usr/bin or /bin — absence is not achieved:"
+    bad "  $(head -1 <<<"$BADPATH")"
+fi
+
 if [[ -z "$LOOSE" ]] && (( ${TRIALCALLS:-0} > 0 )); then
     ok "all $TRIALCALLS bt-trial invocations go through the sandboxed trial() helper"
 else
