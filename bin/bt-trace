@@ -28,6 +28,13 @@ MAX_MB="${BT_TRACE_MAX_MB:-128}"    # rotate when the current file exceeds this
 KEEP="${BT_TRACE_KEEP:-400}"        # rotated files to retain (floor-bounded)
 CHECK_SEC="${BT_TRACE_CHECK_SEC:-30}"       # size / disk checks (expensive-ish)
 POLL_SEC="${BT_TRACE_POLL_SEC:-1}"          # liveness checks (cheap, must be fast)
+# Consecutive instant deaths before the respawn backs off. Overridable for the
+# same reason bt-hang-watchdog exposes BT_MAX_FAILS: at the production value a
+# test must wait ten real polls, and POLL_SEC cannot be shortened because it is
+# also summed into `elapsed` as an integer. Ten seconds is a third of the
+# suite's runtime, which is how this path came to be the one untested branch in
+# a 95%-covered file. The default is unchanged; only the wait is.
+RAPID_MAX="${BT_TRACE_RAPID_MAX:-10}"
 # 15, matching bt-trace.service — the script default and the unit disagreed
 # (10 vs 15), which is the BT_TRACE_KEEP pattern again: a default that differs
 # from the value in effect misleads whoever runs the script by hand
@@ -178,13 +185,13 @@ while :; do
         # CHECK_SEC; any restart that survives a full poll resets the streak,
         # so the ordinary BT-4 crash-restart path is untouched.
         rapid=$(( rapid + 1 ))
-        if (( rapid == 10 )); then
-            log "btmon has died within ${POLL_SEC}s of 10 consecutive restarts —"
+        if (( rapid == RAPID_MAX )); then
+            log "btmon has died within ${POLL_SEC}s of ${RAPID_MAX} consecutive restarts —"
             log "backing off to ${CHECK_SEC}s respawns; gap lines suppressed until one survives"
             printf '%s\tbtmon-persistent-failure\tbackoff=%ss\tcrashes=%s\n' \
                 "$(date -Iseconds)" "$CHECK_SEC" "$crashes" >> "$GAPLOG" 2>/dev/null
         fi
-        if (( rapid < 10 )); then
+        if (( rapid < RAPID_MAX )); then
             log "btmon exited (#$crashes) — restarting within ${POLL_SEC}s; ~${POLL_SEC}s of capture lost"
             printf '%s\tbtmon-exit\tgap<=%ss\ttotal_blind=%ss\tcrashes=%s\n' \
                 "$(date -Iseconds)" "$POLL_SEC" "$blind_total" "$crashes" >> "$GAPLOG" 2>/dev/null

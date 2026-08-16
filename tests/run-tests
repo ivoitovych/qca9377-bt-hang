@@ -5656,6 +5656,50 @@ TRC=$(tr_daemon "capturing to" 80 2 BT_TRACE_CHECK_SEC=30)
 grep -q 'total_blind=' "$TR/cap/gaps.log" \
     && ok "the gap log carries a running blind total, not just isolated events" \
     || bad "the crash gap entry has no cumulative blind time"
+
+# ── CR-47: the rapid-crash backoff, the one branch left untested ─────────
+#
+# The review's fix audit recorded this as an accepted gap — "bt-trace is a
+# capture daemon with no sandbox harness, one of the ten zero-executed files".
+# That premise had gone stale by the time the branch merged: this section is a
+# sandbox harness, and bin/bt-trace measures 95% with exactly four uncovered
+# lines, all of them here. So the gap was four lines rather than a whole file,
+# and closing it needed a seam rather than suite surgery.
+#
+# WHY A SEAM AND NOT PATIENCE. The production threshold is ten consecutive
+# instant deaths, one per POLL_SEC, and POLL_SEC cannot be shortened because it
+# is also summed into `elapsed` as an integer — a fractional value is an awk-
+# free arithmetic error at the first poll, confirmed by trying it. Ten real
+# seconds is a third of this suite's runtime, which is precisely why this path
+# stayed untested. BT_TRACE_RAPID_MAX is the same seam bt-hang-watchdog exposes
+# as BT_MAX_FAILS, for the same reason, and the default is unchanged.
+#
+# THE ASSERTION IS THE SUPPRESSION, not the message. A backoff that logged its
+# banner and kept appending one gap line per second would satisfy any check on
+# the banner alone while still writing the ~86k lines/day the fix exists to
+# prevent. So the count is pinned: with the threshold at 3, exactly 2 btmon-exit
+# gap lines may be written — crashes 1 and 2 — and nothing after.
+printf '#!/bin/sh\nexit 5\n' > "$TR/bin/btmon"
+TRRAP=$(tr_daemon "backing off to" 80 1 BT_TRACE_POLL_SEC=1 BT_TRACE_CHECK_SEC=1 BT_TRACE_RAPID_MAX=3)
+TRRB=$(grep -c 'btmon-persistent-failure' "$TR/cap/gaps.log" 2>/dev/null || true)
+TRRE=$(grep -c 'btmon-exit' "$TR/cap/gaps.log" 2>/dev/null || true)
+TRRL=$(grep -c 'backing off to' <<<"$TRRAP" || true)
+if (( ${TRRL:-0} == 1 && ${TRRB:-0} == 1 && ${TRRE:-0} == 2 )); then
+    ok "a persistently dying btmon backs off once and stops appending a gap line per poll"
+else
+    bad "rapid-crash backoff wrong: banner=$TRRL persistent-gap=$TRRB exit-gaps=$TRRE (want 1/1/2)"
+fi
+# And the seam must not have become the behaviour. The banner names the
+# threshold it acted on, so a default that drifted from ten would say so.
+TRRD=$(grep -oE 'of [0-9]+ consecutive restarts' <<<"$TRRAP" | head -1)
+[[ "$TRRD" == "of 3 consecutive restarts" ]] \
+    && ok "the backoff reports the threshold it actually used, so a drifted default is visible" \
+    || bad "the backoff banner does not name its threshold: '$TRRD'"
+grep -qE 'RAPID_MAX="\$\{BT_TRACE_RAPID_MAX:-10\}"' bin/bt-trace \
+    && ok "the production rapid-crash threshold is still 10 — the seam did not become the default" \
+    || bad "BT_TRACE_RAPID_MAX's default drifted away from the shipped value"
+printf '#!/bin/sh\n[ -e "%s/btmon-dies" ] && exit 5\nsleep 3600 & wait $!\n' "$TR" > "$TR/bin/btmon"
+chmod +x "$TR/bin/btmon"
 rm -f "$TR/btmon-dies"
 
 # ── the floor, and what it does when pruning cannot help ─────────────────
