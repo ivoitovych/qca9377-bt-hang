@@ -6031,6 +6031,56 @@ TAPO=$(BT_LIBDIR="$PWD/tools/lib" BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$T
     || bad "a broken detector produced a report (rc=$tarc4): $(head -1 <<<"$TAPO")"
 rm -rf "$TAP"
 
+# ── bt-retention: which evidence can still be re-derived ────────────────
+#
+# On 2026-08-16 a question about three long windows in EX-018 was answered by
+# discovering their journal was already gone — the oldest retained boot began
+# 2026-08-12, those windows are dated 2026-07-25 to 2026-08-11. Five windows'
+# worth of source evidence had rotated away and nothing said so. It surfaced
+# because a question happened to touch it.
+#
+# Nobody deleted them. A 16G size cap discards oldest-first when reached, and
+# dynamic debug writes about a million lines an hour — so the instrumentation
+# that makes a boot worth keeping is what evicts the boots before it. The
+# defence is a warning while there is still time to archive, not a bigger cap.
+#
+# Four outcomes, all driven: still retained, in the oldest boot and therefore
+# next to go, already gone, and not judgeable at all.
+RT=$(mktemp -d); mkdir -p "$RT/evidence/exhibits"
+printf '# EX-016\n\n2026-07-25T03:25:00+02:00 rotated away\n' > "$RT/evidence/exhibits/016-gone.md"
+printf '# EX-018\n\n| 2026-07-25 03:25 | 5 h 33 m | shutdown |\n' > "$RT/evidence/exhibits/018-bare.md"
+printf '# EX-024\n\n2026-08-14T21:02:15.017017+02:00 signature\n' > "$RT/evidence/exhibits/024-risk.md"
+printf '# EX-025\n\n2026-08-15T16:55:59.333858+02:00 fault\n' > "$RT/evidence/exhibits/025-kept.md"
+RTOUT=$(BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RT" tools/bt-retention 2>&1); rtrc=$?
+if (( rtrc == 0 )) && [[ "$RTOUT" == *"016-gone"*"GONE"* && "$RTOUT" == *"024-risk"*"AT RISK"* \
+   && "$RTOUT" == *"025-kept"*"retained"* && "$RTOUT" == *"018-bare"*"not judgeable"* ]]; then
+    ok "bt-retention separates gone, at-risk, retained and unjudgeable evidence"
+else
+    bad "bt-retention mis-sorted the exhibits (rc=$rtrc):"
+    while IFS= read -r l; do bad "      $l"; done < <(grep -E 'GONE|AT RISK|retained|judgeable' <<<"$RTOUT")
+fi
+
+# A BARE LOCAL TIME IS NOT AN ABSOLUTE ONE, and the first version of this tool
+# treated it as one. Boot ranges are epochs from journald; an exhibit timestamp
+# without an offset would be read in whatever zone the reader is in, which put
+# a retained exhibit two hours out and reported it as rotated away. Reporting
+# evidence gone when it is still there is the one answer this must never
+# invent, so the offset is required rather than assumed.
+printf '# EX-090\n\n2026-08-14T21:02:15 no offset here\n' > "$RT/evidence/exhibits/090-naive.md"
+RTN=$(BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RT" tools/bt-retention 2>&1)
+[[ "$RTN" == *"090-naive"*"not judgeable"* ]] \
+    && ok "a timestamp with no UTC offset is refused rather than placed in the reader's zone" \
+    || bad "an offset-less timestamp was given an absolute position: $(grep -E '090-naive' <<<"$RTN")"
+
+# ENUMERATED == 0 IS A REFUSAL here too: an empty exhibits directory must not
+# report that everything is fine.
+RTE=$(mktemp -d); mkdir -p "$RTE/evidence/exhibits"
+BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RTE" tools/bt-retention >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-retention refuses when there are no exhibits to judge" \
+    || bad "an empty exhibit set produced a clean retention report"
+rm -rf "$RT" "$RTE"
+
 # ── status: the view that decides whether to abort a trial in progress ───
 #
 # The one command an operator runs WHILE a trial is open, and the only place
