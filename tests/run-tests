@@ -7125,6 +7125,53 @@ devtools/repo-scan "$SCRATCH/clean" >/dev/null 2>&1
 (( $? == 0 )) && ok "repo-scan passes documented placeholders" \
               || bad "repo-scan refused the placeholder forms it documents"
 
+# ── NON-ASCII IN THE LOGS, WHICH THE UPSTREAM REPORT NOW DEPENDS ON ──────
+#
+# The second headset that reproduced the fault is recorded by BlueZ, the kernel
+# input layer and logind alike as `联想thinkplus-GM2 pro`. That string is about
+# to appear in an exhibit, and neither the scanner nor the sanitiser had ever
+# been given a byte above 0x7f.
+#
+# TWO DIRECTIONS, AND ONLY ONE OF THEM IS ABOUT LEGIBILITY. A mangled device
+# name in an upstream report is embarrassing. A scanner that stops recognising a
+# MAC because the line around it is multibyte SHIPS THE ADDRESS — and the
+# addresses in this project's logs geolocate the machine. The second is the one
+# worth asserting hardest, so it is asserted under the C locale too: CI does not
+# necessarily run with a UTF-8 locale, and `grep` treating a file as binary
+# would print "Binary file matches" instead of the line, which a counting
+# scanner reads as nothing found.
+#
+# Assembled from fragments, like the other refusal fixtures, so this file never
+# contains a MAC literal for its own scanner to find.
+_n1='5C:F3'; _n2='70:1A'; _n3='9B:CD'
+NASCII='联想thinkplus-GM2 pro'
+mkdir -p "$SCRATCH/utf8"; scratch_repo "$SCRATCH/utf8"
+printf 'kernel: hci0: peer %s %s SCO setup\n' "$_n1:$_n2:$_n3" "$NASCII" > "$SCRATCH/utf8/dev.log"
+git -C "$SCRATCH/utf8" add -A
+UTFA=0; UTFB=0
+for loc in C C.UTF-8; do
+    LC_ALL=$loc devtools/repo-scan "$SCRATCH/utf8" >/dev/null 2>&1 || UTFA=$((UTFA + 1))
+    UTFB=$((UTFB + 1))
+done
+(( UTFA == UTFB && UTFB > 0 )) \
+    && ok "repo-scan still finds a real MAC beside a non-ASCII device name, in $UTFB locale(s)" \
+    || bad "a multibyte device name hid a MAC from the scanner ($UTFA of $UTFB locales caught it)"
+
+# And the sanitiser must replace the address while leaving the name BYTE for
+# byte — a name it silently re-encoded would be wrong in the report and would
+# also break the cross-referencing the deterministic placeholders exist for.
+printf 'bluetoothd: uinput initialized for %s\nkernel: hci0: peer %s %s SCO setup\n' \
+    "$NASCII" "$_n1:$_n2:$_n3" "$NASCII" > "$SCRATCH/utf8/raw.log"
+tools/sanitize-logs.sh "$SCRATCH/utf8/raw.log" "$SCRATCH/utf8/clean.log" >/dev/null 2>&1
+UTFIN=$(grep -c -- "$NASCII" "$SCRATCH/utf8/raw.log" || true)
+UTFOUT=$(grep -c -- "$NASCII" "$SCRATCH/utf8/clean.log" 2>/dev/null || true)
+UTFMAC=$(grep -c -- "$_n1" "$SCRATCH/utf8/clean.log" 2>/dev/null || true)
+if (( ${UTFIN:-0} > 0 && UTFIN == UTFOUT && ${UTFMAC:-1} == 0 )); then
+    ok "sanitize-logs replaces the address and leaves the non-ASCII device name intact ($UTFIN line(s))"
+else
+    bad "sanitiser mangled the device name or kept the address: name in=$UTFIN out=$UTFOUT, address left=$UTFMAC"
+fi
+
 # The REMOVAL of a leak must be commit-able: default mode scans added lines
 # only, because blocking the remediating commit is the one thing this gate
 # must never do. Commit the leak, then stage its deletion.
