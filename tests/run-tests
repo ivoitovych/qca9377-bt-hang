@@ -1513,6 +1513,39 @@ fi
 # Derived over every tracked shell file rather than a named list, because the
 # named list is exactly what let this survive in five other files after it was
 # found in the first.
+# AND NO JOURNAL READ MAY BE PIPED TO `tail` WITHOUT `-n`.
+#
+# `head -1` is cheap on any journal: it closes the pipe and journalctl stops at
+# the first line. `tail -1` cannot know it has the last line until the stream
+# ends, so the same shape reads the WHOLE boot to its end.
+#
+# bt-trial-audit did that for every retained boot, once per run, before it
+# examined a single row — 7m22s on the investigation machine, with sys time
+# above user time because the cost is reading and decompressing rather than
+# matching. That is also why --grep did not rescue it: server-side filtering
+# removes formatting and writing, never traversal.
+#
+# `-n 1` makes journalctl seek to the end instead of streaming to it, so the
+# rule is about the pair rather than about `tail`: a read that ends in tail must
+# have asked the journal for the tail.
+# Derived HERE rather than borrowed from a list built later in the file. The
+# first version of this check referenced TOOLFILES, which is not populated until
+# five thousand lines further down, so grep received no file arguments and the
+# invariant passed having read nothing — the identical mistake made against
+# SHFILES earlier today, in the same session, by the same hand. An empty
+# work-list is checked for that reason.
+TAILF=()
+for f in "${SHFILES[@]}"; do case "$f" in tools/*|bin/*) TAILF+=("$f") ;; esac; done
+if (( ${#TAILF[@]} == 0 )); then
+    bad "no tool files derived — the journal-tail check examined nothing"
+else
+    TAILSCAN=$(grep -nE '(bt_journal|journalctl)[^|]*\|[^|]*tail' "${TAILF[@]}" 2>/dev/null \
+               | grep -v -- ' -n ' | grep -vE '^[^:]*:[0-9]*:[[:space:]]*#')
+    [[ -z "$TAILSCAN" ]] \
+        && ok "none of the ${#TAILF[@]} tools streams a whole boot into tail — every journal read asks for -n" \
+        || bad "a journal read is piped to tail without -n, so it reads to the end: $(head -1 <<<"$TAILSCAN")"
+fi
+
 #
 # SHFILES is the derived work-list, and it is checked for emptiness here for the
 # reason its own header gives: the first draft of this check named an array that
