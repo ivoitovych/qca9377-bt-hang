@@ -6284,6 +6284,47 @@ BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARREPO/inside" \
 (( $? == 2 )) \
     && ok "bt-archive refuses a destination inside the repository — a BSSID-carrying file must not be committable" \
     || bad "bt-archive would have written an unsanitised journal export inside the repo"
+
+# ── AND THE GUARD MUST RESOLVE SYMLINKS, OR IT IS NOT A PATH CHECK ───────
+#
+# Found by the maintainer against the shipped version and reproduced end to
+# end: the guard used `cd "$DEST" && pwd`, which prints the path you arrived by
+# rather than where you are. A destination symlinked into the repository passed
+# the check, reported success, and left the unsanitised export — MACs and Wi-Fi
+# BSSIDs, on a public repository — physically inside the tree.
+#
+# Severity is set by what the file contains, not by how likely the symlink is.
+# The guard exists so nobody has to remember; one walkable by a symlink has to
+# be remembered.
+#
+# BOTH ENDS ARE TESTED. Only the destination was reported, but the comparison
+# has two sides and BT_REPO is supplied by hand — a repository named through a
+# symlink failed to match a destination correctly resolved, which is the same
+# hole entered from the other direction. Both were broken; both are asserted.
+ARSYM=$(mktemp -d); mkdir -p "$ARSYM/repo/inside"
+ln -sfn "$ARSYM/repo/inside" "$ARSYM/link"
+ln -sfn "$ARSYM/repo" "$ARSYM/repolink"
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARSYM/link" \
+    BT_REPO="$ARSYM/repo" tools/bt-archive -1 >/dev/null 2>&1
+arsym1=$?
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARSYM/repo/inside" \
+    BT_REPO="$ARSYM/repolink" tools/bt-archive -1 >/dev/null 2>&1
+arsym2=$?
+ARLANDED=$(ls -A "$ARSYM/repo/inside" 2>/dev/null | wc -l)
+if (( arsym1 == 2 && arsym2 == 2 && ARLANDED == 0 )); then
+    ok "the in-repo guard resolves symlinks on both ends — no export reaches the tree by either route"
+else
+    bad "a symlink walked the disclosure guard (dest=$arsym1 repo=$arsym2, $ARLANDED file(s) inside the repo)"
+fi
+# And it must not have become a guard that refuses everything: a genuinely
+# outside destination still has to work, or the three checks above pass on a
+# tool that archives nothing.
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARSYM/outside" \
+    BT_REPO="$ARSYM/repo" tools/bt-archive -1 >/dev/null 2>&1
+(( $? == 0 )) && ls "$ARSYM/outside"/boot-*.export.* >/dev/null 2>&1 \
+    && ok "a destination genuinely outside the repository still archives" \
+    || bad "the symlink fix turned the guard into a refusal of everything"
+rm -rf "$ARSYM"
 rm -rf "$AR" "$ARD" "$ARTRUNC" "$ARREPO"
 
 # ── status: the view that decides whether to abort a trial in progress ───
