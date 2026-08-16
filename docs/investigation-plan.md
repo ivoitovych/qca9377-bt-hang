@@ -559,3 +559,51 @@ and that boot's predecessor had already had the device off the bus for over thre
 journal work the way `enum_at_boot` was bounded; clear the state file even when the close
 is killed, so a boot is never silently merged; and derive the trial directory so a reused
 number cannot overwrite an existing one.
+
+#### BL-08 addendum — the operator's decision, and the fourth part of the fix
+
+Offered on 2026-08-17, during the 11190 s window: move the trial state file aside before
+shutdown so `autostop` exits without probing, giving that window an untouched terminator
+at the cost of someone remembering to say "I'm shutting down now".
+
+**Declined, for the reason that makes it the right call.** The operator's words:
+
+> For the cases when it is not me who shuts down.
+
+This is a family laptop. The person who closes the lid or holds the power button is
+frequently not the person running the investigation, and a procedure that has to be
+recalled *by whoever happens to be at the keyboard* is not a control at all. The 90 s cost
+was accepted explicitly; the dependence on memory was not.
+
+**That converts the hook's probe from an operational nuisance into a design defect.** So
+long as `autostop` calls `hci_alive`, every shutdown of this machine touches the
+controller, and the only defence is a human remembering. Every shutdown-terminated window
+from here is contaminated by default, and `EX-025`'s whole value was that its terminator
+was not.
+
+**Fourth part of the fix, and it outranks the other three: `autostop` must classify
+without touching the device.** Everything it needs is already readable without issuing a
+command — `bt-window` decides enumerated-versus-gone from `/sys/bus/usb/devices` and
+HCI-responding-versus-not from the journal's timeout lines, and touches nothing. The
+`hciconfig … name` call is the only part of the close path that talks to the controller,
+and it buys a classification the journal already contains.
+
+**Deployment catch, verified rather than assumed.** The copy that runs at shutdown is
+`/usr/local/bin/bt-trial`, not the tree's, and the two are byte-identical along this path:
+
+```console
+$ diff <(sed -n '/^autostop)/,/^    ;;/p' /usr/local/bin/bt-trial) <(sed -n '/^autostop)/,/^    ;;/p' tools/bt-trial) && echo "autostop path IDENTICAL in deployed and tree"
+autostop path IDENTICAL in deployed and tree
+```
+
+So fixing the tree changes nothing until the fix is deployed — and deployment currently
+means `install.sh --apply`, which also runs `systemctl enable --now bt-hang-watchdog`
+(`install.sh:465`), the service whose USB reset has three demonstrations of destroying
+this controller. **A tools-only deployment path that enables no services is a prerequisite
+for shipping this fix**, and does not exist yet.
+
+**The general rule, which the operator stated better than the backlog had:** a control
+that depends on someone remembering is not a control. It is the same finding as
+`bt-retention`'s warning needing someone to act on it, and as `bt-archive` archiving
+nothing on its own — third instance this week, and the first where the someone is not even
+a member of the project.

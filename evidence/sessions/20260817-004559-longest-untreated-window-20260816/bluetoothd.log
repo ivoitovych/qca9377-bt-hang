@@ -1,0 +1,277 @@
+Aug 16 21:41:48.952286 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x000b
+Aug 16 21:41:48.952317 n bluetoothd[2829]: src/adapter.c:connected_callback() hci0 device AA:BB:CC:00:00:01 connected eir_len 30
+Aug 16 21:41:49.135224 n bluetoothd[2829]: profiles/audio/a2dp.c:confirm_cb() AVDTP: incoming connect from AA:BB:CC:00:00:01
+Aug 16 21:41:49.185226 n bluetoothd[2829]: profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01: SINK_STATE_DISCONNECTED -> SINK_STATE_CONNECTING
+Aug 16 21:41:49.185330 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_connect_cb() AVDTP: connected signaling channel to AA:BB:CC:00:00:01
+Aug 16 21:41:49.185360 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_connect_cb() AVDTP imtu=672, omtu=672
+Aug 16 21:41:49.185424 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_register_remote_sep() seid 1 type 1 media 0 delay_reporting true
+Aug 16 21:41:49.185467 n bluetoothd[2829]: profiles/audio/a2dp.c:register_remote_sep() Found remote SEP: /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep1
+Aug 16 21:41:49.185480 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_register_remote_sep() seid 2 type 1 media 0 delay_reporting true
+Aug 16 21:41:49.185491 n bluetoothd[2829]: profiles/audio/a2dp.c:register_remote_sep() Found remote SEP: /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep2
+Aug 16 21:41:49.185503 n bluetoothd[2829]: profiles/audio/a2dp.c:load_remote_sep() LastUsed: lseid 7 rseid 1
+Aug 16 21:41:49.185515 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_ref() 0x606666d5ed10: ref=1
+Aug 16 21:41:49.185522 n bluetoothd[2829]: profiles/audio/avdtp.c:set_disconnect_timer() timeout 1
+Aug 16 21:41:49.215144 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.215183 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received DISCOVER_CMD
+Aug 16 21:41:49.285151 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.285201 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.285215 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d31570: Get_Capability_Ind
+Aug 16 21:41:49.315230 n bluetoothd[2829]: src/profile.c:ext_confirm() incoming connect from AA:BB:CC:00:00:01
+Aug 16 21:41:49.315309 n bluetoothd[2829]: src/service.c:btd_service_ref() 0x606666d2bbf0: ref=2
+Aug 16 21:41:49.315349 n bluetoothd[2829]: src/profile.c:ext_confirm() Hands-Free Voice gateway authorizing connection from AA:BB:CC:00:00:01
+Aug 16 21:41:49.315403 n bluetoothd[2829]: src/profile.c:ext_auth() AA:BB:CC:00:00:01 authorized to connect to Hands-Free Voice gateway
+Aug 16 21:41:49.315438 n bluetoothd[2829]: src/profile.c:ext_connect() Hands-Free Voice gateway connected to AA:BB:CC:00:00:01
+Aug 16 21:41:49.315448 n bluetoothd[2829]: src/service.c:change_state() 0x606666d2bbf0: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: disconnected -> connecting (0)
+Aug 16 21:41:49.316142 n bluetoothd[2829]: src/service.c:change_state() 0x606666d2bbf0: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: connecting -> connected (0)
+Aug 16 21:41:49.316152 n bluetoothd[2829]: src/device.c:device_profile_connected() Hands-Free Voice gateway Success (0)
+Aug 16 21:41:49.316159 n bluetoothd[2829]: src/service.c:btd_service_ref() 0x606666d2bbf0: ref=3
+Aug 16 21:41:49.316167 n bluetoothd[2829]: plugins/policy.c:service_cb() Added Hands-Free Voice gateway reconnect 0
+Aug 16 21:41:49.335005 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.335030 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.335043 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d53520: Get_Capability_Ind
+Aug 16 21:41:49.360105 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.360137 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.360154 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4dcf0: Get_Capability_Ind
+Aug 16 21:41:49.385078 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.385113 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.385127 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4c1a0: Get_Capability_Ind
+Aug 16 21:41:49.415042 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.415095 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.415110 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4b360: Get_Capability_Ind
+Aug 16 21:41:49.440290 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.440341 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.440356 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d50720: Get_Capability_Ind
+Aug 16 21:41:49.461141 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.461162 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.461173 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4f210: Get_Capability_Ind
+Aug 16 21:41:49.485024 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.485049 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.485060 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4ffe0: Get_Capability_Ind
+Aug 16 21:41:49.535099 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.535131 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.535152 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d51920: Get_Capability_Ind
+Aug 16 21:41:49.559988 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.560013 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.560022 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4e240: Get_Capability_Ind
+Aug 16 21:41:49.576016 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.576040 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.576054 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d52070: Get_Capability_Ind
+Aug 16 21:41:49.641291 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.641323 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.641339 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d56cf0: Get_Capability_Ind
+Aug 16 21:41:49.657571 n bluetoothd[2829]: src/battery.c:register_battery_provider() register battery provider path = /org/freedesktop/pipewire/battery
+Aug 16 21:41:49.658378 n bluetoothd[2829]: src/battery.c:btd_battery_register() path = /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 16 21:41:49.658392 n bluetoothd[2829]: src/battery.c:btd_battery_register() registered Battery object: /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 16 21:41:49.658398 n bluetoothd[2829]: src/battery.c:provided_battery_added_cb() provided battery added /org/freedesktop/pipewire/battery/org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 16 21:41:49.658404 n bluetoothd[2829]: src/battery.c:btd_battery_update() path = /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 16 21:41:49.660900 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.660913 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received  GET_ALL_CAPABILITIES_CMD
+Aug 16 21:41:49.660925 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d5adf0: Get_Capability_Ind
+Aug 16 21:41:49.715300 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.715334 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received SET_CONFIGURATION_CMD
+Aug 16 21:41:49.715352 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_setconf_ind() Source 0x606666d4b360: Set_Configuration_Ind
+Aug 16 21:41:49.715370 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_ref() 0x606666d5ed10: ref=2
+Aug 16 21:41:49.715384 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_unref() 0x606666d5ed10: ref=1
+Aug 16 21:41:49.715396 n bluetoothd[2829]: profiles/audio/a2dp.c:setup_ref() 0x606666d60ee0: ref=1
+Aug 16 21:41:49.715408 n bluetoothd[2829]: profiles/audio/a2dp.c:setup_ref() 0x606666d60ee0: ref=2
+Aug 16 21:41:49.715554 n bluetoothd[2829]: profiles/audio/media.c:media_endpoint_async_call() Calling SetConfiguration: name = :1.85 path = /MediaEndpoint/A2DPSource/sbc_xq
+Aug 16 21:41:49.717507 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_ref() 0x606666d5ed10: ref=2
+Aug 16 21:41:49.717525 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: IDLE -> CONFIGURED
+Aug 16 21:41:49.717532 n bluetoothd[2829]: profiles/audio/a2dp.c:setup_unref() 0x606666d60ee0: ref=1
+Aug 16 21:41:49.717538 n bluetoothd[2829]: profiles/audio/a2dp.c:setup_unref() 0x606666d60ee0: ref=0
+Aug 16 21:41:49.717544 n bluetoothd[2829]: profiles/audio/a2dp.c:setup_free() 0x606666d60ee0
+Aug 16 21:41:49.717550 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_unref() 0x606666d5ed10: ref=1
+Aug 16 21:41:49.860078 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.860108 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received DELAY_REPORT_CMD
+Aug 16 21:41:49.860125 n bluetoothd[2829]: profiles/audio/a2dp.c:endpoint_delayreport_ind() Source 0x606666d4b360: DelayReport_Ind
+Aug 16 21:41:49.860183 n bluetoothd[2829]: profiles/audio/avdtp.c:session_cb()
+Aug 16 21:41:49.860203 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_parse_cmd() Received OPEN_CMD
+Aug 16 21:41:49.860215 n bluetoothd[2829]: profiles/audio/a2dp.c:open_ind() Source 0x606666d4b360: Open_Ind
+Aug 16 21:41:49.860226 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_ref() 0x606666d5ed10: ref=2
+Aug 16 21:41:49.860238 n bluetoothd[2829]: profiles/audio/a2dp.c:setup_ref() 0x606666d60ee0: ref=1
+Aug 16 21:41:49.881006 n bluetoothd[2829]: profiles/audio/a2dp.c:confirm_cb() AVDTP: incoming connect from AA:BB:CC:00:00:01
+Aug 16 21:41:51.853091 n bluetoothd[2829]: plugins/policy.c:policy_connect() /org/bluez/hci0/dev_AA:BB:CC:00:00:01 profile a2dp-sink
+Aug 16 21:41:51.853106 n bluetoothd[2829]: profiles/audio/a2dp.c:a2dp_sink_connect() path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 16 21:41:51.853118 n bluetoothd[2829]: src/service.c:btd_service_connect() a2dp-sink profile connect failed for AA:BB:CC:00:00:01: Device or resource busy
+Aug 16 21:41:55.854913 n bluetoothd[2829]: profiles/audio/avdtp.c:stream_open_timeout() Timed out waiting for peer to open the transport channel
+Aug 16 21:41:55.854936 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: CONFIGURED -> ABORTING
+Aug 16 21:41:57.852919 n bluetoothd[2829]: profiles/audio/avdtp.c:cancel_request() Abort: Connection timed out (110)
+Aug 16 21:41:57.852935 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_ref() 0x606666d5ed10: ref=3
+Aug 16 21:41:57.852942 n bluetoothd[2829]: profiles/audio/avdtp.c:connection_lost() Disconnected from AA:BB:CC:00:00:01
+Aug 16 21:41:57.852949 n bluetoothd[2829]: profiles/audio/a2dp.c:abort_cfm() Source 0x606666d4b360: Abort_Cfm
+Aug 16 21:41:57.852955 n bluetoothd[2829]: profiles/audio/a2dp.c:setup_unref() 0x606666d60ee0: ref=0
+Aug 16 21:41:57.852963 n bluetoothd[2829]: profiles/audio/a2dp.c:setup_free() 0x606666d60ee0
+Aug 16 21:41:57.852986 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_unref() 0x606666d5ed10: ref=2
+Aug 16 21:41:57.852995 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: ABORTING -> IDLE
+Aug 16 21:41:57.853080 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_unref() 0x606666d5ed10: ref=1
+Aug 16 21:41:57.853089 n bluetoothd[2829]: profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01: SINK_STATE_CONNECTING -> SINK_STATE_DISCONNECTED
+Aug 16 21:41:57.853097 n bluetoothd[2829]: profiles/audio/a2dp.c:channel_remove() chan 0x606666d5af80
+Aug 16 21:41:57.853133 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_unref() 0x606666d5ed10: ref=0
+Aug 16 21:41:57.853142 n bluetoothd[2829]: profiles/audio/avdtp.c:avdtp_free() 0x606666d5ed10
+Aug 16 21:42:44.917957 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x000c
+Aug 16 21:42:44.917976 n bluetoothd[2829]: src/adapter.c:dev_disconnected() Device AA:BB:CC:00:00:01 disconnected, reason 19
+Aug 16 21:42:44.917985 n bluetoothd[2829]: src/adapter.c:adapter_remove_connection()
+Aug 16 21:42:44.918008 n bluetoothd[2829]: plugins/policy.c:disconnect_cb() reason 19
+Aug 16 21:42:44.918018 n bluetoothd[2829]: src/adapter.c:bonding_attempt_complete() hci0 bdaddr AA:BB:CC:00:00:01 type 0 status 0xe
+Aug 16 21:42:44.918029 n bluetoothd[2829]: src/device.c:device_bonding_complete() bonding (nil) status 0x0e
+Aug 16 21:42:44.918037 n bluetoothd[2829]: src/device.c:device_bonding_failed() status 14
+Aug 16 21:42:44.918044 n bluetoothd[2829]: src/adapter.c:resume_discovery()
+Aug 16 21:42:44.918074 n bluetoothd[2829]: src/profile.c:ext_io_disconnected() Unable to get io data for Hands-Free Voice gateway: getpeername: Transport endpoint is not connected (107)
+Aug 16 21:42:44.918084 n bluetoothd[2829]: src/service.c:change_state() 0x606666d2bbf0: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: connected -> disconnected (0)
+Aug 16 21:42:44.918095 n bluetoothd[2829]: src/service.c:btd_service_unref() 0x606666d2bbf0: ref=2
+Aug 16 21:42:44.919681 n bluetoothd[2829]: src/battery.c:provided_battery_removed_cb() provided battery removed /org/freedesktop/pipewire/battery/org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 16 21:42:44.919693 n bluetoothd[2829]: src/battery.c:btd_battery_unregister() path = /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 17 00:43:17.997836 n bluetoothd[2829]: src/agent.c:add_default_agent() Default agent set to :1.154 /org/gnome/bluetooth/settings
+Aug 17 00:43:17.997861 n bluetoothd[2829]: src/adapter.c:set_mode() sending set mode command for index 0
+Aug 17 00:43:17.997875 n bluetoothd[2829]: src/agent.c:agent_ref() 0x606666d60600: ref=1
+Aug 17 00:43:17.997885 n bluetoothd[2829]: src/agent.c:register_agent() agent :1.154
+Aug 17 00:43:17.997943 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0009
+Aug 17 00:43:17.997969 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0009 complete: 0x00
+Aug 17 00:43:17.997980 n bluetoothd[2829]: src/adapter.c:new_settings_callback() Settings: 0x00000ad1
+Aug 17 00:43:17.997990 n bluetoothd[2829]: src/adapter.c:settings_changed() Changed settings: 0x00000010
+Aug 17 00:43:17.998001 n bluetoothd[2829]: src/adapter.c:settings_changed() Pending settings: 0x00000000
+Aug 17 00:43:17.998041 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0018
+Aug 17 00:43:17.998062 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0018 complete: 0x00
+Aug 17 00:43:17.999638 n bluetoothd[2829]: src/adapter.c:set_discovery_filter() sender :1.154
+Aug 17 00:43:17.999653 n bluetoothd[2829]: src/adapter.c:parse_discovery_filter_dict() filtered discovery params: transport: 7 rssi: 32767 pathloss: 32767  duplicate data: false discoverable true pattern (null)
+Aug 17 00:43:17.999668 n bluetoothd[2829]: src/adapter.c:set_discovery_filter() successfully pre-set filter
+Aug 17 00:43:17.999898 n bluetoothd[2829]: src/adapter.c:start_discovery() sender :1.154
+Aug 17 00:43:17.999908 n bluetoothd[2829]: src/adapter.c:update_discovery_filter()
+Aug 17 00:43:17.999914 n bluetoothd[2829]: src/adapter.c:discovery_filter_to_mgmt_cp()
+Aug 17 00:43:17.999920 n bluetoothd[2829]: src/adapter.c:set_discoverable() sending set mode command for index 0
+Aug 17 00:43:17.999927 n bluetoothd[2829]: src/adapter.c:set_mode() sending set mode command for index 0
+Aug 17 00:43:17.999935 n bluetoothd[2829]: src/adapter.c:trigger_start_discovery()
+Aug 17 00:43:17.999941 n bluetoothd[2829]: src/adapter.c:cancel_passive_scanning()
+Aug 17 00:43:17.999974 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0007
+Aug 17 00:43:17.999990 n bluetoothd[2829]: src/adapter.c:start_discovery_timeout()
+Aug 17 00:43:18.000002 n bluetoothd[2829]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 17 00:43:18.000015 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0007 complete: 0x00
+Aug 17 00:43:18.000021 n bluetoothd[2829]: src/adapter.c:new_settings_callback() Settings: 0x00000ad3
+Aug 17 00:43:18.000026 n bluetoothd[2829]: src/adapter.c:settings_changed() Changed settings: 0x00000002
+Aug 17 00:43:18.000031 n bluetoothd[2829]: src/adapter.c:settings_changed() Pending settings: 0x00000000
+Aug 17 00:43:18.000060 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0006
+Aug 17 00:43:18.014574 n bluetoothd[2829]: src/profile.c:register_profile() sender :1.155
+Aug 17 00:43:18.014601 n bluetoothd[2829]: src/profile.c:create_ext() Created "Message Notification"
+Aug 17 00:43:18.014612 n bluetoothd[2829]: src/profile.c:ext_adapter_probe() "Message Notification" probed
+Aug 17 00:43:18.014663 n bluetoothd[2829]: src/profile.c:ext_start_servers() Message Notification listening on PSM 4097
+Aug 17 00:43:18.014695 n bluetoothd[2829]: src/profile.c:ext_start_servers() Message Notification listening on chan 17
+Aug 17 00:43:18.014730 n bluetoothd[2829]: src/adapter.c:adapter_service_add() /org/bluez/hci0
+Aug 17 00:43:18.014738 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000a
+Aug 17 00:43:18.014747 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+Aug 17 00:43:18.014752 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+Aug 17 00:43:18.014758 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+Aug 17 00:43:18.014763 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+Aug 17 00:43:18.014768 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001133-0000-1000-8000-00805f9
+Aug 17 00:43:18.014773 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001134-0000-1000-8000-00805f9
+Aug 17 00:43:18.014780 n bluetoothd[2829]: src/adapter.c:adapter_service_insert() /org/bluez/hci0
+Aug 17 00:43:18.014787 n bluetoothd[2829]: src/adapter.c:add_uuid() sending add uuid command for index 0
+Aug 17 00:43:18.014943 n bluetoothd[2829]: src/profile.c:register_profile() sender :1.155
+Aug 17 00:43:18.014959 n bluetoothd[2829]: src/profile.c:create_ext() Created "Message Access"
+Aug 17 00:43:18.014968 n bluetoothd[2829]: src/profile.c:ext_adapter_probe() "Message Access" probed
+Aug 17 00:43:18.014998 n bluetoothd[2829]: src/profile.c:ext_start_servers() Message Access listening on PSM 4099
+Aug 17 00:43:18.015015 n bluetoothd[2829]: src/profile.c:ext_start_servers() Message Access listening on chan 16
+Aug 17 00:43:18.015041 n bluetoothd[2829]: src/adapter.c:adapter_service_add() /org/bluez/hci0
+Aug 17 00:43:18.015047 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000b
+Aug 17 00:43:18.015053 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+Aug 17 00:43:18.015059 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+Aug 17 00:43:18.015064 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+Aug 17 00:43:18.015069 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+Aug 17 00:43:18.015073 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001132-0000-1000-8000-00805f9
+Aug 17 00:43:18.015078 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001134-0000-1000-8000-00805f9
+Aug 17 00:43:18.015083 n bluetoothd[2829]: src/adapter.c:adapter_service_insert() /org/bluez/hci0
+Aug 17 00:43:18.015089 n bluetoothd[2829]: src/adapter.c:add_uuid() sending add uuid command for index 0
+Aug 17 00:43:18.015118 n bluetoothd[2829]: src/profile.c:register_profile() sender :1.155
+Aug 17 00:43:18.015129 n bluetoothd[2829]: src/profile.c:create_ext() Created "Phone Book Access"
+Aug 17 00:43:18.015138 n bluetoothd[2829]: src/profile.c:ext_adapter_probe() "Phone Book Access" probed
+Aug 17 00:43:18.015169 n bluetoothd[2829]: src/profile.c:ext_start_servers() Phone Book Access listening on PSM 4101
+Aug 17 00:43:18.015184 n bluetoothd[2829]: src/profile.c:ext_start_servers() Phone Book Access listening on chan 15
+Aug 17 00:43:18.015206 n bluetoothd[2829]: src/adapter.c:adapter_service_add() /org/bluez/hci0
+Aug 17 00:43:18.015213 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000c
+Aug 17 00:43:18.015218 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+Aug 17 00:43:18.015224 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+Aug 17 00:43:18.015228 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+Aug 17 00:43:18.015233 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+Aug 17 00:43:18.015238 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000112f-0000-1000-8000-00805f9
+Aug 17 00:43:18.015243 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001130-0000-1000-8000-00805f9
+Aug 17 00:43:18.015248 n bluetoothd[2829]: src/adapter.c:adapter_service_insert() /org/bluez/hci0
+Aug 17 00:43:18.015253 n bluetoothd[2829]: src/adapter.c:add_uuid() sending add uuid command for index 0
+Aug 17 00:43:18.015281 n bluetoothd[2829]: src/profile.c:register_profile() sender :1.155
+Aug 17 00:43:18.015293 n bluetoothd[2829]: src/profile.c:create_ext() Created "Synchronization"
+Aug 17 00:43:18.015302 n bluetoothd[2829]: src/profile.c:ext_adapter_probe() "Synchronization" probed
+Aug 17 00:43:18.015326 n bluetoothd[2829]: src/profile.c:ext_start_servers() Synchronization listening on chan 14
+Aug 17 00:43:18.015347 n bluetoothd[2829]: src/adapter.c:adapter_service_add() /org/bluez/hci0
+Aug 17 00:43:18.015353 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000d
+Aug 17 00:43:18.015359 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+Aug 17 00:43:18.015363 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+Aug 17 00:43:18.015369 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+Aug 17 00:43:18.015373 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+Aug 17 00:43:18.015378 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001104-0000-1000-8000-00805f9
+Aug 17 00:43:18.015383 n bluetoothd[2829]: src/adapter.c:adapter_service_insert() /org/bluez/hci0
+Aug 17 00:43:18.015388 n bluetoothd[2829]: src/adapter.c:add_uuid() sending add uuid command for index 0
+Aug 17 00:43:18.015415 n bluetoothd[2829]: src/profile.c:register_profile() sender :1.155
+Aug 17 00:43:18.015427 n bluetoothd[2829]: src/profile.c:create_ext() Created "File Transfer"
+Aug 17 00:43:18.015435 n bluetoothd[2829]: src/profile.c:ext_adapter_probe() "File Transfer" probed
+Aug 17 00:43:18.015466 n bluetoothd[2829]: src/profile.c:ext_start_servers() File Transfer listening on PSM 4103
+Aug 17 00:43:18.015481 n bluetoothd[2829]: src/profile.c:ext_start_servers() File Transfer listening on chan 10
+Aug 17 00:43:18.015500 n bluetoothd[2829]: src/adapter.c:adapter_service_add() /org/bluez/hci0
+Aug 17 00:43:18.015506 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000e
+Aug 17 00:43:18.015511 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+Aug 17 00:43:18.015516 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+Aug 17 00:43:18.015521 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+Aug 17 00:43:18.015526 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+Aug 17 00:43:18.015530 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001106-0000-1000-8000-00805f9
+Aug 17 00:43:18.015535 n bluetoothd[2829]: src/adapter.c:adapter_service_insert() /org/bluez/hci0
+Aug 17 00:43:18.015540 n bluetoothd[2829]: src/adapter.c:add_uuid() sending add uuid command for index 0
+Aug 17 00:43:18.015568 n bluetoothd[2829]: src/profile.c:register_profile() sender :1.155
+Aug 17 00:43:18.015578 n bluetoothd[2829]: src/profile.c:create_ext() Created "Object Push"
+Aug 17 00:43:18.015587 n bluetoothd[2829]: src/profile.c:ext_adapter_probe() "Object Push" probed
+Aug 17 00:43:18.015616 n bluetoothd[2829]: src/profile.c:ext_start_servers() Object Push listening on PSM 4105
+Aug 17 00:43:18.015632 n bluetoothd[2829]: src/profile.c:ext_start_servers() Object Push listening on chan 9
+Aug 17 00:43:18.015655 n bluetoothd[2829]: src/adapter.c:adapter_service_add() /org/bluez/hci0
+Aug 17 00:43:18.015661 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000f
+Aug 17 00:43:18.015667 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+Aug 17 00:43:18.015672 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+Aug 17 00:43:18.015677 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+Aug 17 00:43:18.015682 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+Aug 17 00:43:18.015687 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001105-0000-1000-8000-00805f9
+Aug 17 00:43:18.015692 n bluetoothd[2829]: src/adapter.c:adapter_service_insert() /org/bluez/hci0
+Aug 17 00:43:18.015697 n bluetoothd[2829]: src/adapter.c:add_uuid() sending add uuid command for index 0
+Aug 17 00:43:18.015724 n bluetoothd[2829]: src/profile.c:register_profile() sender :1.155
+Aug 17 00:43:18.015737 n bluetoothd[2829]: src/profile.c:create_ext() Created ":1.155/org/bluez/obex/00005005_0000_1000_8000_0002ee000001/<UUID-01>"
+Aug 17 00:43:18.015745 n bluetoothd[2829]: src/profile.c:ext_adapter_probe() ":1.155/org/bluez/obex/00005005_0000_1000_8000_0002ee000001/<UUID-01>" probed
+Aug 17 00:43:18.015774 n bluetoothd[2829]: src/adapter.c:adapter_service_add() /org/bluez/hci0
+Aug 17 00:43:18.015780 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10010
+Aug 17 00:43:18.015786 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+Aug 17 00:43:18.015790 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+Aug 17 00:43:18.015795 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+Aug 17 00:43:18.015800 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+Aug 17 00:43:18.015805 n bluetoothd[2829]: src/sdpd-service.c:add_record_to_server() Record pattern UUID 00005005-0000-1000-8000-0002ee0
+Aug 17 00:43:18.015809 n bluetoothd[2829]: src/adapter.c:adapter_service_insert() /org/bluez/hci0
+Aug 17 00:43:18.015815 n bluetoothd[2829]: src/adapter.c:add_uuid() sending add uuid command for index 0
+Aug 17 00:43:20.054287 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x06 status: 0x05
+Aug 17 00:43:20.054313 n bluetoothd[2829]: Failed to set mode: Authentication Failed (0x05)
+Aug 17 00:43:20.054395 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 17 00:43:24.150275 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x05
+Aug 17 00:43:24.150323 n bluetoothd[2829]: src/adapter.c:start_discovery_complete() status 0x05
+Aug 17 00:43:24.150396 n bluetoothd[2829]: src/adapter.c:discovery_remove() owner :1.154
+Aug 17 00:43:24.150487 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+Aug 17 00:43:26.197993 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+Aug 17 00:43:26.198012 n bluetoothd[2829]: Failed to add UUID: Authentication Failed (0x05)
+Aug 17 00:43:26.198066 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+Aug 17 00:43:28.246288 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+Aug 17 00:43:28.246335 n bluetoothd[2829]: Failed to add UUID: Authentication Failed (0x05)
+Aug 17 00:43:28.246471 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+Aug 17 00:43:30.294236 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+Aug 17 00:43:30.294255 n bluetoothd[2829]: Failed to add UUID: Authentication Failed (0x05)
+Aug 17 00:43:30.294316 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+Aug 17 00:43:32.342389 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+Aug 17 00:43:32.342421 n bluetoothd[2829]: Failed to add UUID: Authentication Failed (0x05)
+Aug 17 00:43:32.342513 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+Aug 17 00:43:34.390160 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+Aug 17 00:43:34.390205 n bluetoothd[2829]: Failed to add UUID: Authentication Failed (0x05)
+Aug 17 00:43:34.390277 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+Aug 17 00:43:36.438259 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+Aug 17 00:43:36.438290 n bluetoothd[2829]: Failed to add UUID: Authentication Failed (0x05)
+Aug 17 00:43:36.438386 n bluetoothd[2829]: src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+Aug 17 00:43:38.486098 n bluetoothd[2829]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+Aug 17 00:43:38.486131 n bluetoothd[2829]: Failed to add UUID: Authentication Failed (0x05)
