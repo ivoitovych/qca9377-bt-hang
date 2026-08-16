@@ -7798,6 +7798,58 @@ NOUT=$(devtools/repo-validate "$SCRATCH/nocheck" 2>&1); nrc=$?
     && ok "files enumerated but none checkable is a pass, and says which it is" \
     || bad "a prose-only repo was not distinguished from an empty one (rc=$nrc)"
 
+# ── devtools/branch-status: a merge CLAIM against the branch's CURRENT tip ─
+#
+# On 2026-08-16 main gained a merge commit naming a branch whose tip had
+# moved one commit past the fetch the merge was made from. The dropped commit
+# was the merge-drift guard tests themselves. No suite gate can catch that —
+# a gate runs on what was merged, not on what was meant to be merged — so the
+# check lives in the tool that compares claims against current state, and
+# these tests replay the incident in miniature.
+#
+# The tool audits refs/remotes/origin, so the fixture manufactures those refs
+# directly with update-ref: no network, no real remote, and the exact shapes
+# needed — a claim whose branch has not moved (must stay QUIET, or the notice
+# cries wolf on every ordinary merge and gets ignored), and the same claim
+# after the branch moves (must NOTICE, with the count of missing commits).
+BSR=$(mktemp -d); CLEANUP_PATHS+=("$BSR")
+bsg() { git -C "$BSR" -c user.name=t -c user.email=test@example.com "$@"; }
+bsg init -q -b work
+echo a > "$BSR/f"; bsg add f; bsg commit -qm base
+bsg checkout -qb feature; echo b >> "$BSR/f"; bsg commit -qam f1
+bsg checkout -q work
+bsg merge -q --no-ff feature -m "Merge remote-tracking branch 'origin/feature'"
+bsg update-ref refs/remotes/origin/main    "$(bsg rev-parse work)"
+bsg update-ref refs/remotes/origin/feature "$(bsg rev-parse feature)"
+
+BSQ=$(BT_BS_ROOT="$BSR" devtools/branch-status 2>&1); bsqrc=$?
+(( bsqrc == 0 )) && [[ "$BSQ" == *"fully merged"* && "$BSQ" != *"MOVED"* ]] \
+    && ok "a merge claim whose branch has not moved stays quiet — no wolf-crying" \
+    || bad "an up-to-date merge claim was flagged, or the run failed (rc=$bsqrc)"
+
+# The incident: the branch gains a commit AFTER the merge that claimed it.
+bsg checkout -q feature; echo c >> "$BSR/f"; bsg commit -qam f2
+bsg update-ref refs/remotes/origin/feature "$(bsg rev-parse feature)"
+BSM=$(BT_BS_ROOT="$BSR" devtools/branch-status 2>&1); bsmrc=$?
+[[ "$BSM" == *"origin/feature merged at"* && "$BSM" == *"its tip has moved — 1 commit(s) not in origin/main"* ]] \
+    && ok "a claim whose branch moved past the merge is noticed, with the missing count" \
+    || bad "the replayed 2026-08-16 incident was not noticed"
+# Report, NOT failure: a moved tip is "more to merge", and an exit 1 here
+# would red-line the tree during ordinary work and get switched off.
+(( bsmrc == 0 )) \
+    && ok "the moved-tip notice reports without failing the run" \
+    || bad "branch-status exited $bsmrc on a notice that is not an error"
+
+# A branch merged, moved, and merged AGAIN is fully taken up: only the newest
+# claim per branch may count, or every re-merged branch nags forever.
+bsg checkout -q work
+bsg merge -q --no-ff feature -m "Merge remote-tracking branch 'origin/feature'"
+bsg update-ref refs/remotes/origin/main "$(bsg rev-parse work)"
+BSR2=$(BT_BS_ROOT="$BSR" devtools/branch-status 2>&1)
+[[ "$BSR2" != *"MOVED"* ]] \
+    && ok "a re-merged branch clears the notice — the newest claim decides" \
+    || bad "a branch already re-merged still reports as moved"
+
 # ── devtools/status: COMMITTED is not DEPLOYED ───────────────────────────
 #
 # The tool exists to keep one distinction visible, and states one contract:

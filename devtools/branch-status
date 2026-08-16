@@ -36,7 +36,11 @@
 set -uo pipefail
 export LC_ALL=C
 
-cd "$(dirname "$0")/.." || exit 1
+# BT_BS_ROOT: the repository to audit, defaulting to this checkout. The seam
+# exists so the suite can drive this tool over a scratch repository with a
+# deliberately stale merge claim — the audit below cannot be exercised any
+# other way without rewriting this repo's own history.
+cd "${BT_BS_ROOT:-$(dirname "$0")/..}" || exit 1
 
 UNIQUE=0; FILES=0; FETCH=0
 while [[ $# -gt 0 ]]; do
@@ -91,6 +95,55 @@ done
 
 printf '\n  %s branch(es), %s carrying at least one patch main does not have.\n' \
     "${#BRANCHES[@]}" "$carriers"
+
+# ── MERGE CLAIMS vs CURRENT BRANCH TIPS ──────────────────────────────────
+#
+# On 2026-08-16 main gained "Merge remote-tracking branch
+# 'origin/review/2026-08-15T1752Z-fixes'" — while that branch's tip had moved
+# one commit past the fetch the merge was made from. The dropped commit was
+# the branch's merge-drift test guards. No gate could catch it: a gate runs
+# on what was merged, not on what was meant to be merged. Only comparing the
+# CLAIM (a merge subject naming a branch) against the branch's CURRENT tip
+# sees it.
+#
+# NOT "every unmerged branch": that fires on ordinary workflow and would be
+# ignored within a week. The signal is a merge commit in main naming a branch
+# whose present tip is NOT contained — "main claims X is merged; X has moved
+# since." Only the NEWEST claim per branch counts (git log lists newest
+# first): a branch merged, moved, and merged again is fully taken up.
+#
+# A NOTICE, not a failure. A merged branch gaining commits afterwards is
+# normal — it means "more to merge", and an exit-1 here would red-line the
+# tree during ordinary work. The exit status stays 0.
+claims=$(git log --merges --format='%h%x09%s' "$BASE" 2>/dev/null \
+         | sed -nE "s/^([0-9a-f]+)\tMerge (remote-tracking branch|branch) '([^']+)'.*/\1\t\3/p")
+stale=0
+declare -A claim_seen=()
+while IFS=$'\t' read -r msha mname; do
+    [[ -n "$mname" ]] || continue
+    mref="${mname#origin/}"            # a claim may name either spelling
+    [[ "$mref" == "main" || "$mref" == "HEAD" ]] && continue
+    [[ -n "${claim_seen[$mref]:-}" ]] && continue
+    claim_seen[$mref]=1
+    # A deleted branch leaves nothing to compare — its tip cannot have moved.
+    git rev-parse --verify --quiet "origin/$mref" >/dev/null || continue
+    if ! git merge-base --is-ancestor "origin/$mref" "$BASE" 2>/dev/null; then
+        if (( stale == 0 )); then
+            echo
+            echo "Merge claims whose branch has MOVED since"
+            echo "───────────────────────────────────────────────────────────────"
+        fi
+        n=$(git rev-list --count "$BASE..origin/$mref" 2>/dev/null)
+        printf '  ! %s merged at %s; its tip has moved — %s commit(s) not in %s\n' \
+               "origin/$mref" "$msha" "${n:-?}" "$BASE"
+        stale=$((stale + 1))
+    fi
+done <<<"$claims"
+if (( stale > 0 )); then
+    echo
+    echo "  A moved tip is not an error — it is more to merge. This notice exists"
+    echo "  because on 2026-08-16 exactly this shape silently dropped a commit."
+fi
 
 if (( UNIQUE )); then
     echo
