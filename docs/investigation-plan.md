@@ -313,3 +313,62 @@ to prevent three days ago.
 **Fourth instance of one family.** The timeout grep that matched 8 of 173 events, the
 `bt-window` rfkill blind spot, the `bt-state` PATH tests, and now this — every one a
 pattern derived from what *our* tools log rather than what the *kernel* logs.
+
+#### BL-04 addendum — which rows are affected, and how the audit was got wrong twice
+
+**The code defect is closed** (`bt-trial` and `bt-window` now match the kernel's
+`reset (full|high|low)-speed USB device`, and the operator pattern is narrowed to rfkill
+lines indicating a block). **The rows written before that are not**, and are recorded here
+rather than edited, on the same principle that left `EX-023`'s row missing rather than
+reconstructed.
+
+`bt-trial-audit`, which uses detectors written independently of `bt-trial`'s, reports:
+
+```
+row 2 (boot -4, 2026-08-14T21:16:56+02:00): perturbed DISAGREES
+                recorded: none    journal: usb_reset (4 reset line(s))
+row 3 (boot  0, 2026-08-15T21:40:46+02:00): perturbed DISAGREES
+                recorded: none    journal: usb_reset (4 reset line(s))
+audited 3 · disagreed 2 · unresolved 0
+```
+
+Row 1 is clean. **Two of three rows in the evidence file carry a false `perturbed=none`** —
+censored windows recorded as clean observations, which would have pooled into failure-rate
+denominators as though nothing had touched the controller.
+
+**A second gate was audited and came back clean, and that is worth recording too.**
+`bt1_status` is `confirmed` on all three rows, so none was ever silently dropped by the
+`unknown` exclusion — a path which, until `4c1757a`, incremented a counter that nothing
+ever read. "Audited, clean" is information; without it the question gets re-derived.
+
+**Two procedural errors made while performing this audit by hand**, both of which returned
+a confident `0` that read as "the row is correct":
+
+1. **Wrong boot index.** Trial 2's boot is `-4`; it was queried as `-3`. Indices shift on
+   every reboot, so counting backwards is unsafe — resolve by containment against
+   `--list-boots` timestamps, which is what `bt-trial-audit` does, and why it found four
+   resets where the hand count found three.
+2. **`journalctl -k --since … --until …` without `-b`** returns only the **current** boot on
+   this host. `tools/bt-stage2`'s header documents this exact trap; it was walked into
+   anyway.
+
+**The rule: an audit query returning zero needs a positive control before it is used** —
+not before it is believed, because the belief is reasonable and the use is what causes
+harm. Run the same query against a window known to be non-zero first. Here, running it
+against row 3 would have returned 4 immediately and exposed the `-b` problem before it
+touched row 2's answer.
+
+This is the empty-input principle the repository already applies to enumeration
+(`enumerated == 0` means something is wrong, not nothing to do), applied to an ad-hoc
+query instead of a derivation.
+
+**Why the defect survived every green suite run.** `perturbed` has three outcomes and the
+suite drove one. `btusb_reload` was tested because that is the perturbation that happened
+first, on 2026-08-13; `usb_reset` — the mode that corrupted two of three rows — was never
+executed, while the comprehensiveness instrument reported 92%. That instrument counts modes
+*reached*, not outcomes *discriminated*, and this is the clearest measurement of the gap.
+
+**Consequence for A/B/C/D.** `perturbed` is what decides whether a row enters a denominator.
+A detector reporting `none` for a reset would have made every build comparison quietly
+wrong while looking entirely normal — and Build B is specifically the arm in which the
+kernel issues resets.
