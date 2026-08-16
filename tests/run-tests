@@ -1255,6 +1255,36 @@ BT_REPO="$SCHEMA" tools/bt-trial report >/dev/null 2>&1 || rc=$?
     && ok "report refuses an unrecognised trial_result value (rc=$rc)" \
     || bad "an unrecognised trial_result was silently counted"
 
+# EVERY EXCLUSION BUCKET MUST BE REPORTED, DERIVED FROM THE SOURCE.
+#
+# `unk[k]++` was incremented for as long as the exclusion existed and read
+# nowhere — no loop, no warning, no output — so a trial whose journal could not
+# be read left the denominator in silence. The behavioural test below catches
+# that one bucket. This catches the NEXT one, because the rule is general: a row
+# removed from a rate must be counted AND shown, and the two halves are written
+# a hundred lines apart where nothing connects them.
+#
+# Both sides are derived. An exclusion is `name[k]++ ... next`; its report is
+# `for (k in name)`. Neither list is written down here, so a bucket added
+# tomorrow is covered without anyone remembering this check exists.
+#
+# I tried the general form first — every variable written and never read — and
+# threw it away. On these files it produced two false positives (`idVendor=`
+# inside a string literal, and `c` read as `c+0`) and no true ones. A check that
+# cries wolf in a repository whose exclusion list demands an argument per entry
+# is worse than no check; the narrow rule is exact and cannot.
+XBUCKET=$(grep -oE '[a-z]+\[k\]\+\+[^}]*next' tools/lib/trial-summary.awk | sed 's/\[k\].*//' | LC_ALL=C sort -u)
+XREPORT=$(grep -oE 'for \(k in [a-z]+\)' tools/lib/trial-summary.awk | sed 's/.*in //; s/)//' | LC_ALL=C sort -u)
+XN=$(grep -c . <<<"$XBUCKET" || true)
+if (( ${XN:-0} == 0 )); then
+    bad "derived no exclusion buckets from trial-summary.awk — the check examined nothing"
+else
+    XMISS=$(comm -23 <(printf '%s\n' "$XBUCKET") <(printf '%s\n' "$XREPORT"))
+    [[ -z "$XMISS" ]] \
+        && ok "each of the $XN exclusion buckets is reported as well as counted" \
+        || bad "an exclusion bucket is counted and never shown — rows leave the denominator in silence: $(tr '\n' ' ' <<<"$XMISS")"
+fi
+
 # ── EXCLUDED IS NOT THE SAME AS DISAPPEARED ──────────────────────────────
 #
 # `unknown` is what bt1_status gets when the journal could not be read when the
