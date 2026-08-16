@@ -36,13 +36,13 @@ review section that argued for it. Grep `REVIEWED-KEEP` to enumerate them.
 
 | ID | Sev | Review § | Target | Finding (short) | Status |
 |---|---|---|---|---|---|
-| CR-01 | MED | 1.1 | README.md | stale suite/coverage figures (96 invariants, ~2 s, 18.3%) | pending |
-| CR-02 | MED | 1.1 | README.md + bin/bt-hang-watchdog | BT_EARLY ratio notation inconsistent; unsourced | pending |
-| CR-03 | LOW | 1.1 | README.md | clone URL inconsistency | pending |
-| CR-04 | LOW | 1.1 | README.md | layout tree self-duplication; docs/ half-listed | pending |
-| CR-05 | NOTE | 1.1 | tools/bt-diagnose | exit-code contract verified real | pending |
-| CR-06 | GOOD | 1.1 | README.md | publishing-logs section explains why | pending |
-| CR-07 | GOOD | 1.1 | README.md | candidate-fix "+0 s never tested" table | pending |
+| CR-01 | MED | 1.1 | README.md | stale suite/coverage figures (96 invariants, ~2 s, 18.3%) | fixed |
+| CR-02 | MED | 1.1 | README.md + bin/bt-hang-watchdog | BT_EARLY ratio notation inconsistent; unsourced | fixed |
+| CR-03 | LOW | 1.1 | README.md | clone URL inconsistency | fixed |
+| CR-04 | LOW | 1.1 | README.md | layout tree self-duplication; docs/ half-listed | fixed |
+| CR-05 | NOTE | 1.1 | tools/bt-diagnose | exit-code contract verified real | recorded |
+| CR-06 | GOOD | 1.1 | README.md | publishing-logs section explains why | kept |
+| CR-07 | GOOD | 1.1 | README.md | candidate-fix "+0 s never tested" table | kept |
 | CR-08 | MED | 1.2 | HISTORY.md | "Current state" section stale, no banner | pending |
 | CR-09 | LOW | 1.2 | HISTORY.md | superseded early-phase claims lack forward pointers | pending |
 | CR-10 | LOW | 1.2 | HISTORY.md | dangling commit hash 4c4047d | pending |
@@ -123,3 +123,75 @@ review section that argued for it. Grep `REVIEWED-KEEP` to enumerate them.
 Entries follow, appended one by one as each is completed.
 
 ---
+
+## Section A — foundation documents
+
+### CR-01 [MED] README's suite and coverage figures were stale — **fixed**
+
+**Elaboration.** The front page said "96 invariants, ~2 s" and "coverage
+18.3%, 38 of 44 scripts at zero". At `ed82166` the suite held 386
+invariants; at `944b1eb` it holds 591, coverage is 87.3%, and 10 of 53
+files execute zero lines. The deeper defect is not the wrong numbers but
+the *kind* of claim: these move with nearly every commit, so any pasted
+snapshot is wrong within days, and a wrong number on the front page
+teaches readers that numbers here are unmaintained.
+
+**Fix.** The volatile numbers are REMOVED, not refreshed. The Tests
+section now points at the executable sources (`tests/run-tests` prints
+"all N invariants hold"; `devtools/coverage` / `devtools/awk-coverage`
+print the current figures; CI enforces the floors), keeps only the
+anchored historical 13.1% starting point, and carries an HTML comment
+explaining why no snapshot may be pasted back. Drift-proof by
+construction rather than corrected-until-next-time.
+
+### CR-02 [MED] BT_EARLY ratio notation inconsistent and unsourced — **fixed**
+
+**Elaboration.** README defined the ratios as "appearances overall vs. in
+boots that hung", under which its own "3/9 excluded" datum is impossible;
+`HISTORY.md` Phase 12 uses the opposite order ("4/4 occurrences fell in
+boots that hung"), under which the impossible datum is `avdtp_close
+failed 4/3`. The ratios also appear nowhere else — no exhibit derives
+them, and the source boots were destroyed by the 2026-08-12 retention
+accident, so they can never be re-derived.
+
+**Fix.** Both copies (README and the `bin/bt-hang-watchdog` comment) now
+state the Phase-12 notation — *in-hung / overall* — and correct the
+transposed datum to `3/4`. Both carry an explicit "historical, not
+re-derivable" caveat citing the EX-003 precedent and each other, so the
+two copies cannot drift apart silently again. Recorded honestly: the 3/4
+orientation is inferred from Phase 12's usage, not re-measured — nothing
+can re-measure it.
+
+### CR-03 [LOW] Clone URL inconsistency — **fixed**
+
+The Install section's `github.com/<you>/…` placeholder is now the
+canonical `ivoitovych` URL with "or your fork", matching the quick-check.
+
+### CR-04 [LOW] Repository-layout tree self-duplication — **fixed**
+
+The tree was two generations merged: `tests/` listed twice, `tools/lib/`,
+`exhibits/`, `trials/` dangling after the closing entries, and half of
+`docs/` missing. Rebuilt as one tree, one entry per path, all ten docs
+accounted for, with a comment recording why (so the next merge of two
+generations is recognisable).
+
+### CR-05 [NOTE] bt-diagnose exit-code contract — **recorded**
+
+Verified real during the review (0 = not observed, 1 = observed, 2 =
+cannot determine; all three asserted distinct by the suite). No change
+needed; recorded so follow-ups cite the suite's three-codes-distinct
+invariant instead of re-checking by hand.
+
+### CR-06 [GOOD] Publishing-logs section — **kept**
+
+`REVIEWED-KEEP` marker added: the section's value is that it keeps the
+*reason* (BSSID → geolocation) attached to the rule; an edit that trims
+the explanation to "run the sanitiser" would survive review as a
+harmless shortening and lose the thing that makes people comply.
+
+### CR-07 [GOOD] Candidate-fix section refuses its own temptation — **kept**
+
+`REVIEWED-KEEP` marker added above the section naming its two
+load-bearing elements: the "+0 s never tested" table and the
+setup-failure warning. Removing either turns the hypothesis back into
+"the fix".

@@ -189,7 +189,7 @@ range while music is playing.
 ## Install
 
 ```bash
-git clone https://github.com/<you>/qca9377-bt-hang
+git clone https://github.com/ivoitovych/qca9377-bt-hang   # or your fork
 cd qca9377-bt-hang
 sudo ./install.sh            # dry run — shows exactly what it would do
 sudo ./install.sh --apply
@@ -293,10 +293,19 @@ intervenes on those instead:
 sudo systemctl edit bt-hang-watchdog     # Environment=BT_EARLY=1
 ```
 
-Trigger patterns were selected from historical boot-level associations (appearances overall
-vs. appearances in boots that hung): `cancel_request() Suspend` 2/2, `Abort` 4/4,
-`avdtp_connect_cb` 5/5, `SDP record: Host is down` 10/10, `avdtp_close failed` 4/3.
-`Device or resource busy` is excluded at 3/9 — too noisy.
+Trigger patterns were selected from historical boot-level associations, written as
+*appearances in boots that hung / appearances overall*: `cancel_request() Suspend` 2/2,
+`Abort` 4/4, `avdtp_connect_cb` 5/5, `SDP record: Host is down` 10/10,
+`avdtp_close failed` 3/4. `Device or resource busy` is excluded at 3/9 — too noisy.
+
+⚠️ These ratios are **historical and no longer re-derivable**: the boots they were
+counted over predate the 2026-08-12 journal-retention accident (see `EX-003` for the
+same caveat class), and the extraction was never captured as an exhibit. An earlier
+wording of this paragraph reversed the notation and transposed `avdtp_close failed`
+(review 2026-08-15T1752Z §1.1); the order used by `HISTORY.md` Phase 12 ("4/4
+occurrences fell in boots that hung") is the one stated above. They are retained only
+to explain how the heuristic's patterns were chosen — see the matching comment in
+`bin/bt-hang-watchdog`.
 
 Those ratios are **not predictive precision**. An early reset prevents observation of the
 counterfactual, and every proposed early marker has failed causal tests elsewhere in this
@@ -341,6 +350,12 @@ BT-1 would otherwise have occurred. It is off in experiment mode for that reason
 ---
 
 ## A candidate fix — NOT established as the fix
+
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.1: the "+0 s never tested" table below
+     and the BTUSB_QCA_ROME setup-failure warning are the two claims that stop
+     this section overselling the patch. Any edit that removes either turns a
+     hypothesis back into "the fix". -->
+
 
 A one-line kernel patch — add the device to btusb's QCA ROME quirks:
 
@@ -418,35 +433,44 @@ help. Per-boot detail: [`evidence/diagnosis/per-boot-history.txt`](evidence/diag
 
 ## Repository layout
 
+<!-- One tree, one entry per path. An earlier version of this block was two
+     generations merged: tests/ appeared twice and tools/lib/, exhibits/ and
+     trials/ dangled below the closing entries (review 2026-08-15T1752Z §1.1). -->
 ```
-bin/                  watchdog + metrics collector
+bin/                  watchdog, capture daemons, metrics collector
 systemd/              unit files
-etc/                  modprobe + udev configuration
+etc/                  modprobe + udev + journald configuration
 tools/                diagnostics, incident capture, log sanitiser
-tests/                run-tests — the analysis invariants
+  lib/                shared awk/sh programs (timestamps, matching, reports, the journal seam)
+tests/                run-tests — invariants, each anchored to a real shipped defect
   fixtures/           table-driven cases for the awk libraries
   journal/            canned journals for driving tools without a machine
+  btmon/              text fixtures for the btmon-reading tools
 devtools/             contributor tooling (check, scan, validate, coverage, commit+verify)
-reviews/              assessments of the repository itself
-docs/
-  investigation.md    full investigation, every measurement
-  bug-report.md       ready to file with linux-bluetooth
-  fix-proposal.md     the patch, its risks, validation plan
+reviews/              assessments of the repository itself, plus the action register
+docs/                 ten documents; the load-bearing ones:
+  issues.md           the issue register — the AUTHORITATIVE current claims
+  investigation.md    full investigation, every measurement (historical chronology)
+  bug-report.md       ready to file with linux-bluetooth (gated; see the banner in it)
+  fix-proposal.md     the patch, its risks, the A/B/C/D validation ladder
+  firmware-hypothesis.md  why the same silicon may behave differently under Windows
   changes-applied.md  exact system changes + rollback
   restore-original-state.md  full path back to the pre-install state
+  (also: investigation-plan.md, pre-submission-checklist.md, related-reports.md)
 evidence/
   baseline/           the failing boot, before any mitigation
   diagnosis/          reproducible transcripts proving the root cause
   sessions/           one directory per reproduction session
+  exhibits/           numbered, self-verifying evidence exhibits
+  trials/             numbered trials and results.tsv (the denominators)
 HISTORY.md            chronological development record, wrong turns included
-tests/                invariants, each anchored to a real shipped defect
-tools/lib/            shared awk programs (timestamps, matching, reports)
-evidence/exhibits/    numbered, self-verifying evidence exhibits
-evidence/trials/      numbered trials and results.tsv (the denominators)
 ```
 
 ### Publishing logs
 
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.1: this section explains WHY the
+     sanitiser exists (BSSID -> geolocation) rather than just prescribing it,
+     and documents the in-place safety. Keep the reason with the rule. -->
 Kernel logs contain your **Wi-Fi access point BSSID**, which public geolocation databases
 (WiGLE, Google, Apple) index — it can reveal where the machine physically is. Always run
 logs through the sanitiser before attaching them anywhere:
@@ -560,18 +584,26 @@ machine. Not installed by `install.sh`.
 
 ### Tests
 
+<!-- No invariant count or coverage percentage is spelled here ON PURPOSE.
+     Both numbers move with nearly every commit, and this page carried
+     "96 invariants" while the suite reported 386 and "18.3%" while the
+     measured figure was ~87% (review 2026-08-15T1752Z §1.1). The suite and
+     devtools/coverage print the current numbers; the reviews/ register
+     tracks the trend. Quote those, not a snapshot pasted here. -->
 ```bash
-tests/run-tests                    # 96 invariants, ~2 s
+tests/run-tests                    # prints "all N invariants hold" — N is the count
 tests/run-tests --section "stage2" # one block, without a sed range
-devtools/coverage                  # what fraction of the shell those 96 actually run
+devtools/coverage                  # how much of the shipped shell the suite executes
 ```
 
-Each of the 96 invariants in `tests/run-tests` encodes a defect that really shipped
+Every invariant in `tests/run-tests` encodes a defect that really shipped
 here, with a fixture built so the old behaviour fails it. Coverage of the shipped shell
-is **18.3%**, up from 13.1% when it was first measured; 38 of 44 scripts still execute no
-line under test, because most tools call `journalctl` directly and so cannot be driven
-from a fixture. Tools that read the journal through
-[`tools/lib/journal.sh`](tools/lib/journal.sh) can be:
+started at 13.1% when it was first measured and is enforced in CI by
+`devtools/coverage --min 80` (shell) and `devtools/awk-coverage --min 85` (the awk the
+analyses are computed in); run either tool for the current figure. What remains
+uncovered is argued line-by-line in `devtools/coverage-exclude`. Tools that read the
+journal through [`tools/lib/journal.sh`](tools/lib/journal.sh) can be driven from a
+fixture:
 
 ```bash
 BT_JOURNAL_FIXTURE=tests/journal/provenance tools/bt-boot-provenance

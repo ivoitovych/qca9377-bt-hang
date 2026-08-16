@@ -301,10 +301,15 @@ while read -r line; do
     # heuristics, not established causal markers or predictors. Acting on one
     # censors whether BT-1 would have occurred without the reset.
     #
-    # Historical boot-level associations, retained only to explain the heuristic:
+    # Historical boot-level associations, retained only to explain the heuristic.
+    # Notation: appearances in boots that hung / appearances overall. NOT
+    # re-derivable: the source boots predate the 2026-08-12 retention accident
+    # and the extraction was never captured as an exhibit. An earlier copy of
+    # this table transposed avdtp_close failed as "4/3" (review
+    # 2026-08-15T1752Z §1.1); README's copy must stay in sync with this one.
     #   cancel_request() Suspend   2/2    avdtp_connect_cb        5/5
     #   cancel_request() Abort     4/4    SDP record: Host is down 10/10
-    #   avdtp_close failed         4/3
+    #   avdtp_close failed         3/4
     # "Device or resource busy" is deliberately EXCLUDED at 3/9 — too noisy to
     # justify resetting a controller that may be healthy.
     if (( EARLY )) && [[ -z "$class" ]]; then
