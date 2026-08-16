@@ -42,10 +42,10 @@
 # "no records", which is a legible outcome rather than a crash.
 #
 # TWO TEST STRATEGIES COEXIST IN THIS TREE, ON PURPOSE. Tools that only READ
-# the journal (bt-phase, bt-postmortem, bt-env-history, ...) are driven
-# through this seam: a fixture directory stands in for the journal and
+# the journal (bt-phase, bt-postmortem, bt-env-history, bt-window, ...) are
+# driven through this seam: a fixture directory stands in for the journal and
 # nothing else about the environment matters. Tools that also ACT on the
-# system (bt-trial, bt-window, bt-incident) are driven in a PATH-stub sandbox
+# system (bt-trial, bt-incident) are driven in a PATH-stub sandbox
 # instead, because their risk is not "reads the wrong journal" but "resets a
 # real controller / writes into the real evidence tree", and only a stubbed
 # PATH plus redirected BT_* roots contains that. Converting an actuating tool
@@ -53,6 +53,16 @@
 # under test — the more dangerous half. So a tool appearing in UT-10's
 # "not converted" list is not necessarily a gap; it may be sandboxed by the
 # other strategy (review 2026-08-15T1752Z §3.4).
+#
+# bt-window MOVED CATEGORIES BETWEEN THE REVIEW AND THIS MERGE. §3.4 listed it
+# among the actuating tools; it was converted to this seam on the test branch
+# in the meantime, and it never actuated — its header states the exclusion as
+# its whole purpose, since probing the controller would end the observation it
+# exists to report on. Checked rather than assumed at merge time: it sources
+# this file, three suite cases drive it from BT_JOURNAL_FIXTURE, and its only
+# mentions of hciconfig, btmgmt or modprobe are in prose. bt-trial and
+# bt-incident remain sandbox-only, which is why the rule above is unchanged —
+# only its example list moved.
 #
 # This file is SOURCED, so it must not set shell options, define traps, or run
 # anything at load time — its callers set their own `set -uo pipefail` and would
@@ -170,6 +180,24 @@ bt_journal_count() {   # <ere> <journalctl selector args...>
 # --grep dance itself, which left a whole-boot read that the suite's own rule
 # then had to make an exception for. An exception in a rule about whole-boot
 # reads is where the next one hides, so the caller does not get to open-code it.
+# And the third form: every matching line, for a caller that needs to take more
+# than one count from the same window. bt-trial-audit wants three — resets,
+# reloads and timeouts — and its first version read the window UNFILTERED and
+# piped it to grep three times. On the investigation machine that meant scanning
+# a 3h22m boot carrying dynamic-debug output at roughly a million lines an hour,
+# to count a handful of matches: minutes per row, and the tool was hours old
+# when it reproduced the exact defect it had been written after.
+#
+# One read, filtered inside journalctl by the UNION of the patterns, then
+# counted locally per pattern. The union is what makes this safe: the local
+# match still decides, and it can only ever select a subset of what came back.
+bt_journal_lines() {   # <ere> <journalctl selector args...> — the matching lines
+    local re="$1"; shift
+    local g=()
+    bt_journal_supports_grep && g=(--grep="$re")
+    bt_journal "$@" "${g[@]}" --no-pager 2>/dev/null | grep -E "$re"
+}
+
 bt_journal_first() {   # <ere> <journalctl selector args...> — first match, or empty
     local re="$1"; shift
     local g=()

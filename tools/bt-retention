@@ -1,0 +1,178 @@
+#!/bin/bash
+# bt-retention — which exhibits can still be re-verified against the journal,
+#                and which are one rotation away from being unverifiable.
+#
+#   bt-retention            report every exhibit
+#   bt-retention --at-risk  only the ones in the oldest retained boot
+#
+# WHY THIS EXISTS. On 2026-08-16 a question about three long windows in EX-018
+# was answered by discovering that the journal behind them was already gone —
+# the oldest retained boot began 2026-08-12, and those windows are dated
+# 2026-07-25 to 2026-08-11. Five windows' worth of source evidence had rotated
+# away and nothing had said so. It was found by asking a question that happened
+# to touch it.
+#
+# NOBODY DELETED THEM, WHICH IS THE POINT. Two mechanisms did:
+#
+#   the size cap    SystemMaxUse=16G, raised from 4G precisely to retain more.
+#                   A cap is still a cap, and it discards oldest-first when
+#                   reached. Dynamic debug emits roughly a million lines an
+#                   hour, so the instrumentation that makes a boot worth keeping
+#                   is what evicts the boots before it.
+#   an age cap      MaxRetentionSec=1month, set once as a generous bound. It is
+#                   not a bound, it is an instruction to delete, and journald
+#                   acted on it at reload: 34 boots to 18 in one second, in a
+#                   file whose purpose was to retain more. See the warning in
+#                   etc/systemd/journald.conf.d/10-bt-investigation.conf.
+#
+# So the loss is structural rather than careless, and the defence is a warning
+# rather than a bigger cap: this reports which evidence is still checkable while
+# there is still time to archive it.
+#
+# EXHIBITS RECORD THE WRONG BOOT FOR THIS. Their provenance carries the boot id
+# they were CAPTURED in, which for EX-025 is the boot after the fault it
+# describes. So the timestamps in the exhibit's own output are used instead —
+# they are the evidence's, not the capture's.
+#
+# Cheap by construction: --list-boots carries every boot's range, so no boot is
+# ever read. The tool this lesson came from spent seven minutes doing that.
+
+set -uo pipefail
+
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-retention: missing $LIBDIR/journal.sh" >&2; exit 2; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
+REPO="${BT_EVIDENCE_REPO:-${BT_REPO:-$(dirname "$(readlink -f "$0")")/..}}"
+DIR="$REPO/evidence/exhibits"
+
+ATRISK=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --at-risk) ATRISK=1 ;;
+        -h|--help) sed -n '2,7p' "$0"; exit 0 ;;
+        *) echo "bt-retention: unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+refuse() { echo "bt-retention: REFUSING — $*" >&2; exit 2; }
+
+[[ -d "$DIR" ]] || refuse "no exhibits directory at $DIR"
+
+# ── retained boot ranges, from the index alone ───────────────────────────
+declare -A BSTART BEND
+NBOOT=0
+LB_JSON=$(bt_journal --list-boots -o json --no-pager 2>/dev/null || true)
+if [[ -n "$LB_JSON" ]] && command -v python3 >/dev/null 2>&1; then
+    while IFS=$'\t' read -r bi bs be; do
+        [[ -n "$bi" ]] || continue
+        BSTART[$bi]=$bs; BEND[$bi]=$be; NBOOT=$((NBOOT + 1))
+    done < <(python3 -c '
+import json, sys
+try:
+    for b in json.loads(sys.stdin.read()):
+        print("%s\t%d\t%d" % (b["index"], b["first_entry"] // 1000000, b["last_entry"] // 1000000))
+except Exception:
+    pass' <<<"$LB_JSON" 2>/dev/null)
+fi
+if (( NBOOT == 0 )); then
+    # Text form. Two timestamps per line after the index and the boot id; the
+    # separator between them varies by systemd version, so both ends are parsed
+    # positionally from a normalised line rather than split on it.
+    while IFS= read -r l; do
+        [[ "$l" =~ ^[[:space:]]*-?[0-9]+[[:space:]]+[0-9a-f]{32} ]] || continue
+        bi=$(awk '{print $1}' <<<"$l")
+        norm=${l//—/ }
+        s=$(awk '{print $4" "$5" "$6" "$7}' <<<"$norm")
+        e=$(awk '{print $8" "$9" "$10" "$11}' <<<"$norm")
+        bs=$(date -d "$s" +%s 2>/dev/null); be=$(date -d "$e" +%s 2>/dev/null)
+        [[ -n "$bs" && -n "$be" ]] || continue
+        BSTART[$bi]=$bs; BEND[$bi]=$be; NBOOT=$((NBOOT + 1))
+    done < <(bt_journal --list-boots --no-pager 2>/dev/null)
+fi
+
+(( NBOOT > 0 )) || refuse "no retained boot could be given a time range — nothing can be judged"
+
+# The oldest retained boot is the one that goes next, so evidence inside it is
+# what needs archiving first.
+OLDEST=""; OLDEST_T=0
+for b in "${!BSTART[@]}"; do
+    if [[ -z "$OLDEST" ]] || (( BSTART[$b] < OLDEST_T )); then OLDEST="$b"; OLDEST_T=${BSTART[$b]}; fi
+done
+
+covering() {   # <epoch> -> the boot index whose range contains it, or empty
+    local t="$1" b
+    for b in "${!BSTART[@]}"; do
+        (( t >= BSTART[$b] && t <= BEND[$b] )) && { echo "$b"; return 0; }
+    done
+    return 1
+}
+
+n=0; kept=0; gone=0; none=0; risk=0
+printf 'bt-retention — %s retained boot(s), oldest begins %s\n\n' \
+    "$NBOOT" "$(date -d "@$OLDEST_T" '+%Y-%m-%d %H:%M' 2>/dev/null)"
+
+for f in "$DIR"/[0-9]*.md; do
+    [[ -e "$f" ]] || continue
+    n=$((n + 1))
+    base=$(basename "$f" .md)
+    # The evidence's own timestamps, not the capture's, and ONLY the ones
+    # carrying a UTC offset.
+    #
+    # Boot ranges are absolute epochs from journald. An exhibit timestamp
+    # written `2026-08-14T21:02:15+02:00` is absolute too; the same instant
+    # written `2026-08-14 21:02:15` is not, and `date -d` would place it in
+    # whatever zone the reader happens to be in. The first version of this
+    # dropped the offset while extracting and put a retained exhibit two hours
+    # out — enough to report evidence as rotated away when it is still there,
+    # which is the one answer this tool must never invent.
+    #
+    # An exhibit with no offset-carrying timestamp is reported as not judgeable
+    # rather than guessed at. EX-018's tables are written in bare local time and
+    # land there honestly: they cannot be placed on an absolute axis from the
+    # file alone.
+    first=$(grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?([+-][0-9]{2}:?[0-9]{2}|Z)' "$f" \
+            | LC_ALL=C sort | head -1)
+    if [[ -z "$first" ]]; then
+        none=$((none + 1))
+        (( ATRISK )) || printf '  %-58s no absolute timestamp — not judgeable\n' "$base"
+        continue
+    fi
+    t=$(date -d "$first" +%s 2>/dev/null)
+    if [[ -z "$t" ]]; then
+        none=$((none + 1)); continue
+    fi
+    b=$(covering "$t")
+    if [[ -z "$b" ]]; then
+        gone=$((gone + 1))
+        (( ATRISK )) || printf '  %-58s GONE      earliest %s\n' "$base" "$first"
+    elif [[ "$b" == "$OLDEST" ]]; then
+        kept=$((kept + 1)); risk=$((risk + 1))
+        printf '  %-58s AT RISK   in boot %s, the next to rotate\n' "$base" "$b"
+    else
+        kept=$((kept + 1))
+        (( ATRISK )) || printf '  %-58s retained  boot %s\n' "$base" "$b"
+    fi
+done
+
+echo
+if (( n == 0 )); then
+    refuse "no exhibits examined — nothing was judged"
+fi
+printf '  %s exhibit(s): %s still verifiable, %s no longer, %s carry no timestamp\n' \
+    "$n" "$kept" "$gone" "$none"
+if (( risk > 0 )); then
+    echo
+    printf '  %s exhibit(s) sit in the OLDEST retained boot. That boot goes next.\n' "$risk"
+    echo "  Archive their source now if the extraction may need re-running:"
+    echo "    bt-archive <boot-index>"
+fi
+(( gone > 0 )) && {
+    echo
+    echo "  An exhibit whose source has gone is not invalid — its output was captured"
+    echo "  verbatim with an exit status. It can no longer be RE-DERIVED, so treat it"
+    echo "  as a record rather than as something a reviewer can reproduce."
+}
+exit 0

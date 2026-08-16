@@ -1,0 +1,14 @@
+device 13d3:3503
+  usb path        3-3
+  power/control   auto
+  hci             hci0
+  responds        no
+  autosuspend     Y
+  tx timeouts     44 (this boot)
+  wd interventions 0
+  connected       0
+services
+  bluetooth                  active
+  bt-hang-watchdog           inactive
+  bt-trace                   active
+  bt-health-snapshot.timer   inactive

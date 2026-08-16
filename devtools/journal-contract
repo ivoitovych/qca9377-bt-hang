@@ -94,14 +94,26 @@ fi
 # ── claim 4: -b all emits '-- Boot <id> --' separators ────────────────────
 # stage2.awk keys its boot-locality on these; tests/stage2-invariants.data
 # and tests/fixtures/stage2/* all carry them.
-if (( nboots > 1 )); then
-    seps=$(journalctl -k -b all --no-pager -o short-iso-precise 2>/dev/null \
-           | head -5000 | grep -c '^-- Boot ')
+#
+# The span is bounded to the PREVIOUS boot's first entry, so exactly one boot
+# boundary (-1 → 0) falls inside it. The first version instead read the first
+# 5000 lines of the whole journal, which assumes the oldest retained boot is
+# short. On this host boot -10 is a dyndbg tracing boot carrying 1,586,655
+# kernel lines, so the cap never reached a boundary and the check reported the
+# contract BROKEN while journalctl was emitting separators normally. Same
+# shape as every other defect this week: a control that holds where it was
+# written and not where it runs.
+prev_start=$(awk '$1 ~ /^-?[0-9]+$/ {print $4" "$5}' <<<"$LB" | tail -2 | head -1)
+if (( nboots > 1 )) && [[ -n "$prev_start" ]]; then
+    seps=$(journalctl -k -b all --since "$prev_start" --no-pager -o short-iso-precise 2>/dev/null \
+           | grep -c '^-- Boot ')
     if [[ "${seps:-0}" -gt 0 ]]; then
         ok "-b all still separates boots with '-- Boot <id> --' (stage2 fixtures claim it)"
     else
         bad "-b all no longer emits boot separators — stage2 boot-locality is broken"
     fi
+elif (( nboots > 1 )); then
+    note "boot-list rows carry no parsable start time — separator claim unchecked"
 else
     note "single boot retained — separator claim unchecked this run"
 fi

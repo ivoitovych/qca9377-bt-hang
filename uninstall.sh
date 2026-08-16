@@ -48,6 +48,7 @@ FILES=(
     /usr/local/bin/bt-verify-kernel-mechanism
     /usr/local/bin/bt-trial
     /usr/local/bin/bt-trial-audit
+    /usr/local/bin/bt-retention
     /usr/local/bin/bt-actions
     /usr/local/bin/bt-boot-stats
     /usr/local/bin/bt-exhibit

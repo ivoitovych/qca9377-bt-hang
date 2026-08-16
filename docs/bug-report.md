@@ -73,6 +73,34 @@ enumerated with no USB-level error for 1 h 12 m and 6 h 26 m, right-censored by 
 is **unresolved** — it has only ever been observed downstream of a reset, rebind or
 driver reload.
 
+### The untreated windows, with their terminators
+
+Four windows have positively established terminator provenance. Every one of them held
+the controller **enumerated with zero USB-layer lines** for its whole duration.
+
+| window | duration | ended by | was the ending ours? |
+|---|---:|---|---|
+| `EX-023` | 12107 s | deliberate `USBDEVFS_RESET` → collapse in 11.2 s | yes |
+| `EX-025` | 8884 s | ordinary shutdown — no reset, no rebind, no bus activity | **no** |
+| `EX-016` | 4332 s | `install.sh` reloading btusb | yes |
+| `EX-021` | 1837 s | operator rfkill toggle → collapse in 12.8 s | yes |
+
+`EX-025` is the one with the fewest objections available to it. The other three each
+invite the same reply — the ending was ours, so the absence of progression only describes
+what happens up to the moment we intervened. A shutdown does not reset the device, unbind
+the driver or touch the bus; it stops asking. The controller was still enumerated with a
+silent USB layer when the machine went down.
+
+That does not make it uncensored. **8883.7 s is what the window reached, not what it
+would have reached**, and the same is true of every row above. What differs is that the
+censoring mechanism is unrelated to the device.
+
+⚠️ `EX-018`'s fourteen-boot table contains longer windows still — 5 h 33 m, 3 h 14 m,
+1 h 26 m — recorded as shutdown-terminated. Those rows are **not** counted above, because
+that exhibit marks its terminator categories historical pending re-capture: reset
+provenance there was inferred rather than positively established. They are consistent with
+the four, and they are not evidence until re-captured.
+
 **The same hardware in the same laptop shows no fault under Windows 11** under deliberate
 repeated connect/disconnect/mode-change cycles, tested 2026-08-11. Hardware alone is
 therefore not a sufficient explanation; some OS/driver/firmware/command-sequence
@@ -98,12 +126,40 @@ after the first timeout. None restored HCI service, and USB loss followed. After
 issued *before* any timeout, on a bluetoothd audio-teardown signal, the controller answered;
 that intervention censored whether a failure was imminent.
 
+**Two deliberate resets, at window ages 3 h 22 m apart, both destroyed the device**
+(`EX-023`, `EX-025` boot). This is the controlled version of the five above, issued
+knowingly rather than by a watchdog reacting:
+
+| | window age at reset | reset → USB disconnect | kernel retries first |
+|---|---:|---:|---:|
+| `EX-023` | 12107 s | 11.2 s | — |
+| 2026-08-15 | 613 s | 85.6 s | 4, with `device descriptor read/64, error -110` between |
+
+**n = 2.** The outcome is invariant and the duration is not: **seconds to minutes**, and
+any single figure would misrepresent it — the same error that produced the retired
+"45–66 s". What the pair does establish is that the outcome does not depend on how long
+the controller has been sitting: a reset at 10 minutes killed it exactly as a reset at
+3 h 22 m did.
+
 ⚠️ **Those experiments do not test the proposed patch.** `hci_cmd_timeout()` calls
 `hdev->reset(hdev)` unconditionally on the **first** timeout, with no threshold — so a
 patched kernel would act at **+0 s**, synchronously with the log line the watchdog reacts
 to. Every post-timeout experiment above was 11 s or more late. The +0 s point is **unknown**:
 an immediate reset may recover the controller or may contribute to later USB loss, so both
 benefit and harm must be measured.
+
+**The burden has moved, though it is not settled.** Adding `13d3:3503` to the quirks table
+installs `hdev->reset`, and `hci_cmd_timeout()` calls it on the first timeout. There are
+now **two controlled demonstrations that this exact operation destroys a device that was
+otherwise stable and enumerated** — at window ages 613 s and 12107 s, both fatal. Against
+that stands `EX-004`, where a reset issued *before* any timeout recovered the controller.
+
+So the patch cannot be assumed beneficial, and this report does not recommend it as a
+fix. What it asks for is the mechanism to be looked at by people who know the controller:
+a device that is matched by no quirks entry, receives no firmware download, and is
+destroyed rather than recovered by the reset the timeout path would apply to it. The
+direction of the fix is **unmeasured**, and stating otherwise would be the same
+over-reach that produced the withdrawn timing claim.
 
 See §"What the missing entry does and does not explain" for the mechanism, and
 [`firmware-hypothesis.md`](firmware-hypothesis.md) for the prevention side.
@@ -189,9 +245,10 @@ What this does **not** weaken, because none of it depends on knowing the trigger
 - the device is matched by no entry in btusb's quirks table (verified in source and binary)
 - 287 command timeouts across 34 boots with zero reset attempts
 - **every reset issued after the first HCI timeout failed, five for five**
-- with no intervention, stage 1 persisted 1 h 12 m and 6 h 26 m with no USB-level
-  error (`EX-016`, `EX-018`); the once-quoted "45–66 s to USB collapse" was our own
-  watchdog's reaction time and is withdrawn
+- **four instrumented windows with positively established provenance**, 1837 s to
+  12107 s, held the controller enumerated with **zero USB-layer lines** throughout
+  (`EX-016`, `EX-021`, `EX-023`, `EX-025`); the once-quoted "45–66 s to USB collapse"
+  was our own watchdog's reaction time and is withdrawn
 
 Those are properties of the controller's response, observed regardless of what provoked it.
 
@@ -203,6 +260,40 @@ Those are properties of the controller's response, observed regardless of what p
 provokes it fairly readily on this machine: connecting and disconnecting classic (BR/EDR)
 audio devices, toggling modes, starting and interrupting playback. Devices involved:
 Sennheiser MOMENTUM 4, Lenovo thinkplus GM2 pro, Tronsmart T8.
+
+### Reproduced on two vendors' headsets, with one signature
+
+Every instrumented failure before 2026-08-15 involved the Sennheiser, which leaves a
+single-peripheral record open to the obvious reply: the headset's codec or HFP
+implementation is at fault rather than the controller. It has now been reproduced on a
+second vendor's device, and the kernel-side sequence is identical (`EX-024`).
+
+Device strings taken from the journal rather than from recollection. On 2026-08-15
+`bluetoothd`, the kernel input layer and `systemd-logind` independently recorded the same
+name — `联想thinkplus-GM2 pro` (联想 is Lenovo) — so it is the device's advertised name
+and not one component's transcription.
+
+| | 2026-08-14 | 2026-08-15 |
+|---|---|---|
+| device | `MOMENTUM 4` | `联想thinkplus-GM2 pro` |
+| vendor | Sennheiser | Lenovo |
+| `0x0428` Setup Synchronous Connection | ✔ | ✔ |
+| `Looking for Alt no` (USB alternate-setting switch) | ✔ | ✔ |
+| unanswered `0x0406` teardown | ✔ | ✔ |
+| `setting interface failed (110)` | ✔ | ✔ |
+
+**SCO setup → first timeout is a distribution, not a constant: 7.6–16.2 s across n = 4.**
+Quoting one figure here is exactly the error that produced the retired "45–66 s".
+
+Two vendors means two Bluetooth chipsets and two independently written HFP/codec
+implementations producing the same kernel-side sequence. That relocates the fault to the
+shared component — the QCA9377's synchronous-link path and the `btusb` alternate-setting
+switch that serves it.
+
+⚠️ **What this does not establish.** Two devices is not a survey. It excludes
+per-peripheral idiosyncrasy as the *sole* explanation; it does not show the fault is
+independent of the negotiated link parameters, which both devices may happen to share.
+That comparison has not been made.
 
 It occurred in **13 of 34 boots**, and in one instrumented case **two minutes into a
 freshly power-cycled boot** under light use — so it needs neither prolonged uptime nor

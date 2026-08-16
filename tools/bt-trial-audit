@@ -107,18 +107,68 @@ done
 BOOTS=$("$BOOTLIST" 2>/dev/null)
 [[ -n "$BOOTS" ]] || refuse "bt-boot-list enumerated no boots — nothing can be resolved"
 
-# start and end of each boot, as epoch seconds. `-n 1` is a hint the fixture
-# ignores, so the local head/tail is what decides in both worlds.
+# ── BOOT RANGES: ASK THE INDEX, DO NOT READ THE BOOTS ────────────────────
+#
+# THIS LOOP WAS THE SEVEN MINUTES. The first version took each boot's end with
+#
+#     bt_journal -k -b "$b" ... | tail -1
+#
+# and `tail -1` cannot know it has the last line until the stream ends, so that
+# read every retained boot from beginning to end — the WHOLE journal, once per
+# run, before a single row was examined. The window reads below were bounded to
+# their trial all along; the cost was here, in the setup, and it did not depend
+# on how many rows there were.
+#
+# It also hid behind a comment claiming `-n 1` made it cheap. `-n 1` was never
+# passed. A comment describing an optimisation that is not in the code is worse
+# than no comment: it answers the question that would have found the bug.
+#
+# Measured on the investigation machine, where the journal carries dynamic-debug
+# output at roughly a million lines an hour: 7m22s, with sys time exceeding user
+# time — the signature of reading and decompressing rather than matching. That
+# is also why --grep did not help: server-side filtering removes formatting and
+# writing, never traversal.
+#
+# --list-boots CARRIES BOTH TIMESTAMPS ALREADY, so no boot needs reading at all.
+# JSON first because it is unambiguous and gives microsecond epochs directly;
+# the text form's separator and date format vary by systemd version, which is
+# the reason bt-boot-list exists.
+# A COUNTER, NOT ${#BSTART[@]}. Under `set -u` this bash raises "unbound
+# variable" for the length of an associative array that is still empty — which
+# is exactly the state the emptiness check exists to detect. The check died
+# where it was needed and the run carried on with no ranges at all, resolving
+# every row to nothing. Counting explicitly cannot fail in the case it is for.
 declare -A BSTART BEND
-while IFS= read -r b; do
-    [[ -n "$b" ]] || continue
-    s=$(bt_journal -k -b "$b" -o short-unix --no-pager 2>/dev/null | head -1 | awk '{printf "%d", $1}')
-    e=$(bt_journal -k -b "$b" -o short-unix --no-pager 2>/dev/null | tail -1 | awk '{printf "%d", $1}')
-    [[ -n "$s" && -n "$e" ]] || continue
-    BSTART[$b]=$s; BEND[$b]=$e
-done <<<"$BOOTS"
+NBOOT=0
+LB_JSON=$(bt_journal --list-boots -o json --no-pager 2>/dev/null || true)
+if [[ -n "$LB_JSON" ]] && command -v python3 >/dev/null 2>&1; then
+    while IFS=$'\t' read -r bi bs be; do
+        [[ -n "$bi" ]] || continue
+        BSTART[$bi]=$bs; BEND[$bi]=$be; NBOOT=$((NBOOT + 1))
+    done < <(python3 -c '
+import json, sys
+try:
+    for b in json.loads(sys.stdin.read()):
+        print("%s\t%d\t%d" % (b["index"], b["first_entry"] // 1000000, b["last_entry"] // 1000000))
+except Exception:
+    pass' <<<"$LB_JSON" 2>/dev/null)
+fi
 
-(( ${#BSTART[@]} > 0 )) || refuse "no boot could be given a time range — the journal is unreadable or empty"
+# FALLBACK, for a journal without JSON --list-boots and for fixtures. `-n 1`
+# is passed this time, so journalctl seeks to the end instead of streaming to
+# it; the local head/tail still decides, which is what keeps a fixture — where
+# both hints are ignored — giving the same answer.
+if (( NBOOT == 0 )); then
+    while IFS= read -r b; do
+        [[ -n "$b" ]] || continue
+        s=$(bt_journal -k -b "$b" -o short-unix --no-pager 2>/dev/null | head -1 | awk '{printf "%d", $1}')
+        e=$(bt_journal -k -b "$b" -o short-unix --no-pager -n 1 2>/dev/null | tail -1 | awk '{printf "%d", $1}')
+        [[ -n "$s" && -n "$e" ]] || continue
+        BSTART[$b]=$s; BEND[$b]=$e; NBOOT=$((NBOOT + 1))
+    done <<<"$BOOTS"
+fi
+
+(( NBOOT > 0 )) || refuse "no boot could be given a time range — the journal is unreadable or empty"
 
 boot_for() {   # <epoch> -> the index whose range contains it, or empty
     local t="$1" b
@@ -176,7 +226,23 @@ while IFS=$'\t' read -r -a f; do
     # the CURRENT boot on this host, whatever the man page implies — documented
     # in bt-stage2's header, and the second of the two errors that produced a
     # false clean answer during the hand audit.
-    W=$(bt_journal -k -b "$b" --since "@$open" --until "@$close" --no-pager -o short-iso-precise 2>/dev/null)
+    #
+    # AND FILTERED INSIDE journalctl. The first version of this read the window
+    # unfiltered and grepped it three times in the shell. A trial window is a
+    # whole boot — 3 h 22 m for the row this tool was written to catch — and
+    # those journals carry dynamic-debug output at roughly a million lines an
+    # hour, so counting four reset lines meant formatting and discarding tens of
+    # millions. Minutes per row on the machine that has the data, instantly fast
+    # on a fixture: the cost scaled with the window, which is the defect this
+    # project had already found in bt-window that morning and which I then
+    # shipped again here within the day.
+    #
+    # One read, filtered by the union of the three patterns; the counts below
+    # are taken from what comes back. The local matches decide, so they can only
+    # ever select a subset of the union — the server-side filter is a speed-up
+    # and never the semantics.
+    W=$(bt_journal_lines "$RE_RESET|$RE_RELOAD|$RE_TIMEOUT" \
+        -k -b "$b" --since "@$open" --until "@$close" -o short-iso-precise)
 
     n_reset=$(grep -cE "$RE_RESET" <<<"$W" || true)
     n_reload=$(grep -cE "$RE_RELOAD" <<<"$W" || true)

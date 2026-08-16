@@ -319,3 +319,243 @@ to prevent three days ago.
 **Fourth instance of one family.** The timeout grep that matched 8 of 173 events, the
 `bt-window` rfkill blind spot, the `bt-state` PATH tests, and now this — every one a
 pattern derived from what *our* tools log rather than what the *kernel* logs.
+
+#### BL-04 addendum — which rows are affected, and how the audit was got wrong twice
+
+**The code defect is closed** (`bt-trial` and `bt-window` now match the kernel's
+`reset (full|high|low)-speed USB device`, and the operator pattern is narrowed to rfkill
+lines indicating a block). **The rows written before that are not**, and are recorded here
+rather than edited, on the same principle that left `EX-023`'s row missing rather than
+reconstructed.
+
+`bt-trial-audit`, which uses detectors written independently of `bt-trial`'s, reports:
+
+```
+row 2 (boot -4, 2026-08-14T21:16:56+02:00): perturbed DISAGREES
+                recorded: none    journal: usb_reset (4 reset line(s))
+row 3 (boot  0, 2026-08-15T21:40:46+02:00): perturbed DISAGREES
+                recorded: none    journal: usb_reset (4 reset line(s))
+audited 3 · disagreed 2 · unresolved 0
+```
+
+Row 1 is clean. **Two of three rows in the evidence file carry a false `perturbed=none`** —
+censored windows recorded as clean observations, which would have pooled into failure-rate
+denominators as though nothing had touched the controller.
+
+**A second gate was audited and came back clean, and that is worth recording too.**
+`bt1_status` is `confirmed` on all three rows, so none was ever silently dropped by the
+`unknown` exclusion — a path which, until `4c1757a`, incremented a counter that nothing
+ever read. "Audited, clean" is information; without it the question gets re-derived.
+
+**Two procedural errors made while performing this audit by hand**, both of which returned
+a confident `0` that read as "the row is correct":
+
+1. **Wrong boot index.** Trial 2's boot is `-4`; it was queried as `-3`. Indices shift on
+   every reboot, so counting backwards is unsafe — resolve by containment against
+   `--list-boots` timestamps, which is what `bt-trial-audit` does, and why it found four
+   resets where the hand count found three.
+2. **`journalctl -k --since … --until …` without `-b`** returns only the **current** boot on
+   this host. `tools/bt-stage2`'s header documents this exact trap; it was walked into
+   anyway.
+
+**The rule: an audit query returning zero needs a positive control before it is used** —
+not before it is believed, because the belief is reasonable and the use is what causes
+harm. Run the same query against a window known to be non-zero first. Here, running it
+against row 3 would have returned 4 immediately and exposed the `-b` problem before it
+touched row 2's answer.
+
+This is the empty-input principle the repository already applies to enumeration
+(`enumerated == 0` means something is wrong, not nothing to do), applied to an ad-hoc
+query instead of a derivation.
+
+**Why the defect survived every green suite run.** `perturbed` has three outcomes and the
+suite drove one. `btusb_reload` was tested because that is the perturbation that happened
+first, on 2026-08-13; `usb_reset` — the mode that corrupted two of three rows — was never
+executed, while the comprehensiveness instrument reported 92%. That instrument counts modes
+*reached*, not outcomes *discriminated*, and this is the clearest measurement of the gap.
+
+**Consequence for A/B/C/D.** `perturbed` is what decides whether a row enters a denominator.
+A detector reporting `none` for a reset would have made every build comparison quietly
+wrong while looking entirely normal — and Build B is specifically the arm in which the
+kernel issues resets.
+
+### BL-05 — registering an incident is a manual sequence, and the machine is a kitchen laptop
+
+Raised by the operator on 2026-08-16, immediately after `EX-026`: capturing an incident
+took roughly a dozen hand-written commands over several minutes, some of them stopping for
+permission prompts, while the fault window was live and the family was waiting for the
+machine.
+
+**Why this is an evidence problem and not an ergonomics one.** The cost falls entirely on
+the window that is still open. Every minute spent hand-assembling greps is a minute the
+operator is asked to leave a broken Bluetooth alone on a shared machine, and the pressure
+to release the laptop is what ends windows early. `EX-025` and the 2026-08-16 live window
+were both censored by exactly that pressure. A capture that takes ten seconds changes what
+the record can contain.
+
+**What is already there.** `bt-incident <slug> --since <time>` collects, sanitises and
+files a session in one command, and it worked correctly today. What was manual around it:
+
+- deciding `--since` by first hand-grepping for the fault's start
+- the whole diagnosis — trigger, first timeout, intervention, terminator, intervals
+- ruling out our own tooling as the cause (four separate queries, all negative)
+- writing the exhibit, its extraction command, and re-running that command to capture
+  verbatim output
+- checking whether the device is still on the bus
+
+**The shape a fix should take.** `bt-incident` already knows how to find the fault; the
+diagnosis above is `bt-postmortem`'s job and it exists. The gap is that nothing chains
+them, and nothing emits an exhibit skeleton with the extraction command already filled in
+and already executed. A single `bt-capture-now` that runs the chain, writes the session,
+drafts the exhibit and prints the timeline would remove every step above except the
+judgement calls.
+
+**The constraint that makes this delicate.** Such a tool runs *during* a live fault, so it
+must be provably read-only — no probe, no `hciconfig`, no `btmgmt`, nothing that touches
+the controller. The whole value of a live window is that nothing has touched it, and a
+capture tool that perturbs the thing it captures is worse than the manual sequence. That
+property needs a test, not a promise.
+
+**Second-order:** the permission prompts are a symptom of commands assembled ad hoc at the
+keyboard. A named tool is matched once; a hand-built pipeline is matched never. This is the
+same argument that produced `tools/bt-interval` and `devtools/check`.
+
+### BL-06 — `bt-archive` refuses a destination inside the repository, but not through a symlink
+
+Found while assessing `ba0bed8` on 2026-08-16, and reproduced end to end rather than
+argued.
+
+`bt-archive` resolves its destination with `cd "$DEST" && pwd`, which returns the
+**logical** path. If the destination is a symlink pointing inside the repository, the
+comparison against `$REPO` does not match, the guard passes, and the archive is written —
+physically — inside the tree:
+
+```console
+$ BT_REPO=…/symtest/repo BT_ARCHIVE_DIR=…/symtest/link tools/bt-archive -1
+bt-archive — boot -1 (id c1315c25) -> …/symtest/link/boot-c1315c25.export.zst
+  3 records, 4.0K on disk — read back and verified
+$ ls …/symtest/repo/inside/
+boot-c1315c25.export.zst
+```
+
+**Severity is set by what the file contains, not by how likely the symlink is.** A raw
+`journalctl -o export` carries MAC addresses and Wi-Fi BSSIDs, and BSSIDs geolocate the
+machine. This repository is public. The guard exists precisely so that nobody has to
+remember; a guard that can be walked around by a symlink is a guard that has to be
+remembered.
+
+**The fix** is `pwd -P` on both ends of the comparison — `$REPO` is already physical
+because it is derived through `readlink -f`, so only the destination diverges, and
+`BT_REPO` supplied by hand may not be. **Not yet applied**, because the suite refuses to
+run while a trial is open and a fix to a disclosure guard should not ship untested.
+
+**The general shape, which is worth more than the instance.** This is the third control
+this week that held where it was written and not where it ran, and the second whose
+mechanism is a symlink. The first destroyed three system binaries by writing through links
+into a directory that was also linked into. The rule then was *a directory is either linked
+into or written into, never both*; the rule now is broader: **a path check that does not
+resolve symlinks is not a path check.**
+
+### BL-07 — a USB reset with no established caller
+
+`EX-026` records a `usb 3-3: reset full-speed USB device number 2` that this project did
+not issue. Ruled out with evidence: our watchdog (inactive, disabled, not installed, no
+journal entries), `btusb_qca_reset` (its string `Resetting usb device` appears zero times),
+driver unbind (`deregistering interface driver btusb`, zero times), and
+`hci_cmd_timeout()` → `hdev->reset()` (no quirks entry matches `13d3:3503`, re-verified
+against this kernel's binary).
+
+**Why it matters.** Every prior stage-2 progression was ended by something of ours, which
+is the standing objection to `EX-021` and `EX-023`. Establishing what else can reset this
+device — and under what conditions — is the difference between "resets kill it" and "*our*
+resets kill it".
+
+**The one testable hypothesis, recorded as unsupported.** `power/control` was `auto` and
+`/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules` is **not installed on this machine**.
+A runtime-suspend whose resume fails is one usbcore route to `usb_reset_device()`. No
+suspend or resume line appears for `usb 3-3` in that boot, so it is unconfirmed in both
+directions — usbcore's dynamic debug was not enabled.
+
+**What would settle it:** enable dynamic debug on `usbcore`/`hub` for the resume and reset
+paths before the next window, so the caller is named in the log rather than inferred from
+what is absent.
+
+### BL-08 — our own shutdown hook times out, and it corrupts the trial record doing it
+
+Found 2026-08-16 from a photograph of the shutdown screen, which showed
+`Job bt-trial-auto.service/stop running (1min 17s / 1min 40s)`. The journal confirms it on
+both of that afternoon's reboots:
+
+```
+2026-08-16T15:28:29  Stopping bt-trial-auto.service …
+2026-08-16T15:29:59  bt-trial-auto.service: Stopping timed out. Terminating.
+2026-08-16T15:29:59  bt-trial-auto.service: Control process exited, code=killed, status=15/TERM
+2026-08-16T15:29:59  bt-trial-auto.service: Failed with result 'timeout'.
+2026-08-16T15:29:59  bt-trial-auto.service: Consumed 1min 20.147s CPU time, 95.6M memory peak
+
+2026-08-16T18:44:36  Stopping bt-trial-auto.service …
+2026-08-16T18:46:06  bt-trial-auto.service: Stopping timed out. Terminating.
+2026-08-16T18:46:06  bt-trial-auto.service: Consumed 1min 24.224s CPU time, 95.0M memory peak
+```
+
+**It is CPU-bound, not blocked.** 1 min 24 s of CPU in 90 s of wall clock is the close path
+scanning the journal, not `hci_alive` waiting on a dead controller — that call is capped at
+`timeout 6`. The 90 s is `TimeoutStopSec` expiring on work that never finishes.
+
+**Four consequences, in increasing order of seriousness.**
+
+1. **Every shutdown costs 90 s** while a trial is open. On a shared kitchen laptop that is
+   a real tax, and it is ours.
+2. **The close is killed, so the row is never written** — the failure mode already known
+   from the `enum_at_boot` fix, still live by another path.
+3. **The state file survives the kill, so the next boot does not open a trial.**
+   `autostart` exits early on `[[ -e "$CUR" ]]`, so one `trial` record silently spans
+   several boots. `observational_boot` is boots-with-a-hang over total boots; merging
+   boots into one row makes that denominator wrong in the same way `BL-04` did.
+4. **The trial directory is reused and overwritten.** `evidence/trials/stock/trial-04/`
+   was written by one trial at 03:35 and by a different trial at 18:48:14 the same day.
+   The first generation exists **only because it happened to be committed** at `1f97aba`
+   while working on an unrelated exhibit:
+
+   ```console
+   $ git show 1f97aba:evidence/trials/stock/trial-04/state-before.txt | head -3
+   device 13d3:3503
+     usb path        3-3
+     power/control   auto
+   $ head -3 evidence/trials/stock/trial-04/state-before.txt
+   device 13d3:3503
+     usb path        absent
+     power/control   -
+   ```
+
+   Nothing in the tooling preserved it. **This is a priority-1 violation reached by
+   accident of good luck**, and it is the reason it belongs at the top of this list.
+
+**What the row that did get written says.** Trial 4 closed at the 18:57:33 power-off,
+recording `treatment=autosusp=?,power=?` and `bt1_status=not_observed` — for a boot in
+which `EX-026` documents a textbook BT-1 fault at 15:37:49. The degraded values are honest
+about the controller being absent; the `not_observed` is not, and it would pool into a
+denominator as a clean boot.
+
+**The other thing the hook does, which matters for the exhibits.** `autostop` calls
+`hci_alive`, and `hci_alive` runs `timeout 6 hciconfig "$h" name` — an HCI
+Read_Local_Name to the controller. **When a trial is open, every shutdown touches the
+device.** That bears directly on `EX-025`, whose claim is that its window was "ended by an
+ordinary system shutdown rather than by anything touching the device".
+
+`EX-025` appears to survive: its `bt-trial-auto` stop at `2026-08-15T19:23:58` completed
+inside the same second with no timeout, and every close with a trial open takes 90 s — so
+no trial was open and no probe was issued. That inference should be replaced with a direct
+check before the exhibit is cited upstream, and **any future shutdown-censored window must
+be checked for an open trial before it is called untouched.**
+
+**What it is NOT.** It does not prevent a reboot, and it cannot affect whether a reboot
+clears the controller: it runs in userspace before `reboot.target`, and clearing the
+controller is a matter of VBUS, which no userspace program holds. Across all fourteen
+retained boots exactly one failed to enumerate — the reboot from stage 2 in `EX-027` —
+and that boot's predecessor had already had the device off the bus for over three hours.
+
+**The fix has three parts, and none is "raise the timeout".** Bound the close path's
+journal work the way `enum_at_boot` was bounded; clear the state file even when the close
+is killed, so a boot is never silently merged; and derive the trial directory so a reused
+number cannot overwrite an existing one.

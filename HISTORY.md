@@ -1786,3 +1786,120 @@ presence, already recorded in `usb_present`.
 
 Both are the house pattern: an instrument whose silence reads as a finding. The first was
 introduced *during* the observation it was built to watch.
+
+## Phase 27 — a second headset, a second reset, and the instruments still wrong the same way
+
+Two days that produced the project's decisive evidence and, alongside it, four more
+defects in the tools measuring it — every one an instance of a shape already named here.
+
+### The evidence
+
+**A different headset.** Every instrumented failure until now was the Sennheiser Momentum 4,
+the device the protocol was written around. On 2026-08-15 the operator provoked it with
+Lenovo earbuds:
+
+```
+21:02:15.017  hci0 opcode 0x0428 plen 17        Setup Synchronous Connection
+21:02:15.050  Looking for Alt no :6 / :3        USB alt-setting switch
+21:02:31.230  command 0x0406 tx timeout         unanswered, 16.2 s later
+21:02:36.671  setting interface failed (110)
+```
+
+Identical signature, different peripheral. A reviewer's first objection to a
+Sennheiser-only record was always going to be peripheral specificity, and that objection is
+now answered with data rather than argument. The claim moves from *this headset breaks my
+adapter* to **synchronous-link setup breaks this adapter**.
+
+The SCO-to-timeout interval across four instrumented instances is **7.6–16.2 s** — a
+distribution, not a constant. Quoting a single figure is how the 45–66 s error was made.
+
+**A second controlled reset, at a wildly different window age.**
+
+| | untreated before reset | reset → USB disconnect |
+|---|---:|---:|
+| `EX-023` | 12107 s (3 h 22 m) | **11.2 s** |
+| 2026-08-15 | 613 s (10 m) | **85.6 s** |
+
+Both killed the device. That was the open question for `BT-3`: whether the reset is lethal
+only to a long-stale controller. It is not. The *outcome* is invariant; the *duration* is
+not — the second took four kernel reset attempts with descriptor-read errors between them
+before the bus gave up. Any report must say **seconds to minutes**, never a constant.
+
+**And a fourth untreated window, censored the cleanest way yet:** 8883.7 s (2 h 28 m) with
+zero USB-layer lines and zero interventions, ended by an ordinary shutdown rather than by
+anything touching the device. Four windows now — 12107 s, 8884 s, 4332 s, 1837 s — all
+showing no progression while untouched.
+
+### The instruments, wrong in the same direction four more times
+
+**The perturbation detectors matched our own log strings, not the kernel's.** Both
+`bt-trial` and `bt-window` decided whether a window was disturbed by grepping
+`Resetting usb device` — which is `bt-hang-watchdog`'s message. The kernel writes
+`usb 3-3: reset full-speed USB device number 2 using xhci_hcd`. So both were blind to a raw
+`USBDEVFS_RESET`: the operation the controlled tests use, the one
+`usb_queue_reset_device()` performs, and the one `BT-3`'s proposed quirk would have the
+kernel issue on every first timeout.
+
+`bt-window` carried the opposite error beside it, counting `RFKILL event … op 1` — bluetoothd
+*observing* the switch disappear during teardown — as an operator action. **The two
+cancelled**, so a window reported CENSORED for entirely the wrong reason. Two errors that
+cancel are worse than one that doesn't, because nothing prompts anyone to look.
+
+**Two of three evidence rows were wrong.** Auditing `results.tsv` against the journal found
+rows 2 and 3 recording `perturbed=none` for windows containing four kernel resets each.
+Censored windows entering the record as clean observations — two thirds of the file. The
+rows were left as written and the defect recorded in `BL-04`, on the same principle that
+left `EX-023`'s row missing rather than reconstructed.
+
+**`bt-trial-audit` was built so that audit is re-runnable rather than remembered**, and its
+load-bearing decision is that it does *not* share `bt-trial`'s detectors. An audit built on
+the same regex can only agree with itself; importing the pattern would have confirmed all
+three rows as correct. Independent detectors reached the same answer, and resolved a boot
+by containment where the hand count had miscounted backwards.
+
+**Journal cost scales with the span traversed, not the lines matched.** Three instances in
+one day. `bt-window` timed out at the moment a window became interesting — five scans, two
+unbounded — and was fixed by counting from the fault forward. The audit then took 7 m 22 s,
+and `--grep` server-side filtering barely helped, because filtering removes formatting, not
+traversal. The real cost was a setup loop running `tail -1` over every retained boot:
+`tail` cannot know it has the last line until the stream ends, so it read every boot end to
+end before a single row was examined. Removing it: **7 m 22 s → 2.136 s**, same conclusions.
+
+The measurement that pinned it was `sys > user` — kernel-side reading and decompression
+rather than userspace matching. The reading was right and the location was wrong; the cost
+was in setup, not in the window reads, which had been bounded all along. **A wrong comment
+was what hid it** — the loop carried a note claiming `-n 1` made the read cheap, and `-n 1`
+was never passed. A comment that answers the question which would have found the bug is
+worse than no comment.
+
+### Two system binaries destroyed, and the rule that came out of it
+
+Fixing a test that could not achieve "tool absent" — `PATH="$STUB:/usr/bin"` where
+`hciconfig` lives in `/usr/bin` — a symlink farm was built over a directory the surrounding
+test code then wrote into. `>` and `cp` write **through** a symlink. Three binaries went:
+
+| binary | became |
+|---|---|
+| `/usr/bin/timeout` | 37 bytes, `exec /usr/bin/timeout "$@"` — infinite recursion |
+| `/usr/bin/systemctl` | 71-byte stub |
+| `/usr/bin/btmgmt` | 67-byte stub |
+
+The recursion is why the suite appeared to hang; it was wedged, not slow. All three were
+restored from packages. Neither half was wrong alone: the stub write created an ordinary
+file in a plain directory, and the farm linked into a directory nothing wrote to. **The
+composition was fatal.** So the rule is not "don't name stubs after real binaries", which is
+unenforceable, but **a directory is either linked into or written into, never both** — now
+structural, with farms and stubs in separate directories.
+
+### What the pattern has become
+
+Every defect in this phase is the same statement in a different costume: **a control
+that holds where the code is developed and not where it runs.** The staging guard lived in
+the test rather than the tool, so it protected every run except a human's. The farm was
+safe on a container with no bluez and fatal on a machine with real binaries. The journal
+tools were correct on fixtures where span and match count are both tiny.
+
+Six such defects surfaced in a week, and every one needed this host. That is the argument
+for verifying here — and equally the argument for a throwaway VM that reproduces the
+*configuration* without carrying the experiment. With one refinement earned this week: the
+VM must also be **loaded**, because one of the six was a race the container always won.

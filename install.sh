@@ -325,6 +325,7 @@ install_file "$SRC/tools/bt-verify-install" /usr/local/bin/bt-verify-install 075
 install_file "$SRC/tools/bt-verify-kernel-mechanism" /usr/local/bin/bt-verify-kernel-mechanism 0755
 install_file "$SRC/tools/bt-trial"       /usr/local/bin/bt-trial       0755
 install_file "$SRC/tools/bt-trial-audit" /usr/local/bin/bt-trial-audit 0755
+install_file "$SRC/tools/bt-retention"   /usr/local/bin/bt-retention   0755
 install_file "$SRC/tools/bt-actions"     /usr/local/bin/bt-actions     0755
 install_file "$SRC/tools/bt-boot-stats"  /usr/local/bin/bt-boot-stats  0755
 install_file "$SRC/tools/bt-exhibit"     /usr/local/bin/bt-exhibit     0755

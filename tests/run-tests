@@ -1266,6 +1266,36 @@ BT_REPO="$SCHEMA" tools/bt-trial report >/dev/null 2>&1 || rc=$?
     && ok "report refuses an unrecognised trial_result value (rc=$rc)" \
     || bad "an unrecognised trial_result was silently counted"
 
+# EVERY EXCLUSION BUCKET MUST BE REPORTED, DERIVED FROM THE SOURCE.
+#
+# `unk[k]++` was incremented for as long as the exclusion existed and read
+# nowhere — no loop, no warning, no output — so a trial whose journal could not
+# be read left the denominator in silence. The behavioural test below catches
+# that one bucket. This catches the NEXT one, because the rule is general: a row
+# removed from a rate must be counted AND shown, and the two halves are written
+# a hundred lines apart where nothing connects them.
+#
+# Both sides are derived. An exclusion is `name[k]++ ... next`; its report is
+# `for (k in name)`. Neither list is written down here, so a bucket added
+# tomorrow is covered without anyone remembering this check exists.
+#
+# I tried the general form first — every variable written and never read — and
+# threw it away. On these files it produced two false positives (`idVendor=`
+# inside a string literal, and `c` read as `c+0`) and no true ones. A check that
+# cries wolf in a repository whose exclusion list demands an argument per entry
+# is worse than no check; the narrow rule is exact and cannot.
+XBUCKET=$(grep -oE '[a-z]+\[k\]\+\+[^}]*next' tools/lib/trial-summary.awk | sed 's/\[k\].*//' | LC_ALL=C sort -u)
+XREPORT=$(grep -oE 'for \(k in [a-z]+\)' tools/lib/trial-summary.awk | sed 's/.*in //; s/)//' | LC_ALL=C sort -u)
+XN=$(grep -c . <<<"$XBUCKET" || true)
+if (( ${XN:-0} == 0 )); then
+    bad "derived no exclusion buckets from trial-summary.awk — the check examined nothing"
+else
+    XMISS=$(comm -23 <(printf '%s\n' "$XBUCKET") <(printf '%s\n' "$XREPORT"))
+    [[ -z "$XMISS" ]] \
+        && ok "each of the $XN exclusion buckets is reported as well as counted" \
+        || bad "an exclusion bucket is counted and never shown — rows leave the denominator in silence: $(tr '\n' ' ' <<<"$XMISS")"
+fi
+
 # ── EXCLUDED IS NOT THE SAME AS DISAPPEARED ──────────────────────────────
 #
 # `unknown` is what bt1_status gets when the journal could not be read when the
@@ -1524,6 +1554,39 @@ fi
 # Derived over every tracked shell file rather than a named list, because the
 # named list is exactly what let this survive in five other files after it was
 # found in the first.
+# AND NO JOURNAL READ MAY BE PIPED TO `tail` WITHOUT `-n`.
+#
+# `head -1` is cheap on any journal: it closes the pipe and journalctl stops at
+# the first line. `tail -1` cannot know it has the last line until the stream
+# ends, so the same shape reads the WHOLE boot to its end.
+#
+# bt-trial-audit did that for every retained boot, once per run, before it
+# examined a single row — 7m22s on the investigation machine, with sys time
+# above user time because the cost is reading and decompressing rather than
+# matching. That is also why --grep did not rescue it: server-side filtering
+# removes formatting and writing, never traversal.
+#
+# `-n 1` makes journalctl seek to the end instead of streaming to it, so the
+# rule is about the pair rather than about `tail`: a read that ends in tail must
+# have asked the journal for the tail.
+# Derived HERE rather than borrowed from a list built later in the file. The
+# first version of this check referenced TOOLFILES, which is not populated until
+# five thousand lines further down, so grep received no file arguments and the
+# invariant passed having read nothing — the identical mistake made against
+# SHFILES earlier today, in the same session, by the same hand. An empty
+# work-list is checked for that reason.
+TAILF=()
+for f in "${SHFILES[@]}"; do case "$f" in tools/*|bin/*) TAILF+=("$f") ;; esac; done
+if (( ${#TAILF[@]} == 0 )); then
+    bad "no tool files derived — the journal-tail check examined nothing"
+else
+    TAILSCAN=$(grep -nE '(bt_journal|journalctl)[^|]*\|[^|]*tail' "${TAILF[@]}" 2>/dev/null \
+               | grep -v -- ' -n ' | grep -vE '^[^:]*:[0-9]*:[[:space:]]*#')
+    [[ -z "$TAILSCAN" ]] \
+        && ok "none of the ${#TAILF[@]} tools streams a whole boot into tail — every journal read asks for -n" \
+        || bad "a journal read is piped to tail without -n, so it reads to the end: $(head -1 <<<"$TAILSCAN")"
+fi
+
 #
 # SHFILES is the derived work-list, and it is checked for emptiness here for the
 # reason its own header gives: the first draft of this check named an array that
@@ -5275,7 +5338,10 @@ fi
 # whether they advertise --grep. The answers must be identical, and must equal
 # the number of matching lines actually in the file.
 JG=$(mktemp -d); mkdir -p "$JG/bin"
-printf 'a: command 0x0406 tx timeout\nb: unrelated\nc: command tx timeout\nd: noise\ne: command 0x0409 tx timeout\n' > "$JG/kernel.log"
+# Carries all three intervention shapes as well as the timeouts, because
+# bt_journal_lines filters by the UNION of several patterns and then counts each
+# separately — an alternation is where a PCRE2/ERE divergence would show first.
+printf 'a: command 0x0406 tx timeout\nb: unrelated\nc: command tx timeout\nd: noise\ne: command 0x0409 tx timeout\nf: usb 3-3: reset full-speed USB device number 2 using xhci_hcd\ng: usbcore: deregistering interface driver btusb\n' > "$JG/kernel.log"
 # WITH --grep: advertises it AND honours it, so a caller that stopped matching
 # locally would still pass while a caller that mis-built the flag would not.
 cat > "$JG/bin/journalctl" <<'JGJ'
@@ -5292,6 +5358,7 @@ JGCOUNT=$(cat <<'JGC'
 source tools/lib/journal.sh
 bt_journal_count 'command( 0x[0-9a-f]+)? tx timeout' -k -b 0
 bt_journal_first 'command( 0x[0-9a-f]+)? tx timeout' -k -b 0
+bt_journal_lines 'reset (full|high|low)-speed USB device|deregistering interface driver btusb|command( 0x[0-9a-f]+)? tx timeout' -k -b 0 | wc -l
 JGC
 )
 JGWITH=$(PATH="$JG/bin:$PATH" JGDIR="$JG" JGHASGREP=1 bash -c "$JGCOUNT" 2>&1)
@@ -5679,6 +5746,50 @@ TRC=$(tr_daemon "capturing to" 80 2 BT_TRACE_CHECK_SEC=30)
 grep -q 'total_blind=' "$TR/cap/gaps.log" \
     && ok "the gap log carries a running blind total, not just isolated events" \
     || bad "the crash gap entry has no cumulative blind time"
+
+# ── CR-47: the rapid-crash backoff, the one branch left untested ─────────
+#
+# The review's fix audit recorded this as an accepted gap — "bt-trace is a
+# capture daemon with no sandbox harness, one of the ten zero-executed files".
+# That premise had gone stale by the time the branch merged: this section is a
+# sandbox harness, and bin/bt-trace measures 95% with exactly four uncovered
+# lines, all of them here. So the gap was four lines rather than a whole file,
+# and closing it needed a seam rather than suite surgery.
+#
+# WHY A SEAM AND NOT PATIENCE. The production threshold is ten consecutive
+# instant deaths, one per POLL_SEC, and POLL_SEC cannot be shortened because it
+# is also summed into `elapsed` as an integer — a fractional value is an awk-
+# free arithmetic error at the first poll, confirmed by trying it. Ten real
+# seconds is a third of this suite's runtime, which is precisely why this path
+# stayed untested. BT_TRACE_RAPID_MAX is the same seam bt-hang-watchdog exposes
+# as BT_MAX_FAILS, for the same reason, and the default is unchanged.
+#
+# THE ASSERTION IS THE SUPPRESSION, not the message. A backoff that logged its
+# banner and kept appending one gap line per second would satisfy any check on
+# the banner alone while still writing the ~86k lines/day the fix exists to
+# prevent. So the count is pinned: with the threshold at 3, exactly 2 btmon-exit
+# gap lines may be written — crashes 1 and 2 — and nothing after.
+printf '#!/bin/sh\nexit 5\n' > "$TR/bin/btmon"
+TRRAP=$(tr_daemon "backing off to" 80 1 BT_TRACE_POLL_SEC=1 BT_TRACE_CHECK_SEC=1 BT_TRACE_RAPID_MAX=3)
+TRRB=$(grep -c 'btmon-persistent-failure' "$TR/cap/gaps.log" 2>/dev/null || true)
+TRRE=$(grep -c 'btmon-exit' "$TR/cap/gaps.log" 2>/dev/null || true)
+TRRL=$(grep -c 'backing off to' <<<"$TRRAP" || true)
+if (( ${TRRL:-0} == 1 && ${TRRB:-0} == 1 && ${TRRE:-0} == 2 )); then
+    ok "a persistently dying btmon backs off once and stops appending a gap line per poll"
+else
+    bad "rapid-crash backoff wrong: banner=$TRRL persistent-gap=$TRRB exit-gaps=$TRRE (want 1/1/2)"
+fi
+# And the seam must not have become the behaviour. The banner names the
+# threshold it acted on, so a default that drifted from ten would say so.
+TRRD=$(grep -oE 'of [0-9]+ consecutive restarts' <<<"$TRRAP" | head -1)
+[[ "$TRRD" == "of 3 consecutive restarts" ]] \
+    && ok "the backoff reports the threshold it actually used, so a drifted default is visible" \
+    || bad "the backoff banner does not name its threshold: '$TRRD'"
+grep -qE 'RAPID_MAX="\$\{BT_TRACE_RAPID_MAX:-10\}"' bin/bt-trace \
+    && ok "the production rapid-crash threshold is still 10 — the seam did not become the default" \
+    || bad "BT_TRACE_RAPID_MAX's default drifted away from the shipped value"
+printf '#!/bin/sh\n[ -e "%s/btmon-dies" ] && exit 5\nsleep 3600 & wait $!\n' "$TR" > "$TR/bin/btmon"
+chmod +x "$TR/bin/btmon"
 rm -f "$TR/btmon-dies"
 
 # ── the floor, and what it does when pruning cannot help ─────────────────
@@ -6150,6 +6261,47 @@ rm -rf "$TAU"
 # answer this tool gives is a count, and zero is what both a correct row and a
 # broken detector look like. Breaking the detector must fail loudly here rather
 # than produce a clean report.
+# ── AND ITS COST MUST NOT SCALE WITH THE WINDOW ─────────────────────────
+#
+# The first version read each row's window UNFILTERED and grepped it three
+# times in the shell. A trial window is a whole boot — 3 h 22 m for the row this
+# tool exists to catch — and those journals carry dynamic-debug output at about
+# a million lines an hour, so counting four reset lines meant formatting and
+# discarding tens of millions. It took minutes per row on the machine that has
+# the data and was instant on these fixtures: the same defect found in bt-window
+# that morning, shipped again here the same day, and invisible to every test
+# because fixtures are small.
+#
+# Speed is not assertable — this container would hide it exactly as it did
+# before. The shape is: the read that scans a row's window must hand its pattern
+# to journalctl rather than to a pipe.
+TAS=$(ta_repo none); mkdir -p "$TAS/bin"
+cat > "$TAS/bin/journalctl" <<'TASJ'
+#!/bin/sh
+echo "$*" >> "$TASDIR/calls.log"
+case " $* " in
+    *" --help "*)        echo "  --grep=PATTERN  Show entries matching"; exit 0 ;;
+    *" --list-boots "*)  cat "$TASFIX/list-boots.log" 2>/dev/null; exit 0 ;;
+esac
+b=""; prev=""
+for a in "$@"; do [ "$prev" = "-b" ] && b="$a"; prev="$a"; done
+cat "$TASFIX/kernel.b$b.log" 2>/dev/null
+exit 0
+TASJ
+chmod +x "$TAS/bin/journalctl"; : > "$TAS/calls.log"
+PATH="$TAS/bin:$PATH" TASDIR="$TAS" TASFIX="$PWD/$TAF" BT_LIBDIR="$PWD/tools/lib" \
+    BT_EVIDENCE_REPO="$TAS" tools/bt-trial-audit >/dev/null 2>&1
+# The window read is the one carrying --since; it must also carry --grep.
+TASWIN=$(grep -- '--since' "$TAS/calls.log" | grep -c . || true)
+TASRAW=$(grep -- '--since' "$TAS/calls.log" | grep -vc -- '--grep' || true)
+if (( ${TASWIN:-0} > 0 && ${TASRAW:-0} == 0 )); then
+    ok "bt-trial-audit filters each window inside journalctl — $TASWIN read(s), none piped raw"
+else
+    bad "bt-trial-audit scans a window through a pipe — cost grows with the window it audits:"
+    while IFS= read -r l; do bad "      journalctl $l"; done < <(grep -- '--since' "$TAS/calls.log" | grep -v -- '--grep')
+fi
+rm -rf "$TAS"
+
 TAP=$(ta_repo none)
 sed "s|^RE_RESET=.*|RE_RESET='ZZZ-no-such-message'|" tools/bt-trial-audit > "$TAP/audit"
 chmod +x "$TAP/audit"
@@ -6158,6 +6310,211 @@ TAPO=$(BT_LIBDIR="$PWD/tools/lib" BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$T
     && ok "a detector that has stopped matching refuses instead of reporting every row clean" \
     || bad "a broken detector produced a report (rc=$tarc4): $(head -1 <<<"$TAPO")"
 rm -rf "$TAP"
+
+# ── devtools/journal-contract, which had no test of its own ─────────────
+#
+# It exists to catch journalctl's output shape changing under the fixtures, and
+# on 2026-08-16 it reported the contract BROKEN while journalctl was behaving
+# normally. It read the first 5000 lines of `-b all` looking for a boot
+# separator; boot -10 on the investigation machine is a dyndbg tracing boot
+# carrying 1,586,655 kernel lines, so the cap never reached a boundary.
+#
+# A NEW SHAPE, AND THE INVERSE OF THIS WEEK'S OTHERS. Elsewhere an unbounded
+# read was too slow; here a bounded read was too SHORT, and finding nothing
+# within the bound was reported as the thing not existing. A truncated search
+# that comes back empty has not established absence — it is the empty-input
+# rule again, one level in: zero from a capped scan is not a result.
+#
+# The checker is deliberately NOT seamed: a fixture cannot tell you whether the
+# real journalctl still emits separators, which is its whole purpose. So it is
+# driven by a STUB that models the host that broke it — an enormous oldest boot
+# — which tests the detector without replacing its subject.
+JC=$(mktemp -d); mkdir -p "$JC/bin"
+cat > "$JC/bin/journalctl" <<'JCJ'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*)
+    printf 'IDX BOOT ID                          FIRST ENTRY                  LAST ENTRY\n'
+    printf ' -1 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 Fri 2026-08-15 05:11:06 CEST Fri 2026-08-15 19:24:03 CEST\n'
+    printf '  0 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0 Fri 2026-08-15 19:25:45 CEST Sat 2026-08-16 03:00:00 CEST\n'
+    exit 0 ;;
+esac
+since=0; for a in "$@"; do [ "$a" = "--since" ] && since=1; done
+if [ "$since" = 1 ]; then
+  printf '2026-08-15T19:25:44.000000+0200 n kernel: last line of prev boot\n'
+  printf -- '-- Boot aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0 --\n'
+  printf '2026-08-15T19:25:45.000000+0200 n kernel: Linux version 7.0.0\n'
+else
+  i=0; while [ $i -lt 20000 ]; do printf '2026-08-12T05:39:08.000000+0200 n kernel: dyndbg noise %s\n' "$i"; i=$((i+1)); done
+  printf -- '-- Boot aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0 --\n'
+fi
+exit 0
+JCJ
+chmod +x "$JC/bin/journalctl"
+JCOUT=$(PATH="$JC/bin:$PATH" devtools/journal-contract 2>&1)
+[[ "$JCOUT" == *"✓ -b all still separates boots"* ]] \
+    && ok "journal-contract finds the boot separator on a host whose oldest boot is enormous" \
+    || bad "journal-contract still reports the contract broken against a normal journalctl"
+
+# The pre-fix shape, against the same stub, to show the test has teeth: a
+# capped scan that never reaches a boundary must be what fails, not the stub.
+sed 's|journalctl -k -b all --since "$prev_start" --no-pager -o short-iso-precise 2>/dev/null|journalctl -k -b all --no-pager -o short-iso-precise 2>/dev/null \| head -5000|' \
+    devtools/journal-contract > "$JC/capped"
+chmod +x "$JC/capped"
+JCCAP=$(PATH="$JC/bin:$PATH" bash "$JC/capped" 2>&1)
+[[ "$JCCAP" == *"✗ -b all no longer emits boot separators"* ]] \
+    && ok "a capped scan over the same journal DOES report a false break — the test discriminates" \
+    || bad "the capped and bounded forms agree, so this proves nothing about either"
+rm -rf "$JC"
+
+# ── bt-retention: which evidence can still be re-derived ────────────────
+#
+# On 2026-08-16 a question about three long windows in EX-018 was answered by
+# discovering their journal was already gone — the oldest retained boot began
+# 2026-08-12, those windows are dated 2026-07-25 to 2026-08-11. Five windows'
+# worth of source evidence had rotated away and nothing said so. It surfaced
+# because a question happened to touch it.
+#
+# Nobody deleted them. A 16G size cap discards oldest-first when reached, and
+# dynamic debug writes about a million lines an hour — so the instrumentation
+# that makes a boot worth keeping is what evicts the boots before it. The
+# defence is a warning while there is still time to archive, not a bigger cap.
+#
+# Four outcomes, all driven: still retained, in the oldest boot and therefore
+# next to go, already gone, and not judgeable at all.
+RT=$(mktemp -d); mkdir -p "$RT/evidence/exhibits"
+printf '# EX-016\n\n2026-07-25T03:25:00+02:00 rotated away\n' > "$RT/evidence/exhibits/016-gone.md"
+printf '# EX-018\n\n| 2026-07-25 03:25 | 5 h 33 m | shutdown |\n' > "$RT/evidence/exhibits/018-bare.md"
+printf '# EX-024\n\n2026-08-14T21:02:15.017017+02:00 signature\n' > "$RT/evidence/exhibits/024-risk.md"
+printf '# EX-025\n\n2026-08-15T16:55:59.333858+02:00 fault\n' > "$RT/evidence/exhibits/025-kept.md"
+RTOUT=$(BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RT" tools/bt-retention 2>&1); rtrc=$?
+if (( rtrc == 0 )) && [[ "$RTOUT" == *"016-gone"*"GONE"* && "$RTOUT" == *"024-risk"*"AT RISK"* \
+   && "$RTOUT" == *"025-kept"*"retained"* && "$RTOUT" == *"018-bare"*"not judgeable"* ]]; then
+    ok "bt-retention separates gone, at-risk, retained and unjudgeable evidence"
+else
+    bad "bt-retention mis-sorted the exhibits (rc=$rtrc):"
+    while IFS= read -r l; do bad "      $l"; done < <(grep -E 'GONE|AT RISK|retained|judgeable' <<<"$RTOUT")
+fi
+
+# A BARE LOCAL TIME IS NOT AN ABSOLUTE ONE, and the first version of this tool
+# treated it as one. Boot ranges are epochs from journald; an exhibit timestamp
+# without an offset would be read in whatever zone the reader is in, which put
+# a retained exhibit two hours out and reported it as rotated away. Reporting
+# evidence gone when it is still there is the one answer this must never
+# invent, so the offset is required rather than assumed.
+printf '# EX-090\n\n2026-08-14T21:02:15 no offset here\n' > "$RT/evidence/exhibits/090-naive.md"
+RTN=$(BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RT" tools/bt-retention 2>&1)
+[[ "$RTN" == *"090-naive"*"not judgeable"* ]] \
+    && ok "a timestamp with no UTC offset is refused rather than placed in the reader's zone" \
+    || bad "an offset-less timestamp was given an absolute position: $(grep -E '090-naive' <<<"$RTN")"
+
+# ENUMERATED == 0 IS A REFUSAL here too: an empty exhibits directory must not
+# report that everything is fine.
+RTE=$(mktemp -d); mkdir -p "$RTE/evidence/exhibits"
+BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RTE" tools/bt-retention >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-retention refuses when there are no exhibits to judge" \
+    || bad "an empty exhibit set produced a clean retention report"
+rm -rf "$RT" "$RTE"
+
+# ── bt-archive: the answer to what bt-retention warns about ─────────────
+#
+# The journal is a ring, so evidence has a half-life set by this project's own
+# verbosity. bt-retention says what is going; this is what you do about it.
+#
+# It is NOT a backup of the evidence — an exhibit already carries its command,
+# its verbatim output and its exit status, so conclusions survive in git
+# indefinitely. What rotation destroys is RE-DERIVATION: asking an old boot a
+# question nobody thought to ask when it was captured, which is exactly what a
+# kernel maintainer does with a submission.
+AR=$(mktemp -d)
+ARO=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$AR" tools/bt-archive -1 2>&1); arrc=$?
+if (( arrc == 0 )) && [[ "$ARO" == *"read back and verified"* ]] && ls "$AR"/boot-*.export.* >/dev/null 2>&1; then
+    ok "bt-archive exports a boot, names it by boot id, and verifies the read-back"
+else
+    bad "bt-archive did not produce a verified archive (rc=$arrc): $(tail -1 <<<"$ARO")"
+fi
+
+# A NEGATIVE BOOT INDEX IS NOT AN OPTION, and the first version thought it was.
+# `-1` is the argument this tool is most often given; a plain `-*` case refused
+# the one invocation that has to work.
+[[ "$ARO" == *"boot -1"* ]] \
+    && ok "a negative boot index is read as an index, not as an unknown option" \
+    || bad "bt-archive rejected -1, the argument it exists to take"
+
+# AN ARCHIVE NOBODY READ BACK IS A BELIEF, NOT A COPY. The failure is silent —
+# a truncated write, a compressor that died inside a pipeline, a full disk all
+# produce a plausible file. Driven by truncating the stream.
+ARTRUNC=$(mktemp -d)
+sed 's#| \$COMP > "\$TMP"#| head -4 | $COMP > "$TMP"#' tools/bt-archive > "$ARTRUNC/bt-archive"
+chmod +x "$ARTRUNC/bt-archive"
+ARD=$(mktemp -d)
+ARTO=$(BT_LIBDIR="$PWD/tools/lib" BT_REPO="$PWD" BT_JOURNAL_FIXTURE=tests/journal/archive \
+       BT_ARCHIVE_DIR="$ARD" "$ARTRUNC/bt-archive" -1 2>&1); artrc=$?
+ARLEFT=$(ls -A "$ARD" 2>/dev/null | wc -l)
+if (( artrc == 2 )) && [[ "$ARTO" == *"read-back mismatch"* ]] && (( ARLEFT == 0 )); then
+    ok "a truncated archive is refused and discarded, not filed as a backup"
+else
+    bad "a truncated archive survived (rc=$artrc, $ARLEFT file(s) left): $(tail -1 <<<"$ARTO")"
+fi
+
+# THE DESTINATION MAY NOT BE INSIDE THE REPOSITORY. A raw export carries MACs
+# and Wi-Fi BSSIDs, and BSSIDs geolocate the machine. repo-scan would catch a
+# committed archive once staged; this refuses to create one that could be.
+#
+# A LOCAL TEMP ROOT, NOT $SCRATCH. The first version used $SCRATCH, which is
+# not assigned until a thousand lines further down — under `set -u` the run
+# aborted here. Third time today a check referenced a work-list defined later in
+# the file; the EXIT trap caught this one and printed the resource report, which
+# is what it was added for.
+ARREPO=$(mktemp -d)
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARREPO/inside" \
+    BT_REPO="$ARREPO" tools/bt-archive -1 >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-archive refuses a destination inside the repository — a BSSID-carrying file must not be committable" \
+    || bad "bt-archive would have written an unsanitised journal export inside the repo"
+
+# ── AND THE GUARD MUST RESOLVE SYMLINKS, OR IT IS NOT A PATH CHECK ───────
+#
+# Found by the maintainer against the shipped version and reproduced end to
+# end: the guard used `cd "$DEST" && pwd`, which prints the path you arrived by
+# rather than where you are. A destination symlinked into the repository passed
+# the check, reported success, and left the unsanitised export — MACs and Wi-Fi
+# BSSIDs, on a public repository — physically inside the tree.
+#
+# Severity is set by what the file contains, not by how likely the symlink is.
+# The guard exists so nobody has to remember; one walkable by a symlink has to
+# be remembered.
+#
+# BOTH ENDS ARE TESTED. Only the destination was reported, but the comparison
+# has two sides and BT_REPO is supplied by hand — a repository named through a
+# symlink failed to match a destination correctly resolved, which is the same
+# hole entered from the other direction. Both were broken; both are asserted.
+ARSYM=$(mktemp -d); mkdir -p "$ARSYM/repo/inside"
+ln -sfn "$ARSYM/repo/inside" "$ARSYM/link"
+ln -sfn "$ARSYM/repo" "$ARSYM/repolink"
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARSYM/link" \
+    BT_REPO="$ARSYM/repo" tools/bt-archive -1 >/dev/null 2>&1
+arsym1=$?
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARSYM/repo/inside" \
+    BT_REPO="$ARSYM/repolink" tools/bt-archive -1 >/dev/null 2>&1
+arsym2=$?
+ARLANDED=$(ls -A "$ARSYM/repo/inside" 2>/dev/null | wc -l)
+if (( arsym1 == 2 && arsym2 == 2 && ARLANDED == 0 )); then
+    ok "the in-repo guard resolves symlinks on both ends — no export reaches the tree by either route"
+else
+    bad "a symlink walked the disclosure guard (dest=$arsym1 repo=$arsym2, $ARLANDED file(s) inside the repo)"
+fi
+# And it must not have become a guard that refuses everything: a genuinely
+# outside destination still has to work, or the three checks above pass on a
+# tool that archives nothing.
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARSYM/outside" \
+    BT_REPO="$ARSYM/repo" tools/bt-archive -1 >/dev/null 2>&1
+(( $? == 0 )) && ls "$ARSYM/outside"/boot-*.export.* >/dev/null 2>&1 \
+    && ok "a destination genuinely outside the repository still archives" \
+    || bad "the symlink fix turned the guard into a refusal of everything"
+rm -rf "$ARSYM"
+rm -rf "$AR" "$ARD" "$ARTRUNC" "$ARREPO"
 
 # ── status: the view that decides whether to abort a trial in progress ───
 #
@@ -7280,6 +7637,53 @@ git -C "$SCRATCH/clean" add -A
 devtools/repo-scan "$SCRATCH/clean" >/dev/null 2>&1
 (( $? == 0 )) && ok "repo-scan passes documented placeholders" \
               || bad "repo-scan refused the placeholder forms it documents"
+
+# ── NON-ASCII IN THE LOGS, WHICH THE UPSTREAM REPORT NOW DEPENDS ON ──────
+#
+# The second headset that reproduced the fault is recorded by BlueZ, the kernel
+# input layer and logind alike as `联想thinkplus-GM2 pro`. That string is about
+# to appear in an exhibit, and neither the scanner nor the sanitiser had ever
+# been given a byte above 0x7f.
+#
+# TWO DIRECTIONS, AND ONLY ONE OF THEM IS ABOUT LEGIBILITY. A mangled device
+# name in an upstream report is embarrassing. A scanner that stops recognising a
+# MAC because the line around it is multibyte SHIPS THE ADDRESS — and the
+# addresses in this project's logs geolocate the machine. The second is the one
+# worth asserting hardest, so it is asserted under the C locale too: CI does not
+# necessarily run with a UTF-8 locale, and `grep` treating a file as binary
+# would print "Binary file matches" instead of the line, which a counting
+# scanner reads as nothing found.
+#
+# Assembled from fragments, like the other refusal fixtures, so this file never
+# contains a MAC literal for its own scanner to find.
+_n1='5C:F3'; _n2='70:1A'; _n3='9B:CD'
+NASCII='联想thinkplus-GM2 pro'
+mkdir -p "$SCRATCH/utf8"; scratch_repo "$SCRATCH/utf8"
+printf 'kernel: hci0: peer %s %s SCO setup\n' "$_n1:$_n2:$_n3" "$NASCII" > "$SCRATCH/utf8/dev.log"
+git -C "$SCRATCH/utf8" add -A
+UTFA=0; UTFB=0
+for loc in C C.UTF-8; do
+    LC_ALL=$loc devtools/repo-scan "$SCRATCH/utf8" >/dev/null 2>&1 || UTFA=$((UTFA + 1))
+    UTFB=$((UTFB + 1))
+done
+(( UTFA == UTFB && UTFB > 0 )) \
+    && ok "repo-scan still finds a real MAC beside a non-ASCII device name, in $UTFB locale(s)" \
+    || bad "a multibyte device name hid a MAC from the scanner ($UTFA of $UTFB locales caught it)"
+
+# And the sanitiser must replace the address while leaving the name BYTE for
+# byte — a name it silently re-encoded would be wrong in the report and would
+# also break the cross-referencing the deterministic placeholders exist for.
+printf 'bluetoothd: uinput initialized for %s\nkernel: hci0: peer %s %s SCO setup\n' \
+    "$NASCII" "$_n1:$_n2:$_n3" "$NASCII" > "$SCRATCH/utf8/raw.log"
+tools/sanitize-logs.sh "$SCRATCH/utf8/raw.log" "$SCRATCH/utf8/clean.log" >/dev/null 2>&1
+UTFIN=$(grep -c -- "$NASCII" "$SCRATCH/utf8/raw.log" || true)
+UTFOUT=$(grep -c -- "$NASCII" "$SCRATCH/utf8/clean.log" 2>/dev/null || true)
+UTFMAC=$(grep -c -- "$_n1" "$SCRATCH/utf8/clean.log" 2>/dev/null || true)
+if (( ${UTFIN:-0} > 0 && UTFIN == UTFOUT && ${UTFMAC:-1} == 0 )); then
+    ok "sanitize-logs replaces the address and leaves the non-ASCII device name intact ($UTFIN line(s))"
+else
+    bad "sanitiser mangled the device name or kept the address: name in=$UTFIN out=$UTFOUT, address left=$UTFMAC"
+fi
 
 # The REMOVAL of a leak must be commit-able: default mode scans added lines
 # only, because blocking the remediating commit is the one thing this gate
