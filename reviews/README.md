@@ -201,7 +201,9 @@ The complete per-finding disposition — all 84 CR IDs with statuses — is the 
 table in [the fixes document](2026-08-16T0022Z-fixes-and-elaboration-for-2026-08-15T1752Z-review.md);
 [GOOD] practices carry `REVIEWED-KEEP 2026-08-15T1752Z` markers at their source sites
 (`grep -rn 'REVIEWED-KEEP' --include='*' .` enumerates them). The rows below are the
-HIGH/MED items only.
+HIGH/MED items only. Every behavioural change on the fixes branch is pinned by a
+suite assertion observed to fail (tracker Addendum 2); the one accepted gap is
+bt-trace's crash backoff, recorded there.
 
 | ID | Item | Status | Landed | Verify |
 |---|---|---|---|---|

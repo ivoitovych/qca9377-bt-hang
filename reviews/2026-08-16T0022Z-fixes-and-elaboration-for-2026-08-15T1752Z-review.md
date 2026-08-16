@@ -799,3 +799,70 @@ written disposition. The sweep that decides this claim:
 awk: catalogue rows == 84, none 'pending'
 grep '^### CR-' + range expansion: every ID 1..84 appears in a heading
 ```
+
+---
+
+## Addendum 2 — every behavioural change on this branch is now pinned by a test
+
+Prompted by the owner's merge-drift concern: a fix that no test asserts
+can be silently reverted by a conflict resolution and the suite stays
+green. The branch was audited change-by-change (`git diff main...HEAD`,
+docs excluded) and every behavioural change now has an assertion that
+goes red without it. Where a test already existed it is named in the
+entry above; this pass added eight that were missing:
+
+- **CR-58** — probes/aborts columns driven through bt-trial's real close
+  path with a decoy in each stream (3 lifecycle lines → probes 1; a
+  stray "exited" → aborts 1). The stub journal now serves per-unit
+  streams, so the count discriminates rather than merely fires.
+- **CR-56** — a full trial close under a private TMPDIR must leave it
+  empty; a dropped EXIT trap leaks the kernel-journal capture on every
+  close.
+- **CR-63** — the fabricated btusb.ko now carries a five-byte decoy
+  whose hex stream spells 3503's pattern one nibble off a byte
+  boundary; 3503 must still read ABSENT.
+- **CR-55** — the bt-evidence fixture gains an answered-after-early
+  line; the manifest must say `wd_early_ok=1` without inflating
+  `wd_interventions`.
+- **CR-65** — the 60-second rate must keep its population flags:
+  kernel 3, `--user` 6 over the logvolume fixture (a re-sliced argument
+  list that lost `-k` reads 6 in both).
+- **CR-39** — a PATH farm without python3 must produce the startup
+  warning; the hard-hang scenario's output must not (the warning
+  discriminates).
+- **CR-40** — a two-signal, no-timeout fixture drives the EARLY path to
+  give-up with a dead controller: both give-up lines required, and no
+  late-path "Detected" line may appear.
+- **CR-52** — a FILES path that is an unremovable directory drives one
+  real `rm` failure through the real accumulator: `ERROR` line,
+  `UNINSTALL INCOMPLETE`, exit 1.
+- **CR-81** — retitling the sandbox exhibit to "**Historical claim.**"
+  must keep its text, marked, in both `list` and the regenerated index.
+
+Every one was OBSERVED TO FAIL (the house rule): the fixes were
+temporarily reverted in two batches — old count patterns, dropped trap,
+any-offset hex match, removed manifest counter, de-flagged rate,
+deleted warning, single-line give-up, unconditional banner, old claim
+grep — and the suite went red at exactly the new assertions (7 ✗ in
+batch one, the 4 remaining in batch two), then green again on restore.
+
+Already-pinned changes, for the record: CR-42 (snapshot column +
+migration), CR-57 (lib rewires — bt-actions render, bt-boot-stats
+hours and bt-sco window run under fixtures; the libs are profiled by
+awk-coverage), CR-58's bt-env-history half, CR-60/61/80 (byte-exact
+fixture families), CR-62 (three refusal tests), CR-64 (postmortem
+count), CR-84 (verified red-then-green on a mawk host directly — the
+"1 of 3 validators" failure was the discovery itself).
+
+**Accepted gap, stated rather than hidden:** bt-trace's rapid-crash
+backoff (CR-47) is not driven by the suite. bin/bt-trace is a capture
+daemon whose loop wraps btmon and disk pruning; it is one of the ten
+zero-executed files devtools/coverage reports and has no sandbox
+harness. Building one is real work (a btmon stub with scripted death
+cadences, a fake clock) and belongs to UT-12-scale suite surgery, not
+this branch. Until then the backoff's observable contract is recorded
+in its comments and the gap is visible in the coverage report — the
+honest state, but an untested state.
+
+Suite after this pass: **all 614 invariants hold**; coverage still
+89% against the 80% floor; repo-scan clean.

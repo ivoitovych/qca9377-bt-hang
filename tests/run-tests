@@ -2491,6 +2491,49 @@ FOUT=$(timeout 10 env PATH="$WD/stub:$PATH" \
     && ok "watchdog reports the hard hang instead of resetting a ghost" \
     || bad "hard-hang path wrong"
 
+# ── the EARLY-path give-up says the same two lines as the late path ──────
+#
+# A log scraper keying on "A cold power-off is required." must see every
+# give-up. The early path used to reach its give-up check without the second
+# line, so an early-mode watchdog that gave up looked different from a
+# late-mode one to anything reading the journal. Driven with a two-signal
+# fixture and no kernel timeouts, so any give-up here can only have come
+# from the early path.
+WDEG=$(mktemp -d)
+printf 'bluetoothd[900]: profiles/audio/avdtp.c:cancel_request() Abort: Connection timed out (110)\nbluetoothd[900]: profiles/audio/avdtp.c:cancel_request() Abort: Connection timed out (110)\n' \
+    > "$WDEG/default.log"
+: > "$WD/spy.log"; touch "$WD/dead"
+EGOUT=$(wd_until "cold power-off" 60 BT_EARLY=1 BT_MAX_FAILS=1 BT_COOLDOWN=0 \
+                 BT_JOURNAL_FIXTURE="$WDEG")
+[[ "$EGOUT" == *"EARLY intervention"* \
+   && "$EGOUT" == *"Giving up: 1 consecutive recovery attempts failed."* \
+   && "$EGOUT" == *"A cold power-off is required."* \
+   && "$EGOUT" != *"Detected"* ]] \
+    && ok "an early-path give-up logs both lines, same as the late path" \
+    || bad "early give-up wrong or from the wrong path"
+rm -f "$WD/dead"; rm -rf "$WDEG"
+
+# ── the missing-actuator warning, on the copy that has no other warning ──
+#
+# python3 issues USBDEVFS_RESET, the primary reset. Without it every
+# intervention silently escalates to unbind/bind — a different treatment
+# than documented — and install.sh's preflight protects only installed
+# copies. The startup warning is the hand-deployed copy's only notice, so
+# it is asserted from a PATH farm with python3 removed (the sanctioned
+# absent-tool construction; a PATH that re-adds /usr/bin proves nothing).
+WDNOPY=$(mktemp -d); farm_dir "$WDNOPY/farm" python3
+WDEMPTYJ=$(mktemp -d)
+PYOUT=$(timeout 10 env PATH="$WD/stub:$WDNOPY/farm" BT_JOURNAL_FIXTURE="$WDEMPTYJ" \
+        BT_SYSFS_USB="$WD/sysfs" BT_SYSFS_DRIVERS="$WD/drv" bin/bt-hang-watchdog 2>&1)
+[[ "$PYOUT" == *"WARNING: python3 not found"* \
+   && "$PYOUT" == *"different treatment than documented"* ]] \
+    && ok "a watchdog without python3 says its reset path is degraded, at startup" \
+    || bad "no startup warning for a missing primary-reset actuator"
+[[ "$FOUT" != *"python3 not found"* ]] \
+    && ok "the warning is absent when python3 is present — it discriminates" \
+    || bad "the python3 warning fires even with python3 on PATH"
+rm -rf "$WDNOPY" "$WDEMPTYJ"
+
 # THE ESCAPE, NOW A TESTED DECISION.
 #
 # This is the scenario that ran the real bt-trial on the investigation machine
@@ -3337,6 +3380,24 @@ if (( ex_awk_ok )); then
     (( ${rows:-0} == 3 )) \
         && ok "bt-exhibit index lists every exhibit (3 rows)" \
         || bad "index has $rows row(s), expected 3"
+
+    # A SUPERSEDED exhibit keeps its file, retitled "**Historical claim.**"
+    # (the register discipline — EX-018 and EX-020 are real ones). The claim
+    # extractor knew only "**Claim" and rendered such exhibits with EMPTY
+    # cells, which reads as a broken exhibit rather than a superseded one.
+    # The marker must survive into the cell — which claims are current is
+    # what the index is for.
+    sed -i 's/^\*\*Claim\.\*\*/**Historical claim.**/' "$EXR/evidence/exhibits/001-probe-one.md"
+    exlist2=$(exhibit list 2>/dev/null)
+    [[ "$exlist2" == *"Historical claim: The probe emits its marker."* ]] \
+        && ok "a Historical-claim exhibit keeps its text and its marker in list" \
+        || bad "the retitled exhibit lost its claim text in list output"
+    exhibit index >/dev/null 2>&1
+    exhist=$(grep -c 'Historical claim: The probe emits its marker\.' \
+             "$EXR/evidence/exhibits/README.md" 2>/dev/null)
+    (( ${exhist:-0} == 1 )) \
+        && ok "the regenerated index carries the historical marker, not an empty cell" \
+        || bad "index cell for the historical exhibit is empty or unmarked"
 else
     # Not a skip. On an engine that cannot express the redaction patterns the
     # correct behaviour is to produce nothing, and that is worth asserting.
@@ -3881,6 +3942,11 @@ mkdir -p "$KM/mods/7.0.0-test/kernel/drivers/bluetooth" \
 km_id() { printf '\xd3\x13'; printf "\\x${1:2:2}\\x${1:0:2}"; }
 { printf 'btusb_qca_reset\0Resetting usb device\0rampatch\0nvm_usb\0using rampatch file\0'
   km_id 3491; km_id 3496; km_id 3501; km_id 3563
+  # A MISALIGNMENT DECOY. These five bytes hex-dump to "0d31303350", which
+  # contains 3503's little-endian pattern "d3130335" — starting mid-byte. A
+  # substring search finds it and reports 13d3:3503 present in a table it is
+  # not in; only a byte-aligned (odd 1-based offset) match may count.
+  printf '\x0d\x31\x30\x33\x50'
 } > "$KM/mods/7.0.0-test/kernel/drivers/bluetooth/btusb.ko"
 printf 'btusb_qca_cmd_timeout\0nothing else here\0' \
     > "$KM/mods/5.0.0-old/kernel/drivers/bluetooth/btusb.ko"
@@ -3910,6 +3976,12 @@ KMOLD=$(km_run 5.0.0-old)
    && "$KMNEW" == *"13d3:3503  ABSENT"* ]] \
     && ok "device IDs are read from the binary: comparators present, 3503 absent" \
     || bad "the ID table read is wrong — the isolated-gap argument does not hold"
+# The decoy above makes the 3503 half of that assertion also pin ALIGNMENT:
+# the module's hex stream does contain "d3130335", one nibble off a byte
+# boundary. Named separately so a regression reads as what it is.
+[[ "$KMNEW" == *"13d3:3503  ABSENT"* ]] \
+    && ok "a mid-byte decoy spelling d3130335 does not read as 13d3:3503 present" \
+    || bad "the ID scan matched at a nibble offset — bytes that are not d3 13 03 35"
 
 # THE DEFECT THIS FOUND. hexdump(1) is in bsdextrautils, absent from minimal
 # images — the same package as the column(1) gap in bt-health-report, with a
@@ -4271,6 +4343,7 @@ cp "$EV/jrn/kernel.log" "$EV/jrn/kernel.b0.log"
 cat > "$EV/jrn/unit-bt-hang-watchdog.log" <<'EVW'
 Aug 10 09:12:00 host bt-hang-watchdog: 3 timeouts in 60s — intervening.
 Aug 10 09:12:30 host bt-hang-watchdog: EARLY intervention: desync signature
+Aug 10 09:12:45 host bt-hang-watchdog: CONTROLLER RESPONDS AFTER EARLY INTERVENTION — BT-1 counterfactual censored
 EVW
 cp "$EV/jrn/unit-bt-hang-watchdog.log" "$EV/jrn/unit-bt-hang-watchdog.b0.log"
 printf '#!/bin/sh\nexit 0\n' > "$EV/stub/hciconfig"
@@ -4373,6 +4446,13 @@ evman=$(cat "$evdir/MANIFEST.txt")
 [[ "$evman" == *"tx_timeouts_in_window=2"* && "$evman" == *"wd_interventions=2"* ]] \
     && ok "the manifest counts timeouts and both intervention forms correctly" \
     || bad "manifest counters wrong: $(grep -E 'tx_timeouts|wd_interv' <<<"$evman" | tr '\n' ' ')"
+# And the censored outcome as its own counter — the fixture's answered-after-
+# early line must land in wd_early_ok and must NOT inflate wd_interventions
+# (its "INTERVENTION" is upper-case; the intervention patterns are the two
+# messages the watchdog actually logs when it acts).
+[[ "$evman" == *"wd_early_ok=1"* ]] \
+    && ok "the manifest records answered-after-early separately from recoveries" \
+    || bad "wd_early_ok missing or wrong: $(grep 'wd_early_ok' <<<"$evman")"
 
 [[ "$evman" == *"sanitised=yes"* ]] \
     && ok "the manifest declares whether the session was sanitised" \
@@ -4715,6 +4795,16 @@ lv_total() { awk '/total lines/ {print $3}' <<<"$(lv "$@")"; }
 [[ "$(lv_total -b -1)" == 1 ]] \
     && ok "-b selects another boot, and the count follows it" \
     || bad "-b did not move to the previous boot: $(lv_total -b -1)"
+
+# The last-60s rate reads the SAME population as the total. Its argument list
+# was once sliced out of JARGS by index, which dropped flags whenever JARGS
+# changed shape; it is now rebuilt explicitly, and the -k retention is what a
+# fixture can pin: default rate over the 3-line kernel journal, --user rate
+# over the 6-line full journal. A slice that lost -k reads 6 in both.
+lv_rate() { awk '/last 60 s/ {print $4}' <<<"$(lv "$@")"; }
+[[ "$(lv_rate)" == 3 && "$(lv_rate --user)" == 6 ]] \
+    && ok "the 60s rate keeps its population flags — kernel 3, --user 6" \
+    || bad "rate population wrong: default $(lv_rate), --user $(lv_rate --user)"
 
 # -n bounds the table, not the total. A flag that quietly changed the total
 # would make two runs of the same boot disagree.
@@ -5698,7 +5788,9 @@ printf '#!/bin/sh\nexit 0\n' > "$TL/bin/bt-incident"
 cat > "$TL/bin/journalctl" <<TLJC
 #!/bin/sh
 case "\$*" in
-  *"-b -1"*) cat "$TL/prevboot" 2>/dev/null; exit 0 ;;
+  *"-b -1"*)            cat "$TL/prevboot" 2>/dev/null; exit 0 ;;
+  *bt-health-snapshot*) cat "$TL/probejournal" 2>/dev/null; exit 0 ;;
+  *"-u bt-trace"*)      cat "$TL/tracejournal" 2>/dev/null; exit 0 ;;
 esac
 [ -e "$TL/journal-unreadable" ] && exit 1
 cat "$TL/kjournal"
@@ -5906,6 +5998,59 @@ TLRN=$(tlpert '2026-08-13T09:00:00.000000+0200 host kernel: Bluetooth: hci0: com
 [[ "$TLRN" == "none" ]] \
     && ok "an untouched window is still recorded as none — the detector discriminates" \
     || bad "a clean window recorded perturbed='$TLRN'"
+
+# ── probes and aborts count events, not lifecycle noise ──────────────────
+#
+# The probes column counts COMPLETED snapshot runs and the aborts column
+# counts btmon restarts. Both patterns were over-broad: matching the unit
+# description counted systemd's "Starting <desc>..." AND "Finished <desc>."
+# — every probe twice, plus runs that died before probing — and bare
+# "exited" matched any bt-trace output containing the word. Driven through
+# the real close path with a decoy in each stream, because a count that is
+# only ever fed matching lines proves the pattern fires, not that it
+# discriminates.
+cat > "$TL/probejournal" <<'TLPJ'
+Starting Snapshot Bluetooth health metrics...
+Finished Snapshot Bluetooth health metrics.
+Starting Snapshot Bluetooth health metrics...
+TLPJ
+cat > "$TL/tracejournal" <<'TLTJ'
+btmon exited (#1) — restarting within 1s; ~1s of capture lost
+bt-trace exited cleanly for an unrelated reason
+TLTJ
+printf '2026-08-13T09:00:20.000000+0200 host kernel: Bluetooth: MGMT ver 1.22\n' > "$TL/kjournal"
+tl autostart stock >/dev/null 2>&1
+tl ok >/dev/null 2>&1
+TLPROBEC=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^probes$' | cut -d: -f1)
+TLABORTC=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^btmon_aborts$' | cut -d: -f1)
+[[ -n "$TLPROBEC" && "$(tl_row | cut -f"$TLPROBEC")" == "1" ]] \
+    && ok "probes counts Finished lines only — 3 lifecycle lines, 1 completed probe" \
+    || bad "probes column read '$(tl_row | cut -f"${TLPROBEC:-1}")', want 1 (2 = Starting counted too)"
+[[ -n "$TLABORTC" && "$(tl_row | cut -f"$TLABORTC")" == "1" ]] \
+    && ok "aborts counts 'btmon exited' only — a decoy 'exited' is not an abort" \
+    || bad "btmon_aborts column read '$(tl_row | cut -f"${TLABORTC:-1}")', want 1"
+rm -f "$TL/probejournal" "$TL/tracejournal"
+
+# ── the trial's kernel-journal capture is removed on exit ────────────────
+#
+# The close path snapshots the kernel journal to a mktemp file read by jk()
+# all the way down to the SCO-timing block, so it cannot be removed inline;
+# an EXIT trap owns it. Asserted behaviourally: run one full close under a
+# private TMPDIR and require it empty afterwards — a dropped trap leaves the
+# capture behind on every trial close, forever.
+mkdir -p "$TL/tmpd"
+tlt() {
+    PATH="$TL/bin:$PATH" TMPDIR="$TL/tmpd" \
+    BT_REPO="$TL" BT_EVIDENCE_REPO="$TL" \
+    BT_STATE="$TL/state" BT_SYSFS_USB="$TL/sysfs" \
+    tools/bt-trial "$@" 2>&1
+}
+tlt autostart stock >/dev/null 2>&1
+tlt ok >/dev/null 2>&1
+TLTMPLEFT=$(ls -A "$TL/tmpd" 2>/dev/null | grep -c . || true)
+(( ${TLTMPLEFT:-0} == 0 )) \
+    && ok "a closed trial leaves no temp files — the journal capture is trap-removed" \
+    || bad "$TLTMPLEFT temp file(s) leaked by the close path: $(ls -A "$TL/tmpd" | head -2 | tr '\n' ' ')"
 
 # ── a results file with no header must refuse, not renumber ─────────────
 #
@@ -6350,6 +6495,20 @@ SRLOUT=$(stage_at "$SRL")
    && "$SRLOUT" == *"override.conf"* ]] \
     && ok "uninstall.sh names a directory it could not remove, and what is in it" \
     || bad "a non-empty project directory was left without a word being said"
+
+# A FAILED STEP must fail the banner. run() accumulates failures on purpose
+# (later removals are independent; a partial revert should remove what it
+# can) — but "UNINSTALL COMPLETE" then printed over the failures. A FILES
+# path that is an unremovable non-empty directory drives one real rm failure
+# through the real accumulator.
+SRF=$(mktemp -d)
+mkdir -p "$SRF/usr/local/bin/bt-mark/keep"
+SRFOUT=$(stage_at "$SRF"); srfrc=$?
+(( srfrc == 1 )) && [[ "$SRFOUT" == *"ERROR: command failed"* \
+   && "$SRFOUT" == *"UNINSTALL INCOMPLETE"* && "$SRFOUT" != *"UNINSTALL COMPLETE"* ]] \
+    && ok "a failed removal makes the banner say INCOMPLETE and exit 1" \
+    || bad "uninstall reported success over a failed step (rc=$srfrc)"
+rm -rf "$SRF"
 
 # --purge-metrics, which deletes collected DATA rather than configuration and
 # is therefore the one destructive option either script has.
