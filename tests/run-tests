@@ -4123,6 +4123,7 @@ cat > "$HS/jrn/unit-bt-hang-watchdog.b0.log" <<'HSW'
 Aug 10 09:12:00 host bt-hang-watchdog: 3 timeouts in 60s — intervening.
 Aug 10 09:12:30 host bt-hang-watchdog: EARLY intervention: desync signature
 Aug 10 09:12:40 host bt-hang-watchdog: RECOVERED after usb reset
+Aug 10 09:12:50 host bt-hang-watchdog: CONTROLLER RESPONDS AFTER EARLY INTERVENTION — BT-1 counterfactual censored
 HSW
 printf '#!/bin/sh\nexit 0\n' > "$HS/stub/hciconfig"
 printf '#!/bin/sh\necho "Device AA:BB:CC:00:00:01 Phone"\n' > "$HS/stub/bluetoothctl"
@@ -4143,8 +4144,8 @@ hs_run >/dev/null; hsrc=$?
 # file cannot reveal it — only the first line carries names.
 hs_hdr=$(awk -F'\t' 'NR==1 {print NF}' "$HS/metrics.tsv")
 hs_row=$(awk -F'\t' 'NR==2 {print NF}' "$HS/metrics.tsv")
-[[ "$hs_hdr" == "14" && "$hs_row" == "14" ]] \
-    && ok "bt-health-snapshot's row width matches its header (14 columns)" \
+[[ "$hs_hdr" == "15" && "$hs_row" == "15" ]] \
+    && ok "bt-health-snapshot's row width matches its header (15 columns)" \
     || bad "header has $hs_hdr columns, the row has $hs_row — the series is misaligned"
 
 # AND no field may be empty, which the width check alone cannot see. Dropping
@@ -4168,6 +4169,24 @@ lines=$(wc -l < "$HS/metrics.tsv"); heads=$(grep -c '^timestamp' "$HS/metrics.ts
     && ok "bt-health-snapshot appends rows and writes the header only once" \
     || bad "metrics.tsv has $lines line(s) and $heads header(s) after two runs"
 
+# THE SCHEMA MIGRATION, driven over a real pre-wd_early_ok file. The header is
+# written once and rows are appended forever, so adding a column REQUIRES the
+# writer to migrate an existing file — appending 15-field rows under a 14-field
+# header is the silent column reassignment the width invariant above exists to
+# prevent. Historical rows must read "-" (not recorded) in the new column,
+# never 0: a zero would claim the early outcome was measured and absent.
+printf 'timestamp\tboot_id\tkernel\tuptime_s\tdev_present\thci_alive\tusb_power_ctrl\tbtusb_autosusp\ttx_timeouts\tunexpected_evt\twd_interventions\twd_recovered\twd_failed\tconnected\n' > "$HS/legacy.tsv"
+printf 'T0\tdeadbeef\t7.0.0-28\t100\t1\t1\ton\tN\t0\t0\t0\t0\t0\t0\n' >> "$HS/legacy.tsv"
+env PATH="$HS/stub:$PATH" BT_METRICS="$HS/legacy.tsv" \
+    BT_SYSFS_USB="$HS/usb" BT_SYSFS_MODULE="$HS/mod" \
+    BT_JOURNAL_FIXTURE="$HS/jrn" bin/bt-health-snapshot >/dev/null 2>&1
+mig_widths=$(awk -F'\t' '{ print NF }' "$HS/legacy.tsv" | sort -u | tr '\n' ' ')
+mig_last=$(awk -F'\t' 'NR==2 { print $NF }' "$HS/legacy.tsv")
+mig_heads=$(grep -c '^timestamp' "$HS/legacy.tsv")
+[[ "$mig_widths" == "15 " && "$mig_last" == "-" && "$mig_heads" == "1" ]] \
+    && ok "a pre-wd_early_ok metrics file is migrated: every row 15 wide, legacy row '-'" \
+    || bad "migration wrong: widths='$mig_widths' legacy-last='$mig_last' headers=$mig_heads"
+
 # Columns by NAME, resolved from the header rather than hardcoded, so this
 # assertion survives a deliberate column addition and fails a reordering.
 hs_col() { awk -F'\t' -v want="$1" \
@@ -4184,6 +4203,17 @@ hs_col() { awk -F'\t' -v want="$1" \
 [[ "$(hs_col wd_interventions)" == "2" && "$(hs_col wd_recovered)" == "1" ]] \
     && ok "bt-health-snapshot counts both intervention forms" \
     || bad "wd_interventions=$(hs_col wd_interventions), want 2 — EARLY was missed again"
+
+# THE OUTCOME THE SCHEMA COULD NOT HOLD. An early intervention that left the
+# controller answering logged neither RECOVERED nor a failure, so the series
+# showed interventions=1, recovered=0 — indistinguishable from "attempted,
+# unverifiable". wd_early_ok records it WITHOUT calling it a recovery: the
+# fixture's early-success line must land in wd_early_ok (1) and must NOT
+# inflate wd_recovered (still 1) — folding the two together would let the
+# mitigation manufacture the recovery rate it is measured by.
+[[ "$(hs_col wd_early_ok)" == "1" && "$(hs_col wd_recovered)" == "1" ]] \
+    && ok "an early answered-after-action lands in wd_early_ok, not wd_recovered" \
+    || bad "wd_early_ok=$(hs_col wd_early_ok) wd_recovered=$(hs_col wd_recovered), want 1 and 1"
 
 [[ "$(hs_col dev_present)" == "1" && "$(hs_col hci_alive)" == "1" \
    && "$(hs_col usb_power_ctrl)" == "on" && "$(hs_col btusb_autosusp)" == "N" ]] \

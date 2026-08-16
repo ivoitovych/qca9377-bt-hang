@@ -28,7 +28,11 @@ MAX_MB="${BT_TRACE_MAX_MB:-128}"    # rotate when the current file exceeds this
 KEEP="${BT_TRACE_KEEP:-400}"        # rotated files to retain (floor-bounded)
 CHECK_SEC="${BT_TRACE_CHECK_SEC:-30}"       # size / disk checks (expensive-ish)
 POLL_SEC="${BT_TRACE_POLL_SEC:-1}"          # liveness checks (cheap, must be fast)
-MIN_FREE_GB="${BT_TRACE_MIN_FREE_GB:-10}"   # never let the filesystem get tighter than this
+# 15, matching bt-trace.service — the script default and the unit disagreed
+# (10 vs 15), which is the BT_TRACE_KEEP pattern again: a default that differs
+# from the value in effect misleads whoever runs the script by hand
+# (review 2026-08-15T1752Z §2.3; the unit remains authoritative when present).
+MIN_FREE_GB="${BT_TRACE_MIN_FREE_GB:-15}"   # never let the filesystem get tighter than this
 GAPLOG="${BT_TRACE_GAPLOG:-$DIR/gaps.log}"  # when capture was NOT running
 
 # Rough sizing: A2DP streaming produces roughly 150 MB/hour of HCI traffic, so
@@ -150,6 +154,7 @@ prune
 elapsed=0
 crashes=0
 blind_total=0
+rapid=0
 
 while :; do
     sleep "$POLL_SEC"
@@ -165,13 +170,34 @@ while :; do
     if ! kill -0 "$BTMON_PID" 2>/dev/null; then
         crashes=$(( crashes + 1 ))
         blind_total=$(( blind_total + POLL_SEC ))
-        log "btmon exited (#$crashes) — restarting within ${POLL_SEC}s; ~${POLL_SEC}s of capture lost"
-        printf '%s\tbtmon-exit\tgap<=%ss\ttotal_blind=%ss\tcrashes=%s\n' \
-            "$(date -Iseconds)" "$POLL_SEC" "$blind_total" "$crashes" >> "$GAPLOG" 2>/dev/null
+        # PERSISTENT failure is not the crash-and-recover case. When btmon dies
+        # within one poll of every restart (no Bluetooth support, broken
+        # install), the 1 s liveness loop would append one gap line per second
+        # — ~86k lines/day of the same fact (review 2026-08-15T1752Z §2.3).
+        # After 10 consecutive instant deaths, log once and slow the respawn to
+        # CHECK_SEC; any restart that survives a full poll resets the streak,
+        # so the ordinary BT-4 crash-restart path is untouched.
+        rapid=$(( rapid + 1 ))
+        if (( rapid == 10 )); then
+            log "btmon has died within ${POLL_SEC}s of 10 consecutive restarts —"
+            log "backing off to ${CHECK_SEC}s respawns; gap lines suppressed until one survives"
+            printf '%s\tbtmon-persistent-failure\tbackoff=%ss\tcrashes=%s\n' \
+                "$(date -Iseconds)" "$CHECK_SEC" "$crashes" >> "$GAPLOG" 2>/dev/null
+        fi
+        if (( rapid < 10 )); then
+            log "btmon exited (#$crashes) — restarting within ${POLL_SEC}s; ~${POLL_SEC}s of capture lost"
+            printf '%s\tbtmon-exit\tgap<=%ss\ttotal_blind=%ss\tcrashes=%s\n' \
+                "$(date -Iseconds)" "$POLL_SEC" "$blind_total" "$crashes" >> "$GAPLOG" 2>/dev/null
+        else
+            sleep "$CHECK_SEC"
+        fi
         start_capture
         prune
         continue
     fi
+
+    # btmon survived a full poll: leave any persistent-failure backoff.
+    rapid=0
 
     # --- size and disk, checked every CHECK_SEC ---------------------------
     (( elapsed < CHECK_SEC )) && continue

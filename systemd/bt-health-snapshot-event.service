@@ -2,6 +2,9 @@
 Description=Snapshot Bluetooth health metrics (event-triggered)
 Documentation=https://github.com/ivoitovych/qca9377-bt-hang
 
+# REVIEWED-KEEP 2026-08-15T1752Z 2.4: the unit SPLIT is the provenance
+# mechanism bt-phase depends on (EX-012). Merging the two units back into one
+# "simpler" unit re-contaminates every exposure denominator.
 # IDENTICAL to bt-health-snapshot.service except for its name, and the name is
 # the entire point: it records the PROVENANCE of the probe.
 #

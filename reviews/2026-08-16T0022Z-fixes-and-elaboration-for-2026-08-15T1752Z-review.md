@@ -74,23 +74,23 @@ review section that argued for it. Grep `REVIEWED-KEEP` to enumerate them.
 | CR-36 | MED | 1.10 | docs/restore-original-state.md | §2 hand-frozen 11-command list | fixed |
 | CR-37 | NOTE | 1.10 | three docs | tooling disclosure — owner's decision | recorded |
 | CR-38 | GOOD | 1.11 | pre-submission-checklist, related-reports | purge procedure; phenotype/cause line | kept |
-| CR-39 | LOW | 2.1 | bin/bt-hang-watchdog | python3 dependency unchecked at startup | pending |
-| CR-40 | LOW | 2.1 | bin/bt-hang-watchdog | give-up message differs early vs late | pending |
-| CR-41 | GOOD | 2.1 | bin/bt-hang-watchdog | O_CREAT-less open; wrong-radio guard; loud exit | pending |
-| CR-42 | MED | 2.2 | bin/bt-health-snapshot | early-intervention success invisible in metrics | pending |
-| CR-43 | NOTE | 2.2 | bin/bt-health-snapshot | unbounded per-tick whole-boot scans | pending |
-| CR-44 | GOOD | 2.3 | bin/bt-capture | btsnoop encoding verified; clock-semantics note | pending |
-| CR-45 | GOOD | 2.3 | bin/bt-usbmon | ring-vs-rotate; never-delete-live-file | pending |
-| CR-46 | LOW | 2.3 | bin/bt-trace | script MIN_FREE_GB default 10 vs unit 15 | pending |
-| CR-47 | NOTE | 2.3 | bin/bt-trace | gaps.log one line/second on persistent crash | pending |
-| CR-48 | GOOD | 2.4 | etc/** | modprobe dyndbg; PRODUCT form; journald warning; split units | pending |
-| CR-49 | NOTE | 2.4 | systemd/bt-hang-watchdog.service | hardening modest; interactions to verify | pending |
-| CR-50 | GOOD | 2.5 | install.sh | three guards; counted discipline; write-once stamp | pending |
-| CR-51 | NOTE | 2.5 | install.sh / tests/run-tests | BT_STATE vs BT_TRIAL_STATE_DIR deliberate | pending |
-| CR-52 | MED | 2.6 | uninstall.sh | no failure tracking; success banner unconditional | pending |
-| CR-53 | NOTE | 2.6 | uninstall.sh | hand lists acceptable (suite derives + asserts) | pending |
-| CR-54 | GOOD | 2.7 | tools/verify-restored.sh | derived lists; refusal; .disabled awareness | pending |
-| CR-55 | LOW | 2.7 | bin/bt-evidence | MANIFEST wd_recovered early blind spot | pending |
+| CR-39 | LOW | 2.1 | bin/bt-hang-watchdog | python3 dependency unchecked at startup | fixed |
+| CR-40 | LOW | 2.1 | bin/bt-hang-watchdog | give-up message differs early vs late | fixed |
+| CR-41 | GOOD | 2.1 | bin/bt-hang-watchdog | O_CREAT-less open; wrong-radio guard; loud exit | kept |
+| CR-42 | MED | 2.2 | bin/bt-health-snapshot | early-intervention success invisible in metrics | fixed |
+| CR-43 | NOTE | 2.2 | bin/bt-health-snapshot | unbounded per-tick whole-boot scans | recorded |
+| CR-44 | GOOD | 2.3 | bin/bt-capture | btsnoop encoding verified; clock-semantics note | kept |
+| CR-45 | GOOD | 2.3 | bin/bt-usbmon | ring-vs-rotate; never-delete-live-file | kept |
+| CR-46 | LOW | 2.3 | bin/bt-trace | script MIN_FREE_GB default 10 vs unit 15 | fixed |
+| CR-47 | NOTE | 2.3 | bin/bt-trace | gaps.log one line/second on persistent crash | fixed |
+| CR-48 | GOOD | 2.4 | etc/** | modprobe dyndbg; PRODUCT form; journald warning; split units | kept |
+| CR-49 | NOTE | 2.4 | systemd/bt-hang-watchdog.service | hardening modest; interactions to verify | recorded |
+| CR-50 | GOOD | 2.5 | install.sh | three guards; counted discipline; write-once stamp | kept |
+| CR-51 | NOTE | 2.5 | install.sh / tests/run-tests | BT_STATE vs BT_TRIAL_STATE_DIR deliberate | recorded |
+| CR-52 | MED | 2.6 | uninstall.sh | no failure tracking; success banner unconditional | fixed |
+| CR-53 | NOTE | 2.6 | uninstall.sh | hand lists acceptable (suite derives + asserts) | recorded |
+| CR-54 | GOOD | 2.7 | tools/verify-restored.sh | derived lists; refusal; .disabled awareness | kept |
+| CR-55 | LOW | 2.7 | bin/bt-evidence | MANIFEST wd_recovered early blind spot | fixed |
 | CR-56 | MED | 3.1 | tools/bt-trial | $KJ temp file never removed | pending |
 | CR-57 | MED | 3.1 | bt-actions, bt-sco, bt-boot-stats | civil-date arithmetic ×4 copies | pending |
 | CR-58 | MED | 3.1 | bt-trial, bt-env-history | probe/abort counts include systemd lifecycle lines | pending |
@@ -358,3 +358,111 @@ changes nothing there, and records the decision point so follow-up reviews
 cite this entry instead of re-raising it.
 
 ### CR-38 [GOOD] Purge procedure; phenotype/cause line — **kept** (markers in both files).
+
+## Section B — deployed runtime (`bin/`, `systemd/`, `etc/`, install/uninstall)
+
+### CR-39 [LOW] Watchdog never checked for python3 — **fixed**
+
+`usbfs_reset()` needs python3; without it every intervention silently
+became unbind/bind — a different treatment than documented, with no
+warning. The startup banner now warns exactly as it does for the missing
+probe tools. `install.sh` already preflights python3, so this covers the
+hand-deployed copy — the one with no other warning.
+
+### CR-40 [LOW] Give-up message differed between paths — **fixed**
+
+The early path now logs the same two lines as the late path, so a log
+scraper keying on "A cold power-off is required" sees every give-up.
+
+### CR-41 [GOOD] Three watchdog practices — **kept**
+
+`REVIEWED-KEEP` markers at the O_CREAT-less `os.open` (the devtmpfs race),
+the resolve-hci-from-our-device rule (spare-dongle trap), and the loud
+journal-reader-died exit.
+
+### CR-42 [MED] Early-intervention success invisible in metrics — **fixed**
+
+The schema deliberately refuses to call a censored outcome a recovery —
+but then had no column for it, so "intervened, controller answers" was
+indistinguishable from "attempted, unverifiable" in the TSV (the mirror
+image of the Phase-10 undercount). `bt-health-snapshot` now writes a 15th
+column `wd_early_ok` (current + legacy message forms), with a one-time,
+atomic, in-writer migration of pre-existing files: header extended, legacy
+rows get `-` (not recorded — never 0, which would claim the outcome was
+measured and absent). Two new invariants: the early success lands in
+`wd_early_ok` and does NOT inflate `wd_recovered`; and the migration
+leaves every row 15 wide with the legacy row's new cell `-`. The suite's
+own pipefail invariant caught the first draft of the migration guard
+(`head | grep -q`) — rewritten pipeline-free; that catch is the checks
+working as designed.
+
+### CR-43 [NOTE] Snapshot's whole-boot scans — **recorded**
+
+The counters genuinely need the whole boot, the tick is a timer (not a
+shutdown-critical path), and main's merge already routed them through
+`bt_journal_count`. Known cost, documented here; not a defect.
+
+### CR-44 / CR-45 [GOOD] bt-capture encoding; bt-usbmon rotation — **kept**
+
+Markers added: the verified btsnoop monitor encoding + clock-semantics
+warning; supervise-and-rotate (never `tcpdump -C -W`) + never delete the
+live capture.
+
+### CR-46 [LOW] bt-trace default MIN_FREE_GB 10 vs unit's 15 — **fixed**
+
+Script default raised to 15 with a comment naming this as the
+BT_TRACE_KEEP pattern (a default differing from the value in effect).
+
+### CR-47 [NOTE] gaps.log growth under persistent btmon failure — **fixed**
+
+After 10 consecutive instant deaths the respawner logs once, backs off to
+CHECK_SEC, and suppresses per-second gap lines; any restart surviving a
+full poll resets the streak, so the ordinary BT-4 crash-restart path is
+untouched.
+
+### CR-48 [GOOD] Four etc/ decisions — **kept**
+
+Markers on: dyndbg-at-module-load + per-file selection (modprobe conf),
+the PRODUCT %x-format note (udev rule), the MaxRetentionSec warning
+(journald drop-in), and the probe-provenance unit split (event unit).
+
+### CR-49 [NOTE] Watchdog unit hardening — **recorded, with a question for the owner**
+
+A comment in the unit now explains why the lockdown stops where it does
+(NoNewPrivileges would break notify()'s sudo; nothing was added
+sight-unseen to the one unit whose failure mode is "the recovery path dies
+when needed"). It also records an interaction to verify on the machine:
+ProtectHome=yes vs the watchdog's `bt-trial hang` writing a results row
+into a checkout that may live under /root — with the exact journalctl
+command to check whether past closures actually produced rows.
+
+### CR-50 / CR-51 [GOOD+NOTE] install.sh guards; BT_STATE naming — **kept/recorded**
+
+Marker over the three-guard block (each protects a distinct asset), and a
+do-not-unify note at the open-trial guard explaining why `BT_STATE` and
+the suite's `BT_TRIAL_STATE_DIR` are deliberately different variables.
+
+### CR-52 [MED] uninstall.sh printed success over failures — **fixed**
+
+`run()` now accumulates failures (deliberately not aborting: later
+removals are independent, and a partial revert should still remove what it
+can), and the final banner splits: `UNINSTALL INCOMPLETE`, exit 1, and a
+pointer to `verify-restored.sh` when anything failed. This is the same
+accumulator install.sh received in the Phase-5 review; the pair is now
+symmetric. Verified compatible with main's new BT_DESTDIR staging mode.
+
+### CR-53 [NOTE] uninstall's hand lists — **recorded**
+
+Header comment added: the lists are hand-written by accepted decision,
+because three derived checks police them (the suite's pairing invariant,
+verify-restored's run-time derivation); the rule is "extend install.sh and
+let the invariant fail until this file catches up", never a fourth list.
+
+### CR-55 [LOW] bt-evidence MANIFEST early blind spot — **fixed**
+
+MANIFEST gains `wd_early_ok=` (current + legacy forms), matching
+bt-incident's split and the CR-42 column, with the same
+censored-not-recovered rationale in place.
+
+Suite after Section B: **all 593 invariants hold** (591 + the two CR-42
+tests).

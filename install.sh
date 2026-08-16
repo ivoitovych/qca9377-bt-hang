@@ -121,6 +121,10 @@ install_file() {
 }
 
 
+# REVIEWED-KEEP 2026-08-15T1752Z 2.5: the three guards below (experiment
+# mode, failed-this-boot, open-trial) each protect a different asset —
+# the controlled baseline, a live stage-1 observation, a comparable trial.
+# None subsumes another; removing any one re-opens a documented incident.
 # ── EXPERIMENT MODE GUARD ─────────────────────────────────────────────────
 # install.sh reinstalls the workarounds — modprobe override, udev pin, watchdog,
 # probe timer. If the machine is deliberately in experiment mode, that silently
@@ -188,6 +192,10 @@ fi
 # catches it after the fact (the row becomes PERTURBED: and pools with
 # nothing), but a contaminated trial detected at close is still a trial lost.
 # On 2026-08-13 exactly this contaminated trial stock #2.
+# NOTE (review 2026-08-15T1752Z 2.5): BT_STATE here is DELIBERATELY a
+# different variable from the BT_TRIAL_STATE_DIR that tests/run-tests' own
+# refuse-while-trial-open guard reads — the suite's guard must not be
+# defeatable by the same override its sandboxed tests set. Do not unify them.
 if (( APPLY )) && [[ -e "${BT_STATE:-/run/bt-trial}/current" ]]; then
     echo "!! A TRIAL IS OPEN ($(grep -m1 '^build=' "${BT_STATE:-/run/bt-trial}/current" 2>/dev/null))."
     echo "   Installing reloads btusb. That is an intervention this trial's"

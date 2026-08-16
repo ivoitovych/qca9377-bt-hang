@@ -167,6 +167,10 @@ def main():
         opcode, index, _plen = struct.unpack_from("<HHH", data, 0)
         payload = data[6:]
 
+        # REVIEWED-KEEP 2026-08-15T1752Z 2.3: the encoding above (magic,
+        # monitor type 2001, flags = index<<16|opcode, the 0x00E03AB44A676000
+        # offset) was verified against the BlueZ btsnoop monitor format, and
+        # the clock warning below is load-bearing for bt-capdiff's tolerance.
         # ⚠ CLOCK SEMANTICS. This is USERSPACE RECEIVE TIME — the moment this
         # process was scheduled and returned from recv() — not the kernel
         # timestamp of the original HCI event. The kernel monitor header

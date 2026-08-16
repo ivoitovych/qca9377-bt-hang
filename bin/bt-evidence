@@ -198,6 +198,11 @@ stop)
         echo "tx_timeouts_in_window=$(count 'command( 0x[0-9a-f]+)? tx timeout' "$dir/kernel.log")"
         echo "wd_interventions=$(count 'intervening|EARLY intervention' "$dir/watchdog.log")"
         echo "wd_recovered=$(count 'RECOVERED' "$dir/watchdog.log")"
+        # Early answered-after-action, kept apart from wd_recovered for the
+        # same reason bt-health-snapshot keeps wd_early_ok apart: the early
+        # reset censored the counterfactual, so it is not a recovery
+        # (review 2026-08-15T1752Z §2.2/§2.7; bt-incident already splits it).
+        echo "wd_early_ok=$(count 'CONTROLLER RESPONDS AFTER EARLY INTERVENTION|EARLY recovery SUCCEEDED' "$dir/watchdog.log")"
         echo "wd_fatal=$(count 'FATAL:' "$dir/watchdog.log")"
         echo "sanitised=$([[ -n "$SANITIZE" ]] && echo yes || echo NO-SANITISER-FOUND)"
     } > "$dir/MANIFEST.txt"

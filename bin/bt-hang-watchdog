@@ -101,6 +101,8 @@ find_usb_dev() {
     return 1
 }
 
+# REVIEWED-KEEP 2026-08-15T1752Z 2.1: resolve the hci node from OUR device's
+# USB path, never "the first adapter" — a spare dongle is frequently hci0.
 # Resolve the hci name belonging to OUR usb device, not merely the first
 # adapter in the system. A spare USB dongle plugged in while the QCA is wedged
 # is frequently hci0, and probing that would report the wrong radio healthy.
@@ -141,6 +143,8 @@ import fcntl, os, sys
 USBDEVFS_RESET = 0x5514          # _IO('U', 20)
 bus, dev = int(sys.argv[1]), int(sys.argv[2])
 path = "/dev/bus/usb/%03d/%03d" % (bus, dev)
+# REVIEWED-KEEP 2026-08-15T1752Z 2.1: the O_CREAT-less open below is load-
+# bearing — see the race it names. Do not "simplify" to open(path, "w").
 # os.open without O_CREAT: if the device vanished between find_usb_dev() and
 # here — exactly the stage-1 -> stage-2 transition this races — fail cleanly
 # instead of creating a bogus regular file on devtmpfs that would later
@@ -244,6 +248,18 @@ if [[ "$PROBE" == none ]]; then
 else
     log "liveness probe: $PROBE"
 fi
+# python3 is the primary reset path: usbfs_reset() issues USBDEVFS_RESET
+# through it. Without it every intervention silently takes the "reset failed"
+# branch and escalates straight to unbind/bind — a DIFFERENT treatment than
+# documented, previously with no startup warning (the capability banner
+# covered the probe tools but not the actuator; review 2026-08-15T1752Z §2.1).
+# install.sh preflights python3, so this bites only hand-deployed copies —
+# which is exactly the copy that has no other warning.
+if ! command -v python3 >/dev/null 2>&1; then
+    log "WARNING: python3 not found. USBDEVFS_RESET (the primary reset) cannot"
+    log "         be issued; every intervention will escalate directly to USB"
+    log "         unbind/bind, which is a different treatment than documented."
+fi
 if (( VERBOSE )); then
     log "verbose mode ON — every detected signal will be logged"
 else
@@ -344,7 +360,11 @@ while read -r line; do
             continue
         fi
         if (( fails >= MAX_FAILS )); then
+            # Same two lines as the late path below: a log scraper keying on
+            # the second line must see every give-up, not only late-path ones
+            # (review 2026-08-15T1752Z §2.1).
             log "Giving up: $MAX_FAILS consecutive recovery attempts failed."
+            log "A cold power-off is required. Watchdog is now idle until reboot."
             gave_up=1; break
         fi
         log "EARLY intervention: $en audio-teardown failure(s) in ${EARLY_WINDOW}s — resetting BEFORE any HCI timeout."
@@ -417,6 +437,7 @@ if (( gave_up )); then
     while :; do sleep 3600; done
 fi
 
+# REVIEWED-KEEP 2026-08-15T1752Z 2.1: the loud exit below is deliberate.
 # Falling out of the loop any other way means the journal reader died. Silent
 # respawn every RestartSec with no diagnostic is worse than a loud failure.
 log "ERROR: journal reader terminated unexpectedly (the journal stream exited)."

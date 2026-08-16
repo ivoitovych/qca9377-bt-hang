@@ -43,6 +43,10 @@ echo "════════════════════════�
 
 echo
 echo "1. Installed files removed"
+# REVIEWED-KEEP 2026-08-15T1752Z 2.7: three properties below carry this
+# tool — the list is DERIVED from install.sh, an implausibly short
+# derivation REFUSES rather than green-lighting, and .disabled names
+# (bt-mode's move-asides, which uninstall.sh cannot see) are checked.
 # DERIVED from install.sh, not hand-written. The list this replaces was frozen
 # at the original 11-file install and reported "matches its pre-investigation
 # state" while ~30 later artifacts — the capture stack, dyndbg, the awk libs,

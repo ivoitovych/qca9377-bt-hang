@@ -10,6 +10,9 @@ SUBSYSTEM=="bluetooth", ACTION=="remove", \
   RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot-event.service"
 SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="13d3", ATTR{idProduct}=="3503", \
   RUN+="/usr/bin/systemctl start --no-block bt-health-snapshot-event.service"
+# REVIEWED-KEEP 2026-08-15T1752Z 2.4: the PRODUCT-format note below is why a
+# non-default device's remove-event rule works at all; install.sh substitutes
+# the stripped form deliberately.
 # PRODUCT is kernel-formatted %x/%x/%x — lowercase, no leading zeros
 # (usb_uevent in drivers/usb/core/driver.c). install.sh substitutes the
 # stripped form for non-default devices; 13d3/3503 happens to be identical
