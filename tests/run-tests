@@ -6031,6 +6031,62 @@ TAPO=$(BT_LIBDIR="$PWD/tools/lib" BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$T
     || bad "a broken detector produced a report (rc=$tarc4): $(head -1 <<<"$TAPO")"
 rm -rf "$TAP"
 
+# ── devtools/journal-contract, which had no test of its own ─────────────
+#
+# It exists to catch journalctl's output shape changing under the fixtures, and
+# on 2026-08-16 it reported the contract BROKEN while journalctl was behaving
+# normally. It read the first 5000 lines of `-b all` looking for a boot
+# separator; boot -10 on the investigation machine is a dyndbg tracing boot
+# carrying 1,586,655 kernel lines, so the cap never reached a boundary.
+#
+# A NEW SHAPE, AND THE INVERSE OF THIS WEEK'S OTHERS. Elsewhere an unbounded
+# read was too slow; here a bounded read was too SHORT, and finding nothing
+# within the bound was reported as the thing not existing. A truncated search
+# that comes back empty has not established absence — it is the empty-input
+# rule again, one level in: zero from a capped scan is not a result.
+#
+# The checker is deliberately NOT seamed: a fixture cannot tell you whether the
+# real journalctl still emits separators, which is its whole purpose. So it is
+# driven by a STUB that models the host that broke it — an enormous oldest boot
+# — which tests the detector without replacing its subject.
+JC=$(mktemp -d); mkdir -p "$JC/bin"
+cat > "$JC/bin/journalctl" <<'JCJ'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*)
+    printf 'IDX BOOT ID                          FIRST ENTRY                  LAST ENTRY\n'
+    printf ' -1 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1 Fri 2026-08-15 05:11:06 CEST Fri 2026-08-15 19:24:03 CEST\n'
+    printf '  0 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0 Fri 2026-08-15 19:25:45 CEST Sat 2026-08-16 03:00:00 CEST\n'
+    exit 0 ;;
+esac
+since=0; for a in "$@"; do [ "$a" = "--since" ] && since=1; done
+if [ "$since" = 1 ]; then
+  printf '2026-08-15T19:25:44.000000+0200 n kernel: last line of prev boot\n'
+  printf -- '-- Boot aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0 --\n'
+  printf '2026-08-15T19:25:45.000000+0200 n kernel: Linux version 7.0.0\n'
+else
+  i=0; while [ $i -lt 20000 ]; do printf '2026-08-12T05:39:08.000000+0200 n kernel: dyndbg noise %s\n' "$i"; i=$((i+1)); done
+  printf -- '-- Boot aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0 --\n'
+fi
+exit 0
+JCJ
+chmod +x "$JC/bin/journalctl"
+JCOUT=$(PATH="$JC/bin:$PATH" devtools/journal-contract 2>&1)
+[[ "$JCOUT" == *"✓ -b all still separates boots"* ]] \
+    && ok "journal-contract finds the boot separator on a host whose oldest boot is enormous" \
+    || bad "journal-contract still reports the contract broken against a normal journalctl"
+
+# The pre-fix shape, against the same stub, to show the test has teeth: a
+# capped scan that never reaches a boundary must be what fails, not the stub.
+sed 's|journalctl -k -b all --since "$prev_start" --no-pager -o short-iso-precise 2>/dev/null|journalctl -k -b all --no-pager -o short-iso-precise 2>/dev/null \| head -5000|' \
+    devtools/journal-contract > "$JC/capped"
+chmod +x "$JC/capped"
+JCCAP=$(PATH="$JC/bin:$PATH" bash "$JC/capped" 2>&1)
+[[ "$JCCAP" == *"✗ -b all no longer emits boot separators"* ]] \
+    && ok "a capped scan over the same journal DOES report a false break — the test discriminates" \
+    || bad "the capped and bounded forms agree, so this proves nothing about either"
+rm -rf "$JC"
+
 # ── bt-retention: which evidence can still be re-derived ────────────────
 #
 # On 2026-08-16 a question about three long windows in EX-018 was answered by

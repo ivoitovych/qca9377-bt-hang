@@ -41,11 +41,22 @@ reviews/verify.sh           # runs the suite and coverage to check the register
 # it to raise a number.
 tests/system-roundtrip      # CI-gated install/revert; must not run by accident
 
-# devtools/journal-contract builds a real journal with systemd-journal-remote
-# and diffs real journalctl output against the fixture grammar. It is a CI step
-# in its own right — the mock-fidelity check TC-04 — and folding it into the
-# suite would double the suite's runtime to re-run what CI already runs.
-devtools/journal-contract   # separate CI step; builds a real journal
+# devtools/journal-contract WAS excluded whole, on the argument that it is a CI
+# step in its own right and folding it in would double the suite's runtime. That
+# argument covered its phase 2, which builds a real journal with
+# systemd-journal-remote — and it silently covered phase 1 as well, which is
+# pure output-shape checking against whatever journalctl is on PATH.
+#
+# Phase 1 had therefore never executed under test, and on 2026-08-16 it reported
+# the journal contract BROKEN while journalctl was behaving normally: it read
+# the first 5000 lines of `-b all` hunting a boot separator, and the
+# investigation machine's oldest boot is a dyndbg tracing boot of 1,586,655
+# kernel lines. The suite now drives phase 1 against a stub modelling exactly
+# that host, which costs milliseconds and would have caught it.
+#
+# The exclusion is gone rather than narrowed to phase 2. Phase 2 declines on its
+# own when systemd-journal-remote is absent, which is the honest mechanism and
+# does not need a line here.
 
 # ── 3. The suite's own failure branches ──────────────────────────────────
 #

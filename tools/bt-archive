@@ -147,7 +147,10 @@ mv -f "$TMP" "$OUT" || refuse "could not place $OUT"
 trap - EXIT
 printf '  %s records, %s on disk — read back and verified\n' "$SRC_N" "$(du -h "$OUT" 2>/dev/null | cut -f1)"
 echo
-echo "  Replay it with:  journalctl --file $OUT   (decompress first if needed)"
+# SEAM-ADVICE: printed for the operator, never executed. Unlike bt-retention's
+# hint this cannot point at one of our tools — replaying an export IS a
+# journalctl invocation, and naming it is the point of the line.
+echo "  Replay it with:  journalctl --file $OUT   (decompress first if needed)"   # SEAM-ADVICE
 echo "  ⚠️  UNSANITISED — carries MACs and BSSIDs. Do not commit it, and run it"
 echo "     through tools/sanitize-logs.sh before sharing any extract from it."
 exit 0
