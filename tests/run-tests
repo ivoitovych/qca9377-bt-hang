@@ -16,6 +16,17 @@
 #   date arithmetic a gap across a month boundary must be positive and correct
 #   provenance      a contaminated probe set must be REFUSED, not reported
 #
+# REVIEWED-KEEP 2026-08-15T1752Z §4: two properties of this file were checked
+# adversarially and held; keep both when extending it.
+#   * The self-guards (open-trial refusal, PATH guard, farm_dir-only symlink
+#     farms, one EXIT trap, trial()-only invocations, /usr/bin fingerprint)
+#     each encode an escape that actually happened here — none is
+#     hypothetical, and none tolerates an exception list.
+#   * Fixtures are drawn from REAL log text (kernel wording, systemd wording,
+#     this project's own messages), never invented shapes — the recurring
+#     failure mode this suite documents is a pattern written on the machine
+#     where the other half never appears.
+#
 # Usage: tests/run-tests
 
 set -uo pipefail
@@ -7051,12 +7062,26 @@ tools/sanitize-logs.sh -i "$SANB/one.log" "$SANB/two.log" >/dev/null 2>&1; sanbr
 # replaces with documented placeholders in the reserved AA:BB:CC space, which
 # are themselves MAC-shaped. A shape check calls a correct sanitisation a
 # failure — it did, on the first run of this assertion.
-(( sanbrc == 0 )) \
-   && ! grep -q '00:11:22:33:44:55' "$SANB/one.log" \
-   && ! grep -qi 'AA:BB:CC:DD:EE:FF' "$SANB/two.log" \
-   && [[ -s "$SANB/one.log" && -s "$SANB/two.log" ]] \
-    && ok "-i sanitises every file it is given, in place" \
-    || bad "batch mode left an original address behind (rc=$sanbrc)"
+if (( awk_intervals_ok )); then
+    (( sanbrc == 0 )) \
+       && ! grep -q '00:11:22:33:44:55' "$SANB/one.log" \
+       && ! grep -qi 'AA:BB:CC:DD:EE:FF' "$SANB/two.log" \
+       && [[ -s "$SANB/one.log" && -s "$SANB/two.log" ]] \
+        && ok "-i sanitises every file it is given, in place" \
+        || bad "batch mode left an original address behind (rc=$sanbrc)"
+else
+    # Same capability gate as the redaction block above. On an incapable awk
+    # the tool's contract is refusal, and a refused batch must leave every
+    # input byte-identical — asserting the redaction here would just re-fail
+    # for the engine's reason, burying the real signal.
+    (( sanbrc != 0 )) \
+       && grep -q '00:11:22:33:44:55' "$SANB/one.log" \
+       && grep -qi 'AA:BB:CC:DD:EE:FF' "$SANB/two.log" \
+        && ok "-i refuses on an incapable awk and leaves the files untouched" \
+        || bad "-i on an incapable awk modified a file or returned success (rc=$sanbrc)"
+    echo "  · batch-mode redaction assertion SKIPPED: this awk lacks ERE intervals on groups"
+    echo "    (install gawk to run it; mawk 1.3.4 is not sufficient)"
+fi
 
 tools/sanitize-logs.sh -i "$SANB/nonexistent.log" >/dev/null 2>&1
 (( $? != 0 )) && ok "-i reports a file it cannot read instead of skipping it silently" \

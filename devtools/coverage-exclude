@@ -19,6 +19,16 @@
 # code behind a stale range: the moment a test reaches an excluded line, the
 # exclusion has to go. It does not stop someone excluding code that ought to be
 # tested — nothing mechanical can — which is why each entry has to argue.
+#
+# LINE-PINNED RANGES ROT BY DESIGN (review 2026-08-15T1752Z §5). Any edit to
+# an excluded file shifts its ranges, and devtools/coverage then fails — at
+# ed82166 it failed against its own HEAD for exactly this reason. That is the
+# accepted cost, not a defect to engineer away: an exclusion that tracked its
+# lines automatically could silently keep hiding code as the file changed
+# underneath it, which is the abuse the self-check exists to make impossible.
+# The rule when it fires: re-derive the range from the current file, re-read
+# the reason, and drop the entry if the reason no longer holds. Expect to
+# touch this file in the same commit as any edit to a file listed below.
 
 # ── 1. Cannot appear in their own trace ──────────────────────────────────
 #

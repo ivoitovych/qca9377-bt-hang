@@ -127,6 +127,9 @@ mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
 [[ -n "$mails" ]] && report "email address found:" $mails || pass "no unexpected emails"
 
 # --- AI attribution --------------------------------------------------------
+# REVIEWED-KEEP 2026-08-15T1752Z §5: keep the fragment assembly below and the
+# refuse-on-empty-read above — the first keeps the scanner out of its own
+# net, the second stops a failed enumeration reading as a clean tree.
 # The pattern strings are assembled from fragments so this file does not itself
 # contain a literal match. The previous approach — excluding lines that looked
 # like grep definitions — worked but broke if the pattern list was ever

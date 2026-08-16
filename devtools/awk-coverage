@@ -102,6 +102,9 @@ fi
 #   "\tstatement"           present in the program, never executed
 #   "\t}" / "" / "\t# ..."  structure, not a statement
 #
+# REVIEWED-KEEP 2026-08-15T1752Z §5: keep the hash-merge design (and the
+# /proc/$PPID/cmdline sidecar that names each profile's caller) — merging by
+# filename instead would conflate every `awk -f` of different programs.
 # Strip the count column to get the canonical program; hash that; merge counts
 # positionally within a hash group.
 : > "$WORK/facts"

@@ -24,6 +24,11 @@ evidence/
 | `bluetoothd-boot0.sanitized.log` | Matching bluetoothd log, incl. the AVDTP teardown that triggered it |
 | `baseline.tsv` | Per-boot failure counts across 34 boots (2026-05-31 → 08-10): **287 timeouts, 13 of 34 boots hung, zero resets**. "Hung" here means ≥1 command timeout. EX-003 counts 18 such boots — same criterion, different (later) retention window; the two totals are not comparable and neither corrects the other |
 
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §7: keep the 34-vs-18 incomparability note in
+the baseline.tsv row above (two retention windows, neither corrects the other) and
+the synthetic-line correction below — both are the disclosures that make these
+numbers quotable at all. -->
+
 Captured at 02:54 on 2026-08-10, *before* the three synthetic `tx timeout` lines were
 injected at 03:07 to test watchdog detection. The 22 timeouts in this log are all
 genuine hardware events. Anything re-collected from the live journal of that boot will
@@ -86,6 +91,11 @@ layout and carry their own NOTES.)*
 Read together: every reset after the first HCI timeout has failed, the only one issued
 before a timeout succeeded, and the early warning that made that possible is **not
 always present**.
+
+`20260810-072445-first-real-hang` predates the full session layout — it was collected
+by hand before `bt-evidence` existed, so it has no `MANIFEST.txt` and no
+state-before/after captures. That is when it was collected, not data loss; the
+journal and capture files it does hold are complete for what was gathered.
 
 ### ⚠️ How these sessions were produced
 

@@ -146,6 +146,9 @@ printf 'PS4=%s\nBASH_XTRACEFD=9\nset -o xtrace\n' \
 ) >"$WORK/suite.out" 2>"$WORK/suite.err"
 SUITE_RC=$?
 
+# REVIEWED-KEEP 2026-08-15T1752Z §5: keep this refusal — an empty trace
+# reported as 0% (or worse, as clean) converts a broken measurement into a
+# confident number.
 # An empty trace means the instrumentation did not take, NOT that nothing ran.
 # Reporting 0% here would be a fabricated finding; refuse instead.
 if [[ ! -s "$WORK/trace" ]]; then

@@ -113,7 +113,12 @@ while read -r f; do
     # unparseable timestamp, which is deliberate and is itself under test. Only
     # awk's own parse diagnostics indicate a broken program.
     out=$(awk -f "$f" /dev/null 2>&1 >/dev/null)
-    if grep -qiE "syntax error|unexpected|can't open source file|unterminated" <<<"$out"; then
+    # "runaway string constant" is mawk's wording for an unterminated string —
+    # its one parse diagnostic that contains none of the other words. Without
+    # it, a broken program passed this validator on any mawk host: the exact
+    # silently-matching-nothing failure this file exists to prevent, in the
+    # validator itself (review 2026-08-15T1752Z follow-up, CR-84).
+    if grep -qiE "syntax error|unexpected|can't open source file|unterminated|runaway string" <<<"$out"; then
         bad "awk   $f"; sed 's/^/      /' <<<"$out"
     else
         ok "awk   $f"

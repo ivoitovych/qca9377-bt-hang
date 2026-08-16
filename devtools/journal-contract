@@ -109,6 +109,9 @@ fi
 fi   # HOST_JOURNAL
 
 # ── phase 2: byte equivalence over a BUILT journal ────────────────────────
+# REVIEWED-KEEP 2026-08-15T1752Z §5: keep phase 2 and its recorded
+# leading-separator divergence note — it is the only check anywhere that the
+# fixture grammar matches what journalctl actually emits, byte for byte.
 #
 # The strong form of the contract, unblocked once the refusal was understood:
 # systemd-journal-remote silently drops any entry without a _BOOT_ID

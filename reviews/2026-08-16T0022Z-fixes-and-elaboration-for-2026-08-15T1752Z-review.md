@@ -103,22 +103,23 @@ review section that argued for it. Grep `REVIEWED-KEEP` to enumerate them.
 | CR-65 | LOW | 3.2 | tools/bt-logvolume | arg-slice drops -o cat; counts "-- No entries --" | fixed |
 | CR-66 | NOTE | 3.2 | tools/* | remaining tools read clean; standouts named | kept |
 | CR-67 | GOOD | 3.2 | tools/sanitize-logs.sh | two-direction engine gate; atomic in-place | kept |
-| CR-68 | MED | 4 | tests/run-tests | five invariants nested in width-check branch | pending |
-| CR-69 | NOTE | 4 | tests/run-tests | self-guards held under adversarial reading | pending |
-| CR-70 | GOOD | 4 | tests/run-tests + fixtures | fixtures drawn from real log text | pending |
-| CR-71 | NOTE | 4 | tests/ | fixture corpus consistent with harness docs | pending |
-| CR-72 | HIGH | 5 | devtools/coverage-exclude | HEAD failed own gate: stale exclusions | pending |
-| CR-73 | MED | 5 | tests/run-tests | eval'd helper corrupts xtrace line attribution | pending |
-| CR-74 | NOTE | 5 | devtools/coverage-exclude | line-pinned ranges rot by design | pending |
-| CR-75 | GOOD | 5 | devtools/* | coverage refusals; journal-contract phase 2; etc. | pending |
-| CR-76 | NOTE | 5 | devtools/README.md | consistent with tool list | pending |
-| CR-77 | GOOD | 6 | reviews/ | report+register+verifier design | pending |
-| CR-78 | NOTE | 6 | reviews/README.md | open items accurately recorded | pending |
-| CR-79 | NOTE | 6 | README.md | register's 85% is the number to quote (feeds CR-01) | pending |
+| CR-68 | MED | 4 | tests/run-tests | five invariants nested in width-check branch | fixed-on-main |
+| CR-69 | NOTE | 4 | tests/run-tests | self-guards held under adversarial reading | kept |
+| CR-70 | GOOD | 4 | tests/run-tests + fixtures | fixtures drawn from real log text | kept |
+| CR-71 | NOTE | 4 | tests/ | fixture corpus consistent with harness docs | recorded |
+| CR-72 | HIGH | 5 | devtools/coverage-exclude | HEAD failed own gate: stale exclusions | recorded |
+| CR-73 | MED | 5 | tests/run-tests | eval'd helper corrupts xtrace line attribution | fixed-on-main |
+| CR-74 | NOTE | 5 | devtools/coverage-exclude | line-pinned ranges rot by design | recorded |
+| CR-75 | GOOD | 5 | devtools/* | coverage refusals; journal-contract phase 2; etc. | kept |
+| CR-76 | NOTE | 5 | devtools/README.md | consistent with tool list | recorded |
+| CR-77 | GOOD | 6 | reviews/ | report+register+verifier design | kept |
+| CR-78 | NOTE | 6 | reviews/README.md | open items accurately recorded | recorded |
+| CR-79 | NOTE | 6 | README.md | register's 85% is the number to quote (feeds CR-01) | fixed |
 | CR-80 | MED | 7 | evidence/trials/results.tsv readers | pre-fix CHANGED: row excluded from denominator | fixed |
-| CR-81 | LOW | 7 | tools/bt-exhibit + exhibits/README.md | EX-018 index claim cell empty | pending |
-| CR-82 | NOTE | 7 | evidence/README.md | first-real-hang predates full session layout | pending |
-| CR-83 | GOOD | 7 | evidence/ | baseline incomparability notes; exhibit capture | pending |
+| CR-81 | LOW | 7 | tools/bt-exhibit + exhibits/README.md | EX-018 index claim cell empty | fixed |
+| CR-82 | NOTE | 7 | evidence/README.md | first-real-hang predates full session layout | fixed |
+| CR-83 | GOOD | 7 | evidence/ | baseline incomparability notes; exhibit capture | kept |
+| CR-84 | MED | new | tests/run-tests, devtools/repo-validate | gawk-dependent tests fail on mawk; validator blind to mawk diagnostics | fixed |
 
 Entries follow, appended one by one as each is completed.
 
@@ -599,3 +600,124 @@ denominator.
 
 Suite after Section C: **all 602 invariants hold** (599 + the three new
 reclass/rescued fixture cases).
+
+## Section D — tests/ and devtools/ (CR-68 .. CR-76, CR-84)
+
+### CR-68 [MED] five invariants nested inside the width check — **fixed on main**
+
+Verified at 944b1eb: the block is unnested (the `ok`/`bad` pair now sits
+beside its own check) and the comment above it cites this finding. No
+further action.
+
+### CR-69 / CR-70 [NOTE+GOOD] run-tests self-guards; real-text fixtures — **kept**
+
+One REVIEWED-KEEP block in the file header records both: every self-guard
+encodes an escape that actually happened (none tolerates an exception
+list), and fixtures are drawn from real log wording — the recurring
+failure mode being patterns written on the machine where the other half
+never appears.
+
+### CR-71 [NOTE] fixture corpus consistent with harness docs — **recorded**
+
+Re-checked after this branch's additions (envhist snapshot log, four new
+fixture cases, two DEPS files): layout still matches the documented
+grammar in journal.sh and the fixtures section of tests/README.md.
+Recorded here; nothing to change.
+
+### CR-72 [HIGH] coverage-exclude stale at ed82166 — **fixed on main; recurs below**
+
+Main repaired the exclusions (87.3% at the merge). This branch's edits
+shift lines again; the final phase of this document re-derives the
+affected ranges before the gate runs. The finding's lesson is CR-74's
+note.
+
+### CR-73 [MED] eval'd helper corrupted xtrace attribution — **fixed on main**
+
+Verified: the helper is extracted to a temp file and sourced, with the
+full rationale in place (xtrace attributes eval'd code to unrelated line
+numbers in the sourcing file; coverage then counts excluded lines as
+executed). No further action.
+
+### CR-74 [NOTE] line-pinned exclusion ranges rot by design — **recorded**
+
+coverage-exclude's header now says so explicitly: the rot is the accepted
+cost of the self-check (an auto-tracking exclusion could silently keep
+hiding code), with the repair rule — re-derive, re-read the reason, drop
+if it no longer holds, expect to touch the file in the same commit as any
+edit to a listed file.
+
+### CR-75 [GOOD] devtools standouts — **kept**
+
+REVIEWED-KEEP markers at each named site: coverage (empty-trace refusal),
+awk-coverage (hash-merge + $PPID sidecar), journal-contract (phase-2 byte
+equivalence), repo-save (counted message scan), repo-scan (fragment
+assembly + refuse-on-empty-read), status (committed-vs-deployed rows),
+assert-test-catches (observed-to-fail made mechanical). The CI workflow's
+ordering and system-roundtrip gating are recorded here as reviewed-good;
+the workflow file itself is unannotated because CI YAML comments do not
+survive the runner's log view, where a reviewer would look.
+
+### CR-76 [NOTE] devtools/README.md consistent — **recorded**
+
+Spot-checked again after this branch's marker edits; still consistent
+with the tool list. Nothing to change.
+
+### CR-84 [MED — new this branch] gawk-dependent tests fail on mawk instead of skipping — **fixed**
+
+Found while running the suite on this container (default awk is mawk
+1.3.4): two failures that read as regressions but were awk-flavor
+assumptions. (1) The batch-mode `-i` sanitise test asserted redaction
+unconditionally; it now sits behind the same ERE-intervals capability
+probe as the older redaction block — on an incapable awk it asserts the
+refusal direction (non-zero exit, files byte-identical) and skips loudly.
+(2) Worse, repo-validate's awk validator judged on diagnostics matching
+`syntax error|unexpected|…|unterminated` — mawk's wording for an
+unterminated string is `runaway string constant`, which matches none of
+them, so a genuinely broken program PASSED validation on any mawk host:
+the silently-matching-nothing failure inside the validator itself. The
+pattern now includes `runaway string`. Verified both ways: 582 green
+under mawk (with loud skips), 602 under gawk.
+
+## Section E — reviews/ register and evidence/ (CR-77 .. CR-79, CR-81 .. CR-83)
+
+### CR-77 / CR-78 [GOOD+NOTE] register design; open items accurate — **kept/recorded**
+
+The report + register + executable verify.sh triad held under reading;
+open items in reviews/README.md matched reality at review time. The
+register row and action entries for this branch are added in the final
+phase below, which is also the live demonstration of the design being
+followed.
+
+### CR-79 [NOTE] the register's 85% is the number README should quote — **fixed via CR-01**
+
+README's volatile numbers were removed in Section A (CR-01): the front
+page now points at run-tests/coverage/CI floors instead of pasted
+snapshots, which is this finding's fix generalised. Recorded here so §6's
+instance is traceable to it.
+
+### CR-81 [LOW] EX-018's index claim cell empty — **fixed**
+
+`bt-exhibit` list/index now share one extractor that accepts the
+"**Historical claim.**" retitling and keeps the marker visible in the
+cell ("Historical claim: …") — which claims are current is what the index
+is for. Regenerating the index fixed EX-018 AND EX-020, a second instance
+nobody had noticed. exhibits/README.md regenerated by the tool, not
+edited.
+
+### CR-82 [NOTE] first-real-hang predates the session layout — **fixed**
+
+evidence/README.md now says `20260810-072445-first-real-hang` was
+hand-collected before bt-evidence existed (no MANIFEST.txt, no
+state-before/after) — when it was collected, not data loss.
+
+### CR-83 [GOOD] baseline disclosures; exhibit capture — **kept**
+
+REVIEWED-KEEP in evidence/README.md over the 34-vs-18 incomparability
+note and the synthetic-line correction. bt-exhibit's single-pass
+command+output capture is already load-bearing in its index header text
+("provably the command that produced the output") and marked at the
+refusal site (CR-66).
+
+Suite after Sections D+E: **all 602 invariants hold** under gawk; **582**
+under mawk with loud skips (CR-84's point). repo-validate: all checks
+passed, 74 of 433 files checkable.
