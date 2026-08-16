@@ -202,8 +202,10 @@ table in [the fixes document](2026-08-16T0022Z-fixes-and-elaboration-for-2026-08
 [GOOD] practices carry `REVIEWED-KEEP 2026-08-15T1752Z` markers at their source sites
 (`grep -rn 'REVIEWED-KEEP' --include='*' .` enumerates them). The rows below are the
 HIGH/MED items only. Every behavioural change on the fixes branch is pinned by a
-suite assertion observed to fail (tracker Addendum 2); the one accepted gap is
-bt-trace's crash backoff, recorded there.
+suite assertion observed to fail (tracker Addendum 2). The one gap Addendum 2
+accepted — bt-trace's crash backoff — was closed on main (`e93319a`,
+BT_TRACE_RAPID_MAX seam, bt-trace at 99%); tracker Addendum 3 records the
+correction.
 
 | ID | Item | Status | Landed | Verify |
 |---|---|---|---|---|

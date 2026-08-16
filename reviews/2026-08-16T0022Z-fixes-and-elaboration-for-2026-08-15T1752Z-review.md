@@ -866,3 +866,26 @@ honest state, but an untested state.
 
 Suite after this pass: **all 614 invariants hold**; coverage still
 89% against the 80% floor; repo-scan clean.
+
+---
+
+## Addendum 3 — CR-47's recorded gap was smaller than written, and is now closed
+
+Correction to Addendum 2, on the merge maintainer's finding (main commit
+`e93319a`): the sentence "bt-trace is a capture daemon with no sandbox
+harness, one of the ten zero-executed files" was true of the tree this
+branch was cut from and stale by merge time — main had gained a bt-trace
+harness in parallel, the file measured 95%, and the untested part was
+exactly the four backoff lines. The maintainer closed those with a
+`BT_TRACE_RAPID_MAX` seam (the watchdog's `BT_MAX_FAILS` pattern;
+shipped default unchanged) and asserted the suppression rather than the
+banner. bin/bt-trace: 99%. CR-47 has no open remainder.
+
+Also recorded here: the mainline merge (`ce6d080`) took this branch at
+`4c74c0b`, one commit short of the pushed tip — `caa1717`, the
+merge-drift-guard tests of Addendum 2, was pushed after the maintainer's
+fetch. The commit written to catch silent drift was itself dropped by
+timing, which is a better argument for it than anything in Addendum 2.
+Reunited by merging main back into this branch; the combined tree runs
+633 invariants green (main's 621 plus the 12 guards), coverage 89%
+against the 80% floor, scan clean.
