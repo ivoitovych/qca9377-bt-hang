@@ -11,6 +11,7 @@ set -uo pipefail
 
 APPLY=0
 PURGE_METRICS=0
+FAILED=0
 for a in "$@"; do
     case "$a" in
         --apply)          APPLY=1 ;;
@@ -22,6 +23,12 @@ for a in "$@"; do
     esac
 done
 
+# These lists are hand-written, and that is ACCEPTED here rather than fixed:
+# tests/run-tests derives the installed set from install.sh and asserts every
+# install_file destination appears below, and tools/verify-restored.sh
+# re-derives it at run time — three overlapping checks that fail differently
+# (review 2026-08-15T1752Z §2.6). Do not add a fourth list; extend install.sh
+# and let the invariant fail until this file catches up.
 FILES=(
     /usr/local/sbin/bt-dyndbg
     /usr/local/sbin/bt-usbmon
@@ -59,9 +66,13 @@ FILES=(
     /usr/local/bin/lib/interval.awk
     /usr/local/bin/lib/capdiff-match.awk
     /usr/local/bin/lib/trial-summary.awk
+    /usr/local/bin/lib/trial-reclass.awk
     /usr/local/bin/lib/trial-sco-table.awk
     /usr/local/bin/lib/stage2.awk
     /usr/local/bin/lib/phase.awk
+    /usr/local/bin/lib/boot-hours.awk
+    /usr/local/bin/lib/sco-window.awk
+    /usr/local/bin/lib/actions-render.awk
     /usr/local/bin/lib/journal.sh
     /usr/local/bin/bt-sco
     /usr/local/bin/bt-capdiff
@@ -161,7 +172,20 @@ run() {
             *) echo "  staging: NOT executed (system command): $*"; return 0 ;;
         esac
     fi
-    if (( APPLY )); then echo "  + $*"; "$@"
+    if (( APPLY )); then
+        echo "  + $*"
+        if ! "$@"; then
+            # Accumulate rather than abort: later removals are independent of
+            # an earlier failure, and a partial revert should still remove
+            # everything it can. But the summary must then tell the truth —
+            # install.sh gained exactly this accumulator in the Phase-5 review
+            # and the uninstaller never did, so "UNINSTALL COMPLETE" printed
+            # over failed systemctl calls and unremovable files
+            # (review 2026-08-15T1752Z §2.6).
+            echo "    ERROR: command failed: $*" >&2
+            FAILED=1
+            return 1
+        fi
     else echo "  would run: $*"; fi
 }
 
@@ -256,6 +280,14 @@ fi
 echo
 
 if (( APPLY )); then
+    if (( FAILED )); then
+        echo "=== UNINSTALL INCOMPLETE ===" >&2
+        echo "One or more steps failed (see ERROR lines above). Everything that" >&2
+        echo "could be removed was removed; what failed is still in place." >&2
+        echo "Run ./tools/verify-restored.sh for the authoritative leftover list," >&2
+        echo "fix the cause, and re-run — this script is idempotent." >&2
+        exit 1
+    fi
     echo "=== UNINSTALL COMPLETE ==="
     echo
     echo "Verify:"

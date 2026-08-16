@@ -76,7 +76,19 @@ else
     span=""
 fi
 
-now=$(bt_journal "${JARGS[@]:0:$(( KONLY ? 4 : 3 ))}" --since "-60s" 2>/dev/null | wc -l)
+# The 60-second window is rebuilt EXPLICITLY, never sliced out of JARGS by
+# index. The old `"${JARGS[@]:0:...}"` arithmetic silently went stale when
+# JARGS changed shape: it kept `-k -b <boot> --no-pager` but dropped `-o cat`,
+# so this count ran in a different output format from the total above — and
+# any future JARGS edit would shift the slice again without any error
+# (review 2026-08-15T1752Z §4.11). A user-passed --since is deliberately NOT
+# carried over: this line measures the last 60 s regardless of the window the
+# report covers.
+RATEARGS=(-b "$BOOT" --no-pager -o cat --since "-60s")
+(( KONLY )) && RATEARGS=(-k "${RATEARGS[@]}")
+# An empty window makes journalctl print "-- No entries --" on stdout, which
+# `wc -l` counted as one line per minute of silence. Count real lines only.
+now=$(bt_journal "${RATEARGS[@]}" 2>/dev/null | grep -vc '^-- No entries --')
 
 echo "Kernel log volume — boot $BOOT${SINCE:+, since $SINCE}"
 echo "──────────────────────────────────────────────────────────────────"

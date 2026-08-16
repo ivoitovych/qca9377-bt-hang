@@ -45,6 +45,9 @@ set -uo pipefail
 # what a fixture pins.
 LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
 [[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-actions: missing $LIBDIR/journal.sh" >&2; exit 1; }
+for _f in timestamp.awk actions-render.awk; do
+    [[ -r "$LIBDIR/$_f" ]] || { echo "bt-actions: missing $LIBDIR/$_f" >&2; exit 1; }
+done
 # shellcheck source=tools/lib/journal.sh
 source "$LIBDIR/journal.sh"
 
@@ -297,52 +300,9 @@ echo "Reconstructed action timeline — boot $BOOT"
 echo "USER = operator action   STACK = BlueZ/PipeWire   CTRL = controller   WDOG = watchdog"
 echo "──────────────────────────────────────────────────────────────────────────────────────"
 
-sort -k1,1 "$STREAM" | awk -v raw="$RAW" '
-# Absolute seconds from an ISO timestamp. The fractional part is MICROseconds
-# (journalctl prints six digits), so it divides by 1e6 — treating it as
-# milliseconds inflates every cadence by a factor of 1000.
-# Full civil-date arithmetic, not (day_of_month * 24 + hour): the private
-# day-only copy this replaces went negative across a month boundary — the same
-# class tools/lib/timestamp.awk was created to end, still alive in this tool.
-# (bt-boot-stats had the sibling copy; the committed EX-003 table shows the
-# damage as -678.4 HOURS rows. NB this comment lives inside a single-quoted
-# shell string: no apostrophes.)
-function days(y, m, d,   era, yoe, doy, doe) {
-    if (m <= 2) y--
-    era = int((y >= 0 ? y : y - 399) / 400)
-    yoe = y - era * 400
-    doy = int((153 * (m + (m > 2 ? -3 : 9)) + 2) / 5) + d - 1
-    doe = yoe * 365 + int(yoe / 4) - int(yoe / 100) + doy
-    return era * 146097 + doe - 719468
-}
-function tosec(t,   d, a, b) {
-    split(t, d, "T")
-    split(d[1], b, "-")
-    split(d[2], a, /[:.+]/)
-    return days(b[1] + 0, b[2] + 0, b[3] + 0) * 86400 + a[1] * 3600 + a[2] * 60 + a[3] + a[4] / 1000000
-}
-function disp(t,   d, s) { split(t, d, "T"); s = d[2]; sub(/[+-][0-9:]+$/, "", s); return substr(s, 1, 12) }
-function flush(   span, cad) {
-    if (n == 0) return
-    if (n == 1) {
-        printf "%-13s %-5s  %s\n", disp(ft), fc, fl
-    } else {
-        span = tosec(lt) - tosec(ft)
-        cad = span / (n - 1)
-        if (cad >= 1)
-            printf "%-13s %-5s  %s\n                          x%d until %s, every ~%.1fs\n", disp(ft), fc, fl, n, disp(lt), cad
-        else
-            printf "%-13s %-5s  %s\n                          x%d until %s (burst, %.2fs apart)\n", disp(ft), fc, fl, n, disp(lt), cad
-    }
-    n = 0
-}
-{
-    ts = $1; cls = $2
-    lbl = $0; sub(/^[^\t]*\t[^\t]*\t/, "", lbl)
-    if (raw == 1) { printf "%-13s %-5s  %s\n", disp(ts), cls, lbl; next }
-    if (lbl == fl && cls == fc) { n++; lt = ts; next }
-    flush()
-    ft = ts; lt = ts; fc = cls; fl = lbl; n = 1
-}
-END { flush() }
-'
+# The renderer is a FILE (tools/lib/actions-render.awk) loaded with -f, like
+# every other analysis program here: it shares iso_secs() instead of carrying
+# a private civil-date copy, repo-validate can parse it, and the tests drive
+# the file production drives (review 2026-08-15T1752Z §3.1).
+sort -k1,1 "$STREAM" | awk -v raw="$RAW" \
+    -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/actions-render.awk"

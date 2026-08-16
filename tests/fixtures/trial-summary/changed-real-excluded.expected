@@ -1,0 +1,25 @@
+  TRIAL TYPE         BUILD  UNRECOV  BT-1 INC RESCUED  RATE    CENSORED mean dur
+  observational_boot stock  0/1      0/1      0/0      0%      0/1      100s
+      treatment: autosusp=Y,power=auto,wd=off,probes=off
+
+  These rows must never be added together. An observational boot
+  and a controlled protocol run are different evidence: the first
+  says the machine did or did not hang during ordinary use, the
+  second says the reproduction protocol was applied and the
+  controller withstood it or did not. Only controlled_* rows can
+  satisfy the A/B/C/D gate.
+
+  !! 2 DISTINCT ENVIRONMENTS above.
+     Rows with different env: lines are different EXPERIMENTS and must
+     not be added together. Autosuspend state and watchdog mode change
+     the controller and can change the outcome, so a kernel comparison
+     across them measures the mitigation as much as the kernel.
+     `build` names only the kernel; the treatment is build + env.
+
+  !! 1 trial(s) CHANGED or PERTURBED mid-run.
+     Their treatment string begins CHANGED: or PERTURBED: so it
+     matches no other trial and cannot pool into any denominator.
+     A trial that was reconfigured while running, or whose
+     controller was reset by something other than the protocol,
+     was not conducted under one condition, and no rate computed
+     from it means anything.

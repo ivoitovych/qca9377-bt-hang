@@ -55,6 +55,10 @@ than repaired.
 
 ## 3. What the quirk restores
 
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.6: the verbatim six-behaviour
+     enumeration below is the correction that invalidated the original A/B
+     design (HISTORY Phase 17). Any summary that collapses it back to "reset +
+     firmware" re-creates the flaw the A/B/C/D ladder exists to avoid. -->
 `BTUSB_QCA_ROME` in `driver_info` causes `btusb_probe()` to install **six** things.
 Verbatim from v7.0 `drivers/bluetooth/btusb.c`:
 
@@ -331,89 +335,18 @@ interface around it. The watchdog exercised a related reset primitive, not the s
 path or execution context. Timing also differed. The observations therefore motivate the
 direct A/B/C/D comparison but do not isolate which difference produced the outcomes.
 
-⚠️ **Small n.** Two failed late resets, one successful early reset, one incident with no
-early signal. Attach all three sessions:
-`evidence/sessions/20260810-072445-first-real-hang/` (late reset failed),
+⚠️ **Small n.** Five failed late resets (+11 s, +16 s, +20 s, +20 s, +33 s — §3a),
+one successful early reset, two hangs with no usable early signal. Attach the
+instrumented sessions:
+`evidence/sessions/20260810-072445-first-real-hang/` (+20 s failed),
 `evidence/sessions/20260811-002156-early-mode-SUCCESS/` (early reset worked),
-`evidence/sessions/20260811-060910-mode-change-hang/` (+11 s failed, no early warning).
-
----
-
-## 5a. A four-step experiment — isolate the cause, do not just find a cure
-
-**Revised twice.** The first version was a single build. The second was an A/B pair that
-could not actually isolate firmware, because `BTUSB_QCA_ROME` does **not** mean "reset
-plus firmware setup" — it installs six distinct behaviours:
-
-```c
-data->setup_on_usb  = btusb_setup_qca;          /* firmware download path      */
-hdev->shutdown      = btusb_shutdown_qca;
-hdev->set_bdaddr    = btusb_set_bdaddr_ath3012;
-hdev->reset         = btusb_qca_reset;          /* the reset callback          */
-HCI_QUIRK_SIMULTANEOUS_DISCOVERY;
-btusb_check_needs_reset_resume(intf);
-```
-
-So "A hangs, B fixes it → firmware is the cause" is **not a valid inference**. It would
-only license "something in the QCA ROME path fixes it". Isolating requires stepping
-through them.
-
-### The builds
-
-| | What it installs | Isolates |
-|---|---|---|
-| **A** | `hdev->reset = btusb_qca_reset` only | immediate kernel-side recovery |
-| **B** | A **+** `data->setup_on_usb = btusb_setup_qca` | QCA USB init / firmware download |
-| **C** | `13d3:3503 → BTUSB_QCA_ROME` (the real candidate quirk) | everything else in the ROME path |
-| **D** | C **+** `BTUSB_WIDEBAND_SPEECH` | the production candidate |
-
-**Keep `BTUSB_WIDEBAND_SPEECH` out until D.** It changes advertised HFP wideband-speech
-capability, and the reproducer involves audio profile and mode transitions — introducing
-it while establishing causation would confound exactly the thing under test.
-
-### Decision rules — benefit and harm are separate axes
-
-The controlled stock protocol (target 5/5) supplies the denominator; the historical 13/34
-rate does not. Score every build on both BT-1 incidence and final USB/controller state:
-
-| Result | Interpretation |
-|---|---|
-| reset fires, HCI returns, no excess USB loss | evidence of useful immediate recovery |
-| reset fires, USB loss rises versus untreated stock | evidence the treatment is harmful |
-| BT-1 falls before any reset is needed | evidence of prevention, not reset recovery |
-| BT-1 persists with no material outcome change | added behavior is insufficient |
-
-Only after A is shown safe but insufficient does B isolate QCA setup; only after B does C
-add the remaining ROME behaviors, and D finally adds wideband speech. `bt-stage2` records
-automatic kernel reset, positive watchdog intervention, and unknown-origin reset as
-separate censoring categories so a treatment cannot masquerade as natural history.
-
-### Instrumentation notes
-
-- **Build A: record which reset path actually runs.** `btusb_qca_reset()` toggles a
-  `bt_en` GPIO if one exists, and only otherwise falls back to `btusb_reset()` →
-  `usb_queue_reset_device()`. Expect either `Reset qca device via bt_en gpio` or
-  `Resetting usb device.` Which one appears matters when comparing against the earlier
-  `USBDEVFS_RESET` attempts.
-- **Build B may bind and then fail at HCI open.** `setup_on_usb` is **not** run during USB
-  probe — `btusb_open()` calls it when the HCI device is opened, before HCI URBs start.
-  If `btusb_setup_qca()` finds an unsupported ROM version it returns `-ENODEV` and *HCI
-  open/setup* fails while the USB device remains bound to `btusb`. That is a **result,
-  not a failure**: capture the reported ROM version and the setup error.
-  `btusb_setup_qca()` sends `QCA_GET_TARGET_VERSION`, looks the `rom_version` up in
-  `qca_devices_table`, then sends `QCA_CHECK_STATUS`. Upstream v7.0 already carries Rome
-  3.0 and 3.2 entries (`0x00000300`, `0x00000302`).
-
-### Prerequisites
-
-- **A4 — a quantified reproducer.** Not "it hung again", but a fixed protocol
-  demonstrating something like **5/5 failures on stock**. Without a denominator,
-  "the patched build ran for an hour" means nothing — a trap this project has fallen into
-  more than once.
-- **A0 — read Ubuntu's own `7.0.0-28` source** for `hci_cmd_timeout()`. Upstream v7.0
-  indisputably calls `hdev->reset()` on the first timeout, and the binary confirms
-  `btusb_qca_reset` is present, but after the five-timeout episode this deserves checking
-  rather than inferring.
+`evidence/sessions/20260811-060910-mode-change-hang/` (+11 s failed, early signal +133 s),
+`evidence/sessions/20260811-194254-early-threshold-missed/` (+33 s failed, one signal −7 s),
+`evidence/sessions/20260811-195623-no-early-signal-fast/` (+16 s failed, no signal at all).
+*(An earlier revision said "two failed late resets … all three sessions" — the count
+this paragraph was born with, never updated as the record grew; the same fossil sat in
+`docs/bug-report.md`'s Confidence note. Both corrected together — grep the tree for the
+old phrase before trusting any copy. Review 2026-08-15T1752Z §1.6.)*
 
 ---
 
@@ -512,6 +445,90 @@ HWE and has 24 kernels installed, so manual rebuilds are not sustainable.
 
 ---
 
+<!-- Section order note: 5a is deliberately FILED here, after 4 and 5, so the
+     numbering reads in sequence; an earlier layout placed it between 3b and 4,
+     which sent a reader following "see 5a" scrolling past 4 to find it BEFORE
+     4 (review 2026-08-15T1752Z §1.6). Its number is kept — too many documents
+     cite "fix-proposal.md §5a" to renumber safely. -->
+
+## 5a. A four-step experiment — isolate the cause, do not just find a cure
+
+**Revised twice.** The first version was a single build. The second was an A/B pair that
+could not actually isolate firmware, because `BTUSB_QCA_ROME` does **not** mean "reset
+plus firmware setup" — it installs six distinct behaviours:
+
+```c
+data->setup_on_usb  = btusb_setup_qca;          /* firmware download path      */
+hdev->shutdown      = btusb_shutdown_qca;
+hdev->set_bdaddr    = btusb_set_bdaddr_ath3012;
+hdev->reset         = btusb_qca_reset;          /* the reset callback          */
+HCI_QUIRK_SIMULTANEOUS_DISCOVERY;
+btusb_check_needs_reset_resume(intf);
+```
+
+So "A hangs, B fixes it → firmware is the cause" is **not a valid inference**. It would
+only license "something in the QCA ROME path fixes it". Isolating requires stepping
+through them.
+
+### The builds
+
+| | What it installs | Isolates |
+|---|---|---|
+| **A** | `hdev->reset = btusb_qca_reset` only | immediate kernel-side recovery |
+| **B** | A **+** `data->setup_on_usb = btusb_setup_qca` | QCA USB init / firmware download |
+| **C** | `13d3:3503 → BTUSB_QCA_ROME` (the real candidate quirk) | everything else in the ROME path |
+| **D** | C **+** `BTUSB_WIDEBAND_SPEECH` | the production candidate |
+
+**Keep `BTUSB_WIDEBAND_SPEECH` out until D.** It changes advertised HFP wideband-speech
+capability, and the reproducer involves audio profile and mode transitions — introducing
+it while establishing causation would confound exactly the thing under test.
+
+### Decision rules — benefit and harm are separate axes
+
+The controlled stock protocol (target 5/5) supplies the denominator; the historical 13/34
+rate does not. Score every build on both BT-1 incidence and final USB/controller state:
+
+| Result | Interpretation |
+|---|---|
+| reset fires, HCI returns, no excess USB loss | evidence of useful immediate recovery |
+| reset fires, USB loss rises versus untreated stock | evidence the treatment is harmful |
+| BT-1 falls before any reset is needed | evidence of prevention, not reset recovery |
+| BT-1 persists with no material outcome change | added behavior is insufficient |
+
+Only after A is shown safe but insufficient does B isolate QCA setup; only after B does C
+add the remaining ROME behaviors, and D finally adds wideband speech. `bt-stage2` records
+automatic kernel reset, positive watchdog intervention, and unknown-origin reset as
+separate censoring categories so a treatment cannot masquerade as natural history.
+
+### Instrumentation notes
+
+- **Build A: record which reset path actually runs.** `btusb_qca_reset()` toggles a
+  `bt_en` GPIO if one exists, and only otherwise falls back to `btusb_reset()` →
+  `usb_queue_reset_device()`. Expect either `Reset qca device via bt_en gpio` or
+  `Resetting usb device.` Which one appears matters when comparing against the earlier
+  `USBDEVFS_RESET` attempts.
+- **Build B may bind and then fail at HCI open.** `setup_on_usb` is **not** run during USB
+  probe — `btusb_open()` calls it when the HCI device is opened, before HCI URBs start.
+  If `btusb_setup_qca()` finds an unsupported ROM version it returns `-ENODEV` and *HCI
+  open/setup* fails while the USB device remains bound to `btusb`. That is a **result,
+  not a failure**: capture the reported ROM version and the setup error.
+  `btusb_setup_qca()` sends `QCA_GET_TARGET_VERSION`, looks the `rom_version` up in
+  `qca_devices_table`, then sends `QCA_CHECK_STATUS`. Upstream v7.0 already carries Rome
+  3.0 and 3.2 entries (`0x00000300`, `0x00000302`).
+
+### Prerequisites
+
+- **A4 — a quantified reproducer.** Not "it hung again", but a fixed protocol
+  demonstrating something like **5/5 failures on stock**. Without a denominator,
+  "the patched build ran for an hour" means nothing — a trap this project has fallen into
+  more than once.
+- **A0 — read Ubuntu's own `7.0.0-28` source** for `hci_cmd_timeout()`. Upstream v7.0
+  indisputably calls `hdev->reset()` on the first timeout, and the binary confirms
+  `btusb_qca_reset` is present, but after the five-timeout episode this deserves checking
+  rather than inferring.
+
+---
+
 ## 6. Before submitting upstream
 
 1. **Check current mainline first.** The ID may already have been added since 7.0:
@@ -530,6 +547,11 @@ HWE and has 24 kernels installed, so manual rebuilds are not sustainable.
    Marcel Holtmann, Luiz Augusto von Dentz.
 
 ### Suggested commit message
+
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.6: the message below deliberately says
+     "aggregate journal counts are consistent with these facts but do not
+     establish them by themselves" and claims no benefit. Strengthening its
+     claims would outrun the evidence gates in pre-submission-checklist.md. -->
 
 ```
 Bluetooth: btusb: Add QCA9377 13d3:3503 to the QCA ROME quirks

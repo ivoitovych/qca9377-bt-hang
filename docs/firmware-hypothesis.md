@@ -96,8 +96,8 @@ Step 2 is the decisive one and costs nothing but a reboot into Windows.
 
 If confirmed, the report changes shape again — and improves:
 
-- **now:** "this device gets no `cmd_timeout` handler, and that handler would not have
-  helped anyway"
+- **now:** "this device gets no reset callback (`hdev->reset` stays NULL), and our
+  late userspace resets did not help — with the +0 s point untested"
 - **would become:** "this device is never given its firmware patch, and the resulting
   stall does not occur under an OS that does load it"
 

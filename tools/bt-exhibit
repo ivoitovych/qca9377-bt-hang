@@ -113,6 +113,11 @@ cmd_new() {
     bash -c "$cmd" > "$raw" 2>&1
     rc=$?
 
+    # REVIEWED-KEEP 2026-08-15T1752Z §3.2: keep both refusals below — the
+    # did-not-run exits (127/126) and the missing-sanitiser case being treated
+    # exactly like a failing sanitiser. Each closes a path by which an exhibit
+    # could record something other than evidence.
+    #
     # 127/126 mean the command DID NOT RUN (not found / not executable). An
     # exhibit records evidence, and a command that never executed produced
     # none — EX-019 shipped exactly this way, its output reading "command not
@@ -211,13 +216,25 @@ cmd_new() {
 }
 
 # ---------------------------------------------------------------------------
+# The one claim extractor for list AND index. An exhibit superseded by later
+# evidence keeps its file but is retitled "**Historical claim.**" (the
+# register discipline — EX-018 is one). The extractor here knew only
+# "**Claim" and rendered such an exhibit with an EMPTY claim cell, which
+# reads as a broken exhibit rather than a superseded one. The historical
+# marker is kept visible in the cell, not stripped: which claims are current
+# is exactly what the index is for.
+exhibit_claim() {
+    grep -m1 -E '^\*\*(Historical )?[Cc]laim[^*]*\*\*' "$1" \
+        | sed -E 's/^\*\*Historical [Cc]laim[^*]*\*\* /Historical claim: /; s/^\*\*[Cc]laim[^*]*\*\* //'
+}
+
 cmd_list() {
     local f found=0
     for f in "$DIR"/[0-9][0-9][0-9]-*.md; do
         [[ -e "$f" ]] || continue
         found=1
         local b; b=$(basename "$f" .md)
-        local claim; claim=$(grep -m1 '^\*\*Claim' "$f" | sed -E 's/^\*\*Claim[^*]*\*\* //')
+        local claim; claim=$(exhibit_claim "$f")
         printf 'EX-%s  %-34s %s\n' "${b:0:3}" "${b:4}" "$claim"
     done
     (( found )) || echo "no exhibits yet"
@@ -246,7 +263,7 @@ cmd_index() {
             [[ -e "$f" ]] || continue
             found=1
             local b; b=$(basename "$f" .md)
-            local claim; claim=$(grep -m1 '^\*\*Claim' "$f" | sed -E 's/^\*\*Claim[^*]*\*\* //')
+            local claim; claim=$(exhibit_claim "$f")
             printf '| EX-%s | [%s](%s.md) | %s |\n' "${b:0:3}" "${b:4}" "$b" "$claim"
         done
         (( found )) || echo '| — | _none yet_ | |'

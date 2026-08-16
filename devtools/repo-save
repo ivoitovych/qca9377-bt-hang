@@ -94,6 +94,7 @@ if grep -qiE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$MSGTEXT"; then
     echo "ABORT: nothing committed" >&2
     exit 1
 fi
+# REVIEWED-KEEP 2026-08-15T1752Z §5: keep the counted form below.
 # COUNTED, NOT `grep -qv`. This is the guard that keeps real MAC addresses and
 # BSSIDs out of a PUBLIC repository, and under `set -o pipefail` a `| grep -q`
 # pipeline exits non-zero exactly when it matches — grep leaves at the first

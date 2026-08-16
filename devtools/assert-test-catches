@@ -21,6 +21,10 @@
 # printed a tick.
 #
 # So the discipline is: after adding a check, break the thing it checks and
+# REVIEWED-KEEP 2026-08-15T1752Z §5: keep this tool first-class — it is the
+# house rule "a new check must be observed to fail" made mechanical, with the
+# restore guaranteed on every exit path including interrupt.
+#
 # watch it go red. Doing that by hand is a `cp`, an append, a run and a restore
 # — a compound shell line that cannot be statically analysed, costs an
 # interactive approval every time, and leaves the working tree dirty if it is

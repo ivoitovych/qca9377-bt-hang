@@ -121,6 +121,10 @@ install_file() {
 }
 
 
+# REVIEWED-KEEP 2026-08-15T1752Z 2.5: the three guards below (experiment
+# mode, failed-this-boot, open-trial) each protect a different asset —
+# the controlled baseline, a live stage-1 observation, a comparable trial.
+# None subsumes another; removing any one re-opens a documented incident.
 # ── EXPERIMENT MODE GUARD ─────────────────────────────────────────────────
 # install.sh reinstalls the workarounds — modprobe override, udev pin, watchdog,
 # probe timer. If the machine is deliberately in experiment mode, that silently
@@ -188,6 +192,10 @@ fi
 # catches it after the fact (the row becomes PERTURBED: and pools with
 # nothing), but a contaminated trial detected at close is still a trial lost.
 # On 2026-08-13 exactly this contaminated trial stock #2.
+# NOTE (review 2026-08-15T1752Z 2.5): BT_STATE here is DELIBERATELY a
+# different variable from the BT_TRIAL_STATE_DIR that tests/run-tests' own
+# refuse-while-trial-open guard reads — the suite's guard must not be
+# defeatable by the same override its sandboxed tests set. Do not unify them.
 if (( APPLY )) && [[ -e "${BT_STATE:-/run/bt-trial}/current" ]]; then
     echo "!! A TRIAL IS OPEN ($(grep -m1 '^build=' "${BT_STATE:-/run/bt-trial}/current" 2>/dev/null))."
     echo "   Installing reloads btusb. That is an intervention this trial's"
@@ -336,9 +344,13 @@ install_file "$SRC/tools/lib/timestamp.awk"     /usr/local/bin/lib/timestamp.awk
 install_file "$SRC/tools/lib/interval.awk"      /usr/local/bin/lib/interval.awk      0644
 install_file "$SRC/tools/lib/capdiff-match.awk" /usr/local/bin/lib/capdiff-match.awk 0644
 install_file "$SRC/tools/lib/trial-summary.awk"   /usr/local/bin/lib/trial-summary.awk   0644
+install_file "$SRC/tools/lib/trial-reclass.awk"   /usr/local/bin/lib/trial-reclass.awk   0644
 install_file "$SRC/tools/lib/trial-sco-table.awk" /usr/local/bin/lib/trial-sco-table.awk 0644
 install_file "$SRC/tools/lib/stage2.awk"        /usr/local/bin/lib/stage2.awk        0644
 install_file "$SRC/tools/lib/phase.awk"         /usr/local/bin/lib/phase.awk         0644
+install_file "$SRC/tools/lib/boot-hours.awk"    /usr/local/bin/lib/boot-hours.awk    0644
+install_file "$SRC/tools/lib/sco-window.awk"    /usr/local/bin/lib/sco-window.awk    0644
+install_file "$SRC/tools/lib/actions-render.awk" /usr/local/bin/lib/actions-render.awk 0644
 # Not an awk program: journal.sh is SOURCED by the tools that read the journal,
 # so it lives beside them for the same reason and must be installed with them.
 # A tool that sources a file it did not ship fails at run time on the installed

@@ -49,6 +49,7 @@ wrong turns, which a clean summary loses.
 | 2026-08-15T01:42Z | [Test comprehensiveness](2026-08-15T0142Z-test-comprehensiveness.md) | the tree at `eaa9a14` | 90.1% line coverage, **76% mean comprehensiveness**. `bt-window` shipped and never executed; `bt-capdiff` at 93% of lines and **1 of 5 modes**; `bin/bt-capture` is Python and no instrument sees it. Adds `devtools/test-comprehension` |
 | 2026-08-15T15:04Z | [Verification on the investigation machine](2026-08-15T1504Z-verification-on-the-investigation-machine.md) | `9a11ab7` merged on `ed82166` | 566/567 where the tools are installed, **system binaries byte-identical** before and after — `farm_dir()` verified on the configuration that destroyed three of them 90 minutes earlier. Names the fourth instance of *a test whose subject is a tool's behaviour cannot be validated where the tool is missing* |
 | 2026-08-15T17:52Z | [Comprehensive code review](2026-08-15T1752Z-comprehensive-code-review.md) | the tree at `ed82166` | Every file, in priority order. **`main` fails its own coverage gate** on three stale exclusion ranges; five invariants nested inside another check's success branch in `tests/run-tests`; prose-behind-code named as the dominant defect class, concentrated where no invariant reaches |
+| 2026-08-16T00:22Z | [Fixes & elaboration for the code review](2026-08-16T0022Z-fixes-and-elaboration-for-2026-08-15T1752Z-review.md) | `main` at `944b1eb`, branch `review/2026-08-15T1752Z-fixes` | All 84 findings dispositioned — fixed / fixed-on-main / kept (REVIEWED-KEEP markers) / recorded; suite 602 green, coverage 89.6%, awk 88.0%. Adds CR-84 (mawk skips) and `tools/lib/trial-reclass.awk` |
 
 ---
 
@@ -193,6 +194,30 @@ what was built, and why it differs.
 | SE-08 | `bt-mode` seam check asserted absolute state, not a change | done — failed on the investigation machine for its correct configuration | `795705e` | delete a real `.disabled` mid-section → "A SEAM LEAKED" names the file |
 | SE-09 | Missing-baseline branch unreachable where the project is installed | done — `BT_SHARE_DIR` / `BT_HEALTH_DIR` seams | `795705e` | drop the two seams with `baseline.tsv` installed → the assertion fails |
 | SE-10 | An exclusion entry pointing at a blank line, excluding nothing | done | `795705e` | `devtools/coverage --uncovered tools/bt-health-report.sh` → 0, not 1 |
+
+### From `2026-08-15T1752Z-comprehensive-code-review.md`
+
+The complete per-finding disposition — all 84 CR IDs with statuses — is the catalogue
+table in [the fixes document](2026-08-16T0022Z-fixes-and-elaboration-for-2026-08-15T1752Z-review.md);
+[GOOD] practices carry `REVIEWED-KEEP 2026-08-15T1752Z` markers at their source sites
+(`grep -rn 'REVIEWED-KEEP' --include='*' .` enumerates them). The rows below are the
+HIGH/MED items only.
+
+| ID | Item | Status | Landed | Verify |
+|---|---|---|---|---|
+| CR-01 | README volatile numbers replaced by executable sources | done | fixes branch | `grep -c '18.3%' README.md` → 0 |
+| CR-42 | metrics.tsv gains `wd_early_ok` with tool-mediated migration | done | fixes branch | `tests/run-tests --section "bt-health-snapshot"` |
+| CR-52 | uninstall.sh failure accumulator + INCOMPLETE banner | done | fixes branch | `grep -c 'UNINSTALL INCOMPLETE' uninstall.sh` → 1 |
+| CR-56 | bt-trial `$KJ` cleanup trap | done | fixes branch | `grep -c "trap 'rm -f \"\$KJ\"' EXIT" tools/bt-trial` → 1 |
+| CR-57 | civil-date arithmetic deduplicated into `tools/lib/` | done | fixes branch | `ls tools/lib/boot-hours.awk tools/lib/sco-window.awk tools/lib/actions-render.awk` |
+| CR-58 | probe/abort counts exclude systemd lifecycle noise | done | fixes branch | `grep -c '^Finished Snapshot' tools/bt-trial tools/bt-env-history` → 1 each |
+| CR-60 | trial-summary RESCUED column (rec[] was dead) | done | fixes branch | `tests/run-tests --section "awk libraries"` — `rescued-shown` case |
+| CR-64 | postmortem counts EARLY interventions | done | fixes branch | `tests/run-tests` — "counted as an intervention" |
+| CR-68 | width-check nesting | done on main | `944b1eb` | comment at the unnested block cites the finding |
+| CR-72 | stale coverage exclusions | done on main; re-derived here | fixes branch | `devtools/coverage --quiet --min 80` |
+| CR-73 | eval'd helper xtrace corruption | done on main | `944b1eb` | helper is sourced from a temp file |
+| CR-80 | pre-fix CHANGED row re-enters the denominator at read time | done | fixes branch | `test -r tools/lib/trial-reclass.awk`; report prints the reclassification note |
+| CR-84 | mawk hosts: loud skips; repo-validate blind spot | done | fixes branch | run the suite with mawk first on PATH → 582 green with skip notes |
 
 ### Check every row at once
 

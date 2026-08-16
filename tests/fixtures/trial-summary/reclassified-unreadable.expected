@@ -1,0 +1,15 @@
+  TRIAL TYPE         BUILD  UNRECOV  BT-1 INC RESCUED  RATE    CENSORED mean dur
+  observational_boot stock  1/2      1/2      0/1      50%     0/2      100s
+      treatment: autosusp=Y,power=auto,wd=off,probes=off
+
+  These rows must never be added together. An observational boot
+  and a controlled protocol run are different evidence: the first
+  says the machine did or did not hang during ordinary use, the
+  second says the reproduction protocol was applied and the
+  controller withstood it or did not. Only controlled_* rows can
+  satisfy the A/B/C/D gate.
+
+  1 row(s) reclassified at read time: recorded as CHANGED by a
+  pre-fix writer when a treatment field merely became unreadable
+  at close. Counted under the treatment the trial ran under.
+  (tools/lib/trial-reclass.awk; the raw TSV is not rewritten.)

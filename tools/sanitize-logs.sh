@@ -19,6 +19,12 @@
 # location of the machine. Kernel logs contain them by default — see the
 # "authenticate with <BSSID>" lines emitted by mac80211.
 #
+# REVIEWED-KEEP 2026-08-15T1752Z §3.2: keep the two-direction gate (an engine
+# that cannot express a pattern refuses the whole run rather than passing what
+# it happens to match) and the build-then-rename in-place path (a failed
+# verification never leaves a half-sanitised file where the input was). Both
+# are deliberate; do not "simplify" either away.
+#
 # IMPLEMENTATION NOTES
 #   * Each pass builds its output incrementally rather than rewriting `line` in
 #     place. A naive in-place loop never terminates, because a replacement such

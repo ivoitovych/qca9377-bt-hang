@@ -25,6 +25,18 @@ Environment=BT_MAX_FAILS=3
 
 # Needs root for USBDEVFS_RESET and sysfs unbind/bind.
 # Everything else is locked down.
+#
+# Why the lockdown stops here (review 2026-08-15T1752Z 2.4): NoNewPrivileges
+# would break notify()'s sudo -u; further directives were deliberately NOT
+# added sight-unseen because this unit's failure mode is "the recovery path
+# dies exactly when needed" (the MemoryMax lesson below). One interaction for
+# the owner to verify on the machine before tightening anything: ProtectHome
+# below makes /root and /home inaccessible, and the watchdog's device-absent
+# path runs bt-trial, which writes the results row into the repository
+# checkout — if that checkout lives under /root or /home, the row write would
+# fail silently under this sandboxing. Check with:
+#   journalctl -u bt-hang-watchdog | grep -A2 'auto-trial closed'
+# and confirm a row landed in evidence/trials/results.tsv for that closure.
 ProtectHome=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes

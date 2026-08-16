@@ -40,6 +40,12 @@ same=0; drift=0; missing=0
 # install.sh is the single source of truth for what gets installed, so the list
 # is now parsed from its install_file calls. Adding a tool there extends this
 # automatically, and the two cannot disagree.
+#
+# REVIEWED-KEEP 2026-08-15T1752Z §3.2: keep this derivation, and keep the
+# `.disabled` interlock in the loop below — reporting a bt-mode-disabled file
+# as drift would push the reader toward `./install.sh --apply`, which silently
+# reverts the controlled baseline; the tools must not send each other into a
+# loop.
 mapfile -t PAIRS < <(
     # Join backslash continuations first: install.sh wraps longer calls across
     # two lines, and parsing line-by-line yields "\" as the destination path —

@@ -16,6 +16,17 @@
 #   date arithmetic a gap across a month boundary must be positive and correct
 #   provenance      a contaminated probe set must be REFUSED, not reported
 #
+# REVIEWED-KEEP 2026-08-15T1752Z §4: two properties of this file were checked
+# adversarially and held; keep both when extending it.
+#   * The self-guards (open-trial refusal, PATH guard, farm_dir-only symlink
+#     farms, one EXIT trap, trial()-only invocations, /usr/bin fingerprint)
+#     each encode an escape that actually happened here — none is
+#     hypothetical, and none tolerates an exception list.
+#   * Fixtures are drawn from REAL log text (kernel wording, systemd wording,
+#     this project's own messages), never invented shapes — the recurring
+#     failure mode this suite documents is a pattern written on the machine
+#     where the other half never appears.
+#
 # Usage: tests/run-tests
 
 set -uo pipefail
@@ -1621,7 +1632,7 @@ PERT=$(mktemp)
 { head -1 evidence/trials/results.tsv
   printf 'x\tcontrolled_v2\tstock\tPERTURBED:btusb_reload:a=1\tr\t9\tv2\tconfirmed\tfailed\t10\t1\t1\t1\tno\tyes\t0\t0\t?\t0\tk\treboot\tyes\tbtusb_reload\n'
 } > "$PERT"
-PO=$(awk -f tools/lib/trial-summary.awk "$PERT" 2>&1)
+PO=$(awk -f tools/lib/trial-reclass.awk -f tools/lib/trial-summary.awk "$PERT" 2>&1)
 if grep -q 'CHANGED or PERTURBED' <<<"$PO" && ! grep -q 'PERTURBED:btusb_reload:a=1' <<<"$PO"; then
     ok "a perturbed trial is excluded and reported, not given its own rate"
 else
@@ -2967,6 +2978,13 @@ PMEARLY=$(pmf pm-early)
    && "$PMEARLY" == *"Early signal preceded the first timeout by 10s"* ]] \
     && ok "bt-postmortem reports early recovery and the window that allowed it" \
     || bad "the early-intervention incident was misread"
+# The interventions count must include the EARLY form. It used to match only
+# "intervening", so an EARLY-mode incident printed "watchdog intervened
+# <time>" (from the timeline, which matched both) beside "interventions 0
+# (early 1)" — the same line contradicting itself.
+[[ "$PMEARLY" == *"interventions 1 (early 1)"* ]] \
+    && ok "an EARLY intervention is counted as an intervention, not only flagged early" \
+    || bad "the incident counts do not include the EARLY intervention form"
 
 # Stage 1 duration is the window any reset has to fit inside — the number the
 # fix proposal is argued from. 60s here: first timeout to first USB failure.
@@ -4186,6 +4204,7 @@ cat > "$HS/jrn/unit-bt-hang-watchdog.b0.log" <<'HSW'
 Aug 10 09:12:00 host bt-hang-watchdog: 3 timeouts in 60s — intervening.
 Aug 10 09:12:30 host bt-hang-watchdog: EARLY intervention: desync signature
 Aug 10 09:12:40 host bt-hang-watchdog: RECOVERED after usb reset
+Aug 10 09:12:50 host bt-hang-watchdog: CONTROLLER RESPONDS AFTER EARLY INTERVENTION — BT-1 counterfactual censored
 HSW
 printf '#!/bin/sh\nexit 0\n' > "$HS/stub/hciconfig"
 printf '#!/bin/sh\necho "Device AA:BB:CC:00:00:01 Phone"\n' > "$HS/stub/bluetoothctl"
@@ -4206,8 +4225,8 @@ hs_run >/dev/null; hsrc=$?
 # file cannot reveal it — only the first line carries names.
 hs_hdr=$(awk -F'\t' 'NR==1 {print NF}' "$HS/metrics.tsv")
 hs_row=$(awk -F'\t' 'NR==2 {print NF}' "$HS/metrics.tsv")
-[[ "$hs_hdr" == "14" && "$hs_row" == "14" ]] \
-    && ok "bt-health-snapshot's row width matches its header (14 columns)" \
+[[ "$hs_hdr" == "15" && "$hs_row" == "15" ]] \
+    && ok "bt-health-snapshot's row width matches its header (15 columns)" \
     || bad "header has $hs_hdr columns, the row has $hs_row — the series is misaligned"
 
 # AND no field may be empty, which the width check alone cannot see. Dropping
@@ -4231,6 +4250,24 @@ lines=$(wc -l < "$HS/metrics.tsv"); heads=$(grep -c '^timestamp' "$HS/metrics.ts
     && ok "bt-health-snapshot appends rows and writes the header only once" \
     || bad "metrics.tsv has $lines line(s) and $heads header(s) after two runs"
 
+# THE SCHEMA MIGRATION, driven over a real pre-wd_early_ok file. The header is
+# written once and rows are appended forever, so adding a column REQUIRES the
+# writer to migrate an existing file — appending 15-field rows under a 14-field
+# header is the silent column reassignment the width invariant above exists to
+# prevent. Historical rows must read "-" (not recorded) in the new column,
+# never 0: a zero would claim the early outcome was measured and absent.
+printf 'timestamp\tboot_id\tkernel\tuptime_s\tdev_present\thci_alive\tusb_power_ctrl\tbtusb_autosusp\ttx_timeouts\tunexpected_evt\twd_interventions\twd_recovered\twd_failed\tconnected\n' > "$HS/legacy.tsv"
+printf 'T0\tdeadbeef\t7.0.0-28\t100\t1\t1\ton\tN\t0\t0\t0\t0\t0\t0\n' >> "$HS/legacy.tsv"
+env PATH="$HS/stub:$PATH" BT_METRICS="$HS/legacy.tsv" \
+    BT_SYSFS_USB="$HS/usb" BT_SYSFS_MODULE="$HS/mod" \
+    BT_JOURNAL_FIXTURE="$HS/jrn" bin/bt-health-snapshot >/dev/null 2>&1
+mig_widths=$(awk -F'\t' '{ print NF }' "$HS/legacy.tsv" | sort -u | tr '\n' ' ')
+mig_last=$(awk -F'\t' 'NR==2 { print $NF }' "$HS/legacy.tsv")
+mig_heads=$(grep -c '^timestamp' "$HS/legacy.tsv")
+[[ "$mig_widths" == "15 " && "$mig_last" == "-" && "$mig_heads" == "1" ]] \
+    && ok "a pre-wd_early_ok metrics file is migrated: every row 15 wide, legacy row '-'" \
+    || bad "migration wrong: widths='$mig_widths' legacy-last='$mig_last' headers=$mig_heads"
+
 # Columns by NAME, resolved from the header rather than hardcoded, so this
 # assertion survives a deliberate column addition and fails a reordering.
 hs_col() { awk -F'\t' -v want="$1" \
@@ -4247,6 +4284,17 @@ hs_col() { awk -F'\t' -v want="$1" \
 [[ "$(hs_col wd_interventions)" == "2" && "$(hs_col wd_recovered)" == "1" ]] \
     && ok "bt-health-snapshot counts both intervention forms" \
     || bad "wd_interventions=$(hs_col wd_interventions), want 2 — EARLY was missed again"
+
+# THE OUTCOME THE SCHEMA COULD NOT HOLD. An early intervention that left the
+# controller answering logged neither RECOVERED nor a failure, so the series
+# showed interventions=1, recovered=0 — indistinguishable from "attempted,
+# unverifiable". wd_early_ok records it WITHOUT calling it a recovery: the
+# fixture's early-success line must land in wd_early_ok (1) and must NOT
+# inflate wd_recovered (still 1) — folding the two together would let the
+# mitigation manufacture the recovery rate it is measured by.
+[[ "$(hs_col wd_early_ok)" == "1" && "$(hs_col wd_recovered)" == "1" ]] \
+    && ok "an early answered-after-action lands in wd_early_ok, not wd_recovered" \
+    || bad "wd_early_ok=$(hs_col wd_early_ok) wd_recovered=$(hs_col wd_recovered), want 1 and 1"
 
 [[ "$(hs_col dev_present)" == "1" && "$(hs_col hci_alive)" == "1" \
    && "$(hs_col usb_power_ctrl)" == "on" && "$(hs_col btusb_autosusp)" == "N" ]] \
@@ -4930,6 +4978,16 @@ EHR=$(BT_JOURNAL_FIXTURE="$EHF" BT_METRICS="$EHF/metrics.tsv" tools/bt-env-histo
 [[ "$EHR" == *"N"*"on"* ]] \
     && ok "autosuspend and power policy are joined from the metrics of that boot" \
     || bad "the metrics join produced no values"
+# The probes column counts COMPLETED snapshot runs. The fixture's boot 0 has
+# three "Starting ..." lines and two "Finished ..." lines (the third run died
+# before probing). Matching the unit description alone counted all five —
+# every probe twice, plus the run that never probed.
+# (The fixture file is named for the EVENT unit because the seam resolves the
+# last -u of a multi-unit query; the pattern under test is unit-independent.)
+ehp=$(grep -cE 'early\+late/3/60.* 2$' <<<"$EHR")
+(( ehp == 1 )) \
+    && ok "probes counts Finished lines only — a started-but-dead run is not a probe" \
+    || bad "the probes column does not count completed runs (want row ending in 2)"
 
 # ── bt-timeline.sh: its modes ───────────────────────────────────────────
 tl_() { BT_JOURNAL_FIXTURE="$BJ" tools/bt-timeline.sh "$@" 2>&1; }
@@ -5915,6 +5973,39 @@ TLRN=$(tlpert '2026-08-13T09:00:00.000000+0200 host kernel: Bluetooth: hci0: com
 [[ "$TLRN" == "none" ]] \
     && ok "an untouched window is still recorded as none — the detector discriminates" \
     || bad "a clean window recorded perturbed='$TLRN'"
+
+# ── a results file with no header must refuse, not renumber ─────────────
+#
+# next_trial_no() numbers a new trial by counting this build's rows under the
+# header. A results.tsv that EXISTS but has no recognisable header used to
+# collapse to "count = 0", so the next trial became #1 — and trial-01 of
+# whatever series the unreadable file was recording got overwritten. A missing
+# file is a legitimate empty series; a corrupt one is unjustifiable input, and
+# the tool's contract for that is refusal. Driven in its own scratch repo so
+# the corrupt file cannot leak into the rows the tests above keep asserting.
+TLNH=$(mktemp -d)
+mkdir -p "$TLNH/state" "$TLNH/evidence/trials"
+printf 'this line is not the results header\n' > "$TLNH/evidence/trials/results.tsv"
+tlnh() {
+    PATH="$TL/bin:$PATH" \
+    BT_REPO="$TLNH" BT_EVIDENCE_REPO="$TLNH" \
+    BT_STATE="$TLNH/state" BT_SYSFS_USB="$TL/sysfs" \
+    tools/bt-trial "$@" 2>&1
+}
+TLNHOUT=$(tlnh autostart stock); tlnhrc=$?
+if (( tlnhrc != 0 )) && [[ "$TLNHOUT" == *"refusing"* && ! -e "$TLNH/state/current" ]]; then
+    ok "autostart over a headerless results.tsv refuses instead of renumbering from 1"
+else
+    bad "a corrupt results.tsv did not stop trial numbering (rc=$tlnhrc): $TLNHOUT"
+fi
+[[ "$(cat "$TLNH/evidence/trials/results.tsv")" == "this line is not the results header" ]] \
+    && ok "the refusal leaves the corrupt file untouched for inspection" \
+    || bad "the corrupt results.tsv was modified by a refused autostart"
+TLNHS=$(tlnh start stock); tlnhsrc=$?
+(( tlnhsrc != 0 )) && [[ "$TLNHS" == *"refusing"* && ! -e "$TLNH/state/current" ]] \
+    && ok "manual start refuses over the same corrupt file — both entry points are guarded" \
+    || bad "start numbered a trial from a headerless results.tsv (rc=$tlnhsrc)"
+rm -rf "$TLNH"
 
 # ── bt-trial audit: recheck the record against the journal ──────────────
 #
@@ -7243,12 +7334,26 @@ tools/sanitize-logs.sh -i "$SANB/one.log" "$SANB/two.log" >/dev/null 2>&1; sanbr
 # replaces with documented placeholders in the reserved AA:BB:CC space, which
 # are themselves MAC-shaped. A shape check calls a correct sanitisation a
 # failure — it did, on the first run of this assertion.
-(( sanbrc == 0 )) \
-   && ! grep -q '00:11:22:33:44:55' "$SANB/one.log" \
-   && ! grep -qi 'AA:BB:CC:DD:EE:FF' "$SANB/two.log" \
-   && [[ -s "$SANB/one.log" && -s "$SANB/two.log" ]] \
-    && ok "-i sanitises every file it is given, in place" \
-    || bad "batch mode left an original address behind (rc=$sanbrc)"
+if (( awk_intervals_ok )); then
+    (( sanbrc == 0 )) \
+       && ! grep -q '00:11:22:33:44:55' "$SANB/one.log" \
+       && ! grep -qi 'AA:BB:CC:DD:EE:FF' "$SANB/two.log" \
+       && [[ -s "$SANB/one.log" && -s "$SANB/two.log" ]] \
+        && ok "-i sanitises every file it is given, in place" \
+        || bad "batch mode left an original address behind (rc=$sanbrc)"
+else
+    # Same capability gate as the redaction block above. On an incapable awk
+    # the tool's contract is refusal, and a refused batch must leave every
+    # input byte-identical — asserting the redaction here would just re-fail
+    # for the engine's reason, burying the real signal.
+    (( sanbrc != 0 )) \
+       && grep -q '00:11:22:33:44:55' "$SANB/one.log" \
+       && grep -qi 'AA:BB:CC:DD:EE:FF' "$SANB/two.log" \
+        && ok "-i refuses on an incapable awk and leaves the files untouched" \
+        || bad "-i on an incapable awk modified a file or returned success (rc=$sanbrc)"
+    echo "  · batch-mode redaction assertion SKIPPED: this awk lacks ERE intervals on groups"
+    echo "    (install gawk to run it; mawk 1.3.4 is not sufficient)"
+fi
 
 tools/sanitize-logs.sh -i "$SANB/nonexistent.log" >/dev/null 2>&1
 (( $? != 0 )) && ok "-i reports a file it cannot read instead of skipping it silently" \

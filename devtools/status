@@ -79,6 +79,9 @@ echo
 echo "${B}Machine${O}"
 
 # --- deployed? the question "pushed" does not answer ---
+# REVIEWED-KEEP 2026-08-15T1752Z §5: keep committed-vs-deployed as separate
+# rows — on this project the investigation machine runs INSTALLED copies, so
+# a pushed commit says nothing about what the watchdog is actually running.
 if [[ -x tools/bt-verify-install ]]; then
     vi=$(tools/bt-verify-install 2>/dev/null | tail -3 | grep -E 'in sync|drifted' | tail -1)
     if grep -q 'drifted' <<<"$vi"; then

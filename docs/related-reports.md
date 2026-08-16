@@ -7,6 +7,9 @@ multiple laptops over several years and asked how widespread it is.
 unusable afterwards — is reported across Qualcomm and Intel controllers, on multiple
 distributions, over at least seven years.
 
+> <!-- REVIEWED-KEEP 2026-08-15T1752Z §1.11: this file's value is holding the
+>      phenotype/cause line under a pile of similar-looking reports. Edits that
+>      promote "same symptom" to "same bug" undo it. -->
 > ⚠️ **Phenotype, not proven common cause.** `command tx timeout` is an endpoint symptom,
 > roughly like "disk I/O timeout": it says the controller stopped answering, not why.
 > Intel 7260 and this QCA9377 may have entirely different underlying bugs that converge

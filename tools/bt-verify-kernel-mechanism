@@ -123,7 +123,25 @@ check_id() {
     fi
     local id="$1" note="$2"
     local lo="${id:2:2}" hi="${id:0:2}"
-    if grep -qo "d313${lo}${hi}" "$TMP.hex" 2>/dev/null; then
+    # BYTE-ALIGNED match only. The hex file is one continuous stream, two
+    # characters per byte, so a plain substring search can also match starting
+    # mid-byte — the tail of one byte joined to the head of the next spelling
+    # "d313..." out of bytes that are not d3 13 at all. That false positive
+    # reports a device ID as present in a table it is not in, which is the
+    # opposite of this section's argument. A real usb_device_id starts on a
+    # byte boundary: 1-based character position must be odd
+    # (review 2026-08-15T1752Z §4.9).
+    if awk -v pat="d313${lo}${hi}" '
+        { hex = hex $0 }
+        END {
+            off = 1
+            while ((i = index(substr(hex, off), pat)) > 0) {
+                p = off + i - 1
+                if (p % 2 == 1) exit 0
+                off = p + 1
+            }
+            exit 1
+        }' "$TMP.hex" 2>/dev/null; then
         printf '  %s✓%s 13d3:%s  present   %s\n' "$G" "$O" "$id" "$note"
     else
         printf '  %s✗%s 13d3:%s  ABSENT    %s\n' "$R" "$O" "$id" "$note"

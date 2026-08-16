@@ -81,10 +81,12 @@ first thing to touch the device in that entire window. Across fifteen windows, a
 collapse has never once begun before something touched the controller. That is not proof
 of causation; it is the complete absence of the counterexample that would refute it.
 
-### The five levels a timestamp has to survive
+### The six levels (0–5) a timestamp has to survive
 
 Each level below was reached by getting the one before it wrong, in this repository, on
-real data. They are listed because the failures are not obvious in advance and each one
+real data. (The section long said "five levels" while its own table held six rows —
+level 0 was added last and sits beneath the rest; the heading now counts what the table
+counts. Review 2026-08-15T1752Z §1.3.) They are listed because the failures are not obvious in advance and each one
 produced a confident, clean-looking, wrong number.
 
 | Level | Question | How it was failed here |
@@ -128,7 +130,9 @@ recovers it.
 
 > **Untested assumption, flagged rather than removed.** Everywhere this project says *"a
 > warm reboot does not drop the M.2 power rail and will not recover it"* — the protocol's
-> step 0, `bt-mode`, `install.sh`, `EX-005`, `docs/related-reports.md` — that is hardware
+> step 0, `bt-mode`, `install.sh`, `EX-005`, `docs/related-reports.md`, and
+> `docs/investigation.md` §8 (which states it with a ✅, under that file's
+> historical-chronology banner) — that is hardware
 > reasoning which entered the documentation as fact. No exhibit supports it. On 2026-08-13
 > the controller recovered across a shutdown that reached `reboot.target`, though an
 > unlogged power-off in the 98 s gap is not excluded (`EX-017`), and firmware time cannot
@@ -170,6 +174,9 @@ from absence of a recognized preceding bus error rather than positive provenance
 breakdown is therefore pending re-capture under the positive/kernel/unknown reset categories.
 No curated exhibit currently establishes an uncensored USB loss, but the whole-journal
 zero must not be cited as mechanically re-verified until that re-capture is done.
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.3: the paragraph above deliberately
+     refuses to cite this register's own headline zero as re-verified until the
+     reset-provenance re-capture lands. Do not "tidy" the hedge away. -->
 
 Worse, the 45–66 s figure is visibly an artefact of the instrument. The short windows
 cluster at 29–121 s because that is the watchdog's reaction time; the two boots where
@@ -285,6 +292,11 @@ ID is a three-line patch, but submitting it as a *fix* requires showing it fixes
 Note the gap could also be deliberate: a silicon revision, a firmware architecture change,
 or a vendor reason for omitting exactly those three IDs. Absence is suggestive, not proof.
 
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.3: BT-3 argues BOTH directions — the
+     deliberate-omission alternative above and the unmeasured-sign caution
+     below. Edits that trim either half turn this register entry into
+     advocacy for the patch. -->
+
 ### ⚠️ The expected DIRECTION of this patch is no longer clear
 
 The quirk installs `hdev->reset`, which `hci_cmd_timeout()` calls on the **first** timeout.
@@ -394,8 +406,10 @@ it degrades the evidence available for every other Bluetooth bug. It also caused
 loss here — the aggressive rotation pruned away the pairing sequence of a session under
 active investigation before retention was raised.
 
-Not yet reported. The minimal reproducer now exists (below); a backtrace from the
-aborting process and a check against current BlueZ are still outstanding.
+*(An earlier trailing paragraph repeated the "still needed before filing" list from
+above and pointed at the reproducer as "below" when it is above — two generations of
+this section imperfectly merged; removed, review 2026-08-15T1752Z §1.3. The filing
+blockers are stated once, under "Minimal reproducer found".)*
 
 ---
 

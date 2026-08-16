@@ -28,7 +28,30 @@ PID="${BT_PID:-3503}"
 mkdir -p "$(dirname "$OUT")"
 
 if [[ ! -s "$OUT" ]]; then
-    printf 'timestamp\tboot_id\tkernel\tuptime_s\tdev_present\thci_alive\tusb_power_ctrl\tbtusb_autosusp\ttx_timeouts\tunexpected_evt\twd_interventions\twd_recovered\twd_failed\tconnected\n' > "$OUT"
+    printf 'timestamp\tboot_id\tkernel\tuptime_s\tdev_present\thci_alive\tusb_power_ctrl\tbtusb_autosusp\ttx_timeouts\tunexpected_evt\twd_interventions\twd_recovered\twd_failed\tconnected\twd_early_ok\n' > "$OUT"
+elif { IFS= read -r _hdr_line < "$OUT"; [[ "$_hdr_line" != *wd_early_ok* ]]; }; then
+    # ONE-TIME, TOOL-MEDIATED MIGRATION to the wd_early_ok schema.
+    #
+    # WHY THE COLUMN EXISTS. wd_interventions counts both intervention forms
+    # and wd_recovered counts confirmed post-timeout recoveries — but an EARLY
+    # intervention that left the controller answering logged neither, so it
+    # appeared as interventions=1, recovered=0, failed=0: indistinguishable
+    # from "attempted, unverifiable". The epistemics are deliberate (a
+    # censored outcome must not be called a recovery — the watchdog's own
+    # message says "no claim that a hang was imminent") but the schema then
+    # needs its own column or the distinction is lost in the series
+    # (review 2026-08-15T1752Z §2.2 — the mirror image of the Phase-10
+    # "interventions=0 beside recovered=1" defect).
+    #
+    # The header is written once and rows are appended forever, so a new
+    # column REQUIRES migrating the existing file: appending 15-field rows
+    # under a 14-field header is exactly the silent column-reassignment the
+    # suite's width invariant exists to prevent. Historical rows get "-"
+    # (not recorded), never 0 — a zero would claim the early outcome was
+    # measured and absent. Atomic: built in a temp file, renamed over.
+    _MIG=$(mktemp) || exit 1
+    awk -F'\t' 'NR==1 { print $0 "\twd_early_ok"; next } { print $0 "\t-" }' \
+        "$OUT" > "$_MIG" && mv -f "$_MIG" "$OUT" || { rm -f "$_MIG"; exit 1; }
 fi
 
 ts=$(date -Iseconds)
@@ -86,6 +109,12 @@ wd_log=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)
 wd_int=$(grep -cE "intervening|EARLY intervention" <<<"$wd_log")
 wd_rec=$(grep -c "RECOVERED" <<<"$wd_log")
 wd_fail=$(grep -c "RECOVERY FAILED\|FATAL:" <<<"$wd_log")
+# Controller ANSWERED after an early, pre-timeout intervention. Deliberately
+# not folded into wd_recovered: the early reset censored the counterfactual,
+# so this is "answered after action", never "recovered from a confirmed
+# stall". The legacy marker is counted too — old boots logged it before the
+# message was corrected. See the migration note at the top for the history.
+wd_early_ok=$(grep -cE "CONTROLLER RESPONDS AFTER EARLY INTERVENTION|EARLY recovery SUCCEEDED" <<<"$wd_log")
 
 # --- currently connected devices -------------------------------------------
 connected=0
@@ -93,7 +122,7 @@ if (( hci_alive )); then
     connected=$(timeout 8 bluetoothctl devices Connected 2>/dev/null | grep -c "^Device")
 fi
 
-printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "$ts" "$boot_id" "$kernel" "$uptime_s" "$dev_present" "$hci_alive" \
     "$usb_ctrl" "$btusb_autosusp" "$tx_timeouts" "$unexpected" \
-    "$wd_int" "$wd_rec" "$wd_fail" "$connected" >> "$OUT"
+    "$wd_int" "$wd_rec" "$wd_fail" "$connected" "$wd_early_ok" >> "$OUT"

@@ -143,6 +143,9 @@ log "  rotate=${MAX_MB}MB keep=$KEEP max~$((MAX_MB * KEEP / 1024))GB floor=${MIN
 
 prune
 
+# REVIEWED-KEEP 2026-08-15T1752Z 2.3: supervise-and-rotate, never tcpdump -C
+# -W (a ring, not an exit) — and the floor loop must never delete the file
+# being written (tcpdump holds the unlinked inode; see prune()).
 # ROTATION IS DONE HERE, NOT BY tcpdump. The first version used `-C $MAX_MB
 # -W 1` and relied on tcpdump EXITING at the size limit so this loop could
 # start a fresh timestamped file. That is not what -C with -W does: it is a

@@ -49,13 +49,17 @@ sudo ./uninstall.sh --apply                  # revert
 sudo ./uninstall.sh --apply --purge-metrics  # also delete collected metrics
 ```
 
-Removes everything `install.sh` adds: the watchdog script and unit, the HCI capture
-service, the metrics collector with its service and timer, all the `bt-*` commands
-(`bt-diagnose`, `bt-state`, `bt-boots`, `bt-boot-list`, `bt-timeline`, `bt-mark`,
-`bt-evidence`, `bt-incident`, `bt-postmortem`, `bt-health-report`, `bt-sanitize-logs`),
-`baseline.tsv`, the first-install stamp, every drop-in it wrote (device selection and
-verbose/early mode), the modprobe conf and both udev rules; then reloads udev and
-systemd and restores `enable_autosuspend=Y`.
+Removes everything `install.sh` adds. **The authoritative list is `install.sh`
+itself** — roughly 35 commands, the capture daemons, the shared `lib/` programs, the
+units, drop-ins, udev rules, the modprobe conf, `baseline.tsv` and the first-install
+stamp; then reloads udev and systemd and restores `enable_autosuspend=Y`. This
+paragraph deliberately does not enumerate the files: an earlier version froze an
+11-command list here that fell ~24 tools behind the installer while still reading as
+complete — the fourth hand-written list this repository has caught rotting
+(review 2026-08-15T1752Z §1.10). The mechanical guarantees are elsewhere:
+`tests/run-tests` asserts every `install_file` destination appears in
+`uninstall.sh`'s list, and `tools/verify-restored.sh` derives its checks from
+`install.sh` at run time.
 
 If a drop-in directory still holds files this project did not install — a
 `systemctl edit` override of your own, for instance — uninstall now **says so** rather

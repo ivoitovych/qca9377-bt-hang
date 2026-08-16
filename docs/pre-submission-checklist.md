@@ -25,6 +25,10 @@ BSSID leak serious. That justifies deferring the cleanup. It does not justify sk
 a kernel patch submission draws attention to the repository, which is exactly when a
 leaked identifier stops being theoretical.
 
+> <!-- REVIEWED-KEEP 2026-08-15T1752Z §1.11: the purge procedure derives the
+>      address list from history at purge time, OUTSIDE the repository, after
+>      the first draft re-leaked the addresses by spelling them as arguments.
+>      Never inline the list here. -->
 > ⚠️ **The addresses must not be spelled in this document.** The first version of this
 > section wrote them out literally as the `filter-repo` arguments — re-leaking into the
 > working tree, in both separator forms, the exact strings the section schedules for
