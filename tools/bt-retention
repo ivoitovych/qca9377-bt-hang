@@ -167,7 +167,7 @@ if (( risk > 0 )); then
     echo
     printf '  %s exhibit(s) sit in the OLDEST retained boot. That boot goes next.\n' "$risk"
     echo "  Archive their source now if the extraction may need re-running:"
-    echo "    journalctl -b <index> -o export | zstd > <somewhere-off-this-disk>"
+    echo "    bt-archive <boot-index>"
 fi
 (( gone > 0 )) && {
     echo

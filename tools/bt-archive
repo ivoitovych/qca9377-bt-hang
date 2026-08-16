@@ -1,0 +1,153 @@
+#!/bin/bash
+# bt-archive — copy one boot's journal off the rotating store, and prove the
+#              copy can be read back.
+#
+#   bt-archive <boot-index>      archive that boot
+#   bt-archive --list            what has been archived already
+#
+# WHY THIS EXISTS. The journal is a ring: SystemMaxUse=16G discards oldest-first
+# once reached, and dynamic debug writes about a million lines an hour, so the
+# instrumentation that makes a boot worth keeping is what evicts the boots
+# before it. Five windows' worth of source evidence had already gone before
+# anyone noticed. `bt-retention` reports which evidence is next; this is what
+# you do about it.
+#
+# WHAT IS AND IS NOT LOST WHEN A BOOT ROTATES. An exhibit records its extraction
+# command, its verbatim output and its exit status, so the CONCLUSION survives
+# in git indefinitely. What dies is RE-DERIVATION: asking the same boot a
+# question nobody thought to ask at capture time. For an upstream submission
+# that matters — a maintainer may want the full trace around an event, not the
+# three lines the exhibit happened to grep.
+#
+# So this is not a backup of the evidence. The evidence is in git. This
+# preserves the ability to ask new questions of old boots.
+#
+# EXPORT FORMAT, NOT TEXT. `-o export` is journald's own serialization and
+# replays with `journalctl --file`, so the archive answers arbitrary future
+# queries rather than only the ones a text dump happens to contain.
+#
+# ⚠️ THE ARCHIVE IS UNSANITISED. A raw journal carries MAC addresses and Wi-Fi
+# BSSIDs, and BSSIDs geolocate the machine. This repository publishes its logs
+# and has leaked addresses once. The archive therefore must never be committed,
+# and this refuses to write anywhere inside the repository rather than trusting
+# anyone to remember that.
+
+set -uo pipefail
+
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-archive: missing $LIBDIR/journal.sh" >&2; exit 2; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
+REPO="${BT_REPO:-$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)}"
+DEST="${BT_ARCHIVE_DIR:-$HOME/bt-journal-archive}"
+
+refuse() { echo "bt-archive: REFUSING — $*" >&2; exit 2; }
+
+LIST=0
+BOOT=""
+# A BOOT INDEX IS NEGATIVE, AND SO IS AN OPTION. `-1` is the argument this tool
+# is most often given, and a plain `-*` option case swallows it — the first
+# version refused `bt-archive -1` as an unknown option, which is the one
+# invocation that has to work. Numeric-looking arguments are boot indices;
+# everything beginning with a dash and a non-digit is an option.
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --list)      LIST=1 ;;
+        -h|--help)   sed -n '2,7p' "$0"; exit 0 ;;
+        -[0-9]*|[0-9]*) BOOT="$1" ;;
+        -*)          refuse "unknown option: $1" ;;
+        *)           refuse "not a boot index: $1" ;;
+    esac
+    shift
+done
+
+# ── the destination may not be inside the repository ─────────────────────
+#
+# Mechanical, not advisory. repo-scan's binary-capture check would catch a
+# committed archive, but only once it is staged — and the reason to keep this
+# out of the tree is stronger than tidiness: the export carries BSSIDs, and the
+# one thing this project must never publish is where the machine is.
+mkdir -p "$DEST" 2>/dev/null || refuse "cannot create $DEST"
+DEST_ABS=$(cd "$DEST" && pwd) || refuse "cannot resolve $DEST"
+case "$DEST_ABS/" in
+    "$REPO"/*) refuse "$DEST_ABS is inside the repository — an archive carries BSSIDs and must not be committable" ;;
+esac
+
+if (( LIST )); then
+    echo "bt-archive — $DEST_ABS"
+    shopt -s nullglob
+    found=0
+    for a in "$DEST_ABS"/boot-*.export.*; do
+        found=$((found + 1))
+        printf '  %-46s %s\n' "$(basename "$a")" "$(du -h "$a" 2>/dev/null | cut -f1)"
+    done
+    (( found == 0 )) && echo "  (nothing archived yet)"
+    exit 0
+fi
+
+[[ -n "$BOOT" ]] || refuse "usage: bt-archive <boot-index>   (e.g. -1, or 0 for the current boot)"
+
+# ── the compressor is PROBED, never assumed ──────────────────────────────
+#
+# zstd is the obvious choice and is not everywhere; this container has xz and
+# gzip and no zstd. A tool that hardcodes one and fails on a machine that
+# lacks it is useless at exactly the moment it is needed — the boot is
+# rotating now, not after someone installs a package.
+COMP=""; EXT=""; DECOMP=""
+for c in zstd xz gzip; do
+    command -v "$c" >/dev/null 2>&1 || continue
+    case "$c" in
+        zstd) COMP="zstd -q -T0"; EXT="zst"; DECOMP="zstd -dc" ;;
+        xz)   COMP="xz -T0";      EXT="xz";  DECOMP="xz -dc" ;;
+        gzip) COMP="gzip";        EXT="gz";  DECOMP="gzip -dc" ;;
+    esac
+    break
+done
+[[ -n "$COMP" ]] || refuse "no compressor found (zstd, xz or gzip) — refusing to write an uncompressed journal export"
+
+# Named by BOOT ID, which is stable, not by index, which shifts on every
+# reboot. An archive called boot--4 would name a different boot tomorrow.
+BID=$(bt_journal --list-boots --no-pager 2>/dev/null \
+      | awk -v b="$BOOT" '$1 == b { print $2; exit }')
+[[ -n "$BID" ]] || refuse "boot $BOOT is not in the retained journal — nothing to archive"
+
+OUT="$DEST_ABS/boot-${BID:0:8}.export.$EXT"
+[[ -e "$OUT" ]] && refuse "$OUT already exists — remove it deliberately rather than overwriting an archive"
+
+echo "bt-archive — boot $BOOT (id ${BID:0:8}) -> $OUT"
+echo "  compressor: ${COMP%% *}"
+
+TMP="$OUT.partial"
+trap 'rm -f "$TMP"' EXIT
+if ! bt_journal -b "$BOOT" -o export --no-pager 2>/dev/null | $COMP > "$TMP"; then
+    refuse "export failed — nothing written"
+fi
+[[ -s "$TMP" ]] || refuse "export produced an empty archive — nothing written"
+
+# ── READ IT BACK, OR IT IS NOT A BACKUP ──────────────────────────────────
+#
+# An archive nobody has decompressed is a belief, not a copy. The failure this
+# guards against is silent: a truncated write, a compressor that exited
+# non-zero inside a pipeline, a full disk. All three produce a plausible file.
+#
+# Compared on the count of record separators — an export stream delimits
+# entries with blank lines — because comparing bytes would only prove the
+# compressor round-trips, which was never in doubt.
+SRC_N=$(bt_journal -b "$BOOT" -o export --no-pager 2>/dev/null | grep -c '^__CURSOR=' || true)
+ARC_N=$($DECOMP < "$TMP" 2>/dev/null | grep -c '^__CURSOR=' || true)
+if (( ${SRC_N:-0} == 0 )); then
+    refuse "the source boot yielded no records — refusing to call an empty archive a backup"
+fi
+if (( ARC_N != SRC_N )); then
+    refuse "read-back mismatch: $SRC_N record(s) exported, $ARC_N recovered — archive discarded"
+fi
+
+mv -f "$TMP" "$OUT" || refuse "could not place $OUT"
+trap - EXIT
+printf '  %s records, %s on disk — read back and verified\n' "$SRC_N" "$(du -h "$OUT" 2>/dev/null | cut -f1)"
+echo
+echo "  Replay it with:  journalctl --file $OUT   (decompress first if needed)"
+echo "  ⚠️  UNSANITISED — carries MACs and BSSIDs. Do not commit it, and run it"
+echo "     through tools/sanitize-logs.sh before sharing any extract from it."
+exit 0
