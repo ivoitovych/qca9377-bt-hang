@@ -39,7 +39,16 @@ LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
 # shellcheck source=tools/lib/journal.sh
 source "$LIBDIR/journal.sh"
 
-REPO="${BT_REPO:-$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)}"
+# PHYSICAL, NOT LOGICAL, ON BOTH ENDS OF THE COMPARISON BELOW.
+#
+# `pwd` prints the path you arrived by; `pwd -P` prints where you actually are.
+# The guard below asks whether the destination lies inside the repository, and
+# a question about where a file will physically land cannot be answered with a
+# logical path. Fixing only the destination would leave the same hole open from
+# this side: BT_REPO is supplied by hand, and a repository reached through a
+# symlink would fail to match a destination correctly resolved.
+REPO="${BT_REPO:-$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd -P)}"
+REPO=$(cd "$REPO" 2>/dev/null && pwd -P) || REPO="${BT_REPO:-$REPO}"
 DEST="${BT_ARCHIVE_DIR:-$HOME/bt-journal-archive}"
 
 refuse() { echo "bt-archive: REFUSING — $*" >&2; exit 2; }
@@ -69,7 +78,7 @@ done
 # out of the tree is stronger than tidiness: the export carries BSSIDs, and the
 # one thing this project must never publish is where the machine is.
 mkdir -p "$DEST" 2>/dev/null || refuse "cannot create $DEST"
-DEST_ABS=$(cd "$DEST" && pwd) || refuse "cannot resolve $DEST"
+DEST_ABS=$(cd "$DEST" && pwd -P) || refuse "cannot resolve $DEST"
 case "$DEST_ABS/" in
     "$REPO"/*) refuse "$DEST_ABS is inside the repository — an archive carries BSSIDs and must not be committable" ;;
 esac
