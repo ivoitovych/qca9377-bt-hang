@@ -770,3 +770,32 @@ Every [GOOD] finding now has a source-site marker carrying the review
 timestamp, so a follow-up review can `grep -rn REVIEWED-KEEP` and skip
 re-deriving what this one already established — which was the point of
 elaborating them at all.
+
+---
+
+## Addendum — completeness check, and the entry it found missing
+
+A mechanical sweep of this document (84 catalogue rows, none pending,
+every CR ID present in an entry heading) found one finding whose WORK was
+done but whose ENTRY was never written: CR-54's marker was placed in
+Section B alongside CR-52/53, and the entry text was skipped. Recorded
+here rather than inserted into Section B, so the append-only order of
+this document stays truthful.
+
+### CR-54 [GOOD] tools/verify-restored.sh — **kept**
+
+REVIEWED-KEEP marker (§2.7) placed at the file's derivation block during
+Section B: the restore verifier derives its checklist at run time from
+install.sh rather than carrying a fourth hand list, refuses on an empty
+derivation instead of reporting a clean system from a parse failure, and
+treats a `.disabled` file as bt-mode's doing rather than as drift — the
+same interlock bt-verify-install carries, in the opposite direction.
+Verify: `grep -c 'REVIEWED-KEEP 2026-08-15T1752Z' tools/verify-restored.sh` → 1.
+
+With this entry, all 84 findings carry both a catalogue status and a
+written disposition. The sweep that decides this claim:
+
+```
+awk: catalogue rows == 84, none 'pending'
+grep '^### CR-' + range expansion: every ID 1..84 appears in a heading
+```
