@@ -721,3 +721,52 @@ refusal site (CR-66).
 Suite after Sections D+E: **all 602 invariants hold** under gawk; **582**
 under mawk with loud skips (CR-84's point). repo-validate: all checks
 passed, 74 of 433 files checkable.
+
+---
+
+## Final phase — coverage repair, register, and the gate
+
+The review's HIGH finding (CR-72) was that `main` failed its own coverage
+gate on stale exclusion ranges. Main repaired them; this branch's edits
+shifted lines again, and the repair was redone here the way
+coverage-exclude's new header note prescribes: propose from where each
+quoted program opens and closes, let the self-check arbitrate. Three
+entries were DELETED outright rather than re-pinned — bt-actions'
+renderer, bt-sco's window selector and bt-boot-stats' aggregator are now
+lib files under awk-coverage, so their shell-side exclusions no longer
+have a subject (the CR-57 change paying for itself in the gate's own
+currency). One entry split in two (bt-logvolume's pipeline is traced
+mid-pipe at the first program's close). Two self-check iterations were
+needed — the file's own warning that eye-derived ranges are wrong twice
+per attempt held for this attempt too.
+
+reviews/README.md gains the Reports row for this document and an action
+block for the review: HIGH/MED rows with verify commands, the full
+84-row disposition delegated to this document's catalogue, and the
+REVIEWED-KEEP grep given as the enumerator for kept practices.
+
+### The gate, all five instruments
+
+```
+tests/run-tests            all 602 invariants hold
+  (with mawk first)        all 582 invariants hold, loud skips
+devtools/repo-validate     all checks passed (74 of 433 checkable)
+devtools/coverage          89.6% — meets the 80% floor
+devtools/awk-coverage      88.0% — meets the 85% floor
+devtools/repo-scan . --all clean
+```
+
+### Disposition totals
+
+84 findings: 42 fixed on this branch (including CR-84, found while
+working), 2 fixed on main between the review and this branch (CR-68,
+CR-73), 25 kept with REVIEWED-KEEP markers at the practice they protect,
+15 recorded (accepted decisions, verified-consistent notes, and CR-72 —
+whose fix landed on main and whose recurrence was repaired above),
+0 declined, 0 open. Counts derive from the catalogue:
+`awk -F'|' '/^\| CR-/ {gsub(/ /,"",$7); c[$7]++} END {for (k in c) print k, c[k]}' <this file>`.
+
+Every [GOOD] finding now has a source-site marker carrying the review
+timestamp, so a follow-up review can `grep -rn REVIEWED-KEEP` and skip
+re-deriving what this one already established — which was the point of
+elaborating them at all.
