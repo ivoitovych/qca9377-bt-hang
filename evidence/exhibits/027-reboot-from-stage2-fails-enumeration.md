@@ -109,6 +109,13 @@ operator's account with no supporting log line, and only the enumeration afterwa
 evidenced. **The reboot/power-off question is therefore still open**, and this exhibit
 does not close it in either direction.
 
+> **Closed 11 minutes later by `EX-028`.** A `poweroff.target` transition at 18:57:34,
+> from this same stage-2 state, brought the controller back at `+1.020 s`. The terminator
+> is a journal line rather than an account, so the question above is now answered: power
+> removal clears the wedge, a kernel restart does not. This paragraph is left as written
+> rather than edited, because what it was honest to claim at the time is part of the
+> record.
+
 **What is not claimed.** That a reboot from stage 1 *reliably* recovers the controller.
 `n = 1` on each side of the pair. What is claimed is narrower and is what the lines
 support: on this occasion the same command produced opposite outcomes, and the recorded
