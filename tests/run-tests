@@ -6081,6 +6081,64 @@ BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RTE" tools/bt-rete
     || bad "an empty exhibit set produced a clean retention report"
 rm -rf "$RT" "$RTE"
 
+# ── bt-archive: the answer to what bt-retention warns about ─────────────
+#
+# The journal is a ring, so evidence has a half-life set by this project's own
+# verbosity. bt-retention says what is going; this is what you do about it.
+#
+# It is NOT a backup of the evidence — an exhibit already carries its command,
+# its verbatim output and its exit status, so conclusions survive in git
+# indefinitely. What rotation destroys is RE-DERIVATION: asking an old boot a
+# question nobody thought to ask when it was captured, which is exactly what a
+# kernel maintainer does with a submission.
+AR=$(mktemp -d)
+ARO=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$AR" tools/bt-archive -1 2>&1); arrc=$?
+if (( arrc == 0 )) && [[ "$ARO" == *"read back and verified"* ]] && ls "$AR"/boot-*.export.* >/dev/null 2>&1; then
+    ok "bt-archive exports a boot, names it by boot id, and verifies the read-back"
+else
+    bad "bt-archive did not produce a verified archive (rc=$arrc): $(tail -1 <<<"$ARO")"
+fi
+
+# A NEGATIVE BOOT INDEX IS NOT AN OPTION, and the first version thought it was.
+# `-1` is the argument this tool is most often given; a plain `-*` case refused
+# the one invocation that has to work.
+[[ "$ARO" == *"boot -1"* ]] \
+    && ok "a negative boot index is read as an index, not as an unknown option" \
+    || bad "bt-archive rejected -1, the argument it exists to take"
+
+# AN ARCHIVE NOBODY READ BACK IS A BELIEF, NOT A COPY. The failure is silent —
+# a truncated write, a compressor that died inside a pipeline, a full disk all
+# produce a plausible file. Driven by truncating the stream.
+ARTRUNC=$(mktemp -d)
+sed 's#| \$COMP > "\$TMP"#| head -4 | $COMP > "$TMP"#' tools/bt-archive > "$ARTRUNC/bt-archive"
+chmod +x "$ARTRUNC/bt-archive"
+ARD=$(mktemp -d)
+ARTO=$(BT_LIBDIR="$PWD/tools/lib" BT_REPO="$PWD" BT_JOURNAL_FIXTURE=tests/journal/archive \
+       BT_ARCHIVE_DIR="$ARD" "$ARTRUNC/bt-archive" -1 2>&1); artrc=$?
+ARLEFT=$(ls -A "$ARD" 2>/dev/null | wc -l)
+if (( artrc == 2 )) && [[ "$ARTO" == *"read-back mismatch"* ]] && (( ARLEFT == 0 )); then
+    ok "a truncated archive is refused and discarded, not filed as a backup"
+else
+    bad "a truncated archive survived (rc=$artrc, $ARLEFT file(s) left): $(tail -1 <<<"$ARTO")"
+fi
+
+# THE DESTINATION MAY NOT BE INSIDE THE REPOSITORY. A raw export carries MACs
+# and Wi-Fi BSSIDs, and BSSIDs geolocate the machine. repo-scan would catch a
+# committed archive once staged; this refuses to create one that could be.
+#
+# A LOCAL TEMP ROOT, NOT $SCRATCH. The first version used $SCRATCH, which is
+# not assigned until a thousand lines further down — under `set -u` the run
+# aborted here. Third time today a check referenced a work-list defined later in
+# the file; the EXIT trap caught this one and printed the resource report, which
+# is what it was added for.
+ARREPO=$(mktemp -d)
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARREPO/inside" \
+    BT_REPO="$ARREPO" tools/bt-archive -1 >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-archive refuses a destination inside the repository — a BSSID-carrying file must not be committable" \
+    || bad "bt-archive would have written an unsanitised journal export inside the repo"
+rm -rf "$AR" "$ARD" "$ARTRUNC" "$ARREPO"
+
 # ── status: the view that decides whether to abort a trial in progress ───
 #
 # The one command an operator runs WHILE a trial is open, and the only place
