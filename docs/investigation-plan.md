@@ -479,3 +479,83 @@ directions — usbcore's dynamic debug was not enabled.
 **What would settle it:** enable dynamic debug on `usbcore`/`hub` for the resume and reset
 paths before the next window, so the caller is named in the log rather than inferred from
 what is absent.
+
+### BL-08 — our own shutdown hook times out, and it corrupts the trial record doing it
+
+Found 2026-08-16 from a photograph of the shutdown screen, which showed
+`Job bt-trial-auto.service/stop running (1min 17s / 1min 40s)`. The journal confirms it on
+both of that afternoon's reboots:
+
+```
+2026-08-16T15:28:29  Stopping bt-trial-auto.service …
+2026-08-16T15:29:59  bt-trial-auto.service: Stopping timed out. Terminating.
+2026-08-16T15:29:59  bt-trial-auto.service: Control process exited, code=killed, status=15/TERM
+2026-08-16T15:29:59  bt-trial-auto.service: Failed with result 'timeout'.
+2026-08-16T15:29:59  bt-trial-auto.service: Consumed 1min 20.147s CPU time, 95.6M memory peak
+
+2026-08-16T18:44:36  Stopping bt-trial-auto.service …
+2026-08-16T18:46:06  bt-trial-auto.service: Stopping timed out. Terminating.
+2026-08-16T18:46:06  bt-trial-auto.service: Consumed 1min 24.224s CPU time, 95.0M memory peak
+```
+
+**It is CPU-bound, not blocked.** 1 min 24 s of CPU in 90 s of wall clock is the close path
+scanning the journal, not `hci_alive` waiting on a dead controller — that call is capped at
+`timeout 6`. The 90 s is `TimeoutStopSec` expiring on work that never finishes.
+
+**Four consequences, in increasing order of seriousness.**
+
+1. **Every shutdown costs 90 s** while a trial is open. On a shared kitchen laptop that is
+   a real tax, and it is ours.
+2. **The close is killed, so the row is never written** — the failure mode already known
+   from the `enum_at_boot` fix, still live by another path.
+3. **The state file survives the kill, so the next boot does not open a trial.**
+   `autostart` exits early on `[[ -e "$CUR" ]]`, so one `trial` record silently spans
+   several boots. `observational_boot` is boots-with-a-hang over total boots; merging
+   boots into one row makes that denominator wrong in the same way `BL-04` did.
+4. **The trial directory is reused and overwritten.** `evidence/trials/stock/trial-04/`
+   was written by one trial at 03:35 and by a different trial at 18:48:14 the same day.
+   The first generation exists **only because it happened to be committed** at `1f97aba`
+   while working on an unrelated exhibit:
+
+   ```console
+   $ git show 1f97aba:evidence/trials/stock/trial-04/state-before.txt | head -3
+   device 13d3:3503
+     usb path        3-3
+     power/control   auto
+   $ head -3 evidence/trials/stock/trial-04/state-before.txt
+   device 13d3:3503
+     usb path        absent
+     power/control   -
+   ```
+
+   Nothing in the tooling preserved it. **This is a priority-1 violation reached by
+   accident of good luck**, and it is the reason it belongs at the top of this list.
+
+**What the row that did get written says.** Trial 4 closed at the 18:57:33 power-off,
+recording `treatment=autosusp=?,power=?` and `bt1_status=not_observed` — for a boot in
+which `EX-026` documents a textbook BT-1 fault at 15:37:49. The degraded values are honest
+about the controller being absent; the `not_observed` is not, and it would pool into a
+denominator as a clean boot.
+
+**The other thing the hook does, which matters for the exhibits.** `autostop` calls
+`hci_alive`, and `hci_alive` runs `timeout 6 hciconfig "$h" name` — an HCI
+Read_Local_Name to the controller. **When a trial is open, every shutdown touches the
+device.** That bears directly on `EX-025`, whose claim is that its window was "ended by an
+ordinary system shutdown rather than by anything touching the device".
+
+`EX-025` appears to survive: its `bt-trial-auto` stop at `2026-08-15T19:23:58` completed
+inside the same second with no timeout, and every close with a trial open takes 90 s — so
+no trial was open and no probe was issued. That inference should be replaced with a direct
+check before the exhibit is cited upstream, and **any future shutdown-censored window must
+be checked for an open trial before it is called untouched.**
+
+**What it is NOT.** It does not prevent a reboot, and it cannot affect whether a reboot
+clears the controller: it runs in userspace before `reboot.target`, and clearing the
+controller is a matter of VBUS, which no userspace program holds. Across all fourteen
+retained boots exactly one failed to enumerate — the reboot from stage 2 in `EX-027` —
+and that boot's predecessor had already had the device off the bus for over three hours.
+
+**The fix has three parts, and none is "raise the timeout".** Bound the close path's
+journal work the way `enum_at_boot` was bounded; clear the state file even when the close
+is killed, so a boot is never silently merged; and derive the trial directory so a reused
+number cannot overwrite an existing one.
