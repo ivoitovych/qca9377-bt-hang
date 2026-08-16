@@ -343,9 +343,13 @@ install_file "$SRC/tools/lib/timestamp.awk"     /usr/local/bin/lib/timestamp.awk
 install_file "$SRC/tools/lib/interval.awk"      /usr/local/bin/lib/interval.awk      0644
 install_file "$SRC/tools/lib/capdiff-match.awk" /usr/local/bin/lib/capdiff-match.awk 0644
 install_file "$SRC/tools/lib/trial-summary.awk"   /usr/local/bin/lib/trial-summary.awk   0644
+install_file "$SRC/tools/lib/trial-reclass.awk"   /usr/local/bin/lib/trial-reclass.awk   0644
 install_file "$SRC/tools/lib/trial-sco-table.awk" /usr/local/bin/lib/trial-sco-table.awk 0644
 install_file "$SRC/tools/lib/stage2.awk"        /usr/local/bin/lib/stage2.awk        0644
 install_file "$SRC/tools/lib/phase.awk"         /usr/local/bin/lib/phase.awk         0644
+install_file "$SRC/tools/lib/boot-hours.awk"    /usr/local/bin/lib/boot-hours.awk    0644
+install_file "$SRC/tools/lib/sco-window.awk"    /usr/local/bin/lib/sco-window.awk    0644
+install_file "$SRC/tools/lib/actions-render.awk" /usr/local/bin/lib/actions-render.awk 0644
 # Not an awk program: journal.sh is SOURCED by the tools that read the journal,
 # so it lives beside them for the same reason and must be installed with them.
 # A tool that sources a file it did not ship fails at run time on the installed

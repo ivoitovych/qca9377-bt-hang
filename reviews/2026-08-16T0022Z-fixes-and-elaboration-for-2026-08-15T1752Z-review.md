@@ -91,18 +91,18 @@ review section that argued for it. Grep `REVIEWED-KEEP` to enumerate them.
 | CR-53 | NOTE | 2.6 | uninstall.sh | hand lists acceptable (suite derives + asserts) | recorded |
 | CR-54 | GOOD | 2.7 | tools/verify-restored.sh | derived lists; refusal; .disabled awareness | kept |
 | CR-55 | LOW | 2.7 | bin/bt-evidence | MANIFEST wd_recovered early blind spot | fixed |
-| CR-56 | MED | 3.1 | tools/bt-trial | $KJ temp file never removed | pending |
-| CR-57 | MED | 3.1 | bt-actions, bt-sco, bt-boot-stats | civil-date arithmetic ×4 copies | pending |
-| CR-58 | MED | 3.1 | bt-trial, bt-env-history | probe/abort counts include systemd lifecycle lines | pending |
-| CR-59 | NOTE | 3.1 | tools/lib/journal.sh | seam-vs-PATH-stub rule unwritten | pending |
-| CR-60 | MED | 3.2 | tools/lib/trial-summary.awk | rec[] dead; unknown bucket invisible | pending |
-| CR-61 | LOW | 3.2 | tools/lib/trial-sco-table.awk | four exclusion reasons one message | pending |
-| CR-62 | LOW | 3.2 | tools/bt-trial | NOHEADER results.tsv restarts numbering at 1 | pending |
-| CR-63 | LOW | 3.2 | tools/bt-verify-kernel-mechanism | hex scan can match at nibble offset | pending |
-| CR-64 | LOW | 3.2 | tools/bt-postmortem | n_act counts late only; t_act includes early | pending |
-| CR-65 | LOW | 3.2 | tools/bt-logvolume | arg-slice drops -o cat; counts "-- No entries --" | pending |
-| CR-66 | NOTE | 3.2 | tools/* | remaining tools read clean; standouts named | pending |
-| CR-67 | GOOD | 3.2 | tools/sanitize-logs.sh | two-direction engine gate; atomic in-place | pending |
+| CR-56 | MED | 3.1 | tools/bt-trial | $KJ temp file never removed | fixed |
+| CR-57 | MED | 3.1 | bt-actions, bt-sco, bt-boot-stats | civil-date arithmetic ×4 copies | fixed |
+| CR-58 | MED | 3.1 | bt-trial, bt-env-history | probe/abort counts include systemd lifecycle lines | fixed |
+| CR-59 | NOTE | 3.1 | tools/lib/journal.sh | seam-vs-PATH-stub rule unwritten | recorded |
+| CR-60 | MED | 3.2 | tools/lib/trial-summary.awk | rec[] dead; unknown bucket invisible | fixed |
+| CR-61 | LOW | 3.2 | tools/lib/trial-sco-table.awk | four exclusion reasons one message | fixed |
+| CR-62 | LOW | 3.2 | tools/bt-trial | NOHEADER results.tsv restarts numbering at 1 | fixed |
+| CR-63 | LOW | 3.2 | tools/bt-verify-kernel-mechanism | hex scan can match at nibble offset | fixed |
+| CR-64 | LOW | 3.2 | tools/bt-postmortem | n_act counts late only; t_act includes early | fixed |
+| CR-65 | LOW | 3.2 | tools/bt-logvolume | arg-slice drops -o cat; counts "-- No entries --" | fixed |
+| CR-66 | NOTE | 3.2 | tools/* | remaining tools read clean; standouts named | kept |
+| CR-67 | GOOD | 3.2 | tools/sanitize-logs.sh | two-direction engine gate; atomic in-place | kept |
 | CR-68 | MED | 4 | tests/run-tests | five invariants nested in width-check branch | pending |
 | CR-69 | NOTE | 4 | tests/run-tests | self-guards held under adversarial reading | pending |
 | CR-70 | GOOD | 4 | tests/run-tests + fixtures | fixtures drawn from real log text | pending |
@@ -115,7 +115,7 @@ review section that argued for it. Grep `REVIEWED-KEEP` to enumerate them.
 | CR-77 | GOOD | 6 | reviews/ | report+register+verifier design | pending |
 | CR-78 | NOTE | 6 | reviews/README.md | open items accurately recorded | pending |
 | CR-79 | NOTE | 6 | README.md | register's 85% is the number to quote (feeds CR-01) | pending |
-| CR-80 | MED | 7 | evidence/trials/results.tsv readers | pre-fix CHANGED: row excluded from denominator | pending |
+| CR-80 | MED | 7 | evidence/trials/results.tsv readers | pre-fix CHANGED: row excluded from denominator | fixed |
 | CR-81 | LOW | 7 | tools/bt-exhibit + exhibits/README.md | EX-018 index claim cell empty | pending |
 | CR-82 | NOTE | 7 | evidence/README.md | first-real-hang predates full session layout | pending |
 | CR-83 | GOOD | 7 | evidence/ | baseline incomparability notes; exhibit capture | pending |
@@ -466,3 +466,136 @@ censored-not-recovered rationale in place.
 
 Suite after Section B: **all 593 invariants hold** (591 + the two CR-42
 tests).
+
+## Section C — tools/ (CR-56 .. CR-67, CR-80)
+
+### CR-56 [MED] bt-trial's $KJ temp file never removed — **fixed**
+
+`trap 'rm -f "$KJ"' EXIT` immediately after the mktemp. It cannot be
+removed inline like `$WJ` — `jk()` reads it all the way down to the
+SCO-timing block — so the trap covers the normal return and every early
+exit between. The comment marks it as the script's only EXIT trap, to be
+extended rather than replaced (the run-tests one-EXIT-trap lesson,
+applied preemptively).
+
+### CR-57 [MED] civil-date arithmetic, four copies — **fixed**
+
+Three new libraries under `tools/lib/`, each built on `timestamp.awk`'s
+`iso_secs()` (the one implementation that already handles month/year
+boundaries and TZ offsets):
+
+- `boot-hours.awk` — hours between two ISO stamps (bt-boot-stats);
+  verified 2.5h across a month boundary where the old
+  `(dd*24+hh)+mm/60` delta arithmetic returns garbage.
+- `sco-window.awk` — the two-pass SCO-window mark/selection
+  (bt-sco --window).
+- `actions-render.awk` — the collapse-cadence renderer (bt-actions).
+
+The three consumers now load them with `-f` beside `timestamp.awk`
+(never inline programs beside `-f` — the repo's own trap), with
+lib-presence guards matching the existing style. install.sh /
+uninstall.sh carry all three, keeping the pairing invariant derivable.
+
+### CR-58 [MED] probe/abort counts include systemd lifecycle noise — **fixed**
+
+Both bt-trial counters and bt-env-history's probes column: a oneshot run
+logs `Starting <desc>...` AND `Finished <desc>.`, so matching the unit
+description counted every probe twice (and counted runs that died before
+probing). All three sites now count `^Finished Snapshot Bluetooth health
+metrics` only; `probe_to_tmo`'s nearest-preceding-probe lookup matches
+`Finished` for the same reason. `aborts` matches bt-trace's actual
+message `btmon exited` instead of bare `exited`. Comments carry the
+systemd-wording caveat (old systemd said "Started"; re-verify after an
+upgrade). New envhist fixture (3 Starting / 2 Finished) pins the
+completed-runs-only semantics; the suite asserts the row ends in 2,
+not 5.
+
+### CR-59 [NOTE] seam-vs-PATH-stub strategy unwritten — **recorded**
+
+journal.sh header now states the rule: reading tools are driven through
+the fixture seam; actuating tools (bt-trial, bt-window, bt-incident) are
+driven in the PATH-stub sandbox because their risk is acting on a real
+controller, not reading the wrong journal — so a tool missing from the
+UT-10 conversion list is not necessarily a coverage gap.
+
+### CR-60 [MED] trial-summary's rec[] counted, never shown — **fixed**
+
+The table gains a RESCUED column (`rec/inc`). It is not derivable from
+the others: INC − UNRECOV also contains confirmed rows whose controller
+came back *without* intervention. New fixture `rescued-shown` pins
+exactly that distinction (UNRECOV 1/4, INC 3/4, RESCUED 1/3 — the
+fourth confirmed row survived unaided). The UNKNOWN display half of the
+original finding was already fixed on main; verified, and the
+regenerated `.expected` files carry both.
+
+### CR-61 [LOW] sco-table: four exclusion reasons, one message — **fixed**
+
+`censored`/`drifted`/`unread` are now separate counters with separate
+messages; "censored by early watchdog intervention" is claimed only for
+`censored_pre_failure` rows. The `censored-excluded` fixture (which holds
+one of each) now shows three one-count lines instead of one false
+three-count line.
+
+### CR-62 [LOW] headerless results.tsv restarts numbering at 1 — **fixed**
+
+`next_trial_no()` distinguishes a missing file (legitimately trial 1)
+from an existing file whose first line is not the header: the latter
+refuses with an explanation, and both callers (`start`, `autostart`)
+propagate the refusal with `|| exit 1`. Fixing it exposed a second
+defect: the awk printed NOHEADER inline *and* a count from END (awk runs
+END after `exit`), so the caller's compare saw neither token — the
+verdict now comes from END alone. Three new sandboxed tests drive a
+corrupt file through both entry points and assert the file is left
+untouched for inspection.
+
+### CR-63 [LOW] device-ID hex scan can match at nibble offset — **fixed**
+
+`check_id()` replaces the bare substring grep with a byte-aligned awk
+match (1-based position must be odd). A mid-byte match spells the ID out
+of bytes that are not `d3 13 …` and reports a device present in a table
+it is not in — the opposite of the section's argument. Both directions
+verified against synthetic hex streams.
+
+### CR-64 [LOW] postmortem n_act missed EARLY interventions — **fixed**
+
+`n_act` now matches `intervening|EARLY intervention`, same as the
+timeline's `t_act` — previously one incident printed "watchdog
+intervened <time>" beside "interventions 0". Suite asserts
+`interventions 1 (early 1)` over the pm-early fixture.
+
+### CR-65 [LOW] logvolume rate slice drops -o cat; counts "-- No entries --" — **fixed**
+
+The 60-second window rebuilds its argument list explicitly (RATEARGS)
+instead of slicing JARGS by index — the slice silently went stale
+whenever JARGS changed shape. An empty window's `-- No entries --`
+stdout line is excluded from the count (one phantom line per quiet
+minute otherwise).
+
+### CR-66 / CR-67 [NOTE+GOOD] tool standouts — **kept**
+
+REVIEWED-KEEP markers placed at the five standouts: sanitize-logs.sh
+(two-direction engine gate + build-then-rename in-place path),
+bt-exhibit (did-not-run refusal + missing-sanitiser treated as failing),
+bt-boot-list (three-rung --list-boots ladder, each rung a real systemd
+breakage), bt-verify-install (derivation from install.sh + `.disabled`
+interlock), bt-mode (single-call-site dry-run).
+
+### CR-80 [MED] pre-fix CHANGED row excluded from the real denominator — **fixed**
+
+New `tools/lib/trial-reclass.awk`: a read-time corrector loaded with
+`-f` before both results.tsv consumers (bt-trial report does it; the
+fixtures load it via DEPS). A `CHANGED:a->b` treatment where `b` differs
+from `a` only by fields whose closing value is `?` is classified under
+`a` — the same correction the writer now applies
+(`treatment_only_became_unreadable`), applied to rows the pre-fix writer
+already recorded. Real changes pass through untouched; PERTURBED rows
+are never touched; both reports print a reclassification note so the
+report and the raw TSV cannot silently disagree. The evidence file is
+not rewritten (the no-hand-editing rule stands). Fixtures:
+`reclassified-unreadable` (both consumers) and `changed-real-excluded`
+(a genuine change stays out). Over the real record, trial stock #2 —
+one of the two most informative failures — re-enters the observational
+denominator.
+
+Suite after Section C: **all 602 invariants hold** (599 + the three new
+reclass/rescued fixture cases).

@@ -65,9 +65,13 @@ FILES=(
     /usr/local/bin/lib/interval.awk
     /usr/local/bin/lib/capdiff-match.awk
     /usr/local/bin/lib/trial-summary.awk
+    /usr/local/bin/lib/trial-reclass.awk
     /usr/local/bin/lib/trial-sco-table.awk
     /usr/local/bin/lib/stage2.awk
     /usr/local/bin/lib/phase.awk
+    /usr/local/bin/lib/boot-hours.awk
+    /usr/local/bin/lib/sco-window.awk
+    /usr/local/bin/lib/actions-render.awk
     /usr/local/bin/lib/journal.sh
     /usr/local/bin/bt-sco
     /usr/local/bin/bt-capdiff

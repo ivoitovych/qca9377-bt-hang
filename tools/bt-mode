@@ -76,6 +76,10 @@ set -- ${ARGS[@]+"${ARGS[@]}"}
 need_root() { (( DRY )) && return 0
               [[ $EUID -eq 0 ]] || { echo "bt-mode: must run as root" >&2; exit 1; }; }
 
+# REVIEWED-KEEP 2026-08-15T1752Z §3.2: keep the single-call-site dry-run
+# design — run()/write_to() are the only mutation paths, so --dry-run cannot
+# drift from apply. A separate "print the plan" branch is how dry runs rot.
+#
 # Every mutation goes through run(), so the dry run cannot drift from what
 # apply does: they are the same call site with one branch between them.
 run() { if (( DRY )); then echo "  would run: $*"; else "$@"; fi; }

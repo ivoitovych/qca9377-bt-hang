@@ -232,13 +232,34 @@ next_trial_no() {
     # overwriting an existing trial directory. The report was already guarded
     # this way; this call site was not.
     local build="$1" n
+    # A results file that does not exist yet is an empty series: this is the
+    # first trial. A file that EXISTS but has no recognisable header is a
+    # different thing entirely — a corrupt or foreign file — and numbering
+    # against it restarts at 1, which OVERWRITES trial-01 of whatever series
+    # the unreadable file was recording. Refusal is the only safe output: the
+    # caller cannot pick a number that is guaranteed not to collide
+    # (review 2026-08-15T1752Z §4.4).
+    if [[ ! -s "$RESULTS" ]]; then
+        echo 1
+        return 0
+    fi
+    # The verdict is printed from END alone. awk runs END even after `exit`
+    # from a rule, so printing NOHEADER inline AND a count from END emitted
+    # two lines for a corrupt file — and the caller's string compare saw
+    # neither token.
     n=$(awk -F'\t' -v b="$build" '
         NR == 1 { for (i = 1; i <= NF; i++) c[$i] = i
-                  if (!("build" in c)) { print "NOHEADER"; exit 1 }
+                  if (!("build" in c)) { bad = 1; exit 1 }
                   next }
         $c["build"] == b { n++ }
-        END { print n + 0 }' "$RESULTS" 2>/dev/null)
-    [[ "$n" == "NOHEADER" || -z "$n" ]] && n=0
+        END { print (bad ? "NOHEADER" : n + 0) }' "$RESULTS" 2>/dev/null)
+    if [[ "$n" == "NOHEADER" || -z "$n" ]]; then
+        echo "bt-trial: $RESULTS exists but its first line is not the results header —" >&2
+        echo "  refusing to number a new trial against it. Numbering from a corrupt" >&2
+        echo "  file restarts at 1 and overwrites an existing trial directory." >&2
+        echo "  Inspect the file; if it is scrap, remove it and retry." >&2
+        return 1
+    fi
     echo $(( n + 1 ))
 }
 
@@ -268,7 +289,7 @@ start)
         exit 1
     fi
     mkdir -p "$STATE" "$TRIALS"
-    n=$(next_trial_no "$build")
+    n=$(next_trial_no "$build") || exit 1
     dir="$TRIALS/$build/trial-$(printf '%02d' "$n")"
     mkdir -p "$dir"
     { echo "start=$(date +%s)"; echo "build=$build"; echo "n=$n"; echo "dir=$dir"
@@ -309,7 +330,10 @@ autostart)
     build="${2:-${BT_BUILD:-stock}}"
     [[ -e "$CUR" ]] && exit 0          # already open; nothing to do
     mkdir -p "$STATE" "$TRIALS"
-    n=$(next_trial_no "$build")
+    # A refusal here fails the unit visibly at boot. That is intended: an
+    # auto-trial silently numbered from a corrupt file records a boot into
+    # someone else's trial directory, which is worse than no trial.
+    n=$(next_trial_no "$build") || exit 1
     dir="$TRIALS/$build/trial-$(printf '%02d' "$n")"
     mkdir -p "$dir"
     # Captured AT START. The row must answer "what was this trial exposed to?",
@@ -373,6 +397,12 @@ hang|ok)
     # survival manufactured from an unreadable journal. `unknown` cannot protect
     # against a failure it never learns about.
     KJ=$(mktemp) || { echo "bt-trial: mktemp failed" >&2; exit 1; }
+    # The capture is read via jk() all the way to the SCO-timing block far
+    # below, so it cannot be removed inline like WJ is; the EXIT trap covers
+    # the normal return and every early exit between here and there. This is
+    # the only EXIT trap in the script — extend it rather than replacing it
+    # if another temp file ever needs the same guarantee.
+    trap 'rm -f "$KJ"' EXIT
     if journalctl -k --since "$since" --no-pager -o short-iso-precise > "$KJ" 2>/dev/null; then
         journal_ok=1
     else
@@ -721,11 +751,24 @@ hang|ok)
     # for btmon to have finished restarting; unspaced probes produce fewer. So
     # the relation is "consistent with 1:1 under spaced observation", NOT an
     # established 1:1, and the abort count is itself a lower bound.
+    # Count COMPLETED runs only. `-u <unit> -o cat` includes systemd's own
+    # lifecycle messages, and a oneshot run emits BOTH "Starting <desc>..."
+    # and "Finished <desc>." — matching the description alone counts every
+    # probe twice (review 2026-08-15T1752Z §4.6). "Finished" is also the
+    # honest event: a run that started and died issued no (complete) probe.
+    # Wording is systemd's, not ours — old systemd said "Started" for
+    # oneshots — so verify against the live journal after a systemd upgrade.
+    # Both unit descriptions begin "Snapshot Bluetooth health metrics", so
+    # one anchored pattern covers the timer- and event-driven units.
     probes=$(journalctl -u bt-health-snapshot.service -u bt-health-snapshot-event.service \
              --since "$since" --no-pager -o cat 2>/dev/null \
-             | grep -c "Snapshot Bluetooth health metrics" || true)
+             | grep -c "^Finished Snapshot Bluetooth health metrics" || true)
+    # bt-trace's restart message is "btmon exited (#N) — ...". Bare "exited"
+    # also matched any other unit output containing the word (including
+    # messages about bt-trace itself exiting), inflating a column that is
+    # already only "consistent with 1:1", never an established count.
     aborts=$(journalctl -u bt-trace --since "$since" --no-pager -o cat 2>/dev/null \
-             | grep -c "exited" || true)
+             | grep -c "btmon exited" || true)
 
     # Distance from the last probe preceding the first timeout. Empty when there
     # was no timeout; "?" when a timeout occurred with no probe before it.
@@ -736,9 +779,13 @@ hang|ok)
     # exposure distribution, and that is where any conclusion belongs.
     probe_to_tmo="?"
     if [[ -n "$t_tmo" ]]; then
+        # "Finished" only, for the same reason as the probes count above: the
+        # unfiltered description also matches the "Starting ..." line, and the
+        # nearest match before the timeout could then be the start of a run
+        # whose probe had not yet been issued.
         t_probe=$(journalctl -u bt-health-snapshot.service --since "$since" --until "$t_tmo" \
                   --no-pager -o short-iso-precise 2>/dev/null \
-                  | grep "Snapshot Bluetooth health" | tail -1 | cut -d' ' -f1)
+                  | grep "Finished Snapshot Bluetooth health" | tail -1 | cut -d' ' -f1)
         if [[ -n "$t_probe" ]]; then
             probe_to_tmo=$(awk -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/interval.awk" -v a="$t_probe" -v b="$t_tmo")
         fi
@@ -875,14 +922,18 @@ report)
     # resolved from the header rather than hardcoded, so adding a field cannot
     # silently shift what is being counted — which is how a denominator gets
     # corrupted without anyone editing the arithmetic.
-    awk -f "$LIBDIR/trial-summary.awk" "$RESULTS" || {
+    # trial-reclass.awk is loaded FIRST: it corrects, at read time, rows a
+    # pre-fix writer recorded as CHANGED when a treatment field merely became
+    # unreadable at close. See the header of that file for what it may and
+    # may not touch.
+    awk -f "$LIBDIR/trial-reclass.awk" -f "$LIBDIR/trial-summary.awk" "$RESULTS" || {
         echo "bt-trial: denominator report FAILED — refusing to print a partial report" >&2
         exit 1
     }
     echo
     echo "${B}Was the SCO stimulus actually applied, and did it matter?${O}"
     echo "─────────────────────────────────────────────────────────────"
-    awk -f "$LIBDIR/trial-sco-table.awk" "$RESULTS" || {
+    awk -f "$LIBDIR/trial-reclass.awk" -f "$LIBDIR/trial-sco-table.awk" "$RESULTS" || {
         echo "bt-trial: SCO cross-tab FAILED — refusing to print a partial report" >&2
         exit 1
     }

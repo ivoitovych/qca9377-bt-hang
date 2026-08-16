@@ -113,6 +113,11 @@ cmd_new() {
     bash -c "$cmd" > "$raw" 2>&1
     rc=$?
 
+    # REVIEWED-KEEP 2026-08-15T1752Z §3.2: keep both refusals below — the
+    # did-not-run exits (127/126) and the missing-sanitiser case being treated
+    # exactly like a failing sanitiser. Each closes a path by which an exhibit
+    # could record something other than evidence.
+    #
     # 127/126 mean the command DID NOT RUN (not found / not executable). An
     # exhibit records evidence, and a command that never executed produced
     # none — EX-019 shipped exactly this way, its output reading "command not

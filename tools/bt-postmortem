@@ -113,7 +113,14 @@ printf '%-34s %-10s %s\n' "controller recovered"       "$(hm "$t_rec")"   "$(del
 # Counts scoped to this incident only.
 cwin() { awk -v s="$WIN_A" -v e="$WIN_B" '$1>=s && $1<=e' | grep -cE "$1" || true; }
 n_to=$(awk -v s="$t_first" -v e="$t_last" '$1>=s && $1<=e' <<<"$(grep -E 'command( 0x[0-9a-f]+)? tx timeout' <<<"$KLOG")" | wc -l)
-n_act=$(cwin "intervening"            <<<"$WLOG")
+# Both intervention forms, matching t_act above and the watchdog's two
+# messages: a threshold intervention logs "... — intervening." and an early
+# one logs "EARLY intervention: ...". Counting only "intervening" made this
+# line contradict its own timeline — "watchdog intervened <time>" from t_act
+# beside "interventions 0" — for every EARLY-mode incident
+# (review 2026-08-15T1752Z §4.10; same defect as bt-health-snapshot's
+# wd_interventions column).
+n_act=$(cwin "intervening|EARLY intervention" <<<"$WLOG")
 n_early=$(cwin "EARLY intervention"   <<<"$WLOG")
 n_rec=$(cwin "RECOVERED"              <<<"$WLOG")
 n_eok=$(cwin "EARLY recovery SUCCEEDED|CONTROLLER RESPONDS AFTER EARLY INTERVENTION" <<<"$WLOG")

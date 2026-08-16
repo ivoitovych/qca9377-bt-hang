@@ -56,6 +56,12 @@ fi
 
 indices=""
 
+# REVIEWED-KEEP 2026-08-15T1752Z §3.2: keep the three-rung ladder below (JSON,
+# then -q, then header-stripped plain text) exactly as ordered. Each rung
+# exists because a real systemd version broke the one above it — see the file
+# header — and collapsing them to the "obvious" single call reintroduces the
+# version dependence this tool was written to absorb.
+
 # 1. JSON — unambiguous where supported.
 if [[ -z "$indices" ]]; then
     j=$(bt_journal --list-boots -o json 2>/dev/null) || j=""

@@ -76,8 +76,19 @@ NR==1 {
     # between matching endpoints. trial-summary.awk excludes BOTH; excluding
     # only CHANGED here let an interior-perturbed trial into this 2x2 while
     # the rate table alongside it refused the same row.
-    if ($col["treatment"] ~ /^(CHANGED|PERTURBED):/) { censored++; next }
-    if (o == "censored_pre_failure" || o == "unknown") { censored++; next }
+    # Three exclusions, three counters. They used to share one counter and
+    # one message — "censored by early watchdog intervention" — which is true
+    # of only the first. A drifted treatment is a reconfiguration, not a
+    # watchdog action; an unknown is an unreadable journal, not an
+    # intervention. A reader tallying "how often did the watchdog censor a
+    # window" against that line would count events that never happened
+    # (review 2026-08-15T1752Z §3.3).
+    # Same read-time correction as trial-summary (trial-reclass.awk, loaded
+    # with -f before this file): a pre-fix CHANGED: marker that records only
+    # a visibility loss re-enters the 2x2; real drift is still excluded.
+    if (reclass_treatment($col["treatment"]) ~ /^(CHANGED|PERTURBED):/) { drifted++; next }
+    if (o == "censored_pre_failure") { censored++; next }
+    if (o == "unknown")              { unread++;   next }
     # "hung" here means the DEFECT occurred, regardless of whether the
     # controller was later rescued. Recovery is a fact about the mitigation,
     # not about whether the stimulus coincided with a failure.
@@ -96,6 +107,9 @@ END {
     printf "  %-22s %8d %12d\n", "no SCO setup", c+0, d+0
     if (unknown) printf "\n  (%d trial(s) with no SCO field — recorded before this was tracked)\n", unknown
     if (censored) printf "  (%d trial(s) censored by early watchdog intervention — excluded)\n", censored
+    if (drifted)  printf "  (%d trial(s) whose treatment CHANGED or was PERTURBED mid-run — excluded)\n", drifted
+    if (unread)   printf "  (%d trial(s) with UNKNOWN evidence — journal unreadable at close — excluded)\n", unread
+    if (reclassified) printf "  (%d pre-fix CHANGED row(s) reclassified at read time — see trial-reclass.awk)\n", reclassified
     print ""
     # Braces are mandatory here. Written without them, the second and third
     # print statements fell OUTSIDE the if, leaving `else` with no matching

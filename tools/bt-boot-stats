@@ -35,6 +35,9 @@ set -uo pipefail
 # fixture; see tools/lib/journal.sh.
 LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
 [[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-boot-stats: missing $LIBDIR/journal.sh" >&2; exit 1; }
+for _f in timestamp.awk boot-hours.awk; do
+    [[ -r "$LIBDIR/$_f" ]] || { echo "bt-boot-stats: missing $LIBDIR/$_f" >&2; exit 1; }
+done
 # shellcheck source=tools/lib/journal.sh
 source "$LIBDIR/journal.sh"
 
@@ -71,20 +74,14 @@ for b in $("$BOOTLIST" 2>/dev/null); do
     first=$(head -1 <<<"$log" | cut -d' ' -f1)
     last=$(tail -1 <<<"$log" | cut -d' ' -f1)
     d=${first%%T*}
-    # Full civil-date arithmetic: the day-of-month version printed -678.4 for a
-    # boot spanning a month boundary, into a committed exhibit (EX-003).
-    hours=$(awk -v a="$first" -v b="$last" '
-        function days(y, m, d,   era, yoe, doy, doe) {
-            if (m <= 2) y--
-            era = int((y >= 0 ? y : y - 399) / 400)
-            yoe = y - era * 400
-            doy = int((153 * (m + (m > 2 ? -3 : 9)) + 2) / 5) + d - 1
-            doe = yoe * 365 + int(yoe / 4) - int(yoe / 100) + doy
-            return era * 146097 + doe - 719468
-        }
-        function s(t,   p, q, r) { split(t, p, "T"); split(p[2], q, /[:.+]/); split(p[1], r, "-")
-                                   return days(r[1]+0, r[2]+0, r[3]+0) * 86400 + q[1]*3600 + q[2]*60 + q[3] }
-        BEGIN { printf "%.1f", (s(b) - s(a)) / 3600 }')
+    # Shared civil-date arithmetic (tools/lib/boot-hours.awk + timestamp.awk):
+    # the private day-of-month copy this replaces printed -678.4 hours for a
+    # boot spanning a month boundary, into a committed exhibit (EX-003), and a
+    # private-but-correct copy is the divergence risk timestamp.awk exists to
+    # end (review 2026-08-15T1752Z §3.1). "?" on a parse failure, never a
+    # plausible number.
+    hours=$(awk -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/boot-hours.awk" \
+                -v a="$first" -v b="$last" </dev/null) || hours="?"
 
     h=no
     if (( nt > 0 )); then h=yes; fi

@@ -41,6 +41,19 @@
 # and exits 0. It also means a test that forgets a file sees a tool reporting
 # "no records", which is a legible outcome rather than a crash.
 #
+# TWO TEST STRATEGIES COEXIST IN THIS TREE, ON PURPOSE. Tools that only READ
+# the journal (bt-phase, bt-postmortem, bt-env-history, ...) are driven
+# through this seam: a fixture directory stands in for the journal and
+# nothing else about the environment matters. Tools that also ACT on the
+# system (bt-trial, bt-window, bt-incident) are driven in a PATH-stub sandbox
+# instead, because their risk is not "reads the wrong journal" but "resets a
+# real controller / writes into the real evidence tree", and only a stubbed
+# PATH plus redirected BT_* roots contains that. Converting an actuating tool
+# to this seam would cover its journal reads while leaving its actions live
+# under test — the more dangerous half. So a tool appearing in UT-10's
+# "not converted" list is not necessarily a gap; it may be sandboxed by the
+# other strategy (review 2026-08-15T1752Z §3.4).
+#
 # This file is SOURCED, so it must not set shell options, define traps, or run
 # anything at load time — its callers set their own `set -uo pipefail` and would
 # inherit whatever it changed.

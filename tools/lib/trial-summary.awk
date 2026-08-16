@@ -49,7 +49,13 @@ NR == 1 {
     # disabled, or with a recovery watchdog able to rescue the controller, are
     # not the same experiment as trials taken without — pooling them under one
     # build name produces a denominator that mixes treatments silently.
-    e  = $c["treatment"]
+    # Through the read-time correction first (trial-reclass.awk, loaded with
+    # -f before this file): a CHANGED: marker whose two fingerprints differ
+    # only by fields that became `?` is a pre-fix writer's record of a
+    # visibility loss, not of a treatment change, and is classified under the
+    # treatment the trial verifiably ran under. Real changes pass through
+    # untouched and are still excluded below.
+    e  = reclass_treatment($c["treatment"])
     k  = ty "|" b "|" e
     envs[e] = 1
     # A trial whose treatment changed mid-run was not conducted under one
@@ -119,12 +125,20 @@ END {
     # a plausible report AND a non-zero status, and the report is what gets
     # read. Bail before printing anything.
     if (abort) exit 1
-    printf "  %-18s %-6s %-8s %-8s %-7s %-8s %s\n", "TRIAL TYPE", "BUILD", "UNRECOV", "BT-1 INC", "RATE", "CENSORED", "mean dur"
+    # RESCUED is printed, not only counted. rec[] had been incremented since
+    # the two-axis split and read nowhere, so the watchdog's success count —
+    # the quantity the mitigation exists to maximise — was invisible in the
+    # one table built to judge it. It is NOT derivable from the other columns:
+    # INC − UNRECOV also contains confirmed rows whose controller came back
+    # WITHOUT intervention, which is a different fact
+    # (review 2026-08-15T1752Z §3.2).
+    printf "  %-18s %-6s %-8s %-8s %-8s %-7s %-8s %s\n", "TRIAL TYPE", "BUILD", "UNRECOV", "BT-1 INC", "RESCUED", "RATE", "CENSORED", "mean dur"
     for (k in tot) {
         split(k, p, "|")
         rate = (tot[k] ? 100 * (inc[k] + 0) / tot[k] : 0)
-        printf "  %-18s %-6s %-8s %-8s %-7s %-8s %.0fs\n", p[1], p[2],
+        printf "  %-18s %-6s %-8s %-8s %-8s %-7s %-8s %.0fs\n", p[1], p[2],
                (h[k] + 0) "/" (tot[k] + 0), (inc[k] + 0) "/" (tot[k] + 0),
+               (rec[k] + 0) "/" (inc[k] + 0),
                (tot[k] ? sprintf("%.0f%%", rate) : "n/a"),
                (cen[k] + 0) "/" (seen[k] + 0), (tot[k] ? sum[k] / tot[k] : 0)
         printf "      treatment: %s\n", p[3]
@@ -201,5 +215,16 @@ END {
         print  "     These are not survivals. Counting them as such understates"
         print  "     the incidence, and dropping them without saying so makes the"
         print  "     denominator smaller than the sample with nothing to show it."
+    }
+
+    # The read-time correction announces itself. A reader tallying this report
+    # against the raw TSV would otherwise find a CHANGED: row counted in a
+    # denominator and conclude the exclusion is broken.
+    if (reclassified > 0) {
+        print ""
+        printf "  %d row(s) reclassified at read time: recorded as CHANGED by a\n", reclassified
+        print  "  pre-fix writer when a treatment field merely became unreadable"
+        print  "  at close. Counted under the treatment the trial ran under."
+        print  "  (tools/lib/trial-reclass.awk; the raw TSV is not rewritten.)"
     }
 }

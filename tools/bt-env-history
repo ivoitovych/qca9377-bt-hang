@@ -94,8 +94,14 @@ bt_journal --list-boots --no-pager 2>/dev/null \
         power=$(cut -d' ' -f2 <<<"$vals")
     fi
 
+    # Completed runs only. A oneshot unit logs "Starting <desc>..." AND
+    # "Finished <desc>." per run, so matching the description alone counted
+    # every probe twice — same defect and same fix as bt-trial's probes
+    # column (review 2026-08-15T1752Z §4.6). systemd's wording, not ours:
+    # re-verify against the live journal after a systemd upgrade.
     probes=$(bt_journal -u bt-health-snapshot.service -u bt-health-snapshot-event.service \
-             -b "$idx" --no-pager -o cat 2>/dev/null | grep -c "Snapshot Bluetooth health" || true)
+             -b "$idx" --no-pager -o cat 2>/dev/null \
+             | grep -c "^Finished Snapshot Bluetooth health" || true)
     [[ "${probes:-0}" -gt 0 ]] && pr="${probes}" || pr="none"
 
     printf '%-5s %-12s %-16s %-11s %-7s %s\n' \
