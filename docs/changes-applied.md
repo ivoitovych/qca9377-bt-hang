@@ -7,7 +7,14 @@
 
 ---
 
-## 0. Summary of blast radius
+## 0. Summary of blast radius — as of 2026-08-10, the first install
+
+> ⚠️ Scope: the table below counts the ORIGINAL 2026-08-10 install only. The
+> dated sections at the end of this file add roughly a dozen more scripts,
+> four units, two drop-ins and a udev rule; `install.sh` is the authoritative
+> current manifest, and `bt-verify-install` derives its checks from it.
+> (The table used to read as document-wide while being day-one only —
+> review 2026-08-15T1752Z §1.9.)
 
 **Every persistent change is a NEW file. No pre-existing file was modified or deleted.**
 
@@ -325,6 +332,9 @@ regardless of the file count, and is the bound that cannot be wrong.
 
 **Rule taken from this:** a change to a default is not applied until the value *in effect*
 has been read back. Record the verification command alongside the change, not the intent.
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.9: this section applies its own rule in
+     the same paragraph that states it (the systemctl show read-back above).
+     Keep the verification command next to the change record. -->
 
 ---
 

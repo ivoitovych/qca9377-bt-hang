@@ -103,6 +103,13 @@ Boot began Sat 2026-08-08 08:59:22. No reboot since — ~1 day 18 h uptime.
 first* one is a `HCI_Disconnect` — the host trying to tear down a link and the chip
 refusing to acknowledge.
 
+*(Count note: this file was appended to while the boot was still running. The 19 here
+and in §7's table were true when written; §9 and §10 say 22 because the boot kept
+failing. The published baseline log holds the final count — 22 `tx timeout` lines,
+decomposing as 21 command timeouts + 1 `link tx timeout` (ACL supervision, a different
+layer; see `EX-015`). None of these figures is an error; they are timestamps of a
+moving count. Review 2026-08-15T1752Z §1.4.)*
+
 ### The trigger sequence ✅
 
 The ordering is consistent and mechanistic:
@@ -195,8 +202,6 @@ a while," not with a random cosmic-ray event.
 
 Reboot history also shows the machine is rebooted very frequently (34 boots in ten weeks,
 several per day on Aug 7–8), which corroborates the reported daily-routine workaround.
-
----
 
 ---
 
@@ -502,7 +507,8 @@ snapshots, and the pre-change baseline side by side.
 
 **Baseline:** `evidence/baseline/baseline.tsv` — 34 boots, 287 timeouts, **13 of 34 boots hung**.
 
-Journald already persists (`/var/log/journal` present, 35 boots retained), so no logging
+Journald already persists (`/var/log/journal` present, 35 boots retained — the 34
+quoted everywhere else excludes the then-current boot), so no logging
 configuration was changed.
 
 ### Reading the result in a day or two
@@ -518,6 +524,10 @@ doing the kernel's missing job. Failure is `FATAL: no longer on the USB bus` rea
 which means the chip hard-hung before the watchdog caught it; the response is to lower
 `BT_THRESHOLD` to 2 and `BT_WINDOW` to 30 via `systemctl edit bt-hang-watchdog`.
 
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.4: the synthetic-line disclosure below
+     (what was injected, when, why, and the arithmetic) is the level of honesty
+     every published attachment depends on. It must travel with any copy of
+     these numbers. -->
 ⚠️ Boot 0 of 2026-08-10 contains **3 synthetic `tx timeout` lines** injected at ~03:07 to
 test the watchdog. Subtract them from that boot's count.
 

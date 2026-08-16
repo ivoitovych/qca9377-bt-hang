@@ -1,5 +1,11 @@
 # Investigation plan — data before code
 
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.8: reviewed clean in full. Worth
+     preserving as-is: A1's explicit downgrade from "decisive" to
+     "strong, not decisive", the A4 gate (no build before a denominator), and
+     the BL-01/BL-02 backlog form — each states why it matters, what
+     limitation travels with the data, and when it must be done by. -->
+
 Agreed with the operator 2026-08-11: **collect and understand before changing anything.**
 Patching the driver first would change a variable before the baseline exists, and after
 fifteen phases in which "it worked for a while" meant nothing, we would not be able to

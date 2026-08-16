@@ -43,37 +43,37 @@ review section that argued for it. Grep `REVIEWED-KEEP` to enumerate them.
 | CR-05 | NOTE | 1.1 | tools/bt-diagnose | exit-code contract verified real | recorded |
 | CR-06 | GOOD | 1.1 | README.md | publishing-logs section explains why | kept |
 | CR-07 | GOOD | 1.1 | README.md | candidate-fix "+0 s never tested" table | kept |
-| CR-08 | MED | 1.2 | HISTORY.md | "Current state" section stale, no banner | pending |
-| CR-09 | LOW | 1.2 | HISTORY.md | superseded early-phase claims lack forward pointers | pending |
-| CR-10 | LOW | 1.2 | HISTORY.md | dangling commit hash 4c4047d | pending |
-| CR-11 | NOTE | 1.2 | HISTORY.md | Phase 12 resolves the CR-02 notation | pending |
-| CR-12 | NOTE | 1.2 | HISTORY.md | retained-boot counts drift 34→18→23→22 | pending |
-| CR-13 | GOOD | 1.2 | HISTORY.md | lessons are mechanised, not just recorded | pending |
-| CR-14 | LOW | 1.3 | docs/issues.md | BT-4 carries two merged text generations | pending |
-| CR-15 | NOTE | 1.3 | docs/issues.md | "five levels" table has six rows | pending |
-| CR-16 | GOOD | 1.3 | docs/issues.md | BT-3 argues both directions | pending |
-| CR-17 | GOOD | 1.3 | docs/issues.md | 9/5 reset-provenance caveat | pending |
-| CR-18 | LOW | 1.4 | docs/investigation.md | boot-0 timeout counts 19 vs 22 unannotated | pending |
-| CR-19 | LOW | 1.4 | docs/investigation.md | "35 boots retained" vs 34 elsewhere | pending |
-| CR-20 | LOW | 1.4 | docs/investigation.md | doubled horizontal rule | pending |
-| CR-21 | NOTE | 1.4 | docs/issues.md | warm-reboot claim list misses investigation.md §8 | pending |
-| CR-22 | GOOD | 1.4 | docs/investigation.md | synthetic-line disclosure | pending |
-| CR-23 | MED | 1.5 | docs/bug-report.md | Confidence note fossilised at n=3 | pending |
-| CR-24 | LOW | 1.5 | docs/bug-report.md | attachments quote conflated 22 count | pending |
-| CR-25 | NOTE | 1.5 | docs/bug-report.md | consumer device names deliberate | pending |
-| CR-26 | GOOD | 1.5 | docs/bug-report.md | Windows-comparison framing | pending |
-| CR-27 | MED | 1.6 | docs/fix-proposal.md | §3b small-n fossil ("two failed late resets") | pending |
-| CR-28 | LOW | 1.6 | docs/fix-proposal.md | section order 3b→5a→4→5 | pending |
-| CR-29 | GOOD | 1.6 | docs/fix-proposal.md | six-behaviour enumeration; two-axis decision rules | pending |
-| CR-30 | GOOD | 1.6 | docs/fix-proposal.md | conservative suggested commit message | pending |
-| CR-31 | MED | 1.7 | docs/firmware-hypothesis.md | refuted "two things" model retained | pending |
-| CR-32 | LOW | 1.7 | docs/firmware-hypothesis.md | pre-Phase-16 cmd_timeout vocabulary | pending |
-| CR-33 | GOOD | 1.8 | docs/investigation-plan.md | A1 downgrade; BL-01/BL-02 form | pending |
-| CR-34 | LOW | 1.9 | docs/changes-applied.md | §0 blast radius reads document-wide, is day-one | pending |
-| CR-35 | GOOD | 1.9 | docs/changes-applied.md | verification-command-beside-change rule | pending |
-| CR-36 | MED | 1.10 | docs/restore-original-state.md | §2 hand-frozen 11-command list | pending |
-| CR-37 | NOTE | 1.10 | three docs | tooling disclosure — owner's decision | pending |
-| CR-38 | GOOD | 1.11 | pre-submission-checklist, related-reports | purge procedure; phenotype/cause line | pending |
+| CR-08 | MED | 1.2 | HISTORY.md | "Current state" section stale, no banner | fixed |
+| CR-09 | LOW | 1.2 | HISTORY.md | superseded early-phase claims lack forward pointers | fixed |
+| CR-10 | LOW | 1.2 | HISTORY.md | dangling commit hash 4c4047d | fixed |
+| CR-11 | NOTE | 1.2 | HISTORY.md | Phase 12 resolves the CR-02 notation | recorded |
+| CR-12 | NOTE | 1.2 | HISTORY.md | retained-boot counts drift 34→18→23→22 | recorded |
+| CR-13 | GOOD | 1.2 | HISTORY.md | lessons are mechanised, not just recorded | kept |
+| CR-14 | LOW | 1.3 | docs/issues.md | BT-4 carries two merged text generations | fixed |
+| CR-15 | NOTE | 1.3 | docs/issues.md | "five levels" table has six rows | fixed |
+| CR-16 | GOOD | 1.3 | docs/issues.md | BT-3 argues both directions | kept |
+| CR-17 | GOOD | 1.3 | docs/issues.md | 9/5 reset-provenance caveat | kept |
+| CR-18 | LOW | 1.4 | docs/investigation.md | boot-0 timeout counts 19 vs 22 unannotated | fixed |
+| CR-19 | LOW | 1.4 | docs/investigation.md | "35 boots retained" vs 34 elsewhere | fixed |
+| CR-20 | LOW | 1.4 | docs/investigation.md | doubled horizontal rule | fixed |
+| CR-21 | NOTE | 1.4 | docs/issues.md | warm-reboot claim list misses investigation.md §8 | fixed |
+| CR-22 | GOOD | 1.4 | docs/investigation.md | synthetic-line disclosure | kept |
+| CR-23 | MED | 1.5 | docs/bug-report.md | Confidence note fossilised at n=3 | fixed |
+| CR-24 | LOW | 1.5 | docs/bug-report.md | attachments quote conflated 22 count | fixed |
+| CR-25 | NOTE | 1.5 | docs/bug-report.md | consumer device names deliberate | recorded |
+| CR-26 | GOOD | 1.5 | docs/bug-report.md | Windows-comparison framing | kept |
+| CR-27 | MED | 1.6 | docs/fix-proposal.md | §3b small-n fossil ("two failed late resets") | fixed |
+| CR-28 | LOW | 1.6 | docs/fix-proposal.md | section order 3b→5a→4→5 | fixed |
+| CR-29 | GOOD | 1.6 | docs/fix-proposal.md | six-behaviour enumeration; two-axis decision rules | kept |
+| CR-30 | GOOD | 1.6 | docs/fix-proposal.md | conservative suggested commit message | kept |
+| CR-31 | MED | 1.7 | docs/firmware-hypothesis.md | refuted "two things" model retained | fixed |
+| CR-32 | LOW | 1.7 | docs/firmware-hypothesis.md | pre-Phase-16 cmd_timeout vocabulary | fixed |
+| CR-33 | GOOD | 1.8 | docs/investigation-plan.md | A1 downgrade; BL-01/BL-02 form | kept |
+| CR-34 | LOW | 1.9 | docs/changes-applied.md | §0 blast radius reads document-wide, is day-one | fixed |
+| CR-35 | GOOD | 1.9 | docs/changes-applied.md | verification-command-beside-change rule | kept |
+| CR-36 | MED | 1.10 | docs/restore-original-state.md | §2 hand-frozen 11-command list | fixed |
+| CR-37 | NOTE | 1.10 | three docs | tooling disclosure — owner's decision | recorded |
+| CR-38 | GOOD | 1.11 | pre-submission-checklist, related-reports | purge procedure; phenotype/cause line | kept |
 | CR-39 | LOW | 2.1 | bin/bt-hang-watchdog | python3 dependency unchecked at startup | pending |
 | CR-40 | LOW | 2.1 | bin/bt-hang-watchdog | give-up message differs early vs late | pending |
 | CR-41 | GOOD | 2.1 | bin/bt-hang-watchdog | O_CREAT-less open; wrong-radio guard; loud exit | pending |
@@ -195,3 +195,166 @@ harmless shortening and lose the thing that makes people comply.
 load-bearing elements: the "+0 s never tested" table and the
 setup-failure warning. Removing either turns the hypothesis back into
 "the fix".
+
+### CR-08 [MED] HISTORY's "Current state" presented a superseded world as present — **fixed**
+
+The section froze 2026-08-10 07:40 ("Root cause identified ✅", "nothing has
+hung since") between Phases 8 and 9, under the one title a searcher lands
+on. Retitled "as of the end of Phase 8 … ⚠️ SUPERSEDED" with a banner
+naming what overturned each claim and pointing at `docs/issues.md`.
+Chronology preserved; only the frame changed.
+
+### CR-09 [LOW] Superseded early-phase claims lacked forward pointers — **fixed**
+
+The file already annotates some corrected passages in place (Phase 2's
+modinfo caveat, Phase 18's overreach) but not others. Added italic
+"(superseded — see Phase N)" notes at the three known-wrong load-bearing
+spots: Phase 1's two-stage blockquote (~6 h figure, M.2-rail claim),
+Phase 2's `btusb_qca_cmd_timeout`/5-timeouts mechanism, Phase 3's
+"same ioctl" and "kernel's 5" claims. The original text stands unedited —
+the annotations say only where the correction lives.
+
+### CR-10 [LOW] Dangling commit hash `4c4047d` — **fixed**
+
+Annotated as a hash from the pre-publication working repository, absent
+from this repository's rewritten history (verified with `git cat-file`).
+The reference is now honest about what it can and cannot resolve.
+
+### CR-11 [NOTE] Phase 12 resolves the ratio notation — **recorded**
+
+Used as the authority for CR-02's fix; no separate change. Recorded so the
+derivation of the 3/4 orientation is traceable to Phase 12's wording.
+
+### CR-12 [NOTE] Retained-boot counts drift across phases — **recorded**
+
+One parenthetical added at Phase 24's "23 retained boots" explaining the
+rolling denominator (34 → 18 → shrinking) and warning against "correcting"
+the phases into agreement. The other counts stand as written.
+
+### CR-13 [GOOD] Lessons are mechanised — **kept**
+
+`REVIEWED-KEEP` marker at the "corrections belong in the machinery"
+section: future lessons should keep landing as tools/tests, not prose.
+
+### CR-14 [LOW] BT-4 carried two merged text generations — **fixed**
+
+The stale trailing paragraph (duplicate "still needed" list, "(below)"
+pointing the wrong way) is replaced by a note recording the removal; the
+filing blockers are stated once, at the reproducer.
+
+### CR-15 [NOTE] "Five levels", six rows — **fixed**
+
+Heading now "The six levels (0–5)…", with a sentence explaining the
+history (level 0 added last, beneath the rest). The one live code
+reference (`tools/bt-trial` comment) updated to match; HISTORY's mention
+left as chronology.
+
+### CR-16 / CR-17 [GOOD] BT-3 argues both directions; the 9/5 caveat — **kept**
+
+Both marked with `REVIEWED-KEEP` comments in `docs/issues.md`: the
+deliberate-omission alternative + unmeasured-sign caution in BT-3, and the
+refusal to cite the register's own headline zero as re-verified.
+
+### CR-18 [LOW] investigation.md boot-0 counts 19 vs 22 — **fixed**
+
+Annotated at the 19: the file was appended to during a live boot; 19 and
+22 are timestamps of a moving count, and the published log's final 22
+decomposes as 21 command + 1 link timeout. Nothing rewritten.
+
+### CR-19 [LOW] "35 boots retained" vs 34 — **fixed**
+
+Annotated: 35 includes the then-current boot; the 34 quoted everywhere
+else excludes it.
+
+### CR-20 [LOW] Doubled horizontal rule — **fixed** (one removed).
+
+### CR-21 [NOTE] issues.md's warm-reboot enumeration missed investigation.md §8 — **fixed**
+
+The BT-1 "untested assumption" list now includes `docs/investigation.md`
+§8, noting it states the claim with a ✅ under that file's historical
+banner — so the enumeration of *where the claim appears* is itself
+complete again.
+
+### CR-22 [GOOD] Synthetic-line disclosure — **kept** (`REVIEWED-KEEP` marker).
+
+### CR-23 [MED] bug-report Confidence note fossilised at n=3 — **fixed**
+
+Now counts the same five late resets the rest of the report counts, notes
+the fossil's origin, and no longer promises "all three" attachments.
+
+### CR-24 [LOW] Conflated 22 in attachments — **fixed**
+
+"22 `tx timeout` lines … 21 HCI command timeouts plus 1 `link tx timeout`",
+with the EX-015 do-not-pool pointer — the report now obeys its own Level-0
+lesson at the last place it didn't.
+
+### CR-25 [NOTE] Consumer device names in the report — **recorded**
+
+Deliberate (they identify hardware, not people) and consistent with the
+sanitisation policy. Recorded so follow-ups don't re-raise it.
+
+### CR-26 [GOOD] Windows-comparison framing — **kept** (`REVIEWED-KEEP` marker).
+
+### CR-27 [MED] fix-proposal §3b small-n fossil — **fixed**
+
+Same fossil as CR-23, in the second document, proving the review's point
+that corrections must be applied by grepping the tree. Now: five late
+resets with their timings, all five instrumented sessions listed
+(including `194254-early-threshold-missed` and `195623-no-early-signal-fast`,
+which the old list omitted), plus a note telling future editors to grep
+for the old phrase.
+
+### CR-28 [LOW] Section order 3b→5a→4→5 — **fixed**
+
+§5a physically moved to sit after §5; all section NUMBERS kept (too many
+documents cite "§5a" to renumber), with a comment recording the decision.
+Verified no directional ("below/above") references broke.
+
+### CR-29 / CR-30 [GOOD] Six-behaviour enumeration; conservative commit message — **kept**
+
+Both marked: collapsing the enumeration back to "reset + firmware"
+re-creates the Phase-17 flaw; strengthening the commit message outruns the
+evidence gates.
+
+### CR-31 [MED] firmware-hypothesis carried the refuted "two things" model — **fixed**
+
+Now: "six things (enumerated verbatim in fix-proposal §3) … the two that
+matter for THIS hypothesis", with the history of the residue named. The
+hypothesis itself is untouched — it genuinely depends only on items 1–2.
+
+### CR-32 [LOW] Pre-Phase-16 vocabulary in "Consequence" — **fixed**
+
+"no `cmd_timeout` handler, and that handler would not have helped anyway"
+→ "no reset callback (`hdev->reset` stays NULL) … with the +0 s point
+untested" — the before/after comparison now compares against the corrected
+mechanism.
+
+### CR-33 [GOOD] investigation-plan.md — **kept** (file-top `REVIEWED-KEEP`
+naming the A1 downgrade, the A4 gate, and the BL-01/BL-02 form).
+
+### CR-34 [LOW] changes-applied §0 scope — **fixed**
+
+Retitled "as of 2026-08-10, the first install" with a scope banner
+pointing at the dated sections and at `install.sh` as the current
+manifest.
+
+### CR-35 [GOOD] Verification-command-beside-change rule — **kept** (marker).
+
+### CR-36 [MED] restore-original-state's hand-frozen 11-command list — **fixed**
+
+The enumeration is *removed*, not refreshed — per the repo's own
+"the enumeration is the bug" lesson. The paragraph now names `install.sh`
+as the authoritative manifest and cites the two mechanical guarantees
+(the suite's install/uninstall pairing invariant; `verify-restored.sh`'s
+run-time derivation), with the rot history recorded in place.
+
+### CR-37 [NOTE] Tooling disclosure in three docs — **recorded, deliberately unchanged**
+
+`restore-original-state.md` §4, `HISTORY.md` Phase 4 and
+`pre-submission-checklist.md` §5 name the development tooling; the publish
+scan blocks only attribution-trailer forms, so these pass it. Whether
+that is the intended policy line is the owner's decision alone — this pass
+changes nothing there, and records the decision point so follow-up reviews
+cite this entry instead of re-raising it.
+
+### CR-38 [GOOD] Purge procedure; phenotype/cause line — **kept** (markers in both files).

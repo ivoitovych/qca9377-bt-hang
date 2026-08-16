@@ -62,6 +62,11 @@ xHCI controller stayed healthy throughout. The bus was fine; the silicon was not
 > stage 2 (USB core dead, off the bus — cold power-off only). Stage 1 had lasted
 > **~6 hours** before decaying. A warm reboot does not drop the M.2 power rail, which
 > is why a reboot sometimes wasn't enough.
+>
+> *(Superseded, kept as written: the "~6 hours" conflation is corrected in
+> Phase 9, "decaying into stage 2" is reclassified as censored-by-us in
+> Phases 24–26, and the M.2-rail claim is demoted to an untested inference —
+> EX-017/EX-019, `docs/issues.md` BT-1.)*
 
 **02:54 · Config backed up** before any change.
 
@@ -84,6 +89,9 @@ more specific than expected.
 
 **The finding.** `btusb_qca_cmd_timeout()` USB-resets a controller after 5 consecutive
 HCI command timeouts, and is installed only when `driver_info` carries `BTUSB_QCA_ROME`.
+*(That mechanism description is wrong and is corrected in Phase 16: v7.0 installs
+`hdev->reset`, fired on the FIRST timeout with no threshold. Kept as written because
+this is the model the next thirteen phases were reasoned under.)*
 The logs say it never ran:
 
 ```
@@ -115,7 +123,8 @@ intervention** remain.
 - **03:07 · `bt-hang-watchdog`** — reimplements the missing kernel handler in userspace:
   tails the kernel log, and after 3 timeouts in 60 s issues `USBDEVFS_RESET`, the same
   ioctl `usb_queue_reset_device()` performs. Threshold 3 rather than the kernel's 5,
-  deliberately.
+  deliberately. *(Both claims superseded: `USBDEVFS_RESET` is a proxy, not the same
+  path — Phase 16 — and the kernel has no 5-timeout threshold — Phases 16–17.)*
 - **03:07 · USB autosuspend disabled** for the radio (`enable_autosuspend=0` plus a udev
   rule pinning `power/control=on`).
 - **03:11 · Metrics collector** — 15-minute snapshots surviving reboots.
@@ -153,8 +162,9 @@ the user's explicit request.
 
 ## Phase 5 — Review (05:00 – 05:32)
 
-A code review of the whole project returned **14 findings**, all fixed in `4c4047d`.
-The two that mattered:
+A code review of the whole project returned **14 findings**, all fixed in `4c4047d`
+*(a hash from the pre-publication working repository; it does not exist in this
+repository's rewritten history — verified 2026-08-15)*. The two that mattered:
 
 - **The sanitiser destroyed a log used in place** (`in.log == out.log`) — `awk … > out`
   truncates before awk opens the input — *while printing "verified: no MACs remain"*.
@@ -275,7 +285,16 @@ better grounds for the bug report than the original window.
 
 ---
 
-## Current state
+## Current state — as of the end of Phase 8, 2026-08-10 07:40 — ⚠️ SUPERSEDED
+
+> ⚠️ This table is a snapshot from the morning of 2026-08-10, kept in
+> chronological place. Nearly every row was overturned by later phases:
+> the "root cause" was demoted to an established driver difference with an
+> unestablished benefit (Phases 9, 16), five hangs followed the power-off,
+> and the mechanism description was corrected twice (Phases 16–17). For
+> current claims use `docs/issues.md`. A section titled "current state"
+> is exactly what a searcher lands on, which is why this banner exists
+> (review 2026-08-15T1752Z §1.2).
 
 | | |
 |---|---|
@@ -1188,6 +1207,10 @@ selection bias by construction, not bad luck.
 
 Auto-trials remove the human from the arming path, so ordinary use generates observations.
 
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.2: the lesson->invariant loop described
+     below (2x2 into bt-trial, awk -f grep into run-tests, provenance from unit
+     names) is the repository's most transferable practice. Future lessons
+     should keep landing as machinery, not only as prose in this file. -->
 ### And corrections belong in the machinery, not in the notes
 
 The repeated failure of this project was converting temporal adjacency into cause. Writing
@@ -1506,7 +1529,9 @@ timeouts in all; **no `USB disconnect` for the remaining 4 m 48 s of the boot.**
 
 `hci_cmd_timeout()` names the opcode whenever it has one. The classifier grepped for the
 literal `command tx timeout`, which the kernel emits only when it cannot. Across the 23
-retained boots:
+retained boots *(retention rolls — the denominator was 34 before the Phase-18a deletion,
+18 just after, and shrinks as boots age out; each phase's count is correct at its own
+date and none should be "corrected" into agreement with another)*:
 
 | pattern | matches | what it is |
 |---|---:|---|

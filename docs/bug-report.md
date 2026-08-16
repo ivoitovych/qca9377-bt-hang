@@ -78,6 +78,10 @@ repeated connect/disconnect/mode-change cycles, tested 2026-08-11. Hardware alon
 therefore not a sufficient explanation; some OS/driver/firmware/command-sequence
 difference is necessary to produce it.
 
+<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.5: the framing below — "Linux drives
+     this controller into a state that Windows does not", with fault assignment
+     left to follow from evidence — is what keeps this report credible to a
+     maintainer. Rewrites that blame either side up front lose that. -->
 This is deliberately *not* stated as "the hardware is fine and Linux is broken". Windows
 may upload different firmware, initialise the controller differently, choose different
 synchronous-connection parameters, reset the device at a different point, or leave a
@@ -112,8 +116,12 @@ measurement — `EX-017`, `EX-019`. And whether the USB collapse occurs at all w
 reset in between is the open question above.)
 
 > ⚠️ **Confidence.** Finding 1 is verified three ways and is solid. Finding 2 rests on
-> two failed late resets (+20 s and +11 s) and one successful early reset. Offered as a
-> hypothesis with evidence, not a settled result. Full logs for all three are attached.
+> five failed late resets (+11 s, +16 s, +20 s, +20 s and +33 s — the same five this
+> report's "What has and has not been tested" section counts) and one successful early
+> reset. Offered as a hypothesis with evidence, not a settled result. Full logs for the
+> instrumented sessions are attached. *(An earlier revision of this note said "two
+> failed late resets" and "all three" — a count frozen when it was written and never
+> updated as the record grew to five; corrected, review 2026-08-15T1752Z §1.5.)*
 >
 > ⚠️ **An important limitation.** The bluetoothd warning is **not always available**, and
 > its lead time varies enormously. Across five instrumented hangs:
@@ -505,7 +513,9 @@ Both are documented in `docs/changes-applied.md`. Effectiveness measurement is o
 
 ✅ **The published logs are clean.** They were captured at 02:54 on 2026-08-10, *before*
 the 3 synthetic `tx timeout` lines were injected into `/dev/kmsg` at ~03:07 to test the
-watchdog. The 22 `tx timeout` events they contain are all genuine hardware events.
+watchdog. The 22 `tx timeout` lines they contain are all genuine hardware events —
+**21 HCI command timeouts plus 1 `link tx timeout`** (ACL supervision, a different
+layer; the two must not be pooled — `EX-015`).
 
 ⚠️ If you re-collect logs from the live system with `journalctl -k -b 0`, that output
 *will* include the 3 synthetic lines. Strip them, or note them explicitly.
