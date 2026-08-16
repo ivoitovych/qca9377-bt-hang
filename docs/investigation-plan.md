@@ -372,3 +372,104 @@ executed, while the comprehensiveness instrument reported 92%. That instrument c
 A detector reporting `none` for a reset would have made every build comparison quietly
 wrong while looking entirely normal — and Build B is specifically the arm in which the
 kernel issues resets.
+
+### BL-05 — registering an incident is a manual sequence, and the machine is a kitchen laptop
+
+Raised by the operator on 2026-08-16, immediately after `EX-026`: capturing an incident
+took roughly a dozen hand-written commands over several minutes, some of them stopping for
+permission prompts, while the fault window was live and the family was waiting for the
+machine.
+
+**Why this is an evidence problem and not an ergonomics one.** The cost falls entirely on
+the window that is still open. Every minute spent hand-assembling greps is a minute the
+operator is asked to leave a broken Bluetooth alone on a shared machine, and the pressure
+to release the laptop is what ends windows early. `EX-025` and the 2026-08-16 live window
+were both censored by exactly that pressure. A capture that takes ten seconds changes what
+the record can contain.
+
+**What is already there.** `bt-incident <slug> --since <time>` collects, sanitises and
+files a session in one command, and it worked correctly today. What was manual around it:
+
+- deciding `--since` by first hand-grepping for the fault's start
+- the whole diagnosis — trigger, first timeout, intervention, terminator, intervals
+- ruling out our own tooling as the cause (four separate queries, all negative)
+- writing the exhibit, its extraction command, and re-running that command to capture
+  verbatim output
+- checking whether the device is still on the bus
+
+**The shape a fix should take.** `bt-incident` already knows how to find the fault; the
+diagnosis above is `bt-postmortem`'s job and it exists. The gap is that nothing chains
+them, and nothing emits an exhibit skeleton with the extraction command already filled in
+and already executed. A single `bt-capture-now` that runs the chain, writes the session,
+drafts the exhibit and prints the timeline would remove every step above except the
+judgement calls.
+
+**The constraint that makes this delicate.** Such a tool runs *during* a live fault, so it
+must be provably read-only — no probe, no `hciconfig`, no `btmgmt`, nothing that touches
+the controller. The whole value of a live window is that nothing has touched it, and a
+capture tool that perturbs the thing it captures is worse than the manual sequence. That
+property needs a test, not a promise.
+
+**Second-order:** the permission prompts are a symptom of commands assembled ad hoc at the
+keyboard. A named tool is matched once; a hand-built pipeline is matched never. This is the
+same argument that produced `tools/bt-interval` and `devtools/check`.
+
+### BL-06 — `bt-archive` refuses a destination inside the repository, but not through a symlink
+
+Found while assessing `ba0bed8` on 2026-08-16, and reproduced end to end rather than
+argued.
+
+`bt-archive` resolves its destination with `cd "$DEST" && pwd`, which returns the
+**logical** path. If the destination is a symlink pointing inside the repository, the
+comparison against `$REPO` does not match, the guard passes, and the archive is written —
+physically — inside the tree:
+
+```console
+$ BT_REPO=…/symtest/repo BT_ARCHIVE_DIR=…/symtest/link tools/bt-archive -1
+bt-archive — boot -1 (id c1315c25) -> …/symtest/link/boot-c1315c25.export.zst
+  3 records, 4.0K on disk — read back and verified
+$ ls …/symtest/repo/inside/
+boot-c1315c25.export.zst
+```
+
+**Severity is set by what the file contains, not by how likely the symlink is.** A raw
+`journalctl -o export` carries MAC addresses and Wi-Fi BSSIDs, and BSSIDs geolocate the
+machine. This repository is public. The guard exists precisely so that nobody has to
+remember; a guard that can be walked around by a symlink is a guard that has to be
+remembered.
+
+**The fix** is `pwd -P` on both ends of the comparison — `$REPO` is already physical
+because it is derived through `readlink -f`, so only the destination diverges, and
+`BT_REPO` supplied by hand may not be. **Not yet applied**, because the suite refuses to
+run while a trial is open and a fix to a disclosure guard should not ship untested.
+
+**The general shape, which is worth more than the instance.** This is the third control
+this week that held where it was written and not where it ran, and the second whose
+mechanism is a symlink. The first destroyed three system binaries by writing through links
+into a directory that was also linked into. The rule then was *a directory is either linked
+into or written into, never both*; the rule now is broader: **a path check that does not
+resolve symlinks is not a path check.**
+
+### BL-07 — a USB reset with no established caller
+
+`EX-026` records a `usb 3-3: reset full-speed USB device number 2` that this project did
+not issue. Ruled out with evidence: our watchdog (inactive, disabled, not installed, no
+journal entries), `btusb_qca_reset` (its string `Resetting usb device` appears zero times),
+driver unbind (`deregistering interface driver btusb`, zero times), and
+`hci_cmd_timeout()` → `hdev->reset()` (no quirks entry matches `13d3:3503`, re-verified
+against this kernel's binary).
+
+**Why it matters.** Every prior stage-2 progression was ended by something of ours, which
+is the standing objection to `EX-021` and `EX-023`. Establishing what else can reset this
+device — and under what conditions — is the difference between "resets kill it" and "*our*
+resets kill it".
+
+**The one testable hypothesis, recorded as unsupported.** `power/control` was `auto` and
+`/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules` is **not installed on this machine**.
+A runtime-suspend whose resume fails is one usbcore route to `usb_reset_device()`. No
+suspend or resume line appears for `usb 3-3` in that boot, so it is unconfirmed in both
+directions — usbcore's dynamic debug was not enabled.
+
+**What would settle it:** enable dynamic debug on `usbcore`/`hub` for the resume and reset
+paths before the next window, so the caller is named in the log rather than inferred from
+what is absent.
