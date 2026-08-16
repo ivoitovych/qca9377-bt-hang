@@ -1,0 +1,3054 @@
+BLUETOOTH TIMELINE — 2026-08-16 21:38:00
+─────────────────────────────────────────────────────────────────────────
+21:41:48  KERN  hci0
+21:41:48  KERN  hci0
+21:41:48  KERN  hci0
+21:41:48  KERN  hci0: dst AA:BB:CC:00:00:01
+21:41:48  KERN  hci0: dst AA:BB:CC:00:00:01 handle 0x0f00
+21:41:48  KERN  hci0 evt 1
+21:41:48  KERN  hci0 opcode 0x0409 plen 7
+21:41:48  KERN  hci0: skb len 10
+21:41:48  KERN  hci0 cmd_cnt 1 cmd queued 1
+21:41:48  KERN  hci0: skb 000000008a85d941
+21:41:48  KERN  hci0: hcon 000000004ec8cc08 handle 0x0001
+21:41:48  KERN  hci0 opcode 0x041b plen 2
+21:41:48  KERN  hci0: skb len 5
+21:41:48  KERN  hci0:
+21:41:48  KERN  hci0: entry 0000000074e495c8
+21:41:48  KERN  hci0 cmd_cnt 1 cmd queued 1
+21:41:48  KERN  hci0: skb 00000000281cd391
+21:41:48  KERN  hci0 opcode 0x041c plen 3
+21:41:48  KERN  hci0: skb len 6
+21:41:48  KERN  hci0 cmd_cnt 1 cmd queued 1
+21:41:48  KERN  hci0: skb 000000001caba986
+21:41:48  KERN  hci0 opcode 0x0419 plen 10
+21:41:48  KERN  hci0: skb len 13
+21:41:48  KERN  hci0 hcon 000000004ec8cc08
+21:41:48  KERN  hci0 cmd_cnt 1 cmd queued 1
+21:41:48  KERN  hci0: skb 000000008cd92587
+21:41:48  KERN  hci0 opcode 0x040b plen 22
+21:41:48  KERN  hci0: skb len 25
+21:41:48  KERN  hci0 cmd_cnt 1 cmd queued 1
+21:41:48  KERN  hci0: skb 000000005fccb8e5
+21:41:48  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x000b
+21:41:48  BLUED src/adapter.c:connected_callback() hci0 device AA:BB:CC:00:00:01 connected eir_len 30
+21:41:49  KERN  hci0 opcode 0x1408 plen 2
+21:41:49  KERN  hci0: skb len 5
+21:41:49  KERN  hci0 cmd_cnt 1 cmd queued 1
+21:41:49  KERN  hci0: skb 000000000f01f661
+21:41:49  BLUED profiles/audio/a2dp.c:confirm_cb() AVDTP: incoming connect from AA:BB:CC:00:00:01
+21:41:49  BLUED profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01: SINK_STATE_DISCONNECTED -> SINK_STATE_CONNECTING
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_connect_cb() AVDTP: connected signaling channel to AA:BB:CC:00:00:01
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_connect_cb() AVDTP imtu=672, omtu=672
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_register_remote_sep() seid 1 type 1 media 0 delay_reporting true
+21:41:49  BLUED profiles/audio/a2dp.c:register_remote_sep() Found remote SEP: /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep1
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_register_remote_sep() seid 2 type 1 media 0 delay_reporting true
+21:41:49  BLUED profiles/audio/a2dp.c:register_remote_sep() Found remote SEP: /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep2
+21:41:49  BLUED profiles/audio/a2dp.c:load_remote_sep() LastUsed: lseid 7 rseid 1
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x606666d5ed10: ref=1
+21:41:49  BLUED profiles/audio/avdtp.c:set_disconnect_timer() timeout 1
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received DISCOVER_CMD
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d31570: Get_Capability_Ind
+21:41:49  BLUED src/profile.c:ext_confirm() incoming connect from AA:BB:CC:00:00:01
+21:41:49  BLUED src/service.c:btd_service_ref() 0x606666d2bbf0: ref=2
+21:41:49  BLUED src/profile.c:ext_confirm() Hands-Free Voice gateway authorizing connection from AA:BB:CC:00:00:01
+21:41:49  BLUED src/profile.c:ext_auth() AA:BB:CC:00:00:01 authorized to connect to Hands-Free Voice gateway
+21:41:49  BLUED src/profile.c:ext_connect() Hands-Free Voice gateway connected to AA:BB:CC:00:00:01
+21:41:49  BLUED src/service.c:change_state() 0x606666d2bbf0: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: disconnected -> connecting (0)
+21:41:49  BLUED src/service.c:change_state() 0x606666d2bbf0: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: connecting -> connected (0)
+21:41:49  BLUED src/device.c:device_profile_connected() Hands-Free Voice gateway Success (0)
+21:41:49  BLUED src/service.c:btd_service_ref() 0x606666d2bbf0: ref=3
+21:41:49  BLUED plugins/policy.c:service_cb() Added Hands-Free Voice gateway reconnect 0
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d53520: Get_Capability_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4dcf0: Get_Capability_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4c1a0: Get_Capability_Ind
+21:41:49  KERN  hci0 cmd_cnt 1 cmd queued 1
+21:41:49  KERN  hci0: skb 00000000e3ebf429
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4b360: Get_Capability_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d50720: Get_Capability_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4f210: Get_Capability_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4ffe0: Get_Capability_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d51920: Get_Capability_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d4e240: Get_Capability_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d52070: Get_Capability_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d56cf0: Get_Capability_Ind
+21:41:49  BLUED src/battery.c:register_battery_provider() register battery provider path = /org/freedesktop/pipewire/battery
+21:41:49  BLUED src/battery.c:btd_battery_register() path = /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+21:41:49  BLUED src/battery.c:btd_battery_register() registered Battery object: /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+21:41:49  BLUED src/battery.c:provided_battery_added_cb() provided battery added /org/freedesktop/pipewire/battery/org/bluez/hci0/dev_AA:BB:CC:00:00:01
+21:41:49  BLUED src/battery.c:btd_battery_update() path = /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received GET_ALL_CAPABILITIES_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_getcap_ind() Source 0x606666d5adf0: Get_Capability_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received SET_CONFIGURATION_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_setconf_ind() Source 0x606666d4b360: Set_Configuration_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x606666d5ed10: ref=2
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x606666d5ed10: ref=1
+21:41:49  BLUED profiles/audio/a2dp.c:setup_ref() 0x606666d60ee0: ref=1
+21:41:49  BLUED profiles/audio/a2dp.c:setup_ref() 0x606666d60ee0: ref=2
+21:41:49  BLUED profiles/audio/media.c:media_endpoint_async_call() Calling SetConfiguration: name = :1.85 path = /MediaEndpoint/A2DPSource/sbc_xq
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x606666d5ed10: ref=2
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: IDLE -> CONFIGURED
+21:41:49  BLUED profiles/audio/a2dp.c:setup_unref() 0x606666d60ee0: ref=1
+21:41:49  BLUED profiles/audio/a2dp.c:setup_unref() 0x606666d60ee0: ref=0
+21:41:49  BLUED profiles/audio/a2dp.c:setup_free() 0x606666d60ee0
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x606666d5ed10: ref=1
+21:41:49  KERN  hci0: dst AA:BB:CC:00:00:01
+21:41:49  KERN  hci0: dst AA:BB:CC:00:00:01 handle 0x0f00
+21:41:49  KERN  hci0: parent 000000004ec8cc08 hcon 0000000057e0f0f8
+21:41:49  KERN  hci0: hcon 0000000057e0f0f8
+21:41:49  KERN  hci0 opcode 0x0428 plen 17
+21:41:49  KERN  hci0: skb len 20
+21:41:49  KERN  hci0 cmd_cnt 1 cmd queued 1
+21:41:49  KERN  hci0: skb 00000000f2f21920
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received DELAY_REPORT_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:endpoint_delayreport_ind() Source 0x606666d4b360: DelayReport_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:session_cb()
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_parse_cmd() Received OPEN_CMD
+21:41:49  BLUED profiles/audio/a2dp.c:open_ind() Source 0x606666d4b360: Open_Ind
+21:41:49  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x606666d5ed10: ref=2
+21:41:49  BLUED profiles/audio/a2dp.c:setup_ref() 0x606666d60ee0: ref=1
+21:41:49  KERN  hci0: hcon 0000000057e0f0f8 handle 0x0003
+21:41:49  KERN  hci0 evt 5
+21:41:49  KERN  hci0
+21:41:49  KERN  hci0
+21:41:49  BLUED profiles/audio/a2dp.c:confirm_cb() AVDTP: incoming connect from AA:BB:CC:00:00:01
+21:41:51  BLUED plugins/policy.c:policy_connect() /org/bluez/hci0/dev_AA:BB:CC:00:00:01 profile a2dp-sink
+21:41:51  BLUED profiles/audio/a2dp.c:a2dp_sink_connect() path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+21:41:51  BLUED src/service.c:btd_service_connect() a2dp-sink profile connect failed for AA:BB:CC:00:00:01: Device or resource busy
+21:41:55  BLUED profiles/audio/avdtp.c:stream_open_timeout() Timed out waiting for peer to open the transport channel
+21:41:55  BLUED profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: CONFIGURED -> ABORTING
+21:41:57  BLUED profiles/audio/avdtp.c:cancel_request() Abort: Connection timed out (110)
+21:41:57  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x606666d5ed10: ref=3
+21:41:57  BLUED profiles/audio/avdtp.c:connection_lost() Disconnected from AA:BB:CC:00:00:01
+21:41:57  BLUED profiles/audio/a2dp.c:abort_cfm() Source 0x606666d4b360: Abort_Cfm
+21:41:57  BLUED profiles/audio/a2dp.c:setup_unref() 0x606666d60ee0: ref=0
+21:41:57  BLUED profiles/audio/a2dp.c:setup_free() 0x606666d60ee0
+21:41:57  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x606666d5ed10: ref=2
+21:41:57  BLUED profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: ABORTING -> IDLE
+21:41:57  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x606666d5ed10: ref=1
+21:41:57  BLUED profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01: SINK_STATE_CONNECTING -> SINK_STATE_DISCONNECTED
+21:41:57  BLUED profiles/audio/a2dp.c:channel_remove() chan 0x606666d5af80
+21:41:57  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x606666d5ed10: ref=0
+21:41:57  BLUED profiles/audio/avdtp.c:avdtp_free() 0x606666d5ed10
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0: handle 0x01 reason 0x13
+21:42:42  KERN  hci0:
+21:42:42  KERN  hci0: entry 000000001b495948
+21:42:42  KERN  hci0 cmd_cnt 1 cmd queued 1
+21:42:42  KERN  hci0: Opcode 0x0406
+21:42:42  KERN  hci0: opcode 0x0406 plen 3
+21:42:42  KERN  hci0: skb 00000000c2745b3e
+21:42:42  KERN  hci0: skb len 6
+21:42:42  KERN  hci0: length 1
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 1
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 2
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 3
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 4
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 5
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 6
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 7
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 8
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 9
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 10
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 11
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 12
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 13
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 14
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 16
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 17
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 18
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 19
+21:42:42  KERN  Bluetooth: hci0: link tx timeout
+21:42:42  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:42  KERN  hci0 opcode 0x041f plen 2
+21:42:42  KERN  hci0: skb len 5
+21:42:42  KERN  hci0 cmd_cnt 0 cmd queued 20
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 21
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 22
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 23
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 24
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 25
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 26
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 27
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 28
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 29
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 30
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 31
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 32
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 33
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 34
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 35
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 36
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 37
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 38
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 39
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 40
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 41
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 42
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 43
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 44
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 45
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 46
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 47
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 48
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 49
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 50
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 51
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 52
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 53
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 54
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 55
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 56
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 57
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 58
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 59
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 60
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 61
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 62
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 63
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 64
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 65
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 67
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 68
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 69
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 70
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 71
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 72
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 73
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 74
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 75
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 76
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 77
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 78
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 79
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 80
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 81
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 82
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 83
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 84
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 85
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 86
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 87
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 88
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 89
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 90
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 91
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 92
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 93
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 94
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 95
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 96
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 97
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 98
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 99
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 100
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 101
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 102
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 103
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 104
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 105
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 106
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 107
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 108
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 109
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 110
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 111
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 112
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 113
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 114
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 115
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 116
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 117
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 118
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 119
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 120
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 121
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 122
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 123
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 124
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 125
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 126
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 127
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 128
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 129
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 130
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 132
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 133
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 134
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 135
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 136
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 137
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 138
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 139
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 140
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 141
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 142
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 143
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 144
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 145
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 147
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 148
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 149
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 150
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 151
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 152
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 153
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 154
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 155
+21:42:43  KERN  Bluetooth: hci0: link tx timeout
+21:42:43  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:43  KERN  hci0 opcode 0x041f plen 2
+21:42:43  KERN  hci0: skb len 5
+21:42:43  KERN  hci0 cmd_cnt 0 cmd queued 156
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 157
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 158
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 159
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 160
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 161
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 162
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 163
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 164
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 165
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 166
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 167
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 168
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 169
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 170
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 171
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 172
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 173
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 174
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 175
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 176
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 177
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 178
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 179
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 180
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 181
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 182
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 183
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 184
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 185
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 186
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 187
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 188
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 190
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 191
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 192
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 193
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 194
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 195
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 196
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 197
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 198
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 199
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 200
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 201
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 202
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 203
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 204
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 205
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 206
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 207
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 208
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 209
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 210
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 211
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 212
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 213
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 214
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 215
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 216
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 217
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 218
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 219
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 220
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 221
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 222
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 223
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 224
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 225
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 226
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 227
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 228
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 229
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 230
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 231
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 232
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 233
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 234
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 235
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 237
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 238
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 239
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 240
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 241
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 242
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 243
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 244
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 245
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 246
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 247
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 248
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 250
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 251
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 252
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 253
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 254
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 255
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 256
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 257
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 258
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 259
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 260
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 261
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 262
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 263
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 264
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 265
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 266
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 267
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 268
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 269
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 271
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 272
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 273
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 274
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 275
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 276
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 277
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 279
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 280
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 281
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 282
+21:42:44  KERN  Bluetooth: hci0: link tx timeout
+21:42:44  KERN  Bluetooth: hci0: killing stalled connection AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 opcode 0x041f plen 2
+21:42:44  KERN  hci0: skb len 5
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 283
+21:42:44  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x000c
+21:42:44  BLUED src/adapter.c:dev_disconnected() Device AA:BB:CC:00:00:01 disconnected, reason 19
+21:42:44  BLUED src/adapter.c:adapter_remove_connection()
+21:42:44  BLUED plugins/policy.c:disconnect_cb() reason 19
+21:42:44  BLUED src/adapter.c:bonding_attempt_complete() hci0 bdaddr AA:BB:CC:00:00:01 type 0 status 0xe
+21:42:44  BLUED src/device.c:device_bonding_complete() bonding (nil) status 0x0e
+21:42:44  BLUED src/device.c:device_bonding_failed() status 14
+21:42:44  BLUED src/adapter.c:resume_discovery()
+21:42:44  BLUED src/profile.c:ext_io_disconnected() Unable to get io data for Hands-Free Voice gateway: getpeername: Transport endpoint is not connected (107)
+21:42:44  BLUED src/service.c:change_state() 0x606666d2bbf0: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: connected -> disconnected (0)
+21:42:44  BLUED src/service.c:btd_service_unref() 0x606666d2bbf0: ref=2
+21:42:44  KERN  hci0: end: err -110
+21:42:44  KERN  hci0: status 0x13
+21:42:44  KERN  hci0 hcon 000000004ec8cc08 chan 0000000035ab1064
+21:42:44  KERN  hci0: handle 0x03 reason 0x13
+21:42:44  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:42:44  KERN  hci0: err 0x6e
+21:42:44  KERN  hci0 cmd_cnt 1 cmd queued 283
+21:42:44  KERN  hci0: skb 00000000793b5376
+21:42:44  BLUED src/battery.c:provided_battery_removed_cb() provided battery removed /org/freedesktop/pipewire/battery/org/bluez/hci0/dev_AA:BB:CC:00:00:01
+21:42:44  BLUED src/battery.c:btd_battery_unregister() path = /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+21:42:44  KERN  hci0 hcon 000000004ec8cc08 handle 1
+21:42:44  KERN  hci0: hcon 000000004ec8cc08
+21:42:44  KERN  hci0: hcon 0000000057e0f0f8
+21:42:44  KERN  hci0 evt 2
+21:42:44  KERN  hci0: entry 00000000eae92ffe
+21:42:44  KERN  hci0: Opcode 0x0406
+21:42:44  KERN  hci0: opcode 0x0406 plen 3
+21:42:44  KERN  hci0: skb len 6
+21:42:44  KERN  hci0: length 1
+21:42:44  KERN  hci0 cmd_cnt 0 cmd queued 283
+21:42:46  KERN  hci0: end: err -110
+21:42:46  KERN  hci0: status 0x13
+21:42:46  KERN  hci0 hcon 0000000057e0f0f8 handle 3
+21:42:46  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:42:46  KERN  hci0: err 0x6e
+21:42:46  KERN  hci0: hcon 0000000057e0f0f8
+21:42:46  KERN  hci0 cmd_cnt 1 cmd queued 283
+21:42:46  KERN  hci0: skb 000000001a257724
+21:42:46  KERN  hci0 evt 6
+21:42:46  KERN  hci0:
+21:42:49  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:42:49  KERN  hci0: err 0x6e
+21:42:49  KERN  hci0 cmd_cnt 1 cmd queued 282
+21:42:49  KERN  hci0: skb 00000000687407d3
+21:42:51  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:42:51  KERN  hci0: err 0x6e
+21:42:51  KERN  hci0 cmd_cnt 1 cmd queued 281
+21:42:51  KERN  hci0: skb 00000000e7fa924a
+21:42:52  KERN  Bluetooth: hci0: setting interface failed (110)
+21:42:53  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:42:53  KERN  hci0: err 0x6e
+21:42:53  KERN  hci0 cmd_cnt 1 cmd queued 280
+21:42:53  KERN  hci0: skb 0000000056f1e959
+21:42:55  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:42:55  KERN  hci0: err 0x6e
+21:42:55  KERN  hci0 cmd_cnt 1 cmd queued 279
+21:42:55  KERN  hci0: skb 00000000b0f19aa1
+21:42:57  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:42:57  KERN  hci0: err 0x6e
+21:42:57  KERN  hci0 cmd_cnt 1 cmd queued 278
+21:42:57  KERN  hci0: skb 00000000fc77dada
+21:42:59  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:42:59  KERN  hci0: err 0x6e
+21:42:59  KERN  hci0 cmd_cnt 1 cmd queued 277
+21:42:59  KERN  hci0: skb 000000009c53a052
+21:43:01  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:01  KERN  hci0: err 0x6e
+21:43:01  KERN  hci0 cmd_cnt 1 cmd queued 276
+21:43:01  KERN  hci0: skb 0000000049cb5171
+21:43:03  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:03  KERN  hci0: err 0x6e
+21:43:03  KERN  hci0 cmd_cnt 1 cmd queued 275
+21:43:03  KERN  hci0: skb 00000000fc9b1547
+21:43:05  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:05  KERN  hci0: err 0x6e
+21:43:05  KERN  hci0 cmd_cnt 1 cmd queued 274
+21:43:05  KERN  hci0: skb 00000000e73c5801
+21:43:07  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:07  KERN  hci0: err 0x6e
+21:43:07  KERN  hci0 cmd_cnt 1 cmd queued 273
+21:43:07  KERN  hci0: skb 000000004bce9ba0
+21:43:09  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:09  KERN  hci0: err 0x6e
+21:43:09  KERN  hci0 cmd_cnt 1 cmd queued 272
+21:43:09  KERN  hci0: skb 00000000393c0f5c
+21:43:11  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:11  KERN  hci0: err 0x6e
+21:43:11  KERN  hci0 cmd_cnt 1 cmd queued 271
+21:43:11  KERN  hci0: skb 0000000071782cc2
+21:43:13  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:13  KERN  hci0: err 0x6e
+21:43:13  KERN  hci0 cmd_cnt 1 cmd queued 270
+21:43:13  KERN  hci0: skb 00000000864ccfd2
+21:43:15  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:15  KERN  hci0: err 0x6e
+21:43:15  KERN  hci0 cmd_cnt 1 cmd queued 269
+21:43:15  KERN  hci0: skb 00000000c45319d4
+21:43:17  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:17  KERN  hci0: err 0x6e
+21:43:17  KERN  hci0 cmd_cnt 1 cmd queued 268
+21:43:17  KERN  hci0: skb 00000000ed74ad43
+21:43:19  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:19  KERN  hci0: err 0x6e
+21:43:19  KERN  hci0 cmd_cnt 1 cmd queued 267
+21:43:19  KERN  hci0: skb 00000000b3d9544c
+21:43:21  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:21  KERN  hci0: err 0x6e
+21:43:21  KERN  hci0 cmd_cnt 1 cmd queued 266
+21:43:21  KERN  hci0: skb 0000000051274153
+21:43:23  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:23  KERN  hci0: err 0x6e
+21:43:23  KERN  hci0 cmd_cnt 1 cmd queued 265
+21:43:23  KERN  hci0: skb 0000000040c84e03
+21:43:25  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:25  KERN  hci0: err 0x6e
+21:43:25  KERN  hci0 cmd_cnt 1 cmd queued 264
+21:43:25  KERN  hci0: skb 000000005821e645
+21:43:27  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:27  KERN  hci0: err 0x6e
+21:43:27  KERN  hci0 cmd_cnt 1 cmd queued 263
+21:43:27  KERN  hci0: skb 000000003c03f5d1
+21:43:29  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:29  KERN  hci0: err 0x6e
+21:43:29  KERN  hci0 cmd_cnt 1 cmd queued 262
+21:43:29  KERN  hci0: skb 00000000f99a8fdb
+21:43:32  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:32  KERN  hci0: err 0x6e
+21:43:32  KERN  hci0 cmd_cnt 1 cmd queued 261
+21:43:32  KERN  hci0: skb 00000000c409f60f
+21:43:34  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:34  KERN  hci0: err 0x6e
+21:43:34  KERN  hci0 cmd_cnt 1 cmd queued 260
+21:43:34  KERN  hci0: skb 000000007c90cddc
+21:43:36  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:36  KERN  hci0: err 0x6e
+21:43:36  KERN  hci0 cmd_cnt 1 cmd queued 259
+21:43:36  KERN  hci0: skb 00000000e0278261
+21:43:38  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:38  KERN  hci0: err 0x6e
+21:43:38  KERN  hci0 cmd_cnt 1 cmd queued 258
+21:43:38  KERN  hci0: skb 000000001de7f2bd
+21:43:40  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:40  KERN  hci0: err 0x6e
+21:43:40  KERN  hci0 cmd_cnt 1 cmd queued 257
+21:43:40  KERN  hci0: skb 000000008c365e88
+21:43:42  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:42  KERN  hci0: err 0x6e
+21:43:42  KERN  hci0 cmd_cnt 1 cmd queued 256
+21:43:42  KERN  hci0: skb 00000000f6c4a15e
+21:43:44  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:44  KERN  hci0: err 0x6e
+21:43:44  KERN  hci0 cmd_cnt 1 cmd queued 255
+21:43:44  KERN  hci0: skb 000000006b261126
+21:43:46  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:46  KERN  hci0: err 0x6e
+21:43:46  KERN  hci0 cmd_cnt 1 cmd queued 254
+21:43:46  KERN  hci0: skb 000000004481240f
+21:43:48  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:48  KERN  hci0: err 0x6e
+21:43:48  KERN  hci0 cmd_cnt 1 cmd queued 253
+21:43:48  KERN  hci0: skb 00000000a16c5887
+21:43:50  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:50  KERN  hci0: err 0x6e
+21:43:50  KERN  hci0 cmd_cnt 1 cmd queued 252
+21:43:50  KERN  hci0: skb 0000000050413462
+21:43:52  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:52  KERN  hci0: err 0x6e
+21:43:52  KERN  hci0 cmd_cnt 1 cmd queued 251
+21:43:52  KERN  hci0: skb 000000008069764a
+21:43:54  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:54  KERN  hci0: err 0x6e
+21:43:54  KERN  hci0 cmd_cnt 1 cmd queued 250
+21:43:54  KERN  hci0: skb 000000006c0e2e07
+21:43:56  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:56  KERN  hci0: err 0x6e
+21:43:56  KERN  hci0 cmd_cnt 1 cmd queued 249
+21:43:56  KERN  hci0: skb 00000000db3268d7
+21:43:58  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:43:58  KERN  hci0: err 0x6e
+21:43:58  KERN  hci0 cmd_cnt 1 cmd queued 248
+21:43:58  KERN  hci0: skb 0000000072a8a74f
+21:44:00  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:00  KERN  hci0: err 0x6e
+21:44:00  KERN  hci0 cmd_cnt 1 cmd queued 247
+21:44:00  KERN  hci0: skb 000000005c383a2c
+21:44:02  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:02  KERN  hci0: err 0x6e
+21:44:02  KERN  hci0 cmd_cnt 1 cmd queued 246
+21:44:02  KERN  hci0: skb 00000000d50052cf
+21:44:04  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:04  KERN  hci0: err 0x6e
+21:44:04  KERN  hci0 cmd_cnt 1 cmd queued 245
+21:44:04  KERN  hci0: skb 00000000fe1721ae
+21:44:06  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:06  KERN  hci0: err 0x6e
+21:44:06  KERN  hci0 cmd_cnt 1 cmd queued 244
+21:44:06  KERN  hci0: skb 00000000fe51e636
+21:44:08  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:08  KERN  hci0: err 0x6e
+21:44:08  KERN  hci0 cmd_cnt 1 cmd queued 243
+21:44:08  KERN  hci0: skb 0000000010ac7ba6
+21:44:10  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:10  KERN  hci0: err 0x6e
+21:44:10  KERN  hci0 cmd_cnt 1 cmd queued 242
+21:44:10  KERN  hci0: skb 00000000e73e2fee
+21:44:12  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:12  KERN  hci0: err 0x6e
+21:44:12  KERN  hci0 cmd_cnt 1 cmd queued 241
+21:44:12  KERN  hci0: skb 00000000b2d31e7f
+21:44:15  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:15  KERN  hci0: err 0x6e
+21:44:15  KERN  hci0 cmd_cnt 1 cmd queued 240
+21:44:15  KERN  hci0: skb 00000000e8db41d5
+21:44:17  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:17  KERN  hci0: err 0x6e
+21:44:17  KERN  hci0 cmd_cnt 1 cmd queued 239
+21:44:17  KERN  hci0: skb 00000000501bf26a
+21:44:19  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:19  KERN  hci0: err 0x6e
+21:44:19  KERN  hci0 cmd_cnt 1 cmd queued 238
+21:44:19  KERN  hci0: skb 000000007224d2d3
+21:44:21  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:21  KERN  hci0: err 0x6e
+21:44:21  KERN  hci0 cmd_cnt 1 cmd queued 237
+21:44:21  KERN  hci0: skb 00000000e7f920a8
+21:44:23  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:23  KERN  hci0: err 0x6e
+21:44:23  KERN  hci0 cmd_cnt 1 cmd queued 236
+21:44:23  KERN  hci0: skb 00000000301b53d0
+21:44:25  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:25  KERN  hci0: err 0x6e
+21:44:25  KERN  hci0 cmd_cnt 1 cmd queued 235
+21:44:25  KERN  hci0: skb 00000000bf8c0d6d
+21:44:27  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:27  KERN  hci0: err 0x6e
+21:44:27  KERN  hci0 cmd_cnt 1 cmd queued 234
+21:44:27  KERN  hci0: skb 00000000e2181903
+21:44:29  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:29  KERN  hci0: err 0x6e
+21:44:29  KERN  hci0 cmd_cnt 1 cmd queued 233
+21:44:29  KERN  hci0: skb 000000002f05eb06
+21:44:31  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:31  KERN  hci0: err 0x6e
+21:44:31  KERN  hci0 cmd_cnt 1 cmd queued 232
+21:44:31  KERN  hci0: skb 000000001d9985c3
+21:44:33  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:33  KERN  hci0: err 0x6e
+21:44:33  KERN  hci0 cmd_cnt 1 cmd queued 231
+21:44:33  KERN  hci0: skb 000000008125fdb2
+21:44:35  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:35  KERN  hci0: err 0x6e
+21:44:35  KERN  hci0 cmd_cnt 1 cmd queued 230
+21:44:35  KERN  hci0: skb 000000002c387bc1
+21:44:37  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:37  KERN  hci0: err 0x6e
+21:44:37  KERN  hci0 cmd_cnt 1 cmd queued 229
+21:44:37  KERN  hci0: skb 00000000dffd322d
+21:44:39  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:39  KERN  hci0: err 0x6e
+21:44:39  KERN  hci0 cmd_cnt 1 cmd queued 228
+21:44:39  KERN  hci0: skb 000000004c5889e3
+21:44:41  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:41  KERN  hci0: err 0x6e
+21:44:41  KERN  hci0 cmd_cnt 1 cmd queued 227
+21:44:41  KERN  hci0: skb 00000000a3a594a1
+21:44:43  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:43  KERN  hci0: err 0x6e
+21:44:43  KERN  hci0 cmd_cnt 1 cmd queued 226
+21:44:43  KERN  hci0: skb 000000001e884fd0
+21:44:45  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:45  KERN  hci0: err 0x6e
+21:44:45  KERN  hci0 cmd_cnt 1 cmd queued 225
+21:44:45  KERN  hci0: skb 0000000052b583e2
+21:44:47  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:47  KERN  hci0: err 0x6e
+21:44:47  KERN  hci0 cmd_cnt 1 cmd queued 224
+21:44:47  KERN  hci0: skb 0000000087be918d
+21:44:49  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:49  KERN  hci0: err 0x6e
+21:44:49  KERN  hci0 cmd_cnt 1 cmd queued 223
+21:44:49  KERN  hci0: skb 00000000e14ff4fe
+21:44:51  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:51  KERN  hci0: err 0x6e
+21:44:51  KERN  hci0 cmd_cnt 1 cmd queued 222
+21:44:51  KERN  hci0: skb 00000000452869a5
+21:44:53  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:53  KERN  hci0: err 0x6e
+21:44:53  KERN  hci0 cmd_cnt 1 cmd queued 221
+21:44:53  KERN  hci0: skb 0000000097ed15fa
+21:44:55  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:55  KERN  hci0: err 0x6e
+21:44:55  KERN  hci0 cmd_cnt 1 cmd queued 220
+21:44:55  KERN  hci0: skb 000000001c0affe9
+21:44:58  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:44:58  KERN  hci0: err 0x6e
+21:44:58  KERN  hci0 cmd_cnt 1 cmd queued 219
+21:44:58  KERN  hci0: skb 00000000a994d7cc
+21:45:00  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:00  KERN  hci0: err 0x6e
+21:45:00  KERN  hci0 cmd_cnt 1 cmd queued 218
+21:45:00  KERN  hci0: skb 0000000095373f10
+21:45:02  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:02  KERN  hci0: err 0x6e
+21:45:02  KERN  hci0 cmd_cnt 1 cmd queued 217
+21:45:02  KERN  hci0: skb 000000006a654427
+21:45:04  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:04  KERN  hci0: err 0x6e
+21:45:04  KERN  hci0 cmd_cnt 1 cmd queued 216
+21:45:04  KERN  hci0: skb 00000000039d6849
+21:45:06  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:06  KERN  hci0: err 0x6e
+21:45:06  KERN  hci0 cmd_cnt 1 cmd queued 215
+21:45:06  KERN  hci0: skb 000000007132b97a
+21:45:08  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:08  KERN  hci0: err 0x6e
+21:45:08  KERN  hci0 cmd_cnt 1 cmd queued 214
+21:45:08  KERN  hci0: skb 000000000ae785e2
+21:45:10  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:10  KERN  hci0: err 0x6e
+21:45:10  KERN  hci0 cmd_cnt 1 cmd queued 213
+21:45:10  KERN  hci0: skb 000000003a62d061
+21:45:12  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:12  KERN  hci0: err 0x6e
+21:45:12  KERN  hci0 cmd_cnt 1 cmd queued 212
+21:45:12  KERN  hci0: skb 000000008643c9a1
+21:45:14  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:14  KERN  hci0: err 0x6e
+21:45:14  KERN  hci0 cmd_cnt 1 cmd queued 211
+21:45:14  KERN  hci0: skb 00000000c6c91271
+21:45:16  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:16  KERN  hci0: err 0x6e
+21:45:16  KERN  hci0 cmd_cnt 1 cmd queued 210
+21:45:16  KERN  hci0: skb 0000000053c79b52
+21:45:18  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:18  KERN  hci0: err 0x6e
+21:45:18  KERN  hci0 cmd_cnt 1 cmd queued 209
+21:45:18  KERN  hci0: skb 000000008634f77d
+21:45:20  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:20  KERN  hci0: err 0x6e
+21:45:20  KERN  hci0 cmd_cnt 1 cmd queued 208
+21:45:20  KERN  hci0: skb 000000000602541f
+21:45:22  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:22  KERN  hci0: err 0x6e
+21:45:22  KERN  hci0 cmd_cnt 1 cmd queued 207
+21:45:22  KERN  hci0: skb 0000000001a7350e
+21:45:24  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:24  KERN  hci0: err 0x6e
+21:45:24  KERN  hci0 cmd_cnt 1 cmd queued 206
+21:45:24  KERN  hci0: skb 000000005c44e2e8
+21:45:26  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:26  KERN  hci0: err 0x6e
+21:45:26  KERN  hci0 cmd_cnt 1 cmd queued 205
+21:45:26  KERN  hci0: skb 0000000009ba1ab3
+21:45:28  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:28  KERN  hci0: err 0x6e
+21:45:28  KERN  hci0 cmd_cnt 1 cmd queued 204
+21:45:28  KERN  hci0: skb 00000000caa114dd
+21:45:30  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:30  KERN  hci0: err 0x6e
+21:45:30  KERN  hci0 cmd_cnt 1 cmd queued 203
+21:45:30  KERN  hci0: skb 00000000fd59dc45
+21:45:32  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:32  KERN  hci0: err 0x6e
+21:45:32  KERN  hci0 cmd_cnt 1 cmd queued 202
+21:45:32  KERN  hci0: skb 0000000051684cda
+21:45:34  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:34  KERN  hci0: err 0x6e
+21:45:34  KERN  hci0 cmd_cnt 1 cmd queued 201
+21:45:34  KERN  hci0: skb 00000000e68cf8ad
+21:45:36  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:36  KERN  hci0: err 0x6e
+21:45:36  KERN  hci0 cmd_cnt 1 cmd queued 200
+21:45:36  KERN  hci0: skb 00000000a48e64e2
+21:45:38  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:38  KERN  hci0: err 0x6e
+21:45:38  KERN  hci0 cmd_cnt 1 cmd queued 199
+21:45:38  KERN  hci0: skb 000000005d1157a9
+21:45:41  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:41  KERN  hci0: err 0x6e
+21:45:41  KERN  hci0 cmd_cnt 1 cmd queued 198
+21:45:41  KERN  hci0: skb 000000001f9d7693
+21:45:43  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:43  KERN  hci0: err 0x6e
+21:45:43  KERN  hci0 cmd_cnt 1 cmd queued 197
+21:45:43  KERN  hci0: skb 00000000cbe872bf
+21:45:45  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:45  KERN  hci0: err 0x6e
+21:45:45  KERN  hci0 cmd_cnt 1 cmd queued 196
+21:45:45  KERN  hci0: skb 0000000044ae2e85
+21:45:47  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:47  KERN  hci0: err 0x6e
+21:45:47  KERN  hci0 cmd_cnt 1 cmd queued 195
+21:45:47  KERN  hci0: skb 00000000bff0ccea
+21:45:49  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:49  KERN  hci0: err 0x6e
+21:45:49  KERN  hci0 cmd_cnt 1 cmd queued 194
+21:45:49  KERN  hci0: skb 0000000016356b0e
+21:45:51  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:51  KERN  hci0: err 0x6e
+21:45:51  KERN  hci0 cmd_cnt 1 cmd queued 193
+21:45:51  KERN  hci0: skb 000000000cf49e46
+21:45:53  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:53  KERN  hci0: err 0x6e
+21:45:53  KERN  hci0 cmd_cnt 1 cmd queued 192
+21:45:53  KERN  hci0: skb 00000000aa698f99
+21:45:55  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:55  KERN  hci0: err 0x6e
+21:45:55  KERN  hci0 cmd_cnt 1 cmd queued 191
+21:45:55  KERN  hci0: skb 00000000852ac7b4
+21:45:57  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:57  KERN  hci0: err 0x6e
+21:45:57  KERN  hci0 cmd_cnt 1 cmd queued 190
+21:45:57  KERN  hci0: skb 00000000110be40c
+21:45:59  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:45:59  KERN  hci0: err 0x6e
+21:45:59  KERN  hci0 cmd_cnt 1 cmd queued 189
+21:45:59  KERN  hci0: skb 0000000055ebb3b5
+21:46:01  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:01  KERN  hci0: err 0x6e
+21:46:01  KERN  hci0 cmd_cnt 1 cmd queued 188
+21:46:01  KERN  hci0: skb 000000001d4dcc9e
+21:46:03  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:03  KERN  hci0: err 0x6e
+21:46:03  KERN  hci0 cmd_cnt 1 cmd queued 187
+21:46:03  KERN  hci0: skb 000000009437479f
+21:46:05  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:05  KERN  hci0: err 0x6e
+21:46:05  KERN  hci0 cmd_cnt 1 cmd queued 186
+21:46:05  KERN  hci0: skb 000000002e5e9af3
+21:46:07  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:07  KERN  hci0: err 0x6e
+21:46:07  KERN  hci0 cmd_cnt 1 cmd queued 185
+21:46:07  KERN  hci0: skb 0000000057dc478d
+21:46:09  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:09  KERN  hci0: err 0x6e
+21:46:09  KERN  hci0 cmd_cnt 1 cmd queued 184
+21:46:09  KERN  hci0: skb 00000000d6e3327e
+21:46:11  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:11  KERN  hci0: err 0x6e
+21:46:11  KERN  hci0 cmd_cnt 1 cmd queued 183
+21:46:11  KERN  hci0: skb 000000009305eddb
+21:46:13  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:13  KERN  hci0: err 0x6e
+21:46:13  KERN  hci0 cmd_cnt 1 cmd queued 182
+21:46:13  KERN  hci0: skb 000000007926e29b
+21:46:15  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:15  KERN  hci0: err 0x6e
+21:46:15  KERN  hci0 cmd_cnt 1 cmd queued 181
+21:46:15  KERN  hci0: skb 00000000a1f1527f
+21:46:17  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:17  KERN  hci0: err 0x6e
+21:46:17  KERN  hci0 cmd_cnt 1 cmd queued 180
+21:46:17  KERN  hci0: skb 000000008c2e5211
+21:46:19  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:19  KERN  hci0: err 0x6e
+21:46:19  KERN  hci0 cmd_cnt 1 cmd queued 179
+21:46:19  KERN  hci0: skb 0000000056a57292
+21:46:22  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:22  KERN  hci0: err 0x6e
+21:46:22  KERN  hci0 cmd_cnt 1 cmd queued 178
+21:46:22  KERN  hci0: skb 0000000003c4f6d5
+21:46:24  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:24  KERN  hci0: err 0x6e
+21:46:24  KERN  hci0 cmd_cnt 1 cmd queued 177
+21:46:24  KERN  hci0: skb 00000000605da3bd
+21:46:26  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:26  KERN  hci0: err 0x6e
+21:46:26  KERN  hci0 cmd_cnt 1 cmd queued 176
+21:46:26  KERN  hci0: skb 00000000d3f0812a
+21:46:28  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:28  KERN  hci0: err 0x6e
+21:46:28  KERN  hci0 cmd_cnt 1 cmd queued 175
+21:46:28  KERN  hci0: skb 0000000033bdf846
+21:46:30  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:30  KERN  hci0: err 0x6e
+21:46:30  KERN  hci0 cmd_cnt 1 cmd queued 174
+21:46:30  KERN  hci0: skb 000000004b3c0478
+21:46:32  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:32  KERN  hci0: err 0x6e
+21:46:32  KERN  hci0 cmd_cnt 1 cmd queued 173
+21:46:32  KERN  hci0: skb 000000007dd953ef
+21:46:34  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:34  KERN  hci0: err 0x6e
+21:46:34  KERN  hci0 cmd_cnt 1 cmd queued 172
+21:46:34  KERN  hci0: skb 000000002506291a
+21:46:36  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:36  KERN  hci0: err 0x6e
+21:46:36  KERN  hci0 cmd_cnt 1 cmd queued 171
+21:46:36  KERN  hci0: skb 0000000064c98494
+21:46:38  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:38  KERN  hci0: err 0x6e
+21:46:38  KERN  hci0 cmd_cnt 1 cmd queued 170
+21:46:38  KERN  hci0: skb 00000000fcdf6a2e
+21:46:40  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:40  KERN  hci0: err 0x6e
+21:46:40  KERN  hci0 cmd_cnt 1 cmd queued 169
+21:46:40  KERN  hci0: skb 00000000b0d45ce3
+21:46:42  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:42  KERN  hci0: err 0x6e
+21:46:42  KERN  hci0 cmd_cnt 1 cmd queued 168
+21:46:42  KERN  hci0: skb 000000008380727d
+21:46:44  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:44  KERN  hci0: err 0x6e
+21:46:44  KERN  hci0 cmd_cnt 1 cmd queued 167
+21:46:44  KERN  hci0: skb 0000000071b46c51
+21:46:46  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:46  KERN  hci0: err 0x6e
+21:46:46  KERN  hci0 cmd_cnt 1 cmd queued 166
+21:46:46  KERN  hci0: skb 000000007288604d
+21:46:48  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:48  KERN  hci0: err 0x6e
+21:46:48  KERN  hci0 cmd_cnt 1 cmd queued 165
+21:46:48  KERN  hci0: skb 00000000d1da76be
+21:46:50  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:50  KERN  hci0: err 0x6e
+21:46:50  KERN  hci0 cmd_cnt 1 cmd queued 164
+21:46:50  KERN  hci0: skb 0000000025e7a054
+21:46:52  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:52  KERN  hci0: err 0x6e
+21:46:52  KERN  hci0 cmd_cnt 1 cmd queued 163
+21:46:52  KERN  hci0: skb 000000002e68258b
+21:46:54  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:54  KERN  hci0: err 0x6e
+21:46:54  KERN  hci0 cmd_cnt 1 cmd queued 162
+21:46:54  KERN  hci0: skb 000000002a3ebb8c
+21:46:56  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:56  KERN  hci0: err 0x6e
+21:46:56  KERN  hci0 cmd_cnt 1 cmd queued 161
+21:46:56  KERN  hci0: skb 000000004b3329bb
+21:46:58  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:46:58  KERN  hci0: err 0x6e
+21:46:58  KERN  hci0 cmd_cnt 1 cmd queued 160
+21:46:58  KERN  hci0: skb 00000000a46b2f0e
+21:47:00  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:00  KERN  hci0: err 0x6e
+21:47:00  KERN  hci0 cmd_cnt 1 cmd queued 159
+21:47:00  KERN  hci0: skb 0000000029aed4a7
+21:47:02  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:02  KERN  hci0: err 0x6e
+21:47:02  KERN  hci0 cmd_cnt 1 cmd queued 158
+21:47:02  KERN  hci0: skb 0000000082f3bae0
+21:47:05  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:05  KERN  hci0: err 0x6e
+21:47:05  KERN  hci0 cmd_cnt 1 cmd queued 157
+21:47:05  KERN  hci0: skb 0000000045c964e1
+21:47:07  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:07  KERN  hci0: err 0x6e
+21:47:07  KERN  hci0 cmd_cnt 1 cmd queued 156
+21:47:07  KERN  hci0: skb 00000000f490af01
+21:47:09  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:09  KERN  hci0: err 0x6e
+21:47:09  KERN  hci0 cmd_cnt 1 cmd queued 155
+21:47:09  KERN  hci0: skb 000000006af0a8fc
+21:47:11  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:11  KERN  hci0: err 0x6e
+21:47:11  KERN  hci0 cmd_cnt 1 cmd queued 154
+21:47:11  KERN  hci0: skb 00000000f307ab98
+21:47:13  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:13  KERN  hci0: err 0x6e
+21:47:13  KERN  hci0 cmd_cnt 1 cmd queued 153
+21:47:13  KERN  hci0: skb 000000003cbeb260
+21:47:15  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:15  KERN  hci0: err 0x6e
+21:47:15  KERN  hci0 cmd_cnt 1 cmd queued 152
+21:47:15  KERN  hci0: skb 0000000062e6a3a2
+21:47:17  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:17  KERN  hci0: err 0x6e
+21:47:17  KERN  hci0 cmd_cnt 1 cmd queued 151
+21:47:17  KERN  hci0: skb 0000000077cb3999
+21:47:19  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:19  KERN  hci0: err 0x6e
+21:47:19  KERN  hci0 cmd_cnt 1 cmd queued 150
+21:47:19  KERN  hci0: skb 000000006eb1bd2b
+21:47:21  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:21  KERN  hci0: err 0x6e
+21:47:21  KERN  hci0 cmd_cnt 1 cmd queued 149
+21:47:21  KERN  hci0: skb 00000000412b91ec
+21:47:23  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:23  KERN  hci0: err 0x6e
+21:47:23  KERN  hci0 cmd_cnt 1 cmd queued 148
+21:47:23  KERN  hci0: skb 0000000090e217b3
+21:47:25  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:25  KERN  hci0: err 0x6e
+21:47:25  KERN  hci0 cmd_cnt 1 cmd queued 147
+21:47:25  KERN  hci0: skb 0000000061a44fdb
+21:47:27  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:27  KERN  hci0: err 0x6e
+21:47:27  KERN  hci0 cmd_cnt 1 cmd queued 146
+21:47:27  KERN  hci0: skb 00000000eefd8ff4
+21:47:29  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:29  KERN  hci0: err 0x6e
+21:47:29  KERN  hci0 cmd_cnt 1 cmd queued 145
+21:47:29  KERN  hci0: skb 000000008f0209ec
+21:47:31  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:31  KERN  hci0: err 0x6e
+21:47:31  KERN  hci0 cmd_cnt 1 cmd queued 144
+21:47:31  KERN  hci0: skb 00000000704bc20f
+21:47:33  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:33  KERN  hci0: err 0x6e
+21:47:33  KERN  hci0 cmd_cnt 1 cmd queued 143
+21:47:33  KERN  hci0: skb 000000005390a9d1
+21:47:35  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:35  KERN  hci0: err 0x6e
+21:47:35  KERN  hci0 cmd_cnt 1 cmd queued 142
+21:47:35  KERN  hci0: skb 00000000970c4265
+21:47:37  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:37  KERN  hci0: err 0x6e
+21:47:37  KERN  hci0 cmd_cnt 1 cmd queued 141
+21:47:37  KERN  hci0: skb 00000000d731e4b6
+21:47:39  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:39  KERN  hci0: err 0x6e
+21:47:39  KERN  hci0 cmd_cnt 1 cmd queued 140
+21:47:39  KERN  hci0: skb 00000000cb732578
+21:47:41  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:41  KERN  hci0: err 0x6e
+21:47:41  KERN  hci0 cmd_cnt 1 cmd queued 139
+21:47:41  KERN  hci0: skb 00000000341ab259
+21:47:43  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:43  KERN  hci0: err 0x6e
+21:47:43  KERN  hci0 cmd_cnt 1 cmd queued 138
+21:47:43  KERN  hci0: skb 000000006c6f935d
+21:47:45  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:45  KERN  hci0: err 0x6e
+21:47:45  KERN  hci0 cmd_cnt 1 cmd queued 137
+21:47:45  KERN  hci0: skb 000000009d2df9fb
+21:47:48  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:48  KERN  hci0: err 0x6e
+21:47:48  KERN  hci0 cmd_cnt 1 cmd queued 136
+21:47:48  KERN  hci0: skb 00000000999e073a
+21:47:50  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:50  KERN  hci0: err 0x6e
+21:47:50  KERN  hci0 cmd_cnt 1 cmd queued 135
+21:47:50  KERN  hci0: skb 00000000ce509c41
+21:47:52  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:52  KERN  hci0: err 0x6e
+21:47:52  KERN  hci0 cmd_cnt 1 cmd queued 134
+21:47:52  KERN  hci0: skb 0000000085fa49d3
+21:47:54  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:54  KERN  hci0: err 0x6e
+21:47:54  KERN  hci0 cmd_cnt 1 cmd queued 133
+21:47:54  KERN  hci0: skb 000000007c34ff17
+21:47:56  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:56  KERN  hci0: err 0x6e
+21:47:56  KERN  hci0 cmd_cnt 1 cmd queued 132
+21:47:56  KERN  hci0: skb 0000000060fe30a3
+21:47:58  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:47:58  KERN  hci0: err 0x6e
+21:47:58  KERN  hci0 cmd_cnt 1 cmd queued 131
+21:47:58  KERN  hci0: skb 00000000d70bf4cf
+21:48:00  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:00  KERN  hci0: err 0x6e
+21:48:00  KERN  hci0 cmd_cnt 1 cmd queued 130
+21:48:00  KERN  hci0: skb 00000000fd51630c
+21:48:02  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:02  KERN  hci0: err 0x6e
+21:48:02  KERN  hci0 cmd_cnt 1 cmd queued 129
+21:48:02  KERN  hci0: skb 000000004ace5b10
+21:48:04  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:04  KERN  hci0: err 0x6e
+21:48:04  KERN  hci0 cmd_cnt 1 cmd queued 128
+21:48:04  KERN  hci0: skb 0000000016d6b72c
+21:48:06  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:06  KERN  hci0: err 0x6e
+21:48:06  KERN  hci0 cmd_cnt 1 cmd queued 127
+21:48:06  KERN  hci0: skb 0000000076caf4be
+21:48:08  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:08  KERN  hci0: err 0x6e
+21:48:08  KERN  hci0 cmd_cnt 1 cmd queued 126
+21:48:08  KERN  hci0: skb 000000006fa5f0d7
+21:48:10  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:10  KERN  hci0: err 0x6e
+21:48:10  KERN  hci0 cmd_cnt 1 cmd queued 125
+21:48:10  KERN  hci0: skb 00000000623fd273
+21:48:12  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:12  KERN  hci0: err 0x6e
+21:48:12  KERN  hci0 cmd_cnt 1 cmd queued 124
+21:48:12  KERN  hci0: skb 0000000093182648
+21:48:14  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:14  KERN  hci0: err 0x6e
+21:48:14  KERN  hci0 cmd_cnt 1 cmd queued 123
+21:48:14  KERN  hci0: skb 000000005e3827fb
+21:48:16  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:16  KERN  hci0: err 0x6e
+21:48:16  KERN  hci0 cmd_cnt 1 cmd queued 122
+21:48:16  KERN  hci0: skb 000000002528d579
+21:48:18  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:18  KERN  hci0: err 0x6e
+21:48:18  KERN  hci0 cmd_cnt 1 cmd queued 121
+21:48:18  KERN  hci0: skb 000000008de65606
+21:48:20  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:20  KERN  hci0: err 0x6e
+21:48:20  KERN  hci0 cmd_cnt 1 cmd queued 120
+21:48:20  KERN  hci0: skb 00000000b0138df0
+21:48:22  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:22  KERN  hci0: err 0x6e
+21:48:22  KERN  hci0 cmd_cnt 1 cmd queued 119
+21:48:22  KERN  hci0: skb 000000003afd1d08
+21:48:24  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:24  KERN  hci0: err 0x6e
+21:48:24  KERN  hci0 cmd_cnt 1 cmd queued 118
+21:48:24  KERN  hci0: skb 00000000abf7f999
+21:48:26  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:26  KERN  hci0: err 0x6e
+21:48:26  KERN  hci0 cmd_cnt 1 cmd queued 117
+21:48:26  KERN  hci0: skb 0000000092f5a284
+21:48:28  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:28  KERN  hci0: err 0x6e
+21:48:28  KERN  hci0 cmd_cnt 1 cmd queued 116
+21:48:28  KERN  hci0: skb 00000000315658df
+21:48:31  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:31  KERN  hci0: err 0x6e
+21:48:31  KERN  hci0 cmd_cnt 1 cmd queued 115
+21:48:31  KERN  hci0: skb 000000004a3a3140
+21:48:33  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:33  KERN  hci0: err 0x6e
+21:48:33  KERN  hci0 cmd_cnt 1 cmd queued 114
+21:48:33  KERN  hci0: skb 00000000110aedaa
+21:48:35  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:35  KERN  hci0: err 0x6e
+21:48:35  KERN  hci0 cmd_cnt 1 cmd queued 113
+21:48:35  KERN  hci0: skb 00000000747f3c64
+21:48:37  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:37  KERN  hci0: err 0x6e
+21:48:37  KERN  hci0 cmd_cnt 1 cmd queued 112
+21:48:37  KERN  hci0: skb 00000000a97a6c8c
+21:48:39  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:39  KERN  hci0: err 0x6e
+21:48:39  KERN  hci0 cmd_cnt 1 cmd queued 111
+21:48:39  KERN  hci0: skb 00000000b486cf76
+21:48:41  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:41  KERN  hci0: err 0x6e
+21:48:41  KERN  hci0 cmd_cnt 1 cmd queued 110
+21:48:41  KERN  hci0: skb 0000000020302072
+21:48:43  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:43  KERN  hci0: err 0x6e
+21:48:43  KERN  hci0 cmd_cnt 1 cmd queued 109
+21:48:43  KERN  hci0: skb 0000000047ada35f
+21:48:45  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:45  KERN  hci0: err 0x6e
+21:48:45  KERN  hci0 cmd_cnt 1 cmd queued 108
+21:48:45  KERN  hci0: skb 000000008ab85e06
+21:48:47  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:47  KERN  hci0: err 0x6e
+21:48:47  KERN  hci0 cmd_cnt 1 cmd queued 107
+21:48:47  KERN  hci0: skb 000000004c9cae44
+21:48:49  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:49  KERN  hci0: err 0x6e
+21:48:49  KERN  hci0 cmd_cnt 1 cmd queued 106
+21:48:49  KERN  hci0: skb 00000000462d015f
+21:48:51  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:51  KERN  hci0: err 0x6e
+21:48:51  KERN  hci0 cmd_cnt 1 cmd queued 105
+21:48:51  KERN  hci0: skb 000000006ef72179
+21:48:53  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:53  KERN  hci0: err 0x6e
+21:48:53  KERN  hci0 cmd_cnt 1 cmd queued 104
+21:48:53  KERN  hci0: skb 000000008ff18b98
+21:48:55  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:55  KERN  hci0: err 0x6e
+21:48:55  KERN  hci0 cmd_cnt 1 cmd queued 103
+21:48:55  KERN  hci0: skb 00000000f1e80d21
+21:48:57  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:57  KERN  hci0: err 0x6e
+21:48:57  KERN  hci0 cmd_cnt 1 cmd queued 102
+21:48:57  KERN  hci0: skb 0000000044f368f7
+21:48:59  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:48:59  KERN  hci0: err 0x6e
+21:48:59  KERN  hci0 cmd_cnt 1 cmd queued 101
+21:48:59  KERN  hci0: skb 00000000dad3bcc3
+21:49:01  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:01  KERN  hci0: err 0x6e
+21:49:01  KERN  hci0 cmd_cnt 1 cmd queued 100
+21:49:01  KERN  hci0: skb 00000000ad4d8eec
+21:49:03  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:03  KERN  hci0: err 0x6e
+21:49:03  KERN  hci0 cmd_cnt 1 cmd queued 99
+21:49:03  KERN  hci0: skb 00000000de247619
+21:49:05  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:05  KERN  hci0: err 0x6e
+21:49:05  KERN  hci0 cmd_cnt 1 cmd queued 98
+21:49:05  KERN  hci0: skb 000000005b115744
+21:49:07  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:07  KERN  hci0: err 0x6e
+21:49:07  KERN  hci0 cmd_cnt 1 cmd queued 97
+21:49:07  KERN  hci0: skb 0000000094e68564
+21:49:09  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:09  KERN  hci0: err 0x6e
+21:49:09  KERN  hci0 cmd_cnt 1 cmd queued 96
+21:49:09  KERN  hci0: skb 00000000e74a324b
+21:49:11  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:11  KERN  hci0: err 0x6e
+21:49:11  KERN  hci0 cmd_cnt 1 cmd queued 95
+21:49:11  KERN  hci0: skb 00000000b42ab97e
+21:49:14  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:14  KERN  hci0: err 0x6e
+21:49:14  KERN  hci0 cmd_cnt 1 cmd queued 94
+21:49:14  KERN  hci0: skb 00000000376f24c1
+21:49:16  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:16  KERN  hci0: err 0x6e
+21:49:16  KERN  hci0 cmd_cnt 1 cmd queued 93
+21:49:16  KERN  hci0: skb 0000000006757169
+21:49:18  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:18  KERN  hci0: err 0x6e
+21:49:18  KERN  hci0 cmd_cnt 1 cmd queued 92
+21:49:18  KERN  hci0: skb 00000000a37ab57c
+21:49:20  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:20  KERN  hci0: err 0x6e
+21:49:20  KERN  hci0 cmd_cnt 1 cmd queued 91
+21:49:20  KERN  hci0: skb 000000009b2a4b95
+21:49:22  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:22  KERN  hci0: err 0x6e
+21:49:22  KERN  hci0 cmd_cnt 1 cmd queued 90
+21:49:22  KERN  hci0: skb 00000000ad723d33
+21:49:24  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:24  KERN  hci0: err 0x6e
+21:49:24  KERN  hci0 cmd_cnt 1 cmd queued 89
+21:49:24  KERN  hci0: skb 0000000084ff4654
+21:49:26  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:26  KERN  hci0: err 0x6e
+21:49:26  KERN  hci0 cmd_cnt 1 cmd queued 88
+21:49:26  KERN  hci0: skb 0000000068f4e878
+21:49:28  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:28  KERN  hci0: err 0x6e
+21:49:28  KERN  hci0 cmd_cnt 1 cmd queued 87
+21:49:28  KERN  hci0: skb 00000000babbcf86
+21:49:30  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:30  KERN  hci0: err 0x6e
+21:49:30  KERN  hci0 cmd_cnt 1 cmd queued 86
+21:49:30  KERN  hci0: skb 00000000fb61ab07
+21:49:32  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:32  KERN  hci0: err 0x6e
+21:49:32  KERN  hci0 cmd_cnt 1 cmd queued 85
+21:49:32  KERN  hci0: skb 000000001073b33f
+21:49:34  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:34  KERN  hci0: err 0x6e
+21:49:34  KERN  hci0 cmd_cnt 1 cmd queued 84
+21:49:34  KERN  hci0: skb 0000000020f60290
+21:49:36  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:36  KERN  hci0: err 0x6e
+21:49:36  KERN  hci0 cmd_cnt 1 cmd queued 83
+21:49:36  KERN  hci0: skb 00000000ba721b9a
+21:49:38  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:38  KERN  hci0: err 0x6e
+21:49:38  KERN  hci0 cmd_cnt 1 cmd queued 82
+21:49:38  KERN  hci0: skb 00000000c336a3a5
+21:49:40  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:40  KERN  hci0: err 0x6e
+21:49:40  KERN  hci0 cmd_cnt 1 cmd queued 81
+21:49:40  KERN  hci0: skb 00000000e3ff26b4
+21:49:42  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:42  KERN  hci0: err 0x6e
+21:49:42  KERN  hci0 cmd_cnt 1 cmd queued 80
+21:49:42  KERN  hci0: skb 00000000b4de1a1c
+21:49:44  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:44  KERN  hci0: err 0x6e
+21:49:44  KERN  hci0 cmd_cnt 1 cmd queued 79
+21:49:44  KERN  hci0: skb 000000003dde466f
+21:49:46  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:46  KERN  hci0: err 0x6e
+21:49:46  KERN  hci0 cmd_cnt 1 cmd queued 78
+21:49:46  KERN  hci0: skb 00000000bc0b8f5d
+21:49:48  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:48  KERN  hci0: err 0x6e
+21:49:48  KERN  hci0 cmd_cnt 1 cmd queued 77
+21:49:48  KERN  hci0: skb 00000000782c03fe
+21:49:50  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:50  KERN  hci0: err 0x6e
+21:49:50  KERN  hci0 cmd_cnt 1 cmd queued 76
+21:49:50  KERN  hci0: skb 000000008da00c2d
+21:49:52  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:52  KERN  hci0: err 0x6e
+21:49:52  KERN  hci0 cmd_cnt 1 cmd queued 75
+21:49:52  KERN  hci0: skb 000000008dae5741
+21:49:54  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:54  KERN  hci0: err 0x6e
+21:49:54  KERN  hci0 cmd_cnt 1 cmd queued 74
+21:49:54  KERN  hci0: skb 0000000057b3e89b
+21:49:57  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:57  KERN  hci0: err 0x6e
+21:49:57  KERN  hci0 cmd_cnt 1 cmd queued 73
+21:49:57  KERN  hci0: skb 00000000c92ed092
+21:49:59  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:49:59  KERN  hci0: err 0x6e
+21:49:59  KERN  hci0 cmd_cnt 1 cmd queued 72
+21:49:59  KERN  hci0: skb 00000000997bfec2
+21:50:01  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:01  KERN  hci0: err 0x6e
+21:50:01  KERN  hci0 cmd_cnt 1 cmd queued 71
+21:50:01  KERN  hci0: skb 00000000d30f2dad
+21:50:03  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:03  KERN  hci0: err 0x6e
+21:50:03  KERN  hci0 cmd_cnt 1 cmd queued 70
+21:50:03  KERN  hci0: skb 00000000d089d30a
+21:50:05  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:05  KERN  hci0: err 0x6e
+21:50:05  KERN  hci0 cmd_cnt 1 cmd queued 69
+21:50:05  KERN  hci0: skb 00000000af95e178
+21:50:07  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:07  KERN  hci0: err 0x6e
+21:50:07  KERN  hci0 cmd_cnt 1 cmd queued 68
+21:50:07  KERN  hci0: skb 00000000d63138cd
+21:50:09  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:09  KERN  hci0: err 0x6e
+21:50:09  KERN  hci0 cmd_cnt 1 cmd queued 67
+21:50:09  KERN  hci0: skb 00000000b15e4c08
+21:50:11  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:11  KERN  hci0: err 0x6e
+21:50:11  KERN  hci0 cmd_cnt 1 cmd queued 66
+21:50:11  KERN  hci0: skb 000000009ec98bc5
+21:50:13  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:13  KERN  hci0: err 0x6e
+21:50:13  KERN  hci0 cmd_cnt 1 cmd queued 65
+21:50:13  KERN  hci0: skb 0000000063e165e3
+21:50:15  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:15  KERN  hci0: err 0x6e
+21:50:15  KERN  hci0 cmd_cnt 1 cmd queued 64
+21:50:15  KERN  hci0: skb 00000000485b4821
+21:50:17  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:17  KERN  hci0: err 0x6e
+21:50:17  KERN  hci0 cmd_cnt 1 cmd queued 63
+21:50:17  KERN  hci0: skb 000000000e09df90
+21:50:19  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:19  KERN  hci0: err 0x6e
+21:50:19  KERN  hci0 cmd_cnt 1 cmd queued 62
+21:50:19  KERN  hci0: skb 0000000019666ae7
+21:50:21  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:21  KERN  hci0: err 0x6e
+21:50:21  KERN  hci0 cmd_cnt 1 cmd queued 61
+21:50:21  KERN  hci0: skb 00000000c15914b0
+21:50:23  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:23  KERN  hci0: err 0x6e
+21:50:23  KERN  hci0 cmd_cnt 1 cmd queued 60
+21:50:23  KERN  hci0: skb 00000000452bec71
+21:50:25  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:25  KERN  hci0: err 0x6e
+21:50:25  KERN  hci0 cmd_cnt 1 cmd queued 59
+21:50:25  KERN  hci0: skb 00000000320fb5ea
+21:50:27  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:27  KERN  hci0: err 0x6e
+21:50:27  KERN  hci0 cmd_cnt 1 cmd queued 58
+21:50:27  KERN  hci0: skb 00000000c7fe1391
+21:50:29  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:29  KERN  hci0: err 0x6e
+21:50:29  KERN  hci0 cmd_cnt 1 cmd queued 57
+21:50:29  KERN  hci0: skb 00000000457d914c
+21:50:31  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:31  KERN  hci0: err 0x6e
+21:50:31  KERN  hci0 cmd_cnt 1 cmd queued 56
+21:50:31  KERN  hci0: skb 000000001d708be2
+21:50:33  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:33  KERN  hci0: err 0x6e
+21:50:33  KERN  hci0 cmd_cnt 1 cmd queued 55
+21:50:33  KERN  hci0: skb 0000000071720b52
+21:50:35  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:35  KERN  hci0: err 0x6e
+21:50:35  KERN  hci0 cmd_cnt 1 cmd queued 54
+21:50:35  KERN  hci0: skb 0000000008699c6f
+21:50:38  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:38  KERN  hci0: err 0x6e
+21:50:38  KERN  hci0 cmd_cnt 1 cmd queued 53
+21:50:38  KERN  hci0: skb 000000006d6fe7fa
+21:50:40  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:40  KERN  hci0: err 0x6e
+21:50:40  KERN  hci0 cmd_cnt 1 cmd queued 52
+21:50:40  KERN  hci0: skb 00000000773baf3b
+21:50:42  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:42  KERN  hci0: err 0x6e
+21:50:42  KERN  hci0 cmd_cnt 1 cmd queued 51
+21:50:42  KERN  hci0: skb 000000004ecb7769
+21:50:44  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:44  KERN  hci0: err 0x6e
+21:50:44  KERN  hci0 cmd_cnt 1 cmd queued 50
+21:50:44  KERN  hci0: skb 0000000054dec2d9
+21:50:46  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:46  KERN  hci0: err 0x6e
+21:50:46  KERN  hci0 cmd_cnt 1 cmd queued 49
+21:50:46  KERN  hci0: skb 0000000093f10569
+21:50:48  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:48  KERN  hci0: err 0x6e
+21:50:48  KERN  hci0 cmd_cnt 1 cmd queued 48
+21:50:48  KERN  hci0: skb 00000000dd5e51f1
+21:50:50  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:50  KERN  hci0: err 0x6e
+21:50:50  KERN  hci0 cmd_cnt 1 cmd queued 47
+21:50:50  KERN  hci0: skb 0000000049253bb6
+21:50:52  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:52  KERN  hci0: err 0x6e
+21:50:52  KERN  hci0 cmd_cnt 1 cmd queued 46
+21:50:52  KERN  hci0: skb 00000000295ddde7
+21:50:54  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:54  KERN  hci0: err 0x6e
+21:50:54  KERN  hci0 cmd_cnt 1 cmd queued 45
+21:50:54  KERN  hci0: skb 0000000051dae396
+21:50:56  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:56  KERN  hci0: err 0x6e
+21:50:56  KERN  hci0 cmd_cnt 1 cmd queued 44
+21:50:56  KERN  hci0: skb 00000000e41ed7f2
+21:50:58  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:50:58  KERN  hci0: err 0x6e
+21:50:58  KERN  hci0 cmd_cnt 1 cmd queued 43
+21:50:58  KERN  hci0: skb 00000000368ceb4b
+21:51:00  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:00  KERN  hci0: err 0x6e
+21:51:00  KERN  hci0 cmd_cnt 1 cmd queued 42
+21:51:00  KERN  hci0: skb 00000000f55d0362
+21:51:02  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:02  KERN  hci0: err 0x6e
+21:51:02  KERN  hci0 cmd_cnt 1 cmd queued 41
+21:51:02  KERN  hci0: skb 0000000074d56b0d
+21:51:04  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:04  KERN  hci0: err 0x6e
+21:51:04  KERN  hci0 cmd_cnt 1 cmd queued 40
+21:51:04  KERN  hci0: skb 00000000f21b313d
+21:51:06  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:06  KERN  hci0: err 0x6e
+21:51:06  KERN  hci0 cmd_cnt 1 cmd queued 39
+21:51:06  KERN  hci0: skb 000000007bcd3cd3
+21:51:08  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:08  KERN  hci0: err 0x6e
+21:51:08  KERN  hci0 cmd_cnt 1 cmd queued 38
+21:51:08  KERN  hci0: skb 00000000cda15428
+21:51:10  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:10  KERN  hci0: err 0x6e
+21:51:10  KERN  hci0 cmd_cnt 1 cmd queued 37
+21:51:10  KERN  hci0: skb 00000000eb0f19b3
+21:51:12  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:12  KERN  hci0: err 0x6e
+21:51:12  KERN  hci0 cmd_cnt 1 cmd queued 36
+21:51:12  KERN  hci0: skb 000000004910b03c
+21:51:14  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:14  KERN  hci0: err 0x6e
+21:51:14  KERN  hci0 cmd_cnt 1 cmd queued 35
+21:51:14  KERN  hci0: skb 0000000097c9aebf
+21:51:16  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:16  KERN  hci0: err 0x6e
+21:51:16  KERN  hci0 cmd_cnt 1 cmd queued 34
+21:51:16  KERN  hci0: skb 00000000ffe4c292
+21:51:18  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:18  KERN  hci0: err 0x6e
+21:51:18  KERN  hci0 cmd_cnt 1 cmd queued 33
+21:51:18  KERN  hci0: skb 000000000627b538
+21:51:21  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:21  KERN  hci0: err 0x6e
+21:51:21  KERN  hci0 cmd_cnt 1 cmd queued 32
+21:51:21  KERN  hci0: skb 00000000d28c166e
+21:51:23  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:23  KERN  hci0: err 0x6e
+21:51:23  KERN  hci0 cmd_cnt 1 cmd queued 31
+21:51:23  KERN  hci0: skb 00000000252cfb4a
+21:51:25  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:25  KERN  hci0: err 0x6e
+21:51:25  KERN  hci0 cmd_cnt 1 cmd queued 30
+21:51:25  KERN  hci0: skb 0000000072e438aa
+21:51:27  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:27  KERN  hci0: err 0x6e
+21:51:27  KERN  hci0 cmd_cnt 1 cmd queued 29
+21:51:27  KERN  hci0: skb 0000000024251263
+21:51:29  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:29  KERN  hci0: err 0x6e
+21:51:29  KERN  hci0 cmd_cnt 1 cmd queued 28
+21:51:29  KERN  hci0: skb 00000000d9125cae
+21:51:31  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:31  KERN  hci0: err 0x6e
+21:51:31  KERN  hci0 cmd_cnt 1 cmd queued 27
+21:51:31  KERN  hci0: skb 0000000022e09ddc
+21:51:33  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:33  KERN  hci0: err 0x6e
+21:51:33  KERN  hci0 cmd_cnt 1 cmd queued 26
+21:51:33  KERN  hci0: skb 00000000553c069e
+21:51:35  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:35  KERN  hci0: err 0x6e
+21:51:35  KERN  hci0 cmd_cnt 1 cmd queued 25
+21:51:35  KERN  hci0: skb 00000000dd0b70cc
+21:51:37  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:37  KERN  hci0: err 0x6e
+21:51:37  KERN  hci0 cmd_cnt 1 cmd queued 24
+21:51:37  KERN  hci0: skb 0000000017980088
+21:51:39  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:39  KERN  hci0: err 0x6e
+21:51:39  KERN  hci0 cmd_cnt 1 cmd queued 23
+21:51:39  KERN  hci0: skb 000000002eec3553
+21:51:41  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:41  KERN  hci0: err 0x6e
+21:51:41  KERN  hci0 cmd_cnt 1 cmd queued 22
+21:51:41  KERN  hci0: skb 00000000d607bcaf
+21:51:43  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:43  KERN  hci0: err 0x6e
+21:51:43  KERN  hci0 cmd_cnt 1 cmd queued 21
+21:51:43  KERN  hci0: skb 00000000740dcacc
+21:51:45  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:45  KERN  hci0: err 0x6e
+21:51:45  KERN  hci0 cmd_cnt 1 cmd queued 20
+21:51:45  KERN  hci0: skb 0000000018a700a8
+21:51:47  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:47  KERN  hci0: err 0x6e
+21:51:47  KERN  hci0 cmd_cnt 1 cmd queued 19
+21:51:47  KERN  hci0: skb 0000000024933c2c
+21:51:49  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:49  KERN  hci0: err 0x6e
+21:51:49  KERN  hci0 cmd_cnt 1 cmd queued 18
+21:51:49  KERN  hci0: skb 0000000055e06ab6
+21:51:51  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:51  KERN  hci0: err 0x6e
+21:51:51  KERN  hci0 cmd_cnt 1 cmd queued 17
+21:51:51  KERN  hci0: skb 000000006f0fcc38
+21:51:53  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:53  KERN  hci0: err 0x6e
+21:51:53  KERN  hci0 cmd_cnt 1 cmd queued 16
+21:51:53  KERN  hci0: skb 0000000030266809
+21:51:55  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:55  KERN  hci0: err 0x6e
+21:51:55  KERN  hci0 cmd_cnt 1 cmd queued 15
+21:51:55  KERN  hci0: skb 00000000c56871fb
+21:51:57  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:57  KERN  hci0: err 0x6e
+21:51:57  KERN  hci0 cmd_cnt 1 cmd queued 14
+21:51:57  KERN  hci0: skb 000000001b37d726
+21:51:59  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:51:59  KERN  hci0: err 0x6e
+21:51:59  KERN  hci0 cmd_cnt 1 cmd queued 13
+21:51:59  KERN  hci0: skb 0000000096e43ef5
+21:52:01  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:01  KERN  hci0: err 0x6e
+21:52:01  KERN  hci0 cmd_cnt 1 cmd queued 12
+21:52:01  KERN  hci0: skb 00000000b11e2e22
+21:52:04  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:04  KERN  hci0: err 0x6e
+21:52:04  KERN  hci0 cmd_cnt 1 cmd queued 11
+21:52:04  KERN  hci0: skb 000000007140ef9e
+21:52:06  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:06  KERN  hci0: err 0x6e
+21:52:06  KERN  hci0 cmd_cnt 1 cmd queued 10
+21:52:06  KERN  hci0: skb 000000005f33a205
+21:52:08  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:08  KERN  hci0: err 0x6e
+21:52:08  KERN  hci0 cmd_cnt 1 cmd queued 9
+21:52:08  KERN  hci0: skb 00000000f821fbf9
+21:52:10  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:10  KERN  hci0: err 0x6e
+21:52:10  KERN  hci0 cmd_cnt 1 cmd queued 8
+21:52:10  KERN  hci0: skb 000000002de78d43
+21:52:12  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:12  KERN  hci0: err 0x6e
+21:52:12  KERN  hci0 cmd_cnt 1 cmd queued 7
+21:52:12  KERN  hci0: skb 00000000c876a9ae
+21:52:14  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:14  KERN  hci0: err 0x6e
+21:52:14  KERN  hci0 cmd_cnt 1 cmd queued 6
+21:52:14  KERN  hci0: skb 00000000ba53db19
+21:52:16  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:16  KERN  hci0: err 0x6e
+21:52:16  KERN  hci0 cmd_cnt 1 cmd queued 5
+21:52:16  KERN  hci0: skb 00000000a38e4e74
+21:52:18  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:18  KERN  hci0: err 0x6e
+21:52:18  KERN  hci0 cmd_cnt 1 cmd queued 4
+21:52:18  KERN  hci0: skb 00000000a96e2721
+21:52:20  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:20  KERN  hci0: err 0x6e
+21:52:20  KERN  hci0 cmd_cnt 1 cmd queued 3
+21:52:20  KERN  hci0: skb 00000000a2ab7189
+21:52:22  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:22  KERN  hci0: err 0x6e
+21:52:22  KERN  hci0 cmd_cnt 1 cmd queued 2
+21:52:22  KERN  hci0: skb 00000000793eafa6
+21:52:24  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:24  KERN  hci0: err 0x6e
+21:52:24  KERN  hci0 cmd_cnt 1 cmd queued 1
+21:52:24  KERN  hci0: skb 00000000fb58f7ef
+21:52:26  KERN  Bluetooth: hci0: command 0x041f tx timeout
+21:52:26  KERN  hci0: err 0x6e
+21:52:26  KERN  hci0 cmd_cnt 1 cmd queued 0
+00:43:17  BLUED src/agent.c:add_default_agent() Default agent set to :1.154 /org/gnome/bluetooth/settings
+00:43:17  BLUED src/adapter.c:set_mode() sending set mode command for index 0
+00:43:17  BLUED src/agent.c:agent_ref() 0x606666d60600: ref=1
+00:43:17  BLUED src/agent.c:register_agent() agent :1.154
+00:43:17  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0009
+00:43:17  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0009 complete: 0x00
+00:43:17  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000ad1
+00:43:17  BLUED src/adapter.c:settings_changed() Changed settings: 0x00000010
+00:43:17  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+00:43:17  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0018
+00:43:17  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0018 complete: 0x00
+00:43:17  BLUED src/adapter.c:set_discovery_filter() sender :1.154
+00:43:17  BLUED src/adapter.c:parse_discovery_filter_dict() filtered discovery params: transport: 7 rssi: 32767 pathloss: 32767 duplicate data: false discoverable true pattern (null)
+00:43:17  BLUED src/adapter.c:set_discovery_filter() successfully pre-set filter
+00:43:17  BLUED src/adapter.c:start_discovery() sender :1.154
+00:43:17  BLUED src/adapter.c:update_discovery_filter()
+00:43:17  BLUED src/adapter.c:discovery_filter_to_mgmt_cp()
+00:43:17  BLUED src/adapter.c:set_discoverable() sending set mode command for index 0
+00:43:17  BLUED src/adapter.c:set_mode() sending set mode command for index 0
+00:43:17  BLUED src/adapter.c:trigger_start_discovery()
+00:43:17  BLUED src/adapter.c:cancel_passive_scanning()
+00:43:17  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0007
+00:43:17  BLUED src/adapter.c:start_discovery_timeout()
+00:43:18  BLUED src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+00:43:18  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0007 complete: 0x00
+00:43:18  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000ad3
+00:43:18  BLUED src/adapter.c:settings_changed() Changed settings: 0x00000002
+00:43:18  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+00:43:18  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0006
+00:43:18  KERN  hci0:
+00:43:18  KERN  hci0: entry 0000000049c0fcbf
+00:43:18  KERN  hci0: ADV monitoring is off
+00:43:18  KERN  hci0: stopping background scanning
+00:43:18  KERN  hci0:
+00:43:18  KERN  hci0: entry 000000009b6c15db
+00:43:18  KERN  hci0: Opcode 0x0c3a
+00:43:18  KERN  hci0: opcode 0x0c3a plen 4
+00:43:18  KERN  hci0: skb len 7
+00:43:18  KERN  hci0: length 1
+00:43:18  KERN  hci0 cmd_cnt 1 cmd queued 1
+00:43:18  KERN  hci0: skb 0000000038735201
+00:43:18  BLUED src/profile.c:register_profile() sender :1.155
+00:43:18  BLUED src/profile.c:create_ext() Created "Message Notification"
+00:43:18  BLUED src/profile.c:ext_adapter_probe() "Message Notification" probed
+00:43:18  BLUED src/profile.c:ext_start_servers() Message Notification listening on PSM 4097
+00:43:18  BLUED src/profile.c:ext_start_servers() Message Notification listening on chan 17
+00:43:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000a
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001133-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001134-0000-1000-8000-00805f9
+00:43:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+00:43:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+00:43:18  BLUED src/profile.c:register_profile() sender :1.155
+00:43:18  BLUED src/profile.c:create_ext() Created "Message Access"
+00:43:18  BLUED src/profile.c:ext_adapter_probe() "Message Access" probed
+00:43:18  BLUED src/profile.c:ext_start_servers() Message Access listening on PSM 4099
+00:43:18  BLUED src/profile.c:ext_start_servers() Message Access listening on chan 16
+00:43:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000b
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001132-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001134-0000-1000-8000-00805f9
+00:43:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+00:43:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+00:43:18  BLUED src/profile.c:register_profile() sender :1.155
+00:43:18  BLUED src/profile.c:create_ext() Created "Phone Book Access"
+00:43:18  BLUED src/profile.c:ext_adapter_probe() "Phone Book Access" probed
+00:43:18  BLUED src/profile.c:ext_start_servers() Phone Book Access listening on PSM 4101
+00:43:18  BLUED src/profile.c:ext_start_servers() Phone Book Access listening on chan 15
+00:43:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000c
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000112f-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001130-0000-1000-8000-00805f9
+00:43:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+00:43:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+00:43:18  BLUED src/profile.c:register_profile() sender :1.155
+00:43:18  BLUED src/profile.c:create_ext() Created "Synchronization"
+00:43:18  BLUED src/profile.c:ext_adapter_probe() "Synchronization" probed
+00:43:18  BLUED src/profile.c:ext_start_servers() Synchronization listening on chan 14
+00:43:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000d
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001104-0000-1000-8000-00805f9
+00:43:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+00:43:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+00:43:18  BLUED src/profile.c:register_profile() sender :1.155
+00:43:18  BLUED src/profile.c:create_ext() Created "File Transfer"
+00:43:18  BLUED src/profile.c:ext_adapter_probe() "File Transfer" probed
+00:43:18  BLUED src/profile.c:ext_start_servers() File Transfer listening on PSM 4103
+00:43:18  BLUED src/profile.c:ext_start_servers() File Transfer listening on chan 10
+00:43:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000e
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001106-0000-1000-8000-00805f9
+00:43:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+00:43:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+00:43:18  BLUED src/profile.c:register_profile() sender :1.155
+00:43:18  BLUED src/profile.c:create_ext() Created "Object Push"
+00:43:18  BLUED src/profile.c:ext_adapter_probe() "Object Push" probed
+00:43:18  BLUED src/profile.c:ext_start_servers() Object Push listening on PSM 4105
+00:43:18  BLUED src/profile.c:ext_start_servers() Object Push listening on chan 9
+00:43:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000f
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001105-0000-1000-8000-00805f9
+00:43:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+00:43:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+00:43:18  BLUED src/profile.c:register_profile() sender :1.155
+00:43:18  BLUED src/profile.c:create_ext() Created ":1.155/org/bluez/obex/00005005_0000_1000_8000_0002ee000001/<UUID-01>"
+00:43:18  BLUED src/profile.c:ext_adapter_probe() ":1.155/org/bluez/obex/00005005_0000_1000_8000_0002ee000001/<UUID-01>" probed
+00:43:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10010
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+00:43:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00005005-0000-1000-8000-0002ee0
+00:43:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+00:43:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+00:43:20  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x06 status: 0x05
+00:43:20  BLUED Failed to set mode: Authentication Failed (0x05)
+00:43:20  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+00:43:20  KERN  Bluetooth: hci0: command 0x041f tx timeout
+00:43:20  KERN  hci0: end: err -110
+00:43:20  KERN  hci0: err 0x6e
+00:43:20  KERN  hci0 cmd_cnt 1 cmd queued 0
+00:43:20  KERN  Bluetooth: hci0: Opcode 0x0c3a failed: -110
+00:43:20  KERN  hci0: state 0 -> 1
+00:43:20  KERN  hci0:
+00:43:20  KERN  hci0: entry 0000000034de8961
+00:43:20  KERN  hci0: type 7
+00:43:20  KERN  hci0:
+00:43:20  KERN  hci0: cancelling interleave scan
+00:43:20  KERN  hci0: Opcode 0x2005
+00:43:20  KERN  hci0: opcode 0x2005 plen 6
+00:43:20  KERN  hci0: skb len 9
+00:43:20  KERN  hci0: length 1
+00:43:20  KERN  hci0 cmd_cnt 1 cmd queued 1
+00:43:20  KERN  hci0: skb 0000000068b8a120
+00:43:22  KERN  hci0: end: err -110
+00:43:22  KERN  Bluetooth: hci0: Opcode 0x2005 failed: -110
+00:43:22  KERN  Bluetooth: hci0: command 0x041f tx timeout
+00:43:22  KERN  hci0: Opcode 0x200b
+00:43:22  KERN  hci0: err 0x6e
+00:43:22  KERN  hci0: opcode 0x200b plen 7
+00:43:22  KERN  hci0: skb len 10
+00:43:22  KERN  hci0 cmd_cnt 1 cmd queued 0
+00:43:22  KERN  hci0: length 1
+00:43:22  KERN  hci0: skb 00000000492993a8
+00:43:22  KERN  hci0 cmd_cnt 0 cmd queued 0
+00:43:24  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x05
+00:43:24  BLUED src/adapter.c:start_discovery_complete() status 0x05
+00:43:24  BLUED src/adapter.c:discovery_remove() owner :1.154
+00:43:24  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+00:43:24  KERN  hci0: end: err -110
+00:43:24  KERN  Bluetooth: hci0: Opcode 0x200b failed: -110
+00:43:24  KERN  Bluetooth: hci0: command 0x041f tx timeout
+00:43:24  KERN  hci0: err 0x6e
+00:43:24  KERN  hci0 cmd_cnt 1 cmd queued 0
+00:43:24  KERN  hci0: state 1 -> 0
+00:43:24  KERN  hci0: entry 00000000d5a947e1
+00:43:24  KERN  hci0: ADV monitoring is off
+00:43:24  KERN  hci0: stopping background scanning
+00:43:24  KERN  hci0:
+00:43:24  KERN  hci0:
+00:43:24  KERN  hci0: entry 00000000bc29b712
+00:43:24  KERN  hci0:
+00:43:24  KERN  hci0:
+00:43:24  KERN  hci0: Opcode 0x0c52
+00:43:24  KERN  hci0: opcode 0x0c52 plen 241
+00:43:24  KERN  hci0: skb len 244
+00:43:24  KERN  hci0: length 1
+00:43:24  KERN  hci0 cmd_cnt 1 cmd queued 1
+00:43:24  KERN  hci0: skb 000000005a4afe92
+00:43:26  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+00:43:26  BLUED Failed to add UUID: Authentication Failed (0x05)
+00:43:26  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+00:43:26  KERN  hci0: end: err -110
+00:43:26  KERN  Bluetooth: hci0: Opcode 0x0c52 failed: -110
+00:43:26  KERN  Bluetooth: hci0: command 0x041f tx timeout
+00:43:26  KERN  hci0: err 0x6e
+00:43:26  KERN  hci0 cmd_cnt 1 cmd queued 0
+00:43:26  KERN  hci0:
+00:43:26  KERN  hci0: entry 000000007ec38c87
+00:43:26  KERN  hci0:
+00:43:26  KERN  hci0:
+00:43:26  KERN  hci0: Opcode 0x0c52
+00:43:26  KERN  hci0: opcode 0x0c52 plen 241
+00:43:26  KERN  hci0: skb len 244
+00:43:26  KERN  hci0: length 1
+00:43:26  KERN  hci0 cmd_cnt 1 cmd queued 1
+00:43:26  KERN  hci0: skb 000000001790cbdd
+00:43:28  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+00:43:28  BLUED Failed to add UUID: Authentication Failed (0x05)
+00:43:28  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+00:43:28  KERN  hci0: end: err -110
+00:43:28  KERN  Bluetooth: hci0: command 0x041f tx timeout
+00:43:28  KERN  hci0: err 0x6e
+00:43:28  KERN  Bluetooth: hci0: Opcode 0x0c52 failed: -110
+00:43:28  KERN  hci0 cmd_cnt 1 cmd queued 0
+00:43:28  KERN  hci0:
+00:43:28  KERN  hci0: entry 0000000041639358
+00:43:28  KERN  hci0:
+00:43:28  KERN  hci0: Opcode 0x0c24
+00:43:28  KERN  hci0: opcode 0x0c24 plen 3
+00:43:28  KERN  hci0: skb len 6
+00:43:28  KERN  hci0: length 1
+00:43:28  KERN  hci0 cmd_cnt 1 cmd queued 1
+00:43:28  KERN  hci0: skb 000000005fccb8e5
+00:43:30  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+00:43:30  BLUED Failed to add UUID: Authentication Failed (0x05)
+00:43:30  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+00:43:30  KERN  Bluetooth: hci0: command 0x041f tx timeout
+00:43:30  KERN  hci0: end: err -110
+00:43:30  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+00:43:30  KERN  hci0: err 0x6e
+00:43:30  KERN  hci0 cmd_cnt 1 cmd queued 0
+00:43:30  KERN  hci0:
+00:43:30  KERN  hci0: entry 0000000056f396c5
+00:43:30  KERN  hci0:
+00:43:30  KERN  hci0: Opcode 0x0c24
+00:43:30  KERN  hci0: opcode 0x0c24 plen 3
+00:43:30  KERN  hci0: skb len 6
+00:43:30  KERN  hci0: length 1
+00:43:30  KERN  hci0 cmd_cnt 1 cmd queued 1
+00:43:30  KERN  hci0: skb 00000000c0be23cc
+00:43:32  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+00:43:32  BLUED Failed to add UUID: Authentication Failed (0x05)
+00:43:32  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+00:43:32  KERN  hci0: end: err -110
+00:43:32  KERN  Bluetooth: hci0: command 0x041f tx timeout
+00:43:32  KERN  hci0: err 0x6e
+00:43:32  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+00:43:32  KERN  hci0 cmd_cnt 1 cmd queued 0
+00:43:32  KERN  hci0:
+00:43:32  KERN  hci0: entry 000000003309b80e
+00:43:32  KERN  hci0:
+00:43:32  KERN  hci0: Opcode 0x0c24
+00:43:32  KERN  hci0: opcode 0x0c24 plen 3
+00:43:32  KERN  hci0: skb len 6
+00:43:32  KERN  hci0: length 1
+00:43:32  KERN  hci0 cmd_cnt 1 cmd queued 1
+00:43:32  KERN  hci0: skb 000000005eaf490b
+00:43:34  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+00:43:34  BLUED Failed to add UUID: Authentication Failed (0x05)
+00:43:34  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+00:43:34  KERN  Bluetooth: hci0: command 0x041f tx timeout
+00:43:34  KERN  hci0: end: err -110
+00:43:34  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+00:43:34  KERN  hci0: err 0x6e
+00:43:34  KERN  hci0 cmd_cnt 1 cmd queued 0
+00:43:34  KERN  hci0:
+00:43:34  KERN  hci0: entry 000000002bca76ca
+00:43:34  KERN  hci0:
+00:43:34  KERN  hci0: Opcode 0x0c24
+00:43:34  KERN  hci0: opcode 0x0c24 plen 3
+00:43:34  KERN  hci0: skb len 6
+00:43:34  KERN  hci0: length 1
+00:43:34  KERN  hci0 cmd_cnt 1 cmd queued 1
+00:43:34  KERN  hci0: skb 000000005fd5ee2f
+00:43:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+00:43:36  BLUED Failed to add UUID: Authentication Failed (0x05)
+00:43:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+00:43:36  KERN  hci0: end: err -110
+00:43:36  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+00:43:36  KERN  Bluetooth: hci0: command 0x041f tx timeout
+00:43:36  KERN  hci0: err 0x6e
+00:43:36  KERN  hci0 cmd_cnt 1 cmd queued 0
+00:43:36  KERN  hci0:
+00:43:36  KERN  hci0: entry 000000000a248dd1
+00:43:36  KERN  hci0:
+00:43:36  KERN  hci0: Opcode 0x0c24
+00:43:36  KERN  hci0: opcode 0x0c24 plen 3
+00:43:36  KERN  hci0: skb len 6
+00:43:36  KERN  hci0: length 1
+00:43:36  KERN  hci0 cmd_cnt 1 cmd queued 1
+00:43:36  KERN  hci0: skb 000000008f166159
+00:43:38  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+00:43:38  BLUED Failed to add UUID: Authentication Failed (0x05)
+00:43:38  KERN  hci0: end: err -110
+00:43:38  KERN  Bluetooth: hci0: command 0x041f tx timeout
+00:43:38  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+00:43:38  KERN  hci0: err 0x6e
+00:43:38  KERN  hci0 cmd_cnt 1 cmd queued 0
+─────────────────────────────────────────────────────────────────────────
+events: 3050   (MARK=0 KERN=2773 BLUED=277 WDOG=0)
