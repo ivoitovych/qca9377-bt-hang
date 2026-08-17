@@ -7915,6 +7915,53 @@ devtools/repo-scan "$SCRATCH/clean" >/dev/null 2>&1
 (( $? == 0 )) && ok "repo-scan passes documented placeholders" \
               || bad "repo-scan refused the placeholder forms it documents"
 
+# THE ALLOWLIST MUST NOT DEPEND ON WHO IS RUNNING THE SCAN.
+#
+# repo-scan allows the maintainer's own address, because a bug report carries a
+# reporter contact — and it derived that address from `git config user.email`,
+# which describes the OPERATOR, not the repository. On a CI runner nobody is
+# configured: the allowlist came out empty and the gate reported the
+# deliberately-published "Reporter contact" line in docs/bug-report.md as a
+# leak. Nobody had seen it because this step runs last in the workflow and the
+# first step had been failing for 45 hours; the first run that reached it failed
+# here.
+#
+# The tip commit's author is a fact about the repository, so a fork gets its own
+# answer with nothing to configure — which is what the comment beside the
+# derivation always claimed. Both directions are asserted below, because
+# widening an allowlist is exactly the change that can blind a gate.
+#
+# `.invalid` is RFC 2606 reserved and can never be anyone's address. The
+# built-in exclusions cover example.com/org, so those would pass whatever this
+# code did and would assert nothing.
+#
+# ASSEMBLED FROM FRAGMENTS, like the planted MAC above and for the same reason:
+# a literal address here is a literal address in a TRACKED FILE, and the first
+# draft of this test made `repo-scan . --all` fail on tests/run-tests itself.
+# Splitting the `@` off is enough — the pattern needs a local part joined to a
+# domain, so the domain alone matches nothing.
+RSAT='@'; RSDOM='qca9377.invalid'
+RSOWN="owner${RSAT}${RSDOM}"; RSOTH="stranger${RSAT}${RSDOM}"
+RSM=$(mktemp -d); git -C "$RSM" init -q
+printf 'Reporter contact: %s\n' "$RSOWN" > "$RSM/README.md"
+git -C "$RSM" add -A
+git -C "$RSM" -c user.name=t -c user.email="$RSOWN" commit -q -m readme
+# No user.email in this repository's own config, and HOME moved aside so no
+# global one is found either: the state of a fresh CI checkout.
+( cd "$RSM" && HOME="$RSM/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? == 0 )) \
+    && ok "repo-scan allows the repository's own maintainer with no configured identity" \
+    || bad "an unconfigured scan called the repository's own reporter contact a leak"
+
+# AND THE WIDENING MUST NOT BLIND IT. One address is allowlisted, not the class.
+printf 'cc: %s\n' "$RSOTH" >> "$RSM/README.md"
+git -C "$RSM" add -A
+( cd "$RSM" && HOME="$RSM/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "a third party's address is still refused when the maintainer's is allowed" \
+    || bad "the repository-derived allowlist let an unrelated address through"
+rm -rf "$RSM"
+
 # ── NON-ASCII IN THE LOGS, WHICH THE UPSTREAM REPORT NOW DEPENDS ON ──────
 #
 # The second headset that reproduced the fault is recorded by BlueZ, the kernel
