@@ -607,3 +607,63 @@ that depends on someone remembering is not a control. It is the same finding as
 `bt-retention`'s warning needing someone to act on it, and as `bt-archive` archiving
 nothing on its own — third instance this week, and the first where the someone is not even
 a member of the project.
+
+### BL-09 — nine exhibits cannot be placed on the journal's axis, and the fix is the format not the parser
+
+Once `bt-retention` stopped reading the capture stamp as the evidence's (`0d3f2f9`), the
+real picture on the investigation machine is:
+
+```
+  29 exhibit(s): 12 still verifiable, 8 no longer, 9 not judgeable
+  4 of the 8 were settled by capture time alone — captured before any
+  retained boot, so whatever they describe is older still.
+```
+
+**The number reported to the maintainer on 2026-08-16 — "20 of 25 re-derivable" — was
+overstated by eight.** Those eight were judged by when someone ran the extraction command,
+not by when the evidence happened. `EX-018` now reports `not judgeable`, which is correct:
+its tables are bare local time and its journal is gone.
+
+**Nine `not judgeable` is the gap worth closing**: `EX-010` through `EX-015`, `EX-018`,
+`EX-019`, `EX-020`. None carries a timestamp with a UTC offset outside its provenance
+block, so nothing can place them against journald's boot ranges.
+
+#### The decision asked for: keep the blunt cut
+
+The fix truncates each exhibit at the `## Provenance` heading, and the maintainer flagged
+that as blunt — if the exhibit format ever grows an evidence-window field that lands in
+that table, the tool will ignore it. Two options were offered: put such a field above the
+heading, or teach the cut its name.
+
+**Keep the cut blunt. Put the field above the heading.** The two failure directions are not
+symmetric, and that asymmetry is the entire lesson of the defect just fixed:
+
+* a blunt cut that drops a field fails to **`not judgeable`** — a missing answer, visible,
+  and it prompts someone to look;
+* a parser that reads named fields out of the provenance table fails to **a wrong answer** —
+  it re-creates exactly the coupling that made the capture stamp masquerade as the
+  evidence's, and it would do so silently.
+
+A tool deciding which parts of the capture record to trust is the shape that caused this.
+The cut should stay incapable of that.
+
+#### What that implies, and it is work
+
+1. **`bt-exhibit` should emit an evidence-window line in the body**, above `## Provenance`,
+   carrying the first and last absolute instants the exhibit's own output covers — with
+   offsets, since a bare local time is not an absolute instant.
+2. **The nine existing exhibits need one added.** That is an annotation derived from each
+   exhibit's own content, not a rewrite of a claim, and it should be committed as such and
+   clearly marked. `EX-018` and `EX-020` may honestly stay unjudgeable, since their
+   evidence is gone and no line in the file can place it.
+3. **The exhibit README should state the requirement**, so the next exhibit carries it
+   without anyone remembering — which is the standing rule from `BL-08`.
+
+#### One prediction that did not hold, recorded because predictions should be checked
+
+The fix's own notes say four of the thirteen settle by capture-time arithmetic against the
+fixture, and "on the real journal it will be more, since the oldest retained boot has moved
+forward". On the real journal it is **still four** — `EX-001` through `EX-004`. The other
+nine were captured on or after 2026-08-12, inside the retained window, so the arithmetic
+cannot settle them in either direction. Nothing is wrong with the tool; the estimate was
+optimistic and the run says so.
