@@ -265,6 +265,15 @@ reset at +0 s may help or harm; that sign remains an experiment, not a tuning fa
 Baseline for comparison (`evidence/baseline/baseline.tsv`): **287 timeouts across 34 boots, 13 of 34
 boots hung.**
 
+⚠️ **That baseline is no longer re-derivable.** It was read from boots that have since
+rotated out of the journal under `SystemMaxUse`, so the numbers survive in the TSV as a
+record but a reviewer cannot reproduce them. `tools/bt-retention` reports which exhibits
+remain re-derivable; `docs/bug-report.md` withdraws both figures from its load-bearing
+list rather than restating them.
+
+Longest untreated observation to date: **47338.1 s — 13 h 8 m 58 s** with zero USB-layer
+lines and zero interventions (`EX-029`).
+
 ### Tunables
 
 | Variable | Default | Meaning |

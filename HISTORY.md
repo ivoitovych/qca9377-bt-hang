@@ -1903,3 +1903,114 @@ Six such defects surfaced in a week, and every one needed this host. That is the
 for verifying here — and equally the argument for a throwaway VM that reproduces the
 *configuration* without carrying the experiment. With one refinement earned this week: the
 VM must also be **loaded**, because one of the six was a race the container always won.
+
+---
+
+## Phase 28 — thirteen hours of nothing, and the tool that spoiled the ending
+
+The strongest evidence this project has produced arrived because nobody was looking at the
+machine, and the same two days exposed our own instrumentation as a source of intervention
+rather than a witness to it.
+
+### The evidence
+
+**Thirteen hours untouched.** On 2026-08-16 at 21:42:44 the controller stopped answering
+HCI. It was found the next morning by a stopped spinner in the GNOME Bluetooth panel:
+
+```
+21:42:44.918919  command 0x041f tx timeout          fault
+                 47338.1 s — 303 command timeouts
+                 0 USB-layer lines.  0 interventions.
+10:51:43         name hci0 blocked 1                shutdown begins
+```
+
+**47338.1 s — 13 h 8 m 58 s — is 3.9× the previous ceiling** (`EX-029`). Both zeroes are
+counted extractions, not summaries. Every earlier long window ended in something we or the
+operator did, which was the standing objection to all of them; this one ended because a
+family needed the laptop. The unattended interval is the one thing the record could not
+manufacture. The retired "45–66 s to USB collapse" is now wrong by three orders of
+magnitude.
+
+**A stage 2 that was not ours.** On 2026-08-16 at 15:37 a household member pressed the
+Bluetooth button, then pressed it again when nothing happened. The account was half wrong
+in a way only the journal could settle: the controller had stopped answering **6.092 s
+before** the button was touched, in the familiar `0x0428` signature. What followed the
+*unblock* was a USB reset — and the watchdog was inactive, disabled, **not installed**, with
+no journal entries. `btusb_qca_reset`'s string appears zero times; no driver unbind; no
+quirks entry to install `hdev->reset`. Four candidates ruled out with evidence rather than
+assertion (`EX-026`). The caller remains unestablished and is recorded as such in `BL-07`.
+
+**Where the wedge lives.** Two `reboot.target` transitions, three hours apart, opposite
+outcomes: from stage 1 the controller returned in 1.107 s; from stage 2 it did not return
+at all, the port detecting a device it could not address (`EX-027`). Eleven minutes later a
+`poweroff.target` from that same state brought it back in 1.020 s (`EX-028`). Both
+terminators are journal lines. A kernel restart discards every piece of host state there
+is and changed nothing; dropping VBUS did. **The failed state is on the device's side of
+the wire.**
+
+`EX-027` was written stating plainly that it could not say whether power removal helps,
+because no logged power removal existed on either side of its pair. `EX-028` closed that
+eleven minutes later. The open-question paragraph was annotated rather than rewritten —
+what it was honest to claim at the time is part of the record.
+
+### The instrument, again
+
+**Our shutdown hook is an intervention.** `bt-trial autostop` calls `hci_alive`, which runs
+`timeout 6 hciconfig hci0 name` — an HCI command issued to the controller at every
+shutdown while a trial is open. `EX-029`'s thirteen clean hours are followed by exactly
+that probe. It also times out: 90 s of `TimeoutStopSec` consumed by CPU-bound journal
+scanning, killed by SIGTERM, the row never written, the state file surviving so the next
+boot silently joins the same trial, and the trial directory reused and overwritten. The
+first generation of `trial-04/` exists **only because it happened to be committed** while
+working on an unrelated exhibit (`BL-08`).
+
+The workaround offered was to move the state file aside before shutdown. The operator
+declined it, and the reason is the finding:
+
+> For the cases when it is not me who shuts down.
+
+This is a family laptop. A procedure recalled by whoever happens to be at the keyboard is
+not a control, and that converts the probe from an operational cost into a design defect:
+`autostop` must classify from the journal it already reads. **A shutdown-censored window on
+this machine can no longer be called untouched without checking whether a trial was open**
+— `EX-025` included.
+
+**Evidence has a half-life set by our own verbosity.** Dynamic debug writes roughly a
+million lines an hour into a 16 GB ring, so the instrumentation that makes a boot worth
+keeping is what evicts the boots before it. Eight exhibits' source journals are already
+gone. `bt-retention` makes that visible and `bt-archive` acts on it — and `bt-archive`'s
+"never write inside the repository" guard turned out to be bypassable through a symlink,
+because it compared logical paths. Reproduced end to end before it was fixed, and fixed on
+both ends rather than the one reported (`BL-06`).
+
+`bt-retention` still judges 13 of 29 exhibits by their **capture** timestamp rather than
+their evidence's, because the extraction reads the provenance table when the body carries
+no offset — the exact error its own header documents avoiding. `EX-018` therefore reports
+`retained` when its journal is the one everybody agrees is gone.
+
+### The shapes
+
+Four defects this phase, all previously named:
+
+* **A control that holds where it was written and not where it runs** — `journal-contract`
+  read the first 5000 lines of `-b all` hunting a boot separator, on a host whose oldest
+  boot carries 1,586,655 kernel lines. Its inverse is new and worth keeping: elsewhere an
+  unbounded read was too slow; here a bounded one was too short, and **zero from a capped
+  scan is not a result.**
+* **A path check that does not resolve symlinks is not a path check** — second defect this
+  week whose mechanism is a symlink; the first destroyed three system binaries.
+* **A control that depends on someone remembering is not a control** — third instance, and
+  the first where the someone is not part of the project.
+* **A tool that reports on the world by asking the world a question changes it** — the
+  shutdown probe, and the reason `bt-capture-now` (`BL-05`) must be provably read-only
+  before it is written.
+
+### What is not done
+
+The four exhibits of this phase reached `docs/bug-report.md` only at the end of it, and
+the two figures that rested on `EX-018` — 287 timeouts across 34 boots, 13 of 34 boots
+hung — are withdrawn rather than restated, because the journal behind them is gone. The
+watchdog is still not installed, deliberately: enabling it means `install.sh --apply`, and
+its USB reset now has three demonstrations of destroying this controller. A tools-only
+deployment path that enables no services does not exist yet, and until it does the fixes
+in the tree cannot reach the machine that has the hardware.

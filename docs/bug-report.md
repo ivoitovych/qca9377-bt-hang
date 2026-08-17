@@ -67,39 +67,54 @@ controller answers no HCI command, while remaining USB-enumerated and initially 
 and leaves the bus", as the fault's trajectory. That figure is **withdrawn**: every
 observation behind it had one of our own USB resets between the HCI timeout and the USB
 collapse, and the 29–121 s clustering is the watchdog's reaction time, not the device's
-survival time (`EX-018`). In the observations with no intervention the controller stayed
-enumerated with no USB-level error for 1 h 12 m and 6 h 26 m, right-censored by us
-(`EX-016`). Whether the USB collapse belongs to the fault's untreated trajectory at all
-is **unresolved** — it has only ever been observed downstream of a reset, rebind or
-driver reload.
+survival time (`EX-020`). The longest observation with no intervention of any kind ran
+**13 h 8 m 58 s** with zero USB-layer lines (`EX-029`). Whether the USB collapse belongs
+to the fault's untreated trajectory at all is **unresolved** — it has only ever been
+observed downstream of a reset, rebind or driver reload.
 
 ### The untreated windows, with their terminators
 
-Four windows have positively established terminator provenance. Every one of them held
+Five windows have positively established terminator provenance. Every one of them held
 the controller **enumerated with zero USB-layer lines** for its whole duration.
 
 | window | duration | ended by | was the ending ours? |
 |---|---:|---|---|
+| `EX-029` | **47338 s** (13 h 8 m 58 s) | power-off after 13 h unattended | see below |
 | `EX-023` | 12107 s | deliberate `USBDEVFS_RESET` → collapse in 11.2 s | yes |
 | `EX-025` | 8884 s | ordinary shutdown — no reset, no rebind, no bus activity | **no** |
 | `EX-016` | 4332 s | `install.sh` reloading btusb | yes |
 | `EX-021` | 1837 s | operator rfkill toggle → collapse in 12.8 s | yes |
 
-`EX-025` is the one with the fewest objections available to it. The other three each
-invite the same reply — the ending was ours, so the absence of progression only describes
-what happens up to the moment we intervened. A shutdown does not reset the device, unbind
-the driver or touch the bus; it stops asking. The controller was still enumerated with a
-silent USB layer when the machine went down.
+**`EX-029` is the decisive row and the reason is mundane: nobody noticed.** The controller
+died at 21:42 and the fault was found the following morning. Across those thirteen hours
+the extraction counts **zero** USB-layer lines and **zero** interventions — not few, zero
+— and the terminator is a family needing the laptop back. An unattended interval is the
+one thing this record could not manufacture, and it is what makes the row evidence.
 
-That does not make it uncensored. **8883.7 s is what the window reached, not what it
-would have reached**, and the same is true of every row above. What differs is that the
-censoring mechanism is unrelated to the device.
+The other four each invite the same reply — the ending was ours, so the absence of
+progression only describes what happens up to the moment we intervened. `EX-025` was the
+previous best answer to that: a shutdown does not reset the device, unbind the driver or
+touch the bus.
 
-⚠️ `EX-018`'s fourteen-boot table contains longer windows still — 5 h 33 m, 3 h 14 m,
-1 h 26 m — recorded as shutdown-terminated. Those rows are **not** counted above, because
-that exhibit marks its terminator categories historical pending re-capture: reset
-provenance there was inferred rather than positively established. They are consistent with
-the four, and they are not evidence until re-captured.
+That does not make any of them uncensored. **47338.1 s is what the longest window reached,
+not what it would have reached**, and the same is true of every row above.
+
+⚠️ **`EX-029`'s terminator was touched, and the figure above excludes that.** The 47338.1 s
+runs from the fault to the first shutdown action. What followed was the shutdown's own
+rfkill block and then our `bt-trial-auto` stop hook, which issues `hciconfig hci0 name` —
+so the *shutdown* probed the controller even though the thirteen hours before it did not.
+That defect is `BL-08` in the investigation plan; the fix is for `autostop` to classify
+from the journal it already reads instead of issuing a command. **A shutdown-censored
+window on this machine cannot be called untouched without first checking whether a trial
+was open**, `EX-025` included.
+
+⚠️ `EX-018`'s fourteen-boot table contains further windows — 5 h 33 m, 3 h 14 m, 1 h 26 m
+— recorded as shutdown-terminated. Those rows are **not** counted above, and the reason is
+now stronger than the one given in earlier revisions: **the journal they were read from is
+no longer retained**, so a reviewer cannot re-derive them and neither can we. Boots before
+2026-08-12 have rotated out under `SystemMaxUse`; `tools/bt-retention` reports which
+exhibits remain re-derivable. `EX-020` is the surviving re-capture and is cited in
+preference to `EX-018` throughout this report.
 
 **The same hardware in the same laptop shows no fault under Windows 11** under deliberate
 repeated connect/disconnect/mode-change cycles, tested 2026-08-11. Hardware alone is
@@ -243,12 +258,25 @@ Consequences for what follows:
 What this does **not** weaken, because none of it depends on knowing the trigger:
 
 - the device is matched by no entry in btusb's quirks table (verified in source and binary)
-- 287 command timeouts across 34 boots with zero reset attempts
 - **every reset issued after the first HCI timeout failed, five for five**
-- **four instrumented windows with positively established provenance**, 1837 s to
-  12107 s, held the controller enumerated with **zero USB-layer lines** throughout
-  (`EX-016`, `EX-021`, `EX-023`, `EX-025`); the once-quoted "45–66 s to USB collapse"
-  was our own watchdog's reaction time and is withdrawn
+- **five instrumented windows with positively established provenance**, 1837 s to
+  **47338 s**, held the controller enumerated with **zero USB-layer lines** throughout
+  (`EX-016`, `EX-021`, `EX-023`, `EX-025`, `EX-029`); the once-quoted "45–66 s to USB
+  collapse" was our own watchdog's reaction time, is withdrawn, and is now wrong by three
+  orders of magnitude
+- **the fault reproduces on two vendors' headsets with one kernel-side signature**
+  (`EX-024`), which locates it in the controller's synchronous-link path rather than in a
+  peripheral
+- **the wedged state survives a host reboot and is cleared by removing power**
+  (`EX-027`, `EX-028`), so it lives on the device's side of the wire rather than in host
+  or driver state
+- **a stage-2 progression has been observed whose reset was demonstrably not ours**
+  (`EX-026`), with the watchdog inactive, disabled and not installed
+
+⚠️ Earlier revisions also listed "287 command timeouts across 34 boots" and "13 of 34
+boots" here. Both come from `EX-018`, whose journal has since rotated out of the retained
+store, so **neither figure can be re-derived by a reviewer or by us**. They are withdrawn
+from the load-bearing list rather than restated; `EX-020` is the surviving re-capture.
 
 Those are properties of the controller's response, observed regardless of what provoked it.
 
@@ -295,9 +323,13 @@ per-peripheral idiosyncrasy as the *sole* explanation; it does not show the faul
 independent of the negotiated link parameters, which both devices may happen to share.
 That comparison has not been made.
 
-It occurred in **13 of 34 boots**, and in one instrumented case **two minutes into a
-freshly power-cycled boot** under light use — so it needs neither prolonged uptime nor
-accumulated state.
+It occurred in one instrumented case **two minutes into a freshly power-cycled boot**
+under light use — so it needs neither prolonged uptime nor accumulated state.
+
+⚠️ Earlier revisions gave a rate of "13 of 34 boots" here. That count came from `EX-018`,
+whose source journal has rotated out of the retained store and cannot be re-derived, so
+the rate is **withdrawn** rather than restated. What remains is the qualitative claim
+above, which rests on a single instrumented boot and is stated as such.
 
 The clearest logged sequence, from the first instrumented hang, was an ungraceful A2DP
 teardown:
@@ -561,11 +593,15 @@ one did not.
 
 ## Impact
 
-- Bluetooth becomes unusable; a full power-off has recovered it. Warm-reboot behavior is
-  unresolved (`EX-017`, `EX-019`).
+- Bluetooth becomes unusable. **A full power-off recovers it; a reboot does not** — from
+  the same collapsed state, eleven minutes apart, `reboot.target` left the controller
+  unenumerable and `poweroff.target` brought it back in 1.020 s (`EX-027`, `EX-028`).
+  Both terminators are journal lines.
 - GNOME Settings shows a Bluetooth panel spinning forever (the MGMT request never
-  completes), with no error surfaced to the user.
-- Occurred in 13 of 34 consecutive boots under normal daily use.
+  completes), with no error surfaced to the user. On 2026-08-16 that stopped spinner was
+  the only sign a 13-hour fault had occurred (`EX-029`).
+- Recovering the machine after a collapse costs a power cycle, and a reboot attempted
+  first wastes several minutes and returns it in the same broken state.
 - The reporter observes the same pattern on **multiple different laptops**, suggesting
   either this device ID is widespread or other IDs are similarly unmatched.
 
