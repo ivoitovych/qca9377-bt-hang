@@ -3907,17 +3907,49 @@ chmod +x "$BM/stub"/*
 # passes where it was written is the defect class this file keeps finding in
 # the tools, arriving in the file that finds it.
 #
-# NOT SKIPPED WHERE IT CAN BE RUN. A user namespace gives EUID 0 with no
-# privilege attached, which is exactly enough for a tool whose every target is
-# already redirected into a temp tree — so CI really executes the round trip
-# rather than stepping over it. Probed rather than assumed: Ubuntu 24.04 can
-# restrict unprivileged user namespaces, and a probe that cannot be satisfied
-# skips through the vacuity report at the end of the run instead of turning
-# nine assertions red.
+# NOT SKIPPED WHERE IT CAN BE RUN. Three ways to reach EUID 0, tried in order
+# of how little they ask for, because all three leave every target redirected
+# into $BM and the last assertion of this section checks the real overrides
+# either way:
+#
+#   1. Already root — the investigation machine, where this suite runs.
+#   2. A USER NAMESPACE. `unshare -r` maps this user to 0 inside the namespace
+#      and grants no privilege outside it. The cheapest thing that works.
+#   3. `fakeroot`, which reports uid 0 to the process tree through an LD_PRELOAD
+#      and grants nothing at all. An ordinary process: no namespace, no
+#      privilege, no environment reset.
+#
+# NOT sudo, WHICH WAS TRIED AND WITHDRAWN. `sudo -n` runs the round trip
+# perfectly — 651 green as an unprivileged user with a real passwordless
+# sudoers rule, verified — and silently destroys the MEASUREMENT of it. sudo
+# resets the environment, so BASH_ENV (how devtools/coverage instruments a
+# child) never arrives, and it closes non-standard descriptors, so the fd the
+# trace is written to is gone. The suite passes and the traced run records not
+# one line of bt-mode, which is worse than the failure it fixes: the
+# comprehensiveness floor then reports 0% for a unit that was fully exercised,
+# and the obvious next move is to disbelieve the instrument.
+#
+# EACH PROBE ASKS FOR THE ANSWER, NOT FOR AN EXIT STATUS. The first draft ran
+# `unshare -r true` and read success as "this gives me root". Modelled with a
+# stub that execs its argument unchanged, the suite went red with nine failures
+# — the exact outcome this section exists to prevent, reintroduced by a probe
+# that checked the wrong thing. `id -u` reports the uid the tool would see.
+#
+# PROBED, NEVER ASSUMED. Ubuntu 24.04 — the GitHub runner image — restricts
+# unprivileged user namespaces through AppArmor, so step 2 fails there and
+# this was written after watching it fail: the run reported 640 invariants and
+# named the round trip as not asked, which is the honest outcome but leaves
+# bt-mode at 0% modes and 0/2 refusals against a comprehensiveness floor of 75.
+# Step 3 is what CI actually takes. If none of the three is available the
+# section skips through the vacuity report at the end of the run rather than
+# turning eleven assertions red.
 BM_PRIV=()
 BM_CAN=1
 if (( EUID != 0 )); then
-    if unshare -r true 2>/dev/null; then BM_PRIV=(unshare -r); else BM_CAN=0; fi
+    if   [[ "$(unshare -r  id -u 2>/dev/null)" == 0 ]]; then BM_PRIV=(unshare -r)
+    elif [[ "$(fakeroot -- id -u 2>/dev/null)" == 0 ]]; then BM_PRIV=(fakeroot --)
+    else BM_CAN=0
+    fi
 fi
 
 bm_run() { ${BM_PRIV[@]+"${BM_PRIV[@]}"} env PATH="$BM/stub:$PATH" \
@@ -8510,9 +8542,9 @@ fi
 # nine red assertions on every CI run for 45 hours and as nothing at all on any
 # host that had it. Same ambiguity, same remedy: the run says which host it was.
 if [[ -n "$PRIV_SKIPPED" ]]; then
-    echo "  NOT ASKED HERE: $PRIV_SKIPPED — this run has neither EUID 0 nor a"
-    echo "                  user namespace, and the tool under test refuses to"
-    echo "                  act without one. Nothing below root can execute it."
+    echo "  NOT ASKED HERE: $PRIV_SKIPPED — this run reached none of EUID 0, a"
+    echo "                  user namespace, or fakeroot, and the tool under test"
+    echo "                  refuses to act without one of them."
 fi
 
 echo
