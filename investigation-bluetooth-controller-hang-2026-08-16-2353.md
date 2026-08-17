@@ -1,0 +1,1413 @@
+# Bluetooth controller hang — source-level investigation, 2026-08-16 23:53
+
+Branch: `investigate-bluetooth-controller-hang-2026-08-16-2353`
+Base: `main` @ `1c336e7`
+Subject: Qualcomm Atheros QCA9377 (ROME), USB `13d3:3503`, on Ubuntu/Linux
+
+**Purpose of this attempt.** Move from evidence collection toward locating the
+defect in Linux source. This document is written incrementally: each section was
+appended immediately after the unit it describes was investigated, so the order
+below is the order in which things were actually learned, including the parts
+that changed later. A summary is appended at the end.
+
+**Scope note.** This is a functional reliability investigation. No security
+review was performed and none is intended.
+
+---
+
+## Unit 0 — Preconditions
+
+### 0.1 AI attribution disabled
+
+Checked all three git configuration levels plus the environment before touching
+anything.
+
+Found at the **global** level (`~/.gitconfig`), i.e. above this repository:
+
+- `user.name` / `user.email` set to the AI vendor's bot identity (a vendor
+  no-reply address);
+- `user.signingkey`, `gpg.format=ssh`, `gpg.ssh.program` and
+  `commit.gpgsign=true`, i.e. every commit SSH-signed with a key registered to
+  that same vendor identity.
+
+> The exact vendor strings are deliberately paraphrased rather than quoted here.
+> `devtools/repo-scan` greps tracked content for them and fails the tree on a
+> hit — correctly, since this repository publishes what it commits. Quoting them
+> verbatim in a report *about removing them* would trip the very gate that
+> enforces the rule.
+
+That is an AI committer identity plus a vendor-keyed signature, both applied
+automatically to every commit. A session-start hook installed by the execution
+environment (`~/.claude/session-start-git-identity.sh`) is what sets them, and
+the same hook conditionally installs a `commit-msg` hook that appends a
+`Co-authored-by:` trailer — that part was **not** active here
+(`CCR_SESSION_ACCOUNT_EMAIL` is empty, `core.hooksPath` was unset), so no
+trailer hook existed to remove.
+
+Changed, all at global level; repository-local config was left with no identity
+keys at all:
+
+```
+user.name=Iaroslav Voitovych
+user.email=yaroslav.voytovych@gmail.com
+commit.gpgsign=false
+(unset) user.signingkey, gpg.format, gpg.ssh.program, core.hooksPath, commit.template
+```
+
+The identity now matches the one every existing commit in this repository
+already uses. Verified afterwards: `git log` over the last 60 commits carries no
+`Co-authored-by` trailer, no `Generated with` line, and no AI-vendor identity of
+any kind; `devtools/repo-scan`'s "AI attribution" check passes on the tree
+including this file, so the project's own gate agrees.
+
+One caveat the operator should know: **the session-start hook re-asserts the bot
+identity at the start of every new session.** This fix holds for the current
+session and for this repository's working copy, but a fresh session will need it
+re-applied unless the hook itself is neutralised.
+
+### 0.2 Branch
+
+Cut from the current `origin/main` (`1c336e7`), not from the pre-existing
+agent-named branch the environment had checked out, per the instruction to start
+from `main` and to fingerprint each attempt:
+
+```
+investigate-bluetooth-controller-hang-2026-08-16-2353
+```
+
+---
+
+## Unit 1 — What the existing evidence already establishes
+
+Read in full before touching any source: `README.md`, `docs/issues.md` (the
+register the project marks as authoritative), and the exhibit index. The
+register is unusually disciplined — several confident mechanisms were killed by
+this repository itself — so the first job is to inherit its distinctions rather
+than re-derive them.
+
+### 1.1 System under investigation (from the repository, not re-collected)
+
+| Field | Value | Source |
+|---|---|---|
+| Distribution | Ubuntu 24.04.4 LTS (noble) | `docs/bug-report.md:202` |
+| Kernel | `7.0.0-28-generic` `#28~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC x86_64` | `docs/bug-report.md:203` |
+| Also reproduced on | `6.17.0-29`, `6.17.0-35`, `6.17.0-40-generic` | `docs/bug-report.md:204` |
+| Controller | Qualcomm Atheros QCA9377 (ROME), BT 4.2, manufacturer `0x001d` | `README.md` |
+| USB ID | `13d3:3503` (IMC Networks, ODM) | `EX-001` |
+| Driver | `btusb`, bound via the generic USB-Bluetooth-class rule, `driver_info = 0` | `EX-001` |
+| BlueZ | 5.72 | `docs/issues.md` BT-4 |
+| Module path | `/lib/modules/7.0.0-28-generic/kernel/drivers/bluetooth/btusb.ko` | `EX-001` |
+
+Nothing needed to identify the source version is missing. The relevant upstream
+tree is **v7.0**, with `6.17` as the confirmed-affected older comparison point.
+
+### 1.2 What fails — stated at the strength the evidence supports
+
+**Established (stage 1).** The controller stops answering HCI commands while
+remaining fully USB-enumerated. `hciconfig` shows `UP RUNNING PSCAN` with
+`errors:0`; the kernel logs `Bluetooth: hci0: command 0xNNNN tx timeout`
+repeatedly. This is `BT-1`.
+
+**Established (localisation).** Both instrumented failures occur at a
+**synchronous-audio (SCO/eSCO) link transition**, together with the USB
+alternate-setting switch btusb performs for isochronous bandwidth:
+
+- `EX-006` — `HCI_Setup_Synchronous_Connection` (`0x0428`) submitted, never
+  answered, timed out 2.169 s later.
+- `EX-009` — `0x0428` answered in 2 ms, alt-setting switched, link reached
+  `handle 0x0003`; the **`HCI_Disconnect` (`0x0406`) tearing it down** was the
+  command never answered.
+- `EX-024` — same signature on two different vendors' headsets.
+
+**The constant is the path, not the opcode.** Three SCO setups were serviced
+correctly and survived. Any explanation keyed to one command is already refuted.
+
+**Established (USB is healthy at onset).** `EX-008`: at the first HCI timeout,
+every URB completes with status 0; the first non-zero URB status is **31.4 s
+later**. USB transport failure is excluded as the *immediate cause* of the first
+timeout — stated narrowly, because the alt-setting switch is a configuration
+action rather than ordinary traffic and is not exonerated by this.
+
+### 1.3 The single most important correction the project made to itself
+
+The old model — *HCI dies, then 45–66 s later USB dies* — **is refuted as
+natural history.** That interval was the watchdog's own reaction time. Untreated
+windows, with nothing touching the device:
+
+| Exhibit | Untreated duration, USB silent | Ended by |
+|---|---|---|
+| `EX-016` | 4331.99 s (1 h 12 m) | our `install.sh` reloading btusb |
+| `EX-021` | 1836.5 s (30 m 36 s) | operator rfkill toggle |
+| `EX-023` | 12107.4 s (3 h 21 m 47 s) | a deliberate `USBDEVFS_RESET` |
+| `EX-025` | 8883.7 s (2 h 28 m) | ordinary system shutdown |
+| live (main) | 10969 s and still running at capture | not yet ended |
+
+All right-censored. **A USB collapse has never once begun before something
+touched the controller** — across fifteen windows. `EX-023` is the controlled
+version: after 3 h 21 m of total USB silence, one `USBDEVFS_RESET` produced a
+USB disconnect in **11.15 s**. `EX-021`: collapse began **12.8 s** after an
+rfkill power-off attempt.
+
+This matters more than anything else in this document, because it inverts the
+prior on the obvious fix.
+
+### 1.4 Recovery: what has been tried
+
+| Attempt | Outcome |
+|---|---|
+| `USBDEVFS_RESET` at +11 s … +33 s after first timeout | ❌ five for five, all failed; USB loss followed |
+| Reset **before** any timeout, on bluetoothd's audio signal | ✅ recovered — then failed again 132 s later (`EX-004`) |
+| Reset at **+0 s** (what `hdev->reset` would do) | ❓ **never tested** |
+| Driver unbind/rebind | ❌ `device descriptor read/64, error -110` |
+| xHCI port power cycle | ❌ `unable to enumerate USB device` |
+| Warm reboot from stage 1 | ~ one recovery on record, unlogged power-off not excluded (`EX-017`, `EX-019`) |
+| Warm reboot from **collapse** | ❌ machine failed to boot; needed a 10 s power-button hold (`EX-022`, `EX-027`) |
+| Full power-off | ✅ recovers (`EX-028`) |
+
+### 1.5 Hypotheses already killed by this repository
+
+- **A2DP-teardown trigger** — refuted: transport reached IDLE five times in one
+  boot with no SCO setup and no failure (`EX-007`).
+- **`0x0428` SCO setup is "the wedging command"** — refuted by `EX-009`
+  (teardown, not setup) and by three survived setups.
+- **The `0x2005` panel desync causes the hang** — refuted: 8 boots carried it
+  and never hung, 2 hung without it (`EX-003`). It is `BT-2`, a separate defect.
+- **Probe clustering as an observer effect** — refuted as reverse causation
+  (`EX-012`).
+- **Kernel regression** — refuted across four kernel versions over ten weeks.
+- **"45–66 s to stage 2" as natural history** — refuted (§1.3).
+
+### 1.6 What remains unexplained
+
+- Why a given SCO transition is fatal when others are not.
+- Whether stage 2 (USB loss) occurs at all without intervention — **no
+  uncensored instance has ever been observed.**
+- Whether a reset at +0 s helps or harms — sign unmeasured.
+- `BT-5`: an SCO link that carried 11 packets in 30 ms, then nothing for 7 s.
+- `BT-6`: ACL data delivered for a connection handle the host does not know.
+- Whether a warm reboot actually drops the M.2 rail (documented as fact, never
+  measured).
+
+---
+
+## Unit 2 — Forensics of the failure path, read off the exhibits
+
+Before opening any source, the two instrumented failures were reduced to an
+exact event sequence with timings, because the timings themselves identify which
+kernel timers and which code paths are involved.
+
+### 2.1 Incident A — `EX-006` / `EX-008`, boot `c1315c25`, 2026-08-12 05:00
+
+```
+05:00:16.595818  hci0 opcode 0x0428 plen 17          <- SCO setup submitted
+05:00:16.595827  hci0: skb len 20
+05:00:16.595835  hci0 cmd_cnt 1 cmd queued 1
+05:00:16.706702  hci0 cmd_cnt 1 cmd queued 1
+05:00:18.764738  Bluetooth: hci0: command tx timeout  <- 2.169 s later
+05:00:18.764759  hci0 cmd_cnt 1 cmd queued 0
+05:00:50.213852  hci0 urb ... status -2 count 0       <- +31.4 s
+05:01:28.125704  usb 3-3: device descriptor read/64, error -110
+```
+
+Three things in that block are load-bearing and are not called out in the
+repository's own text:
+
+1. **`plen 17` confirms the opcode decode.** `HCI_Setup_Synchronous_Connection`
+   has exactly 17 bytes of parameters (handle 2, tx/rx bandwidth 4+4, max
+   latency 2, voice setting 2, retransmission effort 1, packet type 2). The
+   `skb len 20` is those 17 plus the 3-byte HCI command header. The event is
+   what the exhibit says it is.
+
+2. **The timeout message carries *no* opcode here, but `EX-009`'s does.** That
+   is not cosmetic. In current kernels `hci_cmd_timeout()` prints the opcode
+   only when `hdev->req_skb` is set — i.e. only when the command was issued
+   through the `hci_cmd_sync` request machinery. The bare form means `0x0428`
+   was issued through the plain `hci_send_cmd()` path with no synchronous
+   request attached, while `EX-009`'s `0x0406` went through `hci_cmd_sync`.
+   **The two failures are on two different command-submission paths**, which is
+   further evidence against any single-opcode explanation and tells us the
+   defect is downstream of both.
+
+3. **`status -2` is `-ENOENT`, which is a host-side URB unlink, not a device
+   error.** A device that has stopped responding produces `-EPROTO`, `-EILSEQ`,
+   `-ETIMEDOUT` or `-ESHUTDOWN`. `-ENOENT` is what `usb_kill_urb()` /
+   `usb_kill_anchored_urbs()` leaves behind. So the "first non-zero URB status"
+   at +31.4 s is most likely **our own software killing URBs** (a watchdog reset
+   or an alt-setting switch), not the device degrading. That *strengthens*
+   `EX-008`'s ordering claim — at +31.4 s the device still had not produced a
+   single error of its own — and it is one more instance of the pattern in §1.3.
+
+   ⚠️ Not fully verified here: the exhibit does not record what ran at
+   +31.4 s. Listed as a question for §7.
+
+### 2.2 Incident B — `EX-009`, boot `7ab86388`, 2026-08-12 06:26
+
+```
+06:26:25.001673  hci0 opcode 0x0428 plen 17        <- SCO setup
+06:26:25.231664  hci0: hcon ... handle 0x0003      <- answered in 230 ms, link UP
+06:26:25.231709  Looking for Alt no :6             <- btusb alt-setting switch
+06:26:25.231721  Looking for Alt no :3
+                 ... 11 SCO packets in ~30 ms, then 7 s of nothing ...
+06:26:32.543644  hci0: handle 0x03 reason 0x13     <- remote user terminated
+06:26:32.543736  hci0: Opcode 0x0406
+06:26:32.543761  hci0: opcode 0x0406 plen 3        <- Disconnect submitted
+06:26:34.579698  Bluetooth: hci0: command 0x0406 tx timeout   <- +2.036 s
+06:26:39.893568  Bluetooth: hci0: setting interface failed (110)  <- +5.31 s
+```
+
+Derived facts:
+
+- **2.169 s and 2.036 s are both `HCI_CMD_TIMEOUT`.** That constant is
+  `msecs_to_jiffies(2000)` in `net/bluetooth/hci_core.c`'s header. Both
+  incidents are the same timer expiring, so the fault is "no HCI event ever
+  came back", not a slow controller.
+- **`setting interface failed (110)` at +5.31 s is `usb_set_interface()`
+  returning `-ETIMEDOUT`.** `usb_control_msg()` in that path uses
+  `USB_CTRL_SET_TIMEOUT` = 5000 ms. 5.31 s after the HCI timeout means the
+  `SET_INTERFACE` control transfer was issued **at the moment of the HCI
+  timeout** and ran the full 5 s without the device answering.
+
+  That is a significant addition to `EX-008`'s "USB is healthy" claim: in
+  incident B the device was **already refusing a control-endpoint request** ~2 s
+  after HCI went silent. So the healthy-USB window is not uniformly 31 s — the
+  control endpoint (ep0), which is *also where HCI commands are written*, stops
+  answering essentially with HCI, while the bulk/interrupt endpoints keep
+  completing.
+- **`Looking for Alt no :6` then `:3`** — two alt-setting decisions in the same
+  millisecond. Alt 6 is the transparent-air-mode (mSBC / wideband speech)
+  setting; alt 3 is a CVSD setting. Two calls in immediate succession means the
+  first choice was not usable and the driver fell back. That is the exact
+  behaviour to check in source (§4).
+
+### 2.3 The `USBDEVFS_RESET` result, read at the USB level (`EX-023`)
+
+```
+05:01:26.033  xhci_hcd: Timeout while waiting for setup device command
+05:01:31.665  xhci_hcd: Timeout while waiting for setup device command
+05:01:31.873  usb 3-3: device not accepting address 2, error -62
+05:01:31.985  usb 3-3: reset full-speed USB device number 2 using xhci_hcd
+05:01:37.297  xhci_hcd: Timeout while waiting for setup device command
+05:01:42.929  xhci_hcd: Timeout while waiting for setup device command
+05:01:43.137  usb 3-3: device not accepting address 2, error -62
+05:01:43.138  usb 3-3: USB disconnect, device number 2
+```
+
+`Timeout while waiting for setup device command` is the **xHCI Address Device
+command** failing — the host controller could not even assign an address after
+the port reset. `-62` is `-ETIME`. So after a USB port reset the QCA9377's USB
+device core does not come back at all. Combined with §2.2, the picture is:
+
+> The controller's **ep0 / control path dies with HCI**, while its already-armed
+> bulk and interrupt endpoints keep completing. A USB reset then requires ep0 to
+> answer `SET_ADDRESS` — which it cannot — so the reset converts a
+> partially-working device into an absent one.
+
+That is a *mechanically coherent* reason why reset destroys the device, and it
+does not require the reset to have "damaged" anything: the reset simply removes
+the only part of the device that was still functioning (the already-configured
+endpoints) and then demands service from the part that was already dead.
+
+**This reframes `EX-023` from a correlation into a mechanism**, and it predicts
+that a reset at +0 s would fail the same way — because ep0 is already gone at
++2 s in incident B.
+
+### 2.4 Consolidated failure signature
+
+| Layer | State after the fault |
+|---|---|
+| Bluetooth firmware / HCI | dead — no events, no command completions |
+| USB ep0 (control) | dead — `SET_INTERFACE` times out at +2 s, `SET_ADDRESS` fails after reset |
+| USB bulk/interrupt IN | alive — URBs keep completing status 0 for tens of seconds |
+| USB device presence | enumerated, `hciconfig` `UP RUNNING`, `errors:0` |
+| Host-side `hdev` | still open; command credits reset to 1 every 2 s, forever |
+
+A controller whose **ep0 and firmware die together while its data endpoints keep
+running** is very hard to explain as a host-side driver logic bug. It looks like
+the device's firmware — which services ep0 in this chip's architecture — has
+stopped executing.
+
+---
+
+## Unit 3 — Obtaining the Linux source
+
+`cdn.kernel.org` is blocked by this environment's network policy (403 at the
+proxy). GitHub git reads are permitted, so the tree was taken from the official
+mirror:
+
+```
+/workspace/torvalds/linux   git clone --filter=blob:none --branch v7.0
+                            https://github.com/torvalds/linux
+                            HEAD = 028ef9c96e96197026887c0f092424679298aae8, describe = v7.0
+```
+
+Individual files were also pulled independently via `raw.githubusercontent.com`
+at tag `v7.0` and **md5-compared against the clone** — identical — so the source
+quoted below is not dependent on a single fetch path.
+
+**Version match.** The affected machine runs `7.0.0-28-generic` (Ubuntu HWE).
+Upstream `v7.0` is the closest obtainable tree. Ubuntu's own
+`linux-source-7.0.0-28` is not reachable from here (`archive.ubuntu.com` is
+outside the permitted set), so the one gate this cannot close is the project's
+own **A0** — *read Ubuntu's actual `7.0.0-28` tree and confirm it is not
+patched*. Everything below is therefore stated against upstream `v7.0`, and A0
+remains open exactly as `docs/pre-submission-checklist.md` says. That is the
+only piece of information this investigation could not obtain; nothing was
+missing from the repository itself.
+
+Full history is present in the clone (blobless), so `git log -S` archaeology
+across releases is possible offline.
+
+---
+
+## Unit 4 — Source investigation, part 1: the isochronous / wideband-speech path
+
+This is the part of the investigation that produced something the repository
+does not already contain, so it is written out in full.
+
+### 4.1 Re-verification of what the project already established
+
+Checked against upstream `v7.0` before building on it:
+
+| Repository claim | Verdict | Location |
+|---|---|---|
+| `0x3503` absent from `btusb.c` | ✅ confirmed — `grep -rn 0x3503 drivers/bluetooth/` returns nothing | — |
+| 78 `0x13d3` entries | ✅ confirmed exactly 78 | `btusb.c` |
+| `3491/3496/3501` are `BTUSB_QCA_ROME \| BTUSB_WIDEBAND_SPEECH` | ✅ confirmed | `btusb.c:294,296,298` |
+| `hci_cmd_timeout()` calls `hdev->reset()` on the **first** timeout, no threshold | ✅ confirmed | `hci_core.c:1462-1483` |
+| `HCI_CMD_TIMEOUT` = 2 s | ✅ confirmed | `hci.h:486` |
+| `btusb_qca_reset()` → `btusb_reset()` → `usb_queue_reset_device()` when no `bt_en` GPIO | ✅ confirmed | `btusb.c` |
+| `btusb_qca_cmd_timeout` (5-timeout threshold) is gone | ✅ confirmed — the symbol does not exist in v7.0; `cmd_timeout_cnt` has no users | — |
+
+Two additions to that list, both from reading the code around what the project
+already quoted:
+
+- **`btusb_driver` declares no `.pre_reset` / `.post_reset`.** `usb_reset_device()`
+  therefore takes the `usb_forced_unbind_intf()` branch: the interface is
+  **unbound (i.e. `btusb_disconnect` → `hci_unregister_dev`) before the port
+  reset and re-probed after**. So `hdev->reset` on this device is not a
+  lightweight "poke the chip" — it is a full driver teardown, port reset and
+  re-enumeration. That is the same operation as the manual unbind/rebind the
+  evidence already records failing with `device descriptor read/64, error -110`.
+- **`btusb_reset()` takes a `usb_autopm_get_interface()` reference it never
+  puts**, on the stated assumption that the device is about to reset. When the
+  reset fails and the device does not go away, that reference leaks. Minor, but
+  it means repeated failed resets are not free.
+
+### 4.2 The finding: this controller runs wideband speech on isochronous alt setting 1
+
+`EX-009` logs two lines in the same millisecond as the SCO link comes up:
+
+```
+Looking for Alt no :6
+Looking for Alt no :3
+```
+
+That string occurs in exactly one place in the driver:
+
+```c
+static struct usb_host_interface *btusb_find_altsetting(struct btusb_data *data,
+							int alt)
+{
+	struct usb_interface *intf = data->isoc;
+	int i;
+
+	BT_DBG("Looking for Alt no :%d", alt);
+	...
+}
+```
+`drivers/bluetooth/btusb.c`
+
+and `btusb_find_altsetting()` is called with 6 and then 3 in exactly one place —
+the **transparent air-mode** branch of `btusb_work()`:
+
+```c
+	} else if (data->air_mode == HCI_NOTIFY_ENABLE_SCO_TRANSP) {
+		/* Bluetooth USB spec recommends alt 6 (63 bytes), but
+		 * many adapters do not support it.  Alt 1 appears to
+		 * work for all adapters that do not have alt 6, and
+		 * which work with WBS at all.  Some devices prefer
+		 * alt 3 ...
+		 */
+		if (btusb_find_altsetting(data, 6))
+			new_alts = 6;
+		else if (btusb_find_altsetting(data, 3) &&
+			 hdev->sco_mtu >= 72 &&
+			 test_bit(BTUSB_USE_ALT3_FOR_WBS, &data->flags))
+			new_alts = 3;
+		else
+			new_alts = 1;
+	}
+```
+`drivers/bluetooth/btusb.c` (`btusb_work`)
+
+Three deductions, each of which is forced rather than inferred:
+
+1. **The link was in transparent (mSBC / wideband) air mode.** The CVSD branch
+   never calls `btusb_find_altsetting()` at all. The log lines can only come from
+   this branch.
+2. **This controller has no alt setting 6.** `&&`/`?:` short-circuit: if
+   `btusb_find_altsetting(data, 6)` had returned non-NULL, the `else if` would
+   never have been evaluated and `Looking for Alt no :3` would never have been
+   printed. It was printed. Alt 6 is absent.
+3. **The result was alt setting 1, not 3.** `BTUSB_USE_ALT3_FOR_WBS` is set in
+   exactly one place in the whole driver:
+
+   ```c
+	if (IS_ENABLED(CONFIG_BT_HCIBTUSB_RTL) &&
+	    (id->driver_info & BTUSB_REALTEK)) {
+		...
+		set_bit(BTUSB_USE_ALT3_FOR_WBS, &data->flags);
+	}
+   ```
+   `drivers/bluetooth/btusb.c:~4316`
+
+   It is **Realtek-only**. This device probes with `driver_info = 0`, so the bit
+   is clear and the `else` arm runs: **`new_alts = 1`**.
+
+So, established from source plus the existing log, with no new measurement:
+
+> **On every wideband-speech (mSBC) call, this QCA9377 is driven over USB
+> isochronous alternate setting 1 — 9-byte packets — because it has no alt 6 and
+> is not Realtek.**
+
+### 4.3 Why alt 1 for mSBC is a marginal configuration
+
+`__fill_isoc_descriptor()` splits each outgoing SCO packet across isochronous
+frames of `wMaxPacketSize`:
+
+```c
+	for (i = 0; i < BTUSB_MAX_ISOC_FRAMES && len >= mtu;
+					i++, offset += mtu, len -= mtu) {
+```
+with `#define BTUSB_MAX_ISOC_FRAMES 10`.
+
+At alt 1 on a full-speed device, `wMaxPacketSize` is 9 and `bInterval` is 1 (one
+frame per 1 ms). An HFP mSBC payload is 60 bytes per eSCO interval, and the
+kernel's own `esco_param_msbc` requests T2/T1 with max latency 13 ms / 8 ms:
+
+```c
+static const struct sco_param esco_param_msbc[] = {
+	{ EDR_ESCO_MASK & ~ESCO_2EV3, 0x000d,	0x02 }, /* T2 */
+	{ EDR_ESCO_MASK | ESCO_EV3,   0x0008,	0x02 }, /* T1 */
+};
+```
+
+60 bytes over 9-byte frames is **7 frames = 7 ms of bus time** to move one
+packet that must be delivered every **7.5 ms**. That is ~93 % occupancy of the
+isochronous pipe with no slack for jitter, and it is the reason the driver's own
+comment says alt 6 (63 bytes, one frame) is what the spec recommends.
+
+Two further properties of the same code are worth recording:
+
+- **Silent truncation above 90 bytes.** If a SCO packet exceeds
+  `10 × 9 = 90` bytes, the loop stops at `i == 10`, the trailing
+  `if (len && i < BTUSB_MAX_ISOC_FRAMES)` is false, and the remaining bytes are
+  simply never described in any isochronous frame — while
+  `urb->transfer_buffer_length` still says `skb->len`. `usb_submit_urb()` does
+  not cross-check the two. Whether this device's `sco_mtu` allows packets that
+  large is **not established** and needs `hciconfig -a` / Read Buffer Size
+  output, which the repository has not captured. Flagged, not claimed.
+- **Only two RX isochronous URBs are ever in flight**
+  (`btusb_switch_alt_setting()` submits `btusb_submit_isoc_urb()` twice), each
+  covering `wMaxPacketSize × 10` = 90 bytes ≈ 10 ms at alt 1. Total RX buffering
+  is ~20 ms. Any workqueue stall longer than that underruns the isochronous
+  stream.
+
+**This is a direct, mechanical explanation for `BT-5`**, which the register
+currently lists as "observed once; unexplained":
+
+> `EX-009`: the SCO link came up, carried **11 packets in ~30 ms**, then nothing
+> for 7 seconds.
+
+Eleven packets in 30 ms is not an idle voice channel — it is a burst followed by
+a stall, which is what an isochronous stream that cannot sustain its rate looks
+like. `BT-5` and `BT-1` are plausibly the same event seen at two layers.
+
+### 4.4 How the controller ended up in transparent mode at all
+
+This device is **not** declared wideband-speech-capable by Linux — it has no
+`BTUSB_WIDEBAND_SPEECH` bit, so `HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED` is never
+set. Yet it ran an mSBC link. Tracing where that quirk is actually enforced:
+
+```
+net/bluetooth/mgmt.c:831   settings |= MGMT_SETTING_WIDEBAND_SPEECH   (capability report)
+net/bluetooth/mgmt.c:4411  set_wideband_speech() -> MGMT_STATUS_NOT_SUPPORTED
+```
+
+**Those are the only two uses in the entire kernel.** The quirk gates one MGMT
+*setting* and nothing else. In particular it does **not** gate:
+
+- `sco_sock_setsockopt(BT_VOICE)`, which accepts `SCO_AIRMODE_TRANSP`
+  unconditionally — the only test there is `enhanced_sync_conn_capable(hdev)`,
+  and that only chooses which codec id to record;
+- `hci_setup_sync_conn()`, which copies `conn->setting` straight into
+  `cp.voice_setting` and picks `esco_param_msbc`;
+- `btusb_work()`'s alternate-setting selection, which keys off the air mode the
+  **controller** reported in Synchronous Connection Complete
+  (`hci_event.c:5105-5113`), not off any host-side capability flag.
+
+So the full chain is:
+
+```
+13d3:3503 matches no quirks entry          -> driver_info = 0
+                                           -> HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED unset
+BlueZ/PipeWire requests mSBC (BT_VOICE)    -> accepted unconditionally by sco.c
+hci_setup_sync_conn -> 0x0428, voice_setting = transparent
+controller answers, air_mode = 0x03        -> hci_notify(HCI_NOTIFY_ENABLE_SCO_TRANSP)
+btusb_notify -> btusb_work
+  btusb_find_altsetting(6) == NULL          (proved by EX-009's log)
+  BTUSB_USE_ALT3_FOR_WBS clear              (Realtek-only)
+  -> new_alts = 1                           <-- 9-byte isoc frames for 60-byte mSBC
+```
+
+Note carefully: **adding `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH` does not
+change one step of that chain.** The alternate-setting decision consults neither
+flag. If anything, `BTUSB_WIDEBAND_SPEECH` makes this path *more* reachable by
+advertising WBS to userspace. That is a concrete argument that **build D of the
+project's ladder is the riskiest rung, not the safest** — the opposite of how it
+is currently positioned.
+
+### 4.5 When this behaviour appeared — it is a regression, and it is datable
+
+`btusb.c` was fetched at ten release tags and the transparent-mode branch
+compared. The relevant change is sharp and lands between **v5.11 and v5.12**:
+
+**v5.11 and earlier** — alt 1 was an explicit per-device opt-in:
+
+```c
+	} else if (data->air_mode == HCI_NOTIFY_ENABLE_SCO_TRANSP) {
+		/* Check if Alt 6 is supported for Transparent audio */
+		if (btusb_find_altsetting(data, 6)) {
+			data->usb_alt6_packet_flow = true;
+			new_alts = 6;
+		} else if (test_bit(BTUSB_USE_ALT1_FOR_WBS, &data->flags)) {
+			new_alts = 1;
+		} else {
+			bt_dev_err(hdev, "Device does not support ALT setting 6");
+		}
+	}
+```
+
+and `BTUSB_USE_ALT1_FOR_WBS` was set **only** inside the
+`id->driver_info & BTUSB_REALTEK` block. For any other adapter without alt 6,
+`new_alts` stayed **0** — the driver logged an error and wideband speech simply
+did not work. The controller was never placed in an isochronous configuration it
+had not been validated for.
+
+**v5.12** turned that opt-in into an unconditional fallback:
+
+```c
+	} else if (data->air_mode == HCI_NOTIFY_ENABLE_SCO_TRANSP) {
+		/* Bluetooth USB spec recommends alt 6 (63 bytes), but
+		 * many adapters do not support it.  Alt 1 appears to
+		 * work for all adapters that do not have alt 6, and
+		 * which work with WBS at all.
+		 */
+		new_alts = btusb_find_altsetting(data, 6) ? 6 : 1;
+	}
+```
+
+Read the comment against this device: *"all adapters that do not have alt 6,
+**and which work with WBS at all**"*. This adapter is not in that set — Linux
+never claimed it supports WBS. The v5.12 change silently enrolled every
+alt-6-less adapter, validated or not.
+
+Presence matrix across releases:
+
+| | v4.14 | v4.19 | v5.4 | v5.10 | v5.11 | v5.12 | v5.15 | v6.1 | v6.6 | v6.12 | v6.17 | v7.0 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| unconditional alt-1 WBS fallback | – | – | – | – | – | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| `BTUSB_USE_ALT3_FOR_WBS` (Realtek) | – | – | – | – | – | – | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| `13d3:3496` present | – | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| `13d3:3491`, `3501` present | – | – | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| **`13d3:3503` present** | – | – | – | – | – | – | – | – | – | – | – | – |
+| `btusb_qca_cmd_timeout` (threshold 5) | – | – | – | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | – | – |
+| `btusb_qca_reset` (`hdev->reset`, no threshold) | – | – | – | – | – | – | – | – | – | – | ✔ | ✔ |
+
+Two things fall out of that table:
+
+- **`13d3:3503` has never been in the table, in any release checked.** The
+  omission is not a regression; it is an original and permanent gap. That is
+  consistent with the operator's report of the same failure across years and
+  several laptops.
+- **The alt-1 WBS fallback is a real, datable behaviour change (v5.12, 2021).**
+  It is the only change found so far that (a) applies specifically to this
+  device's configuration, (b) post-dates the hardware, and (c) plausibly
+  interacts with the SCO transitions where every instrumented failure occurs.
+
+⚠️ Stated at the right strength: the project has **not** tested v5.11 or earlier,
+so "the bug appeared in v5.12" is **a hypothesis, not a finding**. What is
+established is that the *configuration the driver puts this controller into
+during wideband calls* changed in v5.12, and that before that change this
+controller would have refused wideband speech instead of running it on alt 1.
+
+---
+
+## Unit 5 — Source investigation, part 2: the timeout and escalation machinery
+
+### 5.1 A correction to `EX-006`, derivable from `EX-006`'s own output
+
+`EX-006` claims `0x0428` "was submitted, never answered, and timed out 2.169 s
+later". Its own captured lines contradict that:
+
+```
+05:00:16.595835  hci0 cmd_cnt 1 cmd queued 1      <- hci_cmd_work, before sending 0x0428
+05:00:16.706702  hci0 cmd_cnt 1 cmd queued 1      <- hci_cmd_work again, 111 ms later
+```
+
+That debug line is printed at the top of `hci_cmd_work()`:
+
+```c
+static void hci_cmd_work(struct work_struct *work)
+{
+	...
+	BT_DBG("%s cmd_cnt %d cmd queued %d", hdev->name,
+	       atomic_read(&hdev->cmd_cnt), skb_queue_len(&hdev->cmd_q));
+
+	if (atomic_read(&hdev->cmd_cnt)) {
+		skb = skb_dequeue(&hdev->cmd_q);
+		...
+		err = hci_send_cmd_sync(hdev, skb);
+```
+`net/bluetooth/hci_core.c`
+
+and `hci_send_cmd_sync()` does `atomic_dec(&hdev->cmd_cnt)` on a successful
+send. So after the 16.595835 send, `cmd_cnt` is **0**. The only code in the
+kernel that puts it back to 1 without a timeout is:
+
+```c
+static inline void handle_cmd_cnt_and_timer(struct hci_dev *hdev, u8 ncmd)
+{
+	cancel_delayed_work(&hdev->cmd_timer);
+	...
+		if (ncmd) {
+			cancel_delayed_work(&hdev->ncmd_timer);
+			atomic_set(&hdev->cmd_cnt, 1);
+		}
+	...
+}
+```
+`net/bluetooth/hci_event.c:3771`
+
+which runs **only** from Command Complete / Command Status handling, and
+`hci_cmd_status_evt()` ends with
+
+```c
+	if (atomic_read(&hdev->cmd_cnt) && !skb_queue_empty(&hdev->cmd_q))
+		queue_work(hdev->workqueue, &hdev->cmd_work);
+```
+
+That is exactly the 16.706702 line. Therefore:
+
+> **The controller *did* answer `0x0428` — with a Command Status, ~111 ms after
+> submission. It also returned a command credit and cancelled the pending
+> command timer.** The command that actually timed out at 05:00:18.764738 is a
+> *different, later* command, submitted at 05:00:16.706702 — 2.058 s before the
+> timeout, which matches `HCI_CMD_TIMEOUT` far better than the 2.169 s the
+> exhibit computes from the wrong anchor.
+
+The bare `command tx timeout` (no opcode) corroborates this: `hdev->req_skb` was
+NULL, so the timed-out command was not the one the `hci_cmd_sync` machinery was
+tracking.
+
+**Why this matters, and why it is good news for the investigation.** It removes
+the last asymmetry between the two instrumented incidents:
+
+| | Incident A (`EX-006`) | Incident B (`EX-009`) |
+|---|---|---|
+| `0x0428` submitted | ✔ | ✔ |
+| `0x0428` **accepted by the controller** | ✔ (Command Status + credit, +111 ms) | ✔ (+230 ms, link `handle 0x0003`) |
+| what died | the next command | the `0x0406` teardown |
+
+Both incidents are now the same shape: **the SCO setup succeeds, and the
+controller dies shortly afterwards** — i.e. around the point where
+`hci_sync_conn_complete_evt()` fires `hdev->notify()` and `btusb_work()` performs
+the alternate-setting switch described in Unit 4. `EX-006`'s framing as "the
+wedging command" was already marked as superseded in part; this shows it was
+superseded in whole, and it strengthens the SCO-transition/alt-setting
+localisation rather than weakening it.
+
+⚠️ Caveat, stated plainly: this reading assumes the dynamic-debug lines in the
+exhibit are complete for that window (the exhibit's `grep` filters to
+`cmd_cnt|opcode|command tx timeout|skb len`, so a Command Status line would not
+have appeared even if logged). The inference rests on `cmd_cnt` returning to 1,
+which has exactly one non-timeout source in the kernel. Confirmable on the
+machine by re-running the extraction without the filter.
+
+### 5.2 The structural gap: two ways for a controller to die, one recovery path
+
+This is the most important thing found in the source.
+
+The HCI core has **two** watchdogs, and they are not equivalent:
+
+```c
+static void hci_cmd_timeout(struct work_struct *work)          /* HCI_CMD_TIMEOUT = 2 s */
+{
+	if (hdev->req_skb) {
+		u16 opcode = hci_skb_opcode(hdev->req_skb);
+		bt_dev_err(hdev, "command 0x%4.4x tx timeout", opcode);
+		hci_cmd_sync_cancel_sync(hdev, ETIMEDOUT);
+	} else {
+		bt_dev_err(hdev, "command tx timeout");
+	}
+
+	if (hdev->reset)
+		hdev->reset(hdev);
+
+	atomic_set(&hdev->cmd_cnt, 1);
+	queue_work(hdev->workqueue, &hdev->cmd_work);
+}
+```
+`net/bluetooth/hci_core.c:1462`
+
+```c
+static void hci_ncmd_timeout(struct work_struct *work)         /* HCI_NCMD_TIMEOUT = 4 s */
+{
+	bt_dev_err(hdev, "Controller not accepting commands anymore: ncmd = 0");
+
+	if (test_bit(HCI_INIT, &hdev->flags))
+		return;
+
+	/* This is an irrecoverable state, inject hardware error event */
+	hci_reset_dev(hdev);
+}
+```
+`net/bluetooth/hci_core.c:1486`
+
+`hci_reset_dev()` injects a synthetic HCI Hardware Error event, which reaches
+`hci_hardware_error_evt()` → `queue_work(hdev->req_workqueue, &hdev->error_reset)`
+→
+
+```c
+static void hci_error_reset(struct work_struct *work)
+{
+	...
+	if (hdev->hw_error)
+		hdev->hw_error(hdev, hdev->hw_error_code);
+	else
+		bt_dev_err(hdev, "hardware error 0x%2.2x", hdev->hw_error_code);
+
+	if (!hci_dev_do_close(hdev))
+		hci_dev_do_open(hdev);
+}
+```
+`net/bluetooth/hci_core.c:1023`
+
+**So a full transport-independent close/reopen of the controller already exists
+in the core, requires no vendor quirk, requires no USB reset, and works for
+every driver.** It is simply not reachable from this failure.
+
+The reason is the arming condition. `ncmd_timer` is armed in exactly one place:
+
+```c
+		} else {
+			if (!hci_dev_test_flag(hdev, HCI_CMD_DRAIN_WORKQUEUE))
+				queue_delayed_work(hdev->workqueue, &hdev->ncmd_timer,
+						   HCI_NCMD_TIMEOUT);
+		}
+```
+
+inside `handle_cmd_cnt_and_timer()` — i.e. **only when the controller sends a
+Command Status/Complete carrying `Num_HCI_Command_Packets == 0`.** It is a
+watchdog for "the controller told us it is out of credits and then never gave
+them back".
+
+That produces this asymmetry:
+
+| How the controller dies | What the kernel does |
+|---|---|
+| Answers with `ncmd = 0`, then goes quiet | `hci_ncmd_timeout` after 4 s → `hci_reset_dev` → **`hci_dev_do_close()` + `hci_dev_do_open()`** |
+| Just goes quiet, credits outstanding | `hci_cmd_timeout` every 2 s → log a line, cancel the sync request, **restore the credit, send the next command, repeat forever** |
+
+**BT-1 is the second row.** The controller stops emitting events entirely
+(`EX-006`, `EX-009`), so no Command Status ever arrives, so `ncmd_timer` is never
+armed, so the escalation path is never entered. Meanwhile `hci_cmd_timeout()`
+does the one thing guaranteed not to help: it **fabricates a command credit the
+controller never granted** (`atomic_set(&hdev->cmd_cnt, 1)`) and pumps the next
+queued command into a dead device, every 2 seconds, indefinitely.
+
+This is a complete, source-level explanation for the repository's headline
+numbers — **287 `tx timeout` events across 34 boots, 0 reset attempts** — and it
+is not explained by the missing quirk alone. Even *with* `hdev->reset` installed,
+there is still no counter, no state machine, and no escalation; the difference is
+only that a USB port reset is bolted onto the same non-escalating loop.
+
+**Consequences that follow directly:**
+
+1. **Nothing ever tells userspace the controller is dead.** `hdev` stays `HCI_UP`;
+   `hciconfig` reports `UP RUNNING PSCAN` with `errors:0`; BlueZ keeps issuing
+   commands. That is precisely the user-visible symptom the README opens with —
+   *"Bluetooth settings spins forever and never lists devices."* The panel is not
+   broken; it is being told the adapter is fine.
+2. **The failure is unbounded by design.** There is no N-consecutive-timeouts
+   threshold anywhere in `net/bluetooth`. `EX-016`/`EX-023`/`EX-025` measured 1 h
+   12 m, 3 h 22 m and 2 h 28 m of this loop, and the only thing that ever ended
+   it was a human.
+3. **The kernel's own comment calls the analogous state "irrecoverable" and acts
+   on it.** A controller that has failed *every* command for an hour is at least
+   as irrecoverable as one that reported `ncmd = 0` for four seconds. The
+   asymmetry looks like an oversight, not a decision.
+
+### 5.3 Why `hdev->reset` is a poor fit for this device even when installed
+
+Two source facts, combined with `EX-023`:
+
+- `btusb_driver` has **no `.pre_reset`/`.post_reset`**, so
+  `usb_queue_reset_device()` → `usb_reset_device()` takes the
+  `usb_forced_unbind_intf()` branch: `btusb_disconnect()` → `hci_unregister_dev()`
+  → USB port reset → re-probe.
+- After a port reset the device must answer `SET_ADDRESS` on ep0.
+
+But §2.2 showed ep0 is already dead at +2 s (`setting interface failed (110)` is
+a 5 s `usb_control_msg` timeout on `SET_INTERFACE`), and `EX-023` showed exactly
+this: `xhci_hcd: Timeout while waiting for setup device command`, twice, then
+`device not accepting address 2, error -62`, then `USB disconnect`.
+
+So the mechanism for "reset destroys the device" is now explicit, and it does not
+require the reset to damage anything:
+
+> The reset discards the only part of the device that still works (its
+> already-configured endpoints and the host-side state describing them) and then
+> demands service from the part that is already dead (ep0). A device that was
+> half-alive becomes wholly absent.
+
+This predicts that a reset at **+0 s** fails the same way, because ep0 dies with
+HCI rather than 30 s later. That is a **prediction, not a result** — the project's
+Build A is still the experiment that settles it — but it is now a prediction with
+a mechanism behind it, which the "+0 s is untested" framing did not have.
+
+### 5.4 Where `BT-2` lives in the source (incidental, but it closes a gap)
+
+`docs/issues.md` marks `BT-2` reportable today but does not name the code. The
+string comes from two sites, both in the command-completion path:
+
+```c
+		if (hci_dev_test_flag(hdev, HCI_CMD_PENDING)) {
+			bt_dev_err(hdev, "unexpected event for opcode 0x%4.4x",
+				   *opcode);
+			return;
+		}
+```
+`net/bluetooth/hci_event.c:4317` (Command Complete) and `:4436` (Command Status)
+
+`HCI_CMD_PENDING` is set in `hci_send_cmd_sync()` when a `hci_cmd_sync` request
+is outstanding and cleared when it completes. The message therefore means: *a
+Command Complete/Status arrived for an opcode while the request layer still
+believes a different command is in flight.* For `BT-2` the opcode is `0x2005`
+(`HCI_LE_Set_Random_Address`) and the cadence is exactly 16.0 s, which is
+consistent with a periodic RPA-rotation request from the panel racing the
+request layer rather than with anything transport-level. Useful for the `BT-2`
+report; not evidence about `BT-1`.
+
+---
+
+## Unit 6 — Source investigation, part 3: the QCA setup path, and what else it withholds
+
+### 6.1 A third thing the missing quirk withholds, which the project has not recorded
+
+`docs/fix-proposal.md` §3 enumerates the six behaviours `BTUSB_QCA_ROME`
+installs. There is a seventh, and it is directly on the failure path. The **last
+statement** of `btusb_setup_qca()` is:
+
+```c
+	/* Mark HCI_OP_ENHANCED_SETUP_SYNC_CONN as broken as it doesn't seem to
+	 * work with the likes of HSP/HFP mSBC.
+	 */
+	hci_set_quirk(hdev, HCI_QUIRK_BROKEN_ENHANCED_SETUP_SYNC_CONN);
+
+	return 0;
+```
+`drivers/bluetooth/btusb.c` (`btusb_setup_qca`)
+
+Two things follow.
+
+**(a) Upstream already documents that QCA controllers misbehave on HFP/mSBC
+synchronous connections.** That is not this project's inference; it is a comment
+in the driver, attached to a quirk that exists solely to steer QCA parts away
+from a synchronous-connection command that does not work for mSBC. It is
+independent corroboration that the SCO/mSBC path on QCA silicon is a known weak
+area, which is exactly where every instrumented failure here occurs.
+
+**(b) For this device the quirk is currently moot, and that is checkable.**
+
+```c
+#define enhanced_sync_conn_capable(dev) \
+	(((dev)->commands[29] & 0x08) && \
+	 !hci_test_quirk((dev), HCI_QUIRK_BROKEN_ENHANCED_SETUP_SYNC_CONN))
+```
+`include/net/bluetooth/hci_core.h:2010`
+
+The evidence shows `0x0428` (`HCI_Setup_Synchronous_Connection`), **not** `0x043D`
+(`HCI_Enhanced_Setup_Synchronous_Connection`). Since the quirk is not set for
+this device, `enhanced_sync_conn_capable()` can only be false because
+`commands[29] & 0x08` is clear — i.e. this controller does not advertise the
+enhanced command at all. So it lands on the non-enhanced path by hardware
+capability rather than by quirk.
+
+That is a small but real conclusion: **adding `BTUSB_QCA_ROME` would not change
+which SCO setup command is used on this device.** One more reason the quirk is
+not the lever it looks like.
+
+### 6.2 The firmware hypothesis, checked against the code that would run
+
+`btusb_setup_qca()`:
+
+```c
+	err = btusb_qca_send_vendor_req(udev, QCA_GET_TARGET_VERSION, &ver, sizeof(ver));
+	...
+	ver_rom = le32_to_cpu(ver.rom_version);
+	for (i = 0; i < ARRAY_SIZE(qca_devices_table); i++)
+		if (ver_rom == qca_devices_table[i].rom_version)
+			info = &qca_devices_table[i];
+	...
+	err = btusb_qca_send_vendor_req(udev, QCA_CHECK_STATUS, &status, sizeof(status));
+	...
+	if (!(status & QCA_PATCH_UPDATED))
+		err = btusb_setup_qca_load_rampatch(hdev, &ver, info);
+	...
+	if (!(status & QCA_SYSCFG_UPDATED))
+		err = btusb_setup_qca_load_nvm(hdev, &ver, info);
+```
+
+and the device table:
+
+```c
+static const struct qca_device_info qca_devices_table[] = {
+	{ 0x00000100, 20, 4,  8 }, /* Rome 1.0 */
+	...
+	{ 0x00000300, 28, 4, 16 }, /* Rome 3.0 */
+	{ 0x00000302, 28, 4, 16 }, /* Rome 3.2 */
+	...
+};
+```
+
+The firmware present-but-unused on the affected machine is
+`qca/rampatch_usb_00000302.bin.zst` / `qca/nvm_usb_00000302.bin.zst` — i.e.
+**Rome 3.2, `0x00000302`, an entry that exists in the table.** So if this really
+is a Rome 3.2 part, `btusb_setup_qca()` would find `info`, and the "unsupported
+ROM version → `-ENODEV` → no Bluetooth at all" risk that
+`docs/fix-proposal.md` §4 warns about is *less* likely than that section
+implies. The `linux-firmware` package shipping exactly the `00000302` files for
+this machine is weak but real corroboration of the part identification.
+
+This does not confirm the firmware hypothesis — reading
+`HCI_Read_Local_Version` under both operating systems is still the decisive,
+zero-risk experiment the project already identified. It does mean the hypothesis
+is testable with a lower risk profile than currently documented.
+
+### 6.3 The `EX-009` teardown sequence, completed
+
+The `setting interface failed (110)` line 5.31 s after the `0x0406` timeout was
+previously unattributed. The path is now fully traced:
+
+```
+hci_disconnect_sync()
+  __hci_cmd_sync_status_sk(HCI_OP_DISCONNECT, ..., HCI_EV_DISCONN_COMPLETE,
+                           HCI_CMD_TIMEOUT, NULL)      <- sets hdev->req_skb
+                                                          (hence "command 0x0406 tx timeout")
+  -> no Disconnect Complete ever arrives
+  -> hci_cmd_timeout() at +2.036 s -> hci_cmd_sync_cancel_sync(ETIMEDOUT)
+hci_abort_conn_sync() resumes with err
+  conn still in the hash (no Disconnect Complete), state was BT_CONNECTED
+  -> hci_conn_failed(conn, reason) -> hci_conn_del(conn)
+hci_conn_del()
+  conn->type == ESCO_LINK, setting & SCO_AIRMODE_MASK == TRANSP
+  -> hdev->notify(hdev, HCI_NOTIFY_DISABLE_SCO)
+btusb_notify() -> sco_num 1 -> 0 -> schedule_work(&data->work)
+btusb_work()   -> else branch -> __set_isoc_interface(hdev, 0)
+                 -> usb_set_interface()  [USB_CTRL_SET_TIMEOUT = 5000 ms]
+                 -> -ETIMEDOUT
+                 -> bt_dev_err("setting interface failed (110)")   <- +5.31 s
+```
+
+Every timing in `EX-009` is now accounted for by named source paths. This is
+also the cleanest available proof that **ep0 was already dead ~2 s after HCI
+went silent** — the failing operation is a standard control request on the
+default pipe, not Bluetooth traffic.
+
+One incidental robustness defect noticed in passing, recorded but **not**
+claimed to be involved in `BT-1`:
+
+```c
+	} else {
+		usb_kill_anchored_urbs(&data->isoc_anchor);
+
+		if (test_and_clear_bit(BTUSB_ISOC_RUNNING, &data->flags))
+			__set_isoc_interface(hdev, 0);   /* return value discarded */
+		...
+	}
+```
+
+If that `SET_INTERFACE` to alt 0 fails, `data->isoc_altsetting` correctly stays
+at 1 (the assignment is after the error return), but the failure is not
+propagated and `BTUSB_ISOC_RUNNING` has already been cleared. A subsequent SCO
+setup that also wants alt 1 will find `data->isoc_altsetting == new_alts` and
+**skip `__set_isoc_interface()` entirely**, re-arming isochronous URBs against an
+alternate setting whose state on the device was never re-confirmed. Harmless on a
+device that answers; worth a line in a report.
+
+---
+
+## Unit 7 — Testing the Unit 4 hypothesis against the repository's own captures
+
+Unit 4 predicts that every failure should be preceded by the *transparent* branch
+of `btusb_work()`, whose fingerprint is the pair of lines
+`Looking for Alt no :6` then `Looking for Alt no :3` — and by nothing else, since
+the CVSD branch never calls `btusb_find_altsetting()` at all.
+
+Grepping the whole evidence tree for that string:
+
+| Exhibit | Date | Peripheral | `Alt no :6` then `:3` |
+|---|---|---|---|
+| `EX-009` | 2026-08-12 06:26 | Sennheiser MOMENTUM 4 | ✔ |
+| `EX-024` | 2026-08-15 21:02 | Lenovo thinkplus-GM2 pro | ✔ |
+| `EX-026` | 2026-08-16 15:37 | (rfkill incident) | ✔ |
+
+**Three for three.** Every instrumented failure in this repository that captured
+the alternate-setting lines went down the transparent (wideband/mSBC) branch and
+fell through to alt 1. There is no counter-example in the tree.
+
+`EX-006` is not a counter-example either: its extraction command filters to
+`cmd_cnt|opcode|command tx timeout|skb len`, so the `Looking for Alt` lines
+could not have appeared even if they were logged. Its air mode is **unknown**,
+not CVSD.
+
+This also answers the caveat `EX-024` closes with, in its own words:
+
+> *"it does not show the fault is independent of the negotiated link parameters,
+> which both devices may happen to share."*
+
+They do share one, and now it has a name: **both are modern HFP headsets that
+negotiate mSBC, so both drive the controller into transparent air mode, and
+therefore both land on isochronous alternate setting 1.** That is the shared
+parameter `EX-024` was unable to identify, and it is a property of the *host*
+configuration, not of either headset — which is exactly why two unrelated vendors
+produce a byte-identical kernel-side sequence.
+
+⚠️ What this is **not**. It is a consistent association across three
+observations with no measured denominator. The repository's own register records
+that **three SCO setups were serviced correctly and survived**, and it is not
+known whether those were transparent-mode setups too. If they were, the alt-1
+configuration is *necessary but not sufficient* and the failure is
+jitter-dependent — which is perfectly consistent with an intermittent fault, but
+must be shown rather than assumed. See §8.1: this is answerable **from journals
+already on disk**, with no new hang.
+
+---
+
+## Unit 8 — Synthesis
+
+### 8.1 The multi-stage model, now with named source locations
+
+The task brief proposed that this may be a chain rather than one bug. The source
+supports that, and each link can now be named.
+
+| Stage | What happens | Where in source | Status |
+|---|---|---|---|
+| **0. Enrolment** | `13d3:3503` matches no quirks entry → `driver_info = 0` → no `hdev->setup`, no `hdev->reset`, no `HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED`, no `HCI_QUIRK_BROKEN_ENHANCED_SETUP_SYNC_CONN` | `btusb.c` quirks table | ✅ established (`EX-001`, re-verified) |
+| **1. No firmware patch** | `btusb_setup_qca()` never runs; the Rome 3.2 rampatch/NVM present in `linux-firmware` are never loaded | `btusb.c:btusb_setup_qca` | ✅ established that it does not run; what the controller runs instead is **unmeasured** |
+| **2. Unvalidated WBS enrolment** | Nothing gates transparent air mode on WBS capability. `sco_sock_setsockopt(BT_VOICE)` accepts `SCO_AIRMODE_TRANSP` unconditionally | `sco.c`, `hci_conn.c` | ✅ established from source |
+| **3. Marginal isoc configuration** | No alt 6, not Realtek → `new_alts = 1`; 60-byte mSBC over 9-byte frames, ~7 ms of a 7.5 ms budget | `btusb.c:btusb_work` | ✅ established from source + `EX-009` log |
+| **4. Controller stops executing** | HCI events cease; ep0 stops answering within ~2 s | — | ✅ observed; **mechanism unknown** — firmware erratum, isoc starvation, or both |
+| **5. No detection** | `ncmd_timer` never armed (needs an event that never comes) → the core's own escalation path is unreachable | `hci_core.c:hci_ncmd_timeout`, `hci_event.c:handle_cmd_cnt_and_timer` | ✅ established from source |
+| **6. No escalation** | `hci_cmd_timeout()` logs, fabricates a credit, sends the next command, repeats every 2 s forever; `hdev` stays `HCI_UP` | `hci_core.c:1462` | ✅ established from source; matches 287 timeouts / 0 resets |
+| **7. Recovery destroys the device** | `hdev->reset` (if installed) → forced unbind + USB port reset → `SET_ADDRESS` on a dead ep0 → `-ETIME` → gone | `btusb.c:btusb_reset`, `usb/core/message.c` | ✅ mechanism established; `EX-023` is the controlled observation |
+
+**Stages 0, 2, 3, 5, 6 and 7 are all defects or gaps, and they are in four
+different components.** The brief's hypothesis that this is a chain rather than a
+single line of code is supported.
+
+### 8.2 Ranked candidate locations for the defect
+
+**1 — `drivers/bluetooth/btusb.c`, `btusb_work()`, transparent-air-mode branch.**
+The unconditional `else new_alts = 1;` fallback introduced in v5.12. Highest
+value: it is device-configuration-specific, it post-dates the hardware, it is
+present in every captured failure, and it is testable *today from userspace*
+without building a kernel.
+
+**2 — `net/bluetooth/hci_core.c`, `hci_cmd_timeout()`.** The missing escalation.
+This does not cause the fault, but it converts a recoverable-looking stall into
+an unbounded one and hides it from userspace. It is the difference between "audio
+glitched" and "Bluetooth is dead until you power the machine off". Independent of
+vendor and of this device.
+
+**3 — `net/bluetooth/sco.c` + `hci_conn.c`, transparent air mode ungated by
+`HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED`.** The quirk has exactly two users, both in
+`mgmt.c`, both cosmetic. A capability flag that gates a settings bit but not the
+feature itself is arguably the root gap behind candidate 1.
+
+**4 — controller ROM firmware (unpatched).** Not reachable from Linux source, but
+the strongest explanation for why *the controller* stops executing rather than
+merely misbehaving, and for the Windows/Linux asymmetry. Upstream's own
+`HCI_QUIRK_BROKEN_ENHANCED_SETUP_SYNC_CONN` comment — *"doesn't seem to work with
+the likes of HSP/HFP mSBC"* — is a QCA-specific admission of trouble in exactly
+this area.
+
+**5 — `btusb_reset()` / `usb_reset_device()` as a recovery primitive for a device
+whose ep0 is dead.** A real defect in *recovery*, not in causation.
+
+Candidates 1 and 4 are **not competing** — they compose. An unpatched ROM plus a
+marginal isochronous configuration is a better explanation than either alone, and
+it predicts the Windows result without requiring the hardware to be blameless.
+
+### 8.3 The experiment that discriminates, and it needs no new hang
+
+This is the single most valuable recommendation in this document, because it can
+be run **on journals already retained on the machine**, today:
+
+> **Cross-tabulate transparent-mode SCO setups against outcome.**
+>
+> `Looking for Alt no :6` is emitted **only** by the transparent branch of
+> `btusb_work()`. So, per boot, over the retained journal:
+>
+> - `A` = count of `0x0428` submissions (all SCO setups)
+> - `B` = count of `Looking for Alt no :6` (transparent-mode setups only)
+> - `A − B` = CVSD setups
+> - outcome = did this boot reach `BT-1`?
+>
+> The repository already has the right instrument: `bt-boot-stats` produces
+> exactly this cross-tab, and `docs/issues.md` §"Evidence model" already sets the
+> standard for reading it (`EX-003` is the template — 8 boots with the signature
+> that never hung, 2 hangs without it, therefore refuted).
+
+Three possible outcomes, all informative:
+
+| Result | Reading |
+|---|---|
+| Every failure is preceded by a transparent setup, and boots with only CVSD setups never fail | Strong support. Promotes candidate 1 to the leading hypothesis and makes the userspace test below the priority. |
+| Transparent setups occur in surviving boots too | Alt 1 is necessary but not sufficient; the failure is jitter- or state-dependent. Still narrows the search enormously, and still contraindicates `BTUSB_WIDEBAND_SPEECH`. |
+| A failure occurs with only CVSD setups in the boot | **Refutes** candidate 1 as a general mechanism. Would be the fastest possible kill, which is what this register is good at. |
+
+Note this measurement has the property `docs/issues.md` insists on: the exposure
+boundaries are **exogenous** — `Looking for Alt no :6` is emitted by driver code
+reacting to the controller's air-mode report, not by any probe of this project's,
+and not by the outcome. It does not repeat the `EX-012` reverse-causation trap.
+
+⚠️ One dependency: the `Looking for Alt` line is `BT_DBG`, so it only exists in
+boots where dynamic debug was enabled for `btusb`. `EX-013` documents which boots
+ran with which instrumentation; the denominator must be restricted to those.
+
+### 8.4 The zero-risk treatment test
+
+If §8.3 supports candidate 1, the treatment can be tested **without building a
+kernel, without a reboot into an unproven module, and reversibly**:
+
+> Disable mSBC / wideband speech in the audio stack, so HFP calls negotiate CVSD
+> and `btusb_work()` takes the CVSD branch (`new_alts = alts[0] = 2` for a single
+> link, given the default `hdev->voice_setting` of `0x0060`) instead of the
+> transparent branch (`new_alts = 1`).
+
+On Ubuntu 24.04 that is a WirePlumber monitor property —
+`monitor.bluez.properties { bluez5.enable-msbc = false }` in a
+`wireplumber.conf.d` drop-in. ⚠️ The exact file layout differs between
+WirePlumber 0.4 (Lua) and 0.5 (`.conf`); check the installed version rather than
+copying a snippet. Confirm it took effect from the kernel side — after the
+change, `Looking for Alt no :6` must **stop appearing** and `0x0428` submissions
+must continue. That is a positive verification, not an assumption.
+
+Why this is the right next treatment rather than build A/B/C/D:
+
+- It is **reversible in one file**, with no risk of leaving the machine with no
+  Bluetooth at all — the risk `docs/fix-proposal.md` §4 rightly flags for
+  `BTUSB_QCA_ROME`.
+- It changes **one** variable, where `BTUSB_QCA_ROME` changes seven (six per §5a,
+  plus `HCI_QUIRK_BROKEN_ENHANCED_SETUP_SYNC_CONN` per §6.1).
+- It slots straight into the existing trial machinery: it is a "build" in
+  `bt-trial`'s sense, scored against the same `observational_boot` denominator.
+- It costs audio quality (narrowband HFP), which is a *tolerable* cost for a
+  diagnostic arm and an obvious one to communicate.
+
+### 8.5 What this means for the existing fix proposal
+
+Stated plainly, because it changes the recommendation:
+
+- **`BT-3` remains true and worth reporting.** The ID really is missing, in every
+  release from v4.14 to v7.0.
+- **Build A (`hdev->reset` only) is now predicted to fail, with a mechanism.**
+  §2.3 and §5.3 show ep0 is dead within ~2 s, and a port reset requires ep0. The
+  prediction should be recorded *before* the experiment so it can be scored.
+- **Build D (`+ BTUSB_WIDEBAND_SPEECH`) is contraindicated under candidate 1.**
+  It advertises wideband speech to userspace on a device that has no alt 6 and is
+  therefore driven onto alt 1 — i.e. it makes the suspect path *more* reachable.
+  The ladder currently positions D as "the production candidate"; if §8.3
+  supports candidate 1, that ordering should be reconsidered.
+- **Build B (`+ btusb_setup_qca`) rises.** It is the only rung that tests the
+  firmware hypothesis, it is lower-risk than §4 currently implies (§6.2: the
+  `0x00000302` Rome 3.2 table entry exists and the matching firmware files are on
+  the machine), and it also installs
+  `HCI_QUIRK_BROKEN_ENHANCED_SETUP_SYNC_CONN` — a seventh behaviour the ladder
+  does not currently account for.
+- **A new rung belongs at the bottom of the ladder**: the userspace mSBC-off arm
+  of §8.4, which is cheaper and safer than any kernel build and tests the newest
+  hypothesis.
+
+### 8.6 A second, independent candidate patch
+
+Separate from the device-specific question, `hci_cmd_timeout()`'s missing
+escalation is a defensible upstream discussion in its own right, and the kernel
+already contains the pattern to copy — `hci_ncmd_timeout()`:
+
+```c
+	/* This is an irrecoverable state, inject hardware error event */
+	hci_reset_dev(hdev);
+```
+
+The shape of the change would be: count consecutive command timeouts on `hdev`,
+reset the count whenever any HCI event is received, and on crossing a threshold
+take the same `hci_reset_dev()` path — giving `hci_dev_do_close()` +
+`hci_dev_do_open()` rather than a transport-level USB reset.
+
+Advantages over the quirk approach:
+- transport-independent, so it helps every unmatched controller, which is the
+  actual class of this bug;
+- it does **not** require ep0 to answer, so it is not defeated by the mechanism in
+  §5.3;
+- even when reopen fails, `hci_dev_do_close()` marks the adapter down, so
+  userspace finally learns the controller is dead instead of watching a settings
+  panel spin forever.
+
+⚠️ This is deliberately **not** proposed as part of a device-ID patch.
+`docs/fix-proposal.md` §7 already makes the correct argument — a change to core
+behaviour for all unmatched hardware must not ride along with a three-line table
+addition. Recorded here as a separate, later conversation, exactly as that
+section prescribes.
+
+---
+
+## Summary
+
+### What this attempt adds to the investigation
+
+The repository had localised `BT-1` to *"synchronous-audio link transitions and
+the USB alternate-setting switch that accompanies them, not any single opcode"*,
+and had correctly refused to go further without a mechanism. Reading the v7.0
+source against the existing captures supplies that mechanism's most likely first
+link, and it is not the one the project has been pursuing.
+
+**The new finding.** On every wideband (mSBC) call, this controller is driven
+over USB isochronous **alternate setting 1** — 9-byte packets carrying a 60-byte
+payload every 7.5 ms — because it has no alt 6 and is not a Realtek part. This is
+forced by three lines of `btusb_work()` and proved for this device by the
+`Looking for Alt no :6` / `:3` pair in the existing logs. It appears in **all
+three** instrumented failures that captured those lines, on **two different
+vendors' headsets**, and it is a property of the host configuration rather than
+of either peripheral — which is precisely the shared parameter `EX-024` was
+unable to name.
+
+The configuration became reachable for this device in **Linux v5.12**, when an
+explicit per-device opt-in (`BTUSB_USE_ALT1_FOR_WBS`, Realtek-only) was replaced
+by `new_alts = btusb_find_altsetting(data, 6) ? 6 : 1;` — enrolling every
+alt-6-less adapter, including ones Linux had never declared wideband-capable.
+
+**The structural finding.** The HCI core has two watchdogs and only one
+escalation path. `hci_ncmd_timeout()` treats "controller stopped granting
+credits" as *"an irrecoverable state"* and injects a hardware error that closes
+and reopens the device. `hci_cmd_timeout()` treats "controller answers nothing at
+all" as routine: it logs a line, fabricates a command credit the controller never
+granted, sends the next command, and repeats every 2 seconds forever. `BT-1` is
+the second case, so the escalation path is structurally unreachable, `hdev` never
+leaves `HCI_UP`, and userspace is never told. That is a complete source-level
+account of *287 timeouts across 34 boots with 0 reset attempts*, and of why the
+settings panel spins forever.
+
+**A correction, derived from an exhibit's own output.** `EX-006`'s
+`cmd_cnt 1 cmd queued 1` line at +111 ms can only be produced by a Command
+Status/Complete from the controller, so `0x0428` **was** answered in that
+incident and the command that timed out was a later one. Both instrumented
+failures therefore have the same shape — SCO setup accepted, controller dies
+shortly after — which strengthens the SCO-transition localisation rather than
+weakening it.
+
+**A mechanism for why reset destroys the device.** `setting interface failed
+(110)` is a 5-second `usb_control_msg` timeout, so ep0 is dead within ~2 s of HCI
+going silent, while bulk/interrupt endpoints keep completing. `btusb_driver`
+declares no `.pre_reset`/`.post_reset`, so `hdev->reset` performs a forced unbind
+plus port reset — after which the device must answer `SET_ADDRESS` on the ep0
+that is already dead. `EX-023`'s `xhci_hcd: Timeout while waiting for setup
+device command` is that failure. Reset does not damage the device; it discards
+the half that still worked and demands service from the half that did not. This
+predicts that Build A fails at +0 s too.
+
+### Established facts vs. hypotheses
+
+**Established (source-verified, this attempt):**
+
+- `13d3:3503` is absent from `btusb.c` in every release from v4.14 to v7.0. Never
+  present, in any version.
+- `hci_cmd_timeout()` calls `hdev->reset()` on every timeout with no threshold;
+  `btusb_qca_cmd_timeout` and its 5-timeout counter no longer exist in v7.0.
+- `hci_ncmd_timeout()` → `hci_reset_dev()` → `hci_error_reset()` →
+  `hci_dev_do_close()` + `hci_dev_do_open()` exists, is transport-independent,
+  and is unreachable when the controller emits no events.
+- `HCI_QUIRK_WIDEBAND_SPEECH_SUPPORTED` has exactly two users, both in `mgmt.c`.
+  It gates no data-path behaviour.
+- The transparent-air-mode alt selection consults neither `BTUSB_QCA_ROME` nor
+  `BTUSB_WIDEBAND_SPEECH`; `BTUSB_USE_ALT3_FOR_WBS` is Realtek-only.
+- This controller has **no alt setting 6** (forced by short-circuit evaluation in
+  the `EX-009` / `EX-024` / `EX-026` logs).
+- `btusb_setup_qca()` also sets `HCI_QUIRK_BROKEN_ENHANCED_SETUP_SYNC_CONN`, a
+  seventh withheld behaviour not in `docs/fix-proposal.md` §3's list of six.
+- `btusb_driver` has no `.pre_reset`/`.post_reset`, so a queued reset forcibly
+  unbinds the driver first.
+- The v5.11 → v5.12 change to the transparent-mode alt selection is exactly as
+  quoted in §4.5.
+
+**Hypotheses (explicitly not established):**
+
+- That the alt-1 wideband configuration *causes* the controller to stop
+  executing. Association is 3/3 with no denominator; §8.3 is the test.
+- That the fault appeared in v5.12. Nothing before v6.17 has been tested on this
+  machine; only the *configuration change* is dated, not the fault.
+- That unpatched ROM firmware is necessary. Untested; `HCI_Read_Local_Version`
+  under both operating systems remains the decisive zero-cost experiment.
+- That a reset at +0 s fails. Predicted with a mechanism, still unoccupied.
+- Whether stage 2 (USB loss) happens without intervention. Unchanged: still never
+  observed uncensored.
+
+**Weakened by this attempt:**
+
+- *"Adding the ID is the likely fix."* Neither the alt-setting decision nor the
+  choice of `0x0428` over `0x043D` consults the quirk, and the reset it installs
+  is predicted to fail for a reason ep0-level evidence already supports.
+- *Build D as "the production candidate".* Under candidate 1 it makes the suspect
+  path more reachable, not less.
+- *`BT-5` as an unexplained one-off.* "11 SCO packets in 30 ms, then 7 s of
+  nothing" is what a 60-byte-over-9-byte-frames isochronous stream failing to
+  sustain its rate looks like. `BT-5` and `BT-1` may be one event at two layers.
+
+### Recommended next steps, in order
+
+1. **§8.3 — the cross-tab.** Transparent-mode SCO setups (`Looking for Alt no :6`)
+   against hang outcome, per boot, restricted to boots with `btusb` dynamic debug
+   enabled per `EX-013`. **Runs on journals already on disk. No new hang
+   required.** This is the cheapest decisive measurement available and it can
+   refute the new hypothesis outright.
+2. **§8.4 — the mSBC-off arm.** One reversible userspace setting, verified from
+   the kernel side by the disappearance of `Looking for Alt no :6`. Scored as a
+   trial arm against the existing denominator.
+3. **`HCI_Read_Local_Version` under Linux and under Windows.** Still the cheapest
+   test of the firmware hypothesis, and it costs one reboot.
+4. Only then the kernel builds, with the ladder re-ordered per §8.5.
+
+### What could not be obtained
+
+`archive.ubuntu.com` and `cdn.kernel.org` are both blocked by this environment's
+network policy, so **Ubuntu's own `linux-source-7.0.0-28` tree could not be
+read**. Everything above is against upstream `v7.0` (verified two independent
+ways, §3). The project's gate **A0** — *confirm Ubuntu has not patched
+`hci_cmd_timeout()`* — therefore remains open exactly as
+`docs/pre-submission-checklist.md` states. Given how much of this analysis rests
+on `hci_cmd_timeout()` and `btusb_work()`, A0 is now more load-bearing than it
+was, and is worth closing on the machine with:
+
+```bash
+apt-get source linux-image-unsigned-$(uname -r)      # or: apt install linux-source-7.0.0
+```
+
+Nothing needed to identify the correct source version was missing from the
+repository itself.
+
+### Scope note
+
+No security review was performed; none was in scope. This document is a
+functional reliability analysis only.
