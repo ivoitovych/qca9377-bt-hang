@@ -126,6 +126,17 @@ tools/bt-trial:702-711      # inline sco-params window filter; same
 tools/bt-verify-install:57-60   # inline install_file parser; same
 tests/run-tests:259-264       # inline --section extractor; same
 
+# THE ELEVENTH ENTRY WAS MISSING AND COST MORE THAN A PERCENTAGE POINT.
+# devtools/test-comprehension filters `exit N` inside an embedded program out of
+# a unit's refusal count, and it uses THIS FILE as the filter rather than a
+# second guess about where quoting starts. So a program body that is absent here
+# is not merely counted as uncovered lines — its awk `exit 1` is counted as a
+# refusal of the shell tool that nothing has ever driven, and cannot be, because
+# no test can make bash trace a line inside another language. That pinned
+# tools/bt-verify-kernel-mechanism at 50% against a floor of 75, permanently and
+# for a reason no amount of testing could remove.
+tools/bt-verify-kernel-mechanism:135-144  # inline byte-aligned device-id matcher; same
+
 # Derived by scanning for quoted programs that open on one line and close on
 # another, NOT read off by eye — the two entries written by hand were both
 # wrong, and the self-check caught both. Whole-file entries above already
