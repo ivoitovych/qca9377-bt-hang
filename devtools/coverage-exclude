@@ -201,3 +201,26 @@ tests/run-tests:404-405     # damage report: reached only when /usr/bin actually
 # 14-hour boot is asserted separately by counting its journal reads.
 tools/bt-window:88-90       # inline timeout/USB counter; counts asserted from a fixture
 tools/bt-window:110-112     # inline intervention counter; same
+
+# ── 8. bt-retention's two boot-range readers ─────────────────────────────
+#
+# Both loops that build the boot table are `done < <(cmd)` as the LAST
+# statement of an `if`. Section 4's rule says that form IS traced, and on its
+# own it is — a `done < <(f)` at top level reports its own line. Inside an `if`
+# it does not: bash reports the process substitution at the `fi` BELOW it, and
+# `fi` is a structural line the scanner never counts. So the line is executed,
+# and there is no trace record that can ever say so.
+#
+# Verified rather than reasoned: running bt-retention under the same PS4 the
+# coverage tool uses puts `python3 -c ...` at line 95 and `bt_journal
+# --list-boots` at line 110, which are the two `fi`s.
+#
+# BOTH LOOPS ARE DRIVEN, which is why this is an instrument gap and not a
+# hiding place. tests/run-tests reads the JSON form through
+# tests/journal/retention and the text form through tests/journal/retention-text
+# — two fixtures describing the same three boots by different routes — and
+# asserts the two reports are byte-identical. Mutating the text parser's field
+# positions or removing its em-dash normalisation turns that assertion red;
+# both were checked by doing it.
+tools/bt-retention:88-94    # inline JSON boot-range reader; the trace lands on the fi at 95
+tools/bt-retention:109-109  # text-form reader's process substitution; trace lands on the fi at 110
