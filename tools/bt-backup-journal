@@ -1,0 +1,113 @@
+#!/bin/bash
+# bt-backup-journal — archive every retained boot, so evidence stops evaporating.
+#
+#   bt-backup-journal            archive every retained boot not already archived
+#   bt-backup-journal --dry-run  say what would be archived, write nothing
+#   bt-backup-journal --status   what is archived, what is not, what has gone
+#
+# WHY THIS EXISTS. The operator, 2026-08-19:
+#
+#   "I don't understand at all how we could work with evidence which just
+#    disappears right on the plain sight."
+#
+# He is right, and the answer is not a bigger quota. `SystemMaxUse=16G` is not
+# currently binding — the journal sits at 2.2 G with 70 G free — so raising it
+# would change nothing. Boots have been lost anyway: to an earlier
+# `MaxRetentionSec=1month` that took 34 boots to 18 at one reload, and to
+# ordinary file rotation. Eight exhibits' source journals are already gone.
+#
+# An archive is immune to all of that. `bt-retention` says what is about to go
+# and `bt-archive` copies one boot off the ring, but NEITHER RUNS ON ITS OWN —
+# and a control that depends on someone remembering is not a control. This
+# closes the loop for the whole journal in one command; a timer calling it is
+# the version that needs nobody at all.
+#
+# ⚠️ ARCHIVES ARE UNSANITISED. `journalctl -o export` carries MAC addresses and
+# Wi-Fi BSSIDs, and BSSIDs geolocate the machine. `bt-archive` refuses to write
+# inside the repository and verifies every archive by reading it back; this only
+# drives it, so both properties are inherited rather than reimplemented.
+#
+# Read-only with respect to the system.
+
+set -uo pipefail
+export LC_ALL=C
+
+HERE=$(dirname "$(readlink -f "$0")")
+ARCHIVE="${BT_ARCHIVE_BIN:-$HERE/bt-archive}"
+DEST="${BT_ARCHIVE_DIR:-$HOME/bt-journal-archive}"
+
+DRY=0; STATUS=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dry-run) DRY=1 ;;
+        --status)  STATUS=1 ;;
+        -h|--help) sed -n '2,7p' "$0"; exit 0 ;;
+        *) echo "bt-backup-journal: unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+refuse() { echo "bt-backup-journal: REFUSING — $*" >&2; exit 2; }
+
+[[ -x "$ARCHIVE" ]] || refuse "bt-archive not found or not executable at $ARCHIVE"
+
+# index<TAB>boot-id for every retained boot, read from the index alone. No boot
+# is traversed to decide whether it needs archiving.
+mapfile -t ROWS < <(journalctl --list-boots --no-pager 2>/dev/null \
+                    | awk '$1 ~ /^-?[0-9]+$/ { print $1"\t"$2 }')
+
+# ENUMERATED == 0 IS A REFUSAL. An empty boot list means --list-boots changed
+# shape or the journal is unreadable, not that there is nothing to back up.
+(( ${#ROWS[@]} > 0 )) || refuse "no retained boots found — nothing was examined"
+
+printf 'bt-backup-journal — %s retained boot(s), archive at %s\n\n' "${#ROWS[@]}" "$DEST"
+
+have=0; want=0; done_now=0; failed=0
+for r in "${ROWS[@]}"; do
+    IFS=$'\t' read -r idx bid <<< "$r"
+    short="${bid:0:8}"
+    # bt-archive names by boot id and refuses to overwrite, so presence of any
+    # boot-<id>.export.* is the test for "already archived", whatever
+    # compressor was available on the day.
+    shopt -s nullglob
+    existing=("$DEST"/boot-"$short".export.*)
+    if (( ${#existing[@]} > 0 )); then
+        printf '  %-4s %s  already archived\n' "$idx" "$short"
+        have=$((have + 1))
+        continue
+    fi
+    want=$((want + 1))
+    if (( STATUS )); then
+        printf '  %-4s %s  NOT archived\n' "$idx" "$short"
+        continue
+    fi
+    if (( DRY )); then
+        printf '  %-4s %s  would archive\n' "$idx" "$short"
+        continue
+    fi
+    printf '  %-4s %s  archiving…\n' "$idx" "$short"
+    if "$ARCHIVE" "$idx" >/dev/null 2>&1; then
+        done_now=$((done_now + 1))
+    else
+        # A failure is reported per boot and does not stop the run: one
+        # unreadable boot must not cost the other fourteen their backup.
+        printf '  %-4s %s  FAILED — run: %s %s\n' "$idx" "$short" "$ARCHIVE" "$idx"
+        failed=$((failed + 1))
+    fi
+done
+
+echo
+printf '  %s already archived, %s missing' "$have" "$want"
+(( DRY || STATUS )) || printf ', %s archived now, %s failed' "$done_now" "$failed"
+echo
+
+if (( have + done_now > 0 )); then
+    echo
+    printf '  archive size: %s\n' "$(du -sh "$DEST" 2>/dev/null | cut -f1)"
+    echo "  ⚠️  UNSANITISED — carries MACs and BSSIDs. Never commit; sanitise any extract."
+fi
+
+# NOT AN ERROR EXIT WHEN BOOTS ARE MISSING under --status/--dry-run: those modes
+# exist to report, and a non-zero exit would make them unusable in a check.
+(( failed > 0 )) && exit 1
+exit 0
