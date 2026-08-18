@@ -39,3 +39,4 @@ Regenerate this index with `bt-exhibit index`.
 | EX-027 | [reboot-from-stage2-fails-enumeration](027-reboot-from-stage2-fails-enumeration.md) | Two `reboot.target` transitions three hours apart, on the same machine and the |
 | EX-028 | [poweroff-recovers-what-reboot-could-not](028-poweroff-recovers-what-reboot-could-not.md) | From the same stage-2 state, eleven minutes apart, a `reboot.target` transition |
 | EX-029 | [longest-untreated-window-13h](029-longest-untreated-window-13h.md) | An HCI-nonresponse window of **47338.1 s — 13 h 8 m 58 s** — with **zero** |
+| EX-030 | [a2dp-dropout-without-controller-involvement](030-a2dp-dropout-without-controller-involvement.md) | An audible playback dropout on a **third** device — `Tronsmart T8`, named from |
