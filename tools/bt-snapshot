@@ -1,0 +1,160 @@
+#!/bin/bash
+# bt-snapshot — one coarse capture, then every fine filter for free.
+#
+#   bt-snapshot                 capture this boot, print the summary
+#   bt-snapshot --boot -1       capture a different boot
+#   bt-snapshot --summary-only  re-print the summary of the latest capture
+#   bt-snapshot --list          what has been captured
+#
+# WHY THIS EXISTS. Assessing "what just happened" took ten to fifteen separate
+# journalctl invocations, each traversing the journal again, each costing a
+# permission prompt and a minute of wall clock — while a live fault window was
+# burning and the operator was waiting for the laptop. The operator named the
+# fix: take ONE coarse cut that throws nothing away, then do all the fine
+# filtering against that file, for free.
+#
+# That is the whole design. The expensive step is journal traversal, and this
+# does it ONCE. Every question afterwards is a grep over a local file.
+#
+# ⚠️ IT MUST NEVER TOUCH THE CONTROLLER. This runs DURING a live fault, and the
+# entire value of an untreated window is that nothing has touched the device.
+# So: no hciconfig, no btmgmt, no bluetoothctl, no rfkill writes, no sysfs
+# writes. It reads the journal and reads sysfs. `bt-trial autostop` is the
+# cautionary example — its hci_alive() issues an HCI Read_Local_Name at every
+# shutdown, which is why EX-029's thirteen clean hours end in a touched
+# terminator (BL-08).
+#
+# ⚠️ THE RAW CUT IS UNSANITISED. It carries MAC addresses and Wi-Fi BSSIDs, and
+# BSSIDs geolocate the machine. This repository is public and has leaked
+# addresses once. So the destination is outside the repository, mechanically,
+# the same rule bt-archive enforces — and with pwd -P on both ends, because a
+# path check that does not resolve symlinks is not a path check (BL-06).
+#
+# Read-only with respect to the system. Writes only under BT_SNAPSHOT_DIR.
+
+set -uo pipefail
+export LC_ALL=C
+
+LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+REPO="${BT_REPO:-$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd -P)}"
+DEST="${BT_SNAPSHOT_DIR:-/var/tmp/bt-snapshots}"
+
+BOOT=0; SUMMARY_ONLY=0; LIST=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --boot)         BOOT="${2:?--boot needs an index}"; shift ;;
+        --summary-only) SUMMARY_ONLY=1 ;;
+        --list)         LIST=1 ;;
+        -h|--help)      sed -n '2,9p' "$0"; exit 0 ;;
+        *) echo "bt-snapshot: unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+refuse() { echo "bt-snapshot: REFUSING — $*" >&2; exit 2; }
+
+mkdir -p "$DEST" 2>/dev/null || refuse "cannot create $DEST"
+DEST_ABS=$(cd "$DEST" && pwd -P) || refuse "cannot resolve $DEST"
+case "$DEST_ABS/" in
+    "$REPO"/*) refuse "$DEST_ABS is inside the repository — a raw cut carries BSSIDs and must not be committable" ;;
+esac
+
+if (( LIST )); then
+    echo "bt-snapshot — $DEST_ABS"
+    shopt -s nullglob
+    found=0
+    for d in "$DEST_ABS"/*/; do
+        found=$((found + 1))
+        printf '  %-30s %s\n' "$(basename "$d")" "$(du -sh "$d" 2>/dev/null | cut -f1)"
+    done
+    (( found == 0 )) && echo "  (nothing captured yet)"
+    exit 0
+fi
+
+LATEST="$DEST_ABS/latest"
+
+if (( SUMMARY_ONLY )); then
+    [[ -r "$LATEST/summary.txt" ]] || refuse "no previous capture at $LATEST"
+    cat "$LATEST/summary.txt"
+    exit 0
+fi
+
+# ── the coarse cut: ONE traversal, nothing thrown away ────────────────────
+#
+# Deliberately unfiltered. A --grep here would be the mistake this tool exists
+# to avoid: it saves nothing (journalctl still traverses the whole span) and it
+# decides in advance which lines could matter, which is exactly the judgement
+# that has been wrong repeatedly in this project — the timeout pattern that
+# matched 8 of 173 events, the intervention patterns written to our own
+# wording rather than the kernel's.
+STAMP=$(date '+%Y%m%d-%H%M%S')
+DIR="$DEST_ABS/$STAMP-boot$BOOT"
+mkdir -p "$DIR" || refuse "cannot create $DIR"
+
+echo "bt-snapshot — coarse cut of boot $BOOT -> $DIR"
+journalctl --list-boots --no-pager                     > "$DIR/list-boots.txt" 2>/dev/null
+journalctl -b "$BOOT" --no-pager -o short-iso-precise   > "$DIR/all.log"        2>/dev/null
+journalctl -k -b "$BOOT" --no-pager -o short-iso-precise > "$DIR/kernel.log"     2>/dev/null
+
+# ENUMERATED == 0 IS A REFUSAL. An empty cut means the boot index is wrong or
+# the journal is unreadable, not that the boot was quiet.
+lines=$(wc -l < "$DIR/all.log")
+if [[ "${lines:-0}" -eq 0 ]]; then
+    rm -rf "$DIR"
+    refuse "boot $BOOT produced no journal lines — nothing was captured"
+fi
+
+ln -sfn "$DIR" "$LATEST"
+
+# ── fine filters: all of these are now free ──────────────────────────────
+K="$DIR/kernel.log"; A="$DIR/all.log"
+grep -E 'opcode 0x0428|opcode 0x043d|Looking for Alt no|tx timeout|setting interface failed' "$K" > "$DIR/f-fault.log"      2>/dev/null
+grep -E 'usb 3-3|xhci_hcd|USB disconnect|device descriptor|unable to enumerate' "$K"           > "$DIR/f-usb.log"        2>/dev/null
+grep -E 'deregistering interface driver btusb|Resetting usb device|reset (full|high|low)-speed USB device|name hci[0-9]+ blocked' "$A" > "$DIR/f-intervention.log" 2>/dev/null
+grep -E 'segfault|core-dump|Failed with result|Scheduled restart' "$A"                          > "$DIR/f-crash.log"      2>/dev/null
+grep -E 'corrupted SCO|Error when powering off|connection_lost|disconnected, reason|Failure in Bluetooth' "$A" > "$DIR/f-link.log" 2>/dev/null
+grep -oE 'input: [^(]*\(AVRCP\)' "$A" | sed 's/^input: //' | sort -u                            > "$DIR/f-devices.txt"    2>/dev/null
+
+c() { local f="$1"; [[ -r "$f" ]] && grep -c . "$f" || echo 0; }
+
+# The positive control comes FIRST, because every zero below is meaningless
+# without it. Zero from a scan is not a result until something proves the scan
+# can see — the rule this project learned the hard way, twice.
+OPC=$(grep -cE 'opcode 0x' "$K" 2>/dev/null || true)
+TMO=$(grep -cE 'command 0x[0-9a-f]+ tx timeout' "$K" 2>/dev/null || true)
+SCO=$(grep -cE 'opcode 0x0428' "$K" 2>/dev/null || true)
+ESCO=$(grep -cE 'opcode 0x043d' "$K" 2>/dev/null || true)
+ALT=$(grep -cE 'Looking for Alt no' "$K" 2>/dev/null || true)
+DISC=$(grep -cE 'USB disconnect' "$K" 2>/dev/null || true)
+
+# Device presence read from sysfs — a read, never a probe.
+SYSFS="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+PRESENT="no"; [[ -e "$SYSFS/3-3" ]] && PRESENT="yes"
+HCI="none"; for p in /sys/class/bluetooth/hci*; do [[ -e "$p" ]] && HCI=$(basename "$p") && break; done
+
+FIRST_TMO=$(grep -E 'command 0x[0-9a-f]+ tx timeout' "$K" 2>/dev/null | head -1 | awk '{print $1}')
+
+{
+printf 'bt-snapshot summary — boot %s, captured %s\n' "$BOOT" "$STAMP"
+printf '  raw cut: %s lines in %s\n\n' "$lines" "$DIR"
+printf '  positive control   %6s  opcode 0x… lines %s\n' "$OPC" \
+       "$( (( OPC == 0 )) && echo '  ⚠️ ZERO — every count below is uninterpretable' || echo '(the scan can see)')"
+printf '  command timeouts   %6s\n' "$TMO"
+printf '  0x0428 legacy SCO  %6s\n' "$SCO"
+printf '  0x043d enhanced    %6s\n' "$ESCO"
+printf '  alt-setting switch %6s\n' "$ALT"
+printf '  USB disconnect     %6s\n' "$DISC"
+printf '  interventions      %6s\n' "$(c "$DIR/f-intervention.log")"
+printf '  daemon crashes     %6s\n' "$(c "$DIR/f-crash.log")"
+printf '  link-layer events  %6s\n' "$(c "$DIR/f-link.log")"
+printf '\n  controller on bus  %s\n' "$PRESENT"
+printf '  hci device         %s\n' "$HCI"
+[[ -n "$FIRST_TMO" ]] && printf '  first timeout      %s\n' "$FIRST_TMO"
+printf '\n  peers seen this boot:\n'
+if [[ -s "$DIR/f-devices.txt" ]]; then sed 's/^/    /' "$DIR/f-devices.txt"; else echo '    (none named)'; fi
+printf '\n  fine cuts: f-fault f-usb f-intervention f-crash f-link (in the directory above)\n'
+printf '  ⚠️ UNSANITISED — carries MACs and BSSIDs. Never commit. Sanitise before sharing.\n'
+} > "$DIR/summary.txt"
+
+cat "$DIR/summary.txt"
+exit 0
