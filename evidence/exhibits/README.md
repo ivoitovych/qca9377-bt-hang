@@ -41,3 +41,4 @@ Regenerate this index with `bt-exhibit index`.
 | EX-029 | [longest-untreated-window-13h](029-longest-untreated-window-13h.md) | An HCI-nonresponse window of **47338.1 s — 13 h 8 m 58 s** — with **zero** |
 | EX-030 | [a2dp-dropout-without-controller-involvement](030-a2dp-dropout-without-controller-involvement.md) | An audible playback dropout on a **third** device — `Tronsmart T8`, named from |
 | EX-031 | [enhanced-sco-setup-answered-and-survived](031-enhanced-sco-setup-answered-and-survived.md) | The controller was given a synchronous-link setup by the **Enhanced** command |
+| EX-032 | [bluetoothd-segfault-discovery-never-restarts](032-bluetoothd-segfault-discovery-never-restarts.md) | `bluetoothd` 5.72 segfaulted twice on this boot at the **same code offset** |
