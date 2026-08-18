@@ -40,3 +40,4 @@ Regenerate this index with `bt-exhibit index`.
 | EX-028 | [poweroff-recovers-what-reboot-could-not](028-poweroff-recovers-what-reboot-could-not.md) | From the same stage-2 state, eleven minutes apart, a `reboot.target` transition |
 | EX-029 | [longest-untreated-window-13h](029-longest-untreated-window-13h.md) | An HCI-nonresponse window of **47338.1 s — 13 h 8 m 58 s** — with **zero** |
 | EX-030 | [a2dp-dropout-without-controller-involvement](030-a2dp-dropout-without-controller-involvement.md) | An audible playback dropout on a **third** device — `Tronsmart T8`, named from |
+| EX-031 | [enhanced-sco-setup-answered-and-survived](031-enhanced-sco-setup-answered-and-survived.md) | The controller was given a synchronous-link setup by the **Enhanced** command |

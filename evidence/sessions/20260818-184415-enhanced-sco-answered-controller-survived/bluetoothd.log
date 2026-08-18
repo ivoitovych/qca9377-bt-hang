@@ -1,0 +1,419 @@
+Aug 18 18:24:32.095486 n bluetoothd[2862]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12: TRANSPORT_STATE_ACTIVE -> TRANSPORT_STATE_SUSPENDING
+Aug 18 18:24:32.095505 n bluetoothd[2862]: profiles/audio/transport.c:media_transport_suspend() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12 Owner :1.86
+Aug 18 18:24:32.095513 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_ref() 0x5c48e5e7c970: ref=3
+Aug 18 18:24:32.095519 n bluetoothd[2862]: profiles/audio/a2dp.c:setup_ref() 0x5c48e5e8ab60: ref=1
+Aug 18 18:24:32.095538 n bluetoothd[2862]: profiles/audio/transport.c:media_request_create() Request created: method=Release id=25
+Aug 18 18:24:32.095545 n bluetoothd[2862]: profiles/audio/transport.c:media_owner_add() Owner :1.86 Request Release
+Aug 18 18:24:32.127439 n bluetoothd[2862]: profiles/audio/avdtp.c:session_cb()
+Aug 18 18:24:32.127463 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_parse_resp() SUSPEND request succeeded
+Aug 18 18:24:32.127472 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: STREAMING -> OPEN
+Aug 18 18:24:32.127481 n bluetoothd[2862]: profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01: SINK_STATE_PLAYING -> SINK_STATE_CONNECTED
+Aug 18 18:24:32.127490 n bluetoothd[2862]: profiles/audio/transport.c:transport_update_playing() /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12 State=TRANSPORT_STATE_SUSPENDING Playing=0
+Aug 18 18:24:32.127499 n bluetoothd[2862]: profiles/audio/a2dp.c:suspend_cfm() Source 0x5c48e5e76640: Suspend_Cfm
+Aug 18 18:24:32.127511 n bluetoothd[2862]: profiles/audio/transport.c:media_request_reply() Request Release Reply Success
+Aug 18 18:24:32.127543 n bluetoothd[2862]: profiles/audio/transport.c:media_owner_remove() Owner :1.86 Request Release
+Aug 18 18:24:32.127553 n bluetoothd[2862]: profiles/audio/a2dp.c:a2dp_sep_unlock() SEP 0x5c48e5e76640 unlocked
+Aug 18 18:24:32.127563 n bluetoothd[2862]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12: TRANSPORT_STATE_SUSPENDING -> TRANSPORT_STATE_IDLE
+Aug 18 18:24:32.127580 n bluetoothd[2862]: profiles/audio/transport.c:media_transport_remove_owner() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12 Owner :1.86
+Aug 18 18:24:32.127597 n bluetoothd[2862]: profiles/audio/transport.c:media_owner_free() Owner :1.86
+Aug 18 18:24:32.127605 n bluetoothd[2862]: profiles/audio/a2dp.c:setup_unref() 0x5c48e5e8ab60: ref=0
+Aug 18 18:24:32.127613 n bluetoothd[2862]: profiles/audio/a2dp.c:setup_free() 0x5c48e5e8ab60
+Aug 18 18:24:32.127620 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_unref() 0x5c48e5e7c970: ref=2
+Aug 18 18:24:37.519247 n bluetoothd[2862]: profiles/audio/transport.c:media_owner_create() Owner created: sender=:1.86
+Aug 18 18:24:37.519276 n bluetoothd[2862]: profiles/audio/transport.c:media_transport_resume() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12 Owner :1.86
+Aug 18 18:24:37.519288 n bluetoothd[2862]: profiles/audio/a2dp.c:a2dp_sep_lock() SEP 0x5c48e5e76640 locked
+Aug 18 18:24:37.519302 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_ref() 0x5c48e5e7c970: ref=3
+Aug 18 18:24:37.519314 n bluetoothd[2862]: profiles/audio/a2dp.c:setup_ref() 0x5c48e5e8ab60: ref=1
+Aug 18 18:24:37.519362 n bluetoothd[2862]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12: TRANSPORT_STATE_IDLE -> TRANSPORT_STATE_REQUESTING
+Aug 18 18:24:37.519372 n bluetoothd[2862]: profiles/audio/transport.c:media_request_create() Request created: method=Acquire id=26
+Aug 18 18:24:37.519382 n bluetoothd[2862]: profiles/audio/transport.c:media_owner_add() Owner :1.86 Request Acquire
+Aug 18 18:24:37.519393 n bluetoothd[2862]: profiles/audio/transport.c:media_transport_set_owner() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12 Owner :1.86
+Aug 18 18:24:37.568491 n bluetoothd[2862]: profiles/audio/avdtp.c:session_cb()
+Aug 18 18:24:37.568522 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_parse_resp() START request succeeded
+Aug 18 18:24:37.568533 n bluetoothd[2862]: profiles/audio/a2dp.c:start_cfm() Source 0x5c48e5e76640: Start_Cfm
+Aug 18 18:24:37.568600 n bluetoothd[2862]: profiles/audio/transport.c:media_owner_remove() Owner :1.86 Request Acquire
+Aug 18 18:24:37.568613 n bluetoothd[2862]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12: TRANSPORT_STATE_REQUESTING -> TRANSPORT_STATE_ACTIVE
+Aug 18 18:24:37.568634 n bluetoothd[2862]: profiles/audio/a2dp.c:setup_unref() 0x5c48e5e8ab60: ref=0
+Aug 18 18:24:37.568645 n bluetoothd[2862]: profiles/audio/a2dp.c:setup_free() 0x5c48e5e8ab60
+Aug 18 18:24:37.568655 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_unref() 0x5c48e5e7c970: ref=2
+Aug 18 18:24:37.568666 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: OPEN -> STREAMING
+Aug 18 18:24:37.568677 n bluetoothd[2862]: profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01: SINK_STATE_CONNECTED -> SINK_STATE_PLAYING
+Aug 18 18:24:37.568689 n bluetoothd[2862]: profiles/audio/transport.c:transport_update_playing() /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12 State=TRANSPORT_STATE_ACTIVE Playing=1
+Aug 18 18:24:37.569452 n bluetoothd[2862]: profiles/audio/transport.c:media_transport_set_volume() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12 level 116
+Aug 18 18:39:25.139397 n bluetoothd[2862]: profiles/audio/avctp.c:handle_panel_passthrough() AV/C: PAUSE pressed
+Aug 18 18:39:25.152400 n bluetoothd[2862]: profiles/audio/avctp.c:handle_panel_passthrough() AV/C: PAUSE released
+Aug 18 18:40:43.392442 n bluetoothd[2862]: profiles/audio/avctp.c:handle_panel_passthrough() AV/C: PLAY pressed
+Aug 18 18:40:43.406424 n bluetoothd[2862]: profiles/audio/avctp.c:handle_panel_passthrough() AV/C: PLAY released
+Aug 18 18:41:48.456804 n bluetoothd[2862]: src/agent.c:add_default_agent() Default agent set to :1.249 /org/gnome/bluetooth/settings
+Aug 18 18:41:48.456822 n bluetoothd[2862]: src/adapter.c:set_mode() sending set mode command for index 0
+Aug 18 18:41:48.456837 n bluetoothd[2862]: src/agent.c:agent_ref() 0x5c48e5e98440: ref=1
+Aug 18 18:41:48.456845 n bluetoothd[2862]: src/agent.c:register_agent() agent :1.249
+Aug 18 18:41:48.456906 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0009
+Aug 18 18:41:48.456927 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0009 complete: 0x00
+Aug 18 18:41:48.456939 n bluetoothd[2862]: src/adapter.c:new_settings_callback() Settings: 0x00000ad1
+Aug 18 18:41:48.456949 n bluetoothd[2862]: src/adapter.c:settings_changed() Changed settings: 0x00000010
+Aug 18 18:41:48.456959 n bluetoothd[2862]: src/adapter.c:settings_changed() Pending settings: 0x00000000
+Aug 18 18:41:48.457002 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0018
+Aug 18 18:41:48.457023 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0018 complete: 0x00
+Aug 18 18:41:48.459290 n bluetoothd[2862]: src/adapter.c:set_discovery_filter() sender :1.249
+Aug 18 18:41:48.459303 n bluetoothd[2862]: src/adapter.c:parse_discovery_filter_dict() filtered discovery params: transport: 7 rssi: 32767 pathloss: 32767  duplicate data: false discoverable true pattern (null)
+Aug 18 18:41:48.459324 n bluetoothd[2862]: src/adapter.c:set_discovery_filter() successfully pre-set filter
+Aug 18 18:41:48.459856 n bluetoothd[2862]: src/adapter.c:start_discovery() sender :1.249
+Aug 18 18:41:48.459866 n bluetoothd[2862]: src/adapter.c:update_discovery_filter()
+Aug 18 18:41:48.459871 n bluetoothd[2862]: src/adapter.c:discovery_filter_to_mgmt_cp()
+Aug 18 18:41:48.459878 n bluetoothd[2862]: src/adapter.c:set_discoverable() sending set mode command for index 0
+Aug 18 18:41:48.459885 n bluetoothd[2862]: src/adapter.c:set_mode() sending set mode command for index 0
+Aug 18 18:41:48.459894 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery()
+Aug 18 18:41:48.459899 n bluetoothd[2862]: src/adapter.c:cancel_passive_scanning()
+Aug 18 18:41:48.459946 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0007
+Aug 18 18:41:48.459968 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout()
+Aug 18 18:41:48.459974 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 18 18:41:48.459990 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0007 complete: 0x00
+Aug 18 18:41:48.459996 n bluetoothd[2862]: src/adapter.c:new_settings_callback() Settings: 0x00000ad3
+Aug 18 18:41:48.460001 n bluetoothd[2862]: src/adapter.c:settings_changed() Changed settings: 0x00000002
+Aug 18 18:41:48.460006 n bluetoothd[2862]: src/adapter.c:settings_changed() Pending settings: 0x00000000
+Aug 18 18:41:48.460029 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0006
+Aug 18 18:41:48.466610 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0006 complete: 0x00
+Aug 18 18:41:48.466623 n bluetoothd[2862]: src/adapter.c:new_settings_callback() Settings: 0x00000adb
+Aug 18 18:41:48.466629 n bluetoothd[2862]: src/adapter.c:settings_changed() Changed settings: 0x00000008
+Aug 18 18:41:48.466635 n bluetoothd[2862]: src/adapter.c:settings_changed() Pending settings: 0x00000000
+Aug 18 18:41:48.466687 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 18 18:41:48.475578 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:41:48.475589 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+Aug 18 18:41:48.475611 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+Aug 18 18:41:48.475618 n bluetoothd[2862]: src/adapter.c:start_discovery_complete() status 0x00
+Aug 18 18:41:48.489579 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:41:48.489595 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -57 flags 0x0000 eir_len 19
+Aug 18 18:41:49.898578 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:41:49.898599 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -76 flags 0x0000 eir_len 29
+Aug 18 18:41:49.898619 n bluetoothd[2862]: src/device.c:device_create() dst AA:BB:CC:00:00:02
+Aug 18 18:41:49.898630 n bluetoothd[2862]: src/device.c:device_new() address AA:BB:CC:00:00:02
+Aug 18 18:41:49.898645 n bluetoothd[2862]: src/device.c:device_new() Creating device /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+Aug 18 18:41:49.898681 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:41:49.898693 n bluetoothd[2862]: src/device.c:device_set_rssi_with_delta() rssi -76
+Aug 18 18:41:49.898744 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:41:49.979542 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:41:49.979555 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -65 flags 0x0000 eir_len 19
+Aug 18 18:41:55.799102 n bluetoothd[2862]: src/device.c:btd_device_set_temporary() temporary 1
+Aug 18 18:41:55.799133 n bluetoothd[2862]: src/service.c:change_state() 0x5c48e5e5d790: device AA:BB:CC:00:00:01 profile avrcp-controller state changed: connected -> disconnecting (0)
+Aug 18 18:41:55.799150 n bluetoothd[2862]: profiles/audio/avrcp.c:avrcp_disconnect() path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 18 18:41:55.799166 n bluetoothd[2862]: src/service.c:change_state() 0x5c48e5e5d850: device AA:BB:CC:00:00:01 profile audio-avrcp-target state changed: connected -> disconnected (0)
+Aug 18 18:41:55.799178 n bluetoothd[2862]: src/service.c:change_state() 0x5c48e5e5d790: device AA:BB:CC:00:00:01 profile avrcp-controller state changed: disconnecting -> disconnected (0)
+Aug 18 18:41:55.799192 n bluetoothd[2862]: profiles/audio/avrcp.c:controller_destroy() 0x5c48e5e93530
+Aug 18 18:41:55.799203 n bluetoothd[2862]: profiles/audio/player.c:media_player_destroy() /org/bluez/hci0/dev_AA:BB:CC:00:00:01/player0
+Aug 18 18:41:55.799250 n bluetoothd[2862]: profiles/audio/avrcp.c:target_destroy() 0x5c48e5e8f190
+Aug 18 18:41:55.799267 n bluetoothd[2862]: profiles/audio/avctp.c:avctp_set_state() AVCTP Disconnected
+Aug 18 18:41:55.799307 n bluetoothd[2862]: profiles/audio/avctp.c:avctp_disconnected() AVCTP: closing uinput for AA:BB:CC:00:00:01
+Aug 18 18:41:55.816484 n bluetoothd[2862]: src/service.c:change_state() 0x5c48e5e5d890: device AA:BB:CC:00:00:01 profile a2dp-sink state changed: connected -> disconnecting (0)
+Aug 18 18:41:55.816505 n bluetoothd[2862]: profiles/audio/a2dp.c:a2dp_sink_disconnect() path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 18 18:41:55.816531 n bluetoothd[2862]: src/service.c:change_state() 0x5c48e5e77b40: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: connected -> disconnecting (0)
+Aug 18 18:41:55.816675 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0034
+Aug 18 18:41:55.816709 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0034 complete: 0x00
+Aug 18 18:41:55.816721 n bluetoothd[2862]: src/adapter.c:remove_accept_list_complete() AA:BB:CC:00:00:01 removed from kernel accept list
+Aug 18 18:41:55.818165 n bluetoothd[2862]: src/profile.c:ext_io_disconnected() Hands-Free Voice gateway disconnected from AA:BB:CC:00:00:01
+Aug 18 18:41:55.818175 n bluetoothd[2862]: src/service.c:change_state() 0x5c48e5e77b40: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: disconnecting -> disconnected (0)
+Aug 18 18:41:55.818191 n bluetoothd[2862]: src/service.c:btd_service_unref() 0x5c48e5e77b40: ref=2
+Aug 18 18:41:55.818219 n bluetoothd[2862]: src/battery.c:provided_battery_removed_cb() provided battery removed /org/freedesktop/pipewire/battery/org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 18 18:41:55.818226 n bluetoothd[2862]: src/battery.c:btd_battery_unregister() path = /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 18 18:41:55.865397 n bluetoothd[2862]: profiles/audio/avdtp.c:session_cb()
+Aug 18 18:41:55.865415 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_parse_resp() CLOSE request succeeded
+Aug 18 18:41:55.865423 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: STREAMING -> CLOSING
+Aug 18 18:41:55.865451 n bluetoothd[2862]: profiles/audio/a2dp.c:close_cfm() Source 0x5c48e5e76640: Close_Cfm
+Aug 18 18:41:55.865458 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: CLOSING -> IDLE
+Aug 18 18:41:55.865492 n bluetoothd[2862]: profiles/audio/transport.c:media_transport_remove_owner() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12 Owner :1.86
+Aug 18 18:41:55.865512 n bluetoothd[2862]: profiles/audio/transport.c:media_owner_free() Owner :1.86
+Aug 18 18:41:55.865522 n bluetoothd[2862]: profiles/audio/transport.c:media_transport_suspend() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12 Owner
+Aug 18 18:41:55.865533 n bluetoothd[2862]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd12: TRANSPORT_STATE_ACTIVE -> TRANSPORT_STATE_IDLE
+Aug 18 18:41:55.865544 n bluetoothd[2862]: profiles/audio/a2dp.c:a2dp_sep_unlock() SEP 0x5c48e5e76640 unlocked
+Aug 18 18:41:55.865552 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_unref() 0x5c48e5e7c970: ref=1
+Aug 18 18:41:55.865630 n bluetoothd[2862]: src/service.c:change_state() 0x5c48e5e5d890: device AA:BB:CC:00:00:01 profile a2dp-sink state changed: disconnecting -> disconnected (0)
+Aug 18 18:41:55.865641 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_unref() 0x5c48e5e7c970: ref=0
+Aug 18 18:41:55.865647 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_ref() 0x5c48e5e7c970: ref=1
+Aug 18 18:41:55.865652 n bluetoothd[2862]: profiles/audio/avdtp.c:set_disconnect_timer() timeout 0
+Aug 18 18:41:55.865673 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_ref() 0x5c48e5e7c970: ref=2
+Aug 18 18:41:55.865680 n bluetoothd[2862]: profiles/audio/avdtp.c:connection_lost() Disconnected from AA:BB:CC:00:00:01
+Aug 18 18:41:55.865687 n bluetoothd[2862]: profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01: SINK_STATE_PLAYING -> SINK_STATE_DISCONNECTED
+Aug 18 18:41:55.865693 n bluetoothd[2862]: profiles/audio/a2dp.c:channel_remove() chan 0x5c48e5e8b690
+Aug 18 18:41:55.865758 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_unref() 0x5c48e5e7c970: ref=1
+Aug 18 18:41:55.865764 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_unref() 0x5c48e5e7c970: ref=0
+Aug 18 18:41:55.865769 n bluetoothd[2862]: profiles/audio/avdtp.c:avdtp_free() 0x5c48e5e7c970
+Aug 18 18:41:56.420488 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x000c
+Aug 18 18:41:56.420504 n bluetoothd[2862]: src/adapter.c:dev_disconnected() Device AA:BB:CC:00:00:01 disconnected, reason 3
+Aug 18 18:41:56.420511 n bluetoothd[2862]: src/adapter.c:adapter_remove_connection()
+Aug 18 18:41:56.420569 n bluetoothd[2862]: src/adapter.c:adapter_remove_connection() Removing temporary device /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 18 18:41:56.420579 n bluetoothd[2862]: src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 18 18:41:56.420588 n bluetoothd[2862]: src/service.c:change_state() 0x5c48e5e5d790: device AA:BB:CC:00:00:01 profile avrcp-controller state changed: disconnected -> unavailable (0)
+Aug 18 18:41:56.420598 n bluetoothd[2862]: profiles/audio/control.c:path_unregister() Unregistered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 18 18:41:56.420606 n bluetoothd[2862]: src/service.c:btd_service_unref() 0x5c48e5e5d850: ref=1
+Aug 18 18:41:56.420612 n bluetoothd[2862]: src/service.c:btd_service_unref() 0x5c48e5e5d790: ref=1
+Aug 18 18:41:56.420622 n bluetoothd[2862]: src/service.c:btd_service_unref() 0x5c48e5e5d790: ref=0
+Aug 18 18:41:56.420629 n bluetoothd[2862]: src/service.c:change_state() 0x5c48e5e5d850: device AA:BB:CC:00:00:01 profile audio-avrcp-target state changed: disconnected -> unavailable (0)
+Aug 18 18:41:56.420637 n bluetoothd[2862]: src/service.c:btd_service_unref() 0x5c48e5e5d850: ref=0
+Aug 18 18:41:56.420646 n bluetoothd[2862]: src/service.c:change_state() 0x5c48e5e5d890: device AA:BB:CC:00:00:01 profile a2dp-sink state changed: disconnected -> unavailable (0)
+Aug 18 18:41:56.420657 n bluetoothd[2862]: src/service.c:btd_service_unref() 0x5c48e5e5d890: ref=2
+Aug 18 18:41:56.420665 n bluetoothd[2862]: profiles/audio/sink.c:sink_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 18 18:41:56.420672 n bluetoothd[2862]: src/service.c:btd_service_unref() 0x5c48e5e5d890: ref=1
+Aug 18 18:41:56.420678 n bluetoothd[2862]: src/service.c:btd_service_unref() 0x5c48e5e5d890: ref=0
+Aug 18 18:41:56.420685 n bluetoothd[2862]: src/service.c:change_state() 0x5c48e5e77b40: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: disconnected -> unavailable (0)
+Aug 18 18:41:56.420691 n bluetoothd[2862]: src/service.c:btd_service_unref() 0x5c48e5e77b40: ref=1
+Aug 18 18:41:56.420698 n bluetoothd[2862]: src/profile.c:ext_device_remove() Hands-Free Voice gateway
+Aug 18 18:41:56.420705 n bluetoothd[2862]: src/service.c:btd_service_unref() 0x5c48e5e77b40: ref=0
+Aug 18 18:41:56.427020 n bluetoothd[2862]: src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 18 18:41:56.427085 n bluetoothd[2862]: src/device.c:device_free() 0x5c48e5e66240
+Aug 18 18:41:56.427122 n bluetoothd[2862]: plugins/policy.c:disconnect_cb() reason 3
+Aug 18 18:41:56.427134 n bluetoothd[2862]: src/adapter.c:bonding_attempt_complete() hci0 bdaddr AA:BB:CC:00:00:01 type 0 status 0xe
+Aug 18 18:41:56.427143 n bluetoothd[2862]: src/adapter.c:resume_discovery()
+Aug 18 18:41:56.427151 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery()
+Aug 18 18:41:56.427159 n bluetoothd[2862]: src/adapter.c:cancel_passive_scanning()
+Aug 18 18:41:56.443506 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x001b
+Aug 18 18:41:56.443579 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x001b complete: 0x00
+Aug 18 18:41:58.821476 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:41:58.821503 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+Aug 18 18:41:58.821520 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery()
+Aug 18 18:41:58.821534 n bluetoothd[2862]: src/adapter.c:cancel_passive_scanning()
+Aug 18 18:42:04.271376 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout()
+Aug 18 18:42:04.271395 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 18 18:42:04.271460 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 18 18:42:04.381334 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:42:04.381350 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+Aug 18 18:42:04.381379 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+Aug 18 18:42:04.381391 n bluetoothd[2862]: src/adapter.c:start_discovery_complete() status 0x00
+Aug 18 18:42:04.392308 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:04.392334 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -59 flags 0x0000 eir_len 19
+Aug 18 18:42:05.946297 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:05.946322 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -77 flags 0x0000 eir_len 29
+Aug 18 18:42:05.946343 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:42:05.946365 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:42:05.966268 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:05.966279 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -52 flags 0x0000 eir_len 19
+Aug 18 18:42:06.116285 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:06.116301 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:03, rssi -78 flags 0x0000 eir_len 35
+Aug 18 18:42:06.116328 n bluetoothd[2862]: src/device.c:device_create() dst AA:BB:CC:00:00:03
+Aug 18 18:42:06.116338 n bluetoothd[2862]: src/device.c:device_new() address AA:BB:CC:00:00:03
+Aug 18 18:42:06.116350 n bluetoothd[2862]: src/device.c:device_new() Creating device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:42:06.116378 n bluetoothd[2862]: src/device.c:device_store_cached_name() Can't store name for private addressed device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:42:06.116386 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:42:06.116393 n bluetoothd[2862]: src/device.c:device_set_rssi_with_delta() rssi -78
+Aug 18 18:42:06.116400 n bluetoothd[2862]: src/device.c:btd_device_device_set_name() /org/bluez/hci0/dev_AA:BB:CC:00:00:03 NKCCX
+Aug 18 18:42:06.116465 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:42:14.693228 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:42:14.693256 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+Aug 18 18:42:14.693270 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery()
+Aug 18 18:42:14.693281 n bluetoothd[2862]: src/adapter.c:cancel_passive_scanning()
+Aug 18 18:42:20.272959 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout()
+Aug 18 18:42:20.272982 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 18 18:42:20.273051 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 18 18:42:20.381068 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:42:20.381088 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+Aug 18 18:42:20.381118 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+Aug 18 18:42:20.381129 n bluetoothd[2862]: src/adapter.c:start_discovery_complete() status 0x00
+Aug 18 18:42:20.429033 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:20.429046 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -53 flags 0x0000 eir_len 19
+Aug 18 18:42:20.854086 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:20.854121 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -72 flags 0x0000 eir_len 29
+Aug 18 18:42:20.854161 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:42:20.854192 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:42:20.856008 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:20.856024 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -52 flags 0x0000 eir_len 19
+Aug 18 18:42:21.128124 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:21.128164 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -78 flags 0x0020 eir_len 0
+Aug 18 18:42:22.234081 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:22.234104 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:03, rssi -78 flags 0x0000 eir_len 35
+Aug 18 18:42:22.234133 n bluetoothd[2862]: src/device.c:device_store_cached_name() Can't store name for private addressed device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:42:22.234144 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:42:22.234163 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:42:31.076915 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:42:31.076929 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+Aug 18 18:42:31.076938 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery()
+Aug 18 18:42:31.076945 n bluetoothd[2862]: src/adapter.c:cancel_passive_scanning()
+Aug 18 18:42:36.271387 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout()
+Aug 18 18:42:36.271406 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 18 18:42:36.271462 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 18 18:42:36.381822 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:42:36.381840 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+Aug 18 18:42:36.381862 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+Aug 18 18:42:36.381870 n bluetoothd[2862]: src/adapter.c:start_discovery_complete() status 0x00
+Aug 18 18:42:36.414858 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:36.414878 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -54 flags 0x0000 eir_len 19
+Aug 18 18:42:36.916881 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:36.916904 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -74 flags 0x0000 eir_len 29
+Aug 18 18:42:36.916946 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:42:36.916984 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:42:36.930806 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:36.930822 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -64 flags 0x0000 eir_len 19
+Aug 18 18:42:46.947658 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:42:46.947672 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+Aug 18 18:42:46.947678 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery()
+Aug 18 18:42:46.947683 n bluetoothd[2862]: src/adapter.c:cancel_passive_scanning()
+Aug 18 18:42:52.271373 n bluetoothd[2862]: src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:42:52.271427 n bluetoothd[2862]: src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:42:52.271443 n bluetoothd[2862]: src/device.c:device_free() 0x5c48e5e66240
+Aug 18 18:42:52.271492 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout()
+Aug 18 18:42:52.271499 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 18 18:42:52.271545 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 18 18:42:52.380581 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:42:52.380599 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+Aug 18 18:42:52.380625 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+Aug 18 18:42:52.380634 n bluetoothd[2862]: src/adapter.c:start_discovery_complete() status 0x00
+Aug 18 18:42:52.432554 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:52.432571 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -50 flags 0x0000 eir_len 19
+Aug 18 18:42:52.624584 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:52.624606 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -75 flags 0x0000 eir_len 29
+Aug 18 18:42:52.624632 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:42:52.624652 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:42:52.650550 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:52.650566 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -49 flags 0x0000 eir_len 19
+Aug 18 18:42:53.474543 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:53.474559 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:04, rssi -88 flags 0x0000 eir_len 6
+Aug 18 18:42:53.474572 n bluetoothd[2862]: src/device.c:device_create() dst AA:BB:CC:00:00:04
+Aug 18 18:42:53.474577 n bluetoothd[2862]: src/device.c:device_new() address AA:BB:CC:00:00:04
+Aug 18 18:42:53.474589 n bluetoothd[2862]: src/device.c:device_new() Creating device /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+Aug 18 18:42:53.474615 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:42:53.474625 n bluetoothd[2862]: src/device.c:device_set_rssi_with_delta() rssi -88
+Aug 18 18:42:53.474632 n bluetoothd[2862]: src/device.c:device_set_tx_power() tx_power 0
+Aug 18 18:42:53.474637 n bluetoothd[2862]: src/device.c:device_set_flags() flags 26
+Aug 18 18:42:53.476510 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:53.476521 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -48 flags 0x0000 eir_len 19
+Aug 18 18:42:57.696610 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:42:57.696636 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:03, rssi -77 flags 0x0000 eir_len 14
+Aug 18 18:42:57.696659 n bluetoothd[2862]: src/device.c:device_create() dst AA:BB:CC:00:00:03
+Aug 18 18:42:57.696668 n bluetoothd[2862]: src/device.c:device_new() address AA:BB:CC:00:00:03
+Aug 18 18:42:57.696684 n bluetoothd[2862]: src/device.c:device_new() Creating device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:42:57.696718 n bluetoothd[2862]: src/device.c:device_store_cached_name() Can't store name for private addressed device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:42:57.696728 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:42:57.696738 n bluetoothd[2862]: src/device.c:device_set_rssi_with_delta() rssi -77
+Aug 18 18:42:57.696748 n bluetoothd[2862]: src/device.c:btd_device_device_set_name() /org/bluez/hci0/dev_AA:BB:CC:00:00:03 NKCCX
+Aug 18 18:42:57.696797 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:43:02.821446 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:43:02.821462 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+Aug 18 18:43:02.821470 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery()
+Aug 18 18:43:02.821478 n bluetoothd[2862]: src/adapter.c:cancel_passive_scanning()
+Aug 18 18:43:08.271416 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout()
+Aug 18 18:43:08.271452 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 18 18:43:08.271613 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 18 18:43:08.380320 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:43:08.380338 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+Aug 18 18:43:08.380368 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+Aug 18 18:43:08.380379 n bluetoothd[2862]: src/adapter.c:start_discovery_complete() status 0x00
+Aug 18 18:43:08.461303 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:08.461323 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -52 flags 0x0000 eir_len 19
+Aug 18 18:43:08.667322 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:08.667339 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -74 flags 0x0000 eir_len 29
+Aug 18 18:43:08.667359 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:43:08.667374 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:43:08.678277 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:08.678290 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -55 flags 0x0000 eir_len 19
+Aug 18 18:43:09.567290 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:09.567311 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:03, rssi -78 flags 0x0000 eir_len 35
+Aug 18 18:43:09.567349 n bluetoothd[2862]: src/device.c:device_store_cached_name() Can't store name for private addressed device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:43:09.567358 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:43:09.567383 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:43:18.694179 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:43:18.694195 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+Aug 18 18:43:18.694203 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery()
+Aug 18 18:43:18.694210 n bluetoothd[2862]: src/adapter.c:cancel_passive_scanning()
+Aug 18 18:43:23.271597 n bluetoothd[2862]: src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+Aug 18 18:43:23.271677 n bluetoothd[2862]: src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+Aug 18 18:43:23.271697 n bluetoothd[2862]: src/device.c:device_free() 0x5c48e5e66240
+Aug 18 18:43:24.267426 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout()
+Aug 18 18:43:24.267463 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 18 18:43:24.267583 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 18 18:43:24.376138 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:43:24.376169 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+Aug 18 18:43:24.376211 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+Aug 18 18:43:24.376228 n bluetoothd[2862]: src/adapter.c:start_discovery_complete() status 0x00
+Aug 18 18:43:24.450072 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:24.450087 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -58 flags 0x0000 eir_len 19
+Aug 18 18:43:24.675081 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:24.675102 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:03, rssi -79 flags 0x0000 eir_len 35
+Aug 18 18:43:24.675128 n bluetoothd[2862]: src/device.c:device_store_cached_name() Can't store name for private addressed device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:43:24.675136 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:43:24.675152 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:43:24.978125 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:24.978160 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -70 flags 0x0000 eir_len 29
+Aug 18 18:43:24.978189 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:43:24.978208 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:43:25.680071 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:25.680090 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:03, rssi -76 flags 0x0000 eir_len 35
+Aug 18 18:43:25.680113 n bluetoothd[2862]: src/device.c:device_store_cached_name() Can't store name for private addressed device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:43:25.680120 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:43:25.680135 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:43:35.076955 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:43:35.076973 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+Aug 18 18:43:35.076980 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery()
+Aug 18 18:43:35.076987 n bluetoothd[2862]: src/adapter.c:cancel_passive_scanning()
+Aug 18 18:43:40.271397 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout()
+Aug 18 18:43:40.271420 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 18 18:43:40.271490 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 18 18:43:40.379898 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:43:40.379919 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+Aug 18 18:43:40.379944 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+Aug 18 18:43:40.379955 n bluetoothd[2862]: src/adapter.c:start_discovery_complete() status 0x00
+Aug 18 18:43:40.512871 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:40.512892 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -49 flags 0x0000 eir_len 19
+Aug 18 18:43:40.693870 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:40.693891 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -75 flags 0x0000 eir_len 29
+Aug 18 18:43:40.693916 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:43:40.693935 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:43:40.718836 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:40.718852 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -52 flags 0x0000 eir_len 19
+Aug 18 18:43:50.948751 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:43:50.948768 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+Aug 18 18:43:50.948781 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery()
+Aug 18 18:43:50.948795 n bluetoothd[2862]: src/adapter.c:cancel_passive_scanning()
+Aug 18 18:43:56.271378 n bluetoothd[2862]: src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:43:56.271420 n bluetoothd[2862]: src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+Aug 18 18:43:56.271438 n bluetoothd[2862]: src/device.c:device_free() 0x5c48e5e9c450
+Aug 18 18:43:56.271486 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout()
+Aug 18 18:43:56.271494 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 18 18:43:56.271553 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 18 18:43:56.379603 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:43:56.379617 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+Aug 18 18:43:56.379639 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+Aug 18 18:43:56.379647 n bluetoothd[2862]: src/adapter.c:start_discovery_complete() status 0x00
+Aug 18 18:43:56.477633 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:56.477648 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -55 flags 0x0000 eir_len 19
+Aug 18 18:43:56.999664 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:56.999687 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:05, rssi -83 flags 0x0004 eir_len 4
+Aug 18 18:43:57.001605 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:57.001620 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -50 flags 0x0000 eir_len 19
+Aug 18 18:43:57.017652 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:57.017671 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -75 flags 0x0000 eir_len 29
+Aug 18 18:43:57.017694 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:43:57.017711 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:43:57.104615 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:57.104632 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:04, rssi -86 flags 0x0000 eir_len 6
+Aug 18 18:43:57.104648 n bluetoothd[2862]: src/device.c:device_create() dst AA:BB:CC:00:00:04
+Aug 18 18:43:57.104655 n bluetoothd[2862]: src/device.c:device_new() address AA:BB:CC:00:00:04
+Aug 18 18:43:57.104667 n bluetoothd[2862]: src/device.c:device_new() Creating device /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+Aug 18 18:43:57.104694 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:43:57.104702 n bluetoothd[2862]: src/device.c:device_set_rssi_with_delta() rssi -86
+Aug 18 18:43:57.104709 n bluetoothd[2862]: src/device.c:device_set_tx_power() tx_power 0
+Aug 18 18:43:57.104718 n bluetoothd[2862]: src/device.c:device_set_flags() flags 26
+Aug 18 18:43:57.105585 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:57.105599 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -54 flags 0x0000 eir_len 19
+Aug 18 18:43:57.581677 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:57.581698 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:05, rssi -83 flags 0x0004 eir_len 4
+Aug 18 18:43:57.583634 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:43:57.583648 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -77 flags 0x0000 eir_len 29
+Aug 18 18:43:57.583670 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:43:57.583687 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:44:06.820508 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:44:06.820527 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+Aug 18 18:44:06.820540 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery()
+Aug 18 18:44:06.820554 n bluetoothd[2862]: src/adapter.c:cancel_passive_scanning()
+Aug 18 18:44:12.272104 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout()
+Aug 18 18:44:12.272131 n bluetoothd[2862]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 18 18:44:12.272231 n bluetoothd[2862]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 18 18:44:12.382403 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+Aug 18 18:44:12.382422 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+Aug 18 18:44:12.382451 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+Aug 18 18:44:12.382458 n bluetoothd[2862]: src/adapter.c:start_discovery_complete() status 0x00
+Aug 18 18:44:12.473396 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:44:12.473411 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -48 flags 0x0000 eir_len 19
+Aug 18 18:44:12.494402 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:44:12.494423 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -76 flags 0x0000 eir_len 29
+Aug 18 18:44:12.494451 n bluetoothd[2862]: src/device.c:device_set_legacy() legacy 0
+Aug 18 18:44:12.494472 n bluetoothd[2862]: src/device.c:device_set_flags() flags 2
+Aug 18 18:44:12.582385 n bluetoothd[2862]: src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+Aug 18 18:44:12.582399 n bluetoothd[2862]: src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -50 flags 0x0000 eir_len 19
