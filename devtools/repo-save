@@ -60,8 +60,36 @@ if [[ -z "$(git diff --cached --name-only)" ]]; then
 fi
 echo "  staged: $(git diff --cached --name-only | wc -l) file(s)"
 
+# --- an open trial changes WHICH validators can run, not WHETHER we check ---
+#
+# tests/run-tests refuses while a trial is open, and it is right to: it drives
+# actuators, and on 2026-08-14 a coverage measurement closed a live 2-hour trial
+# and wrote a results row fabricated by test stubs. On the investigation machine
+# bt-trial-auto opens a trial every boot by design, so repo-validate — and
+# therefore this tool, the whole validate/scan/commit/push path — could not run
+# on the machine it was written for. The maintainer had fallen back to plain git
+# with repo-scan by hand, which is the gate working as designed and the workflow
+# failing anyway (comms/2026-08-19T1620Z §5).
+#
+# So: detect it here, drop to the validators that are read-only by construction,
+# and SAY SO. What must never happen is this passing silently — an operator who
+# believes the suite ran is worse off than one who knows it did not.
+TRIAL_STATE="${BT_TRIAL_STATE_DIR:-/run/bt-trial}"
+VALIDATE_ARGS=(.)
+TRIAL_OPEN=0
+if [[ -e "$TRIAL_STATE/current" ]]; then
+    TRIAL_OPEN=1
+    VALIDATE_ARGS=(. --no-suite)
+fi
+
 echo "── validate ─────────────────────────────────────────"
-"$HERE/repo-validate" . || { echo "ABORT: validation failed — nothing committed" >&2; exit 1; }
+if (( TRIAL_OPEN )); then
+    echo "  A TRIAL IS OPEN on this machine — the suite will NOT be run."
+    awk '{ print "    " $0 }' "$TRIAL_STATE/current" 2>/dev/null
+    echo "  Running every validator that is read-only by construction. The"
+    echo "  analysis invariants are not among them; CI runs those on push."
+fi
+"$HERE/repo-validate" "${VALIDATE_ARGS[@]}" || { echo "ABORT: validation failed — nothing committed" >&2; exit 1; }
 
 echo "── scan ─────────────────────────────────────────────"
 "$HERE/repo-scan" . || { echo "ABORT: scan failed — nothing committed" >&2; exit 1; }
@@ -117,6 +145,10 @@ if [[ -n "$MSGFILE" ]]; then git commit -q -F "$MSGFILE" || exit 1
 else                         git commit -q -m "$MSG"     || exit 1; fi
 echo "  $(git log -1 --format='%h  %s')"
 echo "  author: $(git log -1 --format='%an <%ae>')"
+# RESTATED AT THE END, because the end is what a reader remembers and what a
+# scrollback shows. A commit made without the suite is not a lesser commit —
+# CI runs it on push — but it must not be mistaken for one the suite passed.
+(( TRIAL_OPEN )) && echo "  ⚠ committed WITHOUT the suite: a trial was open. CI will run it on push."
 
 (( PUSH )) || { echo "── not pushed (--no-push) ──"; exit 0; }
 

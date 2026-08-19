@@ -8717,6 +8717,118 @@ devtools/repo-save "$SCRATCH/not-a-repo" "msg" --no-push >/dev/null 2>&1
     && ok "the repo-save scratch repo has no remote — nothing could be pushed" \
     || bad "a remote exists on the scratch repo used to test repo-save"
 
+# ── AN OPEN TRIAL, AND THE PATH THAT COULD NOT RUN ON ITS OWN MACHINE ────
+#
+# tests/run-tests refuses while a trial is open — the one check that would have
+# prevented 2026-08-14 outright, when a coverage measurement closed a live
+# 2-hour trial and wrote a results row whose treatment fingerprint was
+# fabricated by test stubs. repo-validate runs the suite; repo-save runs
+# repo-validate. And bt-trial-auto opens a trial on EVERY boot of the
+# investigation machine by design.
+#
+# So the whole validate → scan → commit → push path was unusable on the machine
+# it was written for, and the maintainer had been committing with plain git
+# after running repo-scan by hand (comms/2026-08-19T1620Z §5). The gate worked
+# exactly as designed and the workflow failed anyway — the same shape as the CI
+# recovery above, and the third instance of a control that holds where it was
+# written and not where it runs.
+#
+# THE FIX IS AT THE TOOL BOUNDARY, NOT INSIDE THE SUITE. A "non-acting subset"
+# would require maintaining a claim about which half acts, and the first
+# actuating assertion added to the safe half removes the guard on the one
+# machine where it matters, silently. Everything in repo-validate except the
+# suite parses files and asks git what is tracked.
+#
+# What this section pins is that the difference is IMPOSSIBLE TO MISS. A commit
+# made without the analysis invariants is not a lesser commit — CI runs them on
+# push — but an operator who believes the suite ran is worse off than one who
+# knows it did not.
+SVT="$SCRATCH/trialstate"; mkdir -p "$SVT"
+svt() { BT_TRIAL_STATE_DIR="$SVT" devtools/repo-save "$SCRATCH/save" "$@" --no-push 2>&1; }
+
+printf 'trial-07 build=stock opened 2026-08-19T18:00:00+02:00\n' > "$SVT/current"
+printf '#!/bin/bash\necho open-trial\n' > "$SCRATCH/save/during-trial.sh"
+SVTOUT=$(svt "committed while a trial was open"); svtrc=$?
+if (( svtrc == 0 )) \
+   && [[ "$SVTOUT" == *"A TRIAL IS OPEN"* && "$SVTOUT" == *"trial-07"* \
+      && "$SVTOUT" == *"tests SKIPPED (--no-suite)"* \
+      && "$SVTOUT" == *"SUITE NOT RUN"* \
+      && "$SVTOUT" == *"committed WITHOUT the suite"* ]]; then
+    ok "repo-save commits with a trial open, and says four times that the suite did not run"
+else
+    bad "the open-trial path is silent or broken (rc=$svtrc): $(grep -cE 'TRIAL IS OPEN|SKIPPED|SUITE NOT RUN|WITHOUT the suite' <<<"$SVTOUT") of 4 statements"
+fi
+
+# THE VALIDATORS THAT REMAIN MUST STILL BITE. Dropping the suite must not drop
+# the syntax check with it, or the open-trial path becomes a way to commit a
+# broken script on the one machine that commits most often.
+printf '#!/bin/bash\nif [ ; then echo broken\n' > "$SCRATCH/save/broken-during-trial.sh"
+SVTBAD=$(svt "a broken script while a trial is open"); svtbrc=$?
+(( svtbrc != 0 )) && [[ "$SVTBAD" == *"VALIDATION FAILED"* ]] \
+    && ok "--no-suite still refuses a script that does not parse" \
+    || bad "a syntax error was committed under an open trial (rc=$svtbrc)"
+rm -f "$SCRATCH/save/broken-during-trial.sh"
+
+# AND THE SCAN MUST STILL BITE. repo-scan is read-only by construction, so it
+# runs in both modes — and it is the gate that keeps a BSSID out of a public
+# repository, which is the last one to lose on the machine holding the journals.
+_o1='dc:a6'; _o2='32:11'; _o3='22:33'
+printf 'AP %s:%s:%s\n' "$_o1" "$_o2" "$_o3" > "$SCRATCH/save/leak-during-trial.log"
+SVTLEAK=$(svt "a MAC while a trial is open"); svtlrc=$?
+(( svtlrc != 0 )) && [[ "$SVTLEAK" == *"scan failed"* ]] \
+    && ok "--no-suite still refuses a real MAC — the disclosure gate is not the suite" \
+    || bad "a MAC was committed under an open trial (rc=$svtlrc)"
+rm -f "$SCRATCH/save/leak-during-trial.log"
+
+# AND WITH NO TRIAL OPEN, NOTHING CHANGES. The mode must be reached only by the
+# condition that justifies it; a repo-save that quietly stopped running the
+# suite everywhere would be the defect this section exists to prevent, arriving
+# through its own fix.
+rm -f "$SVT/current"
+printf '#!/bin/bash\necho no-trial\n' > "$SCRATCH/save/after-trial.sh"
+SVNT=$(svt "committed with no trial open"); svntrc=$?
+(( svntrc == 0 )) && [[ "$SVNT" != *"SUITE NOT RUN"* && "$SVNT" != *"TRIAL IS OPEN"* ]] \
+    && ok "with no trial open repo-save runs the full validation, unchanged" \
+    || bad "the no-suite path was taken without an open trial (rc=$svntrc)"
+
+# repo-validate's own two entry points for this.
+devtools/repo-validate "$SCRATCH/save" --no-suite >/dev/null 2>&1
+(( $? == 0 )) && ok "repo-validate --no-suite exits 0 on a tree whose files parse" \
+              || bad "--no-suite failed on a valid tree"
+devtools/repo-validate "$SCRATCH/save" --no-such-flag >/dev/null 2>&1
+(( $? == 2 )) && ok "repo-validate rejects an unknown option rather than reading it as a directory" \
+              || bad "an unknown option was taken for a path"
+
+# THE TALLY COUNTS FILES, AND THE SUITE IS NOT A FILE. It was incremented into
+# $checked, so a small tree reported "6 of 5 files were checkable" — a sentence
+# that cannot be true, in the summary line every caller reads.
+#
+# ITS OWN REPO, WHERE EVERY TRACKED FILE IS CHECKABLE. Two earlier versions of
+# this check could not fail. The first ran against a tree with no
+# tests/run-tests, so the suite step never executed and $checked was never
+# inflated. The second added a stub but reused $SCRATCH/save, which by then held
+# planted .log files — counted in $enumerated, never in $checked — so
+# `checked + 1` still fitted underneath and the arithmetic never crossed.
+#
+# One repo, one shell script, one untracked suite stub: enumerated == 1,
+# checked == 1, and a suite counted as a file makes it 2 of 1 — a sentence that
+# cannot be true, in the summary line every caller reads.
+SVQ=$(mktemp -d); git -C "$SVQ" init -q
+git -C "$SVQ" config user.email test@example.com; git -C "$SVQ" config user.name test
+printf '#!/bin/bash\necho only\n' > "$SVQ/only.sh"
+git -C "$SVQ" add -A
+mkdir -p "$SVQ/tests"; printf '#!/bin/bash\necho "all 1 invariants hold"\n' > "$SVQ/tests/run-tests"
+chmod +x "$SVQ/tests/run-tests"
+SVCOUNT=$(devtools/repo-validate "$SVQ" 2>&1 | tail -1)
+if [[ "$SVCOUNT" =~ \(([0-9]+)\ of\ ([0-9]+)\ files ]]; then
+    (( BASH_REMATCH[1] <= BASH_REMATCH[2] )) \
+        && ok "repo-validate never reports more files checked than it enumerated" \
+        || bad "the summary claims ${BASH_REMATCH[1]} of ${BASH_REMATCH[2]} files — the suite is counted as one"
+else
+    bad "repo-validate's summary line did not carry a checked/enumerated pair: $SVCOUNT"
+fi
+rm -rf "$SVQ"
+
 rm -rf "$SCRATCH"
 
 echo
