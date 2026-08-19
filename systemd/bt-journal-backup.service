@@ -1,0 +1,37 @@
+[Unit]
+Description=Archive every retained journal boot, so evidence stops evaporating
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+# The archive is the answer to a loss this project measured rather than guessed:
+# eight exhibits' source journals had already rotated away before anyone noticed,
+# and the operator's objection was the correct one — evidence that disappears in
+# plain sight cannot be worked with. bt-retention reports what is about to go and
+# bt-archive copies one boot off the ring, but neither runs on its own, and a
+# control that depends on someone remembering is not a control.
+#
+# NO ConditionPathIsDirectory ON THE ARCHIVE PATH. The first draft had one, and
+# it would have made the FIRST run — the only one that matters on a fresh
+# install — skip silently with a success status, because the directory does not
+# exist until something creates it. bt-archive does `mkdir -p` itself, so the
+# condition bought nothing and cost the one run nobody would check. A guard whose
+# failure mode is a quiet skip is the shape this project keeps finding.
+
+[Service]
+Type=oneshot
+# Read-only with respect to the system: it reads the journal and writes only
+# under BT_ARCHIVE_DIR. It never touches the Bluetooth controller — that
+# distinction matters because a live untreated window may be open when this
+# fires, and the whole value of one is that nothing has touched the device.
+Environment=BT_ARCHIVE_DIR=/root/bt-journal-archive
+ExecStart=/usr/local/bin/bt-backup-journal
+
+# Each boot is exported and then READ BACK and counted against the source before
+# it is filed, so this is I/O-heavy by design. Niced and IO-idle so a backup can
+# never compete with the desktop on a family laptop.
+Nice=19
+IOSchedulingClass=idle
+
+# A failure archives nothing and must not look like success.
+# bt-backup-journal already reports per-boot failures and continues, so a
+# non-zero exit here means something structural — an unreadable journal, a full
+# disk, a missing bt-archive.
+TimeoutStartSec=2h

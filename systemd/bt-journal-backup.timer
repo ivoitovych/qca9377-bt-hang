@@ -1,0 +1,21 @@
+[Unit]
+Description=Daily journal archive, so no boot rotates away unarchived
+Documentation=https://github.com/ivoitovych/qca9377-bt-hang
+
+[Timer]
+OnCalendar=daily
+# PERSISTENT IS THE POINT ON THIS MACHINE. It is a family laptop that is powered
+# off for long stretches, and a plain daily timer simply skips every run that
+# falls while the machine is down — which is exactly the period during which the
+# journal keeps its oldest boots and then loses them. Persistent=true runs the
+# missed job at the next boot instead.
+Persistent=true
+# Spread the start so a backup never lands on the moment someone opens the lid.
+RandomizedDelaySec=30m
+# Not at boot: enumeration, the auto-trial and the desktop all start there, and
+# an I/O-heavy archive competing with them is how an instrument perturbs the
+# thing it measures.
+OnBootSec=20min
+
+[Install]
+WantedBy=timers.target

@@ -326,6 +326,14 @@ install_file "$SRC/tools/bt-verify-kernel-mechanism" /usr/local/bin/bt-verify-ke
 install_file "$SRC/tools/bt-trial"       /usr/local/bin/bt-trial       0755
 install_file "$SRC/tools/bt-trial-audit" /usr/local/bin/bt-trial-audit 0755
 install_file "$SRC/tools/bt-retention"   /usr/local/bin/bt-retention   0755
+# bt-archive was written on 2026-08-16 and never added here, so the deployment
+# check could not even report it missing — the tool you need WHILE a boot is
+# rotating was the one not on PATH. bt-backup-journal drives it and is what the
+# timer runs; bt-snapshot is the capture tool an operator reaches for during a
+# live fault, so it must not depend on a checkout being present.
+install_file "$SRC/tools/bt-archive"        /usr/local/bin/bt-archive        0755
+install_file "$SRC/tools/bt-backup-journal" /usr/local/bin/bt-backup-journal 0755
+install_file "$SRC/tools/bt-snapshot"       /usr/local/bin/bt-snapshot       0755
 install_file "$SRC/tools/bt-actions"     /usr/local/bin/bt-actions     0755
 install_file "$SRC/tools/bt-boot-stats"  /usr/local/bin/bt-boot-stats  0755
 install_file "$SRC/tools/bt-exhibit"     /usr/local/bin/bt-exhibit     0755
@@ -376,6 +384,13 @@ install_file "$SRC/systemd/bt-capture.service" /etc/systemd/system/bt-capture.se
 # from before the first HCI command, closed by the watchdog on a hang or by
 # systemd at shutdown.
 install_file "$SRC/systemd/bt-trial-auto.service" /etc/systemd/system/bt-trial-auto.service 0644
+
+# The journal is a ring and this project's own verbosity sets how fast it turns.
+# Eight exhibits' source journals had rotated away before anyone noticed, which
+# is a loss no bigger quota fixes — SystemMaxUse was not even binding. The
+# archive is what fixes it, and it has to run without anyone remembering.
+install_file "$SRC/systemd/bt-journal-backup.service" /etc/systemd/system/bt-journal-backup.service 0644
+install_file "$SRC/systemd/bt-journal-backup.timer"   /etc/systemd/system/bt-journal-backup.timer   0644
 
 # Kernel dynamic debug: the driver's own account of its decisions. Must be
 # enabled before bluetooth.service opens the adapter, hence a sysinit oneshot.
@@ -479,6 +494,9 @@ run systemctl enable --now bt-hang-watchdog
 (( TRACE ))   && run systemctl enable --now bt-trace
 run systemctl enable --now bt-capture
 run systemctl enable --now bt-trial-auto
+# Enabled unconditionally: it archives and never acts on the controller, and the
+# whole point is that it runs when nobody remembers to.
+run systemctl enable --now bt-journal-backup.timer
 run systemctl enable --now bt-dyndbg
 (( USBMON ))  && run systemctl enable --now bt-usbmon
 # Picks up the raised journal size cap. Restarting journald is safe: clients
