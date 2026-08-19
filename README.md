@@ -4,9 +4,41 @@
 
 Affects Qualcomm Atheros **QCA9377** (ROME) Bluetooth, USB ID `13d3:3503`, on Linux.
 
-This repository is an **open investigation**, not an explanation. It ships
-diagnostics and a userspace watchdog that mitigates the failure; it does not yet
-know why the failure happens. What is currently established:
+## What this project is
+
+An attempt to **fix** this, run as an open investigation. It is not a watchdog
+project — the watchdog is one experiment inside it, and on this hardware a
+questionable one, since the USB reset it performs has three controlled
+demonstrations of destroying the controller (`EX-023`, `EX-026`).
+
+The work runs in **three parallel streams**, and they are deliberately not
+merged:
+
+| stream | question it answers | where it lives |
+|---|---|---|
+| **1. Evidence** | What actually happens, in terms a stranger can re-derive? | [`evidence/exhibits/`](evidence/exhibits/) — numbered, each carrying its extraction command, verbatim output and exit status |
+| **2. Workarounds** | Is there a cheap recipe a user can apply today? | [`docs/issues.md`](docs/issues.md), the mitigation tooling, and the trial series under `evidence/trials/` |
+| **3. The real fix** | What patch belongs upstream? | [`docs/fix-proposal.md`](docs/fix-proposal.md), [`docs/bug-report.md`](docs/bug-report.md), [`docs/investigation-plan.md`](docs/investigation-plan.md) |
+
+Stream 3 is the goal. Streams 1 and 2 exist because a patch proposed without a
+denominator is a guess, and because a family that needs its laptop today cannot
+wait for a kernel release.
+
+**The fault is very likely multi-layered, and the streams are shaped around
+that.** What has been observed is not one bug but a sequence: the controller
+stops answering HCI, and then the host cannot bring it back — a reboot does not
+clear it while removing power does (`EX-027`, `EX-028`), which places the stuck
+state on the device's side of the wire. A fix may therefore need to touch the
+driver, the kernel's recovery path, or both. It is also not settled that every
+symptom users report is the same fault: this record already separates **four**
+distinct failure modes that look identical to a person (`EX-030`, `EX-031`,
+`EX-032`), and only one of them is the controller.
+
+Whether it is specific to `13d3:3503`, to the QCA9377 family, or broader is
+**open**. The reporter sees the same pattern on several laptops; that is an
+observation, not a measurement.
+
+## What is currently established
 
 <!-- BT1-CURRENT-BEGIN -->
 > The controller sometimes enters a non-responsive HCI state during synchronous-audio link
