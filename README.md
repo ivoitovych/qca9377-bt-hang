@@ -192,8 +192,32 @@ range while music is playing.
 git clone https://github.com/ivoitovych/qca9377-bt-hang   # or your fork
 cd qca9377-bt-hang
 sudo ./install.sh            # dry run — shows exactly what it would do
-sudo ./install.sh --apply
+sudo ./install.sh --apply    # install and arm
 ```
+
+### `--tools-only` — deploy the files, arm nothing
+
+```bash
+sudo ./install.sh --tools-only
+```
+
+Installs every file, enables no service, reloads no driver, touches no device.
+
+**Use it on a machine you are measuring.** `--apply` runs
+`systemctl enable --now bt-hang-watchdog`, and that watchdog answers an HCI
+timeout with a USB reset — an operation with three controlled demonstrations of
+destroying this controller (`EX-023`, `EX-026`). On the investigation machine
+that made the choice "stale instruments or an armed watchdog", and the
+instruments stayed 29 versions behind for days as a result. This is the third
+option.
+
+It is deny-by-default: only `install`, `rm`, `rmdir` and `mkdir` run, and every
+other command is printed with the reason it was skipped, so a system command
+added later is skipped rather than silently executed.
+
+⚠️ What it deliberately does **not** do: an updated unit file for an
+already-running service is not re-read until the next boot, and a changed udev
+rule applies at the next enumeration. The files on disk are current either way.
 
 Uninstall is complete — every installed file is new, nothing pre-existing is touched:
 

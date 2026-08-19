@@ -2,8 +2,15 @@
 # install.sh — install the Bluetooth hang watchdog and health metrics collector.
 #
 #   sudo ./install.sh                          dry run — show what would happen
-#   sudo ./install.sh --apply                  install
+#   sudo ./install.sh --apply                  install and arm
+#   sudo ./install.sh --tools-only             install the FILES, arm nothing
 #   sudo ./install.sh --apply --no-metrics     watchdog only, skip the collector
+#
+# --tools-only deploys every file and enables no service, reloads no driver and
+# touches no device. It exists because --apply enables bt-hang-watchdog, whose
+# USB reset has three controlled demonstrations of destroying this controller —
+# so on the investigation machine the choice was stale tools or an armed
+# watchdog, and the fixes stayed stuck in the tree for days.
 #
 # Different controller:
 #   BT_VID=0cf3 BT_PID=e300 sudo -E ./install.sh --apply
@@ -17,9 +24,26 @@ set -uo pipefail
 
 APPLY=0
 METRICS=1
+# ── --tools-only — deploy the files, arm nothing ──────────────────────────
+#
+# WHY THIS EXISTS. On 2026-08-19 the checkout was 29 tools ahead of what was
+# running on the investigation machine, and every one of those fixes was
+# unreachable — because the only way to deploy them, `--apply`, also runs
+# `systemctl enable --now bt-hang-watchdog`. That watchdog's response to an HCI
+# timeout is a USB reset, and a reset has THREE controlled demonstrations of
+# destroying this controller (EX-023, the 2026-08-15 test, EX-026). So the
+# operator was choosing between stale instruments and an armed watchdog on a
+# family laptop, and correctly chose stale — which left BL-08's fix, the one
+# that stops our own shutdown hook probing the controller, permanently stuck in
+# the tree.
+#
+# This is the third option: install every file, enable no service, reload no
+# driver, touch no device.
+TOOLS_ONLY=0
 for a in "$@"; do
     case "$a" in
         --apply)       APPLY=1 ;;
+        --tools-only)  APPLY=1; TOOLS_ONLY=1 ;;
         --no-metrics)  METRICS=0 ;;
         -h|--help)     sed -n '2,15p' "$0"; exit 0 ;;
         *) echo "unknown option: $a" >&2; exit 1 ;;
@@ -91,6 +115,26 @@ run() {
     # command added tomorrow is skipped in staging, so the staged round trip
     # fails loudly; the alternative failure direction is a system command
     # executing silently, and only one of those is recoverable.
+    # --tools-only reuses the SAME deny-by-default allowlist as staging rather
+    # than listing the commands to skip. Listing what to skip fails open: a
+    # `systemctl enable` added tomorrow would run, and the mode's whole promise
+    # is that nothing gets armed. This fails closed — a new system command is
+    # skipped and announced, which is loud and recoverable, while the other
+    # direction arms a watchdog on a machine whose controller a reset destroys.
+    #
+    # CHECKED BEFORE THE STAGING GATE, ON PURPOSE. Both gates allow the same
+    # commands, so the order cannot change WHAT runs — only which message is
+    # printed. Putting this first is what makes the mode testable: under a
+    # staging root the output names tools-only as the reason a system command
+    # was skipped, so a test can assert this gate fired rather than assuming
+    # staging covered for it. A guard that cannot be observed firing is the
+    # shape this project keeps finding.
+    if (( TOOLS_ONLY )); then
+        case "${1:-}" in
+            install|rm|rmdir|mkdir) ;;
+            *) echo "  tools-only: NOT executed (would arm or touch the system): $*"; return 0 ;;
+        esac
+    fi
     if (( APPLY )) && [[ -n "$DESTDIR" ]]; then
         case "${1:-}" in
             install|rm|rmdir|mkdir) ;;
@@ -136,7 +180,7 @@ install_file() {
 # writing that stamp on the investigation machine would fake an experiment
 # marker, which is worse than leaving the guard untested.
 MODE_STAMP="${BT_MODE_STAMP:-/usr/local/share/qca9377-bt-hang/mode}"
-if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null; then
+if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null && (( ! TOOLS_ONLY )); then
     echo "!! This machine is in EXPERIMENT mode ($(cat "$MODE_STAMP"))."
     echo "   Installing would re-enable the watchdog, the probe timer, the"
     echo "   modprobe autosuspend override and the udev power pin — reverting"
@@ -144,6 +188,10 @@ if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null; th
     echo
     if [[ "${BT_FORCE_INSTALL:-0}" != 1 ]]; then
         echo "   Refusing. To update tooling while staying in experiment mode:"
+        echo "       sudo ./install.sh --tools-only"
+        echo "   That deploys the files and arms nothing, so the mode stands."
+        echo
+        echo "   To install AND arm anyway (reverts the baseline):"
         echo "       sudo BT_FORCE_INSTALL=1 ./install.sh --apply && sudo bt-mode experiment"
         echo "   Or leave experiment mode first:  sudo bt-mode mitigation"
         exit 3
@@ -198,14 +246,30 @@ fi
 # defeatable by the same override its sandboxed tests set. Do not unify them.
 if (( APPLY )) && [[ -e "${BT_STATE:-/run/bt-trial}/current" ]]; then
     echo "!! A TRIAL IS OPEN ($(grep -m1 '^build=' "${BT_STATE:-/run/bt-trial}/current" 2>/dev/null))."
-    echo "   Installing reloads btusb. That is an intervention this trial's"
-    echo "   treatment column does not record, and it makes the trial"
-    echo "   non-comparable with the rest of the series."
-    echo
-    echo "   Close it first:    bt-trial ok    (or: bt-trial abort)"
-    echo "   Or record it:      bt-trial step \"install.sh reloaded btusb\""
-    echo "   Continuing in 10 s — Ctrl-C to stop."
-    sleep 10
+    if (( TOOLS_ONLY )); then
+        # The btusb reload is what makes an install an INTERVENTION, and
+        # --tools-only does not perform one. What it does change is the
+        # measurement revision mid-trial, which the row already records as
+        # mrev_start..mrev_end — a recorded change, not a hidden one. Warning
+        # about a reload that cannot happen would train the operator to ignore
+        # this guard, which is worse than not printing it.
+        echo "   --tools-only does NOT reload btusb and does not touch the device,"
+        echo "   so this trial is not perturbed. It DOES change the measurement"
+        echo "   revision mid-trial; the row records that as mrev_start..mrev_end."
+        echo
+        echo "   Note it if you want it legible:  bt-trial step \"tools-only deploy\""
+        echo "   Continuing in 3 s — Ctrl-C to stop."
+        sleep 3
+    else
+        echo "   Installing reloads btusb. That is an intervention this trial's"
+        echo "   treatment column does not record, and it makes the trial"
+        echo "   non-comparable with the rest of the series."
+        echo
+        echo "   Close it first:    bt-trial ok    (or: bt-trial abort)"
+        echo "   Or record it:      bt-trial step \"install.sh reloaded btusb\""
+        echo "   Continuing in 10 s — Ctrl-C to stop."
+        sleep 10
+    fi
     echo
 fi
 
@@ -487,6 +551,19 @@ echo
 
 # --- activate --------------------------------------------------------------
 echo "[7/7] activate"
+if (( TOOLS_ONLY )); then
+    echo "  --tools-only: every command below is announced and skipped."
+    echo "  Nothing is enabled, no driver is reloaded, the device is not touched."
+    echo
+    echo "  Deliberately NOT done, and what it costs:"
+    echo "    systemctl daemon-reload  — an updated unit file for an ALREADY running"
+    echo "                               service is not re-read until the next boot."
+    echo "                               Files on disk are current either way."
+    echo "    udevadm control          — a changed udev rule applies at next boot."
+    echo "    enable --now …           — nothing is armed. bt-hang-watchdog stays off,"
+    echo "                               which on this controller is the point."
+    echo
+fi
 run udevadm control --reload-rules
 run systemctl daemon-reload
 run systemctl enable --now bt-hang-watchdog
