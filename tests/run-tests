@@ -6946,6 +6946,189 @@ tools/bt-backup-journal --archive-everything >/dev/null 2>&1
     && ok "bt-backup-journal rejects an unknown option instead of archiving" \
     || bad "an unknown option was ignored and the run proceeded"
 
+# ── bt-snapshot: one coarse cut, and it runs DURING a live fault ─────────
+#
+# 0 of 83 lines had ever executed. This is the tool an operator reaches for
+# while a fault window is open, which puts it in the same category as
+# `bt-trial autostop` — and autostop is the cautionary example in its own
+# header, because its hci_alive() issues an HCI Read_Local_Name at every
+# shutdown and that is why EX-029's thirteen clean hours end in a touched
+# terminator. A capture tool that touched the controller would spoil the very
+# window it was called to record.
+SNF=tests/journal/snapshot
+sn_run() {   # <dest-root> [args...]
+    BT_JOURNAL_FIXTURE="$SNF" BT_SNAPSHOT_DIR="$1/snap" BT_REPO="$1/repo" \
+        tools/bt-snapshot "${@:2}" 2>&1
+}
+SN=$(mktemp -d); mkdir -p "$SN/repo"
+SNOUT=$(sn_run "$SN"); snrc=$?
+SNDIR=$(ls -d "$SN/snap"/*-boot0 2>/dev/null | head -1)
+
+# ONE TRAVERSAL, THEN EVERY FILTER FOR FREE — the whole design, asserted as the
+# files it must leave behind. Ten to fifteen journalctl invocations was the
+# cost this replaced, each re-traversing the journal while the operator waited.
+if (( snrc == 0 )) && [[ -s "$SNDIR/all.log" && -s "$SNDIR/kernel.log" \
+   && -e "$SNDIR/f-fault.log" && -e "$SNDIR/f-usb.log" && -e "$SNDIR/f-intervention.log" \
+   && -e "$SNDIR/f-crash.log" && -e "$SNDIR/f-link.log" && -s "$SNDIR/summary.txt" \
+   && "$(readlink -f "$SN/snap/latest")" == "$(readlink -f "$SNDIR")" ]]; then
+    ok "bt-snapshot takes one coarse cut, derives every fine cut, and points latest at it"
+else
+    bad "the capture is incomplete (rc=$snrc): $(ls "$SNDIR" 2>/dev/null | tr '\n' ' ')"
+fi
+
+# THE BARE `command tx timeout` IS COUNTED, and it is the one that anchors.
+# The kernel omits the opcode whenever hdev->req_skb is NULL — the case where
+# the command that died is not the one hci_cmd_sync was tracking. The fixture
+# puts the bare form FIRST, so a pattern requiring an opcode both undercounts
+# (2 of 3) and moves `first timeout` to a later line, which is the anchor every
+# interval in the summary is read against.
+#
+# MUTATION: put `command 0x[0-9a-f]+ tx timeout` back at either counting site
+# and this fails on the count, the anchor, or both.
+[[ "$SNOUT" == *"command timeouts        3"* \
+   && "$SNOUT" == *"first timeout      2026-08-16T21:42:44.918327+0200"* ]] \
+    && ok "an opcode-less command timeout is counted and can anchor the summary" \
+    || bad "the bare timeout form was missed: $(grep -E 'command timeouts|first timeout' <<<"$SNOUT" | tr '\n' ' ')"
+
+# EVERY COUNT SITS ON ITS OWN LABELLED LINE. `grep -c .` prints 0 AND exits 1 on
+# an empty file, so `[[ -r $f ]] && grep -c . "$f" || echo 0` ran both branches
+# and printed two lines; printf cycled its one-conversion format over the extra
+# argument and the summary grew a stray unlabelled 0 under each zero count —
+# interventions, daemon crashes and link-layer events, the three most often zero.
+#
+# THE FIRST VERSION OF THIS CHECK COULD NOT FAIL. It required leading
+# whitespace, and the stray line has none — `%6s` receives the two-line value
+# as ONE argument, pads the first line and emits the second at column zero.
+# Restoring the broken counter left the suite green, which is how the anchor
+# came to be `^[[:space:]]*`.
+STRAY=$(grep -nE '^[[:space:]]*[0-9]+[[:space:]]*$' "$SNDIR/summary.txt" || true)
+[[ -z "$STRAY" ]] \
+    && ok "no summary count is printed twice — every number is on its labelled line" \
+    || bad "the summary carries an unlabelled bare number: $(tr '\n' ' ' <<<"$STRAY")"
+rm -rf "$SN"
+
+# --summary-only RE-PRINTS AND CAPTURES NOTHING. It exists to be cheap; a
+# version that re-cut the journal would be the expensive thing it replaces.
+SN=$(mktemp -d); mkdir -p "$SN/repo"
+sn_run "$SN" >/dev/null 2>&1
+SNBEFORE=$(ls -d "$SN/snap"/*-boot* | wc -l)
+SNRE=$(sn_run "$SN" --summary-only); snrerc=$?
+SNAFTER=$(ls -d "$SN/snap"/*-boot* | wc -l)
+#
+# THE CAPTURE BANNER IS THE ASSERTION, not the directory count. Counting
+# directories is clock-dependent: $STAMP has second resolution, so a re-cut
+# taken in the same second as the first lands in the SAME directory and the
+# count does not move. Deleting the `exit 0` from this branch left the suite
+# green for exactly that reason. `coarse cut of boot` is printed by the
+# traversal itself and cannot be reached without taking one.
+(( snrerc == 0 )) && (( SNBEFORE == SNAFTER )) \
+   && [[ "$SNRE" == *"bt-snapshot summary"* && "$SNRE" != *"coarse cut of boot"* ]] \
+    && ok "--summary-only re-prints the latest capture and takes no new cut" \
+    || bad "--summary-only captured again ($SNBEFORE -> $SNAFTER) or failed (rc=$snrerc)"
+
+SNLIST=$(sn_run "$SN" --list)
+[[ "$SNLIST" == *"-boot0"* ]] \
+    && ok "--list names what has been captured" \
+    || bad "--list did not report the capture that is there"
+rm -rf "$SN"
+
+# AND BOTH REPORTING MODES MUST BE HONEST WHEN THERE IS NOTHING. An empty --list
+# that printed a heading and no rows reads identically to one whose glob broke.
+SN=$(mktemp -d); mkdir -p "$SN/repo"
+SNEMPTY=$(sn_run "$SN" --list)
+[[ "$SNEMPTY" == *"nothing captured yet"* ]] \
+    && ok "--list says so when nothing has been captured, rather than printing a bare heading" \
+    || bad "an empty capture directory produced no statement that it is empty"
+SNNONE=$(sn_run "$SN" --summary-only); snnrc=$?
+(( snnrc == 2 )) && [[ "$SNNONE" == *"REFUSING"*"no previous capture"* ]] \
+    && ok "--summary-only refuses when there is no previous capture" \
+    || bad "--summary-only gave rc=$snnrc with nothing to summarise"
+rm -rf "$SN"
+
+# ENUMERATED == 0 IS A REFUSAL, AND IT LEAVES NOTHING BEHIND. A boot index that
+# names no boot produces an empty cut; reporting it as a quiet boot would be a
+# capture of nothing filed beside real ones, and the empty directory would be
+# indistinguishable from a capture whose journal read failed.
+SN=$(mktemp -d); mkdir -p "$SN/repo" "$SN/emptyfix"; : > "$SN/emptyfix/default.log"
+SNE=$(BT_JOURNAL_FIXTURE="$SN/emptyfix" BT_SNAPSHOT_DIR="$SN/snap" BT_REPO="$SN/repo" \
+      tools/bt-snapshot 2>&1); snerc=$?
+(( snerc == 2 )) && [[ "$SNE" == *"REFUSING"*"nothing was captured"* ]] \
+    && [[ -z "$(ls "$SN/snap" 2>/dev/null)" ]] \
+    && ok "an empty cut is refused and the directory it made is removed" \
+    || bad "an empty boot gave rc=$snerc or left $(ls "$SN/snap" 2>/dev/null | tr '\n' ' ') behind"
+rm -rf "$SN"
+
+# THE RAW CUT MUST NOT BE COMMITTABLE. It is unfiltered journal — MACs and Wi-Fi
+# BSSIDs, and a BSSID geolocates this machine, in a public repository that has
+# leaked an address once. Same guard as bt-archive, and tested the same way:
+# through a SYMLINK, because a path check that does not resolve symlinks is not
+# a path check (BL-06).
+SN=$(mktemp -d); mkdir -p "$SN/repo/inside"
+SNIN=$(BT_JOURNAL_FIXTURE="$SNF" BT_SNAPSHOT_DIR="$SN/repo/inside" BT_REPO="$SN/repo" \
+       tools/bt-snapshot 2>&1); sninrc=$?
+(( sninrc == 2 )) && [[ "$SNIN" == *"inside the repository"* ]] \
+    && ok "bt-snapshot refuses a destination inside the repository" \
+    || bad "a raw cut was written into the repository (rc=$sninrc)"
+
+ln -s "$SN/repo/inside" "$SN/link-to-inside"
+SNLNK=$(BT_JOURNAL_FIXTURE="$SNF" BT_SNAPSHOT_DIR="$SN/link-to-inside" BT_REPO="$SN/repo" \
+        tools/bt-snapshot 2>&1); snlrc=$?
+(( snlrc == 2 )) && [[ "$SNLNK" == *"inside the repository"* ]] \
+    && ok "the in-repo guard resolves a symlinked destination — no route in by either name" \
+    || bad "a symlink pointing into the repository was accepted (rc=$snlrc)"
+rm -rf "$SN"
+
+# IT MUST NEVER TOUCH THE CONTROLLER — the promise in its own header, and the
+# reason it is safe to run during a live window. Checked at the source, because
+# no fixture can prove the absence of a command that is not called. Comments are
+# excluded: the header names all four in prose, saying it does not use them.
+SNTOUCH=$(grep -nE '(hciconfig|btmgmt|bluetoothctl|rfkill)' tools/bt-snapshot \
+          | grep -vE '^[0-9]+:[[:space:]]*#' || true)
+[[ -z "$SNTOUCH" ]] \
+    && ok "bt-snapshot issues no controller command — safe inside an untreated window" \
+    || bad "a controller-touching command reached the capture tool: $(tr '\n' ' ' <<<"$SNTOUCH")"
+
+SNH=$(tools/bt-snapshot --help 2>&1); snhrc=$?
+(( snhrc == 0 )) && [[ "$SNH" == *"--summary-only"* && "$SNH" == *"--list"* ]] \
+    && ok "bt-snapshot --help describes its modes" \
+    || bad "--help returned $snhrc or did not name the modes it documents"
+tools/bt-snapshot --capture-everything >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-snapshot rejects an unknown option rather than capturing" \
+    || bad "an unknown option was ignored and a cut was taken"
+
+# --boot IS THE MODE THAT MATTERS AFTER A REBOOT. The fault window an operator
+# wants is usually the boot that just ended, and `bt-snapshot --boot -1` is how
+# it is reached; the default of 0 captures the boot that is running now, which
+# after a cold recovery is the wrong one. Untested until here, so the argument
+# could have been read and discarded and the tool would still have looked right.
+SN=$(mktemp -d); mkdir -p "$SN/repo"
+SNB=$(sn_run "$SN" --boot -1); snbrc=$?
+(( snbrc == 0 )) && [[ "$SNB" == *"coarse cut of boot -1"* && "$SNB" == *"summary — boot -1"* ]] \
+   && ls -d "$SN/snap"/*-boot-1 >/dev/null 2>&1 \
+    && ok "--boot captures the boot asked for and names it in the directory" \
+    || bad "--boot -1 was not honoured (rc=$snbrc): $(ls "$SN/snap" 2>/dev/null | tr '\n' ' ')"
+rm -rf "$SN"
+
+# THE TWO ENTRY POINTS bt-archive HAD LEFT. Both were invisible while two units
+# sat at 0%: test-comprehension reports the WORST unit, so every gap above zero
+# was hidden behind them until they were closed. --list is how an operator sees
+# what is already archived before spending an export, and an unknown option must
+# refuse rather than be read as a boot index.
+ARL=$(mktemp -d); mkdir -p "$ARL/dest" "$ARL/repo"
+ARLOUT=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARL/dest" \
+         BT_REPO="$ARL/repo" tools/bt-archive --list 2>&1); arlrc=$?
+(( arlrc == 0 )) \
+    && ok "bt-archive --list reports the archive without exporting anything" \
+    || bad "--list returned $arlrc: $(head -2 <<<"$ARLOUT" | tr '\n' ' ')"
+
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARL/dest" \
+    BT_REPO="$ARL/repo" tools/bt-archive --everything >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-archive refuses an unknown option instead of reading it as a boot" \
+    || bad "bt-archive accepted an option it does not implement"
+rm -rf "$ARL"
+
 # ── status: the view that decides whether to abort a trial in progress ───
 #
 # The one command an operator runs WHILE a trial is open, and the only place
