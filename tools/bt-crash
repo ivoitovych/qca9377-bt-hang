@@ -1,0 +1,103 @@
+#!/bin/bash
+# bt-crash — what crashed, was a core kept, and what is the stack?
+#
+#   bt-crash                 crashes this boot, cores held, newest backtrace
+#   bt-crash --boot -1       a different boot
+#   bt-crash --all           every core held, not just Bluetooth ones
+#
+# WHY THIS EXISTS. Answering "did bluetoothd crash again, and was a core kept?"
+# was a hand-typed pipeline joining a journal grep, a snapshot path under
+# /var/tmp and `coredumpctl` — three fragments, one permission prompt, and a
+# `tail -4` that CUT OFF THE ANSWER: the bluetoothd core was there and the
+# truncated listing showed only btmon's. A named tool is matched once and
+# cannot silently truncate the thing being asked about.
+#
+# WHAT IT IS FOR. This project has three failure modes that look identical to an
+# operator — the controller wedging (BT-1), an audio-server transport release
+# (EX-030), and a BlueZ crash that leaves the adapter powered and permanently
+# non-scanning (EX-032). Only the third leaves a core, so this is the check that
+# separates it from the other two in one command.
+#
+# Read-only. Touches no controller and no journal state.
+
+set -uo pipefail
+export LC_ALL=C
+
+BOOT=0; ALL=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --boot) BOOT="${2:?--boot needs an index}"; shift ;;
+        --all)  ALL=1 ;;
+        -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+        *) echo "bt-crash: unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+echo "bt-crash — boot $BOOT"
+echo "───────────────────────────────────────────────────────────────"
+
+# ── crashes as the journal records them ──────────────────────────────────
+echo
+echo "Crashes in the journal:"
+CRASH=$(journalctl -b "$BOOT" --no-pager -o short-iso 2>/dev/null \
+        | grep -E 'segfault|core-dump|Failed with result' || true)
+n=$(grep -c . <<<"${CRASH:-}" 2>/dev/null || true)
+if [[ -z "$CRASH" ]]; then
+    echo "  none"
+else
+    sed 's/^/  /' <<<"$CRASH" | tail -12
+    printf '  (%s line(s) total)\n' "${n:-0}"
+fi
+
+# THE SAME OFFSET TWICE IS NOT A COINCIDENCE. A repeated segfault at one offset
+# reading one address is a deterministic null dereference, not corruption, and
+# saying so here saves the comparison being redone by hand every time.
+OFF=$(grep -oE 'in [a-z0-9_.-]+\[[0-9a-f]+,' <<<"${CRASH:-}" 2>/dev/null \
+      | sed -E 's/.*\[([0-9a-f]+),/\1/' | sort | uniq -c | sort -rn | head -1 || true)
+if [[ -n "$OFF" ]]; then
+    cnt=$(awk '{print $1}' <<<"$OFF"); off=$(awk '{print $2}' <<<"$OFF")
+    if [[ "${cnt:-0}" -gt 1 ]]; then
+        printf '\n  ⚠️  %s crashes at the SAME offset %s — deterministic, not corruption.\n' "$cnt" "$off"
+    fi
+fi
+
+# ── cores actually retained ──────────────────────────────────────────────
+echo
+if ! command -v coredumpctl >/dev/null 2>&1; then
+    echo "Cores: coredumpctl not installed — no core can be kept or read."
+    echo "       Install systemd-coredump to make the next crash filable."
+    exit 0
+fi
+
+echo "Cores retained:"
+# NEVER TRUNCATED. The hand-typed version ended in `tail -4` and hid the one
+# core that mattered; the full list is printed and filtered by relevance
+# instead, so nothing is dropped by position.
+if (( ALL )); then
+    LIST=$(coredumpctl list --no-pager 2>/dev/null | tail -n +2 || true)
+else
+    LIST=$(coredumpctl list --no-pager 2>/dev/null | tail -n +2 \
+           | grep -iE 'bluetoothd|btmon|btusb|bt-' || true)
+fi
+if [[ -z "$LIST" ]]; then
+    echo "  none$( (( ALL )) || echo ' matching bluetooth processes (use --all)')"
+    exit 0
+fi
+sed 's/^/  /' <<<"$LIST"
+
+# ── the newest bluetoothd stack ──────────────────────────────────────────
+PID=$(grep -i 'bluetoothd' <<<"$LIST" | tail -1 | awk '{print $5}')
+if [[ -n "$PID" ]]; then
+    echo
+    echo "Newest bluetoothd stack (pid $PID):"
+    coredumpctl info "$PID" --no-pager 2>/dev/null \
+        | sed -n '/Stack trace/,$p' | sed 's/^ */  /' | head -14
+    echo
+    echo "  Frames read 'binary + offset' because bluez debug symbols for this"
+    echo "  exact build are not installed — ddebs ships 5.72-0ubuntu5 against an"
+    echo "  installed 5.72-0ubuntu5.5, and mismatched symbols name the WRONG"
+    echo "  function rather than failing. The offsets are exact and sufficient"
+    echo "  for a maintainer who has the matching symbols."
+fi
+exit 0
