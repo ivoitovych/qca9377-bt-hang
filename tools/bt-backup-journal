@@ -33,6 +33,17 @@ set -uo pipefail
 export LC_ALL=C
 
 HERE=$(dirname "$(readlink -f "$0")")
+# THE BOOT INDEX COMES THROUGH THE SEAM, like every other read-only tool here.
+# This read was the one `journalctl` call left open-coded, which made the whole
+# tool undrivable without a real journal — 0 of 50 lines had ever executed under
+# test. bt-archive, which this drives, has been through the seam since it was
+# written; going around it for the index alone meant the driver could not be
+# tested where the thing it drives could.
+LIBDIR="${BT_LIBDIR:-$HERE/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-backup-journal: missing $LIBDIR/journal.sh" >&2; exit 2; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+
 ARCHIVE="${BT_ARCHIVE_BIN:-$HERE/bt-archive}"
 DEST="${BT_ARCHIVE_DIR:-$HOME/bt-journal-archive}"
 
@@ -53,7 +64,7 @@ refuse() { echo "bt-backup-journal: REFUSING — $*" >&2; exit 2; }
 
 # index<TAB>boot-id for every retained boot, read from the index alone. No boot
 # is traversed to decide whether it needs archiving.
-mapfile -t ROWS < <(journalctl --list-boots --no-pager 2>/dev/null \
+mapfile -t ROWS < <(bt_journal --list-boots --no-pager 2>/dev/null \
                     | awk '$1 ~ /^-?[0-9]+$/ { print $1"\t"$2 }')
 
 # ENUMERATED == 0 IS A REFUSAL. An empty boot list means --list-boots changed

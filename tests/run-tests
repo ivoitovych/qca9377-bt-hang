@@ -6793,6 +6793,159 @@ BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARSYM/outside" \
 rm -rf "$ARSYM"
 rm -rf "$AR" "$ARD" "$ARTRUNC" "$ARREPO"
 
+# ── bt-backup-journal: the archive that runs without anyone remembering ──
+#
+# It shipped with 0 of 50 lines ever executed, and it is the one tool here that
+# runs UNATTENDED — a systemd timer calls it on the investigation machine. Its
+# refusals are therefore the only thing standing between "the archive is
+# current" and "the archive stopped a week ago and nobody looked". That is the
+# opposite of the usual case for an untested tool: nobody is watching it fail.
+#
+# DRIVEN THROUGH A STUB bt-archive, which is the whole point of BT_ARCHIVE_BIN.
+# The real one writes hundreds of megabytes and refuses a destination inside the
+# repository; this section tests the DRIVER — which boots it selects, which it
+# skips, what it does when one fails — and the stub records every invocation so
+# the selection can be asserted rather than inferred from what appeared on disk.
+BKJ_FIX=tests/journal/backup
+bkj_setup() {   # -> a fresh dest + stub archiver; echoes the root
+    local d; d=$(mktemp -d); mkdir -p "$d/dest" "$d/bin"
+    # The stub creates what the real bt-archive would create, named the way the
+    # real one names it, and logs its argv. `$1` is the boot index.
+    { echo '#!/bin/sh'
+      echo 'echo "$@" >> "'"$d"'/calls.log"'
+      echo 'case "$1" in'
+      echo '  '"$BKJ_FAILIDX"') exit 1 ;;'
+      echo 'esac'
+      echo 'idx=$1'
+      echo 'case "$idx" in'
+      echo '  -2) id=a1b2c3d4 ;; -1) id=e5f60718 ;; 0) id=9c8d7e6f ;; *) id=unknown ;;'
+      echo 'esac'
+      echo 'echo payload > "'"$d"'/dest/boot-$id.export.zst"'; } > "$d/bin/bt-archive"
+    chmod +x "$d/bin/bt-archive"
+    echo "$d"
+}
+bkj_run() {     # <root> [args...]
+    local d="$1"; shift
+    BT_JOURNAL_FIXTURE="$BKJ_FIX" BT_ARCHIVE_BIN="$d/bin/bt-archive" \
+        BT_ARCHIVE_DIR="$d/dest" tools/bt-backup-journal "$@" 2>&1
+}
+bkj_calls() { [[ -r "$1/calls.log" ]] && grep -c . "$1/calls.log" || echo 0; }
+
+# EVERY RETAINED BOOT, AND THE INDEX IS WHAT IS HANDED ON. bt-archive owns the
+# in-repo guard and the read-back verification; this tool is only allowed to
+# choose boots and pass their index through. Asserting the argv is what makes
+# "inherited rather than reimplemented" a checked claim instead of a comment.
+BKJ_FAILIDX=none
+BKJ=$(bkj_setup); BKJOUT=$(bkj_run "$BKJ"); bkjrc=$?
+if (( bkjrc == 0 )) && [[ "$(bkj_calls "$BKJ")" == 3 ]] \
+   && [[ "$(LC_ALL=C sort "$BKJ/calls.log" | tr '\n' ' ')" == "-1 -2 0 " ]]; then
+    ok "bt-backup-journal archives every retained boot, by index, through bt-archive"
+else
+    bad "the archiver was driven wrongly (rc=$bkjrc, $(bkj_calls "$BKJ") call(s)):"
+    while IFS= read -r l; do bad "      $l"; done < <(head -6 "$BKJ/calls.log" 2>/dev/null)
+fi
+rm -rf "$BKJ"
+
+# ALREADY ARCHIVED IS SKIPPED, and skipped means NOT RE-RUN. On this machine the
+# timer fires on every boot against fifteen boots and 313 MB; a tool that
+# re-exported what it already had would spend the disk it exists to protect.
+# The count of stub invocations is the assertion — the output line alone would
+# pass on a tool that printed "already archived" and archived anyway.
+BKJ=$(bkj_setup)
+echo already > "$BKJ/dest/boot-e5f60718.export.zst"
+BKJSKIP=$(bkj_run "$BKJ")
+if [[ "$(bkj_calls "$BKJ")" == 2 ]] && [[ "$BKJSKIP" == *"e5f60718  already archived"* ]] \
+   && ! grep -qx -- '-1' "$BKJ/calls.log"; then
+    ok "a boot already in the archive is skipped, and bt-archive is not re-run for it"
+else
+    bad "an archived boot was re-exported ($(bkj_calls "$BKJ") call(s), expected 2)"
+fi
+rm -rf "$BKJ"
+
+# ONE BAD BOOT MUST NOT COST THE OTHERS THEIR BACKUP. The header says a failure
+# "is reported per boot and does not stop the run"; unattended, that is the
+# difference between losing one boot and losing every boot after it in the list.
+# The exit status still has to be non-zero, or the timer records a success.
+BKJ_FAILIDX=-2
+BKJ=$(bkj_setup); BKJFAIL=$(bkj_run "$BKJ"); bkjfrc=$?
+if (( bkjfrc == 1 )) && [[ "$(bkj_calls "$BKJ")" == 3 ]] \
+   && [[ "$BKJFAIL" == *"a1b2c3d4  FAILED"* && "$BKJFAIL" == *"1 failed"* ]] \
+   && ls "$BKJ/dest"/boot-9c8d7e6f.export.* >/dev/null 2>&1; then
+    ok "a boot that fails to archive is named and the rest still run (exit 1)"
+else
+    bad "a single failure changed the run (rc=$bkjfrc, $(bkj_calls "$BKJ") call(s), expected 3 and rc=1)"
+fi
+rm -rf "$BKJ"
+BKJ_FAILIDX=none
+
+# THE TWO REPORTING MODES MUST NOT ACT. --status is what a check would call and
+# --dry-run is what a careful operator calls first; either one exporting 313 MB
+# is the same defect install.sh and uninstall.sh have dry runs to avoid.
+for mode in --dry-run --status; do
+    BKJ=$(bkj_setup); BKJR=$(bkj_run "$BKJ" "$mode"); mrc=$?
+    if (( mrc == 0 )) && [[ "$(bkj_calls "$BKJ")" == 0 ]] \
+       && ! ls "$BKJ/dest"/boot-* >/dev/null 2>&1; then
+        ok "bt-backup-journal $mode reports without archiving anything"
+    else
+        bad "$mode invoked bt-archive $(bkj_calls "$BKJ") time(s) or wrote to the archive (rc=$mrc)"
+    fi
+    rm -rf "$BKJ"
+done
+
+# AND THEY MUST NOT EXIT NON-ZERO JUST BECAUSE BOOTS ARE MISSING — the header
+# says so explicitly, because a `--status` that failed when there was anything
+# left to do could not be used in a check. Asserted separately from the "does
+# not act" claim above: they are different failures with different causes.
+BKJ=$(bkj_setup); BKJST=$(bkj_run "$BKJ" --status); strc=$?
+(( strc == 0 )) && [[ "$BKJST" == *"NOT archived"* && "$BKJST" == *"0 already archived, 3 missing"* ]] \
+    && ok "--status names the unarchived boots and still exits 0" \
+    || bad "--status exited $strc or did not report the missing boots"
+rm -rf "$BKJ"
+
+# THE UNSANITISED WARNING IS A DISCLOSURE CONTROL, not decoration. An archive is
+# `journalctl -o export` — MAC addresses and Wi-Fi BSSIDs, and a BSSID
+# geolocates this machine. The operator is told every time anything is in the
+# archive, or the one person who could avoid committing it does not know.
+BKJ=$(bkj_setup); BKJW=$(bkj_run "$BKJ")
+[[ "$BKJW" == *"UNSANITISED"* && "$BKJW" == *"BSSID"* && "$BKJW" == *"Never commit"* ]] \
+    && ok "an archive that exists is reported as unsanitised, naming BSSIDs" \
+    || bad "the archive was written with no disclosure warning"
+rm -rf "$BKJ"
+
+# ENUMERATED == 0 IS A REFUSAL, here as everywhere. An empty boot list means
+# --list-boots changed shape or the journal is unreadable; reporting "nothing to
+# back up" would be a clean run of a tool that examined nothing, on a timer,
+# for as long as it took someone to notice.
+BKJE=$(bkj_setup); BKJEF=$(mktemp -d); : > "$BKJEF/list-boots.log"
+BKJEOUT=$(BT_JOURNAL_FIXTURE="$BKJEF" BT_ARCHIVE_BIN="$BKJE/bin/bt-archive" \
+          BT_ARCHIVE_DIR="$BKJE/dest" tools/bt-backup-journal 2>&1); berc=$?
+(( berc == 2 )) && [[ "$BKJEOUT" == *"REFUSING"*"nothing was examined"* ]] \
+    && ok "an empty boot list is refused, not reported as a clean backup" \
+    || bad "an empty --list-boots gave rc=$berc rather than a refusal"
+rm -rf "$BKJE" "$BKJEF"
+
+# THE ARCHIVER ITSELF MISSING IS THE OTHER REFUSAL. On the machine this runs
+# from a timer against /usr/local/bin, where a half-finished install leaves the
+# driver present and bt-archive absent — and a driver that shrugged would report
+# every boot FAILED once an hour forever.
+BKJN=$(bkj_setup)
+BKJNOUT=$(BT_JOURNAL_FIXTURE="$BKJ_FIX" BT_ARCHIVE_BIN="$BKJN/bin/not-there" \
+          BT_ARCHIVE_DIR="$BKJN/dest" tools/bt-backup-journal 2>&1); bnrc=$?
+(( bnrc == 2 )) && [[ "$BKJNOUT" == *"REFUSING"*"bt-archive not found"* ]] \
+    && ok "a missing bt-archive is refused up front, not once per boot" \
+    || bad "an absent archiver gave rc=$bnrc rather than a refusal"
+rm -rf "$BKJN"
+
+# The two remaining entry points.
+BKJH=$(tools/bt-backup-journal --help 2>&1); bhrc=$?
+(( bhrc == 0 )) && [[ "$BKJH" == *"--status"* && "$BKJH" == *"--dry-run"* ]] \
+    && ok "bt-backup-journal --help describes both reporting modes" \
+    || bad "--help returned $bhrc or did not name the modes it documents"
+tools/bt-backup-journal --archive-everything >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-backup-journal rejects an unknown option instead of archiving" \
+    || bad "an unknown option was ignored and the run proceeded"
+
 # ── status: the view that decides whether to abort a trial in progress ───
 #
 # The one command an operator runs WHILE a trial is open, and the only place
