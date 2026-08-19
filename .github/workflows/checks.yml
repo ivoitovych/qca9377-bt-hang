@@ -34,8 +34,21 @@ jobs:
       # which is correct but means the redaction assertions would SKIP on every
       # CI run. The gate that keeps Wi-Fi BSSIDs out of a public repository is
       # not one to leave untested because of the default awk.
-      - name: Install gawk and systemd-journal-remote
-        run: sudo apt-get install -y gawk systemd-journal-remote
+      #
+      # fakeroot, because the runner runs the suite as an ordinary user and
+      # `tools/bt-mode` refuses to act without EUID 0 — correctly, since in
+      # production it moves files in /etc and stops a unit. Its whole round trip
+      # is seamed into a temp tree under test, so a reported uid of 0 is all it
+      # needs, and fakeroot supplies that through an LD_PRELOAD while granting
+      # nothing. The suite prefers `unshare -r`, which asks for even less, but
+      # this image is Ubuntu 24.04 and AppArmor there refuses unprivileged user
+      # namespaces; without a third option the suite declines the round trip and
+      # the comprehensiveness floor fails on a unit at 0%. sudo is NOT the third
+      # option: it resets the environment and closes the descriptor the coverage
+      # trace is written to, so the round trip would run and be measured as
+      # never having run.
+      - name: Install gawk, systemd-journal-remote and fakeroot
+        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot
 
       - name: Show the tool versions the results depend on
         run: |
