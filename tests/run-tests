@@ -3869,6 +3869,12 @@ real_override_state() {
 }
 BM_OVERRIDES_BEFORE=$(real_override_state)
 
+# Declared here; it is READ 4000 lines below. An accumulator first assigned
+# inside a branch is unset on every run that skips the branch, and a
+# `${PRIV_SKIPPED:-}` at the read site would paper over the difference between
+# "nothing was skipped" and "the variable never existed".
+PRIV_SKIPPED=''
+
 BM=$(mktemp -d)
 mkdir -p "$BM/udev" "$BM/mod" "$BM/stub" "$BM/usb/3-3/power" "$BM/share"
 echo 13d3 > "$BM/usb/3-3/idVendor"; echo 3503 > "$BM/usb/3-3/idProduct"
@@ -3883,7 +3889,70 @@ BMSTUB
 printf '#!/bin/sh\necho "udevadm $*" >> "%s/spy.log"\nexit 0\n' "$BM" > "$BM/stub/udevadm"
 chmod +x "$BM/stub"/*
 
-bm_run() { env PATH="$BM/stub:$PATH" \
+# THE ROUND TRIP NEEDS EUID 0, AND NOTHING SAID SO.
+#
+# bt-mode refuses to run unprivileged, correctly: in production it moves files
+# in /etc and stops a unit. Here every path it touches is a seam pointing into
+# $BM, so that refusal is the only thing between this round trip and a host
+# without root — and that is a fact about who runs the suite, not about the
+# code, so nothing in the code could have caught it.
+#
+# It ran as root on the investigation machine and read green everywhere anyone
+# looked. On the CI runner the suite runs as an ordinary user, and these nine
+# assertions have failed on EVERY run since they were added: 27 consecutive
+# reds on main across 45 hours. repo-validate is the FIRST workflow step, so
+# everything behind it — the coverage floors, the awk floor, the
+# comprehensiveness floor, the journal contract, the system round trip, and
+# repo-scan, the publish-safety gate — was skipped on all 27. A suite that only
+# passes where it was written is the defect class this file keeps finding in
+# the tools, arriving in the file that finds it.
+#
+# NOT SKIPPED WHERE IT CAN BE RUN. Three ways to reach EUID 0, tried in order
+# of how little they ask for, because all three leave every target redirected
+# into $BM and the last assertion of this section checks the real overrides
+# either way:
+#
+#   1. Already root — the investigation machine, where this suite runs.
+#   2. A USER NAMESPACE. `unshare -r` maps this user to 0 inside the namespace
+#      and grants no privilege outside it. The cheapest thing that works.
+#   3. `fakeroot`, which reports uid 0 to the process tree through an LD_PRELOAD
+#      and grants nothing at all. An ordinary process: no namespace, no
+#      privilege, no environment reset.
+#
+# NOT sudo, WHICH WAS TRIED AND WITHDRAWN. `sudo -n` runs the round trip
+# perfectly — 651 green as an unprivileged user with a real passwordless
+# sudoers rule, verified — and silently destroys the MEASUREMENT of it. sudo
+# resets the environment, so BASH_ENV (how devtools/coverage instruments a
+# child) never arrives, and it closes non-standard descriptors, so the fd the
+# trace is written to is gone. The suite passes and the traced run records not
+# one line of bt-mode, which is worse than the failure it fixes: the
+# comprehensiveness floor then reports 0% for a unit that was fully exercised,
+# and the obvious next move is to disbelieve the instrument.
+#
+# EACH PROBE ASKS FOR THE ANSWER, NOT FOR AN EXIT STATUS. The first draft ran
+# `unshare -r true` and read success as "this gives me root". Modelled with a
+# stub that execs its argument unchanged, the suite went red with nine failures
+# — the exact outcome this section exists to prevent, reintroduced by a probe
+# that checked the wrong thing. `id -u` reports the uid the tool would see.
+#
+# PROBED, NEVER ASSUMED. Ubuntu 24.04 — the GitHub runner image — restricts
+# unprivileged user namespaces through AppArmor, so step 2 fails there and
+# this was written after watching it fail: the run reported 640 invariants and
+# named the round trip as not asked, which is the honest outcome but leaves
+# bt-mode at 0% modes and 0/2 refusals against a comprehensiveness floor of 75.
+# Step 3 is what CI actually takes. If none of the three is available the
+# section skips through the vacuity report at the end of the run rather than
+# turning eleven assertions red.
+BM_PRIV=()
+BM_CAN=1
+if (( EUID != 0 )); then
+    if   [[ "$(unshare -r  id -u 2>/dev/null)" == 0 ]]; then BM_PRIV=(unshare -r)
+    elif [[ "$(fakeroot -- id -u 2>/dev/null)" == 0 ]]; then BM_PRIV=(fakeroot --)
+    else BM_CAN=0
+    fi
+fi
+
+bm_run() { ${BM_PRIV[@]+"${BM_PRIV[@]}"} env PATH="$BM/stub:$PATH" \
     BT_MODPROBE_CONF="$BM/modprobe.conf" BT_UDEV_DIR="$BM/udev" \
     BT_MODE_STAMP="$BM/share/mode" BT_SYSFS_USB="$BM/usb" \
     BT_SYSFS_MODULE="$BM/mod" tools/bt-mode "$@" 2>&1; }
@@ -3901,76 +3970,84 @@ BMDRY=$(bm_run experiment --dry-run); bmdryrc=$?
     && ok "bt-mode --dry-run changes nothing and runs nothing" \
     || bad "the dry run moved a file, wrote the stamp, or invoked a tool"
 
-# Now the real switch, inside the sandbox.
-BMEXP=$(bm_run experiment); bmexprc=$?
-(( bmexprc == 0 )) && ok "bt-mode experiment completes" \
-                  || bad "bt-mode experiment failed (rc=$bmexprc)"
+if (( BM_CAN )); then
+    # Now the real switch, inside the sandbox.
+    BMEXP=$(bm_run experiment); bmexprc=$?
+    (( bmexprc == 0 )) && ok "bt-mode experiment completes" \
+                      || bad "bt-mode experiment failed (rc=$bmexprc)"
 
-# Moved aside, not deleted: the header's promise is that everything is
-# reversible, and a deleted udev rule is not.
-[[ -e "$BM/udev/50-bluetooth-no-autosuspend.rules.disabled" \
-   && -e "$BM/udev/51-bluetooth-health-snapshot.rules.disabled" \
-   && -e "$BM/modprobe.conf.disabled" ]] \
-    && ok "bt-mode experiment moves the overrides aside rather than deleting them" \
-    || bad "an override was deleted or left in place instead of being disabled"
+    # Moved aside, not deleted: the header's promise is that everything is
+    # reversible, and a deleted udev rule is not.
+    [[ -e "$BM/udev/50-bluetooth-no-autosuspend.rules.disabled" \
+       && -e "$BM/udev/51-bluetooth-health-snapshot.rules.disabled" \
+       && -e "$BM/modprobe.conf.disabled" ]] \
+        && ok "bt-mode experiment moves the overrides aside rather than deleting them" \
+        || bad "an override was deleted or left in place instead of being disabled"
 
-[[ ! -e "$BM/udev/50-bluetooth-no-autosuspend.rules" && ! -e "$BM/modprobe.conf" ]] \
-    && ok "bt-mode experiment leaves no active override behind" \
-    || bad "an override survived under its active name"
+    [[ ! -e "$BM/udev/50-bluetooth-no-autosuspend.rules" && ! -e "$BM/modprobe.conf" ]] \
+        && ok "bt-mode experiment leaves no active override behind" \
+        || bad "an override survived under its active name"
 
-# The watchdog must actually be stopped AND disabled — a stop alone comes back
-# at the next boot, in the middle of an experiment nobody would re-check.
-[[ "$(cat "$BM/spy.log")" == *"systemctl disable --now bt-hang-watchdog"* ]] \
-    && ok "bt-mode experiment disables the watchdog, not only stops it" \
-    || bad "the watchdog was not disabled — it returns at the next boot"
+    # The watchdog must actually be stopped AND disabled — a stop alone comes back
+    # at the next boot, in the middle of an experiment nobody would re-check.
+    [[ "$(cat "$BM/spy.log")" == *"systemctl disable --now bt-hang-watchdog"* ]] \
+        && ok "bt-mode experiment disables the watchdog, not only stops it" \
+        || bad "the watchdog was not disabled — it returns at the next boot"
 
-[[ "$(cat "$BM/mod/enable_autosuspend")" == "Y" \
-   && "$(cat "$BM/usb/3-3/power/control")" == "auto" ]] \
-    && ok "bt-mode experiment restores the stock power policy at runtime" \
-    || bad "runtime power policy still holds the mitigation values"
+    [[ "$(cat "$BM/mod/enable_autosuspend")" == "Y" \
+       && "$(cat "$BM/usb/3-3/power/control")" == "auto" ]] \
+        && ok "bt-mode experiment restores the stock power policy at runtime" \
+        || bad "runtime power policy still holds the mitigation values"
 
-[[ "$(cat "$BM/share/mode" 2>/dev/null)" == experiment* ]] \
-    && ok "bt-mode records that experiment mode is active" \
-    || bad "the mode stamp does not say experiment"
+    [[ "$(cat "$BM/share/mode" 2>/dev/null)" == experiment* ]] \
+        && ok "bt-mode records that experiment mode is active" \
+        || bad "the mode stamp does not say experiment"
 
-# THE ROUND TRIP, which is the whole reversibility claim. Every file must come
-# back under its active name, with nothing left disabled — the .disabled
-# leftovers are exactly what verify-restored.sh has to hunt for afterwards
-# because uninstall.sh cannot see them.
-BMMIT=$(bm_run mitigation); bmmitrc=$?
-left=$(ls "$BM/udev"/*.disabled "$BM"/*.disabled 2>/dev/null | wc -l)
-(( bmmitrc == 0 && ${left:-0} == 0 )) \
-   && [[ -e "$BM/udev/50-bluetooth-no-autosuspend.rules" \
-      && -e "$BM/udev/51-bluetooth-health-snapshot.rules" \
-      && -e "$BM/modprobe.conf" ]] \
-    && ok "bt-mode mitigation restores every file experiment moved aside" \
-    || bad "the round trip left $left file(s) disabled (rc=$bmmitrc)"
+    # THE ROUND TRIP, which is the whole reversibility claim. Every file must come
+    # back under its active name, with nothing left disabled — the .disabled
+    # leftovers are exactly what verify-restored.sh has to hunt for afterwards
+    # because uninstall.sh cannot see them.
+    BMMIT=$(bm_run mitigation); bmmitrc=$?
+    left=$(ls "$BM/udev"/*.disabled "$BM"/*.disabled 2>/dev/null | wc -l)
+    (( bmmitrc == 0 && ${left:-0} == 0 )) \
+       && [[ -e "$BM/udev/50-bluetooth-no-autosuspend.rules" \
+          && -e "$BM/udev/51-bluetooth-health-snapshot.rules" \
+          && -e "$BM/modprobe.conf" ]] \
+        && ok "bt-mode mitigation restores every file experiment moved aside" \
+        || bad "the round trip left $left file(s) disabled (rc=$bmmitrc)"
 
-[[ "$(cat "$BM/mod/enable_autosuspend")" == "N" \
-   && "$(cat "$BM/usb/3-3/power/control")" == "on" ]] \
-    && ok "bt-mode mitigation re-applies the runtime power policy" \
-    || bad "runtime power policy was not returned to the mitigation values"
+    [[ "$(cat "$BM/mod/enable_autosuspend")" == "N" \
+       && "$(cat "$BM/usb/3-3/power/control")" == "on" ]] \
+        && ok "bt-mode mitigation re-applies the runtime power policy" \
+        || bad "runtime power policy was not returned to the mitigation values"
 
-[[ "$(cat "$BM/spy.log")" == *"systemctl enable --now bt-hang-watchdog"* ]] \
-    && ok "bt-mode mitigation brings the watchdog back enabled" \
-    || bad "the watchdog was not re-enabled — the machine stays unprotected"
+    [[ "$(cat "$BM/spy.log")" == *"systemctl enable --now bt-hang-watchdog"* ]] \
+        && ok "bt-mode mitigation brings the watchdog back enabled" \
+        || bad "the watchdog was not re-enabled — the machine stays unprotected"
 
-# status is read-only and must survive a machine where nothing is set up: it is
-# the command someone runs to find out what state they are in, and it answering
-# with an error is the same as not answering.
-BMSTAT=$(bm_run status); bmstatrc=$?
-(( bmstatrc == 0 )) && [[ "$BMSTAT" == *"recorded mode"*"mitigation"* ]] \
-    && ok "bt-mode status reports the recorded mode" \
-    || bad "bt-mode status did not report the mode (rc=$bmstatrc)"
+    # status is read-only and must survive a machine where nothing is set up: it is
+    # the command someone runs to find out what state they are in, and it answering
+    # with an error is the same as not answering.
+    BMSTAT=$(bm_run status); bmstatrc=$?
+    (( bmstatrc == 0 )) && [[ "$BMSTAT" == *"recorded mode"*"mitigation"* ]] \
+        && ok "bt-mode status reports the recorded mode" \
+        || bad "bt-mode status did not report the mode (rc=$bmstatrc)"
 
-bm_run frobnicate >/dev/null 2>&1
-(( $? != 0 )) && ok "bt-mode rejects an unknown mode" \
-              || bad "bt-mode accepted an unknown mode"
+    bm_run frobnicate >/dev/null 2>&1
+    (( $? != 0 )) && ok "bt-mode rejects an unknown mode" \
+                  || bad "bt-mode accepted an unknown mode"
 
-# THE SANDBOX ITSELF. This suite runs as root on the machine under
-# investigation, and every assertion above ran bt-mode in APPLY mode. If a seam
-# leaked, the watchdog on this host was just disabled and its udev rules moved
-# aside — which is the one failure that must never be discovered later.
+    # THE SANDBOX ITSELF. This suite runs as root on the machine under
+    # investigation, and every assertion above ran bt-mode in APPLY mode. If a seam
+    # leaked, the watchdog on this host was just disabled and its udev rules moved
+    # aside — which is the one failure that must never be discovered later.
+else
+    # LOUD, and counted where the absent-tool skips are counted. A silent skip
+    # here reads as "the round trip passed" in exactly the run that could not
+    # perform it.
+    PRIV_SKIPPED="bt-mode round trip"
+fi
+
 BM_OVERRIDES_AFTER=$(real_override_state)
 BM_OVN=$(grep -c . <<<"$BM_OVERRIDES_AFTER")
 if [[ "$BM_OVERRIDES_AFTER" == "$BM_OVERRIDES_BEFORE" ]] && (( ${BM_OVN:-0} == 3 )); then
@@ -6257,6 +6334,53 @@ TAUO=$(BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$TAU" tools/bt-trial-audit 2>
     || bad "an unauditable row was reported as clean (rc=$tarc3)"
 rm -rf "$TAU"
 
+# THE ENTRY POINTS, WHICH NOTHING HAD REACHED. `devtools/test-comprehension`
+# scored this unit at 33% — 1 of 3 modes, 3 of 5 refusals — the worst in the
+# tree and below the CI floor of 75. It was invisible because the floor step
+# runs AFTER repo-validate in the workflow, and repo-validate had been red for
+# 45 hours, so the step that would have said so was skipped every time. Two
+# gates, one of them hiding the other.
+#
+# --row IS NOT A CONVENIENCE. The audit reads one journal window per row, so on
+# a machine with a long results.tsv the whole-file run is minutes and --row N is
+# how anyone re-checks a single disputed row — including the two rows whose
+# false `perturbed=none` this tool exists because of.
+TAR=$(ta_repo none)
+TAROW=$(BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$TAR" tools/bt-trial-audit --row 1 2>&1); tarowrc=$?
+(( tarowrc == 1 )) && [[ "$TAROW" == *"perturbed DISAGREES"* && "$TAROW" == *"audited     1 row(s)"* ]] \
+    && ok "bt-trial-audit --row audits the row asked for, and reaches the same verdict" \
+    || bad "--row did not audit exactly one row (rc=$tarowrc): $(grep -E 'audited +[0-9]+ row' <<<"$TAROW")"
+
+# A ROW NUMBER THAT SELECTS NOTHING IS A REFUSAL, not a clean report over an
+# empty selection. This is the empty-input rule on the row axis: CHECKED == 0
+# here means the operator asked about a row that is not there, and answering
+# "no disagreements" is answering a question nobody asked.
+BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$TAR" tools/bt-trial-audit --row 99 >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "a --row that selects no row refuses rather than reporting zero disagreements" \
+    || bad "an out-of-range --row produced a verdict about nothing"
+rm -rf "$TAR"
+
+TAHELP=$(tools/bt-trial-audit --help 2>&1); tahelprc=$?
+(( tahelprc == 0 )) && [[ "$TAHELP" == *"--row"* ]] \
+    && ok "bt-trial-audit --help describes --row without reading a journal" \
+    || bad "--help returned $tahelprc or did not mention the mode it documents"
+
+tools/bt-trial-audit --recheck >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-trial-audit rejects an unknown option instead of auditing everything" \
+    || bad "an unknown option was ignored and the whole file audited"
+
+# NO results.tsv IS A REFUSAL TOO. An audit whose subject is absent must not
+# exit 0: a caller scripting `bt-trial-audit && publish` would then publish on
+# the strength of a file that was never there.
+TANO=$(mktemp -d); mkdir -p "$TANO/evidence/trials"
+TANOOUT=$(BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$TANO" tools/bt-trial-audit 2>&1); tanorc=$?
+(( tanorc == 2 )) && [[ "$TANOOUT" == *"REFUSING"*"no results file"* ]] \
+    && ok "a missing results.tsv is refused, never audited as empty and clean" \
+    || bad "an absent results file gave rc=$tanorc rather than a refusal"
+rm -rf "$TANO"
+
 # THE POSITIVE CONTROL, WHICH IS THE WHOLE ANSWER TO A CONFIDENT ZERO. Every
 # answer this tool gives is a count, and zero is what both a correct row and a
 # broken detector look like. Breaking the detector must fail loudly here rather
@@ -7791,6 +7915,53 @@ devtools/repo-scan "$SCRATCH/clean" >/dev/null 2>&1
 (( $? == 0 )) && ok "repo-scan passes documented placeholders" \
               || bad "repo-scan refused the placeholder forms it documents"
 
+# THE ALLOWLIST MUST NOT DEPEND ON WHO IS RUNNING THE SCAN.
+#
+# repo-scan allows the maintainer's own address, because a bug report carries a
+# reporter contact — and it derived that address from `git config user.email`,
+# which describes the OPERATOR, not the repository. On a CI runner nobody is
+# configured: the allowlist came out empty and the gate reported the
+# deliberately-published "Reporter contact" line in docs/bug-report.md as a
+# leak. Nobody had seen it because this step runs last in the workflow and the
+# first step had been failing for 45 hours; the first run that reached it failed
+# here.
+#
+# The tip commit's author is a fact about the repository, so a fork gets its own
+# answer with nothing to configure — which is what the comment beside the
+# derivation always claimed. Both directions are asserted below, because
+# widening an allowlist is exactly the change that can blind a gate.
+#
+# `.invalid` is RFC 2606 reserved and can never be anyone's address. The
+# built-in exclusions cover example.com/org, so those would pass whatever this
+# code did and would assert nothing.
+#
+# ASSEMBLED FROM FRAGMENTS, like the planted MAC above and for the same reason:
+# a literal address here is a literal address in a TRACKED FILE, and the first
+# draft of this test made `repo-scan . --all` fail on tests/run-tests itself.
+# Splitting the `@` off is enough — the pattern needs a local part joined to a
+# domain, so the domain alone matches nothing.
+RSAT='@'; RSDOM='qca9377.invalid'
+RSOWN="owner${RSAT}${RSDOM}"; RSOTH="stranger${RSAT}${RSDOM}"
+RSM=$(mktemp -d); git -C "$RSM" init -q
+printf 'Reporter contact: %s\n' "$RSOWN" > "$RSM/README.md"
+git -C "$RSM" add -A
+git -C "$RSM" -c user.name=t -c user.email="$RSOWN" commit -q -m readme
+# No user.email in this repository's own config, and HOME moved aside so no
+# global one is found either: the state of a fresh CI checkout.
+( cd "$RSM" && HOME="$RSM/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? == 0 )) \
+    && ok "repo-scan allows the repository's own maintainer with no configured identity" \
+    || bad "an unconfigured scan called the repository's own reporter contact a leak"
+
+# AND THE WIDENING MUST NOT BLIND IT. One address is allowlisted, not the class.
+printf 'cc: %s\n' "$RSOTH" >> "$RSM/README.md"
+git -C "$RSM" add -A
+( cd "$RSM" && HOME="$RSM/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "a third party's address is still refused when the maintainer's is allowed" \
+    || bad "the repository-derived allowlist let an unrelated address through"
+rm -rf "$RSM"
+
 # ── NON-ASCII IN THE LOGS, WHICH THE UPSTREAM REPORT NOW DEPENDS ON ──────
 #
 # The second headset that reproduced the fault is recorded by BlueZ, the kernel
@@ -8411,6 +8582,16 @@ elif [[ -n "$MISSING" ]]; then
     echo "                  where they are installed. Verify there before merging."
 else
     ok "all $GUARDN tools this suite conditions on are present — nothing skipped for absence"
+fi
+
+# PRIVILEGE IS PART OF THE ENVIRONMENT TOO, and it was the half nobody declared.
+# An absent tool announced itself above; an absent EUID 0 announced itself as
+# nine red assertions on every CI run for 45 hours and as nothing at all on any
+# host that had it. Same ambiguity, same remedy: the run says which host it was.
+if [[ -n "$PRIV_SKIPPED" ]]; then
+    echo "  NOT ASKED HERE: $PRIV_SKIPPED — this run reached none of EUID 0, a"
+    echo "                  user namespace, or fakeroot, and the tool under test"
+    echo "                  refuses to act without one of them."
 fi
 
 echo

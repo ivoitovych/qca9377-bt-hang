@@ -108,7 +108,7 @@ ln -sfn "$DIR" "$LATEST"
 
 # ── fine filters: all of these are now free ──────────────────────────────
 K="$DIR/kernel.log"; A="$DIR/all.log"
-grep -E 'opcode 0x0428|opcode 0x043d|Looking for Alt no|tx timeout|setting interface failed' "$K" > "$DIR/f-fault.log"      2>/dev/null
+grep -E "opcode 0x0428|opcode 0x043d|Looking for Alt no|command( 0x[0-9a-f]+)? tx timeout|setting interface failed" "$K" > "$DIR/f-fault.log" 2>/dev/null
 grep -E 'usb 3-3|xhci_hcd|USB disconnect|device descriptor|unable to enumerate' "$K"           > "$DIR/f-usb.log"        2>/dev/null
 grep -E 'deregistering interface driver btusb|Resetting usb device|reset (full|high|low)-speed USB device|name hci[0-9]+ blocked' "$A" > "$DIR/f-intervention.log" 2>/dev/null
 grep -E 'segfault|core-dump|Failed with result|Scheduled restart' "$A"                          > "$DIR/f-crash.log"      2>/dev/null
@@ -121,7 +121,7 @@ c() { local f="$1"; [[ -r "$f" ]] && grep -c . "$f" || echo 0; }
 # without it. Zero from a scan is not a result until something proves the scan
 # can see — the rule this project learned the hard way, twice.
 OPC=$(grep -cE 'opcode 0x' "$K" 2>/dev/null || true)
-TMO=$(grep -cE 'command 0x[0-9a-f]+ tx timeout' "$K" 2>/dev/null || true)
+TMO=$(grep -cE "command( 0x[0-9a-f]+)? tx timeout" "$K" 2>/dev/null || true)
 SCO=$(grep -cE 'opcode 0x0428' "$K" 2>/dev/null || true)
 ESCO=$(grep -cE 'opcode 0x043d' "$K" 2>/dev/null || true)
 ALT=$(grep -cE 'Looking for Alt no' "$K" 2>/dev/null || true)
@@ -132,7 +132,7 @@ SYSFS="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
 PRESENT="no"; [[ -e "$SYSFS/3-3" ]] && PRESENT="yes"
 HCI="none"; for p in /sys/class/bluetooth/hci*; do [[ -e "$p" ]] && HCI=$(basename "$p") && break; done
 
-FIRST_TMO=$(grep -E 'command 0x[0-9a-f]+ tx timeout' "$K" 2>/dev/null | head -1 | awk '{print $1}')
+FIRST_TMO=$(grep -E "command( 0x[0-9a-f]+)? tx timeout" "$K" 2>/dev/null | head -1 | awk '{print $1}')
 
 {
 printf 'bt-snapshot summary — boot %s, captured %s\n' "$BOOT" "$STAMP"

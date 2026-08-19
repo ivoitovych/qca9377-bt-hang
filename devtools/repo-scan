@@ -117,6 +117,21 @@ ips=$(grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' <<<"$CONTENT" \
 # token was "-addr", the exact-match allowlist missed it, and the scan failed on
 # its own source. Deriving it also means forks get their own maintainer for free.
 ALLOW_MAIL="${REPO_SCAN_ALLOW_MAIL:-$(git config user.email 2>/dev/null || echo '')}"
+# DERIVED FROM THE REPOSITORY WHEN THE MACHINE HAS NO ANSWER. `git config
+# user.email` describes whoever is running the scan, and on a CI runner nobody
+# is: it returns nothing, the allowlist is empty, and the gate reports the
+# maintainer's own "Reporter contact" line in docs/bug-report.md as a leak.
+#
+# That is not a hypothetical. This step had never executed in CI — repo-validate
+# fails first, and it had been failing for 45 hours — and the first run that
+# reached it failed here, on a line the project publishes deliberately.
+#
+# The tip commit's author is a fact about the REPOSITORY, which is what the
+# comment above always meant by "forks get their own maintainer for free" — a
+# fork carries its own history and gets its own answer, with nothing to
+# configure. It widens the allowlist by exactly one address, the same one the
+# local config would have supplied on the maintainer's machine.
+[[ -n "$ALLOW_MAIL" ]] || ALLOW_MAIL=$(git log -1 --format='%ae' 2>/dev/null || echo '')
 mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
         | grep -viE '@(vger\.kernel\.org|lists\.linux\.dev|kernel\.org|example\.(com|org))$' \
         | grep -viFx 'giometti@linux.it' \
