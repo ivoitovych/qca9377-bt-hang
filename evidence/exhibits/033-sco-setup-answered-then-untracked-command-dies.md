@@ -50,7 +50,7 @@ and this capture, 35113.4 s later.
 01:31:10.402706  hci0 opcode 0x0428 plen 17           SCO setup submitted
                  ┃ 72.791 ms
 01:31:10.475497  hcon … handle 0x0004                 ← ANSWERED. A handle was allocated.
-01:31:10.475608  hci0 evt 5                           Synchronous Connection Complete
+01:31:10.475608  hci0 evt 5                           HCI_NOTIFY_ENABLE_SCO_TRANSP  ⚠️ see below
 01:31:10.475637  Looking for Alt no :6 / :3           btusb switches USB alt-setting
                  ┃ 2.076 s
 01:31:12.551489  command tx timeout                   ← bare form: no opcode
@@ -71,6 +71,44 @@ and this capture, 35113.4 s later.
 | SCO→first timeout | 4.1–55.2 s | **2.076 s** |
 
 **2.076 s is a new floor**, below the previous 4.138 s.
+
+## ⚠️ `hci0 evt 5` — corrected 2026-08-23, and the correction strengthens the record
+
+This exhibit originally annotated that line **"Synchronous Connection Complete"**. That is
+the handler it is reached *from*, not what it says. The line has one producer, and it prints
+a decimal:
+
+```c
+static void btusb_notify(struct hci_dev *hdev, unsigned int evt)
+{
+	BT_DBG("%s evt %d", hdev->name, evt);      /* drivers/bluetooth/btusb.c */
+```
+
+and the argument is the HCI **notify** value, where
+`HCI_NOTIFY_ENABLE_SCO_CVSD = 4` and therefore
+**`HCI_NOTIFY_ENABLE_SCO_TRANSP = 5`** (`include/net/bluetooth/hci.h`).
+
+**So `evt 5` is the machine stating it entered TRANSPARENT (mSBC / wideband) air mode.**
+It is the value `btusb_work()` keys its alternate-setting choice on, and it is the condition
+guarding the branch that probes alt 6, then alt 3, then falls to alt 1.
+
+Read together, this exhibit's own three lines are the complete chain, observed rather than
+inferred:
+
+```
+hci0 evt 5              → air_mode == HCI_NOTIFY_ENABLE_SCO_TRANSP   (transparent branch)
+Looking for Alt no :6   → probe alt 6, absent
+Looking for Alt no :3   → probe alt 3, rejected (BTUSB_USE_ALT3_FOR_WBS is Realtek-only)
+(silence)               → new_alts = 1, the bare else, which logs nothing
+```
+
+**And it retires an inference of ours.** `EX-033` and `docs/investigation-plan.md` both
+treated `0x0428` as implying CVSD. The air mode is carried in the notify value, not the
+opcode — and here a legacy `0x0428` setup produced `evt 5`, transparent. A wideband link was
+negotiated by the legacy command.
+
+Found by the test-suite maintainer while annotating the source investigation; the mistake
+was in this exhibit's prose, never in its captured output, which is unchanged.
 
 ## What the bare form means, and why it matters
 

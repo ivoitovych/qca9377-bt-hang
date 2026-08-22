@@ -50,7 +50,7 @@ Line 1 is **zero** occurrences of `0x0428` this boot; line 2 is **one** occurren
 18:24:32.162650  hci0 opcode 0x043d plen 59            Enhanced Setup Synchronous Connection
                  ┃  64.698 ms
 18:24:32.227348  hcon ... handle 0x0008                 ← THE CONTROLLER ANSWERED
-18:24:32.227453  hci0 evt 5                             Synchronous Connection Complete
+18:24:32.227453  hci0 evt 5                             HCI_NOTIFY_ENABLE_SCO_TRANSP  ⚠️ see below
 18:24:32.227495  Looking for Alt no :6
 18:24:32.227554  Looking for Alt no :3                  USB alt-setting switch, as always
 18:24:32.230379  len 90 mtu 9
@@ -93,6 +93,19 @@ Not by a controller fault. `wireplumber` reported a transport failure, BlueZ log
 `connection_lost()`, and `dev_disconnected()` recorded **reason 3** — BlueZ's code for the
 remote device terminating the connection. The controller answered HCI throughout and is
 still enumerated and responding at the time of writing, on the same boot.
+
+## ⚠️ `hci0 evt 5` — corrected 2026-08-23
+
+Originally annotated "Synchronous Connection Complete". It is not: `btusb_notify()` prints
+`BT_DBG("%s evt %d", hdev->name, evt)` with the HCI **notify** value, and
+`HCI_NOTIFY_ENABLE_SCO_TRANSP = 5`. See `EX-033` for the full derivation.
+
+**It matters here in a specific way.** This exhibit's point is that the Enhanced `0x043D`
+setup was answered and survived. `evt 5` says that link was **transparent (wideband)** — so
+the surviving link and the failing ones were *both* wideband. The `0x0428`-versus-`0x043D`
+comparison this exhibit proposes therefore cannot be a CVSD-versus-wideband comparison, and
+any reading of it in those terms is wrong. What differs between them is the setup command,
+not the air mode.
 
 ## Reading
 
