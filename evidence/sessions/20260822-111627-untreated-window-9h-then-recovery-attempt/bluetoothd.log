@@ -1,0 +1,120 @@
+Aug 22 01:31:10.323433 n bluetoothd[2959]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd0: TRANSPORT_STATE_ACTIVE -> TRANSPORT_STATE_SUSPENDING
+Aug 22 01:31:10.323448 n bluetoothd[2959]: profiles/audio/transport.c:media_transport_suspend() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd0 Owner :1.86
+Aug 22 01:31:10.323456 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_ref() 0x5f8e53bfb720: ref=3
+Aug 22 01:31:10.323463 n bluetoothd[2959]: profiles/audio/a2dp.c:setup_ref() 0x5f8e53bff870: ref=1
+Aug 22 01:31:10.323506 n bluetoothd[2959]: profiles/audio/transport.c:media_request_create() Request created: method=Release id=5
+Aug 22 01:31:10.323513 n bluetoothd[2959]: profiles/audio/transport.c:media_owner_add() Owner :1.86 Request Release
+Aug 22 01:31:10.349563 n bluetoothd[2959]: profiles/audio/avdtp.c:session_cb()
+Aug 22 01:31:10.349581 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_parse_resp() SUSPEND request succeeded
+Aug 22 01:31:10.349588 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: STREAMING -> OPEN
+Aug 22 01:31:10.349596 n bluetoothd[2959]: profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01: SINK_STATE_PLAYING -> SINK_STATE_CONNECTED
+Aug 22 01:31:10.349603 n bluetoothd[2959]: profiles/audio/transport.c:transport_update_playing() /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd0 State=TRANSPORT_STATE_SUSPENDING Playing=0
+Aug 22 01:31:10.349609 n bluetoothd[2959]: profiles/audio/a2dp.c:suspend_cfm() Source 0x5f8e53bf08f0: Suspend_Cfm
+Aug 22 01:31:10.349620 n bluetoothd[2959]: profiles/audio/transport.c:media_request_reply() Request Release Reply Success
+Aug 22 01:31:10.349645 n bluetoothd[2959]: profiles/audio/transport.c:media_owner_remove() Owner :1.86 Request Release
+Aug 22 01:31:10.349653 n bluetoothd[2959]: profiles/audio/a2dp.c:a2dp_sep_unlock() SEP 0x5f8e53bf08f0 unlocked
+Aug 22 01:31:10.349660 n bluetoothd[2959]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd0: TRANSPORT_STATE_SUSPENDING -> TRANSPORT_STATE_IDLE
+Aug 22 01:31:10.349674 n bluetoothd[2959]: profiles/audio/transport.c:media_transport_remove_owner() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd0 Owner :1.86
+Aug 22 01:31:10.349687 n bluetoothd[2959]: profiles/audio/transport.c:media_owner_free() Owner :1.86
+Aug 22 01:31:10.349693 n bluetoothd[2959]: profiles/audio/a2dp.c:setup_unref() 0x5f8e53bff870: ref=0
+Aug 22 01:31:10.349699 n bluetoothd[2959]: profiles/audio/a2dp.c:setup_free() 0x5f8e53bff870
+Aug 22 01:31:10.349706 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_unref() 0x5f8e53bfb720: ref=2
+Aug 22 01:32:20.576878 n bluetoothd[2959]: profiles/audio/transport.c:media_owner_create() Owner created: sender=:1.86
+Aug 22 01:32:20.576897 n bluetoothd[2959]: profiles/audio/transport.c:media_transport_resume() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd0 Owner :1.86
+Aug 22 01:32:20.576904 n bluetoothd[2959]: profiles/audio/a2dp.c:a2dp_sep_lock() SEP 0x5f8e53bf08f0 locked
+Aug 22 01:32:20.576912 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_ref() 0x5f8e53bfb720: ref=3
+Aug 22 01:32:20.576918 n bluetoothd[2959]: profiles/audio/a2dp.c:setup_ref() 0x5f8e53bff870: ref=1
+Aug 22 01:32:20.576941 n bluetoothd[2959]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd0: TRANSPORT_STATE_IDLE -> TRANSPORT_STATE_REQUESTING
+Aug 22 01:32:20.576950 n bluetoothd[2959]: profiles/audio/transport.c:media_request_create() Request created: method=Acquire id=6
+Aug 22 01:32:20.576958 n bluetoothd[2959]: profiles/audio/transport.c:media_owner_add() Owner :1.86 Request Acquire
+Aug 22 01:32:20.576967 n bluetoothd[2959]: profiles/audio/transport.c:media_transport_set_owner() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd0 Owner :1.86
+Aug 22 01:32:27.242529 n bluetoothd[2959]: profiles/audio/avdtp.c:cancel_request() Start: Connection timed out (110)
+Aug 22 01:32:27.242547 n bluetoothd[2959]: profiles/audio/a2dp.c:start_cfm() Source 0x5f8e53bf08f0: Start_Cfm
+Aug 22 01:32:27.242555 n bluetoothd[2959]: profiles/audio/transport.c:media_transport_remove_owner() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd0 Owner :1.86
+Aug 22 01:32:27.242563 n bluetoothd[2959]: profiles/audio/transport.c:media_request_reply() Request Acquire Reply Input/output error
+Aug 22 01:32:27.242608 n bluetoothd[2959]: profiles/audio/transport.c:media_owner_free() Owner :1.86
+Aug 22 01:32:27.242617 n bluetoothd[2959]: profiles/audio/transport.c:media_owner_remove() Owner :1.86 Request Acquire
+Aug 22 01:32:27.242623 n bluetoothd[2959]: profiles/audio/transport.c:media_transport_suspend() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd0 Owner
+Aug 22 01:32:27.242633 n bluetoothd[2959]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01/sep7/fd0: TRANSPORT_STATE_REQUESTING -> TRANSPORT_STATE_IDLE
+Aug 22 01:32:27.242642 n bluetoothd[2959]: profiles/audio/a2dp.c:a2dp_sep_unlock() SEP 0x5f8e53bf08f0 unlocked
+Aug 22 01:32:27.242650 n bluetoothd[2959]: profiles/audio/a2dp.c:setup_unref() 0x5f8e53bff870: ref=0
+Aug 22 01:32:27.242658 n bluetoothd[2959]: profiles/audio/a2dp.c:setup_free() 0x5f8e53bff870
+Aug 22 01:32:27.242670 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_unref() 0x5f8e53bfb720: ref=2
+Aug 22 01:32:29.237759 n bluetoothd[2959]: profiles/audio/avdtp.c:cancel_request() Abort: Connection timed out (110)
+Aug 22 01:32:29.237778 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_ref() 0x5f8e53bfb720: ref=3
+Aug 22 01:32:29.237786 n bluetoothd[2959]: profiles/audio/avdtp.c:connection_lost() Disconnected from AA:BB:CC:00:00:01
+Aug 22 01:32:29.237795 n bluetoothd[2959]: profiles/audio/a2dp.c:abort_cfm() Source 0x5f8e53bf08f0: Abort_Cfm
+Aug 22 01:32:29.237803 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: OPEN -> IDLE
+Aug 22 01:32:29.237850 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_unref() 0x5f8e53bfb720: ref=2
+Aug 22 01:32:29.237899 n bluetoothd[2959]: src/service.c:change_state() 0x5f8e53c00550: device AA:BB:CC:00:00:01 profile a2dp-sink state changed: connected -> disconnected (0)
+Aug 22 01:32:29.237920 n bluetoothd[2959]: plugins/policy.c:policy_disconnect() /org/bluez/hci0/dev_AA:BB:CC:00:00:01 profile avrcp-controller
+Aug 22 01:32:29.237930 n bluetoothd[2959]: src/service.c:change_state() 0x5f8e53c00350: device AA:BB:CC:00:00:01 profile avrcp-controller state changed: connected -> disconnecting (0)
+Aug 22 01:32:29.237941 n bluetoothd[2959]: profiles/audio/avrcp.c:avrcp_disconnect() path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+Aug 22 01:32:29.237955 n bluetoothd[2959]: src/service.c:change_state() 0x5f8e53bec5f0: device AA:BB:CC:00:00:01 profile audio-avrcp-target state changed: connected -> disconnected (0)
+Aug 22 01:32:29.237966 n bluetoothd[2959]: src/service.c:change_state() 0x5f8e53c00350: device AA:BB:CC:00:00:01 profile avrcp-controller state changed: disconnecting -> disconnected (0)
+Aug 22 01:32:29.237975 n bluetoothd[2959]: profiles/audio/avrcp.c:controller_destroy() 0x5f8e53c0fb90
+Aug 22 01:32:29.237985 n bluetoothd[2959]: profiles/audio/player.c:media_player_destroy() /org/bluez/hci0/dev_AA:BB:CC:00:00:01/player0
+Aug 22 01:32:29.238023 n bluetoothd[2959]: profiles/audio/avrcp.c:target_destroy() 0x5f8e53c10040
+Aug 22 01:32:29.238038 n bluetoothd[2959]: profiles/audio/avctp.c:avctp_set_state() AVCTP Disconnected
+Aug 22 01:32:29.238076 n bluetoothd[2959]: profiles/audio/avctp.c:avctp_disconnected() AVCTP: closing uinput for AA:BB:CC:00:00:01
+Aug 22 01:32:29.261632 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_unref() 0x5f8e53bfb720: ref=1
+Aug 22 01:32:29.261700 n bluetoothd[2959]: profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01: SINK_STATE_CONNECTED -> SINK_STATE_DISCONNECTED
+Aug 22 01:32:29.261712 n bluetoothd[2959]: profiles/audio/a2dp.c:channel_remove() chan 0x5f8e53bec630
+Aug 22 01:32:29.261859 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_unref() 0x5f8e53bfb720: ref=0
+Aug 22 01:32:29.261873 n bluetoothd[2959]: profiles/audio/avdtp.c:avdtp_free() 0x5f8e53bfb720
+Aug 22 01:36:13.155122 n bluetoothd[2959]: src/agent.c:add_default_agent() Default agent set to :1.217 /org/gnome/bluetooth/settings
+Aug 22 01:36:13.155173 n bluetoothd[2959]: src/adapter.c:set_mode() sending set mode command for index 0
+Aug 22 01:36:13.155202 n bluetoothd[2959]: src/agent.c:agent_ref() 0x5f8e53c100c0: ref=1
+Aug 22 01:36:13.155216 n bluetoothd[2959]: src/agent.c:register_agent() agent :1.217
+Aug 22 01:36:13.155336 n bluetoothd[2959]: src/shared/mgmt.c:send_request() [0x0000] command 0x0009
+Aug 22 01:36:13.155365 n bluetoothd[2959]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0009 complete: 0x00
+Aug 22 01:36:13.155379 n bluetoothd[2959]: src/adapter.c:new_settings_callback() Settings: 0x00000ad1
+Aug 22 01:36:13.155391 n bluetoothd[2959]: src/adapter.c:settings_changed() Changed settings: 0x00000010
+Aug 22 01:36:13.155401 n bluetoothd[2959]: src/adapter.c:settings_changed() Pending settings: 0x00000000
+Aug 22 01:36:13.155452 n bluetoothd[2959]: src/shared/mgmt.c:send_request() [0x0000] command 0x0018
+Aug 22 01:36:13.155488 n bluetoothd[2959]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0018 complete: 0x00
+Aug 22 01:36:13.160129 n bluetoothd[2959]: src/adapter.c:set_discovery_filter() sender :1.217
+Aug 22 01:36:13.160195 n bluetoothd[2959]: src/adapter.c:parse_discovery_filter_dict() filtered discovery params: transport: 7 rssi: 32767 pathloss: 32767  duplicate data: false discoverable true pattern (null)
+Aug 22 01:36:13.160688 n bluetoothd[2959]: src/adapter.c:start_discovery() sender :1.217
+Aug 22 01:36:13.160709 n bluetoothd[2959]: src/adapter.c:update_discovery_filter()
+Aug 22 01:36:13.160720 n bluetoothd[2959]: src/adapter.c:discovery_filter_to_mgmt_cp()
+Aug 22 01:36:13.160732 n bluetoothd[2959]: src/adapter.c:set_discoverable() sending set mode command for index 0
+Aug 22 01:36:13.160740 n bluetoothd[2959]: src/adapter.c:set_mode() sending set mode command for index 0
+Aug 22 01:36:13.160757 n bluetoothd[2959]: src/adapter.c:trigger_start_discovery()
+Aug 22 01:36:13.160768 n bluetoothd[2959]: src/adapter.c:cancel_passive_scanning()
+Aug 22 01:36:13.160848 n bluetoothd[2959]: src/shared/mgmt.c:send_request() [0x0000] command 0x0007
+Aug 22 01:36:13.160877 n bluetoothd[2959]: src/adapter.c:start_discovery_timeout()
+Aug 22 01:36:13.160886 n bluetoothd[2959]: src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+Aug 22 01:36:13.160908 n bluetoothd[2959]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0007 complete: 0x00
+Aug 22 01:36:13.161003 n bluetoothd[2959]: src/adapter.c:new_settings_callback() Settings: 0x00000ad3
+Aug 22 01:36:13.161015 n bluetoothd[2959]: src/adapter.c:settings_changed() Changed settings: 0x00000002
+Aug 22 01:36:13.161027 n bluetoothd[2959]: src/adapter.c:settings_changed() Pending settings: 0x00000000
+Aug 22 01:36:13.161077 n bluetoothd[2959]: src/shared/mgmt.c:send_request() [0x0000] command 0x0006
+Aug 22 01:36:15.206601 n bluetoothd[2959]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x06 status: 0x05
+Aug 22 01:36:15.206617 n bluetoothd[2959]: Failed to set mode: Authentication Failed (0x05)
+Aug 22 01:36:15.206661 n bluetoothd[2959]: src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+Aug 22 01:36:19.302628 n bluetoothd[2959]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x05
+Aug 22 01:36:19.302647 n bluetoothd[2959]: src/adapter.c:start_discovery_complete() status 0x05
+Aug 22 01:36:19.302692 n bluetoothd[2959]: src/adapter.c:discovery_remove() owner :1.217
+Aug 22 08:45:44.749863 n bluetoothd[2959]: src/agent.c:unregister_agent() agent :1.217
+Aug 22 08:45:44.749883 n bluetoothd[2959]: src/agent.c:agent_disconnect() Agent :1.217 disconnected
+Aug 22 08:45:44.749903 n bluetoothd[2959]: src/agent.c:remove_default_agent() Default agent cleared
+Aug 22 08:45:44.749912 n bluetoothd[2959]: src/adapter.c:set_mode() sending set mode command for index 0
+Aug 22 08:45:44.749926 n bluetoothd[2959]: src/agent.c:agent_destroy() agent :1.217
+Aug 22 08:45:44.749934 n bluetoothd[2959]: src/agent.c:agent_unref() 0x5f8e53c100c0: ref=0
+Aug 22 08:45:44.749998 n bluetoothd[2959]: src/shared/mgmt.c:send_request() [0x0000] command 0x0009
+Aug 22 08:45:44.750023 n bluetoothd[2959]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0009 complete: 0x00
+Aug 22 08:45:44.750032 n bluetoothd[2959]: src/adapter.c:new_settings_callback() Settings: 0x00000acb
+Aug 22 08:45:44.750039 n bluetoothd[2959]: src/adapter.c:settings_changed() Changed settings: 0x00000018
+Aug 22 08:45:44.750045 n bluetoothd[2959]: src/adapter.c:settings_changed() Pending settings: 0x00000000
+Aug 22 08:45:44.776915 n bluetoothd[2959]: src/adapter.c:discovery_disconnect() owner :1.217
+Aug 22 08:45:44.776941 n bluetoothd[2959]: src/adapter.c:set_discoverable() sending set mode command for index 0
+Aug 22 08:45:44.776953 n bluetoothd[2959]: src/adapter.c:set_mode() sending set mode command for index 0
+Aug 22 08:45:44.776968 n bluetoothd[2959]: src/adapter.c:discovery_remove() owner :1.217
+Aug 22 08:45:44.776979 n bluetoothd[2959]: src/adapter.c:discovery_free() 0x5f8e53be8f70
+Aug 22 08:45:44.777000 n bluetoothd[2959]: src/adapter.c:trigger_passive_scanning()
+Aug 22 08:45:44.777259 n bluetoothd[2959]: src/shared/mgmt.c:send_request() [0x0000] command 0x0007
+Aug 22 08:45:44.777318 n bluetoothd[2959]: src/shared/mgmt.c:can_read_data() [0x0000] command 0x0007 complete: 0x00
+Aug 22 08:45:44.777331 n bluetoothd[2959]: src/adapter.c:new_settings_callback() Settings: 0x00000ac1
+Aug 22 08:45:44.777350 n bluetoothd[2959]: src/adapter.c:settings_changed() Changed settings: 0x0000000a
+Aug 22 08:45:44.777364 n bluetoothd[2959]: src/adapter.c:settings_changed() Pending settings: 0x00000000

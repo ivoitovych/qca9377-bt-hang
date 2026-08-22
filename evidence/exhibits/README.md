@@ -42,3 +42,4 @@ Regenerate this index with `bt-exhibit index`.
 | EX-030 | [a2dp-dropout-without-controller-involvement](030-a2dp-dropout-without-controller-involvement.md) | An audible playback dropout on a **third** device — `Tronsmart T8`, named from |
 | EX-031 | [enhanced-sco-setup-answered-and-survived](031-enhanced-sco-setup-answered-and-survived.md) | The controller was given a synchronous-link setup by the **Enhanced** command |
 | EX-032 | [bluetoothd-segfault-discovery-never-restarts](032-bluetoothd-segfault-discovery-never-restarts.md) | `bluetoothd` 5.72 segfaulted twice on this boot at the **same code offset** |
+| EX-033 | [sco-setup-answered-then-untracked-command-dies](033-sco-setup-answered-then-untracked-command-dies.md) | The controller **answered** `0x0428 Setup Synchronous Connection` in 72.8 ms, |
