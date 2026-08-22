@@ -66,50 +66,79 @@ shared-gatt-client-Fix-segfault-after-PIN-entry.patch
 ⚠️ **Do not read upstream BlueZ and call it "what we run".** Ground rule 1 of the
 [external review brief](external-review-brief.md) exists for this.
 
-## 3. Kernel — and the trap in reading mainline
+## 3. Kernel — two traps, and both of them bit
+
+> ⚠️ **Corrected 2026-08-23.** The first version of this section named the wrong
+> source package and the wrong running kernel. Both errors are described below
+> rather than quietly overwritten, because both are easy to repeat.
+
+### Trap 1 — this machine runs the HWE kernel, so `linux` is the wrong package
+
+The source package is **`linux-hwe-7.0`**, not `linux`. They are different files:
+
+```
+linux_7.0.0-30.30.diff.gz              2015294 bytes  sha256 35f9f529…   ← WRONG
+linux-hwe-7.0_7.0.0-30.30~24.04.1.diff.gz  1988323 bytes  sha256 91a45f5c…   ← right
+```
+
+The correct fetch, verified against the publisher's own `Checksums-Sha256`:
 
 ```console
-$ base=http://archive.ubuntu.com/ubuntu/pool/main/l/linux
-$ curl -s $base/linux_7.0.0.orig.tar.gz | tar -xz --wildcards \
+$ base=http://archive.ubuntu.com/ubuntu/pool/main/l/linux-hwe-7.0
+$ curl -sO $base/linux-hwe-7.0_7.0.0-30.30~24.04.1.dsc
+$ curl -sO $base/linux-hwe-7.0_7.0.0-30.30~24.04.1.diff.gz
+$ grep -q "$(sha256sum linux-hwe-7.0_7.0.0-30.30~24.04.1.diff.gz | awk '{print $1}')" \
+       linux-hwe-7.0_7.0.0-30.30~24.04.1.dsc && echo OK
+OK
+```
+
+The `.orig.tar.gz` is the same mainline tarball either way (254937830 bytes), so
+only the delta has to come from the right package. Stream it and extract just the
+paths in the walk of shame — **4.3 MB** instead of a 1.5 GB tree:
+
+```console
+$ curl -s $base/linux-hwe-7.0_7.0.0.orig.tar.gz | tar -xz --wildcards \
       'linux-7.0/net/bluetooth/*' 'linux-7.0/drivers/bluetooth/*' \
       'linux-7.0/include/net/bluetooth/*' 'linux-7.0/drivers/usb/core/*'
 ```
 
-Streaming and extracting only the paths in the walk of shame gives **4.3 MB**
-instead of a 1.5 GB tree. The top-level directory is `linux-7.0/`, not
-`linux-7.0.0/`.
+The tarball's top-level directory is `linux-7.0/`; **paths inside the delta are
+prefixed `linux-hwe-7.0-7.0.0/`**, so strip levels accordingly when patching.
 
 **The Ubuntu delta is not optional.** It patches the files this investigation
-cares about most:
+cares about most (counts from the `-30` HWE delta):
 
-```console
-$ curl -s $base/linux_7.0.0-30.30.diff.gz | zcat | grep '^+++ ' | grep bluetooth
-```
-
-| file | hunks in the Ubuntu delta |
+| file | hunks |
 |---|---|
 | `drivers/bluetooth/hci_qca.c` | 11 |
 | `net/bluetooth/hci_sync.c` | 9 |
 | `net/bluetooth/hci_event.c` | 8 |
+| `net/bluetooth/l2cap_core.c` | 7 |
 | `net/bluetooth/hci_conn.c` | 4 |
 | `drivers/bluetooth/btusb.c` | 4 |
-| `net/bluetooth/sco.c` | (patched) |
+| `net/bluetooth/sco.c` | 3 |
 
-Apply it — 28 files, zero rejects:
+### Trap 2 — "the machine runs `-28`" was stale, and five exhibits carried it
 
-```console
-$ curl -s $base/linux_7.0.0-30.30.diff.gz | zcat > ubuntu.diff
-$ # keep only hunks for paths you extracted, then:
-$ cd linux-7.0 && patch -p1 -i ../bt-subset.diff
-```
+The investigation machine has run **three** kernels during this project:
 
-### The version gap, stated plainly
+| boots | dates | kernel |
+|---|---|---|
+| −15 … −4 | 2026-08-13 → 08-17 | `7.0.0-28-generic` |
+| −3, −2 | 08-19, 08-21 | `7.0.0-29-generic` |
+| −1, 0 | 08-22 → | `7.0.0-30-generic` |
 
-The machine runs **`7.0.0-28-generic`**. The archive currently carries
-`-14.14`, `-30.30` and `-31.31`; **`-28` is superseded and gone**, and Launchpad
-(which keeps superseded builds) is one of the 403 hosts. So kernel readings here
-are against `-30`, one ABI bump *after* the machine. Anything that turns on a
-specific kernel line must say which build it was read in.
+So `-30` **is** the machine today; it is not "one bump ahead" of it, as this file
+previously claimed. But `EX-030`–`EX-032` were captured under `-28`, which is
+superseded and **gone from `archive.ubuntu.com`**.
+
+`-28` survives only on Launchpad, which is one of the 403 hosts here. The
+investigation machine can reach Launchpad in 0.24 s, and has fetched and verified
+the `-28` delta into the shared cache — see
+[`external-cache.md`](external-cache.md) and `external-cache-manifest.tsv`.
+
+**The rule that follows:** a line number is meaningless without the build it was
+read in. Say `-28`, `-29` or `-30` explicitly, every time.
 
 ## 4. Debug symbols — where the archive helps, and where it does not
 
@@ -181,7 +210,9 @@ Not solvable from here at any effort:
 
 - anything requiring the running system — `EX-027`/`EX-028` power-off vs reboot,
   the M.2 rail question, `btmgmt`/`hciconfig` output;
-- the exact `-28` kernel build, unless a Launchpad-reachable network fetches it;
+- ~~the exact `-28` kernel build~~ — **solved**: fetched from Launchpad by the
+  investigation machine and verified into the shared cache
+  ([`external-cache.md`](external-cache.md));
 - `-0ubuntu5.5` amd64 debug symbols, which do not exist anywhere;
 - **anything about the GNOME layer**, which this project captures no logs from at
   all — see [`source-map.md`](source-map.md).
