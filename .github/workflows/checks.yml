@@ -85,6 +85,16 @@ jobs:
       - name: awk statement coverage floor
         run: devtools/awk-coverage --min 85
 
+      # A THIRD LANGUAGE, AND THE SAME ARGUMENT. bin/bt-capture is Python and
+      # neither instrument above could see it — `TX-04`, open since 2026-08-15
+      # as "instrument or state it". It is the capture that SURVIVES btmon's 67
+      # aborts a boot, and the btsnoop it writes is what bt-capdiff and every
+      # later analysis read, so an encoding error here surfaces at READ time on
+      # evidence that cannot be recaptured. stdlib `trace` via a generated
+      # sitecustomize, which is Python's BASH_ENV.
+      - name: python line coverage floor
+        run: devtools/py-coverage --min 80
+
       # A RATCHET ON THE OTHER AXIS. Line coverage cannot see a unit that was
       # never invoked in a mode it has: bt-window sat at 0 of 45 lines while
       # the suite was green and the total moved by a fraction of a point.

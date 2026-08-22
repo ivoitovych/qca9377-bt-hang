@@ -6200,6 +6200,158 @@ echo 999 > "$TR/freegb"
 
 rm -rf "$TR"
 
+# ── bin/bt-capture: the third capture daemon, and the only Python here ────
+#
+# TX-04 has been open since 2026-08-15: *`bin/bt-capture` is Python; no
+# instrument here measures it*, with the decision recorded as "instrument or
+# state it". 211 lines, zero executed, and it is the capture that SURVIVES —
+# btmon aborts 67 times a boot and this is the copy still there afterwards.
+#
+# Two things stopped it being testable and both are now seams.
+#
+#   the socket   everything past open_monitor() needs a bound AF_BLUETOOTH
+#                monitor channel, so the btsnoop encoding that bt-capdiff and
+#                every later analysis read had never run outside the
+#                investigation machine. BT_CAPTURE_SOURCE feeds frames from a
+#                file instead.
+#   prune()      the one function here that DELETES EVIDENCE ran only after the
+#                socket opened. `--prune-only` reaches it without one, and is a
+#                thing an operator wants anyway: reclaim space now, without
+#                stopping the capture that is running.
+if command -v python3 >/dev/null 2>&1; then
+    BC=$(mktemp -d); mkdir -p "$BC/cap"
+    # Two monitor frames, framed as the seam documents: <u32 le length><frame>,
+    # each frame being hci_mon_hdr { le16 opcode; le16 index; le16 len } and its
+    # payload. Written as bytes rather than generated, so the expected output
+    # below is arithmetic a reader can check against the format, not against a
+    # second copy of this tool's own code.
+    printf '\x0a\x00\x00\x00\x02\x00\x00\x00\x04\x00\x01\x28\x04\x11\x0a\x00\x00\x00\x03\x00\x00\x00\x04\x00\x04\x0f\x04\x00' \
+        > "$BC/frames.bin"
+    BCLOG=$(BT_CAPTURE_DIR="$BC/cap" BT_CAPTURE_SOURCE="$BC/frames.bin" \
+            python3 bin/bt-capture --duration 1 --min-free-gb 0 2>&1); bcrc=$?
+    BCF=$(ls "$BC/cap"/*.btsnoop 2>/dev/null | head -1)
+
+    (( bcrc == 0 )) && [[ -n "$BCF" ]] && [[ "$(wc -c < "$BCF")" == "72" ]] \
+        && ok "bt-capture writes a btsnoop file: 16-byte header plus two 28-byte records" \
+        || bad "the capture path produced $(wc -c < "${BCF:-/dev/null}" 2>/dev/null) bytes (rc=$bcrc)"
+
+    # THE ENCODING, WHICH CARRIED A REVIEWED-KEEP MARKER AND NO TEST. `btsnoop\0`,
+    # version 1, datalink type 2001 (monitor). Getting any of the three wrong
+    # makes the file unreadable by `btmon -r` and by Wireshark — and the failure
+    # is at READ time, weeks later, on evidence that cannot be recaptured.
+    BCHDR=$(od -An -N16 -tx1 "$BCF" 2>/dev/null | tr -s ' ' | sed 's/^ //;s/ $//')
+    [[ "$BCHDR" == "62 74 73 6e 6f 6f 70 00 00 00 00 01 00 00 07 d1" ]] \
+        && ok "the btsnoop header is magic, version 1, datalink 2001 — byte for byte" \
+        || bad "btsnoop header wrong: $BCHDR"
+
+    # AND THE RECORD, where the index and opcode are packed into btsnoop's
+    # `flags` field. Frame 1 is opcode 0x0002 on index 0x0000, so flags must be
+    # (0 << 16) | 2 = 0x00000002. A version that swapped the two, or dropped the
+    # shift, produces a file that still opens and attributes every packet to the
+    # wrong controller.
+    BCREC=$(od -An -j16 -N16 -tx1 "$BCF" 2>/dev/null | tr -s ' ' | tr -d '\n' | sed 's/^ //;s/ $//')
+    [[ "$BCREC" == "00 00 00 04 00 00 00 04 00 00 00 02 00 00 00 00" ]] \
+        && ok "a record carries its lengths and (index << 16 | opcode) in the flags field" \
+        || bad "record header wrong: $BCREC"
+
+    # THE PAYLOAD IS COPIED, NOT PARSED. The entire argument for this tool is
+    # that it never decodes, so there is no packet it can fail on. Both payloads
+    # must come back byte-identical.
+    BCP1=$(od -An -j40 -N4 -tx1 "$BCF" 2>/dev/null | tr -s ' ' | sed 's/^ //;s/ $//')
+    BCP2=$(od -An -j68 -N4 -tx1 "$BCF" 2>/dev/null | tr -s ' ' | sed 's/^ //;s/ $//')
+    [[ "$BCP1" == "01 28 04 11" && "$BCP2" == "04 0f 04 00" ]] \
+        && ok "both frame payloads are written through unchanged — nothing is decoded" \
+        || bad "a payload was altered: '$BCP1' '$BCP2'"
+
+    # THE SEAM ANNOUNCES ITSELF. Every other seam in this repository only
+    # changes what a tool READS; this one changes what it WRITES. A stray
+    # BT_CAPTURE_SOURCE would produce a capture file full of fixture frames that
+    # is indistinguishable from a real one afterwards, and a capture whose
+    # provenance is wrong is worse than no capture.
+    [[ "$BCLOG" == *"reading frames from a FILE, not the controller"* ]] \
+        && ok "the capture seam says on stdout that the frames are not the controller's" \
+        || bad "BT_CAPTURE_SOURCE was honoured silently: $(head -1 <<<"$BCLOG")"
+
+    # ROTATION, WHICH IS WHERE THE RING BUG LIVES. bt-usbmon's version of this
+    # left exactly one file forever, and the difference between one and two is
+    # the whole record. `--max-mb 0` makes the size limit zero, so every frame
+    # rotates — a legitimate invocation that turns a 56-byte fixture into the
+    # multi-file case a 64MB default would need an hour of traffic to reach.
+    rm -f "$BC/cap"/*.btsnoop
+    BCROT=$(BT_CAPTURE_DIR="$BC/cap" BT_CAPTURE_SOURCE="$BC/frames.bin" \
+            python3 bin/bt-capture --duration 1 --min-free-gb 0 --max-mb 0 2>&1)
+    BCN=$(ls "$BC/cap"/*.btsnoop 2>/dev/null | wc -l)
+    (( ${BCN:-0} >= 2 )) && [[ "$BCROT" == *"rotated to"* ]] \
+        && ok "a rotation closes one capture and opens the next — the ring keeps more than one" \
+        || bad "rotation left $BCN file(s): $(grep -c 'rotated to' <<<"$BCROT") rotation(s) logged"
+
+    # RETENTION BY COUNT KEEPS THE NEWEST. Sorted by mtime, oldest deleted
+    # first. Reversing that comparison deletes exactly the captures an
+    # investigation is about to read.
+    rm -f "$BC/cap"/*.btsnoop
+    for i in 0 1 2 3 4; do : > "$BC/cap/hci-$i.btsnoop"
+                           touch -d "@$((1700000000 + i))" "$BC/cap/hci-$i.btsnoop"; done
+    BT_CAPTURE_DIR="$BC/cap" python3 bin/bt-capture --prune-only --keep 2 --min-free-gb 0 >/dev/null 2>&1
+    BCKEPT=$(ls "$BC/cap" 2>/dev/null | tr '\n' ' ')
+    [[ "$BCKEPT" == "hci-3.btsnoop hci-4.btsnoop " ]] \
+        && ok "--prune-only keeps the newest captures and deletes the oldest" \
+        || bad "retention kept the wrong files: $BCKEPT"
+
+    # --prune-only MUST NOT NEED A CONTROLLER. That is its whole reason for
+    # existing, and this host has no Bluetooth at all — so an implementation
+    # that opened the socket first would fail here with the socket's error and
+    # never reach the retention it was asked for.
+    BCPO=$(BT_CAPTURE_DIR="$BC/cap" python3 bin/bt-capture --prune-only --keep 9 --min-free-gb 0 2>&1); bcporc=$?
+    (( bcporc == 0 )) && [[ "$BCPO" != *"monitor socket"* && "$BCPO" == *"retention applied"* ]] \
+        && ok "--prune-only opens no socket — it works on a host with no controller" \
+        || bad "--prune-only touched the socket (rc=$bcporc): $(head -1 <<<"$BCPO")"
+
+    # THE DEFECT THIS SECTION FOUND. The free-space loop deletes oldest-first
+    # until the floor is met OR THERE IS NOTHING LEFT, and the second exit said
+    # nothing whatsoever: every retained capture gone, the filesystem still over
+    # the floor, and the caller carrying on writing into it. bin/bt-trace — the
+    # shell sibling, same job, same machine — has always ended that case with
+    # "still under NGB with nothing left to prune" and stopped.
+    #
+    # MUTATION: make prune() return None and this goes red on the exit status
+    # and on the message.
+    BCFLOOR=$(BT_CAPTURE_DIR="$BC/cap" python3 bin/bt-capture --prune-only \
+              --keep 99 --min-free-gb 999999 2>&1); bcfrc=$?
+    (( bcfrc == 1 )) && [[ "$BCFLOOR" == *"nothing left to prune"* ]] \
+       && [[ -z "$(ls "$BC/cap" 2>/dev/null)" ]] \
+        && ok "a floor that cannot be met is reported, not met with silence and an empty directory" \
+        || bad "the exhausted floor was silent (rc=$bcfrc): $(tail -1 <<<"$BCFLOOR")"
+
+    # NO SOCKET AND NO SEAM IS A REFUSAL THAT LEAVES NOTHING BEHIND. A
+    # zero-length .btsnoop is indistinguishable afterwards from a capture whose
+    # traffic was lost, which is the one file this tool must never produce.
+    BCNS=$(BT_CAPTURE_DIR="$BC/none" python3 bin/bt-capture --duration 1 2>&1); bcnsrc=$?
+    (( bcnsrc == 1 )) && [[ "$BCNS" == *"cannot open HCI monitor socket"* ]] \
+       && [[ -z "$(ls "$BC/none" 2>/dev/null)" ]] \
+        && ok "without a monitor socket bt-capture refuses and writes no partial capture" \
+        || bad "the no-socket path gave rc=$bcnsrc or left $(ls "$BC/none" 2>/dev/null | tr '\n' ' ')"
+
+    python3 bin/bt-capture --capture-everything >/dev/null 2>&1
+    (( $? == 2 )) \
+        && ok "bt-capture exits 2 on an unknown option, like every other tool here" \
+        || bad "bt-capture did not refuse an unknown option with 2"
+    rm -rf "$BC"
+
+    # devtools/py-coverage's ENTRY POINTS ONLY. Its measuring path runs THIS
+    # suite, so driving it from here recurses — the same reason
+    # devtools/coverage and devtools/awk-coverage are not run from inside
+    # either. What can be checked is that its two non-measuring paths behave
+    # like every other tool's.
+    PYCH=$(devtools/py-coverage --help 2>&1); pychrc=$?
+    (( pychrc == 0 )) && [[ "$PYCH" == *"--uncovered"* && "$PYCH" == *"--min"* ]] \
+        && ok "py-coverage --help describes its modes without running the suite" \
+        || bad "py-coverage --help returned $pychrc or did not name its modes"
+    devtools/py-coverage --measure-everything >/dev/null 2>&1
+    (( $? == 2 )) \
+        && ok "py-coverage exits 2 on an unknown option rather than running the suite" \
+        || bad "py-coverage accepted an option it does not implement"
+fi
+
 echo
 echo "bt-trial — the whole lifecycle, not just the two ends of it"
 echo "───────────────────────────────────────────────────────────"

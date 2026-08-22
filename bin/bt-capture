@@ -52,6 +52,42 @@ def log(msg):
     print(msg, flush=True)
 
 
+class _FileMonitor:
+    """A monitor socket fed from a file. The seam, and why it exists.
+
+    Everything below open_monitor() -- the btsnoop header, the record encoding,
+    rotation, the write-error path -- needs a bound AF_BLUETOOTH monitor socket,
+    which needs Bluetooth hardware and root. So none of it had ever executed
+    under test, on any machine, and the encoding is not a detail: bt-capdiff
+    reads these files and every later analysis reads bt-capdiff. The format
+    comment carries a REVIEWED-KEEP marker, meaning someone checked it by eye
+    once. Nothing checked it twice.
+
+    Frames on the real socket arrive one per recv(). The fixture supplies the
+    same framing explicitly, `<u32 little-endian length><frame>`, because a raw
+    byte stream has no frame boundaries and inventing them here would test a
+    parser this tool deliberately does not have.
+
+    EOF raises socket.timeout rather than returning b"": the caller treats a
+    timeout as "nothing yet, check the deadline", which is exactly right, and
+    treats a short read as a runt frame to skip, which would spin.
+    """
+
+    def __init__(self, path):
+        self._f = open(path, "rb")
+
+    def settimeout(self, _timeout):
+        pass
+
+    def recv(self, _bufsize):
+        hdr = self._f.read(4)
+        if len(hdr) < 4:
+            time.sleep(0.02)      # not a hot loop while the deadline runs down
+            raise socket.timeout
+        (n,) = struct.unpack("<I", hdr)
+        return self._f.read(n)
+
+
 def open_monitor():
     """Bind the HCI monitor channel.
 
@@ -63,7 +99,19 @@ def open_monitor():
     bind() directly:
 
         struct sockaddr_hci { unsigned short hci_family, hci_dev, hci_channel; }
+
+    BT_CAPTURE_SOURCE replaces the socket with a file; see _FileMonitor. It is
+    announced on stdout rather than taken quietly, because unlike this project's
+    read-only seams this one changes what gets WRITTEN: a stray value in the
+    environment would produce a capture file full of fixture frames that looks
+    exactly like a real one. A capture whose provenance is wrong is worse than
+    no capture, and this line is the difference.
     """
+    src = os.environ.get("BT_CAPTURE_SOURCE", "")
+    if src:
+        log(f"BT_CAPTURE_SOURCE={src} — reading frames from a FILE, not the controller")
+        return _FileMonitor(src)
+
     import ctypes
     import ctypes.util
 
@@ -76,13 +124,51 @@ def open_monitor():
     return s
 
 
+def next_path(directory):
+    """A capture path that does not already exist.
+
+    The name was time.strftime("hci-%Y%m%d-%H%M%S.btsnoop"), at SECOND
+    resolution, and rotation reopens it -- so two rotations inside one second
+    produced the same path and the second TRUNCATED the first capture. Found by
+    a test that rotated twice and got one file back.
+
+    That is not hypothetical at the sizes this runs at, and it is the third time
+    this repository has met second-resolution naming: bt-snapshot put two
+    captures in one directory the same way. bin/bt-trace and bin/bt-usbmon still
+    name their files exactly like the original of this line.
+    """
+    base = time.strftime("hci-%Y%m%d-%H%M%S")
+    path = os.path.join(directory, base + ".btsnoop")
+    n = 1
+    while os.path.exists(path):
+        path = os.path.join(directory, "%s-%02d.btsnoop" % (base, n))
+        n += 1
+    return path
+
+
 def new_file(path):
     f = open(path, "wb", buffering=0)
     f.write(BTSNOOP_MAGIC + struct.pack(">II", BTSNOOP_VERSION, BTSNOOP_TYPE_MONITOR))
     return f
 
 
+def free_gb(directory):
+    st = os.statvfs(directory)
+    return st.f_bavail * st.f_frsize / (1 << 30)
+
+
 def prune(directory, keep, min_free_gb):
+    """Apply retention. Returns True when the free-space floor is met.
+
+    THE RETURN VALUE IS THE POINT, and it was missing. The loop below deletes
+    oldest-first until the floor is met OR THERE IS NOTHING LEFT, and the second
+    exit said nothing at all: every retained capture gone, the filesystem still
+    over the floor, and the caller carrying on writing into it. bin/bt-trace --
+    this tool's shell sibling, doing the same job on the same machine -- has
+    always ended that case with "still under NGB with nothing left to prune" and
+    STOPPED capturing rather than filling the filesystem. The two daemons
+    disagreed, and the quiet one is the one that deletes the evidence.
+    """
     files = sorted(
         (os.path.join(directory, n) for n in os.listdir(directory) if n.endswith(".btsnoop")),
         key=os.path.getmtime,
@@ -98,16 +184,16 @@ def prune(directory, keep, min_free_gb):
     # Free-space floor, enforced independently of the file count: a count is a
     # guess about file size, and this is the check that cannot be wrong.
     while files:
-        st = os.statvfs(directory)
-        free_gb = st.f_bavail * st.f_frsize / (1 << 30)
-        if free_gb >= min_free_gb:
+        if free_gb(directory) >= min_free_gb:
             break
         victim = files.pop(0)
-        log(f"low disk ({free_gb:.1f}GB free): pruning {os.path.basename(victim)}")
+        log(f"low disk ({free_gb(directory):.1f}GB free): pruning {os.path.basename(victim)}")
         try:
             os.unlink(victim)
         except OSError:
             pass
+
+    return free_gb(directory) >= min_free_gb
 
 
 def main():
@@ -124,9 +210,25 @@ def main():
     # A bound the tool enforces itself keeps the invocation matchable.
     ap.add_argument("--duration", type=int, default=0,
                     help="stop after N seconds (0 = run until killed)")
+    # RETENTION WITHOUT A CONTROLLER. prune() decides which captures are
+    # deleted, and it ran only after open_monitor() succeeded -- so the one
+    # function in this file that DESTROYS EVIDENCE could not be reached, or
+    # tested, on any machine without Bluetooth hardware and root. It is also a
+    # thing an operator genuinely wants on its own: reclaim space now, without
+    # stopping the capture that is running.
+    ap.add_argument("--prune-only", action="store_true",
+                    help="apply retention to --dir and exit; opens no socket")
     args = ap.parse_args()
 
     os.makedirs(args.dir, mode=0o700, exist_ok=True)
+
+    if args.prune_only:
+        if prune(args.dir, args.keep, args.min_free_gb):
+            log(f"retention applied (keep={args.keep} floor={args.min_free_gb}GB), "
+                f"{free_gb(args.dir):.1f}GB free")
+            return 0
+        log(f"ERROR: still under {args.min_free_gb}GB with nothing left to prune.")
+        return 1
 
     try:
         sock = open_monitor()
@@ -136,10 +238,19 @@ def main():
 
     log(f"bt-capture started (dir={args.dir} rotate={args.max_mb}MB "
         f"keep={args.keep} floor={args.min_free_gb}GB)")
-    prune(args.dir, args.keep, args.min_free_gb)
+    # REFUSING TO START IS THE SAFE ANSWER, and it is the one bin/bt-trace has
+    # always given: "Stopping capture rather than filling the filesystem." A
+    # capture daemon that keeps writing onto a filesystem it has already emptied
+    # of captures takes journald down with it, and journald is the primary
+    # evidence this whole project reads.
+    if not prune(args.dir, args.keep, args.min_free_gb):
+        log(f"ERROR: still under {args.min_free_gb}GB with nothing left to prune.")
+        log("       Refusing to capture rather than filling the filesystem.")
+        log("       Free space, then: systemctl restart bt-capture")
+        return 1
 
     limit = args.max_mb * 1024 * 1024
-    path = os.path.join(args.dir, time.strftime("hci-%Y%m%d-%H%M%S.btsnoop"))
+    path = next_path(args.dir)
     out = new_file(path)
     log(f"capturing to {os.path.basename(path)}")
     written = 0
@@ -198,7 +309,7 @@ def main():
         if written >= limit:
             out.close()
             prune(args.dir, args.keep, args.min_free_gb)
-            path = os.path.join(args.dir, time.strftime("hci-%Y%m%d-%H%M%S.btsnoop"))
+            path = next_path(args.dir)
             out = new_file(path)
             log(f"rotated to {os.path.basename(path)}")
             written = 0
