@@ -36,6 +36,14 @@ set -uo pipefail
 export LC_ALL=C
 
 LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
+# THROUGH THE SEAM, like every other read-only tool here. LIBDIR was already
+# computed and never used: the three journalctl calls below were open-coded, so
+# the tool could not be driven without a real journal and 0 of its 83 lines had
+# ever executed under test. The reads themselves are unchanged — one coarse cut,
+# nothing thrown away — they simply go through the same door as the rest.
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-snapshot: missing $LIBDIR/journal.sh" >&2; exit 2; }
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
 REPO="${BT_REPO:-$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd -P)}"
 DEST="${BT_SNAPSHOT_DIR:-/var/tmp/bt-snapshots}"
 
@@ -92,9 +100,9 @@ DIR="$DEST_ABS/$STAMP-boot$BOOT"
 mkdir -p "$DIR" || refuse "cannot create $DIR"
 
 echo "bt-snapshot — coarse cut of boot $BOOT -> $DIR"
-journalctl --list-boots --no-pager                     > "$DIR/list-boots.txt" 2>/dev/null
-journalctl -b "$BOOT" --no-pager -o short-iso-precise   > "$DIR/all.log"        2>/dev/null
-journalctl -k -b "$BOOT" --no-pager -o short-iso-precise > "$DIR/kernel.log"     2>/dev/null
+bt_journal --list-boots --no-pager                      > "$DIR/list-boots.txt" 2>/dev/null
+bt_journal -b "$BOOT" --no-pager -o short-iso-precise    > "$DIR/all.log"        2>/dev/null
+bt_journal -k -b "$BOOT" --no-pager -o short-iso-precise > "$DIR/kernel.log"     2>/dev/null
 
 # ENUMERATED == 0 IS A REFUSAL. An empty cut means the boot index is wrong or
 # the journal is unreadable, not that the boot was quiet.
@@ -115,7 +123,19 @@ grep -E 'segfault|core-dump|Failed with result|Scheduled restart' "$A"          
 grep -E 'corrupted SCO|Error when powering off|connection_lost|disconnected, reason|Failure in Bluetooth' "$A" > "$DIR/f-link.log" 2>/dev/null
 grep -oE 'input: [^(]*\(AVRCP\)' "$A" | sed 's/^input: //' | sort -u                            > "$DIR/f-devices.txt"    2>/dev/null
 
-c() { local f="$1"; [[ -r "$f" ]] && grep -c . "$f" || echo 0; }
+# `grep -c .` PRINTS 0 and EXITS 1 on an empty file, so the obvious
+# `[[ -r $f ]] && grep -c . "$f" || echo 0` ran BOTH branches on every empty
+# fine cut and emitted two lines. printf then cycled its one-conversion format
+# over the extra argument, and the summary grew a stray unlabelled 0 on its own
+# line under interventions, daemon crashes and link-layer events — the three
+# counts most often zero, and the three a reader most needs to line up with
+# their labels. Capture once, print once.
+c() {   # lines in a fine cut — 0 for absent, unreadable, or empty
+    local f="$1" n
+    [[ -r "$f" ]] || { echo 0; return 0; }
+    n=$(grep -c . "$f" 2>/dev/null)
+    echo "${n:-0}"
+}
 
 # The positive control comes FIRST, because every zero below is meaningless
 # without it. Zero from a scan is not a result until something proves the scan

@@ -1,17 +1,50 @@
 #!/bin/bash
 # repo-validate — syntax-check everything checkable in a repo.
 #
-#   repo-validate [dir]
+#   repo-validate [dir] [--no-suite]
 #
 # bash -n on shell scripts, systemd-analyze on units, udevadm on rules,
 # jq on JSON, a parse check on Python. Exits non-zero on any failure.
 #
 # Checks TRACKED files plus anything currently STAGED, so a newly added file is
 # validated on the commit that introduces it.
+#
+# --no-suite RUNS EVERY VALIDATOR EXCEPT tests/run-tests, AND SAYS SO.
+#
+# The suite drives tools that ACT, so it refuses to run while a trial is open —
+# the one check that would have prevented 2026-08-14 outright, when a coverage
+# measurement closed a live 2-hour trial and wrote a results row whose treatment
+# fingerprint was fabricated by test stubs. On the investigation machine
+# bt-trial-auto opens a trial on every boot by design, which made the whole
+# validate → scan → commit → push path unusable on the machine it was written
+# for: the maintainer had been committing with plain git after running repo-scan
+# by hand (comms/2026-08-19T1620Z §5).
+#
+# The answer is NOT a "non-acting subset" of the suite. That would require
+# maintaining a claim about which half acts, and a claim about the code
+# diverging from the code is the defect class this project keeps paying for; the
+# first actuating assertion added to the safe half removes the guard on the one
+# machine where it matters, silently. Everything here EXCEPT the suite is
+# read-only by construction — it parses files and asks git what is tracked — so
+# the honest split is at the tool boundary, not inside the suite.
+#
+# WHAT MAKES THIS SAFE IS CI, and only since 2026-08-17. The suite runs on every
+# push, on a runner with no trial and no controller. Before that CI had been red
+# for 45 hours and a local run was the only gate, when skipping it would have
+# left nothing. The absence is stated in the LAST line as well as at the point
+# it happens, because the last line is the one a caller reads.
 
 set -uo pipefail
 
-DIR="${1:-.}"
+DIR="."
+NO_SUITE=0
+for a in "$@"; do
+    case "$a" in
+        --no-suite) NO_SUITE=1 ;;
+        -*) echo "repo-validate: unknown option: $a" >&2; exit 2 ;;
+        *)  DIR="$a" ;;
+    esac
+done
 cd "$DIR" 2>/dev/null || { echo "no such dir: $DIR" >&2; exit 2; }
 git rev-parse --git-dir >/dev/null 2>&1 || { echo "not a git repo: $DIR" >&2; exit 2; }
 
@@ -141,11 +174,22 @@ fi
 # The gap between those two is where this project's worst defects have lived —
 # a phase analysis that documented exogenous-probe selection and implemented a
 # spacing heuristic passed every syntax check ever run against it.
-if [[ -x "$ROOT/tests/run-tests" ]]; then
+if (( NO_SUITE )); then
+    # NOT `ok`, which would put it in the passed count and make a skipped suite
+    # indistinguishable from a green one in the tally.
+    echo "  · tests SKIPPED (--no-suite) — the analysis invariants did NOT run."
+    echo "    Syntax, units, rules, json and python were all checked; nothing"
+    echo "    below the parse level was. CI runs the suite on push."
+elif [[ -x "$ROOT/tests/run-tests" ]]; then
+    # NOT `ok`/`bad`, which increment $checked — a per-FILE tally. The suite is
+    # not a file, and counting it there made the summary say
+    # "6 of 5 files were checkable", which is not a thing that can be true.
+    # It still sets $fail; only the arithmetic changes.
     if out=$("$ROOT/tests/run-tests" 2>&1); then
-        ok "tests $(tail -1 <<<"$out")"
+        printf '  ✓ %s\n' "tests $(tail -1 <<<"$out")"
     else
-        bad "tests FAILED"
+        printf '  ✗ %s\n' "tests FAILED"
+        fail=1
         sed 's/^/      /' <<<"$out"
     fi
 fi
@@ -204,6 +248,10 @@ fi
 if (( fail )); then echo "VALIDATION FAILED ($checked checked)"; exit 1; fi
 if (( checked == 0 )); then
     echo "no checkable files ($enumerated tracked/staged, none are scripts, units, rules, json or python)"
+    exit 0
+fi
+if (( NO_SUITE )); then
+    echo "all syntax checks passed ($checked of $enumerated files were checkable) — SUITE NOT RUN"
     exit 0
 fi
 echo "all checks passed ($checked of $enumerated files were checkable)"

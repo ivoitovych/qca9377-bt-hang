@@ -6793,6 +6793,342 @@ BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARSYM/outside" \
 rm -rf "$ARSYM"
 rm -rf "$AR" "$ARD" "$ARTRUNC" "$ARREPO"
 
+# ── bt-backup-journal: the archive that runs without anyone remembering ──
+#
+# It shipped with 0 of 50 lines ever executed, and it is the one tool here that
+# runs UNATTENDED — a systemd timer calls it on the investigation machine. Its
+# refusals are therefore the only thing standing between "the archive is
+# current" and "the archive stopped a week ago and nobody looked". That is the
+# opposite of the usual case for an untested tool: nobody is watching it fail.
+#
+# DRIVEN THROUGH A STUB bt-archive, which is the whole point of BT_ARCHIVE_BIN.
+# The real one writes hundreds of megabytes and refuses a destination inside the
+# repository; this section tests the DRIVER — which boots it selects, which it
+# skips, what it does when one fails — and the stub records every invocation so
+# the selection can be asserted rather than inferred from what appeared on disk.
+BKJ_FIX=tests/journal/backup
+bkj_setup() {   # -> a fresh dest + stub archiver; echoes the root
+    local d; d=$(mktemp -d); mkdir -p "$d/dest" "$d/bin"
+    # The stub creates what the real bt-archive would create, named the way the
+    # real one names it, and logs its argv. `$1` is the boot index.
+    { echo '#!/bin/sh'
+      echo 'echo "$@" >> "'"$d"'/calls.log"'
+      echo 'case "$1" in'
+      echo '  '"$BKJ_FAILIDX"') exit 1 ;;'
+      echo 'esac'
+      echo 'idx=$1'
+      echo 'case "$idx" in'
+      echo '  -2) id=a1b2c3d4 ;; -1) id=e5f60718 ;; 0) id=9c8d7e6f ;; *) id=unknown ;;'
+      echo 'esac'
+      echo 'echo payload > "'"$d"'/dest/boot-$id.export.zst"'; } > "$d/bin/bt-archive"
+    chmod +x "$d/bin/bt-archive"
+    echo "$d"
+}
+bkj_run() {     # <root> [args...]
+    local d="$1"; shift
+    BT_JOURNAL_FIXTURE="$BKJ_FIX" BT_ARCHIVE_BIN="$d/bin/bt-archive" \
+        BT_ARCHIVE_DIR="$d/dest" tools/bt-backup-journal "$@" 2>&1
+}
+bkj_calls() { [[ -r "$1/calls.log" ]] && grep -c . "$1/calls.log" || echo 0; }
+
+# EVERY RETAINED BOOT, AND THE INDEX IS WHAT IS HANDED ON. bt-archive owns the
+# in-repo guard and the read-back verification; this tool is only allowed to
+# choose boots and pass their index through. Asserting the argv is what makes
+# "inherited rather than reimplemented" a checked claim instead of a comment.
+BKJ_FAILIDX=none
+BKJ=$(bkj_setup); BKJOUT=$(bkj_run "$BKJ"); bkjrc=$?
+if (( bkjrc == 0 )) && [[ "$(bkj_calls "$BKJ")" == 3 ]] \
+   && [[ "$(LC_ALL=C sort "$BKJ/calls.log" | tr '\n' ' ')" == "-1 -2 0 " ]]; then
+    ok "bt-backup-journal archives every retained boot, by index, through bt-archive"
+else
+    bad "the archiver was driven wrongly (rc=$bkjrc, $(bkj_calls "$BKJ") call(s)):"
+    while IFS= read -r l; do bad "      $l"; done < <(head -6 "$BKJ/calls.log" 2>/dev/null)
+fi
+rm -rf "$BKJ"
+
+# ALREADY ARCHIVED IS SKIPPED, and skipped means NOT RE-RUN. On this machine the
+# timer fires on every boot against fifteen boots and 313 MB; a tool that
+# re-exported what it already had would spend the disk it exists to protect.
+# The count of stub invocations is the assertion — the output line alone would
+# pass on a tool that printed "already archived" and archived anyway.
+BKJ=$(bkj_setup)
+echo already > "$BKJ/dest/boot-e5f60718.export.zst"
+BKJSKIP=$(bkj_run "$BKJ")
+if [[ "$(bkj_calls "$BKJ")" == 2 ]] && [[ "$BKJSKIP" == *"e5f60718  already archived"* ]] \
+   && ! grep -qx -- '-1' "$BKJ/calls.log"; then
+    ok "a boot already in the archive is skipped, and bt-archive is not re-run for it"
+else
+    bad "an archived boot was re-exported ($(bkj_calls "$BKJ") call(s), expected 2)"
+fi
+rm -rf "$BKJ"
+
+# ONE BAD BOOT MUST NOT COST THE OTHERS THEIR BACKUP. The header says a failure
+# "is reported per boot and does not stop the run"; unattended, that is the
+# difference between losing one boot and losing every boot after it in the list.
+# The exit status still has to be non-zero, or the timer records a success.
+BKJ_FAILIDX=-2
+BKJ=$(bkj_setup); BKJFAIL=$(bkj_run "$BKJ"); bkjfrc=$?
+if (( bkjfrc == 1 )) && [[ "$(bkj_calls "$BKJ")" == 3 ]] \
+   && [[ "$BKJFAIL" == *"a1b2c3d4  FAILED"* && "$BKJFAIL" == *"1 failed"* ]] \
+   && ls "$BKJ/dest"/boot-9c8d7e6f.export.* >/dev/null 2>&1; then
+    ok "a boot that fails to archive is named and the rest still run (exit 1)"
+else
+    bad "a single failure changed the run (rc=$bkjfrc, $(bkj_calls "$BKJ") call(s), expected 3 and rc=1)"
+fi
+rm -rf "$BKJ"
+BKJ_FAILIDX=none
+
+# THE TWO REPORTING MODES MUST NOT ACT. --status is what a check would call and
+# --dry-run is what a careful operator calls first; either one exporting 313 MB
+# is the same defect install.sh and uninstall.sh have dry runs to avoid.
+for mode in --dry-run --status; do
+    BKJ=$(bkj_setup); BKJR=$(bkj_run "$BKJ" "$mode"); mrc=$?
+    if (( mrc == 0 )) && [[ "$(bkj_calls "$BKJ")" == 0 ]] \
+       && ! ls "$BKJ/dest"/boot-* >/dev/null 2>&1; then
+        ok "bt-backup-journal $mode reports without archiving anything"
+    else
+        bad "$mode invoked bt-archive $(bkj_calls "$BKJ") time(s) or wrote to the archive (rc=$mrc)"
+    fi
+    rm -rf "$BKJ"
+done
+
+# AND THEY MUST NOT EXIT NON-ZERO JUST BECAUSE BOOTS ARE MISSING — the header
+# says so explicitly, because a `--status` that failed when there was anything
+# left to do could not be used in a check. Asserted separately from the "does
+# not act" claim above: they are different failures with different causes.
+BKJ=$(bkj_setup); BKJST=$(bkj_run "$BKJ" --status); strc=$?
+(( strc == 0 )) && [[ "$BKJST" == *"NOT archived"* && "$BKJST" == *"0 already archived, 3 missing"* ]] \
+    && ok "--status names the unarchived boots and still exits 0" \
+    || bad "--status exited $strc or did not report the missing boots"
+rm -rf "$BKJ"
+
+# THE UNSANITISED WARNING IS A DISCLOSURE CONTROL, not decoration. An archive is
+# `journalctl -o export` — MAC addresses and Wi-Fi BSSIDs, and a BSSID
+# geolocates this machine. The operator is told every time anything is in the
+# archive, or the one person who could avoid committing it does not know.
+BKJ=$(bkj_setup); BKJW=$(bkj_run "$BKJ")
+[[ "$BKJW" == *"UNSANITISED"* && "$BKJW" == *"BSSID"* && "$BKJW" == *"Never commit"* ]] \
+    && ok "an archive that exists is reported as unsanitised, naming BSSIDs" \
+    || bad "the archive was written with no disclosure warning"
+rm -rf "$BKJ"
+
+# ENUMERATED == 0 IS A REFUSAL, here as everywhere. An empty boot list means
+# --list-boots changed shape or the journal is unreadable; reporting "nothing to
+# back up" would be a clean run of a tool that examined nothing, on a timer,
+# for as long as it took someone to notice.
+BKJE=$(bkj_setup); BKJEF=$(mktemp -d); : > "$BKJEF/list-boots.log"
+BKJEOUT=$(BT_JOURNAL_FIXTURE="$BKJEF" BT_ARCHIVE_BIN="$BKJE/bin/bt-archive" \
+          BT_ARCHIVE_DIR="$BKJE/dest" tools/bt-backup-journal 2>&1); berc=$?
+(( berc == 2 )) && [[ "$BKJEOUT" == *"REFUSING"*"nothing was examined"* ]] \
+    && ok "an empty boot list is refused, not reported as a clean backup" \
+    || bad "an empty --list-boots gave rc=$berc rather than a refusal"
+rm -rf "$BKJE" "$BKJEF"
+
+# THE ARCHIVER ITSELF MISSING IS THE OTHER REFUSAL. On the machine this runs
+# from a timer against /usr/local/bin, where a half-finished install leaves the
+# driver present and bt-archive absent — and a driver that shrugged would report
+# every boot FAILED once an hour forever.
+BKJN=$(bkj_setup)
+BKJNOUT=$(BT_JOURNAL_FIXTURE="$BKJ_FIX" BT_ARCHIVE_BIN="$BKJN/bin/not-there" \
+          BT_ARCHIVE_DIR="$BKJN/dest" tools/bt-backup-journal 2>&1); bnrc=$?
+(( bnrc == 2 )) && [[ "$BKJNOUT" == *"REFUSING"*"bt-archive not found"* ]] \
+    && ok "a missing bt-archive is refused up front, not once per boot" \
+    || bad "an absent archiver gave rc=$bnrc rather than a refusal"
+rm -rf "$BKJN"
+
+# The two remaining entry points.
+BKJH=$(tools/bt-backup-journal --help 2>&1); bhrc=$?
+(( bhrc == 0 )) && [[ "$BKJH" == *"--status"* && "$BKJH" == *"--dry-run"* ]] \
+    && ok "bt-backup-journal --help describes both reporting modes" \
+    || bad "--help returned $bhrc or did not name the modes it documents"
+tools/bt-backup-journal --archive-everything >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-backup-journal rejects an unknown option instead of archiving" \
+    || bad "an unknown option was ignored and the run proceeded"
+
+# ── bt-snapshot: one coarse cut, and it runs DURING a live fault ─────────
+#
+# 0 of 83 lines had ever executed. This is the tool an operator reaches for
+# while a fault window is open, which puts it in the same category as
+# `bt-trial autostop` — and autostop is the cautionary example in its own
+# header, because its hci_alive() issues an HCI Read_Local_Name at every
+# shutdown and that is why EX-029's thirteen clean hours end in a touched
+# terminator. A capture tool that touched the controller would spoil the very
+# window it was called to record.
+SNF=tests/journal/snapshot
+sn_run() {   # <dest-root> [args...]
+    BT_JOURNAL_FIXTURE="$SNF" BT_SNAPSHOT_DIR="$1/snap" BT_REPO="$1/repo" \
+        tools/bt-snapshot "${@:2}" 2>&1
+}
+SN=$(mktemp -d); mkdir -p "$SN/repo"
+SNOUT=$(sn_run "$SN"); snrc=$?
+SNDIR=$(ls -d "$SN/snap"/*-boot0 2>/dev/null | head -1)
+
+# ONE TRAVERSAL, THEN EVERY FILTER FOR FREE — the whole design, asserted as the
+# files it must leave behind. Ten to fifteen journalctl invocations was the
+# cost this replaced, each re-traversing the journal while the operator waited.
+if (( snrc == 0 )) && [[ -s "$SNDIR/all.log" && -s "$SNDIR/kernel.log" \
+   && -e "$SNDIR/f-fault.log" && -e "$SNDIR/f-usb.log" && -e "$SNDIR/f-intervention.log" \
+   && -e "$SNDIR/f-crash.log" && -e "$SNDIR/f-link.log" && -s "$SNDIR/summary.txt" \
+   && "$(readlink -f "$SN/snap/latest")" == "$(readlink -f "$SNDIR")" ]]; then
+    ok "bt-snapshot takes one coarse cut, derives every fine cut, and points latest at it"
+else
+    bad "the capture is incomplete (rc=$snrc): $(ls "$SNDIR" 2>/dev/null | tr '\n' ' ')"
+fi
+
+# THE BARE `command tx timeout` IS COUNTED, and it is the one that anchors.
+# The kernel omits the opcode whenever hdev->req_skb is NULL — the case where
+# the command that died is not the one hci_cmd_sync was tracking. The fixture
+# puts the bare form FIRST, so a pattern requiring an opcode both undercounts
+# (2 of 3) and moves `first timeout` to a later line, which is the anchor every
+# interval in the summary is read against.
+#
+# MUTATION: put `command 0x[0-9a-f]+ tx timeout` back at either counting site
+# and this fails on the count, the anchor, or both.
+[[ "$SNOUT" == *"command timeouts        3"* \
+   && "$SNOUT" == *"first timeout      2026-08-16T21:42:44.918327+0200"* ]] \
+    && ok "an opcode-less command timeout is counted and can anchor the summary" \
+    || bad "the bare timeout form was missed: $(grep -E 'command timeouts|first timeout' <<<"$SNOUT" | tr '\n' ' ')"
+
+# EVERY COUNT SITS ON ITS OWN LABELLED LINE. `grep -c .` prints 0 AND exits 1 on
+# an empty file, so `[[ -r $f ]] && grep -c . "$f" || echo 0` ran both branches
+# and printed two lines; printf cycled its one-conversion format over the extra
+# argument and the summary grew a stray unlabelled 0 under each zero count —
+# interventions, daemon crashes and link-layer events, the three most often zero.
+#
+# THE FIRST VERSION OF THIS CHECK COULD NOT FAIL. It required leading
+# whitespace, and the stray line has none — `%6s` receives the two-line value
+# as ONE argument, pads the first line and emits the second at column zero.
+# Restoring the broken counter left the suite green, which is how the anchor
+# came to be `^[[:space:]]*`.
+STRAY=$(grep -nE '^[[:space:]]*[0-9]+[[:space:]]*$' "$SNDIR/summary.txt" || true)
+[[ -z "$STRAY" ]] \
+    && ok "no summary count is printed twice — every number is on its labelled line" \
+    || bad "the summary carries an unlabelled bare number: $(tr '\n' ' ' <<<"$STRAY")"
+rm -rf "$SN"
+
+# --summary-only RE-PRINTS AND CAPTURES NOTHING. It exists to be cheap; a
+# version that re-cut the journal would be the expensive thing it replaces.
+SN=$(mktemp -d); mkdir -p "$SN/repo"
+sn_run "$SN" >/dev/null 2>&1
+SNBEFORE=$(ls -d "$SN/snap"/*-boot* | wc -l)
+SNRE=$(sn_run "$SN" --summary-only); snrerc=$?
+SNAFTER=$(ls -d "$SN/snap"/*-boot* | wc -l)
+#
+# THE CAPTURE BANNER IS THE ASSERTION, not the directory count. Counting
+# directories is clock-dependent: $STAMP has second resolution, so a re-cut
+# taken in the same second as the first lands in the SAME directory and the
+# count does not move. Deleting the `exit 0` from this branch left the suite
+# green for exactly that reason. `coarse cut of boot` is printed by the
+# traversal itself and cannot be reached without taking one.
+(( snrerc == 0 )) && (( SNBEFORE == SNAFTER )) \
+   && [[ "$SNRE" == *"bt-snapshot summary"* && "$SNRE" != *"coarse cut of boot"* ]] \
+    && ok "--summary-only re-prints the latest capture and takes no new cut" \
+    || bad "--summary-only captured again ($SNBEFORE -> $SNAFTER) or failed (rc=$snrerc)"
+
+SNLIST=$(sn_run "$SN" --list)
+[[ "$SNLIST" == *"-boot0"* ]] \
+    && ok "--list names what has been captured" \
+    || bad "--list did not report the capture that is there"
+rm -rf "$SN"
+
+# AND BOTH REPORTING MODES MUST BE HONEST WHEN THERE IS NOTHING. An empty --list
+# that printed a heading and no rows reads identically to one whose glob broke.
+SN=$(mktemp -d); mkdir -p "$SN/repo"
+SNEMPTY=$(sn_run "$SN" --list)
+[[ "$SNEMPTY" == *"nothing captured yet"* ]] \
+    && ok "--list says so when nothing has been captured, rather than printing a bare heading" \
+    || bad "an empty capture directory produced no statement that it is empty"
+SNNONE=$(sn_run "$SN" --summary-only); snnrc=$?
+(( snnrc == 2 )) && [[ "$SNNONE" == *"REFUSING"*"no previous capture"* ]] \
+    && ok "--summary-only refuses when there is no previous capture" \
+    || bad "--summary-only gave rc=$snnrc with nothing to summarise"
+rm -rf "$SN"
+
+# ENUMERATED == 0 IS A REFUSAL, AND IT LEAVES NOTHING BEHIND. A boot index that
+# names no boot produces an empty cut; reporting it as a quiet boot would be a
+# capture of nothing filed beside real ones, and the empty directory would be
+# indistinguishable from a capture whose journal read failed.
+SN=$(mktemp -d); mkdir -p "$SN/repo" "$SN/emptyfix"; : > "$SN/emptyfix/default.log"
+SNE=$(BT_JOURNAL_FIXTURE="$SN/emptyfix" BT_SNAPSHOT_DIR="$SN/snap" BT_REPO="$SN/repo" \
+      tools/bt-snapshot 2>&1); snerc=$?
+(( snerc == 2 )) && [[ "$SNE" == *"REFUSING"*"nothing was captured"* ]] \
+    && [[ -z "$(ls "$SN/snap" 2>/dev/null)" ]] \
+    && ok "an empty cut is refused and the directory it made is removed" \
+    || bad "an empty boot gave rc=$snerc or left $(ls "$SN/snap" 2>/dev/null | tr '\n' ' ') behind"
+rm -rf "$SN"
+
+# THE RAW CUT MUST NOT BE COMMITTABLE. It is unfiltered journal — MACs and Wi-Fi
+# BSSIDs, and a BSSID geolocates this machine, in a public repository that has
+# leaked an address once. Same guard as bt-archive, and tested the same way:
+# through a SYMLINK, because a path check that does not resolve symlinks is not
+# a path check (BL-06).
+SN=$(mktemp -d); mkdir -p "$SN/repo/inside"
+SNIN=$(BT_JOURNAL_FIXTURE="$SNF" BT_SNAPSHOT_DIR="$SN/repo/inside" BT_REPO="$SN/repo" \
+       tools/bt-snapshot 2>&1); sninrc=$?
+(( sninrc == 2 )) && [[ "$SNIN" == *"inside the repository"* ]] \
+    && ok "bt-snapshot refuses a destination inside the repository" \
+    || bad "a raw cut was written into the repository (rc=$sninrc)"
+
+ln -s "$SN/repo/inside" "$SN/link-to-inside"
+SNLNK=$(BT_JOURNAL_FIXTURE="$SNF" BT_SNAPSHOT_DIR="$SN/link-to-inside" BT_REPO="$SN/repo" \
+        tools/bt-snapshot 2>&1); snlrc=$?
+(( snlrc == 2 )) && [[ "$SNLNK" == *"inside the repository"* ]] \
+    && ok "the in-repo guard resolves a symlinked destination — no route in by either name" \
+    || bad "a symlink pointing into the repository was accepted (rc=$snlrc)"
+rm -rf "$SN"
+
+# IT MUST NEVER TOUCH THE CONTROLLER — the promise in its own header, and the
+# reason it is safe to run during a live window. Checked at the source, because
+# no fixture can prove the absence of a command that is not called. Comments are
+# excluded: the header names all four in prose, saying it does not use them.
+SNTOUCH=$(grep -nE '(hciconfig|btmgmt|bluetoothctl|rfkill)' tools/bt-snapshot \
+          | grep -vE '^[0-9]+:[[:space:]]*#' || true)
+[[ -z "$SNTOUCH" ]] \
+    && ok "bt-snapshot issues no controller command — safe inside an untreated window" \
+    || bad "a controller-touching command reached the capture tool: $(tr '\n' ' ' <<<"$SNTOUCH")"
+
+SNH=$(tools/bt-snapshot --help 2>&1); snhrc=$?
+(( snhrc == 0 )) && [[ "$SNH" == *"--summary-only"* && "$SNH" == *"--list"* ]] \
+    && ok "bt-snapshot --help describes its modes" \
+    || bad "--help returned $snhrc or did not name the modes it documents"
+tools/bt-snapshot --capture-everything >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-snapshot rejects an unknown option rather than capturing" \
+    || bad "an unknown option was ignored and a cut was taken"
+
+# --boot IS THE MODE THAT MATTERS AFTER A REBOOT. The fault window an operator
+# wants is usually the boot that just ended, and `bt-snapshot --boot -1` is how
+# it is reached; the default of 0 captures the boot that is running now, which
+# after a cold recovery is the wrong one. Untested until here, so the argument
+# could have been read and discarded and the tool would still have looked right.
+SN=$(mktemp -d); mkdir -p "$SN/repo"
+SNB=$(sn_run "$SN" --boot -1); snbrc=$?
+(( snbrc == 0 )) && [[ "$SNB" == *"coarse cut of boot -1"* && "$SNB" == *"summary — boot -1"* ]] \
+   && ls -d "$SN/snap"/*-boot-1 >/dev/null 2>&1 \
+    && ok "--boot captures the boot asked for and names it in the directory" \
+    || bad "--boot -1 was not honoured (rc=$snbrc): $(ls "$SN/snap" 2>/dev/null | tr '\n' ' ')"
+rm -rf "$SN"
+
+# THE TWO ENTRY POINTS bt-archive HAD LEFT. Both were invisible while two units
+# sat at 0%: test-comprehension reports the WORST unit, so every gap above zero
+# was hidden behind them until they were closed. --list is how an operator sees
+# what is already archived before spending an export, and an unknown option must
+# refuse rather than be read as a boot index.
+ARL=$(mktemp -d); mkdir -p "$ARL/dest" "$ARL/repo"
+ARLOUT=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARL/dest" \
+         BT_REPO="$ARL/repo" tools/bt-archive --list 2>&1); arlrc=$?
+(( arlrc == 0 )) \
+    && ok "bt-archive --list reports the archive without exporting anything" \
+    || bad "--list returned $arlrc: $(head -2 <<<"$ARLOUT" | tr '\n' ' ')"
+
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARL/dest" \
+    BT_REPO="$ARL/repo" tools/bt-archive --everything >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-archive refuses an unknown option instead of reading it as a boot" \
+    || bad "bt-archive accepted an option it does not implement"
+rm -rf "$ARL"
+
 # ── status: the view that decides whether to abort a trial in progress ───
 #
 # The one command an operator runs WHILE a trial is open, and the only place
@@ -8380,6 +8716,118 @@ devtools/repo-save "$SCRATCH/not-a-repo" "msg" --no-push >/dev/null 2>&1
 [[ -z "$(git -C "$SCRATCH/save" remote 2>/dev/null)" ]] \
     && ok "the repo-save scratch repo has no remote — nothing could be pushed" \
     || bad "a remote exists on the scratch repo used to test repo-save"
+
+# ── AN OPEN TRIAL, AND THE PATH THAT COULD NOT RUN ON ITS OWN MACHINE ────
+#
+# tests/run-tests refuses while a trial is open — the one check that would have
+# prevented 2026-08-14 outright, when a coverage measurement closed a live
+# 2-hour trial and wrote a results row whose treatment fingerprint was
+# fabricated by test stubs. repo-validate runs the suite; repo-save runs
+# repo-validate. And bt-trial-auto opens a trial on EVERY boot of the
+# investigation machine by design.
+#
+# So the whole validate → scan → commit → push path was unusable on the machine
+# it was written for, and the maintainer had been committing with plain git
+# after running repo-scan by hand (comms/2026-08-19T1620Z §5). The gate worked
+# exactly as designed and the workflow failed anyway — the same shape as the CI
+# recovery above, and the third instance of a control that holds where it was
+# written and not where it runs.
+#
+# THE FIX IS AT THE TOOL BOUNDARY, NOT INSIDE THE SUITE. A "non-acting subset"
+# would require maintaining a claim about which half acts, and the first
+# actuating assertion added to the safe half removes the guard on the one
+# machine where it matters, silently. Everything in repo-validate except the
+# suite parses files and asks git what is tracked.
+#
+# What this section pins is that the difference is IMPOSSIBLE TO MISS. A commit
+# made without the analysis invariants is not a lesser commit — CI runs them on
+# push — but an operator who believes the suite ran is worse off than one who
+# knows it did not.
+SVT="$SCRATCH/trialstate"; mkdir -p "$SVT"
+svt() { BT_TRIAL_STATE_DIR="$SVT" devtools/repo-save "$SCRATCH/save" "$@" --no-push 2>&1; }
+
+printf 'trial-07 build=stock opened 2026-08-19T18:00:00+02:00\n' > "$SVT/current"
+printf '#!/bin/bash\necho open-trial\n' > "$SCRATCH/save/during-trial.sh"
+SVTOUT=$(svt "committed while a trial was open"); svtrc=$?
+if (( svtrc == 0 )) \
+   && [[ "$SVTOUT" == *"A TRIAL IS OPEN"* && "$SVTOUT" == *"trial-07"* \
+      && "$SVTOUT" == *"tests SKIPPED (--no-suite)"* \
+      && "$SVTOUT" == *"SUITE NOT RUN"* \
+      && "$SVTOUT" == *"committed WITHOUT the suite"* ]]; then
+    ok "repo-save commits with a trial open, and says four times that the suite did not run"
+else
+    bad "the open-trial path is silent or broken (rc=$svtrc): $(grep -cE 'TRIAL IS OPEN|SKIPPED|SUITE NOT RUN|WITHOUT the suite' <<<"$SVTOUT") of 4 statements"
+fi
+
+# THE VALIDATORS THAT REMAIN MUST STILL BITE. Dropping the suite must not drop
+# the syntax check with it, or the open-trial path becomes a way to commit a
+# broken script on the one machine that commits most often.
+printf '#!/bin/bash\nif [ ; then echo broken\n' > "$SCRATCH/save/broken-during-trial.sh"
+SVTBAD=$(svt "a broken script while a trial is open"); svtbrc=$?
+(( svtbrc != 0 )) && [[ "$SVTBAD" == *"VALIDATION FAILED"* ]] \
+    && ok "--no-suite still refuses a script that does not parse" \
+    || bad "a syntax error was committed under an open trial (rc=$svtbrc)"
+rm -f "$SCRATCH/save/broken-during-trial.sh"
+
+# AND THE SCAN MUST STILL BITE. repo-scan is read-only by construction, so it
+# runs in both modes — and it is the gate that keeps a BSSID out of a public
+# repository, which is the last one to lose on the machine holding the journals.
+_o1='dc:a6'; _o2='32:11'; _o3='22:33'
+printf 'AP %s:%s:%s\n' "$_o1" "$_o2" "$_o3" > "$SCRATCH/save/leak-during-trial.log"
+SVTLEAK=$(svt "a MAC while a trial is open"); svtlrc=$?
+(( svtlrc != 0 )) && [[ "$SVTLEAK" == *"scan failed"* ]] \
+    && ok "--no-suite still refuses a real MAC — the disclosure gate is not the suite" \
+    || bad "a MAC was committed under an open trial (rc=$svtlrc)"
+rm -f "$SCRATCH/save/leak-during-trial.log"
+
+# AND WITH NO TRIAL OPEN, NOTHING CHANGES. The mode must be reached only by the
+# condition that justifies it; a repo-save that quietly stopped running the
+# suite everywhere would be the defect this section exists to prevent, arriving
+# through its own fix.
+rm -f "$SVT/current"
+printf '#!/bin/bash\necho no-trial\n' > "$SCRATCH/save/after-trial.sh"
+SVNT=$(svt "committed with no trial open"); svntrc=$?
+(( svntrc == 0 )) && [[ "$SVNT" != *"SUITE NOT RUN"* && "$SVNT" != *"TRIAL IS OPEN"* ]] \
+    && ok "with no trial open repo-save runs the full validation, unchanged" \
+    || bad "the no-suite path was taken without an open trial (rc=$svntrc)"
+
+# repo-validate's own two entry points for this.
+devtools/repo-validate "$SCRATCH/save" --no-suite >/dev/null 2>&1
+(( $? == 0 )) && ok "repo-validate --no-suite exits 0 on a tree whose files parse" \
+              || bad "--no-suite failed on a valid tree"
+devtools/repo-validate "$SCRATCH/save" --no-such-flag >/dev/null 2>&1
+(( $? == 2 )) && ok "repo-validate rejects an unknown option rather than reading it as a directory" \
+              || bad "an unknown option was taken for a path"
+
+# THE TALLY COUNTS FILES, AND THE SUITE IS NOT A FILE. It was incremented into
+# $checked, so a small tree reported "6 of 5 files were checkable" — a sentence
+# that cannot be true, in the summary line every caller reads.
+#
+# ITS OWN REPO, WHERE EVERY TRACKED FILE IS CHECKABLE. Two earlier versions of
+# this check could not fail. The first ran against a tree with no
+# tests/run-tests, so the suite step never executed and $checked was never
+# inflated. The second added a stub but reused $SCRATCH/save, which by then held
+# planted .log files — counted in $enumerated, never in $checked — so
+# `checked + 1` still fitted underneath and the arithmetic never crossed.
+#
+# One repo, one shell script, one untracked suite stub: enumerated == 1,
+# checked == 1, and a suite counted as a file makes it 2 of 1 — a sentence that
+# cannot be true, in the summary line every caller reads.
+SVQ=$(mktemp -d); git -C "$SVQ" init -q
+git -C "$SVQ" config user.email test@example.com; git -C "$SVQ" config user.name test
+printf '#!/bin/bash\necho only\n' > "$SVQ/only.sh"
+git -C "$SVQ" add -A
+mkdir -p "$SVQ/tests"; printf '#!/bin/bash\necho "all 1 invariants hold"\n' > "$SVQ/tests/run-tests"
+chmod +x "$SVQ/tests/run-tests"
+SVCOUNT=$(devtools/repo-validate "$SVQ" 2>&1 | tail -1)
+if [[ "$SVCOUNT" =~ \(([0-9]+)\ of\ ([0-9]+)\ files ]]; then
+    (( BASH_REMATCH[1] <= BASH_REMATCH[2] )) \
+        && ok "repo-validate never reports more files checked than it enumerated" \
+        || bad "the summary claims ${BASH_REMATCH[1]} of ${BASH_REMATCH[2]} files — the suite is counted as one"
+else
+    bad "repo-validate's summary line did not carry a checked/enumerated pair: $SVCOUNT"
+fi
+rm -rf "$SVQ"
 
 rm -rf "$SCRATCH"
 
