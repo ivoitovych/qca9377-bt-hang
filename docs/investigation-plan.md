@@ -89,18 +89,42 @@ commit changed behaviour for a class of adapters, here is the class, here is wha
 is a complete report on its own. **That route bypasses A4 entirely**, and it is the only
 one currently unblocked.
 
-⚠️ **It is not yet verified**, and the one check that could sink it is open: §4.2 asserts
-this controller uses isochronous **alt setting 1**, while every `Looking for Alt no` line
-ever captured on this machine says **6 then 3**, with alt 1 appearing not once. If our
-failures are on the legacy CVSD path rather than the wideband one, §4.5 may explain a
-different fault. Settling that is a source read and it is the highest-priority open item in
-the project.
+**Verified 2026-08-22, and the check that was meant to sink it confirmed it instead.**
+
+This section first read: *§4.2 asserts alt setting 1, while every `Looking for Alt no` line
+captured here says 6 then 3, with alt 1 appearing not once — so §4.5 may explain a different
+fault.* That objection was **exactly backwards**, and the source says why
+(`comms/2026-08-22T1106Z`):
+
+* `BT_DBG("Looking for Alt no :%d", alt)` is at the **entry** of
+  `btusb_find_altsetting()` — it logs the candidate *probed*, not the alt chosen.
+* The transparent branch probes 6, then 3, and if both fail assigns `new_alts = 1` in a
+  bare `else` **that calls nothing and therefore logs nothing**. So `:6` then `:3` and
+  silence *is* the alt-1 signature. The absence of `:1` is what §4.2 predicts.
+* The CVSD branch computes `new_alts` arithmetically and **never calls
+  `btusb_find_altsetting`**. A `Looking for Alt no` line can only come from the transparent
+  branch, so its presence is positive proof the device took that branch.
+* `BTUSB_USE_ALT3_FOR_WBS` is set at exactly one site, inside the Realtek block.
+  `13d3:3503` matches no entry, so the alt-3 test fails and alt 1 is forced.
+
+⚠️ **And one inference of ours is withdrawn.** This document previously implied, and
+`comms/2026-08-22T1320Z` stated, that `0x0428` means CVSD. **It does not.** `btusb_notify()`
+takes `air_mode` from the HCI core's notify value, derived from the *air mode of the
+synchronous connection*, not from the opcode. `0x0428` carries a voice-setting parameter and
+can request transparent data exactly as `0x043D` can. **Legacy opcode ≠ CVSD**, and any
+argument resting on that equivalence — including the `0x0428`-versus-`0x043D` comparison
+proposed above as A3's replacement — must be restated in terms of air mode.
+
+So the regression route is **live and source-verified**: this controller is placed in
+isochronous alt setting 1 for wideband speech, a configuration it was never validated for,
+because v5.12 turned a Realtek-only opt-in into an unconditional fallback.
 
 ### Revised order of work
 
-1. **Settle §4.2** — alt 1 versus the observed 6/3. Source read, no hardware. Everything
-   below depends on which way it goes.
+1. ~~Settle §4.2~~ — **done 2026-08-22, confirmed.** See above.
 2. **Name the v5.12 commit**, and confirm the unconditional fallback survives into 7.0.
+   This is now the top item, and the regression report is the only unblocked route to
+   upstream.
 3. **Compute the exposed set** — adapters with no alt 6, not Realtek, no quirk. Turns
    "several laptops" into a list, which is what makes a maintainer act.
 4. **A4**, still, because the ladder cannot run without it and no source finding removes
