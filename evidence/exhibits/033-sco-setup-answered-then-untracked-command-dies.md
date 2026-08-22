@@ -115,7 +115,7 @@ operator was right to say so.
 | field | value |
 |---|---|
 | captured | `2026-08-22T11:16:27+02:00` |
-| kernel | `7.0.0-28-generic` |
+| kernel | `7.0.0-29-generic` — corrected 2026-08-23; this exhibit was hand-written and copied `7.0.0-28-generic` forward from `EX-029` without checking. Boot `56afa828` ran `-29`, verified from its own `Linux version` line |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |
