@@ -5458,6 +5458,33 @@ else
     bad "no tool sources journal.sh — the seam is not wired up"
 fi
 
+# THE SAME RULE FOR THE SECOND SEAM, derived the same way rather than written
+# as "and also check bt-crash". There is one caller today; the rule is here so
+# that the day there are two, neither can quietly regain a direct call. The
+# `[^_[:alnum:]]` in the pattern is what lets `bt_coredumpctl list` through and
+# stops `coredumpctl list` — the underscore is load-bearing, not decoration.
+CDCONV=()
+for f in "${SHFILES[@]}"; do
+    case "$f" in tools/*|bin/*) ;; *) continue ;; esac
+    n=$(grep -c 'source "\$LIBDIR/coredump.sh"' "$f" 2>/dev/null)
+    (( ${n:-0} > 0 )) && CDCONV+=("$f")
+done
+if (( ${#CDCONV[@]} > 0 )); then
+    ok "the coredump seam is in use by ${#CDCONV[@]} tool(s)"
+    CDRAW=$(grep -nE '(^|[^_[:alnum:]])coredumpctl ' "${CDCONV[@]}" 2>/dev/null \
+            | grep -v 'SEAM-ADVICE' \
+            | grep -v '^[^:]*:[0-9]*:[[:space:]]*#' \
+            | grep -v 'coredumpctl "\$@"')
+    if [[ -z "$CDRAW" ]]; then
+        ok "no converted tool calls coredumpctl directly"
+    else
+        bad "a converted tool bypassed bt_coredumpctl — it is untestable again:"
+        while IFS= read -r l; do echo "        $l"; done <<<"$CDRAW"
+    fi
+else
+    bad "no tool sources coredump.sh — the coredump seam is not wired up"
+fi
+
 # ── --grep IS AN OPTIMISATION, WHICH MEANS THE ANSWER MUST NOT DEPEND ON IT ──
 #
 # bt_journal_count and bt_journal_first hand the pattern to journalctl when the
@@ -7186,6 +7213,249 @@ BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARL/dest" \
     || bad "bt-archive accepted an option it does not implement"
 rm -rf "$ARL"
 
+# ── bt-crash: the tool that decides WHICH of three faults the operator has ─
+#
+# This project has three failure modes that are indistinguishable from the
+# outside — the controller wedging (BT-1), an audio-server transport release
+# (EX-030), and a BlueZ crash that leaves the adapter Powered and permanently
+# non-scanning (EX-032). They are answered by completely different work, and
+# bt-crash is what separates them in one command. It had never executed a line
+# under test, because half its answer came from `coredumpctl` on the host and
+# the other half from `journalctl` on the host.
+#
+# Both halves are seams now. tools/lib/coredump.sh is the new one; it exists so
+# the availability probe moves with the calls, which is the defect
+# bt_journal_available was added to fix on the journal side.
+CJ=tests/journal/crash
+cr_run() {   # <coredump fixture> [args...]
+    BT_JOURNAL_FIXTURE="$CJ" BT_COREDUMP_FIXTURE="$1" tools/bt-crash "${@:2}" 2>&1
+}
+
+# THE LINE THE MAINTAINER ASKED FOR BY NAME. Two segfaults at one offset
+# reading one address is a deterministic null dereference; two at different
+# offsets is corruption or three unrelated bugs. That distinction is the whole
+# difference between a filable BlueZ bug and "it crashed again", and nothing
+# checked that the tool draws it. The fixture is EX-032's own two lines.
+CR0=$(cr_run tests/coredump/held); cr0rc=$?
+[[ "$CR0" == *"crashes at the SAME offset 367e5 in bluetoothd"* \
+   && "$CR0" == *"2 crashes at the SAME"* ]] \
+    && ok "two segfaults at one offset are reported as deterministic, not as two crashes" \
+    || bad "the same-offset detector did not fire: $(grep -F 'SAME offset' <<<"$CR0")"
+
+# AND THE OFFSET IS NOT AN IDENTITY ON ITS OWN. `libc.so.6[ade55,…]` and
+# `bluetoothd[367e5,…]` are both in this repository's evidence, and the first
+# version keyed on the bare offset — so two libc faults outvoted one bluetoothd
+# fault and printed `2 crashes at the SAME offset ade55`, true and read by
+# anyone who knows what this tool is for as a claim about BlueZ.
+#
+# MUTATION: drop the module from the sed capture and this fails on the name
+# while the count and the offset still match, which is exactly the report the
+# defect produced.
+CR2=$(cr_run tests/coredump/held --boot -2)
+[[ "$CR2" == *"2 crashes at the SAME offset ade55 in libc.so.6"* \
+   && "$CR2" != *"offset 367e5"* ]] \
+    && ok "a repeated offset is attributed to the binary it is an offset into" \
+    || bad "the majority offset was reported without its binary: $(grep -F 'SAME offset' <<<"$CR2")"
+
+# ONE CRASH IS NOT A PATTERN. The warning is the strongest sentence this tool
+# prints and an off-by-one in its threshold would put it above every single
+# segfault this project has ever recorded.
+CR1=$(cr_run tests/coredump/nonbt --boot -1)
+[[ "$CR1" != *"SAME offset"* ]] \
+    && ok "a single segfault produces no determinism claim" \
+    || bad "one crash was reported as a repeated offset: $(grep -F 'SAME offset' <<<"$CR1")"
+
+# --boot READS THE BOOT IT WAS GIVEN. After a cold recovery the window an
+# operator wants is the boot that just ended, and the default of 0 is the wrong
+# one. The two fixture boots carry different line counts so a tool that read
+# one file for both cannot pass.
+[[ "$CR0" == *"(4 line(s) total)"* && "$CR1" == *"(2 line(s) total)"* ]] \
+    && ok "--boot selects the boot, and the count is that boot's own" \
+    || bad "boot 0 and boot -1 did not give their own counts"
+
+# THE CORE LISTING IS NEVER TRUNCATED. The tool exists because a hand-typed
+# `tail -4` hid the bluetoothd core and showed only btmon's, so every retained
+# core is printed and filtered by relevance instead of by position.
+CRROWS=$(grep -cE '^  (Mon|Tue|Wed|Thu|Fri|Sat|Sun) ' <<<"$CR0" || true)
+(( ${CRROWS:-0} == 3 )) && [[ "$CR0" == *"2862"* && "$CR0" == *"313564"* && "$CR0" == *"btmon"* ]] \
+    && ok "every relevant retained core is listed, oldest included" \
+    || bad "the core listing showed $CRROWS of 3 rows"
+
+# THE BLUETOOTH FILTER IS A FILTER, in both directions. A tool that showed
+# everything would bury the answer; one that showed nothing under --all would
+# make the escape hatch useless.
+CRA=$(cr_run tests/coredump/held --all)
+[[ "$CR0" != *"firefox"* && "$CRA" == *"firefox"* ]] \
+    && ok "unrelated cores are filtered out by default and shown by --all" \
+    || bad "the default listing and --all did not differ on a non-bluetooth core"
+
+# AND THE HEADER ROW IS STRIPPED — asserted HERE, on --all, because that is the
+# only mode where it can be observed. `coredumpctl list` prints a
+# `TIME PID UID GID SIG COREFILE EXE SIZE` row that `tail -n +2` removes; in the
+# default mode the bluetooth grep removes it too, since a header naming columns
+# matches none of the process names. So `tail -n +2` does nothing in the mode
+# that is used most and everything in the mode that has no other filter.
+#
+# THE FIRST VERSION OF THIS CHECK COULD NOT FAIL. It asserted the header's
+# absence from the DEFAULT listing, where the grep had already removed it:
+# deleting `tail -n +2` from both call sites left the suite green. Sixth
+# instance in this repository of a check written against the wrong mode.
+CRAROWS=$(grep -cE '^  (Mon|Tue|Wed|Thu|Fri|Sat|Sun) ' <<<"$CRA" || true)
+(( ${CRAROWS:-0} == 4 )) && [[ "$CRA" != *"COREFILE"* && "$CRA" != *"SIG "* ]] \
+    && ok "--all lists every core and none of coredumpctl's header row" \
+    || bad "--all showed $CRAROWS of 4 rows, or kept the header: $(grep -F COREFILE <<<"$CRA")"
+
+# THE NEWEST bluetoothd CORE IS THE ONE OPENED. Both cores are in the fixture
+# with different stacks, so picking the older one — `head -1` instead of
+# `tail -1`, or the wrong awk field for the pid — fails on the frame as well as
+# on the pid. This is also what pins PID to whitespace field 5 of a `list` row.
+[[ "$CR0" == *"Newest bluetoothd stack (pid 313564)"* \
+   && "$CR0" == *"0x000060ff12be87e5"* && "$CR0" != *"0x00005c48db1977e5"* ]] \
+    && ok "the stack printed is the newest bluetoothd core's, not the first listed" \
+    || bad "the wrong core was opened: $(grep -F 'Newest bluetoothd' <<<"$CR0")"
+
+# A CORE STORE WITH NOTHING RELEVANT IN IT SAYS WHICH KIND OF NOTHING. "none"
+# and "none matching bluetooth processes" are different facts — the second
+# means there are cores and the operator can see them — and a message that did
+# not distinguish them would send someone to install systemd-coredump that
+# already has it.
+CRN=$(cr_run tests/coredump/nonbt); crnrc=$?
+CRNA=$(cr_run tests/coredump/nonbt --all)
+(( crnrc == 0 )) && [[ "$CRN" == *"none matching bluetooth processes (use --all)"* \
+   && "$CRNA" == *"firefox"* ]] \
+    && ok "a store holding only unrelated cores says so, and --all shows them" \
+    || bad "the empty-for-bluetooth message did not point at cores that are there (rc=$crnrc)"
+
+# AND A JOURNAL THAT WAS READ AND HELD NO CRASH. The other half of the empty-
+# input rule: CHECKED == 0 is a RESULT and must read as one. This is the answer
+# an operator gets on a healthy boot, and it is the answer the refusal below has
+# to be distinguishable from — same tool, same section, opposite meaning.
+CRQUIET=$(mktemp -d)
+printf '2026-08-20T09:00:00+0200 n systemd[1]: Started bluetooth.service.\n' > "$CRQUIET/default.log"
+CRQ=$(BT_JOURNAL_FIXTURE="$CRQUIET" BT_COREDUMP_FIXTURE=tests/coredump/nonbt \
+      tools/bt-crash 2>&1); crqrc=$?
+(( crqrc == 0 )) && [[ "$CRQ" == *"Crashes in the journal:"* && "$CRQ" == *"none"* \
+   && "$CRQ" != *"UNKNOWN"* && "$CRQ" != *"line(s) total"* ]] \
+    && ok "a journal that was read and holds no crash reports 'none' and exits 0" \
+    || bad "a quiet boot was not reported as a clean result (rc=$crqrc)"
+rm -rf "$CRQUIET"
+
+CREMPTY=$(mktemp -d)
+CRE=$(cr_run "$CREMPTY" --all); crerc=$?
+(( crerc == 0 )) && [[ "$CRE" == *"Cores retained:"* && "$CRE" == *"none"* \
+   && "$CRE" != *"matching bluetooth"* ]] \
+    && ok "an empty core store reports plain 'none' under --all" \
+    || bad "an empty store did not report cleanly (rc=$crerc)"
+rm -rf "$CREMPTY"
+
+# "NO CRASHES" AND "NOTHING WAS READ" ARE DIFFERENT ANSWERS, and this tool used
+# to print the first for both. That is the empty-input rule — ENUMERATED == 0 is
+# a refusal — applied to the one tool whose job is to say whether BlueZ died.
+# The cores are a separate source and are still listed, so the half that
+# survived is not thrown away with the half that did not.
+#
+# Driven by removing journalctl from PATH, like the other no-journal refusals:
+# the branch is about the HOST lacking the tool, and an empty fixture directory
+# exercises a different question.
+CRNOJ=$(mktemp -d); mkdir -p "$CRNOJ/bin"
+for c in grep awk sed cat sort head tail wc uniq date cut tr basename dirname readlink; do
+    [[ -x "/usr/bin/$c" ]] && ln -sf "/usr/bin/$c" "$CRNOJ/bin/$c" 2>/dev/null
+    [[ -x "/bin/$c" ]] && ln -sf "/bin/$c" "$CRNOJ/bin/$c" 2>/dev/null
+done
+CRNJ=$(PATH="$CRNOJ/bin" BT_COREDUMP_FIXTURE=tests/coredump/held tools/bt-crash 2>&1); crnjrc=$?
+(( crnjrc == 2 )) && [[ "$CRNJ" == *"UNKNOWN — no journal is reachable"* \
+   && "$CRNJ" == *"This is not 'no crashes'"* && "$CRNJ" == *"313564"* ]] \
+    && ok "an unreadable journal is a refusal, and the retained cores are still reported" \
+    || bad "bt-crash without a journal gave rc=$crnjrc: $(grep -F 'Crashes in the journal' -A1 <<<"$CRNJ" | tr '\n' ' ')"
+rm -rf "$CRNOJ"
+
+# AND THE HOST WITH NO CORE STORE AT ALL, which is the common case and the one
+# that produces an ACTION. "coredumpctl not installed" is not a diagnosis — it
+# says the next crash will leave nothing to file, and the fix is one package.
+# Driven through a symlink farm rather than an empty fixture, because the branch
+# is about the tool being absent from the host; a fixture directory that happens
+# to be empty is a store with no cores, which is the assertion above.
+CRF=$(mktemp -d)
+farm_dir "$CRF/farm" coredumpctl
+CRNC=$(PATH="$CRF/farm" BT_JOURNAL_FIXTURE="$CJ" tools/bt-crash 2>&1); crncrc=$?
+(( crncrc == 0 )) && [[ "$CRNC" == *"coredumpctl not installed"* \
+   && "$CRNC" == *"Install systemd-coredump"* && "$CRNC" == *"SAME offset 367e5"* ]] \
+    && ok "no core store names the package to install, and the journal half still answers" \
+    || bad "the absent-coredumpctl branch did not report or suppressed the journal (rc=$crncrc)"
+rm -rf "$CRF"
+
+# IT MUST NEVER TOUCH THE CONTROLLER. Same promise as bt-snapshot and the same
+# reason: it is run while a fault window is open, and the window's whole value
+# is that nothing has been done to the controller inside it. Checked at the
+# source, because no fixture can prove the absence of a call that is not made.
+CRTOUCH=$(grep -nE '(hciconfig|btmgmt|bluetoothctl|rfkill)' tools/bt-crash \
+          | grep -vE '^[0-9]+:[[:space:]]*#' || true)
+[[ -z "$CRTOUCH" ]] \
+    && ok "bt-crash issues no controller command — safe inside an untreated window" \
+    || bad "a controller-touching command reached the crash tool: $(tr '\n' ' ' <<<"$CRTOUCH")"
+
+# THE USAGE SURFACE. `--boot` with no index exited 1 through `${2:?}` while
+# every other usage error in the file exits 2, so one mistake got two answers.
+CRH=$(tools/bt-crash --help 2>&1); crhrc=$?
+(( crhrc == 0 )) && [[ "$CRH" == *"--boot -1"* && "$CRH" == *"--all"* \
+   && "$CRH" != *"WHY THIS EXISTS"* ]] \
+    && ok "bt-crash --help names its modes and stops before the rationale" \
+    || bad "--help returned $crhrc or spilled past the usage block"
+tools/bt-crash --dump-everything >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-crash exits 2 on an unknown option" \
+              || bad "bt-crash did not refuse an unknown option with 2"
+tools/bt-crash --boot >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-crash --boot with no index refuses with 2, like every other usage error" \
+              || bad "--boot with no index did not exit 2"
+CRLIB=$(BT_LIBDIR=/nonexistent tools/bt-crash 2>&1); crlibrc=$?
+(( crlibrc == 2 )) && [[ "$CRLIB" == *"missing /nonexistent/journal.sh"* ]] \
+    && ok "bt-crash names the library it could not load rather than running without it" \
+    || bad "a missing library did not stop bt-crash (rc=$crlibrc)"
+
+# ── the coredump fixture is a CLAIM about real coredumpctl output ────────
+#
+# Three claims, and bt-crash reads a wrong answer out of each if one is false:
+# that `list` prints a header row to strip, that PID is whitespace field 5 of a
+# data row, and that `info` carries a `Stack trace of thread` line. This is the
+# hazard journal-contract was built for — the provenance fixture shipped
+# without `--list-boots`'s header and every fixture-driven test passed while the
+# real tool crashed on real output. The fixture is the world, so the world has
+# to be asked.
+#
+# Declared here and READ in the vacuity report at the end of the run: a check
+# that skips silently makes "all N invariants hold" mean two different things on
+# two machines, which is the ambiguity three of this suite's four longest-lived
+# vacuous assertions escaped through.
+COREDUMP_SKIPPED=''
+CDREAL=""
+if command -v coredumpctl >/dev/null 2>&1; then
+    CDREAL=$(coredumpctl list --no-pager 2>/dev/null || true)
+fi
+CDROWS=$(awk 'NR > 1 && $5 ~ /^[0-9]+$/' <<<"${CDREAL:-}" | wc -l)
+if [[ -z "$CDREAL" ]] || (( ${CDROWS:-0} == 0 )); then
+    COREDUMP_SKIPPED="the coredumpctl output contract (tests/coredump/*)"
+else
+    CDHEAD=$(head -1 <<<"$CDREAL")
+    [[ "$CDHEAD" == TIME* && "$CDHEAD" == *PID* && "$CDHEAD" == *SIG* ]] \
+        && ok "real coredumpctl list prints the header row the fixture carries" \
+        || bad "coredumpctl list's first line is not the header the fixture claims: $CDHEAD"
+
+    # The same awk field bt-crash takes the pid from, against the real tool.
+    CDPID=$(awk 'NR > 1 && $5 ~ /^[0-9]+$/ { print $5; exit }' <<<"$CDREAL")
+    [[ -n "$CDPID" ]] \
+        && ok "PID is whitespace field 5 of a real coredumpctl list row" \
+        || bad "no real list row carries a pid in field 5 — bt-crash reads the wrong column"
+
+    CDINFO=$(coredumpctl info "$CDPID" --no-pager 2>/dev/null || true)
+    if [[ "$CDINFO" == *"Stack trace of thread"* ]]; then
+        ok "real coredumpctl info carries the 'Stack trace of thread' line the fixture claims"
+    elif [[ -z "$CDINFO" ]]; then
+        COREDUMP_SKIPPED="the coredumpctl info contract (core for pid $CDPID no longer readable)"
+    else
+        bad "coredumpctl info printed no stack-trace heading — bt-crash would print nothing"
+    fi
+fi
+
 # ── status: the view that decides whether to abort a trial in progress ───
 #
 # The one command an operator runs WHILE a trial is open, and the only place
@@ -8419,6 +8689,19 @@ devtools/repo-validate "$SCRATCH/badsh" >/dev/null 2>&1
 (( $? != 0 )) && ok "repo-validate fails on a planted bash syntax error" \
               || bad "repo-validate PASSED a repo with unparseable shell"
 
+# AND THE SAME ERROR IN A FILE WITH NO SHEBANG, which is what every SOURCED
+# library is. The shebang scan could not see them, so `tools/lib/journal.sh` —
+# the file every diagnostic in this repository reads the journal through — was
+# parsed by nothing. It survived because a syntax error there turns dozens of
+# assertions in this suite red; that is a consequence of the damage, not a
+# check for it, and it says nothing until someone runs the whole suite.
+mkdir -p "$SCRATCH/badlib"; scratch_repo "$SCRATCH/badlib"
+printf '# a sourced library, no shebang by design\nf() {\n' > "$SCRATCH/badlib/lib.sh"
+git -C "$SCRATCH/badlib" add -A
+devtools/repo-validate "$SCRATCH/badlib" >/dev/null 2>&1
+(( $? != 0 )) && ok "repo-validate parses a shebang-less .sh library too" \
+              || bad "an unparseable sourced library passed validation — the seam libs are unchecked"
+
 # ── EVERY VALIDATOR, AGAINST A FILE OF ITS OWN KIND ──────────────────────
 #
 # repo-validate dispatches by extension: units to systemd-analyze, rules to
@@ -9097,6 +9380,17 @@ if [[ -n "$PRIV_SKIPPED" ]]; then
     echo "  NOT ASKED HERE: $PRIV_SKIPPED — this run reached none of EUID 0, a"
     echo "                  user namespace, or fakeroot, and the tool under test"
     echo "                  refuses to act without one of them."
+fi
+
+# AND THE THIRD KIND OF ABSENCE: a tool that is installed but has nothing to
+# answer with. `coredumpctl` on a host that has never dumped a core exits 1 with
+# an empty list, so the fixture's claims about its output shape cannot be
+# checked — which is every CI container, and the fixture is the world until
+# somewhere asks the world.
+if [[ -n "$COREDUMP_SKIPPED" ]]; then
+    echo "  NOT ASKED HERE: $COREDUMP_SKIPPED — no core is retained on this host,"
+    echo "                  so the fixture's shape was not checked against the"
+    echo "                  real tool. Run this suite where a core exists."
 fi
 
 echo

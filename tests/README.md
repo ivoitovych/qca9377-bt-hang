@@ -68,6 +68,9 @@ check in the file counts `evidence/sessions/` before and after.
 | `trial-results.tsv` | `trial-summary.awk` / `trial-sco-table.awk` |
 | `journal/phase/` | `bt-phase` end to end, via `BT_JOURNAL_FIXTURE` |
 | `journal/provenance/` | `bt-boot-provenance` end to end |
+| `journal/crash/` | `bt-crash` — three boots: two segfaults at one offset, one segfault, and two binaries competing for the majority |
+| `coredump/held/` | `bt-crash` — a core store with two `bluetoothd` cores, a `btmon` core and an unrelated one, via `BT_COREDUMP_FIXTURE` |
+| `coredump/nonbt/` | `bt-crash` — a store holding cores, none of them Bluetooth's |
 
 ### Driving a tool without a journal
 
@@ -88,6 +91,28 @@ returns for a unit that never logged.
 Only tools that source `journal.sh` can be driven this way. An invariant asserts
 that no converted tool has quietly regained a direct `journalctl` call, because
 the seam is worth nothing if it is not the only way in.
+
+### Driving a tool without a retained core
+
+`bt-crash` answers from two sources, and the second is
+[`tools/lib/coredump.sh`](../tools/lib/coredump.sh). `BT_COREDUMP_FIXTURE`
+works the same way, with files chosen from the verb:
+
+```bash
+BT_JOURNAL_FIXTURE=tests/journal/crash \
+BT_COREDUMP_FIXTURE=tests/coredump/held tools/bt-crash
+```
+
+`list.txt` answers `coredumpctl list` and **must carry the header row**, because
+every caller strips one; `info-<pid>.txt` answers `coredumpctl info <pid>`. A
+missing file means "no cores", which here means **exit 1**, not exit 0 — that is
+what the real tool does with nothing retained, and journal.sh's rule is *be the
+honest analogue*, not *always exit 0*.
+
+A fixture is a claim about the real tool's output, so the suite checks three of
+them — the header row, the pid being whitespace field 5, and `info` carrying a
+`Stack trace of thread` line — against real `coredumpctl` whenever the host has
+a core to ask about, and says out loud when it could not.
 
 ## The system round trip
 

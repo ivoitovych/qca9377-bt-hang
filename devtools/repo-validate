@@ -66,6 +66,14 @@ while IFS= read -r f; do
     # scripts silently stop being syntax-checked — the validator would report
     # a clean repository by checking nothing.
     n_sh=$(head -1 "$f" 2>/dev/null | grep -cE '^#!.*(bash|sh)' || true)
+    # AND THE FILES THAT ARE SHELL WITHOUT A SHEBANG, which is every library
+    # meant to be SOURCED. tools/lib/journal.sh is the most depended-on file in
+    # this tree — every diagnostic reads the journal through it — and until this
+    # line it had never been parsed by any validator, because a sourced file
+    # must not carry a shebang and the scan above only knew about shebangs. It
+    # survived on the fact that a syntax error there turns dozens of suite
+    # assertions red, which is a consequence, not a check.
+    case "$f" in *.sh) n_sh=1 ;; esac
     if (( ${n_sh:-0} > 0 )); then
         if bash -n "$f" 2>/dev/null; then ok "bash  $f"
         else bad "bash  $f"; bash -n "$f" 2>&1 | sed 's/^/      /'; fi
