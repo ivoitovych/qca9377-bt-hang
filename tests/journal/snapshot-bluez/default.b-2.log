@@ -1,0 +1,15 @@
+2026-08-16T07:00:01.100000+0200 n kernel: usb 3-3: new full-speed USB device number 2 using xhci_hcd
+2026-08-16T07:00:02.000000+0200 n kernel: Bluetooth: hci0: opcode 0x0c03 sent
+2026-08-16T07:00:02.100000+0200 n kernel: Bluetooth: hci0: opcode 0x1001 sent
+2026-08-16T07:00:03.000000+0200 n systemd[1]: Started bluetooth.service - Bluetooth service.
+2026-08-16T07:00:03.500000+0200 n bluetoothd[1500]: src/adapter.c:adapter_set_power_state() on
+2026-08-16T07:00:03.600000+0200 n bluetoothd[1500]: src/adapter.c:new_settings_callback() Settings: 0x00000ac1
+2026-08-16T10:15:00.000000+0200 n bluetoothd[1500]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+2026-08-16T10:15:02.000000+0200 n bluetoothd[1500]: src/adapter.c:start_discovery_complete() status 0x00
+2026-08-16T10:15:14.000000+0200 n bluetoothd[1500]: src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+2026-08-16T11:02:31.000000+0200 n kernel: bluetoothd[1500]: segfault at 10 ip 00005cd90aed37e5 sp 00007fffca27f910 error 4 in bluetoothd[367e5,5cd90aec2000+f3000] likely on CPU 3 (core 1, socket 0)
+2026-08-16T11:02:31.500000+0200 n systemd[1]: bluetooth.service: Failed with result 'core-dump'.
+2026-08-16T11:02:31.900000+0200 n systemd[1]: bluetooth.service: Scheduled restart job, restart counter is at 1.
+2026-08-16T11:04:00.000000+0200 n bluetoothd[1590]: src/adapter.c:adapter_set_power_state() off
+2026-08-16T11:04:00.300000+0200 n bluetoothd[1590]: src/adapter.c:new_settings_callback() Settings: 0x00000ac0
+2026-08-16T11:04:01.000000+0200 n kernel: Bluetooth: hci0: opcode 0x0c1a sent

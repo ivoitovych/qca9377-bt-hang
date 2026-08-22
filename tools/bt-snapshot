@@ -19,10 +19,19 @@
 # ⚠️ IT MUST NEVER TOUCH THE CONTROLLER. This runs DURING a live fault, and the
 # entire value of an untreated window is that nothing has touched the device.
 # So: no hciconfig, no btmgmt, no bluetoothctl, no rfkill writes, no sysfs
-# writes. It reads the journal and reads sysfs. `bt-trial autostop` is the
+# writes — AND NO D-BUS, which is the one that had to be argued rather than
+# assumed. It reads the journal and reads sysfs. `bt-trial autostop` is the
 # cautionary example — its hci_alive() issues an HCI Read_Local_Name at every
 # shutdown, which is why EX-029's thirteen clean hours end in a touched
 # terminator (BL-08).
+#
+# THE BLUEZ SECTION IS WHY THAT LIST GAINED D-BUS. Reading org.bluez properties
+# over D-Bus is a userspace read of cached state and very probably issues no
+# HCI — and "very probably" is exactly what was believed about the recovery
+# ladder before it cost a controller. The same four values are already in the
+# journal, so the argument does not have to be won: they are read from there,
+# and they are last-logged rather than live. The suite pins the choice at the
+# source, so a later D-Bus call cannot arrive quietly.
 #
 # ⚠️ THE RAW CUT IS UNSANITISED. It carries MAC addresses and Wi-Fi BSSIDs, and
 # BSSIDs geolocate the machine. This repository is public and has leaked
@@ -120,6 +129,7 @@ grep -E "opcode 0x0428|opcode 0x043d|Looking for Alt no|command( 0x[0-9a-f]+)? t
 grep -E 'usb 3-3|xhci_hcd|USB disconnect|device descriptor|unable to enumerate' "$K"           > "$DIR/f-usb.log"        2>/dev/null
 grep -E 'deregistering interface driver btusb|Resetting usb device|reset (full|high|low)-speed USB device|name hci[0-9]+ blocked' "$A" > "$DIR/f-intervention.log" 2>/dev/null
 grep -E 'segfault|core-dump|Failed with result|Scheduled restart' "$A"                          > "$DIR/f-crash.log"      2>/dev/null
+grep -E 'adapter_set_power_state|new_settings_callback\(\) Settings:|discovering_callback|start_discovery_complete|restart counter is at|bluetooth\.service:' "$A" > "$DIR/f-bluez.log" 2>/dev/null
 grep -E 'corrupted SCO|Error when powering off|connection_lost|disconnected, reason|Failure in Bluetooth' "$A" > "$DIR/f-link.log" 2>/dev/null
 grep -oE 'input: [^(]*\(AVRCP\)' "$A" | sed 's/^input: //' | sort -u                            > "$DIR/f-devices.txt"    2>/dev/null
 
@@ -154,6 +164,98 @@ HCI="none"; for p in /sys/class/bluetooth/hci*; do [[ -e "$p" ]] && HCI=$(basena
 
 FIRST_TMO=$(grep -E "command( 0x[0-9a-f]+)? tx timeout" "$K" 2>/dev/null | head -1 | awk '{print $1}')
 
+# ── BlueZ health, and why it is read from the journal ────────────────────
+#
+# THE CAPTURE THIS TOOL COULD NOT MAKE. On 2026-08-19 the operator said
+# Bluetooth was dead; this tool was run, reported "controller on bus yes,
+# 0 timeouts", and the machine was called healthy. It had been dead for 2½
+# hours — EX-032, `Powered=true` and `Discovering=false` after a BlueZ crash —
+# and nothing above could have shown it, because everything above is about the
+# controller and the controller was fine.
+#
+# ⚠️ NOT OVER D-BUS, DELIBERATELY. Reading org.bluez properties is very likely
+# read-only, and "very likely" is what was said about the recovery ladder
+# before it cost a controller. The contract this tool sells is that it can be
+# run INSIDE an untreated window without spoiling it, and a contract that holds
+# except for one call is not a contract. The journal already carries every one
+# of these values; taking them from there costs nothing and risks nothing. The
+# price is that they are as-of-the-last-log rather than live, which is stated
+# on the heading rather than left to be assumed.
+#
+# EVERY VALUE IS THE LAST OBSERVATION, so it is the state the daemon was last
+# seen in. The line's own timestamp is printed beside it — a value with no time
+# on it reads as "now", which is the one thing it is not.
+BZ="$DIR/f-bluez.log"
+BZDBG=$(grep -c 'src/adapter\.c:' "$A" 2>/dev/null || true)
+
+# Powered comes from the MGMT settings word rather than from
+# adapter_set_power_state(), because the two answer different questions.
+# adapter_set_power_state() logs what BLUETOOTHD DID; new_settings_callback()
+# logs what the KERNEL REPORTED, which also moves when something else powers
+# the adapter down — an rfkill block being the case that matters here. Bit 0 is
+# MGMT_SETTING_POWERED. Both are printed; only the second decides.
+PW_LINE=$(grep -E 'new_settings_callback\(\) Settings: 0x' "$BZ" 2>/dev/null | tail -1)
+PW_STATE="unknown"; PW_AT=""
+if [[ -n "$PW_LINE" ]]; then
+    PW_SET=$(grep -oE 'Settings: 0x[0-9a-fA-F]+' <<<"$PW_LINE" | awk '{print $2}')
+    PW_AT=$(awk '{print $1}' <<<"$PW_LINE")
+    (( (PW_SET & 1) )) && PW_STATE="yes" || PW_STATE="no"
+fi
+
+PT_LINE=$(grep -E 'adapter_set_power_state\(\)' "$BZ" 2>/dev/null | tail -1)
+PT_STATE=""; PT_AT=""
+if [[ -n "$PT_LINE" ]]; then
+    PT_STATE=$(sed -E 's/.*adapter_set_power_state\(\)[[:space:]]*//' <<<"$PT_LINE")
+    PT_AT=$(awk '{print $1}' <<<"$PT_LINE")
+fi
+
+DS_LINE=$(grep -E 'discovering_callback\(\).*discovering [0-9]' "$BZ" 2>/dev/null | tail -1)
+DS_STATE="unknown"; DS_AT=""
+if [[ -n "$DS_LINE" ]]; then
+    DS_N=$(sed -E 's/.*discovering ([0-9]+).*/\1/' <<<"$DS_LINE")
+    DS_AT=$(awk '{print $1}' <<<"$DS_LINE")
+    (( DS_N )) && DS_STATE="yes" || DS_STATE="no"
+fi
+
+# systemd's own counter when it is there, and a COUNT of the restart lines when
+# it is not — an older systemd logs `Scheduled restart job` without the
+# counter, and reporting 0 restarts on a boot that plainly restarted the daemon
+# would be the same confident zero this project keeps finding. Which of the two
+# produced the number is printed, because they are not the same claim.
+NR_LINE=$(grep -E 'restart counter is at' "$BZ" 2>/dev/null | tail -1)
+if [[ -n "$NR_LINE" ]]; then
+    NR=$(sed -E 's/.*restart counter is at ([0-9]+).*/\1/' <<<"$NR_LINE")
+    NR_SRC="systemd's counter"; NR_AT=$(awk '{print $1}' <<<"$NR_LINE")
+else
+    NR=$(grep -cE 'bluetooth\.service: Scheduled restart' "$BZ" 2>/dev/null || true)
+    NR="${NR:-0}"; NR_SRC="counted — systemd logged no counter"; NR_AT=""
+fi
+
+# ONE DERIVATION FOR ONE FACT. The printed time and the ordering test below are
+# the same question — "when did a discovery last COMPLETE" — and the first
+# version computed them twice, from two files with two copies of the pattern.
+# A mutation that relaxed one of the two copies to match any status moved the
+# printed timestamp and left the warning untouched, which is what two
+# derivations of one fact always eventually do.
+SD_HIT=$(grep -nE 'start_discovery_complete\(\) status 0x00' "$A" 2>/dev/null | tail -1)
+LN_SDOK=""; SD_AT=""
+if [[ -n "$SD_HIT" ]]; then
+    LN_SDOK=${SD_HIT%%:*}
+    SD_AT=$(awk '{print $1}' <<<"${SD_HIT#*:}")
+fi
+
+# THE EX-032 TEST, ORDERED BY LINE NUMBER AND NOT BY CLOCK. The claim is "no
+# discovery has completed since the last crash", and the coarse cut is already
+# in journal order — so it is a comparison of two line numbers in one file.
+# Parsing the two timestamps and comparing them would introduce a timezone and
+# a date parser to answer a question the file's own ordering already answers.
+#
+# `powered and not discovering` ALONE IS NOT THE SHAPE — that is what an idle
+# adapter looks like every minute of every day, and warning on it would train
+# the reader to ignore the line. What makes EX-032 is that a discovery used to
+# complete, a crash happened, and none has completed since.
+LN_CRASH=$(grep -nE 'segfault|Failed with result' "$A" 2>/dev/null | tail -1 | cut -d: -f1)
+
 {
 printf 'bt-snapshot summary — boot %s, captured %s\n' "$BOOT" "$STAMP"
 printf '  raw cut: %s lines in %s\n\n' "$lines" "$DIR"
@@ -170,9 +272,37 @@ printf '  link-layer events  %6s\n' "$(c "$DIR/f-link.log")"
 printf '\n  controller on bus  %s\n' "$PRESENT"
 printf '  hci device         %s\n' "$HCI"
 [[ -n "$FIRST_TMO" ]] && printf '  first timeout      %s\n' "$FIRST_TMO"
+printf '\n  BlueZ health — last logged state, NOT read from the adapter:\n'
+if (( ${BZDBG:-0} == 0 )); then
+    # ENUMERATED == 0 IS A REFUSAL, and this is the branch that would otherwise
+    # print `powered no / discovering no` on every machine that simply does not
+    # run bluetoothd with debug logging on. That reads as a diagnosis and is an
+    # absence of evidence.
+    printf '    ⚠️ UNKNOWN — no `src/adapter.c:` lines this boot, so powered and\n'
+    printf '       discovering cannot be read. That is bluetoothd debug logging being\n'
+    printf '       off, not the adapter being off. This project ships it on, in\n'
+    printf '       etc/systemd/bluetooth.service.d/10-debug.conf.\n'
+else
+    printf '    powered            %-12s %s\n' "$PW_STATE" "$PW_AT"
+    printf '    discovering        %-12s %s\n' "$DS_STATE" "$DS_AT"
+    # Twelve columns because `off-enabling` is twelve characters. The first
+    # version used seven, which is enough for yes/no and for `on` — and
+    # `off-blocked`, the value that means an rfkill switch took the adapter
+    # down, is the one it pushed out of alignment.
+    [[ -n "$PT_STATE" ]] && printf '    last power change  %-12s %s\n' "$PT_STATE" "$PT_AT"
+    if [[ -n "$SD_AT" ]]; then printf '    last discovery OK  %s\n' "$SD_AT"
+    else                       printf '    last discovery OK  none this boot\n'; fi
+fi
+printf '    service restarts   %-12s %s\n' "$NR" "($NR_SRC)${NR_AT:+ $NR_AT}"
+if [[ "$PW_STATE" == "yes" && -n "$LN_CRASH" && -n "$LN_SDOK" ]] && (( LN_CRASH > LN_SDOK )); then
+    printf '    ⚠️ EX-032 SHAPE — the adapter is powered, a daemon crash followed the\n'
+    printf '       last successful discovery, and none has completed since. Every\n'
+    printf '       controller-side count above can be clean while this is true.\n'
+fi
+
 printf '\n  peers seen this boot:\n'
 if [[ -s "$DIR/f-devices.txt" ]]; then sed 's/^/    /' "$DIR/f-devices.txt"; else echo '    (none named)'; fi
-printf '\n  fine cuts: f-fault f-usb f-intervention f-crash f-link (in the directory above)\n'
+printf '\n  fine cuts: f-fault f-usb f-intervention f-crash f-link f-bluez (in the directory above)\n'
 printf '  ⚠️ UNSANITISED — carries MACs and BSSIDs. Never commit. Sanitise before sharing.\n'
 } > "$DIR/summary.txt"
 

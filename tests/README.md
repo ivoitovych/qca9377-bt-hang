@@ -69,6 +69,7 @@ check in the file counts `evidence/sessions/` before and after.
 | `journal/phase/` | `bt-phase` end to end, via `BT_JOURNAL_FIXTURE` |
 | `journal/provenance/` | `bt-boot-provenance` end to end |
 | `journal/crash/` | `bt-crash` — three boots: two segfaults at one offset, one segfault, and two binaries competing for the majority |
+| `journal/snapshot-bluez/` | `bt-snapshot`'s BlueZ section — boot 0 is the `EX-032` shape (clean controller, dead daemon), boot -1 a quiet day ending in an rfkill block |
 | `coredump/held/` | `bt-crash` — a core store with two `bluetoothd` cores, a `btmon` core and an unrelated one, via `BT_COREDUMP_FIXTURE` |
 | `coredump/nonbt/` | `bt-crash` — a store holding cores, none of them Bluetooth's |
 

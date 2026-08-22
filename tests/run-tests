@@ -7053,7 +7053,8 @@ SNDIR=$(ls -d "$SN/snap"/*-boot0 2>/dev/null | head -1)
 # cost this replaced, each re-traversing the journal while the operator waited.
 if (( snrc == 0 )) && [[ -s "$SNDIR/all.log" && -s "$SNDIR/kernel.log" \
    && -e "$SNDIR/f-fault.log" && -e "$SNDIR/f-usb.log" && -e "$SNDIR/f-intervention.log" \
-   && -e "$SNDIR/f-crash.log" && -e "$SNDIR/f-link.log" && -s "$SNDIR/summary.txt" \
+   && -e "$SNDIR/f-crash.log" && -e "$SNDIR/f-link.log" && -e "$SNDIR/f-bluez.log" \
+   && -s "$SNDIR/summary.txt" \
    && "$(readlink -f "$SN/snap/latest")" == "$(readlink -f "$SNDIR")" ]]; then
     ok "bt-snapshot takes one coarse cut, derives every fine cut, and points latest at it"
 else
@@ -7089,6 +7090,121 @@ STRAY=$(grep -nE '^[[:space:]]*[0-9]+[[:space:]]*$' "$SNDIR/summary.txt" || true
 [[ -z "$STRAY" ]] \
     && ok "no summary count is printed twice — every number is on its labelled line" \
     || bad "the summary carries an unlabelled bare number: $(tr '\n' ' ' <<<"$STRAY")"
+
+# THE FAILURE MODE THIS TOOL WAS RUN DURING AND COULD NOT SEE. On 2026-08-19
+# the operator said Bluetooth was dead, bt-snapshot reported "controller on bus
+# yes, 0 timeouts", and the machine was called healthy. It had been dead for
+# 2½ hours: EX-032, a BlueZ crash leaving the adapter Powered and permanently
+# non-scanning. Every controller-side count was correct and none of them could
+# have shown it.
+#
+# The fixture is that boot's shape — a healthy positive control, ZERO timeouts,
+# and the daemon dead — so a version of this section that reported the
+# controller's health as the machine's health cannot pass.
+SNBZ=$(mktemp -d); mkdir -p "$SNBZ/repo"
+snbz_run() { BT_JOURNAL_FIXTURE=tests/journal/snapshot-bluez BT_SNAPSHOT_DIR="$SNBZ/snap" \
+             BT_REPO="$SNBZ/repo" tools/bt-snapshot "$@" 2>&1; }
+SNB=$(snbz_run); snbrc=$?
+(( snbrc == 0 )) && [[ "$SNB" == *"command timeouts        0"* \
+   && "$SNB" == *"positive control        4"* && "$SNB" != *"ZERO — every count"* ]] \
+    && ok "the EX-032 fixture reproduces a clean controller — the reading that misled" \
+    || bad "the fixture is not the EX-032 shape (rc=$snbrc): $(grep -E 'positive control|command timeouts' <<<"$SNB" | tr '\n' ' ')"
+
+# EACH VALUE, AND THE TIMESTAMP THAT MAKES IT AN OBSERVATION RATHER THAN A
+# CLAIM ABOUT NOW. `powered yes` with no time on it reads as live, which is the
+# one thing a journal-derived value is not.
+BZP=$(rt_line "$SNB" powered); BZD=$(rt_line "$SNB" discovering)
+[[ "$BZP" == *"yes"*"2026-08-18T22:15:03"* ]] \
+    && ok "powered is read from the last MGMT settings word, with the time it was logged" \
+    || bad "powered line wrong: $BZP"
+[[ "$BZD" == *"no"*"2026-08-18T18:46:05"* ]] \
+    && ok "discovering is read from the last discovering_callback, with its time" \
+    || bad "discovering line wrong: $BZD"
+[[ "$(rt_line "$SNB" 'service restarts')" == *"2"*"systemd's counter"* ]] \
+    && ok "service restarts takes systemd's own counter when systemd logged one" \
+    || bad "restart count wrong: $(rt_line "$SNB" 'service restarts')"
+# COMPLETED, NOT ATTEMPTED. The fixture ends with a discovery that was tried
+# after the second crash and came back `status 0x0c` — Command Disallowed,
+# which is what opening the panel on a wedged daemon looks like. A version
+# reading the last ATTEMPT reports 23:50 here: the wrong time, and late enough
+# to be after the crash, which silences the warning below as well.
+#
+# It only silences it because the timestamp and the ordering test are now ONE
+# derivation. They were two — the same pattern written twice over two files —
+# and a mutation that relaxed one copy moved this line while leaving the
+# warning correct, which is how the duplication was found.
+[[ "$(rt_line "$SNB" 'last discovery OK')" == *"2026-08-18T18:46:04"* ]] \
+    && ok "the last successful discovery is the last status 0x00, not the last attempt" \
+    || bad "last discovery wrong: $(rt_line "$SNB" 'last discovery OK')"
+
+# AND THE LINE THE WHOLE SECTION EXISTS FOR. The order is the claim: a crash
+# came AFTER the last completed discovery and none has completed since.
+[[ "$SNB" == *"EX-032 SHAPE"* && "$SNB" == *"none has completed since"* ]] \
+    && ok "the EX-032 shape is named when a crash follows the last completed discovery" \
+    || bad "the summary did not identify the failure mode it was built during"
+rm -rf "$SNBZ"
+
+# POWERED AND NOT DISCOVERING IS WHAT AN IDLE ADAPTER LOOKS LIKE EVERY MINUTE
+# OF EVERY DAY. A warning on that pair alone would fire on every healthy boot
+# and teach the reader to skip the line, which is worse than not printing it.
+# Boot -1 is a quiet day ending in an rfkill block: a discovery completed, no
+# crash followed, and the adapter was powered down deliberately.
+SNBZ=$(mktemp -d); mkdir -p "$SNBZ/repo"
+SNBQ=$(snbz_run --boot -1); snbqrc=$?
+(( snbqrc == 0 )) && [[ "$SNBQ" != *"EX-032 SHAPE"* ]] \
+   && [[ "$(rt_line "$SNBQ" powered)" == *"no"* ]] \
+   && [[ "$(rt_line "$SNBQ" 'last power change')" == *"off-blocked"* ]] \
+    && ok "a boot with no crash raises nothing, and an rfkill block reads as off-blocked" \
+    || bad "the healthy boot warned, or misread the power state (rc=$snbqrc): $(rt_line "$SNBQ" powered)"
+
+# `off-blocked` IS TWELVE CHARACTERS AND THE COLUMN WAS SEVEN. Cosmetic
+# everywhere except here: the value that means a physical switch took the
+# adapter down is the one that ran into its own timestamp.
+[[ "$SNBQ" == *"off-blocked  2026-08-17T22:58:00"* ]] \
+    && ok "the power-change column is wide enough for the value that matters most" \
+    || bad "off-blocked collided with its timestamp: $(rt_line "$SNBQ" 'last power change')"
+
+# WITH NO COUNTER LINE, THE RESTARTS ARE COUNTED AND SAID TO BE COUNTED. An
+# older systemd logs `Scheduled restart job` without `restart counter is at N`,
+# and reporting 0 on a boot that plainly restarted the daemon is the confident
+# zero this project keeps finding.
+[[ "$(rt_line "$SNBQ" 'service restarts')" == *"0"*"counted"* ]] \
+    && ok "no restart line at all is reported as 0, and labelled as counted not reported" \
+    || bad "the counted fallback did not report zero cleanly: $(rt_line "$SNBQ" 'service restarts')"
+
+# AN ADAPTER THAT IS OFF IS NOT DISCOVERING BECAUSE IT IS OFF. Boot -2 satisfies
+# the ordering half of the test exactly — a crash after the last completed
+# discovery — and the adapter was powered down two minutes later. Warning here
+# would tell an operator who switched Bluetooth off that BlueZ is broken.
+#
+# THIS IS THE CASE THAT PINS THE `powered` CONDITION. Without it the two boots
+# above pass either way: neither has a crash-after-discovery boot with the
+# adapter off, so deleting the condition changed nothing observable and the
+# check could not fail. Third time in this suite that a condition was held only
+# by a fixture that did not distinguish it.
+SNBO=$(snbz_run --boot -2); snborc=$?
+(( snborc == 0 )) && [[ "$SNBO" != *"EX-032 SHAPE"* ]] \
+   && [[ "$(rt_line "$SNBO" powered)" == *"no"* ]] \
+   && [[ "$(rt_line "$SNBO" 'last discovery OK')" == *"2026-08-16T10:15:02"* ]] \
+   && [[ "$SNBO" == *"daemon crashes          3"* ]] \
+    && ok "a crash after the last discovery raises nothing while the adapter is powered off" \
+    || bad "the powered-off boot was misread (rc=$snborc): $(rt_line "$SNBO" powered)"
+rm -rf "$SNBZ"
+
+# AND THE MACHINE THAT SIMPLY DOES NOT RUN bluetoothd WITH DEBUG LOGGING ON.
+# Without `-d` there are no `src/adapter.c:` lines at all, so powered and
+# discovering are UNKNOWABLE — and printing `no` for both would be a diagnosis
+# drawn from an absence of evidence, on every stock machine. The restart count
+# survives, because systemd logs that regardless of bluetoothd's log level.
+SNBZ=$(mktemp -d); mkdir -p "$SNBZ/repo"
+SNBU=$(BT_JOURNAL_FIXTURE="$SNF" BT_SNAPSHOT_DIR="$SNBZ/snap" BT_REPO="$SNBZ/repo" \
+       tools/bt-snapshot 2>&1); snburc=$?
+(( snburc == 0 )) && [[ "$SNBU" == *"UNKNOWN — no \`src/adapter.c:\` lines"* \
+   && "$SNBU" == *"not the adapter being off"* && "$SNBU" != *"powered            no"* ]] \
+   && [[ "$(rt_line "$SNBU" 'service restarts')" == *"1"*"counted"* ]] \
+    && ok "no bluetoothd debug lines reads as UNKNOWN, while the restart count still answers" \
+    || bad "a boot without debug logging produced a verdict instead of an unknown (rc=$snburc)"
+rm -rf "$SNBZ"
 rm -rf "$SN"
 
 # --summary-only RE-PRINTS AND CAPTURES NOTHING. It exists to be cheap; a
@@ -7166,10 +7282,20 @@ rm -rf "$SN"
 # reason it is safe to run during a live window. Checked at the source, because
 # no fixture can prove the absence of a command that is not called. Comments are
 # excluded: the header names all four in prose, saying it does not use them.
-SNTOUCH=$(grep -nE '(hciconfig|btmgmt|bluetoothctl|rfkill)' tools/bt-snapshot \
+#
+# D-BUS IS IN THIS LIST NOW, AND IT IS THE ONE THAT HAD TO BE ARGUED. The BlueZ
+# health section wants Powered, Discovering and NRestarts, and `busctl
+# get-property org.bluez …` is the direct route to all three — a userspace read
+# of cached state that very probably issues no HCI. "Very probably" is what was
+# believed about the recovery ladder before it cost a controller, and this tool
+# runs INSIDE the windows whose entire value is that nothing has touched the
+# device. So the values come from the journal instead, at the cost of being
+# last-logged rather than live. This line is what keeps that decision made: a
+# `busctl` added later for convenience fails here rather than in a window.
+SNTOUCH=$(grep -nE '(hciconfig|btmgmt|bluetoothctl|rfkill|busctl|dbus-send|dbus-monitor|gdbus)' tools/bt-snapshot \
           | grep -vE '^[0-9]+:[[:space:]]*#' || true)
 [[ -z "$SNTOUCH" ]] \
-    && ok "bt-snapshot issues no controller command — safe inside an untreated window" \
+    && ok "bt-snapshot issues no controller command and no D-Bus call — safe inside an untreated window" \
     || bad "a controller-touching command reached the capture tool: $(tr '\n' ' ' <<<"$SNTOUCH")"
 
 SNH=$(tools/bt-snapshot --help 2>&1); snhrc=$?
