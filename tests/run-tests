@@ -344,6 +344,40 @@ bin_footprint_diff() {   # <before> <after> — names what changed, and how
 BIN_FOOTPRINT_BEFORE=$(real_bin_footprint)
 BIN_COUNT_BEFORE=$(grep -c . <<<"$BIN_FOOTPRINT_BEFORE" || true)
 
+# ── AND THE REPOSITORY'S OWN TRACKED FILES, WHICH NOTHING WATCHED ────────
+#
+# Asked for by the main branch maintainer (comms/2026-08-22T1000Z §3), after an
+# intervention on the machine passed every contemporaneous safety check — bus
+# presence, driver binding, hci0, no USB-layer lines — and the controller
+# failed to enumerate twenty minutes later at the next boot. Their question:
+# is there anything here whose subject could be damaged in a way that only
+# appears at the NEXT run?
+#
+# There was, and it is the fixtures. The four persistent-state checks cover the
+# evidence tree, the real trial state, /usr/bin and the symlink farms. None of
+# them covers this repository's own files. A test that wrote into
+# tests/journal/*/kernel.log would pass its own run — it would read back exactly
+# what it had just written — and every run after it would be measuring a
+# corrupted fixture, honestly, and meaning nothing. Every contemporaneous check
+# passes. That is the same species as their ladder: a check that is real, that
+# passes truthfully, and that does not cover what it appears to cover.
+#
+# NOT HYPOTHETICAL FOR THIS SUITE IN PARTICULAR. farm_dir() symlinks INTO
+# directories, `>` writes THROUGH a symlink to its target, and the composition
+# of those two is what overwrote /usr/bin/timeout. The fixtures are the other
+# place a farm and a write can meet.
+#
+# Same mechanism as the /usr/bin footprint and the same differ, because the
+# question is identical — did a byte change while the suite ran. 583 tracked
+# files in 9 ms, so it is unconditional too. mtime and size and inode: a fixture
+# rewritten in place changes mtime, and one unlinked and replaced changes inode.
+repo_tree_footprint() {
+    git ls-files -z 2>/dev/null \
+        | xargs -0 -r stat --printf '%n\t%s\t%Y\t%i\n' 2>/dev/null | LC_ALL=C sort
+}
+REPO_FOOTPRINT_BEFORE=$(repo_tree_footprint)
+REPO_COUNT_BEFORE=$(grep -c . <<<"$REPO_FOOTPRINT_BEFORE" || true)
+
 # ── THE THREE REAL RESOURCES, COMPARED AGAINST THE SNAPSHOTS ABOVE ───────
 #
 # A FUNCTION, DEFINED HERE RATHER THAN AT THE BOTTOM, because it is also the
@@ -381,6 +415,29 @@ final_resource_report() {
         bad "  after:  $(tr '\n' ' ' <<<"$TRIAL_FOOTPRINT_AFTER")"
         bad "  a live trial was opened, closed or recorded by this suite —"
         bad "  the affected results row is fabricated by test stubs, not measured"
+    fi
+
+    # The repository's own tracked files, compared the same way. A run that
+    # mutated a fixture would be the only run that could not detect it.
+    #
+    # ENUMERATED == 0 IS A REFUSAL here for the same reason it is below: an empty
+    # snapshot means git ls-files or stat is not what this expects, and comparing
+    # nothing against nothing would tick.
+    if (( ${REPO_COUNT_BEFORE:-0} == 0 )); then
+        bad "could not fingerprint the tracked tree — the fixture check did not run"
+        bad "  a mutated fixture would be invisible to this run AND would silently"
+        bad "  decide every run after it"
+    else
+        REPO_FOOTPRINT_AFTER=$(repo_tree_footprint)
+        if [[ "$REPO_FOOTPRINT_AFTER" == "$REPO_FOOTPRINT_BEFORE" ]]; then
+            ok "no tracked file changed while the suite ran ($REPO_COUNT_BEFORE checked)"
+        else
+            bad "the test run CHANGED tracked files — the next run inherits this:"
+            while IFS= read -r p; do bad "      $p"; done < <(
+                bin_footprint_diff "$REPO_FOOTPRINT_BEFORE" "$REPO_FOOTPRINT_AFTER")
+            bad "  a fixture edited by the suite is read back by the suite: this run"
+            bad "  cannot detect it and every later run measures the corruption"
+        fi
     fi
 
     # The system binaries, compared against the snapshot taken before anything ran.
