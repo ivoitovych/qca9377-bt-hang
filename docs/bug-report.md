@@ -283,10 +283,30 @@ What this does **not** weaken, because none of it depends on knowing the trigger
   was not the one `hci_cmd_sync` was tracking. This is why naming a single triggering
   opcode has never converged: the interval spans 2.1–155.8 s across instances
 
-⚠️ Earlier revisions also listed "287 command timeouts across 34 boots" and "13 of 34
-boots" here. Both come from `EX-018`, whose journal has since rotated out of the retained
-store, so **neither figure can be re-derived by a reviewer or by us**. They are withdrawn
-from the load-bearing list rather than restated; `EX-020` is the surviving re-capture.
+- **287 command timeouts across 34 boots, 13 of 34 boots hung** — re-derivable from
+  `evidence/baseline/baseline.tsv`, which is committed and always has been:
+
+  ```console
+  $ awk -F'\t' 'NR>1 && $1!="TOTAL" && NF>=6 {n++; t+=$3; if($6=="YES") h++}
+         END{printf "boots=%d  tx_timeouts=%d  hung=%d\n", n, t, h}' evidence/baseline/baseline.tsv
+  boots=34  tx_timeouts=287  hung=13
+  ```
+
+  The 13 boots marked hung are exactly the 13 with `tx_timeouts > 0`, so the classification
+  is a function of the counted column rather than a separate judgement that could have
+  drifted.
+
+⚠️ **A correction to an earlier revision of this report, which over-withdrew these two
+figures.** That revision said "neither figure can be re-derived by a reviewer or by us".
+That is false, and stating it cost the report a denominator it actually had. What rotated
+out of the retained journal is the **source journal**; the per-boot table derived from it is
+in the repository and reproduces both figures exactly.
+
+The status these figures carry is therefore **re-derivable from the repository, not
+re-verifiable against the machine** — the same status this project gives any captured
+exhibit output. A reviewer can check the arithmetic and the per-boot distribution; what they
+cannot do is re-audit the table against the journal it came from. `EX-020` remains the
+surviving re-capture of the *classifier*, which is a separate question from the counts.
 
 Those are properties of the controller's response, observed regardless of what provoked it.
 
@@ -336,10 +356,16 @@ That comparison has not been made.
 It occurred in one instrumented case **two minutes into a freshly power-cycled boot**
 under light use — so it needs neither prolonged uptime nor accumulated state.
 
-⚠️ Earlier revisions gave a rate of "13 of 34 boots" here. That count came from `EX-018`,
-whose source journal has rotated out of the retained store and cannot be re-derived, so
-the rate is **withdrawn** rather than restated. What remains is the qualitative claim
-above, which rests on a single instrumented boot and is stated as such.
+It occurred in **13 of 34 consecutive boots** under ordinary daily use, re-derivable from
+`evidence/baseline/baseline.tsv` as shown in §"What this does not weaken".
+
+⚠️ **Read that rate as observational, and as a mixture.** It counts boots in which the
+controller logged an HCI command timeout — which is the right signal, and narrower than
+"Bluetooth stopped working". But it was collected before this record separated four failure
+modes that present identically to an operator (`EX-030`, `EX-031`, `EX-032`), and before
+`EX-013` established that the boots split into two experimental environments at 2026-08-10.
+It is a rate of the fault under this operator's usage on this machine, not a probability for
+anyone else's.
 
 The clearest logged sequence, from the first instrumented hang, was an ungraceful A2DP
 teardown:
