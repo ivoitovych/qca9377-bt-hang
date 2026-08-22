@@ -33,6 +33,49 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
+# ── THE SUITE'S OWN SOURCE, AS A SET RATHER THAN AS "$0" ─────────────────
+#
+# Eight invariants in this file scan THE SUITE ITSELF, and they are the ones
+# that stop it doing damage: no `install.sh --apply` outside a staging root, no
+# `bt-trial` outside the sandboxed helper, no raw symlink farm (one replaced
+# /usr/bin/systemctl on the development container), exactly one EXIT trap, no
+# PATH construction that re-adds /usr/bin. Every one of them read `"$0"`.
+#
+# `"$0"` IS THE ENTRY POINT, NOT THE SUITE. UT-12 splits this file — it is
+# 9,700 lines and the largest in the repository — and the moment any of it moves
+# into a sourced part, all eight keep passing while seeing only what is left
+# behind. A guard that stops covering the code it guards, silently, in the
+# checks that exist to stop the suite from overwriting system binaries and
+# writing into the real evidence tree. That is this repository's most expensive
+# defect shape, aimed at its own safety machinery.
+#
+# So they scan a SET, derived, and the set is exactly `$0` until the day it is
+# not. Written before the split rather than after, because after is when the
+# checks are already quiet.
+#
+# No `shopt -s nullglob`: an unmatched glob stays literal and `[[ -r ]]` rejects
+# it. Setting a shell option here would change the behaviour of every test below
+# it, which is the kind of action-at-a-distance this file exists to catch.
+# A FUNCTION, SO THE DERIVATION ITSELF CAN BE DRIVEN. Inline, this could not be
+# tested until the day it mattered: `tests/parts/` does not exist yet, so
+# deleting the accumulation entirely changed nothing observable and the check
+# guarding it could not fail. A typo in the glob would have sat here silently
+# until the split, which is the one moment it must be right.
+suite_file_set() {   # <entry> <parts-dir> — the suite's own source files
+    local entry="$1" dir="$2" p
+    printf '%s\n' "$entry"
+    for p in "$dir"/*.sh; do [[ -r "$p" ]] && printf '%s\n' "$p"; done
+    return 0
+}
+mapfile -t SUITE_FILES < <(suite_file_set "$0" "${BT_SUITE_PARTS:-tests/parts}")
+
+# Counting across the set. `grep -c` over several files prints one count PER
+# FILE — and so does `grep -hc`, which is the trap: it suppresses the filename
+# and still emits N lines, so a caller expecting a single number gets one that
+# happens to look right while there is one file and silently becomes a list
+# afterwards. Concatenating first is the only form that sums.
+suite_cat() { cat "${SUITE_FILES[@]}"; }
+
 # ── REFUSE TO RUN WHILE A REAL TRIAL IS OPEN ──────────────────────────────
 #
 # The suite's job includes driving tools that ACT — the watchdog decides to
@@ -8284,10 +8327,11 @@ STRIPPED=$(grep -cE '^(systemctl|udevadm|modprobe) ' "$SS/spy.log" 2>/dev/null |
 # Joined across continuations first: every invocation here sets BT_DESTDIR on
 # a line above the one naming the script, and a line-by-line scan sees the two
 # halves separately — reporting each correctly-staged call as a leak.
-SLOOSE=$(awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' "$0" \
+SLOOSE=$(suite_cat \
+         | awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' \
          | grep -nE '^[^#]*\./(install|uninstall)\.sh --apply' \
          | grep -v 'BT_DESTDIR')
-SAPPLY=$(grep -cE '\./(install|uninstall)\.sh --apply' "$0")
+SAPPLY=$(suite_cat | grep -cE '\./(install|uninstall)\.sh --apply' || true)
 if [[ -z "$SLOOSE" ]] && (( ${SAPPLY:-0} >= 4 )); then
     ok "all $SAPPLY install --apply invocations set BT_DESTDIR to a staging root"
 else
@@ -9544,10 +9588,10 @@ echo "────────────────────────�
 # own grep line, and each exclusion is a hole someone can park a real call in.
 # `report` is genuinely safe — read-only, never reaches the failure branch — so
 # it is simply not in the list.
-LOOSE=$(grep -nE 'tools/bt-trial +(autostart|start|ok|hang|abort|step)\b' "$0" \
-        | grep -v "^[0-9]*:[[:space:]]*#")
+LOOSE=$(grep -HnE 'tools/bt-trial +(autostart|start|ok|hang|abort|step)\b' "${SUITE_FILES[@]}" \
+        | grep -v ":[0-9]*:[[:space:]]*#")
 # Counted, so a pattern that stops matching reads as 0 rather than as a tick.
-TRIALCALLS=$(grep -cE 'tools/bt-trial +(autostart|start|ok|hang|abort|step|report)\b' "$0")
+TRIALCALLS=$(suite_cat | grep -cE 'tools/bt-trial +(autostart|start|ok|hang|abort|step|report)\b' || true)
 # THE INVARIANT: no test builds a replacement PATH that still contains /usr/bin
 # or /bin.
 #
@@ -9574,7 +9618,7 @@ TRIALCALLS=$(grep -cE 'tools/bt-trial +(autostart|start|ok|hang|abort|step|repor
 # writes to. A raw `ln -s /usr/bin/*` is banned outright rather than reviewed
 # case by case: it is safe only while nobody adds a write to that directory
 # afterwards, and "safe until someone edits it" is what both of these were.
-FARMF=$(grep -nE '^[^#]*ln -s.? +/(usr/)?bin/\*' "$0" | grep -v 'farm_dir')
+FARMF=$(grep -HnE '^[^#]*ln -s.? +/(usr/)?bin/\*' "${SUITE_FILES[@]}" | grep -v 'farm_dir')
 [[ -z "$FARMF" ]] \
     && ok "every symlink farm is built by farm_dir(), which is never written into" \
     || bad "a raw symlink farm — a later cp or > writes through the link: $(head -1 <<<"$FARMF")"
@@ -9591,7 +9635,72 @@ FARMF=$(grep -nE '^[^#]*ln -s.? +/(usr/)?bin/\*' "$0" | grep -v 'farm_dir')
 # CLEANUP_PATHS and the single trap owns them. This makes the rule mechanical,
 # because the next person to need a cleanup will reach for `trap` first — it is
 # the obvious thing, and it is silently destructive here.
-EXITT=$(grep -nE '^[^#]*\btrap\b[^#]*\bEXIT\b' "$0" | grep -v 'EXITT=')
+# ── AND THE SCANS THEMSELVES MUST KEEP SCANNING THE WHOLE SUITE ─────────
+#
+# Every check in this section reads `${SUITE_FILES[@]}` rather than `"$0"`,
+# because `$0` is the entry point and the suite is about to stop being one file
+# (UT-12). A scan added later with `"$0"` would keep passing while covering only
+# what had not moved yet — a guard that silently stops guarding, in the group of
+# checks that exist to stop this suite overwriting system binaries.
+#
+# COUNTED, NOT PATTERN-MATCHED AGAINST AN ALLOW-LIST. A rule that tried to
+# recognise "a legitimate `$0`" would be a hole the next scan hides in. Three
+# uses are legitimate and none of them reads the file's CONTENT:
+#
+#   line 34   `cd "$(dirname "$0")/.."`  — locating the repository root
+#   line 59   `SUITE_FILES=("$0")`       — seeding the set itself
+#   line 290  `out=$("$0")`              — --section re-running the suite
+#
+# A fourth is a scan, and it has to be justified rather than merged.
+# AND THE DERIVATION ITSELF, AGAINST A PARTS DIRECTORY THAT EXISTS. The set is
+# `$0` alone today, so nothing about the split half of it can be observed from
+# the real tree — deleting the whole `for p in "$dir"/*.sh` loop left this suite
+# green, because there is no `tests/parts/` for it to miss. Driven against a
+# temp directory instead, which is the only way to check a mechanism whose
+# purpose is entirely in the future.
+SFD=$(mktemp -d)
+: > "$SFD/20-tools.sh"; : > "$SFD/10-guards.sh"; : > "$SFD/notes.txt"
+mapfile -t SFGOT < <(suite_file_set /entry "$SFD")
+if (( ${#SFGOT[@]} == 3 )) && [[ "${SFGOT[0]}" == /entry \
+   && "${SFGOT[1]}" == "$SFD/10-guards.sh" && "${SFGOT[2]}" == "$SFD/20-tools.sh" ]]; then
+    ok "the suite's file set is the entry point plus every part, in glob order"
+else
+    bad "the suite-file derivation returned ${#SFGOT[@]} of 3: ${SFGOT[*]}"
+fi
+SFE=$(mktemp -d)
+mapfile -t SFEMPTY < <(suite_file_set /entry "$SFE")
+(( ${#SFEMPTY[@]} == 1 )) && [[ "${SFEMPTY[0]}" == /entry ]] \
+    && ok "an absent parts directory yields the entry point alone, not a literal glob" \
+    || bad "an empty parts directory produced ${#SFEMPTY[@]} file(s): ${SFEMPTY[*]}"
+
+# AND THE INSTRUMENT OUTSIDE THE SUITE, WHICH HAS THE SAME DERIVATION AND A
+# WORSE FAILURE. devtools/test-comprehension greps the suite for what it
+# asserts, and it named `tests/run-tests` outright at four sites — so after the
+# split it would measure whatever stayed in the entry file and report a
+# confident smaller number in the tool that decides whether the suite is
+# comprehensive enough to merge. Not an error; a wrong answer.
+#
+# Driven through `--suite-files`, which is the only way this suite can reach it:
+# test-comprehension RUNS the suite, so calling it in full from here recurses.
+TCS=$(BT_SUITE_PARTS="$SFD" devtools/test-comprehension --suite-files 2>&1); tcsrc=$?
+(( tcsrc == 0 )) \
+   && [[ "$TCS" == "tests/run-tests
+$SFD/10-guards.sh
+$SFD/20-tools.sh" ]] \
+    && ok "test-comprehension counts the suite's parts, not only its entry point" \
+    || bad "test-comprehension's suite set was wrong (rc=$tcsrc): $(tr '\n' ' ' <<<"$TCS")"
+rm -rf "$SFD" "$SFE"
+
+SELF0=$(grep -HnE '"\$0"' "${SUITE_FILES[@]}" | grep -vE ':[0-9]+:[[:space:]]*#')
+SELF0N=$(grep -c . <<<"$SELF0" || true)
+if (( ${SELF0N:-0} == 3 )); then
+    ok "no self-scan reads \$0 — all $((${#SUITE_FILES[@]})) suite file(s) are scanned as a set"
+else
+    bad "$SELF0N uses of \$0 outside comments; a scan over \$0 stops covering the suite when it splits:"
+    while IFS= read -r l; do bad "      $l"; done <<<"$SELF0"
+fi
+
+EXITT=$(grep -HnE '^[^#]*\btrap\b[^#]*\bEXIT\b' "${SUITE_FILES[@]}" | grep -v 'EXITT=')
 EXITN=$(grep -c . <<<"$EXITT" || true)
 if (( EXITN == 1 )); then
     ok "exactly one EXIT trap — cleanups register in CLEANUP_PATHS instead of replacing it"
@@ -9632,8 +9741,8 @@ BFSAME=$(bin_footprint_diff "$BFB" "$BFB")
     && ok "an unchanged /usr/bin produces no damage report" \
     || bad "the differ reports damage for identical footprints: $(tr '\n' '; ' <<<"$BFSAME")"
 
-PATHBUILDS=$(grep -cE '^[^#]*PATH="' "$0")
-BADPATH=$(grep -nE '^[^#]*PATH="[^"]*:/(usr/)?bin' "$0")
+PATHBUILDS=$(suite_cat | grep -cE '^[^#]*PATH="' || true)
+BADPATH=$(grep -HnE '^[^#]*PATH="[^"]*:/(usr/)?bin' "${SUITE_FILES[@]}")
 if [[ -z "$BADPATH" ]] && (( ${PATHBUILDS:-0} >= 10 )); then
     ok "none of the $PATHBUILDS PATH constructions re-adds /usr/bin or /bin"
 else
@@ -9691,7 +9800,7 @@ final_resource_report
 # Both on one line each: bash traces a backslash-continued assignment at its
 # LAST line, so a wrapped version puts its own opening line in the coverage
 # denominator as something nothing can ever reach.
-FARMTOOLS=$(grep -hE '^farm_dir "' "$0" | sed 's/^farm_dir "[^"]*" *//' | tr ' ' '\n' | grep -E '^[a-z][a-z0-9-]+$')
+FARMTOOLS=$(grep -hE '^farm_dir "' "${SUITE_FILES[@]}" | sed 's/^farm_dir "[^"]*" *//' | tr ' ' '\n' | grep -E '^[a-z][a-z0-9-]+$')
 VALTOOLS=$(grep -oE 'skipped: [a-zA-Z0-9_.-]+ not installed' devtools/repo-validate | awk '{ print $2 }')
 GUARDED=$(printf '%s\n%s\n' "$FARMTOOLS" "$VALTOOLS" | grep -E '.' | LC_ALL=C sort -u)
 GUARDN=$(grep -c . <<<"$GUARDED" || true)

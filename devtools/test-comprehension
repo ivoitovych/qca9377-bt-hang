@@ -54,10 +54,11 @@
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
-MIN=""; WANT=""; DUMP=""
+MIN=""; WANT=""; DUMP=""; LIST_SUITE=0
 while (( $# )); do
     case "$1" in
         --min)  MIN="${2:?--min needs a number}"; shift ;;
+        --suite-files) LIST_SUITE=1 ;;
         --dump) DUMP="${2:?--dump needs a directory}"; shift ;;
         -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
         -*) echo "test-comprehension: unknown option: $1" >&2; exit 2 ;;
@@ -65,6 +66,22 @@ while (( $# )); do
     esac
     shift
 done
+
+# BT_SUITE_PARTS is a seam, not a convenience. Until UT-12 runs there is no
+# tests/parts/, so the half of this derivation that matters cannot be observed
+# from the real tree — deleting the loop entirely would change nothing here and
+# everything on the day of the split. tests/run-tests drives this tool with the
+# variable pointed at a directory that does have parts, and asserts the
+# assertion count rises by what they contain.
+SUITE=(tests/run-tests)
+for _p in "${BT_SUITE_PARTS:-tests/parts}"/*.sh; do [[ -r "$_p" ]] && SUITE+=("$_p"); done
+
+# --suite-files answers "which files does this tool think the suite is?" and
+# exits before the trace. It is not a test hook bolted on: it is the first
+# question anyone debugging a wrong assertion count asks, and it is the only way
+# tests/run-tests can drive this derivation at all — this tool RUNS the suite,
+# so the suite cannot run it in full without recursing.
+if (( LIST_SUITE )); then printf '%s\n' "${SUITE[@]}"; exit 0; fi
 
 WORK=$(mktemp -d) || exit 1
 trap 'rm -rf "$WORK"' EXIT
@@ -110,17 +127,27 @@ if (( ${#UNITS[@]} < 20 )); then
     exit 2
 fi
 
+# ── THE SUITE'S OWN SOURCE, AS A SET ────────────────────────────────────
+#
+# Every measurement below greps the suite for what it asserts, and each grep
+# named `tests/run-tests` outright. That file is the ENTRY POINT; UT-12 splits
+# the rest of the suite into sourced parts, and on the day it does, a hardcoded
+# path measures whatever stayed behind. The failure is not an error — it is a
+# smaller number, reported confidently, in the tool that decides whether the
+# suite is comprehensive enough to merge.
+#
+# Derived, so it is exactly `tests/run-tests` until it is not.
 # Which BT_* seams the suite drives. Read once; a seam is "exercised" when the
 # suite sets it anywhere, because a seam set for one unit is set for every unit
 # that reads it.
-SEAMS_DRIVEN=$(grep -ohE '\bBT_[A-Z0-9_]+=' tests/run-tests | sort -u | tr -d '=')
+SEAMS_DRIVEN=$(grep -ohE '\bBT_[A-Z0-9_]+=' "${SUITE[@]}" | sort -u | tr -d '=')
 
 # Assertions NAMING the unit. Attribution is by name because sections are
 # prose and a line has no other link to a tool — so an assertion that exercises
 # a unit without mentioning it is not counted here. That makes this column a
 # LOWER bound on how much is asserted, which is the safe direction: it can
 # understate work done, never overstate it.
-TOTAL_ASSERTS=$(grep -cE '^[^#]*(^|[ \t]|\|\| )(ok|bad) "' tests/run-tests)
+TOTAL_ASSERTS=$(cat "${SUITE[@]}" | grep -cE '^[^#]*(^|[ \t]|\|\| )(ok|bad) "' || true)
 
 printf '%-30s %-7s %-9s %-9s %-9s %-9s %s\n' \
        unit asserts modes refusals seams branches score
@@ -258,13 +285,13 @@ for u in "${UNITS[@]}"; do
     # the instrument written to detect it.
     if (( measured == 0 )); then
         lang=$(head -1 "$u" | sed -E "s|^#!||; s|.*/env +||; s|.*/||; s| .*||")
-        nassert=$(grep -cE '(ok|bad) "[^"]*'"$(basename "$u")" tests/run-tests)
+        nassert=$(cat "${SUITE[@]}" | grep -cE '(ok|bad) "[^"]*'"$(basename "$u")" || true)
         printf '%-30s %-7s %-9s %-9s %-9s %-9s %s\n' "$u" "${nassert:-0}" \
             "—" "—" "—" "—" "UNMEASURED (${lang:-unknown})" >> "$WORK/unmeasured"
         continue
     fi
 
-    nassert=$(grep -cE '(ok|bad) "[^"]*'"$(basename "$u" | sed 's/\./\\./g')" tests/run-tests)
+    nassert=$(cat "${SUITE[@]}" | grep -cE '(ok|bad) "[^"]*'"$(basename "$u" | sed 's/\./\\./g')" || true)
     printf '%-30s %-7s %-9s %-9s %-9s %-9s %d%%\n' "$u" "${nassert:-0}" \
         "$nmode_hit/$nmode" "$nref_hit/$nref" "$nseam_hit/$nseam" "$cov/$tot" "$worst" \
         >> "$WORK/rows"
