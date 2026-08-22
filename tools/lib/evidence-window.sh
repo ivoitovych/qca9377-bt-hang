@@ -90,9 +90,17 @@ bt_ew_read() {   # <exhibit-file>
 # `2026-08-15T25:00:00+02:00` both match it — and `date -f -` drops a line it
 # cannot read and carries on. Taking the minimum of what survived would answer
 # from a list missing the entry that might have been the earliest.
+# `not placeable` IS CHECKED BEFORE THE STAMPS, NOT AFTER. A reason is prose and
+# prose can legitimately contain an instant — "the journal behind these tables
+# was rotated by 2026-08-12T03:00:00+02:00" is a good reason and a terrible thing
+# to parse a window out of. Without this the declaration would say "cannot be
+# placed" and the reader would place it anyway, from a date in the explanation
+# of why it cannot. Same shape as the capture stamp masquerading as the
+# evidence's: a tool deciding which part of a record to believe.
 bt_ew_earliest() {   # <payload>
     local payload="$1" n i best
     local -a stamp epoch
+    [[ "$payload" == "not placeable"* ]] && return 0
     mapfile -t stamp < <(grep -oE "$BT_EW_TS_RE" <<<"$payload")
     n=${#stamp[@]}
     (( n > 0 )) || return 0

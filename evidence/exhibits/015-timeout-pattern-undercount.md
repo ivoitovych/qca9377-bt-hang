@@ -43,6 +43,17 @@ independently confirmed: the window contains no `USB disconnect` line, which is
 the finding in its own right — the controller reached stage 1 and stayed there
 for 4 m 48 s with no watchdog running.
 
+**Evidence window.** `2026-08-13T03:00:25+02:00` — `2026-08-13T05:19:38+02:00`
+
+> **Annotation added 2026-08-22 (`BL-09`), derived from this exhibit's own
+> content. The captured output above is untouched.** The window is what the extraction command
+> itself asked for: `--since '2026-08-13 03:00:25' --until '2026-08-13 05:19:38'`.
+> Those are bare local times; the offset is this exhibit's own `captured` stamp,
+> `2026-08-13T05:35:00+02:00`, fifteen minutes after the `--until` on the same day.
+>
+> The output itself is three bare counts, which is why the command's own bounds are
+> the only thing in the file that can place it.
+
 ## Provenance
 
 | field | value |

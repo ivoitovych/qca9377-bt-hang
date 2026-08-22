@@ -32,6 +32,14 @@ btmon aborts before: 79
 btmon aborts after 3 spaced calls: 82
 ```
 
+**Evidence window.** not placeable — the output is two counts and neither is a time.
+
+> **Annotation added 2026-08-22 (`BL-09`), derived from this exhibit's own
+> content. The captured output above is untouched.** `journalctl -u bt-trace -b 0 … | grep -c`
+> returns a number. The evidence is the capture boot itself, whose id the provenance
+> records, and a boot id is not an instant. Re-running the extraction against the
+> abort lines with `-o short-iso-precise` would place it.
+
 ## Provenance
 
 | field | value |

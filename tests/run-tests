@@ -6919,7 +6919,20 @@ printf '# EX-041\n\nMentions 2026-08-15T16:55:59.333858+02:00 in passing.\n\n%s 
 printf '# EX-042\n\nMentions 2026-08-15T16:55:59.333858+02:00 in passing.\n\n%s not placeable — the journal behind these tables is gone and no line here can place them.\n\n## Provenance\n\n| captured | `2026-08-20T10:00:00+02:00` |\n' \
     '**Evidence window.**' > "$RTD/evidence/exhibits/042-window-unplaceable.md"
 
+# A REASON IS PROSE, AND PROSE MAY CONTAIN A DATE. "the journal behind these
+# tables had rotated by 2026-08-15T16:55:59.333858+02:00" is a good reason and a
+# terrible thing to parse a window out of — without the guard the declaration
+# says "cannot be placed" and the reader places it anyway, from a stamp inside
+# the explanation of why it cannot. Same shape as the capture stamp
+# masquerading as the evidence's: a tool deciding which part of a record to
+# believe. Three of the nine BL-09 annotations quote a date in their reason.
+printf '# EX-044\n\n%s not placeable — the journal behind these tables had already rotated by 2026-08-15T16:55:59.333858+02:00.\n\n## Provenance\n\n| captured | `2026-08-20T10:00:00+02:00` |\n' \
+    '**Evidence window.**' > "$RTD/evidence/exhibits/044-reason-quotes-a-date.md"
+
 RTDO=$(BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RTD" tools/bt-retention 2>&1); rtdrc=$?
+[[ "$(rt_line "$RTDO" 044-reason-quotes-a-date)" == *"declared not placeable"* ]] \
+    && ok "a date inside a not-placeable reason does not become the window" \
+    || bad "the reason was parsed as a window: $(rt_line "$RTDO" 044-reason-quotes-a-date)"
 if (( rtdrc == 0 )) \
    && [[ "$(rt_line "$RTDO" 040-window-kept)" == *"retained"*"declared window"* \
       && "$(rt_line "$RTDO" 041-window-gone)" == *"GONE"*"declared window opens 2026-07-25"* \
@@ -6933,7 +6946,7 @@ fi
 # AND THE REPORT SAYS HOW MANY ANSWERS WERE DECLARED RATHER THAN GUESSED. BL-09
 # is closed when that number reaches the exhibit count; a summary that did not
 # separate them would make closing it a matter of counting files by hand.
-[[ "$RTDO" == *"3 of the 3 carry a declared **Evidence window.** (BL-09)"* ]] \
+[[ "$RTDO" == *"4 of the 4 carry a declared **Evidence window.** (BL-09)"* ]] \
     && ok "the summary counts declared windows apart from scanned ones" \
     || bad "the declared/scanned split was not reported: $(grep -F 'declared **Evidence' <<<"$RTDO")"
 

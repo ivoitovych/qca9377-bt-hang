@@ -53,6 +53,15 @@ exogenous-only analysis of a boot that hung:
     answered later, not so it can be answered now.
 ```
 
+**Evidence window.** not placeable — the output names no instant, and the analysis is addressed by boot index rather than by time.
+
+> **Annotation added 2026-08-22 (`BL-09`), derived from this exhibit's own
+> content. The captured output above is untouched.** The window analysed is `bt-phase -b -2`,
+> which is two boots before the capture boot — a position in a list that shifts every
+> time the machine boots, not a fixed point on journald's axis. The rest of the output
+> is a timer cadence, a udev rule and a phase distribution, none of which carries a
+> date.
+
 ## Provenance
 
 | field | value |

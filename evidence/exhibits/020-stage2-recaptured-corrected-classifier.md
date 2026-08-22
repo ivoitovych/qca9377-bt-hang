@@ -94,6 +94,14 @@ stray disconnect could have truncated one. They are unchanged too, and the
 longest uncensored-by-reset window — 4331.99 s in `EX-016` — was independently
 checked line by line against the raw journal when it was first recorded.
 
+**Evidence window.** not placeable — the output is a summary over 22 boots and names none of them.
+
+> **Annotation added 2026-08-22 (`BL-09`), derived from this exhibit's own
+> content. The captured output above is untouched.** `source: 3286819 lines, 22 boot(s)`
+> counts the input; nothing in the output says which boots or when. The classifier
+> totals below it carry no date either. This matches what
+> `docs/investigation-plan.md` expected of this exhibit.
+
 ## Provenance
 
 | field | value |
