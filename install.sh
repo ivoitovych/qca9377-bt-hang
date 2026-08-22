@@ -428,6 +428,12 @@ install_file "$SRC/tools/lib/actions-render.awk" /usr/local/bin/lib/actions-rend
 # A tool that sources a file it did not ship fails at run time on the installed
 # machine while passing every check in the checkout.
 install_file "$SRC/tools/lib/journal.sh"        /usr/local/bin/lib/journal.sh        0644
+# Same rule, second file: bt-exhibit WRITES the evidence-window field and
+# bt-retention READS it, both are installed, and both source this. Shipping one
+# without the other is a tool that dies on the installed machine while every
+# check in the checkout passes — which is why the suite now derives this list
+# from the sources themselves rather than trusting anyone to remember.
+install_file "$SRC/tools/lib/evidence-window.sh" /usr/local/bin/lib/evidence-window.sh 0644
 if command -v btmon >/dev/null 2>&1; then
     install_file "$SRC/bin/bt-trace"            /usr/local/sbin/bt-trace                    0755
     install_file "$SRC/systemd/bt-trace.service" /etc/systemd/system/bt-trace.service       0644

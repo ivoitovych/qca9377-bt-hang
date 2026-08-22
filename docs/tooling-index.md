@@ -23,6 +23,16 @@ it — the expensive step is journal traversal, and it does it once. Its output
 directory (`/var/tmp/bt-snapshots/latest/`) holds `all.log`, `kernel.log` and the
 `f-*.log` fine cuts; grep those files, never the journal again.
 
+⚠️ **Read the BlueZ health block, not only the controller counts.** Every count
+above it is about the QCA9377, and `EX-032` is the failure mode where the
+controller is perfectly healthy and Bluetooth is dead anyway — a BlueZ crash
+leaving the adapter powered and permanently non-scanning. Those four values are
+taken **from the journal**, so they are the daemon's last logged state and not a
+live read; that is deliberate, because this tool is run inside untreated windows
+and must not talk to the adapter. They read `UNKNOWN` on a machine that does not
+run `bluetoothd -d` — this project ships that on in
+`etc/systemd/bluetooth.service.d/10-debug.conf`.
+
 ---
 
 ## By question

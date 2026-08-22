@@ -23,12 +23,30 @@
 set -uo pipefail
 export LC_ALL=C
 
+# Both halves of the answer come through a seam, so this tool can be driven
+# over a known crash without a crash — or a machine — being present. The
+# journal half is tools/lib/journal.sh; the core half is coredump.sh, added
+# for this tool because half its verdict lived on the host.
+_here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIBDIR="${BT_LIBDIR:-$_here/lib}"
+for _l in journal.sh coredump.sh; do
+    [[ -r "$LIBDIR/$_l" ]] || { echo "bt-crash: missing $LIBDIR/$_l" >&2; exit 2; }
+done
+# shellcheck source=tools/lib/journal.sh
+source "$LIBDIR/journal.sh"
+# shellcheck source=tools/lib/coredump.sh
+source "$LIBDIR/coredump.sh"
+
 BOOT=0; ALL=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --boot) BOOT="${2:?--boot needs an index}"; shift ;;
+        # `${2:?...}` exited 1 here while every other usage error in this file
+        # exits 2, so a caller distinguishing "you typed it wrong" from "it ran
+        # and found nothing" got two different answers for one mistake.
+        --boot) [[ $# -ge 2 ]] || { echo "bt-crash: --boot needs an index" >&2; exit 2; }
+                BOOT="$2"; shift ;;
         --all)  ALL=1 ;;
-        -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,7p' "$0"; exit 0 ;;
         *) echo "bt-crash: unknown option: $1" >&2; exit 2 ;;
     esac
     shift
@@ -40,34 +58,63 @@ echo "────────────────────────�
 # ── crashes as the journal records them ──────────────────────────────────
 echo
 echo "Crashes in the journal:"
-CRASH=$(journalctl -b "$BOOT" --no-pager -o short-iso 2>/dev/null \
-        | grep -E 'segfault|core-dump|Failed with result' || true)
-n=$(grep -c . <<<"${CRASH:-}" 2>/dev/null || true)
-if [[ -z "$CRASH" ]]; then
-    echo "  none"
+# "NO CRASHES" AND "NOTHING WAS READ" MUST NOT PRINT THE SAME WORD. Without a
+# journal the read returns empty and the line below said `none` — a confident
+# all-clear from a tool whose entire job is to say whether BlueZ died. That is
+# the empty-input rule this repository states everywhere else: ENUMERATED == 0
+# is a refusal, CHECKED == 0 is a result. The cores are still listed, because
+# they are a separate source and are often the half that survives; the exit
+# status carries the refusal so a script cannot read silence as health.
+RC=0
+if bt_journal_available; then
+    CRASH=$(bt_journal -b "$BOOT" --no-pager -o short-iso 2>/dev/null \
+            | grep -E 'segfault|core-dump|Failed with result' || true)
+    n=$(grep -c . <<<"${CRASH:-}" 2>/dev/null || true)
+    if [[ -z "$CRASH" ]]; then
+        echo "  none"
+    else
+        sed 's/^/  /' <<<"$CRASH" | tail -12
+        printf '  (%s line(s) total)\n' "${n:-0}"
+    fi
 else
-    sed 's/^/  /' <<<"$CRASH" | tail -12
-    printf '  (%s line(s) total)\n' "${n:-0}"
+    CRASH=""
+    RC=2
+    # Names the host's missing tool, which is what an operator has to install;
+    # the seam governs what this script EXECUTES.
+    echo "  UNKNOWN — no journal is reachable (journalctl not installed)."  # SEAM-ADVICE
+    echo "            This is not 'no crashes': nothing was read."
+    echo "            Try instead: dmesg | grep -E 'segfault|core-dump'"
 fi
 
 # THE SAME OFFSET TWICE IS NOT A COINCIDENCE. A repeated segfault at one offset
 # reading one address is a deterministic null dereference, not corruption, and
 # saying so here saves the comparison being redone by hand every time.
-OFF=$(grep -oE 'in [a-z0-9_.-]+\[[0-9a-f]+,' <<<"${CRASH:-}" 2>/dev/null \
-      | sed -E 's/.*\[([0-9a-f]+),/\1/' | sort | uniq -c | sort -rn | head -1 || true)
+#
+# THE OFFSET IS KEYED TO ITS BINARY, because on its own it is not an identity.
+# This kernel prints `in <binary>[<offset>,<vma_start>+<vma_size>]` and both
+# forms are already in this repository's evidence: `bluetoothd[367e5,...]` in
+# EX-032 and `libc.so.6[ade55,...]` in the 2026-08-11 session. Counting bare
+# offsets pools them, so two libc faults outvoting one bluetoothd fault printed
+# `2 crashes at the SAME offset ade55` — true, and read by anyone who knows
+# what this tool is for as a claim about BlueZ. Naming the binary costs one
+# capture group and makes the line say what it means.
+OFF=$(grep -oE 'in [A-Za-z0-9_.+-]+\[[0-9a-f]+,' <<<"${CRASH:-}" 2>/dev/null \
+      | sed -E 's/^in (.+)\[([0-9a-f]+),$/\2 \1/' \
+      | sort | uniq -c | sort -k1,1nr -k2,2 | head -1 || true)
 if [[ -n "$OFF" ]]; then
-    cnt=$(awk '{print $1}' <<<"$OFF"); off=$(awk '{print $2}' <<<"$OFF")
+    read -r cnt off mod <<<"$OFF"
     if [[ "${cnt:-0}" -gt 1 ]]; then
-        printf '\n  ⚠️  %s crashes at the SAME offset %s — deterministic, not corruption.\n' "$cnt" "$off"
+        printf '\n  ⚠️  %s crashes at the SAME offset %s in %s — deterministic, not corruption.\n' \
+               "$cnt" "$off" "$mod"
     fi
 fi
 
 # ── cores actually retained ──────────────────────────────────────────────
 echo
-if ! command -v coredumpctl >/dev/null 2>&1; then
-    echo "Cores: coredumpctl not installed — no core can be kept or read."
+if ! bt_coredump_available; then
+    echo "Cores: coredumpctl not installed — no core can be kept or read."  # SEAM-ADVICE
     echo "       Install systemd-coredump to make the next crash filable."
-    exit 0
+    exit "$RC"
 fi
 
 echo "Cores retained:"
@@ -75,14 +122,14 @@ echo "Cores retained:"
 # core that mattered; the full list is printed and filtered by relevance
 # instead, so nothing is dropped by position.
 if (( ALL )); then
-    LIST=$(coredumpctl list --no-pager 2>/dev/null | tail -n +2 || true)
+    LIST=$(bt_coredumpctl list --no-pager 2>/dev/null | tail -n +2 || true)
 else
-    LIST=$(coredumpctl list --no-pager 2>/dev/null | tail -n +2 \
+    LIST=$(bt_coredumpctl list --no-pager 2>/dev/null | tail -n +2 \
            | grep -iE 'bluetoothd|btmon|btusb|bt-' || true)
 fi
 if [[ -z "$LIST" ]]; then
     echo "  none$( (( ALL )) || echo ' matching bluetooth processes (use --all)')"
-    exit 0
+    exit "$RC"
 fi
 sed 's/^/  /' <<<"$LIST"
 
@@ -91,7 +138,7 @@ PID=$(grep -i 'bluetoothd' <<<"$LIST" | tail -1 | awk '{print $5}')
 if [[ -n "$PID" ]]; then
     echo
     echo "Newest bluetoothd stack (pid $PID):"
-    coredumpctl info "$PID" --no-pager 2>/dev/null \
+    bt_coredumpctl info "$PID" --no-pager 2>/dev/null \
         | sed -n '/Stack trace/,$p' | sed 's/^ */  /' | head -14
     echo
     echo "  Frames read 'binary + offset' because bluez debug symbols for this"
@@ -100,4 +147,4 @@ if [[ -n "$PID" ]]; then
     echo "  function rather than failing. The offsets are exact and sufficient"
     echo "  for a maintainer who has the matching symbols."
 fi
-exit 0
+exit "$RC"

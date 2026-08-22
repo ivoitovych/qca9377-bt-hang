@@ -1,7 +1,14 @@
 # reviews
 
-Assessments of **this repository** — its testing, its tooling, its own claims. Nothing
-here diagnoses Bluetooth.
+Assessments of **this repository** — its testing, its tooling, its own claims.
+
+**One report reaches past the tree's edge, and it is stated here rather than
+smuggled in.** `2026-08-17T0022Z-source-investigation-2026-08-16-2353.md` reads Linux
+source, because this repository's central claims *are* claims about Linux source and
+checking them cannot stop at our own files — it corrects `EX-006` from `EX-006`'s own
+output. It belongs here rather than in `docs/` because it is a dated snapshot of what was
+known on one evening, not living documentation; `docs/` is where the living account is
+kept. Everything else here diagnoses only us.
 
 ## The convention
 
@@ -50,6 +57,7 @@ wrong turns, which a clean summary loses.
 | 2026-08-15T15:04Z | [Verification on the investigation machine](2026-08-15T1504Z-verification-on-the-investigation-machine.md) | `9a11ab7` merged on `ed82166` | 566/567 where the tools are installed, **system binaries byte-identical** before and after — `farm_dir()` verified on the configuration that destroyed three of them 90 minutes earlier. Names the fourth instance of *a test whose subject is a tool's behaviour cannot be validated where the tool is missing* |
 | 2026-08-15T17:52Z | [Comprehensive code review](2026-08-15T1752Z-comprehensive-code-review.md) | the tree at `ed82166` | Every file, in priority order. **`main` fails its own coverage gate** on three stale exclusion ranges; five invariants nested inside another check's success branch in `tests/run-tests`; prose-behind-code named as the dominant defect class, concentrated where no invariant reaches |
 | 2026-08-16T00:22Z | [Fixes & elaboration for the code review](2026-08-16T0022Z-fixes-and-elaboration-for-2026-08-15T1752Z-review.md) | `main` at `944b1eb`, branch `review/2026-08-15T1752Z-fixes` | All 84 findings dispositioned — fixed / fixed-on-main / kept (REVIEWED-KEEP markers) / recorded; suite 602 green, coverage 89.6%, awk 88.0%. Adds CR-84 (mawk skips) and `tools/lib/trial-reclass.awk` |
+| 2026-08-17T00:22Z | [Source investigation 2026-08-16-2353](2026-08-17T0022Z-source-investigation-2026-08-16-2353.md) | Linux source, against `main` @ `1c336e7` | The one report here that reads the kernel rather than us. Locates `BT-1` as a chain across four components, and names the structural finding: the HCI core has **two watchdogs and one escalation path**, and `BT-1` is the case the escalation cannot reach. Corrects `EX-006` from its own output — `0x0428` *was* answered — which `EX-033` then observed directly six days later |
 
 ---
 
@@ -176,7 +184,7 @@ what was built, and why it differs.
 | TX-01 | `tools/bt-window` is shipped and has never been executed | done — 0% → 91%, 15 scenarios | this commit | `devtools/test-comprehension bt-window` |
 | TX-02 | Drive every mode of the four units below 35% (16 verbs/flags) | done — worst unit is now 80% | this commit | `devtools/test-comprehension --min 75` |
 | TX-03 | Drive the 14 refusal paths nothing has reached | done — 2 remain, both argued | this commit | `devtools/test-comprehension` — "never exercised" section |
-| TX-04 | `bin/bt-capture` is Python; no instrument here measures it | **open** — decide: instrument or state it | — | `devtools/test-comprehension` — "not measurable" section |
+| TX-04 | `bin/bt-capture` is Python; no instrument here measures it | done — instrumented, not stated: `devtools/py-coverage`, 85.9%, CI floor 80 | `2026-08-22` | `devtools/py-coverage --min 80` |
 | TX-05 | Untested watchdog seams decide WHEN it intervenes (`BT_WINDOW`, `BT_EARLY_*`) | done — 13/13 seams driven | this commit | `devtools/test-comprehension bt-hang-watchdog` |
 | TX-06 | A comprehensiveness floor in CI | done — `--min 75`, a ratchet below the current 80 | this commit | `grep -c "comprehensiveness floor" .github/workflows/checks.yml` → 1 |
 

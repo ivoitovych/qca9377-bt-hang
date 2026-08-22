@@ -25,6 +25,18 @@ last decoded events from the decode-free capture:
 @ MGMT Close: bluetoothctl                  {0x0002} 2026-08-12 19:14:47.361100
 ```
 
+**Evidence window.** `2026-08-12T19:14:20.336471+02:00` — `2026-08-12T19:14:47.361100+02:00`
+
+> **Annotation added 2026-08-22 (`BL-09`), derived from this exhibit's own
+> content. The captured output above is untouched.** The three decoded events carry bare local
+> times (`2026-08-12 19:14:20.336471` … `2026-08-12 19:14:47.361100`). The offset is
+> this exhibit's own `captured` stamp, `2026-08-12T19:16:08+02:00` — 108 seconds
+> later, on the same day — so no zone is inferred beyond one the file already states.
+>
+> ⚠️ The window bounds the three events shown. The `btmon aborts this boot: 74` count
+> above them is a count over the whole capture boot, whose start this output does not
+> name; the boot id is in the provenance.
+
 ## Provenance
 
 | field | value |

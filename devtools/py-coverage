@@ -1,0 +1,245 @@
+#!/bin/bash
+# py-coverage — line coverage for the Python this repository ships.
+#
+#   devtools/py-coverage                 per-file table
+#   devtools/py-coverage --uncovered     the lines that never ran
+#   devtools/py-coverage --min 70        exit non-zero below that percentage
+#
+# WHY THIS EXISTS, AND WHY IT IS A THIRD INSTRUMENT.
+#
+# devtools/coverage measures bash by xtrace and devtools/awk-coverage measures
+# awk by `gawk --profile`. Neither can see Python, and this tree has exactly one
+# Python file — `bin/bt-capture`, 211 lines. `TX-04` has been open since
+# 2026-08-15 recording that gap, with the decision stated as "instrument or
+# state it".
+#
+# The file is not incidental. btmon aborts 67 times in a single boot (BT-4), and
+# bt-capture is the capture that SURVIVES: it is the copy of the traffic still
+# there afterwards, and the btsnoop it writes is what `bt-capdiff` and every
+# later analysis read. An encoding error here is discovered at READ time, weeks
+# later, on evidence that cannot be recaptured.
+#
+# HOW IT WORKS, and it is the same shape as the bash instrument. devtools/
+# coverage puts a trace hook into every bash the suite starts, via BASH_ENV.
+# Python's equivalent is `sitecustomize`: any module of that name on PYTHONPATH
+# is imported by the interpreter at startup, before the program runs. So a
+# generated sitecustomize starts `trace.Trace(count=1)`, registers an atexit
+# hook to write the counts, and the suite is run with PYTHONPATH pointing at it.
+#
+# stdlib `trace`, not `coverage.py`: an instrument that only runs where an extra
+# package happens to be installed reports "no data" on the machines that do not
+# have it, and "no data" reads exactly like "nothing to measure".
+#
+# WHAT COUNTS AS COVERABLE. The trace module reports executed LINE numbers. The
+# denominator is every line the compiler treats as a statement, taken from the
+# file's own code objects — not a guess from the text, which is where a
+# hand-written denominator would start disagreeing with the numerator. `def`,
+# `class` and decorator lines execute at import; docstrings and comments are not
+# statements and never appear on either side.
+
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+
+MIN=""; SHOWUNCOV=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --min)       MIN="${2:?--min needs a number}"; shift ;;
+        --uncovered) SHOWUNCOV=1 ;;
+        -h|--help)   sed -n '2,6p' "$0"; exit 0 ;;
+        *) echo "py-coverage: unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+command -v python3 >/dev/null 2>&1 || {
+    echo "py-coverage: python3 not installed — nothing can be measured" >&2; exit 2; }
+
+# DERIVED, like every other file list in this repository. A hand-written
+# "bin/bt-capture" here would keep reporting one file after a second is added,
+# and the report would look complete.
+PYFILES=()
+while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    IFS= read -r shebang < "$f" || continue
+    case "$shebang" in '#!'*python*) PYFILES+=("$f") ;; esac
+    case "$f" in *.py) PYFILES+=("$f") ;; esac
+done < <(git ls-files 2>/dev/null)
+
+if (( ${#PYFILES[@]} == 0 )); then
+    # ENUMERATED == 0 IS A REFUSAL. A tree with no Python would make every
+    # number below vacuously perfect, and "100% of nothing" is the reading this
+    # repository has been burned by more than once.
+    echo "py-coverage: no Python files found in git ls-files — nothing enumerated" >&2
+    exit 2
+fi
+
+WORK=$(mktemp -d) || exit 1
+trap 'rm -rf "$WORK"' EXIT
+mkdir -p "$WORK/hook" "$WORK/counts"
+
+# The hook. Written rather than shipped, because it has to carry the absolute
+# output directory and because a tracked sitecustomize.py on PYTHONPATH would
+# be imported by every python3 anyone ran in this checkout, instrumented or not.
+cat > "$WORK/hook/sitecustomize.py" <<'HOOK'
+import atexit, os, sys, trace, traceback
+
+_out = os.environ.get("BT_PYCOV_DIR", "")
+_root = os.environ.get("BT_PYCOV_ROOT", "")
+if _out and _root:
+    # NO `ignoredirs`. Passing [sys.prefix, sys.exec_prefix] recorded exactly ONE
+    # line of the file under test and the tool reported 0.7% — precise,
+    # confident and wrong, which is the worst thing an instrument can produce.
+    # Measured rather than reasoned about: with the argument removed the same run
+    # records 3,602 lines. Filtering happens in _dump instead, on the repository
+    # root, where it can be seen and where it is one line to check.
+    _tracer = trace.Trace(count=1, trace=0)
+
+    def _dump():
+        # STOP TRACING BEFORE READING THE COUNTS. This dump is itself Python, so
+        # with the tracer still installed every line of it adds entries to the
+        # dict being iterated: `RuntimeError: dictionary changed size during
+        # iteration`, raised inside an `except Exception: pass` that swallowed it
+        # whole. The tool then reported 0.0% across the board, from a run in
+        # which every file had in fact been traced. An instrument that fails
+        # silently reports a number that looks like a finding.
+        sys.settrace(None)
+        try:
+            # Snapshotted with list() as well as untraced: belt and braces on the
+            # exact failure above, and it costs one allocation per process.
+            items = list(_tracer.results().counts.items())
+            # One file per process; the pid keeps concurrent interpreters from
+            # overwriting each other, and the aggregation is a union so order
+            # does not matter.
+            with open(os.path.join(_out, "c-%d" % os.getpid()), "w") as fh:
+                for (fn, lineno), n in items:
+                    if not n:
+                        continue
+                    p = os.path.abspath(fn)
+                    if p.startswith(_root + os.sep):
+                        fh.write("%s\t%d\n" % (p, lineno))
+        except Exception:
+            # NEVER SWALLOWED. py-coverage refuses to report a percentage when
+            # any of these exist, because a number computed from the processes
+            # that happened to survive is not a measurement.
+            with open(os.path.join(_out, "err-%d" % os.getpid()), "w") as fh:
+                traceback.print_exc(file=fh)
+
+    atexit.register(_dump)
+    sys.settrace(_tracer.globaltrace)
+HOOK
+
+echo "running tests/run-tests under trace (${#PYFILES[@]} Python file(s))..." >&2
+SUITE_OUT="$WORK/suite.log"
+BT_PYCOV_DIR="$WORK/counts" BT_PYCOV_ROOT="$PWD" \
+    PYTHONPATH="$WORK/hook${PYTHONPATH:+:$PYTHONPATH}" \
+    tests/run-tests > "$SUITE_OUT" 2>&1
+SUITE_RC=$?
+SUITE_TAIL=$(tail -1 "$SUITE_OUT")
+
+# THE MEASUREMENT IS ONLY MEANINGFUL FROM A GREEN RUN, which is the rule
+# devtools/coverage states and this one inherits: a suite that failed half way
+# leaves every later file looking untested, and the number would be reported
+# with no hint that it came from a broken run.
+if (( SUITE_RC != 0 )); then
+    echo "py-coverage: the suite FAILED — coverage from a failing run is not a measurement" >&2
+    echo "  $SUITE_TAIL" >&2
+    exit 1
+fi
+
+# A PROCESS THAT COULD NOT REPORT IS NOT A PROCESS THAT COVERED NOTHING. Any
+# err-* file means a traced interpreter failed to write its counts, so the union
+# below is missing lines nobody can name — and every missing line lowers the
+# percentage, which is the direction that looks like a finding.
+NERR=$(ls "$WORK/counts"/err-* 2>/dev/null | wc -l)
+if (( ${NERR:-0} > 0 )); then
+    echo "py-coverage: $NERR traced process(es) failed to record their counts:" >&2
+    head -20 "$WORK/counts"/err-* >&2
+    echo "  refusing to report a percentage computed from the ones that survived" >&2
+    exit 2
+fi
+
+NCOUNT=$(ls "$WORK/counts"/c-* 2>/dev/null | wc -l)
+if (( ${NCOUNT:-0} == 0 )); then
+    # ENUMERATED == 0. No interpreter recorded anything, which means the hook
+    # never loaded — PYTHONPATH scrubbed, `python3 -E`, a `site`-less build —
+    # and not that the suite executes no Python.
+    echo "py-coverage: no traced process wrote any counts — the hook did not load" >&2
+    exit 2
+fi
+
+cat "$WORK/counts"/c-* 2>/dev/null | LC_ALL=C sort -u > "$WORK/executed"
+
+# The denominator, from each file's own code objects. Walking co_consts reaches
+# nested functions and classes; co_lines() gives every line the compiler emits
+# an instruction for, which is the definition of "a statement that could run".
+for f in "${PYFILES[@]}"; do
+    python3 - "$f" <<'DENOM'
+import sys, os
+path = sys.argv[1]
+src = open(path).read()
+code = compile(src, path, "exec")
+seen = set()
+stack = [code]
+while stack:
+    c = stack.pop()
+    for _, _, line in c.co_lines():
+        if line:
+            seen.add(line)
+    for k in c.co_consts:
+        if hasattr(k, "co_lines"):
+            stack.append(k)
+for line in sorted(seen):
+    print("%s\t%d" % (os.path.abspath(path), line))
+DENOM
+done | LC_ALL=C sort -u > "$WORK/coverable"
+# SORTED THE SAME WAY AS THE OTHER SIDE, which is not a detail. The denominator
+# comes out of python in NUMERIC line order and `comm` below joins on byte
+# order, where "10" sorts before "2" — so --uncovered listed lines that had
+# plainly executed, including the seam every test drives. The percentage was
+# unaffected (the table joins on a hash, not on order), which is the awkward
+# half: the number was right while the list contradicting it was wrong.
+
+if [[ ! -s "$WORK/coverable" ]]; then
+    echo "py-coverage: no coverable lines derived — the denominator is empty" >&2
+    exit 2
+fi
+
+if (( SHOWUNCOV )); then
+    LC_ALL=C comm -23 "$WORK/coverable" <(LC_ALL=C sort -u "$WORK/executed") \
+        | awk -F'\t' '{ if ($1 != last) { printf "\n%s\n", $1; last = $1 } printf "%6d  ", $2
+                        cmd = "sed -n \"" $2 "p\" \"" $1 "\""; cmd | getline l; close(cmd)
+                        sub(/^[ \t]+/, "", l); print l }'
+    exit 0
+fi
+
+awk -F'\t' '
+    NR == FNR { cov[$1 "\t" $2] = 1; next }
+    {
+        tot[$1]++
+        if (($1 "\t" $2) in cov) hit[$1]++
+    }
+    END {
+        n = 0
+        for (f in tot) {
+            pct = 100 * (hit[f] + 0) / tot[f]
+            printf "  %5.1f%%  %6d/%-6d %s\n", pct, hit[f] + 0, tot[f], f
+            H += hit[f] + 0; T += tot[f]; n++
+        }
+        printf "\nfiles measured: %d\n", n
+        printf "TOTAL: %.1f%% (%d of %d statement lines)\n", (T ? 100 * H / T : 0), H, T
+        printf "%d\n", (T ? int(100 * H / T) : 0) > "/dev/stderr"
+    }
+' <(LC_ALL=C sort -u "$WORK/executed") "$WORK/coverable" 2> "$WORK/pct"
+
+echo
+echo "suite: $SUITE_TAIL"
+
+TOTAL_PCT=$(tr -d '[:space:]' < "$WORK/pct" 2>/dev/null)
+TOTAL_PCT=${TOTAL_PCT:-0}
+if [[ -n "$MIN" ]]; then
+    if (( TOTAL_PCT < MIN )); then
+        echo "python line coverage ${TOTAL_PCT}% is below the --min ${MIN}% floor" >&2
+        exit 1
+    fi
+    echo "python line coverage ${TOTAL_PCT}% meets the --min ${MIN}% floor"
+fi

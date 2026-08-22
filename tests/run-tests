@@ -33,6 +33,49 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
 
+# ── THE SUITE'S OWN SOURCE, AS A SET RATHER THAN AS "$0" ─────────────────
+#
+# Eight invariants in this file scan THE SUITE ITSELF, and they are the ones
+# that stop it doing damage: no `install.sh --apply` outside a staging root, no
+# `bt-trial` outside the sandboxed helper, no raw symlink farm (one replaced
+# /usr/bin/systemctl on the development container), exactly one EXIT trap, no
+# PATH construction that re-adds /usr/bin. Every one of them read `"$0"`.
+#
+# `"$0"` IS THE ENTRY POINT, NOT THE SUITE. UT-12 splits this file — it is
+# 9,700 lines and the largest in the repository — and the moment any of it moves
+# into a sourced part, all eight keep passing while seeing only what is left
+# behind. A guard that stops covering the code it guards, silently, in the
+# checks that exist to stop the suite from overwriting system binaries and
+# writing into the real evidence tree. That is this repository's most expensive
+# defect shape, aimed at its own safety machinery.
+#
+# So they scan a SET, derived, and the set is exactly `$0` until the day it is
+# not. Written before the split rather than after, because after is when the
+# checks are already quiet.
+#
+# No `shopt -s nullglob`: an unmatched glob stays literal and `[[ -r ]]` rejects
+# it. Setting a shell option here would change the behaviour of every test below
+# it, which is the kind of action-at-a-distance this file exists to catch.
+# A FUNCTION, SO THE DERIVATION ITSELF CAN BE DRIVEN. Inline, this could not be
+# tested until the day it mattered: `tests/parts/` does not exist yet, so
+# deleting the accumulation entirely changed nothing observable and the check
+# guarding it could not fail. A typo in the glob would have sat here silently
+# until the split, which is the one moment it must be right.
+suite_file_set() {   # <entry> <parts-dir> — the suite's own source files
+    local entry="$1" dir="$2" p
+    printf '%s\n' "$entry"
+    for p in "$dir"/*.sh; do [[ -r "$p" ]] && printf '%s\n' "$p"; done
+    return 0
+}
+mapfile -t SUITE_FILES < <(suite_file_set "$0" "${BT_SUITE_PARTS:-tests/parts}")
+
+# Counting across the set. `grep -c` over several files prints one count PER
+# FILE — and so does `grep -hc`, which is the trap: it suppresses the filename
+# and still emits N lines, so a caller expecting a single number gets one that
+# happens to look right while there is one file and silently becomes a list
+# afterwards. Concatenating first is the only form that sums.
+suite_cat() { cat "${SUITE_FILES[@]}"; }
+
 # ── REFUSE TO RUN WHILE A REAL TRIAL IS OPEN ──────────────────────────────
 #
 # The suite's job includes driving tools that ACT — the watchdog decides to
@@ -3420,6 +3463,42 @@ if (( ex_awk_ok )); then
         && ok "bt-exhibit records the command's exit status" \
         || bad "exhibit did not record an exit status"
 
+    # ── BL-09: the evidence window, and the round trip that proves it ────
+    #
+    # `echo marker-…` carries no timestamp at all, which is the honest majority
+    # case and the one a diagnosis must not be invented for. The field says so
+    # in words rather than being absent, because absence means "nobody looked"
+    # and this exhibit HAS been looked at — it simply has nothing to place.
+    [[ "$exbody" == *"**Evidence window.** not placeable — this output carries no timestamp with a UTC offset"* ]] \
+        && ok "an exhibit whose output carries no instant declares itself not placeable" \
+        || bad "the evidence window was absent or guessed: $(grep -F 'Evidence window' <<<"$exbody")"
+
+    # ABOVE `## Provenance`, WHICH IS THE ENTIRE DESIGN. bt-retention truncates
+    # at that heading before it reads anything, so a field emitted below it is
+    # invisible — and BL-09's recorded decision is to keep that cut blunt rather
+    # than teach it field names, because a parser that reads the capture record
+    # fails to a WRONG answer while a blunt cut fails to "not judgeable".
+    #
+    # MUTATION: move the emission after the Provenance heading in bt-exhibit and
+    # this fails, as does the round trip below — the field is still in the file
+    # and no longer means anything.
+    exew=$(grep -n 'Evidence window' <<<"$exbody" | head -1 | cut -d: -f1)
+    exprov=$(grep -n '^## Provenance' <<<"$exbody" | head -1 | cut -d: -f1)
+    [[ -n "$exew" && -n "$exprov" ]] && (( exew < exprov )) \
+        && ok "the evidence window sits above ## Provenance, where the blunt cut can still see it" \
+        || bad "the field is at line $exew and Provenance at $exprov — bt-retention would never read it"
+
+    # AND THE READER MUST NOT REACH BELOW THE HEADING. A field placed inside the
+    # capture record is the coupling BL-09 exists to forbid; the reader has to
+    # refuse it rather than quietly accept a second copy.
+    exbelow=$(mktemp)
+    printf '# x\n\n## Provenance\n\n%s `2026-01-01T00:00:00+02:00`\n' '**Evidence window.**' > "$exbelow"
+    exbr=$(bash -c 'source tools/lib/evidence-window.sh; bt_ew_read "$1"' _ "$exbelow")
+    [[ -z "$exbr" ]] \
+        && ok "a window declared inside the provenance block is not read — the cut stays blunt" \
+        || bad "the reader accepted a field from the capture record: '$exbr'"
+    rm -f "$exbelow"
+
     # THE PUBLISH-SAFETY PROPERTY. A Wi-Fi BSSID in a published exhibit is
     # indexed by geolocation databases and discloses where this machine is.
     # The addresses used below sit in the prefix space repo-scan documents for
@@ -3543,6 +3622,71 @@ nosan=$(ls "$EXN/evidence/exhibits/" 2>/dev/null | wc -l)
     && ok "bt-exhibit refuses when the sanitiser is absent, as when it fails" \
     || bad "an unsanitised exhibit was written with no sanitiser present (rc=$nosanrc)"
 rm -rf "$EXN"
+
+# ── BL-09: a window derived from timestamped output, in its own checkout ──
+#
+# Its own checkout because the block above asserts exhibit NUMBERING, and an
+# exhibit created here would renumber everything after it. That is not a
+# hypothetical: the first version of this section wrote into $EXR and turned six
+# unrelated assertions red, which is the numbering invariant doing its job on
+# the test that broke it.
+if (( ex_awk_ok )); then
+    EXW=$(mktemp -d); mkdir -p "$EXW/evidence/exhibits" "$EXW/tools"
+    cp tools/sanitize-logs.sh "$EXW/tools/sanitize-logs.sh"
+    exw_new() { BT_REPO="$EXW" tools/bt-exhibit "$@" >/dev/null 2>&1; }
+
+    # BY INSTANT, NOT BY POSITION. The three stamps are emitted OUT OF ORDER on
+    # purpose — the middle line is the earliest and the first line is the latest
+    # — so a `head -1`/`tail -1` implementation gets both ends wrong. Position
+    # and instant agree on every real journal cut, which is exactly why an
+    # implementation that confuses them would never be caught by one.
+    exw_new new probe-window --claim "Three instants, written out of order." \
+            --why "So the window cannot be read off the file order." \
+            --cmd 'printf "%s\n" "2026-08-14T21:03:27.900000+02:00 last" "2026-08-14T21:02:15.100000+02:00 first" "2026-08-14T21:02:50.500000+02:00 middle"'
+    EXWF="$EXW/evidence/exhibits/001-probe-window.md"
+    exw=$(cat "$EXWF" 2>/dev/null)
+    [[ "$exw" == *'**Evidence window.** `2026-08-14T21:02:15.100000+02:00` — `2026-08-14T21:03:27.900000+02:00`'* ]] \
+        && ok "the window is the earliest and latest INSTANTS, not the first and last lines" \
+        || bad "the window was read off file order: $(grep -F 'Evidence window' <<<"$exw")"
+
+    # ONE INSTANT IS A POINT, NOT A ZERO-LENGTH RANGE. `X — X` reads as a window
+    # that was measured and found to have no duration, which is a different
+    # claim from "the output names one moment".
+    exw_new new probe-point --claim "One instant." --why "Point evidence." \
+            --cmd 'echo "2026-08-16T18:46:06+02:00 the only line"'
+    exo=$(cat "$EXW/evidence/exhibits/002-probe-point.md" 2>/dev/null)
+    [[ "$exo" == *'**Evidence window.** `2026-08-16T18:46:06+02:00`'* && "$exo" != *'+02:00` — `'* ]] \
+        && ok "a single instant is emitted as an instant, not as a zero-length range" \
+        || bad "one timestamp produced a range: $(grep -F 'Evidence window' <<<"$exo")"
+
+    # THE ROUND TRIP — the check neither tool can make about itself. bt-exhibit
+    # WRITES this field and bt-retention READS it, and a writer and a reader
+    # holding separate copies of a format agree exactly until one is edited.
+    # Here the reader is handed the writer's own output and asked for the epoch
+    # bt-retention would actually compare against a boot range.
+    exrt=$(bash -c '
+        source tools/lib/evidence-window.sh
+        payload=$(bt_ew_read "$1")
+        printf "%s|%s\n" "$payload" "$(bt_ew_earliest "$payload")"' _ "$EXWF")
+    exrt_want="\`2026-08-14T21:02:15.100000+02:00\` — \`2026-08-14T21:03:27.900000+02:00\`|$(date -d '2026-08-14T21:02:15.100000+02:00' +%s)"
+    [[ "$exrt" == "$exrt_want" ]] \
+        && ok "what bt-exhibit writes is exactly what bt-retention reads, down to the epoch" \
+        || bad "the writer and the reader disagree: got '$exrt' want '$exrt_want'"
+
+    # A STAMP THAT DOES NOT PARSE VOIDS THE ANSWER rather than being skipped.
+    # The regex accepts dates that do not exist — `2026-02-30T00:00:00+02:00`
+    # matches it and `date` refuses it — and `date -f -` drops a line it cannot
+    # read and carries on. Taking the minimum of what survived would answer from
+    # a list missing the entry that might have been the earliest.
+    exw_new new probe-impossible --claim "A date that does not exist." \
+            --why "The regex accepts it; the clock does not." \
+            --cmd 'printf "%s\n" "2026-02-30T00:00:00+02:00 nonexistent" "2026-08-14T21:02:15.100000+02:00 real"'
+    exi=$(cat "$EXW/evidence/exhibits/003-probe-impossible.md" 2>/dev/null)
+    [[ "$exi" == *"not placeable — 1 of 2 timestamps in this output do not parse"* ]] \
+        && ok "one unparseable instant voids the window instead of being skipped" \
+        || bad "an impossible date was silently dropped: $(grep -F 'Evidence window' <<<"$exi")"
+    rm -rf "$EXW"
+fi
 
 # Argument handling. A slug is a filename and a citation key; anything outside
 # kebab-case makes one or the other unstable.
@@ -5270,8 +5414,15 @@ tools/bt-incident a-slug --since >/dev/null 2>&1
 # A missing sanitiser is already refused. A sanitiser that RUNS AND FAILS is
 # the more dangerous case: the raw text exists at that moment, and the only
 # correct outcome is that neither it nor a half-cleaned copy survives.
-EXF=$(mktemp -d); mkdir -p "$EXF/tools" "$EXF/evidence/exhibits"
+EXF=$(mktemp -d); mkdir -p "$EXF/tools/lib" "$EXF/evidence/exhibits"
 cp tools/bt-exhibit "$EXF/tools/"
+# The libraries it sources, beside it. A copied tool with no lib directory
+# refuses at startup, which would pass this assertion for entirely the wrong
+# reason — "it wrote nothing" is true of a tool that never ran. Derived rather
+# than named, so a tool that gains a third library does not silently turn this
+# into a startup-failure test.
+while IFS= read -r _l; do cp "tools/lib/$_l" "$EXF/tools/lib/"; done \
+    < <(grep -oE 'source "\$LIBDIR/[a-z-]+\.sh"' tools/bt-exhibit | sed 's|.*/||; s|"||')
 printf '#!/bin/bash\nexit 1\n' > "$EXF/tools/sanitize-logs.sh"; chmod +x "$EXF/tools/sanitize-logs.sh"
 git -C "$EXF" init -q 2>/dev/null; touch "$EXF/install.sh"
 EXFOUT=$(BT_REPO="$EXF" "$EXF/tools/bt-exhibit" new failing-sanitiser \
@@ -5456,6 +5607,75 @@ if (( ${#CONVERTED[@]} > 0 )); then
     fi
 else
     bad "no tool sources journal.sh — the seam is not wired up"
+fi
+
+# THE SAME RULE FOR THE SECOND SEAM, derived the same way rather than written
+# as "and also check bt-crash". There is one caller today; the rule is here so
+# that the day there are two, neither can quietly regain a direct call. The
+# `[^_[:alnum:]]` in the pattern is what lets `bt_coredumpctl list` through and
+# stops `coredumpctl list` — the underscore is load-bearing, not decoration.
+CDCONV=()
+for f in "${SHFILES[@]}"; do
+    case "$f" in tools/*|bin/*) ;; *) continue ;; esac
+    n=$(grep -c 'source "\$LIBDIR/coredump.sh"' "$f" 2>/dev/null)
+    (( ${n:-0} > 0 )) && CDCONV+=("$f")
+done
+if (( ${#CDCONV[@]} > 0 )); then
+    ok "the coredump seam is in use by ${#CDCONV[@]} tool(s)"
+    CDRAW=$(grep -nE '(^|[^_[:alnum:]])coredumpctl ' "${CDCONV[@]}" 2>/dev/null \
+            | grep -v 'SEAM-ADVICE' \
+            | grep -v '^[^:]*:[0-9]*:[[:space:]]*#' \
+            | grep -v 'coredumpctl "\$@"')
+    if [[ -z "$CDRAW" ]]; then
+        ok "no converted tool calls coredumpctl directly"
+    else
+        bad "a converted tool bypassed bt_coredumpctl — it is untestable again:"
+        while IFS= read -r l; do echo "        $l"; done <<<"$CDRAW"
+    fi
+else
+    bad "no tool sources coredump.sh — the coredump seam is not wired up"
+fi
+
+# ── A TOOL MUST NOT SOURCE A LIBRARY IT DOES NOT SHIP ────────────────────
+#
+# `install.sh` already says this in prose beside journal.sh — "a tool that
+# sources a file it did not ship fails at run time on the installed machine
+# while passing every check in the checkout" — and nothing enforced it. Adding
+# tools/lib/evidence-window.sh proved the gap in one commit: bt-exhibit and
+# bt-retention are both installed, both began sourcing it, and every check here
+# stayed green while the next `install.sh --apply` would have left two dead
+# tools on the investigation machine.
+#
+# BOTH SIDES DERIVED. The tools come from install.sh's own install_file lines,
+# so a tool that stops being installed drops out; the libraries come from each
+# tool's own `source` lines, so a tool that gains one is covered the day it does.
+# A hand-written pairing is the thing that failed here.
+#
+# SCOPED TO INSTALLED TOOLS ON PURPOSE. tools/bt-crash sources coredump.sh and
+# is deliberately not installed, so requiring its library would be requiring the
+# shipping of something nothing ships.
+mapfile -t INSTALLED < <(grep -oE '^install_file "\$SRC/(tools|bin)/[a-zA-Z0-9._-]+"' install.sh \
+                         | sed 's|^install_file "\$SRC/||; s|"$||')
+LIBSHIP=$(grep -cE '^install_file "\$SRC/tools/lib/[a-z-]+\.sh"' install.sh || true)
+if (( ${#INSTALLED[@]} > 10 )) && (( ${LIBSHIP:-0} > 0 )); then
+    ok "the installed set derives to ${#INSTALLED[@]} tool(s) and $LIBSHIP shell librar(ies)"
+    UNSHIPPED=""
+    for f in "${INSTALLED[@]}"; do
+        [[ -r "$f" ]] || continue
+        while IFS= read -r lib; do
+            [[ -n "$lib" ]] || continue
+            grep -qE "^install_file \"\\\$SRC/tools/lib/$lib\"" install.sh \
+                || UNSHIPPED="$UNSHIPPED $f -> $lib"
+        done < <(grep -oE 'source "\$[A-Z_]*LIB[A-Z_]*/[a-z-]+\.sh"' "$f" | sed 's|.*/||; s|"||')
+    done
+    if [[ -z "$UNSHIPPED" ]]; then
+        ok "every library an installed tool sources is installed alongside it"
+    else
+        bad "an installed tool sources a library install.sh does not ship:"
+        for u in $UNSHIPPED; do echo "        $u"; done
+    fi
+else
+    bad "the installed-tool derivation found ${#INSTALLED[@]} tool(s) and ${LIBSHIP:-0} librar(ies) — it stopped matching install.sh"
 fi
 
 # ── --grep IS AN OPTIMISATION, WHICH MEANS THE ANSWER MUST NOT DEPEND ON IT ──
@@ -5979,6 +6199,158 @@ TRF=$(cat "$TR/daemon.log")
 echo 999 > "$TR/freegb"
 
 rm -rf "$TR"
+
+# ── bin/bt-capture: the third capture daemon, and the only Python here ────
+#
+# TX-04 has been open since 2026-08-15: *`bin/bt-capture` is Python; no
+# instrument here measures it*, with the decision recorded as "instrument or
+# state it". 211 lines, zero executed, and it is the capture that SURVIVES —
+# btmon aborts 67 times a boot and this is the copy still there afterwards.
+#
+# Two things stopped it being testable and both are now seams.
+#
+#   the socket   everything past open_monitor() needs a bound AF_BLUETOOTH
+#                monitor channel, so the btsnoop encoding that bt-capdiff and
+#                every later analysis read had never run outside the
+#                investigation machine. BT_CAPTURE_SOURCE feeds frames from a
+#                file instead.
+#   prune()      the one function here that DELETES EVIDENCE ran only after the
+#                socket opened. `--prune-only` reaches it without one, and is a
+#                thing an operator wants anyway: reclaim space now, without
+#                stopping the capture that is running.
+if command -v python3 >/dev/null 2>&1; then
+    BC=$(mktemp -d); mkdir -p "$BC/cap"
+    # Two monitor frames, framed as the seam documents: <u32 le length><frame>,
+    # each frame being hci_mon_hdr { le16 opcode; le16 index; le16 len } and its
+    # payload. Written as bytes rather than generated, so the expected output
+    # below is arithmetic a reader can check against the format, not against a
+    # second copy of this tool's own code.
+    printf '\x0a\x00\x00\x00\x02\x00\x00\x00\x04\x00\x01\x28\x04\x11\x0a\x00\x00\x00\x03\x00\x00\x00\x04\x00\x04\x0f\x04\x00' \
+        > "$BC/frames.bin"
+    BCLOG=$(BT_CAPTURE_DIR="$BC/cap" BT_CAPTURE_SOURCE="$BC/frames.bin" \
+            python3 bin/bt-capture --duration 1 --min-free-gb 0 2>&1); bcrc=$?
+    BCF=$(ls "$BC/cap"/*.btsnoop 2>/dev/null | head -1)
+
+    (( bcrc == 0 )) && [[ -n "$BCF" ]] && [[ "$(wc -c < "$BCF")" == "72" ]] \
+        && ok "bt-capture writes a btsnoop file: 16-byte header plus two 28-byte records" \
+        || bad "the capture path produced $(wc -c < "${BCF:-/dev/null}" 2>/dev/null) bytes (rc=$bcrc)"
+
+    # THE ENCODING, WHICH CARRIED A REVIEWED-KEEP MARKER AND NO TEST. `btsnoop\0`,
+    # version 1, datalink type 2001 (monitor). Getting any of the three wrong
+    # makes the file unreadable by `btmon -r` and by Wireshark — and the failure
+    # is at READ time, weeks later, on evidence that cannot be recaptured.
+    BCHDR=$(od -An -N16 -tx1 "$BCF" 2>/dev/null | tr -s ' ' | sed 's/^ //;s/ $//')
+    [[ "$BCHDR" == "62 74 73 6e 6f 6f 70 00 00 00 00 01 00 00 07 d1" ]] \
+        && ok "the btsnoop header is magic, version 1, datalink 2001 — byte for byte" \
+        || bad "btsnoop header wrong: $BCHDR"
+
+    # AND THE RECORD, where the index and opcode are packed into btsnoop's
+    # `flags` field. Frame 1 is opcode 0x0002 on index 0x0000, so flags must be
+    # (0 << 16) | 2 = 0x00000002. A version that swapped the two, or dropped the
+    # shift, produces a file that still opens and attributes every packet to the
+    # wrong controller.
+    BCREC=$(od -An -j16 -N16 -tx1 "$BCF" 2>/dev/null | tr -s ' ' | tr -d '\n' | sed 's/^ //;s/ $//')
+    [[ "$BCREC" == "00 00 00 04 00 00 00 04 00 00 00 02 00 00 00 00" ]] \
+        && ok "a record carries its lengths and (index << 16 | opcode) in the flags field" \
+        || bad "record header wrong: $BCREC"
+
+    # THE PAYLOAD IS COPIED, NOT PARSED. The entire argument for this tool is
+    # that it never decodes, so there is no packet it can fail on. Both payloads
+    # must come back byte-identical.
+    BCP1=$(od -An -j40 -N4 -tx1 "$BCF" 2>/dev/null | tr -s ' ' | sed 's/^ //;s/ $//')
+    BCP2=$(od -An -j68 -N4 -tx1 "$BCF" 2>/dev/null | tr -s ' ' | sed 's/^ //;s/ $//')
+    [[ "$BCP1" == "01 28 04 11" && "$BCP2" == "04 0f 04 00" ]] \
+        && ok "both frame payloads are written through unchanged — nothing is decoded" \
+        || bad "a payload was altered: '$BCP1' '$BCP2'"
+
+    # THE SEAM ANNOUNCES ITSELF. Every other seam in this repository only
+    # changes what a tool READS; this one changes what it WRITES. A stray
+    # BT_CAPTURE_SOURCE would produce a capture file full of fixture frames that
+    # is indistinguishable from a real one afterwards, and a capture whose
+    # provenance is wrong is worse than no capture.
+    [[ "$BCLOG" == *"reading frames from a FILE, not the controller"* ]] \
+        && ok "the capture seam says on stdout that the frames are not the controller's" \
+        || bad "BT_CAPTURE_SOURCE was honoured silently: $(head -1 <<<"$BCLOG")"
+
+    # ROTATION, WHICH IS WHERE THE RING BUG LIVES. bt-usbmon's version of this
+    # left exactly one file forever, and the difference between one and two is
+    # the whole record. `--max-mb 0` makes the size limit zero, so every frame
+    # rotates — a legitimate invocation that turns a 56-byte fixture into the
+    # multi-file case a 64MB default would need an hour of traffic to reach.
+    rm -f "$BC/cap"/*.btsnoop
+    BCROT=$(BT_CAPTURE_DIR="$BC/cap" BT_CAPTURE_SOURCE="$BC/frames.bin" \
+            python3 bin/bt-capture --duration 1 --min-free-gb 0 --max-mb 0 2>&1)
+    BCN=$(ls "$BC/cap"/*.btsnoop 2>/dev/null | wc -l)
+    (( ${BCN:-0} >= 2 )) && [[ "$BCROT" == *"rotated to"* ]] \
+        && ok "a rotation closes one capture and opens the next — the ring keeps more than one" \
+        || bad "rotation left $BCN file(s): $(grep -c 'rotated to' <<<"$BCROT") rotation(s) logged"
+
+    # RETENTION BY COUNT KEEPS THE NEWEST. Sorted by mtime, oldest deleted
+    # first. Reversing that comparison deletes exactly the captures an
+    # investigation is about to read.
+    rm -f "$BC/cap"/*.btsnoop
+    for i in 0 1 2 3 4; do : > "$BC/cap/hci-$i.btsnoop"
+                           touch -d "@$((1700000000 + i))" "$BC/cap/hci-$i.btsnoop"; done
+    BT_CAPTURE_DIR="$BC/cap" python3 bin/bt-capture --prune-only --keep 2 --min-free-gb 0 >/dev/null 2>&1
+    BCKEPT=$(ls "$BC/cap" 2>/dev/null | tr '\n' ' ')
+    [[ "$BCKEPT" == "hci-3.btsnoop hci-4.btsnoop " ]] \
+        && ok "--prune-only keeps the newest captures and deletes the oldest" \
+        || bad "retention kept the wrong files: $BCKEPT"
+
+    # --prune-only MUST NOT NEED A CONTROLLER. That is its whole reason for
+    # existing, and this host has no Bluetooth at all — so an implementation
+    # that opened the socket first would fail here with the socket's error and
+    # never reach the retention it was asked for.
+    BCPO=$(BT_CAPTURE_DIR="$BC/cap" python3 bin/bt-capture --prune-only --keep 9 --min-free-gb 0 2>&1); bcporc=$?
+    (( bcporc == 0 )) && [[ "$BCPO" != *"monitor socket"* && "$BCPO" == *"retention applied"* ]] \
+        && ok "--prune-only opens no socket — it works on a host with no controller" \
+        || bad "--prune-only touched the socket (rc=$bcporc): $(head -1 <<<"$BCPO")"
+
+    # THE DEFECT THIS SECTION FOUND. The free-space loop deletes oldest-first
+    # until the floor is met OR THERE IS NOTHING LEFT, and the second exit said
+    # nothing whatsoever: every retained capture gone, the filesystem still over
+    # the floor, and the caller carrying on writing into it. bin/bt-trace — the
+    # shell sibling, same job, same machine — has always ended that case with
+    # "still under NGB with nothing left to prune" and stopped.
+    #
+    # MUTATION: make prune() return None and this goes red on the exit status
+    # and on the message.
+    BCFLOOR=$(BT_CAPTURE_DIR="$BC/cap" python3 bin/bt-capture --prune-only \
+              --keep 99 --min-free-gb 999999 2>&1); bcfrc=$?
+    (( bcfrc == 1 )) && [[ "$BCFLOOR" == *"nothing left to prune"* ]] \
+       && [[ -z "$(ls "$BC/cap" 2>/dev/null)" ]] \
+        && ok "a floor that cannot be met is reported, not met with silence and an empty directory" \
+        || bad "the exhausted floor was silent (rc=$bcfrc): $(tail -1 <<<"$BCFLOOR")"
+
+    # NO SOCKET AND NO SEAM IS A REFUSAL THAT LEAVES NOTHING BEHIND. A
+    # zero-length .btsnoop is indistinguishable afterwards from a capture whose
+    # traffic was lost, which is the one file this tool must never produce.
+    BCNS=$(BT_CAPTURE_DIR="$BC/none" python3 bin/bt-capture --duration 1 2>&1); bcnsrc=$?
+    (( bcnsrc == 1 )) && [[ "$BCNS" == *"cannot open HCI monitor socket"* ]] \
+       && [[ -z "$(ls "$BC/none" 2>/dev/null)" ]] \
+        && ok "without a monitor socket bt-capture refuses and writes no partial capture" \
+        || bad "the no-socket path gave rc=$bcnsrc or left $(ls "$BC/none" 2>/dev/null | tr '\n' ' ')"
+
+    python3 bin/bt-capture --capture-everything >/dev/null 2>&1
+    (( $? == 2 )) \
+        && ok "bt-capture exits 2 on an unknown option, like every other tool here" \
+        || bad "bt-capture did not refuse an unknown option with 2"
+    rm -rf "$BC"
+
+    # devtools/py-coverage's ENTRY POINTS ONLY. Its measuring path runs THIS
+    # suite, so driving it from here recurses — the same reason
+    # devtools/coverage and devtools/awk-coverage are not run from inside
+    # either. What can be checked is that its two non-measuring paths behave
+    # like every other tool's.
+    PYCH=$(devtools/py-coverage --help 2>&1); pychrc=$?
+    (( pychrc == 0 )) && [[ "$PYCH" == *"--uncovered"* && "$PYCH" == *"--min"* ]] \
+        && ok "py-coverage --help describes its modes without running the suite" \
+        || bad "py-coverage --help returned $pychrc or did not name its modes"
+    devtools/py-coverage --measure-everything >/dev/null 2>&1
+    (( $? == 2 )) \
+        && ok "py-coverage exits 2 on an unknown option rather than running the suite" \
+        || bad "py-coverage accepted an option it does not implement"
+fi
 
 echo
 echo "bt-trial — the whole lifecycle, not just the two ends of it"
@@ -6716,6 +7088,82 @@ BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RT" tools/bt-reten
     && ok "an unknown option is refused rather than ignored into a full report" \
     || bad "bt-retention accepted an option it does not implement"
 
+# ── BL-09: a DECLARED window beats the scan, and says it did ─────────────
+#
+# The scan takes the earliest offset-carrying stamp anywhere in the body, which
+# assumes the earliest instant MENTIONED is the earliest instant COVERED. Every
+# exhibit above satisfies that by construction, so until this fixture existed
+# the preference branch was held by nothing: deleting the whole
+# `bt_ew_read` block left the suite green, because no exhibit under test had a
+# field to prefer.
+#
+# Each exhibit below carries a declared window that DISAGREES with what the scan
+# would say, so the two answers are distinguishable per exhibit rather than in
+# aggregate.
+RTD=$(mktemp -d); mkdir -p "$RTD/evidence/exhibits"
+# Declared inside a retained boot; the scan would say GONE from the 2026-07-25
+# date sitting in the prose above it.
+printf '# EX-040\n\nMentions 2026-07-25T03:25:00+02:00 in passing.\n\n%s `2026-08-15T16:55:59.333858+02:00` — `2026-08-15T17:10:00.000000+02:00`\n\n## Provenance\n\n| captured | `2026-08-20T10:00:00+02:00` |\n' \
+    '**Evidence window.**' > "$RTD/evidence/exhibits/040-window-kept.md"
+# Declared outside every retained boot; the scan would say retained from the
+# later stamp in the prose.
+printf '# EX-041\n\nMentions 2026-08-15T16:55:59.333858+02:00 in passing.\n\n%s `2026-07-25T03:25:00+02:00`\n\n## Provenance\n\n| captured | `2026-08-20T10:00:00+02:00` |\n' \
+    '**Evidence window.**' > "$RTD/evidence/exhibits/041-window-gone.md"
+# Examined and declared unplaceable. The scan would answer confidently from the
+# stamp in the prose — which is the whole reason a declaration outranks it.
+printf '# EX-042\n\nMentions 2026-08-15T16:55:59.333858+02:00 in passing.\n\n%s not placeable — the journal behind these tables is gone and no line here can place them.\n\n## Provenance\n\n| captured | `2026-08-20T10:00:00+02:00` |\n' \
+    '**Evidence window.**' > "$RTD/evidence/exhibits/042-window-unplaceable.md"
+
+# A REASON IS PROSE, AND PROSE MAY CONTAIN A DATE. "the journal behind these
+# tables had rotated by 2026-08-15T16:55:59.333858+02:00" is a good reason and a
+# terrible thing to parse a window out of — without the guard the declaration
+# says "cannot be placed" and the reader places it anyway, from a stamp inside
+# the explanation of why it cannot. Same shape as the capture stamp
+# masquerading as the evidence's: a tool deciding which part of a record to
+# believe. Three of the nine BL-09 annotations quote a date in their reason.
+printf '# EX-044\n\n%s not placeable — the journal behind these tables had already rotated by 2026-08-15T16:55:59.333858+02:00.\n\n## Provenance\n\n| captured | `2026-08-20T10:00:00+02:00` |\n' \
+    '**Evidence window.**' > "$RTD/evidence/exhibits/044-reason-quotes-a-date.md"
+
+RTDO=$(BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RTD" tools/bt-retention 2>&1); rtdrc=$?
+[[ "$(rt_line "$RTDO" 044-reason-quotes-a-date)" == *"declared not placeable"* ]] \
+    && ok "a date inside a not-placeable reason does not become the window" \
+    || bad "the reason was parsed as a window: $(rt_line "$RTDO" 044-reason-quotes-a-date)"
+if (( rtdrc == 0 )) \
+   && [[ "$(rt_line "$RTDO" 040-window-kept)" == *"retained"*"declared window"* \
+      && "$(rt_line "$RTDO" 041-window-gone)" == *"GONE"*"declared window opens 2026-07-25"* \
+      && "$(rt_line "$RTDO" 042-window-unplaceable)" == *"declared not placeable"* ]]; then
+    ok "a declared evidence window outranks the scan, in all three of its forms"
+else
+    bad "the declared window was ignored or misread (rc=$rtdrc):"
+    while IFS= read -r l; do bad "      $l"; done < <(grep -E 'declared|GONE|retained|judgeable' <<<"$RTDO")
+fi
+
+# AND THE REPORT SAYS HOW MANY ANSWERS WERE DECLARED RATHER THAN GUESSED. BL-09
+# is closed when that number reaches the exhibit count; a summary that did not
+# separate them would make closing it a matter of counting files by hand.
+[[ "$RTDO" == *"4 of the 4 carry a declared **Evidence window.** (BL-09)"* ]] \
+    && ok "the summary counts declared windows apart from scanned ones" \
+    || bad "the declared/scanned split was not reported: $(grep -F 'declared **Evidence' <<<"$RTDO")"
+
+# A DECLARATION IS ONLY WORTH PREFERRING WHILE IT IS THE EXHIBIT'S OWN. A field
+# below `## Provenance` is part of the capture record, and BL-09's entire
+# argument is that the capture record must never decide this — so an exhibit
+# that puts one there falls back to the scan rather than being trusted.
+#
+# THE FIRST VERSION OF THIS CHECK COULD NOT FAIL, and the reason is worth the
+# line: the fixture was named `043-declared-below`, and the assertion asked
+# whether the report line contained "declared". It always did — the exhibit's
+# own NAME was in the line being searched. Every fixture here is now named for
+# what it tests rather than for the word the tool prints.
+printf '# EX-043\n\nMentions 2026-08-15T16:55:59.333858+02:00 in passing.\n\n## Provenance\n\n| captured | `2026-08-20T10:00:00+02:00` |\n\n%s `2026-07-25T03:25:00+02:00`\n' \
+    '**Evidence window.**' > "$RTD/evidence/exhibits/043-window-in-provenance.md"
+RTDB=$(BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RTD" tools/bt-retention 2>&1)
+[[ "$(rt_line "$RTDB" 043-window-in-provenance)" == *"retained"* \
+   && "$(rt_line "$RTDB" 043-window-in-provenance)" != *"declared"* ]] \
+    && ok "a window below the Provenance heading is not preferred — the blunt cut still decides" \
+    || bad "a field inside the capture record was trusted: $(rt_line "$RTDB" 043-window-in-provenance)"
+rm -rf "$RTD"
+
 # THE TEXT PARSER IS THE ONE THAT RUNS WHERE NOBODY LOOKS. Boot ranges come from
 # `--list-boots -o json` via python3; when either is missing — an older systemd,
 # a host without python3 — the same ranges are read positionally from the text
@@ -7026,7 +7474,8 @@ SNDIR=$(ls -d "$SN/snap"/*-boot0 2>/dev/null | head -1)
 # cost this replaced, each re-traversing the journal while the operator waited.
 if (( snrc == 0 )) && [[ -s "$SNDIR/all.log" && -s "$SNDIR/kernel.log" \
    && -e "$SNDIR/f-fault.log" && -e "$SNDIR/f-usb.log" && -e "$SNDIR/f-intervention.log" \
-   && -e "$SNDIR/f-crash.log" && -e "$SNDIR/f-link.log" && -s "$SNDIR/summary.txt" \
+   && -e "$SNDIR/f-crash.log" && -e "$SNDIR/f-link.log" && -e "$SNDIR/f-bluez.log" \
+   && -s "$SNDIR/summary.txt" \
    && "$(readlink -f "$SN/snap/latest")" == "$(readlink -f "$SNDIR")" ]]; then
     ok "bt-snapshot takes one coarse cut, derives every fine cut, and points latest at it"
 else
@@ -7062,6 +7511,121 @@ STRAY=$(grep -nE '^[[:space:]]*[0-9]+[[:space:]]*$' "$SNDIR/summary.txt" || true
 [[ -z "$STRAY" ]] \
     && ok "no summary count is printed twice — every number is on its labelled line" \
     || bad "the summary carries an unlabelled bare number: $(tr '\n' ' ' <<<"$STRAY")"
+
+# THE FAILURE MODE THIS TOOL WAS RUN DURING AND COULD NOT SEE. On 2026-08-19
+# the operator said Bluetooth was dead, bt-snapshot reported "controller on bus
+# yes, 0 timeouts", and the machine was called healthy. It had been dead for
+# 2½ hours: EX-032, a BlueZ crash leaving the adapter Powered and permanently
+# non-scanning. Every controller-side count was correct and none of them could
+# have shown it.
+#
+# The fixture is that boot's shape — a healthy positive control, ZERO timeouts,
+# and the daemon dead — so a version of this section that reported the
+# controller's health as the machine's health cannot pass.
+SNBZ=$(mktemp -d); mkdir -p "$SNBZ/repo"
+snbz_run() { BT_JOURNAL_FIXTURE=tests/journal/snapshot-bluez BT_SNAPSHOT_DIR="$SNBZ/snap" \
+             BT_REPO="$SNBZ/repo" tools/bt-snapshot "$@" 2>&1; }
+SNB=$(snbz_run); snbrc=$?
+(( snbrc == 0 )) && [[ "$SNB" == *"command timeouts        0"* \
+   && "$SNB" == *"positive control        4"* && "$SNB" != *"ZERO — every count"* ]] \
+    && ok "the EX-032 fixture reproduces a clean controller — the reading that misled" \
+    || bad "the fixture is not the EX-032 shape (rc=$snbrc): $(grep -E 'positive control|command timeouts' <<<"$SNB" | tr '\n' ' ')"
+
+# EACH VALUE, AND THE TIMESTAMP THAT MAKES IT AN OBSERVATION RATHER THAN A
+# CLAIM ABOUT NOW. `powered yes` with no time on it reads as live, which is the
+# one thing a journal-derived value is not.
+BZP=$(rt_line "$SNB" powered); BZD=$(rt_line "$SNB" discovering)
+[[ "$BZP" == *"yes"*"2026-08-18T22:15:03"* ]] \
+    && ok "powered is read from the last MGMT settings word, with the time it was logged" \
+    || bad "powered line wrong: $BZP"
+[[ "$BZD" == *"no"*"2026-08-18T18:46:05"* ]] \
+    && ok "discovering is read from the last discovering_callback, with its time" \
+    || bad "discovering line wrong: $BZD"
+[[ "$(rt_line "$SNB" 'service restarts')" == *"2"*"systemd's counter"* ]] \
+    && ok "service restarts takes systemd's own counter when systemd logged one" \
+    || bad "restart count wrong: $(rt_line "$SNB" 'service restarts')"
+# COMPLETED, NOT ATTEMPTED. The fixture ends with a discovery that was tried
+# after the second crash and came back `status 0x0c` — Command Disallowed,
+# which is what opening the panel on a wedged daemon looks like. A version
+# reading the last ATTEMPT reports 23:50 here: the wrong time, and late enough
+# to be after the crash, which silences the warning below as well.
+#
+# It only silences it because the timestamp and the ordering test are now ONE
+# derivation. They were two — the same pattern written twice over two files —
+# and a mutation that relaxed one copy moved this line while leaving the
+# warning correct, which is how the duplication was found.
+[[ "$(rt_line "$SNB" 'last discovery OK')" == *"2026-08-18T18:46:04"* ]] \
+    && ok "the last successful discovery is the last status 0x00, not the last attempt" \
+    || bad "last discovery wrong: $(rt_line "$SNB" 'last discovery OK')"
+
+# AND THE LINE THE WHOLE SECTION EXISTS FOR. The order is the claim: a crash
+# came AFTER the last completed discovery and none has completed since.
+[[ "$SNB" == *"EX-032 SHAPE"* && "$SNB" == *"none has completed since"* ]] \
+    && ok "the EX-032 shape is named when a crash follows the last completed discovery" \
+    || bad "the summary did not identify the failure mode it was built during"
+rm -rf "$SNBZ"
+
+# POWERED AND NOT DISCOVERING IS WHAT AN IDLE ADAPTER LOOKS LIKE EVERY MINUTE
+# OF EVERY DAY. A warning on that pair alone would fire on every healthy boot
+# and teach the reader to skip the line, which is worse than not printing it.
+# Boot -1 is a quiet day ending in an rfkill block: a discovery completed, no
+# crash followed, and the adapter was powered down deliberately.
+SNBZ=$(mktemp -d); mkdir -p "$SNBZ/repo"
+SNBQ=$(snbz_run --boot -1); snbqrc=$?
+(( snbqrc == 0 )) && [[ "$SNBQ" != *"EX-032 SHAPE"* ]] \
+   && [[ "$(rt_line "$SNBQ" powered)" == *"no"* ]] \
+   && [[ "$(rt_line "$SNBQ" 'last power change')" == *"off-blocked"* ]] \
+    && ok "a boot with no crash raises nothing, and an rfkill block reads as off-blocked" \
+    || bad "the healthy boot warned, or misread the power state (rc=$snbqrc): $(rt_line "$SNBQ" powered)"
+
+# `off-blocked` IS TWELVE CHARACTERS AND THE COLUMN WAS SEVEN. Cosmetic
+# everywhere except here: the value that means a physical switch took the
+# adapter down is the one that ran into its own timestamp.
+[[ "$SNBQ" == *"off-blocked  2026-08-17T22:58:00"* ]] \
+    && ok "the power-change column is wide enough for the value that matters most" \
+    || bad "off-blocked collided with its timestamp: $(rt_line "$SNBQ" 'last power change')"
+
+# WITH NO COUNTER LINE, THE RESTARTS ARE COUNTED AND SAID TO BE COUNTED. An
+# older systemd logs `Scheduled restart job` without `restart counter is at N`,
+# and reporting 0 on a boot that plainly restarted the daemon is the confident
+# zero this project keeps finding.
+[[ "$(rt_line "$SNBQ" 'service restarts')" == *"0"*"counted"* ]] \
+    && ok "no restart line at all is reported as 0, and labelled as counted not reported" \
+    || bad "the counted fallback did not report zero cleanly: $(rt_line "$SNBQ" 'service restarts')"
+
+# AN ADAPTER THAT IS OFF IS NOT DISCOVERING BECAUSE IT IS OFF. Boot -2 satisfies
+# the ordering half of the test exactly — a crash after the last completed
+# discovery — and the adapter was powered down two minutes later. Warning here
+# would tell an operator who switched Bluetooth off that BlueZ is broken.
+#
+# THIS IS THE CASE THAT PINS THE `powered` CONDITION. Without it the two boots
+# above pass either way: neither has a crash-after-discovery boot with the
+# adapter off, so deleting the condition changed nothing observable and the
+# check could not fail. Third time in this suite that a condition was held only
+# by a fixture that did not distinguish it.
+SNBO=$(snbz_run --boot -2); snborc=$?
+(( snborc == 0 )) && [[ "$SNBO" != *"EX-032 SHAPE"* ]] \
+   && [[ "$(rt_line "$SNBO" powered)" == *"no"* ]] \
+   && [[ "$(rt_line "$SNBO" 'last discovery OK')" == *"2026-08-16T10:15:02"* ]] \
+   && [[ "$SNBO" == *"daemon crashes          3"* ]] \
+    && ok "a crash after the last discovery raises nothing while the adapter is powered off" \
+    || bad "the powered-off boot was misread (rc=$snborc): $(rt_line "$SNBO" powered)"
+rm -rf "$SNBZ"
+
+# AND THE MACHINE THAT SIMPLY DOES NOT RUN bluetoothd WITH DEBUG LOGGING ON.
+# Without `-d` there are no `src/adapter.c:` lines at all, so powered and
+# discovering are UNKNOWABLE — and printing `no` for both would be a diagnosis
+# drawn from an absence of evidence, on every stock machine. The restart count
+# survives, because systemd logs that regardless of bluetoothd's log level.
+SNBZ=$(mktemp -d); mkdir -p "$SNBZ/repo"
+SNBU=$(BT_JOURNAL_FIXTURE="$SNF" BT_SNAPSHOT_DIR="$SNBZ/snap" BT_REPO="$SNBZ/repo" \
+       tools/bt-snapshot 2>&1); snburc=$?
+(( snburc == 0 )) && [[ "$SNBU" == *"UNKNOWN — no \`src/adapter.c:\` lines"* \
+   && "$SNBU" == *"not the adapter being off"* && "$SNBU" != *"powered            no"* ]] \
+   && [[ "$(rt_line "$SNBU" 'service restarts')" == *"1"*"counted"* ]] \
+    && ok "no bluetoothd debug lines reads as UNKNOWN, while the restart count still answers" \
+    || bad "a boot without debug logging produced a verdict instead of an unknown (rc=$snburc)"
+rm -rf "$SNBZ"
 rm -rf "$SN"
 
 # --summary-only RE-PRINTS AND CAPTURES NOTHING. It exists to be cheap; a
@@ -7139,10 +7703,20 @@ rm -rf "$SN"
 # reason it is safe to run during a live window. Checked at the source, because
 # no fixture can prove the absence of a command that is not called. Comments are
 # excluded: the header names all four in prose, saying it does not use them.
-SNTOUCH=$(grep -nE '(hciconfig|btmgmt|bluetoothctl|rfkill)' tools/bt-snapshot \
+#
+# D-BUS IS IN THIS LIST NOW, AND IT IS THE ONE THAT HAD TO BE ARGUED. The BlueZ
+# health section wants Powered, Discovering and NRestarts, and `busctl
+# get-property org.bluez …` is the direct route to all three — a userspace read
+# of cached state that very probably issues no HCI. "Very probably" is what was
+# believed about the recovery ladder before it cost a controller, and this tool
+# runs INSIDE the windows whose entire value is that nothing has touched the
+# device. So the values come from the journal instead, at the cost of being
+# last-logged rather than live. This line is what keeps that decision made: a
+# `busctl` added later for convenience fails here rather than in a window.
+SNTOUCH=$(grep -nE '(hciconfig|btmgmt|bluetoothctl|rfkill|busctl|dbus-send|dbus-monitor|gdbus)' tools/bt-snapshot \
           | grep -vE '^[0-9]+:[[:space:]]*#' || true)
 [[ -z "$SNTOUCH" ]] \
-    && ok "bt-snapshot issues no controller command — safe inside an untreated window" \
+    && ok "bt-snapshot issues no controller command and no D-Bus call — safe inside an untreated window" \
     || bad "a controller-touching command reached the capture tool: $(tr '\n' ' ' <<<"$SNTOUCH")"
 
 SNH=$(tools/bt-snapshot --help 2>&1); snhrc=$?
@@ -7185,6 +7759,249 @@ BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARL/dest" \
     && ok "bt-archive refuses an unknown option instead of reading it as a boot" \
     || bad "bt-archive accepted an option it does not implement"
 rm -rf "$ARL"
+
+# ── bt-crash: the tool that decides WHICH of three faults the operator has ─
+#
+# This project has three failure modes that are indistinguishable from the
+# outside — the controller wedging (BT-1), an audio-server transport release
+# (EX-030), and a BlueZ crash that leaves the adapter Powered and permanently
+# non-scanning (EX-032). They are answered by completely different work, and
+# bt-crash is what separates them in one command. It had never executed a line
+# under test, because half its answer came from `coredumpctl` on the host and
+# the other half from `journalctl` on the host.
+#
+# Both halves are seams now. tools/lib/coredump.sh is the new one; it exists so
+# the availability probe moves with the calls, which is the defect
+# bt_journal_available was added to fix on the journal side.
+CJ=tests/journal/crash
+cr_run() {   # <coredump fixture> [args...]
+    BT_JOURNAL_FIXTURE="$CJ" BT_COREDUMP_FIXTURE="$1" tools/bt-crash "${@:2}" 2>&1
+}
+
+# THE LINE THE MAINTAINER ASKED FOR BY NAME. Two segfaults at one offset
+# reading one address is a deterministic null dereference; two at different
+# offsets is corruption or three unrelated bugs. That distinction is the whole
+# difference between a filable BlueZ bug and "it crashed again", and nothing
+# checked that the tool draws it. The fixture is EX-032's own two lines.
+CR0=$(cr_run tests/coredump/held); cr0rc=$?
+[[ "$CR0" == *"crashes at the SAME offset 367e5 in bluetoothd"* \
+   && "$CR0" == *"2 crashes at the SAME"* ]] \
+    && ok "two segfaults at one offset are reported as deterministic, not as two crashes" \
+    || bad "the same-offset detector did not fire: $(grep -F 'SAME offset' <<<"$CR0")"
+
+# AND THE OFFSET IS NOT AN IDENTITY ON ITS OWN. `libc.so.6[ade55,…]` and
+# `bluetoothd[367e5,…]` are both in this repository's evidence, and the first
+# version keyed on the bare offset — so two libc faults outvoted one bluetoothd
+# fault and printed `2 crashes at the SAME offset ade55`, true and read by
+# anyone who knows what this tool is for as a claim about BlueZ.
+#
+# MUTATION: drop the module from the sed capture and this fails on the name
+# while the count and the offset still match, which is exactly the report the
+# defect produced.
+CR2=$(cr_run tests/coredump/held --boot -2)
+[[ "$CR2" == *"2 crashes at the SAME offset ade55 in libc.so.6"* \
+   && "$CR2" != *"offset 367e5"* ]] \
+    && ok "a repeated offset is attributed to the binary it is an offset into" \
+    || bad "the majority offset was reported without its binary: $(grep -F 'SAME offset' <<<"$CR2")"
+
+# ONE CRASH IS NOT A PATTERN. The warning is the strongest sentence this tool
+# prints and an off-by-one in its threshold would put it above every single
+# segfault this project has ever recorded.
+CR1=$(cr_run tests/coredump/nonbt --boot -1)
+[[ "$CR1" != *"SAME offset"* ]] \
+    && ok "a single segfault produces no determinism claim" \
+    || bad "one crash was reported as a repeated offset: $(grep -F 'SAME offset' <<<"$CR1")"
+
+# --boot READS THE BOOT IT WAS GIVEN. After a cold recovery the window an
+# operator wants is the boot that just ended, and the default of 0 is the wrong
+# one. The two fixture boots carry different line counts so a tool that read
+# one file for both cannot pass.
+[[ "$CR0" == *"(4 line(s) total)"* && "$CR1" == *"(2 line(s) total)"* ]] \
+    && ok "--boot selects the boot, and the count is that boot's own" \
+    || bad "boot 0 and boot -1 did not give their own counts"
+
+# THE CORE LISTING IS NEVER TRUNCATED. The tool exists because a hand-typed
+# `tail -4` hid the bluetoothd core and showed only btmon's, so every retained
+# core is printed and filtered by relevance instead of by position.
+CRROWS=$(grep -cE '^  (Mon|Tue|Wed|Thu|Fri|Sat|Sun) ' <<<"$CR0" || true)
+(( ${CRROWS:-0} == 3 )) && [[ "$CR0" == *"2862"* && "$CR0" == *"313564"* && "$CR0" == *"btmon"* ]] \
+    && ok "every relevant retained core is listed, oldest included" \
+    || bad "the core listing showed $CRROWS of 3 rows"
+
+# THE BLUETOOTH FILTER IS A FILTER, in both directions. A tool that showed
+# everything would bury the answer; one that showed nothing under --all would
+# make the escape hatch useless.
+CRA=$(cr_run tests/coredump/held --all)
+[[ "$CR0" != *"firefox"* && "$CRA" == *"firefox"* ]] \
+    && ok "unrelated cores are filtered out by default and shown by --all" \
+    || bad "the default listing and --all did not differ on a non-bluetooth core"
+
+# AND THE HEADER ROW IS STRIPPED — asserted HERE, on --all, because that is the
+# only mode where it can be observed. `coredumpctl list` prints a
+# `TIME PID UID GID SIG COREFILE EXE SIZE` row that `tail -n +2` removes; in the
+# default mode the bluetooth grep removes it too, since a header naming columns
+# matches none of the process names. So `tail -n +2` does nothing in the mode
+# that is used most and everything in the mode that has no other filter.
+#
+# THE FIRST VERSION OF THIS CHECK COULD NOT FAIL. It asserted the header's
+# absence from the DEFAULT listing, where the grep had already removed it:
+# deleting `tail -n +2` from both call sites left the suite green. Sixth
+# instance in this repository of a check written against the wrong mode.
+CRAROWS=$(grep -cE '^  (Mon|Tue|Wed|Thu|Fri|Sat|Sun) ' <<<"$CRA" || true)
+(( ${CRAROWS:-0} == 4 )) && [[ "$CRA" != *"COREFILE"* && "$CRA" != *"SIG "* ]] \
+    && ok "--all lists every core and none of coredumpctl's header row" \
+    || bad "--all showed $CRAROWS of 4 rows, or kept the header: $(grep -F COREFILE <<<"$CRA")"
+
+# THE NEWEST bluetoothd CORE IS THE ONE OPENED. Both cores are in the fixture
+# with different stacks, so picking the older one — `head -1` instead of
+# `tail -1`, or the wrong awk field for the pid — fails on the frame as well as
+# on the pid. This is also what pins PID to whitespace field 5 of a `list` row.
+[[ "$CR0" == *"Newest bluetoothd stack (pid 313564)"* \
+   && "$CR0" == *"0x000060ff12be87e5"* && "$CR0" != *"0x00005c48db1977e5"* ]] \
+    && ok "the stack printed is the newest bluetoothd core's, not the first listed" \
+    || bad "the wrong core was opened: $(grep -F 'Newest bluetoothd' <<<"$CR0")"
+
+# A CORE STORE WITH NOTHING RELEVANT IN IT SAYS WHICH KIND OF NOTHING. "none"
+# and "none matching bluetooth processes" are different facts — the second
+# means there are cores and the operator can see them — and a message that did
+# not distinguish them would send someone to install systemd-coredump that
+# already has it.
+CRN=$(cr_run tests/coredump/nonbt); crnrc=$?
+CRNA=$(cr_run tests/coredump/nonbt --all)
+(( crnrc == 0 )) && [[ "$CRN" == *"none matching bluetooth processes (use --all)"* \
+   && "$CRNA" == *"firefox"* ]] \
+    && ok "a store holding only unrelated cores says so, and --all shows them" \
+    || bad "the empty-for-bluetooth message did not point at cores that are there (rc=$crnrc)"
+
+# AND A JOURNAL THAT WAS READ AND HELD NO CRASH. The other half of the empty-
+# input rule: CHECKED == 0 is a RESULT and must read as one. This is the answer
+# an operator gets on a healthy boot, and it is the answer the refusal below has
+# to be distinguishable from — same tool, same section, opposite meaning.
+CRQUIET=$(mktemp -d)
+printf '2026-08-20T09:00:00+0200 n systemd[1]: Started bluetooth.service.\n' > "$CRQUIET/default.log"
+CRQ=$(BT_JOURNAL_FIXTURE="$CRQUIET" BT_COREDUMP_FIXTURE=tests/coredump/nonbt \
+      tools/bt-crash 2>&1); crqrc=$?
+(( crqrc == 0 )) && [[ "$CRQ" == *"Crashes in the journal:"* && "$CRQ" == *"none"* \
+   && "$CRQ" != *"UNKNOWN"* && "$CRQ" != *"line(s) total"* ]] \
+    && ok "a journal that was read and holds no crash reports 'none' and exits 0" \
+    || bad "a quiet boot was not reported as a clean result (rc=$crqrc)"
+rm -rf "$CRQUIET"
+
+CREMPTY=$(mktemp -d)
+CRE=$(cr_run "$CREMPTY" --all); crerc=$?
+(( crerc == 0 )) && [[ "$CRE" == *"Cores retained:"* && "$CRE" == *"none"* \
+   && "$CRE" != *"matching bluetooth"* ]] \
+    && ok "an empty core store reports plain 'none' under --all" \
+    || bad "an empty store did not report cleanly (rc=$crerc)"
+rm -rf "$CREMPTY"
+
+# "NO CRASHES" AND "NOTHING WAS READ" ARE DIFFERENT ANSWERS, and this tool used
+# to print the first for both. That is the empty-input rule — ENUMERATED == 0 is
+# a refusal — applied to the one tool whose job is to say whether BlueZ died.
+# The cores are a separate source and are still listed, so the half that
+# survived is not thrown away with the half that did not.
+#
+# Driven by removing journalctl from PATH, like the other no-journal refusals:
+# the branch is about the HOST lacking the tool, and an empty fixture directory
+# exercises a different question.
+CRNOJ=$(mktemp -d); mkdir -p "$CRNOJ/bin"
+for c in grep awk sed cat sort head tail wc uniq date cut tr basename dirname readlink; do
+    [[ -x "/usr/bin/$c" ]] && ln -sf "/usr/bin/$c" "$CRNOJ/bin/$c" 2>/dev/null
+    [[ -x "/bin/$c" ]] && ln -sf "/bin/$c" "$CRNOJ/bin/$c" 2>/dev/null
+done
+CRNJ=$(PATH="$CRNOJ/bin" BT_COREDUMP_FIXTURE=tests/coredump/held tools/bt-crash 2>&1); crnjrc=$?
+(( crnjrc == 2 )) && [[ "$CRNJ" == *"UNKNOWN — no journal is reachable"* \
+   && "$CRNJ" == *"This is not 'no crashes'"* && "$CRNJ" == *"313564"* ]] \
+    && ok "an unreadable journal is a refusal, and the retained cores are still reported" \
+    || bad "bt-crash without a journal gave rc=$crnjrc: $(grep -F 'Crashes in the journal' -A1 <<<"$CRNJ" | tr '\n' ' ')"
+rm -rf "$CRNOJ"
+
+# AND THE HOST WITH NO CORE STORE AT ALL, which is the common case and the one
+# that produces an ACTION. "coredumpctl not installed" is not a diagnosis — it
+# says the next crash will leave nothing to file, and the fix is one package.
+# Driven through a symlink farm rather than an empty fixture, because the branch
+# is about the tool being absent from the host; a fixture directory that happens
+# to be empty is a store with no cores, which is the assertion above.
+CRF=$(mktemp -d)
+farm_dir "$CRF/farm" coredumpctl
+CRNC=$(PATH="$CRF/farm" BT_JOURNAL_FIXTURE="$CJ" tools/bt-crash 2>&1); crncrc=$?
+(( crncrc == 0 )) && [[ "$CRNC" == *"coredumpctl not installed"* \
+   && "$CRNC" == *"Install systemd-coredump"* && "$CRNC" == *"SAME offset 367e5"* ]] \
+    && ok "no core store names the package to install, and the journal half still answers" \
+    || bad "the absent-coredumpctl branch did not report or suppressed the journal (rc=$crncrc)"
+rm -rf "$CRF"
+
+# IT MUST NEVER TOUCH THE CONTROLLER. Same promise as bt-snapshot and the same
+# reason: it is run while a fault window is open, and the window's whole value
+# is that nothing has been done to the controller inside it. Checked at the
+# source, because no fixture can prove the absence of a call that is not made.
+CRTOUCH=$(grep -nE '(hciconfig|btmgmt|bluetoothctl|rfkill)' tools/bt-crash \
+          | grep -vE '^[0-9]+:[[:space:]]*#' || true)
+[[ -z "$CRTOUCH" ]] \
+    && ok "bt-crash issues no controller command — safe inside an untreated window" \
+    || bad "a controller-touching command reached the crash tool: $(tr '\n' ' ' <<<"$CRTOUCH")"
+
+# THE USAGE SURFACE. `--boot` with no index exited 1 through `${2:?}` while
+# every other usage error in the file exits 2, so one mistake got two answers.
+CRH=$(tools/bt-crash --help 2>&1); crhrc=$?
+(( crhrc == 0 )) && [[ "$CRH" == *"--boot -1"* && "$CRH" == *"--all"* \
+   && "$CRH" != *"WHY THIS EXISTS"* ]] \
+    && ok "bt-crash --help names its modes and stops before the rationale" \
+    || bad "--help returned $crhrc or spilled past the usage block"
+tools/bt-crash --dump-everything >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-crash exits 2 on an unknown option" \
+              || bad "bt-crash did not refuse an unknown option with 2"
+tools/bt-crash --boot >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-crash --boot with no index refuses with 2, like every other usage error" \
+              || bad "--boot with no index did not exit 2"
+CRLIB=$(BT_LIBDIR=/nonexistent tools/bt-crash 2>&1); crlibrc=$?
+(( crlibrc == 2 )) && [[ "$CRLIB" == *"missing /nonexistent/journal.sh"* ]] \
+    && ok "bt-crash names the library it could not load rather than running without it" \
+    || bad "a missing library did not stop bt-crash (rc=$crlibrc)"
+
+# ── the coredump fixture is a CLAIM about real coredumpctl output ────────
+#
+# Three claims, and bt-crash reads a wrong answer out of each if one is false:
+# that `list` prints a header row to strip, that PID is whitespace field 5 of a
+# data row, and that `info` carries a `Stack trace of thread` line. This is the
+# hazard journal-contract was built for — the provenance fixture shipped
+# without `--list-boots`'s header and every fixture-driven test passed while the
+# real tool crashed on real output. The fixture is the world, so the world has
+# to be asked.
+#
+# Declared here and READ in the vacuity report at the end of the run: a check
+# that skips silently makes "all N invariants hold" mean two different things on
+# two machines, which is the ambiguity three of this suite's four longest-lived
+# vacuous assertions escaped through.
+COREDUMP_SKIPPED=''
+CDREAL=""
+if command -v coredumpctl >/dev/null 2>&1; then
+    CDREAL=$(coredumpctl list --no-pager 2>/dev/null || true)
+fi
+CDROWS=$(awk 'NR > 1 && $5 ~ /^[0-9]+$/' <<<"${CDREAL:-}" | wc -l)
+if [[ -z "$CDREAL" ]] || (( ${CDROWS:-0} == 0 )); then
+    COREDUMP_SKIPPED="the coredumpctl output contract (tests/coredump/*)"
+else
+    CDHEAD=$(head -1 <<<"$CDREAL")
+    [[ "$CDHEAD" == TIME* && "$CDHEAD" == *PID* && "$CDHEAD" == *SIG* ]] \
+        && ok "real coredumpctl list prints the header row the fixture carries" \
+        || bad "coredumpctl list's first line is not the header the fixture claims: $CDHEAD"
+
+    # The same awk field bt-crash takes the pid from, against the real tool.
+    CDPID=$(awk 'NR > 1 && $5 ~ /^[0-9]+$/ { print $5; exit }' <<<"$CDREAL")
+    [[ -n "$CDPID" ]] \
+        && ok "PID is whitespace field 5 of a real coredumpctl list row" \
+        || bad "no real list row carries a pid in field 5 — bt-crash reads the wrong column"
+
+    CDINFO=$(coredumpctl info "$CDPID" --no-pager 2>/dev/null || true)
+    if [[ "$CDINFO" == *"Stack trace of thread"* ]]; then
+        ok "real coredumpctl info carries the 'Stack trace of thread' line the fixture claims"
+    elif [[ -z "$CDINFO" ]]; then
+        COREDUMP_SKIPPED="the coredumpctl info contract (core for pid $CDPID no longer readable)"
+    else
+        bad "coredumpctl info printed no stack-trace heading — bt-crash would print nothing"
+    fi
+fi
 
 # ── status: the view that decides whether to abort a trial in progress ───
 #
@@ -7662,10 +8479,11 @@ STRIPPED=$(grep -cE '^(systemctl|udevadm|modprobe) ' "$SS/spy.log" 2>/dev/null |
 # Joined across continuations first: every invocation here sets BT_DESTDIR on
 # a line above the one naming the script, and a line-by-line scan sees the two
 # halves separately — reporting each correctly-staged call as a leak.
-SLOOSE=$(awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' "$0" \
+SLOOSE=$(suite_cat \
+         | awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' \
          | grep -nE '^[^#]*\./(install|uninstall)\.sh --apply' \
          | grep -v 'BT_DESTDIR')
-SAPPLY=$(grep -cE '\./(install|uninstall)\.sh --apply' "$0")
+SAPPLY=$(suite_cat | grep -cE '\./(install|uninstall)\.sh --apply' || true)
 if [[ -z "$SLOOSE" ]] && (( ${SAPPLY:-0} >= 4 )); then
     ok "all $SAPPLY install --apply invocations set BT_DESTDIR to a staging root"
 else
@@ -8308,6 +9126,43 @@ devtools/repo-scan "$SCRATCH/clean" >/dev/null 2>&1
 (( $? == 0 )) && ok "repo-scan passes documented placeholders" \
               || bad "repo-scan refused the placeholder forms it documents"
 
+# A TRACKED BINARY, WHATEVER IT IS CALLED. repo-scan matched three capture
+# extensions — .btsnoop, .pcap, .pcapng — and a compiled Python file walked past
+# it onto a branch: `bin/__pycache__/bt-capture.cpython-311.pyc`, written when
+# devtools/py-coverage imported bin/bt-capture, staged by repo-save's
+# `git add -A`, committed with every gate green.
+#
+# The fix was not a fourth extension. This repository's premise is that
+# everything it commits is publishable, and sanitize-logs.sh operates on TEXT —
+# so a tracked file that is not text cannot be scanned for a BSSID by anything
+# here, and cannot be shown to be safe to publish. The name is irrelevant; the
+# content is the whole question.
+mkdir -p "$SCRATCH/binary"; scratch_repo "$SCRATCH/binary"
+printf 'ok\n' > "$SCRATCH/binary/fine.log"
+printf '\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00' > "$SCRATCH/binary/opaque.dat"
+git -C "$SCRATCH/binary" add -A
+devtools/repo-scan "$SCRATCH/binary" >/dev/null 2>&1
+(( $? != 0 )) && ok "repo-scan refuses a tracked binary by its content, not its extension" \
+              || bad "a file nothing here can scan was accepted for publication"
+
+# AND AN EMPTY FILE IS TEXT. The suite tracks several as fixtures — an empty
+# capture stub, a zero-length gap log — and `grep -qI .` reports no match on
+# them for lack of any character at all, not for being binary. Treating that as
+# binary would fail the tree on its own fixtures.
+#
+# THE FIRST VERSION OF THIS CHECK ASSERTED THE WRONG THING. It staged only the
+# empty file, and repo-scan refused — correctly, and for an entirely different
+# reason: its refuse-on-empty-read guard, which stops a failed enumeration
+# reading as a clean tree. The scratch repo needs real text in it so that the
+# empty file is the thing under test rather than the only thing there.
+mkdir -p "$SCRATCH/emptyfile"; scratch_repo "$SCRATCH/emptyfile"
+printf 'a line of ordinary text\n' > "$SCRATCH/emptyfile/real.log"
+: > "$SCRATCH/emptyfile/placeholder.log"
+git -C "$SCRATCH/emptyfile" add -A
+devtools/repo-scan "$SCRATCH/emptyfile" >/dev/null 2>&1
+(( $? == 0 )) && ok "an empty tracked file is text, not an unscannable binary" \
+              || bad "repo-scan called a zero-length file binary"
+
 # THE ALLOWLIST MUST NOT DEPEND ON WHO IS RUNNING THE SCAN.
 #
 # repo-scan allows the maintainer's own address, because a bug report carries a
@@ -8418,6 +9273,19 @@ git -C "$SCRATCH/badsh" add -A
 devtools/repo-validate "$SCRATCH/badsh" >/dev/null 2>&1
 (( $? != 0 )) && ok "repo-validate fails on a planted bash syntax error" \
               || bad "repo-validate PASSED a repo with unparseable shell"
+
+# AND THE SAME ERROR IN A FILE WITH NO SHEBANG, which is what every SOURCED
+# library is. The shebang scan could not see them, so `tools/lib/journal.sh` —
+# the file every diagnostic in this repository reads the journal through — was
+# parsed by nothing. It survived because a syntax error there turns dozens of
+# assertions in this suite red; that is a consequence of the damage, not a
+# check for it, and it says nothing until someone runs the whole suite.
+mkdir -p "$SCRATCH/badlib"; scratch_repo "$SCRATCH/badlib"
+printf '# a sourced library, no shebang by design\nf() {\n' > "$SCRATCH/badlib/lib.sh"
+git -C "$SCRATCH/badlib" add -A
+devtools/repo-validate "$SCRATCH/badlib" >/dev/null 2>&1
+(( $? != 0 )) && ok "repo-validate parses a shebang-less .sh library too" \
+              || bad "an unparseable sourced library passed validation — the seam libs are unchecked"
 
 # ── EVERY VALIDATOR, AGAINST A FILE OF ITS OWN KIND ──────────────────────
 #
@@ -8909,10 +9777,10 @@ echo "────────────────────────�
 # own grep line, and each exclusion is a hole someone can park a real call in.
 # `report` is genuinely safe — read-only, never reaches the failure branch — so
 # it is simply not in the list.
-LOOSE=$(grep -nE 'tools/bt-trial +(autostart|start|ok|hang|abort|step)\b' "$0" \
-        | grep -v "^[0-9]*:[[:space:]]*#")
+LOOSE=$(grep -HnE 'tools/bt-trial +(autostart|start|ok|hang|abort|step)\b' "${SUITE_FILES[@]}" \
+        | grep -v ":[0-9]*:[[:space:]]*#")
 # Counted, so a pattern that stops matching reads as 0 rather than as a tick.
-TRIALCALLS=$(grep -cE 'tools/bt-trial +(autostart|start|ok|hang|abort|step|report)\b' "$0")
+TRIALCALLS=$(suite_cat | grep -cE 'tools/bt-trial +(autostart|start|ok|hang|abort|step|report)\b' || true)
 # THE INVARIANT: no test builds a replacement PATH that still contains /usr/bin
 # or /bin.
 #
@@ -8939,7 +9807,7 @@ TRIALCALLS=$(grep -cE 'tools/bt-trial +(autostart|start|ok|hang|abort|step|repor
 # writes to. A raw `ln -s /usr/bin/*` is banned outright rather than reviewed
 # case by case: it is safe only while nobody adds a write to that directory
 # afterwards, and "safe until someone edits it" is what both of these were.
-FARMF=$(grep -nE '^[^#]*ln -s.? +/(usr/)?bin/\*' "$0" | grep -v 'farm_dir')
+FARMF=$(grep -HnE '^[^#]*ln -s.? +/(usr/)?bin/\*' "${SUITE_FILES[@]}" | grep -v 'farm_dir')
 [[ -z "$FARMF" ]] \
     && ok "every symlink farm is built by farm_dir(), which is never written into" \
     || bad "a raw symlink farm — a later cp or > writes through the link: $(head -1 <<<"$FARMF")"
@@ -8956,7 +9824,72 @@ FARMF=$(grep -nE '^[^#]*ln -s.? +/(usr/)?bin/\*' "$0" | grep -v 'farm_dir')
 # CLEANUP_PATHS and the single trap owns them. This makes the rule mechanical,
 # because the next person to need a cleanup will reach for `trap` first — it is
 # the obvious thing, and it is silently destructive here.
-EXITT=$(grep -nE '^[^#]*\btrap\b[^#]*\bEXIT\b' "$0" | grep -v 'EXITT=')
+# ── AND THE SCANS THEMSELVES MUST KEEP SCANNING THE WHOLE SUITE ─────────
+#
+# Every check in this section reads `${SUITE_FILES[@]}` rather than `"$0"`,
+# because `$0` is the entry point and the suite is about to stop being one file
+# (UT-12). A scan added later with `"$0"` would keep passing while covering only
+# what had not moved yet — a guard that silently stops guarding, in the group of
+# checks that exist to stop this suite overwriting system binaries.
+#
+# COUNTED, NOT PATTERN-MATCHED AGAINST AN ALLOW-LIST. A rule that tried to
+# recognise "a legitimate `$0`" would be a hole the next scan hides in. Three
+# uses are legitimate and none of them reads the file's CONTENT:
+#
+#   line 34   `cd "$(dirname "$0")/.."`  — locating the repository root
+#   line 59   `SUITE_FILES=("$0")`       — seeding the set itself
+#   line 290  `out=$("$0")`              — --section re-running the suite
+#
+# A fourth is a scan, and it has to be justified rather than merged.
+# AND THE DERIVATION ITSELF, AGAINST A PARTS DIRECTORY THAT EXISTS. The set is
+# `$0` alone today, so nothing about the split half of it can be observed from
+# the real tree — deleting the whole `for p in "$dir"/*.sh` loop left this suite
+# green, because there is no `tests/parts/` for it to miss. Driven against a
+# temp directory instead, which is the only way to check a mechanism whose
+# purpose is entirely in the future.
+SFD=$(mktemp -d)
+: > "$SFD/20-tools.sh"; : > "$SFD/10-guards.sh"; : > "$SFD/notes.txt"
+mapfile -t SFGOT < <(suite_file_set /entry "$SFD")
+if (( ${#SFGOT[@]} == 3 )) && [[ "${SFGOT[0]}" == /entry \
+   && "${SFGOT[1]}" == "$SFD/10-guards.sh" && "${SFGOT[2]}" == "$SFD/20-tools.sh" ]]; then
+    ok "the suite's file set is the entry point plus every part, in glob order"
+else
+    bad "the suite-file derivation returned ${#SFGOT[@]} of 3: ${SFGOT[*]}"
+fi
+SFE=$(mktemp -d)
+mapfile -t SFEMPTY < <(suite_file_set /entry "$SFE")
+(( ${#SFEMPTY[@]} == 1 )) && [[ "${SFEMPTY[0]}" == /entry ]] \
+    && ok "an absent parts directory yields the entry point alone, not a literal glob" \
+    || bad "an empty parts directory produced ${#SFEMPTY[@]} file(s): ${SFEMPTY[*]}"
+
+# AND THE INSTRUMENT OUTSIDE THE SUITE, WHICH HAS THE SAME DERIVATION AND A
+# WORSE FAILURE. devtools/test-comprehension greps the suite for what it
+# asserts, and it named `tests/run-tests` outright at four sites — so after the
+# split it would measure whatever stayed in the entry file and report a
+# confident smaller number in the tool that decides whether the suite is
+# comprehensive enough to merge. Not an error; a wrong answer.
+#
+# Driven through `--suite-files`, which is the only way this suite can reach it:
+# test-comprehension RUNS the suite, so calling it in full from here recurses.
+TCS=$(BT_SUITE_PARTS="$SFD" devtools/test-comprehension --suite-files 2>&1); tcsrc=$?
+(( tcsrc == 0 )) \
+   && [[ "$TCS" == "tests/run-tests
+$SFD/10-guards.sh
+$SFD/20-tools.sh" ]] \
+    && ok "test-comprehension counts the suite's parts, not only its entry point" \
+    || bad "test-comprehension's suite set was wrong (rc=$tcsrc): $(tr '\n' ' ' <<<"$TCS")"
+rm -rf "$SFD" "$SFE"
+
+SELF0=$(grep -HnE '"\$0"' "${SUITE_FILES[@]}" | grep -vE ':[0-9]+:[[:space:]]*#')
+SELF0N=$(grep -c . <<<"$SELF0" || true)
+if (( ${SELF0N:-0} == 3 )); then
+    ok "no self-scan reads \$0 — all $((${#SUITE_FILES[@]})) suite file(s) are scanned as a set"
+else
+    bad "$SELF0N uses of \$0 outside comments; a scan over \$0 stops covering the suite when it splits:"
+    while IFS= read -r l; do bad "      $l"; done <<<"$SELF0"
+fi
+
+EXITT=$(grep -HnE '^[^#]*\btrap\b[^#]*\bEXIT\b' "${SUITE_FILES[@]}" | grep -v 'EXITT=')
 EXITN=$(grep -c . <<<"$EXITT" || true)
 if (( EXITN == 1 )); then
     ok "exactly one EXIT trap — cleanups register in CLEANUP_PATHS instead of replacing it"
@@ -8997,8 +9930,8 @@ BFSAME=$(bin_footprint_diff "$BFB" "$BFB")
     && ok "an unchanged /usr/bin produces no damage report" \
     || bad "the differ reports damage for identical footprints: $(tr '\n' '; ' <<<"$BFSAME")"
 
-PATHBUILDS=$(grep -cE '^[^#]*PATH="' "$0")
-BADPATH=$(grep -nE '^[^#]*PATH="[^"]*:/(usr/)?bin' "$0")
+PATHBUILDS=$(suite_cat | grep -cE '^[^#]*PATH="' || true)
+BADPATH=$(grep -HnE '^[^#]*PATH="[^"]*:/(usr/)?bin' "${SUITE_FILES[@]}")
 if [[ -z "$BADPATH" ]] && (( ${PATHBUILDS:-0} >= 10 )); then
     ok "none of the $PATHBUILDS PATH constructions re-adds /usr/bin or /bin"
 else
@@ -9056,7 +9989,7 @@ final_resource_report
 # Both on one line each: bash traces a backslash-continued assignment at its
 # LAST line, so a wrapped version puts its own opening line in the coverage
 # denominator as something nothing can ever reach.
-FARMTOOLS=$(grep -hE '^farm_dir "' "$0" | sed 's/^farm_dir "[^"]*" *//' | tr ' ' '\n' | grep -E '^[a-z][a-z0-9-]+$')
+FARMTOOLS=$(grep -hE '^farm_dir "' "${SUITE_FILES[@]}" | sed 's/^farm_dir "[^"]*" *//' | tr ' ' '\n' | grep -E '^[a-z][a-z0-9-]+$')
 VALTOOLS=$(grep -oE 'skipped: [a-zA-Z0-9_.-]+ not installed' devtools/repo-validate | awk '{ print $2 }')
 GUARDED=$(printf '%s\n%s\n' "$FARMTOOLS" "$VALTOOLS" | grep -E '.' | LC_ALL=C sort -u)
 GUARDN=$(grep -c . <<<"$GUARDED" || true)
@@ -9097,6 +10030,17 @@ if [[ -n "$PRIV_SKIPPED" ]]; then
     echo "  NOT ASKED HERE: $PRIV_SKIPPED — this run reached none of EUID 0, a"
     echo "                  user namespace, or fakeroot, and the tool under test"
     echo "                  refuses to act without one of them."
+fi
+
+# AND THE THIRD KIND OF ABSENCE: a tool that is installed but has nothing to
+# answer with. `coredumpctl` on a host that has never dumped a core exits 1 with
+# an empty list, so the fixture's claims about its output shape cannot be
+# checked — which is every CI container, and the fixture is the world until
+# somewhere asks the world.
+if [[ -n "$COREDUMP_SKIPPED" ]]; then
+    echo "  NOT ASKED HERE: $COREDUMP_SKIPPED — no core is retained on this host,"
+    echo "                  so the fixture's shape was not checked against the"
+    echo "                  real tool. Run this suite where a core exists."
 fi
 
 echo

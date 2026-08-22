@@ -77,6 +77,7 @@ FILES=(
     /usr/local/bin/lib/sco-window.awk
     /usr/local/bin/lib/actions-render.awk
     /usr/local/bin/lib/journal.sh
+    /usr/local/bin/lib/evidence-window.sh
     /usr/local/bin/bt-sco
     /usr/local/bin/bt-capdiff
     /usr/local/sbin/bt-capture

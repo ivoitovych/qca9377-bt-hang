@@ -48,6 +48,19 @@ BOOT  DATE         WATCHDOG         AUTOSUSP    POWER   PROBES
              reset the controller BEFORE any HCI timeout, so even the
 ```
 
+**Evidence window.** not placeable — the boot table gives dates without times, so its earliest row is a day rather than an instant.
+
+> **Annotation added 2026-08-22 (`BL-09`), derived from this exhibit's own
+> content. The captured output above is untouched.** The table runs from `2026-07-16` to
+> `2026-08-13` in whole dates. Placing it would mean choosing an instant inside the
+> first day, and the two obvious choices fail in opposite directions: the start of the
+> day can report evidence as rotated away while it is still there, and the end of it
+> can report it as checkable when it is gone. Neither is safe, so the answer is that
+> it cannot be placed.
+>
+> One line does carry a time — `mitigation installed at: 2026-08-10 03:07` — but it is
+> not the earliest thing the table covers, so it cannot open the window.
+
 ## Provenance
 
 | field | value |

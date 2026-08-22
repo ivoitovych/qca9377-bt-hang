@@ -33,6 +33,15 @@ enable_autosuspend=N
 CONFIG_BT_HCIBTUSB_AUTOSUSPEND=y
 ```
 
+**Evidence window.** `2026-08-10T05:28:01.153543462+02:00` — `2026-08-10T06:28:19.669970348+02:00`
+
+> **Annotation added 2026-08-22 (`BL-09`), derived from this exhibit's own
+> content. The captured output above is untouched.** Nothing is inferred here. Both instants are
+> already absolute in the captured output —
+> `2026-08-10 05:28:01.153543462 +0200` and `2026-08-10 06:28:19.669970348 +0200`,
+> as `stat` prints them — and are only rewritten into the `T`-separated form this
+> field requires. No zone was chosen and no precision dropped.
+
 ## Provenance
 
 | field | value |

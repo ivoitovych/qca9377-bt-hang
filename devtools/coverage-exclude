@@ -124,7 +124,7 @@ tools/bt-logvolume:116-121  # inline share renderer (same pipeline, second progr
 tools/bt-trial:250-254      # inline trial-number counter; same
 tools/bt-trial:702-711      # inline sco-params window filter; same
 tools/bt-verify-install:57-60   # inline install_file parser; same
-tests/run-tests:259-264       # inline --section extractor; same
+tests/run-tests:302-307       # inline --section extractor; same
 
 # THE ELEVENTH ENTRY WAS MISSING AND COST MORE THAN A PERCENTAGE POINT.
 # devtools/test-comprehension filters `exit N` inside an embedded program out of
@@ -192,7 +192,7 @@ tools/bt-health-report.sh:228-228  # no-baseline branch: exercised only through 
 # branches on every run. Mutating any one of the three turns that assertion red
 # — verified by doing it. The range starts one line INSIDE the program because
 # the construct is a pipeline, which bash traces at the line it opens on.
-tests/run-tests:334-340     # inline footprint differ; driven and pinned by the assertion above
+tests/run-tests:377-383     # inline footprint differ; driven and pinned by the assertion above
 
 # THE REPORTING LOOP runs only when a binary actually changed, which on an
 # undamaged machine is never — the same category as the `bad` lines section 3
@@ -200,7 +200,8 @@ tests/run-tests:334-340     # inline footprint differ; driven and pinned by the 
 # matches lines that BEGIN with `bad` and this loop calls it mid-line. Its
 # argument, the differ, is driven directly by the assertion above, so what is
 # unreachable is the printing and not the logic.
-tests/run-tests:461-462     # damage report: reached only when /usr/bin actually changed
+tests/run-tests:/while IFS= read -r p; do bad /   # the two damage reports: reached only when
+tests/run-tests:/^ *bin_footprint_diff "\$(REPO|BIN)_FOOTPRINT_BEFORE"/  # something actually changed
 
 # THE SAME REPORT FOR THE TRACKED TREE, added with the fixture check. Reached
 # only when the suite actually mutated a tracked file, which on a correct run is
@@ -211,7 +212,14 @@ tests/run-tests:461-462     # damage report: reached only when /usr/bin actually
 # 404-405 to 461-462 and devtools/coverage refused, naming it as an exclusion
 # that matched nothing. That is the header's stated design working, and the
 # reason both are re-derived here rather than widened.
-tests/run-tests:436-437     # tracked-tree damage report: reached only when a fixture actually changed
+# BY SHAPE, NOT BY LINE. These two were ranges and rotted three times in one
+# afternoon — every insertion above them in a 9,800-line file moves them, and
+# the self-check only catches a range that has drifted ONTO executed code. A
+# range that drifts onto other never-executed lines excludes the wrong thing
+# and reports nothing, which is the failure this file cannot see. Both reports
+# have a distinctive shape and there are exactly two of each, so the shape is
+# the honest key. The awk-body ranges above stay ranges: a quoted program has
+# no shape to match on.
 
 # ── 7. bt-window's two counting passes ───────────────────────────────────
 #
@@ -244,5 +252,5 @@ tools/bt-window:110-112     # inline intervention counter; same
 # asserts the two reports are byte-identical. Mutating the text parser's field
 # positions or removing its em-dash normalisation turns that assertion red;
 # both were checked by doing it.
-tools/bt-retention:88-94    # inline JSON boot-range reader; the trace lands on the fi at 95
-tools/bt-retention:109-109  # text-form reader's process substitution; trace lands on the fi at 110
+tools/bt-retention:92-98    # inline JSON boot-range reader; the trace lands on the fi at 99
+tools/bt-retention:113-113  # text-form reader's process substitution; trace lands on the fi at 114

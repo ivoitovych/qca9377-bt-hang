@@ -66,6 +66,16 @@ That trial is worth running, but it is **secondary**. The stage-2 natural
 history (`EX-018`) comes first, and running this one would consume a hang that
 the stage-2 question needs.
 
+**Evidence window.** not placeable — the captured command did not run.
+
+> **Annotation added 2026-08-22 (`BL-09`), derived from this exhibit's own
+> content. The captured output above is untouched.** The output is a single
+> `command not found` line and the exit status is 127, so the capture covers no
+> instant at all. The `Reading` table below it is hand-transcribed from an earlier
+> interactive run — the exhibit says so itself — and carries boot indices and firmware
+> durations, not dates. Re-capturing this exhibit is the fix, and the exhibit already
+> asks for it.
+
 ## Provenance
 
 | field | value |

@@ -44,6 +44,14 @@ fi
 DIR="$REPO/evidence/exhibits"
 SANITIZE="$REPO/tools/sanitize-logs.sh"
 
+# The evidence-window grammar, shared with bt-retention because a writer and a
+# reader with separate copies of a format agree exactly until one is edited.
+LIBDIR="${BT_LIBDIR:-$_here/lib}"
+[[ -r "$LIBDIR/evidence-window.sh" ]] \
+    || { echo "bt-exhibit: missing $LIBDIR/evidence-window.sh" >&2; exit 2; }
+# shellcheck source=tools/lib/evidence-window.sh
+source "$LIBDIR/evidence-window.sh"
+
 die() { echo "bt-exhibit: $*" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------
@@ -197,6 +205,15 @@ cmd_new() {
         echo '```'
         cat "$raw"
         echo '```'
+        echo
+        # BL-09. What instants does the output above actually cover? Derived
+        # from the output and never from the clock — `date -Iseconds` here would
+        # be the capture time under a new name, and the capture time
+        # masquerading as the evidence's is the defect this field exists
+        # because of. It sits ABOVE `## Provenance` because bt-retention
+        # truncates there and that cut is deliberately kept blunt; see
+        # tools/lib/evidence-window.sh for why the asymmetry decides it.
+        bt_ew_render "$raw"
         echo
         echo "## Provenance"
         echo

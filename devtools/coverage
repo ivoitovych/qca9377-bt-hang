@@ -125,6 +125,26 @@ while IFS= read -r f; do
     IFS= read -r shebang < "$f" || continue
     case "$shebang" in
         '#!'*bash*|'#!'*/sh|'#!'*' sh') SHFILES+=("$f") ;;
+        # A SOURCED PART OF THE SUITE CARRIES NO SHEBANG, AND MUST STILL COUNT.
+        # tests/run-tests is 2,900 coverable lines — 40% of this repository's
+        # whole denominator — and UT-12 moves most of them into tests/parts/*.sh.
+        # A shebang scan would drop every one of those lines from the
+        # denominator on the day of the split, and TOTAL would jump several
+        # points for no reason anyone could name afterwards. A measurement that
+        # improves because code moved is worse than no measurement.
+        #
+        # Matched on the PATH, not on content: these files are shell by
+        # construction, they are sourced by the entry point, and a shebang in
+        # one would be a lie about how it is used.
+        #
+        # ⚠️ THIS ARM IS UNEXERCISED AND SAYS SO. `git ls-files` is the source of
+        # truth here, so nothing can drive it until a part is actually tracked —
+        # deleting the line leaves the suite green. It is not claimed as tested.
+        # The check that would settle it is the first move of UT-12 itself: move
+        # ONE block into tests/parts/ and TOTAL must come out identical, because
+        # the same lines are being counted from a different file. A pilot move is
+        # therefore the right first step, not a shortcut past one.
+        *) case "$f" in tests/parts/*.sh) SHFILES+=("$f") ;; esac ;;
     esac
 done < <(git ls-files 2>/dev/null)
 

@@ -121,6 +121,22 @@ which is still worth more than any row above.
 A handful of such boots settles a question the project treated as closed for
 months.
 
+**Evidence window.** `2026-07-25T03:25:00+02:00` — `2026-08-13T05:14:00+02:00`
+
+> **Annotation added 2026-08-22 (`BL-09`), derived from this exhibit's own
+> content. The captured output above is untouched.** From the `first HCI timeout` column of the
+> stage-1 table, whose rows run `2026-07-25 03:25` to `2026-08-13 05:14`. They are
+> bare local times; the offset is this exhibit's own `captured` stamp,
+> `2026-08-13T11:46:28+02:00`. Both endpoints fall inside the same CEST period as
+> that stamp, so a single offset applies to the whole span and no boundary is crossed.
+>
+> ⚠️ `docs/investigation-plan.md` expected this exhibit to stay unjudgeable — *"no line
+> in the file can place evidence that is gone"*. The table's first column is such a
+> line, and placing it gives the answer the exhibit was written about: the window
+> opens weeks before the oldest retained boot, so `bt-retention` now reports **GONE**
+> rather than **not judgeable**, which is a stronger and more useful statement of the
+> same fact. The evidence is gone; that is now derived rather than assumed.
+
 ## Provenance
 
 | field | value |
