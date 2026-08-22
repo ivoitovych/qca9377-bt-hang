@@ -253,6 +253,29 @@ crash follows discovery. A daemon crash is a consequence of a controller
 behaving abnormally at least as easily as a cause, and nothing here settles
 which. It is also not claimed that this is the only path to either line.
 
+## 6a. Both defects are still present in current BlueZ
+
+Checked against **5.87**, the newest release in the Ubuntu archive:
+
+| defect | 5.72 (`Jan 12 2024`) | 5.87 (`Jul 3`) |
+|---|---|---|
+| `start_discovery_complete()` dereferences `rp->type` above its own `length` check | present | **unchanged** |
+| `transport_cb()` passes `setup->stream` unchecked to `avdtp_stream_set_transport()`, which dereferences it immediately | present | **unchanged** |
+
+All three files (`src/adapter.c`, `profiles/audio/a2dp.c`, `profiles/audio/avdtp.c`)
+**do** differ between the two releases — they have been actively maintained across
+eighteen months and fifteen releases. These two functions were not touched.
+
+That makes both of them live upstream defects rather than historical ones, and it
+makes them **submittable without any of this project's contested material**: no
+hardware, no reproducer, no argument about whether the controller wedge causes the
+crash or the other way round. The `adapter.c` one in particular is an ordering bug
+that a reader can confirm in thirty seconds.
+
+⚠️ **Before submitting, check `bluez/bluez` master and the linux-bluetooth list** —
+5.87 is a release tarball, and a fix may exist in git or in a posted patch that has
+not shipped. Neither is reachable from this environment.
+
 ## 7. Falsifiers
 
 - Resolve either address on the machine with the real `-0ubuntu5.5` symbols (or a
