@@ -158,6 +158,30 @@ bins=$(git ls-files | grep -cE '\.(btsnoop|pcap|pcapng)$' || true)
 (( ${bins:-0} > 0 )) && report "binary capture tracked ($bins) — cannot be sanitised" \
                      || pass "no binary captures tracked"
 
+# --- ANY tracked binary, by CONTENT rather than by extension ---------------
+#
+# The check above matches three capture extensions. A compiled Python file
+# reached `main` past it — `bin/__pycache__/bt-capture.cpython-311.pyc`, written
+# when devtools/py-coverage imported bin/bt-capture, staged by repo-save's
+# `git add -A`, and committed in a19fa0c with every gate green.
+#
+# ADDING `.pyc` TO THE LIST ABOVE WOULD BE THE WRONG FIX. A hand-written
+# extension list is the shape this repository has been burned by four times; the
+# next binary would simply have a fourth extension. What actually matters is not
+# the name: this repository's premise is that everything it commits is
+# publishable and sanitisable, and `tools/sanitize-logs.sh` operates on TEXT. A
+# tracked file that is not text cannot be scanned for a BSSID by anything here,
+# so it cannot be shown to be safe to publish.
+#
+# Empty files are text, not binary — the suite tracks several as fixtures.
+BINCONTENT=""
+while IFS= read -r f; do
+    [[ -f "$f" && -s "$f" ]] || continue
+    grep -qI . "$f" 2>/dev/null || BINCONTENT="$BINCONTENT $f"
+done < <(git ls-files)
+[[ -z "$BINCONTENT" ]] && pass "every tracked file is text — all of it can be scanned" \
+                       || report "tracked binary file(s) — nothing here can scan them:" $BINCONTENT
+
 echo
 if (( fail )); then echo "SCAN FAILED ($SCOPE)"; exit 1; fi
 echo "scan clean ($SCOPE)"

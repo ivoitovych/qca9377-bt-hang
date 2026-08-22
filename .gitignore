@@ -32,3 +32,12 @@ gaps.log
 
 # convenience pointer to the newest session; host-local
 evidence/sessions/latest
+
+# Python writes these beside the source when bin/bt-capture is imported —
+# devtools/py-coverage and any interactive debugging of it do exactly that, and
+# `repo-save` stages with `git add -A`. One got committed in a19fa0c before this
+# rule existed. Nothing here is source, and a .pyc is a tracked binary that
+# repo-scan's binary check does not look for: it matches capture formats
+# (.btsnoop/.pcap), not arbitrary compiled output.
+__pycache__/
+*.pyc

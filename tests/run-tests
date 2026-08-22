@@ -9126,6 +9126,43 @@ devtools/repo-scan "$SCRATCH/clean" >/dev/null 2>&1
 (( $? == 0 )) && ok "repo-scan passes documented placeholders" \
               || bad "repo-scan refused the placeholder forms it documents"
 
+# A TRACKED BINARY, WHATEVER IT IS CALLED. repo-scan matched three capture
+# extensions — .btsnoop, .pcap, .pcapng — and a compiled Python file walked past
+# it onto a branch: `bin/__pycache__/bt-capture.cpython-311.pyc`, written when
+# devtools/py-coverage imported bin/bt-capture, staged by repo-save's
+# `git add -A`, committed with every gate green.
+#
+# The fix was not a fourth extension. This repository's premise is that
+# everything it commits is publishable, and sanitize-logs.sh operates on TEXT —
+# so a tracked file that is not text cannot be scanned for a BSSID by anything
+# here, and cannot be shown to be safe to publish. The name is irrelevant; the
+# content is the whole question.
+mkdir -p "$SCRATCH/binary"; scratch_repo "$SCRATCH/binary"
+printf 'ok\n' > "$SCRATCH/binary/fine.log"
+printf '\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00' > "$SCRATCH/binary/opaque.dat"
+git -C "$SCRATCH/binary" add -A
+devtools/repo-scan "$SCRATCH/binary" >/dev/null 2>&1
+(( $? != 0 )) && ok "repo-scan refuses a tracked binary by its content, not its extension" \
+              || bad "a file nothing here can scan was accepted for publication"
+
+# AND AN EMPTY FILE IS TEXT. The suite tracks several as fixtures — an empty
+# capture stub, a zero-length gap log — and `grep -qI .` reports no match on
+# them for lack of any character at all, not for being binary. Treating that as
+# binary would fail the tree on its own fixtures.
+#
+# THE FIRST VERSION OF THIS CHECK ASSERTED THE WRONG THING. It staged only the
+# empty file, and repo-scan refused — correctly, and for an entirely different
+# reason: its refuse-on-empty-read guard, which stops a failed enumeration
+# reading as a clean tree. The scratch repo needs real text in it so that the
+# empty file is the thing under test rather than the only thing there.
+mkdir -p "$SCRATCH/emptyfile"; scratch_repo "$SCRATCH/emptyfile"
+printf 'a line of ordinary text\n' > "$SCRATCH/emptyfile/real.log"
+: > "$SCRATCH/emptyfile/placeholder.log"
+git -C "$SCRATCH/emptyfile" add -A
+devtools/repo-scan "$SCRATCH/emptyfile" >/dev/null 2>&1
+(( $? == 0 )) && ok "an empty tracked file is text, not an unscannable binary" \
+              || bad "repo-scan called a zero-length file binary"
+
 # THE ALLOWLIST MUST NOT DEPEND ON WHO IS RUNNING THE SCAN.
 #
 # repo-scan allows the maintainer's own address, because a bug report carries a
