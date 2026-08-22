@@ -99,3 +99,118 @@ Recurring details across these:
 These are forum posts and bug trackers, not verified reproductions. They establish that
 the *symptom* is widespread and long-standing. They do **not** establish that every
 instance shares one root cause. Treat as context, not proof.
+
+---
+
+# Second gathering, 2026-08-22 — and a verification status per entry
+
+An external adviser was asked to research this independently, without access to this
+repository, and returned a set of reports with **no domain overlap at all** with the list
+above: Ask Ubuntu, Ubuntu Discourse, a Launchpad bug via mail-archive, BunsenLabs, Unix
+& Linux Stack Exchange, and the Arch wiki.
+
+⚠️ **Almost none of it could be verified from the network this was assembled on.** Every
+host below except `discourse.ubuntu.com` answers **403 at the proxy gateway**:
+
+```console
+$ curl -sS -o /dev/null --max-time 15 https://askubuntu.com/questions/1527530
+curl: (56) CONNECT tunnel failed, response 403
+```
+
+**And the one entry that could be checked did not match its description.** That is the
+reason this section carries a status column rather than a list of links.
+
+| status | meaning |
+|---|---|
+| ✅ verified | fetched and read here; the summary is what the source says |
+| ⚠️ relayed | supplied by the adviser, **not reachable from here**; summary is theirs |
+| ❌ corrected | fetched, and it does **not** say what it was reported to say |
+
+## The one that was checkable
+
+❌ **corrected** — [Ubuntu Discourse: *24.04.2 seems to have broken bluetooth device
+discovery*](https://discourse.ubuntu.com/t/24-04-2-seems-to-have-broken-bluetooth-device-discovery-eek/55768)
+
+Relayed to us as "HCI command timeout → `Resetting usb device` → xHCI resets the USB
+device → more vendor/HCI command timeouts". **The thread contains no such sequence.** All
+sixteen posts were read; two carry any matching signature at all, and what they show is a
+**Realtek** controller:
+
+```
+Bluetooth: hci0: command 0xfc61 tx timeout
+Bluetooth: hci0: RTL: Failed to generate devcoredump
+Bluetooth: hci0: RTL: RTL: Read reg16 failed (-110)
+```
+
+Its actual value is different and smaller: the reporter's symptom is **discovery finding
+nothing while every diagnostic says the adapter is healthy**, and an older kernel did not
+fix it. It also carries `unexpected event for opcode`, which is a signature this project
+counts in its own tooling. Worth keeping as a *different* shape, not as a match.
+
+**The general lesson, recorded because it will recur:** research relayed from a system
+that cannot be asked to show its working needs the same treatment as any other claim
+here — it ships with the command that produced it, or it ships marked as unverified.
+
+## Relayed, unverified — grouped by what they would be worth
+
+⚠️ Every entry in this subsection is **the adviser's summary**, not ours.
+
+**A. "No default controller available" — the operator's own scenario 1.**
+Bluetooth is toggled off and will not come back; `bluetoothctl` reports no controller
+while `bluetoothd` is running normally. Reported on 20.04 and 22.04. *If verified this is
+the most valuable group in the batch*, because it is the reproducer the operator hits
+most often and the one this record has the least captured evidence for.
+
+**B. HCI Reset failing at power-on.** `Bluetooth: hci0: Opcode 0x0c03 failed: -110` on
+24.04 with the GNOME switch unable to enable Bluetooth. See the section below — this one
+we can partly settle from our own logs.
+
+**C. A regression report, April 2026** — Launchpad 2147694, Intel `8087:0037`, kernel
+`6.17.0-1017-oem`: the controller initialises, then **leaves the USB bus and fails to
+re-enumerate**, with BlueZ alive and controllerless; an older kernel does not show it.
+*Different vendor, same shape, and framed as a regression* — which is the route this
+project currently considers its only unblocked path upstream.
+
+**D. Reboot does not recover it; power-off does.** Reports from 2017 and later, plus the
+Arch wiki's own Bluetooth troubleshooting page stating that a normal reboot does not
+reset the controller and power must be removed. **The wiki is the strongest citation
+class in the batch** — third-party *documentation* rather than a forum thread — and it
+corroborates `EX-027`/`EX-028` from outside this project.
+
+**To verify:** all four need a network that is not this one. Any machine that can reach
+`askubuntu.com`, `wiki.archlinux.org` and `bugs.launchpad.net` can settle them in
+minutes, and each should then move to ✅ or ❌ above.
+
+## `0x0c03 failed: -110` is in our own logs, and links group B to this record
+
+Group B above is the one entry we do not have to take on trust. HCI Reset timing out is
+**recorded on this machine, twice, in two separate sessions**:
+
+```console
+$ grep -rh '0x0c03 failed' evidence/sessions/*/kernel.log
+Aug 13 05:14:59.836245 n kernel: Bluetooth: hci0: Opcode 0x0c03 failed: -110
+Aug 13 05:15:03.228342 n kernel: Bluetooth: hci0: Opcode 0x0c03 failed: -110
+Aug 22 11:19:41.798866 n kernel: Bluetooth: hci0: Opcode 0x0c03 failed: -110
+Aug 22 11:20:47.718775 n kernel: Bluetooth: hci0: Opcode 0x0c03 failed: -110
+```
+
+And one of them follows an **rfkill unblock** — the operator's "I turned it off and it
+would not come back", captured with dynamic debug on:
+
+```console
+$ grep -B2 -A2 '11:20:47.718775' evidence/sessions/20260822-112527-*/kernel.log
+Aug 22 11:20:45.732507 n kernel: 00000000089df007 name hci0 blocked 0
+Aug 22 11:20:47.718628 n kernel: hci0: end: err -110
+Aug 22 11:20:47.718775 n kernel: Bluetooth: hci0: Opcode 0x0c03 failed: -110
+Aug 22 11:20:47.718820 n kernel: hci0
+Aug 22 11:20:47.718854 n kernel: hci0 urb 00000000272dcbee status -2 count 0
+```
+
+⚠️ Stated carefully, because the temptation here is to over-claim. What this shows is
+that **the signature the public 24.04 reports quote is one this project has captured
+under instrumentation** — 2.0 s from unblock to timeout, with the URB status alongside
+it. It does not show that those reporters' controllers failed for our reason. It does
+mean that if any of them is asked for more detail, we know exactly which lines to ask
+for, and we can offer a fully instrumented instance of the same visible signature in
+exchange. For a submission, that is a better position than either a lone laptop or an
+unverified pile of links.
