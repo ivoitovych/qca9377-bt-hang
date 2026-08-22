@@ -49,7 +49,7 @@ only as another component describes it. **blind**: no capture reaches it.
 | 3 | desktop UI | `gnome-shell` | Bluetooth quick-settings | a second, independent route to power/connect | **blind** | no |
 | 4 | killswitch | `gnome-settings-daemon` rfkill plugin | `plugins/rfkill/gsd-rfkill-manager.c`, `rfkill-glib.c` | `/dev/rfkill` writes — the "turn it off and it never comes back" path | **blind** | no |
 | 5 | IPC | system D-Bus | `org.bluez.*` | transport only; cannot explain a lost `hci0` | second-hand | n/a |
-| 6 | BT daemon | **BlueZ 5.72** (`5.72-0ubuntu5.5`) | `src/adapter.c`, `src/device.c`, `src/agent.c`, `src/shared/mgmt.c` | power, discovery, pairing, adapter state machine — and it **crashes**, `EX-032` | **captured** | no |
+| 6 | BT daemon | **BlueZ 5.72** (`5.72-0ubuntu5.5`) | `src/adapter.c`, `src/device.c`, `src/agent.c`, `src/shared/mgmt.c` | power, discovery, pairing, adapter state machine — and it **crashes**, `EX-032` | **captured** | **partial** — both `EX-032` crash sites resolved to file and line, see `reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md`; the rest unread |
 | 7 | kernel mgmt | `net/bluetooth/mgmt.c` | — | BlueZ ↔ kernel control, controller index | captured | no |
 | 8 | kernel SCO | `net/bluetooth/sco.c`, `hci_conn.c` | voice setting, air mode, SCO MTU | the `corrupted SCO packet` and the three disagreeing MTUs in `EX-031` | captured | no |
 | 9 | kernel HCI | `net/bluetooth/hci_core.c`, `hci_sync.c`, `hci_event.c` | command queue, timeout, escalation, open/close | **read** — the two-watchdogs/one-escalation finding | captured | **yes** |

@@ -237,6 +237,29 @@ Our current conclusions, stated so they can be **attacked**:
 
 **If any of these is wrong, that is a more valuable result than agreement.**
 
+### 6.1 Settled since this brief was written — OB-04 is no longer open
+
+Both `bluetoothd` crash sites have now been resolved to file and line from the
+shipped binary, so please **do not spend reviewer time re-deriving them**:
+
+| crash | function | source (BlueZ `5.72-0ubuntu5.5`) | NULL value |
+|---|---|---|---|
+| `segfault at 10` | `avdtp_stream_set_transport()` inlined into `transport_cb()` | `profiles/audio/avdtp.c:3225`, caller `profiles/audio/a2dp.c:2448` | `setup->stream` |
+| `segfault at 0` | `start_discovery_complete()` | `src/adapter.c:1845` | the mgmt reply `param` |
+
+The second is an **ordering bug that is visible by reading**: `start_discovery_complete()`
+dereferences `rp->type` inside its `!adapter->discovery_list` early-return branch,
+*above* its own `length < sizeof(*rp)` validation. A start-discovery completion
+carrying no parameters kills the daemon whenever the client list has emptied.
+
+Method, disassembly and falsifiers:
+`reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md`.
+
+**Still open, and worth your time:** whether either crash is *upstream or
+downstream* of the controller wedge — a daemon crash is as easily a consequence
+of a controller answering abnormally as a cause of it, and nothing we hold
+settles the direction. Belief 5 above is exactly what we would like attacked.
+
 ---
 
 ## 7. Deliverable format
