@@ -2175,3 +2175,49 @@ stack but no function name, because `ddebs` ships `5.72-0ubuntu5` against an ins
 while `debuginfod.ubuntu.com` is unreachable from this machine; and `devtools/repo-save`
 cannot run here at all, because it refuses while a trial is open and `bt-trial-auto` opens
 one on every boot by design — the same shape as the 45 hours, one layer down.
+
+### Phase 29 addendum — the reboot that failed, twenty minutes after this was written
+
+The phase above was written at 11:32 and the recovery ladder it describes was reported as
+"three rungs, none recovered it, **none destroyed it**". By 11:41 that second half was
+false, and the correction is worth more than the original claim.
+
+The ladder ended `EX-033`'s window and left the controller in stage 1 by every definition
+this record uses — on the bus, `btusb` bound to `3-3:1.0` and `3-3:1.1`, `hci0` present,
+**zero USB-layer lines** across the 35113 s window and across the ladder itself. The
+operator then took a hot reboot, which `EX-027` predicts recovers a stage-1 controller at
+`+1.107 s`.
+
+It did not come back:
+
+```
++0.813 s   usb 3-3: new full-speed USB device number 2
++16.6 s    device descriptor read/64, error -110      (×4, to +64 s)
++64.3 s    usb usb3-port3: attempt power cycle
++86.9 s    usb usb3-port3: unable to enumerate USB device
+```
+
+**`EX-034`.** Two corrections fall out of it.
+
+`EX-027` had paired two `reboot.target` transitions and concluded the controller's *stage*
+going in was the variable — stage 1 recovered, stage 2 did not. This is a reboot from stage
+1 that failed at `+86.9 s`, the same figure to a tenth of a second as the stage-2 case,
+which is usbcore's fixed retry schedule and says nothing about the device. That
+generalisation is withdrawn. `EX-028` is untouched: it compared reboot against power-off
+from the *same* stage-2 state.
+
+And the ladder's own report was wrong in the direction that matters. Twenty minutes passed
+between the last rung and the first sign of harm, and the sign appeared only when the host
+tried to enumerate from scratch.
+
+**The shape is new and it indicts the method, not one tool.** Every safety check this
+project runs during an intervention is a *contemporaneous* one: bus presence, driver
+binding, `hci0` existence, absence of USB-layer lines. All four passed. The damage surfaced
+at a boundary none of them watch. **"No USB-layer line followed" is evidence about the
+moment, not about the device** — and that sentence should be read back over every
+intervention this record has called harmless.
+
+What it does not establish is which rung did it, or whether the reboot was needed to expose
+it. Three interventions ran in sequence and only the aggregate was tested. The failed
+`hciconfig hci0 up` (`-110`) is the most suspicious, since `HCI_Reset` is the one rung that
+asks the controller to reinitialise — recorded as a hypothesis, not a claim.

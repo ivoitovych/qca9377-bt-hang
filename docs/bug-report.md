@@ -268,10 +268,20 @@ What this does **not** weaken, because none of it depends on knowing the trigger
   (`EX-024`), which locates it in the controller's synchronous-link path rather than in a
   peripheral
 - **the wedged state survives a host reboot and is cleared by removing power**
-  (`EX-027`, `EX-028`), so it lives on the device's side of the wire rather than in host
-  or driver state
+  (`EX-027`, `EX-028`, `EX-034`), so it lives on the device's side of the wire rather than
+  in host or driver state. Three `reboot.target` transitions have now failed to recover it
+  and one `poweroff.target` has succeeded; a kernel restart discards every piece of
+  host-side state there is and changes nothing
 - **a stage-2 progression has been observed whose reset was demonstrably not ours**
   (`EX-026`), with the watchdog inactive, disabled and not installed
+- **the controller can complete a synchronous-link setup** — `0x043D` answered in 64.7 ms
+  and carried a link 17 minutes (`EX-031`), and `0x0428` answered in 72.8 ms (`EX-033`).
+  So the defect is not "this controller cannot do SCO"
+- **the command that dies is frequently anonymous.** The kernel prints the opcode from
+  `hdev->req_skb`; when that is NULL it prints a bare `command tx timeout`. In `EX-033`
+  the setup was answered and the *bare* form arrived 2.076 s later — the failing command
+  was not the one `hci_cmd_sync` was tracking. This is why naming a single triggering
+  opcode has never converged: the interval spans 2.1–155.8 s across instances
 
 ⚠️ Earlier revisions also listed "287 command timeouts across 34 boots" and "13 of 34
 boots" here. Both come from `EX-018`, whose journal has since rotated out of the retained
@@ -602,6 +612,17 @@ one did not.
   the only sign a 13-hour fault had occurred (`EX-029`).
 - Recovering the machine after a collapse costs a power cycle, and a reboot attempted
   first wastes several minutes and returns it in the same broken state.
+- ⚠️ **A reboot does not reliably recover it even from the earlier stage.** `EX-034`
+  records a `reboot.target` taken while the controller was still enumerated, bound and
+  showing `hci0`, which failed to enumerate on the next boot with the same
+  `unable to enumerate USB device` at `+86.9 s` as the collapsed case. An earlier revision
+  of this report implied stage determined the outcome; it does not.
+- ⚠️ **An intervention can look harmless and not be.** In the same case a daemon restart,
+  an `hciconfig down`/failed `up` and a full `modprobe -r btusb` reload produced **zero**
+  USB-layer lines, left the device bound and `hci0` present — and the damage appeared only
+  twenty minutes later when the host tried to enumerate from scratch. Every safety check
+  available at the time was contemporaneous, and all of them passed. Anyone reproducing
+  this should not read "no USB error followed" as "the device is unharmed".
 - The reporter observes the same pattern on **multiple different laptops**, suggesting
   either this device ID is widespread or other IDs are similarly unmatched.
 
