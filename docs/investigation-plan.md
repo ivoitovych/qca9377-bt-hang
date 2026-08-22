@@ -15,6 +15,102 @@ Ordered by risk. Everything in phases A and B is reversible and touches no code.
 
 ---
 
+## Revision 2026-08-22 — read this before the phases below
+
+**The phases were written on 2026-08-11 and are now eleven days and thirty-four exhibits
+old.** They are left as written, because what was believed then is part of the record and
+this project has been burned by silently editing claims. This section says what has changed.
+Where the two disagree, this section wins.
+
+### Items that are DONE and are not marked done
+
+| item | status | evidence |
+|---|---|---|
+| **A0** ⭐ "do this first" | **done** | `hci_cmd_timeout()` calls `hdev->reset()` on the first timeout, no threshold — confirmed in Ubuntu 7.0 source at `hci_core.c:1462-1483` by `investigate-bluetooth-controller-hang-2026-08-16-2353` §4.1, and `btusb.ko` verified to export `btusb_qca_reset` by `tools/bt-verify-kernel-mechanism` |
+| **A2** driver dynamic debug | **done and running** | `bt-dyndbg` is a service; 20 `btusb` and 166 `bluetooth` debug sites enabled. Every exhibit since `EX-006` depends on it |
+
+### A3 is REFUTED — its premise was wrong
+
+A3 rests on "the Sennheiser provokes the hang almost immediately, while the Lenovo buds run
+for hours or days", called "the first controlled variable this investigation has had".
+
+**`EX-024` shows the Lenovo failing with an identical kernel-side signature.** There is no
+controlled variable. The two-headset diff can still be run, but it is no longer a
+comparison of a failing device against a working one, and the reasoning that made it a ⭐
+does not survive.
+
+**What replaced it as the sharpest available comparison** is `0x0428` versus `0x043D`
+(`EX-031`, `EX-033`): the legacy Setup Synchronous Connection has failed every instrumented
+time, and the one Enhanced setup was answered in 64.7 ms and carried a link seventeen
+minutes. That is `n = 1` on the answered side and is the comparison worth designing a
+protocol around.
+
+### ⚠️ C1 Build A is now a KNOWN-DESTRUCTIVE experiment
+
+The ladder defines **Build A** as `hdev->reset = btusb_qca_reset` only, and the ⚠️ beside C1
+warns about `btusb_setup_qca()` failing at HCI open. **That is no longer the main risk.**
+
+Since the plan was written there are **three controlled demonstrations that a USB reset
+destroys this controller** — `EX-023` (11.2 s to disconnect), the 2026-08-15 test (85.6 s),
+and `EX-026` (85.6 s, and the reset was not even ours). `hci_cmd_timeout()` calls
+`hdev->reset()` on the **first** timeout with no threshold.
+
+So Build A does not "install a recovery path". It **automates the operation we have three
+demonstrations of killing the device with, and fires it at +0 s instead of the 11 s or more
+every manual test was late by.** It may still be the right experiment — the +0 s point is
+genuinely unmeasured, and an immediate reset may behave unlike a late one — but it must be
+planned as *deliberately provoking a device-destroying event*, not as a recovery trial.
+Each run is expected to cost a power cycle.
+
+### A4 is still the gate, still unmet, and is the honest bottleneck
+
+Nothing has changed here and it is worth stating plainly: **there is no denominator.**
+`EX-018`'s "13 of 34 boots" is withdrawn — its journal has rotated out and neither we nor a
+reviewer can re-derive it. Every A/B/C/D comparison remains gated on A4, and A4 needs the
+machine, a deterministic reproducer, and a family willing to lose Bluetooth repeatedly.
+
+**And it is now harder than the plan assumed**, because `EX-030`, `EX-031` and `EX-032`
+establish that at least four distinct failure modes present identically to an operator. A
+rate collected without separating them measures a mixture. Any A4 protocol must classify by
+the journal signature, not by whether Bluetooth "worked".
+
+### The route the plan cannot see: a regression, not a rate
+
+**This is the substantive addition.** The plan assumes one road to a patch — establish a
+denominator (A4), then run the ladder (C1), then propose a fix supported by a measured
+difference. That road is still blocked on A4.
+
+There is a second road, and it opened when the source investigation dated a **regression**:
+`BTUSB_USE_ALT1_FOR_WBS` was a Realtek-only opt-in through v5.11 and became an
+**unconditional fallback** in v5.12 (source branch §4.5).
+
+An upstream regression report needs a **mechanism and a commit**, not a failure rate. "This
+commit changed behaviour for a class of adapters, here is the class, here is what happens"
+is a complete report on its own. **That route bypasses A4 entirely**, and it is the only
+one currently unblocked.
+
+⚠️ **It is not yet verified**, and the one check that could sink it is open: §4.2 asserts
+this controller uses isochronous **alt setting 1**, while every `Looking for Alt no` line
+ever captured on this machine says **6 then 3**, with alt 1 appearing not once. If our
+failures are on the legacy CVSD path rather than the wideband one, §4.5 may explain a
+different fault. Settling that is a source read and it is the highest-priority open item in
+the project.
+
+### Revised order of work
+
+1. **Settle §4.2** — alt 1 versus the observed 6/3. Source read, no hardware. Everything
+   below depends on which way it goes.
+2. **Name the v5.12 commit**, and confirm the unconditional fallback survives into 7.0.
+3. **Compute the exposed set** — adapters with no alt 6, not Realtek, no quirk. Turns
+   "several laptops" into a list, which is what makes a maintainer act.
+4. **A4**, still, because the ladder cannot run without it and no source finding removes
+   the need for a measured baseline *if* the fix is ever to be validated here.
+5. **Build C1's modules** (compile only) so the gate opening is not followed by a wait.
+
+Items 1–3 and 5 need no hardware and are delegable; item 4 is the machine's and cannot be.
+
+---
+
 ## Phase A — zero risk, no code, no rebuild
 
 ### A0. Confirm Ubuntu's own `hci_cmd_timeout()` ⭐ do this first
