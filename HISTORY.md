@@ -2014,3 +2014,210 @@ watchdog is still not installed, deliberately: enabling it means `install.sh --a
 its USB reset now has three demonstrations of destroying this controller. A tools-only
 deployment path that enables no services does not exist yet, and until it does the fixes
 in the tree cannot reach the machine that has the hardware.
+
+---
+
+## Phase 29 — four failure modes, a written channel, and the week the instruments caught up
+
+Phase 28 ended with a complaint: every fix was stuck in the tree because the only way to
+deploy them also armed a watchdog that destroys this controller. This phase unsticks that,
+and in the process the record stops being about one fault and starts being about four.
+
+### The evidence
+
+**A dropout that was not the controller.** On 2026-08-17 an audible playback drop on a
+third device — `Tronsmart T8`, named from the journal — turned out to be `wireplumber`
+releasing the A2DP transport. The stream cycled
+`STREAMING → OPEN → CLOSING → IDLE → CONFIGURED → OPEN → STREAMING` in **602 ms**, and the
+ACL link never dropped: `hcon 0000000053bde63f` is the same object before, during and
+after, so the disconnect happened *above* the link (`EX-030`).
+
+Three of this investigation's ingredients were present at once — a profile transition, an
+HFP cycle, and the GNOME Bluetooth panel open, the panel `EX-002` shows drives this
+controller into desync — and nothing happened. **That is the negative control the record
+never had**, and it produced a reusable test: a dropout is `BT-1` only if the journal shows
+`0x0428`, then `Looking for Alt no`, then an unanswered command.
+
+**The controller can do SCO.** On 2026-08-18 it **answered** an *Enhanced* Setup
+Synchronous Connection (`0x043D`) in 64.7 ms, completed the alt-setting switch, and carried
+the link ~17 minutes before the remote ended it (`EX-031`). Every instrumented failure until
+then had used the legacy `0x0428`. `n = 1`, but if the split is real the bug report narrows
+from "SCO setup wedges this controller" to a named opcode — and it lands squarely on the
+wideband-speech path the source investigation was already reading.
+
+**A third failure mode, and the first that is not the controller.** `bluetoothd` 5.72
+segfaulted three times at the **same offset reading the same address** —
+`bluetoothd[367e5]`, fault address `0x10`, three distinct processes across four hours and
+thirteen. `systemd-coredump`, installed for exactly this, kept the core:
+
+```
+#0  bluetoothd + 0x367e5
+#1  bluetoothd + 0x8304a
+#2  libglib-2.0.so.0 + 0x5d45e
+#4  g_main_loop_run
+```
+
+Two of the three crashes follow a discovery operation within two seconds. Afterwards the
+adapter stays `Powered=true` and the daemon stays `active (running)` while discovery is
+permanently dead — **every surface check reads healthy** (`EX-032`). A service restart fixes
+it and lasts about twelve hours.
+
+**The trigger claim was wrong in a specific way.** On 2026-08-22, `0x0428` was submitted and
+**answered** in 72.8 ms, handle `0x0004` allocated, alt-setting switched — and 2.076 s later
+a *different* command died, logged as the bare `command tx timeout` with no opcode
+(`EX-033`). The kernel prints the opcode from `hdev->req_skb`; bare means that pointer was
+NULL, so **the command that died was not the one `hci_cmd_sync` was tracking**. It is
+anonymous by construction.
+
+That reframes a question asked here for weeks. The trigger has been hunted as a *named
+opcode*, and the hunt kept yielding a distribution rather than a constant — 4.1 s, 7.6 s,
+16.2 s, 55.2 s, 155.8 s. If the dying command is often anonymous, part of that spread is the
+search looking for the wrong object.
+
+**And the intervention claim was too broad.** The standing sentence was "a USB collapse has
+never begun before something touched the controller", which reads as though touching it is
+what causes collapse. A deliberate recovery ladder run at the end of `EX-033`'s window —
+daemon restart, `hciconfig down/up`, full `modprobe -r btusb` and reload — recovered nothing
+and **destroyed nothing**: zero USB-layer lines across all three rungs, device still bound,
+`hci0` recreated. What causes stage 2 is specifically a **USB-level reset**, not
+intervention in general. It also stands as a counter-instance to `EX-016`, whose collapse
+followed a btusb reload; that was `n = 1`.
+
+### The instruments finally caught up
+
+**Assessment stopped costing a fault window.** The operator named the design: one coarse cut
+that throws nothing away, then every fine filter for free. `tools/bt-snapshot` does one
+journal traversal — 11 s against ~108k lines — where the same assessment had been ten to
+fifteen separate invocations, each re-traversing, each prompting, while a live window burned
+and a family waited for the laptop.
+
+**Evidence stopped evaporating.** The operator's objection was blunt and correct: "I don't
+understand at all how we could work with evidence which just disappears right on the plain
+sight." The answer was *not* a bigger quota — `SystemMaxUse=16G` was not even binding, at
+2.2 G with 70 G free. `tools/bt-backup-journal` archives every retained boot, each exported
+and **read back and counted** before it is filed: 15 of 15, 313 MB. On a daily timer with
+`Persistent=true`, because a plain daily timer skips exactly the runs that fall while a
+family laptop is off.
+
+**`install.sh --tools-only`.** The unblocker. Deny-by-default on the same allowlist as
+staging: only `install`/`rm`/`rmdir`/`mkdir` run, everything else is announced and skipped.
+Verified under a staging root first — 14 system commands blocked, `enable --now
+bt-hang-watchdog` among them — then live: `31 in sync, 29 drifted, 6 not installed` →
+**69 artifacts in sync**, watchdog still inactive and disabled, controller still at 0
+timeouts.
+
+**`tools/bt-crash`**, after a hand-typed `tail -4` hid the one core that mattered and
+produced a false "no core was kept". **`devtools/branch-status`**, after the same branch
+audit was hand-assembled three times and got wrong twice — "ahead by N" is not "carries N
+commits of work", and `git cherry` compares by patch-id, which is the honest counter.
+
+### `comms/`, and a message worth the whole exchange
+
+The Test Suite Maintainer opened a written channel so messages stop being retyped through
+the operator, and its first message reported that **CI had been red for 45 hours across 27
+consecutive runs** — `tools/bt-mode` refuses to run unprivileged, correctly, and the CI
+runner is not root. Because `repo-validate` is step 1, all 27 runs stopped there, and these
+never executed: the coverage floor, the awk floor, the comprehensiveness floor, the journal
+contract, the system round trip, and `repo-scan --all` — the publish-safety gate standing
+behind ~7,000 lines of session logs already pushed to a public repository.
+
+**The finding to keep is theirs: a gate that runs first hides the state of every gate behind
+it.**
+
+They also found that `bt-snapshot` spelled the timeout pattern three ways, all requiring an
+opcode, while the kernel emits the bare form when `hdev->req_skb` is NULL — and `FIRST_TMO`
+is the anchor every interval in the summary is measured from. Four days later `EX-033`'s
+*first* timeout was the bare form: the old pattern would have reported that window **70 s
+shorter than it was**. A defect found from the tree, confirmed by the machine.
+
+And `bt-retention` was judging **13 of 29 exhibits by their capture stamp** rather than
+their evidence's, because the scan read the provenance table when the body carried no
+offset — the exact error its own header documents avoiding. `EX-018` reported `retained`
+while its journal is the one everybody agrees is gone. Corrected picture: **12 verifiable, 8
+gone, 9 not judgeable**. The number this project had been quoting was overstated by eight.
+
+### The shapes
+
+* **A control that depends on someone remembering is not a control.** The operator's
+  sentence, and the sharpest formulation anyone has produced here. Offered a workaround that
+  required saying "I'm shutting down now", he declined it: *"For the cases when it is not me
+  who shuts down."* This is a family laptop. That converted `bt-trial autostop`'s HCI probe
+  from an operational cost into a design defect.
+* **A gate that runs first hides the state of every gate behind it.**
+* **A path check that does not resolve symlinks is not a path check** — `bt-archive`'s
+  in-repo refusal was bypassable through a symlink, reproduced end to end before it was
+  fixed, and fixed on both ends rather than the one reported.
+* **Zero from a capped scan is not a result** — and its converse, that a zero needs a
+  positive control before it is used. `bt-snapshot` now prints the control first and says in
+  words that every count below is uninterpretable without it.
+
+### What is not done
+
+The README was rewritten this phase because it described the wrong project — it opened as
+though this were a watchdog project. It is an attempt to **fix** this, in three deliberately
+unmerged streams: evidence, workarounds, and the upstream patch. The fault is very likely
+multi-layered, and the layers are now nameable: a wedge whose origin is unknown; an
+**absence** of recovery, since `13d3:3503` matches no quirks entry so `hci_cmd_timeout()`
+has no `hdev->reset` to call and Linux has no periodic USB recovery at all; a recovery path
+that is **harmful** when present; and a state that survives a host reboot and clears only on
+loss of power.
+
+`docs/tooling-index.md` exists now because the same avoidable permission prompts recurred
+every session, and the operator diagnosed why: after a context reset the knowledge of which
+helpers exist is gone, so the pipeline gets hand-typed again — and hand-typed pipelines have
+been *wrong* where the tool is not.
+
+Still open: `bt-snapshot` and `bt-backup-journal` have no tests, which the Test Suite
+Maintainer offered to write and will; the `0x0428` versus `0x043D` split is `n = 1` on the
+answered side and needs both on one device in one session; the `bluetoothd` crash has a
+stack but no function name, because `ddebs` ships `5.72-0ubuntu5` against an installed
+`5.72-0ubuntu5.5` and mismatched symbols name the *wrong* function rather than failing,
+while `debuginfod.ubuntu.com` is unreachable from this machine; and `devtools/repo-save`
+cannot run here at all, because it refuses while a trial is open and `bt-trial-auto` opens
+one on every boot by design — the same shape as the 45 hours, one layer down.
+
+### Phase 29 addendum — the reboot that failed, twenty minutes after this was written
+
+The phase above was written at 11:32 and the recovery ladder it describes was reported as
+"three rungs, none recovered it, **none destroyed it**". By 11:41 that second half was
+false, and the correction is worth more than the original claim.
+
+The ladder ended `EX-033`'s window and left the controller in stage 1 by every definition
+this record uses — on the bus, `btusb` bound to `3-3:1.0` and `3-3:1.1`, `hci0` present,
+**zero USB-layer lines** across the 35113 s window and across the ladder itself. The
+operator then took a hot reboot, which `EX-027` predicts recovers a stage-1 controller at
+`+1.107 s`.
+
+It did not come back:
+
+```
++0.813 s   usb 3-3: new full-speed USB device number 2
++16.6 s    device descriptor read/64, error -110      (×4, to +64 s)
++64.3 s    usb usb3-port3: attempt power cycle
++86.9 s    usb usb3-port3: unable to enumerate USB device
+```
+
+**`EX-034`.** Two corrections fall out of it.
+
+`EX-027` had paired two `reboot.target` transitions and concluded the controller's *stage*
+going in was the variable — stage 1 recovered, stage 2 did not. This is a reboot from stage
+1 that failed at `+86.9 s`, the same figure to a tenth of a second as the stage-2 case,
+which is usbcore's fixed retry schedule and says nothing about the device. That
+generalisation is withdrawn. `EX-028` is untouched: it compared reboot against power-off
+from the *same* stage-2 state.
+
+And the ladder's own report was wrong in the direction that matters. Twenty minutes passed
+between the last rung and the first sign of harm, and the sign appeared only when the host
+tried to enumerate from scratch.
+
+**The shape is new and it indicts the method, not one tool.** Every safety check this
+project runs during an intervention is a *contemporaneous* one: bus presence, driver
+binding, `hci0` existence, absence of USB-layer lines. All four passed. The damage surfaced
+at a boundary none of them watch. **"No USB-layer line followed" is evidence about the
+moment, not about the device** — and that sentence should be read back over every
+intervention this record has called harmless.
+
+What it does not establish is which rung did it, or whether the reboot was needed to expose
+it. Three interventions ran in sequence and only the aggregate was tested. The failed
+`hciconfig hci0 up` (`-110`) is the most suspicious, since `HCI_Reset` is the one rung that
+asks the controller to reinitialise — recorded as a hypothesis, not a claim.

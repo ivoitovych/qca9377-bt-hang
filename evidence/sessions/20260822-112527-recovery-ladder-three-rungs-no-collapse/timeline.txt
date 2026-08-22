@@ -1,0 +1,1432 @@
+BLUETOOTH TIMELINE — 2026-08-22 11:18:00
+─────────────────────────────────────────────────────────────────────────
+11:19:01  KERN  hci0 cmd_cnt 1 cmd queued 1
+11:19:01  KERN  hci0: skb 0000000025ba36cb
+11:19:02  MARK  RECOVERY LADDER step 0: pre-state, window 35113s untreated | usb=3-3 ctrl=on hci=hci0 responds=no connected=1
+11:19:03  TRACE /usr/local/sbin/bt-trace: line 225: 132557 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+11:19:03  TRACE btmon exited (#6) — restarting within 1s; ~1s of capture lost
+11:19:03  TRACE capturing to bt-20260822-111903.btsnoop
+11:19:03  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:03  KERN  hci0: err 0x6e
+11:19:03  KERN  hci0 cmd_cnt 1 cmd queued 0
+11:19:06  KERN  hci0 cmd_cnt 1 cmd queued 1
+11:19:06  KERN  hci0: skb 00000000a956eb06
+11:19:07  MARK  RECOVERY LADDER step 1: systemctl restart bluetooth | usb=3-3 ctrl=on hci=hci0 responds=no connected=1
+11:19:07  BLUED Terminating
+11:19:07  BLUED src/adapter.c:adapter_shutdown()
+11:19:07  BLUED src/adapter.c:adapter_set_power_state() on-disabling
+11:19:07  BLUED src/adapter.c:set_mode() sending set mode command for index 0
+11:19:07  BLUED Stopping bluetooth.service - Bluetooth service...
+11:19:07  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0005
+11:19:07  KERN  hci0: err 0xffffff90
+11:19:07  KERN  hci0:
+11:19:07  KERN  hci0: entry 0000000060eb5cf8
+11:19:07  KERN  hci0: Opcode 0x0c1a
+11:19:07  KERN  hci0: opcode 0x0c1a plen 1
+11:19:07  KERN  hci0: skb len 4
+11:19:07  KERN  hci0: length 1
+11:19:07  KERN  hci0 cmd_cnt 0 cmd queued 1
+11:19:08  TRACE /usr/local/sbin/bt-trace: line 225: 133544 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+11:19:08  TRACE btmon exited (#7) — restarting within 1s; ~1s of capture lost
+11:19:08  TRACE capturing to bt-20260822-111908.btsnoop
+11:19:08  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x05 status: 0x05
+11:19:08  BLUED Failed to set mode: Authentication Failed (0x05)
+11:19:08  BLUED src/adapter.c:adapter_set_power_state() off
+11:19:08  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:08  KERN  hci0: err 0x6e
+11:19:08  KERN  hci0 cmd_cnt 1 cmd queued 1
+11:19:08  KERN  hci0: skb 00000000d0ba24fe
+11:19:08  KERN  hci0: end: err -110
+11:19:08  KERN  Bluetooth: hci0: Opcode 0x0c1a failed: -110
+11:19:10  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:10  KERN  hci0: err 0x6e
+11:19:10  KERN  hci0 cmd_cnt 1 cmd queued 0
+11:19:18  BLUED src/plugin.c:plugin_cleanup() Cleanup plugins
+11:19:18  BLUED profiles/health/hdp.c:hdp_manager_stop() Stopped Health manager
+11:19:18  BLUED profiles/input/suspend-none.c:suspend_exit()
+11:19:18  BLUED profiles/audio/a2dp.c:media_server_remove() path /org/bluez/hci0
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/ldac
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/ldac
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bce810 unregistered: type:0 codec:255 seid_pool:0x5f8e53bdd408 seid:1
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/aptx_hd
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/aptx_hd
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bd31c0 unregistered: type:1 codec:255 seid_pool:0x5f8e53bdd408 seid:2
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_hd
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_hd
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bf08f0 unregistered: type:0 codec:255 seid_pool:0x5f8e53bdd408 seid:3
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/aptx
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/aptx
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53be30c0 unregistered: type:1 codec:255 seid_pool:0x5f8e53bdd408 seid:4
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bdfe10 unregistered: type:0 codec:255 seid_pool:0x5f8e53bdd408 seid:5
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/sbc
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/sbc
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bf6ff0 unregistered: type:1 codec:0 seid_pool:0x5f8e53bdd408 seid:6
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/sbc
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/sbc
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bfa3c0 unregistered: type:0 codec:0 seid_pool:0x5f8e53bdd408 seid:7
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/sbc_xq
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/sbc_xq
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53beb120 unregistered: type:1 codec:0 seid_pool:0x5f8e53bdd408 seid:8
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/sbc_xq
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/sbc_xq
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53beea90 unregistered: type:0 codec:0 seid_pool:0x5f8e53bdd408 seid:9
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_1
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bf1900 unregistered: type:0 codec:255 seid_pool:0x5f8e53bdd408 seid:10
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_0
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_0
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bf3540 unregistered: type:0 codec:255 seid_pool:0x5f8e53bdd408 seid:11
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_1
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bf3d10 unregistered: type:0 codec:255 seid_pool:0x5f8e53bdd408 seid:12
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_0
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_0
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bf4910 unregistered: type:0 codec:255 seid_pool:0x5f8e53bdd408 seid:13
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/faststream
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/faststream
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bf2ec0 unregistered: type:0 codec:255 seid_pool:0x5f8e53bdd408 seid:14
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/faststream_duplex
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/faststream_duplex
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bec690 unregistered: type:0 codec:255 seid_pool:0x5f8e53bdd408 seid:15
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/opus_05
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/opus_05
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bfd470 unregistered: type:1 codec:255 seid_pool:0x5f8e53bdd408 seid:16
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/opus_05
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/opus_05
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53bfe0b0 unregistered: type:0 codec:255 seid_pool:0x5f8e53bdd408 seid:17
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10009
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/opus_05_duplex
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/opus_05_duplex
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53c015c0 unregistered: type:1 codec:255 seid_pool:0x5f8e53bdd408 seid:18
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10008
+11:19:18  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/opus_05_duplex
+11:19:18  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/opus_05_duplex
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5f8e53c021f0 unregistered: type:0 codec:255 seid_pool:0x5f8e53bdd408 seid:19
+11:19:18  BLUED plugins/neard.c:neard_exit() Cleanup neard plugin
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53c006a0: ref=2
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53c00550: ref=2
+11:19:18  BLUED plugins/hostname.c:hostname_remove()
+11:19:18  BLUED plugins/sixaxis.c:sixaxis_exit()
+11:19:18  BLUED src/profile.c:btd_profile_cleanup() Releasing "Hands-Free Voice gateway"
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53c006a0: ref=1
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bf9290: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: disconnected -> unavailable (0)
+11:19:18  BLUED src/profile.c:ext_device_remove() Hands-Free Voice gateway
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bf9290: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53be7100: device AA:BB:CC:00:00:02 profile Hands-Free Voice gateway state changed: disconnected -> unavailable (0)
+11:19:18  BLUED src/profile.c:ext_device_remove() Hands-Free Voice gateway
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53be7100: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bdabf0: device AA:BB:CC:00:00:03 profile Hands-Free Voice gateway state changed: disconnected -> unavailable (0)
+11:19:18  BLUED src/profile.c:ext_device_remove() Hands-Free Voice gateway
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdabf0: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53be7fc0: device AA:BB:CC:00:00:04 profile Hands-Free Voice gateway state changed: disconnected -> unavailable (0)
+11:19:18  BLUED src/profile.c:ext_device_remove() Hands-Free Voice gateway
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53be7fc0: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53c006a0: device AA:BB:CC:00:00:05 profile Hands-Free Voice gateway state changed: connected -> disconnected (-103)
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53c006a0: device AA:BB:CC:00:00:05 profile Hands-Free Voice gateway state changed: disconnected -> unavailable (0)
+11:19:18  BLUED src/profile.c:ext_device_remove() Hands-Free Voice gateway
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53c006a0: ref=0
+11:19:18  BLUED src/profile.c:ext_adapter_remove() "Hands-Free Voice gateway" removed
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10006
+11:19:18  BLUED src/profile.c:remove_ext() Removed "Hands-Free Voice gateway"
+11:19:18  BLUED src/profile.c:btd_profile_cleanup() Releasing "Hands-Free unit"
+11:19:18  BLUED src/profile.c:ext_adapter_remove() "Hands-Free unit" removed
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10007
+11:19:18  BLUED src/profile.c:remove_ext() Removed "Hands-Free unit"
+11:19:18  BLUED src/profile.c:btd_profile_cleanup() Releasing "Message Notification"
+11:19:18  BLUED src/profile.c:ext_adapter_remove() "Message Notification" removed
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000a
+11:19:18  BLUED src/profile.c:remove_ext() Removed "Message Notification"
+11:19:18  BLUED src/profile.c:btd_profile_cleanup() Releasing "Message Access"
+11:19:18  BLUED src/profile.c:ext_adapter_remove() "Message Access" removed
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000b
+11:19:18  BLUED src/profile.c:remove_ext() Removed "Message Access"
+11:19:18  BLUED src/profile.c:btd_profile_cleanup() Releasing "Phone Book Access"
+11:19:18  BLUED src/profile.c:ext_adapter_remove() "Phone Book Access" removed
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000c
+11:19:18  BLUED src/profile.c:remove_ext() Removed "Phone Book Access"
+11:19:18  BLUED src/profile.c:btd_profile_cleanup() Releasing "Synchronization"
+11:19:18  BLUED src/profile.c:ext_adapter_remove() "Synchronization" removed
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000d
+11:19:18  BLUED src/profile.c:remove_ext() Removed "Synchronization"
+11:19:18  BLUED src/profile.c:btd_profile_cleanup() Releasing "File Transfer"
+11:19:18  BLUED src/profile.c:ext_adapter_remove() "File Transfer" removed
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000e
+11:19:18  BLUED src/profile.c:remove_ext() Removed "File Transfer"
+11:19:18  BLUED src/profile.c:btd_profile_cleanup() Releasing "Object Push"
+11:19:18  BLUED src/profile.c:ext_adapter_remove() "Object Push" removed
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000f
+11:19:18  BLUED src/profile.c:remove_ext() Removed "Object Push"
+11:19:18  BLUED src/profile.c:btd_profile_cleanup() Releasing ":1.218/org/bluez/obex/00005005_0000_1000_8000_0002ee000001/<UUID-01>"
+11:19:18  BLUED src/profile.c:ext_adapter_remove() ":1.218/org/bluez/obex/00005005_0000_1000_8000_0002ee000001/<UUID-01>" removed
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10010
+11:19:18  BLUED src/profile.c:remove_ext() Removed ":1.218/org/bluez/obex/00005005_0000_1000_8000_0002ee000001/<UUID-01>"
+11:19:18  BLUED src/adapter.c:adapter_remove() Removing adapter /org/bluez/hci0
+11:19:18  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bdd810: device AA:BB:CC:00:00:01 profile avrcp-controller state changed: disconnected -> unavailable (0)
+11:19:18  BLUED profiles/audio/control.c:path_unregister() Unregistered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdd8d0: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdd810: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdd810: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bdd8d0: device AA:BB:CC:00:00:01 profile audio-avrcp-target state changed: disconnected -> unavailable (0)
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdd8d0: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bdd910: device AA:BB:CC:00:00:01 profile a2dp-sink state changed: disconnected -> unavailable (0)
+11:19:18  BLUED profiles/audio/sink.c:sink_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdd910: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdd910: ref=0
+11:19:18  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:19:18  BLUED src/device.c:device_free() 0x5f8e53be62b0
+11:19:18  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bdd9d0: device AA:BB:CC:00:00:02 profile avrcp-controller state changed: disconnected -> unavailable (0)
+11:19:18  BLUED profiles/audio/control.c:path_unregister() Unregistered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdddb0: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdd9d0: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdd9d0: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bdddb0: device AA:BB:CC:00:00:02 profile audio-avrcp-target state changed: disconnected -> unavailable (0)
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdddb0: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bdddf0: device AA:BB:CC:00:00:02 profile a2dp-source state changed: disconnected -> unavailable (0)
+11:19:18  BLUED profiles/audio/source.c:source_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdddf0: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bdddf0: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bddeb0: device AA:BB:CC:00:00:02 profile a2dp-sink state changed: disconnected -> unavailable (0)
+11:19:18  BLUED profiles/audio/sink.c:sink_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bddeb0: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bddeb0: ref=0
+11:19:18  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED src/device.c:device_free() 0x5f8e53be76f0
+11:19:18  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bddf30: device AA:BB:CC:00:00:03 profile avrcp-controller state changed: disconnected -> unavailable (0)
+11:19:18  BLUED profiles/audio/control.c:path_unregister() Unregistered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bddff0: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bddf30: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bddf30: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bddff0: device AA:BB:CC:00:00:03 profile audio-avrcp-target state changed: disconnected -> unavailable (0)
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bddff0: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bde030: device AA:BB:CC:00:00:03 profile a2dp-sink state changed: disconnected -> unavailable (0)
+11:19:18  BLUED profiles/audio/sink.c:sink_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bde030: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bde030: ref=0
+11:19:18  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:19:18  BLUED src/device.c:device_free() 0x5f8e53be8850
+11:19:18  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bde0f0: device AA:BB:CC:00:00:04 profile avrcp-controller state changed: disconnected -> unavailable (0)
+11:19:18  BLUED profiles/audio/control.c:path_unregister() Unregistered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bde1e0: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bde0f0: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bde0f0: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bde1e0: device AA:BB:CC:00:00:04 profile audio-avrcp-target state changed: disconnected -> unavailable (0)
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bde1e0: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bde220: device AA:BB:CC:00:00:04 profile a2dp-sink state changed: disconnected -> unavailable (0)
+11:19:18  BLUED profiles/audio/sink.c:sink_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bde220: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bde220: ref=0
+11:19:18  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:19:18  BLUED src/device.c:device_free() 0x5f8e53be9310
+11:19:18  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53c00350: device AA:BB:CC:00:00:05 profile avrcp-controller state changed: disconnected -> unavailable (0)
+11:19:18  BLUED profiles/audio/control.c:path_unregister() Unregistered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bec5f0: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53c00350: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53c00350: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53c00550: device AA:BB:CC:00:00:05 profile a2dp-sink state changed: disconnected -> unavailable (0)
+11:19:18  BLUED profiles/audio/sink.c:sink_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53c00550: ref=1
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53c00550: ref=0
+11:19:18  BLUED src/service.c:change_state() 0x5f8e53bec5f0: device AA:BB:CC:00:00:05 profile audio-avrcp-target state changed: disconnected -> unavailable (0)
+11:19:18  BLUED src/service.c:btd_service_unref() 0x5f8e53bec5f0: ref=0
+11:19:18  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:19:18  BLUED src/device.c:device_free() 0x5f8e53bff9a0
+11:19:18  BLUED profiles/audio/a2dp.c:a2dp_source_server_remove() path /org/bluez/hci0
+11:19:18  BLUED profiles/audio/a2dp.c:a2dp_sink_server_remove() path /org/bluez/hci0
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_target_server_remove() path /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10005
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_controller_server_remove() path /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10004
+11:19:18  BLUED profiles/network/manager.c:nap_server_remove() path /org/bluez/hci0
+11:19:18  BLUED profiles/network/manager.c:gn_server_remove() path /org/bluez/hci0
+11:19:18  BLUED profiles/network/manager.c:panu_server_remove() path /org/bluez/hci0
+11:19:18  BLUED profiles/network/server.c:path_unregister() Unregistered interface org.bluez.NetworkServer1 on path /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10001
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10002
+11:19:18  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:19:18  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10003
+11:19:18  BLUED Battery Provider Manager destroyed
+11:19:18  BLUED src/battery.c:manager_free()
+11:19:18  BLUED src/battery.c:btd_battery_unregister() path = /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:19:18  BLUED src/adapter.c:btd_adapter_unref() Freeing adapter /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:adapter_free() 0x5f8e53bd5200
+11:19:18  BLUED Stopping SDP server
+11:19:18  BLUED Exit
+11:19:18  BLUED bluetooth.service: Deactivated successfully.
+11:19:18  BLUED Stopped bluetooth.service - Bluetooth service.
+11:19:18  BLUED bluetooth.service: ConfigurationDirectory 'bluetooth' already exists but the mode is different. (File system: 755 ConfigurationDirectoryMode: 555)
+11:19:18  BLUED Starting bluetooth.service - Bluetooth service...
+11:19:18  BLUED Bluetooth daemon 5.72
+11:19:18  BLUED src/main.c:parse_config() parsing /etc/bluetooth/main.conf
+11:19:18  BLUED Started bluetooth.service - Bluetooth service.
+11:19:18  BLUED src/adapter.c:adapter_init() sending read version command
+11:19:18  BLUED Starting SDP server
+11:19:18  BLUED src/sdpd-service.c:register_device_id() Adding device id record for 0002:1d6b:0246:0548
+11:19:18  BLUED src/plugin.c:plugin_init() Loading builtin plugins
+11:19:18  BLUED src/plugin.c:add_plugin() Loading hostname plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading wiimote plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading autopair plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading policy plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading neard plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading sap plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading a2dp plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading avrcp plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading network plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading input plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading hog plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading health plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading gap plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading scanparam plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading deviceinfo plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading midi plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading battery plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading bap plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading bass plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading mcp plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading vcp plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading micp plugin
+11:19:18  BLUED src/plugin.c:add_plugin() Loading csip plugin
+11:19:18  BLUED src/plugin.c:plugin_init() Loading plugins /usr/lib/x86_64-linux-gnu/bluetooth/plugins
+11:19:18  BLUED src/plugin.c:add_plugin() Loading sixaxis plugin
+11:19:18  BLUED src/profile.c:btd_profile_register() D-Bus experimental not enabled
+11:19:18  BLUED src/plugin.c:plugin_init() System does not support csip plugin
+11:19:18  BLUED profiles/audio/micp.c:micp_init() D-Bus experimental not enabled
+11:19:18  BLUED src/plugin.c:plugin_init() System does not support micp plugin
+11:19:18  BLUED src/profile.c:btd_profile_register() D-Bus experimental not enabled
+11:19:18  BLUED src/plugin.c:plugin_init() System does not support vcp plugin
+11:19:18  BLUED src/profile.c:btd_profile_register() D-Bus experimental not enabled
+11:19:18  BLUED src/plugin.c:plugin_init() System does not support mcp plugin
+11:19:18  BLUED src/profile.c:btd_profile_register() D-Bus experimental not enabled
+11:19:18  BLUED src/plugin.c:plugin_init() System does not support bass plugin
+11:19:18  BLUED src/profile.c:btd_profile_register() D-Bus experimental not enabled
+11:19:18  BLUED src/plugin.c:plugin_init() System does not support bap plugin
+11:19:18  BLUED profiles/health/hdp.c:hdp_manager_start() Starting Health manager
+11:19:18  BLUED profiles/input/suspend-none.c:suspend_init()
+11:19:18  BLUED profiles/network/manager.c:read_config() /etc/bluetooth/network.conf: Key file does not have key “DisableSecurity” in group “General”
+11:19:18  BLUED profiles/network/manager.c:read_config() Config options: Security=true
+11:19:18  BLUED plugins/neard.c:neard_init() Setup neard plugin
+11:19:18  BLUED plugins/hostname.c:read_dmi_fallback() chassis: laptop
+11:19:18  BLUED plugins/hostname.c:read_dmi_fallback() major: 0x01 minor: 0x03
+11:19:18  BLUED plugins/hostname.c:read_transient_hostname() read transient hostname: 'n'
+11:19:18  BLUED plugins/sixaxis.c:sixaxis_init()
+11:19:18  BLUED src/main.c:main() Entering main loop
+11:19:18  BLUED src/shared/mgmt.c:send_request() [0xffff] command 0x0001
+11:19:18  BLUED src/rfkill.c:rfkill_event() RFKILL event idx 0 type 2 op 0 soft 0 hard 0
+11:19:18  BLUED src/shared/mgmt.c:can_read_data() [0xffff] command 0x0001 complete: 0x00
+11:19:18  BLUED Bluetooth management interface 1.23 initialized
+11:19:18  BLUED src/adapter.c:read_version_complete() sending read supported commands command
+11:19:18  BLUED src/adapter.c:read_version_complete() sending read index list command
+11:19:18  BLUED src/rfkill.c:rfkill_event() RFKILL event idx 1 type 1 op 0 soft 0 hard 0
+11:19:18  BLUED src/shared/mgmt.c:send_request() [0xffff] command 0x0002
+11:19:18  BLUED src/shared/mgmt.c:can_read_data() [0xffff] command 0x0002 complete: 0x00
+11:19:18  BLUED src/adapter.c:read_commands_complete() Number of commands: 89
+11:19:18  BLUED src/adapter.c:read_commands_complete() Number of events: 44
+11:19:18  BLUED src/adapter.c:read_commands_complete() enabling kernel-side connection control
+11:19:18  BLUED src/adapter.c:read_commands_complete() kernel supports the set_blocked_keys op
+11:19:18  BLUED src/adapter.c:read_commands_complete() kernel supports controller cap command
+11:19:18  BLUED src/adapter.c:read_commands_complete() kernel supports exp features
+11:19:18  BLUED src/adapter.c:read_commands_complete() kernel supports set system confic
+11:19:18  BLUED src/adapter.c:read_commands_complete() kernel supports ext adv commands
+11:19:18  BLUED src/adapter.c:read_commands_complete() kernel supports suspend/resume events
+11:19:18  BLUED src/shared/mgmt.c:send_request() [0xffff] command 0x0003
+11:19:18  BLUED src/shared/mgmt.c:can_read_data() [0xffff] command 0x0003 complete: 0x00
+11:19:18  BLUED src/adapter.c:read_index_list_complete() Number of controllers: 1
+11:19:18  BLUED src/adapter.c:read_index_list_complete() Found index 0
+11:19:18  BLUED src/adapter.c:index_added() index 0
+11:19:18  BLUED src/adapter.c:reset_adv_monitors() sending remove Adv Monitor command with handle 0
+11:19:18  BLUED src/adapter.c:btd_adapter_new() System name: BlueZ 5.72
+11:19:18  BLUED src/adapter.c:btd_adapter_new() Major class: 0
+11:19:18  BLUED src/adapter.c:btd_adapter_new() Minor class: 0
+11:19:18  BLUED src/adapter.c:btd_adapter_new() Modalias: usb:v1D6Bp0246d0548
+11:19:18  BLUED src/adapter.c:btd_adapter_new() Discoverable timeout: 180 seconds
+11:19:18  BLUED src/adapter.c:btd_adapter_new() Pairable timeout: 0 seconds
+11:19:18  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0053
+11:19:18  BLUED src/profile.c:unregister_profile() sender :1.86
+11:19:18  BLUED src/profile.c:register_profile() sender :1.218
+11:19:18  BLUED src/profile.c:create_ext() Created "Message Notification"
+11:19:18  KERN  hci0:
+11:19:18  BLUED src/profile.c:register_profile() sender :1.218
+11:19:18  KERN  hci0: entry 0000000066c837f2
+11:19:18  BLUED src/profile.c:create_ext() Created "Message Access"
+11:19:18  KERN  hci0: entry 000000008f88ae05
+11:19:18  BLUED src/profile.c:register_profile() sender :1.218
+11:19:18  KERN  hci0: ADV monitoring is off
+11:19:18  BLUED src/profile.c:create_ext() Created "Phone Book Access"
+11:19:18  KERN  hci0: stopping background scanning
+11:19:18  BLUED src/profile.c:register_profile() sender :1.218
+11:19:18  BLUED src/profile.c:create_ext() Created "Synchronization"
+11:19:18  KERN  hci0:
+11:19:18  BLUED src/profile.c:register_profile() sender :1.218
+11:19:18  BLUED src/profile.c:create_ext() Created "File Transfer"
+11:19:18  BLUED src/profile.c:register_profile() sender :1.218
+11:19:18  BLUED src/profile.c:create_ext() Created "Object Push"
+11:19:18  BLUED src/profile.c:register_profile() sender :1.218
+11:19:18  BLUED src/profile.c:create_ext() Created ":1.218/org/bluez/obex/00005005_0000_1000_8000_0002ee000001/<UUID-01>"
+11:19:18  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0053 complete: 0x00
+11:19:18  BLUED src/adapter.c:reset_adv_monitors_complete() Removed all Adv Monitors
+11:19:18  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0049
+11:19:18  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0049 complete: 0x00
+11:19:18  BLUED src/adapter.c:read_exp_features_complete() index 0 status 0x00
+11:19:18  BLUED src/adapter.c:read_exp_features_complete() <UUID-02> flags 0 action 0
+11:19:18  BLUED src/adapter.c:read_exp_features_complete() <UUID-03> flags 0 action 0
+11:19:18  BLUED src/adapter.c:read_info() sending read info command for index 0
+11:19:18  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0004
+11:19:18  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0004 complete: 0x00
+11:19:18  BLUED src/adapter.c:read_info_complete() index 0 status 0x00
+11:19:18  BLUED src/adapter.c:clear_uuids() sending clear uuids command for index 0
+11:19:18  BLUED src/adapter.c:clear_devices() sending clear devices command for index 0
+11:19:18  BLUED src/adapter.c:set_privacy() sending set privacy command for index 0
+11:19:18  BLUED src/adapter.c:set_privacy() setting privacy mode 0x00 for index 0
+11:19:18  BLUED src/battery.c:manager_new()
+11:19:18  BLUED Battery Provider Manager created
+11:19:18  BLUED src/gatt-database.c:btd_gatt_database_new() GATT Manager registered for adapter: /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10001
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000007-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001800-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10002
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000007-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001801-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10003
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000007-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000180a-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/advertising.c:btd_adv_manager_new() LE Advertising Manager created for adapter: /org/bluez/hci0
+11:19:18  BLUED profiles/audio/a2dp.c:media_server_probe() path /org/bluez/hci0
+11:19:18  BLUED plugins/policy.c:policy_adapter_probe()
+11:19:18  BLUED plugins/hostname.c:hostname_probe()
+11:19:18  BLUED plugins/hostname.c:update_class() major: 0x01 minor: 0x03
+11:19:18  BLUED src/adapter.c:btd_adapter_set_class() class: major 1 minor 3
+11:19:18  BLUED src/adapter.c:set_dev_class() sending set device class command for index 0
+11:19:18  BLUED profiles/network/manager.c:panu_server_probe() path /org/bluez/hci0
+11:19:18  BLUED profiles/network/server.c:server_register() Registered interface org.bluez.NetworkServer1 on path /org/bluez/hci0
+11:19:18  BLUED profiles/network/manager.c:gn_server_probe() path /org/bluez/hci0
+11:19:18  BLUED profiles/network/manager.c:nap_server_probe() path /org/bluez/hci0
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_controller_server_probe() path /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10004
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000017-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000110e-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000110f-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_target_server_probe() path /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10005
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000017-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000110c-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000110e-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED profiles/audio/a2dp.c:a2dp_sink_server_probe() path /org/bluez/hci0
+11:19:18  BLUED profiles/audio/a2dp.c:a2dp_source_server_probe() path /org/bluez/hci0
+11:19:18  BLUED profiles/sap/manager.c:sap_server_probe() path /org/bluez/hci0
+11:19:18  BLUED profiles/sap/server.c:sap_server_register() Sap driver initialization failed.
+11:19:18  BLUED sap-server: Operation not permitted (1)
+11:19:18  BLUED src/profile.c:ext_adapter_probe() "Message Notification" probed
+11:19:18  BLUED src/profile.c:ext_start_servers() Message Notification listening on PSM 4097
+11:19:18  BLUED src/profile.c:ext_start_servers() Message Notification listening on chan 17
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10006
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001133-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001134-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/profile.c:ext_adapter_probe() "Message Access" probed
+11:19:18  BLUED src/profile.c:ext_start_servers() Message Access listening on PSM 4099
+11:19:18  BLUED src/profile.c:ext_start_servers() Message Access listening on chan 16
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10007
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001132-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001134-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/profile.c:ext_adapter_probe() "Phone Book Access" probed
+11:19:18  BLUED src/profile.c:ext_start_servers() Phone Book Access listening on PSM 4101
+11:19:18  BLUED src/profile.c:ext_start_servers() Phone Book Access listening on chan 15
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10008
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000112f-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001130-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/profile.c:ext_adapter_probe() "Synchronization" probed
+11:19:18  BLUED src/profile.c:ext_start_servers() Synchronization listening on chan 14
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10009
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001104-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/profile.c:ext_adapter_probe() "File Transfer" probed
+11:19:18  BLUED src/profile.c:ext_start_servers() File Transfer listening on PSM 4103
+11:19:18  BLUED src/profile.c:ext_start_servers() File Transfer listening on chan 10
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000a
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001106-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/profile.c:ext_adapter_probe() "Object Push" probed
+11:19:18  BLUED src/profile.c:ext_start_servers() Object Push listening on PSM 4105
+11:19:18  BLUED src/profile.c:ext_start_servers() Object Push listening on chan 9
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000b
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001105-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/profile.c:ext_adapter_probe() ":1.218/org/bluez/obex/00005005_0000_1000_8000_0002ee000001/<UUID-01>" probed
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000c
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000008-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00005005-0000-1000-8000-0002ee0
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/adapter.c:btd_adapter_unblock_address() hci0 AA:BB:CC:00:00:06
+11:19:18  BLUED src/adapter.c:get_ltk_info() AA:BB:CC:00:00:05
+11:19:18  BLUED src/adapter.c:get_peripheral_ltk_info() AA:BB:CC:00:00:05
+11:19:18  BLUED src/device.c:device_create_from_storage() address AA:BB:CC:00:00:05
+11:19:18  BLUED src/device.c:device_new() address AA:BB:CC:00:00:05
+11:19:18  BLUED src/device.c:device_new() Creating device /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:19:18  BLUED src/device.c:btd_device_set_temporary() temporary 0
+11:19:18  BLUED src/device.c:device_set_bonded() setting bonded for device to true
+11:19:18  BLUED src/adapter.c:get_ltk_info() AA:BB:CC:00:00:01
+11:19:18  BLUED src/adapter.c:get_peripheral_ltk_info() AA:BB:CC:00:00:01
+11:19:18  BLUED src/device.c:device_create_from_storage() address AA:BB:CC:00:00:01
+11:19:18  BLUED src/device.c:device_new() address AA:BB:CC:00:00:01
+11:19:18  BLUED src/device.c:device_new() Creating device /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:19:18  BLUED src/device.c:btd_device_set_temporary() temporary 0
+11:19:18  BLUED src/device.c:device_set_bonded() setting bonded for device to true
+11:19:18  BLUED src/adapter.c:get_ltk_info() AA:BB:CC:00:00:02
+11:19:18  BLUED src/adapter.c:get_peripheral_ltk_info() AA:BB:CC:00:00:02
+11:19:18  BLUED src/device.c:device_create_from_storage() address AA:BB:CC:00:00:02
+11:19:18  BLUED src/device.c:device_new() address AA:BB:CC:00:00:02
+11:19:18  BLUED src/device.c:device_new() Creating device /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED src/device.c:btd_device_set_temporary() temporary 0
+11:19:18  BLUED src/device.c:device_set_bonded() setting bonded for device to true
+11:19:18  BLUED src/adapter.c:get_ltk_info() AA:BB:CC:00:00:03
+11:19:18  BLUED src/adapter.c:get_peripheral_ltk_info() AA:BB:CC:00:00:03
+11:19:18  BLUED src/device.c:device_create_from_storage() address AA:BB:CC:00:00:03
+11:19:18  BLUED src/device.c:device_new() address AA:BB:CC:00:00:03
+11:19:18  BLUED src/device.c:device_new() Creating device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:19:18  BLUED src/device.c:btd_device_set_temporary() temporary 0
+11:19:18  BLUED src/device.c:device_set_bonded() setting bonded for device to true
+11:19:18  BLUED src/adapter.c:get_ltk_info() AA:BB:CC:00:00:04
+11:19:18  BLUED src/adapter.c:get_peripheral_ltk_info() AA:BB:CC:00:00:04
+11:19:18  BLUED src/device.c:device_create_from_storage() address AA:BB:CC:00:00:04
+11:19:18  BLUED src/device.c:device_new() address AA:BB:CC:00:00:04
+11:19:18  BLUED src/device.c:device_new() Creating device /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:19:18  BLUED src/device.c:btd_device_set_temporary() temporary 0
+11:19:18  BLUED src/device.c:device_set_bonded() setting bonded for device to true
+11:19:18  BLUED src/adapter.c:load_link_keys() hci0 keys 5 debug_keys 0 retry false
+11:19:18  BLUED src/adapter.c:load_ltks() hci0 keys 0
+11:19:18  BLUED src/adapter.c:load_irks() hci0 irks 0
+11:19:18  BLUED src/adapter.c:load_conn_params() hci0 conn params 0
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_controller_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:19:18  BLUED profiles/audio/control.c:control_init() Registered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122428e80: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122428e80: device AA:BB:CC:00:00:05 profile avrcp-controller state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_target_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122428f40: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122428f40: device AA:BB:CC:00:00:05 profile audio-avrcp-target state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/a2dp.c:a2dp_sink_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:19:18  BLUED profiles/audio/sink.c:sink_init() /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122428f80: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122428f80: device AA:BB:CC:00:00:05 profile a2dp-sink state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_controller_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:19:18  BLUED profiles/audio/control.c:control_init() Registered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122429040: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122429040: device AA:BB:CC:00:00:01 profile avrcp-controller state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_target_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122429100: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122429100: device AA:BB:CC:00:00:01 profile audio-avrcp-target state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/a2dp.c:a2dp_sink_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:19:18  BLUED profiles/audio/sink.c:sink_init() /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122429140: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122429140: device AA:BB:CC:00:00:01 profile a2dp-sink state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_controller_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED profiles/audio/control.c:control_init() Registered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122429200: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122429200: device AA:BB:CC:00:00:02 profile avrcp-controller state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_target_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e51224292c0: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e51224292c0: device AA:BB:CC:00:00:02 profile audio-avrcp-target state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/a2dp.c:a2dp_source_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED profiles/audio/source.c:source_init() /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122429300: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122429300: device AA:BB:CC:00:00:02 profile a2dp-source state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/a2dp.c:a2dp_sink_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED profiles/audio/sink.c:sink_init() /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e51224293c0: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e51224293c0: device AA:BB:CC:00:00:02 profile a2dp-sink state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_controller_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:19:18  BLUED profiles/audio/control.c:control_init() Registered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122429440: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122429440: device AA:BB:CC:00:00:03 profile avrcp-controller state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_target_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122429530: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122429530: device AA:BB:CC:00:00:03 profile audio-avrcp-target state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/a2dp.c:a2dp_sink_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:19:18  BLUED profiles/audio/sink.c:sink_init() /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122429570: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122429570: device AA:BB:CC:00:00:03 profile a2dp-sink state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_controller_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:19:18  BLUED profiles/audio/control.c:control_init() Registered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122429630: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122429630: device AA:BB:CC:00:00:04 profile avrcp-controller state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/avrcp.c:avrcp_target_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e51224297c0: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e51224297c0: device AA:BB:CC:00:00:04 profile audio-avrcp-target state changed: unavailable -> disconnected (0)
+11:19:18  BLUED profiles/audio/a2dp.c:a2dp_sink_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:19:18  BLUED profiles/audio/sink.c:sink_init() /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:19:18  BLUED src/service.c:btd_service_ref() 0x5e5122429820: ref=2
+11:19:18  BLUED src/service.c:change_state() 0x5e5122429820: device AA:BB:CC:00:00:04 profile a2dp-sink state changed: unavailable -> disconnected (0)
+11:19:18  BLUED src/adapter.c:load_connections() sending get connections command for index 0
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/adapter.c:set_did() hci0 source 2 vendor 1d6b product 246 version 548
+11:19:18  BLUED src/adapter.c:adapter_register() Adapter /org/bluez/hci0 registered
+11:19:18  BLUED src/adapter.c:set_dev_class() sending set device class command for index 0
+11:19:18  BLUED src/adapter.c:set_name() sending set local name command for index 0
+11:19:18  BLUED src/adapter.c:adapter_set_power_state() on
+11:19:18  BLUED src/adapter.c:adapter_start() adapter /org/bluez/hci0 has been enabled
+11:19:18  BLUED src/adapter.c:trigger_passive_scanning()
+11:19:18  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0011
+11:19:18  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0011 complete: 0x00
+11:19:18  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0034
+11:19:18  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0034 complete: 0x00
+11:19:18  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x002f
+11:19:18  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x2f status: 0x0b
+11:19:18  BLUED Failed to set privacy: Rejected (0x0b)
+11:19:18  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:18  BLUED src/profile.c:unregister_profile() sender :1.86
+11:19:18  KERN  hci0:
+11:19:18  KERN  hci0: entry 0000000048cb1690
+11:19:18  KERN  hci0: Opcode 0x0c1a
+11:19:18  KERN  hci0: opcode 0x0c1a plen 1
+11:19:18  KERN  hci0: skb len 4
+11:19:18  KERN  hci0: length 1
+11:19:18  KERN  hci0 cmd_cnt 1 cmd queued 1
+11:19:18  KERN  hci0: skb 000000005a4d695b
+11:19:18  BLUED src/profile.c:register_profile() sender :1.86
+11:19:18  BLUED src/profile.c:create_ext() Created "Hands-Free Voice gateway"
+11:19:18  BLUED src/profile.c:ext_adapter_probe() "Hands-Free Voice gateway" probed
+11:19:18  BLUED src/profile.c:ext_start_servers() Hands-Free Voice gateway listening on chan 13
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000d
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000111e-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000111f-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001203-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED src/profile.c:ext_device_probe() Hands-Free Voice gateway probed with UUID <UUID-04>
+11:19:18  BLUED src/service.c:change_state() 0x5e5122416630: device AA:BB:CC:00:00:05 profile Hands-Free Voice gateway state changed: unavailable -> disconnected (0)
+11:19:18  BLUED src/profile.c:ext_device_probe() Hands-Free Voice gateway probed with UUID <UUID-04>
+11:19:18  BLUED src/service.c:change_state() 0x5e5122434140: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: unavailable -> disconnected (0)
+11:19:18  BLUED src/profile.c:ext_device_probe() Hands-Free Voice gateway probed with UUID <UUID-04>
+11:19:18  BLUED src/service.c:change_state() 0x5e5122433c30: device AA:BB:CC:00:00:02 profile Hands-Free Voice gateway state changed: unavailable -> disconnected (0)
+11:19:18  BLUED src/profile.c:ext_device_probe() Hands-Free Voice gateway probed with UUID <UUID-04>
+11:19:18  BLUED src/service.c:change_state() 0x5e51224326a0: device AA:BB:CC:00:00:03 profile Hands-Free Voice gateway state changed: unavailable -> disconnected (0)
+11:19:18  BLUED src/profile.c:ext_device_probe() Hands-Free Voice gateway probed with UUID <UUID-04>
+11:19:18  BLUED src/service.c:change_state() 0x5e5122414eb0: device AA:BB:CC:00:00:04 profile Hands-Free Voice gateway state changed: unavailable -> disconnected (0)
+11:19:18  BLUED src/profile.c:register_profile() sender :1.86
+11:19:18  BLUED src/profile.c:create_ext() Created "Hands-Free unit"
+11:19:18  BLUED src/profile.c:ext_adapter_probe() "Hands-Free unit" probed
+11:19:18  BLUED src/profile.c:ext_start_servers() Hands-Free unit listening on chan 7
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000e
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000003-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000111e-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001203-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED profiles/audio/media.c:register_app() Registering application: :1.86:/MediaEndpoint
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/ldac, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e512242a4a0 registered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:1
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x1000f
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000019-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000110a-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000110d-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSink/aptx_hd, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e5122438110 registered: type:1 codec:255 seid_pool:0x5e5122420e48 seid:2
+11:19:18  BLUED src/adapter.c:adapter_service_add() /org/bluez/hci0
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Adding record with handle 0x10010
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000019-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00000100-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 00001002-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000110b-0000-1000-8000-00805f9
+11:19:18  BLUED src/sdpd-service.c:add_record_to_server() Record pattern UUID 0000110d-0000-1000-8000-00805f9
+11:19:18  BLUED src/adapter.c:adapter_service_insert() /org/bluez/hci0
+11:19:18  BLUED src/adapter.c:add_uuid() sending add uuid command for index 0
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/aptx_hd, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e512243a620 registered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:3
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSink/aptx, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e512243b040 registered: type:1 codec:255 seid_pool:0x5e5122420e48 seid:4
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/aptx, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e512243bc00 registered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:5
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSink/sbc, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e512243c670 registered: type:1 codec:0 seid_pool:0x5e5122420e48 seid:6
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/sbc, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e512243d230 registered: type:0 codec:0 seid_pool:0x5e5122420e48 seid:7
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSink/sbc_xq, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e512243dca0 registered: type:1 codec:0 seid_pool:0x5e5122420e48 seid:8
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/sbc_xq, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e512243e8d0 registered: type:0 codec:0 seid_pool:0x5e5122420e48 seid:9
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/aptx_ll_1, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e512243f500 registered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:10
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/aptx_ll_0, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e5122440130 registered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:11
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/aptx_ll_duplex_1, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e5122440cd0 registered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:12
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/aptx_ll_duplex_0, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e5122441870 registered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:13
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/faststream, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e51224424e0 registered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:14
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/faststream_duplex, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e5122443100 registered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:15
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSink/opus_05, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e5122443c30 registered: type:1 codec:255 seid_pool:0x5e5122420e48 seid:16
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/opus_05, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e5122444870 registered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:17
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSink/opus_05_duplex, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e5122445360 registered: type:1 codec:255 seid_pool:0x5e5122420e48 seid:18
+11:19:18  BLUED profiles/audio/media.c:proxy_added_cb() Proxy added: /MediaEndpoint/A2DPSource/opus_05_duplex, iface: org.bluez.MediaEndpoint1
+11:19:18  BLUED profiles/audio/avdtp.c:avdtp_register_sep() SEP 0x5e5122445f90 registered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:19
+11:19:18  BLUED profiles/audio/media.c:client_ready_cb() Media application registered: :1.86:/MediaEndpoint
+11:19:18  BLUED plugins/hostname.c:property_changed() static hostname: 'n'
+11:19:18  BLUED plugins/hostname.c:property_changed() pretty hostname: ''
+11:19:18  BLUED plugins/hostname.c:update_name() name: n
+11:19:18  BLUED src/adapter.c:adapter_set_name() name: n
+11:19:18  BLUED src/adapter.c:adapter_set_name() alias: n
+11:19:18  BLUED src/adapter.c:set_name() sending set local name command for index 0
+11:19:18  BLUED plugins/hostname.c:property_changed() chassis: 'laptop'
+11:19:18  BLUED plugins/hostname.c:update_class() major: 0x01 minor: 0x03
+11:19:20  KERN  hci0: end: err -110
+11:19:20  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+11:19:20  BLUED Failed to add UUID: Authentication Failed (0x05)
+11:19:20  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:20  KERN  Bluetooth: hci0: Opcode 0x0c1a failed: -110
+11:19:20  KERN  hci0: entry 0000000017e96ef6
+11:19:20  KERN  hci0: ADV monitoring is off
+11:19:20  KERN  hci0: stopping background scanning
+11:19:20  KERN  hci0: entry 00000000ed57d996
+11:19:20  KERN  hci0:
+11:19:20  KERN  hci0: Opcode 0x0c24
+11:19:20  KERN  hci0: opcode 0x0c24 plen 3
+11:19:20  KERN  hci0: skb len 6
+11:19:20  KERN  hci0: length 1
+11:19:20  KERN  hci0 cmd_cnt 0 cmd queued 1
+11:19:20  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:20  KERN  hci0: err 0x6e
+11:19:20  KERN  hci0 cmd_cnt 1 cmd queued 1
+11:19:20  KERN  hci0: skb 00000000b25bb511
+11:19:20  KERN  hci0: end: err -110
+11:19:20  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+11:19:20  KERN  hci0: entry 00000000b3c486ab
+11:19:20  KERN  hci0:
+11:19:20  KERN  hci0: Opcode 0x0c52
+11:19:20  KERN  hci0: opcode 0x0c52 plen 241
+11:19:20  KERN  hci0: skb len 244
+11:19:20  KERN  hci0: length 1
+11:19:20  KERN  hci0 cmd_cnt 0 cmd queued 1
+11:19:22  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:22  KERN  hci0: end: err -110
+11:19:22  KERN  Bluetooth: hci0: Opcode 0x0c52 failed: -110
+11:19:22  KERN  hci0:
+11:19:22  KERN  hci0: err 0x6e
+11:19:22  KERN  hci0: Opcode 0x0c24
+11:19:22  KERN  hci0: opcode 0x0c24 plen 3
+11:19:22  KERN  hci0 cmd_cnt 1 cmd queued 1
+11:19:22  KERN  hci0: skb 000000003eeb543a
+11:19:22  KERN  hci0: skb len 6
+11:19:22  KERN  hci0: length 1
+11:19:22  KERN  hci0 cmd_cnt 0 cmd queued 1
+11:19:24  KERN  hci0 cmd_cnt 0 cmd queued 2
+11:19:24  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:24  KERN  hci0: err 0x6e
+11:19:24  KERN  hci0 cmd_cnt 1 cmd queued 2
+11:19:24  KERN  hci0: skb 00000000f716e220
+11:19:24  KERN  hci0: end: err -110
+11:19:24  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+11:19:24  KERN  hci0: entry 0000000063803ce7
+11:19:24  KERN  hci0:
+11:19:24  KERN  hci0: Opcode 0x0c24
+11:19:24  KERN  hci0: opcode 0x0c24 plen 3
+11:19:24  KERN  hci0: skb len 6
+11:19:24  KERN  hci0: length 1
+11:19:24  KERN  hci0 cmd_cnt 0 cmd queued 2
+11:19:25  TRACE /usr/local/sbin/bt-trace: line 225: 133603 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+11:19:25  TRACE btmon exited (#8) — restarting within 1s; ~1s of capture lost
+11:19:25  TRACE capturing to bt-20260822-111925.btsnoop
+11:19:26  TRACE /usr/local/sbin/bt-trace: line 225: 133679 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+11:19:26  TRACE btmon exited (#9) — restarting within 1s; ~1s of capture lost
+11:19:26  TRACE capturing to bt-20260822-111926.btsnoop
+11:19:26  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+11:19:26  BLUED Failed to add UUID: Authentication Failed (0x05)
+11:19:26  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:26  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:26  KERN  hci0: err 0x6e
+11:19:26  KERN  hci0 cmd_cnt 1 cmd queued 2
+11:19:26  KERN  hci0: skb 0000000014830ee3
+11:19:26  KERN  hci0: end: err -110
+11:19:26  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+11:19:26  KERN  hci0:
+11:19:26  KERN  hci0:
+11:19:26  KERN  hci0: entry 000000006ef00b3e
+11:19:26  KERN  hci0:
+11:19:26  KERN  hci0: Opcode 0x0c24
+11:19:26  KERN  hci0: opcode 0x0c24 plen 3
+11:19:26  KERN  hci0: skb len 6
+11:19:26  KERN  hci0: length 1
+11:19:26  KERN  hci0 cmd_cnt 0 cmd queued 2
+11:19:28  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+11:19:28  BLUED Failed to add UUID: Authentication Failed (0x05)
+11:19:28  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x003d
+11:19:28  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x003d complete: 0x00
+11:19:28  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x000e
+11:19:28  KERN  hci0: end: err -110
+11:19:28  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+11:19:28  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:28  KERN  hci0: err 0x6e
+11:19:28  KERN  hci0 cmd_cnt 1 cmd queued 2
+11:19:28  KERN  hci0: skb 00000000d0fffede
+11:19:28  KERN  hci0:
+11:19:28  KERN  hci0: entry 00000000daaba863
+11:19:28  KERN  hci0:
+11:19:28  KERN  hci0: Opcode 0x0c24
+11:19:28  KERN  hci0: opcode 0x0c24 plen 3
+11:19:28  KERN  hci0: skb len 6
+11:19:28  KERN  hci0: length 1
+11:19:28  KERN  hci0 cmd_cnt 0 cmd queued 2
+11:19:30  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x000e complete: 0x05
+11:19:30  BLUED Failed to set device class: Authentication Failed (0x05)
+11:19:30  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:30  KERN  hci0: end: err -110
+11:19:30  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:30  KERN  hci0: err 0x6e
+11:19:30  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+11:19:30  KERN  hci0 cmd_cnt 1 cmd queued 2
+11:19:30  KERN  hci0: skb 000000000935b1d8
+11:19:30  KERN  hci0:
+11:19:30  KERN  hci0: entry 000000005f1940d1
+11:19:30  KERN  hci0:
+11:19:30  KERN  hci0: Opcode 0x0c24
+11:19:30  KERN  hci0: opcode 0x0c24 plen 3
+11:19:30  KERN  hci0: skb len 6
+11:19:30  KERN  hci0: length 1
+11:19:30  KERN  hci0 cmd_cnt 0 cmd queued 2
+11:19:32  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+11:19:32  BLUED Failed to add UUID: Authentication Failed (0x05)
+11:19:32  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:32  KERN  hci0: end: err -110
+11:19:32  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:32  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+11:19:32  KERN  hci0: err 0x6e
+11:19:32  KERN  hci0 cmd_cnt 1 cmd queued 2
+11:19:32  KERN  hci0: skb 00000000a91e9100
+11:19:32  KERN  hci0:
+11:19:32  KERN  hci0: entry 00000000a69dd006
+11:19:32  KERN  hci0:
+11:19:32  KERN  hci0: Opcode 0x0c24
+11:19:32  KERN  hci0: opcode 0x0c24 plen 3
+11:19:32  KERN  hci0: skb len 6
+11:19:32  KERN  hci0: length 1
+11:19:32  KERN  hci0 cmd_cnt 0 cmd queued 2
+11:19:34  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+11:19:34  BLUED Failed to add UUID: Authentication Failed (0x05)
+11:19:34  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:34  KERN  hci0: end: err -110
+11:19:34  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+11:19:34  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:34  KERN  hci0: err 0x6e
+11:19:34  KERN  hci0 cmd_cnt 1 cmd queued 2
+11:19:34  KERN  hci0: skb 0000000073a345c2
+11:19:34  KERN  hci0:
+11:19:34  KERN  hci0: entry 0000000080800d38
+11:19:34  KERN  hci0:
+11:19:34  KERN  hci0: Opcode 0x0c24
+11:19:34  KERN  hci0: opcode 0x0c24 plen 3
+11:19:34  KERN  hci0: skb len 6
+11:19:34  KERN  hci0: length 1
+11:19:34  KERN  hci0 cmd_cnt 0 cmd queued 2
+11:19:35  KERN  hci0 cmd_cnt 0 cmd queued 3
+11:19:36  MARK  RECOVERY LADDER step 2: hciconfig hci0 down then up | usb=3-3 ctrl=on hci=hci0 responds=no connected=0
+11:19:36  KERN  hci0 000000006130c661
+11:19:36  TRACE /usr/local/sbin/bt-trace: line 225: 133709 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+11:19:36  TRACE btmon exited (#10) — restarting within 1s; ~1s of capture lost
+11:19:36  TRACE capturing to bt-20260822-111936.btsnoop
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x05
+11:19:36  BLUED Failed to add UUID: Authentication Failed (0x05)
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:36  KERN  hci0: end: err -110
+11:19:36  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+11:19:36  KERN  hci0: err 0x6e
+11:19:36  KERN  hci0 cmd_cnt 1 cmd queued 3
+11:19:36  KERN  Bluetooth: hci0: Opcode 0x0c24 failed: -110
+11:19:36  KERN  hci0: skb 000000006dd62d7e
+11:19:36  KERN  hci0:
+11:19:36  KERN  hci0:
+11:19:36  KERN  hci0: entry 000000002040ecf6
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0007
+11:19:36  BLUED src/adapter.c:dev_class_changed_callback() Class: 0x000000
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0006
+11:19:36  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000ac0
+11:19:36  BLUED src/adapter.c:settings_changed() Changed settings: 0x00000001
+11:19:36  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+11:19:36  BLUED src/adapter.c:cancel_passive_scanning()
+11:19:36  BLUED src/adapter.c:adapter_stop() adapter /org/bluez/hci0 has been disabled
+11:19:36  KERN  hci0: err 0x13
+11:19:36  KERN  hci0: cancelling interleave scan
+11:19:36  KERN  hdev hci0
+11:19:36  KERN  hci0 hcon 000000003076311f chan 00000000bdc99b19
+11:19:36  KERN  hci0: handle 0x03 reason 0x13
+11:19:36  KERN  hci0 hcon 000000003076311f handle 3
+11:19:36  KERN  hci0: hcon 000000003076311f
+11:19:36  KERN  hci0 evt 2
+11:19:36  KERN  hci0
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0: err 0x02
+11:19:36  KERN  hci0
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x00
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x00
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x00
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x00
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x00
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x00
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0027
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0027 complete: 0x00
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x004c
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x4c status: 0x0d
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0033
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x002a
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0033 complete: 0x00
+11:19:36  BLUED src/adapter.c:add_accept_list_complete() AA:BB:CC:00:00:05 added to kernel accept list
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0033
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x002a
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0033 complete: 0x00
+11:19:36  BLUED src/adapter.c:add_accept_list_complete() AA:BB:CC:00:00:01 added to kernel accept list
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0033
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x002a
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0033 complete: 0x00
+11:19:36  BLUED src/adapter.c:add_accept_list_complete() AA:BB:CC:00:00:02 added to kernel accept list
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0033
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x002a
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0033 complete: 0x00
+11:19:36  BLUED src/adapter.c:add_accept_list_complete() AA:BB:CC:00:00:03 added to kernel accept list
+11:19:36  KERN  hci0:
+11:19:36  KERN  hci0: entry 00000000909216a6
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0033
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x002a
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0033 complete: 0x00
+11:19:36  BLUED src/adapter.c:add_accept_list_complete() AA:BB:CC:00:00:04 added to kernel accept list
+11:19:36  KERN  hci0:
+11:19:36  KERN  hci0: entry 00000000e062e4b6
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0012
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0012 complete: 0x00
+11:19:36  BLUED src/adapter.c:load_link_keys_complete() link keys loaded for hci0
+11:19:36  KERN  hci0:
+11:19:36  KERN  hci0: entry 000000003f688071
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0013
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0013 complete: 0x00
+11:19:36  BLUED src/adapter.c:load_ltks_complete() LTKs loaded for hci0
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0030
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0030 complete: 0x00
+11:19:36  BLUED src/adapter.c:load_irks_complete() IRKs loaded for hci0
+11:19:36  KERN  hci0: entry 000000009b804189
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0035
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0035 complete: 0x00
+11:19:36  BLUED src/adapter.c:load_conn_params_complete() Connection Parameters loaded for hci0
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0015
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x15 status: 0x0f
+11:19:36  BLUED Failed to get connections: Not Powered (0x0f)
+11:19:36  KERN  hci0: entry 0000000081485258
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x00
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0028
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0028 complete: 0x00
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x000e
+11:19:36  KERN  hci0 key for AA:BB:CC:00:00:05 type 4
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x000e complete: 0x00
+11:19:36  KERN  hci0 key for AA:BB:CC:00:00:01 type 4
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x000f
+11:19:36  KERN  hci0 key for AA:BB:CC:00:00:02 type 4
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x000f complete: 0x00
+11:19:36  KERN  hci0 key for AA:BB:CC:00:00:03 type 4
+11:19:36  BLUED src/adapter.c:local_name_changed_callback() Name: BlueZ 5.72
+11:19:36  BLUED src/adapter.c:local_name_changed_callback() Short name:
+11:19:36  KERN  hci0 key for AA:BB:CC:00:00:04 type 4
+11:19:36  BLUED src/adapter.c:local_name_changed_callback() Current alias: BlueZ 5.72
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0046
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0046 complete: 0x00
+11:19:36  BLUED src/adapter.c:set_blocked_keys_complete() Successfully set blocked keys for index 0
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x00
+11:19:36  KERN  hci0: entry 00000000756daed0
+11:19:36  KERN  hci0:
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x00
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:36  KERN  hci0:
+11:19:36  KERN  hci0: entry 000000001e73fa39
+11:19:36  KERN  hci0:
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x00
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0010
+11:19:36  KERN  hci0: entry 00000000562d60ce
+11:19:36  KERN  hci0:
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0010 complete: 0x00
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x000f
+11:19:36  KERN  hci0: entry 00000000c59bee5c
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x000f complete: 0x00
+11:19:36  BLUED src/adapter.c:local_name_changed_callback() Name: n
+11:19:36  KERN  hci0:
+11:19:36  BLUED src/adapter.c:local_name_changed_callback() Short name:
+11:19:36  BLUED src/adapter.c:local_name_changed_callback() Current alias: n
+11:19:36  KERN  hci0:
+11:19:36  KERN  hci0: entry 00000000db55d0b4
+11:19:36  KERN  hci0:
+11:19:36  KERN  hci0:
+11:19:37  TRACE /usr/local/sbin/bt-trace: line 225: 133783 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+11:19:37  TRACE btmon exited (#11) — restarting within 1s; ~1s of capture lost
+11:19:37  TRACE capturing to bt-20260822-111937.btsnoop
+11:19:39  KERN  hci0 000000006130c661
+11:19:39  KERN  hci0:
+11:19:39  KERN  hci0
+11:19:39  KERN  hci0
+11:19:39  KERN  hci0
+11:19:39  KERN  hci0
+11:19:39  KERN  hci0:
+11:19:39  KERN  hci0:
+11:19:39  KERN  hci0: Opcode 0x0c03
+11:19:39  KERN  hci0: opcode 0x0c03 plen 0
+11:19:39  KERN  hci0: skb len 3
+11:19:39  KERN  hci0: length 1
+11:19:39  KERN  hci0 cmd_cnt 1 cmd queued 1
+11:19:39  KERN  hci0: skb 00000000a6410ab1
+11:19:41  KERN  hci0: end: err -110
+11:19:41  KERN  Bluetooth: hci0: Opcode 0x0c03 failed: -110
+11:19:41  KERN  hci0
+11:19:41  KERN  hci0: err 0x02
+11:19:41  KERN  hci0
+11:19:47  TRACE /usr/local/sbin/bt-trace: line 225: 133831 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+11:19:47  TRACE btmon exited (#12) — restarting within 1s; ~1s of capture lost
+11:19:47  TRACE capturing to bt-20260822-111947.btsnoop
+11:20:37  MARK  RECOVERY LADDER step 3: modprobe -r btusb then modprobe btusb | usb=3-3 ctrl=on hci=hci0 responds=no connected=0
+11:20:37  KERN  usbcore: deregistering interface driver btusb
+11:20:37  KERN  000000006130c661 name hci0 bus 1
+11:20:37  KERN  hci0 000000006130c661
+11:20:37  KERN  hci0:
+11:20:37  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0005
+11:20:37  BLUED src/adapter.c:index_removed() index 0
+11:20:37  BLUED src/adapter.c:adapter_unregister() Unregister path: /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:adapter_remove() Removing adapter /org/bluez/hci0
+11:20:37  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:20:37  BLUED src/service.c:change_state() 0x5e5122428e80: device AA:BB:CC:00:00:05 profile avrcp-controller state changed: disconnected -> unavailable (0)
+11:20:37  BLUED profiles/audio/control.c:path_unregister() Unregistered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122428f40: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122428e80: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122428e80: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122428f40: device AA:BB:CC:00:00:05 profile audio-avrcp-target state changed: disconnected -> unavailable (0)
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122428f40: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122428f80: device AA:BB:CC:00:00:05 profile a2dp-sink state changed: disconnected -> unavailable (0)
+11:20:37  BLUED profiles/audio/sink.c:sink_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122428f80: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122428f80: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122416630: device AA:BB:CC:00:00:05 profile Hands-Free Voice gateway state changed: disconnected -> unavailable (0)
+11:20:37  BLUED src/profile.c:ext_device_remove() Hands-Free Voice gateway
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122416630: ref=0
+11:20:37  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:05
+11:20:37  BLUED src/device.c:device_free() 0x5e51224319c0
+11:20:37  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:20:37  BLUED src/service.c:change_state() 0x5e5122429040: device AA:BB:CC:00:00:01 profile avrcp-controller state changed: disconnected -> unavailable (0)
+11:20:37  BLUED profiles/audio/control.c:path_unregister() Unregistered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429100: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429040: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429040: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122429100: device AA:BB:CC:00:00:01 profile audio-avrcp-target state changed: disconnected -> unavailable (0)
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429100: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122429140: device AA:BB:CC:00:00:01 profile a2dp-sink state changed: disconnected -> unavailable (0)
+11:20:37  BLUED profiles/audio/sink.c:sink_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429140: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429140: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122434140: device AA:BB:CC:00:00:01 profile Hands-Free Voice gateway state changed: disconnected -> unavailable (0)
+11:20:37  BLUED src/profile.c:ext_device_remove() Hands-Free Voice gateway
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122434140: ref=0
+11:20:37  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:01
+11:20:37  BLUED src/device.c:device_free() 0x5e5122433330
+11:20:37  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:20:37  BLUED src/service.c:change_state() 0x5e5122429200: device AA:BB:CC:00:00:02 profile avrcp-controller state changed: disconnected -> unavailable (0)
+11:20:37  BLUED profiles/audio/control.c:path_unregister() Unregistered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e51224292c0: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429200: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429200: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e51224292c0: device AA:BB:CC:00:00:02 profile audio-avrcp-target state changed: disconnected -> unavailable (0)
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e51224292c0: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122429300: device AA:BB:CC:00:00:02 profile a2dp-source state changed: disconnected -> unavailable (0)
+11:20:37  BLUED profiles/audio/source.c:source_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429300: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429300: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e51224293c0: device AA:BB:CC:00:00:02 profile a2dp-sink state changed: disconnected -> unavailable (0)
+11:20:37  BLUED profiles/audio/sink.c:sink_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e51224293c0: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e51224293c0: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122433c30: device AA:BB:CC:00:00:02 profile Hands-Free Voice gateway state changed: disconnected -> unavailable (0)
+11:20:37  BLUED src/profile.c:ext_device_remove() Hands-Free Voice gateway
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122433c30: ref=0
+11:20:37  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+11:20:37  BLUED src/device.c:device_free() 0x5e51224344e0
+11:20:37  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:20:37  BLUED src/service.c:change_state() 0x5e5122429440: device AA:BB:CC:00:00:03 profile avrcp-controller state changed: disconnected -> unavailable (0)
+11:20:37  BLUED profiles/audio/control.c:path_unregister() Unregistered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429530: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429440: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429440: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122429530: device AA:BB:CC:00:00:03 profile audio-avrcp-target state changed: disconnected -> unavailable (0)
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429530: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122429570: device AA:BB:CC:00:00:03 profile a2dp-sink state changed: disconnected -> unavailable (0)
+11:20:37  BLUED profiles/audio/sink.c:sink_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429570: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429570: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e51224326a0: device AA:BB:CC:00:00:03 profile Hands-Free Voice gateway state changed: disconnected -> unavailable (0)
+11:20:37  BLUED src/profile.c:ext_device_remove() Hands-Free Voice gateway
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e51224326a0: ref=0
+11:20:37  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+11:20:37  BLUED src/device.c:device_free() 0x5e5122435490
+11:20:37  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:20:37  BLUED src/service.c:change_state() 0x5e5122429630: device AA:BB:CC:00:00:04 profile avrcp-controller state changed: disconnected -> unavailable (0)
+11:20:37  BLUED profiles/audio/control.c:path_unregister() Unregistered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e51224297c0: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429630: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429630: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e51224297c0: device AA:BB:CC:00:00:04 profile audio-avrcp-target state changed: disconnected -> unavailable (0)
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e51224297c0: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122429820: device AA:BB:CC:00:00:04 profile a2dp-sink state changed: disconnected -> unavailable (0)
+11:20:37  BLUED profiles/audio/sink.c:sink_unregister() /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429820: ref=1
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122429820: ref=0
+11:20:37  BLUED src/service.c:change_state() 0x5e5122414eb0: device AA:BB:CC:00:00:04 profile Hands-Free Voice gateway state changed: disconnected -> unavailable (0)
+11:20:37  BLUED src/profile.c:ext_device_remove() Hands-Free Voice gateway
+11:20:37  BLUED src/service.c:btd_service_unref() 0x5e5122414eb0: ref=0
+11:20:37  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:04
+11:20:37  BLUED src/device.c:device_free() 0x5e5122435ef0
+11:20:37  BLUED plugins/hostname.c:hostname_remove()
+11:20:37  BLUED profiles/audio/a2dp.c:media_server_remove() path /org/bluez/hci0
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/ldac
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/ldac
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e512242a4a0 unregistered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:1
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/aptx_hd
+11:20:37  KERN  hci0: err 0x13
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/aptx_hd
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e5122438110 unregistered: type:1 codec:255 seid_pool:0x5e5122420e48 seid:2
+11:20:37  KERN  hci0: cancelling interleave scan
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_hd
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_hd
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e512243a620 unregistered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:3
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/aptx
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/aptx
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e512243b040 unregistered: type:1 codec:255 seid_pool:0x5e5122420e48 seid:4
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e512243bc00 unregistered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:5
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/sbc
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/sbc
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e512243c670 unregistered: type:1 codec:0 seid_pool:0x5e5122420e48 seid:6
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/sbc
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/sbc
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e512243d230 unregistered: type:0 codec:0 seid_pool:0x5e5122420e48 seid:7
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/sbc_xq
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/sbc_xq
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e512243dca0 unregistered: type:1 codec:0 seid_pool:0x5e5122420e48 seid:8
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/sbc_xq
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/sbc_xq
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e512243e8d0 unregistered: type:0 codec:0 seid_pool:0x5e5122420e48 seid:9
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_1
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_1
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e512243f500 unregistered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:10
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_0
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_0
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e5122440130 unregistered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:11
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_1
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_1
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e5122440cd0 unregistered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:12
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_0
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/aptx_ll_duplex_0
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e5122441870 unregistered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:13
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/faststream
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/faststream
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e51224424e0 unregistered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:14
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/faststream_duplex
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/faststream_duplex
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e5122443100 unregistered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:15
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/opus_05
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/opus_05
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e5122443c30 unregistered: type:1 codec:255 seid_pool:0x5e5122420e48 seid:16
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/opus_05
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/opus_05
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e5122444870 unregistered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:17
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10010
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSink/opus_05_duplex
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSink/opus_05_duplex
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e5122445360 unregistered: type:1 codec:255 seid_pool:0x5e5122420e48 seid:18
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000f
+11:20:37  BLUED profiles/audio/media.c:release_endpoint() sender=:1.86 path=/MediaEndpoint/A2DPSource/opus_05_duplex
+11:20:37  BLUED profiles/audio/media.c:media_endpoint_destroy() sender=:1.86 path=/MediaEndpoint/A2DPSource/opus_05_duplex
+11:20:37  BLUED profiles/audio/avdtp.c:avdtp_unregister_sep() SEP 0x5e5122445f90 unregistered: type:0 codec:255 seid_pool:0x5e5122420e48 seid:19
+11:20:37  BLUED src/profile.c:ext_adapter_remove() "Hands-Free unit" removed
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000e
+11:20:37  BLUED src/profile.c:ext_adapter_remove() "Hands-Free Voice gateway" removed
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000d
+11:20:37  BLUED src/profile.c:ext_adapter_remove() ":1.218/org/bluez/obex/00005005_0000_1000_8000_0002ee000001/<UUID-01>" removed
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000c
+11:20:37  BLUED src/profile.c:ext_adapter_remove() "Object Push" removed
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000b
+11:20:37  BLUED src/profile.c:ext_adapter_remove() "File Transfer" removed
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x1000a
+11:20:37  BLUED src/profile.c:ext_adapter_remove() "Synchronization" removed
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10009
+11:20:37  BLUED src/profile.c:ext_adapter_remove() "Phone Book Access" removed
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10008
+11:20:37  BLUED src/profile.c:ext_adapter_remove() "Message Access" removed
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10007
+11:20:37  BLUED src/profile.c:ext_adapter_remove() "Message Notification" removed
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10006
+11:20:37  BLUED profiles/audio/a2dp.c:a2dp_source_server_remove() path /org/bluez/hci0
+11:20:37  BLUED profiles/audio/a2dp.c:a2dp_sink_server_remove() path /org/bluez/hci0
+11:20:37  BLUED profiles/audio/avrcp.c:avrcp_target_server_remove() path /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10005
+11:20:37  BLUED profiles/audio/avrcp.c:avrcp_controller_server_remove() path /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10004
+11:20:37  BLUED profiles/network/manager.c:nap_server_remove() path /org/bluez/hci0
+11:20:37  BLUED profiles/network/manager.c:gn_server_remove() path /org/bluez/hci0
+11:20:37  BLUED profiles/network/manager.c:panu_server_remove() path /org/bluez/hci0
+11:20:37  BLUED profiles/network/server.c:path_unregister() Unregistered interface org.bluez.NetworkServer1 on path /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10001
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10002
+11:20:37  BLUED src/adapter.c:adapter_service_remove() /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:remove_uuid() sending remove uuid command for index 0
+11:20:37  BLUED src/sdpd-service.c:remove_record_from_server() Removing record with handle 0x10003
+11:20:37  BLUED Battery Provider Manager destroyed
+11:20:37  BLUED src/battery.c:manager_free()
+11:20:37  BLUED src/adapter.c:btd_adapter_unref() Freeing adapter /org/bluez/hci0
+11:20:37  BLUED src/adapter.c:adapter_free() 0x5e5122418e20
+11:20:37  BLUED src/rfkill.c:rfkill_event() RFKILL event idx 0 type 2 op 1 soft 0 hard 0
+11:20:38  TRACE /usr/local/sbin/bt-trace: line 225: 133908 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+11:20:38  TRACE btmon exited (#13) — restarting within 1s; ~1s of capture lost
+11:20:38  TRACE capturing to bt-20260822-112038.btsnoop
+11:20:45  BLUED src/rfkill.c:rfkill_event() RFKILL event idx 2 type 2 op 0 soft 0 hard 0
+11:20:45  KERN  00000000089df007 name hci0 bus 1
+11:20:45  KERN  hci0
+11:20:45  KERN  hci0 00000000089df007
+11:20:45  KERN  hci0:
+11:20:45  KERN  hci0
+11:20:45  KERN  hci0
+11:20:45  KERN  usbcore: registered new interface driver btusb
+11:20:45  KERN  hci0
+11:20:45  KERN  hci0
+11:20:45  KERN  hci0:
+11:20:45  KERN  hci0:
+11:20:45  KERN  hci0:
+11:20:45  KERN  hci0: Opcode 0x0c03
+11:20:45  KERN  hci0: opcode 0x0c03 plen 0
+11:20:45  KERN  hci0: skb len 3
+11:20:45  KERN  hci0: length 1
+11:20:45  KERN  00000000089df007 name hci0 blocked 0
+11:20:45  KERN  hci0 cmd_cnt 1 cmd queued 1
+11:20:45  KERN  hci0: skb 00000000defd5d3b
+11:20:45  KERN  hci0
+11:20:45  KERN  00000000089df007 name hci0 blocked 0
+11:20:46  TRACE /usr/local/sbin/bt-trace: line 225: 134223 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+11:20:46  TRACE btmon exited (#14) — restarting within 1s; ~1s of capture lost
+11:20:46  TRACE capturing to bt-20260822-112046.btsnoop
+11:20:47  KERN  hci0: end: err -110
+11:20:47  KERN  Bluetooth: hci0: Opcode 0x0c03 failed: -110
+11:20:47  KERN  hci0
+11:20:47  KERN  hci0 urb 00000000272dcbee status -2 count 0
+11:20:47  KERN  hci0: err 0x02
+11:20:47  KERN  hci0
+11:20:47  KERN  hci0 urb 0000000050969fb3 status -2 count 0
+11:20:47  KERN  hci0 urb 0000000000db5c28 status -2 count 0
+11:20:47  KERN  hci0 urb 000000003c23dc32 status -2 count 0
+11:20:54  TRACE /usr/local/sbin/bt-trace: line 225: 134325 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+11:20:54  TRACE btmon exited (#15) — restarting within 1s; ~1s of capture lost
+11:20:54  TRACE capturing to bt-20260822-112054.btsnoop
+─────────────────────────────────────────────────────────────────────────
+events: 1428   (MARK=4 KERN=319 BLUED=1075 WDOG=0)
