@@ -3420,6 +3420,42 @@ if (( ex_awk_ok )); then
         && ok "bt-exhibit records the command's exit status" \
         || bad "exhibit did not record an exit status"
 
+    # ── BL-09: the evidence window, and the round trip that proves it ────
+    #
+    # `echo marker-…` carries no timestamp at all, which is the honest majority
+    # case and the one a diagnosis must not be invented for. The field says so
+    # in words rather than being absent, because absence means "nobody looked"
+    # and this exhibit HAS been looked at — it simply has nothing to place.
+    [[ "$exbody" == *"**Evidence window.** not placeable — this output carries no timestamp with a UTC offset"* ]] \
+        && ok "an exhibit whose output carries no instant declares itself not placeable" \
+        || bad "the evidence window was absent or guessed: $(grep -F 'Evidence window' <<<"$exbody")"
+
+    # ABOVE `## Provenance`, WHICH IS THE ENTIRE DESIGN. bt-retention truncates
+    # at that heading before it reads anything, so a field emitted below it is
+    # invisible — and BL-09's recorded decision is to keep that cut blunt rather
+    # than teach it field names, because a parser that reads the capture record
+    # fails to a WRONG answer while a blunt cut fails to "not judgeable".
+    #
+    # MUTATION: move the emission after the Provenance heading in bt-exhibit and
+    # this fails, as does the round trip below — the field is still in the file
+    # and no longer means anything.
+    exew=$(grep -n 'Evidence window' <<<"$exbody" | head -1 | cut -d: -f1)
+    exprov=$(grep -n '^## Provenance' <<<"$exbody" | head -1 | cut -d: -f1)
+    [[ -n "$exew" && -n "$exprov" ]] && (( exew < exprov )) \
+        && ok "the evidence window sits above ## Provenance, where the blunt cut can still see it" \
+        || bad "the field is at line $exew and Provenance at $exprov — bt-retention would never read it"
+
+    # AND THE READER MUST NOT REACH BELOW THE HEADING. A field placed inside the
+    # capture record is the coupling BL-09 exists to forbid; the reader has to
+    # refuse it rather than quietly accept a second copy.
+    exbelow=$(mktemp)
+    printf '# x\n\n## Provenance\n\n%s `2026-01-01T00:00:00+02:00`\n' '**Evidence window.**' > "$exbelow"
+    exbr=$(bash -c 'source tools/lib/evidence-window.sh; bt_ew_read "$1"' _ "$exbelow")
+    [[ -z "$exbr" ]] \
+        && ok "a window declared inside the provenance block is not read — the cut stays blunt" \
+        || bad "the reader accepted a field from the capture record: '$exbr'"
+    rm -f "$exbelow"
+
     # THE PUBLISH-SAFETY PROPERTY. A Wi-Fi BSSID in a published exhibit is
     # indexed by geolocation databases and discloses where this machine is.
     # The addresses used below sit in the prefix space repo-scan documents for
@@ -3543,6 +3579,71 @@ nosan=$(ls "$EXN/evidence/exhibits/" 2>/dev/null | wc -l)
     && ok "bt-exhibit refuses when the sanitiser is absent, as when it fails" \
     || bad "an unsanitised exhibit was written with no sanitiser present (rc=$nosanrc)"
 rm -rf "$EXN"
+
+# ── BL-09: a window derived from timestamped output, in its own checkout ──
+#
+# Its own checkout because the block above asserts exhibit NUMBERING, and an
+# exhibit created here would renumber everything after it. That is not a
+# hypothetical: the first version of this section wrote into $EXR and turned six
+# unrelated assertions red, which is the numbering invariant doing its job on
+# the test that broke it.
+if (( ex_awk_ok )); then
+    EXW=$(mktemp -d); mkdir -p "$EXW/evidence/exhibits" "$EXW/tools"
+    cp tools/sanitize-logs.sh "$EXW/tools/sanitize-logs.sh"
+    exw_new() { BT_REPO="$EXW" tools/bt-exhibit "$@" >/dev/null 2>&1; }
+
+    # BY INSTANT, NOT BY POSITION. The three stamps are emitted OUT OF ORDER on
+    # purpose — the middle line is the earliest and the first line is the latest
+    # — so a `head -1`/`tail -1` implementation gets both ends wrong. Position
+    # and instant agree on every real journal cut, which is exactly why an
+    # implementation that confuses them would never be caught by one.
+    exw_new new probe-window --claim "Three instants, written out of order." \
+            --why "So the window cannot be read off the file order." \
+            --cmd 'printf "%s\n" "2026-08-14T21:03:27.900000+02:00 last" "2026-08-14T21:02:15.100000+02:00 first" "2026-08-14T21:02:50.500000+02:00 middle"'
+    EXWF="$EXW/evidence/exhibits/001-probe-window.md"
+    exw=$(cat "$EXWF" 2>/dev/null)
+    [[ "$exw" == *'**Evidence window.** `2026-08-14T21:02:15.100000+02:00` — `2026-08-14T21:03:27.900000+02:00`'* ]] \
+        && ok "the window is the earliest and latest INSTANTS, not the first and last lines" \
+        || bad "the window was read off file order: $(grep -F 'Evidence window' <<<"$exw")"
+
+    # ONE INSTANT IS A POINT, NOT A ZERO-LENGTH RANGE. `X — X` reads as a window
+    # that was measured and found to have no duration, which is a different
+    # claim from "the output names one moment".
+    exw_new new probe-point --claim "One instant." --why "Point evidence." \
+            --cmd 'echo "2026-08-16T18:46:06+02:00 the only line"'
+    exo=$(cat "$EXW/evidence/exhibits/002-probe-point.md" 2>/dev/null)
+    [[ "$exo" == *'**Evidence window.** `2026-08-16T18:46:06+02:00`'* && "$exo" != *'+02:00` — `'* ]] \
+        && ok "a single instant is emitted as an instant, not as a zero-length range" \
+        || bad "one timestamp produced a range: $(grep -F 'Evidence window' <<<"$exo")"
+
+    # THE ROUND TRIP — the check neither tool can make about itself. bt-exhibit
+    # WRITES this field and bt-retention READS it, and a writer and a reader
+    # holding separate copies of a format agree exactly until one is edited.
+    # Here the reader is handed the writer's own output and asked for the epoch
+    # bt-retention would actually compare against a boot range.
+    exrt=$(bash -c '
+        source tools/lib/evidence-window.sh
+        payload=$(bt_ew_read "$1")
+        printf "%s|%s\n" "$payload" "$(bt_ew_earliest "$payload")"' _ "$EXWF")
+    exrt_want="\`2026-08-14T21:02:15.100000+02:00\` — \`2026-08-14T21:03:27.900000+02:00\`|$(date -d '2026-08-14T21:02:15.100000+02:00' +%s)"
+    [[ "$exrt" == "$exrt_want" ]] \
+        && ok "what bt-exhibit writes is exactly what bt-retention reads, down to the epoch" \
+        || bad "the writer and the reader disagree: got '$exrt' want '$exrt_want'"
+
+    # A STAMP THAT DOES NOT PARSE VOIDS THE ANSWER rather than being skipped.
+    # The regex accepts dates that do not exist — `2026-02-30T00:00:00+02:00`
+    # matches it and `date` refuses it — and `date -f -` drops a line it cannot
+    # read and carries on. Taking the minimum of what survived would answer from
+    # a list missing the entry that might have been the earliest.
+    exw_new new probe-impossible --claim "A date that does not exist." \
+            --why "The regex accepts it; the clock does not." \
+            --cmd 'printf "%s\n" "2026-02-30T00:00:00+02:00 nonexistent" "2026-08-14T21:02:15.100000+02:00 real"'
+    exi=$(cat "$EXW/evidence/exhibits/003-probe-impossible.md" 2>/dev/null)
+    [[ "$exi" == *"not placeable — 1 of 2 timestamps in this output do not parse"* ]] \
+        && ok "one unparseable instant voids the window instead of being skipped" \
+        || bad "an impossible date was silently dropped: $(grep -F 'Evidence window' <<<"$exi")"
+    rm -rf "$EXW"
+fi
 
 # Argument handling. A slug is a filename and a citation key; anything outside
 # kebab-case makes one or the other unstable.
@@ -5270,8 +5371,15 @@ tools/bt-incident a-slug --since >/dev/null 2>&1
 # A missing sanitiser is already refused. A sanitiser that RUNS AND FAILS is
 # the more dangerous case: the raw text exists at that moment, and the only
 # correct outcome is that neither it nor a half-cleaned copy survives.
-EXF=$(mktemp -d); mkdir -p "$EXF/tools" "$EXF/evidence/exhibits"
+EXF=$(mktemp -d); mkdir -p "$EXF/tools/lib" "$EXF/evidence/exhibits"
 cp tools/bt-exhibit "$EXF/tools/"
+# The libraries it sources, beside it. A copied tool with no lib directory
+# refuses at startup, which would pass this assertion for entirely the wrong
+# reason — "it wrote nothing" is true of a tool that never ran. Derived rather
+# than named, so a tool that gains a third library does not silently turn this
+# into a startup-failure test.
+while IFS= read -r _l; do cp "tools/lib/$_l" "$EXF/tools/lib/"; done \
+    < <(grep -oE 'source "\$LIBDIR/[a-z-]+\.sh"' tools/bt-exhibit | sed 's|.*/||; s|"||')
 printf '#!/bin/bash\nexit 1\n' > "$EXF/tools/sanitize-logs.sh"; chmod +x "$EXF/tools/sanitize-logs.sh"
 git -C "$EXF" init -q 2>/dev/null; touch "$EXF/install.sh"
 EXFOUT=$(BT_REPO="$EXF" "$EXF/tools/bt-exhibit" new failing-sanitiser \
@@ -5483,6 +5591,48 @@ if (( ${#CDCONV[@]} > 0 )); then
     fi
 else
     bad "no tool sources coredump.sh — the coredump seam is not wired up"
+fi
+
+# ── A TOOL MUST NOT SOURCE A LIBRARY IT DOES NOT SHIP ────────────────────
+#
+# `install.sh` already says this in prose beside journal.sh — "a tool that
+# sources a file it did not ship fails at run time on the installed machine
+# while passing every check in the checkout" — and nothing enforced it. Adding
+# tools/lib/evidence-window.sh proved the gap in one commit: bt-exhibit and
+# bt-retention are both installed, both began sourcing it, and every check here
+# stayed green while the next `install.sh --apply` would have left two dead
+# tools on the investigation machine.
+#
+# BOTH SIDES DERIVED. The tools come from install.sh's own install_file lines,
+# so a tool that stops being installed drops out; the libraries come from each
+# tool's own `source` lines, so a tool that gains one is covered the day it does.
+# A hand-written pairing is the thing that failed here.
+#
+# SCOPED TO INSTALLED TOOLS ON PURPOSE. tools/bt-crash sources coredump.sh and
+# is deliberately not installed, so requiring its library would be requiring the
+# shipping of something nothing ships.
+mapfile -t INSTALLED < <(grep -oE '^install_file "\$SRC/(tools|bin)/[a-zA-Z0-9._-]+"' install.sh \
+                         | sed 's|^install_file "\$SRC/||; s|"$||')
+LIBSHIP=$(grep -cE '^install_file "\$SRC/tools/lib/[a-z-]+\.sh"' install.sh || true)
+if (( ${#INSTALLED[@]} > 10 )) && (( ${LIBSHIP:-0} > 0 )); then
+    ok "the installed set derives to ${#INSTALLED[@]} tool(s) and $LIBSHIP shell librar(ies)"
+    UNSHIPPED=""
+    for f in "${INSTALLED[@]}"; do
+        [[ -r "$f" ]] || continue
+        while IFS= read -r lib; do
+            [[ -n "$lib" ]] || continue
+            grep -qE "^install_file \"\\\$SRC/tools/lib/$lib\"" install.sh \
+                || UNSHIPPED="$UNSHIPPED $f -> $lib"
+        done < <(grep -oE 'source "\$[A-Z_]*LIB[A-Z_]*/[a-z-]+\.sh"' "$f" | sed 's|.*/||; s|"||')
+    done
+    if [[ -z "$UNSHIPPED" ]]; then
+        ok "every library an installed tool sources is installed alongside it"
+    else
+        bad "an installed tool sources a library install.sh does not ship:"
+        for u in $UNSHIPPED; do echo "        $u"; done
+    fi
+else
+    bad "the installed-tool derivation found ${#INSTALLED[@]} tool(s) and ${LIBSHIP:-0} librar(ies) — it stopped matching install.sh"
 fi
 
 # ── --grep IS AN OPTIMISATION, WHICH MEANS THE ANSWER MUST NOT DEPEND ON IT ──
@@ -6742,6 +6892,69 @@ BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RT" tools/bt-reten
 (( $? == 2 )) \
     && ok "an unknown option is refused rather than ignored into a full report" \
     || bad "bt-retention accepted an option it does not implement"
+
+# ── BL-09: a DECLARED window beats the scan, and says it did ─────────────
+#
+# The scan takes the earliest offset-carrying stamp anywhere in the body, which
+# assumes the earliest instant MENTIONED is the earliest instant COVERED. Every
+# exhibit above satisfies that by construction, so until this fixture existed
+# the preference branch was held by nothing: deleting the whole
+# `bt_ew_read` block left the suite green, because no exhibit under test had a
+# field to prefer.
+#
+# Each exhibit below carries a declared window that DISAGREES with what the scan
+# would say, so the two answers are distinguishable per exhibit rather than in
+# aggregate.
+RTD=$(mktemp -d); mkdir -p "$RTD/evidence/exhibits"
+# Declared inside a retained boot; the scan would say GONE from the 2026-07-25
+# date sitting in the prose above it.
+printf '# EX-040\n\nMentions 2026-07-25T03:25:00+02:00 in passing.\n\n%s `2026-08-15T16:55:59.333858+02:00` — `2026-08-15T17:10:00.000000+02:00`\n\n## Provenance\n\n| captured | `2026-08-20T10:00:00+02:00` |\n' \
+    '**Evidence window.**' > "$RTD/evidence/exhibits/040-window-kept.md"
+# Declared outside every retained boot; the scan would say retained from the
+# later stamp in the prose.
+printf '# EX-041\n\nMentions 2026-08-15T16:55:59.333858+02:00 in passing.\n\n%s `2026-07-25T03:25:00+02:00`\n\n## Provenance\n\n| captured | `2026-08-20T10:00:00+02:00` |\n' \
+    '**Evidence window.**' > "$RTD/evidence/exhibits/041-window-gone.md"
+# Examined and declared unplaceable. The scan would answer confidently from the
+# stamp in the prose — which is the whole reason a declaration outranks it.
+printf '# EX-042\n\nMentions 2026-08-15T16:55:59.333858+02:00 in passing.\n\n%s not placeable — the journal behind these tables is gone and no line here can place them.\n\n## Provenance\n\n| captured | `2026-08-20T10:00:00+02:00` |\n' \
+    '**Evidence window.**' > "$RTD/evidence/exhibits/042-window-unplaceable.md"
+
+RTDO=$(BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RTD" tools/bt-retention 2>&1); rtdrc=$?
+if (( rtdrc == 0 )) \
+   && [[ "$(rt_line "$RTDO" 040-window-kept)" == *"retained"*"declared window"* \
+      && "$(rt_line "$RTDO" 041-window-gone)" == *"GONE"*"declared window opens 2026-07-25"* \
+      && "$(rt_line "$RTDO" 042-window-unplaceable)" == *"declared not placeable"* ]]; then
+    ok "a declared evidence window outranks the scan, in all three of its forms"
+else
+    bad "the declared window was ignored or misread (rc=$rtdrc):"
+    while IFS= read -r l; do bad "      $l"; done < <(grep -E 'declared|GONE|retained|judgeable' <<<"$RTDO")
+fi
+
+# AND THE REPORT SAYS HOW MANY ANSWERS WERE DECLARED RATHER THAN GUESSED. BL-09
+# is closed when that number reaches the exhibit count; a summary that did not
+# separate them would make closing it a matter of counting files by hand.
+[[ "$RTDO" == *"3 of the 3 carry a declared **Evidence window.** (BL-09)"* ]] \
+    && ok "the summary counts declared windows apart from scanned ones" \
+    || bad "the declared/scanned split was not reported: $(grep -F 'declared **Evidence' <<<"$RTDO")"
+
+# A DECLARATION IS ONLY WORTH PREFERRING WHILE IT IS THE EXHIBIT'S OWN. A field
+# below `## Provenance` is part of the capture record, and BL-09's entire
+# argument is that the capture record must never decide this — so an exhibit
+# that puts one there falls back to the scan rather than being trusted.
+#
+# THE FIRST VERSION OF THIS CHECK COULD NOT FAIL, and the reason is worth the
+# line: the fixture was named `043-declared-below`, and the assertion asked
+# whether the report line contained "declared". It always did — the exhibit's
+# own NAME was in the line being searched. Every fixture here is now named for
+# what it tests rather than for the word the tool prints.
+printf '# EX-043\n\nMentions 2026-08-15T16:55:59.333858+02:00 in passing.\n\n## Provenance\n\n| captured | `2026-08-20T10:00:00+02:00` |\n\n%s `2026-07-25T03:25:00+02:00`\n' \
+    '**Evidence window.**' > "$RTD/evidence/exhibits/043-window-in-provenance.md"
+RTDB=$(BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RTD" tools/bt-retention 2>&1)
+[[ "$(rt_line "$RTDB" 043-window-in-provenance)" == *"retained"* \
+   && "$(rt_line "$RTDB" 043-window-in-provenance)" != *"declared"* ]] \
+    && ok "a window below the Provenance heading is not preferred — the blunt cut still decides" \
+    || bad "a field inside the capture record was trusted: $(rt_line "$RTDB" 043-window-in-provenance)"
+rm -rf "$RTD"
 
 # THE TEXT PARSER IS THE ONE THAT RUNS WHERE NOBODY LOOKS. Boot ranges come from
 # `--list-boots -o json` via python3; when either is missing — an older systemd,

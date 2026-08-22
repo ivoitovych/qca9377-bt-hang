@@ -59,6 +59,10 @@ LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
 [[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-retention: missing $LIBDIR/journal.sh" >&2; exit 2; }
 # shellcheck source=tools/lib/journal.sh
 source "$LIBDIR/journal.sh"
+[[ -r "$LIBDIR/evidence-window.sh" ]] \
+    || { echo "bt-retention: missing $LIBDIR/evidence-window.sh" >&2; exit 2; }
+# shellcheck source=tools/lib/evidence-window.sh
+source "$LIBDIR/evidence-window.sh"
 
 REPO="${BT_EVIDENCE_REPO:-${BT_REPO:-$(dirname "$(readlink -f "$0")")/..}}"
 DIR="$REPO/evidence/exhibits"
@@ -128,7 +132,7 @@ covering() {   # <epoch> -> the boot index whose range contains it, or empty
 
 TS_RE='[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?([+-][0-9]{2}:?[0-9]{2}|Z)'
 
-n=0; kept=0; gone=0; none=0; risk=0; bound=0
+n=0; kept=0; gone=0; none=0; risk=0; bound=0; declared=0
 printf 'bt-retention — %s retained boot(s), oldest begins %s\n\n' \
     "$NBOOT" "$(date -d "@$OLDEST_T" '+%Y-%m-%d %H:%M' 2>/dev/null)"
 
@@ -160,6 +164,42 @@ for f in "$DIR"/[0-9]*.md; do
     # dropped too, and dropping evidence costs a "not judgeable" while keeping
     # the capture stamp costs a wrong answer.
     body=$(awk '/^#{1,6}[[:space:]]+Provenance[[:space:]]*$/ { exit } { print }' "$f")
+
+    # ── A DECLARED WINDOW BEATS A SCAN, AND SAYING SO BEATS BOTH (BL-09) ──
+    #
+    # The scan below takes the earliest offset-carrying stamp anywhere in the
+    # body, which is a heuristic: it assumes the earliest instant mentioned is
+    # the earliest instant the evidence covers. That is usually true and is not
+    # guaranteed — an exhibit quoting a date in its prose moves it.
+    #
+    # `**Evidence window.**` is the exhibit SAYING what it covers, so it is
+    # preferred outright. Its `not placeable` form is the other half and the
+    # more useful one: it separates "nobody has looked at this exhibit" from
+    # "someone looked and it cannot be done", which the scan alone reports
+    # identically. Closing BL-09's nine is then measurable rather than a matter
+    # of remembering which is which.
+    ew=$(bt_ew_read "$f")
+    if [[ -n "$ew" ]]; then
+        ewt=$(bt_ew_earliest "$ew")
+        if [[ -z "$ewt" ]]; then
+            declared=$((declared + 1)); none=$((none + 1))
+            (( ATRISK )) || printf '  %-58s not judgeable — declared not placeable\n' "$base"
+            continue
+        fi
+        ewb=$(covering "$ewt")
+        if [[ -z "$ewb" ]]; then
+            gone=$((gone + 1)); declared=$((declared + 1))
+            (( ATRISK )) || printf '  %-58s GONE      declared window opens %s\n' \
+                "$base" "$(grep -oE "$BT_EW_TS_RE" <<<"$ew" | head -1)"
+        elif [[ "$ewb" == "$OLDEST" ]]; then
+            kept=$((kept + 1)); risk=$((risk + 1)); declared=$((declared + 1))
+            printf '  %-58s AT RISK   declared window in boot %s, the next to rotate\n' "$base" "$ewb"
+        else
+            kept=$((kept + 1)); declared=$((declared + 1))
+            (( ATRISK )) || printf '  %-58s retained  declared window in boot %s\n' "$base" "$ewb"
+        fi
+        continue
+    fi
 
     # EARLIEST BY INSTANT, NOT BY SPELLING. These were sorted as strings, which
     # agrees with time order only while every stamp carries the same offset —
@@ -232,6 +272,13 @@ if (( n == 0 )); then
 fi
 printf '  %s exhibit(s): %s still verifiable, %s no longer, %s not judgeable\n' \
     "$n" "$kept" "$gone" "$none"
+# HOW MANY WERE JUDGED FROM A DECLARATION RATHER THAN A SCAN. The counts above
+# read the same either way, and they are not the same claim: a declared window
+# is the exhibit stating what it covers, a scanned one is this tool guessing
+# from the earliest stamp it can see. BL-09 is closed when this number reaches
+# the exhibit count, so it is printed rather than left to be counted by hand.
+printf '  %s of the %s carry a declared **Evidence window.** (BL-09); the rest were scanned.\n' \
+    "$declared" "$n"
 (( bound > 0 )) && printf '  %s of the %s were settled by capture time alone — captured before any\n  retained boot, so whatever they describe is older still.\n' \
     "$bound" "$gone"
 (( none > 0 )) && {
