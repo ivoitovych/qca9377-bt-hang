@@ -39,8 +39,30 @@ Built against BlueZ 5.87 configured with
 `--disable-systemd --disable-obex --disable-cups --disable-manpages
 --disable-testing --disable-tools --disable-monitor --disable-client`.
 
-⚠️ **Not verified: runtime.** Neither NULL condition can be triggered on demand
-here — both were observed as crashes in the wild, not reproduced deliberately. The
+### The crash site survived falsification
+
+The identification was made **without symbols** — `.eh_frame` function boundaries
+and PLT call fingerprints matched against a *different* build. That method could
+easily have produced a confident wrong answer, so it was published with a
+prediction attached: `%r13` holds NULL, and the faulting instruction is
+`mov 0x10(%r13),%rdi`.
+
+Checked against a retained core on the investigation machine:
+
+```
+r13   0x0
+rip   0x635d944b47e5
+=> 0x635d944b47e5:  mov 0x10(%r13),%rdi
+```
+
+Byte for byte as predicted. The kernel's `segfault at 10` is the `0x10`
+displacement off a NULL base, not an address in its own right.
+
+**Worth citing in the submission** — a maintainer will reasonably ask how a crash
+site was located in a stripped binary whose debug symbols were never published.
+
+⚠️ **Not verified: runtime.** Neither NULL condition can be triggered on demand —
+both were observed as crashes in the wild, not reproduced deliberately. The
 patches are argued from source and from the disassembly of the binary that
 crashed. They prevent a fault that is demonstrably reachable; they have not been
 watched preventing it.
@@ -49,14 +71,24 @@ watched preventing it.
 `setup->stream` is cleared while the setup is still on the `setups` list. The
 patch says so in its own commit message rather than implying a complete fix.
 
-## Before sending — the one open check
+## Upstream status — checked, and both are still needed
 
-**5.87 is a release tarball.** A fix may already exist in `bluez/bluez` master or
-as a patch posted to `linux-bluetooth@vger.kernel.org` that has not shipped.
-Neither is reachable from the environment these were prepared in.
+Master was checked from the investigation machine at **`5.87-78-gc73fa2f`**:
 
-Check both, and if either defect is already addressed, drop that patch rather than
-sending it.
+- `start_discovery_complete()` still does `cp.type = rp->type;` **above** the
+  `length < sizeof(*rp)` check;
+- `transport_cb()` still passes `setup->stream` unchecked, **and the callee does
+  not guard it either**.
+
+Helpful context for the submission: `src/adapter.c`'s recent history carries
+accepted crash fixes of the same shape — *"Fix crash on UUID discovery filter
+match"*, *"Fix crash on dev_disconnected"*. NULL-deref fixes land in this file.
+
+⚠️ **What was NOT established.** `lore.kernel.org` is 403 from **both**
+environments, so nobody has searched the list archives. The correct claim is
+**"not fixed in master as of `c73fa2f`"** — *not* that this has never been
+reported. Both commit messages say exactly that, and the submission must not
+upgrade it.
 
 ## How to send
 

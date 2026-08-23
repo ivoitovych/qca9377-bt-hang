@@ -276,6 +276,31 @@ that a reader can confirm in thirty seconds.
 5.87 is a release tarball, and a fix may exist in git or in a posted patch that has
 not shipped. Neither is reachable from this environment.
 
+## 6b. The falsifier was run, and the identification survived
+
+§7 below offered the strongest check available: that `%r13` held NULL and the
+faulting instruction is `mov 0x10(%r13),%rdi`. Neither the register value nor the
+instruction encoding was visible to the method that produced the claim — it worked
+from `.eh_frame` boundaries and PLT fingerprints in a *different* build.
+
+The main branch maintainer ran it against a retained core:
+
+```
+r13   0x0
+rip   0x635d944b47e5
+=> 0x635d944b47e5:  mov 0x10(%r13),%rdi
+```
+
+**Byte for byte as predicted.** The kernel's `segfault at 10` is the `0x10`
+displacement off a NULL base — a consequence, not a coincidence.
+
+They also confirmed both defects are live in master at **`5.87-78-gc73fa2f`**,
+including that `avdtp_stream_set_transport()` has no guard of its own.
+
+⚠️ **One thing this does not establish.** `lore.kernel.org` is 403 from both
+environments, so the list archives are unsearched. "Not fixed in master" is the
+claim; "never reported" is not.
+
 ## 7. Falsifiers
 
 - Resolve either address on the machine with the real `-0ubuntu5.5` symbols (or a

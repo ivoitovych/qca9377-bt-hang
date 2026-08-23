@@ -37,7 +37,7 @@ with cs->status taken from the kernel. A Command Status carrying status
 the status != MGMT_STATUS_SUCCESS guard, and crashes the daemon.
 
 Observed on a QCA9377 (13d3:3503) whose controller stops answering HCI
-during audio use. Resolved from the shipped binary:
+during audio use. The crash site was resolved from the shipped binary:
 
   bluetoothd[2821]: segfault at 0 ip 00005d6eb1ad1986 sp 00007ffef8e784b0 \
       error 4 in bluetoothd[a6986,5d6eb1a50000+f3000]
@@ -49,6 +49,10 @@ during audio use. Resolved from the shipped binary:
 Perform the same length validation before using the reply in the
 no-clients branch. The check is added inside that branch rather than
 hoisted above it, so that no other path changes behaviour.
+
+Still present in master as of 5.87-78-gc73fa2f. I have not been able to
+search the list archives, so this is "not fixed in master" rather than a
+claim that it has never been reported.
 
 Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---

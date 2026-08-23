@@ -28,8 +28,7 @@ reading address 0x10.
 
 Observed three times on a QCA9377 (13d3:3503) whose controller stops
 answering HCI during audio use, so the AVDTP session can be torn down
-between bt_io_accept() and this callback firing. Resolved from the
-shipped binary:
+between bt_io_accept() and this callback firing:
 
   bluetoothd[313564]: segfault at 10 ip 000060ff12be87e5 sp 00007fff35b2f190 \
       error 4 in bluetoothd[367e5,60ff12bd7000+f3000]
@@ -39,10 +38,15 @@ shipped binary:
   #2  accept_cb()                   btio/btio.c
   #3  glib main loop dispatch
 
-  367e0:  e8 0b 12 ff ff    call   g_io_channel_unix_new@plt
-  367e5:  49 8b 7d 10       mov    0x10(%r13),%rdi    <-- stream->session
-  367ec:  48 8b 47 50       mov    0x50(%rdi),%rax    <-- session->pending_open
-  367f0:  49 39 c5          cmp    %rax,%r13
+Confirmed against a retained core, which shows the base register holding
+NULL and the faulting instruction reading the session field from it:
+
+  r13   0x0
+  rip   0x635d944b47e5
+  => 0x635d944b47e5:  mov 0x10(%r13),%rdi
+
+The kernel's "segfault at 10" is therefore the 0x10 displacement off a
+NULL base, not an address of its own.
 
 Extend the existing validity check to cover the stream. avdtp_stream_set_-
 transport() has exactly one caller, so the check is added here, next to
@@ -51,6 +55,10 @@ the check it completes, rather than hardening the callee.
 Note this prevents the crash but does not explain why setup->stream is
 cleared while the setup remains on the list; that is worth a separate
 look by someone who knows the AVDTP teardown ordering.
+
+Still present in master as of 5.87-78-gc73fa2f. I have not been able to
+search the list archives, so this is "not fixed in master" rather than a
+claim that it has never been reported.
 
 Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
