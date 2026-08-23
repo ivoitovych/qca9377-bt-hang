@@ -56,9 +56,23 @@ Note this prevents the crash but does not explain why setup->stream is
 cleared while the setup remains on the list; that is worth a separate
 look by someone who knows the AVDTP teardown ordering.
 
-Still present in master as of 5.87-78-gc73fa2f. I have not been able to
-search the list archives, so this is "not fixed in master" rather than a
-claim that it has never been reported.
+The same NULL-setup->stream pattern has been fixed before in a neighbouring
+function: 622d98afb ("avdtp: Fix crashes in avdtp_abort") added exactly this
+kind of guard where avdtp_abort() dereferenced a NULL setup->stream. That
+fix did not extend to transport_cb(), which passes it into
+avdtp_stream_set_transport() -- and that callee does not guard it either:
+
+	gboolean avdtp_stream_set_transport(struct avdtp_stream *stream, ...)
+	{
+		GIOChannel *io = g_io_channel_unix_new(fd);
+
+		if (stream != stream->session->pending_open) {   <-- faults here
+
+Still present in master as of 5.87-78-gc73fa2f. A search of the BlueZ issue
+tracker and the web found no prior report of this specific call path, but
+lore.kernel.org and patchwork.kernel.org search were both unreachable from
+here, so please treat "not fixed in master" as established and "not
+previously reported" as unverified.
 
 Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
