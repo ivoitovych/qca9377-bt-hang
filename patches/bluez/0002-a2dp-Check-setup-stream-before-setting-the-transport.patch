@@ -1,0 +1,77 @@
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Subject: [PATCH BlueZ 2/2] a2dp: Check setup->stream before setting the transport
+
+transport_cb() already guards against the setup being freed while the
+transport channel was being accepted:
+
+	if (!g_slist_find(setups, setup)) {
+		warn("bt_io_accept: setup %p no longer valid", setup);
+		g_io_channel_shutdown(io, TRUE, NULL);
+		return;
+	}
+
+but that only establishes that the setup itself is still on the list. It
+does not establish that the setup still has a stream, and the value is
+passed straight on:
+
+	if (!avdtp_stream_set_transport(setup->stream, ...))
+
+avdtp_stream_set_transport() dereferences its first argument in its
+second statement, with no check of its own:
+
+	GIOChannel *io = g_io_channel_unix_new(fd);
+
+	if (stream != stream->session->pending_open) {
+
+struct avdtp_stream has session at offset 0x10, so a NULL stream faults
+reading address 0x10.
+
+Observed three times on a QCA9377 (13d3:3503) whose controller stops
+answering HCI during audio use, so the AVDTP session can be torn down
+between bt_io_accept() and this callback firing. Resolved from the
+shipped binary:
+
+  bluetoothd[313564]: segfault at 10 ip 000060ff12be87e5 sp 00007fff35b2f190 \
+      error 4 in bluetoothd[367e5,60ff12bd7000+f3000]
+
+  #0  avdtp_stream_set_transport()  profiles/audio/avdtp.c  (inlined)
+  #1  transport_cb()                profiles/audio/a2dp.c
+  #2  accept_cb()                   btio/btio.c
+  #3  glib main loop dispatch
+
+  367e0:  e8 0b 12 ff ff    call   g_io_channel_unix_new@plt
+  367e5:  49 8b 7d 10       mov    0x10(%r13),%rdi    <-- stream->session
+  367ec:  48 8b 47 50       mov    0x50(%rdi),%rax    <-- session->pending_open
+  367f0:  49 39 c5          cmp    %rax,%r13
+
+Extend the existing validity check to cover the stream. avdtp_stream_set_-
+transport() has exactly one caller, so the check is added here, next to
+the check it completes, rather than hardening the callee.
+
+Note this prevents the crash but does not explain why setup->stream is
+cleared while the setup remains on the list; that is worth a separate
+look by someone who knows the AVDTP teardown ordering.
+
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ profiles/audio/a2dp.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/profiles/audio/a2dp.c b/profiles/audio/a2dp.c
+--- a/profiles/audio/a2dp.c
++++ b/profiles/audio/a2dp.c
+@@ -2652,6 +2652,11 @@
+ 		return;
+ 	}
+ 
++	if (!setup->stream) {
++		error("bt_io_accept: setup %p has no stream", setup);
++		goto drop;
++	}
++
+ 	if (err) {
+ 		error("%s", err->message);
+ 		goto drop;
+-- 
+2.43.0
+
