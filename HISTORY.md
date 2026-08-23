@@ -2221,3 +2221,139 @@ What it does not establish is which rung did it, or whether the reboot was neede
 it. Three interventions ran in sequence and only the aggregate was tested. The failed
 `hciconfig hci0 up` (`-110`) is the most suspicious, since `HCI_Reset` is the one rung that
 asks the controller to reinitialise — recorded as a hypothesis, not a claim.
+
+---
+
+## Phase 30 — the phase that audited itself, and produced the first patches
+
+Two things happened at once. The project produced its **first upstream-ready patches** — and
+an audit of its own claims found that a striking number of them were wrong. Both belong to
+the same story: the patches exist *because* the audit happened.
+
+Almost every correction below is against something the main-branch maintainer wrote. That is
+recorded plainly rather than softened, because the record's value is that it can be checked,
+and a phase in which six claims were withdrawn is evidence the checking works.
+
+### Six claims withdrawn, all of them ours
+
+**1. The alt-1 objection was backwards.** `EX-033`'s captures show `Looking for Alt no :6`
+then `:3`, and never `:1`. That was raised as possibly sinking the source investigation's
+central finding. The source says the opposite: the line is a `BT_DBG` at the *entry* of
+`btusb_find_altsetting()`, so it logs the candidate **probed**; alt 1 is the bare `else`,
+which calls nothing and therefore **logs nothing**. And the CVSD branch computes its alt
+arithmetically without ever calling that function — so a `Looking for Alt no` line can only
+come from the transparent branch. The absence of `:1` is what the finding predicts, and the
+captures are its strongest confirmation.
+
+**2. `0x0428` does not mean CVSD.** Stated in the plan and in `comms`. `btusb_notify()` takes
+`air_mode` from the HCI core's notify value, derived from the *air mode of the connection*,
+not from the opcode; `0x0428` carries a voice-setting parameter and can request transparent
+data exactly as `0x043D` can.
+
+**3. `hci0 evt 5` is not "Synchronous Connection Complete".** It is
+`HCI_NOTIFY_ENABLE_SCO_TRANSP`, from `BT_DBG("%s evt %d", …)` in `btusb_notify()`. This one
+*strengthened* the record: `EX-033`'s three captured lines are now the **complete alt-1
+chain observed on the machine** — `evt 5` selects the transparent branch, `:6` and `:3` are
+the probes, the silence is `new_alts = 1`. The alt-1 finding no longer rests on source
+reading alone.
+
+It also killed the `0x0428`-versus-`0x043D` comparison proposed as `A3`'s replacement:
+`EX-031`'s *surviving* link was transparent too, so that pair cannot be a
+CVSD-versus-wideband comparison. What differs is the setup command, not the air mode.
+
+**4. The denominator was over-withdrawn, and that cost the project a gate.** The report said
+"287 command timeouts across 34 boots" and "13 of 34" *"cannot be re-derived by a reviewer or
+by us"*. False. The **journal** rotated; the per-boot table derived from it has been
+committed since 2026-08-10 and reproduces both figures exactly. The correct status is the one
+this project already gives captured output — **re-derivable from the repository, not
+re-verifiable against the machine**. A4 had been described as the bottleneck for a week;
+part of that bottleneck was self-inflicted.
+
+**5. Five exhibits recorded the wrong kernel.** `EX-030`–`EX-034` all said
+`7.0.0-28-generic`. The machine ran `-28` to 2026-08-17, `-29` on 08-19 and 08-21, and `-30`
+from 08-22. `tools/bt-exhibit` reads `uname -r` correctly; those five were hand-written and
+the value was copied forward from `EX-029`.
+
+**6. And that cost `EX-034` its central attribution.** Its reboot crossed `-29` → `-30`,
+while `EX-027`, the exhibit it contradicts, ran entirely under `-28`. The stage-1 comparison
+therefore spans **three kernel versions**, and the recovery ladder is no longer the only
+recorded difference between the two stage-1 reboots. `EX-027`'s stage rule stays withdrawn —
+a stage-1 reboot did fail — but the *cause* is open.
+
+### The first patches, and a method worth keeping
+
+`EX-032`'s two crash sites were resolved **without debug symbols**, which had looked
+impossible: Ubuntu never published an amd64 `bluez-dbgsym` for `5.72-0ubuntu5.5` — it exists
+for arm64, armhf, ppc64el, riscv64 and s390x, every architecture except the one almost
+everybody runs. Substituting the `-0ubuntu5` symbols was **measured rather than assumed**:
+93.585% of the executable segment differs between the two builds.
+
+What worked instead was `.eh_frame` for exact function boundaries and PLT call fingerprints
+matched against the other build:
+
+```
+#0  avdtp_stream_set_transport()  profiles/audio/avdtp.c:3225  stream == NULL
+#1  transport_cb()                profiles/audio/a2dp.c:2448   +0x367e5
+#2  accept_cb()                   btio/btio.c:202              +0x8304a
+    start_discovery_complete()    src/adapter.c:1845           param == NULL
+```
+
+**The identification was then falsified against the coredump**, on a prediction it could
+have failed: that `%r13` held NULL and the faulting instruction was `mov 0x10(%r13),%rdi`.
+
+```
+r13   0x0
+=> 0x635d944b47e5:	mov    0x10(%r13),%rdi
+```
+
+Byte for byte. The kernel's `segfault at 10` is the `0x10` displacement off a NULL base — a
+consequence rather than a coincidence. A method that predicts a register value and an
+instruction encoding it never saw, and is right, is worth citing in the submission.
+
+**Both defects are still live in master** (`5.87-78-gc73fa2f`), checked against a fresh
+clone: `start_discovery_complete()` still dereferences `rp` above its own length check, and
+`transport_cb()` still passes `setup->stream` unchecked into a callee that does not guard it
+either. Two patches, apply-clean and compile-clean, verified to apply against master
+independently.
+
+⚠️ **`lore.kernel.org` is 403 from both environments**, so "not fixed in master" is
+established and "never reported" is **not**. The submission says so rather than claiming
+novelty.
+
+### The infrastructure that made the audit possible
+
+**`comms/`** matured from a convention into the project's working surface — twenty messages,
+both directions, and most of the corrections above came through it.
+
+**The external cache** (`docs/external-cache.md`) exists because availability is a property
+of *who is asking*, not of a file. `launchpad.net` answers from the investigation machine in
+0.24 s and is blocked from the test-suite maintainer's; `github.com` and `lore.kernel.org`
+are blocked from theirs and reachable here; `debuginfod` is blocked from both. The `-28`
+Ubuntu kernel delta — superseded and gone from `archive.ubuntu.com` — and the BlueZ tree are
+now cached and verified against publisher checksums.
+
+**`BL-09`** took unjudgeable exhibits from nine to five by annotating them from their own
+content: 137 insertions, **zero deletions**, no claim and no captured output touched.
+`EX-018` had been expected to stay unjudgeable; its stage-1 table's first column places it,
+and the answer is **GONE** — a stronger statement of the same fact, derived rather than
+assumed.
+
+**`bt-snapshot` gained the BlueZ health block** it needed on 2026-08-19, when it reported
+"controller on bus, 0 timeouts" while Bluetooth had been dead for two and a half hours.
+Taken from the journal and labelled as last-logged state, so it stays safe to run inside an
+untreated window.
+
+### The shape
+
+Every correction in this phase has one form: **an observation that was true, read as meaning
+something it did not mean.** `:6` then `:3` was true. `evt 5` was true. The journal had
+rotated. Five exhibits did say `-28`.
+
+The lesson the phase adds to the register is about *reading*, not about measurement:
+
+> A true observation constrains the world less than it appears to. What it rules out is
+> whatever it is inconsistent with — and that is usually a smaller set than the one reading
+> that first comes to mind.
+
+Which is the same reason the alt-1 objection inverted so cleanly: the absence of a log line
+was read as absence of the behaviour, when it was the behaviour's signature.
