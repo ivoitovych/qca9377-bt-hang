@@ -1,84 +1,50 @@
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Subject: [PATCH BlueZ 2/2] a2dp: Check setup->stream before setting the transport
+Subject: [PATCH BlueZ] a2dp: Check setup->stream before setting the transport
 
-transport_cb() already guards against the setup being freed while the
-transport channel was being accepted:
+transport_cb() runs from bt_io_accept() and begins by confirming that the
+a2dp_setup it was handed still exists:
 
 	if (!g_slist_find(setups, setup)) {
 		warn("bt_io_accept: setup %p no longer valid", setup);
-		g_io_channel_shutdown(io, TRUE, NULL);
-		return;
+		...
 	}
 
-but that only establishes that the setup itself is still on the list. It
-does not establish that the setup still has a stream, and the value is
-passed straight on:
+That establishes the lifetime of the setup, not of the stream it points at.
+Several paths in a2dp.c clear setup->stream while leaving the setup itself on
+the list, so by the time the accept completes the setup can be valid and its
+stream NULL. It is then passed on unchecked:
 
-	if (!avdtp_stream_set_transport(setup->stream, ...))
+	if (!avdtp_stream_set_transport(setup->stream,
+					g_io_channel_unix_get_fd(io),
+					imtu, omtu))
 
-avdtp_stream_set_transport() dereferences its first argument in its
-second statement, with no check of its own:
-
-	GIOChannel *io = g_io_channel_unix_new(fd);
-
-	if (stream != stream->session->pending_open) {
-
-struct avdtp_stream has session at offset 0x10, so a NULL stream faults
-reading address 0x10.
-
-Observed three times on a QCA9377 (13d3:3503) whose controller stops
-answering HCI during audio use, so the AVDTP session can be torn down
-between bt_io_accept() and this callback firing:
-
-  bluetoothd[313564]: segfault at 10 ip 000060ff12be87e5 sp 00007fff35b2f190 \
-      error 4 in bluetoothd[367e5,60ff12bd7000+f3000]
-
-  #0  avdtp_stream_set_transport()  profiles/audio/avdtp.c  (inlined)
-  #1  transport_cb()                profiles/audio/a2dp.c
-  #2  accept_cb()                   btio/btio.c
-  #3  glib main loop dispatch
-
-Confirmed against a retained core, which shows the base register holding
-NULL and the faulting instruction reading the session field from it:
-
-  r13   0x0
-  rip   0x635d944b47e5
-  => 0x635d944b47e5:  mov 0x10(%r13),%rdi
-
-The kernel's "segfault at 10" is therefore the 0x10 displacement off a
-NULL base, not an address of its own.
-
-Extend the existing validity check to cover the stream. avdtp_stream_set_-
-transport() has exactly one caller, so the check is added here, next to
-the check it completes, rather than hardening the callee.
-
-Note this prevents the crash but does not explain why setup->stream is
-cleared while the setup remains on the list; that is worth a separate
-look by someone who knows the AVDTP teardown ordering.
-
-The same NULL-setup->stream pattern has been fixed before in a neighbouring
-function: 622d98afb ("avdtp: Fix crashes in avdtp_abort") added exactly this
-kind of guard where avdtp_abort() dereferenced a NULL setup->stream. That
-fix did not extend to transport_cb(), which passes it into
-avdtp_stream_set_transport() -- and that callee does not guard it either:
+and avdtp_stream_set_transport() dereferences it immediately:
 
 	gboolean avdtp_stream_set_transport(struct avdtp_stream *stream, ...)
 	{
 		GIOChannel *io = g_io_channel_unix_new(fd);
 
-		if (stream != stream->session->pending_open) {   <-- faults here
+		if (stream != stream->session->pending_open) {
 
-Still present in master as of 5.87-78-gc73fa2f.
+Observed on a QCA9377 (13d3:3503) whose controller stops answering HCI during
+audio use. From the retained core, %r13 held NULL and the faulting instruction
+was the first field load off it:
 
-I searched the list archive for avdtp_stream_set_transport -- 32 results, none
-reporting this call path. The closest prior work is 90a600895 ("avdtp: Handle
-case where remote send L2CAP connect ahead of Open"), which addressed a
-transport channel arriving at an unexpected point in the sequence, but changed
-only profiles/audio/avdtp.c; transport_cb() in a2dp.c still hands setup->stream
-over unchecked. The avdtp_abort() fix above is the closest match for the NULL
-setup->stream pattern itself.
+  bluetoothd[398112]: segfault at 10 ip 0000635d944b47e5 sp 00007ffefcba28d0 \
+      error 4 in bluetoothd[367e5,635d944a3000+f3000]
 
-If this duplicates something I missed, please say so and I will drop it.
+  r13  0x0
+  => 0x635d944b47e5:  mov 0x10(%r13),%rdi
+
+Check the stream immediately before it is used, so every existing path keeps
+its current behaviour up to the point that was previously unsafe. In
+particular an bt_io_accept() error or a bt_io_get() failure still reports the
+real I/O error rather than this secondary lifecycle condition.
+
+125a2e237e7c ("a2dp: Fix possible crash when accepting stream transport")
+previously hardened this same asynchronous accept window against the whole
+setup disappearing while the accept was pending. This covers the remaining
+case where the setup survives and its stream does not.
 
 Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
@@ -88,18 +54,17 @@ Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 diff --git a/profiles/audio/a2dp.c b/profiles/audio/a2dp.c
 --- a/profiles/audio/a2dp.c
 +++ b/profiles/audio/a2dp.c
-@@ -2652,6 +2652,11 @@
- 		return;
+@@ -2672,6 +2672,11 @@
+ 		goto drop;
  	}
- 
+
 +	if (!setup->stream) {
 +		error("bt_io_accept: setup %p has no stream", setup);
 +		goto drop;
 +	}
 +
- 	if (err) {
- 		error("%s", err->message);
- 		goto drop;
--- 
+ 	if (!avdtp_stream_set_transport(setup->stream,
+ 					g_io_channel_unix_get_fd(io),
+ 					imtu, omtu))
+--
 2.43.0
-
