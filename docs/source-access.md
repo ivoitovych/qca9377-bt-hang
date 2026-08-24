@@ -23,10 +23,58 @@ matters here.
 | `ddebs.ubuntu.com` | ✅ reachable | **debug symbol packages** |
 | `ports.ubuntu.com` | ✅ reachable | non-amd64 architectures |
 | `pypi.org`, `registry.npmjs.org`, `index.crates.io`, `proxy.golang.org` | ✅ reachable | language package registries |
-| `git.kernel.org`, `www.kernel.org`, `bugzilla.kernel.org` | ❌ 403 at the proxy | — |
-| `github.com` | ❌ 403 at the proxy | — |
-| `bugs.launchpad.net`, `launchpadlibrarian.net` | ❌ 403 at the proxy | — |
-| `askubuntu.com`, `wiki.archlinux.org` | ❌ 403 at the proxy | — |
+| `github.com` **over `git`** | ✅ **reachable** — `git clone` / `git ls-remote` work | any public repo, including `bluez/bluez` master |
+| `github.com` over HTTPS (`curl`) | ❌ session repo gate, not a network block | — |
+| `git.kernel.org`, `www.kernel.org`, `bugzilla.kernel.org`, `lore.kernel.org` | ❌ CONNECT tunnel refused | — |
+| `bugs.launchpad.net`, `launchpadlibrarian.net` | ❌ CONNECT tunnel refused | — |
+| `askubuntu.com`, `wiki.archlinux.org` | ❌ CONNECT tunnel refused | — |
+
+### ⚠️ "Blocked" is not one thing — diagnose before concluding
+
+> **Corrected 2026-08-23.** An earlier version of this table said `github.com` was
+> "403 at the proxy" and left it there. That was a conclusion drawn from a status
+> code without asking *what kind* of failure it was, and it was wrong in the way
+> that mattered: **BlueZ master was reachable the whole time.**
+
+Three failure modes are visible from here and they have completely different
+answers. Tell them apart before reporting anything as unavailable:
+
+**1. CONNECT tunnel refused** — `curl: (56) CONNECT tunnel failed, response 403`.
+The proxy declines to open the tunnel, so no request is ever sent. Changing the
+user-agent cannot help, because the origin never sees one. This is a genuine
+network block from here.
+
+**2. An HTTP status from something that did answer.** `github.com` returns a real
+403 with a JSON body, and the body says what it is:
+
+```json
+{"message":"GitHub access to this repository is not enabled for this session.
+  Use add_repo to request access. ..."}
+```
+
+That is this session's own per-repository authorisation gate — **not** a block on
+GitHub, and not censorship of anything. Read the body.
+
+**3. A different protocol to the same host may be open.** Decisive here:
+
+```console
+$ git ls-remote --heads https://github.com/bluez/bluez.git
+68cf12fa3ae5…  refs/heads/1134469
+```
+
+`git` traffic goes through a separate proxy from `curl`, and it serves public
+repositories. So the whole of BlueZ master was clonable while this file was
+claiming GitHub was blocked.
+
+**A fourth mode exists elsewhere and was diagnosed on the investigation machine:**
+a user-agent block fronting an anti-bot JavaScript challenge — `curl` gets 403,
+a browser user-agent gets 200 with a body titled *"Making sure you're not a
+bot!"*, and only a real browser passes it. Same status code, fourth cause.
+
+**The rule:** a 403 is a symptom. Network block, authorisation gate, wrong
+protocol, UA filter and JS challenge all present alike and are fixed differently.
+Diagnose which, then say so — and never route an unexamined limitation into a
+deliverable that goes out under someone else's name.
 
 **The practical consequence.** *Source code* is not a problem — the Ubuntu
 archive carries the full source of everything on this machine, at the exact

@@ -71,9 +71,22 @@ watched preventing it.
 `setup->stream` is cleared while the setup is still on the `setups` list. The
 patch says so in its own commit message rather than implying a complete fix.
 
-## Upstream status — checked, and both are still needed
+## Upstream status — checked twice, independently, and both are still needed
 
-Master was checked from the investigation machine at **`5.87-78-gc73fa2f`**:
+Verified a second time by cloning master directly and applying the patches to it:
+
+```console
+$ git clone --depth 50 https://github.com/bluez/bluez.git      # HEAD c73fa2f
+$ git am 0001-*.patch 0002-*.patch
+Applying: adapter: Fix crash on zero-length start discovery reply
+Applying: a2dp: Check setup->stream before setting the transport
+```
+
+Both defects present at `c73fa2f`, both patches `git am` clean **against real
+master**, not just the 5.87 tarball.
+
+Master was also checked independently from the investigation machine at
+**`5.87-78-gc73fa2f`**:
 
 - `start_discovery_complete()` still does `cp.type = rp->type;` **above** the
   `length < sizeof(*rp)` check;
