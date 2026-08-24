@@ -1,5 +1,5 @@
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Subject: [PATCH BlueZ 1/2] adapter: Fix crash on zero-length start discovery reply
+Subject: [PATCH BlueZ] adapter: Fix crash on zero-length start discovery reply
 
 start_discovery_complete() validates the reply length before using the
 returned parameters:
@@ -11,9 +11,9 @@ returned parameters:
 		return;
 	}
 
-but that check sits *below* the branch taken when the discovery client
-list has emptied while the command was pending, and that branch has
-already dereferenced the reply:
+but that check sits below the branch taken when the discovery client list has
+emptied while the command was pending, and that branch has already
+dereferenced the reply:
 
 	if (!adapter->discovery_list) {
 		struct mgmt_cp_stop_discovery cp;
@@ -24,20 +24,15 @@ already dereferenced the reply:
 		/* Stop discovering as there are no clients left */
 		cp.type = rp->type;      <-- rp may be NULL here
 
-mgmt_cp_start_discovery is a single uint8_t, so rp->type is a one-byte
-read at offset 0 and a NULL rp faults immediately.
+mgmt_cp_start_discovery is a single uint8_t, so rp->type is a one-byte read at
+offset 0 and a NULL rp faults immediately.
 
-param is NULL whenever the request completes without parameters. In
-src/shared/mgmt.c a Command Status event dispatches
-
-	request_complete(mgmt, cs->status, opcode, index, 0, NULL);
-
-with cs->status taken from the kernel. A Command Status carrying status
-0 therefore reaches the callback with length 0 and param NULL, passes
-the status != MGMT_STATUS_SUCCESS guard, and crashes the daemon.
-
-Observed on a QCA9377 (13d3:3503) whose controller stops answering HCI
-during audio use. The crash site was resolved from the shipped binary:
+The mgmt layer can invoke a command callback with no reply parameters --
+src/shared/mgmt.c passes length 0 and a NULL param on the Command Status path,
+for example. Observed on a QCA9377 (13d3:3503) whose controller stops
+answering HCI during audio use: this branch was entered with a success status
+and param == NULL, and faulted on the dereference. The crash site was resolved
+from the shipped binary:
 
   bluetoothd[2821]: segfault at 0 ip 00005d6eb1ad1986 sp 00007ffef8e784b0 \
       error 4 in bluetoothd[a6986,5d6eb1a50000+f3000]
@@ -46,29 +41,14 @@ during audio use. The crash site was resolved from the shipped binary:
   a698b:  0f b7 53 04       movzwl 0x4(%rbx),%edx     <-- adapter->dev_id
   a6992:  4c 8d 45 d7       lea    -0x29(%rbp),%r8    <-- &cp
 
-Perform the same length validation before using the reply in the
-no-clients branch. The check is added inside that branch rather than
-hoisted above it, so that no other path changes behaviour.
+I have not traced which management event produced that combination, and the
+fix does not depend on it.
 
-The length check has been in this function since 7b897d2d3 ("core: Simplify
-discovery start and stop handling", 2013-01-19). The no-clients branch that
-dereferences the reply above it was added later, by 3597d1377 ("adapter: Fix
-not waiting for start discovery result", 2017-08-31), so the ordering has
-been wrong since then.
+Perform the same length validation before using the reply in the no-clients
+branch. The check is added inside that branch rather than hoisted above it, so
+that no other path changes behaviour.
 
-8b21a74f2 ("adapter: Fix crash when discovering", 2018-02-20) fixed a
-different NULL dereference in this same function -- adapter->discovery_list
--- five months afterwards, and did not touch the rp dereference.
-
-Still present in master as of 5.87-78-gc73fa2f.
-
-I searched the list archive for start_discovery_complete and found no report
-of this crash: the only NULL-dereference threads returned are the kernel-side
-'Bluetooth: mgmt: fix hdev->discovery.uuids NULL dereference' patches, which
-are a different layer and a different pointer. The BlueZ git history and issue
-tracker likewise have nothing. If it duplicates something I missed, please say
-so and I will drop it.
-
+Fixes: 3597d1377723 ("adapter: Fix not waiting for start discovery result")
 Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
  src/adapter.c | 6 ++++++
@@ -77,10 +57,10 @@ Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 diff --git a/src/adapter.c b/src/adapter.c
 --- a/src/adapter.c
 +++ b/src/adapter.c
-@@ -1850,6 +1850,12 @@
+@@ -1863,6 +1863,12 @@
  		if (status != MGMT_STATUS_SUCCESS)
  			return;
- 
+
 +		if (length < sizeof(*rp)) {
 +			btd_error(adapter->dev_id,
 +				"Wrong size of start discovery return parameters");
@@ -90,6 +70,5 @@ diff --git a/src/adapter.c b/src/adapter.c
  		/* Stop discovering as there are no clients left */
  		cp.type = rp->type;
  		mgmt_send(adapter->mgmt, MGMT_OP_STOP_DISCOVERY,
--- 
+--
 2.43.0
-
