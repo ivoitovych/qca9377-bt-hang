@@ -12,36 +12,30 @@ and fixed here.
 **Why these two are worth sending, when the rest of this investigation is not
 ready.** They carry none of the contested material. No hardware, no reproducer,
 no argument about whether the controller wedge causes the daemon crash or the
-crash is a symptom of it. `0001` is an ordering bug a reader can confirm in half
-a minute: the branch dereferences `rp` above the `length` check that exists to
-guard it.
+crash is a symptom of it. `0001` in particular is an ordering bug a reader can
+confirm in half a minute: the reply is dereferenced above the function's own
+length check, so a callback delivered without parameters faults.
 
-> ⚠️ **Corrected 2026-08-24 — the overclaim was mine.** This file previously said
-> the mechanism was "fully determined": that `param` is NULL whenever a request
-> completes without parameters, and that a Command Status carrying status `0` was
-> the event received. **Both were wrong**, and an external reviewer caught it.
-> Verified here against master:
->
-> ```c
-> /* mgmt.c:408 — Command Complete */
-> request_complete(mgmt, cc->status, opcode, index, length - 3,
->                                 mgmt->buf + MGMT_HDR_SIZE + 3);   /* NEVER NULL */
-> /* mgmt.c:418 — Command Status */
-> request_complete(mgmt, cs->status, opcode, index, 0, NULL);       /* NULL */
-> ```
->
-> Command Complete passes a real pointer even at `length == 0`, so the broad claim
-> is false. And naming Command Status as *the* event was a hypothesis stated as a
-> finding — nothing in our record establishes which event arrived.
->
-> There is also a **third route** the reviewer found and I had not considered:
-> `request_complete()` falls back to matching on **index alone** when opcode+index
-> misses (`mgmt.c:312`), so a completion for a different command can reach a
-> pending callback.
->
-> What the crash actually shows is narrower and enough: **the branch was entered
-> with a success status and `param == NULL`.** The fix does not depend on which
-> event produced that, and the patch no longer claims to know.
+⚠️ **The mechanism is NOT fully determined, and the patch no longer claims it
+is.** An earlier revision of this file and of the commit message named a
+successful Command Status as the event received. `src/shared/mgmt.c` does pass
+`0, NULL` on that path —
+
+```c
+request_complete(mgmt, cs->status, opcode, index, 0, NULL);   /* mgmt.c:418 */
+```
+
+— but that is an *example* of a parameterless delivery, not a demonstration of
+which event actually arrived. Two things argue against asserting it:
+Command Complete passes a real pointer even at `length == 0`
+(`mgmt->buf + MGMT_HDR_SIZE + 3`, `mgmt.c:408`), and `request_complete()` falls
+back to matching on **index alone** when opcode+index finds nothing
+(`mgmt.c:312`), so a mismatched completion can also reach a pending callback.
+
+What the crash establishes is narrower and sufficient: the branch was entered
+with a success status and `param == NULL`, and faulted on a one-byte read at
+offset 0 — the `segfault at 0` on record. The fix does not depend on which
+event produced it.
 
 ## What has been verified
 
@@ -86,8 +80,13 @@ crashed. They prevent a fault that is demonstrably reachable; they have not been
 watched preventing it.
 
 ⚠️ **`0002` treats the symptom.** It stops the crash without explaining why
-`setup->stream` is cleared while the setup is still on the `setups` list. The
-patch says so in its own commit message rather than implying a complete fix.
+`setup->stream` is cleared while the setup is still on the `setups` list.
+
+That caveat used to be spelled out in the commit message and was dropped when
+the message was shortened for submission, on the reviewer's advice to carry the
+evidence that justifies the change rather than the route to it. It is recorded
+here instead, because it is true and a maintainer may ask: the guard is correct
+and local, and the underlying teardown ordering is not explained by it.
 
 ## Upstream status — checked twice, independently, and both are still needed
 
@@ -144,8 +143,15 @@ It is the *same* code path, not merely a similar one: that commit introduced
 calls. It added no NULL guard on `stream`, and at master `transport_cb()` in
 `a2dp.c:2680` still hands `setup->stream` over unchecked.
 
-So the maintainer has already accepted a fix for **this scenario** in the
-neighbouring file, and the gap patch `0002` closes is one that fix left open.
+So the maintainer has already revisited **this code path** — and the gap patch
+`0002` closes is one that work left open.
+
+⚠️ Not the same *scenario*, and the patch is careful about this. `90a600895`
+handles a transport arriving **before Open**; `125a2e237e7c` handles the
+**`setup` disappearing** while an asynchronous accept is pending. Neither is the
+NULL-stream teardown race observed here. What they establish is that both the
+caller and the callee on this path have been hardened before, and that neither
+ruled out a NULL `stream` at the hand-over.
 
 ⚠️ *Checking this needs the full history.* A `--depth 50` clone cannot see a 2020
 commit and answers `unknown revision` — which reads like "no such commit" rather
@@ -158,9 +164,27 @@ BlueZ takes patches by mail on `linux-bluetooth@vger.kernel.org`. The files are 
 a checkout with `git am` and resent from there:
 
 ```console
-$ git am 0001-*.patch 0002-*.patch
-$ git send-email --to=linux-bluetooth@vger.kernel.org HEAD~2..HEAD
+$ git send-email --to=linux-bluetooth@vger.kernel.org 0001-adapter-*.patch
+$ git send-email --to=linux-bluetooth@vger.kernel.org 0002-a2dp-*.patch
 ```
+
+⚠️ **Send them as two separate invocations, not as a range.** They are
+deliberately two standalone `[PATCH BlueZ]` mails — one is adapter/mgmt
+discovery handling, the other A2DP asynchronous transport lifetime, and neither
+depends on the other. Passing a revision range instead —
+
+```console
+$ git send-email --to=… HEAD~2..HEAD      # DON'T
+```
+
+— makes `send-email` apply `format-patch` semantics to the range, and
+`format-patch` numbers subjects `[PATCH 1/2]` and `[PATCH 2/2]` whenever it
+generates more than one patch. That would present them as a series and couple
+their review, which is the opposite of the intent. If a series is ever wanted,
+add a `0/2` cover letter rather than letting the numbering appear by accident.
+
+To apply to a checkout instead of mailing, `git am 0001-*.patch 0002-*.patch`
+works fine — the caution is only about sending.
 
 The `Signed-off-by` names this repository's maintainer. **Whoever actually sends
 them must put their own name there** — a Signed-off-by is a statement by the

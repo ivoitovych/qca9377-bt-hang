@@ -38,13 +38,18 @@ was the first field load off it:
 
 Check the stream immediately before it is used, so every existing path keeps
 its current behaviour up to the point that was previously unsafe. In
-particular an bt_io_accept() error or a bt_io_get() failure still reports the
+particular a bt_io_accept() error or a bt_io_get() failure still reports the
 real I/O error rather than this secondary lifecycle condition.
 
 125a2e237e7c ("a2dp: Fix possible crash when accepting stream transport")
 previously hardened this same asynchronous accept window against the whole
 setup disappearing while the accept was pending. This covers the remaining
 case where the setup survives and its stream does not.
+
+90a600895 ("avdtp: Handle case where remote send L2CAP connect ahead of Open")
+also changed avdtp_stream_set_transport() itself, to handle a transport
+arriving before Open. The function still dereferences stream before reaching
+that handling, so it does not cover a NULL argument from transport_cb().
 
 Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---

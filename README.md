@@ -18,11 +18,18 @@ merged:
 |---|---|---|
 | **1. Evidence** | What actually happens, in terms a stranger can re-derive? | [`evidence/exhibits/`](evidence/exhibits/) — numbered, each carrying its extraction command, verbatim output and exit status |
 | **2. Workarounds** | Is there a cheap recipe a user can apply today? | [`docs/issues.md`](docs/issues.md), the mitigation tooling, and the trial series under `evidence/trials/` |
-| **3. The real fix** | What patch belongs upstream? | [`docs/fix-proposal.md`](docs/fix-proposal.md), [`docs/bug-report.md`](docs/bug-report.md), [`docs/investigation-plan.md`](docs/investigation-plan.md) |
+| **3. The real fix** | What patch belongs upstream? | [`patches/bluez/`](patches/bluez/), [`docs/fix-proposal.md`](docs/fix-proposal.md), [`docs/bug-report.md`](docs/bug-report.md), [`docs/investigation-plan.md`](docs/investigation-plan.md) |
 
 Stream 3 is the goal. Streams 1 and 2 exist because a patch proposed without a
 denominator is a guess, and because a family that needs its laptop today cannot
 wait for a kernel release.
+
+**Stream 3 has produced its first deliverable**, and it is not the one this
+project set out to write. [`patches/bluez/`](patches/bluez/) holds **two BlueZ
+patches** for NULL dereferences in `bluetoothd`, both confirmed still present in
+upstream master. They came out of `EX-032` — a failure mode that is not the
+controller at all, found only because the record started separating the four
+things that look identical to a user. The kernel-side question is still open.
 
 **The fault is very likely multi-layered, and the streams are shaped around
 that.** What has been observed is not one bug but a sequence: the controller
@@ -480,7 +487,7 @@ more reliable on Linux, and Wi-Fi 6 as a bonus. Check for a BIOS wireless allowl
 
 ---
 
-## Not a kernel regression
+## Not a *recent* regression — but the driver behaviour is datable to v5.12
 
 Tested across every kernel available on the affected machine:
 
@@ -491,8 +498,66 @@ Tested across every kernel available on the affected machine:
 | 6.17.0-40 | yes |
 | 7.0.0-28 | yes |
 
-Four kernel versions across ten weeks and 34 boots. Rolling back the kernel does not
-help. Per-boot detail: [`evidence/diagnosis/per-boot-history.txt`](evidence/diagnosis/per-boot-history.txt).
+Four kernel versions across ten weeks and 34 boots. Rolling back to another recent
+kernel does not help. Per-boot detail:
+[`evidence/diagnosis/per-boot-history.txt`](evidence/diagnosis/per-boot-history.txt).
+
+⚠️ **This heading used to read "Not a kernel regression", and that was too strong.**
+The table shows the fault is not a *recent* regression. It cannot show that the
+behaviour was always there, because **every kernel in it postdates the change that
+matters**.
+
+Reading `btusb.c` at ten release tags dates the relevant change between **v5.11 and
+v5.12**. Through v5.11, alt setting 1 for wideband speech was a per-device opt-in
+guarded by `BTUSB_USE_ALT1_FOR_WBS`, set only inside the Realtek block; any other
+adapter without alt 6 got `new_alts = 0`, an error line, and no wideband speech.
+v5.12 turned that opt-in into an **unconditional fallback**, so an adapter matching
+no quirks entry — which `13d3:3503` does not — is placed into an isochronous
+configuration it was never validated for.
+
+The two statements are consistent: the change landed in v5.12, and the oldest kernel
+tested above is 6.17. Rolling back within that range changes nothing because the
+whole range is on the far side of it.
+
+**That yields a prediction this project has not tested**: on a kernel in the
+**v5.8 – v5.11** window, this hardware should not take the alt-1 path at all —
+it should log `Device does not support ALT setting 6` and get no wideband speech.
+Nobody has run it, and it is recorded here as an open experiment rather than a
+result.
+
+> ⚠️ **The window matters — "v5.11 or earlier" is wrong, and this was checked at
+> five tags.** Alt 1 is reachable *again* below v5.8, by a different route, so an
+> older kernel does not make a cleaner control:
+>
+> | kernel | transparent/WBS path | alt 1? |
+> |---|---|---|
+> | ≤ v5.7 | **no `air_mode` branch exists**; alt is chosen from `voice_setting & 0x0020` and `sco_num` → `alts[sco_num-1]` = {2,4,5}, else `sco_num` | **yes, by a different mechanism** |
+> | v5.8 – v5.11 | alt 6 if present, else `bt_dev_err("Device does not support ALT setting 6")` — and from v5.11 an alt-1 opt-in gated on `BTUSB_USE_ALT1_FOR_WBS`, **set only in the Realtek block** | **no** (this device matches no quirk) |
+> | ≥ v5.12 | `new_alts = btusb_find_altsetting(data, 6) ? 6 : 1;` — unconditional | **yes** |
+>
+> The change is **`517b693351a2`** — Trent Piepho, 2020-12-09, *"Bluetooth: btusb:
+> Always fallback to alt 1 for WBS"* — verified as an ancestor of `v5.12` and
+> **not** of `v5.11`. It restored a pre-5.8 behaviour that `461f95f04f19` (Hilda
+> Wu, 2020-06-30) had brought back for Realtek only.
+>
+> **Its own commit message is the strongest thing we have on this point**, and it
+> is the author's, not ours:
+>
+> > *"many if not most BT USB adapters do not support alt mode 6. In fact, **I have
+> > been unable to find any which do**."*
+>
+> and the code comment it left behind rests on an explicitly empirical assumption:
+>
+> > *"Alt 1 appears to work for all adapters that do not have alt 6, and which work
+> > with WBS at all."*
+>
+> `13d3:3503` is a candidate counterexample to exactly that sentence. That is a far
+> better framing for an upstream report than "the driver picks a bad alt setting".
+
+Confirmed on the machine rather than only in source — `EX-033`'s captured lines are
+the chain itself: `hci0 evt 5` (`HCI_NOTIFY_ENABLE_SCO_TRANSP`, the transparent
+branch), then `Looking for Alt no :6` and `:3` (the two probes), then silence —
+because selecting alt 1 is the bare `else` and logs nothing.
 
 ---
 
@@ -564,8 +629,11 @@ renamed only after verification passes. The logs in `evidence/baseline/` were pr
 | Watchdog intervention path | ✅ exercised — controller answered after one early intervention; late interventions were followed by USB loss, with causality unresolved |
 | Autosuspend setting, udev rule | ✅ applied and verified |
 | **Quantified reproducer (A4)** | ❌ **gate — not done.** No controlled denominator yet |
-| Observational denominator | ⏳ accruing — every boot is now a trial, opened automatically |
+| Observational denominator | ✅ re-derivable — 34 boots, 287 timeouts, 13 hung, from `evidence/baseline/baseline.tsv`; not re-verifiable against the journal, which has rotated |
 | Kernel patch | ❌ written, not built or tested |
+| **BlueZ patches (`patches/bluez/`)** | ✅ **two, ready** — both defects confirmed live in master `c73fa2f9ae2d`, both apply clean, crash sites resolved from the shipped binary and falsified against the retained coredump. **Not yet sent.** |
+| Four distinct failure modes separated | ✅ `EX-030` audio-server release, `EX-031` a SCO link that worked, `EX-032` a BlueZ crash, and `BT-1` itself — all indistinguishable to an operator |
+| Alt-1 fallback dated to v5.12 | ✅ source at ten tags, **and** observed on the machine (`EX-033`) |
 
 > ⛔ **Before submitting anything upstream**, work through
 > [`docs/pre-submission-checklist.md`](docs/pre-submission-checklist.md): unmet evidence
