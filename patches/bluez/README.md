@@ -12,18 +12,36 @@ and fixed here.
 **Why these two are worth sending, when the rest of this investigation is not
 ready.** They carry none of the contested material. No hardware, no reproducer,
 no argument about whether the controller wedge causes the daemon crash or the
-crash is a symptom of it. `0001` in particular is an ordering bug a reader can
-confirm in half a minute, and the mechanism is fully determined from BlueZ's own
-source — `src/shared/mgmt.c` dispatches a Command Status event as
+crash is a symptom of it. `0001` is an ordering bug a reader can confirm in half
+a minute: the branch dereferences `rp` above the `length` check that exists to
+guard it.
 
-```c
-request_complete(mgmt, cs->status, opcode, index, 0, NULL);
-```
-
-so a Command Status carrying status `0` reaches the callback with `length == 0`
-and `param == NULL`, passes the `status != MGMT_STATUS_SUCCESS` guard, and
-faults on a one-byte read at offset 0. That is exactly the `segfault at 0` on
-record.
+> ⚠️ **Corrected 2026-08-24 — the overclaim was mine.** This file previously said
+> the mechanism was "fully determined": that `param` is NULL whenever a request
+> completes without parameters, and that a Command Status carrying status `0` was
+> the event received. **Both were wrong**, and an external reviewer caught it.
+> Verified here against master:
+>
+> ```c
+> /* mgmt.c:408 — Command Complete */
+> request_complete(mgmt, cc->status, opcode, index, length - 3,
+>                                 mgmt->buf + MGMT_HDR_SIZE + 3);   /* NEVER NULL */
+> /* mgmt.c:418 — Command Status */
+> request_complete(mgmt, cs->status, opcode, index, 0, NULL);       /* NULL */
+> ```
+>
+> Command Complete passes a real pointer even at `length == 0`, so the broad claim
+> is false. And naming Command Status as *the* event was a hypothesis stated as a
+> finding — nothing in our record establishes which event arrived.
+>
+> There is also a **third route** the reviewer found and I had not considered:
+> `request_complete()` falls back to matching on **index alone** when opcode+index
+> misses (`mgmt.c:312`), so a completion for a different command can reach a
+> pending callback.
+>
+> What the crash actually shows is narrower and enough: **the branch was entered
+> with a success status and `param == NULL`.** The fix does not depend on which
+> event produced that, and the patch no longer claims to know.
 
 ## What has been verified
 
