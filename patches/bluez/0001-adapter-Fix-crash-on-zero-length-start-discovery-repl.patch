@@ -62,9 +62,12 @@ different NULL dereference in this same function -- adapter->discovery_list
 
 Still present in master as of 5.87-78-gc73fa2f.
 
-I did not find a prior report of this specific defect in the BlueZ git
-history, the issue tracker or the list archives; if it duplicates something
-already posted, please say so and I will drop it.
+I searched the list archive for start_discovery_complete and found no report
+of this crash: the only NULL-dereference threads returned are the kernel-side
+'Bluetooth: mgmt: fix hdev->discovery.uuids NULL dereference' patches, which
+are a different layer and a different pointer. The BlueZ git history and issue
+tracker likewise have nothing. If it duplicates something I missed, please say
+so and I will drop it.
 
 Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---

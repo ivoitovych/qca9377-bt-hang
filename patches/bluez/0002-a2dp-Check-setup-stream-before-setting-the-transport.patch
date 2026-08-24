@@ -70,10 +70,15 @@ avdtp_stream_set_transport() -- and that callee does not guard it either:
 
 Still present in master as of 5.87-78-gc73fa2f.
 
-The neighbouring avdtp_abort() fix above is the closest prior work I found;
-I did not find a report of this specific call path in the BlueZ git history,
-the issue tracker or the list archives. If it duplicates something already
-posted, please say so and I will drop it.
+I searched the list archive for avdtp_stream_set_transport -- 32 results, none
+reporting this call path. The closest prior work is 90a600895 ("avdtp: Handle
+case where remote send L2CAP connect ahead of Open"), which addressed a
+transport channel arriving at an unexpected point in the sequence, but changed
+only profiles/audio/avdtp.c; transport_cb() in a2dp.c still hands setup->stream
+over unchecked. The avdtp_abort() fix above is the closest match for the NULL
+setup->stream pattern itself.
+
+If this duplicates something I missed, please say so and I will drop it.
 
 Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
