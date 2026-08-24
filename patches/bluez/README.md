@@ -97,11 +97,41 @@ Helpful context for the submission: `src/adapter.c`'s recent history carries
 accepted crash fixes of the same shape — *"Fix crash on UUID discovery filter
 match"*, *"Fix crash on dev_disconnected"*. NULL-deref fixes land in this file.
 
-⚠️ **What was NOT established.** `lore.kernel.org` is 403 from **both**
-environments, so nobody has searched the list archives. The correct claim is
-**"not fixed in master as of `c73fa2f`"** — *not* that this has never been
-reported. Both commit messages say exactly that, and the submission must not
-upgrade it.
+### Prior art — settled, no longer a caveat
+
+An earlier revision of this file said the list archives could not be searched
+from either environment. **That was wrong, and it was wrong the same way twice**
+— see the four failure modes in [`docs/source-access.md`](../../docs/source-access.md).
+`lore.kernel.org` returns 403 to `curl` because of a user-agent block fronting a
+JavaScript anti-bot page; a browser passes it in seconds. The operator opened it
+himself and settled the question in under a minute.
+
+| query | results | reporting these defects |
+|---|---|---|
+| `start_discovery_complete` | ~300 hits, 207 distinct subjects | **none** — the only NULL-deref threads are kernel-side `hdev->discovery.uuids` patches, a different layer and pointer |
+| `avdtp_stream_set_transport` | 32 hits | **none** reporting this call path |
+
+**The nearest prior work, verified here against full history** rather than taken
+on trust:
+
+```console
+$ git log -1 --stat 90a600895
+Luiz Augusto von Dentz   2020-09-22
+avdtp: Handle case where remote send L2CAP connect ahead of Open
+ profiles/audio/avdtp.c | 75 ++++++---     <- ONE FILE
+```
+
+It is the *same* code path, not merely a similar one: that commit introduced
+`stream_set_pending_open()`, which is the function `avdtp_stream_set_transport()`
+calls. It added no NULL guard on `stream`, and at master `transport_cb()` in
+`a2dp.c:2680` still hands `setup->stream` over unchecked.
+
+So the maintainer has already accepted a fix for **this scenario** in the
+neighbouring file, and the gap patch `0002` closes is one that fix left open.
+
+⚠️ *Checking this needs the full history.* A `--depth 50` clone cannot see a 2020
+commit and answers `unknown revision` — which reads like "no such commit" rather
+than "not in my clone". Unshallowed to 29242 commits before checking.
 
 ## How to send
 
