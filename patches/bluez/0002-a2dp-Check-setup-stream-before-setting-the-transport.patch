@@ -46,6 +46,12 @@ previously hardened this same asynchronous accept window against the whole
 setup disappearing while the accept was pending. This covers the remaining
 case where the setup survives and its stream does not.
 
+90a600895 ("avdtp: Handle case where remote send L2CAP connect ahead of Open")
+is on the other side of the same call: it introduced stream_set_pending_open(),
+which avdtp_stream_set_transport() calls once it has already dereferenced
+stream. So both ends of this path have been revisited for out-of-order
+transport arrival without a NULL stream being ruled out at the caller.
+
 Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
  profiles/audio/a2dp.c | 5 +++++
