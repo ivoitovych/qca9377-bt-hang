@@ -2357,3 +2357,99 @@ The lesson the phase adds to the register is about *reading*, not about measurem
 
 Which is the same reason the alt-1 objection inverted so cleanly: the absence of a log line
 was read as absence of the behaviour, when it was the behaviour's signature.
+
+---
+
+## Phase 31 — "blocked" is not one thing, and the operator opened a browser
+
+A short phase with one lesson, learned twice simultaneously by two people who could not see
+each other doing it, and closed by the one person who had the tool neither of them did.
+
+### The patches were finished except for one sentence
+
+`EX-032`'s two defects were confirmed live in master, both patches applied clean, both crash
+sites were resolved without symbols and falsified against the coredump. The only thing
+outstanding was a clause both patches carried:
+
+> I have not been able to search the list archives, so this is "not fixed in master" rather
+> than a claim that it has never been reported.
+
+The operator read it and objected on a ground neither maintainer had considered:
+
+> How can I claim that I can access it? That I am submitting the patch from a prison or
+> whatever?
+
+**He signs those patches.** A sentence saying the archives could not be searched reads, to
+a BlueZ maintainer, as the *submitter* admitting he did not do basic homework. The
+limitation belonged to two sandboxes, not to him, and had no business in his commit message.
+That is a category of defect this record had not named: **a limitation of the tooling
+exported into a third party's view of the operator's work.**
+
+### The same mistake, twice, from opposite sides
+
+Both maintainers had written "blocked" into a document after reading a status code and
+stopping there.
+
+**The test-suite maintainer** recorded `github.com` as "403 at the proxy". The response
+*body* said otherwise — it was that session's per-repository authorisation gate — and `git`
+over the same host had worked the entire time. **BlueZ master had been reachable
+throughout.**
+
+**The main-branch maintainer** recorded `lore.kernel.org` as unreachable from a `curl` 403.
+It was a **user-agent block**:
+
+```
+default-UA  http=403
+browser-UA  http=200
+```
+
+and behind that a proof-of-work interstitial titled *"Making sure you're not a bot!"*, which
+needs JavaScript — so installing a text browser would not have helped either, and the
+instinct to try one was right about the question and wrong about the answer.
+
+Two different failures — an authorisation gate and a bot filter — with one shape: **neither
+of us read the response body before writing the conclusion down.**
+
+The resulting table in `docs/source-access.md` now distinguishes four cases that look
+identical from a status code and have completely different answers: a CONNECT tunnel refused
+(no request is ever sent, so user-agent is irrelevant), an HTTP status from a server that
+did answer (read the body), a different protocol to the same host being open, and a UA block
+in front of a JS challenge.
+
+### What a browser settled in under a minute
+
+The operator opened both searches himself and sent the saved pages.
+
+* **`start_discovery_complete`** — ~300 hits, 207 distinct subjects, **none** reporting this
+  crash. The only NULL-dereference threads returned are kernel-side
+  `Bluetooth: mgmt: fix hdev->discovery.uuids` patches: different layer, different pointer.
+* **`avdtp_stream_set_transport`** — 32 hits, none reporting this call path.
+
+**And one hit made patch 2 materially stronger.** The closest prior work is `90a600895`,
+*"avdtp: Handle case where remote send L2CAP connect ahead of Open"* (Luiz Augusto von
+Dentz, 2020-09-22) — precisely the scenario in which a transport channel arrives at an
+unexpected point in the sequence. Checked against the tree, it changed **only**
+`profiles/audio/avdtp.c`, and left `transport_cb()` in `a2dp.c` handing `setup->stream` over
+unchecked.
+
+So the maintainer has already accepted a fix for this *scenario* in the neighbouring file.
+That argument is better than anything either maintainer produced unaided, and it came from a
+search both had declared impossible.
+
+### The shape
+
+Phase 30's lesson was about reading observations. This one is about reading *failures*, and
+it is the same error one level down:
+
+> **"It failed" is not a diagnosis.** A status code is an observation; the cause is a
+> separate question, and there are at least four causes that produce the same code and
+> demand different responses.
+
+And the operator's half, which is the part that actually recovers the situation:
+
+> **When something is blocked for the assistant and trivial for the operator, ask him.** Two
+> links and thirty seconds of his time beat any amount of working around it — and a caveat
+> in a deliverable is not a workaround, it is a defect exported to a third party.
+
+Both patches now state what was searched and what was found, with the near misses named, and
+carry no caveat about access at all. They are finished and wait only on the operator's word.
