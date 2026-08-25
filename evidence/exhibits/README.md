@@ -45,3 +45,4 @@ Regenerate this index with `bt-exhibit index`.
 | EX-033 | [sco-setup-answered-then-untracked-command-dies](033-sco-setup-answered-then-untracked-command-dies.md) | The controller **answered** `0x0428 Setup Synchronous Connection` in 72.8 ms, |
 | EX-034 | [reboot-from-stage1-failed-after-recovery-ladder](034-reboot-from-stage1-failed-after-recovery-ladder.md) | A hot reboot taken while the controller was in **stage 1** — on the bus, driver |
 | EX-035 | [patched-bluetoothd-runtime-observation](035-patched-bluetoothd-runtime-observation.md) | A `bluetoothd` built from this machine's own `5.72-0ubuntu5.5` source with both |
+| EX-036 | [answered-sco-then-bare-timeout-reproduced](036-answered-sco-then-bare-timeout-reproduced.md) | `EX-033`'s signature reproduced, seven days later, on a different peripheral and |

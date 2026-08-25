@@ -2453,3 +2453,112 @@ And the operator's half, which is the part that actually recovers the situation:
 
 Both patches now state what was searched and what was found, with the near misses named, and
 carry no caveat about access at all. They are finished and wait only on the operator's word.
+
+---
+
+## Phase 32 — the patches ran, and the fault reproduced under them
+
+The phase where the project stopped arguing about the patches and put them on the machine —
+and then, hours later, got the fault it had been unable to provoke for a week.
+
+### The patches went from static argument to a running daemon
+
+They had applied, compiled and matched a coredump. **No patched binary had ever executed
+anywhere.** The operator asked for that gap to be closed and it was, deliberately against
+the machine's *own* version rather than upstream master: `bluez 5.72-0ubuntu5.5` source from
+the archive pool, both tarballs verified against the `.dsc`, all **31 Ubuntu patches**
+applied, then ours on top — so anything observed is attributable to the two fixes and not to
+a version change.
+
+Installed to `/usr/local` with a systemd drop-in, the distro binary untouched and `dpkg -V`
+clean, so reverting is deleting one file. That command is written inside the drop-in itself,
+not only in a conversation.
+
+### The filter change is the part that was easy to miss
+
+**A patch that prevents a crash leaves no trace by default.** The daemon simply does not die,
+which is indistinguishable from the bug never having occurred. Both patches log before they
+bail, so the message *is* the observation — the only positive evidence a fix worked rather
+than the conditions not recurring. `bt-snapshot` gained an `f-guard.log` cut, and prints the
+zero case labelled `0 = no crash prevented AND none occurred`, so the ambiguity cannot be
+silently read as success.
+
+### `EX-035` — eight hours, and the trigger was never pulled
+
+The patched daemon ran 7 h 56 m across the operator's deliberate reproduction attempts with
+zero crashes, against three crashes in ~20 h unpatched. **That comparison is not evidence**
+and the exhibit says so at length: no reproducer means no denominator.
+
+Two things had to be corrected inside a single hour, both by checking rather than assuming.
+
+A `Device or resource busy` error looked like a regression the patch had introduced — seven
+occurrences since it started, zero earlier that boot or the previous one. **Widening the
+search found it on the unpatched daemon** in an older boot and in six archived snapshots.
+Not new.
+
+And the operator's account reframed the run, then the logs corrected the reframing. He said
+the testing pattern changed *because* the usual failure had not happened — which would make
+the aggressive testing a consequence rather than a confound, and the strongest signal in the
+exhibit. The logs only partly agreed: HFP connected nine times, but there were **zero**
+synchronous-link setups and **zero** alternate-setting switches in the entire run. `BT-1`
+needs the SCO path; the SCO path was never taken. *"Bluetooth did not die"* had a simpler
+explanation than the patches — it was never asked to do the thing that kills it.
+
+The missing SCO setup was briefly called "the most interesting thing here". It was a
+**pairing problem**: the operator re-paired the device, the full profile stack reconnected,
+and what reconnected was **A2DP — music**. The trigger needs hands-free audio actually in
+use. Recorded as a deflation rather than quietly dropped, because what the record thought
+was interesting for an hour is part of how it was got right.
+
+### `EX-036` — and then it fired
+
+At 17:08 the operator put the headset into hands-free mode, and the fault arrived:
+
+```
+17:08:08.550995  hci0 opcode 0x0428 plen 17        SCO setup
+17:08:08.625863  hcon … handle 0x0005              ANSWERED, +74.9 ms
+17:08:08.625984  hci0 evt 5                        transparent air mode
+17:08:08.626011  Looking for Alt no :6  then  :3   → silence → alt 1
+17:08:10.702854  command tx timeout                BARE, +2.152 s
+```
+
+**That is `EX-033` reproduced** — different peripheral (Sennheiser, not Lenovo), different
+kernel (`-30`, not `-29`), three days apart. `EX-033` measured **2.076 s**; this one
+**2.152 s**. Seventy-six milliseconds apart.
+
+Two claims that rested on a single observation are now `n = 2`: **the controller answers
+`0x0428`**, and **the command that dies is anonymous** — the bare spelling meaning
+`hdev->req_skb` was NULL, so it was not the command `hci_cmd_sync` was tracking.
+
+⚠️ **And that reframes the trigger interval.** The spread this project kept measuring — 4.1,
+7.6, 16.2, 55.2, 155.8 s — was gathered by anchoring on whichever *named* command happened
+to time out. Anchored instead on the **answered setup**, two instances agree within 76 ms.
+The distribution may have been an artefact of measuring from the wrong event. `n = 2` cannot
+establish that; it is enough to stop assuming the opposite.
+
+Two later setups in the same window were **not** answered and timed out in the ordinary
+named way — so the answered-then-anonymous shape belongs to the *first* setup against a
+healthy controller. Future captures should anchor on the first `0x0428` of a window, not the
+last.
+
+### What the phase says about the patches: nothing, and that was predictable
+
+Across the wedge: **0 patch guards fired, 0 daemon crashes.** `BT-1` is the controller fault
+and neither BlueZ patch touches it. The patched daemon has now survived a controller wedge
+without incident — worth recording, and not evidence for the patches.
+
+They remain what they were: a static defect with crash forensics, now built and run without
+regression. Still unsent, still waiting on the operator, who has said he is reviewing them
+himself.
+
+### The shape
+
+Phase 30 was about reading observations; Phase 31 about reading failures. This one is about
+**reading absences**, and it is the same error a third time:
+
+> A quiet run is not a result. Before "it did not fail" means anything, something must show
+> that it was **asked** to — and the counter that shows it has to be in the summary, or the
+> question never gets asked at all.
+
+Zero crashes meant nothing until `0x0428 legacy SCO: 0` explained why. Zero guard firings
+meant nothing until the same counter explained that too.
