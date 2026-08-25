@@ -7612,6 +7612,59 @@ SNBO=$(snbz_run --boot -2); snborc=$?
     || bad "the powered-off boot was misread (rc=$snborc): $(rt_line "$SNBO" powered)"
 rm -rf "$SNBZ"
 
+# ── the patch guards, and why a PREVENTED crash needs its own evidence ────
+#
+# The two patches in patches/bluez/ each return early instead of faulting. A
+# patch that works therefore produces NOTHING: the daemon does not die, which
+# on its own is indistinguishable from the fault conditions never recurring.
+# Both patches log before they bail, so the message is the only positive
+# evidence the guard did work — and this section exists because that
+# distinction is exactly the kind that gets optimised away later by someone
+# tidying "redundant" output.
+SNG=$(mktemp -d); mkdir -p "$SNG/repo"
+sng_run() { BT_JOURNAL_FIXTURE=tests/journal/snapshot-guard BT_SNAPSHOT_DIR="$SNG/snap" \
+            BT_REPO="$SNG/repo" tools/bt-snapshot "$@" 2>&1; }
+SNGO=$(sng_run); sngrc=$?
+(( sngrc == 0 )) && [[ "$SNGO" == *"patch guards fired 2"* && "$SNGO" == *"PREVENTED"* ]] \
+    && ok "a guard that fired is reported as a crash PREVENTED, not as an absence" \
+    || bad "guard hit not reported (rc=$sngrc): $(grep -i guard <<<"$SNGO" | tr '\n' ' ')"
+
+# BOTH STRINGS, because they are not equally informative and the filter says so.
+# `has no stream` is unique to 0002. The discovery string is NOT — 0001
+# duplicates text the function already carried below its own length check — so
+# a fixture carrying only the unique one would let the second pattern rot out
+# of the filter unnoticed.
+SNGD=$(ls -d "$SNG"/snap/*/ 2>/dev/null | head -1)
+[[ -r "$SNGD/f-guard.log" ]] \
+   && [[ "$(grep -c 'has no stream' "$SNGD/f-guard.log")" == 1 ]] \
+   && [[ "$(grep -c 'Wrong size of start discovery' "$SNGD/f-guard.log")" == 1 ]] \
+    && ok "f-guard.log cuts both guard strings — the unique one and the duplicated one" \
+    || bad "f-guard.log missing a guard string: $(cat "$SNGD/f-guard.log" 2>/dev/null | tr '\n' ' ')"
+
+# THE REPORTED COUNT MUST BE THE FILE, and this has to be checked as a
+# RELATIONSHIP rather than against a fixture-derived constant. Written first as
+# `grep -c . f-guard.log == 2` — which passes whatever the tool prints, because
+# it never reads the tool's output at all. Hardcoding GUARD=2 in bt-snapshot did
+# not fail it. Fourth time in this suite a check turned out to assert something
+# nothing could break; the mutation is the only reason it was found.
+SNGN=$(grep -oE 'patch guards fired +[0-9]+' <<<"$SNGO" | grep -oE '[0-9]+$')
+SNGL=$(grep -c . "$SNGD/f-guard.log" 2>/dev/null)
+[[ -n "$SNGN" && "$SNGN" == "$SNGL" ]] \
+    && ok "the reported guard count equals the line count of the cut it names" \
+    || bad "count/cut disagree: reported '$SNGN', file has '$SNGL' lines"
+
+# AND ZERO MUST SAY WHAT IT CANNOT DISTINGUISH. This is the whole point: on a
+# machine where the guards never fired, `0` means either that no crash was
+# prevented or that none was about to happen, and reporting a bare 0 invites
+# reading it as "the patches did nothing".
+SNGZ=$(BT_JOURNAL_FIXTURE=tests/journal/snapshot-bluez BT_SNAPSHOT_DIR="$SNG/z" \
+       BT_REPO="$SNG/repo" tools/bt-snapshot 2>&1)
+[[ "$SNGZ" == *"patch guards fired      0"* && "$SNGZ" == *"no crash prevented AND none occurred"* ]] \
+   && [[ "$SNGZ" != *"PREVENTED"* ]] \
+    && ok "zero guards is labelled ambiguous rather than reported as a clean result" \
+    || bad "the zero case is not labelled: $(grep -i guard <<<"$SNGZ" | tr '\n' ' ')"
+rm -rf "$SNG"
+
 # AND THE MACHINE THAT SIMPLY DOES NOT RUN bluetoothd WITH DEBUG LOGGING ON.
 # Without `-d` there are no `src/adapter.c:` lines at all, so powered and
 # discovering are UNKNOWABLE — and printing `no` for both would be a diagnosis
