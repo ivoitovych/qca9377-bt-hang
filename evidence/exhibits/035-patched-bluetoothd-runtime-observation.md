@@ -151,12 +151,34 @@ requires the SCO path; the SCO path was not taken; therefore `BT-1` could not oc
 run is silent about the controller fault, and the patched daemon's survival is not evidence
 about it either way.
 
-⚠️ It also means the operator's "usual place" did not behave usually **before** reaching
-the point where the fault lives. Why nine HFP connections produced no SCO setup at all is
-unexplained and is the most interesting thing here — it may be the four
-`connecting -> disconnected` failures and the seven `Device or resource busy` refusals
-preventing the audio path from ever opening. That is a question for the next session, not a
-finding.
+### The reason no SCO setup happened — resolved, and it is mundane
+
+An earlier revision of this exhibit called the missing SCO setup "the most interesting thing
+here" and left it open. The operator supplied the answer:
+
+> Another feeling was that I need to re-pair the device because I cannot connect, but that
+> happened before. After re-pairing all started well.
+
+The logs agree, and give the moment:
+
+```
+11:16:11  new_link_key_callback() hci0 new key for <peer> type 4 pin_len 0 store_hint 1
+11:19:28  a2dp-sink            state changed: connecting -> connected
+11:19:28  audio-avrcp-target   state changed: disconnected -> connected
+11:19:28  avrcp-controller     state changed: connecting -> connected
+```
+
+So the four failed HFP attempts and the seven `Device or resource busy` refusals were a
+**pairing problem**, not a patch effect — the operator notes it has happened before. After
+re-pairing, the full profile stack connects and `Connected` reads `true` at the time of
+writing.
+
+**And that is also why no SCO link exists.** What reconnected is **A2DP** — music. `BT-1`'s
+trigger is a *synchronous* link, which needs hands-free audio actually in use: a call, or an
+explicit switch of the audio profile to headset/HFP mode. Having the HFP *profile* connected
+at the RFCOMM level is not the same thing and does not reach `0x0428`.
+
+So there is nothing anomalous to explain. The trigger simply has not been pulled.
 
 ## Reading
 
@@ -178,6 +200,12 @@ simpler explanation than the patches: it was never asked to do the thing that ki
 window: the unpatched daemon crashed three times in roughly twenty hours on 2026-08-18/19,
 so a patched daemon surviving substantially longer under comparable use would begin to
 mean something. It has not yet run that long.
+
+**And what would make the next attempt count.** This run exercised A2DP — music. To reach
+`BT-1` at all the peripheral must be put into **hands-free / HFP audio**, which is what
+produces `0x0428`, the `Looking for Alt no` probes and the alt-1 fallback. `bt-snapshot`'s
+`0x0428 legacy SCO` and `alt-setting switch` counters are the check: while both read zero,
+whatever else happened, the fault was not approached.
 
 ## Provenance
 
