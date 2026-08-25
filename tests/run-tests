@@ -7663,6 +7663,29 @@ SNGZ=$(BT_JOURNAL_FIXTURE=tests/journal/snapshot-bluez BT_SNAPSHOT_DIR="$SNG/z" 
    && [[ "$SNGZ" != *"PREVENTED"* ]] \
     && ok "zero guards is labelled ambiguous rather than reported as a clean result" \
     || bad "the zero case is not labelled: $(grep -i guard <<<"$SNGZ" | tr '\n' ' ')"
+
+# ── the two counters EX-035 designates as "did the attempt even count?" ──
+#
+# EX-035 ran a patched daemon for eight hours with zero crashes and concluded
+# NOTHING from it, because there were zero synchronous-link setups and zero
+# alt-setting switches: BT-1 needs the SCO path, the SCO path was not taken, so
+# "Bluetooth did not die" only means it was never asked to do the thing that
+# kills it. The exhibit names these two bt-snapshot lines as the check for
+# whether a future reproduction attempt counts at all.
+#
+# THEY HAD NO ASSERTIONS. A number that an exhibit leans on and nothing
+# verifies is the shape this record has been burned by before — bt-trial's
+# equivalent counter is tested, bt-snapshot's was not.
+[[ "$SNGO" == *"0x0428 legacy SCO       2"* && "$SNGO" == *"alt-setting switch      2"* ]] \
+    && ok "the SCO-approach counters count 0x0428 setups and Alt-no probes" \
+    || bad "SCO counters wrong: $(grep -E '0x0428|alt-setting' <<<"$SNGO" | tr '\n' ' ')"
+
+# AND BOTH READ ZERO WHEN THE PATH WAS NOT TAKEN, which is the reading that
+# makes EX-035's refusal to conclude anything correct. Without this case the
+# check above passes on a tool that always prints 2.
+[[ "$SNGZ" == *"0x0428 legacy SCO       0"* && "$SNGZ" == *"alt-setting switch      0"* ]] \
+    && ok "both counters read zero on a boot that never approached the SCO path" \
+    || bad "zero case wrong: $(grep -E '0x0428|alt-setting' <<<"$SNGZ" | tr '\n' ' ')"
 rm -rf "$SNG"
 
 # AND THE MACHINE THAT SIMPLY DOES NOT RUN bluetoothd WITH DEBUG LOGGING ON.
