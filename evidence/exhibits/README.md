@@ -8,47 +8,6 @@ that produced the output shown.
 
 Regenerate this index with `bt-exhibit index`.
 
-## Every exhibit carries an evidence window (`BL-09`)
-
-**Above `## Provenance`, in one of three forms:**
-
-```
-**Evidence window.** `2026-08-22T01:31:10.402706+02:00` — `2026-08-22T01:31:12.551489+02:00`
-**Evidence window.** `2026-08-16T18:46:06+02:00`
-**Evidence window.** not placeable — <why>
-```
-
-`bt-exhibit` emits it from the captured output; nothing has to be remembered for
-a new exhibit. It is stated here because the standing rule from `BL-08` is that a
-requirement nobody wrote down is a requirement that lapses on the first exhibit
-written by hand.
-
-**What it is for.** `bt-retention` says whether an exhibit's source is still in
-the journal, which it can only do by placing the evidence on journald's absolute
-axis. Nine exhibits could not be placed at all — their bodies are written in bare
-local time, and the only offset-carrying stamp in the file was `captured` in the
-provenance table. That is when the command **ran**, not when the evidence
-**happened**, and for a retrospective exhibit the two are weeks apart: `EX-018`
-was reported as retained on the strength of its capture stamp while the windows
-it describes had already rotated away.
-
-**Three rules, each of which has already been paid for:**
-
-1. **Above the Provenance heading, never inside it.** `bt-retention` truncates
-   there and that cut stays blunt. A blunt cut that drops a field fails to *not
-   judgeable* — visible, and it prompts someone to look. A parser that reads
-   named fields out of the capture record fails to a **wrong answer**, silently.
-2. **Every instant carries a UTC offset.** `2026-08-14T21:02:15` is not an
-   instant until something supplies a zone, and the something would be the
-   reader's own `TZ`.
-3. **`not placeable` is an answer; a missing field is not.** The first says
-   someone looked and states why it cannot be done. The second says nobody has.
-
-**Derived annotations are marked as such.** Nine exhibits predate the field and
-had one added from their own content — an annotation, not a rewrite of a claim,
-carrying the date it was added and the lines it was derived from. The captured
-output above it is never touched.
-
 | # | exhibit | claim |
 |---|---|---|
 | EX-001 | [device-absent-from-qca-quirks](001-device-absent-from-qca-quirks.md) | USB ID 13d3:3503 is matched by no entry in the btusb quirks table, so it receives neither the QCA firmware setup path nor a hdev->reset callback, while its immediate ID neighbours 3491/3496/3501 do. |
@@ -85,3 +44,4 @@ output above it is never touched.
 | EX-032 | [bluetoothd-segfault-discovery-never-restarts](032-bluetoothd-segfault-discovery-never-restarts.md) | `bluetoothd` 5.72 segfaulted twice on this boot at the **same code offset** |
 | EX-033 | [sco-setup-answered-then-untracked-command-dies](033-sco-setup-answered-then-untracked-command-dies.md) | The controller **answered** `0x0428 Setup Synchronous Connection` in 72.8 ms, |
 | EX-034 | [reboot-from-stage1-failed-after-recovery-ladder](034-reboot-from-stage1-failed-after-recovery-ladder.md) | A hot reboot taken while the controller was in **stage 1** — on the bus, driver |
+| EX-035 | [patched-bluetoothd-runtime-observation](035-patched-bluetoothd-runtime-observation.md) | A `bluetoothd` built from this machine's own `5.72-0ubuntu5.5` source with both |
