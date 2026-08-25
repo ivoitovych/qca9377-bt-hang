@@ -129,6 +129,19 @@ grep -E "opcode 0x0428|opcode 0x043d|Looking for Alt no|command( 0x[0-9a-f]+)? t
 grep -E 'usb 3-3|xhci_hcd|USB disconnect|device descriptor|unable to enumerate' "$K"           > "$DIR/f-usb.log"        2>/dev/null
 grep -E 'deregistering interface driver btusb|Resetting usb device|reset (full|high|low)-speed USB device|name hci[0-9]+ blocked' "$A" > "$DIR/f-intervention.log" 2>/dev/null
 grep -E 'segfault|core-dump|Failed with result|Scheduled restart' "$A"                          > "$DIR/f-crash.log"      2>/dev/null
+# ── the two guards added by patches/bluez/, firing ───────────────────────
+#
+# A patch that prevents a crash leaves NO trace by default: the daemon simply
+# does not die, which is indistinguishable from the bug never having occurred.
+# Both patches take a `goto drop` / `return` path that logs first, so the
+# message IS the observation — the only positive evidence a fix worked rather
+# than the conditions not recurring.
+#
+# `has no stream` is new text, unique to 0002. The discovery message is NOT
+# new — 0001 duplicates a string the function already carried below its own
+# length check — so a hit means only that one of the two sites fired, and
+# which one has to be read from the surrounding lines.
+grep -E 'has no stream|Wrong size of start discovery return parameters' "$A"                    > "$DIR/f-guard.log"      2>/dev/null
 grep -E 'adapter_set_power_state|new_settings_callback\(\) Settings:|discovering_callback|start_discovery_complete|restart counter is at|bluetooth\.service:' "$A" > "$DIR/f-bluez.log" 2>/dev/null
 grep -E 'corrupted SCO|Error when powering off|connection_lost|disconnected, reason|Failure in Bluetooth' "$A" > "$DIR/f-link.log" 2>/dev/null
 grep -oE 'input: [^(]*\(AVRCP\)' "$A" | sed 's/^input: //' | sort -u                            > "$DIR/f-devices.txt"    2>/dev/null
@@ -269,6 +282,13 @@ printf '  USB disconnect     %6s\n' "$DISC"
 printf '  interventions      %6s\n' "$(c "$DIR/f-intervention.log")"
 printf '  daemon crashes     %6s\n' "$(c "$DIR/f-crash.log")"
 printf '  link-layer events  %6s\n' "$(c "$DIR/f-link.log")"
+GUARD=$(c "$DIR/f-guard.log")
+if [[ "${GUARD:-0}" -gt 0 ]]; then
+    printf '  ⚠️  patch guards fired %s — see f-guard.log. A crash was PREVENTED,\n' "$GUARD"
+    printf '      not merely absent. This is the positive evidence.\n'
+else
+    printf '  patch guards fired %6s  (0 = no crash prevented AND none occurred)\n' "${GUARD:-0}"
+fi
 printf '\n  controller on bus  %s\n' "$PRESENT"
 printf '  hci device         %s\n' "$HCI"
 [[ -n "$FIRST_TMO" ]] && printf '  first timeout      %s\n' "$FIRST_TMO"
