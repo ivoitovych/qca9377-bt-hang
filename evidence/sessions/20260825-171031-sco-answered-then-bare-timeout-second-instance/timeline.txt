@@ -1,0 +1,1054 @@
+BLUETOOTH TIMELINE — 2026-08-25 17:07:00
+─────────────────────────────────────────────────────────────────────────
+17:07:03  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+17:07:03  BLUED src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+17:07:03  BLUED src/adapter.c:trigger_start_discovery()
+17:07:03  BLUED src/adapter.c:cancel_passive_scanning()
+17:07:03  KERN  hci0:
+17:07:03  KERN  hci0: state 2 -> 0
+17:07:03  KERN  hci0: entry 00000000ef11746d
+17:07:03  KERN  hci0: ADV monitoring is off
+17:07:03  KERN  hci0: stopping background scanning
+17:07:08  BLUED src/adapter.c:start_discovery_timeout()
+17:07:08  BLUED src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+17:07:08  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+17:07:08  KERN  hci0: state 0 -> 1
+17:07:08  KERN  hci0:
+17:07:08  KERN  hci0: entry 000000009f177b9b
+17:07:08  KERN  hci0: type 7
+17:07:08  KERN  hci0:
+17:07:08  KERN  hci0: cancelling interleave scan
+17:07:08  KERN  hci0: Opcode 0x2005
+17:07:08  KERN  hci0: opcode 0x2005 plen 6
+17:07:08  KERN  hci0: skb len 9
+17:07:08  KERN  hci0: length 1
+17:07:08  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:08  KERN  hci0: skb 000000004b05de25
+17:07:08  KERN  hci0: result 0x00
+17:07:08  KERN  hci0: end: err 0
+17:07:08  KERN  hci0: Opcode 0x200b
+17:07:08  KERN  hci0: opcode 0x200b plen 7
+17:07:08  KERN  hci0: skb len 10
+17:07:08  KERN  hci0: length 1
+17:07:08  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:08  KERN  hci0: skb 00000000eb4133e2
+17:07:08  KERN  Bluetooth: hci0: unexpected event for opcode 0x2005
+17:07:08  KERN  hci0: result 0x00
+17:07:08  KERN  hci0: end: err 0
+17:07:08  KERN  hci0: Opcode 0x200c
+17:07:08  KERN  hci0: opcode 0x200c plen 2
+17:07:08  KERN  hci0: skb len 5
+17:07:08  KERN  hci0: length 1
+17:07:08  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:08  KERN  hci0: skb 00000000f3b17b92
+17:07:08  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+17:07:08  BLUED src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+17:07:08  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+17:07:08  BLUED src/adapter.c:start_discovery_complete() status 0x00
+17:07:08  KERN  hci0: state 1 -> 2
+17:07:08  KERN  hci0: result 0x00
+17:07:08  KERN  hci0: end: err 0
+17:07:08  KERN  hci0: timeout 5120 ms
+17:07:08  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:08  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:01, rssi -77 flags 0x0004 eir_len 35
+17:07:09  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:09  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -68 flags 0x0000 eir_len 29
+17:07:09  BLUED src/device.c:device_set_legacy() legacy 0
+17:07:09  BLUED src/device.c:device_set_flags() flags 2
+17:07:10  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:10  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:03, rssi -80 flags 0x0000 eir_len 14
+17:07:10  BLUED src/device.c:device_store_cached_name() Can't store name for private addressed device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+17:07:10  BLUED src/device.c:device_set_legacy() legacy 0
+17:07:10  BLUED src/device.c:device_set_flags() flags 2
+17:07:10  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:10  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -66 flags 0x0000 eir_len 29
+17:07:10  BLUED src/device.c:device_set_legacy() legacy 0
+17:07:10  BLUED src/device.c:device_set_rssi_with_delta() rssi -66 delta 8
+17:07:10  BLUED src/device.c:device_set_flags() flags 2
+17:07:10  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:10  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:03, rssi -74 flags 0x0020 eir_len 21
+17:07:14  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:14  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:04, rssi -89 flags 0x0004 eir_len 8
+17:07:14  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:14  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:05, rssi -82 flags 0x0004 eir_len 31
+17:07:14  KERN  hci0:
+17:07:14  KERN  hci0:
+17:07:14  KERN  hci0: entry 00000000073d3383
+17:07:14  KERN  hci0: Opcode 0x200c
+17:07:14  KERN  hci0: opcode 0x200c plen 2
+17:07:14  KERN  hci0: skb len 5
+17:07:14  KERN  hci0: length 1
+17:07:14  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:14  KERN  hci0: skb 00000000a3420138
+17:07:14  KERN  hci0: result 0x00
+17:07:14  KERN  hci0:
+17:07:14  KERN  hci0: end: err 0
+17:07:14  KERN  hci0: entry 000000009ecf852e
+17:07:14  KERN  hci0:
+17:07:14  KERN  hci0: Opcode 0x0401
+17:07:14  KERN  hci0: opcode 0x0401 plen 5
+17:07:14  KERN  hci0: skb len 8
+17:07:14  KERN  hci0: length 1
+17:07:14  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:14  KERN  hci0: skb 00000000ed4a24cc
+17:07:14  KERN  hci0: result 0x00
+17:07:14  KERN  hci0: end: err 0
+17:07:14  KERN  hci0: entry 00000000d6de52eb
+17:07:14  KERN  hci0:
+17:07:14  KERN  hci0:
+17:07:19  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+17:07:19  BLUED src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+17:07:19  BLUED src/adapter.c:trigger_start_discovery()
+17:07:19  BLUED src/adapter.c:cancel_passive_scanning()
+17:07:19  KERN  hci0: state 2 -> 0
+17:07:19  KERN  hci0:
+17:07:19  KERN  hci0: entry 00000000ef11746d
+17:07:19  KERN  hci0: ADV monitoring is off
+17:07:19  KERN  hci0: stopping background scanning
+17:07:21  KERN  hci0: dst AA:BB:CC:00:00:06
+17:07:21  KERN  hci0: dst AA:BB:CC:00:00:06 handle 0x0f00
+17:07:21  KERN  hci0 evt 1
+17:07:21  KERN  hci0 opcode 0x0409 plen 7
+17:07:21  KERN  hci0: skb len 10
+17:07:21  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:21  KERN  hci0: skb 00000000f75d5920
+17:07:21  KERN  hci0: hcon 00000000faa937fd handle 0x0002
+17:07:21  KERN  hci0 opcode 0x041b plen 2
+17:07:21  KERN  hci0: skb len 5
+17:07:21  KERN  hci0:
+17:07:21  KERN  hci0: entry 00000000507bfff2
+17:07:21  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:21  KERN  hci0: skb 00000000e85925e0
+17:07:21  KERN  hci0 opcode 0x041c plen 3
+17:07:21  KERN  hci0: skb len 6
+17:07:21  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:21  KERN  hci0: skb 000000001f73ebc6
+17:07:21  KERN  hci0 opcode 0x0419 plen 10
+17:07:21  KERN  hci0: skb len 13
+17:07:21  KERN  hci0 hcon 00000000faa937fd
+17:07:21  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:21  KERN  hci0: skb 000000001d562877
+17:07:21  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:21  KERN  hci0: skb 00000000c7caeae6
+17:07:21  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x000b
+17:07:21  BLUED src/adapter.c:connected_callback() hci0 device AA:BB:CC:00:00:06 connected eir_len 17
+17:07:21  BLUED src/device.c:device_create() dst AA:BB:CC:00:00:06
+17:07:21  BLUED src/device.c:device_new() address AA:BB:CC:00:00:06
+17:07:21  BLUED src/device.c:device_new() Creating device /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:21  BLUED src/device.c:device_set_class() /org/bluez/hci0/dev_AA:BB:CC:00:00:06 0x240404
+17:07:21  KERN  hci0 opcode 0x040c plen 6
+17:07:21  KERN  hci0: skb len 9
+17:07:21  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:21  KERN  hci0: skb 0000000020ac3bf1
+17:07:22  TRACE /usr/local/sbin/bt-trace: line 225: 341217 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+17:07:22  TRACE btmon exited (#52) — restarting within 1s; ~1s of capture lost
+17:07:22  TRACE capturing to bt-20260825-170722.btsnoop
+17:07:22  TRACE pruning bt-20260812-150501.btsnoop
+17:07:22  KERN  hci0 opcode 0x040c plen 6
+17:07:22  KERN  hci0: skb len 9
+17:07:22  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:22  KERN  hci0: skb 00000000e7381bf2
+17:07:23  KERN  hci0 opcode 0x040c plen 6
+17:07:23  KERN  hci0: skb len 9
+17:07:23  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:23  KERN  hci0: skb 00000000d40daeb6
+17:07:24  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x000c
+17:07:24  BLUED src/adapter.c:dev_disconnected() Device AA:BB:CC:00:00:06 disconnected, reason 3
+17:07:24  BLUED src/adapter.c:adapter_remove_connection()
+17:07:24  BLUED plugins/policy.c:disconnect_cb() reason 3
+17:07:24  BLUED src/adapter.c:bonding_attempt_complete() hci0 bdaddr AA:BB:CC:00:00:06 type 0 status 0xe
+17:07:24  BLUED src/device.c:device_bonding_complete() bonding (nil) status 0x0e
+17:07:24  BLUED src/device.c:device_bonding_failed() status 14
+17:07:24  BLUED src/adapter.c:resume_discovery()
+17:07:24  BLUED src/adapter.c:trigger_start_discovery()
+17:07:24  BLUED src/adapter.c:cancel_passive_scanning()
+17:07:24  KERN  hci0:
+17:07:24  KERN  hci0 hcon 00000000faa937fd chan 000000000b70d4ce
+17:07:24  KERN  hci0: entry 0000000077dafcde
+17:07:24  KERN  hci0 hcon 00000000faa937fd handle 2
+17:07:24  KERN  hci0: hcon 00000000faa937fd
+17:07:24  KERN  hci0 evt 2
+17:07:24  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:24  KERN  hci0: skb 00000000c1ebc8b6
+17:07:25  TRACE /usr/local/sbin/bt-trace: line 225: 341361 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+17:07:25  TRACE btmon exited (#53) — restarting within 1s; ~1s of capture lost
+17:07:25  TRACE capturing to bt-20260825-170725.btsnoop
+17:07:25  TRACE pruning bt-20260812-151749.btsnoop
+17:07:28  BLUED src/adapter.c:start_discovery_timeout()
+17:07:28  BLUED src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+17:07:28  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+17:07:28  KERN  hci0: state 0 -> 1
+17:07:28  KERN  hci0:
+17:07:28  KERN  hci0: entry 0000000053283b16
+17:07:28  KERN  hci0: type 7
+17:07:28  KERN  hci0:
+17:07:28  KERN  hci0: cancelling interleave scan
+17:07:28  KERN  hci0: Opcode 0x2005
+17:07:28  KERN  hci0: opcode 0x2005 plen 6
+17:07:28  KERN  hci0: skb len 9
+17:07:28  KERN  hci0: length 1
+17:07:28  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:28  KERN  hci0: skb 000000008afa69c4
+17:07:28  KERN  hci0: result 0x00
+17:07:28  KERN  hci0: end: err 0
+17:07:28  KERN  hci0: Opcode 0x200b
+17:07:28  KERN  hci0: opcode 0x200b plen 7
+17:07:28  KERN  hci0: skb len 10
+17:07:28  KERN  hci0: length 1
+17:07:28  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:28  KERN  hci0: skb 000000005b8cedce
+17:07:28  KERN  Bluetooth: hci0: unexpected event for opcode 0x2005
+17:07:28  KERN  hci0: result 0x00
+17:07:28  KERN  hci0: end: err 0
+17:07:28  KERN  hci0: Opcode 0x200c
+17:07:28  KERN  hci0: opcode 0x200c plen 2
+17:07:28  KERN  hci0: skb len 5
+17:07:28  KERN  hci0: length 1
+17:07:28  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:28  KERN  hci0: skb 000000000208d942
+17:07:28  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+17:07:28  BLUED src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+17:07:28  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+17:07:28  BLUED src/adapter.c:start_discovery_complete() status 0x00
+17:07:28  KERN  hci0: state 1 -> 2
+17:07:28  KERN  hci0: result 0x00
+17:07:28  KERN  hci0: end: err 0
+17:07:28  KERN  hci0: timeout 5120 ms
+17:07:28  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:28  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:06, rssi -54 flags 0x0000 eir_len 19
+17:07:29  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:29  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -68 flags 0x0000 eir_len 29
+17:07:29  BLUED src/device.c:device_set_legacy() legacy 0
+17:07:29  BLUED src/device.c:device_set_flags() flags 2
+17:07:30  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:30  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:06, rssi -47 flags 0x0000 eir_len 19
+17:07:30  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:30  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:03, rssi -76 flags 0x0000 eir_len 35
+17:07:30  BLUED src/device.c:device_store_cached_name() Can't store name for private addressed device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+17:07:30  BLUED src/device.c:device_set_legacy() legacy 0
+17:07:30  BLUED src/device.c:device_set_flags() flags 2
+17:07:30  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:30  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:06, rssi -47 flags 0x0000 eir_len 19
+17:07:30  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:30  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -69 flags 0x0020 eir_len 0
+17:07:34  KERN  hci0:
+17:07:34  KERN  hci0:
+17:07:34  KERN  hci0: entry 00000000bad8b735
+17:07:34  KERN  hci0: Opcode 0x200c
+17:07:34  KERN  hci0: opcode 0x200c plen 2
+17:07:34  KERN  hci0: skb len 5
+17:07:34  KERN  hci0: length 1
+17:07:34  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:34  KERN  hci0: skb 00000000f9451b35
+17:07:34  KERN  hci0: result 0x00
+17:07:34  KERN  hci0:
+17:07:34  KERN  hci0: end: err 0
+17:07:34  KERN  hci0: entry 000000001e386235
+17:07:34  KERN  hci0:
+17:07:34  KERN  hci0: Opcode 0x0401
+17:07:34  KERN  hci0: opcode 0x0401 plen 5
+17:07:34  KERN  hci0: skb len 8
+17:07:34  KERN  hci0: length 1
+17:07:34  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:34  KERN  hci0: skb 00000000fc5f6eda
+17:07:34  KERN  hci0: result 0x00
+17:07:34  KERN  hci0: end: err 0
+17:07:34  KERN  hci0: entry 000000003571b777
+17:07:34  KERN  hci0:
+17:07:34  KERN  hci0:
+17:07:34  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:34  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:06, rssi -48 flags 0x0000 eir_len 47
+17:07:34  BLUED src/device.c:device_set_legacy() legacy 0
+17:07:34  BLUED src/device.c:device_set_rssi_with_delta() rssi -48
+17:07:34  BLUED profiles/audio/avrcp.c:avrcp_controller_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:34  BLUED profiles/audio/control.c:control_init() Registered interface org.bluez.MediaControl1 on path /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:34  BLUED src/service.c:btd_service_ref() 0x5f7e725b2520: ref=2
+17:07:34  BLUED src/service.c:change_state() 0x5f7e725b2520: device AA:BB:CC:00:00:06 profile avrcp-controller state changed: unavailable -> disconnected (0)
+17:07:34  BLUED profiles/audio/a2dp.c:a2dp_sink_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:34  BLUED profiles/audio/sink.c:sink_init() /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:34  BLUED src/service.c:btd_service_ref() 0x5f7e725b5560: ref=2
+17:07:34  BLUED src/service.c:change_state() 0x5f7e725b5560: device AA:BB:CC:00:00:06 profile a2dp-sink state changed: unavailable -> disconnected (0)
+17:07:34  BLUED src/profile.c:ext_device_probe() Hands-Free Voice gateway probed with UUID <UUID-01>
+17:07:34  BLUED src/service.c:change_state() 0x5f7e725b2f00: device AA:BB:CC:00:00:06 profile Hands-Free Voice gateway state changed: unavailable -> disconnected (0)
+17:07:39  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+17:07:39  BLUED src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+17:07:39  BLUED src/adapter.c:trigger_start_discovery()
+17:07:39  BLUED src/adapter.c:cancel_passive_scanning()
+17:07:39  KERN  hci0: state 2 -> 0
+17:07:39  KERN  hci0:
+17:07:39  KERN  hci0: entry 000000009dc08a95
+17:07:39  KERN  hci0: ADV monitoring is off
+17:07:39  KERN  hci0: stopping background scanning
+17:07:41  BLUED src/adapter.c:stop_discovery() sender :1.291
+17:07:41  BLUED src/adapter.c:set_discoverable() sending set mode command for index 0
+17:07:41  BLUED src/adapter.c:set_mode() sending set mode command for index 0
+17:07:41  BLUED src/adapter.c:discovery_remove() owner :1.291
+17:07:41  BLUED src/device.c:device_set_rssi_with_delta() rssi 0
+17:07:41  BLUED src/device.c:device_set_rssi_with_delta() rssi 0
+17:07:41  BLUED src/device.c:device_set_rssi_with_delta() rssi 0
+17:07:41  BLUED src/adapter.c:trigger_passive_scanning()
+17:07:41  BLUED src/device.c:btd_device_set_temporary() temporary 0
+17:07:41  BLUED src/agent.c:agent_ref() 0x5f7e725b30a0: ref=2
+17:07:41  BLUED src/device.c:bonding_request_new() Requesting bonding for AA:BB:CC:00:00:06
+17:07:41  BLUED src/agent.c:agent_ref() 0x5f7e725b30a0: ref=3
+17:07:41  BLUED src/agent.c:agent_unref() 0x5f7e725b30a0: ref=2
+17:07:41  BLUED src/adapter.c:suspend_discovery()
+17:07:41  BLUED src/adapter.c:adapter_bonding_attempt() hci0 bdaddr AA:BB:CC:00:00:06 type 0 io_cap 0x01
+17:07:41  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0007
+17:07:41  KERN  hci0:
+17:07:41  KERN  hci0: entry 0000000069c0278f
+17:07:41  KERN  hci0: Opcode 0x0c1a
+17:07:41  KERN  hci0: opcode 0x0c1a plen 1
+17:07:41  KERN  hci0: skb len 4
+17:07:41  KERN  hci0: length 1
+17:07:41  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:41  KERN  hci0: skb 0000000042fac1db
+17:07:41  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0007 complete: 0x00
+17:07:41  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000ad1
+17:07:41  BLUED src/adapter.c:settings_changed() Changed settings: 0x0000000a
+17:07:41  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+17:07:41  KERN  hci0: result 0x00
+17:07:41  KERN  hci0: end: err 0
+17:07:41  KERN  hci0: ADV monitoring is off
+17:07:41  KERN  hci0: stopping background scanning
+17:07:41  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0033
+17:07:41  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x002a
+17:07:41  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0033 complete: 0x00
+17:07:41  BLUED src/adapter.c:add_accept_list_complete() AA:BB:CC:00:00:06 added to kernel accept list
+17:07:41  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0019
+17:07:41  KERN  hci0:
+17:07:41  KERN  hci0: entry 00000000a8b0ccdb
+17:07:41  KERN  hci0: dst AA:BB:CC:00:00:06
+17:07:41  KERN  hci0: dst AA:BB:CC:00:00:06 handle 0x0f00
+17:07:41  KERN  hci0 evt 1
+17:07:41  KERN  hci0:
+17:07:41  KERN  hci0: entry 00000000cd6d0117
+17:07:41  KERN  hci0: Opcode 0x0405
+17:07:41  KERN  hci0: opcode 0x0405 plen 13
+17:07:41  KERN  hci0: skb len 16
+17:07:41  KERN  hci0: length 1
+17:07:41  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:41  KERN  hci0: skb 00000000fd80225e
+17:07:41  KERN  hci0: hcon 00000000f318cda1 handle 0x0004
+17:07:41  KERN  hci0 opcode 0x041b plen 2
+17:07:41  KERN  hci0: skb len 5
+17:07:41  KERN  hci0: result 0x00
+17:07:41  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:41  KERN  hci0: skb 00000000f274cf3a
+17:07:41  KERN  hci0: end: err 0
+17:07:41  KERN  hci0: entry 000000008bf76938
+17:07:41  KERN  hci0:
+17:07:41  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:41  KERN  hci0: skb 00000000f274cf3a
+17:07:41  KERN  hci0 opcode 0x041c plen 3
+17:07:41  KERN  hci0: skb len 6
+17:07:41  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:41  KERN  hci0: skb 00000000b0d53069
+17:07:41  KERN  hci0 opcode 0x0419 plen 10
+17:07:41  KERN  hci0: skb len 13
+17:07:41  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:41  KERN  hci0: skb 00000000f3c82bfa
+17:07:41  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x000b
+17:07:41  BLUED src/adapter.c:connected_callback() hci0 device AA:BB:CC:00:00:06 connected eir_len 17
+17:07:41  KERN  hci0 opcode 0x0411 plen 2
+17:07:41  KERN  hci0: skb len 5
+17:07:41  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:41  KERN  hci0: skb 00000000588eb587
+17:07:41  KERN  hci0 opcode 0x040c plen 6
+17:07:41  KERN  hci0: skb len 9
+17:07:41  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:41  KERN  hci0: skb 0000000020b60cbc
+17:07:41  KERN  hci0 opcode 0x042b plen 9
+17:07:41  KERN  hci0: skb len 12
+17:07:41  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:41  KERN  hci0: skb 00000000d40aec9b
+17:07:42  KERN  hci0 opcode 0x042c plen 6
+17:07:42  KERN  hci0: skb len 9
+17:07:42  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:42  KERN  hci0: skb 000000005ce00dca
+17:07:42  TRACE /usr/local/sbin/bt-trace: line 225: 341466 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+17:07:42  TRACE btmon exited (#54) — restarting within 1s; ~1s of capture lost
+17:07:42  TRACE capturing to bt-20260825-170742.btsnoop
+17:07:42  TRACE pruning bt-20260812-151800.btsnoop
+17:07:42  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0009
+17:07:42  BLUED src/adapter.c:new_link_key_callback() hci0 new key for AA:BB:CC:00:00:06 type 4 pin_len 0 store_hint 1
+17:07:42  KERN  hci0 key for AA:BB:CC:00:00:06 type 4
+17:07:42  KERN  hci0 opcode 0x0413 plen 3
+17:07:42  KERN  hci0: skb len 6
+17:07:42  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:42  KERN  hci0: skb 0000000082169cfb
+17:07:42  BLUED src/device.c:device_set_bonded() setting bonded for device to true
+17:07:42  BLUED src/device.c:device_bonding_complete() bonding 0x5f7e725b1b10 status 0x00
+17:07:42  BLUED src/device.c:device_bonding_complete() Proceeding with service discovery
+17:07:42  BLUED src/agent.c:agent_unref() 0x5f7e725b30a0: ref=1
+17:07:42  BLUED src/adapter.c:resume_discovery()
+17:07:42  KERN  hci0 hcon 00000000f318cda1
+17:07:42  KERN  hci0 opcode 0x1408 plen 2
+17:07:42  KERN  hci0: skb len 5
+17:07:42  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:42  KERN  hci0: skb 0000000061b8d942
+17:07:42  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0019 complete: 0x00
+17:07:42  BLUED src/adapter.c:pair_device_complete() Success (0x00)
+17:07:42  BLUED src/adapter.c:bonding_attempt_complete() hci0 bdaddr AA:BB:CC:00:00:06 type 0 status 0x0
+17:07:42  BLUED src/device.c:device_bonding_complete() bonding (nil) status 0x00
+17:07:42  BLUED src/adapter.c:resume_discovery()
+17:07:42  BLUED profiles/audio/avrcp.c:avrcp_target_probe() path /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:42  BLUED src/service.c:btd_service_ref() 0x5f7e725dfe40: ref=2
+17:07:42  BLUED src/service.c:change_state() 0x5f7e725dfe40: device AA:BB:CC:00:00:06 profile audio-avrcp-target state changed: unavailable -> disconnected (0)
+17:07:42  BLUED src/device.c:device_svc_resolved() /org/bluez/hci0/dev_AA:BB:CC:00:00:06 err 0
+17:07:42  BLUED src/device.c:btd_device_set_trusted() trusted 1
+17:07:42  BLUED src/device.c:connect_profiles() /org/bluez/hci0/dev_AA:BB:CC:00:00:06 (all), client :1.291
+17:07:42  BLUED src/service.c:btd_service_ref() 0x5f7e725b2f00: ref=2
+17:07:42  BLUED src/service.c:change_state() 0x5f7e725b2f00: device AA:BB:CC:00:00:06 profile Hands-Free Voice gateway state changed: disconnected -> connecting (0)
+17:07:42  BLUED src/profile.c:ext_connect() Hands-Free Voice gateway connected to AA:BB:CC:00:00:06
+17:07:42  BLUED src/service.c:change_state() 0x5f7e725b2f00: device AA:BB:CC:00:00:06 profile Hands-Free Voice gateway state changed: connecting -> connected (0)
+17:07:42  BLUED src/device.c:device_profile_connected() Hands-Free Voice gateway Success (0)
+17:07:42  BLUED profiles/audio/a2dp.c:a2dp_sink_connect() path /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x5f7e725ded20: ref=1
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x5f7e725ded20: ref=2
+17:07:42  BLUED profiles/audio/a2dp.c:setup_ref() 0x5f7e725f3680: ref=1
+17:07:42  BLUED profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:06: SINK_STATE_DISCONNECTED -> SINK_STATE_CONNECTING
+17:07:42  BLUED profiles/audio/sink.c:sink_connect() stream creation in progress
+17:07:42  BLUED src/service.c:change_state() 0x5f7e725b5560: device AA:BB:CC:00:00:06 profile a2dp-sink state changed: disconnected -> connecting (0)
+17:07:42  BLUED plugins/policy.c:policy_connect() /org/bluez/hci0/dev_AA:BB:CC:00:00:06 profile a2dp-sink
+17:07:42  BLUED src/service.c:btd_service_ref() 0x5f7e725b2f00: ref=3
+17:07:42  BLUED plugins/policy.c:service_cb() Added Hands-Free Voice gateway reconnect 0
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_connect_cb() AVDTP: connected signaling channel to AA:BB:CC:00:00:06
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_connect_cb() AVDTP imtu=672, omtu=895
+17:07:42  BLUED profiles/audio/avdtp.c:session_cb()
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_parse_resp() DISCOVER request succeeded
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_discover_resp() seid 7 type 1 media 0 in use 0
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_discover_resp() seid 6 type 1 media 0 in use 0
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_discover_resp() seid 5 type 1 media 0 in use 0
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_discover_resp() seid 4 type 1 media 0 in use 0
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_discover_resp() seid 8 type 1 media 0 in use 0
+17:07:42  BLUED profiles/audio/avdtp.c:session_cb()
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_parse_resp() GET_ALL_CAPABILITIES request succeeded
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_get_capabilities_resp() seid 7 type 1 media 0
+17:07:42  BLUED profiles/audio/avdtp.c:session_cb()
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_parse_resp() GET_ALL_CAPABILITIES request succeeded
+17:07:42  BLUED profiles/audio/avdtp.c:avdtp_get_capabilities_resp() seid 6 type 1 media 0
+17:07:43  BLUED profiles/audio/avdtp.c:session_cb()
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_parse_resp() GET_ALL_CAPABILITIES request succeeded
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_get_capabilities_resp() seid 5 type 1 media 0
+17:07:43  BLUED profiles/audio/avdtp.c:session_cb()
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_parse_resp() GET_ALL_CAPABILITIES request succeeded
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_get_capabilities_resp() seid 4 type 1 media 0
+17:07:43  BLUED src/battery.c:btd_battery_register() path = /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:43  BLUED src/battery.c:btd_battery_register() registered Battery object: /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:43  BLUED src/battery.c:provided_battery_added_cb() provided battery added /org/freedesktop/pipewire/battery/org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:43  BLUED src/battery.c:btd_battery_update() path = /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:43  BLUED profiles/audio/avdtp.c:session_cb()
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_parse_resp() GET_ALL_CAPABILITIES request succeeded
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_get_capabilities_resp() seid 8 type 1 media 0
+17:07:43  BLUED profiles/audio/a2dp.c:discover_cb() version 0x0103 err (nil)
+17:07:43  BLUED profiles/audio/a2dp.c:register_remote_sep() Found remote SEP: /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7
+17:07:43  BLUED profiles/audio/a2dp.c:register_remote_sep() Found remote SEP: /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep6
+17:07:43  BLUED profiles/audio/a2dp.c:register_remote_sep() Found remote SEP: /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep5
+17:07:43  BLUED profiles/audio/a2dp.c:register_remote_sep() Found remote SEP: /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep4
+17:07:43  BLUED profiles/audio/a2dp.c:register_remote_sep() Found remote SEP: /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep8
+17:07:43  BLUED profiles/audio/sink.c:discovery_complete() Discovery complete
+17:07:43  BLUED profiles/audio/a2dp.c:endpoint_match_codec_ind() vendor 0x000000d7 codec 0x0024
+17:07:43  BLUED profiles/audio/a2dp.c:endpoint_match_codec_ind() vendor 0x0000004f codec 0x0001
+17:07:43  BLUED profiles/audio/a2dp.c:setup_ref() 0x5f7e725f3680: ref=2
+17:07:43  BLUED profiles/audio/a2dp.c:endpoint_match_codec_ind() vendor 0x000000d7 codec 0x0024
+17:07:43  BLUED profiles/audio/a2dp.c:setup_ref() 0x5f7e725f3680: ref=3
+17:07:43  BLUED profiles/audio/media.c:media_endpoint_async_call() Calling SelectConfiguration: name = :1.89 path = /MediaEndpoint/A2DPSource/aptx_hd
+17:07:43  BLUED profiles/audio/a2dp.c:setup_unref() 0x5f7e725f3680: ref=2
+17:07:43  BLUED profiles/audio/a2dp.c:a2dp_config() a2dp_config: selected SEP 0x5f7e725beaf0
+17:07:43  BLUED profiles/audio/a2dp.c:setup_ref() 0x5f7e725f3680: ref=3
+17:07:43  BLUED profiles/audio/a2dp.c:endpoint_match_codec_ind() vendor 0x000000d7 codec 0x0024
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_set_configuration() 0x5f7e725ded20: int_seid=3, acp_seid=7
+17:07:43  BLUED profiles/audio/a2dp.c:setup_unref() 0x5f7e725f3680: ref=2
+17:07:43  BLUED profiles/audio/a2dp.c:setup_unref() 0x5f7e725f3680: ref=1
+17:07:43  BLUED profiles/audio/avdtp.c:session_cb()
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_parse_resp() SET_CONFIGURATION request succeeded
+17:07:43  BLUED profiles/audio/a2dp.c:setconf_cfm() Source 0x5f7e725beaf0: Set_Configuration_Cfm
+17:07:43  BLUED profiles/audio/a2dp.c:setup_ref() 0x5f7e725f3680: ref=2
+17:07:43  BLUED profiles/audio/media.c:media_endpoint_async_call() Calling SetConfiguration: name = :1.89 path = /MediaEndpoint/A2DPSource/aptx_hd
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: IDLE -> CONFIGURED
+17:07:43  BLUED profiles/audio/a2dp.c:setup_unref() 0x5f7e725f3680: ref=1
+17:07:43  BLUED profiles/audio/avdtp.c:session_cb()
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_parse_resp() OPEN request succeeded
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_connect_cb() AVDTP: connected transport channel to AA:BB:CC:00:00:06
+17:07:43  BLUED profiles/audio/avdtp.c:handle_transport_connect() Flushable packets enabled
+17:07:43  BLUED profiles/audio/avdtp.c:handle_transport_connect() sk 41, omtu 895, send buffer size 106496
+17:07:43  BLUED profiles/audio/a2dp.c:open_cfm() Source 0x5f7e725beaf0: Open_Cfm
+17:07:43  BLUED profiles/audio/a2dp.c:setup_unref() 0x5f7e725f3680: ref=0
+17:07:43  BLUED profiles/audio/a2dp.c:setup_free() 0x5f7e725f3680
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x5f7e725ded20: ref=1
+17:07:43  BLUED profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: CONFIGURED -> OPEN
+17:07:43  BLUED src/service.c:change_state() 0x5f7e725b5560: device AA:BB:CC:00:00:06 profile a2dp-sink state changed: connecting -> connected (0)
+17:07:43  BLUED src/device.c:device_profile_connected() a2dp-sink Success (0)
+17:07:43  BLUED src/device.c:device_profile_connected() returning response to :1.291
+17:07:43  BLUED plugins/policy.c:policy_connect() /org/bluez/hci0/dev_AA:BB:CC:00:00:06 profile avrcp-controller
+17:07:43  BLUED profiles/audio/avrcp.c:avrcp_connect() path /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:07:43  BLUED profiles/audio/avctp.c:avctp_set_state() AVCTP Connecting
+17:07:43  BLUED src/service.c:change_state() 0x5f7e725b2520: device AA:BB:CC:00:00:06 profile avrcp-controller state changed: disconnected -> connecting (0)
+17:07:43  BLUED src/service.c:btd_service_ref() 0x5f7e725b5560: ref=3
+17:07:43  BLUED plugins/policy.c:service_cb() Added a2dp-sink reconnect 1
+17:07:43  BLUED profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:06: SINK_STATE_CONNECTING -> SINK_STATE_CONNECTED
+17:07:43  BLUED profiles/audio/transport.c:transport_update_playing() /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29 State=TRANSPORT_STATE_IDLE Playing=0
+17:07:43  BLUED src/adapter.c:set_discovery_filter() sender :1.291
+17:07:43  BLUED src/adapter.c:parse_discovery_filter_dict() filtered discovery params: transport: 7 rssi: 32767 pathloss: 32767 duplicate data: false discoverable true pattern (null)
+17:07:43  BLUED src/adapter.c:start_discovery() sender :1.291
+17:07:43  BLUED src/adapter.c:update_discovery_filter()
+17:07:43  BLUED src/adapter.c:discovery_filter_to_mgmt_cp()
+17:07:43  BLUED src/adapter.c:set_discoverable() sending set mode command for index 0
+17:07:43  BLUED src/adapter.c:set_mode() sending set mode command for index 0
+17:07:43  BLUED src/adapter.c:trigger_start_discovery()
+17:07:43  BLUED src/adapter.c:cancel_passive_scanning()
+17:07:43  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0007
+17:07:43  BLUED src/adapter.c:start_discovery_timeout()
+17:07:43  BLUED src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+17:07:43  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0007 complete: 0x00
+17:07:43  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000ad3
+17:07:43  BLUED src/adapter.c:settings_changed() Changed settings: 0x00000002
+17:07:43  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+17:07:43  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0006
+17:07:43  KERN  hci0:
+17:07:43  KERN  hci0: entry 00000000083ed1dd
+17:07:43  KERN  hci0: ADV monitoring is off
+17:07:43  KERN  hci0: stopping background scanning
+17:07:43  KERN  hci0:
+17:07:43  KERN  hci0: entry 0000000012329a02
+17:07:43  KERN  hci0: Opcode 0x0c3a
+17:07:43  KERN  hci0: opcode 0x0c3a plen 4
+17:07:43  KERN  hci0: skb len 7
+17:07:43  KERN  hci0: length 1
+17:07:43  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:43  KERN  hci0: skb 00000000d5cb0351
+17:07:43  KERN  hci0: result 0x00
+17:07:43  KERN  hci0: end: err 0
+17:07:43  KERN  hci0: Opcode 0x0c1a
+17:07:43  KERN  hci0: opcode 0x0c1a plen 1
+17:07:43  KERN  hci0: skb len 4
+17:07:43  KERN  hci0: length 1
+17:07:43  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:43  KERN  hci0: skb 0000000055c5a41f
+17:07:43  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0006 complete: 0x00
+17:07:43  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000adb
+17:07:43  BLUED src/adapter.c:settings_changed() Changed settings: 0x00000008
+17:07:43  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+17:07:43  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+17:07:43  KERN  hci0: result 0x00
+17:07:43  KERN  hci0: end: err 0
+17:07:43  KERN  hci0:
+17:07:43  KERN  hci0: state 0 -> 1
+17:07:43  KERN  hci0:
+17:07:43  KERN  hci0: entry 000000006a31723a
+17:07:43  KERN  hci0: type 7
+17:07:43  KERN  hci0:
+17:07:43  KERN  hci0: cancelling interleave scan
+17:07:43  KERN  hci0: Opcode 0x2005
+17:07:43  KERN  hci0: opcode 0x2005 plen 6
+17:07:43  KERN  hci0: skb len 9
+17:07:43  KERN  hci0: length 1
+17:07:43  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:43  KERN  hci0: skb 00000000da3de6cb
+17:07:43  KERN  hci0: result 0x00
+17:07:43  KERN  hci0: end: err 0
+17:07:43  KERN  hci0: Opcode 0x200b
+17:07:43  KERN  hci0: opcode 0x200b plen 7
+17:07:43  KERN  hci0: skb len 10
+17:07:43  KERN  hci0: length 1
+17:07:43  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:43  KERN  hci0: skb 000000003f558730
+17:07:43  KERN  Bluetooth: hci0: unexpected event for opcode 0x2005
+17:07:43  KERN  hci0: result 0x00
+17:07:43  KERN  hci0: end: err 0
+17:07:43  KERN  hci0: Opcode 0x200c
+17:07:43  KERN  hci0: opcode 0x200c plen 2
+17:07:43  KERN  hci0: skb len 5
+17:07:43  KERN  hci0: length 1
+17:07:43  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:43  KERN  hci0: skb 0000000026e3917c
+17:07:43  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+17:07:43  BLUED src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+17:07:43  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x00
+17:07:43  BLUED src/adapter.c:start_discovery_complete() status 0x00
+17:07:43  KERN  hci0: state 1 -> 2
+17:07:43  KERN  hci0: result 0x00
+17:07:43  KERN  hci0: end: err 0
+17:07:43  KERN  hci0: timeout 5120 ms
+17:07:43  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:43  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:06, rssi -49 flags 0x0000 eir_len 19
+17:07:43  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:43  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:02, rssi -66 flags 0x0000 eir_len 29
+17:07:43  BLUED src/device.c:device_set_legacy() legacy 0
+17:07:43  BLUED src/device.c:device_set_rssi_with_delta() rssi -66
+17:07:43  BLUED src/device.c:device_set_flags() flags 2
+17:07:43  BLUED profiles/audio/avctp.c:avctp_connect_cb() AVCTP: connected to AA:BB:CC:00:00:06
+17:07:43  BLUED profiles/audio/avctp.c:init_uinput() AVRCP: uinput initialized for MOMENTUM 4
+17:07:43  BLUED profiles/audio/avrcp.c:controller_init() 0x5f7e725b7b70 version 0x0106
+17:07:43  BLUED src/service.c:change_state() 0x5f7e725dfe40: device AA:BB:CC:00:00:06 profile audio-avrcp-target state changed: disconnected -> connected (0)
+17:07:43  BLUED profiles/audio/player.c:media_player_controller_create() /org/bluez/hci0/dev_AA:BB:CC:00:00:06/player0
+17:07:43  BLUED profiles/audio/avrcp.c:target_init() 0x5f7e725ad8f0 version 0x0106
+17:07:43  BLUED src/service.c:change_state() 0x5f7e725b2520: device AA:BB:CC:00:00:06 profile avrcp-controller state changed: connecting -> connected (0)
+17:07:43  BLUED src/device.c:device_profile_connected() avrcp-controller Success (0)
+17:07:43  BLUED profiles/audio/avctp.c:avctp_set_state() AVCTP Connected
+17:07:43  BLUED profiles/audio/avrcp.c:handle_vendordep_pdu() AVRCP PDU 0x31, company 0x001958 len 0x0005
+17:07:44  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:44  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:06, rssi -50 flags 0x0000 eir_len 19
+17:07:44  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:44  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:03, rssi -76 flags 0x0000 eir_len 14
+17:07:44  BLUED src/device.c:device_store_cached_name() Can't store name for private addressed device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+17:07:44  BLUED src/device.c:device_set_legacy() legacy 0
+17:07:44  BLUED src/device.c:device_set_rssi_with_delta() rssi -76
+17:07:44  BLUED src/device.c:device_set_flags() flags 2
+17:07:45  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:45  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:06, rssi -52 flags 0x0000 eir_len 19
+17:07:45  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:45  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:05, rssi -81 flags 0x0004 eir_len 31
+17:07:45  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0012
+17:07:45  BLUED src/adapter.c:device_found_callback() hci0 addr AA:BB:CC:00:00:03, rssi -76 flags 0x0020 eir_len 21
+17:07:45  BLUED profiles/audio/player.c:media_player_set_status() stopped
+17:07:48  KERN  hci0:
+17:07:48  KERN  hci0:
+17:07:48  KERN  hci0: entry 000000008221784a
+17:07:48  KERN  hci0: Opcode 0x200c
+17:07:48  KERN  hci0: opcode 0x200c plen 2
+17:07:48  KERN  hci0: skb len 5
+17:07:48  KERN  hci0: length 1
+17:07:48  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:48  KERN  hci0: skb 00000000a42c43ae
+17:07:48  KERN  hci0: result 0x00
+17:07:48  KERN  hci0:
+17:07:48  KERN  hci0: end: err 0
+17:07:48  KERN  hci0: entry 00000000028bd8f8
+17:07:48  KERN  hci0:
+17:07:48  KERN  hci0: Opcode 0x0401
+17:07:48  KERN  hci0: opcode 0x0401 plen 5
+17:07:48  KERN  hci0: skb len 8
+17:07:48  KERN  hci0: length 1
+17:07:48  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:48  KERN  hci0: skb 0000000079c5d436
+17:07:48  KERN  hci0: result 0x00
+17:07:48  KERN  hci0: end: err 0
+17:07:48  KERN  hci0: entry 00000000850da615
+17:07:48  KERN  hci0:
+17:07:48  KERN  hci0:
+17:07:53  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0013
+17:07:53  BLUED src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+17:07:53  BLUED src/adapter.c:trigger_start_discovery()
+17:07:53  BLUED src/adapter.c:cancel_passive_scanning()
+17:07:53  KERN  hci0: state 2 -> 0
+17:07:53  KERN  hci0:
+17:07:53  KERN  hci0: entry 0000000078b95ffc
+17:07:53  KERN  hci0: ADV monitoring is off
+17:07:53  KERN  hci0: stopping background scanning
+17:07:55  BLUED src/agent.c:unregister_agent() agent :1.291
+17:07:55  BLUED src/agent.c:agent_disconnect() Agent :1.291 disconnected
+17:07:55  BLUED src/agent.c:remove_default_agent() Default agent cleared
+17:07:55  BLUED src/adapter.c:set_mode() sending set mode command for index 0
+17:07:55  BLUED src/agent.c:agent_destroy() agent :1.291
+17:07:55  BLUED src/agent.c:agent_unref() 0x5f7e725b30a0: ref=0
+17:07:55  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0009
+17:07:55  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0009 complete: 0x00
+17:07:55  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000acb
+17:07:55  BLUED src/adapter.c:settings_changed() Changed settings: 0x00000010
+17:07:55  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+17:07:55  BLUED src/adapter.c:stop_discovery() sender :1.291
+17:07:55  BLUED src/adapter.c:set_discoverable() sending set mode command for index 0
+17:07:55  BLUED src/adapter.c:set_mode() sending set mode command for index 0
+17:07:55  BLUED src/adapter.c:discovery_remove() owner :1.291
+17:07:55  BLUED src/device.c:device_set_rssi_with_delta() rssi 0
+17:07:55  BLUED src/device.c:device_set_rssi_with_delta() rssi 0
+17:07:55  BLUED src/adapter.c:trigger_passive_scanning()
+17:07:55  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0007
+17:07:55  KERN  hci0:
+17:07:55  KERN  hci0: entry 00000000d6ffed85
+17:07:55  KERN  hci0: Opcode 0x0c1a
+17:07:55  KERN  hci0: opcode 0x0c1a plen 1
+17:07:55  KERN  hci0: skb len 4
+17:07:55  KERN  hci0: length 1
+17:07:55  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:07:55  KERN  hci0: skb 00000000ad3fdc22
+17:07:55  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0007 complete: 0x00
+17:07:55  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000ac1
+17:07:55  BLUED src/adapter.c:settings_changed() Changed settings: 0x0000000a
+17:07:55  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+17:07:55  KERN  hci0: result 0x00
+17:07:55  KERN  hci0: end: err 0
+17:07:55  KERN  hci0: ADV monitoring is off
+17:07:55  KERN  hci0: stopping background scanning
+17:08:04  BLUED profiles/audio/transport.c:media_owner_create() Owner created: sender=:1.89
+17:08:04  BLUED profiles/audio/transport.c:media_transport_resume() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29 Owner :1.89
+17:08:04  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x5f7e725ded20: ref=2
+17:08:04  BLUED profiles/audio/a2dp.c:a2dp_sep_lock() SEP 0x5f7e725beaf0 locked
+17:08:04  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x5f7e725ded20: ref=3
+17:08:04  BLUED profiles/audio/a2dp.c:setup_ref() 0x5f7e725b9c20: ref=1
+17:08:04  BLUED profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29: TRANSPORT_STATE_IDLE -> TRANSPORT_STATE_REQUESTING
+17:08:04  BLUED profiles/audio/transport.c:media_request_create() Request created: method=Acquire id=55
+17:08:04  BLUED profiles/audio/transport.c:media_owner_add() Owner :1.89 Request Acquire
+17:08:04  BLUED profiles/audio/transport.c:media_transport_set_owner() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29 Owner :1.89
+17:08:04  KERN  hci0 opcode 0x0804 plen 2
+17:08:04  KERN  hci0: skb len 5
+17:08:04  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:08:04  KERN  hci0: skb 00000000a4990955
+17:08:04  BLUED profiles/audio/avdtp.c:session_cb()
+17:08:04  BLUED profiles/audio/avdtp.c:avdtp_parse_resp() START request succeeded
+17:08:04  BLUED profiles/audio/a2dp.c:start_cfm() Source 0x5f7e725beaf0: Start_Cfm
+17:08:04  BLUED /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29: fd(41) ready
+17:08:04  BLUED profiles/audio/transport.c:media_owner_remove() Owner :1.89 Request Acquire
+17:08:04  BLUED profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29: TRANSPORT_STATE_REQUESTING -> TRANSPORT_STATE_ACTIVE
+17:08:04  BLUED profiles/audio/a2dp.c:setup_unref() 0x5f7e725b9c20: ref=0
+17:08:04  BLUED profiles/audio/a2dp.c:setup_free() 0x5f7e725b9c20
+17:08:04  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x5f7e725ded20: ref=2
+17:08:04  BLUED profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: OPEN -> STREAMING
+17:08:04  BLUED profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:06: SINK_STATE_CONNECTED -> SINK_STATE_PLAYING
+17:08:04  BLUED profiles/audio/transport.c:transport_update_playing() /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29 State=TRANSPORT_STATE_ACTIVE Playing=1
+17:08:08  BLUED profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29: TRANSPORT_STATE_ACTIVE -> TRANSPORT_STATE_SUSPENDING
+17:08:08  BLUED profiles/audio/transport.c:media_transport_suspend() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29 Owner :1.89
+17:08:08  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x5f7e725ded20: ref=3
+17:08:08  BLUED profiles/audio/a2dp.c:setup_ref() 0x5f7e725b9c20: ref=1
+17:08:08  BLUED profiles/audio/transport.c:media_request_create() Request created: method=Release id=56
+17:08:08  BLUED profiles/audio/transport.c:media_owner_add() Owner :1.89 Request Release
+17:08:08  BLUED profiles/audio/avdtp.c:session_cb()
+17:08:08  BLUED profiles/audio/avdtp.c:avdtp_parse_resp() SUSPEND request succeeded
+17:08:08  BLUED profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: STREAMING -> OPEN
+17:08:08  BLUED profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:06: SINK_STATE_PLAYING -> SINK_STATE_CONNECTED
+17:08:08  BLUED profiles/audio/transport.c:transport_update_playing() /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29 State=TRANSPORT_STATE_SUSPENDING Playing=0
+17:08:08  BLUED profiles/audio/a2dp.c:suspend_cfm() Source 0x5f7e725beaf0: Suspend_Cfm
+17:08:08  BLUED profiles/audio/transport.c:media_request_reply() Request Release Reply Success
+17:08:08  BLUED profiles/audio/transport.c:media_owner_remove() Owner :1.89 Request Release
+17:08:08  BLUED profiles/audio/a2dp.c:a2dp_sep_unlock() SEP 0x5f7e725beaf0 unlocked
+17:08:08  BLUED profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29: TRANSPORT_STATE_SUSPENDING -> TRANSPORT_STATE_IDLE
+17:08:08  BLUED profiles/audio/transport.c:media_transport_remove_owner() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29 Owner :1.89
+17:08:08  BLUED profiles/audio/transport.c:media_owner_free() Owner :1.89
+17:08:08  BLUED profiles/audio/a2dp.c:setup_unref() 0x5f7e725b9c20: ref=0
+17:08:08  BLUED profiles/audio/a2dp.c:setup_free() 0x5f7e725b9c20
+17:08:08  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x5f7e725ded20: ref=2
+17:08:08  KERN  hci0: dst AA:BB:CC:00:00:06
+17:08:08  KERN  hci0: dst AA:BB:CC:00:00:06 handle 0x0f00
+17:08:08  KERN  hci0: parent 00000000f318cda1 hcon 00000000a29f3bc5
+17:08:08  KERN  hci0: hcon 00000000a29f3bc5
+17:08:08  KERN  hci0 opcode 0x0428 plen 17
+17:08:08  KERN  hci0: skb len 20
+17:08:08  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:08:08  KERN  hci0: skb 0000000026afac34
+17:08:08  KERN  hci0: hcon 00000000a29f3bc5 handle 0x0005
+17:08:08  KERN  hci0 evt 5
+17:08:08  KERN  hci0
+17:08:08  KERN  hci0
+17:08:08  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:08:08  KERN  hci0: skb 000000006a896032
+17:08:08  KERN  hci0: handle 0x05 reason 0x13
+17:08:08  KERN  hci0:
+17:08:08  KERN  hci0: entry 00000000dd025e1b
+17:08:08  KERN  hci0: Opcode 0x0406
+17:08:08  KERN  hci0: opcode 0x0406 plen 3
+17:08:08  KERN  hci0: skb len 6
+17:08:08  KERN  hci0: length 1
+17:08:08  KERN  hci0 cmd_cnt 0 cmd queued 1
+17:08:09  TRACE /usr/local/sbin/bt-trace: line 225: 341559 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+17:08:09  TRACE btmon exited (#55) — restarting within 1s; ~1s of capture lost
+17:08:09  TRACE capturing to bt-20260825-170809.btsnoop
+17:08:09  TRACE pruning bt-20260812-151819.btsnoop
+17:08:10  TRACE /usr/local/sbin/bt-trace: line 225: 341699 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+17:08:10  TRACE btmon exited (#56) — restarting within 1s; ~1s of capture lost
+17:08:10  TRACE capturing to bt-20260825-170810.btsnoop
+17:08:10  TRACE pruning bt-20260812-153320.btsnoop
+17:08:10  KERN  Bluetooth: hci0: command tx timeout
+17:08:10  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:08:10  KERN  hci0: skb 000000007ed801c3
+17:08:10  KERN  hci0: end: err -110
+17:08:10  KERN  hci0: status 0x13
+17:08:10  KERN  hci0 hcon 00000000a29f3bc5 handle 5
+17:08:10  KERN  hci0: hcon 00000000a29f3bc5
+17:08:10  KERN  hci0 evt 6
+17:08:12  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+17:08:12  KERN  hci0: err 0x6e
+17:08:12  KERN  hci0 cmd_cnt 1 cmd queued 0
+17:08:13  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+17:08:13  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:02
+17:08:13  BLUED src/device.c:device_free() 0x5f7e725f14d0
+17:08:15  BLUED src/device.c:device_remove() Removing device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+17:08:15  BLUED src/device.c:btd_device_unref() Freeing device /org/bluez/hci0/dev_AA:BB:CC:00:00:03
+17:08:15  BLUED src/device.c:device_free() 0x5f7e725e92d0
+17:08:16  KERN  Bluetooth: hci0: setting interface failed (110)
+17:08:19  BLUED profiles/audio/transport.c:media_owner_create() Owner created: sender=:1.89
+17:08:19  BLUED profiles/audio/transport.c:media_transport_resume() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29 Owner :1.89
+17:08:19  BLUED profiles/audio/a2dp.c:a2dp_sep_lock() SEP 0x5f7e725beaf0 locked
+17:08:19  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x5f7e725ded20: ref=3
+17:08:19  BLUED profiles/audio/a2dp.c:setup_ref() 0x5f7e725d0eb0: ref=1
+17:08:19  BLUED profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29: TRANSPORT_STATE_IDLE -> TRANSPORT_STATE_REQUESTING
+17:08:19  BLUED profiles/audio/transport.c:media_request_create() Request created: method=Acquire id=57
+17:08:19  BLUED profiles/audio/transport.c:media_owner_add() Owner :1.89 Request Acquire
+17:08:19  BLUED profiles/audio/transport.c:media_transport_set_owner() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29 Owner :1.89
+17:08:25  BLUED profiles/audio/avdtp.c:cancel_request() Start: Connection timed out (110)
+17:08:25  BLUED profiles/audio/a2dp.c:start_cfm() Source 0x5f7e725beaf0: Start_Cfm
+17:08:25  BLUED profiles/audio/transport.c:media_transport_remove_owner() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29 Owner :1.89
+17:08:25  BLUED profiles/audio/transport.c:media_request_reply() Request Acquire Reply Input/output error
+17:08:25  BLUED profiles/audio/transport.c:media_owner_free() Owner :1.89
+17:08:25  BLUED profiles/audio/transport.c:media_owner_remove() Owner :1.89 Request Acquire
+17:08:25  BLUED profiles/audio/transport.c:media_transport_suspend() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29 Owner
+17:08:25  BLUED profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:06/sep7/fd29: TRANSPORT_STATE_REQUESTING -> TRANSPORT_STATE_IDLE
+17:08:25  BLUED profiles/audio/a2dp.c:a2dp_sep_unlock() SEP 0x5f7e725beaf0 unlocked
+17:08:25  BLUED profiles/audio/a2dp.c:setup_unref() 0x5f7e725d0eb0: ref=0
+17:08:25  BLUED profiles/audio/a2dp.c:setup_free() 0x5f7e725d0eb0
+17:08:25  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x5f7e725ded20: ref=2
+17:08:27  BLUED profiles/audio/avdtp.c:cancel_request() Abort: Connection timed out (110)
+17:08:27  BLUED profiles/audio/avdtp.c:avdtp_ref() 0x5f7e725ded20: ref=3
+17:08:27  BLUED profiles/audio/avdtp.c:connection_lost() Disconnected from AA:BB:CC:00:00:06
+17:08:27  BLUED profiles/audio/a2dp.c:abort_cfm() Source 0x5f7e725beaf0: Abort_Cfm
+17:08:27  BLUED profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: OPEN -> IDLE
+17:08:27  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x5f7e725ded20: ref=2
+17:08:27  BLUED src/service.c:change_state() 0x5f7e725b5560: device AA:BB:CC:00:00:06 profile a2dp-sink state changed: connected -> disconnected (0)
+17:08:27  BLUED plugins/policy.c:policy_disconnect() /org/bluez/hci0/dev_AA:BB:CC:00:00:06 profile avrcp-controller
+17:08:27  BLUED src/service.c:change_state() 0x5f7e725b2520: device AA:BB:CC:00:00:06 profile avrcp-controller state changed: connected -> disconnecting (0)
+17:08:27  BLUED profiles/audio/avrcp.c:avrcp_disconnect() path /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:08:27  BLUED src/service.c:change_state() 0x5f7e725dfe40: device AA:BB:CC:00:00:06 profile audio-avrcp-target state changed: connected -> disconnected (0)
+17:08:27  BLUED src/service.c:change_state() 0x5f7e725b2520: device AA:BB:CC:00:00:06 profile avrcp-controller state changed: disconnecting -> disconnected (0)
+17:08:27  BLUED profiles/audio/avrcp.c:controller_destroy() 0x5f7e725b7b70
+17:08:27  BLUED profiles/audio/player.c:media_player_destroy() /org/bluez/hci0/dev_AA:BB:CC:00:00:06/player0
+17:08:27  BLUED profiles/audio/avrcp.c:target_destroy() 0x5f7e725ad8f0
+17:08:27  BLUED profiles/audio/avctp.c:avctp_set_state() AVCTP Disconnected
+17:08:27  BLUED profiles/audio/avctp.c:avctp_disconnected() AVCTP: closing uinput for AA:BB:CC:00:00:06
+17:08:27  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x5f7e725ded20: ref=1
+17:08:27  BLUED profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:06: SINK_STATE_CONNECTED -> SINK_STATE_DISCONNECTED
+17:08:27  BLUED profiles/audio/a2dp.c:channel_remove() chan 0x5f7e725f1db0
+17:08:27  BLUED profiles/audio/avdtp.c:avdtp_unref() 0x5f7e725ded20: ref=0
+17:08:27  BLUED profiles/audio/avdtp.c:avdtp_free() 0x5f7e725ded20
+17:08:27  KERN  hci0: dst AA:BB:CC:00:00:06
+17:08:27  KERN  hci0: dst AA:BB:CC:00:00:06 handle 0x0f00
+17:08:27  KERN  hci0: parent 00000000f318cda1 hcon 00000000a29f3bc5
+17:08:27  KERN  hci0: hcon 00000000a29f3bc5
+17:08:27  KERN  hci0 opcode 0x0428 plen 17
+17:08:27  KERN  hci0: skb len 20
+17:08:27  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:08:27  KERN  hci0: skb 000000001d693b7a
+17:08:28  KERN  hci0: handle 0xf00 reason 0x13
+17:08:28  KERN  hci0:
+17:08:28  KERN  hci0: entry 00000000aa802100
+17:08:28  KERN  hci0: Opcode 0x0408
+17:08:28  KERN  hci0: opcode 0x0408 plen 6
+17:08:28  KERN  hci0: skb len 9
+17:08:28  KERN  hci0: length 1
+17:08:28  KERN  hci0 cmd_cnt 0 cmd queued 1
+17:08:28  KERN  hci0: parent 00000000f318cda1 hcon 00000000a29f3bc5
+17:08:30  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+17:08:30  KERN  hci0: err 0x6e
+17:08:30  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:08:30  KERN  hci0: skb 000000004e9a8409
+17:08:30  KERN  hci0: end: err -110
+17:08:30  KERN  hci0: status 0x13
+17:08:30  KERN  hci0 hcon 00000000a29f3bc5 handle 3840
+17:08:30  KERN  hci0: hcon 00000000a29f3bc5
+17:08:30  KERN  hci0 evt 6
+17:08:32  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+17:08:32  KERN  hci0: err 0x6e
+17:08:32  KERN  hci0 cmd_cnt 1 cmd queued 0
+17:08:35  KERN  hci0: dst AA:BB:CC:00:00:06
+17:08:35  KERN  hci0: dst AA:BB:CC:00:00:06 handle 0x0f00
+17:08:35  KERN  hci0: parent 00000000f318cda1 hcon 00000000a29f3bc5
+17:08:35  KERN  hci0: hcon 00000000a29f3bc5
+17:08:35  KERN  hci0 opcode 0x0428 plen 17
+17:08:35  KERN  hci0: skb len 20
+17:08:35  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:08:35  KERN  hci0: skb 00000000b0cd7f59
+17:08:37  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+17:08:37  KERN  hci0: err 0x6e
+17:08:37  KERN  hci0 cmd_cnt 1 cmd queued 0
+17:08:45  KERN  hci0: handle 0xf00 reason 0x13
+17:08:45  KERN  hci0:
+17:08:45  KERN  hci0: entry 000000004a8db497
+17:08:45  KERN  hci0: Opcode 0x0408
+17:08:45  KERN  hci0: opcode 0x0408 plen 6
+17:08:45  KERN  hci0: skb len 9
+17:08:45  KERN  hci0: length 1
+17:08:45  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:08:45  KERN  hci0: skb 00000000c760da0c
+17:08:47  KERN  hci0: end: err -110
+17:08:47  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+17:08:47  KERN  hci0: err 0x6e
+17:08:47  KERN  hci0 cmd_cnt 1 cmd queued 0
+17:08:47  KERN  hci0: status 0x13
+17:08:47  KERN  hci0 hcon 00000000a29f3bc5 handle 3840
+17:08:47  KERN  hci0: hcon 00000000a29f3bc5
+17:08:47  KERN  hci0 evt 6
+17:08:54  BLUED src/agent.c:add_default_agent() Default agent set to :1.291 /org/gnome/bluetooth/settings
+17:08:54  BLUED src/adapter.c:set_mode() sending set mode command for index 0
+17:08:54  BLUED src/agent.c:agent_ref() 0x5f7e725d0ff0: ref=1
+17:08:54  BLUED src/agent.c:register_agent() agent :1.291
+17:08:54  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0009
+17:08:54  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0009 complete: 0x00
+17:08:54  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000ad1
+17:08:54  BLUED src/adapter.c:settings_changed() Changed settings: 0x00000010
+17:08:54  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+17:08:54  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0018
+17:08:54  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0018 complete: 0x00
+17:08:54  BLUED src/adapter.c:set_discovery_filter() sender :1.291
+17:08:54  BLUED src/adapter.c:parse_discovery_filter_dict() filtered discovery params: transport: 7 rssi: 32767 pathloss: 32767 duplicate data: false discoverable true pattern (null)
+17:08:54  BLUED src/adapter.c:start_discovery() sender :1.291
+17:08:54  BLUED src/adapter.c:update_discovery_filter()
+17:08:54  BLUED src/adapter.c:discovery_filter_to_mgmt_cp()
+17:08:54  BLUED src/adapter.c:set_discoverable() sending set mode command for index 0
+17:08:54  BLUED src/adapter.c:set_mode() sending set mode command for index 0
+17:08:54  BLUED src/adapter.c:trigger_start_discovery()
+17:08:54  BLUED src/adapter.c:cancel_passive_scanning()
+17:08:54  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0007
+17:08:54  BLUED src/adapter.c:start_discovery_timeout()
+17:08:54  BLUED src/adapter.c:start_discovery_timeout() adapter->current_discovery_filter == 0
+17:08:54  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0007 complete: 0x00
+17:08:54  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000ad3
+17:08:54  BLUED src/adapter.c:settings_changed() Changed settings: 0x00000002
+17:08:54  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+17:08:54  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0006
+17:08:54  KERN  hci0:
+17:08:54  KERN  hci0: entry 00000000a0a5af76
+17:08:54  KERN  hci0: ADV monitoring is off
+17:08:54  KERN  hci0: stopping background scanning
+17:08:54  KERN  hci0:
+17:08:54  KERN  hci0: entry 000000008de5fa7a
+17:08:54  KERN  hci0: Opcode 0x0c3a
+17:08:54  KERN  hci0: opcode 0x0c3a plen 4
+17:08:54  KERN  hci0: skb len 7
+17:08:54  KERN  hci0: length 1
+17:08:54  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:08:54  KERN  hci0: skb 000000009ddddb7a
+17:08:56  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x06 status: 0x05
+17:08:56  BLUED Failed to set mode: Authentication Failed (0x05)
+17:08:56  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+17:08:56  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+17:08:56  KERN  hci0: err 0x6e
+17:08:56  KERN  hci0 cmd_cnt 1 cmd queued 0
+17:08:56  KERN  hci0: end: err -110
+17:08:56  KERN  Bluetooth: hci0: Opcode 0x0c3a failed: -110
+17:08:56  KERN  hci0: state 0 -> 1
+17:08:56  KERN  hci0:
+17:08:56  KERN  hci0: entry 00000000ac07c647
+17:08:56  KERN  hci0: type 7
+17:08:56  KERN  hci0:
+17:08:56  KERN  hci0: cancelling interleave scan
+17:08:56  KERN  hci0: Opcode 0x2005
+17:08:56  KERN  hci0: opcode 0x2005 plen 6
+17:08:56  KERN  hci0: skb len 9
+17:08:56  KERN  hci0: length 1
+17:08:56  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:08:56  KERN  hci0: skb 00000000912720c9
+17:08:58  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+17:08:58  KERN  hci0: end: err -110
+17:08:58  KERN  hci0: err 0x6e
+17:08:58  KERN  Bluetooth: hci0: Opcode 0x2005 failed: -110
+17:08:58  KERN  hci0 cmd_cnt 1 cmd queued 0
+17:08:58  KERN  hci0: Opcode 0x200b
+17:08:58  KERN  hci0: opcode 0x200b plen 7
+17:08:58  KERN  hci0: skb len 10
+17:08:58  KERN  hci0: length 1
+17:08:58  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:08:58  KERN  hci0: skb 000000004ea0ea9d
+17:09:00  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0023 complete: 0x05
+17:09:00  BLUED src/adapter.c:start_discovery_complete() status 0x05
+17:09:00  BLUED src/adapter.c:discovery_remove() owner :1.291
+17:09:00  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+17:09:00  KERN  hci0: err 0x6e
+17:09:00  KERN  hci0 cmd_cnt 1 cmd queued 0
+17:09:00  KERN  hci0: end: err -110
+17:09:00  KERN  Bluetooth: hci0: Opcode 0x200b failed: -110
+17:09:00  KERN  hci0: state 1 -> 0
+17:09:00  KERN  hci0: entry 000000008fb30397
+17:09:00  KERN  hci0: ADV monitoring is off
+17:09:00  KERN  hci0: stopping background scanning
+17:09:00  KERN  hci0:
+17:09:43  KERN  00000000ed3530ce name hci0 blocked 1
+17:09:43  KERN  hci0 00000000ed3530ce
+17:09:43  KERN  hci0: Opcode 0x0c1a
+17:09:43  KERN  hci0: opcode 0x0c1a plen 1
+17:09:43  KERN  hci0: skb len 4
+17:09:43  KERN  hci0: length 1
+17:09:43  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:09:43  KERN  hci0: skb 000000000e7110ce
+17:09:45  KERN  hci0: end: err -110
+17:09:45  KERN  Bluetooth: hci0: Opcode 0x0c1a failed: -110
+17:09:45  KERN  Bluetooth: hci0: Error when powering off device on rfkill (-110)
+17:09:45  KERN  hci0 00000000ed3530ce
+17:09:45  KERN  hci0:
+17:09:45  KERN  Bluetooth: hci0: command 0x0406 tx timeout
+17:09:45  KERN  hci0: err 0x6e
+17:09:45  KERN  hci0 cmd_cnt 1 cmd queued 0
+17:09:45  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0007
+17:09:45  BLUED src/adapter.c:dev_class_changed_callback() Class: 0x000000
+17:09:45  BLUED src/shared/mgmt.c:can_read_data() [0x0000] event 0x0006
+17:09:45  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000ada
+17:09:45  BLUED src/adapter.c:settings_changed() Changed settings: 0x00000009
+17:09:45  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+17:09:45  BLUED src/adapter.c:cancel_passive_scanning()
+17:09:45  BLUED src/adapter.c:discovery_free() 0x5f7e725d42d0
+17:09:45  BLUED src/adapter.c:set_discoverable() sending set mode command for index 0
+17:09:45  BLUED src/adapter.c:set_mode() sending set mode command for index 0
+17:09:45  BLUED src/adapter.c:adapter_remove_connection()
+17:09:45  BLUED src/adapter.c:adapter_remove_connection()
+17:09:45  BLUED No matching connection for device
+17:09:45  BLUED src/adapter.c:adapter_stop() adapter /org/bluez/hci0 has been disabled
+17:09:45  KERN  hci0: err 0x13
+17:09:45  KERN  hci0: cancelling interleave scan
+17:09:45  KERN  hdev hci0
+17:09:45  KERN  hci0 hcon 00000000f318cda1 chan 00000000af5d9e37
+17:09:45  KERN  hci0 hcon 00000000f318cda1 handle 4
+17:09:45  KERN  hci0: hcon 00000000f318cda1
+17:09:45  BLUED src/profile.c:ext_io_disconnected() Unable to get io data for Hands-Free Voice gateway: getpeername: Transport endpoint is not connected (107)
+17:09:45  BLUED src/service.c:change_state() 0x5f7e725b2f00: device AA:BB:CC:00:00:06 profile Hands-Free Voice gateway state changed: connected -> disconnected (0)
+17:09:45  BLUED src/service.c:btd_service_unref() 0x5f7e725b2f00: ref=2
+17:09:45  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0007
+17:09:45  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x0007 complete: 0x00
+17:09:45  BLUED src/adapter.c:new_settings_callback() Settings: 0x00000ad0
+17:09:45  BLUED src/adapter.c:settings_changed() Changed settings: 0x0000000a
+17:09:45  BLUED src/adapter.c:settings_changed() Pending settings: 0x00000000
+17:09:45  KERN  hci0 evt 2
+17:09:45  KERN  hci0
+17:09:45  KERN  hci0:
+17:09:45  KERN  hci0: entry 00000000e4d5570e
+17:09:45  KERN  hci0: err 0x02
+17:09:45  KERN  hci0: err 0x02
+17:09:45  KERN  hci0: err 0x02
+17:09:45  KERN  hci0: err 0x02
+17:09:45  KERN  hci0: err 0x02
+17:09:45  KERN  hci0: err 0x02
+17:09:45  KERN  hci0: err 0x02
+17:09:45  KERN  hci0: err 0x02
+17:09:45  KERN  hci0: err 0x02
+17:09:45  KERN  hci0: err 0x02
+17:09:45  KERN  hci0
+17:09:45  BLUED src/rfkill.c:rfkill_event() RFKILL event idx 0 type 2 op 2 soft 1 hard 0
+17:09:45  BLUED src/rfkill.c:rfkill_event() RFKILL unblock for hci0
+17:09:45  BLUED src/adapter.c:adapter_set_power_state() off-blocked
+17:09:45  BLUED src/battery.c:provided_battery_removed_cb() provided battery removed /org/freedesktop/pipewire/battery/org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:09:45  BLUED src/battery.c:btd_battery_unregister() path = /org/bluez/hci0/dev_AA:BB:CC:00:00:06
+17:09:45  TRACE /usr/local/sbin/bt-trace: line 225: 341739 Aborted (core dumped) btmon -w "$CURRENT" > /dev/null 2>&1
+17:09:45  TRACE btmon exited (#57) — restarting within 1s; ~1s of capture lost
+17:09:45  TRACE capturing to bt-20260825-170945.btsnoop
+17:09:45  BLUED src/rfkill.c:rfkill_event() RFKILL event idx 0 type 2 op 2 soft 0 hard 0
+17:09:45  BLUED src/rfkill.c:rfkill_event() RFKILL unblock for hci0
+17:09:45  BLUED src/adapter.c:adapter_set_power_state() off
+17:09:45  BLUED src/adapter.c:adapter_set_power_state() off-enabling
+17:09:45  BLUED src/adapter.c:set_mode() sending set mode command for index 0
+17:09:45  BLUED src/shared/mgmt.c:send_request() [0x0000] command 0x0005
+17:09:45  KERN  00000000ed3530ce name hci0 blocked 0
+17:09:45  KERN  hci0:
+17:09:45  KERN  hci0: entry 000000000ed90e0d
+17:09:45  KERN  hci0:
+17:09:45  KERN  hci0
+17:09:45  KERN  hci0
+17:09:45  KERN  hci0
+17:09:45  KERN  hci0
+17:09:45  KERN  hci0:
+17:09:45  KERN  hci0:
+17:09:45  KERN  hci0: Opcode 0x0c03
+17:09:45  KERN  hci0: opcode 0x0c03 plen 0
+17:09:45  KERN  hci0: skb len 3
+17:09:45  KERN  hci0: length 1
+17:09:45  KERN  hci0 cmd_cnt 1 cmd queued 1
+17:09:45  KERN  hci0: skb 00000000b640bddd
+17:09:45  TRACE pruning bt-20260812-153451.btsnoop
+17:09:46  KERN  00000000ed3530ce name hci0 blocked 0
+17:09:47  KERN  hci0: end: err -110
+17:09:47  KERN  Bluetooth: hci0: Opcode 0x0c03 failed: -110
+17:09:47  KERN  hci0
+17:09:47  KERN  hci0: err 0x02
+17:09:47  KERN  hci0
+17:09:47  BLUED src/shared/mgmt.c:can_read_data() [0x0000] command 0x05 status: 0x05
+17:09:47  BLUED Failed to set mode: Authentication Failed (0x05)
+17:09:47  BLUED src/adapter.c:adapter_set_power_state() on
+─────────────────────────────────────────────────────────────────────────
+events: 1050   (MARK=0 KERN=548 BLUED=478 WDOG=0)
