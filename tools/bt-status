@@ -62,6 +62,14 @@ fatal=$(cnt     "FATAL:"                "$WD")
 rfail=$(cnt     "USBDEVFS_RESET failed" "$WD")
 # Canonical spelling (EX-015): bare "tx timeout" folds in link timeouts.
 tx=$(bt_journal_count "command( 0x[0-9a-f]+)? tx timeout" -k -b 0)
+# COUNTED THROUGH THE SEAM, like tx, and for the same reason as the note above.
+# This one read `$KE` — the captured kernel journal that was deleted when it
+# stopped being held in a shell string — and the consumer was missed. Under
+# `set -u` the report printed `line 126: KE: unbound variable` to stderr and an
+# EMPTY counter to stdout: a diagnostic nobody reads and a number that looks
+# like it was measured. Silent zeros are this project's recurring defect; a
+# silent blank is the same defect wearing less.
+le_unexp=$(bt_journal_count "unexpected event for opcode" -k -b 0)
 audio=$(grep -ciE 'avdtp|sco|a2dp|Hands-Free' <<<"$BD" 2>/dev/null || true)
 
 verdict() {
@@ -123,7 +131,7 @@ have bt-state && bt-state | sed 's/^/  /' || echo "  (bt-state not installed)"
 echo
 echo "${B}2. This boot${O}   (up $(uptime -p | sed 's/^up //'))"
 printf '  %-30s %s\n' "HCI command timeouts:"      "${tx:-0}"
-printf '  %-30s %s\n' "'unexpected event' (LE):"   "$(cnt 'unexpected event for opcode' "$KE")"
+printf '  %-30s %s\n' "'unexpected event' (LE):"   "${le_unexp:-0}"
 printf '  %-30s %s\n' "audio/profile events:"      "${audio:-0}"
 printf '  %-30s %s\n' "early signals seen:"        "${early_sig:-0}"
 printf '  %-30s %s\n' "early interventions:"       "${early_act:-0}"

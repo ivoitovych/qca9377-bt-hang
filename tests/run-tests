@@ -3221,6 +3221,25 @@ BRC=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt"
 [[ "$SOUT" == *"CONTROLLER IS DOWN RIGHT NOW"* ]] \
     && ok "bt-status reports a dead controller from present state, not history" \
     || bad "bt-status missed a controller that is down right now"
+
+# ⚠️ EVERY COUNTER MUST CARRY A NUMBER, AND THE REPORT MUST NOT LEAK A SHELL
+# ERROR. The LE line read `$KE` — a variable deleted when this stopped holding
+# the whole kernel journal in a shell string, and the one consumer was missed.
+# Under `set -u` bt-status printed `line 126: KE: unbound variable` to stderr
+# and an EMPTY value in the column: a diagnostic nobody reads and a blank that
+# looks like it was measured. Two assertions, because they are two failures —
+# the counter can be right while the tool still spills an error, and a silent
+# blank is exactly what went unnoticed for as long as it did.
+[[ "$SOUT" != *"unbound variable"* ]] \
+    && ok "bt-status produces its report without a shell diagnostic on stderr" \
+    || bad "bt-status leaked a shell error: $(grep -o '[^ ]*unbound variable' <<<"$SOUT" | head -1)"
+# GREP, NOT rt_line: that helper is defined three thousand lines below this
+# point, and under `set -u` calling it here would abort the run — the same
+# defined-later mistake the archive section already records twice.
+STLE=$(grep -F "'unexpected event' (LE):" <<<"$SOUT" | head -1)
+[[ "$STLE" =~ [[:space:]]2[[:space:]]*$ ]] \
+    && ok "the LE unexpected-event counter reports its number, not a blank" \
+    || bad "the LE counter is empty or wrong: [$STLE]"
 # Main's rewrite removed the causal "stage 2" claim and split the remedy over
 # two lines: the demonstrated recovery is a power-off, and whether a warm
 # reboot works is deliberately unresolved rather than known-negative. The
@@ -7226,19 +7245,45 @@ fi
 
 # AN ARCHIVE NOBODY READ BACK IS A BELIEF, NOT A COPY. The failure is silent —
 # a truncated write, a compressor that died inside a pipeline, a full disk all
-# produce a plausible file. Driven by truncating the stream.
+# produce a plausible file. Driven by a compressor that LOSES DATA.
+#
+# ⚠️ THIS USED TO SED-PATCH THE TOOL'S PIPELINE FROM OUTSIDE, and that is a
+# warning worth keeping. On 2026-08-31 bt-archive's export pipeline gained a
+# `tee` and the pattern `| $COMP > "$TMP"` stopped matching. The sed produced a
+# copy identical to the real tool, which then archived successfully — the test
+# still ran, still named the guard, and had stopped testing it. It failed loudly
+# here only by luck of the assertion shape. A test that reaches into another
+# file's source is coupled to text nobody thinks of as an interface.
+#
+# BT_ARCHIVE_COMP is that interface. The stub consumes ALL of stdin — draining
+# rather than exiting early — so nothing upstream takes SIGPIPE and the failure
+# under test is the one named: bytes silently lost between the source and the
+# file, with every exit status still zero.
 ARTRUNC=$(mktemp -d)
-sed 's#| \$COMP > "\$TMP"#| head -4 | $COMP > "$TMP"#' tools/bt-archive > "$ARTRUNC/bt-archive"
-chmod +x "$ARTRUNC/bt-archive"
+{ echo '#!/bin/bash'
+  echo '{ head -4; cat >/dev/null; } | gzip'; } > "$ARTRUNC/losing-comp"
+chmod +x "$ARTRUNC/losing-comp"
 ARD=$(mktemp -d)
-ARTO=$(BT_LIBDIR="$PWD/tools/lib" BT_REPO="$PWD" BT_JOURNAL_FIXTURE=tests/journal/archive \
-       BT_ARCHIVE_DIR="$ARD" "$ARTRUNC/bt-archive" -1 2>&1); artrc=$?
+ARTO=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARD" \
+       BT_ARCHIVE_COMP="$ARTRUNC/losing-comp" BT_ARCHIVE_EXT=gz BT_ARCHIVE_DECOMP='gzip -dc' \
+       tools/bt-archive -1 2>&1); artrc=$?
 ARLEFT=$(ls -A "$ARD" 2>/dev/null | wc -l)
 if (( artrc == 2 )) && [[ "$ARTO" == *"read-back mismatch"* ]] && (( ARLEFT == 0 )); then
     ok "a truncated archive is refused and discarded, not filed as a backup"
 else
     bad "a truncated archive survived (rc=$artrc, $ARLEFT file(s) left): $(tail -1 <<<"$ARTO")"
 fi
+
+# AND THE SEAM MUST ACTUALLY BE REACHED, or the test above proves nothing about
+# the tool that ships. A stub that is never consulted looks exactly like a guard
+# that works — the failure mode the sed had, restated one level up.
+ARSEAM=$(mktemp -d)
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARSEAM" \
+    BT_ARCHIVE_COMP=/nonexistent/compressor-that-does-not-exist \
+    tools/bt-archive -1 >/dev/null 2>&1
+(( $? != 0 )) && [[ -z "$(ls -A "$ARSEAM" 2>/dev/null)" ]] \
+    && ok "BT_ARCHIVE_COMP is honoured — the compressor seam is reached, not decoration" \
+    || bad "BT_ARCHIVE_COMP was ignored: the truncation test above is not testing bt-archive"
 
 # THE DESTINATION MAY NOT BE INSIDE THE REPOSITORY. A raw export carries MACs
 # and Wi-Fi BSSIDs, and BSSIDs geolocate the machine. repo-scan would catch a
@@ -7296,6 +7341,87 @@ BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARSYM/outside" \
     && ok "a destination genuinely outside the repository still archives" \
     || bad "the symlink fix turned the guard into a refusal of everything"
 rm -rf "$ARSYM"
+# ── --check: PRESENT vs COMPLETE ─────────────────────────────────────────
+#
+# "Already archived" was tested by the existence of a file, and a prefix of a
+# boot is a file. On 2026-08-31 nine of twenty-one archives on the machine were
+# prefixes — one holding 6279 of 423261 records, 1.5% of its boot — and every
+# tool reported the archive current. This is the only question that separates
+# the two, so it has to be asserted on the counts and not on the wording.
+ARCHK=$(mktemp -d)
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARCHK" tools/bt-archive -1 >/dev/null 2>&1
+ARCHKO=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARCHK" tools/bt-archive --check 2>&1)
+[[ "$ARCHKO" == *"c1315c25"*"complete"* ]] \
+    && ok "--check calls a whole archive complete" \
+    || bad "--check misread a complete archive: $(grep c1315c25 <<<"$ARCHKO")"
+
+# A SHORT ARCHIVE IS THE CASE THAT MATTERS, and it must be named as a repair
+# job rather than merely counted. Built by replacing the archive with a valid
+# one-record file — valid, decompressible, and wrong, which is exactly how the
+# nine on the machine looked.
+BT_JOURNAL_FIXTURE=tests/journal/archive tools/bt-archive --list >/dev/null 2>&1
+head -4 tests/journal/archive/default.b-1.log | gzip > "$ARCHK/boot-c1315c25.export.gz"
+rm -f "$ARCHK/boot-c1315c25.export.zst"
+ARSHRT=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARCHK" tools/bt-archive --check 2>&1); ashrc=$?
+if (( ashrc == 0 )) && [[ "$ARSHRT" == *"SHORT"* && "$ARSHRT" == *"1 SHORT"* ]]; then
+    ok "--check finds a prefix that a presence test calls archived"
+else
+    bad "a prefix passed as a complete archive (rc=$ashrc): $(grep -i short <<<"$ARSHRT" | head -1)"
+fi
+
+# EXIT 0 ON A SHORT ARCHIVE, DELIBERATELY. This has to be runnable inside a
+# routine check; a non-zero exit for "there is repair work" would red-line the
+# tree and get the check dropped, which is how the prefixes went unseen.
+(( ashrc == 0 )) \
+    && ok "--check reports without failing — it is a survey, not a gate" \
+    || bad "--check exited $ashrc and would red-line an otherwise clean run"
+
+# --repair MUST ACTUALLY REPAIR, and the proof is a second, independent --check.
+# A repair verified only by the tool that performed it is the same trust the
+# read-back guard exists to refuse.
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARCHK" tools/bt-archive --repair >/dev/null 2>&1
+ARFIXED=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARCHK" tools/bt-archive --check 2>&1)
+[[ "$ARFIXED" == *"0 SHORT"* ]] \
+    && ok "--repair re-archives every short archive, confirmed by a fresh --check" \
+    || bad "--repair left work behind: $(grep -i short <<<"$ARFIXED" | head -1)"
+rm -rf "$ARCHK"
+
+# ── A PREFIX MARKS ITSELF ────────────────────────────────────────────────
+#
+# Skipping the live boot stops new prefixes and does nothing about one already
+# on disk. Nothing in an export stream records whether the boot was still
+# running when it was read, so the fact is written down at the only moment it
+# is known. Without the marker the driver cannot tell a prefix from a complete
+# archive without a full --check, and would not re-archive it.
+ARPFX=$(mktemp -d)
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARPFX" tools/bt-archive 0 >/dev/null 2>&1
+ls "$ARPFX"/boot-95d14e7a.export.*.prefix >/dev/null 2>&1 \
+    && ok "archiving the live boot leaves a marker saying the file is a prefix" \
+    || bad "a live-boot archive is indistinguishable from a complete one"
+
+# AND RE-ARCHIVING A FINISHED BOOT CLEARS IT. A marker that outlived the repair
+# would send the driver back to re-archive the same boot on every run, forever.
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARPFX" tools/bt-archive -1 >/dev/null 2>&1
+ls "$ARPFX"/boot-c1315c25.export.*.prefix >/dev/null 2>&1 \
+    && bad "a finished boot's archive was marked as a prefix" \
+    || ok "a finished boot's archive carries no prefix marker"
+
+# BOOT 0 IS SHORT BY DEFINITION and must not be counted as a defect — it grew
+# while --check was reading it. A check that always reports a problem is a
+# check nobody reads, which is the failure mode this whole section is about.
+ARPFXC=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARPFX" tools/bt-archive --check 2>&1)
+[[ "$ARPFXC" == *"0 SHORT"* && "$ARPFXC" == *"prefix by definition"* ]] \
+    && ok "the live boot is reported as a prefix by definition, not as a defect" \
+    || bad "--check counts the live boot among the defects and will cry wolf on every run"
+
+# THE MARKER IS NOT AN ARCHIVE. Listing it as one would double the apparent
+# count and offer a zero-byte file as a backup.
+ARPFXL=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARPFX" tools/bt-archive --list 2>&1)
+[[ "$ARPFXL" != *".prefix"*"K"* ]] && [[ "$ARPFXL" == *"PREFIX — taken while the boot was live"* ]] \
+    && ok "--list flags a prefix and does not count the marker as an archive" \
+    || bad "--list presented the marker file as a backup, or hid the prefix"
+rm -rf "$ARPFX"
+
 rm -rf "$AR" "$ARD" "$ARTRUNC" "$ARREPO"
 
 # ── bt-backup-journal: the archive that runs without anyone remembering ──
@@ -7336,18 +7462,67 @@ bkj_run() {     # <root> [args...]
 }
 bkj_calls() { [[ -r "$1/calls.log" ]] && grep -c . "$1/calls.log" || echo 0; }
 
-# EVERY RETAINED BOOT, AND THE INDEX IS WHAT IS HANDED ON. bt-archive owns the
+# EVERY FINISHED BOOT, AND THE INDEX IS WHAT IS HANDED ON. bt-archive owns the
 # in-repo guard and the read-back verification; this tool is only allowed to
 # choose boots and pass their index through. Asserting the argv is what makes
 # "inherited rather than reimplemented" a checked claim instead of a comment.
 BKJ_FAILIDX=none
 BKJ=$(bkj_setup); BKJOUT=$(bkj_run "$BKJ"); bkjrc=$?
-if (( bkjrc == 0 )) && [[ "$(bkj_calls "$BKJ")" == 3 ]] \
-   && [[ "$(LC_ALL=C sort "$BKJ/calls.log" | tr '\n' ' ')" == "-1 -2 0 " ]]; then
-    ok "bt-backup-journal archives every retained boot, by index, through bt-archive"
+if (( bkjrc == 0 )) && [[ "$(bkj_calls "$BKJ")" == 2 ]] \
+   && [[ "$(LC_ALL=C sort "$BKJ/calls.log" | tr '\n' ' ')" == "-1 -2 " ]]; then
+    ok "bt-backup-journal archives every finished boot, by index, through bt-archive"
 else
     bad "the archiver was driven wrongly (rc=$bkjrc, $(bkj_calls "$BKJ") call(s)):"
     while IFS= read -r l; do bad "      $l"; done < <(head -6 "$BKJ/calls.log" 2>/dev/null)
+fi
+
+# ⚠️ AND BOOT 0 IS NOT AMONG THEM. This is the 2026-08-31 repair, and it is the
+# assertion that would have caught the loss: archiving the LIVE boot yields a
+# prefix, the file is named by boot id, bt-archive refuses to overwrite — so the
+# prefix reads as "already archived" forever after. Boot c8342e9b was found
+# holding 6199 of its 40437 records, stopping 2.5 h before the fault EX-035 and
+# EX-036 rest on. A live boot cannot rotate off the ring, so waiting costs
+# nothing. Asserted on the argv, because the summary line would pass on a tool
+# that announced the skip and archived anyway.
+if ! grep -qx -- '0' "$BKJ/calls.log" && [[ "$BKJOUT" == *"9c8d7e6f  skipped"* ]]; then
+    ok "the live boot is skipped — a prefix must never be filed as a complete archive"
+else
+    bad "boot 0 was archived while still being written; the result is a prefix that masquerades as complete"
+fi
+rm -rf "$BKJ"
+
+# --include-current EXISTS FOR ONE CASE: a fault has just happened and the
+# machine is about to be power cycled. It must still reach bt-archive, or the
+# operator's only way to grab a live window is gone.
+BKJ=$(bkj_setup); BKJINC=$(bkj_run "$BKJ" --include-current); incrc=$?
+(( incrc == 0 )) && grep -qx -- '0' "$BKJ/calls.log" && [[ "$(bkj_calls "$BKJ")" == 3 ]] \
+    && ok "--include-current archives the live boot deliberately" \
+    || bad "--include-current did not reach bt-archive for boot 0 (rc=$incrc, $(bkj_calls "$BKJ") call(s))"
+rm -rf "$BKJ"
+
+# A MARKED PREFIX IS RE-ARCHIVED, AND WITH --replace. Skipping boot 0 stops NEW
+# prefixes; it does nothing about one already on disk, which is exactly the
+# state the machine was found in. The marker written at archive time is what
+# closes the loop — without acting on it the marker is only a complaint.
+BKJ=$(bkj_setup)
+echo prefix > "$BKJ/dest/boot-e5f60718.export.zst"
+: >         "$BKJ/dest/boot-e5f60718.export.zst.prefix"
+BKJPFX=$(bkj_run "$BKJ")
+if [[ "$BKJPFX" == *"e5f60718  PREFIX on disk"* ]] && grep -q -- '-1 --replace' "$BKJ/calls.log"; then
+    ok "a prefix on disk is re-archived in full, with --replace"
+else
+    bad "a prefix was treated as a complete archive: $(grep -c . "$BKJ/calls.log" 2>/dev/null) call(s), no '-1 --replace'"
+fi
+rm -rf "$BKJ"
+
+# AND --replace IS NOT HANDED OUT OTHERWISE. bt-archive's refusal to overwrite
+# is what protects a good archive from being replaced by a worse one; a driver
+# that passed --replace unconditionally would disable it for every boot.
+BKJ=$(bkj_setup); bkj_run "$BKJ" >/dev/null
+if ! grep -q -- '--replace' "$BKJ/calls.log"; then
+    ok "--replace is passed only for a marked prefix, never routinely"
+else
+    bad "--replace was passed for an ordinary boot, disabling the overwrite refusal"
 fi
 rm -rf "$BKJ"
 
@@ -7359,11 +7534,11 @@ rm -rf "$BKJ"
 BKJ=$(bkj_setup)
 echo already > "$BKJ/dest/boot-e5f60718.export.zst"
 BKJSKIP=$(bkj_run "$BKJ")
-if [[ "$(bkj_calls "$BKJ")" == 2 ]] && [[ "$BKJSKIP" == *"e5f60718  already archived"* ]] \
+if [[ "$(bkj_calls "$BKJ")" == 1 ]] && [[ "$BKJSKIP" == *"e5f60718  already archived"* ]] \
    && ! grep -qx -- '-1' "$BKJ/calls.log"; then
     ok "a boot already in the archive is skipped, and bt-archive is not re-run for it"
 else
-    bad "an archived boot was re-exported ($(bkj_calls "$BKJ") call(s), expected 2)"
+    bad "an archived boot was re-exported ($(bkj_calls "$BKJ") call(s), expected 1)"
 fi
 rm -rf "$BKJ"
 
@@ -7373,13 +7548,31 @@ rm -rf "$BKJ"
 # The exit status still has to be non-zero, or the timer records a success.
 BKJ_FAILIDX=-2
 BKJ=$(bkj_setup); BKJFAIL=$(bkj_run "$BKJ"); bkjfrc=$?
-if (( bkjfrc == 1 )) && [[ "$(bkj_calls "$BKJ")" == 3 ]] \
+if (( bkjfrc == 1 )) && [[ "$(bkj_calls "$BKJ")" == 2 ]] \
    && [[ "$BKJFAIL" == *"a1b2c3d4  FAILED"* && "$BKJFAIL" == *"1 failed"* ]] \
-   && ls "$BKJ/dest"/boot-9c8d7e6f.export.* >/dev/null 2>&1; then
+   && ls "$BKJ/dest"/boot-e5f60718.export.* >/dev/null 2>&1; then
     ok "a boot that fails to archive is named and the rest still run (exit 1)"
 else
-    bad "a single failure changed the run (rc=$bkjfrc, $(bkj_calls "$BKJ") call(s), expected 3 and rc=1)"
+    bad "a single failure changed the run (rc=$bkjfrc, $(bkj_calls "$BKJ") call(s), expected 2 and rc=1)"
 fi
+rm -rf "$BKJ"
+
+# ⚠️ AND THE FAILING TOOL'S OWN WORDS MUST SURVIVE. This was `>/dev/null 2>&1`,
+# so a failure reached the journal as the bare word FAILED and bt-archive's
+# `REFUSING — …`, which names the cause exactly, was discarded. When the timer
+# failed on 2026-08-31 the reason had to be reproduced by hand from a service
+# log that had recorded everything except the error. Unattended, a diagnosis
+# thrown away is a diagnosis nobody will ever have.
+BKJ=$(bkj_setup)
+{ echo '#!/bin/sh'
+  echo 'echo "$@" >> "'"$BKJ"'/calls.log"'
+  echo 'echo "bt-archive: REFUSING — a very specific reason" >&2'
+  echo 'exit 2'; } > "$BKJ/bin/bt-archive"
+chmod +x "$BKJ/bin/bt-archive"
+BKJERR=$(bkj_run "$BKJ")
+[[ "$BKJERR" == *"a very specific reason"* ]] \
+    && ok "a failing bt-archive's stderr is reported, not swallowed" \
+    || bad "the archiver's diagnosis was discarded — an unattended failure with no recorded cause"
 rm -rf "$BKJ"
 BKJ_FAILIDX=none
 
@@ -7402,9 +7595,16 @@ done
 # left to do could not be used in a check. Asserted separately from the "does
 # not act" claim above: they are different failures with different causes.
 BKJ=$(bkj_setup); BKJST=$(bkj_run "$BKJ" --status); strc=$?
-(( strc == 0 )) && [[ "$BKJST" == *"NOT archived"* && "$BKJST" == *"0 already archived, 3 missing"* ]] \
+(( strc == 0 )) && [[ "$BKJST" == *"NOT archived"* && "$BKJST" == *"0 already archived, 2 missing"* ]] \
     && ok "--status names the unarchived boots and still exits 0" \
     || bad "--status exited $strc or did not report the missing boots"
+
+# PRESENCE IS NOT COMPLETENESS, and this tool tests for a file. A clean run that
+# read as "every boot is safely archived" is what let nine prefixes sit on disk
+# unnoticed; the summary has to point at the check that can tell them apart.
+[[ "$BKJST" == *"bt-archive --check"* ]] \
+    && ok "the summary names the completeness check rather than implying one" \
+    || bad "a presence-only summary reads as proof of completeness"
 rm -rf "$BKJ"
 
 # THE UNSANITISED WARNING IS A DISCLOSURE CONTROL, not decoration. An archive is
@@ -7607,10 +7807,51 @@ SNBO=$(snbz_run --boot -2); snborc=$?
 (( snborc == 0 )) && [[ "$SNBO" != *"EX-032 SHAPE"* ]] \
    && [[ "$(rt_line "$SNBO" powered)" == *"no"* ]] \
    && [[ "$(rt_line "$SNBO" 'last discovery OK')" == *"2026-08-16T10:15:02"* ]] \
-   && [[ "$SNBO" == *"daemon crashes          3"* ]] \
+   && [[ "$(rt_line "$SNBO" 'BT stack crashes')" == *"3"* ]] \
     && ok "a crash after the last discovery raises nothing while the adapter is powered off" \
     || bad "the powered-off boot was misread (rc=$snborc): $(rt_line "$SNBO" powered)"
 rm -rf "$SNBZ"
+
+# ── THE CRASH COUNT IS SCOPED TO THE BLUETOOTH STACK ─────────────────────
+#
+# ⚠️ On 2026-08-31 this filter was the crash INDICATORS alone applied to the
+# whole journal, and it reported `daemon crashes 8` on a healthy machine: two
+# gnome-keyring scopes, a user-dirs-update scope, snapd-desktop-integration and
+# its restart, two xdg portals, and the project's OWN bt-journal-backup.service.
+# Zero were bluetoothd. A headline counter that alarms on an unrelated desktop
+# service teaches the reader to discount it, and every claim this project makes
+# rests on the summary's numbers meaning what they say.
+#
+# The fixture is that boot: eight foreign failures and ONE real Bluetooth crash
+# (a btmon coredump), so a filter that counts indicators alone reads 9 here and
+# cannot pass.
+SNOF=$(mktemp -d); mkdir -p "$SNOF/repo"
+SNOFO=$(BT_JOURNAL_FIXTURE=tests/journal/snapshot-otherfail BT_SNAPSHOT_DIR="$SNOF/snap" \
+        BT_REPO="$SNOF/repo" tools/bt-snapshot 2>&1); snofrc=$?
+if (( snofrc == 0 )) && [[ "$(rt_line "$SNOFO" 'BT stack crashes')" == *"1"* ]]; then
+    ok "the crash count names only the Bluetooth stack — a desktop unit failing is not a BT crash"
+else
+    bad "an unrelated unit failure was counted as a Bluetooth crash (rc=$snofrc): $(rt_line "$SNOFO" 'BT stack crashes')"
+fi
+
+# AND NOTHING IS DISCARDED. Trading a misleading number for a blind spot is not
+# a fix — bt-journal-backup's own failure showed up in the old counter, and it
+# is a real signal about this project's tooling even though it is not BT-1.
+[[ "$(rt_line "$SNOFO" 'other unit failures')" == *"8"* ]] \
+   && [[ -s "$SNOF/snap"/*-boot0/f-otherfail.log ]] \
+    && ok "foreign unit failures are kept and reported separately, not dropped" \
+    || bad "the non-Bluetooth failures were lost: $(rt_line "$SNOFO" 'other unit failures')"
+
+# ⚠️ AND THE RESTART COUNTER MUST NOT BE STOLEN FROM ANOTHER UNIT. `restart
+# counter is at N` was its own alternative in the BlueZ filter, and systemd
+# prints that phrase for every unit on the machine — so the reader, which takes
+# the LAST match, attributed snapd-desktop-integration's counter to
+# bluetooth.service. The fixture's only such line belongs to snapd; bluetooth
+# never restarted, and the honest answer is 0.
+[[ "$(rt_line "$SNOFO" 'service restarts')" == *"0"*"counted"* ]] \
+    && ok "another unit's restart counter is not read as bluetooth.service's" \
+    || bad "the restart count was taken from a foreign unit: $(rt_line "$SNOFO" 'service restarts')"
+rm -rf "$SNOF"
 
 # AND THE MACHINE THAT SIMPLY DOES NOT RUN bluetoothd WITH DEBUG LOGGING ON.
 # Without `-d` there are no `src/adapter.c:` lines at all, so powered and

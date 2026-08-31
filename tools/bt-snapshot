@@ -128,7 +128,26 @@ K="$DIR/kernel.log"; A="$DIR/all.log"
 grep -E "opcode 0x0428|opcode 0x043d|Looking for Alt no|command( 0x[0-9a-f]+)? tx timeout|setting interface failed" "$K" > "$DIR/f-fault.log" 2>/dev/null
 grep -E 'usb 3-3|xhci_hcd|USB disconnect|device descriptor|unable to enumerate' "$K"           > "$DIR/f-usb.log"        2>/dev/null
 grep -E 'deregistering interface driver btusb|Resetting usb device|reset (full|high|low)-speed USB device|name hci[0-9]+ blocked' "$A" > "$DIR/f-intervention.log" 2>/dev/null
-grep -E 'segfault|core-dump|Failed with result|Scheduled restart' "$A"                          > "$DIR/f-crash.log"      2>/dev/null
+# ── crashes: SCOPED TO THE BLUETOOTH STACK, and the rest kept separately ──
+#
+# ⚠️ This filter used to be the crash INDICATORS alone, applied to the whole
+# journal. On 2026-08-31 it reported `daemon crashes 8` on a healthy machine:
+# two gnome-keyring scopes, a user-dirs-update scope, snapd-desktop-integration
+# and its restart, two xdg portals, and OUR OWN bt-journal-backup.service. Zero
+# were bluetoothd. A headline counter that alarms on an unrelated desktop
+# service teaches the reader to discount it, and this project's whole method is
+# that a number in the summary can be trusted.
+#
+# The indicator alone is not the event: `Failed with result` describes any unit
+# on the machine. Both halves have to match — a crash-shaped line ABOUT the
+# Bluetooth stack.
+BT_UNIT_RE='bluetoothd|bluetooth\.service|btmon|bluez|obexd'
+CRASH_RE='segfault|core-dump|dumped core|Failed with result|Scheduled restart'
+grep -E "$CRASH_RE" "$A" 2>/dev/null | grep -E "$BT_UNIT_RE"                                    > "$DIR/f-crash.log"      2>/dev/null
+# NOTHING IS DISCARDED — the broad cut moves here rather than disappearing.
+# bt-journal-backup's own failure showed up in the old counter, and losing
+# sight of it entirely would trade a misleading number for a blind spot.
+grep -E "$CRASH_RE" "$A" 2>/dev/null | grep -vE "$BT_UNIT_RE"                                   > "$DIR/f-otherfail.log"  2>/dev/null
 # ── the two guards added by patches/bluez/, firing ───────────────────────
 #
 # A patch that prevents a crash leaves NO trace by default: the daemon simply
@@ -142,7 +161,14 @@ grep -E 'segfault|core-dump|Failed with result|Scheduled restart' "$A"          
 # length check — so a hit means only that one of the two sites fired, and
 # which one has to be read from the surrounding lines.
 grep -E 'has no stream|Wrong size of start discovery return parameters' "$A"                    > "$DIR/f-guard.log"      2>/dev/null
-grep -E 'adapter_set_power_state|new_settings_callback\(\) Settings:|discovering_callback|start_discovery_complete|restart counter is at|bluetooth\.service:' "$A" > "$DIR/f-bluez.log" 2>/dev/null
+# ⚠️ `restart counter is at` WAS AN ALTERNATIVE OF ITS OWN HERE, and systemd
+# prints that phrase for every unit on the machine. It put foreign lines into
+# the BlueZ cut, and the reader below takes the LAST of them — so on
+# 2026-08-31 the report attributed snapd-desktop-integration's restart counter
+# to bluetooth.service. The phrase never needed its own alternative: systemd
+# spells the line `bluetooth.service: Scheduled restart job, restart counter is
+# at N.`, which the `bluetooth\.service:` alternative already matches.
+grep -E 'adapter_set_power_state|new_settings_callback\(\) Settings:|discovering_callback|start_discovery_complete|bluetooth\.service:' "$A" > "$DIR/f-bluez.log" 2>/dev/null
 grep -E 'corrupted SCO|Error when powering off|connection_lost|disconnected, reason|Failure in Bluetooth' "$A" > "$DIR/f-link.log" 2>/dev/null
 grep -oE 'input: [^(]*\(AVRCP\)' "$A" | sed 's/^input: //' | sort -u                            > "$DIR/f-devices.txt"    2>/dev/null
 
@@ -267,7 +293,11 @@ fi
 # adapter looks like every minute of every day, and warning on it would train
 # the reader to ignore the line. What makes EX-032 is that a discovery used to
 # complete, a crash happened, and none has completed since.
-LN_CRASH=$(grep -nE 'segfault|Failed with result' "$A" 2>/dev/null | tail -1 | cut -d: -f1)
+#
+# SCOPED, for the reason given at the filter above: an unrelated desktop unit
+# failing must not satisfy "a crash happened" and raise an EX-032 warning about
+# the Bluetooth adapter.
+LN_CRASH=$(grep -nE 'segfault|Failed with result' "$A" 2>/dev/null | grep -E "$BT_UNIT_RE" | tail -1 | cut -d: -f1)
 
 {
 printf 'bt-snapshot summary — boot %s, captured %s\n' "$BOOT" "$STAMP"
@@ -280,8 +310,17 @@ printf '  0x043d enhanced    %6s\n' "$ESCO"
 printf '  alt-setting switch %6s\n' "$ALT"
 printf '  USB disconnect     %6s\n' "$DISC"
 printf '  interventions      %6s\n' "$(c "$DIR/f-intervention.log")"
-printf '  daemon crashes     %6s\n' "$(c "$DIR/f-crash.log")"
+# "stack", not "daemon": btmon is in scope and is not the daemon. It is the
+# capture tool, and it has been dumping core repeatedly — a tracer dying is
+# evidence loss, which belongs in the summary rather than filed as noise.
+printf '  BT stack crashes   %6s\n' "$(c "$DIR/f-crash.log")"
 printf '  link-layer events  %6s\n' "$(c "$DIR/f-link.log")"
+# Reported, never counted as a Bluetooth crash, and only when non-zero — a
+# desktop machine always has a few and a permanent line would be noise.
+OTHERF=$(c "$DIR/f-otherfail.log")
+if [[ "${OTHERF:-0}" -gt 0 ]]; then
+    printf '  other unit failures %5s  (NOT Bluetooth — see f-otherfail.log)\n' "$OTHERF"
+fi
 GUARD=$(c "$DIR/f-guard.log")
 if [[ "${GUARD:-0}" -gt 0 ]]; then
     printf '  ⚠️  patch guards fired %s — see f-guard.log. A crash was PREVENTED,\n' "$GUARD"
@@ -322,7 +361,7 @@ fi
 
 printf '\n  peers seen this boot:\n'
 if [[ -s "$DIR/f-devices.txt" ]]; then sed 's/^/    /' "$DIR/f-devices.txt"; else echo '    (none named)'; fi
-printf '\n  fine cuts: f-fault f-usb f-intervention f-crash f-link f-bluez (in the directory above)\n'
+printf '\n  fine cuts: f-fault f-usb f-intervention f-crash f-otherfail f-link f-bluez f-guard (in the directory above)\n'
 printf '  ⚠️ UNSANITISED — carries MACs and BSSIDs. Never commit. Sanitise before sharing.\n'
 } > "$DIR/summary.txt"
 

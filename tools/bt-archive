@@ -4,6 +4,8 @@
 #
 #   bt-archive <boot-index>      archive that boot
 #   bt-archive --list            what has been archived already
+#   bt-archive --check           is every archive COMPLETE? (see below)
+#   bt-archive --repair          --check, and re-archive every SHORT one
 #
 # WHY THIS EXISTS. The journal is a ring: SystemMaxUse=16G discards oldest-first
 # once reached, and dynamic debug writes about a million lines an hour, so the
@@ -25,6 +27,23 @@
 # EXPORT FORMAT, NOT TEXT. `-o export` is journald's own serialization and
 # replays with `journalctl --file`, so the archive answers arbitrary future
 # queries rather than only the ones a text dump happens to contain.
+#
+# ⚠️ ARCHIVING THE LIVE BOOT PRODUCES A PARTIAL SNAPSHOT, AND IT HAS COST US.
+# Boot 0 is still being written. An archive of it is a prefix, not a copy — and
+# because the file is named by boot id and this refuses to overwrite, the prefix
+# then LOOKS archived forever. On 2026-08-31 boot c8342e9b was found archived
+# with 6199 of its 40437 records: taken on 08-24 while live, it stops 2.5 hours
+# before the 08-25 17:08 fault that EX-035 and EX-036 rest on, and contains zero
+# `opcode 0x0428` lines. The boot was still on the ring, so nothing was lost —
+# by luck, not by design.
+#
+# Hence two things. `bt-backup-journal` no longer archives boot 0 at all: a live
+# boot cannot rotate away, so waiting until it is finished costs nothing and is
+# the only way to archive it whole. And `--check` compares every archive's
+# record count against the boot still on the ring, so a short one is findable
+# instead of merely present. Archiving boot 0 BY HAND stays supported — it is
+# the right move when a fault has just happened and a reboot is imminent — and
+# says plainly that what it wrote is a prefix.
 #
 # ⚠️ THE ARCHIVE IS UNSANITISED. A raw journal carries MAC addresses and Wi-Fi
 # BSSIDs, and BSSIDs geolocate the machine. This repository publishes its logs
@@ -54,7 +73,11 @@ DEST="${BT_ARCHIVE_DIR:-$HOME/bt-journal-archive}"
 refuse() { echo "bt-archive: REFUSING — $*" >&2; exit 2; }
 
 LIST=0
+CHECK=0
+REPAIR=0
+FORCE=0
 BOOT=""
+SELF=$(readlink -f "$0")
 # A BOOT INDEX IS NEGATIVE, AND SO IS AN OPTION. `-1` is the argument this tool
 # is most often given, and a plain `-*` option case swallows it — the first
 # version refused `bt-archive -1` as an unknown option, which is the one
@@ -63,7 +86,17 @@ BOOT=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --list)      LIST=1 ;;
-        -h|--help)   sed -n '2,7p' "$0"; exit 0 ;;
+        --check)     CHECK=1 ;;
+        # Repair IS the check, plus acting on it. Keeping them one code path
+        # means the thing repaired is exactly the thing reported, and there is
+        # no second definition of "short" to drift out of step.
+        --repair)    CHECK=1; REPAIR=1 ;;
+        # --replace exists for exactly one job: repairing an archive that --check
+        # has reported SHORT. It is not a general overwrite — the refusal above
+        # is what stops a good archive being replaced by a worse one, and this
+        # requires the operator to have been told which file is defective.
+        --replace)   FORCE=1 ;;
+        -h|--help)   sed -n '2,8p' "$0"; exit 0 ;;
         -[0-9]*|[0-9]*) BOOT="$1" ;;
         -*)          refuse "unknown option: $1" ;;
         *)           refuse "not a boot index: $1" ;;
@@ -88,10 +121,126 @@ if (( LIST )); then
     shopt -s nullglob
     found=0
     for a in "$DEST_ABS"/boot-*.export.*; do
+        # The sidecar is bookkeeping, not an archive; listing it as one would
+        # double the apparent count and offer a 0-byte file as a backup.
+        [[ "$a" == *.prefix ]] && continue
         found=$((found + 1))
-        printf '  %-46s %s\n' "$(basename "$a")" "$(du -h "$a" 2>/dev/null | cut -f1)"
+        note=""
+        [[ -e "$a.prefix" ]] && note="  ⚠️ PREFIX — taken while the boot was live"
+        printf '  %-46s %s%s\n' "$(basename "$a")" "$(du -h "$a" 2>/dev/null | cut -f1)" "$note"
     done
     (( found == 0 )) && echo "  (nothing archived yet)"
+    exit 0
+fi
+
+# A decompressor for ONE archive, chosen by its extension rather than by what
+# this machine happens to have probed. An archive written on a box with zstd
+# must stay readable on a box with only gzip, and --check reads files it did
+# not write.
+decomp_for() {
+    case "$1" in
+        *.zst) command -v zstd >/dev/null 2>&1 && { echo "zstd -dc"; return 0; } ;;
+        *.xz)  command -v xz   >/dev/null 2>&1 && { echo "xz -dc";   return 0; } ;;
+        *.gz)  command -v gzip >/dev/null 2>&1 && { echo "gzip -dc"; return 0; } ;;
+    esac
+    return 1
+}
+
+# ── --check: is every archive COMPLETE, or merely PRESENT? ────────────────
+#
+# "Already archived" was tested by the existence of a file, and a prefix of a
+# boot is a file. This asks the only question that distinguishes them: does the
+# archive hold as many records as the boot still on the ring? A boot that has
+# rotated away cannot be compared and says so rather than passing quietly —
+# an unanswerable check is not a pass.
+if (( CHECK )); then
+    echo "bt-archive — completeness check against $DEST_ABS"
+    echo
+    mapfile -t ROWS < <(bt_journal --list-boots --no-pager 2>/dev/null \
+                        | awk '$1 ~ /^-?[0-9]+$/ { print $1"\t"$2 }')
+    # ENUMERATED == 0 IS A REFUSAL, as everywhere else here: an empty boot list
+    # means the journal is unreadable, not that every archive is sound.
+    (( ${#ROWS[@]} > 0 )) || refuse "no retained boots found — nothing was compared"
+    printf '  %-4s %-10s %10s %10s  %s\n' 'IDX' 'BOOT' 'ARCHIVED' 'ON RING' 'VERDICT'
+    short_n=0; ok_n=0; miss_n=0; fixed_n=0; unfixed_n=0
+    for r in "${ROWS[@]}"; do
+        IFS=$'\t' read -r idx bid <<< "$r"
+        sid="${bid:0:8}"
+        shopt -s nullglob
+        cand=()
+        for f in "$DEST_ABS"/boot-"$sid".export.*; do
+            [[ "$f" == *.prefix ]] || cand+=("$f")
+        done
+        if (( ${#cand[@]} == 0 )); then
+            printf '  %-4s %-10s %10s %10s  %s\n' "$idx" "$sid" '—' '?' 'not archived'
+            miss_n=$((miss_n + 1))
+            continue
+        fi
+        # AMBIGUITY IS REPORTED, NOT RESOLVED. Two archives for one boot means
+        # the reader below is picking one alphabetically, which is how a short
+        # .gz outranked its complete .zst replacement. Writing now sweeps the
+        # loser, so this should be unreachable — and an unreachable check that
+        # stays silent when it fires is how the last one went unnoticed.
+        if (( ${#cand[@]} > 1 )); then
+            printf '  %-4s %-10s %10s %10s  %s\n' "$idx" "$sid" '?' '?' \
+                   "AMBIGUOUS — ${#cand[@]} archives for one boot; remove all but the newest"
+            continue
+        fi
+        d=$(decomp_for "${cand[0]}") || {
+            printf '  %-4s %-10s %10s %10s  %s\n' "$idx" "$sid" '?' '?' 'UNREADABLE — no decompressor'
+            continue
+        }
+        an=$($d < "${cand[0]}" 2>/dev/null | grep -c '^__CURSOR=' || true)
+        ln=$(bt_journal -b "$idx" -o export --no-pager 2>/dev/null | grep -c '^__CURSOR=' || true)
+        if (( ${ln:-0} == 0 )); then
+            printf '  %-4s %-10s %10s %10s  %s\n' "$idx" "$sid" "${an:-0}" '0' 'boot unreadable — NOT verified'
+        elif [[ "$idx" == "0" ]]; then
+            # BOOT 0 IS SHORT BY DEFINITION and always will be — it grew while
+            # this check was reading it. Counting it among the defects would
+            # make every single run report a problem, and a check that always
+            # complains is a check nobody reads. The marker written at archive
+            # time is what gets it re-archived in full after the next reboot.
+            printf '  %-4s %-10s %10s %10s  %s\n' "$idx" "$sid" "${an:-0}" "$ln" \
+                   'live — prefix by definition, re-archived when it finishes'
+        elif (( ${an:-0} < ln )); then
+            printf '  %-4s %-10s %10s %10s  %s\n' "$idx" "$sid" "${an:-0}" "$ln" 'SHORT — re-archive'
+            short_n=$((short_n + 1))
+            if (( REPAIR )); then
+                # Self-invocation, so a repair goes through the SAME write,
+                # read-back and refusal path as any other archive. A separate
+                # inline copy would be a second implementation of the one
+                # operation that must not be got subtly wrong.
+                if "$SELF" "$idx" --replace >/dev/null 2>&1; then
+                    printf '  %-4s %-10s %10s %10s  %s\n' '' '' '' '' '↳ re-archived'
+                    fixed_n=$((fixed_n + 1))
+                else
+                    printf '  %-4s %-10s %10s %10s  %s\n' '' '' '' '' '↳ REPAIR FAILED — run by hand'
+                    unfixed_n=$((unfixed_n + 1))
+                fi
+            fi
+        else
+            printf '  %-4s %-10s %10s %10s  %s\n' "$idx" "$sid" "${an:-0}" "$ln" 'complete'
+            ok_n=$((ok_n + 1))
+        fi
+    done
+    echo
+    printf '  %s complete, %s SHORT, %s not archived' "$ok_n" "$short_n" "$miss_n"
+    (( REPAIR )) && printf ', %s re-archived, %s still short' "$fixed_n" "$unfixed_n"
+    echo
+    if (( short_n > 0 && ! REPAIR )); then
+        echo
+        echo "  A SHORT archive was taken while its boot was still being written."
+        echo "  Repair them all with:  bt-archive --repair    (or one: bt-archive <idx> --replace)"
+        echo "  ⚠️ Repair them BEFORE the boot rotates off the ring — after that the"
+        echo "     missing records are gone and only the exhibits' greps remain."
+    fi
+    if (( REPAIR && fixed_n > 0 )); then
+        echo
+        echo "  Re-run --check to confirm: a repair is not verified by the tool that made it."
+    fi
+    # NOT a non-zero exit: this is a report, and a short archive is a repair
+    # job rather than a broken invocation. Exit 1 would make it unusable in a
+    # routine check, which is where it needs to be usable.
     exit 0
 fi
 
@@ -104,15 +253,30 @@ fi
 # lacks it is useless at exactly the moment it is needed — the boot is
 # rotating now, not after someone installs a package.
 COMP=""; EXT=""; DECOMP=""
-for c in zstd xz gzip; do
-    command -v "$c" >/dev/null 2>&1 || continue
-    case "$c" in
-        zstd) COMP="zstd -q -T0"; EXT="zst"; DECOMP="zstd -dc" ;;
-        xz)   COMP="xz -T0";      EXT="xz";  DECOMP="xz -dc" ;;
-        gzip) COMP="gzip";        EXT="gz";  DECOMP="gzip -dc" ;;
-    esac
-    break
-done
+# ── THE COMPRESSOR SEAM, and why it is not sed ───────────────────────────
+#
+# The read-back guard below can only be exercised by making the write lose
+# data, and the suite used to do that by sed-patching this file's pipeline
+# from outside. That coupling broke silently the moment the pipeline changed
+# shape on 2026-08-31: the pattern stopped matching, the "truncated" copy was
+# byte-identical to the real tool, and the test proved nothing about the guard
+# it was named after. A seam cannot quietly stop applying — if the name is
+# wrong the override simply is not there, which is visible.
+if [[ -n "${BT_ARCHIVE_COMP:-}" ]]; then
+    COMP="$BT_ARCHIVE_COMP"
+    EXT="${BT_ARCHIVE_EXT:-gz}"
+    DECOMP="${BT_ARCHIVE_DECOMP:-gzip -dc}"
+else
+    for c in zstd xz gzip; do
+        command -v "$c" >/dev/null 2>&1 || continue
+        case "$c" in
+            zstd) COMP="zstd -q -T0"; EXT="zst"; DECOMP="zstd -dc" ;;
+            xz)   COMP="xz -T0";      EXT="xz";  DECOMP="xz -dc" ;;
+            gzip) COMP="gzip";        EXT="gz";  DECOMP="gzip -dc" ;;
+        esac
+        break
+    done
+fi
 [[ -n "$COMP" ]] || refuse "no compressor found (zstd, xz or gzip) — refusing to write an uncompressed journal export"
 
 # Named by BOOT ID, which is stable, not by index, which shifts on every
@@ -122,17 +286,25 @@ BID=$(bt_journal --list-boots --no-pager 2>/dev/null \
 [[ -n "$BID" ]] || refuse "boot $BOOT is not in the retained journal — nothing to archive"
 
 OUT="$DEST_ABS/boot-${BID:0:8}.export.$EXT"
-[[ -e "$OUT" ]] && refuse "$OUT already exists — remove it deliberately rather than overwriting an archive"
+if [[ -e "$OUT" ]] && (( ! FORCE )); then
+    refuse "$OUT already exists — remove it deliberately, or pass --replace to repair a SHORT archive (see --check)"
+fi
 
 echo "bt-archive — boot $BOOT (id ${BID:0:8}) -> $OUT"
 echo "  compressor: ${COMP%% *}"
 
-TMP="$OUT.partial"
-trap 'rm -f "$TMP"' EXIT
-if ! bt_journal -b "$BOOT" -o export --no-pager 2>/dev/null | $COMP > "$TMP"; then
-    refuse "export failed — nothing written"
+# SAY IT AT THE TIME, not only in a comment nobody reads at 2am. An archive of
+# the live boot is a prefix; the operator asking for one usually knows that and
+# wants it anyway, but the file it produces is indistinguishable afterwards
+# from a complete archive except by --check.
+if [[ "$BOOT" == "0" ]]; then
+    echo "  ⚠️  boot 0 is STILL BEING WRITTEN — this is a PREFIX, not a complete copy."
+    echo "      Re-archive it with --replace once the machine has rebooted."
 fi
-[[ -s "$TMP" ]] || refuse "export produced an empty archive — nothing written"
+
+TMP="$OUT.partial"
+WORK=$(mktemp -d) || refuse "cannot create a work directory"
+trap 'rm -f "$TMP"; rm -rf "$WORK"' EXIT
 
 # ── READ IT BACK, OR IT IS NOT A BACKUP ──────────────────────────────────
 #
@@ -140,10 +312,36 @@ fi
 # guards against is silent: a truncated write, a compressor that exited
 # non-zero inside a pipeline, a full disk. All three produce a plausible file.
 #
-# Compared on the count of record separators — an export stream delimits
-# entries with blank lines — because comparing bytes would only prove the
-# compressor round-trips, which was never in doubt.
-SRC_N=$(bt_journal -b "$BOOT" -o export --no-pager 2>/dev/null | grep -c '^__CURSOR=' || true)
+# Compared on the count of `__CURSOR=` lines, one per record, because comparing
+# bytes would only prove the compressor round-trips, which was never in doubt.
+#
+# ⚠️ COUNT THE STREAM THAT WAS WRITTEN, NEVER A SECOND EXPORT. The first
+# version exported once to compress and AGAIN to count, then compared the two.
+# On a boot still being written that is a race against the machine: entries
+# arrive between the exports, the counts differ, and a perfectly good archive
+# is discarded as a "read-back mismatch". It failed exactly so from the timer
+# at 2026-08-31 00:20:42 on boot 0, and would have kept failing.
+#
+# `tee` makes the source count come from the SAME bytes the compressor got, so
+# the comparison tests the copy instead of the clock. The FIFO and the explicit
+# `wait` are load-bearing: with a process substitution the counter can still be
+# running when the pipeline returns, and the count would be read before it was
+# written — the same race in a smaller window.
+FIFO="$WORK/stream"
+mkfifo "$FIFO" || refuse "cannot create a counting pipe in $WORK"
+grep -c '^__CURSOR=' < "$FIFO" > "$WORK/n" &
+CNTPID=$!
+bt_journal -b "$BOOT" -o export --no-pager 2>/dev/null | tee "$FIFO" | $COMP > "$TMP"
+RC=("${PIPESTATUS[@]}")
+# `grep -c` exits 1 on a zero count, so this status is deliberately not tested;
+# the count itself is checked below, which is the thing that matters.
+wait "$CNTPID" 2>/dev/null
+if [[ "${RC[0]}" != 0 || "${RC[1]}" != 0 || "${RC[2]}" != 0 ]]; then
+    refuse "export failed (journal ${RC[0]}, tee ${RC[1]}, ${COMP%% *} ${RC[2]}) — nothing written"
+fi
+[[ -s "$TMP" ]] || refuse "export produced an empty archive — nothing written"
+
+SRC_N=$(cat "$WORK/n" 2>/dev/null)
 ARC_N=$($DECOMP < "$TMP" 2>/dev/null | grep -c '^__CURSOR=' || true)
 if (( ${SRC_N:-0} == 0 )); then
     refuse "the source boot yielded no records — refusing to call an empty archive a backup"
@@ -153,6 +351,48 @@ if (( ARC_N != SRC_N )); then
 fi
 
 mv -f "$TMP" "$OUT" || refuse "could not place $OUT"
+
+# ── ONE BOOT, ONE ARCHIVE ────────────────────────────────────────────────
+#
+# The compressor is probed, so the same boot archived on a zstd machine and
+# repaired on a gzip one leaves boot-<id>.export.zst AND .gz. Every reader here
+# globs `boot-<id>.export.*` and takes the first match, and the first match is
+# alphabetical — so `.gz` wins over `.zst` regardless of which is current.
+# Found by --repair in the suite: the repair wrote a complete .zst beside the
+# short .gz it was replacing, and the next --check read the short one and still
+# called it SHORT. A superseded copy that outranks its replacement is worse
+# than no copy, because it reads as the answer.
+#
+# Removed only AFTER this archive is written, read back and verified — never on
+# the promise of one.
+#
+# The marker is swept with it. An orphaned boot-<id>.export.gz.prefix left
+# beside a fresh .zst would tell the driver the new archive is a prefix, and it
+# would re-archive the same boot on every run for ever. This runs BEFORE the
+# marker for this archive is written below, so nothing just created is at risk.
+shopt -s nullglob
+for stale in "$DEST_ABS"/boot-"${BID:0:8}".export.*; do
+    [[ "$stale" == "$OUT" ]] && continue
+    rm -f "$stale" && printf '  removed superseded %s\n' "$(basename "$stale")"
+done
+
+# ── A PREFIX MARKS ITSELF ────────────────────────────────────────────────
+#
+# Skipping boot 0 stops NEW prefixes being made, and does nothing about one
+# already on disk: tomorrow that boot is -1, the file exists, and the driver
+# says "already archived" exactly as before. Nothing in an export stream
+# records whether the boot was still running when it was read, so the fact has
+# to be written down at the only moment it is known — now.
+#
+# A sidecar rather than a filename suffix, so the archive keeps the name every
+# tool and every exhibit already expects, and an archive whose marker is lost
+# degrades to today's behaviour instead of becoming unfindable.
+if [[ "$BOOT" == "0" ]]; then
+    : > "$OUT.prefix"
+else
+    # Re-archiving a finished boot is exactly how a prefix stops being one.
+    rm -f "$OUT.prefix"
+fi
 trap - EXIT
 printf '  %s records, %s on disk — read back and verified\n' "$SRC_N" "$(du -h "$OUT" 2>/dev/null | cut -f1)"
 echo

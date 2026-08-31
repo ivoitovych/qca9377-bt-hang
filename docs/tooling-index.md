@@ -23,6 +23,13 @@ it — the expensive step is journal traversal, and it does it once. Its output
 directory (`/var/tmp/bt-snapshots/latest/`) holds `all.log`, `kernel.log` and the
 `f-*.log` fine cuts; grep those files, never the journal again.
 
+⚠️ **`bt-backup-journal` tests for a FILE, which is not the same as a backup.**
+An archive taken while its boot was still being written is a prefix, and it
+then reads as "already archived" for ever. Nine of twenty-one archives were
+prefixes on 2026-08-31 — one holding 1.5% of its boot, another stopping 2.5 h
+before the fault `EX-035` and `EX-036` rest on. `bt-archive --check` is the only
+thing that tells present from complete; run it after any batch of archiving.
+
 ⚠️ **Read the BlueZ health block, not only the controller counts.** Every count
 above it is about the QCA9377, and `EX-032` is the failure mode where the
 controller is perfectly healthy and Bluetooth is dead anyway — a BlueZ crash
@@ -56,6 +63,7 @@ run `bluetoothd -d` — this project ships that on in
 | Which exhibits can still be re-derived? | `tools/bt-retention` (`--at-risk`) |
 | Archive one boot off the rotating journal | `tools/bt-archive <boot-index>` |
 | Archive **every** retained boot | `tools/bt-backup-journal` (also on a daily timer) |
+| Is every archive **complete**, or only present? | `tools/bt-archive --check` (`--repair` fixes them) |
 | Timing breakdown of an incident | `tools/bt-postmortem` |
 | Stage-2 terminator analysis across boots | `tools/bt-stage2` |
 | Compare SCO event windows | `tools/bt-sco --window` |
