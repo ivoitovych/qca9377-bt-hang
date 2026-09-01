@@ -2562,3 +2562,80 @@ Phase 30 was about reading observations; Phase 31 about reading failures. This o
 
 Zero crashes meant nothing until `0x0428 legacy SCO: 0` explained why. Zero guard firings
 meant nothing until the same counter explained that too.
+
+---
+
+## Phase 33 — the instruments were lying, and one of them was losing the evidence
+
+A routine status check on a healthy machine. Bluetooth was fine; five of this project's
+own tools were not. None of it is `BT-1`. All of it is the record about the record.
+
+### The one that mattered
+
+`bt-backup-journal` exists because of a sentence the operator wrote on 08-19 —
+*"I don't understand at all how we could work with evidence which just disappears right on
+the plain sight"* — and it had been quietly keeping **prefixes and calling them backups**.
+
+It archived every retained boot **including the live one**. A live boot yields a prefix; the
+file is named by boot id; `bt-archive` refuses to overwrite. So the prefix reads as *already
+archived* for ever after. The daily timer had been reporting `21 already archived, 0
+missing` over exactly that.
+
+```
+boot c8342e9b:  6199 of 40437 records     zero `opcode 0x0428` lines
+```
+
+**That is the boot `EX-035` and `EX-036` rest on.** Archived 08-24 while live, it stops
+2.5 hours before the 08-25 17:08 fault it exists to preserve.
+
+A completeness check found **nine of twenty-one** archives in the same state — one holding
+**1.5%** of its boot. Every one was still on the ring. All nine were re-archived and
+confirmed by a second, independent check.
+
+⚠️ **Nothing was lost, and that was luck rather than design.** Within the same session boot
+`-20` rotated off the ring. Its archive was complete, so it survived; had it been one of the
+nine, those records would simply be gone and only the exhibits' greps would remain.
+
+### Four more, all the same shape
+
+**The read-back guard was a race against the machine.** `bt-archive` exported once to
+compress and *again* to count, then compared. On a boot still being written, entries arrive
+between the two exports, the counts differ, and a good archive is discarded as a *read-back
+mismatch*. The timer failed exactly so at 00:20:42. The count now comes from the same bytes
+the compressor received.
+
+**And the driver threw away the reason.** `>/dev/null 2>&1` on the tool it drives, so the
+failure reached the journal as the bare word `FAILED`. The cause had to be reproduced by
+hand from a service log that had recorded everything except the error.
+
+**`bt-snapshot` counted the whole machine as Bluetooth crashes** — `daemon crashes 8` on a
+healthy laptop: gnome-keyring scopes, snapd, two xdg portals, and **our own
+`bt-journal-backup.service`**. Zero were `bluetoothd`. The same filter also stole another
+unit's restart counter, because `restart counter is at` is a phrase systemd prints for every
+unit on the machine, and the reader took the last match.
+
+**`bt-status` printed a shell error and an empty counter.** `KE: unbound variable` — the
+variable was deleted when the tool stopped holding the whole kernel journal in a shell
+string, and one consumer was missed. Under `set -u` the column printed *nothing*, which
+reads exactly like a measured zero.
+
+### The test that had stopped testing
+
+The suite exercised the read-back guard by **sed-patching `bt-archive`'s pipeline from
+outside**. Adding a `tee` to that pipeline made the pattern stop matching — producing a copy
+identical to the real tool, still named after the guard, testing nothing. It is the same
+defect as the tools it checks, one level up: a check coupled to text nobody thinks of as an
+interface. Replaced with a real seam, plus an assertion that the seam is actually reached.
+
+### The shape
+
+Phase 32 was about reading absences. This one is about **who is doing the reading**:
+
+> A number in a summary is a claim, and it inherits every assumption of the filter that
+> produced it. `8 daemon crashes` was true of the machine and false of Bluetooth. `21 already
+> archived` was true of the filesystem and false of the archive. Both passed for weeks
+> because a plausible number does not look like a question.
+
+The counters this project trusts most are the ones nobody re-derives. `bt-archive --check`
+exists because *present* and *complete* had never been distinguished, and everything
+downstream had been reading the first as the second.
