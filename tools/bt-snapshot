@@ -195,6 +195,29 @@ SCO=$(grep -cE 'opcode 0x0428' "$K" 2>/dev/null || true)
 ESCO=$(grep -cE 'opcode 0x043d' "$K" 2>/dev/null || true)
 ALT=$(grep -cE 'Looking for Alt no' "$K" 2>/dev/null || true)
 DISC=$(grep -cE 'USB disconnect' "$K" 2>/dev/null || true)
+# ── SCO TRAFFIC ON THE NARROW ENDPOINT, which is the actual condition ─────
+#
+# ⚠️ THE COUNTER THAT WOULD HAVE STOPPED A WRONG CONCLUSION ON 2026-09-01. The
+# operator ran the test that has always killed this controller — hands-free,
+# switched repeatedly — and Bluetooth survived. The summary agreed the trigger
+# had been pulled: `0x0428 legacy SCO 6`, `alt-setting switch 8`. Both true,
+# and neither is the condition.
+#
+# btusb prints `len <n> mtu <m>` per URB, and `m` is the isochronous endpoint
+# size, so it names the alternate setting that was actually in use:
+#
+#   mtu 17  a wide endpoint — CVSD narrowband. Streams fine, 4669 packets on
+#           2026-09-01 with the controller entirely healthy.
+#   mtu  9  the 9-byte alt-1 endpoint, taken by the WBS fallback. 27-byte mSBC
+#           frames go into a 9-byte MTU, and THIS is where the controller dies:
+#           835 such packets before EX-033's timeout, 87 before EX-036's.
+#
+# On 2026-09-01 the transparent links were established three times, reached the
+# alt-1 endpoint, carried EIGHT packets and collapsed back to CVSD. Eight
+# against 835. Counting all SCO traffic together would have shown 4681 and read
+# as "the fault was approached hard" — the exact opposite of what happened.
+SCONARROW=$(grep -cE 'len [0-9]+ mtu 9$' "$K" 2>/dev/null || true)
+SCOWIDE=$(grep -cE 'len [0-9]+ mtu (1[0-9]|[2-9][0-9]+)$' "$K" 2>/dev/null || true)
 
 # Device presence read from sysfs — a read, never a probe.
 SYSFS="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
@@ -308,6 +331,19 @@ printf '  command timeouts   %6s\n' "$TMO"
 printf '  0x0428 legacy SCO  %6s\n' "$SCO"
 printf '  0x043d enhanced    %6s\n' "$ESCO"
 printf '  alt-setting switch %6s\n' "$ALT"
+# Printed directly under the setup counters, because their whole job is to stop
+# those being read as "the fault was approached". Both are shown: the wide count
+# alone looks like heavy SCO use, and it is the harmless kind.
+printf '  SCO pkts mtu>9     %6s  (CVSD — healthy path)\n' "${SCOWIDE:-0}"
+if [[ "${SCONARROW:-0}" -gt 0 ]]; then
+    printf '  ⚠️  SCO pkts on alt-1 (mtu 9): %s — THIS is the condition both recorded\n' "$SCONARROW"
+    printf '      deaths needed (835 before EX-033, 87 before EX-036).\n'
+elif [[ "${SCO:-0}" -gt 0 ]]; then
+    printf '  SCO pkts mtu 9     %6s  (alt-1 never carried traffic — the fault\n' "${SCONARROW:-0}"
+    printf '                             was NOT approached, whatever else ran)\n'
+else
+    printf '  SCO pkts mtu 9     %6s\n' "${SCONARROW:-0}"
+fi
 printf '  USB disconnect     %6s\n' "$DISC"
 printf '  interventions      %6s\n' "$(c "$DIR/f-intervention.log")"
 # "stack", not "daemon": btmon is in scope and is not the daemon. It is the
