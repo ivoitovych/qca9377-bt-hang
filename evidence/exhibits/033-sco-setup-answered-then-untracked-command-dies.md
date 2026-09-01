@@ -1,5 +1,25 @@
 # EX-033 — sco-setup-answered-then-untracked-command-dies
 
+> ## ⚠️ CORRECTION — 2026-09-02, see `EX-037`
+>
+> **The alt probes were not followed by silence.** This exhibit's extraction pattern did
+> not include `len`/`mtu` lines, so it could not see the thing that turned out to matter:
+> **835 × `len 27 mtu 9`** — 27-byte mSBC frames into the 9-byte alt-1 endpoint — streaming
+> between the link coming up and the fault.
+>
+> That traffic is now the best-supported statement of `BT-1`'s condition. Every recorded
+> death carries hundreds of those packets (835 here, 87 in `EX-036`, 680 in `EX-037`); the
+> one recorded survival of the same path, 2026-09-01, carries **none**.
+>
+> **"Anonymous by construction" also overstates it.** The dying command is anonymous to
+> the *printk* — `hdev->req_skb` is NULL because a connection teardown is not an
+> `hci_cmd_sync` request — but it is visible in the log. Here it is the command queued at
+> `01:31:10.511548`, **36 ms** after the link came up; in `EX-036` the equivalent is named
+> outright as `0x0406 Disconnect … reason 0x13`.
+>
+> The answered `0x0428`, the handle, the interval and the 9 h 45 m untreated window all
+> re-derive unchanged. `EX-037` supersedes the reading.
+
 **Claim.** The controller **answered** `0x0428 Setup Synchronous Connection` in 72.8 ms,
 allocated handle `0x0004`, completed the USB alternate-setting switch — and then a
 *different* command died 2.076 s later, logged in the **bare** form

@@ -1,5 +1,32 @@
 # EX-036 — answered-sco-then-bare-timeout-reproduced
 
+> ## ⚠️ CORRECTION — 2026-09-02, see `EX-037`
+>
+> **Two claims below are wrong, and both were artefacts of this exhibit's own grep.**
+>
+> **1. "then silence" after the alt probes is false.** The extraction pattern did not
+> include `len`/`mtu` lines, so it could not see that **SCO data was flowing**:
+> `len 90 mtu 9` at `17:08:08.629850`, then 87 × `len 27 mtu 9` before the fault. The
+> absence of a `:1` line remains true and remains only an inference.
+>
+> **2. "the dying command is anonymous by construction" overstates it.** It is anonymous
+> to the *printk*, not to the log. The command is visible 279 ms after the link came up:
+>
+> ```
+> 17:08:08.904962  hci0: Opcode 0x0406
+> 17:08:08.904982  hci0: opcode 0x0406 plen 3       Disconnect, handle 0x05, reason 0x13
+> 17:08:08.905036  hci0 cmd_cnt 0 cmd queued 1
+> 17:08:10.702854  Bluetooth: hci0: command tx timeout
+> ```
+>
+> So the host tore down an **actively streaming** SCO link 279 ms after establishing it,
+> and the controller never answered the Disconnect. `hdev->req_skb` was NULL because a
+> connection teardown is not an `hci_cmd_sync` request — which explains the bare spelling
+> without making the command unknowable.
+>
+> The rest of the exhibit — the answered `0x0428`, `evt 5`, the interval, the counts —
+> re-derives unchanged. `EX-037` supersedes the reading.
+
 **Claim.** `EX-033`'s signature reproduced, seven days later, on a different peripheral and
 a different kernel: `0x0428` **answered** in 74.9 ms, `evt 5` transparent air mode, both alt
 probes then silence, and the fault arriving **2.152 s** later on the **bare**

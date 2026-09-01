@@ -46,3 +46,4 @@ Regenerate this index with `bt-exhibit index`.
 | EX-034 | [reboot-from-stage1-failed-after-recovery-ladder](034-reboot-from-stage1-failed-after-recovery-ladder.md) | A hot reboot taken while the controller was in **stage 1** — on the bus, driver |
 | EX-035 | [patched-bluetoothd-runtime-observation](035-patched-bluetoothd-runtime-observation.md) | A `bluetoothd` built from this machine's own `5.72-0ubuntu5.5` source with both |
 | EX-036 | [answered-sco-then-bare-timeout-reproduced](036-answered-sco-then-bare-timeout-reproduced.md) | `EX-033`'s signature reproduced, seven days later, on a different peripheral and |
+| EX-037 | [sustained-alt1-traffic-precedes-the-wedge](037-sustained-alt1-traffic-precedes-the-wedge.md) | The controller wedged for a third time on the `EX-033`/`EX-036` signature, and |
