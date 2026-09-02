@@ -125,9 +125,25 @@ the driver instrumentation already tracked in the source-review brief.
 CVSD on its own. Nobody has yet made this controller take the alt-1 path *and* forced the
 stream to sustain, or blocked alt-1 and shown survival under otherwise identical use.
 
-**And the fallback is still not directly observed.** The `:6`/`:3` probes and a 9-byte MTU
-imply alt 1 was selected; no log line names it. `mtu 9` is the strongest evidence yet, and
-it is still an inference from the endpoint size.
+~~**And the fallback is still not directly observed.**~~ **It now is.** While the wedge was
+still open, `sysfs` was read — no control transfer, no probe, nothing on the wire:
+
+```console
+$ tools/bt-usbstate
+  bInterfaceNumber       01
+  bAlternateSetting       1
+  ep_03  type Isoc  wMaxPacketSize 0009  bInterval 01
+  ep_83  type Isoc  wMaxPacketSize 0009  bInterval 01
+```
+
+**The SCO interface is on alternate setting 1 with 9-byte isochronous endpoints.** Not
+inferred from the `:6`/`:3` probes, not inferred from btusb's `mtu 9` — read from the
+kernel's own record of the interface. That is exactly the state
+`BTUSB_USE_ALT1_FOR_WBS` selects, and exactly what a 27-byte mSBC frame does not fit into.
+
+⚠️ **A reboot destroys this and the journal does not carry it.** Every previous wedge in
+this record was rebooted away before anyone looked. `tools/bt-usbstate` exists so the next
+one is not.
 
 ## Provenance
 

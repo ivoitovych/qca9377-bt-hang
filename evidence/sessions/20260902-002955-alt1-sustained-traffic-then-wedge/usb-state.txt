@@ -1,0 +1,69 @@
+bt-usbstate — 3-3 at 2026-09-02T00:45:40+02:00
+
+device
+  idVendor               13d3
+  idProduct              3503
+  bcdDevice              0001
+  devnum                 2
+  speed                  12
+  urbnum                 4601174
+  authorized             1
+  quirks                 0x0
+  avoid_reset_quirk      0
+  bConfigurationValue    1
+  bNumInterfaces          2
+  removable              fixed
+
+power
+  runtime_status         active
+  control                on
+  runtime_enabled        forbidden
+  runtime_active_time    174474804
+  runtime_suspended_time 0
+  autosuspend_delay_ms   2000
+  persist                1
+  wakeup                 disabled
+
+interface 3-3:1.0
+  bInterfaceNumber       00
+  bAlternateSetting       0
+  bNumEndpoints          03
+  bInterfaceClass        e0
+  ep_02
+    bEndpointAddress     02
+    type                 Bulk
+    wMaxPacketSize       0040
+    bInterval            01
+  ep_81
+    bEndpointAddress     81
+    type                 Interrupt
+    wMaxPacketSize       0010
+    bInterval            01
+  ep_82
+    bEndpointAddress     82
+    type                 Bulk
+    wMaxPacketSize       0040
+    bInterval            01
+
+interface 3-3:1.1
+  bInterfaceNumber       01
+  bAlternateSetting       1
+  bNumEndpoints          02
+  bInterfaceClass        e0
+  ep_03
+    bEndpointAddress     03
+    type                 Isoc
+    wMaxPacketSize       0009
+    bInterval            01
+  ep_83
+    bEndpointAddress     83
+    type                 Isoc
+    wMaxPacketSize       0009
+    bInterval            01
+
+  ⚠️  SCO interface is on ALTERNATE SETTING 1, isochronous endpoint 9 bytes
+      That is the BTUSB_USE_ALT1_FOR_WBS state, observed directly rather
+      than inferred from the probe lines. 27-byte mSBC frames do not fit.
+
+  Read from sysfs only — no control transfer was issued. Safe inside an
+  untreated window; this does not count as touching the device.

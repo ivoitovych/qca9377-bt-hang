@@ -1,0 +1,129 @@
+#!/bin/bash
+# bt-usbstate — the controller's USB state as it stands RIGHT NOW.
+#
+#   bt-usbstate              print it
+#   bt-usbstate --out <dir>  also write it to <dir>/usb-state.txt
+#
+# WHY THIS EXISTS. On 2026-09-02, during an untreated wedge, this was read by
+# hand:
+#
+#     /sys/bus/usb/devices/3-3:1.1/bAlternateSetting   1
+#     /sys/bus/usb/devices/3-3:1.1/ep_03/wMaxPacketSize   0009
+#
+# ⚠️ THAT IS THE ALT-1 CLAIM, DIRECTLY OBSERVED. Every exhibit to that date
+# hedged it: EX-033, EX-036 and EX-037 all say alt 1 is an INFERENCE from the
+# `Looking for Alt no :6` / `:3` probes and a 9-byte MTU in btusb's debug
+# output, because no log line names the chosen setting. sysfs names it. The
+# interface is on alternate setting 1 with a 9-byte isochronous endpoint, which
+# is precisely what BTUSB_USE_ALT1_FOR_WBS selects and precisely what 27-byte
+# mSBC frames do not fit into.
+#
+# AND A REBOOT DESTROYS IT. The journal survives; this does not. It exists only
+# while the wedged device is still enumerated, which is the one state nobody
+# can reconstruct afterwards. Every previous wedge was rebooted away before
+# anyone thought to look.
+#
+# ⚠️ READS ONLY, AND ONLY FROM sysfs. No control transfer, no ioctl, no
+# usb_set_interface, nothing through usbfs. Reading these attributes returns
+# values the kernel already holds from enumeration; it does not put a packet on
+# the wire. That matters because this tool is for use INSIDE an untreated
+# window, where the whole value of the window is that nothing has touched the
+# device. Contrast the `USBDEVFS_CONTROL ... ret -110` lines in EX-037, which
+# came from tracing that DID reach for the device.
+#
+# Read-only. Safe inside an untreated window.
+
+set -uo pipefail
+export LC_ALL=C
+
+USBROOT="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
+DEV="${BT_USB_PATH:-3-3}"
+OUT=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --out) OUT="${2:?--out needs a directory}"; shift ;;
+        -h|--help) sed -n '2,5p' "$0"; exit 0 ;;
+        *) echo "bt-usbstate: unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+D="$USBROOT/$DEV"
+# NOT AN ERROR EXIT WHEN THE DEVICE IS GONE. Stage 2 — the controller off the
+# bus entirely — is a real recorded state, and a tool that failed there would
+# be unusable in exactly half the incidents. It reports the absence, which is
+# itself the finding.
+if [[ ! -e "$D" ]]; then
+    printf 'bt-usbstate — %s is NOT on the USB bus\n' "$DEV"
+    printf '  the controller is off the bus (stage 2); there is no USB state to read\n'
+    exit 0
+fi
+
+emit() {
+    printf 'bt-usbstate — %s at %s\n\n' "$DEV" "$(date -Iseconds)"
+
+    printf 'device\n'
+    for f in idVendor idProduct bcdDevice devnum speed urbnum authorized \
+             quirks avoid_reset_quirk bConfigurationValue bNumInterfaces removable; do
+        [[ -r "$D/$f" ]] && printf '  %-22s %s\n' "$f" "$(cat "$D/$f" 2>/dev/null)"
+    done
+
+    printf '\npower\n'
+    for f in runtime_status control runtime_enabled runtime_active_time \
+             runtime_suspended_time autosuspend_delay_ms persist wakeup; do
+        [[ -r "$D/power/$f" ]] && printf '  %-22s %s\n' "$f" "$(cat "$D/power/$f" 2>/dev/null)"
+    done
+
+    # ── THE INTERFACES, AND THE LINE THIS TOOL WAS WRITTEN FOR ───────────
+    #
+    # bAlternateSetting on the SCO interface (bInterfaceNumber 01) is the
+    # answer to the question three exhibits could only infer. Printed with the
+    # endpoint packet size beside it, because the pair is the finding: alt 1
+    # AND a 9-byte isochronous endpoint is the BTUSB_USE_ALT1_FOR_WBS state.
+    shopt -s nullglob
+    for i in "$D"/"$DEV":*; do
+        printf '\ninterface %s\n' "$(basename "$i")"
+        for f in bInterfaceNumber bAlternateSetting bNumEndpoints bInterfaceClass; do
+            [[ -r "$i/$f" ]] && printf '  %-22s %s\n' "$f" "$(cat "$i/$f" 2>/dev/null)"
+        done
+        for e in "$i"/ep_*; do
+            printf '  %s\n' "$(basename "$e")"
+            for f in bEndpointAddress type wMaxPacketSize bInterval; do
+                [[ -r "$e/$f" ]] && printf '    %-20s %s\n' "$f" "$(cat "$e/$f" 2>/dev/null)"
+            done
+        done
+    done
+
+    # The reading, stated here rather than left to whoever finds the file.
+    # ⚠️ TRIMMED, AND THE FIRST VERSION WAS NOT. sysfs prints these attributes
+    # space-padded — `bAlternateSetting` reads " 1", not "1" — so a plain
+    # equality test against "1" never matched and the warning below could not
+    # fire. It was written on the very window it exists to flag and stayed
+    # silent through it. A check that cannot fire is this project's most
+    # frequent defect; `10#` likewise, so a padded "01" is not read as octal.
+    local alt="" mps=""
+    [[ -r "$D/$DEV:1.1/bAlternateSetting" ]] && alt=$(tr -dc '0-9' < "$D/$DEV:1.1/bAlternateSetting" 2>/dev/null)
+    [[ -r "$D/$DEV:1.1/ep_03/wMaxPacketSize" ]] && mps=$(tr -dc '0-9a-fA-F' < "$D/$DEV:1.1/ep_03/wMaxPacketSize" 2>/dev/null)
+    if [[ -n "$alt" ]] && (( 10#$alt == 1 )); then
+        printf '\n  ⚠️  SCO interface is on ALTERNATE SETTING 1'
+        [[ -n "$mps" ]] && printf ', isochronous endpoint %s bytes' "$((16#${mps:-0}))"
+        printf '\n      That is the BTUSB_USE_ALT1_FOR_WBS state, observed directly rather\n'
+        printf '      than inferred from the probe lines. 27-byte mSBC frames do not fit.\n'
+    elif [[ -n "$alt" ]]; then
+        printf '\n  SCO interface alternate setting %s' "$alt"
+        [[ -n "$mps" ]] && printf ', isochronous endpoint %s bytes' "$((16#${mps:-0}))"
+        printf '\n'
+    fi
+
+    printf '\n  Read from sysfs only — no control transfer was issued. Safe inside an\n'
+    printf '  untreated window; this does not count as touching the device.\n'
+}
+
+emit
+if [[ -n "$OUT" ]]; then
+    mkdir -p "$OUT" 2>/dev/null || { echo "bt-usbstate: cannot create $OUT" >&2; exit 2; }
+    emit > "$OUT/usb-state.txt" || { echo "bt-usbstate: cannot write $OUT/usb-state.txt" >&2; exit 2; }
+    printf '\n  -> %s/usb-state.txt\n' "$OUT"
+fi
+exit 0
