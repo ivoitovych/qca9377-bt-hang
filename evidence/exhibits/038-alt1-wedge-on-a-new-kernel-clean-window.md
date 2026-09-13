@@ -26,10 +26,20 @@ this on **`-31`**. Three kernels, same fault, same interval to within 115 ms.
 
 ## Extraction method
 
-One call, re-runnable as-is while boot `c128a59a` is retained:
+One call. At capture time the fault was in boot 0; the machine has since been power
+cycled, so **re-derive with `--boot -1`** — and check the index against boot id
+`f5de8066` first, because indices shift on every reboot:
 
 ```console
-$ tools/bt-fault-window
+$ tools/bt-fault-window              # at capture time
+$ tools/bt-fault-window --boot -1    # after the 2026-09-13 05:13 power cycle
+```
+
+Also replayable from the archive, which holds the boot in full (87,102 records,
+64,457 alt-1 packet lines):
+
+```console
+$ journalctl --file /root/bt-journal-archive/boot-f5de8066.export.zst …
 ```
 
 ## Output
@@ -139,6 +149,19 @@ better explained by *when* the boots happened than by the treatment: every `auto
 is from August, every `autosusp=N` boot later. Recorded here because the rate table is
 persuasive and wrong, and nobody re-derives a number that already agrees with them.
 
+## ⚠️ A provenance correction, made the same night
+
+The first version of this exhibit recorded the boot id as `c128a59a`. **That is a different
+boot — 2026-09-02, eleven days earlier.** The value was copied forward from a
+`bt-archive --check` listing earlier in the same working session rather than read from the
+boot that actually faulted, which is `f5de8066`.
+
+This is the second time this exact error has been made here: five exhibits once recorded
+kernel `7.0.0-28` on machines running `-29` and `-30`, for the same reason — a provenance
+field typed from memory of a previous output. A wrong boot id is worse than a missing one,
+because it makes the exhibit look re-derivable while pointing at the wrong evidence. Every
+number in the tables above was re-checked against `f5de8066` and stands.
+
 ## What this does not establish
 
 **Still not a mechanism.** Four deaths with sustained alt-1 traffic and one survival without
@@ -156,7 +179,8 @@ use. The survival was the peripheral's choice, not an intervention.
 | kernel | `7.0.0-31-generic` |
 | bluez | `5.72-0ubuntu5.5` + 31 Ubuntu patches + `patches/bluez/0001`, `0002` |
 | device | `13d3:3503` QCA9377 (ROME); peer `MOMENTUM 4` |
-| boot id | `c128a59a` |
+| boot id | `f5de8066` — 2026-09-12 00:07:00 → 2026-09-13 05:12:48 |
+| archived | `boot-f5de8066.export.zst`, 87,102 records, read back and verified |
 | treatment | `autosusp=N, power=on, wd=off, probes=off` |
 | exit status | `0` |
 | redacted | `no` |
