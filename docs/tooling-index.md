@@ -97,6 +97,16 @@ destroying this controller.
 
 ## Writing commands so they do not prompt
 
+⚠️ **Let journald do the filtering, or the scan is both too slow AND too narrow.**
+`journalctl --since … | grep X` over this machine's journal walks ~19 days of
+dynamic-debug output and does **not finish in ten minutes**. The same question
+with `journalctl _COMM=bluetoothd --since … | grep X` answers in **thirty
+seconds**, because journald selects on the indexed field instead of streaming
+every record. On 2026-09-13 the slow form was abandoned and replaced by a grep
+over one boot — which reported "the patch guard never fired" when it had fired
+four times (`EX-041`). The too-slow scan and the false conclusion were the same
+mistake.
+
 ⚠️ **The allowlist is not the bottleneck, and measuring this settled it.** On
 2026-09-13 the operator asked for fewer permission prompts. **364 entries were
 already granted**, `journalctl *` and `tools/*` among them. A tally of 3,584
