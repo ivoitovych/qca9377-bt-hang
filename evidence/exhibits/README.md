@@ -47,3 +47,4 @@ Regenerate this index with `bt-exhibit index`.
 | EX-035 | [patched-bluetoothd-runtime-observation](035-patched-bluetoothd-runtime-observation.md) | A `bluetoothd` built from this machine's own `5.72-0ubuntu5.5` source with both |
 | EX-036 | [answered-sco-then-bare-timeout-reproduced](036-answered-sco-then-bare-timeout-reproduced.md) | `EX-033`'s signature reproduced, seven days later, on a different peripheral and |
 | EX-037 | [sustained-alt1-traffic-precedes-the-wedge](037-sustained-alt1-traffic-precedes-the-wedge.md) | The controller wedged for a third time on the `EX-033`/`EX-036` signature, and |
+| EX-038 | [alt1-wedge-on-a-new-kernel-clean-window](038-alt1-wedge-on-a-new-kernel-clean-window.md) | Fourth instance of the `EX-033`/`036`/`037` signature, on a **new kernel** |
