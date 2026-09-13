@@ -104,6 +104,14 @@ running since 08-25. **Unsent — the operator has not released them.**
 
 ## 7. Operating constraints — non-negotiable
 
+⚠️ **This section and §8 are the DURABLE copy.** They were only in an assistant-side memory
+store outside the repository — uncommitted, and lost to any reclone, reinstall or moved
+directory. Tool-specific habits stay there; everything that is true regardless of who or
+what is working lives here, in git.
+
+**Goal.** The endgame is an **upstream kernel patch**, not a local workaround. Three parallel
+streams: evidence, workarounds, the real fix. Workarounds must never be mistaken for it.
+
 - **Family laptop.** A dead controller costs the household. Never request long windows on
   spec; capture what is already open.
 - **Never `install.sh --apply`** on the investigation machine — it arms `bt-hang-watchdog`,
@@ -115,6 +123,22 @@ running since 08-25. **Unsent — the operator has not released them.**
   `sysfs` reads are safe, anything through usbfs is not.
 - **Verify operator accounts against logs** — he asked not to be trusted. Find the record or
   label the claim.
+- **Every claim ships with its extraction command and exact verbatim output**, plus exit
+  status and whether it was redacted. A claim without a re-runnable derivation is not
+  evidence. This is why `evidence/exhibits/` exists in the shape it does.
+- **Write identifiers in full** — branch names, paths, boot ids. Never `…`, never a short
+  form after first use. Five branches here differ only by a trailing UTC timestamp; eliding
+  them makes them indistinguishable exactly when the difference matters. Short SHAs are fine.
+- **Attribution is the operator's, never a tool's.** No AI/assistant attribution in commits,
+  patches or docs. Upstream sign-off is
+  `Iaroslav Voitovych <yaroslav.voytovych@gmail.com>` — title case. ⚠️ The name and the email
+  use *different* transliterations (Ukraine changed its Latin rules in 2011, after the gmail
+  was created). **The mismatch is correct; do not "fix" either to match the other.**
+- **If access to something is blocked, diagnose it and ask** — never ship "I could not
+  access X" inside the operator's deliverable. A 403 from one client is not proof of
+  unreachability: check whether it is a refused tunnel, a status from a server that did
+  answer, or a UA block fronting a challenge (this exact case cost a false caveat about
+  `lore.kernel.org` nearly reaching a patch submission).
 
 ## 8. Method rules that were paid for
 
@@ -127,9 +151,13 @@ running since 08-25. **Unsent — the operator has not released them.**
   `8 daemon crashes` was true of the machine, false of Bluetooth.
 - **Present ≠ complete.** 9 of 21 journal archives were prefixes reading as complete.
 - **Read provenance, never copy it forward.** Wrong boot id twice, wrong kernel five times.
-- **Fewer prompts = fewer pipes, never more allow rules.** 2344/3584 calls contained
-  compound shell against 364 rules already granted. New scripts under `tools/` or
-  `devtools/` are pre-granted and silent.
+- **Extract the repeated question into a tool**, not the repeated command. One script
+  replaced 226 recurring `journalctl … | grep` invocations. If a question recurs and no tool
+  answers it, that is the bug.
+- **Check whether the tool already does the step you are prefixing.** `git add -A` was typed
+  before `repo-save` for weeks; `repo-save` had always staged on its own.
+- **Trim output inside the script, never with a pipe.** Quiet on success, everything on
+  failure — a summary that hides a gate failure is worse than the noise it saved.
 
 ## 9. Open threads
 
