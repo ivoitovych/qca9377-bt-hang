@@ -49,3 +49,4 @@ Regenerate this index with `bt-exhibit index`.
 | EX-037 | [sustained-alt1-traffic-precedes-the-wedge](037-sustained-alt1-traffic-precedes-the-wedge.md) | The controller wedged for a third time on the `EX-033`/`EX-036` signature, and |
 | EX-038 | [alt1-wedge-on-a-new-kernel-clean-window](038-alt1-wedge-on-a-new-kernel-clean-window.md) | Fourth instance of the `EX-033`/`036`/`037` signature, on a **new kernel** |
 | EX-039 | [hci-reset-fails-so-the-toggle-cannot-recover](039-hci-reset-fails-so-the-toggle-cannot-recover.md) | Toggling Bluetooth off and on after a wedge cannot work, and the log says why: |
+| EX-040 | [headset-connect-to-wedge-in-three-seconds](040-headset-connect-to-wedge-in-three-seconds.md) | Fifth instance of the signature, and the **shortest and simplest path to it on |
