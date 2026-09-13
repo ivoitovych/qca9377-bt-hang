@@ -68,6 +68,34 @@ if [[ -x "$REPO/tools/bt-exhibit" ]]; then
     fi
 fi
 
+# ── BRIEF.md STALENESS ───────────────────────────────────────────────────
+#
+# BRIEF.md is the file read first after a context reset, so a stale one is worse
+# than none: it is read WITH the authority of being current. Nothing keeps it
+# current except noticing, and "noticing" is what this project has repeatedly
+# found to be no control at all (bt-retention and bt-archive both existed and
+# neither ran on its own until a timer called them).
+#
+# The cheapest honest check: does BRIEF.md name the newest exhibit? It cannot
+# tell whether the CONTENT is right — only that the file has not been updated
+# since evidence was added. A warning, never a block: evidence must always be
+# committable, and a gate that stopped a capture to enforce documentation would
+# invert this project's priorities.
+NEWEST=$(ls "$REPO/evidence/exhibits/" 2>/dev/null | grep -oE '^[0-9]+' | sort -n | tail -1)
+if [[ -n "$NEWEST" && -r "$REPO/BRIEF.md" ]]; then
+    if ! grep -q "EX-$NEWEST" "$REPO/BRIEF.md" 2>/dev/null; then
+        echo "save: ⚠️  BRIEF.md does not mention EX-$NEWEST — it is the file read first" >&2
+        echo "     after a context reset, and a stale one is read as current." >&2
+    fi
+fi
+# And the budget, which is the only reason it is cheaper than reading the source.
+if [[ -r "$REPO/BRIEF.md" ]]; then
+    BL=$(grep -c . "$REPO/BRIEF.md" 2>/dev/null || echo 0)
+    if [[ "${BL:-0}" -gt 200 ]]; then
+        echo "save: ⚠️  BRIEF.md is $BL lines, over its 200-line budget — cut settled items." >&2
+    fi
+fi
+
 # ── OUTPUT IS TRIMMED HERE, NOT BY A PIPE ────────────────────────────────
 #
 # repo-save prints ~100 lines, most of it a per-file syntax checklist. Trimming

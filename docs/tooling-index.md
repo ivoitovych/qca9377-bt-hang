@@ -1,4 +1,10 @@
-# Tooling index — read this first after a context reset
+# Tooling index — which tool answers which question
+
+⚠️ **Read [`BRIEF.md`](../BRIEF.md) first** — it is the concentrated state of
+knowledge (what is true, what is **retracted**, what is open) in under 200 lines.
+This file is the layer below it: once you know *what* you are asking, this says
+*which tool* asks it.
+
 
 **Purpose.** Every routine question in this project already has a tool. Hand-typing
 the pipeline instead is slower, costs a permission prompt, and has repeatedly been
