@@ -76,7 +76,7 @@ with HFP already connected.
 
 | claim | status |
 |---|---|
-| "`0x0428` is submitted and never answered" | **FALSE** — answered every time |
+| "`BT-1` *is* `0x0428` submitted and never answered" | **FALSE as a general claim** — answered in all 5 alt-1 instances. ⚠️ But `EX-006` (Phase 19) did record one genuinely unanswered, so "never answered" is wrong, and "always answered" is too |
 | "alt probes, then silence" (`EX-033`/`036`) | **FALSE** — artefact of those exhibits' own grep; data was flowing |
 | "the dying command is anonymous *by construction*" | **OVERSTATED** — anonymous to the printk, not the log |
 | "patch `0002`'s guard has never fired" | **FALSE** — fired 4× (`EX-041`); came from grepping one boot |
@@ -158,6 +158,15 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   before `repo-save` for weeks; `repo-save` had always staged on its own.
 - **Trim output inside the script, never with a pipe.** Quiet on success, everything on
   failure — a summary that hides a gate failure is worse than the noise it saved.
+- **Separate what the operator DID from how the controller RESPONDED** (Phase 14). The
+  reproductions were never a controlled procedure; every trigger attribution is an inference
+  read backwards out of logs. Response measurements survive that; trigger claims do not.
+- **A flag is not one behaviour** (Phase 17). `BTUSB_QCA_ROME` installs six things, so an
+  A/B toggling it isolates none of them. Check what a switch actually carries before
+  designing an experiment around it.
+- **One observation is an anecdote — build the tool that checks the corpus** (Phase 25).
+  `bt-stage2` turned one 72-minute boot into 22 boots and 3.3 M lines, and the answer
+  changed shape.
 
 ## 9. Open threads
 

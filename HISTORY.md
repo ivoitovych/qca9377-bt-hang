@@ -2069,6 +2069,12 @@ a *different* command died, logged as the bare `command tx timeout` with no opco
 NULL, so **the command that died was not the one `hci_cmd_sync` was tracking**. It is
 anonymous by construction.
 
+> ⚠️ **SUPERSEDED — see Phase 34 and `EX-036`.** "Anonymous by construction" is too strong.
+> The command is anonymous *to the printk*, not to the log: in `EX-036` it is visible as
+> `0x0406 Disconnect, handle 0x05, reason 0x13`, issued 279 ms after link-up. `req_skb` is
+> NULL because a connection teardown is not an `hci_cmd_sync` request — which explains the
+> bare spelling without making the command unknowable.
+
 That reframes a question asked here for weeks. The trigger has been hunted as a *named
 opcode*, and the hunt kept yielding a distribution rather than a constant — 4.1 s, 7.6 s,
 16.2 s, 55.2 s, 155.8 s. If the dying command is often anonymous, part of that spread is the
@@ -2244,6 +2250,14 @@ which calls nothing and therefore **logs nothing**. And the CVSD branch computes
 arithmetically without ever calling that function — so a `Looking for Alt no` line can only
 come from the transparent branch. The absence of `:1` is what the finding predicts, and the
 captures are its strongest confirmation.
+
+> ⚠️ **STRENGTHENED — see Phase 34.** This reasoning stands, and it is no longer the
+> strongest confirmation: on 2026-09-02 `sysfs` was read during a live wedge and returned
+> `bAlternateSetting 1` with `wMaxPacketSize 0009`, three times since. Alt 1 is now
+> **directly observed**, not inferred from an absence. ⚠️ Separately, `EX-033`'s and
+> `EX-036`'s claim that the probes were followed by *silence* is **wrong** — an artefact of
+> those exhibits' own extraction patterns, which omitted the `len`/`mtu` lines. SCO data was
+> flowing in both.
 
 **2. `0x0428` does not mean CVSD.** Stated in the plan and in `comms`. `btusb_notify()` takes
 `air_mode` from the HCI core's notify value, derived from the *air mode of the connection*,
@@ -2521,6 +2535,11 @@ At 17:08 the operator put the headset into hands-free mode, and the fault arrive
 17:08:08.626011  Looking for Alt no :6  then  :3   → silence → alt 1
 17:08:10.702854  command tx timeout                BARE, +2.152 s
 ```
+
+> ⚠️ **"→ silence" IS WRONG — see Phase 34 and `EX-037`.** An artefact of `EX-036`'s own
+> extraction pattern, which omitted `len`/`mtu` lines. SCO data *was* flowing: `len 90 mtu 9`
+> at `.629850`, then 87 × `len 27 mtu 9` before the fault. That traffic turned out to be the
+> condition itself, not background — so the line that read as an absence was the measurement.
 
 **That is `EX-033` reproduced** — different peripheral (Sennheiser, not Lenovo), different
 kernel (`-30`, not `-29`), three days apart. `EX-033` measured **2.076 s**; this one
