@@ -1,0 +1,71 @@
+#!/bin/bash
+# save — index the exhibits, then validate, scan, commit and push. One command,
+#        one argument, no shell syntax.
+#
+#   devtools/save <message-file>
+#   devtools/save <message-file> --no-push
+#
+# WHY THIS EXISTS. The operator, 2026-09-13, pasting the prompt he had just been
+# shown:
+#
+#   cd /root/exp/qca9377-bt-hang && tools/bt-exhibit index >/dev/null 2>&1; \
+#   git add -A; devtools/repo-save . -F <msgfile> 2>&1 | tail -7
+#
+#   "This command changes directory before running git, which can execute
+#    untrusted hooks from the target directory."
+#
+# ⚠️ FOUR PROMPT TRIGGERS IN ONE CALL, and every one avoidable:
+#
+#   cd X && git …   the named trigger above. repo-save ALREADY takes the repo
+#                   as its first argument, so the cd was pointless as well as
+#                   unmatchable.
+#   ;  ;            two command separators — unanalysable on their own.
+#   >/dev/null 2>&1 a redirect, likewise.
+#   | tail -7       a pipe, to trim output the script could have trimmed itself.
+#
+# And `git add -A` was REDUNDANT: repo-save stages first thing (its own
+# "── stage ──" step). It was never needed, and it is what dragged `git` into a
+# command that then tripped the cd-before-git rule.
+#
+# So this file is the whole commit flow as one simple command with one plain
+# argument, matched by the already-granted devtools/* rule and therefore silent
+# from its first run. See docs/tooling-index.md — the fix for a repeated prompt
+# is never another permission entry.
+#
+# Everything load-bearing still happens: repo-save runs repo-validate and
+# repo-scan, scans the message as well as the content, pushes, and verifies the
+# remote hash equals the local one. Nothing here weakens a gate; it only removes
+# shell.
+
+set -uo pipefail
+export LC_ALL=C
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="$(cd "$HERE/.." && pwd)"
+
+MSG="${1:-}"
+shift || true
+if [[ -z "$MSG" ]]; then
+    echo "usage: devtools/save <message-file> [--no-push]" >&2
+    exit 2
+fi
+# Resolve before anything else runs, so a relative path means what the caller
+# typed rather than something inside the repository.
+[[ "$MSG" == /* ]] || MSG="$PWD/$MSG"
+[[ -r "$MSG" ]] || { echo "save: cannot read message file: $MSG" >&2; exit 2; }
+
+# ⚠️ AN EMPTY MESSAGE FILE IS A REFUSAL. A Write that silently produced nothing
+# would otherwise become a commit titled with the first line of nothing, and the
+# reason for the change would be gone from the history for good.
+[[ -s "$MSG" ]] || { echo "save: REFUSING — message file is empty: $MSG" >&2; exit 2; }
+
+# Regenerate the exhibit index before staging, so a new exhibit is never
+# committed without its README row. Failure is reported, not fatal: a stale
+# index must not block recording evidence.
+if [[ -x "$REPO/tools/bt-exhibit" ]]; then
+    if ! "$REPO/tools/bt-exhibit" index >/dev/null 2>&1; then
+        echo "save: warning — bt-exhibit index failed; committing anyway" >&2
+    fi
+fi
+
+exec "$HERE/repo-save" "$REPO" -F "$MSG" "$@"

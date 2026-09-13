@@ -1,0 +1,113 @@
+#!/bin/bash
+# bt-guards — have the patches/bluez/ guards fired, and when?
+#
+#   bt-guards              the whole patched run (since the install date)
+#   bt-guards --since X    a narrower window, any journalctl time expression
+#
+# WHY THIS EXISTS, AND WHY IT USES _COMM. A patch that prevents a crash leaves
+# NO trace by default: the daemon does not die, which is indistinguishable from
+# the bug never having occurred. Both patches log before they bail, so the
+# message IS the observation — the only positive evidence a fix worked.
+#
+# ⚠️ THE OBVIOUS WAY TO ASK COSTS TEN MINUTES AND GIVES THE WRONG ANSWER.
+# `journalctl --since … | grep 'has no stream'` streams ~19 days of
+# dynamic-debug output through grep and did not finish in ten minutes here. It
+# was abandoned on 2026-09-13 and replaced with a grep over ONE BOOT, which
+# reported that patch 0002's guard had never fired — when it had fired four
+# times (EX-041). The too-slow scan and the false conclusion were the same
+# mistake: not letting journald filter.
+#
+# `_COMM=bluetoothd` selects on an indexed field, so the same question answers
+# in about thirty seconds. That is the entire reason this file exists.
+#
+# ⚠️ THE TWO GUARDS ARE NOT EQUALLY DIAGNOSTIC, and the output says so:
+#
+#   0002  "bt_io_accept: setup %p has no stream" is NEW TEXT, unique to the
+#         patch. A hit is unambiguous — that guard fired and a NULL deref in
+#         avdtp_stream_set_transport() did not happen.
+#   0001  "Wrong size of start discovery return parameters" ALREADY EXISTS in
+#         the function, below the branch the patch protects. A hit means one of
+#         TWO sites fired, and which one cannot be read from the message. The
+#         pre-existing site calls discovery_complete(); ours only returns.
+#
+# Reporting a 0001 hit as "a crash was prevented" would be wrong, and on
+# 2026-09-08 it would have been wrong: the single hit was the pre-existing site.
+#
+# Read-only. Journald reads only — safe inside an untreated window.
+
+set -uo pipefail
+export LC_ALL=C
+
+# The date the patched daemon was first installed on this machine (EX-035).
+# Not "all of time": every boot before it ran the distro binary, where these
+# strings mean something different or nothing at all.
+SINCE="${BT_GUARDS_SINCE:-2026-08-25}"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --since) SINCE="${2:?--since needs a time expression}"; shift ;;
+        -h|--help) sed -n '2,5p' "$0"; exit 0 ;;
+        *) echo "bt-guards: unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+G2='bt_io_accept: setup .* has no stream'
+G1='Wrong size of start discovery return parameters'
+
+printf 'bt-guards — patches/bluez/ guard firings since %s\n\n' "$SINCE"
+
+WORK=$(mktemp) || { echo "bt-guards: cannot create a work file" >&2; exit 2; }
+trap 'rm -f "$WORK"' EXIT
+
+# _COMM, not a bare --since: see the header. The exit status of the pipeline is
+# not tested because grep exits 1 on no matches, which is a legitimate result.
+journalctl _COMM=bluetoothd --since "$SINCE" --no-pager -o short-iso 2>/dev/null \
+    | grep -E "$G2|$G1" > "$WORK"
+
+N2=$(grep -cE "$G2" "$WORK" 2>/dev/null || true)
+N1=$(grep -cE "$G1" "$WORK" 2>/dev/null || true)
+
+# ⚠️ A ZERO NEEDS A POSITIVE CONTROL. If bluetoothd logged nothing at all in the
+# window, both counts are zero for a reason that has nothing to do with the
+# patches, and reporting "0 firings" would be a measurement of the query rather
+# than of the machine.
+SEEN=$(journalctl _COMM=bluetoothd --since "$SINCE" --no-pager 2>/dev/null | head -20000 | grep -c . || true)
+if [[ "${SEEN:-0}" -eq 0 ]]; then
+    echo "  REFUSING — bluetoothd logged nothing since $SINCE." >&2
+    echo "  Both counts would be zero because the scan saw nothing, not because" >&2
+    echo "  the guards did not fire. Check the daemon runs with -d." >&2
+    exit 2
+fi
+printf '  positive control   %6s  bluetoothd lines (capped read — the scan can see)\n\n' "${SEEN:-0}"
+
+printf '  0002  setup has no stream   %4s   ' "${N2:-0}"
+if [[ "${N2:-0}" -gt 0 ]]; then
+    printf '⚠️  CRASHES PREVENTED — new text, unambiguous\n'
+else
+    printf '(guarded path not reached)\n'
+fi
+
+printf '  0001  wrong discovery size  %4s   ' "${N1:-0}"
+if [[ "${N1:-0}" -gt 0 ]]; then
+    printf '⚠️  AMBIGUOUS — pre-existing string, two sites\n'
+else
+    printf '(neither site fired)\n'
+fi
+
+if [[ -s "$WORK" ]]; then
+    echo
+    echo '  firings'
+    sed 's/^/    /' "$WORK"
+fi
+
+if [[ "${N1:-0}" -gt 0 ]]; then
+    echo
+    echo '  ⚠️ A 0001 hit is NOT evidence the patch prevented a crash. The same'
+    echo '     message exists below the branch the patch protects. To tell them'
+    echo '     apart, read the surrounding lines: the PRE-EXISTING site calls'
+    echo '     discovery_complete(), ours only returns — so if adapter->discovery_list'
+    echo '     was non-empty (e.g. adapter_stop() frees an entry just after), it'
+    echo '     was the pre-existing check.'
+fi
+exit 0

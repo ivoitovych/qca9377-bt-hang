@@ -16,6 +16,7 @@ already does it. If none exists and the question recurs, write one.
 |---|---|
 | What is happening on this machine right now? | `tools/bt-snapshot` |
 | Is the repository committed, pushed, deployed, in sync? | `devtools/status` |
+| **Commit and push everything** | `devtools/save <message-file>` — stages, indexes, validates, scans, pushes, verifies |
 | Is the tree valid, scanned, drift-free, ready to commit? | `devtools/check` |
 
 `bt-snapshot` takes **one** coarse journal cut and derives every fine filter from
@@ -76,7 +77,8 @@ run `bluetoothd -d` — this project ships that on in
 | question | tool |
 |---|---|
 | Validate + scan + drift + install state | `devtools/check` |
-| Commit, push and verify the remote matches | `devtools/repo-save <dir> -F <msgfile>` |
+| Commit, push and verify the remote matches | **`devtools/save <msgfile>`** (wraps `repo-save`) |
+| Did the BlueZ patch guards fire? | `tools/bt-guards` |
 | Publish-safety scan (MACs, BSSIDs, emails) | `devtools/repo-scan` |
 | How do the branches diverge? | `devtools/branch-status` (`--unique`, `--files`) |
 | Coverage / comprehensiveness | `devtools/coverage`, `devtools/test-comprehension` |
@@ -124,6 +126,12 @@ no allow rule and prompts **every time**. Keep calls simple:
 
 - one command per call; no `&&`, `;`, `$(...)`, loops, or variable assignment
 - need several steps? put them in a script and invoke it by path
+- **no redirects and no trailing `| tail -N`** — if output needs trimming, the
+  script should trim it. A pipe added for tidiness costs a prompt every run.
+- ⚠️ **check whether the tool already does the step you are prefixing.**
+  `git add -A; devtools/repo-save …` was typed for weeks; `repo-save` stages
+  first thing on its own. The redundant `git add` is what dragged `git` into the
+  command and tripped the *cd-before-git* rule on top of everything else.
 - **never** `git commit -m "<long message>"` — a body line starting with `#`
   (a stack frame `#0 …`, an issue ref) makes the call permanently ungrantable.
   Write the message to a file with the Write tool, then
