@@ -68,4 +68,38 @@ if [[ -x "$REPO/tools/bt-exhibit" ]]; then
     fi
 fi
 
-exec "$HERE/repo-save" "$REPO" -F "$MSG" "$@"
+# ── OUTPUT IS TRIMMED HERE, NOT BY A PIPE ────────────────────────────────
+#
+# repo-save prints ~100 lines, most of it a per-file syntax checklist. Trimming
+# that with `| tail -7` is what added a pipe to the command this file exists to
+# de-pipe, so the trimming belongs inside.
+#
+# ⚠️ QUIET ONLY WHEN IT SUCCEEDS. On any failure the full output is printed,
+# because that is when the checklist matters — a validator that objected is the
+# one thing worth reading in full, and a summary that hid it would make this
+# wrapper a way to miss gate failures rather than a way to avoid prompts.
+# --full forces everything.
+FULL=0
+for a in "$@"; do [[ "$a" == "--full" ]] && FULL=1; done
+set -- "${@/--full/}"
+
+if (( FULL )); then
+    exec "$HERE/repo-save" "$REPO" -F "$MSG" "$@"
+fi
+
+OUT=$(mktemp) || { echo "save: cannot create a work file" >&2; exit 2; }
+trap 'rm -f "$OUT"' EXIT
+"$HERE/repo-save" "$REPO" -F "$MSG" "$@" > "$OUT" 2>&1
+RC=$?
+
+if (( RC != 0 )); then
+    cat "$OUT"
+    echo
+    echo "save: repo-save exited $RC — full output above, nothing was hidden." >&2
+    exit "$RC"
+fi
+
+# The lines that carry the outcome: what was staged, what the gates concluded,
+# the commit, and the remote verification. Never the per-file ✓ list.
+grep -E '^(── |  staged:|all syntax|scan clean|  ✓ message|  [0-9a-f]{7,}  |  ⚠|  ✓ remote|  · tests)' "$OUT"
+exit 0
