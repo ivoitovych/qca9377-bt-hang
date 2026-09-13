@@ -2639,3 +2639,168 @@ Phase 32 was about reading absences. This one is about **who is doing the readin
 The counters this project trusts most are the ones nobody re-derives. `bt-archive --check`
 exists because *present* and *complete* had never been distinguished, and everything
 downstream had been reading the first as the second.
+
+---
+
+## Phase 34 — the phase that predicted, and was right three times
+
+Every phase before this one explained something after it happened. This is the first where
+a claim was written down **before** the data existed and then tested against it — three
+times, and it held each time.
+
+### The prediction
+
+Phase 33 ended with a session in which the operator ran the test that always killed the
+controller, and Bluetooth survived. The summary agreed the trigger had been pulled:
+`0x0428 legacy SCO 6`, `alt-setting switch 8`. Both true, and neither the condition.
+
+The hypothesis stated on 2026-09-01, against that survival: **it is not SCO setups that
+kill this controller, it is sustained traffic on the alt-1 endpoint.** `btusb` prints
+`len <n> mtu <m>` per URB and `m` is the isochronous endpoint size, so the log already
+named which alternate setting was in use — nobody had counted it.
+
+| | `len 27 mtu 9` before the fault | |
+|---|---|---|
+| `EX-033` 08-22 | 835 | dead |
+| `EX-036` 08-25 | 87 | dead |
+| **09-01 daytime** | **0** *(8 setup packets, then CVSD)* | **alive** |
+
+`bt-snapshot` gained the split counter the same day. Then it was left to the machine.
+
+### It fired, three times
+
+`EX-037` (09-01), `EX-038` (09-13), `EX-040` (09-13) — **680, 682, 1562** 27-byte mSBC
+frames pushed into a 9-byte endpoint, each followed by a bare `command tx timeout`.
+
+The signature is now `n = 5` across **three kernels** (`-29`, `-30`, `-31`):
+
+```
+0x0428 answered  →  evt 5  →  :6 → :3  →  27-byte frames on mtu 9  →  dead
+setup → fault:   2.076  2.152  2.151  2.191  2.140 s        spread: 115 ms
+dying cmd after link-up:   36    279     39     35     34 ms
+```
+
+⚠️ **And a kernel upgrade did not help.** `-31` arrived during an eleven-day gap and
+changed nothing.
+
+### The inference became an observation
+
+For weeks every exhibit hedged the same way: alt 1 is *inferred* from the `:6`/`:3` probes
+and from `mtu 9`; no log line names the chosen setting.
+
+During `EX-037`'s still-open window, `sysfs` was read — no control transfer, nothing on the
+wire:
+
+```
+/sys/bus/usb/devices/3-3:1.1/bAlternateSetting      1
+/sys/bus/usb/devices/3-3:1.1/ep_03/wMaxPacketSize   0009   Isoc
+```
+
+**`BTUSB_USE_ALT1_FOR_WBS`, observed directly.** A reboot destroys it and the journal does
+not carry it; every previous wedge in this record was rebooted away before anyone looked.
+`tools/bt-usbstate` exists so the next one is not, and it has now read the same values
+three times.
+
+### And the fault got a three-second path to it
+
+`EX-040`, the fifth instance, is the nearest thing to a reproducer this project has had:
+
+```
+05:13:16  nothing connected
+          ┃  6 m 53 s idle — machine untouched
+05:19:53  ext_confirm() INCOMING connect from the peer
+05:19:54  0x0428              +1.008 s
+05:19:56  tx timeout          +2.140 s   → 3.148 s from connect to dead
+```
+
+Nothing clicked, no mode switched, no audio playing — the *peripheral* opened the
+connection. ⚠️ Recorded with its limit attached: `EX-038` reached the same fatal sequence
+with HFP **already connected**, so this is the shortest recorded path, not a general rule.
+
+### Recovery, answered positively at last
+
+The operator reported the missing spinner in the Bluetooth panel and predicted that toggling
+would make Bluetooth disappear until a power cycle. Both checked out, and the archive gave
+the mechanism:
+
+```
+17:09:46  rfkill blocked 0              Bluetooth switched back ON
+17:09:47  Opcode 0x0c03 failed: -110    ← HCI_Reset TIMES OUT
+17:09:47  adapter_set_power_state() on  ← BlueZ's INTENT, not a success
+```
+
+Everything the record had on recovery was an **absence** — `hdev->reset` is NULL for this
+device, Linux has no periodic USB recovery, `EX-033` sat 9 h 45 m without recovering.
+`EX-039` is the thing that *does* happen: the one reset path a user can command fails at
+the USB layer. With a refinement — `hci0` is never unregistered, so what disappears is a
+*working* adapter, not the adapter. That separates this from the stage-2 shape for the bug
+report.
+
+It also produced a table the operator can use without tools, because `BT-1` and `EX-032`
+look identical from the GUI — both powered, both no spinner — and have opposite remedies.
+
+### The patches finally did something
+
+Nineteen days of runtime, and the question `EX-035` could not answer: *did a guard ever
+fire?*
+
+**Patch `0002` fired four times** — 08-26 and three times on 09-02, across two daemon
+lifetimes and three distinct `setup` pointers. Each is `transport_cb()` reaching the accept
+with a live setup whose stream is NULL, logging, and bailing. Unpatched, each is the
+dereference the retained coredump matched. **Four crashes prevented, not merely absent.**
+
+`0001` is different and `EX-041` says so: its guard has still never fired. What it gained is
+its **premise** observed — `command 0x23 status: 0x00`, a success status with a reply too
+short for `mgmt_cp_start_discovery`, which was a claim from source reading and is now a
+log line.
+
+A third, unrelated crash turned up too — a bad `free()` under `g_main_loop_run` on 09-08,
+at neither patched site. Cleared of being our doing on evidence that holds, and deliberately
+**not** folded into the submission.
+
+### Two errors, both the same error
+
+⚠️ **"Patch 0002's guard has never fired"** was reported confidently, from a grep over
+**one boot** and the retained snapshot cuts. It had fired four times. *A zero from a capped
+scan is not a result* — this project's own rule, broken by the person who wrote it down.
+
+⚠️ **`EX-038` carried the wrong boot id**, copied forward from an earlier listing instead of
+read from the boot that faulted. Second time: five exhibits once recorded kernel `-28` the
+same way. A wrong boot id is worse than a missing one, because the exhibit looks
+re-derivable while pointing at the wrong evidence.
+
+And the two are connected. The full-journal grep that would have found the firings was
+abandoned after ten minutes; `journalctl _COMM=bluetoothd` answered in thirty seconds.
+**The scan too slow to finish and the scan too narrow to be true were the same mistake** —
+not letting the datastore filter.
+
+### The prompts, measured rather than guessed
+
+The operator asked twice for fewer permission interruptions. The instinct was to widen the
+allowlist. Measuring it killed that:
+
+> 3,584 Bash calls across the project's transcripts. **2,344 — 65% — contain a pipe, `&&`,
+> `$(...)` or a redirect.** Against **364 allow rules already granted.**
+
+Compound shell matches no rule however broad, so those prompt every time. Then the operator
+pasted the actual dialog, which was worth more than the statistic: one commit command with
+**four** triggers, and `git add -A` in it **redundant for weeks** — `repo-save` had always
+staged on its own. That redundant `git` is what tripped the *cd-before-git* rule on top of
+the rest.
+
+`tools/bt-fault-window`, `tools/bt-guards`, `devtools/save`. `tools/` and `devtools/` were
+already granted, so each new script costs **zero** new permissions and is silent from its
+first run.
+
+### The shape
+
+Phase 32 read absences; Phase 33 asked who was doing the reading. This one is about
+**committing to an answer before the data arrives**:
+
+> A hypothesis written down in advance is falsifiable; the same claim written afterwards is
+> a story about the data. The counter went into the summary on 2026-09-01 with the
+> prediction attached, and the next three faults were tests rather than anecdotes.
+
+The two errors are the same phase's other half, and not a coincidence. A prediction is only
+worth what the measurement behind it is worth — and both mistakes came from measuring a
+smaller thing than the claim covered.
