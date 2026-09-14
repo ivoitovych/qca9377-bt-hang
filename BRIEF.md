@@ -134,6 +134,13 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   `Iaroslav Voitovych <yaroslav.voytovych@gmail.com>` — title case. ⚠️ The name and the email
   use *different* transliterations (Ukraine changed its Latin rules in 2011, after the gmail
   was created). **The mismatch is correct; do not "fix" either to match the other.**
+- **`BT-1`…`BT-4` are this project's own invented labels** — they exist in no kernel, BlueZ
+  or external convention. The register (`docs/issues.md`) keeps them; that is what issue ids
+  are for. ⚠️ Anything a stranger may read names the fault **plainly**, and may carry the
+  label only as a parenthetical search handle — `(BT-1)` — for someone who followed the repo
+  link. `docs/bug-report.md`, the only file that leaves on its own, carries **none**.
+  Gated in `tests/run-tests`. A maintainer owes us nothing; invented tokens tax them and buy
+  them nothing.
 - **If access to something is blocked, diagnose it and ask** — never ship "I could not
   access X" inside the operator's deliverable. A 403 from one client is not proof of
   unreachability: check whether it is a refused tunnel, a status from a server that did

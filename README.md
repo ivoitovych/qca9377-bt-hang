@@ -119,7 +119,8 @@ $ dmesg | grep -i "Resetting usb device"
 <nothing>
 ```
 
-For `13d3:3503`, BT-3 is confirmed by source and module inspection, not by point 4.
+For `13d3:3503`, the absent quirks-table entry (`BT-3`) is confirmed by source and module
+inspection, not by point 4.
 Point 2's `errors:0` means **no errors are reflected in those HCI
 counters** — the chip is accepting bytes and simply not answering. (USB health at this
 stage is established separately, from USB-level evidence: descriptor reads still succeed
@@ -176,11 +177,13 @@ Both the reset handler and the QCA firmware path *are* compiled into the running
 
 ### Established HCI failure; unresolved USB-loss trajectory
 
-Only the HCI-nonresponsive state is established as part of untreated BT-1:
+Only the HCI-nonresponsive state is established as part of the untreated
+controller-wedge fault (filed in this repository as `BT-1`, if you want to search
+for it):
 
 | Observation | Current interpretation |
 |---|---|
-| HCI unresponsive while USB remains healthy | BT-1, established |
+| HCI unresponsive while USB remains healthy | established |
 | USB errors/disappearance after reset, rebind or reload | observed outcome after intervention; cause unresolved |
 | Untreated HCI failure progressing to USB disappearance | never observed uncensored |
 
@@ -212,7 +215,7 @@ the M.2 power rail remains an inference, not evidence.
 
 > ⚠️ Kept for the record. The A2DP-teardown trigger described below does not
 > hold: the transport reached IDLE five times in one boot with no SCO setup and
-> no failure. See `docs/issues.md` BT-1 and `EX-007`.
+> no failure. See `docs/issues.md` (`BT-1`) and `EX-007`.
 
 Tearing down an **A2DP stream mid-playback** — powering headphones off or walking out of
 range while music is playing.
@@ -285,7 +288,7 @@ in userspace. It tails the kernel log and, after 3 controller timeouts in 60 s, 
 
 **2. USB autosuspend disabled** for the radio — `btusb enable_autosuspend=0` plus a udev
 rule pinning `power/control=on`. This is an experimental mitigation, not an established
-mechanism: the repository has not measured that autosuspend triggers BT-1 or changes its
+mechanism: the repository has not measured that autosuspend triggers the controller wedge or changes its
 frequency, and `EX-014` records uncertainty about the original runtime value.
 
 **3. A metrics collector** (optional, `--no-metrics` to skip) — snapshots health every
@@ -381,7 +384,7 @@ to explain how the heuristic's patterns were chosen — see the matching comment
 
 Those ratios are **not predictive precision**. An early reset prevents observation of the
 counterfactual, and every proposed early marker has failed causal tests elsewhere in this
-repository. The mode is an aggressive mitigation heuristic, not evidence BT-1 was imminent.
+repository. The mode is an aggressive mitigation heuristic, not evidence the wedge was imminent.
 
 ⚠️ **Opt-in, and experimental.** A false positive resets a working controller and drops
 live connections. Raise `BT_EARLY_THRESHOLD` if it fires during normal use.
@@ -411,7 +414,7 @@ relied on. In one, bluetoothd's signal arrived **133 s *after*** the first HCI t
 in another it never appeared.
 
 `BT_EARLY` can leave the controller answering after an intervention, but cannot say whether
-BT-1 would otherwise have occurred. It is off in experiment mode for that reason.
+the wedge would otherwise have occurred. It is off in experiment mode for that reason.
 
 > ⚠️ **These are log signatures, not controlled comparisons.** The reproductions were
 > ad-hoc — arbitrary connect/disconnect/mode-change activity, no fixed procedure, exact
@@ -601,7 +604,7 @@ renamed only after verification passes. The logs in `evidence/baseline/` were pr
 | Observational denominator | ✅ re-derivable — 34 boots, 287 timeouts, 13 hung, from `evidence/baseline/baseline.tsv`; not re-verifiable against the journal, which has rotated |
 | Kernel patch | ❌ written, not built or tested |
 | **BlueZ patches (`patches/bluez/`)** | ✅ **two, ready** — both defects confirmed live in master `c73fa2f9ae2d`, both apply clean, crash sites resolved from the shipped binary and falsified against the retained coredump. **Not yet sent.** |
-| Four distinct failure modes separated | ✅ `EX-030` audio-server release, `EX-031` a SCO link that worked, `EX-032` a BlueZ crash, and `BT-1` itself — all indistinguishable to an operator |
+| Four distinct failure modes separated | ✅ `EX-030` audio-server release, `EX-031` a SCO link that worked, `EX-032` a BlueZ crash, and the controller wedge itself — all indistinguishable to an operator |
 | Alt-1 fallback dated to v5.12 | ✅ source at ten tags, **and** observed on the machine (`EX-033`) |
 
 > ⛔ **Before submitting anything upstream**, work through
@@ -623,7 +626,7 @@ failures share is the transition and the USB alternate-setting switch that accom
 not an opcode.
 
 Earlier drafts named an A2DP-idle trigger and then a specific SCO setup command. Both were
-refuted here; see `docs/issues.md` BT-1.
+refuted here; see `docs/issues.md` (`BT-1`).
 
 ## Diagnostic tools
 

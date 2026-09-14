@@ -744,6 +744,52 @@ else
     bad "retired BT-1/reset assertion remains: $retired"
 fi
 
+# ── PROJECT LABELS MUST NOT LEAD IN OUTWARD-FACING PROSE ─────────────────
+#
+# `BT-1` … `BT-4` are this project's own issue-register handles, invented in
+# docs/issues.md. They exist nowhere in the kernel, in BlueZ, or in any external
+# convention. The operator, 2026-09-14:
+#
+#   "Do we have any defensible reason to teach this slang to external
+#    auditory, especially Linux maintainers? Do they need to learn our
+#    project's slang?"
+#
+# No. A maintainer reading a bug report owes us nothing, and every invented
+# token is a tax that buys them nothing. The rule adopted:
+#
+#   * the register (docs/issues.md) keeps the labels — that is what issue ids
+#     are for, and it is how the project says "BT-2 is reportable today, BT-1
+#     is not" without restating four paragraphs;
+#   * anything a stranger may land on names the fault plainly, and may carry the
+#     label ONLY as a parenthetical search handle — "(`BT-1`)" — for a reader who
+#     followed the repository link and wants to find the section;
+#   * docs/bug-report.md, which is the thing actually sent, carries none at all.
+#
+# ⚠️ THE BUG REPORT IS CHECKED SEPARATELY AND STRICTLY, because it is the only
+# file here that leaves the project on its own.
+bugrep_slang=$(rg -n 'BT-[1-4]' docs/bug-report.md || true)
+if [[ -z "$bugrep_slang" ]]; then
+    ok "the bug report carries no project-invented issue labels"
+else
+    bad "project slang in the outward-facing bug report: $bugrep_slang"
+fi
+
+# Elsewhere in outward-facing prose a bare label — one not wrapped in parens or
+# immediately followed by an explanatory comma — reads as if the term were
+# already shared. README.md:179 did exactly that for weeks: "untreated BT-1",
+# with no definition anywhere above it.
+# Two shapes are allowed, and only these two:
+#   (`BT-1`)        a parenthetical search handle beside a plain-language name
+#   `BT-1`, …       backticked and immediately explained — the defining use
+# A bare `BT-1` in running prose is what this rejects.
+bare_slang=$(rg -n 'BT-[1-4]' README.md docs/fix-proposal.md 2>/dev/null \
+             | rg -v '\(`?BT-[1-4]`?[),]|`BT-[1-4]`,[[:space:]]+[[:alnum:]]' || true)
+if [[ -z "$bare_slang" ]]; then
+    ok "outward-facing docs use project labels only as parenthetical search handles"
+else
+    bad "bare project label in outward-facing prose: $bare_slang"
+fi
+
 echo
 echo "bt-capdiff matching"
 echo "──────────────────────────────────────────────────────────────"

@@ -259,7 +259,7 @@ EARLY intervention: 2 audio-teardown failure(s) in 90s — resetting BEFORE any 
 ```
 
 with **zero `tx timeout` events for the whole boot**. Because intervention came before the
-observable BT-1 endpoint, this is `censored_pre_failure`: the controller answered after the
+observable wedge endpoint, this is `censored_pre_failure`: the controller answered after the
 reset, but the record cannot establish that a stall was imminent or prevented.
 
 ### Consequence for this patch
@@ -270,7 +270,7 @@ fires at +0 s and no experiment has tested that point.
 
 What can be said without inventing the counterfactual:
 
-- after one reset before any timeout, the controller answered; whether BT-1 was imminent is
+- after one reset before any timeout, the controller answered; whether the wedge was imminent is
   unknowable because the intervention censored it;
 - resets at +11 s … +33 s did not restore HCI service and were followed by USB loss;
 - a reset at +0 s is untested, and its sign cannot be inferred from either group.
@@ -434,7 +434,7 @@ which belonged to the `btusb_qca_cmd_timeout()` mechanism this document previous
 described in error and which v7.0 does not use.
 
 Criterion (c) is the one that matters, and only against a **quantified** baseline: run
-the same protocol on stock first and record BT-1 incidence, reset provenance, HCI outcome
+the same protocol on stock first and record wedge incidence, reset provenance, HCI outcome
 and USB-loss outcome (target 5/5 exposure). (a) and (b) only establish that setup ran and
 basic operation survived; neither establishes benefit.
 
@@ -486,14 +486,14 @@ it while establishing causation would confound exactly the thing under test.
 ### Decision rules — benefit and harm are separate axes
 
 The controlled stock protocol (target 5/5) supplies the denominator; the historical 13/34
-rate does not. Score every build on both BT-1 incidence and final USB/controller state:
+rate does not. Score every build on both wedge incidence and final USB/controller state:
 
 | Result | Interpretation |
 |---|---|
 | reset fires, HCI returns, no excess USB loss | evidence of useful immediate recovery |
 | reset fires, USB loss rises versus untreated stock | evidence the treatment is harmful |
-| BT-1 falls before any reset is needed | evidence of prevention, not reset recovery |
-| BT-1 persists with no material outcome change | added behavior is insufficient |
+| the wedge stops occurring before any reset is needed | evidence of prevention, not reset recovery |
+| the wedge persists with no material outcome change | added behavior is insufficient |
 
 Only after A is shown safe but insufficient does B isolate QCA setup; only after B does C
 add the remaining ROME behaviors, and D finally adds wideband speech. `bt-stage2` records
