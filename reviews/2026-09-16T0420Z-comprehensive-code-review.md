@@ -865,8 +865,10 @@ operator; the bug-report rewrite has not started (§4.2).
   is a hole: "the suite will run in CI" is only a control if CI's verdict is read.
   Minimum: `devtools/status` (which already reaches the remote with `ls-remote`) should
   fetch the latest workflow conclusion for HEAD and print it as a row; `repo-save`'s
-  trial-open warning should name the last known CI status. Better: fix R2-100 and add
-  a `tests/run-tests --read-only` subset the trial-open path can still run.
+  trial-open warning should name the last known CI status. (`repo-validate`'s header
+  records the decision *not* to carve a "non-acting subset" out of the suite, and the
+  reasoning is sound; that decision makes reading CI the only remaining control, which
+  is why it has to be mechanical.) And fix R2-100, so green is reachable again.
 - **R2-106 [MED] `devtools/status` prints `sudo ./install.sh --apply` as the remedy for
   deployment drift**, unconditionally — the same advice `bt-verify-install` gives
   (R2-81), in the tool an operator runs at every natural break. On the investigation
