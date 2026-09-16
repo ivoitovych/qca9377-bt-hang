@@ -965,3 +965,47 @@ operator; the bug-report rewrite has not started (§4.2).
   the synthetic-line correction are intact and still the right disclosures; the
   "how these sessions were produced — ad hoc, not to a procedure" paragraph is the kind
   of honesty the exhibits index should inherit.
+
+### 11.2 `patches/bluez/` (README + 0001 + 0002)
+
+- **R2-117 [MED] `patches/bluez/README.md` still says the patches "have not been watched
+  preventing" a crash.** Its "Not verified: runtime" paragraph reads "Neither NULL
+  condition can be triggered on demand … They prevent a fault that is demonstrably
+  reachable; they have not been watched preventing it." EX-041 (2026-09-13) records
+  `0002`'s guard firing four times across two daemon lifetimes and three `setup`
+  pointers, which is precisely "watched preventing it", and `tools/bt-guards` exists to
+  count it. This README is the file that travels with the submission; a maintainer who
+  asks "has this ever fired?" should find the answer here, not in an exhibit index that
+  truncates its claim (R2-114). Add the four-firing line with the `_COMM=bluetoothd`
+  command, and keep the "0002 treats the symptom" caveat, which still holds.
+- **R2-118 [GOOD]** Both patches are minimal, local, and argued from the shipped binary
+  with the falsifier stated and then checked (`%r13` NULL, `mov 0x10(%r13),%rdi`); the
+  commit messages no longer overclaim which management event arrived; the "send as two
+  invocations, not a range" note and the non-transferable `Signed-off-by` warning are
+  exactly right. The `Fixes:` tag on 0001 and the two prior-art commits on 0002 give a
+  maintainer what they need.
+
+### 11.4 `reviews/README.md`, `reviews/verify.sh`
+
+- **R2-119 [MED] The register's "each row carries a command that decides its own status"
+  is only executable for one block.** `reviews/verify.sh` implements the 13 UT rows;
+  the CS, TC, HC, TX, SE and CR blocks (≈50 rows) have commands in the table and nothing
+  runs them. The README says "`verify.sh` — runs every row's check", which is false, and
+  the lesson it cites — "a register nobody runs rots exactly like the documentation it
+  was meant to replace" — now applies to four-fifths of it. Two of the rows this review
+  re-checked are stale: TX-02's "worst unit is now 80%" and HC-04's floors (checks.yml
+  uses 80/85/80/75; the README's coverage paragraph says "now 65"), and the "Verify:
+  `tests/run-tests` (329 invariants)" line is two months old. `verify.sh` also runs
+  `devtools/coverage` twice (CS-08 and the trailer), which is two full suite runs.
+  Extend it to every block or cut the claim to "UT rows".
+- **R2-120 [LOW]** R2-03 (register rows missing for 2026-08-23T2340Z and 2026-09-13;
+  the latter violates the `<UTC timestamp>` convention) stands. `reviews/verify.sh`
+  itself is not in the register's conventions (no timestamp — correct, it is a tool, but
+  it is the one script in `reviews/` and `coverage-exclude` lists it, so it should be
+  named in the README's "Check every row" block with what it does and does not cover).
+- **R2-121 [GOOD]** The 2026-08-23T2340Z crash-site resolution is the strongest single
+  piece of reasoning in `reviews/`: the `[A,B+C]` `print_vma_addr()` decoding checked
+  against the binary's own segment layout, the 93.6%-different-bytes check that forbids
+  address transfer, and the call-fingerprint match with the prediction stated before
+  the core was read. The 2026-08-17T0022Z provenance block (what was annotated, when,
+  and why that was the only honest moment) is the append-only convention done right.
