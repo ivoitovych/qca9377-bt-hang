@@ -906,3 +906,36 @@ operator; the bug-report rewrite has not started (§4.2).
   grammar) is the strongest fixture-fidelity check in the tree and its recorded
   leading-separator divergence is exactly how such an asymmetry should be kept. The
   stale-merge-claim notice in `branch-status` (previous reaction) works as designed.
+
+### 10.3 `repo-validate`, `coverage`, `coverage-exclude`, `awk-coverage`, `py-coverage`, `test-comprehension`
+
+- **R2-111 [MED] The four instruments disagree about what a red suite means.**
+  `py-coverage` refuses to report from a failing run ("coverage from a failing run is
+  not a measurement"); `coverage` reports the figure, prints "these figures describe a
+  red run" to stderr, and exits non-zero only via `SUITE_RC`; `awk-coverage` reports the
+  figure with the suite's last line beside it and enforces `--min` regardless;
+  `test-comprehension` consumes `coverage --dump` and never learns the suite was red.
+  With the suite red for three weeks (R2-01), three of the four have been producing
+  numbers from red runs and one refusing — the CI log shows the difference as "step
+  failed" either way, so nobody has had to notice. Pick `py-coverage`'s rule and apply
+  it to all four; it is the rule `coverage`'s own comment states.
+- **R2-112 [LOW] `coverage-exclude` carries eighteen line-pinned ranges** into files
+  this review asks to change (`bt-trial`, `bt-actions`, `bt-sco`, `bt-capdiff`,
+  `bt-verify-install`, `sanitize-logs.sh`, `bt-window`, `bt-retention`, `run-tests`).
+  The file's header accepts that they rot by design and the self-check catches a range
+  that drifts onto executed code — but the other direction (drifting onto never-executed
+  code, R2-58's "check that cannot fire" class) is caught only by the "matched nothing"
+  check, which passes as long as *some* line is inside the range. Every fix in §8 that
+  touches one of these files should re-derive its range in the same commit, as the
+  header asks. (The run of these gates on the current tree is recorded at the end of
+  §10.)
+- **R2-113 [GOOD]** `repo-validate`'s judge-on-the-diagnostic rule for awk, the
+  `ast.parse`-not-`py_compile` choice with its `__pycache__` reason, the sourced-library
+  parse, and the drift alarm's honest "alarm, not proof" note. `coverage`'s
+  intersection-not-count numerator, the empty-trace refusal (`REVIEWED-KEEP §5`), the
+  stale-exclusion and dead-entry self-checks, and the array-literal tracing rule
+  derived by tracing all three forms. `awk-coverage`'s three normalisations, each found
+  by the hash failing to group. `py-coverage`'s `sitecustomize` hook with the
+  stop-tracing-before-reading fix. `test-comprehension`'s weakest-dimension score and its
+  "UNMEASURED is not 100%" rule. The instruments are, individually, the most carefully
+  argued code in the tree; R2-111 is about their composition.
