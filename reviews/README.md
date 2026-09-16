@@ -58,6 +58,9 @@ wrong turns, which a clean summary loses.
 | 2026-08-15T17:52Z | [Comprehensive code review](2026-08-15T1752Z-comprehensive-code-review.md) | the tree at `ed82166` | Every file, in priority order. **`main` fails its own coverage gate** on three stale exclusion ranges; five invariants nested inside another check's success branch in `tests/run-tests`; prose-behind-code named as the dominant defect class, concentrated where no invariant reaches |
 | 2026-08-16T00:22Z | [Fixes & elaboration for the code review](2026-08-16T0022Z-fixes-and-elaboration-for-2026-08-15T1752Z-review.md) | `main` at `944b1eb`, branch `review/2026-08-15T1752Z-fixes` | All 84 findings dispositioned — fixed / fixed-on-main / kept (REVIEWED-KEEP markers) / recorded; suite 602 green, coverage 89.6%, awk 88.0%. Adds CR-84 (mawk skips) and `tools/lib/trial-reclass.awk` |
 | 2026-08-17T00:22Z | [Source investigation 2026-08-16-2353](2026-08-17T0022Z-source-investigation-2026-08-16-2353.md) | Linux source, against `main` @ `1c336e7` | The one report here that reads the kernel rather than us. Locates `BT-1` as a chain across four components, and names the structural finding: the HCI core has **two watchdogs and one escalation path**, and `BT-1` is the case the escalation cannot reach. Corrects `EX-006` from its own output — `0x0428` *was* answered — which `EX-033` then observed directly six days later |
+| 2026-08-23T23:40Z | [EX-032 crash sites resolved](2026-08-23T2340Z-ex032-crash-sites-resolved.md) | `bluez 5.72-0ubuntu5.5`, stripped | Both `bluetoothd` crash sites named to file and line from the shipped binary, without symbols; falsifier stated and later confirmed against a core |
+| 2026-09-13 | [Foundation-file consistency](2026-09-13-foundation-file-consistency.md) | `5fbd6c2` | README, BRIEF, HISTORY: the central finding is in none of them. (Filename lacks the UTC time the convention requires — recorded, not renamed) |
+| 2026-09-16T04:20Z | [Comprehensive code review](2026-09-16T0420Z-comprehensive-code-review.md) | the tree at `3cf4dd6` | Every file again. **`main` fails its own suite** (2 of 774, since `d70cb2e`) and CI has been red since 08-25 with nothing reading it; **`install.sh --tools-only` silently reverted the experiment baseline on 08-19** — trials 6–12 ran under `autosusp=N,power=on` with the mode stamp still saying experiment; docs outrun by the alt-1 evidence in README, BRIEF, evidence/README, the bug report and three tools' verdicts. 122 findings: 10 HIGH, 39 MED |
 
 ---
 
@@ -265,6 +268,30 @@ Main settled it (`b9cbf9e`..`383b991`) and went further — `devtools/check` now
 `repo-scan . --all` locally. The CI step has been added to match, so a pull request from a
 fork is screened before anyone reads it. `devtools/repo-scan . --all` is clean on the
 merged tree.
+
+### From `2026-09-16T0420Z-comprehensive-code-review.md`
+
+The per-finding list is the report itself (`R2-01`..`R2-122`, severity in the label).
+Rows below are the HIGH items and the MED items that change what the record means;
+everything else is fixed or declined by the reaction, which will add its own tracker.
+
+| ID | Item | Status | Landed | Verify |
+|---|---|---|---|---|
+| R2-01 / R2-100 | Two suite invariants cannot pass on any host; CI red since 08-25 | open | — | `tests/run-tests \| tail -1` → `all … hold`; latest Actions run on `main` green |
+| R2-58 | `--tools-only` reinstalls files `bt-mode experiment` moved aside; baseline reverted 08-19 | open | — | on the machine: `ls /etc/modprobe.d/btusb-qca9377.conf*` shows no `.disabled` beside an active file; `BT_DESTDIR` test with a staged `.disabled` sibling exists in `tests/run-tests` |
+| R2-04 / R2-05 / R2-07 | README: "kept current", contradictory baseline claims, no central finding | open | — | `grep -c 'alt' README.md` → ≥1 in a finding paragraph, per the 2026-09-13 report |
+| R2-21 | `docs/issues.md` stale at EX-021 | open | — | `grep -c 'EX-04' docs/issues.md` → ≥1 |
+| R2-25 | bug-report timing 7.6–16.2 s vs measured 2.076–2.191 s | open | — | `grep -c '2.19' docs/bug-report.md` → ≥1 |
+| R2-64 / R2-65 | `bt-trial abort` deletes tracked evidence; `autostop` probes a live controller (BL-03, BL-08) | open | — | `grep -c 'ls-files' tools/bt-trial` → ≥1; `grep -c hci_alive tools/bt-trial` → 0 in `autostop)` |
+| R2-105 | Commit path on the machine never runs the suite and nothing reads CI | open | — | `devtools/status` prints a CI-conclusion row |
+| R2-70 | `sanitize-logs.sh` redacts SIG base UUIDs; profile identity lost in every session log | open | — | `echo 0000110b-0000-1000-8000-00805f9b34fb \| tools/sanitize-logs.sh /dev/stdin /dev/stdout` prints it unchanged |
+| R2-76 | `bt-status` counts `discovery` lines as audio | open | — | `grep -c "'avdtp\|sco\|a2dp" tools/bt-status` → 0 |
+| R2-81 / R2-106 | verifiers and `devtools/status` advise `--apply` in experiment mode; `.disabled` + active pair invisible | open | — | `tools/bt-verify-install` reports CONFLICT on a staged pair |
+| R2-111 | Four instruments disagree on what a red suite means | open | — | each of the four exits non-zero without a figure on a red run |
+| R2-114 | Exhibit index truncates 16 of 41 claims | open | — | `grep -c ' |$' evidence/exhibits/README.md` → 0 |
+| R2-117 | patches README says the guards were never watched firing; EX-041 shows four | open | — | `grep -c 'EX-041' patches/bluez/README.md` → ≥1 |
+| R2-119 | `reviews/verify.sh` covers 13 of ≈60 register rows | open | — | `reviews/verify.sh` prints a line per block |
+
 
 ## Adding a report
 

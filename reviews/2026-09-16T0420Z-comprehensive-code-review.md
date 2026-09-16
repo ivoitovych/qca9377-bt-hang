@@ -10,8 +10,10 @@ reaction verified first; then every file, one by one, in priority order — foun
 documents, deployed runtime, tools, tests and devtools, registers, evidence; findings
 appended per item as each is completed; the overall summary written last. No agents.
 Severity scale: **HIGH** (wrong result or lost data possible), **MED** (misleading or
-drift-prone), **LOW**, **NOTE** (record, no action), **GOOD** (keep — and now marked
-`REVIEWED-KEEP 2026-09-16T0420Z` at the practice, per the convention the reaction introduced).
+drift-prone), **LOW**, **NOTE** (record, no action), **GOOD** (keep — each is a candidate for a
+`REVIEWED-KEEP 2026-09-16T0420Z` marker at the practice; as with the predecessor, the
+markers are placed by the reaction branch, not by the review, so this branch changes no
+source file).
 
 **Numbering.** Findings are `R2-nn` (second comprehensive review), so they cannot
 collide with the predecessor's `CR-nn` in the register.
@@ -133,7 +135,7 @@ operator; the bug-report rewrite has not started (§4.2).
 - **R2-11 [GOOD]** The opening ("not a watchdog project"), the three-streams table, and
   the label rule commit (`3cf4dd6`) with its gate in `run-tests` are exactly right for an
   outward-facing page. The three `REVIEWED-KEEP 2026-08-15T1752Z` markers did their job —
-  none of the marked sections regressed. Marked again where the page is re-marked below.
+  none of the marked sections regressed; the GOOD items below are marker candidates for the reaction.
 
 ## 2. `BRIEF.md` (197 lines)
 
@@ -182,7 +184,7 @@ operator; the bug-report rewrite has not started (§4.2).
 
 - **R2-19 [GOOD]** The right shape: question → tool, with the two paid-for warnings
   (present ≠ complete; the BlueZ health block is journal-derived) beside the tools they
-  qualify. Marked `REVIEWED-KEEP`.
+  qualify; marker candidate.
 - **R2-20 [LOW]** "Writing commands so they do not prompt" is assistant-tooling mechanics
   in a user-facing document — BRIEF §7 itself says such material belongs in the memory
   store. Keep the *rule* ("extract the recurring question into a tool") here; move the
@@ -420,7 +422,7 @@ operator; the bug-report rewrite has not started (§4.2).
   evidence"), and the second-resolution fix are model instrumentation; the `RAPID_MAX`
   seam in `bt-trace` and the `wd_early_ok` migration in `bt-health-snapshot` held;
   `bt-evidence`'s manifest counts the canonical patterns. All eleven `REVIEWED-KEEP`
-  markers in `bin/` are intact. Marked again below where warranted.
+  markers in `bin/` are intact.
 
 ## 6. `systemd/`, `etc/` (16 files)
 
@@ -539,9 +541,11 @@ operator; the bug-report rewrite has not started (§4.2).
   empty USB section, during the one minute it is being reached for.
 - **R2-67 [MED] `bt-archive --check` and the failing suite test (R2-01).** The tool
   probes `zstd`, `xz`, `gzip` in order and names the archive by whichever it found; the
-  test at `run-tests:7410` asserts `.zst`. The tool is right; the expectation carries the
-  investigation machine's toolchain. The test should derive the suffix from the same probe
-  (or the tool should expose it — `bt-archive --compressor`). Separately, an `AMBIGUOUS`
+  SHORT case at `run-tests:7410` cleans up only `boot-*.export.zst` before writing its
+  `.gz` replacement, so on a host without zstd the `.xz` original survives beside it and
+  `--check` answers AMBIGUOUS. The tool is right; the test carries the investigation
+  machine's toolchain. Derive the suffix from the same probe (or have the tool expose it —
+  `bt-archive --compressor`). Separately, an `AMBIGUOUS`
   row (two archives for one boot) is printed and then `continue`d without incrementing
   any counter, so the summary line "N complete, N SHORT, N not archived" can read clean
   while a boot is unverified — the very case the comment above it says must not pass
@@ -814,8 +818,9 @@ operator; the bug-report rewrite has not started (§4.2).
   d70cb2e** — already R2-01; the mechanics belong here. `run-tests:7887` tests a glob
   inside `[[ ]]`, where bash does not expand it, so the assertion compares a literal
   pattern to nothing and goes red on the machine that wrote it as well as in CI;
-  `run-tests:7410` asserts a `.zst` archive suffix on a tool that probes `zstd`, `xz`,
-  `gzip` in that order (R2-67). Neither is "observed to fail then pass" — house rule 1
+  `run-tests:7410` removes only a `.zst` archive before writing its replacement, on a
+  tool that probes `zstd`, `xz`, `gzip` in that order, so a non-zstd host keeps two
+  archives and gets AMBIGUOUS (R2-67). Neither is "observed to fail then pass" — house rule 1
   — because neither has ever passed. The fix for the first is `compgen -G` or a `for`
   loop; for the second, derive the suffix. Then the CI history (runs 230–247) needs
   reading once for anything else that went red in the meantime.
