@@ -291,3 +291,160 @@ operator; the bug-report rewrite has not started (§4.2).
   review needs and rarely gets. The cache manifest with publisher-checksum verification is
   the right way to hold third-party artefacts outside a public tree.
 
+### 4.7 `docs/investigation-plan.md` (789)
+
+- **R2-37 [GOOD]** The 2026-08-22 revision section is the best example in the tree of
+  superseding without rewriting: "where the two disagree, this section wins", each
+  overturned item named with its exhibit, the regression route stated as the one
+  unblocked path. `BL-04`'s addendum (the positive-control rule for zero results) and
+  `BL-08`'s addendum (the operator's "not a control if it depends on remembering") are
+  the two most transferable lessons in the repository. `REVIEWED-KEEP` held.
+- **R2-38 [MED] The revision section is itself now stale on three claims it corrects
+  others for.** *"`EX-018`'s '13 of 34 boots' is withdrawn — neither we nor a reviewer can
+  re-derive it"* (BRIEF §5: FALSE); *"`:6` then `:3` and silence is the alt-1 signature"*
+  (BRIEF §5: silence was an extraction artefact); *"the `0x0428` versus `0x043D`
+  comparison … worth designing a protocol around"* (killed in Phase 30 §2, and the
+  section's own later paragraph half-retracts it). Also *"a tools-only deployment path …
+  does not exist yet"* under BL-08 — it has since 2026-08-19. A section that wins over
+  the phases below it needs the same forward-correction discipline it introduced.
+- **R2-39 [MED] Backlog items whose blocker was removed a month ago are still open,
+  unmarked.** Checked on the tip: `BL-03` — `bt-trial abort` still `rm -rf`s with no
+  `git ls-files` check (the fix is one line and the incident deleted tracked evidence);
+  `BL-08` part 4 — `autostop` still calls `hci_alive`, i.e. **every shutdown of the
+  family laptop still probes the controller**, contaminating every shutdown-terminated
+  window by default; its stated prerequisite (`--tools-only`) shipped on 08-19. `BL-09`
+  is done (`tools/lib/evidence-window.sh`) and not marked done. The backlog has no
+  status column; it needs one, or the register's verify-command form.
+- **R2-40 [LOW] "Revised order of work" item 2 — name the v5.12 commit — has no
+  recorded outcome.** Twelve mentions of `BTUSB_USE_ALT1_FOR_WBS` across the docs and
+  not one commit id. BRIEF §1 calls it the regression candidate; the plan calls the
+  regression report the only unblocked route; the report needs the commit.
+
+### 4.8 `docs/investigation.md` (549), `docs/firmware-hypothesis.md` (107)
+
+- **R2-41 [NOTE]** `investigation.md` is banner-marked historical and reads as such;
+  the CR-18/19/20 corrections held. Its §1 ("firmware-level lockup … not a BlueZ problem")
+  and §6a (autosuspend as "the single most likely aggravating factor") are August-10
+  beliefs BRIEF §5 retracts; the banner covers them. No new action.
+- **R2-42 [LOW]** `firmware-hypothesis.md` still lists as step 2 "Read the same
+  identifiers under Windows … the decisive one" with no outcome recorded five weeks on,
+  and its supporting-facts table cites `evidence/diagnosis/root-cause-evidence.txt`
+  (present) — fine. Its frame (ROM firmware vs rampatch) is now a secondary hypothesis
+  next to the alt-1 finding and the file does not say so; one line at the top.
+
+### 4.9 `docs/changes-applied.md` (401), `docs/restore-original-state.md` (188)
+
+- **R2-43 [MED] `changes-applied.md` stops at 2026-08-13.** Since then the machine gained
+  `bt-journal-backup.service`/`.timer` (writes under `/root`), `bt-capture` retention
+  changes, `--tools-only` deployments (69 artefacts), a **patched `bluetoothd` under
+  `/usr/local` with a systemd drop-in** (Phase 32 — the single most consequential system
+  change of the project), `systemd-coredump`, and the `--tools-only` install itself. The
+  file whose title is "OS modifications made during this investigation" does not
+  contain the modification that replaced the Bluetooth daemon. `restore-original-state.md`
+  likewise: the "path back" does not mention removing the drop-in or the patched binary.
+- **R2-44 [GOOD]** The read-back-verification rule and its `REVIEWED-KEEP` block held;
+  `restore-original-state.md` §2 still derives rather than enumerates (CR-36).
+- **R2-45 [LOW]** `restore-original-state.md` §4 documents a user-wide assistant setting
+  under `~/.claude` in a document about restoring the *machine* for a kernel-maintainer
+  audience; and §7 gives a repo-delete command with an "irreversible" warning in a
+  restore guide. Both belong in the operator's notes, not here.
+
+### 4.10 `docs/pre-submission-checklist.md` (166), `docs/related-reports.md` (216)
+
+- **R2-46 [MED] The checklist's evidence gates predate the regression route.** §2 lists
+  A4, A0, Builds A/B/C/D and "confirm the SCO localisation reproduces" as the gates —
+  A0 is done (plan revision), the SCO localisation is superseded by the alt-1 result at
+  `n = 5`, and the plan's stated path upstream (a regression report keyed to a commit)
+  has no gate here at all. §2a's readiness table has no row for the BlueZ patches. A
+  checklist that is the last thing read before sending must describe the submission
+  that will actually be sent.
+- **R2-47 [GOOD]** §1's purge procedure (derive the list outside the tree) and its
+  marker held. `related-reports.md`'s verification-status column (✅ / ⚠️ relayed / ❌
+  corrected), with the one checkable entry that turned out not to say what was relayed,
+  is the right way to hold prior art — and its `0x0c03 failed: -110` cross-reference to
+  the project's own captures is exactly the bridge `EX-039` later built on.
+
+### 4.11 `docs/tooling-index.md` — completeness, checked mechanically
+
+- **R2-48 [MED]** All 28 tools it names exist. **23 tools it does not name exist**:
+  `bt-trial`, `bt-trial-audit`, `bt-mode`, `bt-diagnose`, `bt-health-report.sh`,
+  `bt-verify-install`, `verify-restored.sh`, `bt-actions`, `bt-context`, `bt-capdiff`,
+  `bt-phase`, `bt-interval`, `bt-logvolume`, `bt-boot-stats`, `bt-boot-provenance`,
+  `bt-env-history`, `bt-timeline.sh`, `bt-verify-kernel-mechanism`, and five devtools
+  (`assert-test-catches`, `awk-coverage`, `py-coverage`, `repo-validate`,
+  `coverage-exclude`). The file opens with "Every routine question in this project
+  already has a tool … look here first". Half the tools are not here to be found, so
+  the rule sends a reader to hand-type exactly the pipelines it warns against. A suite
+  invariant — every `tools/*`, `devtools/*` name appears in the index — is cheap and is
+  house rule 2 applied to documentation.
+
+### 4.12 `docs/source-map.md` — the "blind" claim, verified
+
+- **R2-33 confirmed [MED].** `tools/bt-snapshot` line 113: `bt_journal -b "$BOOT"
+  --no-pager -o short-iso-precise > "$DIR/all.log"` — **the whole boot, no unit
+  filter**. Since 2026-08-19, every snapshot has captured `gnome-shell`,
+  `gsd-rfkill`, `wireplumber` and `pipewire` lines. The map's *seen?* column was derived
+  from `-u` arguments and therefore missed the one tool that has none; rows 1–4 and
+  16–17 read **blind**/**second-hand** for layers that are in every `all.log` on the
+  machine. The consequence is not cosmetic: the map says "widening the capture scope
+  is a prerequisite for the review", and the external brief's §5 priorities inherit it.
+  The derivation should include tools whose selector is unfiltered.
+
+## 5. `bin/` — the deployed runtime (8 files)
+
+- **R2-49 [MED] `bt-hang-watchdog`'s header does not carry the project's own verdict on
+  it.** The header still frames the tool as "a userspace recovery proxy for the missing
+  handler" whose "timing … matters", and closes "Acting early is the point". The record
+  since: three controlled demonstrations that its `USBDEVFS_RESET` destroys this
+  controller (`EX-023`, 08-15, `EX-026`), README and BRIEF §7 saying never to arm it on
+  this hardware, and it is not installed. Anyone deploying from the file's own
+  description gets the August belief. The tool is fine to keep (it is the experiment);
+  the header needs the four-line warning the README carries.
+- **R2-50 [LOW] `bt-hang-watchdog` header facts now contradicted elsewhere:** *"Natural
+  progression from HCI non-response to USB absence has NEVER been observed without an
+  intervention in between (EX-018)"* — `EX-026` (a reset that was not ours, watchdog not
+  installed) and `EX-034` (damage surfacing twenty minutes after a "harmless" ladder)
+  complicate that; *"the one reset issued BEFORE any timeout recovered the controller"*
+  — and it failed 132 s later (`EX-004`), which the sentence omits.
+- **R2-51 [LOW] `bt-trace`/`bt-usbmon` name files at second resolution** and restart
+  within one second on a crash; `bt-capture` fixed the same defect in itself and its
+  comment names both siblings as still carrying it. With `POLL_SEC=1` a second
+  `start_capture` inside one wall-clock second is reachable exactly in the persistent-
+  failure case, where `btmon -w` would truncate the previous (near-empty) file — low
+  cost, but the comment in `bt-capture` is a standing pointer to an unfixed defect.
+- **R2-52 [LOW] `bt-trace` `disk_guard()`**: the first `free_gb` read is guarded against
+  an empty result; the `while (( $(free_gb) < MIN_FREE_GB ))` loop is not — a transient
+  `df` failure inside the loop is an arithmetic error on an empty operand.
+- **R2-53 [GOOD]** `bt-capture`'s `_FileMonitor` seam with its loud provenance
+  announcement, `prune()`'s return value ("the quiet one is the one that deletes the
+  evidence"), and the second-resolution fix are model instrumentation; the `RAPID_MAX`
+  seam in `bt-trace` and the `wd_early_ok` migration in `bt-health-snapshot` held;
+  `bt-evidence`'s manifest counts the canonical patterns. All eleven `REVIEWED-KEEP`
+  markers in `bin/` are intact. Marked again below where warranted.
+
+## 6. `systemd/`, `etc/` (16 files)
+
+- **R2-54 [MED] `bt-trial-auto.service` is the unit behind `BL-08`, and it is unchanged.**
+  `ExecStop=bt-trial autostop` still issues an HCI command at every shutdown (§4.7,
+  R2-39), and the unit sets no `TimeoutStopSec`, so the 90 s shutdown tax stands. The
+  unit's comment says the classification "is by whether the controller still answers" —
+  which is precisely the design the operator's decision converted into a defect.
+- **R2-55 [LOW] `etc/modprobe.d/btusb-qca9377.conf`: `options btusb dyndbg=+p`
+  enables every `btusb.c` site at load**, including the per-URB completion handlers
+  that `bt-dyndbg`'s `NOISY_FUNCS` exists to suppress, for the ~3 s until
+  `bt-dyndbg.service` runs. Bounded, and the comment argues the trade for `bluetooth.ko`
+  — but not for `btusb`. Separately: the `len 27 mtu 9` lines that carry the alt-1
+  finding are per-URB output from a `btusb.c` site, and nothing in `NOISY_FUNCS` or the
+  modprobe file names which site produces them and why it must stay enabled. The next
+  volume reduction will remove the evidence.
+- **R2-56 [LOW] `bt-usbmon.service` ships `BT_USBMON_BUS=3`** — one machine's bus number
+  in a unit file installed everywhere. The script's own comment explains the fallback;
+  the value belongs in a drop-in written by `install.sh` from the detected bus, as
+  `10-device.conf` already is for VID/PID.
+- **R2-57 [NOTE]** `bt-journal-backup.service` under `/root/bt-journal-archive` with
+  `Nice=19`/`IOSchedulingClass=idle`/`Persistent=true`, and its "no
+  ConditionPathIsDirectory" comment, are exactly right. The `ProtectHome=yes` interaction
+  the previous review asked the owner to verify (CR-49) is moot while the watchdog is not
+  installed, and should be re-verified if it ever is. All six `REVIEWED-KEEP` markers in
+  `etc/`/`systemd/` intact.
+
