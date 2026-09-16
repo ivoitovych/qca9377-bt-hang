@@ -73,11 +73,25 @@ displacement off a NULL base, not an address in its own right.
 **Worth citing in the submission** — a maintainer will reasonably ask how a crash
 site was located in a stripped binary whose debug symbols were never published.
 
-⚠️ **Not verified: runtime.** Neither NULL condition can be triggered on demand —
-both were observed as crashes in the wild, not reproduced deliberately. The
-patches are argued from source and from the disassembly of the binary that
-crashed. They prevent a fault that is demonstrably reachable; they have not been
-watched preventing it.
+**Runtime — the two patches stand differently, and the submission should say so.**
+Neither NULL condition can be triggered on demand; both were first seen as crashes
+in the wild. But the patched daemon has run on the affected machine since
+2026-08-25, and both guards log before they bail, so a firing is positive evidence
+of a crash prevented rather than merely absent (`EX-041`, `tools/bt-guards`):
+
+- **`0002` fired four times** — 08-26, and three times on 09-02, across two daemon
+  lifetimes and three distinct `setup` pointers. Each is `transport_cb()` reaching
+  the accept with a live setup whose stream was NULL. Unpatched, each is the
+  dereference the coredump matched. **Watched preventing it, four times.**
+- **`0001`'s guard has not fired.** Its *premise* was observed once (09-08:
+  `command 0x23 status: 0x00` with a reply too short for the struct), but the
+  pre-existing check caught that instance because `discovery_list` was non-empty.
+  `0001` stands on the coredump analysis, which is an ordinary and sufficient
+  basis for a NULL-dereference fix.
+
+⚠️ A third `bluetoothd` crash on the patched binary (09-08, a bad `free()` under
+`g_main_loop_run`) is at neither patched site, occurred in a process that never
+took either guard path, and is **not** part of this submission.
 
 ⚠️ **`0002` treats the symptom.** It stops the crash without explaining why
 `setup->stream` is cleared while the setup is still on the `setups` list.

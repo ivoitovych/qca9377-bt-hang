@@ -51,3 +51,4 @@ Regenerate this index with `bt-exhibit index`.
 | EX-039 | [hci-reset-fails-so-the-toggle-cannot-recover](039-hci-reset-fails-so-the-toggle-cannot-recover.md) | Toggling Bluetooth off and on after a wedge cannot work, and the log says why: |
 | EX-040 | [headset-connect-to-wedge-in-three-seconds](040-headset-connect-to-wedge-in-three-seconds.md) | Fifth instance of the signature, and the **shortest and simplest path to it on |
 | EX-041 | [patch-0002-prevented-four-crashes](041-patch-0002-prevented-four-crashes.md) | `patches/bluez/0002` has **fired four times** in 19 days of real use on the |
+| EX-042 | [sixth-instance-and-the-treatment-stamp-was-wrong](042-sixth-instance-and-the-treatment-stamp-was-wrong.md) | Sixth instance of the alt-1 signature — `0x0428` answered in 83.8 ms, `evt 5`, |

@@ -11,7 +11,8 @@ which of them still holds.
 ⚠️ **Budget: 200 lines.** Over that, it stops being cheaper than reading the source, which
 is the only reason it exists. Cut the oldest settled item before adding.
 
-**Last updated: 2026-09-13 · newest exhibit: EX-041 · tip `7c9427b`**
+**Last updated: 2026-09-16 · newest exhibit: EX-042** — no tip hash here: it rotted three
+commits within hours of being written (`R2-13`); `git log -1` is one command away.
 
 ---
 
@@ -83,7 +84,7 @@ with HFP already connected.
 | "`EX-038` boot id `c128a59a`" | **FALSE** — it is `f5de8066`; value copied forward |
 | "`evt 5` = Synchronous Connection Complete" | **FALSE** — it is `HCI_NOTIFY_ENABLE_SCO_TRANSP` |
 | "`0x0428` means CVSD" | **FALSE** — air mode comes from the `btusb_notify()` value |
-| "autosuspend mitigation works (0/4 vs 3/4)" | **FALSE** — `EX-038` wedged under `autosusp=N`; the split is chronological |
+| "autosuspend mitigation works (0/4 vs 3/4)" | **FALSE** — `EX-038` wedged under `autosusp=N`. The split is chronological **because `--tools-only` reverted the baseline on 08-19** (`R2-58`): every `autosusp=Y` row is before that deploy, every `autosusp=N` row after. Not a treatment effect — a deployment accident |
 | "the 287-timeout denominator can't be re-derived" | **FALSE** — `evidence/baseline/baseline.tsv` reproduces it |
 | "lore.kernel.org is unreachable" | **FALSE** — UA block fronting a JS challenge; a browser gets 200 |
 | "the recovery ladder destroyed nothing" | **FALSE** by the next boot (`EX-034`) |
@@ -116,7 +117,11 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   spec; capture what is already open.
 - **Never `install.sh --apply`** on the investigation machine — it arms `bt-hang-watchdog`,
   whose USB reset has **3 controlled demonstrations of destroying this controller**. Use
-  `--tools-only`.
+  `--tools-only` — and ⚠️ **run `bt-mode status` after any deploy.** Until 2026-09-16
+  `--tools-only` reinstalled the two files `bt-mode experiment` moves aside, so the
+  baseline was silently reverted on 08-19 and again on 09-01 while the stamp still read
+  *experiment* (`R2-58`, `EX-042`). It now skips any file with a `.disabled` sibling and
+  says so; the stamp is not evidence, the files are.
 - **Never lose code, tests or evidence.** Priority 1; keep clutter over any deletion.
 - **Do not send the patches** until the operator says so.
 - **An untreated window is the most valuable state there is.** Do not touch Bluetooth;
@@ -183,8 +188,16 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
    survey).
 3. `bt-trial` does not record which `bluetoothd` is running, so pre- and post-patch trials
    pool under identical labels. Fix changes the results-file fingerprint — operator's call.
-4. The suite has not run in a while: `run-tests` refuses while a trial is open, correctly.
+4. ⚠️ **CI was red on every push from `d70cb2e` (09-01) to `3cf4dd6` (09-14)** and nothing
+   read it — `devtools/save` printed "CI will run it on push" twelve times. Two invariants
+   of this side's own (`R2-100`) never passed anywhere; fixed 09-16. Green is not yet
+   confirmed; the 18 red runs still need reading once for anything else.
 5. `btmon` dumps core repeatedly (33 in one 5-hour boot) — our capture tool losing evidence.
+6. ⚠️ **Operator's decision:** which treatment the trial series continues under. The
+   baseline was reverted by deploy on 08-19 (`R2-58`); trials 6–13 ran `autosusp=N,power=on`
+   under an *experiment* stamp. Either `bt-mode experiment` again (restores the baseline,
+   loses comparability with 6–13) or accept the mitigated state as the series from 08-19 on.
+   The break must be recorded where `results.tsv` is read; `trial-reclass` cannot fix it.
 
 ## 10. Where detail lives
 

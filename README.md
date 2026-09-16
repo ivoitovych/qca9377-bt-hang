@@ -62,8 +62,11 @@ been killed, and [`HISTORY.md`](HISTORY.md) for how each wrong turn was found.
 
 ⚠️ **Sections below this point were written earlier and are being rewritten.**
 Where a section states a cause ("the trigger", "the real fix", "this is the
-bug"), treat `docs/issues.md` as authoritative — it is kept current and this
-front page is not yet.
+bug"), treat [`BRIEF.md`](BRIEF.md) as authoritative — it is the concentrated
+current state, including what has been **retracted**, and is checked on every
+commit for naming the newest exhibit. `docs/issues.md` is the issue register and
+is **not** kept current past `EX-021`; this front page reaches `EX-033`. Neither
+yet carries the alt-1 finding (`EX-037`–`EX-042`); `BRIEF.md` does.
 
 ---
 

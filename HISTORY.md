@@ -287,6 +287,9 @@ better grounds for the bug report than the original window.
 
 ## Current state — as of the end of Phase 8, 2026-08-10 07:40 — ⚠️ SUPERSEDED
 
+> **The current state lives in [`BRIEF.md`](BRIEF.md)** — by definition, since 2026-09-13.
+> This heading is the only "current state" in this file and had not said so (`R2-17`).
+
 > ⚠️ This table is a snapshot from the morning of 2026-08-10, kept in
 > chronological place. Nearly every row was overturned by later phases:
 > the "root cause" was demoted to an established driver difference with an

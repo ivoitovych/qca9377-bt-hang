@@ -70,7 +70,10 @@ tx=$(bt_journal_count "command( 0x[0-9a-f]+)? tx timeout" -k -b 0)
 # like it was measured. Silent zeros are this project's recurring defect; a
 # silent blank is the same defect wearing less.
 le_unexp=$(bt_journal_count "unexpected event for opcode" -k -b 0)
-audio=$(grep -ciE 'avdtp|sco|a2dp|Hands-Free' <<<"$BD" 2>/dev/null || true)
+# \bsco\b, not `sco`: the bare form matches `discovery`, `discovering` and
+# `discovery_complete`, so every scan counted as an audio event (R2-76). A word
+# boundary keeps SCO/eSCO and drops the discovery lines.
+audio=$(grep -ciE 'avdtp|\bsco\b|\besco\b|a2dp|Hands-Free' <<<"$BD" 2>/dev/null || true)
 
 verdict() {
     # Live state first. Counts are cumulative for the boot, so an early success

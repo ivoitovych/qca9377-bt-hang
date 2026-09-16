@@ -7406,8 +7406,17 @@ ARCHKO=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARCHK" tools/
 # one-record file — valid, decompressible, and wrong, which is exactly how the
 # nine on the machine looked.
 BT_JOURNAL_FIXTURE=tests/journal/archive tools/bt-archive --list >/dev/null 2>&1
+# ⚠️ REMOVE WHATEVER WAS WRITTEN, NOT ".zst". bt-archive probes zstd, xz, gzip
+# in that order, so on a host without zstd the archive above is .xz or .gz and
+# a hardcoded `rm -f …zst` leaves it beside the planted one — two archives for
+# one boot, which --check reports AMBIGUOUS, not SHORT. That is why this
+# invariant was red in CI from the day it was written (R2-100, R2-67). The
+# suffix is derived from what is on disk.
+for _a in "$ARCHK"/boot-c1315c25.export.*; do
+    [[ "$_a" == *.prefix ]] && continue
+    rm -f "$_a"
+done
 head -4 tests/journal/archive/default.b-1.log | gzip > "$ARCHK/boot-c1315c25.export.gz"
-rm -f "$ARCHK/boot-c1315c25.export.zst"
 ARSHRT=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARCHK" tools/bt-archive --check 2>&1); ashrc=$?
 if (( ashrc == 0 )) && [[ "$ARSHRT" == *"SHORT"* && "$ARSHRT" == *"1 SHORT"* ]]; then
     ok "--check finds a prefix that a presence test calls archived"
@@ -7883,8 +7892,13 @@ fi
 # AND NOTHING IS DISCARDED. Trading a misleading number for a blind spot is not
 # a fix — bt-journal-backup's own failure showed up in the old counter, and it
 # is a real signal about this project's tooling even though it is not BT-1.
+# ⚠️ NOT A GLOB INSIDE [[ ]]. Written first as `[[ -s "$SNOF/snap"/*-boot0/… ]]`,
+# which bash does not expand — it compared a literal pattern to nothing, went
+# red on the machine that wrote it, and stayed red in CI for three weeks
+# (R2-100) because nothing read the verdict. Resolved to a path first.
+SNOF_CUT=$(compgen -G "$SNOF/snap/*-boot0/f-otherfail.log" | head -1)
 [[ "$(rt_line "$SNOFO" 'other unit failures')" == *"8"* ]] \
-   && [[ -s "$SNOF/snap"/*-boot0/f-otherfail.log ]] \
+   && [[ -n "$SNOF_CUT" && -s "$SNOF_CUT" ]] \
     && ok "foreign unit failures are kept and reported separately, not dropped" \
     || bad "the non-Bluetooth failures were lost: $(rt_line "$SNOFO" 'other unit failures')"
 
@@ -8777,6 +8791,46 @@ else
     bad "install.sh --apply invoked without a staging root:"
     bad "  $(head -1 <<<"$SLOOSE")"
 fi
+
+# ── --tools-only MUST NOT REINSTALL WHAT bt-mode MOVED ASIDE (R2-58) ─────
+#
+# `bt-mode experiment` implements the controlled baseline by renaming the
+# modprobe override and the udev power pin to `.disabled`. --tools-only skipped
+# the experiment-mode guard AND reinstalled both under their active names, so
+# on 2026-08-19 and again on 2026-09-01 one deploy silently reverted the
+# baseline every trial since depended on — while its refusal text promised it
+# "arms nothing, so the mode stands". The mode stamp went on reading
+# `experiment` beside two ACTIVE files for four weeks, and `bt-mode status`,
+# which would have shown the pair, was never run. No test covered --tools-only
+# at all; this is the first.
+#
+# BOTH DIRECTIONS, because a guard that only ever sees the skip case cannot
+# tell "skipped" from "did nothing": with the siblings planted, neither active
+# name may appear and the deploy must SAY it skipped; without them, both must
+# be written and nothing may claim a skip.
+SRD=$(mktemp -d)
+mkdir -p "$SRD/etc/modprobe.d" "$SRD/etc/udev/rules.d"
+: > "$SRD/etc/modprobe.d/btusb-qca9377.conf.disabled"
+: > "$SRD/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules.disabled"
+TOD=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$SRD/no-such-trial" \
+          BT_DESTDIR="$SRD" ./install.sh --tools-only 2>&1); todrc=$?
+if (( todrc == 0 )) \
+   && [[ ! -e "$SRD/etc/modprobe.d/btusb-qca9377.conf" ]] \
+   && [[ ! -e "$SRD/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules" ]] \
+   && [[ -e "$SRD/etc/modprobe.d/btusb-qca9377.conf.disabled" ]] \
+   && [[ "$TOD" == *"2 file(s) left as bt-mode moved them aside"* ]]; then
+    ok "--tools-only leaves a .disabled-moved file alone, keeps the .disabled, and says so"
+else
+    bad "--tools-only reinstalled beside .disabled or hid it (rc=$todrc): $(grep -c SKIPPED <<<"$TOD") SKIPPED line(s)"
+fi
+SRE=$(mktemp -d)
+TOE=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$SRE/no-such-trial" \
+          BT_DESTDIR="$SRE" ./install.sh --tools-only 2>&1)
+[[ -s "$SRE/etc/modprobe.d/btusb-qca9377.conf" && -s "$SRE/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules" ]] \
+   && [[ "$TOE" != *"moved them aside"* ]] \
+    && ok "--tools-only still installs both files when nothing was moved aside — the skip can fail" \
+    || bad "the .disabled skip fires with no .disabled present, or the summary lies"
+rm -rf "$SRD" "$SRE"
 
 rm -rf "$SR" "$SS" "$SS2" "$SRG" "$SRT" "$SRT2" "$SMS"
 
