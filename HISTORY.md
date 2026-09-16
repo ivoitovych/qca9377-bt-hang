@@ -2826,3 +2826,104 @@ Phase 32 read absences; Phase 33 asked who was doing the reading. This one is ab
 The two errors are the same phase's other half, and not a coincidence. A prediction is only
 worth what the measurement behind it is worth — and both mistakes came from measuring a
 smaller thing than the claim covered.
+
+---
+
+## Phase 35 — a second reviewer reads the whole tree, and two of its HIGH findings were mine
+
+2026-09-14 → 09-16. The phase in which the project stopped calling its own labels
+self-evident, a compact state file was created and immediately proved it could hold an
+error of its own, and a full-tree review found that the two most consequential defects on
+`main` had been committed by the person reacting to it.
+
+### The labels
+
+The operator asked whether `BT-1` … `BT-4` exist anywhere outside this repository. They do
+not — they are section headings invented in `docs/issues.md`. *"Do they need to learn our
+project's slang?"* No. The rule adopted keeps the register (that is what issue ids are
+for), lets a label appear elsewhere only as a parenthetical search handle for someone who
+followed the repository link, and forbids it entirely in the one file that leaves on its
+own. The bug report already had zero; `README.md` had ten, the first of them at line 179
+with no definition above it. Gated in the suite, with the gate proven to fire.
+
+### `BRIEF.md`, and the first thing it got wrong
+
+The operator remembered short-context work where *"reading that file after every context
+compaction was an essential part of having a stable operation."* Nothing here served that:
+memory held *how to work*, the tooling index held *which tool*, and what was actually true
+about the bug lived in 42 exhibits and 2,800 lines of this file. `BRIEF.md` — not
+`JOURNAL.md`, because "journal" means `journald` in every other sentence here — holds it in
+under 200 lines, with the retracted claims as its highest-value section.
+
+Then the operator pointed out that memory lives outside the repository and is lost to any
+reclone, and the durable rules moved in-repo. And within a day `BRIEF` §5 had overstated a
+retraction — *"`0x0428` … answered every time"*, when `EX-006` had recorded one that was
+not. Compression is where nuance dies; a retraction must name its scope.
+
+### The review
+
+Review `2026-09-16T0420Z`: 122 findings against `3cf4dd6`, every file again. Its verdict
+opened with three sentences, two of which described this side's own work.
+
+**`main` had been red on its own suite for three weeks.** Two invariants added on 09-01
+had never passed on any host — a glob inside `[[ ]]`, which bash does not expand, and an
+`rm -f …zst` on a tool that probes for `xz` and `gzip` too. They were "verified standalone"
+with a subset that did not contain them, and `devtools/save` said *"CI will run it on push"*
+on twelve pushes whose red verdicts sat in a browser tab nobody opened. ⚠️ **Fixed, each
+driven to fail on purpose, and `456daba` was the first green since `d70cb2e`.**
+
+**The machine had been running a different treatment from its stamp since 08-19.**
+`bt-mode experiment` sets the baseline by renaming two files to `.disabled`; `--tools-only`
+skipped the mode guard and reinstalled both under their active names, while promising it
+"arms nothing, so the mode stands." The reviewer read `install.sh` and the file dates. This
+side then read the file dates on the machine:
+
+```
+Sep  1 05:45  /etc/modprobe.d/btusb-qca9377.conf            ← this side's own deploy
+Aug 15 09:35  /etc/modprobe.d/btusb-qca9377.conf.disabled
+```
+
+The 08-19 reversion was the reviewer's finding; **the 09-01 one was mine**, deploying the
+`bt-archive` fixes. `bt-mode status` prints *experiment since 2026-08-15* beside *modprobe
+conf ACTIVE*, exactly as predicted, and had not been run. `install.sh` now skips any file
+with a `.disabled` sibling and says so, proven in both directions under a staging root.
+What survives: every exhibit since `EX-036` read the treatment live from `/sys`, so their
+rows are right; what was wrong was the stamp and the promise of comparability. Which
+treatment the series continues under is the operator's decision and is recorded as such.
+
+**The exhibit index had been cutting 17 of 42 claims mid-sentence** since claims started
+wrapping at `EX-026`, and the index test stayed green because it counted rows. The
+extractor takes the paragraph now, and the new test fails against the old extractor on the
+same file — proven before it was committed, after the standalone harness refused twice
+for reasons its swallowed stderr could not show. The `bt-backup-journal` mistake, again.
+
+### The sixth wedge, in the middle of it
+
+`EX-042`, 2026-09-16 12:32:50, `-31`: `0x0428` in 83.8 ms, 1,595 27-byte frames on the
+9-byte endpoint, bare timeout at **2.147 s**. Six occasions, three kernels, spread still
+115 ms. `bAlternateSetting 1` read from `sysfs` for the fourth time, in a window with zero
+interventions after the fault and zero USB-layer lines — the boot's five earlier
+intervention lines were a resume from suspend on another bus, seventeen minutes before.
+
+### What was left undone, said plainly
+
+`origin/claude/unit-testing-intro-0jlol1` still carries four commits `main` lacks. Their
+guard tests were run against the rewritten `bt-snapshot` — 4/4 — and the merge was offered
+and not taken up before the review arrived. Their §9 table (*a real, correctly obtained
+value, anchored to the wrong thing*) is better than `BRIEF` §8 and has not yet replaced it.
+The bug report still describes the pre-alt-1 project. `R2-105` — a CI row in
+`devtools/status` — is the fix for the class of failure this phase is about, and it is not
+written.
+
+### The shape
+
+Phase 34 committed to answers before the data arrived. This phase is what happens when the
+data arrives about *you*:
+
+> A control that runs where it was written protects every run except the one that matters.
+> The suite guarded the staging root and not the human's deploy; the index test guarded the
+> row count and not the row; the commit script announced CI and never read it. Each was
+> correct about the thing it measured and silent about the thing it was for.
+
+The reviewer's §9 table says it in one line, and it is the line this project should have
+written first: **a real, correctly obtained value, anchored to the wrong thing.**

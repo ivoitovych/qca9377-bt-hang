@@ -194,8 +194,10 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
    pool under identical labels. Fix changes the results-file fingerprint — operator's call.
 4. ⚠️ **CI was red on every push from `d70cb2e` (09-01) to `3cf4dd6` (09-14)** and nothing
    read it — `devtools/save` printed "CI will run it on push" twelve times. Two invariants
-   of this side's own (`R2-100`) never passed anywhere; fixed 09-16. Green is not yet
-   confirmed; the 18 red runs still need reading once for anything else.
+   of this side's own (`R2-100`) never passed anywhere; fixed 09-16. **Green confirmed** on
+   `456daba`, `00138a7`, `2839ecc`. Still owed: one read of the 18 red runs for anything
+   else that went red meanwhile, and `R2-105` — a CI row in `devtools/status` so a verdict
+   is read on the machine, not only in a browser tab.
 5. `btmon` dumps core repeatedly (33 in one 5-hour boot) — our capture tool losing evidence.
 6. ⚠️ **Operator's decision:** which treatment the trial series continues under. The
    baseline was reverted by deploy on 08-19 (`R2-58`); trials 6–13 ran `autosusp=N,power=on`

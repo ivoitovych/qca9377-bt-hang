@@ -277,19 +277,19 @@ everything else is fixed or declined by the reaction, which will add its own tra
 
 | ID | Item | Status | Landed | Verify |
 |---|---|---|---|---|
-| R2-01 / R2-100 | Two suite invariants cannot pass on any host; CI red since 08-25 | open | — | `tests/run-tests \| tail -1` → `all … hold`; latest Actions run on `main` green |
-| R2-58 | `--tools-only` reinstalls files `bt-mode experiment` moved aside; baseline reverted 08-19 | open | — | on the machine: `ls /etc/modprobe.d/btusb-qca9377.conf*` shows no `.disabled` beside an active file; `BT_DESTDIR` test with a staged `.disabled` sibling exists in `tests/run-tests` |
-| R2-04 / R2-05 / R2-07 | README: "kept current", contradictory baseline claims, no central finding | open | — | `grep -c 'alt' README.md` → ≥1 in a finding paragraph, per the 2026-09-13 report |
+| R2-01 / R2-100 | Two suite invariants cannot pass on any host; CI red since 08-25 | **closed** | `456daba` | `compgen -G` at `:7887`; suffix derived at `:7410`; each driven to fail on purpose. Actions green on `456daba` (run 35148266458), `00138a7`, `2839ecc` — first greens since `d70cb2e` |
+| R2-58 | `--tools-only` reinstalls files `bt-mode experiment` moved aside; baseline reverted 08-19 | **tool fixed; machine pending operator** | `456daba` | `install_file()` and the generated udev rule skip any destination with a `.disabled` sibling and say so; both-direction staged test in `tests/run-tests` (R2-102). Verified live: active files dated **Sep 1 05:45 — this side's own deploy** beside `.disabled` from Aug 15. The pair is still on the machine: which treatment the series continues under is the operator's decision (`BRIEF` §9.6), recorded in `EX-042` |
+| R2-04 / R2-05 / R2-07 | README: "kept current", contradictory baseline claims, no central finding | **partial** — R2-04 closed, R2-05/R2-07 open | `456daba` (R2-04) | "kept current" now points at `BRIEF.md` and says `issues.md` stops at `EX-021`. The alt-1 finding is still absent from README (`grep -c 'alt-1' README.md` in a finding paragraph → 0); waits on the bug-report rewrite |
 | R2-21 | `docs/issues.md` stale at EX-021 | open | — | `grep -c 'EX-04' docs/issues.md` → ≥1 |
 | R2-25 | bug-report timing 7.6–16.2 s vs measured 2.076–2.191 s | open | — | `grep -c '2.19' docs/bug-report.md` → ≥1 |
 | R2-64 / R2-65 | `bt-trial abort` deletes tracked evidence; `autostop` probes a live controller (BL-03, BL-08) | open | — | `grep -c 'ls-files' tools/bt-trial` → ≥1; `grep -c hci_alive tools/bt-trial` → 0 in `autostop)` |
 | R2-105 | Commit path on the machine never runs the suite and nothing reads CI | open | — | `devtools/status` prints a CI-conclusion row |
 | R2-70 | `sanitize-logs.sh` redacts SIG base UUIDs; profile identity lost in every session log | open | — | `echo 0000110b-0000-1000-8000-00805f9b34fb \| tools/sanitize-logs.sh /dev/stdin /dev/stdout` prints it unchanged |
-| R2-76 | `bt-status` counts `discovery` lines as audio | open | — | `grep -c "'avdtp\|sco\|a2dp" tools/bt-status` → 0 |
+| R2-76 | `bt-status` counts `discovery` lines as audio | **closed** | `456daba` | `\bsco\b` and `\besco\b`; the bare form is gone from `tools/bt-status` |
 | R2-81 / R2-106 | verifiers and `devtools/status` advise `--apply` in experiment mode; `.disabled` + active pair invisible | open | — | `tools/bt-verify-install` reports CONFLICT on a staged pair |
 | R2-111 | Four instruments disagree on what a red suite means | open | — | each of the four exits non-zero without a figure on a red run |
-| R2-114 | Exhibit index truncates 16 of 41 claims | open | — | `grep -c ' |$' evidence/exhibits/README.md` → 0 |
-| R2-117 | patches README says the guards were never watched firing; EX-041 shows four | open | — | `grep -c 'EX-041' patches/bluez/README.md` → ≥1 |
+| R2-114 | Exhibit index truncates 16 of 41 claims | **closed** | `2839ecc` | Extractor takes the whole `**Claim.**` paragraph; 42 rows, 0 cut, 0 empty (17 of 42 were cut at the tip). A wrapped-claim test fails against the old `grep -m1` on the same file. ⚠️ The verify command as written matches every table row — `' |$'` is the row terminator; the honest check is "no claim cell ends without `.`/`!`/`?`/`)`/`` ` ``/`*`" |
+| R2-117 | patches README says the guards were never watched firing; EX-041 shows four | **closed** | `456daba` | The runtime paragraph now separates the two: `0002` fired four times (watched preventing it), `0001`'s guard has not, the 09-08 `free()` is a third crash and stays out of the submission |
 | R2-119 | `reviews/verify.sh` covers 13 of ≈60 register rows | open | — | `reviews/verify.sh` prints a line per block |
 
 
