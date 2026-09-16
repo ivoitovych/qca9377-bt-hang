@@ -556,3 +556,59 @@ operator; the bug-report rewrite has not started (§4.2).
   read) are model tests-of-the-tool. `bt-snapshot`'s unfiltered `all.log` is what makes
   the source-map claim in R2-33 wrong, and is the right choice. `trial-reclass.awk` is a
   clean read-time correction that announces itself and refuses to launder real drift.
+
+### 8.2 `bt-actions`, `bt-exhibit`, `bt-capdiff`, `bt-health-report.sh`, `sanitize-logs.sh`, `bt-postmortem`, `bt-mode`
+
+- **R2-70 [MED] `sanitize-logs.sh` redacts Bluetooth SIG-assigned service UUIDs as if
+  they identified the machine.** The UUID pass has no allowlist, so every
+  `xxxxxxxx-0000-1000-8000-00805f9b34fb` — the public base-UUID form under which
+  A2DP, HFP, AVRCP and OPP are named — becomes `<UUID-NN>`. In the 2026-09-13 session's
+  `bluetoothd.log` four placeholders stand in for 144 profile references
+  (`src/profile.c:ext_adapter_probe() ".../<UUID-01>" probed`), so which profile was
+  probed, connected or torn down is unreadable in exactly the log that is supposed to show
+  the HFP-versus-A2DP sequence behind the SCO finding. `bt-exhibit` inherits it: a
+  `--cmd` that greps for a service UUID is refused as "an address appears in the
+  extraction method". Fix: leave UUIDs whose last 96 bits are the SIG base untouched (and
+  say so in the header's table); nothing about them is identifying.
+- **R2-71 [MED] `bt-capdiff --since/--until` replace the overlap bounds instead of
+  intersecting them.** The header promises "Compares only the overlapping time range …
+  outside it a difference means 'not captured', not 'disagreement'". With `--since` set
+  earlier than the later path's first record, `lo` is simply overwritten, and every record
+  the earlier path captured before the other attached is listed as "present only in …".
+  `lo=max(lo, SINCE)`, `hi=min(hi, UNTIL)`.
+- **R2-72 [MED] `bt-postmortem` narrates a refuted hypothesis as the load-bearing
+  question.** Its closing analysis is whether "the early signal actually arrived early"
+  for "the 'cmd_timeout is too late' hypothesis", and its advice line is "Check the
+  threshold/cooldown". `bt-mode`'s own header records that the early precursors were
+  refuted as causal markers, and the central finding (§2) is a transport alt-setting
+  event the tool does not look for. Read today, the verdict block explains a hang in
+  terms the project has abandoned, with no marker saying so. Minimum: a one-line
+  historical note in the output; better: an "alt setting 1 seen before first timeout?"
+  row in the EVENT table, from the same journal it already reads.
+- **R2-73 [MED] `bt-health-report.sh` has no mode awareness and grades the reverted
+  baseline as correct.** Section 1 prints "expected after a cold power-off:
+  autosuspend=N, power/control=on" unconditionally. On the investigation machine today
+  (R2-58) that is the state the tools-only deploy silently restored, so the one report an
+  operator would run to check the treatment says it is as expected while the mode stamp
+  says `experiment`. Read the stamp `bt-mode` writes and print the expectation for the
+  recorded mode, or print the stamp beside the state. Also: the `installed-at` path is the
+  only input in the file not behind a seam (`BASELINE` and both sysfs roots are), so the
+  before/after labelling cannot be driven by a test except through `BT_CHANGE_TIME`; the
+  header's "35 boots retained" is a constant from another month.
+- **R2-74 [LOW]** `bt-actions` documents four classes (USER/STACK/CTRL/WDOG) in its header
+  and legend line but emits `PROF` and `PLAY` rows as well; its CTRL classifier has no
+  rule for the isoc alt-setting change or the `len 27 mtu 9` frames, so the reconstructed
+  timeline cannot show the mechanism the investigation now centres on. `bt-capdiff
+  --help` prints lines 2–28 and its `Usage:` block begins at 36. `bt-exhibit` writes
+  `13d3:3503 QCA9377 (ROME)` into every provenance table regardless of `BT_VID`/`BT_PID`,
+  and its checkout search includes `/root/exp/qca9377-bt-hang` — the same
+  one-machine-constant class as R2-56/R2-66.
+- **R2-75 [GOOD]** `bt-capdiff`'s consumed one-to-one matcher, the tolerance-widened
+  window with its explanation, the empty-overlap refusal, and the "DO NOT READ THIS AS"
+  block are exactly the epistemic hygiene the tool exists for. `sanitize-logs.sh`'s
+  two-direction awk gate and build-then-rename are intact and correctly marked
+  `REVIEWED-KEEP`. `bt-exhibit`'s three refusals (127/126, missing sanitiser, address in
+  the command) held. `bt-mode`'s single-call-site dry-run design and `.disabled`
+  reversibility are right — R2-58 is `install.sh` failing to respect that convention, not
+  a `bt-mode` defect. `bt-postmortem`'s incident clustering and live-state-outranks-log
+  verdict are sound.
