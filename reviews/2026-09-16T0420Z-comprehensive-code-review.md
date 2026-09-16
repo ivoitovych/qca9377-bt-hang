@@ -654,3 +654,29 @@ operator; the bug-report rewrite has not started (§4.2).
   longer holds the kernel journal in a shell string and exits 0 explicitly with the reason
   written down. `bt-diagnose`'s verdict wording — "a phenotype report, not a device-table
   or causal diagnosis" — is exactly as careful as it should be.
+
+### 8.4 `bt-verify-install`, `bt-verify-kernel-mechanism`
+
+- **R2-81 [MED] `bt-verify-install` cannot see the state R2-58 left behind, and its
+  advice line points at the reverting command.** The `.disabled` interlock fires only
+  when the active path is absent; when both `X` and `X.disabled` exist (the post-08-19
+  state of the modprobe conf and the udev pin) the active file is compared and reported
+  "in sync" and the sibling is never mentioned. This is the tool the 08-19 deploy was
+  verified with — "69 artifacts in sync" — and it had no way to say "you just reinstalled
+  two files bt-mode had moved aside". On any drift it prints `Run: sudo ./install.sh
+  --apply` even when `EXPERIMENT=1`, which is precisely the loop the `REVIEWED-KEEP`
+  comment above the derivation says the tools must not send each other into. Fix: report
+  `X` + `X.disabled` as CONFLICT (non-zero), and print `--tools-only` as the remedy when
+  the mode stamp says experiment.
+- **R2-82 [LOW]** `bt-verify-kernel-mechanism` depends on `strings` (binutils) with no
+  fallback, the same minimal-image class it fixed for `hexdump`; `strings` missing makes
+  `syms` empty and section 1 reports "neither symbol found — module may be stripped",
+  which is the wrong diagnosis. Its question (reset callback versus 5-timeout counter)
+  belongs to the recovery-mechanism phase; a one-line pointer that the transport
+  alt-setting finding is settled elsewhere (`bt-sco`, EX-038) would stop a reader taking
+  this tool's "=> hdev->reset mechanism" as the current model.
+- **R2-83 [GOOD]** The byte-aligned device-ID match, the `od` fallback with "an empty hex
+  dump for a non-empty module means the dump failed, whatever the exit status said", and
+  the derived unit list with the experiment-mode exemption for intervening units are all
+  correct and marked. `REVIEWED-KEEP §3.2` (derivation + interlock) intact — R2-81 asks
+  for the interlock to be widened, not removed.
