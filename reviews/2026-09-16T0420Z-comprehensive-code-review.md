@@ -712,3 +712,24 @@ operator; the bug-report rewrite has not started (§4.2).
   its binary are right. Checkout-only status for these four (R2-62) is justified by
   `bt-fault-window`'s own header: the permission-prompt argument applies to `tools/*` in
   a checkout, not to `/usr/local/bin`.
+
+### 8.6 `bt-boot-provenance`, `bt-usbstate`, `bt-phase`, `bt-env-history`
+
+- **R2-88 [LOW] `bt-usbstate` is the second tool with the port baked in** —
+  `DEV="${BT_USB_PATH:-3-3}"`, seamed but not resolved. It is the tool written to be
+  reached for inside an untreated window, when the operator will not be setting
+  environment variables; resolve by VID/PID over `$USBROOT` as `bt-mode radio_dir` does
+  and fall back to the seam. (R2-66 is the unseamed instance in `bt-snapshot`.)
+- **R2-89 [NOTE]** `bt-env-history` reads AUTOSUSP/POWER from `metrics.tsv`, which
+  `bt-health-snapshot` writes and which does not run with probes off — so for every trial
+  since 08-19 it prints `?`, and `results.tsv`'s treatment fingerprint is the only record
+  of the reverted baseline (R2-58). That is correct behaviour ("? is not default and not
+  off"), and it is why the fingerprint mattered.
+- **R2-90 [GOOD]** `bt-boot-provenance`'s boundaries-from-`--list-boots`, bounded
+  three-minute `hci` scan with the epoch-not-string-arithmetic note, and its honest
+  "shutdown-target provenance, not the M.2 rail" framing; `bt-usbstate`'s sysfs-only
+  read with the trimmed-attribute fix ("a check that cannot fire") and its alt-1 +
+  9-byte pairing — this file is the direct observation the whole finding rests on;
+  `bt-phase`'s four invariants and its "a cluster is not yet a proven incident" caveat;
+  `bt-env-history`'s `Finished`-only probe count. All four read the journal through the
+  seam.
