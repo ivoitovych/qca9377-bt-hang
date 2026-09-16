@@ -1009,3 +1009,39 @@ operator; the bug-report rewrite has not started (§4.2).
   address transfer, and the call-fingerprint match with the prediction stated before
   the core was read. The 2026-08-17T0022Z provenance block (what was annotated, when,
   and why that was the only honest moment) is the append-only convention done right.
+
+### 10.4 The four gates, run on this tree (addendum to §10.3)
+
+Run from `3cf4dd6` in this container (gawk installed, as CI does):
+
+| gate | result |
+|---|---|
+| `devtools/coverage --min 80` | **refuses**: "these EXCLUDED lines were executed by the suite … `tests/run-tests:7415  bad "a prefix passed as a complete archive …"`" — the failing invariant's `bad` branch runs, the by-shape exclusion for `bad` lines therefore hides live code, and the self-check exits 2 before any figure |
+| `devtools/awk-coverage --min 85` | reports `88.3%`, prints `suite: FAILED: 6 of 777 invariants` beside it, and **passes** the floor |
+| `devtools/py-coverage --min 80` | **refuses**: "the suite FAILED — coverage from a failing run is not a measurement" (`6 of 777`) |
+| `devtools/test-comprehension --min 75` | **refuses**: "coverage run failed; cannot measure" |
+
+Two things to take from the table beyond R2-111. First, `coverage` cannot produce a
+number while any invariant is red, because a red invariant executes an excluded `bad`
+line — so the floor step in CI has been unreachable since 08-25 by construction, not
+merely unread. Second, under either instrument's environment the suite runs **777**
+invariants and fails **6**; under a plain run, or under a minimal `gawk --profile` shim
+built by hand for this review, it runs **774** and fails **2**. Three assertions appear
+and four fail only inside the instruments' environments (`BASH_ENV`, `PYTHONPATH`, the
+sidecar-writing awk shim), which is the shape lessons §5 records — "a green suite over a
+blind instrument" has a red-suite cousin. Reproduce with `devtools/py-coverage 2>&1 |
+tail -2` against `tests/run-tests | tail -1`; which four is not established here.
+
+### 11.3 `comms/` (23 messages), `lessons/` (1)
+
+- **R2-122 [GOOD]** `comms/README.md`'s front-matter contract (branch, tip, `needs:`)
+  and its two rules — every number carries its command; a message is not a merge — are
+  honoured in the messages read (2026-08-19T1620Z, 2026-08-24T0025Z/0130Z). The
+  2026-08-24T0130Z message's "we made the same mistake at the same time from opposite
+  sides … neither of us looked at the response body" is the register of a corrected
+  belief, which is what the channel is for. `lessons/2026-08-22T1101Z` is the best
+  document in the repository: its §3 ("a gate that runs first hides the state of every
+  gate behind it") predicts R2-01/R2-105 exactly, and its §8 lists the author's own
+  withdrawn claims. The only note: the lessons directory has one entry from one
+  maintainer; the events of 08-19 (R2-58) and 08-25 onward (R2-01) are the material for
+  the other two the README asks for.
