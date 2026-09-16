@@ -886,3 +886,21 @@ operator; the bug-report rewrite has not started (§4.2).
   ref; `check`'s subsumption argument. The `devtools/README.md` note that repo-scan
   allowlists SIG base UUIDs as public constants is the policy `sanitize-logs.sh` should
   share (R2-70).
+
+### 10.2 `repo-scan`, `journal-contract`, `branch-status`
+
+- **R2-109 [MED] `branch-status` on a shallow clone** — R2-02, recorded here at the
+  tool: with `.git/shallow` present `git cherry` and `merge-base --is-ancestor` answer
+  from a truncated graph, so every branch reads "CARRIES WORK MAIN LACKS" and no merge
+  claim can be checked; the tool prints a confident table. Refuse when
+  `git rev-parse --is-shallow-repository` says true, and say `git fetch --unshallow`.
+  (Found because this review's container was a shallow clone; the same is true of any
+  CI checkout with `fetch-depth: 1`.)
+- **R2-110 [GOOD]** `repo-scan`'s refuse-on-empty-read, added-lines-only default with
+  the reason, the SIG-UUID allowlist, the RFC 5737 placeholder space, the committer
+  address derived from the tip commit for CI, and the content-based binary check that
+  refuses to grow the extension list — all intact with `REVIEWED-KEEP §5`.
+  `journal-contract`'s phase 2 (a built journal diffed byte-for-byte against the fixture
+  grammar) is the strongest fixture-fidelity check in the tree and its recorded
+  leading-separator divergence is exactly how such an asymmetry should be kept. The
+  stale-merge-claim notice in `branch-status` (previous reaction) works as designed.
