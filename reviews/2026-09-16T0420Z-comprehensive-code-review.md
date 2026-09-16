@@ -517,12 +517,15 @@ operator; the bug-report rewrite has not started (§4.2).
 ### 8.1 `bt-trial`, `bt-snapshot`, `bt-archive`, `bt-retention`, `bt-backup-journal`, `bt-trial-audit`
 
 - **R2-64 [HIGH] `bt-trial abort` is still `rm -rf "$dir"; rm -f "$CUR"` with no
-  "has anything been recorded?" check — BL-03 at the code site** (R2-39 for the register
-  status). A trial with steps, marks and a fingerprint is deleted, not closed as
-  `aborted`, although `trial_result=aborted` is in `trial-summary.awk`'s accepted domain
-  and no writer ever produces it. Fix: `abort` should close the row with
-  `trial_result=aborted` and move the state dir to an `aborted/` sidecar; deletion is for
-  a dir with nothing but `start=`.
+  "is any of this tracked?" check — BL-03 at the code site** (R2-39 for the register
+  status). BL-03's own "shape of the work" is `git ls-files --error-unmatch` then
+  refuse-or-move-aside; nothing of it is in the tool. And the suite pins the current
+  behaviour: `run-tests:6538` asserts "abort discards the trial directory and writes no
+  results row". So a test now protects the behaviour the backlog calls a defect, which
+  means the BL-03 fix must change that test on purpose, with a second case for the
+  tracked-directory refusal. (Note `trial_result=aborted` is in `trial-summary.awk`'s
+  accepted domain and no writer produces it — either drop it or make abort-with-content
+  produce it.)
 - **R2-65 [HIGH] `bt-trial autostop` still classifies by probing a live controller**
   (`if hci_alive; then exec "$0" ok; else exec "$0" hang`), which is BL-08 part 4 and the
   90 s shutdown tax in R2-54. The closer already computes `timeouts` from the journal for
@@ -692,12 +695,14 @@ operator; the bug-report rewrite has not started (§4.2).
   (lines 2–26) documents `--dir` and `--raw` but not `--window`, which the same header
   says is "the one to use". Update the signature line to the alt-setting reading and
   list `--window` in usage.
-- **R2-85 [LOW] `bt-window`'s exit contract and its bus check.** The header says "Exit 0
-  while the device is still enumerated, 1 once it has left the bus"; the code also exits
-  1 when the device is enumerated but an intervention was seen. Presence comes from
-  `lsusb | grep -c` rather than the `BT_SYSFS_USB` seam every sibling uses, so "GONE FROM
-  THE BUS" is drivable only by a PATH stub. Both small; the tool is otherwise the model
-  for a passive live-window check.
+- **R2-85 [LOW] `bt-window`'s header states the wrong exit contract.** "Exit 0 while
+  the device is still enumerated, 1 once it has left the bus" — the code also exits 1
+  when the device is present but intervened upon, and `run-tests:8948` asserts exactly
+  that as "the more useful contract". The test is right; the header should say "exit 0
+  means untreated and still running". Presence comes from `lsusb | grep -c` rather than
+  the `BT_SYSFS_USB` seam every sibling uses, so "GONE FROM THE BUS" is drivable only by
+  a PATH stub. Both small; the tool is otherwise the model for a passive live-window
+  check.
 - **R2-86 [LOW] `bt-fault-window --at` drops the zone.** The anchor's `+02:00` is
   stripped and the wall-clock part is re-parsed in the running machine's zone, so a
   fixture captured on the laptop and read in a UTC container is windowed two hours
