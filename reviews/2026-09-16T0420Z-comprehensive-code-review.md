@@ -939,3 +939,29 @@ operator; the bug-report rewrite has not started (§4.2).
   stop-tracing-before-reading fix. `test-comprehension`'s weakest-dimension score and its
   "UNMEASURED is not 100%" rule. The instruments are, individually, the most carefully
   argued code in the tree; R2-111 is about their composition.
+
+## 11. `evidence/`, `patches/`, `comms/`, `lessons/`, `reviews/`
+
+### 11.1 `evidence/README.md`, `evidence/exhibits/README.md`
+
+- **R2-114 [MED] The exhibit index truncates 16 of 41 claims mid-sentence.** `bt-exhibit`'s
+  `exhibit_claim()` takes the first line of the `**Claim.**` paragraph (`grep -m1`), and
+  every exhibit from EX-026 on wraps its claim, so the index — the table a maintainer
+  reads first — ends rows with "captured end to end in 111 s, with no |", "Fifth instance
+  of the signature, and the **shortest and simplest path to it on |". The five alt-1
+  exhibits that carry the central finding are all cut. Join the paragraph to its first
+  blank line (awk, `RS=""`), regenerate with `bt-exhibit index`.
+- **R2-115 [MED] `evidence/README.md` is the third foundation file without the central
+  finding, and its map is incomplete.** Its directory listing names `baseline/`,
+  `diagnosis/`, `sessions/` — not `exhibits/` (41 files, the evidentiary unit the
+  bug report cites) or `trials/`. `diagnosis/` is summarised as the six-point
+  device-table argument (points 3–6: reset handler compiled in, ID absent, zero resets)
+  and the sessions table reads "every reset after the first HCI timeout has failed, the
+  only one issued before a timeout succeeded" — both the Phase-5 model. The sessions
+  table lists 4 of 25 directories with a parenthetical promising the rest "follow the
+  same layout". Same disposition as R2-07/R2-12: one paragraph naming EX-033/036/037/
+  038/040 and `bt-usbstate`'s direct observation, and a five-entry tree.
+- **R2-116 [GOOD]** The `REVIEWED-KEEP §7` note on the 34-versus-18 incomparability and
+  the synthetic-line correction are intact and still the right disclosures; the
+  "how these sessions were produced — ad hoc, not to a procedure" paragraph is the kind
+  of honesty the exhibits index should inherit.
