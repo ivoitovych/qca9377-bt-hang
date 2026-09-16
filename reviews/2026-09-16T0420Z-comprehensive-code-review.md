@@ -850,3 +850,39 @@ operator; the bug-report rewrite has not started (§4.2).
   where". The `bt-window` exit-contract test at `:8948` correctly asserts the code over
   the header (R2-85). `REVIEWED-KEEP §4` intact. The 12 merge-drift guard tests from
   the previous reaction are present and passing (§0).
+
+## 10. `devtools/` (15 scripts + README)
+
+### 10.1 `check`, `assert-test-catches`, `status`, `save`, `repo-save`, `README.md`
+
+- **R2-105 [HIGH] The commit path on the investigation machine never runs the suite,
+  and nothing reads CI — which is how R2-01 stayed red for three weeks.** `repo-save`
+  detects an open trial and drops to `repo-validate --no-suite`, saying "CI runs those
+  on push". On the machine `bt-trial-auto` opens a trial every boot by design, so this
+  branch is the *normal* path there, and every commit since 2026-08-25 was made without
+  the suite. CI did run — and failed, 18 times (runs 230–247) — and no tool, doc, or
+  habit closes the loop back. The design is honest at each step and the composition
+  is a hole: "the suite will run in CI" is only a control if CI's verdict is read.
+  Minimum: `devtools/status` (which already reaches the remote with `ls-remote`) should
+  fetch the latest workflow conclusion for HEAD and print it as a row; `repo-save`'s
+  trial-open warning should name the last known CI status. Better: fix R2-100 and add
+  a `tests/run-tests --read-only` subset the trial-open path can still run.
+- **R2-106 [MED] `devtools/status` prints `sudo ./install.sh --apply` as the remedy for
+  deployment drift**, unconditionally — the same advice `bt-verify-install` gives
+  (R2-81), in the tool an operator runs at every natural break. On the investigation
+  machine that command reverts the baseline; README and `tooling-index.md` both say to
+  use `--tools-only` there. Read the mode stamp (the tool already calls `bt-mode
+  status` two lines later) and print the right command.
+- **R2-107 [LOW]** `devtools/README.md`'s table lists 7 of 15 scripts (missing
+  `awk-coverage`, `py-coverage`, `test-comprehension`, `coverage-exclude`, `status`,
+  `save`, `branch-status`); `save` is the one the workflow now uses. The
+  `REVIEWED-KEEP` marker in `assert-test-catches` was inserted mid-sentence in the
+  header ("break the thing it checks and / REVIEWED-KEEP … / watch it go red").
+- **R2-108 [GOOD]** `repo-save`'s stage-first order, the snapshot-then-commit for `-F`
+  streams, the attribution and counted-MAC message scans (`REVIEWED-KEEP §5` intact),
+  and the remote-hash verification; `save`'s de-piping rationale, empty-message
+  refusal, BRIEF.md staleness and budget warnings, and quiet-only-on-success output;
+  `status`'s committed-versus-deployed rows asked of the remote rather than a tracking
+  ref; `check`'s subsumption argument. The `devtools/README.md` note that repo-scan
+  allowlists SIG base UUIDs as public constants is the policy `sanitize-logs.sh` should
+  share (R2-70).
