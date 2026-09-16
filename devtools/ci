@@ -1,0 +1,125 @@
+#!/bin/bash
+# ci — the CI verdict for a commit, read on the machine instead of in a browser.
+#
+#   devtools/ci                 conclusion for HEAD
+#   devtools/ci <sha>           conclusion for that commit (prefix is fine)
+#   devtools/ci --wait [<sha>]  poll until the run is terminal, then print it
+#   devtools/ci --recent [N]    the last N runs on main (default 6)
+#
+# Exit: 0 success · 1 failure/cancelled · 2 no run found or gh unavailable
+#       3 still running (without --wait)
+#
+# WHY THIS EXISTS. Review 2026-09-16T0420Z, R2-105: "the commit path on the
+# machine never runs the suite and nothing reads CI." main was red for three
+# weeks on two invariants that never passed anywhere; devtools/save printed
+# "CI will run it on push" on twelve pushes and the twelve red verdicts sat in
+# the Actions tab. The verdict has to be READABLE where commits are made, or it
+# is not a verdict — it is a promise.
+#
+# ⚠️ AND THE LOOP THAT READ IT WAS TYPED BY HAND FOUR TIMES IN ONE SESSION:
+#
+#   until gh run list --limit 4 --json conclusion,headSha --jq '…' \
+#         | grep -qE 'success|failure'; do sleep 30; done; gh run list …
+#
+# which the permission matcher cannot parse at all ("Parse error"), so it
+# prompted every single time. The operator pasted the prompt and asked whether
+# it was avoidable. It is: devtools/* is granted once, forever. Same fix as
+# devtools/save and tools/bt-fault-window — the repeated QUESTION becomes a
+# file, and the shell goes away.
+#
+# Read-only. Talks to GitHub through gh; touches nothing on the machine.
+
+set -uo pipefail
+export LC_ALL=C
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="$(cd "$HERE/.." && pwd)"
+
+WAIT=0; RECENT=0; N=6; SHA=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --wait)   WAIT=1 ;;
+        --recent) RECENT=1; [[ "${2:-}" =~ ^[0-9]+$ ]] && { N="$2"; shift; } ;;
+        -h|--help) sed -n '2,9p' "$0"; exit 0 ;;
+        -*) echo "ci: unknown option: $1" >&2; exit 2 ;;
+        *)  SHA="$1" ;;
+    esac
+    shift
+done
+
+command -v gh >/dev/null 2>&1 || { echo "ci: gh is not installed — no verdict is readable here" >&2; exit 2; }
+
+# A VERDICT NAMES ITS COMMIT. The default is HEAD of the checkout, resolved to a
+# full sha so a prefix the user typed and a prefix gh returns compare the same.
+if [[ -z "$SHA" ]]; then
+    SHA=$(git -C "$REPO" rev-parse HEAD 2>/dev/null) || { echo "ci: not a git checkout" >&2; exit 2; }
+fi
+SHA=$(git -C "$REPO" rev-parse --verify --quiet "$SHA^{commit}" 2>/dev/null || echo "$SHA")
+SHORT="${SHA:0:7}"
+
+# gh's --jq runs inside gh; nothing here is piped through the shell. Each field
+# is fetched in one call and split in bash.
+fetch() {   # -> "conclusion<TAB>status<TAB>runId<TAB>title" for the newest run on $SHA, or empty
+    # ⚠️ AN IN-PROGRESS RUN HAS conclusion == "" — THE EMPTY STRING, NOT null.
+    # jq's `//` substitutes only for null/false, so `.conclusion // "-"` still
+    # emitted an empty first field; `read` with a tab IFS strips leading IFS
+    # whitespace; every field shifted left by one and the title printed where
+    # the run id belonged. Two wrong diagnoses on this file's first run, both
+    # corrected by looking at the raw bytes (`cat -A`) instead of theorising.
+    gh run list --limit 30 --json conclusion,status,headSha,databaseId,displayTitle \
+        --jq ".[] | select(.headSha | startswith(\"$SHORT\")) | \"\\(if .conclusion == null or .conclusion == \"\" then \"-\" else .conclusion end)\\t\\(.status)\\t\\(.databaseId)\\t\\(.displayTitle)\"" \
+        2>/dev/null | head -1
+}
+
+if (( RECENT )); then
+    printf 'CI — last %s run(s) on origin/main\n\n' "$N"
+    gh run list --limit "$N" --branch main --json conclusion,status,headSha,displayTitle \
+        --jq '.[] | "\(if .conclusion == null or .conclusion == "" then .status else .conclusion end)\t\(.headSha[0:7])\t\(.displayTitle[0:64])"' 2>/dev/null \
+        | awk -F'\t' '{ printf "  %-10s %s  %s\n", $1, $2, $3 }'
+    exit 0
+fi
+
+row=$(fetch)
+if [[ -z "$row" ]]; then
+    echo "ci: no run found for $SHORT — not pushed, or Actions has not queued it yet" >&2
+    exit 2
+fi
+
+# ── --wait: poll until terminal ──────────────────────────────────────────
+#
+# 30 s between polls: a run here takes ~4–8 minutes, and the GitHub API rate
+# limit is per hour. Every terminal state is matched, not only success — a
+# watcher that only recognised the happy path would sit silent through a
+# cancellation for as long as the timeout.
+if (( WAIT )); then
+    printf 'ci — waiting on %s' "$SHORT"
+    while :; do
+        IFS=$'\t' read -r concl status runid title <<<"$row"
+        [[ "$status" == "completed" ]] && break
+        printf '.'
+        sleep 30
+        row=$(fetch)
+        [[ -n "$row" ]] || { echo; echo "ci: the run for $SHORT disappeared while waiting" >&2; exit 2; }
+    done
+    echo
+fi
+
+IFS=$'\t' read -r concl status runid title <<<"$row"
+if [[ "$status" != "completed" ]]; then
+    printf 'ci — %s  %s  run %s  (%s)\n' "$SHORT" "RUNNING" "$runid" "${title:0:60}"
+    echo "  not terminal yet — devtools/ci --wait $SHORT"
+    exit 3
+fi
+
+case "$concl" in
+    success)
+        printf 'ci — %s  ✓ %s  run %s  (%s)\n' "$SHORT" "$concl" "$runid" "${title:0:60}"
+        exit 0 ;;
+    failure|cancelled|timed_out|startup_failure)
+        printf 'ci — %s  ✗ %s  run %s  (%s)\n' "$SHORT" "$concl" "$runid" "${title:0:60}"
+        echo "  read it:  gh run view $runid --log-failed"
+        exit 1 ;;
+    *)
+        printf 'ci — %s  ? %s  run %s\n' "$SHORT" "${concl:-unknown}" "$runid"
+        exit 2 ;;
+esac

@@ -283,7 +283,7 @@ everything else is fixed or declined by the reaction, which will add its own tra
 | R2-21 | `docs/issues.md` stale at EX-021 | open | — | `grep -c 'EX-04' docs/issues.md` → ≥1 |
 | R2-25 | bug-report timing 7.6–16.2 s vs measured 2.076–2.191 s | open | — | `grep -c '2.19' docs/bug-report.md` → ≥1 |
 | R2-64 / R2-65 | `bt-trial abort` deletes tracked evidence; `autostop` probes a live controller (BL-03, BL-08) | open | — | `grep -c 'ls-files' tools/bt-trial` → ≥1; `grep -c hci_alive tools/bt-trial` → 0 in `autostop)` |
-| R2-105 | Commit path on the machine never runs the suite and nothing reads CI | open | — | `devtools/status` prints a CI-conclusion row |
+| R2-105 | Commit path on the machine never runs the suite and nothing reads CI | **partial** — CI is read; suite still refused while a trial is open | this commit | `devtools/ci [sha]` reads the verdict on the machine (`--wait`, `--recent`); `devtools/status` prints a CI row and goes rc=1 on a red. The suite-on-machine half stays as designed: `run-tests` refuses during an open trial, correctly, so CI is the verdict while one is open |
 | R2-70 | `sanitize-logs.sh` redacts SIG base UUIDs; profile identity lost in every session log | open | — | `echo 0000110b-0000-1000-8000-00805f9b34fb \| tools/sanitize-logs.sh /dev/stdin /dev/stdout` prints it unchanged |
 | R2-76 | `bt-status` counts `discovery` lines as audio | **closed** | `456daba` | `\bsco\b` and `\besco\b`; the bare form is gone from `tools/bt-status` |
 | R2-81 / R2-106 | verifiers and `devtools/status` advise `--apply` in experiment mode; `.disabled` + active pair invisible | open | — | `tools/bt-verify-install` reports CONFLICT on a staged pair |

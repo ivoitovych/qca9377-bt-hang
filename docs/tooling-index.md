@@ -84,6 +84,7 @@ run `bluetoothd -d` — this project ships that on in
 |---|---|
 | Validate + scan + drift + install state | `devtools/check` |
 | Commit, push and verify the remote matches | **`devtools/save <msgfile>`** (wraps `repo-save`) |
+| **What did CI say about a commit?** | `devtools/ci [sha]`, `--wait`, `--recent N` — never a hand-typed `until gh run list … \| grep` loop; that prompted every time and read as "Parse error" |
 | Did the BlueZ patch guards fire? | `tools/bt-guards` |
 | Publish-safety scan (MACs, BSSIDs, emails) | `devtools/repo-scan` |
 | How do the branches diverge? | `devtools/branch-status` (`--unique`, `--files`) |

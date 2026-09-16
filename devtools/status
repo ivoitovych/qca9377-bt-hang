@@ -66,6 +66,24 @@ else
     rc=1
 fi
 
+# --- CI verdict for what was pushed (R2-105) ---
+#
+# "Pushed" answered where the commit went; nothing here answered what happened
+# to it. main was red for three weeks on two invariants that never passed
+# anywhere, and every push printed "CI will run it on push" — a promise this
+# report never checked. The verdict is read here, on the machine, or it is not
+# read. A red is rc=1: a tree whose suite fails is not "all good".
+if [[ -x "$(dirname "$0")/ci" ]]; then
+    ci_line=$("$(dirname "$0")/ci" "$local_head" 2>/dev/null); ci_rc=$?
+    ci_txt=$(sed -n '1p' <<<"$ci_line" | sed -E 's/^ci — [0-9a-f]+ +//')
+    case "$ci_rc" in
+        0) row "${G}✓${O}" "CI" "$ci_txt" ;;
+        1) row "${R}✗${O}" "CI" "$ci_txt"; rc=1 ;;
+        3) row "${Y}~${O}" "CI" "$ci_txt" ;;
+        *) row "${Y}?${O}" "CI" "no verdict readable for ${local_head:0:7} (not pushed, not queued, or gh unavailable)" ;;
+    esac
+fi
+
 # --- branches carrying work that is not on this one ---
 unmerged=$(git branch -r --no-merged HEAD 2>/dev/null | grep -v 'HEAD ->' | wc -l)
 if (( unmerged == 0 )); then
