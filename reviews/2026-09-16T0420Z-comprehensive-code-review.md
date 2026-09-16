@@ -680,3 +680,35 @@ operator; the bug-report rewrite has not started (§4.2).
   the derived unit list with the experiment-mode exemption for intervening units are all
   correct and marked. `REVIEWED-KEEP §3.2` (derivation + interlock) intact — R2-81 asks
   for the interlock to be widened, not removed.
+
+### 8.5 `bt-fault-window`, `bt-window`, `bt-crash`, `bt-sco`
+
+- **R2-84 [MED] `bt-sco` prints the retracted claim as its interpretation.** When
+  requests outnumber completions it says "An unanswered synchronous setup is the
+  signature of the hang". BRIEF §5 retracts exactly this ("answered in all 5 alt-1
+  instances"), and `bt-fault-window` — written after — measures from the *answered*
+  `0x0428`. The header's numbers ("Both instrumented hangs", "five relevant observations:
+  two … hang, three survived") are from the same earlier phase. The `--help` range
+  (lines 2–26) documents `--dir` and `--raw` but not `--window`, which the same header
+  says is "the one to use". Update the signature line to the alt-setting reading and
+  list `--window` in usage.
+- **R2-85 [LOW] `bt-window`'s exit contract and its bus check.** The header says "Exit 0
+  while the device is still enumerated, 1 once it has left the bus"; the code also exits
+  1 when the device is enumerated but an intervention was seen. Presence comes from
+  `lsusb | grep -c` rather than the `BT_SYSFS_USB` seam every sibling uses, so "GONE FROM
+  THE BUS" is drivable only by a PATH stub. Both small; the tool is otherwise the model
+  for a passive live-window check.
+- **R2-86 [LOW] `bt-fault-window --at` drops the zone.** The anchor's `+02:00` is
+  stripped and the wall-clock part is re-parsed in the running machine's zone, so a
+  fixture captured on the laptop and read in a UTC container is windowed two hours
+  off. `date -d` accepts the ISO string with its zone as written; pass it through.
+- **R2-87 [GOOD]** `bt-fault-window`'s `BEFORE=4` with the measured reason, the
+  count-by-endpoint-width summary (`mtu 9` versus wider) with the raw lines available
+  under `--raw`, and the setup-to-fault interval printed beside the four recorded values
+  are exactly the instrument the central finding needed; it is also the only tool that
+  makes the alt-1 mechanism visible (R2-74). `bt-window`'s fault-forward counting and
+  the two intervention classes from the seam held. `bt-crash`'s "no crashes" versus
+  "nothing was read" distinction, the never-truncated core list, and the offset keyed to
+  its binary are right. Checkout-only status for these four (R2-62) is justified by
+  `bt-fault-window`'s own header: the permission-prompt argument applies to `tools/*` in
+  a checkout, not to `/usr/local/bin`.
