@@ -612,3 +612,45 @@ operator; the bug-report rewrite has not started (§4.2).
   reversibility are right — R2-58 is `install.sh` failing to respect that convention, not
   a `bt-mode` defect. `bt-postmortem`'s incident clustering and live-state-outranks-log
   verdict are sound.
+
+### 8.3 `verify-restored.sh`, `bt-status`, `bt-diagnose`, `bt-incident`
+
+- **R2-76 [MED] `bt-status` counts discovery lines as audio.** `audio=$(grep -ciE
+  'avdtp|sco|a2dp|Hands-Free' <<<"$BD")` — `sco` matches `discovery`, `Discovering`,
+  `discoverable`, which with `bluetoothd -d` are among the most frequent lines in the
+  unit's journal. The verdict "No failures this boot, and Bluetooth audio WAS exercised
+  (N audio/profile events) — so this is a real clean run" is therefore reachable on a boot
+  where no audio profile connected, which is the one thing that line exists to rule out.
+  `\bSCO\b` (case-sensitive) or the profile-state lines `bt-actions` already classifies.
+- **R2-77 [MED] `bt-incident`'s manifest says `sanitised=yes` when a sanitiser exists,
+  not when it succeeded.** Each file is passed through `"$SAN" "$f" "$f" >/dev/null
+  2>&1` with the exit status dropped; a refusal (the awk capability gate, or leftover
+  addresses after substitution) leaves the raw journal text in place under
+  `evidence/sessions/` while `MANIFEST.txt` records `sanitised=yes`. `devtools/repo-scan`
+  would catch the addresses before publication, so this is a wrong manifest rather than a
+  leak — but the manifest is the field a reader trusts. Record per-file outcome and set
+  `sanitised=FAILED:<files>` on any non-zero exit. Separately, `bt-incident` is the one
+  journal-reading tool that calls `journalctl` directly rather than `bt_journal`, and
+  hardcodes `/var/log/bt-health/trace`; the suite stubs it out entirely in every flow that
+  invokes it and the sandbox test checks only where it writes, so its collection logic has
+  never run under a fixture.
+- **R2-78 [MED] `bt-diagnose` sends an HCI command.** The header says "Standalone: no
+  installation, no configuration, nothing written"; section 2 runs `hciconfig hci0 name`
+  or `btmgmt info` under a 6 s timeout to decide "controller does NOT respond — it is
+  stalled right now". That is an active probe of a possibly wedged controller, on a
+  project whose operating rule for a stage-1 window is "do nothing" (issues.md §"do
+  nothing") and which spent BL-08 removing its own shutdown probe. The probe has no seam,
+  so the "stalled right now" branch is drivable only through a PATH stub. Make it opt-in
+  (`--probe`) and derive liveness from sysfs and the journal by default.
+- **R2-79 [LOW]** `bt-status`'s early-intervention verdict block still explains the
+  situation through "docs/fix-proposal.md §3a and issues.md BT-3" — hypothesis-era text,
+  same class as R2-72. `verify-restored.sh` item 6 says "if this is still the 2026-08-10
+  boot, 3 of them are synthetic test lines" (a dated constant that will be true again
+  never) and item 7 hardcodes `/root/.claude/settings.json`; `bt-status` and
+  `verify-restored.sh` both fall back to `/root/exp/qca9377-bt-hang` (R2-74 class).
+- **R2-80 [GOOD]** `verify-restored.sh`'s derived list, refuse-when-short, and
+  `.disabled` awareness are intact (`REVIEWED-KEEP 2.7`). `bt-incident`'s
+  options-before-slug fix and the honoured `BT_EVIDENCE_REPO` are right. `bt-status` no
+  longer holds the kernel journal in a shell string and exits 0 explicitly with the reason
+  written down. `bt-diagnose`'s verdict wording — "a phenotype report, not a device-table
+  or causal diagnosis" — is exactly as careful as it should be.
