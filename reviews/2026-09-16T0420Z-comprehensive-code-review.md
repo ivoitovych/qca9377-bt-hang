@@ -775,3 +775,30 @@ operator; the bug-report rewrite has not started (§4.2).
   the seam (`REVIEWED-KEEP §3.2` intact); `bt-stage2`'s build-then-rename cache and
   `-b all`; `bt-interval`'s parse-failure-is-the-exit-status note and the `</dev/null`;
   `bt-state`'s auto-detection by `bluetooth/hci*` child.
+
+### 8.9 `tools/lib/` (14 files)
+
+- **R2-97 [LOW] `bt_journal`'s fixture parser keeps only the last `-u`.** `bt-env-history`
+  passes `-u bt-health-snapshot.service -u bt-health-snapshot-event.service` in one call;
+  over a fixture only `unit-bt-health-snapshot-event.service.log` answers, so the PROBES
+  column under test counts half of what it counts on the machine. Either join both files
+  in the seam or have the caller make two calls (as `bt-phase` does).
+- **R2-98 [LOW] `iso_secs()` ignores a trailing `Z`.** `BT_EW_TS_RE` accepts `Z` as an
+  offset and `date -f -` parses it; `iso_secs` applies only `±HH:MM`, so a `Z` stamp is
+  treated as naive local time. No current producer emits `Z` (journalctl prints
+  `+02:00`), so this is latent, but the two grammars in one directory disagree about
+  the same suffix. Also: `sco-window.awk` and `capdiff-match.awk` use `{n}` interval
+  expressions while `timestamp.awk` deliberately avoids them "because this file must
+  parse everywhere" — `bt-sco` and `bt-capdiff` have no awk gate, unlike `sanitize-logs.sh`.
+- **R2-99 [GOOD]** `journal.sh` is the best-documented seam in the tree: the two
+  intervention regexes with their false-negative/false-positive history, `--grep` as an
+  optimisation with the local match deciding, the three bounded forms (`count`, `first`,
+  `lines`) and the record of what each cost before it existed. `coredump.sh`'s
+  "missing fixture is exit 1, and that is the rule applied, not an exception" is the
+  right reasoning. `evidence-window.sh`'s not-placeable-before-stamps order and its
+  parse-count check; `stage2.awk`'s six terminators with `unknown-reset` kept apart from
+  `intervened` and the per-boot `dev_error` reset with its fixture-verified history;
+  `phase.awk`'s provenance self-check against the timer period; `trial-reclass.awk`'s
+  refusal to launder real drift; `timestamp.awk`'s single civil-date implementation now
+  actually loaded by everything that needs one (HC-07 closed). All `REVIEWED-KEEP`
+  markers in `tools/` and `tools/lib/` are intact.
