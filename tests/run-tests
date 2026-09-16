@@ -3645,6 +3645,20 @@ if (( ex_awk_ok )); then
         && ok "bt-exhibit index lists every exhibit (3 rows)" \
         || bad "index has $rows row(s), expected 3"
 
+    # A ROW THAT EXISTS IS NOT A ROW THAT ENDS. The extractor was `grep -m1`,
+    # one physical line, and every claim from EX-026 on wraps — so 17 of 42
+    # index rows were cut mid-sentence ("…on the same machine and the |") while
+    # the row count above stayed green (R2-114). Rewrite one fixture claim as
+    # a two-line paragraph and assert the SECOND line reached the cell.
+    sed -i 's/^\*\*Claim\.\*\* Association names a BSSID\.$/**Claim.** Association names a BSSID,\nand this second line must reach the index cell./' \
+        "$EXR/evidence/exhibits/002-probe-mac.md" 2>/dev/null
+    exhibit index >/dev/null 2>&1
+    exwrap=$(grep -c 'names a BSSID, and this second line must reach the index cell\.' \
+             "$EXR/evidence/exhibits/README.md" 2>/dev/null)
+    (( ${exwrap:-0} == 1 )) \
+        && ok "a wrapped claim paragraph reaches the index whole, joined on one line" \
+        || bad "the index cut a multi-line claim at its first line (R2-114 regressed)"
+
     # A SUPERSEDED exhibit keeps its file, retitled "**Historical claim.**"
     # (the register discipline — EX-018 and EX-020 are real ones). The claim
     # extractor knew only "**Claim" and rendered such exhibits with EMPTY

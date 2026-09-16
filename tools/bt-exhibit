@@ -240,9 +240,20 @@ cmd_new() {
 # reads as a broken exhibit rather than a superseded one. The historical
 # marker is kept visible in the cell, not stripped: which claims are current
 # is exactly what the index is for.
+# ⚠️ THE WHOLE PARAGRAPH, NOT THE FIRST LINE. This was `grep -m1`, which takes
+# one physical line. Claims up to EX-025 were written on one line; from EX-026
+# on they wrap, so `grep -m1` cut 17 of 42 index rows mid-sentence — "…on the
+# same machine and the |" — and the index test still passed, because it checked
+# that a row EXISTED, not that it ended (R2-114). The paragraph runs from the
+# `**Claim.**` line to the first blank line; whitespace is collapsed so the
+# cell is one line in the table.
 exhibit_claim() {
-    grep -m1 -E '^\*\*(Historical )?[Cc]laim[^*]*\*\*' "$1" \
-        | sed -E 's/^\*\*Historical [Cc]laim[^*]*\*\* /Historical claim: /; s/^\*\*[Cc]laim[^*]*\*\* //'
+    awk '
+        /^\*\*(Historical )?[Cc]laim[^*]*\*\*/ { inclaim = 1 }
+        inclaim && /^[[:space:]]*$/            { exit }
+        inclaim                                { printf "%s ", $0 }
+    ' "$1" \
+        | sed -E 's/^\*\*Historical [Cc]laim[^*]*\*\* /Historical claim: /; s/^\*\*[Cc]laim[^*]*\*\* //; s/[[:space:]]+/ /g; s/ $//'
 }
 
 cmd_list() {

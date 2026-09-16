@@ -156,6 +156,10 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 
 - **A zero from a capped scan is not a result.** Every zero needs a positive control.
   Broken twice, most recently `EX-041`.
+- **"Verified standalone" by a hand-picked subset is not verification.** Two invariants
+  added 09-01 were "checked by hand" — with a script that did not include them — and never
+  passed anywhere; CI said so on twelve pushes that nobody read (`R2-100`). Run the
+  block that changed, and read the verdict that runs on push.
 - **Let the datastore filter.** `journalctl … | grep` over this journal does not finish in
   10 min; `journalctl _COMM=bluetoothd … | grep` takes 30 s. The scan too slow to finish and
   the scan too narrow to be true are the same mistake.
