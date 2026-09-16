@@ -538,12 +538,16 @@ operator; the bug-report rewrite has not started (§4.2).
   probes `zstd`, `xz`, `gzip` in order and names the archive by whichever it found; the
   test at `run-tests:7410` asserts `.zst`. The tool is right; the expectation carries the
   investigation machine's toolchain. The test should derive the suffix from the same probe
-  (or the tool should expose it — `bt-archive --compressor`). Separately, `--check`
-  reports `AMBIGUOUS` when more than one archive matches a boot, which is the correct
-  refusal, but it exits 0 on AMBIGUOUS in the one call site that treats "not FAIL" as OK.
-- **R2-68 [LOW] `bt-snapshot`'s EX-032 shape test is by line number** — it asserts what
-  line N of the capture looks like. Any added header line moves it; the test then fails
-  for a reason unrelated to the shape it protects. Match the line by content.
+  (or the tool should expose it — `bt-archive --compressor`). Separately, an `AMBIGUOUS`
+  row (two archives for one boot) is printed and then `continue`d without incrementing
+  any counter, so the summary line "N complete, N SHORT, N not archived" can read clean
+  while a boot is unverified — the very case the comment above it says must not pass
+  quietly. Count it, and say so in the summary. (The exit-0-always design is deliberate and
+  documented; not disputed.)
+- **R2-68 [GOOD, retracting a draft finding]** `bt-snapshot`'s EX-032 shape test compares
+  two line numbers within one journal cut rather than two parsed timestamps. On first read
+  that looked fragile; the comment at line 309 explains that the cut is already in journal
+  order and the comparison answers "since the last crash" without a date parser. Correct.
 - **R2-69 [GOOD]** `bt-backup-journal` skipping boot 0 unless `--include-current`, and
   `bt-archive`'s tee-plus-FIFO read-back count before filing ("15 of 15") are the right
   discipline for evidence that has already rotated away once. `bt-retention`'s
