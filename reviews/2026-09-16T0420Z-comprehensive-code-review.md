@@ -733,3 +733,23 @@ operator; the bug-report rewrite has not started (§4.2).
   `bt-phase`'s four invariants and its "a cluster is not yet a proven incident" caveat;
   `bt-env-history`'s `Finished`-only probe count. All four read the journal through the
   seam.
+
+### 8.7 `bt-logvolume`, `bt-context`, `bt-boot-stats`, `bt-timeline.sh`, `bt-guards`
+
+- **R2-91 [LOW] `bt-context --full` redacts only the upper-case colon MAC form**
+  (`[0-9A-F]{2}(:[0-9A-F]{2}){5}`), not lower-case, underscore or dash — the exact
+  lesson `sanitize-logs.sh`'s header records from the 2026-08-12 leak. It is a display
+  tool, but its output is what gets pasted into a write-up; route it through the
+  sanitiser or drop the half-redaction (a partial redaction reads as a complete one).
+- **R2-92 [LOW] `bt-guards` bypasses the journal seam** (`journalctl _COMM=bluetoothd`
+  directly), so like `bt-incident` (R2-77) its counting has never run over a fixture. The
+  `_COMM=` field match is the whole point of the tool and the seam may not carry it —
+  in which case the seam should grow a field-match form, since "let journald filter" is
+  the lesson this file exists to record and will be wanted again.
+- **R2-93 [GOOD]** `bt-logvolume`'s rebuilt-not-sliced 60 s window and the
+  "-- No entries --" exclusion; `bt-context`'s inversion of the classifier (the one tool
+  looking for what nobody thought to look for) with its "nothing here is a finding yet"
+  footer; `bt-boot-stats`' false-positive/false-negative table and its explicit
+  non-comparability with the frozen baseline; `bt-timeline.sh`'s per-stream `grab` with
+  the pseudo-event fix; `bt-guards`' positive control and its refusal to call a 0001 hit a
+  prevented crash. All sound.
