@@ -102,19 +102,29 @@ evidence that justifies the change rather than the route to it. It is recorded
 here instead, because it is true and a maintainer may ask: the guard is correct
 and local, and the underlying teardown ordering is not explained by it.
 
-## Upstream status — checked twice, independently, and both are still needed
+## Upstream status — checked three times, independently, and both are still needed
 
-Verified a second time by cloning master directly and applying the patches to it:
+Verified on 2026-09-16 against the unshallowed tree at `c73fa2f9a` in a throwaway
+worktree, each patch **alone** and both **together in either order** — the
+`git am` path is the real submission path, and a stray `---` in a message body
+silently truncates everything after it:
 
 ```console
-$ git clone --depth 50 https://github.com/bluez/bluez.git      # HEAD c73fa2f
-$ git am 0001-*.patch 0002-*.patch
-Applying: adapter: Fix crash on zero-length start discovery reply
-Applying: a2dp: Check setup->stream before setting the transport
+$ bash git-am-check.sh          # scratch worktree of the BlueZ tree at c73fa2f9a
+  PASS  0001 alone — git am clean, 1 commit(s) on top of c73fa2f9a
+         adapter: Fix crash on short start discovery reply
+  PASS  0002 alone — git am clean, 1 commit(s) on top of c73fa2f9a
+         a2dp: Fix crash on NULL stream in transport_cb
+  PASS  0001 then 0002 — git am clean, 2 commit(s) on top of c73fa2f9a
+  PASS  0002 then 0001 (order-independent) — git am clean, 2 commit(s)
+  PASS  no Signed-off-by in either patch
+  PASS  subject 49 chars · subject 46 chars · no body line over 72
 ```
 
-Both defects present at `c73fa2f`, both patches `git am` clean **against real
-master**, not just the 5.87 tarball.
+Both defects present at `c73fa2f9a`, both patches `git am` clean **against real
+master**, not just the 5.87 tarball. An earlier check used a `--depth 50` clone;
+that cannot see a 2020 commit and answers `unknown revision`, so the tree was
+unshallowed before any history question was asked of it.
 
 Master was also checked independently from the investigation machine at
 **`5.87-78-gc73fa2f`**:
@@ -200,6 +210,36 @@ add a `0/2` cover letter rather than letting the numbering appear by accident.
 To apply to a checkout instead of mailing, `git am 0001-*.patch 0002-*.patch`
 works fine — the caution is only about sending.
 
-The `Signed-off-by` names this repository's maintainer. **Whoever actually sends
-them must put their own name there** — a Signed-off-by is a statement by the
-sender, and it is not transferable.
+## Conventions — measured from BlueZ's tree, not assumed
+
+Read on 2026-09-16 from `HACKING` at `c73fa2f9a` and from the last 300 commits.
+
+- ⚠️ **No `Signed-off-by`.** `HACKING`: *"Do not add Signed-off-by lines in your
+  commit messages. BlueZ does not use them, so including them is actually an
+  error."* 4 of the last 300 commits carry one; BlueZ's own `.checkpatch.conf`
+  ignores `MISSING_SIGN_OFF`. Both patches carried one until 2026-09-16 and
+  would have been rejected for it. Removed. (An earlier revision of this file
+  said the sender must put their own there — true of the kernel, wrong here.)
+- **50/72.** Header ≤ 50 characters, body wrapped at 72, quoted tool output
+  exempt. Both subjects were 55; now 49 and 46. `checkpatch --max-line-length=80`
+  is looser than BlueZ's own rule and is not the bar.
+- **`[PATCH BlueZ]` prefix**, one mail per top-level directory, bug fixes first —
+  all already the case.
+- **`Fixes:` is used** — 14 of the last 300 — most often as a GitHub issue URL,
+  with the `hash ("subject")` form as a used minority in 9-, 12- and 13-character
+  hashes. `0001`'s `Fixes: 3597d1377723 (…)` resolves in the tree and is house
+  style. `0002` carries **none on purpose**: `git log -S` on the unchecked call
+  finds only a 2015 refactor (`fe9ba4ff0`), which is where the text last moved,
+  not where the NULL became possible; naming it would mislead. The two prior
+  hardenings of the same path are cited in prose instead.
+- **A GitHub issue is what maintainers most often link.** The tree's `Fixes:`
+  history is dominated by `github.com/bluez/bluez/issues/N`. Filing one before
+  sending is the operator's call; if filed, it belongs in `0002`'s message as
+  `Fixes: <url>`.
+- **`checkpatch` under BlueZ's `.checkpatch.conf`: 0 errors.** The only warnings
+  are the quoted `segfault` / disassembly lines, which `HACKING` §5 exempts, and an
+  `UNKNOWN_COMMIT_ID` that is an artefact of running outside the tree.
+
+The subjects changed with the rewrite, so the files were renamed to what
+`git format-patch` would produce; nothing in the repository referenced the old
+names.

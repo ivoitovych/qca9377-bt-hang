@@ -1,5 +1,5 @@
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Subject: [PATCH BlueZ] adapter: Fix crash on zero-length start discovery reply
+Subject: [PATCH BlueZ] adapter: Fix crash on short start discovery reply
 
 start_discovery_complete() validates the reply length before using the
 returned parameters:
@@ -11,9 +11,9 @@ returned parameters:
 		return;
 	}
 
-but that check sits below the branch taken when the discovery client list has
-emptied while the command was pending, and that branch has already
-dereferenced the reply:
+but that check sits below the branch taken when the discovery client
+list has emptied while the command was pending, and that branch has
+already dereferenced the reply:
 
 	if (!adapter->discovery_list) {
 		struct mgmt_cp_stop_discovery cp;
@@ -24,15 +24,15 @@ dereferenced the reply:
 		/* Stop discovering as there are no clients left */
 		cp.type = rp->type;      <-- rp may be NULL here
 
-mgmt_cp_start_discovery is a single uint8_t, so rp->type is a one-byte read at
-offset 0 and a NULL rp faults immediately.
+mgmt_cp_start_discovery is a single uint8_t, so rp->type is a one-byte
+read at offset 0 and a NULL rp faults immediately.
 
-The mgmt layer can invoke a command callback with no reply parameters --
-src/shared/mgmt.c passes length 0 and a NULL param on the Command Status path,
-for example. Observed on a QCA9377 (13d3:3503) whose controller stops
-answering HCI during audio use: this branch was entered with a success status
-and param == NULL, and faulted on the dereference. The crash site was resolved
-from the shipped binary:
+The mgmt layer can invoke a command callback with no reply parameters:
+src/shared/mgmt.c passes length 0 and a NULL param on the Command
+Status path, for example. Observed on a QCA9377 (13d3:3503) whose
+controller stops answering HCI during audio use: this branch was
+entered with a success status and param == NULL, and faulted on the
+dereference. The crash site was resolved from the shipped binary:
 
   bluetoothd[2821]: segfault at 0 ip 00005d6eb1ad1986 sp 00007ffef8e784b0 \
       error 4 in bluetoothd[a6986,5d6eb1a50000+f3000]
@@ -41,15 +41,21 @@ from the shipped binary:
   a698b:  0f b7 53 04       movzwl 0x4(%rbx),%edx     <-- adapter->dev_id
   a6992:  4c 8d 45 d7       lea    -0x29(%rbp),%r8    <-- &cp
 
-I have not traced which management event produced that combination, and the
-fix does not depend on it.
+The same combination has since been seen again on that machine with
+the daemon logging: a MGMT_OP_START_SERVICE_DISCOVERY reply delivered
+as "command 0x23 status: 0x00" with a length too short for the struct.
+On that occasion the client list was non-empty, so the existing check
+below the branch handled it; when the list is empty the branch above
+is reached first.
 
-Perform the same length validation before using the reply in the no-clients
-branch. The check is added inside that branch rather than hoisted above it, so
-that no other path changes behaviour.
+I have not traced which management event produces the empty reply,
+and the fix does not depend on it.
+
+Perform the same length validation before using the reply in the
+no-clients branch. The check is added inside that branch rather than
+hoisted above it, so that no other path changes behaviour.
 
 Fixes: 3597d1377723 ("adapter: Fix not waiting for start discovery result")
-Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
  src/adapter.c | 6 ++++++
  1 file changed, 6 insertions(+)

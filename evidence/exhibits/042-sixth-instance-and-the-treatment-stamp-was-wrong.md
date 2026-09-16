@@ -78,7 +78,12 @@ USB-layer lines 0
 ```
 
 The boot's five earlier intervention lines all **predate** the fault — the last at
-12:15:36, seventeen minutes before. Those are two USB resets on **bus 1** (`1-3`, `1-4`,
+12:15:36, seventeen minutes before.
+
+**Still open at 23:28:34 — 39,343 s, 10 h 55 m, zero interventions.** That is already past
+`EX-033`'s 9 h 45 m, the longest uncensored window in the record. `bt-mode experiment`
+was deliberately **not** run while it stands: its live `power/control=auto` write would
+have ended it. The switch waits for the operator's next power cycle. Those are two USB resets on **bus 1** (`1-3`, `1-4`,
 not our `3-3`) and an rfkill unblock at one timestamp: a resume-from-suspend signature.
 ⚠️ Noted, not claimed: this wedge came 17 min after a resume. `n = 1`.
 
@@ -91,7 +96,7 @@ active names. So:
 | date | event | files on disk |
 |---|---|---|
 | 08-15 09:35 | `bt-mode experiment` | `.disabled` — baseline |
-| 08-19 | tools-only deploy (reviewer's finding) | **active** — mitigation |
+| 08-19 | tools-only deploy (reviewer's finding) | **active** — modified configuration (`autosusp=N, power=on`) |
 | 09-01 05:45 | tools-only deploy, this side (`bt-archive` fixes) | **active**, re-stamped |
 | 09-16 | `bt-mode status` | stamp *experiment*, files **ACTIVE** |
 
@@ -113,9 +118,38 @@ The rule that `--tools-only` "arms nothing" was believed here as well; the revie
 **Not a mechanism**, still. Six deaths and one survival, all correlational.
 
 **Not a treatment effect in either direction.** With the stamp unreliable from 08-19, the
-comparison this project wanted — baseline vs mitigation — has no clean rows on the baseline
+comparison this project wanted — original vs modified configuration — has no clean rows on the original
 side after 08-19. The live-read rows are honest about what ran; they cannot say what
 *would have* run.
+
+## What the modified configuration is, and why its evidence stands
+
+The operator's position, checked rather than accepted: the modification "just changes the
+mode of operation, not the actual code". Both files were read:
+
+| file | content | kind |
+|---|---|---|
+| `etc/modprobe.d/btusb-qca9377.conf` | `options btusb enable_autosuspend=0` (+ `dyndbg` lines) | a **module parameter** to unchanged `btusb` |
+| `etc/udev/rules.d/50-bluetooth-no-autosuspend.rules` | `ATTR{power/control}="on"` for `13d3:3503` | a **sysfs write** on hotplug |
+
+No kernel, driver or daemon code differs between the two configurations. Autosuspend governs
+runtime power management of an *idle* device; the alt-1 fault occurs during *active* SCO
+streaming, when the device is maximally busy and the runtime-PM path is not on the
+isochronous data path. So the six wedges recorded under the modified configuration are
+evidence of the same code doing the same thing, under one runtime parameter that the
+mechanism does not touch. **They are not thrown away; they are labelled** — by the treatment
+string every exhibit already carries, which says exactly what was set.
+
+⚠️ Two limits, stated so they are not overclaimed. (1) Every alt-1 capture with the endpoint
+counters was made under the modified configuration; the original configuration has
+incidence (3 of 4 early trials) but no capture with the counters. One clean capture under
+the original configuration closes that. (2) Autosuspend plausibly *does* bear on the
+post-fault trajectory — recovery, runtime-PM transitions on a wedged device — which is a
+different question from the trigger and is not settled either way.
+
+And the logging survives the switch: the pre-08-19 boot `e9399c8c`, which ran with the
+conf disabled, carries 1,739 `len/mtu` lines, 2 `Looking for Alt no` and 56 `evt N` against
+a 37,285-line positive control — the `bt-dyndbg` service alone provides the evidence lines.
 
 ## Provenance
 

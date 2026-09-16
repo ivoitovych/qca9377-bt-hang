@@ -199,11 +199,17 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
    the machine and `devtools/status` shows it (`R2-105`). Still owed: one read of the 18
    red runs for anything else that went red meanwhile.
 5. `btmon` dumps core repeatedly (33 in one 5-hour boot) — our capture tool losing evidence.
-6. ⚠️ **Operator's decision:** which treatment the trial series continues under. The
-   baseline was reverted by deploy on 08-19 (`R2-58`); trials 6–13 ran `autosusp=N,power=on`
-   under an *experiment* stamp. Either `bt-mode experiment` again (restores the baseline,
-   loses comparability with 6–13) or accept the mitigated state as the series from 08-19 on.
-   The break must be recorded where `results.tsv` is read; `trial-reclass` cannot fix it.
+6. **Decided 2026-09-16 — return to the original configuration.** The baseline was
+   reverted by deploy on 08-19 (`R2-58`); trials 6–13 and `EX-033`–`EX-042` ran under
+   `autosusp=N,power=on` with an *experiment* stamp. That is **runtime configuration of
+   unchanged code** (a module parameter and a sysfs write — verified, `EX-042`), so the
+   evidence collected under it **stands and is kept**, labelled by the treatment string each
+   exhibit already carries — *modified configuration*, not "mitigated". ⚠️ **`bt-mode
+   experiment` is not yet run:** it writes `power/control=auto` live, and a 10 h 55 m
+   uncensored wedge window is open. Run it after the next power cycle. Logging is unaffected —
+   the `bt-dyndbg` service alone carries the alt-1 evidence lines (verified on boot
+   `e9399c8c`). Still owed: one alt-1 capture with the counters under the original
+   configuration.
 
 ## 10. Where detail lives
 
