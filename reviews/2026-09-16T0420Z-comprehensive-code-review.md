@@ -448,3 +448,107 @@ operator; the bug-report rewrite has not started (§4.2).
   installed, and should be re-verified if it ever is. All six `REVIEWED-KEEP` markers in
   `etc/`/`systemd/` intact.
 
+
+## 7. `install.sh`, `uninstall.sh`
+
+- **R2-58 [HIGH] `install.sh --tools-only` silently reverted the experiment baseline on
+  2026-08-19, and every trial since has run under a different treatment.** The mode guard
+  is skipped for tools-only (`(( ! TOOLS_ONLY ))` on the experiment-mode `if`), and its
+  refusal text promises "That deploys the files and arms nothing, so the mode stands." But
+  `bt-mode experiment` implements the baseline by renaming
+  `/etc/modprobe.d/btusb-qca9377.conf` and `50-bluetooth-no-autosuspend.rules` to
+  `.disabled`, and `--tools-only` runs `install_file` / the udev `sed` for both — so the
+  override and the power pin come back on disk, under their active names, and take effect
+  at the next boot. The record shows exactly that: `evidence/trials/results.tsv` trial 5
+  (opened 2026-08-19T18:38, measurement rev `9b3d750..068eebf` — the tools-only deploy
+  HISTORY.md records at line 2108) ran under `autosusp=Y,power=auto,wd=off,probes=off`;
+  trial 6, opened eleven minutes later on the new kernel, reads
+  `autosusp=N,power=on,wd=off,probes=off`, and so do trials 8–12. HISTORY's account of the
+  deploy ("watchdog still inactive and disabled, controller still at 0 timeouts") checked
+  the watchdog and not the power policy; BRIEF §5 already retracts "autosuspend mitigation
+  works (0/4 vs 3/4)" as "the split is chronological" without naming what made the split.
+  Consequences: (a) the machine has been in an unrecorded half-mitigation for four weeks
+  while its mode stamp still reads `experiment since …` — `bt-mode status` would print
+  that stamp beside "modprobe conf ACTIVE", and nothing runs it; (b) bt-mode's closing
+  line "Trials opened from now … are directly comparable with the A/B/C/D builds" is false
+  for trials 6–12; (c) `bt-mode mitigation` will `mv` the stale `.disabled` copies back
+  over the reinstalled files, which happens to be harmless, but `bt-mode experiment` will
+  overwrite them, losing the originals. **No test covers `--tools-only` at all**: `grep -rn
+  tools-only tests/ devtools/` matches nothing, although the `run()` comment says the gate
+  order exists "so a test can assert this gate fired" and HISTORY says the mode was
+  "verified under a staging root first" — by hand, once. Fix: tools-only must skip (or
+  refuse on) any destination whose `.disabled` sibling exists, and the experiment-mode
+  branch must not be bypassed for it; add the staged-`.disabled` regression test; on the
+  machine, confirm with `ls -l /etc/modprobe.d/btusb-qca9377.conf* /etc/udev/rules.d/50-*`
+  (expect an active file dated 08-19 beside an older `.disabled`), then decide which
+  treatment the series continues under and record the break in `results.tsv`'s reading
+  (trial-reclass cannot fix this one — the fingerprints are genuinely different).
+- **R2-59 [MED] `--tools-only` writes the first-install stamp.** `installed-at` is
+  "the moment the mitigation FIRST went in" for `bt-health-report`'s before/after split,
+  and the stamp block runs on any `APPLY`, tools-only included. On a machine whose first
+  contact is tools-only, every boot is labelled "after" a mitigation that was never armed.
+  On the investigation machine the stamp predates 08-19 and was preserved, so no live
+  consequence, but the write bypasses `run()` (a `>` redirect) and therefore the allowlist.
+- **R2-60 [LOW] The allowlist comments disagree with the code.** `install.sh`'s `run()`
+  says the allowlist is "install, rm, rmdir — and nothing else"; the case arm is
+  `install|rm|rmdir|mkdir`. `uninstall.sh`'s says "rm and rmdir"; its arm is the same
+  four. The drop-in, udev-rule and stamp writes are bare `mkdir -p` + redirection outside
+  `run()`, so "deny by default" gates commands only; that is documented for staging but
+  the tools-only paragraph ("nothing gets armed") reads as if it covered writes too.
+- **R2-61 [LOW]** `--help` prints lines 2–15, which ends on the "Different controller:"
+  heading and omits its one example line (16). The preflight still says "Recovery will
+  still run" of a watchdog whose reset path the fix proposal is now trying to get out of
+  the kernel (R2-29), and `[7/7] activate` still arms it by default under `--apply` —
+  README's `--tools-only` warning is the only thing standing between a new reader and
+  that path.
+- **R2-62 [NOTE]** Not installed by `install.sh` and absent from `uninstall.sh`'s list:
+  `bt-crash`, `bt-fault-window`, `bt-usbstate`, `bt-guards`, `verify-restored.sh`, and
+  `tools/lib/coredump.sh`. The suite derives the pair's consistency from `install.sh`, so
+  the pair is consistent — the question is whether the four tools are meant to exist only
+  in a checkout; taken up per tool in §8.
+- **R2-63 [GOOD]** The three-guard block (mode / failed-this-boot / open-trial) held; the
+  counted `journalctl | grep -cE` at the btusb-reload site with its explanation is the
+  right shape; `uninstall.sh`'s `FAILED` accumulator, the loud `rmdir` leftover listing,
+  and the `.disabled` awareness in `verify-restored.sh` are all as the previous review
+  asked. `REVIEWED-KEEP 2026-08-15T1752Z 2.5` intact.
+
+## 8. `tools/` (34 tools, 14 lib files — 9 047 lines)
+
+### 8.1 `bt-trial`, `bt-snapshot`, `bt-archive`, `bt-retention`, `bt-backup-journal`, `bt-trial-audit`
+
+- **R2-64 [HIGH] `bt-trial abort` is still `rm -rf "$dir"; rm -f "$CUR"` with no
+  "has anything been recorded?" check — BL-03 at the code site** (R2-39 for the register
+  status). A trial with steps, marks and a fingerprint is deleted, not closed as
+  `aborted`, although `trial_result=aborted` is in `trial-summary.awk`'s accepted domain
+  and no writer ever produces it. Fix: `abort` should close the row with
+  `trial_result=aborted` and move the state dir to an `aborted/` sidecar; deletion is for
+  a dir with nothing but `start=`.
+- **R2-65 [HIGH] `bt-trial autostop` still classifies by probing a live controller**
+  (`if hci_alive; then exec "$0" ok; else exec "$0" hang`), which is BL-08 part 4 and the
+  90 s shutdown tax in R2-54. The closer already computes `timeouts` from the journal for
+  the row; the shutdown verdict should come from the same count, with the probe gone.
+  While it stays, the `Finished`-only probe filter means a shutdown that hangs the probe
+  is invisible to the audit.
+- **R2-66 [MED] `bt-snapshot` hardcodes the USB port**: `[[ -e "$SYSFS/3-3" ]] &&
+  PRESENT="yes"` and the `usb 3-3` grep for the USB-layer excerpt. Every other tool
+  resolves the radio by VID/PID (`bt-mode radio_dir`, install preflight). On any other
+  port — or this laptop after a dock — the snapshot reports the controller absent and an
+  empty USB section, during the one minute it is being reached for.
+- **R2-67 [MED] `bt-archive --check` and the failing suite test (R2-01).** The tool
+  probes `zstd`, `xz`, `gzip` in order and names the archive by whichever it found; the
+  test at `run-tests:7410` asserts `.zst`. The tool is right; the expectation carries the
+  investigation machine's toolchain. The test should derive the suffix from the same probe
+  (or the tool should expose it — `bt-archive --compressor`). Separately, `--check`
+  reports `AMBIGUOUS` when more than one archive matches a boot, which is the correct
+  refusal, but it exits 0 on AMBIGUOUS in the one call site that treats "not FAIL" as OK.
+- **R2-68 [LOW] `bt-snapshot`'s EX-032 shape test is by line number** — it asserts what
+  line N of the capture looks like. Any added header line moves it; the test then fails
+  for a reason unrelated to the shape it protects. Match the line by content.
+- **R2-69 [GOOD]** `bt-backup-journal` skipping boot 0 unless `--include-current`, and
+  `bt-archive`'s tee-plus-FIFO read-back count before filing ("15 of 15") are the right
+  discipline for evidence that has already rotated away once. `bt-retention`'s
+  declared-versus-scanned evidence window, its `date -f -` parse-count check, and
+  `bt-trial-audit`'s positive control (a fixture the audit must flag, run before the real
+  read) are model tests-of-the-tool. `bt-snapshot`'s unfiltered `all.log` is what makes
+  the source-map claim in R2-33 wrong, and is the right choice. `trial-reclass.awk` is a
+  clean read-time correction that announces itself and refuses to launder real drift.
