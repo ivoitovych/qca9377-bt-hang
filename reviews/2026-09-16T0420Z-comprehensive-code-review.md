@@ -807,3 +807,46 @@ operator; the bug-report rewrite has not started (§4.2).
   refusal to launder real drift; `timestamp.awk`'s single civil-date implementation now
   actually loaded by everything that needs one (HC-07 closed). All `REVIEWED-KEEP`
   markers in `tools/` and `tools/lib/` are intact.
+
+## 9. `tests/` (run-tests 10 338 lines / 774 invariants, system-roundtrip, fixtures, README)
+
+- **R2-100 [HIGH] Two invariants cannot pass on any host, and CI has been red since
+  d70cb2e** — already R2-01; the mechanics belong here. `run-tests:7887` tests a glob
+  inside `[[ ]]`, where bash does not expand it, so the assertion compares a literal
+  pattern to nothing and goes red on the machine that wrote it as well as in CI;
+  `run-tests:7410` asserts a `.zst` archive suffix on a tool that probes `zstd`, `xz`,
+  `gzip` in that order (R2-67). Neither is "observed to fail then pass" — house rule 1
+  — because neither has ever passed. The fix for the first is `compgen -G` or a `for`
+  loop; for the second, derive the suffix. Then the CI history (runs 230–247) needs
+  reading once for anything else that went red in the meantime.
+- **R2-101 [MED] A test pins the behaviour BL-03 calls a defect** (R2-64): "abort
+  discards the trial directory and writes no results row" at `:6538`. Not wrong as a
+  description of today's tool, but the suite's stated purpose is "every invariant
+  encodes a defect that shipped", and this one encodes the shipped defect as the
+  invariant. Same shape at `:6563`: "autostop on a responding controller closes the
+  trial as survived" asserts the live probe BL-08 part 4 removes. Both tests will need
+  to change with their fixes, and should say so in a comment now so a future fix does
+  not read them as design.
+- **R2-102 [MED] No test exercises `install.sh --tools-only`** (R2-58). The staging
+  harness at `:8398`–`:8757` drives `--apply`, the forced experiment-mode install and the
+  open-trial guard, and its tripwire proves system commands were skipped; the
+  deny-by-default allowlist under `TOOLS_ONLY` and, critically, the interaction with a
+  `.disabled` sibling are unexercised. The `install.sh` comment says the gate order was
+  chosen "so a test can assert this gate fired". Add: staged root with
+  `btusb-qca9377.conf.disabled` present + `--tools-only` → the active name must not
+  appear.
+- **R2-103 [LOW] `tests/README.md` is stale in three places.** "every invariant, ~2 s"
+  — a full run here is 43 s wall-clock (774 invariants, most of them spawning tools).
+  The fixtures table lists 9 rows; `tests/journal/` alone has 40+ directories plus
+  `btmon/` and `fixtures/`. It does not mention that the suite is currently red or
+  which two invariants, so a new contributor runs it, sees `FAILED: 2 of 774`, and has
+  nowhere to read that this is known.
+- **R2-104 [GOOD]** The suite's self-guards held under adversarial reading: the
+  set-not-`$0` derivation with its own future-proof test, the refuse-while-a-trial-is-open
+  gate, the PATH guard derived from `install.sh` with a refuse-under-20 floor, exactly one
+  EXIT trap, the `bin_footprint_diff` driven with synthetic footprints, and the
+  end-of-run "NOT ASKED HERE" vacuity report covering absent tools, absent privilege and
+  absent cores — that last block is the best answer in the tree to "green means what,
+  where". The `bt-window` exit-contract test at `:8948` correctly asserts the code over
+  the header (R2-85). `REVIEWED-KEEP §4` intact. The 12 merge-drift guard tests from
+  the previous reaction are present and passing (§0).
