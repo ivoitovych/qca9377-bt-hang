@@ -1050,3 +1050,92 @@ tail -2` against `tests/run-tests | tail -1`; which four is not established here
   withdrawn claims. The only note: the lessons directory has one entry from one
   maintainer; the events of 08-19 (R2-58) and 08-25 onward (R2-01) are the material for
   the other two the README asks for.
+
+## 12. Cross-cutting
+
+Four shapes account for most of the 122 findings. Each has a name in this repository's
+own lessons file already; what this review adds is where they sit in the tree today.
+
+**12.1 Docs outrun by evidence (≈30 findings).** The central finding of the investigation
+— transparent SCO on alt setting 1, `len 27 mtu 9`, controller dead in ~2.15 s, n=5 across
+three kernels, alt 1 read from sysfs twice — is established in the exhibits (EX-033–040),
+in `bt-usbstate` and `bt-fault-window`, and in BRIEF §5's retractions. It is absent from
+README (R2-07), `evidence/README.md` (R2-115), `docs/issues.md` (R2-21), the bug report's
+timing (R2-25), the exhibit index's truncated claims (R2-114), and three tools whose
+verdict text still narrates the early-signal hypothesis (`bt-postmortem` R2-72,
+`bt-status` R2-79, `bt-sco` R2-84, `bt-health-report` R2-73). The 2026-09-13 report said
+this about the three foundation files; the count is larger. The pattern is not neglect —
+the evidence side is meticulous — it is that nothing mechanical connects a new exhibit to
+the prose that cites the old model. `devtools/save`'s BRIEF check ("does it name the
+newest exhibit?") is the right idea and covers one file.
+
+**12.2 A control that holds where it was written (≈15 findings).** R2-58 is the largest
+instance in the tree's history: `--tools-only` was verified on the machine with
+`bt-verify-install`, which could not see the `.disabled` sibling it had just been
+shadowed by (R2-81), and the mode stamp nobody re-read said the baseline stood. R2-01's
+`.zst` cleanup, `bt-snapshot`'s `3-3` (R2-66), `bt-usbstate`'s `3-3` (R2-88),
+`bt-usbmon.service`'s `BUS=3` (R2-56), `bt-exhibit`'s `13d3:3503` provenance (R2-74),
+the `/root/exp/…` fallbacks (R2-79), `tests/README.md`'s "~2 s" (R2-103) — the same
+shape at smaller cost.
+
+**12.3 A gate that runs first hides the state of every gate behind it (R2-01, R2-105,
+R2-111, R2-112).** lessons §3 describes this exactly, from 08-22. It recurred within four
+days: `repo-validate` is CI's first step, the suite went red on 08-25, every later step
+has been unreachable since, and on the investigation machine the commit path skips the
+suite by design and relies on CI — which nobody reads. The four instruments then differ
+on whether a red run yields a number. None of this is a defect in any one file; it is the
+composition, and the fix is one row in `devtools/status` plus making the four agree.
+
+**12.4 Tests that cannot fail, or that pin the defect (R2-100, R2-101, R2-102).** A glob
+in `[[ ]]` (the suite's own comment names the trap 3 000 lines above); a test that
+asserts BL-03's `rm -rf` and one that asserts BL-08's live probe; no test at all for the
+mode this repository built to deploy safely on its own machine. House rule 1 ("observed to
+fail") was applied to 12 drift guards in the last reaction and evidently not to
+`d70cb2e`'s two.
+
+**12.5 What held.** Everything the previous reaction built is intact and was built on (§0.2);
+all 66 `REVIEWED-KEEP` markers survive; the seams, the refusals-on-empty, the counted
+greps, the derived lists, the read-time correction, the built-journal contract, the
+crash-site resolution, the patches, the comms discipline and the lessons file are as good
+as the previous review said. The instruments are individually the best-argued code in the
+tree. The repository's problem is not quality of parts.
+
+## 13. Overall summary
+
+**Verdict.** The previous review's reaction survived completely and the tree has grown
+well since — but `main` has been red on its own suite for three weeks with nothing
+reading the verdict, the investigation machine has been running a different treatment
+from the one its mode stamp records since 2026-08-19 because the deployment path built to
+protect that treatment reinstalled the two files that define it, and the documents a
+maintainer would read first still describe the model the evidence retired.
+
+**Numbers.** 122 findings: 10 HIGH, 39 MED, 36 LOW, 7 NOTE, 30 GOOD. Suite at review
+start: 772/774 green here, red in CI on every run since 08-25. Gates: `coverage` refuses,
+`py-coverage` refuses, `test-comprehension` cannot measure, `awk-coverage` passes its floor
+from a run with 6 failures.
+
+**Do first, in this order.**
+1. R2-100: fix the two invariants (`compgen -G`; derive the archive suffix), get CI green,
+   then read the 18 red runs once for anything else that went red meanwhile.
+2. R2-58: on the machine, `ls -l /etc/modprobe.d/btusb-qca9377.conf* /etc/udev/rules.d/50-*`;
+   decide the treatment for the series; record the 08-19 break where results.tsv is read;
+   make `--tools-only` respect `.disabled` and add its first test (R2-102); make
+   `bt-verify-install` and `devtools/status` report the pair and stop advising `--apply`
+   in experiment mode (R2-81, R2-106).
+3. R2-105: a CI-conclusion row in `devtools/status`; R2-111: one rule for a red run.
+4. R2-07 / R2-115 / R2-21 / R2-25 / R2-114 / R2-117: the central finding into README,
+   evidence/README, issues.md, the bug report's timing, the exhibit index (fix the
+   extractor), and the patches README (EX-041).
+5. R2-64 / R2-65: BL-03 and BL-08 at the code, with their pinning tests changed on purpose
+   (R2-101).
+6. R2-70 (SIG UUIDs), R2-76 (`sco` matches `discovery`), R2-94/R2-78 (probe-free by
+   default), R2-72/R2-73/R2-84 (tool verdicts).
+
+**Method note.** Every finding above was checked on the tip at `3cf4dd6`, with the command
+that shows it where one exists; findings were appended per file as each was read and none
+was revised after a later file was read except where a later file corrected an earlier
+reading (R2-33 confirmed, R2-64 and R2-85 amended, R2-67 aligned, R2-68 retracted) — each
+such change is recorded in the finding. No source file was changed on this branch; the
+`REVIEWED-KEEP 2026-09-16T0420Z` markers for the 30 GOOD items are for the reaction to
+place, as the previous reaction did. Register rows and an action block for the HIGH/MED
+items are in `reviews/README.md` on this branch.
