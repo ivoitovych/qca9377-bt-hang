@@ -135,3 +135,159 @@ operator; the bug-report rewrite has not started (§4.2).
   outward-facing page. The three `REVIEWED-KEEP 2026-08-15T1752Z` markers did their job —
   none of the marked sections regressed. Marked again where the page is re-marked below.
 
+## 2. `BRIEF.md` (197 lines)
+
+- **R2-12 [MED] §9 item 4 is the wrong fact.** *"The suite has not run in a while:
+  `run-tests` refuses while a trial is open, correctly."* It has run on every push, in CI,
+  and has failed every time since at least 2026-09-13 (R2-01). The staleness check
+  `devtools/save` performs (newest `EX-` named, line budget) cannot see CI; the open thread
+  that belongs here is "CI red since `d70cb2e`", and it was available from the Actions tab
+  on every one of the twelve pushes.
+- **R2-13 [LOW] The header pins a tip hash that rots on every commit.** *"tip `7c9427b`"*
+  was three commits stale at `3cf4dd6` within hours. Either derive it (the file is read
+  after a reset, when `git log -1` is one command away) or drop it and keep only "newest
+  exhibit", which the save hook actually checks.
+- **R2-14 [GOOD]** §5 (RETRACTED) is the highest-value 30 lines in the repository and the
+  09-13 correction to it — *name the scope of what you retract* — was the right one. §7's
+  durable-rules move (out of an uncommitted memory store) is exactly the class of fix this
+  review keeps asking for. The 200-line budget is at 197 physical lines; the save hook
+  counts non-blank, so it is not yet binding, but the next addition must cut first.
+- **R2-15 [NOTE]** §5's row *"the 287-timeout denominator can't be re-derived — FALSE"*
+  is contradicted by README (R2-05) and by `docs/investigation-plan.md`'s revision section
+  (§4.4). BRIEF is right; the others were never re-read against it. A mechanical check —
+  each §5 retracted phrase grepped against the tree — would have caught all three.
+
+## 3. `HISTORY.md` (2825 lines; Phases 28–34 new since the previous review)
+
+- **R2-16 [LOW] The forward-pointer convention was applied three times and is needed in
+  at least three more places.** Phase 28 "What is not done": *"A tools-only deployment
+  path … does not exist yet"* — Phase 29 built it. Phase 30: *"`lore.kernel.org` is 403
+  from both environments"* — Phase 31 shows a UA block, and BRIEF §5 retracts it. Phase 29:
+  *"`0x0428` versus `0x043D` … the comparison worth designing a protocol around"* — Phase 30
+  §2 kills it (opcode ≠ air mode). Every BRIEF §5 retraction has an origin phase; each
+  origin should carry the `⚠️ SUPERSEDED` block the 09-13 review proposed, and that is
+  checkable: for each §5 row, does the phase that first asserted it point forward?
+- **R2-17 [LOW]** "## Current state — as of the end of Phase 8 … ⚠️ SUPERSEDED" is still
+  the only "current state" heading in the file, and it does not point to `BRIEF.md`, which
+  is now the current state by definition. One line.
+- **R2-18 [GOOD]** Phases 28–34 are the best-written part of the record: each ends with
+  "The shape" (a transferable lesson) and "What is not done"; Phase 34 is the first with a
+  pre-registered prediction; Phases 30 and 34 record the author's own errors at the same
+  weight as the findings. Keep the structure; it is what makes the 09-13 harvest (§6 of
+  that review) possible for Phases 1–27.
+
+## 4. `docs/` (16 files)
+
+### 4.1 `docs/tooling-index.md` (151) — new
+
+- **R2-19 [GOOD]** The right shape: question → tool, with the two paid-for warnings
+  (present ≠ complete; the BlueZ health block is journal-derived) beside the tools they
+  qualify. Marked `REVIEWED-KEEP`.
+- **R2-20 [LOW]** "Writing commands so they do not prompt" is assistant-tooling mechanics
+  in a user-facing document — BRIEF §7 itself says such material belongs in the memory
+  store. Keep the *rule* ("extract the recurring question into a tool") here; move the
+  permission-matcher paragraphs out, or a contributor reads a page about a tool they do
+  not use.
+
+### 4.2 `docs/issues.md` (503) — declared authoritative, stalest of the set
+
+- **R2-21 [HIGH] `BT-1`'s entry does not contain the project's central result.** Highest
+  exhibit `EX-021`. The entry still argues from `EX-006`/`EX-009` ("setup unanswered in
+  one, teardown in the other — the constant is the path, not the opcode"), lists "the
+  leading discriminant" as five candidates, and closes with *"Still unknown: … what makes a
+  given SCO operation fatal"* — while `EX-033`–`EX-041` answer it at `n = 5` (transparent
+  air mode → alt 1 → `len 27 mtu 9` → ~2.15 s), `EX-039` answers recovery, and `EX-026`
+  and `EX-034` bear directly on "whether stage 2 occurs at all without intervention". The
+  file README routes readers to as "kept current" is two phases behind HISTORY.
+- **R2-22 [MED] The register is missing the project's first deliverable.** "Six distinct
+  defects" — but the two BlueZ NULL dereferences (`EX-032`, `patches/bluez/0001`, `0002`,
+  the latter with four prevented crashes) have no `BT-n` entry, nor does the third
+  unrelated `free()` crash of 09-08 that BRIEF §6 explicitly separates from the
+  submission. An issue register that omits the two issues with patches is not the
+  register.
+- **R2-23 [LOW]** `BT-4` still says *"Still needed before filing: a backtrace from the
+  aborting process"* — `tools/bt-crash` and `systemd-coredump` exist now (Phase 29), and
+  BRIEF §9 item 5 reports 33 btmon cores in one boot. Either the backtrace exists and the
+  status is stale, or it is the next step and the entry should say so.
+- **R2-24 [GOOD]** The evidence model (two capture paths, three states; the probe as an
+  intervention) and the six-levels table remain the clearest methodological statement in
+  the repository. The `REVIEWED-KEEP` markers held.
+
+### 4.3 `docs/bug-report.md` (699) — the deliverable
+
+- **R2-25 [HIGH] The file that leaves the project contradicts the record on its central
+  timing.** It states *"SCO setup → first timeout is a distribution, not a constant:
+  7.6–16.2 s across n = 4"* and elsewhere *"the interval spans 2.1–155.8 s across
+  instances"*. Phase 32 and `EX-033`/`036`/`037`/`038`/`040` establish that anchored on the
+  *answered* setup the interval is **2.076–2.191 s, spread 115 ms, n = 5** — and that the
+  spread the report quotes was an artefact of anchoring on whichever named command timed
+  out. The 09-13 review's #7 already asked for the rewrite; this is the specific sentence
+  a maintainer would test first.
+- **R2-26 [MED] Header and summary are internally inconsistent with the rest of the
+  tree.** `Regression: No` — while README, BRIEF §1 and the investigation plan name a
+  **v5.12 behaviour change** as the regression candidate and the plan calls the regression
+  report "the only unblocked route to upstream". `Date: 2026-08-11`; kernel `7.0.0-28` in
+  System information (the machine has run `-29`, `-30`, `-31` since, all faulting).
+- **R2-27 [MED] "Workaround in use: a userspace watchdog … issues `USBDEVFS_RESET`"** —
+  it is not in use, deliberately, and has three demonstrations of destroying the device
+  (Phase 28, BRIEF §7). A maintainer reading this would assume the reset path is benign in
+  practice.
+- **R2-28 [NOTE]** The report is *clean* of invented labels (verified by the new gate) and
+  its correction blocks (over-withdrawn denominator; "no USB error followed" is evidence
+  about the moment) are exactly right. The problem is age, not discipline.
+
+### 4.4 `docs/fix-proposal.md` (657)
+
+- **R2-29 [MED] The suggested commit message asks upstream to install the operation the
+  record now believes destroys the device.** *"Add the device to the QCA ROME entries so
+  the standard command-timeout reset path applies."* — while `docs/investigation-plan.md`
+  (revision 2026-08-22) states Build A "automates the operation we have three
+  demonstrations of killing the device with, and fires it at +0 s", and BRIEF §3 says
+  "No software recovery exists". The document carries no revision banner pointing at that
+  reversal; a reader of §1–§3 gets the 2026-08-11 project. Two `REVIEWED-KEEP` sections
+  (six behaviours; the conservative message) are still correct *as* sections — the problem
+  is that the document's frame outlived its premise.
+- **R2-30 [LOW] A fossil inside a "corrections" block.** §3a "Two related corrections":
+  *"Stage 1 lasts ~53 s, not ~6 h"* — `EX-029` is 47 338 s of stage 1. Filed as a
+  correction, it now reads as the current belief.
+- **R2-31 [LOW]** §8 status table: "Checked against current mainline ⚠️ `3503` still
+  absent as of 2026-08-11" and "Early reset recovers, but not durably ✅" are five weeks
+  stale, and the latter is exactly the reset BRIEF §5 retracts as the recovery ladder
+  "destroyed nothing" → FALSE.
+
+### 4.5 `docs/source-map.md` (125), `docs/source-access.md` (273) — new
+
+- **R2-32 [GOOD]** The source map is the right artefact: a register of components with
+  *seen?* and *read?* columns, derived from the capture tools' `-u` arguments with the
+  command shown, and an exclusions table with evidence. `source-access.md`'s
+  "'blocked' is not one thing" table (four causes, one status code) is the best
+  operational lesson of the month, and it is stated with its own error kept visible.
+- **R2-33 [MED] The map's central claim — "GNOME is blind" — is derived from the wrong
+  tools.** The *seen?* column comes from the `-u` arguments of `bt-incident`,
+  `bt-snapshot`, `bt-evidence`, `bt-context`. `bt-snapshot` (Phase 29) takes *one coarse
+  cut* of the journal and writes `all.log`; if that cut is unit-filtered the claim holds,
+  if it is the whole journal then `gnome-shell`, `gsd-rfkill` and `wireplumber` are
+  captured today and rows 1–4/16–17 are wrong. Verified below (§4.9); the map should say
+  which, and derive the column from `bt-snapshot`'s actual selector.
+- **R2-34 [LOW]** Both files carry the "which kernel ran when" table ending at
+  `7.0.0-30` (`-1`, `0`) — the machine has run `-31` since 09-12 and boot indices have
+  shifted many times. This is the copy-forward class both files warn about; the table
+  should be produced by a tool (`bt-boot-list` can print the kernel per boot) and cited
+  by date, not by index.
+
+### 4.6 `docs/external-review-brief.md` (322), `docs/external-cache.md` + manifest — new
+
+- **R2-35 [MED] The hand-out understates the strongest evidence the project has.** §6
+  belief 4: *"We believe the driver selects USB alternate setting 1 … via a fallback that
+  logs nothing"* — alt 1 has since been **read from `sysfs` three times** (`EX-037`,
+  `038`, `040`), and the `len 27 mtu 9` traffic that OB-02 shows two lines of is the
+  condition itself. An external reviewer working from this brief would reconstruct
+  September's finding from August's data. It also lists kernels `-28`/`-29` only. The
+  brief's §6.1 shows the right pattern ("settled since this was written") — the alt-1
+  observation needs the same block.
+- **R2-36 [GOOD]** The brief's ground rules (cite the version; open the URL; absence of a
+  log line is not absence of the event; negative results required) and the merge format
+  (findings keyed by component × observation, disagreements kept) are what an external
+  review needs and rarely gets. The cache manifest with publisher-checksum verification is
+  the right way to hold third-party artefacts outside a public tree.
+
