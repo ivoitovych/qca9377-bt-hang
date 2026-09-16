@@ -753,3 +753,25 @@ operator; the bug-report rewrite has not started (§4.2).
   non-comparability with the frozen baseline; `bt-timeline.sh`'s per-stream `grab` with
   the pseudo-event fix; `bt-guards`' positive control and its refusal to call a 0001 hit a
   prevented crash. All sound.
+
+### 8.8 `bt-boot-list`, `bt-stage2`, `bt-state`, `bt-interval`, `bt-boots`
+
+- **R2-94 [MED] `bt-state`'s HCI probe reaches the untreated window through two
+  callers.** `bt-state` runs `hciconfig <hci> name` (documented as "an INTERVENTION, not
+  an observation", BT-4). `bt-status` calls it in section 1, and `bt-incident` — the tool
+  whose purpose is to capture a hang that has already happened — calls it for
+  `state-now.txt`. So the standard "what happened?" and "record it" commands both send
+  a command to the controller the window is observing, which is why `bt-window` and
+  `bt-usbstate` had to be written as probe-free alternatives. Make the probe opt-in in
+  `bt-state` (`--probe`), have `bt-incident` write `bt-usbstate` output instead, and
+  fold R2-78 (`bt-diagnose`) into the same change.
+- **R2-95 [LOW]** `bt-stage2` reads with `journalctl … _TRANSPORT=kernel +
+  _SYSTEMD_UNIT=…` directly (the seam has no field-match form, R2-92); the `--from`
+  cache is its fixture path, which is adequate. `bt-boots`' fallback `boot_indices()`
+  re-implements the enumeration its own comment says must not be re-implemented, in
+  three tools (`bt-boots`, `bt-diagnose`, `bt-health-report.sh`); the fallback exists
+  for the not-installed case and is the header-row trap `bt-boot-list` fixed.
+- **R2-96 [GOOD]** `bt-boot-list`'s three-rung ladder with the capability probe through
+  the seam (`REVIEWED-KEEP §3.2` intact); `bt-stage2`'s build-then-rename cache and
+  `-b all`; `bt-interval`'s parse-failure-is-the-exit-status note and the `</dev/null`;
+  `bt-state`'s auto-detection by `bluetooth/hci*` child.
