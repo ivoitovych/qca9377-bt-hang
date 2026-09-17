@@ -100,3 +100,30 @@ now, and where the evidence is. Neither wants to be told which sections are stal
   block's refusal to quote a number are all worth keeping verbatim. `REVIEWED-KEEP §1.1`
   markers intact — two of them now guard text that should leave the front page for
   `docs/`, which is a move, not a removal.
+
+## 2. `BRIEF.md` (231 lines, 200 non-blank)
+
+- **FD-09 [MED] README sends strangers to BRIEF as "authoritative", and BRIEF is a
+  working-memory document addressed to the operator and the assistant.** Its title is
+  "read this first, after any context reset"; §7 says "This section and §8 are the DURABLE
+  copy … only in an assistant-side memory store", "Family laptop", "Verify operator
+  accounts against logs — he asked not to be trusted", "Do not send the patches until the
+  operator says so", and the transliteration note on the sign-off. All of that is right
+  where it is, and none of it is for **(M)** or **(U)**. Sections 1–4 and 6 are exactly
+  the public state; 5 (retractions) is valuable to a maintainer too; 7–9 are house rules
+  and open threads. Either the README carries its own copy of §1–§3 and §6 (the skeleton
+  in §7 does this, ~40 lines) and stops delegating, or BRIEF is split into a public
+  `STATE.md` and an internal `BRIEF.md`. The first is cheaper and keeps the 200-line
+  budget meaningful.
+- **FD-10 [LOW] Four counts inside BRIEF are one step stale:** "`evidence/exhibits/`, 42 of
+  them" (43; EX-043 is the newest exhibit named three lines later); §4 "Correlation across
+  5 deaths / 1 survival" beside §2's `n = 7`; §10 "`HISTORY.md` (34 phases)" while Phase 36
+  was added in the same commit series; §2 footnote "Both instances where the log names the
+  dying command" is correct but §3's "read 5× during live wedges" and EX-042's "fourth
+  direct read" / EX-043's "fifth" should agree (they do: 5) — noted only because the
+  README says "five live wedges" and BRIEF §3 says 5×, so this one is consistent.
+- **FD-11 [GOOD]** §1's statement, §2's table with the first-command column and the
+  survival row, §3's settled list and §5's retraction table are the best 60 lines in the
+  repository for a maintainer: the claim, the evidence per instance, and what was wrong
+  before. §6 is the six-line "for maintainers" block README lacks (FD-02), already
+  written. The "no tip hash here: it rotted" note is the right lesson applied.
