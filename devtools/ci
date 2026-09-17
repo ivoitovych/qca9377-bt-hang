@@ -80,9 +80,35 @@ if (( RECENT )); then
 fi
 
 row=$(fetch)
+
+# ⚠️ --wait MUST WAIT FOR THE RUN TO APPEAR, not only for it to finish. GitHub
+# queues the workflow run seconds-to-minutes AFTER the push returns, so the
+# first fetch legitimately comes back empty on a fresh commit. The first
+# version exited 2 there — "no run found" — and a background `--wait` launched
+# right after a push failed every time, which is exactly how it was used. A
+# not-yet-queued run is a state to wait through, not a failure; a genuinely
+# absent one is caught by a bounded grace budget so the tool cannot hang for
+# ever on a sha that was never pushed.
 if [[ -z "$row" ]]; then
-    echo "ci: no run found for $SHORT — not pushed, or Actions has not queued it yet" >&2
-    exit 2
+    if (( ! WAIT )); then
+        echo "ci: no run found for $SHORT — not pushed, or Actions has not queued it yet" >&2
+        echo "  (a run can take a minute to appear after a push; --wait polls for it)" >&2
+        exit 2
+    fi
+    printf 'ci — %s not queued yet' "$SHORT"
+    # ~10 min at 30 s; a push that produced no run is a real error, not an
+    # infinite wait. The two seams (BT_CI_GRACE, BT_CI_POLL) exist so a test can
+    # drive both outcomes — the run appearing, and the budget running out —
+    # without a real ten-minute wall or a real push. A guard that cannot be made
+    # to fire is this project's most-repeated defect.
+    grace="${BT_CI_GRACE:-20}"
+    while [[ -z "$row" ]]; do
+        (( grace-- > 0 )) || { echo; echo "ci: no run for $SHORT after the grace budget — was it pushed to a branch Actions builds?" >&2; exit 2; }
+        printf '.'
+        sleep "${BT_CI_POLL:-30}"
+        row=$(fetch)
+    done
+    echo
 fi
 
 # ── --wait: poll until terminal ──────────────────────────────────────────
