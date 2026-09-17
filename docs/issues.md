@@ -11,6 +11,36 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 
 ---
 
+## Current state — 2026-09-18 (front-door review `FD-22`)
+
+This register was written while the fault was localised in time and not in mechanism, and
+its entries below still read that way. Since `EX-033` (08-22) the wedge has been located in
+one path, reproduced seven times across three kernels, two headsets and both power
+configurations (`EX-033`, `036`, `037`, `038`, `040`, `042`, `043`): the controller
+negotiates transparent (mSBC) SCO, `btusb` falls back to **USB alternate setting 1** (a
+9-byte isochronous endpoint) and streams 27-byte frames into it, and **the first HCI
+command issued into that running stream is never answered**. Alternate setting 1 has been
+read from `sysfs` during five live wedges. `BRIEF.md` §1–§5 is the authoritative statement,
+with every retraction; this file remains the register of the *distinct defects* and of what
+each is worth reporting as.
+
+What this update changes below, entry by entry:
+
+- **BT-1** — the "experiment that settles it" (leave the wedged controller alone) has been
+  run four times: 3 h 22 m (`EX-023`), 2 h 28 m (`EX-025`), 13 h 9 m (`EX-029`) and
+  11 h 12 m (`EX-042`), every one with **zero** USB-layer lines. A natural USB collapse has
+  never been observed; the canonical paragraph stands. Of the five candidate discriminants
+  listed under "the leading discriminant", the fourth — the alternate-setting transition —
+  together with the traffic that follows it is the one the seven instances share.
+- **BT-3** — still true, no longer a candidate *cause*: it explains why nothing recovers the
+  controller (`hdev->reset` is NULL), not why it wedges. The one-line quirks patch is not
+  proposed; `docs/missing-quirks-entry.md` keeps the argument whole.
+- **BT-5** — superseded: `EX-043` shows the same link streaming for 9.65 s unharmed until a
+  command is sent. The near-silence in `EX-009` was an idle link, not a precursor.
+- **BT-7** (new) — the two `bluetoothd` crashes of `EX-032`, resolved to source and fixed
+  in `patches/bluez/`; reportable now, and the only entry here with runtime evidence that
+  its fix works.
+
 ## Evidence model
 
 Two rules govern how anything here is read. Both were bought with mistakes.
@@ -121,8 +151,11 @@ member sets the pace for all. `BT-2` and `BT-4` are reportable *today*; `BT-1` i
 
 ## BT-1 — Controller stops answering HCI, and may or may not then leave the USB bus
 
-**Status:** under investigation — the original bug, and the hardest.
-**Reportable:** ❌ not yet. No quantified reproducer (`docs/pre-submission-checklist.md`).
+**Status:** under investigation — the original bug, and the hardest. **Located** in the
+transparent-SCO alternate-setting path since `EX-033`; see "Current state" above and
+`BRIEF.md` §1. Mechanism open.
+**Reportable:** ❌ not yet — a kernel-side report goes only with a patch ready to follow it
+(`BRIEF.md` §7). The reproduction shape is exact: alt 1, stream, issue a command.
 
 The controller stops answering HCI commands. It has often been observed to stop answering
 USB control transfers and leave the bus some time later, after which a cold power-off
@@ -278,8 +311,11 @@ reproduce "it hangs after several hours".
 
 ## BT-3 — `13d3:3503` is absent from the btusb quirks table
 
-**Status:** confirmed in upstream source and shipped binary (`EX-001`).
-**Reportable:** ⚠️ the patch is trivial; the *justification* is what is missing.
+**Status:** confirmed in upstream source and shipped binary (`EX-001`). **Since 2026-09-18
+read as a consequence for recovery, not a candidate cause** — the wedge is located
+elsewhere (see "Current state"), and this entry explains why no software recovers it.
+**Reportable:** ⚠️ the patch is trivial and is **not proposed**: the reset it installs
+destroyed the device in two controlled tests (`EX-023`, the 2026-08-15 boot).
 
 The device is matched by no quirks entry, so it receives neither `hdev->reset` nor
 `btusb_setup_qca()`. Its immediate ID neighbours `3491/3496/3501` carry
@@ -415,8 +451,10 @@ blockers are stated once, under "Minimal reproducer found".)*
 
 ## BT-5 — SCO link established, then carries almost no data
 
-**Status:** observed once; unexplained.
-**Reportable:** ❌ no — one observation, no mechanism, may be a symptom of BT-1.
+**Status:** **superseded 2026-09-18.** `EX-043` shows the same kind of link streaming 910
+frames over 9.65 s with no command in flight and no harm; the silence recorded here was an
+idle link, not a precursor. Kept for the record.
+**Reportable:** ❌ no.
 
 In the failure of 2026-08-12 06:26, the SCO link came up cleanly (`handle 0x0003`, USB
 alternate setting switched) and then carried **11 packets in ~30 ms and nothing for the
@@ -453,6 +491,25 @@ Worth noting the family resemblance without leaning on it: BT-2 and BT-6 are bot
 and the controller disagreeing about state, and BT-1's failures both occur during SCO link
 transitions, which are state changes. Whether that is one underlying fault or three
 unrelated ones is exactly what is not yet known.
+
+---
+
+## BT-7 — `bluetoothd` dereferences NULL twice, at two sites, on this controller
+
+**Status:** resolved to source and fixed — `patches/bluez/0001` (`src/adapter.c`,
+`start_discovery_complete()` reads the reply above its own length check) and `0002`
+(`profiles/audio/a2dp.c`, `transport_cb()` passes a NULL `setup->stream` on). Crash sites
+named from the stripped distro binary and confirmed against a retained core
+(`reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md`); both defects present in BlueZ
+master `c73fa2f9a`.
+**Reportable:** ✅ **yes — the patches are the report** (BlueZ takes patches by mail and
+needs no bug filed). `0002`'s guard has fired four times in 19 days of use (`EX-041`);
+`0001`'s premise was logged once, its guard has not fired.
+
+Found only because this register separates the failure modes: a `bluetoothd` crash leaves
+the adapter powered and never scanning again (`EX-032`), which to a user is "Bluetooth
+stopped working" exactly as the controller wedge is. `tools/bt-crash` tells them apart.
+Neither patch touches the controller fault; the wedge has occurred with both installed.
 
 ---
 
