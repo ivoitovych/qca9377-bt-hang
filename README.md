@@ -27,9 +27,22 @@ wait for a kernel release.
 **Stream 3 has produced its first deliverable**, and it is not the one this
 project set out to write. [`patches/bluez/`](patches/bluez/) holds **two BlueZ
 patches** for NULL dereferences in `bluetoothd`, both confirmed still present in
-upstream master. They came out of `EX-032` — a failure mode that is not the
-controller at all, found only because the record started separating the four
-things that look identical to a user. The kernel-side question is still open.
+upstream master, both written to BlueZ's own submission rules and `git am`-clean
+against it. `0002`'s guard has fired four times in nineteen days of real use
+(`EX-041`) — four crashes prevented, not merely absent. They came out of
+`EX-032` — a failure mode that is not the controller at all, found only because
+the record started separating the four things that look identical to a user.
+
+**The kernel-side question has narrowed to one sentence** (`EX-037`–`EX-043`,
+seven reproductions across three kernels and both power configurations): when
+this controller negotiates transparent (mSBC) synchronous audio, `btusb` selects
+USB alternate setting 1 — a 9-byte isochronous endpoint — and streams 27-byte
+frames into it; **the first HCI command issued into that running stream is never
+answered**, and the controller then answers nothing, including USB control
+transfers, until power is removed. The alternate setting has been read directly
+from `sysfs` during five live wedges. The mechanism — *how* the traffic wedges the
+device — is not established, and no kernel patch exists yet. `BRIEF.md` carries
+the current state of this; the sections below have not yet been rewritten to it.
 
 **The fault is very likely multi-layered, and the streams are shaped around
 that.** What has been observed is not one bug but a sequence: the controller

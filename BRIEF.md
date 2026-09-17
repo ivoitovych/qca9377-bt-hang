@@ -11,7 +11,7 @@ which of them still holds.
 ⚠️ **Budget: 200 lines.** Over that, it stops being cheaper than reading the source, which
 is the only reason it exists. Cut the oldest settled item before adding.
 
-**Last updated: 2026-09-16 · newest exhibit: EX-042** — no tip hash here: it rotted three
+**Last updated: 2026-09-18 · newest exhibit: EX-043** — no tip hash here: it rotted three
 commits within hours of being written (`R2-13`); `git log -1` is one command away.
 
 ---
@@ -99,7 +99,12 @@ Both instances where the log names the dying command name `0x0406 Disconnect, re
 ## 6. The BlueZ patches — status
 
 Two NULL-deref fixes, built from the machine's own `5.72-0ubuntu5.5` + 31 Ubuntu patches,
-running since 08-25. **Unsent — the operator has not released them.**
+running since 08-25. **Unsent — the operator wants third-party review first.** Rewritten
+09-16 to BlueZ's *measured* conventions (`HACKING` + last 300 commits): ⚠️ **no
+`Signed-off-by` — BlueZ calls it an error**; 50/72; subjects 49/46 chars; checkpatch clean
+under BlueZ's own config; `git am` 4/4 alone and together. **BlueZ takes patches by mail
+(`linux-bluetooth@vger.kernel.org`), never PRs; no bug report is needed — the patch is the
+report.** `0002` has no `Fixes:` on purpose (pickaxe finds only a 2015 refactor).
 
 - **`0002`** (a2dp `setup->stream`): **fired 4×** — 08-26, and 3× on 09-02. Four crashes
   prevented, not merely absent (`EX-041`). Strongest runtime evidence either patch has.
@@ -132,7 +137,10 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **Never lose code, tests or evidence.** Priority 1; keep clutter over any deletion.
 - **Do not send the patches** until the operator says so.
 - **An untreated window is the most valuable state there is.** Do not touch Bluetooth;
-  `sysfs` reads are safe, anything through usbfs is not.
+  `sysfs` reads are safe, anything through usbfs is not. ⚠️ **`bt-mode` writes
+  `power/control` live** — check `bt-window` before any mode switch.
+- **Never publish the kernel (alt-1) bug report without its patch ready to follow at
+  once.** The BlueZ patches need no report at all.
 - **Verify operator accounts against logs** — he asked not to be trusted. Find the record or
   label the claim.
 - **Every claim ships with its extraction command and exact verbatim output**, plus exit
@@ -163,20 +171,16 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 
 - **A zero from a capped scan is not a result.** Every zero needs a positive control.
   Broken twice, most recently `EX-041`.
-- **"Verified standalone" by a hand-picked subset is not verification.** Two invariants
-  added 09-01 were "checked by hand" — with a script that did not include them — and never
-  passed anywhere; CI said so on twelve pushes that nobody read (`R2-100`). Run the
-  block that changed, and read the verdict that runs on push.
-- **Let the datastore filter.** `journalctl … | grep` over this journal does not finish in
-  10 min; `journalctl _COMM=bluetoothd … | grep` takes 30 s. The scan too slow to finish and
-  the scan too narrow to be true are the same mistake.
-- **A number in a summary is a claim** and inherits its filter's assumptions.
-  `8 daemon crashes` was true of the machine, false of Bluetooth.
-- **Present ≠ complete.** 9 of 21 journal archives were prefixes reading as complete.
+- **"Verified standalone" by a hand-picked subset is not verification.** Run the block that
+  changed, and read the verdict that runs on push (`R2-100`: red for 3 weeks, unread).
+- **Let the datastore filter.** `journalctl _COMM=bluetoothd …` takes 30 s where a bare
+  `journalctl … | grep` never finished; the scan too slow and the scan too narrow are one mistake.
+- **A number in a summary is a claim** and inherits its filter's assumptions (`8 daemon
+  crashes` was true of the machine, false of Bluetooth). **Present ≠ complete** — 9 of 21
+  archives were prefixes reading as complete.
 - **Read provenance, never copy it forward.** Wrong boot id twice, wrong kernel five times.
-- **Extract the repeated question into a tool**, not the repeated command. One script
-  replaced 226 recurring `journalctl … | grep` invocations. If a question recurs and no tool
-  answers it, that is the bug.
+- **Extract the repeated question into a tool**, not the repeated command; one script
+  replaced 226 recurring pipelines. If a question recurs and no tool answers it, that is the bug.
 - **Check whether the tool already does the step you are prefixing.** `git add -A` was typed
   before `repo-save` for weeks; `repo-save` had always staged on its own.
 - **Trim output inside the script, never with a pipe.** Quiet on success, everything on
@@ -184,16 +188,16 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **Separate what the operator DID from how the controller RESPONDED** (Phase 14). The
   reproductions were never a controlled procedure; every trigger attribution is an inference
   read backwards out of logs. Response measurements survive that; trigger claims do not.
-- **A flag is not one behaviour** (Phase 17). `BTUSB_QCA_ROME` installs six things, so an
-  A/B toggling it isolates none of them. Check what a switch actually carries before
-  designing an experiment around it.
-- **One observation is an anecdote — build the tool that checks the corpus** (Phase 25).
-  `bt-stage2` turned one 72-minute boot into 22 boots and 3.3 M lines, and the answer
-  changed shape.
+- **A flag is not one behaviour** (Phase 17): `BTUSB_QCA_ROME` installs six things, so an
+  A/B toggling it isolates none. Check what a switch carries before designing around it.
+- **One observation is an anecdote — build the tool that checks the corpus** (Phase 25):
+  `bt-stage2` turned one boot into 22, and the answer changed shape.
 
 ## 9. Open threads
 
-1. Finish the upstream kernel report — the alt-1 statement is ready; the mechanism is not.
+1. **Rewrite `docs/bug-report.md` around `EX-037`–`EX-043`** — it still describes the
+   pre-alt-1 project (`R2-25`). The kernel report itself waits for its patch (§7). The driver
+   test shape is exact: alt 1, stream, issue a command, it dies.
 2. Six tasks delegated to the Test Branch Maintainer (source review, instrumented `btusb`
    logging of the chosen `new_alts`, bug-report audit, `BL-09`, `bt-crash` tests, device
    survey).
@@ -205,8 +209,7 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
    `456daba`, `00138a7`, `2839ecc`, `f6173a8`, `573fb68`. `devtools/ci` reads a verdict on
    the machine and `devtools/status` shows it (`R2-105`). Still owed: one read of the 18
    red runs for anything else that went red meanwhile.
-5. `btmon` dumps core repeatedly (33 in one 5-hour boot) — our capture tool losing evidence.
-6. **Decided 2026-09-16 — return to the original configuration.** The baseline was
+5. **Decided 2026-09-16 — return to the original configuration.** The baseline was
    reverted by deploy on 08-19 (`R2-58`); trials 6–13 and `EX-033`–`EX-042` ran under
    `autosusp=N,power=on` with an *experiment* stamp. That is **runtime configuration of
    unchanged code** (a module parameter and a sysfs write — verified, `EX-042`), so the

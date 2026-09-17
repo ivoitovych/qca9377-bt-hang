@@ -2927,3 +2927,84 @@ data arrives about *you*:
 
 The reviewer's §9 table says it in one line, and it is the line this project should have
 written first: **a real, correctly obtained value, anchored to the wrong thing.**
+
+---
+
+## Phase 36 — the patches meet BlueZ's actual rules, the machine goes back to stock, and the constant dissolves
+
+2026-09-16 → 09-18. Three things, each of which overturned something this side had
+been sure of.
+
+### The patches, against the rules as written rather than as remembered
+
+The operator asked whether the patches were in the best shape for maintainers and for the
+third-party reviewers he wants first. Conventions were read from BlueZ's own tree at
+`c73fa2f9a` — its `HACKING` and its last 300 commits — instead of assumed from kernel
+habit. Two findings changed both patches:
+
+> *"Do not add Signed-off-by lines in your commit messages. BlueZ does not use them, so
+> including them is actually an error."* — `HACKING`
+
+Both patches carried one — a rejection on arrival — and this repository's own README had
+said the sender must add their own. True of the kernel, wrong here. And `HACKING` asks for
+**50/72**, not checkpatch's 75; both subjects were 55 characters. Now `adapter: Fix crash
+on short start discovery reply` (49) and `a2dp: Fix crash on NULL stream in transport_cb`
+(46), files renamed to match. `0002` now carries its four runtime firings in the message
+itself. `0002` gets **no `Fixes:` on purpose** — the pickaxe finds only a 2015 refactor,
+where the text last moved, not where the NULL became possible.
+
+Verified rather than asserted: checkpatch under BlueZ's own `.checkpatch.conf`, 0 errors;
+`git am` in a throwaway worktree, each patch alone and both in either order, 4/4 clean.
+And a correction to the operator's model, which mattered: **BlueZ takes patches by mail,
+not pull requests.** The GitHub tracker is only for tracking. For these two patches no bug
+report is needed at all — the patch *is* the report.
+
+### The configuration, decided and executed with the gate respected
+
+The operator's position: the modification "just changes the mode of operation, not the
+actual code", so evidence collected under it is valid, kept, and called *modified
+configuration* rather than "mitigated". Checked, not accepted: a module parameter and a
+sysfs write; no code differs; autosuspend governs an *idle* device and the fault occurs
+during active streaming. Correct, with two limits recorded — every counted capture had
+been under the modified configuration, and autosuspend may bear on the *post-fault* path.
+
+Decision: return to stock. **Not run while `EX-042`'s window stood** — `bt-mode experiment`
+writes `power/control=auto` *live*, and the window was at 10 h 55 m with zero
+interventions. It closed by power-off at **11 h 12 m**, the longest uncensored window in the
+record. The switch ran on the next boot; stamp and files agree for the first time since
+08-19; `bt-dyndbg` still at 166 sites. Trial-13, which straddled the switch, will close as
+`CHANGED:` — the trial tool already had the protection the review asked for.
+
+### The tool for CI verdicts, and its two first-run bugs
+
+The operator pasted a fourth hand-typed `until gh run list … | grep` loop — "Parse error"
+— and asked if it was avoidable. `devtools/ci` now reads a verdict on the machine and
+`devtools/status` shows it (`R2-105`). Its first run printed the title where the run id
+belonged: an in-progress run's `conclusion` is the **empty string, not null**, jq's `//`
+does not substitute for it, and `read` with a tab IFS then shifted every field. Two wrong
+diagnoses; the third came from `cat -A`. Then `--wait`, launched right after a push,
+exited "no run found" because GitHub queues the run a minute *after* the push returns — it
+now waits for the run to appear, with two seams so both outcomes were proven to fire.
+
+### The seventh wedge, three hours into stock, and the constant that was never one
+
+`EX-043`, 2026-09-17 16:51, `autosusp=Y, power=auto` read live: the modified configuration
+is eliminated as a factor. And it was different in kind. The link came up on alt 1 and
+**streamed 910 frames for 9.65 s with zero HCI commands in flight**; the first command then
+issued — `0x0406 Disconnect` — died 2.05 s later. Setup → fault **11.874 s**, against
+2.08–2.19 s in all six before.
+
+That dissolved the "2.15 s" this project had been proud of. Six fast teardowns, with the
+first command 34–279 ms after link-up, plus `HCI_CMD_TIMEOUT`. **The invariant is not an
+interval: the first HCI command issued into a running alt-1 stream is never answered.** The
+stream alone does no visible harm. That also accounts for the 4.1–155.8 s "spread" measured
+in August from other anchors — the same fact seen without the right one.
+
+### The shape
+
+Phase 34 predicted; Phase 35 was read about; this one is about **the cost of a tidy
+number.** 2.15 s across six instances, spread 115 ms, three kernels — it was true, it was
+measured correctly, and it was the wrong thing to be measuring. One instance with a slow
+teardown was all it took. Seven is not many, and the mechanism is still open; but the shape
+of the driver test is now exact — put the link on alt 1, stream, issue a command, watch it
+die — and that is what the kernel patch has to prevent.
