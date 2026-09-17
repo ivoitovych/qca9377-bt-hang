@@ -32,3 +32,71 @@ different.
 
 Both want the same three things on the first screen: what this is, what is established
 now, and where the evidence is. Neither wants to be told which sections are stale.
+
+## 1. `README.md` (746 lines)
+
+- **FD-01 [HIGH] The page disowns 660 of its own 746 lines, and both readers hit the
+  disowned part on their second screen.** Line 79: "Sections below this point were written
+  earlier and are being rewritten … treat `BRIEF.md` as authoritative". What follows is
+  the retired model presented in the present tense: "Established driver mismatch" (line
+  159, the missing-quirk thesis), "A candidate fix" (443, the one-line `BTUSB_QCA_ROME`
+  patch, with a `REVIEWED-KEEP` marker protecting its hedges), the `BT_EARLY` watchdog
+  section (372) built on precursors the project has refuted, and a Status table (608)
+  whose rows are from the `n = 2` era. **(M)** reads the good patches paragraph at line
+  30 and, scrolling for the hardware context, meets a kernel patch the project no longer
+  proposes. **(U)** reads "Install … `--apply` — install and arm" (247) two screens after
+  being told the armed watchdog has "three controlled demonstrations of destroying the
+  controller". A front page cannot carry a section it tells the reader not to trust; the
+  rewrite the banner promises is the whole fix, and §7 gives the skeleton.
+- **FD-02 [HIGH] Nothing on the page is written for the reader who arrives from a patch.**
+  The patches paragraph (30–38) is accurate and well placed, but it does not link EX-041,
+  the crash-site review, or say how the patches were verified (checkpatch clean under
+  BlueZ's own config, `git am` clean on master both orders); those live in
+  `patches/bluez/README.md`, which the paragraph links only by directory. **(M)** wants,
+  on this screen: the two subjects, "fired four times, EX-041", "resolved from the
+  stripped binary, `reviews/2026-08-23T2340Z`", "how to re-check". Six lines.
+- **FD-03 [HIGH] The Status table contradicts BRIEF and contradicts the page itself.**
+  "Kernel patch ❌ written, not built or tested" — that is the retired quirks patch;
+  BRIEF §1 says no kernel patch exists. "Failure localised to synchronous-audio link
+  transitions ⚠️ … `EX-006`, `EX-009`" — the two-instance reading, now seven with a
+  named invariant. "Observational denominator ✅ re-derivable — 34 boots, 287 timeouts"
+  (621) against "⚠️ That baseline is no longer re-derivable" (344) — the same
+  contradiction R2-05 reported on 09-16, still on the page. The **"strongest current
+  lead"** paragraph below the table ("not a single command … what the two failures share
+  is the transition") is the 08-15 statement. A status table on a front page must be
+  generated from, or be a copy of, BRIEF §2/§3 — never a third hand-kept version.
+- **FD-04 [MED] For (U), reuse is stated once, at line 647, after the install and
+  watchdog material.** "All work with any USB Bluetooth controller, not just 13d3:3503"
+  is true of `bt-diagnose`, `bt-state`, `bt-boots`, `sanitize-logs.sh`, and of the
+  incident/exhibit/fault-window discipline, and it is the sentence a stranger with a
+  Realtek or Intel part needs on the first screen. The only "Different controller?"
+  heading (317) is about installing the watchdog with `BT_VID`/`BT_PID`, on a page that
+  warns the watchdog destroys this controller. Two paragraphs are missing: "if your
+  hardware differs, this transfers: …" and "if your symptom differs, this project
+  separates four failure modes that look identical; here is how to tell which you have".
+- **FD-05 [MED] No branch map, no CI, no register.** The layout tree (552) is good for
+  directories and silent on branches: `main`, `review/*` (report + reaction, per the
+  convention in `reviews/README.md`), `claude/unit-testing-intro-*` (the test-suite
+  maintainer's line, currently 9 commits past its merge), the evidence and verify
+  branches. A maintainer who runs `git branch -r` sees 19 branches and no legend. Nor is
+  there a sentence on CI (`.github/workflows/checks.yml`, green since 09-16, read by
+  `devtools/ci`) or on `reviews/README.md` as the live action register.
+- **FD-06 [MED] Retired numbers remain load-bearing.** "287 timeouts across 34 boots"
+  appears four times; the "Not a *recent* regression" table (509) lists four kernels
+  with "Hangs? yes" for the old phenotype while BRIEF's signature table carries the
+  three kernels that matter; the `BT_EARLY` lead-time table (409) and the "five for five"
+  late-reset count are watchdog-era measurements the page itself calls historical and
+  not re-derivable. Each is true as history and wrong as a front page.
+- **FD-07 [LOW]** `docs/issues.md` is labelled "the AUTHORITATIVE current claims" in the
+  layout block (565) and "not kept current past `EX-021`" at line 79. The Contributing
+  section asks for "confirmation that the patch works, if you build it" and "whether
+  13d3:3503 is present in the quirks table in current mainline" — requests for the
+  retired model; the current one wants a ≤ v5.11 kernel run, other alt-1 controllers, and
+  a `btmon` capture of an Enhanced Setup that survived.
+- **FD-08 [GOOD]** Lines 1–60 are the right front page in miniature: the one-sentence
+  symptom, the affected part, the three-stream table with where each lives, the
+  seven-reproduction sentence, "four distinct failure modes that look identical". The
+  layout tree, the Publishing-logs paragraph (reason with the rule), and the tests
+  block's refusal to quote a number are all worth keeping verbatim. `REVIEWED-KEEP §1.1`
+  markers intact — two of them now guard text that should leave the front page for
+  `docs/`, which is a move, not a removal.
