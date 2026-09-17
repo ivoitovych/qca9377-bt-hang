@@ -228,5 +228,4 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 | evidence, one claim + extraction each | `evidence/exhibits/` (`bt-exhibit index`) |
 | narrative, why things were believed | `HISTORY.md` (34 phases) |
 | which tool answers which question | `docs/tooling-index.md` |
-| the patches and their reasoning | `patches/bluez/` |
-| working rules for the assistant | auto-loaded memory (`MEMORY.md`) |
+| the patches, their reasoning and BlueZ's measured conventions | `patches/bluez/` |
