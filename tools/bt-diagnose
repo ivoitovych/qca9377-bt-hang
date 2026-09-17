@@ -116,17 +116,28 @@ VID=$(<"${DEVS[0]%|*}/idVendor"); PID=$(<"${DEVS[0]%|*}/idProduct")
 HCI="${DEVS[0]#*|}"
 
 # ── 2. Does the controller answer? ────────────────────────────────────────
+#
+# ⚠️ OPT-IN since 2026-09-18 (R2-78). The header promises "nothing written",
+# and a Read Local Name is an HCI command into whatever state the controller is
+# in — on a wedged one it is exactly the intervention an untreated window must
+# not receive. Liveness is asked for explicitly with --probe.
 echo
-alive=unknown
-if command -v hciconfig >/dev/null 2>&1; then
-    timeout 6 hciconfig "$HCI" name >/dev/null 2>&1 && alive=yes || alive=no
-elif command -v btmgmt >/dev/null 2>&1; then
-    timeout 6 btmgmt --index "${HCI#hci}" info >/dev/null 2>&1 && alive=yes || alive=no
+PROBE=0; for a in "$@"; do [[ "$a" == "--probe" ]] && PROBE=1; done
+alive=unprobed
+if (( PROBE )); then
+    alive=unknown
+    if command -v hciconfig >/dev/null 2>&1; then
+        timeout 6 hciconfig "$HCI" name >/dev/null 2>&1 && alive=yes || alive=no
+    elif command -v btmgmt >/dev/null 2>&1; then
+        timeout 6 btmgmt --index "${HCI#hci}" info >/dev/null 2>&1 && alive=yes || alive=no
+    fi
 fi
 case "$alive" in
-    yes) echo "  ${G}✓${O} controller responds to HCI commands" ;;
-    no)  echo "  ${R}✗${O} controller does NOT respond — it is stalled right now" ;;
-    *)   echo "  ${Y}•${O} cannot probe (install 'bluez' for hciconfig/btmgmt)" ;;
+    yes)      echo "  ${G}✓${O} controller responds to HCI commands" ;;
+    no)       echo "  ${R}✗${O} controller does NOT respond — it is stalled right now" ;;
+    unprobed) echo "  ${Y}•${O} liveness not probed — a probe is an HCI command into the controller;"
+              echo "    pass --probe to send one (never inside a hang you mean to observe)" ;;
+    *)        echo "  ${Y}•${O} cannot probe (install 'bluez' for hciconfig/btmgmt)" ;;
 esac
 
 # ── 3. Historical phenotype ───────────────────────────────────────────────

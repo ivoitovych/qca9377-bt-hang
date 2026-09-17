@@ -76,6 +76,23 @@ first timeout   2026-09-17T16:51:28.781675+02:00
 checked         2026-09-17T23:44:19+02:00     6 h 53 m, 0 interventions, USB layer silent
 ```
 
+⚠️ **"0 interventions" audited against R2-94, for this and the four windows before it.**
+`bt-incident` called `bt-state`, which ran `hciconfig name` — HCI Read Local Name,
+`0x0c14` — inside every window from `EX-037` on. `bt-window` cannot see that: it looks for
+reset/rfkill/reload lines. So the question was whether a probe ever *reached the
+controller*. Counted after each fault, from the archives:
+
+| window | `0x0c14 tx timeout` after the fault |
+|---|---|
+| `EX-037` `EX-038` `EX-040` `EX-042` `EX-043` | **0, 0, 0, 0, 0** |
+
+And the kernel log at this window's capture (23:44:32–38) shows why: the only command
+transmitted was bluetoothd's own `0x0406` retry at :37.19; the probe was queued behind the
+stuck command with `cmd_cnt 0`, and `timeout 6` killed `hciconfig` before a credit was
+freed, so the kernel dropped it untransmitted. **No byte reached the controller in any of
+the five.** That is luck of timing, not design — one `hci_cmd_timeout` inside those six
+seconds would have sent it — and `bt-state` is probe-free by default from 2026-09-18.
+
 ## Provenance
 
 | field | value |

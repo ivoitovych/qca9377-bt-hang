@@ -4444,22 +4444,42 @@ printf 'Aug 10 09:12:00 host bt-hang-watchdog: intervening now\n' \
     > "$BS/jrn/unit-bt-hang-watchdog.b0.log"
 # hciconfig is an INTERVENTION, not an observation — a raw HCI exchange that
 # has aborted a live btmon capture (EX-011). Stubbing it is not only for speed.
-printf '#!/bin/sh\nexit 0\n' > "$BS/stub/hciconfig"
+# The hciconfig stub RECORDS that it was called: probe-freedom is asserted on
+# the spy log, not on the output field — a tool could print "unprobed" and
+# still have sent the command.
+printf '#!/bin/sh\necho "hciconfig $*" >> "%s/probe.log"\nexit 0\n' "$BS" > "$BS/stub/hciconfig"
 printf '#!/bin/sh\necho "Device AA:BB:CC:00:00:01 Phone"\n' > "$BS/stub/bluetoothctl"
 chmod +x "$BS/stub"/*
 
 bs_run() { env PATH="$BS/stub:$PATH" BT_SYSFS_USB="$BS/usb" BT_SYSFS_MODULE="$BS/mod" \
                BT_JOURNAL_FIXTURE="$BS/jrn" tools/bt-state "$@" 2>&1; }
 
+# ⚠️ PROBE-FREE BY DEFAULT (R2-94). bt-state ran `hciconfig name` — an HCI
+# command — on every call, and bt-status and bt-incident call it first inside
+# an untreated wedge window. The five windows EX-037..EX-043 were audited: the
+# probe was queued behind the stuck command and never transmitted, by luck of
+# a 2 s timer against a 6 s timeout. The default must not send it at all.
+: > "$BS/probe.log"
 BSTSV=$(bs_run --tsv); bstsvrc=$?
-# Field by field, by POSITION. Grepping for the values would pass on a row
-# whose columns had been reordered, which is the failure that cannot be seen
-# downstream: metrics.tsv rows carry no per-row header.
+IFS=$'\t' read -r f_ts f_dev f_ctrl f_hci f_alive f_as f_tx f_wd f_conn <<<"$BSTSV"
+(( bstsvrc == 0 )) && [[ "$f_dev" == "3-3" && "$f_ctrl" == "on" && "$f_hci" == "hci0" \
+                      && "$f_alive" == "unprobed" && "$f_as" == "N" ]] \
+   && [[ ! -s "$BS/probe.log" ]] \
+    && ok "bt-state --tsv is probe-free by default: liveness reads 'unprobed' and hciconfig was never invoked" \
+    || bad "default bt-state probed or mislabelled: alive=$f_alive, hciconfig calls=$(grep -c . "$BS/probe.log" 2>/dev/null)"
+
+# And --probe MUST still probe, or the liveness test the trials and BT-4 rely
+# on has silently become a constant. Field by field, by POSITION: grepping for
+# the values would pass on a row whose columns had been reordered, which is the
+# failure that cannot be seen downstream — metrics.tsv rows carry no header.
+: > "$BS/probe.log"
+BSTSV=$(bs_run --tsv --probe); bstsvrc=$?
 IFS=$'\t' read -r f_ts f_dev f_ctrl f_hci f_alive f_as f_tx f_wd f_conn <<<"$BSTSV"
 (( bstsvrc == 0 )) && [[ "$f_dev" == "3-3" && "$f_ctrl" == "on" && "$f_hci" == "hci0" \
                       && "$f_alive" == "yes" && "$f_as" == "N" ]] \
-    && ok "bt-state --tsv puts device/power/hci/liveness in their documented columns" \
-    || bad "TSV columns wrong: dev=$f_dev ctrl=$f_ctrl hci=$f_hci alive=$f_alive as=$f_as"
+   && grep -q 'hciconfig hci0 name' "$BS/probe.log" \
+    && ok "bt-state --tsv --probe puts device/power/hci/liveness in their documented columns and sends exactly the probe" \
+    || bad "TSV columns wrong under --probe: dev=$f_dev ctrl=$f_ctrl hci=$f_hci alive=$f_alive as=$f_as; probe.log=$(cat "$BS/probe.log" 2>/dev/null | tr '\n' ' ')"
 
 # 2, not 3: the fixture's `link tx timeout` is ACL supervision, a different
 # layer. Inflating this column inflates every before/after table built on it.

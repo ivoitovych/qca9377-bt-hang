@@ -93,8 +93,9 @@ cd qca9377-bt-hang
 ./tools/bt-diagnose
 ```
 
-It displays the currently attached USB Bluetooth controller, checks whether it answers
-now, and scans retained boots for HCI command timeouts. Historical kernel lines are not
+It displays the currently attached USB Bluetooth controller, scans retained boots for HCI
+command timeouts, and — only with `--probe`, since that sends an HCI command into whatever
+state the controller is in — checks whether it answers now. Historical kernel lines are not
 stably attributable to the current VID:PID and are not paired causally with resets or
 firmware messages. The tool therefore reports a **phenotype**, not “this bug.” Exit 0 =
 phenotype not observed in retained history, 1 = observed, 2 = cannot determine.

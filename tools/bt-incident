@@ -96,7 +96,18 @@ journalctl -u bluetooth --since "$SINCE" --no-pager -o short-precise 2>/dev/null
 journalctl -u bt-trace --since "$SINCE" --no-pager -o short-precise 2>/dev/null \
   > "$DIR/trace-service.log" || true
 command -v bt-timeline >/dev/null 2>&1 && bt-timeline "$SINCE" --raw > "$DIR/timeline.txt" 2>/dev/null || true
-command -v bt-state    >/dev/null 2>&1 && bt-state > "$DIR/state-now.txt" 2>&1 || true
+# bt-state is PROBE-FREE by default since 2026-09-18 (R2-94): it used to send
+# `hciconfig name` — HCI Read Local Name — into the very window this tool
+# exists to capture, from every capture made. bt-usbstate is the read-only view
+# of the controller's transport state and is recorded beside it.
+# Siblings resolved next to this file, not on PATH: PATH holds the installed
+# copies, which are whatever was last deployed (R2-94 proof caught bt-status
+# probing through exactly that).
+_HERE="$(dirname "$(readlink -f "$0")")"
+_bt_state="$_HERE/bt-state";     [[ -x "$_bt_state" ]]    || _bt_state=bt-state
+_bt_usbstate="$_HERE/bt-usbstate"; [[ -x "$_bt_usbstate" ]] || _bt_usbstate=bt-usbstate
+command -v "$_bt_state"    >/dev/null 2>&1 && "$_bt_state"    > "$DIR/state-now.txt" 2>&1 || true
+command -v "$_bt_usbstate" >/dev/null 2>&1 && "$_bt_usbstate" > "$DIR/usb-state.txt" 2>&1 || true
 
 for f in "$DIR"/*.log "$DIR"/*.txt; do
     [[ -f "$f" && -s "$f" && -n "$SAN" ]] && "$SAN" "$f" "$f" >/dev/null 2>&1

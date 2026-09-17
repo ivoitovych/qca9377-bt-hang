@@ -60,7 +60,7 @@ run `bluetoothd -d` — this project ships that on in
 | **What happened around the fault?** | `tools/bt-fault-window` (sequence + alt-1 counts + interval) |
 | What USB state is the wedged controller in? | `tools/bt-usbstate` (alt setting, endpoint size) |
 | Did a daemon crash, was a core kept, what is the stack? | `tools/bt-crash` |
-| Controller / service / mode / trial state | `tools/bt-status`, `tools/bt-state` |
+| Controller / service / mode / trial state | `tools/bt-status`, `tools/bt-state` — **probe-free by default**; `--probe` sends an HCI command and is an intervention (never inside an open window) |
 | Which boots exist, and when? | `tools/bt-boot-list`, `tools/bt-boots` |
 
 ### Evidence

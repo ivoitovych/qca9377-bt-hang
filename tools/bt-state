@@ -29,9 +29,25 @@ if [[ -z "$VID" || -z "$PID" ]]; then
     done
 fi
 VID="${VID:-13d3}"; PID="${PID:-3503}"   # fall back to the documented device
-TSV=0; [[ "${1:-}" == "--tsv" ]] && TSV=1
+TSV=0; PROBE=0
+for a in "$@"; do
+    case "$a" in
+        --tsv)   TSV=1 ;;
+        --probe) PROBE=1 ;;
+    esac
+done
 
-dev=absent; ctrl=-; hci=-; alive=?
+# ⚠️ PROBE-FREE BY DEFAULT since 2026-09-18 (R2-94). The `responds` field used
+# to be answered by `hciconfig name` — HCI Read Local Name, opcode 0x0c14 — on
+# EVERY run, and this tool is called by bt-status and by bt-incident, the two
+# commands run first inside an untreated wedge window. An audit of the five
+# windows EX-037..EX-043 found zero 0x0c14 timeouts after the fault: the probe
+# was queued behind the stuck command with cmd_cnt 0 and `timeout 6` killed
+# hciconfig before a credit was freed, so no byte ever reached the controller.
+# That is luck of timing, not design — one hci_cmd_timeout inside those six
+# seconds and the probe would have been transmitted into the window. Liveness
+# is now a deliberate act: `--probe`. Without it the field says so.
+dev=absent; ctrl=-; hci=-; alive=unprobed
 for d in "$SYSFS_USB"/*; do
     [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
     if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
@@ -40,11 +56,12 @@ for d in "$SYSFS_USB"/*; do
         break
     fi
 done
-if [[ "$hci" != "-" ]]; then
+if [[ "$hci" != "-" ]] && (( PROBE )); then
     # This probe is an INTERVENTION, not an observation: a raw-HCI
     # command/response exchange, proven to abort an active btmon capture
     # (EX-011) and counted per trial as a measurement perturbation. It is kept
-    # because it is a genuine end-to-end liveness test — see issues.md BT-4.
+    # behind --probe because it is a genuine end-to-end liveness test — see
+    # issues.md BT-4 — and must never run into a window by accident again.
     if command -v hciconfig >/dev/null 2>&1; then
         timeout 6 hciconfig "$hci" name >/dev/null 2>&1 && alive=yes || alive=no
     elif command -v btmgmt >/dev/null 2>&1; then

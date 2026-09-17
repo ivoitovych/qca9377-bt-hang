@@ -27,9 +27,12 @@ commits within hours of being written (`R2-13`); `git log -1` is one command awa
 > it. Reproduced under stock power management (`EX-043`); the modified configuration is not
 > a factor.
 
-Regression candidate: `BTUSB_USE_ALT1_FOR_WBS` went from a Realtek-only opt-in to an
-unconditional fallback in **v5.11 → v5.12**. Untested prediction: a ≤ v5.11 kernel should
-not take this path.
+Introducing commit, verified at five tags by the test-suite maintainer (08-24, received
+09-18): **`517b693351a2`** — Trent Piepho, 2020-12-09, *"Bluetooth: btusb: Always fallback to
+alt 1 for WBS"* — ancestor of v5.12, not v5.11. ⚠️ Its own message states the assumption this
+hardware falsifies: *"I have been unable to find any [adapters that support alt 6]"* — build
+the upstream report on that sentence. **Control window is v5.8–v5.11 only**: below v5.8 alt 1
+is reachable by a different route (`new_alts = sco_num`), so "≤ v5.11" was wrong.
 
 ## 2. The signature — `n = 7`, three kernels, two peripherals, both configurations
 
@@ -66,9 +69,7 @@ Both instances where the log names the dying command name `0x0406 Disconnect, re
 - **No software recovery exists.** `hci_cmd_timeout()` calls `hdev->reset()`, which is NULL
   ( `13d3:3503` matches no quirks entry); Linux has no periodic USB device recovery; and the
   GUI toggle fails with `Opcode 0x0c03 (HCI_Reset) failed: -110` (`EX-039`).
-- **`hci0` is never unregistered.** The device stays enumerated and cannot initialise — this
-  is *not* the stage-2 "off the bus" shape.
-- **CVSD is safe.** `mtu 17`, 4669 packets, controller healthy throughout.
+- **`hci0` is never unregistered** (not the stage-2 shape); **CVSD (`mtu 17`) is safe.**
 
 ## 4. Not settled
 
@@ -94,7 +95,6 @@ Both instances where the log names the dying command name `0x0406 Disconnect, re
 | "autosuspend mitigation works (0/4 vs 3/4)" | **FALSE** — `EX-038` wedged under `autosusp=N`. The split is chronological **because `--tools-only` reverted the baseline on 08-19** (`R2-58`): every `autosusp=Y` row is before that deploy, every `autosusp=N` row after. Not a treatment effect — a deployment accident |
 | "the 287-timeout denominator can't be re-derived" | **FALSE** — `evidence/baseline/baseline.tsv` reproduces it |
 | "lore.kernel.org is unreachable" | **FALSE** — UA block fronting a JS challenge; a browser gets 200 |
-| "the recovery ladder destroyed nothing" | **FALSE** by the next boot (`EX-034`) |
 
 ## 6. The BlueZ patches — status
 
@@ -138,7 +138,8 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **Do not send the patches** until the operator says so.
 - **An untreated window is the most valuable state there is.** Do not touch Bluetooth;
   `sysfs` reads are safe, anything through usbfs is not. ⚠️ **`bt-mode` writes
-  `power/control` live** — check `bt-window` before any mode switch.
+  `power/control` live** — check `bt-window` before any mode switch. `bt-state`, `bt-status`,
+  `bt-incident` are probe-free since 09-18; `--probe` sends an HCI command and is an intervention.
 - **Never publish the kernel (alt-1) bug report without its patch ready to follow at
   once.** The BlueZ patches need no report at all.
 - **Verify operator accounts against logs** — he asked not to be trusted. Find the record or
@@ -178,7 +179,6 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **A number in a summary is a claim** and inherits its filter's assumptions (`8 daemon
   crashes` was true of the machine, false of Bluetooth). **Present ≠ complete** — 9 of 21
   archives were prefixes reading as complete.
-- **Read provenance, never copy it forward.** Wrong boot id twice, wrong kernel five times.
 - **Extract the repeated question into a tool**, not the repeated command; one script
   replaced 226 recurring pipelines. If a question recurs and no tool answers it, that is the bug.
 - **Check whether the tool already does the step you are prefixing.** `git add -A` was typed

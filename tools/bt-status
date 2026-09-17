@@ -15,8 +15,15 @@
 
 set -uo pipefail
 
-BRIEF=0
-[[ "${1:-}" == "--brief" ]] && BRIEF=1
+BRIEF=0; PROBE=""
+for a in "$@"; do
+    case "$a" in
+        --brief) BRIEF=1 ;;
+        # Passed through to bt-state. Off by default (R2-94): this is the
+        # first command run in an untreated window, and it must not send one.
+        --probe) PROBE="--probe" ;;
+    esac
+done
 
 G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
 [[ -t 1 ]] || { G=""; R=""; Y=""; B=""; O=""; }
@@ -129,7 +136,13 @@ echo "${B}BLUETOOTH SITUATION REPORT${O} — $(date -Iseconds)"
 echo "═════════════════════════════════════════════════════════════"
 echo
 echo "${B}1. Controller${O}"
-have bt-state && bt-state | sed 's/^/  /' || echo "  (bt-state not installed)"
+# THE SIBLING, NOT WHATEVER IS ON PATH. `bt-state` on PATH is the INSTALLED
+# copy under /usr/local/bin, which is whatever was last deployed — the
+# probe-freedom proof for R2-94 caught this tool still probing because PATH
+# handed it the stale twin. A tool must run the code it ships with.
+BTSTATE="$(dirname "$(readlink -f "$0")")/bt-state"
+[[ -x "$BTSTATE" ]] || BTSTATE=bt-state
+have "$BTSTATE" && "$BTSTATE" $PROBE | sed 's/^/  /' || echo "  (bt-state not installed)"
 
 echo
 echo "${B}2. This boot${O}   (up $(uptime -p | sed 's/^up //'))"
