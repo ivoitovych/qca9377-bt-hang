@@ -1,0 +1,27 @@
+2026-08-18T08:00:01.100000+0200 n kernel: usb 3-3: new full-speed USB device number 2 using xhci_hcd
+2026-08-18T08:00:01.400000+0200 n kernel: Bluetooth: hci0: QCA Product ID   :0x00000008
+2026-08-18T08:00:02.000000+0200 n kernel: Bluetooth: hci0: opcode 0x0c03 sent
+2026-08-18T08:00:02.100000+0200 n kernel: Bluetooth: hci0: opcode 0x1001 sent
+2026-08-18T08:00:03.000000+0200 n systemd[1]: Started bluetooth.service - Bluetooth service.
+2026-08-18T08:00:03.500000+0200 n bluetoothd[2862]: src/adapter.c:adapter_set_power_state() on
+2026-08-18T08:00:03.600000+0200 n bluetoothd[2862]: src/adapter.c:new_settings_callback() Settings: 0x00000ac1
+2026-08-18T18:46:00.000000+0200 n kernel: Bluetooth: hci0: opcode 0x0401 sent
+2026-08-18T18:46:01.000000+0200 n bluetoothd[2862]: src/adapter.c:trigger_start_discovery() adapter 0
+2026-08-18T18:46:02.000000+0200 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 1 method 0
+2026-08-18T18:46:04.000000+0200 n bluetoothd[2862]: src/adapter.c:start_discovery_complete() status 0x00
+2026-08-18T18:46:05.000000+0200 n bluetoothd[2862]: src/adapter.c:discovering_callback() hci0 type 7 discovering 0 method 0
+2026-08-18T18:46:06.000000+0200 n kernel: bluetoothd[2862]: segfault at 10 ip 00005c48db1977e5 sp 00007fff41437110 error 4 in bluetoothd[367e5,5c48db186000+f3000] likely on CPU 9 (core 4, socket 0)
+2026-08-18T18:46:07.000000+0200 n systemd[1]: bluetooth.service: Failed with result 'core-dump'.
+2026-08-18T18:46:07.100000+0200 n systemd[1]: bluetooth.service: Scheduled restart job, restart counter is at 1.
+2026-08-18T18:46:08.000000+0200 n bluetoothd[313564]: src/adapter.c:new_settings_callback() Settings: 0x00000ac1
+2026-08-18T22:15:00.000000+0200 n kernel: bluetoothd[313564]: segfault at 10 ip 000060ff12be87e5 sp 00007fff35b2f190 error 4 in bluetoothd[367e5,60ff12bd7000+f3000] likely on CPU 6 (core 3, socket 0)
+2026-08-18T22:15:00.500000+0200 n systemd[1]: bluetooth.service: Failed with result 'core-dump'.
+2026-08-18T22:15:00.841599+0200 n systemd[1]: bluetooth.service: Scheduled restart job, restart counter is at 2.
+2026-08-18T22:15:02.000000+0200 n bluetoothd[348170]: src/adapter.c:adapter_set_power_state() on
+2026-08-18T22:15:03.100000+0200 n bluetoothd[348170]: src/adapter.c:new_settings_callback() Settings: 0x00000ac1
+2026-08-18T22:20:00.000000+0200 n kernel: Bluetooth: hci0: opcode 0x040a sent
+2026-08-18T23:50:00.000000+0200 n bluetoothd[348170]: src/adapter.c:trigger_start_discovery() adapter 0
+2026-08-18T23:50:00.400000+0200 n bluetoothd[348170]: src/adapter.c:start_discovery_complete() status 0x0c
+
+Aug 18 22:16:11 n bluetoothd[1158]: profiles/audio/a2dp.c:transport_cb() bt_io_accept: setup 0x5581a2f0 has no stream
+Aug 18 22:16:44 n bluetoothd[1158]: src/adapter.c:start_discovery_complete() Wrong size of start discovery return parameters

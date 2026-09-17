@@ -7946,6 +7946,81 @@ SNOF_CUT=$(compgen -G "$SNOF/snap/*-boot0/f-otherfail.log" | head -1)
     && ok "another unit's restart counter is not read as bluetooth.service's" \
     || bad "the restart count was taken from a foreign unit: $(rt_line "$SNOFO" 'service restarts')"
 rm -rf "$SNOF"
+# ── the patch guards, and why a PREVENTED crash needs its own evidence ────
+#
+# The two patches in patches/bluez/ each return early instead of faulting. A
+# patch that works therefore produces NOTHING: the daemon does not die, which
+# on its own is indistinguishable from the fault conditions never recurring.
+# Both patches log before they bail, so the message is the only positive
+# evidence the guard did work — and this section exists because that
+# distinction is exactly the kind that gets optimised away later by someone
+# tidying "redundant" output.
+SNG=$(mktemp -d); mkdir -p "$SNG/repo"
+sng_run() { BT_JOURNAL_FIXTURE=tests/journal/snapshot-guard BT_SNAPSHOT_DIR="$SNG/snap" \
+            BT_REPO="$SNG/repo" tools/bt-snapshot "$@" 2>&1; }
+SNGO=$(sng_run); sngrc=$?
+(( sngrc == 0 )) && [[ "$SNGO" == *"patch guards fired 2"* && "$SNGO" == *"PREVENTED"* ]] \
+    && ok "a guard that fired is reported as a crash PREVENTED, not as an absence" \
+    || bad "guard hit not reported (rc=$sngrc): $(grep -i guard <<<"$SNGO" | tr '\n' ' ')"
+
+# BOTH STRINGS, because they are not equally informative and the filter says so.
+# `has no stream` is unique to 0002. The discovery string is NOT — 0001
+# duplicates text the function already carried below its own length check — so
+# a fixture carrying only the unique one would let the second pattern rot out
+# of the filter unnoticed.
+SNGD=$(ls -d "$SNG"/snap/*/ 2>/dev/null | head -1)
+[[ -r "$SNGD/f-guard.log" ]] \
+   && [[ "$(grep -c 'has no stream' "$SNGD/f-guard.log")" == 1 ]] \
+   && [[ "$(grep -c 'Wrong size of start discovery' "$SNGD/f-guard.log")" == 1 ]] \
+    && ok "f-guard.log cuts both guard strings — the unique one and the duplicated one" \
+    || bad "f-guard.log missing a guard string: $(cat "$SNGD/f-guard.log" 2>/dev/null | tr '\n' ' ')"
+
+# THE REPORTED COUNT MUST BE THE FILE, and this has to be checked as a
+# RELATIONSHIP rather than against a fixture-derived constant. Written first as
+# `grep -c . f-guard.log == 2` — which passes whatever the tool prints, because
+# it never reads the tool's output at all. Hardcoding GUARD=2 in bt-snapshot did
+# not fail it. Fourth time in this suite a check turned out to assert something
+# nothing could break; the mutation is the only reason it was found.
+SNGN=$(grep -oE 'patch guards fired +[0-9]+' <<<"$SNGO" | grep -oE '[0-9]+$')
+SNGL=$(grep -c . "$SNGD/f-guard.log" 2>/dev/null)
+[[ -n "$SNGN" && "$SNGN" == "$SNGL" ]] \
+    && ok "the reported guard count equals the line count of the cut it names" \
+    || bad "count/cut disagree: reported '$SNGN', file has '$SNGL' lines"
+
+# AND ZERO MUST SAY WHAT IT CANNOT DISTINGUISH. This is the whole point: on a
+# machine where the guards never fired, `0` means either that no crash was
+# prevented or that none was about to happen, and reporting a bare 0 invites
+# reading it as "the patches did nothing".
+SNGZ=$(BT_JOURNAL_FIXTURE=tests/journal/snapshot-bluez BT_SNAPSHOT_DIR="$SNG/z" \
+       BT_REPO="$SNG/repo" tools/bt-snapshot 2>&1)
+[[ "$SNGZ" == *"patch guards fired      0"* && "$SNGZ" == *"no crash prevented AND none occurred"* ]] \
+   && [[ "$SNGZ" != *"PREVENTED"* ]] \
+    && ok "zero guards is labelled ambiguous rather than reported as a clean result" \
+    || bad "the zero case is not labelled: $(grep -i guard <<<"$SNGZ" | tr '\n' ' ')"
+
+# ── the two counters EX-035 designates as "did the attempt even count?" ──
+#
+# EX-035 ran a patched daemon for eight hours with zero crashes and concluded
+# NOTHING from it, because there were zero synchronous-link setups and zero
+# alt-setting switches: BT-1 needs the SCO path, the SCO path was not taken, so
+# "Bluetooth did not die" only means it was never asked to do the thing that
+# kills it. The exhibit names these two bt-snapshot lines as the check for
+# whether a future reproduction attempt counts at all.
+#
+# THEY HAD NO ASSERTIONS. A number that an exhibit leans on and nothing
+# verifies is the shape this record has been burned by before — bt-trial's
+# equivalent counter is tested, bt-snapshot's was not.
+[[ "$SNGO" == *"0x0428 legacy SCO       2"* && "$SNGO" == *"alt-setting switch      2"* ]] \
+    && ok "the SCO-approach counters count 0x0428 setups and Alt-no probes" \
+    || bad "SCO counters wrong: $(grep -E '0x0428|alt-setting' <<<"$SNGO" | tr '\n' ' ')"
+
+# AND BOTH READ ZERO WHEN THE PATH WAS NOT TAKEN, which is the reading that
+# makes EX-035's refusal to conclude anything correct. Without this case the
+# check above passes on a tool that always prints 2.
+[[ "$SNGZ" == *"0x0428 legacy SCO       0"* && "$SNGZ" == *"alt-setting switch      0"* ]] \
+    && ok "both counters read zero on a boot that never approached the SCO path" \
+    || bad "zero case wrong: $(grep -E '0x0428|alt-setting' <<<"$SNGZ" | tr '\n' ' ')"
+rm -rf "$SNG"
 
 # AND THE MACHINE THAT SIMPLY DOES NOT RUN bluetoothd WITH DEBUG LOGGING ON.
 # Without `-d` there are no `src/adapter.c:` lines at all, so powered and

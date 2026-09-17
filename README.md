@@ -539,14 +539,47 @@ The two statements are consistent: the change landed in v5.12, and the oldest ke
 tested above is 6.17. Rolling back within that range changes nothing because the
 whole range is on the far side of it.
 
-**That yields a prediction this project has not tested**: a v5.11-or-earlier kernel
-should not take the alt-1 path on this hardware at all. Nobody has run it, and it is
-recorded here as an open experiment rather than a result.
+**That yields a prediction this project has not tested**: on a kernel in the
+**v5.8 – v5.11** window, this hardware should not take the alt-1 path at all —
+it should log `Device does not support ALT setting 6` and get no wideband speech.
+Nobody has run it, and it is recorded here as an open experiment rather than a
+result.
+
+> ⚠️ **The window matters — "v5.11 or earlier" is wrong, and this was checked at
+> five tags.** Alt 1 is reachable *again* below v5.8, by a different route, so an
+> older kernel does not make a cleaner control:
+>
+> | kernel | transparent/WBS path | alt 1? |
+> |---|---|---|
+> | ≤ v5.7 | **no `air_mode` branch exists**; alt is chosen from `voice_setting & 0x0020` and `sco_num` → `alts[sco_num-1]` = {2,4,5}, else `sco_num` | **yes, by a different mechanism** |
+> | v5.8 – v5.11 | alt 6 if present, else `bt_dev_err("Device does not support ALT setting 6")` — and from v5.11 an alt-1 opt-in gated on `BTUSB_USE_ALT1_FOR_WBS`, **set only in the Realtek block** | **no** (this device matches no quirk) |
+> | ≥ v5.12 | `new_alts = btusb_find_altsetting(data, 6) ? 6 : 1;` — unconditional | **yes** |
+>
+> The change is **`517b693351a2`** — Trent Piepho, 2020-12-09, *"Bluetooth: btusb:
+> Always fallback to alt 1 for WBS"* — verified as an ancestor of `v5.12` and
+> **not** of `v5.11`. It restored a pre-5.8 behaviour that `461f95f04f19` (Hilda
+> Wu, 2020-06-30) had brought back for Realtek only.
+>
+> **Its own commit message is the strongest thing we have on this point**, and it
+> is the author's, not ours:
+>
+> > *"many if not most BT USB adapters do not support alt mode 6. In fact, **I have
+> > been unable to find any which do**."*
+>
+> and the code comment it left behind rests on an explicitly empirical assumption:
+>
+> > *"Alt 1 appears to work for all adapters that do not have alt 6, and which work
+> > with WBS at all."*
+>
+> `13d3:3503` is a candidate counterexample to exactly that sentence. That is a far
+> better framing for an upstream report than "the driver picks a bad alt setting".
 
 Confirmed on the machine rather than only in source — `EX-033`'s captured lines are
 the chain itself: `hci0 evt 5` (`HCI_NOTIFY_ENABLE_SCO_TRANSP`, the transparent
-branch), then `Looking for Alt no :6` and `:3` (the two probes), then silence —
-because selecting alt 1 is the bare `else` and logs nothing.
+branch), then `Looking for Alt no :6` and `:3` (the two probes). ⚠️ An earlier
+version of this sentence said "then silence"; that was an artefact of the exhibit's
+own grep (`EX-037`). Alt 1 is now **read directly from `sysfs`** during live wedges —
+`bAlternateSetting 1`, `wMaxPacketSize 0009` — five times (`EX-037`–`EX-043`).
 
 ---
 
