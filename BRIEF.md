@@ -204,12 +204,12 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
    `autosusp=N,power=on` with an *experiment* stamp. That is **runtime configuration of
    unchanged code** (a module parameter and a sysfs write — verified, `EX-042`), so the
    evidence collected under it **stands and is kept**, labelled by the treatment string each
-   exhibit already carries — *modified configuration*, not "mitigated". ⚠️ **`bt-mode
-   experiment` is not yet run:** it writes `power/control=auto` live, and a 10 h 55 m
-   uncensored wedge window is open. Run it after the next power cycle. Logging is unaffected —
-   the `bt-dyndbg` service alone carries the alt-1 evidence lines (verified on boot
-   `e9399c8c`). Still owed: one alt-1 capture with the counters under the original
-   configuration.
+   exhibit already carries — *modified configuration*, not "mitigated". **`bt-mode
+   experiment` run 2026-09-17 13:40**, after the 11 h 12 m window closed by power-off:
+   `bt-mode status` shows stamp and files agreeing (`autosusp=Y`, `power=auto`, both
+   overrides `disabled`); `bt-dyndbg status` shows 166 sites still on — the service alone
+   carries the alt-1 evidence lines (also verified on boot `e9399c8c`). Still owed: one
+   alt-1 capture with the counters under the original configuration.
 
 ## 10. Where detail lives
 

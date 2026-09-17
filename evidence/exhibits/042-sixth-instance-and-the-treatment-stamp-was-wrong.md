@@ -80,10 +80,12 @@ USB-layer lines 0
 The boot's five earlier intervention lines all **predate** the fault — the last at
 12:15:36, seventeen minutes before.
 
-**Still open at 23:28:34 — 39,343 s, 10 h 55 m, zero interventions.** That is already past
-`EX-033`'s 9 h 45 m, the longest uncensored window in the record. `bt-mode experiment`
-was deliberately **not** run while it stands: its live `power/control=auto` write would
-have ended it. The switch waits for the operator's next power cycle. Those are two USB resets on **bus 1** (`1-3`, `1-4`,
+**Closed by power-off at 23:44:54 — 40,324 s, 11 h 12 m, zero interventions, zero
+USB-layer lines.** The boot's last journal entry is the terminator; nothing touched
+Bluetooth between the fault and the power-off. **The longest uncensored window in the
+record**, past `EX-033`'s 9 h 45 m by 87 minutes. `bt-mode experiment` was deliberately
+not run while it stood — its live `power/control=auto` write would have ended it — and
+was run on the next boot, 2026-09-17 13:40, once `bt-window` showed nothing open. Those are two USB resets on **bus 1** (`1-3`, `1-4`,
 not our `3-3`) and an rfkill unblock at one timestamp: a resume-from-suspend signature.
 ⚠️ Noted, not claimed: this wedge came 17 min after a resume. `n = 1`.
 
