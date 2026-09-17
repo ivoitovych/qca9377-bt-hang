@@ -68,6 +68,6 @@ is not proposed.
 | `tests/run-tests` | **all 777 invariants hold** — including the three on these files: canonical BT-1 paragraph identical in README, bug report, fix proposal; no retired reset assertions; no bare project labels in README or the fix proposal; none at all in the bug report |
 | `devtools/repo-validate . --no-suite` | all syntax checks passed (91 of 739 checkable) |
 | `devtools/repo-scan . --all` | clean |
-| `devtools/coverage --min 80` | see the line appended below after the run |
+| `devtools/coverage --min 80` | 85%, from a green run (777 invariants) |
 | README links | every relative link resolves |
 | BRIEF budget | 200 non-blank lines |
