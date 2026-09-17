@@ -296,17 +296,21 @@ everything else is fixed or declined by the reaction, which will add its own tra
 
 ### From `2026-09-17T2251Z-front-door-review.md`
 
+The per-finding disposition — all 25 `FD` IDs — is the catalogue in
+[the fixes document](2026-09-17T2251Z-fixes-for-front-door-review.md), on branch
+`review/2026-09-17T2251Z-fixes`.
+
 | ID | Item | Status | Landed | Verify |
 |---|---|---|---|---|
-| FD-01 / FD-03 / FD-05 / FD-06 | README rewritten to the §7.1 skeleton; watchdog material moved to `docs/install.md`; branch map; no retired numbers | open | — | `wc -l README.md` ≤ ~200; `grep -c 'being rewritten' README.md` → 0; `grep -c '287' README.md` → 0 |
-| FD-02 | "For maintainers" block on the front page (BRIEF §6 + crash-site link + reproduction shape) | open | — | `grep -c 'EX-041' README.md` → ≥1; `grep -c '2026-08-23T2340Z' README.md` → ≥1 |
-| FD-04 / FD-24 | "Is this your problem?" — four failure modes, what transfers to another controller, why this class goes unreported | open | — | `grep -c 'different controller' README.md` → ≥1 |
-| FD-09 | README carries its own status copy; BRIEF labelled internal | open | — | README Status block names the newest exhibit (extend `devtools/save`) |
-| FD-12 | Mail-body note below `---` in both patch mails (§7.2) | open | — | `git format-patch --notes` output shows the note below `---` and `git am` drops it |
-| FD-13 | Track the `git am` verification script the README quotes | open | — | `git ls-files patches/bluez devtools \| grep -c am-check` → 1 |
-| FD-14 / FD-15 | `patches/bluez/README.md` in the maintainer's order; 5.72-build sentence | open | — | first heading after the table is the environment/runtime block |
-| FD-17 / FD-18 / FD-19 / FD-20 | `docs/bug-report.md` rewritten around BRIEF §1–§3; one gate; no revision history | open — last, with the kernel patch | — | `grep -c 'alt' docs/bug-report.md` → ≥5; `grep -c 'Do not send' docs/bug-report.md` → 1 |
-| FD-22 / FD-23 | `docs/issues.md`: BT-1 stage-2 closed against EX-023/025/029/042; alt-1 and EX-032 entries; BT-3 and BT-5 restated | open | — | `grep -c 'EX-04' docs/issues.md` → ≥3 |
+| FD-01 / FD-03 / FD-05 / FD-06 | README rewritten to the §7.1 skeleton; watchdog material moved to `docs/install.md`; branch map; no retired numbers | **fixed** | `b07a4ef` | `wc -l README.md` ≤ ~200; `grep -c 'being rewritten' README.md` → 0; `grep -c '287' README.md` → 0 |
+| FD-02 | "For maintainers" block on the front page (BRIEF §6 + crash-site link + reproduction shape) | **fixed** | `b07a4ef` | `grep -c 'EX-041' README.md` → ≥1; `grep -c '2026-08-23T2340Z' README.md` → ≥1 |
+| FD-04 / FD-24 | "Is this your problem?" — four failure modes, what transfers to another controller, why this class goes unreported | **fixed** | `b07a4ef` | `grep -c 'different controller' README.md` → ≥1 |
+| FD-09 | README carries its own status copy; BRIEF labelled internal | **fixed** | `b07a4ef` | README Status block names the newest exhibit (extend `devtools/save`) |
+| FD-12 | Mail-body note below `---` in both patch mails (§7.2) | **fixed** — notes written; mails not yet sent | `b07a4ef` `139deb5` | `git format-patch --notes` output shows the note below `---` and `git am` drops it |
+| FD-13 | Track the `git am` verification script the README quotes | **fixed** — script tracked; run once on the machine before sending | `b07a4ef` | `git ls-files patches/bluez devtools \| grep -c am-check` → 1 |
+| FD-14 / FD-15 | `patches/bluez/README.md` in the maintainer's order; 5.72-build sentence | **fixed** | `139deb5` | first heading after the table is the environment/runtime block |
+| FD-17 / FD-18 / FD-19 / FD-20 | `docs/bug-report.md` rewritten around BRIEF §1–§3; one gate; no revision history | **fixed** — rewritten; still gated on a kernel patch before sending | `139deb5` | `grep -c 'alt' docs/bug-report.md` → ≥5; `grep -c 'Do not send' docs/bug-report.md` → 1 |
+| FD-22 / FD-23 | `docs/issues.md`: BT-1 stage-2 closed against EX-023/025/029/042; alt-1 and EX-032 entries; BT-3 and BT-5 restated | **fixed** | `139deb5` | `grep -c 'EX-04' docs/issues.md` → ≥3 |
 
 ## Adding a report
 

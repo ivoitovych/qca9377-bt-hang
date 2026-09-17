@@ -95,6 +95,7 @@ run `bluetoothd -d` — this project ships that on in
 
 | what | command |
 |---|---|
+| Prove the BlueZ patches apply the way a maintainer applies them (`git am` alone/together/either order, BlueZ format rules) | `patches/bluez/git-am-check.sh <bluez-checkout> [<commit>]` |
 | Deploy files, **arm nothing** | `sudo ./install.sh --tools-only` |
 | Deploy and arm everything | `sudo ./install.sh --apply` |
 
