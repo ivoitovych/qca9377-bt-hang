@@ -20,41 +20,48 @@ commits within hours of being written (`R2-13`); `git log -1` is one command awa
 
 > When the QCA9377 (`13d3:3503`) negotiates **transparent (mSBC / WBS)** SCO, `btusb` falls
 > back to **USB alternate setting 1** — a **9-byte** isochronous endpoint — and streams
-> **27-byte** mSBC frames into it. After ~2 s of that the controller stops answering,
-> including plain USB control transfers. Only a **full power-off** recovers it.
+> **27-byte** mSBC frames into it. **The first HCI command issued while that stream is
+> running is never answered** — the fault surfaces `HCI_CMD_TIMEOUT` (2.0 s) after that
+> command, whether it comes 34 ms or 9.65 s after link-up (`EX-043`) — and the controller
+> then answers nothing, including USB control transfers. Only a **full power-off** recovers
+> it. Reproduced under stock power management (`EX-043`); the modified configuration is not
+> a factor.
 
 Regression candidate: `BTUSB_USE_ALT1_FOR_WBS` went from a Realtek-only opt-in to an
 unconditional fallback in **v5.11 → v5.12**. Untested prediction: a ≤ v5.11 kernel should
 not take this path.
 
-## 2. The signature — `n = 5`, three kernels, two peripherals
+## 2. The signature — `n = 7`, three kernels, two peripherals, both configurations
 
 ```
-0x0428 answered  →  evt 5  →  "Looking for Alt no :6" → ":3"  →  27-byte frames on mtu 9  →  bare tx timeout
+0x0428 answered → evt 5 → "Looking for Alt no :6" → ":3" → 27-byte frames on mtu 9 → FIRST command issued → +2.0 s tx timeout
 ```
 
-| exhibit | date | kernel | `len 27 mtu 9` | setup→fault |
-|---|---|---|---|---|
-| `EX-033` | 08-22 | `-29` | 835 | 2.076 s |
-| `EX-036` | 08-25 | `-30` | 87 | 2.152 s |
-| `EX-037` | 09-01 | `-30` | 680 | 2.151 s |
-| `EX-038` | 09-13 | `-31` | 682 | 2.191 s |
-| `EX-040` | 09-13 | `-31` | 1562¹ | 2.140 s |
-| *survival* | 09-01 | `-30` | **8** | *lived* |
+| exhibit | date | kernel | config | `len 27 mtu 9` | first cmd after link-up | setup→fault |
+|---|---|---|---|---|---|---|
+| `EX-033` | 08-22 | `-29` | modified | 835 | 36 ms | 2.076 s |
+| `EX-036` | 08-25 | `-30` | modified | 87 | 279 ms (`0x0406`) | 2.152 s |
+| `EX-037` | 09-01 | `-30` | modified | 680 | 39 ms | 2.151 s |
+| `EX-038` | 09-13 | `-31` | modified | 682 | 35 ms | 2.191 s |
+| `EX-040` | 09-13 | `-31` | modified | 1562¹ | 34 ms | 2.140 s |
+| `EX-042` | 09-16 | `-31` | modified | 1595¹ | ~90 ms | 2.147 s |
+| **`EX-043`** | **09-17** | `-31` | **original** | 910 | **9,650 ms** (`0x0406`) | **11.874 s** |
+| *survival* | 09-01 | `-30` | modified | **8** | — | *lived* |
 
-¹ window-scoped, not link-up-to-fault. Interval spread **115 ms**. Dying command is queued
-**34–39 ms** after link-up in 4 of 5 (`EX-036` is 279 ms and is the only one where the log
-names it: `0x0406 Disconnect, reason 0x13`).
-
-**Fastest path** (`EX-040`): incoming HFP connect → SCO at +1.008 s → dead at +2.140 s =
-**3.148 s**, machine untouched. ⚠️ Not a general rule — `EX-038` reached the same sequence
-with HFP already connected.
+¹ window-scoped. ⚠️ **The "2.15 s interval" was an artefact of six fast teardowns** (first
+command 34–279 ms after link-up); the invariant is *first command + `HCI_CMD_TIMEOUT`*,
+and `EX-043` shows the stream itself running 9.65 s without harm until a command is sent.
+Both instances where the log names the dying command name `0x0406 Disconnect, reason 0x13`.
 
 ## 3. Settled
 
 - **`0x0428` IS answered** — a connection handle is allocated every time.
 - **alt 1 is directly observed**, not inferred — `sysfs` `bAlternateSetting 1` +
-  `wMaxPacketSize 0009`, read 3× during live wedges (`tools/bt-usbstate`).
+  `wMaxPacketSize 0009`, read 5× during live wedges (`tools/bt-usbstate`).
+- **The first HCI command into a running alt-1 stream is never answered** (`EX-043`): zero
+  commands were in flight for 9.65 s of streaming; the first one issued died. The stream
+  alone does not wedge the controller — a command into it does.
+- **The original configuration reproduces it** (`EX-043`, `autosusp=Y, power=auto`, live).
 - **The wedge is below HCI** — USB control transfers (`GET_DESCRIPTOR`) return `-110`.
 - **No software recovery exists.** `hci_cmd_timeout()` calls `hdev->reset()`, which is NULL
   ( `13d3:3503` matches no quirks entry); Linux has no periodic USB device recovery; and the
