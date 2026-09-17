@@ -167,3 +167,47 @@ now, and where the evidence is. Neither wants to be told which sections are stal
   "two invocations, not a range" warning are exactly what a first-time submitter gets
   wrong. The runtime paragraph separating 0002 (watched) from 0001 (premise seen, guard not
   fired) is the honest statement R2-117 asked for.
+
+## 4. `docs/bug-report.md` (699 lines)
+
+- **FD-17 [HIGH] The report argues for the fix the project no longer proposes, and against
+  the evidence it now has.** Title: "`13d3:3503` is absent from the QCA ROME quirks, so it
+  gets neither firmware setup nor a reset callback". Proposed fix: "Add `13d3:3503` to
+  btusb's QCA ROME quirks entries". The report's own body then spends two sections
+  establishing that the reset this entry would install "destroyed a device that was
+  otherwise stable and enumerated" in two controlled tests, and that "this report does not
+  recommend it as a fix". A maintainer reads a title that asks for X, a body that shows X
+  is harmful, and a "Proposed fix" that asks for X. Meanwhile BRIEF §1 has the finding a
+  maintainer could act on — alt-1 fallback, first command into the stream dies, `n = 7`,
+  regression candidate v5.11→v5.12 — and the report does not contain the string `alt` in
+  that sense at all. R2-25 named the timing line; the whole document is the finding.
+- **FD-18 [HIGH] Two blocking banners with no owner.** "⛔ Do not send this without
+  working through `pre-submission-checklist.md`" and "🔬 Under active revision … Do not
+  submit this report until [the firmware hypothesis] is resolved — it may change the
+  framing substantially". The firmware hypothesis was the pre-alt-1 explanation for
+  Windows; BRIEF does not list it among open threads. A document that tells its reader
+  twice not to send it, for a reason the project has moved past, is a document nobody
+  will send. BRIEF §7's rule is the actual gate: the kernel report goes only with its
+  patch. Say that once, at the top, and remove the two stale gates.
+- **FD-19 [MED] Numbers and counts inside the report disagree with BRIEF and with each
+  other.** "SCO setup → first timeout is a distribution, not a constant: 7.6–16.2 s across
+  n = 4" (R2-25; measured 2.076–2.191 s in six instances and 11.874 s in the seventh,
+  from a different anchor). "Regression: No" in the header against BRIEF's v5.12
+  regression candidate. "Kernel 7.0.0-28 … also 6.17.0-29/35/40" against the three
+  kernels of the signature table. The `hci_cmd_timeout` root-cause section is correct as
+  far as it goes and is now the second-order story. The five-window terminator table
+  (EX-016/021/023/025/029) is good and current, and survives a rewrite intact.
+- **FD-20 [MED] The report is written to a subsystem list that will read it cold, and
+  it opens with a correction history.** Four "earlier revisions of this report said…"
+  passages, a `REVIEWED-KEEP` HTML comment, and internal labels in a document BRIEF §7
+  says must carry none (checked: no `BT-1` in the body — that gate holds; the marker
+  comment is invisible when rendered but visible in the mail). A submitted report should
+  be the current claim, the evidence per instance, the reproduction shape ("put the link
+  on alt 1, stream, issue any command"), the environment, and what has been ruled out —
+  in that order, without its own revision history. HISTORY.md holds the history.
+- **FD-21 [GOOD]** The Windows framing ("Linux drives this controller into a state that
+  Windows does not", with fault assignment left open) and its `REVIEWED-KEEP` reason;
+  the methodological caveat ("the reproductions were not a controlled procedure"); the
+  two-headset table (EX-024); the "an intervention can look harmless and not be" bullet
+  (EX-034); the system-information block; the re-derivable baseline command. These are
+  the paragraphs a rewrite keeps.
