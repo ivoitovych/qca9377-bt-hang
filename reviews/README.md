@@ -61,6 +61,7 @@ wrong turns, which a clean summary loses.
 | 2026-08-23T23:40Z | [EX-032 crash sites resolved](2026-08-23T2340Z-ex032-crash-sites-resolved.md) | `bluez 5.72-0ubuntu5.5`, stripped | Both `bluetoothd` crash sites named to file and line from the shipped binary, without symbols; falsifier stated and later confirmed against a core |
 | 2026-09-13 | [Foundation-file consistency](2026-09-13-foundation-file-consistency.md) | `5fbd6c2` | README, BRIEF, HISTORY: the central finding is in none of them. (Filename lacks the UTC time the convention requires — recorded, not renamed) |
 | 2026-09-16T04:20Z | [Comprehensive code review](2026-09-16T0420Z-comprehensive-code-review.md) | the tree at `3cf4dd6` | Every file again. **`main` fails its own suite** (2 of 774, since `d70cb2e`) and CI has been red since 08-25 with nothing reading it; **`install.sh --tools-only` silently reverted the experiment baseline on 08-19** — trials 6–12 ran under `autosusp=N,power=on` with the mode stamp still saying experiment; docs outrun by the alt-1 evidence in README, BRIEF, evidence/README, the bug report and three tools' verdicts. 122 findings: 10 HIGH, 39 MED |
+| 2026-09-17T22:51Z | [Front-door review](2026-09-17T2251Z-front-door-review.md) | `0f25bea` — README, BRIEF, `patches/bluez/`, `docs/bug-report.md`, `docs/issues.md`, read as a maintainer arriving from a patch and as a stranger with a different controller | Everything both readers need exists and is not where they look: README disowns 660 of its 746 lines and presents the retired model; the mails carry no way back to the record; the bug report asks for the fix its own body argues against; `issues.md` stops at EX-021. Delivers a README skeleton, the patch mail-body note, and the order of work |
 
 ---
 
@@ -292,6 +293,20 @@ everything else is fixed or declined by the reaction, which will add its own tra
 | R2-117 | patches README says the guards were never watched firing; EX-041 shows four | **closed** | `456daba` | The runtime paragraph now separates the two: `0002` fired four times (watched preventing it), `0001`'s guard has not, the 09-08 `free()` is a third crash and stays out of the submission |
 | R2-119 | `reviews/verify.sh` covers 13 of ≈60 register rows | open | — | `reviews/verify.sh` prints a line per block |
 
+
+### From `2026-09-17T2251Z-front-door-review.md`
+
+| ID | Item | Status | Landed | Verify |
+|---|---|---|---|---|
+| FD-01 / FD-03 / FD-05 / FD-06 | README rewritten to the §7.1 skeleton; watchdog material moved to `docs/install.md`; branch map; no retired numbers | open | — | `wc -l README.md` ≤ ~200; `grep -c 'being rewritten' README.md` → 0; `grep -c '287' README.md` → 0 |
+| FD-02 | "For maintainers" block on the front page (BRIEF §6 + crash-site link + reproduction shape) | open | — | `grep -c 'EX-041' README.md` → ≥1; `grep -c '2026-08-23T2340Z' README.md` → ≥1 |
+| FD-04 / FD-24 | "Is this your problem?" — four failure modes, what transfers to another controller, why this class goes unreported | open | — | `grep -c 'different controller' README.md` → ≥1 |
+| FD-09 | README carries its own status copy; BRIEF labelled internal | open | — | README Status block names the newest exhibit (extend `devtools/save`) |
+| FD-12 | Mail-body note below `---` in both patch mails (§7.2) | open | — | `git format-patch --notes` output shows the note below `---` and `git am` drops it |
+| FD-13 | Track the `git am` verification script the README quotes | open | — | `git ls-files patches/bluez devtools \| grep -c am-check` → 1 |
+| FD-14 / FD-15 | `patches/bluez/README.md` in the maintainer's order; 5.72-build sentence | open | — | first heading after the table is the environment/runtime block |
+| FD-17 / FD-18 / FD-19 / FD-20 | `docs/bug-report.md` rewritten around BRIEF §1–§3; one gate; no revision history | open — last, with the kernel patch | — | `grep -c 'alt' docs/bug-report.md` → ≥5; `grep -c 'Do not send' docs/bug-report.md` → 1 |
+| FD-22 / FD-23 | `docs/issues.md`: BT-1 stage-2 closed against EX-023/025/029/042; alt-1 and EX-032 entries; BT-3 and BT-5 restated | open | — | `grep -c 'EX-04' docs/issues.md` → ≥3 |
 
 ## Adding a report
 

@@ -211,3 +211,158 @@ now, and where the evidence is. Neither wants to be told which sections are stal
   two-headset table (EX-024); the "an intervention can look harmless and not be" bullet
   (EX-034); the system-information block; the re-derivable baseline command. These are
   the paragraphs a rewrite keeps.
+
+## 5. `docs/issues.md` (503 lines)
+
+- **FD-22 [HIGH] The register that README calls "the AUTHORITATIVE current claims" stops
+  at EX-021 and says nothing about the finding.** BT-1's body is the two-stage debate of
+  mid-August: "Both instrumented failures involve SCO link handling — setup unanswered in
+  one case (`EX-006`), teardown unanswered in the other (`EX-009`)"; "the right-hand branch
+  has been walked twice … `n = 2`, both censored"; "the leading discriminant … at least five
+  logically distinct possibilities"; "the experiment that settles it … do nothing" — an
+  experiment since run seven times (EX-023, EX-025, EX-029, EX-042: 3 h 22 m, 2 h 28 m,
+  13 h 9 m, 11 h 12 m, all with zero USB-layer lines). The word `alt` appears only inside
+  "alternate-setting switch" as one of five candidates. There is no entry for the alt-1
+  fallback, none for the `bluetoothd` crashes (EX-032, two patches — R2-22), and BT-5
+  ("SCO link established, then carries almost no data … observed once") is now answered
+  by EX-043's stream running 9.65 s unharmed. R2-21 stands, and it is the register a
+  maintainer is pointed at.
+- **FD-23 [MED] BT-3 still says the missing quirk "may be the cause of BT-1".** BRIEF §3
+  has moved it to "no software recovery exists: `hdev->reset` is NULL" — a consequence for
+  recovery, not a cause. The entry's both-directions argument (`REVIEWED-KEEP §1.3`) is
+  still the right shape; its status line and first paragraph are not. BT-4 (btmon aborts)
+  is genuinely still open and correctly separated from EX-032; BT-2 is still the easiest
+  thing to report and nobody has.
+- **FD-24 [MED] For (U), the two most useful passages are at the bottom of the file
+  nobody is sent to.** "Why this class of bug goes unreported" (rare per user, recovery
+  destroys the evidence, default logging insufficient, instrumentation costs more than
+  the bug seems worth) and "On the wider claim" (what the Windows and Android comparisons
+  do and do not support) are exactly what a stranger with a different controller needs
+  to decide whether the method transfers. They belong on the front page, shortened.
+- **FD-25 [GOOD]** The evidence model (three-state reading of two capture paths; the probe
+  is an intervention; the six levels a timestamp must survive) is the project's method in
+  one page and is current. The four-alternative A–D framing and the "experiment that
+  settles it" were right when written and have since been run, which is the best fate a
+  register entry can have — it needs closing, not deleting.
+
+## 6. Cross-cutting — the two readers, scored
+
+| what the reader needs on the first screen | (M) maintainer | (U) different controller |
+|---|---|---|
+| what this is, in a sentence | ✅ line 3 | ✅ |
+| what is established now | ✅ lines 40–48 … then ❌ contradicted by 159–633 | same |
+| where the evidence is, two clicks | ⚠️ `evidence/exhibits/` linked; index fixed (R2-114) | ⚠️ |
+| the patches: what, fired?, verified how | ⚠️ paragraph, no EX-041 link, no verification | — |
+| how the crash site was found | ❌ not linked from README or from the mails (FD-12) | — |
+| reproduction shape | ❌ only in BRIEF §9.1 / EX-043 | — |
+| environment (distro, kernels, bluez) | ❌ only in `bug-report.md` §System information | ❌ |
+| does this transfer to my hardware / symptom | — | ❌ one sentence at line 647 |
+| what to run first | ✅ `bt-diagnose` at line 86 | ✅ |
+| branch map, CI, register | ❌ | ❌ |
+| the retired model presented as current | ❌ 660 lines | ❌ |
+
+Five of the eleven rows are answered by material that already exists in BRIEF §1–§3 and
+§6, `patches/bluez/README.md` and `docs/issues.md`'s last two sections. The front-door
+problem is placement, not absence: the project has written everything both readers need
+and has not put it where they look.
+
+## 7. Deliverables
+
+### 7.1 README skeleton (≈150 lines; everything else moves to `docs/`)
+
+```
+# qca9377-bt-hang
+<one-sentence symptom>  ·  <part, USB ID>  ·  <"an open investigation aimed at an upstream fix">
+
+## Status (<date>, EX-043)            ← copy of BRIEF §1 statement + one line "n = 7, three
+                                         kernels, two peripherals, both power configurations";
+                                         one line: what is NOT established (mechanism);
+                                         one line: no kernel patch yet, two BlueZ patches ready
+
+## For maintainers                    ← BRIEF §6 verbatim: the two subjects, 0002 fired 4×
+                                         (EX-041), 0001 premise seen, checkpatch + git am,
+                                         crash site resolved from the stripped binary
+                                         (reviews/2026-08-23T2340Z), how to re-check; the
+                                         reproduction shape ("alt 1, stream, issue a command")
+
+## The evidence                        ← three-stream table (keep); the signature table from
+                                         BRIEF §2; "each exhibit carries its command, verbatim
+                                         output and exit status"; link the index
+
+## Is this your problem?               ← bt-diagnose block (keep); the four failure modes that
+                                         look identical (EX-030/031/032 + the wedge) and which
+                                         tool tells them apart; "if your controller differs:
+                                         what transfers" (bt-diagnose, bt-state, bt-boots,
+                                         sanitize-logs, bt-incident, bt-exhibit, the journal
+                                         seam; what is QCA-specific); "why this class of bug
+                                         goes unreported" in four lines
+
+## Environment                          ← the System information block from bug-report.md
+
+## Method, in five rules                ← every claim ships with its command; zero needs a
+                                         positive control; the probe is an intervention;
+                                         separate what the operator did from how the controller
+                                         responded; retractions are kept (BRIEF §5)
+
+## Repository map                       ← the layout tree (keep) + a branch legend (main;
+                                         review/<ts> and its reaction; claude/unit-testing-*;
+                                         evidence/*, verify/*, backup/*) + CI + reviews/README
+                                         as the live register
+
+## Install / tooling / tests / contributing / license
+                                         ← three lines each, linking docs/install.md (the
+                                         current Install, --tools-only, tunables, BT_EARLY
+                                         and watchdog material, moved whole with its
+                                         REVIEWED-KEEP markers), docs/tooling-index.md,
+                                         tests/README.md; Contributing asks for a ≤ v5.11
+                                         run, other alt-1 controllers, a survived Enhanced
+                                         Setup capture
+```
+
+Rules for the rewrite: no number on the page that is not in BRIEF §2 or re-derivable by a
+printed command; no section the page tells the reader not to trust; no `BT-n` label without
+its plain name first; the Status block is a copy of BRIEF §1, dated, and `devtools/save`'s
+BRIEF check extends to it ("does README's status name the newest exhibit?").
+
+### 7.2 The note below `---` in each patch mail (FD-12)
+
+```
+---
+Context, not part of the change: the crash was recorded on a QCA9377
+(13d3:3503) laptop under Ubuntu 24.04 / bluez 5.72-0ubuntu5.5 and the
+site was resolved from the stripped distro binary, then checked against
+a retained core. The record, including the four logged firings of this
+guard (EX-041) and the crash-site method, is public:
+https://github.com/ivoitovych/qca9377-bt-hang  (patches/bluez/README.md)
+```
+
+Adjust the second sentence for 0001 ("the guard has not fired; its premise was logged once,
+see patches/bluez/README.md"). Insert with `git send-email --annotate` or `git format-patch
+--notes`; never above the `---`, never as a trailer.
+
+### 7.3 Order of work
+
+1. README rewrite to §7.1 (moves, not deletions; `docs/install.md` receives the watchdog
+   material with its markers). Gate: `repo-scan`, the label test, and a new `devtools/save`
+   line that README's status names the newest exhibit.
+2. `docs/issues.md`: close BT-1's stage-2 question with the four windows, add the alt-1
+   entry and the EX-032 entry, restate BT-3, close BT-5 against EX-043 (FD-22/23).
+3. `patches/bluez/README.md`: reorder to the maintainer's order, track the verification
+   script, add the 5.72-build sentence (FD-13/14/15); then the mail-body note (7.2).
+4. `docs/bug-report.md`: rewrite around BRIEF §1–§3 with the terminator table, the
+   two-headset table, the Windows framing and the environment block kept; one gate at the
+   top ("goes only with its patch"), no revision history (FD-17–20). This is last because
+   BRIEF §7 says it does not leave without a kernel patch, and there is none.
+
+### 7.4 Is a deeper review needed now?
+
+Not a comprehensive one. The tree at `0f25bea` is two days past a full review whose
+reaction is still landing, and every finding above is a placement or currency problem in
+five files, not a defect in the tools or the evidence. The next full review is due after
+items 1–3 land and before the BlueZ patches are mailed — that is the tree the maintainers
+will open, and it should be reviewed once as the thing they will see. A short check that
+the README skeleton was followed (one hour, the eleven rows in §6 as the checklist) is
+enough in between.
+
+**Findings:** 25 — 6 HIGH, 9 MED, 3 LOW, 7 GOOD. No source file changed on this branch;
+register row and action block added to `reviews/README.md`.
