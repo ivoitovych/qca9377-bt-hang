@@ -127,3 +127,43 @@ now, and where the evidence is. Neither wants to be told which sections are stal
   repository for a maintainer: the claim, the evidence per instance, and what was wrong
   before. §6 is the six-line "for maintainers" block README lacks (FD-02), already
   written. The "no tip hash here: it rotted" note is the right lesson applied.
+
+## 3. `patches/bluez/` (README + 0001 + 0002)
+
+- **FD-12 [HIGH] The mails carry no way back to the record.** Neither patch body, nor the
+  "How to send" section, nor the README mentions the repository, EX-041, or the crash-site
+  review. The README itself says of the falsification "**Worth citing in the submission** —
+  a maintainer will reasonably ask how a crash site was located in a stripped binary", and
+  the commit messages, correctly, no longer carry that route. So the one question the
+  README predicts has no answer in what the maintainer receives. The place is the mail
+  body **below the `---` line**, which `git am` discards and BlueZ's `HACKING` rules do not
+  govern; `git send-email --annotate` or a `format-patch --notes` puts it there. Text in
+  §7.2. Do not put it in the commit message: the rewrite on 09-16 was right to strip the
+  route, and a URL in a `Fixes:`-shaped position would be read as a bug tracker.
+- **FD-13 [MED] The verification the README quotes is not re-runnable.** "`$ bash
+  git-am-check.sh  # scratch worktree of the BlueZ tree at c73fa2f9a`" — the script is not
+  tracked (`git ls-files` finds nothing), so the six PASS lines are a transcript of a
+  command a reader cannot run, which is the exact thing `evidence/exhibits/` exists to
+  prevent. Track it (under `patches/bluez/` or `devtools/`), or replace the block with the
+  five plain commands it wraps.
+- **FD-14 [MED] For (M), the README's order is the project's order, not the reader's.**
+  The first screen after the table is the mechanism caveat for 0001 (what an earlier
+  revision got wrong about Command Status); "What has been verified", the runtime evidence,
+  prior art and how to send come after. A maintainer's order is: environment (QCA9377
+  `13d3:3503`, Ubuntu 24.04, `bluez 5.72-0ubuntu5.5`, BlueZ master `c73fa2f9a`), the
+  two subjects, runtime evidence (0002 ×4, 0001 premise seen once), verification
+  (checkpatch, `git am` ×4), prior art, how to send — then the history notes ("an earlier
+  revision said…", the `lore` 403 story, the `--depth 50` trap) under one heading at the
+  end. Nothing needs rewriting; the sections need moving.
+- **FD-15 [LOW]** "Built against BlueZ 5.87 … `--disable-*`" is the compile check; the
+  runtime evidence comes from the `5.72-0ubuntu5.5` rebuild running on the machine, which
+  the README does not say in one place — the maintainer will want to know the guard that
+  fired four times is in the 5.72 build, not a 5.87 one. One sentence.
+- **FD-16 [GOOD]** Both commit messages are as good as this class of patch gets: the
+  defect shown in the code, the crash line and the disassembly, the runtime firings stated
+  with dates and pointer counts, the two prior hardenings cited for what they did and did
+  not cover, no claim about which mgmt event arrived. The conventions section measured from
+  BlueZ's own tree (no `Signed-off-by`, 50/72, `[PATCH BlueZ]`, `Fixes:` usage) and the
+  "two invocations, not a range" warning are exactly what a first-time submitter gets
+  wrong. The runtime paragraph separating 0002 (watched) from 0001 (premise seen, guard not
+  fired) is the honest statement R2-117 asked for.
