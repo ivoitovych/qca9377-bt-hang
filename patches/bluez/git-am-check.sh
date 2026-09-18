@@ -97,7 +97,10 @@ for p in "${PATCHES[@]}"; do
         # being a trailer — and BlueZ's own Fixes: lines run past 80 columns.
         # The first run of this file against the real tree flagged 0001's Fixes:
         # at 75 and reported FAIL on a patch that was fine (2026-09-18).
-        [[ "$line" =~ ^[A-Z][A-Za-z-]+:\  ]] && continue
+        # KNOWN NAMES ONLY, not `^[A-Z][A-Za-z-]+: ` — that also matched an ordinary
+        # sentence starting "Observed: …" and let it escape the 72-column check
+        # (review-branch maintainer, same day).
+        [[ "$line" =~ ^(Fixes|Link|Cc|Reported-by|Tested-by|Reviewed-by|Acked-by|Suggested-by|Co-developed-by|Signed-off-by):\  ]] && continue
         (( ${#line} > 72 )) && { long=$((long + 1)); echo "        >72: $line"; }
     done < <(sed -n '/^$/,/^---$/p' "$p" | sed '$d')
 done
