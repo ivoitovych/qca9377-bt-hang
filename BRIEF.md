@@ -195,9 +195,9 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 
 ## 9. Open threads
 
-1. **Rewrite `docs/bug-report.md` around `EX-037`–`EX-043`** — it still describes the
-   pre-alt-1 project (`R2-25`). The kernel report itself waits for its patch (§7). The driver
-   test shape is exact: alt 1, stream, issue a command, it dies.
+1. **`docs/bug-report.md` rewritten around `EX-037`–`EX-043`** (front-door fixes, 09-18).
+   It still leaves only with a kernel patch (§7). The driver test shape is exact: alt 1,
+   stream, issue a command, it dies. Next: the operator's third-party review of the patches.
 2. Six tasks delegated to the Test Branch Maintainer (source review, instrumented `btusb`
    logging of the chosen `new_alts`, bug-report audit, `BL-09`, `bt-crash` tests, device
    survey).
