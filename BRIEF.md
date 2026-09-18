@@ -1,18 +1,18 @@
 # BRIEF — read this first, after any context reset
 
-**What this is.** The concentrated state of knowledge: what is true, what is retracted,
-what is open. Facts only, with pointers instead of explanations.
+**What this is.** Internal working state for whoever resumes the investigation: what is
+true, what is retracted, what is open. Facts only, with pointers instead of explanations.
 
-**What it is not.** Not evidence (`evidence/exhibits/`, 42 of them), not narrative
+**What it is not.** Not evidence (`evidence/exhibits/`, 43 of them), not narrative
 (`HISTORY.md`, 2800 lines), not tooling (`docs/tooling-index.md`), not working rules
-(auto-loaded memory). Nothing here is derivable from those — it is the layer that says
-which of them still holds.
+(auto-loaded memory), and **not the public summary** — a stranger reads `README.md`, whose
+Status block is a dated copy of §1–§3 and §6, checked on every commit like this file
+(`FD-09`). Nothing here is derivable from those — it is the layer that says which holds.
 
 ⚠️ **Budget: 200 lines.** Over that, it stops being cheaper than reading the source, which
 is the only reason it exists. Cut the oldest settled item before adding.
 
-**Last updated: 2026-09-18 · newest exhibit: EX-043** — no tip hash here: it rotted three
-commits within hours of being written (`R2-13`); `git log -1` is one command away.
+**Last updated: 2026-09-18 · newest exhibit: EX-043** — no tip hash: it rotted within hours (`R2-13`).
 
 ---
 
@@ -73,7 +73,7 @@ Both instances where the log names the dying command name `0x0406 Disconnect, re
 
 ## 4. Not settled
 
-- **Mechanism.** Correlation across 5 deaths / 1 survival. *How* the traffic wedges the
+- **Mechanism.** Correlation across 7 deaths / 1 survival. *How* the traffic wedges the
   controller is unknown — needs driver instrumentation or an mgmt/btmon trace.
 - **No controlled comparison.** Nobody has forced alt-1 with a sustained stream on demand,
   or blocked alt-1 and shown survival under identical use. The survival was the
@@ -226,6 +226,6 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 | | |
 |---|---|
 | evidence, one claim + extraction each | `evidence/exhibits/` (`bt-exhibit index`) |
-| narrative, why things were believed | `HISTORY.md` (34 phases) |
+| narrative, why things were believed | `HISTORY.md` (36 phases) |
 | which tool answers which question | `docs/tooling-index.md` |
 | the patches, their reasoning and BlueZ's measured conventions | `patches/bluez/` |

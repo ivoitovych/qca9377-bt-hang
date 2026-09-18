@@ -1,89 +1,90 @@
 # qca9377-bt-hang
 
-**Your Bluetooth controller sometimes stops answering HCI during audio transitions.**
+**Your Bluetooth controller stops answering during hands-free audio, and only removing
+power brings it back.** Qualcomm Atheros **QCA9377** (ROME), USB ID `13d3:3503`, on
+Linux. An open investigation aimed at an upstream fix, run so that every claim can be
+re-derived by a stranger from the command that produced it.
 
-Affects Qualcomm Atheros **QCA9377** (ROME) Bluetooth, USB ID `13d3:3503`, on Linux.
+## Status — 2026-09-18, newest exhibit `EX-043`
 
-## What this project is
+> When this controller negotiates **transparent (mSBC / wideband) synchronous audio**,
+> `btusb` falls back to **USB alternate setting 1** — a 9-byte isochronous endpoint — and
+> streams 27-byte mSBC frames into it. **The first HCI command issued while that stream is
+> running is never answered**; the controller then answers nothing, including USB control
+> transfers, until power is removed. Reproduced **seven times across three kernels, two
+> headsets, and both power configurations** (`EX-033`, `036`, `037`, `038`, `040`, `042`,
+> `043`), with alternate setting 1 read directly from `sysfs` during five live wedges.
 
-An attempt to **fix** this, run as an open investigation. It is not a watchdog
-project — the watchdog is one experiment inside it, and on this hardware a
-questionable one, since the USB reset it performs has three controlled
-demonstrations of destroying the controller (`EX-023`, `EX-026`).
+- **Established:** the sequence above; `0x0428 Setup Synchronous Connection` *is*
+  answered; the stream alone runs unharmed (9.65 s in `EX-043`) until a command is sent;
+  no software recovery exists (`hdev->reset` is NULL for this ID, `HCI_Reset` returns
+  `-110`, a warm reboot does not clear it, a power-off does — `EX-027`/`028`/`039`).
+- **Not established:** the mechanism — *how* traffic on that endpoint wedges the
+  device. The fallback was introduced by **`517b693351a2`** (Trent Piepho, 2020-12-09,
+  *"Always fallback to alt 1 for WBS"*, in v5.12 and not v5.11), whose own message states
+  the assumption this hardware falsifies: *"I have been unable to find any [adapters that
+  support alt 6]"*. The clean control window is **v5.8–v5.11** — not "≤ v5.11": below v5.8
+  alt 1 is reachable again by a different route. No kernel in that window has been run.
+  Table and provenance in [`docs/missing-quirks-entry.md`](docs/missing-quirks-entry.md).
+- **No kernel patch exists yet.** Two **BlueZ** patches do (below). The full current state,
+  including what has been **retracted**, is [`BRIEF.md`](BRIEF.md) §1–§6; the section
+  above is a dated copy of its §1 and is checked on every commit for naming the newest
+  exhibit.
 
-The work runs in **three parallel streams**, and they are deliberately not
-merged:
+The earlier first-order finding — this ID matches no `btusb` quirks entry, so it gets
+neither the QCA firmware setup nor a reset callback — is still true and now explains the
+*absence of recovery*, not the wedge. It is kept whole, with the one-line quirks patch the
+project no longer proposes, in [`docs/missing-quirks-entry.md`](docs/missing-quirks-entry.md).
+
+## For maintainers
+
+Two `bluetoothd` NULL dereferences, found because the record separates four failure
+modes that look identical to a user (`EX-032`): [`patches/bluez/`](patches/bluez/).
+
+| patch | subject | runtime evidence |
+|---|---|---|
+| `0001` | `adapter: Fix crash on short start discovery reply` | guard not yet fired; its premise (success status, too-short reply) logged once |
+| `0002` | `a2dp: Fix crash on NULL stream in transport_cb` | **fired four times** in 19 days of ordinary use — four crashes prevented, not merely absent (`EX-041`) |
+
+Both defects confirmed present in BlueZ master `c73fa2f9a`; both written to BlueZ's own
+rules (no `Signed-off-by`, 50/72, `checkpatch` clean under BlueZ's `.checkpatch.conf`);
+`git am` clean alone, together, in either order — re-run it with
+[`patches/bluez/git-am-check.sh`](patches/bluez/git-am-check.sh). The crash sites were
+resolved **from the stripped distro binary**, with the falsifier stated before a retained
+core was read and then matched byte for byte:
+[`reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md`](reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md).
+Neither patch touches the controller fault.
+
+**The controller fault, if you want to reproduce it:** put a transparent SCO link on
+alternate setting 1 (any mSBC headset does it — `Looking for Alt no :6` then `:3` in the
+`btusb` debug output), let it stream, issue any HCI command. It dies `HCI_CMD_TIMEOUT`
+later (`EX-043`). Environment below. What is missing is the mechanism, and a kernel-side
+report goes out only with a patch ready to follow it.
+
+## The evidence
+
+Three parallel streams, deliberately not merged:
 
 | stream | question it answers | where it lives |
 |---|---|---|
-| **1. Evidence** | What actually happens, in terms a stranger can re-derive? | [`evidence/exhibits/`](evidence/exhibits/) — numbered, each carrying its extraction command, verbatim output and exit status |
-| **2. Workarounds** | Is there a cheap recipe a user can apply today? | [`docs/issues.md`](docs/issues.md), the mitigation tooling, and the trial series under `evidence/trials/` |
-| **3. The real fix** | What patch belongs upstream? | [`patches/bluez/`](patches/bluez/), [`docs/fix-proposal.md`](docs/fix-proposal.md), [`docs/bug-report.md`](docs/bug-report.md), [`docs/investigation-plan.md`](docs/investigation-plan.md) |
+| **1. Evidence** | What actually happens, in terms a stranger can re-derive? | [`evidence/exhibits/`](evidence/exhibits/) — 43 numbered exhibits, each carrying its extraction command, verbatim output and exit status |
+| **2. Workarounds** | Is there a cheap recipe a user can apply today? | [`docs/install.md`](docs/install.md) (a watchdog and a power-policy change — **experiments, and on this hardware questionable ones**), and the trial series in `evidence/trials/` |
+| **3. The real fix** | What patch belongs upstream? | [`patches/bluez/`](patches/bluez/), [`docs/bug-report.md`](docs/bug-report.md), [`docs/fix-proposal.md`](docs/fix-proposal.md) |
 
-Stream 3 is the goal. Streams 1 and 2 exist because a patch proposed without a
-denominator is a guess, and because a family that needs its laptop today cannot
-wait for a kernel release.
+The signature, per instance (`BRIEF.md` §2 carries the full table):
 
-**Stream 3 has produced its first deliverable**, and it is not the one this
-project set out to write. [`patches/bluez/`](patches/bluez/) holds **two BlueZ
-patches** for NULL dereferences in `bluetoothd`, both confirmed still present in
-upstream master, both written to BlueZ's own submission rules and `git am`-clean
-against it. `0002`'s guard has fired four times in nineteen days of real use
-(`EX-041`) — four crashes prevented, not merely absent. They came out of
-`EX-032` — a failure mode that is not the controller at all, found only because
-the record started separating the four things that look identical to a user.
+| exhibit | date | kernel | power config | 27-byte frames on the 9-byte endpoint | first command after link-up | setup → fault |
+|---|---|---|---|---|---|---|
+| `EX-033` | 08-22 | `-29` | modified | 835 | 36 ms | 2.076 s |
+| `EX-038` | 09-13 | `-31` | modified | 682 | 35 ms | 2.191 s |
+| `EX-042` | 09-16 | `-31` | modified | 1595 | ~90 ms | 2.147 s |
+| **`EX-043`** | **09-17** | `-31` | **original** | 910 | **9,650 ms** | **11.874 s** |
+| *survival* | 09-01 | `-30` | modified | 8 | — | *lived* |
 
-**The kernel-side question has narrowed to one sentence** (`EX-037`–`EX-043`,
-seven reproductions across three kernels and both power configurations): when
-this controller negotiates transparent (mSBC) synchronous audio, `btusb` selects
-USB alternate setting 1 — a 9-byte isochronous endpoint — and streams 27-byte
-frames into it; **the first HCI command issued into that running stream is never
-answered**, and the controller then answers nothing, including USB control
-transfers, until power is removed. The alternate setting has been read directly
-from `sysfs` during five live wedges. The mechanism — *how* the traffic wedges the
-device — is not established, and no kernel patch exists yet. `BRIEF.md` carries
-the current state of this; the sections below have not yet been rewritten to it.
+The interval is not a constant: it is *time to the first command* plus the 2 s command
+timeout, which is why six fast teardowns looked like "2.15 s" until `EX-043`.
 
-**The fault is very likely multi-layered, and the streams are shaped around
-that.** What has been observed is not one bug but a sequence: the controller
-stops answering HCI, and then the host cannot bring it back — a reboot does not
-clear it while removing power does (`EX-027`, `EX-028`), which places the stuck
-state on the device's side of the wire. A fix may therefore need to touch the
-driver, the kernel's recovery path, or both. It is also not settled that every
-symptom users report is the same fault: this record already separates **four**
-distinct failure modes that look identical to a person (`EX-030`, `EX-031`,
-`EX-032`), and only one of them is the controller.
-
-Whether it is specific to `13d3:3503`, to the QCA9377 family, or broader is
-**open**. The reporter sees the same pattern on several laptops; that is an
-observation, not a measurement.
-
-## What is currently established
-
-<!-- BT1-CURRENT-BEGIN -->
-> The controller sometimes enters a non-responsive HCI state during synchronous-audio link
-> transitions, while remaining USB-enumerated. Later USB collapse has so far only been
-> observed after a reset, rebind or driver reload; whether it belongs to the fault's
-> untreated trajectory is **unresolved**.
-<!-- BT1-CURRENT-END -->
-
-That is a statement about **when and where**, not **why**. The mechanism is not
-established, and several confident-sounding explanations in this repository's
-history have already been refuted — by this repository. See
-[`docs/issues.md`](docs/issues.md) for what is currently believed and what has
-been killed, and [`HISTORY.md`](HISTORY.md) for how each wrong turn was found.
-
-⚠️ **Sections below this point were written earlier and are being rewritten.**
-Where a section states a cause ("the trigger", "the real fix", "this is the
-bug"), treat [`BRIEF.md`](BRIEF.md) as authoritative — it is the concentrated
-current state, including what has been **retracted**, and is checked on every
-commit for naming the newest exhibit. `docs/issues.md` is the issue register and
-is **not** kept current past `EX-021`; this front page reaches `EX-033`. Neither
-yet carries the alt-1 finding (`EX-037`–`EX-042`); `BRIEF.md` does.
-
----
-
-## Does this machine show the phenotype?
+## Is this your problem?
 
 One command, no installation, nothing written:
 
@@ -93,687 +94,143 @@ cd qca9377-bt-hang
 ./tools/bt-diagnose
 ```
 
-It displays the currently attached USB Bluetooth controller, scans retained boots for HCI
-command timeouts, and — only with `--probe`, since that sends an HCI command into whatever
-state the controller is in — checks whether it answers now. Historical kernel lines are not
-stably attributable to the current VID:PID and are not paired causally with resets or
-firmware messages. The tool therefore reports a **phenotype**, not “this bug.” Exit 0 =
-phenotype not observed in retained history, 1 = observed, 2 = cannot determine.
+It shows the attached USB Bluetooth controller and scans the retained boots for HCI
+command timeouts. It reports a **phenotype**, not "this bug": exit 0 = not observed in
+retained history, 1 = observed, 2 = cannot determine. Only with `--probe` does it also ask
+the controller whether it answers now — that sends an HCI command into whatever state the
+controller is in, which is exactly what a hang you mean to observe must not receive.
+
+**Four things look identical to a person and are not the same fault.** Bluetooth "stops
+working" here has meant: the controller wedge above; an audio-server transport release with
+the controller healthy (`EX-030`); a synchronous link that came up and worked (`EX-031`);
+and `bluetoothd` crashing, leaving the adapter powered and never scanning again (`EX-032`
+— the two patches). `tools/bt-crash` tells the last apart from the rest in one command;
+`tools/bt-status` gives the verdict on the first.
+
+**If your controller is different**, most of this transfers. `bt-diagnose`, `bt-state`,
+`bt-boots`, `bt-crash` and `sanitize-logs.sh` work on any USB controller; every tool
+takes `BT_VID`/`BT_PID`; `bt-incident` collects a hang that already happened into a
+sanitised, publishable session; `bt-exhibit` captures a claim with its command and output
+in one pass; the journal seam (`tools/lib/journal.sh`) lets every analysis run over a
+fixture instead of a live machine. What is specific to this part: the alt-1 reading in
+`bt-usbstate` and `bt-fault-window`, the `13d3:3503` defaults, and the exhibits.
+
+**Why this class of bug goes unreported**, and why yours may not be in any tracker: it is
+rare per user; the only recovery (a power-off) destroys the volatile evidence and, without
+persistent logging set up in advance, the logs; default logging cannot name the command in
+flight; and the instrumentation costs more than the bug seems to justify. Selection, not
+rarity — `docs/issues.md` §"Why this class of bug goes unreported".
+
+## Environment
 
 ```
-Log evidence
-  boots examined            : 34
-  HCI command timeouts      : 287
-  reset-like kernel messages: 0
-  scope                     : aggregate across retained boots; not VID:PID-paired
+Distribution : Ubuntu 24.04 LTS (noble)
+Kernels      : 7.0.0-29, -30, -31-generic (the signature); 6.17.0-29/35/40, 7.0.0-28 (earlier phenotype)
+BlueZ        : 5.72 (5.72-0ubuntu5.5; the patched daemon is a rebuild of that source)
+Platform     : AMD Renoir/Cezanne laptop; controller on xhci_hcd, full-speed
+BT device    : usb 13d3:3503 — HCI manufacturer 0x001D (Qualcomm), version 0x07 (4.2)
+Companion    : ath10k_pci qca9377 hw1.1 (one combo chip)
+Headsets     : Sennheiser MOMENTUM 4, Lenovo thinkplus GM2 pro (two vendors, one signature — EX-024)
 ```
 
-For this repository's exact `13d3:3503` controller, a separate source/module inspection
-establishes that `hdev->reset` is absent. Aggregate timeout/reset counts alone do not:
-events may come from different boots, configurations, controllers or reset origins. Use
-`tools/bt-verify-kernel-mechanism` for the static QCA9377 mechanism check.
-
-<details>
-<summary>Or check by hand</summary>
-
-You have observed the same phenotype if the controller stops answering and the kernel
-records HCI command timeouts. The missing reset callback is a separate static question:
-
-```bash
-# 1. Bluetooth settings spins forever and never lists devices
-# 2. The controller is "up" but answers nothing:
-$ hciconfig -a
-Can't read local name on hci0: Connection timed out (110)
-hci0:   UP RUNNING PSCAN
-        RX bytes:12490523 acl:2838 sco:11 events:1743003 errors:0    # <- errors:0
-
-# 3. The kernel log is full of:
-$ dmesg | grep "tx timeout"
-Bluetooth: hci0: command 0x0406 tx timeout
-
-# 4. Context only — absence here does not identify the device-table mechanism:
-$ dmesg | grep -i "Resetting usb device"
-<nothing>
-```
-
-For `13d3:3503`, the absent quirks-table entry (`BT-3`) is confirmed by source and module
-inspection, not by point 4.
-Point 2's `errors:0` means **no errors are reflected in those HCI
-counters** — the chip is accepting bytes and simply not answering. (USB health at this
-stage is established separately, from USB-level evidence: descriptor reads still succeed
-at HCI failure onset.)
-
-</details>
-
-Confirm the hardware:
-
-```bash
-$ lsusb | grep 13d3
-Bus 003 Device 002: ID 13d3:3503 IMC Networks
-$ bluetoothctl show | grep -E "Manufacturer|Version"
-	Manufacturer: 0x001d (29)      # Qualcomm
-	Version: 0x07 (7)              # Bluetooth 4.2
-```
-
----
-
-## Established driver mismatch
-
-`13d3:3503` is matched by no entry in btusb's vendor quirks table. It binds through the
-generic USB-Bluetooth-class rule with `driver_info = 0`, so it receives **neither** of
-the two things `BTUSB_QCA_ROME` provides:
-
-- **`hdev->reset = btusb_qca_reset`** — the callback `hci_cmd_timeout()` invokes on the
-  *first* command timeout (no threshold; see `net/bluetooth/hci_core.c`)
-- **`btusb_setup_qca()`** — the QCA USB init path, so **no rampatch or NVM download is
-  ever performed for this device through that path**
-
-  (What firmware state the controller is actually in — pristine ROM, or something with
-  persistent patch state — is not established. `btusb_setup_qca()`'s own
-  `QCA_GET_TARGET_VERSION` / `QCA_CHECK_STATUS` queries would tell us; see
-  [`docs/fix-proposal.md`](docs/fix-proposal.md) §5a build B.)
-
-Three genuine QCA ROME comparators from the same ODM are covered while this one is not —
-`13d3:3491`, `3496` and `3501` are all `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH` in
-upstream v7.0; `3502`, `3503` and `3504` appear nowhere. Check your own kernel with
-`tools/bt-verify-kernel-mechanism`.
-
-⚠️ Numerical proximity alone proves nothing: `13d3:3563` *is* present but is
-`BTUSB_MEDIATEK`. `13d3` is IMC Networks, an ODM shipping modules built around several
-vendors' silicon.
-
-Measured on the affected machine:
-
-```
-"tx timeout" events across 34 boots : 287
-automatic reset attempts            :   0
-```
-
-Both the reset handler and the QCA firmware path *are* compiled into the running
-`btusb.ko` (verified with `strings`). They simply never run for this device.
-
-### Established HCI failure; unresolved USB-loss trajectory
-
-Only the HCI-nonresponsive state is established as part of the untreated
-controller-wedge fault (filed in this repository as `BT-1`, if you want to search
-for it):
-
-| Observation | Current interpretation |
-|---|---|
-| HCI unresponsive while USB remains healthy | established |
-| USB errors/disappearance after reset, rebind or reload | observed outcome after intervention; cause unresolved |
-| Untreated HCI failure progressing to USB disappearance | never observed uncensored |
-
-⚠️ It is tempting to write "with the quirk, a reset fires within seconds and you notice
-nothing but an audio dropout" — an earlier version of this file did. That is **not
-established**. The one early reset ever measured did recover the controller, and it failed
-again 132 seconds later (`EX-004`). A reset at the exact moment `hdev->reset` would fire —
-the first HCI timeout — has still never been tested. See `docs/fix-proposal.md` §5a.
-
-Without prompt intervention, HCI non-response persisted for 72 minutes and 6.5 hours
-while the controller remained USB-enumerated. Those are censored lower bounds, not a
-decay time or proof that the state lasts indefinitely.
-
-In the intervened incidents that reached USB absence, these attempts failed:
-
-```
-usb 3-3: device descriptor read/64, error -110      # driver unbind/rebind
-usb 3-3: device not accepting address 2, error -62
-usb usb3-port3: attempt power cycle                 # xHCI port power cycle
-usb usb3-port3: unable to enumerate USB device
-```
-
-A full shutdown has recovered the controller. Warm-reboot recovery is unmeasured: one
-controller recovery across a `reboot.target` shutdown is on record, but an unlogged
-power-off is not excluded (`EX-017`, `EX-019`). The claim that a warm reboot does not drop
-the M.2 power rail remains an inference, not evidence.
-
-### An earlier hypothesis about the trigger — SINCE REFUTED
-
-> ⚠️ Kept for the record. The A2DP-teardown trigger described below does not
-> hold: the transport reached IDLE five times in one boot with no SCO setup and
-> no failure. See `docs/issues.md` (`BT-1`) and `EX-007`.
-
-Tearing down an **A2DP stream mid-playback** — powering headphones off or walking out of
-range while music is playing.
-
-```
-20:19:59  avdtp.c: Suspend: Connection timed out (110)
-20:20:11  avdtp.c: Abort:   Connection timed out (110)
-20:20:43  Bluetooth: hci0: command 0x0406 tx timeout   <-- wedged (0x0406 = HCI_Disconnect)
-```
-
----
-
-## Install
-
-```bash
-git clone https://github.com/ivoitovych/qca9377-bt-hang   # or your fork
-cd qca9377-bt-hang
-sudo ./install.sh            # dry run — shows exactly what it would do
-sudo ./install.sh --apply    # install and arm
-```
-
-### `--tools-only` — deploy the files, arm nothing
-
-```bash
-sudo ./install.sh --tools-only
-```
-
-Installs every file, enables no service, reloads no driver, touches no device.
-
-**Use it on a machine you are measuring.** `--apply` runs
-`systemctl enable --now bt-hang-watchdog`, and that watchdog answers an HCI
-timeout with a USB reset — an operation with three controlled demonstrations of
-destroying this controller (`EX-023`, `EX-026`). On the investigation machine
-that made the choice "stale instruments or an armed watchdog", and the
-instruments stayed 29 versions behind for days as a result. This is the third
-option.
-
-It is deny-by-default: only `install`, `rm`, `rmdir` and `mkdir` run, and every
-other command is printed with the reason it was skipped, so a system command
-added later is skipped rather than silently executed.
-
-⚠️ What it deliberately does **not** do: an updated unit file for an
-already-running service is not re-read until the next boot, and a changed udev
-rule applies at the next enumeration. The files on disk are current either way.
-
-Uninstall is complete — every installed file is new, nothing pre-existing is touched:
-
-```bash
-sudo ./uninstall.sh                          # dry run
-sudo ./uninstall.sh --apply
-sudo ./uninstall.sh --apply --purge-metrics  # also delete collected metrics
-./tools/verify-restored.sh                   # confirm nothing is left behind
-```
-
-[`docs/restore-original-state.md`](docs/restore-original-state.md) documents the full
-path back to the pre-install state, including the few things `uninstall.sh` deliberately
-does not touch (collected metrics, and settings changed outside this repo).
-
-### What it installs
-
-**1. A watchdog** (`bt-hang-watchdog.service`) — reimplements the missing kernel handler
-in userspace. It tails the kernel log and, after 3 controller timeouts in 60 s, issues
-`USBDEVFS_RESET`, escalating to USB unbind/bind if needed.
-
-⚠️ This is a **proxy, not an equivalent**. `USBDEVFS_RESET` goes via `proc_resetdevice()`
-→ `usb_reset_device()`, while the kernel path queues a reset on the interface
-(`usb_queue_reset_device()`). More importantly the *timing* differs: the kernel resets at
-+0 s inside `hci_cmd_timeout()`, whereas a journal-tailing watchdog has measured +11 s to
-+33 s. Every late reset failed; the +0 s case has never been tested.
-
-**2. USB autosuspend disabled** for the radio — `btusb enable_autosuspend=0` plus a udev
-rule pinning `power/control=on`. This is an experimental mitigation, not an established
-mechanism: the repository has not measured that autosuspend triggers the controller wedge or changes its
-frequency, and `EX-014` records uncertainty about the original runtime value.
-
-**3. A metrics collector** (optional, `--no-metrics` to skip) — snapshots health every
-15 min to `/var/log/bt-health/metrics.tsv`, surviving reboots.
-
-Confirming a recovery worked needs `hciconfig` or `btmgmt` (package `bluez`). Without
-either, the watchdog still resets the controller but logs the attempt as unverified
-rather than counting it as a failure — so a missing tool cannot make it disable itself.
-
-### Different controller?
-
-The watchdog is not chip-specific:
-
-```bash
-BT_VID=0cf3 BT_PID=e300 sudo -E ./install.sh --apply
-```
-
----
-
-## Is it working?
-
-```bash
-bt-health-report            # full analysis
-journalctl -u bt-hang-watchdog -f    # live
-```
-
-Report these outcomes separately rather than converting them into one success verdict:
-
-- **tx-timeout counts change under a controlled denominator** — evidence about incidence,
-  not proof of which treatment component caused the change
-- **timeouts still happen, but each is followed by `RECOVERED`** — the watchdog is doing
-  useful mitigation for a confirmed HCI stall
-- **USB errors/disappearance follow intervention** — an adverse post-intervention outcome;
-  it does not prove the controller naturally reached a second stage or that the watchdog
-  merely acted too late
-
-Do not lower thresholds on the assumption that USB absence is natural progression. A
-reset at +0 s may help or harm; that sign remains an experiment, not a tuning fact.
-
-Baseline for comparison (`evidence/baseline/baseline.tsv`): **287 timeouts across 34 boots, 13 of 34
-boots hung.**
-
-⚠️ **That baseline is no longer re-derivable.** It was read from boots that have since
-rotated out of the journal under `SystemMaxUse`, so the numbers survive in the TSV as a
-record but a reviewer cannot reproduce them. `tools/bt-retention` reports which exhibits
-remain re-derivable; `docs/bug-report.md` withdraws both figures from its load-bearing
-list rather than restating them.
-
-Longest untreated observation to date: **47338.1 s — 13 h 8 m 58 s** with zero USB-layer
-lines and zero interventions (`EX-029`).
-
-### Tunables
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `BT_THRESHOLD` | `3` | timeouts inside the window before intervening |
-| `BT_WINDOW` | `60` | sliding window, seconds |
-| `BT_COOLDOWN` | `180` | minimum seconds between recovery attempts |
-| `BT_MAX_FAILS` | `3` | consecutive failures before idling until reboot |
-| `BT_VERBOSE` | `0` | log every detected signal and the window state |
-| `BT_EARLY` | `0` | also act on audio-teardown failures — see below |
-| `BT_EARLY_THRESHOLD` | `1` | early signals before intervening |
-| `BT_EARLY_WINDOW` | `90` | early sliding window, seconds |
-
-### `BT_EARLY` — resetting before the HCI timeout
-
-By default the watchdog waits for `tx timeout`, i.e. for the controller to already have
-stopped answering. The 2026-08-10 hang suggests that may be too late: a reset issued 20 s
-after the first timeout, and 33 s *before* any USB-level failure, did not recover the
-chip.
-
-bluetoothd sees trouble first. In that hang it logged audio-teardown failures **52 s**
-before the kernel noticed. `BT_EARLY=1` follows bluetoothd as well as the kernel and
-intervenes on those instead:
-
-```bash
-sudo systemctl edit bt-hang-watchdog     # Environment=BT_EARLY=1
-```
-
-Trigger patterns were selected from historical boot-level associations, written as
-*appearances in boots that hung / appearances overall*: `cancel_request() Suspend` 2/2,
-`Abort` 4/4, `avdtp_connect_cb` 5/5, `SDP record: Host is down` 10/10,
-`avdtp_close failed` 3/4. `Device or resource busy` is excluded at 3/9 — too noisy.
-
-⚠️ These ratios are **historical and no longer re-derivable**: the boots they were
-counted over predate the 2026-08-12 journal-retention accident (see `EX-003` for the
-same caveat class), and the extraction was never captured as an exhibit. An earlier
-wording of this paragraph reversed the notation and transposed `avdtp_close failed`
-(review 2026-08-15T1752Z §1.1); the order used by `HISTORY.md` Phase 12 ("4/4
-occurrences fell in boots that hung") is the one stated above. They are retained only
-to explain how the heuristic's patterns were chosen — see the matching comment in
-`bin/bt-hang-watchdog`.
-
-Those ratios are **not predictive precision**. An early reset prevents observation of the
-counterfactual, and every proposed early marker has failed causal tests elsewhere in this
-repository. The mode is an aggressive mitigation heuristic, not evidence the wedge was imminent.
-
-⚠️ **Opt-in, and experimental.** A false positive resets a working controller and drops
-live connections. Raise `BT_EARLY_THRESHOLD` if it fires during normal use.
-
-**The warning is short and its length varies wildly.** Measured lead times between the
-first bluetoothd signal and the first HCI timeout:
-
-| Incident | Lead time |
-|---|---|
-| audio teardown | −52 s |
-| audio teardown (recovered) | enough for ≥2 signals |
-| connect/disconnect + mode changes | **+133 s** — no window at all |
-| "a few manipulations" | **−7 s** |
-| light use, 2 min into a fresh boot | **none at all** |
-
-**Two of five hangs had no usable warning**, so this is not a general mitigation — it
-covers roughly the audio-teardown subset. The late trigger has never once succeeded:
-five for five, a reset after the first HCI timeout failed.
-
-That is why the default threshold is **1**, not 2. On 2026-08-11 exactly one signal
-arrived 7 s ahead, a threshold of 2 was never reached, and the controller was lost.
-A 7-second window also sets a hard bound on how slow *any* recovery mechanism can
-afford to be — including a kernel one.
-
-⚠️ **In two of five hangs there was no usable warning at all**, so `BT_EARLY` cannot be
-relied on. In one, bluetoothd's signal arrived **133 s *after*** the first HCI timeout;
-in another it never appeared.
-
-`BT_EARLY` can leave the controller answering after an intervention, but cannot say whether
-the wedge would otherwise have occurred. It is off in experiment mode for that reason.
-
-> ⚠️ **These are log signatures, not controlled comparisons.** The reproductions were
-> ad-hoc — arbitrary connect/disconnect/mode-change activity, no fixed procedure, exact
-> actions unrecorded. Differences between incidents may reflect different (unknown)
-> actions rather than different mechanisms. See
-> [`docs/bug-report.md`](docs/bug-report.md#-methodological-caveat--read-before-weighing-the-comparisons).
-
----
-
-## A candidate fix — NOT established as the fix
-
-<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.1: the "+0 s never tested" table below
-     and the BTUSB_QCA_ROME setup-failure warning are the two claims that stop
-     this section overselling the patch. Any edit that removes either turns a
-     hypothesis back into "the fix". -->
-
-
-A one-line kernel patch — add the device to btusb's QCA ROME quirks:
-
-```c
-+	{ USB_DEVICE(0x13d3, 0x3503), .driver_info = BTUSB_QCA_ROME |
-+						     BTUSB_WIDEBAND_SPEECH },
-```
-
-> ⚠️ **Untested — and our experiments did not test it.** Our userspace resets fired
-> **+11 s to +33 s** after the first timeout and all five failed. But `hci_cmd_timeout()`
-> calls `hdev->reset(hdev)` *synchronously with the timeout it reports*, with no
-> threshold — so a patched kernel acts at **+0 s**. Every experiment we ran was late
-> relative to the thing being proposed.
->
-> | Reset issued | Result |
-> |---|---|
-> | **+0 s** — what the patch would do | ❓ **never tested** |
-> | **+11 s … +33 s** after the first timeout | ❌ five attempts, all failed |
-> | **before** any timeout, on bluetoothd's audio-teardown signal | ✅ **recovered** |
->
-> The tested reset timings had different outcomes, but do not establish a one-way recovery
-> deadline: a reset may recover, destabilise, or drive USB loss. The +0 s treatment is
-> untested and must be scored for both benefit and harm.
->
-> Sessions: [late reset failed](evidence/sessions/20260810-072445-first-real-hang/) ·
-> [early reset worked](evidence/sessions/20260811-002156-early-mode-SUCCESS/) ·
-> [+11 s also failed, no early warning](evidence/sessions/20260811-060910-mode-change-hang/)
->
-> ⚠️ **Also untested and risky in its own right.** `BTUSB_QCA_ROME` enables the rampatch
-> firmware download path; if this module is not a true ROME variant, adapter setup can
-> fail and leave you with *no* Bluetooth. (Setup runs at HCI open, not at USB probe, so
-> the device still enumerates — the failure appears when the adapter is brought up, and
-> booting the previous kernel recovers it.) See
-> [`docs/fix-proposal.md`](docs/fix-proposal.md).
-
-**Why the missing ID matters twice.** It withholds *recovery* — `hdev->reset` is NULL, so
-`hci_cmd_timeout()` logs each timeout and does nothing — **and** *prevention*, because
-`btusb_setup_qca()` never runs, so Linux never performs the QCA rampatch/NVM download for
-this ID. (What the controller runs instead is *not* established — only that this driver
-loads nothing into it.) The first is verified three ways; the second is the
-[firmware hypothesis](docs/firmware-hypothesis.md), and it is the better explanation for
-why the same hardware never faults under Windows.
-
-**Confirmed at source level.** `0x3503` does not appear anywhere in upstream
-`drivers/bluetooth/btusb.c` (v7.0), which carries 78 other `0x13d3` entries — the vendor
-is well covered, this product ID simply is not. The running `btusb.ko` agrees: a scan for
-the little-endian `usb_device_id` pair `d3 13 03 35` finds nothing, while `d3 13 62 33`
-(13d3:3362, a known entry) is found, validating the method. Ubuntu added no extra IDs —
-78 in the binary, 78 in upstream.
-
-Note `modinfo` cannot answer this: it exposes only `btusb_table`, while the quirks live
-in a separate non-exported `quirks_table` matched via `usb_match_id()` (btusb.c:4046).
-
-Longer term, the QCA9377 is a weak 2015-era part with a long history of this failure. On
-most laptops it is an M.2 2230 card that swaps directly for an Intel AX200/AX210 — far
-more reliable on Linux, and Wi-Fi 6 as a bonus. Check for a BIOS wireless allowlist first.
-
----
-
-## Not a *recent* regression — but the driver behaviour is datable to v5.12
-
-Tested across every kernel available on the affected machine:
-
-| Kernel | Hangs? |
-|---|---|
-| 6.17.0-29 | yes |
-| 6.17.0-35 | yes |
-| 6.17.0-40 | yes |
-| 7.0.0-28 | yes |
-
-Four kernel versions across ten weeks and 34 boots. Rolling back to another recent
-kernel does not help. Per-boot detail:
-[`evidence/diagnosis/per-boot-history.txt`](evidence/diagnosis/per-boot-history.txt).
-
-⚠️ **This heading used to read "Not a kernel regression", and that was too strong.**
-The table shows the fault is not a *recent* regression. It cannot show that the
-behaviour was always there, because **every kernel in it postdates the change that
-matters**.
-
-Reading `btusb.c` at ten release tags dates the relevant change between **v5.11 and
-v5.12**. Through v5.11, alt setting 1 for wideband speech was a per-device opt-in
-guarded by `BTUSB_USE_ALT1_FOR_WBS`, set only inside the Realtek block; any other
-adapter without alt 6 got `new_alts = 0`, an error line, and no wideband speech.
-v5.12 turned that opt-in into an **unconditional fallback**, so an adapter matching
-no quirks entry — which `13d3:3503` does not — is placed into an isochronous
-configuration it was never validated for.
-
-The two statements are consistent: the change landed in v5.12, and the oldest kernel
-tested above is 6.17. Rolling back within that range changes nothing because the
-whole range is on the far side of it.
-
-**That yields a prediction this project has not tested**: on a kernel in the
-**v5.8 – v5.11** window, this hardware should not take the alt-1 path at all —
-it should log `Device does not support ALT setting 6` and get no wideband speech.
-Nobody has run it, and it is recorded here as an open experiment rather than a
-result.
-
-> ⚠️ **The window matters — "v5.11 or earlier" is wrong, and this was checked at
-> five tags.** Alt 1 is reachable *again* below v5.8, by a different route, so an
-> older kernel does not make a cleaner control:
->
-> | kernel | transparent/WBS path | alt 1? |
-> |---|---|---|
-> | ≤ v5.7 | **no `air_mode` branch exists**; alt is chosen from `voice_setting & 0x0020` and `sco_num` → `alts[sco_num-1]` = {2,4,5}, else `sco_num` | **yes, by a different mechanism** |
-> | v5.8 – v5.11 | alt 6 if present, else `bt_dev_err("Device does not support ALT setting 6")` — and from v5.11 an alt-1 opt-in gated on `BTUSB_USE_ALT1_FOR_WBS`, **set only in the Realtek block** | **no** (this device matches no quirk) |
-> | ≥ v5.12 | `new_alts = btusb_find_altsetting(data, 6) ? 6 : 1;` — unconditional | **yes** |
->
-> The change is **`517b693351a2`** — Trent Piepho, 2020-12-09, *"Bluetooth: btusb:
-> Always fallback to alt 1 for WBS"* — verified as an ancestor of `v5.12` and
-> **not** of `v5.11`. It restored a pre-5.8 behaviour that `461f95f04f19` (Hilda
-> Wu, 2020-06-30) had brought back for Realtek only.
->
-> **Its own commit message is the strongest thing we have on this point**, and it
-> is the author's, not ours:
->
-> > *"many if not most BT USB adapters do not support alt mode 6. In fact, **I have
-> > been unable to find any which do**."*
->
-> and the code comment it left behind rests on an explicitly empirical assumption:
->
-> > *"Alt 1 appears to work for all adapters that do not have alt 6, and which work
-> > with WBS at all."*
->
-> `13d3:3503` is a candidate counterexample to exactly that sentence. That is a far
-> better framing for an upstream report than "the driver picks a bad alt setting".
-
-Confirmed on the machine rather than only in source — `EX-033`'s captured lines are
-the chain itself: `hci0 evt 5` (`HCI_NOTIFY_ENABLE_SCO_TRANSP`, the transparent
-branch), then `Looking for Alt no :6` and `:3` (the two probes). ⚠️ An earlier
-version of this sentence said "then silence"; that was an artefact of the exhibit's
-own grep (`EX-037`). Alt 1 is now **read directly from `sysfs`** during live wedges —
-`bAlternateSetting 1`, `wMaxPacketSize 0009` — five times (`EX-037`–`EX-043`).
-
----
-
-## Repository layout
+Windows 11 on the same laptop shows no fault under deliberate repeated use. That is not
+"Linux is broken": Linux drives this controller into a state that Windows does not, and
+which side is at fault follows from the mechanism, not the other way round.
+
+## Method, in five rules
+
+1. **Every claim ships with its extraction command and verbatim output**, plus exit status
+   and whether it was redacted. A claim without a re-runnable derivation is not evidence.
+2. **A zero needs a positive control.** A scan that saw nothing is not a scan that found
+   nothing.
+3. **The liveness probe is an intervention.** Inside an untreated window, `sysfs` reads
+   are safe and anything that sends a command is not.
+4. **Separate what the operator did from how the controller responded.** Trigger
+   attributions are inferences from logs; response measurements survive that.
+5. **Retractions are kept, not deleted.** `BRIEF.md` §5 lists every claim this project
+   asserted and later refuted, so nobody re-asserts one.
+
+The current formulation of the fault as the issue register carries it (`docs/issues.md`,
+where it is filed as `BT-1`, the project's own search handle):
+
+<!-- BT1-CURRENT-BEGIN -->
+> The controller sometimes enters a non-responsive HCI state during synchronous-audio link
+> transitions, while remaining USB-enumerated. Later USB collapse has so far only been
+> observed after a reset, rebind or driver reload; whether it belongs to the fault's
+> untreated trajectory is **unresolved**.
+<!-- BT1-CURRENT-END -->
+
+## Repository map
 
 <!-- One tree, one entry per path. An earlier version of this block was two
      generations merged: tests/ appeared twice and tools/lib/, exhibits/ and
      trials/ dangled below the closing entries (review 2026-08-15T1752Z §1.1). -->
 ```
+BRIEF.md              the concentrated current state, 200 lines, what is true / retracted / open
+HISTORY.md            chronological development record, wrong turns included (36 phases)
 bin/                  watchdog, capture daemons, metrics collector
-systemd/              unit files
-etc/                  modprobe + udev + journald configuration
+systemd/ etc/         unit files; modprobe + udev + journald configuration
 tools/                diagnostics, incident capture, log sanitiser
   lib/                shared awk/sh programs (timestamps, matching, reports, the journal seam)
 tests/                run-tests — invariants, each anchored to a real shipped defect
-  fixtures/           table-driven cases for the awk libraries
-  journal/            canned journals for driving tools without a machine
-  btmon/              text fixtures for the btmon-reading tools
-devtools/             contributor tooling (check, scan, validate, coverage, commit+verify)
-reviews/              assessments of the repository itself, plus the action register
-docs/                 ten documents; the load-bearing ones:
-  issues.md           the issue register — the AUTHORITATIVE current claims
-  investigation.md    full investigation, every measurement (historical chronology)
-  bug-report.md       ready to file with linux-bluetooth (gated; see the banner in it)
-  fix-proposal.md     the patch, its risks, the A/B/C/D validation ladder
-  firmware-hypothesis.md  why the same silicon may behave differently under Windows
-  changes-applied.md  exact system changes + rollback
-  restore-original-state.md  full path back to the pre-install state
-  (also: investigation-plan.md, pre-submission-checklist.md, related-reports.md)
+devtools/             contributor tooling (check, scan, validate, coverage, ci, commit+verify)
+reviews/              assessments of the repository itself; README.md there is the live action register
+comms/  lessons/      messages between the maintainers; what the project cost to learn
+patches/bluez/        the two BlueZ patches, their verification script and mail notes
+docs/                 issues.md (issue register) · bug-report.md · fix-proposal.md · install.md ·
+                      missing-quirks-entry.md · tooling-index.md · investigation-plan.md · …
 evidence/
-  baseline/           the failing boot, before any mitigation
-  diagnosis/          reproducible transcripts proving the root cause
-  sessions/           one directory per reproduction session
-  exhibits/           numbered, self-verifying evidence exhibits
+  exhibits/           numbered, self-verifying evidence exhibits (start here)
+  sessions/           one directory per reproduction session, sanitised
   trials/             numbered trials and results.tsv (the denominators)
-HISTORY.md            chronological development record, wrong turns included
+  baseline/ diagnosis/  the failing boot before any mitigation; the device-table transcripts
 ```
 
-### Publishing logs
+**Branches.** `main` is the record. `review/<UTC timestamp>` holds one assessment
+(report first, then the reaction on `review/<timestamp>-fixes`), per the convention in
+[`reviews/README.md`](reviews/README.md). `claude/unit-testing-intro-*` is the test-suite
+maintainer's line. `evidence/*`, `verify/*` and `backup/*` are dated snapshots kept
+because nothing here is deleted. CI (`.github/workflows/checks.yml`) runs the suite, the
+coverage floors and the publish scan on every push; `devtools/ci` reads its verdict.
 
-<!-- REVIEWED-KEEP 2026-08-15T1752Z §1.1: this section explains WHY the
-     sanitiser exists (BSSID -> geolocation) rather than just prescribing it,
-     and documents the in-place safety. Keep the reason with the rule. -->
-Kernel logs contain your **Wi-Fi access point BSSID**, which public geolocation databases
-(WiGLE, Google, Apple) index — it can reveal where the machine physically is. Always run
-logs through the sanitiser before attaching them anywhere:
+## Install, tools, tests
 
-```bash
-./tools/sanitize-logs.sh /path/to/kernel.log
-```
-
-It replaces MACs and BSSIDs (**colon or dash separated**), UUIDs and IPv4 addresses with
-deterministic placeholders, then verifies none survived — checking every form it
-substitutes, so a missed form cannot produce a false all-clear. It is safe to run in
-place (`sanitize-logs.sh kernel.log kernel.log`): output is built in a temp file and
-renamed only after verification passes. The logs in `evidence/baseline/` were produced this way.
-
----
-
-## Status
-
-| | |
-|---|---|
-| Device unmatched by btusb quirks table | ✅ upstream v7.0 source **and** shipped binary |
-| Reset mechanism is `hdev->reset`, on the first timeout | ✅ source + binary |
-| Failure localised to synchronous-audio link transitions | ⚠️ both instrumented failures occur there — setup unanswered in one (`EX-006`), teardown in the other (`EX-009`). **No single triggering opcode**: three SCO setups were survived |
-| USB healthy at HCI failure | ✅ measured — first URB error is 31 s later (`EX-008`) |
-| Watchdog detection | ✅ tested end-to-end |
-| Watchdog intervention path | ✅ exercised — controller answered after one early intervention; late interventions were followed by USB loss, with causality unresolved |
-| Autosuspend setting, udev rule | ✅ applied and verified |
-| **Quantified reproducer (A4)** | ❌ **gate — not done.** No controlled denominator yet |
-| Observational denominator | ✅ re-derivable — 34 boots, 287 timeouts, 13 hung, from `evidence/baseline/baseline.tsv`; not re-verifiable against the journal, which has rotated |
-| Kernel patch | ❌ written, not built or tested |
-| **BlueZ patches (`patches/bluez/`)** | ✅ **two, ready** — both defects confirmed live in master `c73fa2f9ae2d`, both apply clean, crash sites resolved from the shipped binary and falsified against the retained coredump. **Not yet sent.** |
-| Four distinct failure modes separated | ✅ `EX-030` audio-server release, `EX-031` a SCO link that worked, `EX-032` a BlueZ crash, and the controller wedge itself — all indistinguishable to an operator |
-| Alt-1 fallback dated to v5.12 | ✅ source at ten tags, **and** observed on the machine (`EX-033`) |
-
-> ⛔ **Before submitting anything upstream**, work through
-> [`docs/pre-submission-checklist.md`](docs/pre-submission-checklist.md): unmet evidence
-> gates, content that must be excluded, and a deferred purge of Bluetooth addresses from
-> git history.
-
-**This is not one bug.** [`docs/issues.md`](docs/issues.md) tracks six distinct defects
-observed on this machine, separately, because filing them under one heading actively
-slowed the work — evidence for one kept being read as evidence for another. Two of them
-(`BT-2`, the panel-triggered 16 s command desync, and `BT-4`, `btmon` aborting mid-capture)
-are reportable **now**, independently of the hang.
-
-**The strongest current lead**, stated at the strength the evidence supports: the
-failure occurs during synchronous-audio (SCO/eSCO) link transitions. It is *not* a single
-command — three setups were serviced correctly and survived, one went unanswered, and one
-completed successfully before a later `Disconnect` went unanswered instead. What the two
-failures share is the transition and the USB alternate-setting switch that accompanies it,
-not an opcode.
-
-Earlier drafts named an A2DP-idle trigger and then a specific SCO setup command. Both were
-refuted here; see `docs/issues.md` (`BT-1`).
-
-## Diagnostic tools
-
-Standalone — clone and run, no installation required. All work with any USB Bluetooth
-controller, not just `13d3:3503`.
-
-| Tool | Purpose |
-|---|---|
-| `tools/bt-diagnose` | **Do you have this bug?** Auto-detects the controller, scans all boots, gives a verdict |
-| `tools/bt-state` | Current controller/USB/service state in one shot |
-| `tools/bt-boots [N]` | Per-boot failure counts across retained boots |
-| `tools/bt-boot-list` | Robust journal boot enumeration (see its header — the obvious versions fail silently) |
-| `tools/sanitize-logs.sh` | Scrub MACs, BSSIDs, UUIDs and IPv4 from logs before publishing them |
-
-Installed to `/usr/local/bin` by `install.sh`, but none of them need it.
-
-### Investigating a hang
-
-Installed alongside the mitigation, for reproducing and recording failures:
-
-| Tool | Purpose |
-|---|---|
-| `bt-trial` | Numbered trials with a failure rate per build, so every comparison has a denominator. **A trial now opens automatically at each boot** (`bt-trial-auto.service`, ordered before `bluetooth.service`) and is closed by the watchdog on a hang or by systemd at shutdown — a manually started trial missed the window that mattered, because Bluetooth is scanning before anyone can reach a terminal. Auto trials record `survived` rather than `ok`: they say the machine did not hang, not that the reproduction protocol was carried out |
-| `bt-capture` (service) | Decode-free HCI capture straight from the kernel monitor socket. Runs alongside `bt-trace` because `btmon` aborts frequently (`BT-4`) and took the SCO parameters with it |
-| `bt-sco` | Every synchronous-link setup with its decoded parameters and completion — the comparison that matters now that SCO setup alone is known not to be sufficient |
-| `bt-status` | **"What do we have by now?"** — controller, per-boot history, whether Bluetooth was actually used, watchdog activity, verdict |
-| `bt-verify-install` | is the running system the same as the checkout? catches hand-installed drift |
-| `bt-postmortem` | What happened during the last hang: timing, whether the watchdog fired, **whether the reset worked** |
-| `bt-incident <slug>` | Collect a hang that already happened into a sanitised evidence session |
-| `bt-timeline [-30m]` | Merge kernel, bluetoothd, watchdog, trace and your marks into one chronology |
-| `bt-mark "<text>"` | Annotate the journal with what you are doing, plus device state at that instant |
-| `bt-evidence start/note/cmd/stop` | Record a planned session, when you know the test in advance |
-| `bt-trace` (service) | Rotating btsnoop HCI capture via `btmon`; logs its own gaps |
-| `bt-actions` | **Reconstruct what actually happened** — merges operator actions, BlueZ/PipeWire responses, controller failures and watchdog decisions into one wall-clock timeline, collapsing repeats. Use this instead of describing a session from memory |
-| `bt-context` | The inverse filter: shows what sits *next to* a failure that nothing yet explains. Finds signals nobody thought to grep for |
-| `bt-boot-stats` | One row per boot, and the cross-tab that tells you whether a signature actually predicts the hang or just accompanies it |
-| `bt-exhibit` | Capture evidence as a numbered exhibit: claim, exact extraction command, verbatim output, relevance — command and output captured in one pass so they cannot drift |
-| `bt-dyndbg on\|off\|status` | Kernel `pr_debug` for `btusb` and the HCI core. `--packets` adds the per-packet files, which perturb the timing being measured |
-| `bt-usbmon` (service) | Rotating pcap of the controller's USB bus — records whether post-HCI USB behavior is untreated progression, hub recovery, or intervention aftermath |
-
-See [`evidence/README.md`](evidence/README.md) for how sessions are structured.
-
-## Contributing tooling
-
-[`devtools/`](devtools/) holds scripts for working **on** this repository — not for
-diagnosing Bluetooth:
-
-| Script | Purpose |
-|---|---|
-| `devtools/check` | the one command to run before committing |
-| `devtools/repo-scan <dir>` | refuse-to-publish scan: MACs, BSSIDs, UUIDs, IPv4, emails, AI attribution, binary captures |
-| `devtools/repo-validate <dir>` | `bash -n`, `systemd-analyze`, `udevadm verify`, `jq`, `py_compile` |
-| `devtools/repo-save <dir> "<msg>"` | validate → scan → commit → push → verify the remote hash matches |
-| `devtools/coverage` | how much of the shipped shell the test suite actually executes |
-| `devtools/assert-test-catches` | prove a test really fails when its invariant is broken |
-
-This repo publishes logs, and kernel logs carry the Wi-Fi AP BSSID — which public
-geolocation databases index. `repo-scan` is the last check before that leaves the
-machine. Not installed by `install.sh`.
-
-### Tests
-
-<!-- No invariant count or coverage percentage is spelled here ON PURPOSE.
-     Both numbers move with nearly every commit, and this page carried
-     "96 invariants" while the suite reported 386 and "18.3%" while the
-     measured figure was ~87% (review 2026-08-15T1752Z §1.1). The suite and
-     devtools/coverage print the current numbers; the reviews/ register
-     tracks the trend. Quote those, not a snapshot pasted here. -->
-```bash
-tests/run-tests                    # prints "all N invariants hold" — N is the count
-tests/run-tests --section "stage2" # one block, without a sed range
-devtools/coverage                  # how much of the shipped shell the suite executes
-```
-
-Every invariant in `tests/run-tests` encodes a defect that really shipped
-here, with a fixture built so the old behaviour fails it. Coverage of the shipped shell
-started at 13.1% when it was first measured and is enforced in CI by
-`devtools/coverage --min 80` (shell) and `devtools/awk-coverage --min 85` (the awk the
-analyses are computed in); run either tool for the current figure. What remains
-uncovered is argued line-by-line in `devtools/coverage-exclude`. Tools that read the
-journal through [`tools/lib/journal.sh`](tools/lib/journal.sh) can be driven from a
-fixture:
-
-```bash
-BT_JOURNAL_FIXTURE=tests/journal/provenance tools/bt-boot-provenance
-```
-
-[the unit-testing assessment](reviews/2026-08-13T1214Z-unit-testing-assessment.md) measures this
-and tracks what remains.
+- **Install:** [`docs/install.md`](docs/install.md). On a machine you are *measuring*, use
+  `sudo ./install.sh --tools-only`; `--apply` arms a watchdog whose USB reset has three
+  controlled demonstrations of destroying this controller (`EX-023`, `EX-026`).
+- **Tools:** [`docs/tooling-index.md`](docs/tooling-index.md) — which tool answers which
+  question. The standalone ones (`bt-diagnose`, `bt-state`, `bt-boots`, `bt-boot-list`,
+  `sanitize-logs.sh`) need no installation.
+- **Publishing logs:** kernel logs carry your Wi-Fi access point BSSID, which public
+  geolocation databases index. Run `./tools/sanitize-logs.sh <log>` before attaching
+  anything anywhere; it replaces MACs, BSSIDs and IPv4 addresses with deterministic
+  placeholders and verifies none survived. `devtools/repo-scan` refuses to publish
+  otherwise.
+- **Tests:** [`tests/README.md`](tests/README.md).
+  <!-- No invariant count or coverage percentage is spelled here ON PURPOSE.
+       Both numbers move with nearly every commit, and this page carried
+       "96 invariants" while the suite reported 386 and "18.3%" while the
+       measured figure was ~87% (review 2026-08-15T1752Z §1.1). The suite and
+       devtools/coverage print the current numbers; the reviews/ register
+       tracks the trend. Quote those, not a snapshot pasted here. -->
+  ```bash
+  tests/run-tests        # every invariant encodes a defect that really shipped here
+  devtools/coverage      # how much of the shipped shell the suite executes
+  devtools/check         # the one command to run before committing
+  ```
 
 ## Contributing
 
-Useful data points, especially:
+Most useful, in this order:
 
-- Other USB IDs showing the same signature (timeouts with zero reset attempts)
-- Whether `13d3:3503` is present in the quirks table in current mainline
-- Confirmation that the patch works, if you build it
+- a run on a **≤ v5.11 kernel** with an mSBC headset — the untested prediction is that it
+  never takes the alternate-setting-1 path;
+- the same signature on **another controller** that matches no quirks entry (`bt-diagnose`,
+  then `bt-fault-window` around the first timeout);
+- a `btmon` capture of a transparent SCO link that **survived** a command on this part.
+
+Messages between maintainers go in [`comms/`](comms/); every number carries the command
+that produced it.
 
 ## License
 

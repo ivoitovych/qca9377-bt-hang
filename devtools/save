@@ -88,6 +88,19 @@ if [[ -n "$NEWEST" && -r "$REPO/BRIEF.md" ]]; then
         echo "     after a context reset, and a stale one is read as current." >&2
     fi
 fi
+# THE FRONT PAGE, BY THE SAME TEST. README.md carries a dated copy of BRIEF's
+# status for readers who never open BRIEF — a maintainer arriving from a patch
+# reads the README and nothing else. A README status that names an older
+# exhibit than BRIEF does is the 2026-09-13 finding again ("the central finding
+# is in none of the foundation files"), and nothing but this line notices it
+# (front-door review 2026-09-17T2251Z, FD-09). Same rule: a warning, never a
+# block.
+if [[ -n "$NEWEST" && -r "$REPO/README.md" ]]; then
+    if ! grep -q "EX-$NEWEST" "$REPO/README.md" 2>/dev/null; then
+        echo "save: ⚠️  README.md does not mention EX-$NEWEST — its Status block is behind" >&2
+        echo "     BRIEF.md; a stranger reads the README and nothing else." >&2
+    fi
+fi
 # And the budget, which is the only reason it is cheaper than reading the source.
 if [[ -r "$REPO/BRIEF.md" ]]; then
     BL=$(grep -c . "$REPO/BRIEF.md" 2>/dev/null || echo 0)

@@ -4541,9 +4541,13 @@ mkdir -p "$BSMG/bin2"; cp "$BSMG/bin/btmgmt" "$BSMG/bin/bluetoothctl" "$BSMG/bin
 # /usr/bin/btmgmt on the investigation machine. Nothing is written into a farm
 # now, so there is no order left to get wrong.
 farm_dir "$BSMG/farm" hciconfig
+# --probe, explicitly: this test is ABOUT the probe's fallback path (btmgmt when
+# hciconfig is gone). Since 2026-09-18 bt-state probes only when asked (R2-94),
+# so without the flag the field reads `unprobed` and the fallback is never
+# exercised — which is what turned CI red on 6ca042e.
 BSMGOUT=$(env PATH="$BSMG/bin2:$BSMG/farm" \
               BT_SYSFS_USB="$BS/usb" BT_SYSFS_MODULE="$BS/mod" \
-              BT_JOURNAL_FIXTURE="$BS/jrn" tools/bt-state --tsv 2>&1)
+              BT_JOURNAL_FIXTURE="$BS/jrn" tools/bt-state --tsv --probe 2>&1)
 [[ "$(awk -F'\t' '{print $5}' <<<"$BSMGOUT")" == "yes" ]] \
     && ok "bt-state falls back to btmgmt where hciconfig has been removed" \
     || bad "liveness was not probed without hciconfig: $(awk -F'\t' '{print $5}' <<<"$BSMGOUT")"

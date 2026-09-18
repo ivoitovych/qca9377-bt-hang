@@ -16,26 +16,45 @@ crash is a symptom of it. `0001` in particular is an ordering bug a reader can
 confirm in half a minute: the reply is dereferenced above the function's own
 length check, so a callback delivered without parameters faults.
 
-⚠️ **The mechanism is NOT fully determined, and the patch no longer claims it
-is.** An earlier revision of this file and of the commit message named a
-successful Command Status as the event received. `src/shared/mgmt.c` does pass
-`0, NULL` on that path —
+## Environment and runtime evidence — read this first
 
-```c
-request_complete(mgmt, cs->status, opcode, index, 0, NULL);   /* mgmt.c:418 */
-```
+| | |
+|---|---|
+| machine | AMD Renoir/Cezanne laptop, Ubuntu 24.04 LTS, `bluez 5.72-0ubuntu5.5` |
+| controller | Qualcomm Atheros QCA9377 (ROME), USB `13d3:3503`, `btusb` |
+| crashes | `EX-032`: `segfault at 0` (08-14) and `segfault at 10` (08-18, seen three times) |
+| resolved from | the stripped distro binary — `.eh_frame` boundaries + PLT call fingerprints against a different build — with the falsifier stated first and matched byte for byte against a retained core ([`reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md`](../../reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md)) |
+| runtime | the patched daemon is a rebuild of **`5.72-0ubuntu5.5`** (the machine's own source + 31 Ubuntu patches), running since 2026-08-25. The 5.87 and master checks below are apply/compile checks, not the running build |
+| upstream | both defects present in BlueZ master `c73fa2f9a`; both patches `git am` clean there |
 
-— but that is an *example* of a parameterless delivery, not a demonstration of
-which event actually arrived. Two things argue against asserting it:
-Command Complete passes a real pointer even at `length == 0`
-(`mgmt->buf + MGMT_HDR_SIZE + 3`, `mgmt.c:408`), and `request_complete()` falls
-back to matching on **index alone** when opcode+index finds nothing
-(`mgmt.c:312`), so a mismatched completion can also reach a pending callback.
+**Runtime — the two patches stand differently, and the submission should say so.**
+Neither NULL condition can be triggered on demand; both were first seen as crashes
+in the wild. But the patched daemon has run on the affected machine since
+2026-08-25, and both guards log before they bail, so a firing is positive evidence
+of a crash prevented rather than merely absent (`EX-041`, `tools/bt-guards`):
 
-What the crash establishes is narrower and sufficient: the branch was entered
-with a success status and `param == NULL`, and faulted on a one-byte read at
-offset 0 — the `segfault at 0` on record. The fix does not depend on which
-event produced it.
+- **`0002` fired four times** — 08-26, and three times on 09-02, across two daemon
+  lifetimes and three distinct `setup` pointers. Each is `transport_cb()` reaching
+  the accept with a live setup whose stream was NULL. Unpatched, each is the
+  dereference the coredump matched. **Watched preventing it, four times.**
+- **`0001`'s guard has not fired.** Its *premise* was observed once (09-08:
+  `command 0x23 status: 0x00` with a reply too short for the struct), but the
+  pre-existing check caught that instance because `discovery_list` was non-empty.
+  `0001` stands on the coredump analysis, which is an ordinary and sufficient
+  basis for a NULL-dereference fix.
+
+⚠️ A third `bluetoothd` crash on the patched binary (09-08, a bad `free()` under
+`g_main_loop_run`) is at neither patched site, occurred in a process that never
+took either guard path, and is **not** part of this submission.
+
+⚠️ **`0002` treats the symptom.** It stops the crash without explaining why
+`setup->stream` is cleared while the setup is still on the `setups` list.
+
+That caveat used to be spelled out in the commit message and was dropped when
+the message was shortened for submission, on the reviewer's advice to carry the
+evidence that justifies the change rather than the route to it. It is recorded
+here instead, because it is true and a maintainer may ask: the guard is correct
+and local, and the underlying teardown ordering is not explained by it.
 
 ## What has been verified
 
@@ -73,35 +92,6 @@ displacement off a NULL base, not an address in its own right.
 **Worth citing in the submission** — a maintainer will reasonably ask how a crash
 site was located in a stripped binary whose debug symbols were never published.
 
-**Runtime — the two patches stand differently, and the submission should say so.**
-Neither NULL condition can be triggered on demand; both were first seen as crashes
-in the wild. But the patched daemon has run on the affected machine since
-2026-08-25, and both guards log before they bail, so a firing is positive evidence
-of a crash prevented rather than merely absent (`EX-041`, `tools/bt-guards`):
-
-- **`0002` fired four times** — 08-26, and three times on 09-02, across two daemon
-  lifetimes and three distinct `setup` pointers. Each is `transport_cb()` reaching
-  the accept with a live setup whose stream was NULL. Unpatched, each is the
-  dereference the coredump matched. **Watched preventing it, four times.**
-- **`0001`'s guard has not fired.** Its *premise* was observed once (09-08:
-  `command 0x23 status: 0x00` with a reply too short for the struct), but the
-  pre-existing check caught that instance because `discovery_list` was non-empty.
-  `0001` stands on the coredump analysis, which is an ordinary and sufficient
-  basis for a NULL-dereference fix.
-
-⚠️ A third `bluetoothd` crash on the patched binary (09-08, a bad `free()` under
-`g_main_loop_run`) is at neither patched site, occurred in a process that never
-took either guard path, and is **not** part of this submission.
-
-⚠️ **`0002` treats the symptom.** It stops the crash without explaining why
-`setup->stream` is cleared while the setup is still on the `setups` list.
-
-That caveat used to be spelled out in the commit message and was dropped when
-the message was shortened for submission, on the reviewer's advice to carry the
-evidence that justifies the change rather than the route to it. It is recorded
-here instead, because it is true and a maintainer may ask: the guard is correct
-and local, and the underlying teardown ordering is not explained by it.
-
 ## Upstream status — checked three times, independently, and both are still needed
 
 Verified on 2026-09-16 against the unshallowed tree at `c73fa2f9a` in a throwaway
@@ -110,7 +100,7 @@ worktree, each patch **alone** and both **together in either order** — the
 silently truncates everything after it:
 
 ```console
-$ bash git-am-check.sh          # scratch worktree of the BlueZ tree at c73fa2f9a
+$ patches/bluez/git-am-check.sh /path/to/bluez c73fa2f9a   # tracked; a throwaway worktree
   PASS  0001 alone — git am clean, 1 commit(s) on top of c73fa2f9a
          adapter: Fix crash on short start discovery reply
   PASS  0002 alone — git am clean, 1 commit(s) on top of c73fa2f9a
@@ -139,13 +129,6 @@ accepted crash fixes of the same shape — *"Fix crash on UUID discovery filter
 match"*, *"Fix crash on dev_disconnected"*. NULL-deref fixes land in this file.
 
 ### Prior art — settled, no longer a caveat
-
-An earlier revision of this file said the list archives could not be searched
-from either environment. **That was wrong, and it was wrong the same way twice**
-— see the four failure modes in [`docs/source-access.md`](../../docs/source-access.md).
-`lore.kernel.org` returns 403 to `curl` because of a user-agent block fronting a
-JavaScript anti-bot page; a browser passes it in seconds. The operator opened it
-himself and settled the question in under a minute.
 
 | query | results | reporting these defects |
 |---|---|---|
@@ -210,6 +193,24 @@ add a `0/2` cover letter rather than letting the numbering appear by accident.
 To apply to a checkout instead of mailing, `git am 0001-*.patch 0002-*.patch`
 works fine — the caution is only about sending.
 
+### The note below the `---` line
+
+A maintainer who asks "where did this come from, and has the guard ever
+fired?" gets no answer from the commit message, correctly — BlueZ's `HACKING`
+wants the message to carry the change and its evidence, not the route. The
+place for the route is the mail body **below the `---` separator**, which
+`git am` discards and which no convention governs
+(front-door review 2026-09-17T2251Z, `FD-12`). The text for each mail is in
+[`mail-notes/`](mail-notes/) — `0001.txt`, `0002.txt` — and goes in with:
+
+```console
+$ git send-email --annotate --to=linux-bluetooth@vger.kernel.org 0001-adapter-*.patch
+# in the editor: paste mail-notes/0001.txt directly under the `---` line, above the diffstat
+```
+
+Never above the `---`, never as a trailer, never as a `Fixes:` URL — a project link
+in a `Fixes:`-shaped position reads as a bug tracker.
+
 ## Conventions — measured from BlueZ's tree, not assumed
 
 Read on 2026-09-16 from `HACKING` at `c73fa2f9a` and from the last 300 commits.
@@ -243,3 +244,34 @@ Read on 2026-09-16 from `HACKING` at `c73fa2f9a` and from the last 300 commits.
 The subjects changed with the rewrite, so the files were renamed to what
 `git format-patch` would produce; nothing in the repository referenced the old
 names.
+
+## Notes from the route — history a maintainer does not need
+
+⚠️ **The mechanism is NOT fully determined, and the patch no longer claims it
+is.** An earlier revision of this file and of the commit message named a
+successful Command Status as the event received. `src/shared/mgmt.c` does pass
+`0, NULL` on that path —
+
+```c
+request_complete(mgmt, cs->status, opcode, index, 0, NULL);   /* mgmt.c:418 */
+```
+
+— but that is an *example* of a parameterless delivery, not a demonstration of
+which event actually arrived. Two things argue against asserting it:
+Command Complete passes a real pointer even at `length == 0`
+(`mgmt->buf + MGMT_HDR_SIZE + 3`, `mgmt.c:408`), and `request_complete()` falls
+back to matching on **index alone** when opcode+index finds nothing
+(`mgmt.c:312`), so a mismatched completion can also reach a pending callback.
+
+What the crash establishes is narrower and sufficient: the branch was entered
+with a success status and `param == NULL`, and faulted on a one-byte read at
+offset 0 — the `segfault at 0` on record. The fix does not depend on which
+event produced it.
+
+An earlier revision of this file said the list archives could not be searched
+from either environment. **That was wrong, and it was wrong the same way twice**
+— see the four failure modes in [`docs/source-access.md`](../../docs/source-access.md).
+`lore.kernel.org` returns 403 to `curl` because of a user-agent block fronting a
+JavaScript anti-bot page; a browser passes it in seconds. The operator opened it
+himself and settled the question in under a minute.
+
