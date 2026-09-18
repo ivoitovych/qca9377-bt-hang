@@ -178,7 +178,8 @@ echo "  author: $(git log -1 --format='%an <%ae>')"
 # And the RECORDED fields, not only the configured ones — a hook or a template
 # could still have written something else. A bad commit is undone here, before
 # the push below can publish it.
-if git log -1 --format='%an <%ae> %cn <%ce>' | grep -qiE "$_ai_re"; then
+recorded="$(git log -1 --format='%an <%ae> %cn <%ce>')"
+if grep -qiE "$_ai_re" <<<"$recorded"; then
     echo "  ✗ the recorded author/committer carries an AI identity — undoing the commit" >&2
     git reset -q --soft HEAD~1
     echo "ABORT: commit undone; nothing pushed" >&2

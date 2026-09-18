@@ -142,5 +142,5 @@ fi
 
 # The lines that carry the outcome: what was staged, what the gates concluded,
 # the commit, and the remote verification. Never the per-file ✓ list.
-grep -E '^(── |  staged:|all syntax|scan clean|  ✓ message|  [0-9a-f]{7,}  |  ⚠|  ✓ remote|  · tests)' "$OUT"
+grep -E '^(── |  staged:|all syntax|scan clean|  ✓ message|  ✓ identity|  [0-9a-f]{7,}  |  author:|  ⚠|  ✓ remote|  · tests)' "$OUT"
 exit 0
