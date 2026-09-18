@@ -5,7 +5,7 @@
 **Date:** 2026-09-18 (supersedes the 2026-08-11 draft, which argued for a quirks-table entry this report no longer proposes)
 **Suggested recipients:** `linux-bluetooth@vger.kernel.org`, `linux-kernel@vger.kernel.org`
 **Maintainers:** Marcel Holtmann, Luiz Augusto von Dentz
-**Regression:** candidate — `BTUSB_USE_ALT1_FOR_WBS` became an unconditional fallback in v5.11 → v5.12; every kernel tested is on the far side of that change, and a ≤ v5.11 run has not been made
+**Regression:** candidate — `517b693351a2` ("Bluetooth: btusb: Always fallback to alt 1 for WBS", in v5.12, not v5.11) made the alternate-setting-1 fallback unconditional; every kernel tested is on the far side of it, and no kernel in the v5.8–v5.11 control window (where the device would get no wideband speech instead) has been run
 
 ---
 
@@ -239,8 +239,9 @@ The shape of the fault is exact and the mechanism is not. What would settle it i
 knowledge of the controller: whether streaming 27-byte transparent frames on a 9-byte
 isochronous endpoint is a state this firmware tolerates at all, and whether the
 alternate-setting-1 fallback introduced for wideband speech in v5.12 should apply to a
-device that matches no quirks entry. A ≤ v5.11 kernel run on this hardware is the one
-cheap experiment the reporter has not made and will make on request.
+device that matches no quirks entry. A run on a kernel in the v5.8–v5.11 window
+(below v5.8 alternate setting 1 is reachable by a different route) is the one cheap
+experiment the reporter has not made and will make on request.
 
 ## Attachments
 

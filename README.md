@@ -223,8 +223,10 @@ coverage floors and the publish scan on every push; `devtools/ci` reads its verd
 
 Most useful, in this order:
 
-- a run on a **≤ v5.11 kernel** with an mSBC headset — the untested prediction is that it
-  never takes the alternate-setting-1 path;
+- a run on a kernel in the **v5.8–v5.11 window** with an mSBC headset — the untested
+  prediction is that it logs `Device does not support ALT setting 6` and never takes the
+  alternate-setting-1 path (below v5.8 alt 1 is reachable by another route, so "older" is
+  not "cleaner");
 - the same signature on **another controller** that matches no quirks entry (`bt-diagnose`,
   then `bt-fault-window` around the first timeout);
 - a `btmon` capture of a transparent SCO link that **survived** a command on this part.
