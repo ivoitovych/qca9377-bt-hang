@@ -522,7 +522,15 @@ if (( METRICS )); then
     # the default never exposed this.)
     VID_X=$(printf '%x' "$((16#$VID))")
     PID_X=$(printf '%x' "$((16#$PID))")
-    if (( APPLY )); then
+    # The R2-58 fix covered install_file() and the 50- rule above, and its own
+    # comment counted "these two rules" written by redirect — then guarded one.
+    # On 2026-09-18 a --tools-only deploy under experiment mode wrote this file
+    # beside its .disabled sibling, exactly the reversion R2-58 was closed for,
+    # one rule over. Same check, same wording, so the summary count is honest.
+    if [[ -e "$UDEV_SNAP.disabled" ]]; then
+        echo "  · ${UDEV_SNAP#"$DESTDIR"} SKIPPED — a .disabled sibling exists (bt-mode moved it aside)"
+        SKIPPED_DISABLED=$((SKIPPED_DISABLED + 1))
+    elif (( APPLY )); then
         mkdir -p "$(dirname "$UDEV_SNAP")"
         if sed -e "s/idVendor}==\"$DEFAULT_VID\"/idVendor}==\"$VID\"/" \
                -e "s/idProduct}==\"$DEFAULT_PID\"/idProduct}==\"$PID\"/" \

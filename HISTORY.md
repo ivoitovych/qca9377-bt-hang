@@ -3008,3 +3008,47 @@ measured correctly, and it was the wrong thing to be measuring. One instance wit
 teardown was all it took. Seven is not many, and the mechanism is still open; but the shape
 of the driver test is now exact — put the link on alt 1, stream, issue a command, watch it
 die — and that is what the kernel patch has to prevent.
+
+## Phase 37 — the fields git writes, and the third file
+
+*2026-09-18. Two gates, each closing a gap a collaborator or a tool had just walked
+through.*
+
+### The author field
+
+The test-suite maintainer reported a near-miss: a reinitialised container reset his git
+config, and a lessons commit went onto his branch authored by the assistant. `repo-scan`
+passed it, because `repo-scan` reads content; the message scan in `repo-save` passed it,
+because the message was clean. He caught it one commit in, amended, and wrote: *neither
+checks the author field; one bad reinit puts AI attribution into the permanent history of a
+repository whose whole premise is publishability.*
+
+`main` was checked before anything was changed — 396 commits, one identity in both the
+author and committer fields — so the history was clean by his eye and not by any gate.
+`repo-save` now reads `git var GIT_AUTHOR_IDENT` and `GIT_COMMITTER_IDENT`, the values git
+would actually write, and refuses on the same obfuscated patterns as the message scan, or
+when no identity is configured at all. After the commit it re-reads the recorded fields and
+undoes the commit if they differ. Three suite invariants; driven both ways in a scratch
+repository first. The first push failed CI on the suite's own `grep -q`-at-the-end-of-a-
+pipeline invariant — the inversion the message scan's comment warns about, reintroduced two
+screens below it. The suite was right; here-string now.
+
+### The third file
+
+Deploying the probe-free tools with `--tools-only` — the sanctioned form — wrote
+`51-bluetooth-health-snapshot.rules` beside its `.disabled` sibling. The R2-58 fix of 09-16
+guarded `install_file()` and the 50- rule; its own comment counted "these two rules" written
+by redirect and guarded one. `bt-verify-install`, run as the post-deploy check the same fix
+had prescribed, showed the third file within minutes. It was byte-identical to the
+`.disabled` copy, so removing it restored the 09-17 state exactly; `udevadm control
+--reload-rules` was rerun because the deploy had loaded the rule into udevd; the journal
+shows no udev event and no snapshot unit in the interval. The skip covers all three now and
+the staged test asserts three, both directions.
+
+### The shape
+
+Both gaps were one step past a gate that existed. The message scan stopped at the message;
+the `.disabled` skip stopped at the second of three files. Neither was found by the tool that
+owned it — one by a collaborator's eye, one by a verification tool run because a rule said to
+run it. The rule (*run `bt-mode status` or `bt-verify-install` after any deploy*) earned its
+line in BRIEF this morning.

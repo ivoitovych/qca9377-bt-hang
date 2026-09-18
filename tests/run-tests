@@ -8921,27 +8921,37 @@ fi
 # tell "skipped" from "did nothing": with the siblings planted, neither active
 # name may appear and the deploy must SAY it skipped; without them, both must
 # be written and nothing may claim a skip.
+#
+# ALL THREE files bt-mode moves aside, not the two the first fix guarded. The
+# fix's own comment counted "these two rules" written by redirect and then
+# guarded one of them; on 2026-09-18 a --tools-only deploy under experiment
+# mode wrote 51-bluetooth-health-snapshot.rules beside its .disabled sibling —
+# the R2-58 reversion again, one rule over, seven days after the register row
+# said fixed. This test asserted two files and passed; it asserts three now.
 SRD=$(mktemp -d)
 mkdir -p "$SRD/etc/modprobe.d" "$SRD/etc/udev/rules.d"
 : > "$SRD/etc/modprobe.d/btusb-qca9377.conf.disabled"
 : > "$SRD/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules.disabled"
+: > "$SRD/etc/udev/rules.d/51-bluetooth-health-snapshot.rules.disabled"
 TOD=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$SRD/no-such-trial" \
           BT_DESTDIR="$SRD" ./install.sh --tools-only 2>&1); todrc=$?
 if (( todrc == 0 )) \
    && [[ ! -e "$SRD/etc/modprobe.d/btusb-qca9377.conf" ]] \
    && [[ ! -e "$SRD/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules" ]] \
+   && [[ ! -e "$SRD/etc/udev/rules.d/51-bluetooth-health-snapshot.rules" ]] \
    && [[ -e "$SRD/etc/modprobe.d/btusb-qca9377.conf.disabled" ]] \
-   && [[ "$TOD" == *"2 file(s) left as bt-mode moved them aside"* ]]; then
-    ok "--tools-only leaves a .disabled-moved file alone, keeps the .disabled, and says so"
+   && [[ "$TOD" == *"3 file(s) left as bt-mode moved them aside"* ]]; then
+    ok "--tools-only leaves all three .disabled-moved files alone, keeps the .disabled, and says so"
 else
-    bad "--tools-only reinstalled beside .disabled or hid it (rc=$todrc): $(grep -c SKIPPED <<<"$TOD") SKIPPED line(s)"
+    bad "--tools-only reinstalled beside .disabled or hid it (rc=$todrc): $(grep -c SKIPPED <<<"$TOD") SKIPPED line(s); 51- present: $([[ -e "$SRD/etc/udev/rules.d/51-bluetooth-health-snapshot.rules" ]] && echo yes || echo no)"
 fi
 SRE=$(mktemp -d)
 TOE=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$SRE/no-such-trial" \
           BT_DESTDIR="$SRE" ./install.sh --tools-only 2>&1)
-[[ -s "$SRE/etc/modprobe.d/btusb-qca9377.conf" && -s "$SRE/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules" ]] \
+[[ -s "$SRE/etc/modprobe.d/btusb-qca9377.conf" && -s "$SRE/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules" \
+   && -s "$SRE/etc/udev/rules.d/51-bluetooth-health-snapshot.rules" ]] \
    && [[ "$TOE" != *"moved them aside"* ]] \
-    && ok "--tools-only still installs both files when nothing was moved aside — the skip can fail" \
+    && ok "--tools-only still installs all three files when nothing was moved aside — the skip can fail" \
     || bad "the .disabled skip fires with no .disabled present, or the summary lies"
 rm -rf "$SRD" "$SRE"
 

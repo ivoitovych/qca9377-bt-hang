@@ -132,8 +132,8 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   `--tools-only` — and ⚠️ **run `bt-mode status` after any deploy.** Until 2026-09-16
   `--tools-only` reinstalled the two files `bt-mode experiment` moves aside, so the
   baseline was silently reverted on 08-19 and again on 09-01 while the stamp still read
-  *experiment* (`R2-58`, `EX-042`). It now skips any file with a `.disabled` sibling and
-  says so; the stamp is not evidence, the files are.
+  *experiment* (`R2-58`, `EX-042`). A 09-16 fix guarded 2 of 3 files; the 3rd reverted on
+  09-18 and was caught in minutes; all 3 skip now. The stamp is not evidence, the files are.
 - **Never lose code, tests or evidence.** Priority 1; keep clutter over any deletion.
 - **Do not send the patches** until the operator says so.
 - **An untreated window is the most valuable state there is.** Do not touch Bluetooth;
