@@ -93,6 +93,11 @@ for p in "${PATCHES[@]}"; do
     # (indented by two or more spaces or a tab, exempt per HACKING §5).
     while IFS= read -r line; do
         [[ "$line" =~ ^([[:space:]]{2,}|$'\t') ]] && continue
+        # Trailers (Fixes:, Link:, …) are never wrapped — a wrapped trailer stops
+        # being a trailer — and BlueZ's own Fixes: lines run past 80 columns.
+        # The first run of this file against the real tree flagged 0001's Fixes:
+        # at 75 and reported FAIL on a patch that was fine (2026-09-18).
+        [[ "$line" =~ ^[A-Z][A-Za-z-]+:\  ]] && continue
         (( ${#line} > 72 )) && { long=$((long + 1)); echo "        >72: $line"; }
     done < <(sed -n '/^$/,/^---$/p' "$p" | sed '$d')
 done
