@@ -9449,6 +9449,21 @@ scratch_repo() {   # <dir> ; creates an empty repo with an identity
 
 # ── the three refusals that stand between a kernel log and a public repo ─
 #
+# GATED ON THE SAME CAPABILITY AS THE REDACTION BLOCK ABOVE, and it took a
+# long investigation to find out why it had to be. The stub below defers the
+# capability probes to the real awk "so a probe this stub failed would exercise
+# the capability refusal instead of the verifier" — which is exactly what
+# happened on a host whose awk is mawk: the tool refused at its own gate and
+# never reached the verifier these four assertions aim at. They then failed
+# with text reading `a raw UUID survived verification`, on the one tool whose
+# entire job is refusing to publish secrets. A container shipping mawk produced
+# five failures that read like a live privacy leak and were nothing of the kind.
+#
+# The design assumption — that the real awk is capable — was written in the
+# comment below and enforced nowhere. It is enforced below, around the four
+# assertions only: the $SANW workspace and its stub are created unconditionally
+# because the capability-refusal block further down reuses both.
+#
 # The substituter is tested above against every representation. These test what
 # happens when it is WRONG, which is the case that matters: a Wi-Fi BSSID in a
 # published kernel log is indexed by public geolocation databases, so an
@@ -9479,6 +9494,18 @@ for a in "$@"; do last="$a"; done
 exec /usr/bin/awk "$@"
 SANAWK
 chmod +x "$SANW/bin/awk"
+
+# Written unconditionally: the capability-refusal test further down feeds this
+# same file to a stub that always fails the probe, and it must exist whether or
+# not the guarded assertions below ran. Leaving its creation inside the guard
+# made that test fail for a missing input while reporting a trusted-awk
+# problem — a wrong reason wearing the right error message.
+printf 'kernel: wlan0: authenticate with 00:11:22:33:44:55\n' > "$SANW/in.log"
+
+# The four assertions below, and only these, require a capable real awk: the
+# stub defers the capability probes to it, so on mawk the tool refuses at its
+# own gate and the verifier they target is never reached.
+if (( awk_intervals_ok )); then
 SANPASS="$SANW/out.log"
 printf 'kernel: wlan0: authenticate with 00:11:22:33:44:55\n' > "$SANW/in.log"
 SANPOUT=$(PATH="$SANW/bin:$PATH" tools/sanitize-logs.sh "$SANW/in.log" "$SANPASS" 2>&1); sanprc=$?
@@ -9505,6 +9532,11 @@ SANI=$(PATH="$SANW/bin:$PATH" tools/sanitize-logs.sh "$SANW/in.log" "$SANW/i.log
 [[ "$SANI" == *"raw IPv4 addresses remain"* ]] \
     && ok "the verifier catches an IPv4 address the substituter missed" \
     || bad "a raw IPv4 address survived verification"
+else
+    echo "  · verifier assertions SKIPPED: this awk lacks ERE intervals on groups,"
+    echo "    so the tool refuses before the verifier is reached"
+    echo "    (install gawk to run them; mawk 1.3.4 is not sufficient)"
+fi
 
 # THE CAPABILITY REFUSAL. mawk 1.3.4 mishandles ERE intervals on groups, which
 # would redact wrongly in BOTH directions — short hex runs replaced as if they
@@ -9711,14 +9743,21 @@ done
 # also break the cross-referencing the deterministic placeholders exist for.
 printf 'bluetoothd: uinput initialized for %s\nkernel: hci0: peer %s %s SCO setup\n' \
     "$NASCII" "$_n1:$_n2:$_n3" "$NASCII" > "$SCRATCH/utf8/raw.log"
-tools/sanitize-logs.sh "$SCRATCH/utf8/raw.log" "$SCRATCH/utf8/clean.log" >/dev/null 2>&1
-UTFIN=$(grep -c -- "$NASCII" "$SCRATCH/utf8/raw.log" || true)
-UTFOUT=$(grep -c -- "$NASCII" "$SCRATCH/utf8/clean.log" 2>/dev/null || true)
-UTFMAC=$(grep -c -- "$_n1" "$SCRATCH/utf8/clean.log" 2>/dev/null || true)
-if (( ${UTFIN:-0} > 0 && UTFIN == UTFOUT && ${UTFMAC:-1} == 0 )); then
-    ok "sanitize-logs replaces the address and leaves the non-ASCII device name intact ($UTFIN line(s))"
+# Same capability gate again: this one asserts what the sanitiser WROTE, so on
+# an incapable awk it reads an output file the tool correctly refused to create
+# and reports the empty result as the sanitiser having mangled a device name.
+if (( awk_intervals_ok )); then
+    tools/sanitize-logs.sh "$SCRATCH/utf8/raw.log" "$SCRATCH/utf8/clean.log" >/dev/null 2>&1
+    UTFIN=$(grep -c -- "$NASCII" "$SCRATCH/utf8/raw.log" || true)
+    UTFOUT=$(grep -c -- "$NASCII" "$SCRATCH/utf8/clean.log" 2>/dev/null || true)
+    UTFMAC=$(grep -c -- "$_n1" "$SCRATCH/utf8/clean.log" 2>/dev/null || true)
+    if (( ${UTFIN:-0} > 0 && UTFIN == UTFOUT && ${UTFMAC:-1} == 0 )); then
+        ok "sanitize-logs replaces the address and leaves the non-ASCII device name intact ($UTFIN line(s))"
+    else
+        bad "sanitiser mangled the device name or kept the address: name in=$UTFIN out=$UTFOUT, address left=$UTFMAC"
+    fi
 else
-    bad "sanitiser mangled the device name or kept the address: name in=$UTFIN out=$UTFOUT, address left=$UTFMAC"
+    echo "  · non-ASCII device-name assertion SKIPPED: this awk lacks ERE intervals on groups"
 fi
 
 # The REMOVAL of a leak must be commit-able: default mode scans added lines
