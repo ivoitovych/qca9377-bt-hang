@@ -10090,6 +10090,34 @@ devtools/repo-save "$SCRATCH/not-a-repo" "msg" --no-push >/dev/null 2>&1
 (( $? != 0 )) && ok "repo-save refuses a directory that is not a git repo" \
               || bad "repo-save accepted a non-repository"
 
+# THE FIELDS GIT WRITES, NOT ONLY THE TEXT IT IS GIVEN. The message scan above
+# cannot see the author and committer: those come from git config or the
+# GIT_*_NAME/EMAIL environment, and a reinitialised container resets them to
+# the tool's own identity. On 2026-09-18 that put an AI-authored commit on a
+# collaborator's branch with repo-scan passing it — caught one commit in, by
+# eye. The gate must refuse BEFORE the commit exists, and for the committer
+# field as much as the author's.
+printf 'identity probe\n' > "$SCRATCH/save/ident.log"
+svbefore=$(git -C "$SCRATCH/save" rev-parse HEAD)
+_ae='noreply@anthro'; _ae+='pic.com'
+SVID=$(GIT_AUTHOR_NAME="$_ai" GIT_AUTHOR_EMAIL="$_ae" save "identity probe"); svidrc=$?
+svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
+(( svidrc != 0 )) && [[ "$SVID" == *"AI identity"* && "$svbefore" == "$svafter" ]] \
+    && ok "repo-save refuses an AI author identity before any commit exists" \
+    || bad "an AI author identity got through (rc=$svidrc, HEAD moved: $([[ $svbefore != "$svafter" ]] && echo yes || echo no))"
+SVIDC=$(GIT_COMMITTER_NAME="$_ai" GIT_COMMITTER_EMAIL="$_ae" save "identity probe"); svidcrc=$?
+svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
+(( svidcrc != 0 )) && [[ "$SVIDC" == *"committer identity"* && "$svbefore" == "$svafter" ]] \
+    && ok "repo-save checks the committer field as well as the author" \
+    || bad "an AI committer identity got through (rc=$svidcrc)"
+# And a legitimate identity still commits — a gate that refuses everything is
+# not a gate. scratch_repo sets a plain test identity in the repo config.
+SVOK=$(save "identity probe"); svokrc=$?
+svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
+(( svokrc == 0 )) && [[ "$SVOK" == *"✓ identity:"* && "$svbefore" != "$svafter" ]] \
+    && ok "repo-save commits under the configured non-AI identity" \
+    || bad "the identity gate refused a legitimate identity (rc=$svokrc): $(grep -m1 identity <<<"$SVOK")"
+
 # Nothing above may have configured or contacted a remote. --no-push is the
 # only thing standing between this block and a push from a test run.
 [[ -z "$(git -C "$SCRATCH/save" remote 2>/dev/null)" ]] \

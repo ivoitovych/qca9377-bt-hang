@@ -140,11 +140,50 @@ if (( ${n_real:-0} > 0 )); then
 fi
 echo "  ✓ message clean"
 
+# ── IDENTITY, CHECKED BEFORE THE COMMIT EXISTS ────────────────────────────
+#
+# The message scan above catches attribution written INTO a commit. It cannot
+# see attribution that git writes ON the commit: the author and committer
+# fields come from git config or GIT_*_NAME/EMAIL, and a reinitialised
+# environment resets them to the tool's own identity. On 2026-09-18 the
+# test-suite maintainer's container did exactly that, and a lessons commit went
+# in authored by the assistant — repo-scan passed it, because repo-scan reads
+# content. He caught it one commit in and amended. This is the gate that makes
+# that a refusal rather than a catch. Same obfuscated patterns as the message
+# scan, so this file does not match its own check.
+_ai_re="$_c|$_a"
+id_author="$(git var GIT_AUTHOR_IDENT 2>/dev/null)"
+id_committer="$(git var GIT_COMMITTER_IDENT 2>/dev/null)"
+id_bad=0
+for who in "author:$id_author" "committer:$id_committer"; do
+    role="${who%%:*}"; ident="${who#*:}"
+    if [[ -z "$ident" ]]; then
+        echo "  ✗ no $role identity configured — git would invent one" >&2; id_bad=1
+    elif grep -qiE "$_ai_re" <<<"$ident"; then
+        echo "  ✗ $role identity is an AI identity: ${ident%% <*}" >&2; id_bad=1
+    fi
+done
+if (( id_bad )); then
+    echo "     set: git config user.name / user.email to the operator, then retry" >&2
+    echo "ABORT: nothing committed" >&2
+    exit 1
+fi
+echo "  ✓ identity: ${id_author%% <*}"
+
 echo "── commit ───────────────────────────────────────────"
 if [[ -n "$MSGFILE" ]]; then git commit -q -F "$MSGFILE" || exit 1
 else                         git commit -q -m "$MSG"     || exit 1; fi
 echo "  $(git log -1 --format='%h  %s')"
 echo "  author: $(git log -1 --format='%an <%ae>')"
+# And the RECORDED fields, not only the configured ones — a hook or a template
+# could still have written something else. A bad commit is undone here, before
+# the push below can publish it.
+if git log -1 --format='%an <%ae> %cn <%ce>' | grep -qiE "$_ai_re"; then
+    echo "  ✗ the recorded author/committer carries an AI identity — undoing the commit" >&2
+    git reset -q --soft HEAD~1
+    echo "ABORT: commit undone; nothing pushed" >&2
+    exit 1
+fi
 # RESTATED AT THE END, because the end is what a reader remembers and what a
 # scrollback shows. A commit made without the suite is not a lesser commit —
 # CI runs it on push — but it must not be mistaken for one the suite passed.
