@@ -272,8 +272,24 @@ of it was learned by having each item corrected.
 - **Say what you did not establish.** "Not fixed in master as of `<commit>`" is
   provable. "Never reported" is not, unless the archives were actually searched —
   and the distinction is the first thing a maintainer who knows better will notice.
-- **A `Signed-off-by` is a statement by the sender and is not transferable.**
-  Whoever actually sends must put their own there.
+- **Read the project's own stated rules before copying a convention from a
+  neighbouring project.** ⚠️ **Corrected 2026-09-18.** This item originally said
+  *"a `Signed-off-by` is a statement by the sender and is not transferable —
+  whoever actually sends must put their own there."* That is true of the **kernel**
+  and **an error for BlueZ**, whose `HACKING` says so in as many words:
+
+  > *"Do not add Signed-off-by lines in your commit messages. BlueZ does not use
+  > them, so including them is actually an error."*
+
+  Both patches carried one and **would have been rejected for it**. The main branch
+  maintainer caught it by reading `HACKING` and the last 300 commits (4 of 300 carry
+  one; `.checkpatch.conf` ignores `MISSING_SIGN_OFF`) instead of assuming.
+
+  The sharp part is that I had already done this correctly for a *different*
+  trailer in the same patch — `Fixes:` was adopted only after measuring 18 uses in
+  400 commits. I measured one convention and assumed the neighbouring one, in the
+  same file, on the same afternoon. **Sampling one convention does not license the
+  next one.**
 
 **Verification a patch should carry before it goes anywhere:** applies to
 pristine source; applies via `git am` (the real submission path, and a stray
@@ -323,11 +339,29 @@ correctly computed statistic over a wrongly chosen origin is not noisy — it is
 spread: 4.1, 7.6, 16.2, 55.2, 155.8 s. It had been anchored on whichever *named*
 command happened to time out. Anchored instead on the *answered* setup that
 precedes the fault, two independent instances — different peripheral, different
-kernel, three days apart — agree within **76 ms**.
+kernel, three days apart — agreed within **76 ms**.
 
-n=2 cannot establish that the spread was an artefact. It is enough to stop
-assuming the opposite, and to fix the anchor for future captures: the **first**
-qualifying event in a window, not the last.
+> ⚠️ **Corrected 2026-09-18, and the correction is the better lesson.** I cited
+> that 76 ms agreement as evidence the new anchor was *right*. It was only **less
+> wrong**. `EX-043` caught a wedge where the first command arrived **9.65 s** after
+> link-up instead of the 34–279 ms of the six prior instances, giving 11.874 s
+> setup-to-fault against a supposed "2.15 s constant".
+>
+> The six tight intervals were *(time to first command)* + `HCI_CMD_TIMEOUT`. What
+> is actually invariant is not an interval at all:
+>
+> **the first HCI command issued into a running alt-1 stream is never answered.**
+> The stream alone runs unharmed; a command into it does not return.
+>
+> So a tight agreement across two instances was itself an artefact — of both
+> instances happening to tear down fast. **A converging measurement is not proof
+> the anchor is right; it can equally mean the sample did not vary in the dimension
+> that matters.** Widening n was what exposed it, not re-examining the arithmetic.
+
+n=2 could not establish that the original spread was an artefact, and — as above —
+could not establish that the replacement anchor was correct either. The durable
+form of the rule: fix the anchor to the **causal** event, then keep sampling until
+something varies.
 
 **Why this belongs in a lessons file rather than an exhibit:** it is the same
 error as §1, §2 and §5 in numerical clothing. Every one of them is a real,
