@@ -55,7 +55,10 @@ modes that look identical to a user (`EX-032`): [`patches/bluez/`](patches/bluez
 | `0002` | `a2dp: Fix crash on NULL stream in transport_cb` | **fired four times** in 19 days of ordinary use — four crashes prevented, not merely absent (`EX-041`) |
 
 **Sent to `linux-bluetooth@vger.kernel.org` on 2026-09-19** as two independent mails
-(Message-IDs in `patches/bluez/README.md`), after three independent reviews.
+(Message-IDs in `patches/bluez/README.md`), after three independent reviews. The list's
+CI bot passed every build and analysis check on both; its `TestFunctional` failure is the
+same BAP test failing on twelve unrelated patches that week, and its one actionable note
+is hard tabs in the quoted code of the commit messages (`patches/bluez/README.md` §Sent).
 Both defects confirmed present in BlueZ master `c73fa2f9a`; both written to BlueZ's own
 rules (no `Signed-off-by`, 50/72, `checkpatch` clean under BlueZ's `.checkpatch.conf`);
 `git am` clean alone, together, in either order — re-run it with

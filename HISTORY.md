@@ -3244,6 +3244,29 @@ he paid for, written by him, pointing at his `lessons/` file rather than reprodu
 entry point, sections by owner, the long form one link away; a second brief under `tests/`
 would have recreated the must-read-proliferation problem he had named.
 
+### The bot
+
+The list's CI bot answered both mails within ninety minutes of receipt, and the operator
+brought the two replies in the next morning: *"We have input for patches."* Both mails said
+FAIL three times. Read past the word: every build, smatch, scan-build, valgrind and distcheck
+passed; CheckPatch's failure was the one quoted line the local run had already shown on 09-18;
+GitLint's was hard tabs — the C quoted in both commit messages had been pasted with the tree's
+own indentation, and B3 counts every one. That is the only thing a v2 would change, and whether
+a linter complaint deserves a v2 before a maintainer has said anything is the operator's call,
+recorded as open.
+
+The third failure was the one that needed the discipline. `TestFunctional` had produced
+AddressSanitizer coredumps for both patches, in the same BAP transport tests, and a first
+reading found no patched function in any frame — suggestive, since the two patches share no
+file, but a suggestion is not a check. Patchwork keeps every check state and every bot comment
+as public data, and `lore` blocks `curl` while patchwork's API does not, so a read-only script
+asked the question properly: of the sixty most recent bluetooth patches, which BlueZ ones
+failed `TestFunctional`, and on which tests? Twelve patches from ten unrelated series across
+three days, one of them touching only `monitor/`, all on the same two tests. The bot's baseline
+this week, not either patch. Two of those twelve series are other people's attempts at exactly
+the crash the coredumps show. No reply to the bot is owed, and the script stays, so the next
+"is this ours?" is a command rather than an argument.
+
 ### The shape
 
 Four gaps, each one step past a gate that existed. The message scan stopped at the

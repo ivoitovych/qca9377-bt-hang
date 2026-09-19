@@ -17,6 +17,25 @@ notes at `5cdf0dc`; the built copies were verified to `git apply --check` agains
 `c73fa2f9a` before sending. Three independent reviews preceded the send (register §TP,
 §TP2, §TP3). What follows is the state the patches were in when they went.
 
+### The list's CI bot, 2026-09-19 22:05 / 22:10 UTC
+
+Patchwork: `0001` is patch `14831546` in series 1169362, `0002` is `14831547` in
+series 1169363. The bot's verdicts, with the full quotation and the check in
+[`reviews/2026-09-20T0300Z-bluez-ci-bot-results.md`](../../reviews/2026-09-20T0300Z-bluez-ci-bot-results.md)
+(register §CB):
+
+| check | `0001` | `0002` | meaning |
+|---|---|---|---|
+| `pre-ci_am`, BuildEll, BluezMake, bluezmakeextell, IncrementalBuild, ScanBuild, CheckSmatch | PASS | PASS | applies and builds clean upstream |
+| MakeCheck, MakeDistcheck, CheckValgrind | not run | PASS | — |
+| CheckPatch | FAIL, 0 errors 1 warning | FAIL, 0 errors 1 warning | the quoted line already known from the 09-18 run; exempt (`HACKING` §5) |
+| GitLint | FAIL, B3 ×16 | FAIL, B3 ×11 | **hard tabs in the quoted C** of the commit messages — the one thing a v2 would change |
+| TestFunctional | FAIL | FAIL | **the bot's, not ours**: the same two `functional.test_bap::test_bap_unicast_set_transport_*` tests fail on twelve patches from ten unrelated series 09-17 → 09-19 (`scripts/patchwork-checks.sh --failed-functional 60`); the coredumps are in BAP/GATT teardown, no patched function in any frame |
+
+No reply to the bot is owed. **Open (CB-02): whether to send a v2 of each with the
+quoted code indented by spaces**, changelog below the `---`. Nothing in the code
+would change; the operator decides, and nothing goes out without his word.
+
 Two crashes recorded as `EX-032` on this machine, resolved to source in
 [`reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md`](../../reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md)
 and fixed here.

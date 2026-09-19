@@ -87,6 +87,8 @@ run `bluetoothd -d` — this project ships that on in
 | Commit, push and verify the remote matches | **`devtools/save <msgfile>`** (wraps `repo-save`: validates, scans content and message, refuses an AI author/committer identity, verifies the remote) |
 | **What did CI say about a commit?** | `devtools/ci [sha]`, `--wait`, `--recent N` — never a hand-typed `until gh run list … \| grep` loop; that prompted every time and read as "Parse error" |
 | Did a **green** run hide anything (a missing tool, a swallowed error)? | `scripts/ci-log-search.sh <sha\|run-id> "<pattern>"` — the full log, not the failed step; found `rg: command not found` ×3 in a green run on 2026-09-20 |
+| **Is a BlueZ CI-bot failure ours?** | `scripts/patchwork-checks.sh --failed-functional N` — which functional tests failed on the N most recent bluetooth patches, from the bot's own patchwork comments; `--patch ID` for one patch's check states. Settled the 09-19 `TestFunctional` failure in one run (12 unrelated patches, same two tests). `lore` blocks `curl`; patchwork's API does not |
+| Read a saved Gmail message (HTML) as greppable text | `scripts/mail-html-to-text.sh <saved.html>` → `tmp/<name>.txt` — how the bot's backtraces were read |
 | **Why is CI red?** | `devtools/ci --failed [sha]` — prints the failing invariants and any stale coverage exclusion with the lines it hid; a red `--wait` does this automatically. Never `gh run view … --log-failed \| grep`: that prompted three times on 2026-09-19/20 and blocked an unattended session for an hour |
 | Did the BlueZ patch guards fire? | `tools/bt-guards` |
 | Publish-safety scan (MACs, BSSIDs, emails) | `devtools/repo-scan` |
