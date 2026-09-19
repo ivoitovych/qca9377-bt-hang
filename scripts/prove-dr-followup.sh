@@ -4,7 +4,7 @@
 # file preserved and restored, F4 missing sanitiser is unpublishable, F5 abort
 # keeps the directory), runnable while an open trial keeps the suite closed.
 set -uo pipefail
-REPO=/root/exp/qca9377-bt-hang; cd "$REPO" || exit 2
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$REPO" || exit 2
 P=0; F=0
 ok()  { printf '  PASS  %s\n' "$1"; P=$((P+1)); }
 bad() { printf '  FAIL  %s\n' "$1"; F=$((F+1)); }

@@ -2,7 +2,7 @@
 # Which caller still reaches hciconfig on the passive autostop path? Same
 # harness as prove-dr-review.sh, but the spy records its parent's command line.
 set -uo pipefail
-REPO=/root/exp/qca9377-bt-hang; cd "$REPO" || exit 2
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$REPO" || exit 2
 TL=$(mktemp -d); mkdir -p "$TL/bin" "$TL/state" "$TL/sysfs/3-3/power" "$TL/sysfs/3-3/3-3:1.0/bluetooth/hci0" "$TL/evidence/trials"
 echo 13d3 > "$TL/sysfs/3-3/idVendor"; echo 3503 > "$TL/sysfs/3-3/idProduct"; echo on > "$TL/sysfs/3-3/power/control"
 cat > "$TL/bin/hciconfig" <<EOF

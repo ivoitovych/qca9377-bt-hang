@@ -3219,6 +3219,16 @@ code now, and a fourth invariant forbids `rg`. The tool that found the evidence 
 `scripts/ci-log-search.sh`, because the lines hid inside a step that passed and a red-run
 reader never looks there.
 
+The reviewer re-read the response against the tree and accepted it, with three residuals in
+the response itself: the new guard against ripgrep read only the one file and matched only two
+of the ways `rg` can be spelled; the proof scripts written for outsiders hardcoded this
+machine's path, and one could cache a failed download as a log; and the superseded document
+still called itself a fix proposal while the record said the reset "destroys" a device that a
+power-off brings back. All three fixed the same night — the last by replacing "destroy" in
+seven current-facing files with what `EX-023` actually shows. A reviewer who checks whether
+the response to a review was itself done properly is doing the job the register asks of
+everyone here; both rounds are filed.
+
 ### The budget
 
 The operator, reading BRIEF after a day in which it had been trimmed three times to stay at

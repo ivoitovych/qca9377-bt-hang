@@ -8,7 +8,7 @@
 #
 # --tools-only deploys every file and enables no service, reloads no driver and
 # touches no device. It exists because --apply enables bt-hang-watchdog, whose
-# USB reset has three controlled demonstrations of destroying this controller —
+# USB reset has three controlled demonstrations of driving an already-wedged controller off the USB bus until power is removed —
 # so on the investigation machine the choice was stale tools or an armed
 # watchdog, and the fixes stayed stuck in the tree for days.
 #
@@ -33,7 +33,7 @@ METRICS=1
 # unreachable — because the only way to deploy them, `--apply`, also runs
 # `systemctl enable --now bt-hang-watchdog`. That watchdog's response to an HCI
 # timeout is a USB reset, and a reset has THREE controlled demonstrations of
-# destroying this controller (EX-023, the 2026-08-15 test, EX-026). So the
+# driving an already-wedged controller off the USB bus until power is removed (EX-023, the 2026-08-15 test, EX-026). So the
 # operator was choosing between stale instruments and an armed watchdog on a
 # family laptop, and correctly chose stale — which left BL-08's fix, the one
 # that stops our own shutdown hook probing the controller, permanently stuck in
@@ -124,7 +124,7 @@ run() {
     # `systemctl enable` added tomorrow would run, and the mode's whole promise
     # is that nothing gets armed. This fails closed — a new system command is
     # skipped and announced, which is loud and recoverable, while the other
-    # direction arms a watchdog on a machine whose controller a reset destroys.
+    # direction arms a watchdog on a machine whose wedged controller a reset drives off the bus.
     #
     # CHECKED BEFORE THE STAGING GATE, ON PURPOSE. Both gates allow the same
     # commands, so the order cannot change WHAT runs — only which message is

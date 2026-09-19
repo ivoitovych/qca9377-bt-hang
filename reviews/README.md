@@ -400,6 +400,9 @@ The per-finding disposition — all 25 `FD` IDs — is the catalogue in
 | DP-04 | next step is a controlled kernel experiment, not more logging: Build B (QCA setup on, automatic reset off) first | **recorded** as BRIEF §9.6 — a kernel build on the family laptop, the operator's decision | `BRIEF.md` §9 | — |
 | DP-05 | kernel version no longer predicts whether `dc16388d45ec` is present (backports); read the driver | **adopted** — bug report and BRIEF §9.6; `tools/bt-verify-kernel-mechanism` | `docs/bug-report.md` | — |
 | DP-06 | unprotected `main`, 23 branches, monolithic runner (= UT-12) | **recorded** — operator's | — | — |
+| DP-07 | (follow-up) the anti-`rg` guard read only `$0` and matched only `rg -`/`rg '` | **fixed** — reads `${SUITE_FILES[@]}`; matches the `rg` command token at a command start regardless of the next argument; positive control in `scripts/prove-neg-search.sh` | `tests/run-tests` | `scripts/prove-neg-search.sh` → guard detects all three shapes |
+| DP-08 | (follow-up) the new proof scripts hardcoded `/root/exp/qca9377-bt-hang`; `ci-log-search.sh` could cache a failed download as the log | **fixed** — every script under `scripts/` derives the checkout from its own path; download to a temp file, `mv` on success only | `scripts/*.sh` | `grep -L 'BASH_SOURCE' scripts/*.sh` → none hardcode the path |
+| DP-09 | (follow-up) `fix-proposal.md` heading still said "Fix proposal"; "destroying this device" overstates the evidence | **fixed** — heading "Historical fix proposal — superseded …"; every current-facing "destroying" is now "driving an already-wedged controller off the USB bus until power is removed — not permanent damage" (README, BRIEF, install.md, tooling-index, issues, install.sh, fix-proposal) | as listed | `grep -c "destroying this" README.md BRIEF.md docs/*.md install.sh` → 0 |
 
 ## Adding a report
 

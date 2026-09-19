@@ -328,7 +328,7 @@ the kernels that were run.
 read as a consequence for recovery, not a candidate cause** — the wedge is located
 elsewhere (see "Current state"), and this entry explains why no software recovers it.
 **Reportable:** ⚠️ the patch is trivial and is **not proposed**: the reset it installs
-destroyed the device in two controlled tests (`EX-023`, the 2026-08-15 boot).
+drove the already-wedged device off the USB bus, recoverable only by removing power, in two controlled tests (`EX-023`, the 2026-08-15 boot).
 
 The device is matched by no quirks entry, so it receives neither `hdev->reset` nor
 `btusb_setup_qca()`. Its immediate ID neighbours `3491/3496/3501` carry

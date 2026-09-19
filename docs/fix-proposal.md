@@ -1,4 +1,4 @@
-# Fix proposal — btusb: add QCA9377 `13d3:3503` to the QCA ROME quirks
+# Historical fix proposal — superseded by upstream `dc16388d45ec` (QCA9377 `13d3:3503` quirks entry, and what it installs)
 
 > ⚠️ **SUPERSEDED — read this banner before anything below (2026-09-20, R2-29 / DP-03).**
 > The one-line change this document proposes **was made upstream on 2026-08-07 by someone
@@ -6,8 +6,9 @@
 > table", for a BLE-scanning failure — present in master, absent from `v7.0` and the 6.6.y
 > and 6.12.y stable heads as checked 2026-09-19. So the proposal is moot as a submission,
 > and it was already withdrawn as a *fix for the wedge* on 2026-08-22: the reset path it
-> installs has three controlled demonstrations of destroying this device when applied to an
-> already-wedged controller (`EX-023`, `EX-026`, the 08-15 boot), and `BRIEF.md` §3 says
+> installs has three controlled demonstrations of driving an already-wedged controller off
+> the USB bus, recoverable only by removing power (`EX-023`, `EX-026`, the 08-15 boot) — not
+> permanent damage; the part comes back after a power-off — and `BRIEF.md` §3 says
 > every recovery tried in that state failed. What survives of this document is its §2
 > analysis of the **six behaviours** `BTUSB_QCA_ROME` installs — firmware setup, shutdown,
 > BD-address handling, discovery, reset, resume — which is exactly the reason the next

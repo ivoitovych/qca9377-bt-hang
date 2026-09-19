@@ -105,8 +105,8 @@ run `bluetoothd -d` — this project ships that on in
 | Deploy and arm everything | `sudo ./install.sh --apply` |
 
 ⚠️ Use `--tools-only` on the investigation machine. `--apply` enables
-`bt-hang-watchdog`, whose USB reset has three controlled demonstrations of
-destroying this controller.
+`bt-hang-watchdog`, whose USB reset has three controlled demonstrations of driving
+an already-wedged controller off the USB bus until power is removed.
 
 ---
 

@@ -4,7 +4,8 @@
 # pushed, or Actions has not queued it yet" for a green sha; after it, the
 # verdict. Read-only; one network call.
 set -uo pipefail
-REPO=/root/exp/qca9377-bt-hang
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SHA=$(git -C "$REPO" rev-parse --short origin/main)
-echo "from /root/exp (not a git repository), asking about origin/main $SHA:"
-cd /root/exp && "$REPO/devtools/ci" "$SHA"; echo "rc=$?"
+ELSEWHERE=$(mktemp -d)   # any directory that is not a git repository
+echo "from $ELSEWHERE (not a git repository), asking about origin/main $SHA:"
+cd "$ELSEWHERE" && "$REPO/devtools/ci" "$SHA"; echo "rc=$?"; rmdir "$ELSEWHERE"

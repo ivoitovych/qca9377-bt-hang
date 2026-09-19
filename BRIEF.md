@@ -136,7 +136,8 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **Family laptop.** A dead controller costs the household. Never request long windows on
   spec; capture what is already open.
 - **Never `install.sh --apply`** on the investigation machine — it arms `bt-hang-watchdog`,
-  whose USB reset has **3 controlled demonstrations of destroying this controller**. Use
+  whose USB reset has **3 controlled demonstrations of driving an already-wedged controller
+  off the USB bus until power is removed** (`EX-023`, `EX-026`; not permanent damage). Use
   `--tools-only` — and ⚠️ **run `bt-mode status` after any deploy.** Until 2026-09-16
   `--tools-only` reinstalled the two files `bt-mode experiment` moves aside, so the
   baseline was silently reverted on 08-19 and again on 09-01 while the stamp still read

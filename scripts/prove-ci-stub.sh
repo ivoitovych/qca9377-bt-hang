@@ -2,7 +2,7 @@
 # The two new devtools/ci invariants, run standalone with the same gh stub the
 # suite uses, so they can be checked here while a trial keeps the suite closed.
 set -uo pipefail
-REPO=/root/exp/qca9377-bt-hang
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 P=0; F=0
 ok()  { printf '  PASS  %s\n' "$1"; P=$((P+1)); }
 bad() { printf '  FAIL  %s\n' "$1"; F=$((F+1)); }

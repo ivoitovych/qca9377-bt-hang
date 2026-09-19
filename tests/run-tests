@@ -813,11 +813,19 @@ else
 fi
 
 # And the suite must not depend on a tool CI does not install. ripgrep was the
-# one such dependency; this keeps it from coming back under another name.
-if grep -qE '^[^#]*\brg (-[a-zA-Z]|'"'"')' tests/run-tests; then
-    bad "tests/run-tests invokes ripgrep — CI has no rg, and a missing search tool must never read as a pass"
+# one such dependency; this keeps it from coming back. Two things the first
+# version of this guard got wrong (deep-review follow-up, 2026-09-20): it read
+# only $0, so a test moved into tests/parts/ by the UT-12 split would have left
+# its protection — every self-check here reads ${SUITE_FILES[@]} — and it matched
+# `rg -x` and `rg '…'` but not `rg "…"` or `rg pattern`. Now: the command token
+# `rg` at the start of a command (line start, after ; & | ( or $( ), followed by
+# whitespace, on a line whose non-comment part contains it.
+RG_HITS=$(grep -HnE '^[^#]*(^|[;&|(]|\$\()[[:space:]]*rg[[:space:]]' "${SUITE_FILES[@]}" 2>/dev/null \
+          | grep -vE 'RG_HITS=|deep-review follow-up|command token')
+if [[ -n "$RG_HITS" ]]; then
+    bad "the suite invokes ripgrep — CI has no rg, and a missing search tool must never read as a pass: $(head -2 <<<"$RG_HITS" | tr '\n' ' ')"
 else
-    ok "tests/run-tests invokes no ripgrep — every search here uses grep, which every host has"
+    ok "the suite (${#SUITE_FILES[@]} file(s)) invokes no ripgrep — every search uses grep, which every host has"
 fi
 
 echo

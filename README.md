@@ -209,7 +209,9 @@ coverage floors and the publish scan on every push; `devtools/ci` reads its verd
 
 - **Install:** [`docs/install.md`](docs/install.md). On a machine you are *measuring*, use
   `sudo ./install.sh --tools-only`; `--apply` arms a watchdog whose USB reset has three
-  controlled demonstrations of destroying this controller (`EX-023`, `EX-026`).
+  controlled demonstrations of driving an already-wedged controller off the USB bus until
+  power is removed (`EX-023`, `EX-026`) — not permanent damage, but the one state a
+  power-off is then the only way out of.
 - **Tools:** [`docs/tooling-index.md`](docs/tooling-index.md) — which tool answers which
   question. The standalone ones (`bt-diagnose`, `bt-state`, `bt-boots`, `bt-boot-list`,
   `sanitize-logs.sh`) need no installation.
