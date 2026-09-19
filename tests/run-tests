@@ -8802,9 +8802,15 @@ SSTAMP2=$(cat "$SR/usr/local/share/qca9377-bt-hang/installed-at" 2>/dev/null)
 # exists to avoid: every reinstall would move it forward and relabel
 # already-mitigated boots as "before", contaminating the comparison.
 
-[[ "$SIOUT2" == *"already exists — will be OVERWRITTEN"* ]] \
-    && ok "a re-install names the files it is about to overwrite" \
-    || bad "the overwrite warning did not fire on a second install"
+# Since 2026-09-20 (DR-08 follow-up) a re-install of OUR OWN files is silent: each
+# destination is identical to its source, so there is nothing to warn about and
+# nothing to back up. Only a destination that differs from the source is named —
+# "not ours — kept as <dst>.pre-qca9377-bt-hang" — and preserved. The old
+# "will be OVERWRITTEN" warning fired on every re-install and protected nothing.
+SPRE=$(find "$SR" -name '*.pre-qca9377-bt-hang' 2>/dev/null | wc -l)
+[[ "$SIOUT2" != *"OVERWRITTEN"* && "$SIOUT2" != *"not ours"* ]] && (( SPRE == 0 )) \
+    && ok "a re-install of identical files warns about nothing and backs up nothing" \
+    || bad "re-install of identical files warned or backed up ($SPRE copies): $(grep -E 'OVERWRITTEN|not ours' <<<"$SIOUT2" | head -2 | tr '\n' ' ')"
 
 # ── the round trip closes ────────────────────────────────────────────────
 SDIR_MADE=$(while read -r d; do [[ -n "$d" && -d "$SR$d" ]] && echo "$d"; done \
