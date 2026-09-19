@@ -10225,9 +10225,14 @@ fi
 CIS=$(mktemp -d); mkdir -p "$CIS/bin" "$CIS/elsewhere"
 cat > "$CIS/bin/gh" <<'EOF'
 #!/bin/bash
-# stub: record the cwd gh was called from; answer one green run, or fail on demand
+# stub: record the cwd gh was called from; answer one green run, fail on demand,
+# or fail the first CI_STUB_FAIL_TIMES calls (counted in CI_STUB_COUNTER) and then answer
 echo "$PWD" >> "${CI_STUB_LOG:?}"
 [[ -n "${CI_STUB_FAIL:-}" ]] && { echo "failed to determine base repo: not a git repository" >&2; exit 1; }
+if [[ -n "${CI_STUB_FAIL_TIMES:-}" ]]; then
+    n=$(cat "${CI_STUB_COUNTER:?}" 2>/dev/null || echo 0); echo $((n + 1)) > "$CI_STUB_COUNTER"
+    (( n < CI_STUB_FAIL_TIMES )) && { echo "error connecting to api.github.com" >&2; exit 1; }
+fi
 case "$*" in
   *"run list"*) printf 'success\tcompleted\t123\tstub run\n' ;;
   *) exit 0 ;;
@@ -10245,8 +10250,18 @@ cwd_seen=$(sort -u "$CIS/calls" | head -1)
 CIFAIL=$(cd "$CIS/elsewhere" && env PATH="$CIS/bin:$PATH" CI_STUB_LOG="$CIS/calls" CI_STUB_FAIL=1 \
          BT_CI_GRACE=2 BT_CI_POLL=0 "$OLDPWD/devtools/ci" --wait HEAD 2>&1); cifrc=$?
 (( cifrc == 2 )) && [[ "$CIFAIL" == *"gh run list failed"* && "$CIFAIL" == *"not a git repository"* && "$CIFAIL" != *"grace budget"* ]] \
-    && ok "devtools/ci stops on a gh failure with gh's message, not 'no run after the grace budget'" \
+    && ok "devtools/ci stops on a persistent gh failure with gh's message, not 'no run after the grace budget'" \
     || bad "a gh failure was read as an absent run (rc=$cifrc): $(tail -2 <<<"$CIFAIL" | tr '\n' ' ')"
+# …but a TRANSIENT failure while waiting is ridden out. The evening of the fix,
+# one "error connecting to api.github.com" ended a --wait on a green run.
+: > "$CIS/counter"
+CITR=$(cd "$CIS/elsewhere" && env PATH="$CIS/bin:$PATH" CI_STUB_LOG="$CIS/calls" \
+       CI_STUB_FAIL_TIMES=2 CI_STUB_COUNTER="$CIS/counter" BT_CI_POLL=0 \
+       "$OLDPWD/devtools/ci" --wait HEAD 2>&1); citrrc=$?
+# gh's stderr is kept and sits between the two retry marks, so count the failures, not "!!"
+(( citrrc == 0 )) && [[ "$CITR" == *"✓ success"* ]] && (( $(grep -c "error connecting" <<<"$CITR") == 2 )) \
+    && ok "devtools/ci --wait rides out two transient gh failures and reads the verdict" \
+    || bad "two transient gh failures ended the wait (rc=$citrrc): $(tail -2 <<<"$CITR" | tr '\n' ' ')"
 rm -rf "$CIS"
 
 # ── repo-save, the gate that actually commits ────────────────────────────

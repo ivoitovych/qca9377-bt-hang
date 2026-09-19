@@ -101,7 +101,31 @@ if (( RECENT )); then
     exit 0
 fi
 
-row=$(fetch) || exit 2
+# A FAILING gh IS FATAL ONCE, TOLERATED WHILE WAITING. The 2026-09-19 fix made
+# any gh failure stop the tool, so an empty answer from a broken query could no
+# longer read as "no run". The same evening one dropped connection to
+# api.github.com ("error connecting") ended a --wait that had been polling a
+# green run for five minutes. A wait rides out a few consecutive failures — the
+# grace budget is not consumed by them — and gives up on a persistent one with
+# gh's own message; a single query (no --wait) still fails at once. The seam
+# BT_CI_GH_FAILS lets a test drive both outcomes.
+GH_FAILS_MAX="${BT_CI_GH_FAILS:-5}"; gh_fail=0
+poll_fetch() {   # sets $row on success; on a gh failure leaves $row alone and counts it
+    local r
+    if r=$(fetch); then gh_fail=0; row="$r"; return 0; fi
+    if (( ++gh_fail >= GH_FAILS_MAX )); then
+        echo; echo "ci: gh failed $gh_fail times in a row — giving up" >&2; exit 2
+    fi
+    printf '!'
+    return 1
+}
+
+row=""
+if (( WAIT )); then
+    until poll_fetch; do sleep "${BT_CI_POLL:-30}"; done
+else
+    row=$(fetch) || exit 2
+fi
 
 # ⚠️ --wait MUST WAIT FOR THE RUN TO APPEAR, not only for it to finish. GitHub
 # queues the workflow run seconds-to-minutes AFTER the push returns, so the
@@ -130,10 +154,14 @@ if [[ -z "$row" ]]; then
     # be made to fire is this project's most-repeated defect.
     grace="${BT_CI_GRACE:-40}"
     while [[ -z "$row" ]]; do
-        (( grace-- > 0 )) || { echo; echo "ci: no run for $SHORT after the grace budget — was it pushed to a branch Actions builds?" >&2; exit 2; }
-        printf '.'
+        # A retry after a gh failure does not spend the grace budget: the budget
+        # measures GitHub not queuing the run, not the network dropping a call.
+        if (( gh_fail == 0 )); then
+            (( grace-- > 0 )) || { echo; echo "ci: no run for $SHORT after the grace budget — was it pushed to a branch Actions builds?" >&2; exit 2; }
+            printf '.'
+        fi
         sleep "${BT_CI_POLL:-30}"
-        row=$(fetch) || exit 2
+        poll_fetch || true
     done
     echo
 fi
@@ -150,9 +178,12 @@ if (( WAIT )); then
         IFS=$'\t' read -r concl status runid title <<<"$row"
         [[ "$status" == "completed" ]] && break
         printf '.'
-        sleep 30
-        row=$(fetch) || exit 2
-        [[ -n "$row" ]] || { echo; echo "ci: the run for $SHORT disappeared while waiting" >&2; exit 2; }
+        sleep "${BT_CI_POLL:-30}"
+        # On a gh failure $row keeps the last good answer, so the loop simply
+        # polls again; "disappeared" is judged only on a successful, empty fetch.
+        if poll_fetch; then
+            [[ -n "$row" ]] || { echo; echo "ci: the run for $SHORT disappeared while waiting" >&2; exit 2; }
+        fi
     done
     echo
 fi
