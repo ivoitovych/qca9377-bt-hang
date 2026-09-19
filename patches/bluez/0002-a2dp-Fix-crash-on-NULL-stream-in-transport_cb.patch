@@ -12,8 +12,9 @@ the a2dp_setup it was handed still exists:
 That establishes the lifetime of the setup, not of the stream it
 points at. Several paths in a2dp.c clear setup->stream while leaving
 the setup itself on the list, so by the time the accept completes the
-setup can be valid and its stream NULL. It is then passed on
-unchecked:
+setup can be valid and its stream NULL. confirm_cb() already refuses
+to start the accept when setup->stream is NULL; nothing re-checks it
+when the accept completes, and it is then passed on unchecked:
 
 	if (!avdtp_stream_set_transport(setup->stream,
 					g_io_channel_unix_get_fd(io),

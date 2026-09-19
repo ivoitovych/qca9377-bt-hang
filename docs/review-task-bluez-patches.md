@@ -60,7 +60,7 @@ The record behind them, in the order a reviewer probably wants it:
   either order, no `Signed-off-by`, 50/72) and
   `patches/bluez/checkpatch-check.sh <bluez-tree>` (checkpatch under BlueZ's own
   `.checkpatch.conf`, from inside the tree).
-- `mail-notes/0001.txt`, `mail-notes/0002.txt` — the text that goes *below* the
+- `patches/bluez/mail-notes/0001.txt`, `patches/bluez/mail-notes/0002.txt` — the text that goes *below* the
   `---` line of each mail, which `git am` discards.
 
 The repository's front page (`README.md`) and `BRIEF.md` describe the larger

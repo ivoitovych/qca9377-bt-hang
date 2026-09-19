@@ -72,7 +72,7 @@ and local, and the underlying teardown ordering is not explained by it.
 | `git am` at master `c73fa2f9a`, each alone and both in either order (`patches/bluez/git-am-check.sh`) | ✅ 6/6, re-run after the 09-18 message changes |
 | defects still present at master `2401054` (2026-09-17) | ✅ both — the first third-party reviewer's check, not re-run here (no network) |
 | defects still present at master `ebbb4ee3` (2026-09-18) | ✅ both — the second independent reviewer's check (`reviews/2026-09-19T1700Z-…`) |
-| two independent reviews (2026-09-18, 2026-09-19), the second formed before reading the first | ✅ accept both; one message-only correction each time, both applied; no code change from either |
+| three independent reviews (2026-09-18, 2026-09-19 ×2), the later two formed before reading the first | ✅ accept both, submit independently; message-only changes from them (a label, a provenance sentence, one sentence on `confirm_cb()`), all applied; no code change from any |
 
 Built against BlueZ 5.87 configured with
 `--disable-systemd --disable-obex --disable-cups --disable-manpages

@@ -3103,6 +3103,16 @@ reached, independently, the conclusion our verification of the first review had 
 about the index-fallback lead. Both defects confirmed at a master one day newer than the
 first reviewer's. No code in either patch has changed since 2026-08-25.
 
+A third reading arrived the same evening, from a reviewer who wrote down their own list
+first and used it instead of ours: submit both, no code changes, no should-fix, nits only.
+It added two facts the record had not carried. `confirm_cb()` already refuses to start the
+accept when `setup->stream` is NULL — so `0002` is the missing second half of a check the
+file already makes, and one sentence in the message now says so. And in the ten seconds
+between the last client leaving and the fatal reply, two failed completions ran the very
+branch that then crashed, harmlessly, because their status was not success. It also found
+that our task document pointed the reviewer at a path that does not exist. Three readers;
+three lists; the same two patches, unchanged in code since August.
+
 ### The shape
 
 Three gaps, each one step past a gate that existed. The message scan stopped at the
