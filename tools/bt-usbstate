@@ -15,8 +15,9 @@
 # `Looking for Alt no :6` / `:3` probes and a 9-byte MTU in btusb's debug
 # output, because no log line names the chosen setting. sysfs names it. The
 # interface is on alternate setting 1 with a 9-byte isochronous endpoint, which
-# is precisely what BTUSB_USE_ALT1_FOR_WBS selects and precisely what 27-byte
-# mSBC frames do not fit into.
+# is precisely what BTUSB_USE_ALT1_FOR_WBS selects. (The 27-byte SCO buffers are
+# sent as three 9-byte packets — __fill_isoc_descriptor() — not forced into one;
+# an earlier comment here said "do not fit", DR-02.)
 #
 # AND A REBOOT DESTROYS IT. The journal survives; this does not. It exists only
 # while the wedged device is still enumerated, which is the one state nobody
@@ -37,8 +38,28 @@ set -uo pipefail
 export LC_ALL=C
 
 USBROOT="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
-DEV="${BT_USB_PATH:-3-3}"
+VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
 OUT=""
+# RESOLVE THE DEVICE BY VID:PID, the way bt-mode's radio_dir() does. Until
+# 2026-09-19 this was `DEV="${BT_USB_PATH:-3-3}"` — one machine's port baked in —
+# and a controller on any other port read as "NOT on the USB bus", i.e. stage 2,
+# with exit 0 (review DR-09; the R2-88 closure had counted the word idVendor in
+# this file and called it fixed). BT_USB_PATH is kept as an explicit override.
+DEV=""; MATCHES=0
+if [[ -n "${BT_USB_PATH:-}" ]]; then
+    DEV="$BT_USB_PATH"
+else
+    for d in "$USBROOT"/*; do
+        [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
+        [[ "$(tr -dc '0-9a-fA-F' < "$d/idVendor")" == "$VID" && \
+           "$(tr -dc '0-9a-fA-F' < "$d/idProduct")" == "$PID" ]] || continue
+        MATCHES=$((MATCHES + 1)); [[ -z "$DEV" ]] && DEV="$(basename "$d")"
+    done
+    if (( MATCHES > 1 )); then
+        echo "bt-usbstate: $MATCHES devices match $VID:$PID under $USBROOT — set BT_USB_PATH to choose" >&2
+        exit 2
+    fi
+fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -49,15 +70,22 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-D="$USBROOT/$DEV"
 # NOT AN ERROR EXIT WHEN THE DEVICE IS GONE. Stage 2 — the controller off the
 # bus entirely — is a real recorded state, and a tool that failed there would
 # be unusable in exactly half the incidents. It reports the absence, which is
-# itself the finding.
-if [[ ! -e "$D" ]]; then
-    printf 'bt-usbstate — %s is NOT on the USB bus\n' "$DEV"
+# itself the finding — but it says WHICH absence: no device with this VID:PID
+# anywhere under the sysfs root (stage 2), or a configured path that does not
+# exist (a configuration error, not a controller state).
+if [[ -z "$DEV" ]]; then
+    printf 'bt-usbstate — no device %s:%s on the USB bus\n' "$VID" "$PID"
     printf '  the controller is off the bus (stage 2); there is no USB state to read\n'
     exit 0
+fi
+D="$USBROOT/$DEV"
+if [[ ! -e "$D" ]]; then
+    printf 'bt-usbstate — configured path %s does not exist under %s\n' "$DEV" "$USBROOT"
+    printf '  BT_USB_PATH names a port that is not there; this says nothing about the controller\n'
+    exit 2
 fi
 
 emit() {
@@ -109,7 +137,7 @@ emit() {
         printf '\n  ⚠️  SCO interface is on ALTERNATE SETTING 1'
         [[ -n "$mps" ]] && printf ', isochronous endpoint %s bytes' "$((16#${mps:-0}))"
         printf '\n      That is the BTUSB_USE_ALT1_FOR_WBS state, observed directly rather\n'
-        printf '      than inferred from the probe lines. 27-byte mSBC frames do not fit.\n'
+        printf '      than inferred from the probe lines. 27-byte buffers go as 3×9-byte packets.\n'
     elif [[ -n "$alt" ]]; then
         printf '\n  SCO interface alternate setting %s' "$alt"
         [[ -n "$mps" ]] && printf ', isochronous endpoint %s bytes' "$((16#${mps:-0}))"

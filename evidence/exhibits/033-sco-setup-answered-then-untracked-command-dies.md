@@ -178,3 +178,14 @@ operator was right to say so.
 | exit status | `0` |
 | redacted | `no` |
 | session | `evidence/sessions/20260822-111627-untreated-window-9h-then-recovery-attempt` |
+
+### ⚠️ CORRECTED 2026-09-19 — "into the 9-byte endpoint" (`DR-02`)
+
+The correction block above says the 835 `len 27 mtu 9` lines are "27-byte mSBC frames into
+the 9-byte alt-1 endpoint". The count is right; the picture is not. `btusb`'s
+`__fill_isoc_descriptor()` splits a 27-byte buffer into three 9-byte isochronous packets
+(`cache/linux` at `v7.0`, `drivers/bluetooth/btusb.c`, `for (...; len >= mtu; ...)` with
+`length = mtu`), so nothing oversized reaches the endpoint. `len 27 mtu 9` is that split,
+logged once per buffer. What the count establishes is sustained transparent-SCO traffic on
+alternate setting 1 before the fault, not a transport-size violation. Found by the
+2026-09-19 comprehensive review.

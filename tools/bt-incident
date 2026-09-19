@@ -81,8 +81,10 @@ DIR="$REPO/evidence/sessions/$(date +%Y%m%d-%H%M%S)-${SLUG//[^a-zA-Z0-9._-]/_}"
 mkdir -p "$DIR" || { echo "cannot create $DIR" >&2; exit 1; }
 
 SAN=""
-for c in "$HERE/sanitize-logs.sh" /usr/local/bin/bt-sanitize-logs; do
-    [[ -x "$c" ]] && { SAN="$c"; break; }
+# BT_SANITIZER is a seam so a test can hand this tool a sanitiser that FAILS and
+# check that the manifest says so (DR-06).
+for c in "${BT_SANITIZER:-}" "$HERE/sanitize-logs.sh" /usr/local/bin/bt-sanitize-logs; do
+    [[ -n "$c" && -x "$c" ]] && { SAN="$c"; break; }
 done
 
 echo "collecting since '$SINCE' into $DIR"
@@ -109,8 +111,20 @@ _bt_usbstate="$_HERE/bt-usbstate"; [[ -x "$_bt_usbstate" ]] || _bt_usbstate=bt-u
 command -v "$_bt_state"    >/dev/null 2>&1 && "$_bt_state"    > "$DIR/state-now.txt" 2>&1 || true
 command -v "$_bt_usbstate" >/dev/null 2>&1 && "$_bt_usbstate" > "$DIR/usb-state.txt" 2>&1 || true
 
+# The sanitiser's exit status is the ONLY thing that says a file is clean: on a
+# refusal (awk capability gate, addresses left after substitution) it leaves the
+# raw text in place. Until 2026-09-19 this loop dropped that status and the
+# manifest said `sanitised=yes` because a sanitiser EXISTED (R2-77, DR-06) —
+# raw journal text beside a manifest that vouched for it. Now every failure is
+# named in the manifest and the tool exits non-zero so nothing downstream
+# treats the session as publishable.
+SAN_FAILED=""
 for f in "$DIR"/*.log "$DIR"/*.txt; do
-    [[ -f "$f" && -s "$f" && -n "$SAN" ]] && "$SAN" "$f" "$f" >/dev/null 2>&1
+    [[ -f "$f" && -s "$f" && -n "$SAN" ]] || continue
+    if ! "$SAN" "$f" "$f" >/dev/null 2>&1; then
+        SAN_FAILED="${SAN_FAILED:+$SAN_FAILED,}$(basename "$f")"
+        echo "WARNING: sanitiser FAILED on $(basename "$f") — raw text left in place" >&2
+    fi
 done
 
 {
@@ -155,7 +169,9 @@ count() { local n; n=$(grep -cE "$1" "$2" 2>/dev/null || true); echo "${n:-0}" |
     echo "wd_fatal=$(count 'FATAL:' "$DIR/watchdog.log")"
     echo "usb_descriptor_errors=$(count 'descriptor read' "$DIR/kernel.log")"
     echo "usb_disconnect=$(count 'USB disconnect' "$DIR/kernel.log")"
-    echo "sanitised=$([[ -n "$SAN" ]] && echo yes || echo NO-SANITISER)"
+    if [[ -z "$SAN" ]]; then echo "sanitised=NO-SANITISER"
+    elif [[ -n "$SAN_FAILED" ]]; then echo "sanitised=FAILED:$SAN_FAILED"
+    else echo "sanitised=yes"; fi
 } > "$DIR/MANIFEST.txt"
 
 [[ -f "$DIR/NOTES.md" ]] || cat > "$DIR/NOTES.md" <<EOF
@@ -187,5 +203,11 @@ sed 's/^/  /' "$DIR/MANIFEST.txt"
 echo
 echo "  -> $DIR"
 echo "  -> also reachable as: evidence/sessions/latest"
+# The session is written either way — a partial record beats none — but the
+# exit status says whether it may be published as it stands (DR-06).
+if [[ -n "$SAN_FAILED" ]]; then
+    echo "  ⚠️  NOT PUBLISHABLE: the sanitiser refused $SAN_FAILED — raw text is in place" >&2
+    exit 1
+fi
 echo "  write the analysis to evidence/sessions/latest/NOTES.md"
 echo "  run bt-postmortem for the timing breakdown"

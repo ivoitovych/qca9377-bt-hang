@@ -1,10 +1,19 @@
 # The missing quirks entry — what it does and does not explain
 
+> ⚠️ **Superseded upstream on 2026-08-07 (`DR-01`, 2026-09-19).** Commit `dc16388d45ec`,
+> "Bluetooth: btusb: Add IMC Networks QCA9377 to quirks table" (authored 2026-06-29,
+> committed 2026-08-07), adds exactly the entry this document describes as missing —
+> `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH` for `13d3:3503` — for a **BLE scanning failure**,
+> not for this fault. It is in master and absent from `v7.0`, `linux-6.6.y` and
+> `linux-6.12.y`. Everything below is true of the kernels this project ran (`7.0.0-28…31`)
+> and false of master; the setup and reset paths the entry installs are **untested here**.
+> Its descriptor listing (alts 1–5: 9/17/25/33/49 bytes, no alt 6) matches this device.
+>
 > Moved from the front page on 2026-09-18 (front-door review `FD-01`), unchanged apart
-> from this banner. This was the project's first-order finding (August 2026): `13d3:3503`
-> matches no entry in btusb's quirks table, so it receives neither `hdev->reset` nor the
-> QCA firmware setup path. It is still true, and it now explains why **no software
-> recovery exists** once the controller wedges (`BRIEF.md` §3) — not why it wedges. The
+> from these banners. This was the project's first-order finding (August 2026): `13d3:3503`
+> matched no entry in btusb's quirks table, so it received neither `hdev->reset` nor the
+> QCA firmware setup path. On those kernels it explains why **every tested recovery
+> failed** once the controller wedged (`BRIEF.md` §3) — not why it wedges. The
 > one-line quirks patch below is **not proposed as the fix**: the reset it would install
 > destroyed the device in two controlled tests, and the fault has since been located in
 > the transparent-SCO alternate-setting path (`BRIEF.md` §1, `EX-033`–`EX-043`). The

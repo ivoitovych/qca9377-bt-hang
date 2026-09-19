@@ -208,8 +208,9 @@ DISC=$(grep -cE 'USB disconnect' "$K" 2>/dev/null || true)
 #
 #   mtu 17  a wide endpoint — CVSD narrowband. Streams fine, 4669 packets on
 #           2026-09-01 with the controller entirely healthy.
-#   mtu  9  the 9-byte alt-1 endpoint, taken by the WBS fallback. 27-byte mSBC
-#           frames go into a 9-byte MTU, and THIS is where the controller dies:
+#   mtu  9  the 9-byte alt-1 endpoint, taken by the WBS fallback. 27-byte SCO
+#           buffers are sent as three 9-byte packets (not forced into one — DR-02),
+#           and THIS is the traffic that precedes every recorded death:
 #           835 such packets before EX-033's timeout, 87 before EX-036's.
 #
 # On 2026-09-01 the transparent links were established three times, reached the

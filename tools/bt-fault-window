@@ -111,8 +111,10 @@ fi
 #
 # btusb prints `len <n> mtu <m>` per URB and `m` is the isochronous endpoint
 # size, so it names the alternate setting actually in use. mtu 9 is the alt-1
-# endpoint the WBS fallback selects; 27-byte mSBC frames do not fit it, and
-# sustained traffic there precedes every recorded death (835 EX-033, 87 EX-036,
+# endpoint the WBS fallback selects. ⚠️ `len 27 mtu 9` is NOT an oversized packet:
+# __fill_isoc_descriptor() splits the 27-byte buffer into three 9-byte packets
+# (DR-02, 2026-09-19; the first reading here said "do not fit"). What the count
+# measures is sustained alt-1 traffic, and that precedes every recorded death (835 EX-033, 87 EX-036,
 # 680 EX-037, 682 EX-038) while the one recorded survival of the same path has
 # none. Counting all SCO traffic together hides exactly that distinction.
 NARROW=$(grep -cE 'len [0-9]+ mtu 9$' "$WIN" 2>/dev/null || true)
@@ -123,7 +125,7 @@ printf '  SCO packets in this window\n'
 printf '    alt-1  (mtu 9)   %8s   of which 27-byte mSBC: %s\n' "${NARROW:-0}" "${NARROW27:-0}"
 printf '    wider  (mtu >9)  %8s   (CVSD — the healthy path)\n' "${WIDE:-0}"
 if [[ "${NARROW27:-0}" -gt 0 ]]; then
-    printf '    ⚠️  27-byte frames on a 9-byte endpoint — the BT-1 condition.\n'
+    printf '    ⚠️  alt-1 transparent SCO (27-byte buffers as 3×9-byte packets) — the BT-1 condition.\n'
 fi
 echo
 

@@ -4814,6 +4814,21 @@ bin/bt-mark >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-mark refuses an empty message" \
               || bad "bt-mark accepted a mark with no text"
 
+# bt-mark IS PROBE-FREE BY DEFAULT (2026-09-19). It sent `hciconfig name` on
+# every mark — three per trial from bt-trial alone — and was the last HCI
+# command still leaving at shutdown after autostop went passive (DR-07).
+printf '#!/bin/sh\necho "$*" >> %s/hci-calls\nexit 0\n' "$EV" > "$EV/stub/hciconfig"; chmod +x "$EV/stub/hciconfig"
+rm -f "$EV/hci-calls"
+MKP=$(env PATH="$EV/stub:$PATH" BT_SYSFS_USB="$EV/usb" bin/bt-mark "plain mark" 2>&1)
+[[ "$MKP" == *"responds=unprobed"* && ! -e "$EV/hci-calls" ]] \
+    && ok "bt-mark sends no HCI command by default and says responds=unprobed" \
+    || bad "bt-mark probed by default: $(grep -c . "$EV/hci-calls" 2>/dev/null) call(s); $MKP"
+MKQ=$(env PATH="$EV/stub:$PATH" BT_SYSFS_USB="$EV/usb" bin/bt-mark --probe "probed mark" 2>&1)
+[[ "$MKQ" == *"responds=yes"* && "$MKQ" == *"(probed)"* && -s "$EV/hci-calls" ]] \
+    && ok "bt-mark --probe asks the controller and labels the mark as probed" \
+    || bad "bt-mark --probe did not probe or did not say so: $MKQ"
+rm -f "$EV/stub/hciconfig" "$EV/hci-calls"
+
 # Refusals before anything is open. Recording into no session would write to a
 # path derived from an absent state file.
 ev note "orphan" >/dev/null 2>&1
@@ -6483,6 +6498,8 @@ echo on   > "$TL/sysfs/3-3/power/control"
 # classification under test is bt-trial's and not the machine's radio.
 cat > "$TL/bin/hciconfig" <<TLSTUB
 #!/bin/sh
+# spy: every call is an HCI command sent to the controller; autostop must send none
+echo "\$*" >> "$TL/hciconfig-calls"
 [ -e "$TL/dead" ] && exit 1
 exit 0
 TLSTUB
@@ -6501,6 +6518,13 @@ exit 0
 TLSTUB
 printf '#!/bin/sh\necho "up 1 hour"\n' > "$TL/bin/uptime"
 printf '#!/bin/sh\nexit 0\n' > "$TL/bin/bt-incident"
+# bt-trial calls bt-mark and bt-state BY NAME. On a checkout with the project
+# installed, that reached /usr/local/bin — whatever was last deployed — and the
+# 2026-09-19 proof of the passive autostop found the installed bt-mark still
+# probing. The checkout's copies are put first on PATH so the suite tests the
+# chain it ships, not the machine's deployment.
+ln -sf "$PWD/bin/bt-mark" "$TL/bin/bt-mark"
+ln -sf "$PWD/tools/bt-state" "$TL/bin/bt-state"
 # bt-trial reads the kernel journal through journalctl DIRECTLY, not through
 # tools/lib/journal.sh — it is one of the ten tools UT-10 has not converted.
 # So the window's contents are a stub reading a file this section writes.
@@ -6605,23 +6629,65 @@ TLAS=$(tl autostop); tlasrc=$?
     || bad "autostop without a trial was not silent (rc=$tlasrc): $TLAS"
 
 rm -f "$TL/dead"
+# AUTOSTOP IS PASSIVE (2026-09-19; BL-08, R2-65, DR-07). It classifies from the
+# kernel journal — a command timeout since the trial opened → hang — and sends
+# NOTHING to the controller. Until then it ran hci_alive() at every shutdown of
+# the family laptop, an HCI Read Local Name into the state under study, and the
+# two tests that stood here pinned that as the design ("on a responding
+# controller", "on a dead controller"): a test that asserts the defect is what
+# makes the defect survive its own review. The spy in the hciconfig stub above
+# is the assertion that matters: zero calls.
+# `start`/`autostart` probe ON PURPOSE (a trial opened on a dead controller
+# measures nothing); the spy is reset after autostart so it counts autostop alone.
+: > "$TL/kjournal"
 tl autostart stock >/dev/null 2>&1
+rm -f "$TL/hciconfig-calls"
 tl autostop >/dev/null 2>&1
-[[ "$(tl_field 9)" == "survived" ]] \
-    && ok "autostop on a responding controller closes the trial as survived" \
-    || bad "autostop misclassified a live controller as '$(tl_field 9)'"
+[[ "$(tl_field 9)" == "survived" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+    && ok "autostop with no timeout in the journal closes as survived and sends no HCI command" \
+    || bad "autostop: result '$(tl_field 9)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
 
+printf 'Bluetooth: hci0: command 0x0406 tx timeout\n' > "$TL/kjournal"
 tl autostart stock >/dev/null 2>&1
-touch "$TL/dead"
+touch "$TL/dead"     # the controller dies after the trial opened — and must not be asked
+rm -f "$TL/hciconfig-calls"
 tl autostop >/dev/null 2>&1
 # `failed` is the tool's word for it — the three trial_result values are
 # survived / failed / alive_after_intervention, and `hang` is the VERB that
-# produces the second. Asserting "hang" here tested the vocabulary this check
-# expected rather than the one the results file uses.
-[[ "$(tl_field 9)" == "failed" ]] \
-    && ok "autostop on a dead controller closes the trial through the hang path" \
-    || bad "autostop misclassified a dead controller as '$(tl_field 9)'"
-rm -f "$TL/dead"
+# produces the second.
+[[ "$(tl_field 9)" == "failed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+    && ok "autostop with a timeout in the journal closes through the hang path, still sending no command" \
+    || bad "autostop: result '$(tl_field 9)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
+
+# The probe survives as a DELIBERATE intervention only: BT_TRIAL_PROBE=1.
+: > "$TL/kjournal"
+tl autostart stock >/dev/null 2>&1
+rm -f "$TL/hciconfig-calls"
+BT_TRIAL_PROBE=1 tl autostop >/dev/null 2>&1
+[[ "$(tl_field 9)" == "failed" ]] && [[ -s "$TL/hciconfig-calls" ]] \
+    && ok "BT_TRIAL_PROBE=1 restores the probing autostop, on purpose and visibly" \
+    || bad "BT_TRIAL_PROBE=1: result '$(tl_field 9)', calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
+rm -f "$TL/dead" "$TL/hciconfig-calls"; : > "$TL/kjournal"
+
+# ── abort refuses to delete TRACKED evidence (BL-03, R2-64, DR-07) ───────
+# The 2026-08-22 incident: `bt-trial abort` rm -rf'd a trial directory git
+# knew about. The abort test above pins the untracked case (correct: scratch
+# is discarded); this pins the other half. $TL becomes a repository for it.
+git -C "$TL" init -q 2>/dev/null
+tl autostart stock >/dev/null 2>&1
+TLADIR=$(grep '^dir=' "$TL/state/current" | cut -d= -f2-)
+printf 'kept\n' > "$TLADIR/evidence.log"
+git -C "$TL" -c user.name=test -c user.email=test@example.com add "$TLADIR/evidence.log" 2>/dev/null
+TLAR=$(tl abort); tlarrc=$?
+(( tlarrc == 1 )) && [[ "$TLAR" == *"REFUSED"* && -d "$TLADIR" && -e "$TL/state/current" ]] \
+    && ok "abort refuses to delete a trial directory holding tracked files, and keeps the trial open" \
+    || bad "abort removed or ignored tracked evidence (rc=$tlarrc): $TLAR"
+git -C "$TL" rm -q --cached "$TLADIR/evidence.log" 2>/dev/null
+TLAU=$(tl abort); tlaurc=$?
+(( tlaurc == 0 )) && [[ ! -d "$TLADIR" && "$TLAU" == *"discarded"* ]] \
+    && ok "abort discards the same directory once nothing in it is tracked" \
+    || bad "abort did not discard an untracked trial (rc=$tlaurc)"
+rm -rf "$TL/.git"
 
 # ── the two classifications that decide whether a row may be POOLED ──────
 #
@@ -8754,6 +8820,25 @@ SRLOUT=$(stage_at "$SRL")
     && ok "uninstall.sh names a directory it could not remove, and what is in it" \
     || bad "a non-empty project directory was left without a word being said"
 
+# THE .disabled SIBLINGS ARE OURS TOO. bt-mode experiment renames the modprobe
+# override and the udev rules to `<name>.disabled`; until 2026-09-19 uninstall
+# removed the active names only and printed UNINSTALL COMPLETE over a machine
+# that still carried all three (review DR-08). verify-restored.sh flagged them;
+# the uninstaller did not remove them.
+SRDIS=$(mktemp -d); mkdir -p "$SRDIS/etc/modprobe.d" "$SRDIS/etc/udev/rules.d"
+: > "$SRDIS/etc/modprobe.d/btusb-qca9377.conf.disabled"
+: > "$SRDIS/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules.disabled"
+: > "$SRDIS/etc/udev/rules.d/51-bluetooth-health-snapshot.rules.disabled"
+SRDISOUT=$(stage_at "$SRDIS"); srdisrc=$?
+(( srdisrc == 0 )) \
+   && [[ ! -e "$SRDIS/etc/modprobe.d/btusb-qca9377.conf.disabled" ]] \
+   && [[ ! -e "$SRDIS/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules.disabled" ]] \
+   && [[ ! -e "$SRDIS/etc/udev/rules.d/51-bluetooth-health-snapshot.rules.disabled" ]] \
+   && [[ "$SRDISOUT" == *"UNINSTALL COMPLETE"* ]] \
+    && ok "uninstall.sh removes the .disabled siblings bt-mode experiment leaves behind" \
+    || bad "uninstall left a .disabled file behind or failed (rc=$srdisrc): $(ls "$SRDIS"/etc/*/ 2>/dev/null | tr '\n' ' ')"
+rm -rf "$SRDIS"
+
 # A FAILED STEP must fail the banner. run() accumulates failures on purpose
 # (later removals are independent; a partial revert should remove what it
 # can) — but "UNINSTALL COMPLETE" then printed over the failures. A FILES
@@ -10019,6 +10104,114 @@ STUNMERGED=$(st_run)
     && ok "devtools/status names remote branches carrying unmerged work" \
     || bad "an unmerged remote branch was not surfaced"
 rm -rf "$ST"
+
+# ── bt-usbstate finds the controller by VID:PID, on any port (DR-09) ──────
+#
+# The tool defaulted to port 3-3 — one machine's port — and on any other port
+# reported the controller "NOT on the USB bus" (stage 2) with exit 0. The R2-88
+# closure counted the word idVendor in the file and called it fixed; this is the
+# behavioural check that should have been run instead.
+US=$(mktemp -d)
+mkdir -p "$US/1-2/power" "$US/1-2/1-2:1.1" "$US/2-4"
+echo 13d3 > "$US/1-2/idVendor"; echo 3503 > "$US/1-2/idProduct"; echo auto > "$US/1-2/power/control"
+echo 8087 > "$US/2-4/idVendor"; echo 0a2b > "$US/2-4/idProduct"
+USOUT=$(BT_SYSFS_USB="$US" tools/bt-usbstate 2>&1); usrc=$?
+(( usrc == 0 )) && [[ "$USOUT" == *"1-2 at"* && "$USOUT" != *"NOT on the USB bus"* && "$USOUT" != *"off the bus"* ]] \
+    && ok "bt-usbstate resolves the controller by VID:PID at a port other than 3-3" \
+    || bad "bt-usbstate did not find 13d3:3503 at 1-2 (rc=$usrc): $(head -2 <<<"$USOUT" | tr '\n' ' ')"
+USNONE=$(BT_SYSFS_USB="$US/2-4" tools/bt-usbstate 2>&1); usnrc=$?
+(( usnrc == 0 )) && [[ "$USNONE" == *"no device 13d3:3503"* ]] \
+    && ok "bt-usbstate with no matching device reports stage 2 by VID:PID, exit 0" \
+    || bad "absence misreported (rc=$usnrc): $(head -1 <<<"$USNONE")"
+USPATH=$(BT_SYSFS_USB="$US" BT_USB_PATH=9-9 tools/bt-usbstate 2>&1); usprc=$?
+(( usprc == 2 )) && [[ "$USPATH" == *"configured path"* ]] \
+    && ok "bt-usbstate distinguishes a wrong BT_USB_PATH from a missing controller" \
+    || bad "a bad configured path was read as controller state (rc=$usprc)"
+mkdir -p "$US/3-1"; echo 13d3 > "$US/3-1/idVendor"; echo 3503 > "$US/3-1/idProduct"
+BT_SYSFS_USB="$US" tools/bt-usbstate >/dev/null 2>&1
+(( $? == 2 )) && ok "bt-usbstate refuses to guess between two matching controllers" \
+              || bad "two matches were not refused"
+rm -rf "$US"
+
+# ── bt-incident: a failed sanitiser is named in the manifest (R2-77, DR-06) ─
+#
+# The manifest said `sanitised=yes` whenever a sanitiser EXECUTABLE existed;
+# the sanitiser's exit status — the only thing that says a file is clean — was
+# dropped. A refusal left raw journal text beside a manifest vouching for it.
+INCS=$(mktemp -d); mkdir -p "$INCS/repo" "$INCS/bin"
+printf '#!/bin/sh\nexit 1\n' > "$INCS/bin/failing-sanitiser"; chmod +x "$INCS/bin/failing-sanitiser"
+INCSOUT=$(BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER="$INCS/bin/failing-sanitiser" \
+          tools/bt-incident sanitiser-failure-check --since '10 minutes ago' 2>&1); incsrc=$?
+# sessions/ also holds a `latest` symlink to the newest session: read the dated dir only
+INCSMAN=$(cat "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null)
+(( incsrc != 0 )) && [[ "$INCSMAN" == *"sanitised=FAILED:"* && "$INCSMAN" != *"sanitised=yes"* ]] \
+    && ok "bt-incident names every file its sanitiser refused and exits non-zero" \
+    || bad "a failing sanitiser was reported as success (rc=$incsrc): $(grep sanitised <<<"$INCSMAN")"
+printf '#!/bin/sh\nexit 0\n' > "$INCS/bin/ok-sanitiser"; chmod +x "$INCS/bin/ok-sanitiser"
+rm -rf "$INCS/repo"; mkdir -p "$INCS/repo"
+BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER="$INCS/bin/ok-sanitiser" \
+    tools/bt-incident sanitiser-ok-check --since '10 minutes ago' >/dev/null 2>&1; incsokrc=$?
+(( incsokrc == 0 )) && grep -q "^sanitised=yes" "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null \
+    && ok "bt-incident still reports sanitised=yes when every file passes" \
+    || bad "a passing sanitiser was not reported as yes (rc=$incsokrc)"
+rm -rf "$INCS"
+
+# ── bt-capture: rotation honours the free-space floor; no AF_BLUETOOTH is a refusal ─
+#
+# DR-05: startup stopped when prune() could not restore the floor; rotation
+# called prune() and ignored the answer, then opened the next file. DR-05's
+# reproduction and this test drive main() with prune() answering [True, False].
+# The second case is the 2026-09-19 review's own host: a Python without
+# socket.AF_BLUETOOTH raised AttributeError through main() instead of the
+# controlled OSError the no-socket contract promises.
+if command -v python3 >/dev/null 2>&1; then
+    BCR=$(mktemp -d); mkdir -p "$BCR/cap"
+    BCROUT=$(cd "$BCR" && python3 - "$OLDPWD/bin/bt-capture" "$BCR" <<'PYEOF'
+import importlib.util, importlib.machinery, io, os, socket, struct, sys, types
+path, tmp = sys.argv[1], sys.argv[2]
+spec = importlib.util.spec_from_loader("btcap", importlib.machinery.SourceFileLoader("btcap", path))
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+# ~1.2 MB of frames so a 1 MB --max-mb rotates once
+frame = struct.pack("<I", 10) + struct.pack("<HHH", 2, 0, 4) + b"\x01\x28\x04\x11"
+frames = os.path.join(tmp, "frames.bin")
+with open(frames, "wb") as f:
+    for _ in range(45000): f.write(frame)
+answers = [True, False]
+calls = []
+def fake_prune(d, keep, gb):
+    calls.append(1); return answers.pop(0) if answers else False
+m.prune = fake_prune
+os.environ["BT_CAPTURE_SOURCE"] = frames
+os.environ["BT_CAPTURE_DIR"] = os.path.join(tmp, "cap")
+sys.argv = ["bt-capture", "--max-mb", "1", "--min-free-gb", "0", "--duration", "5"]
+log = io.StringIO(); m.log = lambda s: log.write(s + "\n")
+rc = m.main()
+files = [f for f in os.listdir(os.path.join(tmp, "cap")) if f.endswith(".btsnoop")]
+ok1 = rc == 1 and len(files) == 1 and "floor not restored" in log.getvalue() and len(calls) == 2
+print(("PASS" if ok1 else "FAIL") + f" rotation: rc={rc} files={len(files)} prune_calls={len(calls)}")
+# no AF_BLUETOOTH → OSError, not AttributeError
+os.environ.pop("BT_CAPTURE_SOURCE")
+saved = getattr(socket, "AF_BLUETOOTH", None)
+if saved is not None: delattr(socket, "AF_BLUETOOTH")
+try:
+    m.open_monitor(); out = "FAIL no-socket: opened something"
+except OSError as e:
+    out = "PASS no-socket: OSError " + str(e.errno)
+except Exception as e:
+    out = "FAIL no-socket: " + type(e).__name__
+finally:
+    if saved is not None: socket.AF_BLUETOOTH = saved
+print(out)
+PYEOF
+    ); bcrrc=$?
+    [[ "$BCROUT" == *"PASS rotation"* ]] \
+        && ok "bt-capture stops at rotation when prune() cannot restore the free-space floor" \
+        || bad "rotation ignored a failed prune (rc=$bcrrc): $BCROUT"
+    [[ "$BCROUT" == *"PASS no-socket"* ]] \
+        && ok "bt-capture refuses with OSError on a Python without AF_BLUETOOTH" \
+        || bad "missing AF_BLUETOOTH was not a controlled refusal: $BCROUT"
+    rm -rf "$BCR"
+fi
 
 # ── devtools/ci runs gh INSIDE the repository, and a gh failure is not "no run" ─
 #

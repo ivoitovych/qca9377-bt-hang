@@ -159,3 +159,12 @@ one is not.
 | session | `evidence/sessions/20260902-002955-alt1-sustained-traffic-then-wedge` |
 | confirms | `EX-033`, `EX-036` |
 | corrects | `EX-033`, `EX-036` — the "silence" claim |
+
+### ⚠️ CORRECTED 2026-09-19 — "does not fit into" (`DR-02`)
+
+The sentence above ends "exactly what a 27-byte mSBC frame does not fit into". The
+observation (alternate setting 1, 9-byte endpoint, read from sysfs) stands; the inference
+does not: `btusb`'s `__fill_isoc_descriptor()` sends a 27-byte buffer as three 9-byte
+packets, so the endpoint width is never exceeded. `len 27 mtu 9` marks that split. Sustained
+alt-1 traffic before the fault is what this exhibit shows. Found by the 2026-09-19
+comprehensive review.

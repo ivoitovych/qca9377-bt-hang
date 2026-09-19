@@ -19,10 +19,11 @@
 
 When this controller negotiates a **transparent (mSBC / wideband-speech) synchronous
 link**, `btusb` finds no alternate setting 6 or 3 on the isochronous interface and falls
-back to **alternate setting 1** — a **9-byte** isochronous endpoint — then streams
-**27-byte** mSBC frames into it. The link comes up: `0x0428 Setup Synchronous Connection`
-*is* answered, a connection handle is allocated, frames flow. **The first HCI command the
-host then issues is never answered.** `hci_cmd_timeout()` fires `HCI_CMD_TIMEOUT` (2 s)
+back to **alternate setting 1** — a **9-byte** isochronous endpoint — then sends each
+**27-byte** SCO buffer as three 9-byte packets (`__fill_isoc_descriptor`; the `len 27 mtu 9`
+debug line is that split, not an oversized packet). The link comes up: `0x0428 Setup
+Synchronous Connection` *is* answered, a connection handle is allocated, packets flow. **The
+first HCI command the host then issues gets no response.** `hci_cmd_timeout()` fires `HCI_CMD_TIMEOUT` (2 s)
 after that command; from then on the controller answers no HCI command and no USB control
 transfer (`GET_DESCRIPTOR` returns `-110`), stays enumerated, survives a warm reboot in that
 state, and is recovered only by removing power.
@@ -41,7 +42,7 @@ names the endpoint size in use.
 
 ```
 0x0428 answered → evt 5 (HCI_NOTIFY_ENABLE_SCO_TRANSP) → "Looking for Alt no :6" → ":3"
-   → 27-byte frames on mtu 9 → FIRST HCI command issued → +2.0 s "command tx timeout"
+   → len 27 mtu 9 (27-byte buffers as 3×9-byte packets) → FIRST HCI command issued → +2.0 s "command tx timeout"
 ```
 
 | exhibit | date | kernel | power config | `len 27 mtu 9` frames | first command after link-up | setup → fault |
@@ -78,9 +79,13 @@ command name `0x0406`.
 fault, and an Enhanced Setup Synchronous Connection was answered in 64.7 ms and carried a
 link for 17 minutes (`EX-031`). The defect is not "this controller cannot do SCO".
 
-**No software recovery exists.** `hci_cmd_timeout()` calls `hdev->reset()`, which is NULL
-for this device (`13d3:3503` matches no `btusb` quirks entry, so it gets neither
-`btusb_qca_reset` nor `btusb_setup_qca`); the GUI toggle fails with
+**Every recovery tested failed.** On the kernels run here `hci_cmd_timeout()` calls
+`hdev->reset()`, which is NULL: `13d3:3503` matched no `btusb` quirks entry, so it got
+neither `btusb_qca_reset` nor `btusb_setup_qca`. ⚠️ Upstream commit `dc16388d45ec`
+("Bluetooth: btusb: Add IMC Networks QCA9377 to quirks table", committed 2026-08-07, in
+master, not in v7.0 or in 6.6.y/6.12.y) has since added `BTUSB_QCA_ROME |
+BTUSB_WIDEBAND_SPEECH` for this ID, for a BLE-scanning failure; a kernel carrying it takes
+the QCA firmware-setup and reset paths, which this report has **not** tested. The GUI toggle fails with
 `Opcode 0x0c03 (HCI_Reset) failed: -110` (`EX-039`); a warm reboot leaves the device
 unenumerable and a power-off brings it back in about a second (`EX-027`, `EX-028`,
 `EX-034`). `hci0` is never unregistered — the device stays enumerated and cannot
@@ -153,8 +158,12 @@ under identical use — the survival on record was the peripheral's choice
 - **The mechanism.** *How* traffic on a 9-byte endpoint wedges the controller — a
   firmware state, an isochronous scheduling interaction, a controller-side buffer — is
   unknown. Correlation across seven deaths and one survival is all the record has.
-- **That the missing quirks entry causes the wedge.** It explains the absence of recovery
-  (`hdev->reset` NULL, no QCA firmware download through `btusb_setup_qca()`), and it is a
+- **That the command causes the wedge.** The first command observed after the stream
+  starts gets no response; a controller already wedged by the stream would look the same,
+  and both named dying commands are `Disconnect`. "Any command" is untested.
+- **That the missing quirks entry causes the wedge.** It explained the absence of recovery
+  on the kernels run here (`hdev->reset` NULL, no QCA firmware download through
+  `btusb_setup_qca()`) — the entry now exists upstream (`dc16388d45ec`) — and it is a
   real gap — `13d3:3491`, `3496` and `3501` carry `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH`
   while `3502`, `3503` and `3504` carry nothing. Whether the gap is deliberate is not
   known. Adding the entry is not proposed, for the reason given above.
@@ -236,10 +245,11 @@ Modalias     : usb:v13D3p3503d0001dcE0dsc01dp01icE0isc01ip01in00
 ## What is asked
 
 The shape of the fault is exact and the mechanism is not. What would settle it is
-knowledge of the controller: whether streaming 27-byte transparent frames on a 9-byte
-isochronous endpoint is a state this firmware tolerates at all, and whether the
-alternate-setting-1 fallback introduced for wideband speech in v5.12 should apply to a
-device that matches no quirks entry. A run on a kernel in the v5.8–v5.11 window
+knowledge of the controller: whether transparent SCO carried as 9-byte isochronous packets
+(27-byte buffers split three ways) is a state this firmware tolerates at all, and whether
+the alternate-setting-1 fallback introduced for wideband speech in v5.12 should apply to
+this device — which upstream has since given a quirks entry (`dc16388d45ec`), so the
+setup/reset path that entry installs is the first thing to test. A run on a kernel in the v5.8–v5.11 window
 (below v5.8 alternate setting 1 is reachable by a different route) is the one cheap
 experiment the reporter has not made and will make on request.
 

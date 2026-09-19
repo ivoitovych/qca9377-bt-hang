@@ -19,25 +19,25 @@ is the only reason it exists. Cut the oldest settled item before adding.
 ## 1. The bug, current best statement
 
 > When the QCA9377 (`13d3:3503`) negotiates **transparent (mSBC / WBS)** SCO, `btusb` falls
-> back to **USB alternate setting 1** — a **9-byte** isochronous endpoint — and streams
-> **27-byte** mSBC frames into it. **The first HCI command issued while that stream is
-> running is never answered** — the fault surfaces `HCI_CMD_TIMEOUT` (2.0 s) after that
-> command, whether it comes 34 ms or 9.65 s after link-up (`EX-043`) — and the controller
-> then answers nothing, including USB control transfers. Only a **full power-off** recovers
-> it. Reproduced under stock power management (`EX-043`); the modified configuration is not
-> a factor.
+> back to **USB alternate setting 1** — a **9-byte** isochronous endpoint — and sends each
+> 27-byte SCO buffer as **three 9-byte packets** (`__fill_isoc_descriptor`; `len 27 mtu 9` is
+> that split, ⚠️ not an overflow — `DR-02`). **The first HCI command observed after the
+> stream starts gets no response** — `HCI_CMD_TIMEOUT` (2.0 s) after it, whether issued 34 ms
+> or 9.65 s after link-up (`EX-043`); both named dying commands are `0x0406 Disconnect` — and
+> the controller then answers nothing, including USB control transfers. Only a **full
+> power-off** recovers it. Reproduced under stock power management (`EX-043`).
 
 Introducing commit, verified at five tags by the test-suite maintainer (08-24, received
 09-18): **`517b693351a2`** — Trent Piepho, 2020-12-09, *"Bluetooth: btusb: Always fallback to
-alt 1 for WBS"* — ancestor of v5.12, not v5.11. ⚠️ Its own message states the assumption this
-hardware falsifies: *"I have been unable to find any [adapters that support alt 6]"* — build
-the upstream report on that sentence. **Control window is v5.8–v5.11 only**: below v5.8 alt 1
-is reachable by a different route (`new_alts = sco_num`), so "≤ v5.11" was wrong.
+alt 1 for WBS"* — ancestor of v5.12, not v5.11. Its message assumes adapters without alt 6
+work on alt 1; this part has alts 1–5 and no 6 (its descriptors are also in `dc16388d45ec`),
+so the fallback *applies* to it — whether it is *compatible* is the question (`DR-04`).
+**Control window is v5.8–v5.11 only** (below v5.8 alt 1 is reachable via `new_alts = sco_num`).
 
 ## 2. The signature — `n = 7`, three kernels, two peripherals, both configurations
 
 ```
-0x0428 answered → evt 5 → "Looking for Alt no :6" → ":3" → 27-byte frames on mtu 9 → FIRST command issued → +2.0 s tx timeout
+0x0428 answered → evt 5 → "Looking for Alt no :6" → ":3" → len 27 mtu 9 (3×9-byte packets) → FIRST command observed → +2.0 s tx timeout
 ```
 
 | exhibit | date | kernel | config | `len 27 mtu 9` | first cmd after link-up | setup→fault |
@@ -61,14 +61,14 @@ Both instances where the log names the dying command name `0x0406 Disconnect, re
 - **`0x0428` IS answered** — a connection handle is allocated every time.
 - **alt 1 is directly observed**, not inferred — `sysfs` `bAlternateSetting 1` +
   `wMaxPacketSize 0009`, read 5× during live wedges (`tools/bt-usbstate`).
-- **The first HCI command into a running alt-1 stream is never answered** (`EX-043`): zero
-  commands were in flight for 9.65 s of streaming; the first one issued died. The stream
-  alone does not wedge the controller — a command into it does.
+- **The first HCI command observed after the stream starts gets no response** (`EX-043`):
+  none in flight for 9.65 s; the first issued died. ⚠️ Whether that command *wedges* the
+  controller or *discovers* one the stream already wedged is **not established** (`DR-03`).
 - **The original configuration reproduces it** (`EX-043`, `autosusp=Y, power=auto`, live).
 - **The wedge is below HCI** — USB control transfers (`GET_DESCRIPTOR`) return `-110`.
-- **No software recovery exists.** `hci_cmd_timeout()` calls `hdev->reset()`, which is NULL
-  ( `13d3:3503` matches no quirks entry); Linux has no periodic USB device recovery; and the
-  GUI toggle fails with `Opcode 0x0c03 (HCI_Reset) failed: -110` (`EX-039`).
+- **Every tested recovery failed** (`EX-039`): `hdev->reset` is NULL on the kernels run here —
+  `13d3:3503` had no quirks entry ⚠️ **until `dc16388d45ec`** (master, 2026-08-07, for a BLE-scan
+  fault; not in v7.0, 6.6.y, 6.12.y) — and that entry's setup/reset path is **untested here** (`DR-01`).
 - **`hci0` is never unregistered** (not the stage-2 shape); **CVSD (`mtu 17`) is safe.**
 
 ## 4. Not settled

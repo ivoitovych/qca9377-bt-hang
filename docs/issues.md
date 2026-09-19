@@ -18,8 +18,9 @@ its entries below still read that way. Since `EX-033` (08-22) the wedge has been
 one path, reproduced seven times across three kernels, two headsets and both power
 configurations (`EX-033`, `036`, `037`, `038`, `040`, `042`, `043`): the controller
 negotiates transparent (mSBC) SCO, `btusb` falls back to **USB alternate setting 1** (a
-9-byte isochronous endpoint) and streams 27-byte frames into it, and **the first HCI
-command issued into that running stream is never answered**. Alternate setting 1 has been
+9-byte isochronous endpoint) and sends each 27-byte buffer as three 9-byte packets, and
+**the first HCI command observed after that stream starts gets no response** (whether it
+causes the wedge or discovers it is not established — `DR-03`). Alternate setting 1 has been
 read from `sysfs` during five live wedges. `BRIEF.md` §1–§5 is the authoritative statement,
 with every retraction; this file remains the register of the *distinct defects* and of what
 each is worth reporting as.
@@ -32,9 +33,11 @@ What this update changes below, entry by entry:
   never been observed; the canonical paragraph stands. Of the five candidate discriminants
   listed under "the leading discriminant", the fourth — the alternate-setting transition —
   together with the traffic that follows it is the one the seven instances share.
-- **BT-3** — still true, no longer a candidate *cause*: it explains why nothing recovers the
-  controller (`hdev->reset` is NULL), not why it wedges. The one-line quirks patch is not
-  proposed; `docs/missing-quirks-entry.md` keeps the argument whole.
+- **BT-3** — true of the kernels run here, no longer a candidate *cause*, and ⚠️ **closed
+  upstream on 2026-08-07 by `dc16388d45ec`** (master; not in v7.0 or a stable line yet): it
+  explained why nothing recovered the controller (`hdev->reset` NULL), not why it wedges.
+  The setup/reset path that entry installs is untested here; `docs/missing-quirks-entry.md`
+  keeps the argument whole.
 - **BT-5** — superseded: `EX-043` shows the same link streaming for 9.65 s unharmed until a
   command is sent. The near-silence in `EX-009` was an idle link, not a precursor.
 - **BT-7** (new) — the two `bluetoothd` crashes of `EX-032`, resolved to source and fixed
@@ -309,7 +312,17 @@ reproduce "it hangs after several hours".
 
 ---
 
-## BT-3 — `13d3:3503` is absent from the btusb quirks table
+## BT-3 — `13d3:3503` was absent from the btusb quirks table (added upstream 2026-08-07)
+
+**Update 2026-09-19 (`DR-01`):** upstream commit `dc16388d45ec`, "Bluetooth: btusb: Add IMC
+Networks QCA9377 to quirks table" (Tibor Harcsa; authored 2026-06-29, committed 2026-08-07),
+adds `{ USB_DEVICE(0x13d3, 0x3503), .driver_info = BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH }`.
+Its stated reason is a **BLE scanning failure**, not this fault. Present in master; absent
+from `v7.0` (the running kernel's base) and from `linux-6.6.y` and `linux-6.12.y` as of
+2026-09-19. Its descriptor dump lists alternate settings 1–5 (9/17/25/33/49 bytes), no 6 —
+the same device shape observed here. A kernel carrying it runs `btusb_setup_qca()` and has
+a reset callback; **neither has been tested on this machine**. Everything below describes
+the kernels that were run.
 
 **Status:** confirmed in upstream source and shipped binary (`EX-001`). **Since 2026-09-18
 read as a consequence for recovery, not a candidate cause** — the wedge is located

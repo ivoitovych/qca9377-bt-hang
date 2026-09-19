@@ -22,10 +22,13 @@ RemainAfterExit=yes
 Environment=BT_BUILD=stock
 
 ExecStart=/usr/local/bin/bt-trial autostart
-# systemd runs this at shutdown. It classifies by whether the controller still
-# answers, so a boot that ended with a dead controller is recorded as a hang
-# even if nobody was watching when it died.
+# systemd runs this at shutdown. Since 2026-09-19 it classifies PASSIVELY, from
+# the journal (any HCI command timeout since the trial opened → hang), and sends
+# nothing to the controller: the old probe was an intervention at every shutdown
+# (BL-08, R2-65, DR-07) and hung for 90 s on a wedged controller. A journal read
+# takes seconds; the stop timeout below is a backstop, not a budget.
 ExecStop=/usr/local/bin/bt-trial autostop
+TimeoutStopSec=30
 
 [Install]
 WantedBy=multi-user.target

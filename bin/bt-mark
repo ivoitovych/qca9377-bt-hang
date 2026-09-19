@@ -4,18 +4,28 @@
 #
 #   bt-mark "connecting MOMENTUM 4"
 #   bt-mark "playing audio"
-#   bt-mark "POWERING HEADSET OFF MID-STREAM"
+#   bt-mark --probe "POWERING HEADSET OFF MID-STREAM"    also ask the controller
 #
 # Without these, a reproduction session is a wall of side effects with no record
 # of what was actually done. Read them back with bt-timeline.
+#
+# ⚠️ PROBE-FREE BY DEFAULT since 2026-09-19. The mark used to carry
+# `responds=yes|no`, measured by `hciconfig <hci> name` — an HCI Read Local Name
+# sent to the controller under study on EVERY mark, including the three
+# bt-trial writes per trial. The hciconfig spy in the suite found it: after the
+# trial's own probes were removed, one command was still leaving at shutdown,
+# and it was this one. `responds=unprobed` now; `--probe` measures it, on
+# purpose, and says so in the mark.
 
 set -uo pipefail
-MSG="${*:?usage: bt-mark <message>}"
+PROBE=0
+if [[ "${1:-}" == "--probe" ]]; then PROBE=1; shift; fi
+MSG="${*:?usage: bt-mark [--probe] <message>}"
 VID="${BT_VID:-13d3}"; PID="${BT_PID:-3503}"
 SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
 
 # Compact state at the moment of the mark, so each step carries its own context.
-dev="absent"; ctrl="-"; hci="-"; alive="?"
+dev="absent"; ctrl="-"; hci="-"; alive="unprobed"
 for d in "$SYSFS_USB"/*; do
     [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
     if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
@@ -24,8 +34,9 @@ for d in "$SYSFS_USB"/*; do
         break
     fi
 done
-if [[ "$hci" != "-" ]] && command -v hciconfig >/dev/null 2>&1; then
+if (( PROBE )) && [[ "$hci" != "-" ]] && command -v hciconfig >/dev/null 2>&1; then
     timeout 6 hciconfig "$hci" name >/dev/null 2>&1 && alive=yes || alive=no
+    MSG="$MSG (probed)"
 fi
 # grep -c already prints 0 when it matches nothing; it just exits 1 doing so.
 # An "|| echo 0" here appends a SECOND zero, making $conn "0\n0" and logger

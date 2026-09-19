@@ -3125,13 +3125,62 @@ from the first crash to the list: the first was recorded on 08-14, resolved to s
 08-23, running patched on the machine from 08-25, watched preventing four crashes by 09-13,
 read by three reviewers by 09-19.
 
+### The fourth review, two hours after the mails went
+
+A comprehensive review of the whole tree at `682d15c` arrived the evening the BlueZ patches
+were mailed. On the patches it agreed with the three before it. On the controller narrative it
+found two things nobody here had checked, and both hold against the source.
+
+**The quirks entry exists.** `dc16388d45ec`, "Bluetooth: btusb: Add IMC Networks QCA9377 to
+quirks table", authored 2026-06-29 and committed 2026-08-07 — for a BLE-scanning failure,
+by a different reporter — adds exactly the `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH` entry
+this project called missing since August. It is in master and in no release this machine can
+run yet: absent from `v7.0`, from 6.6.y and from 6.12.y. Everything the record said about
+"no quirks entry" was true of the kernels it ran and false of master for six weeks. Every
+such sentence is now version-qualified and names the commit. What that entry installs — the
+QCA firmware setup and a reset callback — has never run on this device here; testing a build
+that carries it is the obvious next experiment, and it is a kernel build on the family laptop.
+
+**`len 27 mtu 9` is not an overflow.** `__fill_isoc_descriptor()` splits a 27-byte SCO
+buffer into three 9-byte isochronous packets; the debug line is that split, once per buffer.
+"27-byte frames into a 9-byte endpoint" — in BRIEF, README, the bug report, three tools and
+two exhibits — implied a transport-size violation the log never showed. The observation
+survives intact: alternate setting 1, a 9-byte endpoint, sustained traffic before every
+death. The mechanism claim does not, and it is withdrawn everywhere it stood.
+
+Two softer corrections with it: "the first command into the stream is never answered … a
+command into it does [wedge the controller]" becomes "the first command *observed* after the
+stream starts gets no response" — a controller already wedged by the stream would look the
+same, and both named dying commands are Disconnect; and "no software recovery exists"
+becomes "every tested recovery failed".
+
+Then the tools. The review ran isolated reproductions and found five defects, four of them
+already in the register and one of them marked *done* by this side two days before on the
+strength of a word count: `bt-usbstate` printed `idVendor` and still read port `3-3`. All
+five are fixed with behavioural tests and a standalone proof: capture rotation now stops when
+the free-space floor cannot be restored; the incident manifest names every file the sanitiser
+refused; `bt-trial autostop` classifies from the journal and sends nothing to the controller
+at shutdown, with the two tests that had pinned the probe replaced; `abort` refuses tracked
+evidence; `uninstall.sh` removes the `.disabled` siblings. The autostop change is BL-08, the
+operator's decision of 2026-08-22, finally in the code — and not yet deployed, because
+deploying it changes what the laptop does at every shutdown and that step is his.
+
+The spy that proved the passive path found one more probe nobody had listed. With the
+trial's own `hci_alive()` calls removed, one `hciconfig name` still left at shutdown; its
+grandparent was `bt-mark`, the journal-annotation tool, which had measured `responds=yes|no`
+on every mark since August — three marks per trial from `bt-trial` alone, and every manual
+step an operator ever stamped. It is probe-free by default now, `--probe` labels the mark
+when it is used, and the trial harness puts the checkout's `bt-mark` and `bt-state` first on
+PATH so the suite tests the chain it ships rather than whatever the machine last deployed.
+
 ### The shape
 
-Three gaps, each one step past a gate that existed. The message scan stopped at the
+Four gaps, each one step past a gate that existed. The message scan stopped at the
 message; the `.disabled` skip stopped at the second of three files; the exhibit label was
 read by everyone, including a reviewer, and checked by no one against the header that
-defines it. None was found by the tool or the file that owned it — one by a collaborator's
+defines it; the R2-88 closure counted a word in a file instead of running the tool against
+a fixture. None was found by the tool or the file that owned it — one by a collaborator's
 eye, one by a verification tool run because a rule said to run it, one by an outsider
-building on the error until it broke. The last is the argument for the third-party review
-the operator insisted on: not that it found a defect in the patches (it found none), but
-that it found the one place the record had trusted itself.
+building on the error until it broke, one by a reviewer who ran the tool. The last two are
+the argument for the outside reviews the operator insisted on: not that they found a defect
+in the patches (none did), but that they found the places the record had trusted itself.

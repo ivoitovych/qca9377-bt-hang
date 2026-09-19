@@ -9,16 +9,20 @@ re-derived by a stranger from the command that produced it.
 
 > When this controller negotiates **transparent (mSBC / wideband) synchronous audio**,
 > `btusb` falls back to **USB alternate setting 1** — a 9-byte isochronous endpoint — and
-> streams 27-byte mSBC frames into it. **The first HCI command issued while that stream is
-> running is never answered**; the controller then answers nothing, including USB control
+> sends each 27-byte SCO buffer as three 9-byte packets (`len 27 mtu 9` in the log is that
+> split, not an overflow). **The first HCI command observed after the stream starts gets no
+> response**; the controller then answers nothing, including USB control
 > transfers, until power is removed. Reproduced **seven times across three kernels, two
 > headsets, and both power configurations** (`EX-033`, `036`, `037`, `038`, `040`, `042`,
 > `043`), with alternate setting 1 read directly from `sysfs` during five live wedges.
 
 - **Established:** the sequence above; `0x0428 Setup Synchronous Connection` *is*
-  answered; the stream alone runs unharmed (9.65 s in `EX-043`) until a command is sent;
-  no software recovery exists (`hdev->reset` is NULL for this ID, `HCI_Reset` returns
-  `-110`, a warm reboot does not clear it, a power-off does — `EX-027`/`028`/`039`).
+  answered; the stream ran 9.65 s in `EX-043` before the first command was issued, and that
+  command got no response — whether the command wedged the controller or only found it
+  wedged is not established; every tested recovery failed (`hdev->reset` is NULL on the
+  kernels run here — the ID entered btusb's quirks table upstream in `dc16388d45ec`, master
+  2026-08-07, not in v7.0 or a stable release yet; `HCI_Reset` returns `-110`; a warm
+  reboot does not clear it, a power-off does — `EX-027`/`028`/`039`).
 - **Not established:** the mechanism — *how* traffic on that endpoint wedges the
   device. The fallback was introduced by **`517b693351a2`** (Trent Piepho, 2020-12-09,
   *"Always fallback to alt 1 for WBS"*, in v5.12 and not v5.11), whose own message states
@@ -75,7 +79,7 @@ Three parallel streams, deliberately not merged:
 
 The signature, per instance (`BRIEF.md` §2 carries the full table):
 
-| exhibit | date | kernel | power config | 27-byte frames on the 9-byte endpoint | first command after link-up | setup → fault |
+| exhibit | date | kernel | power config | `len 27 mtu 9` buffers (each sent as 3×9-byte packets) | first command after link-up | setup → fault |
 |---|---|---|---|---|---|---|
 | `EX-033` | 08-22 | `-29` | modified | 835 | 36 ms | 2.076 s |
 | `EX-038` | 09-13 | `-31` | modified | 682 | 35 ms | 2.191 s |

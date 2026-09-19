@@ -351,13 +351,26 @@ autostart)
     ;;
 
 autostop)
-    # Close an auto-opened trial at shutdown, classifying by what the controller
-    # is actually doing rather than by what anyone intended.
+    # Close an auto-opened trial at shutdown. PASSIVELY, since 2026-09-19: the
+    # verdict comes from the journal — did any HCI command time out since the
+    # trial opened? — and no command is sent to the controller. Until then this
+    # ran hci_alive() (`hciconfig <hci> name`, an HCI Read Local Name) at every
+    # shutdown of the family laptop, which is BL-08 (operator's decision,
+    # 2026-08-22), R2-65 and DR-07: the closing measurement intervened in the
+    # thing it measured, and a wedged controller made the probe hang for the
+    # 90 s shutdown tax. BT_TRIAL_PROBE=1 restores the old behaviour for a
+    # deliberate, recorded intervention.
     [[ -e "$CUR" ]] || exit 0
-    if hci_alive; then
-        exec "$0" ok
+    if [[ -n "${BT_TRIAL_PROBE:-}" ]]; then
+        if hci_alive; then exec "$0" ok; else exec "$0" hang; fi
+    fi
+    start=$(grep '^start=' "$CUR" | cut -d= -f2)
+    tmo=$(journalctl -k --since "@$(( start - 5 ))" --no-pager -o cat 2>/dev/null \
+          | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
+    if (( ${tmo:-0} > 0 )); then
+        BT_TRIAL_PASSIVE=1 exec "$0" hang
     else
-        exec "$0" hang
+        BT_TRIAL_PASSIVE=1 exec "$0" ok
     fi
     ;;
 
@@ -592,7 +605,10 @@ hang|ok)
     fi
 
     # --- axis 2: what happened to the controller ----------------------------
-    if [[ "$1" == hang ]] || ! hci_alive; then
+    # BT_TRIAL_PASSIVE (set by autostop) means: classify from the journal alone,
+    # send nothing. The probe on `ok` stays for an operator closing a trial by
+    # hand, where it is a deliberate act on a controller they are looking at.
+    if [[ "$1" == hang ]] || { [[ -z "${BT_TRIAL_PASSIVE:-}" ]] && ! hci_alive; }; then
         trial_result=failed
     elif [[ "${any_int:-0}" =~ ^[0-9]+$ ]] && (( any_int > 0 )); then
         # NOT "recovered". That word asserts a recovery happened, which is only
@@ -791,7 +807,13 @@ hang|ok)
         fi
     fi
 
-    hci_alive && resp_after=yes || resp_after=no
+    # "responds afterwards" is a PROBE — the same `hciconfig name` the passive
+    # autostop exists to avoid. Under BT_TRIAL_PASSIVE it is recorded as
+    # `unprobed` (bt-state's word for the same state), never measured. Found by
+    # the hciconfig spy in the suite: the autostop path still sent two commands
+    # after the classifier had been made passive.
+    if [[ -n "${BT_TRIAL_PASSIVE:-}" ]]; then resp_after=unprobed
+    elif hci_alive; then resp_after=yes; else resp_after=no; fi
     # Resolve the device by VID/PID rather than by bus path: after a reset it
     # can re-enumerate at a different address, and a hardcoded path would then
     # report "gone" for a device that is present and working.
@@ -910,6 +932,18 @@ hang|ok)
 abort)
     [[ -e "$CUR" ]] || { echo "no trial open"; exit 0; }
     dir=$(grep '^dir=' "$CUR" | cut -d= -f2-)
+    # BL-03 (2026-08-22): abort once deleted a trial directory that held TRACKED
+    # evidence, and the suite pinned that as the design until 2026-09-19 (R2-64,
+    # DR-07). Anything git knows about is refused, not removed; the operator
+    # decides what to do with it. Untracked scratch is discarded as before.
+    if [[ -d "$dir" ]] && git -C "$dir" rev-parse --git-dir >/dev/null 2>&1 \
+       && [[ -n "$(git -C "$dir" ls-files -- . 2>/dev/null)" ]]; then
+        echo "abort REFUSED: $dir holds tracked files:" >&2
+        git -C "$dir" ls-files -- . 2>/dev/null | sed 's/^/    /' >&2
+        echo "  the trial stays open; close it with 'bt-trial hang' or 'bt-trial ok'," >&2
+        echo "  or remove the directory yourself once its evidence is safe." >&2
+        exit 1
+    fi
     rm -rf "$dir"; rm -f "$CUR"
     echo "trial discarded"
     ;;

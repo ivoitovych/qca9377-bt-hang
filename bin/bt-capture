@@ -115,9 +115,16 @@ def open_monitor():
     import ctypes
     import ctypes.util
 
-    s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_RAW, socket.BTPROTO_HCI)
+    # A Python built without Bluetooth support has no socket.AF_BLUETOOTH at all;
+    # touching it raised AttributeError through main() instead of the controlled
+    # refusal the no-socket test expects (2026-09-19 review, run on such a host).
+    af = getattr(socket, "AF_BLUETOOTH", None)
+    proto = getattr(socket, "BTPROTO_HCI", None)
+    if af is None or proto is None:
+        raise OSError(97, "this Python has no AF_BLUETOOTH support; cannot open the HCI monitor")
+    s = socket.socket(af, socket.SOCK_RAW, proto)
     libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True)
-    addr = struct.pack("<HHH", socket.AF_BLUETOOTH, HCI_DEV_NONE, HCI_CHANNEL_MONITOR)
+    addr = struct.pack("<HHH", af, HCI_DEV_NONE, HCI_CHANNEL_MONITOR)
     if libc.bind(s.fileno(), addr, len(addr)) != 0:
         err = ctypes.get_errno()
         raise OSError(err, os.strerror(err))
@@ -308,7 +315,14 @@ def main():
 
         if written >= limit:
             out.close()
-            prune(args.dir, args.keep, args.min_free_gb)
+            # Same contract as startup: if pruning cannot restore the free-space
+            # floor, STOP, do not open another file. The return value was
+            # ignored here until 2026-09-19 (review DR-05), so a disk filled by
+            # something else during a capture would have discarded retained
+            # captures and then kept writing anyway.
+            if not prune(args.dir, args.keep, args.min_free_gb):
+                log("ERROR: free-space floor not restored at rotation; stopping capture")
+                return 1
             path = next_path(args.dir)
             out = new_file(path)
             log(f"rotated to {os.path.basename(path)}")

@@ -224,6 +224,14 @@ for f in "${FILES[@]}"; do
     else
         echo "  (absent, nothing to do: $f)"
     fi
+    # bt-mode experiment moves the modprobe override and the udev rules aside as
+    # `<name>.disabled`. Those are this project's files under another name, and
+    # an uninstall that left them behind announced "UNINSTALL COMPLETE" over a
+    # machine that still carried them (review DR-08, 2026-09-19; verify-restored.sh
+    # knew to flag them, this script did not know to remove them).
+    if [[ -e "$f.disabled" ]]; then
+        run rm -f "$f.disabled"
+    fi
 done
 for d in "${DIRS[@]}"; do
     if [[ -d "$d" ]]; then
