@@ -1,4 +1,21 @@
-# BlueZ patches — two NULL dereferences, ready to send
+# BlueZ patches — two NULL dereferences, sent 2026-09-19
+
+## Sent
+
+Mailed to `linux-bluetooth@vger.kernel.org` on 2026-09-19 as two independent
+`[PATCH BlueZ]` messages, `git send-email`, From the operator's identity, each Cc'd
+to the sender; the mail note sat below the `---` separator as planned.
+
+| patch | Message-ID | server result |
+|---|---|---|
+| `0001` | `<20260919184425.102314-1-yaroslav.voytovych@gmail.com>` | 250 |
+| `0002` | `<20260919184435.102408-1-yaroslav.voytovych@gmail.com>` | 250 |
+
+Archive URLs, once the list has them: `https://lore.kernel.org/linux-bluetooth/<Message-ID without brackets>/`.
+The mails as sent were built by `scripts/build-mails.sh` from the tracked patches and
+notes at `5cdf0dc`; the built copies were verified to `git apply --check` against BlueZ
+`c73fa2f9a` before sending. Three independent reviews preceded the send (register §TP,
+§TP2, §TP3). What follows is the state the patches were in when they went.
 
 Two crashes recorded as `EX-032` on this machine, resolved to source in
 [`reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md`](../../reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md)

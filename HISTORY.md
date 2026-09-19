@@ -3113,6 +3113,18 @@ branch that then crashed, harmlessly, because their status was not success. It a
 that our task document pointed the reviewer at a path that does not exist. Three readers;
 three lists; the same two patches, unchanged in code since August.
 
+### Sent
+
+On 2026-09-19 at 20:44 CEST the operator gave the word and the two patches went to
+`linux-bluetooth@vger.kernel.org` as two independent mails from his identity, each accepted
+with `250` (`patches/bluez/README.md` §Sent has the Message-IDs). `git send-email` was not
+installed on the machine until that hour; the SMTP account was configured in the repository's
+git config, the app password passed once on the command line and stored nowhere, the built
+mails checked with `git apply --check` against the BlueZ tree before sending. Thirty-six days
+from the first crash to the list: the first was recorded on 08-14, resolved to source on
+08-23, running patched on the machine from 08-25, watched preventing four crashes by 09-13,
+read by three reviewers by 09-19.
+
 ### The shape
 
 Three gaps, each one step past a gate that existed. The message scan stopped at the
