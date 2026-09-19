@@ -108,9 +108,9 @@ report.** `0002` has no `Fixes:` on purpose (pickaxe finds only a 2015 refactor)
 
 - **`0002`** (a2dp `setup->stream`): **fired 4×** — 08-26, and 3× on 09-02. Four crashes
   prevented, not merely absent (`EX-041`). Strongest runtime evidence either patch has.
-- **`0001`** (zero-length start-discovery reply): guard **never fired**. Its *premise* was
-  observed — `command 0x23 status: 0x00`, success with a too-short reply. Stands on coredump
-  analysis, which is an ordinary and sufficient basis.
+- **`0001`** (zero-length start-discovery reply): guard **never fired**. The 08-14 crash is
+  reconstructed from the daemon log (`EX-041` ⚠️ block): Command Status `0x00` for the Start
+  Discovery (`0x0023`, not service discovery) sent 2.05 s earlier, client list empty. Premise 5×.
 - ⚠️ **Neither relates to `BT-1`.** The wedge has occurred **4×** with both installed.
 - ⚠️ **A third, unrelated crash exists**: bad `free()` under `g_main_loop_run`, 09-08, at
   neither patched site. Cleared of being ours. **Do not fold it into the submission.**

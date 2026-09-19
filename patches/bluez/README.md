@@ -37,11 +37,14 @@ of a crash prevented rather than merely absent (`EX-041`, `tools/bt-guards`):
   lifetimes and three distinct `setup` pointers. Each is `transport_cb()` reaching
   the accept with a live setup whose stream was NULL. Unpatched, each is the
   dereference the coredump matched. **Watched preventing it, four times.**
-- **`0001`'s guard has not fired.** Its *premise* was observed once (09-08:
-  `command 0x23 status: 0x00` with a reply too short for the struct), but the
-  pre-existing check caught that instance because `discovery_list` was non-empty.
-  `0001` stands on the coredump analysis, which is an ordinary and sufficient
-  basis for a NULL-dereference fix.
+- **`0001`'s guard has not fired.** Its *premise* — a Command Status with status
+  `0x00` answering a Start Discovery, so the callback gets `length 0, param NULL` —
+  was logged **five times with clients present** (four on 08-14 in the daemon that
+  then crashed, once on 09-08); the pre-existing check below the branch caught each.
+  The 08-14 crash is the sixth, **reconstructed line by line from the archived
+  daemon log** (`EX-041` correction of 09-18): last client removed 21:03:16, Start
+  Discovery sent 21:03:24.943, Command Status `0x00` at 21:03:26.994, callback with
+  the list empty, `segfault at 0`. The coredump analysis and the log agree.
 
 ⚠️ A third `bluetoothd` crash on the patched binary (09-08, a bad `free()` under
 `g_main_loop_run`) is at neither patched site, occurred in a process that never
@@ -65,6 +68,9 @@ and local, and the underlying teardown ordering is not explained by it.
 | `src/adapter.c` and `profiles/audio/a2dp.c` compile | ✅ both objects build |
 | compiler warnings introduced | ✅ none |
 | defects still present in current upstream 5.87 | ✅ both, unchanged since 5.72 |
+| `checkpatch` under BlueZ's own `.checkpatch.conf` (`patches/bluez/checkpatch-check.sh <tree>`, 2026-09-18) | ✅ 0 errors each; 1 warning each, the quoted `segfault` line (`HACKING` §5 exempts quoted output) |
+| `git am` at master `c73fa2f9a`, each alone and both in either order (`patches/bluez/git-am-check.sh`) | ✅ 6/6, re-run after the 09-18 message changes |
+| defects still present at master `2401054` (2026-09-17) | ✅ both — the third-party reviewer's check, not re-run here (no network) |
 
 Built against BlueZ 5.87 configured with
 `--disable-systemd --disable-obex --disable-cups --disable-manpages
@@ -237,9 +243,16 @@ Read on 2026-09-16 from `HACKING` at `c73fa2f9a` and from the last 300 commits.
   history is dominated by `github.com/bluez/bluez/issues/N`. Filing one before
   sending is the operator's call; if filed, it belongs in `0002`'s message as
   `Fixes: <url>`.
-- **`checkpatch` under BlueZ's `.checkpatch.conf`: 0 errors.** The only warnings
-  are the quoted `segfault` / disassembly lines, which `HACKING` §5 exempts, and an
-  `UNKNOWN_COMMIT_ID` that is an artefact of running outside the tree.
+- **`checkpatch` under BlueZ's `.checkpatch.conf`: 0 errors** — now a tracked
+  command, `patches/bluez/checkpatch-check.sh <bluez-tree>`, which runs from inside
+  the tree so the config is actually read. ⚠️ Its first run on 09-18 found an
+  **error the earlier hand-run had not**: `0002` cited prior commits as bare
+  `hash ("title")` and checkpatch's `GIT_COMMIT_ID` wants `commit <12+ hex> ("title")`.
+  BlueZ's last 300 commits show no house form either way (one bare citation, no
+  `commit …` form), so the form checkpatch accepts is used: `commit 125a2e237e7c (…)`,
+  `commit 90a600895d80 (…)`, wrapped at 72 with the closing `")` on the next line,
+  which checkpatch joins. The remaining warning per patch is the quoted `segfault`
+  line, exempt under `HACKING` §5.
 
 The subjects changed with the rewrite, so the files were renamed to what
 `git format-patch` would produce; nothing in the repository referenced the old
@@ -247,26 +260,46 @@ names.
 
 ## Notes from the route — history a maintainer does not need
 
-⚠️ **The mechanism is NOT fully determined, and the patch no longer claims it
-is.** An earlier revision of this file and of the commit message named a
-successful Command Status as the event received. `src/shared/mgmt.c` does pass
-`0, NULL` on that path —
+⚠️ **The event IS determined; the kernel's reason for sending it is not.** This
+section has flipped twice, so the evidence is spelled out. An early revision
+named a successful Command Status as the event received; a 09-16 revision
+retracted that as a claim from source reading, because Command Complete passes a
+real pointer even at `length == 0` (`mgmt.c:408`) and `request_complete()` falls
+back to matching on **index alone** when opcode+index finds nothing
+(`mgmt.c:312`), so a mismatched completion could also reach the callback.
 
-```c
-request_complete(mgmt, cs->status, opcode, index, 0, NULL);   /* mgmt.c:418 */
+On 2026-09-18 a third-party review, reading our own exhibit, noticed that the
+opcode we had labelled `START_SERVICE_DISCOVERY` (`0x003A`) was `0x0023`, Start
+Discovery itself — and re-reading the archived 08-14 daemon log settled the
+event outright (`EX-041`, correction block):
+
+```
+21:03:16.750  discovery_remove() owner :1.125            ← last client gone
+21:03:24.943  send_request() [0x0000] command 0x0023      ← Start Discovery sent
+21:03:26.994  can_read_data() [0x0000] command 0x23 status: 0x00
+21:03:26.994  start_discovery_complete() status 0x00
+21:03:26      kernel: bluetoothd[2821]: segfault at 0 …
 ```
 
-— but that is an *example* of a parameterless delivery, not a demonstration of
-which event actually arrived. Two things argue against asserting it:
-Command Complete passes a real pointer even at `length == 0`
-(`mgmt->buf + MGMT_HDR_SIZE + 3`, `mgmt.c:408`), and `request_complete()` falls
-back to matching on **index alone** when opcode+index finds nothing
-(`mgmt.c:312`), so a mismatched completion can also reach a pending callback.
+`command 0x%02x status:` is printed **only** on the `MGMT_EV_CMD_STATUS` branch
+(`complete:` on the other), the opcode matches the request sent 2.05 s earlier
+(no fallback), and that branch passes `0, NULL`. So: Command Status, status
+`0x00`, `length 0`, `param NULL`, list empty, `rp->type` — the `segfault at 0`.
+The same delivery appears five more times in the logs with clients present.
 
-What the crash establishes is narrower and sufficient: the branch was entered
-with a success status and `param == NULL`, and faulted on a one-byte read at
-offset 0 — the `segfault at 0` on record. The fix does not depend on which
-event produced it.
+Still open, and now the interesting question for a kernel reader: **why does the
+kernel answer Start Discovery with a successful Command Status** rather than the
+one-byte Command Complete it sent for the other 37 in that log? The five
+with-clients instances came 12–14 ms after the send; the fatal one 2.05 s after,
+while the controller was timing out HCI commands every 2 s. The commit message
+states the observation and leaves the cause open. A `btmon` capture of the next
+occurrence would show the management event as the kernel emitted it.
+
+Residual behaviour after the guard, stated so a maintainer need not ask: if the
+kernel *did* start discovery and the reply carried no `type`, the no-clients
+branch can no longer send `MGMT_OP_STOP_DISCOVERY`, and discovery runs until
+another stop path. Manufacturing a `type` would be worse; a daemon that is up
+can be told to stop, one that has crashed cannot.
 
 An earlier revision of this file said the list archives could not be searched
 from either environment. **That was wrong, and it was wrong the same way twice**

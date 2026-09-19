@@ -69,7 +69,7 @@ pre-existing check fired. `0001`'s own guard has still never fired.
 The **premise** of `0001`, observed in the wild on 2026-09-08:
 
 ```
-10:27:19.051905  send_request  command 0x0023          START_SERVICE_DISCOVERY
+10:27:19.051905  send_request  command 0x0023          START_DISCOVERY  (⚠️ label corrected 09-18, see below)
 10:27:19.066260  can_read_data command 0x23 status: 0x00   ← Command Status path
 10:27:19.066276  start_discovery_complete() status 0x00
 10:27:19.066284  Wrong size of start discovery return parameters
@@ -79,6 +79,53 @@ The **premise** of `0001`, observed in the wild on 2026-09-08:
 "success status, NULL param" combination the patch argues `src/shared/mgmt.c` can deliver.
 That was a claim from source reading; it is now an observation. It does not show `0001`
 preventing a crash — only that the condition it guards is real on this hardware.
+
+### ⚠️ CORRECTED 2026-09-18 — the label, the count, and the event
+
+Found by a third-party review of the patches
+([`reviews/2026-09-18T0700Z-third-party-bluez-patch-review.md`](../../reviews/2026-09-18T0700Z-third-party-bluez-patch-review.md)),
+which took the label at face value and built a hypothesis on it.
+
+1. **The label was wrong.** The first line above originally read `START_SERVICE_DISCOVERY`.
+   `0x0023` is `MGMT_OP_START_DISCOVERY`; `MGMT_OP_START_SERVICE_DISCOVERY` is `0x003A`
+   (`lib/bluetooth/mgmt.h:304`, `:456`). The request and the reply carry the **same** opcode,
+   so there was no opcode mismatch and `request_complete()`'s index-only fallback was not
+   involved. The wrong label had been copied into `patches/bluez/0001`'s message; fixed there.
+2. **"Observed once" was wrong.** The archived daemon log of the 08-14 session
+   (`evidence/sessions/20260814-212211-trial-stock-2-hang/bluetoothd.log`) holds the same
+   delivery four more times, in the lifetime of the daemon that crashed, 32 minutes before it:
+
+   ```console
+   $ grep -c 'Wrong size of start discovery' evidence/sessions/20260814-212211-trial-stock-2-hang/bluetoothd.log
+   4
+   $ grep -n -B1 'command 0x23 status: 0x00' evidence/sessions/20260814-212211-trial-stock-2-hang/bluetoothd.log | grep -c send_request
+   4
+   ```
+
+   Each is `send_request … command 0x0023` → 12 ms → `command 0x23 status: 0x00` →
+   `Wrong size…` (20:31:22, :23, :26, :37). Premise count: **five** with clients present, not
+   one.
+3. **The crash itself is the sixth, and it is fully reconstructed.** The crashing daemon's
+   last management lines (`grep -n '\[2821\]' … | tail`):
+
+   ```
+   4804  21:03:16.750850  src/adapter.c:discovery_remove() owner :1.125
+   4811  21:03:24.943018  src/shared/mgmt.c:send_request() [0x0000] command 0x0023
+   4812  21:03:26.994468  src/shared/mgmt.c:can_read_data() [0x0000] command 0x23 status: 0x00
+   4813  21:03:26.994484  src/adapter.c:start_discovery_complete() status 0x00
+   timeline 20116  21:03:26  KERN  bluetoothd[2821]: segfault at 0 ip 00005d6eb1ad1986 …
+   ```
+
+   Last client removed at 21:03:16; Start Discovery sent 21:03:24.943; **Command Status,
+   status 0x00**, 2.05 s later; callback entered with the list empty; `segfault at 0`. The
+   event is identified by its debug text: `src/shared/mgmt.c` prints `command 0x%02x status:`
+   only on the `MGMT_EV_CMD_STATUS` branch and `command 0x%04x complete:` on
+   `MGMT_EV_CMD_COMPLETE` (5.72 `mgmt.c:391,401`; master `:406,415`). The 37 normal Start
+   Discovery completions in the same log are all `complete:`.
+4. **Not established:** why the kernel answers Start Discovery with a successful Command
+   Status. The five with-clients instances came 12–14 ms after the send; the crashing one came
+   2.05 s after it, during the controller's HCI command timeouts (`0x0406 tx timeout` every
+   2 s from 20:32:21 to 21:03:26 in that session). The patch says so and does not depend on it.
 
 ## ⚠️ The unrelated crash, cleared properly this time
 

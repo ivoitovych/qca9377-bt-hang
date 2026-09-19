@@ -504,7 +504,7 @@ named from the stripped distro binary and confirmed against a retained core
 master `c73fa2f9a`.
 **Reportable:** ✅ **yes — the patches are the report** (BlueZ takes patches by mail and
 needs no bug filed). `0002`'s guard has fired four times in 19 days of use (`EX-041`);
-`0001`'s premise was logged once, its guard has not fired.
+`0001`'s premise was logged five times with clients present and its guard has not fired; the 08-14 crash itself is reconstructed from the daemon log (`EX-041`, correction of 09-18).
 
 Found only because this register separates the failure modes: a `bluetoothd` crash leaves
 the adapter powered and never scanning again (`EX-032`), which to a user is "Bluetooth

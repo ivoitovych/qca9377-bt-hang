@@ -43,7 +43,7 @@ modes that look identical to a user (`EX-032`): [`patches/bluez/`](patches/bluez
 
 | patch | subject | runtime evidence |
 |---|---|---|
-| `0001` | `adapter: Fix crash on short start discovery reply` | guard not yet fired; its premise (success status, too-short reply) logged once |
+| `0001` | `adapter: Fix crash on short start discovery reply` | guard not yet fired; its premise (Command Status `0x00` answering Start Discovery) logged five times with clients present, and the 08-14 crash itself is reconstructed from the daemon log (`EX-041`) |
 | `0002` | `a2dp: Fix crash on NULL stream in transport_cb` | **fired four times** in 19 days of ordinary use — four crashes prevented, not merely absent (`EX-041`) |
 
 Both defects confirmed present in BlueZ master `c73fa2f9a`; both written to BlueZ's own

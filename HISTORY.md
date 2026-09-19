@@ -3045,10 +3045,56 @@ had prescribed, showed the third file within minutes. It was byte-identical to t
 shows no udev event and no snapshot unit in the interval. The skip covers all three now and
 the staged test asserts three, both directions.
 
+### The review, and the crash that had been on disk for five weeks
+
+The operator brought the third-party review of the two BlueZ patches he had wanted before
+sending. Verdict: accept both, submit independently, both defects confirmed at BlueZ master
+`2401054` of 2026-09-17. Its most interesting section built a hypothesis for `0001`'s
+untraced trigger: our exhibit showed a *Start Service Discovery* reply arriving as
+`command 0x23 status: 0x00`, and `0x23` is plain Start Discovery — so, the reviewer
+reasoned, an opcode mismatch had sent the event through `request_complete()`'s index-only
+fallback (`6efdbd8dbd16`, 2021) to the wrong callback.
+
+The premise was ours and wrong. `0x0023` **is** `MGMT_OP_START_DISCOVERY`; service discovery
+is `0x003A`. `EX-041` had mislabelled the line and the patch message had inherited it. The
+reviewer did what a careful reader does with a record that trusts itself — took it at face
+value — and the hypothesis fell the moment the source log was re-read: the request sent
+12 ms earlier was `0x0023` too. Exact match, no fallback.
+
+Re-reading that log did more than kill a hypothesis. The archived daemon log of the 08-14
+session, in the repository since August, holds the crashing daemon's last lines:
+
+```
+21:03:16.750  discovery_remove() owner :1.125
+21:03:24.943  send_request() [0x0000] command 0x0023
+21:03:26.994  can_read_data() [0x0000] command 0x23 status: 0x00
+21:03:26.994  start_discovery_complete() status 0x00
+21:03:26      kernel: bluetoothd[2821]: segfault at 0
+```
+
+Last client removed; Start Discovery sent; **Command Status, status success**, 2.05 s later;
+callback with the list empty; the fault. `src/shared/mgmt.c` prints `status:` only on the
+`MGMT_EV_CMD_STATUS` branch and `complete:` on the other, so the event is identified by its
+own text, and that branch passes `0, NULL`. The commit message had said *"I have not traced
+which management event produces the empty reply"*; the trace had been in
+`evidence/sessions/…/bluetoothd.log` for five weeks, and `patches/bluez/README.md` had
+*retracted* the correct identification on 09-16 as "a claim from source reading". It was
+a claim from source reading then; it is an observation now. The premise count was wrong too:
+"once" was five — four in the crashing daemon's own lifetime, 32 minutes before it died.
+
+What stays open is the question one layer down, and it is now sharp: why does the kernel
+answer Start Discovery with a successful Command Status instead of the one-byte Command
+Complete it sent for the other 37 in that log? The fatal one came as the controller was
+timing out HCI commands every two seconds. The patch states the observation and leaves the
+cause; the fix does not depend on it.
+
 ### The shape
 
-Both gaps were one step past a gate that existed. The message scan stopped at the message;
-the `.disabled` skip stopped at the second of three files. Neither was found by the tool that
-owned it — one by a collaborator's eye, one by a verification tool run because a rule said to
-run it. The rule (*run `bt-mode status` or `bt-verify-install` after any deploy*) earned its
-line in BRIEF this morning.
+Three gaps, each one step past a gate that existed. The message scan stopped at the
+message; the `.disabled` skip stopped at the second of three files; the exhibit label was
+read by everyone, including a reviewer, and checked by no one against the header that
+defines it. None was found by the tool or the file that owned it — one by a collaborator's
+eye, one by a verification tool run because a rule said to run it, one by an outsider
+building on the error until it broke. The last is the argument for the third-party review
+the operator insisted on: not that it found a defect in the patches (it found none), but
+that it found the one place the record had trusted itself.

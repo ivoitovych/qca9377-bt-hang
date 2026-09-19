@@ -50,17 +50,17 @@ unsafe. In particular a bt_io_accept() error or a bt_io_get() failure
 still reports the real I/O error rather than this secondary lifecycle
 condition.
 
-125a2e237e7c ("a2dp: Fix possible crash when accepting stream
+commit 125a2e237e7c ("a2dp: Fix possible crash when accepting stream
 transport") previously hardened this same asynchronous accept window
 against the whole setup disappearing while the accept was pending.
 This covers the remaining case where the setup survives and its stream
 does not.
 
-90a600895 ("avdtp: Handle case where remote send L2CAP connect ahead
-of Open") also changed avdtp_stream_set_transport() itself, to handle
-a transport arriving before Open. The function still dereferences
-stream before reaching that handling, so it does not cover a NULL
-argument from transport_cb().
+commit 90a600895d80 ("avdtp: Handle case where remote send L2CAP
+connect ahead of Open") also changed avdtp_stream_set_transport()
+itself, to handle a transport arriving before Open. The function still
+dereferences stream before reaching that handling, so it does not
+cover a NULL argument from transport_cb().
 ---
  profiles/audio/a2dp.c | 5 +++++
  1 file changed, 5 insertions(+)

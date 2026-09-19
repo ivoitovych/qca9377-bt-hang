@@ -29,10 +29,28 @@ read at offset 0 and a NULL rp faults immediately.
 
 The mgmt layer can invoke a command callback with no reply parameters:
 src/shared/mgmt.c passes length 0 and a NULL param on the Command
-Status path, for example. Observed on a QCA9377 (13d3:3503) whose
-controller stops answering HCI during audio use: this branch was
-entered with a success status and param == NULL, and faulted on the
-dereference. The crash site was resolved from the shipped binary:
+Status path:
+
+	case MGMT_EV_CMD_STATUS:
+		...
+		DBG(mgmt, "[0x%04x] command 0x%02x status: 0x%02x", ...);
+		request_complete(mgmt, cs->status, opcode, index, 0, NULL);
+
+Observed as a crash on a QCA9377 (13d3:3503) whose controller stops
+answering HCI during audio use. The daemon's debug log (bluez 5.72)
+ends with exactly that delivery, for the Start Discovery it had sent
+2.05 s earlier, ten seconds after its last discovery client had gone:
+
+  21:03:16.750  discovery_remove() owner :1.125
+  21:03:24.943  send_request() [0x0000] command 0x0023
+  21:03:26.994  can_read_data() [0x0000] command 0x23 status: 0x00
+  21:03:26.994  start_discovery_complete() status 0x00
+  21:03:26      kernel: bluetoothd[2821]: segfault at 0 ...
+
+"command ... status:" is the Command Status branch (Command Complete
+logs "complete:"), so the callback ran with status 0, length 0 and a
+NULL param, found discovery_list empty, and faulted on rp->type. The
+crash site was resolved from the shipped binary:
 
   bluetoothd[2821]: segfault at 0 ip 00005d6eb1ad1986 sp 00007ffef8e784b0 \
       error 4 in bluetoothd[a6986,5d6eb1a50000+f3000]
@@ -41,15 +59,18 @@ dereference. The crash site was resolved from the shipped binary:
   a698b:  0f b7 53 04       movzwl 0x4(%rbx),%edx     <-- adapter->dev_id
   a6992:  4c 8d 45 d7       lea    -0x29(%rbp),%r8    <-- &cp
 
-The same combination has since been seen again on that machine with
-the daemon logging: a MGMT_OP_START_SERVICE_DISCOVERY reply delivered
-as "command 0x23 status: 0x00" with a length too short for the struct.
-On that occasion the client list was non-empty, so the existing check
-below the branch handled it; when the list is empty the branch above
-is reached first.
+The same delivery, a Command Status with status 0x00 answering a Start
+Discovery just sent, was logged five more times on that machine: four
+in the crashing daemon's own lifetime and once on a later day. On each
+of those the client list was non-empty, so the existing check below
+the branch handled it ("Wrong size of start discovery return
+parameters"); when the list is empty the branch above is reached
+first.
 
-I have not traced which management event produces the empty reply,
-and the fix does not depend on it.
+Why the kernel answers Start Discovery with a successful Command
+Status rather than the usual one-byte Command Complete is not
+established here. The crashing instance arrived while the controller
+was timing out HCI commands; the fix does not depend on the cause.
 
 Perform the same length validation before using the reply in the
 no-clients branch. The check is added inside that branch rather than

@@ -1,7 +1,10 @@
 Context, not part of the change: the crash was recorded on a QCA9377
 (13d3:3503) laptop under Ubuntu 24.04 / bluez 5.72-0ubuntu5.5 and the
 site was resolved from the stripped distro binary, then checked against
-a retained core. This guard has not fired since it was installed; its
-premise (a success status with a too-short reply) was logged once. The
-record and the crash-site method are public:
+a retained core; the archived daemon log independently shows the same
+sequence (client removed, Start Discovery sent, Command Status 0x00,
+fault). This guard has not fired since it was installed; the delivery
+it guards against was logged five more times with clients present, so
+the pre-existing check caught those. The record and the crash-site
+method are public:
 https://github.com/ivoitovych/qca9377-bt-hang  (patches/bluez/README.md)
