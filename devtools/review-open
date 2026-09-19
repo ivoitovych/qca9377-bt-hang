@@ -1,0 +1,63 @@
+#!/bin/bash
+# review-open — every action-register row in reviews/README.md whose status is
+# not a closed one, grouped by register, with a count per status word.
+#
+#   devtools/review-open            rows not closed
+#   devtools/review-open --all      every row, with its status word
+#   devtools/review-open --counts   status-word histogram per register only
+#
+# WHY. Before anything is submitted, the operator wants every finding from every
+# review — the test-suite maintainer's, the review-branch maintainer's, the
+# third-party patch review — either fixed or consciously left. The register has
+# ~250 rows across nine prefixes and the status column uses a dozen different
+# words; "what is still open" was being answered from memory. This reads the
+# column.
+#
+# A row is CLOSED when its status begins with one of: fixed, done, no action,
+# recorded, refuted, superseded, answered, withdrawn, agreed, kept, n/a,
+# not applicable, confirmed, verified, merged, retracted. Everything else —
+# open, pending, partial, in progress, deferred, and any phrase not on that list
+# — is shown, because an unfamiliar status word is exactly the kind that hides
+# an unfinished item.
+set -uo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REG="$HERE/reviews/README.md"
+[[ -r "$REG" ]] || { echo "review-open: no $REG" >&2; exit 2; }
+MODE="${1:-open}"
+awk -v mode="$MODE" '
+BEGIN {
+    n = split("fixed done closed no.action recorded refuted superseded answered withdrawn agreed kept n/a not.applicable confirmed verified merged retracted tool.fixed", cl, " ")
+    for (i = 1; i <= n; i++) { gsub(/\./, " ", cl[i]); closed[cl[i]] = 1 }
+}
+/^\| [A-Z][A-Z0-9]?[A-Z0-9]?-[0-9]+/ {
+    # R2-nn and the like carry a digit in the prefix — the first version of this
+    # pattern skipped the whole 122-row R2 register and reported nothing missing.
+    id = $2
+    # status is the third cell; strip bold and take the first phrase
+    ncell = split($0, c, /\|/)
+    if (ncell < 4) next
+    s = c[4]; gsub(/\*\*/, "", s); gsub(/^ +| +$/, "", s)
+    nw = split(tolower(s), w, /[ —:;,(]+/)
+    word = w[1]
+    two = (nw >= 2) ? w[1] " " w[2] : word
+    isclosed = (word in closed) || (two in closed)
+    prefix = id; sub(/-.*/, "", prefix)
+    total[prefix]++
+    if (!isclosed) { openn[prefix]++; openrows[prefix] = openrows[prefix] sprintf("  %-7s %-14s %s\n", id, word, substr(c[3], 1, 90)) }
+    hist[prefix " " word]++
+    if (mode == "--all") printf "%-7s %-14s %s\n", id, word, substr(c[3], 1, 100)
+}
+END {
+    if (mode == "--all") exit
+    # Registers in the order the reviews were written; anything new goes last.
+    # (An external sort was tried first and interleaved the rows of one register
+    # with the header of the next — "R2-01" sorts before "R2:".)
+    np = split("UT CS TC HC SE CR TX FD R2 BL TP", order, " ")
+    for (p in total) { seen = 0; for (i = 1; i <= np; i++) if (order[i] == p) seen = 1; if (!seen) order[++np] = p }
+    for (i = 1; i <= np; i++) {
+        p = order[i]; if (!(p in total)) continue
+        printf "%s: %d rows, %d not closed\n", p, total[p], openn[p]
+        if (mode == "--counts") { for (k in hist) { split(k, kk, " "); if (kk[1] == p) printf "     %3d  %s\n", hist[k], kk[2] } }
+        else if (openn[p]) printf "%s", openrows[p]
+    }
+}' "$REG"

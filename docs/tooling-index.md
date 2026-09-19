@@ -87,6 +87,8 @@ run `bluetoothd -d` — this project ships that on in
 | **What did CI say about a commit?** | `devtools/ci [sha]`, `--wait`, `--recent N` — never a hand-typed `until gh run list … \| grep` loop; that prompted every time and read as "Parse error" |
 | Did the BlueZ patch guards fire? | `tools/bt-guards` |
 | Publish-safety scan (MACs, BSSIDs, emails) | `devtools/repo-scan` |
+| **Which review findings are still open, across every register?** | `devtools/review-open` (`--all`, `--counts`) — reads the status column of `reviews/README.md`; the gate before anything is submitted |
+| Compile-test a kernel patch against the running kernel (no tree needed) | `scripts/build-bluetooth-module.sh [patch]` — `net/bluetooth` from `cache/linux` against `/lib/modules/$(uname -r)/build`; builds only, never installs |
 | How do the branches diverge? | `devtools/branch-status` (`--unique`, `--files`) |
 | Coverage / comprehensiveness | `devtools/coverage`, `devtools/test-comprehension` |
 | Do the fixtures still match real journalctl? | `devtools/journal-contract` |
@@ -125,9 +127,13 @@ pipe, `&&`, `$(...)` or a redirect**, and the matcher cannot analyse compound
 shell, so every one of those prompts *however broad the allowlist is*. 226 were
 the same question, now answered by `bt-fault-window` in one call.
 
-**So the fix is never another permission entry. It is a file under `tools/` or
-`devtools/`, both of which are already granted — a new script there costs zero
-new permissions for ever.**
+**So the fix is never another permission entry. It is a file under `tools/`,
+`devtools/` or `scripts/`, all of which are granted — a new script there costs
+zero new permissions for ever.** `scripts/` (added 2026-09-19, see its README) is
+for helpers and proofs that are not yet tools; their outputs go to `tmp/`
+(ignored) and third-party sources to `cache/` (ignored). Neither the session's
+`/tmp` scratchpad nor an inline pipeline: the first vanished with a reboot, the
+second prompts every time and can leave an unattended session stuck for hours.
 
 The permission matcher cannot analyse compound shell, so such a command matches
 no allow rule and prompts **every time**. Keep calls simple:

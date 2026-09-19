@@ -12,6 +12,16 @@ evidence/**/*.raw.log
 metrics.tsv
 *.tsv.tmp
 
+# Working directories that must survive reboots but never publish.
+#   tmp/    transient outputs (decoded captures, scratch data) — the session
+#           scratchpad under /tmp was wiped by a reboot on 2026-09-19 and took
+#           the day's helper scripts with it; helpers now live in scripts/,
+#           tracked, and their outputs here
+#   cache/  third-party sources (kernel, BlueZ) fetched for reading and
+#           compile-testing patches; large, reproducible, not ours
+tmp/
+cache/
+
 # Editor / OS noise
 *~
 .DS_Store
