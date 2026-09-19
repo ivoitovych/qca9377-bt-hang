@@ -17,8 +17,10 @@
 #
 # Reverse with ./uninstall.sh
 #
-# Every file installed is NEW. Nothing pre-existing is modified, so uninstalling
-# is a complete restoration.
+# Every file installed is meant to be NEW. If a destination already exists and is
+# not ours, the original is kept as <dst>.pre-qca9377-bt-hang and uninstall.sh
+# moves it back — that, not an assumption, is what makes uninstalling a
+# restoration (DR-08 follow-up, 2026-09-20).
 
 set -uo pipefail
 
@@ -41,6 +43,7 @@ METRICS=1
 # driver, touch no device.
 TOOLS_ONLY=0
 SKIPPED_DISABLED=0   # destinations left alone because bt-mode moved them aside (R2-58)
+PRESERVED=0          # pre-existing foreign files copied to <dst>.pre-qca9377-bt-hang (DR-08 F3)
 for a in "$@"; do
     case "$a" in
         --apply)       APPLY=1 ;;
@@ -176,7 +179,24 @@ install_file() {
     # the system path it shadows — otherwise a staging install reports on files
     # it will never touch, and the "every file installed is NEW" check reads
     # the wrong tree.
-    [[ -e "$DESTDIR$dst" ]] && echo "  ! $dst already exists — will be OVERWRITTEN"
+    # A PRE-EXISTING FILE THAT IS NOT OURS IS KEPT, NOT OVERWRITTEN AND FORGOTTEN.
+    # Until 2026-09-20 this printed "will be OVERWRITTEN" and did exactly that,
+    # and uninstall.sh then deleted the result — so "no pre-existing file was
+    # ever modified … a complete restoration" was a claim, not a property
+    # (review DR-08 follow-up, F3). Now: a destination that exists and differs
+    # from the source is copied once to `<dst>.pre-qca9377-bt-hang`; the
+    # uninstaller moves that copy back. A destination identical to the source
+    # (our own earlier deploy) needs no backup; a backup that already exists is
+    # never overwritten, so the FIRST foreign file is the one that survives.
+    if [[ -e "$DESTDIR$dst" ]] && ! cmp -s "$src" "$DESTDIR$dst"; then
+        if [[ -e "$DESTDIR$dst.pre-qca9377-bt-hang" ]]; then
+            echo "  ! $dst differs from the source — replaced; the earlier pre-install copy is kept"
+        else
+            echo "  ! $dst exists and is not ours — kept as $dst.pre-qca9377-bt-hang"
+            run install -m "$mode" "$DESTDIR$dst" "$DESTDIR$dst.pre-qca9377-bt-hang"
+            PRESERVED=$((PRESERVED + 1))
+        fi
+    fi
     run install -D -m "$mode" "$src" "$DESTDIR$dst"
 }
 

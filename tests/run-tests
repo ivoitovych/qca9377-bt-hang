@@ -6597,12 +6597,18 @@ tl step >/dev/null 2>&1
 (( $? != 0 )) && ok "step without a description refuses instead of recording nothing" \
               || bad "step accepted an empty description"
 
-# ── abort: the trial that must not become a row ──────────────────────────
+# ── abort: the trial that must not become a row — and must not lose evidence ─
+# Until 2026-09-20 abort deleted the directory (the BL-03 incident, and its
+# 2026-09-19 fix only refused TRACKED content — newly captured evidence is
+# untracked by definition, follow-up F5). Abort now keeps the directory,
+# renamed with an ABORTED marker, and writes no row; `--discard` deletes.
 TLA=$(tl abort); tlarc=$?
-(( tlarc == 0 )) && [[ ! -e "$TL/state/current" && ! -d "$TLDIR" ]] \
-    && [[ "$TLA" == *"discarded"* ]] \
-    && ok "abort discards the trial directory and writes no results row" \
-    || bad "abort left state behind (rc=$tlarc)"
+TLAKEPT=$(ls -d "$TLDIR".aborted-* 2>/dev/null | head -1)
+(( tlarc == 0 )) && [[ ! -e "$TL/state/current" && ! -d "$TLDIR" && -n "$TLAKEPT" && -e "$TLAKEPT/ABORTED" ]] \
+    && [[ "$TLA" == *"directory kept"* ]] && [[ ! -s "$TL/evidence/trials/results.tsv" || "$(tl_field 9)" != "aborted" ]] \
+    && ok "abort keeps the trial directory (renamed, with an ABORTED marker) and writes no results row" \
+    || bad "abort did not keep the directory (rc=$tlarc): kept='$TLAKEPT' $TLA"
+rm -rf "$TLAKEPT"
 
 TLA2=$(tl abort); tla2rc=$?
 (( tla2rc == 0 )) && [[ "$TLA2" == *"no trial open"* ]] \
@@ -6643,9 +6649,38 @@ rm -f "$TL/dead"
 tl autostart stock >/dev/null 2>&1
 rm -f "$TL/hciconfig-calls"
 tl autostop >/dev/null 2>&1
-[[ "$(tl_field 9)" == "survived" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
-    && ok "autostop with no timeout in the journal closes as survived and sends no HCI command" \
-    || bad "autostop: result '$(tl_field 9)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
+# NOT "survived": nothing asked the controller, so nothing measured liveness. A
+# controller that went silent without a logged timeout would have been recorded
+# alive (follow-up F1). The row says what the journal showed and no more.
+[[ "$(tl_field 9)" == "ended_unprobed" && "$(tl_field 8)" == "not_observed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+    && ok "autostop with no timeout in the journal closes as ended_unprobed/not_observed and sends no HCI command" \
+    || bad "autostop: result '$(tl_field 9)'/'$(tl_field 8)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
+
+# A dead controller that logged no timeout must not read as alive either.
+touch "$TL/dead"
+tl autostart stock >/dev/null 2>&1; rm -f "$TL/hciconfig-calls"
+tl autostop >/dev/null 2>&1
+[[ "$(tl_field 9)" == "ended_unprobed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+    && ok "autostop on a silent dead controller (no timeout logged) records ended_unprobed, not survived" \
+    || bad "a silent dead controller was recorded as '$(tl_field 9)'"
+rm -f "$TL/dead"
+
+# An unreadable journal is `unknown` on the evidence axis and still unprobed.
+touch "$TL/journal-unreadable"
+tl autostart stock >/dev/null 2>&1; rm -f "$TL/hciconfig-calls"
+tl autostop >/dev/null 2>&1
+[[ "$(tl_field 8)" == "unknown" && "$(tl_field 9)" == "ended_unprobed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+    && ok "autostop with an unreadable journal records unknown/ended_unprobed and sends no HCI command" \
+    || bad "unreadable journal at autostop recorded '$(tl_field 8)'/'$(tl_field 9)'"
+rm -f "$TL/journal-unreadable"
+
+# Opt-in means the value 1. BT_TRIAL_PROBE=0 probed until 2026-09-20 (follow-up F2).
+: > "$TL/kjournal"
+tl autostart stock >/dev/null 2>&1; rm -f "$TL/hciconfig-calls"
+BT_TRIAL_PROBE=0 tl autostop >/dev/null 2>&1
+[[ ! -e "$TL/hciconfig-calls" && "$(tl_field 9)" == "ended_unprobed" ]] \
+    && ok "BT_TRIAL_PROBE=0 is passive — a zero-valued opt-in does not probe" \
+    || bad "BT_TRIAL_PROBE=0 probed: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l) call(s), result '$(tl_field 9)'"
 
 printf 'Bluetooth: hci0: command 0x0406 tx timeout\n' > "$TL/kjournal"
 tl autostart stock >/dev/null 2>&1
@@ -6678,15 +6713,15 @@ tl autostart stock >/dev/null 2>&1
 TLADIR=$(grep '^dir=' "$TL/state/current" | cut -d= -f2-)
 printf 'kept\n' > "$TLADIR/evidence.log"
 git -C "$TL" -c user.name=test -c user.email=test@example.com add "$TLADIR/evidence.log" 2>/dev/null
-TLAR=$(tl abort); tlarrc=$?
+TLAR=$(tl abort --discard); tlarrc=$?
 (( tlarrc == 1 )) && [[ "$TLAR" == *"REFUSED"* && -d "$TLADIR" && -e "$TL/state/current" ]] \
-    && ok "abort refuses to delete a trial directory holding tracked files, and keeps the trial open" \
-    || bad "abort removed or ignored tracked evidence (rc=$tlarrc): $TLAR"
+    && ok "abort --discard refuses to delete a trial directory holding tracked files, and keeps the trial open" \
+    || bad "abort --discard removed or ignored tracked evidence (rc=$tlarrc): $TLAR"
 git -C "$TL" rm -q --cached "$TLADIR/evidence.log" 2>/dev/null
-TLAU=$(tl abort); tlaurc=$?
-(( tlaurc == 0 )) && [[ ! -d "$TLADIR" && "$TLAU" == *"discarded"* ]] \
-    && ok "abort discards the same directory once nothing in it is tracked" \
-    || bad "abort did not discard an untracked trial (rc=$tlaurc)"
+TLAU=$(tl abort --discard); tlaurc=$?
+(( tlaurc == 0 )) && [[ ! -d "$TLADIR" && "$TLAU" == *"deleted on request"* ]] \
+    && ok "abort --discard deletes the same directory once nothing in it is tracked" \
+    || bad "abort --discard did not delete an untracked trial (rc=$tlaurc)"
 rm -rf "$TL/.git"
 
 # ── the two classifications that decide whether a row may be POOLED ──────
@@ -8839,6 +8874,28 @@ SRDISOUT=$(stage_at "$SRDIS"); srdisrc=$?
     || bad "uninstall left a .disabled file behind or failed (rc=$srdisrc): $(ls "$SRDIS"/etc/*/ 2>/dev/null | tr '\n' ' ')"
 rm -rf "$SRDIS"
 
+# A PRE-EXISTING FILE THAT IS NOT OURS SURVIVES THE PAIR (DR-08 follow-up, F3).
+# install.sh overwrote a colliding destination and uninstall.sh then deleted it,
+# under a summary that said no pre-existing file was ever modified. Now the
+# original is kept as <dst>.pre-qca9377-bt-hang and moved back on uninstall.
+SRPX=$(mktemp -d); mkdir -p "$SRPX/usr/local/bin"
+printf 'original bt-mark, not ours\n' > "$SRPX/usr/local/bin/bt-mark"
+SRPXI=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$SRPX/no-such-trial" \
+        BT_DESTDIR="$SRPX" ./install.sh --tools-only 2>&1); srpxirc=$?
+(( srpxirc == 0 )) && [[ -e "$SRPX/usr/local/bin/bt-mark.pre-qca9377-bt-hang" ]] \
+   && grep -q "original bt-mark" "$SRPX/usr/local/bin/bt-mark.pre-qca9377-bt-hang" \
+   && ! grep -q "original bt-mark" "$SRPX/usr/local/bin/bt-mark" \
+   && [[ "$SRPXI" == *"not ours"* ]] \
+    && ok "install.sh keeps a colliding pre-existing file as .pre-qca9377-bt-hang and says so" \
+    || bad "a pre-existing file was overwritten without a copy (rc=$srpxirc)"
+SRPXU=$(stage_at "$SRPX"); srpxurc=$?
+(( srpxurc == 0 )) && grep -q "original bt-mark" "$SRPX/usr/local/bin/bt-mark" 2>/dev/null \
+   && [[ ! -e "$SRPX/usr/local/bin/bt-mark.pre-qca9377-bt-hang" ]] \
+   && [[ "$SRPXU" == *"1 pre-existing file(s)"* && "$SRPXU" == *"UNINSTALL COMPLETE"* ]] \
+    && ok "uninstall.sh moves the pre-existing file back and counts the restoration" \
+    || bad "uninstall did not restore the original (rc=$srpxurc): $(grep -E 'pre-existing|COMPLETE' <<<"$SRPXU" | tr '\n' ' ')"
+rm -rf "$SRPX"
+
 # A FAILED STEP must fail the banner. run() accumulates failures on purpose
 # (later removals are independent; a partial revert should remove what it
 # can) — but "UNINSTALL COMPLETE" then printed over the failures. A FILES
@@ -10147,6 +10204,13 @@ INCSMAN=$(cat "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null)
 (( incsrc != 0 )) && [[ "$INCSMAN" == *"sanitised=FAILED:"* && "$INCSMAN" != *"sanitised=yes"* ]] \
     && ok "bt-incident names every file its sanitiser refused and exits non-zero" \
     || bad "a failing sanitiser was reported as success (rc=$incsrc): $(grep sanitised <<<"$INCSMAN")"
+# No sanitiser at all is not a success either (follow-up F4): the manifest was
+# honest (NO-SANITISER) but the exit status said publishable.
+rm -rf "$INCS/repo"; mkdir -p "$INCS/repo"
+BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER=none tools/bt-incident no-sanitiser-check --since '10 minutes ago' >/dev/null 2>&1; incsnrc=$?
+(( incsnrc != 0 )) && grep -q "^sanitised=NO-SANITISER" "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null \
+    && ok "bt-incident with no sanitiser available exits non-zero and says NO-SANITISER" \
+    || bad "a session with no sanitiser exited $incsnrc"
 printf '#!/bin/sh\nexit 0\n' > "$INCS/bin/ok-sanitiser"; chmod +x "$INCS/bin/ok-sanitiser"
 rm -rf "$INCS/repo"; mkdir -p "$INCS/repo"
 BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER="$INCS/bin/ok-sanitiser" \

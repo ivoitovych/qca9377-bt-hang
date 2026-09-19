@@ -18,7 +18,10 @@
 ## Summary
 
 When this controller negotiates a **transparent (mSBC / wideband-speech) synchronous
-link**, `btusb` finds no alternate setting 6 or 3 on the isochronous interface and falls
+link**, `btusb` does not select alternate setting 6 or 3 (the log shows the probes `Looking
+for Alt no :6` then `:3`; selecting alt 3 also requires a sufficient `sco_mtu` and
+`BTUSB_USE_ALT3_FOR_WBS`, so the fallback alone does not prove alt 3 is absent — the
+device's own descriptors, listed in `dc16388d45ec`, show alts 1–5 and no 6) and falls
 back to **alternate setting 1** — a **9-byte** isochronous endpoint — then sends each
 **27-byte** SCO buffer as three 9-byte packets (`__fill_isoc_descriptor`; the `len 27 mtu 9`
 debug line is that split, not an oversized packet). The link comes up: `0x0428 Setup
@@ -61,9 +64,10 @@ names the endpoint size in use.
 `sysfs` write — no code differs — and `EX-043` reproduces the fault under the original.
 
 **The interval is not a constant.** Six fast teardowns made it look like 2.15 s; `EX-043`
-shows the stream running 9.65 s with zero commands in flight and no harm, and the first
-command issued — `0x0406 Disconnect, reason 0x13` — dying. What is invariant is *the first
-command into a running alternate-setting-1 stream is never answered*, and the interval is
+shows the stream running 9.65 s with zero commands in flight (whether the command path was
+healthy during that interval was not measured — nothing asked it), and the first command
+issued — `0x0406 Disconnect, reason 0x13` — getting no response. What is invariant is *the
+first command observed after an alternate-setting-1 stream starts gets no response*, and the interval is
 that command's time plus `HCI_CMD_TIMEOUT`. Both instances where the log names the dying
 command name `0x0406`.
 
@@ -75,7 +79,7 @@ command name `0x0406`.
 /sys/bus/usb/devices/3-3:1.1/ep_83/wMaxPacketSize     0009    Isoc
 ```
 
-**CVSD is safe.** The same controller carried a CVSD link (`mtu 17`, 4,669 packets) with no
+**The CVSD controls survived.** The same controller carried a CVSD link (`mtu 17`, 4,669 packets) with no
 fault, and an Enhanced Setup Synchronous Connection was answered in 64.7 ms and carried a
 link for 17 minutes (`EX-031`). The defect is not "this controller cannot do SCO".
 
@@ -144,7 +148,8 @@ There is no scripted reproducer, and the shape is now exact enough for a driver 
    setting 1 silently (it is the bare `else`);
 2. let it stream (`len 27 mtu 9` per URB); the stream alone does not wedge the
    controller — 9.65 s in `EX-043`;
-3. issue any HCI command — a disconnect is the natural one;
+3. issue an HCI command — a disconnect is the natural one, and is the only one the record
+   has seen die; whether any other command does the same is untested;
 4. it times out 2 s later; nothing answers afterwards; only a power-off recovers.
 
 On this machine ordinary hands-free use provokes it within minutes to hours; `EX-040`

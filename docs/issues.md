@@ -465,7 +465,7 @@ blockers are stated once, under "Minimal reproducer found".)*
 ## BT-5 — SCO link established, then carries almost no data
 
 **Status:** **superseded 2026-09-18.** `EX-043` shows the same kind of link streaming 910
-frames over 9.65 s with no command in flight and no harm; the silence recorded here was an
+frames over 9.65 s with no command in flight (command-path health unmeasured); the silence recorded here was an
 idle link, not a precursor. Kept for the record.
 **Reportable:** ❌ no.
 

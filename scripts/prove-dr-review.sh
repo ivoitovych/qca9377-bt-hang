@@ -64,7 +64,7 @@ tl() { PATH="$TL/bin:$PATH" BT_REPO="$TL" BT_EVIDENCE_REPO="$TL" BT_STATE="$TL/s
 res() { tail -1 "$TL/evidence/trials/results.tsv" 2>/dev/null | cut -f9; }
 # start/autostart probe on purpose; the spy is reset after autostart so only autostop counts
 tl autostart stock >/dev/null; rm -f "$TL/hciconfig-calls"; tl autostop >/dev/null
-[[ "$(res)" == survived && ! -e "$TL/hciconfig-calls" ]] && ok "no timeout → survived, 0 HCI commands" || bad "passive ok: result=$(res) calls=$(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
+[[ "$(res)" == ended_unprobed && ! -e "$TL/hciconfig-calls" ]] && ok "no timeout → ended_unprobed, 0 HCI commands" || bad "passive ok: result=$(res) calls=$(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
 printf 'Bluetooth: hci0: command 0x0406 tx timeout\n' > "$TL/kjournal"
 tl autostart stock >/dev/null; touch "$TL/dead"; rm -f "$TL/hciconfig-calls"; tl autostop >/dev/null
 [[ "$(res)" == failed && ! -e "$TL/hciconfig-calls" ]] && ok "timeout → failed, 0 HCI commands" || bad "passive hang: result=$(res) calls=$(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
@@ -75,10 +75,10 @@ rm -f "$TL/dead" "$TL/hciconfig-calls"
 git -C "$TL" init -q; tl autostart stock >/dev/null
 d=$(grep '^dir=' "$TL/state/current" | cut -d= -f2-); printf 'kept\n' > "$d/evidence.log"
 git -C "$TL" -c user.name=test -c user.email=test@example.com add "$d/evidence.log"
-o=$(tl abort); rc=$?
-(( rc == 1 )) && [[ "$o" == *REFUSED* && -d "$d" && -e "$TL/state/current" ]] && ok "abort refused with tracked file (rc=$rc)" || bad "tracked abort: rc=$rc $o"
-git -C "$TL" rm -q --cached "$d/evidence.log"; o=$(tl abort); rc=$?
-(( rc == 0 )) && [[ ! -d "$d" ]] && ok "abort discards once untracked" || bad "untracked abort rc=$rc"
+o=$(tl abort --discard); rc=$?
+(( rc == 1 )) && [[ "$o" == *REFUSED* && -d "$d" && -e "$TL/state/current" ]] && ok "abort --discard refused with tracked file (rc=$rc)" || bad "tracked abort: rc=$rc $o"
+git -C "$TL" rm -q --cached "$d/evidence.log"; o=$(tl abort --discard); rc=$?
+(( rc == 0 )) && [[ ! -d "$d" ]] && ok "abort --discard deletes once untracked" || bad "untracked abort rc=$rc"
 rm -rf "$TL"
 
 echo "── DR-05 bt-capture rotation + AF_BLUETOOTH"

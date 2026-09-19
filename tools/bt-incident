@@ -82,10 +82,13 @@ mkdir -p "$DIR" || { echo "cannot create $DIR" >&2; exit 1; }
 
 SAN=""
 # BT_SANITIZER is a seam so a test can hand this tool a sanitiser that FAILS and
-# check that the manifest says so (DR-06).
-for c in "${BT_SANITIZER:-}" "$HERE/sanitize-logs.sh" /usr/local/bin/bt-sanitize-logs; do
-    [[ -n "$c" && -x "$c" ]] && { SAN="$c"; break; }
-done
+# check that the manifest says so (DR-06); BT_SANITIZER=none simulates a host
+# with no sanitiser at all, which must also be an unpublishable session (F4).
+if [[ "${BT_SANITIZER:-}" != none ]]; then
+    for c in "${BT_SANITIZER:-}" "$HERE/sanitize-logs.sh" /usr/local/bin/bt-sanitize-logs; do
+        [[ -n "$c" && -x "$c" ]] && { SAN="$c"; break; }
+    done
+fi
 
 echo "collecting since '$SINCE' into $DIR"
 
@@ -205,6 +208,10 @@ echo "  -> $DIR"
 echo "  -> also reachable as: evidence/sessions/latest"
 # The session is written either way — a partial record beats none — but the
 # exit status says whether it may be published as it stands (DR-06).
+if [[ -z "$SAN" ]]; then
+    echo "  ⚠️  NOT PUBLISHABLE: no sanitiser was available — every file is raw journal text" >&2
+    exit 1
+fi
 if [[ -n "$SAN_FAILED" ]]; then
     echo "  ⚠️  NOT PUBLISHABLE: the sanitiser refused $SAN_FAILED — raw text is in place" >&2
     exit 1

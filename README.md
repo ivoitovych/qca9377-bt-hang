@@ -19,15 +19,19 @@ re-derived by a stranger from the command that produced it.
 - **Established:** the sequence above; `0x0428 Setup Synchronous Connection` *is*
   answered; the stream ran 9.65 s in `EX-043` before the first command was issued, and that
   command got no response — whether the command wedged the controller or only found it
-  wedged is not established; every tested recovery failed (`hdev->reset` is NULL on the
-  kernels run here — the ID entered btusb's quirks table upstream in `dc16388d45ec`, master
-  2026-08-07, not in v7.0 or a stable release yet; `HCI_Reset` returns `-110`; a warm
-  reboot does not clear it, a power-off does — `EX-027`/`028`/`039`).
+  wedged is not established; every recovery tried on an already-wedged controller failed
+  (`hdev->reset` is NULL on the kernels run here — the ID entered btusb's quirks table
+  upstream in `dc16388d45ec`, master 2026-08-07, not in v7.0 nor in the 6.6.y and 6.12.y
+  stable heads as checked on 2026-09-19; `HCI_Reset` returns `-110`; a warm reboot does not
+  clear it, a power-off does — `EX-027`/`028`/`039`; the one reset issued *before* any
+  timeout did recover the controller, which then failed again 132 s later, `EX-004`).
 - **Not established:** the mechanism — *how* traffic on that endpoint wedges the
   device. The fallback was introduced by **`517b693351a2`** (Trent Piepho, 2020-12-09,
-  *"Always fallback to alt 1 for WBS"*, in v5.12 and not v5.11), whose own message states
-  the assumption this hardware falsifies: *"I have been unable to find any [adapters that
-  support alt 6]"*. The clean control window is **v5.8–v5.11** — not "≤ v5.11": below v5.8
+  *"Always fallback to alt 1 for WBS"*, in v5.12 and not v5.11), whose own message assumes
+  that adapters without alt 6 work on alt 1 (*"I have been unable to find any [adapters that
+  support alt 6]"*). This part has alts 1–5 and no 6, so the fallback *applies* to it;
+  whether it is *compatible* with it is the open question — a device using alt 1 does not
+  falsify the author's observation. The clean control window is **v5.8–v5.11** — not "≤ v5.11": below v5.8
   alt 1 is reachable again by a different route. No kernel in that window has been run.
   Table and provenance in [`docs/missing-quirks-entry.md`](docs/missing-quirks-entry.md).
 - **No kernel patch exists yet.** Two **BlueZ** patches do (below). The full current state,
@@ -63,8 +67,10 @@ Neither patch touches the controller fault.
 
 **The controller fault, if you want to reproduce it:** put a transparent SCO link on
 alternate setting 1 (any mSBC headset does it — `Looking for Alt no :6` then `:3` in the
-`btusb` debug output), let it stream, issue any HCI command. It dies `HCI_CMD_TIMEOUT`
-later (`EX-043`). Environment below. What is missing is the mechanism, and a kernel-side
+`btusb` debug output), let it stream, then issue an HCI command — in both recorded cases
+it was `Disconnect`; whether *any* command does it is untested. The command gets no
+response and `HCI_CMD_TIMEOUT` follows (`EX-043`); whether the command wedged the
+controller or found it already wedged is not established. Environment below. What is missing is the mechanism, and a kernel-side
 report goes out only with a patch ready to follow it.
 
 ## The evidence

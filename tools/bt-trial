@@ -361,7 +361,9 @@ autostop)
     # 90 s shutdown tax. BT_TRIAL_PROBE=1 restores the old behaviour for a
     # deliberate, recorded intervention.
     [[ -e "$CUR" ]] || exit 0
-    if [[ -n "${BT_TRIAL_PROBE:-}" ]]; then
+    # Opt-in means the value 1, not "set to anything": BT_TRIAL_PROBE=0 probed
+    # until 2026-09-20 (follow-up F2). Anything other than 1 is passive.
+    if [[ "${BT_TRIAL_PROBE:-}" == 1 ]]; then
         if hci_alive; then exec "$0" ok; else exec "$0" hang; fi
     fi
     start=$(grep '^start=' "$CUR" | cut -d= -f2)
@@ -452,7 +454,7 @@ hang|ok)
     # controller.
     #
     #   bt1_status     not_observed | confirmed | censored_pre_failure | unknown
-    #   trial_result   survived | failed | alive_after_intervention | aborted
+    #   trial_result   survived | failed | alive_after_intervention | aborted | ended_unprobed
     #
     # The BT-1 numerator then becomes mechanical — bt1_status == confirmed —
     # and censored observations cannot leak into either side of a rate.
@@ -608,8 +610,16 @@ hang|ok)
     # BT_TRIAL_PASSIVE (set by autostop) means: classify from the journal alone,
     # send nothing. The probe on `ok` stays for an operator closing a trial by
     # hand, where it is a deliberate act on a controller they are looking at.
-    if [[ "$1" == hang ]] || { [[ -z "${BT_TRIAL_PASSIVE:-}" ]] && ! hci_alive; }; then
+    if [[ "$1" == hang ]] || { [[ "${BT_TRIAL_PASSIVE:-}" != 1 ]] && ! hci_alive; }; then
         trial_result=failed
+    elif [[ "${BT_TRIAL_PASSIVE:-}" == 1 ]]; then
+        # NOT "survived". A passive close asked the controller nothing, so it
+        # measured nothing about liveness: no timeout was seen in the journal
+        # (or the journal was unreadable — bt1_status carries that as
+        # `unknown`), and that is all this row may say. Until 2026-09-20 it
+        # said `survived` here, and a controller that had gone silent without a
+        # logged timeout would have been recorded alive (follow-up F1).
+        trial_result=ended_unprobed
     elif [[ "${any_int:-0}" =~ ^[0-9]+$ ]] && (( any_int > 0 )); then
         # NOT "recovered". That word asserts a recovery happened, which is only
         # true when a failure was confirmed. Paired with
@@ -638,6 +648,8 @@ hang|ok)
     # reports what was determined.
     case "$trial_result" in
         survived)  echo "${G}verified: controller responds, no intervention${O}" ;;
+        ended_unprobed)
+                   echo "${Y}trial ended without a probe: no command timeout observed; liveness not measured${O}" ;;
         alive_after_intervention)
                    echo "${Y}controller responds, but only after intervention${O}" ;;
         failed)    echo "${R}controller does NOT respond${O}" ;;
@@ -812,7 +824,7 @@ hang|ok)
     # `unprobed` (bt-state's word for the same state), never measured. Found by
     # the hciconfig spy in the suite: the autostop path still sent two commands
     # after the classifier had been made passive.
-    if [[ -n "${BT_TRIAL_PASSIVE:-}" ]]; then resp_after=unprobed
+    if [[ "${BT_TRIAL_PASSIVE:-}" == 1 ]]; then resp_after=unprobed
     elif hci_alive; then resp_after=yes; else resp_after=no; fi
     # Resolve the device by VID/PID rather than by bus path: after a reset it
     # can re-enumerate at a different address, and a hardcoded path would then
@@ -930,22 +942,40 @@ hang|ok)
     ;;
 
 abort)
+    # ABORT KEEPS THE EVIDENCE. BL-03 (2026-08-22): abort deleted a trial directory
+    # holding tracked evidence; the 2026-09-19 fix refused the tracked case and
+    # still deleted untracked directories — and newly captured evidence is
+    # untracked by definition (follow-up F5). Now the default is: close the trial
+    # without a results row, keep the directory renamed `<dir>.aborted-<stamp>`
+    # with an ABORTED file naming the reason, delete nothing. `--discard` is the
+    # deliberate deletion of scratch, and it still refuses tracked files.
     [[ -e "$CUR" ]] || { echo "no trial open"; exit 0; }
     dir=$(grep '^dir=' "$CUR" | cut -d= -f2-)
-    # BL-03 (2026-08-22): abort once deleted a trial directory that held TRACKED
-    # evidence, and the suite pinned that as the design until 2026-09-19 (R2-64,
-    # DR-07). Anything git knows about is refused, not removed; the operator
-    # decides what to do with it. Untracked scratch is discarded as before.
-    if [[ -d "$dir" ]] && git -C "$dir" rev-parse --git-dir >/dev/null 2>&1 \
-       && [[ -n "$(git -C "$dir" ls-files -- . 2>/dev/null)" ]]; then
-        echo "abort REFUSED: $dir holds tracked files:" >&2
-        git -C "$dir" ls-files -- . 2>/dev/null | sed 's/^/    /' >&2
-        echo "  the trial stays open; close it with 'bt-trial hang' or 'bt-trial ok'," >&2
-        echo "  or remove the directory yourself once its evidence is safe." >&2
-        exit 1
+    if [[ "${2:-}" == "--discard" ]]; then
+        if [[ -d "$dir" ]] && git -C "$dir" rev-parse --git-dir >/dev/null 2>&1 \
+           && [[ -n "$(git -C "$dir" ls-files -- . 2>/dev/null)" ]]; then
+            echo "abort --discard REFUSED: $dir holds tracked files:" >&2
+            git -C "$dir" ls-files -- . 2>/dev/null | sed 's/^/    /' >&2
+            echo "  the trial stays open; 'bt-trial abort' (without --discard) keeps the directory." >&2
+            exit 1
+        fi
+        rm -rf "$dir"; rm -f "$CUR"
+        echo "trial discarded (directory deleted on request)"
+        exit 0
     fi
-    rm -rf "$dir"; rm -f "$CUR"
-    echo "trial discarded"
+    kept="$dir"
+    if [[ -d "$dir" ]]; then
+        kept="$dir.aborted-$(date +%Y%m%dT%H%M%S)"
+        mv "$dir" "$kept" || { echo "abort: could not rename $dir" >&2; exit 1; }
+        {
+            echo "aborted=$(date -Iseconds)"
+            echo "reason=${3:-${2:-not given}}"
+            echo "note=no results row was written; this directory is kept for whatever it holds"
+        } > "$kept/ABORTED"
+    fi
+    rm -f "$CUR"
+    echo "trial aborted; no results row written; directory kept: $kept"
+    echo "  (bt-trial abort --discard deletes it instead — untracked files only)"
     ;;
 
 report)

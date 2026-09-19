@@ -88,7 +88,11 @@ NR == 1 {
         abort = 1; exit 1
     }
     tr = $c["trial_result"]
-    if (tr != "survived" && tr != "failed" && tr != "alive_after_intervention" && tr != "aborted") {
+    # `ended_unprobed` (2026-09-20): the passive autostop closed the trial without
+    # asking the controller anything; no timeout was seen, liveness was not
+    # measured. It is not "survived" — that word asserts a measurement — and the
+    # rate below never keys on trial_result for a non-confirmed row anyway.
+    if (tr != "survived" && tr != "failed" && tr != "alive_after_intervention" && tr != "aborted" && tr != "ended_unprobed") {
         printf "trial-summary: unrecognised trial_result \"%s\" on line %d\n", tr, NR > "/dev/stderr"
         abort = 1; exit 1
     }

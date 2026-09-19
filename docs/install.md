@@ -42,8 +42,15 @@ added later is skipped rather than silently executed.
 ⚠️ What it deliberately does **not** do: an updated unit file for an
 already-running service is not re-read until the next boot, and a changed udev
 rule applies at the next enumeration. The files on disk are current either way.
+**If a unit file changed** (for example `bt-trial-auto.service` gained
+`TimeoutStopSec=30` on 2026-09-19), run `sudo systemctl daemon-reload` after
+`--tools-only` or the manager keeps the old definition until reboot — and check
+with `systemctl show bt-trial-auto -p TimeoutStopUSec`.
 
-Uninstall is complete — every installed file is new, nothing pre-existing is touched:
+Uninstall is a restoration: every installed file is new, and where a destination
+already existed and was not ours, `install.sh` kept the original as
+`<file>.pre-qca9377-bt-hang` and `uninstall.sh` moves it back (since 2026-09-20; before
+that a colliding file was overwritten and then deleted):
 
 ```bash
 sudo ./uninstall.sh                          # dry run

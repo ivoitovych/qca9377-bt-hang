@@ -3173,6 +3173,34 @@ step an operator ever stamped. It is probe-free by default now, `--probe` labels
 when it is used, and the trial harness puts the checkout's `bt-mark` and `bt-state` first on
 PATH so the suite tests the chain it ships rather than whatever the machine last deployed.
 
+### The follow-up: five gaps in the fixes, all real
+
+The comprehensive reviewer re-checked the response by execution and found that every one of
+this side's fourteen proofs passed — and that five edge cases just past them did not. A
+passive shutdown with no logged timeout was recorded `survived`, including on a controller
+that had gone silent and on an unreadable journal: the classifier had stopped asking and kept
+asserting. `BT_TRIAL_PROBE=0` probed, because the test was "is it set" and not "is it 1". A
+pre-existing file at a destination was overwritten by `install.sh` and then deleted by
+`uninstall.sh`, under a summary that said no pre-existing file was ever modified. A host with
+no sanitiser at all still exited 0. And `abort`, fixed the day before to refuse *tracked*
+evidence, still deleted untracked directories — which is what freshly captured evidence is.
+
+All five are fixed with tests and a standalone proof. The passive close has its own word,
+`ended_unprobed`, that asserts nothing about liveness; opt-in means `1`; a colliding file is
+kept as `.pre-qca9377-bt-hang` and moved back on uninstall, and the summary says how many;
+no sanitiser is unpublishable; `abort` keeps the directory and `--discard` is the deliberate
+deletion. Eight residual sentences — "any HCI command", "no harm", "CVSD is safe", "this
+hardware falsifies", "finds no alternate setting 6 or 3", "not in a stable release yet",
+"every tested recovery failed" — are corrected where they stood, each to what the record
+supports and no further.
+
+Two things about how this went. The proofs the reviewer ran were this side's own, and they
+passed in the reviewer's environment — which is the point of tracking them. And three of the
+five gaps were the halves of findings this side had marked *fixed* the day before: the
+tracked-only abort, the `.disabled`-only uninstall, the failing-sanitiser-only manifest. A
+finding has the scope the reviewer gave it, not the scope of the fix that was convenient; the
+register rows say so now.
+
 ### The budget
 
 The operator, reading BRIEF after a day in which it had been trimmed three times to stay at

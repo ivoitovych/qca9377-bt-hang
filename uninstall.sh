@@ -12,6 +12,7 @@ set -uo pipefail
 APPLY=0
 PURGE_METRICS=0
 FAILED=0
+RESTORED=0   # pre-existing files moved back from <dst>.pre-qca9377-bt-hang (DR-08 follow-up)
 for a in "$@"; do
     case "$a" in
         --apply)          APPLY=1 ;;
@@ -175,7 +176,7 @@ run() {
     # executing silently, and only one of those is recoverable.
     if (( APPLY )) && [[ -n "$DESTDIR" ]]; then
         case "${1:-}" in
-            install|rm|rmdir|mkdir) ;;
+            install|rm|rmdir|mkdir|mv) ;;   # mv: restoring a .pre-qca9377-bt-hang copy
             *) echo "  staging: NOT executed (system command): $*"; return 0 ;;
         esac
     fi
@@ -231,6 +232,13 @@ for f in "${FILES[@]}"; do
     # knew to flag them, this script did not know to remove them).
     if [[ -e "$f.disabled" ]]; then
         run rm -f "$f.disabled"
+    fi
+    # A file that was there before install.sh replaced it was kept as
+    # `<dst>.pre-qca9377-bt-hang` (DR-08 follow-up); put it back. This is what
+    # "complete restoration" means once a collision has happened.
+    if [[ -e "$f.pre-qca9377-bt-hang" ]]; then
+        run mv "$f.pre-qca9377-bt-hang" "$f"
+        RESTORED=$((RESTORED + 1))
     fi
 done
 for d in "${DIRS[@]}"; do
@@ -309,8 +317,13 @@ if (( APPLY )); then
     echo "  cat /sys/module/btusb/parameters/enable_autosuspend   # expect Y"
     echo "  systemctl status bt-hang-watchdog                     # expect: not found"
     echo
-    echo "No pre-existing file was ever modified, so nothing needs restoring"
-    echo "from backup. Uninstall is a complete restoration."
+    if (( RESTORED > 0 )); then
+        echo "$RESTORED pre-existing file(s) that install.sh had replaced were restored from"
+        echo "their .pre-qca9377-bt-hang copies. Uninstall is a complete restoration."
+    else
+        echo "No pre-existing file had been replaced (no .pre-qca9377-bt-hang copy was"
+        echo "found), so nothing needed restoring. Uninstall is a complete restoration."
+    fi
 else
     echo "=== DRY RUN COMPLETE — no changes made ==="
 fi
