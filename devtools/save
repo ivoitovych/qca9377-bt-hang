@@ -102,10 +102,14 @@ if [[ -n "$NEWEST" && -r "$REPO/README.md" ]]; then
     fi
 fi
 # And the budget, which is the only reason it is cheaper than reading the source.
+# 500 since 2026-09-19 (was 200): at 200 every addition cost a *why* elsewhere —
+# three trims in one day — and the operator's measure, a ~200k-token
+# post-compaction context, makes ~10k tokens for the file that says what holds
+# cheap. The rule that goes with the number: never cut a reason to fit a fact.
 if [[ -r "$REPO/BRIEF.md" ]]; then
     BL=$(grep -c . "$REPO/BRIEF.md" 2>/dev/null || echo 0)
-    if [[ "${BL:-0}" -gt 200 ]]; then
-        echo "save: ⚠️  BRIEF.md is $BL lines, over its 200-line budget — cut settled items." >&2
+    if [[ "${BL:-0}" -gt 500 ]]; then
+        echo "save: ⚠️  BRIEF.md is $BL lines, over its 500-line budget — cut the oldest settled item, never a reason." >&2
     fi
 fi
 

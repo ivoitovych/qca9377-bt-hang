@@ -172,7 +172,7 @@ where it is filed as `BT-1`, the project's own search handle):
      generations merged: tests/ appeared twice and tools/lib/, exhibits/ and
      trials/ dangled below the closing entries (review 2026-08-15T1752Z §1.1). -->
 ```
-BRIEF.md              the concentrated current state, 200 lines, what is true / retracted / open
+BRIEF.md              the concentrated current state, under 500 lines, what is true / retracted / open, and the rules paid for
 HISTORY.md            chronological development record, wrong turns included (36 phases)
 bin/                  watchdog, capture daemons, metrics collector
 systemd/ etc/         unit files; modprobe + udev + journald configuration

@@ -3173,6 +3173,21 @@ step an operator ever stamped. It is probe-free by default now, `--probe` labels
 when it is used, and the trial harness puts the checkout's `bt-mark` and `bt-state` first on
 PATH so the suite tests the chain it ships rather than whatever the machine last deployed.
 
+### The budget
+
+The operator, reading BRIEF after a day in which it had been trimmed three times to stay at
+200 lines: *"it appears to be very concentrated, and it feels like things are falling apart
+already from there … compressed like under a heavy press."* His arithmetic: the working
+context is a million tokens, a compaction leaves about a quarter, and the one file that
+says what holds costs 4–5k of those at 16 KB — 10k at 500 lines would still be cheap. He was
+right, and the day's log was the evidence: each trim had cut a *why* (the transliteration
+rule lost its explanation; the recovery bullet lost a clause) and kept the fact, which is
+the wrong half to keep. Budget raised to 500 lines. Two rules with it: never cut a reason to
+fit a fact, and sections name their owner — the test-suite maintainer gets §8a for the rules
+he paid for, written by him, pointing at his `lessons/` file rather than reproducing it. One
+entry point, sections by owner, the long form one link away; a second brief under `tests/`
+would have recreated the must-read-proliferation problem he had named.
+
 ### The shape
 
 Four gaps, each one step past a gate that existed. The message scan stopped at the

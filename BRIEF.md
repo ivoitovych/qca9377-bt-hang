@@ -1,18 +1,23 @@
 # BRIEF — read this first, after any context reset
 
 **What this is.** Internal working state for whoever resumes the investigation: what is
-true, what is retracted, what is open. Facts only, with pointers instead of explanations.
+true, what is retracted, what is open — and the rules that were paid for, **with the why**.
+A rule without its reason gets re-learned; that is what this file exists to prevent.
 
 **What it is not.** Not evidence (`evidence/exhibits/`, 43 of them), not narrative
-(`HISTORY.md`, 2800 lines), not tooling (`docs/tooling-index.md`), not working rules
+(`HISTORY.md`, 3000 lines), not tooling (`docs/tooling-index.md`), not working rules
 (auto-loaded memory), and **not the public summary** — a stranger reads `README.md`, whose
 Status block is a dated copy of §1–§3 and §6, checked on every commit like this file
 (`FD-09`). Nothing here is derivable from those — it is the layer that says which holds.
 
-⚠️ **Budget: 200 lines.** Over that, it stops being cheaper than reading the source, which
-is the only reason it exists. Cut the oldest settled item before adding.
+⚠️ **Budget: 500 lines (~40 KB, ~10k tokens).** It was 200 until 2026-09-19; at 200 every
+addition cost a *why* somewhere else (three trims in one day), and the operator's measure —
+a post-compaction context of ~200k tokens — makes 10k for the one file that says what holds
+cheap. Over 500 it stops being cheaper than the source. Cut the oldest settled item before
+adding; never cut a reason to fit a fact. **Sections name their owner**; each owner writes
+theirs and points at the long form (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-09-18 · newest exhibit: EX-043** — no tip hash: it rotted within hours (`R2-13`).
+**Last updated: 2026-09-19 · newest exhibit: EX-043** — no tip hash: it rotted within hours (`R2-13`).
 
 ---
 
@@ -153,8 +158,11 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **Attribution is the operator's, never a tool's.** No AI/assistant attribution in commits,
   patches or docs; `repo-save` refuses an AI *author/committer identity* as well as an AI trailer
   (a reinit reset a collaborator's git config on 09-18; caught by eye, now gated). Upstream
-  sign-off is `Iaroslav Voitovych <yaroslav.voytovych@gmail.com>` — title case. ⚠️ Name and email
-  use *different* transliterations (2011 rule change). **Correct as is; do not "fix" either.**
+  sign-off is `Iaroslav Voitovych <yaroslav.voytovych@gmail.com>` — title case. ⚠️ The name and
+  the email use *different* transliterations of the same Ukrainian name: Ukraine changed its
+  Latin transliteration rules in 2011, after the gmail address was created, and the passport
+  spelling followed the new rules. **The mismatch is correct; do not "fix" either to match the
+  other** — both have already been "corrected" once by a well-meaning reader.
 - **`BT-1`…`BT-4` are this project's own invented labels** — they exist in no kernel, BlueZ
   or external convention. The register (`docs/issues.md`) keeps them; that is what issue ids
   are for. ⚠️ Anything a stranger may read names the fault **plainly**, and may carry the
@@ -192,6 +200,15 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   A/B toggling it isolates none. Check what a switch carries before designing around it.
 - **One observation is an anecdote — build the tool that checks the corpus** (Phase 25):
   `bt-stage2` turned one boot into 22, and the answer changed shape.
+
+## 8a. The test suite — rules the maintainer paid for (owner: the test-suite maintainer)
+
+*Reserved on 2026-09-19 at the operator's request. The test-suite maintainer writes this
+section — the rules, each with its reason, ten to thirty lines — and points at the long
+form in [`lessons/2026-08-22T1101Z-test-suite-maintainer.md`](lessons/) and its
+successors. Nothing here is written by the main branch; a placeholder until he does.*
+
+- (his first rule, with its why, goes here)
 
 ## 9. Open threads
 

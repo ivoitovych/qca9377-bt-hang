@@ -1,7 +1,8 @@
 # Tooling index — which tool answers which question
 
 ⚠️ **Read [`BRIEF.md`](../BRIEF.md) first** — it is the concentrated state of
-knowledge (what is true, what is **retracted**, what is open) in under 200 lines.
+knowledge (what is true, what is **retracted**, what is open, and the rules that were
+paid for with their reasons) in under 500 lines.
 This file is the layer below it: once you know *what* you are asking, this says
 *which tool* asks it.
 
