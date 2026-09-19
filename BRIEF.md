@@ -100,12 +100,11 @@ Both instances where the log names the dying command name `0x0406 Disconnect, re
 
 Two NULL-deref fixes, built from the machine's own `5.72-0ubuntu5.5` + 31 Ubuntu patches,
 running since 08-25. **Unsent. Two independent reviews (09-18, 09-19): accept both; message-only
-corrections applied; no code change. Sending is the operator's word.** Rewritten
-09-16 to BlueZ's *measured* conventions (`HACKING` + last 300 commits): ⚠️ **no
-`Signed-off-by` — BlueZ calls it an error**; 50/72; subjects 49/46 chars; checkpatch clean
-under BlueZ's own config; `git am` 4/4 alone and together. **BlueZ takes patches by mail
-(`linux-bluetooth@vger.kernel.org`), never PRs; no bug report is needed — the patch is the
-report.** `0002` has no `Fixes:` on purpose (pickaxe finds only a 2015 refactor).
+corrections applied; no code change. Sending is the operator's word.** Written to BlueZ's
+*measured* conventions (`HACKING` + last 300 commits): ⚠️ **no `Signed-off-by` — BlueZ calls it
+an error**; 50/72; subjects 49/46; checkpatch 0 errors under BlueZ's own config; `git am` 6/6.
+**BlueZ takes patches by mail (`linux-bluetooth@vger.kernel.org`), never PRs; no bug report is
+needed — the patch is the report.** `0002` has no `Fixes:` on purpose (pickaxe: a 2015 refactor).
 
 - **`0002`** (a2dp `setup->stream`): **fired 4×** — 08-26, and 3× on 09-02. Four crashes
   prevented, not merely absent (`EX-041`). Strongest runtime evidence either patch has.
