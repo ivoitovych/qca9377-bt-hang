@@ -37,15 +37,19 @@ Status path:
 		request_complete(mgmt, cs->status, opcode, index, 0, NULL);
 
 Observed as a crash on a QCA9377 (13d3:3503) whose controller stops
-answering HCI during audio use. The daemon's debug log (bluez 5.72)
-ends with exactly that delivery, for the Start Discovery it had sent
-2.05 s earlier, ten seconds after its last discovery client had gone:
+answering HCI during audio use. The archived session logs show exactly
+that sequence: the daemon's debug log (bluez 5.72) ends with the
+Command Status delivery and the callback entry, for the Start Discovery
+it had sent 2.05 s earlier, ten seconds after its last discovery client
+had gone; the contemporaneous kernel log records the resulting fault:
 
+  bluetoothd:
   21:03:16.750  discovery_remove() owner :1.125
   21:03:24.943  send_request() [0x0000] command 0x0023
   21:03:26.994  can_read_data() [0x0000] command 0x23 status: 0x00
   21:03:26.994  start_discovery_complete() status 0x00
-  21:03:26      kernel: bluetoothd[2821]: segfault at 0 ...
+  kernel:
+  21:03:26.995  bluetoothd[2821]: segfault at 0 ...
 
 "command ... status:" is the Command Status branch (Command Complete
 logs "complete:"), so the callback ran with status 0, length 0 and a

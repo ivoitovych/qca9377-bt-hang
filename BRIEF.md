@@ -99,7 +99,8 @@ Both instances where the log names the dying command name `0x0406 Disconnect, re
 ## 6. The BlueZ patches — status
 
 Two NULL-deref fixes, built from the machine's own `5.72-0ubuntu5.5` + 31 Ubuntu patches,
-running since 08-25. **Unsent — the operator wants third-party review first.** Rewritten
+running since 08-25. **Unsent. Two independent reviews (09-18, 09-19): accept both; message-only
+corrections applied; no code change. Sending is the operator's word.** Rewritten
 09-16 to BlueZ's *measured* conventions (`HACKING` + last 300 commits): ⚠️ **no
 `Signed-off-by` — BlueZ calls it an error**; 50/72; subjects 49/46 chars; checkpatch clean
 under BlueZ's own config; `git am` 4/4 alone and together. **BlueZ takes patches by mail

@@ -3088,6 +3088,21 @@ Complete it sent for the other 37 in that log? The fatal one came as the control
 timing out HCI commands every two seconds. The patch states the observation and leaves the
 cause; the fix does not depend on it.
 
+### The second review
+
+The operator asked for a second independent reading before mailing and for the task to be
+written so the reviewer's own list would govern (`docs/review-task-bluez-patches.md`). It
+came back the same day, formed before the first review was read: no blocker; one
+should-fix, message only. `0001` said the daemon log *ends with* a sequence whose last line
+was the kernel's `segfault at 0`; that line is in the kernel log beside it, not in
+`bluetoothd.log`, which ends with the callback entry and then systemd's `status=11/SEGV`.
+Two files, one sequence, stated as one file. The reviewer's point — BlueZ wants the message
+to carry the evidence *accurately* — is the same rule this project applies to exhibits, and
+the message had broken it by two lines. Corrected, both sources named. The reviewer also
+reached, independently, the conclusion our verification of the first review had reached
+about the index-fallback lead. Both defects confirmed at a master one day newer than the
+first reviewer's. No code in either patch has changed since 2026-08-25.
+
 ### The shape
 
 Three gaps, each one step past a gate that existed. The message scan stopped at the
