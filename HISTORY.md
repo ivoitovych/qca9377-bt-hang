@@ -3201,6 +3201,24 @@ tracked-only abort, the `.disabled`-only uninstall, the failing-sanitiser-only m
 finding has the scope the reviewer gave it, not the scope of the fix that was convenient; the
 register rows say so now.
 
+### The fifth review, and the gate that never ran
+
+A broad review of the whole project arrived after midnight: "high-quality investigation,
+strong fault localization, incomplete causal proof". Most of it is assessment this side agrees
+with — the next step is a kernel experiment, not more logging, and it must separate the QCA
+firmware setup from the automatic reset that `dc16388d45ec` installs together; kernel version
+no longer says whether a machine has that entry; the watchdog is an experiment harness and not
+a cure. One paragraph was a finding: the CI log of a *green* run said `rg: command not found`
+three times. Three assertions — the ones that keep retired sentences and project slang out of
+the outward-facing files — were written as `rg … || true`, so on the CI host, which has no
+ripgrep, the failed search became an empty string and the empty string became "nothing
+found". They had passed on every push since the label gate was added on 09-14 and had never
+once run. The suite's own rule — an analysis failure must never read as a zero result — was
+broken inside the suite, by the tests that enforce rules on prose. They read `grep`'s exit
+code now, and a fourth invariant forbids `rg`. The tool that found the evidence is new too:
+`scripts/ci-log-search.sh`, because the lines hid inside a step that passed and a red-run
+reader never looks there.
+
 ### The budget
 
 The operator, reading BRIEF after a day in which it had been trimmed three times to stay at

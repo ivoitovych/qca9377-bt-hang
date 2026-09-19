@@ -737,12 +737,29 @@ fi
 BT1_CURRENT_FILES=(README.md docs/bug-report.md docs/fix-proposal.md
                    bin/bt-usbmon bin/bt-hang-watchdog tools/bt-status
                    tools/bt-postmortem tools/bt-health-report.sh)
-retired=$(rg -n -i 'failure has two stages|controller fails in two stages|recoverable window closes|window closes sharply|exact operation usb_queue_reset_device|autosuspend was the trigger|stage 1 lasted ~6 hours|reached stage 2 before|cheap and safe' "${BT1_CURRENT_FILES[@]}" || true)
-if [[ -z "$retired" ]]; then
-    ok "current-facing docs and tools contain no retired BT-1/reset assertions"
-else
-    bad "retired BT-1/reset assertion remains: $retired"
-fi
+# ⚠️ A SEARCH THAT FAILS IS NOT A SEARCH THAT FOUND NOTHING. These three
+# negative assertions used `rg … || true`: on a host without ripgrep — CI, as
+# the 2026-09-20 deep review found in the log ("rg: command not found") — the
+# command failed, `|| true` turned the failure into an empty string, and the
+# empty string read as "no forbidden text", green. Exactly the analysis-
+# failure-as-zero-result shape this suite's own rules forbid. grep is on every
+# host this suite runs on; its exit code says which of the three things
+# happened, and only "no match" (1) is the negative result these tests want.
+#   0 matched  → the assertion fails on the matches
+#   1 no match → the assertion passes
+#   2 error    → the assertion fails as a broken search, never as a pass
+neg_search() {   # neg_search <label> <grep -E args…>: ok/bad on the three outcomes
+    local label="$1"; shift
+    local out rc
+    out=$(grep -nE "$@" 2>/dev/null); rc=$?
+    case $rc in
+        1) ok "$label" ;;
+        0) bad "$label — found: $(head -3 <<<"$out" | tr '\n' ' ')" ;;
+        *) bad "$label — the search itself FAILED (grep rc=$rc); not a negative result" ;;
+    esac
+}
+neg_search "current-facing docs and tools contain no retired BT-1/reset assertions" \
+    -i 'failure has two stages|controller fails in two stages|recoverable window closes|window closes sharply|exact operation usb_queue_reset_device|autosuspend was the trigger|stage 1 lasted ~6 hours|reached stage 2 before|cheap and safe' "${BT1_CURRENT_FILES[@]}"
 
 # ── PROJECT LABELS MUST NOT LEAD IN OUTWARD-FACING PROSE ─────────────────
 #
@@ -767,12 +784,7 @@ fi
 #
 # ⚠️ THE BUG REPORT IS CHECKED SEPARATELY AND STRICTLY, because it is the only
 # file here that leaves the project on its own.
-bugrep_slang=$(rg -n 'BT-[1-4]' docs/bug-report.md || true)
-if [[ -z "$bugrep_slang" ]]; then
-    ok "the bug report carries no project-invented issue labels"
-else
-    bad "project slang in the outward-facing bug report: $bugrep_slang"
-fi
+neg_search "the bug report carries no project-invented issue labels" 'BT-[1-4]' docs/bug-report.md
 
 # Elsewhere in outward-facing prose a bare label — one not wrapped in parens or
 # immediately followed by an explanatory comma — reads as if the term were
@@ -782,12 +794,30 @@ fi
 #   (`BT-1`)        a parenthetical search handle beside a plain-language name
 #   `BT-1`, …       backticked and immediately explained — the defining use
 # A bare `BT-1` in running prose is what this rejects.
-bare_slang=$(rg -n 'BT-[1-4]' README.md docs/fix-proposal.md 2>/dev/null \
-             | rg -v '\(`?BT-[1-4]`?[),]|`BT-[1-4]`,[[:space:]]+[[:alnum:]]' || true)
-if [[ -z "$bare_slang" ]]; then
-    ok "outward-facing docs use project labels only as parenthetical search handles"
+# Two searches: every label occurrence, minus the two allowed shapes. Each
+# grep's exit code is read; an error in either is a broken search, not a pass.
+labels_out=$(grep -nE 'BT-[1-4]' README.md docs/fix-proposal.md 2>/dev/null); labels_rc=$?
+if (( labels_rc == 2 )); then
+    bad "outward-facing label search FAILED (grep rc=2); not a negative result"
+elif (( labels_rc == 1 )); then
+    ok "outward-facing docs use project labels only as parenthetical search handles (none present)"
 else
-    bad "bare project label in outward-facing prose: $bare_slang"
+    bare_slang=$(grep -vE '\(`?BT-[1-4]`?[),]|`BT-[1-4]`,[[:space:]]+[[:alnum:]]' <<<"$labels_out"); bare_rc=$?
+    if (( bare_rc == 2 )); then
+        bad "outward-facing label filter FAILED (grep rc=2); not a negative result"
+    elif [[ -z "$bare_slang" ]]; then
+        ok "outward-facing docs use project labels only as parenthetical search handles"
+    else
+        bad "bare project label in outward-facing prose: $(head -3 <<<"$bare_slang" | tr '\n' ' ')"
+    fi
+fi
+
+# And the suite must not depend on a tool CI does not install. ripgrep was the
+# one such dependency; this keeps it from coming back under another name.
+if grep -qE '^[^#]*\brg (-[a-zA-Z]|'"'"')' tests/run-tests; then
+    bad "tests/run-tests invokes ripgrep — CI has no rg, and a missing search tool must never read as a pass"
+else
+    ok "tests/run-tests invokes no ripgrep — every search here uses grep, which every host has"
 fi
 
 echo

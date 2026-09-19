@@ -240,6 +240,14 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    overrides `disabled`); `bt-dyndbg status` shows 166 sites still on — the service alone
    carries the alt-1 evidence lines (also verified on boot `e9399c8c`). Still owed: one
    alt-1 capture with the counters under the original configuration.
+6. **The next experiment is a kernel, not more logging (deep review 2026-09-20).** Every
+   reproduction ran on a kernel that treated `13d3:3503` as generic; `dc16388d45ec` gives it
+   `BTUSB_QCA_ROME`, which installs *both* QCA firmware setup and a reset-on-timeout callback.
+   Those must be separated ("Build B": setup on, automatic reset off) or a failure and its
+   treatment land in one trial. Ladder: A baseline on one fixed tree → B setup only → E setup
+   on, alt-1 blocked for this ID → D as upstream. **A kernel build on the family laptop —
+   the operator's decision.** Kernel version alone no longer predicts behaviour (backports):
+   check the running `btusb` for the entry (`tools/bt-verify-kernel-mechanism`), never the version.
 
 ## 10. Where detail lives
 

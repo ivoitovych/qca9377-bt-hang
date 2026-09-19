@@ -89,7 +89,9 @@ neither `btusb_qca_reset` nor `btusb_setup_qca`. ⚠️ Upstream commit `dc16388
 ("Bluetooth: btusb: Add IMC Networks QCA9377 to quirks table", committed 2026-08-07, in
 master, not in v7.0 or in 6.6.y/6.12.y) has since added `BTUSB_QCA_ROME |
 BTUSB_WIDEBAND_SPEECH` for this ID, for a BLE-scanning failure; a kernel carrying it takes
-the QCA firmware-setup and reset paths, which this report has **not** tested. The GUI toggle fails with
+the QCA firmware-setup and reset paths, which this report has **not** tested — and because
+device-ID additions are routinely backported, the kernel *version* no longer says whether a
+given machine has it: check the running `btusb` for the entry. The GUI toggle fails with
 `Opcode 0x0c03 (HCI_Reset) failed: -110` (`EX-039`); a warm reboot leaves the device
 unenumerable and a power-off brings it back in about a second (`EX-027`, `EX-028`,
 `EX-034`). `hci0` is never unregistered — the device stays enumerated and cannot
