@@ -22,6 +22,9 @@ fi
 [[ -n "$CP" && -f "$CP" ]] || { echo "no checkpatch.pl found; pass one" >&2; exit 2; }
 [[ -f "$TREE/.checkpatch.conf" ]] || { echo "no .checkpatch.conf in $TREE" >&2; exit 2; }
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# BT_PATCH_DIR: check another directory of patches (e.g. patches/bluez/v2)
+# with the same rules; default is the directory this script lives in.
+HERE="${BT_PATCH_DIR:-$HERE}"
 cd "$TREE" || exit 2
 rc=0
 for p in "$HERE"/0*.patch; do

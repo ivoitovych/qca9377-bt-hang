@@ -3267,6 +3267,12 @@ this week, not either patch. Two of those twelve series are other people's attem
 the crash the coredumps show. No reply to the bot is owed, and the script stays, so the next
 "is this ours?" is a command rather than an argument.
 
+The v2 was prepared the same night without being sent: a script derives it from the v1
+files and refuses to write if anything below the separator moved, gitlint was installed
+into the ignored cache and first made to reproduce the bot's own violation count on v1
+before it was believed on v2, and checkpatch, `git am` and the mail builder ran on the
+result. Whether those two mails go is the question the record leaves with the operator.
+
 ### The shape
 
 Four gaps, each one step past a gate that existed. The message scan stopped at the

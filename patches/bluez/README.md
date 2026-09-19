@@ -36,6 +36,26 @@ No reply to the bot is owed. **Open (CB-02): whether to send a v2 of each with t
 quoted code indented by spaces**, changelog below the `---`. Nothing in the code
 would change; the operator decides, and nothing goes out without his word.
 
+### v2 — prepared, not sent
+
+[`v2/`](v2/) holds both patches as the bot would want them, derived from the v1
+files by `scripts/build-v2.sh` (deterministic; refuses to write if anything after
+the `---` changed beyond the two changelog lines). What changed: every tab in the
+quoted C is four spaces; the two quoted kernel fault lines are wrapped at `sp`;
+the three disassembly lines lose three spaces before `<--`; subject prefix
+`[PATCH BlueZ v2]`; two-line changelog under the separator. The diff is v1's,
+byte for byte.
+
+| check on `v2/` | result |
+|---|---|
+| `scripts/gitlint-check.sh <tree> v2/*.patch` — gitlint 0.19.1, BlueZ's `.gitlint`; on the v1 files it reproduces the bot's 16 / 11 B3 violations first | ✅ 0 violations each |
+| `BT_PATCH_DIR=patches/bluez/v2 patches/bluez/checkpatch-check.sh <tree>` | ✅ 0 errors, **0 warnings** each (v1: 1 warning) |
+| `BT_PATCH_DIR=patches/bluez/v2 patches/bluez/git-am-check.sh <tree> c73fa2f9a` | ✅ 6/6 |
+| `BT_PATCH_DIR=patches/bluez/v2 scripts/build-mails.sh` | changelog first under `---`, then the mail note, then the diffstat |
+
+To send, on the operator's word only: build the mails with `BT_PATCH_DIR` as
+above and `git send-email` each from `tmp/mail/` separately, as for v1.
+
 Two crashes recorded as `EX-032` on this machine, resolved to source in
 [`reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md`](../../reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md)
 and fixed here.

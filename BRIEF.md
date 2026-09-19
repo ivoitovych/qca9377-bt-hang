@@ -258,9 +258,11 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    check the running `btusb` for the entry (`tools/bt-verify-kernel-mechanism`), never the version.
 7. **BlueZ v2 or not (CB-02).** The bot's only actionable finding is hard tabs in the quoted C
    of both commit messages. A v2 with spaces clears GitLint and changes no code; a v2 for a
-   linter before a maintainer has replied may read as noise. Operator's decision; if yes, the
-   changelog goes below the `---`, `git-am-check.sh` and `checkpatch-check.sh` re-run first,
-   two separate mails as before. Whatever the maintainer writes first decides the rest.
+   linter before a maintainer has replied may read as noise. Operator's decision. **v2 is
+   prepared in `patches/bluez/v2/`** (`scripts/build-v2.sh`, diff byte-identical to v1):
+   gitlint 0, checkpatch 0/0, `git am` 6/6; `BT_PATCH_DIR=patches/bluez/v2 scripts/build-mails.sh`
+   lays changelog, note, diffstat. Two separate mails as before, on his word only. Whatever
+   the maintainer writes first decides the rest.
 
 ## 10. Where detail lives
 

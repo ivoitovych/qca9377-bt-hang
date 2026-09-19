@@ -26,6 +26,9 @@ set -uo pipefail
 export LC_ALL=C
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# BT_PATCH_DIR: check another directory of patches (e.g. patches/bluez/v2)
+# with the same rules; default is the directory this script lives in.
+HERE="${BT_PATCH_DIR:-$HERE}"
 TREE="${1:?usage: git-am-check.sh <path-to-bluez-checkout> [<commit>]}"
 BASE="${2:-HEAD}"
 
