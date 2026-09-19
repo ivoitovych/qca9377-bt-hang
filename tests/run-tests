@@ -10020,6 +10020,42 @@ STUNMERGED=$(st_run)
     || bad "an unmerged remote branch was not surfaced"
 rm -rf "$ST"
 
+# ── devtools/ci runs gh INSIDE the repository, and a gh failure is not "no run" ─
+#
+# gh resolves the repository from the current directory. On 2026-09-19 the
+# session's working directory had moved one level above the checkout; every
+# `gh run list` then failed with "not a git repository", the tool dropped that
+# stderr, and --wait reported "no run after the grace budget" three times for
+# runs that existed and were green. Two invariants: gh is invoked with the
+# checkout as its cwd wherever the tool is started from, and a failing gh stops
+# the tool with gh's own message rather than being read as an absent run.
+CIS=$(mktemp -d); mkdir -p "$CIS/bin" "$CIS/elsewhere"
+cat > "$CIS/bin/gh" <<'EOF'
+#!/bin/bash
+# stub: record the cwd gh was called from; answer one green run, or fail on demand
+echo "$PWD" >> "${CI_STUB_LOG:?}"
+[[ -n "${CI_STUB_FAIL:-}" ]] && { echo "failed to determine base repo: not a git repository" >&2; exit 1; }
+case "$*" in
+  *"run list"*) printf 'success\tcompleted\t123\tstub run\n' ;;
+  *) exit 0 ;;
+esac
+EOF
+chmod +x "$CIS/bin/gh"
+: > "$CIS/calls"
+CIOUT=$(cd "$CIS/elsewhere" && env PATH="$CIS/bin:$PATH" CI_STUB_LOG="$CIS/calls" \
+        "$OLDPWD/devtools/ci" HEAD 2>&1); circ=$?
+cwd_seen=$(sort -u "$CIS/calls" | head -1)
+# devtools/ci cds to the PHYSICAL path of its own parent; compare like with like.
+[[ "$cwd_seen" == "$(pwd -P)" ]] \
+    && ok "devtools/ci invokes gh with the checkout as cwd when started elsewhere (rc=$circ)" \
+    || bad "devtools/ci ran gh from '$cwd_seen', not the checkout (rc=$circ)"
+CIFAIL=$(cd "$CIS/elsewhere" && env PATH="$CIS/bin:$PATH" CI_STUB_LOG="$CIS/calls" CI_STUB_FAIL=1 \
+         BT_CI_GRACE=2 BT_CI_POLL=0 "$OLDPWD/devtools/ci" --wait HEAD 2>&1); cifrc=$?
+(( cifrc == 2 )) && [[ "$CIFAIL" == *"gh run list failed"* && "$CIFAIL" == *"not a git repository"* && "$CIFAIL" != *"grace budget"* ]] \
+    && ok "devtools/ci stops on a gh failure with gh's message, not 'no run after the grace budget'" \
+    || bad "a gh failure was read as an absent run (rc=$cifrc): $(tail -2 <<<"$CIFAIL" | tr '\n' ' ')"
+rm -rf "$CIS"
+
 # ── repo-save, the gate that actually commits ────────────────────────────
 #
 # It stages, validates, scans, scans the MESSAGE, commits, and verifies the

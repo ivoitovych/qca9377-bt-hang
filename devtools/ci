@@ -34,6 +34,14 @@ export LC_ALL=C
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/.." && pwd)"
+# gh resolves "which repository" from the CURRENT DIRECTORY, not from the
+# script's location. Run from anywhere else — as this tool was on 2026-09-19,
+# when the session's working directory had moved one level up — every `gh run
+# list` fails with "not a git repository", its stderr is dropped below, fetch()
+# returns nothing, and --wait reports "no run after the grace budget" for a run
+# that exists and is green. Three verdicts were misread that way in one
+# afternoon. devtools/status already cds for the same reason.
+cd "$REPO" || { echo "ci: cannot enter $REPO" >&2; exit 2; }
 
 WAIT=0; RECENT=0; N=6; SHA=""
 while [[ $# -gt 0 ]]; do
@@ -66,9 +74,23 @@ fetch() {   # -> "conclusion<TAB>status<TAB>runId<TAB>title" for the newest run 
     # whitespace; every field shifted left by one and the title printed where
     # the run id belonged. Two wrong diagnoses on this file's first run, both
     # corrected by looking at the raw bytes (`cat -A`) instead of theorising.
-    gh run list --limit 30 --json conclusion,status,headSha,databaseId,displayTitle \
+    # gh's own failure (no repo, no auth, no network) must not read as "no run":
+    # its stderr is kept and the tool stops on it, because an empty answer from
+    # a broken query is exactly what waited twenty minutes on 2026-09-19.
+    local out err rc
+    err=$(mktemp)
+    out=$(gh run list --limit 30 --json conclusion,status,headSha,databaseId,displayTitle \
         --jq ".[] | select(.headSha | startswith(\"$SHORT\")) | \"\\(if .conclusion == null or .conclusion == \"\" then \"-\" else .conclusion end)\\t\\(.status)\\t\\(.databaseId)\\t\\(.displayTitle)\"" \
-        2>/dev/null | head -1
+        2>"$err"); rc=$?
+    if (( rc != 0 )); then
+        echo "ci: gh run list failed (rc=$rc):" >&2; sed 's/^/     /' "$err" >&2; rm -f "$err"
+        # fetch() runs inside `row=$(fetch) || exit 2`, a subshell: `exit` here would end
+        # only the subshell and the caller would loop on. Return, and every
+        # caller carries `|| exit 2`. Found by the standalone proof, not by eye.
+        return 2
+    fi
+    rm -f "$err"
+    printf '%s\n' "$out" | head -1
 }
 
 if (( RECENT )); then
@@ -79,7 +101,7 @@ if (( RECENT )); then
     exit 0
 fi
 
-row=$(fetch)
+row=$(fetch) || exit 2
 
 # ⚠️ --wait MUST WAIT FOR THE RUN TO APPEAR, not only for it to finish. GitHub
 # queues the workflow run seconds-to-minutes AFTER the push returns, so the
@@ -97,20 +119,21 @@ if [[ -z "$row" ]]; then
     fi
     printf 'ci — %s not queued yet' "$SHORT"
     # ~20 min at 30 s; a push that produced no run is a real error, not an
-    # infinite wait. The budget was 10 min until 2026-09-19, when two pushes in
-    # one afternoon queued after 10–11 min (run createdAt minus push time) and
-    # the tool declared both "no run" while their runs then went green. The
-    # queue is GitHub's; the budget has to cover its slow days. The two seams
-    # (BT_CI_GRACE, BT_CI_POLL) exist so a test can drive both outcomes — the
-    # run appearing, and the budget running out — without a real twenty-minute
-    # wall or a real push. A guard that cannot be made to fire is this
-    # project's most-repeated defect.
+    # infinite wait. ⚠️ The budget was 10 min until 2026-09-19 and was doubled
+    # on the belief that two runs had queued late. That belief was wrong: the
+    # runs were found within minutes by `gh run list -R …`; this tool never saw
+    # them because it ran gh outside the repository (the cd above). The larger
+    # budget is kept as margin and costs only a longer wait on a sha that was
+    # truly never pushed. The two seams (BT_CI_GRACE, BT_CI_POLL) exist so a
+    # test can drive both outcomes — the run appearing, and the budget running
+    # out — without a real wall-clock wait or a real push. A guard that cannot
+    # be made to fire is this project's most-repeated defect.
     grace="${BT_CI_GRACE:-40}"
     while [[ -z "$row" ]]; do
         (( grace-- > 0 )) || { echo; echo "ci: no run for $SHORT after the grace budget — was it pushed to a branch Actions builds?" >&2; exit 2; }
         printf '.'
         sleep "${BT_CI_POLL:-30}"
-        row=$(fetch)
+        row=$(fetch) || exit 2
     done
     echo
 fi
@@ -128,7 +151,7 @@ if (( WAIT )); then
         [[ "$status" == "completed" ]] && break
         printf '.'
         sleep 30
-        row=$(fetch)
+        row=$(fetch) || exit 2
         [[ -n "$row" ]] || { echo; echo "ci: the run for $SHORT disappeared while waiting" >&2; exit 2; }
     done
     echo
