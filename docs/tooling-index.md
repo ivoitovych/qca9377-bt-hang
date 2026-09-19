@@ -86,6 +86,7 @@ run `bluetoothd -d` — this project ships that on in
 | Validate + scan + drift + install state | `devtools/check` |
 | Commit, push and verify the remote matches | **`devtools/save <msgfile>`** (wraps `repo-save`: validates, scans content and message, refuses an AI author/committer identity, verifies the remote) |
 | **What did CI say about a commit?** | `devtools/ci [sha]`, `--wait`, `--recent N` — never a hand-typed `until gh run list … \| grep` loop; that prompted every time and read as "Parse error" |
+| **Why is CI red?** | `devtools/ci --failed [sha]` — prints the failing invariants and any stale coverage exclusion with the lines it hid; a red `--wait` does this automatically. Never `gh run view … --log-failed \| grep`: that prompted three times on 2026-09-19/20 and blocked an unattended session for an hour |
 | Did the BlueZ patch guards fire? | `tools/bt-guards` |
 | Publish-safety scan (MACs, BSSIDs, emails) | `devtools/repo-scan` |
 | **Which review findings are still open, across every register?** | `devtools/review-open` (`--all`, `--counts`) — reads the status column of `reviews/README.md`; the gate before anything is submitted |
