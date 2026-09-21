@@ -57,9 +57,22 @@ command -v python3 >/dev/null 2>&1 || {
 # DERIVED, like every other file list in this repository. A hand-written
 # "bin/bt-capture" here would keep reporting one file after a second is added,
 # and the report would look complete.
-PYFILES=()
+#
+# scripts/ IS OUT OF SCOPE, AND SAYS SO. scripts/README.md: "Nothing here is part
+# of the deliverable" — one-off extractions that talk to patchwork or GitHub and
+# cannot run in the suite. On 2026-09-21 two such survey scripts took the total
+# from 86% to 41% and turned main red over files nobody installs. They are
+# excluded by directory, and every excluded file is PRINTED below, so the
+# narrowing is visible in the report rather than silent. A script promoted to
+# tools/ or devtools/ (the README's rule) is measured from that moment.
+PYFILES=(); PYSKIPPED=()
 while IFS= read -r f; do
     [[ -f "$f" ]] || continue
+    case "$f" in scripts/*)
+        IFS= read -r shebang < "$f" || continue
+        case "$shebang" in '#!'*python*) PYSKIPPED+=("$f") ;; *) case "$f" in *.py) PYSKIPPED+=("$f") ;; esac ;; esac
+        continue ;;
+    esac
     IFS= read -r shebang < "$f" || continue
     case "$shebang" in '#!'*python*) PYFILES+=("$f") ;; esac
     case "$f" in *.py) PYFILES+=("$f") ;; esac
@@ -72,6 +85,9 @@ if (( ${#PYFILES[@]} == 0 )); then
     echo "py-coverage: no Python files found in git ls-files — nothing enumerated" >&2
     exit 2
 fi
+for f in "${PYSKIPPED[@]+"${PYSKIPPED[@]}"}"; do
+    echo "out of scope (scripts/, not shipped): $f"
+done
 
 WORK=$(mktemp -d) || exit 1
 trap 'rm -rf "$WORK"' EXIT
