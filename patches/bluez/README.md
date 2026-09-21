@@ -36,6 +36,20 @@ No reply to the bot is owed. **Open (CB-02): whether to send a v2 of each with t
 quoted code indented by spaces**, changelog below the `---`. Nothing in the code
 would change; the operator decides, and nothing goes out without his word.
 
+### The GitHub pull requests — the bot's, not ours
+
+`bluez/bluez` #2554 (`0001`) and #2555 (`0002`) were opened by the bot from the
+patchwork series; they are where its CI runs. Measured on 2026-09-21
+([`reviews/2026-09-21T0900Z-bluez-ci-workflow-as-practised.md`](../../reviews/2026-09-21T0900Z-bluez-ci-workflow-as-practised.md)):
+no pull request in that repository has ever been merged (0 of 1073), the
+maintainers' bot describes it as "only for CI and testing purposes", and a new
+version mailed to the list becomes a **new** pull request because the bot keys
+them by patchwork series id — by the maintainers' design, stated in their source.
+**Nothing is ever done on GitHub: no comment, no push, no pull request.** The
+lint checks are advisory in practice — 25 of 63 recently accepted series carried
+a CheckPatch/GitLint fail or warning when applied — so v1 is not an exception to
+the workflow, and a v2 by mail is the one proper way to clear a bot finding.
+
 ### v2 — prepared, not sent
 
 [`v2/`](v2/) holds both patches as the bot would want them, derived from the v1

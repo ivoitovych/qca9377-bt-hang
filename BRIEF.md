@@ -261,8 +261,16 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    linter before a maintainer has replied may read as noise. Operator's decision. **v2 is
    prepared in `patches/bluez/v2/`** (`scripts/build-v2.sh`, diff byte-identical to v1):
    gitlint 0, checkpatch 0/0, `git am` 6/6; `BT_PATCH_DIR=patches/bluez/v2 scripts/build-mails.sh`
-   lays changelog, note, diffstat. Two separate mails as before, on his word only. Whatever
-   the maintainer writes first decides the rest.
+   lays changelog, note, diffstat. Two separate mails as before, on his word only.
+   **The workflow, measured 09-21 (`reviews/2026-09-21T0900Z-…`), not assumed:** the GitHub
+   PRs (#2554/#2555) are the bot's CI vehicle — 0 of 1073 ever merged, "only for CI and
+   testing purposes" in the maintainers' own bot text; **never comment, push or open a PR
+   there.** A v2 is a new patchwork series id and so a **new PR by the maintainers' design**
+   (`sync_patchwork.py`: "a resent series comes with a new series id") — that is correct, not
+   a discourtesy. Lint is advisory: 25 of 63 accepted series carried a CheckPatch/GitLint
+   fail/warning when applied, the maintainer's own included; Rule 2 of
+   `doc/maintainer-guidelines.rst` exempts verbatim logs from the line limit. A v2 by mail is
+   the contributor's outlet for a bot finding and is within practice either way.
 
 ## 10. Where detail lives
 

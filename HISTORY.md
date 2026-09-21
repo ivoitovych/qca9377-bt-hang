@@ -3273,6 +3273,26 @@ into the ignored cache and first made to reproduce the bot's own violation count
 before it was believed on v2, and checkpatch, `git am` and the mail builder ran on the
 result. Whether those two mails go is the question the record leaves with the operator.
 
+He did not take the recommendation to wait. He had found the pull requests the bot opens
+on GitHub, seen red on both, and said what a GitHub contributor knows: *"Maintainer created
+the CI scripts, so they should be followed. And we are one exception. For what reason we
+should have an exception? … this is arrogance."* And he asked for it to be measured — a few
+dozen merges, who reacts to CI errors, the exact workflow — and then whether a new version
+can land in the same pull request, because a second one looked to him like disrespect.
+
+The measurement answered both, and corrected both of us. The pull requests are the bot's
+test bench: none of 1073 has ever been merged, the maintainers' own bot tells anyone who
+opens one that the repository is "only for CI and testing purposes", and their source says
+in a comment that "a resent series comes with a new series id" — a v2 is a new pull request
+by their design, and there is no branch a contributor could push a follow-up commit to. His
+model of the mechanism was GitHub's and does not exist here. But "wait" had been a judgment
+delivered as if it were knowledge, and the data under it is mixed: forty percent of the
+series the maintainer applied in two months carried a lint failure or warning, his own
+among them, and the written maintainer rules exempt verbatim logs from the line limit — so
+lint is advisory and we were never an exception; yet a contributor who wants to own their
+CI result has exactly one outlet, a v2 by mail, and it costs the maintainer nothing. The
+instinct was right, the mechanism was wrong, and the recommendation had not been checked.
+
 ### The shape
 
 Four gaps, each one step past a gate that existed. The message scan stopped at the
