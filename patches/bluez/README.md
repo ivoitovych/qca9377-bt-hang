@@ -1,4 +1,4 @@
-# BlueZ patches — two NULL dereferences, sent 2026-09-19
+# BlueZ patches — two NULL dereferences, sent 2026-09-19, v2 2026-09-21
 
 ## Sent
 
@@ -50,7 +50,21 @@ lint checks are advisory in practice — 25 of 63 recently accepted series carri
 a CheckPatch/GitLint fail or warning when applied — so v1 is not an exception to
 the workflow, and a v2 by mail is the one proper way to clear a bot finding.
 
-### v2 — prepared, not sent
+### v2 — sent 2026-09-21 22:47 CEST, on the operator's word
+
+| patch | Message-ID | server result |
+|---|---|---|
+| `0001` v2 | `<20260921204706.211385-1-yaroslav.voytovych@gmail.com>` | 250 |
+| `0002` v2 | `<20260921204711.211409-1-yaroslav.voytovych@gmail.com>` | 250 |
+
+Two separate mails, new threads, built with `BT_PATCH_DIR=patches/bluez/v2
+scripts/build-mails.sh` from the tracked `v2/` files at `17b393f`; each checked
+with `git apply --check` against BlueZ `c73fa2f9a` and dry-run before sending.
+The bot will open two **new** pull requests for them — by the maintainers'
+design (above). Expected from its run: CheckPatch and GitLint clean;
+`TestFunctional` likely still failing, as on every series that week, and not ours.
+
+What follows is how v2 was prepared.
 
 [`v2/`](v2/) holds both patches as the bot would want them, derived from the v1
 files by `scripts/build-v2.sh` (deterministic; refuses to write if anything after

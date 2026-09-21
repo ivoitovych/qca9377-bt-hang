@@ -113,7 +113,8 @@ running since 08-25. **Sent 2026-09-19 to `linux-bluetooth` as two mails (Messag
 an error**; 50/72; subjects 49/46; checkpatch 0 errors under BlueZ's own config; `git am` 6/6.
 **BlueZ takes patches by mail (`linux-bluetooth@vger.kernel.org`), never PRs; no bug report is
 needed — the patch is the report.** `0002` has no `Fixes:` on purpose (pickaxe: a 2015 refactor).
-**The list's CI bot answered both within 90 min (09-19 22:05/22:10 UTC; register §CB):** every
+**v2 of both sent 2026-09-21** (message-only: quoted code re-indented, two lines wrapped).
+**The list's CI bot answered both v1 mails within 90 min (09-19 22:05/22:10 UTC; register §CB):** every
 build, smatch, scan-build, valgrind and distcheck PASS; CheckPatch the one known quoted-line
 warning; **GitLint B3 — hard tabs in the quoted C of both messages — the only actionable item
 (v2 with spaces: operator's call, CB-02)**; TestFunctional FAIL is the bot's own — the same two
@@ -256,7 +257,11 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    on, alt-1 blocked for this ID → D as upstream. **A kernel build on the family laptop —
    the operator's decision.** Kernel version alone no longer predicts behaviour (backports):
    check the running `btusb` for the entry (`tools/bt-verify-kernel-mechanism`), never the version.
-7. **BlueZ v2 or not (CB-02).** The bot's only actionable finding is hard tabs in the quoted C
+7. **BlueZ v2 — SENT 2026-09-21 22:47 CEST on the operator's word** (two mails, 250 each,
+   Message-IDs in `patches/bluez/README.md`; app password used once, stored nowhere). Next: the
+   bot's run on v2 (two NEW PRs — correct; expect lint clean, `TestFunctional` still theirs),
+   then the maintainer. If he asks for changes, v3 by mail the same way. How it got here:
+   the bot's only actionable finding is hard tabs in the quoted C
    of both commit messages. A v2 with spaces clears GitLint and changes no code; a v2 for a
    linter before a maintainer has replied may read as noise. Operator's decision. **v2 is
    prepared in `patches/bluez/v2/`** (`scripts/build-v2.sh`, diff byte-identical to v1):

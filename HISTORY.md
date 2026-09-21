@@ -3293,6 +3293,12 @@ lint is advisory and we were never an exception; yet a contributor who wants to 
 CI result has exactly one outlet, a v2 by mail, and it costs the maintainer nothing. The
 instinct was right, the mechanism was wrong, and the recommendation had not been checked.
 
+He read that and sent the v2. On 2026-09-21 at 22:47 CEST both went to the list as two new
+threads, `250` each, with a fresh app password used once on the command line and stored
+nowhere — the same procedure as two days before, rebuilt, apply-checked and dry-run first.
+The contributor's half of the bot's report is answered the way this project's maintainers
+built it to be answered.
+
 ### The shape
 
 Four gaps, each one step past a gate that existed. The message scan stopped at the
