@@ -1,0 +1,71 @@
+#!/bin/bash
+# held — the held kernel/* branch, without the hand-typed git chains that
+#        prompted the operator five times on 2026-09-23.
+#
+#   devtools/held status            where main and the held branch stand, on every remote
+#   devtools/held sync              merge main into the held branch, regenerate the exhibit
+#                                   index if it conflicts, commit, push to `private`, return to main
+#   devtools/held commit <msgfile>  commit the held branch's working tree via repo-save
+#                                   (which pushes kernel/* to `private` only), return to main
+#   devtools/held edit              switch to the held branch (for editing patches/kernel/);
+#                                   `devtools/held commit` or `sync` returns to main
+#
+# Never touches `origin` for the held branch; `repo-save` refuses that too.
+# One plain argument, no shell syntax, matched by the granted devtools/* rule.
+set -uo pipefail
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO" || exit 2
+HELD="${BT_HELD_BRANCH:-kernel/mgmt-flush-status}"
+IDENT=(-c user.name="Iaroslav Voitovych" -c user.email="yaroslav.voytovych@gmail.com")
+
+back_to_main() { git checkout -q main || { echo "could not return to main" >&2; exit 1; }; }
+
+case "${1:-status}" in
+status)
+	git fetch -q origin 2>/dev/null; git fetch -q private 2>/dev/null
+	printf '%-28s local %s  origin %s  private %s\n' main \
+		"$(git rev-parse --short main)" \
+		"$(git rev-parse --short origin/main 2>/dev/null || echo -)" \
+		"$(git rev-parse --short private/main 2>/dev/null || echo -)"
+	printf '%-28s local %s  origin %s  private %s\n' "$HELD" \
+		"$(git rev-parse --short "$HELD")" \
+		"$(git rev-parse --short "origin/$HELD" 2>/dev/null || echo none)" \
+		"$(git rev-parse --short "private/$HELD" 2>/dev/null || echo none)"
+	n=$(git ls-remote --heads origin 'kernel/*' | wc -l)
+	(( n == 0 )) && echo "origin carries no kernel/* branch ✓" || { echo "✗ origin carries $n kernel/* branch(es)" >&2; exit 1; }
+	echo "held branch is $(git rev-list --count "main..$HELD") commit(s) ahead of main, $(git rev-list --count "$HELD..main") behind"
+	;;
+sync)
+	[[ -z "$(git status --porcelain)" ]] || { echo "working tree not clean — commit or stash first" >&2; exit 1; }
+	git checkout -q "$HELD" || exit 1
+	if ! git merge -q --no-edit main 2>/dev/null; then
+		# the exhibit index is generated: regenerate it instead of merging text
+		if git diff --name-only --diff-filter=U | grep -qx evidence/exhibits/README.md; then
+			git checkout --theirs evidence/exhibits/README.md
+			tools/bt-exhibit index >/dev/null
+			git add evidence/exhibits/README.md
+		fi
+		if git diff --name-only --diff-filter=U | grep -q .; then
+			echo "unresolved conflicts:"; git diff --name-only --diff-filter=U
+			echo "resolve them, then: devtools/held commit <msgfile>" >&2; exit 1
+		fi
+		git "${IDENT[@]}" commit -q -m "Merge main into $HELD"
+	fi
+	git push -q private "$HELD" 2>&1 | tail -1
+	back_to_main
+	"$0" status
+	;;
+commit)
+	msg="${2:?devtools/held commit <msgfile>}"
+	[[ "$(git branch --show-current)" == "$HELD" ]] || git checkout -q "$HELD" || exit 1
+	devtools/repo-save "$REPO" -F "$msg"; rc=$?
+	back_to_main
+	exit $rc
+	;;
+edit)
+	[[ -z "$(git status --porcelain)" ]] || { echo "working tree not clean" >&2; exit 1; }
+	git checkout -q "$HELD" && echo "on $HELD — edit, then: devtools/held commit <msgfile>"
+	;;
+*)
+	sed -n '2,13p' "$0"; exit 2 ;;
+esac
