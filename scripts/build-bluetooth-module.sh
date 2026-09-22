@@ -16,7 +16,7 @@
 # /lib/modules/$(uname -r)/build.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC="$HERE/cache/linux"
+SRC="${BT_KSRC:-$HERE/cache/linux}"   # BT_KSRC: another (sparse) checkout, e.g. a worktree at bluetooth-next/master
 OUT="$HERE/tmp/bt-build"
 KBUILD="/lib/modules/$(uname -r)/build"
 PATCH="${1:-}"

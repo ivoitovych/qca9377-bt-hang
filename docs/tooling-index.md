@@ -99,7 +99,8 @@ run `bluetoothd -d` — this project ships that on in
 | Did the BlueZ patch guards fire? | `tools/bt-guards` |
 | Publish-safety scan (MACs, BSSIDs, emails) | `devtools/repo-scan` |
 | **Which review findings are still open, across every register?** | `devtools/review-open` (`--all`, `--counts`) — reads the status column of `reviews/README.md`; the gate before anything is submitted |
-| Compile-test a kernel patch against the running kernel (no tree needed) | `scripts/build-bluetooth-module.sh [patch]` — `net/bluetooth` from `cache/linux` against `/lib/modules/$(uname -r)/build`; builds only, never installs |
+| Compile-test a kernel patch against the running kernel (no tree needed) | `scripts/build-bluetooth-module.sh [patch]` — `net/bluetooth` from `cache/linux` (or `BT_KSRC=<checkout>`) against `/lib/modules/$(uname -r)/build`; builds only, never installs |
+| Does a one-file kernel patch compile at **another** tree's tip (`bluetooth-next`, a stable branch)? | `scripts/compile-mgmt-at.sh <sparse-worktree> <patch>` — that tree's `include/` first, `-Werror`, unpatched then patched. Whole-module builds across kernel versions need a full tree with `modules_prepare` (packages this host lacks); worktrees under `cache/linux-bt-next`, `cache/linux-6.1.y`, `cache/linux-6.12.y` |
 | How do the branches diverge? | `devtools/branch-status` (`--unique`, `--files`) |
 | Coverage / comprehensiveness | `devtools/coverage`, `devtools/test-comprehension` |
 | Do the fixtures still match real journalctl? | `devtools/journal-contract` |
