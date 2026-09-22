@@ -39,7 +39,7 @@ work on alt 1; this part has alts 1–5 and no 6 (its descriptors are also in `d
 so the fallback *applies* to it — whether it is *compatible* is the question (`DR-04`).
 **Control window is v5.8–v5.11 only** (below v5.8 alt 1 is reachable via `new_alts = sco_num`).
 
-## 2. The signature — `n = 7`, three kernels, two peripherals, both configurations
+## 2. The signature — `n = 8`, three kernels, two peripherals, both configurations
 
 ```
 0x0428 answered → evt 5 → "Looking for Alt no :6" → ":3" → len 27 mtu 9 (3×9-byte packets) → FIRST command observed → +2.0 s tx timeout
@@ -54,6 +54,7 @@ so the fallback *applies* to it — whether it is *compatible* is the question (
 | `EX-040` | 09-13 | `-31` | modified | 1562¹ | 34 ms | 2.140 s |
 | `EX-042` | 09-16 | `-31` | modified | 1595¹ | ~90 ms | 2.147 s |
 | **`EX-043`** | **09-17** | `-31` | **original** | 910 | **9,650 ms** (`0x0406`) | **11.874 s** |
+| **`EX-045`** | **09-22** | `-31` | **original** | 735 | (`0x0406`, reason `0x13`) | 2.018 s cmd→timeout |
 | *survival* | 09-01 | `-30` | modified | **8** | — | *lived* |
 
 ¹ window-scoped. ⚠️ **The "2.15 s interval" was an artefact of six fast teardowns** (first
@@ -261,8 +262,11 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    experiment` run 2026-09-17 13:40**, after the 11 h 12 m window closed by power-off:
    `bt-mode status` shows stamp and files agreeing (`autosusp=Y`, `power=auto`, both
    overrides `disabled`); `bt-dyndbg status` shows 166 sites still on — the service alone
-   carries the alt-1 evidence lines (also verified on boot `e9399c8c`). Still owed: one
-   alt-1 capture with the counters under the original configuration.
+   carries the alt-1 evidence lines (also verified on boot `e9399c8c`). **Delivered 09-22:
+   `EX-045`**, the eighth death, original configuration, 735 alt-1 packets, `0x0406` dies —
+   recorded from journal and sysfs only, 8.5 h into an untreated window still open at 00:21
+   on 09-23. ⚠️ **While that window is open, nothing touches Bluetooth** — the kernel-patch
+   runtime test (§9.9) waits for the operator's power-off.
 6. **The next experiment is a kernel, not more logging (deep review 2026-09-20).** Every
    reproduction ran on a kernel that treated `13d3:3503` as generic; `dc16388d45ec` gives it
    `BTUSB_QCA_ROME`, which installs *both* QCA firmware setup and a reset-on-timeout callback.
@@ -301,6 +305,17 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    **both** `bluetooth/master` and `bluetooth-next/master` on send day. Tips fetched into
    `cache/linux` (`bluetooth-next`, `bluetooth`, `stable`, mainline remotes) — refresh with
    `git fetch` before any claim about them; they move daily.
+
+9. **Kernel-patch runtime test — prepared 09-23, waits for a closed window and the operator.**
+   `bluetooth.ko` for the running `7.0.0-31-generic` is built from **Ubuntu's own source**
+   (v7.0 + the `linux-hwe-7.0_7.0.0-31.31~24.04.1` diff, which touches `mgmt.c` and nine other
+   Bluetooth files — vanilla would have been wrong), unpatched and patched, vermagic matching,
+   under `tmp/runtime/` (rebuild: `BT_KSRC=cache/ubuntu-7.0.0-31 scripts/build-bluetooth-module.sh`).
+   Secure Boot off, `sig_enforce=N`. The patched daemon runs from `/usr/local` via drop-in
+   `20-patched-bluetoothd.conf`; the stock package binary is intact (`dpkg -V bluez` clean), so
+   "stock daemon" = disable that drop-in. Runbook: `scripts/runtime-mgmt-test.sh` — refuses
+   while `bt-window` is open or a trial is open; `load`/`restore` swap the module, `trigger`
+   captures the mgmt reply to a Start Discovery pending at power-off. A reboot restores all.
 
 ## 10. Where detail lives
 
