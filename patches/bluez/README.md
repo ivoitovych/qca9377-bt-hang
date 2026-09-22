@@ -66,6 +66,21 @@ seconds as ignoring it. Watch the two v2 states instead:
 `scripts/patchwork-checks.sh --patch 14836499` / `14836500`, or the state field
 of `https://patchwork.kernel.org/api/1.3/patches/<id>/`.
 
+## What is kept, and why nothing here is removed
+
+| path | what it is |
+|---|---|
+| `0001-*.patch`, `0002-*.patch` | **v1**, the tracked patches — what was applied upstream |
+| `v2/0001-*.patch`, `v2/0002-*.patch` | **v2**, derived by `scripts/build-v2.sh`; on the list, unhandled |
+| `sent/v1/*.patch` | the v1 **mails as sent** on 09-19 (patch + note under `---`); byte-identical to the builder of commit `682d15c` run on the unchanged patches and notes (checked 09-22) |
+| `sent/v2/*.patch` | the v2 **mails as sent** on 09-21, copied from the build that was fed to `git send-email` |
+| `mail-notes/` | the text below `---` in every mail |
+
+Both versions stay, with their as-sent forms. The v1s are what is in BlueZ master;
+the v2s are on the list with an open state and whatever the maintainer does with
+them — ignores, marks, or asks about — is answered from these files, not from
+memory. Nothing under `patches/bluez/` is deleted or renamed after a send.
+
 ## Sent
 
 Mailed to `linux-bluetooth@vger.kernel.org` on 2026-09-19 as two independent
