@@ -32,8 +32,39 @@ v2s, which is patchwork's automatic bookkeeping, not a maintainer action.
 fetches and reports ALREADY APPLIED / does-not-apply against `origin/master`,
 and reproduces both bot verdicts on the v2 files.
 
-Owed to the list: a one-line reply on each v2 thread saying the version is moot
-because v1 was applied — the operator's word, as for every mail.
+**Verified at the canonical tree, not a mirror** (2026-09-22): `git ls-remote
+https://git.kernel.org/pub/scm/bluetooth/bluez.git refs/heads/master` →
+`17e624d1c`, the same tip as the GitHub mirror; both commits are served by
+`https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=<sha>` with
+`From: Iaroslav Voitovych`; `src/adapter.c` at that tip carries the length check
+at lines 1884–1888 and `profiles/audio/a2dp.c` the stream guard at 2697–2700.
+
+**The sequence, UTC — neither v2 arrived before the merge:**
+
+| when | event |
+|---|---|
+| 09-19 18:44 | v1 of both mailed |
+| 09-21 14:10:30 / :31 | maintainer commits `0bed9886c` then `a734b0605` |
+| 09-21 14:27 | 15 more commits pushed; master tip `17e624d1c` |
+| 09-21 20:47 | v2 of both mailed |
+| 09-21 22:42 | bot: `0001` v2 does not apply |
+| 09-21 23:20 | bot: `0002` v2 all PASS, PR #2559 |
+
+Why the two v2 verdicts differ against the same tree: PR #2559's base is
+`17e624d1c`, which already contains `0bed9886c` (GitHub compare: 16 ahead, 0
+behind); the PR's only change adds the guard **a second time** — the file at
+the PR head has the identical four-line check at lines 2697 and 2702. A pure
+insertion has no changed anchor, so git applies it twice; `0001`'s hunk sits in
+code v1 already altered, so it cannot. Same fact, seen two ways.
+
+**Decision 2026-09-22: send nothing on the v2 threads.** Both v2 entries are
+`new` on patchwork with no delegate and only the bot's comment; the v1 entries'
+*superseded* is patchwork's automatic bookkeeping. A v2 arriving after v1 was
+applied is routine for the maintainer, and the bot has already told the list
+that `0001` v2 does not apply. A "please ignore" mail would cost him the same
+seconds as ignoring it. Watch the two v2 states instead:
+`scripts/patchwork-checks.sh --patch 14836499` / `14836500`, or the state field
+of `https://patchwork.kernel.org/api/1.3/patches/<id>/`.
 
 ## Sent
 

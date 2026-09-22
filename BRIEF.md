@@ -111,8 +111,12 @@ as sent: `a734b0605` (adapter), `0bed9886c` (a2dp).** Thirty-eight days from fir
 ⚠️ The v2 mails (22:47 CEST the same day) were sent 6.5 h *after* that, checked against a
 month-old cached checkout instead of a fetched `origin/master` — redundant, bot said "does not
 apply" for `0001`, all-PASS for `0002`. Lesson in code: `scripts/pre-send-check.sh` fetches and
-reports ALREADY APPLIED before any mail. Owed: one-line "v1 was applied, please ignore" reply on
-each v2 thread — operator's word. Patchwork's *superseded* on the v1 rows is automatic bookkeeping.
+reports ALREADY APPLIED before any mail. **Verified at kernel.org itself** (`ls-remote` tip
+`17e624d1c`, both commits served with his `From:`). Sequence UTC: v1 09-19 18:44 → applied 09-21
+14:10 → v2 20:47 → bot 22:42/23:20; **neither v2 arrived before the merge** — `0002` v2 "passed"
+only because a pure insertion applies twice (PR #2559 would add the guard a second time, lines
+2697 and 2702). **Decision 09-22: send nothing on the v2 threads**; watch their patchwork states
+(14836499 / 14836500, both `new`). Patchwork's *superseded* on the v1 rows is automatic.
 
 Two NULL-deref fixes, built from the machine's own `5.72-0ubuntu5.5` + 31 Ubuntu patches,
 running since 08-25. **Sent 2026-09-19 to `linux-bluetooth` as two mails (Message-IDs in
@@ -266,7 +270,7 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    the operator's decision.** Kernel version alone no longer predicts behaviour (backports):
    check the running `btusb` for the entry (`tools/bt-verify-kernel-mechanism`), never the version.
 7. **BlueZ — CLOSED: both applied upstream 2026-09-21 (§6).** The v2 mails of 22:47 CEST were
-   moot; owed a one-line reply on each v2 thread (operator's word). Never again send without
+   moot; **no reply is sent** — watch the v2 patchwork states instead. Never again send without
    `scripts/pre-send-check.sh` against a fetched `origin/master`. How the v2 came about:
    the bot's only actionable finding is hard tabs in the quoted C
    of both commit messages. A v2 with spaces clears GitLint and changes no code; a v2 for a

@@ -3318,8 +3318,19 @@ fetched. The rule the repository already had — "kernel version alone no longer
 behaviour; read the tree" — was broken on the BlueZ side the same day it was written into the
 kernel ladder. `scripts/pre-send-check.sh` now fetches `origin/master`, looks for the subject
 already in the log, and apply-checks against that tip; on the v2 files it says what the bot
-said. A short reply on each v2 thread, "v1 was applied, please ignore", is owed and waits for
-the operator's word like every mail.
+said.
+
+The operator did not take "applied" on trust either. Was it the real tree or a mirror; had one
+v2 perhaps arrived before the merge and the other after, since one bot run passed and one
+failed; and had the maintainer already dealt with the v2s, so that another mail would only be
+more noise? Checked at the source: kernel.org's own `refs/heads/master` and its web interface
+serve both commits; the sequence in UTC is v1 mailed, both applied six and a half hours before
+v2 was mailed, then both bot runs; and the passing run passed because the bot's pull request
+would add the same four-line guard a second time, at lines 2697 and 2702 of the same file —
+git applies a pure insertion twice. Both v2 entries stand `new` on patchwork with nobody's
+hand on them. So the "please ignore" reply proposed the night before is withdrawn: a v2 after
+an applied v1 is routine for the maintainer, the bot has already said the first one does not
+apply, and the correct amount of further mail is none. The states are watched instead.
 
 ### The shape
 
