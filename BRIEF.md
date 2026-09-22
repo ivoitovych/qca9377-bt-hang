@@ -173,7 +173,11 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   `power/control` live** — check `bt-window` before any mode switch. `bt-state`, `bt-status`,
   `bt-incident` are probe-free since 09-18; `--probe` sends an HCI command and is an intervention.
 - **Never publish the kernel (alt-1) bug report without its patch ready to follow at
-  once.** The BlueZ patches need no report at all.
+  once.** The BlueZ patches need no report at all. **Held `kernel/*` branches live on the
+  `private` remote** (`ivoitovych/qca9377-bt-hang-private`, created 2026-09-23) — so a disk
+  failure cannot take the patch, and nothing public shows it. `repo-save` pushes a `kernel/*`
+  branch to `private` and refuses `origin` (tested; `scripts/prove-held-branch-guard.sh`).
+  On send day the branch merges into `main` and goes public with the mail.
 - **Verify operator accounts against logs** — he asked not to be trusted. Find the record or
   label the claim.
 - **Every claim ships with its extraction command and exact verbatim output**, plus exit

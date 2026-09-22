@@ -194,8 +194,17 @@ fi
 
 echo "── push ─────────────────────────────────────────────"
 br=$(git branch --show-current)
-git push -q origin "$br" 2>&1 | tail -3
-git fetch -q origin 2>/dev/null
-l=$(git rev-parse "$br"); r=$(git rev-parse "origin/$br" 2>/dev/null || echo none)
+# A kernel/* branch is held back until its patch is mailed (BRIEF §7); it lives
+# on the `private` remote and must never reach `origin` through this path. The
+# rule was kept by hand until 2026-09-23; now it is code.
+remote=origin
+case "$br" in kernel/*)
+    git remote get-url private >/dev/null 2>&1 || { echo "  ✗ $br is a held branch and no 'private' remote exists — not pushed" >&2; exit 1; }
+    remote=private
+    echo "  held branch: pushing to '$remote', never to origin" ;;
+esac
+git push -q "$remote" "$br" 2>&1 | tail -3
+git fetch -q "$remote" 2>/dev/null
+l=$(git rev-parse "$br"); r=$(git rev-parse "$remote/$br" 2>/dev/null || echo none)
 if [[ "$l" == "$r" ]]; then echo "  ✓ remote matches: ${l:0:8}"; else
     echo "  ✗ MISMATCH local=${l:0:8} remote=${r:0:8}" >&2; exit 1; fi
