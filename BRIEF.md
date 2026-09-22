@@ -288,6 +288,18 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    `doc/maintainer-guidelines.rst` exempts verbatim logs from the line limit. A v2 by mail is
    the contributor's outlet for a bot finding and is within practice either way.
 
+8. **Kernel submission workflow measured 2026-09-22 (`reviews/2026-09-22T1700Z-…`), before any
+   kernel patch is tested or sent.** Route: mail to `linux-bluetooth`, both maintainers on Cc,
+   `Signed-off-by` required, `Fixes:` normal (173/300), `Cc: stable` on mainline-bound fixes
+   (61/300; never to the stable list directly — Greg KH's form letter). Same bot, kernel check
+   set; **acceptance is silent** (patchwork-bot "applied"), 53 % of accepted series had a bot
+   fail/warning, 33 % a tester fail, only `VerifyFixes` is never failed; 39 % were v2+. ⚠️
+   **Sashiko** (Linux Foundation LLM reviewer) reviews every list submission and the maintainer
+   quotes it — so the external review before sending is the right rehearsal. Rebase against
+   **both** `bluetooth/master` and `bluetooth-next/master` on send day. Tips fetched into
+   `cache/linux` (`bluetooth-next`, `bluetooth`, `stable`, mainline remotes) — refresh with
+   `git fetch` before any claim about them; they move daily.
+
 ## 10. Where detail lives
 
 | | |

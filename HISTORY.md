@@ -3332,6 +3332,24 @@ hand on them. So the "please ignore" reply proposed the night before is withdraw
 an applied v1 is routine for the maintainer, the bot has already said the first one does not
 apply, and the correct amount of further mail is none. The states are watched instead.
 
+### The kernel side, measured before it is walked
+
+With BlueZ closed, the operator set the order for the kernel patch: learn the target tree's
+workflow first, bring the patch to its final form, then test it running on a clean system
+with the logging on and nothing of ours in the way, then an outside review, then send. The
+workflow was measured the same afternoon, from the same patchwork project the BlueZ survey had
+used, since kernel and BlueZ patches share it. Three hundred and twelve kernel series in two
+months, a hundred and thirty-three accepted, and the shape is the BlueZ shape with the signs
+reversed on the trailers: sign-off required, `Fixes:` on most, `Cc: stable` on a fifth, lint
+and the VM testers advisory, acceptance silent in ninety-five cases of a hundred. One thing
+was new. Four threads had the maintainer quoting an automated LLM reviewer, Sashiko, run by
+the Linux Foundation over every list submission — "Sashiko found a problem", and the
+submitter answering it. Whatever this project sends will be read by a machine before a human,
+and the maintainer trusts the machine enough to forward its findings. The outside review the
+operator wanted before sending is therefore not caution; it is the rehearsal. The tips of
+`bluetooth-next`, `bluetooth`, mainline and three stable branches were fetched into the cache
+the same day, so "does it still apply" is a command again rather than a memory.
+
 ### The shape
 
 Four gaps, each one step past a gate that existed. The message scan stopped at the
