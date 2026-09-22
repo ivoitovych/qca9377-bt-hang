@@ -1,4 +1,39 @@
-# BlueZ patches — two NULL dereferences, sent 2026-09-19, v2 2026-09-21
+# BlueZ patches — two NULL dereferences, sent 2026-09-19, **applied upstream 2026-09-21**
+
+## Applied
+
+Both v1 patches are in BlueZ master, committed by the maintainer on
+2026-09-21 at 10:10 -0400, exactly as sent (message, tabs and all):
+
+| patch | upstream commit | author date | committer |
+|---|---|---|---|
+| `0001` | `a734b0605` `adapter: Fix crash on short start discovery reply` | 2026-09-19 20:44 +0200 | Luiz Augusto von Dentz, 2026-09-21T10:10:31-04:00 |
+| `0002` | `0bed9886c` `a2dp: Fix crash on NULL stream in transport_cb` | 2026-09-19 20:44 +0200 | Luiz Augusto von Dentz, 2026-09-21T10:10:30-04:00 |
+
+```console
+$ git -C <bluez> fetch origin && git -C <bluez> log --format='%h %ad %an  %s' --date=iso --author=Voitovych origin/master
+a734b0605 2026-09-19 20:44:25 +0200 Iaroslav Voitovych  adapter: Fix crash on short start discovery reply
+0bed9886c 2026-09-19 20:44:35 +0200 Iaroslav Voitovych  a2dp: Fix crash on NULL stream in transport_cb
+```
+
+Thirty-eight days from the first crash (08-14) to the tree. Applied in the same
+push as the maintainers' own `mgmt-tester` CI fixes and the `bap:` use-after-free
+fix, i.e. the batch that also cured the bot's `TestFunctional` failure.
+
+⚠️ **The v2 mails of 2026-09-21 22:47 CEST were redundant when sent.** The
+maintainer had applied v1 six and a half hours earlier. This side checked the v2
+against the cached checkout at `c73fa2f9a` (2026-08-19), not against a freshly
+fetched `origin/master`; one `git fetch` would have shown both commits. The bot
+duly reported `0001` v2 as "patch does not apply" (the hunk is already there) and
+`0002` v2 as all-PASS (a pure insertion applies a second time; it would have
+added a duplicate guard). Patchwork marked both v1 entries *superseded* by the
+v2s, which is patchwork's automatic bookkeeping, not a maintainer action.
+`scripts/pre-send-check.sh <tree> <patch>…` is the check that was missing; it
+fetches and reports ALREADY APPLIED / does-not-apply against `origin/master`,
+and reproduces both bot verdicts on the v2 files.
+
+Owed to the list: a one-line reply on each v2 thread saying the version is moot
+because v1 was applied — the operator's word, as for every mail.
 
 ## Sent
 
@@ -60,9 +95,11 @@ the workflow, and a v2 by mail is the one proper way to clear a bot finding.
 Two separate mails, new threads, built with `BT_PATCH_DIR=patches/bluez/v2
 scripts/build-mails.sh` from the tracked `v2/` files at `17b393f`; each checked
 with `git apply --check` against BlueZ `c73fa2f9a` and dry-run before sending.
-The bot will open two **new** pull requests for them — by the maintainers'
-design (above). Expected from its run: CheckPatch and GitLint clean;
-`TestFunctional` likely still failing, as on every series that week, and not ours.
+The bot's results (2026-09-22 00:42 / 01:20 CEST): `0001` v2 — "couldn't be
+applied to the current HEAD … patch failed: src/adapter.c:1863", because v1 was
+already in the tree (see **Applied**); `0002` v2 — series 1170691, PR #2559,
+**every check PASS** including CheckPatch, GitLint and `TestFunctional` (the
+maintainers' CI fix had landed in the same push as our patches).
 
 What follows is how v2 was prepared.
 

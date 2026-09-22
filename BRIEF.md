@@ -104,7 +104,15 @@ Both instances where the log names the dying command name `0x0406 Disconnect, re
 | "the 287-timeout denominator can't be re-derived" | **FALSE** — `evidence/baseline/baseline.tsv` reproduces it |
 | "lore.kernel.org is unreachable" | **FALSE** — UA block fronting a JS challenge; a browser gets 200 |
 
-## 6. The BlueZ patches — status
+## 6. The BlueZ patches — status: **APPLIED UPSTREAM 2026-09-21**
+
+**Both v1 patches are in BlueZ master, committed by the maintainer 2026-09-21T10:10-04:00 exactly
+as sent: `a734b0605` (adapter), `0bed9886c` (a2dp).** Thirty-eight days from first crash to tree.
+⚠️ The v2 mails (22:47 CEST the same day) were sent 6.5 h *after* that, checked against a
+month-old cached checkout instead of a fetched `origin/master` — redundant, bot said "does not
+apply" for `0001`, all-PASS for `0002`. Lesson in code: `scripts/pre-send-check.sh` fetches and
+reports ALREADY APPLIED before any mail. Owed: one-line "v1 was applied, please ignore" reply on
+each v2 thread — operator's word. Patchwork's *superseded* on the v1 rows is automatic bookkeeping.
 
 Two NULL-deref fixes, built from the machine's own `5.72-0ubuntu5.5` + 31 Ubuntu patches,
 running since 08-25. **Sent 2026-09-19 to `linux-bluetooth` as two mails (Message-IDs in
@@ -257,10 +265,9 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    on, alt-1 blocked for this ID → D as upstream. **A kernel build on the family laptop —
    the operator's decision.** Kernel version alone no longer predicts behaviour (backports):
    check the running `btusb` for the entry (`tools/bt-verify-kernel-mechanism`), never the version.
-7. **BlueZ v2 — SENT 2026-09-21 22:47 CEST on the operator's word** (two mails, 250 each,
-   Message-IDs in `patches/bluez/README.md`; app password used once, stored nowhere). Next: the
-   bot's run on v2 (two NEW PRs — correct; expect lint clean, `TestFunctional` still theirs),
-   then the maintainer. If he asks for changes, v3 by mail the same way. How it got here:
+7. **BlueZ — CLOSED: both applied upstream 2026-09-21 (§6).** The v2 mails of 22:47 CEST were
+   moot; owed a one-line reply on each v2 thread (operator's word). Never again send without
+   `scripts/pre-send-check.sh` against a fetched `origin/master`. How the v2 came about:
    the bot's only actionable finding is hard tabs in the quoted C
    of both commit messages. A v2 with spaces clears GitLint and changes no code; a v2 for a
    linter before a maintainer has replied may read as noise. Operator's decision. **v2 is

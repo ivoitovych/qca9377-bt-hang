@@ -3299,6 +3299,28 @@ nowhere — the same procedure as two days before, rebuilt, apply-checked and dr
 The contributor's half of the bot's report is answered the way this project's maintainers
 built it to be answered.
 
+### Applied — and the v2 that was already moot
+
+The bot's answers to the v2 came in the night: `0002` all green, every check including the
+functional one; `0001` "couldn't be applied to the current HEAD". One fetch explained both.
+The maintainer had applied **both v1 patches on Monday 2026-09-21 at 10:10 his time** —
+`a734b0605` and `0bed9886c`, author Iaroslav Voitovych, message and tabs exactly as sent — in
+the same push as his own CI fixes, six and a half hours before the v2 mails went. The adapter
+hunk was already in the tree, so v2 could not apply; the a2dp hunk is a pure insertion and
+would have applied a second time, which is why it passed. Thirty-eight days from the first
+crash on 08-14 to BlueZ master, and every one of the survey's conclusions of that morning
+confirmed by the maintainer's own hands: lint advisory, verbatim quotes exempt, v1 applied as
+it stood.
+
+The v2 was this side's mistake, and a specific one. The mails were rebuilt, apply-checked and
+dry-run before sending — against the cached checkout at `c73fa2f9a`, dated 2026-08-19. Nobody
+fetched. The rule the repository already had — "kernel version alone no longer predicts
+behaviour; read the tree" — was broken on the BlueZ side the same day it was written into the
+kernel ladder. `scripts/pre-send-check.sh` now fetches `origin/master`, looks for the subject
+already in the log, and apply-checks against that tip; on the v2 files it says what the bot
+said. A short reply on each v2 thread, "v1 was applied, please ignore", is owed and waits for
+the operator's word like every mail.
+
 ### The shape
 
 Four gaps, each one step past a gate that existed. The message scan stopped at the
