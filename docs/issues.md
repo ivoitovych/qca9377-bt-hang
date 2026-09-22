@@ -509,7 +509,14 @@ unrelated ones is exactly what is not yet known.
 
 ## BT-7 — `bluetoothd` dereferences NULL twice, at two sites, on this controller
 
-**Status:** resolved to source and fixed — `patches/bluez/0001` (`src/adapter.c`,
+**Status 2026-09-22: fixed upstream.** Both patches applied to BlueZ master on 2026-09-21 —
+[`a734b0605`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=a734b06059cbe0d0f00442c901506ef17e960960)
+(adapter) and
+[`0bed9886c`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=0bed9886cff317d814f9b1f11c1461459f2b9a00)
+(a2dp); no release tag carries them yet. Links to the mails, patchwork entries and the
+bot's pull requests: `patches/bluez/README.md`, status table.
+
+**Status (history):** resolved to source and fixed — `patches/bluez/0001` (`src/adapter.c`,
 `start_discovery_complete()` reads the reply above its own length check) and `0002`
 (`profiles/audio/a2dp.c`, `transport_cb()` passes a NULL `setup->stream` on). Crash sites
 named from the stripped distro binary and confirmed against a retained core

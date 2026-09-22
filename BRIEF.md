@@ -108,6 +108,8 @@ Both instances where the log names the dying command name `0x0406 Disconnect, re
 
 **Both v1 patches are in BlueZ master, committed by the maintainer 2026-09-21T10:10-04:00 exactly
 as sent: `a734b0605` (adapter), `0bed9886c` (a2dp).** Thirty-eight days from first crash to tree.
+Every URL — kernel.org commits, lore, patchwork v1/v2, bot PRs — in the status table at the top
+of `patches/bluez/README.md`; no BlueZ release tag carries them yet (267 commits past 5.87).
 ⚠️ The v2 mails (22:47 CEST the same day) were sent 6.5 h *after* that, checked against a
 month-old cached checkout instead of a fetched `origin/master` — redundant, bot said "does not
 apply" for `0001`, all-PASS for `0002`. Lesson in code: `scripts/pre-send-check.sh` fetches and

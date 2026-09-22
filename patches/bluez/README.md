@@ -1,5 +1,23 @@
 # BlueZ patches — two NULL dereferences, sent 2026-09-19, **applied upstream 2026-09-21**
 
+## Status and links — 2026-09-22
+
+| | `0001` adapter | `0002` a2dp |
+|---|---|---|
+| **status** | **applied upstream 2026-09-21** | **applied upstream 2026-09-21** |
+| upstream commit (kernel.org, canonical) | [`a734b0605`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=a734b06059cbe0d0f00442c901506ef17e960960) | [`0bed9886c`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=0bed9886cff317d814f9b1f11c1461459f2b9a00) |
+| same commit, GitHub mirror | [bluez/bluez@a734b06](https://github.com/bluez/bluez/commit/a734b06059cbe0d0f00442c901506ef17e960960) | [bluez/bluez@0bed988](https://github.com/bluez/bluez/commit/0bed9886cff317d814f9b1f11c1461459f2b9a00) |
+| v1 mail, list archive | [lore](https://lore.kernel.org/linux-bluetooth/20260919184425.102314-1-yaroslav.voytovych@gmail.com/) | [lore](https://lore.kernel.org/linux-bluetooth/20260919184435.102408-1-yaroslav.voytovych@gmail.com/) |
+| v1 patchwork (state *superseded* — automatic, by the v2) | [14831546](https://patchwork.kernel.org/project/bluetooth/patch/20260919184425.102314-1-yaroslav.voytovych@gmail.com/), series [1169362](https://patchwork.kernel.org/series/1169362/) | [14831547](https://patchwork.kernel.org/project/bluetooth/patch/20260919184435.102408-1-yaroslav.voytovych@gmail.com/), series [1169363](https://patchwork.kernel.org/series/1169363/) |
+| v1 bot pull request (CI vehicle, never merged) | [#2554](https://github.com/bluez/bluez/pull/2554) | [#2555](https://github.com/bluez/bluez/pull/2555) |
+| v2 mail (moot — sent after v1 was applied) | [lore](https://lore.kernel.org/linux-bluetooth/20260921204706.211385-1-yaroslav.voytovych@gmail.com/) | [lore](https://lore.kernel.org/linux-bluetooth/20260921204711.211409-1-yaroslav.voytovych@gmail.com/) |
+| v2 patchwork (state *new*, nobody's hand on it) | [14836499](https://patchwork.kernel.org/project/bluetooth/patch/20260921204706.211385-1-yaroslav.voytovych@gmail.com/), series [1170690](https://patchwork.kernel.org/series/1170690/) | [14836500](https://patchwork.kernel.org/project/bluetooth/patch/20260921204711.211409-1-yaroslav.voytovych@gmail.com/), series [1170691](https://patchwork.kernel.org/series/1170691/) |
+| v2 bot result | does not apply (v1 already in tree); no PR | all PASS; [#2559](https://github.com/bluez/bluez/pull/2559) would add the guard twice |
+| first BlueZ release to carry them | the next tag after `5.87` (none cut as of 2026-09-22) | same |
+
+`lore` links open in a browser (its anti-bot page blocks `curl`); the kernel.org
+commit links serve the raw patch with `/patch/?id=`.
+
 ## Applied
 
 Both v1 patches are in BlueZ master, committed by the maintainer on

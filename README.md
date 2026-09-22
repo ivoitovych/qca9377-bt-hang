@@ -54,8 +54,13 @@ modes that look identical to a user (`EX-032`): [`patches/bluez/`](patches/bluez
 | `0001` | `adapter: Fix crash on short start discovery reply` | guard not yet fired; its premise (Command Status `0x00` answering Start Discovery) logged five times with clients present, and the 08-14 crash itself is reconstructed from the daemon log (`EX-041`) |
 | `0002` | `a2dp: Fix crash on NULL stream in transport_cb` | **fired four times** in 19 days of ordinary use — four crashes prevented, not merely absent (`EX-041`) |
 
-**Applied in BlueZ master on 2026-09-21** by the maintainer, as sent: `a734b0605`
-(adapter) and `0bed9886c` (a2dp). **Sent to `linux-bluetooth@vger.kernel.org` on
+**Applied in BlueZ master on 2026-09-21** by the maintainer, as sent:
+[`a734b0605`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=a734b06059cbe0d0f00442c901506ef17e960960)
+(adapter) and
+[`0bed9886c`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=0bed9886cff317d814f9b1f11c1461459f2b9a00)
+(a2dp); 267 commits past 5.87, no release tag yet. Every link (commits, list
+archive, patchwork, bot pull requests) is in the status table at the top of
+`patches/bluez/README.md`. **Sent to `linux-bluetooth@vger.kernel.org` on
 2026-09-19** as two independent mails (Message-IDs in `patches/bluez/README.md`), after
 three independent reviews. The list's
 CI bot passed every build and analysis check on both; its `TestFunctional` failure is the
