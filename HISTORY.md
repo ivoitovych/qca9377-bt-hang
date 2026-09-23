@@ -3380,6 +3380,21 @@ The consequence for tonight is a second power-off in an hour, caused by this sid
 tooling is kept, marked, and the drop-in restored so a plain reboot returns the machine to
 exactly its pre-test state.
 
+### Three readers, and two zeros that were not
+
+The morning after, three external reviews of the held kernel patch arrived within hours of
+each other, each formed on its own. All three said the one-line change was correct and
+should go in; the first two independently caught the same overstatement in the message
+(the pointer the code reads is not always NULL), the third asked for the stable inventory
+to leave the message and for the patch to be regenerated and checked inside a real tree.
+Doing that produced two false passes in an hour, both of this side's making. A new script
+that swaps a patch's message "verified" an empty diff against an empty diff after a
+`git show` wrote nothing; and sparse reported zero findings for a run the kernel had
+quietly skipped because the distribution's sparse was too old. Both now refuse instead of
+reporting, and the zero that stands — sparse, current, CHECK line present — is one that
+could have been otherwise. The operator then gave the word for the runtime test the way
+`EX-046` left open: the module in place before the first probe, and a cold boot.
+
 ### The shape
 
 Four gaps, each one step past a gate that existed. The message scan stopped at the

@@ -343,6 +343,15 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    and added 10 MGMT rows to a 46-line fixture — `btmon` aborted on one of those captures on
    the way, a `BT-4` instance (test now sets `BT_TRACE_DIR` to nothing). Both fixed in the
    suite with the reason beside them; `BRIEF §8a` remains his.
+   **State 2026-09-23 after the power cycle:** controller healthy, all boots archived complete.
+   **Three independent external reviews** of the held patch (details on the held branch only,
+   `patches/kernel/README.md` ER1–ER3): all say the one-line diff is correct and should go in;
+   message corrected twice, diff unchanged; regenerated with `format-patch --base` on
+   `bluetooth-next`; in-tree checkpatch `--strict` 0/0/0, `W=1 -Werror` clean, sparse 0 new
+   (`scripts/kernel-preflight.sh`; ⚠️ Ubuntu's sparse 0.6.4 is silently skipped by 7.x — a
+   current one is built in `cache/sparse`, and the script refuses without a CHECK line).
+   **Operator approved the runtime test via `updates/` + cold boot on 2026-09-23.** Removal
+   (`0x11`) is not tested on hardware: it needs a `btusb` unbind, which wedges this part (`EX-046`).
 
 ## 10. Where detail lives
 
