@@ -36,7 +36,9 @@ status)
 	echo "held branch is $(git rev-list --count "main..$HELD") commit(s) ahead of main, $(git rev-list --count "$HELD..main") behind"
 	;;
 sync)
-	[[ -z "$(git status --porcelain)" ]] || { echo "working tree not clean — commit or stash first" >&2; exit 1; }
+	# tracked changes only: an open trial's untracked directory rides along
+	# untouched through a checkout, and must not be committed to get past this
+	[[ -z "$(git status --porcelain --untracked-files=no)" ]] || { echo "working tree not clean — commit or stash first" >&2; exit 1; }
 	git checkout -q "$HELD" || exit 1
 	if ! git merge -q --no-edit main 2>/dev/null; then
 		# the exhibit index is generated: regenerate it instead of merging text
@@ -63,7 +65,7 @@ commit)
 	exit $rc
 	;;
 edit)
-	[[ -z "$(git status --porcelain)" ]] || { echo "working tree not clean" >&2; exit 1; }
+	[[ -z "$(git status --porcelain --untracked-files=no)" ]] || { echo "working tree not clean" >&2; exit 1; }
 	git checkout -q "$HELD" && echo "on $HELD — edit, then: devtools/held commit <msgfile>"
 	;;
 *)

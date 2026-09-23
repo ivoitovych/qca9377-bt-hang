@@ -10,6 +10,10 @@ P="${1:?usage: patch-replace-message.sh <patch> <message-file>}"
 M="${2:?usage: patch-replace-message.sh <patch> <message-file>}"
 [[ -r "$P" && -r "$M" ]] || { echo "cannot read $P or $M" >&2; exit 2; }
 grep -qx -- '---' "$M" && { echo "message file contains a --- line" >&2; exit 2; }
+# An empty or truncated patch would compare "empty diff == empty diff" and pass;
+# that happened on 2026-09-23 and wrote a message with no diff at all.
+grep -qx -- '---' "$P" || { echo "$P has no --- separator — not a format-patch file" >&2; exit 2; }
+grep -q '^diff --git ' "$P" || { echo "$P has no diff — refusing" >&2; exit 2; }
 tmp=$(mktemp) || exit 2
 cat "$M" > "$tmp"
 awk 'f {print} /^---$/ && !f {f=1; print}' "$P" >> "$tmp"
