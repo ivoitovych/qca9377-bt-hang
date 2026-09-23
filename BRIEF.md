@@ -320,6 +320,29 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    "stock daemon" = disable that drop-in. Runbook: `scripts/runtime-mgmt-test.sh` — refuses
    while `bt-window` is open or a trial is open; `load`/`restore` swap the module, `trigger`
    captures the mgmt reply to a Start Discovery pending at power-off. A reboot restores all.
+   ⚠️ **Attempted 2026-09-23 01:08–01:20 and it wedged the controller (`EX-046`)**: the first
+   `btusb` unload/re-probe, still on the STOCK module, ended with HCI Reset `0x0c03` timing out
+   (`-110`) and hci0 registered with an all-zero address, DOWN; two further re-probes the same.
+   No SCO involved — **a driver reload on a healthy controller is itself fatal on this part**
+   (no firmware-setup path without `BTUSB_QCA_ROME`), which is also why every reset/rebind
+   recovery in the record failed. `bt-window` does not see this state (no tx-timeout line).
+   Consequences: (a) **never swap `bluetooth.ko` on a live system here** — the swap tooling
+   stays for the record, `load`/`restore` must not be run; (b) the runtime test needs the
+   patched module in place **before the first probe**: `/lib/modules/$(uname -r)/updates/`
+   + `depmod` + a cold boot, reverted by deleting that file + `depmod` + reboot — the
+   operator's decision; (c) the machine needs a power-off to recover, again. Getting the swap
+   to unload at all took four fixes in the runbook: D-Bus re-activation of `bluetoothd`
+   (mask for the swap), socket holders that re-load modules on the spot (WirePlumber,
+   ModemManager, this project's `bt-capture`/`bt-trace`), dependency order, and a
+   `lsmod | grep -q` under pipefail that skipped loaded modules.
+   **For the test-suite maintainer (§8a):** with no trial open the suite ran locally for the
+   first time in weeks and two invariants failed **only on this machine**, both green in CI:
+   `bt-capture`'s "no monitor socket" test opened a real socket as root with `bluetooth.ko`
+   loaded (now run under `unshare -Ur`, which drops `CAP_NET_RAW` for root too — same refusal
+   on every host), and `bt-actions` read the machine's real btsnoop captures in its second pass
+   and added 10 MGMT rows to a 46-line fixture — `btmon` aborted on one of those captures on
+   the way, a `BT-4` instance (test now sets `BT_TRACE_DIR` to nothing). Both fixed in the
+   suite with the reason beside them; `BRIEF §8a` remains his.
 
 ## 10. Where detail lives
 

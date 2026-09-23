@@ -3350,6 +3350,36 @@ operator wanted before sending is therefore not caution; it is the rehearsal. Th
 `bluetooth-next`, `bluetooth`, mainline and three stable branches were fetched into the cache
 the same day, so "does it still apply" is a command again rather than a memory.
 
+### The night the swap wedged the controller
+
+The eighth death (`EX-045`) had run untreated for thirty hours and was recorded from the
+journal and sysfs alone; the operator powered off at 00:54 on 2026-09-23 and the controller
+came back clean. The kernel patch's runtime test was to follow: stock daemon, swap
+`bluetooth.ko` for the module built from Ubuntu's own source, a Start Discovery pending at
+power-off, watch the management channel. The swap did not go. `bluetoothd` came back on its
+own after `systemctl stop`, because a client asks D-Bus for it within a second; WirePlumber,
+ModemManager and this project's own two capture services held sockets that made the kernel
+re-load `rfcomm` and `bnep` the instant they were removed; `modprobe -r` with a list did not
+keep dependency order; and the runbook's own loaded-module test, `lsmod | grep -q` under
+pipefail, reported loaded modules absent, so the loop skipped them — the very trap this
+repository's rules describe. Four fixes later the control module loaded, the daemon started,
+and the trigger captured nothing: hci0 had an all-zero address and was DOWN.
+
+The kernel log said when it had died: 01:17:06, at the **first** `btusb` re-probe, on the
+stock module, before any swap had happened. HCI Reset — the first command a probe sends —
+timed out after two seconds, and did so again at every re-probe after. No SCO, no
+alternate setting, no audio: a driver reload on a healthy controller was fatal by itself
+(`EX-046`). `bt-window` did not notice, because the line it keys on is never printed on
+this path. This is the same fact the record already held from the other side — every reset,
+rebind and reload tried on a wedged controller had failed — seen now on a healthy one, and it
+is consistent with what the missing quirks entry withholds: without `BTUSB_QCA_ROME` a
+re-probe has no firmware setup to run. The consequence for the test is plain. The module
+cannot be swapped on a live system here; it has to be in place before the first probe, which
+means the `updates/` module directory and a cold boot, and that is the operator's decision.
+The consequence for tonight is a second power-off in an hour, caused by this side. The
+tooling is kept, marked, and the drop-in restored so a plain reboot returns the machine to
+exactly its pre-test state.
+
 ### The shape
 
 Four gaps, each one step past a gate that existed. The message scan stopped at the

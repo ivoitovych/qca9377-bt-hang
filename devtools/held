@@ -40,12 +40,12 @@ sync)
 	git checkout -q "$HELD" || exit 1
 	if ! git merge -q --no-edit main 2>/dev/null; then
 		# the exhibit index is generated: regenerate it instead of merging text
-		if git diff --name-only --diff-filter=U | grep -qx evidence/exhibits/README.md; then
+		if [[ -n "$(git diff --name-only --diff-filter=U -- evidence/exhibits/README.md)" ]]; then
 			git checkout --theirs evidence/exhibits/README.md
 			tools/bt-exhibit index >/dev/null
 			git add evidence/exhibits/README.md
 		fi
-		if git diff --name-only --diff-filter=U | grep -q .; then
+		if [[ -n "$(git diff --name-only --diff-filter=U)" ]]; then
 			echo "unresolved conflicts:"; git diff --name-only --diff-filter=U
 			echo "resolve them, then: devtools/held commit <msgfile>" >&2; exit 1
 		fi

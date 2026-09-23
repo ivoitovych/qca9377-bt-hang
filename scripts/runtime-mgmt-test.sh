@@ -16,6 +16,13 @@
 # REFUSES to touch Bluetooth while tools/bt-window reports an open untreated
 # window or tools/bt-trial reports a trial open — that evidence outranks this
 # test (BRIEF §7). Root required for everything but status.
+#
+# ⚠️ 2026-09-23: `load`/`restore` WEDGED THE CONTROLLER (EX-046). Unloading and
+# re-probing btusb on this part, healthy, stock module, ended with HCI Reset
+# timing out and hci0 registered with an all-zero address — before any swap had
+# even happened. Do not run load/restore on a live system here. The module has
+# to be in place before the first probe (updates/ dir + depmod + cold boot);
+# `status`, `stock-daemon`, `patched-daemon` and `trigger` remain usable.
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DROPIN=/etc/systemd/system/bluetooth.service.d/20-patched-bluetoothd.conf
@@ -33,13 +40,87 @@ which_module() {
 	echo "unknown ($cur)"
 }
 guard() {
-	if "$REPO/tools/bt-window" 2>&1 | grep -q "Untreated and running"; then
+	local win tri
+	win=$("$REPO/tools/bt-window" 2>&1); tri=$("$REPO/tools/bt-trial" status 2>&1)
+	if [[ "$win" == *"Untreated and running"* ]]; then
 		echo "REFUSED: an untreated HCI window is open (tools/bt-window). Do not touch Bluetooth." >&2; exit 3
 	fi
-	if "$REPO/tools/bt-trial" status 2>&1 | grep -q "^trial OPEN"; then
+	if [[ "$tri" == "trial OPEN"* ]]; then
 		echo "REFUSED: a trial is open (tools/bt-trial status). Close it first." >&2; exit 3
 	fi
 	[[ $EUID -eq 0 ]] || { echo "root required" >&2; exit 2; }
+}
+
+# bluetoothd is D-Bus activated: `systemctl stop` alone brings it back within a
+# second (a client asks for org.bluez), and its listening sockets pin rfcomm and
+# bluetooth. Mask for the duration of the swap, stop, then let modprobe order
+# the removal of the whole stack.
+refcounts() { lsmod | awk '$1 ~ /^(bluetooth|rfcomm|bnep|btusb)$/ {printf "%s=%s ", $1, $3} END {print ""}'; }
+
+# Userspace re-creates Bluetooth sockets the moment a module is gone: opening an
+# RFCOMM/BNEP socket makes the kernel auto-load rfcomm/bnep again, so a removal
+# "succeeds" and the module is back with users before the next step. The holders
+# with bluetoothd down are WirePlumber (HFP backend, per logged-in user) and
+# ModemManager. They are stopped for the seconds of the swap and started again.
+HOLDER_USERS=(); HOLDER_MM=0; HOLDER_UNITS=()
+stop_holders() {
+	# this project's own capture services hold HCI monitor sockets on bluetooth.ko
+	local s
+	for s in bt-capture bt-trace; do
+		if systemctl is-active --quiet "$s"; then systemctl stop "$s"; HOLDER_UNITS+=("$s"); fi
+	done
+	if systemctl is-active --quiet ModemManager; then systemctl stop ModemManager; HOLDER_MM=1; fi
+	local u
+	for u in $(loginctl list-users --no-legend | awk '{print $2}'); do
+		if systemctl --user -M "$u@" is-active --quiet wireplumber 2>/dev/null; then
+			systemctl --user -M "$u@" stop wireplumber; HOLDER_USERS+=("$u")
+		fi
+	done
+}
+start_holders() {
+	local u
+	for u in "${HOLDER_USERS[@]+"${HOLDER_USERS[@]}"}"; do systemctl --user -M "$u@" start wireplumber; done
+	(( HOLDER_MM )) && systemctl start ModemManager
+	local s
+	for s in "${HOLDER_UNITS[@]+"${HOLDER_UNITS[@]}"}"; do systemctl start "$s"; done
+	return 0
+}
+
+unload_stack() {
+	systemctl mask --runtime bluetooth >/dev/null 2>&1
+	systemctl daemon-reload
+	systemctl stop bluetooth
+	stop_holders
+	sleep 1
+	if pidof bluetoothd >/dev/null; then
+		echo "bluetoothd still running after stop+mask: $(pidof bluetoothd)" >&2
+		systemctl unmask --runtime bluetooth >/dev/null 2>&1; start_holders; return 1
+	fi
+	echo "before unload: $(refcounts)"
+	# one at a time, dependants first: btusb holds the vendor helpers, everything
+	# holds bluetooth. (modprobe -r with the whole list did not keep this order.)
+	local m
+	# loaded-module test via sysfs: `lsmod | grep -q` under pipefail can report
+	# "absent" for a loaded module when grep exits first (SIGPIPE), which made
+	# the loop silently skip every module but the last on 2026-09-23.
+	for m in btusb btrtl btintel btbcm btmtk btqca rfcomm bnep hidp bluetooth; do
+		[[ -e /sys/module/$m/refcnt ]] || continue
+		if ! modprobe -r "$m"; then
+			echo "could not unload $m: $(lsmod | grep -E "^$m ")" >&2
+			echo "open sockets: /sys/kernel/debug/bluetooth/{rfcomm,l2cap,sco}" >&2
+			modprobe bluetooth; modprobe btusb
+			systemctl unmask --runtime bluetooth >/dev/null 2>&1; systemctl daemon-reload
+			systemctl start bluetooth; start_holders; return 1
+		fi
+	done
+	echo "after unload:  $(refcounts)"
+}
+finish_stack() {          # after insmod/modprobe of bluetooth: btusb, service, holders
+	modprobe btusb
+	systemctl unmask --runtime bluetooth >/dev/null 2>&1
+	systemctl daemon-reload
+	systemctl start bluetooth
+	start_holders
 }
 
 case "$cmd" in
@@ -68,25 +149,19 @@ load)
 	guard
 	v="${2:?load unpatched|patched}"
 	ko="$RT/bluetooth-$v.ko"; [[ -f $ko ]] || { echo "no $ko — build it first" >&2; exit 2; }
-	systemctl stop bluetooth
-	# unload every module that depends on bluetooth, then bluetooth itself
-	for m in rfcomm bnep hidp btusb btrtl btintel btbcm btmtk btqca; do
-		lsmod | grep -q "^$m " && modprobe -r "$m"
-	done
-	lsmod | grep -q "^bluetooth " && rmmod bluetooth
-	insmod "$ko" || { echo "insmod failed — restoring stock" >&2; modprobe bluetooth; modprobe btusb; systemctl start bluetooth; exit 1; }
-	modprobe btusb
-	systemctl start bluetooth
+	unload_stack || exit 1
+	if ! insmod "$ko"; then
+		echo "insmod failed — restoring stock" >&2
+		modprobe bluetooth; finish_stack; exit 1
+	fi
+	finish_stack
 	sleep 2; "$0" status
 	;;
 restore)
 	guard
-	systemctl stop bluetooth
-	for m in rfcomm bnep hidp btusb btrtl btintel btbcm btmtk btqca; do
-		lsmod | grep -q "^$m " && modprobe -r "$m"
-	done
-	lsmod | grep -q "^bluetooth " && rmmod bluetooth
-	modprobe bluetooth && modprobe btusb && systemctl start bluetooth
+	unload_stack || exit 1
+	modprobe bluetooth
+	finish_stack
 	sleep 2; "$0" status
 	;;
 trigger)
