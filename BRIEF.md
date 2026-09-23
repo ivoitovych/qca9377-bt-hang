@@ -352,6 +352,18 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    current one is built in `cache/sparse`, and the script refuses without a CHECK line).
    **Operator approved the runtime test via `updates/` + cold boot on 2026-09-23.** Removal
    (`0x11`) is not tested on hardware: it needs a `btusb` unbind, which wedges this part (`EX-046`).
+   ⚠️ **INSTALLED 2026-09-24 00:5x: `/lib/modules/7.0.0-31-generic/updates/bluetooth.ko`**
+   (patched, Ubuntu source, srcversion `66D38200362CD82D3F68A9D`, sha256 `815e7378…b90b72`),
+   `depmod -a` done; not in the initramfs, so it loads from the first boot after. Checked first:
+   `scripts/check-modversions.sh` — all 9 dependants (btusb, btintel, btbcm, btrtl, btmtk,
+   btqca, rfcomm, bnep, hidp) accept its CRCs, 0 mismatches. **Every trial and exhibit from
+   that boot on runs the PATCHED `bluetooth.ko`** — `bt-trial` labels them `build=stock`
+   (§9.3); read the boot's srcversion, not the label. **Undo:** `rm` that file, `depmod -a
+   7.0.0-31-generic`, reboot. The observation wanted: a Start Discovery answered by the flush
+   (Command Status, not Command Complete) with `0x0f` in the continuous capture —
+   `tools/bt-ctrl-window`. A control run on stock (09-24 00:33) did **not** reach the flush:
+   a healthy controller completes discovery in ~110 ms; 08-14 needed a 2 s HCI timeout
+   holding the sync lock in front of a queued discovery and an rfkill power-off.
 
 ## 10. Where detail lives
 
