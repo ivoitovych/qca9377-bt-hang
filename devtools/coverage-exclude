@@ -112,8 +112,8 @@ tests/run-tests:/^(\|\| *)?bad /   # failure branches: unreachable in a green ru
 # swallowed the awk-capability probe, which is live shell that runs on every
 # invocation. They are now derived from where each quoted program actually
 # opens and closes.
-tools/bt-actions:85-267     # inline classifier; see devtools/awk-coverage
-tools/bt-actions:280-287    # inline MGMT-intent extractor; same
+tools/bt-actions:93-274     # inline classifier; see devtools/awk-coverage (re-derived 2026-09-24: 9373e62 moved the file by +7)
+tools/bt-actions:288-295    # inline MGMT-intent extractor; same
 tools/bt-sco:115-123        # inline request/completion block filter; same
 tools/bt-capdiff:88-108     # inline record extractor; same
 tools/sanitize-logs.sh:142-191  # inline substituter and its verifier; same
@@ -122,7 +122,7 @@ tools/bt-env-history:82-91  # inline metrics.tsv column reader; same
 tools/bt-logvolume:110-114  # inline message normaliser; same
 tools/bt-logvolume:116-121  # inline share renderer (same pipeline, second program)
 tools/bt-trial:250-254      # inline trial-number counter; same
-tools/bt-trial:730-739      # inline sco-params window filter; same (re-derived 2026-09-19 (+16) and again 2026-09-20 (+12, the abort/autostop edits) — R2-112; CI's stale-exclusion check caught the old range covering live code both times; the range is btmon-line+2 … +11)
+tools/bt-trial:767-776      # inline sco-params window filter; same (re-derived 2026-09-19 (+16), 2026-09-20 (+12, the abort/autostop edits) and 2026-09-24 (+37, dbe7123) — R2-112; CI's stale-exclusion check caught the old range covering live code both times; the range is btmon-line+2 … +11)
 tools/bt-verify-install:57-60   # inline install_file parser; same
 tests/run-tests:302-307       # inline --section extractor; same
 

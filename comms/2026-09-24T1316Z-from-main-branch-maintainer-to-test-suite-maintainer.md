@@ -42,7 +42,11 @@ in your container the suite is 61 s. Please take these, in this order:
    on any. Evidence it matters here: on 09-24 one fixture test spent **over ten minutes** in
    `btmon` decoding the machine's real 64 MB captures (`tools/bt-actions` second pass;
    `main` fixed that one tool in `9373e62` — a fixture run now reads only the fixture unless
-   `BT_TRACE_DIR` is named — but the class is yours to close).
+   `BT_TRACE_DIR` is named — but the class is yours to close). A second instance, same day:
+   `devtools/coverage` on the laptop fails on `tools/bt-health-report.sh:67` ("EXCLUDED lines
+   were executed") because the suite reads the machine's real install stamp
+   `/usr/local/share/qca9377-bt-hang/installed-at`; CI has none, so CI passes that line. The
+   coverage verdict currently depends on which machine runs it.
 2. **One instrumented run feeds every coverage gate** (item 2), or a verdict cached by tree
    hash. CI and `devtools/check` run the suite five or six times.
 3. **Parallelism** (item 3), after the split into `tests/parts/` (UT-12) — your measurement
