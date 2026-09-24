@@ -319,7 +319,7 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    `20-patched-bluetoothd.conf`; the stock package binary is intact (`dpkg -V bluez` clean), so
    "stock daemon" = disable that drop-in. Runbook: `scripts/runtime-mgmt-test.sh` — refuses
    while `bt-window` is open or a trial is open; `load`/`restore` swap the module, `trigger`
-   captures the mgmt reply to a Start Discovery pending at power-off. A reboot restores all.
+   captures the management channel around a power cycle. A reboot restores all.
    ⚠️ **Attempted 2026-09-23 01:08–01:20 and it wedged the controller (`EX-046`)**: the first
    `btusb` unload/re-probe, still on the STOCK module, ended with HCI Reset `0x0c03` timing out
    (`-110`) and hci0 registered with an all-zero address, DOWN; two further re-probes the same.
@@ -359,11 +359,13 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    btqca, rfcomm, bnep, hidp) accept its CRCs, 0 mismatches. **Every trial and exhibit from
    that boot on runs the PATCHED `bluetooth.ko`** — `bt-trial` labels them `build=stock`
    (§9.3); read the boot's srcversion, not the label. **Undo:** `rm` that file, `depmod -a
-   7.0.0-31-generic`, reboot. The observation wanted: a Start Discovery answered by the flush
-   (Command Status, not Command Complete) with `0x0f` in the continuous capture —
-   `tools/bt-ctrl-window`. A control run on stock (09-24 00:33) did **not** reach the flush:
-   a healthy controller completes discovery in ~110 ms; 08-14 needed a 2 s HCI timeout
-   holding the sync lock in front of a queued discovery and an rfkill power-off.
+   7.0.0-31-generic`, reboot. What the runtime check looks for, and its results: the held
+   branch only. **Runtime result 2026-09-24 (01:19–03:39, operator's heavy use, dozens of
+   power cycles, pairing, 2 h of audio): no regression**; the ninth alt-1 death (`EX-047`)
+   happened on this build, unchanged in signature. ⚠️ **Publication slip, 09-22→09-24:**
+   earlier revisions of this section, HISTORY and the runbook header described the held
+   finding's test case on public `main`. Neutralised on 09-24; the text remains in git history
+   (removal would need a force-push — the operator's call). The closing move is to send the patch.
 
 ## 10. Where detail lives
 

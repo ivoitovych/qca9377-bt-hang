@@ -1,9 +1,9 @@
 #!/bin/bash
 # runtime-mgmt-test.sh — run the held kernel patch on this machine: swap the
 # running bluetooth.ko for one built from Ubuntu's own source (unpatched
-# control or patched), with the STOCK distro bluetoothd, and capture what the
-# kernel answers to a Start Discovery that is pending when the adapter powers
-# off. Everything is reversible; a reboot restores the stock module and the
+# control or patched), with the STOCK distro bluetoothd, and capture the
+# management channel around a power cycle (what is checked there: the held
+# branch). Everything is reversible; a reboot restores the stock module and the
 # patched daemon drop-in is only moved aside, never deleted.
 #
 #   scripts/runtime-mgmt-test.sh status              what runs now (daemon, module, window)

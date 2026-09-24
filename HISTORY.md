@@ -3355,8 +3355,8 @@ the same day, so "does it still apply" is a command again rather than a memory.
 The eighth death (`EX-045`) had run untreated for thirty hours and was recorded from the
 journal and sysfs alone; the operator powered off at 00:54 on 2026-09-23 and the controller
 came back clean. The kernel patch's runtime test was to follow: stock daemon, swap
-`bluetooth.ko` for the module built from Ubuntu's own source, a Start Discovery pending at
-power-off, watch the management channel. The swap did not go. `bluetoothd` came back on its
+`bluetooth.ko` for the module built from Ubuntu's own source, and watch the management
+channel. The swap did not go. `bluetoothd` came back on its
 own after `systemctl stop`, because a client asks D-Bus for it within a second; WirePlumber,
 ModemManager and this project's own two capture services held sockets that made the kernel
 re-load `rfcomm` and `bnep` the instant they were removed; `modprobe -r` with a list did not
