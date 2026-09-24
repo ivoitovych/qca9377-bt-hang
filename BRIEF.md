@@ -74,6 +74,9 @@ Both instances where the log names the dying command name `0x0406 Disconnect, re
   controller or *discovers* one the stream already wedged is **not established** (`DR-03`).
 - **The original configuration reproduces it** (`EX-043`, `autosusp=Y, power=auto`, live).
 - **The wedge is below HCI** — USB control transfers (`GET_DESCRIPTOR`) return `-110`.
+- **An rfkill cycle on a wedged controller** (operator, 09-24, `EX-048`): the power-off itself
+  fails (`-110`), and on unblock two USB resets leave the device off the bus (`000`, hci0
+  DOWN) — USB loss once more only *after* an intervention.
 - **Every recovery tried on an already-wedged controller failed** (`EX-039`); the one reset
   issued *before* any timeout recovered it, and it failed again 132 s later (`EX-004`).
   `hdev->reset` is NULL on the kernels run here — `13d3:3503` had no quirks entry ⚠️ **until
