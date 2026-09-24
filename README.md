@@ -5,17 +5,18 @@ power brings it back.** Qualcomm Atheros **QCA9377** (ROME), USB ID `13d3:3503`,
 Linux. An open investigation aimed at an upstream fix, run so that every claim can be
 re-derived by a stranger from the command that produced it.
 
-## Status — 2026-09-23, newest exhibit `EX-046`
+## Status — 2026-09-24, newest exhibit `EX-047`
 
 > When this controller negotiates **transparent (mSBC / wideband) synchronous audio**,
 > `btusb` falls back to **USB alternate setting 1** — a 9-byte isochronous endpoint — and
 > sends each 27-byte SCO buffer as three 9-byte packets (`len 27 mtu 9` in the log is that
 > split, not an overflow). **The first HCI command observed after the stream starts gets no
 > response**; the controller then answers nothing, including USB control
-> transfers, until power is removed. Reproduced **eight times across three kernels, two
+> transfers, until power is removed. Reproduced **nine times across three kernels, two
 > headsets, and both power configurations** (`EX-033`, `036`, `037`, `038`, `040`, `042`,
-> `043`, `045`), with alternate setting 1 read directly from `sysfs` during six live wedges;
-> the two most recent (`EX-043`, `EX-045`) under the stock power configuration.
+> `043`, `045`, `047`), with alternate setting 1 read directly from `sysfs` during seven live
+> wedges; the three most recent (`EX-043`, `EX-045`, `EX-047`) under the stock power
+> configuration, `EX-047` with a self-built `bluetooth.ko`.
 
 - **Established:** the sequence above; `0x0428 Setup Synchronous Connection` *is*
   answered; the stream ran 9.65 s in `EX-043` before the first command was issued, and that
@@ -104,6 +105,9 @@ The signature, per instance (`BRIEF.md` §2 carries the full table):
 | `EX-042` | 09-16 | `-31` | modified | 1595 | ~90 ms | 2.147 s |
 | **`EX-043`** | **09-17** | `-31` | **original** | 910 | **9,650 ms** | **11.874 s** |
 | **`EX-045`** | **09-22** | `-31` | **original** | 735 | (`0x0406`) | 2.018 s cmd→timeout |
+| **`EX-047`** | **09-24** | `-31`¹ | **original** | 717 | (`0x0406`) | 2.053 s cmd→timeout |
+
+¹ self-built `bluetooth.ko` loaded from `updates/`; the fault is unchanged.
 | *survival* | 09-01 | `-30` | modified | 8 | — | *lived* |
 
 The interval is not a constant: it is *time to the first command* plus the 2 s command

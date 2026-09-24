@@ -39,7 +39,8 @@ work on alt 1; this part has alts 1–5 and no 6 (its descriptors are also in `d
 so the fallback *applies* to it — whether it is *compatible* is the question (`DR-04`).
 **Control window is v5.8–v5.11 only** (below v5.8 alt 1 is reachable via `new_alts = sco_num`).
 
-## 2. The signature — `n = 8`, three kernels, two peripherals, both configurations
+## 2. The signature — `n = 9`, three kernels, two peripherals, both configurations
+² self-built `bluetooth.ko` from `updates/` (srcversion `66D38200…`); signature unchanged.
 
 ```
 0x0428 answered → evt 5 → "Looking for Alt no :6" → ":3" → len 27 mtu 9 (3×9-byte packets) → FIRST command observed → +2.0 s tx timeout
@@ -55,6 +56,7 @@ so the fallback *applies* to it — whether it is *compatible* is the question (
 | `EX-042` | 09-16 | `-31` | modified | 1595¹ | ~90 ms | 2.147 s |
 | **`EX-043`** | **09-17** | `-31` | **original** | 910 | **9,650 ms** (`0x0406`) | **11.874 s** |
 | **`EX-045`** | **09-22** | `-31` | **original** | 735 | (`0x0406`, reason `0x13`) | 2.018 s cmd→timeout |
+| **`EX-047`** | **09-24** | `-31`² | **original** | 717 | (`0x0406`, reason `0x13`) | 2.053 s cmd→timeout |
 | *survival* | 09-01 | `-30` | modified | **8** | — | *lived* |
 
 ¹ window-scoped. ⚠️ **The "2.15 s interval" was an artefact of six fast teardowns** (first
