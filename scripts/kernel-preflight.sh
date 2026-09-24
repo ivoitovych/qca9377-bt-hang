@@ -57,4 +57,14 @@ echo "   findings in mgmt.c: base $(printf '%s\n' "$before" | grep -c .), patche
 if [[ -n "$new" ]]; then echo "   NEW with the patch:"; printf '      %s\n' "$new"; rc=1
 else echo "   no new sparse finding introduced by the patch"; fi
 
+# Recipients, from the tree itself (get_maintainer.pl refuses outside a tree).
+# ⚠️ `Cc: stable@vger.kernel.org` in the patch body is a TAG, "NOT an email
+# recipient" (Documentation/process/submitting-patches.rst) — send with
+# `git send-email --suppress-cc=bodycc` so it is not mailed to the stable list.
+echo "── recipients: scripts/get_maintainer.pl on the patch commit"
+git format-patch -1 --stdout HEAD > .preflight.patch
+scripts/get_maintainer.pl --no-rolestats .preflight.patch
+scripts/get_maintainer.pl .preflight.patch | sed 's/^/   role: /'
+rm -f .preflight.patch
+
 exit $rc
