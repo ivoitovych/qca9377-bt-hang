@@ -119,9 +119,18 @@ trap 'rm -rf "$WORK"' EXIT INT TERM
 # defect the check was hunting. Same shebang scan, same source of truth, and
 # built without a pipeline so the detector cannot be bitten by the pipefail
 # inversion it exists alongside.
-SHFILES=()
+SHFILES=(); SHSKIPPED=()
 while IFS= read -r f; do
     [[ -f "$f" ]] || continue
+    # scripts/ IS OUT OF SCOPE, AND SAYS SO — the rule devtools/py-coverage has
+    # had since 2026-09-21. scripts/README.md: nothing there is the deliverable;
+    # one-off helpers for proofs, patch work and system steps, many of which
+    # cannot run in the suite at all (network, a kernel tree, root on a live
+    # controller). On 2026-09-24 their growth took TOTAL from ~80% to 76.7% with
+    # all 813 invariants green. Excluded by directory and LISTED below, so the
+    # narrowing shows in the report. A script promoted to tools/ or devtools/
+    # is measured from that moment.
+    case "$f" in scripts/*) SHSKIPPED+=("$f"); continue ;; esac
     IFS= read -r shebang < "$f" || continue
     case "$shebang" in
         '#!'*bash*|'#!'*/sh|'#!'*' sh') SHFILES+=("$f") ;;
@@ -152,6 +161,7 @@ if (( ${#SHFILES[@]} == 0 )); then
     echo "coverage: no shell files found (not a git checkout?)" >&2
     exit 2
 fi
+echo "out of scope (scripts/, not shipped): ${#SHSKIPPED[@]} file(s)" >&2
 
 # ── run the suite under trace ─────────────────────────────────────────────
 printf 'running tests/run-tests under trace (%d shell files)...\n' "${#SHFILES[@]}" >&2
