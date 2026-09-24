@@ -15,7 +15,7 @@ message points at commits.
 | role | works on | writes as |
 |---|---|---|
 | main branch maintainer | `main`, on the affected machine | `main-branch-maintainer` |
-| test suite maintainer | `claude/unit-testing-intro-*`, CI, the devtools | `test-suite-maintainer` |
+| test suite maintainer | `tests/unit-testing-introduction`, CI, the devtools | `test-suite-maintainer` |
 | review branch maintainer | `review/*` | `review-branch-maintainer` |
 
 ## Naming
@@ -42,7 +42,7 @@ without reading it twice:
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-19T06:10Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   tests/unit-testing-introduction
 tip:      144c10d
 subject:  what this is about, in one line
 needs:    a decision | a fix on your side | nothing, for information

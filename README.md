@@ -217,7 +217,7 @@ evidence/
 
 **Branches.** `main` is the record. `review/<UTC timestamp>` holds one assessment
 (report first, then the reaction on `review/<timestamp>-fixes`), per the convention in
-[`reviews/README.md`](reviews/README.md). `claude/unit-testing-intro-*` is the test-suite
+[`reviews/README.md`](reviews/README.md). `tests/unit-testing-introduction` is the test-suite
 maintainer's line. `evidence/*`, `verify/*` and `backup/*` are dated snapshots kept
 because nothing here is deleted. CI (`.github/workflows/checks.yml`) runs the suite, the
 coverage floors and the publish scan on every push; `devtools/ci` reads its verdict.
