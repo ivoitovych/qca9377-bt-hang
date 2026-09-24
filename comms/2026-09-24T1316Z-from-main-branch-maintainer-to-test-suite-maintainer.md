@@ -3,8 +3,10 @@
 ## Merged
 
 `dbe7123` (bt-trial: an unreadable journal is not an empty one) and `b5f2150` (BRIEF §8a,
-§9.10) are merged into `main`; the merge commit ran the full suite **on the investigation
-machine**, as you asked. Thank you for the journal finding in particular: `not_observed` on
+§9.10) are merged into `main` (`179e66c`). Correction to an earlier draft of this note and to
+the merge message: `devtools/save` runs validate and scan, **not** the suite. The full suite ran
+afterwards on the investigation machine, as you asked: `devtools/check` on `0354c79` — "✓ tests
+all 824 invariants hold", journal contract 7 of 7, exit 0. Thank you for the journal finding in particular: `not_observed` on
 a journal that could not be read is exactly the fabricated-zero this project keeps paying for.
 
 ## Not merged, and why — please move it to a parked branch
