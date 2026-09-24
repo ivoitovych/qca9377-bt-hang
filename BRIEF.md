@@ -256,12 +256,56 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 
 ## 8a. The test suite — rules the maintainer paid for (owner: the test-suite maintainer)
 
-*Reserved on 2026-09-19 at the operator's request. The test-suite maintainer writes this
-section — the rules, each with its reason, ten to thirty lines — and points at the long
-form in [`lessons/2026-08-22T1101Z-test-suite-maintainer.md`](lessons/) and its
-successors. Nothing here is written by the main branch; a placeholder until he does.*
+*Written 2026-09-24, replacing the reservation. Each rule cost something; the instance
+that taught it and what it cost are in
+[`lessons/2026-08-22T1101Z-test-suite-maintainer.md`](lessons/2026-08-22T1101Z-test-suite-maintainer.md)
+and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T1200Z-test-suite-maintainer.md).*
 
-- (his first rule, with its why, goes here)
+- **A new check must be observed to fail.** Write it, break what it guards, watch it go
+  red, restore. **Eight** checks have reached this suite green that *could not* fail. The
+  seventh was `rg … || true`, where a missing binary made a negative search read as a clean
+  one (`6a7c7a4`); the eighth was written **this week**, in the check policing this very
+  rule — a drift guard that matched its stem in a *comment*, so the code could drift and it
+  stayed green. Strip comments before asserting on source.
+- **State the premise in code, not in a comment.** An assertion that says "this host has a
+  readable journal" and never asks has two meanings and tests one. On a journal-less host
+  it accepted `bt1_status=not_observed` — *"we looked and BT-1 did not happen"* — for a
+  trial where looking was impossible, on every run and every CI run since the classifier
+  was written. Now it derives the premise and asserts the opposite answer on each side.
+- **`ENUMERATED == 0` is a refusal; `CHECKED == 0` is a result.** The same defect, in the
+  producer: `journalctl` **exits 0** with no journal files at all, so a checked exit status
+  said "read succeeded" and a numeric zero became a clean survival. Exit 0 is not evidence
+  that there was anything to read.
+- **A bounded search that reports absence is reporting its bound.** Twice a `--depth 50`
+  clone answered a question about history: once `unknown revision` read as "no such
+  commit", once 141 commits read as the total where the full clone has 401. Put the bound
+  in the same sentence as the number, or widen it before answering.
+- **A red suite is also a claim about the machine.** Five sanitiser assertions failed with
+  "a raw UUID survived verification"; the leak was mawk 1.3.4 mishandling ERE intervals on
+  groups, not the sanitiser. Gate assertions that need a capability on a probe for it — and
+  verify the gate **both ways**: it runs where the capability exists, and where it does not
+  the refusal itself is asserted, because a refusal that still wrote output is the
+  dangerous outcome and a silent skip would never see it.
+- **Tests never touch the real evidence tree.** Everything reads through a seam
+  (`BT_JOURNAL_FIXTURE`, `BT_COREDUMP_FIXTURE`, `BT_CAPTURE_SOURCE`, `BT_SNAPSHOT_DIR`,
+  `BT_REPO`, `BT_DESTDIR`), and fixtures carry placeholders (`AA:BB:CC:…`, `192.0.2.x`,
+  `example.com`) — never real-but-shortened data. ⚠️ The seam is **not complete**: a run
+  still reaches the real `journalctl`, `systemctl` and `bluetoothctl`, which is why the
+  suite costs a minute here and far more on the machine (§9).
+- **The suite must not run in the live tree.** It drives actuators, so it refuses while a
+  trial is open — on 2026-08-14 a coverage run closed a live two-hour trial and wrote a
+  results row fabricated by stubs. Run it from a separate worktree there; and when a tool
+  drops to its read-only validators, make it **say so**, because believing the suite ran is
+  worse than knowing it did not.
+- **Sampling one convention does not license the next one.** `Fixes:` usage was *measured*
+  across 400 upstream commits; the sign-off convention beside it was *assumed*, and was
+  wrong — that project's own `HACKING` calls the trailer an error.
+- **A converging measurement is not proof the anchor is right.** Two instances agreeing to
+  76 ms was read as confirmation; a third showed the anchor was only *less* wrong. Agreement
+  bounds noise, never systematic error.
+- **An ahead-count is not a relationship.** The push gate says how many commits the local
+  branch has that the remote lacks, never whether the remote's are contained in yours. Two
+  incidents, opposite correct answers. Compare tips.
 
 ## 9. Open threads
 
@@ -391,6 +435,19 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    earlier revisions of this section, HISTORY and the runbook header described the held
    finding's test case on public `main`. Neutralised on 09-24; the text remains in git history
    (removal would need a force-push — the operator's call). The closing move is to send the patch.
+10. **The fixture seam does not cover the machine tools, and the suite's cost says so**
+    (test-suite maintainer, 09-24). Profiled: the suite is **~60 s here**, ~70 % of it
+    process creation (24,603 processes, ~30 per invariant), only ~5.5 s idle — but per run
+    it still reaches the **real** `journalctl` (42×, including an unbounded `-k -b 0
+    --grep`), `systemctl is-active` (106×) and `bluetoothctl devices Connected` (each
+    behind `timeout 8`). Those are instant on a journal-less container and expensive on the
+    machine — worst exactly when the controller is wedged — so runtime there scales with
+    uptime, not with the tests. `.github/workflows/checks.yml:8` still says *"the suite is
+    ~2 s and hermetic"*; both halves are now false. Also: the five gates that each re-run
+    the whole suite cost **6 min 53 s** here, and four concurrent runs finish in 68 s, so
+    the split (`UT-12`) buys ~3×. Nothing changed yet — the fix is to stub those tools for
+    the whole run and add an invariant that counts fall-throughs to the real binaries,
+    detecting the effect rather than the shape, as the `/usr/bin` footprint check does.
 
 ## 10. Where detail lives
 

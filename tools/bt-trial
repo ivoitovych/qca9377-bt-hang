@@ -412,17 +412,46 @@ hang|ok)
     # survival manufactured from an unreadable journal. `unknown` cannot protect
     # against a failure it never learns about.
     KJ=$(mktemp) || { echo "bt-trial: mktemp failed" >&2; exit 1; }
+    KJERR=$(mktemp) || { echo "bt-trial: mktemp failed" >&2; exit 1; }
     # The capture is read via jk() all the way to the SCO-timing block far
     # below, so it cannot be removed inline like WJ is; the EXIT trap covers
     # the normal return and every early exit between here and there. This is
     # the only EXIT trap in the script — extend it rather than replacing it
-    # if another temp file ever needs the same guarantee.
-    trap 'rm -f "$KJ"' EXIT
-    if journalctl -k --since "$since" --no-pager -o short-iso-precise > "$KJ" 2>/dev/null; then
+    # if another temp file ever needs the same guarantee. $KJERR rides the same
+    # trap for the same reason.
+    trap 'rm -f "$KJ" "$KJERR"' EXIT
+    if journalctl -k --since "$since" --no-pager -o short-iso-precise > "$KJ" 2>"$KJERR"; then
         journal_ok=1
     else
         journal_ok=0
     fi
+
+    # ⚠️ AND AN EXIT STATUS OF 0 IS NOT A READABLE JOURNAL.
+    #
+    # The check above closes the case where journalctl FAILS. It does not close
+    # the case where journalctl SUCCEEDS at reading nothing, and that is the
+    # case that actually occurs: with no journal files at all — a container, a
+    # fresh install, Storage=none — `journalctl -k` prints `-- No entries --`
+    # on stdout, "No journal files were found." on stderr, and EXITS 0. The
+    # same happens with files present and unreadable ("No journal files were
+    # opened due to insufficient permissions"), which is what a non-root close
+    # outside the systemd-journal group looks like.
+    #
+    # So journal_ok was 1, tmo was a perfectly numeric 0, and the classifier
+    # wrote bt1_status=not_observed — "we looked and BT-1 did not happen" — for
+    # a trial where looking was impossible. Exactly the outcome the comment
+    # above says `unknown` exists to prevent, reached by the other door. Every
+    # suite run and every CI run has produced that row since the classifier was
+    # written, and the suite's own assertion accepted it.
+    #
+    # The signal is on stderr, at the point of use, so no second journalctl
+    # call is needed to ask. Matched on the stem both wordings share.
+    journal_files=1
+    if grep -q 'No journal files were' "$KJERR" 2>/dev/null; then
+        journal_files=0
+        journal_ok=0
+    fi
+    rm -f "$KJERR"
     jk() { cat "$KJ"; }
 
     sco_sent=$(jk | grep -c "opcode 0x0428" || true)
@@ -569,8 +598,16 @@ hang|ok)
     # pipeline, and an intervention that DID happen becomes zero — so a
     # censored trial silently becomes `not_observed + survived`. Unreadable
     # evidence must not become negative evidence.
+    #
+    # $journal_files GATES THIS READ RATHER THAN A SECOND PROBE OF ITS OWN,
+    # because the -u form gives no signal to probe: with no journal files
+    # `journalctl -u <unit>` prints nothing, writes nothing to stderr and exits
+    # 0 — identical, byte for byte, to a readable journal in which that unit
+    # has never logged. Only the -k read above says which of the two it is, so
+    # its verdict is the one carried here.
     WJ=$(mktemp) || { echo "bt-trial: mktemp failed" >&2; exit 1; }
-    if journalctl -u bt-hang-watchdog --since "$since" --no-pager -o cat > "$WJ" 2>/dev/null; then
+    if (( journal_files )) \
+       && journalctl -u bt-hang-watchdog --since "$since" --no-pager -o cat > "$WJ" 2>/dev/null; then
         wd_journal_ok=1
         early_int=$(grep -c "EARLY intervention" "$WJ" || true)
         any_int=$(grep -cE "EARLY intervention|Detected .* controller timeouts within" "$WJ" || true)
