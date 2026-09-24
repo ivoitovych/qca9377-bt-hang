@@ -13,7 +13,9 @@
 # Needs a tree prepared by scripts/build-bluetooth-fulltree.sh (.config,
 # modules_prepare) and `sparse` installed. Writes build output in the tree only.
 set -uo pipefail
-TREE="${1:?usage: kernel-preflight.sh <full-kernel-worktree>}"
+TREE="${1:-$(dirname "${BASH_SOURCE[0]}")/../cache/full-bt-next}"   # default: the bluetooth-next worktree
+BT_SPARSE="${BT_SPARSE:-$(dirname "${BASH_SOURCE[0]}")/../cache/sparse/sparse}"   # default: the current sparse built there
+[[ -x "$BT_SPARSE" ]] || BT_SPARSE=sparse
 cd "$TREE" || exit 2
 J=$(nproc)
 rc=0

@@ -16,7 +16,11 @@
 # /lib/modules/$(uname -r)/build.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC="${BT_KSRC:-$HERE/cache/linux}"   # BT_KSRC: another (sparse) checkout, e.g. a worktree at bluetooth-next/master
+SRC="${BT_KSRC:-$HERE/cache/linux}"   # --ksrc DIR (or BT_KSRC): another checkout
+# Options as FLAGS, not an `env VAR=…` prefix: a command that starts with `env`
+# does not match the granted scripts/* rule and prompts every time (2026-09-24).
+if [[ "${1:-}" == "--ksrc" ]]; then SRC="${2:?--ksrc needs a directory}"; shift 2; fi
+[[ "${1:-}" == "--ubuntu" ]] && { SRC="$HERE/cache/ubuntu-7.0.0-31"; shift; }
 OUT="$HERE/tmp/bt-build"
 KBUILD="/lib/modules/$(uname -r)/build"
 PATCH="${1:-}"

@@ -8,9 +8,29 @@
 #   scripts/mgmt-replies.sh <capture.btsnoop>...           all replies
 #   BT_MGMT_ONLY="Discovery" scripts/mgmt-replies.sh …      only commands matching
 set -uo pipefail
-(( $# )) || { echo "usage: mgmt-replies.sh <capture.btsnoop>..." >&2; exit 2; }
+#   scripts/mgmt-replies.sh --status --since "2026-09-24 01:18" [--trace]
+#       every capture file written since then (capture/ by default, --trace
+#       for the btmon trace), Command Status only — no file list, no env prefix
 ONLY="${BT_MGMT_ONLY:-}"
 KIND="${BT_MGMT_KIND:-}"      # STATUS or COMPLETE to keep only that event kind
+SINCE=""; DIR=/var/log/bt-health/capture
+while [[ "${1:-}" == --* ]]; do
+	case "$1" in
+		--status)   KIND=STATUS ;;
+		--complete) KIND=COMPLETE ;;
+		--only)     ONLY="${2:?--only needs a regex}"; shift ;;
+		--since)    SINCE="${2:?--since needs a time}"; shift ;;
+		--trace)    DIR=/var/log/bt-health/trace ;;
+		*) echo "unknown option $1" >&2; exit 2 ;;
+	esac
+	shift
+done
+if [[ -n "$SINCE" ]]; then
+	mapfile -t FILES < <(find "$DIR" -name '*.btsnoop' -newermt "$SINCE" | sort)
+	(( ${#FILES[@]} )) || { echo "no captures in $DIR since $SINCE" >&2; exit 1; }
+	set -- "${FILES[@]}" "$@"
+fi
+(( $# )) || { echo "usage: mgmt-replies.sh [--status|--complete] [--only RE] [--since TIME [--trace]] [capture.btsnoop...]" >&2; exit 2; }
 for f in "$@"; do
 	out=$(COLUMNS=200 btmon -T -r "$f" 2>/dev/null); brc=$?
 	(( brc == 0 )) || echo "!! $(basename "$f"): btmon exited $brc — decode incomplete (BT-4)"
