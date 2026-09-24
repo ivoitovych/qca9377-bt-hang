@@ -3395,6 +3395,34 @@ reporting, and the zero that stands — sparse, current, CHECK line present — 
 could have been otherwise. The operator then gave the word for the runtime test the way
 `EX-046` left open: the module in place before the first probe, and a cold boot.
 
+### Two hours of use, a ninth death, and the test that needed a machine that does not exist
+
+The patched module loaded from `updates/` on the next boot and the operator used the laptop
+hard for two hours. Every management reply of those two hours was read back from both
+recorders — once the reader had been taught, through two false zeros of its own, that btmon
+prints the same record two different ways. Nothing regressed, and nothing reached the code
+the patch changes: on a healthy controller that path opens only for an instant. The ninth
+alt-1 death came during that use (`EX-047`), on the self-built module, unchanged — two bugs,
+independent, as the record had always held. The operator then cycled airplane mode on the
+wedged controller; the power-off itself failed and two USB resets left the device off the
+bus (`EX-048`), once more only after an intervention.
+
+A trigger for the needed timing was not written here. An outside reviewer's design supplied
+one: a virtual controller that simply does not answer the power-off's command for a third of
+a second. It needed two transport fixes on this machine, and then, on one kernel, the stock
+module answered `0x00` and the patched one `0x0f` — the post-fix observation the third
+review had said to claim only if seen. The message gained that one paragraph, was
+regenerated in the tree, and every check ran again clean.
+
+Along the way the record caught its own habits twice more: text on public `main` had
+described the held finding's test case for two days (neutralised, recorded, the closing move
+being the send itself), and an exhibit was once written on `main` for four minutes before
+it was noticed and moved. Before sending, the operator asked for the patch README to be
+brought up to date and for one more review focused on the submission itself, with the
+reminder that the kernel's rules are not BlueZ's. They are not: the kernel wants a sign-off,
+four recipients from `get_maintainer.pl`, and `Cc: stable` as a tag that must not be mailed
+— which `git send-email` would have done by default.
+
 ### The shape
 
 Four gaps, each one step past a gate that existed. The message scan stopped at the

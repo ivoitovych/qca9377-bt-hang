@@ -17,7 +17,24 @@ cheap. Over 500 it stops being cheaper than the source. Cut the oldest settled i
 adding; never cut a reason to fit a fact. **Sections name their owner**; each owner writes
 theirs and points at the long form (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-09-19 · newest exhibit: EX-043** — no tip hash: it rotted within hours (`R2-13`).
+**Last updated: 2026-09-24 · newest exhibit on `main`: EX-048; the held branch has EX-049 and
+EX-050, so the next exhibit on `main` is EX-051** — no tip hash: it rotted within hours (`R2-13`).
+
+> **RESUME HERE (2026-09-24 ~12:00).** The held kernel patch is final: three external reviews
+> say it should go in; it is **tested both ways** on one kernel (stock vs patched module, a
+> virtual controller — exhibits on the held branch only); in-tree checks clean; applies at
+> `bluetooth` and `bluetooth-next` as of 09-24. **Not sent.** Next: a fourth,
+> submission-focused external review — brief `patches/kernel/REVIEW-TASK.md` on the held
+> branch, file package by `scripts/export-kernel-review.sh` → `tmp/review-kernel-0001/`;
+> then the operator's word and a one-use app password. The exact package and send
+> procedure (freshness fetch minutes before, merge the held branch into `main` and push in
+> the same minute, `--suppress-cc=bodycc`, dry run) are in the held branch's
+> `patches/kernel/README.md`. **Private remote:** `private` =
+> `github.com/ivoitovych/qca9377-bt-hang-private`, branch `kernel/mgmt-flush-status`;
+> `devtools/held status|sync|edit|commit` handles it; `origin` never gets `kernel/*`.
+> **Machine:** stock `bluetooth.ko` (the patched one is in `tmp/runtime/`), patched
+> `bluetoothd` drop-in, controller healthy. **Never write details of the held finding on
+> `main`** (the 09-22→24 slip is recorded in §9.9).
 
 ---
 
