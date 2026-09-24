@@ -1156,6 +1156,51 @@ else
     bad "no results row written — the producer path is broken"
 fi
 
+# ── "can this host read a journal at all" — a decision, so it is driven ──
+#
+# The assertion below branches on it, and on any given host only one branch
+# ever runs: the container always takes "no journal", the investigation machine
+# always takes "journal". That is the standing argument for leaving the other
+# untested and it is the wrong answer here, for the same reason
+# bin_footprint_diff takes its footprints as arguments — a premise that is only
+# ever evaluated one way is a premise nobody has checked.
+#
+# So the matcher is a function fed synthetic stderr, both directions, on every
+# host. The two positives are systemd's own wordings; the negative is the hint
+# journalctl prints to a non-root caller who CAN still read some of it, which a
+# looser match ("No journal" alone, or any stderr at all) would swallow — and
+# that would silently turn every ordinary user's trial into `unknown`.
+journal_unreadable_msg() {   # <stderr text> — 0 when it says the journal cannot be read
+    [[ "$1" == *"No journal files were"* ]]
+}
+journal_unreadable_msg "No journal files were found." \
+    && ok "the journal premise reads 'No journal files were found.' as unreadable" \
+    || bad "a host with no journal files would be treated as having a readable one"
+journal_unreadable_msg "No journal files were opened due to insufficient permissions." \
+    && ok "the journal premise reads the permissions wording as unreadable" \
+    || bad "a journal the caller may not read would be treated as readable"
+journal_unreadable_msg "Hint: You are currently not seeing messages from other users." \
+    && bad "a benign journalctl hint was read as an unreadable journal — every ordinary user's trial becomes unknown" \
+    || ok "a benign journalctl hint leaves the journal readable"
+journal_unreadable_msg "" \
+    && bad "silence from journalctl was read as an unreadable journal" \
+    || ok "no stderr at all leaves the journal readable"
+
+# AND THE TOOL MUST BE ASKING THE SAME QUESTION. The premise above only means
+# anything if tools/bt-trial keys on the same stem; a matcher that drifted in
+# one file and not the other would leave this suite asserting one host and the
+# producer classifying another.
+# COMMENTS STRIPPED FIRST, and this is not fussiness. Written as a plain
+# `grep -q` over the whole file it passed a mutation that changed the matcher
+# in the CODE to a stem that matches nothing, because the comment above that
+# code still quotes both wordings — the check read the prose, agreed with it,
+# and reported the producer as keying on something it no longer keyed on. That
+# is this repository's signature defect aimed at the check for itself.
+_btcode=$(grep -v '^[[:space:]]*#' tools/bt-trial)
+[[ "$_btcode" == *"No journal files were"* ]] \
+    && ok "tools/bt-trial's CODE keys on the same journal-unreadable stem this premise does" \
+    || bad "tools/bt-trial no longer matches 'No journal files were' — the premise here has drifted from the producer"
+
 # The row must carry both axes, populated with values from their domains. A
 # blank or missing field here would make every later report refuse.
 if [[ -s "$LC/evidence/trials/results.tsv" ]]; then
@@ -1163,22 +1208,53 @@ if [[ -s "$LC/evidence/trials/results.tsv" ]]; then
          "$LC/evidence/trials/results.tsv")
     tr=$(awk -F'\t' 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} NR==2{print $c["trial_result"]}' \
          "$LC/evidence/trials/results.tsv")
-    # `unknown` is a legitimate value — but not here. This host has a readable
-    # journal, so `unknown` means evidence collection failed, and that is
-    # exactly how the ordering bug manifested: $tmo was consulted before it was
-    # assigned, every trial classified `unknown`, and every trial was excluded
-    # from every rate. The denominator would have been permanently zero while
-    # the report printed cleanly.
+    # `unknown` is a legitimate value, and WHICH answer is correct here depends
+    # on a premise this assertion used to state in a comment and never check.
     #
-    # Domain-membership alone would have passed that, since `unknown` is in the
-    # domain. The assertion has to be that collection SUCCEEDED.
-    case "$bs" in
-        not_observed|confirmed|censored_pre_failure)
-            ok "bt1_status populated from evidence ($bs)" ;;
-        unknown)
-            bad "bt1_status is 'unknown' on a host with a readable journal — evidence collection failed (classifier ordered before collection?)" ;;
-        *)  bad "bt1_status is '${bs:-empty}' — outside its domain" ;;
-    esac
+    # On a host with a readable journal, `unknown` means evidence collection
+    # failed, and that is exactly how the ordering bug manifested: $tmo was
+    # consulted before it was assigned, every trial classified `unknown`, and
+    # every trial was excluded from every rate. The denominator would have been
+    # permanently zero while the report printed cleanly. Domain-membership
+    # alone would have passed that, since `unknown` is in the domain — the
+    # assertion has to be that collection SUCCEEDED.
+    #
+    # ⚠️ BUT THE COMMENT SAID "this host has a readable journal" AND NOTHING
+    # ASKED. On a host with no journal at all — this container, every CI
+    # runner — collection CANNOT succeed, and the honest answer is `unknown`.
+    # Accepting `not_observed` there is accepting "we looked and BT-1 did not
+    # happen" from a host where looking was impossible, which is the defect
+    # this pair of assertions now covers from both sides (tools/bt-trial's
+    # journal_files check). Green on the machine and green in the container had
+    # to stop meaning the same sentence.
+    #
+    # The premise is derived the same way bt-trial derives it, from the stem
+    # both journalctl wordings share — "found" for absent, "opened due to
+    # insufficient permissions" for unreadable.
+    # NOT `journalctl … | grep -q`: this file forbids a pipeline ending in
+    # `grep -q` and is right to — under pipefail it exits non-zero exactly when
+    # it MATCHES, because grep leaves at the first hit and the writer dies of
+    # SIGPIPE. Captured, then handed to the matcher driven above.
+    host_journal=1
+    _jprobe=$(journalctl -n 0 --no-pager 2>&1 >/dev/null)
+    journal_unreadable_msg "$_jprobe" && host_journal=0
+    if (( host_journal )); then
+        case "$bs" in
+            not_observed|confirmed|censored_pre_failure)
+                ok "bt1_status populated from evidence ($bs)" ;;
+            unknown)
+                bad "bt1_status is 'unknown' on a host with a readable journal — evidence collection failed (classifier ordered before collection?)" ;;
+            *)  bad "bt1_status is '${bs:-empty}' — outside its domain" ;;
+        esac
+    else
+        case "$bs" in
+            unknown)
+                ok "bt1_status is 'unknown' on a host with no readable journal — collection refused rather than guessed" ;;
+            not_observed|confirmed|censored_pre_failure)
+                bad "bt1_status is '$bs' on a host with NO journal — a verdict manufactured from a journal that could not be read" ;;
+            *)  bad "bt1_status is '${bs:-empty}' — outside its domain" ;;
+        esac
+    fi
     case "$tr" in
         survived|failed|alive_after_intervention|aborted)
             ok "trial_result populated from its domain ($tr)" ;;
@@ -1362,6 +1438,53 @@ if [[ "$ubs" == "unknown" ]]; then
 else
     bad "unreadable watchdog journal gave '${ubs:-empty}', expected unknown"
 fi
+
+# ── A HOST WITH NO JOURNAL IS NOT A HOST WITH NO TIMEOUTS ────────────────
+#
+# The block above covers a read that FAILS. This covers the one that SUCCEEDS
+# at reading nothing, which is the case that actually occurs — and which every
+# run of this suite, on this container and on every CI runner, has produced
+# and accepted since the classifier was written.
+#
+# THE WATCHDOG IS REPORTED INACTIVE FIRST, on purpose. With it reported running
+# the row comes out `unknown` through the wd_journal_ok branch above, and this
+# assertion would pass without touching the mechanism it exists to test — green
+# for the neighbouring reason. Inactive leaves exactly one route to `unknown`,
+# so the old behaviour reaches `not_observed` here and the test goes red.
+cat > "$LC/bin/systemctl" <<'STUB'
+#!/bin/sh
+case "$*" in
+  *is-active*) exit 3 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/bin/systemctl"
+
+# Byte-identical to what systemd prints, not to the shape the code expects:
+# `-- No entries --` on stdout, the reason on stderr, and EXIT 0. A fixture
+# invented from the expected shape is how the timeout pattern came to match
+# nothing in the real journal (see the TMO_OPCODE_LINE note above).
+for _jcase in 'absent:No journal files were found.' \
+              'unreadable:No journal files were opened due to insufficient permissions.'; do
+    _jlabel="${_jcase%%:*}"; _jw="${_jcase#*:}"
+    cat > "$LC/bin/journalctl" <<STUB
+#!/bin/sh
+echo "-- No entries --"
+echo "$_jw" >&2
+exit 0
+STUB
+    chmod +x "$LC/bin/journalctl"
+    rm -f "$LC/evidence/trials/results.tsv" "$LC/state/current"
+    trial autostart stock >/dev/null 2>&1
+    trial ok >/dev/null 2>&1
+    njs=$(awk -F"\t" 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} END{print $c["bt1_status"]}' \
+          "$LC/evidence/trials/results.tsv" 2>/dev/null)
+    if [[ "$njs" == "unknown" ]]; then
+        ok "journal $_jlabel, journalctl still exits 0 -> unknown, not a clean survival"
+    else
+        bad "journal $_jlabel gave bt1_status='${njs:-empty}', expected unknown ($_jw)"
+    fi
+done
 
 rm -f "$LC/bin/journalctl" "$LC/bin/systemctl"
 rm -rf "$LC"
@@ -9908,14 +10031,32 @@ done
 # also break the cross-referencing the deterministic placeholders exist for.
 printf 'bluetoothd: uinput initialized for %s\nkernel: hci0: peer %s %s SCO setup\n' \
     "$NASCII" "$_n1:$_n2:$_n3" "$NASCII" > "$SCRATCH/utf8/raw.log"
-tools/sanitize-logs.sh "$SCRATCH/utf8/raw.log" "$SCRATCH/utf8/clean.log" >/dev/null 2>&1
+tools/sanitize-logs.sh "$SCRATCH/utf8/raw.log" "$SCRATCH/utf8/clean.log" >/dev/null 2>&1; utfrc=$?
 UTFIN=$(grep -c -- "$NASCII" "$SCRATCH/utf8/raw.log" || true)
 UTFOUT=$(grep -c -- "$NASCII" "$SCRATCH/utf8/clean.log" 2>/dev/null || true)
 UTFMAC=$(grep -c -- "$_n1" "$SCRATCH/utf8/clean.log" 2>/dev/null || true)
-if (( ${UTFIN:-0} > 0 && UTFIN == UTFOUT && ${UTFMAC:-1} == 0 )); then
-    ok "sanitize-logs replaces the address and leaves the non-ASCII device name intact ($UTFIN line(s))"
+# THE SAME CAPABILITY GATE THE REDACTION BLOCKS ABOVE CARRY, and this one was
+# missed when they were added. On an awk without ERE intervals on groups the
+# tool REFUSES, writes no clean.log, and UTFOUT/UTFMAC are read from a file
+# that does not exist — so the assertion failed with "sanitiser mangled the
+# device name", on a mawk host, about a sanitiser that had done exactly the
+# right thing. Five failures reading like a live privacy leak and being nothing
+# of the kind is how this was found; this was the fifth, left over.
+if (( awk_intervals_ok )); then
+    if (( ${UTFIN:-0} > 0 && UTFIN == UTFOUT && ${UTFMAC:-1} == 0 )); then
+        ok "sanitize-logs replaces the address and leaves the non-ASCII device name intact ($UTFIN line(s))"
+    else
+        bad "sanitiser mangled the device name or kept the address: name in=$UTFIN out=$UTFOUT, address left=$UTFMAC"
+    fi
 else
-    bad "sanitiser mangled the device name or kept the address: name in=$UTFIN out=$UTFOUT, address left=$UTFMAC"
+    # BOTH DIRECTIONS, like the -i block above: a refusal that still wrote an
+    # output file would be the dangerous failure here, and skipping silently
+    # would never notice it.
+    (( utfrc != 0 )) && [[ ! -s "$SCRATCH/utf8/clean.log" ]] \
+        && ok "on an incapable awk the non-ASCII case is refused and no clean.log is written" \
+        || bad "an incapable awk produced output for the non-ASCII case (rc=$utfrc) — a partial redaction may have been written"
+    echo "  · non-ASCII redaction assertion SKIPPED: this awk lacks ERE intervals on groups"
+    echo "    (install gawk to run it; mawk 1.3.4 is not sufficient)"
 fi
 
 # The REMOVAL of a leak must be commit-able: default mode scans added lines
