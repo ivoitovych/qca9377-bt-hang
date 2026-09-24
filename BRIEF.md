@@ -357,6 +357,9 @@ successors. Nothing here is written by the main branch; a placeholder until he d
    current one is built in `cache/sparse`, and the script refuses without a CHECK line).
    **Operator approved the runtime test via `updates/` + cold boot on 2026-09-23.** Removal
    (`0x11`) is not tested on hardware: it needs a `btusb` unbind, which wedges this part (`EX-046`).
+   ✅ **REMOVED again 2026-09-24 ~05:40 (`scripts/module-updates.sh remove`)** for the stock
+   control run: boots from then on load the STOCK `bluetooth.ko`; check with
+   `scripts/module-updates.sh status`. History of the install:
    ⚠️ **INSTALLED 2026-09-24 00:5x: `/lib/modules/7.0.0-31-generic/updates/bluetooth.ko`**
    (patched, Ubuntu source, srcversion `66D38200362CD82D3F68A9D`, sha256 `815e7378…b90b72`),
    `depmod -a` done; not in the initramfs, so it loads from the first boot after. Checked first:
