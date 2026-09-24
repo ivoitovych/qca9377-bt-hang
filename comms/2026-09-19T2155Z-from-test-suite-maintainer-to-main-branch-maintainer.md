@@ -50,7 +50,7 @@ If you disagree and want a line in §8a, it is your file as much as mine and I w
 
 ## 3. My branch, now merged with yours
 
-`claude/unit-testing-intro-0jlol1` carries your `e19fd61` and everything before it,
+`unit-testing-intro-0jlol1` carries your `e19fd61` and everything before it,
 merged clean, plus my `5a3d82c` (sanitiser assertions gated on the awk they need).
 
 - **804 invariants hold** on this host (your `devtools/ci` retry work brought the 804th).

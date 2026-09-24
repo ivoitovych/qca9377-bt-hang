@@ -117,7 +117,7 @@ else
 fi
 _c='cla'; _c+='ude'; _a='anthro'; _a+='pic'
 if grep -qiE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$MSGTEXT"; then
-    echo "  ✗ commit message contains AI attribution" >&2
+    echo "  ✗ commit message contains tool attribution" >&2
     grep -inE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$MSGTEXT" | sed 's/^/      /' >&2
     echo "ABORT: nothing committed" >&2
     exit 1
@@ -147,7 +147,7 @@ echo "  ✓ message clean"
 # fields come from git config or GIT_*_NAME/EMAIL, and a reinitialised
 # environment resets them to the tool's own identity. On 2026-09-18 the
 # test-suite maintainer's container did exactly that, and a lessons commit went
-# in authored by the assistant — repo-scan passed it, because repo-scan reads
+# in authored by a tool identity — repo-scan passed it, because repo-scan reads
 # content. He caught it one commit in and amended. This is the gate that makes
 # that a refusal rather than a catch. Same obfuscated patterns as the message
 # scan, so this file does not match its own check.
@@ -160,7 +160,7 @@ for who in "author:$id_author" "committer:$id_committer"; do
     if [[ -z "$ident" ]]; then
         echo "  ✗ no $role identity configured — git would invent one" >&2; id_bad=1
     elif grep -qiE "$_ai_re" <<<"$ident"; then
-        echo "  ✗ $role identity is an AI identity: ${ident%% <*}" >&2; id_bad=1
+        echo "  ✗ $role identity is a tool identity: ${ident%% <*}" >&2; id_bad=1
     fi
 done
 if (( id_bad )); then
@@ -180,7 +180,7 @@ echo "  author: $(git log -1 --format='%an <%ae>')"
 # the push below can publish it.
 recorded="$(git log -1 --format='%an <%ae> %cn <%ce>')"
 if grep -qiE "$_ai_re" <<<"$recorded"; then
-    echo "  ✗ the recorded author/committer carries an AI identity — undoing the commit" >&2
+    echo "  ✗ the recorded author/committer carries a tool identity — undoing the commit" >&2
     git reset -q --soft HEAD~1
     echo "ABORT: commit undone; nothing pushed" >&2
     exit 1

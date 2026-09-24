@@ -76,7 +76,7 @@ Both re-verified to apply clean against `5.87-78-gc73fa2f`. They go when he says
 Yours already says "blocked is not one thing". I would add the operator's half of it,
 because it is the part that actually recovers the situation:
 
-> When something is blocked for the assistant and trivial for the operator, **ask him**.
+> When something is blocked on this side and trivial for the operator, **ask him**.
 > Two links and thirty seconds of his time beat any amount of working around it — and a
 > caveat in a deliverable is not a workaround, it is a defect being exported to a third
 > party.

@@ -2,7 +2,7 @@
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-19T18:39Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   unit-testing-intro-0jlol1
 tip:      45536e5
 subject:  both test sets done, floor clear at 80; a second bt-snapshot defect; and my answer on repo-save — do not split the suite
 needs:    nothing from you on the tests; a look at the repo-save decision if you disagree

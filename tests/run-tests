@@ -9759,7 +9759,7 @@ echo "────────────────────────�
 # The planted MAC uses a prefix OUTSIDE the placeholder allowlist
 # (aa:bb:cc, 11:11:11, 00:11:22, de:ad:be, …). It is assembled from fragments
 # so this test file itself stays clean under the very scan it is testing —
-# the same trick repo-scan uses for its own AI-attribution patterns.
+# the same trick repo-scan uses for its own tool-attribution patterns.
 SCRATCH=$(mktemp -d)
 scratch_repo() {   # <dir> ; creates an empty repo with an identity
     git -C "$1" init -q 2>/dev/null
@@ -10545,7 +10545,7 @@ _ai='cla'; _ai+='ude'
 SVAI=$(save "fix the thing
 
 Co-Authored-By: $_ai <noreply@example.com>"); svairc=$?
-(( svairc != 0 )) && [[ "$SVAI" == *"AI attribution"* ]] \
+(( svairc != 0 )) && [[ "$SVAI" == *"tool attribution"* ]] \
     && ok "repo-save refuses a commit message carrying an attribution trailer" \
     || bad "an attribution trailer was committed (rc=$svairc)"
 
@@ -10607,7 +10607,7 @@ devtools/repo-save "$SCRATCH/not-a-repo" "msg" --no-push >/dev/null 2>&1
 # THE FIELDS GIT WRITES, NOT ONLY THE TEXT IT IS GIVEN. The message scan above
 # cannot see the author and committer: those come from git config or the
 # GIT_*_NAME/EMAIL environment, and a reinitialised container resets them to
-# the tool's own identity. On 2026-09-18 that put an AI-authored commit on a
+# the tool's own identity. On 2026-09-18 that put a tool-authored commit on a
 # collaborator's branch with repo-scan passing it — caught one commit in, by
 # eye. The gate must refuse BEFORE the commit exists, and for the committer
 # field as much as the author's.
@@ -10616,20 +10616,20 @@ svbefore=$(git -C "$SCRATCH/save" rev-parse HEAD)
 _ae='noreply@anthro'; _ae+='pic.com'
 SVID=$(GIT_AUTHOR_NAME="$_ai" GIT_AUTHOR_EMAIL="$_ae" save "identity probe"); svidrc=$?
 svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
-(( svidrc != 0 )) && [[ "$SVID" == *"AI identity"* && "$svbefore" == "$svafter" ]] \
-    && ok "repo-save refuses an AI author identity before any commit exists" \
-    || bad "an AI author identity got through (rc=$svidrc, HEAD moved: $([[ $svbefore != "$svafter" ]] && echo yes || echo no))"
+(( svidrc != 0 )) && [[ "$SVID" == *"tool identity"* && "$svbefore" == "$svafter" ]] \
+    && ok "repo-save refuses a tool author identity before any commit exists" \
+    || bad "a tool author identity got through (rc=$svidrc, HEAD moved: $([[ $svbefore != "$svafter" ]] && echo yes || echo no))"
 SVIDC=$(GIT_COMMITTER_NAME="$_ai" GIT_COMMITTER_EMAIL="$_ae" save "identity probe"); svidcrc=$?
 svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
 (( svidcrc != 0 )) && [[ "$SVIDC" == *"committer identity"* && "$svbefore" == "$svafter" ]] \
     && ok "repo-save checks the committer field as well as the author" \
-    || bad "an AI committer identity got through (rc=$svidcrc)"
+    || bad "a tool committer identity got through (rc=$svidcrc)"
 # And a legitimate identity still commits — a gate that refuses everything is
 # not a gate. scratch_repo sets a plain test identity in the repo config.
 SVOK=$(save "identity probe"); svokrc=$?
 svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
 (( svokrc == 0 )) && [[ "$SVOK" == *"✓ identity:"* && "$svbefore" != "$svafter" ]] \
-    && ok "repo-save commits under the configured non-AI identity" \
+    && ok "repo-save commits under the configured identity" \
     || bad "the identity gate refused a legitimate identity (rc=$svokrc): $(grep -m1 identity <<<"$SVOK")"
 
 # Nothing above may have configured or contacted a remote. --no-push is the

@@ -2,7 +2,7 @@
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-22T14:41Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   unit-testing-intro-0jlol1
 tip:      7ea5139
 subject:  §3.4 done, journal route taken as you authorised — and the one thing about it you should push back on if you disagree
 needs:    your judgement on §3 (the warning is a claim, and it is mine not yours until you keep it)

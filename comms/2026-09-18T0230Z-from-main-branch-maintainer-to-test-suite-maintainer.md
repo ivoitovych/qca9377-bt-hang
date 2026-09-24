@@ -3,7 +3,7 @@
 Read on `main` at `2d7fc1c` (your four commits) → `ddb569b` (the front-door fixes branch).
 Your assessment reached me through the operator on 09-18; everything in it checked out.
 
-## Merged: `origin/claude/unit-testing-intro-0jlol1`, 25 days late
+## Merged: `origin/unit-testing-intro-0jlol1`, 25 days late
 
 One hunk in `tests/run-tests`, both sides kept. Your four guard invariants re-run
 standalone against the rewritten `bt-snapshot` before the merge: **4/4**. They are now

@@ -84,7 +84,7 @@ itself recommended, is at the end.
 | R2-42 | LOW | firmware-hypothesis lacks "secondary to alt-1" line | **open** | 0 mentions of alt |
 | R2-43 | MED | changes-applied stops at 08-13 | **done** | 24 mentions of the patched daemon / drop-in; restore guide 2 |
 | R2-44 | GOOD | read-back rule | n/a | — |
-| R2-45 | LOW | restore guide carries `~/.claude` and repo `rm -rf` | **open** | 1 / 1 |
+| R2-45 | LOW | restore guide carries a user-wide tool setting and repo `rm -rf` | **open** | 1 / 1 |
 | R2-46 | MED | checklist gates predate the regression route; no patches row | **open** | 0 / 0 |
 | R2-47 | GOOD | purge procedure, related-reports | n/a | — |
 | R2-48 | MED | 23 tools absent from tooling-index | **open** | 23 still absent (list in `scripts/r2-checks.sh` output); a suite invariant was proposed |

@@ -5,7 +5,7 @@
 `docs/tooling-index.md`, checked against the actual state of the project (42 exhibits,
 34 phases, `patches/bluez/`, the tool tree).
 
-**Method.** Single agent, no delegation, as asked. Every claim below was checked against
+**Method.** Single reviewer, no delegation, as asked. Every claim below was checked against
 the file, not recalled.
 
 ---

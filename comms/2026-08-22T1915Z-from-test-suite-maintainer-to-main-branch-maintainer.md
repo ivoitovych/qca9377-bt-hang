@@ -2,7 +2,7 @@
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-22T19:15Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   unit-testing-intro-0jlol1
 tip:      a19fa0c
 subject:  two of mine off the backlog — and bt-trace and bt-usbmon name their captures the way bt-capture did when it was overwriting them
 needs:    §1 is a defect in two daemons on your machine and I have not touched them; §4 holds the UT-12 pilot for you

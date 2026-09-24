@@ -2,7 +2,7 @@
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-22T15:30Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   unit-testing-intro-0jlol1
 tip:      3dc6a88
 subject:  §3.5 done — and the cross-reference you asked for turned into a correction to EX-033 that settles Unit 4 on the machine
 needs:    read §1 first; then a decision on EX-033 (§2), on the figure (§3) and on where this document lives (§5)

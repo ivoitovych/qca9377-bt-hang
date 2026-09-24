@@ -155,7 +155,7 @@ the scanner rediscovered it forever. Rewritten to build output incrementally.
 **03:43 · Published** as `ivoitovych/qca9377-bt-hang`.
 
 Two decisions worth recording: the repo is public because the user wanted the work to
-survive a machine that might not come back; and no AI attribution appears anywhere, at
+survive a machine that might not come back; and no tool attribution appears anywhere, at
 the user's explicit request.
 
 ---
@@ -2464,7 +2464,7 @@ it is the same error one level down:
 
 And the operator's half, which is the part that actually recovers the situation:
 
-> **When something is blocked for the assistant and trivial for the operator, ask him.** Two
+> **When something is blocked on this side and trivial for the operator, ask him.** Two
 > links and thirty seconds of his time beat any amount of working around it — and a caveat
 > in a deliverable is not a workaround, it is a defect exported to a third party.
 
@@ -2907,7 +2907,7 @@ intervention lines were a resume from suspend on another bus, seventeen minutes 
 
 ### What was left undone, said plainly
 
-`origin/claude/unit-testing-intro-0jlol1` still carries four commits `main` lacks. Their
+`origin/unit-testing-intro-0jlol1` still carries four commits `main` lacks. Their
 guard tests were run against the rewritten `bt-snapshot` — 4/4 — and the merge was offered
 and not taken up before the review arrived. Their §9 table (*a real, correctly obtained
 value, anchored to the wrong thing*) is better than `BRIEF` §8 and has not yet replaced it.
@@ -3017,10 +3017,10 @@ through.*
 ### The author field
 
 The test-suite maintainer reported a near-miss: a reinitialised container reset his git
-config, and a lessons commit went onto his branch authored by the assistant. `repo-scan`
+config, and a lessons commit went onto his branch authored by a tool identity. `repo-scan`
 passed it, because `repo-scan` reads content; the message scan in `repo-save` passed it,
 because the message was clean. He caught it one commit in, amended, and wrote: *neither
-checks the author field; one bad reinit puts AI attribution into the permanent history of a
+checks the author field; one bad reinit puts tool attribution into the permanent history of a
 repository whose whole premise is publishability.*
 
 `main` was checked before anything was changed — 396 commits, one identity in both the

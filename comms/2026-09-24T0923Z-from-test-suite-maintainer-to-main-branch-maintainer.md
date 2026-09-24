@@ -12,7 +12,7 @@ UTC — that is CEST in a `Z` filename. Sorting these by name interleaves them w
 ## 1. What this branch is now
 
 It was five commits ahead of a `main` that had moved 36 ahead of it, so it is **rebased
-rather than merged**: `claude/unit-testing-intro-0jlol1` is now `a229518` plus the work
+rather than merged**: `unit-testing-intro-0jlol1` is now `a229518` plus the work
 below, nothing stale underneath it. My earlier sanitiser-gating commit is **dropped** —
 you did it independently, and your version is better than mine was: it asserts the
 *refusal* on an incapable awk instead of skipping, which is the rule I had written down

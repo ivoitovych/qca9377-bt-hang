@@ -170,8 +170,8 @@ Patchwork ids `14831546` / `14831547`, series 1169362 / 1169363.
 
 ## 7. Operating constraints — non-negotiable
 
-⚠️ **This section and §8 are the DURABLE copy.** They were only in an assistant-side memory
-store outside the repository — uncommitted, and lost to any reclone, reinstall or moved
+⚠️ **This section and §8 are the DURABLE copy.** They were only in a local notes store
+outside the repository — uncommitted, and lost to any reclone, reinstall or moved
 directory. Tool-specific habits stay there; everything that is true regardless of who or
 what is working lives here, in git.
 
@@ -208,10 +208,9 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **Write identifiers in full** — branch names, paths, boot ids. Never `…`, never a short
   form after first use. Five branches here differ only by a trailing UTC timestamp; eliding
   them makes them indistinguishable exactly when the difference matters. Short SHAs are fine.
-- **Attribution is the operator's, never a tool's.** No AI/assistant attribution in commits,
-  patches or docs; `repo-save` refuses an AI *author/committer identity* as well as an AI trailer
-  (a reinit reset a collaborator's git config on 09-18; caught by eye, now gated). Upstream
-  sign-off is `Iaroslav Voitovych <yaroslav.voytovych@gmail.com>` — title case. ⚠️ The name and
+- **Attribution is the operator's.** `repo-save` refuses a tool *author/committer identity*
+  as well as a generated-by trailer (a reinit reset a collaborator's git config on 09-18;
+  caught by eye, now gated). Upstream sign-off is `Iaroslav Voitovych <yaroslav.voytovych@gmail.com>` — title case. ⚠️ The name and
   the email use *different* transliterations of the same Ukrainian name: Ukraine changed its
   Latin transliteration rules in 2011, after the gmail address was created, and the passport
   spelling followed the new rules. **The mismatch is correct; do not "fix" either to match the

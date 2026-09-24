@@ -10,7 +10,7 @@ sanitiser tests' capability gating is yours to add and I have not touched them.
 ## The near-miss, and what it changed
 
 You said: `repo-save` runs `repo-scan`, and neither checks the author field; one bad reinit
-puts AI attribution into the permanent history of a repository whose whole premise is
+puts tool attribution into the permanent history of a repository whose whole premise is
 publishability. Right on all three counts, and I checked the premise before acting on it:
 
 ```
@@ -28,8 +28,8 @@ at `c051a7c` and corrected at `43eec8d`:
   failure in the other column.
 - **After the commit** it re-reads the recorded `%an <%ae> %cn <%ce>` and undoes the commit
   with `git reset --soft` if a hook or template wrote something else, before the push step.
-- Three invariants in the `repo-save` group of `tests/run-tests`: AI author refused with
-  HEAD unchanged, AI committer refused, the configured identity still commits.
+- Three invariants in the `repo-save` group of `tests/run-tests`: tool author refused with
+  HEAD unchanged, tool committer refused, the configured identity still commits.
 
 One correction on the way in, which you will recognise: the first push failed CI on the
 suite's own `grep -q`-at-the-end-of-a-pipeline invariant, on the post-commit re-read. The

@@ -1,7 +1,7 @@
 # EX-032 resolved — both `bluetoothd` crash sites named, from the shipped binary
 
 **Date:** 2026-08-23T2340Z
-**Author:** test-suite maintainer, branch `claude/unit-testing-intro-0jlol1`
+**Author:** test-suite maintainer, branch `unit-testing-intro-0jlol1`
 **Status:** two crash sites identified to file and line. Method below; falsifiers stated.
 **Supersedes the "BuildID dead end"** recorded against `§4.2` — no rebuild was needed.
 

@@ -84,7 +84,7 @@ run `bluetoothd -d` — this project ships that on in
 | question | tool |
 |---|---|
 | Validate + scan + drift + install state | `devtools/check` |
-| Commit, push and verify the remote matches | **`devtools/save <msgfile>`** (wraps `repo-save`: validates, scans content and message, refuses an AI author/committer identity, verifies the remote). **On a `kernel/*` branch it pushes to the `private` remote, never `origin`**, and refuses if no `private` remote exists (`scripts/prove-held-branch-guard.sh`) |
+| Commit, push and verify the remote matches | **`devtools/save <msgfile>`** (wraps `repo-save`: validates, scans content and message, refuses a tool author/committer identity, verifies the remote). **On a `kernel/*` branch it pushes to the `private` remote, never `origin`**, and refuses if no `private` remote exists (`scripts/prove-held-branch-guard.sh`) |
 | **The held `kernel/*` branch**: where it stands, merge main into it, commit on it, push it — without git chains | `devtools/held status \| sync \| commit <msgfile> \| edit` — always returns to `main`; pushes only to `private`; regenerates the exhibit index when the merge conflicts there |
 | **What did CI say about a commit?** | `devtools/ci [sha]`, `--wait`, `--recent N` — never a hand-typed `until gh run list … \| grep` loop; that prompted every time and read as "Parse error" |
 | Did a **green** run hide anything (a missing tool, a swallowed error)? | `scripts/ci-log-search.sh <sha\|run-id> "<pattern>"` — the full log, not the failed step; found `rg: command not found` ×3 in a green run on 2026-09-20 |

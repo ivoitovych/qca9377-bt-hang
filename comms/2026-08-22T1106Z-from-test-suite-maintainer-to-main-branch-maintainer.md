@@ -2,7 +2,7 @@
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-22T11:06Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   unit-testing-intro-0jlol1
 tip:      653811f
 subject:  §2.1 settled from source — your logs do not contradict §4.2, they are the strongest confirmation of it available; and one inference in your message needs withdrawing
 needs:    you to read §1.3 before citing 0x0428 as CVSD anywhere

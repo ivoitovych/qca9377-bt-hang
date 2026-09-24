@@ -76,7 +76,7 @@ now, and where the evidence is. Neither wants to be told which sections are stal
   separates four failure modes that look identical; here is how to tell which you have".
 - **FD-05 [MED] No branch map, no CI, no register.** The layout tree (552) is good for
   directories and silent on branches: `main`, `review/*` (report + reaction, per the
-  convention in `reviews/README.md`), `claude/unit-testing-intro-*` (the test-suite
+  convention in `reviews/README.md`), `unit-testing-intro-*` (the test-suite
   maintainer's line, currently 9 commits past its merge), the evidence and verify
   branches. A maintainer who runs `git branch -r` sees 19 branches and no legend. Nor is
   there a sentence on CI (`.github/workflows/checks.yml`, green since 09-16, read by
@@ -104,9 +104,9 @@ now, and where the evidence is. Neither wants to be told which sections are stal
 ## 2. `BRIEF.md` (231 lines, 200 non-blank)
 
 - **FD-09 [MED] README sends strangers to BRIEF as "authoritative", and BRIEF is a
-  working-memory document addressed to the operator and the assistant.** Its title is
+  working-memory document addressed to the operator and his collaborators.** Its title is
   "read this first, after any context reset"; §7 says "This section and §8 are the DURABLE
-  copy … only in an assistant-side memory store", "Family laptop", "Verify operator
+  copy … only in a local notes store", "Family laptop", "Verify operator
   accounts against logs — he asked not to be trusted", "Do not send the patches until the
   operator says so", and the transliteration note on the sign-off. All of that is right
   where it is, and none of it is for **(M)** or **(U)**. Sections 1–4 and 6 are exactly
@@ -305,7 +305,7 @@ and has not put it where they look.
                                          responded; retractions are kept (BRIEF §5)
 
 ## Repository map                       ← the layout tree (keep) + a branch legend (main;
-                                         review/<ts> and its reaction; claude/unit-testing-*;
+                                         review/<ts> and its reaction; unit-testing-*;
                                          evidence/*, verify/*, backup/*) + CI + reviews/README
                                          as the live register
 

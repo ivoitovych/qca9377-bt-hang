@@ -90,10 +90,10 @@ owner/machine dependency, or SKIPPED with a recorded reason.
 1. **Git-history MAC purge** (F4's second half). Owner's deliberate deferral; the
    procedure in checklist §1 is now leak-proof (derives addresses from history into a
    local file). Becomes mandatory before any upstream submission.
-2. **The merged `claude/…` review branch still exists on origin** (at `383b991`, fully
+2. **The merged review branch still exists on origin** (at `383b991`, fully
    contained in main). My deletion attempt was rejected (403 — session credentials
    cannot delete refs). One command, aligned with the repository's attribution policy:
-   `git push origin --delete claude/project-code-review-sr0s9f`.
+   `git push origin --delete project-code-review-sr0s9f`.
 3. **EX-019 re-capture** on the affected machine (the annotation and the bt-exhibit
    gate are in place; the exhibit remains marked not-citable until re-captured).
 4. **bt-usbmon on-host confirmation** (F13): after a day of uptime, the usbmon
@@ -229,7 +229,7 @@ branch: **68/68 invariants** (main's 67 plus the exhibit-path check below);
 `fix-proposal.md` §-renumbering (breaks cross-references everywhere for cosmetics);
 naive-vs-offset timestamp mixing (no caller does it; documented at `iso_secs()`);
 `bt-sco` cosmetic nits. Externally blocked set unchanged: history MAC purge,
-`claude/…` branch deletion, EX-019 re-capture, on-host usbmon retention check.
+review-branch deletion, EX-019 re-capture, on-host usbmon retention check.
 
 ---
 
@@ -238,7 +238,7 @@ naive-vs-offset timestamp mixing (no caller does it; documented at `iso_secs()`)
 Consolidated from §3, §4.5 and the addendum, in execution order. Steps 1–5 are one
 sitting; 6 needs a day of uptime; 7–8 are owner decisions on their own schedule.
 
-**1. Merge and pull.** Merge `claude/project-code-review-sr0s9f` into `main`
+**1. Merge and pull.** Merge `project-code-review-sr0s9f` into `main`
 (fast-forward — it contains main, the unit-testing merge, and this chain), then pull on
 the machine.
 
@@ -295,7 +295,7 @@ $ ls -la /var/log/bt-health/usbmon/
 branch is fully contained in main; session credentials could not delete refs):
 
 ```console
-$ git push origin --delete claude/project-code-review-sr0s9f
+$ git push origin --delete project-code-review-sr0s9f
 ```
 
 **8. Owner decision, before any upstream submission — the git-history MAC purge**, per

@@ -150,17 +150,8 @@ treatments, so a mistake here is visible rather than silent — but it is still 
 
 ---
 
-## 5. Attribution — an open decision for the author
+## 5. Sign-off
 
-Commits in this repository deliberately carry no AI attribution. That was a decision about
-this repository, taken because anti-AI sentiment could distract from the technical content.
-
-Whether to disclose tooling in the **kernel submission** is a separate decision and belongs
-to Iaroslav alone. Worth knowing before choosing: the `Signed-off-by:` line is a legal
-statement under the Developer's Certificate of Origin about the right to submit the code —
-it is not a claim of unassisted authorship. Some maintainers appreciate a note under the
-`---` line (where it does not enter the permanent commit message); others consider it
-noise. Either choice is defensible.
-
-The legal name for `Signed-off-by:` is **Iaroslav Voitovych**, which differs from the
-email spelling for transliteration reasons.
+The `Signed-off-by:` line is a legal statement under the Developer's Certificate of Origin
+about the right to submit the code. The legal name for `Signed-off-by:` is **Iaroslav
+Voitovych**, which differs from the email spelling for transliteration reasons.

@@ -42,7 +42,7 @@ say R2-39  "plan backlog has status column / BL-09 done"      "status $(c docs/i
 say R2-40  "plan/report name the v5.12 commit"                "plan $(c docs/investigation-plan.md 517b693351a2) report $(c docs/bug-report.md 517b693351a2)"
 say R2-42  "firmware-hypothesis points to alt-1 finding"      "$(c docs/firmware-hypothesis.md 'alt')"
 say R2-43  "changes-applied covers patched bluetoothd"        "$(c docs/changes-applied.md 'bluetoothd|/usr/local|drop-in') restore $(c docs/restore-original-state.md 'drop-in|patched')"
-say R2-45  "restore guide: ~/.claude and rm -rf repo"         "$(c docs/restore-original-state.md 'claude') / $(c docs/restore-original-state.md 'rm -rf')"
+say R2-45  "restore guide: user-wide tool setting and rm -rf repo" "$(c docs/restore-original-state.md 'attribution') / $(c docs/restore-original-state.md 'rm -rf')"
 say R2-46  "checklist has BlueZ patches + regression gate"    "$(c docs/pre-submission-checklist.md 'patches/bluez|0001') / $(c docs/pre-submission-checklist.md '517b|regression')"
 say R2-48  "tools not named in tooling-index"                 "$(for t in tools/bt-* tools/*.sh devtools/*; do b=$(basename "$t"); grep -q "$b" docs/tooling-index.md || printf '%s ' "$b"; done)"
 say R2-49  "bt-hang-watchdog header warns (destroy/never arm)" "$(c bin/bt-hang-watchdog 'destroy|EX-023|never arm|do not arm')"

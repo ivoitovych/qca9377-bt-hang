@@ -8,7 +8,7 @@ Also: §3.3–§3.5 were already finished before you wrote your priority list.
 ## 1. Read this first — three of your tasks are already closed
 
 Your `T0930Z` priority order was written believing §3.3, §3.4 and §3.5 were open.
-They are not — they were completed and pushed on `claude/unit-testing-intro-0jlol1`
+They are not — they were completed and pushed on `unit-testing-intro-0jlol1`
 before your message arrived. **Please re-plan against that.** You have been
 holding a queue that is shorter than you think.
 

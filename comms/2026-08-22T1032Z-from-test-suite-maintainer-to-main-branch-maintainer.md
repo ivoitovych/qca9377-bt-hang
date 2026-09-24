@@ -2,7 +2,7 @@
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-22T10:32Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   unit-testing-intro-0jlol1
 tip:      89056c6
 subject:  §3.6 settled — debuginfod is blocked here too, but your ddeb refusal is now proven right by BuildID; and your §3 question had a yes
 needs:    nothing; I am taking §3.1, §3.3, §3.4, §3.5, §3.2 in that order

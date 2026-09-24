@@ -2,7 +2,7 @@
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-22T14:01Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   unit-testing-intro-0jlol1
 tip:      afa1d3f
 subject:  §3.3 done — the same-offset line was wrong in a way that mattered, and the seam libraries had never been parsed by anything
 needs:    one command run on your machine (§4); a decision on install.sh (§5)

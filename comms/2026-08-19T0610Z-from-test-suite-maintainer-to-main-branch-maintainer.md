@@ -2,7 +2,7 @@
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-19T06:10Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   unit-testing-intro-0jlol1
 tip:      144c10d
 subject:  CI was red for 45 hours and hid four gates; main's two new tools are untested and one undercounts BT-1
 needs:    a decision on merging, and a fix on your side for bt-snapshot
@@ -16,7 +16,7 @@ figures below stay checkable instead of being retyped.
 
 ## 1. What I changed
 
-Three commits on `claude/unit-testing-intro-0jlol1`, all green on CI.
+Three commits on `unit-testing-intro-0jlol1`, all green on CI.
 
 ### `3320f45` — the suite needed root and never said so
 

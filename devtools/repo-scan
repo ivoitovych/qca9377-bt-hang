@@ -9,7 +9,7 @@
 # Exits non-zero if anything suspicious is found.
 #
 # Checks: MAC addresses / BSSIDs (colon or dash), UUIDs, IPv4 addresses,
-# email addresses, AI attribution, and tracked binary captures.
+# email addresses, tool attribution, and tracked binary captures.
 #
 # WHY: this repository publishes logs. Kernel logs contain the Wi-Fi access
 # point BSSID, which public geolocation databases index — publishing one can
@@ -141,7 +141,7 @@ mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
         | sort -u)
 [[ -n "$mails" ]] && report "email address found:" $mails || pass "no unexpected emails"
 
-# --- AI attribution --------------------------------------------------------
+# --- tool attribution --------------------------------------------------------
 # REVIEWED-KEEP 2026-08-15T1752Z §5: keep the fragment assembly below and the
 # refuse-on-empty-read above — the first keeps the scanner out of its own
 # net, the second stops a failed enumeration reading as a clean tree.
@@ -150,8 +150,8 @@ mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
 # like grep definitions — worked but broke if the pattern list was ever
 # reformatted, and a false positive here blocks every commit.
 _c='cla'; _c+='ude'; _a='anthro'; _a+='pic'
-ai=$(grep -icE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$CONTENT" || true)
-(( ${ai:-0} > 0 )) && report "AI attribution present ($ai match(es))" || pass "no AI attribution"
+ta=$(grep -icE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$CONTENT" || true)
+(( ${ta:-0} > 0 )) && report "tool attribution present ($ta match(es))" || pass "no tool attribution"
 
 # --- binary captures -------------------------------------------------------
 bins=$(git ls-files | grep -cE '\.(btsnoop|pcap|pcapng)$' || true)

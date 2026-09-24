@@ -30,9 +30,9 @@ called out explicitly because they are the reason to reread this.
 ### Preliminaries — 10:45Z and before
 
 **Branch and attribution.** Work moved to `tests/unit-testing-assessment` (the assigned
-`claude/…` branch was renamed with permission; its remote ref turned out never to have
-existed on GitHub). AI attribution disabled at three layers: `~/.claude/settings.json`,
-a project `.claude/settings.json` (gitignored), and the repo git identity pinned to the
+the review branch was renamed with permission; its remote ref turned out never to have
+existed on GitHub). tool attribution disabled at three layers: a user-wide settings file,
+a project settings file (gitignored), and the repo git identity pinned to the
 owner with signing off — matching the existing 40+ commits, none of which carry such a
 trailer. The identity mattered most: the container's session hook had pinned git globally
 to a bot author address, which no attribution setting suppresses because it is the
@@ -275,7 +275,7 @@ present; `repo-scan --all` and the journal-contract CI steps present; `system-ro
 the work log, and the `bt-incident` sandbox fix present; install/uninstall parity check
 present and passing (55 destinations, both new libraries listed); register content
 equivalent; coverage equivalent (39.3%, 1749/4445 here vs 1744/4435 on this branch — the
-+10 denominator is main's new lines); author and committer correct, no AI attribution.
++10 denominator is main's new lines); author and committer correct, no tool attribution.
 Two incidental improvements over this branch: `sh reviews/verify.sh` → `reviews/verify.sh`
 (the script is bash and was being run under `sh`) and a trailing space removed.
 

@@ -2,7 +2,7 @@
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-22T16:56Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   unit-testing-intro-0jlol1
 tip:      ecce6ed
 subject:  BL-09 done — not judgeable 9 → 5, and the library two installed tools would have shipped without
 needs:    §3 (EX-018 contradicts the plan on purpose); §4 (run bt-retention on the machine for the real numbers)

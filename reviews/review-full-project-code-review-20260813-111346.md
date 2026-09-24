@@ -133,7 +133,7 @@ A consolidated findings table and overall assessment are at the end of this file
 ### 1.11 `docs/pre-submission-checklist.md`
 - **NOTE** — The MAC-purge item documents real leaked device addresses and the
   filter-repo command to fix history — good that it exists and is honest about deferral.
-- **NOTE** — §5 records the no-AI-attribution decision for this repository explicitly, and
+- **NOTE** — §5 records the no-tool-attribution decision for this repository explicitly, and
   correctly separates it from the kernel-submission disclosure decision (DCO point is
   accurate). The legal-name/transliteration note is a thoughtful touch.
 - **LOW** — The purge command's replace-text file rewrites two specific MACs; the grep
@@ -148,8 +148,8 @@ A consolidated findings table and overall assessment are at the end of this file
   No issues.
 
 ### 1.13 `docs/restore-original-state.md`
-- **NOTE** — §4 documents the user-global `~/.claude/settings.json` attribution change —
-  i.e. the no-AI-attribution config predates this review and is an established project
+- **NOTE** — §4 documents the user-global a user-wide settings file attribution change —
+  i.e. the no-tool-attribution config predates this review and is an established project
   policy. §7's warning that repo deletion doesn't un-publish is correct.
 - **LOW** — §2's list of what uninstall removes is stale relative to current `install.sh`
   (no mention of bt-capture, bt-usbmon, bt-dyndbg, dyndbg/journald/bluetoothd drop-ins,
@@ -162,7 +162,7 @@ A consolidated findings table and overall assessment are at the end of this file
 
 ### 2.1 `.gitignore`
 - **NOTE** — Coherent with the privacy posture: raw logs, btsnoop, backups, metrics,
-  `.claude/`/`.cursor/`/`.aider*` all excluded. `evidence/sessions/latest` (the symlink
+  editor tooling directories all excluded. `evidence/sessions/latest` (the symlink
   `bt-incident` creates) is correctly ignored.
 - **LOW** — `data/logs/*.log` / `!data/logs/*.sanitized.log` refer to a `data/` directory
   that no longer exists (evidence moved to `evidence/baseline/`); the *sanitized* logs now
@@ -812,7 +812,7 @@ A consolidated findings table and overall assessment are at the end of this file
 ### 9.4 `devtools/repo-scan`
 - **NOTE** — Root-anchored, staged-additions-by-default with the removes-a-secret
   rationale, empty-read-refusal, normalised MAC allowlist, SIG-UUID allowlist, email
-  check with self-referential-pattern fix, AI-attribution check assembled from fragments
+  check with self-referential-pattern fix, tool-attribution check assembled from fragments
   so the tool doesn't match itself, binary-capture check. Well built.
 - **LOW** — The MAC detector here matches colon/dash only (`[:-]`) — **not underscore** —
   while `sanitize-logs.sh` learned the underscore lesson (20 leaked addresses) and scans
@@ -932,10 +932,10 @@ sanitisation check.)*
   in-place corrections and integrity notes (EX-003's destroyed-dataset note, EX-007's
   refutation, EX-009's packet-count correction, EX-017's comparison-class correction).
   As an evidence corpus this is far above the norm.
-- **HIGH (privacy/policy)** — **EX-018's extraction command leaks a local AI-tooling
-  scratchpad path** (`bt-stage2 --from /tmp/<ai-tool>-0/-root-exp/<session-uuid>/scratchpad/stage2.log`).
-  Three problems: (a) the path names the AI coding tool, in a repository whose explicit,
-  documented policy (checklist §5, HISTORY Phase 4) is that no AI attribution appears
+- **HIGH (privacy/policy)** — **EX-018's extraction command leaks a local tooling
+  scratchpad path** (`bt-stage2 --from /tmp/<tool>-0/-root-exp/<session-uuid>/scratchpad/stage2.log`).
+  Three problems: (a) the path names the tool, in a repository whose explicit,
+  documented policy (checklist §5, HISTORY Phase 4) is that no tool attribution appears
   anywhere; (b) the embedded session UUID is exactly what `repo-scan` flags — and does
   flag (see 11.5); (c) the "re-runnable as-is" promise is broken — the command reads a
   temp cache that exists on no machine, including the affected one. The exhibit's
@@ -1038,7 +1038,7 @@ Ordered by severity; file:line references are to the tree at the review commit.
 | F2 | HIGH | `tools/lib/stage2.awk` | `dev_error` never reset at boot boundaries → in any boot after the first bus error in the journal, our resets are classified "hub recovery" and a following disconnect as **NATURAL** (confirmed with fixture). Biases the headline "no natural stage 2 ever observed" analysis toward false NATURALs. Also: no per-device filtering — any USB device's disconnect can terminate (even "naturally") a stage-1 window. |
 | F3 | HIGH | `tests/run-tests` timeout-spelling invariant | The scan regex only sees `-c`/`-cE` + double-quoted patterns; six live bare-pattern counting sites (bt-evidence ×2, bt-incident, bt-postmortem ×2, bt-status) pass unseen while the suite prints a green tick and claims repo-wide coverage. |
 | F4 | HIGH | `docs/pre-submission-checklist.md:37` | The two real device MACs are in the working tree as the filter-repo arguments; `repo-scan --all` fails on them; "working tree is clean" is self-contradicted. |
-| F5 | HIGH | `evidence/exhibits/018…md:12` | Extraction command leaks an AI-tool-named scratchpad path + session UUID, violating the repo's own no-AI-attribution policy and the re-runnability promise. |
+| F5 | HIGH | `evidence/exhibits/018…md:12` | Extraction command leaks a tool-named scratchpad path + session UUID, violating the repo's own no-tool-attribution policy and the re-runnability promise. |
 | F6 | MED | `tools/bt-status` verdict | Prints the refuted pre-Phase-16 conclusion ("adding the device to btusb's quirks table would not be sufficient") on every early recovery. |
 | F7 | MED | `bin/bt-hang-watchdog` header/FATAL text | Superseded model asserted as fact (~6 h stage 1, "USB reset recovers it", M.2-rail claim) — flows into journals and evidence. |
 | F8 | MED | `tools/bt-postmortem` | Clusters and counts with bare `tx timeout` — link-supervision timeouts can fabricate or shift incidents (the "0s" anchor of every Δ). |

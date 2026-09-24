@@ -22,7 +22,7 @@ collide with the predecessor's `CR-nn` in the register.
 
 ### 0.1 What the tips looked like at start
 
-- Working tree clean; checkout on `claude/code-review-comprehensive-wtftwp` at `3cf4dd6`
+- Working tree clean; checkout on `code-review-comprehensive-wtftwp` at `3cf4dd6`
   (equal to `origin/main`); a stale local `main` at `3fe3b6c`, three behind. Committer
   identity in the container was a tool's; reset to the operator's before the first commit.
 - **The checkout was a shallow clone** (`.git/shallow`, 5 boundary commits). Every
@@ -31,7 +31,7 @@ collide with the predecessor's `CR-nn` in the register.
   commit of the previous reaction, and `devtools/branch-status` reported **all 18 branches**
   carrying work main lacks and one false stale-merge claim. After unshallowing: 332
   commits, every reaction commit an ancestor of the tip, 6 carriers (the known set), one
-  true notice (`origin/claude/unit-testing-intro-0jlol1` moved 9 commits past its merge
+  true notice (`origin/unit-testing-intro-0jlol1` moved 9 commits past its merge
   `25074a5`).
 - **`awk` is mawk 1.3.4 here**; gawk installed before running the suite, exactly as CI does.
 
@@ -185,7 +185,7 @@ operator; the bug-report rewrite has not started (§4.2).
 - **R2-19 [GOOD]** The right shape: question → tool, with the two paid-for warnings
   (present ≠ complete; the BlueZ health block is journal-derived) beside the tools they
   qualify; marker candidate.
-- **R2-20 [LOW]** "Writing commands so they do not prompt" is assistant-tooling mechanics
+- **R2-20 [LOW]** "Writing commands so they do not prompt" is tooling mechanics
   in a user-facing document — BRIEF §7 itself says such material belongs in the memory
   store. Keep the *rule* ("extract the recurring question into a tool") here; move the
   permission-matcher paragraphs out, or a contributor reads a page about a tool they do
@@ -346,8 +346,8 @@ operator; the bug-report rewrite has not started (§4.2).
   likewise: the "path back" does not mention removing the drop-in or the patched binary.
 - **R2-44 [GOOD]** The read-back-verification rule and its `REVIEWED-KEEP` block held;
   `restore-original-state.md` §2 still derives rather than enumerates (CR-36).
-- **R2-45 [LOW]** `restore-original-state.md` §4 documents a user-wide assistant setting
-  under `~/.claude` in a document about restoring the *machine* for a kernel-maintainer
+- **R2-45 [LOW]** `restore-original-state.md` §4 documents a user-wide tool setting
+  under a user-wide settings directory in a document about restoring the *machine* for a kernel-maintainer
   audience; and §7 gives a repo-delete command with an "irreversible" warning in a
   restore guide. Both belong in the operator's notes, not here.
 
@@ -653,7 +653,7 @@ operator; the bug-report rewrite has not started (§4.2).
   situation through "docs/fix-proposal.md §3a and issues.md BT-3" — hypothesis-era text,
   same class as R2-72. `verify-restored.sh` item 6 says "if this is still the 2026-08-10
   boot, 3 of them are synthetic test lines" (a dated constant that will be true again
-  never) and item 7 hardcodes `/root/.claude/settings.json`; `bt-status` and
+  never) and item 7 hardcodes a user-wide settings file; `bt-status` and
   `verify-restored.sh` both fall back to `/root/exp/qca9377-bt-hang` (R2-74 class).
 - **R2-80 [GOOD]** `verify-restored.sh`'s derived list, refuse-when-short, and
   `.disabled` awareness are intact (`REVIEWED-KEEP 2.7`). `bt-incident`'s

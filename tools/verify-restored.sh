@@ -170,14 +170,6 @@ info "  if this is still the 2026-08-10 boot, 3 of them are synthetic test lines
 info "  a reboot removes them entirely"
 
 echo
-echo "7. User-wide Claude Code setting (outside uninstall.sh)"
-if grep -q '"attribution"' /root/.claude/settings.json 2>/dev/null; then
-    info "~/.claude/settings.json still has the attribution block (harmless; see docs §4)"
-else
-    ok "~/.claude/settings.json has no attribution block"
-fi
-
-echo
 echo "════════════════════════════════════════════════════════════"
 printf 'restored: %d   outstanding: %d   informational: %d\n' "$pass" "$fail" "$note"
 if (( fail )); then

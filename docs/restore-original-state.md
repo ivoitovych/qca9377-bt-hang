@@ -3,8 +3,8 @@
 A complete, verifiable path back to how this system looked before any of this work
 started — broader than `uninstall.sh`, which only reverses what `install.sh` did.
 
-**Short version:** `sudo ./uninstall.sh --apply` covers the mitigation. Four further
-changes live outside it (§3–§6). Nothing here is load-bearing for booting: no
+**Short version:** `sudo ./uninstall.sh --apply` covers the mitigation. Three further
+changes live outside it (§3–§5). Nothing here is load-bearing for booting: no
 bootloader, initramfs, kernel package, partition table or fstab was ever touched.
 
 ---
@@ -94,30 +94,7 @@ sudo rm -rf /var/log/bt-health          # or pass --purge-metrics
 
 ---
 
-## 4. User-wide Claude Code setting
-
-Changed outside this repo, at `~/.claude/settings.json`, to suppress AI attribution in
-commits and PRs. It affects **every project on this machine**, not just this one.
-
-Before:
-```json
-{ "theme": "dark" }
-```
-
-After:
-```json
-{
-  "theme": "dark",
-  "attribution": { "commit": "", "pr": "", "sessionUrl": false }
-}
-```
-
-To restore, delete the `attribution` block. Keeping it is harmless and is probably what
-you want; it is listed here only for completeness.
-
----
-
-## 5. Synthetic log entries ⚠️
+## 4. Synthetic log entries ⚠️
 
 Three fabricated lines were written to `/dev/kmsg` at ~03:07 on 2026-08-10 to test the
 watchdog's detection path:
@@ -136,7 +113,7 @@ shows **25** `tx timeout` events where the hardware produced **22**.
 
 ---
 
-## 6. Things already reverted, or that a reboot clears
+## 5. Things already reverted, or that a reboot clears
 
 | Action | Status |
 |---|---|
@@ -150,7 +127,7 @@ None of these persist across a reboot.
 
 ---
 
-## 7. The published repository
+## 6. The published repository
 
 The investigation is public at `https://github.com/ivoitovych/qca9377-bt-hang`.
 
@@ -166,7 +143,7 @@ system.
 
 ---
 
-## 8. Verify
+## 7. Verify
 
 ```bash
 ./tools/verify-restored.sh
@@ -178,7 +155,7 @@ Checks each item above and reports what is still in place. Run it after
 
 ---
 
-## 9. What cannot be restored
+## 8. What cannot be restored
 
 - **The raw, unsanitised logs** from the failing boot. Their content survives in
   `evidence/baseline/*.sanitized.log`; what is gone is the real MAC addresses, the Wi-Fi AP

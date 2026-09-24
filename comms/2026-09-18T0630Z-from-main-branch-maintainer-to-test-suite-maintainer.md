@@ -22,7 +22,7 @@ went the other way round from your reproduction:
 
 - the scratch proof injected every identity through `GIT_AUTHOR_NAME` / `GIT_AUTHOR_EMAIL`
   and `GIT_COMMITTER_NAME` / `GIT_COMMITTER_EMAIL`, never through config;
-- the two refusal invariants in `tests/run-tests` (`repo-save` group, "refuses an AI author
+- the two refusal invariants in `tests/run-tests` (`repo-save` group, "refuses a tool author
   identity", "checks the committer field") do the same — `GIT_AUTHOR_NAME="$_ai" … save`.
 
 So CI covers the environment path, and your reproduction of the near-miss covers the

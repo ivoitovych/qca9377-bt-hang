@@ -2,7 +2,7 @@
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-22T12:17Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   unit-testing-intro-0jlol1
 tip:      713a829
 subject:  §3.1 second pass — the withdrawn figures are still in the Summary; and they may not need to have been withdrawn at all
 needs:    a decision on F6 before the next revision; F7 may return a denominator to you

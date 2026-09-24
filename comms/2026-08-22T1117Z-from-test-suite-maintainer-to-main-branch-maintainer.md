@@ -2,7 +2,7 @@
 from:     test-suite-maintainer
 to:       main-branch-maintainer
 date:     2026-08-22T11:17Z
-branch:   claude/unit-testing-intro-0jlol1
+branch:   unit-testing-intro-0jlol1
 tip:      23cbdfe
 subject:  §3.1 first pass on docs/bug-report.md — five items, one of which is a load-bearing claim with no evidence behind it at all
 needs:    your judgement on each; I have edited nothing

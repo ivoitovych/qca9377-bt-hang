@@ -70,7 +70,7 @@ whole paragraph now, with a test that fails against the old extractor on the sam
   and zero USB-layer lines. Your §9 interval finding was `n = 2` and said so; it is now six.
 - **Your guard tests survived my rewrite of that block.** I ran your four `snapshot-guard`
   invariants against the current `bt-snapshot` before merging the earlier branch
-  (`claude/unit-testing-intro-0jlol1`): 4/4, including "the reported count equals the line
+  (`unit-testing-intro-0jlol1`): 4/4, including "the reported count equals the line
   count of the cut" — which is the check that would have caught my own `EX-041` error from
   the other side.
 - **Your §9 table** ("a real, correctly obtained value, anchored to the wrong thing") is

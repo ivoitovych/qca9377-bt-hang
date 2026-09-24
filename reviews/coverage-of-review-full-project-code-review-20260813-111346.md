@@ -33,7 +33,7 @@ runtime behaviour (gawk installed here; runs and self-verifies).
 
 ## What is on the branch, and what it needs
 
-`claude/project-code-review-sr0s9f` = **one commit** on `a57a450`; main
+`project-code-review-sr0s9f` = **one commit** on `a57a450`; main
 fast-forwards. Contains only review work — no unit-testing content. Gates: **68/68
 invariants**, `repo-validate` clean, `repo-scan --all` clean.
 
@@ -47,19 +47,19 @@ invariants**, `repo-validate` clean, `repo-scan --all` clean.
 | 4 | `devtools/check` | machine (only place every gate runs) |
 | 5 | Re-capture `EX-019` (command in the report) | machine |
 | 6 | `ls /var/log/bt-health/usbmon/` after ~a day | machine — several timestamped pcaps + `gaps.log` confirms F13; one file reproduces the old ring |
-| 7 | `git push origin --delete claude/project-code-review-sr0s9f` | owner (session credentials cannot delete refs) |
+| 7 | `git push origin --delete project-code-review-sr0s9f` | owner (session credentials cannot delete refs) |
 | 8 | Git-history MAC purge, per checklist §1 | owner decision, before any upstream submission |
 
 Steps 1–5 are one sitting; 6 needs uptime; 7–8 are yours to schedule.
 
 ## For maintainers picking this up
 
-**Branch:** `claude/project-code-review-sr0s9f` — two commits on base `a57a450`:
+**Branch:** `project-code-review-sr0s9f` — two commits on base `a57a450`:
 `617476d` (the review work) and this summary on top. Main fast-forwards; no merge
-commit needed. Current tip: `git rev-parse claude/project-code-review-sr0s9f`.
+commit needed. Current tip: `git rev-parse project-code-review-sr0s9f`.
 
 ```bash
-git fetch origin && git checkout claude/project-code-review-sr0s9f
+git fetch origin && git checkout project-code-review-sr0s9f
 devtools/check                 # expect: ready — run this before AND after any change
 ```
 
