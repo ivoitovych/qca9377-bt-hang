@@ -56,6 +56,14 @@ SINCE=""
 UNTIL=""
 RAW=0
 TRACE_DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
+# A fixture-driven run reads ONLY the fixture. Without this the second pass
+# decoded the machine's real captures under every fixture test: on 2026-09-22
+# ten real rows landed in a 46-line fixture, and on 2026-09-24 one suite run
+# spent over ten minutes in btmon over dozens of 64 MB real files. The real
+# trace is read under a fixture only when BT_TRACE_DIR is named explicitly.
+if [[ -n "${BT_JOURNAL_FIXTURE:-}" && -z "${BT_TRACE_DIR:-}" ]]; then
+    TRACE_DIR=/nonexistent/bt-actions-fixture-run
+fi
 
 while (( $# )); do
     case "$1" in
