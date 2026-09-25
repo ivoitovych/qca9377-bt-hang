@@ -17,24 +17,22 @@ cheap. Over 500 it stops being cheaper than the source. Cut the oldest settled i
 adding; never cut a reason to fit a fact. **Sections name their owner**; each owner writes
 theirs and points at the long form (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-09-24 · newest exhibit on `main`: EX-048; the held branch has EX-049 and
-EX-050, so the next exhibit on `main` is EX-051** — no tip hash: it rotted within hours (`R2-13`).
+**Last updated: 2026-09-25 · newest exhibit on `main`: EX-052; the held branch has EX-049 and
+EX-050 (the exhibit tool numbers from `main` alone, so renumber by hand), so the next exhibit
+on `main` is EX-053** — no tip hash: it rotted within hours (`R2-13`).
 
-> **RESUME HERE (2026-09-24 ~12:00).** The held kernel patch is final: three external reviews
-> say it should go in; it is **tested both ways** on one kernel (stock vs patched module, a
-> virtual controller — exhibits on the held branch only); in-tree checks clean; applies at
-> `bluetooth` and `bluetooth-next` as of 09-24. **Not sent.** Next: a fourth,
-> submission-focused external review — brief `patches/kernel/REVIEW-TASK.md` on the held
-> branch, file package by `scripts/export-kernel-review.sh` → `tmp/review-kernel-0001/`;
-> then the operator's word and a one-use app password. The exact package and send
-> procedure (freshness fetch minutes before, merge the held branch into `main` and push in
-> the same minute, `--suppress-cc=bodycc`, dry run) are in the held branch's
-> `patches/kernel/README.md`. **Private remote:** `private` =
-> `github.com/ivoitovych/qca9377-bt-hang-private`, branch `kernel/mgmt-flush-status`;
-> `devtools/held status|sync|edit|commit` handles it; `origin` never gets `kernel/*`.
-> **Machine:** stock `bluetooth.ko` (the patched one is in `tmp/runtime/`), patched
-> `bluetoothd` drop-in, controller healthy. **Never write details of the held finding on
-> `main`** (the 09-22→24 slip is recorded in §9.9).
+> **RESUME HERE (2026-09-25 ~23:30).** **Two more alt-1 deaths on 09-25** — `EX-051` (15:29,
+> `-31`, the dying command is `0x0c1a` Write Scan Enable, not Disconnect) and `EX-052` (18:32,
+> the first on **`7.0.0-34`**); both ended by a reboot, `EX-052` about 13 min after the fault.
+> In `EX-052`'s window **`tcpdump` issued two usbfs `GET_DESCRIPTOR` transfers** to the
+> wedged device (both `-110`): this project's own capture touched it — find which unit runs
+> that `tcpdump` before the next window. The held kernel patch (`kernel/mgmt-flush-status`,
+> private remote) **was sent on 2026-09-24 at 19:11** after four external reviews; the list's
+> CI bot passed 13 of 14 (its `mesh-tester` failure is the bot's standing one); the full
+> record is on that branch. **Private remote:** `private` =
+> `github.com/ivoitovych/qca9377-bt-hang-private`; `devtools/held status|sync|edit|commit`
+> handles it; `origin` never gets `kernel/*`. **Machine:** stock `bluetooth.ko` on
+> `7.0.0-34`; an automatic trial (`trial-14`) is open.
 
 ---
 
@@ -45,7 +43,8 @@ EX-050, so the next exhibit on `main` is EX-051** — no tip hash: it rotted wit
 > 27-byte SCO buffer as **three 9-byte packets** (`__fill_isoc_descriptor`; `len 27 mtu 9` is
 > that split, ⚠️ not an overflow — `DR-02`). **The first HCI command observed after the
 > stream starts gets no response** — `HCI_CMD_TIMEOUT` (2.0 s) after it, whether issued 34 ms
-> or 9.65 s after link-up (`EX-043`); both named dying commands are `0x0406 Disconnect` — and
+> or 9.65 s after link-up (`EX-043`); the named dying commands are `0x0406 Disconnect` and,
+> in `EX-051`, `0x0c1a Write Scan Enable` — the opcode does not matter — and
 > the controller then answers nothing, including USB control transfers. Only a **full
 > power-off** recovers it. Reproduced under stock power management (`EX-043`).
 
@@ -56,7 +55,7 @@ work on alt 1; this part has alts 1–5 and no 6 (its descriptors are also in `d
 so the fallback *applies* to it — whether it is *compatible* is the question (`DR-04`).
 **Control window is v5.8–v5.11 only** (below v5.8 alt 1 is reachable via `new_alts = sco_num`).
 
-## 2. The signature — `n = 9`, three kernels, two peripherals, both configurations
+## 2. The signature — `n = 11`, four kernels, two peripherals, both configurations
 ² self-built `bluetooth.ko` from `updates/` (srcversion `66D38200…`); signature unchanged.
 
 ```
@@ -74,12 +73,16 @@ so the fallback *applies* to it — whether it is *compatible* is the question (
 | **`EX-043`** | **09-17** | `-31` | **original** | 910 | **9,650 ms** (`0x0406`) | **11.874 s** |
 | **`EX-045`** | **09-22** | `-31` | **original** | 735 | (`0x0406`, reason `0x13`) | 2.018 s cmd→timeout |
 | **`EX-047`** | **09-24** | `-31`² | **original** | 717 | (`0x0406`, reason `0x13`) | 2.053 s cmd→timeout |
+| **`EX-051`** | **09-25** | `-31` | **original** | 1857¹ | (`0x0c1a` Write Scan Enable) | 3.672 s; 2.020 s cmd→timeout |
+| **`EX-052`** | **09-25** | **`-34`** | **original** | 3605¹ | (`0x0406`, reason `0x13`) | 2.051 s cmd→timeout |
 | *survival* | 09-01 | `-30` | modified | **8** | — | *lived* |
 
 ¹ window-scoped. ⚠️ **The "2.15 s interval" was an artefact of six fast teardowns** (first
 command 34–279 ms after link-up); the invariant is *first command + `HCI_CMD_TIMEOUT`*,
 and `EX-043` shows the stream itself running 9.65 s without harm until a command is sent.
-Both instances where the log names the dying command name `0x0406 Disconnect, reason 0x13`.
+Where the log names the dying command it is `0x0406 Disconnect, reason 0x13`, except
+`EX-051`: `0x0c1a Write Scan Enable`, the first command after the stream started — so the
+fault is not specific to Disconnect.
 
 ## 3. Settled
 

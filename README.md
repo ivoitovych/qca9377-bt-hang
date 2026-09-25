@@ -5,18 +5,19 @@ power brings it back.** Qualcomm Atheros **QCA9377** (ROME), USB ID `13d3:3503`,
 Linux. An open investigation aimed at an upstream fix, run so that every claim can be
 re-derived by a stranger from the command that produced it.
 
-## Status — 2026-09-24, newest exhibit `EX-048`
+## Status — 2026-09-25, newest exhibit `EX-052`
 
 > When this controller negotiates **transparent (mSBC / wideband) synchronous audio**,
 > `btusb` falls back to **USB alternate setting 1** — a 9-byte isochronous endpoint — and
 > sends each 27-byte SCO buffer as three 9-byte packets (`len 27 mtu 9` in the log is that
 > split, not an overflow). **The first HCI command observed after the stream starts gets no
 > response**; the controller then answers nothing, including USB control
-> transfers, until power is removed. Reproduced **nine times across three kernels, two
+> transfers, until power is removed. Reproduced **eleven times across four kernels, two
 > headsets, and both power configurations** (`EX-033`, `036`, `037`, `038`, `040`, `042`,
-> `043`, `045`, `047`), with alternate setting 1 read directly from `sysfs` during seven live
-> wedges; the three most recent (`EX-043`, `EX-045`, `EX-047`) under the stock power
-> configuration, `EX-047` with a self-built `bluetooth.ko`.
+> `043`, `045`, `047`, `051`, `052`), with alternate setting 1 read directly from `sysfs`
+> during seven live wedges; the five most recent under the stock power configuration,
+> `EX-047` with a self-built `bluetooth.ko`, `EX-052` on kernel `7.0.0-34`. The dying command
+> is usually `Disconnect`; in `EX-051` it was `Write Scan Enable`.
 
 - **Established:** the sequence above; `0x0428 Setup Synchronous Connection` *is*
   answered; the stream ran 9.65 s in `EX-043` before the first command was issued, and that
@@ -80,8 +81,9 @@ Neither patch touches the controller fault.
 
 **The controller fault, if you want to reproduce it:** put a transparent SCO link on
 alternate setting 1 (any mSBC headset does it — `Looking for Alt no :6` then `:3` in the
-`btusb` debug output), let it stream, then issue an HCI command — in both recorded cases
-it was `Disconnect`; whether *any* command does it is untested. The command gets no
+`btusb` debug output), let it stream, then issue an HCI command — in the recorded cases
+it was `Disconnect`, and once `Write Scan Enable` (`EX-051`); whether *every* command does
+it is untested. The command gets no
 response and `HCI_CMD_TIMEOUT` follows (`EX-043`); whether the command wedged the
 controller or found it already wedged is not established. Environment below. What is missing is the mechanism, and a kernel-side
 report goes out only with a patch ready to follow it.
@@ -106,8 +108,11 @@ The signature, per instance (`BRIEF.md` §2 carries the full table):
 | **`EX-043`** | **09-17** | `-31` | **original** | 910 | **9,650 ms** | **11.874 s** |
 | **`EX-045`** | **09-22** | `-31` | **original** | 735 | (`0x0406`) | 2.018 s cmd→timeout |
 | **`EX-047`** | **09-24** | `-31`¹ | **original** | 717 | (`0x0406`) | 2.053 s cmd→timeout |
+| **`EX-051`** | **09-25** | `-31` | **original** | 1857² | (`0x0c1a`) | 2.020 s cmd→timeout |
+| **`EX-052`** | **09-25** | **`-34`** | **original** | 3605² | (`0x0406`) | 2.051 s cmd→timeout |
 
 ¹ self-built `bluetooth.ko` loaded from `updates/`; the fault is unchanged.
+² counted in the 12 s before the fault only.
 | *survival* | 09-01 | `-30` | modified | 8 | — | *lived* |
 
 The interval is not a constant: it is *time to the first command* plus the 2 s command
