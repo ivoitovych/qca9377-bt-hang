@@ -32,7 +32,11 @@ on `main` is EX-053** — no tip hash: it rotted within hours (`R2-13`).
 > record is on that branch. **Private remote:** `private` =
 > `github.com/ivoitovych/qca9377-bt-hang-private`; `devtools/held status|sync|edit|commit`
 > handles it; `origin` never gets `kernel/*`. **Machine:** stock `bluetooth.ko` on
-> `7.0.0-34`; an automatic trial (`trial-14`) is open.
+> `7.0.0-34`; an automatic trial (`trial-14`) is open. **New headset (09-25): Shure AONIC 50**
+> — A2DP (LDAC) only: its HFP never completes (WirePlumber 1.0.5: `RFCOMM receive command
+> before SLC completed: AT+%QAC=0`), so it opens no SCO link and **cannot** reach the alt-1
+> path as it stands. Making its HFP work would make it a third peripheral for the signature —
+> and expose the controller; the operator's call.
 
 ---
 
