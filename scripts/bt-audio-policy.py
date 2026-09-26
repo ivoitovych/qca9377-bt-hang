@@ -33,11 +33,13 @@ where one is known. Nothing is sent to any device: it only listens.
 import json
 import os
 import pwd
+import re
 import subprocess
 import sys
 import time
 
 DEC = json.JSONDecoder()
+MAC = re.compile(r"([0-9A-Fa-f]{2}[_:]){5}[0-9A-Fa-f]{2}")
 
 
 def now():
@@ -67,7 +69,9 @@ def summarize(state):
                for o in nodes.values()}
 
     def label(name):
-        return by_name.get(name) or name
+        # A node that no longer exists has no description; mask the device
+        # address its name carries (bluez_input.AA_BB_CC_DD_EE_FF.0).
+        return by_name.get(name) or MAC.sub("XX_XX_XX_XX_XX_XX", str(name))
 
     for o in state.values():
         t = o.get("type", "")
