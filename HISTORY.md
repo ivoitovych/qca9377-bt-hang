@@ -3434,3 +3434,63 @@ eye, one by a verification tool run because a rule said to run it, one by an out
 building on the error until it broke, one by a reviewer who ran the tool. The last two are
 the argument for the outside reviews the operator insisted on: not that they found a defect
 in the patches (none did), but that they found the places the record had trusted itself.
+
+### The firmware that was never loaded (2026-09-24 → 26)
+
+The kernel MGMT patch went to `linux-bluetooth` on 09-24 at 19:11 after four external
+reviews; the list's bot passed 13 of 14 checks the next morning, the fourteenth
+(`mesh-tester`) failing on all 122 other kernel patches of the preceding two months too.
+Nothing was owed to it. The record of the send lives on the private branch.
+
+The controller then died three more times in two days — `EX-051` (the dying command was
+`0x0c1a` Write Scan Enable, not Disconnect), `EX-052` (the first death on `7.0.0-34`, with this
+project's own capture sending two `GET_DESCRIPTOR` requests into the wedged device) and
+`EX-053`, the first with a third headset model. `EX-054` left that last one untreated for
+12 h 34 min: enumerated, silent at the USB layer, answering nothing. Twelve deaths, four
+kernels, three headsets, one signature.
+
+The operator asked for a source-level review by an outside reviewer rather than more
+logging. The review (private branch `review/source-review-2026-09-26`) retired two
+attractive shortcuts — the 27 → 9+9+9 alt-1 framing is what the Bluetooth USB transport
+specification prescribes, and the alt-3 flag alone is a no-op on a controller whose SCO MTU
+is 50 — and pointed at `dc16388d45ec`, which gave this exact USB ID the QCA ROME setup path
+upstream in August. Checking the reviewer against the record exposed an error of our own:
+`BRIEF` §3 had called `EX-031` a CVSD control. It is a **wideband** link on alt 1 that
+survived 17 minutes — set up by Enhanced `0x043D`, where all twelve deaths used legacy
+`0x0428`. Why the kernel had chosen Enhanced then and never since led to the retained
+captures: of 159 `Read Local Supported Commands` replies, 149 list 197 commands without
+Enhanced Setup, six list 200 with it, all between 08-14 and 08-19
+(`scripts/supported-commands-survey.sh`). The controller does not always boot the same.
+
+That made the experiment obvious, and the operator chose the purest form: **E1**, a
+`btusb.ko` built from Ubuntu's own `-34` source with `13d3:3503` given QCA ROME setup and
+nothing else — no automatic reset, wideband and legacy `0x0428` and alt 1 left exactly as
+they failed (`diag/btusb-e1`, private). Getting there took three new tools
+(`prepare-ubuntu-ksrc.sh`, `build-btusb-module.sh`, `module-updates.sh --module btusb`) and
+one honest caveat: even an unpatched build from the same source is not byte-identical to
+Ubuntu's module (four helpers inlined differently), so behaviour is compared, not bytes.
+
+The first E1 boot answered the question the stock driver had never let anyone ask
+(`EX-055`): the controller had been running its **bare ROM firmware**, build `0x111`; the
+setup loaded rampatch build `0x3e8` and the NVM, and the controller then advertised 202
+commands including Enhanced Setup. That evening the operator put it through the calls that
+had killed it: seven wideband links on alt 1, 15,273 buffers of exactly the old framing,
+every hang-up answered in milliseconds (`EX-056`); by 22:28, 29 hang-ups, zero timeouts.
+Twelve of twelve against none of twenty-nine is not yet a denominator — one boot, one
+headset — but it is the first intervention in six weeks that changed the outcome.
+
+The same evening produced a second harvest, above the kernel: a plain handsfree entry that
+will not stick, a microphone volume that drifts to zero, the internal microphone kept as
+default when a headset is chosen, a codec dropdown that vanishes, an input meter attached to
+the wrong source (`docs/issues.md` U1–U6). The operator stopped the record twice to insist
+that his impressions are not evidence — once withdrawing his own claim (U5: the codec choice
+turned out to be per-device memory, `policy-bluetooth` in WirePlumber's state) — and every
+statement there now carries **[log]**, **[operator]** or **[inference]**. To stop depending on
+anyone watching, `scripts/bt-audio-policy.py` now records every change of the audio policy
+from PipeWire's own event stream; on its first evening it weakened one of my own leads (the
+profile/route "mismatch" behind U4 appears in A2DP too).
+
+A history rewrite to remove traces of tool use from past commits was prepared and stopped;
+it is not resumed. The current tree's wording was neutralised instead, public branches
+reduced to `main` and the test maintainer's, and every repository backed up as verified
+bundles, copied off the machine by the operator.

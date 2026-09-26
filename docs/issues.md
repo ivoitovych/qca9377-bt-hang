@@ -549,8 +549,9 @@ profile vs routes (`MATCH`/`MISMATCH`), default sink/source, volumes/mute and ca
 streams to the journal (`journalctl -u bt-audio-policy`) — the [log] side of U1–U5 now
 accumulates from ordinary use; the operator marks a UI moment with `bt-mark`.
 Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT_AUDIO_SOURCE@`;
-`pw-cli enum-params <device-id> EnumProfile` and `… Profile`. PipeWire/WirePlumber 1.0.5,
-GNOME Settings (Ubuntu 24.04). Headset: `MOMENTUM 4` as the node name **[log]**
+`pw-cli enum-params <device-id> EnumProfile` and `… Profile`. PipeWire 1.0.5, WirePlumber
+0.4.17, GNOME Settings 46.7, BlueZ 5.72 (Ubuntu 24.04 packages, `dpkg-query`; corrected
+2026-09-26 — an earlier line said WirePlumber 1.0.5). Headset: `MOMENTUM 4` as the node name **[log]**
 (Sennheiser **[operator]**).
 
 - **U1 — the plain "Headset Head Unit (HSP/HFP)" entry.**

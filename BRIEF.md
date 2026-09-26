@@ -17,10 +17,25 @@ cheap. Over 500 it stops being cheaper than the source. Cut the oldest settled i
 adding; never cut a reason to fit a fact. **Sections name their owner**; each owner writes
 theirs and points at the long form (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-09-26 · newest exhibit on `main`: EX-053; the held branch has EX-049 and
-EX-050 (the exhibit tool numbers from `main` alone — now past them, so it numbers correctly
-again), so the next exhibit on `main` is EX-054** — no tip hash: it rotted within hours (`R2-13`).
+**Last updated: 2026-09-26 ~23:40 · newest exhibit on `main`: EX-056; the held branch has EX-049
+and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted within hours (`R2-13`).
 
+> **RESUME HERE (2026-09-26 ~23:40).** **E1 is running** (`/sys/module/btusb/version` =
+> `0.8-e1`) and, on its first boot, **29 hang-ups answered, 0 timeouts** where the stock
+> driver died 12/12 (`EX-055`, `EX-056`). The operator is testing more headsets (Shure next).
+> **Recording, all automatic:** kernel debug (`bt-dyndbg`), both HCI captures, `bluetoothd -d`,
+> the auto trial, and **`scripts/bt-audio-policy.py`** as a **transient** unit
+> (`systemctl status bt-audio-policy`, gone at reboot — restart with the `systemd-run` line in
+> `docs/tooling-index.md`). Operator marks moments with `bt-mark "…"`. **In progress:**
+> (1) a per-call SCO ledger for the E1 count per headset; (2) a private **contribution
+> roadmap** — one row per issue (BT-1 backport of `dc16388d45ec` with E1 evidence; U1–U6 in
+> `docs/issues.md`; btmon; the third `bluetoothd` free) with its upstream project and whether
+> it is already fixed there. Installed: PipeWire 1.0.5, **WirePlumber 0.4.17**, GNOME Settings
+> 46.7, BlueZ 5.72. A `git fetch stable` into `cache/linux` was running for the backport check.
+> **Rules re-stated 09-26:** operator impressions are leads, never evidence — every U-item
+> statement is tagged [log]/[operator]/[inference]; a history rewrite of past commits is
+> **not** to be resumed.
+>
 > **E1 BOOTED 2026-09-26 17:11 (`EX-055`).** The stock controller was on bare ROM firmware
 > (rom `0x302`, build `0x111`, status `0x20`); E1 loaded rampatch build `0x3e8` + NVM, and the
 > controller now advertises **202 commands incl. Enhanced Setup/Accept** (stock: 197 without).
