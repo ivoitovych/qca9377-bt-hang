@@ -533,6 +533,35 @@ Neither patch touches the controller fault; the wedge has occurred with both ins
 
 ---
 
+## U1–U4 — userspace audio problems seen during the E1 tests (2026-09-26)
+
+**Status:** observed by the operator with a Sennheiser MOMENTUM 4, measured once each.
+**Reportable:** later, to PipeWire/WirePlumber or GNOME Settings — **not** kernel or
+controller defects. In every one the controller answered normally: the eleven SCO links of
+that session were all set up and hung up cleanly (`EX-056`).
+
+Snapshot commands (as the desktop user): `wpctl status`; `pw-cli enum-params <device-id>
+EnumProfile` and `… Profile`. PipeWire/WirePlumber 1.0.5, GNOME Settings (Ubuntu 24.04).
+
+- **U1 — the plain "Headset Head Unit (HSP/HFP)" entry gives no sound.** It is PipeWire's
+  generic `headset-head-unit` profile (index 3), listed beside `headset-head-unit-cvsd` and
+  `-msbc`, which both work. Open: whether selecting it requests a SCO link at all — needs the
+  time of one attempt, then the kernel log for `opcode 0x0428` at that minute.
+- **U2 — the headset says "mute on" after switching to handsfree.** WirePlumber had the
+  headset's handsfree source at **volume 0.00**; HFP carries source volume to the headset as
+  microphone gain, and gain 0 is announced as mute. Likely a restored volume, not a failure.
+- **U3 — calls use the laptop's internal microphone, not the headset's.** WirePlumber's
+  *configured* default source is the internal analog input; it outranks the headset source
+  whenever the headset connects. Observed live: Chrome played to the headset in handsfree
+  mode while recording from the internal microphone. Phones switch to the headset microphone;
+  this stack keeps an old manual choice.
+- **U4 — the Codec ("Configuration") dropdown disappears from GNOME Settings**, and returns
+  after switching the output device away and back. At 22:04:36, with it missing, PipeWire
+  offered all eight profiles for the device (off, three handsfree, four A2DP), all available,
+  active `headset-head-unit-cvsd` — the data was there; the panel did not refresh.
+
+---
+
 ## On the wider claim
 
 It is tempting — and this investigation supplies plenty of emotional support for it — to
