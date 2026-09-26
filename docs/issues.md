@@ -578,8 +578,9 @@ GNOME Settings (Ubuntu 24.04). Headset: `MOMENTUM 4` as the node name **[log]**
   **Proposed report (operator's position, 2026-09-26):** selecting a handsfree device should
   make its microphone the input too — that is what the user is choosing, and what phones do;
   keeping the laptop's internal microphone is counterintuitive, whatever the reason for it.
-  **[log]** the headset source already carries a higher `priority.session` (2010) than a
-  typical internal input, yet the saved *configured* default wins. **Before filing:** search
+  **[log]** the headset source carries `priority.session` 2010 and the internal microphone
+  (`alsa_input…analog-stereo`) 2009 (`wpctl inspect`, 2026-09-26) — the headset ranks higher,
+  yet the saved *configured* default wins. **Before filing:** search
   WirePlumber's tracker for the existing discussion and any setting (the behaviour may be
   deliberate), and confirm the [operator] part above with a measured recording; target
   WirePlumber, with GNOME Settings as a possible second party (it writes the saved default).
