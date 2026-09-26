@@ -611,6 +611,24 @@ GNOME Settings (Ubuntu 24.04). Headset: `MOMENTUM 4` as the node name **[log]**
   differs from the profile its active port claims (3); the same mismatch may be why the plain
   entry "does not stick" (U1). Sharper than "does not refresh", still to be confirmed in the
   panel's source (libgnome-volume-control / the PulseAudio-compatibility layer).
+  ⚠️ **Weakened, 23:10:** `bt-audio-policy.py` shows the same kind of mismatch in **A2DP** mode
+  too (active `a2dp-sink#10`, route claims #2) — routes appear to name the base profile of a
+  codec variant as a rule. So the mismatch is probably PipeWire's normal representation, not
+  the cause; U4 stays "panel does not refresh" until the recorder shows a state that differs
+  at the moments the dropdown is missing (mark them with `bt-mark`).
+- **U6 — GNOME Settings' input level meter shows nothing for the internal microphone.**
+  **[operator]** 23:10: internal microphone selected in the panel, loud sounds, the input
+  level indicator does not move; with the headset's handsfree microphone it does.
+  **[log]** 23:10:17 (`bt-audio-policy.py --once`): the headset in A2DP (no microphone); the
+  *actual* default source is the internal microphone (volume 0.53, not muted) while the
+  *configured* one is still the headset input, which does not exist in A2DP; the **only**
+  capture stream GNOME Settings holds reads **"monitor of MOMENTUM 4"** — the headset's
+  output monitor, not the internal microphone. ALSA mixer (`amixer -c 1 contents`): `Capture
+  Switch` on, `Capture Volume` 80/80, `Internal Mic Boost` 3/3.
+  **[inference]** the meter is attached to the wrong node: after the switch the panel keeps
+  a stream on the headset's monitor and never opens one on the new default source, so it
+  cannot show the internal microphone. Not measured: that the internal microphone carries
+  sound (needs a short recording, only with consent).
 - **U5 — switching to handsfree picks the lowest-quality codec** *(first impression;
   withdrawn by the operator the same evening — see the correction below)*.
   **[log]** PipeWire ranks the handsfree profiles `headset-head-unit` 1, `-cvsd` 2, `-msbc` 3
