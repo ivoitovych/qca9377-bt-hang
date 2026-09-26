@@ -21,6 +21,12 @@ theirs and points at the long form (`lessons/`, `reviews/`) rather than reproduc
 EX-050 (the exhibit tool numbers from `main` alone — now past them, so it numbers correctly
 again), so the next exhibit on `main` is EX-054** — no tip hash: it rotted within hours (`R2-13`).
 
+> **E1 BOOTED 2026-09-26 17:11 (`EX-055`).** The stock controller was on bare ROM firmware
+> (rom `0x302`, build `0x111`, status `0x20`); E1 loaded rampatch build `0x3e8` + NVM, and the
+> controller now advertises **202 commands incl. Enhanced Setup/Accept** (stock: 197 without).
+> First 4 h 29 min: **0 timeouts, 0 LE `unexpected event`** — but **no SCO setup yet** (A2DP
+> only), so the fatal path is not yet tested. **Next: a wideband call, then hang up.**
+>
 > **RESUME HERE (2026-09-26 ~14:50) — EXPERIMENT E1 IS INSTALLED.** A diagnostic `btusb.ko`
 > (`0.8-e1`, srcversion `0FF3E900DE4D28718D8573F`, sha256 `f635c447…`) is in
 > `/lib/modules/7.0.0-34-generic/updates/`: `13d3:3503` gets **QCA ROME setup, no automatic
