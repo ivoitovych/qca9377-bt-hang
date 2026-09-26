@@ -17,9 +17,9 @@ cheap. Over 500 it stops being cheaper than the source. Cut the oldest settled i
 adding; never cut a reason to fit a fact. **Sections name their owner**; each owner writes
 theirs and points at the long form (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-09-25 · newest exhibit on `main`: EX-052; the held branch has EX-049 and
-EX-050 (the exhibit tool numbers from `main` alone, so renumber by hand), so the next exhibit
-on `main` is EX-053** — no tip hash: it rotted within hours (`R2-13`).
+**Last updated: 2026-09-26 · newest exhibit on `main`: EX-053; the held branch has EX-049 and
+EX-050 (the exhibit tool numbers from `main` alone — now past them, so it numbers correctly
+again), so the next exhibit on `main` is EX-054** — no tip hash: it rotted within hours (`R2-13`).
 
 > **RESUME HERE (2026-09-25 ~23:30).** **Two more alt-1 deaths on 09-25** — `EX-051` (15:29,
 > `-31`, the dying command is `0x0c1a` Write Scan Enable, not Disconnect) and `EX-052` (18:32,
@@ -32,11 +32,11 @@ on `main` is EX-053** — no tip hash: it rotted within hours (`R2-13`).
 > record is on that branch. **Private remote:** `private` =
 > `github.com/ivoitovych/qca9377-bt-hang-private`; `devtools/held status|sync|edit|commit`
 > handles it; `origin` never gets `kernel/*`. **Machine:** stock `bluetooth.ko` on
-> `7.0.0-34`; an automatic trial (`trial-14`) is open. **New headset (09-25): Shure AONIC 50**
-> — A2DP (LDAC) only: its HFP never completes (WirePlumber 1.0.5: `RFCOMM receive command
-> before SLC completed: AT+%QAC=0`), so it opens no SCO link and **cannot** reach the alt-1
-> path as it stands. Making its HFP work would make it a third peripheral for the signature —
-> and expose the controller; the operator's call.
+> `7.0.0-34`. **New headset (09-25): Shure AONIC 50.** ⚠️ **RETRACTED (09-26):** "its HFP
+> never completes, so it cannot reach the alt-1 path" — true of one connection at 23:14
+> (`RFCOMM receive command before SLC completed: AT+%QAC=0`), false as a rule: under the
+> operator's testing its HFP came up and it died at 02:09 (`EX-053`) — **the third headset
+> model with the same signature**. It is a live trigger, not a safe headset.
 
 ---
 
@@ -59,7 +59,7 @@ work on alt 1; this part has alts 1–5 and no 6 (its descriptors are also in `d
 so the fallback *applies* to it — whether it is *compatible* is the question (`DR-04`).
 **Control window is v5.8–v5.11 only** (below v5.8 alt 1 is reachable via `new_alts = sco_num`).
 
-## 2. The signature — `n = 11`, four kernels, two peripherals, both configurations
+## 2. The signature — `n = 12`, four kernels, three peripherals, both configurations
 ² self-built `bluetooth.ko` from `updates/` (srcversion `66D38200…`); signature unchanged.
 
 ```
@@ -79,6 +79,7 @@ so the fallback *applies* to it — whether it is *compatible* is the question (
 | **`EX-047`** | **09-24** | `-31`² | **original** | 717 | (`0x0406`, reason `0x13`) | 2.053 s cmd→timeout |
 | **`EX-051`** | **09-25** | `-31` | **original** | 1857¹ | (`0x0c1a` Write Scan Enable) | 3.672 s; 2.020 s cmd→timeout |
 | **`EX-052`** | **09-25** | **`-34`** | **original** | 3605¹ | (`0x0406`, reason `0x13`) | 2.051 s cmd→timeout |
+| **`EX-053`** | **09-26** | `-34` | **original** | 2432¹ | **7,331 ms** (`0x0406`, reason `0x13`); **Shure AONIC 50** | **9.421 s** |
 | *survival* | 09-01 | `-30` | modified | **8** | — | *lived* |
 
 ¹ window-scoped. ⚠️ **The "2.15 s interval" was an artefact of six fast teardowns** (first

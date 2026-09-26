@@ -5,18 +5,19 @@ power brings it back.** Qualcomm Atheros **QCA9377** (ROME), USB ID `13d3:3503`,
 Linux. An open investigation aimed at an upstream fix, run so that every claim can be
 re-derived by a stranger from the command that produced it.
 
-## Status — 2026-09-25, newest exhibit `EX-052`
+## Status — 2026-09-26, newest exhibit `EX-053`
 
 > When this controller negotiates **transparent (mSBC / wideband) synchronous audio**,
 > `btusb` falls back to **USB alternate setting 1** — a 9-byte isochronous endpoint — and
 > sends each 27-byte SCO buffer as three 9-byte packets (`len 27 mtu 9` in the log is that
 > split, not an overflow). **The first HCI command observed after the stream starts gets no
 > response**; the controller then answers nothing, including USB control
-> transfers, until power is removed. Reproduced **eleven times across four kernels, two
-> headsets, and both power configurations** (`EX-033`, `036`, `037`, `038`, `040`, `042`,
-> `043`, `045`, `047`, `051`, `052`), with alternate setting 1 read directly from `sysfs`
-> during seven live wedges; the five most recent under the stock power configuration,
-> `EX-047` with a self-built `bluetooth.ko`, `EX-052` on kernel `7.0.0-34`. The dying command
+> transfers, until power is removed. Reproduced **twelve times across four kernels, three
+> headset models, and both power configurations** (`EX-033`, `036`, `037`, `038`, `040`,
+> `042`, `043`, `045`, `047`, `051`, `052`, `053`), with alternate setting 1 read directly
+> from `sysfs` during eight live wedges; the six most recent under the stock power
+> configuration, `EX-047` with a self-built `bluetooth.ko`, `EX-052`/`053` on kernel
+> `7.0.0-34`, `EX-053` with a third headset (Shure AONIC 50). The dying command
 > is usually `Disconnect`; in `EX-051` it was `Write Scan Enable`.
 
 - **Established:** the sequence above; `0x0428 Setup Synchronous Connection` *is*
@@ -110,6 +111,7 @@ The signature, per instance (`BRIEF.md` §2 carries the full table):
 | **`EX-047`** | **09-24** | `-31`¹ | **original** | 717 | (`0x0406`) | 2.053 s cmd→timeout |
 | **`EX-051`** | **09-25** | `-31` | **original** | 1857² | (`0x0c1a`) | 2.020 s cmd→timeout |
 | **`EX-052`** | **09-25** | **`-34`** | **original** | 3605² | (`0x0406`) | 2.051 s cmd→timeout |
+| **`EX-053`** | **09-26** | `-34` | **original** | 2432² | **7,331 ms** (`0x0406`) | **9.421 s** |
 
 ¹ self-built `bluetooth.ko` loaded from `updates/`; the fault is unchanged.
 ² counted in the 12 s before the fault only.
