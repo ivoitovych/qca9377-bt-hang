@@ -590,6 +590,19 @@ GNOME Settings (Ubuntu 24.04). Headset: `MOMENTUM 4` as the node name **[log]**
   **[operator]** at that moment the dropdown was missing, and it returns after switching the
   output device away and back.
   **[inference]** GNOME Settings does not refresh its profile list; the data was there.
+- **U5 — switching to handsfree picks the lowest-quality codec.**
+  **[log]** PipeWire ranks the handsfree profiles `headset-head-unit` 1, `-cvsd` 2, `-msbc` 3
+  (`EnumProfile` priorities). At 22:04:36 the active profile was `headset-head-unit-cvsd`
+  with `save` **false**; at a later reading, after the operator chose mSBC, it was
+  `headset-head-unit-msbc` with `save` **true**. CVSD is narrowband (8 kHz) and mSBC
+  wideband (16 kHz) by the HFP specification.
+  **[operator]** selecting handsfree in the UI lands on CVSD, and the sound is very poor.
+  **[inference]** the automatic choice goes against the server's own ranking — a policy
+  defect, or a deliberate conservative fallback (mSBC is fragile on many adapters; on this
+  one it was the trigger of `BT-1` until `EX-056`). Either way the report is: prefer mSBC
+  when the adapter supports it. **To confirm:** which component sets the profile on a
+  handsfree switch (WirePlumber's Bluetooth policy vs the UI), from its source or a debug log
+  (`WIREPLUMBER_DEBUG`), and whether `save=false` means "not chosen by the user" there.
 
 ---
 
