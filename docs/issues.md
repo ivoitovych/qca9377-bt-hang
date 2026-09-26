@@ -564,6 +564,12 @@ GNOME Settings (Ubuntu 24.04). Headset: `MOMENTUM 4` as the node name **[log]**
   **[operator]** the headset announced "mute on".
   **[inference]** HFP carries source volume to the headset as microphone gain, and gain 0 is
   announced as mute. **To confirm:** the RFCOMM `AT+VGM` value in the capture at the switch.
+  **[log] 22:55:59:** source volume **0.08** (`wpctl get-volume`), **not muted** (no
+  `[MUTED]`; route `mute` false), route linear volume 0.000482 — so the volume moved
+  0.00 → 0.27 → 0.08 over the evening **with no recorded user action** for the last two.
+  **[screenshot]** the panel draws a crossed microphone at that level — it reads as muted
+  while the stream is not. **[inference]** something other than the user sets it —
+  possibly the headset reporting its microphone gain over HFP (`+VGM`); the capture can say.
 - **U3 — calls use the laptop's internal microphone.**
   **[log]** at 22:04 WirePlumber's *configured* default source was the internal analog input,
   and Chrome played to the headset in handsfree mode while its input stream read the internal
@@ -590,6 +596,17 @@ GNOME Settings (Ubuntu 24.04). Headset: `MOMENTUM 4` as the node name **[log]**
   **[operator]** at that moment the dropdown was missing, and it returns after switching the
   output device away and back.
   **[inference]** GNOME Settings does not refresh its profile list; the data was there.
+  **Second capture, 22:55:59.** **[screenshot]** (`tmp/ui-screenshots/2026-09-26T2255-…png`,
+  local, sha256 `b08cab16…`): output and input both "Handsfree — MOMENTUM 4", **no
+  Configuration row**, input slider at the far left with a crossed microphone icon.
+  **[log]** at that moment: all eight profiles offered and available; active profile
+  `headset-head-unit-msbc` (index **261**), `save` true; but both active **routes**
+  (`headset-hf-input`, `headset-hf-output`, `pw-cli enum-params <dev> Route`) report
+  `profile` **3** — the plain `headset-head-unit` entry — with `profiles` [3, 260, 261].
+  **[inference]** the panel may hide the Configuration row when the active profile (261)
+  differs from the profile its active port claims (3); the same mismatch may be why the plain
+  entry "does not stick" (U1). Sharper than "does not refresh", still to be confirmed in the
+  panel's source (libgnome-volume-control / the PulseAudio-compatibility layer).
 - **U5 — switching to handsfree picks the lowest-quality codec** *(first impression;
   withdrawn by the operator the same evening — see the correction below)*.
   **[log]** PipeWire ranks the handsfree profiles `headset-head-unit` 1, `-cvsd` 2, `-msbc` 3
