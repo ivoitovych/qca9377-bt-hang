@@ -559,8 +559,8 @@ GNOME Settings (Ubuntu 24.04). Headset: `MOMENTUM 4` as the node name **[log]**
   by the UI as if selectable. **To confirm:** the minute of one output-side attempt, then
   whether any `opcode 0x0428` appears at that minute.
 - **U2 — "mute on" after switching to handsfree.**
-  **[log]** at 22:04 the headset's handsfree source was at volume **0.00**; at 22:1x it read
-  0.27.
+  **[log]** at 22:04 the headset's handsfree source was at volume **0.00**; at a later check
+  the same evening (after 22:07, exact time not recorded) it read 0.27.
   **[operator]** the headset announced "mute on".
   **[inference]** HFP carries source volume to the headset as microphone gain, and gain 0 is
   announced as mute. **To confirm:** the RFCOMM `AT+VGM` value in the capture at the switch.
