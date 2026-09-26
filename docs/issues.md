@@ -544,6 +544,10 @@ Neither patch touches the controller fault; the wedge has occurred with both ins
 GNOME Settings, **not** as kernel or controller defects: the SCO links of that session were
 all set up and hung up cleanly **[log]** (`EX-056`).
 
+**Automatic record since 2026-09-26 23:02:** `scripts/bt-audio-policy.py` logs every change of
+profile vs routes (`MATCH`/`MISMATCH`), default sink/source, volumes/mute and capture
+streams to the journal (`journalctl -u bt-audio-policy`) — the [log] side of U1–U5 now
+accumulates from ordinary use; the operator marks a UI moment with `bt-mark`.
 Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT_AUDIO_SOURCE@`;
 `pw-cli enum-params <device-id> EnumProfile` and `… Profile`. PipeWire/WirePlumber 1.0.5,
 GNOME Settings (Ubuntu 24.04). Headset: `MOMENTUM 4` as the node name **[log]**
