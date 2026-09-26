@@ -590,19 +590,30 @@ GNOME Settings (Ubuntu 24.04). Headset: `MOMENTUM 4` as the node name **[log]**
   **[operator]** at that moment the dropdown was missing, and it returns after switching the
   output device away and back.
   **[inference]** GNOME Settings does not refresh its profile list; the data was there.
-- **U5 — switching to handsfree picks the lowest-quality codec.**
+- **U5 — switching to handsfree picks the lowest-quality codec** *(first impression;
+  withdrawn by the operator the same evening — see the correction below)*.
   **[log]** PipeWire ranks the handsfree profiles `headset-head-unit` 1, `-cvsd` 2, `-msbc` 3
   (`EnumProfile` priorities). At 22:04:36 the active profile was `headset-head-unit-cvsd`
   with `save` **false**; at a later reading, after the operator chose mSBC, it was
   `headset-head-unit-msbc` with `save` **true**. CVSD is narrowband (8 kHz) and mSBC
   wideband (16 kHz) by the HFP specification.
   **[operator]** selecting handsfree in the UI lands on CVSD, and the sound is very poor.
-  **[inference]** the automatic choice goes against the server's own ranking — a policy
-  defect, or a deliberate conservative fallback (mSBC is fragile on many adapters; on this
-  one it was the trigger of `BT-1` until `EX-056`). Either way the report is: prefer mSBC
-  when the adapter supports it. **To confirm:** which component sets the profile on a
-  handsfree switch (WirePlumber's Bluetooth policy vs the UI), from its source or a debug log
-  (`WIREPLUMBER_DEBUG`), and whether `save=false` means "not chosen by the user" there.
+  ⚠️ **Operator's correction, 22:28 the same evening:** after switching handsfree ↔ headset
+  several more times, *"it seems like the better codec is being selected"* — the operator
+  withdrew the first impression and asked for it to be recorded, as the reason reports need
+  logs. **[log]** 22:21–22:26: 15 SCO links, 10 mSBC (`evt 5`) and 5 CVSD (`evt 4`) — the log
+  cannot tell automatic choices from explicit picks; active afterwards: `-msbc`, `save` true.
+  **[log] the mechanism** — WirePlumber's state (`~/.local/state/wireplumber/`, read-only):
+  `policy-bluetooth` keeps a per-device `saved-headset-profile`, and `default-profile` the
+  device's profile; for this headset both read `headset-head-unit-msbc` at 22:28 (other
+  paired devices: `-msbc` for most, `-cvsd` for one, `a2dp-sink` for several). A handsfree
+  switch restores the profile last used on that device.
+  **[inference] revised:** not "handsfree picks the worst codec" but "handsfree picks what
+  was last used on this device"; the CVSD at 22:04 was presumably that device's saved choice
+  at the time (the files keep no history). **Open, and the only reportable part:** what the
+  policy picks for a device with **no** saved profile — needs a device never switched to
+  handsfree before, or its saved entry removed (operator's decision: it changes saved
+  preferences), then one switch and the log.
 
 ---
 
