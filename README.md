@@ -5,7 +5,7 @@ power brings it back.** Qualcomm Atheros **QCA9377** (ROME), USB ID `13d3:3503`,
 Linux. An open investigation aimed at an upstream fix, run so that every claim can be
 re-derived by a stranger from the command that produced it.
 
-## Status — 2026-09-26, newest exhibit `EX-055`
+## Status — 2026-09-26, newest exhibit `EX-056`
 
 > When this controller negotiates **transparent (mSBC / wideband) synchronous audio**,
 > `btusb` falls back to **USB alternate setting 1** — a 9-byte isochronous endpoint — and

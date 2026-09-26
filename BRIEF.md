@@ -24,8 +24,12 @@ again), so the next exhibit on `main` is EX-054** — no tip hash: it rotted wit
 > **E1 BOOTED 2026-09-26 17:11 (`EX-055`).** The stock controller was on bare ROM firmware
 > (rom `0x302`, build `0x111`, status `0x20`); E1 loaded rampatch build `0x3e8` + NVM, and the
 > controller now advertises **202 commands incl. Enhanced Setup/Accept** (stock: 197 without).
-> First 4 h 29 min: **0 timeouts, 0 LE `unexpected event`** — but **no SCO setup yet** (A2DP
-> only), so the fatal path is not yet tested. **Next: a wideband call, then hang up.**
+> First 4 h 29 min: 0 timeouts, 0 LE `unexpected event` (A2DP only). **Then the fatal path,
+> 21:52–21:55 (`EX-056`): 7 wideband links on alt 1 (15,273 `len 27 mtu 9` buffers) + 4 CVSD
+> links, all set up by legacy `0x0428`, every one ended by a `0x0406` Disconnect answered
+> `0x00` — 0 timeouts.** On stock (ROM firmware) that Disconnect died 12/12. **Missing QCA
+> firmware setup is now the leading cause of BT-1**; n = 7 on one boot, one headset — more
+> sessions and headsets to make it a denominator, then the stable backport of `dc16388d45ec`.
 >
 > **RESUME HERE (2026-09-26 ~14:50) — EXPERIMENT E1 IS INSTALLED.** A diagnostic `btusb.ko`
 > (`0.8-e1`, srcversion `0FF3E900DE4D28718D8573F`, sha256 `f635c447…`) is in
