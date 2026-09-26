@@ -1,6 +1,7 @@
 #!/bin/bash
 # prove-held-branch-guard.sh — standalone proof of the two suite assertions on repo-save's held-branch
-# guard (kernel/* → private remote only), for when the suite cannot run (trial open).
+# guard (kernel/*, and since 2026-09-26 plan/* and the other private-only families →
+# private remote only), for when the suite cannot run (trial open).
 set -uo pipefail
 cd /root/exp/qca9377-bt-hang || exit 2
 SCRATCH=$(mktemp -d)
@@ -20,6 +21,15 @@ ho=$(git --git-dir="$SCRATCH/held-origin.git" rev-parse --verify --quiet refs/he
 (( heldrc == 0 )) && [[ "$hp" != none && "$ho" == none && "$HELD" == *"never to origin"* ]] \
     && ok "repo-save pushes a kernel/* branch to 'private' and not to origin" \
     || { bad "held-branch push: rc=$heldrc private=$hp origin=$ho"; echo "$HELD" | tail -8; }
+git -C "$SCRATCH/held" checkout -q -b plan/held-test
+printf 'plan\n' > "$SCRATCH/held/plan.txt"
+PLAN=$(devtools/repo-save "$SCRATCH/held" "plan branch commit" 2>&1); planrc=$?
+pp=$(git --git-dir="$SCRATCH/held-private.git" rev-parse --verify --quiet refs/heads/plan/held-test || echo none)
+po=$(git --git-dir="$SCRATCH/held-origin.git" rev-parse --verify --quiet refs/heads/plan/held-test || echo none)
+(( planrc == 0 )) && [[ "$pp" != none && "$po" == none ]] \
+    && ok "repo-save pushes a plan/* branch to 'private' and not to origin" \
+    || { bad "plan-branch push: rc=$planrc private=$pp origin=$po"; echo "$PLAN" | tail -8; }
+git -C "$SCRATCH/held" checkout -q kernel/held-test
 git -C "$SCRATCH/held" remote remove private
 printf 'held 2\n' >> "$SCRATCH/held/held.txt"
 HELD2=$(devtools/repo-save "$SCRATCH/held" "held branch, no private remote" 2>&1); held2rc=$?
