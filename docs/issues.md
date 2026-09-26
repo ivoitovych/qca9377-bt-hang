@@ -545,8 +545,11 @@ EnumProfile` and `… Profile`. PipeWire/WirePlumber 1.0.5, GNOME Settings (Ubun
 
 - **U1 — the plain "Headset Head Unit (HSP/HFP)" entry gives no sound.** It is PipeWire's
   generic `headset-head-unit` profile (index 3), listed beside `headset-head-unit-cvsd` and
-  `-msbc`, which both work. Open: whether selecting it requests a SCO link at all — needs the
-  time of one attempt, then the kernel log for `opcode 0x0428` at that minute.
+  `-msbc`, which both work. From the input side (22:07) selecting it **does not stick**: the
+  selection falls back to a codec-specific entry, while the microphone keeps working; the
+  kernel log shows the profile churn as SCO links torn down and set up again (all answered).
+  So the generic entry is likely an automatic choice that resolves to CVSD/mSBC — offered by
+  the UI as if selectable. Open: what selecting it on the *output* side does (silence).
 - **U2 — the headset says "mute on" after switching to handsfree.** WirePlumber had the
   headset's handsfree source at **volume 0.00**; HFP carries source volume to the headset as
   microphone gain, and gain 0 is announced as mute. Likely a restored volume, not a failure.
@@ -554,7 +557,9 @@ EnumProfile` and `… Profile`. PipeWire/WirePlumber 1.0.5, GNOME Settings (Ubun
   *configured* default source is the internal analog input; it outranks the headset source
   whenever the headset connects. Observed live: Chrome played to the headset in handsfree
   mode while recording from the internal microphone. Phones switch to the headset microphone;
-  this stack keeps an old manual choice.
+  this stack keeps an old manual choice. **The headset microphone itself works** once chosen by
+  hand in GNOME Settings (level meter live, in use on an mSBC link) — a default-policy
+  problem, not a broken microphone.
 - **U4 — the Codec ("Configuration") dropdown disappears from GNOME Settings**, and returns
   after switching the output device away and back. At 22:04:36, with it missing, PipeWire
   offered all eight profiles for the device (off, three handsfree, four A2DP), all available,
