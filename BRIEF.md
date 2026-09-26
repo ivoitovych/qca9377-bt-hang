@@ -21,7 +21,21 @@ theirs and points at the long form (`lessons/`, `reviews/`) rather than reproduc
 EX-050 (the exhibit tool numbers from `main` alone — now past them, so it numbers correctly
 again), so the next exhibit on `main` is EX-054** — no tip hash: it rotted within hours (`R2-13`).
 
-> **RESUME HERE (2026-09-25 ~23:30).** **Two more alt-1 deaths on 09-25** — `EX-051` (15:29,
+> **RESUME HERE (2026-09-26 ~14:50) — EXPERIMENT E1 IS INSTALLED.** A diagnostic `btusb.ko`
+> (`0.8-e1`, srcversion `0FF3E900DE4D28718D8573F`, sha256 `f635c447…`) is in
+> `/lib/modules/7.0.0-34-generic/updates/`: `13d3:3503` gets **QCA ROME setup, no automatic
+> reset**; wideband, legacy `0x0428` and alt 1 unchanged (patch and facts: private branch
+> `diag/btusb-e1`). It loads from the first cold boot after 14:50. **After that boot:**
+> `cat /sys/module/btusb/version` must read `0.8-e1`; `journalctl -k -b 0 --grep 'E1:|QCA|rampatch|NVM'`
+> for the firmware state; `scripts/supported-commands-survey.sh` for 197 vs 200 commands; then
+> the operator's usual hard test. Survival under wideband calls → the fix is the upstream
+> entry `dc16388d45ec` (stable backport); the same first-command death → E2 (minus the
+> Enhanced-setup quirk). **Undo:** `scripts/module-updates.sh --module btusb remove`, reboot.
+> Before it: the `EX-053` window stayed untreated **12 h 34 min**, USB silent (`EX-054`), and
+> the controller advertised Enhanced Setup only 08-14…08-19 (6 of 159 replies,
+> `scripts/supported-commands-survey.sh`).
+>
+> **Earlier (2026-09-25 ~23:30).** **Two more alt-1 deaths on 09-25** — `EX-051` (15:29,
 > `-31`, the dying command is `0x0c1a` Write Scan Enable, not Disconnect) and `EX-052` (18:32,
 > the first on **`7.0.0-34`**); both ended by a reboot, `EX-052` about 13 min after the fault.
 > In `EX-052`'s window **`tcpdump` issued two usbfs `GET_DESCRIPTOR` transfers** to the
