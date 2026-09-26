@@ -575,6 +575,14 @@ GNOME Settings (Ubuntu 24.04). Headset: `MOMENTUM 4` as the node name **[log]**
   **[inference]** a default-policy problem, not a broken microphone: the saved choice
   outranks the newly connected headset. Not measured: whether the stream carries sound rather
   than silence (that needs a short recording — only with the operator's consent).
+  **Proposed report (operator's position, 2026-09-26):** selecting a handsfree device should
+  make its microphone the input too — that is what the user is choosing, and what phones do;
+  keeping the laptop's internal microphone is counterintuitive, whatever the reason for it.
+  **[log]** the headset source already carries a higher `priority.session` (2010) than a
+  typical internal input, yet the saved *configured* default wins. **Before filing:** search
+  WirePlumber's tracker for the existing discussion and any setting (the behaviour may be
+  deliberate), and confirm the [operator] part above with a measured recording; target
+  WirePlumber, with GNOME Settings as a possible second party (it writes the saved default).
 - **U4 — the Codec ("Configuration") dropdown disappears from GNOME Settings.**
   **[log]** at 22:04:36 PipeWire offered all eight profiles for the device (off, three
   handsfree, four A2DP), all available, active `headset-head-unit-cvsd`.
