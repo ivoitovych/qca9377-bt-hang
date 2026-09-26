@@ -107,8 +107,16 @@ fault is not specific to Disconnect.
   `hdev->reset` is NULL on the kernels run here — `13d3:3503` had no quirks entry ⚠️ **until
   `dc16388d45ec`** (master, 2026-08-07, for a BLE-scan fault; not in v7.0, 6.6.y, 6.12.y as
   checked 09-19) — and that entry's setup/reset path is **untested here** (`DR-01`).
-- **`hci0` is never unregistered** (not the stage-2 shape); **the CVSD controls survived**
-  (`mtu 17`, `EX-031`) — a statement about the observed controls, not a safety guarantee.
+- **`hci0` is never unregistered** (not the stage-2 shape).
+- ⚠️ *Corrected 2026-09-26:* this line used to read "the CVSD controls survived (`mtu 17`,
+  `EX-031`)". `EX-031` is **not** a CVSD control: it is a **transparent (wideband) link on
+  alt 1** (`evt 5`, `len 27 mtu 9`) that ran ~17 min and survived — set up by **Enhanced**
+  `0x043D`, while all twelve deaths used legacy `0x0428`. So entering alt 1 is not
+  sufficient; which setup command the host chose may matter. The kernel uses `0x043D` only
+  when the controller's supported-commands bitmap advertises it (`commands[29] & 0x08`) and no
+  quirk forbids it; why it did on 08-18 (`-28`) and not on the boots that died is **not
+  known**. ⚠️ Upstream's QCA ROME path (`dc16388d45ec`) sets
+  `HCI_QUIRK_BROKEN_ENHANCED_SETUP_SYNC_CONN`, forcing `0x0428` for this device.
 
 ## 4. Not settled
 
