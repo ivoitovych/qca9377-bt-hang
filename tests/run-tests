@@ -1019,6 +1019,54 @@ else
     diff <(echo "$R1") <(echo "$R2") | head -12 | sed 's/^/      /'
 fi
 
+# ONE SHUFFLE IS ONE SAMPLE. The seed above happens to put `trial` last — a
+# column the report never reads — so a consumer that silently drops its LAST
+# column passes it: a mutation pass (2026-09-28) turned trial-summary.awk's
+# header loop from `i <= NF` into `i < NF` and the suite stayed green. So every
+# column takes the last position in turn, the boundary where an off-by-one
+# lives, and the report must not change. Twenty report runs, under a second.
+_plast=""
+for _pcol in $(head -1 "$FIX"); do
+    python3 - "$FIX" "$RD/evidence/trials/results.tsv" "$_pcol" <<'PY'
+import sys
+rows = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
+j = rows[0].index(sys.argv[3])
+order = [i for i in range(len(rows[0])) if i != j] + [j]
+with open(sys.argv[2], "w") as f:
+    for r in rows:
+        f.write("\t".join(r[i] for i in order) + "\n")
+PY
+    [[ "$(BT_REPO="$RD" tools/bt-trial report 2>&1)" == "$R1" ]] || _plast+="$_pcol "
+done
+[[ -z "$_plast" ]] \
+    && ok "report is identical with each of its $(head -1 "$FIX" | wc -w) columns moved to the last position" \
+    || bad "report changed when these columns were last — read by position, or dropped at the boundary: $_plast"
+
+# AN UNKNOWN TRIAL IS PART OF THE SAMPLE THE CENSORED FIGURE IS OUT OF. The
+# censored column reads "censored/seen": seen counts every trial in the group,
+# including those whose evidence could not be read. The same mutation pass
+# turned the unknown branch's `seen[k]++` into `seen[k]--` and nothing failed —
+# no fixture had an unknown row inside a reported group. One is added to the
+# observational stock group here: the censored figure must go from 1/3 to 1/4
+# and nothing that is a RATE may move, because unknown enters none of them.
+RU=$(mktemp -d); CLEANUP_PATHS+=("$RU")
+mkdir -p "$RU/evidence/trials" && touch "$RU/install.sh" && git -C "$RU" init -q 2>/dev/null
+awk -F'\t' -v OFS='\t' '
+    NR == 1 { for (i = 1; i <= NF; i++) c[$i] = i; print; next }
+    { print }
+    $c["trial_type"] == "observational_boot" && $c["trial"] == 2 {
+        $c["trial"] = 6; $c["bt1_status"] = "unknown"; add = $0
+    }
+    END { print add }' "$FIX" > "$RU/evidence/trials/results.tsv"
+RUO=$(BT_REPO="$RU" tools/bt-trial report 2>&1)
+if grep -qE 'observational_boot +stock +1/2 +1/2 +0/1 +50% +1/4 +5400s' <<<"$RUO" \
+   && grep -q '1 trial(s) with UNKNOWN evidence' <<<"$RUO"; then
+    ok "an unknown trial joins the censored figure's denominator (1/4) and moves no rate"
+else
+    bad "unknown trial mishandled — expected 1/2 1/2 0/1 50% 1/4 5400s:"
+    grep -E 'observational_boot +stock' <<<"$RUO" | head -1 | sed 's/^/      /'
+fi
+
 echo
 echo "awk program-loading (the -f trap)"
 echo "──────────────────────────────────────────────────────────────"
