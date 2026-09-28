@@ -8456,6 +8456,97 @@ SNGZ=$(BT_JOURNAL_FIXTURE=tests/journal/snapshot-bluez BT_SNAPSHOT_DIR="$SNG/z" 
     && ok "zero guards is labelled ambiguous rather than reported as a clean result" \
     || bad "the zero case is not labelled: $(grep -i guard <<<"$SNGZ" | tr '\n' ' ')"
 
+# ── bt-guards: the same question over the whole patched period ───────────
+#
+# bt-snapshot counts guard firings in ONE boot. bt-guards answers the question
+# EX-041 needed — has either guard fired SINCE THE PATCHED DAEMON WENT IN — and
+# had no test at all: 0 of 45 lines executed (devtools/coverage, 2026-09-28),
+# and outside test-comprehension's view because install.sh does not ship it.
+# What it prints is the only positive evidence the two BlueZ fixes work, so all
+# three of its answers are driven here: firings, none, and nothing to look at.
+#
+# journalctl is a stub fed from the same real-format fixtures as above, and it
+# records its arguments, because the reason the tool exists is HOW it asks: by
+# _COMM, an indexed field journald filters itself — not by piping nineteen days
+# of debug output through grep, the form that ran ten minutes and then reported
+# 0002 as never having fired when it had fired four times.
+BG=$(mktemp -d); mkdir -p "$BG/bin"
+cat > "$BG/bin/journalctl" <<STUB
+#!/bin/sh
+printf '%s\n' "\$*" >> "$BG/argv"
+cat "$BG/feed"
+STUB
+chmod +x "$BG/bin/journalctl"
+bg_run() { : > "$BG/argv"; cp "$1" "$BG/feed"; shift
+           PATH="$BG/bin:$PATH" tools/bt-guards "$@" 2>&1; }
+
+BGF=$(bg_run tests/journal/snapshot-guard/default.b0.log); bgrc=$?
+# Each count is read from ITS OWN report line, together with the verdict
+# printed beside it — a right number beside the wrong label is a wrong report.
+bgl2=$(grep -m1 'setup has no stream' <<<"$BGF"); bgl1=$(grep -m1 'wrong discovery size' <<<"$BGF")
+(( bgrc == 0 )) \
+   && [[ "$bgl2" =~ stream\ +1\  && "$bgl2" == *"CRASHES PREVENTED"* ]] \
+   && [[ "$bgl1" =~ size\ +1\  && "$bgl1" == *"AMBIGUOUS"* ]] \
+    && ok "bt-guards counts each guard's firings and names what each one means" \
+    || bad "bt-guards misread a fixture with one firing of each guard (rc=$bgrc): $(grep -E '000[12]' <<<"$BGF" | tr '\n' ' ')"
+[[ "$BGF" == *"is NOT evidence the patch prevented a crash"* ]] \
+    && ok "a 0001 hit carries the warning that the same text exists at a pre-existing site" \
+    || bad "a 0001 firing was reported without its ambiguity warning"
+# HOW IT ASKED. Every call must select on _COMM and carry the window; one bare
+# --since scan is the ten-minute query this tool was written to replace.
+BGBARE=$(grep -vc '_COMM=bluetoothd --since 2026-08-25' "$BG/argv" || true)
+BGCALLS=$(grep -c . "$BG/argv" || true)
+(( ${BGCALLS:-0} >= 1 && ${BGBARE:-1} == 0 )) \
+    && ok "bt-guards selects on _COMM=bluetoothd over the patched period on all $BGCALLS journal read(s)" \
+    || bad "bt-guards read the journal without _COMM or without its window ($BGBARE of $BGCALLS call(s)): $(head -2 "$BG/argv" | tr '\n' ' ')"
+
+# NONE FIRED, over a journal where the daemon DID log: a result, stated as one.
+BGN=$(bg_run tests/journal/snapshot-bluez/default.b0.log); bgnrc=$?
+(( bgnrc == 0 )) \
+   && [[ "$BGN" == *"(guarded path not reached)"* && "$BGN" == *"(neither site fired)"* ]] \
+   && [[ "$BGN" != *"PREVENTED"* && "$BGN" != *"AMBIGUOUS"* ]] \
+   && [[ "$BGN" =~ positive\ control\ +[1-9] ]] \
+    && ok "no firings over a journal the daemon wrote to is reported as a result, with its positive control" \
+    || bad "the no-firing case was misreported (rc=$bgnrc): $(grep -E '000[12]|positive' <<<"$BGN" | tr '\n' ' ')"
+
+# NOTHING TO LOOK AT. An empty read is a refusal: zeros from a scan that saw no
+# bluetoothd line at all would be a measurement of the query, not the machine.
+: > "$BG/empty"
+BGE=$(bg_run "$BG/empty"); bgerc=$?
+(( bgerc == 2 )) && [[ "$BGE" == *"REFUSING"* && "$BGE" != *"0002  setup"* ]] \
+    && ok "bt-guards refuses to report zero firings from a journal with no bluetoothd lines" \
+    || bad "an empty journal produced counts instead of a refusal (rc=$bgerc)"
+
+# The window is the patched period and it moves only on purpose.
+bg_run tests/journal/snapshot-bluez/default.b0.log --since '2026-09-01 00:00' >/dev/null
+grep -q -- "--since 2026-09-01 00:00" "$BG/argv" \
+    && ok "bt-guards --since passes its window through to journald" \
+    || bad "--since was not honoured: $(head -1 "$BG/argv")"
+BT_GUARDS_SINCE=2026-09-02 bg_run tests/journal/snapshot-bluez/default.b0.log >/dev/null
+grep -q -- "--since 2026-09-02" "$BG/argv" \
+    && ok "BT_GUARDS_SINCE moves the default window" \
+    || bad "BT_GUARDS_SINCE was ignored: $(head -1 "$BG/argv")"
+bg_run tests/journal/snapshot-bluez/default.b0.log --bogus >/dev/null; bgbrc=$?
+(( bgbrc == 2 )) && ok "bt-guards rejects an unknown option" \
+                 || bad "bt-guards accepted an unknown option (rc=$bgbrc)"
+
+# AND THE PATTERNS MUST MATCH WHAT THE PATCHES ACTUALLY PRINT. If the message
+# in a patch changes and the tool's pattern does not, bt-guards reports
+# "(guarded path not reached)" for ever — a permanent, silent false negative on
+# the one question it answers. The message is taken from the patch as SENT
+# upstream, with its %p filled in, and handed to the tool's own pattern, read
+# from its code lines only.
+BGP2=$(grep -m1 -oE 'setup %p has no stream' patches/bluez/sent/v2/0002-*.patch)
+BGG2=$(grep -m1 -E "^G2='" tools/bt-guards | sed -E "s/^G2='(.*)'$/\1/")
+BGP1=$(grep -m1 -oE '"Wrong size of start discovery return parameters"' patches/bluez/sent/v2/0001-*.patch | tr -d '"')
+BGG1=$(grep -m1 -E "^G1='" tools/bt-guards | sed -E "s/^G1='(.*)'$/\1/")
+[[ -n "$BGP2" && -n "$BGG2" && -n "$BGP1" && -n "$BGG1" ]] \
+   && grep -qE -- "$BGG2" <<<"bt_io_accept: ${BGP2/\%p/0x5581a2f0}" \
+   && grep -qE -- "$BGG1" <<<"$BGP1" \
+    && ok "bt-guards' patterns match the messages the sent patches print" \
+    || bad "bt-guards' patterns and the patches' messages have drifted apart: G2='$BGG2' vs '$BGP2', G1='$BGG1' vs '$BGP1'"
+rm -rf "$BG"
+
 # ── the two counters EX-035 designates as "did the attempt even count?" ──
 #
 # EX-035 ran a patched daemon for eight hours with zero crashes and concluded
@@ -9758,6 +9849,85 @@ BWG=$(grep -v -- '--help' "$BWS/calls.log" | grep -v -- '--since' | grep -c -- '
 rm -rf "$BWS"
 
 rm -rf "$BW"
+
+echo
+echo "bt-fault-window — the SCO-to-fault sequence, counted from a fixture"
+echo "──────────────────────────────────────────────────────────────"
+# bt-fault-window prints the observation BT-1 rests on — alt-1 packets, the
+# 27-byte mSBC condition, and the 0x0428-setup-to-fault interval compared with
+# the exhibits' 2.076–2.191 s — and until 2026-09-28 no test had run one line of
+# it (0 of 60, devtools/coverage; install.sh does not ship it, so
+# test-comprehension never listed it). Every number below is read from
+# tests/journal/fault-window, whose b0 boot is EX-036's setup and fault lines
+# verbatim — so the interval the tool prints must be EX-036's own 2.152 s.
+FW=tests/journal/fault-window
+fw_run() { BT_JOURNAL_FIXTURE="$FW" tools/bt-fault-window "$@" 2>&1; }
+
+FWO=$(fw_run); fwrc=$?
+fwline() { grep -m1 -- "$1" <<<"$FWO"; }
+(( fwrc == 0 )) && [[ "$FWO" == *"anchored on 2026-08-25T17:08:10.702854+02:00"* ]] \
+    && ok "the default anchor is the boot's first COMMAND timeout" \
+    || bad "bt-fault-window anchored somewhere else (rc=$fwrc): $(head -1 <<<"$FWO")"
+# THE DECOY. b0 carries a `link tx timeout` 1.2 s before the command timeout —
+# ACL link supervision, a different event. An anchor pattern of bare
+# "tx timeout" settles on it, and scripts/sco-ledger.sh shipped with exactly
+# that spelling (fixed in cbff9d7). Here it would move the whole window.
+[[ "$FWO" != *"anchored on 2026-08-25T17:08:09.5"* ]] \
+    && ok "a link tx timeout ahead of the fault is not taken as the anchor" \
+    || bad "the anchor settled on the link-supervision timeout"
+[[ "$(fwline 'alt-1  (mtu 9)')" =~ \)\ +4\ +of\ which\ 27-byte\ mSBC:\ 3$ ]] \
+   && [[ "$(fwline 'wider  (mtu >9)')" =~ \)\ +0\ + ]] \
+    && ok "alt-1 packets (4), their 27-byte mSBC share (3) and wider packets (0) are counted" \
+    || bad "packet counts wrong: $(fwline 'alt-1') / $(fwline 'wider')"
+[[ "$FWO" == *"— the BT-1 condition."* ]] \
+    && ok "27-byte alt-1 buffers are named as the BT-1 condition" \
+    || bad "the BT-1 condition line is missing on an alt-1 mSBC stream"
+[[ "$FWO" == *"0x0428 setup → fault: 2.152 s"* ]] \
+    && ok "setup → fault is EX-036's own 2.152 s, from EX-036's own lines" \
+    || bad "the interval disagrees with the exhibit it was drawn from: $(fwline 'setup →')"
+# The filtered view must say how much it hid, and --raw must hide nothing: a
+# sequence that silently drops lines is a sequence nobody can check.
+[[ "$FWO" == *"(5 line(s) filtered as repeated SCO/debug noise — --raw shows all 8)"* ]] \
+   && [[ "$FWO" == *"link tx timeout"* && "$FWO" != *"len 27 mtu 9"* ]] \
+    && ok "the default view filters packet noise, keeps every event line, and says how many it hid" \
+    || bad "the filtered sequence is wrong: $(grep -A1 'filtered' <<<"$FWO" | head -1)"
+FWR=$(fw_run --raw)
+[[ "$(grep -c 'len 27 mtu 9' <<<"$FWR")" == 3 && "$FWR" != *"filtered as repeated"* ]] \
+    && ok "--raw shows every line of the window" \
+    || bad "--raw still filtered lines"
+
+# A HEALTHY STREAM: wider packets only, and no BT-1 claim.
+FWC=$(fw_run --boot -1); fwcrc=$?
+(( fwcrc == 0 )) && [[ "$(grep -m1 'wider  (mtu >9)' <<<"$FWC")" =~ \)\ +2\ + ]] \
+   && [[ "$(grep -m1 'alt-1  (mtu 9)' <<<"$FWC")" =~ \)\ +0\ + ]] \
+   && [[ "$FWC" != *"BT-1 condition"* ]] \
+    && ok "a CVSD stream at mtu 17 counts as wider and makes no BT-1 claim" \
+    || bad "the CVSD boot was misread (rc=$fwcrc): $(grep -E 'alt-1|wider|BT-1' <<<"$FWC" | tr '\n' ' ')"
+
+# THE REFUSALS. Each is a place where printing counts would be printing the
+# query rather than the machine.
+FWN=$(fw_run --boot -2); fwnrc=$?
+(( fwnrc == 2 )) && [[ "$FWN" == *"REFUSING — no command timeout in boot -2"* && "$FWN" != *"SCO packets"* ]] \
+    && ok "a boot whose only timeout is link supervision is refused, not anchored" \
+    || bad "a boot with no command timeout was not refused (rc=$fwnrc)"
+FWE=$(fw_run --boot -3 --at 2026-08-20T10:00:00.000000+02:00); fwerc=$?
+(( fwerc == 2 )) && [[ "$FWE" == *"the window is empty"* ]] \
+    && ok "an empty window is refused (the boot may have rotated off the ring)" \
+    || bad "an empty window produced output (rc=$fwerc)"
+FWB=$(fw_run --at not-a-time); fwbrc=$?
+(( fwbrc == 2 )) && [[ "$FWB" == *"cannot parse the anchor timestamp"* ]] \
+    && ok "an unparseable --at is refused" \
+    || bad "an unparseable --at was accepted (rc=$fwbrc)"
+fw_run --bogus >/dev/null; fwurc=$?
+(( fwurc == 2 )) && ok "bt-fault-window rejects an unknown option" \
+                 || bad "bt-fault-window accepted an unknown option (rc=$fwurc)"
+
+# --at forces a window where there is no timeout to anchor on, and the window
+# it prints is the one it was asked for.
+FWA=$(fw_run --boot -2 --at 2026-08-13T10:00:02.000000+02:00 --before 3 --after 4); fwarc=$?
+(( fwarc == 0 )) && [[ "$FWA" == *"anchored on 2026-08-13T10:00:02.000000+02:00"* && "$FWA" == *"(−3s / +4s)"* ]] \
+    && ok "--at anchors explicitly and --before/--after set the window" \
+    || bad "--at/--before/--after not honoured (rc=$fwarc): $(sed -n '1,2p' <<<"$FWA" | tr '\n' ' ')"
 
 echo
 echo "bt-context — what sits next to a failure that nothing here explains"
