@@ -1026,6 +1026,33 @@ else
     bad "month-boundary arithmetic wrong: records 3s apart treated as unmatched"
 fi
 
+# THE MERGE ITSELF. Each case above has at most one record per side left over,
+# and it leaves by the TAIL loop — so the two branches that report a record
+# unmatched in the MIDDLE of a stream never ran, nor did the tail for side B,
+# nor a difference EXACTLY equal to the tolerance. A mutation pass (2026-09-28)
+# showed it: turning `i++` into `i--` in the in-loop branches "survived",
+# which is only possible for a line that never executes — a loop that runs it
+# never ends. This is the function that decides which records one capture path
+# has and the other lacks.
+#
+#   A: 10.0 12.0 20.0        B: 10.2 15.0 20.5 30.0        tol 0.5
+#   10.0~10.2 match; 12.0 unmatched in A mid-stream; 15.0 unmatched in B
+#   mid-stream; 20.0~20.5 match at EXACTLY the tolerance; 30.0 unmatched in the
+#   tail of B.
+#
+# Under timeout: a matcher that stops advancing loops for ever, and without a
+# bound it would hang the suite rather than fail this check.
+printf '%s > HCI Event: EVENT Z\n' 2026-08-12T12:00:10.000 2026-08-12T12:00:12.000 2026-08-12T12:00:20.000 > "$FA"
+printf '%s > HCI Event: EVENT Z\n' 2026-08-12T12:00:10.200 2026-08-12T12:00:15.000 2026-08-12T12:00:20.500 2026-08-12T12:00:30.000 > "$FB"
+: > "$OA"; : > "$OB"
+timeout 10 awk -f tools/lib/timestamp.awk -f "$MATCH" -v tol=0.5 -v outA="$OA" -v outB="$OB" "$FA" "$FB"; mrc=$?
+if (( mrc == 0 )) && [[ "$(cat "$OA")" == "2026-08-12T12:00:12.000 > HCI Event: EVENT Z" ]] \
+   && [[ "$(cat "$OB")" == $'2026-08-12T12:00:15.000 > HCI Event: EVENT Z\n2026-08-12T12:00:30.000 > HCI Event: EVENT Z' ]]; then
+    ok "an interleaved merge leaves 12.0 unmatched in A and 15.0, 30.0 in B; 0.5 s apart at tol 0.5 matches"
+else
+    bad "interleaved merge wrong (rc=$mrc): A=[$(tr '\n' '|' < "$OA")] B=[$(tr '\n' '|' < "$OB")]"
+fi
+
 echo
 echo "bt-trial report — schema invariants"
 echo "──────────────────────────────────────────────────────────────"
@@ -1181,6 +1208,34 @@ else
     grep -E 'observational_boot +stock' <<<"$RUO" | head -1 | sed 's/^/      /'
 fi
 
+# THE SCO TABLE'S CONCLUSION, on each side of its condition. "SCO setup has
+# been survived AND followed by failure" is a claim about BOTH cells of the SCO
+# row, and the one fixture above has both, so a condition that required only
+# one of them (`&&` read as `||`, or a `> 0` read as `>= 0`, which is always
+# true of a count) printed the same claim. Two fixtures cut from the same rows:
+# SCO followed only by failure (trials 1 4 6 7 — the table counts 3, because
+# trial 7's treatment CHANGED mid-run and is excluded, which the report says),
+# and SCO only survived (5),
+# each with the no-SCO survival (2) so the earlier "no stimulus" and "every
+# trial provoked it" branches cannot answer first.
+SCOF=$(mktemp -d); CLEANUP_PATHS+=("$SCOF")
+sco_fix() {   # <dir> <trial>... — the fixture's header and exactly those trials
+    local d="$1"; shift
+    mkdir -p "$d/evidence/trials" && touch "$d/install.sh" && git -C "$d" init -q 2>/dev/null
+    awk -F'\t' -v keep=" $* " 'NR == 1 { for (i = 1; i <= NF; i++) c[$i] = i; print; next }
+                               index(keep, " " $c["trial"] " ")' "$FIX" > "$d/evidence/trials/results.tsv"
+}
+sco_fix "$SCOF/hung" 1 4 6 7 2;  SCOH=$(BT_REPO="$SCOF/hung" tools/bt-trial report 2>&1)
+sco_fix "$SCOF/surv" 5 2;        SCOS=$(BT_REPO="$SCOF/surv" tools/bt-trial report 2>&1)
+if grep -q 'SCO setup has been survived AND followed by failure' <<<"$R1" \
+   && ! grep -q 'survived AND followed by failure' <<<"$SCOH" \
+   && ! grep -q 'survived AND followed by failure' <<<"$SCOS" \
+   && grep -qE 'SCO setup requested +3 +0$' <<<"$SCOH" && grep -qE 'SCO setup requested +0 +1$' <<<"$SCOS"; then
+    ok "\"survived AND followed by failure\" is said only when both happened (3/1 yes; 3/0 and 0/1 no)"
+else
+    bad "the SCO conclusion is wrong on one side: both=$(grep -c 'AND followed' <<<"$R1") hung-only=$(grep -c 'AND followed' <<<"$SCOH") survived-only=$(grep -c 'AND followed' <<<"$SCOS")"
+fi
+
 echo
 echo "awk program-loading (the -f trap)"
 echo "──────────────────────────────────────────────────────────────"
@@ -1213,6 +1268,73 @@ iv2=$(awk -f tools/lib/timestamp.awk -f tools/lib/interval.awk \
         -v a="not-a-timestamp" -v b="2026-09-01T00:00:02.000000+02:00" </dev/null)
 [[ -z "$iv2" ]] && ok "interval.awk prints nothing on an unparseable timestamp" \
     || bad "expected empty output on bad input, got '$iv2'"
+
+# ── iso_secs against an independent implementation ────────────────────────
+#
+# timestamp.awk is the date arithmetic under every interval this project
+# reports. A mutation pass (2026-09-28) flipped its operators: 6 of 7 survived.
+# Every test computed a DIFFERENCE of two timestamps from the same month with
+# the same UTC offset, so an error common to both ends cancelled: February
+# (the `m <= 2` year shift of the civil-date algorithm) and negative offsets
+# were never reached, and a sign error on the offset shifted both ends alike.
+#
+# So absolute values, checked against GNU date — a separate implementation —
+# at the places the algorithm branches: the epoch itself, a leap day, the
+# century rule both ways (2000 is a leap year, 2100 is not), January and
+# February, the last second of February, a year boundary, negative and
+# positive offsets naming the same instant, a space separator, and a fraction.
+# Programs as FILES and two -f, never -f plus an inline string: that pairing is
+# the trap this section guards (the string is read as an input filename), and
+# `-e` is gawk-only.
+ISOP=$(mktemp -d); CLEANUP_PATHS+=("$ISOP")
+printf 'BEGIN { printf "%%.6f", iso_secs(t) }\n' > "$ISOP/fmt.awk"
+printf 'BEGIN { print iso_secs(t) }\n'         > "$ISOP/raw.awk"
+_isobad=""
+for _t in 1970-01-01T00:00:00+00:00 2024-02-29T12:00:00+00:00 2026-01-15T08:30:00+02:00 \
+          2026-02-28T23:59:59+02:00 2026-03-01T00:00:00+02:00 2025-12-31T23:30:00-05:00 \
+          2026-09-28T05:00:00-05:00 2026-09-28T12:00:00+02:00 2000-02-29T00:00:00+00:00 \
+          2100-03-01T00:00:00+00:00 "2026-07-31 23:59:59" 2026-06-15T10:20:30.250000+03:00; do
+    _o=$(TZ=UTC date -d "$_t" +%s.%6N 2>/dev/null)
+    _a=$(TZ=UTC awk -v t="$_t" -f tools/lib/timestamp.awk -f "$ISOP/fmt.awk")
+    [[ -n "$_o" && "$_o" == "$_a" ]] || _isobad+="$_t (date $_o, iso_secs ${_a:-none})  "
+done
+[[ -z "$_isobad" ]] \
+    && ok "iso_secs agrees with GNU date on 12 timestamps: epoch, leap days, century rule, Jan/Feb, ± offsets" \
+    || bad "iso_secs disagrees with GNU date: $_isobad"
+# A timestamp without an offset is read as UTC — which is what GNU date does
+# only under TZ=UTC, so the oracle runs there; the journal always writes one.
+_ir1=$(awk -v t="1969-12-31T23:59:59+00:00" -f tools/lib/timestamp.awk -f "$ISOP/raw.awk")
+_ir2=$(awk -v t="20260928120000" -f tools/lib/timestamp.awk -f "$ISOP/raw.awk")
+[[ "$_ir1" == "-1" && "$_ir2" == "-1" ]] \
+    && ok "iso_secs refuses a pre-1970 time and one with no date/time separator (-1, -1)" \
+    || bad "iso_secs accepted what it must refuse: pre-1970 -> '$_ir1', no separator -> '$_ir2'"
+# The epoch's own second is a time, not a refusal.
+iv0=$(awk -f tools/lib/timestamp.awk -f tools/lib/interval.awk \
+        -v a="1970-01-01T00:00:00+00:00" -v b="1970-01-01T00:00:03+00:00" </dev/null)
+iv00=$(awk -f tools/lib/timestamp.awk -f tools/lib/interval.awk \
+        -v a="1970-01-01T00:00:00+00:00" -v b="1970-01-01T00:00:00+00:00" </dev/null)
+[[ "$iv0" == "3.000" && "$iv00" == "0.000" ]] && ok "interval.awk accepts the epoch's own second at either end (3.000s, 0.000s)" \
+    || bad "interval.awk refused a valid timestamp at the epoch: '${iv0:-empty}', '${iv00:-empty}'"
+
+# boot-hours.awk had no refusal test at all: all three of its mutants
+# survived, among them `||` -> `&&`, which accepts ONE bad timestamp and prints
+# hours computed from -1.
+bh=$(awk -f tools/lib/timestamp.awk -f tools/lib/boot-hours.awk \
+        -v a="2026-02-28T22:00:00.000000+02:00" -v b="2026-03-01T01:00:00.000000+02:00" </dev/null)
+bhA=$(awk -f tools/lib/timestamp.awk -f tools/lib/boot-hours.awk \
+        -v a="not-a-timestamp" -v b="2026-03-01T01:00:00.000000+02:00" </dev/null); bhArc=$?
+bhB=$(awk -f tools/lib/timestamp.awk -f tools/lib/boot-hours.awk \
+        -v a="2026-02-28T22:00:00.000000+02:00" -v b="not-a-timestamp" </dev/null); bhBrc=$?
+bh0=$(awk -f tools/lib/timestamp.awk -f tools/lib/boot-hours.awk \
+        -v a="1970-01-01T00:00:00+00:00" -v b="1970-01-01T01:30:00+00:00" </dev/null)
+bh00=$(awk -f tools/lib/timestamp.awk -f tools/lib/boot-hours.awk \
+        -v a="1970-01-01T00:00:00+00:00" -v b="1970-01-01T00:00:00+00:00" </dev/null)
+[[ "$bh" == "3.0" && "$bh0" == "1.5" && "$bh00" == "0.0" ]] \
+    && ok "boot-hours.awk: 3.0 h across the end of February, 1.5 h and 0.0 h at the epoch" \
+    || bad "boot-hours.awk arithmetic wrong: Feb->Mar '${bh:-empty}', epoch '${bh0:-empty}'"
+[[ -z "$bhA" && $bhArc -ne 0 && -z "$bhB" && $bhBrc -ne 0 ]] \
+    && ok "boot-hours.awk refuses a bad timestamp on either side, printing nothing" \
+    || bad "boot-hours.awk printed hours from a bad timestamp: '$bhA' (rc $bhArc), '$bhB' (rc $bhBrc)"
 
 echo
 echo "analysis commands fail loudly"
@@ -2423,6 +2545,35 @@ for libdir in tests/fixtures/*/; do
     done
     (( ncase == 0 )) && bad "$(basename "$libdir"): no cases ran"
 done
+
+# ── two libraries the tools call, driven directly at their boundaries ──────
+#
+# A mutation pass (2026-09-28) left these survivors: a line EXACTLY `win`
+# seconds from an SCO setup (sco-window.awk's two edges), a cadence of EXACTLY
+# 1 s (actions-render.awk's every/burst split), and two consecutive actions
+# sharing a label but not a class — merged into one "x2" if the match needs
+# either field instead of both. Each is a wrong line in a report, not a crash.
+LB=$(mktemp -d); CLEANUP_PATHS+=("$LB")
+# sco-window: file 1 carries the setup mark, file 2 the lines to select, in the
+# btmon wall-clock form the tool reads. win=2: 11:59:58 and 12:00:02 are ON the
+# edges and belong in the window; a millisecond further out does not.
+printf '< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17  #1 [hci0] 2026-08-12 12:00:00.000000\n' > "$LB/marks"
+printf 'edge-lo  2026-08-12 11:59:58.000000\nout-lo   2026-08-12 11:59:57.999000\nedge-hi  2026-08-12 12:00:02.000000\nout-hi   2026-08-12 12:00:02.001000\n' > "$LB/lines"
+LBW=$(awk -v win=2 -f tools/lib/timestamp.awk -f tools/lib/sco-window.awk "$LB/marks" "$LB/lines" | awk '{print $1}' | tr '\n' ' ')
+[[ "$LBW" == "edge-lo edge-hi " ]] \
+    && ok "sco-window keeps lines exactly win seconds either side of a setup and drops the next millisecond out" \
+    || bad "sco-window's edges are wrong: selected [$LBW], expected [edge-lo edge-hi ]"
+# actions-render: tab-separated time, class, label. Three identical actions
+# exactly 1 s apart are a cadence ("every ~1.0s"), not a burst; then a label
+# repeated under a DIFFERENT class is a different action and gets its own line.
+printf '2026-08-12T12:00:00.000000+02:00\tMGMT\tStart Discovery\n2026-08-12T12:00:01.000000+02:00\tMGMT\tStart Discovery\n2026-08-12T12:00:02.000000+02:00\tMGMT\tStart Discovery\n2026-08-12T12:00:03.000000+02:00\tHCI\tStart Discovery\n' > "$LB/acts"
+LBA=$(awk -f tools/lib/timestamp.awk -f tools/lib/actions-render.awk "$LB/acts")
+[[ "$LBA" == *"x3 until 12:00:02.000, every ~1.0s"* && "$LBA" != *"burst"* ]] \
+    && ok "actions-render calls a 1.0 s cadence a cadence, not a burst" \
+    || bad "a 1.0 s cadence was misrendered: $(tr -s ' ' <<<"$LBA" | tr '\n' '|')"
+[[ "$(grep -c 'Start Discovery' <<<"$LBA")" == 2 && "$LBA" != *"x4"* ]] \
+    && ok "a label repeated under another class is a separate action, not merged" \
+    || bad "actions of different classes were merged: $(tr -s ' ' <<<"$LBA" | tr '\n' '|')"
 
 echo
 echo "whole tools, not just the awk they call"
