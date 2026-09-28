@@ -260,6 +260,34 @@ export PATH="$GUARD/bin:$PATH:$GUARD/decoy"
 # added. A list of paths cannot be replaced by forgetting.
 CLEANUP_PATHS=("$SUITE_TMP")   # $GUARD and all 79 other mktemps live inside it
 
+# ── THE SUITE'S GIT READS NONE OF THE HOST'S GIT CONFIGURATION ───────────
+#
+# Dozens of tests build scratch repositories and drive repo-save, repo-scan,
+# branch-status and the held-branch path through them. Every one of those git
+# calls read the global and system configuration of whoever ran the suite. On
+# a host that signs commits by default, twelve of them failed — the signing
+# program ran inside tools that were never told about it — while the same tree
+# was green in CI and on the laptop, which do not sign. Found 2026-09-28 by a
+# sandboxed run whose private /tmp hid this container's signing helper.
+#
+# Five call sites here had already been patched one at a time with
+# `-c commit.gpgsign=false`; the tools under test never were. A flag that must
+# be remembered at each call site will be forgotten at the next one, and
+# signing is only one key: a global core.hooksPath would run the host's hooks
+# inside scratch repos, and init.defaultBranch changes what a fresh repo's
+# branch is called. So the configuration is replaced once, here, for every
+# git the suite and its tools start.
+#
+# KEPT: the host's own safe.directory entries, and nothing else. They are a
+# trust decision the host made, and without them a checkout owned by another
+# user would stop working under the suite rather than becoming more isolated.
+SUITE_GITCONFIG="$SUITE_TMP/gitconfig"
+: > "$SUITE_GITCONFIG"
+while IFS= read -r _sd; do
+    [[ -n "$_sd" ]] && git config --file "$SUITE_GITCONFIG" --add safe.directory "$_sd"
+done < <(git config --global --get-all safe.directory 2>/dev/null; git config --system --get-all safe.directory 2>/dev/null)
+export GIT_CONFIG_GLOBAL="$SUITE_GITCONFIG" GIT_CONFIG_NOSYSTEM=1
+
 # THE OTHER HALF OF WHY THIS IS A TRAP AND NOT A LINE AT THE END.
 #
 # The three checks that compare the real machine before and after — the evidence
@@ -5963,7 +5991,14 @@ bin/bt-trace --bogus >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-trace rejects an unknown argument" \
               || bad "bt-trace accepted an unknown argument"
 
+# THE FLOOR IS PINNED, because --check prunes by BOTH rules and this assertion
+# is about one. bt-usbmon also deletes captures while the filesystem under the
+# temp dir has less than BT_USBMON_MIN_FREE_GB (default 15) free — so unpinned,
+# this test measured the HOST'S DISK, not the KEEP rule: green on a 30 GB
+# container, red with 0 files left on an 8 GB tmpfs (a sandboxed run found it,
+# 2026-09-28) and on any laptop or runner whose disk is fuller than that.
 USCHK=$(env PATH="$CP/stub:$PATH" BT_USBMON_DIR="$CP/usb" BT_USBMON_KEEP=2 \
+            BT_USBMON_MIN_FREE_GB=0 \
             BT_SYSFS_USB="$CP/dev" BT_USBMON_DEBUGFS="$CP/dbg" \
             bin/bt-usbmon --check 2>&1); usrc=$?
 usleft=$(ls -1 "$CP/usb"/usbmon-*.pcap 2>/dev/null | wc -l)
@@ -5982,6 +6017,7 @@ usleft=$(ls -1 "$CP/usb"/usbmon-*.pcap 2>/dev/null | wc -l)
 # --check must answer instead of hanging. Bounded by timeout: if the guard is
 # ever removed, this hangs the suite, and a hang is the failure to catch.
 USGONE=$(timeout 20 env PATH="$CP/stub:$PATH" BT_USBMON_DIR="$CP/usb" \
+             BT_USBMON_MIN_FREE_GB=0 \
              BT_SYSFS_USB="$CP/empty" BT_USBMON_DEBUGFS="$CP/dbg" \
              bin/bt-usbmon --check 2>&1); usgrc=$?
 (( usgrc == 0 )) && [[ "$USGONE" == *"not present"* ]] \
@@ -11116,6 +11152,24 @@ if (( EXITN == 1 )); then
 else
     bad "$EXITN EXIT traps in this file; a second one REPLACES the first and its cleanup is lost:"
     while IFS= read -r l; do bad "      $l"; done <<<"$EXITT"
+fi
+
+# The git isolation at the top of this file, checked from where the tests run:
+# every configuration key git can see globally must be a safe.directory entry
+# the host itself made, and the system file must be off. Read by asking git,
+# not by inspecting the variables, so a later `export` that undid it — or a git
+# that ignored it — shows up here.
+# KEY NAMES ONLY in the report, never values: a host's global config holds an
+# identity, an email and key paths, and this line would print them into a CI
+# log of a public repository the one time it failed.
+_gleak=""
+while IFS= read -r _gl; do
+    [[ "$_gl" == safe.directory=* ]] || _gleak+="${_gl%%=*} "
+done < <(git config --global --list 2>/dev/null)
+if [[ "${GIT_CONFIG_NOSYSTEM:-}" == 1 && "${GIT_CONFIG_GLOBAL:-}" == "$SUITE_GITCONFIG" && -z "$_gleak" ]]; then
+    ok "the suite's git reads none of the host's git configuration (safe.directory excepted)"
+else
+    bad "the suite's git inherits host configuration — scratch-repo tests now depend on the machine: ${_gleak:-GIT_CONFIG_GLOBAL=${GIT_CONFIG_GLOBAL:-unset} NOSYSTEM=${GIT_CONFIG_NOSYSTEM:-unset}}"
 fi
 
 # The ban above catches the SHAPE of the hazard, in one spelling, in this file.
