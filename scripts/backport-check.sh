@@ -27,7 +27,11 @@ echo "files:   ${FILES[*]}"
 rc=0
 for b in "${BRANCHES[@]}"; do
 	tip=$(git -C "$REPO" log -1 --format='%h %s' "$b" 2>/dev/null) || { printf '%-22s ? no such branch\n' "$b"; rc=1; continue; }
-	if git -C "$REPO" log --oneline -F --grep="$SUBJ" "$b" | grep -q .; then
+	# Captured, then tested — NOT `git log … | grep -q .`. Under pipefail that
+	# form exits non-zero exactly when it MATCHES and git is still writing (grep
+	# leaves at the first line, git dies of SIGPIPE), so a commit that IS on the
+	# branch reads as absent — silently, and only when the log is long enough.
+	if [[ -n "$(git -C "$REPO" log --oneline -F --grep="$SUBJ" "$b")" ]]; then
 		printf '%-22s PRESENT  (%s)\n' "$b" "$(git -C "$REPO" log -1 --format=%h -F --grep="$SUBJ" "$b")"
 		continue
 	fi
