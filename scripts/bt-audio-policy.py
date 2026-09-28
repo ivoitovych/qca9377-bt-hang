@@ -133,6 +133,20 @@ def apply(state, update):
             continue
         if o.get("info") is None and "type" not in o:
             state.pop(oid, None)
+        elif o.get("type", "").endswith(":Metadata") and oid in state:
+            # pw-dump prints only the metadata entries that CHANGED (1.0.5
+            # metadata_dump skips e->changed == 0), and a removal as value null.
+            # Replacing the object dropped every key the update did not name:
+            # 2026-09-27 00:37:53 logged "default audio.source -> -" while the
+            # source was set, and nothing after it.
+            merged = {(m.get("subject"), m.get("key")): m
+                      for m in state[oid].get("metadata") or []}
+            for m in o.get("metadata") or []:
+                if m.get("value") is None:
+                    merged.pop((m.get("subject"), m.get("key")), None)
+                else:
+                    merged[(m.get("subject"), m.get("key"))] = m
+            state[oid] = dict(o, metadata=list(merged.values()))
         else:
             state[oid] = o
 

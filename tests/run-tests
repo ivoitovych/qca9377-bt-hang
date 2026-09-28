@@ -1141,6 +1141,20 @@ else
     bad "autostart failed (rc=$rc) or wrote no state file"
 fi
 
+# The unit declares BT_BUILD=stock; with a diagnostic btusb loaded that is the
+# forgotten override (2026-09-26, E1 opened as stock trial 15). Checked in a
+# separate state dir, so the trial opened above is untouched.
+mkdir -p "$LC/sysmod/btusb"; echo 0.8-e1 > "$LC/sysmod/btusb/version"
+PATH="$LC/bin:$PATH" BT_REPO="$LC" BT_EVIDENCE_REPO="$LC" BT_STATE="$LC/state-mb" \
+    BT_SYSFS_USB="$LC/sysfs" BT_SYSFS_MODULE="$LC/sysmod" BT_BUILD=stock \
+    tools/bt-trial autostart >/dev/null 2>&1
+if grep -qx 'build=E1' "$LC/state-mb/current" 2>/dev/null && grep -qx 'build_declared=stock' "$LC/state-mb/current"; then
+    ok "autostart labels a diagnostic btusb by its version, not the unit's stale stock"
+else
+    bad "autostart with btusb 0.8-e1 and BT_BUILD=stock: $(tr '\n' ' ' < "$LC/state-mb/current" 2>/dev/null)"
+fi
+rm -rf "$LC/state-mb" "$LC/evidence/trials/E1"
+
 rc=0
 out=$(trial ok 2>&1) || rc=$?
 if (( rc == 0 )); then
@@ -10415,6 +10429,37 @@ BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER="$INCS/bin/ok-sanitiser" \
     && ok "bt-incident still reports sanitised=yes when every file passes" \
     || bad "a passing sanitiser was not reported as yes (rc=$incsokrc)"
 rm -rf "$INCS"
+
+# ── bt-audio-policy: a partial metadata update keeps the keys it does not name ─
+#
+# pw-dump -m prints only the metadata entries that changed. The recorder
+# replaced the whole object and logged the untouched default source as gone
+# (2026-09-27 00:37:53). A sink-only update must leave the source in place, and
+# a null value must remove its key.
+if command -v python3 >/dev/null 2>&1; then
+    BAPOUT=$(python3 - scripts/bt-audio-policy.py <<'PYEOF'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("bap", sys.argv[1])
+bap = importlib.util.module_from_spec(spec); spec.loader.exec_module(bap)
+md = lambda entries: {"id": 40, "type": "PipeWire:Interface:Metadata",
+                      "props": {"metadata.name": "default"}, "metadata": entries}
+e = lambda k, v: {"subject": 0, "key": k, "type": "Spa:String:JSON", "value": v}
+st = {}
+bap.apply(st, [md([e("default.audio.sink", {"name": "sinkA"}), e("default.audio.source", {"name": "srcA"})])])
+bap.apply(st, [md([e("default.audio.sink", {"name": "sinkB"})])])
+s = bap.summarize(st)
+print("kept" if s.get("default audio.source") == "srcA" and s.get("default audio.sink") == "sinkB" else f"lost {s}")
+bap.apply(st, [md([e("default.audio.source", None)])])
+print("removed" if "default audio.source" not in bap.summarize(st) else "not-removed")
+PYEOF
+)
+    [[ "$BAPOUT" == *kept* ]] \
+        && ok "bt-audio-policy keeps metadata keys a partial update does not name" \
+        || bad "bt-audio-policy partial metadata update: $BAPOUT"
+    [[ "$BAPOUT" == *removed* && "$BAPOUT" != *not-removed* ]] \
+        && ok "bt-audio-policy drops a metadata key whose update value is null" \
+        || bad "bt-audio-policy null metadata value: $BAPOUT"
+fi
 
 # ── bt-capture: rotation honours the free-space floor; no AF_BLUETOOTH is a refusal ─
 #

@@ -221,6 +221,21 @@ env_fingerprint() {
 #               layout. Recorded so a discrepancy can be traced, and pooled
 #               across unless a specific change altered event detection, which
 #               is a judgement to make explicitly rather than automatically.
+# WHICH DRIVER BUILD IS LOADED, read from the module rather than declared.
+# Diagnostic btusb builds carry a version suffix ("0.8-e1"); the stock module has
+# none. On 2026-09-26 E1 was installed and the unit's BT_BUILD=stock was never
+# overridden, so the first E1 boot opened as stock trial 15 — exactly the pooling
+# the unit's comment warns about. A declared "stock" is now checked against this.
+module_build() {
+    local v
+    v=$(cat "${BT_SYSFS_MODULE:-/sys/module}/btusb/version" 2>/dev/null)
+    if [[ "$v" == *-* ]]; then
+        printf '%s' "${v##*-}" | tr '[:lower:]' '[:upper:]'
+    else
+        printf 'stock'
+    fi
+}
+
 measurement_revision() {
     git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo '?'
 }
@@ -329,6 +344,14 @@ autostart)
     # protocol produced none.
     build="${2:-${BT_BUILD:-stock}}"
     [[ -e "$CUR" ]] && exit 0          # already open; nothing to do
+    # A "stock" from the unit's environment with a diagnostic module loaded is
+    # the forgotten override, not a choice: the module wins, and the declaration
+    # is kept. An explicit argument is someone's deliberate word and stands.
+    declared="$build"
+    if [[ -z "${2:-}" && "$build" == stock ]]; then
+        loaded=$(module_build)
+        [[ "$loaded" != stock ]] && build="$loaded"
+    fi
     mkdir -p "$STATE" "$TRIALS"
     # A refusal here fails the unit visibly at boot. That is intended: an
     # auto-trial silently numbered from a corrupt file records a boot into
@@ -343,6 +366,7 @@ autostart)
     # configuration of its last minute.
     { echo "start=$(date +%s)"; echo "build=$build"; echo "n=$n"; echo "dir=$dir"
       echo "auto=1"
+      [[ "$declared" != "$build" ]] && echo "build_declared=$declared"
       echo "treat_start=$(env_fingerprint)"
       echo "mrev_start=$(measurement_revision)"; } > "$CUR"
     command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-before.txt" 2>&1
