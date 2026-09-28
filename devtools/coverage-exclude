@@ -124,7 +124,7 @@ tools/bt-logvolume:116-121  # inline share renderer (same pipeline, second progr
 tools/bt-trial:265-269      # inline trial-number counter; same (re-derived 2026-10-03, +15: the 09-28/29 closer edits moved it and CI never reached this step to say so — see the next entry)
 tools/bt-trial:870-879      # inline sco-params window filter; same (re-derived 2026-09-19 (+16), 2026-09-20 (+12, the abort/autostop edits), 2026-09-24 (+37, dbe7123) and 2026-10-03 (+103: 0910344 and d743c19 moved it by +78 while CI was red one step earlier and nobody saw; the no-match fix adds +25) — R2-112; CI's stale-exclusion check caught the old range covering live code each time; the range is btmon-line+2 … +11)
 tools/bt-verify-install:57-60   # inline install_file parser; same
-tests/run-tests:302-307       # inline --section extractor; same
+tests/run-tests:329-334       # inline --section extractor; same (re-derived 2026-09-28: +27, the git-isolation block above it)
 
 # THE ELEVENTH ENTRY WAS MISSING AND COST MORE THAN A PERCENTAGE POINT.
 # devtools/test-comprehension filters `exit N` inside an embedded program out of
@@ -192,7 +192,7 @@ tools/bt-health-report.sh:228-228  # no-baseline branch: exercised only through 
 # branches on every run. Mutating any one of the three turns that assertion red
 # — verified by doing it. The range starts one line INSIDE the program because
 # the construct is a pipeline, which bash traces at the line it opens on.
-tests/run-tests:377-383     # inline footprint differ; driven and pinned by the assertion above
+tests/run-tests:405-411     # inline footprint differ; driven and pinned by the assertion above (re-derived 2026-09-28 from the trace, not by arithmetic)
 
 # THE REPORTING LOOP runs only when a binary actually changed, which on an
 # undamaged machine is never — the same category as the `bad` lines section 3
