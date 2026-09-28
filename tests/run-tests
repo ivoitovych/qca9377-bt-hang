@@ -653,6 +653,120 @@ grep -q 'SKIPPED — provenance check failed' <<<"$REF" \
     && ok "refuses to report when claimed provenance is impossible" \
     || bad "did not refuse on a contaminated probe set"
 
+# ── what phase.awk REPORTS, not only what it counts ─────────────────────────
+#
+# A mutation pass (2026-09-28) flipped each operator in phase.awk and ran the
+# whole suite on every mutant: 27 of 54 survived. The checks above pin lines,
+# clusters, gaps and the refusal; nothing pinned the phase values, the
+# near-probe count, the histogram, the verdict, the edge count, or any
+# boundary — and every fixture delivered its records already in time order, so
+# both insertion sorts could be broken without a test noticing. This output is
+# the answer to "are failures phase-locked to the probes", the question this
+# suite's own header gives as the reason it exists.
+#
+# Every expected value below was computed by hand before the program was run.
+# Records are phase.awk's internal format (boot, kind, time), so the data is
+# constructed to put each branch on its boundary, not copied from a log.
+PB=(-v igap=60 -v period=600 "${PHASEAWK[@]}")
+
+# A — one boot, probes 600 s apart, every record OUT OF ORDER. Timeouts: one
+# before the first probe and one after the last (edges); one at exactly phase
+# 0.100, which is NOT near (the rule is < 0.10); a second 30 s after it (same
+# cluster); one EXACTLY igap after another (a new cluster, `>=`); and one at
+# phase 0.983, so the histogram's last bucket is occupied. The LAST record is a
+# timeout that starts a cluster of its own: a sort that skips its final element
+# leaves it after 10:31 and it is swallowed into that cluster instead.
+PHA=$(awk "${PB[@]}" <<'PHDATA'
+7 EXO 2026-08-20T10:20:00.000000+02:00
+7 TMO 2026-08-20T10:21:30.000000+02:00
+7 EXO 2026-08-20T10:00:00.000000+02:00
+7 TMO 2026-08-20T10:19:50.000000+02:00
+7 TMO 2026-08-20T10:01:00.000000+02:00
+7 EXO 2026-08-20T10:30:00.000000+02:00
+7 TMO 2026-08-20T10:31:00.000000+02:00
+7 TMO 2026-08-20T10:01:30.000000+02:00
+7 EXO 2026-08-20T10:10:00.000000+02:00
+7 TMO 2026-08-20T10:22:30.000000+02:00
+7 TMO 2026-08-20T09:59:00.000000+02:00
+7 TMO 2026-08-20T10:05:00.000000+02:00
+PHDATA
+)
+[[ "$(grep -oE 'phase [0-9.]+' <<<"$PHA" | tr '\n' ' ')" == "phase 0.100 phase 0.500 phase 0.983 phase 0.150 phase 0.250 " ]] \
+    && ok "phases placed from shuffled records: 0.100 0.500 0.983 0.150 0.250 — both sorts do their work" \
+    || bad "phase values wrong from out-of-order records: $(grep -oE 'phase [0-9.]+' <<<"$PHA" | tr '\n' ' ')"
+[[ "$PHA" =~ LINES\ +8 && "$PHA" =~ CLUSTERS\ +7 && "$PHA" == *"outside probe range 2 (excluded)"* && "$PHA" =~ placed\ +5 ]] \
+    && ok "8 lines, 7 clusters (a gap of exactly igap splits), 2 outside the probe range, 5 placed" \
+    || bad "counts wrong: $(grep -E 'LINES|CLUSTERS|outside|placed' <<<"$PHA" | tr -s ' ' | tr '\n' ';')"
+[[ "$PHA" == *"mean phase         0.397"* && "$PHA" == *"within first 10%   0 of 5"* ]] \
+    && ok "mean phase 0.397, and a phase of exactly 0.100 is not counted as near" \
+    || bad "mean or near count wrong: $(grep -E 'mean|first 10' <<<"$PHA" | tr -s ' ' | tr '\n' ';')"
+# The sign is part of the count: an extraction of [0-9]+ reads -2 as 2, and a
+# bucket that DEcrements passed this check until a mutant said so.
+[[ "$(sed -n '/distribution across the gap/,/^$/p' <<<"$PHA" | grep -oE -- '-?[0-9]+$' | tr '\n' ' ')" == "2 1 1 0 1 " ]] \
+    && ok "the histogram is 2 1 1 0 1, its last bucket included" \
+    || bad "histogram wrong: $(sed -n '/distribution/,/^$/p' <<<"$PHA" | grep -oE '[0-9]+$' | tr '\n' ' ')"
+[[ "$PHA" == *"Too few events for this to mean anything"* ]] \
+    && ok "five placed events are too few for a verdict" \
+    || bad "a verdict was drawn from five events"
+
+# B — the provenance boundary. Probes exactly period/2 apart are possible for a
+# timer and must be KEPT; one second closer is not, and that boot is skipped
+# before any of its timeouts are counted. Boot 5's only short gap is its LAST —
+# a check that stops one gap early passes it as clean.
+PHB=$(awk "${PB[@]}" <<'PHDATA'
+3 EXO 2026-08-21T11:00:00.000000+02:00
+3 EXO 2026-08-21T11:05:00.000000+02:00
+3 EXO 2026-08-21T11:15:00.000000+02:00
+3 TMO 2026-08-21T11:07:30.000000+02:00
+4 EXO 2026-08-21T12:00:00.000000+02:00
+4 EXO 2026-08-21T12:04:59.000000+02:00
+4 EXO 2026-08-21T12:15:00.000000+02:00
+4 TMO 2026-08-21T12:06:00.000000+02:00
+5 EXO 2026-08-21T13:00:00.000000+02:00
+5 EXO 2026-08-21T13:10:00.000000+02:00
+5 EXO 2026-08-21T13:14:59.000000+02:00
+5 TMO 2026-08-21T13:05:00.000000+02:00
+PHDATA
+)
+[[ "$PHB" == *"⛔ 2 boot(s) SKIPPED"* && "$PHB" == *"boot 3    phase 0.250"* && "$PHB" =~ LINES\ +1 && "$PHB" =~ placed\ +1 ]] \
+    && ok "probes exactly period/2 apart are kept; a short gap first or last skips the boot with its timeouts" \
+    || bad "provenance boundary wrong: $(grep -E 'SKIPPED|phase|LINES|placed' <<<"$PHB" | tr -s ' ' | tr '\n' ';')"
+
+# D — a timeout EXACTLY at a probe's timestamp belongs to the gap that probe
+# opens: phase 0.000, placed, near. `<` for `<=` moves it into the previous gap
+# at phase 1.000; `>=` for `>` makes that probe both ends of a zero gap and
+# drops the timeout without a word.
+PHD=$(awk "${PB[@]}" <<'PHDATA'
+6 EXO 2026-08-23T09:00:00.000000+02:00
+6 EXO 2026-08-23T09:10:00.000000+02:00
+6 EXO 2026-08-23T09:20:00.000000+02:00
+6 TMO 2026-08-23T09:10:00.000000+02:00
+PHDATA
+)
+[[ "$PHD" == *"boot 6    phase 0.000   (0.0s into a 600.0s gap)"* && "$PHD" =~ placed\ +1 && "$PHD" == *"within first 10%   1 of 1"* ]] \
+    && ok "a timeout at a probe's own timestamp is placed at phase 0.000 of the gap it opens" \
+    || bad "a timeout at a probe timestamp was misplaced or dropped: $(grep -E 'phase|placed' <<<"$PHD" | tr -s ' ' | tr '\n' ';')"
+
+# C — the verdict, at its boundaries: exactly 8 placed events, with 5 near
+# (over half), 4 near (exactly half — NOT over), and 7 events (too few,
+# whatever their share).
+phc() {   # <near> <far> — ten probes 600 s apart, one timeout per gap
+    local near=$1 far=$2 g=0 i
+    for i in $(seq 0 9); do printf '9 EXO 2026-08-22T%s.000000+02:00\n' "$(date -u -d "@$((43200 + 600*i))" +%H:%M:%S)"; done
+    for i in $(seq 1 "$near"); do printf '9 TMO 2026-08-22T%s.000000+02:00\n' "$(date -u -d "@$((43200 + 600*g + 30))" +%H:%M:%S)"; g=$((g+1)); done
+    for i in $(seq 1 "$far");  do printf '9 TMO 2026-08-22T%s.000000+02:00\n' "$(date -u -d "@$((43200 + 600*g + 300))" +%H:%M:%S)"; g=$((g+1)); done
+}
+PHC1=$(phc 5 3 | awk "${PB[@]}"); PHC2=$(phc 4 4 | awk "${PB[@]}"); PHC3=$(phc 4 3 | awk "${PB[@]}")
+[[ "$PHC1" == *"within first 10%   5 of 8"* && "$PHC1" == *"Over half the clusters fall in the first 10%"* ]] \
+    && ok "8 events, 5 near: over half, and said so" \
+    || bad "5 of 8 near did not produce the over-half verdict"
+[[ "$PHC2" == *"within first 10%   4 of 8"* && "$PHC2" == *"No departure from the stated null"* && "$PHC2" != *"Over half"* ]] \
+    && ok "8 events, exactly 4 near: not over half" \
+    || bad "exactly half was reported as over half, or the count is wrong"
+[[ "$PHC3" =~ placed\ +7 && "$PHC3" == *"Too few events"* && "$PHC3" != *"Over half"* ]] \
+    && ok "7 events are too few, even with most of them near" \
+    || bad "a verdict was drawn from 7 events"
+
 # --- the SCRIPT, not just the analysis it loads ----------------------------
 #
 # Everything above drives phase.awk directly. These drive tools/bt-phase, over a
@@ -10829,10 +10943,22 @@ USA2=$(BT_SYSFS_USB="$US" tools/bt-usbstate 2>&1)
     || bad "a non-alt-1 setting was misreported: $(grep -iE 'alternate|endpoint' <<<"$USA2" | tr '\n' ' ')"
 
 # --out writes the same report it prints — the copy a session keeps must be the
-# text the operator saw — and says where it went.
-USOD=$(BT_SYSFS_USB="$US" tools/bt-usbstate --out "$US/out" 2>&1); usodrc=$?
+# text the operator saw — and says where it went. Compared with the output of
+# THE SAME RUN: the report carries a timestamp, and a comparison with a second
+# run failed whenever a second ticked between them (it did, 2026-09-28, and
+# exposed that the tool itself read the clock once per copy).
+# And the clock is made to tick between reads, so a per-copy clock read fails
+# EVERY time rather than on the run where a second happens to turn over.
+mkdir -p "$US/tick"
+cat > "$US/tick/date" <<TICK
+#!/bin/sh
+n=\$(cat "$US/tick/n" 2>/dev/null || echo 0); n=\$((n + 1)); echo "\$n" > "$US/tick/n"
+echo "2026-09-28T10:00:0\${n}+02:00"
+TICK
+chmod +x "$US/tick/date"
+USOD=$(PATH="$US/tick:$PATH" BT_SYSFS_USB="$US" tools/bt-usbstate --out "$US/out" 2>&1); usodrc=$?
 (( usodrc == 0 )) && [[ -s "$US/out/usb-state.txt" && "$USOD" == *"-> $US/out/usb-state.txt"* ]] \
-   && [[ "$(cat "$US/out/usb-state.txt")" == "$(BT_SYSFS_USB="$US" tools/bt-usbstate 2>&1)" ]] \
+   && [[ "$(cat "$US/out/usb-state.txt")" == "$(sed '/^  -> .*usb-state\.txt$/d' <<<"$USOD")" ]] \
     && ok "bt-usbstate --out writes exactly the report it prints, and names the file" \
     || bad "--out did not write the printed report (rc=$usodrc)"
 # Its two refusals. A regular file where a directory must be, and a directory

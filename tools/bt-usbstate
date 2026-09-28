@@ -88,8 +88,14 @@ if [[ ! -e "$D" ]]; then
     exit 2
 fi
 
+# ONE timestamp for the run. emit() is called twice with --out — once for the
+# screen, once for the file — and read the clock each time, so a second
+# boundary between the two calls gave the saved copy a different time from the
+# report the operator saw. Found 2026-09-28 by a test that failed on one run in
+# several: the copy a session keeps must be the text that was printed.
+STAMP=$(date -Iseconds)
 emit() {
-    printf 'bt-usbstate — %s at %s\n\n' "$DEV" "$(date -Iseconds)"
+    printf 'bt-usbstate — %s at %s\n\n' "$DEV" "$STAMP"
 
     printf 'device\n'
     for f in idVendor idProduct bcdDevice devnum speed urbnum authorized \
