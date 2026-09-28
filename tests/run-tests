@@ -4410,6 +4410,14 @@ VREMPTY=$(vr_run); vremprc=$?
 (( vremprc != 0 )) && [[ "$VREMPTY" == *"refusing a false all-clear"* ]] \
     && ok "verify-restored refuses to report success from a short artifact list" \
     || bad "an underived list reported restoration (rc=$vremprc)"
+# Without its journal library it must stop at once and name what is missing,
+# rather than run on with bt_journal undefined and every journal check reading
+# as clean. Driven on the real file through BT_LIBDIR: a copy run elsewhere
+# passed this test while the instruments credited the copy, not the tool.
+VRLIB=$(BT_LIBDIR="$VR/nolib" tools/verify-restored.sh 2>&1); vrlibrc=$?
+(( vrlibrc == 1 )) && [[ "$VRLIB" == *"missing $VR/nolib/journal.sh"* && "$VRLIB" != *"RESTORED"* ]] \
+    && ok "verify-restored refuses to run without the journal library beside it" \
+    || bad "verify-restored ran without its library (rc=$vrlibrc): $(head -1 <<<"$VRLIB")"
 rm -rf "$VR"
 
 # ── bt-diagnose: the tool a stranger runs before trusting any of this ─────
@@ -8577,6 +8585,10 @@ grep -q -- "--since 2026-09-02" "$BG/argv" \
 bg_run tests/journal/snapshot-bluez/default.b0.log --bogus >/dev/null; bgbrc=$?
 (( bgbrc == 2 )) && ok "bt-guards rejects an unknown option" \
                  || bad "bt-guards accepted an unknown option (rc=$bgbrc)"
+BGH=$(bg_run tests/journal/snapshot-guard/default.b0.log --help); bghrc=$?
+(( bghrc == 0 )) && [[ "$BGH" == *"bt-guards"* && "$BGH" != *"0002"* ]] && [[ ! -s "$BG/argv" ]] \
+    && ok "bt-guards --help prints usage and reads no journal" \
+    || bad "bt-guards --help counted firings or read the journal (rc=$bghrc)"
 
 # AND THE PATTERNS MUST MATCH WHAT THE PATCHES ACTUALLY PRINT. If the message
 # in a patch changes and the tool's pattern does not, bt-guards reports
@@ -9969,6 +9981,10 @@ FWB=$(fw_run --at not-a-time); fwbrc=$?
 fw_run --bogus >/dev/null; fwurc=$?
 (( fwurc == 2 )) && ok "bt-fault-window rejects an unknown option" \
                  || bad "bt-fault-window accepted an unknown option (rc=$fwurc)"
+FWH=$(fw_run --help); fwhrc=$?
+(( fwhrc == 0 )) && [[ "$FWH" == *"bt-fault-window"* && "$FWH" != *"SCO packets"* && "$FWH" != *"REFUSING"* ]] \
+    && ok "bt-fault-window --help prints usage without reading a window" \
+    || bad "bt-fault-window --help did more than print usage (rc=$fwhrc)"
 
 # --at forces a window where there is no timeout to anchor on, and the window
 # it prints is the one it was asked for.
@@ -10783,6 +10799,57 @@ mkdir -p "$US/3-1"; echo 13d3 > "$US/3-1/idVendor"; echo 3503 > "$US/3-1/idProdu
 BT_SYSFS_USB="$US" tools/bt-usbstate >/dev/null 2>&1
 (( $? == 2 )) && ok "bt-usbstate refuses to guess between two matching controllers" \
               || bad "two matches were not refused"
+rm -rf "$US/3-1"
+
+# ── and the observation the tool exists for: the alternate setting itself ──
+#
+# bt-usbstate reads the SCO interface's alternate setting and its isochronous
+# endpoint size straight from sysfs — the one DIRECT observation of the alt-1
+# state, where every exhibit before 2026-09-02 had to infer it from probe
+# lines. The checks above cover finding the device; none of them had ever
+# given the interface a setting, so the line the tool is cited for was never
+# asserted (found 2026-09-28 while widening test-comprehension to the tools
+# install.sh does not ship). The values are sysfs's own forms: the setting as
+# a padded decimal, wMaxPacketSize as four hex digits.
+mkdir -p "$US/1-2/1-2:1.1/ep_03"
+printf ' 1\n' > "$US/1-2/1-2:1.1/bAlternateSetting"
+printf '0009\n' > "$US/1-2/1-2:1.1/ep_03/wMaxPacketSize"
+USA1=$(BT_SYSFS_USB="$US" tools/bt-usbstate 2>&1); usa1rc=$?
+(( usa1rc == 0 )) && [[ "$USA1" == *"SCO interface is on ALTERNATE SETTING 1, isochronous endpoint 9 bytes"* ]] \
+   && [[ "$USA1" == *"BTUSB_USE_ALT1_FOR_WBS state, observed directly"* ]] \
+    && ok "alternate setting 1 with a 9-byte endpoint is reported as the observed alt-1 state" \
+    || bad "the alt-1 observation was not reported (rc=$usa1rc): $(grep -iE 'alternate|endpoint' <<<"$USA1" | tr '\n' ' ')"
+# Any OTHER setting is stated plainly and is not the alt-1 claim. Hex 0011 is
+# 17 bytes — the endpoint size must be converted, not printed as its digits.
+printf ' 2\n' > "$US/1-2/1-2:1.1/bAlternateSetting"
+printf '0011\n' > "$US/1-2/1-2:1.1/ep_03/wMaxPacketSize"
+USA2=$(BT_SYSFS_USB="$US" tools/bt-usbstate 2>&1)
+[[ "$USA2" == *"SCO interface alternate setting 2, isochronous endpoint 17 bytes"* && "$USA2" != *"ALTERNATE SETTING 1"* ]] \
+    && ok "another alternate setting is stated plainly, with its endpoint size converted from hex" \
+    || bad "a non-alt-1 setting was misreported: $(grep -iE 'alternate|endpoint' <<<"$USA2" | tr '\n' ' ')"
+
+# --out writes the same report it prints — the copy a session keeps must be the
+# text the operator saw — and says where it went.
+USOD=$(BT_SYSFS_USB="$US" tools/bt-usbstate --out "$US/out" 2>&1); usodrc=$?
+(( usodrc == 0 )) && [[ -s "$US/out/usb-state.txt" && "$USOD" == *"-> $US/out/usb-state.txt"* ]] \
+   && [[ "$(cat "$US/out/usb-state.txt")" == "$(BT_SYSFS_USB="$US" tools/bt-usbstate 2>&1)" ]] \
+    && ok "bt-usbstate --out writes exactly the report it prints, and names the file" \
+    || bad "--out did not write the printed report (rc=$usodrc)"
+# Its two refusals. A regular file where a directory must be, and a directory
+# where the report file must be: both fail for every user, root included, so
+# the refusal is driven the same way here and on a runner.
+: > "$US/notadir"
+BT_SYSFS_USB="$US" tools/bt-usbstate --out "$US/notadir/sub" >/dev/null 2>&1; usnd=$?
+mkdir -p "$US/blocked/usb-state.txt"
+BT_SYSFS_USB="$US" tools/bt-usbstate --out "$US/blocked" >/dev/null 2>&1; usbl=$?
+(( usnd == 2 && usbl == 2 )) \
+    && ok "an --out it cannot create or cannot write into is refused (2, 2)" \
+    || bad "an unusable --out was not refused (create rc=$usnd, write rc=$usbl)"
+BT_SYSFS_USB="$US" tools/bt-usbstate --bogus >/dev/null 2>&1; usbog=$?
+USH=$(BT_SYSFS_USB="$US" tools/bt-usbstate --help 2>&1); ushrc=$?
+(( usbog == 2 && ushrc == 0 )) && [[ "$USH" == *"bt-usbstate"* && "$USH" != *"SCO interface"* ]] \
+    && ok "bt-usbstate rejects an unknown option and --help prints usage without reading the device" \
+    || bad "option handling wrong (unknown rc=$usbog, help rc=$ushrc)"
 rm -rf "$US"
 
 # ── bt-incident: a failed sanitiser is named in the manifest (R2-77, DR-06) ─

@@ -15,7 +15,11 @@ set -uo pipefail
 # checking it by hand is exactly what the script replaced. It could not be run
 # anywhere except on a machine mid-investigation, so it had never been run
 # under test at all.
-_HERE_VR_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib"
+# BT_LIBDIR, like every other tool here that sources lib/: the library beside
+# the script by default, and a seam so the refusal below can be driven on THIS
+# file — a copy run elsewhere would exercise the copy, and the coverage and
+# comprehension instruments credit the path that ran, not the one it came from.
+_HERE_VR_LIB="${BT_LIBDIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib}"
 [[ -r "$_HERE_VR_LIB/journal.sh" ]] || {
     echo "verify-restored.sh: missing $_HERE_VR_LIB/journal.sh" >&2; exit 1; }
 # shellcheck source=tools/lib/journal.sh

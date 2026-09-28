@@ -111,12 +111,23 @@ done
 # call sites or a glob knows only what somebody remembered. Shared awk
 # libraries are excluded — they are measured by devtools/awk-coverage, which
 # reports statements rather than modes.
+#
+# ⚠️ AND EVERY EXECUTABLE UNDER bin/ AND tools/, INSTALLED OR NOT. install.sh
+# knows what is shipped to the machine, which is not everything the project
+# RUNS: tools/bt-fault-window and tools/bt-guards are run from the checkout,
+# print observations the exhibits cite, and were never installed — so this
+# report never listed them, while devtools/coverage showed both at 0 of their
+# lines. The least-tested tools in the tree were the ones this instrument could
+# not see (found 2026-09-28). The union keeps install.sh's guarantee and adds
+# the tracked executables, by mode, from git.
 units() {
-    awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' install.sh \
-    | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"' \
-    | sed 's|.*\$SRC/||; s|"||' \
-    | grep -vE '\.awk$|^tools/lib/|\.service$|\.timer$|\.conf$|\.rules$|\.tsv$' \
-    | sort -u
+    {
+        awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' install.sh \
+        | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"' \
+        | sed 's|.*\$SRC/||; s|"||'
+        git ls-files -s -- bin tools | awk '$1 == "100755" { print $4 }'
+    } | grep -vE '\.awk$|^tools/lib/|\.service$|\.timer$|\.conf$|\.rules$|\.tsv$' \
+      | sort -u
 }
 mapfile -t UNITS < <(units)
 # An empty derivation is a refusal, not a pass — the rule this repository
