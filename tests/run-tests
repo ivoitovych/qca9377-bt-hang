@@ -322,6 +322,17 @@ export BT_SYSFS_USB="$SUITE_MACHINE/usb" BT_SYSFS_MODULE="$SUITE_MACHINE/module"
        BT_SYSFS_BT="$SUITE_MACHINE/class-bluetooth" BT_SHARE_DIR="$SUITE_MACHINE/share" \
        BT_UNIT_DIR="$SUITE_MACHINE/units" BT_HEALTH_DIR="$SUITE_MACHINE/health" \
        BT_METRICS="$SUITE_MACHINE/health/metrics.tsv" BT_ARCHIVE_DIR="$SUITE_MACHINE/journal-archive"
+# The usbfs device nodes too, and this one is an ACTUATOR: the watchdog opens
+# <node>/<bus>/<dev> and issues USBDEVFS_RESET. Its fixture carries bus 3, device
+# 99, and until 2026-09-29 every scenario that reached recovery ran the real
+# python3 against the real /dev/bus/usb/003/099 — a reset of whatever device held
+# that number, on a suite run as root. An empty directory: nothing to open.
+mkdir -p "$SUITE_MACHINE/devfs-usb"
+export BT_DEVFS_USB="$SUITE_MACHINE/devfs-usb"
+# And the per-user runtime directories the watchdog's notification looks for a
+# session bus in, before handing it to sudo: none here, so nobody is notified.
+mkdir -p "$SUITE_MACHINE/run-user"
+export BT_RUN_USER_DIR="$SUITE_MACHINE/run-user"
 # And no bytecode written beside the Python under test: a fresh checkout gained
 # bin/__pycache__/ from every run.
 export PYTHONDONTWRITEBYTECODE=1
@@ -3421,6 +3432,12 @@ WD=$(mktemp -d)
 mkdir -p "$WD/stub" "$WD/sysfs/3-3/3-3:1.0/bluetooth/hci0" "$WD/drv"
 echo 13d3 > "$WD/sysfs/3-3/idVendor";  echo 3503 > "$WD/sysfs/3-3/idProduct"
 echo 3    > "$WD/sysfs/3-3/busnum";    echo 99   > "$WD/sysfs/3-3/devnum"
+# A camera from the same vendor, earlier in the tree, as in bt-trial's: matched
+# on the vendor alone, the watchdog would reset and unbind the CAMERA, and no
+# fixture held a second device to show it (devtools/mutate, 2026-09-29).
+mkdir -p "$WD/sysfs/1-5/1-5:1.0"
+echo 13d3 > "$WD/sysfs/1-5/idVendor";  echo 56c9 > "$WD/sysfs/1-5/idProduct"
+echo 3    > "$WD/sysfs/1-5/busnum";    echo 4    > "$WD/sysfs/1-5/devnum"
 
 cat > "$WD/stub/systemctl" <<STUB
 #!/bin/sh
@@ -3442,6 +3459,16 @@ if [ -e "$WD/dead-once" ]; then rm -f "$WD/dead-once"; exit 1; fi
 exit 0
 STUB
 printf '#!/bin/sh\nexit 0\n' > "$WD/stub/loginctl"
+# The reset itself, recorded and not performed: the watchdog issues it through
+# `python3 - <bus> <dev> <usbfs root>` with the program on stdin. The spy is
+# the ONLY python3 these scenarios reach; before it, each ran the real one.
+cat > "$WD/stub/python3" <<STUB
+#!/bin/sh
+cat >/dev/null
+echo "python3 \$*" >> "$WD/spy.log"
+[ -e "$WD/reset-fails" ] && exit 1
+exit 0
+STUB
 chmod +x "$WD/stub"/*
 
 # WHY A MARKER AND NOT A TIMEOUT, for the scenarios that keep retrying.
@@ -3495,12 +3522,26 @@ WOUT=$(wd_run 10); wrc=$?
 [[ "$WOUT" == *"Detected 3 controller timeouts within 60s — intervening."* ]] \
     && ok "watchdog intervenes at the threshold" \
     || bad "watchdog did not intervene at 3/60s"
-[[ "$WOUT" == *"USBDEVFS_RESET failed"* ]] \
-    && ok "watchdog logs the failed USB reset (no device node here, by design)" \
-    || bad "USB reset outcome not logged"
+# The reset reaches the spy with the fixture's bus and device numbers and the
+# DECLARED usbfs root — never /dev/bus/usb. "No device node here, by design"
+# was what this asserted: true in a container, and on the laptop a reset of
+# whatever held bus 3, device 99. Reading busnum or devnum could also be turned
+# into a refusal and no test noticed (devtools/mutate, 2026-09-29).
+[[ "$WOUT" == *"USBDEVFS_RESET issued"* ]] \
+   && grep -qxF "python3 - 3 99 $BT_DEVFS_USB" "$WD/spy.log" \
+    && ok "watchdog issues the USB reset for its device, through the declared usbfs root" \
+    || bad "USB reset: $(grep -m1 USBDEVFS <<<"$WOUT"); spy: $(grep python3 "$WD/spy.log" | head -1)"
 [[ "$WOUT" == *"escalating to USB unbind/bind"* ]] \
     && ok "watchdog escalates when the controller stays dead after reset" \
     || bad "escalation path not taken"
+# And a reset that fails is logged as failed, and recovery goes on to the
+# next step rather than stopping there.
+touch "$WD/reset-fails" "$WD/dead-once"
+WRF=$(wd_until "escalating to USB unbind/bind" 80)
+rm -f "$WD/reset-fails" "$WD/dead-once"
+[[ "$WRF" == *"USBDEVFS_RESET failed"*"escalating to USB unbind/bind"* ]] \
+    && ok "a failed USB reset is logged as failed, and recovery escalates past it" \
+    || bad "failed reset: $(grep -E 'USBDEVFS|escalat' <<<"$WRF" | tr '\n' '|')"
 [[ "$WOUT" == *"RECOVERED — confirmed stalled controller is responding again"* ]] \
     && ok "watchdog confirms recovery of a CONFIRMED stall through the probe" \
     || bad "recovery not confirmed"
@@ -3661,8 +3702,8 @@ NOPOUT=$(wd_until "cannot be confirmed" 60 PATH="$WDNOP:$WD/noprobe-farm" BT_COO
 # Same farm, keeping btmgmt and removing ONLY hciconfig — the branch under
 # test is the fallback, so btmgmt must be present and hciconfig must not.
 WDBM="$WD/btmgmt-only"; mkdir -p "$WDBM"
-cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WD/stub/loginctl" "$WDBM/" 2>/dev/null
-printf '#!/bin/sh\necho "btmgmt $*" >> "%s/spy.log"\nexit 0\n' "$WD" > "$WDBM/btmgmt"
+cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WD/stub/loginctl" "$WD/stub/python3" "$WDBM/" 2>/dev/null
+printf '#!/bin/sh\necho "btmgmt $*" >> "%s/spy.log"\n[ -e "%s/dead" ] && exit 1\nexit 0\n' "$WD" "$WD" > "$WDBM/btmgmt"
 chmod +x "$WDBM/btmgmt" "$WDBM/systemctl" "$WDBM/sleep" 2>/dev/null
 farm_dir "$WD/btmgmt-farm" hciconfig
 : > "$WD/spy.log"; rm -f "$WD/dead"
@@ -3676,6 +3717,16 @@ BMOUT=$(wd_until "RECOVER" 60 PATH="$WDBM:$WD/btmgmt-farm" BT_COOLDOWN=99999)
    && [[ "$BMOUT" != *"neither hciconfig nor btmgmt"* ]] \
     && ok "btmgmt is selected as the probe when hciconfig is absent" \
     || bad "the btmgmt fallback probe was not selected: $(grep -m1 'liveness probe' <<<"$BMOUT")"
+# And its ANSWER is read the right way round. A dead controller probed through
+# btmgmt was never staged, and a probe that reported every failure as a live
+# controller passed (devtools/mutate, 2026-09-29).
+: > "$WD/spy.log"; touch "$WD/dead"
+BMDEAD=$(wd_until "RECOVER" 60 PATH="$WDBM:$WD/btmgmt-farm" BT_COOLDOWN=99999)
+rm -f "$WD/dead"
+[[ "$BMDEAD" == *"RECOVERY FAILED"* && "$BMDEAD" != *"RECOVERED"* ]] \
+   && grep -qx 'btmgmt --index 0 info' "$WD/spy.log" \
+    && ok "a dead controller probed through btmgmt is reported dead, asked about hci0" \
+    || bad "btmgmt probe of a dead controller: $(grep -m1 RECOVER <<<"$BMDEAD"); spy: $(grep -m1 btmgmt "$WD/spy.log")"
 
 # ── the four boundaries the watchdog decides on, driven to the second ──────
 #
@@ -3748,6 +3799,20 @@ WBE1=$(wb_run "  window: 1/99" "1000 1089 1090" "$WB_EARLY|$WB_EARLY|$WB_HIT" BT
    && "$WBE1" == *"early window: 2/2"* && "$WBE1" == *"EARLY intervention"* ]] \
     && ok "an early signal exactly EARLY_WINDOW old has left its window; one second younger still counts" \
     || bad "early window boundary: at 90 s $(grep -oE 'early window: [0-9]+/2' <<<"$WBE" | tr '\n' ' '), at 89 s $(grep -oE 'early window: [0-9]+/2' <<<"$WBE1" | tr '\n' ' ')"
+# BT_EARLY=0 — experiment mode — means the audio-teardown heuristics are not
+# acted on at all: the watchdog follows the KERNEL stream alone, where
+# bluetoothd's lines never appear. Every scenario above ran with early detection
+# on. Here the full stream carries early lines and the kernel stream only the
+# timeout; the watchdog must count the timeout and never see an early signal.
+# (Inside the loop, the early classification is also guarded by BT_EARLY; with
+# this reader that second guard can never be reached by a bluetoothd line, and
+# flipping it changed nothing — devtools/mutate, 2026-09-29.)
+printf '%s\n' "$WB_HIT" > "$WB/jrn/kernel.log"
+WBX=$(wb_run "  window: 1/99" "1000 1001 1002" "$WB_EARLY|$WB_EARLY|$WB_HIT" BT_THRESHOLD=99 BT_EARLY=0)
+rm -f "$WB/jrn/kernel.log"
+[[ "$WBX" == *"  window: 1/99"* && "$WBX" != *"early window"* && "$WBX" != *"EARLY intervention"* ]] \
+    && ok "with BT_EARLY=0 the watchdog follows the kernel stream alone: no early signal reaches it" \
+    || bad "BT_EARLY=0: $(grep -E 'window|intervention|reader' <<<"$WBX" | head -4 | tr '\n' '|')"
 rm -rf "$WB"
 
 # ── verbose mode, which is what an operator turns on to see the window ────
@@ -3783,6 +3848,27 @@ FOUT=$(timeout 10 env PATH="$WD/stub:$PATH" \
     && ok "watchdog reports the hard hang instead of resetting a ghost" \
     || bad "hard-hang path wrong"
 
+# WHO IS TOLD. The notification goes to each logged-in user with a session bus,
+# through sudo. Every scenario lists no sessions, so the selection never ran,
+# and one that skipped every real user — or told users with no bus — passed
+# (devtools/mutate, 2026-09-29). Here three sessions: this user, with a bus
+# socket under the declared runtime root; a user without one; and a line with
+# no user field. sudo is a spy; only the first may be handed the message.
+WN=$(mktemp -d); mkdir -p "$WN/bin" "$WN/run/$(id -u)"
+python3 -c 'import socket, sys; socket.socket(socket.AF_UNIX).bind(sys.argv[1])' "$WN/run/$(id -u)/bus"
+printf '#!/bin/sh\nprintf "2 %s %s seat0\\n3 65534 nobody\\nx\\n"\n' "$(id -u)" "$(id -un)" > "$WN/bin/loginctl"
+printf '#!/bin/sh\necho "sudo $*" >> "%s/sudo.log"\n' "$WN" > "$WN/bin/sudo"
+chmod +x "$WN/bin"/*
+timeout 10 env PATH="$WN/bin:$WD/stub:$PATH" BT_RUN_USER_DIR="$WN/run" \
+    BT_JOURNAL_FIXTURE=tests/journal/watchdog BT_SYSFS_USB="$EMPTYSYS" BT_SYSFS_DRIVERS="$WD/drv" \
+    BT_COOLDOWN=99999 bin/bt-hang-watchdog >/dev/null 2>&1
+WNS=$(sort -u "$WN/sudo.log" 2>/dev/null)
+[[ "$WNS" == "sudo -u $(id -un) DBUS_SESSION_BUS_ADDRESS=unix:path=$WN/run/$(id -u)/bus notify-send -u critical Bluetooth "*"absent from USB"* \
+   && $(grep -c . <<<"$WNS") == 1 ]] \
+    && ok "the notification goes to the user with a session bus, and to nobody else" \
+    || bad "notify: sudo was asked: $(tr '\n' '|' <<<"$WNS")"
+rm -rf "$WN"
+
 # ── the EARLY-path give-up says the same two lines as the late path ──────
 #
 # A log scraper keying on "A cold power-off is required." must see every
@@ -3814,8 +3900,13 @@ rm -f "$WD/dead"; rm -rf "$WDEG"
 # it is asserted from a PATH farm with python3 removed (the sanctioned
 # absent-tool construction; a PATH that re-adds /usr/bin proves nothing).
 WDNOPY=$(mktemp -d); farm_dir "$WDNOPY/farm" python3
+# The scenarios' stubs, COPIED without the python3 spy: the spy is on every
+# other watchdog PATH so that no scenario reaches the real one, and here the
+# point is that there is none at all.
+mkdir -p "$WDNOPY/stub"
+for f in "$WD/stub"/*; do [[ "${f##*/}" == python3 ]] || cp -p "$f" "$WDNOPY/stub/"; done
 WDEMPTYJ=$(mktemp -d)
-PYOUT=$(timeout 10 env PATH="$WD/stub:$WDNOPY/farm" BT_JOURNAL_FIXTURE="$WDEMPTYJ" \
+PYOUT=$(timeout 10 env PATH="$WDNOPY/stub:$WDNOPY/farm" BT_JOURNAL_FIXTURE="$WDEMPTYJ" \
         BT_SYSFS_USB="$WD/sysfs" BT_SYSFS_DRIVERS="$WD/drv" bin/bt-hang-watchdog 2>&1)
 [[ "$PYOUT" == *"WARNING: python3 not found"* \
    && "$PYOUT" == *"different treatment than documented"* ]] \
@@ -6710,6 +6801,13 @@ WDLOUT=$("$WDL/bt-hang-watchdog" 2>&1); wdlrc=$?
 (( wdlrc != 0 )) && [[ "$WDLOUT" == *"cannot find lib/journal.sh"* ]] \
     && ok "the watchdog refuses to start without its journal library" \
     || bad "a watchdog with no journal library did not refuse (rc=$wdlrc)"
+# And a BT_LIBDIR that names a directory WITHOUT the library refuses the same
+# way: it was checked only when nothing was named (devtools/mutate, 2026-09-29).
+mkdir -p "$WDL/nolib"
+WDLOUT2=$(BT_LIBDIR="$WDL/nolib" "$WDL/bt-hang-watchdog" 2>&1); wdlrc2=$?
+(( wdlrc2 != 0 )) && [[ "$WDLOUT2" == *"cannot find lib/journal.sh"* ]] \
+    && ok "a BT_LIBDIR without the journal library is refused, not sourced blind" \
+    || bad "BT_LIBDIR without journal.sh: rc=$wdlrc2, $(head -2 <<<"$WDLOUT2" | tr '\n' '|')"
 rm -rf "$WDL"
 
 # ── bt-incident: the option paths that follow a valid slug ──────────────
