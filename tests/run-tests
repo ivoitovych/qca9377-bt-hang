@@ -1661,12 +1661,13 @@ trial() {
 # trial(), pointed at another evidence root and state directory, for a test that
 # needs its own. BT_EVIDENCE_REPO is the root by construction — the variable a
 # hand-written call once forgot (see the invariant at the end of the file).
-trial_in() {   # <evidence root> <state dir> [VAR=value...] -- <bt-trial arguments>
+trial_in() {   # <evidence root> <state dir> [--timeout N] [VAR=value...] -- <bt-trial arguments>
     local root="$1" state="$2"; shift 2
-    local -a extra=()
+    local -a extra=() limit=()
+    [[ "${1:-}" == --timeout ]] && { limit=(timeout "$2"); shift 2; }
     while [[ $# -gt 0 && "$1" != -- ]]; do extra+=("$1"); shift; done
     shift
-    env PATH="$LC/bin:$PATH" BT_REPO="$root" BT_EVIDENCE_REPO="$root" BT_STATE="$state" \
+    "${limit[@]}" env PATH="$LC/bin:$PATH" BT_REPO="$root" BT_EVIDENCE_REPO="$root" BT_STATE="$state" \
         BT_SYSFS_USB="$LC/sysfs" BT_SYSFS_MODULE="$LC/mod" "${extra[@]}" tools/bt-trial "$@"
 }
 
@@ -1743,6 +1744,38 @@ else
     while IFS= read -r l; do echo "        $l"; done <<<"$SLOWOUT"
 fi
 rm -rf "$LC/slow" "$LC/state-slow"
+
+# AND THE SHUTDOWN PATH ITSELF. autostop — the unit's ExecStop — counted the
+# trial's timeouts with its own full read of the kernel journal before handing
+# over to the closer above, unbudgeted: the 180 s read of an E1 day, ahead of
+# the 90 s stop timeout, so the row could still be lost at shutdown. It now
+# counts through the error-priority index as the closer does. Its stub models
+# what is fast on a real E1 day and what is not: the -p read and a read bounded
+# by --until (the closer's enumeration check, three minutes from boot start,
+# which --list-boots supplies) answer at once; an UNBOUNDED full read sleeps 5 s.
+# autostop gets 4.
+mkdir -p "$LC/slowstop/bin"
+cat > "$LC/slowstop/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" --until "*) exit 0 ;;
+  *" -k "*) sleep 5; exit 0 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/slowstop/bin/journalctl"
+trial_in "$LC/slowstop" "$LC/state-slowstop" PATH="$LC/slowstop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/slowstop" "$LC/state-slowstop" --timeout 4 PATH="$LC/slowstop/bin:$LC/bin:$PATH" \
+    BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; ssrc=$?
+SSROW=$(awk -F'\t' 'NR == 2 { print $8, $13 }' "$LC/slowstop/evidence/trials/results.tsv" 2>/dev/null)
+if (( ssrc == 0 )) && [[ "$SSROW" == "confirmed 1" ]]; then
+    ok "autostop counts through the error-priority index: a slow full journal cannot hold shutdown past its timeout"
+else
+    bad "autostop with a slow full journal: rc=$ssrc (124 = still reading at 4 s), row (bt1_status timeouts)='$SSROW'"
+fi
+rm -rf "$LC/slowstop" "$LC/state-slowstop"
 
 # THE --grep PROBE, both ways, and against the inversion that hid it. A journal
 # whose --help names --grep must be asked with the filter; one whose help does
