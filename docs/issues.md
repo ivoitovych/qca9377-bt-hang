@@ -655,6 +655,50 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   handsfree before, or its saved entry removed (operator's decision: it changes saved
   preferences), then one switch and the log.
 
+- **U7 — after an HFP codec switch made while a SCO link is up, no new SCO link is set up
+  (silence in the new codec).** Found 2026-09-29 with Lenovo `联想thinkplus-GM2 pro` earbuds
+  under E1; the operator's report was "Test sound does not play".
+  **[log]** the sound stream exists and is routed: `bt-audio-policy` logs
+  `playback-node[gnome-control-center]: Mono target=- role=Test` and
+  `playback[gnome-control-center]: 联想thinkplus-GM2 pro` at 02:30:40, :47, 02:31:03, :14, :38.
+  **[log]** the HCI capture (`scripts/capture-window.sh <capture> "2026-09-29 02:30:40"
+  "2026-09-29 02:31:45" 'RFCOMM|[+]BCS|Synchronous|Disconnect'`), three codec switches in a row:
+
+  | time | switch | SCO up at the time? | RFCOMM | HCI |
+  |---|---|---|---|---|
+  | 02:30:44.995 | mSBC → CVSD | **yes** (mSBC handle 19) | `+BCS: 1` → `AT+BCS=1` → `OK` → `+CIEV: 2,1` → `+VGS`/`+VGM` (twice, 1.5 s apart) | **`Disconnect` of handle 19, then no `Setup Synchronous Connection` at all** |
+  | 02:30:59.743 | CVSD → mSBC | no | `+BCS: 2` → `AT+BCS=2` → `OK` → `+CIEV: 2,1` | `Setup Synchronous Connection` 30 ms after `OK` → eSCO **Transparent**, handle 20 |
+  | 02:31:12.238 | mSBC → CVSD | **yes** (handle 20) | as the first | **`Disconnect`, then nothing** |
+
+  and the reference switch at 02:27:32 (mSBC → CVSD with **no** SCO up, the previous link having
+  ended at 02:26:55): `+BCS: 1` → `AT+BCS=1` → `OK` → `+CIEV: 2,1` → `Setup Synchronous
+  Connection` at +30 ms → eSCO **CVSD** handle 18, 171 s of audio.
+  **[log]** the kernel's SCO socket debug is off (`sco.c` has no `=p` in
+  `dynamic_debug/control`), so the absence of a `connect()` attempt is read from the HCI
+  capture, not the kernel log. **[operator]** the mono test sound was heard in CVSD at ~02:27:3x
+  (link 18 up) and not at 02:30:47 / 02:31:14 / 02:31:38 (no link).
+  **[inference]** PipeWire 1.0.5's native HFP backend sets the new SCO up as part of the codec
+  switch (30 ms after the headset's `OK`), and skips that step when the switch had to tear an
+  existing SCO down first — the disconnect and the negotiation overlap (`Disconnect` completes
+  between `+BCS:` and `AT+BCS=`). A later acquire by a stream does not recover it: the test
+  stream and the panel's meter both linked and no setup followed. **Not a controller or kernel
+  defect**: no HCI command was issued for it to fail. **To confirm:** with the Sound panel
+  closed (its meter keeps the SCO up), switch codec by `pactl set-card-profile` once with the
+  SCO idle and once while a stream plays; and read PipeWire master's `backend-native.c` codec
+  switch path (`rfcomm_hfp_ag_set_codec` and what follows `AT+BCS`) for a fix after 1.0.5.
+  Reportable to PipeWire once confirmed, with this capture excerpt.
+- **U8 — mSBC on the Lenovo earbuds: link up, data flowing, nothing audible** *(lead)*.
+  **[log]** at 02:30:40 and 02:31:03 the test stream was linked to the earbuds' sink while an
+  mSBC (Transparent) eSCO link was up and carrying host TX (`len 27 mtu 9` buffers: 5,761 on
+  link 02:30:27, 4,211 on 02:30:59) and RX; the kernel logged `corrupted SCO packet` ×6 during
+  the earbuds' mSBC links and once at teardown of handle 20; the same message appeared on the
+  first E1 boot with the MOMENTUM (21:53:23, an mSBC link) and not on the last stock boot (whose
+  mSBC links lived under 10 s). **[operator]** nothing heard in mSBC; CVSD (when its link exists)
+  audible. **[inference]** either the earbuds do not decode what this host sends over alt 1
+  (framing / the 3×9-byte split), or the corrupted-packet path drops the RX side; the two are
+  separable by whether the *microphone* side works in mSBC. **To confirm:** the MOMENTUM's test
+  sound in mSBC on this boot (if audible there, U8 is earbud-specific); then E3 with both.
+
 ---
 
 ## On the wider claim
