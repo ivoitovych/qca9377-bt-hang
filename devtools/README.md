@@ -16,7 +16,7 @@ directory touches Bluetooth.
 | `assert-test-catches <file> <line> <substr>` | prove a suite invariant actually fails when violated |
 | `journal-contract` | do the journal fixtures still match the shapes the REAL journalctl emits |
 | `sandbox [--self-test] [-- cmd]` | run the suite in a **decoy world** and list every place it reached for the real machine |
-| `mutate <file> [--lines A-B]` | flip each decision in a file, one at a time, and list the ones the suite does not notice |
+| `mutate <file> [--lines A-B] \| --self-test` | flip each decision in a file, one at a time, and list the ones the suite does not notice |
 | `mutants <file>` | the list `mutate` works from: every live operator, awk programs inside shell included |
 
 ```bash
@@ -110,9 +110,10 @@ inside shell scripts** with awk's rules, because the classifiers live there and 
 per-line tool nor the coverage trace can see into them. Its proposals are pinned by the
 suite on fixtures of both languages.
 
-A verdict about a mutant is only worth the mutant. `mutate` itself is checked on a fixture
-repository whose own suite fails with the line that changed, so every row names exactly
-what was applied. That check exists because the first `bt-trial` run applied every dropped
+A verdict about a mutant is only worth the mutant. `mutate --self-test` runs the tool on a
+fixture repository whose own suite fails with the line that changed, so every row names
+exactly what was applied. Every run begins with it (under a second) and measures nothing
+if it fails; CI also runs it as a step of its own. That check exists because the first `bt-trial` run applied every dropped
 `!` wrongly: the row's empty replacement field collapsed under `read`, and the word
 `shell-neg` was pasted where the `!` had been. It also checks that each mutant is applied
 to the file **as it was when the run started**, even if the file is edited during the
@@ -123,6 +124,26 @@ First use (2026-09-29): 14 of `bt-actions`' 24 mutants survived — its rfkill r
 `&&` into `||` filed the Bluetooth toggle's ON as OFF and no test noticed, and its noise
 test could not fail at all. 22 of 24 are killed now; the other two cannot change any
 output here.
+
+`tools/bt-trial`, the trial lifecycle and its classifier (2026-09-29): 90 of 175 were caught
+at first, and nothing about bt-trial was wrong. The tests were missing:
+- No test ever let bt-trial find its checkout.
+- No test read the treatment fingerprint's power field, the SCO interval as the closer
+  writes it, or the measurement revision. Those fields could be inverted and every
+  trial still passed.
+- No trial was ever numbered against an existing results file.
+- No fixture held a second device from the same vendor.
+
+149 of 175 are caught now. Of the rest, 25 cannot change any output:
+- 19 `|| true` status guards; bt-trial runs without `set -e`, and `grep -c` prints its count
+  either way.
+- 3 sysfs entries with only one of the two id files; a USB device has both or neither.
+- A device with two hci nodes.
+- A missing btmon, whose error is discarded.
+- The `abort --discard` guard, where `ls-files` answers either way.
+
+One cannot be tested without leaving the fixture: a checkout candidate with only one of its
+two markers sends the search on to the laptop's own clone.
 
 ## Why these exist
 
