@@ -72,10 +72,21 @@ and UTS namespaces, with every real directory under a throwaway overlay. Four de
 
 `sandbox --self-test` plants a leak for every detector and every decoy and fails if any
 goes unseen; each isolation probe first proves on the host that the thing it must fail to
-reach is reachable there, or says it cannot be verified. The first full run (2026-09-29)
-found 312 machine-tool calls per suite run — among them 20 `logger` calls writing trial
-lines into the real journal and 6 runs of an *installed* `bt-boot-list` — 12 tests whose
-verdict depends on the machine, and a test creating `~/bt-journal-archive`.
+reach is reachable there, or says it cannot be verified. Each of its mechanisms was
+disabled in turn, and each time the self-test went red.
+
+The world is built as namespace-root; the command itself runs as **the caller**, in a
+nested user namespace with no capabilities — the uid the suite really runs as, and one
+that cannot unmount a decoy. A call tagged by the suite's `real_tool()` — its one
+sanctioned door, for checking a fixture's shape against the real tool — is listed
+apart and not counted.
+
+The first full run (2026-09-29) found 312 machine-tool calls per suite run — among them
+20 `logger` calls writing trial lines into the real journal and 6 runs of an *installed*
+`bt-boot-list` — reads of the host's USB tree, btusb parameter, boot id and install stamp,
+12 tests whose verdict depended on the machine, and a test creating `~/bt-journal-archive`.
+All fixed the same day (tests/README.md, rule 5); CI now runs the suite in the decoy world
+and fails on any leak.
 
 It needs unprivileged user namespaces: this container and CI have them; Ubuntu 24.04's
 AppArmor refuses them to ordinary users, so on the laptop it exits 3 — nothing measured,

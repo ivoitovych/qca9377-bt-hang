@@ -5,12 +5,12 @@
 # six shipped decisions, and a hand-written path list missed install.sh twice.
 # Both were caught by review, later, after the wrong numbers had been quoted.
 #
-# The suite takes a few minutes and runs on every push. It sandboxes bt-trial,
-# stubs bt-incident and asserts that evidence/sessions/ is unchanged afterwards
-# — but it is NOT yet hermetic: run in a decoy world (devtools/sandbox, below)
-# on 2026-09-29 it made 312 calls of real machine tools and 12 of its verdicts
-# depended on the machine. The fixes are in progress; this line said "~2 s and
-# hermetic" until they were measured.
+# The suite takes about a minute and runs on every push. It is hermetic, and
+# that is MEASURED rather than claimed: the last step below runs it in a decoy
+# world (devtools/sandbox) and fails on any call of a machine tool, any read of
+# a machine file, any write to a real directory. This line said "~2 s and
+# hermetic" until 2026-09-29, when the first such run counted 312 calls of real
+# machine tools per suite run and 12 verdicts that changed with the machine.
 
 name: checks
 
@@ -123,14 +123,22 @@ jobs:
       # HERE, after the steps above have measured the suite the way it runs on
       # the laptop (fakeroot, no namespaces), so none of their results change.
       #
-      # The suite does not run in the decoy world as a gate yet — on its first
-      # run there it made 312 machine-tool calls. That step lands with the fixes.
       - name: sandbox self-test (the leak detector catches every planted leak)
         run: |
           if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
             sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           fi
           devtools/sandbox --self-test
+
+      # THE SUITE IN THE DECOY WORLD. Every machine tool, every installed file,
+      # /sys, /proc, /run and /var/log answer with a per-run marker; every real
+      # directory sits under a throwaway overlay. Exit 4 on any call, marked
+      # output, read or write — each listed with its caller. The one sanctioned
+      # door, real_tool() in the suite, is listed apart and not counted. This
+      # runner, unlike the container the suite is developed in, has a live
+      # systemd, journald and D-Bus: exactly the machine a leak would reach.
+      - name: suite in the decoy world (no verdict from the machine)
+        run: devtools/sandbox
 
       # THE SYSTEM ROUND TRIP — the only step here that writes to the machine.
       #
