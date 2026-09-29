@@ -2100,8 +2100,8 @@ fi
 # ...and says where the evidence went only when the collector succeeded. The
 # pointer was never read: printed for a failed collection instead, it passed
 # (devtools/mutate, 2026-09-29).
-[[ "$out" == *"-> evidence/sessions/latest"* ]] \
-    && ok "a hang whose incident collection succeeded points at the collected evidence" \
+[[ "$out" == *"-> evidence/sessions/latest"* && "$out" == *": HANG"* ]] \
+    && ok "a hang is announced as HANG and points at the evidence its collection gathered" \
     || bad "no '-> evidence/sessions/latest' after a successful collection"
 # ── THE ONTOLOGY ITSELF, through the production producer ──────────────────
 #
@@ -2200,6 +2200,17 @@ combo "timeout + intervention"       "$TMO_LINE" "$LATE_LINE"              ok   
 combo "early intervention only"      ""          "$EARLY_LINE"             ok   censored_pre_failure  alive_after_intervention
 combo "opcode-form timeout, hang"    "$TMO_OPCODE_LINE" ""                 hang confirmed             failed
 combo "link timeout is not BT-1"     "$LINK_TMO_LINE"   ""                 ok   not_observed          survived
+
+# The incident collector is for a failed trial only, and the verdict line
+# says which it was. Only the failed side was tested: collecting for every
+# trial, or printing HANG for a survival, passed (devtools/mutate, 2026-09-29).
+rm -f "$LC/incident-was-called" "$LC/evidence/trials/results.tsv" "$LC/state/current"
+printf '#!/bin/sh\nexit 0\n' > "$LC/bin/journalctl"
+trial autostart stock >/dev/null 2>&1
+LCSV=$(trial ok 2>&1)
+[[ ! -e "$LC/incident-was-called" && "$LCSV" == *"Trial stock #1: survived"* && "$LCSV" != *"HANG"* ]] \
+    && ok "a survived trial collects no incident and is announced as survived" \
+    || bad "survived close: incident $([[ -e "$LC/incident-was-called" ]] && echo collected || echo not collected), verdict: $(grep -m1 'Trial stock' <<<"$LCSV")"
 
 # UNREADABLE WATCHDOG EVIDENCE MUST NOT BECOME NEGATIVE EVIDENCE.
 #
@@ -10136,6 +10147,48 @@ TLSPC=$(sort -u "$TL/btmon.calls")
     && grep -qF "TRIAL stock #$TLSCON RESULT: " <<<"$(tail -n +"$((TLSCOLOG + 1))" "$TL/bin/logger.log")" \
     && ok "a close records the machine's state after the trial and announces the result" \
     || bad "close of $TLSCODIR: state-after.txt $([[ -s "$TLSCODIR/state-after.txt" ]] && echo present || echo missing), RESULT line $(grep -c RESULT "$TL/bin/logger.log")"
+
+# And a window with NO setups and no timeout: the interval was not determined,
+# `?`, not `none` — `none` claims a stimulus the controller survived — and there
+# is nothing to decode, so btmon is not run. Each was reachable by flipping one
+# comparison, and no close without setups looked (devtools/mutate, 2026-09-29).
+# The same close checks two more columns nothing read: the controller was on
+# the bus at the end, and this boot's journal never shows it enumerating.
+: > "$TL/kjournal"
+TLBTC=$(wc -l < "$TL/btmon.calls")
+tl_close_sco
+TLEMPTY=$(tl_row)
+TLUSBC=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^usb_present$' | cut -d: -f1)
+[[ "$(cut -f"$TLSCOCOL" <<<"$TLEMPTY")" == "?" && $(wc -l < "$TL/btmon.calls") == "$TLBTC" ]] \
+    && ok "a window without setups records the SCO interval as undetermined and decodes nothing" \
+    || bad "no-setup window: sco_to_timeout_s '$(cut -f"$TLSCOCOL" <<<"$TLEMPTY")' (want ?), btmon runs $(( $(wc -l < "$TL/btmon.calls") - TLBTC ))"
+[[ "$(cut -f"$TLUSBC" <<<"$TLEMPTY")" == "yes" && "$(cut -f"$TLECOL" <<<"$TLEMPTY")" == "no" ]] \
+    && ok "usb_present and enum_at_boot are read, not assumed: on the bus at the end, never enumerated in this journal" \
+    || bad "usb_present '$(cut -f"$TLUSBC" <<<"$TLEMPTY")' (want yes), enum_at_boot '$(cut -f"$TLECOL" <<<"$TLEMPTY")' (want no)"
+
+# THE CONTROLLER GONE, THE CAMERA STILL THERE. usb_present finds the controller
+# by vendor AND product; either alone finds the camera and records a lost
+# device as present. The close classifies the trial failed (hci_alive finds no
+# device either), which is the truth of a controller that left the bus.
+mv "$TL/sysfs/3-3" "$TL/sysfs-3-3.gone"
+tl autostart stock >/dev/null 2>&1; tl ok >/dev/null 2>&1
+mv "$TL/sysfs-3-3.gone" "$TL/sysfs/3-3"
+[[ "$(tl_row | cut -f"$TLUSBC")" == "no" ]] \
+    && ok "a controller that left the bus is recorded absent, a same-vendor camera notwithstanding" \
+    || bad "usb_present '$(tl_row | cut -f"$TLUSBC")' with only the camera on the bus (want no)"
+
+# THE PROBE INTERVAL. probe_to_timeout_s is the distance from the last health
+# probe before the first timeout to that timeout — bt-phase's raw input. No
+# close had both, so skipping the computation, or computing it with no
+# timeout, passed (devtools/mutate, 2026-09-29).
+printf '2026-08-13T09:00:03.000000+0200 host systemd[1]: Finished Snapshot Bluetooth health metrics.\n' > "$TL/probejournal"
+printf '2026-08-13T09:00:07.500000+0200 host kernel: Bluetooth: hci0: command 0x0406 tx timeout\n' > "$TL/kjournal"
+tl autostart stock >/dev/null 2>&1; tl ok >/dev/null 2>&1
+rm -f "$TL/probejournal"; : > "$TL/kjournal"
+TLPTC=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^probe_to_timeout_s$' | cut -d: -f1)
+[[ "$(tl_row | cut -f"$TLPTC")" == "4.500" ]] \
+    && ok "probe_to_timeout_s runs from the last probe before the first timeout" \
+    || bad "probe_to_timeout_s '$(tl_row | cut -f"$TLPTC")' for a probe 4.5 s before the timeout"
 
 tl xyzzy >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-trial rejects an unknown verb rather than doing nothing quietly" \
