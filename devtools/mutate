@@ -1,0 +1,152 @@
+#!/bin/bash
+# mutate — does the suite notice when a decision in this file is changed?
+#
+#   devtools/mutate <file> [--lines A-B[,C-D]] [--workers N] [--timeout SEC] [--out DIR]
+#
+# Every operator mutant devtools/mutants lists for <file> — a comparison
+# flipped, && swapped for ||, a negation dropped — is applied ALONE, and the
+# whole suite runs on it. A mutant the suite still passes is a decision nothing
+# checks: either a missing test, or a change that cannot alter any output (an
+# equivalent mutant), and telling which is the reading this tool exists for.
+#
+# Exit: 0 every mutant killed · 1 survivors (listed) · 2 usage, or the suite is
+#       not green on the unmutated tree · 3 no user namespaces here
+#
+# WHY EACH RUN IS ISOLATED. A mutant can do anything the code under it can: loop,
+# leave daemons, write where the real code would not. Each runs in its own git
+# worktree — the checkout this was started from is never modified — and in fresh
+# user, pid, mount and net namespaces with a private /tmp, so whatever it starts
+# dies with it and nothing it writes outlives it. The suite exits at its first
+# failing assertion (the reader stops), which is what makes a run of hundreds
+# affordable.
+#
+# THE TREE AS IT IS, not HEAD: uncommitted, staged and untracked changes are
+# carried into every worktree, so a fix being written can be tested before it
+# is committed.
+#
+# Grown from the harness behind the 2026-09-28 mutation pass over the awk
+# libraries (212 mutants, 176 caught before, 196 after).
+
+set -uo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="$(cd "$HERE/.." && pwd)"
+
+LINES=""; NW=4; TMO=600; OUT=""; FILE=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --lines)   LINES="${2:?--lines needs A-B}"; shift ;;
+        --workers) NW="${2:?--workers needs a number}"; shift ;;
+        --timeout) TMO="${2:?--timeout needs seconds}"; shift ;;
+        --out)     OUT="${2:?--out needs a directory}"; shift ;;
+        -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
+        -*)        echo "mutate: unknown option: $1" >&2; exit 2 ;;
+        *)         [[ -z "$FILE" ]] || { echo "mutate: one file at a time" >&2; exit 2; }
+                   FILE="$1" ;;
+    esac
+    shift
+done
+[[ -n "$FILE" ]] || { sed -n '2,13p' "$0" >&2; exit 2; }
+[[ "$NW" =~ ^[1-9][0-9]*$ && "$TMO" =~ ^[1-9][0-9]*$ ]] || { echo "mutate: --workers and --timeout take positive integers" >&2; exit 2; }
+cd "$REPO" || exit 2
+FILE="${FILE#./}"
+git ls-files --error-unmatch -- "$FILE" >/dev/null 2>&1 \
+    || { echo "mutate: $FILE is not a tracked file of this repository" >&2; exit 2; }
+if ! unshare -Urpfnm --mount-proc true 2>/dev/null; then
+    echo "mutate: this host refuses unprivileged user namespaces — nothing was run (exit 3)." >&2
+    echo "        Each mutant must run where whatever it starts dies with it." >&2
+    exit 3
+fi
+
+WORK=$(mktemp -d "${TMPDIR:-/var/tmp}/bt-mutate.XXXXXX") || exit 2
+OUT="${OUT:-$WORK/results}"; mkdir -p "$OUT"
+cleanup() {
+    local w
+    for w in "$WORK"/w*; do
+        [[ -d "$w" ]] && git -C "$REPO" worktree remove --force "$w" >/dev/null 2>&1
+    done
+    git -C "$REPO" worktree prune >/dev/null 2>&1
+    [[ "$OUT" == "$WORK/results" ]] || rm -rf "$WORK"
+}
+trap cleanup EXIT
+
+if [[ -n "$LINES" ]]; then
+    "$HERE/mutants" "$FILE" --lines "$LINES" > "$OUT/mutants.tsv" || exit 2
+else
+    "$HERE/mutants" "$FILE" > "$OUT/mutants.tsv" || exit 2
+fi
+TOTAL=$(grep -c . "$OUT/mutants.tsv")
+(( TOTAL > 0 )) || { echo "mutate: devtools/mutants proposes no mutant for $FILE${LINES:+ lines $LINES}" >&2; exit 2; }
+
+# ── worktrees carrying the tree as it is ──────────────────────────────────
+HEAD=$(git rev-parse HEAD)
+git diff --name-only HEAD > "$WORK/changed"
+git ls-files -o --exclude-standard >> "$WORK/changed"
+git diff --name-only --diff-filter=D HEAD > "$WORK/deleted"
+for i in $(seq 1 "$NW"); do
+    w="$WORK/w$i"
+    git worktree add -q --detach "$w" "$HEAD" 2>/dev/null || { echo "mutate: cannot create a worktree" >&2; exit 2; }
+    grep -vxFf "$WORK/deleted" "$WORK/changed" | tar -cf - -T - 2>/dev/null | tar -xf - -C "$w"
+    while IFS= read -r d; do rm -f "$w/$d"; done < "$WORK/deleted"
+done
+
+run_suite() {   # <worktree> — the first verdict line the suite prints
+    timeout "$TMO" unshare -Urpfnm --mount-proc sh -c "mount -t tmpfs none /tmp && cd '$1' && exec tests/run-tests" 2>&1 \
+        | grep -m1 -E '^  ✗ |^FAILED: |RUN DID NOT FINISH|^all [0-9]+ invariants hold$'
+}
+
+echo "mutate: $FILE${LINES:+ (lines $LINES)} — $TOTAL mutant(s), $NW worker(s)"
+base=$(run_suite "$WORK/w1")
+if [[ "$base" != all\ *\ invariants\ hold ]]; then
+    echo "mutate: the suite is not green on the UNMUTATED tree — refusing: ${base:-no verdict}" >&2
+    exit 2
+fi
+echo "  baseline: $base"
+
+apply() {   # <worktree file> <line> <col> <from> <to> — exactly one occurrence, where listed
+    python3 - "$@" <<'PY'
+import sys
+p, ln, col, frm, to = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), sys.argv[4], sys.argv[5]
+lines = open(p, encoding="utf-8").read().split("\n")
+s = lines[ln - 1]
+if s[col:col + len(frm)] != frm:
+    sys.exit(1)
+lines[ln - 1] = s[:col] + to + s[col + len(frm):]
+open(p, "w", encoding="utf-8").write("\n".join(lines))
+PY
+}
+
+worker() {   # <n>
+    local w="$WORK/w$1" ln col frm to kind ctx res
+    while IFS=$'\t' read -r ln col frm to kind ctx; do
+        git -C "$w" checkout -q -- "$FILE" 2>/dev/null
+        grep -qxF -- "$FILE" "$WORK/changed" && cp "$REPO/$FILE" "$w/$FILE"
+        if ! apply "$w/$FILE" "$ln" "$col" "$frm" "$to"; then
+            res="NOT-APPLIED"
+        else
+            res=$(run_suite "$w")
+            case "$res" in
+                all\ *\ invariants\ hold)      res="SURVIVED" ;;
+                "  ✗ "*)                       res="KILLED	${res#  ✗ }" ;;
+                FAILED:*|*"DID NOT FINISH"*)   res="KILLED	$res" ;;
+                "")                            res="TIMEOUT" ;;
+            esac
+        fi
+        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$ln" "$col" "$frm" "$to" "$kind" "$res" "$ctx" >> "$OUT/res.$1"
+    done < <(awk -v n="$NW" -v k="$1" 'NR % n == k % n' "$OUT/mutants.tsv")
+}
+for i in $(seq 1 "$NW"); do worker "$i" & done
+wait
+cat "$OUT"/res.* 2>/dev/null | sort -t$'\t' -k1,1n -k2,2n > "$OUT/results.tsv"
+rm -f "$OUT"/res.*
+
+killed=$(awk -F'\t' '$6 == "KILLED"' "$OUT/results.tsv" | grep -c .)
+survived=$(awk -F'\t' '$6 == "SURVIVED"' "$OUT/results.tsv" | grep -c .)
+other=$(( TOTAL - killed - survived ))
+echo "  killed $killed   survived $survived   other (timeout / not applied) $other   of $TOTAL"
+echo "  results: $OUT/results.tsv"
+if (( survived )); then
+    echo "  survivors — each a decision no test checks, or a change that cannot alter any output:"
+    awk -F'\t' '$6 == "SURVIVED" { printf "    %5d  %-3s -> %-3s  %-11s %s\n", $1, $3, ($4 == "" ? "(none)" : $4), $5, substr($7, 1, 80) }' "$OUT/results.tsv"
+    exit 1
+fi
+exit 0
