@@ -130,6 +130,16 @@ jobs:
           fi
           devtools/sandbox --self-test
 
+      # THE MUTATION HARNESS'S OWN TEST. devtools/mutate judges whether the
+      # suite notices a changed decision; a verdict is only worth the mutant,
+      # and its first real run applied every dropped `!` wrongly with a report
+      # that looked like any other. --self-test runs it on a repository it
+      # builds and pins what each mutant applied. It needs the namespaces
+      # lifted in the step above; the suite's own run of it, earlier, is
+      # reported as not asked on this runner.
+      - name: mutate self-test (each mutant applied exactly as listed)
+        run: devtools/mutate --self-test
+
       # THE SUITE IN THE DECOY WORLD. Every machine tool, every installed file,
       # /sys, /proc, /run and /var/log answer with a per-run marker; every real
       # directory sits under a throwaway overlay. Exit 4 on any call, marked

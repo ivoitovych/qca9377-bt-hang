@@ -2,6 +2,7 @@
 # mutate — does the suite notice when a decision in this file is changed?
 #
 #   devtools/mutate <file> [--lines A-B[,C-D]] [--workers N] [--timeout SEC] [--out DIR]
+#   devtools/mutate --self-test
 #
 # Every operator mutant devtools/mutants lists for <file> — a comparison
 # flipped, && swapped for ||, a negation dropped — is applied ALONE, and the
@@ -10,8 +11,10 @@
 # equivalent mutant), and telling which is the reading this tool exists for.
 #
 # Exit: 0 every mutant killed · 1 survivors or timeouts (listed) · 2 usage, the
-#       suite not green on the unmutated tree, or a mutant that could not be
-#       applied where it was listed · 3 no user namespaces here
+#       harness failing its own self-test, the suite not green on the unmutated
+#       tree, or a mutant that could not be applied where it was listed · 3 no
+#       user namespaces here
+#       --self-test: 0 every check holds · 1 one failed · 3 no user namespaces
 #
 # WHY EACH RUN IS ISOLATED. A mutant can do anything the code under it can: loop,
 # leave daemons, write where the real code would not. Each runs in its own git
@@ -28,6 +31,18 @@
 # checkout instead, so an edit made there during a run of an hour reached every
 # mutant after it.
 #
+# WHY THERE IS A SELF-TEST. A verdict about a mutant is only worth the mutant.
+# The first bt-trial run applied every dropped `!` wrongly and its report looked
+# like any other. --self-test runs this tool on a repository it builds, whose
+# own suite fails with the line that changed, and pins what each mutant applied;
+# the other promises above — the tree as it was at the start, survivors listed
+# with exit 1, an unappliable mutant exit 2, nothing left behind — likewise.
+# Every run begins with it (under a second) and measures nothing if it fails;
+# CI also runs it as a step of its own.
+#
+# Worktrees go under $TMPDIR, or /var/tmp, but never under /tmp: each mutant
+# runs with a /tmp of its own, where a worktree kept there does not exist.
+#
 # A worktree's .git is a FILE. Code that looks for its checkout with
 # `[[ -d .git ]]` finds none in a worktree; a test that depends on that search
 # builds a checkout of its own (bt-trial's does).
@@ -39,33 +54,118 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/.." && pwd)"
 
-LINES=""; NW=4; TMO=600; OUT=""; FILE=""
+LINES=""; NW=4; TMO=600; OUT=""; FILE=""; SELFTEST=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --lines)   LINES="${2:?--lines needs A-B}"; shift ;;
         --workers) NW="${2:?--workers needs a number}"; shift ;;
         --timeout) TMO="${2:?--timeout needs seconds}"; shift ;;
         --out)     OUT="${2:?--out needs a directory}"; shift ;;
-        -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
+        --self-test) SELFTEST=1 ;;
+        -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
         -*)        echo "mutate: unknown option: $1" >&2; exit 2 ;;
         *)         [[ -z "$FILE" ]] || { echo "mutate: one file at a time" >&2; exit 2; }
                    FILE="$1" ;;
     esac
     shift
 done
-[[ -n "$FILE" ]] || { sed -n '2,13p' "$0" >&2; exit 2; }
+
+userns_or_exit() {
+    unshare -Urpfnm --mount-proc true 2>/dev/null && return 0
+    echo "mutate: this host refuses unprivileged user namespaces — nothing was run (exit 3)." >&2
+    echo "        Each mutant must run where whatever it starts dies with it." >&2
+    exit 3
+}
+# Somewhere a mutant can see: under $TMPDIR unless that is under /tmp.
+work_base() {
+    local b="${TMPDIR:-/var/tmp}"
+    case "$(readlink -f "$b")/" in /tmp/*) b=/var/tmp ;; esac
+    echo "$b"
+}
+
+# ── --self-test ───────────────────────────────────────────────────────────
+self_test() {
+    userns_or_exit
+    local T R fails=0 rc out rows want
+    T=$(mktemp -d "$(work_base)/bt-mutate-selftest.XXXXXX") || exit 2
+    trap 'rm -rf "$T"' EXIT
+    trap 'exit 130' INT TERM
+    R="$T/repo"
+    export MUTATE_SELFTESTED=1        # the fixture's own runs do not recurse into this
+    mkdir -p "$R/devtools" "$R/tests"
+    cp "$HERE/mutate" "$HERE/mutants" "$R/devtools/" || exit 2
+    printf '%s\n' 'x=0' 'if ! [[ $x -eq 1 ]]; then echo no; fi' '[[ $x == 1 ]] && echo yes' > "$R/mf.sh"
+    # The fixture's suite: green only on the file as it was when the run began
+    # (tests/pristine); otherwise it fails with the lines that differ. On its
+    # first run it edits the LIVE file, as an operator might mid-run.
+    cat > "$R/tests/run-tests" <<'FIXSUITE'
+#!/bin/bash
+cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
+[[ -n "${MUT_ALLGREEN:-}" ]] && { echo "all 1 invariants hold"; exit 0; }
+if [[ -n "${MUT_LIVE:-}" && ! -e "$MUT_LIVE.edited" ]]; then
+    echo '# edited during the run' >> "$MUT_LIVE"; : > "$MUT_LIVE.edited"
+fi
+cmp -s mf.sh tests/pristine && { echo "all 1 invariants hold"; exit 0; }
+echo "  ✗ $(diff tests/pristine mf.sh | sed -n 's/^> //p' | paste -sd'|')"
+exit 1
+FIXSUITE
+    chmod +x "$R/tests/run-tests"
+    git -C "$R" init -q && git -C "$R" add -A \
+        && git -C "$R" -c user.name=t -c user.email=test@example.com -c commit.gpgsign=false commit -qm fixture \
+        || exit 2
+    sed -i 's/^x=0$/x=1/' "$R/mf.sh"                 # uncommitted: the tree as it is
+    cp "$R/mf.sh" "$R/tests/pristine"
+
+    st() {   # <0 = holds> <description> <detail when not>
+        if [[ "$1" == 0 ]]; then echo "  ✓ $2"; else echo "  ✗ $2 — $3"; fails=$((fails + 1)); fi
+    }
+    out=$(TMPDIR="$T" MUT_LIVE="$R/mf.sh" "$R/devtools/mutate" mf.sh --workers 2 --out "$T/out1" 2>&1); rc=$?
+    rows=$(awk -F'\t' '{ print $1, $2, $6 ":", $7 }' "$T/out1/results.tsv" 2>/dev/null)
+    want='2 3 KILLED: if [[ $x -eq 1 ]]; then echo no; fi
+2 11 KILLED: if ! [[ $x -ne 1 ]]; then echo no; fi
+3 6 KILLED: [[ $x != 1 ]] && echo yes
+3 14 KILLED: [[ $x == 1 ]] || echo yes'
+    [[ $rc == 0 && "$rows" == "$want" ]] && grep -q 'edited during the run' "$R/mf.sh"
+    st $? "each mutant applied exactly as listed, a dropped ! included, to the file as it was at the start" \
+          "rc=$rc, applied: $(tr '\n' '|' <<<"$rows")"
+
+    git -C "$R" checkout -q -- mf.sh; sed -i 's/^x=0$/x=1/' "$R/mf.sh"
+    out=$(TMPDIR="$T" MUT_ALLGREEN=1 "$R/devtools/mutate" mf.sh --workers 2 --out "$T/out2" 2>&1); rc=$?
+    [[ $rc == 1 && "$out" == *"killed 0   survived 4"* && $(grep -cE '^ +[23]  ' <<<"$out") == 4 ]]
+    st $? "a suite that notices nothing: four survivors listed, exit 1" \
+          "rc=$rc, $(grep -E 'killed' <<<"$out")"
+
+    printf '#!/bin/sh\nprintf "3\\t0\\t!=\\t==\\tshell-test\\tnot here\\n"\n' > "$R/devtools/mutants"
+    out=$(TMPDIR="$T" "$R/devtools/mutate" mf.sh --workers 1 --out "$T/out3" 2>&1); rc=$?
+    [[ $rc == 2 && "$out" == *"not applied 1"* && "$out" == *"NOT APPLIED"* ]]
+    st $? "a listed operator that is not where the list puts it: named, exit 2 — nothing was measured" \
+          "rc=$rc, $(grep -E 'killed' <<<"$out")"
+
+    [[ -z "$(git -C "$R" worktree list | sed 1d)" && -z "$(ls -d "$T"/bt-mutate.* 2>/dev/null)" ]]
+    st $? "no worktree and no work directory left behind" \
+          "$(git -C "$R" worktree list | sed 1d | tr '\n' ' ')$(ls -d "$T"/bt-mutate.* 2>/dev/null)"
+
+    (( fails == 0 )) && { echo "mutate self-test: every check holds"; exit 0; }
+    echo "mutate self-test: $fails check(s) FAILED"; exit 1
+}
+(( SELFTEST )) && self_test
+
+[[ -n "$FILE" ]] || { sed -n '2,17p' "$0" >&2; exit 2; }
 [[ "$NW" =~ ^[1-9][0-9]*$ && "$TMO" =~ ^[1-9][0-9]*$ ]] || { echo "mutate: --workers and --timeout take positive integers" >&2; exit 2; }
 cd "$REPO" || exit 2
 FILE="${FILE#./}"
 git ls-files --error-unmatch -- "$FILE" >/dev/null 2>&1 \
     || { echo "mutate: $FILE is not a tracked file of this repository" >&2; exit 2; }
-if ! unshare -Urpfnm --mount-proc true 2>/dev/null; then
-    echo "mutate: this host refuses unprivileged user namespaces — nothing was run (exit 3)." >&2
-    echo "        Each mutant must run where whatever it starts dies with it." >&2
-    exit 3
+userns_or_exit
+if [[ -z "${MUTATE_SELFTESTED:-}" ]]; then
+    if ! st_out=$("$0" --self-test 2>&1); then
+        echo "mutate: the harness failed its own self-test — no mutant was run:" >&2
+        grep -E '✗' <<<"$st_out" >&2
+        exit 2
+    fi
 fi
 
-WORK=$(mktemp -d "${TMPDIR:-/var/tmp}/bt-mutate.XXXXXX") || exit 2
+WORK=$(mktemp -d "$(work_base)/bt-mutate.XXXXXX") || exit 2
 OUT="${OUT:-$WORK/results}"; mkdir -p "$OUT"
 cleanup() {
     local w
