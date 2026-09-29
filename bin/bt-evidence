@@ -57,7 +57,7 @@ snapshot_state() { # -> stdout
     echo "# state snapshot $(date -Iseconds)"
     echo "## uptime"; uptime -p
     echo "## kernel"; uname -r
-    echo "## boot_id"; cut -c1-8 /proc/sys/kernel/random/boot_id
+    echo "## boot_id"; cut -c1-8 "${BT_PROC:-/proc}/sys/kernel/random/boot_id"
     for d in "$SYSFS_USB"/*; do
         [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
         if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then

@@ -1,0 +1,73 @@
+# tests/machine-tools — the commands that answer with THIS MACHINE's state, or act on it.
+#
+# Read by tests/run-tests, which puts a tripwire in front of each for the whole
+# run (and inside every PATH farm), and by devtools/sandbox, which replaces each
+# with a decoy. A test that needs one of these stubs it; a call that reaches the
+# tripwire is a verdict taken from whatever machine the suite ran on, and fails
+# the run.
+#
+# WRITTEN BY HAND, AND WHY THAT IS ALLOWED HERE. Everything else the suite scans
+# is derived (tests/README.md, rule 2). Whether a command reads the machine is a
+# property of the command, not of its call sites, so there is nothing to derive
+# it from. The backstop is devtools/sandbox: a tool missing from this list is not
+# decoyed, but whatever it reads under /sys, /proc, /run, /var/log or
+# /var/lib/bluetooth is, and its READ and DATA detectors fire on that.
+#
+# One name per line; '#' starts a comment.
+
+# systemd and the journal
+journalctl
+systemctl
+systemd-run
+systemd-analyze   # `verify` resolves a unit against THIS host's unit directories
+systemd-cat
+coredumpctl
+loginctl
+busctl
+timedatectl
+hostnamectl
+reboot
+shutdown
+poweroff
+halt
+
+# Bluetooth
+bluetoothctl
+btmgmt
+btmon
+hciconfig
+hcitool
+hcidump
+hciattach
+btattach
+rfkill
+
+# devices, modules, the kernel
+udevadm
+lsusb
+modprobe
+rmmod
+insmod
+dmesg
+uname
+
+# D-Bus, audio, the desktop session
+dbus-send
+gdbus
+pw-dump
+pw-cli
+wpctl
+pactl
+notify-send
+wall
+logger
+
+# the network
+tcpdump
+curl
+wget
+nmcli
+iw
+
+# /proc/uptime is read by uptime(1) itself, which no BT_PROC seam can redirect
+uptime

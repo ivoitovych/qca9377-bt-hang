@@ -55,9 +55,11 @@ elif { IFS= read -r _hdr_line < "$OUT"; [[ "$_hdr_line" != *wd_early_ok* ]]; }; 
 fi
 
 ts=$(date -Iseconds)
-boot_id=$(cut -c1-8 /proc/sys/kernel/random/boot_id 2>/dev/null || echo "-")
-kernel=$(uname -r)
-uptime_s=$(awk '{printf "%d", $1}' /proc/uptime)
+boot_id=$(cut -c1-8 "${BT_PROC:-/proc}/sys/kernel/random/boot_id" 2>/dev/null || echo "-")
+# "-" when uname cannot answer, like every other unknown in the row: an empty
+# field is read back as a missing printf argument (and was — tests/run-tests).
+kernel=$(uname -r 2>/dev/null); [[ -n "$kernel" ]] || kernel="-"
+uptime_s=$(awk '{printf "%d", $1}' "${BT_PROC:-/proc}/uptime")
 
 # --- device presence -------------------------------------------------------
 dev_present=0

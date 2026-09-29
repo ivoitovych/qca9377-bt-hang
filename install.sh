@@ -325,7 +325,7 @@ echo
 # --- preflight -------------------------------------------------------------
 echo "[1/7] preflight"
 found=0
-for d in /sys/bus/usb/devices/*; do
+for d in "${BT_SYSFS_USB:-/sys/bus/usb/devices}"/*; do
     [[ -f "$d/idVendor" && -f "$d/idProduct" ]] || continue
     if [[ "$(<"$d/idVendor")" == "$VID" && "$(<"$d/idProduct")" == "$PID" ]]; then
         echo "  device $VID:$PID present at $(basename "$d")"
@@ -673,7 +673,7 @@ run systemctl daemon-reload
 # So the guard now asks both questions: is anything connected, AND has the
 # controller already failed this boot? The second is the one that mattered.
 if (( APPLY )); then
-    uc=$(awk '/^btusb/ {print $3}' /proc/modules 2>/dev/null)
+    uc=$(awk '/^btusb/ {print $3}' "${BT_PROC:-/proc}/modules" 2>/dev/null)
     # COUNTED, NOT `grep -q`, AND THIS IS THE SITE WHERE IT MATTERS MOST.
     #
     # Under `set -o pipefail` a `producer | grep -q` pipeline exits NON-ZERO

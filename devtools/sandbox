@@ -64,13 +64,10 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/.." && pwd)"
 SELF="$HERE/sandbox"
 
-# Every machine tool the project's code calls, and those a test could reach for by
-# accident. One decoy each, whether or not this host has the tool.
-MACHINE_TOOLS=(journalctl systemctl bluetoothctl btmgmt btmon hciconfig hcitool hcidump
-               hciattach btattach udevadm coredumpctl rfkill lsusb modprobe rmmod insmod
-               dmesg loginctl busctl dbus-send gdbus tcpdump pw-dump pw-cli wpctl pactl
-               logger systemd-cat notify-send wall systemd-run timedatectl hostnamectl
-               reboot shutdown poweroff halt uname curl wget nmcli iw)
+# Every machine tool: tests/machine-tools, the list the suite's own tripwire
+# reads, so the two layers cannot disagree about what "the machine" is. One
+# decoy each, whether or not this host has the tool.
+mapfile -t MACHINE_TOOLS < <(sed -e 's/#.*//' -e 's/[[:space:]]//g' "$REPO/tests/machine-tools" 2>/dev/null | grep .)
 # Real trees replaced outright by an empty tmpfs, then decoys planted in them.
 MASKS=(/run /dev/shm /var/log /var/crash /var/lib/bluetooth /var/lib/systemd/coredump
        /sys/bus /sys/module /sys/class /sys/kernel/debug)
@@ -191,7 +188,12 @@ inside() {
     mount -t tmpfs none /tmp || return 99
     cd "$REPO" || return 99
     : > "$W/armed"
-    "$@"; rc=$?
+    # The command runs as the CALLER, in a nested user namespace with no
+    # capabilities: the uid the suite really runs as (root here, an ordinary
+    # user in CI), so ownership checks answer as they do outside — as root,
+    # git saw every index entry's recorded owner differ and rewrote the index
+    # — and a command that tries to unmount a decoy is refused.
+    unshare --user --map-user="$HOST_UID" --map-group="$HOST_GID" -- "$@"; rc=$?
     sweep_reads > "$W/reads"
     listing > /mnt/ctl/after
     changes > "$W/writes"
@@ -257,7 +259,7 @@ changes() {   # before → after: "+ created", "~ changed", "- deleted", one pat
 
 if [[ "${1:-}" == --inside ]]; then
     shift
-    [[ -n "${W:-}" && -n "${MARK:-}" && -n "${OLD:-}" ]] || { echo "sandbox: --inside is internal" >&2; exit 2; }
+    [[ -n "${W:-}" && -n "${MARK:-}" && -n "${OLD:-}" && -n "${HOST_UID:-}" ]] || { echo "sandbox: --inside is internal" >&2; exit 2; }
     inside "$@"
     exit $?
 fi
@@ -279,6 +281,11 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 (( ${#CMD[@]} )) || CMD=(tests/run-tests)
+if (( ${#MACHINE_TOOLS[@]} < 30 )); then
+    echo "sandbox: read only ${#MACHINE_TOOLS[@]} machine tool(s) from tests/machine-tools —" >&2
+    echo "         refusing to call a world with the machine left in it a decoy" >&2
+    exit 2
+fi
 
 if ! unshare -Urpfnmu --mount-proc true 2>/dev/null; then
     echo "sandbox: this host refuses unprivileged user/pid/mount/net/UTS namespaces —" >&2
@@ -294,7 +301,8 @@ W=$(mktemp -d /var/tmp/bt-sandbox.XXXXXX) || { echo "sandbox: no work directory"
 trap 'rm -rf "$W"' EXIT
 OLD=978307200                                   # 2001-01-01: the planted access time
 MARK="DECOY-$(od -An -N6 -tx1 /dev/urandom | tr -d ' \n')"
-export W MARK OLD REPO
+HOST_UID=$(id -u); HOST_GID=$(id -g)
+export W MARK OLD REPO HOST_UID HOST_GID
 mkdir -p "$W/decoy"
 : > "$W/hits.log"; : > "$W/plant"; : > "$W/notes"
 
@@ -330,9 +338,14 @@ decoy_data() {   # <posing as> [content] — a data file carrying the marker
 # One executable decoy for every tool: it logs the call and answers with the
 # marker. Exit 0 with marked output is the most detectable answer there is — a
 # caller that consumes it carries the marker into whatever it prints.
+# A call tagged BT_MACHINE_CONTRACT comes from the suite's real_tool(), the one
+# sanctioned door to the machine (a fixture's shape checked against the real
+# tool): it is logged apart, listed, and not counted as a leak. The suite keeps
+# that tag inside real_tool() with an invariant of its own.
 cat > "$W/decoy/tool" <<DECOY
 #!/bin/sh
-printf '%s\t%s\t%s\n' "\$0" "\$*" "\$(tr '\\0' ' ' < /proc/\$PPID/cmdline 2>/dev/null | cut -c1-150)" >> "$W/hits.log"
+log="$W/hits.log"; [ -n "\${BT_MACHINE_CONTRACT:-}" ] && log="$W/contracts.log"
+printf '%s\t%s\t%s\n' "\$0" "\$*" "\$(tr '\\0' ' ' < /proc/\$PPID/cmdline 2>/dev/null | cut -c1-150)\${BT_MACHINE_CONTRACT:+ [contract: \$BT_MACHINE_CONTRACT]}" >> "\$log"
 echo "$MARK \$(basename "\$0") \$*"
 exit 0
 DECOY
@@ -409,7 +422,7 @@ done
 awk -F'\t' '!seen[$0]++' "$W/plant" > "$W/plant.u" && mv "$W/plant.u" "$W/plant"
 
 run_inside() {   # <command...> — build the world, run the command in it
-    rm -f "$W/armed"; : > "$W/hits.log"; : > "$W/reads"; : > "$W/writes"; : > "$W/notes"
+    rm -f "$W/armed"; : > "$W/hits.log"; : > "$W/contracts.log"; : > "$W/reads"; : > "$W/writes"; : > "$W/notes"
     unshare -Urpfnmu --mount-proc "$SELF" --inside "$@"
 }
 world_failed() {   # <rc> — the world was never armed: say so, never judge
@@ -439,6 +452,7 @@ if (( SELFTEST )); then
         r=$(grep -c . "$W/reads");    w=$(grep -c . "$W/writes")
         case "$expect" in
             call)    (( h )) && ok=1 ;;
+            contract) (( h == 0 )) && [[ -s "$W/contracts.log" ]] && ok=1 ;;
             data)    (( m )) && ok=1 ;;
             read)    (( r )) && ok=1 ;;
             write)   (( w )) && ok=1 ;;
@@ -496,6 +510,8 @@ LISTEN
         "for t in $(q "${MACHINE_TOOLS[@]}"); do p=\$(command -v \"\$t\") || continue; echo \"TRIED \$p\"; \"\$t\" >/dev/null 2>&1; done"
     probe call "an installed awk library, run with awk -f"   "awk -f /usr/local/bin/lib/phase.awk /dev/null >/dev/null"
     probe call "an installed shell library, sourced"         ". /usr/local/bin/lib/journal.sh >/dev/null"
+    probe contract "a tagged contract read is listed apart, not as a leak" \
+        "BT_MACHINE_CONTRACT=self-test journalctl --list-boots >/dev/null"
     # DATA
     probe data "a decoy tool's answer, consumed"             "journalctl -k -b 0 | tail -1"
     probe data "the host name"                                "cat /proc/sys/kernel/hostname"
@@ -521,6 +537,8 @@ LISTEN
     probe refused "resolves a host name" \
         "getent hosts github.com >/dev/null 2>&1 && echo PROBE-RESOLVED || echo PROBE-REFUSED" \
         "getent hosts github.com >/dev/null 2>&1 && echo PROBE-REACHABLE"
+    probe isolated "unmounts a decoy to reach what is under it" \
+        "umount /sys/bus 2>/dev/null && echo PROBE-UNMOUNTED || echo PROBE-ISOLATED"
     probe isolated "sees a host process" \
         "[ -e /proc/$SENTINEL ] && echo PROBE-SAW-HOST || echo PROBE-ISOLATED" \
         "[ -e /proc/$SENTINEL ] && echo PROBE-REACHABLE"
@@ -562,16 +580,21 @@ run_inside "${CMD[@]}" 2>&1 | tee "$W/out.log"
 rc=${PIPESTATUS[0]}
 [[ -e "$W/armed" ]] || world_failed "$rc"
 if [[ -n "$KEEP" ]]; then
-    mkdir -p "$KEEP" && cp "$W/hits.log" "$W/reads" "$W/writes" "$W/out.log" "$KEEP/" \
+    mkdir -p "$KEEP" && cp "$W/hits.log" "$W/contracts.log" "$W/reads" "$W/writes" "$W/out.log" "$KEEP/" \
         && echo "sandbox: raw logs kept in $KEEP (hits.log: tool, argv, caller)"
 fi
 
 calls=$(grep -c . "$W/hits.log"); marks=$(grep -c -- "$MARK" "$W/out.log")
+contracts=$(grep -c . "$W/contracts.log")
 reads=$(grep -c . "$W/reads");   writes=$(grep -c . "$W/writes")
 echo
 echo "── sandbox ($MARK): $(grep -c '^bind' "$W/plant") tools decoyed in place, $(grep -c . "$W/installed") installed files, decoy /sys /proc /run /var/log;"
 echo "   $(( $(grep -c . "$W/overlays") - $(grep -c 'not overlaid' "$W/notes") )) real trees under throwaway overlays, / read-only"
 [[ -s "$W/notes" ]] && sed 's/^/   · /' "$W/notes"
+if (( contracts )); then
+    echo "   · $contracts contract read(s) through real_tool — the fixture's shape checked against the real tool, not leaks:"
+    awk -F'\t' '{ print "       " $1 " " $2 "   " $3 }' "$W/contracts.log" | sort | uniq -c | sed 's/^/    /' | head -5
+fi
 if (( calls + marks + reads + writes == 0 )); then
     echo "   ✓ no leak — no real tool run, no decoy data in the output, no decoy file read, no real directory written"
     (( rc == 0 )) || exit 1

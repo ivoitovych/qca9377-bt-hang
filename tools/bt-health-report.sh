@@ -60,14 +60,21 @@ PID="${BT_PID:-3503}"
 # Defaults to the mtime of the watchdog unit if not set explicitly.
 # Prefer the stamp install.sh writes once. A unit file's mtime moves forward on
 # every reinstall, which would relabel already-mitigated boots as "before".
-STAMP=/usr/local/share/qca9377-bt-hang/installed-at
+#
+# Both seamed, for the reason the baseline search above gives. Hardcoded, the
+# suite's report tests labelled their fixture boots against the INSTALL DATE of
+# whatever machine ran them: every boot "before" here, and on the laptop an
+# answer set by when the project was last installed — while the two branches
+# below were measured as "only on an installed machine" and left untested.
+STAMP="${BT_SHARE_DIR:-/usr/local/share/qca9377-bt-hang}/installed-at"
+WD_UNIT="${BT_UNIT_DIR:-/etc/systemd/system}/bt-hang-watchdog.service"
 if [[ -n "${BT_CHANGE_TIME:-}" ]]; then
     CHANGE_EPOCH=$(date -d "$BT_CHANGE_TIME" +%s 2>/dev/null || echo 0)
 elif [[ -s "$STAMP" ]]; then
     CHANGE_EPOCH=$(cat "$STAMP")
-elif [[ -e /etc/systemd/system/bt-hang-watchdog.service ]]; then
+elif [[ -e "$WD_UNIT" ]]; then
     # Fallback only; see above for why this can mislabel.
-    CHANGE_EPOCH=$(stat -c %Y /etc/systemd/system/bt-hang-watchdog.service)
+    CHANGE_EPOCH=$(stat -c %Y "$WD_UNIT")
 else
     CHANGE_EPOCH=0
 fi

@@ -71,7 +71,7 @@ fi
 # lot and confusing them is how a fixed problem gets reported as still broken:
 # a boot average includes the start-up burst long after the steady rate is fine.
 if [[ -z "$SINCE" ]]; then
-    span=$(awk '{printf "%d", $1}' /proc/uptime)
+    span=$(awk '{printf "%d", $1}' "${BT_PROC:-/proc}/uptime")
 else
     span=""
 fi
