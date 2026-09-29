@@ -329,6 +329,24 @@ export PYTHONDONTWRITEBYTECODE=1
 # The last assertion, exported so a tripwire hit can say where in the run it was.
 export SUITE_AT="(before the first assertion)"
 
+# EVERY PROCESS THIS RUN STARTS CARRIES THIS MARKER, and an orphan keeps its
+# environment. So "did anything outlive the test that started it?" has an
+# answer at the end of the run (suite_orphans, below) — it did: each run left
+# five `sleep 3600` behind, the idle loops of the daemons the tests stopped
+# with a plain `kill <pid>`, which a CI runner reaped by the dozen at job end
+# and the laptop never would. systemctl stop kills the unit's whole cgroup; a
+# test that stops a daemon must do the same (stop_daemon).
+export SUITE_RUN_ID="suite-$$-$SRANDOM"
+suite_orphans() {   # pid and command of every process carrying this run's marker, but this shell
+    local p pid
+    for p in /proc/[0-9]*; do
+        pid=${p#/proc/}
+        [[ "$pid" == "$$" || "$pid" == "$BASHPID" ]] && continue
+        grep -qsz "^SUITE_RUN_ID=$SUITE_RUN_ID\$" "$p/environ" || continue
+        printf '%s %s\n' "$pid" "$(tr '\0' ' ' < "$p/cmdline" 2>/dev/null | cut -c1-90)"
+    done
+}
+
 # THE ONE DOOR TO THE REAL MACHINE. A contract check compares a fixture's shape
 # with what the real tool prints, and reading the machine is its whole point
 # (coredumpctl, below). It goes through here, and nowhere else: the binary is
@@ -410,6 +428,12 @@ on_exit() {
         echo "  ** RUN DID NOT FINISH — interrupted, or exited early. The checks"
         echo "     below are the only account of what it touched. **"
         final_resource_report
+    fi
+    # Nothing this run started may outlive it, whichever way it ended. The
+    # normal path reports them as a failure first (end of file); this reaps.
+    if declare -F suite_orphans >/dev/null; then
+        local _o; _o=$(suite_orphans | cut -d' ' -f1)
+        [[ -n "$_o" ]] && kill -TERM $_o 2>/dev/null
     fi
     (( ${#CLEANUP_PATHS[@]} )) && rm -rf "${CLEANUP_PATHS[@]}"
 }
@@ -691,6 +715,21 @@ MSTUB
         esac
         chmod +x "$d/$t"
     done
+}
+
+# ── STOPPING A DAEMON THE WAY systemctl stop DOES ─────────────────────────
+#
+# Start it as its own process group — `setsid` — and stop it with TERM to the
+# main process, then TERM to whatever is still in its group: its idle
+# `sleep 3600`, a stub btmon and ITS sleep. `kill <pid>` alone left every one
+# of those running for an hour after the suite finished (see SUITE_RUN_ID).
+# setsid does not fork from a background job, so $! stays the daemon's pid and
+# the TERM still reaches the daemon's own trap first.
+SETSID=$(command -v setsid)   # resolved once: a farmed PATH below must not hide it
+stop_daemon() {   # <pid> — of a daemon started with "$SETSID"
+    kill -TERM "$1" 2>/dev/null; wait "$1" 2>/dev/null
+    kill -TERM -- "-$1" 2>/dev/null
+    return 0
 }
 
 # ── THE SHELL SCRIPTS THIS REPOSITORY SHIPS ───────────────────────────────
@@ -3249,7 +3288,7 @@ wd_until() {   # <marker> <max-tenths> [env overrides...] — stop as soon as it
     local out; out=$(mktemp)
     env PATH="$WD/stub:$PATH" BT_JOURNAL_FIXTURE=tests/journal/watchdog \
         BT_SYSFS_USB="$WD/sysfs" BT_SYSFS_DRIVERS="$WD/drv" \
-        "$@" bin/bt-hang-watchdog > "$out" 2>&1 &
+        "$@" "$SETSID" bin/bt-hang-watchdog > "$out" 2>&1 &
     local pid=$! i=0
     while (( i < tenths )); do
         grep -q "$marker" "$out" 2>/dev/null && break
@@ -3264,7 +3303,7 @@ wd_until() {   # <marker> <max-tenths> [env overrides...] — stop as soon as it
     # is a subshell, so an assignment here never reaches the caller. The first
     # version set WD_ALIVE and the caller read it as unset.
     kill -0 "$pid" 2>/dev/null && echo 1 > "$WD/alive" || echo 0 > "$WD/alive"
-    kill -TERM "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
+    stop_daemon "$pid"
     cat "$out"; rm -f "$out"
 }
 
@@ -7028,7 +7067,7 @@ echo 2048 > "$UM/capkb"                 # each capture is 2 MB
 PATH="$UM/bin:$PATH" BT_SYSFS_USB="$UM/sysfs" BT_USBMON_DIR="$UM/cap" \
     BT_USBMON_DEBUGFS="$UM/dbg" BT_USBMON_GAPLOG="$UM/cap/gaps.log" \
     BT_USBMON_MAX_MB=1 BT_USBMON_CHECK_SEC=0.3 BT_USBMON_KEEP=99 \
-    bin/bt-usbmon > "$UM/daemon.log" 2>&1 &
+    "$SETSID" bin/bt-usbmon > "$UM/daemon.log" 2>&1 &
 UMPID=$!
 # POLLED ON THE THING BEING ASSERTED, not on a log line plus a sleep. The
 # first version waited for "rotating at" and then slept for the new file to
@@ -7041,7 +7080,7 @@ while (( umi < 100 )); do
     (( UMROT >= 2 )) && break
     sleep 0.1; umi=$((umi + 1))
 done
-kill -TERM "$UMPID" 2>/dev/null; wait "$UMPID" 2>/dev/null
+stop_daemon "$UMPID"
 UMLOG=$(cat "$UM/daemon.log")
 
 (( UMROT >= 2 )) && [[ "$UMLOG" == *"rotating at"* ]] \
@@ -7066,12 +7105,12 @@ touch "$UM/tcpdump-dies"
 PATH="$UM/bin:$PATH" BT_SYSFS_USB="$UM/sysfs" BT_USBMON_DIR="$UM/cap" \
     BT_USBMON_DEBUGFS="$UM/dbg" BT_USBMON_GAPLOG="$UM/cap/gaps.log" \
     BT_USBMON_CHECK_SEC=0.3 BT_USBMON_KEEP=99 \
-    bin/bt-usbmon > "$UM/dead.log" 2>&1 &
+    "$SETSID" bin/bt-usbmon > "$UM/dead.log" 2>&1 &
 UMPID2=$!
 # Waits for the GAP-LOG entry, which is written after the log line and is what
 # the second assertion below reads. Stopping at the log line raced the printf.
 um_wait "$UM/cap/gaps.log" "tcpdump-exit" 100
-kill -TERM "$UMPID2" 2>/dev/null; wait "$UMPID2" 2>/dev/null
+stop_daemon "$UMPID2"
 UMDEAD=$(cat "$UM/dead.log")
 [[ "$UMDEAD" == *"tcpdump exited (rc=3) — restarting"* ]] \
     && ok "a capture process that dies is noticed, with its exit status" \
@@ -7137,14 +7176,14 @@ tr_daemon() {   # <marker> <tenths> <count> [env...] — until the marker has ap
     # first one becomes the command name and the daemon never runs. env also
     # execs, so $! stays the daemon's pid and the TERM below reaches its trap.
     env PATH="$TR/bin:$PATH" BT_TRACE_DIR="$TR/cap" BT_TRACE_GAPLOG="$TR/cap/gaps.log" \
-        BT_TRACE_POLL_SEC=1 "$@" bin/bt-trace > "$TR/daemon.log" 2>&1 &
+        BT_TRACE_POLL_SEC=1 "$@" "$SETSID" bin/bt-trace > "$TR/daemon.log" 2>&1 &
     local pid=$! i=0 n=0
     while (( i < tenths )); do
         n=$(grep -c "$marker" "$TR/daemon.log" 2>/dev/null || true)
         (( ${n:-0} >= want )) && break
         sleep 0.1; i=$((i + 1))
     done
-    kill -TERM "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
+    stop_daemon "$pid"
     cat "$TR/daemon.log"
 }
 
@@ -7236,7 +7275,7 @@ echo 1 > "$TR/freegb"
 : > "$TR/cap/gaps.log"; : > "$TR/daemon.log"
 env PATH="$TR/bin:$PATH" BT_TRACE_DIR="$TR/cap" BT_TRACE_GAPLOG="$TR/cap/gaps.log" \
     BT_TRACE_POLL_SEC=1 BT_TRACE_MIN_FREE_GB=15 BT_TRACE_CHECK_SEC=1 \
-    bin/bt-trace > "$TR/daemon.log" 2>&1 &
+    "$SETSID" bin/bt-trace > "$TR/daemon.log" 2>&1 &
 TRPID=$!
 # WAIT FOR THE LAST MESSAGE OF THE SCENARIO, NOT THE FIRST RECOGNISABLE ONE.
 #
@@ -7265,6 +7304,7 @@ else
     ok "a bt-trace idling after the disk floor still stops on SIGTERM"
 fi
 wait "$TRPID" 2>/dev/null
+kill -TERM -- "-$TRPID" 2>/dev/null   # and what it left in its group (stop_daemon's second half)
 TRF=$(cat "$TR/daemon.log")
 [[ "$TRF" == *"only 1GB free"* && "$TRF" == *"pruning captures"* ]] \
    && [[ "$TRF" == *"Stopping capture rather than filling the filesystem"* ]] \
@@ -10030,9 +10070,10 @@ SRMP=$(env PATH="$SS/bin:$PATH" BT_DESTDIR="$SRM" ./uninstall.sh --apply --purge
 # THE btusb RESTORE, both branches. They differ by the module's USECOUNT, and
 # forcing a real usecount means holding the controller open — the one thing
 # these tests may never do to the device under investigation. So /proc/modules
-# is a seam and lsmod is a stub, and both branches are driven from text.
+# is a seam, and both branches are driven from text. (Presence too, since
+# 2026-09-29: it was read through an unseamed lsmod, stubbed here, and the real
+# one everywhere else.)
 SPM=$(mktemp -d); mkdir -p "$SPM/bin"; cp "$SS/bin"/* "$SPM/bin/"
-printf '#!/bin/sh\necho "btusb                  73728  0"\nexit 0\n' > "$SPM/bin/lsmod"
 printf '#!/bin/sh\necho "modprobe $*" >> "%s/spy.log"\nexit 0\n' "$SPM" > "$SPM/bin/modprobe"
 chmod +x "$SPM/bin"/*
 SFREE=$(mktemp); printf 'btusb 73728 0 - Live 0x0000000000000000\n' > "$SFREE"
@@ -10055,6 +10096,16 @@ SPMB=$(env PATH="$SPM/bin:$PATH" BT_DESTDIR="$SRB" BT_PROC_MODULES="$SBUSY" \
 [[ "$SPMB" == *"btusb is in use (usecount=3)"* && "$SPMB" != *"modprobe -r"* ]] \
     && ok "a btusb in use is left alone rather than force-unloaded" \
     || bad "uninstall.sh tried to unload a module that was in use"
+# And the third branch, the one every container took by default: no btusb line
+# at all. Presence now comes from the same file, so an empty one is "not loaded"
+# on every host — the laptop's lsmod used to answer this for its tests.
+SNONE=$(mktemp); : > "$SNONE"
+SPMN=$(env PATH="$SPM/bin:$PATH" BT_DESTDIR="$SRB" BT_PROC_MODULES="$SNONE" \
+           ./uninstall.sh --apply 2>&1)
+[[ "$SPMN" == *"btusb not loaded"* && "$SPMN" != *"modprobe -r"* && "$SPMN" != *"usecount"* ]] \
+    && ok "no btusb in the modules file is 'not loaded' — read from the file, not lsmod" \
+    || bad "uninstall.sh's btusb presence did not follow BT_PROC_MODULES: $(grep -m1 btusb <<<"$SPMN")"
+rm -f "$SNONE"
 
 rm -rf "$SRL" "$SRM" "$SPM" "$SRB" "$SFREE" "$SBUSY"
 
@@ -12168,6 +12219,17 @@ else
                                  substr(a[k], 1, 40), substr(at[k], 1, 60) } }' \
         <(grep -v $'^journalctl\t--suite-tripwire-canary\t' "$TRIP_LOG") \
         | sort -t$'\t' -k1,1rn -k2,2n -k3,3n | cut -f4- | head -120
+fi
+
+# Nothing this run started may still be running (SUITE_RUN_ID, top of file).
+# Reported, then reaped, so a red run does not leave them either.
+ORPHANS=$(suite_orphans)
+if [[ -z "$ORPHANS" ]]; then
+    ok "no process this run started has outlived the test that started it"
+else
+    bad "$(grep -c . <<<"$ORPHANS") process(es) outlived the test that started them — stop daemons with stop_daemon:"
+    sed 's/^/        /' <<<"$ORPHANS" | head -10
+    kill -TERM $(cut -d' ' -f1 <<<"$ORPHANS") 2>/dev/null
 fi
 
 final_resource_report
