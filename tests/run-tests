@@ -4130,18 +4130,29 @@ STSYS=$(mktemp -d); mkdir -p "$STSYS/usb" "$STSYS/bt"
 # bt-status runs bt-state, which asks systemctl whether bluetooth is running and
 # bluetoothctl what is connected: this machine's answers until they were declared.
 STBIN="$STSYS/bin"; machine_stub "$STBIN" systemctl bluetoothctl uptime
+# And its checkout, declared: section 5 reports the repository's state, and
+# without BT_REPO it found THIS one — this checkout's uncommitted count in every
+# test's output, and a `git status` that rewrote its stale index (devtools/
+# sandbox, run as an ordinary user). One commit, one uncommitted file.
+STREPO="$STSYS/repo"; mkdir -p "$STREPO/tools"; git init -q "$STREPO"
+: > "$STREPO/tools/bt-status"; git -C "$STREPO" add -A
+git -C "$STREPO" -c user.name=t -c user.email=test@example.com -c commit.gpgsign=false commit -qm init
+echo x > "$STREPO/uncommitted"
 
 # Stage 2: nothing on the bus, no adapter.
-SOUT=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SOUT=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
        tools/bt-status 2>&1); src=$?
 (( src == 0 )) && ok "bt-status runs over a fixture and a fake device tree" \
                || bad "bt-status failed (rc=$src)"
+[[ "$SOUT" == *"checkout:"*"$STREPO"* ]] && grep -qE 'uncommitted files: +1$' <<<"$SOUT" \
+    && ok "bt-status reports the declared checkout and its one uncommitted file" \
+    || bad "bt-status's repo section is not the declared checkout's: $(grep -E 'checkout:|uncommitted' <<<"$SOUT" | tr '\n' '|')"
 
 # THE SAME VERDICT MUST NOT PRODUCE TWO EXIT CODES. Before this was asserted,
 # a down controller exited 1 in full mode and 0 under --brief, because the full
 # path had no explicit exit and inherited whatever ran last. A caller writing
 # `bt-status && ...` got different behaviour from a DISPLAY flag.
-BRC=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+BRC=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
       tools/bt-status --brief >/dev/null 2>&1; echo $?)
 [[ "$src" == "$BRC" ]] \
     && ok "bt-status exit status is the same in full and --brief mode" \
@@ -4181,7 +4192,7 @@ STLE=$(grep -F "'unexpected event' (LE):" <<<"$SOUT" | head -1)
 # Enumerated but no adapter: a DIFFERENT diagnosis, and the operator's next
 # step differs with it — btusb never bound, rather than the chip being gone.
 mkdir -p "$STSYS/usb/3-3"; echo 13d3 > "$STSYS/usb/3-3/idVendor"; echo 3503 > "$STSYS/usb/3-3/idProduct"
-SENUM=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SENUM=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
         tools/bt-status 2>&1)
 [[ "$SENUM" == *"btusb has created no adapter"* && "$SENUM" != *"full POWER-OFF is required"* ]] \
     && ok "bt-status distinguishes 'enumerated, no adapter' from stage 2" \
@@ -4189,7 +4200,7 @@ SENUM=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" B
 
 # Healthy: an adapter exists, so no down-right-now verdict at all.
 mkdir -p "$STSYS/bt/hci0"
-SOK=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SOK=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
       tools/bt-status 2>&1)
 [[ "$SOK" != *"CONTROLLER IS DOWN RIGHT NOW"* ]] \
     && ok "bt-status does not cry down when an adapter is present" \
@@ -4211,7 +4222,7 @@ SOK=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_
 #
 # Each pair (kernel + watchdog + bluetoothd) is a fixture directory, because
 # the verdicts differ by which of those three logs carries what — not by a flag.
-sv() { PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$STSYS/usb" \
+sv() { PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$STSYS/usb" \
        BT_SYSFS_BT="$STSYS/bt" tools/bt-status --brief 2>&1; }
 
 SVEOK=$(sv status-early-ok)
@@ -4254,14 +4265,14 @@ SVCQ=$(sv status-clean-quiet)
 # operator opens this tool to answer, and the directory was hardcoded.
 STTR=$(mktemp -d); : > "$STTR/a.btsnoop"; : > "$STTR/b.btsnoop"
 printf 'gap 1\ngap 2\ngap 3\n' > "$STTR/gaps.log"
-SVTR=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SVTR=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
        BT_TRACE_DIR="$STTR" tools/bt-status 2>&1)
 [[ "$SVTR" == *"btsnoop files:"*"2"* && "$SVTR" == *"capture gaps logged:"*"3"* ]] \
     && ok "bt-status counts the captures and the logged capture gaps" \
     || bad "capture health did not report 2 files and 3 gaps"
 rm -rf "$STTR"
 
-SVNOTR=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SVNOTR=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
          BT_TRACE_DIR=/nonexistent tools/bt-status 2>&1)
 [[ "$SVNOTR" == *"no trace directory"* ]] \
     && ok "bt-status says so when there is no capture directory at all" \
@@ -4269,7 +4280,7 @@ SVNOTR=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" 
 
 # No checkout: the tool must say which variable to set rather than printing an
 # empty section, because it is run from anywhere and often from /.
-SVNOREPO=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SVNOREPO=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
            BT_REPO=/nonexistent/checkout tools/bt-status 2>&1)
 [[ "$SVNOREPO" == *"no checkout found"* && "$SVNOREPO" == *"BT_REPO="* ]] \
     && ok "bt-status names the override when it cannot find a checkout" \

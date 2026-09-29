@@ -377,7 +377,9 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
   readable journal" and never asks has two meanings and tests one. On a journal-less host
   it accepted `bt1_status=not_observed` — *"we looked and BT-1 did not happen"* — for a
   trial where looking was impossible, on every run and every CI run since the classifier
-  was written. Now it derives the premise and asserts the opposite answer on each side.
+  was written. It then derived the premise from the host, so the container checked one
+  answer and the laptop the other; since 2026-09-29 the journal is an input — readable
+  in one test, absent and unreadable in another — and both answers run on every host.
 - **`ENUMERATED == 0` is a refusal; `CHECKED == 0` is a result.** The same defect, in the
   producer: `journalctl` **exits 0** with no journal files at all, so a checked exit status
   said "read succeeded" and a numeric zero became a clean survival. Exit 0 is not evidence
@@ -395,9 +397,19 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
 - **Tests never touch the real evidence tree.** Everything reads through a seam
   (`BT_JOURNAL_FIXTURE`, `BT_COREDUMP_FIXTURE`, `BT_CAPTURE_SOURCE`, `BT_SNAPSHOT_DIR`,
   `BT_REPO`, `BT_DESTDIR`), and fixtures carry placeholders (`AA:BB:CC:…`, `192.0.2.x`,
-  `example.com`) — never real-but-shortened data. ⚠️ The seam is **not complete**: a run
-  still reaches the real `journalctl`, `systemctl` and `bluetoothctl`, which is why the
-  suite costs a minute here and far more on the machine (§9).
+  `example.com`) — never real-but-shortened data. The seam is complete **as measured**,
+  not as believed: every machine tool answers from a tripwire unless a test declares it,
+  `/proc`, `/sys` and the install paths resolve to an empty declared machine for the whole
+  run, nothing the run starts may outlive it, and CI runs the suite in `devtools/sandbox`'s
+  decoy world, which fails on any call, read or write that reaches the real machine
+  (tests/README.md, rule 5).
+- **A leak is only visible where the mock and the world disagree.** For weeks the suite
+  called the real `journalctl`, `systemctl`, `logger` and `lsmod` — 312 calls a run — and
+  every one passed, because in the container and in CI the real machine answered *nothing*,
+  which is exactly what an empty fixture returns. On the laptop the same calls read its
+  real journal and wrote 20 fake trial lines into it. A check that the suite is hermetic
+  has to run in a world that answers differently from every fixture, and has to prove on
+  itself that it would catch a leak.
 - **The suite must not run in the live tree.** It drives actuators, so it refuses while a
   trial is open — on 2026-08-14 a coverage run closed a live two-hour trial and wrote a
   results row fabricated by stubs. Run it from a separate worktree there; and when a tool
