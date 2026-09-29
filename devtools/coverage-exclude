@@ -126,7 +126,7 @@ tools/bt-logvolume:116-121  # inline share renderer (same pipeline, second progr
 tools/bt-trial:274-278      # inline trial-number counter; same (re-derived 2026-09-29: +3, the btusb seam comment; +21, main's module_build and KJ_RE)
 tools/bt-trial:872-880      # inline sco-params window filter; same (re-derived 2026-09-19 (+16), 2026-09-20 (+12, the abort/autostop edits), 2026-09-24 (+37, dbe7123) and 2026-09-29 (+3, then +97 with main's bounded closer, +5 for autostop's priority read) — R2-112; CI's stale-exclusion check caught the old range covering live code both times. Shrunk 2026-09-29 by its last line, the `echo` after the program: a test now decodes a capture, so it runs. The range is btmon-line+2 … +10, the program's body)
 tools/bt-verify-install:57-60   # inline install_file parser; same
-tests/run-tests:455-460       # inline --section extractor; same (re-derived 2026-09-28: +27, the git-isolation block above it; 2026-09-29: +126, the machine tripwire, the declared machine and the run marker)
+tests/run-tests:466-471       # inline --section extractor; same (re-derived 2026-09-28: +27, the git-isolation block above it; 2026-09-29: +126, the machine tripwire, the declared machine and the run marker; then +11, the declared usbfs and runtime-user roots)
 
 # THE ELEVENTH ENTRY WAS MISSING AND COST MORE THAN A PERCENTAGE POINT.
 # devtools/test-comprehension filters `exit N` inside an embedded program out of
@@ -200,7 +200,7 @@ tools/bt-health-report.sh:235-235  # no-baseline branch: exercised only through 
 # branches on every run. Mutating any one of the three turns that assertion red
 # — verified by doing it. The range starts one line INSIDE the program because
 # the construct is a pipeline, which bash traces at the line it opens on.
-tests/run-tests:531-537     # inline footprint differ; driven and pinned by the assertion above (re-derived 2026-09-28 from the trace, not by arithmetic; 2026-09-29 by content, the differ now compares every field)
+tests/run-tests:542-548     # inline footprint differ; driven and pinned by the assertion above (re-derived 2026-09-28 from the trace, not by arithmetic; 2026-09-29 by content, the differ now compares every field; then +11 by content, the declared usbfs and runtime-user roots)
 
 # THE REPORTING LOOP runs only when a binary actually changed, which on an
 # undamaged machine is never — the same category as the `bad` lines section 3
