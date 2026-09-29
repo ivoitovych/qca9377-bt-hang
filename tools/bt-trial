@@ -169,7 +169,10 @@ treatment_only_became_unreadable() {
 
 env_fingerprint() {
     local autosusp power wd early thr probes commit dev
-    autosusp=$(cat /sys/module/btusb/parameters/enable_autosuspend 2>/dev/null || echo '?')
+    # Seamed like the device tree below and like every other tool's btusb read:
+    # hardcoded, every trial a test opened was fingerprinted with the HOST's
+    # autosuspend setting (devtools/sandbox, 2026-09-29).
+    autosusp=$(cat "${BT_SYSFS_MODULE:-/sys/module/btusb/parameters}/enable_autosuspend" 2>/dev/null || echo '?')
     power='?'
     for dev in "$SYSFS_USB"/*; do
         [[ -f "$dev/idVendor" && -f "$dev/idProduct" ]] || continue
