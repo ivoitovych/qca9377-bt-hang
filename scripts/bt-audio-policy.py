@@ -91,6 +91,13 @@ def summarize(state):
                 s[f"{key} profile-route"] = "MATCH"
             else:
                 s[f"{key} profile-route"] = f"MISMATCH active #{prof.get('index')} routes {claimed}"
+        elif t.endswith(":Node") and p.get("media.class") == "Stream/Output/Audio":
+            # The node itself, not only its link: a one-second test sound can be
+            # created and gone inside one pw-dump batch, and then no link is
+            # ever seen. media.name is the sound's name (e.g. audio-channel-front-left).
+            app = p.get("application.name") or p.get("node.name", "?")
+            s[f"playback-node[{app}]"] = \
+                f"{p.get('media.name', '?')} target={p.get('target.object', '-')} role={p.get('media.role', '-')}"
         elif t.endswith(":Node") and p.get("media.class") in ("Audio/Sink", "Audio/Source"):
             pr = (params(o).get("Props") or [{}])[0]
             vols = pr.get("channelVolumes") or []
@@ -114,14 +121,21 @@ def summarize(state):
         if not src or not dst:
             continue
         dp = props(dst)
-        if dp.get("media.class") != "Stream/Input/Audio":
-            continue
         sp = props(src)
-        what = sp.get("node.description", "?")
-        if sp.get("media.class") == "Audio/Sink":
-            what = f"monitor of {what}"
-        app = dp.get("application.name") or dp.get("node.name", "?")
-        key = f"capture[{app}]"
+        if dp.get("media.class") == "Stream/Input/Audio":
+            what = sp.get("node.description", "?")
+            if sp.get("media.class") == "Audio/Sink":
+                what = f"monitor of {what}"
+            app = dp.get("application.name") or dp.get("node.name", "?")
+            key = f"capture[{app}]"
+        elif sp.get("media.class") == "Stream/Output/Audio" and dp.get("media.class") == "Audio/Sink":
+            # Playback too, since 2026-09-29: "Test sound does not play" needs
+            # to know whether the test stream existed and which sink it fed.
+            what = dp.get("node.description", "?")
+            app = sp.get("application.name") or sp.get("node.name", "?")
+            key = f"playback[{app}]"
+        else:
+            continue
         s[key] = "; ".join(sorted(set(filter(None, [s.get(key), what]))))
     return s
 
@@ -133,6 +147,20 @@ def apply(state, update):
             continue
         if o.get("info") is None and "type" not in o:
             state.pop(oid, None)
+        elif o.get("type", "").endswith(":Metadata") and oid in state:
+            # pw-dump prints only the metadata entries that CHANGED (1.0.5
+            # metadata_dump skips e->changed == 0), and a removal as value null.
+            # Replacing the object dropped every key the update did not name:
+            # 2026-09-27 00:37:53 logged "default audio.source -> -" while the
+            # source was set, and nothing after it.
+            merged = {(m.get("subject"), m.get("key")): m
+                      for m in state[oid].get("metadata") or []}
+            for m in o.get("metadata") or []:
+                if m.get("value") is None:
+                    merged.pop((m.get("subject"), m.get("key")), None)
+                else:
+                    merged[(m.get("subject"), m.get("key"))] = m
+            state[oid] = dict(o, metadata=list(merged.values()))
         else:
             state[oid] = o
 

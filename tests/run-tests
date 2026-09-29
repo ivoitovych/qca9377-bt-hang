@@ -1658,6 +1658,17 @@ trial() {
     BT_STATE="$LC/state" BT_SYSFS_USB="$LC/sysfs" BT_SYSFS_MODULE="$LC/mod" \
     tools/bt-trial "$@"
 }
+# trial(), pointed at another evidence root and state directory, for a test that
+# needs its own. BT_EVIDENCE_REPO is the root by construction — the variable a
+# hand-written call once forgot (see the invariant at the end of the file).
+trial_in() {   # <evidence root> <state dir> [VAR=value...] -- <bt-trial arguments>
+    local root="$1" state="$2"; shift 2
+    local -a extra=()
+    while [[ $# -gt 0 && "$1" != -- ]]; do extra+=("$1"); shift; done
+    shift
+    env PATH="$LC/bin:$PATH" BT_REPO="$root" BT_EVIDENCE_REPO="$root" BT_STATE="$state" \
+        BT_SYSFS_USB="$LC/sysfs" BT_SYSFS_MODULE="$LC/mod" "${extra[@]}" tools/bt-trial "$@"
+}
 
 rc=0
 trial autostart stock >/dev/null 2>&1 || rc=$?
@@ -1666,6 +1677,104 @@ if (( rc == 0 )) && [[ -e "$LC/state/current" ]]; then
 else
     bad "autostart failed (rc=$rc) or wrote no state file"
 fi
+
+# The unit declares BT_BUILD=stock; with a diagnostic btusb loaded that is the
+# forgotten override (2026-09-26, E1 opened as stock trial 15). Checked in a
+# separate state dir, so the trial opened above is untouched.
+# BT_SYSFS_MODULE names btusb's parameters directory, as in every tool; the
+# version file is its sibling, as in /sys/module/btusb.
+mkdir -p "$LC/sysmod/btusb/parameters"; echo 0.8-e1 > "$LC/sysmod/btusb/version"
+trial_in "$LC" "$LC/state-mb" BT_SYSFS_MODULE="$LC/sysmod/btusb/parameters" BT_BUILD=stock \
+    -- autostart >/dev/null 2>&1
+if grep -qx 'build=E1' "$LC/state-mb/current" 2>/dev/null && grep -qx 'build_declared=stock' "$LC/state-mb/current"; then
+    ok "autostart labels a diagnostic btusb by its version, not the unit's stale stock"
+else
+    bad "autostart with btusb 0.8-e1 and BT_BUILD=stock: $(tr '\n' ' ' < "$LC/state-mb/current" 2>/dev/null)"
+fi
+rm -rf "$LC/state-mb" "$LC/evidence/trials/E1"
+
+# An unclosed trial's directory is set aside at the next boot, never written
+# over: the number is reused (it counts rows, and the unclosed trial has none),
+# and mkdir -p put the new state-before.txt over the old one on 2026-09-27.
+printf '#!/bin/sh\nexit 0\n' > "$LC/bin/bt-state"; chmod +x "$LC/bin/bt-state"
+mkdir -p "$LC/ev-set/evidence/trials/stock/trial-01"
+echo old > "$LC/ev-set/evidence/trials/stock/trial-01/state-before.txt"
+trial_in "$LC/ev-set" "$LC/state-set" -- autostart stock >/dev/null 2>&1
+ASIDE=$(ls -d "$LC/ev-set/evidence/trials/stock/trial-01.unclosed-"* 2>/dev/null | head -1)
+if [[ -n "$ASIDE" && "$(cat "$ASIDE/state-before.txt" 2>/dev/null)" == old \
+      && -e "$LC/ev-set/evidence/trials/stock/trial-01/steps.log" ]]; then
+    ok "autostart sets an unclosed trial directory aside instead of writing over it"
+else
+    bad "autostart over an existing trial-01 directory: aside='$ASIDE'"
+fi
+rm -rf "$LC/ev-set" "$LC/state-set"
+
+# The closer's verdict comes from an error-priority read and the descriptive
+# scan runs under a budget: a journal too slow for the budget (a day of dynamic
+# debug: 180 s even --grep-filtered) costs the counts, never the row or the
+# verdict. The stub answers the -p read at once and sleeps on the full one.
+mkdir -p "$LC/slow/bin"
+cat > "$LC/slow/bin/journalctl" <<'STUB'
+#!/bin/sh
+fast=0
+for a in "$@"; do [ "$a" = "-p" ] && fast=1; done
+for a in "$@"; do
+  if [ "$a" = "-k" ]; then
+    if [ "$fast" = 1 ]; then
+      printf '2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout\n'
+    else
+      sleep 5
+    fi
+    exit 0
+  fi
+done
+exit 0
+STUB
+chmod +x "$LC/slow/bin/journalctl"
+export BT_TRIAL_SCAN_BUDGET=1
+trial_in "$LC/slow" "$LC/state-slow" PATH="$LC/slow/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+SLOWOUT=$(trial_in "$LC/slow" "$LC/state-slow" PATH="$LC/slow/bin:$LC/bin:$PATH" -- ok 2>&1); slowrc=$?
+unset BT_TRIAL_SCAN_BUDGET
+SLOWROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13 }' "$LC/slow/evidence/trials/results.tsv" 2>/dev/null)
+if [[ "$SLOWROW" == "confirmed ? 1" ]]; then
+    ok "a journal too slow for the budget costs the descriptive counts, never the row or the verdict"
+else
+    bad "slow-journal close: rc=$slowrc row (bt1_status sco_sent timeouts)='$SLOWROW'"
+    while IFS= read -r l; do echo "        $l"; done <<<"$SLOWOUT"
+fi
+rm -rf "$LC/slow" "$LC/state-slow"
+
+# THE --grep PROBE, both ways, and against the inversion that hid it. A journal
+# whose --help names --grep must be asked with the filter; one whose help does
+# not, without. The first help text is LONG, as journalctl's is: probed with
+# `journalctl --help | grep -q -- --grep` under pipefail, grep leaves at the
+# match, the writer dies of SIGPIPE, and the probe reads "no --grep" on exactly
+# the system that has it — the closer then read the laptop's journal unfiltered.
+mkdir -p "$LC/kg/bin" "$LC/kgn/bin"
+cat > "$LC/kg/bin/journalctl" <<KGSTUB
+#!/bin/sh
+case "\$1" in --help) echo "  --grep=PATTERN"; exec seq 1 200000 ;; esac   # exec: the WRITER must be what dies of SIGPIPE, as journalctl does
+echo "\$*" >> "$LC/kg/args"
+exit 0
+KGSTUB
+cat > "$LC/kgn/bin/journalctl" <<KGSTUB
+#!/bin/sh
+case "\$1" in --help) echo "  -k --dmesg"; exit 0 ;; esac
+echo "\$*" >> "$LC/kgn/args"
+exit 0
+KGSTUB
+chmod +x "$LC/kg/bin/journalctl" "$LC/kgn/bin/journalctl"
+for kg in kg kgn; do
+    trial_in "$LC/$kg" "$LC/$kg/state" PATH="$LC/$kg/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+    trial_in "$LC/$kg" "$LC/$kg/state" PATH="$LC/$kg/bin:$LC/bin:$PATH" -- ok >/dev/null 2>&1
+done
+if grep -qE -- '(^| )-k .*--grep=' "$LC/kg/args" 2>/dev/null && ! grep -q -- '--grep' "$LC/kgn/args" 2>/dev/null \
+   && grep -qE -- '(^| )-k ' "$LC/kgn/args" 2>/dev/null; then
+    ok "the closer filters with --grep where the journal offers it, and only there — probed without the pipefail inversion"
+else
+    bad "the --grep probe: with it offered, $(grep -c -- '--grep' "$LC/kg/args" 2>/dev/null) filtered read(s); without, $(grep -c -- '--grep' "$LC/kgn/args" 2>/dev/null)"
+fi
+rm -rf "$LC/kg" "$LC/kgn"
 
 rc=0
 out=$(trial ok 2>&1) || rc=$?
@@ -11424,6 +11533,37 @@ env "${INCENV[@]}" BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER="$INCS/bin/ok-sani
     && ok "bt-incident still reports sanitised=yes when every file passes" \
     || bad "a passing sanitiser was not reported as yes (rc=$incsokrc)"
 rm -rf "$INCS"
+
+# ── bt-audio-policy: a partial metadata update keeps the keys it does not name ─
+#
+# pw-dump -m prints only the metadata entries that changed. The recorder
+# replaced the whole object and logged the untouched default source as gone
+# (2026-09-27 00:37:53). A sink-only update must leave the source in place, and
+# a null value must remove its key.
+if command -v python3 >/dev/null 2>&1; then
+    BAPOUT=$(python3 - scripts/bt-audio-policy.py <<'PYEOF'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("bap", sys.argv[1])
+bap = importlib.util.module_from_spec(spec); spec.loader.exec_module(bap)
+md = lambda entries: {"id": 40, "type": "PipeWire:Interface:Metadata",
+                      "props": {"metadata.name": "default"}, "metadata": entries}
+e = lambda k, v: {"subject": 0, "key": k, "type": "Spa:String:JSON", "value": v}
+st = {}
+bap.apply(st, [md([e("default.audio.sink", {"name": "sinkA"}), e("default.audio.source", {"name": "srcA"})])])
+bap.apply(st, [md([e("default.audio.sink", {"name": "sinkB"})])])
+s = bap.summarize(st)
+print("kept" if s.get("default audio.source") == "srcA" and s.get("default audio.sink") == "sinkB" else f"lost {s}")
+bap.apply(st, [md([e("default.audio.source", None)])])
+print("removed" if "default audio.source" not in bap.summarize(st) else "not-removed")
+PYEOF
+)
+    [[ "$BAPOUT" == *kept* ]] \
+        && ok "bt-audio-policy keeps metadata keys a partial update does not name" \
+        || bad "bt-audio-policy partial metadata update: $BAPOUT"
+    [[ "$BAPOUT" == *removed* && "$BAPOUT" != *not-removed* ]] \
+        && ok "bt-audio-policy drops a metadata key whose update value is null" \
+        || bad "bt-audio-policy null metadata value: $BAPOUT"
+fi
 
 # ── bt-capture: rotation honours the free-space floor; no AF_BLUETOOTH is a refusal ─
 #

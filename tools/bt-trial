@@ -224,6 +224,27 @@ env_fingerprint() {
 #               layout. Recorded so a discrepancy can be traced, and pooled
 #               across unless a specific change altered event detection, which
 #               is a judgement to make explicitly rather than automatically.
+# WHICH DRIVER BUILD IS LOADED, read from the module rather than declared.
+# Diagnostic btusb builds carry a version suffix ("0.8-e1"); the stock module has
+# none. On 2026-09-26 E1 was installed and the unit's BT_BUILD=stock was never
+# overridden, so the first E1 boot opened as stock trial 15 — exactly the pooling
+# the unit's comment warns about. A declared "stock" is now checked against this.
+#
+# BT_SYSFS_MODULE is btusb's PARAMETERS directory here as in every other tool
+# (bt-state, bt-health-report, bt-mode, bt-evidence, bt-health-snapshot,
+# verify-restored.sh, and the autosuspend read above); the version file is its
+# sibling. Read as the /sys/module root, one variable named two directories in
+# this one file, and a test that set it for either read silently blinded the other.
+module_build() {
+    local v params="${BT_SYSFS_MODULE:-/sys/module/btusb/parameters}"
+    v=$(cat "${params%/*}/version" 2>/dev/null)
+    if [[ "$v" == *-* ]]; then
+        printf '%s' "${v##*-}" | tr '[:lower:]' '[:upper:]'
+    else
+        printf 'stock'
+    fi
+}
+
 measurement_revision() {
     git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo '?'
 }
@@ -264,6 +285,27 @@ next_trial_no() {
         return 1
     fi
     echo $(( n + 1 ))
+}
+
+# The union of every pattern the close path asks of the kernel journal, handed
+# to journalctl as --grep where it has one (Ubuntu 24.04 does; the suite's stub
+# does not, and then the reads are unfiltered as before). Each local grep still
+# decides, so the filter can only ever remove lines no question would match.
+KJ_RE='opcode 0x0428|command( 0x[0-9a-f]+)? tx timeout|USB disconnect, device number|deregistering interface driver btusb|usb_queue_reset_device|Resetting usb device|reset (full|high|low)-speed USB device'
+#
+# Asked by the two close paths only — nothing else reads the kernel journal, and
+# `report` or `protocol` has no business starting journalctl. And CAPTURED, not
+# piped into `grep -q`: under pipefail that pipeline fails exactly when it
+# MATCHES, whenever the help text is still being written when grep leaves —
+# which journalctl's is on Ubuntu 24.04 — so the probe answered "no --grep" on
+# the one system that has it, and the closer read the journal unfiltered: the
+# 90 s shutdown kill this filter was added to prevent.
+KGREP=()
+kgrep_init() {
+    local help
+    help=$(journalctl --help 2>/dev/null)
+    [[ "$help" == *--grep* ]] && KGREP=(--grep="$KJ_RE")
+    return 0
 }
 
 case "${1:-}" in
@@ -332,12 +374,30 @@ autostart)
     # protocol produced none.
     build="${2:-${BT_BUILD:-stock}}"
     [[ -e "$CUR" ]] && exit 0          # already open; nothing to do
+    # A "stock" from the unit's environment with a diagnostic module loaded is
+    # the forgotten override, not a choice: the module wins, and the declaration
+    # is kept. An explicit argument is someone's deliberate word and stands.
+    declared="$build"
+    if [[ -z "${2:-}" && "$build" == stock ]]; then
+        loaded=$(module_build)
+        [[ "$loaded" != stock ]] && build="$loaded"
+    fi
     mkdir -p "$STATE" "$TRIALS"
     # A refusal here fails the unit visibly at boot. That is intended: an
     # auto-trial silently numbered from a corrupt file records a boot into
     # someone else's trial directory, which is worse than no trial.
     n=$(next_trial_no "$build") || exit 1
     dir="$TRIALS/$build/trial-$(printf '%02d' "$n")"
+    # The number comes from the rows in results.tsv, so a trial whose close never
+    # wrote its row (the shutdown closer was killed at 90 s on 2026-09-27) gets
+    # its number reused at the next boot, and mkdir -p then wrote the new
+    # state-before.txt over the old one. An existing directory is set aside,
+    # never reused: the row can be rebuilt from the journal, the directory cannot.
+    if [[ -e "$dir" ]]; then
+        aside="$dir.unclosed-$(date -u +%Y%m%dT%H%M%S)"
+        mv "$dir" "$aside"
+        echo "bt-trial: trial-$(printf '%02d' "$n") existed with no results row; kept as $(basename "$aside")" >&2
+    fi
     mkdir -p "$dir"
     # Captured AT START. The row must answer "what was this trial exposed to?",
     # not "what existed when it ended". An auto-trial spans a whole boot, and
@@ -346,6 +406,7 @@ autostart)
     # configuration of its last minute.
     { echo "start=$(date +%s)"; echo "build=$build"; echo "n=$n"; echo "dir=$dir"
       echo "auto=1"
+      [[ "$declared" != "$build" ]] && echo "build_declared=$declared"
       echo "treat_start=$(env_fingerprint)"
       echo "mrev_start=$(measurement_revision)"; } > "$CUR"
     command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-before.txt" 2>&1
@@ -370,7 +431,10 @@ autostop)
         if hci_alive; then exec "$0" ok; else exec "$0" hang; fi
     fi
     start=$(grep '^start=' "$CUR" | cut -d= -f2)
-    tmo=$(journalctl -k --since "@$(( start - 5 ))" --no-pager -o cat 2>/dev/null \
+    # Filtered inside journalctl (see KJ_RE below): unfiltered, a day of
+    # dynamic-debug kernel log took the closer past the shutdown timeout.
+    kgrep_init
+    tmo=$(journalctl -k --since "@$(( start - 5 ))" --no-pager -o cat "${KGREP[@]}" 2>/dev/null \
           | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
     if (( ${tmo:-0} > 0 )); then
         BT_TRIAL_PASSIVE=1 exec "$0" hang
@@ -416,6 +480,7 @@ hang|ok)
     # against a failure it never learns about.
     KJ=$(mktemp) || { echo "bt-trial: mktemp failed" >&2; exit 1; }
     KJERR=$(mktemp) || { echo "bt-trial: mktemp failed" >&2; exit 1; }
+    kgrep_init
     # The capture is read via jk() all the way to the SCO-timing block far
     # below, so it cannot be removed inline like WJ is; the EXIT trap covers
     # the normal return and every early exit between here and there. This is
@@ -423,7 +488,17 @@ hang|ok)
     # if another temp file ever needs the same guarantee. $KJERR rides the same
     # trap for the same reason.
     trap 'rm -f "$KJ" "$KJERR"' EXIT
-    if journalctl -k --since "$since" --no-pager -o short-iso-precise > "$KJ" 2>"$KJERR"; then
+    # THE VERDICT FIRST, FROM THE ERROR-PRIORITY INDEX. The one fact the row
+    # cannot do without is the timeout count, and `command … tx timeout` is a
+    # bt_dev_err line: `-p err` reaches it through the journal's priority
+    # index without touching the debug flood. Measured 2026-09-29 on the first
+    # E1 boot (24 h, dynamic debug on): this read 0.0 s; the same boot read
+    # unfiltered took the shutdown closer past its 90 s and systemd killed it —
+    # no row, and the next boot reused the trial number. Even --grep-filtered
+    # the full read took 180 s: server-side filtering removes formatting and
+    # writing, never traversal (tools/lib/journal.sh). The stderr capture is
+    # why this stays a direct call rather than the seam.
+    if journalctl -k -p err --since "$since" --no-pager -o short-iso-precise "${KGREP[@]}" > "$KJ" 2>"$KJERR"; then
         journal_ok=1
     else
         journal_ok=0
@@ -455,9 +530,26 @@ hang|ok)
         journal_ok=0
     fi
     rm -f "$KJERR"
+    tmo=$(grep -cE "command( 0x[0-9a-f]+)? tx timeout" "$KJ" || true)
+    t_tmo=$(grep -m1 -E "command( 0x[0-9a-f]+)? tx timeout" "$KJ" | cut -d' ' -f1)
+
+    # THEN THE DESCRIPTIVE COUNTS, BOUNDED. Setups, bus losses, reloads and
+    # resets live at info and debug priority, so they need the full read; it
+    # runs under a budget and, if the journal is too big for it, those fields
+    # read "?" — not determined — and the row is still written. A day of
+    # dynamic debug must cost the counts, never the row or the verdict.
+    kj_complete=1
+    if ! timeout "${BT_TRIAL_SCAN_BUDGET:-20}" journalctl -k --since "$since" --no-pager -o short-iso-precise "${KGREP[@]}" > "$KJ" 2>/dev/null; then
+        kj_complete=0
+        : > "$KJ"
+    fi
     jk() { cat "$KJ"; }
 
-    sco_sent=$(jk | grep -c "opcode 0x0428" || true)
+    if (( kj_complete )); then
+        sco_sent=$(jk | grep -c "opcode 0x0428" || true)
+    else
+        sco_sent="?"
+    fi
     # HCI command timeouts appear in TWO forms: `command tx timeout` when the
     # kernel could not name the opcode, and `command 0x0406 tx timeout` when it
     # could. Matching the literal "command tx timeout" misses every opcode-carrying
@@ -466,9 +558,13 @@ hang|ok)
     # timeouts, because all five named an opcode.
 #
     # Bare "tx timeout" would over-match instead: `link tx timeout` is an ACL link
-    # supervision timeout, a different event.
-    tmo=$(jk | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
-    usb_gone=$(jk | grep -c "USB disconnect, device number" || true)
+    # supervision timeout, a different event. ($tmo itself is taken from the
+    # error-priority read above, for the reason given there.)
+    if (( kj_complete )); then
+        usb_gone=$(jk | grep -c "USB disconnect, device number" || true)
+    else
+        usb_gone="?"
+    fi
 
     # ── TWO AXES, NOT ONE FIELD ───────────────────────────────────────────
     #
@@ -553,7 +649,7 @@ hang|ok)
     # treatment string unmatchable, which is what keeps a perturbed trial out of
     # every denominator.
     perturbed=none
-    if (( journal_ok )); then
+    if (( journal_ok && kj_complete )); then
         # COUNTED, NOT `grep -q`. Under `set -o pipefail` a `producer | grep -q`
         # pipeline exits NON-ZERO when the pattern is found: grep leaves at the
         # first match, the producer dies of SIGPIPE, and pipefail propagates
@@ -583,7 +679,8 @@ hang|ok)
         fi
     else
         # An unreadable journal cannot certify the interior either way, and
-        # `none` would be a claim we have no basis for.
+        # `none` would be a claim we have no basis for. Nor can a read that ran
+        # out of budget.
         perturbed=unknown
     fi
 
@@ -722,7 +819,7 @@ hang|ok)
     # command that actually went unanswered was a later Disconnect. This field
     # means "nearest preceding synchronous setup" and must NOT be read as "the
     # setup belonging to this failure".
-    t_tmo=$(jk | grep -m1 -E "command( 0x[0-9a-f]+)? tx timeout" | cut -d' ' -f1)
+    # $t_tmo comes from the error-priority read; the setups from the bounded one.
     if [[ -n "$t_tmo" ]]; then
         t_sco=$(jk | grep "opcode 0x0428" | cut -d' ' -f1 \
                 | awk -v lim="$t_tmo" '$1 < lim' | tail -1)
@@ -732,7 +829,7 @@ hang|ok)
     sco_to_tmo="?"
     if [[ -n "$t_sco" && -n "$t_tmo" ]]; then
         sco_to_tmo=$(awk -f "$LIBDIR/timestamp.awk" -f "$LIBDIR/interval.awk" -v a="$t_sco" -v b="$t_tmo")
-    elif (( sco_sent > 0 )); then
+    elif [[ "$sco_sent" != "?" ]] && (( sco_sent > 0 )); then
         sco_to_tmo="none"     # SCO requested and NO timeout followed — survival under stimulus
     fi
 
@@ -755,7 +852,7 @@ hang|ok)
     : > "$dir/sco-params.txt"
     t_start=$(date -d "@$start" '+%Y-%m-%d %H:%M:%S')
     t_end=$(date '+%Y-%m-%d %H:%M:%S')
-    if command -v btmon >/dev/null 2>&1 && (( sco_sent > 0 )); then
+    if command -v btmon >/dev/null 2>&1 && [[ "$sco_sent" != "?" ]] && (( sco_sent > 0 )); then
         {
             printf '# trial window: %s .. %s\n' "$t_start" "$t_end"
             printf '# both capture paths are shown; a request present in only one\n'

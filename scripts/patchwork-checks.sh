@@ -12,6 +12,11 @@
 #       for every BlueZ patch among the N most recent whose TestFunctional check
 #       failed: the bot's comment on patchwork, reduced to its "FAIL functional…"
 #       lines — which test failed, not just that one did
+#   scripts/patchwork-checks.sh --rate CONTEXT [N] [BEFORE]
+#       over the N most recent patches (older than BEFORE, YYYY-MM-DD, if given)
+#       that carry check CONTEXT (e.g. TestRunner_mesh-tester, run on kernel
+#       patches only): each patch's state for it, then the fail/success totals —
+#       is a failure the bot's standing one, and since when?
 #
 # Output, one line per patch:  <date> <patch-id> <check:state ...>  <name>
 # lore.kernel.org blocks curl by user-agent; patchwork.kernel.org's API does not
@@ -74,6 +79,28 @@ for c in json.load(open(sys.argv[1])):
         print(f'   FAIL {m.group(1)}  on {m.group(2)}  {m.group(3)}')
 PYEOF
 	done < "$OUT/patches.tsv"
+	exit 0
+fi
+
+if [[ "${1:-}" == "--rate" ]]; then
+	CTX="${2:?check context, e.g. TestRunner_mesh-tester}"
+	N="${3:-100}"
+	BEFORE="${4:+&before=$4}"
+	fetch "$API/patches/?project=bluetooth&order=-date&per_page=$N$BEFORE" "$OUT/patches.json" || exit 2
+	python3 - "$OUT/patches.json" <<'PYEOF' > "$OUT/patches.tsv"
+import json, sys
+for p in json.load(open(sys.argv[1])):
+    print(f'{p["date"][:16]}\t{p["id"]}\t{p["name"]}')
+PYEOF
+	fail=0; ok=0; other=0
+	while IFS=$'\t' read -r date id name; do
+		line=$(checks_line "$id") || continue
+		state=$(grep -oE "(^| )$CTX:[a-z]+" <<<"$line" | cut -d: -f2)
+		[[ -n "$state" ]] || continue
+		printf '%s  %s  %-8s  %s\n' "$date" "$id" "$state" "$name"
+		case "$state" in fail) fail=$((fail + 1)) ;; success) ok=$((ok + 1)) ;; *) other=$((other + 1)) ;; esac
+	done < "$OUT/patches.tsv"
+	echo "$CTX over the $N most recent patches: fail $fail   success $ok   other $other"
 	exit 0
 fi
 
