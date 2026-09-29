@@ -673,7 +673,7 @@ run systemctl daemon-reload
 # So the guard now asks both questions: is anything connected, AND has the
 # controller already failed this boot? The second is the one that mattered.
 if (( APPLY )); then
-    uc=$(awk '/^btusb/ {print $3}' "${BT_PROC:-/proc}/modules" 2>/dev/null)
+    uc=$(awk '/^btusb/ {print $3}' "${BT_PROC_MODULES:-${BT_PROC:-/proc}/modules}" 2>/dev/null)
     # COUNTED, NOT `grep -q`, AND THIS IS THE SITE WHERE IT MATTERS MOST.
     #
     # Under `set -o pipefail` a `producer | grep -q` pipeline exits NON-ZERO
