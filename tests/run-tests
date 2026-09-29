@@ -11747,6 +11747,82 @@ devtools/mutants --help >/dev/null 2>&1; mu3=$?
     || bad "devtools/mutants exit codes: none=$mu0 unreadable=$mu1 bogus=$mu2 help=$mu3"
 rm -rf "$MUT"
 
+# ── devtools/mutate: is each mutant applied exactly as listed? ─────────────
+#
+# A verdict about a mutant is only worth the mutant. The first bt-trial run
+# reported 85 survivors of 175, and the negation survivors among them were not
+# negations: a dropped `!` has an EMPTY replacement field, a tab is whitespace
+# to `read`, runs of whitespace separators collapse, and the kind "shell-neg"
+# was pasted where the `!` had been (2026-09-29). The report looked like any
+# other. So mutate runs here on a fixture repository whose own suite fails with
+# the line that differs from the file as it was: each KILLED row names exactly
+# what was applied, and the rows are pinned.
+#
+# The same fixture holds the second promise, the tree AS IT IS WHEN THE RUN
+# STARTS. mf.sh carries an uncommitted edit, and the fixture suite edits the
+# live file again during the baseline run — which is what an operator does
+# while a run of an hour goes on. Restoring from the checkout, as mutate did,
+# put that edit into every mutant after it.
+#
+# mutate hides /tmp from every mutant, so its work cannot live there, and the
+# suite's temp root does: this test has its own directory under /var/tmp,
+# registered for cleanup. Without user namespaces mutate refuses (exit 3), and
+# the check is reported as not asked, never as a pass.
+MUTATE_SKIPPED=''
+if unshare -Urpfnm --mount-proc true 2>/dev/null; then
+    MUW=$(mktemp -d /var/tmp/bt-suite-mutate.XXXXXX); CLEANUP_PATHS+=("$MUW")
+    mkdir -p "$MUW/repo/devtools" "$MUW/repo/tests"
+    cp devtools/mutate devtools/mutants "$MUW/repo/devtools/"
+    printf '%s\n' 'x=0' 'if ! [[ $x -eq 1 ]]; then echo no; fi' '[[ $x == 1 ]] && echo yes' > "$MUW/repo/mf.sh"
+    cat > "$MUW/repo/tests/run-tests" <<'MUTSUITE'
+#!/bin/bash
+cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
+[[ -n "${MUT_ALLGREEN:-}" ]] && { echo "all 1 invariants hold"; exit 0; }
+if [[ -n "${MUT_LIVE:-}" && ! -e "$MUT_LIVE.edited" ]]; then
+    echo '# edited during the run' >> "$MUT_LIVE"; : > "$MUT_LIVE.edited"
+fi
+cmp -s mf.sh tests/pristine && { echo "all 1 invariants hold"; exit 0; }
+echo "  ✗ $(diff tests/pristine mf.sh | sed -n 's/^> //p' | paste -sd'|')"
+exit 1
+MUTSUITE
+    chmod +x "$MUW/repo/tests/run-tests"
+    git -C "$MUW/repo" init -q
+    git -C "$MUW/repo" add -A
+    git -C "$MUW/repo" -c user.name=t -c user.email=test@example.com -c commit.gpgsign=false commit -qm fixture
+    sed -i 's/^x=0$/x=1/' "$MUW/repo/mf.sh"             # uncommitted: the tree as it is
+    cp "$MUW/repo/mf.sh" "$MUW/repo/tests/pristine"
+    MUTO=$(TMPDIR="$MUW" MUT_LIVE="$MUW/repo/mf.sh" "$MUW/repo/devtools/mutate" mf.sh --workers 2 --out "$MUW/out" 2>&1); mutrc=$?
+    MUTR=$(awk -F'\t' '{ print $1, $2, $6 ":", $7 }' "$MUW/out/results.tsv" 2>/dev/null)
+    MUTRWANT='2 3 KILLED: if [[ $x -eq 1 ]]; then echo no; fi
+2 11 KILLED: if ! [[ $x -ne 1 ]]; then echo no; fi
+3 6 KILLED: [[ $x != 1 ]] && echo yes
+3 14 KILLED: [[ $x == 1 ]] || echo yes'
+    (( mutrc == 0 )) && [[ "$MUTR" == "$MUTRWANT" ]] \
+        && grep -q 'edited during the run' "$MUW/repo/mf.sh" \
+        && ok "devtools/mutate applies each mutant exactly as listed, a dropped ! included, to the tree as it was when it started" \
+        || bad "devtools/mutate (rc=$mutrc) applied: $(tr '\n' '|' <<<"$MUTR")"
+    # A suite that notices nothing: every mutant survives, is listed, exit 1.
+    git -C "$MUW/repo" checkout -q -- mf.sh; sed -i 's/^x=0$/x=1/' "$MUW/repo/mf.sh"
+    MUTG=$(TMPDIR="$MUW" MUT_ALLGREEN=1 "$MUW/repo/devtools/mutate" mf.sh --workers 2 --out "$MUW/out2" 2>&1); mutgrc=$?
+    (( mutgrc == 1 )) && [[ "$MUTG" == *"killed 0   survived 4"* ]] \
+        && [[ $(grep -cE '^ +[23]  ' <<<"$MUTG") == 4 ]] \
+        && ok "devtools/mutate lists every survivor and exits 1 when the suite notices nothing" \
+        || bad "devtools/mutate over a suite that notices nothing: rc=$mutgrc, $(grep -E 'killed|survived' <<<"$MUTG" | head -2 | tr '\n' '|')"
+    # A list that puts an operator where the file has none: nothing is measured,
+    # and that is not a clean run. Exit 0 once meant "every mutant killed" for a
+    # run that had applied none.
+    printf '#!/bin/sh\nprintf "3\\t0\\t!=\\t==\\tshell-test\\tnot here\\n"\n' > "$MUW/repo/devtools/mutants"
+    MUTN=$(TMPDIR="$MUW" "$MUW/repo/devtools/mutate" mf.sh --workers 1 --out "$MUW/out3" 2>&1); mutnrc=$?
+    (( mutnrc == 2 )) && [[ "$MUTN" == *"not applied 1"* && "$MUTN" == *"NOT APPLIED"* ]] \
+        && ok "devtools/mutate exits 2, and says so, when a listed mutant is not where the list puts it" \
+        || bad "devtools/mutate with an unappliable mutant: rc=$mutnrc, $(grep -E 'killed|NOT' <<<"$MUTN" | head -2 | tr '\n' '|')"
+    [[ -z "$(git -C "$MUW/repo" worktree list | sed 1d)" && -z "$(ls -d "$MUW"/bt-mutate.* 2>/dev/null)" ]] \
+        && ok "devtools/mutate removes its worktrees and work directory" \
+        || bad "devtools/mutate left: $(git -C "$MUW/repo" worktree list | sed 1d | tr '\n' ' ') $(ls -d "$MUW"/bt-mutate.* 2>/dev/null)"
+else
+    MUTATE_SKIPPED="devtools/mutate on a fixture repository"
+fi
+
 # ── devtools/branch-status: a merge CLAIM against the branch's CURRENT tip ─
 #
 # On 2026-08-16 main gained a merge commit naming a branch whose tip had
@@ -12809,6 +12885,17 @@ if [[ -n "$COREDUMP_SKIPPED" ]]; then
     echo "  NOT ASKED HERE: $COREDUMP_SKIPPED — no core is retained on this host,"
     echo "                  so the fixture's shape was not checked against the"
     echo "                  real tool. Run this suite where a core exists."
+fi
+
+# AND THE HARNESS THAT JUDGES THE SUITE. devtools/mutate isolates every mutant in
+# user, pid and mount namespaces with a /proc of its own; a host that refuses
+# them (Ubuntu 24.04's AppArmor default, the CI runner before its sysctl, the
+# decoy world, whose /proc is covered) cannot run it, so its check was not asked.
+if [[ -n "$MUTATE_SKIPPED" ]]; then
+    echo "  NOT ASKED HERE: $MUTATE_SKIPPED — this host cannot give a process"
+    echo "                  user, pid and mount namespaces with a /proc of its own,"
+    echo "                  and mutate refuses to run a mutant anywhere its"
+    echo "                  processes could outlive it."
 fi
 
 echo
