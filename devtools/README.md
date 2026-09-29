@@ -16,6 +16,8 @@ directory touches Bluetooth.
 | `assert-test-catches <file> <line> <substr>` | prove a suite invariant actually fails when violated |
 | `journal-contract` | do the journal fixtures still match the shapes the REAL journalctl emits |
 | `sandbox [--self-test] [-- cmd]` | run the suite in a **decoy world** and list every place it reached for the real machine |
+| `mutate <file> [--lines A-B]` | flip each decision in a file, one at a time, and list the ones the suite does not notice |
+| `mutants <file>` | the list `mutate` works from: every live operator, awk programs inside shell included |
 
 ```bash
 ./devtools/check
@@ -91,6 +93,27 @@ and fails on any leak.
 It needs unprivileged user namespaces: this container and CI have them; Ubuntu 24.04's
 AppArmor refuses them to ordinary users, so on the laptop it exits 3 — nothing measured,
 never a pass.
+
+## Knowing whether a decision is checked
+
+Coverage says a line ran. It does not say a test would notice if the line decided
+differently. `mutate` asks that directly: every comparison, `&&`/`||`, `-z`/`-n` and
+negation that `mutants` finds in a file is flipped **alone**, and the whole suite runs on
+the result — each in its own git worktree and fresh namespaces, so a mutant that loops or
+leaves a daemon dies with its run. A mutant the suite still passes is either a decision no
+test checks or a change that cannot alter any output; the report lists them, and telling
+the two apart is the work.
+
+`mutants` scans shell statefully — quotes across lines, heredocs, `#` only at a word's
+start, `>` as a comparison only inside `(( ))` — and scans the **awk programs quoted
+inside shell scripts** with awk's rules, because the classifiers live there and neither a
+per-line tool nor the coverage trace can see into them. Its proposals are pinned by the
+suite on fixtures of both languages.
+
+First use (2026-09-29): 14 of `bt-actions`' 24 mutants survived — its rfkill rule turned
+`&&` into `||` filed the Bluetooth toggle's ON as OFF and no test noticed, and its noise
+test could not fail at all. 22 of 24 are killed now; the other two cannot change any
+output here.
 
 ## Why these exist
 
