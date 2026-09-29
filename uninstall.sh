@@ -281,16 +281,19 @@ echo
 echo "[5/5] restore btusb default (enable_autosuspend=Y)"
 # Counted, not `grep -q`: under pipefail the pipeline exits non-zero exactly
 # when the module IS loaded, so the restore would be skipped precisely when it
-# is needed. lsmod's output is short enough that it usually finishes writing
-# first — which makes the failure intermittent rather than absent.
-n_btusb=$(lsmod | grep -c "^btusb" || true)
+# is needed. Read from /proc/modules, the file lsmod formats, through the SAME
+# seam as the usecount below: the presence check used lsmod, unseamed, so its
+# tests could choose "idle" or "in use" but never "loaded" — the runner's real
+# lsmod answered that (devtools/sandbox in CI, 2026-09-29).
+BT_PROC_MODULES="${BT_PROC_MODULES:-${BT_PROC:-/proc}/modules}"
+n_btusb=$(awk '$1 == "btusb" { n++ } END { print n + 0 }' "$BT_PROC_MODULES" 2>/dev/null)
 if (( ${n_btusb:-0} > 0 )); then
     # Seamed for the same reason every other kernel-state read here is: the
     # two branches below differ by whether the module is IN USE, and that is
     # not a state a test may create on a real machine — forcing a usecount
     # means holding the controller open, which is the one thing this project's
     # tests must never do to the device under investigation.
-    uc=$(awk '/^btusb/ {print $3}' "${BT_PROC_MODULES:-/proc/modules}")
+    uc=$(awk '/^btusb/ {print $3}' "$BT_PROC_MODULES")
     if [[ "${uc:-0}" == "0" ]]; then
         run modprobe -r btusb
         run modprobe btusb
