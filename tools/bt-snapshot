@@ -223,7 +223,7 @@ SCOWIDE=$(grep -cE 'len [0-9]+ mtu (1[0-9]|[2-9][0-9]+)$' "$K" 2>/dev/null || tr
 # Device presence read from sysfs — a read, never a probe.
 SYSFS="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
 PRESENT="no"; [[ -e "$SYSFS/3-3" ]] && PRESENT="yes"
-HCI="none"; for p in /sys/class/bluetooth/hci*; do [[ -e "$p" ]] && HCI=$(basename "$p") && break; done
+HCI="none"; for p in "${BT_SYSFS_BT:-/sys/class/bluetooth}"/hci*; do [[ -e "$p" ]] && HCI=$(basename "$p") && break; done
 
 FIRST_TMO=$(grep -E "command( 0x[0-9a-f]+)? tx timeout" "$K" 2>/dev/null | head -1 | awk '{print $1}')
 

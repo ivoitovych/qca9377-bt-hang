@@ -245,7 +245,109 @@ DECOYSTUB
     chmod +x "$GUARD/decoy/$tool"
 done < <(guard_names)
 
-export PATH="$GUARD/bin:$PATH:$GUARD/decoy"
+# ── THE MACHINE TRIPWIRE: NO VERDICT MAY COME FROM THE MACHINE ────────────
+#
+# THE LEAK THIS CLOSES, MEASURED. The guard above covers this project's own
+# tools. The machine's tools — journalctl, systemctl, bluetoothctl, uname,
+# logger — were reached by every test that did not stub them. devtools/sandbox
+# ran the suite in a decoy world on 2026-09-29 and counted 312 such calls per
+# run, 20 of them `logger` writing "TRIAL stock #1 START" into the real journal,
+# and 12 verdicts that changed when the machine's answers changed. Here, and in
+# CI, those calls returned nothing — exactly what an empty fixture returns — so
+# every one of them passed for a reason that is not true on the laptop, where
+# they read its real journal, its real units and its real adapter (31 calls of
+# `timeout 8 bluetoothctl`: minutes, whenever bluetoothd is the thing hung).
+#
+# So every tool in tests/machine-tools answers from a tripwire for the whole
+# run: nothing on stdout, exit 1 — the same answer on every machine — and one
+# line in $TRIP_LOG naming the tool, its arguments, its caller and the last
+# assertion before it. A test that needs the tool stubs it, ahead of this on
+# PATH; the end of the run fails on any line in the log. farm_dir links the
+# tripwire in place of the real binary, so a farmed PATH gets it too.
+#
+# Present for EVERY listed tool, installed on this host or not: a tool that
+# exists on the laptop and not in CI was a verdict that differed between them.
+TRIP="$GUARD/trip"; TRIP_LOG="$GUARD/trip.log"
+SUITE_ORIG_PATH="$GUARD/bin:$PATH:$GUARD/decoy"   # what PATH would be without the tripwire
+mkdir -p "$TRIP"; : > "$TRIP_LOG"
+machine_tools() { sed -e 's/#.*//' -e 's/[[:space:]]//g' tests/machine-tools | grep .; }
+while IFS= read -r tool; do
+    cat > "$TRIP/$tool" <<TRIPSTUB
+#!/bin/sh
+# Installed by tests/run-tests: a machine tool reached by a test that did not stub it.
+# The ancestry up to the suite: a tool's caller is often another tool.
+p=\$PPID; chain=""
+for _ in 1 2 3 4 5; do
+    c=\$(tr '\\0' ' ' < /proc/\$p/cmdline 2>/dev/null | cut -c1-80)
+    case "\$c" in ""|*tests/run-tests*) break ;; esac
+    chain="\$chain < \$c"
+    p=\$(sed -n 's/^PPid:[[:space:]]*//p' /proc/\$p/status 2>/dev/null)
+    [ -n "\$p" ] || break
+done
+printf '%s\t%s\t%s\t%s\n' "$tool" "\$*" "\${chain# < }" "\${SUITE_AT:-}" >> "$TRIP_LOG"
+exit 1
+TRIPSTUB
+    chmod +x "$TRIP/$tool"
+done < <(machine_tools)
+TRIP_N=$(machine_tools | grep -c .)
+if (( ${TRIP_N:-0} < 30 )); then
+    echo "run-tests: read only ${TRIP_N:-0} machine tool(s) from tests/machine-tools —" >&2
+    echo "           refusing to run with the machine within reach" >&2
+    exit 2
+fi
+# /proc, DECLARED FOR THE WHOLE RUN. Six scripts read it directly — the boot
+# id, uptime, the loaded modules — and each test that ran one put the host's
+# values into its metrics rows, exhibit headers and install decisions
+# (devtools/sandbox's READ detector, 2026-09-29). They now read
+# ${BT_PROC:-/proc}; the run's /proc holds values no machine has. Not a UUID
+# for the boot id: nothing reads more than its first eight characters, and
+# repo-scan rightly refuses UUIDs in a fixture.
+SUITE_PROC="$GUARD/proc"; mkdir -p "$SUITE_PROC/sys/kernel/random"
+echo fixture-boot-id                           > "$SUITE_PROC/sys/kernel/random/boot_id"
+echo "3600.00 7200.00"                         > "$SUITE_PROC/uptime"
+echo "btusb 77824 0 - Live 0x0000000000000000" > "$SUITE_PROC/modules"
+export BT_PROC="$SUITE_PROC"
+
+# AND THE REST OF THE MACHINE, DECLARED THE SAME WAY: an empty USB bus, no btusb,
+# no adapter, nothing installed, no unit files, no health directory, no metrics.
+# Tests that need a device, a stamp or a metrics file build one and point the
+# seam at it, as they always did; a test that FORGETS now meets this machine
+# instead of the one it runs on. Each forgotten seam found so far read the host
+# — bt-env-history the real metrics.tsv, install.sh the real bus, bt-snapshot
+# the real adapter — and a forgotten BT_METRICS on a writer would have appended
+# to the laptop's real metrics series.
+SUITE_MACHINE="$GUARD/machine"
+mkdir -p "$SUITE_MACHINE"/{usb,module,class-bluetooth,share,units,health}
+export BT_SYSFS_USB="$SUITE_MACHINE/usb" BT_SYSFS_MODULE="$SUITE_MACHINE/module" \
+       BT_SYSFS_BT="$SUITE_MACHINE/class-bluetooth" BT_SHARE_DIR="$SUITE_MACHINE/share" \
+       BT_UNIT_DIR="$SUITE_MACHINE/units" BT_HEALTH_DIR="$SUITE_MACHINE/health" \
+       BT_METRICS="$SUITE_MACHINE/health/metrics.tsv" BT_ARCHIVE_DIR="$SUITE_MACHINE/journal-archive"
+# And no bytecode written beside the Python under test: a fresh checkout gained
+# bin/__pycache__/ from every run.
+export PYTHONDONTWRITEBYTECODE=1
+
+# The last assertion, exported so a tripwire hit can say where in the run it was.
+export SUITE_AT="(before the first assertion)"
+
+# THE ONE DOOR TO THE REAL MACHINE. A contract check compares a fixture's shape
+# with what the real tool prints, and reading the machine is its whole point
+# (coredumpctl, below). It goes through here, and nowhere else: the binary is
+# resolved on the PATH as it was before the tripwire, and the call is tagged
+# BT_MACHINE_CONTRACT=<check>, which devtools/sandbox lists as a contract read
+# rather than a leak. An invariant at the end keeps the tag inside this function.
+real_tool() {   # <check> <tool> [args...] — 127 when the host has no such tool
+    local check="$1" t="$2" p; shift 2
+    p=$(PATH="$SUITE_ORIG_PATH" command -v "$t") || return 127
+    BT_MACHINE_CONTRACT="$check" "$p" "$@"
+}
+
+export PATH="$GUARD/bin:$TRIP:$PATH:$GUARD/decoy"
+
+# THE CANARY: the tripwire fired once, on purpose, before any test. The check
+# at the end requires exactly this line and no other — a tripwire that stopped
+# recording would otherwise report "no test reached a machine tool" over an
+# empty log, which is the empty-input failure this file keeps meeting.
+journalctl --suite-tripwire-canary >/dev/null 2>&1
 
 # ── ONE EXIT TRAP, BECAUSE BASH ONLY HAS ONE ─────────────────────────────
 #
@@ -402,10 +504,10 @@ real_bin_footprint() {
 # directions on every run, on an undamaged machine.
 bin_footprint_diff() {   # <before> <after> — names what changed, and how
     awk -F'\t' '
-        FNR == NR { before[$1] = $2 FS $3 FS $4; gone[$1] = 1; next }
+        FNR == NR { before[$1] = substr($0, length($1) + 2); gone[$1] = 1; next }
         {
-            if (!($1 in before))                     print $1 "  (appeared)"
-            else if (before[$1] != $2 FS $3 FS $4)   print $1 "  (rewritten)"
+            if (!($1 in before))                                print $1 "  (appeared)"
+            else if (before[$1] != substr($0, length($1) + 2))  print $1 "  (rewritten)"
             delete gone[$1]
         }
         END { for (p in gone) print p "  (removed)" }
@@ -442,9 +544,16 @@ BIN_COUNT_BEFORE=$(grep -c . <<<"$BIN_FOOTPRINT_BEFORE" || true)
 # question is identical — did a byte change while the suite ran. 583 tracked
 # files in 9 ms, so it is unconditional too. mtime and size and inode: a fixture
 # rewritten in place changes mtime, and one unlinked and replaced changes inode.
+#
+# AND MODE AND CTIME, because a write need not touch a byte. `chmod +x dir/*`
+# over a stub directory holding a symlink to bin/bt-mark chmodded the real
+# bin/bt-mark on every run: same mode, same bytes, same mtime, invisible to all
+# three fields above — found by devtools/sandbox's WRITE detector, 2026-09-29.
+# ctime moves on any metadata change, so the next such chmod is caught here.
+# The differ compares every field after the path, however many there are.
 repo_tree_footprint() {
     git ls-files -z 2>/dev/null \
-        | xargs -0 -r stat --printf '%n\t%s\t%Y\t%i\n' 2>/dev/null | LC_ALL=C sort
+        | xargs -0 -r stat --printf '%n\t%s\t%Y\t%i\t%a\t%Z\n' 2>/dev/null | LC_ALL=C sort
 }
 REPO_FOOTPRINT_BEFORE=$(repo_tree_footprint)
 REPO_COUNT_BEFORE=$(grep -c . <<<"$REPO_FOOTPRINT_BEFORE" || true)
@@ -539,8 +648,50 @@ final_resource_report() {
 }
 
 
-ok()   { echo "  ✓ $*"; pass=$((pass + 1)); }
-bad()  { echo "  ✗ $*"; fail=$((fail + 1)); }
+ok()   { echo "  ✓ $*"; pass=$((pass + 1)); SUITE_AT="✓ $*"; }
+bad()  { echo "  ✗ $*"; fail=$((fail + 1)); SUITE_AT="✗ $*"; }
+
+# ── A DECLARED MACHINE, for tools that meet one on the way ────────────────
+#
+# Most tools under test call a machine tool or two in passing — bt-state asks
+# systemctl about bluetooth, bt-mark tells logger, bt-exhibit records uname.
+# Each such call used to reach the real tool (see the tripwire, top of file).
+# The test now DECLARES which machine tools its subject meets, and gets a quiet,
+# defined machine in a stub directory it puts on PATH:
+#
+#   systemctl    every unit inactive (is-active: 3), disabled; show: nothing
+#   journalctl   readable and empty
+#   uname        -r: 0.0.0-suite-fixture — a release no machine has
+#   uptime       "up 1 hour"
+#   logger       records its message in <dir>/logger.log, never the journal
+#   lsusb        no such device (1); coredumpctl: no cores (1)
+#   anything else: silent, exit 0
+#
+# A test that needs a machine in a particular state writes that stub itself.
+machine_stub() {   # <dir> <tool>... — quiet stubs for the named machine tools
+    local d="$1" t; shift
+    mkdir -p "$d"
+    for t in "$@"; do
+        case "$t" in
+            systemctl) cat > "$d/$t" <<'MSTUB'
+#!/bin/sh
+case "$*" in
+  *is-active*--quiet*|*--quiet*is-active*) exit 3 ;;
+  *is-active*)  echo inactive; exit 3 ;;
+  *is-enabled*) echo disabled; exit 1 ;;
+esac
+exit 0
+MSTUB
+            ;;
+            uname) printf '#!/bin/sh\ncase "$1" in -r) echo 0.0.0-suite-fixture ;; *) echo Linux ;; esac\n' > "$d/$t" ;;
+            uptime) printf '#!/bin/sh\necho "up 1 hour"\n' > "$d/$t" ;;
+            logger) printf '#!/bin/sh\necho "$*" >> "%s/logger.log"\n' "$d" > "$d/$t" ;;
+            lsusb|coredumpctl) printf '#!/bin/sh\nexit 1\n' > "$d/$t" ;;
+            *) printf '#!/bin/sh\nexit 0\n' > "$d/$t" ;;
+        esac
+        chmod +x "$d/$t"
+    done
+}
 
 # ── THE SHELL SCRIPTS THIS REPOSITORY SHIPS ───────────────────────────────
 #
@@ -1429,6 +1580,9 @@ mkdir -p "$LC/sysfs/3-3/3-3:1.0/bluetooth/hci0" "$LC/sysfs/3-3/power"
 echo 13d3 > "$LC/sysfs/3-3/idVendor"
 echo 3503 > "$LC/sysfs/3-3/idProduct"
 echo on   > "$LC/sysfs/3-3/power/control"
+# btusb's autosuspend parameter, which the treatment fingerprint records: Y,
+# the value neither the laptop (N) nor a runner without btusb (?) would give.
+mkdir -p "$LC/mod"; echo Y > "$LC/mod/enable_autosuspend"
 # Answers unless a test stages a dead controller on purpose.
 cat > "$LC/bin/hciconfig" <<STUB
 #!/bin/sh
@@ -1436,12 +1590,33 @@ cat > "$LC/bin/hciconfig" <<STUB
 exit 0
 STUB
 chmod +x "$LC/bin/hciconfig"
+# AND A FABRICATED MACHINE AROUND IT, for the same reason, one layer out. The
+# first closures below ran before any journalctl or systemctl stub existed, so
+# the evidence bt-trial collected was THIS host's kernel log and THIS host's
+# watchdog state, and its kernel column was this host's `uname -r` — nothing
+# here, the laptop's real history there (devtools/sandbox, 2026-09-29). The
+# default is a quiet, READABLE journal, no unit running, and a kernel release
+# no machine has; the combinations below replace these one at a time.
+cat > "$LC/bin/journalctl" <<'STUB'
+#!/bin/sh
+exit 0
+STUB
+cat > "$LC/bin/systemctl" <<'STUB'
+#!/bin/sh
+case "$*" in *is-active*) exit 3 ;; esac
+exit 0
+STUB
+cat > "$LC/bin/uname" <<'STUB'
+#!/bin/sh
+case "$1" in -r) echo 0.0.0-suite-fixture ;; *) echo Linux ;; esac
+STUB
+chmod +x "$LC/bin/journalctl" "$LC/bin/systemctl" "$LC/bin/uname"
 
 # The ONLY way these tests may invoke bt-trial.
 trial() {
     PATH="$LC/bin:$PATH" \
     BT_REPO="$LC" BT_EVIDENCE_REPO="$LC" \
-    BT_STATE="$LC/state" BT_SYSFS_USB="$LC/sysfs" \
+    BT_STATE="$LC/state" BT_SYSFS_USB="$LC/sysfs" BT_SYSFS_MODULE="$LC/mod" \
     tools/bt-trial "$@"
 }
 
@@ -1520,53 +1695,34 @@ if [[ -s "$LC/evidence/trials/results.tsv" ]]; then
          "$LC/evidence/trials/results.tsv")
     tr=$(awk -F'\t' 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} NR==2{print $c["trial_result"]}' \
          "$LC/evidence/trials/results.tsv")
-    # `unknown` is a legitimate value, and WHICH answer is correct here depends
-    # on a premise this assertion used to state in a comment and never check.
+    # `unknown` is a legitimate value — but not HERE. The journal this trial
+    # read is the stub above: readable and quiet. With a readable journal,
+    # `unknown` means evidence collection failed, and that is exactly how the
+    # ordering bug manifested: $tmo was consulted before it was assigned, every
+    # trial classified `unknown`, and every trial was excluded from every rate.
+    # The denominator would have been permanently zero while the report printed
+    # cleanly. Domain-membership alone would have passed that, since `unknown`
+    # is in the domain — the assertion has to be that collection SUCCEEDED.
     #
-    # On a host with a readable journal, `unknown` means evidence collection
-    # failed, and that is exactly how the ordering bug manifested: $tmo was
-    # consulted before it was assigned, every trial classified `unknown`, and
-    # every trial was excluded from every rate. The denominator would have been
-    # permanently zero while the report printed cleanly. Domain-membership
-    # alone would have passed that, since `unknown` is in the domain — the
-    # assertion has to be that collection SUCCEEDED.
-    #
-    # ⚠️ BUT THE COMMENT SAID "this host has a readable journal" AND NOTHING
-    # ASKED. On a host with no journal at all — this container, every CI
-    # runner — collection CANNOT succeed, and the honest answer is `unknown`.
-    # Accepting `not_observed` there is accepting "we looked and BT-1 did not
-    # happen" from a host where looking was impossible, which is the defect
-    # this pair of assertions now covers from both sides (tools/bt-trial's
-    # journal_files check). Green on the machine and green in the container had
-    # to stop meaning the same sentence.
-    #
-    # The premise is derived the same way bt-trial derives it, from the stem
-    # both journalctl wordings share — "found" for absent, "opened due to
-    # insufficient permissions" for unreadable.
-    # NOT `journalctl … | grep -q`: this file forbids a pipeline ending in
-    # `grep -q` and is right to — under pipefail it exits non-zero exactly when
-    # it MATCHES, because grep leaves at the first hit and the writer dies of
-    # SIGPIPE. Captured, then handed to the matcher driven above.
-    host_journal=1
-    _jprobe=$(journalctl -n 0 --no-pager 2>&1 >/dev/null)
-    journal_unreadable_msg "$_jprobe" && host_journal=0
-    if (( host_journal )); then
-        case "$bs" in
-            not_observed|confirmed|censored_pre_failure)
-                ok "bt1_status populated from evidence ($bs)" ;;
-            unknown)
-                bad "bt1_status is 'unknown' on a host with a readable journal — evidence collection failed (classifier ordered before collection?)" ;;
-            *)  bad "bt1_status is '${bs:-empty}' — outside its domain" ;;
-        esac
-    else
-        case "$bs" in
-            unknown)
-                ok "bt1_status is 'unknown' on a host with no readable journal — collection refused rather than guessed" ;;
-            not_observed|confirmed|censored_pre_failure)
-                bad "bt1_status is '$bs' on a host with NO journal — a verdict manufactured from a journal that could not be read" ;;
-            *)  bad "bt1_status is '${bs:-empty}' — outside its domain" ;;
-        esac
-    fi
+    # This used to ask the HOST whether it had a readable journal and assert
+    # one branch or the other, so the container only ever checked `unknown` and
+    # the laptop only ever checked collection, against its own kernel log. The
+    # journal is now an input: readable here, and absent and unreadable in
+    # "A HOST WITH NO JOURNAL" below — both answers, on every host.
+    case "$bs" in
+        not_observed)
+            ok "bt1_status populated from evidence ($bs) — a readable, quiet journal" ;;
+        unknown)
+            bad "bt1_status is 'unknown' with a readable journal — evidence collection failed (classifier ordered before collection?)" ;;
+        *)  bad "bt1_status is '${bs:-empty}' from a quiet journal — expected not_observed" ;;
+    esac
+    # The kernel column is the kernel the TRIAL ran on, read from uname. From the
+    # stub, so a value any real machine could produce would mean it was not.
+    kr=$(awk -F'\t' 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} NR==2{print $c["kernel"]}' \
+         "$LC/evidence/trials/results.tsv")
+    [[ "$kr" == 0.0.0-suite-fixture ]] \
+        && ok "the row's kernel is the one uname reported to the trial" \
+        || bad "the row's kernel is '${kr:-empty}', not the stubbed 0.0.0-suite-fixture — read from the machine?"
     case "$tr" in
         survived|failed|alive_after_intervention|aborted)
             ok "trial_result populated from its domain ($tr)" ;;
@@ -3114,8 +3270,12 @@ farm_dir() {   # <dir> [tool-to-omit...] — symlinks only; NEVER written into
     local f b omit
     local -a keep=()
     mkdir -p "$d"
-    for f in /usr/bin/*; do
+    # A machine tool is linked to its TRIPWIRE, never to the real binary, and on
+    # every host alike: a farm that mirrored the real /usr/bin handed the watchdog
+    # test the real loginctl here, and would have handed it the laptop's.
+    for f in /usr/bin/* "$TRIP"/*; do
         b=${f##*/}
+        [[ "$f" == /usr/bin/* && -e "$TRIP/$b" ]] && continue
         omit=0
         for t in "$@"; do [[ "$b" == "$t" ]] && { omit=1; break; }; done
         (( omit )) && continue
@@ -3137,7 +3297,10 @@ farm_dir() {   # <dir> [tool-to-omit...] — symlinks only; NEVER written into
 # No probe tool at all: neither hciconfig nor btmgmt is linked in, and the
 # stub directory beside it carries the rest.
 WDNOP="$WD/noprobe-stub"; mkdir -p "$WDNOP"
-cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WDNOP/" 2>/dev/null
+# loginctl too: the watchdog's notify() asks it for the logged-in users and
+# runs `sudo -u <user> notify-send` on each session bus. Left out of this
+# copy, the farmed PATH answered with the machine's real sessions.
+cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WD/stub/loginctl" "$WDNOP/" 2>/dev/null
 farm_dir "$WD/noprobe-farm" hciconfig btmgmt
 # PATH is passed THROUGH wd_until: env applies assignments left to right, so a
 # later PATH= wins over the helper's default. That keeps one waiting mechanism
@@ -3157,7 +3320,7 @@ NOPOUT=$(wd_until "cannot be confirmed" 60 PATH="$WDNOP:$WD/noprobe-farm" BT_COO
 # Same farm, keeping btmgmt and removing ONLY hciconfig — the branch under
 # test is the fallback, so btmgmt must be present and hciconfig must not.
 WDBM="$WD/btmgmt-only"; mkdir -p "$WDBM"
-cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WDBM/" 2>/dev/null
+cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WD/stub/loginctl" "$WDBM/" 2>/dev/null
 printf '#!/bin/sh\necho "btmgmt $*" >> "%s/spy.log"\nexit 0\n' "$WD" > "$WDBM/btmgmt"
 chmod +x "$WDBM/btmgmt" "$WDBM/systemctl" "$WDBM/sleep" 2>/dev/null
 farm_dir "$WD/btmgmt-farm" hciconfig
@@ -3417,7 +3580,9 @@ LVOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-logvolume 2>&1)
 # run and produce a row per boot — its columns come from units this fixture
 # deliberately does not carry, and asserting "-" everywhere would pin
 # absence rather than behaviour.
-EHOUT=$(BT_JOURNAL_FIXTURE="$BJ" tools/bt-env-history 2>&1); ehrc=$?
+# BT_METRICS pointed at nothing: unset, this read the REAL metrics.tsv and
+# joined it to the fixture's boots by boot id (devtools/sandbox, 2026-09-29).
+EHOUT=$(BT_METRICS=/nonexistent BT_JOURNAL_FIXTURE="$BJ" tools/bt-env-history 2>&1); ehrc=$?
 (( ehrc == 0 )) && ok "bt-env-history runs over a fixture without a journal" \
                 || bad "bt-env-history failed (rc=$ehrc)"
 
@@ -3435,7 +3600,14 @@ HR=tests/journal/health
 HRSYS=$(mktemp -d); mkdir -p "$HRSYS/usb/3-3" "$HRSYS/mod"
 echo 13d3 > "$HRSYS/usb/3-3/idVendor"; echo 3503 > "$HRSYS/usb/3-3/idProduct"
 echo N > "$HRSYS/mod/enable_autosuspend"
-HROUT=$(BT_JOURNAL_FIXTURE="$HR" BT_SYSFS_USB="$HRSYS/usb" BT_SYSFS_MODULE="$HRSYS/mod" \
+# The machine around the report, declared: systemctl for the in-force section,
+# and the install time read from an EMPTY share directory and unit directory.
+# Before these were seams, every report here labelled its fixture boots against
+# the install date of whichever machine ran the suite.
+HRBIN="$HRSYS/bin"; machine_stub "$HRBIN" systemctl
+mkdir -p "$HRSYS/share" "$HRSYS/units"
+HRMACH=(PATH="$HRBIN:$PATH" BT_SHARE_DIR="$HRSYS/share" BT_UNIT_DIR="$HRSYS/units")
+HROUT=$(env "${HRMACH[@]}" BT_JOURNAL_FIXTURE="$HR" BT_SYSFS_USB="$HRSYS/usb" BT_SYSFS_MODULE="$HRSYS/mod" \
         BT_METRICS=/nonexistent tools/bt-health-report.sh 2>&1); hrrc=$?
 (( hrrc == 0 )) && ok "bt-health-report runs over a fixture" \
                 || bad "bt-health-report failed (rc=$hrrc)"
@@ -3471,7 +3643,7 @@ t0=$(awk  '$1 == "0"  { print $3 }' <<<"$HROUT" | head -1)
 # the counters. Each fixture differs only in what the watchdog log contains,
 # because that is the only thing separating the four sentences.
 mkdir -p "$HRSYS/bt/hci0"
-hrv() { BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$HRSYS/usb"         BT_SYSFS_MODULE="$HRSYS/mod" BT_SYSFS_BT="$HRSYS/bt"         BT_METRICS="${2:-/nonexistent}" tools/bt-health-report.sh 2>&1; }
+hrv() { env "${HRMACH[@]}" BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$HRSYS/usb"         BT_SYSFS_MODULE="$HRSYS/mod" BT_SYSFS_BT="$HRSYS/bt"         BT_METRICS="${2:-/nonexistent}" tools/bt-health-report.sh 2>&1; }
 
 HRV1=$(hrv hr-none)
 [[ "$HRV1" == *"no watchdog intervention is recorded"* \
@@ -3544,7 +3716,7 @@ rm -f "$HRM"
 # for the boot start — and one fixture file has to answer both. The seam
 # answers formatting flags by being the text it is, so the text has to be the
 # form the arithmetic needs.
-hrp() { BT_JOURNAL_FIXTURE=tests/journal/hr-phase BT_SYSFS_USB="$HRSYS/usb" \
+hrp() { env "${HRMACH[@]}" BT_JOURNAL_FIXTURE=tests/journal/hr-phase BT_SYSFS_USB="$HRSYS/usb" \
         BT_SYSFS_MODULE="$HRSYS/mod" BT_SYSFS_BT="$HRSYS/bt" BT_METRICS=/nonexistent \
         BT_CHANGE_TIME="$1" tools/bt-health-report.sh 2>&1; }
 # Boot -1 starts at epoch 1786690800. A change time before that makes the boot
@@ -3559,7 +3731,36 @@ hr_b=$(awk '$1 == "-1" { print $6 }' <<<"$HRV6B" | head -1)
     && ok "BT_CHANGE_TIME moves boots across the before/after boundary, both ways" \
     || bad "phase labelling did not follow the change time (got '$hr_a' then '$hr_b')"
 
-HRV7=$(BT_JOURNAL_FIXTURE=tests/journal/health BT_SYSFS_USB="$HRSYS/usb" \
+# WITHOUT BT_CHANGE_TIME the install time is the stamp install.sh writes, and
+# failing that the watchdog unit's mtime. Both were hardcoded paths, so this
+# ran only where the project was installed — the laptop, never CI — and each
+# report test there was labelled by the laptop's install date. Now seamed,
+# driven, and the precedence pinned: the stamp wins, because a unit's mtime
+# moves forward on every reinstall and would relabel mitigated boots "before".
+hrs() {   # <stamp epoch or ""> <unit mtime epoch or ""> — boot -1's label
+    local d; d=$(mktemp -d); mkdir -p "$d/share" "$d/units"
+    [[ -n "$1" ]] && echo "$1" > "$d/share/installed-at"
+    [[ -n "$2" ]] && { : > "$d/units/bt-hang-watchdog.service"; touch -d "@$2" "$d/units/bt-hang-watchdog.service"; }
+    env "${HRMACH[@]}" BT_SHARE_DIR="$d/share" BT_UNIT_DIR="$d/units" \
+        BT_JOURNAL_FIXTURE=tests/journal/hr-phase BT_SYSFS_USB="$HRSYS/usb" \
+        BT_SYSFS_MODULE="$HRSYS/mod" BT_SYSFS_BT="$HRSYS/bt" BT_METRICS=/nonexistent \
+        tools/bt-health-report.sh 2>&1 | awk '$1 == "-1" { print $6; exit }'
+    rm -rf "$d"
+}
+hs_a=$(hrs 1786600000 ""); hs_b=$(hrs 1786699999 "")
+[[ "$hs_a" == "AFTER" && "$hs_b" == "before" ]] \
+    && ok "the install stamp places the boundary, both ways" \
+    || bad "install-stamp labelling wrong (got '$hs_a' then '$hs_b', want AFTER then before)"
+hu_a=$(hrs "" 1786600000); hu_b=$(hrs "" 1786699999)
+[[ "$hu_a" == "AFTER" && "$hu_b" == "before" ]] \
+    && ok "with no stamp, the watchdog unit's mtime places the boundary, both ways" \
+    || bad "unit-mtime fallback labelling wrong (got '$hu_a' then '$hu_b', want AFTER then before)"
+hp=$(hrs 1786699999 1786600000)
+[[ "$hp" == "before" ]] \
+    && ok "the stamp outranks the unit's mtime, which moves on every reinstall" \
+    || bad "a reinstalled unit's mtime overrode the install stamp (boot -1 labelled '$hp')"
+
+HRV7=$(env "${HRMACH[@]}" BT_JOURNAL_FIXTURE=tests/journal/health BT_SYSFS_USB="$HRSYS/usb" \
        BT_SYSFS_MODULE="$HRSYS/mod" BT_SYSFS_BT="$HRSYS/bt" BT_METRICS=/nonexistent \
        BT_BASELINE=/nonexistent/baseline.tsv \
        BT_SYNTHETIC_NOTE="3 of these are injected test lines" tools/bt-health-report.sh 2>&1)
@@ -3580,13 +3781,17 @@ HRV7=$(BT_JOURNAL_FIXTURE=tests/journal/health BT_SYSFS_USB="$HRSYS/usb" \
 HRNB=$(mktemp -d); mkdir -p "$HRNB/bin"
 cp tools/bt-health-report.sh "$HRNB/bin/"
 cp -r tools/lib "$HRNB/bin/lib"
+# bt-boot-list too, as an installation has it beside the report. Without it the
+# copy searched on to /usr/local/bin/bt-boot-list — an INSTALLED tool, run
+# against the real journal, from inside a test (devtools/sandbox, 2026-09-29).
+cp tools/bt-boot-list "$HRNB/bin/"
 mkdir -p "$HRNB/sys/usb" "$HRNB/sys/mod" "$HRNB/sys/bt/hci0"
 # The two SYSTEM candidates are pointed at the empty temp tree as well. Without
 # that this assertion passed here and FAILED on the investigation machine, which
 # has /usr/local/share/qca9377-bt-hang/baseline.tsv installed: the branch was
 # never taken, so the message never appeared. A missing-baseline test that only
 # works where the baseline was never installed tests the wrong machine.
-HRV8=$(BT_JOURNAL_FIXTURE=tests/journal/health BT_SYSFS_USB="$HRNB/sys/usb" \
+HRV8=$(env "${HRMACH[@]}" BT_JOURNAL_FIXTURE=tests/journal/health BT_SYSFS_USB="$HRNB/sys/usb" \
        BT_SYSFS_MODULE="$HRNB/sys/mod" BT_SYSFS_BT="$HRNB/sys/bt" BT_METRICS=/nonexistent \
        BT_BASELINE=/nonexistent/baseline.tsv \
        BT_SHARE_DIR="$HRNB/none" BT_HEALTH_DIR="$HRNB/none" \
@@ -3754,9 +3959,12 @@ rm -rf "$PMSYS"
 # machine fully off" versus "it is fine" — is what a person does next.
 ST=tests/journal/status
 STSYS=$(mktemp -d); mkdir -p "$STSYS/usb" "$STSYS/bt"
+# bt-status runs bt-state, which asks systemctl whether bluetooth is running and
+# bluetoothctl what is connected: this machine's answers until they were declared.
+STBIN="$STSYS/bin"; machine_stub "$STBIN" systemctl bluetoothctl uptime
 
 # Stage 2: nothing on the bus, no adapter.
-SOUT=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SOUT=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
        tools/bt-status 2>&1); src=$?
 (( src == 0 )) && ok "bt-status runs over a fixture and a fake device tree" \
                || bad "bt-status failed (rc=$src)"
@@ -3765,7 +3973,7 @@ SOUT=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt
 # a down controller exited 1 in full mode and 0 under --brief, because the full
 # path had no explicit exit and inherited whatever ran last. A caller writing
 # `bt-status && ...` got different behaviour from a DISPLAY flag.
-BRC=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+BRC=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
       tools/bt-status --brief >/dev/null 2>&1; echo $?)
 [[ "$src" == "$BRC" ]] \
     && ok "bt-status exit status is the same in full and --brief mode" \
@@ -3805,7 +4013,7 @@ STLE=$(grep -F "'unexpected event' (LE):" <<<"$SOUT" | head -1)
 # Enumerated but no adapter: a DIFFERENT diagnosis, and the operator's next
 # step differs with it — btusb never bound, rather than the chip being gone.
 mkdir -p "$STSYS/usb/3-3"; echo 13d3 > "$STSYS/usb/3-3/idVendor"; echo 3503 > "$STSYS/usb/3-3/idProduct"
-SENUM=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SENUM=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
         tools/bt-status 2>&1)
 [[ "$SENUM" == *"btusb has created no adapter"* && "$SENUM" != *"full POWER-OFF is required"* ]] \
     && ok "bt-status distinguishes 'enumerated, no adapter' from stage 2" \
@@ -3813,7 +4021,7 @@ SENUM=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/b
 
 # Healthy: an adapter exists, so no down-right-now verdict at all.
 mkdir -p "$STSYS/bt/hci0"
-SOK=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SOK=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
       tools/bt-status 2>&1)
 [[ "$SOK" != *"CONTROLLER IS DOWN RIGHT NOW"* ]] \
     && ok "bt-status does not cry down when an adapter is present" \
@@ -3835,7 +4043,7 @@ SOK=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt"
 #
 # Each pair (kernel + watchdog + bluetoothd) is a fixture directory, because
 # the verdicts differ by which of those three logs carries what — not by a flag.
-sv() { BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$STSYS/usb" \
+sv() { PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$STSYS/usb" \
        BT_SYSFS_BT="$STSYS/bt" tools/bt-status --brief 2>&1; }
 
 SVEOK=$(sv status-early-ok)
@@ -3878,14 +4086,14 @@ SVCQ=$(sv status-clean-quiet)
 # operator opens this tool to answer, and the directory was hardcoded.
 STTR=$(mktemp -d); : > "$STTR/a.btsnoop"; : > "$STTR/b.btsnoop"
 printf 'gap 1\ngap 2\ngap 3\n' > "$STTR/gaps.log"
-SVTR=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SVTR=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
        BT_TRACE_DIR="$STTR" tools/bt-status 2>&1)
 [[ "$SVTR" == *"btsnoop files:"*"2"* && "$SVTR" == *"capture gaps logged:"*"3"* ]] \
     && ok "bt-status counts the captures and the logged capture gaps" \
     || bad "capture health did not report 2 files and 3 gaps"
 rm -rf "$STTR"
 
-SVNOTR=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SVNOTR=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
          BT_TRACE_DIR=/nonexistent tools/bt-status 2>&1)
 [[ "$SVNOTR" == *"no trace directory"* ]] \
     && ok "bt-status says so when there is no capture directory at all" \
@@ -3893,7 +4101,7 @@ SVNOTR=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/
 
 # No checkout: the tool must say which variable to set rather than printing an
 # empty section, because it is run from anywhere and often from /.
-SVNOREPO=$(BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
+SVNOREPO=$(PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" \
            BT_REPO=/nonexistent/checkout tools/bt-status 2>&1)
 [[ "$SVNOREPO" == *"no checkout found"* && "$SVNOREPO" == *"BT_REPO="* ]] \
     && ok "bt-status names the override when it cannot find a checkout" \
@@ -3948,13 +4156,33 @@ done
 # is correct — a failed trial must not collect during a test run). Stubbing a
 # tool protects the suite from it; it does not test it. This runs the real
 # one, pointed at a temp directory, and asserts the write landed inside.
+# THE MACHINE IT COLLECTS FROM, declared. bt-incident copies the last minutes
+# of the kernel, watchdog and bluetoothd journals and snapshots the device
+# through bt-state and bt-usbstate. Undeclared, every run of these tests copied
+# THIS machine's logs — on the laptop, real unsanitised journal text — into a
+# temp session, and read its real USB tree (devtools/sandbox, 2026-09-29).
+# The kernel stream carries one marked line, so the collection can be shown to
+# have read it and nothing else.
+INCM=$(mktemp -d); mkdir -p "$INCM/usb" "$INCM/mod" "$INCM/bt" "$INCM/jrn"
+machine_stub "$INCM/bin" systemctl bluetoothctl uname
+cat > "$INCM/bin/journalctl" <<'INCJ'
+#!/bin/sh
+case " $* " in *" -k "*) echo "Aug 10 09:10:00 host kernel: Bluetooth: hci0: incident-fixture-line" ;; esac
+exit 0
+INCJ
+chmod +x "$INCM/bin/journalctl"
+INCENV=(PATH="$INCM/bin:$PATH" BT_SYSFS_USB="$INCM/usb" BT_SYSFS_MODULE="$INCM/mod"
+        BT_SYSFS_BT="$INCM/bt" BT_JOURNAL_FIXTURE="$INCM/jrn")
 INC=$(mktemp -d)
 mkdir -p "$INC/repo"
-BT_EVIDENCE_REPO="$INC/repo" tools/bt-incident suite-sandbox-check >/dev/null 2>&1
+env "${INCENV[@]}" BT_EVIDENCE_REPO="$INC/repo" tools/bt-incident suite-sandbox-check >/dev/null 2>&1
 inside=$(find "$INC/repo" -type d -name '*suite-sandbox-check*' 2>/dev/null | wc -l)
 (( ${inside:-0} == 1 )) \
     && ok "bt-incident writes inside an explicit BT_EVIDENCE_REPO" \
     || bad "bt-incident did NOT write into its sandbox — the override is being ignored"
+grep -qs 'incident-fixture-line' "$INC"/repo/evidence/sessions/2*/kernel.log \
+    && ok "bt-incident's kernel.log is the declared journal's, not this machine's" \
+    || bad "bt-incident's kernel.log lacks the declared journal's line — collected from elsewhere"
 
 # THE SECOND CLAIM — "wrote nowhere else" — restated so it can actually fail.
 #
@@ -3972,7 +4200,7 @@ inside=$(find "$INC/repo" -type d -name '*suite-sandbox-check*' 2>/dev/null | wc
 # the property to assert — the override must survive a target that does not
 # look like a checkout — and it is checkable on any machine.
 INC2=$(mktemp -d)              # deliberately WITHOUT an evidence/ subdirectory
-BT_EVIDENCE_REPO="$INC2" tools/bt-incident suite-override-survives >/dev/null 2>&1
+env "${INCENV[@]}" BT_EVIDENCE_REPO="$INC2" tools/bt-incident suite-override-survives >/dev/null 2>&1
 inc2=$(find "$INC2" -type d -name '*suite-override-survives*' 2>/dev/null | wc -l)
 (( ${inc2:-0} == 1 )) \
     && ok "an explicit BT_EVIDENCE_REPO survives a target with no evidence/ tree" \
@@ -4010,7 +4238,9 @@ ex_awk_ok=1
 echo "00:11:22:33:44:55:66:77" | awk '{exit !(match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) && RLENGTH == 23)}' 2>/dev/null || ex_awk_ok=0
 echo "11:22" | awk '{exit (match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) != 0)}' 2>/dev/null || ex_awk_ok=0
 
-exhibit() { BT_REPO="$EXR" tools/bt-exhibit "$@"; }
+# The exhibit header records `uname -r`: the machine's until declared here.
+EXBIN="$EXR/bin"; machine_stub "$EXBIN" uname
+exhibit() { PATH="$EXBIN:$PATH" BT_REPO="$EXR" tools/bt-exhibit "$@"; }
 
 if (( ex_awk_ok )); then
     # THE CENTRAL CLAIM, and the reason the tool exists rather than a template:
@@ -4199,7 +4429,7 @@ fi
 # can be used in a pipeline, where nobody reads stderr. The safest-looking
 # failure was the only unsafe one.
 EXN=$(mktemp -d); mkdir -p "$EXN/evidence"
-BT_REPO="$EXN" tools/bt-exhibit new probe-nosan --claim "c" \
+PATH="$EXBIN:$PATH" BT_REPO="$EXN" tools/bt-exhibit new probe-nosan --claim "c" \
         --cmd 'echo "wlan0: authenticate with de:ad:be:ef:00:11"' >/dev/null 2>&1
 nosanrc=$?
 nosan=$(ls "$EXN/evidence/exhibits/" 2>/dev/null | wc -l)
@@ -4218,7 +4448,7 @@ rm -rf "$EXN"
 if (( ex_awk_ok )); then
     EXW=$(mktemp -d); mkdir -p "$EXW/evidence/exhibits" "$EXW/tools"
     cp tools/sanitize-logs.sh "$EXW/tools/sanitize-logs.sh"
-    exw_new() { BT_REPO="$EXW" tools/bt-exhibit "$@" >/dev/null 2>&1; }
+    exw_new() { PATH="$EXBIN:$PATH" BT_REPO="$EXW" tools/bt-exhibit "$@" >/dev/null 2>&1; }
 
     # BY INSTANT, NOT BY POSITION. The three stamps are emitted OUT OF ORDER on
     # purpose — the middle line is the earliest and the first line is the latest
@@ -4557,7 +4787,9 @@ DG=$(mktemp -d)
 mkdir -p "$DG/usb/3-3/3-3:1.0/bluetooth/hci0" "$DG/empty"
 echo 13d3 > "$DG/usb/3-3/idVendor"; echo 3503 > "$DG/usb/3-3/idProduct"
 
-dg_run() { BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$DG/usb" \
+# lsusb lists the bus as it is NOW — this machine's, until declared.
+machine_stub "$DG/bin" lsusb
+dg_run() { PATH="$DG/bin:$PATH" BT_JOURNAL_FIXTURE="tests/journal/$1" BT_SYSFS_USB="$DG/usb" \
            tools/bt-diagnose 2>&1; }
 
 DGSIG=$(dg_run diagnose-signature); dgsigrc=$?
@@ -4612,7 +4844,7 @@ DGCLEAN=$(dg_run diagnose-clean); dgcleanrc=$?
 
 # No controller at all. This is the ONE case where "cannot determine" is the
 # honest answer, and its exit code must not be confused with health.
-DGNONE=$(BT_JOURNAL_FIXTURE=tests/journal/diagnose-signature BT_SYSFS_USB="$DG/empty" \
+DGNONE=$(PATH="$DG/bin:$PATH" BT_JOURNAL_FIXTURE=tests/journal/diagnose-signature BT_SYSFS_USB="$DG/empty" \
          tools/bt-diagnose 2>&1); dgnonerc=$?
 (( dgnonerc == 2 )) && [[ "$DGNONE" == *"power-off"* ]] \
     && ok "bt-diagnose exits 2 with no controller on the bus, and says power-off" \
@@ -4964,6 +5196,9 @@ printf 'Aug 10 09:12:00 host bt-hang-watchdog: intervening now\n' \
 printf '#!/bin/sh\necho "hciconfig $*" >> "%s/probe.log"\nexit 0\n' "$BS" > "$BS/stub/hciconfig"
 printf '#!/bin/sh\necho "Device AA:BB:CC:00:00:01 Phone"\n' > "$BS/stub/bluetoothctl"
 chmod +x "$BS/stub"/*
+# The services section asks systemctl about four units: declared, every one
+# inactive, so the section can be checked against something.
+machine_stub "$BS/stub" systemctl
 
 bs_run() { env PATH="$BS/stub:$PATH" BT_SYSFS_USB="$BS/usb" BT_SYSFS_MODULE="$BS/mod" \
                BT_JOURNAL_FIXTURE="$BS/jrn" tools/bt-state "$@" 2>&1; }
@@ -5018,6 +5253,11 @@ BSHUM=$(bs_run)
 [[ "$BSHUM" == *"device 13d3:3503"* && "$BSHUM" == *"responds"* && "$BSHUM" == *"services"* ]] \
     && ok "bt-state's human form reports the device, liveness and services" \
     || bad "the human-readable form is missing a section"
+# Each unit's state as systemctl gave it — the declared machine's `inactive`,
+# so a services section read from anywhere else shows up here.
+(( $(grep -cE '^ +(bluetooth|bt-[a-z-]+)(\.[a-z]+)? +inactive$' <<<"$BSHUM") == 4 )) \
+    && ok "bt-state reports each service as systemctl answered it" \
+    || bad "the services section does not carry systemctl's answers: $(grep -A4 services <<<"$BSHUM" | tr '\n' '|')"
 # btmgmt is the fallback when hciconfig is absent, and it is the one that runs
 # on a modern bluez where hciconfig has been removed. A liveness column that
 # silently reads "?" on those machines makes every row of metrics.tsv useless
@@ -5031,6 +5271,7 @@ chmod +x "$BSMG/bin"/*
 # must simply not contain one; the branch under test is the one taken when
 # hciconfig is not there at all.
 mkdir -p "$BSMG/bin2"; cp "$BSMG/bin/btmgmt" "$BSMG/bin/bluetoothctl" "$BSMG/bin2/"
+machine_stub "$BSMG/bin2" systemctl
 # /usr/bin MUST NOT be on the PATH here, and leaving it there is not a detail.
 #
 # hciconfig lives in /usr/bin on any machine with bluez installed — which is
@@ -5176,6 +5417,7 @@ HSW
 printf '#!/bin/sh\nexit 0\n' > "$HS/stub/hciconfig"
 printf '#!/bin/sh\necho "Device AA:BB:CC:00:00:01 Phone"\n' > "$HS/stub/bluetoothctl"
 chmod +x "$HS/stub"/*
+machine_stub "$HS/stub" uname   # the kernel column
 
 hs_run() { env PATH="$HS/stub:$PATH" BT_METRICS="$HS/metrics.tsv" \
     BT_SYSFS_USB="${1:-$HS/usb}" BT_SYSFS_MODULE="$HS/mod" \
@@ -5208,6 +5450,24 @@ hs_blank=$(awk -F'\t' 'NR==2 { for (i=1;i<=NF;i++) if ($i == "") { print i; exit
 [[ -z "$hs_blank" ]] \
     && ok "no column in the row is blank (unknowns are '-' or 0, never empty)" \
     || bad "column $hs_blank is empty — a printf argument is missing, not its %s"
+# The kernel column is uname's answer — the DECLARED one — and "-" when uname
+# cannot answer. That second case wrote an EMPTY field until the machine
+# tripwire made uname fail here and the check above caught it.
+hs_k=$(awk -F'\t' 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} NR==2{print $c["kernel"]}' "$HS/metrics.tsv")
+HSNU=$(mktemp -d); cp -r "$HS/stub" "$HSNU/stub"; printf '#!/bin/sh\nexit 1\n' > "$HSNU/stub/uname"
+env PATH="$HSNU/stub:$PATH" BT_METRICS="$HSNU/metrics.tsv" BT_SYSFS_USB="$HS/usb" BT_SYSFS_MODULE="$HS/mod" \
+    BT_JOURNAL_FIXTURE="$HS/jrn" bin/bt-health-snapshot >/dev/null 2>&1
+hs_k2=$(awk -F'\t' 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} NR==2{print $c["kernel"]}' "$HSNU/metrics.tsv" 2>/dev/null)
+# Boot id and uptime from the run's declared /proc (BT_PROC, top of file) —
+# the host's own until 2026-09-29.
+hs_bu=$(awk -F'\t' 'NR==1{for(i=1;i<=NF;i++)c[$i]=i;next} NR==2{print $c["boot_id"] " " $c["uptime_s"]}' "$HS/metrics.tsv")
+[[ "$hs_bu" == "fixture- 3600" ]] \
+    && ok "boot id and uptime come from the declared /proc, not this machine's" \
+    || bad "boot_id/uptime_s are '$hs_bu', not the declared 'fixture- 3600'"
+[[ "$hs_k" == 0.0.0-suite-fixture && "$hs_k2" == "-" ]] \
+    && ok "the kernel column is uname's answer, and '-' when uname has none" \
+    || bad "kernel column: '$hs_k' from the declared uname (want 0.0.0-suite-fixture), '$hs_k2' from a failing one (want -)"
+rm -rf "$HSNU"
 
 # Second run appends only. A re-written header mid-file would be read back as a
 # data row of literal column names.
@@ -5310,6 +5570,7 @@ printf '#!/bin/sh\nexit 0\n' > "$EV/stub/logger"
 printf '#!/bin/sh\nexit 0\n' > "$EV/stub/systemctl"
 printf '#!/bin/sh\necho "up 1 hour"\n' > "$EV/stub/uptime"
 chmod +x "$EV/stub"/*
+machine_stub "$EV/stub" uname   # the session header records the kernel
 
 ev_env=(PATH="$EV/stub:$PATH" BT_EVIDENCE_REPO="$EV/repo" BT_EVIDENCE_STATE="$EV/state"
         BT_SYSFS_USB="$EV/usb" BT_SYSFS_MODULE="$EV/mod" BT_JOURNAL_FIXTURE="$EV/jrn"
@@ -5341,7 +5602,10 @@ MKQ=$(env PATH="$EV/stub:$PATH" BT_SYSFS_USB="$EV/usb" bin/bt-mark --probe "prob
 [[ "$MKQ" == *"responds=yes"* && "$MKQ" == *"(probed)"* && -s "$EV/hci-calls" ]] \
     && ok "bt-mark --probe asks the controller and labels the mark as probed" \
     || bad "bt-mark --probe did not probe or did not say so: $MKQ"
-rm -f "$EV/stub/hciconfig" "$EV/hci-calls"
+# RESTORED, not removed: deleting it took away the silent stub every later
+# `ev start` and `ev stop` relied on, and their probes reached the machine's
+# own hciconfig for the rest of the section.
+printf '#!/bin/sh\nexit 0\n' > "$EV/stub/hciconfig"; rm -f "$EV/hci-calls"
 
 # Refusals before anything is open. Recording into no session would write to a
 # path derived from an absent state file.
@@ -6406,7 +6670,17 @@ INSTALL_STAMP=$(mktemp)
 # Pointing it at a nonexistent path is not a workaround: a dry run's contract
 # is "print what would happen and change nothing", and it must hold whatever
 # mode the machine happens to be in. The mode guard has its own test.
-install_dry() { BT_MODE_STAMP=/nonexistent/mode ./install.sh "$@" 2>&1; }
+#
+# AND AGAINST AN EMPTY STAGING ROOT, for the same reason one level down. A bare
+# dry run plans against THIS machine: "would keep existing stamp: <its epoch>"
+# and every other line describing what is installed here — the laptop's
+# installation in its output, a bare checkout's in CI's, with the assertions
+# below reading either (devtools/sandbox's READ detector, 2026-09-29). Staged,
+# the plan is the same banner and the same "would run:" lines against a machine
+# with nothing on it, everywhere. The write check below still watches the real
+# install trees.
+IDRY=$(mktemp -d)
+install_dry() { BT_DESTDIR="$IDRY" BT_MODE_STAMP=/nonexistent/mode ./install.sh "$@" 2>&1; }
 
 IOUT=$(install_dry); irc=$?
 if (( irc == 0 )); then
@@ -6430,6 +6704,18 @@ WROTE=$(find /usr/local /etc/systemd/system /etc/modprobe.d /etc/udev/rules.d \
 [[ -z "$WROTE" ]] && ok "install.sh dry run wrote nothing under the install trees" \
                   || bad "install.sh dry run WROTE: $WROTE"
 
+# The preflight's device check reads the DECLARED bus (BT_SYSFS_USB): the suite's
+# empty one by default, a planted 3-3 when a test builds one. It scanned the
+# real /sys/bus/usb until 2026-09-29, so this said "present" on the laptop and
+# "not on the USB bus" in CI for the same dry run.
+IBUSD=$(mktemp -d); mkdir -p "$IBUSD/3-3"
+echo 13d3 > "$IBUSD/3-3/idVendor"; echo 3503 > "$IBUSD/3-3/idProduct"
+IBUS=$(BT_SYSFS_USB="$IBUSD" install_dry)
+[[ "$IBUS" == *"device 13d3:3503 present at 3-3"* && "$IOUT" == *"13d3:3503 not on the USB bus right now"* ]] \
+    && ok "install.sh's preflight reads the declared bus, present and absent" \
+    || bad "install.sh's device check did not follow BT_SYSFS_USB: $(grep -hE 'present at|not on the USB' <<<"$IBUS$IOUT" | tr '\n' '|')"
+rm -rf "$IBUSD"
+
 install_dry --bogus >/dev/null 2>&1
 (( $? != 0 )) && ok "install.sh rejects an unknown option" \
               || bad "install.sh accepted an unknown option"
@@ -6452,7 +6738,7 @@ IDEF=$(install_dry)
 # refuse BEFORE anything else — even a dry run prints install plans a reader
 # may follow by hand.
 MODEF=$(mktemp); echo "experiment since=2026-08-13" > "$MODEF"
-MOUT=$(BT_MODE_STAMP="$MODEF" ./install.sh 2>&1); mrc=$?
+MOUT=$(BT_DESTDIR="$IDRY" BT_MODE_STAMP="$MODEF" ./install.sh 2>&1); mrc=$?
 if (( mrc == 3 )) && [[ "$MOUT" == *"EXPERIMENT"* ]]; then
     ok "install.sh refuses (rc=3) when the machine is in experiment mode"
 else
@@ -6522,8 +6808,12 @@ chmod +x "$UM/bin"/*
 # restating the other four. The first version took the overrides as positional
 # arguments and handed `--check` to the shell as a command name.
 um() {
+    # The suite declares an empty bus for the whole run (top of file). Here that
+    # means "this test set nothing", so the harness's own device applies.
+    local usb="${BT_SYSFS_USB:-}"
+    [[ -z "$usb" || "$usb" == "$SUITE_MACHINE/usb" ]] && usb="$UM/sysfs"
     PATH="$UM/bin:$PATH" \
-    BT_SYSFS_USB="${BT_SYSFS_USB:-$UM/sysfs}" \
+    BT_SYSFS_USB="$usb" \
     BT_USBMON_DIR="${BT_USBMON_DIR:-$UM/cap}" \
     BT_USBMON_DEBUGFS="${BT_USBMON_DEBUGFS:-$UM/dbg}" \
     BT_USBMON_GAPLOG="${BT_USBMON_GAPLOG:-$UM/cap/gaps.log}" \
@@ -7022,6 +7312,7 @@ touch "$TL/install.sh"; git -C "$TL" init -q 2>/dev/null
 mkdir -p "$TL/sysfs/3-3/power" "$TL/sysfs/3-3/3-3:1.0/bluetooth/hci0"
 echo 13d3 > "$TL/sysfs/3-3/idVendor"; echo 3503 > "$TL/sysfs/3-3/idProduct"
 echo on   > "$TL/sysfs/3-3/power/control"
+mkdir -p "$TL/mod"; echo Y > "$TL/mod/enable_autosuspend"   # see $LC/mod above
 
 # A controller that answers unless a test kills it on purpose, so the
 # classification under test is bt-trial's and not the machine's radio.
@@ -7047,6 +7338,11 @@ exit 0
 TLSTUB
 printf '#!/bin/sh\necho "up 1 hour"\n' > "$TL/bin/uptime"
 printf '#!/bin/sh\nexit 0\n' > "$TL/bin/bt-incident"
+# bt-mark, one link further out, writes each trial line to the journal with
+# logger and counts connected devices with bluetoothctl; bt-trial records
+# uname. Undeclared, those reached the machine: 20 "TRIAL stock #1 START"
+# lines per suite run into the laptop's real journal, among the real ones.
+machine_stub "$TL/bin" logger bluetoothctl uname
 # bt-trial calls bt-mark and bt-state BY NAME. On a checkout with the project
 # installed, that reached /usr/local/bin — whatever was last deployed — and the
 # 2026-09-19 proof of the passive autostop found the installed bt-mark still
@@ -7070,7 +7366,12 @@ cat "$TL/kjournal"
 exit 0
 TLJC
 : > "$TL/prevboot"
-chmod +x "$TL/bin"/*
+# REGULAR FILES ONLY. A glob here also named the two symlinks above, and chmod
+# follows a symlink: every run chmodded the checkout's own bin/bt-mark and
+# tools/bt-state. Mode unchanged, so no content check could see it — the
+# sandbox's WRITE detector did (devtools/sandbox, 2026-09-29) — but on a file
+# checked out without +x it would have changed the real one.
+find "$TL/bin" -maxdepth 1 -type f -exec chmod +x {} +
 
 # The ONLY way this section may invoke bt-trial. Same rule as the sandbox
 # above, and the same reason: an invocation that forgets BT_EVIDENCE_REPO
@@ -7078,7 +7379,7 @@ chmod +x "$TL/bin"/*
 tl() {
     PATH="$TL/bin:$PATH" \
     BT_REPO="$TL" BT_EVIDENCE_REPO="$TL" \
-    BT_STATE="$TL/state" BT_SYSFS_USB="$TL/sysfs" \
+    BT_STATE="$TL/state" BT_SYSFS_USB="$TL/sysfs" BT_SYSFS_MODULE="$TL/mod" \
     tools/bt-trial "$@" 2>&1
 }
 tl_row() { tail -1 "$TL/evidence/trials/results.tsv" 2>/dev/null; }
@@ -7101,6 +7402,12 @@ TLDIR=$(grep '^dir=' "$TL/state/current" 2>/dev/null | cut -d= -f2-)
     || bad "start did not open a trial (rc=$tlsrc, dir=$TLDIR)"
 (( tlsrc == 0 )) && [[ -e "$TLDIR/steps.log" ]] \
     && ok "bt-trial start opens a numbered trial with its own directory"
+# The start is announced in the journal, through bt-mark — and here that
+# journal is the stub's file, which is the proof the announcement went nowhere
+# real.
+grep -q 'TRIAL stock #1 START' "$TL/bin/logger.log" 2>/dev/null \
+    && ok "the trial start is announced to the journal (the declared logger, not the machine's)" \
+    || bad "no 'TRIAL stock #1 START' reached the declared logger — announced elsewhere, or not at all"
 
 # THE FINGERPRINT IS TAKEN AT START. An auto-trial spans a whole boot and this
 # project reconfigures instrumentation while one is open, so a fingerprint read
@@ -7110,6 +7417,12 @@ TLTS=$(grep '^treat_start=' "$TL/state/current" | cut -d= -f2-)
 [[ "$TLTS" == *"wd=early+late/thr5"* && "$TLTS" == *"probes=on"* ]] \
     && ok "the treatment fingerprint reads the watchdog's actual configuration" \
     || bad "fingerprint did not describe a running watchdog: '$TLTS'"
+# And btusb's parameter from the DECLARED module directory. It was read from
+# the real /sys/module until 2026-09-29, so every trial here carried the host's
+# autosuspend setting; Y is a value the laptop and CI would not produce.
+[[ "$TLTS" == "autosusp=Y,"* ]] \
+    && ok "the fingerprint's autosuspend value is the declared module parameter" \
+    || bad "fingerprint autosuspend is not the declared Y — read from this machine? '$TLTS'"
 
 TLS2=$(tl start stock); tls2rc=$?
 (( tls2rc == 1 )) && [[ "$TLS2" == *"already open"* ]] \
@@ -7392,7 +7705,7 @@ mkdir -p "$TL/tmpd"
 tlt() {
     PATH="$TL/bin:$PATH" TMPDIR="$TL/tmpd" \
     BT_REPO="$TL" BT_EVIDENCE_REPO="$TL" \
-    BT_STATE="$TL/state" BT_SYSFS_USB="$TL/sysfs" \
+    BT_STATE="$TL/state" BT_SYSFS_USB="$TL/sysfs" BT_SYSFS_MODULE="$TL/mod" \
     tools/bt-trial "$@" 2>&1
 }
 tlt autostart stock >/dev/null 2>&1
@@ -7417,7 +7730,7 @@ printf 'this line is not the results header\n' > "$TLNH/evidence/trials/results.
 tlnh() {
     PATH="$TL/bin:$PATH" \
     BT_REPO="$TLNH" BT_EVIDENCE_REPO="$TLNH" \
-    BT_STATE="$TLNH/state" BT_SYSFS_USB="$TL/sysfs" \
+    BT_STATE="$TLNH/state" BT_SYSFS_USB="$TL/sysfs" BT_SYSFS_MODULE="$TL/mod" \
     tools/bt-trial "$@" 2>&1
 }
 TLNHOUT=$(tlnh autostart stock); tlnhrc=$?
@@ -8073,7 +8386,11 @@ ARCHKO=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARCHK" tools/
 # job rather than merely counted. Built by replacing the archive with a valid
 # one-record file — valid, decompressible, and wrong, which is exactly how the
 # nine on the machine looked.
-BT_JOURNAL_FIXTURE=tests/journal/archive tools/bt-archive --list >/dev/null 2>&1
+# Into $ARCHK like its neighbours. Without BT_ARCHIVE_DIR this defaulted to
+# ~/bt-journal-archive — it created that directory in the real home and listed
+# it, and on the laptop that is where the real, unsanitised journal archives
+# live (devtools/sandbox's WRITE detector, run as an ordinary user, 2026-09-29).
+BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARCHK" tools/bt-archive --list >/dev/null 2>&1
 # ⚠️ REMOVE WHATEVER WAS WRITTEN, NOT ".zst". bt-archive probes zstd, xz, gzip
 # in that order, so on a host without zstd the archive above is .xz or .gz and
 # a hardcoded `rm -f …zst` leaves it beside the planted one — two archives for
@@ -8404,6 +8721,18 @@ if (( snrc == 0 )) && [[ -s "$SNDIR/all.log" && -s "$SNDIR/kernel.log" \
 else
     bad "the capture is incomplete (rc=$snrc): $(ls "$SNDIR" 2>/dev/null | tr '\n' ' ')"
 fi
+
+# The adapter line reads the DECLARED /sys/class/bluetooth (BT_SYSFS_BT): none
+# on the suite's machine, hci7 on one a test builds. It read the real class
+# directory until 2026-09-29 — hci0 on the laptop, nothing in CI.
+SNH=$(mktemp -d); mkdir -p "$SNH/repo" "$SNH/class/hci7"
+SNHOUT=$(BT_SYSFS_BT="$SNH/class" sn_run "$SNH")
+sn_hci() { { printf '%s\n' "$1"; cat "$2"/snap/*-boot0/summary.txt 2>/dev/null; } \
+           | awk '/hci device/ { print $NF; exit }'; }
+[[ "$(sn_hci "$SNOUT" "$SN")" == none && "$(sn_hci "$SNHOUT" "$SNH")" == hci7 ]] \
+    && ok "bt-snapshot's adapter comes from the declared class directory, absent and present" \
+    || bad "bt-snapshot's hci device ignored BT_SYSFS_BT: '$(sn_hci "$SNOUT" "$SN")' then '$(sn_hci "$SNHOUT" "$SNH")'"
+rm -rf "$SNH"
 
 # THE BARE `command tx timeout` IS COUNTED, and it is the one that anchors.
 # The kernel omits the opcode whenever hdev->req_skb is NULL — the case where
@@ -9114,8 +9443,8 @@ CRLIB=$(BT_LIBDIR=/nonexistent tools/bt-crash 2>&1); crlibrc=$?
 # vacuous assertions escaped through.
 COREDUMP_SKIPPED=''
 CDREAL=""
-if command -v coredumpctl >/dev/null 2>&1; then
-    CDREAL=$(coredumpctl list --no-pager 2>/dev/null || true)
+if PATH="$SUITE_ORIG_PATH" command -v coredumpctl >/dev/null 2>&1; then
+    CDREAL=$(real_tool coredump-contract coredumpctl list --no-pager 2>/dev/null || true)
 fi
 CDROWS=$(awk 'NR > 1 && $5 ~ /^[0-9]+$/' <<<"${CDREAL:-}" | wc -l)
 if [[ -z "$CDREAL" ]] || (( ${CDROWS:-0} == 0 )); then
@@ -9132,7 +9461,7 @@ else
         && ok "PID is whitespace field 5 of a real coredumpctl list row" \
         || bad "no real list row carries a pid in field 5 — bt-crash reads the wrong column"
 
-    CDINFO=$(coredumpctl info "$CDPID" --no-pager 2>/dev/null || true)
+    CDINFO=$(real_tool coredump-contract coredumpctl info "$CDPID" --no-pager 2>/dev/null || true)
     if [[ "$CDINFO" == *"Stack trace of thread"* ]]; then
         ok "real coredumpctl info carries the 'Stack trace of thread' line the fixture claims"
     elif [[ -z "$CDINFO" ]]; then
@@ -9912,7 +10241,11 @@ bw_present
 # bt-window called it directly. It reads through bt_journal now, so the same
 # questions can be asked without a stub at all — and the fixture is the form
 # another machine can reproduce.
-BWF=$(BT_JOURNAL_FIXTURE=tests/journal/window tools/bt-window 2>&1); bwfrc=$?
+# Without a journalctl stub — but bt-window still asks lsusb whether the device
+# is on the bus now, and that answer was this machine's: absent here, present on
+# the laptop. Declared absent for all three.
+BWFBIN=$(mktemp -d); machine_stub "$BWFBIN" lsusb
+BWF=$(PATH="$BWFBIN:$PATH" BT_JOURNAL_FIXTURE=tests/journal/window tools/bt-window 2>&1); bwfrc=$?
 if [[ "$BWF" == *"2026-08-15T21:02:31.230123"* && "$BWF" == *"command timeouts   3"* \
    && "$BWF" == *"no intervention"* && "$BWF" == *"1 USB-layer line"* ]]; then
     ok "bt-window answers from a journal fixture — counts, onset and both verdicts"
@@ -9931,14 +10264,14 @@ fi
 # Both fixtures are the REAL 2026-08-15 lines, six seconds apart on that
 # machine, so one scenario pins both directions and neither can be satisfied by
 # a pattern that matches everything.
-BWR=$(BT_JOURNAL_FIXTURE=tests/journal/window-reset tools/bt-window 2>&1)
+BWR=$(PATH="$BWFBIN:$PATH" BT_JOURNAL_FIXTURE=tests/journal/window-reset tools/bt-window 2>&1)
 if [[ "$BWR" == *"1 INTERVENTION(S)"* && "$BWR" == *"1 tooling"* && "$BWR" != *"operator"* ]]; then
     ok "a deliberate USB reset is attributed to TOOLING, and the rfkill teardown beside it is not an operator"
 else
     bad "reset window mis-attributed — the kernel's reset wording or the rfkill qualifier is wrong:"
     while IFS= read -r l; do bad "      $l"; done < <(grep -E 'INTERVENTION|intervention|tooling|operator' <<<"$BWR")
 fi
-BWK=$(BT_JOURNAL_FIXTURE=tests/journal/window-rfkill tools/bt-window 2>&1)
+BWK=$(PATH="$BWFBIN:$PATH" BT_JOURNAL_FIXTURE=tests/journal/window-rfkill tools/bt-window 2>&1)
 if [[ "$BWK" == *"1 INTERVENTION(S)"* && "$BWK" == *"1 operator"* && "$BWK" != *"tooling"* ]]; then
     ok "an rfkill block that actually blocks (soft 1) is attributed to the OPERATOR"
 else
@@ -10669,7 +11002,23 @@ else
     bad "the .rules fixture is not a copy of $UDEVSRC — the shipped rule is missing or unreadable"
 fi
 git -C "$SCRATCH/kinds" add -A
-KOUT=$(devtools/repo-validate "$SCRATCH/kinds" 2>&1); krc=$?
+# udevadm, DECLARED: a spy that accepts `verify`. The real one made this test
+# ask a different question per host — "checked" where udev is installed (the
+# laptop, and its udevadm is a machine tool), "skipped" everywhere else. What
+# is under test is repo-validate's dispatch, so the spy records what it was
+# handed; the shipped rule's real verdict is CI's repo-validate over the tree.
+KBIN="$SCRATCH/kbin"; mkdir -p "$KBIN"
+printf '#!/bin/sh\necho "$*" >> "%s/udevadm.log"\nexit 0\n' "$KBIN" > "$KBIN/udevadm"; chmod +x "$KBIN/udevadm"
+# systemd-analyze likewise: `verify` resolves a unit's dependencies against this
+# host's own unit directories, so its verdict on a.service was the host's.
+printf '#!/bin/sh\necho "$*" >> "%s/systemd-analyze.log"\nexit 0\n' "$KBIN" > "$KBIN/systemd-analyze"; chmod +x "$KBIN/systemd-analyze"
+KOUT=$(PATH="$KBIN:$PATH" devtools/repo-validate "$SCRATCH/kinds" 2>&1); krc=$?
+grep -qx 'verify ./a.rules' "$KBIN/udevadm.log" 2>/dev/null \
+    && ok "repo-validate hands a .rules file to udevadm verify" \
+    || bad "repo-validate did not run 'udevadm verify ./a.rules': $(tr '\n' ';' < "$KBIN/udevadm.log" 2>/dev/null)"
+grep -q 'verify.*a\.service' "$KBIN/systemd-analyze.log" 2>/dev/null \
+    && ok "repo-validate hands a .service file to systemd-analyze verify" \
+    || bad "repo-validate did not run systemd-analyze verify on a.service: $(tr '\n' ';' < "$KBIN/systemd-analyze.log" 2>/dev/null)"
 # Each validator either CHECKED its file or SKIPPED for a named missing tool.
 # Both are acceptable answers; silence about the file is not, because that is
 # what a validator matching nothing looks like from outside.
@@ -10991,7 +11340,7 @@ rm -rf "$US"
 # dropped. A refusal left raw journal text beside a manifest vouching for it.
 INCS=$(mktemp -d); mkdir -p "$INCS/repo" "$INCS/bin"
 printf '#!/bin/sh\nexit 1\n' > "$INCS/bin/failing-sanitiser"; chmod +x "$INCS/bin/failing-sanitiser"
-INCSOUT=$(BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER="$INCS/bin/failing-sanitiser" \
+INCSOUT=$(env "${INCENV[@]}" BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER="$INCS/bin/failing-sanitiser" \
           tools/bt-incident sanitiser-failure-check --since '10 minutes ago' 2>&1); incsrc=$?
 # sessions/ also holds a `latest` symlink to the newest session: read the dated dir only
 INCSMAN=$(cat "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null)
@@ -11001,13 +11350,13 @@ INCSMAN=$(cat "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null)
 # No sanitiser at all is not a success either (follow-up F4): the manifest was
 # honest (NO-SANITISER) but the exit status said publishable.
 rm -rf "$INCS/repo"; mkdir -p "$INCS/repo"
-BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER=none tools/bt-incident no-sanitiser-check --since '10 minutes ago' >/dev/null 2>&1; incsnrc=$?
+env "${INCENV[@]}" BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER=none tools/bt-incident no-sanitiser-check --since '10 minutes ago' >/dev/null 2>&1; incsnrc=$?
 (( incsnrc != 0 )) && grep -q "^sanitised=NO-SANITISER" "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null \
     && ok "bt-incident with no sanitiser available exits non-zero and says NO-SANITISER" \
     || bad "a session with no sanitiser exited $incsnrc"
 printf '#!/bin/sh\nexit 0\n' > "$INCS/bin/ok-sanitiser"; chmod +x "$INCS/bin/ok-sanitiser"
 rm -rf "$INCS/repo"; mkdir -p "$INCS/repo"
-BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER="$INCS/bin/ok-sanitiser" \
+env "${INCENV[@]}" BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER="$INCS/bin/ok-sanitiser" \
     tools/bt-incident sanitiser-ok-check --since '10 minutes ago' >/dev/null 2>&1; incsokrc=$?
 (( incsokrc == 0 )) && grep -q "^sanitised=yes" "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null \
     && ok "bt-incident still reports sanitised=yes when every file passes" \
@@ -11595,6 +11944,45 @@ if [[ -z "$LOOSE" ]] && (( ${TRIALCALLS:-0} > 0 )); then
 else
     bad "bt-trial invoked outside trial() — may write to the real evidence tree:"
     while IFS= read -r l; do echo "        $l"; done <<<"$LOOSE"
+fi
+
+# The contract tag may be set in ONE place. Anywhere else it would be a way to
+# walk a leak past devtools/sandbox labelled as a contract read.
+# (Bracketed patterns, so this line does not match itself.)
+CTAGS=$(grep -n 'BT_MACHINE_CONTRAC[T]=' tests/run-tests | grep -v '^[0-9]*:[[:space:]]*#' \
+        | grep -vc 'CONTRAC[T]="[$]check" "[$]p" "[$]@"' || true)
+(( CTAGS == 0 )) \
+    && ok "BT_MACHINE_CONTRACT is set only by real_tool — no test can pass a leak off as a contract read" \
+    || bad "BT_MACHINE_CONTRACT is set outside real_tool ($CTAGS place(s)) — a leak can hide as a contract read"
+
+# The machine tripwire (top of file): every call that reached it is a verdict
+# this run took from the machine it ran on. Grouped by tool and by the
+# assertion that preceded it, which is where the missing stub belongs.
+TRIPCANARY=$(grep -c $'^journalctl\t--suite-tripwire-canary\t' "$TRIP_LOG")
+TRIPHITS=$(grep -vc $'^journalctl\t--suite-tripwire-canary\t' "$TRIP_LOG")
+if (( TRIPCANARY != 1 )); then
+    bad "the machine tripwire did not record its own canary ($TRIPCANARY line(s)) — the check below would pass on nothing"
+elif (( TRIPHITS == 0 )); then
+    ok "no test reached a machine tool: all $TRIP_N in tests/machine-tools answered only from stubs"
+else
+    bad "$TRIPHITS call(s) reached a machine tool no test had stubbed — answered by THIS machine:"
+    # each caller → "<script> <verb>" (interpreter, timeout(1), paths dropped),
+    # joined up the ancestry: "bt-state < bt-evidence stop"
+    awk -F'\t' '{ nc = split($3, cs, / < /); s = ""
+                  for (j = 1; j <= nc; j++) {
+                      nw = split(cs[j], w, " "); i = 1
+                      while (i < nw && (w[i] ~ /(^|\/)(ba|da)?sh$/ || w[i] == "timeout" || w[i] ~ /^[0-9]+$/)) i++
+                      c = w[i]; sub(/.*\//, "", c)
+                      if (w[i + 1] ~ /^[a-z][a-z0-9-]*$/) c = c " " w[i + 1]
+                      s = s (j > 1 ? " < " : "") c }
+                  k = $1 "\t" s; n[k]++
+                  if (!(k in a)) { a[k] = $2; at[k] = $4 } }
+                END { for (k in n) { split(k, q, "\t"); g++
+                          printf "%d\t%d\t1\t%5d  %-12s %s\n", n[k], g, n[k], q[1], substr(q[2], 1, 90)
+                          printf "%d\t%d\t2\t                    argv: %s   after: %s\n", n[k], g,
+                                 substr(a[k], 1, 40), substr(at[k], 1, 60) } }' \
+        <(grep -v $'^journalctl\t--suite-tripwire-canary\t' "$TRIP_LOG") \
+        | sort -t$'\t' -k1,1rn -k2,2n -k3,3n | cut -f4- | head -120
 fi
 
 final_resource_report

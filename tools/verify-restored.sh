@@ -168,7 +168,7 @@ echo "6. Synthetic log entries (cleared by reboot)"
 # which this machine has logged 7 against 173 real command timeouts. See
 # evidence/exhibits/015-timeout-pattern-undercount.md.
 tx=$(bt_journal_count "command( 0x[0-9a-f]+)? tx timeout" -k -b 0)
-up=$(awk '{printf "%.1f", $1/3600}' /proc/uptime)
+up=$(awk '{printf "%.1f", $1/3600}' "${BT_PROC:-/proc}/uptime")
 info "this boot shows $tx 'tx timeout' events (uptime ${up} h)"
 info "  if this is still the 2026-08-10 boot, 3 of them are synthetic test lines"
 info "  a reboot removes them entirely"

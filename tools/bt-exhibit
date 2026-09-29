@@ -221,7 +221,7 @@ cmd_new() {
         echo '|---|---|'
         printf '| captured | `%s` |\n' "$(date -Iseconds)"
         printf '| kernel | `%s` |\n' "$(uname -r)"
-        printf '| boot id | `%s` |\n' "$(cut -c1-8 /proc/sys/kernel/random/boot_id 2>/dev/null || echo -)"
+        printf '| boot id | `%s` |\n' "$(cut -c1-8 "${BT_PROC:-/proc}/sys/kernel/random/boot_id" 2>/dev/null || echo -)"
         printf '| device | `13d3:3503` QCA9377 (ROME) |\n'
         printf '| exit status | `%s` |\n' "$rc"
         printf '| redacted | `%s` |\n' "$redacted"

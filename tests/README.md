@@ -1,7 +1,7 @@
 # tests
 
 ```bash
-tests/run-tests                       # every invariant, ~2 s
+tests/run-tests                       # every invariant, about a minute
 tests/run-tests --section "stage2"    # one block, without a sed range
 devtools/check                        # what to run before committing
 devtools/coverage                     # how much of the shell these actually run
@@ -58,6 +58,40 @@ died, every run of this suite deposited a fabricated incident directory into
 `evidence/sessions/`. Ten accumulated beside one genuine collection. Every
 `bt-trial` call now goes through the sandboxed `trial()` helper, and the last
 check in the file counts `evidence/sessions/` before and after.
+
+**5. No verdict may come from the machine.** Rule 3 said it about the journal;
+on 2026-09-29 `devtools/sandbox` measured what it missed. Run in a world whose
+every answer disagrees with every fixture, the suite made 312 calls of real
+machine tools per run — 20 of them `logger`, writing "TRIAL stock #1 START" into
+the real journal — read the host's USB tree, btusb parameter, boot id and install
+stamp, created `~/bt-journal-archive` beside the real archives, and 12 of its
+verdicts changed with the machine. Here and in CI those answers were empty,
+which is what an empty fixture returns, so every one of them passed.
+
+Three layers now, from cheapest to strictest:
+
+- **The machine tripwire.** Every command in [`machine-tools`](machine-tools)
+  answers from a tripwire for the whole run — nothing, exit 1, one logged line —
+  and `farm_dir` links it in place of the real binary. A test whose subject meets
+  one of those tools *declares* it: `machine_stub <dir> systemctl uname …` gives
+  a quiet, defined machine (no unit running, an empty readable journal, a kernel
+  release no machine has, a `logger` that writes a file). The run fails on any
+  call that reached the tripwire, naming the tool, its caller chain and the
+  assertion before it. A canary proves the tripwire is recording.
+- **The declared machine.** `/proc`, the USB bus, btusb's parameters, the
+  Bluetooth class, the install stamp, the unit directory, the health directory
+  and the journal archive all resolve through `BT_*` seams, and the suite points
+  every one of them at an empty machine for the whole run. A test that needs a
+  device builds one; a test that forgets meets that empty machine, never this one.
+- **The decoy world**, [`devtools/sandbox`](../devtools/README.md), in CI: the
+  whole suite in namespaces where every machine answer is marked, every real
+  directory is under a throwaway overlay, and four detectors — calls, marked
+  output, reads, writes — must all stay silent.
+
+The one sanctioned door to the real machine is `real_tool <check> <tool>`, for a
+contract check that compares a fixture's shape with the real tool's output (the
+coredumpctl contract). The sandbox lists those calls apart, and an invariant
+keeps the tag they carry inside that function.
 
 ## Fixtures
 

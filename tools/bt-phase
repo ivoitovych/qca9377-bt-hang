@@ -80,8 +80,13 @@ done
 # shellcheck source=tools/lib/journal.sh
 source "$LIBDIR/journal.sh"
 
-BOOTLIST="${BT_BOOT_LIST:-/usr/local/bin/bt-boot-list}"
-[[ -x "$BOOTLIST" ]] || BOOTLIST="$(dirname "$0")/bt-boot-list"
+# The SIBLING first, as bt-diagnose and bt-health-report do. The installed copy
+# came first here, so the checkout's bt-phase ran whatever bt-boot-list was last
+# deployed — against the real journal, beside a fixture-driven analysis — and
+# its tests did the same on any machine with the project installed
+# (devtools/sandbox, 2026-09-29). Installed, the sibling IS /usr/local/bin's.
+BOOTLIST="${BT_BOOT_LIST:-$(dirname "$(readlink -f "$0")")/bt-boot-list}"
+[[ -x "$BOOTLIST" ]] || BOOTLIST=/usr/local/bin/bt-boot-list
 
 DATA=$(mktemp)
 trap 'rm -f "$DATA"' EXIT
