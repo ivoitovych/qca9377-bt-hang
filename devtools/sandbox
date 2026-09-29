@@ -1,0 +1,604 @@
+#!/bin/bash
+# sandbox — run the suite (or any command) in a DECOY WORLD, and report every
+#           place it reached for the real machine.
+#
+#   devtools/sandbox                  run tests/run-tests inside the decoy world
+#   devtools/sandbox -- <cmd> [args]  run <cmd> there instead
+#   devtools/sandbox --self-test      prove the sandbox catches leaks: probes that
+#                                     DO leak, every detector and every decoy; each
+#                                     must be caught, and a clean control must not trip
+#   --report <dir>                    keep the raw logs (calls with their callers,
+#                                     reads, writes, output) for fixing what leaked
+#
+# Exit: 0 clean · 1 the command failed, no leak · 2 usage, or the world could not be built
+#       3 namespaces unavailable on this host — nothing was measured
+#       4 LEAK (with --self-test: a leak the sandbox failed to catch)
+#
+# WHY THIS EXISTS. The suite's tools talk to the machine by design — journalctl,
+# systemctl, bluetoothctl, sysfs, the install stamp — and the suite points them at
+# fixtures through seams. Where a seam was missing, a test used the REAL machine:
+# 42 journalctl and 106 systemctl calls per run (2026-09-24), and a test that spent
+# ten minutes decoding the laptop's 64 MB captures. In this container those calls
+# returned nothing — exactly what an empty fixture returns — so the leak was
+# invisible here, and slow and able to misreport on the laptop. A leak is only
+# visible where the real world and the mock DISAGREE.
+#
+# So the real world is replaced by a decoy that disagrees with every fixture: each
+# decoy answer carries a per-run marker, DECOY-<nonce>, and four detectors watch.
+# None needs to know what the real machine holds (on the laptop: device addresses),
+# and none can fire for a test that stayed on its fixtures:
+#
+#   CALL   a decoyed tool was run               each decoy logs its path and argv
+#   DATA   decoy data was consumed              the marker appears in the output
+#   READ   a decoy file was read, even when     each is planted with an access time
+#          nothing of it reached the output     in 2001; the first read moves it
+#   WRITE  something wrote a real directory     every real tree sits under a throwaway
+#                                               overlay: the upper layer IS the diff,
+#                                               and the real tree is never written
+#
+# THE DECOY WORLD, built in fresh user + pid + mount + net + UTS namespaces:
+#   · no network, no host process visible; the hostname is the marker
+#   · private /tmp, /run, /dev/shm — no host daemon's socket (journald, D-Bus,
+#     systemd) is reachable
+#   · every directory of / under a throwaway overlay, / itself read-only
+#   · every machine tool is a decoy: present ones bind-mounted over their real
+#     paths, so an absolute path is caught as well as PATH; absent ones planted,
+#     because the laptop has them all
+#   · the project is INSTALLED: every file install.sh installs is a decoy (the
+#     2026-08-14 escape ran an installed copy)
+#   · decoy /sys (USB tree, btusb, the bluetooth class, debugfs), /proc (boot id,
+#     uptime, kernel release and command line), /var/log, /var/lib/bluetooth,
+#     /run/bt-trial
+#
+# ⚠️ THE SANDBOX ITSELF IS UNDER TEST. A sandbox that fails to isolate reports
+# "no leak" — the empty-input failure, aimed at the instrument that detects it.
+# --self-test runs probes that DO leak, and fails loudly on any it misses.
+#
+# WHERE IT RUNS. It needs unprivileged user namespaces. This container has them;
+# CI enables them (Ubuntu 24.04's AppArmor restricts them by default); on the
+# investigation laptop it refuses with exit 3. The suite's own PATH tripwire is
+# the layer that runs there.
+
+set -uo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="$(cd "$HERE/.." && pwd)"
+SELF="$HERE/sandbox"
+
+# Every machine tool the project's code calls, and those a test could reach for by
+# accident. One decoy each, whether or not this host has the tool.
+MACHINE_TOOLS=(journalctl systemctl bluetoothctl btmgmt btmon hciconfig hcitool hcidump
+               hciattach btattach udevadm coredumpctl rfkill lsusb modprobe rmmod insmod
+               dmesg loginctl busctl dbus-send gdbus tcpdump pw-dump pw-cli wpctl pactl
+               logger systemd-cat notify-send wall systemd-run timedatectl hostnamectl
+               reboot shutdown poweroff halt uname curl wget nmcli iw)
+# Real trees replaced outright by an empty tmpfs, then decoys planted in them.
+MASKS=(/run /dev/shm /var/log /var/crash /var/lib/bluetooth /var/lib/systemd/coredump
+       /sys/bus /sys/module /sys/class /sys/kernel/debug)
+mask_of() {   # <path> — the mask that covers it, if any
+    local m
+    for m in "${MASKS[@]}"; do [[ "$1" == "$m" || "$1" == "$m/"* ]] && { echo "$m"; return 0; }; done
+    return 1
+}
+# Filesystems never overlaid: not trees of files, or immutable already.
+PSEUDO_FS='^(squashfs|iso9660|erofs|proc|sysfs|devtmpfs|devpts|tmpfs|cgroup2?|mqueue|debugfs|tracefs|securityfs|pstore|bpf|fusectl|configfs|autofs|binfmt_misc|hugetlbfs|efivarfs|nsfs|rpc_pipefs|fuse\..*)$'
+
+# ════════════════════════════════════════════════════════════════════════════
+# INSIDE the namespaces (this script re-executed with --inside). Root here is
+# root of a user namespace: it can mount over anything in its own mount
+# namespace, and nothing it does to a mount reaches the host.
+# ════════════════════════════════════════════════════════════════════════════
+inside() {
+    local -a OV=()
+    local -A MOUNTED=()
+    local i j p kind src dst rc
+    mapfile -t OV < "$W/overlays"
+    ov_of() {   # <path> — index of the overlay that holds it (the longest prefix), or -1
+        local best=-1 len=0 k
+        for k in "${!OV[@]}"; do
+            if [[ "$1" == "${OV[k]}" || "$1" == "${OV[k]}/"* ]] && (( ${#OV[k]} > len )); then
+                best=$k; len=${#OV[k]}
+            fi
+        done
+        echo "$best"
+    }
+    upper_in() { echo "/mnt/ov/$1/u${2#"${OV[$1]}"}"; }   # <overlay index> <path>
+    ro() {   # <mount point> — read-only, keeping every flag a user namespace may not clear
+        local o
+        o=$(findmnt -no VFS-OPTIONS -M "$1") || return 1
+        mount -o "remount,bind,ro${o#rw}" "$1"
+    }
+    root() { printf '%s\t%s\n' "$1" "$2" >> /mnt/ctl/roots; }   # <where it lives> <what it poses as>
+
+    mount -t tmpfs none /mnt || return 90
+    mkdir -p /mnt/low /mnt/ov /mnt/dec /mnt/ctl /mnt/w
+    : > /mnt/ctl/roots
+    mount --bind "$W" /mnt/w || return 90
+
+    # 1. each real tree as it is: the lower layers. A tree with mounts inside it
+    #    may only be bound recursively in a user namespace (a plain bind would
+    #    uncover what those mounts hide); the overlay shows none of them either
+    #    way, and each gets its own overlay below.
+    for i in "${!OV[@]}"; do
+        mkdir -p "/mnt/low/$i" "/mnt/ov/$i/u" "/mnt/ov/$i/w"
+        mount --bind "${OV[i]}" "/mnt/low/$i" 2>/dev/null || mount --rbind "${OV[i]}" "/mnt/low/$i" \
+            || { echo "sandbox: cannot bind ${OV[i]}" >&2; return 91; }
+    done
+    # 2. upper layers, prepared before the overlays exist (no permission is needed
+    #    on the real directory that way): nested mount points, mask points, decoys
+    for i in "${!OV[@]}"; do
+        j=$(ov_of "${OV[i]%/*}"); (( j >= 0 )) && mkdir -p "$(upper_in "$j" "${OV[i]}")"
+    done
+    for p in "${MASKS[@]}"; do
+        j=$(ov_of "$p"); (( j >= 0 )) && mkdir -p "$(upper_in "$j" "$p")"
+    done
+    for i in "${!OV[@]}"; do   # the decoys, staged once outside as a tree per root
+        [[ -d "/mnt/w/stage/ov${OV[i]}" ]] || continue
+        cp -a "/mnt/w/stage/ov${OV[i]}/." "/mnt/ov/$i/u/" || return 92
+    done
+    # 3. the overlays, parents first. The kernel refuses an overlay on a tree that
+    #    has mounts inside it (in a user namespace they are locked to it): such a
+    #    tree is made read-only instead — as a plain directory, by / below — and
+    #    each mount inside it gets its own overlay.
+    for i in "${!OV[@]}"; do
+        if mount -t overlay overlay -o "lowerdir=/mnt/low/$i,upperdir=/mnt/ov/$i/u,workdir=/mnt/ov/$i/w" "${OV[i]}" 2>/dev/null; then
+            root "/mnt/ov/$i/u" "${OV[i]}"
+        else
+            if mountpoint -q "${OV[i]}"; then ro "${OV[i]}" || return 93; fi
+            echo "read-only, not overlaid (it has mounts inside): ${OV[i]}" >> "$W/notes"
+        fi
+    done
+    # 4. / itself read-only: nothing lands on the root filesystem outside an overlay
+    ro / || return 94
+    # 5. the decoy trees, then what is planted in them
+    for p in "${MASKS[@]}"; do
+        [[ -d "$p" ]] || continue            # a /sys entry this kernel does not have
+        mount -t tmpfs -o mode=755 none "$p" || return 95
+        MOUNTED[$p]=1; root "$p" "$p"
+        if [[ -d "/mnt/w/stage/mask$p" ]]; then cp -a "/mnt/w/stage/mask$p/." "$p/" || return 96; fi
+    done
+    [[ "${XDG_RUNTIME_DIR:-}" == /run/* ]] && mkdir -p "$XDG_RUNTIME_DIR"
+    # every decoy must be in place: one that silently failed to appear is a
+    # place where a leak would go unseen
+    while IFS=$'\t' read -r kind src dst; do
+        [[ "$kind" == file && ! -e "$dst" ]] || continue
+        p=$(mask_of "$dst") && [[ -z "${MOUNTED[$p]:-}" ]] && continue   # (no such /sys tree here)
+        echo "sandbox: decoy not in place: $dst" >&2; return 96
+    done < "$W/plant"
+    # 6. decoy binaries over the real ones; decoy /proc entries
+    while IFS=$'\t' read -r kind src dst; do
+        case "$kind" in
+            bind)  [[ -e "$dst" ]] || continue
+                   mount --bind "/mnt/w${src#"$W"}" "$dst" || return 97 ;;
+            pbind) [[ -e "$dst" ]] || continue
+                   p="/mnt/dec/${dst//\//_}"
+                   { cp "/mnt/w${src#"$W"}" "$p" && mount --bind "$p" "$dst"; } || return 97
+                   root "$p" "$dst" ;;
+        esac
+    done < "$W/plant"
+    # 7. the hostname is the marker; the work directory back where the decoys write
+    # (sethostname, not /proc/sys/kernel/hostname: the file is refused to a
+    # namespace root that is not also the real root — the CI runner's case)
+    hostname "$MARK" 2>/dev/null || echo "$MARK" > /proc/sys/kernel/hostname || return 98
+    mount --bind /mnt/w "$W" || return 98
+    # 8. arm READ (every planted file's access time to 2001) and WRITE (the listing)
+    while IFS=$'\t' read -r src dst; do
+        if [[ -f "$src" ]]; then touch -a -d "@$OLD" "$src"
+        else find "$src" -type f ! -perm -u+x -exec touch -a -d "@$OLD" {} +
+        fi
+    done < /mnt/ctl/roots
+    listing > /mnt/ctl/before
+    # 9. a private /tmp, then the command
+    mount -t tmpfs none /tmp || return 99
+    cd "$REPO" || return 99
+    : > "$W/armed"
+    "$@"; rc=$?
+    sweep_reads > "$W/reads"
+    listing > /mnt/ctl/after
+    changes > "$W/writes"
+    return "$rc"
+}
+
+listing() {   # every entry under every root: <posing path> <type> <size mtime> <real path>
+    local src dst
+    while IFS=$'\t' read -r src dst; do
+        if [[ -f "$src" ]]; then
+            printf '%s\tf\t%s\t%s\n' "$dst" "$(stat -c '%s %Y' "$src")" "$src"
+        else
+            find "$src" -mindepth 1 -printf '%y\t%s %T@\t%P\n' \
+            | awk -F'\t' -v d="$dst" -v s="$src" '{ print d "/" $3 "\t" $1 "\t" $2 "\t" s "/" $3 }'
+        fi
+    done < /mnt/ctl/roots
+}
+
+sweep_reads() {   # every planted, non-executable file whose access time moved
+    # Only what was there when the detector was armed counts: a real file copied up
+    # into an overlay later (git's index, say) carries a fresh access time, and was
+    # never a decoy.
+    local src dst
+    while IFS=$'\t' read -r src dst; do
+        if [[ -f "$src" ]]; then
+            (( $(stat -c %X "$src") > OLD + 1 )) && echo "$dst"
+        else
+            find "$src" -type f ! -perm -u+x -printf '%A@\t%P\n' \
+            | awk -F'\t' -v o="$OLD" -v d="$dst" '$1 + 0 > o + 1 { print d "/" $2 }'
+        fi
+    done < /mnt/ctl/roots \
+    | awk -F'\t' 'NR == FNR { if ($2 == "f") armed[$1]; next } $0 in armed' /mnt/ctl/before -
+}
+
+changes() {   # before → after: "+ created", "~ changed", "- deleted", one path each
+    local sign path type real low
+    awk -F'\t' 'NR == FNR { b[$1] = $2 "\t" $3; next }
+                { a[$1] = 1
+                  if (!($1 in b))                          print "+\t" $1 "\t" $2 "\t" $4
+                  else if ($2 != "d" && b[$1] != $2 "\t" $3) print "~\t" $1 "\t" $2 "\t" $4 }
+                END { for (p in b) if (!(p in a)) print "-\t" p "\td\t" }' \
+        /mnt/ctl/before /mnt/ctl/after \
+    | while IFS=$'\t' read -r sign path type real; do
+        note=""
+        if [[ "$sign" == + && "$real" == /mnt/ov/* ]]; then
+            low="/mnt/low/${real#/mnt/ov/}"; low="${low/\/u\//\/}"   # /mnt/ov/N/u/x → /mnt/low/N/x
+            if [[ "$type" == c ]]; then sign=-            # an overlay whiteout: a deletion
+            elif [[ -e "$low" || -L "$low" ]]; then       # copied up: the real one was changed
+                [[ "$type" == d ]] && continue            # (a directory, for a change below it)
+                sign='~'
+                if [[ "$type" != f ]]; then :
+                elif ! cmp -s "$real" "$low"; then note="   (content)"
+                elif [[ "$(stat -c %a "$low")" != "$(stat -c %a "$real")" ]]; then
+                    note="   (mode only: $(stat -c %a "$low") → $(stat -c %a "$real"))"
+                else note="   (times only)"
+                fi
+            fi
+        fi
+        [[ "$type" == d ]] && path+=/
+        printf '%s %s%s\n' "$sign" "$path" "$note"
+    done | sort -k2
+}
+
+if [[ "${1:-}" == --inside ]]; then
+    shift
+    [[ -n "${W:-}" && -n "${MARK:-}" && -n "${OLD:-}" ]] || { echo "sandbox: --inside is internal" >&2; exit 2; }
+    inside "$@"
+    exit $?
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# OUTSIDE: prepare the decoys, run, judge.
+# ════════════════════════════════════════════════════════════════════════════
+SELFTEST=0
+KEEP=""
+CMD=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --self-test) SELFTEST=1 ;;
+        --report) KEEP="${2:?--report needs a directory}"; shift ;;
+        --) shift; CMD=("$@"); break ;;
+        -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
+        *) echo "sandbox: unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+(( ${#CMD[@]} )) || CMD=(tests/run-tests)
+
+if ! unshare -Urpfnmu --mount-proc true 2>/dev/null; then
+    echo "sandbox: this host refuses unprivileged user/pid/mount/net/UTS namespaces —" >&2
+    echo "         nothing was run and NOTHING WAS MEASURED (exit 3, not a pass)." >&2
+    echo "         On Ubuntu 24.04 AppArmor restricts them; the suite's PATH" >&2
+    echo "         tripwire is the isolation layer that runs here." >&2
+    exit 3
+fi
+
+# The work directory: decoys, the call log, the verdicts. Under /var, whose
+# overlay would swallow its writes — so the world re-binds it, real, on top.
+W=$(mktemp -d /var/tmp/bt-sandbox.XXXXXX) || { echo "sandbox: no work directory" >&2; exit 2; }
+trap 'rm -rf "$W"' EXIT
+OLD=978307200                                   # 2001-01-01: the planted access time
+MARK="DECOY-$(od -An -N6 -tx1 /dev/urandom | tr -d ' \n')"
+export W MARK OLD REPO
+mkdir -p "$W/decoy"
+: > "$W/hits.log"; : > "$W/plant"; : > "$W/notes"
+
+# ── which real trees get an overlay ────────────────────────────────────────
+# Every directory of /, and every tree mounted inside one (an overlay does not
+# show what is mounted below it, so each needs its own).
+{
+    for d in /*; do
+        [[ -d "$d" && ! -L "$d" ]] || continue
+        case "$d" in /proc|/sys|/dev|/run|/tmp|/mnt|/lost+found) continue ;; esac
+        echo "$d"
+    done > "$W/top"
+    cat "$W/top"
+    findmnt -rn -o TARGET,FSTYPE | while read -r t fs; do
+        [[ "$t" == *'\x'* || "$fs" =~ $PSEUDO_FS ]] && continue
+        while IFS= read -r d; do [[ "$t" == "$d/"* ]] && { echo "$t"; break; }; done < "$W/top"
+    done
+} | sort -u > "$W/overlays"
+
+# ── the decoys ─────────────────────────────────────────────────────────────
+plant() {   # <kind> <source> <posing as> — a planted file is staged under the root it lands in
+    printf '%s\t%s\t%s\n' "$1" "$2" "$3" >> "$W/plant"
+    [[ "$1" == file ]] || return 0
+    local s="$W/stage/ov$3"
+    mask_of "$3" >/dev/null && s="$W/stage/mask$3"
+    mkdir -p "${s%/*}" && cp "$2" "$s"
+}
+N=0
+decoy_data() {   # <posing as> [content] — a data file carrying the marker
+    N=$((N + 1)); printf '%s\n' "${2:-$MARK $1}" > "$W/decoy/data.$N"
+    plant file "$W/decoy/data.$N" "$1"
+}
+# One executable decoy for every tool: it logs the call and answers with the
+# marker. Exit 0 with marked output is the most detectable answer there is — a
+# caller that consumes it carries the marker into whatever it prints.
+cat > "$W/decoy/tool" <<DECOY
+#!/bin/sh
+printf '%s\t%s\t%s\n' "\$0" "\$*" "\$(tr '\\0' ' ' < /proc/\$PPID/cmdline 2>/dev/null | cut -c1-150)" >> "$W/hits.log"
+echo "$MARK \$(basename "\$0") \$*"
+exit 0
+DECOY
+chmod 755 "$W/decoy/tool"
+
+# machine tools: every copy on this host's usual paths, and a planted one if none
+for t in "${MACHINE_TOOLS[@]}"; do
+    found=0
+    for dir in /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin; do
+        [[ -e "$dir/$t" ]] || continue
+        plant bind "$W/decoy/tool" "$(readlink -f "$dir/$t")"; found=1
+    done
+    (( found )) || plant file "$W/decoy/tool" "/usr/bin/$t"
+done
+
+# the project, installed: install.sh is the list (continuation lines joined)
+sed -e ':a' -e '/\\$/N; s/\\\n//; ta' "$REPO/install.sh" \
+| grep -oE '^[[:space:]]*install_file[[:space:]]+"[^"]+"[[:space:]]+/[^[:space:]]+[[:space:]]+[0-7]+' \
+| awk '{ print $3 "\t" $4 }' | sort -u > "$W/installed"
+if (( $(wc -l < "$W/installed") < 40 )); then
+    echo "sandbox: install.sh yields only $(wc -l < "$W/installed") installed files — the decoy" >&2
+    echo "         install would be incomplete; the parser needs updating" >&2
+    exit 2
+fi
+while IFS=$'\t' read -r dst mode; do
+    case "$dst" in
+        *.awk) N=$((N + 1))
+               printf 'BEGIN { print "%s\\t(awk -f)" >> "%s/hits.log"; print "%s %s"; exit }\n' \
+                   "$dst" "$W" "$MARK" "$dst" > "$W/decoy/data.$N"
+               plant file "$W/decoy/data.$N" "$dst" ;;
+        */lib/*.sh) N=$((N + 1))
+               printf "printf '%%s\\\\t(sourced)\\\\n' '%s' >> '%s/hits.log'; echo '%s %s'\n" \
+                   "$dst" "$W" "$MARK" "$dst" > "$W/decoy/data.$N"
+               plant file "$W/decoy/data.$N" "$dst" ;;
+        *) if [[ "$mode" == *7* ]]; then plant file "$W/decoy/tool" "$dst"
+           else decoy_data "$dst" "# $MARK $dst"; fi ;;
+    esac
+done < "$W/installed"
+for f in /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules \
+         /etc/udev/rules.d/51-bluetooth-health-snapshot.rules \
+         /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf \
+         /etc/systemd/system/bt-health-snapshot.service.d/10-device.conf; do
+    decoy_data "$f" "# $MARK $f"
+done
+decoy_data /usr/local/share/qca9377-bt-hang/installed-at
+decoy_data /usr/local/share/qca9377-bt-hang/mode
+
+# the machine's own state
+U="/sys/bus/usb/devices/$MARK"
+for f in idVendor:13d3 idProduct:3503 busnum:9 devnum:9 serial: power/control: \
+         "$MARK:1.1/bAlternateSetting:1" "$MARK:1.1/ep_03/wMaxPacketSize:0009"; do
+    v="${f##*:}"; decoy_data "$U/${f%:*}" "${v:-$MARK}"
+done
+decoy_data "/sys/bus/usb/drivers/usb/$MARK"
+decoy_data /sys/module/btusb/parameters/enable_autosuspend
+decoy_data /sys/module/bluetooth/srcversion
+decoy_data /sys/class/bluetooth/hci0/address
+decoy_data /sys/kernel/debug/usb/usbmon/0u
+decoy_data /sys/kernel/debug/dynamic_debug/control
+decoy_data /sys/kernel/debug/bluetooth/rfcomm
+decoy_data /var/log/bt-health/metrics.tsv "$(printf 'timestamp\tnote\n%s\t%s' "$MARK" "$MARK")"
+decoy_data "/var/log/bt-health/trace/$MARK.btsnoop"
+decoy_data "/var/log/bt-health/capture/$MARK.pcap"
+decoy_data "/var/log/journal/$MARK/system.journal"
+decoy_data "/var/lib/bluetooth/$MARK/info" "Name=$MARK"
+# No trial is OPEN in the decoy world: run-tests' first guard refuses to run on a
+# machine with one, reading the real /run/bt-trial/current on purpose. The
+# state directory still holds a decoy, for anything that lists it.
+decoy_data "/run/bt-trial/$MARK"
+decoy_data "/run/bt-evidence/$MARK"
+for f in sys/kernel/random/boot_id sys/kernel/osrelease uptime version cmdline modules; do
+    N=$((N + 1)); echo "$MARK" > "$W/decoy/data.$N"; plant pbind "$W/decoy/data.$N" "/proc/$f"
+done
+awk -F'\t' '!seen[$0]++' "$W/plant" > "$W/plant.u" && mv "$W/plant.u" "$W/plant"
+
+run_inside() {   # <command...> — build the world, run the command in it
+    rm -f "$W/armed"; : > "$W/hits.log"; : > "$W/reads"; : > "$W/writes"; : > "$W/notes"
+    unshare -Urpfnmu --mount-proc "$SELF" --inside "$@"
+}
+world_failed() {   # <rc> — the world was never armed: say so, never judge
+    echo "sandbox: the decoy world could not be built (step $1) — nothing was measured" >&2
+    exit 2
+}
+
+# ── --self-test: the sandbox must catch what it claims to catch ────────────
+if (( SELFTEST )); then
+    echo "sandbox self-test ($MARK) — every probe but the last LEAKS on purpose and must be caught"
+    fails=0
+    NONCE=${MARK#DECOY-}
+    unverifiable=0
+    probe() {   # <expect> <name> <shell code> [<positive control, run on the HOST>]
+        local expect="$1" name="$2" code="$3" control="${4:-}" out rc h m r w ok=0 want miss
+        # An isolation probe proves nothing where the host itself would refuse:
+        # its control must reach the thing from outside, or the probe is skipped
+        # and said to be unverifiable here — never counted as caught.
+        if [[ -n "$control" ]] && [[ "$(bash -c "$control" 2>&1)" != *PROBE-REACHABLE* ]]; then
+            printf '  · %-60s not verifiable here: the host itself cannot reach it\n' "$name"
+            unverifiable=$((unverifiable + 1)); return
+        fi
+        out=$(run_inside bash -c "$code" 2>&1); rc=$?
+        [[ -e "$W/armed" ]] || { printf '  ✗ %-60s the world was not built (rc=%s)\n' "$name" "$rc"
+                                 fails=$((fails + 1)); return; }
+        h=$(grep -c . "$W/hits.log"); m=$(grep -c -- "$MARK" <<< "$out")
+        r=$(grep -c . "$W/reads");    w=$(grep -c . "$W/writes")
+        case "$expect" in
+            call)    (( h )) && ok=1 ;;
+            data)    (( m )) && ok=1 ;;
+            read)    (( r )) && ok=1 ;;
+            write)   (( w )) && ok=1 ;;
+            refused) [[ "$out" == *PROBE-REFUSED* ]] && ok=1 ;;
+            written-or-refused) { (( w )) || [[ "$out" == *PROBE-REFUSED* ]]; } && ok=1 ;;
+            isolated) [[ "$out" == *PROBE-ISOLATED* ]] && ok=1 ;;
+            clean)   (( h + m + r + w == 0 && rc == 0 )) && ok=1 ;;
+            call-all|read-all)   # every TRIED path must be in the log
+                if [[ "$expect" == call-all ]]; then
+                    miss=$(grep '^TRIED ' <<< "$out" | cut -c7- | sort -u \
+                           | comm -23 - <(cut -f1 "$W/hits.log" | sort -u))
+                else
+                    miss=$(grep '^TRIED ' <<< "$out" | cut -c7- | sort -u | comm -23 - <(sort -u "$W/reads"))
+                fi
+                want=$(grep -c '^TRIED ' <<< "$out")
+                name="$name ($want)"
+                (( want > 0 )) && [[ -z "$miss" ]] && ok=1 ;;
+        esac
+        if (( ok )); then printf '  ✓ %-60s caught (%s)\n' "$name" "$expect"
+        else
+            printf '  ✗ %-60s NOT caught (rc=%s calls=%s data=%s reads=%s writes=%s)\n' "$name" "$rc" "$h" "$m" "$r" "$w"
+            [[ -n "${miss:-}" ]] && sed 's/^/        missed: /' <<< "$miss" | head -5
+            fails=$((fails + 1))
+        fi
+    }
+    execs=$(awk -F'\t' '$1 == "bind" || ($1 == "file" && $2 ~ /\/decoy\/tool$/) { print $3 }' "$W/plant" | sort -u)
+    datas=$(awk -F'\t' '$1 == "pbind" || ($1 == "file" && $2 !~ /\/decoy\/tool$/) { print $3 }' "$W/plant" | sort -u)
+    q() { printf '%q ' "$@"; }
+    # things on the host for the isolation probes to fail to reach: a process, a
+    # TCP listener on loopback, a unix socket under /run
+    sleep 300 & SENTINEL=$!
+    SOCK="${XDG_RUNTIME_DIR:-/run}/bt-sandbox-$NONCE.sock"
+    python3 - "$SOCK" "$W/port" <<'LISTEN' 2>/dev/null &
+import os, select, socket, sys
+listeners = []
+t = socket.socket(); t.bind(("127.0.0.1", 0)); t.listen(8); listeners.append(t)
+with open(sys.argv[2] + ".tmp", "w") as f: f.write(str(t.getsockname()[1]))
+try:
+    u = socket.socket(socket.AF_UNIX); u.bind(sys.argv[1]); u.listen(8); listeners.append(u)
+except OSError:
+    pass
+os.rename(sys.argv[2] + ".tmp", sys.argv[2])
+while True:
+    for s in select.select(listeners, [], [])[0]:
+        s.accept()[0].close()
+LISTEN
+    LISTENER=$!
+    for _ in $(seq 50); do [[ -s "$W/port" ]] && break; sleep 0.1; done
+    PORT=$(cat "$W/port" 2>/dev/null)
+    connect_unix="python3 -c 'import socket,sys; s=socket.socket(socket.AF_UNIX); s.connect(sys.argv[1])' '$SOCK' 2>/dev/null"
+    # CALL
+    probe call-all "every decoyed binary, by its absolute path" \
+        "for p in $(q $execs); do [ -e \"\$p\" ] || continue; echo \"TRIED \$p\"; \"\$p\" --probe >/dev/null 2>&1; done"
+    probe call-all "every machine tool, by name through PATH" \
+        "for t in $(q "${MACHINE_TOOLS[@]}"); do p=\$(command -v \"\$t\") || continue; echo \"TRIED \$p\"; \"\$t\" >/dev/null 2>&1; done"
+    probe call "an installed awk library, run with awk -f"   "awk -f /usr/local/bin/lib/phase.awk /dev/null >/dev/null"
+    probe call "an installed shell library, sourced"         ". /usr/local/bin/lib/journal.sh >/dev/null"
+    # DATA
+    probe data "a decoy tool's answer, consumed"             "journalctl -k -b 0 | tail -1"
+    probe data "the host name"                                "cat /proc/sys/kernel/hostname"
+    # READ — output discarded: only the access time can tell
+    probe read-all "every decoy file, read with output discarded" \
+        "for p in $(q $datas); do [ -f \"\$p\" ] || continue; echo \"TRIED \$p\"; cat \"\$p\" >/dev/null; done"
+    probe read "the btusb parameter, through a glob"          "cat /sys/module/*/parameters/* >/dev/null"
+    # WRITE — absorbed by the overlay or the decoy tree, never reaching the host
+    probe write "creates a file in the repository"            "touch '$REPO/.sandbox-probe-$NONCE'"
+    probe write "changes a file in the repository"            "echo probe >> '$REPO/README.md'"
+    probe write "deletes a file in the repository"            "rm '$REPO/README.md'"
+    probe write "creates a file in \$HOME"                    "touch \"\$HOME/.sandbox-probe-$NONCE\""
+    probe write "writes the decoy USB tree"                   "echo on > '/sys/bus/usb/devices/$MARK/power/control'"
+    probe write "writes /run"                                 "mkdir -p /run/bt-trial && echo probe > /run/bt-trial/current"
+    probe write "writes /dev/shm"                             "touch /dev/shm/.sandbox-probe-$NONCE"
+    probe written-or-refused "writes /var/lib"                "touch /var/lib/.sandbox-probe-$NONCE 2>/dev/null || echo PROBE-REFUSED"
+    probe refused "writes / itself"                           "touch /.sandbox-probe-$NONCE 2>/dev/null && echo PROBE-WROTE || echo PROBE-REFUSED" \
+        "[ -w / ] && echo PROBE-REACHABLE"
+    # ISOLATION
+    probe refused "connects to a TCP listener on the host's loopback" \
+        "(exec 3<>/dev/tcp/127.0.0.1/$PORT) 2>/dev/null && echo PROBE-CONNECTED || echo PROBE-REFUSED" \
+        "(exec 3<>/dev/tcp/127.0.0.1/$PORT) 2>/dev/null && echo PROBE-REACHABLE"
+    probe refused "resolves a host name" \
+        "getent hosts github.com >/dev/null 2>&1 && echo PROBE-RESOLVED || echo PROBE-REFUSED" \
+        "getent hosts github.com >/dev/null 2>&1 && echo PROBE-REACHABLE"
+    probe isolated "sees a host process" \
+        "[ -e /proc/$SENTINEL ] && echo PROBE-SAW-HOST || echo PROBE-ISOLATED" \
+        "[ -e /proc/$SENTINEL ] && echo PROBE-REACHABLE"
+    probe isolated "connects to a unix socket under /run" \
+        "$connect_unix && echo PROBE-CONNECTED || echo PROBE-ISOLATED" \
+        "$connect_unix && echo PROBE-REACHABLE"
+    probe isolated "reaches a host daemon's socket (D-Bus, journald, systemd)" \
+        "for s in /run/dbus/system_bus_socket /run/systemd/journal/socket /run/systemd/private; do [ -S \"\$s\" ] && { echo PROBE-SAW \$s; exit; }; done; echo PROBE-ISOLATED" \
+        "for s in /run/dbus/system_bus_socket /run/systemd/journal/socket /run/systemd/private; do [ -S \"\$s\" ] && echo PROBE-REACHABLE; done"
+    # CONTROL
+    probe clean "a clean command (the control)"               "echo nothing to see; git -C '$REPO' rev-parse --short HEAD >/dev/null"
+    kill "$SENTINEL" "$LISTENER" 2>/dev/null
+    rm -f "$SOCK"
+    # and after all of it, the host is as it was
+    for f in "$REPO/.sandbox-probe-$NONCE" "$HOME/.sandbox-probe-$NONCE" "/var/lib/.sandbox-probe-$NONCE" \
+             "/.sandbox-probe-$NONCE" "/dev/shm/.sandbox-probe-$NONCE"; do
+        if [[ -e "$f" ]]; then echo "  ✗ a probe's write REACHED THE HOST: $f"; rm -f "$f"; fails=$((fails + 1)); fi
+    done
+    if ! git -C "$REPO" diff --quiet -- README.md; then
+        echo "  ✗ a probe changed the REAL README.md"; fails=$((fails + 1))
+    else
+        echo "  ✓ the host is untouched: no probe file exists outside, README.md unchanged"
+    fi
+    [[ -s "$W/notes" ]] && sed 's/^/  · /' "$W/notes"
+    if (( fails )); then
+        echo "SANDBOX BROKEN: $fails probe(s) not caught — its 'no leak' verdicts mean nothing until fixed"
+        exit 4
+    fi
+    if (( unverifiable )); then
+        echo "sandbox isolates and detects: every probe caught ($unverifiable not verifiable on this host, above)"
+    else
+        echo "sandbox isolates and detects: every probe caught"
+    fi
+    exit 0
+fi
+
+# ── the run ────────────────────────────────────────────────────────────────
+run_inside "${CMD[@]}" 2>&1 | tee "$W/out.log"
+rc=${PIPESTATUS[0]}
+[[ -e "$W/armed" ]] || world_failed "$rc"
+if [[ -n "$KEEP" ]]; then
+    mkdir -p "$KEEP" && cp "$W/hits.log" "$W/reads" "$W/writes" "$W/out.log" "$KEEP/" \
+        && echo "sandbox: raw logs kept in $KEEP (hits.log: tool, argv, caller)"
+fi
+
+calls=$(grep -c . "$W/hits.log"); marks=$(grep -c -- "$MARK" "$W/out.log")
+reads=$(grep -c . "$W/reads");   writes=$(grep -c . "$W/writes")
+echo
+echo "── sandbox ($MARK): $(grep -c '^bind' "$W/plant") tools decoyed in place, $(grep -c . "$W/installed") installed files, decoy /sys /proc /run /var/log;"
+echo "   $(( $(grep -c . "$W/overlays") - $(grep -c 'not overlaid' "$W/notes") )) real trees under throwaway overlays, / read-only"
+[[ -s "$W/notes" ]] && sed 's/^/   · /' "$W/notes"
+if (( calls + marks + reads + writes == 0 )); then
+    echo "   ✓ no leak — no real tool run, no decoy data in the output, no decoy file read, no real directory written"
+    (( rc == 0 )) || exit 1
+    exit 0
+fi
+echo "   ⛔ LEAK — the command reached for the real machine:"
+if (( calls )); then
+    echo "   CALL   $calls call(s) of a machine tool:"
+    # per tool: the count, the first argv, and the callers (parent command lines)
+    awk -F'\t' '{ n[$1]++; if (!($1 in a)) a[$1] = $2; c[$1 SUBSEP $3]++ }
+                END { for (t in n) {
+                          printf "%06d\t            %5d  %s   (first: %s)\n", n[t], n[t], t, substr(a[t], 1, 70)
+                          for (k in c) { split(k, q, SUBSEP)
+                              if (q[1] == t) printf "%06d\t                     %4d ← %s\n", n[t], c[k], substr(q[2], 1, 110) } } }' \
+        "$W/hits.log" | sort -t$'\t' -k1,1rn -s | cut -f2-
+fi
+if (( marks )); then
+    echo "   DATA   $marks output line(s) carry decoy data:"
+    grep -m8 -- "$MARK" "$W/out.log" | cut -c1-150 | sed 's/^/            /'
+fi
+if (( reads )); then
+    echo "   READ   $reads decoy file(s) read:"
+    sed 's/^/            /' "$W/reads"
+fi
+if (( writes )); then
+    echo "   WRITE  $writes change(s) to real directories (absorbed; none reached them):"
+    head -40 "$W/writes" | sed 's/^/            /'
+    (( writes > 40 )) && echo "            … and $((writes - 40)) more"
+fi
+exit 4

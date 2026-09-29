@@ -15,6 +15,7 @@ directory touches Bluetooth.
 | `coverage [--min N]` | How much of the shell this repo ships does `tests/run-tests` actually execute |
 | `assert-test-catches <file> <line> <substr>` | prove a suite invariant actually fails when violated |
 | `journal-contract` | do the journal fixtures still match the shapes the REAL journalctl emits |
+| `sandbox [--self-test] [-- cmd]` | run the suite in a **decoy world** and list every place it reached for the real machine |
 
 ```bash
 ./devtools/check
@@ -46,6 +47,39 @@ The figures are a deliberate **lower bound** — multi-line commands are traced 
 their first line — so the tool is for ranking files and watching a trend, not for quoting
 an exact percentage. If instrumentation fails it exits 2 rather than reporting 0%, because
 a silent "everything is uncovered" reads like a finding.
+
+## Knowing whether a test used its fixtures or the machine
+
+A third question a green suite cannot answer: did the test get its answer from the
+fixture it was given, or from the machine it happened to run on? On a machine with no
+Bluetooth, no journal and nothing installed — this container, CI — the real machine
+returns *nothing*, which is exactly what an empty fixture returns. A test that reads the
+real journal passes there for the wrong reason, and on the investigation laptop it reads
+the laptop's real history, runs slowly, and can misreport.
+
+A leak is only visible where the real world and the mock **disagree**. `sandbox` builds a
+world that disagrees with every fixture — every machine tool, every installed file of this
+project, the USB tree under `/sys`, the boot id, `/var/log/bt-health`, `/var/lib/bluetooth`
+— each answering with a per-run marker `DECOY-<nonce>`, in fresh user, pid, mount, network
+and UTS namespaces, with every real directory under a throwaway overlay. Four detectors:
+
+| | fires when | how |
+|---|---|---|
+| CALL | a machine tool was run | each decoy logs its path, argv and caller |
+| DATA | decoy data was consumed | the marker appears in the output |
+| READ | a decoy file was read, even if nothing of it was printed | planted with an access time in 2001; the first read moves it |
+| WRITE | a real directory was written | the overlay's upper layer is the diff; the real tree is never touched |
+
+`sandbox --self-test` plants a leak for every detector and every decoy and fails if any
+goes unseen; each isolation probe first proves on the host that the thing it must fail to
+reach is reachable there, or says it cannot be verified. The first full run (2026-09-29)
+found 312 machine-tool calls per suite run — among them 20 `logger` calls writing trial
+lines into the real journal and 6 runs of an *installed* `bt-boot-list` — 12 tests whose
+verdict depends on the machine, and a test creating `~/bt-journal-archive`.
+
+It needs unprivileged user namespaces: this container and CI have them; Ubuntu 24.04's
+AppArmor refuses them to ordinary users, so on the laptop it exits 3 — nothing measured,
+never a pass.
 
 ## Why these exist
 
