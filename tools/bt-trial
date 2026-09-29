@@ -433,8 +433,13 @@ autostop)
     start=$(grep '^start=' "$CUR" | cut -d= -f2)
     # Filtered inside journalctl (see KJ_RE below): unfiltered, a day of
     # dynamic-debug kernel log took the closer past the shutdown timeout.
+    # And through the ERROR-PRIORITY INDEX, as the closer's verdict is: this is
+    # the unit's ExecStop, and a full read here — 180 s on an E1 day even
+    # filtered, measured — ran before the closer's budget could apply, so the
+    # 90 s stop timeout could still kill it and lose the row. `command … tx
+    # timeout` is a bt_dev_err line; -p err reaches every one of them.
     kgrep_init
-    tmo=$(journalctl -k --since "@$(( start - 5 ))" --no-pager -o cat "${KGREP[@]}" 2>/dev/null \
+    tmo=$(journalctl -k -p err --since "@$(( start - 5 ))" --no-pager -o cat "${KGREP[@]}" 2>/dev/null \
           | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
     if (( ${tmo:-0} > 0 )); then
         BT_TRIAL_PASSIVE=1 exec "$0" hang
