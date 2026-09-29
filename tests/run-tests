@@ -1730,22 +1730,77 @@ else
     bad "autostart with btusb 0.8-e1 and BT_BUILD=stock: $(tr '\n' ' ' < "$LC/state-mb/current" 2>/dev/null)"
 fi
 rm -rf "$LC/state-mb" "$LC/evidence/trials/E1"
+# The override is for the unit's stale default and nothing else: a build named
+# on the command line is someone's deliberate word, and so is a BT_BUILD other
+# than stock. Only the first case was tested; a condition that fired on either
+# half would have relabelled both (devtools/mutate, 2026-09-29). Each in a root
+# of its own, so the trial LC holds open is not set aside.
+trial_in "$LC/ev-mbx" "$LC/state-mbx" BT_SYSFS_MODULE="$LC/sysmod/btusb/parameters" BT_BUILD=stock \
+    -- autostart stock >/dev/null 2>&1
+trial_in "$LC/ev-mba" "$LC/state-mba" BT_SYSFS_MODULE="$LC/sysmod/btusb/parameters" BT_BUILD=A \
+    -- autostart >/dev/null 2>&1
+if grep -qx 'build=stock' "$LC/state-mbx/current" 2>/dev/null && grep -qx 'build=A' "$LC/state-mba/current" 2>/dev/null; then
+    ok "with btusb 0.8-e1 loaded, an explicit 'stock' and a declared BT_BUILD=A both stand"
+else
+    bad "explicit stock -> $(grep '^build=' "$LC/state-mbx/current" 2>/dev/null), BT_BUILD=A -> $(grep '^build=' "$LC/state-mba/current" 2>/dev/null)"
+fi
+rm -rf "$LC/ev-mbx" "$LC/state-mbx" "$LC/ev-mba" "$LC/state-mba"
 
 # An unclosed trial's directory is set aside at the next boot, never written
 # over: the number is reused (it counts rows, and the unclosed trial has none),
 # and mkdir -p put the new state-before.txt over the old one on 2026-09-27.
-printf '#!/bin/sh\nexit 0\n' > "$LC/bin/bt-state"; chmod +x "$LC/bin/bt-state"
+printf '#!/bin/sh\necho bt-state-fixture\n' > "$LC/bin/bt-state"; chmod +x "$LC/bin/bt-state"
 mkdir -p "$LC/ev-set/evidence/trials/stock/trial-01"
 echo old > "$LC/ev-set/evidence/trials/stock/trial-01/state-before.txt"
 trial_in "$LC/ev-set" "$LC/state-set" -- autostart stock >/dev/null 2>&1
 ASIDE=$(ls -d "$LC/ev-set/evidence/trials/stock/trial-01.unclosed-"* 2>/dev/null | head -1)
+# ...and the new trial-01 has a state-before.txt of its own, from bt-state: that
+# the new one existed was never checked, and a start that skipped bt-state
+# passed (devtools/mutate, 2026-09-29).
 if [[ -n "$ASIDE" && "$(cat "$ASIDE/state-before.txt" 2>/dev/null)" == old \
-      && -e "$LC/ev-set/evidence/trials/stock/trial-01/steps.log" ]]; then
+      && -e "$LC/ev-set/evidence/trials/stock/trial-01/steps.log" \
+      && "$(cat "$LC/ev-set/evidence/trials/stock/trial-01/state-before.txt" 2>/dev/null)" == bt-state-fixture ]]; then
     ok "autostart sets an unclosed trial directory aside instead of writing over it"
 else
     bad "autostart over an existing trial-01 directory: aside='$ASIDE'"
 fi
 rm -rf "$LC/ev-set" "$LC/state-set"
+
+# THE NUMBER. A new trial is numbered from its build's rows in results.tsv —
+# found by the header, wherever the build column is. Every trial the suite
+# opened had an empty results file, so counting the wrong build's rows, counting
+# down, or missing a last column all passed (devtools/mutate, 2026-09-29). Here:
+# build is the LAST column, and two stock rows sit around an E1 row.
+mkdir -p "$LC/ev-num/evidence/trials"
+printf 'timestamp\ttrial\tbuild\n2026-09-01\t1\tstock\n2026-09-02\t1\tE1\n2026-09-03\t2\tstock\n' \
+    > "$LC/ev-num/evidence/trials/results.tsv"
+trial_in "$LC/ev-num" "$LC/state-num" -- autostart stock >/dev/null 2>&1
+if grep -qx 'n=3' "$LC/state-num/current" 2>/dev/null && [[ -d "$LC/ev-num/evidence/trials/stock/trial-03" ]]; then
+    ok "a new trial is numbered from its own build's rows, found by header, build column last"
+else
+    bad "numbering against 2 stock + 1 E1 rows, build last: $(grep '^n=' "$LC/state-num/current" 2>/dev/null || echo 'refused')"
+fi
+rm -rf "$LC/ev-num" "$LC/state-num"
+
+# THE MEASUREMENT REVISION. A row records the commit of the tools that measured
+# it, and a range when they changed while the trial was open. No trial here had
+# a commit to record, so "?" at both ends passed whatever the comparison did:
+# a range for an unchanged revision, the start alone for a changed one
+# (devtools/mutate, 2026-09-29). This root is a repository with a history.
+mkdir -p "$LC/ev-rev"; git -C "$LC/ev-rev" init -q
+mrc() { git -C "$LC/ev-rev" -c user.name=t -c user.email=test@example.com -c commit.gpgsign=false \
+            commit -q --allow-empty -m "$1"; git -C "$LC/ev-rev" rev-parse --short HEAD; }
+REV1=$(mrc one)
+trial_in "$LC/ev-rev" "$LC/state-rev" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/ev-rev" "$LC/state-rev" -- ok >/dev/null 2>&1
+trial_in "$LC/ev-rev" "$LC/state-rev" -- autostart stock >/dev/null 2>&1
+REV2=$(mrc two)
+trial_in "$LC/ev-rev" "$LC/state-rev" -- ok >/dev/null 2>&1
+REVS=$(awk -F'\t' 'NR > 1 { print $5 }' "$LC/ev-rev/evidence/trials/results.tsv" 2>/dev/null | tr '\n' ' ')
+[[ -n "$REV1" && "$REVS" == "$REV1 $REV1..$REV2 " ]] \
+    && ok "a row records the tools' revision, and a range when they changed while the trial was open" \
+    || bad "measurement_rev: want '$REV1 $REV1..$REV2', got '$REVS'"
+rm -rf "$LC/ev-rev" "$LC/state-rev"
 
 # The closer's verdict comes from an error-priority read and the descriptive
 # scan runs under a budget: a journal too slow for the budget (a day of dynamic
@@ -1773,11 +1828,15 @@ export BT_TRIAL_SCAN_BUDGET=1
 trial_in "$LC/slow" "$LC/state-slow" PATH="$LC/slow/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 SLOWOUT=$(trial_in "$LC/slow" "$LC/state-slow" PATH="$LC/slow/bin:$LC/bin:$PATH" -- ok 2>&1); slowrc=$?
 unset BT_TRIAL_SCAN_BUDGET
-SLOWROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13 }' "$LC/slow/evidence/trials/results.tsv" 2>/dev/null)
-if [[ "$SLOWROW" == "confirmed ? 1" ]]; then
-    ok "a journal too slow for the budget costs the descriptive counts, never the row or the verdict"
+# And the window it could not finish reading is `unknown`, not `none`: a scan
+# that ran out of budget cannot certify that nothing touched the controller.
+# Nothing checked that column here, and a condition that scanned a partial read
+# as if it were whole passed (devtools/mutate, 2026-09-29).
+SLOWROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }' "$LC/slow/evidence/trials/results.tsv" 2>/dev/null)
+if [[ "$SLOWROW" == "confirmed ? 1 unknown" ]]; then
+    ok "a journal too slow for the budget costs the descriptive counts and the window's certificate, never the row or the verdict"
 else
-    bad "slow-journal close: rc=$slowrc row (bt1_status sco_sent timeouts)='$SLOWROW'"
+    bad "slow-journal close: rc=$slowrc row (bt1_status sco_sent timeouts perturbed)='$SLOWROW'"
     while IFS= read -r l; do echo "        $l"; done <<<"$SLOWOUT"
 fi
 rm -rf "$LC/slow" "$LC/state-slow"
@@ -1987,6 +2046,12 @@ if [[ -e "$LC/incident-was-called" ]]; then
 else
     bad "hang did NOT invoke bt-incident — control flow keyed on a dead value"
 fi
+# ...and says where the evidence went only when the collector succeeded. The
+# pointer was never read: printed for a failed collection instead, it passed
+# (devtools/mutate, 2026-09-29).
+[[ "$out" == *"-> evidence/sessions/latest"* ]] \
+    && ok "a hang whose incident collection succeeded points at the collected evidence" \
+    || bad "no '-> evidence/sessions/latest' after a successful collection"
 # ── THE ONTOLOGY ITSELF, through the production producer ──────────────────
 #
 # Individual paths were tested; the combinations were not. These four are the
@@ -7755,6 +7820,9 @@ TLDIR=$(grep '^dir=' "$TL/state/current" 2>/dev/null | cut -d= -f2-)
     || bad "start did not open a trial (rc=$tlsrc, dir=$TLDIR)"
 (( tlsrc == 0 )) && [[ -e "$TLDIR/steps.log" ]] \
     && ok "bt-trial start opens a numbered trial with its own directory"
+[[ -s "$TLDIR/state-before.txt" ]] \
+    && ok "bt-trial start records the machine's state before the trial (bt-state)" \
+    || bad "start wrote no state-before.txt — the trial's baseline is missing"
 # The start is announced in the journal, through bt-mark — and here that
 # journal is the stub's file, which is the proof the announcement went nowhere
 # real.
@@ -7793,6 +7861,10 @@ TLST=$(tl step "plugged in the headset"); tlstrc=$?
 (( tlstrc == 0 )) && grep -qE '^\[\+[0-9]+s\] plugged in the headset$' "$TLDIR/steps.log" \
     && ok "bt-trial step records what was done, stamped from the trial's start" \
     || bad "step did not append a stamped line (rc=$tlstrc)"
+
+grep -qF 'TRIAL step: plugged in the headset' "$TL/bin/logger.log" 2>/dev/null \
+    && ok "a step is announced to the journal too, so it sits in the timeline beside the kernel's lines" \
+    || bad "step 'plugged in the headset' did not reach the declared logger"
 
 tl step >/dev/null 2>&1
 (( $? != 0 )) && ok "step without a description refuses instead of recording nothing" \
@@ -7950,11 +8022,17 @@ cat > "$TL/kjournal" <<'TLJRN'
 2026-08-13T09:00:20.000000+0200 host kernel: Bluetooth: MGMT ver 1.22
 TLJRN
 tl autostart stock >/dev/null 2>&1
-tl ok >/dev/null 2>&1
+TLPOUT=$(tl ok)
 TLPR=$(tl_field 4)
 [[ "$TLPR" == *"PERTURBED:btusb_reload"* ]] \
     && ok "a btusb reload inside the window makes the treatment unpoolable" \
     || bad "an interior perturbation left the row comparable: '$TLPR'"
+# The operator is told at the close, not only in the row: nothing read the
+# close's words, and a warning shown for clean trials and not for this one
+# passed (devtools/mutate, 2026-09-29).
+[[ "$TLPOUT" == *"mid-trial perturbation: btusb_reload — this trial is not comparable"* ]] \
+    && ok "the close tells the operator the trial is not comparable, and why" \
+    || bad "close of a perturbed trial did not warn: $(grep -m1 -i perturb <<<"$TLPOUT")"
 # Column 23 is `perturbed`, resolved from the header rather than counted by
 # eye — the first draft of this check read column 17, which is `probes`, and
 # asserted a true thing about the wrong field.
@@ -8199,6 +8277,14 @@ TAHELP=$(tools/bt-trial-audit --help 2>&1); tahelprc=$?
 (( tahelprc == 0 )) && [[ "$TAHELP" == *"--row"* ]] \
     && ok "bt-trial-audit --help describes --row without reading a journal" \
     || bad "--help returned $tahelprc or did not mention the mode it documents"
+# `bt-trial audit` is the verb the operator types; it hands over to the
+# bt-trial-audit beside it, and to the installed one only when there is none.
+# No test went through the verb, and a dispatch that preferred the installed
+# copy — or refused with one beside it — passed (devtools/mutate, 2026-09-29).
+TADISP=$(BT_REPO="$TL" tools/bt-trial audit --help 2>&1); tadisprc=$?
+(( tadisprc == 0 )) && [[ "$TADISP" == "$TAHELP" ]] \
+    && ok "bt-trial audit hands over to the bt-trial-audit beside it" \
+    || bad "bt-trial audit --help: rc=$tadisprc, $(head -1 <<<"$TADISP")"
 
 tools/bt-trial-audit --recheck >/dev/null 2>&1
 (( $? == 2 )) \
@@ -9900,6 +9986,89 @@ TLECOL=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^en
 [[ -n "$TLECOL" ]] && [[ "$(tl_row | cut -f"$TLECOL")" == "yes" ]] \
     && ok "a controller that enumerated this boot is recorded as having done so" \
     || bad "enum_at_boot read '$(tl_row | cut -f"${TLECOL:-1}")' with the device in the journal"
+
+# THE SCO INTERVAL, AS THE CLOSER WRITES IT. sco_to_timeout_s is the 2x2's
+# timing column: from the setup NEAREST BEFORE the first timeout to that
+# timeout; `none` when setups were requested and no timeout followed; `?` when
+# not determined. The report's reading of the column was tested, the closer's
+# writing of it never: the trial's first setup instead of the nearest, a setup
+# logged at the timeout's own instant counted as before it, `none` never
+# written, all passed (devtools/mutate, 2026-09-29). So did a close that wrote
+# no state-after.txt, announced no result, or copied no SCO parameters.
+#
+# Those are copied out of both capture paths, declared here, keeping only the
+# setups and completions inside the trial's window, each with its indented
+# parameters. The btmon here decodes one capture: a setup and a completion ON
+# the window, one of each a year before and a year after, and an unrelated
+# event whose parameters must not ride along. The window's two ends are the
+# trial's start and the close's clock; that clock reads the start's second
+# here, so the records on the window sit on BOTH of its bounds. Everything else
+# the close asks `date` passes through.
+mkdir -p "$TL/cap" "$TL/trace" "$TL/sco-bin"; : > "$TL/cap/x.btsnoop"; : > "$TL/btmon.calls"
+cat > "$TL/bin/btmon" <<TLBTMON
+#!/bin/sh
+echo "\$*" >> "$TL/btmon.calls"
+T=\$(cat "$TL/btmon-time"); Y=\${T%%-*}
+B="\$((Y - 1))\${T#\$Y}"; A="\$((Y + 1))\${T#\$Y}"
+cat <<EOT
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17   #1 [hci0] \$B.000001
+        Handle: 1 (a year before)
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17   #2 [hci0] \$T.000001
+        Handle: 256
+> HCI Event: Command Status (0x0f) plen 4                            #3 [hci0] \$T.000002
+        Status: unrelated
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17            #4 [hci0] \$T.000003
+        Link type: eSCO (0x02)
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17   #5 [hci0] \$A.000001
+        Handle: 2 (a year after)
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17            #6 [hci0] \$A.000002
+        Link type: late
+EOT
+TLBTMON
+REALDATE_TL=$(command -v date)
+cat > "$TL/sco-bin/date" <<TLDATE
+#!/bin/sh
+[ "\$#" = 1 ] && [ "\$1" = "+%Y-%m-%d %H:%M:%S" ] && exec cat "$TL/btmon-time"
+exec $REALDATE_TL "\$@"
+TLDATE
+chmod +x "$TL/bin/btmon" "$TL/sco-bin/date"
+tl_close_sco() {
+    ( export BT_CAPTURE_DIR="$TL/cap" BT_TRACE_DIR="$TL/trace"
+      tl autostart stock
+      date -d "@$(grep '^start=' "$TL/state/current" | cut -d= -f2)" '+%Y-%m-%d %H:%M:%S' > "$TL/btmon-time"
+      PATH="$TL/sco-bin:$PATH" tl ok ) >/dev/null 2>&1
+}
+cat > "$TL/kjournal" <<'TLSCO'
+2026-08-13T09:00:00.000000+0200 host kernel: Bluetooth: hci0 opcode 0x0428 plen 17
+2026-08-13T09:00:05.000000+0200 host kernel: Bluetooth: hci0 opcode 0x0428 plen 17
+2026-08-13T09:00:07.500000+0200 host kernel: Bluetooth: hci0 opcode 0x0428 plen 17
+2026-08-13T09:00:07.500000+0200 host kernel: Bluetooth: hci0: command 0x0428 tx timeout
+2026-08-13T09:00:09.000000+0200 host kernel: Bluetooth: hci0 opcode 0x0428 plen 17
+TLSCO
+TLSCOLOG=$(wc -l < "$TL/bin/logger.log" 2>/dev/null || echo 0)
+tl_close_sco
+TLSCON=$(tl_field 6); TLSCODIR="$TL/evidence/trials/stock/trial-$(printf '%02d' "$TLSCON")"
+TLSCOCOL=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^sco_to_timeout_s$' | cut -d: -f1)
+TLSCO1=$(tl_row | cut -f"${TLSCOCOL:-1}")
+printf '2026-08-13T09:00:00.000000+0200 host kernel: Bluetooth: hci0 opcode 0x0428 plen 17\n' > "$TL/kjournal"
+tl_close_sco
+TLSCO2=$(tl_row | cut -f"${TLSCOCOL:-1}")
+[[ "$TLSCO1" == "2.500" && "$TLSCO2" == "none" ]] \
+    && ok "sco_to_timeout_s runs from the setup strictly before the first timeout; setups and no timeout write none" \
+    || bad "sco_to_timeout_s: with a timeout '$TLSCO1' (want 2.500), without '$TLSCO2' (want none)"
+TLSP=$(cat "$TLSCODIR/sco-params.txt" 2>/dev/null)
+TLSPC=$(sort -u "$TL/btmon.calls")
+[[ "$TLSP" == "# trial window: "* && "$TLSPC" == "-T -r $TL/cap/x.btsnoop" ]] \
+    && ok "a trial with SCO setups decodes the captures in the declared paths, and nothing else" \
+    || bad "sco-params.txt: $(head -1 <<<"$TLSP"); btmon was asked for: $(tr '\n' ' ' <<<"$TLSPC")"
+[[ $(grep -cE '^        (Handle: 256|Link type: eSCO \(0x02\))$' <<<"$TLSP") == 2 \
+   && "$TLSP" != *"a year"* && "$TLSP" != *"Link type: late"* && "$TLSP" != *"unrelated"* ]] \
+    && ok "the SCO parameters are the window's own, bounds included, each with its parameters and nothing else's" \
+    || bad "sco-params.txt window: $(grep -E 'Handle|Link type|Status' <<<"$TLSP" | tr -s ' ' | tr '\n' ';')"
+[[ -s "$TLSCODIR/state-after.txt" ]] \
+    && grep -qF "TRIAL stock #$TLSCON RESULT: " <<<"$(tail -n +"$((TLSCOLOG + 1))" "$TL/bin/logger.log")" \
+    && ok "a close records the machine's state after the trial and announces the result" \
+    || bad "close of $TLSCODIR: state-after.txt $([[ -s "$TLSCODIR/state-after.txt" ]] && echo present || echo missing), RESULT line $(grep -c RESULT "$TL/bin/logger.log")"
 
 tl xyzzy >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-trial rejects an unknown verb rather than doing nothing quietly" \
