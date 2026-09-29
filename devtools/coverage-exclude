@@ -40,6 +40,7 @@ devtools/coverage           # runs the suite under trace; cannot trace itself
 devtools/awk-coverage       # runs the suite under gawk --profile; same regress
 devtools/check              # runs repo-validate and the suite
 devtools/assert-test-catches  # runs the suite once per mutation, by design
+devtools/mutate             # runs the suite once per mutant, in namespaces it builds; its proposal (devtools/mutants) is tested
 devtools/sandbox            # runs the suite inside namespaces it builds; tested by its own --self-test
 reviews/verify.sh           # runs the suite and coverage to check the register
 
@@ -114,7 +115,7 @@ tests/run-tests:/^(\|\| *)?bad /   # failure branches: unreachable in a green ru
 # invocation. They are now derived from where each quoted program actually
 # opens and closes.
 tools/bt-actions:93-274     # inline classifier; see devtools/awk-coverage (re-derived 2026-09-24: 9373e62 moved the file by +7)
-tools/bt-actions:288-295    # inline MGMT-intent extractor; same
+tools/bt-actions:288-294    # inline MGMT-intent extractor; same (295, its closing line, runs since 2026-09-29: pass 2 is now driven)
 tools/bt-sco:115-123        # inline request/completion block filter; same
 tools/bt-capdiff:88-108     # inline record extractor; same
 tools/sanitize-logs.sh:142-191  # inline substituter and its verifier; same

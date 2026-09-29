@@ -1,0 +1,311 @@
+#!/usr/bin/env python3
+"""mutants — list the operator mutants of a shell or awk file, one per line.
+
+    devtools/mutants <file> [--lines A-B[,C-D...]]
+
+Output, tab-separated:  LINE  COL  FROM  TO  KIND  CONTEXT
+(COL is 0-based; KIND says which rule produced it). devtools/mutate applies them
+one at a time and runs the suite on each; this lists them, and nothing else, so
+the suite can test WHAT is proposed without running anything.
+
+WHY A SCANNER AND NOT A REGEX. A mutant inside a message, a pattern or a comment
+is noise — trivially killed, or equivalent — and a flood of noise hides the
+survivors worth reading. In shell the hazards are specific: `>` is a redirection
+unless it is inside (( )); `-n` is `sort -n` unless it is inside [[ ]]; `#` starts
+a comment only at the start of a word (`${#a[@]}` is not one); quotes and
+heredocs span lines. And the decision code that matters most here is often not
+shell at all: the classifiers are awk programs inside single quotes, which a
+per-line tool reads as a string and skips — the very lines the coverage tool
+cannot see either. Those are scanned with awk's rules.
+
+Kinds:
+  awk            comparison / logical / increment in awk (a .awk file, or an
+                 awk program quoted inside a shell script)
+  shell-arith    the same inside (( )) and $(( ))
+  shell-test     == != -eq -ne -lt -le -gt -ge -z -n && || inside [[ ]],
+                 and the numeric operators inside [ ] or test
+  shell-list     && <-> || between commands
+  shell-neg      a leading ! removed from a condition
+"""
+import re
+import sys
+
+AWK_SWAPS = [  # longest first, so ">=" is never read as ">" then "="
+    (">=", ">"), ("<=", "<"), ("==", "!="), ("!=", "=="),
+    ("&&", "||"), ("||", "&&"), ("++", "--"), ("--", "++"),
+    (">", ">="), ("<", "<="),
+]
+ARITH_SWAPS = AWK_SWAPS
+TEST_WORDS = {"-eq": "-ne", "-ne": "-eq", "-lt": "-le", "-le": "-lt",
+              "-gt": "-ge", "-ge": "-gt", "-z": "-n", "-n": "-z"}
+TEST_OPS = [("==", "!="), ("!=", "=="), ("&&", "||"), ("||", "&&")]
+NUMERIC_WORDS = {k: v for k, v in TEST_WORDS.items() if k not in ("-z", "-n")}
+
+# An awk program is the first single-quoted argument after `awk` that is not an
+# option's value: `awk -F'\t' '$1 > 3'` quotes twice, and the first is -F's.
+AWK_START = re.compile(r"(?:^|[\s|;&(`$])(?:g|m)?awk\b[^|;&]*$")
+OPTION_VALUE = re.compile(r"(?:-F|-v\s*\w+=|=)$")
+
+
+def awk_mask(text):
+    """Live-code mask for one line of awk: False inside strings, regexes, comments."""
+    live = [True] * len(text)
+    i, n, prev = 0, len(text), ""
+    while i < n:
+        c = text[i]
+        if c == "#":
+            for k in range(i, n):
+                live[k] = False
+            break
+        if c == '"':
+            live[i] = False
+            i += 1
+            while i < n and text[i] != '"':
+                if text[i] == "\\":
+                    live[i] = False
+                    i += 1
+                if i < n:
+                    live[i] = False
+                    i += 1
+            if i < n:
+                live[i] = False
+            i += 1
+            continue
+        if c == "/" and prev in ("", "(", ",", "~", "!", "&", "|", "{", "}", ";", ":", "="):
+            live[i] = False
+            i += 1
+            while i < n and text[i] != "/":
+                if text[i] == "\\":
+                    live[i] = False
+                    i += 1
+                if i < n:
+                    live[i] = False
+                    i += 1
+            if i < n:
+                live[i] = False
+            i += 1
+            continue
+        if not c.isspace():
+            prev = c
+        i += 1
+    return live
+
+
+def swaps_in(text, live, swaps, kind, taken, out, offset=0):
+    """Operator swaps in `text` where every char is live and not yet taken."""
+    for frm, to in swaps:
+        for m in re.finditer(re.escape(frm), text):
+            s, e = m.start(), m.end()
+            if not all(live[s:e]) or any(taken[s:e]):
+                continue
+            if frm in (">", "<"):
+                before = text[:s].rstrip()
+                if frm == ">" and re.search(r"\b(print|printf)\b[^;]*$", before):
+                    continue   # awk output redirection
+                if frm == "<" and re.search(r"\bgetline\b[^;]*$", before):
+                    continue   # getline < file
+                if text[s - 1:s] in ("-", ">", "<", "=") or text[e:e + 1] in (">", "<", "&"):
+                    continue
+            for k in range(s, e):
+                taken[k] = True
+            out.append((offset + s, frm, to, kind))
+
+
+def awk_line(text, out, offset=0):
+    live = awk_mask(text)
+    swaps_in(text, live, AWK_SWAPS, "awk", [False] * len(text), out, offset)
+
+
+def shell_file(lines):
+    """Yield (lineno, [(col, from, to, kind)]) for a shell script."""
+    heredoc = None          # terminator word while inside a heredoc body
+    heredoc_strip = False
+    in_awk = False          # inside a multi-line single-quoted awk program
+    in_sq = False           # inside a multi-line single-quoted string (not awk)
+    in_dq = False           # inside a multi-line double-quoted string
+    for ln, raw in enumerate(lines, 1):
+        line = raw.rstrip("\n")
+        found = []
+        if heredoc is not None:
+            if (line.lstrip("\t") if heredoc_strip else line) == heredoc:
+                heredoc = None
+            yield ln, found
+            continue
+        i, n = 0, len(line)
+        ctx = []            # stack of "arith" / "test" contexts on this line
+        pending_heredoc = None
+        taken = [False] * n
+        while i < n:
+            c = line[i]
+            if in_awk or in_sq:
+                j = line.find("'", i)
+                seg_end = n if j < 0 else j
+                if in_awk:
+                    awk_line(line[i:seg_end], found, i)
+                if j < 0:
+                    i = n
+                    break
+                in_awk = in_sq = False
+                i = j + 1
+                continue
+            if in_dq:
+                j = i
+                while j < n and line[j] != '"':
+                    j += 2 if line[j] == "\\" else 1
+                if j >= n:
+                    i = n
+                    break
+                in_dq = False
+                i = j + 1
+                continue
+            if c == "\\":
+                i += 2
+                continue
+            if c == "#" and (i == 0 or line[i - 1] in " \t;|&(`"):
+                break       # a comment to the end of the line
+            if c == "'":
+                j = line.find("'", i + 1)
+                starts_awk = bool(AWK_START.search(line[:i])) and not OPTION_VALUE.search(line[:i])
+                if j < 0:
+                    if starts_awk:
+                        in_awk = True
+                        awk_line(line[i + 1:], found, i + 1)
+                    else:
+                        in_sq = True
+                    i = n
+                    break
+                if starts_awk:
+                    awk_line(line[i + 1:j], found, i + 1)
+                i = j + 1
+                continue
+            if c == '"':
+                j = i + 1
+                while j < n and line[j] != '"':
+                    j += 2 if line[j] == "\\" else 1
+                if j >= n:
+                    in_dq = True
+                    i = n
+                    break
+                i = j + 1
+                continue
+            m = re.match(r"<<(-?)\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\2", line[i:])
+            if m and not line[i:].startswith("<<<"):
+                pending_heredoc = (m.group(3), m.group(1) == "-")
+                i += m.end()
+                continue
+            if line.startswith("$((", i) or line.startswith("((", i):
+                ctx.append(("arith", i))
+                i += 3 if c == "$" else 2
+                continue
+            if line.startswith("))", i) and ctx and ctx[-1][0] == "arith":
+                ctx.pop()
+                i += 2
+                continue
+            if line.startswith("[[", i) and (i == 0 or line[i - 1] in " \t;!(&|"):
+                ctx.append(("test", i))
+                i += 2
+                continue
+            if line.startswith("]]", i) and ctx and ctx[-1][0] == "test":
+                ctx.pop()
+                i += 2
+                continue
+            top = ctx[-1][0] if ctx else None
+            if top == "arith":
+                for frm, to in ARITH_SWAPS:
+                    if line.startswith(frm, i) and not any(taken[i:i + len(frm)]):
+                        nxt = line[i + len(frm):i + len(frm) + 1]
+                        prv = line[i - 1:i]
+                        if frm in (">", "<") and (nxt in (">", "<", "=") or prv in (">", "<", "-")):
+                            continue
+                        if frm in ("++", "--") and False:
+                            continue
+                        found.append((i, frm, to, "shell-arith"))
+                        for k in range(i, i + len(frm)):
+                            taken[k] = True
+                        i += len(frm) - 1
+                        break
+                i += 1
+                continue
+            if top == "test":
+                w = re.match(r"(-eq|-ne|-lt|-le|-gt|-ge|-z|-n)(?=\s)", line[i:])
+                if w and line[i - 1:i] in (" ", "\t"):
+                    found.append((i, w.group(1), TEST_WORDS[w.group(1)], "shell-test"))
+                    i += len(w.group(1))
+                    continue
+                for frm, to in TEST_OPS:
+                    if line.startswith(frm, i) and line[i - 1:i] in (" ", "\t") \
+                       and line[i + len(frm):i + len(frm) + 1] in (" ", "\t"):
+                        found.append((i, frm, to, "shell-test"))
+                        i += len(frm) - 1
+                        break
+                i += 1
+                continue
+            # plain command context
+            w = re.match(r"(-eq|-ne|-lt|-le|-gt|-ge)(?=\s)", line[i:])
+            if w and line[i - 1:i] in (" ", "\t") and re.search(r"(?:^|[\s;&|!(])(?:\[|test)\s[^;&|]*$", line[:i]):
+                found.append((i, w.group(1), NUMERIC_WORDS[w.group(1)], "shell-test"))
+                i += len(w.group(1))
+                continue
+            if line.startswith("&&", i) or line.startswith("||", i):
+                frm = line[i:i + 2]
+                found.append((i, frm, "||" if frm == "&&" else "&&", "shell-list"))
+                i += 2
+                continue
+            neg = re.match(r"!\s", line[i:])
+            if neg and re.search(r"(?:^|[\s;])(?:if|elif|while|until)\s*$|(?:&&|\|\|)\s*$", line[:i]):
+                found.append((i, line[i:i + neg.end()], "", "shell-neg"))
+                i += neg.end()
+                continue
+            i += 1
+        if pending_heredoc:
+            heredoc, heredoc_strip = pending_heredoc
+        yield ln, found
+
+
+def parse_ranges(spec):
+    ranges = []
+    for part in spec.split(","):
+        a, _, b = part.partition("-")
+        ranges.append((int(a), int(b or a)))
+    return ranges
+
+
+def main(argv):
+    if len(argv) < 2 or argv[1] in ("-h", "--help"):
+        print(__doc__.strip().split("\n\n")[0] + "\n\n" + __doc__.strip().split("\n\n")[1])
+        return 0 if len(argv) >= 2 else 2
+    path = argv[1]
+    ranges = None
+    if len(argv) >= 4 and argv[2] == "--lines":
+        ranges = parse_ranges(argv[3])
+    elif len(argv) != 2:
+        print("mutants: usage: mutants <file> [--lines A-B[,C-D]]", file=sys.stderr)
+        return 2
+    try:
+        lines = open(path, encoding="utf-8").readlines()
+    except OSError as e:
+        print(f"mutants: {e}", file=sys.stderr)
+        return 2
+    if path.endswith(".awk"):
+        per_line = []
+        for ln, raw in enumerate(lines, 1):
+            found = []
+            text = raw.rstrip("\n")
+            if not text.lstrip().startswith("#"):
+                awk_line(text, found)
+            per_line.append((ln, found))
+    else:
+        per_line = list(shell_file(lines))
+    count = 0
+    for ln, found in per_line:
+        if ranges and not any(a <= ln <= b for a, b in ranges):
+            continue
+        ctx = lines[ln - 1].strip()[:110]
+        for col, frm, to, kind in sorted(found):
+            print(f"{ln}\t{col}\t{frm}\t{to}\t{kind}\t{ctx}")
+            count += 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
