@@ -110,6 +110,15 @@ inside shell scripts** with awk's rules, because the classifiers live there and 
 per-line tool nor the coverage trace can see into them. Its proposals are pinned by the
 suite on fixtures of both languages.
 
+A verdict about a mutant is only worth the mutant. `mutate` itself is checked on a fixture
+repository whose own suite fails with the line that changed, so every row names exactly
+what was applied. That check exists because the first `bt-trial` run applied every dropped
+`!` wrongly: the row's empty replacement field collapsed under `read`, and the word
+`shell-neg` was pasted where the `!` had been. It also checks that each mutant is applied
+to the file **as it was when the run started**, even if the file is edited during the
+run. Exit 0 means every mutant was applied and killed. Survivors and timeouts exit 1, and
+a listed mutant that could not be applied exits 2.
+
 First use (2026-09-29): 14 of `bt-actions`' 24 mutants survived — its rfkill rule turned
 `&&` into `||` filed the Bluetooth toggle's ON as OFF and no test noticed, and its noise
 test could not fail at all. 22 of 24 are killed now; the other two cannot change any
