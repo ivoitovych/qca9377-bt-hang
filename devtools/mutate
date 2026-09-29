@@ -9,8 +9,9 @@
 # checks: either a missing test, or a change that cannot alter any output (an
 # equivalent mutant), and telling which is the reading this tool exists for.
 #
-# Exit: 0 every mutant killed · 1 survivors (listed) · 2 usage, or the suite is
-#       not green on the unmutated tree · 3 no user namespaces here
+# Exit: 0 every mutant killed · 1 survivors or timeouts (listed) · 2 usage, the
+#       suite not green on the unmutated tree, or a mutant that could not be
+#       applied where it was listed · 3 no user namespaces here
 #
 # WHY EACH RUN IS ISOLATED. A mutant can do anything the code under it can: loop,
 # leave daemons, write where the real code would not. Each runs in its own git
@@ -22,7 +23,14 @@
 #
 # THE TREE AS IT IS, not HEAD: uncommitted, staged and untracked changes are
 # carried into every worktree, so a fix being written can be tested before it
-# is committed.
+# is committed. As it is WHEN THIS STARTS: the file under test is copied aside
+# then, and each mutant is applied to that copy. It was restored from the
+# checkout instead, so an edit made there during a run of an hour reached every
+# mutant after it.
+#
+# A worktree's .git is a FILE. Code that looks for its checkout with
+# `[[ -d .git ]]` finds none in a worktree; a test that depends on that search
+# builds a checkout of its own (bt-trial's does).
 #
 # Grown from the harness behind the 2026-09-28 mutation pass over the awk
 # libraries (212 mutants, 176 caught before, 196 after).
@@ -68,6 +76,7 @@ cleanup() {
     [[ "$OUT" == "$WORK/results" ]] || rm -rf "$WORK"
 }
 trap cleanup EXIT
+trap 'exit 130' INT TERM      # so a stopped run still removes its worktrees
 
 if [[ -n "$LINES" ]]; then
     "$HERE/mutants" "$FILE" --lines "$LINES" > "$OUT/mutants.tsv" || exit 2
@@ -79,6 +88,7 @@ TOTAL=$(grep -c . "$OUT/mutants.tsv")
 
 # ── worktrees carrying the tree as it is ──────────────────────────────────
 HEAD=$(git rev-parse HEAD)
+cp -- "$FILE" "$WORK/pristine" || exit 2
 git diff --name-only HEAD > "$WORK/changed"
 git ls-files -o --exclude-standard >> "$WORK/changed"
 git diff --name-only --diff-filter=D HEAD > "$WORK/deleted"
@@ -115,11 +125,17 @@ open(p, "w", encoding="utf-8").write("\n".join(lines))
 PY
 }
 
+# Rows reach each worker separated by \037, not by tabs. A tab is whitespace to
+# `read`, and runs of whitespace separators collapse: a dropped `!` has an EMPTY
+# replacement field, so its row shifted one field left and the kind, the text
+# "shell-neg", was written where the `!` had been. Every negation mutant was
+# malformed — killed or surviving for reasons unrelated to the negation. Found
+# reading the first bt-trial run (2026-09-29); the suite now pins, on a fixture
+# repository, exactly what each mutant applies.
 worker() {   # <n>
     local w="$WORK/w$1" ln col frm to kind ctx res
-    while IFS=$'\t' read -r ln col frm to kind ctx; do
-        git -C "$w" checkout -q -- "$FILE" 2>/dev/null
-        grep -qxF -- "$FILE" "$WORK/changed" && cp "$REPO/$FILE" "$w/$FILE"
+    while IFS=$'\037' read -r ln col frm to kind ctx; do
+        cp -- "$WORK/pristine" "$w/$FILE"
         if ! apply "$w/$FILE" "$ln" "$col" "$frm" "$to"; then
             res="NOT-APPLIED"
         else
@@ -132,7 +148,7 @@ worker() {   # <n>
             esac
         fi
         printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$ln" "$col" "$frm" "$to" "$kind" "$res" "$ctx" >> "$OUT/res.$1"
-    done < <(awk -v n="$NW" -v k="$1" 'NR % n == k % n' "$OUT/mutants.tsv")
+    done < <(awk -F'\t' -v OFS='\037' -v n="$NW" -v k="$1" 'NR % n == k % n { $1 = $1; print }' "$OUT/mutants.tsv")
 }
 for i in $(seq 1 "$NW"); do worker "$i" & done
 wait
@@ -141,12 +157,20 @@ rm -f "$OUT"/res.*
 
 killed=$(awk -F'\t' '$6 == "KILLED"' "$OUT/results.tsv" | grep -c .)
 survived=$(awk -F'\t' '$6 == "SURVIVED"' "$OUT/results.tsv" | grep -c .)
-other=$(( TOTAL - killed - survived ))
-echo "  killed $killed   survived $survived   other (timeout / not applied) $other   of $TOTAL"
+unapplied=$(awk -F'\t' '$6 == "NOT-APPLIED"' "$OUT/results.tsv" | grep -c .)
+other=$(( TOTAL - killed - survived - unapplied ))
+echo "  killed $killed   survived $survived   timed out / no verdict $other   not applied $unapplied   of $TOTAL"
 echo "  results: $OUT/results.tsv"
-if (( survived )); then
-    echo "  survivors — each a decision no test checks, or a change that cannot alter any output:"
-    awk -F'\t' '$6 == "SURVIVED" { printf "    %5d  %-3s -> %-3s  %-11s %s\n", $1, $3, ($4 == "" ? "(none)" : $4), $5, substr($7, 1, 80) }' "$OUT/results.tsv"
-    exit 1
-fi
+listed() {   # <result> <heading>
+    awk -F'\t' -v r="$1" '$6 == r { f = 1 } END { exit !f }' "$OUT/results.tsv" || return 0
+    echo "  $2"
+    awk -F'\t' -v r="$1" '$6 == r { printf "    %5d  %-3s -> %-3s  %-11s %s\n", $1, $3, ($4 == "" ? "(none)" : $4), $5, substr($7, 1, 80) }' "$OUT/results.tsv"
+}
+listed SURVIVED "survivors — each a decision no test checks, or a change that cannot alter any output:"
+listed TIMEOUT  "timed out — no verdict inside --timeout; a mutant that loops is not a mutant the suite caught:"
+listed NOT-APPLIED "NOT APPLIED — the listed operator was not where the list put it; nothing was measured for these:"
+# Exit 0 is a claim that every mutant was applied and caught. It was 0 for a run
+# that applied nothing at all.
+(( unapplied )) && exit 2
+(( killed == TOTAL )) || exit 1
 exit 0
