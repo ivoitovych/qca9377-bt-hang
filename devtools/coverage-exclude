@@ -40,7 +40,7 @@ devtools/coverage           # runs the suite under trace; cannot trace itself
 devtools/awk-coverage       # runs the suite under gawk --profile; same regress
 devtools/check              # runs repo-validate and the suite
 devtools/assert-test-catches  # runs the suite once per mutation, by design
-devtools/mutate             # runs the suite once per mutant, in namespaces it builds; its proposal (devtools/mutants) is tested
+devtools/mutate             # runs the suite once per mutant, in namespaces it builds; tested by its own --self-test (every run, and a CI step); its proposal (devtools/mutants) is tested by the suite
 devtools/sandbox            # runs the suite inside namespaces it builds; tested by its own --self-test
 reviews/verify.sh           # runs the suite and coverage to check the register
 
