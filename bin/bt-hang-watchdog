@@ -55,6 +55,15 @@ source "$LIBDIR/journal.sh"
 # without a radio. Defaults are the real kernel paths, byte for byte.
 SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
 SYSFS_DRV="${BT_SYSFS_DRIVERS:-/sys/bus/usb/drivers/usb}"
+# And the usbfs device nodes the reset opens. Unseamed, every test that reached
+# recover() ran the real python3 against /dev/bus/usb/<bus>/<dev> of the
+# fixture's numbers — a USBDEVFS_RESET of whatever device held them on the
+# machine the suite ran on, if it ran as root (2026-09-29).
+DEVFS_USB="${BT_DEVFS_USB:-/dev/bus/usb}"
+# And the per-user runtime directories whose session bus a notification goes
+# to, through sudo. No test could list a session without the next step being
+# the machine's real /run/user and the real sudo.
+RUN_USER="${BT_RUN_USER_DIR:-/run/user}"
 
 VID="${BT_VID:-13d3}"          # QCA9377 BT (IMC Networks)
 PID="${BT_PID:-3503}"
@@ -138,11 +147,11 @@ usbfs_reset() {
     local dev="$1" b n
     b=$(<"$SYSFS_USB/$dev/busnum") || return 1
     n=$(<"$SYSFS_USB/$dev/devnum") || return 1
-    python3 - "$b" "$n" <<'PYEOF'
+    python3 - "$b" "$n" "$DEVFS_USB" <<'PYEOF'
 import fcntl, os, sys
 USBDEVFS_RESET = 0x5514          # _IO('U', 20)
 bus, dev = int(sys.argv[1]), int(sys.argv[2])
-path = "/dev/bus/usb/%03d/%03d" % (bus, dev)
+path = os.path.join(sys.argv[3], "%03d/%03d" % (bus, dev))
 # REVIEWED-KEEP 2026-08-15T1752Z 2.1: the O_CREAT-less open below is load-
 # bearing — see the race it names. Do not "simplify" to open(path, "w").
 # os.open without O_CREAT: if the device vanished between find_usb_dev() and
@@ -162,7 +171,7 @@ notify() {
     local msg="$1" u bus
     while read -r u; do
         [[ -n "$u" ]] || continue
-        bus="/run/user/$(id -u "$u" 2>/dev/null)/bus"
+        bus="$RUN_USER/$(id -u "$u" 2>/dev/null)/bus"
         [[ -S "$bus" ]] || continue
         timeout 5 sudo -u "$u" \
             DBUS_SESSION_BUS_ADDRESS="unix:path=$bus" \
