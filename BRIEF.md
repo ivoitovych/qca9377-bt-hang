@@ -17,9 +17,31 @@ cheap. Over 500 it stops being cheaper than the source. Cut the oldest settled i
 adding; never cut a reason to fit a fact. **Sections name their owner**; each owner writes
 theirs and points at the long form (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-09-26 ~23:40 · newest exhibit on `main`: EX-056; the held branch has EX-049
+**Last updated: 2026-09-29 · newest exhibit on `main`: EX-056; the held branch has EX-049
 and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted within hours (`R2-13`).
 
+> **RESUME HERE (2026-09-29).** **E1 stands at 37 SCO links, 37 hang-ups answered, 0 timeouts**
+> over two boots (`scripts/sco-ledger.sh -1` and `0`): 34 on the first boot (09-26 17:11 →
+> 09-27 17:20, streams to 5,122 s), 3 on the current one — **all MOMENTUM 4**; the Shure
+> connected once (AVRCP, 09-26 17:33) and never reached SCO under E1, so E1 has one headset.
+> Stock control stays 12/12 deaths, three headsets. **E1 is not the upstream entry** (no
+> `BTUSB_WIDEBAND_SPEECH`, no reset callback): the stable request needs one boot of the exact
+> `dc16388d45ec` entry (**E3**) first. Roadmap: private branch `plan/contributions`,
+> `docs/contributions-roadmap.md`. **Kernel patch `14845586`: state `new`, no human reply**;
+> its `TestRunner_mesh-tester` fail is the bot's: `scripts/patchwork-checks.sh --rate` shows
+> **every kernel patch since 2026-06-01 fails it** (66 of 66 in three 250-patch windows, 122/122
+> cached 07-22 → 09-21) and 18 of 20 passed before 05-15; nothing is waiting on us. **Second
+> external-review task** (the outside record for every open item, with the two 09-27 research
+> notes): private branch `review/external-sources-2026-09-29`, `reviews/EXTERNAL-SOURCES-TASK.md`.
+> **Trial tool fixed (09-29):** the first E1 boot opened as *stock* trial 15 (unit env not
+> overridden) and lost its row (closer killed at 90 s reading a day of debug journal; the next
+> boot reused 15 and overwrote its directory) — `bt-trial` now labels by `btusb` version, takes
+> its verdict from `-p err` (0.0 s), bounds the rest, and sets unclosed directories aside.
+> ⚠️ **The installed `/usr/local/bin/bt-trial` and unit are the 09-18 copies** — the fixes reach
+> the machine only after an install by the operator. `bt-audio-policy` recorder restarted
+> (transient) with its metadata fix. Not done: the BlueZ btmon upstream check (its researcher
+> died with the session; it is item 2 of the review task).
+>
 > **RESUME HERE (2026-09-26 ~23:40).** **E1 is running** (`/sys/module/btusb/version` =
 > `0.8-e1`) and, on its first boot, **29 hang-ups answered, 0 timeouts** where the stock
 > driver died 12/12 (`EX-055`, `EX-056`). The operator is testing more headsets (Shure next).

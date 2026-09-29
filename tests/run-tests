@@ -1155,6 +1155,60 @@ else
 fi
 rm -rf "$LC/state-mb" "$LC/evidence/trials/E1"
 
+# An unclosed trial's directory is set aside at the next boot, never written
+# over: the number is reused (it counts rows, and the unclosed trial has none),
+# and mkdir -p put the new state-before.txt over the old one on 2026-09-27.
+printf '#!/bin/sh\nexit 0\n' > "$LC/bin/bt-state"; chmod +x "$LC/bin/bt-state"
+mkdir -p "$LC/ev-set/evidence/trials/stock/trial-01"
+echo old > "$LC/ev-set/evidence/trials/stock/trial-01/state-before.txt"
+PATH="$LC/bin:$PATH" BT_REPO="$LC/ev-set" BT_EVIDENCE_REPO="$LC/ev-set" BT_STATE="$LC/state-set" \
+    BT_SYSFS_USB="$LC/sysfs" tools/bt-trial autostart stock >/dev/null 2>&1
+ASIDE=$(ls -d "$LC/ev-set/evidence/trials/stock/trial-01.unclosed-"* 2>/dev/null | head -1)
+if [[ -n "$ASIDE" && "$(cat "$ASIDE/state-before.txt" 2>/dev/null)" == old \
+      && -e "$LC/ev-set/evidence/trials/stock/trial-01/steps.log" ]]; then
+    ok "autostart sets an unclosed trial directory aside instead of writing over it"
+else
+    bad "autostart over an existing trial-01 directory: aside='$ASIDE'"
+fi
+rm -rf "$LC/ev-set" "$LC/state-set"
+
+# The closer's verdict comes from an error-priority read and the descriptive
+# scan runs under a budget: a journal too slow for the budget (a day of dynamic
+# debug: 180 s even --grep-filtered) costs the counts, never the row or the
+# verdict. The stub answers the -p read at once and sleeps on the full one.
+mkdir -p "$LC/slow/bin"
+cat > "$LC/slow/bin/journalctl" <<'STUB'
+#!/bin/sh
+fast=0
+for a in "$@"; do [ "$a" = "-p" ] && fast=1; done
+for a in "$@"; do
+  if [ "$a" = "-k" ]; then
+    if [ "$fast" = 1 ]; then
+      printf '2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout\n'
+    else
+      sleep 5
+    fi
+    exit 0
+  fi
+done
+exit 0
+STUB
+chmod +x "$LC/slow/bin/journalctl"
+export BT_TRIAL_SCAN_BUDGET=1
+PATH="$LC/slow/bin:$LC/bin:$PATH" BT_REPO="$LC/slow" BT_EVIDENCE_REPO="$LC/slow" BT_STATE="$LC/state-slow" \
+    BT_SYSFS_USB="$LC/sysfs" tools/bt-trial autostart stock >/dev/null 2>&1
+SLOWOUT=$(PATH="$LC/slow/bin:$LC/bin:$PATH" BT_REPO="$LC/slow" BT_EVIDENCE_REPO="$LC/slow" BT_STATE="$LC/state-slow" \
+    BT_SYSFS_USB="$LC/sysfs" tools/bt-trial ok 2>&1); slowrc=$?
+unset BT_TRIAL_SCAN_BUDGET
+SLOWROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13 }' "$LC/slow/evidence/trials/results.tsv" 2>/dev/null)
+if [[ "$SLOWROW" == "confirmed ? 1" ]]; then
+    ok "a journal too slow for the budget costs the descriptive counts, never the row or the verdict"
+else
+    bad "slow-journal close: rc=$slowrc row (bt1_status sco_sent timeouts)='$SLOWROW'"
+    while IFS= read -r l; do echo "        $l"; done <<<"$SLOWOUT"
+fi
+rm -rf "$LC/slow" "$LC/state-slow"
+
 rc=0
 out=$(trial ok 2>&1) || rc=$?
 if (( rc == 0 )); then
