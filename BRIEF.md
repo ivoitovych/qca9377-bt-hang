@@ -533,9 +533,13 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
     uptime, not with the tests. `.github/workflows/checks.yml:8` still says *"the suite is
     ~2 s and hermetic"*; both halves are now false. Also: the five gates that each re-run
     the whole suite cost **6 min 53 s** here, and four concurrent runs finish in 68 s, so
-    the split (`UT-12`) buys ~3×. Nothing changed yet — the fix is to stub those tools for
-    the whole run and add an invariant that counts fall-throughs to the real binaries,
-    detecting the effect rather than the shape, as the `/usr/bin` footprint check does.
+    the split (`UT-12`) buys ~3×. **Done 2026-09-29 for the machine half:** every tool in
+    `tests/machine-tools` answers from a tripwire for the whole run, `/proc`, `/sys` and the
+    install paths resolve to a declared empty machine, and an invariant fails on any call
+    that reached the machine — 274 did on the first run; none now. `devtools/sandbox`
+    measured the rest (312 calls, 12 machine-dependent verdicts) and CI runs the suite in its
+    decoy world on every push (tests/README.md, rule 5). **Still open:** the five gates that
+    each re-run the suite, and the split.
 
 ## 10. Where detail lives
 
