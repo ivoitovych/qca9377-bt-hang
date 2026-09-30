@@ -102,14 +102,17 @@ if [[ -n "$NEWEST" && -r "$REPO/README.md" ]]; then
     fi
 fi
 # And the budget, which is the only reason it is cheaper than reading the source.
-# 500 since 2026-09-19 (was 200): at 200 every addition cost a *why* elsewhere —
-# three trims in one day — and the operator's measure, a ~200k-token
-# post-compaction context, makes ~10k tokens for the file that says what holds
-# cheap. The rule that goes with the number: never cut a reason to fit a fact.
+# 750 since 2026-10-01 (operator's decision; was 500 from 09-19, 200 before): at
+# 200 every addition cost a *why* elsewhere — three trims in one day — and the
+# operator's measure, a ~200k-token post-compaction context, makes ~15k tokens
+# for the file that says what holds cheap. The E1/E3 weeks added a resume block
+# per experiment plus the userspace register; at 500 the warning fired on every
+# save. The rule that goes with the number: never cut a reason to fit a fact.
+BRIEF_BUDGET=750
 if [[ -r "$REPO/BRIEF.md" ]]; then
     BL=$(grep -c . "$REPO/BRIEF.md" 2>/dev/null || echo 0)
-    if [[ "${BL:-0}" -gt 500 ]]; then
-        echo "save: ⚠️  BRIEF.md is $BL lines, over its 500-line budget — cut the oldest settled item, never a reason." >&2
+    if [[ "${BL:-0}" -gt "$BRIEF_BUDGET" ]]; then
+        echo "save: ⚠️  BRIEF.md is $BL lines, over its $BRIEF_BUDGET-line budget — cut the oldest settled item, never a reason." >&2
     fi
 fi
 
