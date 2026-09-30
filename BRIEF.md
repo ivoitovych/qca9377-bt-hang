@@ -20,6 +20,23 @@ theirs and points at the long form (`lessons/`, `reviews/`) rather than reproduc
 **Last updated: 2026-09-29 · newest exhibit on `main`: EX-056; the held branch has EX-049
 and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted within hours (`R2-13`).
 
+> **RESUME HERE (2026-09-30) — E3 IS INSTALLED, machine powered down on the operator's word.**
+> `updates/btusb.ko` is now the **exact upstream entry `dc16388d45ec`** on `7.0.0-34` (version
+> `0.8`, srcversion `36ADEF2A3F27D16D77A320E`, sha256 `f13d86c4…`; record on private
+> `diag/btusb-e1`, `patches/diag/README.md` §E3); the trial unit's drop-in
+> `/etc/systemd/system/bt-trial-auto.service.d/override.conf` labels the next boots **E3**.
+> **After the boot:** `scripts/module-updates.sh --module btusb status` (loaded srcversion must
+> be `36ADEF2A…`), `journalctl -k -b 0 --grep 'QCA|rampatch|NVM'` (no `E1:` lines this time),
+> `scripts/supported-commands-survey.sh` (202 with Enhanced), then the hard test with **both**
+> headsets and `scripts/sco-ledger.sh 0`; pass = 0 timeouts, 0 `0x2005`. Then the stable
+> backport request. Also open: the earbuds' **U7** (PipeWire skips the SCO setup when a codec
+> switch tears an active link down — HCI capture, `docs/issues.md`) and **U8** (mSBC silent on
+> the earbuds, `corrupted SCO packet`); the mesh-tester kernel finding (private
+> `diag/mesh-tester-ci`, phase 2 awaiting approval); four outside "research reports" received
+> 09-29/30, all generic rewrites with invented detail, set aside. The E1 trial directory was
+> copied to `trial-15.e1-boot2-unclosed-20260930` because the installed (09-18) trial tool
+> reuses the number. Recorder `bt-audio-policy` is transient: restart it after the boot.
+>
 > **RESUME HERE (2026-09-29).** **E1 stands at 37 SCO links, 37 hang-ups answered, 0 timeouts**
 > over two boots (`scripts/sco-ledger.sh -1` and `0`): 34 on the first boot (09-26 17:11 →
 > 09-27 17:20, streams to 5,122 s), 3 on the current one — **all MOMENTUM 4**; the Shure
