@@ -20,6 +20,14 @@ theirs and points at the long form (`lessons/`, `reviews/`) rather than reproduc
 **Last updated: 2026-09-29 · newest exhibit on `main`: EX-056; the held branch has EX-049
 and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted within hours (`R2-13`).
 
+> **E3 FIRST SESSION (2026-10-01 00:13 →):** loaded srcversion `36ADEF2A…`, rampatch `0x3e8` +
+> NVM loaded, trial **E3 #1**. MOMENTUM 4: **7 SCO links, 7 hang-ups answered, 0 timeouts**, no
+> `0x2005`, no `corrupted SCO packet`; [operator] every mode audible (A2DP, handsfree mSBC and
+> CVSD), except U1's unselectable first line. Two codec switches under an active link both set
+> the new link up (U7 does not reproduce on the MOMENTUM). New **U9**: after rfkill off/on nobody
+> reconnects the headset (BlueZ policy reconnects only after link loss/suspend). Next: the
+> earbuds and the Shure on E3, then the stable request.
+>
 > **RESUME HERE (2026-09-30) — E3 IS INSTALLED, machine powered down on the operator's word.**
 > `updates/btusb.ko` is now the **exact upstream entry `dc16388d45ec`** on `7.0.0-34` (version
 > `0.8`, srcversion `36ADEF2A3F27D16D77A320E`, sha256 `f13d86c4…`; record on private

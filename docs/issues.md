@@ -722,6 +722,12 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   (framing / the 3×9-byte split), or the corrupted-packet path drops the RX side; the two are
   separable by whether the *microphone* side works in mSBC. **To confirm:** the MOMENTUM's test
   sound in mSBC on this boot (if audible there, U8 is earbud-specific); then E3 with both.
+  **[operator] 2026-10-01, E3 boot, MOMENTUM 4:** "all checked modes are audible now, in both
+  headset and handsfree modes" (A2DP; handsfree mSBC and CVSD) — the only exception being U1's
+  unselectable first line. **[log]** the same session: 7 SCO links (2 mSBC, 5 CVSD), 7 hang-ups
+  answered, 0 timeouts, and **no** `corrupted SCO packet`, `0x2005` or `tx timeout` on the boot.
+  So mSBC audio on this host is fine with the MOMENTUM under the exact upstream entry; U8 is
+  earbud-specific unless the earbuds also go silent on E3 — that test is next.
 
 ---
 
