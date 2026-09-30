@@ -687,6 +687,30 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   SCO idle and once while a stream plays; and read PipeWire master's `backend-native.c` codec
   switch path (`rfcomm_hfp_ag_set_codec` and what follows `AT+BCS`) for a fix after 1.0.5.
   Reportable to PipeWire once confirmed, with this capture excerpt.
+  **[log] 2026-10-01, E3 boot, MOMENTUM 4:** two mSBC → CVSD switches made with the mSBC link
+  up (00:54:45, 00:55:27) both got their CVSD link within 0.2 s (`sco-ledger.sh 0`). So the
+  skipped setup is **not** universal; on the earbuds the headset's `AT+BCS=` reply arrived
+  after the old link's `Disconnect` had completed — the MOMENTUM's ordering at those two
+  switches is the comparison to read next (`capture-window.sh`). Device-dependent timing in
+  PipeWire's switch path, still a PipeWire matter.
+- **U9 — after Bluetooth off → on, the headset is not reconnected.** Marked by the operator
+  01:02:31 ("the headset is on my head, why not connect to it?").
+  **[log]** 01:00:03 rfkill soft-block (`RFKILL event … soft 1`), the MOMENTUM disconnected
+  with `reason 21`, `plugins/policy.c:disconnect_cb() reason 21`; 01:00:06 unblock and `Set
+  Powered`; no connection attempt by anyone in the next 2.5 min (`bluetoothd` log,
+  `bt-audio-policy`: no device). **[log]** BlueZ 5.72 `plugins/policy.c:743` reconnects only
+  for `MGMT_DEV_DISCONN_TIMEOUT` and `LOCAL_HOST_SUSPEND` (link loss and system suspend); a
+  disconnect caused by the local adapter being switched off is not one of them, and nothing in
+  BlueZ or the desktop connects known audio devices when the adapter comes back.
+  **[inference]** a policy gap, not a fault: phones reconnect the last audio device when
+  Bluetooth is re-enabled; BlueZ leaves it to the headset, which did not page us. Possible
+  suggestion to BlueZ (policy plugin: on power-on, attempt the devices that were connected at
+  power-off) — check the tracker first for a prior decision.
+- **U4/U1, operator marks 2026-10-01:** 00:25:51 "the Configuration line disappears for a
+  moment when you change the selection" — consistent with U4's mechanism (the row is hidden
+  while the combo row's device object is swapped, then re-evaluated). 00:59:41 "three lines in
+  the dropbox, the first not selectable" — U1 as shipped in PipeWire 1.0.5 (the codecless entry;
+  removed upstream in 1.2). Both [operator], both explained by the source already read.
 - **U8 — mSBC on the Lenovo earbuds: link up, data flowing, nothing audible** *(lead)*.
   **[log]** at 02:30:40 and 02:31:03 the test stream was linked to the earbuds' sink while an
   mSBC (Transparent) eSCO link was up and carrying host TX (`len 27 mtu 9` buffers: 5,761 on
