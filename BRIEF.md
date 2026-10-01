@@ -32,6 +32,11 @@ and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted
 > Host kernel and adapter untouched throughout. **Not sent**: wants an outside review first, then
 > `scripts/pre-send-check.sh` on the day, then the operator's word.
 >
+> **E3 + SHURE (2026-10-01 03:00–03:01):** 9 SCO links on the Shure AONIC 50 (5 mSBC, 4 CVSD), 9
+> hang-ups answered, 0 timeouts — the headset that died on stock in `EX-053`. **E3 boot total: 16
+> links, 16 answered, 0 timeouts, two headsets.** Machine powered down after this on the operator's
+> word; next boot is E3 #2 (the drop-in stays). **Next: the stable backport request.**
+>
 > **E3 FIRST SESSION (2026-10-01 00:13 →):** loaded srcversion `36ADEF2A…`, rampatch `0x3e8` +
 > NVM loaded, trial **E3 #1**. MOMENTUM 4: **7 SCO links, 7 hang-ups answered, 0 timeouts**, no
 > `0x2005`, no `corrupted SCO packet`; [operator] every mode audible (A2DP, handsfree mSBC and
