@@ -1,15 +1,15 @@
 # EX-058 — e1-setup-only-58-links-three-boots
 
-**Claim.** A diagnostic btusb build that applies only the QCA setup part of the upstream entry (E1: BTUSB_QCA_ROME without BTUSB_WIDEBAND_SPEECH and without the reset callback) ran 58 SCO links over three boots and two headset models with every hang-up answered and 0 command timeouts, where the stock driver died in all 12 recorded instances.
+**Claim.** A diagnostic btusb build that applies only the QCA setup part of the upstream entry (E1: BTUSB_QCA_ROME without BTUSB_WIDEBAND_SPEECH and without the reset callback) ran 58 SCO links over three boots and two headset models with all 58 hang-ups answered and 0 command timeouts, where the stock driver timed out in all 12 recorded instances.
 
-**Relevance.** Isolates the firmware setup from the entry's other effects: wideband, alt 1 and legacy 0x0428 are as in the deaths, the reset callback cannot have rescued anything, and the only change is that the controller runs the rampatch instead of its ROM firmware. Per-link rows name the headset, air mode, alt-1 buffer count, seconds streamed and the outcome of the first command after the stream.
+**Relevance.** Isolates the firmware setup from the entry's other effects: wideband, alt 1 and legacy 0x0428 are as in the deaths, the reset callback cannot have rescued anything, and the isolated change is enabling the QCA setup path, which loads the rampatch and NVM instead of leaving the controller on its ROM firmware. Per-link rows name the headset, air mode, alt-1 buffer count, seconds streamed and the outcome of the first command after the stream. The three boots are named by their ids, which do not change at the next reboot.
 
 ## Extraction method
 
 Re-runnable as-is on the affected machine:
 
 ```console
-$ /root/exp/qca9377-bt-hang/scripts/sco-ledger-boots.sh -3 -2 -1
+$ /root/exp/qca9377-bt-hang/scripts/sco-ledger-boots.sh 226965f1219c426a950d71e6845deb6d 855a927e5bff4155af4f13442ce34b4c 8709ee7c02d84d378eca24a204b75ed6
 ```
 
 ## Output
@@ -17,7 +17,7 @@ $ /root/exp/qca9377-bt-hang/scripts/sco-ledger-boots.sh -3 -2 -1
 Verbatim, 76 line(s), exit status 0.
 
 ```
-== boot -3
+== boot 226965f1219c426a950d71e6845deb6d
 setup                       headset             air     len27/9   streamed  outcome
 2026-09-26T21:52:50.121505  MOMENTUM 4          msbc       3607      10.84  hangup-ok 58 ms
 2026-09-26T21:53:12.290578  MOMENTUM 4          msbc       1242       3.76  hangup-ok 5 ms
@@ -56,7 +56,7 @@ setup                       headset             air     len27/9   streamed  outc
 
 links 34   hang-ups answered 34   timeouts 0
 
-== boot -2
+== boot 855a927e5bff4155af4f13442ce34b4c
 setup                       headset             air     len27/9   streamed  outcome
 2026-09-28T18:25:28.585230  MOMENTUM 4          msbc       3195       9.60  hangup-ok 26 ms
 2026-09-28T18:25:52.037353  MOMENTUM 4          msbc       3465      10.42  hangup-ok 53 ms
@@ -82,7 +82,7 @@ setup                       headset             air     len27/9   streamed  outc
 
 links 21   hang-ups answered 21   timeouts 0
 
-== boot -1
+== boot 8709ee7c02d84d378eca24a204b75ed6
 setup                       headset             air     len27/9   streamed  outcome
 2026-09-29T18:20:50.515505  MOMENTUM 4          msbc        637     167.77  hangup-ok 48 ms
 2026-09-29T18:24:21.137437  MOMENTUM 4          msbc        640      85.85  hangup-ok 42 ms
@@ -101,7 +101,7 @@ TOTAL over 3 boot(s): links 58   hang-ups answered 58   timeouts 0
 
 | field | value |
 |---|---|
-| captured | `2026-10-02T00:46:30+02:00` |
+| captured | `2026-10-02T01:15:25+02:00` |
 | kernel | `7.0.0-34-generic` |
 | boot id | `c34cfa10` |
 | device | `13d3:3503` QCA9377 (ROME) |

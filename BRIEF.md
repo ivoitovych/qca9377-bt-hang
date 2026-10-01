@@ -40,7 +40,11 @@ and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted
 > The mail is now short (commit, trees, missing-ID effect, applies, one validation paragraph,
 > pointer). Public record brought level: `EX-057` (E3 boot summary, 16/16), `EX-058` (E1 three
 > boots, 58/58), README status block, `docs/missing-quirks-entry.md` superseding banner.
-> `backport-check.sh` defaults updated. Not sent: operator's word. ⚠️ `EX-057` shows one
+> `backport-check.sh` defaults updated. Second review round (10-02): `EX-057`/`058` re-recorded
+> by **boot id** (index selectors shift at every reboot), `EX-057`'s relevance line corrected
+> (the error-level grep is not empty), the mail's 12-instance sentence narrowed to what the
+> exhibits show, "all 16 hang-ups answered" instead of "every post-stream command". The
+> reviewer withdrew its own suggestion of an attribution trailer. Not sent: operator's word. ⚠️ `EX-057` shows one
 > `corrupted SCO packet` during a Shure mSBC link — the message is not earbud-specific (U8).
 >
 > **MGMT PATCH ACCEPTED (2026-09-29 17:40, seen 10-01):** `Bluetooth: MGMT: Fix status of pending

@@ -1,15 +1,15 @@
 # EX-057 — e3-upstream-entry-16-links-two-headsets
 
-**Claim.** With the exact upstream entry dc16388d45ec built for 7.0.0-34 (E3, srcversion 36ADEF2A3F27D16D77A320E), the controller loads the QCA rampatch and NVM and 16 SCO links on two headsets, including the Shure AONIC 50 that wedged the stock driver in EX-053, were set up and torn down with every hang-up answered: 0 command timeouts and 0 unexpected-event 0x2005 on the boot. The error-level lines that do appear are late SCO packets after each hang-up ("unknown connection handle"), one "corrupted SCO packet" during a Shure mSBC link (03:01:19), and one Disconnect answered -107 at 01:00:03 when the adapter was switched off by rfkill — none is a command timeout. (Correction to the claim as first written, which said 0 corrupted SCO packets; the output below is untouched.)
+**Claim.** With the exact upstream entry dc16388d45ec built for 7.0.0-34 (E3, srcversion 36ADEF2A3F27D16D77A320E), the controller loads the QCA rampatch and NVM, and 16 SCO links on two headsets, including the Shure AONIC 50 that wedged the stock driver in EX-053, were set up and torn down with all 16 hang-ups answered: 0 command timeouts and 0 unexpected-event 0x2005 on the boot. The error-level lines that do appear are late SCO packets after each hang-up (unknown connection handle), one corrupted SCO packet during a Shure mSBC link at 03:01:19, and one Disconnect answered -107 at 01:00:03 when the adapter was switched off by rfkill; none is a command timeout.
 
-**Relevance.** This is the production form of the fix the stable backport request asks for: the same machine, the same wideband alt-1 streams, legacy 0x0428 setup, the upstream entry and nothing else changed. The error-level grep is empty, so nothing is hidden by the ledger's filters.
+**Relevance.** This is the production form of the fix the stable backport request asks for: the same machine, the same wideband alt-1 streams, legacy 0x0428 setup, the upstream entry and nothing else changed. The error-level grep is included in full, so anything outside the ledger's filters stays visible. The boot is named by its id, which does not change at the next reboot.
 
 ## Extraction method
 
 Re-runnable as-is on the affected machine:
 
 ```console
-$ /root/exp/qca9377-bt-hang/scripts/boot-bt-summary.sh 0
+$ /root/exp/qca9377-bt-hang/scripts/boot-bt-summary.sh c34cfa108a144b0f9b900806cb71367e
 ```
 
 ## Output
@@ -17,8 +17,8 @@ $ /root/exp/qca9377-bt-hang/scripts/boot-bt-summary.sh 0
 Verbatim, 65 line(s), exit status 0.
 
 ```
-== boot 0
-     0 c34cfa108a144b0f9b900806cb71367e Thu 2026-10-01 00:13:20 CEST Fri 2026-10-02 00:42:19 CEST
+== boot c34cfa108a144b0f9b900806cb71367e
+     0 c34cfa108a144b0f9b900806cb71367e Thu 2026-10-01 00:13:20 CEST Fri 2026-10-02 01:11:13 CEST
 == btusb loaded now: version 0.8 srcversion 36ADEF2A3F27D16D77A320E
 == firmware setup (kernel log)
 2026-10-01T00:13:21+02:00 n kernel: Bluetooth: hci0: using rampatch file: qca/rampatch_usb_00000302.bin
@@ -58,7 +58,7 @@ Verbatim, 65 line(s), exit status 0.
 2026-10-01T03:02:01+02:00 n kernel: Bluetooth: hci0: SCO packet for unknown connection handle 11
 2026-10-01T03:15:57+02:00 n kernel: Bluetooth: hci0: SCO packet for unknown connection handle 11
 == SCO ledger
-== boot 0
+== boot c34cfa108a144b0f9b900806cb71367e
 setup                       headset             air     len27/9   streamed  outcome
 2026-10-01T00:54:20.265311  MOMENTUM 4          msbc       8312      24.96  hangup-ok 37 ms
 2026-10-01T00:54:45.419298  MOMENTUM 4          cvsd          0       8.22  hangup-ok 17 ms
@@ -90,7 +90,7 @@ TOTAL over 1 boot(s): links 16   hang-ups answered 16   timeouts 0
 
 | field | value |
 |---|---|
-| captured | `2026-10-02T00:42:59+02:00` |
+| captured | `2026-10-02T01:11:52+02:00` |
 | kernel | `7.0.0-34-generic` |
 | boot id | `c34cfa10` |
 | device | `13d3:3503` QCA9377 (ROME) |

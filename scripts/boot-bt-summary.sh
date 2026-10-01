@@ -8,9 +8,12 @@
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 B="${1:-0}"
+# An exhibit should name the boot by its id, which never changes, not by an
+# index, which shifts at every reboot (review of 2026-10-02 on EX-057/058).
+CUR=$(tr -d - < /proc/sys/kernel/random/boot_id)
 echo "== boot $B"
-journalctl --list-boots --no-pager | awk -v b="$B" '$1 == b { print "   " $0 }'
-if [[ "$B" == 0 ]]; then
+journalctl --list-boots --no-pager | awk -v b="$B" '$1 == b || $2 == b { print "   " $0 }'
+if [[ "$B" == 0 || "$B" == "$CUR" ]]; then
 	echo "== btusb loaded now: version $(cat /sys/module/btusb/version 2>/dev/null) srcversion $(cat /sys/module/btusb/srcversion 2>/dev/null)"
 fi
 echo "== firmware setup (kernel log)"
