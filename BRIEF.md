@@ -20,6 +20,18 @@ theirs and points at the long form (`lessons/`, `reviews/`) rather than reproduc
 **Last updated: 2026-09-29 · newest exhibit on `main`: EX-056; the held branch has EX-049
 and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted within hours (`R2-13`).
 
+> **MESH-TESTER KERNEL PATCH READY (2026-10-01, private `diag/mesh-tester-ci`,
+> `patches/mesh-tester/0001-…`, `docs/mesh-tester-ci/phase2-results.md`):** reproduced in qemu on
+> bluetooth-next `671d566d3c3b` with BlueZ HEAD testers built as the bot builds them — the two
+> "Mesh - Send cancel" cases fail in all five configurations, no `LE Set Advertising Enable (0x00)`
+> ever sent; patched (`mesh_send_done_sync()` removes the mesh-only adv instance before the
+> `list_empty()` check and completes the `mesh_tx` that owns it): mesh-tester **10/10** KVM,
+> 10/10 KVM+valgrind, 5/5 TCG+valgrind; **mgmt-tester 501/501**. Preflight in `cache/full-bt-next`:
+> checkpatch 0/0/0, W=1 -Werror clean, sparse 0 new; recipients from get_maintainer (the two
+> maintainers, the two blamed authors, both lists; `Cc: stable` is a tag — `--suppress-cc=bodycc`).
+> Host kernel and adapter untouched throughout. **Not sent**: wants an outside review first, then
+> `scripts/pre-send-check.sh` on the day, then the operator's word.
+>
 > **E3 FIRST SESSION (2026-10-01 00:13 →):** loaded srcversion `36ADEF2A…`, rampatch `0x3e8` +
 > NVM loaded, trial **E3 #1**. MOMENTUM 4: **7 SCO links, 7 hang-ups answered, 0 timeouts**, no
 > `0x2005`, no `corrupted SCO packet`; [operator] every mode audible (A2DP, handsfree mSBC and
