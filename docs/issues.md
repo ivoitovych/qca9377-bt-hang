@@ -725,7 +725,9 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   **[operator] 2026-10-01, E3 boot, MOMENTUM 4:** "all checked modes are audible now, in both
   headset and handsfree modes" (A2DP; handsfree mSBC and CVSD) — the only exception being U1's
   unselectable first line. **[log]** the same session: 7 SCO links (2 mSBC, 5 CVSD), 7 hang-ups
-  answered, 0 timeouts, and **no** `corrupted SCO packet`, `0x2005` or `tx timeout` on the boot.
+  answered, 0 timeouts, and no `0x2005` or `tx timeout` on the boot; no `corrupted SCO packet`
+  during the MOMENTUM session — one appeared later that boot during a Shure mSBC link
+  (03:01:19, `EX-057`), so the message is not earbud-specific either.
   So mSBC audio on this host is fine with the MOMENTUM under the exact upstream entry; U8 is
   earbud-specific unless the earbuds also go silent on E3 — that test is next.
 

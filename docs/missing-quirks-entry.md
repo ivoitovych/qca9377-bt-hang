@@ -1,5 +1,15 @@
 # The missing quirks entry — what it does and does not explain
 
+> ✅ **Tested here since 2026-09-26 — this banner supersedes the one below it.** The entry's
+> setup path is no longer "untested here": a diagnostic build that applied only the QCA
+> setup part (E1) ran 58 wideband/narrowband SCO links over three boots with every hang-up
+> answered and 0 command timeouts (`EX-055`, `EX-056`, `EX-058`), and the exact upstream entry
+> `dc16388d45ec` built for `7.0.0-34` (E3) ran 16 links on two headsets, including the one
+> that wedged the stock driver in `EX-053`, with 0 timeouts and 0 `0x2005` errors (`EX-057`).
+> So the missing entry is not only why nothing *recovered* the wedge, as the text below
+> concluded in September; without it the controller runs on ROM firmware, and with the
+> firmware the entry loads the wedge did not occur. The text below is kept as written.
+
 > ⚠️ **Superseded upstream on 2026-08-07 (`DR-01`, 2026-09-19).** Commit `dc16388d45ec`,
 > "Bluetooth: btusb: Add IMC Networks QCA9377 to quirks table" (authored 2026-06-29,
 > committed 2026-08-07), adds exactly the entry this document describes as missing —

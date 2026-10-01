@@ -32,6 +32,17 @@ and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted
 > Host kernel and adapter untouched throughout. **Not sent**: wants an outside review first, then
 > `scripts/pre-send-check.sh` on the day, then the operator's word.
 >
+> **STABLE REQUEST, REVISED AFTER OUTSIDE REVIEW (2026-10-02):** draft on private `diag/btusb-e1`
+> (`patches/diag/stable-request-dc16388d45ec.md`). Verified from the review: kernel.org lists
+> **7.1.y EOL and no 7.0.y; 6.18.y, 5.15.y, 5.10.y live** → trees asked: 7.2/6.18/6.12/6.6/6.1
+> (5.15/5.10 offered); the 12 deaths span four builds `-29/-30/-31/-34` (not `-28`); E1 is two
+> headset models; "all 12 recorded instances", never "12 of 12 links" (no denominator exists).
+> The mail is now short (commit, trees, missing-ID effect, applies, one validation paragraph,
+> pointer). Public record brought level: `EX-057` (E3 boot summary, 16/16), `EX-058` (E1 three
+> boots, 58/58), README status block, `docs/missing-quirks-entry.md` superseding banner.
+> `backport-check.sh` defaults updated. Not sent: operator's word. ⚠️ `EX-057` shows one
+> `corrupted SCO packet` during a Shure mSBC link — the message is not earbud-specific (U8).
+>
 > **MGMT PATCH ACCEPTED (2026-09-29 17:40, seen 10-01):** `Bluetooth: MGMT: Fix status of pending
 > commands flushed on power off` is **`86ef0f58bdec` on `bluetooth-next/master`**, committed by the
 > maintainer 09-29 11:20 -0400, one file +1/−1 — applied as sent; patchwork `14845586` state

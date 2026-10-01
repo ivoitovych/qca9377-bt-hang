@@ -5,7 +5,20 @@ power brings it back.** Qualcomm Atheros **QCA9377** (ROME), USB ID `13d3:3503`,
 Linux. An open investigation aimed at an upstream fix, run so that every claim can be
 re-derived by a stranger from the command that produced it.
 
-## Status — 2026-09-26, newest exhibit `EX-056`
+## Status — 2026-10-02, newest exhibit `EX-058`
+
+> **The cause is the missing `btusb` table entry, and the fix is upstream.** Without
+> `{ USB_DEVICE(0x13d3, 0x3503), BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH }` the controller is
+> matched as a generic device and runs on its ROM firmware (`rom 0x302 build 0x111`,
+> `EX-055`). On that firmware the fault below occurred in **all 12 recorded instances**. With
+> the firmware the entry loads (`rampatch_usb_00000302.bin` build `0x3e8` + NVM, both in
+> linux-firmware): a diagnostic build applying only the QCA setup part ran **58 SCO links over
+> three boots and two headset models with every hang-up answered, 0 timeouts** (`EX-056`,
+> `EX-058`); the exact upstream commit `dc16388d45ec` (mainline v7.3-rc1, in no stable line)
+> built for `7.0.0-34` ran **16 links on two headsets — including the one from `EX-053` — with 0
+> timeouts and 0 `0x2005` errors** (`EX-057`). A stable backport request is being prepared.
+> The paragraphs below describe the fault as it was characterised on the stock driver and are
+> kept as written.
 
 > When this controller negotiates **transparent (mSBC / wideband) synchronous audio**,
 > `btusb` falls back to **USB alternate setting 1** — a 9-byte isochronous endpoint — and
