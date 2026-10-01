@@ -92,7 +92,8 @@ TOTAL over 1 boot(s): links 16   hang-ups answered 16   timeouts 0
 |---|---|
 | captured | `2026-10-02T01:11:52+02:00` |
 | kernel | `7.0.0-34-generic` |
-| boot id | `c34cfa10` |
+| capture boot id | `c34cfa10` |
+| evidence boot ids | `c34cfa10` |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

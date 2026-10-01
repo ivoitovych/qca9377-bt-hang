@@ -3761,6 +3761,22 @@ if (( ex_awk_ok )); then
         && ok "bt-exhibit records the command's exit status" \
         || bad "exhibit did not record an exit status"
 
+    # PROVENANCE NAMES THE EVIDENCE BOOTS, NOT ONLY THE CAPTURE BOOT. The old
+    # single `boot id` row was the machine's current boot; for EX-058 (three
+    # earlier boots) it named the boot the exhibit was generated on. The boots
+    # the command names by 32-hex id go in their own row; a command that names
+    # none says so.
+    exhibit new probe-boots --claim "Two boots are named." \
+            --cmd 'echo 0123456789abcdef0123456789abcdef fedcba9876543210fedcba9876543210' >/dev/null 2>&1
+    exboots=$(cat "$EXR/evidence/exhibits/002-probe-boots.md" 2>/dev/null)
+    [[ "$exboots" == *'| capture boot id | `'* && "$exboots" == *'| evidence boot ids | `01234567, fedcba98` |'* ]] \
+        && ok "bt-exhibit names the evidence boots from the command, apart from the capture boot" \
+        || bad "exhibit provenance did not separate evidence boots from the capture boot"
+    [[ "$exbody" == *'| evidence boot ids | none named by the command'* ]] \
+        && ok "an exhibit whose command names no boot says so in its provenance" \
+        || bad "an exhibit with no boot in its command did not say so"
+    rm -f "$EXR/evidence/exhibits/002-probe-boots.md"
+
     # ── BL-09: the evidence window, and the round trip that proves it ────
     #
     # `echo marker-…` carries no timestamp at all, which is the honest majority
