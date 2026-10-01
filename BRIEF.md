@@ -36,7 +36,9 @@ and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted
 > commands flushed on power off` is **`86ef0f58bdec` on `bluetooth-next/master`**, committed by the
 > maintainer 09-29 11:20 -0400, one file +1/−1 — applied as sent; patchwork `14845586` state
 > `accepted`; the only reply ever was the bot's. Verified by `git fetch bluetooth-next` + `show`.
-> The held branch `kernel/mgmt-flush-status` may now be merged into `main` (operator's call).
+> The branch `kernel/mgmt-flush-status` (patch, reviews, EX-044, `bt-ctrl-window`) **stays on the
+> private remote** by the operator's decision of 2026-10-01; this line is `main`'s record of the
+> patch and its acceptance. Attribution in this repository is the project author's only.
 >
 > **E3 + SHURE (2026-10-01 03:00–03:01):** 9 SCO links on the Shure AONIC 50 (5 mSBC, 4 CVSD), 9
 > hang-ups answered, 0 timeouts — the headset that died on stock in `EX-053`. **E3 boot total: 16
