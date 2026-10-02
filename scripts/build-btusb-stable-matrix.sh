@@ -1,39 +1,45 @@
 #!/bin/bash
-# build-btusb-stable-matrix.sh — apply a btusb patch to each stable line and
-# BUILD btusb there, not only dry-run it: a full checkout of each tip (worktree
-# of cache/linux, blobs on demand), defconfig + Bluetooth and btusb as modules,
-# modules_prepare, then `make M=drivers/bluetooth` unpatched (control) and
-# patched. -Werror where the tree's own unpatched build tolerates it. No
+# build-btusb-stable-matrix.sh — does a mainline commit CHERRY-PICK and BUILD on
+# each stable line? The check a backport request rests on: not `patch --dry-run`
+# (text), not `patch -p1` (fuzz), but `git cherry-pick` of the commit itself —
+# what the stable team's pickup is — on a full checkout of each line's tip,
+# fetched this minute, followed by `make M=drivers/bluetooth` unpatched (control)
+# and picked, with -Werror where the tree's own control build takes it. No
 # install, no load; the laptop's kernel is untouched.
 #
-#   scripts/build-btusb-stable-matrix.sh <patch> [<stable-branch>…]
+#   scripts/build-btusb-stable-matrix.sh <commit> [<stable-branch>…]
 #   default branches: the lines live on kernel.org on 2026-10-02
 #
-# Per branch: tip, how the patch applied (offset/fuzz), whether the entry is in
-# the compiled source, unpatched and patched make results. Logs under
-# tmp/btusb-matrix/. Exit 0 when every patched build succeeds.
+# Per branch: tip after the fetch, cherry-pick result (OK / CONFLICT), whether the
+# entry is in the picked source, unpatched and picked make results. Each worktree
+# (cache/stable-<ver>/) is reset to the fresh tip every run, so a rerun never
+# rebuilds yesterday's tip. Logs under tmp/btusb-matrix/. Exit 0 when every
+# cherry-pick and every picked build succeeds.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PATCH="${1:?usage: build-btusb-stable-matrix.sh <patch> [<stable-branch>…]}"; shift
-[[ -r "$PATCH" ]] || { echo "cannot read $PATCH" >&2; exit 2; }
-PATCH="$(readlink -f "$PATCH")"
+COMMIT="${1:?usage: build-btusb-stable-matrix.sh <commit> [<stable-branch>…]}"; shift
 BRANCHES=("$@")
 (( ${#BRANCHES[@]} )) || BRANCHES=(stable/linux-7.2.y stable/linux-6.18.y stable/linux-6.12.y stable/linux-6.6.y stable/linux-6.1.y stable/linux-5.15.y stable/linux-5.10.y)
 BASE="$HERE/cache/linux"
 LOGS="$HERE/tmp/btusb-matrix"; mkdir -p "$LOGS"
 J=$(nproc)
 rc=0
-printf '%-22s %-14s %-28s %-10s %-12s %s\n' "branch" "tip" "apply" "entry" "unpatched" "patched"
+echo "fetching stable…"
+git -C "$BASE" fetch -q stable 2>/dev/null || { echo "fetch failed" >&2; exit 2; }
+echo "commit: $(git -C "$BASE" log -1 --format='%h %s' "$COMMIT")"
+printf '%-22s %-14s %-12s %-7s %-14s %s\n' "branch" "tip" "cherry-pick" "entry" "unpatched" "picked"
 for b in "${BRANCHES[@]}"; do
 	name="stable-${b#stable/linux-}"; TREE="$HERE/cache/$name"; log="$LOGS/$name.log"
 	: > "$log"
 	if [[ ! -d "$TREE" ]]; then
-		git -C "$BASE" worktree add --no-checkout "$TREE" "$b" >>"$log" 2>&1 || { printf '%-22s worktree FAILED\n' "$b"; rc=1; continue; }
+		git -C "$BASE" worktree add --no-checkout --detach "$TREE" "$b" >>"$log" 2>&1 || { printf '%-22s worktree FAILED\n' "$b"; rc=1; continue; }
 		git -C "$TREE" sparse-checkout disable >>"$log" 2>&1
-		git -C "$TREE" checkout -q "$b" >>"$log" 2>&1 || { printf '%-22s checkout FAILED\n' "$b"; rc=1; continue; }
 	fi
+	# Always the fetched tip, never whatever the worktree held last time.
+	git -C "$TREE" cherry-pick --abort >/dev/null 2>&1 || true
+	git -C "$TREE" checkout -q --detach "$b" >>"$log" 2>&1 || { printf '%-22s checkout FAILED\n' "$b"; rc=1; continue; }
+	git -C "$TREE" reset -q --hard "$b" >>"$log" 2>&1
 	tip=$(git -C "$TREE" log -1 --format=%h)
-	git -C "$TREE" checkout -q -- drivers/bluetooth
 	(
 		cd "$TREE" || exit 2
 		if [[ ! -f .config ]]; then
@@ -59,13 +65,17 @@ for b in "${BRANCHES[@]}"; do
 		fi
 	}
 	un=$(build unpatched)
-	git -C "$TREE" checkout -q -- drivers/bluetooth
-	apply=$(patch -d "$TREE" -p1 --forward < "$PATCH" 2>&1 | grep -oE 'offset [-0-9]+ lines?|fuzz [0-9]+|FAILED|malformed' | tr '\n' ' ')
-	[[ -n "$apply" ]] || apply="clean"
+	if git -C "$TREE" cherry-pick --no-commit "$COMMIT" >>"$log" 2>&1; then
+		pick="OK"
+	else
+		pick="CONFLICT"
+		git -C "$TREE" diff --name-only --diff-filter=U >>"$log" 2>&1
+	fi
 	entry=$(grep -c "0x13d3, 0x3503" "$TREE/drivers/bluetooth/btusb.c")
-	pa=$(build patched)
-	[[ "$pa" == rc=0* && "$entry" == 1 && "$apply" != *FAILED* ]] || rc=1
-	printf '%-22s %-14s %-28s %-10s %-12s %s%s\n' "$b" "$tip" "$apply" "x$entry" "$un" "$pa" "${werror:+  (-Werror)}"
-	git -C "$TREE" checkout -q -- drivers/bluetooth
+	if [[ $pick == OK ]]; then pa=$(build picked); else pa="(not built)"; fi
+	[[ "$pick" == OK && "$pa" == rc=0* && "$entry" == 1 ]] || rc=1
+	printf '%-22s %-14s %-12s %-7s %-14s %s%s\n' "$b" "$tip" "$pick" "x$entry" "$un" "$pa" "${werror:+  (-Werror)}"
+	git -C "$TREE" cherry-pick --abort >/dev/null 2>&1 || true
+	git -C "$TREE" reset -q --hard "$b" >>"$log" 2>&1
 done
 exit $rc

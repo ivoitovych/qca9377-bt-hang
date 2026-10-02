@@ -48,7 +48,11 @@ and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted
 > hanging lines, the entry quoted as a block identical to `btusb.c`, no sentence that leaves work to
 > the reader, with/without structure — and "applies" became **applied and built**:
 > `scripts/build-btusb-stable-matrix.sh` compiled btusb with `-Werror`, unpatched and patched, on
-> all seven live lines (7.2, 6.18, 6.12, 6.6, 6.1, 5.15, 5.10). Draft **v4**; sendable file
+> all seven live lines (7.2, 6.18, 6.12, 6.6, 6.1, 5.15, 5.10). Reviewer's last pass (10-02):
+> GNU `patch` is not the stable pickup — the matrix now **fetches, resets each worktree to the tip
+> and `git cherry-pick`s the commit itself**: OK on all seven, builds clean (`EX-059`); the 5.15/5.10
+> aside deleted (floor 6.1 by choice); E1 stated as 58/58, 0 timeouts; `scripts/mail-lint.sh`
+> (72 columns, ASCII, headers) clean. Draft **v4b**; sendable file
 > `tmp/stable-backport/request-v4.eml` (local). Not sent: operator's word. ⚠️ `EX-057` shows one
 > `corrupted SCO packet` during a Shure mSBC link — the message is not earbud-specific (U8).
 >
