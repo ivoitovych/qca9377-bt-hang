@@ -121,8 +121,8 @@ tools/bt-boot-list:69-74    # inline JSON boot-index reader; same
 tools/bt-env-history:82-91  # inline metrics.tsv column reader; same
 tools/bt-logvolume:110-114  # inline message normaliser; same
 tools/bt-logvolume:116-121  # inline share renderer (same pipeline, second program)
-tools/bt-trial:250-254      # inline trial-number counter; same
-tools/bt-trial:767-776      # inline sco-params window filter; same (re-derived 2026-09-19 (+16), 2026-09-20 (+12, the abort/autostop edits) and 2026-09-24 (+37, dbe7123) — R2-112; CI's stale-exclusion check caught the old range covering live code both times; the range is btmon-line+2 … +11)
+tools/bt-trial:265-269      # inline trial-number counter; same (re-derived 2026-10-03, +15: the 09-28/29 closer edits moved it and CI never reached this step to say so — see the next entry)
+tools/bt-trial:870-879      # inline sco-params window filter; same (re-derived 2026-09-19 (+16), 2026-09-20 (+12, the abort/autostop edits), 2026-09-24 (+37, dbe7123) and 2026-10-03 (+103: 0910344 and d743c19 moved it by +78 while CI was red one step earlier and nobody saw; the no-match fix adds +25) — R2-112; CI's stale-exclusion check caught the old range covering live code each time; the range is btmon-line+2 … +11)
 tools/bt-verify-install:57-60   # inline install_file parser; same
 tests/run-tests:302-307       # inline --section extractor; same
 
