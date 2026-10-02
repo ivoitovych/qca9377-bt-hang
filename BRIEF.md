@@ -20,6 +20,16 @@ theirs and points at the long form (`lessons/`, `reviews/`) rather than reproduc
 **Last updated: 2026-09-29 · newest exhibit on `main`: EX-056; the held branch has EX-049
 and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted within hours (`R2-13`).
 
+> **MESH PATCH: NOT READY — outside review 2026-10-02 found a real hole, verified here:** the
+> patch removes the host-side instance before the extended-advertising removal sequence, so on
+> an ext-adv controller no `LE Remove Advertising Set` is sent and, with another advertiser
+> present, the mesh set is never disabled; nothing hides the mesh instance from
+> `MGMT_EV_ADVERTISING_REMOVED` (`adv->mesh` is read nowhere); every mesh test is legacy-only
+> (`test_bredrle50` unused); "1000 s" is legacy-only (`u16 duration` truncates to 16.96 s on
+> ext-adv — a separate defect). **Phase 3** (`docs/mesh-tester-ci/PHASE3-TASK.md`): two-patch
+> series, ext-adv-aware teardown without the MGMT event, BREDRLE50 + coexistence + handle
+> tests, base on the `bluetooth` fixes tree. Running in qemu only.
+>
 > **MESH-TESTER KERNEL PATCH READY (2026-10-01, private `diag/mesh-tester-ci`,
 > `patches/mesh-tester/0001-…`, `docs/mesh-tester-ci/phase2-results.md`):** reproduced in qemu on
 > bluetooth-next `671d566d3c3b` with BlueZ HEAD testers built as the bot builds them — the two
