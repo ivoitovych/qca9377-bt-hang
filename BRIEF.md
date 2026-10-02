@@ -44,7 +44,12 @@ and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted
 > by **boot id** (index selectors shift at every reboot), `EX-057`'s relevance line corrected
 > (the error-level grep is not empty), the mail's 12-instance sentence narrowed to what the
 > exhibits show, "all 16 hang-ups answered" instead of "every post-stream command". The
-> reviewer withdrew its own suggestion of an attribution trailer. Not sent: operator's word. ⚠️ `EX-057` shows one
+> reviewer withdrew its own suggestion of an attribution trailer. **Operator's review (10-02):** no
+> hanging lines, the entry quoted as a block identical to `btusb.c`, no sentence that leaves work to
+> the reader, with/without structure — and "applies" became **applied and built**:
+> `scripts/build-btusb-stable-matrix.sh` compiled btusb with `-Werror`, unpatched and patched, on
+> all seven live lines (7.2, 6.18, 6.12, 6.6, 6.1, 5.15, 5.10). Draft **v4**; sendable file
+> `tmp/stable-backport/request-v4.eml` (local). Not sent: operator's word. ⚠️ `EX-057` shows one
 > `corrupted SCO packet` during a Shure mSBC link — the message is not earbud-specific (U8).
 >
 > **MGMT PATCH ACCEPTED (2026-09-29 17:40, seen 10-01):** `Bluetooth: MGMT: Fix status of pending
