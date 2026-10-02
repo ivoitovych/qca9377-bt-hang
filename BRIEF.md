@@ -54,6 +54,29 @@ and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted
 > Host kernel and adapter untouched throughout. **Not sent**: wants an outside review first, then
 > `scripts/pre-send-check.sh` on the day, then the operator's word.
 >
+> **RESUME HERE (2026-10-02 ~05:30, written at context compaction).** State of every submission:
+> **BlueZ ×2 applied** (09-21). **Kernel MGMT fix applied** (`86ef0f58bdec`, bluetooth-next, 09-29).
+> **Stable backport request for `dc16388d45ec` SENT** 10-02 03:25 (Message-ID below), awaiting the
+> stable team; nothing owed. **Mesh series (private `diag/mesh-tester-ci`): phase 3 done** (two
+> patches on `bluetooth/master` `86ef0f58bdec`, ext-adv handled, 23/23, 50/50, 501/501) — then the
+> **outside review of 10-02 said "do not send this revision"** with four verified findings:
+> (1) scheduler race — `mesh_send_done_sync()` clears `HCI_MESH_SENDING` before the now-sleeping
+> teardown, `mesh_send()` queues a start itself when the flag is clear, `mesh_next()` queues the
+> head again (`mgmt.c:1099, 2532-2538, 1112-1126`); (2) patch 2/2's message says bluetooth-meshd
+> matches completion events by handle — false, `mesh/mesh-io-mgmt.c:send_cmplt()` is empty;
+> (3) the new tester cases can pass without their scenario (cancel-active not gated on A being
+> active, coexistence setup not gated, hook ignores targeted disable of set 1, returns unchecked);
+> (4) duration-note arithmetic (655 s → 65.17 s, 8192 s → 0). **Phase 4** task written
+> (`docs/mesh-tester-ci/PHASE4-TASK.md`: ownership protocol keeping the flag through teardown,
+> message fixes, tester preconditions, note corrections, rerun of every gate); the review is kept
+> as `review-series-2026-10-02.md`. **Do not send the series until phase 4 is reviewed again.**
+> Machine: E3 (`updates/btusb.ko` = upstream entry) still installed and running, trial E3 #1 open;
+> the installed `/usr/local/bin` tools are the 09-18 copies (operator's install pending);
+> `bt-audio-policy` recorder transient. Userspace queue unchanged: U7, U6 (SRU), U4, U9 next.
+> Tooling new this week: `build-btusb-stable-matrix.sh` (cherry-pick + build per stable line,
+> `EX-059`), `stable-tips-check.sh`, `mail-lint.sh`, `get-maintainers.sh`, `series-backport-check.sh`,
+> `capture-window.sh`, `boot-bt-summary.sh`, `sco-ledger-boots.sh`, `bt-exhibit` provenance rows.
+>
 > **STABLE REQUEST SENT — 2026-10-02 03:25:42 +0200**, Message-ID
 > `<20261002012542.473669-1-yaroslav.voytovych@gmail.com>`
 > (<https://lore.kernel.org/r/20261002012542.473669-1-yaroslav.voytovych@gmail.com>), SMTP `250`, on the

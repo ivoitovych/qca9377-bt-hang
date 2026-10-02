@@ -3494,3 +3494,58 @@ A history rewrite to remove traces of tool use from past commits was prepared an
 it is not resumed. The current tree's wording was neutralised instead, public branches
 reduced to `main` and the test maintainer's, and every repository backed up as verified
 bundles, copied off the machine by the operator.
+
+## The week the fixes left the machine (2026-09-27 → 10-02)
+
+E1 ran three boots and 58 wideband and narrowband links without a single timeout, on two
+headset models, where the stock driver had died in all twelve recorded instances. Then the
+exact upstream entry, `dc16388d45ec`, was built for the running kernel as **E3**, installed on
+the operator's word, and ran 16 links on two headsets — among them the Shure that had wedged
+the controller in `EX-053` — with every hang-up answered and no `0x2005` event. The per-link
+ledger (`scripts/sco-ledger.sh`) replaced hand-counting; a per-boot summary and a multi-boot
+aggregate became exhibits `EX-057` and `EX-058`, named by the boots' ids after an outside
+reviewer pointed out that an index selects a different boot after the next reboot — a defect
+in the exhibit tool itself, which now separates the capture boot from the evidence boots.
+
+The stable backport request went through four drafts and three review rounds. The reviewer
+corrected the target set (7.1.y had gone end-of-life, 7.0.y was gone, 6.18.y and two older
+longterm lines were live), a count (the twelve deaths span four builds, not five), a
+denominator we never had ("twelve of twelve links" became "all twelve recorded instances"),
+and the headset count of the E1 aggregate. The operator's own reading was harsher and
+better: one line left hanging in an otherwise wrapped mail, a source citation flowed through
+prose, a sentence that handed the maintainers work, and two paragraphs nobody tired could
+follow. Every one was changed, and "applies" became *applied and built*: a matrix script
+fetches each live stable line, resets a full checkout to its tip, `git cherry-pick`s the
+commit — the operation the stable team performs, not `patch` with fuzz — and builds `btusb`
+with `-Werror`; all seven lines passed (`EX-059`). The mail was sent on 2 October at 03:25,
+over port 465 after 587 timed out on the household network, with every sentence tied to a
+public exhibit. The same week the patchwork bot wrote that the MGMT status fix had been
+applied to bluetooth-next as `86ef0f58bdec`, one file, one line each way, exactly as sent;
+the branch that holds its record stays private by the operator's decision, and `main`
+records the fact.
+
+The CI failure that had decorated that patch turned into a contribution of its own. Every
+kernel patch on the list since June failed the bot's `mesh-tester` on the same two cases;
+the reading found a 2025 kernel commit that guarded the end-of-transmission advertising
+disable with a list-emptiness check the mesh packet's own instance makes false, and a 2022
+completion path that reports the wrong packet. Reproduced in qemu with the bot's own
+testers, patched, 10/10 and 501/501 — and then a second outside reviewer found the hole the
+tests could not see: extended advertising, which no mesh test exercised, was torn down in the
+wrong order. Phase 3 rebuilt the fix on the kernel's own removal path, added the missing
+tests to BlueZ's tester, and passed 23/23, 18/18 under valgrind, 50/50 across repeats. The
+review of that revision found the next layer: a scheduler window the teardown had widened
+from microseconds to HCI round-trips, a false sentence about bluetooth-meshd in a commit
+message, tests that could pass without their scenario, and arithmetic in a side note. All
+four held against the source. The series is held for a fourth phase; nothing has been sent.
+
+Around all of this, the register kept growing from the operator's marks: a codec switch
+under an active SCO link leaves the new codec without a link (U7, read from the HCI capture
+with a new `capture-window` helper; device-dependent), nobody reconnects the headset after
+Bluetooth is switched off and on (U9, a BlueZ policy gap), and the earbuds' mSBC silence
+(U8) lost its "corrupted packet" explanation when the same message appeared on the MOMENTUM.
+Four outside "research reports" arrived; all were generic or paraphrased from our own notes
+with invented detail, and were set aside with their errors listed. The trial tool was found
+to have lost a results row to a day-long journal scan and to reuse a trial number; its
+verdict now comes from the error-priority index in milliseconds, the descriptive scan is
+bounded, unclosed directories are set aside, and the installed copies — still from
+September 18 — await the operator's install.
