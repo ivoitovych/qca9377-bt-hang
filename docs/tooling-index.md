@@ -2,7 +2,7 @@
 
 ⚠️ **Read [`BRIEF.md`](../BRIEF.md) first** — it is the concentrated state of
 knowledge (what is true, what is **retracted**, what is open, and the rules that were
-paid for with their reasons) in under 500 lines.
+paid for with their reasons) in under 750 lines.
 This file is the layer below it: once you know *what* you are asking, this says
 *which tool* asks it.
 A first-time reader should start with [`README.md`](../README.md) and
