@@ -1,139 +1,72 @@
 # qca9377-bt-hang
 
-**Your Bluetooth controller stops answering during hands-free audio, and only removing
-power brings it back.** Qualcomm Atheros **QCA9377** (ROME), USB ID `13d3:3503`, on
-Linux. An open investigation aimed at an upstream fix, run so that every claim can be
-re-derived by a stranger from the command that produced it.
+### Linux Bluetooth reliability — from a controller hang to upstream fixes
 
-## Status — 2026-10-02, newest exhibit `EX-059`
+[![Linux kernel: 1 accepted](https://img.shields.io/badge/Linux_kernel-1_accepted-2ea44f)](https://github.com/bluez/bluetooth-next/commit/86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc)
+[![BlueZ: 2 applied](https://img.shields.io/badge/BlueZ-2_applied-2ea44f)](patches/bluez/README.md)
+[![checks](https://github.com/ivoitovych/qca9377-bt-hang/actions/workflows/checks.yml/badge.svg?branch=main&event=push)](https://github.com/ivoitovych/qca9377-bt-hang/actions/workflows/checks.yml)
+[![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue)](LICENSE)
 
-> **The cause is the missing `btusb` table entry, and the fix is upstream.** Without
-> `{ USB_DEVICE(0x13d3, 0x3503), BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH }` the controller is
-> matched as a generic device and runs on its ROM firmware (`rom 0x302 build 0x111`,
-> `EX-055`). On that firmware the fault below occurred in **all 12 recorded instances**. With
-> the firmware the entry loads (`rampatch_usb_00000302.bin` build `0x3e8` + NVM, both in
-> linux-firmware): a diagnostic build applying only the QCA setup part ran **58 SCO links over
-> three boots and two headset models with every hang-up answered, 0 timeouts** (`EX-056`,
-> `EX-058`); the exact upstream commit `dc16388d45ec` (mainline v7.3-rc1, in no stable line)
-> built for `7.0.0-34` ran **16 links on two headsets — including the one from `EX-053` — with 0
-> timeouts and 0 `0x2005` errors** (`EX-057`). The commit cherry-picks onto the tip of every live
-> stable line and btusb builds with it on each (`EX-059`). A stable backport request is being
-> prepared.
-> The paragraphs below describe the fault as it was characterised on the stock driver and are
-> kept as written.
+An investigation of Bluetooth failures on Linux, with reproducible evidence, diagnostic
+tools, and **three fixes accepted upstream: one in the Linux Bluetooth kernel subsystem and
+two in BlueZ**.
 
-> When this controller negotiates **transparent (mSBC / wideband) synchronous audio**,
-> `btusb` falls back to **USB alternate setting 1** — a 9-byte isochronous endpoint — and
-> sends each 27-byte SCO buffer as three 9-byte packets (`len 27 mtu 9` in the log is that
-> split, not an overflow). **The first HCI command observed after the stream starts gets no
-> response**; the controller then answers nothing, including USB control
-> transfers, until power is removed. Reproduced **twelve times across four kernels, three
-> headset models, and both power configurations** (`EX-033`, `036`, `037`, `038`, `040`,
-> `042`, `043`, `045`, `047`, `051`, `052`, `053`), with alternate setting 1 read directly
-> from `sysfs` during eight live wedges; the six most recent under the stock power
-> configuration, `EX-047` with a self-built `bluetooth.ko`, `EX-052`/`053` on kernel
-> `7.0.0-34`, `EX-053` with a third headset (Shure AONIC 50). The dying command
-> is usually `Disconnect`; in `EX-051` it was `Write Scan Enable`.
+The work began with a Qualcomm Atheros **QCA9377** controller (USB ID `13d3:3503`) that
+stopped answering during hands-free audio and came back only when power was removed.
+Following the failures through the stack found defects in shared kernel and userspace code
+that are not specific to this controller, and a device-table omission that was. Every
+claim here ships with the command that produced it, so a stranger can re-derive it.
 
-- **Established:** the sequence above; `0x0428 Setup Synchronous Connection` *is*
-  answered; the stream ran 9.65 s in `EX-043` before the first command was issued, and that
-  command got no response — whether the command wedged the controller or only found it
-  wedged is not established; every recovery tried on an already-wedged controller failed
-  (`hdev->reset` is NULL on the kernels run here — the ID entered btusb's quirks table
-  upstream in `dc16388d45ec`, master 2026-08-07, not in v7.0 nor in the 6.6.y and 6.12.y
-  stable heads as checked on 2026-09-19; `HCI_Reset` returns `-110`; a warm reboot does not
-  clear it, a power-off does — `EX-027`/`028`/`039`; the one reset issued *before* any
-  timeout did recover the controller, which then failed again 132 s later, `EX-004`).
-- **Not established:** the mechanism — *how* traffic on that endpoint wedges the
-  device. The fallback was introduced by **`517b693351a2`** (Trent Piepho, 2020-12-09,
-  *"Always fallback to alt 1 for WBS"*, in v5.12 and not v5.11), whose own message assumes
-  that adapters without alt 6 work on alt 1 (*"I have been unable to find any [adapters that
-  support alt 6]"*). This part has alts 1–5 and no 6, so the fallback *applies* to it;
-  whether it is *compatible* with it is the open question — a device using alt 1 does not
-  falsify the author's observation. The clean control window is **v5.8–v5.11** — not "≤ v5.11": below v5.8
-  alt 1 is reachable again by a different route. No kernel in that window has been run.
-  Table and provenance in [`docs/missing-quirks-entry.md`](docs/missing-quirks-entry.md).
-- **No kernel patch exists yet.** Two **BlueZ** patches do (below). The full current state,
-  including what has been **retracted**, is [`BRIEF.md`](BRIEF.md) §1–§6; the section
-  above is a dated copy of its §1 and is checked on every commit for naming the newest
-  exhibit.
+**What you can get from this repository**
 
-The earlier first-order finding — this ID matches no `btusb` quirks entry, so it gets
-neither the QCA firmware setup nor a reset callback — is still true and now explains the
-*absence of recovery*, not the wedge. It is kept whole, with the one-line quirks patch the
-project no longer proposes, in [`docs/missing-quirks-entry.md`](docs/missing-quirks-entry.md).
+- **Diagnose a failure:** tools that tell a controller timeout, a `bluetoothd` crash and an
+  audio-layer problem apart — four things that look identical to a user.
+- **Inspect upstream fixes:** the accepted commits, their reasoning and the evidence behind
+  them, plus the series still under review.
+- **Investigate your own device:** reusable log analysis, incident capture and sanitisation
+  tools; hardware-specific conclusions are labelled as such.
+- **Follow the work:** [`docs/STATUS.md`](docs/STATUS.md) is the dated snapshot of every
+  issue and submission; [`HISTORY.md`](HISTORY.md) is how the beliefs changed.
 
-## For maintainers
+## Accepted upstream contributions
 
-Two `bluetoothd` NULL dereferences, found because the record separates four failure
-modes that look identical to a user (`EX-032`): [`patches/bluez/`](patches/bluez/).
-
-| patch | subject | runtime evidence |
+| component | fix | upstream commit |
 |---|---|---|
-| `0001` | `adapter: Fix crash on short start discovery reply` | guard not yet fired; its premise (Command Status `0x00` answering Start Discovery) logged five times with clients present, and the 08-14 crash itself is reconstructed from the daemon log (`EX-041`) |
-| `0002` | `a2dp: Fix crash on NULL stream in transport_cb` | **fired four times** in 19 days of ordinary use — four crashes prevented, not merely absent (`EX-041`) |
+| Linux Bluetooth (MGMT) | Pending management commands flushed at power-off were answered with a status byte read from the wrong object — a Success for a Start Discovery the adapter never ran. They now carry the status the caller set (Not Powered / Invalid Index). | [`86ef0f58bdec`](https://github.com/bluez/bluetooth-next/commit/86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc) (bluetooth-next, 2026-09-29) |
+| BlueZ | `adapter: Fix crash on short start discovery reply` — validate the reply length before the no-clients path reads it. This is the userspace side of the kernel defect above. | [`a734b06059cb`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=a734b06059cbe0d0f00442c901506ef17e960960) (2026-09-21) |
+| BlueZ | `a2dp: Fix crash on NULL stream in transport_cb` — check that the stream still exists when the asynchronous transport acceptance completes. Its guard fired four times in nineteen days of ordinary use (`EX-041`). | [`0bed9886cff3`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=0bed9886cff317d814f9b1f11c1461459f2b9a00) (2026-09-21) |
 
-**Applied in BlueZ master on 2026-09-21** by the maintainer, as sent:
-[`a734b0605`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=a734b06059cbe0d0f00442c901506ef17e960960)
-(adapter) and
-[`0bed9886c`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=0bed9886cff317d814f9b1f11c1461459f2b9a00)
-(a2dp); 267 commits past 5.87, no release tag yet. Every link (commits, list
-archive, patchwork, bot pull requests) is in the status table at the top of
-`patches/bluez/README.md`. **Sent to `linux-bluetooth@vger.kernel.org` on
-2026-09-19** as two independent mails (Message-IDs in `patches/bluez/README.md`), after
-three independent reviews. The list's
-CI bot passed every build and analysis check on both; its `TestFunctional` failure is the
-same BAP test failing on twelve unrelated patches that week, and its one actionable note
-was hard tabs in the quoted code of the commit messages — cleared by a message-only **v2,
-sent 2026-09-21** (`patches/bluez/README.md` §Sent).
-Both defects confirmed present in BlueZ master `c73fa2f9a`; both written to BlueZ's own
-rules (no `Signed-off-by`, 50/72, `checkpatch` clean under BlueZ's `.checkpatch.conf`);
-`git am` clean alone, together, in either order — re-run it with
-[`patches/bluez/git-am-check.sh`](patches/bluez/git-am-check.sh). The crash sites were
-resolved **from the stripped distro binary**, with the falsifier stated before a retained
-core was read and then matched byte for byte:
-[`reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md`](reviews/2026-08-23T2340Z-ex032-crash-sites-resolved.md).
-Neither patch touches the controller fault.
+The three changes are in code every Linux Bluetooth adapter runs; nothing in them is
+conditional on this controller's USB ID. "Accepted" means in the subsystem maintainer's
+tree; inclusion in a release, stable backports and distribution packages are later
+milestones, tracked in [`docs/STATUS.md`](docs/STATUS.md). Submission history and every
+link (lore, patchwork, the list's CI bot) are in [`patches/bluez/README.md`](patches/bluez/README.md).
 
-**The controller fault, if you want to reproduce it:** put a transparent SCO link on
-alternate setting 1 (any mSBC headset does it — `Looking for Alt no :6` then `:3` in the
-`btusb` debug output), let it stream, then issue an HCI command — in the recorded cases
-it was `Disconnect`, and once `Write Scan Enable` (`EX-051`); whether *every* command does
-it is untested. The command gets no
-response and `HCI_CMD_TIMEOUT` follows (`EX-043`); whether the command wedged the
-controller or found it already wedged is not established. Environment below. What is missing is the mechanism, and a kernel-side
-report goes out only with a patch ready to follow it.
+## The QCA9377 result
 
-## The evidence
+**The controller hang was the missing `btusb` device-table entry.** Without it `13d3:3503`
+is bound as a generic adapter and runs on its ROM firmware; on that firmware the first HCI
+command after a transparent (mSBC) SCO stream started got no answer, in all twelve recorded
+instances, and only a power-off recovered the controller. With the entry the driver loads
+the QCA firmware (`rampatch` + NVM, both in linux-firmware), and on this machine the hang
+did not occur in the recorded trials:
 
-Three parallel streams, deliberately not merged:
+| build | what it tested | result | record |
+|---|---|---|---|
+| E1 — QCA setup only | the firmware-load half of the entry, no reset callback | 58 SCO links, three boots, two headset models, every hang-up answered, 0 command timeouts | `EX-055`, `EX-056`, `EX-058` |
+| E3 — the exact upstream entry | `BTUSB_QCA_ROME \| BTUSB_WIDEBAND_SPEECH`, built for `7.0.0-34` | 16 links, two headsets — including the one that wedged the stock driver in `EX-053` — 0 timeouts, 0 `0x2005` errors | `EX-057` |
 
-| stream | question it answers | where it lives |
-|---|---|---|
-| **1. Evidence** | What actually happens, in terms a stranger can re-derive? | [`evidence/exhibits/`](evidence/exhibits/) — 43 numbered exhibits, each carrying its extraction command, verbatim output and exit status |
-| **2. Workarounds** | Is there a cheap recipe a user can apply today? | [`docs/install.md`](docs/install.md) (a watchdog and a power-policy change — **experiments, and on this hardware questionable ones**), and the trial series in `evidence/trials/` |
-| **3. The real fix** | What patch belongs upstream? | [`patches/bluez/`](patches/bluez/), [`docs/bug-report.md`](docs/bug-report.md), [`docs/fix-proposal.md`](docs/fix-proposal.md) |
-
-The signature, per instance (`BRIEF.md` §2 carries the full table):
-
-| exhibit | date | kernel | power config | `len 27 mtu 9` buffers (each sent as 3×9-byte packets) | first command after link-up | setup → fault |
-|---|---|---|---|---|---|---|
-| `EX-033` | 08-22 | `-29` | modified | 835 | 36 ms | 2.076 s |
-| `EX-038` | 09-13 | `-31` | modified | 682 | 35 ms | 2.191 s |
-| `EX-042` | 09-16 | `-31` | modified | 1595 | ~90 ms | 2.147 s |
-| **`EX-043`** | **09-17** | `-31` | **original** | 910 | **9,650 ms** | **11.874 s** |
-| **`EX-045`** | **09-22** | `-31` | **original** | 735 | (`0x0406`) | 2.018 s cmd→timeout |
-| **`EX-047`** | **09-24** | `-31`¹ | **original** | 717 | (`0x0406`) | 2.053 s cmd→timeout |
-| **`EX-051`** | **09-25** | `-31` | **original** | 1857² | (`0x0c1a`) | 2.020 s cmd→timeout |
-| **`EX-052`** | **09-25** | **`-34`** | **original** | 3605² | (`0x0406`) | 2.051 s cmd→timeout |
-| **`EX-053`** | **09-26** | `-34` | **original** | 2432² | **7,331 ms** (`0x0406`) | **9.421 s** |
-
-¹ self-built `bluetooth.ko` loaded from `updates/`; the fault is unchanged.
-² counted in the 12 s before the fault only.
-| *survival* | 09-01 | `-30` | modified | 8 | — | *lived* |
-
-The interval is not a constant: it is *time to the first command* plus the 2 s command
-timeout, which is why six fast teardowns looked like "2.15 s" until `EX-043`.
+The entry is upstream commit `dc16388d45ec` ("Bluetooth: btusb: Add IMC Networks QCA9377
+to quirks table"), **authored by Tibor Harcsa** for a BLE scanning fault, in mainline since
+v7.3-rc1 and in no stable line. This project's contribution is the diagnosis, the isolation
+of the hang to the ROM firmware, the validation of the entry against it, and the stable
+backport request: the commit cherry-picks onto the tip of every live stable line and
+`btusb` builds with it on each (`EX-059`); the request was sent on 2026-10-02 and its
+outcome is pending ([`docs/STATUS.md`](docs/STATUS.md)). What the ROM firmware does wrong
+internally is not established and is not claimed. The full argument, with the September
+text that first read the entry as a recovery issue rather than the cause, is
+[`docs/missing-quirks-entry.md`](docs/missing-quirks-entry.md); the twelve-instance
+signature table is `BRIEF.md` §2.
 
 ## Is this your problem?
 
@@ -155,38 +88,51 @@ controller is in, which is exactly what a hang you mean to observe must not rece
 working" here has meant: the controller wedge above; an audio-server transport release with
 the controller healthy (`EX-030`); a synchronous link that came up and worked (`EX-031`);
 and `bluetoothd` crashing, leaving the adapter powered and never scanning again (`EX-032`
-— the two patches). `tools/bt-crash` tells the last apart from the rest in one command;
-`tools/bt-status` gives the verdict on the first.
+— the two BlueZ patches). `tools/bt-crash` tells the last apart from the rest in one
+command; `tools/bt-status` gives the verdict on the first.
 
 **If your controller is different**, most of this transfers. `bt-diagnose`, `bt-state`,
 `bt-boots`, `bt-crash` and `sanitize-logs.sh` work on any USB controller; every tool
 takes `BT_VID`/`BT_PID`; `bt-incident` collects a hang that already happened into a
 sanitised, publishable session; `bt-exhibit` captures a claim with its command and output
 in one pass; the journal seam (`tools/lib/journal.sh`) lets every analysis run over a
-fixture instead of a live machine. What is specific to this part: the alt-1 reading in
+fixture instead of a live machine. Specific to this part: the alternate-setting reading in
 `bt-usbstate` and `bt-fault-window`, the `13d3:3503` defaults, and the exhibits.
 
-**Why this class of bug goes unreported**, and why yours may not be in any tracker: it is
-rare per user; the only recovery (a power-off) destroys the volatile evidence and, without
-persistent logging set up in advance, the logs; default logging cannot name the command in
-flight; and the instrumentation costs more than the bug seems to justify. Selection, not
-rarity — `docs/issues.md` §"Why this class of bug goes unreported".
+**If you have a QCA9377 and the hang:** a kernel carrying `dc16388d45ec` is the fix. Until
+your distribution ships one, the entry is a two-line addition to `drivers/bluetooth/btusb.c`
+(the exact text is in the stable request, `docs/STATUS.md`). Check which `btusb` you run
+with `tools/bt-verify-kernel-mechanism`, not the kernel version — backports move.
+
+## Current direction — 2026-10-03
+
+- **Stable backport of `dc16388d45ec`:** requested for 7.2.y, 6.18.y, 6.12.y, 6.6.y and
+  6.1.y; waiting for the stable team.
+- **Delivery of the three accepted fixes** into kernel and BlueZ releases and into Ubuntu:
+  tracked, nothing owed yet.
+- **A mesh advertising series for the kernel** (three patches, found while reading why the
+  list's `mesh-tester` fails on every submission since June) is written, tested in qemu and
+  under its second outside review; it is not submitted.
+- **Desktop audio issues** seen while testing the fixed driver (codec switches, reconnect
+  policy, a GNOME codec row) are recorded in [`docs/issues.md`](docs/issues.md) as leads
+  with evidence; upstream fixes are checked before anything new is written.
+
+The dated detail, one row per issue and submission, is [`docs/STATUS.md`](docs/STATUS.md).
 
 ## Environment
 
 ```
 Distribution : Ubuntu 24.04 LTS (noble)
-Kernels      : 7.0.0-29, -30, -31-generic (the signature); 6.17.0-29/35/40, 7.0.0-28 (earlier phenotype)
+Kernels      : 7.0.0-29, -30, -31, -34-generic (the twelve instances); 6.17.0-29/35/40, 7.0.0-28 (earlier phenotype)
 BlueZ        : 5.72 (5.72-0ubuntu5.5; the patched daemon is a rebuild of that source)
 Platform     : AMD Renoir/Cezanne laptop; controller on xhci_hcd, full-speed
 BT device    : usb 13d3:3503 — HCI manufacturer 0x001D (Qualcomm), version 0x07 (4.2)
 Companion    : ath10k_pci qca9377 hw1.1 (one combo chip)
-Headsets     : Sennheiser MOMENTUM 4, Lenovo thinkplus GM2 pro (two vendors, one signature — EX-024)
+Headsets     : Sennheiser MOMENTUM 4, Lenovo thinkplus GM2 pro, Shure AONIC 50 (three vendors, one signature — EX-024, EX-053)
 ```
 
-Windows 11 on the same laptop shows no fault under deliberate repeated use. That is not
-"Linux is broken": Linux drives this controller into a state that Windows does not, and
-which side is at fault follows from the mechanism, not the other way round.
+Windows 11 on the same laptop shows no fault under deliberate repeated use; Windows loads
+the controller's firmware, which is what the missing entry withheld on Linux.
 
 ## Method, in five rules
 
@@ -201,7 +147,7 @@ which side is at fault follows from the mechanism, not the other way round.
 5. **Retractions are kept, not deleted.** `BRIEF.md` §5 lists every claim this project
    asserted and later refuted, so nobody re-asserts one.
 
-The current formulation of the fault as the issue register carries it (`docs/issues.md`,
+The formulation of the controller fault as the issue register carries it (`docs/issues.md`,
 where it is filed as `BT-1`, the project's own search handle):
 
 <!-- BT1-CURRENT-BEGIN -->
@@ -213,25 +159,25 @@ where it is filed as `BT-1`, the project's own search handle):
 
 ## Repository map
 
-<!-- One tree, one entry per path. An earlier version of this block was two
-     generations merged: tests/ appeared twice and tools/lib/, exhibits/ and
-     trials/ dangled below the closing entries (review 2026-08-15T1752Z §1.1). -->
 ```
-BRIEF.md              the concentrated current state, under 500 lines, what is true / retracted / open, and the rules paid for
-HISTORY.md            chronological development record, wrong turns included (36 phases)
+README.md             this page: purpose, results, routes
+docs/STATUS.md        the dated snapshot: every issue and submission, its state and next step
+BRIEF.md              the maintainers' hand-off: machine state, constraints, rules paid for, retractions
+HISTORY.md            chronological development record, wrong turns included (37 phases and a chapter)
 bin/                  watchdog, capture daemons, metrics collector
 systemd/ etc/         unit files; modprobe + udev + journald configuration
 tools/                diagnostics, incident capture, log sanitiser
   lib/                shared awk/sh programs (timestamps, matching, reports, the journal seam)
+scripts/              the helpers behind the exhibits (ledgers, build matrix, mail checks, proofs)
 tests/                run-tests — invariants, each anchored to a real shipped defect
 devtools/             contributor tooling (check, scan, validate, coverage, ci, commit+verify)
 reviews/              assessments of the repository itself; README.md there is the live action register
 comms/  lessons/      messages between the maintainers; what the project cost to learn
-patches/bluez/        the two BlueZ patches, their verification script and mail notes
-docs/                 issues.md (issue register) · bug-report.md · fix-proposal.md · install.md ·
-                      missing-quirks-entry.md · tooling-index.md · investigation-plan.md · …
+patches/bluez/        the two applied BlueZ patches, their verification script and mail notes
+docs/                 issues.md (issue register) · missing-quirks-entry.md · install.md ·
+                      tooling-index.md · the historical plans and drafts, each labelled
 evidence/
-  exhibits/           numbered, self-verifying evidence exhibits (start here)
+  exhibits/           numbered, self-verifying evidence exhibits — README.md there is the index
   sessions/           one directory per reproduction session, sanitised
   trials/             numbered trials and results.tsv (the denominators)
   baseline/ diagnosis/  the failing boot before any mitigation; the device-table transcripts
@@ -239,18 +185,19 @@ evidence/
 
 **Branches.** `main` is the record. `review/<UTC timestamp>` holds one assessment
 (report first, then the reaction on `review/<timestamp>-fixes`), per the convention in
-[`reviews/README.md`](reviews/README.md). `tests/unit-testing-introduction` is the test-suite
-maintainer's line. `evidence/*`, `verify/*` and `backup/*` are dated snapshots kept
-because nothing here is deleted. CI (`.github/workflows/checks.yml`) runs the suite, the
+[`reviews/README.md`](reviews/README.md). Work that must not be public before it is sent
+— kernel patches and their reviews — lives on a private remote until submission and is
+recorded here only by its facts. CI (`.github/workflows/checks.yml`) runs the suite, the
 coverage floors and the publish scan on every push; `devtools/ci` reads its verdict.
 
 ## Install, tools, tests
 
-- **Install:** [`docs/install.md`](docs/install.md). On a machine you are *measuring*, use
-  `sudo ./install.sh --tools-only`; `--apply` arms a watchdog whose USB reset has three
-  controlled demonstrations of driving an already-wedged controller off the USB bus until
-  power is removed (`EX-023`, `EX-026`) — not permanent damage, but the one state a
-  power-off is then the only way out of.
+- **Install:** [`docs/install.md`](docs/install.md). Passive diagnosis needs nothing
+  installed. On a machine you are *measuring*, use `sudo ./install.sh --tools-only`.
+  `--apply` arms an experimental watchdog whose USB reset has three controlled
+  demonstrations of driving an already-wedged controller off the USB bus until power is
+  removed (`EX-023`, `EX-026`) — not permanent damage, but the one state a power-off is
+  then the only way out of.
 - **Tools:** [`docs/tooling-index.md`](docs/tooling-index.md) — which tool answers which
   question. The standalone ones (`bt-diagnose`, `bt-state`, `bt-boots`, `bt-boot-list`,
   `sanitize-logs.sh`) need no installation.
@@ -276,16 +223,19 @@ coverage floors and the publish scan on every push; `devtools/ci` reads its verd
 
 Most useful, in this order:
 
-- a run on a kernel in the **v5.8–v5.11 window** with an mSBC headset — the untested
-  prediction is that it logs `Device does not support ALT setting 6` and never takes the
-  alternate-setting-1 path (below v5.8 alt 1 is reachable by another route, so "older" is
-  not "cleaner");
+- **a QCA9377 (`13d3:3503`) on a kernel that carries `dc16388d45ec`** with an mSBC headset
+  — `./tools/bt-diagnose`, then `scripts/sco-ledger.sh 0` after a few hands-free calls;
+  the prediction is every hang-up answered and no command timeout;
 - the same signature on **another controller** that matches no quirks entry (`bt-diagnose`,
   then `bt-fault-window` around the first timeout);
-- a `btmon` capture of a transparent SCO link that **survived** a command on this part.
+- a run on a kernel in the **v5.8–v5.11 window** on the stock entry-less driver — the
+  untested prediction is that it logs `Device does not support ALT setting 6` and never
+  takes the alternate-setting-1 path (below v5.8 that path is reachable by another route).
 
 Messages between maintainers go in [`comms/`](comms/); every number carries the command
-that produced it.
+that produced it. Reports of evidence from other machines are welcome as issues on this
+repository: a sanitised `bt-incident` session, or the output of `bt-diagnose` and
+`bt-boots`, says more than a description.
 
 ## License
 

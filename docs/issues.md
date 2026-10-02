@@ -11,7 +11,36 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 
 ---
 
-## Current state — 2026-09-18 (front-door review `FD-22`)
+## Current state — 2026-10-03
+
+The lifecycle of every issue, with its component, evidence maturity, state and next action,
+is one table in [`STATUS.md`](STATUS.md) — the only page that says what is *current*. This
+register keeps each issue's evidence, reasoning and falsifiers. What changed since the
+2026-09-18 state below:
+
+- **BT-1 is explained and remedied.** The missing `btusb` device-table entry left the
+  controller on its ROM firmware; on that firmware the first HCI command after a transparent
+  SCO stream died in all twelve instances. With the QCA firmware the entry loads, 58 + 16 SCO
+  links on three headset models closed with every hang-up answered and 0 timeouts
+  (`EX-055`–`EX-058`). The entry is upstream (`dc16388d45ec`, Tibor Harcsa, v7.3-rc1); a
+  stable backport request was sent 2026-10-02. What the ROM firmware does wrong is not claimed.
+- **BT-3 is therefore the cause of BT-1, not only its missing recovery** — the opposite of
+  the 09-18 reading below, which is kept as written.
+- **BT-7 is fixed upstream** (two BlueZ patches applied 2026-09-21).
+- **BT-8 (new)** — the kernel-side source of the reply that crashed `bluetoothd` in BT-7's
+  first site: pending management commands flushed at power-off were answered with a status
+  byte read from the wrong object. Fixed upstream (`86ef0f58bdec`, 2026-09-29).
+- **M-1, M-2 (new, kernel mesh advertising)** — found while reading why the list's CI fails
+  `mesh-tester` on every patch since June: the mesh instance keeps advertising after its
+  count, the done path completes the wrong request, and a scheduler window starts a packet
+  twice (M-1, three patches under outside review); a `u16 duration` overflow for timeouts
+  above 65 s (M-2, note only). Both are developed on a private branch until sent; this
+  register records the facts.
+- **U1–U9** — the userspace audio items are listed in their own section below, each tagged
+  [log] / [operator] / [inference]; `STATUS.md` carries their lifecycle states (U5 withdrawn,
+  U6 fixed upstream in GNOME 47, U7 and U9 confirmed, the rest observed).
+
+## Current state — 2026-09-18 (front-door review `FD-22`) — superseded above, kept as written
 
 This register was written while the fault was localised in time and not in mechanism, and
 its entries below still read that way. Since `EX-033` (08-22) the wedge has been located in
@@ -533,7 +562,47 @@ Neither patch touches the controller fault; the wedge has occurred with both ins
 
 ---
 
-## U1–U4 — userspace audio problems seen during the E1 tests (2026-09-26)
+## BT-8 — Pending management commands flushed at power-off are answered with the wrong status
+
+**Status 2026-10-03: fixed upstream.** `Bluetooth: MGMT: Fix status of pending commands
+flushed on power off` is
+[`86ef0f58bdec`](https://github.com/bluez/bluetooth-next/commit/86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc)
+on `bluetooth-next` (applied 2026-09-29 as sent; `Cc: stable`); not yet in a mainline release.
+
+**What it is.** `cmd_complete_rsp()` falls through to `cmd_status_rsp(cmd, data)` for a
+pending command without a completion callback, and that reads `data` as a `u8 *` — since
+`f53e1c9c726d` the callers pass a `struct cmd_lookup`, so the status sent is the first byte
+of the lookup's socket pointer, not the status the caller set. In `mgmt_index_removed()` and
+`__mgmt_power_off()` that byte is `0x00`: Success, for a command the adapter never ran.
+
+**How it was found.** This is the kernel-side source of the reply in BT-7's first site: a
+Start Discovery pending when the adapter powered off was answered with Command Status
+`0x00` and no parameters, and `bluetoothd` 5.72 crashed on the zero-length success
+(`EX-032`, `EX-041`). BlueZ patch `0001` guards the daemon; this fix makes the kernel say
+Not Powered. Reproduced and tested with a virtual controller (`hci_vhci`): power off held in
+`Write Scan Enable` while a Start Discovery is submitted — status `0x00` before, `0x0f`
+(Not Powered) after. Developed and reviewed on a private branch until sent; `main` records
+the patch, its acceptance and these facts.
+
+**Reportable:** ✅ sent 2026-09-24 and applied. Not specific to this controller.
+
+---
+
+## U1–U9 — userspace audio problems seen during the E1/E3 tests (2026-09-26 →)
+
+| id | one line | state (`STATUS.md`) |
+|---|---|---|
+| U1 | first codec/profile line unselectable in handsfree mode (GNOME Settings) | observed |
+| U2 | volume display/route oddities after a profile switch | observed |
+| U3 | profile priority comparison (WirePlumber, design) | observed, not a defect |
+| U4 | GNOME codec row shows a profile/route mismatch | observed, lead weakened |
+| U5 | handsfree picks CVSD over mSBC | withdrawn by the operator |
+| U6 | input meter reads the headset monitor | confirmed; fixed upstream in GNOME 47 |
+| U7 | PipeWire skips the SCO setup after a codec switch under an active link | confirmed on one device |
+| U8 | earbuds silent in mSBC; `corrupted SCO packet` | observed |
+| U9 | no reconnect after rfkill off/on (BlueZ policy) | confirmed, by design |
+
+The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
 **Status:** leads, not findings. Each item mixes what was **measured** with what the operator
 **reported** from the UI or by ear; every statement below carries its source:
