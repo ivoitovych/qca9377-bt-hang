@@ -20,6 +20,18 @@ theirs and points at the long form (`lessons/`, `reviews/`) rather than reproduc
 **Last updated: 2026-09-29 · newest exhibit on `main`: EX-056; the held branch has EX-049
 and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted within hours (`R2-13`).
 
+> **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
+> `86ef0f58bdec` (private `diag/mesh-tester-ci`, `patches/mesh-tester/series/`): 1/2 tears the mesh
+> instance down through `hci_remove_advertising_sync()` before the `list_empty()` check (legacy:
+> instance dropped, timer cancelled; **extended: that set alone disabled and removed**) and
+> `mgmt_advertising_removed()` skips the internal instance; 2/2 completes the `mesh_tx` that owns
+> the instance. BlueZ tester patch adds BREDRLE50 variants, coexistence, queue/handle cases.
+> **mesh-tester 10/23 → 23/23 (KVM), 5/18 → 18/18 (TCG+valgrind), cancel cases 0/50 → 50/50,
+> mgmt-tester 501/501; checkpatch/W=1/sparse clean; applies to bluetooth-next and dry-applies to
+> 6.1.y–7.2.y.** Reviewed here: both patches read correct. Open: legacy coexistence never airs the
+> mesh packet (pre-existing), the `u16 duration` overflow is a separate note. **Next: outside review
+> of the series, then the operator's word.**
+>
 > **MESH PATCH: NOT READY — outside review 2026-10-02 found a real hole, verified here:** the
 > patch removes the host-side instance before the extended-advertising removal sequence, so on
 > an ext-adv controller no `LE Remove Advertising Set` is sent and, with another advertiser
