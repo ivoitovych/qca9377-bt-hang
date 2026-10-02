@@ -1,5 +1,7 @@
 # Incident: poweroff-recovers-from-stage2-20260816
 
+> Template not completed at the time; the interpretation of this session lives in the exhibit(s) that cite it (grep the session directory name in evidence/exhibits/).
+
 **Collected:** 2026-08-16T19:02:11+02:00 (window: 2026-08-16 18:56:00)
 
 ## What was being done

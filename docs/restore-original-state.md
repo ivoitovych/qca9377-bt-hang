@@ -1,5 +1,11 @@
 # Restoring the machine to its pre-investigation state
 
+> **Scope (2026-10-03).** This document covers uninstalling the diagnostic and mitigation
+> tools installed by `install.sh`. It does not cover the later experiments recorded in
+> `BRIEF.md` and `HISTORY.md` — a self-built `btusb` module under
+> `/lib/modules/<kernel>/updates/`, removed with `scripts/module-updates.sh`, and a patched
+> `bluetoothd` drop-in — each of which has its own undo recorded where it was installed.
+
 A complete, verifiable path back to how this system looked before any of this work
 started — broader than `uninstall.sh`, which only reverses what `install.sh` did.
 
@@ -24,7 +30,7 @@ Captured before the first change was made, on 2026-08-10 at 02:54 CEST:
 | `/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules` | **did not exist** |
 | `tlp` | `inactive`, no `/etc/tlp.conf` |
 | journald | persistent (`/var/log/journal` present) |
-| Kernel | `7.0.0-28-generic` (unchanged throughout) |
+| Kernel | `7.0.0-28-generic` (unchanged throughout — as of the first install, 2026-08-10) |
 
 **No pre-existing file was ever modified.** Verified two ways:
 
@@ -163,3 +169,8 @@ Checks each item above and reports what is still in place. Run it after
 - **The hardware state.** The controller was already hard-hung when the investigation
   began. A full power-off recovers it. (Whether a warm reboot also does is untested — see EX-017.)
   That predates and is independent of everything documented here.
+  *Note 2026-10-03:* a warm reboot did recover the controller once
+  ([`evidence/exhibits/017-warm-reboot-recovered-controller.md`](../evidence/exhibits/017-warm-reboot-recovered-controller.md));
+  from the later state only a power-off did
+  ([`027`](../evidence/exhibits/027-reboot-from-stage2-fails-enumeration.md),
+  [`028`](../evidence/exhibits/028-poweroff-recovers-what-reboot-could-not.md)).

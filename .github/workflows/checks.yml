@@ -5,9 +5,11 @@
 # six shipped decisions, and a hand-written path list missed install.sh twice.
 # Both were caught by review, later, after the wrong numbers had been quoted.
 #
-# The suite is ~2 s and hermetic — it sandboxes bt-trial, stubs bt-incident and
-# asserts that evidence/sessions/ is unchanged afterwards — so there is no
-# reason for it not to run on every push.
+# The suite is hermetic with respect to evidence — it sandboxes bt-trial, stubs
+# bt-incident and asserts that evidence/sessions/ is unchanged afterwards. It
+# takes about 2 s on the runner and about 60 s on the investigation machine,
+# where it reaches real host tools (journalctl, systemctl, bluetoothctl) — so
+# there is no reason for it not to run on every push.
 
 name: checks
 

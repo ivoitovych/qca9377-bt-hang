@@ -18,9 +18,11 @@ Rules:
 - If a script is run more than twice it is promoted to `tools/` or `devtools/`
   with a test; this directory is where that promotion starts, not a substitute
   for it.
-- Nothing here is part of the deliverable. `repo-scan` covers it like any other
-  tracked text, so no addresses, names or journal excerpts in the scripts
-  themselves.
+- The scripts are not installed on a user's machine, but several published
+  exhibits are produced by them (`sco-ledger.sh`, `sco-ledger-boots.sh`,
+  `boot-bt-summary.sh`, `build-btusb-stable-matrix.sh`), and they are tracked
+  and tested for that reason. `repo-scan` covers them like any other tracked
+  text, so no addresses, names or journal excerpts in the scripts themselves.
 
 The permission rule that lets these run without a prompt is
 `Bash(/root/exp/qca9377-bt-hang/scripts/*)` beside the existing `tools/*` and

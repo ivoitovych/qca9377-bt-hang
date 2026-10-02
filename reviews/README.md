@@ -10,6 +10,10 @@ output. It belongs here rather than in `docs/` because it is a dated snapshot of
 known on one evening, not living documentation; `docs/` is where the living account is
 kept. Everything else here diagnoses only us.
 
+Since then (noted 2026-10-03) the BlueZ and kernel workflow surveys
+(`2026-09-21T0900Z-bluez-ci-workflow-as-practised.md`,
+`2026-09-22T1700Z-kernel-bluetooth-workflow-as-practised.md`) also read upstream practice.
+
 ## The convention
 
 **One file per assessment, named `<UTC timestamp>-<topic>.md`, never edited after it is

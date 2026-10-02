@@ -15,6 +15,15 @@
 > experiment must separate *QCA firmware initialisation* from *automatic reset on timeout*
 > (deep review 2026-09-20, "Build B"): a kernel carrying `dc16388d45ec` changes both at once,
 > and this project has never run one. `BRIEF.md` §9 carries that experiment.
+>
+> **Update 2026-10-03:** it has since run both. The QCA setup path alone (E1) ran 58 SCO
+> links over three boots with 0 command timeouts
+> ([`EX-055`](../evidence/exhibits/055-e1-qca-setup-loads-rampatch-over-rom-firmware.md),
+> [`EX-056`](../evidence/exhibits/056-e1-seven-wideband-disconnects-answered.md),
+> [`EX-058`](../evidence/exhibits/058-e1-setup-only-58-links-three-boots.md)), and the
+> exact upstream entry (E3) ran 16 links on two headsets with 0 timeouts
+> ([`EX-057`](../evidence/exhibits/057-e3-upstream-entry-16-links-two-headsets.md)).
+> The entry's author is Tibor Harcsa.
 
 **Companion document:** `docs/bug-report.md`
 **File:** `drivers/bluetooth/btusb.c`

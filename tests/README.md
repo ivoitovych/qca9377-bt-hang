@@ -1,7 +1,8 @@
 # tests
 
 ```bash
-tests/run-tests                       # every invariant, ~2 s
+tests/run-tests                       # every invariant; about 60 s on the investigation machine,
+                                      # about 2 s on a journal-less container (measured 2026-09-24)
 tests/run-tests --section "stage2"    # one block, without a sed range
 devtools/check                        # what to run before committing
 devtools/coverage                     # how much of the shell these actually run

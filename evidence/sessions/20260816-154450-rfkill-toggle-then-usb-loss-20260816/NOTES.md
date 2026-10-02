@@ -1,5 +1,7 @@
 # Incident: rfkill-toggle-then-usb-loss-20260816
 
+> Template not completed at the time; the interpretation of this session lives in the exhibit(s) that cite it (grep the session directory name in evidence/exhibits/).
+
 **Collected:** 2026-08-16T15:44:53+02:00 (window: 2026-08-16 15:36:00)
 
 ## What was being done

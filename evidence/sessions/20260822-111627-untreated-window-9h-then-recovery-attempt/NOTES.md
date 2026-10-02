@@ -1,5 +1,7 @@
 # Incident: untreated-window-9h-then-recovery-attempt
 
+> Template not completed at the time; the interpretation of this session lives in the exhibit(s) that cite it (grep the session directory name in evidence/exhibits/).
+
 **Collected:** 2026-08-22T11:16:33+02:00 (window: 2026-08-22 01:28:00)
 
 ## What was being done

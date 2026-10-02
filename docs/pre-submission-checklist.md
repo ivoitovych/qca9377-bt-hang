@@ -1,5 +1,11 @@
 # Pre-submission checklist
 
+> **Note (2026-10-03).** This checklist was written in August for a kernel-side bug report
+> that was never sent. Three submissions have since been accepted upstream through the
+> per-component workflows recorded in [`patches/bluez/README.md`](../patches/bluez/README.md)
+> and [`reviews/2026-09-22T1700Z-kernel-bluetooth-workflow-as-practised.md`](../reviews/2026-09-22T1700Z-kernel-bluetooth-workflow-as-practised.md).
+> The gates below are the record of that time, not a universal present-day requirement.
+
 Everything that must be settled **before** anything from this repository is sent to
 `linux-bluetooth@vger.kernel.org`. Items are recorded here rather than in the document
 they came from, because each was discovered in a different place and would otherwise be
