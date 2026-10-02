@@ -29,7 +29,7 @@ lesson:
 1. **The rule**, stated so it can be applied to something else.
 2. **The instance that taught it** — what actually went wrong, with the command
    or the commit. A rule with no instance is an opinion someone had.
-3. **What it cost**, when the cost is known. Hours, a destroyed controller, a
+3. **What it cost**, when the cost is known. Hours, a controller wedged until power-off, a
    withdrawn claim, a wrong number in a public report.
 
 ## What does not

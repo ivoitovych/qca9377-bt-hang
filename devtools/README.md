@@ -80,7 +80,8 @@ is the only thing that proves a push actually landed.
 
 ## Notes
 
-- Read-only except `repo-save`, which is the only one that writes or pushes.
+- Read-only, with two exceptions: `repo-save` commits and pushes, and
+  `assert-test-catches` temporarily mutates a tracked file and restores it.
 - Non-zero exit on failure, so they compose.
 - They take the target directory as an argument — no hardcoded paths.
 - **Not installed** by `install.sh`. They are useless to end users and would only

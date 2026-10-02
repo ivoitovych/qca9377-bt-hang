@@ -1,6 +1,6 @@
 # The firmware hypothesis
 
-**Status:** untested, but it reframes the whole investigation
+**Status:** tested since 2026-09-26 (status line revised 2026-10-03) — the QCA setup path ran 58 SCO links over three boots with 0 command timeouts ([`EX-055`](../evidence/exhibits/055-e1-qca-setup-loads-rampatch-over-rom-firmware.md), [`EX-056`](../evidence/exhibits/056-e1-seven-wideband-disconnects-answered.md), [`EX-058`](../evidence/exhibits/058-e1-setup-only-58-links-three-boots.md)), and the exact upstream entry ran 16 links on two headsets with 0 timeouts ([`EX-057`](../evidence/exhibits/057-e3-upstream-entry-16-links-two-headsets.md)); the text below is kept as written in August
 **Raised:** 2026-08-11, after the operator pointed out the hardware is flawless under Windows
 
 ---

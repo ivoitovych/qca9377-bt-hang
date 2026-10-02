@@ -5,6 +5,8 @@ knowledge (what is true, what is **retracted**, what is open, and the rules that
 paid for with their reasons) in under 500 lines.
 This file is the layer below it: once you know *what* you are asking, this says
 *which tool* asks it.
+A first-time reader should start with [`README.md`](../README.md) and
+[`docs/STATUS.md`](STATUS.md); `BRIEF.md` is the maintainers' hand-off.
 
 
 **Purpose.** Every routine question in this project already has a tool. Hand-typing
@@ -17,7 +19,7 @@ already does it. If none exists and the question recurs, write one.
 
 ---
 
-## The three commands that answer almost everything
+## The four commands that answer almost everything
 
 | question | command |
 |---|---|

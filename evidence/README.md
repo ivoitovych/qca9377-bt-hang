@@ -12,6 +12,8 @@ evidence/
   baseline/    the failing boot, before any mitigation existed
   diagnosis/   reproducible command transcripts proving the root cause
   sessions/    one directory per reproduction session
+  exhibits/    numbered exhibits; the index is exhibits/README.md
+  trials/      numbered trials and results.tsv
 ```
 
 ---
@@ -44,6 +46,8 @@ machine, establishing in order:
 3. the reset handler and QCA firmware paths **are** compiled into the shipped `btusb.ko`
 4. the ID is **absent** from that binary's tables — byte-scan validated against a known ID
 5. it is absent from upstream `btusb.c` too, which carries 78 other `0x13d3` entries
+   (as of 2026-08-10; added upstream on 2026-08-07 by `dc16388d45ec`, which reached
+   mainline in v7.3-rc1 — see `docs/missing-quirks-entry.md`)
 6. across 34 boots and four kernel versions: 287 command timeouts, **zero** reset attempts
 
 Points 3 and 4 together are the argument: the code exists, it simply never runs for

@@ -12,11 +12,23 @@
 
 ## Install
 
+**Start with the passive diagnosis** — it reads the journal and installs nothing — then
+deploy the tools without arming anything:
+
 ```bash
 git clone https://github.com/ivoitovych/qca9377-bt-hang   # or your fork
 cd qca9377-bt-hang
+./tools/bt-diagnose          # passive diagnosis — reads the journal, installs nothing
+sudo ./install.sh --tools-only   # deploy the files, arm nothing (see below)
+```
+
+**Optional, experimental — arms the watchdog.** Read the warning under `--tools-only`
+first: the USB reset the watchdog performs has three controlled demonstrations of driving
+an already-wedged controller off the USB bus until power is removed (`EX-023`, `EX-026`).
+
+```bash
 sudo ./install.sh            # dry run — shows exactly what it would do
-sudo ./install.sh --apply    # install and arm
+sudo ./install.sh --apply    # install and arm (optional, experimental)
 ```
 
 ### `--tools-only` — deploy the files, arm nothing
@@ -59,7 +71,7 @@ sudo ./uninstall.sh --apply --purge-metrics  # also delete collected metrics
 ./tools/verify-restored.sh                   # confirm nothing is left behind
 ```
 
-[`docs/restore-original-state.md`](docs/restore-original-state.md) documents the full
+[`docs/restore-original-state.md`](restore-original-state.md) documents the full
 path back to the pre-install state, including the few things `uninstall.sh` deliberately
 does not touch (collected metrics, and settings changed outside this repo).
 
@@ -209,6 +221,6 @@ the wedge would otherwise have occurred. It is off in experiment mode for that r
 > ad-hoc — arbitrary connect/disconnect/mode-change activity, no fixed procedure, exact
 > actions unrecorded. Differences between incidents may reflect different (unknown)
 > actions rather than different mechanisms. See
-> [`docs/bug-report.md`](docs/bug-report.md#-methodological-caveat--read-before-weighing-the-comparisons).
+> [`docs/bug-report.md`](bug-report.md#methodological-caveat).
 
 ---
