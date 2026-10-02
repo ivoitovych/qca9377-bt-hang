@@ -5,7 +5,7 @@ power brings it back.** Qualcomm Atheros **QCA9377** (ROME), USB ID `13d3:3503`,
 Linux. An open investigation aimed at an upstream fix, run so that every claim can be
 re-derived by a stranger from the command that produced it.
 
-## Status — 2026-10-02, newest exhibit `EX-058`
+## Status — 2026-10-02, newest exhibit `EX-059`
 
 > **The cause is the missing `btusb` table entry, and the fix is upstream.** Without
 > `{ USB_DEVICE(0x13d3, 0x3503), BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH }` the controller is
@@ -16,7 +16,9 @@ re-derived by a stranger from the command that produced it.
 > three boots and two headset models with every hang-up answered, 0 timeouts** (`EX-056`,
 > `EX-058`); the exact upstream commit `dc16388d45ec` (mainline v7.3-rc1, in no stable line)
 > built for `7.0.0-34` ran **16 links on two headsets — including the one from `EX-053` — with 0
-> timeouts and 0 `0x2005` errors** (`EX-057`). A stable backport request is being prepared.
+> timeouts and 0 `0x2005` errors** (`EX-057`). The commit cherry-picks onto the tip of every live
+> stable line and btusb builds with it on each (`EX-059`). A stable backport request is being
+> prepared.
 > The paragraphs below describe the fault as it was characterised on the stock driver and are
 > kept as written.
 
