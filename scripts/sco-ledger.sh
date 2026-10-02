@@ -29,7 +29,7 @@ NAMES=$( {
 } )
 
 journalctl -k -b "$BOOT" --no-pager -o short-iso-precise \
-	--grep 'hci0: dst [0-9a-f:]+ handle|opcode 0x0428|opcode 0x043d|hci0 evt [45]$|len [0-9]+ mtu 9|reason 0x13|opcode 0x0406 status|tx timeout' |
+	--grep 'hci0: dst [0-9a-f:]+ handle|opcode 0x0428|opcode 0x043d|hci0 evt [45]$|len [0-9]+ mtu 9|reason 0x13|opcode 0x0406 status|command( 0x[0-9a-f]+)? tx timeout' |
 awk -v names="$NAMES" '
 # seconds since the start of the month: enough for a boot, and correct across midnight
 function secs(ts,   t) { t = substr(ts, 12, 15); split(t, h, ":"); return substr(ts, 9, 2) * 86400 + h[1] * 3600 + h[2] * 60 + h[3] }
@@ -61,7 +61,8 @@ BEGIN {
 	if (open && pending) close_link(sprintf("hangup-ok %d ms", (secs($1) - tcmd) * 1000))
 	next
 }
-/tx timeout/ {
+/command( 0x[0-9a-f]+)? tx timeout/ {
+	# the command form only: `link tx timeout` is ACL supervision, not BT-1
 	if (open) { if (!tcmd) tcmd = secs($1) - 2.0; op = $0; sub(/.*command /, "", op); sub(/ tx timeout.*/, "", op); close_link("TIMEOUT " op) }
 	next
 }

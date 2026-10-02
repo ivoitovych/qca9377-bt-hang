@@ -29,8 +29,11 @@ echo "files:   ${FILES[*]}"
 rc=0
 for b in "${BRANCHES[@]}"; do
 	tip=$(git -C "$REPO" log -1 --format='%h %s' "$b" 2>/dev/null) || { printf '%-22s ? no such branch\n' "$b"; rc=1; continue; }
-	if git -C "$REPO" log --oneline -F --grep="$SUBJ" "$b" | grep -q .; then
-		printf '%-22s PRESENT  (%s)\n' "$b" "$(git -C "$REPO" log -1 --format=%h -F --grep="$SUBJ" "$b")"
+	# Captured, not `| grep -q`: under pipefail that pipeline exits non-zero
+	# exactly when the subject IS found and git dies of SIGPIPE.
+	present=$(git -C "$REPO" log -1 --format=%h -F --grep="$SUBJ" "$b")
+	if [[ -n "$present" ]]; then
+		printf '%-22s PRESENT  (%s)\n' "$b" "$present"
 		continue
 	fi
 	d="$OUT/${b//\//_}"; mkdir -p "$d"
