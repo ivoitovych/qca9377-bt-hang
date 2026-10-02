@@ -32,6 +32,14 @@ and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted
 > Host kernel and adapter untouched throughout. **Not sent**: wants an outside review first, then
 > `scripts/pre-send-check.sh` on the day, then the operator's word.
 >
+> **STABLE REQUEST SENT — 2026-10-02 03:25:42 +0200**, Message-ID
+> `<20261002012542.473669-1-yaroslav.voytovych@gmail.com>`
+> (<https://lore.kernel.org/r/20261002012542.473669-1-yaroslav.voytovych@gmail.com>), SMTP `250`, on the
+> operator's word; To stable@, Cc the commit's author, both maintainers, linux-bluetooth; body = draft
+> v4c (private `diag/btusb-e1`). Port 587 timed out on this network, 465 worked (config updated).
+> **Wait for the stable team's reply; nothing owed meanwhile.** BlueZ ×2 and the MGMT patch are
+> applied; the backport request is the fourth submission.
+>
 > **STABLE REQUEST, REVISED AFTER OUTSIDE REVIEW (2026-10-02):** draft on private `diag/btusb-e1`
 > (`patches/diag/stable-request-dc16388d45ec.md`). Verified from the review: kernel.org lists
 > **7.1.y EOL and no 7.0.y; 6.18.y, 5.15.y, 5.10.y live** → trees asked: 7.2/6.18/6.12/6.6/6.1
