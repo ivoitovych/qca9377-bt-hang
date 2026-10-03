@@ -58,11 +58,13 @@ did not occur in the recorded trials:
 
 The entry is upstream commit `dc16388d45ec` ("Bluetooth: btusb: Add IMC Networks QCA9377
 to quirks table"), **authored by Tibor Harcsa** for a BLE scanning fault, in mainline since
-v7.3-rc1 and in no stable line. This project's contribution is the diagnosis, the isolation
-of the hang to the ROM firmware, the validation of the entry against it, and the stable
-backport request: the commit cherry-picks onto the tip of every live stable line and
-`btusb` builds with it on each (`EX-059`); the request was sent on 2026-10-02 and its
-outcome is pending ([`docs/STATUS.md`](docs/STATUS.md)). What the ROM firmware does wrong
+v7.3-rc1. This project's contribution is the diagnosis, the isolation of the hang to the ROM
+firmware, the validation of the entry against it, and the stable backport request: the
+commit cherry-picks onto the tip of every live stable line and `btusb` builds with it on
+each (`EX-059`); the request was sent on 2026-10-02, and the stable team **queued it for all
+seven live lines — 7.2, 6.18, 6.12, 6.6, 6.1, 5.15 and 5.10** — confirmed in the public stable
+queue on 2026-10-03 (`EX-061`). It reaches users with each line's next stable release
+([`docs/STATUS.md`](docs/STATUS.md)). What the ROM firmware does wrong
 internally is not established and is not claimed. The full argument, with the September
 text that first read the entry as a recovery issue rather than the cause, is
 [`docs/missing-quirks-entry.md`](docs/missing-quirks-entry.md); the twelve-instance
@@ -99,15 +101,16 @@ in one pass; the journal seam (`tools/lib/journal.sh`) lets every analysis run o
 fixture instead of a live machine. Specific to this part: the alternate-setting reading in
 `bt-usbstate` and `bt-fault-window`, the `13d3:3503` defaults, and the exhibits.
 
-**If you have a QCA9377 and the hang:** a kernel carrying `dc16388d45ec` is the fix. Until
-your distribution ships one, the entry is a two-line addition to `drivers/bluetooth/btusb.c`
-(the exact text is in the stable request, `docs/STATUS.md`). Check which `btusb` you run
-with `tools/bt-verify-kernel-mechanism`, not the kernel version — backports move.
+**If you have a QCA9377 and the hang:** a kernel carrying `dc16388d45ec` is the fix — mainline
+from v7.3, and the next stable release of 7.2, 6.18, 6.12, 6.6, 6.1, 5.15 and 5.10, where it is
+queued. Until your distribution ships one, the entry is a two-line addition to
+`drivers/bluetooth/btusb.c`. Check which `btusb` you run with
+`tools/bt-verify-kernel-mechanism`, not the kernel version — backports move.
 
 ## Current direction — 2026-10-03
 
-- **Stable backport of `dc16388d45ec`:** requested for 7.2.y, 6.18.y, 6.12.y, 6.6.y and
-  6.1.y; waiting for the stable team.
+- **Stable backport of `dc16388d45ec`:** queued by the stable team for 7.2, 6.18, 6.12, 6.6,
+  6.1, 5.15 and 5.10 (`EX-061`); next, each line's release and the distribution kernels.
 - **Delivery of the three accepted fixes** into kernel and BlueZ releases and into Ubuntu:
   tracked, nothing owed yet.
 - **A mesh advertising series for the kernel** (three patches, found while reading why the

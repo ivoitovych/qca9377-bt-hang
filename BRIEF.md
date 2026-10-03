@@ -20,13 +20,17 @@ series) were moved verbatim to the end of `HISTORY.md`; the block below is repla
 topped up. **Sections name their owner**; each owner writes theirs and points at the long form
 (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-10-03 · newest exhibit on `main`: EX-060** (EX-044/049/050 live on private
-branches; the next exhibit on `main` is EX-061) — no tip hash: it rotted within hours (`R2-13`).
+**Last updated: 2026-10-03 · newest exhibit on `main`: EX-061** (EX-044/049/050 live on private
+branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted within hours (`R2-13`).
 
 > **HAND-OFF (2026-10-03).** *Current state of every issue and submission: `docs/STATUS.md`.*
 > **Submissions:** BlueZ ×2 **applied** 09-21; kernel MGMT fix **applied** 09-29 (`86ef0f58bdec`);
 > stable backport request for `dc16388d45ec` **sent** 10-02 03:25 +0200 (Message-ID
-> `<20261002012542.473669-1-yaroslav.voytovych@gmail.com>`, SMTP `250`), waiting, nothing owed.
+> `<20261002012542.473669-1-yaroslav.voytovych@gmail.com>`, SMTP `250`); **QUEUED by the stable
+> team for 7.2, 6.18, 6.12, 6.6, 6.1, 5.15 and 5.10** (reply relayed by the operator 10-03,
+> confirmed in the public stable queue the same day, `EX-061`,
+> `scripts/stable-queue-check.sh`). Asked for five lines; queued for all seven. Nothing owed;
+> next: each line's release, then the Ubuntu kernel that carries it.
 > **Mesh series (private `diag/mesh-tester-ci`): phase 4 done 10-02** — the 10-02 review's race
 > is reproduced and fixed by a new prerequisite patch 1/3 (`HCI_MESH_SENDING` stays set through
 > the tear-down; `mesh_next()` decides the next owner under `hdev->lock`); v2 = three kernel

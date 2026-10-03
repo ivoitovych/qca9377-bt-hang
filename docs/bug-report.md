@@ -3,8 +3,9 @@
 > **Historical record (2026-10-03).** This is the pre-fix draft of a kernel-side report,
 > kept as written; it was never sent. The fault's cause was found to be the missing
 > device-table entry, fixed upstream by `dc16388d45ec` (not authored by this project),
-> validated here (`EX-055`–`EX-058`) and now the subject of a stable backport request
-> (sent 2026-10-02, outcome pending). The current state is [`docs/STATUS.md`](STATUS.md).
+> validated here (`EX-055`–`EX-058`) and backported on this project's request (sent
+> 2026-10-02; queued for seven stable lines on 2026-10-03, `EX-061`). The current state is
+> [`docs/STATUS.md`](STATUS.md).
 
 **Subsystem:** `drivers/bluetooth/btusb.c` (and the HCI core's handling of a controller that never answers)
 **Reporter contact:** yaroslav.voytovych@gmail.com
