@@ -34,10 +34,21 @@ branches; the next exhibit on `main` is EX-060) — no tip hash: it rotted withi
 > pre-existing tester errors), cancel/hold ×5 60/60, mgmt-tester 501/501, checkpatch/W=1/sparse
 > clean per commit, stable text-apply after `71af682ba469`. Committed as
 > `patches/mesh-tester/series-v2/`, `docs/mesh-tester-ci/phase4-results.md`; the review request
-> is `docs/mesh-tester-ci/REVIEW-TASK-SERIES-V2.md`. **Not sent: second outside review first,
-> then the operator's word.** One open question for that review: the flag is not among the
-> volatile flags and `__mgmt_power_off()` does not touch `mesh_pending`; v2 relies on a queued
-> start running on the down device and failing through the error path.
+> is `docs/mesh-tester-ci/REVIEW-TASK-SERIES-V2.md`. **Second outside review returned 10-03:
+> "do not send this revision yet"** (kept as `review-series-v2-2026-10-03.md`), five findings
+> verified here against the source: (1) `mesh_send()`'s error cleanup is inverted (`if (sending)
+> mgmt_mesh_remove`), so a start whose `hci_cmd_sync_queue()` fails leaves its `mesh_tx` pending
+> with the flag clear, and v2's `mesh_next()` later **starts the rejected request** — a public
+> patch by another author (2026-09-19, "fix mesh_tx leak on hci_cmd_sync_queue() failure") already
+> proposes the one-line cleanup; reference it, never re-author it; (2) the done deadline is
+> `cnt × 25 ms` while the instance interval is the adapter's (1280 ms default), so an effective
+> tear-down may air one event where `Count` asked for three — receiver-based emulator test needed
+> before any "Count restored" claim; (3) the active-cancel tester case can still pass on natural
+> completion; (4) ⚠️ my power-off argument was wrong: `__hci_cmd_sync_sk()` has no HCI_UP guard, a
+> queued start on a down device is not promptly `-ENETDOWN`; (5) the duration note misses
+> remainder 8 (timeout ≡ 6357 mod 8192 also encodes 0). Phase 5 task: `PHASE5-TASK.md`. Also
+> corrected: the BlueZ patch carries no `Signed-off-by` (BlueZ forbids it); phase4-results said
+> otherwise. **Not sent.**
 > **Machine:** E3 (`updates/btusb.ko` = the exact upstream entry) installed, trial E3 #1 open;
 > the installed `/usr/local/bin` tools are the 09-18 copies — the operator installs (and the
 > 10-03 `bt-trial` fix matters: with the 09-28 closer every clean trial would close `unknown`).
