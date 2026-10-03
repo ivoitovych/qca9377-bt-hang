@@ -699,6 +699,18 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   a stream on the headset's monitor and never opens one on the new default source, so it
   cannot show the internal microphone. Not measured: that the internal microphone carries
   sound (needs a short recording, only with consent).
+  **[source, 2026-10-03]** located upstream: in GNOME Settings 46.7 the input meter's stream
+  is re-targeted from gvc's active-input signal only while the slider holds no stream
+  (`panels/sound/cc-sound-panel.c`, `input_device_update_cb`), so once it held the headset's
+  handsfree source it is never moved to the internal microphone; and the single capture
+  stream the recorder saw is most plausibly the *output* meter on the headset's sink monitor,
+  with the input meter holding nothing. Fixed upstream by the 2024-03-07 series
+  `215289935`, `a74bc5a84`, `bf6f72278`, `afec106a8`, `3aeb837cb` plus `0da10f03a` (all
+  `panels/sound/`, first release 47.0; 46.7 and 47.0 ship the same gvc); not in any Ubuntu
+  24.04 revision through `1:46.7-0ubuntu0.24.04.6`. Full check with commands:
+  [`userspace-upstream-check-2026-10-03.md`](userspace-upstream-check-2026-10-03.md). Next: one
+  recorder reading with the panel open (one capture stream predicted on 46.7, two on 47),
+  then a Launchpad SRU request quoting the six commits.
 - **U5 — switching to handsfree picks the lowest-quality codec** *(first impression;
   withdrawn by the operator the same evening — see the correction below)*.
   **[log]** PipeWire ranks the handsfree profiles `headset-head-unit` 1, `-cvsd` 2, `-msbc` 3
@@ -762,6 +774,34 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   after the old link's `Disconnect` had completed — the MOMENTUM's ordering at those two
   switches is the comparison to read next (`capture-window.sh`). Device-dependent timing in
   PipeWire's switch path, still a PipeWire matter.
+  **[log] 2026-10-03 — the comparison, read from the retained captures (`EX-060`,
+  `scripts/sco-switch-windows.sh`).** The "`Disconnect` completes between `+BCS:` and
+  `AT+BCS=`" above was the *Command Status* of the Disconnect; the *Disconnection Complete
+  event*, which is when the old link is actually gone, comes much later on the earbuds:
+
+  | switch | `Disconnect` status | headset `AT+BCS=` | AG `OK` | old link's Disconnection Complete | `Setup Synchronous Connection` |
+  |---|---|---|---|---|---|
+  | earbuds 02:30:44.996 | +2 ms | **+16 ms** | +17 ms | **+177 ms** (handle 19) | none |
+  | earbuds 02:31:12.238 | +3 ms | **+30 ms** | +30 ms | **+205 ms** (handle 20) | none |
+  | MOMENTUM 00:54:45.331 | +5 ms | +67 ms | +67 ms | **+39 ms** (handle 3) | +91 ms (24 ms after `OK`) |
+  | MOMENTUM 00:55:27.444 | +5 ms | +75 ms | +75 ms | **+46 ms** (handle 7) | +101 ms (26 ms after `OK`) |
+
+  So the one thing that separates failure from success is whether the old link's
+  Disconnection Complete has arrived **before** the headset answers: the MOMENTUM takes
+  ~70 ms to reply and its link is gone in ~40 ms; the earbuds reply in 16–30 ms and their link
+  takes ~200 ms to go. PipeWire's new node is acquired, and its SCO `connect()` issued, about
+  25–30 ms after `OK` in the working cases — on the earbuds that moment falls **inside** the
+  old link's teardown, and no `Setup Synchronous Connection` ever follows.
+  **[inference]** the earlier reading "PipeWire skips the setup" was wrong in mechanism: PipeWire
+  does the same thing every time (free the old transport, create the new one, let the first
+  acquiring node call `connect()`); what differs is that on the earbuds that `connect()` is
+  issued for a peer whose previous SCO link is still being torn down, and nothing retries once
+  the teardown completes. PipeWire master (`702a11de5`, 2026-09-28) keeps the same design; no
+  commit since 1.0.5 addresses it, and the nearest tracker item (#5467, fixed 2026-09-30) is a
+  different mechanism ([`userspace-upstream-check-2026-10-03.md`](userspace-upstream-check-2026-10-03.md)
+  §U7). Reportable to PipeWire now, with this table and the exhibit: a connect issued during
+  the previous link's teardown is never retried. How the host handles a SCO connect that
+  overlaps the previous link's teardown is examined separately before anything is said about it.
 - **U9 — after Bluetooth off → on, the headset is not reconnected.** Marked by the operator
   01:02:31 ("the headset is on my head, why not connect to it?").
   **[log]** 01:00:03 rfkill soft-block (`RFKILL event … soft 1`), the MOMENTUM disconnected

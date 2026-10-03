@@ -20,8 +20,8 @@ series) were moved verbatim to the end of `HISTORY.md`; the block below is repla
 topped up. **Sections name their owner**; each owner writes theirs and points at the long form
 (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-10-03 · newest exhibit on `main`: EX-059** (EX-044/049/050 live on private
-branches; the next exhibit on `main` is EX-060) — no tip hash: it rotted within hours (`R2-13`).
+**Last updated: 2026-10-03 · newest exhibit on `main`: EX-060** (EX-044/049/050 live on private
+branches; the next exhibit on `main` is EX-061) — no tip hash: it rotted within hours (`R2-13`).
 
 > **HAND-OFF (2026-10-03).** *Current state of every issue and submission: `docs/STATUS.md`.*
 > **Submissions:** BlueZ ×2 **applied** 09-21; kernel MGMT fix **applied** 09-29 (`86ef0f58bdec`);
@@ -52,7 +52,13 @@ branches; the next exhibit on `main` is EX-060) — no tip hash: it rotted withi
 > **Machine:** E3 (`updates/btusb.ko` = the exact upstream entry) installed, trial E3 #1 open;
 > the installed `/usr/local/bin` tools are the 09-18 copies — the operator installs (and the
 > 10-03 `bt-trial` fix matters: with the 09-28 closer every clean trial would close `unknown`).
-> `bt-audio-policy` recorder transient. **Userspace queue:** U7, U6 (SRU), U4, U9 (`STATUS.md`).
+> `bt-audio-policy` recorder transient. **Userspace (10-03, `docs/userspace-upstream-check-2026-10-03.md`):**
+> **U7 is a race** — the new SCO connect is issued ~25 ms after the AG's `OK`, and on the earbuds
+> the old link's Disconnection Complete arrives 177–205 ms after the Disconnect, after the connect;
+> on the MOMENTUM 39–46 ms, before it (`EX-060`, four switches). No PipeWire commit through master
+> addresses it; reportable to PipeWire with the exhibit. **U6** fixed upstream in GNOME Settings 47.0
+> (six commits named), absent from Ubuntu 24.04 → SRU after one recorder reading. Queue: U7 report,
+> U6 SRU, U4, U9.
 > **CI was red 09-26 → 10-02**, unseen because the suite refuses while a trial is open; four
 > invariants fixed 10-03 on `fix/ci-invariants-2026-10-03`, green, merged — one real defect among
 > them (§9.4). **Docs:** an outside presentation review (10-02) was verified claim by claim; its
