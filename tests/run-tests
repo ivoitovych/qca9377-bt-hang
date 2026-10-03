@@ -1699,7 +1699,7 @@ case "$1" in -r) echo 0.0.0-suite-fixture ;; *) echo Linux ;; esac
 STUB
 chmod +x "$LC/bin/journalctl" "$LC/bin/systemctl" "$LC/bin/uname"
 
-# The ONLY way these tests may invoke bt-trial.
+# The ONLY ways these tests may invoke bt-trial.
 trial() {
     PATH="$LC/bin:$PATH" \
     BT_REPO="$LC" BT_EVIDENCE_REPO="$LC" \
@@ -1915,6 +1915,57 @@ else
     bad "the --grep probe: with it offered, $(grep -c -- '--grep' "$LC/kg/args" 2>/dev/null) filtered read(s); without, $(grep -c -- '--grep' "$LC/kgn/args" 2>/dev/null)"
 fi
 rm -rf "$LC/kg" "$LC/kgn"
+
+# A --grep read that matched nothing EXITS 1 (systemd 255, measured 2026-10-03
+# on the investigation machine: `journalctl -k -b 0 --grep=zzz` prints nothing
+# on either stream and returns 1). The closer read that as "journalctl failed",
+# so every clean close — the trial this project hopes for — was `unknown`, and
+# with it perturbed=unknown and the descriptive counts "?". Found by CI, which
+# has a readable journal and no Bluetooth: 30 red runs from 2026-09-28. The
+# stub advertises --grep in --help, as the real one does, so the closer takes
+# the filtered path; it answers every -k read with exit 1 and nothing else.
+mkdir -p "$LC/nomatch/bin"
+cat > "$LC/nomatch/bin/journalctl" <<'STUB'
+#!/bin/sh
+for a in "$@"; do
+  case "$a" in
+    --help) echo '  -g --grep=PATTERN  Show entries with MESSAGE matching PATTERN'; exit 0 ;;
+    -k) exit 1 ;;
+  esac
+done
+exit 0
+STUB
+chmod +x "$LC/nomatch/bin/journalctl"
+trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+NMOUT=$(trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok 2>&1); nmrc=$?
+NMROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
+if [[ "$NMROW" == "not_observed 0 0 none" ]]; then
+    ok "a filtered read that matched nothing is a clean window, not an unreadable journal"
+else
+    bad "no-match close: rc=$nmrc row (bt1_status sco_sent timeouts perturbed)='$NMROW'"
+    while IFS= read -r l; do echo "        $l"; done <<<"$NMOUT"
+fi
+# And exit 1 WITH a complaint on stderr is still a failed read.
+cat > "$LC/nomatch/bin/journalctl" <<'STUB'
+#!/bin/sh
+for a in "$@"; do
+  case "$a" in
+    --help) echo '  -g --grep=PATTERN  Show entries with MESSAGE matching PATTERN'; exit 0 ;;
+    -k) echo 'Failed to open journal: Input/output error' >&2; exit 1 ;;
+  esac
+done
+exit 0
+STUB
+rm -rf "$LC/nomatch/evidence" "$LC/state-nomatch"
+trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok >/dev/null 2>&1
+NMROW2=$(awk -F'\t' 'NR == 2 { print $8, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
+if [[ "$NMROW2" == "unknown unknown" ]]; then
+    ok "exit 1 with a complaint on stderr is still an unreadable journal -> unknown"
+else
+    bad "failed-read close: row (bt1_status perturbed)='$NMROW2'"
+fi
+rm -rf "$LC/nomatch" "$LC/state-nomatch"
 
 rc=0
 out=$(trial ok 2>&1) || rc=$?
@@ -4779,6 +4830,22 @@ if (( ex_awk_ok )); then
     [[ "$exbody" == *"exit status | \`0\`"* ]] \
         && ok "bt-exhibit records the command's exit status" \
         || bad "exhibit did not record an exit status"
+
+    # PROVENANCE NAMES THE EVIDENCE BOOTS, NOT ONLY THE CAPTURE BOOT. The old
+    # single `boot id` row was the machine's current boot; for EX-058 (three
+    # earlier boots) it named the boot the exhibit was generated on. The boots
+    # the command names by 32-hex id go in their own row; a command that names
+    # none says so.
+    exhibit new probe-boots --claim "Two boots are named." \
+            --cmd 'echo 0123456789abcdef0123456789abcdef fedcba9876543210fedcba9876543210' >/dev/null 2>&1
+    exboots=$(cat "$EXR/evidence/exhibits/002-probe-boots.md" 2>/dev/null)
+    [[ "$exboots" == *'| capture boot id | `'* && "$exboots" == *'| evidence boot ids | `01234567, fedcba98` |'* ]] \
+        && ok "bt-exhibit names the evidence boots from the command, apart from the capture boot" \
+        || bad "exhibit provenance did not separate evidence boots from the capture boot"
+    [[ "$exbody" == *'| evidence boot ids | none named by the command'* ]] \
+        && ok "an exhibit whose command names no boot says so in its provenance" \
+        || bad "an exhibit with no boot in its command did not say so"
+    rm -f "$EXR/evidence/exhibits/002-probe-boots.md"
 
     # ── BL-09: the evidence window, and the round trip that proves it ────
     #

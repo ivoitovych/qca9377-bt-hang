@@ -11,7 +11,36 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 
 ---
 
-## Current state — 2026-09-18 (front-door review `FD-22`)
+## Current state — 2026-10-03
+
+The lifecycle of every issue, with its component, evidence maturity, state and next action,
+is one table in [`STATUS.md`](STATUS.md) — the only page that says what is *current*. This
+register keeps each issue's evidence, reasoning and falsifiers. What changed since the
+2026-09-18 state below:
+
+- **BT-1 is explained and remedied.** The missing `btusb` device-table entry left the
+  controller on its ROM firmware; on that firmware the first HCI command after a transparent
+  SCO stream died in all twelve instances. With the QCA firmware the entry loads, 58 + 16 SCO
+  links on three headset models closed with every hang-up answered and 0 timeouts
+  (`EX-055`–`EX-058`). The entry is upstream (`dc16388d45ec`, Tibor Harcsa, v7.3-rc1); a
+  stable backport request was sent 2026-10-02. What the ROM firmware does wrong is not claimed.
+- **BT-3 is therefore the cause of BT-1, not only its missing recovery** — the opposite of
+  the 09-18 reading below, which is kept as written.
+- **BT-7 is fixed upstream** (two BlueZ patches applied 2026-09-21).
+- **BT-8 (new)** — the kernel-side source of the reply that crashed `bluetoothd` in BT-7's
+  first site: pending management commands flushed at power-off were answered with a status
+  byte read from the wrong object. Fixed upstream (`86ef0f58bdec`, 2026-09-29).
+- **M-1, M-2 (new, kernel mesh advertising)** — found while reading why the list's CI fails
+  `mesh-tester` on every patch since June: the mesh instance keeps advertising after its
+  count, the done path completes the wrong request, and a scheduler window starts a packet
+  twice (M-1, three patches under outside review); a `u16 duration` overflow for timeouts
+  above 65 s (M-2, note only). Both are developed on a private branch until sent; this
+  register records the facts.
+- **U1–U9** — the userspace audio items are listed in their own section below, each tagged
+  [log] / [operator] / [inference]; `STATUS.md` carries their lifecycle states (U5 withdrawn,
+  U6 fixed upstream in GNOME 47, U7 and U9 confirmed, the rest observed).
+
+## Current state — 2026-09-18 (front-door review `FD-22`) — superseded above, kept as written
 
 This register was written while the fault was localised in time and not in mechanism, and
 its entries below still read that way. Since `EX-033` (08-22) the wedge has been located in
@@ -533,7 +562,47 @@ Neither patch touches the controller fault; the wedge has occurred with both ins
 
 ---
 
-## U1–U4 — userspace audio problems seen during the E1 tests (2026-09-26)
+## BT-8 — Pending management commands flushed at power-off are answered with the wrong status
+
+**Status 2026-10-03: fixed upstream.** `Bluetooth: MGMT: Fix status of pending commands
+flushed on power off` is
+[`86ef0f58bdec`](https://github.com/bluez/bluetooth-next/commit/86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc)
+on `bluetooth-next` (applied 2026-09-29 as sent; `Cc: stable`); not yet in a mainline release.
+
+**What it is.** `cmd_complete_rsp()` falls through to `cmd_status_rsp(cmd, data)` for a
+pending command without a completion callback, and that reads `data` as a `u8 *` — since
+`f53e1c9c726d` the callers pass a `struct cmd_lookup`, so the status sent is the first byte
+of the lookup's socket pointer, not the status the caller set. In `mgmt_index_removed()` and
+`__mgmt_power_off()` that byte is `0x00`: Success, for a command the adapter never ran.
+
+**How it was found.** This is the kernel-side source of the reply in BT-7's first site: a
+Start Discovery pending when the adapter powered off was answered with Command Status
+`0x00` and no parameters, and `bluetoothd` 5.72 crashed on the zero-length success
+(`EX-032`, `EX-041`). BlueZ patch `0001` guards the daemon; this fix makes the kernel say
+Not Powered. Reproduced and tested with a virtual controller (`hci_vhci`): power off held in
+`Write Scan Enable` while a Start Discovery is submitted — status `0x00` before, `0x0f`
+(Not Powered) after. Developed and reviewed on a private branch until sent; `main` records
+the patch, its acceptance and these facts.
+
+**Reportable:** ✅ sent 2026-09-24 and applied. Not specific to this controller.
+
+---
+
+## U1–U9 — userspace audio problems seen during the E1/E3 tests (2026-09-26 →)
+
+| id | one line | state (`STATUS.md`) |
+|---|---|---|
+| U1 | first codec/profile line unselectable in handsfree mode (GNOME Settings) | observed |
+| U2 | volume display/route oddities after a profile switch | observed |
+| U3 | profile priority comparison (WirePlumber, design) | observed, not a defect |
+| U4 | GNOME codec row shows a profile/route mismatch | observed, lead weakened |
+| U5 | handsfree picks CVSD over mSBC | withdrawn by the operator |
+| U6 | input meter reads the headset monitor | confirmed; fixed upstream in GNOME 47 |
+| U7 | PipeWire skips the SCO setup after a codec switch under an active link | confirmed on one device |
+| U8 | earbuds silent in mSBC; `corrupted SCO packet` | observed |
+| U9 | no reconnect after rfkill off/on (BlueZ policy) | confirmed, by design |
+
+The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
 **Status:** leads, not findings. Each item mixes what was **measured** with what the operator
 **reported** from the UI or by ear; every statement below carries its source:
@@ -687,6 +756,30 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   SCO idle and once while a stream plays; and read PipeWire master's `backend-native.c` codec
   switch path (`rfcomm_hfp_ag_set_codec` and what follows `AT+BCS`) for a fix after 1.0.5.
   Reportable to PipeWire once confirmed, with this capture excerpt.
+  **[log] 2026-10-01, E3 boot, MOMENTUM 4:** two mSBC → CVSD switches made with the mSBC link
+  up (00:54:45, 00:55:27) both got their CVSD link within 0.2 s (`sco-ledger.sh 0`). So the
+  skipped setup is **not** universal; on the earbuds the headset's `AT+BCS=` reply arrived
+  after the old link's `Disconnect` had completed — the MOMENTUM's ordering at those two
+  switches is the comparison to read next (`capture-window.sh`). Device-dependent timing in
+  PipeWire's switch path, still a PipeWire matter.
+- **U9 — after Bluetooth off → on, the headset is not reconnected.** Marked by the operator
+  01:02:31 ("the headset is on my head, why not connect to it?").
+  **[log]** 01:00:03 rfkill soft-block (`RFKILL event … soft 1`), the MOMENTUM disconnected
+  with `reason 21`, `plugins/policy.c:disconnect_cb() reason 21`; 01:00:06 unblock and `Set
+  Powered`; no connection attempt by anyone in the next 2.5 min (`bluetoothd` log,
+  `bt-audio-policy`: no device). **[log]** BlueZ 5.72 `plugins/policy.c:743` reconnects only
+  for `MGMT_DEV_DISCONN_TIMEOUT` and `LOCAL_HOST_SUSPEND` (link loss and system suspend); a
+  disconnect caused by the local adapter being switched off is not one of them, and nothing in
+  BlueZ or the desktop connects known audio devices when the adapter comes back.
+  **[inference]** a policy gap, not a fault: phones reconnect the last audio device when
+  Bluetooth is re-enabled; BlueZ leaves it to the headset, which did not page us. Possible
+  suggestion to BlueZ (policy plugin: on power-on, attempt the devices that were connected at
+  power-off) — check the tracker first for a prior decision.
+- **U4/U1, operator marks 2026-10-01:** 00:25:51 "the Configuration line disappears for a
+  moment when you change the selection" — consistent with U4's mechanism (the row is hidden
+  while the combo row's device object is swapped, then re-evaluated). 00:59:41 "three lines in
+  the dropbox, the first not selectable" — U1 as shipped in PipeWire 1.0.5 (the codecless entry;
+  removed upstream in 1.2). Both [operator], both explained by the source already read.
 - **U8 — mSBC on the Lenovo earbuds: link up, data flowing, nothing audible** *(lead)*.
   **[log]** at 02:30:40 and 02:31:03 the test stream was linked to the earbuds' sink while an
   mSBC (Transparent) eSCO link was up and carrying host TX (`len 27 mtu 9` buffers: 5,761 on
@@ -698,6 +791,14 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   (framing / the 3×9-byte split), or the corrupted-packet path drops the RX side; the two are
   separable by whether the *microphone* side works in mSBC. **To confirm:** the MOMENTUM's test
   sound in mSBC on this boot (if audible there, U8 is earbud-specific); then E3 with both.
+  **[operator] 2026-10-01, E3 boot, MOMENTUM 4:** "all checked modes are audible now, in both
+  headset and handsfree modes" (A2DP; handsfree mSBC and CVSD) — the only exception being U1's
+  unselectable first line. **[log]** the same session: 7 SCO links (2 mSBC, 5 CVSD), 7 hang-ups
+  answered, 0 timeouts, and no `0x2005` or `tx timeout` on the boot; no `corrupted SCO packet`
+  during the MOMENTUM session — one appeared later that boot during a Shure mSBC link
+  (03:01:19, `EX-057`), so the message is not earbud-specific either.
+  So mSBC audio on this host is fine with the MOMENTUM under the exact upstream entry; U8 is
+  earbud-specific unless the earbuds also go silent on E3 — that test is next.
 
 ---
 

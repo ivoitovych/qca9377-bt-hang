@@ -4,7 +4,9 @@
 # mail the commit id, the kernels and why, once it is in mainline).
 #
 #   scripts/backport-check.sh <commit> [<stable-branch>…]
-#   default branches: stable/linux-{7.2,7.1,7.0,6.12,6.6,6.1}.y in cache/linux
+#   default branches: the lines kernel.org listed as live on 2026-10-02 —
+#   stable/linux-{7.2,6.18,6.12,6.6,6.1,5.15,5.10}.y in cache/linux (7.1.y and
+#   7.0.y went EOL; check https://www.kernel.org/releases.json before a request)
 #
 # Per branch: PRESENT (a commit with the same subject is there), APPLIES (the
 # patch applies to that branch's files; offset/fuzz shown), or FAILS. Read-only:
@@ -15,7 +17,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="$HERE/cache/linux"
 C="${1:?usage: backport-check.sh <commit> [<stable-branch>…]}"; shift
 BRANCHES=("$@")
-(( ${#BRANCHES[@]} )) || BRANCHES=(stable/linux-7.2.y stable/linux-7.1.y stable/linux-7.0.y stable/linux-6.12.y stable/linux-6.6.y stable/linux-6.1.y)
+(( ${#BRANCHES[@]} )) || BRANCHES=(stable/linux-7.2.y stable/linux-6.18.y stable/linux-6.12.y stable/linux-6.6.y stable/linux-6.1.y stable/linux-5.15.y stable/linux-5.10.y)
 OUT="$HERE/tmp/backport-check"
 rm -rf "$OUT"; mkdir -p "$OUT"
 git -C "$REPO" format-patch -q -1 --stdout "$C" > "$OUT/patch" || exit 2
@@ -27,12 +29,11 @@ echo "files:   ${FILES[*]}"
 rc=0
 for b in "${BRANCHES[@]}"; do
 	tip=$(git -C "$REPO" log -1 --format='%h %s' "$b" 2>/dev/null) || { printf '%-22s ? no such branch\n' "$b"; rc=1; continue; }
-	# Captured, then tested — NOT `git log … | grep -q .`. Under pipefail that
-	# form exits non-zero exactly when it MATCHES and git is still writing (grep
-	# leaves at the first line, git dies of SIGPIPE), so a commit that IS on the
-	# branch reads as absent — silently, and only when the log is long enough.
-	if [[ -n "$(git -C "$REPO" log --oneline -F --grep="$SUBJ" "$b")" ]]; then
-		printf '%-22s PRESENT  (%s)\n' "$b" "$(git -C "$REPO" log -1 --format=%h -F --grep="$SUBJ" "$b")"
+	# Captured, not `| grep -q`: under pipefail that pipeline exits non-zero
+	# exactly when the subject IS found and git dies of SIGPIPE.
+	present=$(git -C "$REPO" log -1 --format=%h -F --grep="$SUBJ" "$b")
+	if [[ -n "$present" ]]; then
+		printf '%-22s PRESENT  (%s)\n' "$b" "$present"
 		continue
 	fi
 	d="$OUT/${b//\//_}"; mkdir -p "$d"

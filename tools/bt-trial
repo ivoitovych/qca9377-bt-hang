@@ -307,6 +307,21 @@ kgrep_init() {
     [[ "$help" == *--grep* ]] && KGREP=(--grep="$KJ_RE")
     return 0
 }
+# ⚠️ WITH --grep, journalctl EXITS 1 WHEN NOTHING MATCHED (systemd 255,
+# measured 2026-10-03: `journalctl -k -b 0 --grep=zzz` prints nothing on either
+# stream and returns 1). A clean boot has no timeout, no reload and no reset in
+# its window, so the two filtered reads below return 1 on exactly the trial this
+# project hopes for. Read as "journalctl failed" that made every clean close
+# `unknown` — 30 red CI runs from 2026-09-28, none seen here because the suite
+# refuses while a trial is open. jread() tells the two apart: 0, or 1 with a
+# silent stderr, is a read that completed; anything else is a failure.
+jread() {   # jread <stderr-file> journalctl args... > stdout
+    local errf="$1" rc=0; shift
+    journalctl "$@" 2>"$errf" || rc=$?
+    (( rc == 0 )) && return 0
+    (( rc == 1 )) && [[ ! -s "$errf" ]] && return 0
+    return "$rc"
+}
 
 case "${1:-}" in
 
@@ -503,7 +518,9 @@ hang|ok)
     # the full read took 180 s: server-side filtering removes formatting and
     # writing, never traversal (tools/lib/journal.sh). The stderr capture is
     # why this stays a direct call rather than the seam.
-    if journalctl -k -p err --since "$since" --no-pager -o short-iso-precise "${KGREP[@]}" > "$KJ" 2>"$KJERR"; then
+    # Through jread(): with --grep a window that matched nothing exits 1 (see
+    # jread above), and that is a readable journal with no timeout in it.
+    if jread "$KJERR" -k -p err --since "$since" --no-pager -o short-iso-precise "${KGREP[@]}" > "$KJ"; then
         journal_ok=1
     else
         journal_ok=0
@@ -543,11 +560,16 @@ hang|ok)
     # runs under a budget and, if the journal is too big for it, those fields
     # read "?" — not determined — and the row is still written. A day of
     # dynamic debug must cost the counts, never the row or the verdict.
+    # The same no-match exit applies here: 1 with a silent stderr is a complete
+    # read of a window with nothing in it; 124 is the budget; the rest failed.
     kj_complete=1
-    if ! timeout "${BT_TRIAL_SCAN_BUDGET:-20}" journalctl -k --since "$since" --no-pager -o short-iso-precise "${KGREP[@]}" > "$KJ" 2>/dev/null; then
+    kjrc=0
+    timeout "${BT_TRIAL_SCAN_BUDGET:-20}" journalctl -k --since "$since" --no-pager -o short-iso-precise "${KGREP[@]}" > "$KJ" 2>"$KJERR" || kjrc=$?
+    if (( kjrc != 0 )) && ! { (( kjrc == 1 )) && [[ ! -s "$KJERR" ]]; }; then
         kj_complete=0
         : > "$KJ"
     fi
+    rm -f "$KJERR"
     jk() { cat "$KJ"; }
 
     if (( kj_complete )); then

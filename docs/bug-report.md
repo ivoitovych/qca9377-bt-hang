@@ -1,5 +1,11 @@
 # Bug report — btusb: QCA9377 `13d3:3503` stops answering HCI after the first command issued into a transparent-SCO stream on USB alternate setting 1
 
+> **Historical record (2026-10-03).** This is the pre-fix draft of a kernel-side report,
+> kept as written; it was never sent. The fault's cause was found to be the missing
+> device-table entry, fixed upstream by `dc16388d45ec` (not authored by this project),
+> validated here (`EX-055`–`EX-058`) and now the subject of a stable backport request
+> (sent 2026-10-02, outcome pending). The current state is [`docs/STATUS.md`](STATUS.md).
+
 **Subsystem:** `drivers/bluetooth/btusb.c` (and the HCI core's handling of a controller that never answers)
 **Reporter contact:** yaroslav.voytovych@gmail.com
 **Date:** 2026-09-18 (supersedes the 2026-08-11 draft, which argued for a quirks-table entry this report no longer proposes)

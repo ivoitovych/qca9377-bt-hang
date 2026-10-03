@@ -4,100 +4,54 @@
 true, what is retracted, what is open — and the rules that were paid for, **with the why**.
 A rule without its reason gets re-learned; that is what this file exists to prevent.
 
-**What it is not.** Not evidence (`evidence/exhibits/`, 43 of them), not narrative
-(`HISTORY.md`, 3000 lines), not tooling (`docs/tooling-index.md`), not working rules
-(auto-loaded memory), and **not the public summary** — a stranger reads `README.md`, whose
-Status block is a dated copy of §1–§3 and §6, checked on every commit like this file
-(`FD-09`). Nothing here is derivable from those — it is the layer that says which holds.
+**What it is not.** Not evidence (`evidence/exhibits/`, index in its `README.md`), not
+narrative (`HISTORY.md`), not tooling (`docs/tooling-index.md`), not working rules
+(auto-loaded memory), **not the current snapshot** — that is `docs/STATUS.md`, one dated row
+per issue and submission, the only page that says what is *current* — and **not the public
+summary** — a stranger reads `README.md`. Nothing here is derivable from those: this is the
+layer that says which claim holds, which was retracted, and what each rule cost.
 
-⚠️ **Budget: 500 lines (~40 KB, ~10k tokens).** It was 200 until 2026-09-19; at 200 every
-addition cost a *why* somewhere else (three trims in one day), and the operator's measure —
-a post-compaction context of ~200k tokens — makes 10k for the one file that says what holds
-cheap. Over 500 it stops being cheaper than the source. Cut the oldest settled item before
-adding; never cut a reason to fit a fact. **Sections name their owner**; each owner writes
-theirs and points at the long form (`lessons/`, `reviews/`) rather than reproducing it.
+⚠️ **Budget: 750 lines** (`devtools/save` warns above it; 200 until 2026-09-19, 500 until
+2026-10-01, the operator's call each time). At 200 every addition cost a *why* somewhere else;
+over 750 it stops being cheaper than the source. Cut the oldest settled item before adding;
+never cut a reason to fit a fact. **One hand-off block, not a stack**: on 2026-10-03 nine
+stacked "RESUME HERE" blocks (205 lines, three of them contradicting each other on the mesh
+series) were moved verbatim to the end of `HISTORY.md`; the block below is replaced, not
+topped up. **Sections name their owner**; each owner writes theirs and points at the long form
+(`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-09-29 · newest exhibit on `main`: EX-056; the held branch has EX-049
-and EX-050, so the next exhibit on `main` is EX-057** — no tip hash: it rotted within hours (`R2-13`).
+**Last updated: 2026-10-03 · newest exhibit on `main`: EX-059** (EX-044/049/050 live on private
+branches; the next exhibit on `main` is EX-060) — no tip hash: it rotted within hours (`R2-13`).
 
-> **RESUME HERE (2026-09-29).** **E1 stands at 37 SCO links, 37 hang-ups answered, 0 timeouts**
-> over two boots (`scripts/sco-ledger.sh -1` and `0`): 34 on the first boot (09-26 17:11 →
-> 09-27 17:20, streams to 5,122 s), 3 on the current one — **all MOMENTUM 4**; the Shure
-> connected once (AVRCP, 09-26 17:33) and never reached SCO under E1, so E1 has one headset.
-> Stock control stays 12/12 deaths, three headsets. **E1 is not the upstream entry** (no
-> `BTUSB_WIDEBAND_SPEECH`, no reset callback): the stable request needs one boot of the exact
-> `dc16388d45ec` entry (**E3**) first. Roadmap: private branch `plan/contributions`,
-> `docs/contributions-roadmap.md`. **Kernel patch `14845586`: state `new`, no human reply**;
-> its `TestRunner_mesh-tester` fail is the bot's: `scripts/patchwork-checks.sh --rate` shows
-> **every kernel patch since 2026-06-01 fails it** (66 of 66 in three 250-patch windows, 122/122
-> cached 07-22 → 09-21) and 18 of 20 passed before 05-15; nothing is waiting on us. **Second
-> external-review task** (the outside record for every open item, with the two 09-27 research
-> notes): private branch `review/external-sources-2026-09-29`, `reviews/EXTERNAL-SOURCES-TASK.md`.
-> **Trial tool fixed (09-29):** the first E1 boot opened as *stock* trial 15 (unit env not
-> overridden) and lost its row (closer killed at 90 s reading a day of debug journal; the next
-> boot reused 15 and overwrote its directory) — `bt-trial` now labels by `btusb` version, takes
-> its verdict from `-p err` (0.0 s), bounds the rest, and sets unclosed directories aside.
-> ⚠️ **The installed `/usr/local/bin/bt-trial` and unit are the 09-18 copies** — the fixes reach
-> the machine only after an install by the operator. `bt-audio-policy` recorder restarted
-> (transient) with its metadata fix. Not done: the BlueZ btmon upstream check (its researcher
-> died with the session; it is item 2 of the review task).
->
-> **RESUME HERE (2026-09-26 ~23:40).** **E1 is running** (`/sys/module/btusb/version` =
-> `0.8-e1`) and, on its first boot, **29 hang-ups answered, 0 timeouts** where the stock
-> driver died 12/12 (`EX-055`, `EX-056`). The operator is testing more headsets (Shure next).
-> **Recording, all automatic:** kernel debug (`bt-dyndbg`), both HCI captures, `bluetoothd -d`,
-> the auto trial, and **`scripts/bt-audio-policy.py`** as a **transient** unit
-> (`systemctl status bt-audio-policy`, gone at reboot — restart with the `systemd-run` line in
-> `docs/tooling-index.md`). Operator marks moments with `bt-mark "…"`. **In progress:**
-> (1) a per-call SCO ledger for the E1 count per headset; (2) a private **contribution
-> roadmap** — one row per issue (BT-1 backport of `dc16388d45ec` with E1 evidence; U1–U6 in
-> `docs/issues.md`; btmon; the third `bluetoothd` free) with its upstream project and whether
-> it is already fixed there. Installed: PipeWire 1.0.5, **WirePlumber 0.4.17**, GNOME Settings
-> 46.7, BlueZ 5.72. A `git fetch stable` into `cache/linux` was running for the backport check.
-> **Rules re-stated 09-26:** operator impressions are leads, never evidence — every U-item
-> statement is tagged [log]/[operator]/[inference]; a history rewrite of past commits is
-> **not** to be resumed.
->
-> **E1 BOOTED 2026-09-26 17:11 (`EX-055`).** The stock controller was on bare ROM firmware
-> (rom `0x302`, build `0x111`, status `0x20`); E1 loaded rampatch build `0x3e8` + NVM, and the
-> controller now advertises **202 commands incl. Enhanced Setup/Accept** (stock: 197 without).
-> First 4 h 29 min: 0 timeouts, 0 LE `unexpected event` (A2DP only). **Then the fatal path,
-> 21:52–21:55 (`EX-056`): 7 wideband links on alt 1 (15,273 `len 27 mtu 9` buffers) + 4 CVSD
-> links, all set up by legacy `0x0428`, every one ended by a `0x0406` Disconnect answered
-> `0x00` — 0 timeouts.** On stock (ROM firmware) that Disconnect died 12/12. **Missing QCA
-> firmware setup is now the leading cause of BT-1**; n = 7 on one boot, one headset — more
-> sessions and headsets to make it a denominator, then the stable backport of `dc16388d45ec`.
->
-> **RESUME HERE (2026-09-26 ~14:50) — EXPERIMENT E1 IS INSTALLED.** A diagnostic `btusb.ko`
-> (`0.8-e1`, srcversion `0FF3E900DE4D28718D8573F`, sha256 `f635c447…`) is in
-> `/lib/modules/7.0.0-34-generic/updates/`: `13d3:3503` gets **QCA ROME setup, no automatic
-> reset**; wideband, legacy `0x0428` and alt 1 unchanged (patch and facts: private branch
-> `diag/btusb-e1`). It loads from the first cold boot after 14:50. **After that boot:**
-> `cat /sys/module/btusb/version` must read `0.8-e1`; `journalctl -k -b 0 --grep 'E1:|QCA|rampatch|NVM'`
-> for the firmware state; `scripts/supported-commands-survey.sh` for 197 vs 200 commands; then
-> the operator's usual hard test. Survival under wideband calls → the fix is the upstream
-> entry `dc16388d45ec` (stable backport); the same first-command death → E2 (minus the
-> Enhanced-setup quirk). **Undo:** `scripts/module-updates.sh --module btusb remove`, reboot.
-> Before it: the `EX-053` window stayed untreated **12 h 34 min**, USB silent (`EX-054`), and
-> the controller advertised Enhanced Setup only 08-14…08-19 (6 of 159 replies,
-> `scripts/supported-commands-survey.sh`).
->
-> **Earlier (2026-09-25 ~23:30).** **Two more alt-1 deaths on 09-25** — `EX-051` (15:29,
-> `-31`, the dying command is `0x0c1a` Write Scan Enable, not Disconnect) and `EX-052` (18:32,
-> the first on **`7.0.0-34`**); both ended by a reboot, `EX-052` about 13 min after the fault.
-> In `EX-052`'s window **`tcpdump` issued two usbfs `GET_DESCRIPTOR` transfers** to the
-> wedged device (both `-110`): this project's own capture touched it — find which unit runs
-> that `tcpdump` before the next window. The held kernel patch (`kernel/mgmt-flush-status`,
-> private remote) **was sent on 2026-09-24 at 19:11** after four external reviews; the list's
-> CI bot passed 13 of 14 (its `mesh-tester` failure is the bot's standing one); the full
-> record is on that branch. **Private remote:** `private` =
-> `github.com/ivoitovych/qca9377-bt-hang-private`; `devtools/held status|sync|edit|commit`
-> handles it; `origin` never gets `kernel/*`. **Machine:** stock `bluetooth.ko` on
-> `7.0.0-34`. **New headset (09-25): Shure AONIC 50.** ⚠️ **RETRACTED (09-26):** "its HFP
-> never completes, so it cannot reach the alt-1 path" — true of one connection at 23:14
-> (`RFCOMM receive command before SLC completed: AT+%QAC=0`), false as a rule: under the
-> operator's testing its HFP came up and it died at 02:09 (`EX-053`) — **the third headset
-> model with the same signature**. It is a live trigger, not a safe headset.
+> **HAND-OFF (2026-10-03).** *Current state of every issue and submission: `docs/STATUS.md`.*
+> **Submissions:** BlueZ ×2 **applied** 09-21; kernel MGMT fix **applied** 09-29 (`86ef0f58bdec`);
+> stable backport request for `dc16388d45ec` **sent** 10-02 03:25 +0200 (Message-ID
+> `<20261002012542.473669-1-yaroslav.voytovych@gmail.com>`, SMTP `250`), waiting, nothing owed.
+> **Mesh series (private `diag/mesh-tester-ci`): phase 4 done 10-02** — the 10-02 review's race
+> is reproduced and fixed by a new prerequisite patch 1/3 (`HCI_MESH_SENDING` stays set through
+> the tear-down; `mesh_next()` decides the next owner under `hdev->lock`); v2 = three kernel
+> patches + the BlueZ tester, 25/25 KVM ×3, bluetooth-next + v2 25/25, TCG+valgrind 20/20 (seven
+> pre-existing tester errors), cancel/hold ×5 60/60, mgmt-tester 501/501, checkpatch/W=1/sparse
+> clean per commit, stable text-apply after `71af682ba469`. Committed as
+> `patches/mesh-tester/series-v2/`, `docs/mesh-tester-ci/phase4-results.md`; the review request
+> is `docs/mesh-tester-ci/REVIEW-TASK-SERIES-V2.md`. **Not sent: second outside review first,
+> then the operator's word.** One open question for that review: the flag is not among the
+> volatile flags and `__mgmt_power_off()` does not touch `mesh_pending`; v2 relies on a queued
+> start running on the down device and failing through the error path.
+> **Machine:** E3 (`updates/btusb.ko` = the exact upstream entry) installed, trial E3 #1 open;
+> the installed `/usr/local/bin` tools are the 09-18 copies — the operator installs (and the
+> 10-03 `bt-trial` fix matters: with the 09-28 closer every clean trial would close `unknown`).
+> `bt-audio-policy` recorder transient. **Userspace queue:** U7, U6 (SRU), U4, U9 (`STATUS.md`).
+> **CI was red 09-26 → 10-02**, unseen because the suite refuses while a trial is open; four
+> invariants fixed 10-03 on `fix/ci-invariants-2026-10-03`, green, merged — one real defect among
+> them (§9.4). **Docs:** an outside presentation review (10-02) was verified claim by claim; its
+> first edit (README, `docs/STATUS.md`, this file, `docs/issues.md`) landed 10-03, the mechanical
+> second edit (links, historical labels, counts) on `docs/second-edit-2026-10-03`.
+> **Rules re-stated:** nothing sent anywhere without the operator's word; private branches
+> (`kernel/*`, `diag/*`, `plan/*`, `review/*`, `attribution/*`, `postponed/*`) push to `private`
+> only; attribution in this repository is the project author's only; never touch the laptop's
+> Bluetooth or kernel from an agent; operator impressions are leads, tagged, never evidence.
+
 
 ---
 
@@ -166,8 +120,13 @@ fault is not specific to Disconnect.
 - **Every recovery tried on an already-wedged controller failed** (`EX-039`); the one reset
   issued *before* any timeout recovered it, and it failed again 132 s later (`EX-004`).
   `hdev->reset` is NULL on the kernels run here — `13d3:3503` had no quirks entry ⚠️ **until
-  `dc16388d45ec`** (master, 2026-08-07, for a BLE-scan fault; not in v7.0, 6.6.y, 6.12.y as
-  checked 09-19) — and that entry's setup/reset path is **untested here** (`DR-01`).
+  `dc16388d45ec`** (master, 2026-08-07, for a BLE-scan fault; mainline v7.3-rc1, in no stable
+  line as of 2026-10-02) — and that entry's setup/reset path was **untested here** (`DR-01`)
+  until 2026-09-26. ✅ *Since then:* the setup half alone (E1) ran 58 links / 3 boots /
+  2 headsets with 0 timeouts (`EX-055`, `EX-056`, `EX-058`); the exact entry (E3) ran 16 links /
+  2 headsets with 0 timeouts (`EX-057`). **The missing entry is the cause**: on ROM firmware the
+  first command after the stream dies; with the QCA firmware loaded it did not, in 74 links.
+  The stable backport request went out 2026-10-02 (`docs/STATUS.md`).
 - **`hci0` is never unregistered** (not the stage-2 shape).
 - ⚠️ *Corrected 2026-09-26:* this line used to read "the CVSD controls survived (`mtu 17`,
   `EX-031`)". `EX-031` is **not** a CVSD control: it is a **transparent (wideband) link on
@@ -181,8 +140,9 @@ fault is not specific to Disconnect.
 
 ## 4. Not settled
 
-- **Mechanism.** Correlation across 7 deaths / 1 survival. *How* the traffic wedges the
-  controller is unknown — needs driver instrumentation or an mgmt/btmon trace.
+- **Mechanism.** Correlation across 12 deaths / 1 survival (§2; "7" when this was written,
+  09-18). *What the ROM firmware does wrong* with alt-1 traffic is unknown and is not claimed;
+  the host-side remedy (load the firmware the entry provides) is validated, §3.
 - **No controlled comparison.** Nobody has forced alt-1 with a sustained stream on demand,
   or blocked alt-1 and shown survival under identical use. The survival was the
   peripheral's choice, not an intervention.
@@ -397,15 +357,28 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
 
 ## 9. Open threads
 
-1. **`docs/bug-report.md` rewritten around `EX-037`–`EX-043`** (front-door fixes, 09-18).
-   It still leaves only with a kernel patch (§7). The driver test shape is exact: alt 1,
-   stream, issue a command, it dies. Next: the operator's third-party review of the patches.
+1. ✅ **Closed 10-03: `docs/bug-report.md` is a historical pre-fix draft, labelled as such.**
+   The kernel-side report it prepared was overtaken: the cause is the missing entry, fixed
+   upstream by `dc16388d45ec`; what went out instead is the stable backport request (10-02).
+   As written 09-18: rewritten around `EX-037`–`EX-043`; it leaves only with a kernel patch.
 2. Six tasks delegated to the Test Branch Maintainer (source review, instrumented `btusb`
    logging of the chosen `new_alts`, bug-report audit, `BL-09`, `bt-crash` tests, device
    survey).
 3. `bt-trial` does not record which `bluetoothd` is running, so pre- and post-patch trials
    pool under identical labels. Fix changes the results-file fingerprint — operator's call.
-4. ⚠️ **CI was red on every push from `d70cb2e` (09-01) to `3cf4dd6` (09-14)** and nothing
+4. ⚠️ **CI was red again on every push from 2026-09-26 to 10-02 — thirty runs** — for the
+   same reason as before with a new twist: the suite refuses while a trial is open, a trial was
+   open throughout E1/E3, so nothing ran locally, and `devtools/save` printed "CI will run it
+   on push" thirty times. Four invariants, all in that week's code: two `| grep -q` pipelines
+   (`backport-check.sh`, `bt-trial`), a `tx timeout` spelling in `sco-ledger.sh`, four `bt-trial`
+   calls outside `trial()` in the suite, and **one real defect**: `journalctl --grep` exits 1
+   when nothing matched (systemd 255), which the new closer read as an unreadable journal —
+   every clean trial would have closed `unknown` once the 09-28 tool was installed. Fixed
+   10-03 (`fix/ci-invariants-2026-10-03`, green on CI, merged); `scripts/prove-trial-nomatch.sh`
+   carries the proof for open-trial days. The coverage exclusions had rotted too, behind the
+   red step. Lesson: a red badge nobody reads is the same as no CI; `devtools/ci` after every
+   push on days the suite cannot run here.
+   **The first episode:** red from `d70cb2e` (09-01) to `3cf4dd6` (09-14) and nothing
    read it — `devtools/save` printed "CI will run it on push" twelve times. Two invariants
    of this side's own (`R2-100`) never passed anywhere; fixed 09-16. **Green confirmed** on
    `456daba`, `00138a7`, `2839ecc`, `f6173a8`, `573fb68`. `devtools/ci` reads a verdict on
@@ -425,7 +398,9 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
    recorded from journal and sysfs only, 8.5 h into an untreated window still open at 00:21
    on 09-23. ⚠️ **While that window is open, nothing touches Bluetooth** — the kernel-patch
    runtime test (§9.9) waits for the operator's power-off.
-6. **The next experiment is a kernel, not more logging (deep review 2026-09-20).** Every
+6. ✅ **Done 09-26 → 10-01: E1 (setup only) and E3 (the exact entry) ran, 0 timeouts in 74
+   links; the stable request followed (§3, `docs/STATUS.md`).** As it was planned:
+   **The next experiment is a kernel, not more logging (deep review 2026-09-20).** Every
    reproduction ran on a kernel that treated `13d3:3503` as generic; `dc16388d45ec` gives it
    `BTUSB_QCA_ROME`, which installs *both* QCA firmware setup and a reset-on-timeout callback.
    Those must be separated ("Build B": setup on, automatic reset off) or a failure and its
@@ -464,7 +439,9 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
    `cache/linux` (`bluetooth-next`, `bluetooth`, `stable`, mainline remotes) — refresh with
    `git fetch` before any claim about them; they move daily.
 
-9. **Kernel-patch runtime test — prepared 09-23, waits for a closed window and the operator.**
+9. ✅ **Closed: the patch ran here 09-24 with no regression and was applied upstream 09-29
+   (`86ef0f58bdec`).** The record below is kept as written.
+   **Kernel-patch runtime test — prepared 09-23, waits for a closed window and the operator.**
    `bluetooth.ko` for the running `7.0.0-31-generic` is built from **Ubuntu's own source**
    (v7.0 + the `linux-hwe-7.0_7.0.0-31.31~24.04.1` diff, which touches `mgmt.c` and nine other
    Bluetooth files — vanilla would have been wrong), unpatched and patched, vermagic matching,
@@ -546,6 +523,7 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
 | | |
 |---|---|
 | evidence, one claim + extraction each | `evidence/exhibits/` (`bt-exhibit index`) |
-| narrative, why things were believed | `HISTORY.md` (36 phases) |
+| the current snapshot, one dated row per issue and submission | `docs/STATUS.md` |
+| narrative, why things were believed | `HISTORY.md` (37 phases, a chapter, and the retired hand-off blocks) |
 | which tool answers which question | `docs/tooling-index.md` |
 | the patches, their reasoning and BlueZ's measured conventions | `patches/bluez/` |

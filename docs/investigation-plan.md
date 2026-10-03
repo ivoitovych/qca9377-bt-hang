@@ -17,6 +17,8 @@ Ordered by risk. Everything in phases A and B is reversible and touches no code.
 
 ## Revision 2026-08-22 — read this before the phases below
 
+> 2026-10-03: this plan is preserved as written; the active queue is [`docs/STATUS.md`](STATUS.md).
+
 **The phases were written on 2026-08-11 and are now eleven days and thirty-four exhibits
 old.** They are left as written, because what was believed then is part of the record and
 this project has been burned by silently editing claims. This section says what has changed.

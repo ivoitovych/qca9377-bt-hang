@@ -61,11 +61,8 @@ BEGIN {
 	if (open && pending) close_link(sprintf("hangup-ok %d ms", (secs($1) - tcmd) * 1000))
 	next
 }
-# THE OPCODE-AWARE SPELLING, NOT A BARE "tx timeout". The bare form also
-# matches `link tx timeout` — ACL link supervision, a different event on a
-# different layer — and closed the open SCO link as a command TIMEOUT, counted
-# in the "timeouts N" summary line. The suite forbids every other spelling.
 /command( 0x[0-9a-f]+)? tx timeout/ {
+	# the command form only: `link tx timeout` is ACL supervision, not BT-1
 	if (open) { if (!tcmd) tcmd = secs($1) - 2.0; op = $0; sub(/.*command /, "", op); sub(/ tx timeout.*/, "", op); close_link("TIMEOUT " op) }
 	next
 }

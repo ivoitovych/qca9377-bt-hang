@@ -1,5 +1,15 @@
 # The missing quirks entry — what it does and does not explain
 
+> ✅ **Tested here since 2026-09-26 — this banner supersedes the one below it.** The entry's
+> setup path is no longer "untested here": a diagnostic build that applied only the QCA
+> setup part (E1) ran 58 wideband/narrowband SCO links over three boots with every hang-up
+> answered and 0 command timeouts (`EX-055`, `EX-056`, `EX-058`), and the exact upstream entry
+> `dc16388d45ec` built for `7.0.0-34` (E3) ran 16 links on two headsets, including the one
+> that wedged the stock driver in `EX-053`, with 0 timeouts and 0 `0x2005` errors (`EX-057`).
+> So the missing entry is not only why nothing *recovered* the wedge, as the text below
+> concluded in September; without it the controller runs on ROM firmware, and with the
+> firmware the entry loads the wedge did not occur. The text below is kept as written.
+
 > ⚠️ **Superseded upstream on 2026-08-07 (`DR-01`, 2026-09-19).** Commit `dc16388d45ec`,
 > "Bluetooth: btusb: Add IMC Networks QCA9377 to quirks table" (authored 2026-06-29,
 > committed 2026-08-07), adds exactly the entry this document describes as missing —
@@ -34,7 +44,7 @@ the two things `BTUSB_QCA_ROME` provides:
   (What firmware state the controller is actually in — pristine ROM, or something with
   persistent patch state — is not established. `btusb_setup_qca()`'s own
   `QCA_GET_TARGET_VERSION` / `QCA_CHECK_STATUS` queries would tell us; see
-  [`docs/fix-proposal.md`](docs/fix-proposal.md) §5a build B.)
+  [`docs/fix-proposal.md`](fix-proposal.md) §5a build B.)
 
 Three genuine QCA ROME comparators from the same ODM are covered while this one is not —
 `13d3:3491`, `3496` and `3501` are all `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH` in
@@ -139,23 +149,23 @@ A one-line kernel patch — add the device to btusb's QCA ROME quirks:
 > deadline: a reset may recover, destabilise, or drive USB loss. The +0 s treatment is
 > untested and must be scored for both benefit and harm.
 >
-> Sessions: [late reset failed](evidence/sessions/20260810-072445-first-real-hang/) ·
-> [early reset worked](evidence/sessions/20260811-002156-early-mode-SUCCESS/) ·
-> [+11 s also failed, no early warning](evidence/sessions/20260811-060910-mode-change-hang/)
+> Sessions: [late reset failed](../evidence/sessions/20260810-072445-first-real-hang/) ·
+> [early reset worked](../evidence/sessions/20260811-002156-early-mode-SUCCESS/) ·
+> [+11 s also failed, no early warning](../evidence/sessions/20260811-060910-mode-change-hang/)
 >
 > ⚠️ **Also untested and risky in its own right.** `BTUSB_QCA_ROME` enables the rampatch
 > firmware download path; if this module is not a true ROME variant, adapter setup can
 > fail and leave you with *no* Bluetooth. (Setup runs at HCI open, not at USB probe, so
 > the device still enumerates — the failure appears when the adapter is brought up, and
 > booting the previous kernel recovers it.) See
-> [`docs/fix-proposal.md`](docs/fix-proposal.md).
+> [`docs/fix-proposal.md`](fix-proposal.md).
 
 **Why the missing ID matters twice.** It withholds *recovery* — `hdev->reset` is NULL, so
 `hci_cmd_timeout()` logs each timeout and does nothing — **and** *prevention*, because
 `btusb_setup_qca()` never runs, so Linux never performs the QCA rampatch/NVM download for
 this ID. (What the controller runs instead is *not* established — only that this driver
 loads nothing into it.) The first is verified three ways; the second is the
-[firmware hypothesis](docs/firmware-hypothesis.md), and it is the better explanation for
+[firmware hypothesis](firmware-hypothesis.md), and it is the better explanation for
 why the same hardware never faults under Windows.
 
 **Confirmed at source level.** `0x3503` does not appear anywhere in upstream
@@ -187,7 +197,7 @@ Tested across every kernel available on the affected machine:
 
 Four kernel versions across ten weeks and 34 boots. Rolling back to another recent
 kernel does not help. Per-boot detail:
-[`evidence/diagnosis/per-boot-history.txt`](evidence/diagnosis/per-boot-history.txt).
+[`evidence/diagnosis/per-boot-history.txt`](../evidence/diagnosis/per-boot-history.txt).
 
 ⚠️ **This heading used to read "Not a kernel regression", and that was too strong.**
 The table shows the fault is not a *recent* regression. It cannot show that the

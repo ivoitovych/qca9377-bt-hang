@@ -18,7 +18,10 @@
 # the command and writes both in a single pass, so drift is not possible.
 #
 # Usage:
-#   bt-exhibit new <slug> --claim "..." [--why "..."] --cmd '<shell pipeline>'
+#   bt-exhibit new <slug> --claim "..." [--why "..."] --cmd '<shell pipeline>' [--boots '<id> <id>…']
+#       --boots: the boots the evidence comes from (32-hex journal boot ids); by
+#       default read from the command. Name boots by id in the command, never by
+#       index: an index selects a different boot after the next reboot.
 #   bt-exhibit list
 #   bt-exhibit index          regenerate evidence/exhibits/README.md
 #
@@ -60,17 +63,29 @@ cmd_new() {
     [[ -n "$slug" ]] || die "usage: bt-exhibit new <slug> --claim ... --cmd ..."
     [[ "$slug" =~ ^[a-z0-9-]+$ ]] || die "slug must be lower-case kebab-case: $slug"
 
-    local claim="" why="" cmd=""
+    local claim="" why="" cmd="" boots=""
     while (( $# )); do
         case "$1" in
             --claim) claim="${2:-}"; shift 2 ;;
             --why)   why="${2:-}";   shift 2 ;;
             --cmd)   cmd="${2:-}";   shift 2 ;;
+            --boots) boots="${2:-}"; shift 2 ;;
             *) die "unknown argument: $1" ;;
         esac
     done
     [[ -n "$claim" ]] || die "--claim is required"
     [[ -n "$cmd"   ]] || die "--cmd is required"
+    # EVIDENCE BOOTS ARE NOT THE CAPTURE BOOT. The provenance table used to carry
+    # one `boot id`: the machine's current boot, read at capture time. For an
+    # exhibit that extracts earlier boots that field named the wrong boot
+    # (EX-058, 2026-10-02: three E1 boots, provenance said the E3 boot). The
+    # boots the evidence comes from are the 32-hex ids the command names —
+    # given with --boots, or read from the command itself; an exhibit whose
+    # command selects by index (-b 0, -1) names none, and the table says so,
+    # because an index selects a different boot after the next reboot.
+    if [[ -z "$boots" ]]; then
+        boots=$(grep -oE '\b[0-9a-f]{32}\b' <<<"$cmd" | tr '\n' ' ')
+    fi
 
     # --- the prose and the command are published too --------------------------
     # Only the captured OUTPUT used to be sanitised. The extraction method is
@@ -221,7 +236,12 @@ cmd_new() {
         echo '|---|---|'
         printf '| captured | `%s` |\n' "$(date -Iseconds)"
         printf '| kernel | `%s` |\n' "$(uname -r)"
-        printf '| boot id | `%s` |\n' "$(cut -c1-8 "${BT_PROC:-/proc}/sys/kernel/random/boot_id" 2>/dev/null || echo -)"
+        printf '| capture boot id | `%s` |\n' "$(cut -c1-8 "${BT_PROC:-/proc}/sys/kernel/random/boot_id" 2>/dev/null || echo -)"
+        if [[ -n "${boots// /}" ]]; then
+            printf '| evidence boot ids | `%s` |\n' "$(for b in $boots; do printf '%s' "${b:0:8}"; printf ', '; done | sed 's/, $//')"
+        else
+            printf '| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |\n'
+        fi
         printf '| device | `13d3:3503` QCA9377 (ROME) |\n'
         printf '| exit status | `%s` |\n' "$rc"
         printf '| redacted | `%s` |\n' "$redacted"
