@@ -88,17 +88,19 @@ if [[ -n "$NEWEST" && -r "$REPO/BRIEF.md" ]]; then
         echo "     after a context reset, and a stale one is read as current." >&2
     fi
 fi
-# THE FRONT PAGE, BY THE SAME TEST. README.md carries a dated copy of BRIEF's
-# status for readers who never open BRIEF — a maintainer arriving from a patch
-# reads the README and nothing else. A README status that names an older
-# exhibit than BRIEF does is the 2026-09-13 finding again ("the central finding
-# is in none of the foundation files"), and nothing but this line notices it
-# (front-door review 2026-09-17T2251Z, FD-09). Same rule: a warning, never a
-# block.
-if [[ -n "$NEWEST" && -r "$REPO/README.md" ]]; then
-    if ! grep -q "EX-$NEWEST" "$REPO/README.md" 2>/dev/null; then
-        echo "save: ⚠️  README.md does not mention EX-$NEWEST — its Status block is behind" >&2
-        echo "     BRIEF.md; a stranger reads the README and nothing else." >&2
+# THE CURRENT SNAPSHOT, BY THE SAME TEST. Until 2026-10-03 this line watched
+# README.md, which carried a dated copy of BRIEF's status (front-door review
+# 2026-09-17T2251Z, FD-09). The presentation review of 2026-10-02 found that
+# copy to be one of several competing "current" statements and moved the role
+# to docs/STATUS.md — one dated page, one row per issue and submission — with
+# README pointing at it and carrying no volatile counts. So the freshness test
+# follows the role: a new exhibit that STATUS does not name is the 2026-09-13
+# finding again ("the central finding is in none of the foundation files").
+# Same rule: a warning, never a block.
+if [[ -n "$NEWEST" && -r "$REPO/docs/STATUS.md" ]]; then
+    if ! grep -q "EX-$NEWEST" "$REPO/docs/STATUS.md" 2>/dev/null; then
+        echo "save: ⚠️  docs/STATUS.md does not mention EX-$NEWEST — the current snapshot is behind" >&2
+        echo "     BRIEF.md; README points a stranger there and nowhere else." >&2
     fi
 fi
 # And the budget, which is the only reason it is cheaper than reading the source.
