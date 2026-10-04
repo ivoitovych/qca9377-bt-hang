@@ -38,7 +38,14 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 > pre-existing tester errors), cancel/hold ×5 60/60, mgmt-tester 501/501, checkpatch/W=1/sparse
 > clean per commit, stable text-apply after `71af682ba469`. Committed as
 > `patches/mesh-tester/series-v2/`, `docs/mesh-tester-ci/phase4-results.md`; the review request
-> is `docs/mesh-tester-ci/REVIEW-TASK-SERIES-V2.md`. **Second outside review returned 10-03:
+> is `docs/mesh-tester-ci/REVIEW-TASK-SERIES-V2.md`. **Phase 5 done 10-04** (private
+> `diag/mesh-tester-ci` `1806e72`, `docs/mesh-tester-ci/phase5-results.md`,
+> `patches/mesh-tester/series-v3/`): all five v2 findings answered; v3 = 5 kernel patches (4/5 a
+> new fix: power-off during a transmission left `HCI_MESH_SENDING` set for good; 5/5 a comment
+> on the Count deadline, droppable, alternative in `series-v3/alternative/`) + 4 BlueZ patches;
+> mesh-tester 55/55 (unpatched 18/55); raw logs in `cache/mesh-tester-ci-phase5/logs` with
+> checksums committed. **Waiting on the operator's two decisions, then a third outside review.**
+> History of that phase follows. **Second outside review returned 10-03:
 > "do not send this revision yet"** (kept as `review-series-v2-2026-10-03.md`), five findings
 > verified here against the source: (1) `mesh_send()`'s error cleanup is inverted (`if (sending)
 > mgmt_mesh_remove`), so a start whose `hci_cmd_sync_queue()` fails leaves its `mesh_tx` pending
