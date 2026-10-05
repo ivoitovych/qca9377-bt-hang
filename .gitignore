@@ -21,6 +21,9 @@ metrics.tsv
 #           compile-testing patches; large, reproducible, not ours
 tmp/
 cache/
+# libtoolize run from the wrong directory drops this into the root (2026-09 and
+# 2026-10-05, both times while building BlueZ under cache/); never ours.
+/ltmain.sh
 
 # Editor / OS noise
 *~
