@@ -1,0 +1,696 @@
+#!/bin/bash
+# bt-ui-capture — instrument the desktop audio stack and GNOME Settings for a
+#                 manual test session, so that every state change, every
+#                 decision taken on it and every UI control change is on record.
+#
+# WHY. The open userspace items (docs/issues.md U1, U2, U4, U6, U7, U8, U9 and
+# the operator's mark "the Configuration line disappears for a moment") are
+# known mostly from what the operator SAW. The existing record
+# (scripts/bt-audio-policy.py, the HCI captures, bluetoothd -d, the kernel's
+# dynamic debug) shows PipeWire's state and the air interface, but not:
+#   * which program asked for a change (pipewire-pulse logs client requests
+#     only at info level, which is off by default);
+#   * what WirePlumber and PipeWire's Bluetooth backend decided — and in
+#     WirePlumber 0.4.17 the Bluetooth backend (spa.bluez5*) runs INSIDE the
+#     wireplumber process (monitors/bluez.lua creates LocalNode objects), so
+#     its log level is WirePlumber's, set by WIREPLUMBER_DEBUG at start only;
+#   * what GNOME Settings decided (it logs g_debug() under the domains
+#     cc-sound-panel and Gvc only when G_MESSAGES_DEBUG names them);
+#   * what GNOME Settings drew (row hidden, line selected) — published by GTK 4
+#     on the accessibility bus whether or not anyone listens;
+#   * when the kernel's SCO socket was connected and torn down (sco.c's debug
+#     sites are off; hci_conn.c's are already on through bt-dyndbg).
+# docs/ui-capture-research.md has the source reading behind every knob here.
+#
+# Usage:
+#   bt-ui-capture [plan]          print every change start/stage-restart would
+#                                 make; change nothing (the default)
+#   bt-ui-capture start           apply the RUNTIME settings and start the
+#                                 passive monitors (root)
+#   bt-ui-capture stage-restart   write — do not apply — the settings that need
+#                                 a PipeWire/WirePlumber restart (root)
+#   bt-ui-capture status          what is active, where the logs are, sizes
+#   bt-ui-capture stop            revert every runtime change, stop every
+#                                 monitor this tool started (root)
+#   bt-ui-capture unstage         remove the staged drop-ins (root)
+#   bt-ui-capture collect [--since T] [--until T]
+#                                 gather the window into the session directory,
+#                                 with sanitised copies for publishing (root)
+#
+# SIDE EFFECTS, all reverted by `stop` (runtime) or `unstage` (staged):
+#   start   PipeWire daemon log level (pw-metadata settings 0 log.level, the
+#           previous value is recorded); kernel dynamic debug for sco.c's
+#           connection-level functions (previous flags recorded); launcher
+#           overrides under the desktop user's ~/.local/share (applications/
+#           and dbus-1/services/) so GNOME Settings starts with
+#           G_MESSAGES_DEBUG the NEXT time it is opened; three transient system
+#           units (bt-ui-atspi, bt-ui-sysbus, bt-ui-sessbus) writing size-capped
+#           files into the session directory; the bt-audio-policy recorder if it
+#           is not running; a bt-mark at start and at stop.
+#   stage-restart  drop-ins under ~/.config/systemd/user/{pipewire,
+#           pipewire-pulse,wireplumber}.service.d/90-bt-ui-capture.conf. No
+#           daemon-reload, no restart: they take effect when the user's
+#           services next start (logout/login with no other session, or boot).
+#   collect writes only under the session directory.
+#
+# NEVER: restarts or signals pipewire, wireplumber, bluetoothd or gnome-shell;
+# touches the Bluetooth adapter (no power, connect, rfkill, hciconfig, btmgmt);
+# installs packages; overwrites a user file it did not write (it checks for its
+# own marker line first). It counts no HCI timeouts, so the opcode-aware timeout
+# pattern does not apply here.
+#
+# Seams (tests, scripts/prove-ui-capture.sh): BT_UI_BASE, BT_UI_USER,
+# BT_UI_UID, BT_UI_HOME, BT_UI_EUID, BT_UI_REPO, BT_UI_MARK, BT_UI_APPDIR,
+# BT_DYNDBG_CTL, BT_UI_CAPTURE_DIRS, BT_JOURNAL_FIXTURE; the commands it runs
+# (runuser, systemd-run, systemctl, pw-metadata, loginctl, dbus-monitor, ...)
+# are taken from PATH, so a stub directory stands in for all of them.
+
+set -uo pipefail
+
+HERE=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)
+SELF="$HERE/$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
+REPO="${BT_UI_REPO:-$(cd "$HERE/.." && pwd)}"
+LIBDIR="${BT_LIBDIR:-$HERE/lib}"
+[[ -r "$LIBDIR/journal.sh" ]] || { echo "bt-ui-capture: missing $LIBDIR/journal.sh" >&2; exit 1; }
+# shellcheck source=lib/journal.sh
+source "$LIBDIR/journal.sh"
+
+BASE="${BT_UI_BASE:-/var/log/bt-health/ui}"
+CTL="${BT_DYNDBG_CTL:-/sys/kernel/debug/dynamic_debug/control}"
+EUID_EFF="${BT_UI_EUID:-$EUID}"
+CAPTURE_DIRS="${BT_UI_CAPTURE_DIRS:-/var/log/bt-health/capture /var/log/bt-health/trace}"
+APPDIR="${BT_UI_APPDIR:-/usr/share/applications}"
+# 3 = info: node and link state transitions, XRuns, driver changes
+# (src/pipewire/impl-node.c:412, impl-link.c:189 at 1.0.5). 4 adds debug.
+PW_LEVEL="${BT_UI_PW_LEVEL:-3}"
+MAX_BYTES="${BT_UI_MAX_BYTES:-52428800}"   # per monitor file, before rotation
+KEEP="${BT_UI_KEEP:-3}"                    # rotated files kept per monitor
+GCC_DOMAINS="${BT_UI_GCC_DOMAINS:-cc-sound-panel Gvc}"
+# WirePlumber 0.4: ONE level for all listed categories, and unlisted categories
+# are silenced at every level (lib/wp/log.c is_category_enabled), so this list
+# also decides which warnings survive. spa.bluez5.sink.sco is left out on
+# purpose: its timer logs at debug once per graph cycle (sco-sink.c:602).
+WP_DEBUG="${BT_UI_WP_DEBUG:-D:spa.bluez5,spa.bluez5.native,spa.bluez5.device,spa.bluez5.source.sco,spa.bluez5.quirks,script/*,m-default-nodes,m-default-profile,wireplumber,pw}"
+PULSE_DEBUG="${BT_UI_PULSE_DEBUG:-mod.protocol-pulse*:3}"
+DAEMON_DEBUG="${BT_UI_DAEMON_DEBUG:-3}"
+MARKER="bt-ui-capture"
+UNITS=(bt-ui-atspi bt-ui-sysbus bt-ui-sessbus)
+RECORDER_UNIT=bt-audio-policy
+DROPIN_NAME=90-bt-ui-capture.conf
+# Connection-level functions only. sco_send_frame, sco_recv_frame,
+# sco_sock_sendmsg, sco_recv_scodata and the refcount helpers run per packet
+# and stay off (the bt-dyndbg lesson: volume follows the call site's place in
+# the data path, not the file).
+SCO_FUNCS=(sco_sock_connect sco_connect sco_conn_add __sco_chan_add sco_conn_del
+           sco_chan_del sco_connect_cfm sco_disconn_cfm sco_conn_ready
+           __sco_sock_close sco_sock_release sco_sock_shutdown sco_sock_kill
+           sco_sock_timeout sco_connect_ind sco_conn_defer_accept)
+
+die()  { echo "bt-ui-capture: $*" >&2; exit 1; }
+need_root() { [[ "$EUID_EFF" -eq 0 ]] || die "${1:-this} must run as root (it acts on the desktop user's session through runuser)"; }
+
+# ── one mutation path, so `plan` cannot drift from `start` (the bt-mode rule)
+DRY=0
+run() { if (( DRY )); then echo "  would run: $*"; return 0; fi; "$@"; }
+# write_file <path> <mode> <owner:group or empty> <content>
+write_file() {
+    local f="$1" mode="$2" owner="$3" content="$4"
+    if (( DRY )); then
+        echo "  would write $f (mode $mode${owner:+, owner $owner}):"
+        # A desktop file copy is a hundred translation lines; show what differs.
+        printf '%s\n' "$content" | grep -E '^(#|\[|Exec|Environment|Name=)' | sed 's/^/      | /'
+        return 0
+    fi
+    printf '%s\n' "$content" > "$f" || return 1
+    chmod "$mode" "$f" || return 1
+    [[ -z "$owner" ]] || chown "$owner" "$f"
+}
+append_ctl() {   # dynamic debug: append, never truncate (see bin/bt-dyndbg)
+    if (( DRY )); then echo "  would write '$*' to $CTL"; return 0; fi
+    printf '%s\n' "$*" >> "$CTL" 2>/dev/null
+}
+
+# ── the desktop user, from logind rather than hard-coded ─────────────────
+U=""; UID_U=""; GID_U=""; HOME_U=""; XDG=""
+find_user() {
+    U="${BT_UI_USER:-}"
+    if [[ -z "$U" ]]; then
+        local sid
+        sid=$(loginctl show-seat seat0 -p ActiveSession --value 2>/dev/null)
+        [[ -n "$sid" ]] && U=$(loginctl show-session "$sid" -p Name --value 2>/dev/null)
+    fi
+    [[ -n "$U" ]] || return 1
+    UID_U="${BT_UI_UID:-$(id -u "$U" 2>/dev/null)}"
+    GID_U="$(id -g "$U" 2>/dev/null || echo "$UID_U")"
+    [[ -n "$UID_U" ]] || return 1
+    if [[ -n "${BT_UI_HOME:-}" ]]; then HOME_U="$BT_UI_HOME"
+    else
+        local pw
+        pw=$(getent passwd "$U" 2>/dev/null)
+        HOME_U=$(cut -d: -f6 <<<"$pw")
+    fi
+    [[ -n "$HOME_U" ]] || return 1
+    XDG="/run/user/$UID_U"
+}
+as_user() {
+    runuser -u "$U" -- env XDG_RUNTIME_DIR="$XDG" \
+        DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG/bus" "$@"
+}
+mkdir_user() {   # create a directory under the user's home, owned by the user
+    [[ -d "$1" ]] && return 0
+    run runuser -u "$U" -- mkdir -p "$1"
+}
+
+# ── session directory and its manifest ──────────────────────────────────
+SESSION=""; MANIFEST=""
+current_session() {
+    local p
+    [[ -r "$BASE/current" ]] || return 1
+    p=$(<"$BASE/current")
+    [[ -n "$p" && -d "$p" ]] || return 1
+    SESSION="$p"; MANIFEST="$SESSION/manifest.txt"
+}
+latest_session() {
+    current_session && return 0
+    local d last=""
+    for d in "$BASE"/2*/; do [[ -d "$d" ]] && last="${d%/}"; done
+    [[ -n "$last" ]] || return 1
+    SESSION="$last"; MANIFEST="$SESSION/manifest.txt"
+}
+mf() {   # record key=value; the last value of a key wins
+    if (( DRY )); then echo "  would record $1=$2"; return 0; fi
+    printf '%s=%s\n' "$1" "$2" >> "$MANIFEST"
+}
+mf_get() {
+    [[ -r "$MANIFEST" ]] || return 0
+    awk -v k="$1" 'index($0, k "=") == 1 { v = substr($0, length(k) + 2) } END { print v }' "$MANIFEST"
+}
+
+mark() {
+    local m="${BT_UI_MARK:-}"
+    [[ -n "$m" ]] || m=$(command -v bt-mark 2>/dev/null)
+    [[ -n "$m" ]] || m="$REPO/bin/bt-mark"
+    [[ -x "$m" ]] || { echo "  (no bt-mark found; mark skipped: $*)"; return 0; }
+    if (( DRY )); then echo "  would run: $m $*"; return 0; fi
+    "$m" "$@" >/dev/null
+}
+
+# ── probes (read-only) ───────────────────────────────────────────────────
+pw_level_now() {
+    local out
+    out=$(as_user pw-metadata -n settings 2>/dev/null) || return 1
+    sed -n "s/.*key:'log.level' value:'\([0-9]*\)'.*/\1/p" <<<"$out" | head -1
+}
+dyndbg_flags() {   # <func> -> the flags of its first site ("_" = off), or "?"
+    local line
+    line=$(grep -m1 -E "\]$1 =[a-z_]+ " "$CTL" 2>/dev/null) || { echo "?"; return 0; }
+    sed -E 's/.* =([a-z_]+) .*/\1/' <<<"$line"
+}
+unit_active() { systemctl is-active --quiet "$1" 2>/dev/null; }
+user_pids() { pgrep -u "$UID_U" -x "$1" 2>/dev/null; }
+proc_env() {   # <pid> <VAR> -> value or empty
+    local e
+    e=$(tr '\0' '\n' < "/proc/$1/environ" 2>/dev/null) || return 0
+    sed -n "s/^$2=//p" <<<"$e" | head -1
+}
+# Counted, never `| grep -q` (under pipefail that inverts on a match).
+has_marker() {
+    local n
+    [[ -r "$1" ]] || return 1
+    n=$(grep -c "^# $MARKER" "$1" 2>/dev/null || true)
+    (( ${n:-0} > 0 ))
+}
+
+versions() {
+    echo "# versions, $(date -Is)"
+    echo "kernel $(uname -r)"
+    dpkg-query -W -f='${Package} ${Version}\n' pipewire pipewire-pulse wireplumber \
+        libspa-0.2-bluetooth gnome-control-center bluez libgtk-4-1 at-spi2-core 2>/dev/null
+    echo "bluetoothd ExecStart: $(systemctl show bluetooth -p ExecStart --value 2>/dev/null | head -1)"
+    local n p
+    for n in pipewire wireplumber pipewire-pulse gnome-control-c; do
+        for p in $(user_pids "$n"); do
+            echo "process $n pid=$p started=$(ps -o lstart= -p "$p" 2>/dev/null)" \
+                 "PIPEWIRE_DEBUG=$(proc_env "$p" PIPEWIRE_DEBUG)" \
+                 "WIREPLUMBER_DEBUG=$(proc_env "$p" WIREPLUMBER_DEBUG)" \
+                 "G_MESSAGES_DEBUG=$(proc_env "$p" G_MESSAGES_DEBUG)"
+        done
+    done
+    echo "pipewire settings log.level: $(pw_level_now || echo '?')"
+    echo "toolkit-accessibility: $(as_user gsettings get org.gnome.desktop.interface toolkit-accessibility 2>/dev/null || echo '?')"
+    echo "linger: $(loginctl show-user "$U" -p Linger --value 2>/dev/null || echo '?')"
+}
+
+# ── the launcher overrides (GNOME Settings with G_MESSAGES_DEBUG) ────────
+override_paths() {
+    printf '%s\n' "$HOME_U/.local/share/applications/org.gnome.Settings.desktop" \
+                  "$HOME_U/.local/share/applications/gnome-sound-panel.desktop" \
+                  "$HOME_U/.local/share/applications/gnome-bluetooth-panel.desktop" \
+                  "$HOME_U/.local/share/dbus-1/services/org.gnome.Settings.service"
+}
+override_content() {   # <target path> -> content on stdout
+    local dst="$1" src line
+    printf '# %s session=%s: GNOME Settings with G_MESSAGES_DEBUG; removed by "bt-ui-capture stop"\n' \
+        "$MARKER" "$(basename "$SESSION")"
+    case "$dst" in
+        *.service)
+            printf '[D-BUS Service]\nName=org.gnome.Settings\nExec=/usr/bin/env "G_MESSAGES_DEBUG=%s" /usr/bin/gnome-control-center\n' "$GCC_DOMAINS"
+            return 0 ;;
+    esac
+    src="$APPDIR/$(basename "$dst")"
+    [[ -r "$src" ]] || return 1
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ "$line" == Exec=gnome-control-center* ]]; then
+            printf 'Exec=env "G_MESSAGES_DEBUG=%s" %s\n' "$GCC_DOMAINS" "${line#Exec=}"
+        else
+            printf '%s\n' "$line"
+        fi
+    done < "$src"
+}
+apply_overrides() {
+    local f content
+    while IFS= read -r f; do
+        if [[ -e "$f" ]] && ! has_marker "$f"; then
+            echo "  SKIP $f: exists and was not written by $MARKER (left untouched)"
+            continue
+        fi
+        if [[ -e "$f" ]]; then echo "  $f: already in place"; continue; fi
+        content=$(override_content "$f") || { echo "  SKIP $f: no system file to derive it from"; continue; }
+        mkdir_user "$(dirname "$f")"
+        write_file "$f" 0644 "$UID_U:$GID_U" "$content" && mf override "$f"
+    done < <(override_paths)
+    local p
+    for p in $(user_pids gnome-control-c); do
+        if [[ "$(proc_env "$p" G_MESSAGES_DEBUG)" == "$GCC_DOMAINS" ]]; then
+            echo "  GNOME Settings pid $p already runs with G_MESSAGES_DEBUG=$GCC_DOMAINS"
+        else
+            echo "  NOTE: GNOME Settings is running (pid $p) WITHOUT the debug domains."
+            echo "        Close it and open it again: it is single-instance, so a new"
+            echo "        launch only re-activates the running copy. Nothing here closes it."
+        fi
+    done
+}
+remove_overrides() {
+    local f
+    while IFS= read -r f; do
+        [[ -e "$f" ]] || continue
+        if has_marker "$f"; then run rm -f "$f"; echo "  removed $f"
+        else echo "  kept $f (not written by $MARKER)"; fi
+    done < <(override_paths)
+}
+
+# ── staged drop-ins (restart / re-login) ─────────────────────────────────
+dropin_path() { echo "$HOME_U/.config/systemd/user/$1.service.d/$DROPIN_NAME"; }
+dropin_content() {   # <service> <VAR=value>
+    printf '# %s: staged %s; read when %s.service next starts (logout/login with no\n' "$MARKER" "$(date -Is)" "$1"
+    printf '# other session, or boot). Nothing restarts it. Undo: bt-ui-capture unstage\n'
+    printf '[Service]\nEnvironment="%s"\n' "$2"
+}
+staged_pairs() {
+    printf '%s\n' "pipewire|PIPEWIRE_DEBUG=$DAEMON_DEBUG" \
+                  "pipewire-pulse|PIPEWIRE_DEBUG=$PULSE_DEBUG" \
+                  "wireplumber|WIREPLUMBER_DEBUG=$WP_DEBUG"
+}
+
+# ── monitors: transient system units running this tool's `_monitor` ──────
+start_monitor() {   # <unit> <kind>
+    if unit_active "$1"; then echo "  $1: already running"; return 0; fi
+    run systemd-run --quiet --unit="$1" --collect \
+        --description="bt-ui-capture $2 monitor ($(basename "$SESSION"))" \
+        --property=Restart=always --property=RestartSec=10 \
+        --setenv=BT_UI_USER="$U" --setenv=BT_UI_UID="$UID_U" \
+        --setenv=BT_UI_MAX_BYTES="$MAX_BYTES" --setenv=BT_UI_KEEP="$KEEP" \
+        "$SELF" _monitor "$2" "$SESSION" && mf unit "$1"
+}
+
+# capped_write <file>: stdin to <file>, rotating at MAX_BYTES (approximate:
+# characters, not bytes), keeping KEEP old files — so a monitor can never
+# outgrow (KEEP+1) x MAX_BYTES whatever the session produces.
+capped_write() {
+    local f="$1" bytes=0 line i
+    [[ -e "$f" ]] && bytes=$(stat -c %s "$f" 2>/dev/null || echo 0)
+    exec 3>>"$f" || return 1
+    chmod 0640 "$f" 2>/dev/null
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        printf '%s\n' "$line" >&3
+        bytes=$(( bytes + ${#line} + 1 ))
+        if (( bytes >= MAX_BYTES )); then
+            exec 3>&-
+            for (( i = KEEP - 1; i >= 1; i-- )); do
+                [[ -e "$f.$i" ]] && mv -f "$f.$i" "$f.$(( i + 1 ))"
+            done
+            mv -f "$f" "$f.1"
+            exec 3>>"$f"; chmod 0640 "$f" 2>/dev/null; bytes=0
+        fi
+    done
+    exec 3>&-
+}
+
+monitor_main() {   # _monitor <kind> <session dir>
+    need_root "_monitor"
+    local kind="${1:?kind}" dir="${2:?session dir}" raw addr
+    find_user || die "no desktop user"
+    case "$kind" in
+        atspi)
+            raw=$(as_user busctl --user call org.a11y.Bus /org/a11y/bus org.a11y.Bus GetAddress 2>/dev/null) \
+                || die "accessibility bus address not available"
+            addr=${raw#s \"}; addr=${addr%\"}
+            as_user python3 "$dir/bin/bt-ui-atspi.py" --address "$addr" --comm gnome-control-c \
+                | capped_write "$dir/atspi.log" ;;
+        sysbus)
+            # Everything BlueZ says, and every call made to it (who powered,
+            # who connected — or that nobody did, U9).
+            dbus-monitor --system "sender='org.bluez'" "destination='org.bluez'" \
+                | capped_write "$dir/system-bus.log" ;;
+        sessbus)
+            # GNOME Settings' own session-bus traffic and the rfkill switch the
+            # shell's quick settings drive.
+            as_user dbus-monitor --session "sender='org.gnome.Settings'" \
+                "destination='org.gnome.Settings'" \
+                "type='signal',path='/org/gnome/SettingsDaemon/Rfkill'" \
+                "type='method_call',destination='org.gnome.SettingsDaemon.Rfkill'" \
+                | capped_write "$dir/session-bus.log" ;;
+        *) die "unknown monitor kind: $kind" ;;
+    esac
+}
+
+# ── start ────────────────────────────────────────────────────────────────
+start_main() {
+    (( DRY )) || need_root "start"
+    if ! find_user; then
+        (( DRY )) || die "no active graphical session found (set BT_UI_USER)"
+        echo "  (no desktop user found from logind; showing the plan for user 'i')"
+        U=i; UID_U=1000; GID_U=1000; HOME_U=/home/i; XDG=/run/user/1000
+    fi
+    local reuse=0
+    if current_session; then reuse=1; else
+        SESSION="$BASE/$(date -u +%Y%m%dT%H%M%SZ)"; MANIFEST="$SESSION/manifest.txt"
+    fi
+    echo "── session: $SESSION ($([[ $reuse -eq 1 ]] && echo 'already active; re-applying what is not in effect' || echo new))"
+    if (( ! reuse )); then
+        run mkdir -p "$SESSION/bin"
+        run chmod 0755 "$SESSION" "$SESSION/bin"
+        mf session "$SESSION"
+        mf started_at "$(date '+%Y-%m-%d %H:%M:%S')"
+        mf user "$U uid=$UID_U home=$HOME_U"
+    fi
+    if (( DRY )); then echo "  would write $SESSION/versions.txt"
+    else versions > "$SESSION/versions.txt" 2>&1; fi
+    if [[ -r "$REPO/scripts/bt-ui-atspi.py" ]]; then
+        run install -m 0644 "$REPO/scripts/bt-ui-atspi.py" "$SESSION/bin/bt-ui-atspi.py"
+    else
+        echo "  WARNING: $REPO/scripts/bt-ui-atspi.py missing; the AT-SPI monitor will fail"
+    fi
+
+    echo "── PipeWire daemon log level (runtime; restored by stop)"
+    local before
+    before=$(pw_level_now || true)
+    if [[ -z "$(mf_get pw_level_before)" ]]; then mf pw_level_before "${before:-2}"; fi
+    if [[ "$before" == "$PW_LEVEL" ]]; then echo "  already $PW_LEVEL"
+    else
+        echo "  log.level ${before:-?} -> $PW_LEVEL (the pipewire daemon only; pipewire-pulse and"
+        echo "  wireplumber keep theirs: their settings metadata is local, src/pipewire/settings.c)"
+        run as_user pw-metadata -n settings 0 log.level "$PW_LEVEL" && mf pw_level_set "$PW_LEVEL"
+    fi
+
+    echo "── kernel dynamic debug, sco.c connection-level functions (runtime; restored by stop)"
+    local f flags n_on=0
+    if [[ ! -r "$CTL" ]]; then
+        echo "  cannot read $CTL (needs root and debugfs); would enable: ${SCO_FUNCS[*]}"
+    fi
+    for f in "${SCO_FUNCS[@]}"; do
+        [[ -r "$CTL" ]] || break
+        flags=$(dyndbg_flags "$f")
+        [[ -z "$(mf_get "dyndbg_before.$f")" ]] && mf "dyndbg_before.$f" "$flags"
+        if [[ "$flags" == *p* ]]; then n_on=$((n_on + 1)); continue; fi
+        [[ "$flags" == "?" ]] && { echo "  $f: no such site in $CTL (skipped)"; continue; }
+        append_ctl "module bluetooth func $f +p"
+    done
+    (( n_on > 0 )) && echo "  $n_on function(s) were already on"
+    echo "  (hci_conn.c is already on through bt-dyndbg; nothing added there)"
+
+    echo "── GNOME Settings launchers with G_MESSAGES_DEBUG=\"$GCC_DOMAINS\" (takes effect at its next start)"
+    apply_overrides
+
+    echo "── passive monitors (transient system units; files capped at $MAX_BYTES bytes x $((KEEP + 1)))"
+    start_monitor bt-ui-atspi atspi
+    start_monitor bt-ui-sysbus sysbus
+    start_monitor bt-ui-sessbus sessbus
+
+    echo "── audio-policy recorder"
+    if unit_active "$RECORDER_UNIT"; then
+        echo "  $RECORDER_UNIT: already running"
+        [[ -n "$(mf_get recorder)" ]] || mf recorder already-running
+    else
+        run systemd-run --quiet --unit="$RECORDER_UNIT" \
+            --description="Bluetooth audio-policy change recorder (qca9377-bt-hang)" \
+            --property=Restart=always --property=RestartSec=10 \
+            "$REPO/scripts/bt-audio-policy.py" --user "$U" && mf recorder started-by-ui-capture
+    fi
+
+    if (( ! DRY )); then
+        printf '%s\n' "$SESSION" > "$BASE/current"
+        mf state active
+    else
+        echo "  would write $BASE/current -> $SESSION"
+    fi
+    mark "ui-capture START session=$(basename "$SESSION") (pw level $PW_LEVEL, sco dyndbg, a11y/bus monitors)"
+    echo "── done. Logs: $SESSION   Read docs/ui-capture.md before the test."
+}
+
+# ── stage-restart / unstage ──────────────────────────────────────────────
+stage_main() {
+    (( DRY )) || need_root "stage-restart"
+    find_user || { (( DRY )) || die "no desktop user"; U=i; UID_U=1000; GID_U=1000; HOME_U=/home/i; XDG=/run/user/1000; }
+    echo "── staged settings (written now, read by systemd --user when each service next starts)"
+    local pair svc kv f content
+    while IFS= read -r pair; do
+        svc="${pair%%|*}"; kv="${pair#*|}"
+        f=$(dropin_path "$svc")
+        content=$(dropin_content "$svc" "$kv")
+        if [[ -e "$f" ]] && ! has_marker "$f"; then
+            echo "  SKIP $f: exists and was not written by $MARKER"; continue
+        fi
+        mkdir_user "$(dirname "$f")"
+        write_file "$f" 0644 "$UID_U:$GID_U" "$content"
+    done < <(staged_pairs)
+    local linger
+    linger=$(loginctl show-user "$U" -p Linger --value 2>/dev/null)
+    echo "  takes effect: at the next start of the user's services. With Linger=${linger:-?}"
+    echo "  and no other session open, a logout and login does it; so does a reboot."
+    echo "  This tool does not run daemon-reload and restarts nothing."
+    echo "  Check after the next login: bt-ui-capture status (compares the running"
+    echo "  processes' environment with the staged values)."
+}
+unstage_main() {
+    need_root "unstage"
+    find_user || die "no desktop user"
+    local svc f
+    for svc in pipewire pipewire-pulse wireplumber; do
+        f=$(dropin_path "$svc")
+        [[ -e "$f" ]] || continue
+        if has_marker "$f"; then run rm -f "$f"; echo "  removed $f"
+        else echo "  kept $f (not written by $MARKER)"; fi
+    done
+    echo "  Services already running with the debug environment keep it until they"
+    echo "  next start; nothing is restarted here."
+}
+
+# ── stop ─────────────────────────────────────────────────────────────────
+stop_main() {
+    need_root "stop"
+    find_user || die "no desktop user"
+    local u f b
+    current_session || echo "  no active session pointer; reverting whatever carries the $MARKER marker"
+    for u in "${UNITS[@]}"; do
+        if unit_active "$u"; then run systemctl stop "$u"; echo "  stopped $u"; fi
+    done
+    if [[ -n "$SESSION" ]]; then
+        b=$(mf_get pw_level_before)
+        if [[ -n "$b" ]]; then
+            run as_user pw-metadata -n settings 0 log.level "$b"
+            echo "  PipeWire daemon log.level -> $b (recorded at start)"
+        fi
+        for f in "${SCO_FUNCS[@]}"; do
+            b=$(mf_get "dyndbg_before.$f")
+            [[ "$b" == "_" ]] && append_ctl "module bluetooth func $f -p"
+        done
+        echo "  sco.c dynamic debug restored to the flags recorded at start"
+        if [[ "$(mf_get recorder)" == started-by-ui-capture ]] && unit_active "$RECORDER_UNIT"; then
+            run systemctl stop "$RECORDER_UNIT"; echo "  stopped $RECORDER_UNIT (this tool started it)"
+        fi
+    fi
+    remove_overrides
+    mark "ui-capture STOP session=$(basename "${SESSION:-none}")"
+    if [[ -n "$SESSION" ]]; then
+        mf stopped_at "$(date '+%Y-%m-%d %H:%M:%S')"
+        mf state stopped
+        run rm -f "$BASE/current"
+    fi
+    echo "  GNOME Settings, if open, keeps its debug environment until it is closed."
+    echo "  Staged drop-ins are untouched; remove them with: bt-ui-capture unstage"
+}
+
+# ── status ───────────────────────────────────────────────────────────────
+status_main() {
+    local have_user=1 u f s b p
+    find_user || have_user=0
+    if latest_session; then
+        echo "session: $SESSION ($(mf_get state); started $(mf_get started_at))"
+    else
+        echo "session: none under $BASE"
+    fi
+    for u in "${UNITS[@]}" "$RECORDER_UNIT"; do
+        if unit_active "$u"; then echo "  unit $u: active"; else echo "  unit $u: inactive"; fi
+    done
+    if [[ -n "$SESSION" ]]; then
+        for f in "$SESSION"/*.log*; do
+            [[ -e "$f" ]] || continue
+            s=$(stat -c %s "$f" 2>/dev/null || echo '?')
+            echo "  $f  $s bytes"
+        done
+    fi
+    if [[ "$EUID_EFF" -ne 0 ]]; then
+        echo "  (not root: PipeWire level, dynamic debug, overrides and process environments not read)"
+        return 0
+    fi
+    (( have_user )) || { echo "  no desktop user found"; return 0; }
+    echo "  PipeWire daemon log.level now: $(pw_level_now || echo '?') (recorded before start: $(mf_get pw_level_before))"
+    local on=0
+    for f in "${SCO_FUNCS[@]}"; do [[ "$(dyndbg_flags "$f")" == *p* ]] && on=$((on + 1)); done
+    echo "  sco.c dynamic debug: $on of ${#SCO_FUNCS[@]} functions on"
+    while IFS= read -r f; do
+        if has_marker "$f"; then echo "  override present: $f"; fi
+    done < <(override_paths)
+    for p in $(user_pids gnome-control-c); do
+        echo "  GNOME Settings pid $p G_MESSAGES_DEBUG='$(proc_env "$p" G_MESSAGES_DEBUG)'"
+    done
+    local pair svc kv var want got
+    while IFS= read -r pair; do
+        svc="${pair%%|*}"; kv="${pair#*|}"; var="${kv%%=*}"; want="${kv#*=}"
+        f=$(dropin_path "$svc")
+        has_marker "$f" || continue
+        got=""
+        for p in $(user_pids "$svc"); do got=$(proc_env "$p" "$var"); done
+        if [[ "$got" == "$want" ]]; then echo "  staged $svc: IN EFFECT ($var)"
+        else echo "  staged $svc: written, NOT yet in effect (running process has $var='$got')"; fi
+    done < <(staged_pairs)
+    local since
+    since=$(mf_get started_at)
+    if [[ -n "$since" ]]; then
+        echo "  journal lines since $since:"
+        for u in pipewire.service pipewire-pulse.service wireplumber.service; do
+            echo "    $u: $(bt_journal _SYSTEMD_USER_UNIT="$u" --since "$since" --no-pager -q 2>/dev/null | wc -l)"
+        done
+        echo "    gnome-control-center: $(bt_journal _COMM=gnome-control-c --since "$since" --no-pager -q 2>/dev/null | wc -l)"
+        echo "    journald rate-limit suppressions: $(bt_journal_count 'Suppressed [0-9]+ messages' SYSLOG_IDENTIFIER=systemd-journald --since "$since")"
+    fi
+}
+
+# ── collect ──────────────────────────────────────────────────────────────
+collect_main() {
+    need_root "collect"
+    local since="" until=""
+    while (( $# )); do
+        case "$1" in
+            --since) since="${2:?--since needs a time}"; shift 2 ;;
+            --until) until="${2:?--until needs a time}"; shift 2 ;;
+            *) die "collect: unknown argument $1" ;;
+        esac
+    done
+    latest_session || die "no session under $BASE (run start first, or pass a session)"
+    [[ -n "$since" ]] || since=$(mf_get started_at)
+    [[ -n "$since" ]] || die "no start time recorded; pass --since"
+    [[ -n "$until" ]] || until=$(mf_get stopped_at)
+    [[ -n "$until" ]] || until=$(date '+%Y-%m-%d %H:%M:%S')
+    local s u out raw pub f
+    s=$(date -d "$since" '+%Y-%m-%d %H:%M:%S') || die "cannot parse --since '$since'"
+    u=$(date -d "$until" '+%Y-%m-%d %H:%M:%S') || die "cannot parse --until '$until'"
+    out="$SESSION/collect-$(date -u +%Y%m%dT%H%M%SZ)"; raw="$out/raw"; pub="$out/published"
+    mkdir -p "$raw" "$pub" || die "cannot create $out"
+    chmod 0700 "$raw"
+    echo "── collecting $s .. $u into $out"
+    # One read, ORed matches: kernel, bluetoothd, the three PipeWire services,
+    # GNOME Settings (gnome-shell- or D-Bus-launched), the marks, the recorder,
+    # the monitors' own unit messages, and journald's rate-limit notices.
+    bt_journal --since "$s" --until "$u" --no-pager -o short-iso-precise \
+        _TRANSPORT=kernel + _COMM=bluetoothd \
+        + _SYSTEMD_USER_UNIT=pipewire.service + _SYSTEMD_USER_UNIT=pipewire-pulse.service \
+        + _SYSTEMD_USER_UNIT=wireplumber.service + _COMM=gnome-control-c \
+        + SYSLOG_IDENTIFIER=bt-mark + _SYSTEMD_UNIT=bt-audio-policy.service \
+        + _SYSTEMD_UNIT=bt-ui-atspi.service + _SYSTEMD_UNIT=bt-ui-sysbus.service \
+        + _SYSTEMD_UNIT=bt-ui-sessbus.service + SYSLOG_IDENTIFIER=systemd-journald \
+        > "$raw/timeline.log" 2>/dev/null
+    # The same userspace sources with their structured fields: WirePlumber's
+    # GLIB_DOMAIN (which script decided), CODE_FILE/LINE/FUNC for PipeWire and
+    # GLib — fields the short format drops.
+    bt_journal --since "$s" --until "$u" --no-pager -o json \
+        --output-fields=MESSAGE,PRIORITY,GLIB_DOMAIN,CODE_FILE,CODE_LINE,CODE_FUNC,_PID,_COMM,__REALTIME_TIMESTAMP \
+        _SYSTEMD_USER_UNIT=pipewire.service + _SYSTEMD_USER_UNIT=pipewire-pulse.service \
+        + _SYSTEMD_USER_UNIT=wireplumber.service + _COMM=gnome-control-c \
+        > "$raw/userspace.json" 2>/dev/null
+    for f in "$SESSION"/*.log "$SESSION"/*.log.[0-9]* "$SESSION/manifest.txt" "$SESSION/versions.txt"; do
+        [[ -e "$f" ]] && cp -p "$f" "$raw/"
+    done
+    # HCI captures covering the window: last written after its start, begun
+    # before its end (the file name carries the local start time).
+    local d c stamp ustamp
+    ustamp=$(date -d "$u" '+%Y%m%d%H%M%S')
+    {
+        echo "# HCI capture files overlapping $s .. $u (not copied: they hold addresses and payload)"
+        for d in $CAPTURE_DIRS; do
+            [[ -d "$d" ]] || continue
+            while IFS= read -r c; do
+                stamp=$(basename "$c" .btsnoop); stamp=${stamp#*-}; stamp=${stamp//-/}
+                [[ "$stamp" =~ ^[0-9]{14}$ ]] || continue
+                (( stamp <= ustamp )) || continue
+                echo "$c  $(stat -c '%s bytes, last write %y' "$c" 2>/dev/null)"
+            done < <(find "$d" -maxdepth 1 -name '*.btsnoop' -newermt "$s" 2>/dev/null | sort)
+        done
+        echo "# read a window:  scripts/capture-window.sh <file> \"$s\" \"$u\" 'RFCOMM|[+]BCS|Synchronous|Disconnect'"
+        echo "# codec switches: scripts/sco-switch-windows.sh <file> \"<from>\" \"<to>\""
+    } > "$raw/captures.txt"
+    local san="$HERE/sanitize-logs.sh"
+    [[ -x "$san" ]] || san=$(command -v bt-sanitize-logs 2>/dev/null)
+    if [[ -z "$san" ]]; then
+        echo "  WARNING: sanitize-logs.sh not found; nothing written to $pub"
+    else
+        for f in "$raw"/*; do
+            [[ -s "$f" ]] || continue
+            if "$san" "$f" "$pub/$(basename "$f")" >/dev/null 2>"$out/sanitize-errors.txt"; then
+                echo "  sanitised $(basename "$f")"
+            else
+                echo "  NOT published: $(basename "$f") (see $out/sanitize-errors.txt)"
+            fi
+        done
+        echo "  NOTE: placeholders (AA:BB:CC:00:00:NN) are numbered per file; within timeline.log they are consistent."
+    fi
+    for f in "$raw"/*; do echo "  $(stat -c '%8s' "$f") $f"; done
+}
+
+# ── dispatch ─────────────────────────────────────────────────────────────
+cmd="${1:-plan}"; shift || true
+case "$cmd" in
+    plan)
+        DRY=1
+        echo "bt-ui-capture plan — nothing below is done; 'start' and 'stage-restart' do it"
+        echo
+        echo "=== start (runtime; reverted by 'stop') ==="
+        start_main
+        echo
+        echo "=== stage-restart (written now, effective at the next login; reverted by 'unstage') ==="
+        stage_main
+        echo
+        echo "Journald: RateLimitIntervalSec=30s, RateLimitBurst=10000 per service by default"
+        echo "(this machine sets neither); 'status' counts suppressions since the start."
+        ;;
+    start)          start_main ;;
+    stage-restart)  stage_main ;;
+    status)         status_main ;;
+    stop)           stop_main ;;
+    unstage)        unstage_main ;;
+    collect)        collect_main "$@" ;;
+    _monitor)       monitor_main "$@" ;;
+    -h|--help|help) sed -n '2,60p' "$0" ;;
+    *) die "unknown command '$cmd' (plan|start|stage-restart|status|stop|unstage|collect)" ;;
+esac
