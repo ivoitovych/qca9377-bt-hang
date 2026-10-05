@@ -81,6 +81,15 @@ run `bluetoothd -d` — this project ships that on in
 | Compare SCO event windows | `tools/bt-sco --window` |
 | Redact before sharing anything raw | `tools/sanitize-logs.sh` |
 
+### Desktop audio and UI capture (U1–U9)
+
+| question | tool |
+|---|---|
+| **Instrument a manual audio test session** — who asked for each profile/volume/default change, what WirePlumber and PipeWire's Bluetooth backend decided, what GNOME Settings decided and drew | `sudo tools/bt-ui-capture plan` (default; changes nothing) → `start` (live: PipeWire daemon log level, `sco.c` connect/teardown debug, AT-SPI recorder, system/session bus monitors, GNOME Settings launchers with `G_MESSAGES_DEBUG`, the recorder if absent, a `bt-mark`) → `stop` (restores what `start` recorded). `stage-restart` / `unstage` for what needs a restart (pipewire-pulse requests, WirePlumber debug; effective at the next login, nothing restarted). `status`, `collect [--since T] [--until T]` (journal cut, monitor files, the HCI captures covering the window, sanitised copies). How to run a session and read it: [`ui-capture.md`](ui-capture.md); why each knob: [`ui-capture-research.md`](ui-capture-research.md) |
+| What does GNOME Settings' UI do, as events? | `scripts/bt-ui-atspi.py --address <a11y bus>` — passive (match rules only, no AT-SPI registry listener; GTK 4.14 emits regardless); run by `bt-ui-capture` as unit `bt-ui-atspi` |
+| Prove `bt-ui-capture` without a session (while a trial is open) | `scripts/prove-ui-capture.sh [tool]` — stubs on PATH, seams into `tmp/`, a private dbus-daemon for the AT-SPI path; 67 checks. Pass a modified copy to watch a check go red |
+| Debug-only patches for decisions nothing logs | `docs/ui-capture-patches/` — GNOME Settings 46.7 sound panel (U4, U1, U6), btusb SCO fragment drop (U8); plans in `ui-capture-research.md` §Task 4; nothing built |
+
 ### Repository and gates
 
 | question | tool |

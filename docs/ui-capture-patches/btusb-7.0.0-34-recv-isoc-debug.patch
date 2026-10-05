@@ -1,0 +1,28 @@
+Debug line only: which check makes btusb drop an incoming SCO fragment.
+
+Not for upstream submission. The kernel logs "corrupted SCO packet"
+(btusb_isoc_complete) when btusb_recv_isoc() returns -EILSEQ, for either of
+two reasons: the header's length exceeds the skb's tailroom, or the header's
+handle is not a live SCO/eSCO connection (a lost fragment, or data still
+arriving after the link was deleted). This adds one dynamic-debug site on that
+branch, off unless enabled:
+
+  echo 'module btusb func btusb_recv_isoc +p' > /sys/kernel/debug/dynamic_debug/control
+
+It runs in URB completion context, but only on the error path (U8 recorded
+six per link). Against Ubuntu's 7.0.0-34 source (cache/ubuntu-7.0.0-34).
+
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -1407,6 +1407,11 @@
+ 
+ 			if (skb_tailroom(skb) < hci_skb_expect(skb) ||
+ 			    !btusb_validate_sco_handle(data->hdev, hdr)) {
++				bt_dev_dbg(data->hdev,
++					   "dropped SCO fragment: handle 0x%4.4x dlen %u tailroom %u valid-handle %d",
++					   hci_handle(__le16_to_cpu(hdr->handle)), hdr->dlen,
++					   skb_tailroom(skb),
++					   btusb_validate_sco_handle(data->hdev, hdr));
+ 				kfree_skb(skb);
+ 				skb = NULL;
+ 
