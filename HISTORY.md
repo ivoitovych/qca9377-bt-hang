@@ -6,8 +6,11 @@ from the stripped binary, Phase 30 · the alternate-setting-1 signature, Phases 
 BlueZ patches sent and applied, Phase 36 · the kernel MGMT fix sent (09-24) and applied
 (09-29), Phase 37 and the chapter after it · E1 (QCA setup only, 58 links, 0 timeouts) and E3
 (the exact upstream entry, 16 links, 0 timeouts), the stable backport request sent 10-02, the
-mesh series through four phases — "The week the fixes left the machine" · the hand-off blocks
-BRIEF carried until 2026-10-03, verbatim, at the end.
+mesh series through four phases — "The week the fixes left the machine" · the backport queued
+for seven stable lines, CI repaired, the front page rewritten, the mesh work split into separate
+contributions after a research review, the desktop instrumented — "The days the work learned to
+say 'not yet'" · the hand-off blocks BRIEF carried until 2026-10-03 and 2026-10-05, verbatim,
+at the end.
 
 Chronological record of how this project came about, in the order things were actually
 learned — including the wrong turns, because several of them changed the conclusions.
@@ -3558,6 +3561,85 @@ to have lost a results row to a day-long journal scan and to reuse a trial numbe
 verdict now comes from the error-priority index in milliseconds, the descriptive scan is
 bounded, unclosed directories are set aside, and the installed copies — still from
 September 18 — await the operator's install.
+
+## The days the work learned to say "not yet" (2026-10-03 → 10-05)
+
+**The stable team answered within a day.** The backport request of October 2 asked for five
+lines; the reply queued `dc16388d45ec` for all seven live ones, 5.15 and 5.10 included. The
+mail was relayed by the operator and checked against the public stable queue the same day, so
+the record says "queued" because the queue says so (`EX-061`, `scripts/stable-queue-check.sh`).
+The QCA9377 hang now reaches users with each line's next release.
+
+**CI had been red for a week and nobody saw it.** An outside presentation review of the public
+tree (10-02) noticed the badge. Every push since September 26 had failed: the suite refuses to
+run while a trial is open, a trial had been open throughout E1 and E3, so nothing ran locally
+and `devtools/save` printed "CI will run it on push" thirty times. Of the four failing
+invariants, three were rule violations in that week's own code; the fourth was a real defect —
+`journalctl --grep` exits 1 when nothing matches, and the new trial closer read that as an
+unreadable journal, so every clean trial would have closed `unknown`. Fixed on an isolated
+branch, proven green by CI, merged; the coverage exclusions that had rotted behind the red step
+were re-derived the same evening.
+
+**The front page was rewritten around what had been achieved.** The presentation review was
+verified claim by claim — its file-level claims held; three details were off — and acted on in
+two edits: README opens with the three accepted contributions and the QCA9377 result credited to
+the entry's upstream author; a new `docs/STATUS.md` is the one dated page that says what is
+current; BRIEF's nine stacked hand-off blocks went verbatim into this file; the register gained
+a lifecycle table and the kernel MGMT fix as BT-8; nine broken links, the old plans' labels and
+stale counts were fixed by a second, mechanical edit.
+
+**U7 turned out to be a race, and the earlier reading was wrong in mechanism.** Reading all four
+live-link codec switches from the retained captures showed the one thing that separates failure
+from success: on the earbuds the headset answers `AT+BCS=` 16–30 ms after the Disconnect while
+the old link's Disconnection Complete arrives 177–205 ms after it, so PipeWire's new connect
+lands inside the teardown and is never retried; on the MOMENTUM the order is the other way
+round (`EX-060`). U6 was located upstream (fixed in GNOME Settings 47, absent from Ubuntu
+24.04). A private note on how the host handles the overlapping connect was stopped by a safety
+classifier mid-write; nothing was written, and the operator filed a report about the stop.
+
+**The mesh series met an architecture.** Phase 5 answered every finding of the second review
+and found an older bug of its own (a power-off during a transmission left the scheduler stuck
+for good). The operator then asked for an open-ended research review of the whole history of
+Bluetooth Mesh in Linux before deciding anything. Its verdict, every cited list thread fetched
+and verified here: the mesh transmit path has never had one ownership model, and other 2026 work
+— a February race patch, an August lifetime series, a September cleanup by another author — has
+been finding other pieces of the same missing state machine. So v3 is not sent as one series.
+It is split into separate contributions in a reviewer-agreed order: a Tested-by on the other
+author's cleanup first, a standalone BlueZ leak fix, the power-off fix, a question to the list
+on what Count means, and the core ownership patches only after four prerequisites are settled.
+
+**"Tested-by" had to be earned literally.** Phase 5 had proved the cleanup's *idea* with a local
+equivalent; the reviewer pointed out that a Tested-by belongs to the exact posted patch. It was
+applied unchanged, built against an identical control kernel and checked with a new case that
+forces the failure: without the patch the rejected request stays listed, is later completed,
+makes the next request go out twice and exhausts the handles; with it none of that happens.
+The reply and the standalone BlueZ leak fix were prepared, linted and dry-run; they wait for
+the operator's word. A second patch for the same power-off bug, by another author, surfaced in
+the same search and is being compared with ours before anything is sent for that bug.
+
+**Writing the state machine down changed what was known.** A private document modelled two
+coupled machines — the life of a request, and who owns the controller and the advertising slot —
+with fourteen invariants checked against every revision and proposal. Two of its inferences were
+then put to qemu as research gates and both held: the advertising-instance list is changed
+without the lock it documents in several call paths, and multi-CPU runs show races on it; the
+device-removal path permits a lock-order inversion that lockdep reports once the teardown is
+kept queued. Those details stay private until a patch exists. The gates also exposed a weakness
+in our own evidence: phase 5's race-checker runs had used a single-CPU kernel, so "KCSAN clean"
+meant little; the public page was corrected instead of defended.
+
+**The desktop got instruments before the next manual test.** For every unfixed UI item the code
+that decides what the operator saw was located at the installed versions and upstream reports
+were collected (U1 is fixed in PipeWire 1.2, U4 lives in GNOME Settings 46's panel logic, U9 is a
+policy declined upstream years ago). `tools/bt-ui-capture` was built, reviewed and switched on:
+PipeWire's daemon log level, the kernel's SCO-socket debug, a recorder of GNOME Settings' UI
+events from the accessibility bus and bus monitors, live; WirePlumber's and pipewire-pulse's
+debug staged for the next login; everything undone by `stop` and `unstage`.
+
+**Prompts and passwords.** The operator twice forwarded floods of permission prompts. The second
+time most were simple read-only commands without a rule; read-only rules and the agents' helper
+areas were added, while anything that changes audio settings still asks. Reading the local
+settings showed three revoked Gmail app passwords stored in one-off "always allow" rules from
+earlier sends; they were removed, and sends now run through `git`, which never prompts.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here verbatim from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
