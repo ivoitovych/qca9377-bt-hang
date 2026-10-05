@@ -20,75 +20,76 @@ series) were moved verbatim to the end of `HISTORY.md`; the block below is repla
 topped up. **Sections name their owner**; each owner writes theirs and points at the long form
 (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-10-03 · newest exhibit on `main`: EX-061** (EX-044/049/050 live on private
+**Last updated: 2026-10-05 · newest exhibit on `main`: EX-061** (EX-044/049/050 live on private
 branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted within hours (`R2-13`).
 
-> **HAND-OFF (2026-10-03).** *Current state of every issue and submission: `docs/STATUS.md`.*
-> **Submissions:** BlueZ ×2 **applied** 09-21; kernel MGMT fix **applied** 09-29 (`86ef0f58bdec`);
-> stable backport request for `dc16388d45ec` **sent** 10-02 03:25 +0200 (Message-ID
-> `<20261002012542.473669-1-yaroslav.voytovych@gmail.com>`, SMTP `250`); **QUEUED by the stable
-> team for 7.2, 6.18, 6.12, 6.6, 6.1, 5.15 and 5.10** (reply relayed by the operator 10-03,
-> confirmed in the public stable queue the same day, `EX-061`,
-> `scripts/stable-queue-check.sh`). Asked for five lines; queued for all seven. Nothing owed;
-> next: each line's release, then the Ubuntu kernel that carries it.
-> **Mesh series (private `diag/mesh-tester-ci`): phase 4 done 10-02** — the 10-02 review's race
-> is reproduced and fixed by a new prerequisite patch 1/3 (`HCI_MESH_SENDING` stays set through
-> the tear-down; `mesh_next()` decides the next owner under `hdev->lock`); v2 = three kernel
-> patches + the BlueZ tester, 25/25 KVM ×3, bluetooth-next + v2 25/25, TCG+valgrind 20/20 (seven
-> pre-existing tester errors), cancel/hold ×5 60/60, mgmt-tester 501/501, checkpatch/W=1/sparse
-> clean per commit, stable text-apply after `71af682ba469`. Committed as
-> `patches/mesh-tester/series-v2/`, `docs/mesh-tester-ci/phase4-results.md`; the review request
-> is `docs/mesh-tester-ci/REVIEW-TASK-SERIES-V2.md`. **Phase 5 done 10-04** (private
-> `diag/mesh-tester-ci` `1806e72`, `docs/mesh-tester-ci/phase5-results.md`,
-> `patches/mesh-tester/series-v3/`): all five v2 findings answered; v3 = 5 kernel patches (4/5 a
-> new fix: power-off during a transmission left `HCI_MESH_SENDING` set for good; 5/5 a comment
-> on the Count deadline, droppable, alternative in `series-v3/alternative/`) + 4 BlueZ patches;
-> mesh-tester 55/55 (unpatched 18/55); raw logs in `cache/mesh-tester-ci-phase5/logs` with
-> checksums committed. **Superseded 10-05 by the outside research review**
-> (`docs/mesh-tester-ci/research-review-2026-10-05.md`, every cited thread fetched and verified):
-> the transmit path has no single ownership model; other 2026 work (Feb race patch, Aug lifetime
-> series — both unmerged, Sep cleanup by another author — unmerged) covers other parts of it. v3 is
-> split: (1) test the other author's EXACT cleanup patch and offer a Tested-by (phase 5 used a local
-> equivalent — not enough for a Tested-by); (2) BlueZ `shared/mgmt` leak fix alone; (3) power-off
-> fix (old 4/5) alone; (4) Count as a question to the list, old 5/5 dropped; (5) the core three after
-> the lifetime work settles, 2/5 with an exact internal-instance predicate; (6) duration overflow.
-> Keep `Cc: stable` on fixes, drop the five-tree "applies" claim. A private state-machine document
-> (`tmp/mesh-tester-ci/STATE-MACHINE.md`, in progress) maps every patch onto the transition it
-> repairs. Steps 1–2 in progress in qemu; **nothing goes out without the operator's word.**
-> History of that phase follows. **Second outside review returned 10-03:
-> "do not send this revision yet"** (kept as `review-series-v2-2026-10-03.md`), five findings
-> verified here against the source: (1) `mesh_send()`'s error cleanup is inverted (`if (sending)
-> mgmt_mesh_remove`), so a start whose `hci_cmd_sync_queue()` fails leaves its `mesh_tx` pending
-> with the flag clear, and v2's `mesh_next()` later **starts the rejected request** — a public
-> patch by another author (2026-09-19, "fix mesh_tx leak on hci_cmd_sync_queue() failure") already
-> proposes the one-line cleanup; reference it, never re-author it; (2) the done deadline is
-> `cnt × 25 ms` while the instance interval is the adapter's (1280 ms default), so an effective
-> tear-down may air one event where `Count` asked for three — receiver-based emulator test needed
-> before any "Count restored" claim; (3) the active-cancel tester case can still pass on natural
-> completion; (4) ⚠️ my power-off argument was wrong: `__hci_cmd_sync_sk()` has no HCI_UP guard, a
-> queued start on a down device is not promptly `-ENETDOWN`; (5) the duration note misses
-> remainder 8 (timeout ≡ 6357 mod 8192 also encodes 0). Phase 5 task: `PHASE5-TASK.md`. Also
-> corrected: the BlueZ patch carries no `Signed-off-by` (BlueZ forbids it); phase4-results said
-> otherwise. **Not sent.**
-> **Machine:** E3 (`updates/btusb.ko` = the exact upstream entry) installed, trial E3 #1 open;
-> the installed `/usr/local/bin` tools are the 09-18 copies — the operator installs (and the
-> 10-03 `bt-trial` fix matters: with the 09-28 closer every clean trial would close `unknown`).
-> `bt-audio-policy` recorder transient. **Userspace (10-03, `docs/userspace-upstream-check-2026-10-03.md`):**
-> **U7 is a race** — the new SCO connect is issued ~25 ms after the AG's `OK`, and on the earbuds
-> the old link's Disconnection Complete arrives 177–205 ms after the Disconnect, after the connect;
-> on the MOMENTUM 39–46 ms, before it (`EX-060`, four switches). No PipeWire commit through master
-> addresses it; reportable to PipeWire with the exhibit. **U6** fixed upstream in GNOME Settings 47.0
-> (six commits named), absent from Ubuntu 24.04 → SRU after one recorder reading. Queue: U7 report,
-> U6 SRU, U4, U9.
-> **CI was red 09-26 → 10-02**, unseen because the suite refuses while a trial is open; four
-> invariants fixed 10-03 on `fix/ci-invariants-2026-10-03`, green, merged — one real defect among
-> them (§9.4). **Docs:** an outside presentation review (10-02) was verified claim by claim; its
-> first edit (README, `docs/STATUS.md`, this file, `docs/issues.md`) landed 10-03, the mechanical
-> second edit (links, historical labels, counts) on `docs/second-edit-2026-10-03`.
-> **Rules re-stated:** nothing sent anywhere without the operator's word; private branches
-> (`kernel/*`, `diag/*`, `plan/*`, `review/*`, `attribution/*`, `postponed/*`) push to `private`
-> only; attribution in this repository is the project author's only; never touch the laptop's
-> Bluetooth or kernel from an agent; operator impressions are leads, tagged, never evidence.
+> **HAND-OFF (2026-10-05, written at context compaction).** Current state of every issue and
+> submission: `docs/STATUS.md`. The previous block is at the end of `HISTORY.md`, verbatim.
+>
+> **Upstream, done:** BlueZ ×2 applied 09-21 (`a734b06059cb`, `0bed9886cff3`); kernel MGMT fix
+> applied to bluetooth-next 09-29 (`86ef0f58bdec`, waiting for mainline); stable backport of
+> `dc16388d45ec` **queued for 7.2, 6.18, 6.12, 6.6, 6.1, 5.15, 5.10** (requested 10-02 for five,
+> all seven queued 10-03, stable-queue commit `007ed56547de`, `EX-061`,
+> `scripts/stable-queue-check.sh`; links in STATUS). Nothing owed on any of them.
+>
+> **READY TO SEND — waiting for the operator's word and a fresh app password** (used once on the
+> two `git send-email` commands, never written to a file; `git *` never prompts, so it cannot land
+> in an allow rule — the 09/10 passwords that did were removed from `settings.local.json` 10-04):
+> 1. **Tested-by reply on Hui Peng's posted cleanup** ("Bluetooth: MGMT: fix mesh_tx leak on
+>    hci_cmd_sync_queue() failure", patchwork 14831271, still `new`, unmerged). Validated EXACTLY
+>    as posted (git am, unchanged) on bluetooth-next `036d4119079a`, identical control build; six
+>    assertions control-vs-patched, five runs each (`docs/mesh-tester-ci/validation-2026-10-05.md`
+>    on private `diag/mesh-tester-ci`). Draft `cache/hui-peng-validation/reply-draft.txt`
+>    (reply-all: To the author; Cc both maintainers, the kernel.org developer from his Cc,
+>    linux-bluetooth, linux-kernel; In-Reply-To his Message-ID); lint clean; **dry-run envelope
+>    checked 10-05**. Both send commands, with the pre-send checks: `cache/hui-peng-validation/SEND.txt`
+>    (outside the repository: it carries addresses).
+> 2. **BlueZ `shared/mgmt: Fix notify leak in mgmt_unregister()`** standalone
+>    (`tmp/mesh-tester-ci/standalone/bluez-shared-mgmt-leak/0001-…patch`, also on the private
+>    branch): applies to BlueZ master `4dc15be8e` (`scripts/pre-send-check.sh` OK 10-05),
+>    mgmt-tester leak 227 objects → 0, testers' results unchanged, checkpatch/gitlint clean, no
+>    competing fix; To linux-bluetooth only; dry-run checked.
+>
+> **Mesh work — the plan after the outside research review (10-05):** v3 (5+4 patches) is NOT sent
+> as a series. Order: (1) the Tested-by above; (2) the BlueZ leak fix above; (3) the power-off fix
+> — **a competing patch by Jiale Yao (patchwork 14864878, 10-03) exists; a qemu comparison of the
+> two is RUNNING** (`tmp/mesh-tester-ci/power-off-compare-2026-10-05.md`; criterion: does recovery
+> keep the normal hand-over path); (4) Count as a separate question to the list (old 5/5 dropped);
+> (5) the core ownership patches, only after four prerequisites: the cleanup, mesh locking of the
+> advertising list, a deliberate unregister drain policy, no scheduler hand-over in command-clear
+> callbacks; (6) the duration overflow. Device removal is a separate question from Count.
+> Keep `Cc: stable` on fixes; never claim stable applicability from text-apply.
+> **Private documents** (`diag/mesh-tester-ci`): `RESEARCH-AND-REVIEW-TASK-2026-10-05.md` (the
+> open-ended task), `research-review-2026-10-05.md` (the review, every cited thread verified, and
+> the reviewer's follow-ups), `STATE-MACHINE.md` (two coupled machines — request lifetime and
+> controller/slot ownership — fourteen invariants, matrix of all revisions and proposals),
+> `gates-2026-10-05.md` (two research gates **confirmed** in qemu; kernel findings stay private
+> until a patch exists), `validation-2026-10-05.md`. ⚠️ **Phase 5's KCSAN runs were single-CPU**
+> and could not see most races — corrected in STATUS; use the 4-CPU wrapper (`qemu-smp.sh`).
+>
+> **Desktop capture RUNNING** since 10-05 02:37 (`tools/bt-ui-capture`, merged on `main`;
+> `docs/ui-capture.md`, research `docs/ui-capture-research.md`): PipeWire daemon log level 3,
+> kernel SCO-socket debug, GNOME Settings UI-event recorder (accessibility bus), system and session
+> bus monitors; GNOME Settings logs its decisions once **closed and reopened**; WirePlumber and
+> pipewire-pulse debug **staged for the next login**. Undo: `bt-ui-capture stop`, `unstage`.
+> Operator decisions open: a GNOME Settings debug build (dev packages; build elsewhere), a btusb
+> debug build for U8 (only after trial E3 #1 closes), installing shellcheck.
+> **Userspace findings:** U7 is a race between PipeWire's new SCO connect and the old link's
+> teardown (`EX-060`); U6 fixed in GNOME 47, not in noble (SRU after one reading); U1 fixed in
+> PipeWire 1.2 (`805e5cf9c`); U4 GNOME Settings 46 logic, two related open reports; U9 BlueZ
+> policy, declined upstream before (STATUS has all rows).
+>
+> **Machine:** E3 installed, trial E3 #1 open (the suite therefore refuses locally — watch CI
+> after every push: `devtools/ci`); installed `/usr/local/bin` tools are the 09-18 copies (the
+> operator installs). **Permissions:** project `.claude/settings.json` gained read-only rules and
+> the agents' helper-script areas on 10-04/05 (see memory).
+> **Rules:** nothing sent without the operator's word; private branches push to `private` only;
+> attribution is the project author's only — no tool or model names anywhere, no `Assisted-by`;
+> other authors' patches are tested exactly as posted and never re-authored; a kernel finding stays
+> private until its patch exists; operator impressions are leads; never touch the laptop's
+> Bluetooth or kernel from an agent; clock ranges are written "HH:MM:SS to HH:MM:SS"
+> (`scripts/fix-time-ranges.py`) because the publishing scan reads the hyphenated form as an
+> address.
 
 
 ---
