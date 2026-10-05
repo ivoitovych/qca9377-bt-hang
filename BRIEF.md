@@ -44,7 +44,17 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 > new fix: power-off during a transmission left `HCI_MESH_SENDING` set for good; 5/5 a comment
 > on the Count deadline, droppable, alternative in `series-v3/alternative/`) + 4 BlueZ patches;
 > mesh-tester 55/55 (unpatched 18/55); raw logs in `cache/mesh-tester-ci-phase5/logs` with
-> checksums committed. **Waiting on the operator's two decisions, then a third outside review.**
+> checksums committed. **Superseded 10-05 by the outside research review**
+> (`docs/mesh-tester-ci/research-review-2026-10-05.md`, every cited thread fetched and verified):
+> the transmit path has no single ownership model; other 2026 work (Feb race patch, Aug lifetime
+> series — both unmerged, Sep cleanup by another author — unmerged) covers other parts of it. v3 is
+> split: (1) test the other author's EXACT cleanup patch and offer a Tested-by (phase 5 used a local
+> equivalent — not enough for a Tested-by); (2) BlueZ `shared/mgmt` leak fix alone; (3) power-off
+> fix (old 4/5) alone; (4) Count as a question to the list, old 5/5 dropped; (5) the core three after
+> the lifetime work settles, 2/5 with an exact internal-instance predicate; (6) duration overflow.
+> Keep `Cc: stable` on fixes, drop the five-tree "applies" claim. A private state-machine document
+> (`tmp/mesh-tester-ci/STATE-MACHINE.md`, in progress) maps every patch onto the transition it
+> repairs. Steps 1–2 in progress in qemu; **nothing goes out without the operator's word.**
 > History of that phase follows. **Second outside review returned 10-03:
 > "do not send this revision yet"** (kept as `review-series-v2-2026-10-03.md`), five findings
 > verified here against the source: (1) `mesh_send()`'s error cleanup is inverted (`if (sending)
