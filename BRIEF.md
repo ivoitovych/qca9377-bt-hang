@@ -32,18 +32,24 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 > all seven queued 10-03, stable-queue commit `007ed56547de`, `EX-061`,
 > `scripts/stable-queue-check.sh`; links in STATUS). Nothing owed on any of them.
 >
+> **SENT 2026-10-06 22:18 +0200 — Tested-by reply on Hui Peng's posted cleanup** ("Bluetooth:
+> MGMT: fix mesh_tx leak on hci_cmd_sync_queue() failure", patchwork 14831271), reply-all, threaded,
+> SMTP `250` for all six recipients, Message-ID
+> `<20261006201800.3597400-1-yaroslav.voytovych@gmail.com>`. Final text = private
+> `diag/mesh-tester-ci` `b926833` (`patches/mesh-tester/hui-peng-tested-by-reply.txt`), after
+> three outside reviewers' rounds; it links the public retest kit pinned at `ccfc358`
+> (`retest/mesh-tx-leak/`). Before sending: bluetooth-next had moved to `c85976511aa9`, the fix
+> not in it, `mesh_send()` untouched; Pauli Virtanen's `87a49b610708` ("hci_sync: fix mesh adv
+> timeout units", 10-05) says it fixes mesh-tester's "Send cancel" failures — the reply's two
+> timeouts are true for the tested base; check what it means for our mesh plan (items 3–6 below)
+> before any further mesh work. App password used on that one command only; operator to revoke
+> it; confirm with `scripts/smtp-login-check.sh`. Watch the thread for replies.
+>
 > **READY TO SEND — waiting for the operator's word and a fresh app password** (used once on the
-> two `git send-email` commands, never written to a file; `git *` never prompts, so it cannot land
-> in an allow rule — the 09/10 passwords that did were removed from `settings.local.json` 10-04):
-> 1. **Tested-by reply on Hui Peng's posted cleanup** ("Bluetooth: MGMT: fix mesh_tx leak on
->    hci_cmd_sync_queue() failure", patchwork 14831271, still `new`, unmerged). Validated EXACTLY
->    as posted (git am, unchanged) on bluetooth-next `036d4119079a`, identical control build; six
->    assertions control-vs-patched, five runs each (`docs/mesh-tester-ci/validation-2026-10-05.md`
->    on private `diag/mesh-tester-ci`). Draft `cache/hui-peng-validation/reply-draft.txt`
->    (reply-all: To the author; Cc both maintainers, the kernel.org developer from his Cc,
->    linux-bluetooth, linux-kernel; In-Reply-To his Message-ID); lint clean; **dry-run envelope
->    checked 10-05**. Both send commands, with the pre-send checks: `cache/hui-peng-validation/SEND.txt`
->    (outside the repository: it carries addresses).
+> `git send-email` command, never written to a file; `git *` never prompts, so it cannot land in an
+> allow rule — the 09/10 passwords that did were removed from `settings.local.json` 10-04). The
+> send command and pre-send checks: `cache/hui-peng-validation/SEND.txt` (outside the repository:
+> it carries addresses); `scripts/pre-send-check.sh` OK 10-06 against BlueZ master `f8f352d13`.
 > 2. **BlueZ `shared/mgmt: Fix notify leak in mgmt_unregister()`** standalone
 >    (`tmp/mesh-tester-ci/standalone/bluez-shared-mgmt-leak/0001-…patch`, also on the private
 >    branch): applies to BlueZ master `4dc15be8e` (`scripts/pre-send-check.sh` OK 10-05),
@@ -52,9 +58,10 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 >
 > **Mesh work — the plan after the outside research review (10-05):** v3 (5+4 patches) is NOT sent
 > as a series. Order: (1) the Tested-by above; (2) the BlueZ leak fix above; (3) the power-off fix
-> — **a competing patch by Jiale Yao (patchwork 14864878, 10-03) exists; a qemu comparison of the
-> two is RUNNING** (`tmp/mesh-tester-ci/power-off-compare-2026-10-05.md`; criterion: does recovery
-> keep the normal hand-over path); (4) Count as a separate question to the list (old 5/5 dropped);
+> — **a competing patch by Jiale Yao (patchwork 14864878, 10-03) exists; the qemu comparison is
+> DONE** (private `docs/mesh-tester-ci/power-off-compare-2026-10-05.md`): both fail with a backlog
+> of three; his recovers outside the command worker with no locks held; ours needs v3 1/5. Proposal
+> (operator's call): a review reply on his thread, no Tested-by; (4) Count as a separate question to the list (old 5/5 dropped);
 > (5) the core ownership patches, only after four prerequisites: the cleanup, mesh locking of the
 > advertising list, a deliberate unregister drain policy, no scheduler hand-over in command-clear
 > callbacks; (6) the duration overflow. Device removal is a separate question from Count.
