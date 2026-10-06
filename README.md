@@ -42,6 +42,16 @@ tree; inclusion in a release, stable backports and distribution packages are lat
 milestones, tracked in [`docs/STATUS.md`](docs/STATUS.md). Submission history and every
 link (lore, patchwork, the list's CI bot) are in [`patches/bluez/README.md`](patches/bluez/README.md).
 
+### Backports and testing of others' patches
+
+Not code of this project, but upstream work done here: getting another author's fix to users
+of older kernels, and testing other authors' patches as posted.
+
+| upstream | contribution | state |
+|---|---|---|
+| Linux stable | Backport request for [`dc16388d45ec`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=dc16388d45ec) (the QCA9377 device-table entry, authored by Tibor Harcsa — the fix for this repository's original hang), with the cherry-pick and build verified on every target line (`EX-059`) | requested 2026-10-02 ([lore](https://lore.kernel.org/r/20261002012542.473669-1-yaroslav.voytovych@gmail.com)); **queued for 7.2, 6.18, 6.12, 6.6, 6.1, 5.15 and 5.10** (stable-queue [`007ed56547de`](https://git.kernel.org/pub/scm/linux/kernel/git/stable/stable-queue.git/commit/?id=007ed56547dedc050e1af25976bdfb299aa99b67), `EX-061`) |
+| Linux Bluetooth (MGMT) | `Tested-by` on Hui Peng's "Bluetooth: MGMT: fix mesh_tx leak on hci_cmd_sync_queue() failure" ([patchwork 14831271](https://patchwork.kernel.org/patch/14831271/)), which its author had not reproduced: the leak reproduced without fault injection (a Mesh Send while powered off), the posted patch compared with an unpatched control in QEMU, and requests answered Failed shown to be transmitted later; reproducer, configs and 159 VM logs in [`retest/mesh-tx-leak/`](retest/mesh-tx-leak/REPORT.md) | sent 2026-10-06 ([lore](https://lore.kernel.org/r/20261006201800.3597400-1-yaroslav.voytovych@gmail.com)); the patch is pending |
+
 ## The QCA9377 result
 
 **The controller hang was the missing `btusb` device-table entry.** Without it `13d3:3503`
