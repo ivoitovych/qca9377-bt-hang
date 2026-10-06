@@ -68,7 +68,9 @@ command -v python3 >/dev/null 2>&1 || {
 PYFILES=(); PYSKIPPED=()
 while IFS= read -r f; do
     [[ -f "$f" ]] || continue
-    case "$f" in scripts/*)
+    # retest/ likewise: a published retest kit run in QEMU elsewhere, never in
+    # this suite (retest/*/README.md). Added 2026-10-06.
+    case "$f" in scripts/*|retest/*)
         IFS= read -r shebang < "$f" || continue
         case "$shebang" in '#!'*python*) PYSKIPPED+=("$f") ;; *) case "$f" in *.py) PYSKIPPED+=("$f") ;; esac ;; esac
         continue ;;
@@ -86,7 +88,7 @@ if (( ${#PYFILES[@]} == 0 )); then
     exit 2
 fi
 for f in "${PYSKIPPED[@]+"${PYSKIPPED[@]}"}"; do
-    echo "out of scope (scripts/, not shipped): $f"
+    echo "out of scope (scripts/, retest/, not shipped): $f"
 done
 
 WORK=$(mktemp -d) || exit 1

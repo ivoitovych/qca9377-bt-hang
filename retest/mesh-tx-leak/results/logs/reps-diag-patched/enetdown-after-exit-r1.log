@@ -1,0 +1,94 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+Could not access KVM kernel module: No such file or directory
+qemu-system-x86_64: failed to initialize kvm: No such file or directory
+qemu-system-x86_64: falling back to tcg
+No EFI environment detected.
+early console in extract_kernel
+input_data: 0x0000000006f552c4
+input_len: 0x00000000020f48e3
+output: 0x0000000001000000
+output_len: 0x00000000069ba478
+kernel_total_size: 0x000000000809c000
+needed_size: 0x0000000008200000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000005e2cc90).
+[    0.000000] Linux version 7.3.0-rc2-g8ac2a343ce63 (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Mon Oct  5 22:18:32 UTC 2026
+[    0.000000] Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/work/bluez/./tools/test-runner TESTHOME=/home/user/work/bluez TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/home/user/experiments/bluetooth/mesh-tx-leak/kmemleak-after-exit.sh /home/user/work/bluez/tools/mesh-leak-check enetdown legacy'
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+[    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000003ffdffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000003ffe0000-0x000000003fffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x0000000040000000-0x00000000afffffff]
+[    0.000000] BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+[    0.000000] BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+[    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+[    0.000000] BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+[    0.000000] printk: legacy bootconsole [earlyser0] enabled
+[    0.000000] Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+ÿ[    9.155077] Driver 'wmi-bmof' was unable to register with bus_type 'wmi' because the bus was not initialized.
+[   15.029184] 9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Failed to mount filesystem: Device or resource busy
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /home/user/experiments/bluetooth/mesh-tx-leak/kmemleak-after-exit.sh /home/user/work/bluez/tools/mesh-leak-check enetdown legacy
+Changing into directory /home/user/work/bluez
+New process 74 created
+=== scenario kmemleak-enetdown, legacy advertising ===
+KERNEL Linux version 7.3.0-rc2-g8ac2a343ce63 (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Mon Oct  5 22:18:32 UTC 2026
+controller hci0 added (legacy advertising)
+sockA: Set Powered 1 -> Success
+sockA: Set Powered 0 -> Success
+controller hci0 HCI_UP=0
+sockA: Set LE 1 -> Success
+sockA: Set Exp Feature mesh 1 -> Success
+[   22.602033] Bluetooth: hci0: Send Mesh Failed -100
+sockA: Mesh Send tag 1 -> Failed (0x03)
+sockA: Read Mesh Features [after_failure] max_handles 3 used_handles 0 handles []
+RESULT after_failure outstanding=0 handles=-
+RESULT before_teardown kprobe handle=1 added=1 mesh_send_sync=0 removed=1
+RESULT before_teardown kprobe hci_release_dev=0 hci_sock_destruct=1
+sockA: close socket
+emulator: removing controller
+emulator: controller removed
+RESULT after_teardown kprobe handle=1 added=1 mesh_send_sync=0 removed=1
+RESULT after_teardown kprobe hci_release_dev=1 hci_sock_destruct=2
+kmemleak: not scanning (noscan), exiting
+=== end scenario kmemleak-enetdown (ok) ===
+reproducer exited with status 0
+RESULT enetdown kmemleak round=1 scan=after_exit unreferenced=0 from_mgmt_mesh_add=0 from_hci_sock_create=0
+RESULT enetdown kmemleak round=2 scan=after_exit unreferenced=0 from_mgmt_mesh_add=0 from_hci_sock_create=0
+RESULT enetdown kmemleak round=3 scan=after_exit unreferenced=0 from_mgmt_mesh_add=0 from_hci_sock_create=0
+RESULT enetdown kmemleak round=4 scan=after_exit unreferenced=0 from_mgmt_mesh_add=0 from_hci_sock_create=0
+RESULT enetdown kmemleak round=5 scan=after_exit unreferenced=0 from_mgmt_mesh_add=0 from_hci_sock_create=0
+Process 74 exited with status 0

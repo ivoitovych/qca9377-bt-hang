@@ -1,0 +1,48 @@
+From 3792c210325e1fa1524ce2a20ab571dbe8f21020 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Mon, 5 Oct 2026 20:41:51 +0000
+Subject: [PATCH] TEST ONLY: mesh_send delay knob
+
+---
+ net/bluetooth/mgmt.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index aea3482e3..2c16fb5a6 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -22,6 +22,7 @@
+ /* Bluetooth HCI Management interface */
+ 
+ #include <linux/module.h>
++#include <linux/delay.h>
+ #include <linux/unaligned.h>
+ 
+ #include <net/bluetooth/bluetooth.h>
+@@ -2491,6 +2492,13 @@ static int mesh_send_cancel(struct sock *sk, struct hci_dev *hdev,
+ 	return err;
+ }
+ 
++/* Test-only knob: delay between mgmt_mesh_add() and hci_cmd_sync_queue()
++ * in mesh_send(), so that the controller can be removed while a Mesh Send
++ * is in progress. Not for upstream.
++ */
++static unsigned int mesh_send_test_delay_ms;
++module_param(mesh_send_test_delay_ms, uint, 0644);
++
+ static int mesh_send(struct sock *sk, struct hci_dev *hdev, void *data, u16 len)
+ {
+ 	struct mgmt_mesh_tx *mesh_tx;
+@@ -2533,6 +2541,9 @@ static int mesh_send(struct sock *sk, struct hci_dev *hdev, void *data, u16 len)
+ 	sending = hci_dev_test_flag(hdev, HCI_MESH_SENDING);
+ 	mesh_tx = mgmt_mesh_add(sk, hdev, send, len);
+ 
++	if (mesh_tx && !sending && READ_ONCE(mesh_send_test_delay_ms))
++		msleep(READ_ONCE(mesh_send_test_delay_ms));
++
+ 	if (!mesh_tx)
+ 		err = -ENOMEM;
+ 	else if (!sending)
+-- 
+2.43.0
+

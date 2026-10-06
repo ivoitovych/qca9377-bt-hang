@@ -1,0 +1,273 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+Could not access KVM kernel module: No such file or directory
+qemu-system-x86_64: failed to initialize kvm: No such file or directory
+qemu-system-x86_64: falling back to tcg
+No EFI environment detected.
+early console in extract_kernel
+input_data: 0x0000000006f552c4
+input_len: 0x00000000020f4486
+output: 0x0000000001000000
+output_len: 0x00000000069ba474
+kernel_total_size: 0x000000000809c000
+needed_size: 0x0000000008200000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000005e2cc90).
+[    0.000000] Linux version 7.3.0-rc2-g3792c210325e (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Mon Oct  5 21:56:14 UTC 2026
+[    0.000000] Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/work/bluez/./tools/test-runner TESTHOME=/home/user/work/bluez TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/home/user/work/bluez/tools/mesh-leak-check kmemleak-enomem legacy plain'
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+[    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000003ffdffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000003ffe0000-0x000000003fffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x0000000040000000-0x00000000afffffff]
+[    0.000000] BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+[    0.000000] BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+[    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+[    0.000000] BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+[    0.000000] printk: legacy bootconsole [earlyser0] enabled
+[    0.000000] Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+ÿ[   11.462674] Driver 'wmi-bmof' was unable to register with bus_type 'wmi' because the bus was not initialized.
+[   17.621307] 9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Failed to mount filesystem: Device or resource busy
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /home/user/work/bluez/tools/mesh-leak-check kmemleak-enomem legacy plain
+Changing into directory /home/user/work/bluez
+New process 74 created
+=== scenario kmemleak-enomem, legacy advertising ===
+KERNEL Linux version 7.3.0-rc2-g3792c210325e (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Mon Oct  5 21:56:14 UTC 2026
+controller hci0 added (legacy advertising)
+sockA: Set Powered 1 -> Success
+sockA: Set Powered 0 -> Success
+controller hci0 HCI_UP=0
+sockA: Set LE 1 -> Success
+sockA: Set Exp Feature mesh 1 -> Success
+failslab: require mesh_send [ffffffffb3f4b4e0,ffffffffb3f4ba90) reject mgmt_mesh_add [ffffffffb3fdaa40,ffffffffb3fdad40)
+sockA: Set Powered 1 -> Success
+AULT_INJECTION: forcing a failure.
+[   37.755755] name failslab, interval 1, probability 100, space 0, times 1
+[   37.757086] FAULT_INJECTION: forcing a failure.
+[   37.757086] name failslab, interval 1, probability 100, space 0, times 1
+[   37.758145] CPU: 0 UID: 0 PID: 76 Comm: mesh-leak-check Not tainted 7.3.0-rc2-g3792c210325e #1 PREEMPT(lazy) 
+[   37.758257] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+[   37.758547] Call Trace:
+[   37.758697]  <TASK>
+[   37.758820]  dump_stack_lvl+0x66/0xa0
+[   37.759688]  should_fail_ex+0x54f/0x650
+[   37.759764]  should_failslab+0xc2/0x120
+[   37.759805]  __kmalloc_noprof+0xe3/0x700
+[   37.759902]  ? alloc_buf.isra.0+0x44/0x210
+[   37.759988]  alloc_buf.isra.0+0x44/0x210
+[   37.760041]  put_chars+0x1d9/0x2e0
+[   37.760067]  ? add_lock_to_list+0x2c/0x1b0
+[   37.760136]  ? __pfx_put_chars+0x10/0x10
+[   37.760242]  hvc_console_print+0x250/0x750
+[   37.760320]  ? __pfx_hvc_console_print+0x10/0x10
+[   37.760401]  ? lock_release+0xc6/0x280
+[   37.760493]  console_flush_one_record+0x55a/0x910
+[   37.760557]  ? __pfx_console_flush_one_record+0x10/0x10
+[   37.760730]  console_unlock+0xc3/0x1a0
+[   37.760777]  ? __pfx_console_unlock+0x10/0x10
+[   37.760818]  ? mark_held_locks+0x10/0x70
+[   37.760912]  ? _printk+0xba/0xf0
+[   37.760961]  ? __down_trylock_console_sem+0x56/0x90
+[   37.760998]  vprintk_emit+0x313/0x3e0
+[   37.761035]  ? __pfx_vprintk_emit+0x10/0x10
+[   37.761058]  ? entry_SYSCALL_64_after_hwframe+0x77/0x7f
+[   37.761148]  _printk+0xba/0xf0
+[   37.761192]  ? __pfx__printk+0x10/0x10
+[   37.761247]  ? __pfx____ratelimit+0x10/0x10
+[   37.761282]  ? __pfx_mesh_send_sync+0x10/0x10
+[   37.761338]  should_fail_ex+0x524/0x650
+[   37.761371]  ? lock_release+0xc6/0x280
+[   37.761409]  ? __pfx_mesh_send_sync+0x10/0x10
+[   37.761435]  should_failslab+0xc2/0x120
+[   37.761461]  ? __pfx_mesh_send_sync+0x10/0x10
+[   37.761485]  __kmalloc_cache_noprof+0x86/0x5d0
+[   37.761518]  ? hci_cmd_sync_submit+0xa3/0x2b0
+[   37.761564]  ? __pfx_mesh_send_start_complete+0x10/0x10
+[   37.761590]  ? __pfx_mesh_send_sync+0x10/0x10
+[   37.761614]  hci_cmd_sync_submit+0xa3/0x2b0
+[   37.761735]  mesh_send+0x243/0x5b0
+[   37.761778]  ? __pfx_mesh_send+0x10/0x10
+[   37.761814]  ? do_raw_read_unlock+0x44/0xd0
+[   37.761843]  ? _raw_read_unlock+0x1e/0x40
+[   37.761954]  hci_sock_sendmsg+0x1196/0x2260
+[   37.762014]  ? avc_has_perm+0xa5/0x160
+[   37.762046]  ? __pfx_hci_sock_sendmsg+0x10/0x10
+[   37.762082]  ? selinux_socket_sendmsg+0x8c/0x270
+[   37.762128]  ? kasan_save_stack+0x42/0x60
+[   37.762190]  sock_write_iter+0x427/0x4c0
+[   37.762230]  ? __pfx_sock_write_iter+0x10/0x10
+[   37.762252]  ? __file_has_perm+0x30c/0x410
+[   37.762321]  ? selinux_file_permission+0x22d/0x530
+[   37.762395]  vfs_write+0xa71/0x1060
+[   37.762432]  ? lock_acquire+0x18d/0x300
+[   37.762459]  ? __fget_files+0x2b/0x2f0
+[   37.762488]  ? __pfx_vfs_write+0x10/0x10
+[   37.762613]  ksys_write+0x17c/0x1c0
+[   37.762706]  ? __pfx_ksys_write+0x10/0x10
+[   37.762735]  ? exit_to_user_mode_loop+0x11f/0x530
+[   37.762765]  ? trace_hardirqs_off+0x67/0x150
+[   37.762830]  do_syscall_64+0x109/0x5e0
+[   37.762922]  entry_SYSCALL_64_after_hwframe+0x77/0x7f
+[   37.763049] RIP: 0033:0x7f0afbe7d5dd
+[   37.763523] Code: e5 48 83 ec 20 48 89 55 e8 48 89 75 f0 89 7d f8 e8 88 bf f7 ff 48 8b 55 e8 48 8b 75 f0 41 89 c0 8b 7d f8 b8 01 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 33 44 89 c7 48 89 45 f8 e8 df bf f7 ff 48 8b
+[   37.763704] RSP: 002b:00007f0afbbda250 EFLAGS: 00000293 ORIG_RAX: 0000000000000001
+[   37.763819] RAX: ffffffffffffffda RBX: 000000000000002b RCX: 00007f0afbe7d5dd
+[   37.763912] RDX: 0000000000000031 RSI: 00007f0afbbda2a0 RDI: 0000000000000004
+[   37.763962] RBP: 00007f0afbbda270 R08: 0000000000000000 R09: 00007f0afbbdab10
+[   37.764004] R10: 0000000000000000 R11: 0000000000000293 R12: 00007f0afbbdac20
+[   37.764044] R13: 0000000000000059 R14: 0000000000000059 R15: 00007f0afbbdab0e
+[   37.764203]  </TASK>
+[   38.146021] CPU: 0 UID: 0 PID: 76 Comm: mesh-leak-check Not tainted 7.3.0-rc2-g3792c210325e #1 PREEMPT(lazy) 
+[   38.146179] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+[   38.146236] Call Trace:
+[   38.146287]  <TASK>
+[   38.146322]  dump_stack_lvl+0x80/0xa0
+[   38.146420]  should_fail_ex+0x54f/0x650
+[   38.146460]  ? lock_release+0xc6/0x280
+[   38.146520]  ? __pfx_mesh_send_sync+0x10/0x10
+[   38.146561]  should_failslab+0xc2/0x120
+[   38.146604]  ? __pfx_mesh_send_sync+0x10/0x10
+[   38.146643]  __kmalloc_cache_noprof+0x86/0x5d0
+[   38.146697]  ? hci_cmd_sync_submit+0xa3/0x2b0
+[   38.146773]  ? __pfx_mesh_send_start_complete+0x10/0x10
+[   38.146815]  ? __pfx_mesh_send_sync+0x10/0x10
+[   38.146972]  hci_cmd_sync_submit+0xa3/0x2b0
+[   38.147072]  mesh_send+0x243/0x5b0
+[   38.147177]  ? __pfx_mesh_send+0x10/0x10
+[   38.147243]  ? do_raw_read_unlock+0x44/0xd0
+[   38.147304]  ? _raw_read_unlock+0x1e/0x40
+[   38.147386]  hci_sock_sendmsg+0x1196/0x2260
+[   38.147478]  ? avc_has_perm+0xa5/0x160
+[   38.147527]  ? __pfx_hci_sock_sendmsg+0x10/0x10
+[   38.147587]  ? selinux_socket_sendmsg+0x8c/0x270
+[   38.147625]  ? kasan_save_stack+0x42/0x60
+[   38.147716]  sock_write_iter+0x427/0x4c0
+[   38.147778]  ? __pfx_sock_write_iter+0x10/0x10
+[   38.147808]  ? __file_has_perm+0x30c/0x410
+[   38.148028]  ? selinux_file_permission+0x22d/0x530
+[   38.148187]  vfs_write+0xa71/0x1060
+[   38.148272]  ? lock_acquire+0x18d/0x300
+[   38.148321]  ? __fget_files+0x2b/0x2f0
+[   38.148418]  ? __pfx_vfs_write+0x10/0x10
+[   38.148634]  ksys_write+0x17c/0x1c0
+[   38.148700]  ? __pfx_ksys_write+0x10/0x10
+[   38.148735]  ? exit_to_user_mode_loop+0x11f/0x530
+[   38.148780]  ? trace_hardirqs_off+0x67/0x150
+[   38.149001]  do_syscall_64+0x109/0x5e0
+[   38.149087]  entry_SYSCALL_64_after_hwframe+0x77/0x7f
+[   38.149173] RIP: 0033:0x7f0afbe7d5dd
+[   38.149237] Code: e5 48 83 ec 20 48 89 55 e8 48 89 75 f0 89 7d f8 e8 88 bf f7 ff 48 8b 55 e8 48 8b 75 f0 41 89 c0 8b 7d f8 b8 01 00 00 00 0f 05 <48> 3d 00 f0 ff ff 77 33 44 89 c7 48 89 45 f8 e8 df bf f7 ff 48 8b
+[   38.149299] RSP: 002b:00007f0afbbda250 EFLAGS: 00000293 ORIG_RAX: 0000000000000001
+[   38.149379] RAX: ffffffffffffffda RBX: 000000000000002b RCX: 00007f0afbe7d5dd
+[   38.149408] RDX: 0000000000000031 RSI: 00007f0afbbda2a0 RDI: 0000000000000004
+[   38.149431] RBP: 00007f0afbbda270 R08: 0000000000000000 R09: 00007f0afbbdab10
+[   38.149454] R10: 0000000000000000 R11: 0000000000000293 R12: 00007f0afbbdac20
+[   38.149479] R13: 0000000000000059 R14: 0000000000000059 R15: 00007f0afbbdab0e
+[   38.149649]  </TASK>
+[   38.323458] Bluetooth: hci0: Send Mesh Failed -12
+sockA: Mesh Send tag 1 -> Failed (0x03)
+sockA: Read Mesh Features [after_failure] max_handles 3 used_handles 1 handles [1]
+RESULT after_failure outstanding=1 handles=1
+RESULT before_teardown kprobe handle=1 added=1 mesh_send_sync=0 removed=0
+RESULT before_teardown kprobe hci_release_dev=0 hci_sock_destruct=1
+sockA: close socket
+emulator: removing controller
+emulator: controller removed
+RESULT after_teardown kprobe handle=1 added=1 mesh_send_sync=0 removed=0
+RESULT after_teardown kprobe hci_release_dev=1 hci_sock_destruct=1
+kmemleak: round 1: waiting for object aging, scanning
+RESULT enomem kmemleak round=1 stack_scan=on slab_shrink=no unreferenced=0 from_mgmt_mesh_add=0 from_hci_sock_create=0
+kmemleak: round 2: waiting for object aging, scanning
+RESULT enomem kmemleak round=2 stack_scan=on slab_shrink=no unreferenced=3 from_mgmt_mesh_add=1 from_hci_sock_create=2
+kmemleak: round 3: waiting for object aging, scanning
+RESULT enomem kmemleak round=3 stack_scan=on slab_shrink=no unreferenced=3 from_mgmt_mesh_add=1 from_hci_sock_create=2
+kmemleak: round 4: waiting for object aging, scanning
+RESULT enomem kmemleak round=4 stack_scan=on slab_shrink=no unreferenced=3 from_mgmt_mesh_add=1 from_hci_sock_create=2
+kmemleak: round 5: waiting for object aging, scanning
+KMEMLEAK unreferenced object 0xffff888003e67000 (size 2048):
+KMEMLEAK   comm "mesh-leak-check", pid 76, jiffies 4294689304
+KMEMLEAK   hex dump (first 32 bytes):
+KMEMLEAK     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+KMEMLEAK     1f 00 03 40 00 00 00 00 00 00 00 00 00 00 00 00  ...@............
+KMEMLEAK   backtrace (crc 62835fbe):
+KMEMLEAK     __kmalloc_noprof+0x469/0x700
+KMEMLEAK     sk_prot_alloc+0x115/0x210
+KMEMLEAK     sk_alloc+0x2b/0x970
+KMEMLEAK     bt_sock_alloc+0x29/0x350
+KMEMLEAK     hci_sock_create+0xb3/0x170
+KMEMLEAK     bt_sock_create+0x123/0x250
+KMEMLEAK     __sock_create+0x23e/0x5c0
+KMEMLEAK     __sys_socket+0x116/0x1d0
+KMEMLEAK     __x64_sys_socket+0x6d/0xb0
+KMEMLEAK     do_syscall_64+0x109/0x5e0
+KMEMLEAK     entry_SYSCALL_64_after_hwframe+0x77/0x7f
+KMEMLEAK unreferenced object 0xffff888002003780 (size 32):
+KMEMLEAK   comm "mesh-leak-check", pid 76, jiffies 4294689305
+KMEMLEAK   hex dump (first 32 bytes):
+KMEMLEAK     00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
+KMEMLEAK     07 00 00 00 03 00 00 00 0f 00 00 00 00 00 00 00  ................
+KMEMLEAK   backtrace (crc 53473829):
+KMEMLEAK     __kmalloc_noprof+0x469/0x700
+KMEMLEAK     lsm_blob_alloc+0x49/0x70
+KMEMLEAK     security_sk_alloc+0x29/0x90
+KMEMLEAK     sk_prot_alloc+0x12b/0x210
+KMEMLEAK     sk_alloc+0x2b/0x970
+KMEMLEAK     bt_sock_alloc+0x29/0x350
+KMEMLEAK     hci_sock_create+0xb3/0x170
+KMEMLEAK     bt_sock_create+0x123/0x250
+KMEMLEAK     __sock_create+0x23e/0x5c0
+KMEMLEAK     __sys_socket+0x116/0x1d0
+KMEMLEAK     __x64_sys_socket+0x6d/0xb0
+KMEMLEAK     do_syscall_64+0x109/0x5e0
+KMEMLEAK     entry_SYSCALL_64_after_hwframe+0x77/0x7f
+KMEMLEAK unreferenced object 0xffff8880052aec00 (size 96):
+KMEMLEAK   comm "mesh-leak-check", pid 76, jiffies 4294701936
+KMEMLEAK   hex dump (first 32 bytes):
+KMEMLEAK     50 d1 a1 04 80 88 ff ff 50 d1 a1 04 80 88 ff ff  P.......P.......
+KMEMLEAK     00 00 00 00 00 00 00 00 2b 00 00 00 00 00 00 00  ........+.......
+KMEMLEAK   backtrace (crc 12076d16):
+KMEMLEAK     __kmalloc_cache_noprof+0x41f/0x5d0
+KMEMLEAK     mgmt_mesh_add+0x4f/0x300
+KMEMLEAK     mesh_send+0x205/0x5b0
+KMEMLEAK     hci_sock_sendmsg+0x1196/0x2260
+KMEMLEAK     sock_write_iter+0x427/0x4c0
+KMEMLEAK     vfs_write+0xa71/0x1060
+KMEMLEAK     ksys_write+0x17c/0x1c0
+KMEMLEAK     do_syscall_64+0x109/0x5e0
+KMEMLEAK     entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RESULT enomem kmemleak round=5 stack_scan=on slab_shrink=no unreferenced=3 from_mgmt_mesh_add=1 from_hci_sock_create=2
+=== end scenario kmemleak-enomem (ok) ===
+Process 74 exited with status 0

@@ -130,7 +130,10 @@ while IFS= read -r f; do
     # all 813 invariants green. Excluded by directory and LISTED below, so the
     # narrowing shows in the report. A script promoted to tools/ or devtools/
     # is measured from that moment.
-    case "$f" in scripts/*) SHSKIPPED+=("$f"); continue ;; esac
+    # retest/ is out of scope for the same reason: a published retest kit whose
+    # scripts run kernels in QEMU on another machine (retest/*/README.md), never
+    # in this suite. Added 2026-10-06 with retest/mesh-tx-leak/.
+    case "$f" in scripts/*|retest/*) SHSKIPPED+=("$f"); continue ;; esac
     IFS= read -r shebang < "$f" || continue
     case "$shebang" in
         '#!'*bash*|'#!'*/sh|'#!'*' sh') SHFILES+=("$f") ;;
@@ -161,7 +164,7 @@ if (( ${#SHFILES[@]} == 0 )); then
     echo "coverage: no shell files found (not a git checkout?)" >&2
     exit 2
 fi
-echo "out of scope (scripts/, not shipped): ${#SHSKIPPED[@]} file(s)" >&2
+echo "out of scope (scripts/, retest/, not shipped): ${#SHSKIPPED[@]} file(s)" >&2
 
 # ── run the suite under trace ─────────────────────────────────────────────
 printf 'running tests/run-tests under trace (%d shell files)...\n' "${#SHFILES[@]}" >&2

@@ -1,0 +1,138 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+Could not access KVM kernel module: No such file or directory
+qemu-system-x86_64: failed to initialize kvm: No such file or directory
+qemu-system-x86_64: falling back to tcg
+No EFI environment detected.
+early console in extract_kernel
+input_data: 0x0000000006bb02c4
+input_len: 0x00000000020f07ee
+output: 0x0000000001000000
+output_len: 0x00000000069b9f90
+kernel_total_size: 0x0000000007cf3000
+needed_size: 0x0000000007e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000005e2bc90).
+[    0.000000] Linux version 7.3.0-rc2-g036d4119079a (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #2 SMP PREEMPT_DYNAMIC Mon Oct  5 22:52:54 UTC 2026
+[    0.000000] Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/work/bluez/./tools/test-runner TESTHOME=/home/user/work/bluez TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/home/user/work/bluez/tools/mesh-leak-check busy-drain ext'
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+[    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000003ffdffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000003ffe0000-0x000000003fffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x0000000040000000-0x00000000afffffff]
+[    0.000000] BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+[    0.000000] BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+[    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+[    0.000000] BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+[    0.000000] printk: legacy bootconsole [earlyser0] enabled
+[    0.000000] Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+ÿ[    5.688433] Driver 'wmi-bmof' was unable to register with bus_type 'wmi' because the bus was not initialized.
+[    8.181054] 9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Failed to mount filesystem: Device or resource busy
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /home/user/work/bluez/tools/mesh-leak-check busy-drain ext
+Changing into directory /home/user/work/bluez
+New process 75 created
+=== scenario busy-drain, ext advertising ===
+KERNEL Linux version 7.3.0-rc2-g036d4119079a (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #2 SMP PREEMPT_DYNAMIC Mon Oct  5 22:52:54 UTC 2026
+controller hci0 added (extended advertising)
+sockA: Set Powered 1 -> Success
+sockA: Set Powered 0 -> Success
+controller hci0 HCI_UP=0
+sockA: Set LE 1 -> Success
+sockA: Set Exp Feature mesh 1 -> Success
+[   11.779507] Bluetooth: hci0: Send Mesh Failed -100
+sockA: Mesh Send tag 1 -> Failed (0x03)
+[   11.785506] Bluetooth: hci0: Send Mesh Failed -100
+sockA: Mesh Send tag 2 -> Failed (0x03)
+[   11.788505] Bluetooth: hci0: Send Mesh Failed -100
+sockA: Mesh Send tag 3 -> Failed (0x03)
+sockA: Read Mesh Features [sockA_after_3_failures] max_handles 3 used_handles 3 handles [1,2,3]
+RESULT sockA_after_3_failures outstanding=3 handles=1,2,3
+sockA: Set Powered 1 -> Success
+sockA: Mesh Send tag 4 -> Busy (0x0a)
+RESULT sockA_send_after_power_on status=Busy
+sockB: Mesh Send tag 11 -> Success handle 4
+sockB: event Mesh Packet Complete handle 1
+sockB: event Mesh Packet Complete handle 2
+sockB: event Mesh Packet Complete handle 3
+sockB: event Mesh Packet Complete handle 4
+sockA: event Mesh Packet Complete handle 1
+sockA: event Mesh Packet Complete handle 2
+sockA: event Mesh Packet Complete handle 3
+sockA: event Mesh Packet Complete handle 4
+sockA: Read Mesh Features [sockA_after_sockB_send_1] max_handles 3 used_handles 0 handles []
+RESULT sockA_after_sockB_send_1 outstanding=0 handles=-
+sockB: Mesh Send tag 12 -> Success handle 5
+sockB: event Mesh Packet Complete handle 5
+sockA: event Mesh Packet Complete handle 5
+sockA: Read Mesh Features [sockA_after_sockB_send_2] max_handles 3 used_handles 0 handles []
+RESULT sockA_after_sockB_send_2 outstanding=0 handles=-
+sockB: Mesh Send tag 13 -> Success handle 6
+sockB: event Mesh Packet Complete handle 6
+sockA: event Mesh Packet Complete handle 6
+sockA: Read Mesh Features [sockA_after_sockB_send_3] max_handles 3 used_handles 0 handles []
+RESULT sockA_after_sockB_send_3 outstanding=0 handles=-
+sockB: Mesh Send tag 14 -> Success handle 7
+sockB: event Mesh Packet Complete handle 7
+sockA: event Mesh Packet Complete handle 7
+sockA: Read Mesh Features [sockA_after_sockB_send_4] max_handles 3 used_handles 0 handles []
+RESULT sockA_after_sockB_send_4 outstanding=0 handles=-
+sockA: Mesh Send tag 20 -> Success handle 8
+RESULT sockA_send_after_drain status=Success
+sockA: event Mesh Packet Complete handle 8
+sockA: Read Mesh Features [sockA_end] max_handles 3 used_handles 0 handles []
+RESULT sockA_end outstanding=0 handles=-
+RESULT end sockB packet_complete_handles=1,2,3,4,5,6,7
+RESULT end hci tag=1 adv_data_writes=0
+RESULT end hci tag=2 adv_data_writes=1
+RESULT end hci tag=3 adv_data_writes=1
+RESULT end hci tag=4 adv_data_writes=0
+RESULT end hci tag=11 adv_data_writes=2
+RESULT end hci tag=12 adv_data_writes=1
+RESULT end hci tag=13 adv_data_writes=1
+RESULT end hci tag=14 adv_data_writes=1
+RESULT end hci tag=20 adv_data_writes=1
+RESULT end hci adv_enable=8 adv_disable=8
+RESULT end kprobe handle=1 added=1 mesh_send_sync=0 removed=1
+RESULT end kprobe handle=2 added=1 mesh_send_sync=1 removed=1
+RESULT end kprobe handle=3 added=1 mesh_send_sync=1 removed=1
+RESULT end kprobe handle=4 added=1 mesh_send_sync=2 removed=1
+RESULT end kprobe handle=5 added=1 mesh_send_sync=1 removed=1
+RESULT end kprobe handle=6 added=1 mesh_send_sync=1 removed=1
+RESULT end kprobe handle=7 added=1 mesh_send_sync=1 removed=1
+RESULT end kprobe handle=8 added=1 mesh_send_sync=1 removed=1
+RESULT end kprobe hci_release_dev=0 hci_sock_destruct=1
+=== end scenario busy-drain (ok) ===
+Process 75 exited with status 0

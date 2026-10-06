@@ -75,9 +75,16 @@ pass()   { (( QUIET )) || echo "  ✓ $1"; }
 # [:_-]: the underscore form is the one that carried the historical 20-address
 # leak (BlueZ D-Bus paths), and it was the one separator this last-line-of-
 # defence scan did not match while the sanitiser did.
+# The exact addresses below are BlueZ test constants that mgmt-tester prints
+# into kernel logs (retest/mesh-tx-leak/results/logs/*/mgmt-tester-*.log):
+# 05:04:03:02:01:00 and bc:9a:78:56:34:11 are fixed addresses in
+# tools/mgmt-tester.c; 00:aa:01:01:00:00 is the emulated controller's own
+# address, built in emulator/btdev.c (bdaddr[4] = 0xaa). Matched whole, so a
+# real address sharing a prefix is still caught.
 macs=$(grep -oEi '[0-9a-f]{2}([:_-][0-9a-f]{2}){5,}' <<<"$CONTENT" \
        | tr 'A-F_-' 'a-f::' \
        | grep -vE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be)' \
+       | grep -vxE '05:04:03:02:01:00|bc:9a:78:56:34:11|00:aa:01:01:00:00' \
        | sort -u)
 [[ -n "$macs" ]] && report "real MAC/BSSID found:" $macs || pass "no unexpected MACs"
 

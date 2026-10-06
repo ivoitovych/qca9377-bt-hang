@@ -177,6 +177,8 @@ devtools/             contributor tooling (check, scan, validate, coverage, ci, 
 reviews/              assessments of the repository itself; README.md there is the live action register
 comms/  lessons/      messages between the maintainers; what the project cost to learn
 patches/bluez/        the two applied BlueZ patches, their verification script and mail notes
+retest/mesh-tx-leak/  reproducer, kernel configs and 159 VM logs for the retest of another
+                      author's kernel patch (patchwork 14831271); REPORT.md there has the findings
 docs/                 issues.md (issue register) · missing-quirks-entry.md · install.md ·
                       tooling-index.md · the historical plans and drafts, each labelled
 evidence/

@@ -1,0 +1,117 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+Could not access KVM kernel module: No such file or directory
+qemu-system-x86_64: failed to initialize kvm: No such file or directory
+qemu-system-x86_64: falling back to tcg
+No EFI environment detected.
+early console in extract_kernel
+input_data: 0x0000000006f552c4
+input_len: 0x00000000020f4486
+output: 0x0000000001000000
+output_len: 0x00000000069ba474
+kernel_total_size: 0x000000000809c000
+needed_size: 0x0000000008200000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000005e2cc90).
+[    0.000000] Linux version 7.3.0-rc2-g3792c210325e (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Mon Oct  5 21:56:14 UTC 2026
+[    0.000000] Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/work/bluez/./tools/test-runner TESTHOME=/home/user/work/bluez TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/home/user/work/bluez/tools/mesh-leak-check kmemleak-enodev legacy shrink'
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+[    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000003ffdffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000003ffe0000-0x000000003fffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x0000000040000000-0x00000000afffffff]
+[    0.000000] BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+[    0.000000] BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+[    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+[    0.000000] BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+[    0.000000] printk: legacy bootconsole [earlyser0] enabled
+[    0.000000] Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+ÿ[   11.299333] Driver 'wmi-bmof' was unable to register with bus_type 'wmi' because the bus was not initialized.
+[   17.183295] 9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Failed to mount filesystem: Device or resource busy
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /home/user/work/bluez/tools/mesh-leak-check kmemleak-enodev legacy shrink
+Changing into directory /home/user/work/bluez
+New process 73 created
+=== scenario kmemleak-enodev, legacy advertising ===
+KERNEL Linux version 7.3.0-rc2-g3792c210325e (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Mon Oct  5 21:56:14 UTC 2026
+controller hci0 added (legacy advertising)
+sockA: Set Powered 1 -> Success
+sockA: Set Powered 0 -> Success
+controller hci0 HCI_UP=0
+sockA: Set LE 1 -> Success
+sockA: Set Exp Feature mesh 1 -> Success
+sockA: Set Powered 1 -> Success
+[   24.504717] mesh-leak-check: enodev: Mesh Send while controller is removed
+emulator: removing controller
+[   26.066686] Bluetooth: hci0: Send Mesh Failed -19
+sockA: Mesh Send tag 1 -> Failed (0x03)
+emulator: controller removed
+RESULT before_teardown kprobe handle=1 added=1 mesh_send_sync=0 removed=0
+RESULT before_teardown kprobe hci_release_dev=1 hci_sock_destruct=1
+sockA: close socket
+RESULT after_teardown kprobe handle=1 added=1 mesh_send_sync=0 removed=0
+RESULT after_teardown kprobe hci_release_dev=1 hci_sock_destruct=1
+kmemleak: round 1: waiting for object aging, scanning
+kmemleak: shrank 236 slab caches
+RESULT enodev kmemleak round=1 stack_scan=on slab_shrink=yes unreferenced=0 from_mgmt_mesh_add=0 from_hci_sock_create=0
+kmemleak: round 2: waiting for object aging, scanning
+kmemleak: shrank 236 slab caches
+RESULT enodev kmemleak round=2 stack_scan=on slab_shrink=yes unreferenced=0 from_mgmt_mesh_add=0 from_hci_sock_create=0
+kmemleak: round 3: waiting for object aging, scanning
+kmemleak: shrank 236 slab caches
+RESULT enodev kmemleak round=3 stack_scan=on slab_shrink=yes unreferenced=1 from_mgmt_mesh_add=1 from_hci_sock_create=0
+kmemleak: round 4: waiting for object aging, scanning
+kmemleak: shrank 236 slab caches
+RESULT enodev kmemleak round=4 stack_scan=on slab_shrink=yes unreferenced=1 from_mgmt_mesh_add=1 from_hci_sock_create=0
+kmemleak: round 5: waiting for object aging, scanning
+kmemleak: shrank 236 slab caches
+KMEMLEAK unreferenced object 0xffff8880032b7b00 (size 96):
+KMEMLEAK   comm "mesh-leak-check", pid 75, jiffies 4294689522
+KMEMLEAK   hex dump (first 32 bytes):
+KMEMLEAK     50 d1 a1 04 80 88 ff ff 50 d1 a1 04 80 88 ff ff  P.......P.......
+KMEMLEAK     00 00 00 00 00 00 00 00 2b 00 00 00 00 00 00 00  ........+.......
+KMEMLEAK   backtrace (crc 4857bbff):
+KMEMLEAK     __kmalloc_cache_noprof+0x41f/0x5d0
+KMEMLEAK     mgmt_mesh_add+0x4f/0x300
+KMEMLEAK     mesh_send+0x205/0x5b0
+KMEMLEAK     hci_sock_sendmsg+0x1196/0x2260
+KMEMLEAK     sock_write_iter+0x427/0x4c0
+KMEMLEAK     vfs_write+0xa71/0x1060
+KMEMLEAK     ksys_write+0x17c/0x1c0
+KMEMLEAK     do_syscall_64+0x109/0x5e0
+KMEMLEAK     entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RESULT enodev kmemleak round=5 stack_scan=on slab_shrink=yes unreferenced=1 from_mgmt_mesh_add=1 from_hci_sock_create=0
+=== end scenario kmemleak-enodev (ok) ===
+Process 73 exited with status 0

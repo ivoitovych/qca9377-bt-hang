@@ -1,0 +1,174 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+Could not access KVM kernel module: No such file or directory
+qemu-system-x86_64: failed to initialize kvm: No such file or directory
+qemu-system-x86_64: falling back to tcg
+No EFI environment detected.
+early console in extract_kernel
+input_data: 0x0000000006baf2c4
+input_len: 0x00000000020f10cf
+output: 0x0000000001000000
+output_len: 0x00000000069b9f9c
+kernel_total_size: 0x0000000007cf3000
+needed_size: 0x0000000007e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000005e2bc90).
+[    0.000000] Linux version 7.3.0-rc2-g59f710c1a4bd (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 SMP PREEMPT_DYNAMIC Mon Oct  5 21:37:19 UTC 2026
+[    0.000000] Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/work/bluez/./tools/test-runner TESTHOME=/home/user/work/bluez TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='tools/mesh-tester -q'
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+[    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x000000003ffdffff]  System RAM
+[    0.000000] BIOS-e820: [mem 0x000000003ffe0000-0x000000003fffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x0000000040000000-0x00000000afffffff]
+[    0.000000] BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+[    0.000000] BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+[    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+[    0.000000] BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+[    0.000000] BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+[    0.000000] printk: legacy bootconsole [earlyser0] enabled
+[    0.000000] Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+ÿ[    7.719679] Driver 'wmi-bmof' was unable to register with bus_type 'wmi' because the bus was not initialized.
+[   10.897749] 9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Failed to mount filesystem: Device or resource busy
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command tools/mesh-tester -q
+Changing into directory /home/user/work/bluez
+New process 75 created
+
+[1;39mController setup[0m - [0;30minit[0m
+[1;39mController setup[0m - [0;34msetup[0m
+[1;39mController setup[0m - [0;34msetup complete[0m
+[1;39mController setup[0m - [0;30mrun[0m
+[1;39mController setup[0m - [0;32mtest passed[0m
+[1;39mController setup[0m - [0;35mteardown[0m
+[1;39mController setup[0m - [0;35mteardown complete[0m
+[1;39mController setup[0m - [0;30mdone[0m
+
+[1;39mMesh - Enable 1[0m - [0;30minit[0m
+[1;39mMesh - Enable 1[0m - [0;34msetup[0m
+[1;39mMesh - Enable 1[0m - [0;34msetup complete[0m
+[1;39mMesh - Enable 1[0m - [0;30mrun[0m
+[1;39mMesh - Enable 1[0m - [0;32mtest passed[0m
+[1;39mMesh - Enable 1[0m - [0;35mteardown[0m
+[1;39mMesh - Enable 1[0m - [0;35mteardown complete[0m
+[1;39mMesh - Enable 1[0m - [0;30mdone[0m
+
+[1;39mMesh - Enable 2[0m - [0;30minit[0m
+[1;39mMesh - Enable 2[0m - [0;34msetup[0m
+[1;39mMesh - Enable 2[0m - [0;34msetup complete[0m
+[1;39mMesh - Enable 2[0m - [0;30mrun[0m
+[1;39mMesh - Enable 2[0m - [0;32mtest passed[0m
+[1;39mMesh - Enable 2[0m - [0;35mteardown[0m
+[1;39mMesh - Enable 2[0m - [0;35mteardown complete[0m
+[1;39mMesh - Enable 2[0m - [0;30mdone[0m
+
+[1;39mMesh - Read Mesh Features[0m - [0;30minit[0m
+[1;39mMesh - Read Mesh Features[0m - [0;34msetup[0m
+[1;39mMesh - Read Mesh Features[0m - [0;34msetup complete[0m
+[1;39mMesh - Read Mesh Features[0m - [0;30mrun[0m
+[1;39mMesh - Read Mesh Features[0m - [0;32mtest passed[0m
+[1;39mMesh - Read Mesh Features[0m - [0;35mteardown[0m
+[1;39mMesh - Read Mesh Features[0m - [0;35mteardown complete[0m
+[1;39mMesh - Read Mesh Features[0m - [0;30mdone[0m
+
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;30minit[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;34msetup[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;34msetup complete[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;30mrun[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;32mtest passed[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;35mteardown[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;35mteardown complete[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;30mdone[0m
+
+[1;39mMesh - Send[0m - [0;30minit[0m
+[1;39mMesh - Send[0m - [0;34msetup[0m
+[1;39mMesh - Send[0m - [0;34msetup complete[0m
+[1;39mMesh - Send[0m - [0;30mrun[0m
+[1;39mMesh - Send[0m - [0;32mtest passed[0m
+[1;39mMesh - Send[0m - [0;35mteardown[0m
+[1;39mMesh - Send[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send[0m - [0;30mdone[0m
+
+[1;39mMesh - Send - too short[0m - [0;30minit[0m
+[1;39mMesh - Send - too short[0m - [0;34msetup[0m
+[1;39mMesh - Send - too short[0m - [0;34msetup complete[0m
+[1;39mMesh - Send - too short[0m - [0;30mrun[0m
+[1;39mMesh - Send - too short[0m - [0;32mtest passed[0m
+[1;39mMesh - Send - too short[0m - [0;35mteardown[0m
+[1;39mMesh - Send - too short[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send - too short[0m - [0;30mdone[0m
+
+[1;39mMesh - Send - too long[0m - [0;30minit[0m
+[1;39mMesh - Send - too long[0m - [0;34msetup[0m
+[1;39mMesh - Send - too long[0m - [0;34msetup complete[0m
+[1;39mMesh - Send - too long[0m - [0;30mrun[0m
+[1;39mMesh - Send - too long[0m - [0;32mtest passed[0m
+[1;39mMesh - Send - too long[0m - [0;35mteardown[0m
+[1;39mMesh - Send - too long[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send - too long[0m - [0;30mdone[0m
+
+[1;39mMesh - Send cancel - 1[0m - [0;30minit[0m
+[1;39mMesh - Send cancel - 1[0m - [0;34msetup[0m
+[1;39mMesh - Send cancel - 1[0m - [0;34msetup complete[0m
+[1;39mMesh - Send cancel - 1[0m - [0;30mrun[0m
+[   19.413975] random: crng init done
+[1;39mMesh - Send cancel - 1[0m - [0;31mtest timed out[0m
+[1;39mMesh - Send cancel - 1[0m - [0;35mteardown[0m
+[1;39mMesh - Send cancel - 1[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send cancel - 1[0m - [0;30mdone[0m
+
+[1;39mMesh - Send cancel - 2[0m - [0;30minit[0m
+[1;39mMesh - Send cancel - 2[0m - [0;34msetup[0m
+[1;39mMesh - Send cancel - 2[0m - [0;34msetup complete[0m
+[1;39mMesh - Send cancel - 2[0m - [0;30mrun[0m
+[1;39mMesh - Send cancel - 2[0m - [0;31mtest timed out[0m
+[1;39mMesh - Send cancel - 2[0m - [0;35mteardown[0m
+[1;39mMesh - Send cancel - 2[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send cancel - 2[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+Controller setup                                     [0;32mPassed    [0m   0.541 seconds
+Mesh - Enable 1                                      [0;32mPassed    [0m   0.339 seconds
+Mesh - Enable 2                                      [0;32mPassed    [0m   0.287 seconds
+Mesh - Read Mesh Features                            [0;32mPassed    [0m   0.249 seconds
+Mesh - Read Mesh Features - Disabled                 [0;32mPassed    [0m   0.233 seconds
+Mesh - Send                                          [0;32mPassed    [0m   0.367 seconds
+Mesh - Send - too short                              [0;32mPassed    [0m   0.232 seconds
+Mesh - Send - too long                               [0;32mPassed    [0m   0.296 seconds
+Mesh - Send cancel - 1                               [0;31mTimed out [0m   2.797 seconds
+Mesh - Send cancel - 2                               [0;31mTimed out [0m   1.989 seconds
+Total: 10, [0;32mPassed: 8 (80.0%)[0m, [0;31mFailed: 2[0m, [0;33mNot Run: 0[0m
+Overall execution time: 7.42 seconds
+Process 75 exited with status 1
