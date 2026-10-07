@@ -1658,19 +1658,16 @@ trial() {
     BT_STATE="$LC/state" BT_SYSFS_USB="$LC/sysfs" BT_SYSFS_MODULE="$LC/mod" \
     tools/bt-trial "$@"
 }
-# The same seams, in a tree and state directory of the caller's choosing, for
-# the proofs that must not touch the trial opened by trial(): the stubs and the
-# fabricated device are inherited, so the evidence tree and the state file are
-# the only things a caller can point elsewhere. TRIAL_PATH_PRE puts a test's
-# own stubs ahead of the shared ones. Four of these proofs spelled the variables
-# out inline on 2026-09-28 and were red in CI for a week (bt-trial invoked
-# outside trial()) — the invariant is that there is nothing to spell out.
-trial_in() {   # trial_in <tree> <state-dir> <verb> [args]
-    local tree="$1" state="$2"; shift 2
-    PATH="${TRIAL_PATH_PRE:+$TRIAL_PATH_PRE:}$LC/bin:$PATH" \
-    BT_REPO="$tree" BT_EVIDENCE_REPO="$tree" \
-    BT_STATE="$state" BT_SYSFS_USB="$LC/sysfs" \
-    tools/bt-trial "$@"
+# trial(), pointed at another evidence root and state directory, for a test that
+# needs its own. BT_EVIDENCE_REPO is the root by construction — the variable a
+# hand-written call once forgot (see the invariant at the end of the file).
+trial_in() {   # <evidence root> <state dir> [VAR=value...] -- <bt-trial arguments>
+    local root="$1" state="$2"; shift 2
+    local -a extra=()
+    while [[ $# -gt 0 && "$1" != -- ]]; do extra+=("$1"); shift; done
+    shift
+    env PATH="$LC/bin:$PATH" BT_REPO="$root" BT_EVIDENCE_REPO="$root" BT_STATE="$state" \
+        BT_SYSFS_USB="$LC/sysfs" BT_SYSFS_MODULE="$LC/mod" "${extra[@]}" tools/bt-trial "$@"
 }
 
 rc=0
@@ -1684,9 +1681,11 @@ fi
 # The unit declares BT_BUILD=stock; with a diagnostic btusb loaded that is the
 # forgotten override (2026-09-26, E1 opened as stock trial 15). Checked in a
 # separate state dir, so the trial opened above is untouched.
-mkdir -p "$LC/sysmod/btusb"; echo 0.8-e1 > "$LC/sysmod/btusb/version"
-BT_SYSFS_MODULE="$LC/sysmod" BT_BUILD=stock \
-    trial_in "$LC" "$LC/state-mb" autostart >/dev/null 2>&1
+# BT_SYSFS_MODULE names btusb's parameters directory, as in every tool; the
+# version file is its sibling, as in /sys/module/btusb.
+mkdir -p "$LC/sysmod/btusb/parameters"; echo 0.8-e1 > "$LC/sysmod/btusb/version"
+trial_in "$LC" "$LC/state-mb" BT_SYSFS_MODULE="$LC/sysmod/btusb/parameters" BT_BUILD=stock \
+    -- autostart >/dev/null 2>&1
 if grep -qx 'build=E1' "$LC/state-mb/current" 2>/dev/null && grep -qx 'build_declared=stock' "$LC/state-mb/current"; then
     ok "autostart labels a diagnostic btusb by its version, not the unit's stale stock"
 else
@@ -1700,7 +1699,7 @@ rm -rf "$LC/state-mb" "$LC/evidence/trials/E1"
 printf '#!/bin/sh\nexit 0\n' > "$LC/bin/bt-state"; chmod +x "$LC/bin/bt-state"
 mkdir -p "$LC/ev-set/evidence/trials/stock/trial-01"
 echo old > "$LC/ev-set/evidence/trials/stock/trial-01/state-before.txt"
-trial_in "$LC/ev-set" "$LC/state-set" autostart stock >/dev/null 2>&1
+trial_in "$LC/ev-set" "$LC/state-set" -- autostart stock >/dev/null 2>&1
 ASIDE=$(ls -d "$LC/ev-set/evidence/trials/stock/trial-01.unclosed-"* 2>/dev/null | head -1)
 if [[ -n "$ASIDE" && "$(cat "$ASIDE/state-before.txt" 2>/dev/null)" == old \
       && -e "$LC/ev-set/evidence/trials/stock/trial-01/steps.log" ]]; then
@@ -1733,8 +1732,8 @@ exit 0
 STUB
 chmod +x "$LC/slow/bin/journalctl"
 export BT_TRIAL_SCAN_BUDGET=1
-TRIAL_PATH_PRE="$LC/slow/bin" trial_in "$LC/slow" "$LC/state-slow" autostart stock >/dev/null 2>&1
-SLOWOUT=$(TRIAL_PATH_PRE="$LC/slow/bin" trial_in "$LC/slow" "$LC/state-slow" ok 2>&1); slowrc=$?
+trial_in "$LC/slow" "$LC/state-slow" PATH="$LC/slow/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+SLOWOUT=$(trial_in "$LC/slow" "$LC/state-slow" PATH="$LC/slow/bin:$LC/bin:$PATH" -- ok 2>&1); slowrc=$?
 unset BT_TRIAL_SCAN_BUDGET
 SLOWROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13 }' "$LC/slow/evidence/trials/results.tsv" 2>/dev/null)
 if [[ "$SLOWROW" == "confirmed ? 1" ]]; then
@@ -1744,6 +1743,38 @@ else
     while IFS= read -r l; do echo "        $l"; done <<<"$SLOWOUT"
 fi
 rm -rf "$LC/slow" "$LC/state-slow"
+
+# THE --grep PROBE, both ways, and against the inversion that hid it. A journal
+# whose --help names --grep must be asked with the filter; one whose help does
+# not, without. The first help text is LONG, as journalctl's is: probed with
+# `journalctl --help | grep -q -- --grep` under pipefail, grep leaves at the
+# match, the writer dies of SIGPIPE, and the probe reads "no --grep" on exactly
+# the system that has it — the closer then read the laptop's journal unfiltered.
+mkdir -p "$LC/kg/bin" "$LC/kgn/bin"
+cat > "$LC/kg/bin/journalctl" <<KGSTUB
+#!/bin/sh
+case "\$1" in --help) echo "  --grep=PATTERN"; exec seq 1 200000 ;; esac   # exec: the WRITER must be what dies of SIGPIPE, as journalctl does
+echo "\$*" >> "$LC/kg/args"
+exit 0
+KGSTUB
+cat > "$LC/kgn/bin/journalctl" <<KGSTUB
+#!/bin/sh
+case "\$1" in --help) echo "  -k --dmesg"; exit 0 ;; esac
+echo "\$*" >> "$LC/kgn/args"
+exit 0
+KGSTUB
+chmod +x "$LC/kg/bin/journalctl" "$LC/kgn/bin/journalctl"
+for kg in kg kgn; do
+    trial_in "$LC/$kg" "$LC/$kg/state" PATH="$LC/$kg/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+    trial_in "$LC/$kg" "$LC/$kg/state" PATH="$LC/$kg/bin:$LC/bin:$PATH" -- ok >/dev/null 2>&1
+done
+if grep -qE -- '(^| )-k .*--grep=' "$LC/kg/args" 2>/dev/null && ! grep -q -- '--grep' "$LC/kgn/args" 2>/dev/null \
+   && grep -qE -- '(^| )-k ' "$LC/kgn/args" 2>/dev/null; then
+    ok "the closer filters with --grep where the journal offers it, and only there — probed without the pipefail inversion"
+else
+    bad "the --grep probe: with it offered, $(grep -c -- '--grep' "$LC/kg/args" 2>/dev/null) filtered read(s); without, $(grep -c -- '--grep' "$LC/kgn/args" 2>/dev/null)"
+fi
+rm -rf "$LC/kg" "$LC/kgn"
 
 # A --grep read that matched nothing EXITS 1 (systemd 255, measured 2026-10-03
 # on the investigation machine: `journalctl -k -b 0 --grep=zzz` prints nothing
@@ -1765,8 +1796,8 @@ done
 exit 0
 STUB
 chmod +x "$LC/nomatch/bin/journalctl"
-TRIAL_PATH_PRE="$LC/nomatch/bin" trial_in "$LC/nomatch" "$LC/state-nomatch" autostart stock >/dev/null 2>&1
-NMOUT=$(TRIAL_PATH_PRE="$LC/nomatch/bin" trial_in "$LC/nomatch" "$LC/state-nomatch" ok 2>&1); nmrc=$?
+trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+NMOUT=$(trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok 2>&1); nmrc=$?
 NMROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
 if [[ "$NMROW" == "not_observed 0 0 none" ]]; then
     ok "a filtered read that matched nothing is a clean window, not an unreadable journal"
@@ -1786,8 +1817,8 @@ done
 exit 0
 STUB
 rm -rf "$LC/nomatch/evidence" "$LC/state-nomatch"
-TRIAL_PATH_PRE="$LC/nomatch/bin" trial_in "$LC/nomatch" "$LC/state-nomatch" autostart stock >/dev/null 2>&1
-TRIAL_PATH_PRE="$LC/nomatch/bin" trial_in "$LC/nomatch" "$LC/state-nomatch" ok >/dev/null 2>&1
+trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok >/dev/null 2>&1
 NMROW2=$(awk -F'\t' 'NR == 2 { print $8, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
 if [[ "$NMROW2" == "unknown unknown" ]]; then
     ok "exit 1 with a complaint on stderr is still an unreadable journal -> unknown"
