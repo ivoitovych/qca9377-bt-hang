@@ -91,6 +91,17 @@ considered, it must be resent". Checked on GitHub (`gh pr view 2559 -R bluez/blu
 (`0bed9886cff3` on `origin/master`, the same 5-line guard, v1's message). Nothing to
 resend: the bot tracks the v2 series, and the fix itself is the applied v1. No action.
 
+**Later on 2026-10-07 the maintainer applied the `0002` v2 as well**, as `d84171e6c`
+(committer Luiz Augusto von Dentz, `Wed Oct 7 14:47:18 2026 -0400`; v2's
+space-indented message), on top of `0bed9886c`. Master now checks the stream twice in a
+row: `git grep -n -A4 "if (!setup->stream)" origin/master -- profiles/audio/a2dp.c` →
+`a2dp.c:2697` and `a2dp.c:2702`, the same four lines each. Harmless (the second check
+can never fire), but dead code. A one-line cleanup is prepared, **not sent**:
+[`cleanup/0001-a2dp-Remove-duplicate-stream-check-in-transport_cb.patch`](cleanup/0001-a2dp-Remove-duplicate-stream-check-in-transport_cb.patch)
+(removes the second copy; base `d84171e6c`; after it `a2dp.c` is byte-identical to
+`0bed9886c`'s and `4dc15be8e`'s, which built and passed `make check` here; checkpatch
+and gitlint clean). Sending it is the operator's decision.
+
 ## What is kept, and why nothing here is removed
 
 | path | what it is |

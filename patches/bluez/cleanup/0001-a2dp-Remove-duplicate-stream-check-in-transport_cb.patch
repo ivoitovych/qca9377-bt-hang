@@ -1,0 +1,36 @@
+From 7ab6a8298c153d4e7c58278b196911942a87e201 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Wed, 7 Oct 2026 23:02:13 +0200
+Subject: [PATCH BlueZ] a2dp: Remove duplicate stream check in transport_cb()
+
+commit 0bed9886cff3 ("a2dp: Fix crash on NULL stream in transport_cb")
+and commit d84171e6cd68 ("a2dp: Fix crash on NULL stream in
+transport_cb") are the same change applied twice, so transport_cb() now
+checks setup->stream twice in a row. Remove the second copy.
+
+Fixes: d84171e6cd68 ("a2dp: Fix crash on NULL stream in transport_cb")
+---
+ profiles/audio/a2dp.c | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/profiles/audio/a2dp.c b/profiles/audio/a2dp.c
+index 3c991de6a..efbe73f1b 100644
+--- a/profiles/audio/a2dp.c
++++ b/profiles/audio/a2dp.c
+@@ -2699,11 +2699,6 @@ static void transport_cb(GIOChannel *io, GError *err, gpointer user_data)
+ 		goto drop;
+ 	}
+ 
+-	if (!setup->stream) {
+-		error("bt_io_accept: setup %p has no stream", setup);
+-		goto drop;
+-	}
+-
+ 	if (!avdtp_stream_set_transport(setup->stream,
+ 					g_io_channel_unix_get_fd(io),
+ 					imtu, omtu))
+
+base-commit: d84171e6cd68a5ab95d0f3a384279c36bd108a13
+-- 
+2.43.0
+
