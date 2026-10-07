@@ -12,7 +12,7 @@
 | v1 bot pull request (CI vehicle, never merged) | [#2554](https://github.com/bluez/bluez/pull/2554) | [#2555](https://github.com/bluez/bluez/pull/2555) |
 | v2 mail (moot — sent after v1 was applied) | [lore](https://lore.kernel.org/linux-bluetooth/20260921204706.211385-1-yaroslav.voytovych@gmail.com/) | [lore](https://lore.kernel.org/linux-bluetooth/20260921204711.211409-1-yaroslav.voytovych@gmail.com/) |
 | v2 patchwork (state *new*, nobody's hand on it) | [14836499](https://patchwork.kernel.org/project/bluetooth/patch/20260921204706.211385-1-yaroslav.voytovych@gmail.com/), series [1170690](https://patchwork.kernel.org/series/1170690/) | [14836500](https://patchwork.kernel.org/project/bluetooth/patch/20260921204711.211409-1-yaroslav.voytovych@gmail.com/), series [1170691](https://patchwork.kernel.org/series/1170691/) |
-| v2 bot result | does not apply (v1 already in tree); no PR | all PASS; [#2559](https://github.com/bluez/bluez/pull/2559) would add the guard twice |
+| v2 bot result | does not apply (v1 already in tree); no PR | all PASS; [#2559](https://github.com/bluez/bluez/pull/2559) would add the guard twice; **closed unmerged by the bot 2026-10-07 00:04 UTC** as stale (open > 2 weeks) — expected: v1 is the applied commit |
 | first BlueZ release to carry them | the next tag after `5.87` (none cut as of 2026-09-22) | same |
 
 `lore` links open in a browser (its anti-bot page blocks `curl`); the kernel.org
@@ -83,6 +83,13 @@ that `0001` v2 does not apply. A "please ignore" mail would cost him the same
 seconds as ignoring it. Watch the two v2 states instead:
 `scripts/patchwork-checks.sh --patch 14836499` / `14836500`, or the state field
 of `https://patchwork.kernel.org/api/1.3/patches/<id>/`.
+
+**2026-10-07: the bot closed PR #2559 (the `0002` v2) unmerged** — "picked up by the
+CI more than 2 weeks ago … never applied to the tree … if the change should still be
+considered, it must be resent". Checked on GitHub (`gh pr view 2559 -R bluez/bluez`:
+`CLOSED`, `closedAt 2026-10-07T00:04:32Z`, `mergedAt null`) and in BlueZ master
+(`0bed9886cff3` on `origin/master`, the same 5-line guard, v1's message). Nothing to
+resend: the bot tracks the v2 series, and the fix itself is the applied v1. No action.
 
 ## What is kept, and why nothing here is removed
 
