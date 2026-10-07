@@ -229,9 +229,15 @@ env_fingerprint() {
 # none. On 2026-09-26 E1 was installed and the unit's BT_BUILD=stock was never
 # overridden, so the first E1 boot opened as stock trial 15 — exactly the pooling
 # the unit's comment warns about. A declared "stock" is now checked against this.
+#
+# BT_SYSFS_MODULE is btusb's PARAMETERS directory here as in every other tool
+# (bt-state, bt-health-report, bt-mode, bt-evidence, bt-health-snapshot,
+# verify-restored.sh, and the autosuspend read above); the version file is its
+# sibling. Read as the /sys/module root, one variable named two directories in
+# this one file, and a test that set it for either read silently blinded the other.
 module_build() {
-    local v
-    v=$(cat "${BT_SYSFS_MODULE:-/sys/module}/btusb/version" 2>/dev/null)
+    local v params="${BT_SYSFS_MODULE:-/sys/module/btusb/parameters}"
+    v=$(cat "${params%/*}/version" 2>/dev/null)
     if [[ "$v" == *-* ]]; then
         printf '%s' "${v##*-}" | tr '[:lower:]' '[:upper:]'
     else
@@ -286,13 +292,21 @@ next_trial_no() {
 # does not, and then the reads are unfiltered as before). Each local grep still
 # decides, so the filter can only ever remove lines no question would match.
 KJ_RE='opcode 0x0428|command( 0x[0-9a-f]+)? tx timeout|USB disconnect, device number|deregistering interface driver btusb|usb_queue_reset_device|Resetting usb device|reset (full|high|low)-speed USB device'
+#
+# Asked by the two close paths only — nothing else reads the kernel journal, and
+# `report` or `protocol` has no business starting journalctl. And CAPTURED, not
+# piped into `grep -q`: under pipefail that pipeline fails exactly when it
+# MATCHES, whenever the help text is still being written when grep leaves —
+# which journalctl's is on Ubuntu 24.04 — so the probe answered "no --grep" on
+# the one system that has it, and the closer read the journal unfiltered: the
+# 90 s shutdown kill this filter was added to prevent.
 KGREP=()
-# Captured, then matched: `journalctl --help | grep -q` is the pipeline this
-# repository forbids (SIGPIPE under pipefail inverts it; tests/run-tests).
-JHELP=$(journalctl --help 2>/dev/null || true)
-if [[ "$JHELP" == *--grep* ]]; then
-    KGREP=(--grep="$KJ_RE")
-fi
+kgrep_init() {
+    local help
+    help=$(journalctl --help 2>/dev/null)
+    [[ "$help" == *--grep* ]] && KGREP=(--grep="$KJ_RE")
+    return 0
+}
 # ⚠️ WITH --grep, journalctl EXITS 1 WHEN NOTHING MATCHED (systemd 255,
 # measured 2026-10-03: `journalctl -k -b 0 --grep=zzz` prints nothing on either
 # stream and returns 1). A clean boot has no timeout, no reload and no reset in
@@ -434,6 +448,7 @@ autostop)
     start=$(grep '^start=' "$CUR" | cut -d= -f2)
     # Filtered inside journalctl (see KJ_RE below): unfiltered, a day of
     # dynamic-debug kernel log took the closer past the shutdown timeout.
+    kgrep_init
     tmo=$(journalctl -k --since "@$(( start - 5 ))" --no-pager -o cat "${KGREP[@]}" 2>/dev/null \
           | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)
     if (( ${tmo:-0} > 0 )); then
@@ -480,6 +495,7 @@ hang|ok)
     # against a failure it never learns about.
     KJ=$(mktemp) || { echo "bt-trial: mktemp failed" >&2; exit 1; }
     KJERR=$(mktemp) || { echo "bt-trial: mktemp failed" >&2; exit 1; }
+    kgrep_init
     # The capture is read via jk() all the way to the SCO-timing block far
     # below, so it cannot be removed inline like WJ is; the EXIT trap covers
     # the normal return and every early exit between here and there. This is
