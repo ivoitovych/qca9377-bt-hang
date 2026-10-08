@@ -148,7 +148,10 @@ run `bluetoothd -d` — this project ships that on in
 | **Does a kernel patch build at another tree's tip — the real check** | `scripts/build-bluetooth-fulltree.sh <ref> <name> <patch>` — full worktree under `cache/<name>` (blobs on demand), `defconfig` + BT as module, `modules_prepare`, `make M=net/bluetooth` unpatched then patched with `-Werror`; needs `bison flex libelf-dev` (installed 2026-09-22). Worktrees `cache/full-bt-next`, `cache/full-6.1.y` exist; ~5 min each after the first checkout |
 | Does a one-file kernel patch compile at **another** tree's tip (quick, no full tree) | `scripts/compile-mgmt-at.sh <sparse-worktree> <patch>` — that tree's `include/` first, `-Werror`, unpatched then patched. Whole-module builds across kernel versions need a full tree with `modules_prepare` (packages this host lacks); worktrees under `cache/linux-bt-next`, `cache/linux-6.1.y`, `cache/linux-6.12.y` |
 | How do the branches diverge? | `devtools/branch-status` (`--unique`, `--files`) |
-| Coverage / comprehensiveness | `devtools/coverage`, `devtools/test-comprehension` |
+| Coverage / comprehensiveness | `devtools/coverage` (bash lines), `devtools/awk-coverage` (awk statements), `devtools/py-coverage` (Python lines), `devtools/test-comprehension` (modes, refusals, seams, branches per unit); each takes `--min N`, and CI holds 80 / 95 / 80 / 75 |
+| Run the suite, or one block of it | `tests/run-tests`, `tests/run-tests --section "<text from a heading>"`; it refuses while a trial is open, and refuses to run inside a run of itself |
+| **Does any test reach the real machine?** (a call, a read, a write, an answer the machine gave) | `devtools/sandbox` — the suite in a decoy world whose every answer is marked; four detectors must stay silent. `--self-test` plants leaks and proves each one is caught (tests/README.md, rule 5) |
+| **Would the suite notice if this decision were wrong?** | `devtools/mutate <file> [--lines A-B]` — each mutant from `devtools/mutants` (a flipped comparison, `&&`↔`\|\|`, a dropped `!`) applied alone in its own namespace, the whole suite run on it; a survivor is a missing test or an equivalent change. `--self-test` checks the harness |
 | Do the fixtures still match real journalctl? | `devtools/journal-contract` |
 
 ### Deploying to the affected machine

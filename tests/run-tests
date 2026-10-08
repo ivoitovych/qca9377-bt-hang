@@ -13357,6 +13357,30 @@ devtools/repo-validate "$SCRATCH/save" --no-such-flag >/dev/null 2>&1
 (( $? == 2 )) && ok "repo-validate rejects an unknown option rather than reading it as a directory" \
               || bad "an unknown option was taken for a path"
 
+# THE DOCUMENTATION-DRIFT ALARM, DRIVEN BOTH WAYS. It reads the history of the
+# checkout it is given, so whether it ran under this suite depended on the
+# order of THIS checkout's last commits: on 2026-10-08 a docs-only edit made
+# nine of repo-validate's lines stop running, and nothing had ever said what
+# the alarm prints. A scratch history with dates set by hand: code three hours
+# newer than the docs, then the docs caught up. An alarm, never a failure.
+SVD=$(mktemp -d); git -C "$SVD" init -q
+git -C "$SVD" config user.email test@example.com; git -C "$SVD" config user.name test
+svd_commit() {   # <iso date> <message>
+    git -C "$SVD" add -A
+    GIT_AUTHOR_DATE="$1" GIT_COMMITTER_DATE="$1" git -C "$SVD" commit -qm "$2"
+}
+mkdir -p "$SVD/docs" "$SVD/tools"
+printf 'notes\n' > "$SVD/docs/notes.md";               svd_commit 2026-01-01T10:00:00Z docs
+printf '#!/bin/bash\necho tool\n' > "$SVD/tools/t";    svd_commit 2026-01-01T13:00:00Z code
+SVD1=$(devtools/repo-validate "$SVD" --no-suite 2>&1); svd1=$?
+printf 'caught up\n' >> "$SVD/docs/notes.md";          svd_commit 2026-01-01T14:00:00Z "docs again"
+SVD2=$(devtools/repo-validate "$SVD" --no-suite 2>&1); svd2=$?
+(( svd1 == 0 && svd2 == 0 )) && [[ "$SVD1" == *"documentation drift"*"(by 3h)"*"1 of the last 20 commits touched those, 1 touched docs"* \
+                                  && "$SVD2" != *"documentation drift"* ]] \
+    && ok "repo-validate raises the drift alarm when code is newer than the docs (by 3h), drops it once they catch up, fails on neither" \
+    || bad "the drift alarm: rc=$svd1/$svd2, code-newer: $(grep -A5 'drift' <<<"$SVD1" | tr '\n' '|') docs-newer: $(grep 'drift' <<<"$SVD2")"
+rm -rf "$SVD"
+
 # THE TALLY COUNTS FILES, AND THE SUITE IS NOT A FILE. It was incremented into
 # $checked, so a small tree reported "6 of 5 files were checkable" — a sentence
 # that cannot be true, in the summary line every caller reads.
