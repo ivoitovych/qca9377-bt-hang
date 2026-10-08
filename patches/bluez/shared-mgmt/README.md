@@ -6,7 +6,8 @@
 | 1/2 | [`0001-shared-mgmt-Fix-notify-leak-in-mgmt_unregister.patch`](0001-shared-mgmt-Fix-notify-leak-in-mgmt_unregister.patch) — `src/shared/mgmt.c`, +17/−7 · [lore](https://lore.kernel.org/r/20261008034102.707451-1-yaroslav.voytovych@gmail.com) · [patchwork 14873331](https://patchwork.kernel.org/patch/14873331/) |
 | 2/2 | [`0002-unit-test-mgmt-Test-unregistering-from-callbacks.patch`](0002-unit-test-mgmt-Test-unregistering-from-callbacks.patch) — `unit/test-mgmt.c`, +225 · [lore](https://lore.kernel.org/r/20261008034102.707451-2-yaroslav.voytovych@gmail.com) · [patchwork 14873330](https://patchwork.kernel.org/patch/14873330/) |
 | base | BlueZ master `d84171e6cd68` (`base-commit:` in 1/2); `scripts/pre-send-check.sh` OK minutes before sending |
-| next | the list's CI bot on patchwork; `git log origin/master --grep="mgmt_unregister"` after about two days; no resend for lint |
+| CI bot | **all 12 checks PASS**, mail 2026-10-08 12:41 +0200 ([series 1181228](https://patchwork.kernel.org/series/1181228/), [bluez/bluez#2634](https://github.com/bluez/bluez/pull/2634)), ScanBuild included; see below for the one failed GitHub check that is not the bot's |
+| next | `git log origin/master --grep="mgmt_unregister"` after about two days; no resend for lint |
 
 The two files here are byte-identical to what was mailed.
 
@@ -37,6 +38,24 @@ from `git grep "mgmt_unregister("` at the base).
 | testers' verdicts | mgmt-tester 502/506, mesh-tester 8/10, userchan-tester 4/4 | identical, case by case (the failures predate the fix) |
 | checkpatch (BlueZ `.checkpatch.conf`), gitlint (BlueZ `.gitlint`) | — | 0 errors, 0 warnings; no violations |
 | clang static analyzer on both files | — | no report (the base files have none either) |
+
+## The list's CI bot (2026-10-08)
+
+The bot mailed its result at 12:41 +0200: CheckPatch, GitLint, BuildEll, BluezMake,
+MakeCheck, MakeDistcheck, CheckValgrind, CheckSmatch, bluezmakeextell, TestFunctional,
+IncrementalBuild and ScanBuild all PASS. `gh pr view 2634 --repo bluez/bluez` agrees: those
+twelve, plus checkpatch, CodeQL and Codacy Static Code Analysis, are SUCCESS.
+
+One check on the pull request failed, **Codacy Security Scan** (run 37757622669). The cause is not
+the series:
+- the tool crashed with `java.nio.charset.MalformedInputException` in its SARIF formatter
+  (`Sarif.scala:146`, reading a source file as UTF-8). Its log has no finding against our files.
+- both patch files contain no non-ASCII line (`grep -c -P "[^\x00-\x7F]"`: 0 and 0);
+- the same check failed on every run since 2026-10-07 18:53 UTC, including the master push
+  "a2dp: Fix crash on NULL stream in transport_cb" and two other series, and passed before
+  (`gh run list --repo bluez/bluez --workflow "Codacy Security Scan"`).
+
+The bot does not report this check, and the mail does not list it. Nothing to do.
 
 The run logs, their SHA256SUMS and the four outside review rounds are on the project's private
 branch, kept with the rest of the mesh work; this directory records the facts.

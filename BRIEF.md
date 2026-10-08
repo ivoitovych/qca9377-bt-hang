@@ -42,7 +42,11 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 >    `patches/bluez/shared-mgmt/`; base `d84171e6c`, commits `9fbc84f5d`/`0722ddc78` in
 >    `cache/bluez-standalone-mgmt-leak` (older states on `keep/shared-mgmt-notify-leak-*`).
 >    Review record: private `diag/mesh-tester-ci` `docs/mesh-tester-ci/review-response-*.md`.
->    **Next:** the bot's results on patchwork; `git log origin/master --grep=mgmt_unregister`
+>    **CI bot, 10-08 12:41 +0200: all 12 checks PASS, ScanBuild included** (series 1181228, PR
+>    bluez/bluez#2634). That PR's Codacy Security Scan FAILURE is not ours: the tool crashes
+>    (`MalformedInputException`, SARIF formatter), and has failed on every run since 10-07 18:53 UTC,
+>    master included. Details in `patches/bluez/shared-mgmt/README.md`.
+>    **Next:** `git log origin/master --grep=mgmt_unregister`
 >    after ~2 days; **never a lint-only respin** (the a2dp v2 shows what happens).
 >
 > **App passwords:** the 10-06 and 10-08 ones were used on one `git send-email` each; the 10-08

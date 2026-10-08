@@ -46,7 +46,7 @@ link (lore, patchwork, the list's CI bot) are in [`patches/bluez/README.md`](pat
 
 | component | fix | state |
 |---|---|---|
-| BlueZ | `shared/mgmt: Fix notify leak in mgmt_unregister()` + `unit/test-mgmt: Test unregistering from callbacks` — unregistering from a notification callback leaked the entry, and unregistering the next entry was a use-after-free (the crash fixed for the sibling function in 2015). The new unit tests fail without the fix; the testers' 233 leaked `mgmt_register()` allocations go to 0 with every verdict unchanged ([`patches/bluez/shared-mgmt/`](patches/bluez/shared-mgmt/README.md)) | sent 2026-10-08 ([lore](https://lore.kernel.org/r/20261008034102.707451-1-yaroslav.voytovych@gmail.com)) |
+| BlueZ | `shared/mgmt: Fix notify leak in mgmt_unregister()` + `unit/test-mgmt: Test unregistering from callbacks` — unregistering from a notification callback leaked the entry, and unregistering the next entry was a use-after-free (the crash fixed for the sibling function in 2015). The new unit tests fail without the fix; the testers' 233 leaked `mgmt_register()` allocations go to 0 with every verdict unchanged ([`patches/bluez/shared-mgmt/`](patches/bluez/shared-mgmt/README.md)) | sent 2026-10-08 ([lore](https://lore.kernel.org/r/20261008034102.707451-1-yaroslav.voytovych@gmail.com)); the list's CI bot: all checks pass |
 
 ### Backports and testing of others' patches
 
