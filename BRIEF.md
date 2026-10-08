@@ -45,16 +45,19 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 > before any further mesh work. App password used on that one command only; operator to revoke
 > it; confirm with `scripts/smtp-login-check.sh`. Watch the thread for replies.
 >
-> **READY TO SEND — waiting for the operator's word and a fresh app password** (used once on the
-> `git send-email` command, never written to a file; `git *` never prompts, so it cannot land in an
-> allow rule — the 09/10 passwords that did were removed from `settings.local.json` 10-04). The
-> send command and pre-send checks: `cache/hui-peng-validation/SEND.txt` (outside the repository:
-> it carries addresses); `scripts/pre-send-check.sh` OK 10-06 against BlueZ master `f8f352d13`.
-> 2. **BlueZ `shared/mgmt: Fix notify leak in mgmt_unregister()`** standalone
->    (`tmp/mesh-tester-ci/standalone/bluez-shared-mgmt-leak/0001-…patch`, also on the private
->    branch): applies to BlueZ master `4dc15be8e` (`scripts/pre-send-check.sh` OK 10-05),
->    mgmt-tester leak 227 objects → 0, testers' results unchanged, checkpatch/gitlint clean, no
->    competing fix; To linux-bluetooth only; dry-run checked.
+> **SENT 2026-10-08 05:41:01 to 05:41:02 +0200 — BlueZ series** `[PATCH BlueZ 1/2]
+> shared/mgmt: Fix notify leak in mgmt_unregister()` and `[PATCH BlueZ 2/2] unit/test-mgmt: Test
+> unregistering from callbacks`, To linux-bluetooth only, threaded, SMTP `250` both, Message-IDs
+> `<20261008034102.707451-1-yaroslav.voytovych@gmail.com>` and
+> `<20261008034102.707451-2-yaroslav.voytovych@gmail.com>`. Base BlueZ master `d84171e6c`
+> (`scripts/pre-send-check.sh` OK just before); commits `9fbc84f5d`/`0722ddc78`; final files =
+> private `diag/mesh-tester-ci` `a71ea4b`
+> (`patches/mesh-tester/bluez-shared-mgmt-notify-leak-on-d84171e6c-2026-10-08/`), after four
+> outside reviews (`docs/mesh-tester-ci/review-response-*.md`). App password used on that one
+> command only; operator to revoke it and confirm with `scripts/smtp-login-check.sh`. Next: the
+> CI bot's results on patchwork; check `git log origin/master --grep=<subject>` after ~2 days;
+> never send a lint-only respin. **Not sent, operator's decision:** the a2dp duplicate-guard
+> cleanup (`patches/bluez/cleanup/`, SEND.txt item 3).
 >
 > **Mesh work — the plan after the outside research review (10-05):** v3 (5+4 patches) is NOT sent
 > as a series. Order: (1) the Tested-by above; (2) the BlueZ leak fix above; (3) the power-off fix
