@@ -208,9 +208,18 @@ SUITE_TAIL=$(tail -1 "$WORK/suite.out" 2>/dev/null)
 # coverable table does not contain, and the file reported 0.0% WHILE ITS TESTS
 # WERE VISIBLY RUNNING IT. A measurement tool's failure mode is once again
 # "looks like a finding": strip the ./ prefix at normalisation.
+# And the same failure for ABSOLUTE paths: a test that runs a tool from inside
+# a scratch directory names it by its full path under the checkout, and that is
+# the checkout's own file. Dropped as "absolute", a tool run that way
+# reported 0 of 10 lines while seven tests ran it (2026-10-08). A path under
+# the checkout root is made relative; every other absolute path — the suite's
+# copies in temp trees, an installed image — is still dropped.
 grep -oE '@@C@@[^@]*@@[0-9]+@@' "$WORK/trace" 2>/dev/null \
   | sed -E 's/^@@C@@//; s/@@$//; s/@@/\t/; s/^\.\///' \
-  | awk -F'\t' 'NF == 2 && $1 !~ /^\// && $1 !~ /^\.\./ { print $1 "\t" $2 }' \
+  | awk -F'\t' -v phys="$(pwd -P)/" -v logi="$PWD/" '
+        NF == 2 && index($1, phys) == 1 { $1 = substr($1, length(phys) + 1) }
+        NF == 2 && index($1, logi) == 1 { $1 = substr($1, length(logi) + 1) }
+        NF == 2 && $1 !~ /^\// && $1 !~ /^\.\./ { print $1 "\t" $2 }' \
   | sort -u > "$WORK/executed"
 
 # ── the exclusion list ────────────────────────────────────────────────────

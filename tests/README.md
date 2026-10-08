@@ -93,6 +93,23 @@ contract check that compares a fixture's shape with the real tool's output (the
 coredumpctl contract). The sandbox lists those calls apart, and an invariant
 keeps the tag they carry inside that function.
 
+**6. A namespace is only worth its proof.** A seam replaces the default it guards,
+so the shipped paths (`/var/log/bt-health/ui`, the kernel's dynamic-debug control
+file, the effective uid) never run under a seam. Where a test needs them, it runs
+the tool inside `unshare -Urm` with a tmpfs over each real path. That's root
+without a seam, on paths only that process tree can see. Before anything runs in
+it, the namespace proves itself:
+- a marker file created inside each redirected directory must be readable inside;
+- the same file must not exist on the machine afterwards, an existence test that
+  reads nothing real;
+- the uid inside must be 0.
+
+A namespace that fails this proof is a red invariant, and nothing runs in it. A
+host that cannot build one (Ubuntu 24.04's default, CI before its sysctl) reports
+the tests as **not asked**, never as passed. The proof was seen to fail: with its
+tmpfs over `/var/log` removed, the suite went red on exactly that check, and
+nothing ran inside.
+
 ## Fixtures
 
 | Path | Feeds |
