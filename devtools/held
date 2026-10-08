@@ -31,7 +31,12 @@ status)
 		"$(git rev-parse --short "$HELD")" \
 		"$(git rev-parse --short "origin/$HELD" 2>/dev/null || echo none)" \
 		"$(git rev-parse --short "private/$HELD" 2>/dev/null || echo none)"
-	n=$(git ls-remote --heads origin 'kernel/*' | wc -l)
+	# The check this command exists for, so its own failure is a failure: a
+	# count of lines from an ls-remote that could not reach origin is 0, and
+	# printed "no kernel/* branch ✓" about a remote it never asked (2026-10-08).
+	heads=$(git ls-remote --heads origin 'kernel/*') \
+		|| { echo "✗ cannot reach origin — whether it carries a kernel/* branch was NOT checked" >&2; exit 1; }
+	n=$(grep -c . <<<"$heads")
 	(( n == 0 )) && echo "origin carries no kernel/* branch ✓" || { echo "✗ origin carries $n kernel/* branch(es)" >&2; exit 1; }
 	echo "held branch is $(git rev-list --count "main..$HELD") commit(s) ahead of main, $(git rev-list --count "$HELD..main") behind"
 	;;

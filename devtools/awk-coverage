@@ -37,9 +37,24 @@
 # so a statement is reported by its TEXT and its position in the program, never
 # by a source line number. It answers "did this statement ever run", which is
 # the coverage question; it does not give you a line to click.
+#
+# A PARSE CHECK IS NOT A RUN. devtools/repo-validate runs every *.awk file as a
+# program over /dev/null, to catch a syntax error. No rule sees a record, and
+# the file is a different program to the profiler from the same file loaded
+# beside the libraries its tools load with it. So each check filed the file's
+# statements a SECOND time, nearly all unrun. Nothing ran repo-validate under
+# the suite until the checkout world (2026-10-08). The first time it did,
+# eight library files reappeared as 0-28% programs and the total fell from
+# 89.8% to 75.5%, with not one statement less exercised. A file program run
+# over /dev/null and nothing else is set aside, and the report says how many.
+#
+# BT_SUITE names the suite to run (default tests/run-tests). It exists so the
+# suite can drive this tool against a small suite of its own, with an answer
+# known in advance; run on the real suite from inside it, it would recurse.
 
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
+SUITE="${BT_SUITE:-tests/run-tests}"
 
 MIN=""; SHOWUNCOV=0
 while [[ $# -gt 0 ]]; do
@@ -60,7 +75,7 @@ if ! command -v gawk >/dev/null 2>&1; then
     echo "awk-coverage: gawk is required (mawk has no profiler) — skipping" >&2
     exit 0
 fi
-[[ -x tests/run-tests ]] || { echo "awk-coverage: tests/run-tests not executable" >&2; exit 2; }
+[[ -x "$SUITE" ]] || { echo "awk-coverage: $SUITE not executable" >&2; exit 2; }
 
 WORK=$(mktemp -d) || exit 1
 trap 'rm -rf "$WORK"' EXIT INT TERM
@@ -73,22 +88,24 @@ mkdir -p "$WORK/shim" "$WORK/prof"
 # profile is just its text — so a low-coverage program could be located only by
 # grepping the tree for a statement out of it. /proc/<ppid>/cmdline names the
 # script that ran it, which turns "program 33953112231299 is at 41%" into
-# "tools/bt-trial is at 41%".
+# "tools/bt-trial is at 41%". The .args sidecar holds awk's own arguments, one
+# per line, which is how a parse check is told from a run.
 cat > "$WORK/shim/awk" <<SHIM
 #!/bin/sh
 id="\$\$.\$(date +%N)"
 tr '\\0' ' ' < /proc/\$PPID/cmdline 2>/dev/null > "$WORK/prof/p.\$id.src"
+{ pwd; for a in "\$@"; do printf '%s\n' "\$a"; done; } > "$WORK/prof/p.\$id.args"
 exec gawk --profile="$WORK/prof/p.\$id" "\$@"
 SHIM
 chmod +x "$WORK/shim/awk"
 
-echo "running tests/run-tests with awk profiling..." >&2
-PATH="$WORK/shim:$PATH" tests/run-tests >"$WORK/suite.out" 2>&1
+echo "running $SUITE with awk profiling..." >&2
+PATH="$WORK/shim:$PATH" "$SUITE" >"$WORK/suite.out" 2>&1
 SUITE_TAIL=$(tail -1 "$WORK/suite.out" 2>/dev/null)
 
-# Excluding the .src sidecars, which would double every count and make the
+# Excluding the sidecars, which would double every count and make the
 # "no profiles were written" guard pass on a run that wrote none.
-nprof=$(ls -1 "$WORK/prof" 2>/dev/null | grep -vc '\.src$')
+nprof=$(ls -1 "$WORK/prof" 2>/dev/null | grep -vcE '\.(src|args)$')
 if (( ${nprof:-0} == 0 )); then
     echo "awk-coverage: no profiles were written — the shim was not used" >&2
     echo "              (a tool calling gawk or /usr/bin/awk directly bypasses PATH)" >&2
@@ -120,19 +137,38 @@ for lib in tools/lib/*.awk; do
         | awk -v l="$lib" '{ print $2 "\t" l }' >> "$WORK/owners"
 done
 
-for p in "$WORK/prof"/*; do
-    [[ "$p" == *.src ]] && continue
-    [[ -s "$p" ]] || continue
-    # Caller, for naming the inline programs. Reduced to the repository path it
-    # names, because the full command line carries fixture paths that differ
-    # between runs and would split one program across many labels.
-    # The interpreter is dropped: cmdline is "/bin/bash tools/bt-actions ...",
-    # and matching greedily labelled every program "bin/bash".
-    caller=$(tr -s " " "\n" < "$p.src" 2>/dev/null \
-             | grep -oE "(tools|bin|devtools|tests)/[a-zA-Z0-9._-]+|(^|/)(install|uninstall)\.sh" \
-             | grep -vE "^(/usr)?/?bin/(bash|sh|dash)$" | head -1 || true)
-    caller="${caller#/}"
-    [[ -n "$caller" ]] || caller="(unknown)"
+: > "$WORK/callers"; : > "$WORK/ranfiles"; : > "$WORK/checks"
+
+# awk's own arguments, read back from the .args sidecar (its first line is the
+# directory awk ran in): the files the program came from, as absolute paths,
+# in PFILES, and NULLONLY=1 when its only input was /dev/null.
+read_args() {   # <args file>
+    local -a a; local i=1 ops=0 null=0 cwd f
+    PFILES=(); NULLONLY=0
+    mapfile -t a < "$1" 2>/dev/null || return 0
+    cwd="${a[0]:-/}"
+    while (( i < ${#a[@]} )); do
+        f=""
+        case "${a[i]}" in
+            -f) f="${a[i+1]:-}"; i=$((i + 1)) ;;
+            -v|-F|-e|--source) i=$((i + 1)) ;;
+            --file=*) f="${a[i]#--file=}" ;;
+            -f?*) f="${a[i]#-f}" ;;
+            -?*) ;;
+            *) ops=$((ops + 1)); [[ "${a[i]}" == /dev/null ]] && null=$((null + 1)) ;;
+        esac
+        if [[ -n "$f" ]]; then
+            [[ "$f" == /* ]] || f="$cwd/$f"
+            PFILES+=("$(realpath -m -- "$f")")
+        fi
+        i=$((i + 1))
+    done
+    (( ${#PFILES[@]} && ops > 0 && ops == null )) && NULLONLY=1
+    return 0
+}
+
+add_profile() {   # <profile> <caller>
+    local p="$1" caller="$2"
 
     # Drop the generated-at header line: it carries a timestamp and would make
     # every profile of the same program hash differently.
@@ -160,8 +196,13 @@ for p in "$WORK/prof"/*; do
     # ones were left holding the name.
     canon=$(sed -E 's/^[[:space:]]*[0-9]+[[:space:]]+//; s/^[[:space:]]+//; s/\{[[:space:]]*#[[:space:]]*[0-9]+[[:space:]]*$/{/' "$WORK/body")
     h=$(printf '%s' "$canon" | cksum | tr -d ' ')
-    label="$caller#${h: -6}"
-    awk -v h="$label" -v owners="$WORK/owners" '
+    # THE HASH IS THE PROGRAM; the caller only names it. Keying on caller#hash
+    # filed one program once per script that ran it: bt-trial's report program
+    # stood at 115, 107 and 90 of 122 under three names, with every statement
+    # counted three times (2026-10-08). The callers are kept beside it, and the
+    # report names a program by the one that ran it most.
+    printf '%s\t%s\n' "$h" "$caller" >> "$WORK/callers"
+    awk -v h="$h" -v owners="$WORK/owners" '
         # ATTRIBUTION. A library loaded with -f appears in EVERY profile of
         # every tool that loads it, so counting statements per profile makes
         # tools/lib/timestamp.awk contribute once per caller — nineteen times
@@ -196,16 +237,73 @@ for p in "$WORK/prof"/*; do
             if (s ~ /^#/) next
             # Structure carries no execution of its own: a closing brace, a
             # bare `else {`, a rule header already counted on its pattern.
+            # And `BEGIN {` / `END {`: gawk never prints a count on them, only
+            # on the statements inside, so each one was a statement that
+            # "never ran" in every program that has one (2026-10-08).
             if (s ~ /^[{}]$/ || s ~ /^\}[[:space:]]*else[[:space:]]*\{$/) next
+            if (s ~ /^(BEGIN|END|BEGINFILE|ENDFILE)[[:space:]]*\{$/) next
             print scope "\t" idx "\t" executed "\t" s
         }
     ' "$WORK/body" >> "$WORK/facts"
+}
+
+for p in "$WORK/prof"/*; do
+    [[ "$p" == *.src || "$p" == *.args ]] && continue
+    [[ -s "$p" ]] || continue
+    read_args "$p.args"
+    if (( NULLONLY )); then echo "$p" >> "$WORK/checks"; continue; fi
+    (( ${#PFILES[@]} )) && printf '%s\n' "${PFILES[@]}" >> "$WORK/ranfiles"
+    # Caller, for naming the inline programs. Reduced to the repository path it
+    # names, because the full command line carries fixture paths that differ
+    # between runs and would split one program across many labels.
+    # The interpreter is dropped: cmdline is "/bin/bash tools/bt-actions ...",
+    # and matching greedily labelled every program "bin/bash". A name starts
+    # with a letter or digit: "$d/tests/../tools/x" was labelled "tests/..".
+    caller=$(tr -s " " "\n" < "$p.src" 2>/dev/null \
+             | grep -oE "(tools|bin|devtools|tests)/[a-zA-Z0-9_][a-zA-Z0-9._-]*|(^|/)(install|uninstall)\.sh" \
+             | grep -vE "^(/usr)?/?bin/(bash|sh|dash)$" | head -1 || true)
+    caller="${caller#/}"
+    add_profile "$p" "${caller:-(unknown)}"
 done
+
+# The parse checks. One whose files all ran as part of a real program is set
+# aside: those statements are already counted, where they ran over data. One
+# whose file never ran over data is COUNTED, under the file's name, so a file
+# no tool runs shows at what the check ran of it and never drops out of the
+# report.
+nparse=0; nparsekept=0
+while IFS= read -r p; do
+    read_args "$p.args"
+    elsewhere=1
+    for f in "${PFILES[@]}"; do grep -qxF -- "$f" "$WORK/ranfiles" || elsewhere=0; done
+    if (( elsewhere )); then nparse=$((nparse + 1)); continue; fi
+    nparsekept=$((nparsekept + 1))
+    add_profile "$p" "parse-check-only:${PFILES[0]#"$PWD"/}"
+done < "$WORK/checks"
 
 # ── report ────────────────────────────────────────────────────────────────
 sort -u "$WORK/facts" > "$WORK/facts.u"
 
-awk -F'\t' -v showunc="$SHOWUNCOV" '
+awk -F'\t' -v showunc="$SHOWUNCOV" -v callers="$WORK/callers" '
+    # A program is named by the caller that ran it most (ties: the first by
+    # name, so a name never changes between two runs of the same suite), and
+    # says how many others ran it too.
+    BEGIN {
+        while ((getline l < callers) > 0) {
+            split(l, cp, "\t"); if (!((cp[1], cp[2]) in nc)) ncallers[cp[1]]++
+            c = ++nc[cp[1], cp[2]]
+            if (c > best[cp[1]] || (c == best[cp[1]] && cp[2] < who[cp[1]])) { best[cp[1]] = c; who[cp[1]] = cp[2] }
+        }
+        close(callers)
+    }
+    function name(scope,   kind, rest, h, tail) {
+        if (scope !~ /^(prog|fn):/) return scope
+        kind = substr(scope, 1, index(scope, ":")); rest = substr(scope, length(kind) + 1)
+        h = rest; tail = ""
+        if (kind == "fn:") { h = substr(rest, 1, index(rest, ":") - 1); tail = substr(rest, index(rest, ":")) }
+        return kind who[h] "#" substr(h, length(h) - 5) tail \
+               (ncallers[h] > 1 ? " (+" ncallers[h] - 1 " other caller" (ncallers[h] > 2 ? "s" : "") ")" : "")
+    }
     {
         k = $1 "\t" $2
         text[k] = $4
@@ -222,7 +320,7 @@ awk -F'\t' -v showunc="$SHOWUNCOV" '
         if (showunc) {
             for (h in tot) {
                 if (hit[h] == tot[h]) continue
-                printf "program %s  (%d/%d statements)\n", h, hit[h] + 0, tot[h]
+                printf "program %s  (%d/%d statements)\n", name(h), hit[h] + 0, tot[h]
                 print substr(unc[h], 2)
                 print ""
             }
@@ -234,7 +332,7 @@ awk -F'\t' -v showunc="$SHOWUNCOV" '
         n = 0
         for (h in tot) {
             pct = 100 * (hit[h] + 0) / tot[h]
-            rows[++n] = sprintf("%6.1f%%  %5d/%-5d  %s", pct, hit[h] + 0, tot[h], h)
+            rows[++n] = sprintf("%6.1f%%  %5d/%-5d  %s", pct, hit[h] + 0, tot[h], name(h))
             sortkey[n] = pct
         }
         # NOT named `key`: that is a scalar in the rule above, and awk treats a
@@ -260,6 +358,7 @@ awk -F'\t' -v showunc="$SHOWUNCOV" '
 echo
 echo "suite: $SUITE_TAIL"
 echo "profiles collected: $nprof"
+echo "parse checks set aside: $nparse (their files also ran over data); counted: $nparsekept (their files never did)"
 
 TOTAL_PCT=$(tr -d '[:space:]' < "$WORK/pct" 2>/dev/null)
 TOTAL_PCT=${TOTAL_PCT:-0}

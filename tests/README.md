@@ -110,6 +110,35 @@ the tests as **not asked**, never as passed. The proof was seen to fail: with it
 tmpfs over `/var/log` removed, the suite went red on exactly that check, and
 nothing ran inside.
 
+The **checkout world** does the same for tools that act on the checkout they
+live in: `devtools/held`, `devtools/save`, `devtools/review-open`. They switch
+branches, commit and push, so they run in place under `unshare -Urmn`. An
+overlay of the checkout is mounted over its own path, and a network namespace
+cuts it off. Every write lands in a throwaway layer, and every push reaches
+only scratch bare repositories. The world's proof:
+- a file and a commit made inside are there inside, absent outside;
+- HEAD, every ref and the status are unchanged outside;
+- the real origin is unreachable from inside.
+
+It was seen to fail both ways. Without the overlay, the proof commit landed in
+the checkout. Without the network namespace, origin answered. Each time the
+world went red and nothing ran in it. It sets its own git identity and accepts
+a shallow push, because CI's checkout has neither.
+
+**7. An instrument is measured too.** `devtools/awk-coverage` runs the suite,
+so the suite never ran it, and its counting was trusted unseen. `BT_SUITE` now
+points it at a toy suite whose right answer was worked out by hand. Measured
+that way (2026-10-08), it had three counting errors, all making the figure low:
+- one program run by three scripts was filed as three programs;
+- gawk's `BEGIN {` / `END {` headers, which never carry a count, were counted as
+  statements that never ran;
+- repo-validate's parse check of every `*.awk` file over `/dev/null` filed each
+  file a second time.
+
+89.8% of 1941 statements became 97.8% of 1340. A suite run inside a suite run is
+refused (`SUITE_RUN_ID`), so an instrument that loses its seam stops at once
+instead of starting the suite inside itself.
+
 ## Fixtures
 
 | Path | Feeds |

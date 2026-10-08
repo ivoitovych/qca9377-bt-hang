@@ -103,6 +103,17 @@ if [[ -e "$BT_REAL_TRIAL_STATE/current" && "${BT_ALLOW_OPEN_TRIAL:-0}" != 1 ]]; 
     exit 2
 fi
 
+# A SUITE RUN INSIDE A SUITE RUN is refused, by the marker every process of a
+# run carries (SUITE_RUN_ID, below). The instruments run this file, and this
+# file runs the instruments, against small suites of their own named through
+# BT_SUITE, and runs repo-save in the checkout world. An instrument that lost
+# its seam, or a repo-save that lost its no-suite path, would start this file
+# inside itself, and that run would do the same.
+if [[ -n "${SUITE_RUN_ID:-}" ]]; then
+    echo "run-tests: already inside suite run $SUITE_RUN_ID — refusing to run inside it." >&2
+    exit 2
+fi
+
 # ── THE PATH GUARD, BEFORE ANYTHING ELSE RUNS ─────────────────────────────
 #
 # THE ESCAPE THIS CLOSES, WHICH HAPPENED.
@@ -462,7 +473,9 @@ trap on_exit EXIT
 # contain no failures must not report success for a run that failed elsewhere.
 if [[ "${1:-}" == --section ]]; then
     [[ -n "${2:-}" ]] || { echo "usage: run-tests --section <text from a heading>" >&2; exit 2; }
-    out=$("$0"); rc=$?
+    # A filter around one run, not a run: the child is the run, with a marker
+    # of its own, or the nested-run refusal above stops it.
+    out=$(env -u SUITE_RUN_ID "$0"); rc=$?
     awk -v want="$2" '
         index($0, want) && !started { started = 1 }
         started && printed && /^$/  { started = 0 }
@@ -10816,6 +10829,246 @@ fi
 rm -rf "$UIT"
 
 echo
+echo "the checkout world — tools that act on their own checkout, run in place"
+echo "──────────────────────────────────────────────────────────────────────────"
+# devtools/held and devtools/save act on the checkout they live in: they switch
+# branches, commit, and push. No test could run them where they are, and a copy
+# elsewhere is a different file to coverage and a different repository to git.
+# So they run in place in a CHECKOUT WORLD: `unshare -Urmn`, an overlay of this
+# checkout mounted over its own path, so every write — the index, objects,
+# refs, the working tree — lands in a throwaway upper layer, and a network
+# namespace, so no push or fetch can leave the machine. Remotes are scratch
+# bare repositories named through GIT_CONFIG_* for the length of one run.
+#
+# It is only worth its proof, as the namespace world above: before anything runs
+# in it, a marker file and a commit made inside must be there inside, absent
+# outside — HEAD, every ref and the working tree's status unchanged — and the
+# real origin unreachable from inside. A world that cannot be built is not
+# asked; one that builds and fails the proof is a red invariant, and nothing
+# runs in it.
+COW=$(mktemp -d)
+co_world() {   # <script> — run <script> at this checkout's own path, overlaid, offline
+    rm -rf "$COW/up" "$COW/wk"; mkdir -p "$COW/up" "$COW/wk"
+    unshare -Urmn bash -c '
+        mount -t overlay co-world -o lowerdir="$PWD",upperdir="$1",workdir="$2" "$PWD" || exit 97
+        cd "$PWD" || exit 97        # re-enter: the old directory handle is the lower layer
+        # An identity of its own, in the overlay'"'"'s .git/config: a fresh clone
+        # has none, and CI'"'"'s checkout is one (2026-10-08).
+        git config user.name "Checkout World"; git config user.email world@example.com
+        eval "$3"' co-world "$COW/up" "$COW/wk" "$1"
+}
+co_snapshot() { git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)'; git status --porcelain; }
+COMARK="co-world-$SUITE_RUN_ID"
+COWORLD_SKIPPED=''
+COWORLD_OK=0
+if unshare -Urmn true 2>/dev/null; then
+    cobefore=$(co_snapshot)
+    coproof=$(co_world "
+        echo $COMARK > $COMARK.proof
+        git commit -q --allow-empty -m 'checkout world: proof' || exit 1
+        echo \"file=\$(cat $COMARK.proof) head=\$(git log -1 --format=%s)\"
+        git ls-remote origin >/dev/null 2>&1 && echo net=reached || echo net=none
+    " 2>&1); corc=$?
+    coafter=$(co_snapshot)
+    if (( corc == 97 )); then
+        COWORLD_SKIPPED="the checkout world (an overlay of this checkout cannot be mounted here)"
+    elif [[ "$coproof" == "file=$COMARK head=checkout world: proof"*"net=none" && ! -e "$COMARK.proof" \
+            && "$cobefore" == "$coafter" ]]; then
+        ok "the checkout world proves itself: a commit and a file inside, neither outside, origin unreachable"
+        COWORLD_OK=1
+    else
+        bad "the checkout world did NOT prove itself — nothing was run in it: inside '$(tr '\n' ' ' <<<"$coproof")'; outside $([[ -e "$COMARK.proof" ]] && echo 'the marker exists' || echo 'no marker'), $([[ "$cobefore" == "$coafter" ]] && echo 'refs unchanged' || echo 'REFS OR STATUS CHANGED')"
+        rm -f "$COMARK.proof"
+    fi
+else
+    COWORLD_SKIPPED="the checkout world (no user, mount and network namespaces here)"
+fi
+
+if (( COWORLD_OK )); then
+    # The world's scratch remotes, and a trial marked open so repo-save takes
+    # its documented no-suite path rather than running this suite inside itself.
+    mkdir -p "$COW/trial" "$COW/nohooks"; : > "$COW/trial/current"
+    # repo-save validates the unit files with the machine's systemd-analyze and
+    # udevadm: declared here, as everywhere in this suite.
+    machine_stub "$COW/bin" systemd-analyze udevadm
+    COSETUP="
+        B='$COW/bare'; rm -rf \"\$B\"; mkdir -p \"\$B\"
+        git init -q --bare \"\$B/origin.git\"; git init -q --bare \"\$B/private.git\"
+        # CI checks out at depth 1, and a bare repository refuses a push from a
+        # shallow clone unless told to take one.
+        git -C \"\$B/origin.git\" config receive.shallowUpdate true
+        git -C \"\$B/private.git\" config receive.shallowUpdate true
+        # The real URL, read BEFORE the rewrite exists: a key exported ahead of
+        # its value is an empty insteadOf, and that matches every URL.
+        ORIGIN_URL=\$(git remote get-url origin)
+        export GIT_CONFIG_COUNT=2 PATH='$COW/bin':\"\$PATH\"
+        export GIT_CONFIG_KEY_0=\"url.\$B/origin.git.insteadOf\" GIT_CONFIG_VALUE_0=\"\$ORIGIN_URL\"
+        # No hooks in here: hooks installed in this checkout would run at every
+        # commit and push the world makes, against the world's scratch remotes.
+        export GIT_CONFIG_KEY_1=core.hooksPath GIT_CONFIG_VALUE_1='$COW/nohooks'
+        # The private remote is a real one, in the overlay's .git/config: git
+        # pushes to a remote named only through GIT_CONFIG_*, but \`git remote
+        # get-url\` — repo-save's test for it — does not count one as existing.
+        git remote add private \"\$B/private.git\"
+        export BT_TRIAL_STATE_DIR='$COW/trial'
+        git add -A && git commit -q --allow-empty -m 'checkout world: the tree as it is'
+        git checkout -q -B main      # -B: the checkout may already be on main, as CI's is
+        git push -q origin main 2>/dev/null
+        git checkout -q -b kernel/mgmt-flush-status
+        printf 'held patch\n' > held-world.patch; git add held-world.patch; git commit -q -m 'held: a patch'
+        git checkout -q main
+    "
+
+    # ── devtools/held: status, the origin check, sync, edit, commit
+    COH=$(co_world "$COSETUP
+        echo '== status'; devtools/held status 2>&1; echo \"rc=\$?\"
+        git push -q origin kernel/mgmt-flush-status:refs/heads/kernel/leak 2>/dev/null
+        echo '== leak'; devtools/held status 2>&1; echo \"rc=\$?\"
+        git push -q origin :refs/heads/kernel/leak 2>/dev/null
+        echo 'main moves' > main-world.txt; git add main-world.txt; git commit -q -m 'main: a change'
+        echo '== sync'; devtools/held sync 2>&1; echo \"rc=\$?\"
+        echo \"branch=\$(git branch --show-current)\"
+        echo \"private-has-main-change=\$(git --git-dir=\$B/private.git log --format=%s kernel/mgmt-flush-status 2>/dev/null | grep -c 'main: a change')\"
+        echo '== edit'; devtools/held edit 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
+        printf 'edited\n' >> held-world.patch
+        printf 'held: an edit\n' > '$COW/held-msg'
+        echo '== commit'; devtools/held commit '$COW/held-msg' > '$COW/held-commit.out' 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
+        echo \"private-has-edit=\$(git --git-dir=\$B/private.git log --format=%s kernel/mgmt-flush-status 2>/dev/null | grep -c 'held: an edit')\"
+        echo \"origin-kernel-heads=\$(git --git-dir=\$B/origin.git for-each-ref refs/heads/kernel | grep -c .)\"
+        echo dirty >> main-world.txt
+        echo '== dirty'; devtools/held edit 2>&1; echo \"rc=\$?\"
+        git checkout -q -- main-world.txt
+        echo '== usage'; devtools/held frobnicate >/dev/null 2>&1; echo \"rc=\$?\"
+        echo '== offline'; GIT_CONFIG_COUNT=0 devtools/held status 2>&1; echo \"rc=\$?\"
+    " 2>&1)
+    cosect() { awk -v s="== $1" '$0 == s { f = 1; next } /^== / { f = 0 } f' <<<"$COH"; }
+    [[ "$(cosect status)" == *"origin carries no kernel/* branch ✓"* && "$(cosect status)" == *"held branch is 1 commit(s) ahead of main, 0 behind"* \
+       && "$(cosect status)" == *"rc=0"* ]] \
+        && ok "held status: main and the held branch on every remote, origin clean, 1 ahead" \
+        || bad "held status: $(cosect status | tr '\n' '|')"
+    [[ "$(cosect leak)" == *"✗ origin carries 1 kernel/* branch(es)"* && "$(cosect leak)" == *"rc=1"* ]] \
+        && ok "held status refuses when origin carries a kernel/* branch" \
+        || bad "held status with kernel/leak on origin: $(cosect leak | tr '\n' '|')"
+    [[ "$(cosect sync)" == *"rc=0"* && "$COH" == *"branch=main"* && "$COH" == *"private-has-main-change=1"* \
+       && "$(cosect sync)" == *"held branch is 2 commit(s) ahead of main, 0 behind"* ]] \
+        && ok "held sync merges main into the held branch, pushes it to private only, and returns to main" \
+        || bad "held sync: $(cosect sync | tr '\n' '|') $(grep -E '^(branch|private-has-main-change)=' <<<"$COH" | tr '\n' ' ')"
+    [[ "$(cosect edit)" == *"on kernel/mgmt-flush-status"* && "$(cosect edit)" == *"rc=0 branch=kernel/mgmt-flush-status"* ]] \
+        && ok "held edit switches to the held branch and says how to come back" \
+        || bad "held edit: $(cosect edit | tr '\n' '|')"
+    [[ "$(cosect commit)" == *"rc=0 branch=main"* && "$COH" == *"private-has-edit=1"* && "$COH" == *"origin-kernel-heads=0"* ]] \
+        && ok "held commit goes through repo-save to private, never origin, and returns to main" \
+        || bad "held commit: $(cosect commit | tr '\n' '|') $(grep -E '^(private-has-edit|origin-kernel-heads)=' <<<"$COH" | tr '\n' ' ') — repo-save said: $(tail -6 "$COW/held-commit.out" 2>/dev/null | tr '\n' '|')"
+    [[ "$(cosect dirty)" == *"working tree not clean"* && "$(cosect dirty)" == *"rc=1"* && "$(cosect usage)" == *"rc=2"* ]] \
+        && ok "held edit refuses a dirty tree, and an unknown verb prints usage (2)" \
+        || bad "held dirty/usage: $(cosect dirty | tr '\n' '|') $(cosect usage | tr '\n' '|')"
+    [[ "$(cosect offline)" == *"cannot reach origin"*"NOT checked"* && "$(cosect offline)" == *"rc=1"* \
+       && "$(cosect offline)" != *"no kernel/* branch ✓"* ]] \
+        && ok "held status with origin unreachable says the kernel/* check was not made, and fails" \
+        || bad "held status offline: $(cosect offline | tr '\n' '|')"
+
+    # ── held sync when main and the held branch disagree. The exhibit index is
+    # generated, so both sides adding an exhibit conflict on it every time; sync
+    # regenerates it from the merged exhibits instead of asking. A conflict in
+    # anything else is the operator's, and sync must stop and name it.
+    COX=$(co_world "$COSETUP
+        exhibit() { printf '# EX-%s — %s\n\n**Claim.** %s.\n' \"\$1\" \"\$2\" \"\$2\" > evidence/exhibits/\$1-\$2.md
+                    tools/bt-exhibit index >/dev/null; git add evidence/exhibits; git commit -q -m \"exhibit \$1\"; }
+        git checkout -q kernel/mgmt-flush-status; exhibit 998 held-world; git checkout -q main; exhibit 997 main-world
+        echo '== index'; devtools/held sync 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
+        echo \"tip=\$(git log -1 --format=%s kernel/mgmt-flush-status)\"
+        echo \"index-rows=\$(git show kernel/mgmt-flush-status:evidence/exhibits/README.md | grep -cE '^\\| EX-99[78] ')\"
+        echo \"private-tip=\$(git --git-dir=\$B/private.git log -1 --format=%s kernel/mgmt-flush-status)\"
+        git checkout -q kernel/mgmt-flush-status; echo held-side >> held-world.patch; git commit -qam 'held: a side'
+        git checkout -q main; echo main-side >> held-world.patch; git add held-world.patch; git commit -qm 'main: a side'
+        echo '== conflict'; devtools/held sync 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
+        git merge --abort 2>/dev/null; git checkout -q main
+        echo dirty >> BRIEF.md
+        echo '== dirty-sync'; devtools/held sync 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
+    " 2>&1)
+    coxsect() { awk -v s="== $1" '$0 == s { f = 1; next } /^== / { f = 0 } f' <<<"$COX"; }
+    [[ "$(coxsect index)" == *"rc=0 branch=main"* && "$COX" == *"tip=Merge main into kernel/mgmt-flush-status"* \
+       && "$COX" == *"index-rows=2"* && "$COX" == *"private-tip=Merge main into kernel/mgmt-flush-status"* ]] \
+        && ok "held sync regenerates a conflicted exhibit index from both sides' exhibits, commits the merge, pushes it to private" \
+        || bad "held sync over an index conflict: $(coxsect index | tr '\n' '|') $(grep -E '^(tip|index-rows|private-tip)=' <<<"$COX" | tr '\n' ' ')"
+    # Not the exit status alone: without its `exit 1`, sync goes on to a commit
+    # that fails and a checkout of main that fails, and exits 1 anyway — saying
+    # "could not return to main" instead of what to do (a surviving mutant).
+    [[ "$(coxsect conflict)" == *"unresolved conflicts:"*"held-world.patch"*"resolve them, then: devtools/held commit"* \
+       && "$(coxsect conflict)" == *"rc=1 branch=kernel/mgmt-flush-status"* \
+       && "$(coxsect conflict)" != *"could not return to main"* ]] \
+        && ok "held sync stops on a conflict that is not the index, names the file, and leaves it on the held branch" \
+        || bad "held sync over a patch conflict: $(coxsect conflict | tr '\n' '|')"
+    [[ "$(coxsect dirty-sync)" == *"working tree not clean"* && "$(coxsect dirty-sync)" == *"rc=1 branch=main"* ]] \
+        && ok "held sync refuses a dirty tree before switching branches" \
+        || bad "held sync with a dirty tree: $(coxsect dirty-sync | tr '\n' '|')"
+
+    # ── devtools/save: refusals, the hand-off warnings, a commit
+    printf 'save: a world commit\n' > "$COW/save-msg"; : > "$COW/save-empty"
+    COS=$(co_world "$COSETUP
+        echo '== noarg'; devtools/save >/dev/null 2>&1; echo \"rc=\$?\"
+        echo '== missing'; devtools/save '$COW/nope' 2>&1; echo \"rc=\$?\"
+        echo '== empty'; devtools/save '$COW/save-empty' 2>&1; echo \"rc=\$?\"
+        printf '# EX-999 — a world probe\n\n**Claim.** none.\n' > evidence/exhibits/999-world-probe.md
+        for i in \$(seq 1 800); do echo \"line \$i\"; done >> BRIEF.md
+        echo world > save-world.txt
+        echo '== save'; devtools/save '$COW/save-msg' --no-push 2>&1; echo \"rc=\$?\"
+        echo \"head=\$(git log -1 --format=%s)\"
+        echo \"pushed=\$(git --git-dir=\$B/origin.git log --format=%s main 2>/dev/null | grep -c 'save: a world commit')\"
+    " 2>&1)
+    cossect() { awk -v s="== $1" '$0 == s { f = 1; next } /^== / { f = 0 } f' <<<"$COS"; }
+    [[ "$(cossect noarg)" == *"rc=2"* && "$(cossect missing)" == *"cannot read message file"*"rc=2"* \
+       && "$(cossect empty)" == *"REFUSING"*"empty"*"rc=2"* ]] \
+        && ok "save refuses no message, an unreadable one and an empty one (2), before anything else" \
+        || bad "save refusals: $(cossect noarg | tr '\n' '|') $(cossect missing | tr '\n' '|') $(cossect empty | tr '\n' '|')"
+    [[ "$(cossect save)" == *"BRIEF.md does not mention EX-999"* && "$(cossect save)" == *"docs/STATUS.md does not mention EX-999"* \
+       && "$(cossect save)" == *"over its 750-line budget"* ]] \
+        && ok "save warns when BRIEF.md and docs/STATUS.md lag the newest exhibit, and when BRIEF.md is over budget" \
+        || bad "save warnings: $(cossect save | grep -E '⚠|budget' | tr '\n' '|')"
+    [[ "$(cossect save)" == *"rc=0"* && "$COS" == *"head=save: a world commit"* && "$COS" == *"pushed=0"* ]] \
+        && ok "save --no-push commits through repo-save (no suite: a trial is open) and pushes nothing" \
+        || bad "save --no-push: $(cossect save | tail -4 | tr '\n' '|') $(grep -E '^(head|pushed)=' <<<"$COS" | tr '\n' ' ')"
+
+    # ── devtools/review-open, on a register written for the purpose. The real
+    # one changes with every review; this one holds each case the tool decides:
+    # a prefix with a digit (R2), bold, a two-word closed status, a status word
+    # nobody listed, and a row too short to have a status.
+    COR=$(co_world "
+        cat > reviews/README.md <<'REG'
+| ID | Item | Status |
+|---|---|---|
+| UT-01 | a test that runs | **done** |
+| UT-02 | a test not yet written | open |
+| R2-07 | a digit in the prefix | partial — half of it |
+| R2-08 | two words, closed | no action: by design |
+| TX-03 | a word nobody listed | deferred to the next review |
+| TX-04 too short to carry a status
+REG
+        echo '== open'; devtools/review-open; echo \"rc=\$?\"
+        echo '== all'; devtools/review-open --all; echo \"rc=\$?\"
+        echo '== counts'; devtools/review-open --counts; echo \"rc=\$?\"
+        echo '== bad'; devtools/review-open --al 2>&1; echo \"rc=\$?\"
+    " 2>&1)
+    corsect() { awk -v s="== $1" '$0 == s { f = 1; next } /^== / { f = 0 } f' <<<"$COR"; }
+    [[ "$(corsect open)" == *"UT: 2 rows, 1 not closed"* && "$(corsect open)" == *"R2: 2 rows, 1 not closed"* \
+       && "$(corsect open)" == *"TX: 1 rows, 1 not closed"* && "$(corsect open)" == *"UT-02"* && "$(corsect open)" == *"R2-07"* \
+       && "$(corsect open)" == *"TX-03   deferred"* && "$(corsect open)" != *"UT-01"* && "$(corsect open)" != *"R2-08"* ]] \
+        && ok "review-open lists what is not closed — an R2 row, an unlisted status word — and not bold or two-word closures" \
+        || bad "review-open: $(corsect open | tr '\n' '|')"
+    [[ $(grep -cE '^(UT|R2|TX)-[0-9]+ ' <<<"$(corsect all)") == 5 && "$(corsect counts)" == *"  no"* \
+       && "$(corsect counts)" == *"   1  done"* ]] \
+        && ok "review-open --all prints every row with a status, and --counts the words per register" \
+        || bad "review-open --all/--counts: $(corsect all | tr '\n' '|') $(corsect counts | tr '\n' '|')"
+    [[ "$(corsect bad)" == *"unknown option: --al"* && "$(corsect bad)" == *"rc=2"* ]] \
+        && ok "review-open refuses an unknown option instead of answering another question" \
+        || bad "review-open --al: $(corsect bad | tr '\n' '|')"
+    [[ "$cobefore" == "$(co_snapshot)" ]] \
+        && ok "the checkout world's runs left this checkout's HEAD, refs and status as they were" \
+        || bad "the checkout world changed this checkout — HEAD, refs or status differ"
+fi
+rm -rf "$COW"
+
+echo
 echo "install.sh / uninstall.sh — the APPLY path, for real, into a staging root"
 echo "─────────────────────────────────────────────────────────────────────────"
 #
@@ -13256,6 +13509,70 @@ $SFD/20-tools.sh" ]] \
     || bad "test-comprehension's suite set was wrong (rc=$tcsrc): $(tr '\n' ' ' <<<"$TCS")"
 rm -rf "$SFD" "$SFE"
 
+# THE SUITE REFUSES TO RUN INSIDE ITSELF. Everything below drives instruments
+# that run a suite; this is what makes a lost seam a refusal, not a recursion.
+# Under a timeout, so a refusal that broke fails here in seconds.
+NEST=$(timeout -k 2 20 tests/run-tests 2>&1); nestrc=$?
+(( nestrc == 2 )) && [[ "$NEST" == "run-tests: already inside suite run $SUITE_RUN_ID — refusing to run inside it." ]] \
+    && ok "the suite refuses to run inside a run of itself, before doing anything" \
+    || bad "a nested tests/run-tests gave rc=$nestrc: $(head -3 <<<"$NEST" | tr '\n' '|')"
+
+# devtools/awk-coverage, MEASURED AGAINST AN ANSWER KNOWN IN ADVANCE. It runs a
+# suite, so it never ran from here, and its counting was trusted unseen. Two
+# defects were in that counting (2026-10-08), both making it say less than the
+# suite does. It keyed programs on caller#hash, so one program run by three
+# scripts was three programs. And it counted gawk's `BEGIN {` / `END {`
+# headers, which never carry a count, as statements that never ran. A third
+# came with the checkout world: repo-validate's parse check of every *.awk file
+# over /dev/null filed each file's statements again, as a program that never
+# saw data. BT_SUITE points it at a toy suite here, small enough to count by
+# hand, and shaped like the tools: a program is two files loaded together.
+#   lib/two.awk +   `/^a/`, `na++`, `/^b/`, `nb++`, `print`, `print` — run by
+#   lib/tail.awk    tools/one twice and tools/other once, never with a `b`
+#                   line: 5 of 6, ONE program, named by the caller that ran it
+#                   most
+#   lib/lonely.awk  `n++`, `print` — only ever parse-checked: counted, at 1 of 2
+#   tools/check     parse-checks all three, twice: four set aside, two counted
+# 6 of 8, 75.0%. Counting the parse checks gives 8 of 14, two.awk filed again
+# at 1 of 5: the same shape as the real fall, measured on this toy.
+if command -v gawk >/dev/null 2>&1; then
+    ACT=$(mktemp -d); mkdir -p "$ACT/tools/lib" "$ACT/tests"
+    printf '/^a/ { na++ }\n/^b/ { nb++ }\nEND { print na + 0, nb + 0 }\n' > "$ACT/tools/lib/two.awk"
+    printf 'END { print "tail" }\n' > "$ACT/tools/lib/tail.awk"
+    printf '{ n++ }\nEND { print n + 0 }\n' > "$ACT/tools/lib/lonely.awk"
+    printf '#!/bin/bash\nl=$(dirname "${BASH_SOURCE[0]}")/lib\nprintf "a\\n" | awk -f "$l/two.awk" -f "$l/tail.awk"\n' > "$ACT/tools/one"
+    printf '#!/bin/bash\nl=$(dirname "${BASH_SOURCE[0]}")/lib\nprintf "a\\na\\n" | awk -f "$l/two.awk" -f "$l/tail.awk"\n' > "$ACT/tools/other"
+    printf '#!/bin/bash\ncd "$(dirname "${BASH_SOURCE[0]}")" && for f in lib/*.awk; do awk -f "$f" /dev/null >/dev/null; done\n' > "$ACT/tools/check"
+    printf '#!/bin/bash\nd=$(dirname "${BASH_SOURCE[0]}")/..\n"$d/tools/one"; "$d/tools/one"; "$d/tools/other"; "$d/tools/check"; "$d/tools/check"\necho "toy: done"\n' > "$ACT/tests/suite"
+    chmod +x "$ACT/tools/one" "$ACT/tools/other" "$ACT/tools/check" "$ACT/tests/suite"
+    ACO=$(BT_SUITE="$ACT/tests/suite" timeout -k 2 60 devtools/awk-coverage --min 75 2>&1); acorc=$?
+    ACU=$(BT_SUITE="$ACT/tests/suite" timeout -k 2 60 devtools/awk-coverage --uncovered 2>&1)
+    ACF=$(BT_SUITE="$ACT/tests/suite" timeout -k 2 60 devtools/awk-coverage --min 76 2>&1); acfrc=$?
+    [[ $(grep -c '% .*prog:' <<<"$ACO") == 2 && "$ACO" == *"83.3%      5/6      prog:tools/one#"*" (+1 other caller)"* ]] \
+        && ok "awk-coverage files one program run by two scripts once, named by the one that ran it most" \
+        || bad "awk-coverage's grouping by program: $(grep -E '%|TOTAL' <<<"$ACO" | tr '\n' '|')"
+    [[ "$ACO" == *"50.0%      1/2      prog:parse-check-only:$ACT/tools/lib/lonely.awk#"* \
+       && "$ACO" == *"parse checks set aside: 4 (their files also ran over data); counted: 2 (their files never did)"* ]] \
+        && ok "awk-coverage sets aside a parse check of a file that ran, and counts the file that never did" \
+        || bad "awk-coverage's parse checks: $(grep -E 'parse|lonely' <<<"$ACO" | tr '\n' '|')"
+    [[ "$ACO" == *"TOTAL: 75.0% (6 of 8 statements)"* && "$ACO" == *"suite: toy: done"* && $acorc == 0 && $acfrc == 1 \
+       && "$ACF" == *"awk statement coverage 75% is below the --min 76% floor"* ]] \
+        && ok "awk-coverage totals 6 of 8 (no parse check twice, no BEGIN/END header), and its floor holds at 75 and fails at 76" \
+        || bad "awk-coverage's total or floor: rc=$acorc/$acfrc $(grep -E 'TOTAL|floor|suite:' <<<"$ACO$ACF" | tr '\n' '|')"
+    [[ "$ACU" == *"    nb++"* && "$ACU" == *"    n++"* && "$ACU" == *"2 of 8 awk statements never ran"* && "$ACU" != *"END {"* ]] \
+        && ok "awk-coverage --uncovered names the two statements that never ran, and nothing else" \
+        || bad "awk-coverage --uncovered: $(tr '\n' '|' <<<"$ACU")"
+    chmod -x "$ACT/tests/suite"
+    BT_SUITE="$ACT/tests/suite" timeout -k 2 20 devtools/awk-coverage >/dev/null 2>&1
+    (( $? == 2 )) \
+        && ok "awk-coverage refuses a suite it cannot run (2), rather than profiling nothing" \
+        || bad "awk-coverage ran with a non-executable BT_SUITE"
+    rm -rf "$ACT"
+    AWKCOV_SKIPPED=''
+else
+    AWKCOV_SKIPPED="devtools/awk-coverage against a toy suite (no gawk here; mawk has no profiler)"
+fi
+
 SELF0=$(grep -HnE '"\$0"' "${SUITE_FILES[@]}" | grep -vE ':[0-9]+:[[:space:]]*#')
 SELF0N=$(grep -c . <<<"$SELF0" || true)
 if (( ${SELF0N:-0} == 3 )); then
@@ -13480,7 +13797,7 @@ fi
 # AT-SPI recorder is proven against a private accessibility bus, which needs
 # dbus-daemon and python3 with GObject; its shipped defaults run inside a user
 # and mount namespace, which some hosts refuse. Either way: not asked, said so.
-for _ns in "$UIATSPI_SKIPPED" "$UINS_SKIPPED"; do
+for _ns in "$UIATSPI_SKIPPED" "$UINS_SKIPPED" "$COWORLD_SKIPPED" "$AWKCOV_SKIPPED"; do
     [[ -n "$_ns" ]] || continue
     echo "  NOT ASKED HERE: $_ns — not available on this host,"
     echo "                  so it was not run. Run this suite where it is."
