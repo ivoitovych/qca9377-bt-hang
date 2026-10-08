@@ -10295,6 +10295,476 @@ tl xyzzy >/dev/null 2>&1
 rm -rf "$TL"
 
 echo
+echo "bt-ui-capture — every verb in place; its shipped defaults in a namespace"
+echo "──────────────────────────────────────────────────────────────────────────"
+# The desktop capture tool (main, 2026-10-05) arrived with a standalone proof,
+# scripts/prove-ui-capture.sh, and no test here: 0 of its 400 lines ran under
+# the suite, and the comprehension floor went red on this branch. Its checks are
+# carried over below, against tools/bt-ui-capture IN PLACE (the proof runs a
+# copy, which neither coverage nor comprehension can credit), with main's stubs:
+# every command it runs on the system records its arguments, every path is a
+# seam into a temporary tree. Then what the proof never reached: `status`, the
+# two bus monitors and their rotation, the refusals, the five tuning knobs —
+# and the shipped DEFAULTS, which no seam can reach, since a seam replaces the
+# default it guards (below, in a user and mount namespace).
+UIT=$(mktemp -d)
+mkdir -p "$UIT/repo/scripts" "$UIT/repo/bin" "$UIT/stub" "$UIT/base" "$UIT/home" "$UIT/apps" \
+         "$UIT/fixture" "$UIT/cap/capture" "$UIT/cap/trace" "$UIT/state"
+cp scripts/bt-ui-atspi.py "$UIT/repo/scripts/"
+printf '#!/bin/sh\nexit 0\n' > "$UIT/repo/scripts/bt-audio-policy.py"
+printf '#!/bin/bash\necho "bt-mark $*" >> "$PROVE_CALLS"\n' > "$UIT/repo/bin/bt-mark"
+chmod +x "$UIT/repo/scripts/bt-audio-policy.py" "$UIT/repo/bin/bt-mark"
+UICALLS="$UIT/calls.log"; UISTATE="$UIT/state"; : > "$UICALLS"; echo 2 > "$UISTATE/pw-level"
+uistub() { cat > "$UIT/stub/$1"; chmod +x "$UIT/stub/$1"; }
+uistub runuser <<'EOF'
+#!/bin/bash
+echo "runuser $*" >> "$PROVE_CALLS"
+while [[ $# -gt 0 && "$1" != "--" ]]; do shift; done
+shift
+exec "$@"
+EOF
+uistub systemd-run <<'EOF'
+#!/bin/bash
+echo "systemd-run $*" >> "$PROVE_CALLS"
+for a in "$@"; do case "$a" in --unit=*) touch "$PROVE_STATE/active-${a#--unit=}" ;; esac; done
+EOF
+uistub systemctl <<'EOF'
+#!/bin/bash
+echo "systemctl $*" >> "$PROVE_CALLS"
+case "$1" in
+    is-active) [[ -e "$PROVE_STATE/active-${*: -1}" ]] ;;
+    stop) rm -f "$PROVE_STATE/active-$2" ;;
+    show) echo "{ path=/usr/libexec/bluetooth/bluetoothd ; argv[]=/usr/libexec/bluetooth/bluetoothd -d }" ;;
+esac
+EOF
+uistub pw-metadata <<'EOF'
+#!/bin/bash
+echo "pw-metadata $*" >> "$PROVE_CALLS"
+if [[ $# -ge 5 ]]; then echo "$5" > "$PROVE_STATE/pw-level"; exit 0; fi
+echo 'Found "settings" metadata 31'
+printf "update: id:0 key:'log.level' value:'%s' type:''\n" "$(cat "$PROVE_STATE/pw-level")"
+EOF
+uistub loginctl <<'EOF'
+#!/bin/bash
+echo "loginctl $*" >> "$PROVE_CALLS"
+case "$1" in show-seat) echo 4 ;; show-session) echo prove-user ;; show-user) echo no ;; esac
+EOF
+uistub chown <<'EOF'
+#!/bin/bash
+echo "chown $*" >> "$PROVE_CALLS"
+EOF
+uistub busctl <<'EOF'
+#!/bin/bash
+printf 's "%s"\n' "$(cat "$PROVE_STATE/bus-address" 2>/dev/null)"
+EOF
+# The bus monitors' source: N lines of 100 characters, then exit, so a monitor
+# run ends by itself and rotation can be counted.
+uistub dbus-monitor <<'EOF'
+#!/bin/bash
+echo "dbus-monitor $*" >> "$PROVE_CALLS"
+n=$(cat "$PROVE_STATE/monitor-lines" 2>/dev/null || echo 0)
+for (( i = 0; i < n; i++ )); do printf 'signal sender=:1.42 member=PropertiesChanged %077d\n' "$i"; done
+EOF
+uistub pgrep <<'EOF'
+#!/bin/bash
+[[ -s "$PROVE_STATE/pids-$*" ]] && cat "$PROVE_STATE/pids-$*" && exit 0
+exit 1
+EOF
+uistub gsettings <<'EOF'
+#!/bin/bash
+echo false
+EOF
+uistub dpkg-query <<'EOF'
+#!/bin/bash
+echo "pipewire 1.0.5-test"
+EOF
+machine_stub "$UIT/stub" uname      # versions.txt records the kernel release
+# A dynamic-debug control file in the kernel's own wording (main's proof: lines
+# from /sys/kernel/debug/dynamic_debug/control on 7.0.0-34, sites trimmed).
+UICTL="$UIT/control"
+cat > "$UICTL" <<'EOF'
+net/bluetooth/sco.c:84 [bluetooth]sco_conn_free =_ "conn %p\n"
+net/bluetooth/sco.c:164 [bluetooth]sco_sock_timeout =_ "sock %p state %d\n"
+net/bluetooth/sco.c:224 [bluetooth]sco_conn_add =_ "hcon %p conn %p\n"
+net/bluetooth/sco.c:238 [bluetooth]sco_chan_del =_ "sk %p, conn %p, err %d\n"
+net/bluetooth/sco.c:263 [bluetooth]sco_conn_del =_ "hcon %p conn %p, err %d\n"
+net/bluetooth/sco.c:286 [bluetooth]__sco_chan_add =_ "conn %p\n"
+net/bluetooth/sco.c:327 [bluetooth]sco_connect =_ "%pMR -> %pMR\n"
+net/bluetooth/sco.c:412 [bluetooth]sco_send_frame =_ "sk %p len %d\n"
+net/bluetooth/sco.c:431 [bluetooth]sco_recv_frame =_ "sk %p len %u\n"
+net/bluetooth/sco.c:527 [bluetooth]sco_sock_kill =_ "sk %p state %d\n"
+net/bluetooth/sco.c:544 [bluetooth]__sco_sock_close =_ "sk %p state %d socket %p\n"
+net/bluetooth/sco.c:676 [bluetooth]sco_sock_connect =_ "sk %p\n"
+net/bluetooth/sco.c:837 [bluetooth]sco_sock_sendmsg =_ "sock %p, sk %p\n"
+net/bluetooth/sco.c:876 [bluetooth]sco_conn_defer_accept =_ "conn %p\n"
+net/bluetooth/sco.c:1334 [bluetooth]sco_sock_shutdown =_ "sock %p, sk %p\n"
+net/bluetooth/sco.c:1364 [bluetooth]sco_sock_release =_ "sock %p, sk %p\n"
+net/bluetooth/sco.c:1388 [bluetooth]sco_conn_ready =_ "conn %p\n"
+net/bluetooth/sco.c:1449 [bluetooth]sco_connect_ind =_ "hdev %s, bdaddr %pMR\n"
+net/bluetooth/sco.c:1476 [bluetooth]sco_connect_cfm =_ "hcon %p bdaddr %pMR status %u\n"
+net/bluetooth/sco.c:1495 [bluetooth]sco_disconn_cfm =_ "hcon %p reason %d\n"
+net/bluetooth/sco.c:1524 [bluetooth]sco_recv_scodata =_ "conn %p len %u\n"
+net/bluetooth/hci_conn.c:546 [bluetooth]hci_sco_setup =p "hcon %p\n"
+EOF
+cp "$UICTL" "$UIT/control.orig"
+printf '[Desktop Entry]\nName=Sound\nExec=gnome-control-center sound\nType=Application\n' > "$UIT/apps/gnome-sound-panel.desktop"
+printf '[Desktop Entry]\nName=Bluetooth\nExec=gnome-control-center bluetooth\nType=Application\n' > "$UIT/apps/gnome-bluetooth-panel.desktop"
+printf '[Desktop Entry]\nName=Settings\nExec=gnome-control-center\nType=Application\n' > "$UIT/apps/org.gnome.Settings.desktop"
+
+# The ONLY way this section runs the tool: ui [VAR=value...] -- <arguments>.
+ui() {
+    local -a extra=()
+    while [[ $# -gt 0 && "$1" != -- ]]; do extra+=("$1"); shift; done
+    shift
+    env -u BT_UI_USER PATH="$UIT/stub:$PATH" PROVE_CALLS="$UICALLS" PROVE_STATE="$UISTATE" \
+        BT_UI_BASE="$UIT/base" BT_UI_HOME="$UIT/home" BT_UI_UID=4242 BT_UI_REPO="$UIT/repo" \
+        BT_DYNDBG_CTL="$UICTL" BT_UI_APPDIR="$UIT/apps" BT_UI_CAPTURE_DIRS="$UIT/cap/capture $UIT/cap/trace" \
+        BT_JOURNAL_FIXTURE="$UIT/fixture" BT_UI_EUID=0 BT_UI_MARK="$UIT/repo/bin/bt-mark" \
+        "${extra[@]}" tools/bt-ui-capture "$@"
+}
+uic() { local n; n=$(grep -c -E -- "$1" "$2" 2>/dev/null || true); echo "${n:-0}"; }
+uiok() { local d="$1"; shift; if "$@"; then ok "bt-ui-capture: $d"; else bad "bt-ui-capture: $d"; fi; }
+uieq() { [[ "$1" == "$2" ]]; }
+uitree() { find "$UIT/base" "$UIT/home" -printf '%p %s\n' 2>/dev/null | sort; }
+uimut() { uic '^(systemd-run|systemctl stop|chown|bt-mark)|pw-metadata -n settings 0 ' "$UICALLS"; }
+UIAPPS="$UIT/home/.local/share/applications"
+UIDBUS="$UIT/home/.local/share/dbus-1/services/org.gnome.Settings.service"
+
+# ── plan changes nothing, and is the default
+uibefore=$(uitree)
+UIPLAN=$(ui -- plan 2>&1); uirc=$?
+uifirst=$(ui -- 2>&1 | head -1)
+uiok "plan exits 0" uieq "$uirc" 0
+uiok "plan made no acting call (systemd-run, systemctl stop, chown, pw-metadata set, bt-mark)" uieq "$(uimut)" 0
+uiok "plan left the session and home trees as they were" uieq "$(uitree)" "$uibefore"
+uiok "plan left the dynamic-debug control untouched" cmp -s "$UICTL" "$UIT/control.orig"
+uin=$(grep -c -e "would write 'module bluetooth func sco_connect +p'" -e "would run: systemd-run" <<<"$UIPLAN" || true)
+uiok "plan names what start would change (one dynamic-debug line, three monitors, the recorder)" uieq "$uin" 5
+uiok "plan is the default with no argument" uieq "${uifirst%% —*}" "bt-ui-capture plan"
+# The two runtime knobs, read where plan shows them — before any session
+# exists: with one active, plan rightly proposes nothing already in place.
+UIKNOB=$(ui BT_UI_PW_LEVEL=5 BT_UI_GCC_DOMAINS=knob-domain -- plan 2>&1)
+uiok "BT_UI_PW_LEVEL and BT_UI_GCC_DOMAINS are what plan says start would set" \
+    test -n "$(grep -E 'pw-metadata -n settings 0 log\.level 5' <<<"$UIKNOB")" -a -n "$(grep -F 'G_MESSAGES_DEBUG=knob-domain' <<<"$UIKNOB")"
+
+# ── every acting subcommand refuses without root, before any call
+for uisub in start stop stage-restart unstage collect _monitor; do
+    : > "$UICALLS"
+    uio=$(ui BT_UI_EUID=1000 -- "$uisub" 2>&1); uir=$?
+    uisaid=0; [[ "$uio" == *"must run as root"* ]] && uisaid=1
+    uiok "$uisub refuses without root (exit 1, says so) and made no call first" \
+        uieq "$uir/$uisaid/$(wc -c < "$UICALLS")" "1/1/0"
+done
+
+# ── start records, then changes; a foreign file is left alone
+printf '[Desktop Entry]\nName=Mine\nExec=my-own-launcher\n' > "$UIT/foreign.desktop"
+mkdir -p "$UIAPPS"; cp "$UIT/foreign.desktop" "$UIAPPS/gnome-bluetooth-panel.desktop"
+: > "$UICALLS"
+ui -- start > "$UIT/start1.out" 2>&1; uirc=$?
+UIS=$(cat "$UIT/base/current" 2>/dev/null); UIM="$UIS/manifest.txt"
+uiok "start exits 0 and writes the session pointer" test "$uirc" -eq 0 -a -n "$UIS" -a -d "$UIS"
+uiok "start recorded the PipeWire level it found (2), then set 3" \
+    uieq "$(uic '^pw_level_before=2$' "$UIM")/$(cat "$UISTATE/pw-level")" "1/3"
+uiok "start recorded the 16 sco.c functions as off, then enabled exactly those" \
+    uieq "$(uic '^dyndbg_before\..*=_$' "$UIM")/$(uic '^module bluetooth func .* \+p$' "$UICTL")" "16/16"
+uiok "start enabled no per-packet sco.c function" \
+    uieq "$(uic 'func (sco_send_frame|sco_recv_frame|sco_recv_scodata|sco_sock_sendmsg) ' "$UICTL")" 0
+uiok "start's sound-panel override carries its marker and the debug domains" \
+    uieq "$(uic '^# bt-ui-capture' "$UIAPPS/gnome-sound-panel.desktop")/$(uic '^Exec=env "G_MESSAGES_DEBUG=cc-sound-panel Gvc" gnome-control-center sound$' "$UIAPPS/gnome-sound-panel.desktop")" "1/1"
+uiok "start wrote the D-Bus activation override" uieq "$(uic '^Exec=/usr/bin/env "G_MESSAGES_DEBUG=' "$UIDBUS")" 1
+uiok "start left a foreign launcher untouched" cmp -s "$UIT/foreign.desktop" "$UIAPPS/gnome-bluetooth-panel.desktop"
+uiok "start launched exactly the three monitors, and the recorder because it was not running" \
+    uieq "$(uic '^systemd-run .*--unit=bt-ui-(atspi|sysbus|sessbus) ' "$UICALLS")/$(uic '^systemd-run .*--unit=bt-audio-policy ' "$UICALLS")" "3/1"
+uiok "start marked the journal and copied the AT-SPI recorder into the session" \
+    test "$(uic '^bt-mark ui-capture START' "$UICALLS")" -eq 1 -a -r "$UIS/bin/bt-ui-atspi.py"
+
+# ── a second start is idempotent
+: > "$UICALLS"
+ui -- start > "$UIT/start2.out" 2>&1; uirc=$?
+uiok "a second start reuses the session, re-records nothing, launches nothing, sets nothing" \
+    uieq "$uirc:$(cat "$UIT/base/current"):$(uic '^pw_level_before=' "$UIM"):$(uic '^systemd-run ' "$UICALLS"):$(uic 'pw-metadata -n settings 0 ' "$UICALLS")" "0:$UIS:1:0:0"
+
+# ── status: what is active, read back (the proof never asked)
+printf '2026-10-05T01:00:01.000000+0200 n journald: Suppressed 12 messages from pipewire.service\n' > "$UIT/fixture/default.log"
+echo 777 > "$UISTATE/pids--u 4242 -x gnome-control-c"
+# The kernel applies a `+p` query to the sites' flags; a fixture file only
+# collects the queries. So do here what the kernel would, before asking.
+sed -i -E '/^net\/bluetooth\/sco\.c:[0-9]+ \[bluetooth\](sco_conn_free|sco_sock_timeout|sco_conn_add|sco_chan_del|sco_conn_del|__sco_chan_add|sco_connect|sco_sock_kill|__sco_sock_close|sco_sock_connect|sco_conn_defer_accept|sco_sock_shutdown|sco_sock_release|sco_conn_ready|sco_connect_ind|sco_connect_cfm|sco_disconn_cfm) =_ /s/ =_ / =p /' "$UICTL"
+# GNOME Settings' environment, through BT_PROC: a process that already has the
+# debug domains, so the value must be READ, not merely printed empty.
+mkdir -p "$UIT/proc/777"; printf 'HOME=/home/u\0G_MESSAGES_DEBUG=cc-sound-panel Gvc\0' > "$UIT/proc/777/environ"
+UIST=$(ui BT_PROC="$UIT/proc" -- status 2>&1); uirc=$?
+UISTNR=$(ui BT_UI_EUID=1000 -- status 2>&1); uirc2=$?
+uiok "status names the session, the active monitors and the PipeWire level against the recorded one" \
+    test "$uirc" -eq 0 -a -n "$(grep -F "session: $UIS (active; started" <<<"$UIST")" \
+         -a "$(grep -c 'unit bt-ui-.*: active' <<<"$UIST")" -eq 3 \
+         -a -n "$(grep -F 'PipeWire daemon log.level now: 3 (recorded before start: 2)' <<<"$UIST")"
+uiok "status counts the sco.c functions on and lists the overrides it wrote" \
+    test -n "$(grep -F 'sco.c dynamic debug: 16 of 16 functions on' <<<"$UIST")" \
+         -a "$(grep -c 'override present:' <<<"$UIST")" -eq 3
+uiok "status reads GNOME Settings' environment through its pid, under BT_PROC" \
+    test -n "$(grep -F "GNOME Settings pid 777 G_MESSAGES_DEBUG='cc-sound-panel Gvc'" <<<"$UIST")"
+uiok "status as a non-root user says what it could not read, and reads none of it" \
+    test "$uirc2" -eq 0 -a -n "$(grep -F '(not root: PipeWire level' <<<"$UISTNR")" \
+         -a -z "$(grep -F 'PipeWire daemon log.level' <<<"$UISTNR")"
+rm -f "$UISTATE/pids--u 4242 -x gnome-control-c"
+
+# ── stage-restart writes, unstage removes, a foreign drop-in stays; the knobs
+UIPWD="$UIT/home/.config/systemd/user/pipewire.service.d"
+mkdir -p "$UIPWD"
+printf '[Service]\nEnvironment=FOO=1\n' > "$UIT/foreign.conf"
+cp "$UIT/foreign.conf" "$UIPWD/90-bt-ui-capture.conf"
+: > "$UICALLS"
+ui -- stage-restart > "$UIT/stage.out" 2>&1; uirc=$?
+UIWPD="$UIT/home/.config/systemd/user/wireplumber.service.d/90-bt-ui-capture.conf"
+UIPPD="$UIT/home/.config/systemd/user/pipewire-pulse.service.d/90-bt-ui-capture.conf"
+uiok "stage-restart wrote WIREPLUMBER_DEBUG with the native HFP topic and without the per-cycle sink.sco" \
+    test "$uirc" -eq 0 -a "$(uic '^Environment="WIREPLUMBER_DEBUG=D:.*spa\.bluez5\.native' "$UIWPD")" -eq 1 \
+         -a "$(uic 'sink\.sco' "$UIWPD")" -eq 0
+uiok "stage-restart wrote PIPEWIRE_DEBUG for pipewire-pulse at info" \
+    uieq "$(uic '^Environment="PIPEWIRE_DEBUG=mod\.protocol-pulse\*:3"$' "$UIPPD")" 1
+uiok "stage-restart did not overwrite a foreign drop-in, and restarted or reloaded nothing" \
+    test "$(cmp -s "$UIT/foreign.conf" "$UIPWD/90-bt-ui-capture.conf" && echo kept)" = kept \
+         -a "$(uic '^systemctl (restart|daemon-reload|--user)' "$UICALLS")" -eq 0
+ui -- unstage > "$UIT/unstage.out" 2>&1
+uiok "unstage removed its drop-ins and kept the foreign one" \
+    test ! -e "$UIWPD" -a ! -e "$UIPPD" -a "$(cmp -s "$UIT/foreign.conf" "$UIPWD/90-bt-ui-capture.conf" && echo kept)" = kept
+rm -f "$UIPWD/90-bt-ui-capture.conf"
+# Every knob reaches what it names. The defaults above prove the shipped values;
+# these prove each override is read, rather than the default being hardcoded
+# somewhere it is also printed.
+ui BT_UI_WP_DEBUG=D:wp.knob BT_UI_PULSE_DEBUG=pulse.knob:2 BT_UI_DAEMON_DEBUG=4 -- stage-restart >/dev/null 2>&1
+uiok "BT_UI_WP_DEBUG, BT_UI_PULSE_DEBUG and BT_UI_DAEMON_DEBUG are what stage-restart writes" \
+    uieq "$(uic '^Environment="WIREPLUMBER_DEBUG=D:wp\.knob"$' "$UIWPD")$(uic '^Environment="PIPEWIRE_DEBUG=pulse\.knob:2"$' "$UIPPD")$(uic '^Environment="PIPEWIRE_DEBUG=4"$' "$UIPWD/90-bt-ui-capture.conf")" 111
+ui -- unstage >/dev/null 2>&1
+
+# ── the two bus monitors, and the rotation that bounds every monitor file.
+# The AT-SPI monitor needs a real accessibility bus (below); these run here.
+UIMD="$UIT/mon"; mkdir -p "$UIMD"
+echo 200 > "$UISTATE/monitor-lines"
+ui BT_UI_USER=prove-user BT_UI_MAX_BYTES=4000 BT_UI_KEEP=2 -- _monitor sysbus "$UIMD" >/dev/null 2>&1; uirc=$?
+ui BT_UI_USER=prove-user BT_UI_MAX_BYTES=4000 BT_UI_KEEP=2 -- _monitor sessbus "$UIMD" >/dev/null 2>&1; uirc2=$?
+uinf=$(find "$UIMD" -maxdepth 1 -name 'system-bus.log*' | wc -l)
+uibig=$(find "$UIMD" -maxdepth 1 -name '*.log*' -size +5k | wc -l)
+uiok "the system-bus monitor follows BlueZ both ways, the session-bus one Settings and the rfkill switch, as the user" \
+    test "$uirc$uirc2" = 00 -a "$(uic "^dbus-monitor --system sender='org.bluez' destination='org.bluez'$" "$UICALLS")" -eq 1 \
+         -a "$(uic "^runuser -u prove-user -- .* dbus-monitor --session sender='org.gnome.Settings'" "$UICALLS")" -eq 1
+uiok "a monitor rotates at BT_UI_MAX_BYTES and keeps BT_UI_KEEP old files: 20 kB in, 3 files of at most 4 kB" \
+    test "$uinf" -eq 3 -a "$uibig" -eq 0 -a "$(cat "$UIMD"/system-bus.log* | wc -l)" -le 200
+uio=$(ui BT_UI_USER=prove-user -- _monitor nosuch "$UIMD" 2>&1); uir=$?
+uio2=$(ui -- nosuchverb 2>&1); uir2=$?
+uio3=$(ui -- collect --bogus 2>&1); uir3=$?
+uiok "an unknown monitor kind, command or collect argument is refused by name" \
+    test "$uir" -ne 0 -a "$uir2" -ne 0 -a "$uir3" -ne 0 \
+         -a -n "$(grep -F 'unknown monitor kind: nosuch' <<<"$uio")" \
+         -a -n "$(grep -F "unknown command 'nosuchverb'" <<<"$uio2")" \
+         -a -n "$(grep -F 'unknown argument --bogus' <<<"$uio3")"
+
+# ── the AT-SPI recorder, against a PRIVATE accessibility bus (main's proof).
+# Needs a dbus-daemon and python3 with GObject; where either is missing the
+# check is reported as not asked, never as a pass.
+UIATSPI_SKIPPED=''
+if command -v dbus-daemon >/dev/null 2>&1 && python3 -c 'import gi; gi.require_version("Gio", "2.0")' 2>/dev/null; then
+    mkdir -p "$UIT/bus"
+    cat > "$UIT/bus.conf" <<EOF
+<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+  <type>accessibility</type>
+  <listen>unix:dir=$UIT/bus</listen>
+  <auth>EXTERNAL</auth>
+  <policy context="default">
+    <allow user="*"/>
+    <allow send_destination="*" eavesdrop="true"/>
+    <allow eavesdrop="true"/>
+    <allow own="*"/>
+  </policy>
+</busconfig>
+EOF
+    uibus=$(dbus-daemon --config-file="$UIT/bus.conf" --fork --print-address=1 --print-pid=1 2>/dev/null)
+    uiaddr=$(sed -n 1p <<<"$uibus"); UIBUSPID=$(sed -n 2p <<<"$uibus")
+    printf '%s' "$uiaddr" > "$UISTATE/bus-address"
+    cat > "$UIT/emitter.py" <<'PYEOF'
+import ctypes, sys
+import gi
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio, GLib
+# Name this process like the application under test (PR_SET_NAME = 15).
+ctypes.CDLL(None).prctl(15, sys.argv[3].encode(), 0, 0, 0)
+addr, n = sys.argv[1], int(sys.argv[2])
+conn = Gio.DBusConnection.new_for_address_sync(
+    addr, Gio.DBusConnectionFlags.AUTHENTICATION_CLIENT |
+    Gio.DBusConnectionFlags.MESSAGE_BUS_CONNECTION, None, None)
+xml = ('<node><interface name="org.a11y.atspi.Accessible">'
+       '<method name="GetRoleName"><arg type="s" direction="out"/></method>'
+       '<property name="Name" type="s" access="read"/>'
+       '<property name="Parent" type="(so)" access="read"/></interface></node>')
+iface = Gio.DBusNodeInfo.new_for_xml(xml).interfaces[0]
+def method(c, sender, path, i, m, params, inv):
+    inv.return_value(GLib.Variant("(s)", ("panel" if path.endswith("row") else "filler",)))
+def getprop(c, sender, path, i, prop):
+    if prop == "Name":
+        return GLib.Variant("s", "Configuration" if path.endswith("row") else "Output")
+    return GLib.Variant("(so)", (c.get_unique_name(), "/t/group"))
+for p in ("/t/row", "/t/group"):
+    conn.register_object(p, iface, method, getprop, None)
+loop = GLib.MainLoop()
+state = {"i": 0}
+def tick():
+    i = state["i"]; state["i"] += 1
+    if i >= n:
+        GLib.timeout_add(500, loop.quit)
+        return False
+    conn.emit_signal(None, "/t/row", "org.a11y.atspi.Event.Object", "StateChanged",
+                     GLib.Variant("(siiva{sv})", (sys.argv[4], i % 2, 0, GLib.Variant("s", "0"), {})))
+    conn.emit_signal(None, "/t/row", "org.a11y.atspi.Event.Object", "BoundsChanged",
+                     GLib.Variant("(siiva{sv})", ("", 0, 0, GLib.Variant("s", "0"), {})))
+    return True
+GLib.timeout_add(20, tick)
+loop.run()
+PYEOF
+    UIAD="$UIT/atspi"; mkdir -p "$UIAD/bin"; cp scripts/bt-ui-atspi.py "$UIAD/bin/"
+    ui BT_UI_USER=prove-user BT_UI_MAX_BYTES=4000 BT_UI_KEEP=2 -- _monitor atspi "$UIAD" >/dev/null 2>&1 &
+    UIMON=$!
+    for _ in $(seq 1 50); do
+        [[ "$(uic 'bt-ui-atspi start' "$UIAD/atspi.log")" -gt 0 ]] && break
+        sleep 0.1
+    done
+    # The application first, then a bystander emitting a state the application
+    # never does, LAST, so that rotation could not discard the evidence.
+    python3 "$UIT/emitter.py" "$uiaddr" 120 gnome-control-c showing
+    python3 "$UIT/emitter.py" "$uiaddr" 5 bystander focused
+    sleep 1
+    pkill -f "$UIAD/bin/bt-ui-atspi.py" 2>/dev/null
+    wait "$UIMON" 2>/dev/null
+    cat "$UIAD"/atspi.log* > "$UIT/atspi.all" 2>/dev/null
+    uinf=$(find "$UIAD" -maxdepth 1 -name 'atspi.log*' | wc -l)
+    uibig=$(find "$UIAD" -maxdepth 1 -name 'atspi.log*' -size +8k | wc -l)
+    uiok "the AT-SPI recorder names the widget and its parent on every event it records" \
+        uieq "$(uic "object:state-changed:showing v1=1 role=panel name='Configuration' parent='Output'" "$UIT/atspi.all")" \
+             "$(uic 'object:state-changed:showing v1=1 ' "$UIT/atspi.all")"
+    uiok "the AT-SPI recorder keeps the application's events and drops a bystander's and BoundsChanged" \
+        test "$(uic 'object:state-changed:showing' "$UIT/atspi.all")" -gt 0 \
+             -a "$(uic 'state-changed:focused' "$UIT/atspi.all")" -eq 0 -a "$(uic 'BoundsChanged|bounds-changed' "$UIT/atspi.all")" -eq 0
+    uiok "the AT-SPI monitor rotated and stayed bounded" test "$uinf" -ge 2 -a "$uinf" -le 3 -a "$uibig" -eq 0
+    kill "$UIBUSPID" 2>/dev/null
+else
+    UIATSPI_SKIPPED="bt-ui-capture's AT-SPI recorder (needs dbus-daemon and python3 with GObject)"
+fi
+
+# ── stop puts back exactly what start recorded
+: > "$UICALLS"
+ui -- stop > "$UIT/stop.out" 2>&1; uirc=$?
+uiok "stop exits 0 and stops the three monitors, and the recorder because start had started it" \
+    uieq "$uirc/$(uic '^systemctl stop bt-ui-(atspi|sysbus|sessbus)$' "$UICALLS")/$(uic '^systemctl stop bt-audio-policy$' "$UICALLS")" "0/3/1"
+uiok "stop restored the PipeWire level and switched the 16 sco.c functions off again" \
+    uieq "$(cat "$UISTATE/pw-level")/$(uic '^module bluetooth func .* -p$' "$UICTL")" "2/16"
+uiok "stop removed its overrides, kept the foreign launcher, cleared the pointer, recorded the state" \
+    test ! -e "$UIAPPS/gnome-sound-panel.desktop" -a ! -e "$UIDBUS" -a ! -e "$UIT/base/current" \
+         -a "$(cmp -s "$UIT/foreign.desktop" "$UIAPPS/gnome-bluetooth-panel.desktop" && echo kept)" = kept \
+         -a "$(awk -F= '/^state=/ { v = $2 } END { print v }' "$UIM")" = stopped
+
+# ── collect: the window, the captures, published copies without addresses
+cat > "$UIT/fixture/default.log" <<'EOF'
+2026-10-05T01:00:01.000000+0200 n kernel: Bluetooth: sco_connect() 00:11:22:33:44:55 -> DE:AD:BE:EF:00:01
+2026-10-05T01:00:02.000000+0200 n wireplumber[3292]: RFCOMM << AT+BCS=2
+2026-10-05T01:00:03.000000+0200 n wireplumber[3292]: bluez_output.00_11_22_33_44_55.1 transport acquired
+EOF
+touch -d '2026-10-05 00:59:00' "$UIT/cap/trace/bt-20261005-000000.btsnoop"
+touch -d '2026-10-05 01:30:00' "$UIT/cap/trace/bt-20261005-005900.btsnoop"
+touch -d '2026-10-04 20:00:00' "$UIT/cap/trace/bt-20261004-180000.btsnoop"
+touch -d '2026-10-05 03:00:00' "$UIT/cap/capture/hci-20261005-020000.btsnoop"
+ui -- collect --since '2026-10-05 01:00:00' --until '2026-10-05 01:45:00' > "$UIT/collect.out" 2>&1; uirc=$?
+UIC=$(find "$UIS" -maxdepth 1 -type d -name 'collect-*' | head -1)
+uiok "collect writes a collect directory holding the raw timeline" \
+    test "$uirc" -eq 0 -a -d "$UIC" -a "$(uic 'AT\+BCS=2' "$UIC/raw/timeline.log")" -eq 1
+uiok "collect lists the capture that runs into the window, and none before or after it" \
+    uieq "$(uic 'bt-20261005-005900' "$UIC/raw/captures.txt")/$(uic 'bt-20261004-180000|hci-20261005-020000|bt-20261005-000000' "$UIC/raw/captures.txt")" "1/0"
+cat "$UIC"/published/* > "$UIT/published.all" 2>/dev/null
+uimacs=$(grep -oiE '[0-9a-f]{2}([:_-][0-9a-f]{2}){5}' "$UIT/published.all" | wc -l)
+uiph=$(grep -oiE 'AA:BB:CC:00:00:[0-9]{2}' "$UIT/published.all" | wc -l)
+uiok "no published file still holds an address — and the raw timeline did, so this can fail" \
+    test -s "$UIC/published/timeline.log" -a "$uimacs" -eq "$uiph" -a "$(uic '00:11:22:33:44:55' "$UIC/raw/timeline.log")" -gt 0
+
+# ── THE SHIPPED DEFAULTS, in a user and mount namespace.
+#
+# Every check above names the tool's paths through seams, and a seam REPLACES
+# the default it guards: /var/log/bt-health/ui, the kernel's dynamic-debug
+# control file, /usr/share/applications and the effective uid were never run.
+# Here they are, for real, inside `unshare -Urm`: uid 0 without a seam, and a
+# tmpfs over /var/log, /sys/kernel/debug and /usr/share/applications that only
+# this process tree can see. The machine's own files are never reached.
+#
+# A NAMESPACE IS ONLY WORTH ITS PROOF. A namespace that silently failed to
+# build would run these steps against the real paths — a stop on the real
+# dynamic-debug control file of the machine running the suite. So before any
+# step uses it, the world proves itself: a marker FILE created inside, in each
+# redirected directory, must be readable inside and must not exist on the
+# machine afterwards; the uid inside must be 0. The outside check is an
+# existence test only. It read the real control file at first, and the decoy
+# world flagged that as what it is, a read of the machine (2026-10-08). Without that proof, nothing
+# runs inside; and where the host refuses user namespaces (Ubuntu 24.04's
+# default, the CI runner before its sysctl, the decoy world's covered /proc is
+# no obstacle here — this needs no /proc of its own), the steps are reported
+# as not asked, never as passed.
+UINS_SKIPPED=''
+ui_world() {   # <script> — run <script> as root over the redirected paths, in a fresh namespace
+    unshare -Urm bash -c '
+        set -e
+        mount -t tmpfs bt-ui-world /var/log
+        mount -t tmpfs bt-ui-world /sys/kernel/debug
+        mount -t tmpfs bt-ui-world /usr/share/applications
+        mkdir -p /var/log/bt-health/ui /sys/kernel/debug/dynamic_debug
+        cp "$1/control.orig" /sys/kernel/debug/dynamic_debug/control
+        cp "$1"/apps/*.desktop /usr/share/applications/
+        set +e
+        eval "$2"' ui-world "$UIT" "$1"
+}
+UIMARK="bt-ui-world-$SUITE_RUN_ID"
+if unshare -Urm true 2>/dev/null && [[ -d /var/log && -d /sys/kernel/debug && -d /usr/share/applications ]]; then
+    uiproof=$(ui_world "
+        echo $UIMARK > /var/log/bt-health/ui/$UIMARK
+        echo $UIMARK > /sys/kernel/debug/dynamic_debug/$UIMARK
+        echo $UIMARK > /usr/share/applications/$UIMARK.desktop
+        echo \"uid=\$(id -u) log=\$(cat /var/log/bt-health/ui/$UIMARK) dbg=\$(cat /sys/kernel/debug/dynamic_debug/$UIMARK) app=\$(cat /usr/share/applications/$UIMARK.desktop)\"
+    " 2>&1)
+    uileak=""
+    [[ -e "/var/log/bt-health/ui/$UIMARK" ]] && uileak+=" /var/log/bt-health/ui"
+    [[ -e "/sys/kernel/debug/dynamic_debug/$UIMARK" ]] && uileak+=" /sys/kernel/debug/dynamic_debug"
+    [[ -e "/usr/share/applications/$UIMARK.desktop" ]] && uileak+=" /usr/share/applications"
+    if [[ "$uiproof" == "uid=0 log=$UIMARK dbg=$UIMARK app=$UIMARK" && -z "$uileak" ]]; then
+        ok "the namespace world proves itself: root inside, its markers inside, none on the machine"
+        UIDEF=$(ui_world "
+            export PATH='$UIT/stub':\"\$PATH\" PROVE_CALLS='$UICALLS' PROVE_STATE='$UISTATE'
+            export BT_UI_HOME='$UIT/home-ns' BT_UI_UID=4242 BT_UI_REPO='$UIT/repo' BT_UI_MARK='$UIT/repo/bin/bt-mark'
+            export BT_UI_CAPTURE_DIRS='$UIT/cap/capture $UIT/cap/trace' BT_JOURNAL_FIXTURE='$UIT/fixture'
+            unset BT_UI_BASE BT_DYNDBG_CTL BT_UI_APPDIR BT_UI_EUID BT_UI_USER
+            echo 2 > '$UISTATE/pw-level'
+            tools/bt-ui-capture start >/dev/null 2>&1; echo \"start=\$?\"
+            echo \"session=\$(cat /var/log/bt-health/ui/current)\"
+            echo \"on=\$(grep -cE '^module bluetooth func .* \\+p\$' /sys/kernel/debug/dynamic_debug/control)\"
+            echo \"override=\$(grep -c '^# bt-ui-capture' '$UIT/home-ns/.local/share/applications/gnome-sound-panel.desktop')\"
+            tools/bt-ui-capture stop >/dev/null 2>&1; echo \"stop=\$?\"
+            echo \"off=\$(grep -cE '^module bluetooth func .* -p\$' /sys/kernel/debug/dynamic_debug/control)\"
+            echo \"pointer=\$([ -e /var/log/bt-health/ui/current ] && echo left || echo cleared)\"
+        " 2>&1)
+        uiok "with no seam, start and stop run as root on the shipped paths — /var/log/bt-health/ui, the kernel's control file, /usr/share/applications" \
+            test -n "$(grep -x 'start=0' <<<"$UIDEF")" -a -n "$(grep -E '^session=/var/log/bt-health/ui/' <<<"$UIDEF")" \
+                 -a -n "$(grep -x 'on=16' <<<"$UIDEF")" -a -n "$(grep -x 'override=1' <<<"$UIDEF")" \
+                 -a -n "$(grep -x 'stop=0' <<<"$UIDEF")" -a -n "$(grep -x 'off=16' <<<"$UIDEF")" \
+                 -a -n "$(grep -x 'pointer=cleared' <<<"$UIDEF")"
+        [[ ! -e /var/log/bt-health/ui ]] || [[ -z "$(ls -A /var/log/bt-health/ui 2>/dev/null)" ]] \
+            && ok "bt-ui-capture: the default-path run left nothing under the machine's /var/log/bt-health/ui" \
+            || bad "bt-ui-capture: the default-path run reached the machine's /var/log/bt-health/ui"
+    else
+        bad "the namespace world did NOT prove itself (inside: '$uiproof'; on the machine:${uileak:- nothing}) — nothing was run in it"
+    fi
+else
+    UINS_SKIPPED="bt-ui-capture's shipped defaults, run in a user and mount namespace"
+fi
+rm -rf "$UIT"
+
+echo
 echo "install.sh / uninstall.sh — the APPLY path, for real, into a staging root"
 echo "─────────────────────────────────────────────────────────────────────────"
 #
@@ -12954,6 +13424,16 @@ if [[ -n "$PRIV_SKIPPED" ]]; then
     echo "                  user namespace, or fakeroot, and the tool under test"
     echo "                  refuses to act without one of them."
 fi
+
+# AND WHAT NEEDS A BUS OR A NAMESPACE THIS HOST CANNOT GIVE. bt-ui-capture's
+# AT-SPI recorder is proven against a private accessibility bus, which needs
+# dbus-daemon and python3 with GObject; its shipped defaults run inside a user
+# and mount namespace, which some hosts refuse. Either way: not asked, said so.
+for _ns in "$UIATSPI_SKIPPED" "$UINS_SKIPPED"; do
+    [[ -n "$_ns" ]] || continue
+    echo "  NOT ASKED HERE: $_ns — not available on this host,"
+    echo "                  so it was not run. Run this suite where it is."
+done
 
 # AND THE THIRD KIND OF ABSENCE: a tool that is installed but has nothing to
 # answer with. `coredumpctl` on a host that has never dumped a core exits 1 with

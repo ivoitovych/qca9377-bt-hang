@@ -61,7 +61,7 @@
 #
 # Seams (tests, scripts/prove-ui-capture.sh): BT_UI_BASE, BT_UI_USER,
 # BT_UI_UID, BT_UI_HOME, BT_UI_EUID, BT_UI_REPO, BT_UI_MARK, BT_UI_APPDIR,
-# BT_DYNDBG_CTL, BT_UI_CAPTURE_DIRS, BT_JOURNAL_FIXTURE; the commands it runs
+# BT_DYNDBG_CTL, BT_UI_CAPTURE_DIRS, BT_JOURNAL_FIXTURE, BT_PROC; the commands it runs
 # (runuser, systemd-run, systemctl, pw-metadata, loginctl, dbus-monitor, ...)
 # are taken from PATH, so a stub directory stands in for all of them.
 
@@ -209,8 +209,10 @@ dyndbg_flags() {   # <func> -> the flags of its first site ("_" = off), or "?"
 unit_active() { systemctl is-active --quiet "$1" 2>/dev/null; }
 user_pids() { pgrep -u "$UID_U" -x "$1" 2>/dev/null; }
 proc_env() {   # <pid> <VAR> -> value or empty
+    # /proc through BT_PROC, as in every other tool here: a stubbed pgrep hands
+    # back a pid, and the real /proc/<pid> is then some other process's.
     local e
-    e=$(tr '\0' '\n' < "/proc/$1/environ" 2>/dev/null) || return 0
+    e=$(tr '\0' '\n' < "${BT_PROC:-/proc}/$1/environ" 2>/dev/null) || return 0
     sed -n "s/^$2=//p" <<<"$e" | head -1
 }
 # Counted, never `| grep -q` (under pipefail that inverts on a match).
