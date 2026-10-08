@@ -11,6 +11,19 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 
 ---
 
+## Current state — 2026-10-08 (what changed since the 2026-10-03 state below)
+
+- **M-1 is not sent as one series.** An outside research review (10-05) found that the mesh
+  transmit path has never had one ownership model and that other 2026 work is fixing other
+  pieces of it; the patches are being split into separate contributions (`STATUS.md`).
+  Findings from that work stay private until each has its patch.
+- **M-3 (new, BlueZ `shared/mgmt`)** — `mgmt_unregister()` from a notification callback
+  leaked the entry, and unregistering the next entry was a use-after-free. Fix and unit tests
+  submitted 2026-10-08 (section below).
+- **BT-7's a2dp fix is in BlueZ master twice.** The redundant v2 was applied on 2026-10-07 on
+  top of v1, so the stream is checked twice in a row; harmless, and a one-line cleanup is
+  prepared (`patches/bluez/README.md`).
+
 ## Current state — 2026-10-03
 
 The lifecycle of every issue, with its component, evidence maturity, state and next action,
@@ -587,6 +600,28 @@ Not Powered. Reproduced and tested with a virtual controller (`hci_vhci`): power
 the patch, its acceptance and these facts.
 
 **Reportable:** ✅ sent 2026-09-24 and applied. Not specific to this controller.
+
+---
+
+## M-3 — `mgmt_unregister()` from a notification callback leaks, or frees the next node
+
+**Status 2026-10-08: submitted** (`patches/bluez/shared-mgmt/`, patchwork 14873331 / 14873330).
+
+**What it is.** In BlueZ `src/shared/mgmt.c`, `mgmt_unregister()` took the entry off
+`notify_list` with `queue_remove_if()` even while `process_notify()` was walking the list,
+and only marked it removed; the walk's cleanup frees removed entries still on the list, so
+this one leaked and its destroy callback never ran. Unregistering the *next* entry freed the
+queue node `queue_foreach()` had already saved — a use-after-free, the same crash
+`872729a91632` fixed for `mgmt_unregister_index()` in 2015.
+
+**How it was found.** In the mesh work, the testers run under ASan report leaked
+`mgmt_register()` allocations: 228 in mgmt-tester, 3 in mesh-tester, 2 in userchan-tester, all
+0 with the fix, every tester verdict unchanged. A unit reproducer in `unit/test-mgmt` fails
+without the fix (leak, use-after-free, wrong return value) and passes with it.
+
+**Reportable:** ✅ sent 2026-10-08. `bluetoothd` does not reach the use-after-free (it
+unregisters by index or all); the in-tree callers that leak are the testers. Not specific to
+this controller.
 
 ---
 

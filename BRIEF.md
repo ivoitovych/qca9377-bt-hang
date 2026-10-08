@@ -20,86 +20,67 @@ series) were moved verbatim to the end of `HISTORY.md`; the block below is repla
 topped up. **Sections name their owner**; each owner writes theirs and points at the long form
 (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-10-05 · newest exhibit on `main`: EX-061** (EX-044/049/050 live on private
+**Last updated: 2026-10-08 · newest exhibit on `main`: EX-061** (EX-044/049/050 live on private
 branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted within hours (`R2-13`).
 
-> **HAND-OFF (2026-10-05, written at context compaction).** Current state of every issue and
+> **HAND-OFF (2026-10-08, after the BlueZ series was sent).** Current state of every issue and
 > submission: `docs/STATUS.md`. The previous block is at the end of `HISTORY.md`, verbatim.
 >
 > **Upstream, done:** BlueZ ×2 applied 09-21 (`a734b06059cb`, `0bed9886cff3`); kernel MGMT fix
 > applied to bluetooth-next 09-29 (`86ef0f58bdec`, waiting for mainline); stable backport of
-> `dc16388d45ec` **queued for 7.2, 6.18, 6.12, 6.6, 6.1, 5.15, 5.10** (requested 10-02 for five,
-> all seven queued 10-03, stable-queue commit `007ed56547de`, `EX-061`,
-> `scripts/stable-queue-check.sh`; links in STATUS). Nothing owed on any of them.
+> `dc16388d45ec` **queued for 7.2, 6.18, 6.12, 6.6, 6.1, 5.15, 5.10** (`EX-061`). Nothing owed.
+> ⚠️ The redundant a2dp v2 was **also applied**, 10-07, as `d84171e6c` on top of v1: master checks
+> `setup->stream` twice (dead code). Cleanup prepared, **not sent — operator's decision**
+> (`patches/bluez/cleanup/`, SEND.txt item 3).
 >
-> **SENT 2026-10-06 22:18 +0200 — Tested-by reply on Hui Peng's posted cleanup** ("Bluetooth:
-> MGMT: fix mesh_tx leak on hci_cmd_sync_queue() failure", patchwork 14831271), reply-all, threaded,
-> SMTP `250` for all six recipients, Message-ID
-> `<20261006201800.3597400-1-yaroslav.voytovych@gmail.com>`. Final text = private
-> `diag/mesh-tester-ci` `b926833` (`patches/mesh-tester/hui-peng-tested-by-reply.txt`), after
-> three outside reviewers' rounds; it links the public retest kit pinned at `ccfc358`
-> (`retest/mesh-tx-leak/`). Before sending: bluetooth-next had moved to `c85976511aa9`, the fix
-> not in it, `mesh_send()` untouched; Pauli Virtanen's `87a49b610708` ("hci_sync: fix mesh adv
-> timeout units", 10-05) says it fixes mesh-tester's "Send cancel" failures — the reply's two
-> timeouts are true for the tested base; check what it means for our mesh plan (items 3–6 below)
-> before any further mesh work. App password used on that one command only; operator to revoke
-> it; confirm with `scripts/smtp-login-check.sh`. Watch the thread for replies.
+> **Submitted, waiting:**
+> 1. **Tested-by** on Hui Peng's "Bluetooth: MGMT: fix mesh_tx leak on hci_cmd_sync_queue()
+>    failure" (patchwork 14831271), 10-06 22:18 +0200, Message-ID
+>    `<20261006201800.3597400-1-yaroslav.voytovych@gmail.com>`; kit `retest/mesh-tx-leak/`.
+> 2. **BlueZ `shared/mgmt` series**, 10-08 05:41:01 to 05:41:02 +0200, patchwork 14873331 (1/2)
+>    and 14873330 (2/2), Message-IDs `<20261008034102.707451-1-…>` / `-2-…`; files as mailed in
+>    `patches/bluez/shared-mgmt/`; base `d84171e6c`, commits `9fbc84f5d`/`0722ddc78` in
+>    `cache/bluez-standalone-mgmt-leak` (older states on `keep/shared-mgmt-notify-leak-*`).
+>    Review record: private `diag/mesh-tester-ci` `docs/mesh-tester-ci/review-response-*.md`.
+>    **Next:** the bot's results on patchwork; `git log origin/master --grep=mgmt_unregister`
+>    after ~2 days; **never a lint-only respin** (the a2dp v2 shows what happens).
 >
-> **SENT 2026-10-08 05:41:01 to 05:41:02 +0200 — BlueZ series** `[PATCH BlueZ 1/2]
-> shared/mgmt: Fix notify leak in mgmt_unregister()` and `[PATCH BlueZ 2/2] unit/test-mgmt: Test
-> unregistering from callbacks`, To linux-bluetooth only, threaded, SMTP `250` both, Message-IDs
-> `<20261008034102.707451-1-yaroslav.voytovych@gmail.com>` and
-> `<20261008034102.707451-2-yaroslav.voytovych@gmail.com>`. Base BlueZ master `d84171e6c`
-> (`scripts/pre-send-check.sh` OK just before); commits `9fbc84f5d`/`0722ddc78`; final files =
-> private `diag/mesh-tester-ci` `a71ea4b`
-> (`patches/mesh-tester/bluez-shared-mgmt-notify-leak-on-d84171e6c-2026-10-08/`), after four
-> outside reviews (`docs/mesh-tester-ci/review-response-*.md`). App password used on that one
-> command only; operator to revoke it and confirm with `scripts/smtp-login-check.sh`. Next: the
-> CI bot's results on patchwork; check `git log origin/master --grep=<subject>` after ~2 days;
-> never send a lint-only respin. **Not sent, operator's decision:** the a2dp duplicate-guard
-> cleanup (`patches/bluez/cleanup/`, SEND.txt item 3).
+> **App passwords:** the 10-06 and 10-08 ones were used on one `git send-email` each; the 10-08
+> one was searched for afterwards and found in no settings file, history or git config; the
+> operator revokes each (10-06 revocation not yet confirmed) and confirms with
+> `! BT_SMTP_PASS='…' scripts/smtp-login-check.sh` (run by the operator: an agent-run env
+> prefix can save the password into `settings.local.json` — grep it after).
 >
-> **Mesh work — the plan after the outside research review (10-05):** v3 (5+4 patches) is NOT sent
-> as a series. Order: (1) the Tested-by above; (2) the BlueZ leak fix above; (3) the power-off fix
-> — **a competing patch by Jiale Yao (patchwork 14864878, 10-03) exists; the qemu comparison is
-> DONE** (private `docs/mesh-tester-ci/power-off-compare-2026-10-05.md`): both fail with a backlog
-> of three; his recovers outside the command worker with no locks held; ours needs v3 1/5. Proposal
-> (operator's call): a review reply on his thread, no Tested-by; (4) Count as a separate question to the list (old 5/5 dropped);
-> (5) the core ownership patches, only after four prerequisites: the cleanup, mesh locking of the
-> advertising list, a deliberate unregister drain policy, no scheduler hand-over in command-clear
-> callbacks; (6) the duration overflow. Device removal is a separate question from Count.
-> Keep `Cc: stable` on fixes; never claim stable applicability from text-apply.
-> **Private documents** (`diag/mesh-tester-ci`): `RESEARCH-AND-REVIEW-TASK-2026-10-05.md` (the
-> open-ended task), `research-review-2026-10-05.md` (the review, every cited thread verified, and
-> the reviewer's follow-ups), `STATE-MACHINE.md` (two coupled machines — request lifetime and
-> controller/slot ownership — fourteen invariants, matrix of all revisions and proposals),
-> `gates-2026-10-05.md` (two research gates **confirmed** in qemu; kernel findings stay private
-> until a patch exists), `validation-2026-10-05.md`. ⚠️ **Phase 5's KCSAN runs were single-CPU**
-> and could not see most races — corrected in STATUS; use the 4-CPU wrapper (`qemu-smp.sh`).
+> **Mesh work, remaining order** (v3 is never sent as one series): (3) the power-off fix —
+> another author's patch for the same bug (patchwork 14864878) was compared in qemu, results
+> private (`power-off-compare-2026-10-05.md`); proposal, operator's call: a review reply on his
+> thread, no Tested-by; first weigh Pauli Virtanen's `87a49b610708` ("Send cancel" fix, 10-05);
+> (4) Count as a question to the list; (5) the core ownership patches after four prerequisites
+> (the cleanup, mesh locking of the advertising list, an unregister drain policy, no scheduler
+> hand-over in command-clear callbacks); (6) the duration overflow. Private documents on
+> `diag/mesh-tester-ci`: the research review, `STATE-MACHINE.md`, `gates-2026-10-05.md`
+> (kernel findings private until a patch exists). KCSAN only on the 4-CPU wrapper.
+> Also open: a review reply on Jiale Yao's patchwork 14864878 (needs the operator's word);
+> the `MGMT_INDEX_NONE` asymmetry in `mgmt_unregister_index()` (noted, out of the series).
 >
-> **Desktop capture RUNNING** since 10-05 02:37 (`tools/bt-ui-capture`, merged on `main`;
-> `docs/ui-capture.md`, research `docs/ui-capture-research.md`): PipeWire daemon log level 3,
-> kernel SCO-socket debug, GNOME Settings UI-event recorder (accessibility bus), system and session
-> bus monitors; GNOME Settings logs its decisions once **closed and reopened**; WirePlumber and
-> pipewire-pulse debug **staged for the next login**. Undo: `bt-ui-capture stop`, `unstage`.
-> Operator decisions open: a GNOME Settings debug build (dev packages; build elsewhere), a btusb
-> debug build for U8 (only after trial E3 #1 closes), installing shellcheck.
-> **Userspace findings:** U7 is a race between PipeWire's new SCO connect and the old link's
-> teardown (`EX-060`); U6 fixed in GNOME 47, not in noble (SRU after one reading); U1 fixed in
-> PipeWire 1.2 (`805e5cf9c`); U4 GNOME Settings 46 logic, two related open reports; U9 BlueZ
-> policy, declined upstream before (STATUS has all rows).
+> **Pre-send gate for BlueZ** (what the 10-08 series passed): `scripts/pre-send-check.sh`
+> (series, in order, today's master) · checkpatch + gitlint with BlueZ's configs · `make check`
+> · unit cases with and without the fix · **clang static analyzer on the touched files, base
+> vs patched** (the bot's ScanBuild posts any new report; `tmp/mesh-tester-ci/clang-analyze.sh`
+> for now) · `git send-email --dry-run`.
 >
-> **Machine:** E3 installed, trial E3 #1 open (the suite therefore refuses locally — watch CI
-> after every push: `devtools/ci`); installed `/usr/local/bin` tools are the 09-18 copies (the
-> operator installs). **Permissions:** project `.claude/settings.json` gained read-only rules and
-> the agents' helper-script areas on 10-04/05 (see memory).
+> **Desktop capture RUNNING** since 10-05 02:37 (`tools/bt-ui-capture`, `docs/ui-capture.md`);
+> undo with `bt-ui-capture stop` and `unstage`. Userspace rows U1–U9 in STATUS. Operator
+> decisions open: GNOME Settings debug build, btusb debug build for U8 (after trial E3 #1),
+> shellcheck, the U7 PipeWire report, the U6 SRU.
+>
+> **Machine:** E3 installed, trial E3 #1 open (the suite refuses locally — `devtools/ci` after
+> every push); installed `/usr/local/bin` tools are the 09-18 copies (the operator installs).
 > **Rules:** nothing sent without the operator's word; private branches push to `private` only;
-> attribution is the project author's only — no tool or model names anywhere, no `Assisted-by`;
-> other authors' patches are tested exactly as posted and never re-authored; a kernel finding stays
-> private until its patch exists; operator impressions are leads; never touch the laptop's
-> Bluetooth or kernel from an agent; clock ranges are written "HH:MM:SS to HH:MM:SS"
-> (`scripts/fix-time-ranges.py`) because the publishing scan reads the hyphenated form as an
-> address.
+> attribution is the project author's only; other authors' patches are tested exactly as posted;
+> a kernel finding stays private until its patch exists; maintainer mail carries only what the
+> maintainer needs; never touch the laptop's Bluetooth or kernel from an agent; clock ranges are
+> written "HH:MM:SS to HH:MM:SS" (`scripts/fix-time-ranges.py`).
 
 
 ---
