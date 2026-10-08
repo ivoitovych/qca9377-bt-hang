@@ -10857,7 +10857,11 @@ co_world() {   # <script> — run <script> at this checkout's own path, overlaid
         git config user.name "Checkout World"; git config user.email world@example.com
         eval "$3"' co-world "$COW/up" "$COW/wk" "$1"
 }
-co_snapshot() { git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)'; git status --porcelain; }
+# --no-optional-locks: a plain `git status` refreshes the index's stat cache and
+# writes .git/index when the cache is stale, as it is in a fresh CI checkout.
+# The decoy world reported that write there (2026-10-08), from the one check
+# meant to prove the real checkout untouched.
+co_snapshot() { git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)'; git --no-optional-locks status --porcelain; }
 COMARK="co-world-$SUITE_RUN_ID"
 COWORLD_SKIPPED=''
 COWORLD_OK=0
