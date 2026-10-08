@@ -4,7 +4,11 @@
 # implicit TLS on 465, as the config says), AUTH, QUIT.
 # Sends nothing. The password comes from the environment and is never written.
 #
-#   BT_SMTP_PASS='xxxx xxxx xxxx xxxx' scripts/smtp-login-check.sh
+#   BT_SMTP_PASS='xxxx xxxx xxxx xxxx' scripts/smtp-login-check.sh [port encryption]
+#
+# The optional port and encryption override the config, e.g. "587 tls": on
+# 2026-10-08 Gmail closed every 465 login check mid-AUTH (INCONCLUSIVE) while
+# 587 STARTTLS answered 535 for revoked passwords.
 #
 # Exit 0 and "ALIVE" if the login is accepted (the password must still be
 # revoked); exit 1 and "REVOKED" with the server's code (Gmail: 535) if refused.
@@ -19,6 +23,10 @@ USER_=$(git -C "$REPO" config sendemail.smtpuser) || exit 2
 # operator's network, and a STARTTLS check against 465 only ever sees the
 # server hang up before any verdict.
 ENC=$(git -C "$REPO" config sendemail.smtpencryption 2>/dev/null || echo tls)
+if [ $# -eq 2 ]; then
+    PORT=$1
+    ENC=$2
+fi
 export HOST PORT USER_ ENC
 python3 - <<'PYEOF'
 import os, smtplib, sys

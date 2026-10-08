@@ -50,9 +50,13 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 >    after ~2 days; **never a lint-only respin** (the a2dp v2 shows what happens).
 >
 > **App passwords:** the 10-06 and 10-08 ones were used on one `git send-email` each; the 10-08
-> one was searched for afterwards and found in no settings file, history or git config; the
-> operator revokes each (10-06 revocation not yet confirmed) and confirms with
-> `! BT_SMTP_PASS='…' scripts/smtp-login-check.sh` (run by the operator: an agent-run env
+> one was searched for afterwards and found in no settings file, history or git config.
+> **All revoked, verified 2026-10-08:** every app password used since 09-19 (seven, the 10-06
+> and 10-08 ones included) gets `535 5.7.8 Username and Password not accepted` from
+> smtp.gmail.com:587 (STARTTLS, AUTH LOGIN; nothing sent). On 465 the same check only got
+> INCONCLUSIVE (Gmail closed the connection during AUTH), so **check on 587**. After the next
+> send, the operator revokes the password and confirms with
+> `! BT_SMTP_PASS='…' scripts/smtp-login-check.sh 587 tls` (run by the operator: an agent-run env
 > prefix can save the password into `settings.local.json` — grep it after).
 >
 > **Mesh work, remaining order** (v3 is never sent as one series): (3) the power-off fix —
