@@ -1,7 +1,7 @@
 # BlueZ patches — two NULL dereferences, sent 2026-09-19, **applied upstream 2026-09-21**
 
 Also in this directory: [`shared-mgmt/`](shared-mgmt/README.md) — the `shared/mgmt` notify
-leak fix and its unit tests, **submitted 2026-10-08**, awaiting the maintainer; and
+leak fix and its unit tests, **sent and applied upstream 2026-10-08**; and
 [`cleanup/`](cleanup/) — removal of the duplicate a2dp guard (below), prepared, not sent.
 
 ## Status and links — 2026-09-22

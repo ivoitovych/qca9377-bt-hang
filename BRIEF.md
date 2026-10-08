@@ -26,7 +26,10 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 > **HAND-OFF (2026-10-08, after the BlueZ series was sent).** Current state of every issue and
 > submission: `docs/STATUS.md`. The previous block is at the end of `HISTORY.md`, verbatim.
 >
-> **Upstream, done:** BlueZ ×2 applied 09-21 (`a734b06059cb`, `0bed9886cff3`); kernel MGMT fix
+> **Upstream, done:** BlueZ `shared/mgmt` series **applied 10-08**, the day it was sent, as
+> `ae23df052290` + `6f5eeb402d3b`, identical to what was sent (`git range-diff`: `=`). Luiz then
+> converted `unit/test-mgmt` to the tester framework (`866b0b8b1`), our six cases intact.
+> BlueZ ×2 applied 09-21 (`a734b06059cb`, `0bed9886cff3`); kernel MGMT fix
 > applied to bluetooth-next 09-29 (`86ef0f58bdec`, waiting for mainline); stable backport of
 > `dc16388d45ec` **queued for 7.2, 6.18, 6.12, 6.6, 6.1, 5.15, 5.10** (`EX-061`). Nothing owed.
 > ⚠️ The redundant a2dp v2 was **also applied**, 10-07, as `d84171e6c` on top of v1: master checks
@@ -37,7 +40,7 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 > 1. **Tested-by** on Hui Peng's "Bluetooth: MGMT: fix mesh_tx leak on hci_cmd_sync_queue()
 >    failure" (patchwork 14831271), 10-06 22:18 +0200, Message-ID
 >    `<20261006201800.3597400-1-yaroslav.voytovych@gmail.com>`; kit `retest/mesh-tx-leak/`.
-> 2. **BlueZ `shared/mgmt` series**, 10-08 05:41:01 to 05:41:02 +0200, patchwork 14873331 (1/2)
+> 2. ~~Submitted~~ **APPLIED 10-08** (above). **BlueZ `shared/mgmt` series**, 10-08 05:41:01 to 05:41:02 +0200, patchwork 14873331 (1/2)
 >    and 14873330 (2/2), Message-IDs `<20261008034102.707451-1-…>` / `-2-…`; files as mailed in
 >    `patches/bluez/shared-mgmt/`; base `d84171e6c`, commits `9fbc84f5d`/`0722ddc78` in
 >    `cache/bluez-standalone-mgmt-leak` (older states on `keep/shared-mgmt-notify-leak-*`).
@@ -46,8 +49,8 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 >    bluez/bluez#2634). That PR's Codacy Security Scan FAILURE is not ours: the tool crashes
 >    (`MalformedInputException`, SARIF formatter), and has failed on every run since 10-07 18:53 UTC,
 >    master included. Details in `patches/bluez/shared-mgmt/README.md`.
->    **Next:** `git log origin/master --grep=mgmt_unregister`
->    after ~2 days; **never a lint-only respin** (the a2dp v2 shows what happens).
+>    **Next:** nothing owed; the next BlueZ tag. Lesson kept: **never a lint-only respin**
+>    (the a2dp v2 shows what happens).
 >
 > **App passwords:** the 10-06 and 10-08 ones were used on one `git send-email` each; the 10-08
 > one was searched for afterwards and found in no settings file, history or git config.

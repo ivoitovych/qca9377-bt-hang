@@ -22,7 +22,7 @@ claim here ships with the command that produced it, so a stranger can re-derive 
 - **Diagnose a failure:** tools that tell a controller timeout, a `bluetoothd` crash and an
   audio-layer problem apart — four things that look identical to a user.
 - **Inspect upstream fixes:** the accepted commits, their reasoning and the evidence behind
-  them, plus the series still under review.
+  them, plus the backports and the tests of other authors' patches.
 - **Investigate your own device:** reusable log analysis, incident capture and sanitisation
   tools; hardware-specific conclusions are labelled as such.
 - **Follow the work:** [`docs/STATUS.md`](docs/STATUS.md) is the dated snapshot of every
@@ -35,18 +35,13 @@ claim here ships with the command that produced it, so a stranger can re-derive 
 | Linux Bluetooth (MGMT) | Pending management commands flushed at power-off were answered with a status byte read from the wrong object — a Success for a Start Discovery the adapter never ran. They now carry the status the caller set (Not Powered / Invalid Index). | [`86ef0f58bdec`](https://github.com/bluez/bluetooth-next/commit/86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc) (bluetooth-next, 2026-09-29) |
 | BlueZ | `adapter: Fix crash on short start discovery reply` — validate the reply length before the no-clients path reads it. This is the userspace side of the kernel defect above. | [`a734b06059cb`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=a734b06059cbe0d0f00442c901506ef17e960960) (2026-09-21) |
 | BlueZ | `a2dp: Fix crash on NULL stream in transport_cb` — check that the stream still exists when the asynchronous transport acceptance completes. Its guard fired four times in nineteen days of ordinary use (`EX-041`). A redundant v2 was applied on top on 2026-10-07 (`d84171e6cd68`), leaving the check twice in a row; a one-line cleanup is prepared. | [`0bed9886cff3`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=0bed9886cff317d814f9b1f11c1461459f2b9a00) (2026-09-21) |
+| BlueZ | `shared/mgmt: Fix notify leak in mgmt_unregister()` + `unit/test-mgmt: Test unregistering from callbacks` — unregistering from a notification callback leaked the entry, and unregistering the next entry was a use-after-free (the crash fixed for the sibling function in 2015). The new unit tests fail without the fix; the testers' 233 leaked `mgmt_register()` allocations go to 0 with every verdict unchanged ([`patches/bluez/shared-mgmt/`](patches/bluez/shared-mgmt/README.md)). Sent and applied the same day, unchanged. | [`ae23df052290`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=ae23df052290) + [`6f5eeb402d3b`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=6f5eeb402d3b) (2026-10-08) |
 
-The three changes are in code every Linux Bluetooth adapter runs; nothing in them is
+The four changes are in code every Linux Bluetooth adapter runs; nothing in them is
 conditional on this controller's USB ID. "Accepted" means in the subsystem maintainer's
 tree; inclusion in a release, stable backports and distribution packages are later
 milestones, tracked in [`docs/STATUS.md`](docs/STATUS.md). Submission history and every
 link (lore, patchwork, the list's CI bot) are in [`patches/bluez/README.md`](patches/bluez/README.md).
-
-### Submitted, awaiting the maintainer
-
-| component | fix | state |
-|---|---|---|
-| BlueZ | `shared/mgmt: Fix notify leak in mgmt_unregister()` + `unit/test-mgmt: Test unregistering from callbacks` — unregistering from a notification callback leaked the entry, and unregistering the next entry was a use-after-free (the crash fixed for the sibling function in 2015). The new unit tests fail without the fix; the testers' 233 leaked `mgmt_register()` allocations go to 0 with every verdict unchanged ([`patches/bluez/shared-mgmt/`](patches/bluez/shared-mgmt/README.md)) | sent 2026-10-08 ([lore](https://lore.kernel.org/r/20261008034102.707451-1-yaroslav.voytovych@gmail.com)); the list's CI bot: all checks pass |
 
 ### Backports and testing of others' patches
 
@@ -127,10 +122,10 @@ queued. Until your distribution ships one, the entry is a two-line addition to
 
 - **Stable backport of `dc16388d45ec`:** queued by the stable team for 7.2, 6.18, 6.12, 6.6,
   6.1, 5.15 and 5.10 (`EX-061`); next, each line's release and the distribution kernels.
-- **Delivery of the three accepted fixes** into kernel and BlueZ releases and into Ubuntu:
-  tracked, nothing owed yet.
-- **Submitted, awaiting the maintainer:** the BlueZ `shared/mgmt` notify-leak fix with its
-  unit tests (2026-10-08, [`patches/bluez/shared-mgmt/`](patches/bluez/shared-mgmt/README.md)).
+- **Delivery of the four accepted fixes** into kernel and BlueZ releases and into Ubuntu:
+  tracked, nothing owed yet. The newest, the BlueZ `shared/mgmt` notify-leak fix with its unit
+  tests, was sent and applied on 2026-10-08
+  ([`patches/bluez/shared-mgmt/`](patches/bluez/shared-mgmt/README.md)).
 - **The kernel mesh advertising work** (found while reading why the list's `mesh-tester` fails
   on every submission since June) is written and tested in qemu, but after an outside research
   review it is not sent as one series: it goes out as separate contributions in a reviewed
@@ -197,7 +192,7 @@ devtools/             contributor tooling (check, scan, validate, coverage, ci, 
 reviews/              assessments of the repository itself; README.md there is the live action register
 comms/  lessons/      messages between the maintainers; what the project cost to learn
 patches/bluez/        the two applied BlueZ patches, their verification script and mail notes;
-  shared-mgmt/        the submitted shared/mgmt fix and its unit tests, as mailed
+  shared-mgmt/        the applied shared/mgmt fix and its unit tests, as mailed
   cleanup/            the prepared, unsent removal of the duplicate a2dp check
 retest/mesh-tx-leak/  reproducer, kernel configs and 159 VM logs for the retest of another
                       author's kernel patch (patchwork 14831271); REPORT.md there has the findings

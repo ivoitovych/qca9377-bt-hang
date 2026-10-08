@@ -3689,6 +3689,23 @@ pre-send check against that minute's master and a dry run; both were on patchwor
 The app password was used on that one command, and the settings, history and git configuration
 were searched for it afterwards.
 
+**Applied the same day.** At 12:41 the list's bot passed all twelve checks, ScanBuild included,
+the one the analyzer fix had been aimed at. At 17:20 the patchwork bot reported both patches
+applied to BlueZ master by Luiz Augusto von Dentz (`ae23df052290`, `6f5eeb402d3b`). A
+`git range-diff` against the sent commits shows both unchanged, message and code. The same
+afternoon he converted `unit/test-mgmt` to the tester framework (`866b0b8b1`), keeping the six
+unregister cases and their counts. Under twelve hours from mail to master, against two days for
+the first BlueZ pair.
+The four review rounds and the measured message conventions cost a day before sending and
+nothing after it.
+
+The same evening the last app passwords were checked: all seven used since September are
+refused by Gmail. The check had looked inconclusive for days only because it used port 465,
+where Gmail closes the connection mid-login; port 587 answers. A kernel update arrived too.
+`7.0.0-38`'s stock btusb lacks the QCA9377 entry, and E3 exists only for `-34`, so a plain
+reboot would have brought the original hang back. That is why an Ubuntu-side request for
+`dc16388d45ec` is now proposed.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here verbatim from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`

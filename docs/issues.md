@@ -19,7 +19,7 @@ They are numbered `BT-n` so exhibits and commits can cite them.
   Findings from that work stay private until each has its patch.
 - **M-3 (new, BlueZ `shared/mgmt`)** — `mgmt_unregister()` from a notification callback
   leaked the entry, and unregistering the next entry was a use-after-free. Fix and unit tests
-  submitted 2026-10-08 (section below).
+  sent and applied 2026-10-08 (section below).
 - **BT-7's a2dp fix is in BlueZ master twice.** The redundant v2 was applied on 2026-10-07 on
   top of v1, so the stream is checked twice in a row; harmless, and a one-line cleanup is
   prepared (`patches/bluez/README.md`).
@@ -605,7 +605,11 @@ the patch, its acceptance and these facts.
 
 ## M-3 — `mgmt_unregister()` from a notification callback leaks, or frees the next node
 
-**Status 2026-10-08: submitted** (`patches/bluez/shared-mgmt/`, patchwork 14873331 / 14873330).
+**Status 2026-10-08: accepted.** Sent 05:41 +0200 (`patches/bluez/shared-mgmt/`, patchwork
+14873331 / 14873330). Applied to BlueZ master the same day by Luiz Augusto von Dentz as
+`ae23df052290` and `6f5eeb402d3b`. `git range-diff` against the sent commits shows both
+identical (`=`). He then converted `unit/test-mgmt` to the tester framework (`866b0b8b1`);
+the six unregister cases and their expected counts are unchanged there.
 
 **What it is.** In BlueZ `src/shared/mgmt.c`, `mgmt_unregister()` took the entry off
 `notify_list` with `queue_remove_if()` even while `process_notify()` was walking the list,

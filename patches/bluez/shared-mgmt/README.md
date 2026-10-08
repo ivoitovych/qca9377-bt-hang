@@ -1,13 +1,15 @@
-# BlueZ `shared/mgmt` notify leak — sent 2026-10-08, awaiting the maintainer
+# BlueZ `shared/mgmt` notify leak — sent and applied 2026-10-08
 
 | | |
 |---|---|
-| **status** | **submitted** 2026-10-08 05:41:01 to 05:41:02 +0200, To linux-bluetooth only, two patches threaded, no cover letter |
+| **status** | **accepted**: applied to BlueZ master on 2026-10-08 by Luiz Augusto von Dentz as [`ae23df052290`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=ae23df052290) (1/2) and [`6f5eeb402d3b`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=6f5eeb402d3b) (2/2); patchwork-bot mail 17:20 +0200. `git range-diff` shows both identical to the sent commits (`=`) |
+| sent | 2026-10-08 05:41:01 to 05:41:02 +0200, To linux-bluetooth only, two patches threaded, no cover letter |
+| afterwards | the maintainer converted `unit/test-mgmt` to the tester framework (`866b0b8b1`, same day). The six `/mgmt/unregister/` cases keep their expected counts and destroy checks; the checks that ran after the main loop now run in its teardown |
 | 1/2 | [`0001-shared-mgmt-Fix-notify-leak-in-mgmt_unregister.patch`](0001-shared-mgmt-Fix-notify-leak-in-mgmt_unregister.patch) — `src/shared/mgmt.c`, +17/−7 · [lore](https://lore.kernel.org/r/20261008034102.707451-1-yaroslav.voytovych@gmail.com) · [patchwork 14873331](https://patchwork.kernel.org/patch/14873331/) |
 | 2/2 | [`0002-unit-test-mgmt-Test-unregistering-from-callbacks.patch`](0002-unit-test-mgmt-Test-unregistering-from-callbacks.patch) — `unit/test-mgmt.c`, +225 · [lore](https://lore.kernel.org/r/20261008034102.707451-2-yaroslav.voytovych@gmail.com) · [patchwork 14873330](https://patchwork.kernel.org/patch/14873330/) |
 | base | BlueZ master `d84171e6cd68` (`base-commit:` in 1/2); `scripts/pre-send-check.sh` OK minutes before sending |
 | CI bot | **all 12 checks PASS**, mail 2026-10-08 12:41 +0200 ([series 1181228](https://patchwork.kernel.org/series/1181228/), [bluez/bluez#2634](https://github.com/bluez/bluez/pull/2634)), ScanBuild included; see below for the one failed GitHub check that is not the bot's |
-| next | `git log origin/master --grep="mgmt_unregister"` after about two days; no resend for lint |
+| next | the next BlueZ release tag; nothing owed |
 
 The two files here are byte-identical to what was mailed.
 
