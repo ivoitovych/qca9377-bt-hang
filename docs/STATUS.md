@@ -61,6 +61,14 @@ E3 (`updates/btusb.ko` carrying the exact upstream entry) is installed; trial E3
 open; the installed `/usr/local/bin` tools are the 2026-09-18 copies until the operator
 installs the current ones. Nothing is changed on this machine without the operator's word.
 
+⚠️ **Kernel update pending (2026-10-08 17:40):** Ubuntu installed `7.0.0-38-generic`, and
+`/var/run/reboot-required` lists it. The running kernel is `7.0.0-34`. E3 exists only in
+`/lib/modules/7.0.0-34-generic/updates/`; `-38` has no `updates/`. The `-38` stock btusb lacks
+the 13d3:3503 entry: `scripts/btusb-has-device.py` reports ABSENT on the stock btusb of `-34` and
+of `-38`, FOUND on E3, and FOUND on the control `0cf3:e300` in stock `-38`. The `-38` changelog
+has no QCA9377 line. A default boot into `-38` therefore brings BT-1 back. Until E3 is built
+for `-38` and installed, boot `-34` from GRUB's "Advanced options".
+
 ## Repository health
 
 CI (`checks` workflow) was red on every push from 2026-09-26 to 2026-10-02: four suite
