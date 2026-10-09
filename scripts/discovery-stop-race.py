@@ -148,7 +148,12 @@ def main(files):
         elif reply is not None and not reply.startswith("Success"):
             kind = "refused (" + reply + ")"
         else:
-            off = next((e[1] for e in ev if e[0] == "le-scan" and e[2] == "off"), None)
+            # The cycle's own scan-off is the first one after its Inquiry command: a
+            # cycle can open with a scan-off that only stops background scanning
+            # (BlueZ issue #1554's capture does), which is not one of its two ends.
+            inq = next((e[1] for e in ev if e[0] == "inquiry"), None)
+            off = next((e[1] for e in ev if e[0] == "le-scan" and e[2] == "off"
+                        and (inq is None or e[1] > inq)), None)
             off_done = next((e[1] for e in ev if e[0] == "le-scan-done" and off and e[1] > off), None)
             ic = next((e[1] for e in ev if e[0] == "inquiry-complete"), None)
             cancel = next((e[1] for e in ev if e[0] == "inquiry-cancel"), None)
