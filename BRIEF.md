@@ -377,7 +377,7 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
   readable journal" and never asks has two meanings and tests one. On a journal-less host
   it accepted `bt1_status=not_observed` — *"we looked and BT-1 did not happen"* — for a
   trial where looking was impossible, on every run and every CI run since the classifier
-  was written. It then derived the premise from the host, so the container checked one
+  was written. It then derived the premise from the host, so a bare host checked one
   answer and the laptop the other; since 2026-09-29 the journal is an input — readable
   in one test, absent and unreadable in another — and both answers run on every host.
 - **`ENUMERATED == 0` is a refusal; `CHECKED == 0` is a result.** The same defect, in the
@@ -405,7 +405,7 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
   (tests/README.md, rule 5).
 - **A leak is only visible where the mock and the world disagree.** For weeks the suite
   called the real `journalctl`, `systemctl`, `logger` and `lsmod` — 312 calls a run — and
-  every one passed, because in the container and in CI the real machine answered *nothing*,
+  every one passed, because on a bare host and in CI the real machine answered *nothing*,
   which is exactly what an empty fixture returns. On the laptop the same calls read its
   real journal and wrote 20 fake trial lines into it. A check that the suite is hermetic
   has to run in a world that answers differently from every fixture, and has to prove on
