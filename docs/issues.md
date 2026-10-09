@@ -657,8 +657,10 @@ capture attached to BlueZ issue #1554 (2025-09, open); a reply pointing to the f
 there on 2026-10-09 (`docs/STATUS.md`).
 
 **Why it matters here.** `dc16388d45ec`, whose stable backport this project requested, gives
-13d3:3503 the quirk on 6.12, 6.6 and 6.1, where the fix is missing. The race already affects
-every Intel and Realtek adapter on those lines.
+13d3:3503 the quirk on 6.12, 6.6 and 6.1, where the fix is missing. On those lines the race is
+already possible for adapters whose drivers set the quirk (among them Intel and Realtek),
+whenever they run combined BR/EDR and LE discovery and the Inquiry Complete lands inside the
+scan-off; how often that happens depends on timing (here: 2 cycles in about 14,700).
 
 **Next:** an adapted backport of `96d006ae6445` to 6.12, 6.6 and 6.1, tested with a
 deterministic reproducer in qemu, then a request to stable (operator's word).
