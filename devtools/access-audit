@@ -65,7 +65,9 @@ audit() {   # <work-dir> <allow-file> <stale:0|1> <cmd...> — trace, classify; 
         env -u BASH_ENV TMPDIR="$w/tmp" "$@" > "$w/out" 2>&1
     local rc=$?
     local -a extra=()
-    (( stale )) && extra+=(--stale)
+    # the run's output: an allow entry for a check it reports as not asked is
+    # not expected to match (tests/access-allowlist, when-asked=)
+    (( stale )) && extra+=(--stale --not-asked "$w/out")
     devtools/access-classify "$w/trace" --root "$ROOT" --scratch "$w/tmp" --allow "$allow" \
         --path "$PATH" --tsv "$w/violations.tsv" "${extra[@]}"
     local crc=$?
@@ -100,6 +102,8 @@ if (( SELFTEST )); then
     # world plants, so that a deliberate probe is not reported there as a leak.
     probe caught "/proc/version"                         "a machine file read directly" \
         'cat /proc/version > /dev/null'
+    probe caught "proc-of-a-process"                     "the /proc entry of a process the run did not start" \
+        'cat /proc/1/stat > /dev/null 2>&1; true'
     probe caught "/var/log/bt-health/access-audit-probe" "an existence check of a machine path that is absent here" \
         '[ -e /var/log/bt-health/access-audit-probe ]; true'
     probe caught "access-audit-probe"                    "a read in the caller's home" \
@@ -124,12 +128,27 @@ if (( SELFTEST )); then
     else
         echo "  · a namespace world's own mounts: no user namespaces here — not verifiable"
     fi
+    probe clean "" "the /proc entry of a process the run started" \
+        'sleep 5 & p=$!; cat /proc/$p/stat > /dev/null; kill $p'
+    probe clean "" "a contract read, through the suite's one door (env BT_MACHINE_CONTRACT=)" \
+        'env BT_MACHINE_CONTRACT=self-test cat /proc/version > /dev/null'
     printf 'read /proc/version   # the self-test: an allowed access\n' > "$WORK/allow"
     PROBE_ALLOW="$WORK/allow" probe clean "" "an access the allow list names" \
         'cat /proc/version > /dev/null'
+    printf 'read /proc/version by=cat  # the self-test: one command'"'"'s access\n' > "$WORK/allow-by"
+    PROBE_ALLOW="$WORK/allow-by" probe clean "" "an access the allow list names for the command that made it" \
+        'cat /proc/version > /dev/null'
+    PROBE_ALLOW="$WORK/allow-by" probe caught "/proc/version" "the same access by another command" \
+        'head -c1 /proc/version > /dev/null'
     printf 'read /proc/version   # used\nread /proc/loadavg   # never used\n' > "$WORK/allow2"
     PROBE_ALLOW="$WORK/allow2" PROBE_STALE=1 probe caught "STALE allow entry, line 2" \
         "an allow entry nothing matched, when staleness is asked" 'cat /proc/version > /dev/null'
+    printf 'read /proc/version   # used\nread /proc/loadavg when-asked=probe-check  # its check only\n' > "$WORK/allow3"
+    PROBE_ALLOW="$WORK/allow3" PROBE_STALE=1 probe caught "STALE allow entry, line 2" \
+        "an unmatched entry whose check WAS asked" 'cat /proc/version > /dev/null'
+    PROBE_ALLOW="$WORK/allow3" PROBE_STALE=1 probe clean "" \
+        "an unmatched entry whose check the run reports as NOT ASKED" \
+        'cat /proc/version > /dev/null; echo "  NOT ASKED HERE: the probe-check (absent here)"'
     echo
     if (( fail )); then echo "access-audit self-test: $fail of $((pass + fail)) checks FAILED"; exit 1; fi
     echo "access-audit self-test: every planted access caught, every control clean ($pass checks)"

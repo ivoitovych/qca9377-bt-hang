@@ -140,12 +140,20 @@ fi   # HOST_JOURNAL
 # leading one is harmless to it — but the fixtures claim a shape the real
 # tool does not emit, and that asymmetry is recorded here rather than
 # discovered again.
+#
+# BT_JOURNAL_REMOTE names the builder; set and empty, this phase is not run.
+# The suite drives phase 1 against a stub journalctl, which this phase cannot
+# be compared with, so it sets it empty there; CI runs this tool on its own.
 JR=""
-for c in /usr/lib/systemd/systemd-journal-remote /lib/systemd/systemd-journal-remote; do
-    [[ -x "$c" ]] && { JR="$c"; break; }
-done
+if [[ -n "${BT_JOURNAL_REMOTE+set}" ]]; then
+    JR=$BT_JOURNAL_REMOTE
+else
+    for c in /usr/lib/systemd/systemd-journal-remote /lib/systemd/systemd-journal-remote; do
+        [[ -x "$c" ]] && { JR="$c"; break; }
+    done
+fi
 if [[ -z "$JR" ]]; then
-    note "systemd-journal-remote not installed — byte-equivalence phase skipped"
+    note "systemd-journal-remote not installed or not asked — byte-equivalence phase skipped"
 else
     W=$(mktemp -d); trap 'rm -rf "$W"' EXIT
     B1=11111111111111111111111111111111

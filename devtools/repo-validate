@@ -128,8 +128,15 @@ while IFS= read -r f; do
     fi
     # ast.parse rather than py_compile: py_compile writes __pycache__/*.pyc
     # beside the source, which repo-save would then stage and commit, and which
-    # contradicts this tool being read-only.
-    if out=$(python3 -c 'import ast,sys; ast.parse(open(sys.argv[1]).read())' "$f" 2>&1); then ok "py    $f"
+    # contradicts this tool being read-only. The error is caught and reported
+    # as one line: uncaught, it reaches the system's excepthook, and Ubuntu's
+    # (apport) reads the package database and /etc/apt to decide whether to
+    # file a crash report — machine state the access audit reported in CI.
+    if out=$(python3 -c 'import ast, sys
+try:
+    ast.parse(open(sys.argv[1]).read(), sys.argv[1])
+except Exception as e:
+    sys.exit("%s: %s" % (type(e).__name__, e))' "$f" 2>&1); then ok "py    $f"
     else bad "py    $f"; sed 's/^/      /' <<<"$out"; fi
 done < <(files)
 

@@ -175,6 +175,23 @@ access, and each must be caught. It also runs clean controls: scratch, software,
 a checkout read, a namespace world's own mount and an allowed path, and none
 may be flagged. CI runs the full audit as a job of its own.
 
+CI's first audit found more, from what CI has and this host lacks:
+- the checkout world's network proof resolving github.com through the host's
+  `/etc/resolv.conf`;
+- `id -g` for the bt-ui-capture tests' user, answered by systemd's user
+  database;
+- Ubuntu's crash reporter, run by a Python syntax error `repo-validate` left
+  uncaught;
+- `pkill -f` reading every process on the runner;
+- the coredump contract reading the host's journal;
+- the journal-contract phase that the suite could not use.
+
+Each was closed by a seam or a change in the test, except two kinds:
+- **The coredump contract's reads.** They go through `real_tool`, the suite's
+  one door to the real machine, and the audit classes them as `contract`.
+- **What the AT-SPI test's private `dbus-daemon` asks about its clients.**
+  These are allow lines for that command only, tied to that check.
+
 ## Fixtures
 
 | Path | Feeds |

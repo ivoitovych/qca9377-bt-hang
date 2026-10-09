@@ -34,6 +34,7 @@ Defaults are unchanged when the variables are unset, except where noted.
 | `tools/bt-incident` | reads `BT_TRACE_DIR`; the trace directory used to be written in |
 | `bin/bt-capture`, `bin/bt-evidence`, `bin/bt-trace`, `bin/bt-usbmon`, `tools/bt-actions`, `tools/bt-capdiff`, `tools/bt-sco`, `tools/bt-status`, `tools/bt-trial` | the trace, capture and usbmon defaults are `${BT_HEALTH_DIR:-/var/log/bt-health}/…`, so setting `BT_HEALTH_DIR` moves all four |
 | `tools/verify-restored.sh` | takes `BT_DESTDIR`, the staging prefix `install.sh` and `uninstall.sh` already take, and checks every artifact under it; its health directory defaults under it |
+| `tools/bt-ui-capture` | takes `BT_UI_GID` beside `BT_UI_UID`, so a test gives the user's group instead of asking the user database |
 | `tools/bt-verify-kernel-mechanism` | its temporary copy and `.hex` go under `TMPDIR`, and both are removed on every exit path |
 | `tools/bt-boot-stats` | **runs the `bt-boot-list` beside it first**, then the one in `/usr/local/bin`: the order `bt-phase` has had since 2026-09-29. Installed, they are the same file. From a checkout, it no longer runs whatever was last deployed. |
 
@@ -56,3 +57,23 @@ Defaults are unchanged when the variables are unset, except where noted.
   host tool presence and the clock.
 - **`sudo`, `runuser` and `gh`** are on the tripwire (`tests/machine-tools`).
   No test reached any of them.
+
+## 4. CI's first run of the audit
+
+The audit job failed on its first run. CI has tools this host lacks, so its run
+asked more:
+- the private `dbus-daemon` of the AT-SPI test;
+- `coredumpctl`, `zstd` and `systemd-journal-remote`;
+- systemd's user database;
+- a resolver that reads its files.
+
+All of it closed in the commit after:
+- **Seams and test changes.** `BT_UI_GID`; a network proof that resolves no
+  name; the AT-SPI recorder stopped by its pid instead of `pkill -f`;
+  `devtools/repo-validate` reports a Python syntax error itself, so Ubuntu's
+  crash reporter never runs; `devtools/journal-contract` takes
+  `BT_JOURNAL_REMOTE` and the suite sets it empty.
+- **The coredump contract's reads**, through `real_tool`, are classed as
+  `contract`.
+- **What `dbus-daemon` asks about its clients** is allowed for that command
+  only, and expected only where that test runs.

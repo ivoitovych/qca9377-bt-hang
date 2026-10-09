@@ -205,7 +205,7 @@ tools/bt-health-report.sh:235-235  # no-baseline branch: exercised only through 
 # branches on every run. Mutating any one of the three turns that assertion red
 # — verified by doing it. The range starts one line INSIDE the program because
 # the construct is a pipeline, which bash traces at the line it opens on.
-tests/run-tests:597-603     # inline footprint differ; driven and pinned by the assertion above (re-derived 2026-09-28 from the trace, not by arithmetic; 2026-09-29 by content, the differ now compares every field; then +11 by content, the declared usbfs and runtime-user roots; 2026-10-08 +13 by content, the nested-run refusal; 2026-10-09 +25 by content, the --section block above it and the declared home; then +29, the declared host state and seams)
+tests/run-tests:599-605     # inline footprint differ; driven and pinned by the assertion above (re-derived 2026-09-28 from the trace, not by arithmetic; 2026-09-29 by content, the differ now compares every field; then +11 by content, the declared usbfs and runtime-user roots; 2026-10-08 +13 by content, the nested-run refusal; 2026-10-09 +25 by content, the --section block above it and the declared home; then +29, the declared host state and seams; then +2, real_tool's note on env)
 
 # THE REPORTING LOOP runs only when a binary actually changed, which on an
 # undamaged machine is never — the same category as the `bad` lines section 3

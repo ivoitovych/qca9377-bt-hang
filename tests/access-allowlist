@@ -6,8 +6,12 @@
 # and a line that nothing in a full run matched is itself a failure: an entry
 # that no longer describes the run is how an allow list starts hiding things.
 #
-# FORMAT   <read|write|exec|any> <glob>   # reason (required)
-# The glob is fnmatch's: `*` crosses `/`.
+# FORMAT   <read|write|exec|any> <glob> [by=<command>] [when-asked=<word>]   # reason (required)
+# The glob is fnmatch's: `*` crosses `/`. by= matches only that command's
+# accesses. when-asked= ties a line to one check: where the run reports a check
+# containing <word> as NOT ASKED, nothing is expected to match the line, and it
+# is not stale for that. A read the suite makes through real_tool, its one door
+# to the real machine, is classed `contract` and needs no line here.
 #
 # The first list made from a trace (2026-10-09) was not this one. Before it,
 # the run read the host's ~/.jq, ~/.config/git, Python site-packages, the real
@@ -22,10 +26,11 @@ read  /etc/gitconfig                        # the safe.directory copy (git confi
 read  */.gitconfig                          # the safe.directory copy (git config --global), before HOME is declared
 read  */.config/git/config                  # the same copy: git's XDG location for the global file
 
-# ── processes: the tripwire names its caller chain, the orphan scan its survivors
+# ── processes: the orphan scan reads every process to find this run's survivors
+#    (the tripwire's caller chain and the orphans' names are the run's own
+#    processes, which the audit recognises without a line here)
 read  /proc                                 # the orphan scan lists the process table
 read  /proc/*/environ                       # suite_orphans: which processes still carry this run's marker
-read  /proc/*/cmdline                       # the tripwire's caller chain, and the orphan report's names
 
 # ── the install guards: the real system's fingerprint, before the first staged
 #    install and after the last, by existence and stat only
@@ -47,8 +52,15 @@ read  /var/log                              # the namespace world's probe that /
 read  /var/log/bt-health/ui*                # its proof: the marker it made inside is absent here
 read  /sys/kernel/debug                     # the probe that debugfs can be covered
 read  /sys/kernel/debug/dynamic_debug/bt-ui-world-*   # the proof, for the control file's directory
-read  /etc/gnutls/config                    # TLS settings, read by git's https helper in the checkout world's offline proof
 
 # ── identity: id(1) resolves the bt-ui-capture tests' user names
 read  /etc/passwd                           # id -g / id -un, for the fixture user
 read  /etc/nsswitch.conf                    # how id(1) resolves a name
+
+# ── the AT-SPI test's private bus. dbus-daemon asks the system about each
+#    client it accepts; not asked where python3 has no GObject (CI asks it)
+read  /run/systemd/seats*                by=dbus-daemon when-asked=AT-SPI   # is the connecting user at a seat (at_console), from logind
+read  /run/systemd/users/*               by=dbus-daemon when-asked=AT-SPI   # the same, from logind's record of that user
+read  /run/systemd/userdb*               by=dbus-daemon when-asked=AT-SPI   # the user's name, through systemd's user database
+read  /etc/group                         by=dbus-daemon when-asked=AT-SPI   # the user's groups, for its policy
+read  /proc/sys/kernel/random/boot_id    by=dbus-daemon when-asked=AT-SPI   # libsystemd, in the same lookups

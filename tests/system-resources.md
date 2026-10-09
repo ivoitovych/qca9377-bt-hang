@@ -17,6 +17,13 @@ Two checks keep this file true:
 - `devtools/access-audit` fails on any access a run makes that is not isolated
   or named in [`access-allowlist`](access-allowlist).
 
+A host decides part of what a run asks. CI's first audit (2026-10-09) found
+accesses this host never makes, because CI has `dbus-daemon` with GObject,
+`coredumpctl`, `zstd`, `systemd-journal-remote`, systemd's user database and a
+resolver that reads its files. Each is closed in §3 and §4. An allow line that only one check needs
+names that check (`when-asked=`), so a host where the check is not asked does
+not report the line as stale.
+
 ## The mechanisms, and what proves each one
 
 | mechanism | what it isolates | proved by |
@@ -112,15 +119,18 @@ reaching the real one.
 | temporary files | `TMPDIR` is one directory of the run's own, removed at exit | 2026-08 |
 | the open-trial state | `BT_TRIAL_STATE_DIR`, declared after the refusal at the top has read the real one | 2026-10-09, found by the trace |
 | installed copies of the project's tools | the PATH guard puts a recording stub first for every name `install.sh` installs | 2026-08-14 |
-| the network | the checkout world runs in a network namespace; network clients are on the tripwire | 2026-10-08 |
-| user identity (`/etc/passwd`, via `id`) | **allowed**: the bt-ui-capture tests resolve their fixture user's name | — |
+| the network | the checkout world runs in a network namespace; network clients are on the tripwire. Its proof asks the namespace for its interfaces and connects to an address literal: resolving a name would read the host's `/etc/resolv.conf` and `/etc/hosts` first | 2026-10-08 / 2026-10-09, found by CI's trace |
+| user identity | `bt-ui-capture` takes the desktop user's uid, gid and home from `BT_UI_UID`, `BT_UI_GID` and `BT_UI_HOME`; a host whose user database includes systemd's otherwise answers `id -g` from `/run/userdb` and `/run/systemd/userdb` | 2026-10-09, found by CI's trace |
+| what the AT-SPI test's private bus asks | **allowed**, for `dbus-daemon` only and only where that test runs: whether the connecting user is at a seat, its record and its groups | — |
+| other processes | a `/proc/<pid>` read of a process the run started is the run's own; the AT-SPI test stops its recorder by the pid the recorder logs, not with `pkill -f`, which reads every process on the machine | 2026-10-09, found by CI's trace |
+| a crash reporter | `devtools/repo-validate` reports a Python syntax error itself: uncaught, Ubuntu's excepthook (apport) reads the package database and `/etc/apt` | 2026-10-09, found by CI's trace |
 
 ## 4. Data read through fixtures
 
 | resource | seam | notes |
 |---|---|---|
-| the journal | `BT_JOURNAL_FIXTURE` (tools/lib/journal.sh) | an invariant forbids a converted tool a direct `journalctl` |
-| retained core dumps | `BT_COREDUMP_FIXTURE` (tools/lib/coredump.sh) | three fixture claims are checked against real `coredumpctl` through `real_tool`, the one sanctioned door |
+| the journal | `BT_JOURNAL_FIXTURE` (tools/lib/journal.sh) | an invariant forbids a converted tool a direct `journalctl`. `devtools/journal-contract` checks the fixtures' grammar against the real tool; in the suite it runs against a stub with `BT_JOURNAL_REMOTE` empty, and CI runs it on its own |
+| retained core dumps | `BT_COREDUMP_FIXTURE` (tools/lib/coredump.sh) | three fixture claims are checked against real `coredumpctl` through `real_tool`, the one sanctioned door; what it reads there, the host's journal included, the access audit classes as `contract` |
 | the HCI monitor socket | `BT_CAPTURE_SOURCE` | bt-capture reads frames from a file instead |
 
 ## 5. The repository's own evidence

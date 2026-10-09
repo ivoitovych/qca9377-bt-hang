@@ -402,10 +402,12 @@ suite_orphans() {   # pid and command of every process carrying this run's marke
 # resolved on the PATH as it was before the tripwire, and the call is tagged
 # BT_MACHINE_CONTRACT=<check>, which devtools/sandbox lists as a contract read
 # rather than a leak. An invariant at the end keeps the tag inside this function.
+# Through env(1), so the tag is in the command line too, where an strace sees
+# it: devtools/access-audit classes what the tagged tool reads as `contract`.
 real_tool() {   # <check> <tool> [args...] — 127 when the host has no such tool
     local check="$1" t="$2" p; shift 2
     p=$(PATH="$SUITE_ORIG_PATH" command -v "$t") || return 127
-    BT_MACHINE_CONTRACT="$check" "$p" "$@"
+    env BT_MACHINE_CONTRACT="$check" "$p" "$@"
 }
 
 export PATH="$GUARD/bin:$TRIP:$PATH:$GUARD/decoy"
@@ -8689,17 +8691,22 @@ fi
 exit 0
 JCJ
 chmod +x "$JC/bin/journalctl"
-JCOUT=$(PATH="$JC/bin:$PATH" devtools/journal-contract 2>&1)
+# BT_JOURNAL_REMOTE empty: phase 2 builds a real journal for the real
+# journalctl, and here journalctl is the stub — CI runs the tool on its own.
+JCOUT=$(BT_JOURNAL_REMOTE= PATH="$JC/bin:$PATH" devtools/journal-contract 2>&1)
 [[ "$JCOUT" == *"✓ -b all still separates boots"* ]] \
     && ok "journal-contract finds the boot separator on a host whose oldest boot is enormous" \
     || bad "journal-contract still reports the contract broken against a normal journalctl"
+[[ "$JCOUT" == *"not asked — byte-equivalence phase skipped"* ]] \
+    && ok "journal-contract does not run its systemd-journal-remote phase where BT_JOURNAL_REMOTE is empty" \
+    || bad "journal-contract ran phase 2 with BT_JOURNAL_REMOTE empty: $(grep -iE 'equivalence|journal-remote' <<<"$JCOUT" | head -2 | tr '\n' '|')"
 
 # The pre-fix shape, against the same stub, to show the test has teeth: a
 # capped scan that never reaches a boundary must be what fails, not the stub.
 sed 's|journalctl -k -b all --since "$prev_start" --no-pager -o short-iso-precise 2>/dev/null|journalctl -k -b all --no-pager -o short-iso-precise 2>/dev/null \| head -5000|' \
     devtools/journal-contract > "$JC/capped"
 chmod +x "$JC/capped"
-JCCAP=$(PATH="$JC/bin:$PATH" bash "$JC/capped" 2>&1)
+JCCAP=$(BT_JOURNAL_REMOTE= PATH="$JC/bin:$PATH" bash "$JC/capped" 2>&1)
 [[ "$JCCAP" == *"✗ -b all no longer emits boot separators"* ]] \
     && ok "a capped scan over the same journal DOES report a false break — the test discriminates" \
     || bad "the capped and bounded forms agree, so this proves nothing about either"
@@ -10535,7 +10542,7 @@ ui() {
     while [[ $# -gt 0 && "$1" != -- ]]; do extra+=("$1"); shift; done
     shift
     env -u BT_UI_USER PATH="$UIT/stub:$PATH" PROVE_CALLS="$UICALLS" PROVE_STATE="$UISTATE" \
-        BT_UI_BASE="$UIT/base" BT_UI_HOME="$UIT/home" BT_UI_UID=4242 BT_UI_REPO="$UIT/repo" \
+        BT_UI_BASE="$UIT/base" BT_UI_HOME="$UIT/home" BT_UI_UID=4242 BT_UI_GID=4242 BT_UI_REPO="$UIT/repo" \
         BT_DYNDBG_CTL="$UICTL" BT_UI_APPDIR="$UIT/apps" BT_UI_CAPTURE_DIRS="$UIT/cap/capture $UIT/cap/trace" \
         BT_JOURNAL_FIXTURE="$UIT/fixture" BT_UI_EUID=0 BT_UI_MARK="$UIT/repo/bin/bt-mark" \
         "${extra[@]}" tools/bt-ui-capture "$@"
@@ -10748,12 +10755,17 @@ PYEOF
         [[ "$(uic 'bt-ui-atspi start' "$UIAD/atspi.log")" -gt 0 ]] && break
         sleep 0.1
     done
+    # The recorder names its own pid in its first line, read now, before
+    # rotation can move it. Stopped by that, not by `pkill -f`, which reads
+    # /proc/<pid> of every process on the machine to find it (CI's access
+    # audit, 2026-10-09).
+    uirec=$(sed -n 's/.*bt-ui-atspi start pid=\([0-9][0-9]*\).*/\1/p' "$UIAD/atspi.log" 2>/dev/null | head -1)
     # The application first, then a bystander emitting a state the application
     # never does, LAST, so that rotation could not discard the evidence.
     python3 "$UIT/emitter.py" "$uiaddr" 120 gnome-control-c showing
     python3 "$UIT/emitter.py" "$uiaddr" 5 bystander focused
     sleep 1
-    pkill -f "$UIAD/bin/bt-ui-atspi.py" 2>/dev/null
+    kill "${uirec:-$UIMON}" 2>/dev/null     # no start line: the monitor itself, and the orphan scan names the rest
     wait "$UIMON" 2>/dev/null
     cat "$UIAD"/atspi.log* > "$UIT/atspi.all" 2>/dev/null
     uinf=$(find "$UIAD" -maxdepth 1 -name 'atspi.log*' | wc -l)
@@ -10854,7 +10866,7 @@ if unshare -Urm true 2>/dev/null && [[ -d /var/log && -d /sys/kernel/debug && -d
         ok "the namespace world proves itself: root inside, its markers inside, none on the machine"
         UIDEF=$(ui_world "
             export PATH='$UIT/stub':\"\$PATH\" PROVE_CALLS='$UICALLS' PROVE_STATE='$UISTATE'
-            export BT_UI_HOME='$UIT/home-ns' BT_UI_UID=4242 BT_UI_REPO='$UIT/repo' BT_UI_MARK='$UIT/repo/bin/bt-mark'
+            export BT_UI_HOME='$UIT/home-ns' BT_UI_UID=4242 BT_UI_GID=4242 BT_UI_REPO='$UIT/repo' BT_UI_MARK='$UIT/repo/bin/bt-mark'
             export BT_UI_CAPTURE_DIRS='$UIT/cap/capture $UIT/cap/trace' BT_JOURNAL_FIXTURE='$UIT/fixture'
             unset BT_UI_BASE BT_DYNDBG_CTL BT_UI_APPDIR BT_UI_EUID BT_UI_USER
             echo 2 > '$UISTATE/pw-level'
@@ -10925,7 +10937,13 @@ if unshare -Urmn true 2>/dev/null; then
         echo $COMARK > $COMARK.proof
         git commit -q --allow-empty -m 'checkout world: proof' || exit 1
         echo \"file=\$(cat $COMARK.proof) head=\$(git log -1 --format=%s)\"
-        git ls-remote origin >/dev/null 2>&1 && echo net=reached || echo net=none
+        # No way out: the world's network namespace has no interface but lo, and
+        # a connect to an address literal fails at once. Not \`git ls-remote
+        # origin\`: resolving the name reads the machine's /etc/resolv.conf and
+        # /etc/hosts first, as CI's access audit reported (2026-10-09).
+        ifs=\$(awk 'NR > 2 { sub(\":\", \"\", \$1); printf \"%s \", \$1 }' /proc/self/net/dev)
+        if [[ \"\$ifs\" == 'lo ' ]] && ! (exec 3<>/dev/tcp/192.0.2.1/9) 2>/dev/null; then echo net=none
+        else echo \"net=reached (interfaces: \$ifs)\"; fi
     " 2>&1); corc=$?
     coafter=$(co_snapshot)
     if (( corc == 97 )); then
@@ -10997,7 +11015,9 @@ if (( COWORLD_OK )); then
         echo '== dirty'; devtools/held edit 2>&1; echo \"rc=\$?\"
         git checkout -q -- main-world.txt
         echo '== usage'; devtools/held frobnicate >/dev/null 2>&1; echo \"rc=\$?\"
-        echo '== offline'; GIT_CONFIG_COUNT=0 devtools/held status 2>&1; echo \"rc=\$?\"
+        # origin rewritten to a repository that does not exist: unreachable
+        # without a resolver lookup of the real name (the machine's /etc/hosts).
+        echo '== offline'; GIT_CONFIG_KEY_0=\"url.\$B/unreachable.git.insteadOf\" devtools/held status 2>&1; echo \"rc=\$?\"
     " 2>&1)
     cosect() { awk -v s="== $1" '$0 == s { f = 1; next } /^== / { f = 0 } f' <<<"$COH"; }
     [[ "$(cosect status)" == *"origin carries no kernel/* branch ✓"* && "$(cosect status)" == *"held branch is 1 commit(s) ahead of main, 0 behind"* \
@@ -12636,6 +12656,12 @@ kcheck awk  'BEGIN { print "unterminated' awk
 (( kbad == 0 )) && (( kran >= 2 )) \
     && ok "each of $kran validators present here FAILS its own broken file" \
     || bad "$kbad of $kran validator(s) passed a file that does not parse"
+if command -v python3 >/dev/null 2>&1; then
+    kpy=$(devtools/repo-validate "$SCRATCH/bad-py" 2>&1)
+    [[ "$kpy" == *"SyntaxError: "*"broken.py, line 1"* && "$kpy" != *Traceback* ]] \
+        && ok "repo-validate names a Python syntax error in one line, with no traceback" \
+        || bad "repo-validate's Python error report: $(grep -A3 'broken.py' <<<"$kpy" | tr '\n' '|')"
+fi
 
 # ── an empty enumeration is INCONCLUSIVE, not a pass ─────────────────────
 #
@@ -13536,10 +13562,24 @@ devtools/access-classify /nonexistent/trace --root . --scratch /nonexistent >/de
 ACB=$(mktemp); printf 'read /proc/uptime\n' > "$ACB"
 ACBO=$(devtools/access-classify "$ACB" --root . --scratch /nonexistent --allow "$ACB" 2>&1); acbrc=$?
 devtools/access-classify "$ACB" --scratch /nonexistent >/dev/null 2>&1; acrrc=$?
-(( aaurc == 2 && acnrc == 2 && acmrc == 2 && acbrc == 2 && acrrc == 2 )) && [[ "$ACBO" == *"want \"<read|write|exec|any> <glob>  # reason\""* ]] \
+(( aaurc == 2 && acnrc == 2 && acmrc == 2 && acbrc == 2 && acrrc == 2 )) && [[ "$ACBO" == *"want \"<read|write|exec|any> <glob> [by=<command>] [when-asked=<word>]  # reason\""* ]] \
     && ok "access-audit and access-classify refuse an unknown option, no log, an unreadable log, an allow line without a reason, and no --root (2)" \
     || bad "access refusals: audit=$aaurc noargs=$acnrc unreadable=$acmrc reasonless=$acbrc noroot=$acrrc"
 rm -f "$ACB"
+# Two names no file has: zstd stats its standard streams under the names it
+# prints them as, `/*stdin*\` and `/*stdout*\` (CI's audit, 2026-10-09). They
+# are streams, not the machine.
+ACZ=$(mktemp -d)
+cat > "$ACZ/trace" <<'ACZT'
+7 execve("/usr/bin/zstd", ["zstd", "-dc"], 0x7ffc /* 9 vars */) = 0
+7 newfstatat(AT_FDCWD, "/*stdin*\\", 0x7ffc, 0) = -1 ENOENT (No such file or directory)
+7 newfstatat(AT_FDCWD, "/*stdout*\\", 0x7ffc, 0) = -1 ENOENT (No such file or directory)
+ACZT
+ACZO=$(devtools/access-classify "$ACZ/trace" --root "$PWD" --scratch "$ACZ" 2>&1); aczrc=$?
+(( aczrc == 0 )) && grep -qE '^  pseudo-device +read +2$' <<<"$ACZO" \
+    && ok "access-classify takes zstd's names for its standard streams as streams, not machine paths" \
+    || bad "zstd's stream names (rc=$aczrc): $(grep -E 'MACHINE|pseudo' <<<"$ACZO" | head -2 | tr '\n' '|')"
+rm -rf "$ACZ"
 
 echo
 echo "the tests may not write to the real evidence tree"

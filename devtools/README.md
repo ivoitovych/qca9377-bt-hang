@@ -119,13 +119,35 @@ process is followed through `clone` and recycled pids; a failed attempt counts
 as much as a success. PATH searches and the walk to an ancestor directory are
 recognised for what they are.
 
+Recognised as the run's own, too:
+- a `/proc/<pid>` entry of a process the run started;
+- what a tool reads under `env BT_MACHINE_CONTRACT=<check>`, which is how the
+  suite's `real_tool` runs it: a `contract` read, its declared purpose.
+
+An allow line can be narrowed:
+- `by=<command>` matches only that command's accesses;
+- `when-asked=<word>` ties the line to one check. Where the run reports a check
+  containing the word as NOT ASKED, the line is not expected to match.
+
 The first run (2026-10-09) found nine kinds of access the decoy world had
 passed, from the host's `~/.jq` to `uninstall.sh` planning its dry run against
 the real `/etc`; tests/README.md, rule 8, lists them. `--self-test` plants each
-kind of access: a direct read, an absent-path check, the caller's home, a
-refused write, `/tmp` outside the run, a checkout write, an installed copy run
-and a network client. Each must be caught. The clean controls must not be.
-Each classifier rule was removed in turn, and the self-test went red each time.
+kind of access, and each must be caught:
+- a direct read;
+- another process's `/proc` entry;
+- an absent-path check;
+- the caller's home;
+- a refused write;
+- `/tmp` outside the run;
+- a checkout write;
+- an installed copy run;
+- a network client;
+- an allowed path read by a command its line does not name;
+- a stale line whose check was asked.
+
+The clean controls must not be caught: the run's own process, a contract read,
+and a line whose check was not asked, among others. Each classifier rule was
+removed in turn, and the self-test went red each time.
 
 It needs `strace` and permission to trace. It exits 3, nothing measured, where
 either is missing or where it is itself being traced.

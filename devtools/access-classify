@@ -2,20 +2,29 @@
 """access-classify — every file access in an strace log, sorted by where it landed.
 
     devtools/access-classify <strace-log> --root <checkout> --scratch <dir>
-                             [--allow <file>] [--stale] [--path <PATH>] [--tsv <out>]
+                             [--allow <file>] [--stale] [--not-asked <run output>]
+                             [--path <PATH>] [--tsv <out>]
 
 Reads `strace -f -e trace=%file,%process` output. Each access, attempted or
 made, is classified:
 
   scratch, checkout (reads), software, host-software, runtime-probe,
   pseudo-device, own-process, namespaced, ancestor, path-search,
-  git-discovery, declared-absent            — the run's own, or nothing
+  git-discovery, declared-absent, contract  — the run's own, or nothing
   MACHINE/<dir>, tmp-outside-run, proc-of-a-process, identity,
   checkout-write, INSTALLED-COPY, NETWORK   — the machine
 
 A machine access is a violation unless a line of --allow names it. With
 --stale, an allow line nothing matched is a violation too: an entry that no
-longer describes the run is how an allow list starts hiding things.
+longer describes the run is how an allow list starts hiding things. A line
+marked `by=<command>` matches only that command's accesses. A line marked
+`when-asked=<word>` belongs to one check: where the run's output (given by
+--not-asked) reports a check containing <word> as NOT ASKED, nothing is
+expected to match it.
+
+A `contract` access is one made through the suite's one door to the real
+machine (tests/run-tests, real_tool), which runs its tool under
+`env BT_MACHINE_CONTRACT=<check>`: reading the machine is that check's point.
 
 Exit: 0 no violation · 1 violations (listed) · 2 usage or unreadable log
 
@@ -38,7 +47,7 @@ if not args or args[0] in ('-h', '--help'):
     print(__doc__.strip().split('\n\n')[1])
     sys.exit(0 if args else 2)
 log = args.pop(0)
-opts = {'--root': None, '--scratch': None, '--allow': None, '--tsv': None, '--path': ''}
+opts = {'--root': None, '--scratch': None, '--allow': None, '--tsv': None, '--path': '', '--not-asked': None}
 stale_check = False
 while args:
     a = args.pop(0)
@@ -58,7 +67,7 @@ except OSError as e:
     usage(f'cannot read {log}: {e.strerror}')
 
 # ── the allow list ──────────────────────────────────────────────────────────
-allow = []          # (mode, glob, reason, lineno)
+allow = []          # (mode, glob, reason, lineno, when-asked word or None, by command or None)
 if opts['--allow']:
     try:
         with open(opts['--allow']) as f:
@@ -67,11 +76,21 @@ if opts['--allow']:
                 parts = body.split()
                 if not parts:
                     continue
-                if len(parts) != 2 or parts[0] not in ('read', 'write', 'exec', 'any') or not reason.strip():
-                    usage(f'{opts["--allow"]}:{n}: want "<read|write|exec|any> <glob>  # reason"')
-                allow.append((parts[0], parts[1], reason.strip(), n))
+                quals = dict(q.split('=', 1) for q in parts[2:] if re.match(r'^(when-asked|by)=.', q))
+                if len(parts) < 2 or len(quals) != len(parts) - 2 or parts[0] not in ('read', 'write', 'exec', 'any') \
+                        or not reason.strip():
+                    usage(f'{opts["--allow"]}:{n}: want "<read|write|exec|any> <glob> [by=<command>] '
+                          f'[when-asked=<word>]  # reason"')
+                allow.append((parts[0], parts[1], reason.strip(), n, quals.get('when-asked'), quals.get('by')))
     except OSError as e:
         usage(f'cannot read {opts["--allow"]}: {e.strerror}')
+not_asked = []      # the run's own report of the checks it did not ask
+if opts['--not-asked']:
+    try:
+        with open(opts['--not-asked'], errors='replace') as f:
+            not_asked = [line for line in f if 'NOT ASKED HERE:' in line]
+    except OSError as e:
+        usage(f'cannot read {opts["--not-asked"]}: {e.strerror}')
 
 # ── parsing ─────────────────────────────────────────────────────────────────
 LINE = re.compile(r'^(\d+)\s+(.*)$')
@@ -90,11 +109,12 @@ SKIP = {'wait4', 'exit_group', 'exit', 'getcwd', 'kill', 'tgkill', 'rt_sigreturn
 
 
 class Proc:
-    __slots__ = ('cwd', 'cmd', 'ns', 'net', 'parented', 'own_cwd', 'own_cmd', 'own_ns', 'own_net')
+    __slots__ = ('cwd', 'cmd', 'ns', 'net', 'contract', 'parented', 'own_cwd', 'own_cmd', 'own_ns', 'own_net',
+                 'own_contract')
 
-    def __init__(self, cwd, cmd, ns, net):
-        self.cwd, self.cmd, self.ns, self.net = cwd, cmd, ns, net
-        self.parented = self.own_cwd = self.own_cmd = self.own_ns = self.own_net = False
+    def __init__(self, cwd, cmd, ns, net, contract=None):
+        self.cwd, self.cmd, self.ns, self.net, self.contract = cwd, cmd, ns, net, contract
+        self.parented = self.own_cwd = self.own_cmd = self.own_ns = self.own_net = self.own_contract = False
 
 
 procs = {}
@@ -102,6 +122,7 @@ ns_cover = defaultdict(list)    # namespace id -> what was mounted inside it
 ns_count = 0
 pending = {}
 events = []                     # (proc, path, mode, ok, call)
+run_pids = set()                # every process the trace saw: the run's own
 
 
 def split_args(a):
@@ -181,7 +202,7 @@ def handle(pid, name, raw_args, ret):
             child = int(ret)
             c = procs.get(child)
             if c is None or c.parented:
-                procs[child] = c = Proc(pr.cwd, pr.cmd, pr.ns, pr.net)
+                procs[child] = c = Proc(pr.cwd, pr.cmd, pr.ns, pr.net, pr.contract)
             else:
                 # the child ran (and logged) before this line: fill in, in place,
                 # what it has not set itself, so its earlier events see it too
@@ -193,6 +214,8 @@ def handle(pid, name, raw_args, ret):
                     c.ns = pr.ns
                 if not c.own_net:
                     c.net = pr.net
+                if not c.own_contract:
+                    c.contract = pr.contract
             c.parented = True
         return
     if name == 'fchdir':
@@ -216,6 +239,11 @@ def handle(pid, name, raw_args, ret):
                 pr.net = pr.own_net = True
             if base == 'mount' and pr.ns is not None and words:
                 ns_cover[pr.ns].append(resolve(words[-1], pr, 'AT_FDCWD'))
+            # the suite's one door to the real machine: env BT_MACHINE_CONTRACT=<check> <tool>
+            if base == 'env' and pr.contract is None:
+                tag = next((w for w in words[1:] if w.startswith('BT_MACHINE_CONTRACT=')), None)
+                if tag:
+                    pr.contract, pr.own_contract = tag.split('=', 1)[1] or '?', True
         if exe is not None:
             events.append((pr, resolve(exe, pr, 'AT_FDCWD'), 'exec', ok, name))
         return
@@ -236,6 +264,7 @@ for raw in logf:
     if not m:
         continue
     pid, rest = int(m.group(1)), m.group(2)
+    run_pids.add(pid)
     if rest.startswith('+++'):
         procs.pop(pid, None)            # exited: a recycled pid starts a new life
         continue
@@ -280,9 +309,12 @@ SOFTWARE_FILES = {'/etc/ld.so.cache', '/etc/ld.so.preload', '/etc/localtime', '/
 PROBES = ('/selinux', '/sys/fs/selinux', '/sys/fs/smackfs', '/etc/selinux/config', '/proc/mounts', '/proc/filesystems',
           '/proc/sys/kernel/ngroups_max', '/proc/sys/vm/overcommit_memory', '/proc/meminfo', '/proc/stat',
           '/proc/cpuinfo', '/sys/devices/system/cpu', '/sys/fs/cgroup', '/proc/sys/fs/pipe-max-size',
-          '/sys/kernel/mm/transparent_hugepage', '/proc/sys/kernel/osrelease')
+          '/sys/kernel/mm/transparent_hugepage', '/proc/sys/kernel/osrelease',
+          # whether AppArmor is enabled, which dbus-daemon asks at every start
+          '/sys/module/apparmor/parameters/', '/sys/kernel/security/apparmor')
 PSEUDO = ('/dev/null', '/dev/zero', '/dev/urandom', '/dev/random', '/dev/tty', '/dev/full',
           '/dev/stdin', '/dev/stdout', '/dev/stderr', '/dev/fd/', '/dev/pts/')
+STREAM_NAMES = {'/*stdin*\\', '/*stdout*\\'}   # zstd's names for its standard streams, which it stats
 NET = {'git-remote-http', 'git-remote-https', 'git-remote-ftp', 'curl', 'wget', 'ssh', 'gh', 'nc', 'ncat',
        'scp', 'rsync'}
 
@@ -310,12 +342,15 @@ def classify(path, pr, mode, ok, call):
         return 'NETWORK'
     if under(path, root):
         return 'checkout-write' if mode == 'write' else 'checkout'
-    if path.startswith(PSEUDO):
+    if path.startswith(PSEUDO) or path in STREAM_NAMES:
         return 'pseudo-device'
     if path.startswith(('/proc/self', '/proc/thread-self')):
         return 'own-process'
-    if re.match(r'^/proc/\d+(/|$)', path):
-        return 'proc-of-a-process'
+    m = re.match(r'^/proc/(\d+)(/|$)', path)
+    if m:
+        # a process this run started (a peer on its own bus, a recorder naming
+        # a sender it was sent) is the run's own; any other is the machine's
+        return 'own-process' if int(m.group(1)) in run_pids else 'proc-of-a-process'
     if base in PROJECT and mode == 'exec' and ok:
         return 'INSTALLED-COPY'         # a project tool RUN from outside the checkout
     if mode != 'write' and call in LOOKUPS | {'execve'} and os.path.dirname(path) in exec_dirs \
@@ -349,7 +384,8 @@ def classify(path, pr, mode, ok, call):
 
 
 BENIGN = {'scratch', 'checkout', 'software', 'host-software', 'runtime-probe', 'pseudo-device',
-          'own-process', 'namespaced', 'ancestor', 'path-search', 'git-discovery', 'declared-absent'}
+          'own-process', 'namespaced', 'ancestor', 'path-search', 'git-discovery', 'declared-absent',
+          'contract'}
 
 
 def pattern(path):
@@ -358,9 +394,10 @@ def pattern(path):
     return re.sub(r'/[0-9a-f]{32}(?=/|$)', '/<hex32>', p)
 
 
-def allowed(path, mode):
-    for i, (m, glob, _, _) in enumerate(allow):
-        if (m == 'any' or m == mode) and fnmatch.fnmatchcase(path, glob):
+def allowed(path, mode, pr):
+    cmd = os.path.basename(pr.cmd.split(' ', 1)[0])
+    for i, (m, glob, _, _, _, by) in enumerate(allow):
+        if (m == 'any' or m == mode) and (by is None or by == cmd) and fnmatch.fnmatchcase(path, glob):
             return i
     return None
 
@@ -372,10 +409,12 @@ for pr, path, mode, ok, call in events:
     if path is None:
         continue
     cl = classify(path, pr, mode, ok, call)
+    if cl not in BENIGN and pr.contract:
+        cl = 'contract'                 # declared, at the one door, by the check it serves
     classes[(cl, mode)] += 1
     if cl in BENIGN:
         continue
-    i = allowed(path, mode)
+    i = allowed(path, mode, pr)
     if i is not None:
         matched[i] += 1
         continue
@@ -387,7 +426,9 @@ out = open(opts['--tsv'], 'w') if opts['--tsv'] else None
 print(f'accesses: {sum(classes.values())}   processes: {len(procs)}   namespaces: {ns_count}')
 for (cl, mode), n in sorted(classes.items()):
     print(f'  {cl:<20} {mode:<6} {n}')
-stale = [a for i, a in enumerate(allow) if not matched[i]] if stale_check else []
+# An entry that belongs to a check the run reports as not asked is not expected here.
+expected = [a for a in allow if not (a[4] and any(a[4] in line for line in not_asked))]
+stale = [a for i, a in enumerate(allow) if not matched[i] and a in expected] if stale_check else []
 if violations:
     print(f'\nMACHINE ACCESS outside the allow list — {len(violations)} kind(s):')
     for (cl, mode, outcome, pat), (n, cmds) in sorted(violations.items()):
@@ -395,8 +436,11 @@ if violations:
         print(f'  {cl:<18} {mode:<5} {outcome:<9} ×{n:<5} {pat}\n{"":>22}by: {by}')
         if out:
             out.write('\t'.join((cl, mode, outcome, str(n), pat, by)) + '\n')
-for mode, glob, reason, n in stale:
-    print(f'  STALE allow entry, line {n}: {mode} {glob}  — nothing in this run matched it')
+for mode, glob, reason, n, _, by in stale:
+    print(f'  STALE allow entry, line {n}: {mode} {glob}{" by=" + by if by else ""}  — nothing in this run matched it')
+if stale_check and len(expected) < len(allow):
+    print(f'  ({len(allow) - len(expected)} allow entr{"y" if len(allow) - len(expected) == 1 else "ies"} '
+          f'not expected here: {", ".join(sorted({a[4] for a in allow if a not in expected}))} not asked)')
 if violations or stale:
     sys.exit(1)
 print('\nno machine access outside the allow list')
