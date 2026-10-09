@@ -653,7 +653,8 @@ v6.6.158, v6.1.189 or v7.0.14, which all have the racy code (checked with `git g
 tags, 2026-10-09). 5.10 and 5.15 predate the race. In 6.12, 6.6 and 6.1 the upstream patch
 does not apply as is (`hci_test_quirk()` does not exist there). The laptop's `7.0.0-34` has
 the race; `-38` has the fix but not the 13d3:3503 entry. The same race is visible in the
-capture attached to BlueZ issue #1554 (Intel, 2025-09, open).
+capture attached to BlueZ issue #1554 (2025-09, open); a reply pointing to the fix was posted
+there on 2026-10-09 (`docs/STATUS.md`).
 
 **Why it matters here.** `dc16388d45ec`, whose stable backport this project requested, gives
 13d3:3503 the quirk on 6.12, 6.6 and 6.1, where the fix is missing. The race already affects
