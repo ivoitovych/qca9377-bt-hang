@@ -10,7 +10,7 @@ that reached `recover()` ran the **real** `python3`. That process opened
 fixture's: bus 3, device 99. Nothing stubbed `python3`, and neither the tripwire nor the
 decoy world watched it: `python3` is not a machine tool, and `/dev` is not decoyed.
 
-In this container and on CI no such node exists, so the open failed. The test even
+On a bare host and on CI no such node exists, so the open failed. The test even
 asserted that failure, as "no device node here, by design". On the laptop it depends on
 two things:
 

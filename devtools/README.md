@@ -54,7 +54,7 @@ a silent "everything is uncovered" reads like a finding.
 
 A third question a green suite cannot answer: did the test get its answer from the
 fixture it was given, or from the machine it happened to run on? On a machine with no
-Bluetooth, no journal and nothing installed — this container, CI — the real machine
+Bluetooth, no journal and nothing installed — a bare host, CI — the real machine
 returns *nothing*, which is exactly what an empty fixture returns. A test that reads the
 real journal passes there for the wrong reason, and on the investigation laptop it reads
 the laptop's real history, runs slowly, and can misreport.
@@ -90,7 +90,7 @@ The first full run (2026-09-29) found 312 machine-tool calls per suite run — a
 All fixed the same day (tests/README.md, rule 5); CI now runs the suite in the decoy world
 and fails on any leak.
 
-It needs unprivileged user namespaces: this container and CI have them; Ubuntu 24.04's
+It needs unprivileged user namespaces: a bare development host and CI have them; Ubuntu 24.04's
 AppArmor refuses them to ordinary users, so on the laptop it exits 3 — nothing measured,
 never a pass.
 

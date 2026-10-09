@@ -46,7 +46,7 @@ subtracted two times from the same month and offset, so February and negative of
 were never reached), `boot-hours.awk` 0/3.
 
 Laptop verdict wanted as always — and this time the sandbox is why it matters less than
-usual: two host dependencies were found by making this container *less* like a
+usual: two host dependencies were found by making the test host *less* like a
 comfortable host, and both are fixed.
 
 ## 3. Three findings in your code — reported, not changed

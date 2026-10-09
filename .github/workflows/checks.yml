@@ -145,7 +145,7 @@ jobs:
       # directory sits under a throwaway overlay. Exit 4 on any call, marked
       # output, read or write — each listed with its caller. The one sanctioned
       # door, real_tool() in the suite, is listed apart and not counted. This
-      # runner, unlike the container the suite is developed in, has a live
+      # runner, unlike a bare development host, has a live
       # systemd, journald and D-Bus: exactly the machine a leak would reach.
       - name: suite in the decoy world (no verdict from the machine)
         run: devtools/sandbox

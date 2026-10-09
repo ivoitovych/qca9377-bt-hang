@@ -29,7 +29,7 @@ marked output, a read and a write. First run, per suite run:
 - `bt-status`'s tests reported THIS checkout in its Repo section — its uncommitted count
   and upstream — and the `git status` behind it rewrote a stale index.
 
-In the container and in CI all of it passed, because the real machine answered *nothing*
+On a bare host and in CI all of it passed, because the real machine answered *nothing*
 there — which is exactly what an empty fixture returns. A leak is only visible where the
 mock and the world disagree (BRIEF §8a, new rule).
 

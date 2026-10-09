@@ -18,7 +18,7 @@
 # systemctl, bluetoothctl, sysfs, the install stamp — and the suite points them at
 # fixtures through seams. Where a seam was missing, a test used the REAL machine:
 # 42 journalctl and 106 systemctl calls per run (2026-09-24), and a test that spent
-# ten minutes decoding the laptop's 64 MB captures. In this container those calls
+# ten minutes decoding the laptop's 64 MB captures. On a bare host those calls
 # returned nothing — exactly what an empty fixture returns — so the leak was
 # invisible here, and slow and able to misreport on the laptop. A leak is only
 # visible where the real world and the mock DISAGREE.
@@ -54,7 +54,7 @@
 # "no leak" — the empty-input failure, aimed at the instrument that detects it.
 # --self-test runs probes that DO leak, and fails loudly on any it misses.
 #
-# WHERE IT RUNS. It needs unprivileged user namespaces. This container has them;
+# WHERE IT RUNS. It needs unprivileged user namespaces. The development host has them;
 # CI enables them (Ubuntu 24.04's AppArmor restricts them by default); on the
 # investigation laptop it refuses with exit 3. The suite's own PATH tripwire is
 # the layer that runs there.

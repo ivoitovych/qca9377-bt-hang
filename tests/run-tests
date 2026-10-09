@@ -399,7 +399,7 @@ CLEANUP_PATHS=("$SUITE_TMP")   # $GUARD and all 79 other mktemps live inside it
 # a host that signs commits by default, twelve of them failed — the signing
 # program ran inside tools that were never told about it — while the same tree
 # was green in CI and on the laptop, which do not sign. Found 2026-09-28 by a
-# sandboxed run whose private /tmp hid this container's signing helper.
+# sandboxed run whose private /tmp hid the host's signing program.
 #
 # Five call sites here had already been patched one at a time with
 # `-c commit.gpgsign=false`; the tools under test never were. A flag that must
@@ -2044,7 +2044,7 @@ if [[ -s "$LC/evidence/trials/results.tsv" ]]; then
     # is in the domain — the assertion has to be that collection SUCCEEDED.
     #
     # This used to ask the HOST whether it had a readable journal and assert
-    # one branch or the other, so the container only ever checked `unknown` and
+    # one branch or the other, so a bare host only ever checked `unknown` and
     # the laptop only ever checked collection, against its own kernel log. The
     # journal is now an input: readable here, and absent and unreadable in
     # "A HOST WITH NO JOURNAL" below — both answers, on every host.
@@ -3575,7 +3575,7 @@ WOUT=$(wd_run 10); wrc=$?
     || bad "watchdog did not intervene at 3/60s"
 # The reset reaches the spy with the fixture's bus and device numbers and the
 # DECLARED usbfs root — never /dev/bus/usb. "No device node here, by design"
-# was what this asserted: true in a container, and on the laptop a reset of
+# was what this asserted: true on a bare host, and on the laptop a reset of
 # whatever held bus 3, device 99. Reading busnum or devnum could also be turned
 # into a refusal and no test noticed (devtools/mutate, 2026-09-29).
 [[ "$WOUT" == *"USBDEVFS_RESET issued"* ]] \
@@ -7025,7 +7025,7 @@ bin/bt-trace --bogus >/dev/null 2>&1
 # is about one. bt-usbmon also deletes captures while the filesystem under the
 # temp dir has less than BT_USBMON_MIN_FREE_GB (default 15) free — so unpinned,
 # this test measured the HOST'S DISK, not the KEEP rule: green on a 30 GB
-# container, red with 0 files left on an 8 GB tmpfs (a sandboxed run found it,
+# host, red with 0 files left on an 8 GB tmpfs (a sandboxed run found it,
 # 2026-09-28) and on any laptop or runner whose disk is fuller than that.
 USCHK=$(env PATH="$CP/stub:$PATH" BT_USBMON_DIR="$CP/usb" BT_USBMON_KEEP=2 \
             BT_USBMON_MIN_FREE_GB=0 \
@@ -10657,7 +10657,7 @@ SPMB=$(env PATH="$SPM/bin:$PATH" BT_DESTDIR="$SRB" BT_PROC_MODULES="$SBUSY" \
 [[ "$SPMB" == *"btusb is in use (usecount=3)"* && "$SPMB" != *"modprobe -r"* ]] \
     && ok "a btusb in use is left alone rather than force-unloaded" \
     || bad "uninstall.sh tried to unload a module that was in use"
-# And the third branch, the one every container took by default: no btusb line
+# And the third branch, the one every bare host took by default: no btusb line
 # at all. Presence now comes from the same file, so an empty one is "not loaded"
 # on every host — the laptop's lsmod used to answer this for its tests.
 SNONE=$(mktemp); : > "$SNONE"
