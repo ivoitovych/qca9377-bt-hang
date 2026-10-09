@@ -1,0 +1,50 @@
+From 492cd5ec90bbe507a443eb825b7a55ff8b8e57b3 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 9 Oct 2026 23:19:09 +0200
+Subject: [PATCH BlueZ 3/4] emulator/vhci: Add
+ vhci_set_quirk_simultaneous_discovery
+
+Set or clear HCI_QUIRK_SIMULTANEOUS_DISCOVERY through the kernel's
+quirk_simultaneous_discovery debugfs entry, which only accepts writes
+while the controller is down.
+---
+ emulator/vhci.c | 10 ++++++++++
+ emulator/vhci.h |  1 +
+ 2 files changed, 11 insertions(+)
+
+diff --git a/emulator/vhci.c b/emulator/vhci.c
+index 05fcfd0b7..1a4da56e6 100644
+--- a/emulator/vhci.c
++++ b/emulator/vhci.c
+@@ -307,6 +307,16 @@ int vhci_set_force_static_address(struct vhci *vhci, bool enable)
+ 							sizeof(val));
+ }
+ 
++int vhci_set_quirk_simultaneous_discovery(struct vhci *vhci, bool enable)
++{
++	char val;
++
++	val = (enable) ? 'Y' : 'N';
++
++	return vhci_debugfs_write(vhci, "quirk_simultaneous_discovery", &val,
++							sizeof(val));
++}
++
+ int vhci_force_devcd(struct vhci *vhci, const void *data, size_t len)
+ {
+ 	return vhci_debugfs_write(vhci, "force_devcoredump", data, len);
+diff --git a/emulator/vhci.h b/emulator/vhci.h
+index 12c4b55a0..1efb52f2e 100644
+--- a/emulator/vhci.h
++++ b/emulator/vhci.h
+@@ -29,6 +29,7 @@ int vhci_set_msft_opcode(struct vhci *vhci, uint16_t opcode);
+ int vhci_set_aosp_capable(struct vhci *vhci, bool enable);
+ int vhci_set_emu_opcode(struct vhci *vhci, uint16_t opcode);
+ int vhci_set_force_static_address(struct vhci *vhci, bool enable);
++int vhci_set_quirk_simultaneous_discovery(struct vhci *vhci, bool enable);
+ int vhci_force_devcd(struct vhci *vhci, const void *data, size_t len);
+ int vhci_read_devcd(struct vhci *vhci, void *buf, size_t size);
+ bool vhci_pause_input(struct vhci *vhci, bool paused);
+-- 
+2.43.0
+

@@ -1,0 +1,22 @@
+---- Start Discovery - Simultaneous Inquiry Late - run
+> HCI Event: Command Complete (0x0e) plen 68 #263 [hci0] 23:46:43.259286 | Read Local Supported Commands (0x04|0x0002) ncmd 1 #262 (0.064 msec) | Status: Success (0x00) | Commands: 138 entries | Inquiry (Octet 0 - Bit 0) | Inquiry Cancel (Octet 0 - Bit 1)
+> HCI Event: Command Complete (0x0e) plen 8 #283 [hci0] 23:46:43.261313 | Read Current IAC LAP (0x03|0x0039) ncmd 1 #282 (0.052 msec) | Status: Success (0x00) | Number of IAC: 1 | Access code: 0x9e8b33 (General Inquiry)
+> HCI Event: Command Complete (0x0e) plen 12 #291 [hci0] 23:46:43.261918 | LE Read Supported States (0x08|0x001c) ncmd 1 #290 (0.056 msec) | Status: Success (0x00) | States: 0x000003ffffffffff | Bit 0 Non-connectable Advertising State | Bit 1 Scannable Advertising State
+< HCI Command: Set Event Mask (0x03|0x0001) plen 8 #292 [hci0] 23:46:43.262014 | Mask: 0x3dbff807fffbffff | Inquiry Complete | Inquiry Result | Connection Complete | Connection Request
+> HCI Event: Command Complete (0x0e) plen 8 #299 [hci0] 23:46:43.262539 | Read Page Scan Activity (0x03|0x001b) ncmd 1 #298 (0.053 msec) | Status: Success (0x00) | Interval: 1280.000 msec (0x0800) | Window: 11.250 msec (0x0012)
+> HCI Event: Command Complete (0x0e) plen 5 #301 [hci0] 23:46:43.262671 | Read Page Scan Type (0x03|0x0046) ncmd 1 #300 (0.044 msec) | Status: Success (0x00) | Type: Standard Scan (0x00)
+< HCI Command: LE Set Scan... (0x08|0x000b) plen 7 #334 [hci0] 23:46:43.267005 | Type: Active (0x01) | Interval: 22.500 msec (0x0024) | Window: 11.250 msec (0x0012) | Own address type: Random (0x01) | Filter policy: Accept all advertisement (0x00)
+< HCI Command: LE Set Scan... (0x08|0x000c) plen 2 #336 [hci0] 23:46:43.267141 | Scanning: Enabled (0x01) | Filter duplicates: Enabled (0x01)
+> HCI Event: Command Complete (0x0e) plen 4 #337 [hci0] 23:46:43.267181 | LE Set Scan Enable (0x08|0x000c) ncmd 1 #336 (0.040 msec) | Status: Success (0x00)
+< HCI Command: Inquiry (0x01|0x0001) plen 5 #338 [hci0] 23:46:43.267260 | Access code: 0x9e8b33 (General Inquiry) | Length: 10.24s (0x08) | Num responses: 0
+> HCI Event: Command Status (0x0f) plen 4 #339 [hci0] 23:46:43.267302 | Inquiry (0x01|0x0001) ncmd 1 #338 (0.042 msec) | Status: Success (0x00)
+@ MGMT Event: Command Complete (0x0001) plen 4 {0x0001} [hci0] 23:46:43.267361 | Start Discovery (0x0023) plen 1 | Status: Success (0x00) | Address type: 0x07 | BR/EDR | LE Public
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0002} [hci0] 23:46:43.267391 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Enabled (0x01)
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0001} [hci0] 23:46:43.267391 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Enabled (0x01)
+< HCI Command: LE Set Scan... (0x08|0x000c) plen 2 #340 [hci0] 23:46:53.764905 | Scanning: Disabled (0x00) | Filter duplicates: Disabled (0x00) | Sending Inquiry Complete before its Command Complete
+> HCI Event: Inquiry Complete (0x01) plen 1 #341 [hci0] 23:46:53.766231 | Request: #338 (10498.971 msec) | Status: Success (0x00)
+> HCI Event: Command Complete (0x0e) plen 4 #342 [hci0] 23:46:53.766598 | LE Set Scan Enable (0x08|0x000c) ncmd 1 #340 (1.693 msec) | Status: Success (0x00)
+---- Start Discovery - Simultaneous Inquiry Late - test failed
+@ MGMT Event: Command Complete (0x0001) plen 4 {0x0001} [hci0] 23:46:54.769128 | Start Discovery (0x0023) plen 1 | Status: Busy (0x0a) | Address type: 0x07 | BR/EDR | LE Public
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0002} [hci0] 23:46:54.774289 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Disabled (0x00)
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0001} [hci0] 23:46:54.774289 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Disabled (0x00)

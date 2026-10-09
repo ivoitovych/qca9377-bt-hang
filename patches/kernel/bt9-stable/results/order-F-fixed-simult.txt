@@ -1,0 +1,47 @@
+---- Start Discovery - Simultaneous Inquiry Late - run
+< HCI Command: Read Local E.. (0x04|0x0004) plen 1 #276 [hci0] 23:41:58.778072 | Page: 1 | Discovering: type 0x07 enabled
+> HCI Event: Command Complete (0x0e) plen 8 #289 [hci0] 23:41:58.780049 | Read Current IAC LAP (0x03|0x0039) ncmd 1 #288 (0.042 msec) | Status: Success (0x00) | Number of IAC: 1 | Access code: 0x9e8b33 (General Inquiry)
+> HCI Event: Command Complete (0x0e) plen 12 #299 [hci0] 23:41:58.781020 | LE Read Supported States (0x08|0x001c) ncmd 1 #298 (0.108 msec) | Status: Success (0x00) | States: 0x000003ffffffffff | Bit 0 Non-connectable Advertising State | Bit 1 Scannable Advertising State
+< HCI Command: Set Event Mask (0x03|0x0001) plen 8 #300 [hci0] 23:41:58.781156 | Mask: 0x3dbff807fffbffff | Inquiry Complete | Inquiry Result | Connection Complete | Connection Request
+> HCI Event: Command Complete (0x0e) plen 8 #307 [hci0] 23:41:58.781750 | Read Page Scan Activity (0x03|0x001b) ncmd 1 #306 (0.172 msec) | Status: Success (0x00) | Interval: 1280.000 msec (0x0800) | Window: 11.250 msec (0x0012)
+> HCI Event: Command Complete (0x0e) plen 5 #309 [hci0] 23:41:58.782091 | Read Page Scan Type (0x03|0x0046) ncmd 1 #308 (0.157 msec) | Status: Success (0x00) | Type: Standard Scan (0x00)
+mgmt-tester[62]: = Start Discovery - Simultaneous In.. 23:41:58.816329
+mgmt-tester[62]: = Start Discovery - Simultaneous In.. 23:41:58.816527
+< HCI Command: LE Set Scan... (0x08|0x000b) plen 7 #342 [hci0] 23:41:58.791850 | Type: Active (0x01) | Interval: 22.500 msec (0x0024) | Window: 11.250 msec (0x0012) | Own address type: Random (0x01) | Filter policy: Accept all advertisement (0x00)
+< HCI Command: LE Set Scan... (0x08|0x000c) plen 2 #344 [hci0] 23:41:58.792108 | Scanning: Enabled (0x01) | Filter duplicates: Enabled (0x01)
+> HCI Event: Command Complete (0x0e) plen 4 #345 [hci0] 23:41:58.792141 | LE Set Scan Enable (0x08|0x000c) ncmd 1 #344 (0.033 msec) | Status: Success (0x00)
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0002} [hci0] 23:41:58.792199 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Enabled (0x01)
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0001} [hci0] 23:41:58.792199 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Enabled (0x01)
+< HCI Command: Inquiry (0x01|0x0001) plen 5 #346 [hci0] 23:41:58.792439 | Access code: 0x9e8b33 (General Inquiry) | Length: 10.24s (0x08) | Num responses: 0
+mgmt-tester[62]: = Discovering: type 0x07 enabled 23:41:58.819299
+> HCI Event: Command Status (0x0f) plen 4 #347 [hci0] 23:41:58.792553 | Inquiry (0x01|0x0001) ncmd 1 #346 (0.114 msec) | Status: Success (0x00)
+@ MGMT Event: Command Complete (0x0001) plen 4 {0x0001} [hci0] 23:41:58.792620 | Start Discovery (0x0023) plen 1 | Status: Success (0x00) | Address type: 0x07 | BR/EDR | LE Public
+mgmt-tester[62]: = Start Discovery: Success (0x00) 23:41:58.820047 | LE Set Scan Enable (disable) received
+< HCI Command: LE Set Scan... (0x08|0x000c) plen 2 #348 [hci0] 23:42:09.246190 | Scanning: Disabled (0x00) | Filter duplicates: Disabled (0x00) | Sending Inquiry Complete before its Command Complete
+mgmt-tester[62]: = LE Set Scan Enable (disable) received 23:42:09.246976
+mgmt-tester[62]: = Sending Inquiry Complete before its Comm.. 23:42:09.247307
+> HCI Event: Inquiry Complete (0x01) plen 1 #349 [hci0] 23:42:09.247123 | Request: #346 (10454.684 msec) | Status: Success (0x00)
+mgmt-tester[62]: = Start Discovery - Simultaneous In.. 23:42:09.247889
+> HCI Event: Command Complete (0x0e) plen 4 #350 [hci0] 23:42:09.247452 | LE Set Scan Enable (0x08|0x000c) ncmd 1 #348 (1.262 msec) | Status: Success (0x00)
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0002} [hci0] 23:42:09.248253 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Disabled (0x00)
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0001} [hci0] 23:42:09.248253 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Disabled (0x00)
+mgmt-tester[62]: = Discovering: type 0x07 disabled 23:42:09.249700
+mgmt-tester[62]: = Start Discovery - Simultaneous In.. 23:42:10.249094
+< HCI Command: LE Set Scan... (0x08|0x000b) plen 7 #353 [hci0] 23:42:10.249860 | Type: Active (0x01) | Interval: 22.500 msec (0x0024) | Window: 11.250 msec (0x0012) | Own address type: Random (0x01) | Filter policy: Accept all advertisement (0x00)
+---- Start Discovery - Simultaneous Inquiry Late - test passed
+< HCI Command: LE Set Scan... (0x08|0x000c) plen 2 #355 [hci0] 23:42:10.250239 | Scanning: Enabled (0x01) | Filter duplicates: Enabled (0x01)
+> HCI Event: Command Complete (0x0e) plen 4 #356 [hci0] 23:42:10.250304 | LE Set Scan Enable (0x08|0x000c) ncmd 1 #355 (0.065 msec) | Status: Success (0x00)
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0002} [hci0] 23:42:10.250397 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Enabled (0x01)
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0001} [hci0] 23:42:10.250397 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Enabled (0x01)
+< HCI Command: Inquiry (0x01|0x0001) plen 5 #357 [hci0] 23:42:10.250641 | Access code: 0x9e8b33 (General Inquiry) | Length: 10.24s (0x08) | Num responses: 0
+> HCI Event: Command Status (0x0f) plen 4 #358 [hci0] 23:42:10.250681 | Inquiry (0x01|0x0001) ncmd 1 #357 (0.040 msec) | Status: Success (0x00)
+@ MGMT Event: Command Complete (0x0001) plen 4 {0x0001} [hci0] 23:42:10.250793 | Start Discovery (0x0023) plen 1 | Status: Success (0x00) | Address type: 0x07 | BR/EDR | LE Public
+mgmt-tester[62]: = Start Discovery after the LE scan timeou.. 23:42:10.254881
+mgmt-tester[62]: = Start Discovery - Simultaneous In.. 23:42:10.255073
+mgmt-tester[62]: = Start Discovery - Simultaneous In.. 23:42:10.255274
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0002} [hci0] 23:42:10.266051 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Disabled (0x00)
+@ MGMT Event: Discovering (0x0013) plen 2 {0x0001} [hci0] 23:42:10.266051 | Address type: 0x07 | BR/EDR | LE Public | LE Random | Discovery: Disabled (0x00)
+mgmt-tester[62]: = Start Discovery - Simultaneous In.. 23:42:10.269852
+mgmt-tester[62]: = Start Discovery - Simultaneous In.. 23:42:10.270268
+mgmt-tester[62]: = Start Discovery - Simultaneous Inquiry F.. 23:42:10.271333
+mgmt-tester[62]: = Start Discovery - Simultaneous Inquiry L.. 23:42:10.271516

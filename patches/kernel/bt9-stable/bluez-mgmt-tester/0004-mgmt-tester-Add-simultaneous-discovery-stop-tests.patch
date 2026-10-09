@@ -1,0 +1,302 @@
+From 3c4a6dad8762a0d288370df3e2c91140d2e1b65c Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 9 Oct 2026 23:19:17 +0200
+Subject: [PATCH BlueZ 4/4] mgmt-tester: Add simultaneous discovery stop tests
+
+With HCI_QUIRK_SIMULTANEOUS_DISCOVERY, a BR/EDR + LE discovery runs the
+inquiry and the LE scan together and the LE scan timeout ends it. If the
+Inquiry Complete event arrives after LE Set Scan Enable (disable) was
+sent but before its Command Complete, kernels without commit
+96d006ae6445 ("Bluetooth: hci_event: fix simultaneous discovery stuck in
+FINDING") never leave DISCOVERY_FINDING: no Discovering (disabled)
+event is sent and every later Start Discovery fails with Busy.
+
+Both tests set the quirk, keep the emulator from completing the inquiry
+on its own and send the Inquiry Complete themselves: one second into
+the discovery (Simultaneous Inquiry First) or from the LE Set Scan
+Enable (disable) command hook, ahead of the Command Complete
+(Simultaneous Inquiry Late). Each then expects Discovering (disabled)
+and a successful new Start Discovery.
+
+Start Discovery - Simultaneous Inquiry First         Passed
+Start Discovery - Simultaneous Inquiry Late          Failed (Busy)
+on a kernel without that commit; both pass with it.
+---
+ tools/mgmt-tester.c | 254 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 254 insertions(+)
+
+diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
+index 75a1431fd..d16e24478 100644
+--- a/tools/mgmt-tester.c
++++ b/tools/mgmt-tester.c
+@@ -12241,6 +12241,253 @@ static void test_add_remove_device_nowait(const void *test_data)
+ 				command_generic_callback, NULL, NULL);
+ }
+ 
++/* Simultaneous discovery: BR/EDR inquiry and LE scan run together and the
++ * LE scan timeout ends the cycle. The emulator's own Inquiry Complete is
++ * suppressed and the test sends it either well before the LE scan disable
++ * (inquiry_first) or between LE Set Scan Enable (disable) and its Command
++ * Complete (during_scan_disable). Either way discovery has to stop and a
++ * new Start Discovery has to succeed.
++ */
++static struct {
++	bool during_scan_disable;
++	bool started;
++	bool stopped;
++	bool scan_disabled;
++	unsigned int discov_id;
++} simult;
++
++static void simult_inquiry_complete(const char *when)
++{
++	struct test_data *data = tester_get_data();
++	struct btdev *btdev = vhci_get_btdev(hciemu_get_vhci(data->hciemu));
++	struct bt_hci_evt_inquiry_complete ev;
++
++	tester_print("Sending Inquiry Complete %s", when);
++
++	ev.status = BT_HCI_ERR_SUCCESS;
++
++	if (btdev_send_event(btdev, BT_HCI_EVT_INQUIRY_COMPLETE, &ev,
++							sizeof(ev)) < 0)
++		tester_test_failed();
++}
++
++static void simult_inquiry_complete_early(void *user_data)
++{
++	simult_inquiry_complete("before LE scan disable");
++}
++
++static void simult_restart_callback(uint8_t status, uint16_t length,
++					const void *param, void *user_data)
++{
++	tester_print("Start Discovery after the LE scan timeout: %s (0x%02x)",
++						mgmt_errstr(status), status);
++
++	if (!simult.stopped) {
++		tester_warn("No Discovering (disabled) event");
++		tester_test_failed();
++		return;
++	}
++
++	if (status != MGMT_STATUS_SUCCESS) {
++		tester_test_failed();
++		return;
++	}
++
++	tester_test_passed();
++}
++
++static void simult_restart(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++
++	mgmt_unregister(data->mgmt, simult.discov_id);
++
++	mgmt_send(data->mgmt, MGMT_OP_START_DISCOVERY, data->mgmt_index,
++				sizeof(start_discovery_bredrle_param),
++				start_discovery_bredrle_param,
++				simult_restart_callback, NULL, NULL);
++}
++
++static bool simult_inquiry_hook(const void *data, uint16_t len,
++							void *user_data)
++{
++	/* Command Status has been sent; skip the emulator's inquiry timers
++	 * so that the only Inquiry Complete is the one the test sends.
++	 */
++	return false;
++}
++
++static bool simult_scan_enable_hook(const void *data, uint16_t len,
++							void *user_data)
++{
++	const struct bt_hci_cmd_le_set_scan_enable *cmd = data;
++
++	if (len < sizeof(*cmd) || cmd->enable || !simult.started ||
++							simult.scan_disabled)
++		return true;
++
++	simult.scan_disabled = true;
++
++	tester_print("LE Set Scan Enable (disable) received");
++
++	if (simult.during_scan_disable)
++		simult_inquiry_complete("before its Command Complete");
++
++	tester_wait(1, simult_restart, NULL);
++
++	return true;
++}
++
++static void simult_discovering(uint16_t index, uint16_t length,
++					const void *param, void *user_data)
++{
++	const struct mgmt_ev_discovering *ev = param;
++
++	if (length != sizeof(*ev)) {
++		tester_warn("Incorrect discovering event length");
++		tester_test_failed();
++		return;
++	}
++
++	tester_print("Discovering: type 0x%02x %s", ev->type,
++				ev->discovering ? "enabled" : "disabled");
++
++	if (!ev->discovering) {
++		simult.stopped = true;
++		return;
++	}
++
++	if (simult.started)
++		return;
++
++	simult.started = true;
++
++	if (!simult.during_scan_disable)
++		tester_wait(1, simult_inquiry_complete_early, NULL);
++}
++
++static void simult_start_callback(uint8_t status, uint16_t length,
++					const void *param, void *user_data)
++{
++	tester_print("Start Discovery: %s (0x%02x)", mgmt_errstr(status),
++									status);
++
++	if (status != MGMT_STATUS_SUCCESS)
++		tester_test_failed();
++}
++
++static bool simult_setup_status(const char *step, uint8_t status)
++{
++	if (status == MGMT_STATUS_SUCCESS)
++		return true;
++
++	tester_warn("%s: %s (0x%02x)", step, mgmt_errstr(status), status);
++	tester_setup_failed();
++
++	return false;
++}
++
++static void simult_power_on_callback(uint8_t status, uint16_t length,
++					const void *param, void *user_data)
++{
++	if (!simult_setup_status("Power on with the quirk", status))
++		return;
++
++	tester_setup_complete();
++}
++
++static void simult_power_off_callback(uint8_t status, uint16_t length,
++					const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	struct vhci *vhci = hciemu_get_vhci(data->hciemu);
++	unsigned char param_on[] = { 0x01 };
++	int err;
++
++	if (!simult_setup_status("Power off", status))
++		return;
++
++	/* The quirk can only be changed while the controller is down */
++	err = vhci_set_quirk_simultaneous_discovery(vhci, true);
++	if (err) {
++		tester_warn("Unable to set quirk_simultaneous_discovery: %s (%d)",
++							strerror(-err), -err);
++		tester_setup_failed();
++		return;
++	}
++
++	mgmt_send(data->mgmt, MGMT_OP_SET_POWERED, data->mgmt_index,
++					sizeof(param_on), param_on,
++					simult_power_on_callback, NULL, NULL);
++}
++
++static void simult_power_off(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	unsigned char param_off[] = { 0x00 };
++
++	mgmt_send(data->mgmt, MGMT_OP_SET_POWERED, data->mgmt_index,
++					sizeof(param_off), param_off,
++					simult_power_off_callback, NULL, NULL);
++}
++
++static void simult_powered_callback(uint8_t status, uint16_t length,
++					const void *param, void *user_data)
++{
++	if (!simult_setup_status("Power on", status))
++		return;
++
++	/* The kernel may still hold the pending Set Powered after sending
++	 * its reply, and then answers Busy to the next one: wait first.
++	 */
++	tester_wait(1, simult_power_off, NULL);
++}
++
++static void setup_simult_discovery(const void *test_data)
++{
++	struct test_data *data = tester_get_data();
++	unsigned char param[] = { 0x01 };
++
++	mgmt_send(data->mgmt, MGMT_OP_SET_LE, data->mgmt_index,
++					sizeof(param), param, NULL, NULL, NULL);
++	mgmt_send(data->mgmt, MGMT_OP_SET_POWERED, data->mgmt_index,
++					sizeof(param), param,
++					simult_powered_callback, NULL, NULL);
++}
++
++static void test_simult_discovery(bool during_scan_disable)
++{
++	struct test_data *data = tester_get_data();
++
++	memset(&simult, 0, sizeof(simult));
++	simult.during_scan_disable = during_scan_disable;
++
++	hciemu_add_hook(data->hciemu, HCIEMU_HOOK_PRE_EVT, BT_HCI_CMD_INQUIRY,
++					simult_inquiry_hook, NULL);
++	hciemu_add_hook(data->hciemu, HCIEMU_HOOK_PRE_CMD,
++					BT_HCI_CMD_LE_SET_SCAN_ENABLE,
++					simult_scan_enable_hook, NULL);
++
++	simult.discov_id = mgmt_register(data->mgmt, MGMT_EV_DISCOVERING,
++					data->mgmt_index, simult_discovering,
++					NULL, NULL);
++
++	mgmt_send(data->mgmt, MGMT_OP_START_DISCOVERY, data->mgmt_index,
++				sizeof(start_discovery_bredrle_param),
++				start_discovery_bredrle_param,
++				simult_start_callback, NULL, NULL);
++}
++
++static void test_simult_discovery_inquiry_first(const void *test_data)
++{
++	test_simult_discovery(false);
++}
++
++static void test_simult_discovery_during_scan_disable(const void *test_data)
++{
++	test_simult_discovery(true);
++}
++
+ static void trigger_device_found(void *user_data)
+ {
+ 	struct test_data *data = tester_get_data();
+@@ -13870,6 +14117,13 @@ int main(int argc, char *argv[])
+ 	test_bredrle("Start Discovery - Power Off 1",
+ 				&start_discovery_valid_param_power_off_1,
+ 				NULL, test_command_generic);
++	/* Simultaneous discovery ends on the 10.24 s LE scan timeout */
++	test_bredrle_full("Start Discovery - Simultaneous Inquiry First",
++				NULL, setup_simult_discovery,
++				test_simult_discovery_inquiry_first, 15);
++	test_bredrle_full("Start Discovery - Simultaneous Inquiry Late",
++				NULL, setup_simult_discovery,
++				test_simult_discovery_during_scan_disable, 15);
+ 
+ 	test_bredrle("Stop Discovery - Success 1",
+ 				&stop_discovery_success_test_1,
+-- 
+2.43.0
+

@@ -662,8 +662,13 @@ already possible for adapters whose drivers set the quirk (among them Intel and 
 whenever they run combined BR/EDR and LE discovery and the Inquiry Complete lands inside the
 scan-off; how often that happens depends on timing (here: 2 cycles in about 14,700).
 
-**Next:** an adapted backport of `96d006ae6445` to 6.12, 6.6 and 6.1, tested with a
-deterministic reproducer in qemu, then a request to stable (operator's word).
+**Backport and test, 2026-10-10** ([`patches/kernel/bt9-stable/`](../patches/kernel/bt9-stable/README.md)):
+`96d006ae6445` backported to v6.12.112, v6.6.158 and v6.1.189 (one adaptation: the quirk test).
+A new `mgmt-tester` case forces the race deterministically in qemu, through the emulator and the
+kernel's existing `quirk_simultaneous_discovery` debugfs switch: it fails with Busy on all three
+lines and on bluetooth-next with the fix reverted, and passes with the fix and with each
+backport; the normal-order control passes everywhere. **Next:** the stable request with the
+three backports, and the BlueZ test series to linux-bluetooth (both operator's word).
 
 **What it is.** With `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`, a BR/EDR+LE discovery runs LE active
 scanning and a 10.24 s Inquiry together, and arms the `le_scan_disable` timer for the same
