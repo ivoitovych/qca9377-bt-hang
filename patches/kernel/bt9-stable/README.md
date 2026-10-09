@@ -19,7 +19,17 @@ this device the quirk without the fix.
 | path | what |
 |---|---|
 | `6.12.112/`, `6.6.158/`, `6.1.189/` | the backport per line: `96d006ae6445` cherry-picked, original author, date, message, `Fixes:` and sign-offs, `[ Upstream commit … ]` per `stable-kernel-rules.rst`; one change, `hci_test_quirk(hdev, Q)` → `test_bit(Q, &hdev->quirks)` as those lines test this quirk elsewhere; a bracketed note and our sign-off. One patch-id for all three (`results/backport-record.txt`) |
-| `bluez-mgmt-tester/` | four BlueZ patches on master `7428ca2df935`: free the emulator's hooks in `btdev_destroy()` (a leak LeakSanitizer reports for any test that adds a hook), `btdev_send_event()`, `vhci_set_quirk_simultaneous_discovery()`, and two `mgmt-tester` cases: "Start Discovery - Simultaneous Inquiry First" (control) and "… Inquiry Late" (the race) |
+| `bluez-mgmt-tester/v2-leak-fix/` | **current**, BlueZ master `7428ca2df935`: one patch, free the emulator's hooks in `btdev_destroy()` (`Fixes: 37199df506f4`; with master, "Add + Remove Device Nowait - Success" leaks 24 bytes from `btdev_add_hook`, with the fix none). Stands alone |
+| `bluez-mgmt-tester/v2-test-series/` | **current**: `btdev_send_event()`, `vhci_set_quirk_simultaneous_discovery()`, and two `mgmt-tester` cases, "Start Discovery - Simultaneous Inquiry First" (control) and "… Inquiry Late" (the race). Applies on master with or without the leak fix (same resulting tree either way); removes its own hooks, so it reports no leak without it |
+| `bluez-mgmt-tester/v1/` | the first version (four patches in one series), kept; superseded after outside review |
+
+**What v2 changed after review.** The tests' delayed callbacks now live in per-test state and
+are cancelled in post-teardown, which runs on every path (BlueZ's `tester_wait()` keeps no id,
+so v1's waits could fire in the next test; shown with deliberately failing scratch builds);
+setup and test calls check their return values; where the kernel has no
+`quirk_simultaneous_discovery` debugfs entry the cases report **Not Run** (exit status 0)
+instead of failing; the vhci debugfs path buffer is sized with `PATH_MAX`; the leak fix is
+split out. v2 verdicts: `results/summary-v2.txt`.
 | `results/` | `summary-F.txt` (every verdict), the packet-order extracts of the decisive runs, `backport-record.txt`, `lint.log`, `w1-positive-control.log` |
 
 ## How the test forces the race (the event order is forced; the kernel's 10.24 s LE timer still runs)
@@ -74,4 +84,6 @@ would be sent are kept with the rest of the kit. The raw guest logs, kernels and
 
 Re-check on the day: the three stable tips and the stable queue (in case `96d006ae6445` was
 picked up meanwhile), `patch --dry-run` on each tip. The backport request goes to the stable
-list with the three patches; the BlueZ series is a separate submission to linux-bluetooth.
+list with the three patches (prepared 2026-10-10 as `[PATCH 6.12.y]`, `[PATCH 6.6.y]`,
+`[PATCH 6.1.y]`; tips and queue re-checked that day). The BlueZ leak fix and the test series
+are separate submissions to linux-bluetooth.

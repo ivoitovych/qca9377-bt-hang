@@ -1,0 +1,48 @@
+From 051c891170f825866ea773f83421331f82e0bfbd Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 9 Oct 2026 23:19:06 +0200
+Subject: [PATCH BlueZ 1/3] emulator: Add btdev_send_event
+
+Allow a tester to send an arbitrary event from the emulated controller,
+for instance from a command hook, so that the order of events around a
+command can be chosen by the test.
+---
+ emulator/btdev.c | 11 +++++++++++
+ emulator/btdev.h |  3 +++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/emulator/btdev.c b/emulator/btdev.c
+index e00f78288..fa326e72f 100644
+--- a/emulator/btdev.c
++++ b/emulator/btdev.c
+@@ -9158,3 +9158,14 @@ int btdev_set_emu_opcode(struct btdev *btdev, uint16_t opcode)
+ 		return -ENOTSUP;
+ 	}
+ }
++
++int btdev_send_event(struct btdev *btdev, uint8_t event, const void *data,
++								uint8_t len)
++{
++	if (!btdev)
++		return -EINVAL;
++
++	send_event(btdev, event, data, len);
++
++	return 0;
++}
+diff --git a/emulator/btdev.h b/emulator/btdev.h
+index 145f7edaa..aa04ca611 100644
+--- a/emulator/btdev.h
++++ b/emulator/btdev.h
+@@ -112,3 +112,6 @@ bool btdev_del_hook(struct btdev *btdev, enum btdev_hook_type type,
+ int btdev_set_msft_opcode(struct btdev *btdev, uint16_t opcode);
+ int btdev_set_aosp_capable(struct btdev *btdev, bool enable);
+ int btdev_set_emu_opcode(struct btdev *btdev, uint16_t opcode);
++
++int btdev_send_event(struct btdev *btdev, uint8_t event, const void *data,
++								uint8_t len);
+
+base-commit: 7428ca2df9356363079db0f48412c20cbdb9471f
+-- 
+2.43.0
+

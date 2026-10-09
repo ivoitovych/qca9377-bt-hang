@@ -1,0 +1,49 @@
+From 4d936502844dfe6d42fd2f849910de0e4b5bb792 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 9 Oct 2026 23:18:59 +0200
+Subject: [PATCH BlueZ] emulator: Free hooks in btdev_destroy
+
+Hooks added with btdev_add_hook() are only freed by btdev_del_hook(),
+so a hook still installed when the device is destroyed is leaked. With
+ASan, mgmt-tester "Add + Remove Device Nowait - Success" passes but
+the tester exits with status 1:
+
+  Direct leak of 24 byte(s) in 1 object(s) allocated from:
+    #0 in malloc
+    #1 in btdev_add_hook emulator/btdev.c:8891
+
+Free the remaining hooks in btdev_destroy().
+
+Fixes: 37199df506f4 ("emulator: Add support for pre/post command/event hooks")
+---
+ emulator/btdev.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/emulator/btdev.c b/emulator/btdev.c
+index e00f78288..ecc24a72b 100644
+--- a/emulator/btdev.c
++++ b/emulator/btdev.c
+@@ -8424,6 +8424,8 @@ struct btdev *btdev_create(enum btdev_type type, uint16_t id)
+ 
+ void btdev_destroy(struct btdev *btdev)
+ {
++	int i;
++
+ 	if (!btdev)
+ 		return;
+ 
+@@ -8438,6 +8440,9 @@ void btdev_destroy(struct btdev *btdev)
+ 	queue_destroy(btdev->le_per_adv, free);
+ 	queue_destroy(btdev->le_big, le_big_free);
+ 
++	for (i = 0; i < MAX_HOOK_ENTRIES; i++)
++		free(btdev->hook_list[i]);
++
+ 	free(btdev);
+ }
+ 
+
+base-commit: 7428ca2df9356363079db0f48412c20cbdb9471f
+-- 
+2.43.0
+
