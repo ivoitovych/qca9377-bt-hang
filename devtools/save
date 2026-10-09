@@ -70,7 +70,7 @@ fi
 
 # ── BRIEF.md STALENESS ───────────────────────────────────────────────────
 #
-# BRIEF.md is the file read first after a context reset, so a stale one is worse
+# BRIEF.md is the file read first when the work resumes, so a stale one is worse
 # than none: it is read WITH the authority of being current. Nothing keeps it
 # current except noticing, and "noticing" is what this project has repeatedly
 # found to be no control at all (bt-retention and bt-archive both existed and
@@ -85,7 +85,7 @@ NEWEST=$(ls "$REPO/evidence/exhibits/" 2>/dev/null | grep -oE '^[0-9]+' | sort -
 if [[ -n "$NEWEST" && -r "$REPO/BRIEF.md" ]]; then
     if ! grep -q "EX-$NEWEST" "$REPO/BRIEF.md" 2>/dev/null; then
         echo "save: ⚠️  BRIEF.md does not mention EX-$NEWEST — it is the file read first" >&2
-        echo "     after a context reset, and a stale one is read as current." >&2
+        echo "     when the work resumes, and a stale one is read as current." >&2
     fi
 fi
 # THE CURRENT SNAPSHOT, BY THE SAME TEST. Until 2026-10-03 this line watched

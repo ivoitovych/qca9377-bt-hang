@@ -1,7 +1,7 @@
 #!/bin/bash
 # prove-held-branch-guard.sh — standalone proof of the two suite assertions on repo-save's held-branch
-# guard (kernel/*, and since 2026-09-26 plan/* and the other private-only families →
-# private remote only), for when the suite cannot run (trial open).
+# guard (kernel/*, and since 2026-09-26 plan/* and the other private-only families, since
+# 2026-10-09 config/* → private remote only), for when the suite cannot run (trial open).
 set -uo pipefail
 cd /root/exp/qca9377-bt-hang || exit 2
 SCRATCH=$(mktemp -d)
@@ -29,6 +29,14 @@ po=$(git --git-dir="$SCRATCH/held-origin.git" rev-parse --verify --quiet refs/he
 (( planrc == 0 )) && [[ "$pp" != none && "$po" == none ]] \
     && ok "repo-save pushes a plan/* branch to 'private' and not to origin" \
     || { bad "plan-branch push: rc=$planrc private=$pp origin=$po"; echo "$PLAN" | tail -8; }
+git -C "$SCRATCH/held" checkout -q -b config/held-test
+printf 'config\n' > "$SCRATCH/held/config.txt"
+CONF=$(devtools/repo-save "$SCRATCH/held" "config branch commit" 2>&1); confrc=$?
+cp_=$(git --git-dir="$SCRATCH/held-private.git" rev-parse --verify --quiet refs/heads/config/held-test || echo none)
+co=$(git --git-dir="$SCRATCH/held-origin.git" rev-parse --verify --quiet refs/heads/config/held-test || echo none)
+(( confrc == 0 )) && [[ "$cp_" != none && "$co" == none ]] \
+    && ok "repo-save pushes a config/* branch to 'private' and not to origin" \
+    || { bad "config-branch push: rc=$confrc private=$cp_ origin=$co"; echo "$CONF" | tail -8; }
 git -C "$SCRATCH/held" checkout -q kernel/held-test
 git -C "$SCRATCH/held" remote remove private
 printf 'held 2\n' >> "$SCRATCH/held/held.txt"

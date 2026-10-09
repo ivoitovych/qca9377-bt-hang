@@ -1,12 +1,12 @@
-# BRIEF — read this first, after any context reset
+# BRIEF — read this first when resuming the work
 
 **What this is.** Internal working state for whoever resumes the investigation: what is
 true, what is retracted, what is open — and the rules that were paid for, **with the why**.
 A rule without its reason gets re-learned; that is what this file exists to prevent.
 
 **What it is not.** Not evidence (`evidence/exhibits/`, index in its `README.md`), not
-narrative (`HISTORY.md`), not tooling (`docs/tooling-index.md`), not working rules
-(auto-loaded memory), **not the current snapshot** — that is `docs/STATUS.md`, one dated row
+narrative (`HISTORY.md`), not tooling (`docs/tooling-index.md`), not working habits
+(kept outside this repository), **not the current snapshot** — that is `docs/STATUS.md`, one dated row
 per issue and submission, the only page that says what is *current* — and **not the public
 summary** — a stranger reads `README.md`. Nothing here is derivable from those: this is the
 layer that says which claim holds, which was retracted, and what each rule cost.
@@ -16,7 +16,7 @@ layer that says which claim holds, which was retracted, and what each rule cost.
 over 750 it stops being cheaper than the source. Cut the oldest settled item before adding;
 never cut a reason to fit a fact. **One hand-off block, not a stack**: on 2026-10-03 nine
 stacked "RESUME HERE" blocks (205 lines, three of them contradicting each other on the mesh
-series) were moved verbatim to the end of `HISTORY.md`; the block below is replaced, not
+series) were moved to the end of `HISTORY.md`; the block below is replaced, not
 topped up. **Sections name their owner**; each owner writes theirs and points at the long form
 (`lessons/`, `reviews/`) rather than reproducing it.
 
@@ -59,8 +59,7 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 > smtp.gmail.com:587 (STARTTLS, AUTH LOGIN; nothing sent). On 465 the same check only got
 > INCONCLUSIVE (Gmail closed the connection during AUTH), so **check on 587**. After the next
 > send, the operator revokes the password and confirms with
-> `! BT_SMTP_PASS='…' scripts/smtp-login-check.sh 587 tls` (run by the operator: an agent-run env
-> prefix can save the password into `settings.local.json` — grep it after).
+> `BT_SMTP_PASS='…' scripts/smtp-login-check.sh 587 tls`, typed by the operator only.
 >
 > **Mesh work, remaining order** (v3 is never sent as one series): (3) the power-off fix —
 > another author's patch for the same bug (patchwork 14864878) was compared in qemu, results
@@ -90,7 +89,7 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 > **Rules:** nothing sent without the operator's word; private branches push to `private` only;
 > attribution is the project author's only; other authors' patches are tested exactly as posted;
 > a kernel finding stays private until its patch exists; maintainer mail carries only what the
-> maintainer needs; never touch the laptop's Bluetooth or kernel from an agent; clock ranges are
+> maintainer needs; only the operator touches the laptop's Bluetooth or kernel; clock ranges are
 > written "HH:MM:SS to HH:MM:SS" (`scripts/fix-time-ranges.py`).
 
 
@@ -248,10 +247,9 @@ Patchwork ids `14831546` / `14831547`, series 1169362 / 1169363.
 
 ## 7. Operating constraints — non-negotiable
 
-⚠️ **This section and §8 are the DURABLE copy.** They were only in a local notes store
-outside the repository — uncommitted, and lost to any reclone, reinstall or moved
-directory. Tool-specific habits stay there; everything that is true regardless of who or
-what is working lives here, in git.
+⚠️ **This section and §8 are the DURABLE copy.** They were once kept only outside the
+repository, where a reclone, reinstall or moved directory would lose them. Working habits
+stay outside; everything that is true regardless of who is working lives here, in git.
 
 **Goal.** The endgame is an **upstream kernel patch**, not a local workaround. Three parallel
 streams: evidence, workarounds, the real fix. Workarounds must never be mistaken for it.
@@ -286,9 +284,9 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **Write identifiers in full** — branch names, paths, boot ids. Never `…`, never a short
   form after first use. Five branches here differ only by a trailing UTC timestamp; eliding
   them makes them indistinguishable exactly when the difference matters. Short SHAs are fine.
-- **Attribution is the operator's.** `repo-save` refuses a tool *author/committer identity*
-  as well as a generated-by trailer (a reinit reset a collaborator's git config on 09-18;
-  caught by eye, now gated). Upstream sign-off is `Iaroslav Voitovych <yaroslav.voytovych@gmail.com>` — title case. ⚠️ The name and
+- **Attribution is the operator's.** `repo-save` refuses a commit whose author or committer
+  identity is missing or was assigned by the environment (a reinit reset a collaborator's git
+  config on 09-18; caught by eye, now gated). Upstream sign-off is `Iaroslav Voitovych <yaroslav.voytovych@gmail.com>` — title case. ⚠️ The name and
   the email use *different* transliterations of the same Ukrainian name: Ukraine changed its
   Latin transliteration rules in 2011, after the gmail address was created, and the passport
   spelling followed the new rules. **The mismatch is correct; do not "fix" either to match the

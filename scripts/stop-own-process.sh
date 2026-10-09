@@ -7,7 +7,7 @@
 # A PID is signalled (TERM) only if its command line names the project
 # directory and it is not one of the host's Bluetooth or audio processes.
 # Anything else is refused and named. The family laptop's Bluetooth stack
-# is never touched from an agent.
+# is touched only by the operator.
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 [ $# -ge 1 ] || { echo "usage: $0 <pid>..." >&2; exit 2; }

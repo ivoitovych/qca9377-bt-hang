@@ -198,9 +198,10 @@ br=$(git branch --show-current)
 # on the `private` remote and must never reach `origin` through this path. The
 # rule was kept by hand until 2026-09-23; now it is code. The other private-only
 # families (plans, diagnostic builds, reviews, attribution, postponed work) were
-# pushed by hand until 2026-09-26 and are held the same way.
+# pushed by hand until 2026-09-26 and are held the same way. config/* (since
+# 2026-10-09) holds workstation configuration and is never public either.
 remote=origin
-case "$br" in kernel/*|plan/*|diag/*|review/*|attribution/*|postponed/*)
+case "$br" in kernel/*|plan/*|diag/*|review/*|attribution/*|postponed/*|config/*)
     git remote get-url private >/dev/null 2>&1 || { echo "  ✗ $br is a held branch and no 'private' remote exists — not pushed" >&2; exit 1; }
     remote=private
     echo "  held branch: pushing to '$remote', never to origin" ;;

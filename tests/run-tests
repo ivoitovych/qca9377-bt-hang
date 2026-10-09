@@ -10842,6 +10842,15 @@ po=$(git --git-dir="$SCRATCH/held-origin.git" rev-parse --verify --quiet refs/he
 (( planrc == 0 )) && [[ "$pp" != none && "$po" == none ]] \
     && ok "repo-save pushes a plan/* branch to 'private' and not to origin" \
     || bad "plan-branch push: rc=$planrc private=$pp origin=$po"
+# config/* (workstation configuration, 2026-10-09) likewise.
+git -C "$SCRATCH/held" checkout -q -b config/held-test
+printf 'config\n' > "$SCRATCH/held/config.txt"
+CONF=$(devtools/repo-save "$SCRATCH/held" "config branch commit" 2>&1); confrc=$?
+cp_=$(git --git-dir="$SCRATCH/held-private.git" rev-parse --verify --quiet refs/heads/config/held-test || echo none)
+co=$(git --git-dir="$SCRATCH/held-origin.git" rev-parse --verify --quiet refs/heads/config/held-test || echo none)
+(( confrc == 0 )) && [[ "$cp_" != none && "$co" == none ]] \
+    && ok "repo-save pushes a config/* branch to 'private' and not to origin" \
+    || bad "config-branch push: rc=$confrc private=$cp_ origin=$co"
 git -C "$SCRATCH/held" checkout -q kernel/held-test
 
 # With no private remote at all the branch is not pushed anywhere, loudly.

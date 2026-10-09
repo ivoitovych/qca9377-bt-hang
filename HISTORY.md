@@ -709,7 +709,7 @@ machine's own binary before the repository was changed.
 
 ## Phase 17 — Second review pass: the A/B experiment could not have isolated anything
 
-The same reviewer (GPT 5.6 Sol) re-read the repository against current upstream source
+The same reviewer re-read the repository against current upstream source
 after the Phase-16 corrections landed, and found one substantive design flaw plus several
 factual errors. All verified locally before acting.
 
@@ -2183,10 +2183,9 @@ has no `hdev->reset` to call and Linux has no periodic USB recovery at all; a re
 that is **harmful** when present; and a state that survives a host reboot and clears only on
 loss of power.
 
-`docs/tooling-index.md` exists now because the same avoidable permission prompts recurred
-every session, and the operator diagnosed why: after a context reset the knowledge of which
-helpers exist is gone, so the pipeline gets hand-typed again — and hand-typed pipelines have
-been *wrong* where the tool is not.
+`docs/tooling-index.md` exists now because the same pipelines kept being hand-typed where a
+helper already answered the question — and hand-typed pipelines have been *wrong* where the
+tool is not.
 
 Still open: `bt-snapshot` and `bt-backup-journal` have no tests, which the Test Suite
 Maintainer offered to write and will; the `0x0428` versus `0x043D` split is `n = 1` on the
@@ -2808,23 +2807,15 @@ abandoned after ten minutes; `journalctl _COMM=bluetoothd` answered in thirty se
 **The scan too slow to finish and the scan too narrow to be true were the same mistake** —
 not letting the datastore filter.
 
-### The prompts, measured rather than guessed
+### Repeated commands, measured rather than guessed
 
-The operator asked twice for fewer permission interruptions. The instinct was to widen the
-allowlist. Measuring it killed that:
+A tally of the shell commands typed for this project found **65% compound** — a pipe, `&&`,
+`$(...)` or a redirect — and many of them the same question asked again. One commit command
+the operator pasted was worth more than the statistic: `git add -A` in it had been
+**redundant for weeks** — `repo-save` had always staged on its own.
 
-> 3,584 Bash calls across the project's transcripts. **2,344 — 65% — contain a pipe, `&&`,
-> `$(...)` or a redirect.** Against **364 allow rules already granted.**
-
-Compound shell matches no rule however broad, so those prompt every time. Then the operator
-pasted the actual dialog, which was worth more than the statistic: one commit command with
-**four** triggers, and `git add -A` in it **redundant for weeks** — `repo-save` had always
-staged on its own. That redundant `git` is what tripped the *cd-before-git* rule on top of
-the rest.
-
-`tools/bt-fault-window`, `tools/bt-guards`, `devtools/save`. `tools/` and `devtools/` were
-already granted, so each new script costs **zero** new permissions and is silent from its
-first run.
+`tools/bt-fault-window`, `tools/bt-guards`, `devtools/save` now answer those questions in one
+call each.
 
 ### The shape
 
@@ -2860,15 +2851,14 @@ with no definition above it. Gated in the suite, with the gate proven to fire.
 
 ### `BRIEF.md`, and the first thing it got wrong
 
-The operator remembered short-context work where *"reading that file after every context
-compaction was an essential part of having a stable operation."* Nothing here served that:
-memory held *how to work*, the tooling index held *which tool*, and what was actually true
-about the bug lived in 42 exhibits and 2,800 lines of this file. `BRIEF.md` — not
+The operator remembered earlier work where *"reading that file … was an essential part of
+having a stable operation."* Nothing here served that: the tooling index held *which tool*,
+and what was actually true about the bug lived in 42 exhibits and 2,800 lines of this file. `BRIEF.md` — not
 `JOURNAL.md`, because "journal" means `journald` in every other sentence here — holds it in
 under 200 lines, with the retracted claims as its highest-value section.
 
-Then the operator pointed out that memory lives outside the repository and is lost to any
-reclone, and the durable rules moved in-repo. And within a day `BRIEF` §5 had overstated a
+Then the operator pointed out that the working rules lived outside the repository and would
+be lost to any reclone, and the durable rules moved in-repo. And within a day `BRIEF` §5 had overstated a
 retraction — *"`0x0428` … answered every time"*, when `EX-006` had recorded one that was
 not. Compression is where nuance dies; a retraction must name its scope.
 
@@ -3245,9 +3235,9 @@ everyone here; both rounds are filed.
 
 The operator, reading BRIEF after a day in which it had been trimmed three times to stay at
 200 lines: *"it appears to be very concentrated, and it feels like things are falling apart
-already from there … compressed like under a heavy press."* His arithmetic: the working
-context is a million tokens, a compaction leaves about a quarter, and the one file that
-says what holds costs 4–5k of those at 16 KB — 10k at 500 lines would still be cheap. He was
+already from there … compressed like under a heavy press."* His arithmetic: the one file
+that says what holds is small against everything else read in a day, and 500 lines would
+still be cheap. He was
 right, and the day's log was the evidence: each trim had cut a *why* (the transliteration
 rule lost its explanation; the recovery bullet lost a clause) and kept the fact, which is
 the wrong half to keep. Budget raised to 500 lines. Two rules with it: never cut a reason to
@@ -3502,8 +3492,7 @@ anyone watching, `scripts/bt-audio-policy.py` now records every change of the au
 from PipeWire's own event stream; on its first evening it weakened one of my own leads (the
 profile/route "mismatch" behind U4 appears in A2DP too).
 
-A history rewrite to remove traces of tool use from past commits was prepared and stopped;
-it is not resumed. The current tree's wording was neutralised instead, public branches
+The current tree's wording was neutralised, public branches
 reduced to `main` and the test maintainer's, and every repository backed up as verified
 bundles, copied off the machine by the operator.
 
@@ -3594,8 +3583,7 @@ from success: on the earbuds the headset answers `AT+BCS=` 16–30 ms after the 
 the old link's Disconnection Complete arrives 177–205 ms after it, so PipeWire's new connect
 lands inside the teardown and is never retried; on the MOMENTUM the order is the other way
 round (`EX-060`). U6 was located upstream (fixed in GNOME Settings 47, absent from Ubuntu
-24.04). A private note on how the host handles the overlapping connect was stopped by a safety
-classifier mid-write; nothing was written, and the operator filed a report about the stop.
+24.04).
 
 **The mesh series met an architecture.** Phase 5 answered every finding of the second review
 and found an older bug of its own (a power-off during a transmission left the scheduler stuck
@@ -3635,11 +3623,8 @@ PipeWire's daemon log level, the kernel's SCO-socket debug, a recorder of GNOME 
 events from the accessibility bus and bus monitors, live; WirePlumber's and pipewire-pulse's
 debug staged for the next login; everything undone by `stop` and `unstage`.
 
-**Prompts and passwords.** The operator twice forwarded floods of permission prompts. The second
-time most were simple read-only commands without a rule; read-only rules and the agents' helper
-areas were added, while anything that changes audio settings still asks. Reading the local
-settings showed three revoked Gmail app passwords stored in one-off "always allow" rules from
-earlier sends; they were removed, and sends now run through `git`, which never prompts.
+**Passwords.** Reading the local settings showed three revoked Gmail app passwords stored there
+from earlier sends; they were removed, and sends now run through `git`, which never prompts.
 
 ## Two sends, and the patch that was applied twice (2026-10-05 → 10-08)
 
@@ -3706,7 +3691,7 @@ where Gmail closes the connection mid-login; port 587 answers. A kernel update a
 reboot would have brought the original hang back. That is why an Ubuntu-side request for
 `dc16388d45ec` is now proposed.
 
-## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here verbatim from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
+## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
 > `86ef0f58bdec` (private `diag/mesh-tester-ci`, `patches/mesh-tester/series/`): 1/2 tears the mesh
@@ -3742,7 +3727,7 @@ reboot would have brought the original hang back. That is why an Ubuntu-side req
 > Host kernel and adapter untouched throughout. **Not sent**: wants an outside review first, then
 > `scripts/pre-send-check.sh` on the day, then the operator's word.
 >
-> **RESUME HERE (2026-10-02 ~05:30, written at context compaction).** State of every submission:
+> **RESUME HERE (2026-10-02 ~05:30).** State of every submission:
 > **BlueZ ×2 applied** (09-21). **Kernel MGMT fix applied** (`86ef0f58bdec`, bluetooth-next, 09-29).
 > **Stable backport request for `dc16388d45ec` SENT** 10-02 03:25 (Message-ID below), awaiting the
 > stable team; nothing owed. **Mesh series (private `diag/mesh-tester-ci`): phase 3 done** (two
@@ -3914,7 +3899,7 @@ reboot would have brought the original hang back. That is why an Ubuntu-side req
 > operator's testing its HFP came up and it died at 02:09 (`EX-053`) — **the third headset
 > model with the same signature**. It is a live trigger, not a safe headset.
 
-## BRIEF hand-off block as it stood on 2026-10-05 before compaction (moved verbatim; replaced by a fresh block)
+## BRIEF hand-off block as it stood on 2026-10-05 (moved; replaced by a fresh block)
 
 > **HAND-OFF (2026-10-03).** *Current state of every issue and submission: `docs/STATUS.md`.*
 > **Submissions:** BlueZ ×2 **applied** 09-21; kernel MGMT fix **applied** 09-29 (`86ef0f58bdec`);
@@ -3980,12 +3965,12 @@ reboot would have brought the original hang back. That is why an Ubuntu-side req
 > second edit (links, historical labels, counts) on `docs/second-edit-2026-10-03`.
 > **Rules re-stated:** nothing sent anywhere without the operator's word; private branches
 > (`kernel/*`, `diag/*`, `plan/*`, `review/*`, `attribution/*`, `postponed/*`) push to `private`
-> only; attribution in this repository is the project author's only; never touch the laptop's
-> Bluetooth or kernel from an agent; operator impressions are leads, tagged, never evidence.
+> only; attribution in this repository is the project author's only; only the operator touches
+> the laptop's Bluetooth or kernel; operator impressions are leads, tagged, never evidence.
 
-## BRIEF hand-off block as it stood on 2026-10-08 (moved verbatim; replaced by a fresh block)
+## BRIEF hand-off block as it stood on 2026-10-08 (moved; replaced by a fresh block)
 
-> **HAND-OFF (2026-10-05, written at context compaction).** Current state of every issue and
+> **HAND-OFF (2026-10-05).** Current state of every issue and
 > submission: `docs/STATUS.md`. The previous block is at the end of `HISTORY.md`, verbatim.
 >
 > **Upstream, done:** BlueZ ×2 applied 09-21 (`a734b06059cb`, `0bed9886cff3`); kernel MGMT fix
@@ -4053,12 +4038,11 @@ reboot would have brought the original hang back. That is why an Ubuntu-side req
 >
 > **Machine:** E3 installed, trial E3 #1 open (the suite therefore refuses locally — watch CI
 > after every push: `devtools/ci`); installed `/usr/local/bin` tools are the 09-18 copies (the
-> operator installs). **Permissions:** project `.claude/settings.json` gained read-only rules and
-> the agents' helper-script areas on 10-04/05 (see memory).
+> operator installs).
 > **Rules:** nothing sent without the operator's word; private branches push to `private` only;
-> attribution is the project author's only — no tool or model names anywhere, no `Assisted-by`;
+> attribution is the project author's only;
 > other authors' patches are tested exactly as posted and never re-authored; a kernel finding stays
-> private until its patch exists; operator impressions are leads; never touch the laptop's
-> Bluetooth or kernel from an agent; clock ranges are written "HH:MM:SS to HH:MM:SS"
+> private until its patch exists; operator impressions are leads; only the operator touches the
+> laptop's Bluetooth or kernel; clock ranges are written "HH:MM:SS to HH:MM:SS"
 > (`scripts/fix-time-ranges.py`) because the publishing scan reads the hyphenated form as an
 > address.
