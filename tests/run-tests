@@ -13568,17 +13568,20 @@ devtools/access-classify "$ACB" --scratch /nonexistent >/dev/null 2>&1; acrrc=$?
 rm -f "$ACB"
 # Two names no file has: zstd stats its standard streams under the names it
 # prints them as, `/*stdin*\` and `/*stdout*\` (CI's audit, 2026-10-09). They
-# are streams, not the machine.
+# are streams, not the machine. And the kernel's highest capability number,
+# which dbus-daemon asks there: a probe, like the kernel's release.
 ACZ=$(mktemp -d)
 cat > "$ACZ/trace" <<'ACZT'
 7 execve("/usr/bin/zstd", ["zstd", "-dc"], 0x7ffc /* 9 vars */) = 0
 7 newfstatat(AT_FDCWD, "/*stdin*\\", 0x7ffc, 0) = -1 ENOENT (No such file or directory)
 7 newfstatat(AT_FDCWD, "/*stdout*\\", 0x7ffc, 0) = -1 ENOENT (No such file or directory)
+8 execve("/usr/bin/dbus-daemon", ["dbus-daemon", "--fork"], 0x7ffc /* 9 vars */) = 0
+8 openat(AT_FDCWD, "/proc/sys/kernel/cap_last_cap", O_RDONLY|O_CLOEXEC) = 3
 ACZT
 ACZO=$(devtools/access-classify "$ACZ/trace" --root "$PWD" --scratch "$ACZ" 2>&1); aczrc=$?
-(( aczrc == 0 )) && grep -qE '^  pseudo-device +read +2$' <<<"$ACZO" \
-    && ok "access-classify takes zstd's names for its standard streams as streams, not machine paths" \
-    || bad "zstd's stream names (rc=$aczrc): $(grep -E 'MACHINE|pseudo' <<<"$ACZO" | head -2 | tr '\n' '|')"
+(( aczrc == 0 )) && grep -qE '^  pseudo-device +read +2$' <<<"$ACZO" && grep -qE '^  runtime-probe +read +1$' <<<"$ACZO" \
+    && ok "access-classify takes zstd's names for its standard streams as streams, and the capability count as a probe" \
+    || bad "stream names and the capability count (rc=$aczrc): $(grep -E 'MACHINE|pseudo|probe' <<<"$ACZO" | head -3 | tr '\n' '|')"
 rm -rf "$ACZ"
 
 echo

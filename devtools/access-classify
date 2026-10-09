@@ -310,6 +310,8 @@ PROBES = ('/selinux', '/sys/fs/selinux', '/sys/fs/smackfs', '/etc/selinux/config
           '/proc/sys/kernel/ngroups_max', '/proc/sys/vm/overcommit_memory', '/proc/meminfo', '/proc/stat',
           '/proc/cpuinfo', '/sys/devices/system/cpu', '/sys/fs/cgroup', '/proc/sys/fs/pipe-max-size',
           '/sys/kernel/mm/transparent_hugepage', '/proc/sys/kernel/osrelease',
+          # the kernel's highest capability number, which libcap and systemd ask
+          '/proc/sys/kernel/cap_last_cap',
           # whether AppArmor is enabled, which dbus-daemon asks at every start
           '/sys/module/apparmor/parameters/', '/sys/kernel/security/apparmor')
 PSEUDO = ('/dev/null', '/dev/zero', '/dev/urandom', '/dev/random', '/dev/tty', '/dev/full',
