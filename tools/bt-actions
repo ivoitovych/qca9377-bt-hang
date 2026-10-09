@@ -55,7 +55,7 @@ BOOT=0
 SINCE=""
 UNTIL=""
 RAW=0
-TRACE_DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
+TRACE_DIR="${BT_TRACE_DIR:-${BT_HEALTH_DIR:-/var/log/bt-health}/trace}"
 # A fixture-driven run reads ONLY the fixture. Without this the second pass
 # decoded the machine's real captures under every fixture test: on 2026-09-22
 # ten real rows landed in a 46-line fixture, and on 2026-09-24 one suite run

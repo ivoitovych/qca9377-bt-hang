@@ -130,21 +130,26 @@ for f in "$DIR"/*.log "$DIR"/*.txt; do
     fi
 done
 
+# The trace directory through BT_TRACE_DIR, as bt-status, bt-evidence and the
+# capture tools read it, under BT_HEALTH_DIR. It was the one reader with the path
+# written in, so its tests listed the machine's real captures and gap log
+# (strace over a suite run, 2026-10-09).
+TRACE_DIR="${BT_TRACE_DIR:-${BT_HEALTH_DIR:-/var/log/bt-health}/trace}"
 {
     echo "# btsnoop captures overlapping this window (NOT committed — they contain"
     echo "# device addresses, names, pairing exchanges and audio payload)."
     echo "# Inspect: btmon -r <file>"
     echo
-    find /var/log/bt-health/trace -name '*.btsnoop' -newermt "$SINCE" 2>/dev/null \
+    find "$TRACE_DIR" -name '*.btsnoop' -newermt "$SINCE" 2>/dev/null \
       | sort | while read -r f; do printf '  %10s  %s\n' "$(stat -c %s "$f")" "$f"; done
     echo
     echo "# CAPTURE GAPS in this window — moments when nothing was being recorded."
     echo "# btmon (bluez 5.72) aborts with a buffer overflow every few minutes; the"
     echo "# supervisor restarts it within ~1 s, but a gap can still straddle an event."
     echo "# An empty list below means the window was covered continuously."
-    if [[ -f /var/log/bt-health/trace/gaps.log ]]; then
+    if [[ -f "$TRACE_DIR/gaps.log" ]]; then
         awk -v since="$(date -d "$SINCE" -Iseconds 2>/dev/null)" \
-            'since=="" || $1 >= since' /var/log/bt-health/trace/gaps.log \
+            'since=="" || $1 >= since' "$TRACE_DIR/gaps.log" \
           | sed 's/^/  /' || true
     else
         echo "  (no gap log — bt-trace may predate gap tracking)"

@@ -884,8 +884,8 @@ hang|ok)
             printf '# trial window: %s .. %s\n' "$t_start" "$t_end"
             printf '# both capture paths are shown; a request present in only one\n'
             printf '# is an instrumentation finding, not evidence about the controller.\n\n'
-            for src in "${BT_CAPTURE_DIR:-/var/log/bt-health/capture}" \
-                       "${BT_TRACE_DIR:-/var/log/bt-health/trace}"; do
+            for src in "${BT_CAPTURE_DIR:-${BT_HEALTH_DIR:-/var/log/bt-health}/capture}" \
+                       "${BT_TRACE_DIR:-${BT_HEALTH_DIR:-/var/log/bt-health}/trace}"; do
                 printf '===== source: %s =====\n' "$src"
                 for f in "$src"/*.btsnoop; do
                     [[ -e "$f" ]] || continue

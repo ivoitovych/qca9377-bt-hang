@@ -51,8 +51,8 @@ set -uo pipefail
 LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
 [[ -r "$LIBDIR/timestamp.awk" ]] || { echo "bt-capdiff: missing $LIBDIR/timestamp.awk" >&2; exit 1; }
 
-TRACE_DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
-CAP_DIR="${BT_CAPTURE_DIR:-/var/log/bt-health/capture}"
+TRACE_DIR="${BT_TRACE_DIR:-${BT_HEALTH_DIR:-/var/log/bt-health}/trace}"
+CAP_DIR="${BT_CAPTURE_DIR:-${BT_HEALTH_DIR:-/var/log/bt-health}/capture}"
 SINCE=""
 UNTIL=""
 TOP=20

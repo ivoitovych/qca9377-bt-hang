@@ -205,7 +205,8 @@ def prune(directory, keep, min_free_gb):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dir", default=os.environ.get("BT_CAPTURE_DIR", "/var/log/bt-health/capture"))
+    ap.add_argument("--dir", default=os.environ.get(
+        "BT_CAPTURE_DIR", os.path.join(os.environ.get("BT_HEALTH_DIR", "/var/log/bt-health"), "capture")))
     ap.add_argument("--max-mb", type=int, default=int(os.environ.get("BT_CAPTURE_MAX_MB", "64")))
     ap.add_argument("--keep", type=int, default=int(os.environ.get("BT_CAPTURE_KEEP", "400")))
     ap.add_argument("--min-free-gb", type=int,

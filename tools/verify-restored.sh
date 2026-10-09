@@ -29,7 +29,13 @@ VID="${BT_VID:-13d3}"
 PID="${BT_PID:-3503}"
 SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
 SYSFS_MOD="${BT_SYSFS_MODULE:-/sys/module/btusb/parameters}"
-HEALTH_DIR="${BT_HEALTH_DIR:-/var/log/bt-health}"
+# BT_DESTDIR, the staging prefix install.sh and uninstall.sh already take: every
+# artifact path is checked under it, literal names included. Unset, it is the
+# machine. Until 2026-10-09 the six literal artifacts could not be redirected,
+# so the restored-machine verdict was asserted only where the project had never
+# been installed, and the suite read the real /etc and /usr/local to decide.
+DESTDIR="${BT_DESTDIR:-}"
+HEALTH_DIR="${BT_HEALTH_DIR:-$DESTDIR/var/log/bt-health}"
 
 pass=0; fail=0; note=0
 
@@ -84,6 +90,7 @@ else
         bad "derived only ${#VR_FILES[@]} artifact(s) from $INSTALL_SH — refusing a false all-clear"
     else
         for f in "${VR_FILES[@]}"; do
+            f="$DESTDIR$f"
             if [[ -e "$f" ]]; then bad "still present: $f"
             elif [[ -e "$f.disabled" ]]; then
                 # bt-mode experiment moves files aside; uninstall removes only

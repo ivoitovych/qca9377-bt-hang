@@ -37,7 +37,7 @@ set -uo pipefail
 # review 2026-08-15T1752Z §3.1).
 LIBDIR="${BT_LIBDIR:-$(dirname "$(readlink -f "$0")")/lib}"
 
-DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
+DIR="${BT_TRACE_DIR:-${BT_HEALTH_DIR:-/var/log/bt-health}/trace}"
 RAW=0
 WINDOW=0
 

@@ -16,7 +16,7 @@
 
 set -uo pipefail
 
-DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
+DIR="${BT_TRACE_DIR:-${BT_HEALTH_DIR:-/var/log/bt-health}/trace}"
 MAX_MB="${BT_TRACE_MAX_MB:-128}"    # rotate when the current file exceeds this
 # Retention is a file COUNT, but files do not rotate only on size: btmon in
 # bluez 5.72 aborts regularly (a buffer overflow in its own decoder), and every

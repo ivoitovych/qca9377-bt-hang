@@ -114,6 +114,33 @@ if [[ -n "${SUITE_RUN_ID:-}" ]]; then
     exit 2
 fi
 
+# ── --section: print one block instead of all of them ─────────────────────
+#
+# Reading a single section out of the full output was being done with
+# `sed -n '/heading/,/next heading/p'`, which is read-only but indistinguishable
+# from a rewrite to a static analyser, so it cost an interactive approval every
+# time. The suite knows where its own sections begin and end; asking it is both
+# cheaper and more accurate than pattern-matching its output from outside.
+#
+# The exit status is the SUITE's, not the filter's — a section that happens to
+# contain no failures must not report success for a run that failed elsewhere.
+if [[ "${1:-}" == --section ]]; then
+    [[ -n "${2:-}" ]] || { echo "usage: run-tests --section <text from a heading>" >&2; exit 2; }
+    # A filter around one run, not a run. It sits here, before anything is
+    # declared or exported, so the run it starts begins from the caller's own
+    # environment: the real trial state for its refusal, the host's
+    # safe.directory for its git, and no run marker of this one.
+    out=$("$0"); rc=$?
+    awk -v want="$2" '
+        index($0, want) && !started { started = 1 }
+        started && printed && /^$/  { started = 0 }
+        started                     { print; if ($0 !~ /^$/) printed = 1 }
+        /^all [0-9]+ invariants hold$/ || /^FAILED: /  { tail = $0 }
+        END { if (tail != "") { print ""; print tail } }
+    ' <<<"$out"
+    exit $rc
+fi
+
 # ── THE PATH GUARD, BEFORE ANYTHING ELSE RUNS ─────────────────────────────
 #
 # THE ESCAPE THIS CLOSES, WHICH HAPPENED.
@@ -430,6 +457,28 @@ while IFS= read -r _sd; do
 done < <(git config --global --get-all safe.directory 2>/dev/null; git config --system --get-all safe.directory 2>/dev/null)
 export GIT_CONFIG_GLOBAL="$SUITE_GITCONFIG" GIT_CONFIG_NOSYSTEM=1
 
+# THE HOST USER'S CONFIGURATION, DECLARED AWAY — after the safe.directory copy
+# above, which is the one thing taken from it. An exact trace of a run
+# (strace over every file access, 2026-10-09) found reads neither the tripwire
+# nor the decoy world could see, because they read files a test never names:
+#   - jq read ~/.jq;
+#   - git read ~/.config/git/ignore and ~/.config/git/attributes, whatever
+#     GIT_CONFIG_GLOBAL says, and /etc/gitattributes;
+#   - every python3 read the user's site-packages under ~/.local.
+# Each can change what a tool prints: an ignore pattern on the host would hide
+# a file from a scratch repository's `git add -A`. A home of the run's own,
+# empty, and the system attributes off.
+mkdir -p "$SUITE_MACHINE/home"
+export HOME="$SUITE_MACHINE/home" XDG_CONFIG_HOME="$SUITE_MACHINE/home/.config" \
+       GIT_ATTR_NOSYSTEM=1 PYTHONNOUSERSITE=1
+# And the trial state, the same way. The refusal at the top of this file reads
+# the real one, before anything runs, and the check at the end compares it
+# (BT_REAL_TRIAL_STATE); between the two, repo-save's tests read
+# /run/bt-trial/current wherever they did not set BT_TRIAL_STATE_DIR themselves.
+# The same trace found them. Declared: no trial open.
+mkdir -p "$SUITE_MACHINE/trial-state"
+export BT_TRIAL_STATE_DIR="$SUITE_MACHINE/trial-state"
+
 # THE OTHER HALF OF WHY THIS IS A TRAP AND NOT A LINE AT THE END.
 #
 # The three checks that compare the real machine before and after — the evidence
@@ -461,30 +510,6 @@ on_exit() {
 }
 trap on_exit EXIT
 
-# ── --section: print one block instead of all of them ─────────────────────
-#
-# Reading a single section out of the full output was being done with
-# `sed -n '/heading/,/next heading/p'`, which is read-only but indistinguishable
-# from a rewrite to a static analyser, so it cost an interactive approval every
-# time. The suite knows where its own sections begin and end; asking it is both
-# cheaper and more accurate than pattern-matching its output from outside.
-#
-# The exit status is the SUITE's, not the filter's — a section that happens to
-# contain no failures must not report success for a run that failed elsewhere.
-if [[ "${1:-}" == --section ]]; then
-    [[ -n "${2:-}" ]] || { echo "usage: run-tests --section <text from a heading>" >&2; exit 2; }
-    # A filter around one run, not a run: the child is the run, with a marker
-    # of its own, or the nested-run refusal above stops it.
-    out=$(env -u SUITE_RUN_ID "$0"); rc=$?
-    awk -v want="$2" '
-        index($0, want) && !started { started = 1 }
-        started && printed && /^$/  { started = 0 }
-        started                     { print; if ($0 !~ /^$/) printed = 1 }
-        /^all [0-9]+ invariants hold$/ || /^FAILED: /  { tail = $0 }
-        END { if (tail != "") { print ""; print tail } }
-    ' <<<"$out"
-    exit $rc
-fi
 
 pass=0; fail=0
 
@@ -3471,6 +3496,17 @@ AATR=$(PATH="$AASPY/bin:$PATH" BT_JOURNAL_FIXTURE="$BA" BT_TRACE_DIR="$AASPY/tra
 [[ "$AATR" == *"MGMT: Set Powered"* ]] \
     && ok "an explicitly named trace directory is decoded under a fixture, operator MGMT commands included" \
     || bad "the named trace directory was not read: $(grep -c MGMT <<<"$AATR") MGMT row(s)"
+# AND THE DEFAULT ONE IS NOT. The default lives under BT_HEALTH_DIR since
+# 2026-10-09, so a health directory with a capture in it is the machine's
+# directory as bt-actions sees it: under a fixture, with BT_TRACE_DIR unset, it
+# must not decode it. Until then this guard could only be observed on a machine
+# whose real /var/log/bt-health/trace held captures — never here, never in CI.
+mkdir -p "$AASPY/health/trace"; : > "$AASPY/health/trace/b.btsnoop"
+AADEF=$(env -u BT_TRACE_DIR PATH="$AASPY/bin:$PATH" BT_HEALTH_DIR="$AASPY/health" \
+        BT_JOURNAL_FIXTURE="$BA" tools/bt-actions --raw 2>&1)
+[[ "$AADEF" != *"MGMT: Set Powered"* ]] \
+    && ok "under a fixture the DEFAULT trace directory is not decoded, though it holds a capture" \
+    || bad "bt-actions decoded the default trace directory under a fixture: $(grep -c MGMT <<<"$AADEF") MGMT row(s)"
 rm -rf "$AASPY"
 
 echo
@@ -5260,9 +5296,9 @@ rm -rf "$VI"
 # machine. The list is now derived from install.sh; that fix is what these
 # assertions hold in place.
 VR=$(mktemp -d)
-mkdir -p "$VR/repo" "$VR/dest" "$VR/stub" "$VR/mod" "$VR/usb/3-3/power" "$VR/jrn"
+mkdir -p "$VR/repo" "$VR/root" "$VR/stub" "$VR/mod" "$VR/usb/3-3/power" "$VR/jrn"
 { for i in $(seq 1 12); do
-      printf 'install_file "$SRC/tools/t%02d" %s/dest/t%02d\n' "$i" "$VR" "$i"
+      printf 'install_file "$SRC/tools/t%02d" /usr/local/bin/t%02d\n' "$i" "$i"
   done
   echo 'systemctl enable --now bt-hang-watchdog'
 } > "$VR/repo/install.sh"
@@ -5279,56 +5315,52 @@ VRSTUB
 printf '#!/bin/sh\nexit 0\n' > "$VR/stub/dpkg"
 chmod +x "$VR/stub"/*
 
-vr_run() { env PATH="$VR/stub:$PATH" BT_INSTALL_SH="$VR/repo/install.sh" \
+# Every path under a staging root, BT_DESTDIR, as install.sh and uninstall.sh
+# are tested: the machine it checks is the one this test builds. Until
+# 2026-10-09 the six literal artifacts could not be redirected, so the
+# restored-machine case was asked only where the project had never been
+# installed — and reported "ok, skipped" where it had — and this test read the
+# real /etc and /usr/local to decide which (strace over a suite run).
+vr_run() { env PATH="$VR/stub:$PATH" BT_INSTALL_SH="$VR/repo/install.sh" BT_DESTDIR="$VR/root" \
                BT_SYSFS_MODULE="$VR/mod" BT_SYSFS_USB="$VR/usb" \
                BT_HEALTH_DIR="$VR/no-health" BT_JOURNAL_FIXTURE="$VR/jrn" \
                tools/verify-restored.sh 2>&1; }
 
-# The six artifacts the script names literally — the udev rules, the drop-ins
-# and the stamps install.sh writes outside install_file — are NOT overridable,
-# deliberately: they are the revert contract, and a test that redirects them
-# tests nothing. That makes the fully-restored assertion depend on host state,
-# so it is gated rather than faked. On the investigation machine itself, with
-# the project installed, "restored" is legitimately false.
-vr_host_clean=1
-for f in /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules \
-         /etc/udev/rules.d/51-bluetooth-health-snapshot.rules \
-         /etc/systemd/system/bt-hang-watchdog.service.d/10-device.conf \
-         /etc/systemd/system/bt-health-snapshot.service.d/10-device.conf \
-         /usr/local/share/qca9377-bt-hang/installed-at \
-         /usr/local/share/qca9377-bt-hang/mode; do
-    [[ -e "$f" || -e "$f.disabled" ]] && vr_host_clean=0
-done
+VROUT=$(vr_run); vrrc=$?
+(( vrrc == 0 )) && [[ "$VROUT" == *"matches its pre-investigation state"* ]] \
+    && ok "verify-restored reports a clean machine restored" \
+    || bad "a fully restored tree did not verify (rc=$vrrc)"
 
-if (( vr_host_clean )); then
-    VROUT=$(vr_run); vrrc=$?
-    (( vrrc == 0 )) && [[ "$VROUT" == *"matches its pre-investigation state"* ]] \
-        && ok "verify-restored reports a clean machine restored" \
-        || bad "a fully restored tree did not verify (rc=$vrrc)"
-else
-    ok "verify-restored: clean-machine case skipped (project is installed here)"
-fi
+# THE REVERT CONTRACT, BY ITS LITERAL NAMES. The six artifacts install.sh writes
+# outside install_file are named in the tool itself; one left behind under the
+# root is reported under its own name.
+mkdir -p "$VR/root/etc/udev/rules.d"; touch "$VR/root/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules"
+VRLIT=$(vr_run); vrlitrc=$?
+(( vrlitrc != 0 )) && [[ "$VRLIT" == *"still present: $VR/root/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules"* ]] \
+    && ok "verify-restored reports a literal artifact install.sh writes outside install_file" \
+    || bad "a leftover udev rule passed as restored (rc=$vrlitrc)"
+rm -f "$VR/root/etc/udev/rules.d/50-bluetooth-no-autosuspend.rules"
 
 # THE FROZEN-LIST DEFECT, in the form the fix takes: the artifacts come out of
 # install.sh, so a tool added there is checked without anyone remembering to
 # add it here. t07 exists only in the scratch install.sh.
-touch "$VR/dest/t07"
+mkdir -p "$VR/root/usr/local/bin"; touch "$VR/root/usr/local/bin/t07"
 VRLEFT=$(vr_run); vrlrc=$?
-(( vrlrc != 0 )) && [[ "$VRLEFT" == *"still present: $VR/dest/t07"* ]] \
+(( vrlrc != 0 )) && [[ "$VRLEFT" == *"still present: $VR/root/usr/local/bin/t07"* ]] \
     && ok "verify-restored derives its artifact list from install.sh" \
     || bad "a leftover named only in install.sh was not reported (rc=$vrlrc)"
-rm -f "$VR/dest/t07"
+rm -f "$VR/root/usr/local/bin/t07"
 
 # THE GAP BETWEEN THE TWO TOOLS. `bt-mode experiment` moves files aside to
 # <name>.disabled; uninstall.sh removes only the active names. So an
 # experiment -> uninstall sequence leaves every disabled file on disk, and a
 # restoration check that only tested -e would call that a clean revert.
-touch "$VR/dest/t03.disabled"
+touch "$VR/root/usr/local/bin/t03.disabled"
 VRDIS=$(vr_run); vrdisrc=$?
 (( vrdisrc != 0 )) && [[ "$VRDIS" == *"moved aside by bt-mode"* ]] \
     && ok "verify-restored catches files uninstall.sh cannot see (.disabled)" \
     || bad "an experiment->uninstall leftover passed as restored (rc=$vrdisrc)"
-rm -f "$VR/dest/t03.disabled"
+rm -f "$VR/root/usr/local/bin/t03.disabled"
 
 # The mitigation value itself. N is what this project sets; Y is the original.
 echo N > "$VR/mod/enable_autosuspend"
@@ -7400,13 +7432,16 @@ else
 fi
 rm -f "$MODEF" "$INSTALL_STAMP"
 
-UOUT=$(./uninstall.sh 2>&1); urc=$?
+# Under an empty staging root: with none, the dry run read the real /etc,
+# /usr/local and /var/log to plan its removals (strace, 2026-10-09).
+UDRY=$(mktemp -d)
+UOUT=$(BT_DESTDIR="$UDRY" ./uninstall.sh 2>&1); urc=$?
 if (( urc == 0 )) && [[ "$UOUT" == *"DRY RUN COMPLETE"* ]]; then
     ok "uninstall.sh dry run exits 0 and completes"
 else
     bad "uninstall.sh dry run failed (rc=$urc)"
 fi
-./uninstall.sh --bogus >/dev/null 2>&1
+BT_DESTDIR="$UDRY" ./uninstall.sh --bogus >/dev/null 2>&1
 (( $? != 0 )) && ok "uninstall.sh rejects an unknown option" \
               || bad "uninstall.sh accepted an unknown option"
 
@@ -13494,8 +13529,8 @@ FARMF=$(grep -HnE '^[^#]*ln -s.? +/(usr/)?bin/\*' "${SUITE_FILES[@]}" | grep -v 
 # uses are legitimate and none of them reads the file's CONTENT:
 #
 #   line 34   `cd "$(dirname "$0")/.."`  — locating the repository root
-#   line 59   `SUITE_FILES=("$0")`       — seeding the set itself
-#   line 290  `out=$("$0")`              — --section re-running the suite
+#   line 70   `suite_file_set "$0" …`    — seeding the set itself
+#   line 133  `out=$("$0")`              — --section re-running the suite
 #
 # A fourth is a scan, and it has to be justified rather than merged.
 # AND THE DERIVATION ITSELF, AGAINST A PARTS DIRECTORY THAT EXISTS. The set is

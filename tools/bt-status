@@ -166,7 +166,7 @@ echo "${B}4. Capture health${O}"
 # this directory. Hardcoded here, it was the one part of the status report no
 # test could reach — and "is the capture actually running?" is half of what an
 # operator opens this tool to find out.
-TRACE_DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
+TRACE_DIR="${BT_TRACE_DIR:-${BT_HEALTH_DIR:-/var/log/bt-health}/trace}"
 if [[ -d "$TRACE_DIR" ]]; then
     printf '  %-30s %s\n' "btsnoop files:" "$(ls -1 "$TRACE_DIR"/*.btsnoop 2>/dev/null | wc -l)"
     printf '  %-30s %s\n' "disk used:"     "$(du -sh "$TRACE_DIR" 2>/dev/null | cut -f1)"
