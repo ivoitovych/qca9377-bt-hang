@@ -13,10 +13,16 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 
 ## Current state — 2026-10-08 (what changed since the 2026-10-03 state below)
 
+- **BT-9 (new, 2026-10-09, kernel)** — when a simultaneous-discovery cycle's Inquiry
+  Complete lands inside the LE scan-off, the kernel never stops discovery and refuses every
+  later scan until a suspend or power-off; twice in this boot, stuck since 2026-10-04 10:26:11
+  (section below, `EX-062`).
+
 - **M-1 is not sent as one series.** An outside research review (10-05) found that the mesh
   transmit path has never had one ownership model and that other 2026 work is fixing other
   pieces of it; the patches are being split into separate contributions (`STATUS.md`).
-  Findings from that work stay private until each has its patch.
+  Findings from that work were kept private until each had its patch; since 2026-10-09 kernel
+  findings are recorded here as they are found, and that work is being ported to `main`.
 - **M-3 (new, BlueZ `shared/mgmt`)** — `mgmt_unregister()` from a notification callback
   leaked the entry, and unregistering the next entry was a use-after-free. Fix and unit tests
   sent and applied 2026-10-08 (section below).
@@ -201,8 +207,9 @@ member sets the pace for all. `BT-2` and `BT-4` are reportable *today*; `BT-1` i
 **Status:** under investigation — the original bug, and the hardest. **Located** in the
 transparent-SCO alternate-setting path since `EX-033`; see "Current state" above and
 `BRIEF.md` §1. Mechanism open.
-**Reportable:** ❌ not yet — a kernel-side report goes only with a patch ready to follow it
-(`BRIEF.md` §7). The reproduction shape is exact: alt 1, stream, issue a command.
+**Reportable:** ❌ not yet — a kernel-side report should come with a patch, or it asks the
+maintainers to do the investigation (`bug-report.md`). The reproduction shape is exact: alt 1,
+stream, issue a command.
 
 The controller stops answering HCI commands. It has often been observed to stop answering
 USB control transfers and leave the bus some time later, after which a cold power-off
@@ -626,6 +633,44 @@ without the fix (leak, use-after-free, wrong return value) and passes with it.
 **Reportable:** ✅ sent 2026-10-08. `bluetoothd` does not reach the use-after-free (it
 unregisters by index or all); the in-tree callers that leak are the testers. Not specific to
 this controller.
+
+---
+
+## BT-9 — Simultaneous discovery can end without the kernel ever stopping it; every later scan is refused Busy
+
+**Status 2026-10-09: found; reproduction and patch next.** `EX-062`.
+
+**What it is.** With `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`, a BR/EDR+LE discovery runs LE active
+scanning and a 10.24 s Inquiry together, and arms the `le_scan_disable` timer for the same
+10.24 s. Two paths end the cycle, and each one leaves `DISCOVERY_STOPPED` to the other in one
+case:
+- `le_scan_disable()` (`net/bluetooth/hci_sync.c`) queues the LE scan-off and, while
+  `HCI_INQUIRY` is still set, returns without stopping: "BR/EDR inquiry will stop discovery
+  when finished";
+- `hci_inquiry_complete_evt()` (`net/bluetooth/hci_event.c`) does not stop while `HCI_LE_SCAN`
+  is set — and that flag is cleared only by the scan-off's Command Complete.
+
+When the Inquiry Complete arrives between the timer's scan-off command and that command's
+Command Complete, neither path stops discovery. `start_discovery_internal()`
+(`net/bluetooth/mgmt.c`) then answers every Start Discovery with Busy, without sending any HCI
+command, until a system suspend or an adapter power-off resets the state. Restarting
+`bluetoothd` does not clear it.
+
+**How it was found.** On 2026-10-09 the Settings Bluetooth page showed no scanning spinner —
+until now always a sign of a dead controller. The controller was healthy; the kernel had
+refused every scan since 2026-10-04 10:26:11, where the timer's scan-off (10:26:11.625144)
+went out 0.55 ms before the Inquiry Complete (.625697) and 2.6 ms before its own Command
+Complete (.627698). The boot's traces show one earlier case, 2026-10-01 03:51:27, stuck for
+8 h 18 min until a suspend cleared it, unnoticed. A call was up during the second cycle, not
+the first, so it is not required. GNOME Settings and Chrome both kept getting "Operation
+already in progress".
+
+**Why only now.** The quirk comes with `BTUSB_QCA_ROME`, which `dc16388d45ec` gives this
+device — build E3 on this laptop. Without it the device ran interleaved discovery, where the
+timer starts the Inquiry instead of racing it. The race itself is in core code and applies to
+every adapter that sets the quirk.
+
+**Reportable:** with the patch. Not specific to this controller.
 
 ---
 

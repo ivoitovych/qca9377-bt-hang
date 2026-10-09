@@ -20,11 +20,27 @@ series) were moved to the end of `HISTORY.md`; the block below is replaced, not
 topped up. **Sections name their owner**; each owner writes theirs and points at the long form
 (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-10-08 · newest exhibit on `main`: EX-061** (EX-044/049/050 live on private
-branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted within hours (`R2-13`).
+**Last updated: 2026-10-09 · newest exhibit on `main`: EX-062** (EX-044/049/050 live on private
+branches, to be ported; the next exhibit on `main` is EX-063) — no tip hash: it rotted within
+hours (`R2-13`).
 
-> **HAND-OFF (2026-10-08, after the BlueZ series was sent).** Current state of every issue and
-> submission: `docs/STATUS.md`. The previous block is at the end of `HISTORY.md`, verbatim.
+> **HAND-OFF (2026-10-08, after the BlueZ series was sent; 2026-10-09 item first).** Current
+> state of every issue and submission: `docs/STATUS.md`. The previous block is at the end of
+> `HISTORY.md`, verbatim.
+>
+> **New, 2026-10-09 — device discovery stuck since 2026-10-04 10:26:11 (`EX-062`).** The
+> missing Settings spinner was not a dead controller: the controller kept serving links and
+> calls, but every scan request since that moment is refused Busy by the kernel itself. Cause,
+> from the trace and the source: with `HCI_QUIRK_SIMULTANEOUS_DISCOVERY` (set by
+> `BTUSB_QCA_ROME`, i.e. by E3 / `dc16388d45ec` for this device) the two paths that end a
+> discovery cycle each leave the stop to the other when the Inquiry Complete event lands
+> between the LE timer's scan-off command and its Command Complete — **twice** in this boot's
+> traces: 10-01 03:51:27 (stuck 8 h 18 min, until a suspend cleared it, unnoticed) and 10-04
+> 10:26:11 (stuck since). A call was up only in the second, so it is not required. Core-code
+> race, any adapter with that quirk; not the alt-1 bug. **Next:** reproduce in qemu, patch,
+> send. The laptop's discovery stays stuck until a suspend or an adapter power-off (operator's
+> call); traces preserved in `/root/bt-trace-keep/` with `SHA256SUMS`. Private branches are
+> being ported to `main` (§7 rule change, 2026-10-09).
 >
 > **Upstream, done:** BlueZ `shared/mgmt` series **applied 10-08**, the day it was sent, as
 > `ae23df052290` + `6f5eeb402d3b`, identical to what was sent (`git range-diff`: `=`). Luiz then
@@ -69,7 +85,7 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 > (the cleanup, mesh locking of the advertising list, an unregister drain policy, no scheduler
 > hand-over in command-clear callbacks); (6) the duration overflow. Private documents on
 > `diag/mesh-tester-ci`: the research review, `STATE-MACHINE.md`, `gates-2026-10-05.md`
-> (kernel findings private until a patch exists). KCSAN only on the 4-CPU wrapper.
+> (to be ported to `main`, below). KCSAN only on the 4-CPU wrapper.
 > Also open: a review reply on Jiale Yao's patchwork 14864878 (needs the operator's word);
 > the `MGMT_INDEX_NONE` asymmetry in `mgmt_unregister_index()` (noted, out of the series).
 >
@@ -88,7 +104,7 @@ branches; the next exhibit on `main` is EX-062) — no tip hash: it rotted withi
 > every push); installed `/usr/local/bin` tools are the 09-18 copies (the operator installs).
 > **Rules:** nothing sent without the operator's word; private branches push to `private` only;
 > attribution is the project author's only; other authors' patches are tested exactly as posted;
-> a kernel finding stays private until its patch exists; maintainer mail carries only what the
+> a kernel finding is recorded on `main` as it is found; maintainer mail carries only what the
 > maintainer needs; only the operator touches the laptop's Bluetooth or kernel; clock ranges are
 > written "HH:MM:SS to HH:MM:SS" (`scripts/fix-time-ranges.py`).
 
@@ -270,12 +286,17 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   `sysfs` reads are safe, anything through usbfs is not. ⚠️ **`bt-mode` writes
   `power/control` live** — check `bt-window` before any mode switch. `bt-state`, `bt-status`,
   `bt-incident` are probe-free since 09-18; `--probe` sends an HCI command and is an intervention.
-- **Never publish the kernel (alt-1) bug report without its patch ready to follow at
-  once.** The BlueZ patches need no report at all. **Held `kernel/*` branches live on the
-  `private` remote** (`ivoitovych/qca9377-bt-hang-private`, created 2026-09-23) — so a disk
-  failure cannot take the patch, and nothing public shows it. `repo-save` pushes a `kernel/*`
-  branch to `private` and refuses `origin` (tested; `scripts/prove-held-branch-guard.sh`).
-  On send day the branch merges into `main` and goes public with the mail.
+- **Kernel findings are recorded on `main` as they are found** (operator's decision,
+  2026-10-09; first: `EX-062`). From 2026-09-17 to 2026-10-09 the rule was the opposite —
+  a kernel finding stayed off `main` until its patch could follow at once — so the work of
+  that period sits on the `private` remote (`ivoitovych/qca9377-bt-hang-private`):
+  `kernel/mgmt-flush-status`, `diag/*`, `plan/*`, `postponed/*`, `review/*`. It comes back as
+  **new commits that copy vetted files**, each naming its source branch and commit, never as a
+  `git merge`: a merge would publish the branch history, which also holds working-session
+  material that is not project content. The held-branch machinery stays: `repo-save` still
+  pushes `kernel/*`, `diag/*`, `plan/*`, `review/*`, `attribution/*`, `postponed/*` and
+  `config/*` to `private` only (tested; `scripts/prove-held-branch-guard.sh`), for work that
+  is private for other reasons.
 - **Verify operator accounts against logs** — he asked not to be trusted. Find the record or
   label the claim.
 - **Every claim ships with its extraction command and exact verbatim output**, plus exit
