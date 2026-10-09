@@ -423,7 +423,10 @@ awk -F'\t' '!seen[$0]++' "$W/plant" > "$W/plant.u" && mv "$W/plant.u" "$W/plant"
 
 run_inside() {   # <command...> — build the world, run the command in it
     rm -f "$W/armed"; : > "$W/hits.log"; : > "$W/contracts.log"; : > "$W/reads"; : > "$W/writes"; : > "$W/notes"
-    unshare -Urpfnmu --mount-proc "$SELF" --inside "$@"
+    # BT_DECOY_WORLD tells the command where it is. Only a test whose subject
+    # touches the machine ON PURPOSE needs it: devtools/access-audit's
+    # self-test plants reads of /proc, and here they are leaks by definition.
+    BT_DECOY_WORLD="$MARK" unshare -Urpfnmu --mount-proc "$SELF" --inside "$@"
 }
 world_failed() {   # <rc> — the world was never armed: say so, never judge
     echo "sandbox: the decoy world could not be built (step $1) — nothing was measured" >&2

@@ -1,0 +1,402 @@
+#!/usr/bin/env python3
+"""access-classify — every file access in an strace log, sorted by where it landed.
+
+    devtools/access-classify <strace-log> --root <checkout> --scratch <dir>
+                             [--allow <file>] [--stale] [--path <PATH>] [--tsv <out>]
+
+Reads `strace -f -e trace=%file,%process` output. Each access, attempted or
+made, is classified:
+
+  scratch, checkout (reads), software, host-software, runtime-probe,
+  pseudo-device, own-process, namespaced, ancestor, path-search,
+  git-discovery, declared-absent            — the run's own, or nothing
+  MACHINE/<dir>, tmp-outside-run, proc-of-a-process, identity,
+  checkout-write, INSTALLED-COPY, NETWORK   — the machine
+
+A machine access is a violation unless a line of --allow names it. With
+--stale, an allow line nothing matched is a violation too: an entry that no
+longer describes the run is how an allow list starts hiding things.
+
+Exit: 0 no violation · 1 violations (listed) · 2 usage or unreadable log
+
+devtools/access-audit runs this; see there for why it exists.
+"""
+import fnmatch
+import os
+import re
+import sys
+from collections import Counter, defaultdict
+
+
+def usage(msg):
+    print(f'access-classify: {msg}', file=sys.stderr)
+    sys.exit(2)
+
+
+args = sys.argv[1:]
+if not args or args[0] in ('-h', '--help'):
+    print(__doc__.strip().split('\n\n')[1])
+    sys.exit(0 if args else 2)
+log = args.pop(0)
+opts = {'--root': None, '--scratch': None, '--allow': None, '--tsv': None, '--path': ''}
+stale_check = False
+while args:
+    a = args.pop(0)
+    if a == '--stale':
+        stale_check = True
+    elif a in opts and args:
+        opts[a] = args.pop(0)
+    else:
+        usage(f'unknown option: {a}')
+if not opts['--root'] or not opts['--scratch']:
+    usage('--root and --scratch are required')
+root = os.path.realpath(opts['--root'])
+scratch = os.path.realpath(opts['--scratch'])
+try:
+    logf = open(log, errors='replace')
+except OSError as e:
+    usage(f'cannot read {log}: {e.strerror}')
+
+# ── the allow list ──────────────────────────────────────────────────────────
+allow = []          # (mode, glob, reason, lineno)
+if opts['--allow']:
+    try:
+        with open(opts['--allow']) as f:
+            for n, line in enumerate(f, 1):
+                body, _, reason = line.partition('#')
+                parts = body.split()
+                if not parts:
+                    continue
+                if len(parts) != 2 or parts[0] not in ('read', 'write', 'exec', 'any') or not reason.strip():
+                    usage(f'{opts["--allow"]}:{n}: want "<read|write|exec|any> <glob>  # reason"')
+                allow.append((parts[0], parts[1], reason.strip(), n))
+    except OSError as e:
+        usage(f'cannot read {opts["--allow"]}: {e.strerror}')
+
+# ── parsing ─────────────────────────────────────────────────────────────────
+LINE = re.compile(r'^(\d+)\s+(.*)$')
+CALL = re.compile(r'^([a-z0-9_]+)\((.*)\)\s+=\s+(-?\d+|\?)(.*)$')
+RESUMED = re.compile(r'^<\.\.\. ([a-z0-9_]+) resumed>(.*)$')
+WRITE_FLAGS = ('O_WRONLY', 'O_RDWR', 'O_CREAT', 'O_TRUNC', 'O_APPEND')
+WRITE_CALLS = {'unlink', 'unlinkat', 'rmdir', 'mkdir', 'mkdirat', 'rename', 'renameat', 'renameat2',
+               'symlink', 'symlinkat', 'link', 'linkat', 'chmod', 'fchmodat', 'fchmodat2', 'chown',
+               'fchownat', 'lchown', 'utimensat', 'utimes', 'truncate', 'mknod', 'mknodat', 'creat',
+               'setxattr', 'lsetxattr', 'removexattr'}
+LOOKUPS = {'newfstatat', 'stat', 'lstat', 'access', 'faccessat', 'faccessat2', 'statx'}
+AT1 = {'openat', 'newfstatat', 'fstatat64', 'statx', 'faccessat', 'faccessat2', 'readlinkat',
+       'fchmodat', 'fchmodat2', 'fchownat', 'utimensat', 'mkdirat', 'unlinkat', 'mknodat'}
+TWO = {'renameat', 'renameat2', 'linkat'}
+SKIP = {'wait4', 'exit_group', 'exit', 'getcwd', 'kill', 'tgkill', 'rt_sigreturn', 'execveat'}
+
+
+class Proc:
+    __slots__ = ('cwd', 'cmd', 'ns', 'net', 'parented', 'own_cwd', 'own_cmd', 'own_ns', 'own_net')
+
+    def __init__(self, cwd, cmd, ns, net):
+        self.cwd, self.cmd, self.ns, self.net = cwd, cmd, ns, net
+        self.parented = self.own_cwd = self.own_cmd = self.own_ns = self.own_net = False
+
+
+procs = {}
+ns_cover = defaultdict(list)    # namespace id -> what was mounted inside it
+ns_count = 0
+pending = {}
+events = []                     # (proc, path, mode, ok, call)
+
+
+def split_args(a):
+    out, depth, cur, q, esc = [], 0, [], False, False
+    for ch in a:
+        if q:
+            cur.append(ch)
+            if esc:
+                esc = False
+            elif ch == '\\':
+                esc = True
+            elif ch == '"':
+                q = False
+            continue
+        if ch == '"':
+            q = True
+            cur.append(ch)
+            continue
+        if ch in '[{(':
+            depth += 1
+        elif ch in ']})':
+            depth -= 1
+        if ch == ',' and depth == 0:
+            out.append(''.join(cur).strip())
+            cur = []
+        else:
+            cur.append(ch)
+    if cur:
+        out.append(''.join(cur).strip())
+    return out
+
+
+def unq(t):
+    m = re.match(r'^"((?:[^"\\]|\\.)*)"(\.\.\.)?$', t)
+    return bytes(m.group(1), 'utf-8').decode('unicode_escape', 'replace') if m else None
+
+
+def path_args(name, t):
+    g = lambda i: t[i] if i < len(t) else ''
+    if name in AT1:
+        p = unq(g(1))
+        return [(g(0), p)] if p is not None else []
+    if name in TWO:
+        return [(d, unq(g(i))) for d, i in ((g(0), 1), (g(2), 3)) if unq(g(i)) is not None]
+    if name == 'symlinkat':
+        p = unq(g(2))
+        return [(g(1), p)] if p is not None else []
+    if name == 'symlink':
+        p = unq(g(1))
+        return [('AT_FDCWD', p)] if p is not None else []
+    if name in ('rename', 'link'):
+        return [('AT_FDCWD', unq(g(i))) for i in (0, 1) if unq(g(i)) is not None]
+    p = unq(g(0))
+    return [('AT_FDCWD', p)] if p is not None else []
+
+
+def proc(pid):
+    if pid not in procs:
+        procs[pid] = Proc(root, '?', None, False)
+    return procs[pid]
+
+
+def resolve(p, pr, dirfd):
+    if p.startswith('/'):
+        return os.path.normpath(p)
+    if dirfd != 'AT_FDCWD' or pr.cwd is None:
+        return None                     # relative to a descriptor this does not track
+    return os.path.normpath(os.path.join(pr.cwd, p))
+
+
+def handle(pid, name, raw_args, ret):
+    global ns_count
+    pr = proc(pid)
+    ok = ret != '?' and not ret.startswith('-')
+    if name in ('clone', 'clone3', 'fork', 'vfork'):
+        if ok and int(ret) > 0:
+            child = int(ret)
+            c = procs.get(child)
+            if c is None or c.parented:
+                procs[child] = c = Proc(pr.cwd, pr.cmd, pr.ns, pr.net)
+            else:
+                # the child ran (and logged) before this line: fill in, in place,
+                # what it has not set itself, so its earlier events see it too
+                if not c.own_cwd:
+                    c.cwd = pr.cwd
+                if not c.own_cmd:
+                    c.cmd = pr.cmd
+                if not c.own_ns:
+                    c.ns = pr.ns
+                if not c.own_net:
+                    c.net = pr.net
+            c.parented = True
+        return
+    if name == 'fchdir':
+        if ok:
+            pr.cwd, pr.own_cwd = None, True     # a directory this does not track
+        return
+    if name in SKIP:
+        return
+    toks = split_args(raw_args)
+    if name == 'execve':
+        exe = unq(toks[0]) if toks else None
+        if ok:
+            words = [unq(w) or '' for w in split_args(toks[1][1:-1])] if len(toks) > 1 and toks[1].startswith('[') else []
+            pr.cmd, pr.own_cmd = ' '.join(words[:8])[:160], True
+            base = os.path.basename(exe or '')
+            flags = [w for w in words[1:4] if w.startswith('-') and not w.startswith('--')]
+            if base == 'unshare' and any('m' in w for w in flags):
+                ns_count += 1
+                pr.ns, pr.own_ns = ns_count, True
+            if base == 'unshare' and any('n' in w for w in flags):
+                pr.net = pr.own_net = True
+            if base == 'mount' and pr.ns is not None and words:
+                ns_cover[pr.ns].append(resolve(words[-1], pr, 'AT_FDCWD'))
+        if exe is not None:
+            events.append((pr, resolve(exe, pr, 'AT_FDCWD'), 'exec', ok, name))
+        return
+    pairs = path_args(name, toks)
+    write = name in WRITE_CALLS or (name in ('open', 'openat') and any(f in raw_args for f in WRITE_FLAGS))
+    for dirfd, p in pairs:
+        if p == '':
+            continue                    # AT_EMPTY_PATH: the descriptor itself
+        rp = resolve(p, pr, dirfd)      # before a chdir moves the base it is relative to
+        if rp is not None:
+            events.append((pr, rp, 'write' if write else 'read', ok, name))
+    if name == 'chdir' and ok and pairs:
+        pr.cwd, pr.own_cwd = resolve(pairs[0][1], pr, 'AT_FDCWD'), True
+
+
+for raw in logf:
+    m = LINE.match(raw.rstrip('\n'))
+    if not m:
+        continue
+    pid, rest = int(m.group(1)), m.group(2)
+    if rest.startswith('+++'):
+        procs.pop(pid, None)            # exited: a recycled pid starts a new life
+        continue
+    if rest.startswith('---'):
+        continue
+    if rest.endswith('<unfinished ...>'):
+        pending[pid] = rest[:-len('<unfinished ...>')]
+        continue
+    r = RESUMED.match(rest)
+    if r:
+        head = pending.pop(pid, None)
+        if head is None:
+            continue
+        rest = head + r.group(2)
+    c = CALL.match(rest)
+    if c:
+        handle(pid, c.group(1), c.group(2), c.group(3))
+
+if not events:
+    usage(f'{log} holds no file access — strace did not trace the run')
+
+# ── classification ──────────────────────────────────────────────────────────
+# What install.sh can put on a PATH: bin/ and tools/. devtools/ is never
+# installed, and its names (status, coverage, check) are names a host may have.
+PROJECT = {f for d in ('bin', 'tools') for f in
+           (os.listdir(os.path.join(root, d)) if os.path.isdir(os.path.join(root, d)) else [])}
+# Where a command is looked for: the PATH the run started with, and every
+# directory something was executed from or tried in.
+exec_dirs = {os.path.dirname(p) for (_, p, m, ok, c) in events if p and m == 'exec'}
+exec_dirs |= {os.path.normpath(d) for d in opts['--path'].split(':') if d.startswith('/')}
+ANCESTORS = set()
+for base in (root, scratch):
+    d = base
+    while d not in ('/', ''):
+        d = os.path.dirname(d)
+        ANCESTORS.add(d)
+SOFTWARE = ('/usr/bin/', '/usr/sbin/', '/bin/', '/sbin/', '/usr/lib/', '/usr/lib64/', '/lib/', '/lib64/',
+            '/usr/libexec/', '/usr/share/', '/usr/include/', '/etc/alternatives/')
+SOFTWARE_FILES = {'/etc/ld.so.cache', '/etc/ld.so.preload', '/etc/localtime', '/etc/locale.alias',
+                  '/etc/inputrc', '/etc/bash.bashrc', '/etc/mime.types', '/etc/magic', '/usr', '/usr/bin',
+                  '/bin', '/usr/sbin', '/sbin', '/usr/lib', '/lib', '/lib64', '/usr/share'}
+PROBES = ('/selinux', '/sys/fs/selinux', '/sys/fs/smackfs', '/etc/selinux/config', '/proc/mounts', '/proc/filesystems',
+          '/proc/sys/kernel/ngroups_max', '/proc/sys/vm/overcommit_memory', '/proc/meminfo', '/proc/stat',
+          '/proc/cpuinfo', '/sys/devices/system/cpu', '/sys/fs/cgroup', '/proc/sys/fs/pipe-max-size',
+          '/sys/kernel/mm/transparent_hugepage', '/proc/sys/kernel/osrelease')
+PSEUDO = ('/dev/null', '/dev/zero', '/dev/urandom', '/dev/random', '/dev/tty', '/dev/full',
+          '/dev/stdin', '/dev/stdout', '/dev/stderr', '/dev/fd/', '/dev/pts/')
+NET = {'git-remote-http', 'git-remote-https', 'git-remote-ftp', 'curl', 'wget', 'ssh', 'gh', 'nc', 'ncat',
+       'scp', 'rsync'}
+
+
+def under(p, d):
+    return p == d or p.startswith(d.rstrip('/') + '/')
+
+
+def classify(path, pr, mode, ok, call):
+    base = os.path.basename(path)
+    if path in ANCESTORS and (mode != 'write' or not ok):
+        return 'ancestor'
+    if pr.ns is not None:
+        covers = [t for t in ns_cover.get(pr.ns, []) if t]
+        # inside the world, or on the way to what it mounted
+        if any(under(path, t) or under(t, path) for t in covers):
+            return 'namespaced'
+        # and util-linux mount's own books, kept in /run/mount, which from
+        # inside a user namespace it may only look at: building the world
+        if pr.cmd.startswith('mount ') and under(path, '/run/mount'):
+            return 'namespaced'
+    if under(path, scratch):
+        return 'scratch'                # a test's own stub included, whatever its name
+    if mode == 'exec' and ok and base in NET and not pr.net:
+        return 'NETWORK'
+    if under(path, root):
+        return 'checkout-write' if mode == 'write' else 'checkout'
+    if path.startswith(PSEUDO):
+        return 'pseudo-device'
+    if path.startswith(('/proc/self', '/proc/thread-self')):
+        return 'own-process'
+    if re.match(r'^/proc/\d+(/|$)', path):
+        return 'proc-of-a-process'
+    if base in PROJECT and mode == 'exec' and ok:
+        return 'INSTALLED-COPY'         # a project tool RUN from outside the checkout
+    if mode != 'write' and call in LOOKUPS | {'execve'} and os.path.dirname(path) in exec_dirs \
+            and base not in PROJECT and (not ok or call != 'execve'):
+        return 'path-search'
+    if mode != 'write' and (path in SOFTWARE_FILES or path.startswith(SOFTWARE)):
+        return 'software'
+    # A project tool's name in a system directory is never mere software: it
+    # is what install.sh puts there, so looking at it is looking at the machine,
+    # the same on a host where it is installed and one where it is not.
+    if mode != 'write' and path.startswith(('/usr/local/bin/', '/usr/local/lib/', '/opt/')) \
+            and base not in PROJECT:
+        return 'host-software'
+    if mode != 'write' and (path.startswith(PROBES) or path.endswith(('/pyvenv.cfg', '._pth'))):
+        return 'runtime-probe'
+    if under(path, '/nonexistent'):
+        return 'declared-absent'
+    if not ok and mode == 'read' and re.search(r'/(\.git(/.*)?|HEAD)$', path):
+        holder = re.sub(r'/\.git(/.*)?$|/HEAD$', '', path) or '/'
+        if holder in ANCESTORS or holder == '/':
+            return 'git-discovery'
+    if mode != 'write' and path in ('/etc/passwd', '/etc/group', '/etc/nsswitch.conf'):
+        return 'identity'
+    if path.startswith('/tmp/'):
+        return 'tmp-outside-run'
+    for d in ('/proc', '/sys', '/dev', '/run', '/var', '/etc', '/usr/local', '/boot', '/root', '/home',
+              '/opt', '/srv', '/mnt', '/media', '/usr', '/lib'):
+        if under(path, d):
+            return 'MACHINE' + d
+    return 'MACHINE/other'
+
+
+BENIGN = {'scratch', 'checkout', 'software', 'host-software', 'runtime-probe', 'pseudo-device',
+          'own-process', 'namespaced', 'ancestor', 'path-search', 'git-discovery', 'declared-absent'}
+
+
+def pattern(path):
+    p = re.sub(r'^/proc/\d+', '/proc/<pid>', path)
+    p = p.replace(scratch, '<scratch>')
+    return re.sub(r'/[0-9a-f]{32}(?=/|$)', '/<hex32>', p)
+
+
+def allowed(path, mode):
+    for i, (m, glob, _, _) in enumerate(allow):
+        if (m == 'any' or m == mode) and fnmatch.fnmatchcase(path, glob):
+            return i
+    return None
+
+
+classes = Counter()
+violations = defaultdict(lambda: [0, Counter()])
+matched = Counter()
+for pr, path, mode, ok, call in events:
+    if path is None:
+        continue
+    cl = classify(path, pr, mode, ok, call)
+    classes[(cl, mode)] += 1
+    if cl in BENIGN:
+        continue
+    i = allowed(path, mode)
+    if i is not None:
+        matched[i] += 1
+        continue
+    key = (cl, mode, 'made' if ok else 'attempted', pattern(path))
+    violations[key][0] += 1
+    violations[key][1][pr.cmd[:100]] += 1
+
+out = open(opts['--tsv'], 'w') if opts['--tsv'] else None
+print(f'accesses: {sum(classes.values())}   processes: {len(procs)}   namespaces: {ns_count}')
+for (cl, mode), n in sorted(classes.items()):
+    print(f'  {cl:<20} {mode:<6} {n}')
+stale = [a for i, a in enumerate(allow) if not matched[i]] if stale_check else []
+if violations:
+    print(f'\nMACHINE ACCESS outside the allow list — {len(violations)} kind(s):')
+    for (cl, mode, outcome, pat), (n, cmds) in sorted(violations.items()):
+        by = '; '.join(f'{c} ×{k}' for c, k in cmds.most_common(2))
+        print(f'  {cl:<18} {mode:<5} {outcome:<9} ×{n:<5} {pat}\n{"":>22}by: {by}')
+        if out:
+            out.write('\t'.join((cl, mode, outcome, str(n), pat, by)) + '\n')
+for mode, glob, reason, n in stale:
+    print(f'  STALE allow entry, line {n}: {mode} {glob}  — nothing in this run matched it')
+if violations or stale:
+    sys.exit(1)
+print('\nno machine access outside the allow list')

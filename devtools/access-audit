@@ -1,0 +1,148 @@
+#!/bin/bash
+# access-audit — run the suite (or any command) under an exact trace of every
+#                file access, and say which ones reached the machine.
+#
+#   devtools/access-audit                  tests/run-tests, against tests/access-allowlist
+#   devtools/access-audit -- <cmd> [args]  <cmd> instead (no stale-entry check)
+#   devtools/access-audit --self-test      planted accesses must each be caught,
+#                                          and clean controls must not be
+#   --report <dir>                         keep the trace, the output and the table
+#
+# Exit: 0 nothing outside the allow list · 1 a machine access outside it, a
+#       stale allow entry, or the command failed · 2 usage, or no trace was made
+#       · 3 no strace here, or tracing not permitted (already traced, or ptrace
+#       refused) — nothing was measured
+#
+# WHY, BESIDE devtools/sandbox. The decoy world answers "did a machine answer
+# change a verdict?" by marking every answer the machine gives and watching
+# access times. It cannot see an access that returns nothing: an existence
+# check, a read of a file that is absent here and present on the laptop, a
+# lookup of a path no test names. Those are the leaks that pass everywhere
+# except where they matter. strace sees every one, made or attempted, and
+# devtools/access-classify sorts each by where it landed: the run's scratch
+# space, the checkout, system software, a namespace world's own mounts — or
+# the machine. Run over the suite on 2026-10-09 it found nine kinds the decoy
+# world had passed, each a seam to declare (tests/README.md, rule 8).
+#
+# The run's scratch space is TMPDIR, set here, so every temporary the command
+# makes is the run's own by construction. A trace slows the suite about six
+# times; CI runs it as a job of its own.
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 2
+ROOT=$PWD
+ALLOW=tests/access-allowlist
+REPORT=""; SELFTEST=0; CMD=()
+while (( $# )); do
+    case "$1" in
+        --report)    REPORT="${2:?--report needs a directory}"; shift 2 ;;
+        --self-test) SELFTEST=1; shift ;;
+        --)          shift; CMD=("$@"); break ;;
+        -h|--help)   sed -n '2,13p' "$0"; exit 0 ;;
+        *) echo "access-audit: unknown option: $1" >&2; exit 2 ;;
+    esac
+done
+
+# A traced process cannot be traced again: under an audit, this reports that
+# it measured nothing rather than failing on ptrace's refusal.
+tracer=$(awk '/^TracerPid:/ { print $2 }' /proc/self/status 2>/dev/null)
+if [[ -n "$tracer" && "$tracer" != 0 ]]; then
+    echo "access-audit: already running under a tracer (pid $tracer) — nothing measured" >&2; exit 3
+fi
+command -v strace >/dev/null 2>&1 || { echo "access-audit: strace is not installed — nothing measured" >&2; exit 3; }
+strace -f -qq -e trace=none -o /dev/null true 2>/dev/null \
+    || { echo "access-audit: strace cannot trace here (ptrace refused) — nothing measured" >&2; exit 3; }
+
+WORK=$(mktemp -d) || exit 2
+trap 'rm -rf "$WORK"' EXIT INT TERM
+
+audit() {   # <work-dir> <allow-file> <stale:0|1> <cmd...> — trace, classify; prints the classifier's verdict
+    local w="$1" allow="$2" stale="$3"; shift 3
+    mkdir -p "$w/tmp"
+    # Without BASH_ENV: under devtools/coverage every bash sources that file,
+    # which lives outside this run's scratch space, and the audit would report
+    # the coverage instrument as the command's own access to the machine.
+    strace -f -qq -s 300 -e trace=%file,%process,fchdir -o "$w/trace" \
+        env -u BASH_ENV TMPDIR="$w/tmp" "$@" > "$w/out" 2>&1
+    local rc=$?
+    local -a extra=()
+    (( stale )) && extra+=(--stale)
+    devtools/access-classify "$w/trace" --root "$ROOT" --scratch "$w/tmp" --allow "$allow" \
+        --path "$PATH" --tsv "$w/violations.tsv" "${extra[@]}"
+    local crc=$?
+    (( rc == 0 )) || { echo "the traced command FAILED (rc=$rc); its last lines:"; tail -5 "$w/out" | sed 's/^/    /'; return 1; }
+    return "$crc"
+}
+
+if (( SELFTEST )); then
+    # ── the planted accesses, each run alone so a catch names its probe ───────
+    # Every probe is harmless by construction: a read, a write that the kernel
+    # refuses, a temporary file removed at once, a lookup of a name .invalid
+    # never resolves. Each must be reported, and the controls must not be.
+    pass=0; fail=0
+    ok()  { echo "  ✓ $*"; pass=$((pass + 1)); }
+    bad() { echo "  ✗ $*"; fail=$((fail + 1)); }
+    : > "$WORK/none"
+    mkdir -p "$WORK/installed"; printf '#!/bin/sh\nexit 0\n' > "$WORK/installed/bt-mark"
+    chmod +x "$WORK/installed/bt-mark"
+    probe() {   # <expect: caught|clean> <what must appear when caught> <label> <shell>
+        local expect="$1" want="$2" label="$3" sh="$4" n=$((pass + fail)) out rc
+        out=$(audit "$WORK/p$n" "${PROBE_ALLOW:-$WORK/none}" "${PROBE_STALE:-0}" bash -c "$sh" 2>&1); rc=$?
+        if [[ "$expect" == caught ]]; then
+            (( rc == 1 )) && [[ "$out" == *"$want"* ]] && ok "caught: $label" \
+                || bad "NOT caught: $label (rc=$rc) $(grep -E 'MACHINE|STALE|FAILED' <<<"$out" | head -2 | tr '\n' ' ')"
+        else
+            (( rc == 0 )) && ok "clean: $label" \
+                || bad "a clean run was reported: $label (rc=$rc) $(grep -E '^  [A-Za-z]' <<<"$out" | grep -vE '^  [a-z-]+ +(read|write|exec) +[0-9]+$' | head -3 | tr '\n' ' ')"
+        fi
+    }
+    echo "access-audit — self-test"
+    # /proc/version, which every Linux has: not /proc/uptime, which the decoy
+    # world plants, so that a deliberate probe is not reported there as a leak.
+    probe caught "/proc/version"                         "a machine file read directly" \
+        'cat /proc/version > /dev/null'
+    probe caught "/var/log/bt-health/access-audit-probe" "an existence check of a machine path that is absent here" \
+        '[ -e /var/log/bt-health/access-audit-probe ]; true'
+    probe caught "access-audit-probe"                    "a read in the caller's home" \
+        "cat '$HOME/.access-audit-probe' 2>/dev/null; true"
+    probe caught "/proc/access-audit-probe"              "a write the kernel refuses is still an attempt" \
+        ': > /proc/access-audit-probe 2>/dev/null; true'
+    probe caught "tmp-outside-run"                       "a temporary file outside the run's TMPDIR" \
+        'f=$(mktemp /tmp/access-audit-probe.XXXXXX) && rm -f "$f"'
+    probe caught "checkout-write"                        "a write into the checkout" \
+        ": > '$ROOT/.access-audit-probe-dir/x' 2>/dev/null; true"
+    probe caught "INSTALLED-COPY"                        "an installed copy of a project tool, run" \
+        "'$WORK/installed/bt-mark'"
+    if command -v git >/dev/null 2>&1; then
+        probe caught "NETWORK"                           "a network client outside a network namespace" \
+            'git ls-remote https://example.invalid/access-audit-probe >/dev/null 2>&1; true'
+    fi
+    probe clean "" "the run's own scratch space, system software, and reads of the checkout" \
+        "echo x > \"\$TMPDIR/c\"; cat \"\$TMPDIR/c\" >/dev/null; ls /usr/bin >/dev/null; cat '$ROOT/README.md' >/dev/null"
+    if unshare -Urm true 2>/dev/null; then
+        probe clean "" "a write inside a namespace world, to what that world mounted" \
+            'unshare -Urm sh -c "mount -t tmpfs probe /mnt && echo x > /mnt/x"'
+    else
+        echo "  · a namespace world's own mounts: no user namespaces here — not verifiable"
+    fi
+    printf 'read /proc/version   # the self-test: an allowed access\n' > "$WORK/allow"
+    PROBE_ALLOW="$WORK/allow" probe clean "" "an access the allow list names" \
+        'cat /proc/version > /dev/null'
+    printf 'read /proc/version   # used\nread /proc/loadavg   # never used\n' > "$WORK/allow2"
+    PROBE_ALLOW="$WORK/allow2" PROBE_STALE=1 probe caught "STALE allow entry, line 2" \
+        "an allow entry nothing matched, when staleness is asked" 'cat /proc/version > /dev/null'
+    echo
+    if (( fail )); then echo "access-audit self-test: $fail of $((pass + fail)) checks FAILED"; exit 1; fi
+    echo "access-audit self-test: every planted access caught, every control clean ($pass checks)"
+    exit 0
+fi
+
+stale=0
+if (( ${#CMD[@]} == 0 )); then CMD=(tests/run-tests); stale=1; fi
+echo "access-audit: ${CMD[*]} under strace (every file access, made or attempted)..." >&2
+audit "$WORK/run" "$ALLOW" "$stale" "${CMD[@]}"; rc=$?
+if [[ -n "$REPORT" ]]; then
+    mkdir -p "$REPORT" && cp "$WORK/run/trace" "$WORK/run/out" "$REPORT/" \
+        && cp "$WORK/run/violations.tsv" "$REPORT/" 2>/dev/null
+    echo "access-audit: trace and output kept in $REPORT" >&2
+fi
+exit "$rc"

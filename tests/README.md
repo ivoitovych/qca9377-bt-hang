@@ -139,6 +139,42 @@ that way (2026-10-08), it had three counting errors, all making the figure low:
 refused (`SUITE_RUN_ID`), so an instrument that loses its seam stops at once
 instead of starting the suite inside itself.
 
+**8. An access that answers nothing is still an access.** The tripwire catches a
+machine *tool*. The decoy world catches a machine *answer*, by its marks and by
+access times. Neither sees these:
+- an existence check of a path that is absent here;
+- a read of a file that is missing in CI and present on the laptop;
+- a lookup of a path no test names.
+
+Each passes everywhere except where it matters. `devtools/access-audit` runs the
+suite under `strace -f` and classifies every file access, made or attempted, by
+where it landed:
+- the run's scratch space;
+- the checkout;
+- system software;
+- a namespace world's own mounts;
+- the machine.
+
+An access to the machine fails the audit unless
+[`access-allowlist`](access-allowlist) names it with a reason, and an allow line
+nothing matched fails it too.
+
+Its first run (2026-10-09) found nine kinds of access the decoy world had passed:
+- jq's `~/.jq`, git's `~/.config/git/ignore` and `/etc/gitattributes`, and
+  Python's user site-packages;
+- the real trial state, read by repo-save's tests;
+- the real `/var/log/bt-health/trace`, read by `bt-status` and `bt-incident`;
+- the real `/etc` and `/usr/local`, read by `uninstall.sh`'s dry run and by
+  `verify-restored.sh`;
+- `/tmp` outside the run.
+
+Each was a seam to declare, not a line to allow. The run now has a home of its
+own, its own trial state, and a health directory every tool derives its trace,
+capture and usbmon directories from. The audit's self-test plants each kind of
+access, and each must be caught. It also runs clean controls: scratch, software,
+a checkout read, a namespace world's own mount and an allowed path, and none
+may be flagged. CI runs the full audit as a job of its own.
+
 ## Fixtures
 
 | Path | Feeds |

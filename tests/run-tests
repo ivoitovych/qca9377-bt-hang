@@ -478,6 +478,23 @@ export HOME="$SUITE_MACHINE/home" XDG_CONFIG_HOME="$SUITE_MACHINE/home/.config" 
 # The same trace found them. Declared: no trial open.
 mkdir -p "$SUITE_MACHINE/trial-state"
 export BT_TRIAL_STATE_DIR="$SUITE_MACHINE/trial-state"
+# And every other seam whose default is a machine path, declared the same way
+# (tests/system-resources.md lists them, and an invariant below keeps that list
+# whole). A test that needs one sets it, as every test did; a test that forgets
+# one meets this machine, which has nothing, instead of the one it runs on.
+mkdir -p "$SUITE_MACHINE"/{evidence-state,modules,snapshots,usb-drivers,udev,usbmon-debugfs,bt-trial,dyndbg,ui-base,ui-apps}
+export BT_EVIDENCE_STATE="$SUITE_MACHINE/evidence-state" BT_MODE_STAMP="$SUITE_MACHINE/share/mode" \
+       BT_MODPROBE_CONF="$SUITE_MACHINE/modprobe.d/btusb-qca9377.conf" BT_MODULES_DIR="$SUITE_MACHINE/modules" \
+       BT_SNAPSHOT_DIR="$SUITE_MACHINE/snapshots" BT_SYSFS_DRIVERS="$SUITE_MACHINE/usb-drivers" \
+       BT_UDEV_DIR="$SUITE_MACHINE/udev" BT_USBMON_DEBUGFS="$SUITE_MACHINE/usbmon-debugfs" \
+       BT_STATE="$SUITE_MACHINE/bt-trial" BT_DYNDBG_CTL="$SUITE_MACHINE/dyndbg/control" \
+       BT_UI_BASE="$SUITE_MACHINE/ui-base" BT_UI_APPDIR="$SUITE_MACHINE/ui-apps" \
+       BT_UI_CAPTURE_DIRS="$SUITE_MACHINE/health/capture $SUITE_MACHINE/health/trace"
+# And the evidence tree incidents are written into, which defaults to THIS
+# checkout's: rule 4's last check counts evidence/sessions after the run, and
+# this keeps a forgotten seam from writing there in the first place.
+mkdir -p "$SUITE_MACHINE/evidence-repo"
+export BT_EVIDENCE_REPO="$SUITE_MACHINE/evidence-repo"
 
 # THE OTHER HALF OF WHY THIS IS A TRAP AND NOT A LINE AT THE END.
 #
@@ -7029,7 +7046,8 @@ rm -rf "$EXF"
 # unreachable by construction.
 INCR=$(mktemp -d); mkdir -p "$INCR/tools"
 cp tools/bt-incident "$INCR/tools/"
-INCROUT=$(cd "$INCR" && ./tools/bt-incident no-evidence-tree 2>&1); increrc=$?
+# Unset, which is the condition under test: the run declares an evidence tree.
+INCROUT=$(cd "$INCR" && env -u BT_EVIDENCE_REPO ./tools/bt-incident no-evidence-tree 2>&1); increrc=$?
 (( increrc == 1 )) && [[ "$INCROUT" == *"has no evidence/ directory"* \
                       && "$INCROUT" == *"set BT_EVIDENCE_REPO"* ]] \
     && ok "bt-incident refuses to collect where there is no evidence tree" \
@@ -7499,12 +7517,13 @@ chmod +x "$UM/bin"/*
 um() {
     # The suite declares an empty bus for the whole run (top of file). Here that
     # means "this test set nothing", so the harness's own device applies.
-    local usb="${BT_SYSFS_USB:-}"
+    local usb="${BT_SYSFS_USB:-}" dbg="${BT_USBMON_DEBUGFS:-}"
     [[ -z "$usb" || "$usb" == "$SUITE_MACHINE/usb" ]] && usb="$UM/sysfs"
+    [[ -z "$dbg" || "$dbg" == "$SUITE_MACHINE/usbmon-debugfs" ]] && dbg="$UM/dbg"
     PATH="$UM/bin:$PATH" \
     BT_SYSFS_USB="$usb" \
     BT_USBMON_DIR="${BT_USBMON_DIR:-$UM/cap}" \
-    BT_USBMON_DEBUGFS="${BT_USBMON_DEBUGFS:-$UM/dbg}" \
+    BT_USBMON_DEBUGFS="$dbg" \
     BT_USBMON_GAPLOG="${BT_USBMON_GAPLOG:-$UM/cap/gaps.log}" \
     bin/bt-usbmon "$@" 2>&1
 }
@@ -13449,6 +13468,80 @@ rm -rf "$SVQ"
 rm -rf "$SCRATCH"
 
 echo
+echo "access-audit — the isolation itself, measured by an exact trace"
+echo "──────────────────────────────────────────────────────────────"
+# The tripwire catches a machine TOOL; the decoy world catches a machine
+# ANSWER. Neither sees an access that answers nothing: an existence check of a
+# path absent here, a read of a file no test names. strace sees every file
+# access, made or attempted, and devtools/access-classify sorts each by where
+# it landed. Over the whole suite it found nine kinds the other two had passed
+# (2026-10-09), and CI runs it so as a job of its own. Here, the instrument:
+# its self-test plants each kind of access and requires each caught, and
+# requires the clean controls — scratch, software, the checkout read, a
+# namespace world's own mount, an allowed path — to stay clean.
+# Not in the decoy world: the self-test's planted reads of /proc are deliberate,
+# and there they are leaks by definition (devtools/sandbox sets BT_DECOY_WORLD).
+AUDIT_SKIPPED=''
+if [[ -n "${BT_DECOY_WORLD:-}" ]]; then
+    AAS="access-audit: inside the decoy world, where its planted machine reads are leaks"; aasrc=3
+else
+    AAS=$(devtools/access-audit --self-test 2>&1); aasrc=$?
+fi
+if (( aasrc == 3 )); then
+    AUDIT_SKIPPED="devtools/access-audit's self-test ($(head -1 <<<"$AAS" | sed 's/^access-audit: //'))"
+else
+    (( aasrc == 0 )) && [[ "$AAS" == *"every planted access caught, every control clean"* ]] \
+        && ok "access-audit catches every planted machine access and passes every clean control" \
+        || bad "access-audit self-test (rc=$aasrc): $(grep -E '✗' <<<"$AAS" | head -3 | tr '\n' '|')"
+fi
+if [[ "$AAS" != *"strace is not installed"* && "$AAS" != *"cannot trace here"* && "$AAS" != *"already running under a tracer"* ]]; then
+    AAD=$(mktemp -d)
+    AAR=$(devtools/access-audit --report "$AAD/kept" -- sh -c 'echo x > "$TMPDIR/f"' 2>&1); aarrc=$?
+    (( aarrc == 0 )) && [[ "$AAR" == *"no machine access outside the allow list"* && -s "$AAD/kept/trace" && -e "$AAD/kept/out" ]] \
+        && ok "access-audit runs a given command, finds nothing outside the allow list, and keeps its trace with --report" \
+        || bad "access-audit -- <cmd> --report (rc=$aarrc): $(tail -2 <<<"$AAR" | tr '\n' '|')"
+    AAF=$(devtools/access-audit -- sh -c 'exit 7' 2>&1); aafrc=$?
+    (( aafrc == 1 )) && [[ "$AAF" == *"the traced command FAILED (rc=7)"* ]] \
+        && ok "access-audit fails when the traced command fails, whatever the accesses" \
+        || bad "a failing command passed the audit (rc=$aafrc)"
+    rm -rf "$AAD"
+fi
+# THE CATALOG IS WHOLE, AND EVERY SEAM IN IT IS DECLARED. system-resources.md
+# lists each BT_* seam whose default is on the machine. The list is derived here
+# from the code, so a seam added to a tool without its line there, or without a
+# declaration for the run, fails — the run would otherwise meet that tool's
+# machine default the first time a test forgot it.
+SRDOC=tests/system-resources.md
+mapfile -t SRSEAMS < <(git ls-files bin tools install.sh uninstall.sh \
+    | xargs grep -ohE '\$\{BT_[A-Z0-9_]+:-(/|\$\{BT_|\$HOME|~)' 2>/dev/null \
+    | sed -E 's/^\$\{(BT_[A-Z0-9_]+).*/\1/' | sort -u)
+# A seam whose default lies under another — ${BT_TRACE_DIR:-${BT_HEALTH_DIR:-…}}
+# — is declared through that one: bt-actions' fixture guard needs BT_TRACE_DIR
+# itself unset. The parent is read from the code, not listed here.
+srmissing=""; srundeclared=""
+for _v in "${SRSEAMS[@]}"; do
+    grep -qF "| \`$_v\` |" "$SRDOC" || srmissing+=" $_v"
+    [[ -n "${!_v+set}" ]] && continue
+    _p=$(git ls-files bin tools install.sh uninstall.sh | xargs grep -ohE "\\\$\\{$_v:-\\\$\\{BT_[A-Z0-9_]+" 2>/dev/null \
+         | sed -E 's/.*\$\{(BT_[A-Z0-9_]+)$/\1/' | sort -u | head -1)
+    [[ -n "$_p" && -n "${!_p+set}" ]] || srundeclared+=" $_v"
+done
+(( ${#SRSEAMS[@]} >= 25 )) && [[ -z "$srmissing" && -z "$srundeclared" ]] \
+    && ok "every one of the ${#SRSEAMS[@]} seams with a machine default is in system-resources.md and declared for the run" \
+    || bad "seams with a machine default: ${#SRSEAMS[@]}; not catalogued:${srmissing:- none}; not declared:${srundeclared:- none}"
+
+devtools/access-audit --everything >/dev/null 2>&1; aaurc=$?
+devtools/access-classify >/dev/null 2>&1; acnrc=$?
+devtools/access-classify /nonexistent/trace --root . --scratch /nonexistent >/dev/null 2>&1; acmrc=$?
+ACB=$(mktemp); printf 'read /proc/uptime\n' > "$ACB"
+ACBO=$(devtools/access-classify "$ACB" --root . --scratch /nonexistent --allow "$ACB" 2>&1); acbrc=$?
+devtools/access-classify "$ACB" --scratch /nonexistent >/dev/null 2>&1; acrrc=$?
+(( aaurc == 2 && acnrc == 2 && acmrc == 2 && acbrc == 2 && acrrc == 2 )) && [[ "$ACBO" == *"want \"<read|write|exec|any> <glob>  # reason\""* ]] \
+    && ok "access-audit and access-classify refuse an unknown option, no log, an unreadable log, an allow line without a reason, and no --root (2)" \
+    || bad "access refusals: audit=$aaurc noargs=$acnrc unreadable=$acmrc reasonless=$acbrc noroot=$acrrc"
+rm -f "$ACB"
+
+echo
 echo "the tests may not write to the real evidence tree"
 echo "──────────────────────────────────────────────────────────────"
 
@@ -13860,7 +13953,7 @@ fi
 # AT-SPI recorder is proven against a private accessibility bus, which needs
 # dbus-daemon and python3 with GObject; its shipped defaults run inside a user
 # and mount namespace, which some hosts refuse. Either way: not asked, said so.
-for _ns in "$UIATSPI_SKIPPED" "$UINS_SKIPPED" "$COWORLD_SKIPPED" "$AWKCOV_SKIPPED"; do
+for _ns in "$UIATSPI_SKIPPED" "$UINS_SKIPPED" "$COWORLD_SKIPPED" "$AWKCOV_SKIPPED" "$AUDIT_SKIPPED"; do
     [[ -n "$_ns" ]] || continue
     echo "  NOT ASKED HERE: $_ns — not available on this host,"
     echo "                  so it was not run. Run this suite where it is."

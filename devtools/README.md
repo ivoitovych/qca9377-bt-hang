@@ -16,6 +16,7 @@ directory touches Bluetooth.
 | `assert-test-catches <file> <line> <substr>` | prove a suite invariant actually fails when violated |
 | `journal-contract` | do the journal fixtures still match the shapes the REAL journalctl emits |
 | `sandbox [--self-test] [-- cmd]` | run the suite in a **decoy world** and list every place it reached for the real machine |
+| `access-audit [--self-test] [-- cmd]` | run the suite under **strace** and list every file access, made or attempted, that reached the machine outside `tests/access-allowlist` |
 | `mutate <file> [--lines A-B] \| --self-test` | flip each decision in a file, one at a time, and list the ones the suite does not notice |
 | `mutants <file>` | the list `mutate` works from: every live operator, awk programs inside shell included |
 
@@ -93,6 +94,41 @@ and fails on any leak.
 It needs unprivileged user namespaces: a bare development host and CI have them; Ubuntu 24.04's
 AppArmor refuses them to ordinary users, so on the laptop it exits 3 — nothing measured,
 never a pass.
+
+### What the decoy world cannot see, and the trace can
+
+The decoy world learns of a read from an access time, and of a leak through
+its markers. An access that answers nothing leaves neither. Three kinds pass
+it everywhere:
+- an existence check of a path that is absent;
+- a read of a file that is missing here and present on the laptop;
+- a lookup of a path no test names.
+
+`access-audit` runs the suite under `strace -f -e trace=%file,%process` and
+`access-classify` sorts every access by where it landed:
+- the run's scratch space (TMPDIR, set by the audit);
+- the checkout;
+- system software;
+- a namespace world's own mounts (followed from `unshare` to each `mount`
+  inside it);
+- the machine.
+
+A machine access fails the audit unless `tests/access-allowlist` names it with
+a reason. With the full suite, an allow line nothing matched fails it too. Each
+process is followed through `clone` and recycled pids; a failed attempt counts
+as much as a success. PATH searches and the walk to an ancestor directory are
+recognised for what they are.
+
+The first run (2026-10-09) found nine kinds of access the decoy world had
+passed, from the host's `~/.jq` to `uninstall.sh` planning its dry run against
+the real `/etc`; tests/README.md, rule 8, lists them. `--self-test` plants each
+kind of access: a direct read, an absent-path check, the caller's home, a
+refused write, `/tmp` outside the run, a checkout write, an installed copy run
+and a network client. Each must be caught. The clean controls must not be.
+Each classifier rule was removed in turn, and the self-test went red each time.
+
+It needs `strace` and permission to trace. It exits 3, nothing measured, where
+either is missing or where it is itself being traced.
 
 ## Knowing whether a decision is checked
 
