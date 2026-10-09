@@ -109,6 +109,7 @@ run `bluetoothd -d` — this project ships that on in
 | Read a saved Gmail message (HTML) as greppable text | `scripts/mail-html-to-text.sh <saved.html>` → `tmp/<name>.txt` — how the bot's backtraces were read |
 | **Why is CI red?** | `devtools/ci --failed [sha]` — prints the failing invariants and any stale coverage exclusion with the lines it hid; a red `--wait` does this automatically. Never `gh run view … --log-failed \| grep`: that prompted three times on 2026-09-19/20 and blocked an unattended session for an hour |
 | Did the BlueZ patch guards fire? | `tools/bt-guards` |
+| What did the **kernel** say on the management channel in a window of a capture? | `tools/bt-ctrl-window <btsnoop> <from> <to> [--hci]` — decodes the records `btmon` prints as `Control Event: 0xffff`, drops every address-bearing line (`EX-044`) |
 | Publish-safety scan (MACs, BSSIDs, emails) | `devtools/repo-scan` |
 | **Which review findings are still open, across every register?** | `devtools/review-open` (`--all`, `--counts`) — reads the status column of `reviews/README.md`; the gate before anything is submitted |
 | Compile-test a kernel patch against the running kernel (no tree needed) | `scripts/build-bluetooth-module.sh [patch]` — `net/bluetooth` from `cache/linux` (or `BT_KSRC=<checkout>`) against `/lib/modules/$(uname -r)/build`; builds only, never installs |

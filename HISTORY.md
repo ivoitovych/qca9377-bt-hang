@@ -3090,6 +3090,55 @@ Complete it sent for the other 37 in that log? The fatal one came as the control
 timing out HCI commands every two seconds. The patch states the observation and leaves the
 cause; the fix does not depend on it.
 
+### The layer below, read from a capture nobody had opened
+
+*(This section and what it cites — `EX-044`, `tools/bt-ctrl-window`, `patches/kernel/` —
+lived on the branch `kernel/mgmt-flush-status` until 2026-10-09, when kernel findings
+stopped being held off `main`; ported then.)*
+
+The reviewer had asked for a raw management trace of the next occurrence. There was no
+need to wait: `bin/bt-capture`, the decode-free writer built in August because `btmon`
+kept crashing, had kept `hci-20260814-201826.btsnoop`, spanning 20:18 to 21:44 on the day of
+the crash, after every `bt-trace` copy had rotated out. `btmon` reads it back but labels
+the management records `Control Event: 0xffff`, so a small decoder was written and the
+bytes read:
+
+```
+21:03:24.942998  Start Discovery (0x0023)                              ← bluetoothd
+21:03:26.994426  Command Status for Start Discovery, status 0x00       ← kernel
+21:03:26.994458  Class Of Device Changed (zeroed)
+21:03:26.994463  New Settings 0x0ada — powered bit clear
+```
+
+Same three events, same order, same microsecond, at 20:31:22. That burst is the kernel's
+power-off path, `__mgmt_power_off()`: answer every pending command, zero the class, announce
+the settings. The pending Start Discovery should have been answered **Not Powered**
+(`0x0f`). It was answered **Success**.
+
+The source explains why, and it is a type confusion at current master: `cmd_complete_rsp()`
+receives a `struct cmd_lookup *` — `{ struct sock *sk; struct hci_dev *hdev; u8
+mgmt_status; }` — and, for a command with no `cmd_complete` callback, falls through to
+`cmd_status_rsp(cmd, data)`, which reads `data` as `u8 *`. The first byte of `match->sk`,
+a NULL pointer in both callers, is `0x00`. Introduced by `f53e1c9c726d` ("Bluetooth: MGMT:
+Fix possible crash on mgmt_index_removed", 2024-09-27, v6.12), which changed the caller's
+`data` from `&status` to `&match` and left the fall-through untouched. Start Discovery is
+registered with `mgmt_pending_add()` and no callback, so it takes that path; so does every
+other such command flushed by power-off or index removal, on every kernel since.
+
+That is the event `patches/bluez/0001` guards against, named from the kernel's side, and it
+is a kernel bug with a one-expression fix: pass `&match->mgmt_status`. The patch is in
+`patches/kernel/`, with the `Fixes:` tag the blame gives it. Compile-tested the same day
+against the running kernel's headers from a sparse checkout of `v7.0` (`scripts/build-
+bluetooth-module.sh`), patched and unpatched; not sent — the operator's step.
+
+Two things about how this was found. The 08-14 kernel log had said *"Error when powering
+off device on rfkill (-110)"* at 21:03:26.991, three milliseconds before the fatal reply, and
+the daemon log had said the same power-off in its own vocabulary at 20:31 — both in the
+repository since August, both read many times for the wedge and never for this. And the
+capture that settled it survived only because a tool written for a different purpose kept
+its own copy. The reviewer's hypothesis was wrong; the reviewer's instinct — *look at the
+management channel* — was the whole answer.
+
 ### The second review
 
 The operator asked for a second independent reading before mailing and for the task to be
@@ -3114,6 +3163,15 @@ between the last client leaving and the fatal reply, two failed completions ran 
 branch that then crashed, harmlessly, because their status was not success. It also found
 that our task document pointed the reviewer at a path that does not exist. Three readers;
 three lists; the same two patches, unchanged in code since August.
+
+The first reviewer, shown the kernel finding by the operator, verified it independently
+from public kernel source and added the one thing the local reading had not checked:
+`f53e1c9c726d` was **backported to stable** — the faulty transformation is in 6.1.120 and
+the 6.1, 6.6 and 6.12 stable heads still carry it (verified here against the stable mirror;
+6.1.119 has the correct form). "Every kernel since v6.12" understated it. The kernel patch
+now carries `Cc: stable@vger.kernel.org` and says so; the reviewer also withdrew the
+index-fallback hypothesis in full and asked that the two BlueZ patches not wait for the
+kernel one.
 
 ### Sent
 

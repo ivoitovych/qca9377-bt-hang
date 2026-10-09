@@ -20,9 +20,9 @@ series) were moved to the end of `HISTORY.md`; the block below is replaced, not
 topped up. **Sections name their owner**; each owner writes theirs and points at the long form
 (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-10-09 · newest exhibit on `main`: EX-062** (EX-044/049/050 live on private
-branches, to be ported; the next exhibit on `main` is EX-063) — no tip hash: it rotted within
-hours (`R2-13`).
+**Last updated: 2026-10-09 · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
+`kernel/mgmt-flush-status` the same day; the next exhibit on `main` is EX-063) — no tip hash:
+it rotted within hours (`R2-13`).
 
 > **HAND-OFF (2026-10-08, after the BlueZ series was sent; 2026-10-09 item first).** Current
 > state of every issue and submission: `docs/STATUS.md`. The previous block is at the end of

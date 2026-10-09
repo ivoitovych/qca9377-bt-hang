@@ -1,0 +1,75 @@
+#!/bin/bash
+# bt-ctrl-window — the management (control) channel of a btsnoop capture in a
+# time window, with the raw control records decoded and every address dropped.
+#
+#   bt-ctrl-window <capture.btsnoop> <from> <to>      times as HH:MM:SS[.fff]
+#   bt-ctrl-window <capture.btsnoop> <from> <to> --hci   also HCI packet headers
+#
+# WHY. btmon 5.72 reading a bt-capture file prints management traffic as
+#
+#   @ Control Event: 0xffff              {0x0001} [hci0] 2026-08-14 21:03:26.994426
+#           02 00 23 00 00
+#
+# — the record is intact but the label is not decoded, so a reader has to know
+# that the first two bytes are the event (or command) code and the rest its
+# parameters. That is exactly the layer a "which management event did the
+# kernel send" question lives at, and it was the layer this project had never
+# read: the fatal Start Discovery reply of 2026-08-14 sat in a capture for five
+# weeks (EX-044). This tool decodes the code, names the opcode inside a
+# Command Complete / Command Status, and prints nothing that carries a device
+# address, so its output can go straight into an exhibit.
+#
+# Read-only. The capture is UNSANITISED (addresses, names, pairing); only the
+# filtered text leaves this tool.
+set -uo pipefail
+
+usage() { sed -n '2,7p' "$0" >&2; exit 2; }
+F="${1:-}"; FROM="${2:-}"; TO="${3:-}"; HCI=0
+[[ -n "$F" && -n "$FROM" && -n "$TO" ]] || usage
+[[ "${4:-}" == "--hci" ]] && HCI=1
+[[ -r "$F" ]] || { echo "bt-ctrl-window: cannot read $F" >&2; exit 2; }
+command -v btmon >/dev/null || { echo "bt-ctrl-window: btmon not found" >&2; exit 2; }
+
+# Codes from lib/bluetooth/mgmt.h (BlueZ) — the ones this investigation has met.
+# Anything else prints as its number, which is still more than 0xffff said.
+btmon -T -r "$F" 2>/dev/null | awk -v from="$FROM" -v to="$TO" -v hci="$HCI" '
+BEGIN {
+    ev["0001"]="Command Complete"; ev["0002"]="Command Status";
+    ev["0006"]="New Settings"; ev["0007"]="Class Of Device Changed";
+    ev["0011"]="Discovering"; ev["0004"]="Index Removed"; ev["0003"]="Index Added";
+    op["0005"]="Set Powered"; op["0006"]="Set Discoverable"; op["0007"]="Set Connectable";
+    op["0023"]="Start Discovery"; op["0024"]="Stop Discovery"; op["003a"]="Start Service Discovery";
+    op["000e"]="Set Local Name"; op["0010"]="Add UUID"; op["0011"]="Remove UUID";
+    st["00"]="Success"; st["03"]="Failed"; st["05"]="Auth Failed"; st["0a"]="Busy";
+    st["0f"]="Not Powered"; st["10"]="Invalid Index"; st["08"]="Timeout";
+}
+function ts(line,   m) { if (match(line, /[0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9]+/)) return substr(line, RSTART, RLENGTH); return "" }
+function le16(a, b) { return tolower(b a) }
+{
+    t = ts($0)
+    if (t != "") { inwin = (t >= from && t <= to) }
+    if (!inwin) next
+    if ($0 ~ /[0-9A-Fa-f][0-9A-Fa-f](:[0-9A-Fa-f][0-9A-Fa-f]){5}/) next   # never an address
+    if ($0 ~ /^@ Control (Event|Command)/) { kind = ($0 ~ /Event/) ? "E" : "C"; print; pend = 1; next }
+    if (pend) {
+        pend = 0
+        n = split($0, b, /[ \t]+/); i = 1; while (i <= n && b[i] == "") i++
+        code = le16(b[i], b[i+1])
+        if (kind == "E") {
+            name = (code in ev) ? ev[code] : "event 0x" code
+            if (code == "0001" || code == "0002") {
+                o = le16(b[i+2], b[i+3]); s = tolower(b[i+4])
+                printf "        %s  ->  %s for %s (0x%s), status 0x%s %s\n", $0 ~ /^ *$/ ? "" : trim($0), name, (o in op) ? op[o] : "opcode", o, s, (s in st) ? st[s] : ""
+            } else if (code == "0006") {
+                printf "        %s  ->  %s: 0x%s%s%s%s\n", trim($0), name, tolower(b[i+5]), tolower(b[i+4]), tolower(b[i+3]), tolower(b[i+2])
+            } else printf "        %s  ->  %s\n", trim($0), name
+        } else {
+            printf "        %s  ->  %s (0x%s)\n", trim($0), (code in op) ? op[code] : "opcode", code
+        }
+        next
+    }
+    if (hci && $0 ~ /^[<>] HCI/) { print; next }
+    if ($0 ~ /^= bluetoothd/) print
+}
+function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); sub(/  +[^ ]*$/, "", s); return s }
+'

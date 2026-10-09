@@ -603,8 +603,9 @@ Start Discovery pending when the adapter powered off was answered with Command S
 (`EX-032`, `EX-041`). BlueZ patch `0001` guards the daemon; this fix makes the kernel say
 Not Powered. Reproduced and tested with a virtual controller (`hci_vhci`): power off held in
 `Write Scan Enable` while a Start Discovery is submitted — status `0x00` before, `0x0f`
-(Not Powered) after. Developed and reviewed on a private branch until sent; `main` records
-the patch, its acceptance and these facts.
+(Not Powered) after. Developed and reviewed on a private branch until sent; ported to
+`main` on 2026-10-09: the patch, its review record and the reproducer in `patches/kernel/`,
+`EX-044`, `EX-049`, `EX-050`, `tools/bt-ctrl-window`.
 
 **Reportable:** ✅ sent 2026-09-24 and applied. Not specific to this controller.
 
