@@ -16,7 +16,8 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 - **BT-9 (new, 2026-10-09, kernel)** — when a simultaneous-discovery cycle's Inquiry
   Complete lands inside the LE scan-off, the kernel never stops discovery and refuses every
   later scan until a suspend or power-off; twice in this boot, stuck since 2026-10-04 10:26:11
-  (section below, `EX-062`).
+  (section below, `EX-062`). Already fixed upstream (`96d006ae6445`), but not in 6.12, 6.6 or
+  6.1, where the `dc16388d45ec` backport will give this device the quirk.
 
 - **M-1 is not sent as one series.** An outside research review (10-05) found that the mesh
   transmit path has never had one ownership model and that other 2026 work is fixing other
@@ -639,7 +640,27 @@ this controller.
 
 ## BT-9 — Simultaneous discovery can end without the kernel ever stopping it; every later scan is refused Busy
 
-**Status 2026-10-09: found; reproduction and patch next.** `EX-062`.
+**Status 2026-10-09: already fixed upstream; missing from the 6.12, 6.6 and 6.1 stable
+lines, which the `dc16388d45ec` backport is about to expose.** `EX-062`.
+
+**Upstream.** Jiajia Liu found the same race on an Intel AX201 and fixed it: "Bluetooth:
+hci_event: fix simultaneous discovery stuck in FINDING", mainline `96d006ae6445`
+(2026-06-02, applied by Luiz Augusto von Dentz; `Fixes: 8ffde2a73f2c`, v6.1-rc1). The fix
+sets `DISCOVERY_STOPPED` in the scan-off's Command Complete handler when inquiry has already
+finished. It is in v7.2-rc1 and later, v7.1.5+ and v6.18.40+, and in Ubuntu's
+`7.0.0-38` (changelog, "upstream stable patchset 2026-08-20"); it is **not** in v6.12.112,
+v6.6.158, v6.1.189 or v7.0.14, which all have the racy code (checked with `git grep` at those
+tags, 2026-10-09). 5.10 and 5.15 predate the race. In 6.12, 6.6 and 6.1 the upstream patch
+does not apply as is (`hci_test_quirk()` does not exist there). The laptop's `7.0.0-34` has
+the race; `-38` has the fix but not the 13d3:3503 entry. The same race is visible in the
+capture attached to BlueZ issue #1554 (Intel, 2025-09, open).
+
+**Why it matters here.** `dc16388d45ec`, whose stable backport this project requested, gives
+13d3:3503 the quirk on 6.12, 6.6 and 6.1, where the fix is missing. The race already affects
+every Intel and Realtek adapter on those lines.
+
+**Next:** an adapted backport of `96d006ae6445` to 6.12, 6.6 and 6.1, tested with a
+deterministic reproducer in qemu, then a request to stable (operator's word).
 
 **What it is.** With `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`, a BR/EDR+LE discovery runs LE active
 scanning and a 10.24 s Inquiry together, and arms the `le_scan_disable` timer for the same
@@ -671,7 +692,8 @@ device — build E3 on this laptop. Without it the device ran interleaved discov
 timer starts the Inquiry instead of racing it. The race itself is in core code and applies to
 every adapter that sets the quirk.
 
-**Reportable:** with the patch. Not specific to this controller.
+**Reportable:** no new report — fixed upstream; the contribution is the stable backport. Not
+specific to this controller.
 
 ---
 

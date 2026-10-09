@@ -37,10 +37,13 @@ it rotted within hours (`R2-13`).
 > between the LE timer's scan-off command and its Command Complete — **twice** in this boot's
 > traces: 10-01 03:51:27 (stuck 8 h 18 min, until a suspend cleared it, unnoticed) and 10-04
 > 10:26:11 (stuck since). A call was up only in the second, so it is not required. Core-code
-> race, any adapter with that quirk; not the alt-1 bug. **Next:** reproduce in qemu, patch,
-> send. The laptop's discovery stays stuck until a suspend or an adapter power-off (operator's
-> call); traces preserved in `/root/bt-trace-keep/` with `SHA256SUMS`. Private branches are
-> being ported to `main` (§7 rule change, 2026-10-09).
+> race, any adapter with that quirk; not the alt-1 bug. **Already fixed upstream** by Jiajia
+> Liu (`96d006ae6445`, v7.2-rc1; in 7.1.5+, 6.18.40+ and Ubuntu `7.0.0-38`), **but not in
+> 6.12, 6.6 or 6.1** — the lines our `dc16388d45ec` backport reaches. **Next:** adapted
+> backport to those three, tested in qemu with a deterministic reproducer; then a stable
+> request (operator's word). The laptop's discovery stays stuck until a suspend or an adapter
+> power-off (operator's call); traces preserved in `/root/bt-trace-keep/` with `SHA256SUMS`.
+> Private branches are being ported to `main` (§7 rule change, 2026-10-09).
 >
 > **Upstream, done:** BlueZ `shared/mgmt` series **applied 10-08**, the day it was sent, as
 > `ae23df052290` + `6f5eeb402d3b`, identical to what was sent (`git range-diff`: `=`). Luiz then
