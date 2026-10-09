@@ -10,7 +10,7 @@ A first-time reader should start with [`README.md`](../README.md) and
 
 
 **Purpose.** Every routine question in this project already has a tool. Hand-typing
-the pipeline instead is slower, costs a permission prompt, and has repeatedly been
+the pipeline instead is slower and has repeatedly been
 *wrong* in ways the tool is not — a `tail -4` that hid the answer, a `grep -c`
 that emitted two zeros, a timeout pattern that matched 8 of 173 events.
 
@@ -97,7 +97,7 @@ run `bluetoothd -d` — this project ships that on in
 | Validate + scan + drift + install state | `devtools/check` |
 | Commit, push and verify the remote matches | **`devtools/save <msgfile>`** (wraps `repo-save`: validates, scans content and message, refuses a tool author/committer identity, verifies the remote). **On a `kernel/*`, `plan/*`, `diag/*`, `review/*`, `attribution/*`, `postponed/*` or `config/*` branch it pushes to the `private` remote, never `origin`**, and refuses if no `private` remote exists (`scripts/prove-held-branch-guard.sh`) |
 | **The held `kernel/*` branch**: where it stands, merge main into it, commit on it, push it — without git chains | `devtools/held status \| sync \| commit <msgfile> \| edit` — always returns to `main`; pushes only to `private`; regenerates the exhibit index when the merge conflicts there |
-| **What did CI say about a commit?** | `devtools/ci [sha]`, `--wait`, `--recent N` — never a hand-typed `until gh run list … \| grep` loop; that prompted every time and read as "Parse error" |
+| **What did CI say about a commit?** | `devtools/ci [sha]`, `--wait`, `--recent N` — never a hand-typed `until gh run list … \| grep` loop; it read as "Parse error" |
 | Did a **green** run hide anything (a missing tool, a swallowed error)? | `scripts/ci-log-search.sh <sha\|run-id> "<pattern>"` — the full log, not the failed step; found `rg: command not found` ×3 in a green run on 2026-09-20 |
 | **Is a BlueZ CI-bot failure ours?** | `scripts/patchwork-checks.sh --failed-functional N` — which functional tests failed on the N most recent bluetooth patches, from the bot's own patchwork comments; `--patch ID` for one patch's check states; **`--rate CONTEXT [N] [BEFORE]`** — one check's fail/success count over the N most recent patches carrying it (e.g. `TestRunner_mesh-tester`: 20 of 20 kernel patches 09-19 → 09-27 fail, ours among them). Settled the 09-19 `TestFunctional` failure in one run (12 unrelated patches, same two tests). `lore` blocks `curl`; patchwork's API does not |
 | **How does BlueZ actually treat bot failures?** (accepted series' check states, respins, commenters) | `scripts/bluez-accepted-survey.py [PAGES]` → cached under `tmp/patchwork/survey/`; then `scripts/bluez-human-ci-mentions.py` for what humans said about the CI; `scripts/git-log-tab-count.sh <tree> [N] [--list]` for tabs / long lines that landed in the tree |
@@ -107,7 +107,7 @@ run `bluetoothd -d` — this project ships that on in
 | **Before mailing any patch: is it already upstream, and does it apply to today's master?** | `scripts/pre-send-check.sh <tree> <patch>…` — fetches `origin`, greps the subject in the log (a folded `Subject:` is unfolded), apply-checks the files **in the order given, as a series** against `origin/master`; says `OK to send` or `DO NOT SEND`. An applicability check only — lint and tests are separate. Written after both BlueZ v2 mails went out 6.5 h after v1 had been applied; on 2026-10-07 the maintainer applied the a2dp v2 on top of its v1 anyway, which is why a lint-only respin is never sent |
 | Is a used app password really revoked? | `BT_SMTP_PASS='…' scripts/smtp-login-check.sh 587 tls` — login only, sends nothing; `REVOKED 535` / `ALIVE` / `INCONCLUSIVE` (a dropped connection is never read as revoked). Without arguments it uses the config's 465, where Gmail closed every check mid-AUTH on 2026-10-08; 587 answered |
 | Read a saved Gmail message (HTML) as greppable text | `scripts/mail-html-to-text.sh <saved.html>` → `tmp/<name>.txt` — how the bot's backtraces were read |
-| **Why is CI red?** | `devtools/ci --failed [sha]` — prints the failing invariants and any stale coverage exclusion with the lines it hid; a red `--wait` does this automatically. Never `gh run view … --log-failed \| grep`: that prompted three times on 2026-09-19/20 and blocked an unattended session for an hour |
+| **Why is CI red?** | `devtools/ci --failed [sha]` — prints the failing invariants and any stale coverage exclusion with the lines it hid; a red `--wait` does this automatically |
 | Did the BlueZ patch guards fire? | `tools/bt-guards` |
 | What did the **kernel** say on the management channel in a window of a capture? | `tools/bt-ctrl-window <btsnoop> <from> <to> [--hci]` — decodes the records `btmon` prints as `Control Event: 0xffff`, drops every address-bearing line (`EX-044`) |
 | Publish-safety scan (MACs, BSSIDs, emails) | `devtools/repo-scan` |
@@ -165,7 +165,7 @@ an already-wedged controller off the USB bus until power is removed.
 
 ---
 
-## Writing commands so they do not prompt
+## Writing commands
 
 ⚠️ **Let journald do the filtering, or the scan is both too slow AND too narrow.**
 `journalctl --since … | grep X` over this machine's journal walks ~19 days of
@@ -177,37 +177,26 @@ over one boot — which reported "the patch guard never fired" when it had fired
 four times (`EX-041`). The too-slow scan and the false conclusion were the same
 mistake.
 
-⚠️ **The allowlist is not the bottleneck, and measuring this settled it.** On
-2026-09-13 the operator asked for fewer permission prompts. **364 entries were
-already granted**, `journalctl *` and `tools/*` among them. A tally of 3,584
-Bash calls across this project's transcripts found **2,344 — 65% — containing a
-pipe, `&&`, `$(...)` or a redirect**, and the matcher cannot analyse compound
-shell, so every one of those prompts *however broad the allowlist is*. 226 were
-the same question, now answered by `bt-fault-window` in one call.
+**A repeated question becomes a file, not a pipeline.** A file under `tools/`,
+`devtools/` or `scripts/` is reviewed, versioned and re-runnable, and an exhibit
+can cite it; a hand-typed pipeline is none of these. Of the commands typed on this
+project up to 2026-09-13, two thirds were compound shell, and 226 asked one
+question that `bt-fault-window` now answers in one call. `scripts/` (added
+2026-09-19, see its README) is for helpers and proofs that are not yet tools;
+their outputs go to `tmp/` (ignored) and third-party sources to `cache/`
+(ignored), never to a system temporary directory, which vanishes with a reboot.
 
-**So the fix is never another permission entry. It is a file under `tools/`,
-`devtools/` or `scripts/`, all of which are granted — a new script there costs
-zero new permissions for ever.** `scripts/` (added 2026-09-19, see its README) is
-for helpers and proofs that are not yet tools; their outputs go to `tmp/`
-(ignored) and third-party sources to `cache/` (ignored). Neither the session's
-`/tmp` scratchpad nor an inline pipeline: the first vanished with a reboot, the
-second prompts every time and can leave an unattended session stuck for hours.
-
-The permission matcher cannot analyse compound shell, so such a command matches
-no allow rule and prompts **every time**. Keep calls simple:
+Keep commands simple:
 
 - one command per call; no `&&`, `;`, `$(...)`, loops, or variable assignment
 - need several steps? put them in a script and invoke it by path
 - **no redirects and no trailing `| tail -N`** — if output needs trimming, the
-  script should trim it. A pipe added for tidiness costs a prompt every run.
+  script should trim it, and print everything when something failed.
 - ⚠️ **check whether the tool already does the step you are prefixing.**
   `git add -A; devtools/repo-save …` was typed for weeks; `repo-save` stages
-  first thing on its own. The redundant `git add` is what dragged `git` into the
-  command and tripped the *cd-before-git* rule on top of everything else.
-- **never** `git commit -m "<long message>"` — a body line starting with `#`
-  (a stack frame `#0 …`, an issue ref) makes the call permanently ungrantable.
-  Write the message to a file with the Write tool, then
-  `devtools/repo-save . -F <file>`
+  first thing on its own.
+- **never** `git commit -m "<long message>"` — write the message to a file, then
+  `devtools/save <file>`
 - use `git -C <dir> …`, never `cd <dir> && git …`
 
 ## Communication

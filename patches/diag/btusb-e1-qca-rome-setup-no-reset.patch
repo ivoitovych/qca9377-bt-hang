@@ -1,0 +1,77 @@
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -29,7 +29,10 @@
+ #include "btrtl.h"
+ #include "btmtk.h"
+ 
+-#define VERSION "0.8"
++/* DIAGNOSTIC BUILD E1 (qca9377-bt-hang), not for upstream: 13d3:3503 gets the
++ * QCA ROME setup path without the timeout-reset callback; see btusb_setup_qca().
++ */
++#define VERSION "0.8-e1"
+ 
+ static bool disable_scofix;
+ static bool force_scofix;
+@@ -298,6 +301,10 @@
+ 						     BTUSB_WIDEBAND_SPEECH },
+ 	{ USB_DEVICE(0x13d3, 0x3501), .driver_info = BTUSB_QCA_ROME |
+ 						     BTUSB_WIDEBAND_SPEECH },
++	/* E1: QCA ROME setup only. No BTUSB_WIDEBAND_SPEECH, so wideband
++	 * behaves as on the stock generic entry the failures ran under.
++	 */
++	{ USB_DEVICE(0x13d3, 0x3503), .driver_info = BTUSB_QCA_ROME },
+ 
+ 	/* QCA WCN6855 chipset */
+ 	{ USB_DEVICE(0x0489, 0xe0c7), .driver_info = BTUSB_QCA_WCN6855 |
+@@ -3656,6 +3663,9 @@
+ 		return err;
+ 
+ 	ver_rom = le32_to_cpu(ver.rom_version);
++	bt_dev_info(hdev, "E1: before setup: rom 0x%08x patch 0x%08x ram 0x%08x",
++		    ver_rom, le32_to_cpu(ver.patch_version),
++		    le32_to_cpu(ver.ram_version));
+ 
+ 	for (i = 0; i < ARRAY_SIZE(qca_devices_table); i++) {
+ 		if (ver_rom == qca_devices_table[i].rom_version)
+@@ -3678,8 +3688,13 @@
+ 	if (err < 0)
+ 		return err;
+ 
++	bt_dev_info(hdev, "E1: status 0x%02x: rampatch %s, nvm %s", status,
++		    (status & QCA_PATCH_UPDATED) ? "already present" : "will load",
++		    (status & QCA_SYSCFG_UPDATED) ? "already present" : "will load");
++
+ 	if (!(status & QCA_PATCH_UPDATED)) {
+ 		err = btusb_setup_qca_load_rampatch(hdev, &ver, info);
++		bt_dev_info(hdev, "E1: rampatch load returned %d", err);
+ 		if (err < 0)
+ 			return err;
+ 	}
+@@ -3692,8 +3707,12 @@
+ 	btdata->qca_dump.fw_version = le32_to_cpu(ver.patch_version);
+ 	btdata->qca_dump.controller_id = le32_to_cpu(ver.rom_version);
+ 
++	bt_dev_info(hdev, "E1: after rampatch: rom 0x%08x patch 0x%08x",
++		    le32_to_cpu(ver.rom_version), le32_to_cpu(ver.patch_version));
++
+ 	if (!(status & QCA_SYSCFG_UPDATED)) {
+ 		err = btusb_setup_qca_load_nvm(hdev, &ver, info);
++		bt_dev_info(hdev, "E1: nvm load returned %d", err);
+ 		if (err < 0)
+ 			return err;
+ 
+@@ -4331,7 +4350,13 @@
+ 		data->setup_on_usb = btusb_setup_qca;
+ 		hdev->shutdown = btusb_shutdown_qca;
+ 		hdev->set_bdaddr = btusb_set_bdaddr_ath3012;
+-		hdev->reset = btusb_qca_reset;
++		/* E1: no automatic reset-on-timeout for 13d3:3503, so a failure
++		 * and its treatment never land in the same trial.
++		 */
++		if (!(id->idVendor == 0x13d3 && id->idProduct == 0x3503))
++			hdev->reset = btusb_qca_reset;
++		else
++			bt_dev_info(hdev, "E1: 13d3:3503 QCA ROME setup, no reset callback");
+ 		hci_set_quirk(hdev, HCI_QUIRK_SIMULTANEOUS_DISCOVERY);
+ 		btusb_check_needs_reset_resume(intf);
+ 	}

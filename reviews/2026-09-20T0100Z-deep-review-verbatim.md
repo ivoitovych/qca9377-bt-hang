@@ -1,16 +1,19 @@
 # Deep Review of `ivoitovych/qca9377-bt-hang`
 
+*(Reproduced verbatim, except that inline citation markers, which carried no content, were
+removed on 2026-10-09.)*
+
 ## Executive summary
 
-[`ivoitovych/qca9377-bt-hang`](https://github.com/ivoitovych/qca9377-bt-hang) is not primarily a conventional software project; it is a **forensic hardware/driver investigation packaged as a reproducible evidence repository**, with a substantial diagnostics and experiment-control toolkit built around the investigation. Its target is a Qualcomm Atheros QCA9377 Bluetooth controller exposed as IMC Networks USB device `13d3:3503` on Linux. The observed failure is unusually severe: during transparent synchronous audio, normally mSBC/wideband speech, Linux `btusb` selects USB alternate setting 1, transfers 27-byte SCO buffers through a 9-byte isochronous endpoint as three packets, and the first subsequently observed HCI command receives no reply. Once this happens, the controller has also failed USB control transfers and has generally required removal of power to recover. The repository reports seven reproductions across three 7.0-series Ubuntu kernels, two headset vendors, and both modified and stock USB power-management configurations. fileciteturn11file0L2-L2
+[`ivoitovych/qca9377-bt-hang`](https://github.com/ivoitovych/qca9377-bt-hang) is not primarily a conventional software project; it is a **forensic hardware/driver investigation packaged as a reproducible evidence repository**, with a substantial diagnostics and experiment-control toolkit built around the investigation. Its target is a Qualcomm Atheros QCA9377 Bluetooth controller exposed as IMC Networks USB device `13d3:3503` on Linux. The observed failure is unusually severe: during transparent synchronous audio, normally mSBC/wideband speech, Linux `btusb` selects USB alternate setting 1, transfers 27-byte SCO buffers through a 9-byte isochronous endpoint as three packets, and the first subsequently observed HCI command receives no reply. Once this happens, the controller has also failed USB control transfers and has generally required removal of power to recover. The repository reports seven reproductions across three 7.0-series Ubuntu kernels, two headset vendors, and both modified and stock USB power-management configurations.
 
-The project's strongest technical result is **not yet a root cause**. It has narrowed a vague “Bluetooth hangs” report into a reproducible correlation around the Linux wideband-SCO alternate-setting path. In particular, the repository correctly withdrew an earlier interpretation that `len 27 mtu 9` meant a 27-byte packet was overflowing a 9-byte endpoint; Linux's isochronous descriptor filling splits the buffer into several transactions. It also established that `HCI_Setup_Synchronous_Connection` (`0x0428`) usually succeeds, data flows, and the important boundary is the first HCI command observed after the transparent stream begins. fileciteturn15file0L2-L2
+The project's strongest technical result is **not yet a root cause**. It has narrowed a vague “Bluetooth hangs” report into a reproducible correlation around the Linux wideband-SCO alternate-setting path. In particular, the repository correctly withdrew an earlier interpretation that `len 27 mtu 9` meant a 27-byte packet was overflowing a 9-byte endpoint; Linux's isochronous descriptor filling splits the buffer into several transactions. It also established that `HCI_Setup_Synchronous_Connection` (`0x0428`) usually succeeds, data flows, and the important boundary is the first HCI command observed after the transparent stream begins.
 
-The strongest regression candidate is upstream Linux commit [`517b693351a2`](https://github.com/torvalds/linux/commit/517b693351a2d04f3af1fc0e506ac7e1346094de), “Bluetooth: btusb: Always fallback to alt 1 for WBS.” That change made alternate-setting 1 the generic fallback when alternate setting 6 is unavailable. The patch author's rationale explicitly depended on the empirical assumption that alt 1 works for adapters lacking alt 6; the QCA9377 device here has alternates 1–5 but no 6, making it a plausible counterexample. The change was incorporated for v5.12; the repository identifies v5.8–v5.11 as the clean historical control window because earlier kernels can reach alt 1 by a different mechanism. citeturn4search8turn4search5 fileciteturn12file0L2-L2
+The strongest regression candidate is upstream Linux commit [`517b693351a2`](https://github.com/torvalds/linux/commit/517b693351a2d04f3af1fc0e506ac7e1346094de), “Bluetooth: btusb: Always fallback to alt 1 for WBS.” That change made alternate-setting 1 the generic fallback when alternate setting 6 is unavailable. The patch author's rationale explicitly depended on the empirical assumption that alt 1 works for adapters lacking alt 6; the QCA9377 device here has alternates 1–5 but no 6, making it a plausible counterexample. The change was incorporated for v5.12; the repository identifies v5.8–v5.11 as the clean historical control window because earlier kernels can reach alt 1 by a different mechanism.
 
-There is, however, an important 2026 development that substantially changes what should be tested next. Linux commit [`dc16388d45ec`](https://github.com/torvalds/linux/commit/dc16388d45ecbd3be0d8c9424dbbaa2c81806578), committed on August 7, 2026, added `13d3:3503` to the QCA ROME `btusb` quirks table with `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH`. Current upstream source therefore no longer has the “missing device ID” condition present in all of the project's tested kernels. That upstream addition was motivated by a different BLE-scanning problem, and the repository has **not tested the Bluetooth-audio fault on a kernel containing this new quirk**. This is now the highest-value missing experiment. citeturn4search12turn3search0 fileciteturn12file0L2-L2
+There is, however, an important 2026 development that substantially changes what should be tested next. Linux commit [`dc16388d45ec`](https://github.com/torvalds/linux/commit/dc16388d45ecbd3be0d8c9424dbbaa2c81806578), committed on August 7, 2026, added `13d3:3503` to the QCA ROME `btusb` quirks table with `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH`. Current upstream source therefore no longer has the “missing device ID” condition present in all of the project's tested kernels. That upstream addition was motivated by a different BLE-scanning problem, and the repository has **not tested the Bluetooth-audio fault on a kernel containing this new quirk**. This is now the highest-value missing experiment.
 
-The repository itself is unusually rigorous in evidence retention, explicit retractions, fixtures, instrumentation, privacy sanitization, and test coverage. At the same time, it has accumulated significant complexity very quickly: roughly 4.9 MB by GitHub's repository-size metric, hundreds of commits since August 10, 2026, approximately 776 tracked files in the latest CI checkout, large shell/AWK tooling, extensive review branches, and a very large monolithic shell test runner. The latest inspected GitHub Actions run on `main` was **red**, even though all 810 reported invariants passed: the subsequent coverage gate failed because an exclusion had become stale. More seriously, its log also exposed a false-green dependency problem: several `rg`-based assertions emitted `rg: command not found` yet still passed because the test expressions used `|| true`. This is a concrete maintainability defect and contradicts the project's own principle that analysis failures should fail loudly. fileciteturn20file0L2-L2 fileciteturn21file0L2-L2 fileciteturn24file0L2-L2
+The repository itself is unusually rigorous in evidence retention, explicit retractions, fixtures, instrumentation, privacy sanitization, and test coverage. At the same time, it has accumulated significant complexity very quickly: roughly 4.9 MB by GitHub's repository-size metric, hundreds of commits since August 10, 2026, approximately 776 tracked files in the latest CI checkout, large shell/AWK tooling, extensive review branches, and a very large monolithic shell test runner. The latest inspected GitHub Actions run on `main` was **red**, even though all 810 reported invariants passed: the subsequent coverage gate failed because an exclusion had become stale. More seriously, its log also exposed a false-green dependency problem: several `rg`-based assertions emitted `rg: command not found` yet still passed because the test expressions used `|| true`. This is a concrete maintainability defect and contradicts the project's own principle that analysis failures should fail loudly.
 
 My overall assessment is therefore:
 
@@ -31,7 +34,7 @@ My overall assessment is therefore:
 
 ### Purpose and architecture
 
-The repository has three intertwined roles. It is an **evidence archive**, a **measurement/diagnostics suite**, and an **upstream-development staging area**. Its README explicitly separates these into evidence, workaround experiments, and the eventual “real fix.” fileciteturn11file0L2-L2
+The repository has three intertwined roles. It is an **evidence archive**, a **measurement/diagnostics suite**, and an **upstream-development staging area**. Its README explicitly separates these into evidence, workaround experiments, and the eventual “real fix.”
 
 The architecture can be summarized as follows:
 
@@ -64,7 +67,7 @@ flowchart TD
     ANALYSIS --> TEST
 ```
 
-This separation is one of the repository's best design decisions. The author repeatedly distinguishes **what was observed**, **what is inferred**, **what has been retracted**, and **what constitutes an intervention**. For a difficult intermittent hardware problem, this is far more scientifically useful than a conventional issue thread containing evolving unversioned hypotheses. fileciteturn15file0L2-L2
+This separation is one of the repository's best design decisions. The author repeatedly distinguishes **what was observed**, **what is inferred**, **what has been retracted**, and **what constitutes an intervention**. For a difficult intermittent hardware problem, this is far more scientifically useful than a conventional issue thread containing evolving unversioned hypotheses.
 
 ### Main components and key files
 
@@ -89,13 +92,13 @@ The practical entry points are:
 | `patches/bluez/` | Two submitted BlueZ crash fixes | Separate from controller wedge |
 | `.github/workflows/checks.yml` | CI policy | Ambitious multi-layer CI |
 
-The implementation is primarily **Shell**, with AWK used for analysis and a small amount of Python for capture-related functionality. GitHub currently identifies Shell as the primary language. The repository is licensed under **GPL-2.0** and GitHub reports a size of 4,898 KiB. fileciteturn14file0L2-L2
+The implementation is primarily **Shell**, with AWK used for analysis and a small amount of Python for capture-related functionality. GitHub currently identifies Shell as the primary language. The repository is licensed under **GPL-2.0** and GitHub reports a size of 4,898 KiB.
 
 ### Activity, commits and community signals
 
-The repository was created on **August 10, 2026** and was still being pushed late on **September 19, 2026**, so this is an extremely young and intensely active project. GitHub's commit pagination inspected during this review reached roughly **418 main-branch commits in about six weeks**, indicating very high churn rather than a mature/stable development cadence. The fetched recent history shows frequent evidence corrections, tooling fixes, CI fixes, documentation rewrites and review reactions rather than release-oriented development. Repository metadata currently reports **0 stars, 0 forks and 0 open issues**. fileciteturn14file0L2-L2
+The repository was created on **August 10, 2026** and was still being pushed late on **September 19, 2026**, so this is an extremely young and intensely active project. GitHub's commit pagination inspected during this review reached roughly **418 main-branch commits in about six weeks**, indicating very high churn rather than a mature/stable development cadence. The fetched recent history shows frequent evidence corrections, tooling fixes, CI fixes, documentation rewrites and review reactions rather than release-oriented development. Repository metadata currently reports **0 stars, 0 forks and 0 open issues**.
 
-Mainline authorship also appears highly concentrated around Iaroslav Voitovych. The repository has many `review/*`, `backup/*`, `tests/*` and evidence snapshot branches—23 branches were returned in the inspected branch listing—but all were unprotected, including `main`. This is understandable for a personal research notebook, but it is not the governance structure one would want if the project becomes a maintained Linux troubleshooting package. fileciteturn25file0L2-L2
+Mainline authorship also appears highly concentrated around Iaroslav Voitovych. The repository has many `review/*`, `backup/*`, `tests/*` and evidence snapshot branches—23 branches were returned in the inspected branch listing—but all were unprotected, including `main`. This is understandable for a personal research notebook, but it is not the governance structure one would want if the project becomes a maintained Linux troubleshooting package.
 
 Several commits are particularly important to understanding how the investigation evolved:
 
@@ -109,7 +112,7 @@ Several commits are particularly important to understanding how the investigatio
 | [`6ca042e`](https://github.com/ivoitovych/qca9377-bt-hang/commit/6ca042e0c55400c8715b1a149d0d4e289a9f8f7e) | Makes several diagnostic tools probe-free by default after realizing they could themselves issue HCI commands during valuable untreated windows |
 | [`984706e`](https://github.com/ivoitovych/qca9377-bt-hang/commit/984706efc43f4e0066a27ca14e822ae61f6faff2) | Corrects two major narrative points: upstream now has the device quirk; 27/9 is packet splitting, not overflow |
 
-That history is simultaneously reassuring and cautionary. The maintainer is unusually willing to **retract wrong conclusions publicly**, which increases trust in the current state. But the volume of corrections demonstrates that readers should rely on current `BRIEF.md`/`README.md`/`docs/bug-report.md`, not old exhibits or historical prose without checking their correction banners. fileciteturn15file0L2-L2
+That history is simultaneously reassuring and cautionary. The maintainer is unusually willing to **retract wrong conclusions publicly**, which increases trust in the current state. But the volume of corrections demonstrates that readers should rely on current `BRIEF.md`/`README.md`/`docs/bug-report.md`, not old exhibits or historical prose without checking their correction banners.
 
 ## Technical analysis of the controller fault
 
@@ -145,7 +148,7 @@ sequenceDiagram
     Q-->>B: Controller recovers after cold power cycle
 ```
 
-Seven observed failures form the principal dataset: fileciteturn15file0L2-L2
+Seven observed failures form the principal dataset:
 
 | Exhibit | Kernel | Power policy | `len 27 mtu 9` buffers | Time to first observed command | Setup → timeout |
 |---|---|---|---:|---:|---:|
@@ -157,21 +160,21 @@ Seven observed failures form the principal dataset: fileciteturn15file0
 | EX-042 | 7.0.0-31 | Modified | 1,595 | ~90 ms | 2.147 s |
 | EX-043 | 7.0.0-31 | **Stock** | 910 | **9.650 s** | **11.874 s** |
 
-`EX-043` is especially important. The stream ran for about 9.65 seconds before the first observed HCI command. The timeout then followed approximately one command-timeout interval later. Thus the earlier cluster around ~2.15 seconds was not a device-internal “death timer”; it mostly reflected userspace tearing the synchronous connection down almost immediately after setup. fileciteturn17file0L2-L2
+`EX-043` is especially important. The stream ran for about 9.65 seconds before the first observed HCI command. The timeout then followed approximately one command-timeout interval later. Thus the earlier cluster around ~2.15 seconds was not a device-internal “death timer”; it mostly reflected userspace tearing the synchronous connection down almost immediately after setup.
 
-The project has also observed a CVSD/narrowband synchronous path operating successfully with a larger endpoint MTU. Consequently, the evidence does **not** support the broad statement “QCA9377 SCO is broken.” The narrower transparent/WBS/alt-1 path is the meaningful discriminator. fileciteturn17file0L2-L2
+The project has also observed a CVSD/narrowband synchronous path operating successfully with a larger endpoint MTU. Consequently, the evidence does **not** support the broad statement “QCA9377 SCO is broken.” The narrower transparent/WBS/alt-1 path is the meaningful discriminator.
 
 ### What is not established
 
 Four causal questions remain open.
 
-First, the evidence does **not prove that the first HCI command causes the hang**. It proves that this is the first operation observed failing. The controller may already have entered an internal dead state because of the preceding isochronous traffic, with the first command merely acting as the liveness probe that reveals it. The repository explicitly preserves this distinction. fileciteturn15file0L2-L2
+First, the evidence does **not prove that the first HCI command causes the hang**. It proves that this is the first operation observed failing. The controller may already have entered an internal dead state because of the preceding isochronous traffic, with the first command merely acting as the liveness probe that reveals it. The repository explicitly preserves this distinction.
 
-Second, there is no controlled same-kernel A/B experiment in which alt 1 is deliberately allowed versus deliberately prohibited while every other variable is held constant. The current association—seven failures with the characteristic path and one short survival—is compelling, but remains observational. fileciteturn15file0L2-L2
+Second, there is no controlled same-kernel A/B experiment in which alt 1 is deliberately allowed versus deliberately prohibited while every other variable is held constant. The current association—seven failures with the characteristic path and one short survival—is compelling, but remains observational.
 
-Third, there is no evidence identifying the precise controller-side mechanism. Plausible classes include a QCA firmware state-machine bug, an interaction between transparent SCO framing and this USB endpoint configuration, or another device-side queue/state problem. None has yet been discriminated experimentally. fileciteturn17file0L2-L2
+Third, there is no evidence identifying the precise controller-side mechanism. Plausible classes include a QCA firmware state-machine bug, an interaction between transparent SCO framing and this USB endpoint configuration, or another device-side queue/state problem. None has yet been discriminated experimentally.
 
-Fourth, the effect of **proper QCA firmware initialization in current upstream Linux is unknown**. This is now critical because the newest upstream quirk causes `btusb_setup_qca()` to run for this USB ID; all of the project's reproductions were on kernels lacking that mapping. fileciteturn12file0L2-L2 citeturn4search12turn3search0
+Fourth, the effect of **proper QCA firmware initialization in current upstream Linux is unknown**. This is now critical because the newest upstream quirk causes `btusb_setup_qca()` to run for this USB ID; all of the project's reproductions were on kernels lacking that mapping.
 
 ### The two relevant upstream kernel changes
 
@@ -188,7 +191,7 @@ timeline
     2026-09 : current investigation still lacks a run with dc16388d45ec present
 ```
 
-The first change, [`517b693351a2`](https://github.com/torvalds/linux/commit/517b693351a2d04f3af1fc0e506ac7e1346094de), converted lack of alternate setting 6 into a fallback to alt 1 for WBS. The original patch discussion says many adapters did not have alt 6 and records the author's observation that alt 1 seemed to work for adapters supporting WBS. That makes a device-specific incompatibility with alt 1 a credible regression hypothesis—not proof, but a technically well-motivated one. citeturn4search8turn4search5
+The first change, [`517b693351a2`](https://github.com/torvalds/linux/commit/517b693351a2d04f3af1fc0e506ac7e1346094de), converted lack of alternate setting 6 into a fallback to alt 1 for WBS. The original patch discussion says many adapters did not have alt 6 and records the author's observation that alt 1 seemed to work for adapters supporting WBS. That makes a device-specific incompatibility with alt 1 a credible regression hypothesis—not proof, but a technically well-motivated one.
 
 The second change, [`dc16388d45ec`](https://github.com/torvalds/linux/commit/dc16388d45ecbd3be0d8c9424dbbaa2c81806578), adds:
 
@@ -197,17 +200,17 @@ The second change, [`dc16388d45ec`](https://github.com/torvalds/linux/commit/dc1
                                              BTUSB_WIDEBAND_SPEECH },
 ```
 
-to the current upstream driver's quirk table. That activates the QCA-specific setup/reset/shutdown machinery that the investigation's tested kernels lacked. Current `btusb.c` contains the entry. citeturn4search12turn3search0
+to the current upstream driver's quirk table. That activates the QCA-specific setup/reset/shutdown machinery that the investigation's tested kernels lacked. Current `btusb.c` contains the entry.
 
-This dramatically changes the interpretation of the repository's earlier “missing quirk” work. The missing entry was a **real defect in the kernels tested**, and plausibly explains why those kernels had neither QCA initialization nor a reset callback. It should no longer be presented as the proposed upstream fix, however, because upstream has already independently made the change—and for another observed problem. The repository now says this explicitly. fileciteturn12file0L2-L2
+This dramatically changes the interpretation of the repository's earlier “missing quirk” work. The missing entry was a **real defect in the kernels tested**, and plausibly explains why those kernels had neither QCA initialization nor a reset callback. It should no longer be presented as the proposed upstream fix, however, because upstream has already independently made the change—and for another observed problem. The repository now says this explicitly.
 
 ### Why recovery results require caution
 
 The evidence around resetting the controller is one of the project's more important findings.
 
-Long untreated wedges have remained USB-enumerated for hours. `EX-029`, for example, observed more than 13 hours without spontaneous USB-layer collapse. By contrast, several attempted resets/rebinds/reloads of an already-wedged controller were followed by USB enumeration failure. Thus “USB disappearance” cannot currently be assumed to be the natural second stage of the original fault. fileciteturn17file0L2-L2
+Long untreated wedges have remained USB-enumerated for hours. `EX-029`, for example, observed more than 13 hours without spontaneous USB-layer collapse. By contrast, several attempted resets/rebinds/reloads of an already-wedged controller were followed by USB enumeration failure. Thus “USB disappearance” cannot currently be assumed to be the natural second stage of the original fault.
 
-This matters because `BTUSB_QCA_ROME` installs `hdev->reset = btusb_qca_reset`, and the HCI core can invoke the driver's reset callback when a command times out. The project's userspace reset experiments were mostly **late**—roughly 11–33 seconds after the first timeout or much later—whereas the kernel callback would happen at the first timeout. Those are not equivalent experiments. One reset performed before any timeout did recover service, although the controller failed again later. fileciteturn16file0L2-L2
+This matters because `BTUSB_QCA_ROME` installs `hdev->reset = btusb_qca_reset`, and the HCI core can invoke the driver's reset callback when a command times out. The project's userspace reset experiments were mostly **late**—roughly 11–33 seconds after the first timeout or much later—whereas the kernel callback would happen at the first timeout. Those are not equivalent experiments. One reset performed before any timeout did recover service, although the controller failed again later.
 
 Accordingly:
 
@@ -228,13 +231,13 @@ The most useful compatibility table is not simply “old versus new.” There ar
 | Ubuntu 7.0.0-29/-30/-31 | Post-v5.12 behavior | No new quirk entry in project environment | **Seven detailed signature reproductions** | Strongest existing data |
 | Current upstream after `dc16388d45ec` | Post-v5.12 alt-1 behavior remains | **QCA ROME + WBS now present** | **Untested by project** | Highest-priority environment to test |
 
-The version-history analysis for the alternate settings comes from source comparison recorded by the project and the upstream WBS fallback patch; the current quirk is independently visible in upstream Linux. fileciteturn12file0L2-L2 citeturn4search8turn3search0
+The version-history analysis for the alternate settings comes from source comparison recorded by the project and the upstream WBS fallback patch; the current quirk is independently visible in upstream Linux.
 
-A crucial deployment consequence follows: **kernel version alone is no longer enough to predict behavior.** Distribution kernels frequently backport device-ID fixes. The reliable procedure is to inspect the actual `btusb` source/module or runtime setup logs for the `13d3:3503` QCA entry rather than assuming a particular distro release does or does not contain `dc16388d45ec`. The repository's `bt-verify-kernel-mechanism` exists partly for this reason. fileciteturn12file0L2-L2
+A crucial deployment consequence follows: **kernel version alone is no longer enough to predict behavior.** Distribution kernels frequently backport device-ID fixes. The reliable procedure is to inspect the actual `btusb` source/module or runtime setup logs for the `13d3:3503` QCA entry rather than assuming a particular distro release does or does not contain `dc16388d45ec`. The repository's `bt-verify-kernel-mechanism` exists partly for this reason.
 
 ### Firmware implications
 
-`BTUSB_QCA_ROME` does much more than provide a reset callback. The repository's source analysis records that it configures QCA-specific USB setup, shutdown, BD-address handling, simultaneous-discovery behavior and reset/resume behavior. Most importantly for root-cause work, `btusb_setup_qca()` can load QCA rampatch/NVM firmware. fileciteturn16file0L2-L2
+`BTUSB_QCA_ROME` does much more than provide a reset callback. The repository's source analysis records that it configures QCA-specific USB setup, shutdown, BD-address handling, simultaneous-discovery behavior and reset/resume behavior. Most importantly for root-cause work, `btusb_setup_qca()` can load QCA rampatch/NVM firmware.
 
 That creates two materially different hypotheses:
 
@@ -248,13 +251,13 @@ The current evidence cannot distinguish these. Testing a modern tree containing 
 
 For an affected production system today, I would rank options as follows:
 
-**Safest:** avoid the triggering wideband hands-free mode. A2DP playback does not exercise SCO in the same way, and the repository has positive evidence that CVSD/narrowband synchronous audio can operate without the signature. That is a loss of voice quality or functionality, but it does not deliberately reset a controller known to react badly to some recovery attempts. fileciteturn17file0L2-L2
+**Safest:** avoid the triggering wideband hands-free mode. A2DP playback does not exercise SCO in the same way, and the repository has positive evidence that CVSD/narrowband synchronous audio can operate without the signature. That is a loss of voice quality or functionality, but it does not deliberately reset a controller known to react badly to some recovery attempts.
 
-**Next safest:** run only the repository's passive diagnostics, especially `bt-diagnose`, `bt-state`, `bt-status`, `bt-usbstate` and capture tooling in their non-probing modes. The project intentionally changed these tools to avoid sending HCI commands merely to ask “is it alive?” fileciteturn15file0L2-L2
+**Next safest:** run only the repository's passive diagnostics, especially `bt-diagnose`, `bt-state`, `bt-status`, `bt-usbstate` and capture tooling in their non-probing modes. The project intentionally changed these tools to avoid sending HCI commands merely to ask “is it alive?”
 
-**Experimental:** test a kernel containing the new upstream QCA quirk after a cold boot, preferably on noncritical hardware and with complete logging from startup. The new tree changes both firmware initialization and reset behavior and therefore must be treated as an experiment rather than an assumed fix. citeturn4search12
+**Experimental:** test a kernel containing the new upstream QCA quirk after a cold boot, preferably on noncritical hardware and with complete logging from startup. The new tree changes both firmware initialization and reset behavior and therefore must be treated as an experiment rather than an assumed fix.
 
-**Not recommended on a valuable machine:** installing the repository's active watchdog and letting it automatically reset/rebind a wedged controller. The README itself warns that the watchdog's recovery operation has produced destructive outcomes in controlled experiments and recommends `--tools-only` on a measurement machine. fileciteturn11file0L2-L2
+**Not recommended on a valuable machine:** installing the repository's active watchdog and letting it automatically reset/rebind a wedged controller. The README itself warns that the watchdog's recovery operation has produced destructive outcomes in controlled experiments and recommends `--tools-only` on a measurement machine.
 
 ## Code quality, testing, documentation and security assessment
 
@@ -262,13 +265,13 @@ For an affected production system today, I would rank options as follows:
 
 The repository has several uncommon strengths.
 
-Its best feature is **epistemic discipline**. `BRIEF.md` contains an explicit “settled,” “not settled” and “retracted” model. Major mistakes—including the meaning of the 27/9 transfer sizes, an earlier incorrect trigger interpretation, autosuspend correlation, a copied boot ID and misinterpretation of event identifiers—remain documented rather than silently disappearing. fileciteturn15file0L2-L2
+Its best feature is **epistemic discipline**. `BRIEF.md` contains an explicit “settled,” “not settled” and “retracted” model. Major mistakes—including the meaning of the 27/9 transfer sizes, an earlier incorrect trigger interpretation, autosuspend correlation, a copied boot ID and misinterpretation of event identifiers—remain documented rather than silently disappearing.
 
-The tooling architecture also improved materially over time. Journal-reading tools share a fixtureable abstraction rather than hard-coding `journalctl`; coredump access has a similar seam; evidence captures are sanitized; analysis tools can be run against fixtures; and tests explicitly prevent themselves from writing fabricated data into the real evidence tree. fileciteturn19file0L2-L2
+The tooling architecture also improved materially over time. Journal-reading tools share a fixtureable abstraction rather than hard-coding `journalctl`; coredump access has a similar seam; evidence captures are sanitized; analysis tools can be run against fixtures; and tests explicitly prevent themselves from writing fabricated data into the real evidence tree.
 
-The test philosophy is unusually strong for shell tooling: the project requires tests to correspond to actual previously shipped defects and tries to demonstrate that new tests fail when the protected behavior is broken. It also separates a dangerous install/uninstall system round-trip from ordinary hermetic tests and runs that real system test only under explicit gates. fileciteturn19file0L2-L2
+The test philosophy is unusually strong for shell tooling: the project requires tests to correspond to actual previously shipped defects and tries to demonstrate that new tests fail when the protected behavior is broken. It also separates a dangerous install/uninstall system round-trip from ordinary hermetic tests and runs that real system test only under explicit gates.
 
-CI is similarly ambitious. The workflow includes syntax/validation checks, the behavioral suite, shell coverage, AWK statement coverage, Python coverage, per-tool comprehensiveness, journal-contract testing, installation round-trip testing and a publish/privacy scan. fileciteturn20file0L2-L2
+CI is similarly ambitious. The workflow includes syntax/validation checks, the behavioral suite, shell coverage, AWK statement coverage, Python coverage, per-tool comprehensiveness, journal-contract testing, installation round-trip testing and a publish/privacy scan.
 
 ### Maintainability concerns
 
@@ -278,7 +281,7 @@ A related problem is centralization in `tests/run-tests`. Although the suite is 
 
 That CI run exposes two concrete issues.
 
-First, current `main` was **not green** at the latest inspected head. `repo-validate` succeeded and all **810 invariants** reported success, but the separate coverage stage failed because `devtools/coverage-exclude` listed code that had started executing. Every later stage was therefore skipped. fileciteturn21file0L2-L2
+First, current `main` was **not green** at the latest inspected head. `repo-validate` succeeded and all **810 invariants** reported success, but the separate coverage stage failed because `devtools/coverage-exclude` listed code that had started executing. Every later stage was therefore skipped.
 
 Second—and more concerning—the same log printed `rg: command not found` while several `rg`-dependent checks still received a green tick. The implementation explains why:
 
@@ -289,9 +292,9 @@ if [[ -z "$retired" ]]; then
 fi
 ```
 
-and analogous code exists for other documentation assertions. With `rg` absent, command failure becomes empty output, which is indistinguishable from “no forbidden text found.” fileciteturn24file0L2-L2
+and analogous code exists for other documentation assertions. With `rg` absent, command failure becomes empty output, which is indistinguishable from “no forbidden text found.”
 
-That should be considered a **high-priority correctness bug in the test harness**. It is particularly notable because the project's own documented rule is that analysis failures must fail loudly rather than be converted into zero-result evidence. fileciteturn19file0L2-L2
+That should be considered a **high-priority correctness bug in the test harness**. It is particularly notable because the project's own documented rule is that analysis failures must fail loudly rather than be converted into zero-result evidence.
 
 The current CI environment also does not exercise every integration contract: the inspected log noted absent Bluetooth command-line utilities for some guarded paths and no retained coredump with which to validate the coredump fixture against a live tool. Thus “810 invariants pass” should not be read as complete platform validation.
 
@@ -299,7 +302,7 @@ The current CI environment also does not exercise every integration contract: th
 
 Documentation is both an exceptional strength and a weakness.
 
-The evidence provenance is much better than typical bug repositories, and the current-facing documents explicitly avoid claims that the data no longer support. Yet historical layers are so extensive that stale material remains easy to encounter. The most obvious example is [`docs/fix-proposal.md`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/docs/fix-proposal.md), whose title still frames adding `13d3:3503` to the QCA ROME table as the proposed fix even though current upstream has already done so and the project's front page explicitly says that one-line quirk is no longer considered the controller-wedge fix. fileciteturn16file0L2-L2 fileciteturn12file0L2-L2
+The evidence provenance is much better than typical bug repositories, and the current-facing documents explicitly avoid claims that the data no longer support. Yet historical layers are so extensive that stale material remains easy to encounter. The most obvious example is [`docs/fix-proposal.md`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/docs/fix-proposal.md), whose title still frames adding `13d3:3503` to the QCA ROME table as the proposed fix even though current upstream has already done so and the project's front page explicitly says that one-line quirk is no longer considered the controller-wedge fix.
 
 I would therefore treat documentation as having **high factual quality at the current-state layer, but substantial navigation/staleness risk across the full tree**.
 
@@ -307,9 +310,9 @@ I would therefore treat documentation as having **high factual quality at the cu
 
 The two BlueZ patches are a separate, positive outcome of the investigation.
 
-`0001` fixes a path where `start_discovery_complete()` can use a management reply before validating its length. `0002` prevents `transport_cb()` from handing a null `setup->stream` into code that dereferences it. The second guard was observed firing four times on the affected system, making it much stronger than a speculative NULL check; the first has supporting trace reconstruction but its new guard had not fired in ordinary use at the time of submission. Both were reported as applying cleanly to contemporary BlueZ, compiling, passing BlueZ's configured checkpatch rules, and applying independently in either order. They were sent as two independent messages to `linux-bluetooth` on September 19, 2026. fileciteturn18file0L2-L2
+`0001` fixes a path where `start_discovery_complete()` can use a management reply before validating its length. `0002` prevents `transport_cb()` from handing a null `setup->stream` into code that dereferences it. The second guard was observed firing four times on the affected system, making it much stronger than a speculative NULL check; the first has supporting trace reconstruction but its new guard had not fired in ordinary use at the time of submission. Both were reported as applying cleanly to contemporary BlueZ, compiling, passing BlueZ's configured checkpatch rules, and applying independently in either order. They were sent as two independent messages to `linux-bluetooth` on September 19, 2026.
 
-They should **not** be described as fixes for the QCA9377 hardware wedge. The repository has reproduced the controller failure with the patched daemon running. fileciteturn15file0L2-L2
+They should **not** be described as fixes for the QCA9377 hardware wedge. The repository has reproduced the controller failure with the patched daemon running.
 
 ### Security and stability risks
 
@@ -327,7 +330,7 @@ The repository itself nevertheless has several operational risks:
 | Current CI false-green dependency behavior | **Medium** | A missing analyzer can make some negative assertions pass |
 | Unprotected main / branch proliferation | **Low-medium for a personal repo** | Raises accidental-history and governance risk if collaboration increases |
 
-The project deserves credit for explicitly addressing several of these: log sanitization, publish scanning, 0600-style capture handling, probe-free defaults, fixture isolation and warnings around active installation. fileciteturn11file0L2-L2 fileciteturn20file0L2-L2
+The project deserves credit for explicitly addressing several of these: log sanitization, publish scanning, 0600-style capture handling, probe-free defaults, fixture isolation and warnings around active installation.
 
 ## Recommended fix strategy and prioritized actions
 
@@ -363,15 +366,15 @@ A useful ladder is:
 | E | **Yes** | No initially | **Blocked for this device** | Test whether alt 1 is causally necessary |
 | F | Same as E but alternate experimentally selected path | No | Different alt behavior | Only after descriptor/MTU requirements are understood |
 
-Build B is the most important. The current upstream device quirk combines initialization and recovery, but the repository's existing evidence warns that automatically resetting an already-wedged controller could censor or worsen the incident. Separating setup from reset allows the most valuable question—“did correct QCA firmware initialization prevent the wedge?”—to be answered without immediately invoking the most hazardous intervention. The reason for this separation is supported directly by the multi-behavior analysis in `docs/fix-proposal.md`. fileciteturn16file0L2-L2
+Build B is the most important. The current upstream device quirk combines initialization and recovery, but the repository's existing evidence warns that automatically resetting an already-wedged controller could censor or worsen the incident. Separating setup from reset allows the most valuable question—“did correct QCA firmware initialization prevent the wedge?”—to be answered without immediately invoking the most hazardous intervention. The reason for this separation is supported directly by the multi-behavior analysis in `docs/fix-proposal.md`.
 
 ### What a likely upstream controller fix should look like
 
 It is too early to recommend a final code diff, but the decision tree is now reasonably clear.
 
-If **Build B eliminates the failure**, the likely answer is not another WBS-alt-setting quirk at all; the 2026 QCA ROME device-table addition may already contain the effective prevention by ensuring correct firmware initialization. The next work would then be reproducing that result sufficiently and considering stable backports of `dc16388d45ec`. citeturn4search12
+If **Build B eliminates the failure**, the likely answer is not another WBS-alt-setting quirk at all; the 2026 QCA ROME device-table addition may already contain the effective prevention by ensuring correct firmware initialization. The next work would then be reproducing that result sufficiently and considering stable backports of `dc16388d45ec`.
 
-If the fault **persists with correct QCA firmware but disappears when alt 1 is prohibited**, then `13d3:3503` becomes strong evidence against the generic assumption introduced by `517b693351a2`. The right upstream fix would probably be a **device-specific or capability-driven WBS-alt-setting restriction**, not reverting the generic fallback for every Bluetooth USB adapter. citeturn4search8turn4search5
+If the fault **persists with correct QCA firmware but disappears when alt 1 is prohibited**, then `13d3:3503` becomes strong evidence against the generic assumption introduced by `517b693351a2`. The right upstream fix would probably be a **device-specific or capability-driven WBS-alt-setting restriction**, not reverting the generic fallback for every Bluetooth USB adapter.
 
 If the fault persists even when alt 1 is blocked, then the current central hypothesis is wrong or incomplete, and work should move toward transparent-SCO/HCI interaction more generally.
 
@@ -387,7 +390,7 @@ For end users who are not kernel developers, the practical order should be:
 4. Cold power-cycle after a wedge rather than repeatedly resetting/rebinding the already nonresponsive device.
 5. Consider hardware replacement where operational reliability matters more than preserving this controller; this is an engineering workaround, not evidence about fault attribution.
 
-The repository's own active watchdog should be regarded as an **experiment harness, not a production-grade cure**. fileciteturn11file0L2-L2
+The repository's own active watchdog should be regarded as an **experiment harness, not a production-grade cure**.
 
 ## Reproduction and validation plan
 
@@ -424,7 +427,7 @@ The repository's observed target sequence is then:
 10. Record HCI and USB-control liveness separately.
 ```
 
-This follows the strongest existing evidence while avoiding the project's earlier mistake of treating a liveness probe as passive observation. fileciteturn17file0L2-L2
+This follows the strongest existing evidence while avoiding the project's earlier mistake of treating a liveness probe as passive observation.
 
 ### Command-causality matrix
 
@@ -456,7 +459,7 @@ alt-1 blocked:
     do not produce controller non-response
 ```
 
-A “no failure” result must have positive controls showing that the intended stimulus was actually reached; the repository itself has already learned that counting SCO setup requests without proving the target path was active can produce a misleading clean result. fileciteturn19file0L2-L2
+A “no failure” result must have positive controls showing that the intended stimulus was actually reached; the repository itself has already learned that counting SCO setup requests without proving the target path was active can produce a misleading clean result.
 
 ### Firmware/init experiment
 
@@ -498,15 +501,15 @@ search succeeded, zero matches    => valid negative result
 search failed                     => test failure
 ```
 
-rather than converting both into an empty string with `|| true`. The currently inspected `tests/run-tests` code does not preserve that distinction for several `rg` checks. fileciteturn24file0L2-L2
+rather than converting both into an empty string with `|| true`. The currently inspected `tests/run-tests` code does not preserve that distinction for several `rg` checks.
 
-The CI workflow should also install every tool required by mandatory assertions and preferably end with a small summary that explicitly distinguishes **passed**, **skipped because dependency absent**, and **not run because an earlier gate failed**. The current workflow already has good independent coverage layers; the missing piece is making environmental incompleteness impossible to mistake for validation. fileciteturn20file0L2-L2
+The CI workflow should also install every tool required by mandatory assertions and preferably end with a small summary that explicitly distinguishes **passed**, **skipped because dependency absent**, and **not run because an earlier gate failed**. The current workflow already has good independent coverage layers; the missing piece is making environmental incompleteness impossible to mistake for validation.
 
 ## Overall conclusions and open questions
 
-This repository is unusually good at one thing that kernel debugging badly needs: **turning an intermittent personal hardware problem into an auditable chain of evidence**. The progression from “Bluetooth randomly dies” to “a QCA9377 on transparent SCO reaches USB alternate setting 1, carries 27-byte buffers through 9-byte isochronous transactions, and the first subsequently observed HCI command does not receive a reply” is a genuine technical accomplishment. The direct `sysfs` confirmation of alt 1, multi-headset reproduction, long untreated windows, stock-power reproduction and preservation of falsified hypotheses all materially raise the quality of the case. fileciteturn11file0L2-L2
+This repository is unusually good at one thing that kernel debugging badly needs: **turning an intermittent personal hardware problem into an auditable chain of evidence**. The progression from “Bluetooth randomly dies” to “a QCA9377 on transparent SCO reaches USB alternate setting 1, carries 27-byte buffers through 9-byte isochronous transactions, and the first subsequently observed HCI command does not receive a reply” is a genuine technical accomplishment. The direct `sysfs` confirmation of alt 1, multi-headset reproduction, long untreated windows, stock-power reproduction and preservation of falsified hypotheses all materially raise the quality of the case.
 
-The project has **not yet demonstrated the mechanism** or produced the kernel patch the investigation ultimately seeks. `517b693351a2` is a good regression candidate, but the evidence does not yet establish it as the cause. More importantly, the environment has changed upstream: `dc16388d45ec` now causes this exact USB ID to take the QCA ROME setup path that none of the detailed reproductions used. Until that tree is tested, a patch designed solely around alternate-setting behavior would be premature. citeturn4search12turn3search0
+The project has **not yet demonstrated the mechanism** or produced the kernel patch the investigation ultimately seeks. `517b693351a2` is a good regression candidate, but the evidence does not yet establish it as the cause. More importantly, the environment has changed upstream: `dc16388d45ec` now causes this exact USB ID to take the QCA ROME setup path that none of the detailed reproductions used. Until that tree is tested, a patch designed solely around alternate-setting behavior would be premature.
 
 The key unresolved research questions are therefore:
 
@@ -526,8 +529,8 @@ The key unresolved research questions are therefore:
 
 **How does the newly installed QCA reset callback behave at the precise first-timeout boundary?** Existing late USB-reset experiments do not answer this and should not be extrapolated to it.
 
-**Will the two submitted BlueZ patches be accepted or superseded upstream?** Their engineering case is reasonably strong, especially patch `0002`, but their eventual upstream disposition was not established in the repository material available for this review. fileciteturn18file0L2-L2
+**Will the two submitted BlueZ patches be accepted or superseded upstream?** Their engineering case is reasonably strong, especially patch `0002`, but their eventual upstream disposition was not established in the repository material available for this review.
 
-**Can the investigation tooling be reduced without losing evidentiary strength?** The current 800-plus-invariant, hundreds-of-file research environment is sophisticated but increasingly carries its own failure modes, as the current red CI and `rg` false-green behavior demonstrate. fileciteturn21file0L2-L2
+**Can the investigation tooling be reduced without losing evidentiary strength?** The current 800-plus-invariant, hundreds-of-file research environment is sophisticated but increasingly carries its own failure modes, as the current red CI and `rg` false-green behavior demonstrate.
 
 The most defensible final assessment is therefore **“high-quality investigation, strong fault localization, incomplete causal proof.”** The repository already contains enough evidence to justify serious upstream attention, but the decisive next contribution is not another layer of observational tooling. It is a small series of controlled kernel experiments—current QCA initialization versus historical generic initialization, and alt-1 permitted versus prohibited—performed on one fixed kernel baseline. Those experiments can turn the current strong correlation into either a falsified theory or a patchable Linux driver defect.

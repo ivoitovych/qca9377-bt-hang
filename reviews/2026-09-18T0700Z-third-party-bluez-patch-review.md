@@ -4,9 +4,8 @@
 the public repository at `cccf0fe` and cross-checking against BlueZ master
 `2401054ca67a1f79e44e71d6a1cea096a13f5e5d` (2026-09-17), the Linux management
 implementation, and the historical commits the patches cite. The review is reproduced
-verbatim in §"The review" below. Tokens of the form `fileciteturnNNfileNLx-Ly` and
-`citeturnNNviewN` are the reviewer's tool's citation markers and carry no content; they are
-kept rather than edited out.
+verbatim in §"The review" below, except that inline citation markers, which carried no
+content, were removed on 2026-10-09.
 
 **Verdict as given.** Accept both, submit independently; both defects present at current
 master; `0002` stronger empirically; for `0001`, a "strong additional lead" on the untraced
@@ -188,39 +187,39 @@ Reproduced verbatim from the operator's paste of 2026-09-18.
 
 I **accessed and analyzed the exact two patch files requested**, not copies inferred from their titles:
 
-1. [`0001-adapter-Fix-crash-on-short-start-discovery-reply.patch`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/patches/bluez/0001-adapter-Fix-crash-on-short-start-discovery-reply.patch) fileciteturn23file0L2-L6  
-2. [`0002-a2dp-Fix-crash-on-NULL-stream-in-transport_cb.patch`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/patches/bluez/0002-a2dp-Fix-crash-on-NULL-stream-in-transport_cb.patch) fileciteturn24file0L2-L6
+1. [`0001-adapter-Fix-crash-on-short-start-discovery-reply.patch`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/patches/bluez/0001-adapter-Fix-crash-on-short-start-discovery-reply.patch)  
+2. [`0002-a2dp-Fix-crash-on-NULL-stream-in-transport_cb.patch`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/patches/bluez/0002-a2dp-Fix-crash-on-NULL-stream-in-transport_cb.patch)
 
 I also cross-checked them against current upstream BlueZ source and history, BlueZ's management protocol implementation, the Linux Bluetooth management implementation, the historical commits named by the patches, and the supporting material in the `qca9377-bt-hang` repository.
 
 ## Executive summary
 
-**Both patches are technically sound, narrowly scoped crash fixes and, in my assessment, should be upstreamable.** They address two genuine unchecked-pointer conditions in BlueZ. Neither patch attempts to solve the underlying QCA9377 controller hang; both correctly harden `bluetoothd` against abnormal asynchronous state that the controller/kernel/userspace path can expose. The project's own documentation makes that distinction explicitly. fileciteturn27file0L2-L2
+**Both patches are technically sound, narrowly scoped crash fixes and, in my assessment, should be upstreamable.** They address two genuine unchecked-pointer conditions in BlueZ. Neither patch attempts to solve the underlying QCA9377 controller hang; both correctly harden `bluetoothd` against abnormal asynchronous state that the controller/kernel/userspace path can expose. The project's own documentation makes that distinction explicitly.
 
 The most important conclusions are:
 
 | Finding | Assessment |
 |---|---|
-| `0001` crash | **Confirmed real code defect.** `start_discovery_complete()` dereferences `rp->type` in the no-client path before reaching its existing reply-length validation. Current upstream still has that ordering. fileciteturn44file0L2-L8 fileciteturn45file0L2-L8 |
+| `0001` crash | **Confirmed real code defect.** `start_discovery_complete()` dereferences `rp->type` in the no-client path before reaching its existing reply-length validation. Current upstream still has that ordering. |
 | `0001` patch correctness | **Correct and very low regression risk.** The new validation dominates the previously unsafe dereference without changing valid replies. |
-| `0001` deeper trigger | **Partially unresolved, but there is a strong additional lead.** BlueZ's shared mgmt layer deliberately falls back from opcode+index matching to index-only matching if a kernel event contains an unexpected opcode. That fallback was introduced in upstream commit `6efdbd8dbd16`. Combined with a Command Status event, it can deliver `length=0, param=NULL` to a callback for a different pending opcode. fileciteturn41file0L2-L6 citeturn14view0turn14view3 |
-| `0002` crash | **Confirmed real code defect.** `transport_cb()` verifies that `setup` still exists, but not that `setup->stream` still exists. Current upstream has paths that set `setup->stream = NULL` and then later passes it unchecked to `avdtp_stream_set_transport()`. fileciteturn47file0L2-L8 fileciteturn46file0L2-L14 fileciteturn33file4L45-L53 |
-| `0002` patch correctness | **Correct, probably even stronger than `0001` empirically.** Its guard reportedly fired four times in 19 days on the affected machine, directly exercising the newly protected condition. fileciteturn24file0L2-L2 |
-| Current upstream status | I verified the vulnerable constructs remain at upstream BlueZ commit `2401054ca67a1f79e44e71d6a1cea096a13f5e5d`, committed September 17, 2026. fileciteturn42file0L2-L6 |
-| Backport suitability | **Good.** Both patches are local, independent, and touch different files. The project records clean `git am` testing against BlueZ master and clean application/build checks against 5.87; its runtime deployment is based on Ubuntu's BlueZ 5.72 package. fileciteturn27file0L2-L2 |
+| `0001` deeper trigger | **Partially unresolved, but there is a strong additional lead.** BlueZ's shared mgmt layer deliberately falls back from opcode+index matching to index-only matching if a kernel event contains an unexpected opcode. That fallback was introduced in upstream commit `6efdbd8dbd16`. Combined with a Command Status event, it can deliver `length=0, param=NULL` to a callback for a different pending opcode. |
+| `0002` crash | **Confirmed real code defect.** `transport_cb()` verifies that `setup` still exists, but not that `setup->stream` still exists. Current upstream has paths that set `setup->stream = NULL` and then later passes it unchecked to `avdtp_stream_set_transport()`. |
+| `0002` patch correctness | **Correct, probably even stronger than `0001` empirically.** Its guard reportedly fired four times in 19 days on the affected machine, directly exercising the newly protected condition. |
+| Current upstream status | I verified the vulnerable constructs remain at upstream BlueZ commit `2401054ca67a1f79e44e71d6a1cea096a13f5e5d`, committed September 17, 2026. |
+| Backport suitability | **Good.** Both patches are local, independent, and touch different files. The project records clean `git am` testing against BlueZ master and clean application/build checks against 5.87; its runtime deployment is based on Ubuntu's BlueZ 5.72 package. |
 | Recommended disposition | **Submit both independently upstream.** Add deterministic regression coverage if feasible. For `0001`, separately investigate the shared-mgmt mismatched-opcode fallback; for `0002`, consider a lower-layer NULL guard only as defense in depth. |
 
-One especially useful result of the deeper investigation is that the unexplained `0001` event deserves further attention. Current Linux's normal successful Start Discovery completion returns a **Command Complete with one byte** of command parameter data; it does not normally produce a successful zero-parameter completion. citeturn16search0turn16search1 BlueZ's own shared mgmt code, however, converts a `MGMT_EV_CMD_STATUS` into callback arguments `length=0, param=NULL`, and if the opcode does not match a pending request it can intentionally select the first pending request for the same controller index. citeturn14view0turn14view3 This provides a plausible route to the observed short callback and is worth investigating independently of `0001`.
+One especially useful result of the deeper investigation is that the unexplained `0001` event deserves further attention. Current Linux's normal successful Start Discovery completion returns a **Command Complete with one byte** of command parameter data; it does not normally produce a successful zero-parameter completion. BlueZ's own shared mgmt code, however, converts a `MGMT_EV_CMD_STATUS` into callback arguments `length=0, param=NULL`, and if the opcode does not match a pending request it can intentionally select the first pending request for the same controller index. This provides a plausible route to the observed short callback and is worth investigating independently of `0001`.
 
-Neither patch itself specifies a BlueZ base version. That is the correct interpretation of the files. The surrounding repository says the deployed patched daemon was rebuilt from Ubuntu BlueZ `5.72-0ubuntu5.5`, while separate apply/compile testing was done against newer BlueZ sources; those are test contexts, not version metadata embedded in the patches. fileciteturn27file0L2-L2
+Neither patch itself specifies a BlueZ base version. That is the correct interpretation of the files. The surrounding repository says the deployed patched daemon was rebuilt from Ubuntu BlueZ `5.72-0ubuntu5.5`, while separate apply/compile testing was done against newer BlueZ sources; those are test contexts, not version metadata embedded in the patches.
 
 ## Patch `0001`: short Start Discovery reply
 
 ### What the vulnerable code does
 
-`start_discovery_complete()` is a BlueZ userspace callback for completion of Bluetooth management discovery commands. At the D-Bus boundary, this machinery ultimately services operations such as `org.bluez.Adapter1.StartDiscovery`; BlueZ documents `StartDiscovery()` on `org.bluez.Adapter1`. fileciteturn32file2L27-L40
+`start_discovery_complete()` is a BlueZ userspace callback for completion of Bluetooth management discovery commands. At the D-Bus boundary, this machinery ultimately services operations such as `org.bluez.Adapter1.StartDiscovery`; BlueZ documents `StartDiscovery()` on `org.bluez.Adapter1`.
 
-At the lower management-protocol boundary, `MGMT_OP_START_DISCOVERY` is opcode `0x0023`, and its relevant parameter structure contains one `uint8_t type`, so one byte is required before `rp->type` is safe to read. fileciteturn18file0L1-L12
+At the lower management-protocol boundary, `MGMT_OP_START_DISCOVERY` is opcode `0x0023`, and its relevant parameter structure contains one `uint8_t type`, so one byte is required before `rp->type` is safe to read.
 
 The current upstream structure is, logically:
 
@@ -241,7 +240,7 @@ callback(status, length, param)
         return
 ```
 
-That ordering remains in current upstream BlueZ: the no-client branch performs `cp.type = rp->type`, while the pre-existing `length < sizeof(*rp)` validation is farther down. fileciteturn44file0L2-L8 fileciteturn45file0L2-L8
+That ordering remains in current upstream BlueZ: the no-client branch performs `cp.type = rp->type`, while the pre-existing `length < sizeof(*rp)` validation is farther down.
 
 The minimal original-versus-patched comparison is therefore:
 
@@ -259,7 +258,7 @@ if (length < sizeof(*rp))
         return;
 ```
 
-before the no-client branch's `rp->type` use. The actual patch also emits BlueZ's existing diagnostic string. fileciteturn23file0L2-L2
+before the no-client branch's `rp->type` use. The actual patch also emits BlueZ's existing diagnostic string.
 
 ### Line-by-line review
 
@@ -271,7 +270,7 @@ before the no-client branch's `rp->type` use. The actual patch also emits BlueZ'
 | `return;` | Prevent `rp->type` dereference and prevent constructing a Stop Discovery command from nonexistent data. | **Correct.** Anything else would require inventing the missing discovery type. |
 | closing brace / blank line | Keep the validation local to the no-client branch. | **Good minimalism.** No behavior outside the faulty path changes. |
 
-The patch deliberately duplicates the lower length check instead of moving the existing one upward. That is conservative: it leaves all other status/error handling exactly as it was, which is particularly sensible for a crash fix. fileciteturn23file0L2-L2
+The patch deliberately duplicates the lower length check instead of moving the existing one upward. That is conservative: it leaves all other status/error handling exactly as it was, which is particularly sensible for a crash fix.
 
 ### Proximate root cause
 
@@ -279,9 +278,9 @@ The direct root cause is an **ordering error**:
 
 > an externally supplied callback parameter is dereferenced on one control-flow path before the function's own validity check is reached.
 
-This is not QCA9377-specific. The hardware/controller behavior supplies the unusual trigger, but once `start_discovery_complete(status=SUCCESS, length=0, param=NULL, ...)` reaches the no-client branch, the C-level failure follows from ordinary control flow. The project's retained-binary analysis identifies the crashing load as the byte read corresponding to `rp->type`; the patch itself records a `segfault at 0` and disassembly matching that access. fileciteturn23file0L2-L2 The repository's independent crash-resolution note reaches the same conclusion from the shipped binary and retained core. fileciteturn25file0L2-L2
+This is not QCA9377-specific. The hardware/controller behavior supplies the unusual trigger, but once `start_discovery_complete(status=SUCCESS, length=0, param=NULL, ...)` reaches the no-client branch, the C-level failure follows from ordinary control flow. The project's retained-binary analysis identifies the crashing load as the byte read corresponding to `rp->type`; the patch itself records a `segfault at 0` and disassembly matching that access. The repository's independent crash-resolution note reaches the same conclusion from the shipped binary and retained core.
 
-The historical origin is also well established. Upstream commit [`3597d1377723705e3fa6736610fcdb64ee6f2ce1`](https://github.com/bluez/bluez/commit/3597d1377723705e3fa6736610fcdb64ee6f2ce1), "adapter: Fix not waiting for start discovery result," changed discovery startup to wait asynchronously for completion and added the "clients disappeared while the command was pending" branch. That commit put `cp.type = rp->type` in the branch before the pre-existing/newly adjacent validation logic, which is why `0001` reasonably carries it as its `Fixes:` reference. fileciteturn34file0L2-L6
+The historical origin is also well established. Upstream commit [`3597d1377723705e3fa6736610fcdb64ee6f2ce1`](https://github.com/bluez/bluez/commit/3597d1377723705e3fa6736610fcdb64ee6f2ce1), "adapter: Fix not waiting for start discovery result," changed discovery startup to wait asynchronously for completion and added the "clients disappeared while the command was pending" branch. That commit put `cp.type = rp->type` in the branch before the pre-existing/newly adjacent validation logic, which is why `0001` reasonably carries it as its `Fixes:` reference.
 
 ### The deeper and more interesting trigger path
 
@@ -295,11 +294,11 @@ Command Status
 request_complete(... status ..., length=0, param=NULL)
 ```
 
-That behavior is current upstream. citeturn14view0
+That behavior is current upstream.
 
-More importantly, `request_complete()` first tries to locate a pending request using **opcode + controller index**. If that fails, it intentionally falls back to **controller index alone**, removes that request, and invokes its callback. citeturn14view2turn14view3
+More importantly, `request_complete()` first tries to locate a pending request using **opcode + controller index**. If that fails, it intentionally falls back to **controller index alone**, removes that request, and invokes its callback.
 
-That index-only fallback is not accidental. It was deliberately added in upstream BlueZ commit [`6efdbd8dbd1674cb6fdaa0648f8a17f8d5240dcf`](https://github.com/bluez/bluez/commit/6efdbd8dbd1674cb6fdaa0648f8a17f8d5240dcf), "shared/mgmt: Fix not processing request queue," because a kernel had returned a management event containing the wrong opcode; without fallback, BlueZ's request queue stalled. fileciteturn41file0L2-L6
+That index-only fallback is not accidental. It was deliberately added in upstream BlueZ commit [`6efdbd8dbd1674cb6fdaa0648f8a17f8d5240dcf`](https://github.com/bluez/bluez/commit/6efdbd8dbd1674cb6fdaa0648f8a17f8d5240dcf), "shared/mgmt: Fix not processing request queue," because a kernel had returned a management event containing the wrong opcode; without fallback, BlueZ's request queue stalled.
 
 That history makes one detail in `0001` unusually significant. The patch records an occasion described as a Start Service Discovery callback while the debug message said:
 
@@ -307,7 +306,7 @@ That history makes one detail in `0001` unusually significant. The patch records
 command 0x23 status: 0x00
 ```
 
-But `0x0023` is **Start Discovery**, whereas `MGMT_OP_START_SERVICE_DISCOVERY` is `0x003A`. fileciteturn18file0L8-L8 fileciteturn43file0L2-L8
+But `0x0023` is **Start Discovery**, whereas `MGMT_OP_START_SERVICE_DISCOVERY` is `0x003A`.
 
 A plausible sequence is therefore:
 
@@ -325,9 +324,9 @@ flowchart TD
     G -- "Yes, with 0001" --> K["New length guard logs and returns"]
 ```
 
-This is an **inference**, not a proven reconstruction of the crash event. It is supported by three independent facts: the patch's recorded opcode/status mismatch, BlueZ's current index-only fallback behavior, and the Command Status path's zero-length/NULL callback semantics. fileciteturn23file0L2-L2 citeturn14view0turn14view3
+This is an **inference**, not a proven reconstruction of the crash event. It is supported by three independent facts: the patch's recorded opcode/status mismatch, BlueZ's current index-only fallback behavior, and the Command Status path's zero-length/NULL callback semantics.
 
-Current Linux makes the anomaly more conspicuous. In the normal Start Discovery completion path, the kernel uses `mgmt_cmd_complete()` and returns one byte from the pending command parameter. Its immediate error cases likewise use Command Complete with the `type` byte. citeturn16search0turn16search1 Thus a successful zero-parameter callback should **not be treated as an ordinary successful Start Discovery completion**.
+Current Linux makes the anomaly more conspicuous. In the normal Start Discovery completion path, the kernel uses `mgmt_cmd_complete()` and returns one byte from the pending command parameter. Its immediate error cases likewise use Command Complete with the `type` byte. Thus a successful zero-parameter callback should **not be treated as an ordinary successful Start Discovery completion**.
 
 That does not weaken `0001`. Quite the opposite: a userspace callback that consumes management data should not crash simply because upstream supplied a malformed or misassociated event.
 
@@ -348,7 +347,7 @@ That is substantially preferable to terminating `bluetoothd`, and manufacturing 
 
 ### What the vulnerable code does
 
-`transport_cb()` is the asynchronous completion callback used after an A2DP transport channel has been accepted. Current BlueZ begins by verifying that the `a2dp_setup` pointer still belongs to the global `setups` list. If it does not, it shuts down the channel and returns. fileciteturn47file0L2-L8
+`transport_cb()` is the asynchronous completion callback used after an A2DP transport channel has been accepted. Current BlueZ begins by verifying that the `a2dp_setup` pointer still belongs to the global `setups` list. If it does not, it shuts down the channel and returns.
 
 That check only establishes:
 
@@ -362,7 +361,7 @@ It does **not** establish:
 setup->stream is still non-NULL
 ```
 
-Current `a2dp.c` demonstrably contains error/teardown paths that perform `setup->stream = NULL`. For example, configuration/open failure paths clear it before finalizing the setup. fileciteturn46file0L2-L14
+Current `a2dp.c` demonstrably contains error/teardown paths that perform `setup->stream = NULL`. For example, configuration/open failure paths clear it before finalizing the setup.
 
 Nevertheless, the same current upstream `transport_cb()` subsequently does the equivalent of:
 
@@ -370,9 +369,9 @@ Nevertheless, the same current upstream `transport_cb()` subsequently does the e
 avdtp_stream_set_transport(setup->stream, ...);
 ```
 
-without rechecking `setup->stream`. fileciteturn33file4L45-L53
+without rechecking `setup->stream`.
 
-The callee's current implementation creates a `GIOChannel` and then immediately evaluates state involving `stream->session`; therefore a NULL stream is not a supported input. fileciteturn33file3L34-L42
+The callee's current implementation creates a `GIOChannel` and then immediately evaluates state involving `stream->session`; therefore a NULL stream is not a supported input.
 
 The state transition is:
 
@@ -416,7 +415,7 @@ That is fundamentally an **asynchronous object-lifetime mismatch**: the containe
 | NULL stream | pass NULL into AVDTP and crash | log condition, take existing `drop:` cleanup |
 | Cleanup on late stale transport | unreachable because of crash | `setup_unref(setup)` + socket/channel shutdown via existing path |
 
-The current `drop:` label releases the setup reference and shuts down the accepted I/O channel, so the patch uses existing cleanup semantics rather than inventing another teardown path. fileciteturn13file0
+The current `drop:` label releases the setup reference and shuts down the accepted I/O channel, so the patch uses existing cleanup semantics rather than inventing another teardown path.
 
 ### Line-by-line review
 
@@ -428,7 +427,7 @@ The five added lines are logically three operations:
 | `error("bt_io_accept: setup %p has no stream", setup);` | Distinguish a late transport callback from ordinary socket failure and record the associated setup. | **Useful diagnostically.** The project's runtime observations rely on this log. |
 | `goto drop;` | Reuse existing callback cleanup for an accepted transport that can no longer be attached to an AVDTP stream. | **Correct.** With no target stream, retaining the transport serves no useful purpose. |
 
-The placement is particularly good. The patch intentionally checks the stream **after** pre-existing `bt_io_accept`/`bt_io_get` error handling, so a genuine I/O failure retains its original diagnostic rather than being masked by a secondary `stream == NULL` state. That intent is explicitly stated in the patch. fileciteturn24file0L2-L2
+The placement is particularly good. The patch intentionally checks the stream **after** pre-existing `bt_io_accept`/`bt_io_get` error handling, so a genuine I/O failure retains its original diagnostic rather than being masked by a secondary `stream == NULL` state. That intent is explicitly stated in the patch.
 
 ### Root cause and relationship to previous upstream fixes
 
@@ -442,7 +441,7 @@ stream lifetime    ────────────────X
                                      transport_cb executes here
 ```
 
-An older upstream fix already addressed the first lifetime. Commit [`125a2e237e7c2b688f1cf26e1a3b3c7279ff5b06`](https://github.com/bluez/bluez/commit/125a2e237e7c2b688f1cf26e1a3b3c7279ff5b06), "a2dp: Fix possible crash when accepting stream transport," was committed in September 2017 after `a2dp_setup` itself could disappear while `bt_io_accept()` remained pending. It added an I/O reference/shutdown mechanism so the callback would not operate on a freed setup. fileciteturn35file0L2-L6
+An older upstream fix already addressed the first lifetime. Commit [`125a2e237e7c2b688f1cf26e1a3b3c7279ff5b06`](https://github.com/bluez/bluez/commit/125a2e237e7c2b688f1cf26e1a3b3c7279ff5b06), "a2dp: Fix possible crash when accepting stream transport," was committed in September 2017 after `a2dp_setup` itself could disappear while `bt_io_accept()` remained pending. It added an I/O reference/shutdown mechanism so the callback would not operate on a freed setup.
 
 `0002` catches the distinct remaining lifetime:
 
@@ -450,7 +449,7 @@ An older upstream fix already addressed the first lifetime. Commit [`125a2e237e7
 
 That distinction is technically sound. Checking that the parent object survives never implies that a nullable member remains valid.
 
-A second relevant upstream change, [`90a600895d8083188125736dfc17139d4887c184`](https://github.com/bluez/bluez/commit/90a600895d8083188125736dfc17139d4887c184), "avdtp: Handle case where remote send L2CAP connect ahead of Open," modified `avdtp_stream_set_transport()` so it can cope with an early transport connection before the expected AVDTP Open sequencing. It still assumes the `stream` argument itself is non-NULL. fileciteturn36file0L2-L6
+A second relevant upstream change, [`90a600895d8083188125736dfc17139d4887c184`](https://github.com/bluez/bluez/commit/90a600895d8083188125736dfc17139d4887c184), "avdtp: Handle case where remote send L2CAP connect ahead of Open," modified `avdtp_stream_set_transport()` so it can cope with an early transport connection before the expected AVDTP Open sequencing. It still assumes the `stream` argument itself is non-NULL.
 
 So these three fixes cover different cases:
 
@@ -460,7 +459,7 @@ So these three fixes cover different cases:
 | `90a600895` | transport may arrive before AVDTP Open | No; requires a valid stream object |
 | proposed `0002` | accepted transport arrives after setup's stream was cleared | **Yes** |
 
-The empirical evidence for `0002` is unusually useful: the patch says the new guard fired **four times over 19 days**, on August 26 and three times on September 2, 2026, across multiple setup pointers and daemon lifetimes. That means the protected state is not merely hypothetical on the affected installation. fileciteturn24file0L2-L2 The repository README records the same distinction: `0002` has fired in the field, whereas `0001`'s new branch-local guard had not yet fired even though its malformed-reply premise had been observed. fileciteturn27file0L2-L2
+The empirical evidence for `0002` is unusually useful: the patch says the new guard fired **four times over 19 days**, on August 26 and three times on September 2, 2026, across multiple setup pointers and daemon lifetimes. That means the protected state is not merely hypothetical on the affected installation. The repository README records the same distinction: `0002` has fired in the field, whereas `0001`'s new branch-local guard had not yet fired even though its malformed-reply premise had been observed.
 
 ## Upstream history, APIs, and current status
 
@@ -487,9 +486,9 @@ Linux net/bluetooth/mgmt.c
 Bluetooth controller
 ```
 
-BlueZ's public API exposes discovery through `org.bluez.Adapter1.StartDiscovery()`. fileciteturn32file2L27-L40 The kernel management command is `MGMT_OP_START_DISCOVERY` (`0x0023`) and carries a one-byte address/discovery type. fileciteturn18file0L1-L12
+BlueZ's public API exposes discovery through `org.bluez.Adapter1.StartDiscovery()`. The kernel management command is `MGMT_OP_START_DISCOVERY` (`0x0023`) and carries a one-byte address/discovery type.
 
-BlueZ's management-protocol documentation specifies Start Discovery as a management command and describes its one-octet address-type parameter and discovery event behavior. fileciteturn17file0 Linux's current kernel implementation sends normal completion through `mgmt_cmd_complete(..., cmd->param, 1)`, including the one-byte type. citeturn16search0turn16search1
+BlueZ's management-protocol documentation specifies Start Discovery as a management command and describes its one-octet address-type parameter and discovery event behavior. Linux's current kernel implementation sends normal completion through `mgmt_cmd_complete(..., cmd->param, 1)`, including the one-byte type.
 
 This distinction is important for assigning blame correctly:
 
@@ -497,7 +496,7 @@ This distinction is important for assigning blame correctly:
 
 ### BlueZ internal API semantics relevant to `0002`
 
-`avdtp_stream_set_transport()` is an internal BlueZ AVDTP interface declared with a `struct avdtp_stream *stream` argument; current callers include `a2dp.c`. fileciteturn33file2L23-L31 Its current implementation assumes the pointer is valid and accesses stream-owned session state. fileciteturn33file3L34-L42
+`avdtp_stream_set_transport()` is an internal BlueZ AVDTP interface declared with a `struct avdtp_stream *stream` argument; current callers include `a2dp.c`. Its current implementation assumes the pointer is valid and accesses stream-owned session state.
 
 That means the practical contract is:
 
@@ -509,21 +508,21 @@ precondition: stream != NULL and refers to a live AVDTP stream
 
 ### Current master
 
-The latest official BlueZ commit I checked for this review was [`2401054ca67a1f79e44e71d6a1cea096a13f5e5d`](https://github.com/bluez/bluez/commit/2401054ca67a1f79e44e71d6a1cea096a13f5e5d), committed September 17, 2026. fileciteturn42file0L2-L6
+The latest official BlueZ commit I checked for this review was [`2401054ca67a1f79e44e71d6a1cea096a13f5e5d`](https://github.com/bluez/bluez/commit/2401054ca67a1f79e44e71d6a1cea096a13f5e5d), committed September 17, 2026.
 
 At that revision:
 
-- `src/adapter.c` still reads `rp->type` in the no-client branch before the existing short-reply check. fileciteturn44file0L2-L8 fileciteturn45file0L2-L8
-- `profiles/audio/a2dp.c` still invokes `avdtp_stream_set_transport(setup->stream, ...)` without a NULL check at that call site. fileciteturn33file4L45-L53
-- `profiles/audio/avdtp.c` still dereferences stream state in `avdtp_stream_set_transport()`. fileciteturn33file3L34-L42
+- `src/adapter.c` still reads `rp->type` in the no-client branch before the existing short-reply check.
+- `profiles/audio/a2dp.c` still invokes `avdtp_stream_set_transport(setup->stream, ...)` without a NULL check at that call site.
+- `profiles/audio/avdtp.c` still dereferences stream state in `avdtp_stream_set_transport()`.
 
 I also searched the official BlueZ commit/PR/issue material for the exact proposed patch subjects and the relevant function names. I found the historical related commits discussed above, but no corresponding merged fix that supersedes either proposed patch. Exact-title searches of the `linux-bluetooth`/lore material available through web indexing also did not surface these two proposed patches. That is not proof that no unindexed mail exists, so I would phrase upstream status as **"not present in current master"**, not "never reported."
 
 ### A relevant upstream design decision behind `0001`
 
-The 2021 commit `6efdbd8dbd16` deserves explicit attention because it is more directly related to the anomalous completion than the patch message currently says. BlueZ had encountered kernels returning a Command Status for the wrong management opcode. To prevent its request queue from becoming unusable, BlueZ intentionally began taking the first pending request on the same controller index when exact opcode+index matching failed. fileciteturn41file0L2-L6
+The 2021 commit `6efdbd8dbd16` deserves explicit attention because it is more directly related to the anomalous completion than the patch message currently says. BlueZ had encountered kernels returning a Command Status for the wrong management opcode. To prevent its request queue from becoming unusable, BlueZ intentionally began taking the first pending request on the same controller index when exact opcode+index matching failed.
 
-Current code retains this fallback. citeturn14view2turn14view3
+Current code retains this fallback.
 
 So the shared mgmt stack knowingly tolerates malformed opcode associations. Once that policy exists, individual callbacks should be written defensively against reply shapes that do not satisfy their normal successful-command contracts. This materially strengthens the case for `0001`.
 
@@ -533,11 +532,11 @@ So the shared mgmt stack knowingly tolerates malformed opcode associations. Once
 
 | Item | Crash/service severity | Trigger likelihood | Patch regression risk | Current evidence/test coverage |
 |---|---|---|---|---|
-| `0001` missing reply validation | **High** when triggered: daemon SIGSEGV can take down Bluetooth userspace | **Low / rare**, requires an abnormal/misassociated short successful completion plus the no-client timing window | **Very low** | Actual crash site resolved; malformed short successful reply independently observed; new branch-specific guard itself had not fired in the repository's reported runtime period. fileciteturn23file0L2-L2 fileciteturn27file0L2-L2 |
+| `0001` missing reply validation | **High** when triggered: daemon SIGSEGV can take down Bluetooth userspace | **Low / rare**, requires an abnormal/misassociated short successful completion plus the no-client timing window | **Very low** | Actual crash site resolved; malformed short successful reply independently observed; new branch-specific guard itself had not fired in the repository's reported runtime period. |
 | `0001` post-fix orphan discovery possibility | Low-to-medium operational impact | Very low; requires same malformed successful completion | N/A, residual failure mode rather than regression | Needs synthetic fault-injection test |
-| `0002` NULL stream | **High** when triggered: immediate daemon NULL dereference | **Medium in affected lifecycle conditions**; guard fired four times in 19 days on the reported machine | **Very low** | Real crash/core evidence plus four observed prevented dereferences. fileciteturn24file0L2-L2 |
+| `0002` NULL stream | **High** when triggered: immediate daemon NULL dereference | **Medium in affected lifecycle conditions**; guard fired four times in 19 days on the reported machine | **Very low** | Real crash/core evidence plus four observed prevented dereferences. |
 | `0002` dropping a late transport | Low; remote transport is closed because no target stream exists | Same as NULL-stream state | Very low | Uses existing `drop:` path rather than a new teardown mechanism |
-| Broader `shared/mgmt.c` fix | Potentially high benefit | Relevant whenever kernel opcode is malformed | **Medium/high** because the index fallback exists to support known faulty kernel responses | Requires broad callback audit and regression matrix. fileciteturn41file0L2-L6 |
+| Broader `shared/mgmt.c` fix | Potentially high benefit | Relevant whenever kernel opcode is malformed | **Medium/high** because the index fallback exists to support known faulty kernel responses | Requires broad callback audit and regression matrix. |
 
 ### Is `0001` sufficient?
 
@@ -550,7 +549,7 @@ if (!rp || length < sizeof(*rp))
         ...
 ```
 
-instead of testing only `length`. I do **not** think it is necessary for this patch. BlueZ's shared mgmt implementation pairs a Command Status's `NULL` parameter with `length == 0`, while a parsed Command Complete supplies a pointer into its receive buffer. citeturn14view0 Following the existing `length < sizeof(*rp)` convention also makes the proposed fix smaller and stylistically consistent.
+instead of testing only `length`. I do **not** think it is necessary for this patch. BlueZ's shared mgmt implementation pairs a Command Status's `NULL` parameter with `length == 0`, while a parsed Command Complete supplies a pointer into its receive buffer. Following the existing `length < sizeof(*rp)` convention also makes the proposed fix smaller and stylistically consistent.
 
 A more interesting alternative is to change **`src/shared/mgmt.c`**. When exact opcode matching fails and BlueZ resorts to its index-only fallback, it could avoid forwarding a mismatched event as an apparently successful command completion. For example:
 
@@ -567,7 +566,7 @@ That would address a broader invariant:
 
 > an event for opcode X should never cause callback Y to believe Y succeeded merely because they share a controller index.
 
-It is attractive, especially because the historical reason for the fallback was an error-status event with an incorrect opcode. fileciteturn41file0L2-L6 But I would **not replace `0001` with that change**. It has a much larger blast radius. Existing callbacks may depend, deliberately or accidentally, on the fallback. The right sequence would be:
+It is attractive, especially because the historical reason for the fallback was an error-status event with an incorrect opcode. But I would **not replace `0001` with that change**. It has a much larger blast radius. Existing callbacks may depend, deliberately or accidentally, on the fallback. The right sequence would be:
 
 1. land the local crash hardening;
 2. separately audit every use of the index-only fallback;
@@ -580,9 +579,9 @@ For the identified NULL dereference: **yes**.
 
 Three broader alternatives exist.
 
-**Lower-layer defense in `avdtp_stream_set_transport()`.** A check such as `if (!stream) return FALSE;` at the very beginning would protect every caller. That is reasonable defense in depth, and it should precede even construction of the `GIOChannel`. But it does not explain which caller violated the contract and gives weaker diagnostic context. Current BlueZ exposes this function internally through `profiles/audio/avdtp.h`, so a lower-level guard could be added independently. fileciteturn33file2L23-L31
+**Lower-layer defense in `avdtp_stream_set_transport()`.** A check such as `if (!stream) return FALSE;` at the very beginning would protect every caller. That is reasonable defense in depth, and it should precede even construction of the `GIOChannel`. But it does not explain which caller violated the contract and gives weaker diagnostic context. Current BlueZ exposes this function internally through `profiles/audio/avdtp.h`, so a lower-level guard could be added independently.
 
-**Cancel the pending `setup->io` whenever `setup->stream` is cleared.** This attacks the asynchronous state mismatch earlier: if no stream remains, cancel the outstanding transport acceptance rather than letting its callback eventually discover that fact. Architecturally that is appealing, but `setup->stream` is cleared in multiple A2DP paths, and changing all of them risks interactions with the deliberately supported "transport arrives ahead of Open" behavior introduced by `90a600895`. fileciteturn46file0L2-L14 fileciteturn36file0L2-L6 It needs considerably more lifecycle analysis.
+**Cancel the pending `setup->io` whenever `setup->stream` is cleared.** This attacks the asynchronous state mismatch earlier: if no stream remains, cancel the outstanding transport acceptance rather than letting its callback eventually discover that fact. Architecturally that is appealing, but `setup->stream` is cleared in multiple A2DP paths, and changing all of them risks interactions with the deliberately supported "transport arrives ahead of Open" behavior introduced by `90a600895`. It needs considerably more lifecycle analysis.
 
 **Reference the stream across the async operation.** This would be ideal if the stream object had a straightforward independent ownership/refcount contract suitable for that use. The current AVDTP design does not make that an obviously safe localized change, so I would not introduce ownership changes solely to fix this NULL dereference.
 
@@ -633,11 +632,11 @@ A higher-value shared-mgmt integration test should then inject:
 3. the same controller index;
 4. status `0x00`.
 
-That would determine whether current `request_complete()`'s index fallback reproduces the exact callback shape hypothesized above. The fallback behavior itself is explicit current source behavior. citeturn14view0turn14view3
+That would determine whether current `request_complete()`'s index fallback reproduces the exact callback shape hypothesized above. The fallback behavior itself is explicit current source behavior.
 
-A second variant should use a nonzero status. That verifies why commit `6efdbd8dbd16` introduced this fallback and prevents any future generalized fix from recreating the historical stuck-request-queue problem. fileciteturn41file0L2-L6
+A second variant should use a nonzero status. That verifies why commit `6efdbd8dbd16` introduced this fallback and prevents any future generalized fix from recreating the historical stuck-request-queue problem.
 
-For real-daemon validation, start discovery over D-Bus and immediately remove/stop the last discovery client while its mgmt request is pending, then inject or instrument the mgmt completion to be `(SUCCESS, 0, NULL)`. BlueZ already has functional tests built around `org.bluez.Adapter1.StartDiscovery`, so extending its testing infrastructure is preferable to relying on physical timing. fileciteturn32file6L91-L103
+For real-daemon validation, start discovery over D-Bus and immediately remove/stop the last discovery client while its mgmt request is pending, then inject or instrument the mgmt completion to be `(SUCCESS, 0, NULL)`. BlueZ already has functional tests built around `org.bluez.Adapter1.StartDiscovery`, so extending its testing infrastructure is preferable to relying on physical timing.
 
 ### Deterministic reproducer for `0002`
 
@@ -681,11 +680,11 @@ force an AVDTP open/config error path that executes setup->stream = NULL
 deliver pending accept callback
 ```
 
-Current `a2dp.c` already supplies concrete error paths that clear `setup->stream`, so the reproducer need not invent an impossible state. fileciteturn46file0L2-L14
+Current `a2dp.c` already supplies concrete error paths that clear `setup->stream`, so the reproducer need not invent an impossible state.
 
 ### Sanitizer and stress validation
 
-For both patches I would run BlueZ's regular tests plus a sanitizer-enabled build where practical. BlueZ's own `HACKING` file documents `make check`, running `bluetoothd` from the repository, and a Valgrind invocation for daemon testing. fileciteturn31file0L2-L10
+For both patches I would run BlueZ's regular tests plus a sanitizer-enabled build where practical. BlueZ's own `HACKING` file documents `make check`, running `bluetoothd` from the repository, and a Valgrind invocation for daemon testing.
 
 The acceptance criteria should be:
 
@@ -730,11 +729,11 @@ later:
     if length < sizeof(*rp)
 ```
 
-The problematic no-client asynchronous handling was introduced by the 2017 upstream commit `3597d1377723`. fileciteturn34file0L2-L6
+The problematic no-client asynchronous handling was introduced by the 2017 upstream commit `3597d1377723`.
 
-For `0002`, a target is affected if its `transport_cb()` validates `setup` but then invokes `avdtp_stream_set_transport(setup->stream, ...)` without revalidating `setup->stream`. The separate setup-lifetime protection from 2017 does not close that gap. fileciteturn35file0L2-L6
+For `0002`, a target is affected if its `transport_cb()` validates `setup` but then invokes `avdtp_stream_set_transport(setup->stream, ...)` without revalidating `setup->stream`. The separate setup-lifetime protection from 2017 does not close that gap.
 
-The project's own test context reports runtime deployment on Ubuntu's BlueZ `5.72-0ubuntu5.5`, application/build checks against 5.87, and `git am` verification against a then-current master. fileciteturn27file0L2-L2 I independently confirmed the vulnerable source forms remain at the newer September 17, 2026 master commit `2401054`. fileciteturn42file0L2-L6
+The project's own test context reports runtime deployment on Ubuntu's BlueZ `5.72-0ubuntu5.5`, application/build checks against 5.87, and `git am` verification against a then-current master. I independently confirmed the vulnerable source forms remain at the newer September 17, 2026 master commit `2401054`.
 
 ### Applying the patches
 
@@ -747,7 +746,7 @@ git am /path/to/0001-adapter-Fix-crash-on-short-start-discovery-reply.patch
 git am /path/to/0002-a2dp-Fix-crash-on-NULL-stream-in-transport_cb.patch
 ```
 
-The repository includes a dedicated [`git-am-check.sh`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/patches/bluez/git-am-check.sh) that creates temporary worktrees and verifies each patch alone and both orderings. fileciteturn30file0L2-L10
+The repository includes a dedicated [`git-am-check.sh`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/patches/bluez/git-am-check.sh) that creates temporary worktrees and verifies each patch alone and both orderings.
 
 If context drift prevents automated application, the safe manual placement is precise:
 
@@ -755,13 +754,13 @@ If context drift prevents automated application, the safe manual placement is pr
 
 **For `0002`:** put the NULL-stream check after the callback's existing I/O/error retrieval has succeeded and **immediately before** `avdtp_stream_set_transport(setup->stream, ...)`.
 
-Do not move the `0002` check to the top of `transport_cb()`: doing so could cause a real `bt_io_accept()` or `bt_io_get()` failure to be reported merely as "no stream," which is exactly the diagnostic regression the submitted placement avoids. fileciteturn24file0L2-L2
+Do not move the `0002` check to the top of `transport_cb()`: doing so could cause a real `bt_io_accept()` or `bt_io_get()` failure to be reported merely as "no stream," which is exactly the diagnostic regression the submitted placement avoids.
 
 ### Upstream submission quality
 
-The patch formatting is aligned with current BlueZ contribution rules. BlueZ's `HACKING` document says patches are normally sent by email to `linux-bluetooth@vger.kernel.org`, requests the `[PATCH BlueZ]` subject prefix, requires 50/72 commit-message formatting, and explicitly says **not** to add `Signed-off-by` lines. fileciteturn31file0L2-L10
+The patch formatting is aligned with current BlueZ contribution rules. BlueZ's `HACKING` document says patches are normally sent by email to `linux-bluetooth@vger.kernel.org`, requests the `[PATCH BlueZ]` subject prefix, requires 50/72 commit-message formatting, and explicitly says **not** to add `Signed-off-by` lines.
 
-The project has specifically checked those constraints in its verification script. fileciteturn30file0L2-L10
+The project has specifically checked those constraints in its verification script.
 
 I agree with keeping the fixes as **two independent patches**, rather than artificially presenting them as a dependent series:
 
@@ -777,12 +776,12 @@ For `0001`, I would consider a small clarification to the commit message—not t
 
 > `src/shared/mgmt.c` can invoke callbacks with zero parameters on its Command Status path; the exact kernel/event sequence responsible for the observed successful short delivery is not established.
 
-That is already broadly what the patch says. The deeper investigation above shows an especially plausible route through BlueZ's index-only mismatched-opcode fallback, but I would **not put that mechanism into the patch's commit message as fact until a raw mgmt trace proves it**. Current normal Linux Start Discovery completion is one-byte Command Complete, while BlueZ's index fallback was specifically designed to tolerate wrong kernel opcodes. citeturn16search1turn14view3 fileciteturn41file0L2-L6
+That is already broadly what the patch says. The deeper investigation above shows an especially plausible route through BlueZ's index-only mismatched-opcode fallback, but I would **not put that mechanism into the patch's commit message as fact until a raw mgmt trace proves it**. Current normal Linux Start Discovery completion is one-byte Command Complete, while BlueZ's index fallback was specifically designed to tolerate wrong kernel opcodes.
 
 ### Final technical recommendation
 
-**`0001`: Accept/upstream.** It fixes an indisputable control-flow bug with essentially no normal-path behavioral change. Treat investigation of the anomalous mgmt completion as a separate follow-up. In that follow-up, the first target I would examine is `src/shared/mgmt.c`'s index-only fallback introduced by `6efdbd8dbd16`, especially how it handles a mismatched opcode combined with `MGMT_STATUS_SUCCESS`. fileciteturn41file0L2-L6
+**`0001`: Accept/upstream.** It fixes an indisputable control-flow bug with essentially no normal-path behavioral change. Treat investigation of the anomalous mgmt completion as a separate follow-up. In that follow-up, the first target I would examine is `src/shared/mgmt.c`'s index-only fallback introduced by `6efdbd8dbd16`, especially how it handles a mismatched opcode combined with `MGMT_STATUS_SUCCESS`.
 
-**`0002`: Accept/upstream.** It fixes an indisputable lifetime-invariant violation at the correct caller boundary and has direct field evidence showing the protected condition occurs repeatedly. A subsequent `if (!stream) return FALSE;` inside `avdtp_stream_set_transport()` is reasonable defense in depth but should not replace this caller-side fix. fileciteturn24file0L2-L2
+**`0002`: Accept/upstream.** It fixes an indisputable lifetime-invariant violation at the correct caller boundary and has direct field evidence showing the protected condition occurs repeatedly. A subsequent `if (!stream) return FALSE;` inside `avdtp_stream_set_transport()` is reasonable defense in depth but should not replace this caller-side fix.
 
-**Neither patch should be advertised as a fix for the QCA9377 controller wedge itself.** The repository correctly characterizes them as userspace crash hardening discovered while investigating that larger controller problem. The fact that the bugs remain visible in current upstream BlueZ, and that their correctness can be demonstrated independently of QCA9377 hardware, is actually their strongest upstream case. fileciteturn27file0L2-L2
+**Neither patch should be advertised as a fix for the QCA9377 controller wedge itself.** The repository correctly characterizes them as userspace crash hardening discovered while investigating that larger controller problem. The fact that the bugs remain visible in current upstream BlueZ, and that their correctness can be demonstrated independently of QCA9377 hardware, is actually their strongest upstream case.
