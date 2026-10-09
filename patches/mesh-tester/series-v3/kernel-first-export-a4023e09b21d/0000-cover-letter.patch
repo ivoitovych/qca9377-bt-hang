@@ -1,0 +1,25 @@
+From a4023e09b21d6cc6c9b3f7cb1e46a524b706d529 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 4 Oct 2026 17:41:52 +0200
+Subject: [PATCH 0/5] *** SUBJECT HERE ***
+
+*** BLURB HERE ***
+
+Iaroslav Voitovych (5):
+  Bluetooth: MGMT: hand mesh transmissions over under hdev->lock
+  Bluetooth: MGMT: remove the mesh advertising instance when done
+  Bluetooth: MGMT: complete the mesh transmission that owned the
+    instance
+  Bluetooth: MGMT: finish a mesh transmission that ends while powered
+    off
+  Bluetooth: MGMT: note what the mesh done deadline does to Count
+
+ include/net/bluetooth/hci.h |   3 +
+ net/bluetooth/mgmt.c        | 139 ++++++++++++++++++++++++++++--------
+ 2 files changed, 113 insertions(+), 29 deletions(-)
+
+
+base-commit: 08e90633377f1b2567ab5ad6810b74c552246a07
+-- 
+2.43.0
+

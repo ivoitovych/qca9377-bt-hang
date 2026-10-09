@@ -133,7 +133,10 @@ while IFS= read -r f; do
     # retest/ is out of scope for the same reason: a published retest kit whose
     # scripts run kernels in QEMU on another machine (retest/*/README.md), never
     # in this suite. Added 2026-10-06 with retest/mesh-tx-leak/.
-    case "$f" in scripts/*|retest/*) SHSKIPPED+=("$f"); continue ;; esac
+    # patches/ and docs/mesh-tester-ci/ likewise: reproducers kept beside their
+    # patch, and the record of the QEMU harness the mesh work ran elsewhere
+    # (docs/mesh-tester-ci/tools-phase5/). Added 2026-10-09 when they came to main.
+    case "$f" in scripts/*|retest/*|patches/*|docs/mesh-tester-ci/*) SHSKIPPED+=("$f"); continue ;; esac
     IFS= read -r shebang < "$f" || continue
     case "$shebang" in
         '#!'*bash*|'#!'*/sh|'#!'*' sh') SHFILES+=("$f") ;;
@@ -164,7 +167,7 @@ if (( ${#SHFILES[@]} == 0 )); then
     echo "coverage: no shell files found (not a git checkout?)" >&2
     exit 2
 fi
-echo "out of scope (scripts/, retest/, not shipped): ${#SHSKIPPED[@]} file(s)" >&2
+echo "out of scope (scripts/, retest/, patches/, docs/mesh-tester-ci/, not shipped): ${#SHSKIPPED[@]} file(s)" >&2
 
 # ── run the suite under trace ─────────────────────────────────────────────
 printf 'running tests/run-tests under trace (%d shell files)...\n' "${#SHFILES[@]}" >&2

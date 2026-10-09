@@ -1,0 +1,85 @@
+From de2b51ad33e42387393512cd8ad3dc0cd2f7279b Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 2 Oct 2026 03:56:49 +0200
+Subject: [PATCH 1/2] Bluetooth: MGMT: remove the mesh advertising instance
+ when done
+
+mesh_send_done_sync() only disables advertising when hdev->adv_instances
+is empty, but the instance a mesh packet is advertised through
+(le_num_of_adv_sets + 1) is itself on that list and nothing removes it,
+so for a mesh transmission the check is never true and advertising is
+never disabled here. On the legacy advertising path the controller
+keeps advertising the packet and the stale instance stays scheduled for
+1000 seconds (hci_schedule_adv_instance_sync() arms adv_instance_expire
+with adv->remaining_time, the 1000 the instance was added with); with
+extended advertising the set stays enabled until the duration the
+controller was given ends. Before the list check was added the disable
+was unconditional, which is what the tools/mesh-tester cases
+"Mesh - Send cancel - 1/2" have expected since 2022 and now time out on.
+
+Tear the instance down the way Remove Advertising does, with
+hci_remove_advertising_sync(): on the legacy path this drops the
+instance, cancels its timer and reschedules the next instance if there
+is one; with extended advertising it disables and removes that set
+only, so other advertising sets keep running, which is what the list
+check was added for. The existing list_empty() check then disables
+advertising only when no other instance is left.
+
+All removal paths end in mgmt_advertising_removed(). The mesh instance
+is internal - Add Advertising rejects instances above
+le_num_of_adv_sets, Read Advertising Features hides them and no
+Advertising Added is ever sent for them - so skip the event for it
+instead of announcing to userspace the removal of an instance it never
+saw.
+
+Fixes: f3cb5676e5c1 ("Bluetooth: MGMT: mesh_send: check instances prior disabling advertising")
+Cc: stable@vger.kernel.org
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/mgmt.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 251a896babd5..143b9bc25744 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -1093,8 +1093,21 @@ static void mesh_send_complete(struct hci_dev *hdev,
+ static int mesh_send_done_sync(struct hci_dev *hdev, void *data)
+ {
+ 	struct mgmt_mesh_tx *mesh_tx;
++	u8 instance = hdev->le_num_of_adv_sets + 1;
+ 
+ 	hci_dev_clear_flag(hdev, HCI_MESH_SENDING);
++
++	/* The packet was advertised through the mesh-only instance
++	 * (le_num_of_adv_sets + 1). Tear it down the same way Remove
++	 * Advertising does: with extended advertising this disables and
++	 * removes that set only, otherwise the instance is dropped and the
++	 * next one, if any, is rescheduled. It has to go before the
++	 * list_empty() check below, otherwise the instance itself keeps
++	 * advertising enabled and the packet stays on air until the instance
++	 * expires.
++	 */
++	hci_remove_advertising_sync(hdev, NULL, instance, true);
++
+ 	if (list_empty(&hdev->adv_instances))
+ 		hci_disable_advertising_sync(hdev);
+ 	mesh_tx = mgmt_mesh_next(hdev, NULL);
+@@ -1288,6 +1301,14 @@ void mgmt_advertising_removed(struct sock *sk, struct hci_dev *hdev,
+ {
+ 	struct mgmt_ev_advertising_removed ev;
+ 
++	/* The instance mesh transmissions are advertised through
++	 * (le_num_of_adv_sets + 1) is internal: Add Advertising rejects it,
++	 * Read Advertising Features hides it and no Advertising Added was
++	 * ever sent for it, so don't announce its removal either.
++	 */
++	if (instance > hdev->le_num_of_adv_sets)
++		return;
++
+ 	ev.instance = instance;
+ 
+ 	mgmt_event(MGMT_EV_ADVERTISING_REMOVED, hdev, &ev, sizeof(ev), sk);
+-- 
+2.43.0
+

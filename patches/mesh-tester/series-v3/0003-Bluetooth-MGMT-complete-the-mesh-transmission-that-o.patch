@@ -1,0 +1,60 @@
+From 9085912a65bc5714b0ff0b460fa49dc2ff67bfee Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 2 Oct 2026 14:16:29 +0200
+Subject: [PATCH 3/5] Bluetooth: MGMT: complete the mesh transmission that
+ owned the instance
+
+mesh_send_done_sync() completes the head of hdev->mesh_pending when a
+transmission is done. That is the right request only while the queue is
+in order: after a Mesh Send Cancel of the in-flight handle the head is
+the next, still unsent, packet, which is then reported with Mesh Packet
+Complete and dropped, although the request that held the advertising
+instance has already been completed by the cancel. The next packet can
+therefore leave the pending queue without being advertised, even though
+userspace has not cancelled it.
+
+Complete the request that acquired the mesh advertising instance
+instead: mesh_send_sync() records the instance number
+(le_num_of_adv_sets + 1) only in the mesh_tx it started, a queued one
+still carries 0 and a cancelled one has already left the queue. If
+cancellation has already removed that request, nothing is completed
+here and the queued requests are left pending for mesh_next(). This is
+what doc/mgmt-protocol.rst describes for the event ("a requested
+outbound Mesh packet has completed and no longer occupies a transmit
+slot") and for the cancel ("For each mesh packet canceled, the Mesh
+Packet Transmission Complete event will be generated").
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+Cc: stable@vger.kernel.org
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/mgmt.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index e7da34dbbad5..a8a9fda75dae 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -1141,9 +1141,16 @@ static int mesh_send_done_sync(struct hci_dev *hdev, void *data)
+ 
+ 	hci_dev_lock(hdev);
+ 
+-	mesh_tx = mgmt_mesh_next(hdev, NULL);
+-	if (mesh_tx)
+-		mesh_send_complete(hdev, mesh_tx, false);
++	/* Only the request that acquired the mesh instance has a nonzero
++	 * instance. Cancellation may already have removed that request; do
++	 * not complete an unrelated queued request.
++	 */
++	list_for_each_entry(mesh_tx, &hdev->mesh_pending, list) {
++		if (mesh_tx->instance == instance) {
++			mesh_send_complete(hdev, mesh_tx, false);
++			break;
++		}
++	}
+ 
+ 	mesh_next(hdev);
+ 
+-- 
+2.43.0
+

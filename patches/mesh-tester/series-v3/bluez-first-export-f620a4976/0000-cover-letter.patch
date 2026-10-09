@@ -1,0 +1,25 @@
+From f620a497625985cafb99cc960392485267c78218 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 4 Oct 2026 17:41:53 +0200
+Subject: [PATCH 0/4] *** SUBJECT HERE ***
+
+*** BLURB HERE ***
+
+Iaroslav Voitovych (4):
+  emulator/hciemu: Add hooks on client controllers
+  shared/mgmt: Fix leak when unregistering from a notify callback
+  doc: Enable fault injection in the tester kernel config
+  tools/mesh-tester: Test mesh advertising lifecycle
+
+ doc/tester.config   |    3 +
+ emulator/hciemu.c   |   83 +-
+ emulator/hciemu.h   |    8 +
+ src/shared/mgmt.c   |   23 +-
+ tools/mesh-tester.c | 2727 ++++++++++++++++++++++++++++++++++++++++++-
+ 5 files changed, 2762 insertions(+), 82 deletions(-)
+
+
+base-commit: ae69dcddd5495c7c72b7935e12e17cf6d6b28461
+-- 
+2.43.0
+

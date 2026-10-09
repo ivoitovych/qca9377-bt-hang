@@ -1,0 +1,658 @@
+From 51ab024b5eaecc5ce2ddd0c175e1bfc2aaa91721 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 2 Oct 2026 04:05:07 +0200
+Subject: [PATCH BlueZ] tools/mesh-tester: Add extended advertising and send
+ sequence tests
+
+All mesh cases run on the legacy advertising emulator (BREDRLE), so the
+extended advertising path of Mesh Send, where the packet goes out through
+an advertising set of its own, was not covered. Add BREDRLE50 variants of
+"Mesh - Send" and "Mesh - Send cancel - 1/2": the send must enable the
+mesh set (handle 4 on this emulator, le_num_of_adv_sets + 1) and the end
+of a transmission is LE Remove Advertising Set for that handle.
+
+Add transmission sequence tests on both emulators that check the handles
+reported by Mesh Packet Complete in order, how often the mesh set was
+started and torn down on the controller, that no Advertising Removed
+event is sent for the internal mesh instance, and what Read Advertising
+Features lists afterwards:
+
+ - two sends, cancel the one on air: handle 1 completes at once, the
+   queued handle 2 is then actually sent and completes;
+ - two sends, cancel the queued one: handle 2 completes at once, handle 1
+   completes when its count is done, nothing restarts;
+ - two sends, cancel all: both complete at once, the set on air is torn
+   down when its count is done;
+ - two sends, no cancel: both complete in order, one after the other;
+ - one send while an ordinary advertising instance is active: the
+   transmission completes, advertising is not disabled as a whole and the
+   ordinary instance remains.
+
+The sequence tests get a 4 second timeout since they wait for two
+transmissions and a settle time. The expectations are those of the
+kernel series "Bluetooth: MGMT: remove the mesh advertising instance when
+done" and "Bluetooth: MGMT: complete the mesh transmission that was on
+air"; without it the new cases fail the way "Mesh - Send cancel - 1/2"
+have been failing.
+---
+ tools/mesh-tester.c | 577 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 577 insertions(+)
+
+diff --git a/tools/mesh-tester.c b/tools/mesh-tester.c
+index 4412bfdb7..678d20f6e 100644
+--- a/tools/mesh-tester.c
++++ b/tools/mesh-tester.c
+@@ -62,6 +62,14 @@ struct test_data {
+ 	int unmet_conditions;
+ 	int unmet_setup_conditions;
+ 	int sk;
++	/* Mesh transmission sequence tests (test_mesh_tx) */
++	unsigned int mesh_tx_cmplt_id;
++	unsigned int mesh_tx_removed_id;
++	unsigned int mesh_tx_settle_id;
++	unsigned int mesh_tx_cmplt_count;
++	unsigned int mesh_tx_starts;
++	unsigned int mesh_tx_stops;
++	unsigned int mesh_tx_disable_all;
+ };
+ 
+ static void print_debug(const char *str, void *user_data)
+@@ -78,6 +86,11 @@ static void test_post_teardown(const void *test_data)
+ 	if (data->sk >= 0)
+ 		close(data->sk);
+ 
++	if (data->mesh_tx_settle_id > 0) {
++		g_source_remove(data->mesh_tx_settle_id);
++		data->mesh_tx_settle_id = 0;
++	}
++
+ 	queue_destroy(data->expect_hci_q, NULL);
+ 
+ 	hciemu_unref(data->hciemu);
+@@ -366,6 +379,25 @@ struct generic_data {
+ 	bool set_adv;
+ 	const uint8_t *adv_data;
+ 	uint8_t adv_data_len;
++	/* Mesh transmission sequence tests (test_mesh_tx): issue
++	 * mesh_tx_sends Mesh Send commands, then (if mesh_tx_do_cancel)
++	 * Mesh Send Cancel of mesh_tx_cancel_handle (0 = all), and expect
++	 * the Mesh Packet Complete events in the order of mesh_tx_cmplt,
++	 * mesh_tx_starts advertising starts and mesh_tx_stops tear-downs
++	 * of the mesh advertising set (-1 = not checked), no Advertising
++	 * Removed event, and the instances of mesh_tx_instances to be the
++	 * only ones left in Read Advertising Features.
++	 */
++	uint8_t mesh_tx_sends;
++	bool mesh_tx_do_cancel;
++	uint8_t mesh_tx_cancel_handle;
++	const uint8_t *mesh_tx_cmplt;
++	uint8_t mesh_tx_cmplt_len;
++	int mesh_tx_starts;
++	int mesh_tx_stops;
++	bool mesh_tx_coexist;
++	const uint8_t *mesh_tx_instances;
++	uint8_t mesh_tx_instances_len;
+ };
+ 
+ static const uint8_t set_exp_feat_param_debug[] = {
+@@ -1398,6 +1430,479 @@ static void setup_multi_mesh_send(const void *test_data)
+ 			NULL, NULL, NULL);
+ }
+ 
++/* Extended advertising: a mesh packet is advertised through the instance
++ * le_num_of_adv_sets + 1. The emulated controller supports three
++ * advertising sets, so the mesh set has handle 4.
++ */
++#define MESH_EXT_ADV_HANDLE	0x04
++
++static const uint8_t mesh_ext_adv_handle[] = {
++	MESH_EXT_ADV_HANDLE
++};
++
++/* LE Set Extended Advertising Enable: enable, one set, handle 4, then
++ * the duration (0x06a0) and max events. The duration is derived by the
++ * kernel from the instance timeout and is not part of what is checked
++ * here (see mesh_ext_adv_enable_check).
++ */
++static const uint8_t mesh_ext_adv_enable_param[] = {
++	0x01, 0x01, MESH_EXT_ADV_HANDLE, 0xa0, 0x06, 0x00
++};
++
++static int mesh_ext_adv_enable_check(const void *param, uint16_t length)
++{
++	const struct bt_hci_cmd_le_set_ext_adv_enable *cp = param;
++	const struct bt_hci_cmd_ext_adv_set *set = (const void *)(cp + 1);
++
++	if (length < sizeof(*cp) + sizeof(*set))
++		return -1;
++
++	if (cp->enable != 0x01 || cp->num_of_sets != 0x01)
++		return -1;
++
++	if (set->handle != MESH_EXT_ADV_HANDLE)
++		return -1;
++
++	return 0;
++}
++
++static const struct generic_data mesh_send_mesh_1_ext = {
++	.send_opcode = MGMT_OP_MESH_SEND,
++	.send_param = send_mesh_1,
++	.send_len = sizeof(send_mesh_1),
++	.expect_param = mesh_send_rsp_param_mesh,
++	.expect_len = sizeof(mesh_send_rsp_param_mesh),
++	.expect_status = MGMT_STATUS_SUCCESS,
++	.expect_alt_ev = MGMT_EV_MESH_PACKET_CMPLT,
++	.expect_alt_ev_param = mesh_send_rsp_param_mesh,
++	.expect_alt_ev_len = sizeof(mesh_send_rsp_param_mesh),
++	.expect_hci_command = BT_HCI_CMD_LE_SET_EXT_ADV_ENABLE,
++	.expect_hci_param = mesh_ext_adv_enable_param,
++	.expect_hci_len = sizeof(mesh_ext_adv_enable_param),
++	.expect_hci_param_check_func = mesh_ext_adv_enable_check,
++};
++
++/* With extended advertising the end of a mesh transmission is the
++ * removal of the mesh set: LE Remove Advertising Set for handle 4.
++ */
++static const struct generic_data mesh_send_mesh_cancel_1_ext = {
++	.send_opcode = MGMT_OP_MESH_SEND_CANCEL,
++	.send_param = send_mesh_cancel_1,
++	.send_len = sizeof(send_mesh_cancel_1),
++	.expect_status = MGMT_STATUS_SUCCESS,
++	.expect_alt_ev = MGMT_EV_MESH_PACKET_CMPLT,
++	.expect_alt_ev_param = send_mesh_cancel_1,
++	.expect_alt_ev_len = sizeof(send_mesh_cancel_1),
++	.expect_hci_command = BT_HCI_CMD_LE_REMOVE_ADV_SET,
++	.expect_hci_param = mesh_ext_adv_handle,
++	.expect_hci_len = sizeof(mesh_ext_adv_handle),
++};
++
++static const struct generic_data mesh_send_mesh_cancel_2_ext = {
++	.send_opcode = MGMT_OP_MESH_SEND_CANCEL,
++	.send_param = send_mesh_cancel_2,
++	.send_len = sizeof(send_mesh_cancel_2),
++	.expect_status = MGMT_STATUS_SUCCESS,
++	.expect_alt_ev = MGMT_EV_MESH_PACKET_CMPLT,
++	.expect_alt_ev_param = send_mesh_cancel_2,
++	.expect_alt_ev_len = sizeof(send_mesh_cancel_2),
++	.expect_hci_command = BT_HCI_CMD_LE_REMOVE_ADV_SET,
++	.expect_hci_param = mesh_ext_adv_handle,
++	.expect_hci_len = sizeof(mesh_ext_adv_handle),
++};
++
++/* Mesh transmission sequences: the handles reported by Mesh Packet
++ * Complete, in order, and what the controller is told.
++ *
++ * Every Mesh Send is advertised for cnt (3) x 25 ms. A transmission
++ * starts with an advertising enable for the mesh set (LE Set Advertising
++ * Enable 0x01, or LE Set Extended Advertising Enable of the mesh set)
++ * and ends with the set being torn down (LE Set Advertising Enable 0x00,
++ * or LE Remove Advertising Set of the mesh set). The Cancel is issued
++ * right after the second Mesh Send is acknowledged, i.e. while the first
++ * packet is on air.
++ */
++static const uint8_t mesh_tx_handles_1_2[] = { 0x01, 0x02 };
++static const uint8_t mesh_tx_handles_2_1[] = { 0x02, 0x01 };
++static const uint8_t mesh_tx_handles_1[] = { 0x01 };
++static const uint8_t mesh_tx_instance_1[] = { 0x01 };
++
++/* Two sends, cancel the one on air: handle 1 completes at once, the
++ * queued handle 2 is then actually sent (a second start) and completes
++ * when its count is done (a second tear-down).
++ */
++static const struct generic_data mesh_tx_cancel_active = {
++	.mesh_tx_sends = 2,
++	.mesh_tx_do_cancel = true,
++	.mesh_tx_cancel_handle = 0x01,
++	.mesh_tx_cmplt = mesh_tx_handles_1_2,
++	.mesh_tx_cmplt_len = sizeof(mesh_tx_handles_1_2),
++	.mesh_tx_starts = 2,
++	.mesh_tx_stops = 2,
++};
++
++/* Two sends, cancel the queued one: handle 2 completes at once, handle 1
++ * stays on air and completes when its count is done. Nothing restarts.
++ */
++static const struct generic_data mesh_tx_cancel_queued = {
++	.mesh_tx_sends = 2,
++	.mesh_tx_do_cancel = true,
++	.mesh_tx_cancel_handle = 0x02,
++	.mesh_tx_cmplt = mesh_tx_handles_2_1,
++	.mesh_tx_cmplt_len = sizeof(mesh_tx_handles_2_1),
++	.mesh_tx_starts = 1,
++	.mesh_tx_stops = 1,
++};
++
++/* Two sends, cancel all: both complete at once, the set on air is torn
++ * down when its count is done and nothing else is sent.
++ */
++static const struct generic_data mesh_tx_cancel_all = {
++	.mesh_tx_sends = 2,
++	.mesh_tx_do_cancel = true,
++	.mesh_tx_cancel_handle = 0x00,
++	.mesh_tx_cmplt = mesh_tx_handles_1_2,
++	.mesh_tx_cmplt_len = sizeof(mesh_tx_handles_1_2),
++	.mesh_tx_starts = 1,
++	.mesh_tx_stops = 1,
++};
++
++/* Two sends, no cancel: handle 1 completes when its count is done and
++ * is torn down, handle 2 is then sent and completes the same way.
++ */
++static const struct generic_data mesh_tx_two_completions = {
++	.mesh_tx_sends = 2,
++	.mesh_tx_cmplt = mesh_tx_handles_1_2,
++	.mesh_tx_cmplt_len = sizeof(mesh_tx_handles_1_2),
++	.mesh_tx_starts = 2,
++	.mesh_tx_stops = 2,
++};
++
++/* One send while an ordinary advertising instance (1) is active: the
++ * transmission completes, advertising as a whole is never disabled and
++ * instance 1 is still there afterwards. Without extended advertising the
++ * controller has a single advertising set that instance 1 is using, so
++ * the mesh set is neither started nor stopped on the controller; with
++ * extended advertising the mesh set is started and torn down on its own.
++ */
++static const struct generic_data mesh_tx_coexist = {
++	.mesh_tx_sends = 1,
++	.mesh_tx_cmplt = mesh_tx_handles_1,
++	.mesh_tx_cmplt_len = sizeof(mesh_tx_handles_1),
++	.mesh_tx_starts = -1,
++	.mesh_tx_stops = 0,
++	.mesh_tx_coexist = true,
++	.mesh_tx_instances = mesh_tx_instance_1,
++	.mesh_tx_instances_len = sizeof(mesh_tx_instance_1),
++};
++
++static const struct generic_data mesh_tx_coexist_ext = {
++	.mesh_tx_sends = 1,
++	.mesh_tx_cmplt = mesh_tx_handles_1,
++	.mesh_tx_cmplt_len = sizeof(mesh_tx_handles_1),
++	.mesh_tx_starts = 1,
++	.mesh_tx_stops = 1,
++	.mesh_tx_coexist = true,
++	.mesh_tx_instances = mesh_tx_instance_1,
++	.mesh_tx_instances_len = sizeof(mesh_tx_instance_1),
++};
++
++/* Add Advertising: instance 1, no flags, default duration, no timeout,
++ * 4 bytes of advertising data (manufacturer specific), no scan response.
++ */
++static const uint8_t add_advertising_param_coexist[] = {
++	0x01,
++	0x00, 0x00, 0x00, 0x00,
++	0x00, 0x00,
++	0x00, 0x00,
++	0x04,
++	0x00,
++	0x03, 0xff, 0x12, 0x34,
++};
++
++static void setup_coexist_callback(uint8_t status, uint16_t length,
++		const void *param, void *user_data)
++{
++	const struct mgmt_rp_add_advertising *rp = param;
++
++	if (status != MGMT_STATUS_SUCCESS || length != sizeof(*rp) ||
++							rp->instance != 0x01) {
++		tester_warn("Add Advertising failed: %s (0x%02x)",
++						mgmt_errstr(status), status);
++		tester_setup_failed();
++		return;
++	}
++
++	tester_print("Ordinary advertising instance %u added", rp->instance);
++}
++
++static void setup_mesh_coexist(const void *test_data)
++{
++	struct test_data *data = tester_get_data();
++
++	setup_enable_mesh(test_data);
++
++	mgmt_send(data->mgmt, MGMT_OP_ADD_ADVERTISING, data->mgmt_index,
++			sizeof(add_advertising_param_coexist),
++			add_advertising_param_coexist,
++			setup_coexist_callback, NULL, NULL);
++}
++
++static void mesh_tx_adv_features_callback(uint8_t status, uint16_t length,
++		const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct generic_data *test = data->test_data;
++	const struct mgmt_rp_read_adv_features *rp = param;
++
++	if (status != MGMT_STATUS_SUCCESS || length < sizeof(*rp)) {
++		tester_warn("Read Advertising Features failed: %s (0x%02x)",
++						mgmt_errstr(status), status);
++		tester_test_failed();
++		return;
++	}
++
++	tester_print("Advertising instances left: %u", rp->num_instances);
++
++	if (rp->num_instances != test->mesh_tx_instances_len ||
++			length != sizeof(*rp) + rp->num_instances ||
++			(rp->num_instances && memcmp(rp->instance,
++						test->mesh_tx_instances,
++						rp->num_instances))) {
++		tester_warn("Unexpected advertising instances");
++		util_hexdump('>', rp->instance, rp->num_instances,
++							print_debug, "");
++		util_hexdump('!', test->mesh_tx_instances,
++				test->mesh_tx_instances_len, print_debug, "");
++		tester_test_failed();
++		return;
++	}
++
++	test_condition_complete(data);
++}
++
++static gboolean mesh_tx_settle(gpointer user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct generic_data *test = data->test_data;
++
++	data->mesh_tx_settle_id = 0;
++
++	tester_print("Mesh set starts %u stops %u, advertising disabled %u",
++			data->mesh_tx_starts, data->mesh_tx_stops,
++			data->mesh_tx_disable_all);
++
++	if (test->mesh_tx_starts >= 0 &&
++		data->mesh_tx_starts != (unsigned int) test->mesh_tx_starts) {
++		tester_warn("Expected %d starts of the mesh set",
++							test->mesh_tx_starts);
++		tester_test_failed();
++		return FALSE;
++	}
++
++	if (test->mesh_tx_stops >= 0 &&
++		data->mesh_tx_stops != (unsigned int) test->mesh_tx_stops) {
++		tester_warn("Expected %d tear-downs of the mesh set",
++							test->mesh_tx_stops);
++		tester_test_failed();
++		return FALSE;
++	}
++
++	if (test->mesh_tx_coexist && data->mesh_tx_disable_all) {
++		tester_warn("Advertising was disabled while another "
++						"instance was active");
++		tester_test_failed();
++		return FALSE;
++	}
++
++	mgmt_send(data->mgmt, MGMT_OP_READ_ADV_FEATURES, data->mgmt_index,
++			0, NULL, mesh_tx_adv_features_callback, NULL, NULL);
++
++	return FALSE;
++}
++
++static void mesh_tx_cmplt_callback(uint16_t index, uint16_t length,
++		const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct generic_data *test = data->test_data;
++	const struct mgmt_ev_mesh_pkt_cmplt *ev = param;
++	unsigned int n = data->mesh_tx_cmplt_count;
++
++	if (length != sizeof(*ev)) {
++		tester_warn("Invalid Mesh Packet Complete length %u", length);
++		tester_test_failed();
++		return;
++	}
++
++	tester_print("Mesh Packet Complete handle %u (%u of %u)", ev->handle,
++					n + 1, test->mesh_tx_cmplt_len);
++
++	if (n >= test->mesh_tx_cmplt_len) {
++		tester_warn("Unexpected Mesh Packet Complete");
++		tester_test_failed();
++		return;
++	}
++
++	if (ev->handle != test->mesh_tx_cmplt[n]) {
++		tester_warn("Expected handle %u", test->mesh_tx_cmplt[n]);
++		tester_test_failed();
++		return;
++	}
++
++	data->mesh_tx_cmplt_count = n + 1;
++
++	if (data->mesh_tx_cmplt_count < test->mesh_tx_cmplt_len)
++		return;
++
++	/* All transmissions are accounted for; give the tear-down of the
++	 * last set and any stray event time to arrive, then check what the
++	 * controller was told and what is left.
++	 */
++	data->mesh_tx_settle_id = g_timeout_add(400, mesh_tx_settle, NULL);
++}
++
++static void mesh_tx_removed_callback(uint16_t index, uint16_t length,
++		const void *param, void *user_data)
++{
++	const struct mgmt_ev_advertising_removed *ev = param;
++
++	if (length == sizeof(*ev))
++		tester_warn("Advertising Removed for instance %u",
++							ev->instance);
++	else
++		tester_warn("Advertising Removed received");
++
++	tester_test_failed();
++}
++
++static void mesh_tx_hci_callback(uint16_t opcode, const void *param,
++		uint8_t length, void *user_data)
++{
++	struct test_data *data = user_data;
++	const struct bt_hci_cmd_le_set_ext_adv_enable *cp;
++	const struct bt_hci_cmd_ext_adv_set *set;
++	const uint8_t *enable;
++
++	tester_print("HCI Command 0x%04x length %u", opcode, length);
++
++	switch (opcode) {
++	case BT_HCI_CMD_LE_SET_ADV_ENABLE:
++		if (length != 1)
++			return;
++
++		enable = param;
++		if (*enable)
++			data->mesh_tx_starts++;
++		else
++			data->mesh_tx_stops++;
++		break;
++	case BT_HCI_CMD_LE_SET_EXT_ADV_ENABLE:
++		if (length < sizeof(*cp))
++			return;
++
++		cp = param;
++		if (!cp->num_of_sets) {
++			if (!cp->enable)
++				data->mesh_tx_disable_all++;
++			return;
++		}
++
++		if (length < sizeof(*cp) + sizeof(*set))
++			return;
++
++		set = (const void *)(cp + 1);
++		if (cp->enable && set->handle == MESH_EXT_ADV_HANDLE)
++			data->mesh_tx_starts++;
++		break;
++	case BT_HCI_CMD_LE_REMOVE_ADV_SET:
++		if (length == 1 && *(const uint8_t *)param ==
++							MESH_EXT_ADV_HANDLE)
++			data->mesh_tx_stops++;
++		break;
++	default:
++		break;
++	}
++}
++
++static void mesh_tx_cancel_callback(uint8_t status, uint16_t length,
++		const void *param, void *user_data)
++{
++	tester_print("Mesh Send Cancel: %s (0x%02x)", mgmt_errstr(status),
++								status);
++
++	if (status != MGMT_STATUS_SUCCESS)
++		tester_test_failed();
++}
++
++static void mesh_tx_send_callback(uint8_t status, uint16_t length,
++		const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct generic_data *test = data->test_data;
++	const uint8_t *handle = param;
++	uint8_t expected = PTR_TO_UINT(user_data);
++	struct mgmt_cp_mesh_send_cancel cancel;
++
++	if (status != MGMT_STATUS_SUCCESS || length != sizeof(*handle)) {
++		tester_warn("Mesh Send failed: %s (0x%02x)",
++						mgmt_errstr(status), status);
++		tester_test_failed();
++		return;
++	}
++
++	tester_print("Mesh Send: handle %u", *handle);
++
++	if (*handle != expected) {
++		tester_warn("Expected handle %u", expected);
++		tester_test_failed();
++		return;
++	}
++
++	if (expected < test->mesh_tx_sends || !test->mesh_tx_do_cancel)
++		return;
++
++	cancel.handle = test->mesh_tx_cancel_handle;
++
++	tester_print("Sending Mesh Send Cancel for handle %u", cancel.handle);
++
++	mgmt_send(data->mgmt, MGMT_OP_MESH_SEND_CANCEL, data->mgmt_index,
++			sizeof(cancel), &cancel,
++			mesh_tx_cancel_callback, NULL, NULL);
++}
++
++static void test_mesh_tx(const void *test_data)
++{
++	struct test_data *data = tester_get_data();
++	const struct generic_data *test = data->test_data;
++	unsigned int i;
++
++	tester_print("Registering Mesh Packet Complete notification");
++	data->mesh_tx_cmplt_id = mgmt_register(data->mgmt_alt,
++					MGMT_EV_MESH_PACKET_CMPLT,
++					data->mgmt_index,
++					mesh_tx_cmplt_callback, NULL, NULL);
++
++	tester_print("Registering Advertising Removed notification");
++	data->mesh_tx_removed_id = mgmt_register(data->mgmt_alt,
++					MGMT_EV_ADVERTISING_REMOVED,
++					data->mgmt_index,
++					mesh_tx_removed_callback, NULL, NULL);
++
++	tester_print("Registering HCI command callback");
++	hciemu_add_central_post_command_hook(data->hciemu,
++						mesh_tx_hci_callback, data);
++
++	test_add_condition(data);
++
++	for (i = 1; i <= test->mesh_tx_sends; i++) {
++		tester_print("Sending Mesh Send %u", i);
++		mgmt_send(data->mgmt, MGMT_OP_MESH_SEND, data->mgmt_index,
++				sizeof(send_mesh_1), send_mesh_1,
++				mesh_tx_send_callback, UINT_TO_PTR(i), NULL);
++	}
++}
++
+ int main(int argc, char *argv[])
+ {
+ 	tester_init(&argc, &argv);
+@@ -1455,5 +1960,77 @@ int main(int argc, char *argv[])
+ 			setup_multi_mesh_send,
+ 			test_command_generic);
+ 
++	/* The same with extended advertising: the mesh packet goes out
++	 * through its own advertising set, which must be removed when the
++	 * transmission is done or cancelled.
++	 */
++	test_bredrle50("Mesh - Send - Ext Adv",
++			&mesh_send_mesh_1_ext,
++			setup_enable_mesh,
++			test_command_generic);
++
++	test_bredrle50("Mesh - Send cancel - 1 - Ext Adv",
++			&mesh_send_mesh_cancel_1_ext,
++			setup_multi_mesh_send,
++			test_command_generic);
++
++	test_bredrle50("Mesh - Send cancel - 2 - Ext Adv",
++			&mesh_send_mesh_cancel_2_ext,
++			setup_multi_mesh_send,
++			test_command_generic);
++
++	/* Transmission sequences: which handle completes when, what the
++	 * controller is told, no Advertising Removed for the mesh set.
++	 */
++	test_bredrle_full("Mesh - Send queue - cancel active",
++			&mesh_tx_cancel_active,
++			setup_enable_mesh,
++			test_mesh_tx, 4);
++
++	test_bredrle_full("Mesh - Send queue - cancel queued",
++			&mesh_tx_cancel_queued,
++			setup_enable_mesh,
++			test_mesh_tx, 4);
++
++	test_bredrle_full("Mesh - Send queue - cancel all",
++			&mesh_tx_cancel_all,
++			setup_enable_mesh,
++			test_mesh_tx, 4);
++
++	test_bredrle_full("Mesh - Send queue - two completions",
++			&mesh_tx_two_completions,
++			setup_enable_mesh,
++			test_mesh_tx, 4);
++
++	test_bredrle_full("Mesh - Send coexist - instance remains",
++			&mesh_tx_coexist,
++			setup_mesh_coexist,
++			test_mesh_tx, 4);
++
++	test_bredrle50_full("Mesh - Send queue - cancel active - Ext Adv",
++			&mesh_tx_cancel_active,
++			setup_enable_mesh,
++			test_mesh_tx, 4);
++
++	test_bredrle50_full("Mesh - Send queue - cancel queued - Ext Adv",
++			&mesh_tx_cancel_queued,
++			setup_enable_mesh,
++			test_mesh_tx, 4);
++
++	test_bredrle50_full("Mesh - Send queue - cancel all - Ext Adv",
++			&mesh_tx_cancel_all,
++			setup_enable_mesh,
++			test_mesh_tx, 4);
++
++	test_bredrle50_full("Mesh - Send queue - two completions - Ext Adv",
++			&mesh_tx_two_completions,
++			setup_enable_mesh,
++			test_mesh_tx, 4);
++
++	test_bredrle50_full("Mesh - Send coexist - instance remains - Ext Adv",
++			&mesh_tx_coexist_ext,
++			setup_mesh_coexist,
++			test_mesh_tx, 4);
++
+ 	return tester_run();
+ }
+-- 
+2.43.0
+

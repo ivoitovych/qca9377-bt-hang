@@ -1,0 +1,44 @@
+tools/mesh-tester: Test mesh advertising lifecycle
+
+All mesh cases run on the legacy advertising emulator (BREDRLE), so the
+extended advertising path of Mesh Send, where the packet goes out
+through an advertising set of its own, is not covered. Add BREDRLE50
+variants of "Mesh - Send" and "Mesh - Send cancel - 1/2": the send must
+enable the mesh set (handle 4 on this emulator, le_num_of_adv_sets + 1)
+and the end of a transmission is LE Remove Advertising Set for it.
+
+Add lifecycle tests on both emulators that follow two transmissions
+through the controller: every Mesh Send is acknowledged with the
+expected handle; each start of the mesh set is attributed to a request
+by the advertising data loaded before it (the two requests carry
+distinct packets); the Mesh Packet Complete handles arrive in the
+expected order, each once; the mesh set is torn down the expected
+number of times; no Advertising Removed event is sent for the internal
+mesh instance; Read Advertising Features lists what is expected
+afterwards. A cancel is issued only once its scenario is in place,
+request 1 started and request 2 acknowledged and still queued, and a
+completion before that fails the test instead of passing it as a
+natural completion:
+
+ - cancel active: handle 1 completes at once, request 2 is then started
+   and completes;
+ - cancel queued: handle 2 completes at once, handle 1 when its count is
+   done, nothing is started for request 2;
+ - cancel all: both complete at once, nothing is started for request 2;
+ - two completions: both complete in order, one after the other;
+ - send in tear-down: the first tear-down command after request 1
+   started is held back in the emulator (a pre-command hook drops it and
+   feeds it back in once request 2 is acknowledged), so request 2 is
+   added while the kernel waits for the controller; each request must be
+   started exactly once, in order;
+ - coexist: one send while an ordinary advertising instance is active;
+   nothing disables, removes or clears the ordinary set and it is still
+   listed afterwards. Without extended advertising the mesh packet
+   shares the controller's single set with that instance, so whether it
+   is started is not checked there.
+
+The sequences wait for two transmissions and a settle time and get a
+4 second timeout. Without the kernel fixes the cancel cases time out
+and the lifecycle cases fail: the mesh set is never torn down and the
+queued request is completed instead of the cancelled one; a tear-down
+that is not serialized against Mesh Send starts the new request twice.

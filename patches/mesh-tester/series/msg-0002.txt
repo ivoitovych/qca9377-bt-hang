@@ -1,0 +1,23 @@
+Bluetooth: MGMT: complete the mesh transmission that was on air
+
+mesh_send_done_sync() completes the head of hdev->mesh_pending when a
+transmission is done. That is the packet that was sent only while the
+queue is in order: after a Mesh Send Cancel of the in-flight handle the
+head is the next, still unsent, packet, which is then reported with
+Mesh Packet Complete without ever having been advertised (the one that
+was on air was already completed by the cancel). bluetooth-meshd
+matches the event to its transmissions by that handle and so sees the
+second packet as transmitted when it was dropped.
+
+Complete the mesh_tx that owns the advertising instance instead. Every
+transmission uses the same instance number (le_num_of_adv_sets + 1) and
+mesh_send_sync() records it only in the mesh_tx it actually started, so
+the instance identifies the packet that was on air: a cancelled one has
+already left the queue and a queued one still carries instance 0. This
+restores the MGMT semantics of Mesh Packet Complete - it names the
+handle whose transmission finished - and cancelling the in-flight
+handle leaves the queued ones to be sent.
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+Cc: stable@vger.kernel.org
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>

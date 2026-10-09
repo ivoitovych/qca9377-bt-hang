@@ -1,0 +1,52 @@
+From a4023e09b21d6cc6c9b3f7cb1e46a524b706d529 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 3 Oct 2026 22:12:53 +0200
+Subject: [PATCH 5/5] Bluetooth: MGMT: note what the mesh done deadline does to
+ Count
+
+mesh_send_start_complete() arms the done work cnt * 25 ms after a mesh
+packet was started, while mesh_send_sync() adds the packet's instance
+with the adapter's advertising interval, 0x0800 (1280 ms) unless
+userspace configured another one. Now that the done work removes the
+instance, the number of advertising events a packet gets depends on
+that interval: at the default interval one, whatever cnt is; at a
+20 ms interval about one more than cnt. doc/mgmt-protocol.rst defines
+Count as "the number of times this packet will be sent before
+transmission completes".
+
+Sizing the deadline for cnt events at the configured interval would
+keep a cnt of 1, which is what bluetooth-meshd sends (it times its own
+retransmissions), at 25 ms, but would hold a request with cnt 3 for
+more than 2.5 s at the default interval instead of 75 ms, and the
+tools/mesh-tester cases that send cnt 3 and wait for the end of the
+transmission within their 2 s timeout ("Mesh - Send", "Mesh - Send
+cancel - 1/2" and their extended advertising variants) would time out.
+That is a separate change with its own compatibility question; note
+the current behaviour where the deadline is set.
+
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/mgmt.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index f73cd5b85c09..ce55b5db5220 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -2374,6 +2374,13 @@ static void mesh_send_start_complete(struct hci_dev *hdev, void *data, int err)
+ 		return;
+ 	}
+ 
++	/* The done work ends the transmission cnt * 25 ms after the start,
++	 * whatever advertising interval the instance was added with (the
++	 * adapter's, 0x0800 = 1280 ms by default). The controller sends the
++	 * first advertising event on enable and the next one an interval
++	 * later, so with a longer interval fewer than cnt events are sent
++	 * and with a shorter one more can be.
++	 */
+ 	mesh_send_interval = msecs_to_jiffies((send->cnt) * 25);
+ 	queue_delayed_work(hdev->req_workqueue, &hdev->mesh_send_done,
+ 			   mesh_send_interval);
+-- 
+2.43.0
+

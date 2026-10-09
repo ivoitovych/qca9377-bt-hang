@@ -1,0 +1,82 @@
+From 6cc1a7a507a949328743cd339ee413405628cb80 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Thu, 1 Oct 2026 05:41:05 +0200
+Subject: [PATCH] Bluetooth: MGMT: stop advertising when a mesh transmission is
+ done
+
+mesh_send_done_sync() only disables advertising when hdev->adv_instances
+is empty, but the instance a mesh packet is advertised through
+(le_num_of_adv_sets + 1) is itself on that list and nothing removes it,
+so the check is never true for a mesh transmission: LE Set Advertising
+Enable (0x00) is never sent and the controller keeps advertising the
+packet until the instance expires 1000 seconds later, instead of
+stopping after the requested count. Before the list check was added the
+disable was unconditional, which is what tools/mesh-tester has expected
+since 2022 ("Mesh - Send cancel - 1/2", failing in the CI since).
+
+mesh_send_done_sync() also completes the head of hdev->mesh_pending
+instead of the transmission that was on air. After a Mesh Send Cancel of
+the in-flight handle the head is the next, still unsent, packet, which
+is then reported complete without ever being sent.
+
+Remove the mesh instance when the transmission is done, so the existing
+check only accounts for other advertising instances, and complete the
+mesh_tx that owns the instance.
+
+Fixes: f3cb5676e5c1 ("Bluetooth: MGMT: mesh_send: check instances prior disabling advertising")
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+Cc: stable@vger.kernel.org
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/mgmt.c | 30 ++++++++++++++++++++++++++----
+ 1 file changed, 26 insertions(+), 4 deletions(-)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 9d3de5a0b8ee..a61f380b6b48 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -1094,15 +1094,37 @@ static void mesh_send_complete(struct hci_dev *hdev,
+ 
+ static int mesh_send_done_sync(struct hci_dev *hdev, void *data)
+ {
+-	struct mgmt_mesh_tx *mesh_tx;
++	struct mgmt_mesh_tx *mesh_tx, *sent = NULL;
++	u8 instance = hdev->le_num_of_adv_sets + 1;
+ 
+ 	hci_dev_clear_flag(hdev, HCI_MESH_SENDING);
++
++	/* The packet was advertised through the mesh-only instance
++	 * (le_num_of_adv_sets + 1). Drop it before deciding whether
++	 * advertising may stay on, otherwise the instance itself keeps
++	 * adv_instances non-empty, advertising is never disabled here and
++	 * the packet stays on air until the instance expires.
++	 */
++	hci_dev_lock(hdev);
++	hci_remove_adv_instance(hdev, instance);
++	hci_dev_unlock(hdev);
++
+ 	if (list_empty(&hdev->adv_instances))
+ 		hci_disable_advertising_sync(hdev);
+-	mesh_tx = mgmt_mesh_next(hdev, NULL);
+ 
+-	if (mesh_tx)
+-		mesh_send_complete(hdev, mesh_tx, false);
++	/* Complete the transmission that was on air, not the head of the
++	 * queue: after a Mesh Send Cancel of the in-flight handle the head
++	 * is the next, still unsent, packet.
++	 */
++	list_for_each_entry(mesh_tx, &hdev->mesh_pending, list) {
++		if (mesh_tx->instance == instance) {
++			sent = mesh_tx;
++			break;
++		}
++	}
++
++	if (sent)
++		mesh_send_complete(hdev, sent, false);
+ 
+ 	return 0;
+ }
+-- 
+2.43.0
+

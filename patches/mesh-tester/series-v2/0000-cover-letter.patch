@@ -1,0 +1,91 @@
+From 988f5c0f7476c2330ad2014a9780e8c092d4e6fb Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 2 Oct 2026 14:16:29 +0200
+Subject: [PATCH 0/3] Bluetooth: MGMT: stop and account mesh transmissions correctly
+
+A mesh packet is advertised through a dedicated advertising instance
+(le_num_of_adv_sets + 1). Since the list_empty() check was added to
+mesh_send_done_sync(), that instance is what keeps hdev->adv_instances
+non-empty, so a mesh transmission never disables advertising when its
+count is done or when it is cancelled: on the legacy path the controller
+keeps advertising the packet and the instance stays scheduled for
+1000 s, with extended advertising the set stays enabled for the duration
+the controller was given. The tools/mesh-tester cases "Mesh - Send
+cancel - 1/2" encode the original behaviour (the end of advertising
+after the cancel) and time out on current kernels.
+
+Independently, mesh_send_done_sync() completes the head of the pending
+queue rather than the request that held the advertising instance, so
+after cancelling the in-flight handle the next, still unsent, packet is
+reported complete without having been advertised.
+
+Tearing the instance down means controller commands inside
+mesh_send_done_sync(), and that work clears HCI_MESH_SENDING first: a
+Mesh Send arriving while it waits for the controller sees the flag
+clear, queues a start, and the destroy callback mesh_next() queues the
+head of the queue again afterwards - the same packet is started twice.
+The window exists today in the microseconds between the clear and
+mesh_next(); the tear-down would widen it to a controller round trip.
+Patch 1 therefore comes first: it keeps the flag set until the next
+packet has been queued or the scheduler goes idle, and makes that
+decision under hdev->lock, where mesh_send() tests the flag, without
+holding the lock across a controller command. Patch 2 tears the mesh
+instance down through hci_remove_advertising_sync() on both advertising
+paths - that set only with extended advertising, so other advertisers
+keep running - and keeps Advertising Removed from being emitted for the
+internal instance. Patch 3 completes the request that acquired the
+instance.
+
+Patch 1 touches send_cancel() as 71af682ba469 ("Bluetooth: mgmt:
+Dequeue pending mesh_send_sync entries on cancel") left it; stable
+trees need that commit first, and patch 1 lists it as a prerequisite.
+With it, the three patches apply cumulatively to the current
+linux-7.2.y, 6.18.y, 6.12.y, 6.6.y and 6.1.y tips; no stable kernel was
+built or run.
+
+Tested with tools/test-runner (qemu) on the bluetooth tree, with
+tools/mesh-tester extended by the BlueZ patch "tools/mesh-tester: Test
+mesh advertising lifecycle" (BREDRLE50 variants of the Send/cancel
+cases, and lifecycle cases that check the Mesh Packet Complete handles,
+which request each start of the mesh set belongs to, how often the set
+is torn down, that no Advertising Removed is sent for the mesh instance,
+that the ordinary advertising set is left alone, and what Read
+Advertising Features lists afterwards; one case holds the tear-down
+command in the emulator and sends a packet while the kernel waits for
+it):
+
+  mesh-tester, 25 cases, KVM:                 unpatched 10/25, patched 25/25
+  mesh-tester, 20 Send cases, TCG + valgrind: unpatched  5/20, patched 20/20
+  the cancel cases and the hold case, 5 runs: patched 60/60
+  mgmt-tester, 501 cases, patched:            501/501
+
+In the recorded runs, the series disabled and removed the mesh set after
+the requested mesh-done interval, while the ordinary extended-advertising
+set remained enabled. The cnt=3 cases use a nominal 75 ms interval. The
+legacy coexistence case checks preservation of the ordinary advertiser
+only; mesh transmission while another legacy instance is rotating remains
+a separate pre-existing limitation. The TCG/valgrind run passed all 20
+functional cases but reported seven tester-side errors, also present with
+the unpatched kernel. The original generic cancel cases remain
+load-sensitive. With only the tear-down applied (patches 2 and 3 without
+patch 1) the hold case starts the second packet twice on both emulators;
+with patch 1 it is started once.
+
+This series fixes normal and cancellation-driven mesh-done teardown.
+Recovery after advertising setup/removal failure and all pending-request
+behavior across power transitions are not established by these tests.
+
+Iaroslav Voitovych (3):
+  Bluetooth: MGMT: hand mesh transmissions over under hdev->lock
+  Bluetooth: MGMT: remove the mesh advertising instance when done
+  Bluetooth: MGMT: complete the mesh transmission that owned the instance
+
+ include/net/bluetooth/hci.h |   3 ++
+ net/bluetooth/mgmt.c        | 124 +++++++++++++++++++++++++++++++++-----------
+ 2 files changed, 98 insertions(+), 29 deletions(-)
+
+
+base-commit: 86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc
+--
+2.43.0
+

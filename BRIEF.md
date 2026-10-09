@@ -63,7 +63,7 @@ it rotted within hours (`R2-13`).
 >    and 14873330 (2/2), Message-IDs `<20261008034102.707451-1-…>` / `-2-…`; files as mailed in
 >    `patches/bluez/shared-mgmt/`; base `d84171e6c`, commits `9fbc84f5d`/`0722ddc78` in
 >    `cache/bluez-standalone-mgmt-leak` (older states on `keep/shared-mgmt-notify-leak-*`).
->    Review record: private `diag/mesh-tester-ci` `docs/mesh-tester-ci/review-response-*.md`.
+>    Review record: `docs/mesh-tester-ci/review-response-*.md` (ported 2026-10-09).
 >    **CI bot, 10-08 12:41 +0200: all 12 checks PASS, ScanBuild included** (series 1181228, PR
 >    bluez/bluez#2634). That PR's Codacy Security Scan FAILURE is not ours: the tool crashes
 >    (`MalformedInputException`, SARIF formatter), and has failed on every run since 10-07 18:53 UTC,
@@ -82,13 +82,15 @@ it rotted within hours (`R2-13`).
 >
 > **Mesh work, remaining order** (v3 is never sent as one series): (3) the power-off fix —
 > another author's patch for the same bug (patchwork 14864878) was compared in qemu, results
-> private (`power-off-compare-2026-10-05.md`); proposal, operator's call: a review reply on his
+> held on the private branch until the reply is decided (`power-off-compare-2026-10-05.md`);
+> proposal, operator's call: a review reply on his
 > thread, no Tested-by; first weigh Pauli Virtanen's `87a49b610708` ("Send cancel" fix, 10-05);
 > (4) Count as a question to the list; (5) the core ownership patches after four prerequisites
 > (the cleanup, mesh locking of the advertising list, an unregister drain policy, no scheduler
-> hand-over in command-clear callbacks); (6) the duration overflow. Private documents on
-> `diag/mesh-tester-ci`: the research review, `STATE-MACHINE.md`, `gates-2026-10-05.md`
-> (to be ported to `main`, below). KCSAN only on the 4-CPU wrapper.
+> hand-over in command-clear callbacks); (6) the duration overflow. The documents —
+> research review, `STATE-MACHINE.md`, `gates-2026-10-05.md`, every phase — are in
+> `docs/mesh-tester-ci/` (ported 2026-10-09; its README gives the reading order). KCSAN only
+> on the 4-CPU wrapper.
 > Also open: a review reply on Jiale Yao's patchwork 14864878 (needs the operator's word);
 > the `MGMT_INDEX_NONE` asymmetry in `mgmt_unregister_index()` (noted, out of the series).
 >

@@ -1,0 +1,89 @@
+From c0b18e7ca30f9c06a9dc7a117fb6789771175a1f Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 3 Oct 2026 21:56:14 +0200
+Subject: [PATCH 2/5] Bluetooth: MGMT: remove the mesh advertising instance
+ when done
+
+mesh_send_done_sync() only disables advertising when hdev->adv_instances
+is empty, but the instance a mesh packet is advertised through
+(le_num_of_adv_sets + 1) is itself on that list and nothing removes it,
+so for a mesh transmission the check is never true and advertising is
+never disabled here. On the legacy advertising path the controller
+keeps advertising the packet and the stale instance stays scheduled for
+1000 seconds (hci_schedule_adv_instance_sync() arms adv_instance_expire
+with adv->remaining_time, the 1000 the instance was added with); with
+extended advertising the set stays enabled until the duration the
+controller was given ends. Before the list check was added the disable
+was unconditional, which is what the tools/mesh-tester cases
+"Mesh - Send cancel - 1/2" have expected since 2022 and now time out on.
+
+Tear the instance down the way Remove Advertising does, with
+hci_remove_advertising_sync(): on the legacy path this drops the
+instance, cancels its timer and reschedules the next instance if there
+is one; with extended advertising it disables and removes that set
+only, so other advertising sets keep running, which is what the list
+check was added for. The existing list_empty() check then disables
+advertising only when no other instance is left. The hand-over to the
+next pending packet stays behind the tear-down, under hdev->lock, so a
+Mesh Send arriving while the controller commands are in flight is
+queued and started once, in order. The request is accounted for even if
+the teardown fails; recovery of a residual advertising instance is not
+handled here.
+
+The tear-down happens when the done work fires; this patch does not
+change when that is.
+
+All removal paths end in mgmt_advertising_removed(). The mesh instance
+is internal - Add Advertising rejects instances above
+le_num_of_adv_sets, Read Advertising Features hides them and no
+Advertising Added is ever sent for them - so skip the event for it
+instead of announcing to userspace the removal of an instance it never
+saw.
+
+Fixes: f3cb5676e5c1 ("Bluetooth: MGMT: mesh_send: check instances prior disabling advertising")
+Cc: stable@vger.kernel.org
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/mgmt.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index b19ab17ff1b3..e7da34dbbad5 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -1123,6 +1123,18 @@ static void mesh_next(struct hci_dev *hdev)
+ static int mesh_send_done_sync(struct hci_dev *hdev, void *data)
+ {
+ 	struct mgmt_mesh_tx *mesh_tx;
++	u8 instance = hdev->le_num_of_adv_sets + 1;
++
++	/* The packet was advertised through the mesh-only instance
++	 * (le_num_of_adv_sets + 1). Tear it down the way Remove Advertising
++	 * does: with extended advertising this disables and removes that set
++	 * only, otherwise the instance is dropped and the next one, if any,
++	 * is rescheduled. It has to go before the list_empty() check below,
++	 * which the instance itself would otherwise keep false. Account for
++	 * the request even if teardown fails. Recovery of a residual
++	 * advertising instance is not handled here.
++	 */
++	hci_remove_advertising_sync(hdev, NULL, instance, true);
+ 
+ 	if (list_empty(&hdev->adv_instances))
+ 		hci_disable_advertising_sync(hdev);
+@@ -1305,6 +1317,13 @@ void mgmt_advertising_removed(struct sock *sk, struct hci_dev *hdev,
+ {
+ 	struct mgmt_ev_advertising_removed ev;
+ 
++	/* Mesh transmissions use an internal instance (le_num_of_adv_sets + 1)
++	 * above the range Add Advertising accepts and Read Advertising
++	 * Features lists; no Advertising Added was ever sent for it.
++	 */
++	if (instance > hdev->le_num_of_adv_sets)
++		return;
++
+ 	ev.instance = instance;
+ 
+ 	mgmt_event(MGMT_EV_ADVERTISING_REMOVED, hdev, &ev, sizeof(ev), sk);
+-- 
+2.43.0
+

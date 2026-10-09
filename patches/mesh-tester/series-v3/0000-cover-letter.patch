@@ -1,0 +1,143 @@
+From 71a4243699c8da045d92e17da7ceae9e43e2ff4f Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 4 Oct 2026 17:50:36 +0200
+Subject: [PATCH 0/5] Bluetooth: MGMT: stop and account mesh transmissions correctly
+
+A mesh packet is advertised through a dedicated advertising instance
+(le_num_of_adv_sets + 1). Since the list_empty() check was added to
+mesh_send_done_sync(), that instance is what keeps hdev->adv_instances
+non-empty, so a mesh transmission never disables advertising when its
+done work runs or when it is cancelled: on the legacy path the
+controller keeps advertising the packet and the instance stays
+scheduled for 1000 s, with extended advertising the set stays enabled
+for the duration the controller was given. The tools/mesh-tester cases
+"Mesh - Send cancel - 1/2" encode the original behaviour and time out
+on current kernels.
+
+Independently, mesh_send_done_sync() completes the head of the pending
+queue rather than the request that held the instance, so after
+cancelling the in-flight handle the next, still unsent, packet is
+reported complete without having been advertised.
+
+Tearing the instance down means controller commands inside
+mesh_send_done_sync(), and that work clears HCI_MESH_SENDING first: a
+Mesh Send arriving while it waits for the controller sees the flag
+clear and queues a start, and mesh_next() queues the head of the queue
+again afterwards. Patch 1 therefore comes first: it keeps the flag set
+until the next packet has been queued or the scheduler goes idle, and
+makes that decision under hdev->lock, where mesh_send() tests the flag,
+without holding the lock across a controller command. Patch 2 tears
+the mesh instance down through hci_remove_advertising_sync() on both
+advertising paths - that set only with extended advertising, so other
+advertisers keep running - and keeps Advertising Removed from being
+emitted for the internal instance. Patch 3 completes the request that
+acquired the instance. Patch 4 fixes an older problem the new tests
+found: if the controller is powered off while a packet is on air, its
+done work cannot be queued, HCI_MESH_SENDING stays set and no later
+Mesh Send is ever started; the work is now submitted so that it runs
+on the closed device and hands over. Patch 5 only adds a comment and
+can be dropped (see "Count" below).
+
+Dependency. Patch 1's reasoning (a clear flag means nothing is pending)
+needs mesh_send() to remove a request whose first hci_cmd_sync_queue()
+failed; today its error path removes it under an inverted condition,
+so such a rejected request stays pending and, with the series, can
+later be started by mesh_next(). That cleanup has already been posted
+by another author, "Bluetooth: MGMT: fix mesh_tx leak on
+hci_cmd_sync_queue() failure"
+(Hui Peng, 2026-09-19, https://lkml.iu.edu/2609.2/10074.html); it is not
+in bluetooth or bluetooth-next as of 2026-10-04. This series assumes it
+and does not include it; the order is for the maintainers to decide.
+With fault injection on that allocation, the series alone leaves the
+rejected handle listed by Read Mesh Features; with the cleanup applied
+the handle is gone, is never started or completed, and the next
+requests progress.
+
+Count. The done work runs cnt * 25 ms after the start, while the
+instance uses the adapter's advertising interval (1280 ms by default).
+With the tear-down in place, a scanning client in the emulator receives
+one advertising event for Count 1 and for Count 3 at the default
+interval, two and four at a 20 ms interval; doc/mgmt-protocol.rst
+defines Count as the number of times the packet is sent. Sizing the
+deadline for cnt events at the configured interval would keep Count 1,
+what bluetooth-meshd sends, at 25 ms and give three events for Count 3,
+but would hold such a request for more than 2.5 s, and the existing
+mesh-tester cases that send Count 3 and wait for the end within 2 s
+time out with it. This series leaves the deadline as it is; patch 5
+says so in the code. Those counts come from the emulator's model of an
+advertising set, not from a radio. The tests verify command ordering,
+ownership and teardown at the existing Count x 25 ms host deadline.
+They do not establish the requested number of advertising events or
+receiver delivery. The relationship between that deadline and the
+configured advertising interval requires separate validation.
+
+Stable. 71af682ba469 ("Bluetooth: mgmt: Dequeue pending mesh_send_sync
+entries on cancel"), whose send_cancel() patch 1 builds on, is in
+7.2.9, 6.18.55, 6.12.112, 6.6.158 and 6.1.189. On those tips the five
+patches apply cumulatively (offsets only); no stable kernel was built or
+run. The cleanup named above is needed there as well.
+
+Testing, all in qemu with tools/test-runner on 08e90633377f with the
+cleanup above applied locally, KASAN, lockdep and fault injection
+enabled, and tools/mesh-tester extended by the BlueZ series "[PATCH
+BlueZ 0/4] mesh-tester: mesh advertising lifecycle tests" (posted
+separately):
+
+  mesh-tester, 55 cases, KVM:           unpatched 18/55, patched 55/55
+  the same without the cleanup:         53/55 (the two rejected-start
+                                        cases fail as described above)
+  50 Send cases, TCG + valgrind:        unpatched 13/50, patched 50/50
+                                        (one tester-side valgrind error
+                                        in both)
+  cancel/tear-down/receiver cases x5:   80/80, 50/50, 20/20
+  mgmt-tester, 503 cases:               501/503 patched and unpatched
+                                        (the two Security Level Changed
+                                        cases need the bluetooth-next
+                                        event)
+  mesh-tester under KCSAN (unpatched 18/55, patched 55/55), and the
+  socket-close cases unpatched vs patched under KASAN and lockdep: no
+  report from Bluetooth code on either kernel (KCSAN reports one race
+  in the APIC timer calibration at boot, on both)
+
+Kernel traces from kprobe events in the guest show the cases do what
+their names say: with request 1's enable held, Cancel(1) runs right
+after the released start and finds nothing to dequeue, request 1
+completes before any tear-down and request 2 is started once; with
+request 1's tear-down held, Cancel(2) dequeues the start that
+mesh_next() had queued (hci_cmd_sync_dequeue() returns true, the start
+completes with -ECANCELED) and the next request is started. On the
+previous two-patch teardown/owner-matching revision, the hold test
+observed the second request started twice. The ownership prerequisite
+(patch 1) prevents that interleaving in the recorded runs.
+
+Not covered: an accepted start that runs after power-off failed at once
+with -EINVAL in the emulator; a real driver may fail it differently.
+A start that fails after hci_add_adv_instance() still leaves the
+instance behind, and with extended advertising the next power on
+re-enables it with the completed request's packet. Unregistering with
+pending requests leaves them allocated. Both predate this series and
+are not changed by it. No dependency on the old queue-head completion
+behavior was found in the inspected BlueZ client. Public searches did
+not establish a non-BlueZ workaround. Compatibility with private
+clients and dependence on accidental extra airtime remain unestablished;
+the tests currently validate HCI lifecycle rather than requested
+radio-event count.
+
+Iaroslav Voitovych (5):
+  Bluetooth: MGMT: hand mesh transmissions over under hdev->lock
+  Bluetooth: MGMT: remove the mesh advertising instance when done
+  Bluetooth: MGMT: complete the mesh transmission that owned the
+    instance
+  Bluetooth: MGMT: finish a mesh transmission that ends while powered
+    off
+  Bluetooth: MGMT: note what the mesh done deadline does to Count
+
+ include/net/bluetooth/hci.h |   3 +
+ net/bluetooth/mgmt.c        | 139 ++++++++++++++++++++++++++++--------
+ 2 files changed, 113 insertions(+), 29 deletions(-)
+
+
+base-commit: 08e90633377f1b2567ab5ad6810b74c552246a07
+-- 
+2.43.0
+

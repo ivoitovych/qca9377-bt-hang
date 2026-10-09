@@ -1,0 +1,64 @@
+From 99ccb3ab4861857bae041069aabd4931bfde93f9 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 3 Oct 2026 21:55:02 +0200
+Subject: [PATCH] Bluetooth: MGMT: leave room for cnt events in the mesh done
+ deadline
+
+mesh_send_start_complete() arms the done work cnt * 25 ms after a mesh
+packet was started. mesh_send_sync() adds the packet's advertising
+instance with the adapter's advertising interval, 0x0800 (1280 ms)
+unless userspace configured another one, and the controller sends the
+first advertising event on enable and each further one an interval
+later. With the default interval only the first of cnt events fits into
+the deadline. doc/mgmt-protocol.rst defines Count as "the number of
+times this packet will be sent before transmission completes".
+
+So far the deadline did not limit what was sent, because nothing tore
+the instance down when it expired. Once the done work removes the mesh
+instance, a Count above 1 yields a single advertising event at the
+default interval.
+
+Arm the done work so that cnt events fit: the first at the start, each
+further one an interval plus the up to 10 ms of advDelay later, and
+25 ms after the last. A cnt of 1, which is what bluetooth-meshd sends
+(it times its own retransmissions), keeps the 25 ms it has today, at
+any interval. With an interval shorter than those 25 ms the controller
+can still send one event more than cnt, as it does today.
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+Cc: stable@vger.kernel.org
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/mgmt.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index b19ab17ff1b3..ca11195d8ba5 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -2343,9 +2343,18 @@ static void mesh_send_start_complete(struct hci_dev *hdev, void *data, int err)
+ 		return;
+ 	}
+ 
+-	mesh_send_interval = msecs_to_jiffies((send->cnt) * 25);
++	/* The instance was added with the adapter's advertising interval:
++	 * the first event is sent on enable, each further one an interval
++	 * plus up to 10 ms of advDelay later. Leave room for cnt events and
++	 * 25 ms after the last one, which is all a cnt of 1 gets.
++	 */
++	mesh_send_interval = 25;
++	if (send->cnt > 1)
++		mesh_send_interval += (send->cnt - 1) *
++			(INTERVAL_TO_MS(hdev->le_adv_max_interval) + 10);
++
+ 	queue_delayed_work(hdev->req_workqueue, &hdev->mesh_send_done,
+-			   mesh_send_interval);
++			   msecs_to_jiffies(mesh_send_interval));
+ }
+ 
+ static int mesh_send_sync(struct hci_dev *hdev, void *data)
+
+base-commit: f40c7a65bcb25aa254d56e7a9c60d1acbc4c951e
+-- 
+2.43.0
+

@@ -1,0 +1,59 @@
+From 0ca34eea2330359b77a310264eed12f68b2ac999 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 2 Oct 2026 03:57:37 +0200
+Subject: [PATCH 0/2] Bluetooth: MGMT: stop and account mesh transmissions correctly
+
+A mesh packet is advertised through a dedicated advertising instance
+(le_num_of_adv_sets + 1). Since the list_empty() check was added to
+mesh_send_done_sync(), that instance is what keeps hdev->adv_instances
+non-empty, so a mesh transmission never disables advertising when its
+count is done or when it is cancelled: on the legacy path the packet
+stays on air and the instance stays scheduled for 1000 s, with extended
+advertising the set stays enabled for the duration the controller was
+given. The tools/mesh-tester cases "Mesh - Send cancel - 1/2" encode the
+original behaviour (the end of advertising after the cancel) and time
+out on current kernels.
+
+Independently, mesh_send_done_sync() completes the head of the pending
+queue rather than the transmission that was on air, so after cancelling
+the in-flight handle the next, still unsent, packet is reported complete
+without having been sent.
+
+Patch 1 tears the mesh instance down through hci_remove_advertising_sync()
+on both advertising paths - that set only with extended advertising, so
+other advertisers keep running - and keeps Advertising Removed from
+being emitted for the internal instance. Patch 2 completes the mesh_tx
+that owns the instance.
+
+Tested with tools/test-runner (qemu) on the bluetooth tree and on
+bluetooth-next, with tools/mesh-tester extended by the BlueZ patch
+"tools/mesh-tester: Add extended advertising and send sequence tests"
+(BREDRLE50 variants of the Send/cancel cases, and sequences that check
+the handles of Mesh Packet Complete, how often the mesh set is started
+and torn down, that no Advertising Removed is sent for the mesh instance,
+and what Read Advertising Features lists afterwards):
+
+  mesh-tester, 23 cases, KVM:           unpatched 10/23, patched 23/23
+  mesh-tester, TCG + valgrind, 18 cases: unpatched  5/18, patched 18/18
+  the 10 cancel cases, 5 repeated runs:  patched 50/50
+  mgmt-tester, 501 cases, patched:      501/501
+
+Unpatched, the cancel cases time out waiting for the end of advertising
+(legacy: no LE Set Advertising Enable 0x00; extended: no LE Remove
+Advertising Set) and the sequence cases report the tear-down counts off
+by one or two; with the series the mesh set is disabled and removed
+75 ms after each transmission on both paths and an ordinary advertising
+instance alongside it is left untouched.
+
+Iaroslav Voitovych (2):
+  Bluetooth: MGMT: remove the mesh advertising instance when done
+  Bluetooth: MGMT: complete the mesh transmission that was on air
+
+ net/bluetooth/mgmt.c | 42 ++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 38 insertions(+), 4 deletions(-)
+
+
+base-commit: 86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc
+--
+2.43.0
+

@@ -1,0 +1,152 @@
+From 8e1574ed68a6ee64b0070e4d48abdd0cda537783 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 3 Oct 2026 03:48:58 +0200
+Subject: [PATCH 1/4] emulator/hciemu: Add hooks on client controllers
+
+hciemu_add_hook() and hciemu_del_hook() only reach the central
+controller, the one attached to vhci. A test that wants to see what a
+remote receives, for example the advertising reports the emulator
+delivers to a scanning client, has no way to observe the client's
+controller.
+
+Add hciemu_client_add_hook() and hciemu_client_del_hook(), the same
+hooks on the btdev of a client returned by hciemu_get_client(), and
+share the type mapping with the central variants.
+---
+ emulator/hciemu.c | 83 ++++++++++++++++++++++++++++++-----------------
+ emulator/hciemu.h |  8 +++++
+ 2 files changed, 61 insertions(+), 30 deletions(-)
+
+diff --git a/emulator/hciemu.c b/emulator/hciemu.c
+index 48ed63b41..31de05d1f 100644
+--- a/emulator/hciemu.c
++++ b/emulator/hciemu.c
+@@ -781,6 +781,27 @@ bool hciemu_clear_central_post_command_hooks(struct hciemu *hciemu)
+ 	return true;
+ }
+ 
++static bool hciemu_hook_type_to_btdev(enum hciemu_hook_type type,
++						enum btdev_hook_type *hook_type)
++{
++	switch (type) {
++	case HCIEMU_HOOK_PRE_CMD:
++		*hook_type = BTDEV_HOOK_PRE_CMD;
++		return true;
++	case HCIEMU_HOOK_POST_CMD:
++		*hook_type = BTDEV_HOOK_POST_CMD;
++		return true;
++	case HCIEMU_HOOK_PRE_EVT:
++		*hook_type = BTDEV_HOOK_PRE_EVT;
++		return true;
++	case HCIEMU_HOOK_POST_EVT:
++		*hook_type = BTDEV_HOOK_POST_EVT;
++		return true;
++	}
++
++	return false;
++}
++
+ int hciemu_add_hook(struct hciemu *hciemu, enum hciemu_hook_type type,
+ 				uint16_t opcode, hciemu_hook_func_t function,
+ 				void *user_data)
+@@ -795,22 +816,8 @@ int hciemu_add_hook(struct hciemu *hciemu, enum hciemu_hook_type type,
+ 	if (!dev)
+ 		return 0;
+ 
+-	switch (type) {
+-	case HCIEMU_HOOK_PRE_CMD:
+-		hook_type = BTDEV_HOOK_PRE_CMD;
+-		break;
+-	case HCIEMU_HOOK_POST_CMD:
+-		hook_type = BTDEV_HOOK_POST_CMD;
+-		break;
+-	case HCIEMU_HOOK_PRE_EVT:
+-		hook_type = BTDEV_HOOK_PRE_EVT;
+-		break;
+-	case HCIEMU_HOOK_POST_EVT:
+-		hook_type = BTDEV_HOOK_POST_EVT;
+-		break;
+-	default:
++	if (!hciemu_hook_type_to_btdev(type, &hook_type))
+ 		return -1;
+-	}
+ 
+ 	return btdev_add_hook(dev, hook_type, opcode, function, user_data);
+ }
+@@ -828,26 +835,42 @@ bool hciemu_del_hook(struct hciemu *hciemu, enum hciemu_hook_type type,
+ 	if (!dev)
+ 		return false;
+ 
+-	switch (type) {
+-	case HCIEMU_HOOK_PRE_CMD:
+-		hook_type = BTDEV_HOOK_PRE_CMD;
+-		break;
+-	case HCIEMU_HOOK_POST_CMD:
+-		hook_type = BTDEV_HOOK_POST_CMD;
+-		break;
+-	case HCIEMU_HOOK_PRE_EVT:
+-		hook_type = BTDEV_HOOK_PRE_EVT;
+-		break;
+-	case HCIEMU_HOOK_POST_EVT:
+-		hook_type = BTDEV_HOOK_POST_EVT;
+-		break;
+-	default:
++	if (!hciemu_hook_type_to_btdev(type, &hook_type))
+ 		return false;
+-	}
+ 
+ 	return btdev_del_hook(dev, hook_type, opcode);
+ }
+ 
++int hciemu_client_add_hook(struct hciemu_client *client,
++				enum hciemu_hook_type type, uint16_t opcode,
++				hciemu_hook_func_t function, void *user_data)
++{
++	enum btdev_hook_type hook_type;
++
++	if (!client || !client->dev)
++		return -1;
++
++	if (!hciemu_hook_type_to_btdev(type, &hook_type))
++		return -1;
++
++	return btdev_add_hook(client->dev, hook_type, opcode, function,
++								user_data);
++}
++
++bool hciemu_client_del_hook(struct hciemu_client *client,
++				enum hciemu_hook_type type, uint16_t opcode)
++{
++	enum btdev_hook_type hook_type;
++
++	if (!client || !client->dev)
++		return false;
++
++	if (!hciemu_hook_type_to_btdev(type, &hook_type))
++		return false;
++
++	return btdev_del_hook(client->dev, hook_type, opcode);
++}
++
+ static bool client_is_pending(const void *data, const void *match_data)
+ {
+ 	struct hciemu_client *client = (struct hciemu_client *)data;
+diff --git a/emulator/hciemu.h b/emulator/hciemu.h
+index cdf1ebe16..f96122674 100644
+--- a/emulator/hciemu.h
++++ b/emulator/hciemu.h
+@@ -100,3 +100,11 @@ int hciemu_add_hook(struct hciemu *hciemu, enum hciemu_hook_type type,
+ 
+ bool hciemu_del_hook(struct hciemu *hciemu, enum hciemu_hook_type type,
+ 							uint16_t opcode);
++
++/* The same hooks on the controller of a client (hciemu_get_client) */
++int hciemu_client_add_hook(struct hciemu_client *client,
++				enum hciemu_hook_type type, uint16_t opcode,
++				hciemu_hook_func_t function, void *user_data);
++
++bool hciemu_client_del_hook(struct hciemu_client *client,
++				enum hciemu_hook_type type, uint16_t opcode);
+-- 
+2.43.0
+

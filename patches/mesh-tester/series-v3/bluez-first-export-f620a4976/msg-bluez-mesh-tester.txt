@@ -1,0 +1,60 @@
+tools/mesh-tester: Test mesh advertising lifecycle
+
+All mesh cases run on the legacy advertising emulator (BREDRLE), so the
+extended advertising path of Mesh Send, where the packet goes out
+through an advertising set of its own, is not covered. Add BREDRLE50
+variants of "Mesh - Send" and "Mesh - Send cancel - 1/2": the send must
+enable the mesh set (handle 4 on this emulator, le_num_of_adv_sets + 1)
+and the end of a transmission is LE Remove Advertising Set for it.
+
+Add lifecycle cases on both emulators that follow the transmissions
+through the controller: every Mesh Send is acknowledged with the
+expected handle; each start of the mesh set is attributed to a request
+by the advertising data loaded before it (the requests carry distinct
+packets); the Mesh Packet Complete handles arrive in the expected order,
+each once, and after the expected number of tear-downs; no Advertising
+Removed is sent for the internal mesh instance; Read Advertising
+Features and Read Mesh Features list what is expected afterwards.
+
+ - cancel active, cancel queued, cancel all, two completions: two
+   requests, the Cancel issued once request 1 started and request 2 is
+   acknowledged and still queued;
+ - cancel held start: the enable of request 1 is held in the emulator,
+   so it cannot end on its own; request 2 and the Cancel of handle 1
+   are sent, a Read Mesh Features right behind the Cancel on the same
+   socket must be answered while the enable is still held, which shows
+   the kernel accepted the Cancel first, and only then is the enable
+   released;
+ - cancel held tear-down: the tear-down of request 1 is held while
+   handle 2 is cancelled, so the kernel queues the start of request 2
+   behind the Cancel and the Cancel has to remove it; a third request
+   must then be started;
+ - cancel other socket: request 2 and the Cancel of handle 1 go out on
+   a second socket and handle 1 must be left alone;
+ - send in tear-down: request 2 is sent while the tear-down of request
+   1 is held; each request must be started exactly once, in order;
+ - rejected start: /proc/self/fail-nth makes the first allocation of a
+   Mesh Send's queued start fail; the rejected handle must not be
+   listed, started or completed, and the next requests must progress;
+   aborted without fault injection in the kernel;
+ - power: the controller is powered off with request 1 started (and
+   request 2 queued), or with its tear-down held, then on again at once
+   or after 300 ms; a request sent after that must be started and
+   complete and nothing may be left pending;
+ - unregister: the controller is removed with a transmission and a
+   backlog on it, or with its tear-down held;
+ - close: the socket the requests went out on is closed while the start
+   or the tear-down of request 1 is held; a request on the other socket
+   must be started and complete afterwards;
+ - coexist: one send while an ordinary advertising instance is active;
+   nothing disables, removes or clears the ordinary set. Without
+   extended advertising the mesh packet shares the controller's single
+   set with that instance, so whether it is started is not checked;
+ - receiver (extended advertising): the client controller scans without
+   duplicate filtering and the mesh packets it receives are counted and
+   timed against the enable and the tear-down of the mesh set, for
+   Count 1 and 3 at the default and at a 20 ms advertising interval.
+   One packet is required; the counts are only printed.
+
+The new cases check the returns of the operations they issue. Without
+the kernel fixes the cancel cases time out and the lifecycle cases fail.

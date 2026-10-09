@@ -1,0 +1,24 @@
+Bluetooth: MGMT: finish a mesh transmission that ends while powered off
+
+mesh_send_done() queues mesh_send_done_sync() with hci_cmd_sync_queue(),
+which returns -ENETDOWN once the device is closed. If the controller is
+powered off after a mesh packet was started and before its done work
+runs, that work is never queued, and nothing else completes the request
+or clears HCI_MESH_SENDING: power off does not touch hdev->mesh_pending
+and the flag is not volatile. After the controller is powered on again
+every Mesh Send is acknowledged and queued behind the stale flag, none
+is ever started, and Read Mesh Features keeps listing the old handles
+until the controller is removed.
+
+Queue the done work with hci_cmd_sync_submit(), which does not check
+HCI_RUNNING, so that it still runs while the device is down: its
+tear-down commands fail on the closed device, the request that owned
+the instance is completed, and mesh_next() completes the requests that
+are still pending, since no start can be queued, and clears the flag.
+hci_cmd_sync_submit() still refuses new work once the device is being
+unregistered.
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+Cc: stable@vger.kernel.org
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+

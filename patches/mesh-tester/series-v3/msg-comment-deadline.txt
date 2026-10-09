@@ -1,0 +1,23 @@
+Bluetooth: MGMT: note what the mesh done deadline does to Count
+
+mesh_send_start_complete() arms the done work cnt * 25 ms after a mesh
+packet was started, while mesh_send_sync() adds the packet's instance
+with the adapter's advertising interval, 0x0800 (1280 ms) unless
+userspace configured another one. Now that the done work removes the
+instance, the number of advertising events a packet gets depends on
+that interval: at the default interval one, whatever cnt is; at a
+20 ms interval about one more than cnt. doc/mgmt-protocol.rst defines
+Count as "the number of times this packet will be sent before
+transmission completes".
+
+Sizing the deadline for cnt events at the configured interval would
+keep a cnt of 1, which is what bluetooth-meshd sends (it times its own
+retransmissions), at 25 ms, but would hold a request with cnt 3 for
+more than 2.5 s at the default interval instead of 75 ms, and the
+tools/mesh-tester cases that send cnt 3 and wait for the end of the
+transmission within their 2 s timeout ("Mesh - Send", "Mesh - Send
+cancel - 1/2" and their extended advertising variants) would time out.
+That is a separate change with its own compatibility question; note
+the current behaviour where the deadline is set.
+
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>

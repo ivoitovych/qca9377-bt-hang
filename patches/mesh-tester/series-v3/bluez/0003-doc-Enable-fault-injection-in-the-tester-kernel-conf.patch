@@ -1,0 +1,32 @@
+From be159716a8205ba7d6a59143a86710c923ac8a64 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 4 Oct 2026 05:16:38 +0200
+Subject: [PATCH BlueZ 3/4] doc: Enable fault injection in the tester kernel
+ config
+
+mesh-tester makes the first allocation of a Mesh Send's queued work
+fail through /proc/self/fail-nth to check how the kernel handles a
+start it could not queue. That needs CONFIG_FAULT_INJECTION,
+CONFIG_FAILSLAB and CONFIG_FAULT_INJECTION_DEBUG_FS; without them the
+case is aborted and reported as not run.
+---
+ doc/tester.config | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/doc/tester.config b/doc/tester.config
+index 34f1530e1..f773a9e8b 100644
+--- a/doc/tester.config
++++ b/doc/tester.config
+@@ -66,6 +66,9 @@ CONFIG_PROVE_RCU=y
+ CONFIG_LOCKDEP=y
+ CONFIG_DEBUG_MUTEXES=y
+ CONFIG_KASAN=y
++CONFIG_FAULT_INJECTION=y
++CONFIG_FAILSLAB=y
++CONFIG_FAULT_INJECTION_DEBUG_FS=y
+ 
+ CONFIG_USB=y
+ CONFIG_USB_XHCI_HCD=y
+-- 
+2.43.0
+

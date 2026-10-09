@@ -1,0 +1,57 @@
+Subject: Re: [PATCH] Bluetooth: MGMT: fix mesh_tx leak on
+ hci_cmd_sync_queue() failure
+
+Hi Hui,
+
+I reproduced the leak and confirmed that your patch fixes it in the
+tested cases. I applied the patch as posted on top of bluetooth-next
+036d4119079a and compared it against a control kernel built from the
+same revision without the patch, in QEMU (BlueZ test-runner, emulated
+controller, KASAN and lockdep), with legacy and extended advertising.
+
+The leak is reachable without fault injection: with LE and the mesh
+experimental feature enabled, a Mesh Send while the adapter is powered
+off reaches hci_cmd_sync_queue(), which returns -ENETDOWN after the
+kernel has assigned the request a handle. I also made that call
+return -ENOMEM using failslab.
+
+In both cases, without the patch the failed handle stays listed in
+Read Mesh Features. When the next transmission ends (in the
+powered-off case, after powering the adapter back on and sending
+again), a Mesh Packet Complete is reported for the failed handle, and
+the next request's packet is started on the controller twice.
+
+The leaked entries also count against MESH_HANDLES_MAX. After three
+consecutive failures, three handles stay outstanding and subsequent
+Mesh Sends from that socket are answered Busy. In the powered-off
+case, once the adapter is powered on, a send from another socket
+causes the first leaked handle to be completed without ever being
+started, and the other two failed requests to be started on the
+controller, although their Mesh Sends had been answered Failed.
+
+With the patch, in all tested scenarios no failed handle is listed,
+completed or started, each accepted send is started on the controller
+and completed once, and repeated failures leave no outstanding
+handles. The powered-off reproducer gives the same control-vs-patched
+result on a 4-CPU guest.
+
+Separately, with both kernels rebuilt with CONFIG_DEBUG_KMEMLEAK,
+kmemleak reports leaked allocations from mgmt_mesh_add() on the
+unpatched build only, for -ENETDOWN, -ENOMEM and -ENODEV, when scanned
+after the test program had closed its socket, removed the controller
+and exited. The leaked entry keeps the MGMT socket referenced, so
+closing the socket does not release it. It also stays leaked after
+the controller is removed, although the commit message says either
+should release it. The -ENODEV case needed a
+test-only delay in mesh_send(), added to diagnostic builds of both
+kernels, so that the controller could be removed while the Mesh Send
+was in progress.
+
+No KASAN, lockdep or WARNING reports. BlueZ's unmodified mgmt-tester
+passes 503/503 on both kernels; mesh-tester gives 8/10 on both, with
+the same two "Mesh - Send cancel" cases timing out.
+
+Reproducer, kernel configs and logs:
+https://github.com/ivoitovych/qca9377-bt-hang/tree/ccfc358e2cd866948aea3ec81bfabd5298e30618/retest/mesh-tx-leak
+
+Tested-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>

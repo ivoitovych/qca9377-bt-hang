@@ -1,0 +1,929 @@
+diff --git a/tools/mesh-tester.c b/tools/mesh-tester.c
+index 472858fcb..5f71b778d 100644
+--- a/tools/mesh-tester.c
++++ b/tools/mesh-tester.c
+@@ -17,10 +17,13 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <sys/ioctl.h>
++#include <sys/socket.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
++#include <sys/wait.h>
+ #include <fcntl.h>
+ #include <errno.h>
++#include <poll.h>
+ #include <unistd.h>
+ 
+ #include <glib.h>
+@@ -154,6 +157,23 @@ struct mesh_fail {
+ 	uint8_t pending[MESH_FAIL_READS_MAX];	/* used handles per read */
+ 	unsigned int reads;
+ 	unsigned int bad[6];	/* violations of assertions (a) to (f) */
++	/*
++	 * Powered-off variant (test_mesh_off): no fault injection; the start
++	 * cannot be queued because the controller is not running. The failing
++	 * sends (packet 0) are made with the controller powered off, the
++	 * others with it powered on.
++	 */
++	bool power;		/* this run is the powered-off variant */
++	bool once;		/* one send while powered off, then the verdict */
++	bool rx_keep;		/* the mesh receiver stays enabled */
++	bool powered;		/* the controller is powered */
++	uint8_t rx_on;		/* Set Mesh Receiver while powered */
++	uint8_t rx_off;		/* Set Mesh Receiver while powered off */
++	uint8_t le_off;		/* Set LE while powered off */
++	uint32_t settings_off;	/* current settings after Set Powered off */
++	uint32_t settings_le;	/* current settings after Set LE */
++	uint8_t first;		/* answer to the first send while powered off */
++	uint8_t pending_on;	/* used handles in the first read after power on */
+ };
+ 
+ /* What a Read Mesh Features reply is checked against */
+@@ -221,6 +241,14 @@ struct test_data {
+ 	unsigned int mesh_tx_reports;	/* mesh packets the client received */
+ 	int64_t mesh_tx_report_t[MESH_TX_REPORTS_MAX];
+ 	bool mesh_tx_receiver_hooked;
++	/* Powered off (test_mesh_off): polling for HCI_RUNNING clear */
++	unsigned int mesh_off_poll_id;
++	/* Controller removed during a Mesh Send (test_mesh_unreg) */
++	bool unreg_running;
++	bool unreg_index_gone;
++	bool unreg_child_done;
++	int unreg_child_status;
++	pid_t unreg_pid;
+ };
+ 
+ static void print_debug(const char *str, void *user_data)
+@@ -239,6 +267,8 @@ static uint16_t mesh_tx_teardown_opcode(const struct test_data *data)
+ 	return BT_HCI_CMD_LE_SET_ADV_ENABLE;
+ }
+ 
++static bool mesh_unreg_delay(unsigned int ms);
++
+ static void test_post_teardown(const void *test_data)
+ {
+ 	struct test_data *data = tester_get_data();
+@@ -246,6 +276,12 @@ static void test_post_teardown(const void *test_data)
+ 	if (data->sk >= 0)
+ 		close(data->sk);
+ 
++	/* From here on an Index Removed is the teardown's own */
++	if (data->unreg_running) {
++		data->unreg_running = false;
++		mesh_unreg_delay(0);
++	}
++
+ 	if (data->mesh_tx_settle_id > 0) {
+ 		g_source_remove(data->mesh_tx_settle_id);
+ 		data->mesh_tx_settle_id = 0;
+@@ -261,6 +297,11 @@ static void test_post_teardown(const void *test_data)
+ 		data->mesh_fail.timeout_id = 0;
+ 	}
+ 
++	if (data->mesh_off_poll_id > 0) {
++		g_source_remove(data->mesh_off_poll_id);
++		data->mesh_off_poll_id = 0;
++	}
++
+ 	if (data->mesh_tx_probe.fd >= 0) {
+ 		close(data->mesh_tx_probe.fd);
+ 		data->mesh_tx_probe.fd = -1;
+@@ -289,6 +330,19 @@ static void test_post_teardown(const void *test_data)
+ 
+ 	hciemu_unref(data->hciemu);
+ 	data->hciemu = NULL;
++
++	if (data->unreg_index_gone) {
++		/* Removed during the test: no Index Removed follows */
++		data->unreg_index_gone = false;
++
++		mgmt_unref(data->mgmt);
++		data->mgmt = NULL;
++
++		mgmt_unref(data->mgmt_alt);
++		data->mgmt_alt = NULL;
++
++		tester_post_teardown_complete();
++	}
+ }
+ 
+ static void test_pre_setup_failed(void)
+@@ -479,6 +533,8 @@ static void index_added_callback(uint16_t index, uint16_t length,
+ 
+ }
+ 
++static void mesh_unreg_index_removed(struct test_data *data);
++
+ static void index_removed_callback(uint16_t index, uint16_t length,
+ 		const void *param, void *user_data)
+ {
+@@ -490,6 +546,12 @@ static void index_removed_callback(uint16_t index, uint16_t length,
+ 	if (index != data->mgmt_index)
+ 		return;
+ 
++	/* Removed by the test itself (test_mesh_unreg), not the teardown */
++	if (data->unreg_running) {
++		mesh_unreg_index_removed(data);
++		return;
++	}
++
+ 	mgmt_unregister_index(data->mgmt, data->mgmt_index);
+ 	mgmt_unregister_index(data->mgmt_alt, data->mgmt_index);
+ 
+@@ -3848,11 +3910,20 @@ static void mesh_fail_finish(struct test_data *data)
+ 	struct mesh_fail *fail = &data->mesh_fail;
+ 	unsigned int i, total = 0;
+ 
+-	tester_print("Failed start: fail-nth %u, handle %u failed first, "
+-			"%u of %u capacity sends accepted, then %u failed and "
+-			"%u answered Busy", fail->nth, fail->rejected,
+-			fail->accepted, fail->capacity, fail->failed,
+-			fail->busy);
++	if (fail->power)
++		tester_print("Powered off: handle %u failed first (first send "
++				"while powered off: %s), %u of %u capacity sends "
++				"accepted, then %u failed and %u answered Busy, "
++				"first read after power on: %u handles pending",
++				fail->rejected, mgmt_errstr(fail->first),
++				fail->accepted, fail->capacity, fail->failed,
++				fail->busy, fail->pending_on);
++	else
++		tester_print("Failed start: fail-nth %u, handle %u failed "
++				"first, %u of %u capacity sends accepted, then %u "
++				"failed and %u answered Busy", fail->nth,
++				fail->rejected, fail->accepted, fail->capacity,
++				fail->failed, fail->busy);
+ 
+ 	for (i = 0; i < fail->reads && i < MESH_FAIL_READS_MAX; i++)
+ 		tester_print("  Read Mesh Features %u: %u handles pending",
+@@ -3898,16 +3969,31 @@ static void mesh_fail_finish(struct test_data *data)
+  * could make fail in mesh_send(), and the fault would hit the socket
+  * write instead, so packet 0 then goes out without fail-nth.
+  */
++static void mesh_fail_power(struct test_data *data, bool on);
++
+ static void mesh_fail_repeat_next(struct test_data *data)
+ {
+ 	struct mesh_fail *fail = &data->mesh_fail;
+ 
+ 	if (fail->failed + fail->busy >= fail->max_handles + 2U) {
+ 		fail->step = MESH_FAIL_LAST;
++
++		/* Packet 4 goes out once the controller is back on */
++		if (fail->power) {
++			mesh_fail_power(data, true);
++			return;
++		}
++
+ 		mesh_fail_send(data, 4, false);
+ 		return;
+ 	}
+ 
++	/* Powered off, a send that is answered Busy is not a problem */
++	if (fail->power) {
++		mesh_fail_send(data, 0, true);
++		return;
++	}
++
+ 	mesh_fail_send(data, 0, fail->used < fail->max_handles);
+ }
+ 
+@@ -3937,6 +4023,36 @@ static void mesh_fail_features_callback(uint8_t status, uint16_t length,
+ 	fail->max_handles = rp->max_handles;
+ 	fail->used = rp->used_handles;
+ 
++	/* Powered off: the read right after the failed send, and the first
++	 * read after power on
++	 */
++	if (fail->step == MESH_FAIL_PROBE && fail->power) {
++		if (!fail->powered) {
++			fail->pending[0] = rp->used_handles;
++
++			if (fail->once) {
++				tester_print("Powered off, once: first send "
++					"answered %s, %u handles pending after "
++					"it", mgmt_errstr(fail->first),
++					rp->used_handles);
++				if (rp->used_handles) {
++					mesh_fail_bad(data, 0);
++					tester_test_failed();
++					return;
++				}
++				tester_test_passed();
++				return;
++			}
++
++			mesh_fail_power(data, true);
++			return;
++		}
++
++		fail->pending_on = rp->used_handles;
++		mesh_fail_send(data, 1, false);
++		return;
++	}
++
+ 	/* While probing it is not known yet whether the start failed */
+ 	if (fail->step == MESH_FAIL_PROBE) {
+ 		fail->pending[0] = rp->used_handles;
+@@ -3954,6 +4070,13 @@ static void mesh_fail_features_callback(uint8_t status, uint16_t length,
+ 	switch (fail->step) {
+ 	case MESH_FAIL_CAPACITY:
+ 		fail->step = MESH_FAIL_REPEAT;
++
++		/* The failing sends are made with the controller off */
++		if (fail->power) {
++			mesh_fail_power(data, false);
++			break;
++		}
++
+ 		mesh_fail_repeat_next(data);
+ 		break;
+ 	case MESH_FAIL_REPEAT:
+@@ -4018,6 +4141,32 @@ static void mesh_fail_faulted_answer(struct test_data *data)
+ {
+ 	struct mesh_fail *fail = &data->mesh_fail;
+ 
++	/* Powered off: only Failed shows that mesh_send() got as far as
++	 * hci_cmd_sync_queue(); anything else ends the run inconclusive.
++	 */
++	if (fail->power && fail->step == MESH_FAIL_PROBE) {
++		fail->first = fail->status;
++
++		if (fail->status != MGMT_STATUS_FAILED) {
++			tester_warn("Mesh Send while powered off answered %s "
++					"(0x%02x), not Failed: the path under "
++					"test was not reached",
++					mgmt_errstr(fail->status), fail->status);
++			tester_test_failed();
++			return;
++		}
++
++		memset(fail->pkt, 0, sizeof(fail->pkt));
++		mesh_fail_read(data);
++		return;
++	}
++
++	if (fail->power && fail->status == MGMT_STATUS_SUCCESS) {
++		tester_warn("Mesh Send while powered off was accepted");
++		tester_test_failed();
++		return;
++	}
++
+ 	if (fail->status == MGMT_STATUS_SUCCESS) {
+ 		if (fail->step != MESH_FAIL_PROBE) {
+ 			tester_warn("fail-nth %u no longer fails the start",
+@@ -4174,6 +4323,13 @@ static void mesh_fail_plain_answer(struct test_data *data, unsigned int i)
+ 		break;
+ 	}
+ 
++	if (fail->power && fail->handle == (uint8_t) (fail->last_handle + 1)) {
++		tester_warn("The Mesh Send made while powered off consumed no "
++				"handle: it did not reach hci_cmd_sync_queue()");
++		tester_test_failed();
++		return;
++	}
++
+ 	if (fail->handle == (uint8_t) (fail->last_handle + 1)) {
+ 		/* No handle consumed: the fault hit before the request */
+ 		fail->last_handle = fail->handle;
+@@ -4192,9 +4348,15 @@ static void mesh_fail_plain_answer(struct test_data *data, unsigned int i)
+ 	fail->pkt[1].handle = fail->handle;
+ 	fail->step = MESH_FAIL_CAPACITY;
+ 
+-	tester_print("fail-nth %u fails the start: packet 0 was given handle "
+-			"%u and answered Failed, packet 1 got handle %u",
+-			fail->nth, fail->rejected, fail->handle);
++	if (fail->power)
++		tester_print("Powered off fails the start: packet 0 was given "
++				"handle %u and answered Failed, packet 1 (powered "
++				"on) got handle %u", fail->rejected, fail->handle);
++	else
++		tester_print("fail-nth %u fails the start: packet 0 was given "
++				"handle %u and answered Failed, packet 1 got "
++				"handle %u", fail->nth, fail->rejected,
++				fail->handle);
+ 
+ 	/* The read made right after the failure */
+ 	fail->reads = 1;
+@@ -4204,6 +4366,17 @@ static void mesh_fail_plain_answer(struct test_data *data, unsigned int i)
+ 		mesh_fail_bad(data, 0);
+ 	}
+ 
++	/* ... and, powered off, the one after power on */
++	if (fail->power) {
++		fail->pending[1] = fail->pending_on;
++		fail->reads = 2;
++		if (fail->pending_on) {
++			tester_warn("Handle %u was still pending after power "
++						"on", fail->rejected);
++			mesh_fail_bad(data, 0);
++		}
++	}
++
+ 	/* (d): the other handles at once, while packet 1 is on air */
+ 	fail->capacity = fail->max_handles;
+ 	if (fail->capacity > MESH_FAIL_CAPACITY_MAX)
+@@ -4285,7 +4458,11 @@ static void mesh_fail_send(struct test_data *data, unsigned int i,
+ 	struct mesh_fail *fail = &data->mesh_fail;
+ 	uint8_t pdu[sizeof(send_mesh_2)];
+ 
+-	if (faulted)
++	if (faulted && fail->power)
++		tester_print("Sending Mesh Send of packet %u while powered off "
++				"at +%lld ms", i,
++				(long long) mesh_tx_now_ms(data));
++	else if (faulted)
+ 		tester_print("Sending Mesh Send of packet %u with fail-nth %u "
+ 				"at +%lld ms", i, fail->nth,
+ 				(long long) mesh_tx_now_ms(data));
+@@ -4297,7 +4474,7 @@ static void mesh_fail_send(struct test_data *data, unsigned int i,
+ 	fail->faulted = faulted;
+ 	fail->answered = false;
+ 
+-	if (faulted && !mesh_tx_fail_nth(data, fail->nth)) {
++	if (faulted && !fail->power && !mesh_tx_fail_nth(data, fail->nth)) {
+ 		tester_warn("Failed to write " MESH_TX_FAIL_NTH);
+ 		tester_test_failed();
+ 		return;
+@@ -4310,7 +4487,7 @@ static void mesh_fail_send(struct test_data *data, unsigned int i,
+ 				mesh_fail_send_callback, UINT_TO_PTR(i), NULL);
+ 	fail->sync = false;
+ 
+-	if (faulted)
++	if (faulted && !fail->power)
+ 		mesh_tx_fail_nth(data, 0);
+ 
+ 	fail->write_failed = fail->answered;
+@@ -4541,6 +4718,524 @@ static void test_mesh_fail(const void *test_data)
+ 	mesh_fail_send(data, 0, true);
+ }
+ 
++/*
++ * Powered off (test_mesh_off): mesh_send() checks LE and the experimental
++ * feature but not power, so with the controller powered off and LE enabled
++ * a Mesh Send reaches hci_cmd_sync_queue(), which fails with -ENETDOWN
++ * because HCI_RUNNING is clear. The same assertions as the failed start,
++ * with the failing sends made while powered off instead of fail-nth.
++ * First recorded: Set Mesh Receiver while powered, the settings after Set
++ * Powered off (is LE kept), Set Mesh Receiver and Set LE while powered off.
++ */
++/*
++ * The reply to Set Powered off is sent from __mgmt_power_off(), before
++ * hci_dev_close_sync() clears HCI_RUNNING; on several CPUs a Mesh Send
++ * made at once can still be queued. The failing sends wait until the
++ * device flags (HCIGETDEVINFO) show HCI_RUNNING clear.
++ */
++typedef void (*mesh_off_next_t)(struct test_data *data);
++
++static mesh_off_next_t mesh_off_next_fn;
++static unsigned int mesh_off_polls;
++
++static gboolean mesh_off_poll(gpointer user_data)
++{
++	struct test_data *data = tester_get_data();
++	struct hci_dev_info di;
++
++	if (hci_devinfo(data->mgmt_index, &di) < 0) {
++		tester_warn("HCIGETDEVINFO failed: %s", strerror(errno));
++		data->mesh_off_poll_id = 0;
++		tester_test_failed();
++		return FALSE;
++	}
++
++	if (di.flags & (1 << HCI_RUNNING)) {
++		if (++mesh_off_polls > 100) {
++			tester_warn("HCI_RUNNING still set 1 s after Set "
++							"Powered off");
++			data->mesh_off_poll_id = 0;
++			tester_test_failed();
++			return FALSE;
++		}
++		return TRUE;
++	}
++
++	data->mesh_off_poll_id = 0;
++
++	tester_print("HCI_RUNNING clear at +%lld ms (after %u polls of 10 "
++			"ms following the Set Powered off reply)",
++			(long long) mesh_tx_now_ms(data), mesh_off_polls);
++
++	mesh_off_next_fn(data);
++
++	return FALSE;
++}
++
++static void mesh_off_wait_down(struct test_data *data, mesh_off_next_t next)
++{
++	mesh_off_polls = 0;
++	mesh_off_next_fn = next;
++
++	if (!mesh_off_poll(NULL))
++		return;
++
++	data->mesh_off_poll_id = g_timeout_add(10, mesh_off_poll, NULL);
++}
++
++static void mesh_fail_power_callback(uint8_t status, uint16_t length,
++			const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	struct mesh_fail *fail = &data->mesh_fail;
++	bool on = PTR_TO_UINT(user_data);
++	uint32_t settings = 0;
++
++	if (status == MGMT_STATUS_SUCCESS && length == sizeof(settings))
++		settings = get_le32(param);
++
++	tester_print("Set Powered %s at +%lld ms: %s (0x%02x), settings "
++			"0x%08x", on ? "on" : "off",
++			(long long) mesh_tx_now_ms(data), mgmt_errstr(status),
++			status, settings);
++
++	if (status != MGMT_STATUS_SUCCESS) {
++		tester_test_failed();
++		return;
++	}
++
++	fail->powered = on;
++
++	switch (fail->step) {
++	case MESH_FAIL_PROBE:
++		/* The first read after power on */
++		mesh_fail_read(data);
++		break;
++	case MESH_FAIL_REPEAT:
++		mesh_off_wait_down(data, mesh_fail_repeat_next);
++		break;
++	case MESH_FAIL_LAST:
++		mesh_fail_send(data, 4, false);
++		break;
++	case MESH_FAIL_CAPACITY:
++		break;
++	}
++}
++
++static void mesh_fail_power(struct test_data *data, bool on)
++{
++	uint8_t param = on ? 0x01 : 0x00;
++
++	tester_print("Sending Set Powered %s at +%lld ms", on ? "on" : "off",
++					(long long) mesh_tx_now_ms(data));
++
++	if (!mgmt_send(data->mgmt, MGMT_OP_SET_POWERED, data->mgmt_index,
++				sizeof(param), &param, mesh_fail_power_callback,
++				UINT_TO_PTR(on), NULL)) {
++		tester_warn("Failed to send Set Powered");
++		tester_test_failed();
++	}
++}
++
++static void mesh_off_le_callback(uint8_t status, uint16_t length,
++			const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	struct mesh_fail *fail = &data->mesh_fail;
++
++	fail->le_off = status;
++	if (status == MGMT_STATUS_SUCCESS && length == sizeof(uint32_t))
++		fail->settings_le = get_le32(param);
++
++	tester_print("Set LE on while powered off: %s (0x%02x), settings "
++			"0x%08x (LE %s, powered %s)", mgmt_errstr(status),
++			status, fail->settings_le,
++			fail->settings_le & MGMT_SETTING_LE ? "on" : "off",
++			fail->settings_le & MGMT_SETTING_POWERED ?
++								"yes" : "no");
++
++	if (status != MGMT_STATUS_SUCCESS ||
++				!(fail->settings_le & MGMT_SETTING_LE)) {
++		tester_warn("LE is not enabled while powered off");
++		tester_test_failed();
++		return;
++	}
++
++	mesh_fail_send(data, 0, true);
++}
++
++static void mesh_off_rx_off_callback(uint8_t status, uint16_t length,
++			const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	struct mesh_fail *fail = &data->mesh_fail;
++	static const uint8_t on = 0x01;
++
++	fail->rx_off = status;
++
++	tester_print("Set Mesh Receiver while powered off: %s (0x%02x)",
++					mgmt_errstr(status), status);
++
++	if (!mgmt_send(data->mgmt, MGMT_OP_SET_LE, data->mgmt_index,
++				sizeof(on), &on, mesh_off_le_callback, NULL,
++				NULL)) {
++		tester_warn("Failed to send Set LE");
++		tester_test_failed();
++	}
++}
++
++static void mesh_off_rx_off_send(struct test_data *data);
++
++static void mesh_off_power_off_callback(uint8_t status, uint16_t length,
++			const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	struct mesh_fail *fail = &data->mesh_fail;
++
++	if (status == MGMT_STATUS_SUCCESS && length == sizeof(uint32_t))
++		fail->settings_off = get_le32(param);
++
++	tester_print("Set Powered off at +%lld ms: %s (0x%02x), settings "
++			"0x%08x (LE %s, powered %s)",
++			(long long) mesh_tx_now_ms(data), mgmt_errstr(status),
++			status, fail->settings_off,
++			fail->settings_off & MGMT_SETTING_LE ? "on" : "off",
++			fail->settings_off & MGMT_SETTING_POWERED ?
++								"yes" : "no");
++
++	if (status != MGMT_STATUS_SUCCESS) {
++		tester_test_failed();
++		return;
++	}
++
++	fail->powered = false;
++
++	mesh_off_wait_down(data, mesh_off_rx_off_send);
++}
++
++static void mesh_off_rx_off_send(struct test_data *data)
++{
++	if (!mgmt_send(data->mgmt, MGMT_OP_SET_MESH_RECEIVER,
++				data->mgmt_index, sizeof(set_mesh_receiver_1),
++				set_mesh_receiver_1, mesh_off_rx_off_callback,
++				NULL, NULL)) {
++		tester_warn("Failed to send Set Mesh Receiver");
++		tester_test_failed();
++	}
++}
++
++static void mesh_off_power_off(struct test_data *data)
++{
++	static const uint8_t off = 0x00;
++
++	tester_print("Sending Set Powered off at +%lld ms",
++					(long long) mesh_tx_now_ms(data));
++
++	if (!mgmt_send(data->mgmt, MGMT_OP_SET_POWERED, data->mgmt_index,
++				sizeof(off), &off, mesh_off_power_off_callback,
++				NULL, NULL)) {
++		tester_warn("Failed to send Set Powered");
++		tester_test_failed();
++	}
++}
++
++static void mesh_off_rx_disable_callback(uint8_t status, uint16_t length,
++			const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++
++	tester_print("Set Mesh Receiver disable while powered: %s (0x%02x)",
++					mgmt_errstr(status), status);
++
++	mesh_off_power_off(data);
++}
++
++/*
++ * With the receiver kept on, the controller scans while the mesh packets
++ * are sent; without it, the transmissions are those of the failed start.
++ */
++static void mesh_off_rx_on_callback(uint8_t status, uint16_t length,
++			const void *param, void *user_data)
++{
++	struct test_data *data = tester_get_data();
++	struct mesh_fail *fail = &data->mesh_fail;
++	uint8_t rx_disable[sizeof(set_mesh_receiver_1)];
++
++	fail->rx_on = status;
++
++	tester_print("Set Mesh Receiver while powered: %s (0x%02x), kept %s",
++					mgmt_errstr(status), status,
++					fail->rx_keep ? "on" : "off");
++
++	if (fail->rx_keep) {
++		mesh_off_power_off(data);
++		return;
++	}
++
++	memcpy(rx_disable, set_mesh_receiver_1, sizeof(rx_disable));
++	rx_disable[0] = 0x00;
++
++	if (!mgmt_send(data->mgmt, MGMT_OP_SET_MESH_RECEIVER,
++				data->mgmt_index, sizeof(rx_disable),
++				rx_disable, mesh_off_rx_disable_callback,
++				NULL, NULL)) {
++		tester_warn("Failed to send Set Mesh Receiver");
++		tester_test_failed();
++	}
++}
++
++static void mesh_off_start(bool once, bool rx_keep)
++{
++	struct test_data *data = tester_get_data();
++	struct mesh_fail *fail = &data->mesh_fail;
++
++	data->mesh_tx_t0 = g_get_monotonic_time();
++
++	data->mesh_tx_cmplt_id = mgmt_register(data->mgmt_alt,
++					MGMT_EV_MESH_PACKET_CMPLT,
++					data->mgmt_index,
++					mesh_fail_cmplt_callback, NULL, NULL);
++	if (!data->mesh_tx_cmplt_id) {
++		tester_warn("Failed to register for Mesh Packet Complete");
++		tester_test_failed();
++		return;
++	}
++
++	if (!hciemu_add_central_post_command_hook(data->hciemu,
++					mesh_fail_hci_callback, data)) {
++		tester_warn("Failed to register the HCI command callback");
++		tester_test_failed();
++		return;
++	}
++
++	fail->power = true;
++	fail->once = once;
++	fail->rx_keep = rx_keep;
++	fail->powered = true;
++
++	if (!mgmt_send(data->mgmt, MGMT_OP_SET_MESH_RECEIVER,
++				data->mgmt_index, sizeof(set_mesh_receiver_1),
++				set_mesh_receiver_1, mesh_off_rx_on_callback,
++				NULL, NULL)) {
++		tester_warn("Failed to send Set Mesh Receiver");
++		tester_test_failed();
++	}
++}
++
++static void test_mesh_off(const void *test_data)
++{
++	mesh_off_start(false, false);
++}
++
++/* The same with the mesh receiver (passive scanning) kept on */
++static void test_mesh_off_rx(const void *test_data)
++{
++	mesh_off_start(false, true);
++}
++
++/* One send while powered off, one read, then the controller is removed */
++static void test_mesh_off_once(const void *test_data)
++{
++	mesh_off_start(true, true);
++}
++
++/*
++ * Removal during a Mesh Send (test_mesh_unreg). Needs a DIAGNOSTIC kernel
++ * whose mesh_send() sleeps inside hci_dev_lock() for
++ * bluetooth.diag_mesh_send_delay_ms: a child process sends the Mesh Send
++ * on a socket of its own and blocks in the kernel; meanwhile the vhci
++ * device is closed, hci_unregister_dev() sets HCI_UNREGISTER and then
++ * waits for hdev->lock with HCI_RUNNING still set, so the send's
++ * hci_cmd_sync_queue() fails with -ENODEV. The answer is the child's exit
++ * status; whether the request was freed shows only in kmemleak.
++ */
++#define MESH_UNREG_PARAM \
++	"/sys/module/bluetooth/parameters/diag_mesh_send_delay_ms"
++#define MESH_UNREG_DELAY_MS	1500
++#define MESH_UNREG_REMOVE_MS	150
++
++static bool mesh_unreg_delay(unsigned int ms)
++{
++	char buf[16];
++
++	snprintf(buf, sizeof(buf), "%u", ms);
++
++	return mesh_tx_write_file(MESH_UNREG_PARAM, buf);
++}
++
++static void mesh_unreg_child(uint16_t index)
++{
++	struct sockaddr_hci addr;
++	uint8_t buf[sizeof(struct mgmt_hdr) + sizeof(send_mesh_2)];
++	struct mgmt_hdr *hdr = (void *) buf;
++	uint8_t rbuf[512];
++	struct pollfd pfd;
++	int fd, n, i;
++
++	/* The inherited vhci descriptor would keep the controller alive
++	 * until this process exits: close everything but stdio.
++	 */
++	for (fd = 3; fd < 1024; fd++)
++		close(fd);
++
++	fd = socket(PF_BLUETOOTH, SOCK_RAW | SOCK_CLOEXEC, BTPROTO_HCI);
++	if (fd < 0)
++		_exit(0xfe);
++
++	memset(&addr, 0, sizeof(addr));
++	addr.hci_family = AF_BLUETOOTH;
++	addr.hci_dev = HCI_DEV_NONE;
++	addr.hci_channel = HCI_CHANNEL_CONTROL;
++
++	if (bind(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0)
++		_exit(0xfd);
++
++	hdr->opcode = htobs(MGMT_OP_MESH_SEND);
++	hdr->index = htobs(index);
++	hdr->len = htobs(sizeof(send_mesh_2));
++	mesh_fail_pdu(buf + sizeof(*hdr), 0);
++
++	if (write(fd, buf, sizeof(buf)) != (ssize_t) sizeof(buf))
++		_exit(0xfc);
++
++	for (i = 0; i < 50; i++) {
++		struct mgmt_hdr *ev = (void *) rbuf;
++
++		pfd.fd = fd;
++		pfd.events = POLLIN;
++		pfd.revents = 0;
++
++		if (poll(&pfd, 1, 100) <= 0)
++			continue;
++
++		n = read(fd, rbuf, sizeof(rbuf));
++		if (n < (int) sizeof(*ev) + 3)
++			continue;
++
++		if (btohs(ev->opcode) != MGMT_EV_CMD_STATUS &&
++				btohs(ev->opcode) != MGMT_EV_CMD_COMPLETE)
++			continue;
++
++		if (get_le16(rbuf + sizeof(*ev)) != MGMT_OP_MESH_SEND)
++			continue;
++
++		_exit(rbuf[sizeof(*ev) + 2]);
++	}
++
++	_exit(0xff);
++}
++
++static void mesh_unreg_finish(struct test_data *data)
++{
++	int status = data->unreg_child_status;
++
++	if (!data->unreg_child_done || !data->unreg_index_gone)
++		return;
++
++	mesh_unreg_delay(0);
++
++	tester_print("Removal during a Mesh Send: the send was answered "
++			"0x%02x (%s)", status, status <= 0xff ?
++			mgmt_errstr(status) : "no answer");
++
++	if (status != MGMT_STATUS_FAILED) {
++		tester_warn("Expected Failed: the path under test was not "
++								"reached");
++		tester_test_failed();
++		return;
++	}
++
++	tester_test_passed();
++}
++
++static void mesh_unreg_child_exit(GPid pid, gint wait_status,
++							gpointer user_data)
++{
++	struct test_data *data = tester_get_data();
++
++	g_spawn_close_pid(pid);
++
++	data->unreg_child_done = true;
++	data->unreg_child_status = WIFEXITED(wait_status) ?
++					WEXITSTATUS(wait_status) : 0x100;
++
++	tester_print("Child %d done at +%lld ms, exit status 0x%02x", pid,
++				(long long) mesh_tx_now_ms(data),
++				data->unreg_child_status);
++
++	mesh_unreg_finish(data);
++}
++
++static void mesh_unreg_index_removed(struct test_data *data)
++{
++	tester_print("Index Removed during the Mesh Send at +%lld ms",
++				(long long) mesh_tx_now_ms(data));
++
++	data->unreg_index_gone = true;
++
++	mesh_unreg_finish(data);
++}
++
++static gboolean mesh_unreg_remove(gpointer user_data)
++{
++	struct test_data *data = tester_get_data();
++
++	tester_print("Closing the vhci device (controller removal) at "
++			"+%lld ms", (long long) mesh_tx_now_ms(data));
++
++	hciemu_unref(data->hciemu);
++	data->hciemu = NULL;
++
++	tester_print("vhci device closed at +%lld ms",
++				(long long) mesh_tx_now_ms(data));
++
++	return FALSE;
++}
++
++static void test_mesh_unreg(const void *test_data)
++{
++	struct test_data *data = tester_get_data();
++	pid_t pid;
++
++	data->mesh_tx_t0 = g_get_monotonic_time();
++
++	if (access(MESH_UNREG_PARAM, W_OK) < 0) {
++		tester_warn("Needs the diagnostic kernel (" MESH_UNREG_PARAM
++							"): not run");
++		tester_test_abort();
++		return;
++	}
++
++	if (!mesh_unreg_delay(MESH_UNREG_DELAY_MS)) {
++		tester_warn("Failed to write " MESH_UNREG_PARAM);
++		tester_test_failed();
++		return;
++	}
++
++	data->unreg_running = true;
++
++	fflush(stdout);
++	fflush(stderr);
++
++	pid = fork();
++	if (pid < 0) {
++		tester_warn("fork failed: %s", strerror(errno));
++		tester_test_failed();
++		return;
++	}
++
++	if (pid == 0)
++		mesh_unreg_child(data->mgmt_index);
++
++	data->unreg_pid = pid;
++	g_child_watch_add(pid, mesh_unreg_child_exit, NULL);
++	g_timeout_add(MESH_UNREG_REMOVE_MS, mesh_unreg_remove, NULL);
++
++	tester_print("Child %d sends a Mesh Send (kernel delay %u ms); the "
++			"controller is removed in %u ms", pid,
++			MESH_UNREG_DELAY_MS, MESH_UNREG_REMOVE_MS);
++}
++
+ static void test_mesh_tx(const void *test_data)
+ {
+ 	struct test_data *data = tester_get_data();
+@@ -4824,6 +5519,46 @@ int main(int argc, char *argv[])
+ 			setup_enable_mesh,
+ 			test_mesh_fail, 10);
+ 
++	/*
++	 * The start cannot be queued because the controller is powered off
++	 * (no fault injection); and the controller removed during a send
++	 * (diagnostic kernel only, otherwise not run).
++	 */
++	test_bredrle_full("Mesh - Send - poweroff-cycle",
++			&mesh_tx_failed_start,
++			setup_enable_mesh,
++			test_mesh_off, 10);
++
++	test_bredrle50_full("Mesh - Send - poweroff-cycle - Ext Adv",
++			&mesh_tx_failed_start,
++			setup_enable_mesh,
++			test_mesh_off, 10);
++
++	test_bredrle_full("Mesh - Send - poweroff-rx-cycle",
++			&mesh_tx_failed_start,
++			setup_enable_mesh,
++			test_mesh_off_rx, 10);
++
++	test_bredrle50_full("Mesh - Send - poweroff-rx-cycle - Ext Adv",
++			&mesh_tx_failed_start,
++			setup_enable_mesh,
++			test_mesh_off_rx, 10);
++
++	test_bredrle_full("Mesh - Send - poweroff-once",
++			&mesh_tx_failed_start,
++			setup_enable_mesh,
++			test_mesh_off_once, 4);
++
++	test_bredrle50_full("Mesh - Send - poweroff-once - Ext Adv",
++			&mesh_tx_failed_start,
++			setup_enable_mesh,
++			test_mesh_off_once, 4);
++
++	test_bredrle_full("Mesh - Send - unregister-in-send",
++			&mesh_tx_failed_start,
++			setup_enable_mesh,
++			test_mesh_unreg, 6);
++
+ 	/* Power transitions and the removal of the controller */
+ 	test_bredrle_full("Mesh - Send power - off with active request",
+ 			&mesh_tx_power_off_active,

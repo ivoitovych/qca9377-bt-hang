@@ -1,0 +1,26 @@
+Bluetooth: MGMT: leave room for cnt events in the mesh done deadline
+
+mesh_send_start_complete() arms the done work cnt * 25 ms after a mesh
+packet was started. mesh_send_sync() adds the packet's advertising
+instance with the adapter's advertising interval, 0x0800 (1280 ms)
+unless userspace configured another one, and the controller sends the
+first advertising event on enable and each further one an interval
+later. With the default interval only the first of cnt events fits into
+the deadline. doc/mgmt-protocol.rst defines Count as "the number of
+times this packet will be sent before transmission completes".
+
+So far the deadline did not limit what was sent, because nothing tore
+the instance down when it expired. Once the done work removes the mesh
+instance, a Count above 1 yields a single advertising event at the
+default interval.
+
+Arm the done work so that cnt events fit: the first at the start, each
+further one an interval plus the up to 10 ms of advDelay later, and
+25 ms after the last. A cnt of 1, which is what bluetooth-meshd sends
+(it times its own retransmissions), keeps the 25 ms it has today, at
+any interval. With an interval shorter than those 25 ms the controller
+can still send one event more than cnt, as it does today.
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+Cc: stable@vger.kernel.org
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>

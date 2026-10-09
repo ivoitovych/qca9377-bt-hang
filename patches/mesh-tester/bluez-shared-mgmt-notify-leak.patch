@@ -1,0 +1,69 @@
+From bdd3acd517337a2f263b430a9cb6a05daa3b6893 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 4 Oct 2026 18:10:40 +0200
+Subject: [PATCH BlueZ] shared/mgmt: Fix notify leak in mgmt_unregister()
+
+mgmt_unregister() called from a notification callback takes the entry
+off notify_list and only marks it removed. process_notify() then frees
+the removed entries it finds on notify_list, which no longer holds this
+one, so it is never freed.
+
+Leave the entry on the list while notifying, as mgmt_unregister_index()
+and mgmt_unregister_all() do, so that process_notify() frees it.
+
+mgmt-tester and mesh-tester unregister from their event callbacks.
+Built with ./bootstrap-configure --disable-lsan and run with
+test-runner, mgmt-tester ends with "Direct leak of 9080 byte(s) in 227
+object(s)" allocated through util_malloc(), 40 bytes each as struct
+mgmt_notify, and mesh-tester with 120 bytes in 3 such objects. With
+this change neither reports them.
+
+Fixes: 872729a91632 ("shared/mgmt: Fix crash when removing index")
+---
+ src/shared/mgmt.c | 23 ++++++++++++++++-------
+ 1 file changed, 16 insertions(+), 7 deletions(-)
+
+diff --git a/src/shared/mgmt.c b/src/shared/mgmt.c
+index f56bcee14..0762fb872 100644
+--- a/src/shared/mgmt.c
++++ b/src/shared/mgmt.c
+@@ -999,18 +999,27 @@ bool mgmt_unregister(struct mgmt *mgmt, unsigned int id)
+ 	if (!mgmt || !id)
+ 		return false;
+ 
+-	notify = queue_remove_if(mgmt->notify_list, match_notify_id,
++	/* While notifying, leave the entry on the list for process_notify()
++	 * to free once it is done with it.
++	 */
++	if (mgmt->in_notify) {
++		notify = queue_find(mgmt->notify_list, match_notify_id,
+ 							UINT_TO_PTR(id));
+-	if (!notify)
+-		return false;
++		if (!notify)
++			return false;
++
++		notify->removed = true;
++		mgmt->need_notify_cleanup = true;
+ 
+-	if (!mgmt->in_notify) {
+-		destroy_notify(notify);
+ 		return true;
+ 	}
+ 
+-	notify->removed = true;
+-	mgmt->need_notify_cleanup = true;
++	notify = queue_remove_if(mgmt->notify_list, match_notify_id,
++							UINT_TO_PTR(id));
++	if (!notify)
++		return false;
++
++	destroy_notify(notify);
+ 
+ 	return true;
+ }
+
+base-commit: 4dc15be8ee3f7422d447087f1893d215575cb2c8
+-- 
+2.43.0
+

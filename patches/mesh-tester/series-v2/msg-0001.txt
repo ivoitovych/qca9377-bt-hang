@@ -1,0 +1,34 @@
+Bluetooth: MGMT: hand mesh transmissions over under hdev->lock
+
+mesh_send() tests HCI_MESH_SENDING under hdev->lock and, when it is
+clear, queues mesh_send_sync() for the packet it just added. The flag
+is cleared by mesh_send_done_sync() before the finished transmission is
+accounted for and before mesh_next(), the destroy callback of that
+work, queues the next pending packet. A Mesh Send landing in between
+sees the flag clear and queues a start of its own; mesh_next() then
+queues the head of the pending list as well. hci_cmd_sync_queue() does
+not deduplicate, so the same packet is started twice, or a packet that
+was just added is started ahead of an older one. The same window is in
+mesh_send_start_complete(), which clears the flag and only then
+completes the failed packet and calls mesh_next(), and in send_cancel(),
+which calls mesh_next() when it finds the flag clear after the start it
+dequeued has cleared it.
+
+Keep the flag set until the decision to start the next packet or to go
+idle has been made, and make it under hdev->lock, the lock mesh_send()
+tests the flag under. mesh_next() runs at the end of
+mesh_send_done_sync() with hdev->lock held, after the work is done with
+the controller, and clears the flag only when nothing is pending; a
+failed start takes the same path. send_cancel() takes hdev->lock around
+the removal of the cancelled requests and calls mesh_next() exactly
+when it dequeued the queued start, which was the next owner: a
+cancelled transmission on air is handed over by its done work, a
+cancelled one queued behind the owner leaves the owner alone. The
+-ECANCELED invocation of mesh_send_start_complete() runs under
+cmd_sync_work_lock and therefore only completes the request. hdev->lock
+is not held across any controller command.
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+Cc: <stable@vger.kernel.org> # 6.1.x: 71af682ba469: Bluetooth: mgmt: Dequeue pending mesh_send_sync entries on cancel
+Cc: <stable@vger.kernel.org> # 6.1.x
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>

@@ -1,0 +1,241 @@
+From f40c7a65bcb25aa254d56e7a9c60d1acbc4c951e Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Fri, 2 Oct 2026 14:05:15 +0200
+Subject: [PATCH 1/5] Bluetooth: MGMT: hand mesh transmissions over under
+ hdev->lock
+
+mesh_send() tests HCI_MESH_SENDING under hdev->lock and, when it is
+clear, queues mesh_send_sync() for the packet it just added. The flag
+is cleared by mesh_send_done_sync() before the finished transmission is
+accounted for and before mesh_next(), the destroy callback of that
+work, queues the next pending packet. A Mesh Send landing in between
+sees the flag clear and queues a start of its own; mesh_next() then
+queues the head of the pending list as well. hci_cmd_sync_queue() does
+not deduplicate, so the same packet is started twice, or a packet that
+was just added is started ahead of an older one. The same window is in
+mesh_send_start_complete(), which clears the flag and only then
+completes the failed packet and calls mesh_next(), and in send_cancel(),
+which calls mesh_next() when it finds the flag clear after the start it
+dequeued has cleared it.
+
+Keep the flag set until the decision to start the next packet or to go
+idle has been made, and make it under hdev->lock, the lock mesh_send()
+tests the flag under. mesh_next() runs at the end of
+mesh_send_done_sync() with hdev->lock held, after the work is done with
+the controller, and clears the flag only when nothing is pending; a
+failed start takes the same path. send_cancel() takes hdev->lock around
+the removal of the cancelled requests and calls mesh_next() exactly
+when it dequeued the queued start, which was the next owner: a
+cancelled transmission on air is handed over by its done work, a
+cancelled one queued behind the owner leaves the owner alone. The
+-ECANCELED invocation of mesh_send_start_complete() runs under
+cmd_sync_work_lock and therefore only completes the request. hdev->lock
+is not held across any controller command.
+
+A clear flag means an empty pending list only if a request whose first
+hci_cmd_sync_queue() failed is removed again by mesh_send(); its error
+path currently removes the request under the inverted condition. That
+cleanup is the separate fix "Bluetooth: MGMT: fix mesh_tx leak on
+hci_cmd_sync_queue() failure", posted on 2026-09-19, which this patch
+assumes; with it in place a rejected request can neither be listed by
+Read Mesh Features nor be started by mesh_next() later.
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+Cc: <stable@vger.kernel.org> # 6.1.x: 71af682ba469: Bluetooth: mgmt: Dequeue pending mesh_send_sync entries on cancel
+Cc: <stable@vger.kernel.org> # 6.1.x
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ include/net/bluetooth/hci.h |  3 ++
+ net/bluetooth/mgmt.c        | 99 ++++++++++++++++++++++++++-----------
+ 2 files changed, 74 insertions(+), 28 deletions(-)
+
+diff --git a/include/net/bluetooth/hci.h b/include/net/bluetooth/hci.h
+index 1641d879dbda..a0294ff050be 100644
+--- a/include/net/bluetooth/hci.h
++++ b/include/net/bluetooth/hci.h
+@@ -471,6 +471,9 @@ enum {
+ 
+ 	HCI_MESH_EXPERIMENTAL,
+ 	HCI_MESH,
++	/* A mesh transmission is queued, running, on air or being torn
++	 * down; set and cleared under hdev->lock, see mesh_next().
++	 */
+ 	HCI_MESH_SENDING,
+ 
+ 	__HCI_NUM_FLAGS,
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 251a896babd5..b19ab17ff1b3 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -1090,37 +1090,54 @@ static void mesh_send_complete(struct hci_dev *hdev,
+ 	mgmt_mesh_remove(mesh_tx);
+ }
+ 
+-static int mesh_send_done_sync(struct hci_dev *hdev, void *data)
++static int mesh_send_sync(struct hci_dev *hdev, void *data);
++static void mesh_send_start_complete(struct hci_dev *hdev, void *data, int err);
++
++/* Start the next pending transmission or go idle. Called with hdev->lock
++ * held by whoever is done with the current one: the done work after its
++ * interval, a start that failed, or a cancel that dequeued the start that
++ * was queued. HCI_MESH_SENDING stays set from the moment a start is queued
++ * until the hand-over here, so mesh_send(), which tests the flag under the
++ * same lock, never queues a start of its own while a transmission is
++ * queued, running, on air or being torn down. The flag is clear only when
++ * nothing is pending, given that mesh_send() removes a request whose
++ * first start could not be queued.
++ */
++static void mesh_next(struct hci_dev *hdev)
+ {
+ 	struct mgmt_mesh_tx *mesh_tx;
+ 
+-	hci_dev_clear_flag(hdev, HCI_MESH_SENDING);
+-	if (list_empty(&hdev->adv_instances))
+-		hci_disable_advertising_sync(hdev);
+-	mesh_tx = mgmt_mesh_next(hdev, NULL);
++	lockdep_assert_held(&hdev->lock);
++
++	while ((mesh_tx = mgmt_mesh_next(hdev, NULL))) {
++		if (!hci_cmd_sync_queue(hdev, mesh_send_sync, mesh_tx,
++					mesh_send_start_complete))
++			return;
+ 
+-	if (mesh_tx)
+ 		mesh_send_complete(hdev, mesh_tx, false);
++	}
+ 
+-	return 0;
++	hci_dev_clear_flag(hdev, HCI_MESH_SENDING);
+ }
+ 
+-static int mesh_send_sync(struct hci_dev *hdev, void *data);
+-static void mesh_send_start_complete(struct hci_dev *hdev, void *data, int err);
+-static void mesh_next(struct hci_dev *hdev, void *data, int err)
++static int mesh_send_done_sync(struct hci_dev *hdev, void *data)
+ {
+-	struct mgmt_mesh_tx *mesh_tx = mgmt_mesh_next(hdev, NULL);
++	struct mgmt_mesh_tx *mesh_tx;
+ 
+-	if (!mesh_tx)
+-		return;
++	if (list_empty(&hdev->adv_instances))
++		hci_disable_advertising_sync(hdev);
+ 
+-	err = hci_cmd_sync_queue(hdev, mesh_send_sync, mesh_tx,
+-				 mesh_send_start_complete);
++	hci_dev_lock(hdev);
+ 
+-	if (err < 0)
++	mesh_tx = mgmt_mesh_next(hdev, NULL);
++	if (mesh_tx)
+ 		mesh_send_complete(hdev, mesh_tx, false);
+-	else
+-		hci_dev_set_flag(hdev, HCI_MESH_SENDING);
++
++	mesh_next(hdev);
++
++	hci_dev_unlock(hdev);
++
++	return 0;
+ }
+ 
+ static void mesh_send_done(struct work_struct *work)
+@@ -1131,7 +1148,7 @@ static void mesh_send_done(struct work_struct *work)
+ 	if (!hci_dev_test_flag(hdev, HCI_MESH_SENDING))
+ 		return;
+ 
+-	hci_cmd_sync_queue(hdev, mesh_send_done_sync, NULL, mesh_next);
++	hci_cmd_sync_queue(hdev, mesh_send_done_sync, NULL, NULL);
+ }
+ 
+ static void mgmt_init_hdev(struct sock *sk, struct hci_dev *hdev)
+@@ -2309,11 +2326,20 @@ static void mesh_send_start_complete(struct hci_dev *hdev, void *data, int err)
+ 	/* Report any errors here, but don't report completion */
+ 
+ 	if (mgmt_err) {
+-		hci_dev_clear_flag(hdev, HCI_MESH_SENDING);
++		/* Dequeued by send_cancel() or hci_cmd_sync_clear(), which
++		 * run this under cmd_sync_work_lock: only report the request,
++		 * the caller moves on.
++		 */
++		if (err == -ECANCELED) {
++			mesh_send_complete(hdev, mesh_tx, false);
++			return;
++		}
++
++		hci_dev_lock(hdev);
+ 		/* Send Complete Error Code for handle */
+ 		mesh_send_complete(hdev, mesh_tx, false);
+-		if (err != -ECANCELED)
+-			mesh_next(hdev, NULL, 0);
++		mesh_next(hdev);
++		hci_dev_unlock(hdev);
+ 		return;
+ 	}
+ 
+@@ -2418,14 +2444,19 @@ static int send_cancel(struct hci_dev *hdev, void *data)
+ 	struct mgmt_pending_cmd *cmd = data;
+ 	struct mgmt_cp_mesh_send_cancel *cancel = (void *)cmd->param;
+ 	struct mgmt_mesh_tx *mesh_tx;
++	bool dequeued = false;
++
++	hci_dev_lock(hdev);
+ 
+ 	if (!cancel->handle) {
+ 		do {
+ 			mesh_tx = mgmt_mesh_next(hdev, cmd->sk);
+ 
+ 			if (mesh_tx) {
+-				if (!hci_cmd_sync_dequeue(hdev, mesh_send_sync,
+-							  mesh_tx, NULL))
++				if (hci_cmd_sync_dequeue(hdev, mesh_send_sync,
++							 mesh_tx, NULL))
++					dequeued = true;
++				else
+ 					mesh_send_complete(hdev, mesh_tx, false);
+ 			}
+ 		} while (mesh_tx);
+@@ -2433,8 +2464,10 @@ static int send_cancel(struct hci_dev *hdev, void *data)
+ 		mesh_tx = mgmt_mesh_find(hdev, cancel->handle);
+ 
+ 		if (mesh_tx && mesh_tx->sk == cmd->sk) {
+-			if (!hci_cmd_sync_dequeue(hdev, mesh_send_sync,
+-						  mesh_tx, NULL))
++			if (hci_cmd_sync_dequeue(hdev, mesh_send_sync,
++						 mesh_tx, NULL))
++				dequeued = true;
++			else
+ 				mesh_send_complete(hdev, mesh_tx, false);
+ 		}
+ 	}
+@@ -2442,8 +2475,15 @@ static int send_cancel(struct hci_dev *hdev, void *data)
+ 	mgmt_cmd_complete(cmd->sk, hdev->id, MGMT_OP_MESH_SEND_CANCEL,
+ 			  0, NULL, 0);
+ 
+-	if (!hci_dev_test_flag(hdev, HCI_MESH_SENDING))
+-		mesh_next(hdev, NULL, 0);
++	/* A start that was still queued was the next owner of the mesh
++	 * advertising; with it gone nobody else hands over. A cancelled
++	 * transmission on air is handed over by its done work, a cancelled
++	 * one behind it leaves the owner alone.
++	 */
++	if (dequeued)
++		mesh_next(hdev);
++
++	hci_dev_unlock(hdev);
+ 
+ 	return 0;
+ }
+@@ -2527,6 +2567,9 @@ static int mesh_send(struct sock *sk, struct hci_dev *hdev, void *data, u16 len)
+ 		goto done;
+ 	}
+ 
++	/* Queue the start only when nothing is queued, on air or being torn
++	 * down; otherwise mesh_next() starts this one in turn.
++	 */
+ 	sending = hci_dev_test_flag(hdev, HCI_MESH_SENDING);
+ 	mesh_tx = mgmt_mesh_add(sk, hdev, send, len);
+ 
+-- 
+2.43.0
+

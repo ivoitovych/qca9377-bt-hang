@@ -1,0 +1,43 @@
+From 7c62b76f48d93f827c93eda370cdf2b3513286c1 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 4 Oct 2026 18:18:36 +0200
+Subject: [PATCH BlueZ 0/4] mesh-tester: mesh advertising lifecycle tests
+
+Tests for the kernel series "[PATCH 0/5] Bluetooth: MGMT: stop and
+account mesh transmissions correctly", posted separately.
+
+Patch 1 lets a test hook the client controllers of the emulator, which
+the receiver cases use to count the advertising reports a scanning
+client gets. Patch 2 fixes a leak in src/shared/mgmt.c that
+LeakSanitizer reports for mesh-tester and mgmt-tester runs (an event
+handler unregistered from inside its callback is never freed); it is
+independent of the rest. Patch 3 enables fault injection in the tester
+kernel config, which the rejected-start cases need; without it they are
+reported as not run. Patch 4 adds the cases.
+
+On bluetooth/master 08e90633377f with the kernel series (and the
+posted mesh_tx cleanup it assumes) all 55 mesh-tester cases pass under
+KVM and the 50 Send cases under TCG and valgrind; on the unpatched
+kernel 18 of 55 pass. Without the cleanup the two rejected-start cases
+fail. The receiver cases print the counts they see and only require one
+packet, so they pass whichever way the kernel's Count deadline is
+decided.
+
+Iaroslav Voitovych (4):
+  emulator/hciemu: Add hooks on client controllers
+  shared/mgmt: Fix leak when unregistering from a notify callback
+  doc: Enable fault injection in the tester kernel config
+  tools/mesh-tester: Test mesh advertising lifecycle
+
+ doc/tester.config   |    3 +
+ emulator/hciemu.c   |   83 +-
+ emulator/hciemu.h   |    8 +
+ src/shared/mgmt.c   |   23 +-
+ tools/mesh-tester.c | 2738 ++++++++++++++++++++++++++++++++++++++++++-
+ 5 files changed, 2773 insertions(+), 82 deletions(-)
+
+
+base-commit: ae69dcddd5495c7c72b7935e12e17cf6d6b28461
+-- 
+2.43.0
+

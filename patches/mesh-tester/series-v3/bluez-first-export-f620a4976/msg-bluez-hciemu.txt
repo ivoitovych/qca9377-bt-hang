@@ -1,0 +1,11 @@
+emulator/hciemu: Add hooks on client controllers
+
+hciemu_add_hook() and hciemu_del_hook() only reach the central
+controller, the one attached to vhci. A test that wants to see what a
+remote receives, for example the advertising reports the emulator
+delivers to a scanning client, has no way to observe the client's
+controller.
+
+Add hciemu_client_add_hook() and hciemu_client_del_hook(), the same
+hooks on the btdev of a client returned by hciemu_get_client(), and
+share the type mapping with the central variants.

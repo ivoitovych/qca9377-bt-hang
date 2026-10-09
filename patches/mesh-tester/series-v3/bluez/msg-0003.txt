@@ -1,0 +1,8 @@
+doc: Enable fault injection in the tester kernel config
+
+mesh-tester makes the first allocation of a Mesh Send's queued work
+fail through /proc/self/fail-nth to check how the kernel handles a
+start it could not queue. That needs CONFIG_FAULT_INJECTION,
+CONFIG_FAILSLAB and CONFIG_FAULT_INJECTION_DEBUG_FS; without them the
+case is aborted and reported as not run.
+

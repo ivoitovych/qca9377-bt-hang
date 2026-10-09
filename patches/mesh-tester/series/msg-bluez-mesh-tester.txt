@@ -1,0 +1,32 @@
+tools/mesh-tester: Add extended advertising and send sequence tests
+
+All mesh cases run on the legacy advertising emulator (BREDRLE), so the
+extended advertising path of Mesh Send, where the packet goes out through
+an advertising set of its own, was not covered. Add BREDRLE50 variants of
+"Mesh - Send" and "Mesh - Send cancel - 1/2": the send must enable the
+mesh set (handle 4 on this emulator, le_num_of_adv_sets + 1) and the end
+of a transmission is LE Remove Advertising Set for that handle.
+
+Add transmission sequence tests on both emulators that check the handles
+reported by Mesh Packet Complete in order, how often the mesh set was
+started and torn down on the controller, that no Advertising Removed
+event is sent for the internal mesh instance, and what Read Advertising
+Features lists afterwards:
+
+ - two sends, cancel the one on air: handle 1 completes at once, the
+   queued handle 2 is then actually sent and completes;
+ - two sends, cancel the queued one: handle 2 completes at once, handle 1
+   completes when its count is done, nothing restarts;
+ - two sends, cancel all: both complete at once, the set on air is torn
+   down when its count is done;
+ - two sends, no cancel: both complete in order, one after the other;
+ - one send while an ordinary advertising instance is active: the
+   transmission completes, advertising is not disabled as a whole and the
+   ordinary instance remains.
+
+The sequence tests get a 4 second timeout since they wait for two
+transmissions and a settle time. The expectations are those of the
+kernel series "Bluetooth: MGMT: remove the mesh advertising instance when
+done" and "Bluetooth: MGMT: complete the mesh transmission that was on
+air"; without it the new cases fail the way "Mesh - Send cancel - 1/2"
+have been failing.

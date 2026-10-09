@@ -1,0 +1,25 @@
+Bluetooth: MGMT: complete the mesh transmission that owned the instance
+
+mesh_send_done_sync() completes the head of hdev->mesh_pending when a
+transmission is done. That is the right request only while the queue is
+in order: after a Mesh Send Cancel of the in-flight handle the head is
+the next, still unsent, packet, which is then reported with Mesh Packet
+Complete and dropped, although the request that held the advertising
+instance has already been completed by the cancel. The next packet can
+therefore leave the pending queue without being advertised, even though
+userspace has not cancelled it.
+
+Complete the request that acquired the mesh advertising instance
+instead: mesh_send_sync() records the instance number
+(le_num_of_adv_sets + 1) only in the mesh_tx it started, a queued one
+still carries 0 and a cancelled one has already left the queue. If
+cancellation has already removed that request, nothing is completed
+here and the queued requests are left pending for mesh_next(). This is
+what doc/mgmt-protocol.rst describes for the event ("a requested
+outbound Mesh packet has completed and no longer occupies a transmit
+slot") and for the cancel ("For each mesh packet canceled, the Mesh
+Packet Transmission Complete event will be generated").
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+Cc: stable@vger.kernel.org
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>

@@ -1,0 +1,14 @@
+shared/mgmt: Fix leak when unregistering from a notify callback
+
+mgmt_unregister() called from inside a notification callback takes the
+entry off notify_list and only marks it removed. process_notify() then
+frees the removed entries it finds on notify_list, which no longer
+holds this one, so it is never freed.
+
+Leave the entry on the list while notifying, as
+mgmt_unregister_index() and mgmt_unregister_all() do, so that
+process_notify() frees it.
+
+Found with LeakSanitizer in mesh-tester, whose generic event cases
+unregister from their callback (6 leaks of 40 bytes per run).
+
