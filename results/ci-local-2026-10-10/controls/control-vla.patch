@@ -1,0 +1,32 @@
+From c77b804dee1824eb783b98a1ac2c1c4feb9e4fe8 Mon Sep 17 00:00:00 2001
+From: scratch control <scratch@example.com>
+Date: Sat, 10 Oct 2026 14:02:21 +0000
+Subject: [PATCH BlueZ] emulator: scratch control with a variable length array
+
+Deliberate: a used VLA in btdev_create(). Never to be sent.
+---
+ emulator/btdev.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/emulator/btdev.c b/emulator/btdev.c
+index e00f78288..2c70b3db8 100644
+--- a/emulator/btdev.c
++++ b/emulator/btdev.c
+@@ -8335,12 +8335,14 @@ struct btdev *btdev_create(enum btdev_type type, uint16_t id)
+ {
+ 	struct btdev *btdev;
+ 	int index;
++	uint8_t scratch[id + 1];
+ 
+ 	btdev = malloc(sizeof(*btdev));
+ 	if (!btdev)
+ 		return NULL;
+ 
+ 	memset(btdev, 0, sizeof(*btdev));
++	memset(scratch, 0, sizeof(scratch));
+ 
+ 	switch (type) {
+ 	case BTDEV_TYPE_BREDRLE:
+-- 
+2.43.0
+

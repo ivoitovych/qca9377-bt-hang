@@ -1,0 +1,30 @@
+WARNING:EMAIL_SUBJECT: A patch subject line should describe the change not the tool that found it
+#4: 
+Subject: [PATCH BlueZ] emulator: scratch control with a checkpatch error
+
+ERROR:CODE_INDENT: code indent should use tabs where possible
+#20: FILE: emulator/btdev.c:8427:
++        if(!btdev)$
+
+WARNING:LEADING_SPACE: please, no spaces at the start of a line
+#20: FILE: emulator/btdev.c:8427:
++        if(!btdev)$
+
+ERROR:SPACING: space required before the open parenthesis '('
+#20: FILE: emulator/btdev.c:8427:
++        if(!btdev)
+
+/home/user/qca9377-bt-hang/tmp/ci-local/controls-20261010T140220Z/control-checkpatch-error.patch total: 2 errors, 2 warnings, 8 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+NOTE: Whitespace errors detected.
+      You may wish to use scripts/cleanpatch or scripts/cleanfile
+
+/home/user/qca9377-bt-hang/tmp/ci-local/controls-20261010T140220Z/control-checkpatch-error.patch has style problems, please review.
+
+NOTE: Ignored message types: COMMIT_MESSAGE COMPLEX_MACRO CONST_STRUCT FILE_PATH_CHANGES MISSING_SIGN_OFF PREFER_PACKED SPDX_LICENSE_TAG SPLIT_STRING SSCANF_TO_KSTRTO
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.

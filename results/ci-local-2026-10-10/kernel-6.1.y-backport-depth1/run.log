@@ -1,0 +1,10 @@
+12:36:38 ci-local: space=kernel tree=/home/user/qca9377-bt-hang/cache/bluetooth-next-full base=origin/master checks=am,checkpatch,verifyfixes,verifysignedoff,gitlint,subjectprefix jobs=4
+12:36:38 ci-local: out=/home/user/qca9377-bt-hang/tmp/ci-local/20261010T123638Z-6.1.y-backport
+12:36:38   patch: patches/kernel/bt9-stable/send/6.1.y/0001-Bluetooth-hci_event-fix-simultaneous-discovery-stuck.patch :: [6.1.y] Bluetooth: hci_event: fix simultaneous discovery stuck in FINDING
+12:36:38 ci-local: base commit 964430c038967fd06643e866f68115664e1a1bd1 2026-10-09 Bluetooth: btintel: load unlocker.sfi to allow unsigned firmware
+12:36:38 ci-local: stable backport for 6.1.y detected in the subject
+12:36:39 ci-local: newest 6.1.y tag is v6.1.189
+12:36:39 ci-local: checking out v6.1.189 into a worktree (a partial clone fetches the blobs now)
+12:36:55   $ (cd kernel && git -c user.name=Iaroslav Voitovych -c user.email=yaroslav.voytovych@gmail.com -c commit.gpgsign=false am /home/user/qca9377-bt-hang/patches/kernel/bt9-stable/send/6.1.y/0001-Bluetooth-hci_event-fix-simultaneous-discovery-stuck.patch)
+12:36:59   $ (cd kernel && /home/user/qca9377-bt-hang/cache/action-ci/scripts/verify_signedoff.sh a500ba24937a966eab140b95eac42782a7ce2c85..HEAD)
+12:36:59 RESULT: 1 check(s) with a NEW finding — see /home/user/qca9377-bt-hang/tmp/ci-local/20261010T123638Z-6.1.y-backport/summary.txt

@@ -1,0 +1,156 @@
+base 7428ca2df9356363079db0f48412c20cbdb9471f 2026-10-09 device: Fix LE bearer Connect not replying
+tree /home/user/qca9377-bt-hang/cache/bluez
+patch 0001-emulator-Avoid-variable-length-array-in-send_cmd.patch :: [BlueZ] emulator: Avoid variable length array in send_cmd
+
+am                 PASS          all 1 patch(es) apply to origin/master with git am
+checkpatch         PASS          no ERROR or WARNING from checkpatch (version 0.32)
+gitlint            PASS          no violations with the bot's config (gitlint, version 0.19.1)
+buildell           PASS          ELL 002b32d configured, built and installed
+make               PASS          no finding on either side
+makeextell         PASS          no finding on either side
+smatch             FIXED         1 fixed, 44 pre-existing
+    PRE-EXISTING: ./lib/bluetooth/bluetooth.h:232:15: warning: array of flexible structures  (x2)
+    PRE-EXISTING: ./src/shared/ascs.h:88:25: warning: array of flexible structures  (x3)
+    PRE-EXISTING: ./src/shared/btp.h:338:41: warning: array of flexible structures  (x4)
+    PRE-EXISTING: ./src/shared/mgmt.h:95:25: error: redefinition of unsigned int enum mgmt_io_capability  (x4)
+    PRE-EXISTING: ./src/shared/queue.h:19:20: error: redefinition of struct queue_entry
+    PRE-EXISTING: /usr/include/readline/rltypedefs.h:37:27: warning: non-ANSI function declaration of function 'CPFunction'  (x7)
+    PRE-EXISTING: /usr/include/readline/rltypedefs.h:38:29: warning: non-ANSI function declaration of function 'CPPFunction'  (x7)
+    PRE-EXISTING: /usr/include/readline/rltypedefs.h:35:23: warning: non-ANSI function declaration of function 'Function'  (x7)
+    PRE-EXISTING: /usr/include/readline/rltypedefs.h:36:25: warning: non-ANSI function declaration of function 'VFunction'  (x7)
+    PRE-EXISTING: ell/cert-crypto.c:36:33: warning: Variable length array is used.  (x4)
+    PRE-EXISTING: ell/checksum.c:382:28: warning: non-ANSI function declaration of function 'init_supported'
+    PRE-EXISTING: ell/checksum.c:444:47: warning: non-ANSI function declaration of function 'l_checksum_cmac_aes_supported'
+    PRE-EXISTING: ell/cipher.c:519:24: warning: Variable length array is used.
+    PRE-EXISTING: ell/cipher.c:660:28: warning: non-ANSI function declaration of function 'init_supported'
+    PRE-EXISTING: ell/dbus-filter.c:233:46: warning: Variable length array is used.
+    PRE-EXISTING: ell/dbus-service.c:548:49: warning: non-ANSI function declaration of function '_dbus_object_tree_new'
+    PRE-EXISTING: ell/key.c:550:25: warning: Variable length array is used.
+    PRE-EXISTING: ell/log.c:439:68: warning: non-ANSI function declaration of function 'free_debug_sections'
+    PRE-EXISTING: ell/log.c:431:65: warning: non-ANSI function declaration of function 'register_debug_section'
+    PRE-EXISTING: ell/random.c:60:42: warning: non-ANSI function declaration of function 'l_getrandom_is_supported'
+    PRE-EXISTING: ell/tls-suites.c:1079:25: warning: Variable length array is used.  (x4)
+    PRE-EXISTING: ell/tls.c:45:25: warning: Variable length array is used.  (x4)
+    FIXED: emulator/btdev.c:479:29: warning: Variable length array is used.
+    PRE-EXISTING: emulator/bthost.c:703:28: warning: Variable length array is used.  (x5)
+    PRE-EXISTING: mesh/mesh-io-mgmt.c:525:67: warning: Variable length array is used.
+    PRE-EXISTING: monitor/bt.h:3924:52: warning: array of flexible structures  (x2)
+    PRE-EXISTING: monitor/msft.h:88:44: warning: array of flexible structures
+    PRE-EXISTING: monitor/packet.c:2289:26: warning: Variable length array is used.
+    PRE-EXISTING: src/shared/bap.c:318:25: warning: array of flexible structures  (x3)
+    PRE-EXISTING: src/shared/crypto.c:271:21: warning: Variable length array is used.  (x6)
+    PRE-EXISTING: src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.  (x12)
+    PRE-EXISTING: src/shared/queue.h:19:20: error: redefinition of struct queue_entry  (x2)
+    PRE-EXISTING: tools/bneptest.c:634:39: warning: unknown escape sequence: '\%'
+    PRE-EXISTING: tools/hex2hcd.c:136:26: warning: Variable length array is used.
+    PRE-EXISTING: tools/mesh-cfgtest.c:1453:17: warning: unknown escape sequence: '\%'
+    PRE-EXISTING: tools/mesh-gatt/net.c:1239:30: warning: non-ANSI function declaration of function 'get_next_seq'
+    PRE-EXISTING: tools/mesh-gatt/net.c:2193:29: warning: non-ANSI function declaration of function 'net_get_default_ttl'
+    PRE-EXISTING: tools/mesh-gatt/net.c:2207:26: warning: non-ANSI function declaration of function 'net_get_seq_num'
+    PRE-EXISTING: tools/mesh-gatt/node.c:456:39: warning: non-ANSI function declaration of function 'node_get_local_node'
+    PRE-EXISTING: tools/meshctl.c:324:33: warning: non-ANSI function declaration of function 'forget_mesh_devices'
+    PRE-EXISTING: tools/rctest.c:631:33: warning: non-ANSI function declaration of function 'automated_send_recv'
+    PRE-EXISTING: tools/seq2bseq.c:57:26: warning: Variable length array is used.
+    PRE-EXISTING: unit/avctp.c:505:34: warning: Variable length array is used.  (x2)
+    PRE-EXISTING: unit/avrcp-lib.c:1085:34: warning: Variable length array is used.  (x4)
+    PRE-EXISTING: unit/test-avrcp.c:374:26: warning: Variable length array is used.  (x3)
+    the bot would post: CheckSmatch PASS (no smatch line on the touched files)
+incremental        PASS          git am + make succeeded after each of the 1 patch(es)
+scanbuild          PRE-EXISTING  95 pre-existing, none new
+    PRE-EXISTING: ./src/shared/util.h:298:9: warning: 1st function call argument is an uninitialized value [core.CallAndMessage]  (x2)
+    PRE-EXISTING: client/btpclient/btpclientctl.c:1655:2: warning: Null pointer passed to 2nd parameter expecting 'nonnull' [core.NonNullParamChecker]
+    PRE-EXISTING: client/btpclient/btpclientctl.c:402:3: warning: Value stored to 'bit' is never read [deadcode.DeadStores]
+    PRE-EXISTING: ell/cert.c:645:41: warning: Access to field 'asn1_len' results in a dereference of a null pointer (loaded from variable 'cert') [core.NullDereference]
+    PRE-EXISTING: ell/ecc-external.c:227:14: warning: 2nd function call argument is an uninitialized value [core.CallAndMessage]
+    PRE-EXISTING: ell/ecc-external.c:77:11: warning: Assigned value is garbage or undefined [core.uninitialized.Assign]  (x2)
+    PRE-EXISTING: ell/ecc-external.c:435:22: warning: The left operand of '&' is a garbage value [core.UndefinedBinaryOperatorResult]  (x2)
+    PRE-EXISTING: ell/ecc-external.c:688:28: warning: The left operand of '>>' is a garbage value [core.UndefinedBinaryOperatorResult]
+    PRE-EXISTING: ell/ecc-external.c:160:18: warning: The right operand of '-' is a garbage value [core.UndefinedBinaryOperatorResult]
+    PRE-EXISTING: ell/gvariant-util.c:456:5: warning: Dereference of null pointer [core.NullDereference]
+    PRE-EXISTING: ell/gvariant-util.c:143:18: warning: The left operand of '>' is a garbage value [core.UndefinedBinaryOperatorResult]
+    PRE-EXISTING: ell/pem.c:304:11: warning: 1st function call argument is an uninitialized value [core.CallAndMessage]  (x2)
+    PRE-EXISTING: ell/pem.c:166:34: warning: Dereference of null pointer (loaded from variable 'buf_ptr') [core.NullDereference]
+    PRE-EXISTING: ell/pem.c:131:8: warning: Dereference of null pointer (loaded from variable 'eol') [core.NullDereference]  (x2)
+    PRE-EXISTING: emulator/b1ee.c:258:3: warning: Potential leak of memory pointed to by 'server_port' [unix.Malloc]
+    PRE-EXISTING: emulator/b1ee.c:258:3: warning: Potential leak of memory pointed to by 'sniffer_port' [unix.Malloc]
+    PRE-EXISTING: emulator/b1ee.c:289:2: warning: Value stored to 'argc' is never read [deadcode.DeadStores]
+    PRE-EXISTING: emulator/btdev.c:6663:20: warning: Access to field 'link' results in a dereference of a null pointer (loaded from variable 'acl') [core.NullDereference]  (x2)
+    PRE-EXISTING: emulator/serial.c:150:2: warning: Assigned value is garbage or undefined [core.uninitialized.Assign]  (x2)
+    PRE-EXISTING: emulator/serial.c:213:36: warning: Value stored to 'dev_type' during its initialization is never read [deadcode.DeadStores]
+    PRE-EXISTING: emulator/serial.c:150:36: warning: Value stored to 'type' during its initialization is never read [deadcode.DeadStores]
+    PRE-EXISTING: emulator/server.c:264:2: warning: Assigned value is garbage or undefined [core.uninitialized.Assign]
+    PRE-EXISTING: emulator/server.c:264:36: warning: Value stored to 'type' during its initialization is never read [deadcode.DeadStores]
+    PRE-EXISTING: src/gatt-client.c:1572:2: warning: Use of memory after it is freed [unix.Malloc]  (x2)
+    PRE-EXISTING: gdbus/watch.c:226:3: warning: Attempt to free released memory [unix.Malloc]
+    PRE-EXISTING: gobex/gobex-header.c:95:2: warning: Null pointer passed to 2nd parameter expecting 'nonnull' [core.NonNullParamChecker]  (x2)
+    PRE-EXISTING: gobex/gobex-transfer.c:424:7: warning: Use of memory after it is freed [unix.Malloc]  (x2)
+    PRE-EXISTING: lib/bluetooth/hci.c:93:4: warning: Value stored to 'ptr' is never read [deadcode.DeadStores]
+    PRE-EXISTING: lib/bluetooth/sdp.c:509:17: warning: Dereference of undefined pointer value [core.NullDereference]  (x2)
+    PRE-EXISTING: lib/bluetooth/sdp.c:1901:26: warning: Potential leak of memory pointed to by 'ap' [unix.Malloc]
+    PRE-EXISTING: lib/bluetooth/sdp.c:2065:4: warning: Potential leak of memory pointed to by 'lang' [unix.Malloc]
+    PRE-EXISTING: lib/bluetooth/sdp.c:3287:9: warning: Potential leak of memory pointed to by 'pSeq' [unix.Malloc]
+    PRE-EXISTING: lib/bluetooth/sdp.c:3286:8: warning: Potential leak of memory pointed to by 'pSvcRec' [unix.Malloc]
+    PRE-EXISTING: lib/bluetooth/sdp.c:1915:6: warning: Potential leak of memory pointed to by 'pds' [unix.Malloc]
+    PRE-EXISTING: lib/bluetooth/sdp.c:2154:9: warning: Potential leak of memory pointed to by 'profDesc' [unix.Malloc]
+    PRE-EXISTING: lib/bluetooth/sdp.c:4623:13: warning: Potential leak of memory pointed to by 'rec_list' [unix.Malloc]
+    PRE-EXISTING: lib/bluetooth/sdp.c:4962:8: warning: Potential leak of memory pointed to by 'subseq' [unix.Malloc]
+    PRE-EXISTING: lib/bluetooth/sdp.c:4923:40: warning: Potential leak of memory pointed to by 'tseq' [unix.Malloc]
+    PRE-EXISTING: lib/bluetooth/sdp.c:1960:10: warning: Potential leak of memory pointed to by 'u' [unix.Malloc]
+    PRE-EXISTING: mesh/main.c:162:3: warning: Value stored to 'optarg' is never read [deadcode.DeadStores]
+    PRE-EXISTING: monitor/hwdb.c:59:2: warning: Value stored to 'hwdb' is never read [deadcode.DeadStores]  (x2)
+    PRE-EXISTING: monitor/hwdb.c:64:2: warning: Value stored to 'udev' is never read [deadcode.DeadStores]  (x2)
+    PRE-EXISTING: monitor/l2cap.c:1735:4: warning: Value stored to 'data' is never read [deadcode.DeadStores]
+    PRE-EXISTING: monitor/l2cap.c:1736:4: warning: Value stored to 'size' is never read [deadcode.DeadStores]
+    PRE-EXISTING: monitor/packet.c:18384:14: warning: Value stored to 'desc' during its initialization is never read [deadcode.DeadStores]
+    PRE-EXISTING: obexd/plugins/messages-dummy.c:165:9: warning: Access to field 'next' results in a dereference of a null pointer (loaded from variable 'cur') [core.NullDereference]
+    PRE-EXISTING: obexd/plugins/vcard.c:701:6: warning: 2nd function call argument is an uninitialized value [core.CallAndMessage]
+    PRE-EXISTING: obexd/plugins/vcard.c:701:6: warning: 3rd function call argument is an uninitialized value [core.CallAndMessage]
+    PRE-EXISTING: obexd/plugins/vcard.c:701:6: warning: 4th function call argument is an uninitialized value [core.CallAndMessage]
+    PRE-EXISTING: obexd/plugins/vcard.c:701:6: warning: 5th function call argument is an uninitialized value [core.CallAndMessage]
+    PRE-EXISTING: obexd/src/main.c:301:6: warning: Array access (from variable 'option_root') results in a null pointer dereference [core.NullDereference]
+    PRE-EXISTING: obexd/src/obex.c:123:3: warning: Access to field 'close' results in a dereference of a null pointer (loaded from field 'driver') [core.NullDereference]
+    PRE-EXISTING: src/oui.c:50:2: warning: Value stored to 'hwdb' is never read [deadcode.DeadStores]
+    PRE-EXISTING: src/oui.c:53:2: warning: Value stored to 'udev' is never read [deadcode.DeadStores]
+    PRE-EXISTING: profiles/audio/a2dp.c:3445:20: warning: Access to field 'starting' results in a dereference of a null pointer (loaded from variable 'stream') [core.NullDereference]
+    PRE-EXISTING: profiles/audio/a2dp.c:3448:8: warning: Access to field 'suspending' results in a dereference of a null pointer (loaded from variable 'stream') [core.NullDereference]  (x2)
+    PRE-EXISTING: profiles/audio/a2dp.c:442:8: warning: Use of memory after it is freed [unix.Malloc]
+    PRE-EXISTING: profiles/audio/avdtp.c:895:25: warning: Use of memory after it is freed [unix.Malloc]  (x2)
+    PRE-EXISTING: profiles/audio/avrcp.c:1934:2: warning: Value stored to 'operands' is never read [deadcode.DeadStores]
+    PRE-EXISTING: profiles/audio/media.c:1152:7: warning: Use of memory after it is freed [unix.Malloc]
+    PRE-EXISTING: src/sdp-client.c:353:14: warning: Access to field 'cb' results in a dereference of a null pointer [core.NullDereference]  (x2)
+    PRE-EXISTING: src/sdp-xml.c:129:10: warning: Assigned value is garbage or undefined [core.uninitialized.Assign]  (x9)
+    PRE-EXISTING: src/sdpd-request.c:209:13: warning: Result of 'malloc' is converted to a pointer of type 'char', which is incompatible with sizeof operand type 'uint16_t' [unix.MallocSizeof]  (x2)
+    PRE-EXISTING: src/sdpd-request.c:237:13: warning: Result of 'malloc' is converted to a pointer of type 'char', which is incompatible with sizeof operand type 'uint32_t' [unix.MallocSizeof]  (x2)
+    PRE-EXISTING: src/shared/bap.c:1543:8: warning: Use of memory after it is freed [unix.Malloc]  (x6)
+    PRE-EXISTING: src/shared/gatt-client.c:458:21: warning: Use of memory after it is freed [unix.Malloc]  (x39)
+    PRE-EXISTING: src/shared/rap.c:3922:30: warning: Assigned value is garbage or undefined [core.uninitialized.Assign]  (x3)
+    PRE-EXISTING: src/shared/rap.c:4967:13: warning: Use of memory after it is freed [unix.Malloc]  (x3)
+    PRE-EXISTING: tools/avtest.c:243:5: warning: Value stored to 'len' is never read [deadcode.DeadStores]  (x32)
+    PRE-EXISTING: tools/btgatt-client.c:1822:2: warning: Value stored to 'argv' is never read [deadcode.DeadStores]
+    PRE-EXISTING: tools/btgatt-server.c:1204:2: warning: Value stored to 'argv' is never read [deadcode.DeadStores]
+    PRE-EXISTING: tools/check-selftest.c:42:3: warning: Value stored to 'ptr' is never read [deadcode.DeadStores]
+    PRE-EXISTING: tools/ciptool.c:351:7: warning: 5th function call argument is an uninitialized value [core.CallAndMessage]
+    PRE-EXISTING: tools/create-image.c:76:3: warning: Value stored to 'fd' is never read [deadcode.DeadStores]  (x4)
+    PRE-EXISTING: tools/gatt-service.c:294:2: warning: 2nd function call argument is an uninitialized value [core.CallAndMessage]
+    PRE-EXISTING: tools/hciattach.c:817:7: warning: Although the value stored to 'n' is used in the enclosing expression, the value is never actually read from 'n' [deadcode.DeadStores]  (x6)
+    PRE-EXISTING: tools/meshctl.c:762:2: warning: 2nd function call argument is an uninitialized value [core.CallAndMessage]
+    PRE-EXISTING: tools/meshctl.c:326:19: warning: Access to field 'mesh_devices' results in a dereference of a null pointer (loaded from variable 'default_ctrl') [core.NullDereference]
+    PRE-EXISTING: tools/meshctl.c:1957:2: warning: Value stored to 'len' is never read [deadcode.DeadStores]
+    PRE-EXISTING: tools/obex-server-tool.c:133:13: warning: Null pointer passed to 1st parameter expecting 'nonnull' [core.NonNullParamChecker]  (x2)
+    PRE-EXISTING: tools/rfcomm.c:354:8: warning: Although the value stored to 'fd' is used in the enclosing expression, the value is never actually read from 'fd' [deadcode.DeadStores]  (x2)
+    PRE-EXISTING: tools/rfcomm.c:497:14: warning: Assigned value is garbage or undefined [core.uninitialized.Assign]
+    PRE-EXISTING: tools/rfcomm.c:234:7: warning: Null pointer passed to 1st parameter expecting 'nonnull' [core.NonNullParamChecker]
+    PRE-EXISTING: tools/rfcomm.c:234:3: warning: Value stored to 'i' is never read [deadcode.DeadStores]
+    PRE-EXISTING: tools/sdptool.c:980:4: warning: 1st function call argument is an uninitialized value [core.CallAndMessage]
+    PRE-EXISTING: tools/sdptool.c:4112:4: warning: Potential leak of memory pointed to by 'context.svc' [unix.Malloc]
+    PRE-EXISTING: tools/sdptool.c:3777:2: warning: Potential leak of memory pointed to by 'si.name' [unix.Malloc]
+    PRE-EXISTING: tools/sdptool.c:941:26: warning: Result of 'malloc' is converted to a pointer of type 'uint32_t', which is incompatible with sizeof operand type 'int' [unix.MallocSizeof]
+    PRE-EXISTING: unit/avdtp.c:756:25: warning: Use of memory after it is freed [unix.Malloc]  (x2)
+    PRE-EXISTING: unit/avrcp-lib.c:1968:3: warning: 1st function call argument is an uninitialized value [core.CallAndMessage]
+    PRE-EXISTING: unit/avrcp-lib.c:3510:4: warning: Address of stack memory associated with local variable 'val' is still referred to by the stack variable 'iov' upon returning to the caller.  This will be a dangling reference [core.StackAddressEscape]  (x2)
+    PRE-EXISTING: unit/test-hog.c:288:13: warning: Null pointer passed to 1st parameter expecting 'nonnull' [core.NonNullParamChecker]
+    PRE-EXISTING: unit/test-util.c:42:3: warning: Potential leak of memory pointed to by 'data' [unix.Malloc]
+    PRE-EXISTING: unit/test-util.c:33:8: warning: Potential leak of memory pointed to by 'p1' [unix.Malloc]
+    PRE-EXISTING: unit/test-util.c:36:3: warning: Potential leak of memory pointed to by 'p2' [unix.Malloc]
+
+RESULT: no NEW finding
