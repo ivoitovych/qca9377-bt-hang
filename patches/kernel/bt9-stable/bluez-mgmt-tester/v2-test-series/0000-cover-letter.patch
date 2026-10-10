@@ -1,0 +1,50 @@
+From 08560e11667f7815d69cd8f74bb0e17a89363f50 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 10 Oct 2026 03:12:54 +0200
+Subject: [PATCH BlueZ 0/3] mgmt-tester: Add simultaneous discovery stop tests
+
+These tests cover the kernel bug fixed by 96d006ae6445 ("Bluetooth:
+hci_event: fix simultaneous discovery stuck in FINDING"): with
+HCI_QUIRK_SIMULTANEOUS_DISCOVERY, an Inquiry Complete that arrives
+between LE Set Scan Enable (disable) and its Command Complete leaves
+discovery stuck, and Start Discovery is answered Busy. The fix is in
+7.2-rc1, 7.1.5 and 6.18.40; older stable lines need a backport, and on
+those kernels the Late case fails until they get it.
+
+Patch 1 lets a test send an HCI event from the emulator, patch 2 sets
+the quirk through the kernel's existing debugfs entry, patch 3 adds the
+two cases. Late forces the racy order; First is the normal-order
+control. Where the debugfs entry is missing both are Not Run. Each
+case takes about 13 s, most of it the kernel's LE scan timeout. The
+emulated controller is LE 4.0, so the cases use legacy scanning; the
+kernel ends extended scanning in the same le_set_scan_enable_complete().
+
+Tested in qemu with 4 CPUs on bluetooth-next with and without the fix,
+and on v6.12.112, v6.6.158 and v6.1.189 with and without a backport:
+Late fails without the fix (no Discovering disabled before the probe,
+Start Discovery answered Busy) and passes with it; First passes on all.
+In full mgmt-tester runs every existing case has the same verdict as on
+master, except two that time out intermittently with and without the
+series: "Pairing Acceptor - SMP over BR/EDR 2" and "LL Privacy - Remove
+Device 4 (Disable Adv)".
+
+The series applies with or without "emulator: Free hooks in
+btdev_destroy", sent separately.
+
+Iaroslav Voitovych (3):
+  emulator: Add btdev_send_event
+  emulator/vhci: Add vhci_set_quirk_simultaneous_discovery
+  mgmt-tester: Add simultaneous discovery stop tests
+
+ emulator/btdev.c    |  11 ++
+ emulator/btdev.h    |   3 +
+ emulator/vhci.c     |  15 +-
+ emulator/vhci.h     |   1 +
+ tools/mgmt-tester.c | 395 ++++++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 423 insertions(+), 2 deletions(-)
+
+
+base-commit: 7428ca2df9356363079db0f48412c20cbdb9471f
+-- 
+2.43.0
+

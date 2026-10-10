@@ -1,0 +1,21 @@
+compare-full.py /root/exp/qca9377-bt-hang/tmp/bt9-repro/logs/run-fixed-mgmtfull-master.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/bluez-v2/logs/run-v2-master-fixed-mgmtfull.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/bluez-v2/logs/run-rc-master-fixed-mgmtfull-1.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/bluez-v2/logs/run-rc-master-fixed-mgmtfull-2.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/bluez-v2/logs/run-rc-master-fixed-mgmtfull-3.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/bluez-v2/logs/run-rc-master-fixed-mgmtfull-4.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/logs/run-fixed-mgmtfull-series1.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/logs/run-F-fixed-mgmtfull.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/bluez-v2/logs/run-v2-fixed-mgmtfull.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/bluez-v2/logs/run-rc-v2-fixed-mgmtfull-1.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/bluez-v2/logs/run-rc-v2-fixed-mgmtfull-2.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/bluez-v2/logs/run-rc-v2-fixed-mgmtfull-3.log /root/exp/qca9377-bt-hang/tmp/bt9-repro/bluez-v2/logs/run-rc-v2-fixed-mgmtfull-4.log
+
+run-fixed-mgmtfull-master.log: Total: 506, Passed: 496 (98.0%), Failed: 10, Not Run: 0 | exit 1 | 506 tests | ASan: 128 byte(s) leaked in 6 allocation(s).
+run-v2-master-fixed-mgmtfull.log: Total: 506, Passed: 498 (98.4%), Failed: 8, Not Run: 0 | exit 1 | 506 tests | ASan: 128 byte(s) leaked in 6 allocation(s).
+run-rc-master-fixed-mgmtfull-1.log: Total: 506, Passed: 497 (98.2%), Failed: 9, Not Run: 0 | exit 1 | 506 tests | ASan: 120 byte(s) leaked in 5 allocation(s).
+run-rc-master-fixed-mgmtfull-2.log: Total: 506, Passed: 498 (98.4%), Failed: 8, Not Run: 0 | exit 1 | 506 tests | ASan: 120 byte(s) leaked in 5 allocation(s).
+run-rc-master-fixed-mgmtfull-3.log: Total: 506, Passed: 497 (98.2%), Failed: 9, Not Run: 0 | exit 1 | 506 tests | ASan: 128 byte(s) leaked in 6 allocation(s).
+run-rc-master-fixed-mgmtfull-4.log: Total: 506, Passed: 498 (98.4%), Failed: 8, Not Run: 0 | exit 1 | 506 tests | ASan: 120 byte(s) leaked in 5 allocation(s).
+run-fixed-mgmtfull-series1.log: Total: 508, Passed: 499 (98.2%), Failed: 9, Not Run: 0 | exit 1 | 508 tests | ASan: 8 byte(s) leaked in 1 allocation(s).
+run-F-fixed-mgmtfull.log: Total: 508, Passed: 500 (98.4%), Failed: 8, Not Run: 0 | exit 1 | 508 tests | ASan: 16 byte(s) leaked in 2 allocation(s).
+run-v2-fixed-mgmtfull.log: Total: 508, Passed: 499 (98.2%), Failed: 9, Not Run: 0 | exit 1 | 508 tests | ASan: 8 byte(s) leaked in 1 allocation(s).
+run-rc-v2-fixed-mgmtfull-1.log: Total: 508, Passed: 498 (98.0%), Failed: 10, Not Run: 0 | exit 1 | 508 tests | ASan: 16 byte(s) leaked in 2 allocation(s).
+run-rc-v2-fixed-mgmtfull-2.log: Total: 508, Passed: 499 (98.2%), Failed: 9, Not Run: 0 | exit 1 | 508 tests | ASan: 8 byte(s) leaked in 1 allocation(s).
+run-rc-v2-fixed-mgmtfull-3.log: Total: 508, Passed: 498 (98.0%), Failed: 10, Not Run: 0 | exit 1 | 508 tests | ASan: none
+run-rc-v2-fixed-mgmtfull-4.log: Total: 508, Passed: 500 (98.4%), Failed: 8, Not Run: 0 | exit 1 | 508 tests | ASan: none
+
+tests whose result differs between the logs (columns in argument order):
+  Pairing Acceptor - SMP over BR/EDR 2                         Timed out | Passed | Timed out | Passed | Timed out | Passed | Timed out | Passed | Timed out | Timed out | Timed out | Timed out | Passed
+  LL Privacy - Remove Device 4 (Disable Adv)                   Timed out | Passed | Passed | Passed | Passed | Passed | Passed | Passed | Passed | Timed out | Passed | Timed out | Passed
+  Start Discovery - Simultaneous Inquiry First                 missing | missing | missing | missing | missing | missing | Passed | Passed | Passed | Passed | Passed | Passed | Passed
+  Start Discovery - Simultaneous Inquiry Late                  missing | missing | missing | missing | missing | missing | Passed | Passed | Passed | Passed | Passed | Passed | Passed

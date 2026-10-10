@@ -1,14 +1,16 @@
-From 4d936502844dfe6d42fd2f849910de0e4b5bb792 Mon Sep 17 00:00:00 2001
+From 97f71eea6238d906bb29f194123160b7e1654104 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Fri, 9 Oct 2026 23:18:59 +0200
 Subject: [PATCH BlueZ] emulator: Free hooks in btdev_destroy
 
 Hooks added with btdev_add_hook() are only freed by btdev_del_hook(),
-so a hook still installed when the device is destroyed is leaked. With
-ASan, mgmt-tester "Add + Remove Device Nowait - Success" passes but
-the tester exits with status 1:
+so a hook still installed when the device is destroyed is leaked. Five
+mgmt-tester cases leave one installed: "Add + Remove Device Nowait -
+Success" and the four "Adv. ... & connected" cases on the LE emulator.
+They pass, but with ASan the tester exits with status 1 because
+LeakSanitizer reports:
 
-  Direct leak of 24 byte(s) in 1 object(s) allocated from:
+  Direct leak of 120 byte(s) in 5 object(s) allocated from:
     #0 in malloc
     #1 in btdev_add_hook emulator/btdev.c:8891
 

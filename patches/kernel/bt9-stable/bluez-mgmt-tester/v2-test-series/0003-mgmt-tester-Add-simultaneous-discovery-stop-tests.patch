@@ -1,33 +1,24 @@
-From 8b02eb81df02a9f10bca1b51b3dfe6458943ff7f Mon Sep 17 00:00:00 2001
+From 08560e11667f7815d69cd8f74bb0e17a89363f50 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Fri, 9 Oct 2026 23:19:17 +0200
 Subject: [PATCH BlueZ 3/3] mgmt-tester: Add simultaneous discovery stop tests
 
-With HCI_QUIRK_SIMULTANEOUS_DISCOVERY, a BR/EDR + LE discovery runs the
-inquiry and the LE scan together and the kernel's 10.24 s LE scan
-timeout ends it. If the Inquiry Complete event arrives after LE Set
-Scan Enable (disable) was sent but before its Command Complete, kernels
-without the Linux fix 96d006ae6445 ("Bluetooth: hci_event: fix
-simultaneous discovery stuck in FINDING") never leave
-DISCOVERY_FINDING: no Discovering (disabled) event is sent and every
+With HCI_QUIRK_SIMULTANEOUS_DISCOVERY, kernels without commit
+96d006ae6445 ("Bluetooth: hci_event: fix simultaneous discovery stuck
+in FINDING") stay in DISCOVERY_FINDING when the Inquiry Complete event
+arrives after LE Set Scan Enable (disable) was sent but before its
+Command Complete: no Discovering (disabled) event is sent and every
 later Start Discovery fails with Busy.
 
-The tests force that order of HCI events deterministically; the LE scan
-timeout itself is not shortened. Both set the quirk through debugfs,
-keep the emulator from completing the inquiry and send the Inquiry
-Complete themselves: one second into the discovery (Simultaneous
-Inquiry First) or from the LE Set Scan Enable (disable) command hook,
-before its Command Complete (Simultaneous Inquiry Late). One second
-after that command a new Start Discovery probes the state. A test fails
-if no Discovering (disabled) event was received before the probe or if
-the probe does not succeed. On a kernel without the fix the Late test
-gets no Discovering (disabled) event and the probe is answered Busy:
-
-Start Discovery - Simultaneous Inquiry First         Passed
-Start Discovery - Simultaneous Inquiry Late          Failed
-
-Both pass with the fix. If the debugfs entry cannot be opened, the
-tests are reported as Not Run.
+Both tests set the quirk through debugfs and send the Inquiry Complete
+themselves: one second into the discovery (Simultaneous Inquiry First,
+the normal order) or from the LE Set Scan Enable (disable) command
+hook, before its Command Complete (Simultaneous Inquiry Late). The LE
+scan timeout itself is not shortened. One second after that command a
+new Start Discovery probes the state; a test fails if no Discovering
+(disabled) event came before the probe or if the probe does not
+succeed. Without the kernel fix the Late test fails. If the debugfs
+entry cannot be opened, the tests are reported as Not Run.
 ---
  tools/mgmt-tester.c | 395 ++++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 395 insertions(+)
