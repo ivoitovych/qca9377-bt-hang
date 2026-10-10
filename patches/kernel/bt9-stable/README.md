@@ -1,6 +1,11 @@
 # BT-9 — the stable backport of `96d006ae6445`, and a deterministic test for it
 
-**State 2026-10-10: built and tested in qemu; nothing sent.** Sending is the operator's call.
+**State 2026-10-10: the stable backports were sent 2026-10-10 04:25 +0200** (three mails,
+exactly the files in `send/` apart from the elided addresses:
+[6.12.y](https://lore.kernel.org/r/20261010022523.2789588-1-yaroslav.voytovych@gmail.com),
+[6.6.y](https://lore.kernel.org/r/20261010022523.2789588-2-yaroslav.voytovych@gmail.com),
+[6.1.y](https://lore.kernel.org/r/20261010022523.2789588-3-yaroslav.voytovych@gmail.com)).
+The BlueZ leak fix and test series are not sent; that is the operator's call.
 
 ## What and why
 

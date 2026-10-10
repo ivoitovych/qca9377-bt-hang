@@ -667,9 +667,9 @@ scan-off; how often that happens depends on timing (here: 2 cycles in about 14,7
 A new `mgmt-tester` case forces the race deterministically in qemu, through the emulator and the
 kernel's existing `quirk_simultaneous_discovery` debugfs switch: it fails with Busy on all three
 lines and on bluetooth-next with the fix reverted, and passes with the fix and with each
-backport; the normal-order control passes everywhere. **Next:** the stable request with the
-three backports, then the BlueZ emulator leak fix and the BlueZ test series to linux-bluetooth,
-each its own submission (all operator's word).
+backport; the normal-order control passes everywhere. **Stable request sent 2026-10-10 04:25
++0200** (three mails; `docs/STATUS.md`). **Next:** the BlueZ emulator leak fix and the BlueZ
+test series to linux-bluetooth, each its own submission (operator's word).
 
 **What it is.** With `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`, a BR/EDR+LE discovery runs LE active
 scanning and a 10.24 s Inquiry together, and arms the `le_scan_disable` timer for the same

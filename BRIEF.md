@@ -41,10 +41,11 @@ it rotted within hours (`R2-13`).
 > Liu (`96d006ae6445`, v7.2-rc1; in 7.1.5+, 6.18.40+ and Ubuntu `7.0.0-38`), **but not in
 > 6.12, 6.6 or 6.1** — the lines our `dc16388d45ec` backport reaches. **Backports to those
 > three built and tested 2026-10-10** (`patches/kernel/bt9-stable/`: a new `mgmt-tester` case
-> forces the race; fails on each line, passes with each backport). **Next**, each its own
-> submission and the operator's word: the stable request (three mails, `send/`; the operator
-> runs `tmp/bt9-repro/send/send-stable.sh --send` in their own terminal, git asks for the
-> password), then the BlueZ emulator leak fix, then the BlueZ test series (with cover letter).
+> forces the race; fails on each line, passes with each backport). **Stable request sent
+> 2026-10-10 04:25 +0200** (three mails, Message-IDs `<20261010022523.2789588-{1,2,3}-…>`;
+> watch for Queued/FAILED). **Next**, each its own submission and the operator's word: the
+> BlueZ emulator leak fix, then the BlueZ test series (cover letter: change "older stable
+> lines need a backport" to say the backports are on the list).
 > Reply on BlueZ #1554 posted 2026-10-09. The laptop's discovery stays stuck until a suspend or an adapter
 > power-off (operator's call); traces preserved in `/root/bt-trace-keep/` with `SHA256SUMS`.
 > Private branches are being ported to `main` (§7 rule change, 2026-10-09).
