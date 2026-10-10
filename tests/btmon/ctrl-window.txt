@@ -1,0 +1,31 @@
+= bluetoothd: Bluetooth daemon 5.72                                    21:03:20.000000
+@ Control Event: 0xffff              {0x0001} [hci0] 21:03:20.500000
+        06 00 01 00 00 00 00
+< HCI Command: LE Set Scan Enable (0x08|0x000c) plen 2       #1 [hci0] 21:03:24.000000
+        Scanning: Disabled (0x00)
+= bluetoothd: before the window                                        21:03:24.500000
+@ Control Command: 0xffff              {0x0001} [hci0] 21:03:25.000000
+        23 00 07
+< HCI Command: Inquiry (0x01|0x0001) plen 5                    #2 [hci0] 21:03:25.100000
+        Access code: 0x9e8b33 (General Inquiry)
+> HCI Event: Inquiry Result (0x02) plen 15                     #3 [hci0] 21:03:25.200000
+        Address: AA:BB:CC:00:00:01 (OUI AA-BB-CC)
+@ Control Event: 0xffff              {0x0001} [hci0] 21:03:26.994426
+        02 00 23 00 00
+@ Control Event: 0xffff              {0x0001} [hci0] 21:03:27.000000
+        01 00 24 00 0f
+@ Control Event: 0xffff              {0x0001} [hci0] 21:03:27.050000
+        01 00 77 00 7f
+@ Control Event: 0xffff              {0x0001} [hci0] 21:03:27.100000
+        06 00 81 0a 00 00
+@ Control Event: 0xffff              {0x0001} [hci0] 21:03:27.200000
+        11 00 07 01
+@ Control Event: 0xffff              {0x0001} [hci0] 21:03:27.300000
+        99 00 01
+@ Control Command: 0xffff              {0x0001} [hci0] 21:03:27.400000
+        42 00
+= bluetoothd: inside the window                                        21:03:28.000000
+= bluetoothd: src/device.c device AA:BB:CC:00:00:02 connected         21:03:28.500000
+@ Control Event: 0xffff              {0x0001} [hci0] 21:03:31.000000
+        01 00 05 00 00
+= bluetoothd: after the window                                         21:03:31.500000

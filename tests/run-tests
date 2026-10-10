@@ -6685,6 +6685,57 @@ CDH=$(tools/bt-capdiff --help 2>&1); cdhrc=$?
     && ok "bt-capdiff --help prints its own usage" \
     || bad "bt-capdiff --help failed (rc=$cdhrc)"
 
+# ── bt-ctrl-window: the management channel of a capture, decoded ──────────
+#
+# btmon prints a management record as `@ Control Event: 0xffff` with its bytes
+# undecoded; this tool names the event, the opcode inside a Command Complete
+# or Command Status, and the status, inside a time window, and drops every
+# line that carries an address so its output can go into an exhibit (EX-044).
+# The seam is btmon on PATH, as for bt-sco: tests/btmon/ctrl-window.txt holds
+# every record kind it decodes, one of each outside the window on both sides,
+# HCI headers, and two addresses inside the window: an HCI parameter line, which
+# the tool never prints, and a daemon message, which it would print but for
+# the address.
+CW=$(mktemp -d); mkdir -p "$CW/stub"; : > "$CW/cap.btsnoop"
+printf '#!/bin/sh\ncat "$BTMON_FIXTURE"\n' > "$CW/stub/btmon"; chmod +x "$CW/stub/btmon"
+cw_run() { env PATH="$CW/stub:$PATH" BTMON_FIXTURE=tests/btmon/ctrl-window.txt \
+               tools/bt-ctrl-window "$CW/cap.btsnoop" "$@" 2>&1; }
+CWO=$(cw_run 21:03:25 21:03:30); cwrc=$?
+(( cwrc == 0 )) \
+   && [[ "$CWO" == *"02 00 23 00 00  ->  Command Status for Start Discovery (0x0023), status 0x00 Success"* \
+      && "$CWO" == *"01 00 24 00 0f  ->  Command Complete for Stop Discovery (0x0024), status 0x0f Not Powered"* \
+      && "$CWO" == *"01 00 77 00 7f  ->  Command Complete for opcode (0x0077), status 0x7f"* ]] \
+    && ok "bt-ctrl-window names the event, the opcode inside it and its status, and an unknown opcode or status by number" \
+    || bad "bt-ctrl-window's Command Complete / Command Status decoding (rc=$cwrc): $(grep -- '->' <<<"$CWO" | head -3 | tr '\n' '|')"
+[[ "$CWO" == *"06 00 81 0a 00 00  ->  New Settings: 0x00000a81"* && "$CWO" == *"11 00 07 01  ->  Discovering"* \
+   && "$CWO" == *"99 00 01  ->  event 0x0099"* && "$CWO" == *"23 00 07  ->  Start Discovery (0x0023)"* \
+   && "$CWO" == *"42 00  ->  opcode (0x0042)"* ]] \
+    && ok "bt-ctrl-window reads New Settings as a little-endian word, names other events and commands, and numbers unknown ones" \
+    || bad "bt-ctrl-window's other records: $(grep -- '->' <<<"$CWO" | tail -5 | tr '\n' '|')"
+[[ "$CWO" == *"inside the window"* && "$CWO" != *"before the window"* && "$CWO" != *"after the window"* \
+   && "$CWO" != *"Set Powered"* && "$CWO" != *"06 00 01 00 00 00 00"* ]] \
+    && ok "bt-ctrl-window keeps the window: nothing before its start or after its end" \
+    || bad "bt-ctrl-window's window leaked: $(grep -E 'before|after|Set Powered' <<<"$CWO" | head -2 | tr '\n' '|')"
+CWH=$(cw_run 21:03:25 21:03:30 --hci)
+[[ "$CWO" != *"HCI"* && "$CWH" == *"< HCI Command: Inquiry"* && "$CWH" == *"> HCI Event: Inquiry Result"* \
+   && "$CWH" != *"LE Set Scan Enable"* ]] \
+    && ok "bt-ctrl-window prints HCI packet headers only with --hci, and only inside the window" \
+    || bad "bt-ctrl-window --hci: $(grep HCI <<<"$CWH$CWO" | head -3 | tr '\n' '|')"
+[[ "$CWO$CWH" != *"AA:BB:CC"* ]] \
+    && ok "bt-ctrl-window prints no line that carries an address, with or without --hci" \
+    || bad "bt-ctrl-window printed an address"
+# The three refusals, each before btmon could run: no window, a capture it
+# cannot read, and no btmon at all (a PATH without it).
+CWU=$(tools/bt-ctrl-window "$CW/cap.btsnoop" 2>&1); cwurc=$?
+CWR=$(env PATH="$CW/stub:$PATH" tools/bt-ctrl-window "$CW/absent.btsnoop" 21:03:25 21:03:30 2>&1); cwrrc=$?
+farm_dir "$CW/farm" btmon
+CWB=$(env PATH="$CW/farm" tools/bt-ctrl-window "$CW/cap.btsnoop" 21:03:25 21:03:30 2>&1); cwbrc=$?
+(( cwurc == 2 && cwrrc == 2 && cwbrc == 2 )) && [[ "$CWU" == *"bt-ctrl-window <capture.btsnoop> <from> <to>"* \
+   && "$CWR" == *"cannot read $CW/absent.btsnoop"* && "$CWB" == *"btmon not found"* ]] \
+    && ok "bt-ctrl-window refuses (2) a missing window, an unreadable capture and a host without btmon" \
+    || bad "bt-ctrl-window refusals: usage=$cwurc unreadable=$cwrrc no-btmon=$cwbrc"
+rm -rf "$CW"
+
 echo
 echo "the parameters that decide the answers, and the refusals nothing drove"
 echo "─────────────────────────────────────────────────────────────────────"
