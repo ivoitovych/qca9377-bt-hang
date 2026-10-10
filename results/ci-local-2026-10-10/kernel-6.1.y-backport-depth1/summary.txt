@@ -1,0 +1,26 @@
+base 964430c038967fd06643e866f68115664e1a1bd1 2026-10-09 Bluetooth: btintel: load unlocker.sfi to allow unsigned firmware
+tree /home/user/qca9377-bt-hang/cache/bluetooth-next-full
+patch 0001-Bluetooth-hci_event-fix-simultaneous-discovery-stuck.patch :: [6.1.y] Bluetooth: hci_event: fix simultaneous discovery stuck in FINDING
+
+target v6.1.189 a500ba24937a966eab140b95eac42782a7ce2c85 (stable line 6.1.y)
+upstream commit named by the backport: 96d006ae6445679436b945593950fd465eba7e76
+am                 PASS          all 1 patch(es) apply to v6.1.189 with git am
+am-bluetooth-next  EXPECTED      does not apply to origin/master — expected for a backport: upstream commit 96d006ae6445679436b945593950fd465eba7e76 is in origin/master already
+    error: patch failed: net/bluetooth/hci_event.c:1748
+    error: net/bluetooth/hci_event.c: patch does not apply
+checkpatch         NEW           checkpatch reports on the patches (the bot: ERROR = fail, WARNING = warning)
+    == 0001-Bluetooth-hci_event-fix-simultaneous-discovery-stuck.patch
+    ERROR: Please use git commit description style 'commit <12+ chars of sha1> ("<title line>")' - ie: 'commit 96d006ae6445 ("Bluetooth: hci_event: fix simultaneous discovery stuck in FINDING")'
+    #7: 
+    ERROR: Unrecognized email address: 'Jiajia Liu <<address elided>>'
+    #76: 
+    ERROR: Unrecognized email address: 'Luiz Augusto von Dentz <<address elided>>'
+    #77: 
+    ERROR: Missing Signed-off-by: line by nominal patch author ''
+    total: 4 errors, 0 warnings, 0 checks, 13 lines checked
+gitlint            PASS          no violations with the bot's config (gitlint, version 0.19.1)
+subjectprefix      PASS          every subject carries "Bluetooth: "
+verifyfixes        NOT RUN       v6.1.189 was fetched with --depth 1; Fixes: ancestry cannot be checked (use --stable-full)
+verifysignedoff    PASS          verify_signedoff.sh a500ba24937a966eab140b95eac42782a7ce2c85..HEAD: no complaint
+
+RESULT: NEW findings in 1 check(s)

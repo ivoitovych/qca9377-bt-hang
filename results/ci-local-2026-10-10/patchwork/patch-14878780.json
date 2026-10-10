@@ -1,0 +1,58 @@
+{
+ "id": 14878780,
+ "url": "https://patchwork.kernel.org/api/1.3/patches/14878780/",
+ "web_url": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/",
+ "project": {
+  "id": 395,
+  "url": "https://patchwork.kernel.org/api/1.3/projects/395/",
+  "name": "Bluetooth",
+  "link_name": "bluetooth",
+  "list_id": "linux-bluetooth.vger.kernel.org",
+  "list_email": "linux-bluetooth@vger.kernel.org",
+  "web_url": "",
+  "scm_url": "",
+  "webscm_url": "",
+  "list_archive_url": "",
+  "list_archive_url_format": "https://lore.kernel.org/r/{}",
+  "commit_url_format": ""
+ },
+ "msgid": "<<address elided>>",
+ "list_archive_url": "https://lore.kernel.org/r/<address elided>",
+ "date": "2026-10-10T03:18:49",
+ "name": "[BlueZ,1/3] emulator: Add btdev_send_event",
+ "commit_ref": null,
+ "pull_url": null,
+ "state": "new",
+ "archived": false,
+ "hash": "617c3424ad46a5d64fe3f343bb95f2b7661d30cc",
+ "submitter": {
+  "id": 225234,
+  "url": "https://patchwork.kernel.org/api/1.3/people/225234/",
+  "name": "Iaroslav Voitovych",
+  "email": "yaroslav.voytovych@gmail.com"
+ },
+ "delegate": null,
+ "mbox": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/mbox/",
+ "series": [
+  {
+   "id": 1182788,
+   "url": "https://patchwork.kernel.org/api/1.3/series/1182788/",
+   "web_url": "https://patchwork.kernel.org/series/1182788/",
+   "date": "2026-10-10T03:18:49",
+   "name": "mgmt-tester: Add simultaneous discovery stop tests",
+   "version": 1,
+   "mbox": "https://patchwork.kernel.org/series/1182788/mbox/"
+  }
+ ],
+ "comments": "https://patchwork.kernel.org/api/patches/14878780/comments/",
+ "check": "fail",
+ "checks": "https://patchwork.kernel.org/api/patches/14878780/checks/",
+ "tags": {},
+ "related": [],
+ "content": "Allow a tester to send an arbitrary event from the emulated controller,\nfor instance from a command hook, so that the order of events around a\ncommand can be chosen by the test.\n---\n emulator/btdev.c | 11 +++++++++++\n emulator/btdev.h |  3 +++\n 2 files changed, 14 insertions(+)",
+ "diff": "diff --git a/emulator/btdev.c b/emulator/btdev.c\nindex e00f78288..fa326e72f 100644\n--- a/emulator/btdev.c\n+++ b/emulator/btdev.c\n@@ -9158,3 +9158,14 @@ int btdev_set_emu_opcode(struct btdev *btdev, uint16_t opcode)\n \t\treturn -ENOTSUP;\n \t}\n }\n+\n+int btdev_send_event(struct btdev *btdev, uint8_t event, const void *data,\n+\t\t\t\t\t\t\t\tuint8_t len)\n+{\n+\tif (!btdev)\n+\t\treturn -EINVAL;\n+\n+\tsend_event(btdev, event, data, len);\n+\n+\treturn 0;\n+}\ndiff --git a/emulator/btdev.h b/emulator/btdev.h\nindex 145f7edaa..aa04ca611 100644\n--- a/emulator/btdev.h\n+++ b/emulator/btdev.h\n@@ -112,3 +112,6 @@ bool btdev_del_hook(struct btdev *btdev, enum btdev_hook_type type,\n int btdev_set_msft_opcode(struct btdev *btdev, uint16_t opcode);\n int btdev_set_aosp_capable(struct btdev *btdev, bool enable);\n int btdev_set_emu_opcode(struct btdev *btdev, uint16_t opcode);\n+\n+int btdev_send_event(struct btdev *btdev, uint8_t event, const void *data,\n+\t\t\t\t\t\t\t\tuint8_t len);\n",
+ "prefixes": [
+  "BlueZ",
+  "1/3"
+ ]
+}

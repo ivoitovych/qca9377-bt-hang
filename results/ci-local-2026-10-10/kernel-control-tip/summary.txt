@@ -1,0 +1,23 @@
+base ac6c98797269b88984c0f033126b540bc3c3bcfc 2026-10-09 Merge branch 'bluetooth' into bluetooth-next
+tree /home/user/qca9377-bt-hang/cache/bluetooth-next-full
+patch 0001-Bluetooth-btintel-load-unlocker.sfi-to-allow-unsigne.patch :: Bluetooth: btintel: load unlocker.sfi to allow unsigned firmware
+
+am                 PASS          all 1 patch(es) apply to origin/master~1 with git am
+checkpatch         PASS          no ERROR or WARNING from checkpatch (version 0.32)
+gitlint            NEW           1 patch(es) with gitlint violations (gitlint, version 0.19.1)
+    == 0001-Bluetooth-btintel-load-unlocker.sfi-to-allow-unsigne.patch
+    35: B1 Line exceeds max length (82>80): "[  414.150089] Bluetooth: hci0: Firmware timestamp 2026.39 buildtype 3 build 86921"
+subjectprefix      PASS          every subject carries "Bluetooth: "
+verifyfixes        PASS          verify_fixes.sh ac6c98797269b88984c0f033126b540bc3c3bcfc..HEAD: no complaint
+verifysignedoff    NEW           verify_signedoff.sh complains (the bot posts this as a warning)
+    Commit 584bfd041853 ("Bluetooth: btintel: load unlocker.sfi to allow unsigned firmware")
+    	committer Signed-off-by missing
+    	author email:    <address elided>
+    	committer email: yaroslav.voytovych@gmail.com
+    	Signed-off-by: Ravindra <<address elided>>
+    	Signed-off-by: Kiran K <<address elided>>
+    	Signed-off-by: Luiz Augusto von Dentz <<address elided>>
+    
+    Errors in tree with Signed-off-by, please fix!
+
+RESULT: NEW findings in 2 check(s)

@@ -43,9 +43,37 @@ def repl(m):
     if a.lower() == keep.lower() or LISTS.match(a.lower()):
         return a
     return "<address elided>"
-text = re.sub(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", repl, text)
+ADDR = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+# A JSON document is walked as data: addresses are elided inside string
+# values (a text-level substitution ate the "t" of a "\t" escape and broke
+# the document), and the "headers" field is dropped — mail headers carry the
+# relays' IPv4 addresses and hash-like tokens, and no results file cites them.
+parsed = None
+if dst.endswith(".json"):
+    try:
+        import json
+        parsed = json.loads(text)
+    except ValueError:
+        parsed = None
+if parsed is not None:
+    def walk(o):
+        if isinstance(o, dict):
+            return {k: walk(v) for k, v in o.items() if k != "headers"}
+        if isinstance(o, list):
+            return [walk(v) for v in o]
+        if isinstance(o, str):
+            return ADDR.sub(repl, o)
+        return o
+    text = json.dumps(walk(parsed), indent=1, ensure_ascii=False) + "\n"
+else:
+    text = ADDR.sub(repl, text)
 open(dst, "wb").write(text.encode("utf-8") + note)
 PY
+	# then the repository's own sanitiser: MAC addresses, UUIDs and IPv4
+	# addresses become placeholders (it refuses to write a half-done file)
+	if [[ -x "$REPO/tools/sanitize-logs.sh" ]]; then
+		"$REPO/tools/sanitize-logs.sh" "$2" "$2" >/dev/null 2>&1 || echo "ci-local-publish: sanitize-logs refused $2" >&2
+	fi
 }
 
 n=0
