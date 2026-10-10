@@ -5,7 +5,10 @@ exactly the files in `send/` apart from the elided addresses:
 [6.12.y](https://lore.kernel.org/r/20261010022523.2789588-1-yaroslav.voytovych@gmail.com),
 [6.6.y](https://lore.kernel.org/r/20261010022523.2789588-2-yaroslav.voytovych@gmail.com),
 [6.1.y](https://lore.kernel.org/r/20261010022523.2789588-3-yaroslav.voytovych@gmail.com)).
-The BlueZ leak fix and test series are not sent; that is the operator's call.
+The BlueZ leak fix and the test series were sent to linux-bluetooth 2026-10-10 05:18 +0200,
+exactly the files in `bluez-mgmt-tester/v2-leak-fix/` and `v2-test-series/`:
+[leak fix](https://lore.kernel.org/r/20261010031846.2842837-1-yaroslav.voytovych@gmail.com),
+[test series](https://lore.kernel.org/r/20261010031852.2842893-1-yaroslav.voytovych@gmail.com).
 
 ## What and why
 

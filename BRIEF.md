@@ -43,9 +43,9 @@ it rotted within hours (`R2-13`).
 > three built and tested 2026-10-10** (`patches/kernel/bt9-stable/`: a new `mgmt-tester` case
 > forces the race; fails on each line, passes with each backport). **Stable request sent
 > 2026-10-10 04:25 +0200** (three mails, Message-IDs `<20261010022523.2789588-{1,2,3}-…>`;
-> watch for Queued/FAILED). **Next**, each its own submission and the operator's word: the
-> BlueZ emulator leak fix, then the BlueZ test series (cover letter: change "older stable
-> lines need a backport" to say the backports are on the list).
+> watch for Queued/FAILED). **BlueZ leak fix and test series sent 05:18 +0200** to
+> linux-bluetooth (`<20261010031846.2842837-1-…>`, `<20261010031852.2842893-1..4-…>`).
+> **Next:** replies on all three submissions.
 > Reply on BlueZ #1554 posted 2026-10-09. The laptop's discovery stays stuck until a suspend or an adapter
 > power-off (operator's call); traces preserved in `/root/bt-trace-keep/` with `SHA256SUMS`.
 > Private branches are being ported to `main` (§7 rule change, 2026-10-09).
