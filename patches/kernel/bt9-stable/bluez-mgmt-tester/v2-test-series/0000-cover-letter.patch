@@ -1,6 +1,6 @@
 From 9577fc9b2422ce1fce79f06a6bc66f5c10f5d27f Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Sat, 10 Oct 2026 04:00:56 +0200
+Date: Sat, 10 Oct 2026 05:10:15 +0200
 Subject: [PATCH BlueZ 0/3] mgmt-tester: Add simultaneous discovery stop tests
 
 These tests cover the kernel bug fixed by 96d006ae6445 ("Bluetooth:
@@ -8,8 +8,8 @@ hci_event: fix simultaneous discovery stuck in FINDING"): with
 HCI_QUIRK_SIMULTANEOUS_DISCOVERY, an Inquiry Complete that arrives
 between LE Set Scan Enable (disable) and its Command Complete leaves
 discovery stuck, and Start Discovery is answered Busy. The fix is in
-7.2-rc1, 7.1.5 and 6.18.40; older stable lines need a backport, and on
-those kernels the Late case fails until they get it.
+7.2-rc1, 7.1.5 and 6.18.40, and backports for 6.12.y, 6.6.y and 6.1.y
+are on the stable list; on kernels without it the Late case fails.
 
 Patch 1 lets a test send an HCI event from the emulator, patch 2 sets
 the quirk through the kernel's existing debugfs entry, patch 3 adds the
