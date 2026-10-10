@@ -126,6 +126,7 @@ tools/bt-logvolume:116-121  # inline share renderer (same pipeline, second progr
 tools/bt-trial:274-278      # inline trial-number counter; same (re-derived 2026-09-29: +3, the btusb seam comment; +21, main's module_build and KJ_RE; main re-derived it 2026-10-03, +15, for its own tree; unmoved by the merge of 2026-10-03's main — the range starts at the `n=$(awk` line and stops before the closing `END …)`, the line bash attributes the command to)
 tools/bt-trial:894-902      # inline sco-params window filter; same (re-derived 2026-09-19 (+16), 2026-09-20 (+12, the abort/autostop edits), 2026-09-24 (+37, dbe7123), 2026-09-29 and 2026-10-03 on each branch, and by content at the merge — R2-112; CI's stale-exclusion check caught the old range covering live code each time. The range is btmon-line+2 … +10, the program's body: the `echo` after it runs since a test decodes a capture (2026-09-29))
 tools/bt-verify-install:57-60   # inline install_file parser; same
+tools/bt-ctrl-window:36-75      # inline management-record decoder; same — `btmon … | awk` reports the line the pipeline starts on, so 35 runs (2026-10-10)
 tests/run-tests:466-471       # inline --section extractor; same (re-derived 2026-09-28: +27, the git-isolation block above it; 2026-09-29: +126, the machine tripwire, the declared machine and the run marker; then +11, the declared usbfs and runtime-user roots)
 
 # THE ELEVENTH ENTRY WAS MISSING AND COST MORE THAN A PERCENTAGE POINT.

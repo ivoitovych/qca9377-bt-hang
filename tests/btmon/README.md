@@ -1,7 +1,7 @@
 # btmon fixtures
 
 Decoded-text output as `btmon -T -r <file>` produces it, for the tools that parse it:
-`bt-sco` and `bt-capdiff`.
+`bt-sco`, `bt-capdiff` and `bt-ctrl-window`.
 
 ## Why a mock rather than the real tool
 
