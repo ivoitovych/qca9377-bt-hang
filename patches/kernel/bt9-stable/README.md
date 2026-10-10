@@ -26,10 +26,10 @@ quirks, this one among them, without the fix.
 |---|---|
 | `6.12.112/`, `6.6.158/`, `6.1.189/` | the backport per line: `96d006ae6445` cherry-picked, original author, date, message, `Fixes:` and sign-offs, `[ Upstream commit … ]` per `stable-kernel-rules.rst`; one change, `hci_test_quirk(hdev, Q)` → `test_bit(Q, &hdev->quirks)` as those lines test this quirk elsewhere; a bracketed note and our sign-off. One patch-id for all three (`results/backport-record.txt`) |
 | `send/6.12.y/`, `send/6.6.y/`, `send/6.1.y/` | the same patches **as they would be mailed**: `[PATCH 6.N.y]` subject and the note below the `---` line (why, who is affected, how it was tested). Identical to the sendable files apart from the elided addresses (see the end of this file) |
-| `bluez-mgmt-tester/v2-leak-fix/` | **current**, BlueZ master `7428ca2df935`: one patch, free the emulator's hooks in `btdev_destroy()` (`Fixes: 37199df506f4`). Stands alone. Message reworded 2026-10-10 after review (five leaking cases, not one; LeakSanitizer named); code unchanged, same tree as tested |
-| `bluez-mgmt-tester/v2-test-series/` | **current**: a cover letter (`0000`), `btdev_send_event()`, `vhci_set_quirk_simultaneous_discovery()`, and two `mgmt-tester` cases, "Start Discovery - Simultaneous Inquiry First" (control) and "… Inquiry Late" (the race). Applies on master with or without the leak fix (same resulting tree either way); removes its own hooks, so it reports no leak without it. Patch 3's message shortened 2026-10-10 after review; code unchanged, same tree as tested |
+| `bluez-mgmt-tester/v2-leak-fix/` | **current**, BlueZ master `7428ca2df935`: one patch, free the emulator's hooks in `btdev_destroy()` (`Fixes: 37199df506f4`). Stands alone. Message reworded 2026-10-10 after review (five leaking mgmt-tester cases by searchable name, not one; the l2cap-tester case; LeakSanitizer named); code unchanged, same tree as tested |
+| `bluez-mgmt-tester/v2-test-series/` | **current**: a cover letter (`0000`), `btdev_send_event()`, `vhci_set_quirk_simultaneous_discovery()`, and two `mgmt-tester` cases, "Start Discovery - Simultaneous Inquiry First" (control) and "… Inquiry Late" (the race). Applies on master with or without the leak fix (same resulting tree either way); removes its own hooks, so it reports no leak without it. Patch 3, 2026-10-10 after review: message shortened, and the comment on the one-second Set Powered wait now names its cause (the only code change since the full test matrix; the two cases re-run with it on fixed and unfixed bluetooth-next, same verdicts, `summary-v2-r4.txt`) |
 | `bluez-mgmt-tester/v1/` | the first version (four patches in one series), kept; superseded after outside review |
-| `results/` | v1: `summary-F.txt` (every verdict), the packet-order extracts of the decisive runs, `lint-v1.log`. v2: `summary-v2.txt`, `summary-v2-stable-lines.txt`, `summary-recheck.txt`, `summary-v2-l2cap-master.txt`, `compare-full-recheck.txt`, `lint-v2.log`, `make-check-v2.log`. Both: `backport-record.txt`, `w1-positive-control.log` |
+| `results/` | v1: `summary-F.txt` (every verdict), the packet-order extracts of the decisive runs, `lint-v1.log`. v2: `summary-v2.txt`, `summary-v2-stable-lines.txt`, `summary-recheck.txt`, `summary-v2-l2cap-master.txt`, `summary-v2-r4.txt`, `compare-full-recheck.txt`, `lint-v2.log`, `make-check-v2.log`. Both: `backport-record.txt`, `w1-positive-control.log` |
 
 **What v2 changed after review.** The tests' delayed callbacks now live in per-test state and
 are cancelled in post-teardown, which runs on every path (BlueZ's `tester_wait()` keeps no id,
@@ -60,7 +60,8 @@ v6.12.112); the upstream report was extended scanning.
 The one-second wait after power-on in the setup: the kernel sends the Set Powered reply, and
 New Settings to every socket but the requester's, before it frees the pending command
 (`mgmt_set_powered_complete()`, v6.12.112), so no event marks the moment when the next Set
-Powered is accepted rather than answered Busy. A retry on Busy would be the alternative.
+Powered is accepted rather than answered Busy (checked in bluetooth-next `964430c03896` too).
+The code comment at the wait says so. A retry on Busy would be the alternative.
 
 ## Results (qemu, 4 CPUs, KASAN, lockdep)
 

@@ -79,24 +79,18 @@ Signed-off-by: Luiz Augusto von Dentz <<address elided>>
   this branch does elsewhere; hci_test_quirk() does not exist here ]
 Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
-Upstream 96d006ae6445 for 6.12.y, with one change: hci_test_quirk() does
-not exist here, so the quirk is tested with test_bit() on hdev->quirks, as
-elsewhere in this tree. 7.2.y and 6.18.y already have the fix; 5.15.y and
-5.10.y predate 8ffde2a73f2c. The same backport is sent separately for
-6.6.y and 6.1.y.
+7.2.y and 6.18.y already have this fix; 5.15.y and 5.10.y predate
+8ffde2a73f2c. The same backport is sent separately for 6.6.y and 6.1.y.
 
-On this branch btintel, btrtl and hci_qca set
-HCI_QUIRK_SIMULTANEOUS_DISCOVERY, as btusb does for several Qualcomm and
-CSR entries. When an Inquiry Complete arrives between LE Set Scan Enable
-(disable) and its Command Complete, discovery stays in DISCOVERY_FINDING
-and Start Discovery is answered Busy until a power-off or suspend. It
-happened twice on a QCA9377 (13d3:3503) running 7.0; that device's ID
-entry (dc16388d45ec) is queued for 6.12.y, 6.6.y and 6.1.y.
+btintel, btrtl, hci_qca and several btusb entries (Qualcomm, CSR) set
+the quirk on this branch. On a 7.0-based kernel with dc16388d45ec, the
+13d3:3503 entry now queued for 6.12.y, 6.6.y and 6.1.y, that QCA9377
+hit this race twice within four days: discovery stayed stuck for eight
+hours until a suspend the first time, and for days the second time,
+with every Start Discovery answered Busy.
 
-Tested in qemu on v6.12.112: a mgmt-tester case that forces that event order
-fails without this patch (no Discovering disabled, the next Start
-Discovery gets Busy) and passes with it; the normal-order case passes
-either way. net/bluetooth builds with W=1 -Werror.
+Tested in qemu on v6.12.112: a mgmt-tester case that forces this event
+order fails without this patch and passes with it.
 
  net/bluetooth/hci_event.c | 7 +++++++
  1 file changed, 7 insertions(+)

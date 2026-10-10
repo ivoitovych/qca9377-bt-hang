@@ -1,6 +1,6 @@
-From 08560e11667f7815d69cd8f74bb0e17a89363f50 Mon Sep 17 00:00:00 2001
+From 9577fc9b2422ce1fce79f06a6bc66f5c10f5d27f Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Sat, 10 Oct 2026 03:12:54 +0200
+Date: Sat, 10 Oct 2026 03:29:05 +0200
 Subject: [PATCH BlueZ 0/3] mgmt-tester: Add simultaneous discovery stop tests
 
 These tests cover the kernel bug fixed by 96d006ae6445 ("Bluetooth:
@@ -27,6 +27,10 @@ In full mgmt-tester runs every existing case has the same verdict as on
 master, except two that time out intermittently with and without the
 series: "Pairing Acceptor - SMP over BR/EDR 2" and "LL Privacy - Remove
 Device 4 (Disable Adv)".
+
+BlueZ's CI runs mgmt-tester on each Bluetooth kernel patch posted to
+the list, so once these cases are in, the Late case catches a
+regression of 96d006ae6445 there.
 
 The series applies with or without "emulator: Free hooks in
 btdev_destroy", sent separately.

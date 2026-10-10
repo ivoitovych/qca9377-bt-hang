@@ -1,4 +1,4 @@
-From 08560e11667f7815d69cd8f74bb0e17a89363f50 Mon Sep 17 00:00:00 2001
+From 9577fc9b2422ce1fce79f06a6bc66f5c10f5d27f Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Fri, 9 Oct 2026 23:19:17 +0200
 Subject: [PATCH BlueZ 3/3] mgmt-tester: Add simultaneous discovery stop tests
@@ -24,7 +24,7 @@ entry cannot be opened, the tests are reported as Not Run.
  1 file changed, 395 insertions(+)
 
 diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
-index 75a1431fd..09c5c1d51 100644
+index 75a1431fd..992351e2e 100644
 --- a/tools/mgmt-tester.c
 +++ b/tools/mgmt-tester.c
 @@ -40,6 +40,19 @@
@@ -399,8 +399,8 @@ index 75a1431fd..09c5c1d51 100644
 +	if (!simult_setup_status("Power on", status))
 +		return;
 +
-+	/* The kernel may still hold the pending Set Powered after sending
-+	 * its reply, and then answers Busy to the next one: wait first.
++	/* mgmt_set_powered_complete() sends the reply before it frees the
++	 * pending command, so an immediate Set Powered can be answered Busy.
 +	 */
 +	data->simult.power_off_id = timeout_add_seconds(1, simult_power_off,
 +								data, NULL);
