@@ -85,9 +85,9 @@ Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 btintel, btrtl, hci_qca and several btusb entries (Qualcomm, CSR) set
 the quirk on this branch. On a 7.0-based kernel with dc16388d45ec, the
 13d3:3503 entry now queued for 6.12.y, 6.6.y and 6.1.y, that QCA9377
-hit this race twice within four days: discovery stayed stuck for eight
-hours until a suspend the first time, and for days the second time,
-with every Start Discovery answered Busy.
+hit this race twice within four days: discovery stayed stuck the first
+time for eight hours, until a suspend; the second time for days, with
+every Start Discovery answered Busy.
 
 Tested in qemu on v6.12.112: a mgmt-tester case that forces this event
 order fails without this patch and passes with it.
