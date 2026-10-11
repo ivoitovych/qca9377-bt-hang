@@ -1,0 +1,973 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+Could not access KVM kernel module: No such file or directory
+qemu-system-x86_64: failed to initialize kvm: No such file or directory
+qemu-system-x86_64: falling back to tcg
+early console in extract_kernel
+input_data: 0x0000000004ddb2c4
+input_len: 0x0000000000f0bc1c
+output: 0x0000000001000000
+output_len: 0x0000000004c7a1ac
+kernel_total_size: 0x00000000048ed000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000002df2e80).
+Linux version 7.3.0-rc2-g964430c03896 (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 PREEMPT_DYNAMIC Sat Oct 10 12:14:54 UTC 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/qca9377-bt-hang/tmp/tester-compare/20261011T152719Z-btdev-vla-rest2/work/src/tools/test-runner TESTHOME=/home/user/qca9377-bt-hang/tmp/tester-compare/20261011T152719Z-btdev-vla-rest2/work/src TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/usr/bin/env ASAN_OPTIONS=exitcode=65:detect_leaks=0:print_summary=1 tools/ioctl-tester'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /usr/bin/env ASAN_OPTIONS=exitcode=65:detect_leaks=0:print_summary=1 tools/ioctl-tester
+Changing into directory /home/user/qca9377-bt-hang/tmp/tester-compare/20261011T152719Z-btdev-vla-rest2/work/src
+New process 35 created
+
+[1;39mHCI Down[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mHCI Down[0m - [0;34msetup[0m
+[1;39mHCI Down[0m - [0;34msetup complete[0m
+[1;39mHCI Down[0m - [0;30mrun[0m
+[1;39mHCI Down[0m - [0;32mtest passed[0m
+[1;39mHCI Down[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mHCI Down[0m - [0;35mteardown complete[0m
+[1;39mHCI Down[0m - [0;30mdone[0m
+
+[1;39mDevice List[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mDevice List[0m - [0;34msetup[0m
+[1;39mDevice List[0m - [0;34msetup complete[0m
+[1;39mDevice List[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mDevice List[0m - [0;32mtest passed[0m
+[1;39mDevice List[0m - [0;32mtest passed[0m
+[1;39mDevice List[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mDevice List[0m - [0;35mteardown complete[0m
+[1;39mDevice List[0m - [0;30mdone[0m
+
+[1;39mDevice List - Invalid Param 1[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mDevice List - Invalid Param 1[0m - [0;34msetup[0m
+[1;39mDevice List - Invalid Param 1[0m - [0;34msetup complete[0m
+[1;39mDevice List - Invalid Param 1[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mCommand Parameter is updated[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mDevice List - Invalid Param 1[0m - [0;32mtest passed[0m
+  [0;37mReceived expected error: 22[0m
+[1;39mDevice List - Invalid Param 1[0m - [0;32mtest passed[0m
+[1;39mDevice List - Invalid Param 1[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mDevice List - Invalid Param 1[0m - [0;35mteardown complete[0m
+[1;39mDevice List - Invalid Param 1[0m - [0;30mdone[0m
+
+[1;39mDevice Info[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mDevice Info[0m - [0;34msetup[0m
+[1;39mDevice Info[0m - [0;34msetup complete[0m
+[1;39mDevice Info[0m - [0;30mrun[0m
+[1;39mDevice Info[0m - [0;32mtest passed[0m
+[1;39mDevice Info[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mDevice Info[0m - [0;35mteardown complete[0m
+[1;39mDevice Info[0m - [0;30mdone[0m
+
+[1;39mReset Stat[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mReset Stat[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+[1;39mReset Stat[0m - [0;34msetup complete[0m
+[1;39mReset Stat[0m - [0;30mrun[0m
+[1;39mReset Stat[0m - [0;32mtest passed[0m
+[1;39mReset Stat[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mReset Stat[0m - [0;35mteardown complete[0m
+[1;39mReset Stat[0m - [0;30mdone[0m
+
+[1;39mSet Link Mode - ACCEPT[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet Link Mode - ACCEPT[0m - [0;34msetup[0m
+[1;39mSet Link Mode - ACCEPT[0m - [0;34msetup complete[0m
+[1;39mSet Link Mode - ACCEPT[0m - [0;30mrun[0m
+[1;39mSet Link Mode - ACCEPT[0m - [0;32mtest passed[0m
+[1;39mSet Link Mode - ACCEPT[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet Link Mode - ACCEPT[0m - [0;35mteardown complete[0m
+[1;39mSet Link Mode - ACCEPT[0m - [0;30mdone[0m
+
+[1;39mSet Link Mode - MASTER[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet Link Mode - MASTER[0m - [0;34msetup[0m
+[1;39mSet Link Mode - MASTER[0m - [0;34msetup complete[0m
+[1;39mSet Link Mode - MASTER[0m - [0;30mrun[0m
+[1;39mSet Link Mode - MASTER[0m - [0;32mtest passed[0m
+[1;39mSet Link Mode - MASTER[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet Link Mode - MASTER[0m - [0;35mteardown complete[0m
+[1;39mSet Link Mode - MASTER[0m - [0;30mdone[0m
+
+[1;39mSet Pkt Type - DM[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet Pkt Type - DM[0m - [0;34msetup[0m
+[1;39mSet Pkt Type - DM[0m - [0;34msetup complete[0m
+[1;39mSet Pkt Type - DM[0m - [0;30mrun[0m
+[1;39mSet Pkt Type - DM[0m - [0;32mtest passed[0m
+[1;39mSet Pkt Type - DM[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet Pkt Type - DM[0m - [0;35mteardown complete[0m
+[1;39mSet Pkt Type - DM[0m - [0;30mdone[0m
+
+[1;39mSet Pkt Type - DH[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet Pkt Type - DH[0m - [0;34msetup[0m
+[1;39mSet Pkt Type - DH[0m - [0;34msetup complete[0m
+[1;39mSet Pkt Type - DH[0m - [0;30mrun[0m
+[1;39mSet Pkt Type - DH[0m - [0;32mtest passed[0m
+[1;39mSet Pkt Type - DH[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet Pkt Type - DH[0m - [0;35mteardown complete[0m
+[1;39mSet Pkt Type - DH[0m - [0;30mdone[0m
+
+[1;39mSet Pkt Type - HV[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet Pkt Type - HV[0m - [0;34msetup[0m
+[1;39mSet Pkt Type - HV[0m - [0;34msetup complete[0m
+[1;39mSet Pkt Type - HV[0m - [0;30mrun[0m
+[1;39mSet Pkt Type - HV[0m - [0;32mtest passed[0m
+[1;39mSet Pkt Type - HV[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet Pkt Type - HV[0m - [0;35mteardown complete[0m
+[1;39mSet Pkt Type - HV[0m - [0;30mdone[0m
+
+[1;39mSet Pkt Type - 2-DH[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;34msetup[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;34msetup complete[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;30mrun[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;32mtest passed[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;35mteardown complete[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;30mdone[0m
+
+[1;39mSet Pkt Type - 2-DH[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;34msetup[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;34msetup complete[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;30mrun[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;32mtest passed[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;35mteardown complete[0m
+[1;39mSet Pkt Type - 2-DH[0m - [0;30mdone[0m
+
+[1;39mSet Pkt Type - ALL[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet Pkt Type - ALL[0m - [0;34msetup[0m
+[1;39mSet Pkt Type - ALL[0m - [0;34msetup complete[0m
+[1;39mSet Pkt Type - ALL[0m - [0;30mrun[0m
+[1;39mSet Pkt Type - ALL[0m - [0;32mtest passed[0m
+[1;39mSet Pkt Type - ALL[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet Pkt Type - ALL[0m - [0;35mteardown complete[0m
+[1;39mSet Pkt Type - ALL[0m - [0;30mdone[0m
+
+[1;39mSet ACL MTU - 1[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet ACL MTU - 1[0m - [0;34msetup[0m
+[1;39mSet ACL MTU - 1[0m - [0;34msetup complete[0m
+[1;39mSet ACL MTU - 1[0m - [0;30mrun[0m
+[1;39mSet ACL MTU - 1[0m - [0;32mtest passed[0m
+[1;39mSet ACL MTU - 1[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet ACL MTU - 1[0m - [0;35mteardown complete[0m
+[1;39mSet ACL MTU - 1[0m - [0;30mdone[0m
+
+[1;39mSet ACL MTU - 2[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet ACL MTU - 2[0m - [0;34msetup[0m
+[1;39mSet ACL MTU - 2[0m - [0;34msetup complete[0m
+[1;39mSet ACL MTU - 2[0m - [0;30mrun[0m
+[1;39mSet ACL MTU - 2[0m - [0;32mtest passed[0m
+[1;39mSet ACL MTU - 2[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet ACL MTU - 2[0m - [0;35mteardown complete[0m
+[1;39mSet ACL MTU - 2[0m - [0;30mdone[0m
+
+[1;39mSet SCO MTU - 1[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet SCO MTU - 1[0m - [0;34msetup[0m
+[1;39mSet SCO MTU - 1[0m - [0;34msetup complete[0m
+[1;39mSet SCO MTU - 1[0m - [0;30mrun[0m
+[1;39mSet SCO MTU - 1[0m - [0;32mtest passed[0m
+[1;39mSet SCO MTU - 1[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet SCO MTU - 1[0m - [0;35mteardown complete[0m
+[1;39mSet SCO MTU - 1[0m - [0;30mdone[0m
+
+[1;39mSet SCO MTU - 2[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mSet SCO MTU - 2[0m - [0;34msetup[0m
+[1;39mSet SCO MTU - 2[0m - [0;34msetup complete[0m
+[1;39mSet SCO MTU - 2[0m - [0;30mrun[0m
+[1;39mSet SCO MTU - 2[0m - [0;32mtest passed[0m
+[1;39mSet SCO MTU - 2[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mSet SCO MTU - 2[0m - [0;35mteardown complete[0m
+[1;39mSet SCO MTU - 2[0m - [0;30mdone[0m
+
+[1;39mBlock BDADDR - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBlock BDADDR - Success[0m - [0;34msetup[0m
+[1;39mBlock BDADDR - Success[0m - [0;34msetup complete[0m
+[1;39mBlock BDADDR - Success[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mCommand Parameter is updated[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mBlock BDADDR - Success[0m - [0;32mtest passed[0m
+[1;39mBlock BDADDR - Success[0m - [0;32mtest passed[0m
+[1;39mBlock BDADDR - Success[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBlock BDADDR - Success[0m - [0;35mteardown complete[0m
+[1;39mBlock BDADDR - Success[0m - [0;30mdone[0m
+
+[1;39mBlock BDADDR - Fail[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBlock BDADDR - Fail[0m - [0;34msetup[0m
+  [0;37mAdded block BDADDR[0m
+[1;39mBlock BDADDR - Fail[0m - [0;34msetup complete[0m
+[1;39mBlock BDADDR - Fail[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mCommand Parameter is updated[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mBlock BDADDR - Fail[0m - [0;32mtest passed[0m
+  [0;37mReceived expected error: 17[0m
+[1;39mBlock BDADDR - Fail[0m - [0;32mtest passed[0m
+[1;39mBlock BDADDR - Fail[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBlock BDADDR - Fail[0m - [0;35mteardown complete[0m
+[1;39mBlock BDADDR - Fail[0m - [0;30mdone[0m
+
+[1;39mUnblock BDADDR - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mUnblock BDADDR - Success[0m - [0;34msetup[0m
+  [0;37mAdded block BDADDR[0m
+[1;39mUnblock BDADDR - Success[0m - [0;34msetup complete[0m
+[1;39mUnblock BDADDR - Success[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mCommand Parameter is updated[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mUnblock BDADDR - Success[0m - [0;32mtest passed[0m
+[1;39mUnblock BDADDR - Success[0m - [0;32mtest passed[0m
+[1;39mUnblock BDADDR - Success[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mUnblock BDADDR - Success[0m - [0;35mteardown complete[0m
+[1;39mUnblock BDADDR - Success[0m - [0;30mdone[0m
+
+[1;39mUnblock BDADDR - Fail[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mUnblock BDADDR - Fail[0m - [0;34msetup[0m
+[1;39mUnblock BDADDR - Fail[0m - [0;34msetup complete[0m
+[1;39mUnblock BDADDR - Fail[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mCommand Parameter is updated[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mUnblock BDADDR - Fail[0m - [0;32mtest passed[0m
+  [0;37mReceived expected error: 2[0m
+[1;39mUnblock BDADDR - Fail[0m - [0;32mtest passed[0m
+[1;39mUnblock BDADDR - Fail[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mUnblock BDADDR - Fail[0m - [0;35mteardown complete[0m
+[1;39mUnblock BDADDR - Fail[0m - [0;30mdone[0m
+
+[1;39mConnection List - No Conn[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mConnection List - No Conn[0m - [0;34msetup[0m
+[1;39mConnection List - No Conn[0m - [0;34msetup complete[0m
+[1;39mConnection List - No Conn[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mConnection List - No Conn[0m - [0;32mtest passed[0m
+[1;39mConnection List - No Conn[0m - [0;32mtest passed[0m
+[1;39mConnection List - No Conn[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mConnection List - No Conn[0m - [0;35mteardown complete[0m
+[1;39mConnection List - No Conn[0m - [0;30mdone[0m
+
+[1;39mConnection List[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mConnection List[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+[1;39mConnection List[0m - [0;34msetup complete[0m
+[1;39mConnection List[0m - [0;30mrun[0m
+  [0;37mRegistering Device Connected notification[0m
+  [0;37mADDR TYPE: 0[0m
+random: crng init done
+  [0;37mDevice Connected[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mConnection List[0m - [0;32mtest passed[0m
+[1;39mConnection List[0m - [0;32mtest passed[0m
+[1;39mConnection List[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mConnection List[0m - [0;35mteardown complete[0m
+[1;39mConnection List[0m - [0;30mdone[0m
+
+[1;39mConnection Info[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mConnection Info[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+[1;39mConnection Info[0m - [0;34msetup complete[0m
+[1;39mConnection Info[0m - [0;30mrun[0m
+  [0;37mRegistering Device Connected notification[0m
+  [0;37mADDR TYPE: 0[0m
+  [0;37mDevice Connected[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mCommand Parameter is updated[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mConnection Info[0m - [0;32mtest passed[0m
+[1;39mConnection Info[0m - [0;32mtest passed[0m
+[1;39mConnection Info[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mConnection Info[0m - [0;35mteardown complete[0m
+[1;39mConnection Info[0m - [0;30mdone[0m
+
+[1;39mConnection Info - No Connection[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mConnection Info - No Connection[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+[1;39mConnection Info - No Connection[0m - [0;34msetup complete[0m
+[1;39mConnection Info - No Connection[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mCommand Parameter is updated[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mConnection Info - No Connection[0m - [0;32mtest passed[0m
+  [0;37mReceived expected error: 2[0m
+[1;39mConnection Info - No Connection[0m - [0;32mtest passed[0m
+[1;39mConnection Info - No Connection[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mConnection Info - No Connection[0m - [0;35mteardown complete[0m
+[1;39mConnection Info - No Connection[0m - [0;30mdone[0m
+
+[1;39mConnection Info - Wrong Type[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mConnection Info - Wrong Type[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+[1;39mConnection Info - Wrong Type[0m - [0;34msetup complete[0m
+[1;39mConnection Info - Wrong Type[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mCommand Parameter is updated[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mConnection Info - Wrong Type[0m - [0;32mtest passed[0m
+  [0;37mReceived expected error: 2[0m
+[1;39mConnection Info - Wrong Type[0m - [0;32mtest passed[0m
+[1;39mConnection Info - Wrong Type[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mConnection Info - Wrong Type[0m - [0;35mteardown complete[0m
+[1;39mConnection Info - Wrong Type[0m - [0;30mdone[0m
+
+[1;39mAuthentication Info - No Connection[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mAuthentication Info - No Connection[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+[1;39mAuthentication Info - No Connection[0m - [0;34msetup complete[0m
+[1;39mAuthentication Info - No Connection[0m - [0;30mrun[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mCommand Parameter is updated[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAuthentication Info - No Connection[0m - [0;32mtest passed[0m
+  [0;37mReceived expected error: 2[0m
+[1;39mAuthentication Info - No Connection[0m - [0;32mtest passed[0m
+[1;39mAuthentication Info - No Connection[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAuthentication Info - No Connection[0m - [0;35mteardown complete[0m
+[1;39mAuthentication Info - No Connection[0m - [0;30mdone[0m
+
+[1;39mAuthentication Info[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mHCI device id: 0[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mAuthentication Info[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+[1;39mAuthentication Info[0m - [0;34msetup complete[0m
+[1;39mAuthentication Info[0m - [0;30mrun[0m
+  [0;37mRegistering Device Connected notification[0m
+  [0;37mADDR TYPE: 0[0m
+  [0;37mDevice Connected[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mCommand Parameter is updated[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mAuthentication Info[0m - [0;32mtest passed[0m
+[1;39mAuthentication Info[0m - [0;32mtest passed[0m
+[1;39mAuthentication Info[0m - [0;35mteardown[0m
+  [0;37mSocket closed[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mAuthentication Info[0m - [0;35mteardown complete[0m
+[1;39mAuthentication Info[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+HCI Down                                             [0;32mPassed    [0m   1.176 seconds
+Device List                                          [0;32mPassed    [0m   0.291 seconds
+Device List - Invalid Param 1                        [0;32mPassed    [0m   0.263 seconds
+Device Info                                          [0;32mPassed    [0m   0.235 seconds
+Reset Stat                                           [0;32mPassed    [0m   0.315 seconds
+Set Link Mode - ACCEPT                               [0;32mPassed    [0m   0.301 seconds
+Set Link Mode - MASTER                               [0;32mPassed    [0m   0.313 seconds
+Set Pkt Type - DM                                    [0;32mPassed    [0m   0.313 seconds
+Set Pkt Type - DH                                    [0;32mPassed    [0m   0.216 seconds
+Set Pkt Type - HV                                    [0;32mPassed    [0m   0.240 seconds
+Set Pkt Type - 2-DH                                  [0;32mPassed    [0m   0.231 seconds
+Set Pkt Type - 2-DH                                  [0;32mPassed    [0m   0.221 seconds
+Set Pkt Type - ALL                                   [0;32mPassed    [0m   0.181 seconds
+Set ACL MTU - 1                                      [0;32mPassed    [0m   0.148 seconds
+Set ACL MTU - 2                                      [0;32mPassed    [0m   0.146 seconds
+Set SCO MTU - 1                                      [0;32mPassed    [0m   0.190 seconds
+Set SCO MTU - 2                                      [0;32mPassed    [0m   0.167 seconds
+Block BDADDR - Success                               [0;32mPassed    [0m   0.202 seconds
+Block BDADDR - Fail                                  [0;32mPassed    [0m   0.218 seconds
+Unblock BDADDR - Success                             [0;32mPassed    [0m   0.270 seconds
+Unblock BDADDR - Fail                                [0;32mPassed    [0m   0.238 seconds
+Connection List - No Conn                            [0;32mPassed    [0m   0.203 seconds
+Connection List                                      [0;32mPassed    [0m   1.241 seconds
+Connection Info                                      [0;32mPassed    [0m   0.321 seconds
+Connection Info - No Connection                      [0;32mPassed    [0m   0.247 seconds
+Connection Info - Wrong Type                         [0;32mPassed    [0m   0.249 seconds
+Authentication Info - No Connection                  [0;32mPassed    [0m   0.232 seconds
+Authentication Info                                  [0;32mPassed    [0m   0.272 seconds
+Total: 28, [0;32mPassed: 28 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+Overall execution time: 8.92 seconds
+Process 35 exited with status 0
+exit status 0

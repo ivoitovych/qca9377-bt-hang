@@ -3790,9 +3790,10 @@ mails with one subject are read as three revisions of one patch.
 two iovec entries, so the array gets a fixed size. The precedent, a September gatt-server fix
 "for CI VLA warnings", was applied without a human comment. ci-local shows the line FIXED and
 nothing NEW; the emulator testers in QEMU under software emulation — mgmt, l2cap, sco, four
-mgmt rounds a side — change no verdict, and the one case that failed on each side was a
-different LL Privacy accept-list case each time, the family the earlier runs had already seen
-vary. The patch is held until the maintainer answers the two series.
+mgmt rounds a side, and on the afternoon of the 11th the other eight of the kernel bot's
+eleven — change no verdict, and the one case that failed on each side was a different LL
+Privacy accept-list case each time, the family the earlier runs had already seen vary. The
+patch is held until the maintainer answers the two series.
 
 **The pairing test could not be run here.** The functional harness gives each guest its
 emulated controller from a `btvirt` on the host over a virtio console; that controller never

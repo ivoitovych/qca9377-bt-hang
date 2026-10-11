@@ -1,0 +1,48 @@
+base 7428ca2df9356363079db0f48412c20cbdb9471f 2026-10-09 device: Fix LE bearer Connect not replying
+kernel /home/user/qca9377-bt-hang/cache/bluetooth-next/arch/x86/boot/bzImage
+patch 0001-emulator-Avoid-variable-length-array-in-send_cmd.patch
+kvm: no (TCG)
+
+iso-tester     base     run 1: Total: 141, Passed: 141 (100.0%), Failed: 0, Not Run: 0
+bnep-tester    base     run 1: Total: 1, Passed: 1 (100.0%), Failed: 0, Not Run: 0
+rfcomm-tester  base     run 1: Total: 11, Passed: 11 (100.0%), Failed: 0, Not Run: 0
+ioctl-tester   base     run 1: Total: 28, Passed: 28 (100.0%), Failed: 0, Not Run: 0
+mesh-tester    base     run 1: Total: 10, Passed: 10 (100.0%), Failed: 0, Not Run: 0
+smp-tester     base     run 1: Total: 8, Passed: 8 (100.0%), Failed: 0, Not Run: 0
+userchan-tester base     run 1: Total: 4, Passed: 4 (100.0%), Failed: 0, Not Run: 0
+6lowpan-tester base     run 1: Total: 9, Passed: 9 (100.0%), Failed: 0, Not Run: 0
+iso-tester     patched  run 1: Total: 141, Passed: 141 (100.0%), Failed: 0, Not Run: 0
+bnep-tester    patched  run 1: Total: 1, Passed: 1 (100.0%), Failed: 0, Not Run: 0
+rfcomm-tester  patched  run 1: Total: 11, Passed: 11 (100.0%), Failed: 0, Not Run: 0
+ioctl-tester   patched  run 1: Total: 28, Passed: 28 (100.0%), Failed: 0, Not Run: 0
+mesh-tester    patched  run 1: Total: 10, Passed: 10 (100.0%), Failed: 0, Not Run: 0
+smp-tester     patched  run 1: Total: 8, Passed: 8 (100.0%), Failed: 0, Not Run: 0
+userchan-tester patched  run 1: Total: 4, Passed: 4 (100.0%), Failed: 0, Not Run: 0
+6lowpan-tester patched  run 1: Total: 9, Passed: 9 (100.0%), Failed: 0, Not Run: 0
+
+== iso-tester: 141 case names; base runs 1, patched runs 1
+   cases with identical verdicts on both sides: 141
+   REGRESSIONS: 0
+== bnep-tester: 1 case names; base runs 1, patched runs 1
+   cases with identical verdicts on both sides: 1
+   REGRESSIONS: 0
+== rfcomm-tester: 11 case names; base runs 1, patched runs 1
+   cases with identical verdicts on both sides: 11
+   REGRESSIONS: 0
+== ioctl-tester: 27 case names; base runs 1, patched runs 1
+   cases with identical verdicts on both sides: 27
+   REGRESSIONS: 0
+== mesh-tester: 10 case names; base runs 1, patched runs 1
+   cases with identical verdicts on both sides: 10
+   REGRESSIONS: 0
+== smp-tester: 8 case names; base runs 1, patched runs 1
+   cases with identical verdicts on both sides: 8
+   REGRESSIONS: 0
+== userchan-tester: 4 case names; base runs 1, patched runs 1
+   cases with identical verdicts on both sides: 4
+   REGRESSIONS: 0
+== 6lowpan-tester: 9 case names; base runs 1, patched runs 1
+   cases with identical verdicts on both sides: 9
+   REGRESSIONS: 0
+
+RESULT: no case passes on the base and fails with the patches
