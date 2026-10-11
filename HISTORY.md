@@ -3795,15 +3795,22 @@ different LL Privacy accept-list case each time, the family the earlier runs had
 vary. The patch is held until the maintainer answers the two series.
 
 **The pairing test could not be run here.** The functional harness gives each guest its
-emulated controller from a `btvirt` on the host over a virtio console; without KVM that
-controller never answers the kernel's first command, so every run dies in setup, with
-`--vm-timeout` 60 or 300. The harness also always asks QEMU for the host CPU model, which TCG
-refuses; a local change to the installed copy got the guests to boot, no further. So the
-TestFunctional failure stays flaky on the bot's own record — the same test, the same awaited
-line, on an unrelated patch 16 minutes earlier, with a pass in between — and its rate is
-unmeasured. The script for measuring it waits for a machine with `/dev/kvm`.
+emulated controller from a `btvirt` on the host over a virtio console; that controller never
+answered the kernel's first command, so every run died in setup, with `--vm-timeout` 60 or
+300. The harness also always asks QEMU for the host CPU model, which TCG refuses; a local
+change to the installed copy got the guests to boot, no further. For a day the results file
+blamed software emulation, the visible difference from the bot. It was wrong: on the
+afternoon of the 11th a two-minute probe sent one HCI command to the host `btvirt` by hand,
+and the BR/EDR-only socket answered in a millisecond while the LE-capable one dropped the
+connection on the first byte. The emulator creates an LE-capable controller only with the
+kernel's `AF_ALG` crypto interface, and the container's kernel has none; it closes the
+client without a word. The guest kernel has the interface, which is why the testers' in-guest
+emulator worked all along. So the TestFunctional failure stays flaky on the bot's own record —
+the same test, the same awaited line, on an unrelated patch 16 minutes earlier, with a pass in
+between — and its rate is unmeasured. The script for measuring it waits for a machine with a
+distribution kernel and `/dev/kvm`.
 
-**Three mistakes, each with a rule.** The first results commit carried the patchwork reads with
+**Four mistakes, each with a rule.** The first results commit carried the patchwork reads with
 their mail headers, the relays' addresses included; the repository's address scan refused
 them, and the refusal passed through a pipe whose exit status came from `tail`, so the push went
 out. The files were republished through a publisher that drops the headers and runs
@@ -3814,8 +3821,11 @@ to `private` and verified there (BRIEF §7); the backup is
 headers appear in no commit of the branch now. Second, a running shell script must never be
 edited in place — bash reads it as it runs; a copy is edited and renamed over it. Third, a
 process-killing pattern that matches its own command line kills the shell that issued it; kill
-by process id. None of the three touched the evidence; all three are written down so that they
-are not relearned.
+by process id. Fourth, the harness failure above was attributed to the one difference that
+could be seen, no KVM, and the attribution was committed and pushed as if it were a finding; a
+cause is not the most visible difference, it is what a probe of the failing component shows,
+and the probe was cheaper than the paragraph. None of the four touched the evidence; all four
+are written down so that they are not relearned.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
