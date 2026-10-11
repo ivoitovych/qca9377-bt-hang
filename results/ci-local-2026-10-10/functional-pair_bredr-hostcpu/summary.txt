@@ -1,0 +1,21 @@
+base 7428ca2df9356363079db0f48412c20cbdb9471f 2026-10-09 device: Fix LE bearer Connect not replying
+kernel /home/user/qca9377-bt-hang/cache/bluetooth-next/arch/x86/boot/bzImage
+selection -k 'test_bluetoothctl_pair_bredr', 10 run(s) per side, --vm-timeout 60
+harness: pytest-bluezenv 0.1.9, pytest 9.1.1
+kvm: no (TCG)
+patch 0001-emulator-Add-btdev_send_event.patch
+patch 0002-emulator-vhci-Add-vhci_set_quirk_simultaneous_discov.patch
+patch 0003-mgmt-tester-Add-simultaneous-discovery-stop-tests.patch
+
+base     run  1: FAIL functional.test_bluetoothctl::test_bluetoothctl_pair_bredr[hosts15-vm2]: failed on setup with "RuntimeError: Process exited unexpectedly" 
+base     run  2: FAIL functional.test_bluetoothctl::test_bluetoothctl_pair_bredr[hosts15-vm2]: failed on setup with "RuntimeError: Process exited unexpectedly" 
+base     run  3: FAIL functional.test_bluetoothctl::test_bluetoothctl_pair_bredr[hosts15-vm2]: failed on setup with "RuntimeError: Process exited unexpectedly" 
+base     run  4: FAIL functional.test_bluetoothctl::test_bluetoothctl_pair_bredr[hosts15-vm2]: failed on setup with "RuntimeError: Process exited unexpectedly" 
+base     run  5: FAIL functional.test_bluetoothctl::test_bluetoothctl_pair_bredr[hosts15-vm2]: failed on setup with "RuntimeError: Process exited unexpectedly" 
+base     run  6: FAIL functional.test_bluetoothctl::test_bluetoothctl_pair_bredr[hosts15-vm2]: failed on setup with "RuntimeError: Process exited unexpectedly" 
+base     run  7: FAIL functional.test_bluetoothctl::test_bluetoothctl_pair_bredr[hosts15-vm2]: failed on setup with "RuntimeError: Process exited unexpectedly" 
+base     run  8: FAIL functional.test_bluetoothctl::test_bluetoothctl_pair_bredr[hosts15-vm2]: failed on setup with "RuntimeError: Process exited unexpectedly" 
+base     run  9: FAIL functional.test_bluetoothctl::test_bluetoothctl_pair_bredr[hosts15-vm2]: failed on setup with "RuntimeError: Process exited unexpectedly" 
+base     run 10: FAIL functional.test_bluetoothctl::test_bluetoothctl_pair_bredr[hosts15-vm2]: failed on setup with "RuntimeError: Process exited unexpectedly" 
+base: 10 failure(s) in 10 run(s)
+
