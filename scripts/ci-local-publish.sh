@@ -89,6 +89,7 @@ while IFS= read -r -d '' f; do
 		# only when that step failed: its .out sibling ends with "exit status N"
 		rc="$(tail -1 "$f" 2>/dev/null | grep -oE 'exit status [0-9]+' | awk '{print $3}')"
 		[[ -n "$rc" && "$rc" != 0 ]] || continue ;;
+	build.*.log) continue ;;   # a build's full output; its failure would show in summary.txt
 	*.log) [[ "$rel" == *tester*.log || "$rel" == *.base.*.log || "$rel" == *.patched.*.log ]] || continue ;;
 	*) continue ;;
 	esac
