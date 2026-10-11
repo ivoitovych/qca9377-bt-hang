@@ -585,6 +585,6 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
 |---|---|
 | evidence, one claim + extraction each | `evidence/exhibits/` (`bt-exhibit index`) |
 | the current snapshot, one dated row per issue and submission | `docs/STATUS.md` |
-| narrative, why things were believed | `HISTORY.md` (37 phases, a chapter, and the retired hand-off blocks) |
+| narrative, why things were believed | `HISTORY.md` (37 phases, the dated chapters, and the retired hand-off blocks) |
 | which tool answers which question | `docs/tooling-index.md` |
 | the patches, their reasoning and BlueZ's measured conventions | `patches/bluez/` |

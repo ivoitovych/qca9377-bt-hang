@@ -3749,6 +3749,74 @@ where Gmail closes the connection mid-login; port 587 answers. A kernel update a
 reboot would have brought the original hang back. That is why an Ubuntu-side request for
 `dc16388d45ec` is now proposed.
 
+## The bot's noise, reproduced (2026-10-10 → 10-11)
+
+**The lesson that started it.** The list's bot answered the two BlueZ series of 10 October
+with three red marks: a smatch warning on `emulator/btdev.c:479` on both, a TestFunctional
+failure on one, and `pre-ci_am fail` on the 6.1.y stable backport. All three were read off the
+bot's comments as upstream's, and that reading turned out right — but it was reached by
+reading, not by checking, and a lone local run would only have repeated the bot's noise. The
+work of these two days was to be able to tell our findings from theirs by measurement: run
+the bot's checks on master and on master plus the patches, and class every line NEW,
+PRE-EXISTING or FIXED. It ran in a build container without Bluetooth hardware and without
+KVM, on the public branch `ci/upstream-ci-local`, with nothing sent anywhere
+(`results/ci-local-2026-10-10.md` holds every claim with its command).
+
+**The bot's source, pinned.** The BlueZ and kernel bots are one GitHub Action, `bluez/action-ci`,
+run inside a container image whose Dockerfile fetches `checkpatch.pl` from the kernel's master
+at build time, pins smatch and sparse to commits, installs `pytest-bluezenv` 0.1.9 and starts
+from Ubuntu 26.04. Two things the code showed that the comments never did: the bot's GitLint
+uses its own configuration, not BlueZ's `.gitlint` (title limit 80, `Fixes:` and URL lines
+ignored), and CheckSmatch posts every smatch line on a file the series touches without looking
+at the base — which is exactly how an upstream line at 479 became our warning. The BlueZ
+`workflow` branch still names the action's old home; the check it posts exists only in the new
+one, so what ran is known by elimination, not by a log.
+
+**The reproduction.** `scripts/ci-local.sh` runs the bot's recipes twice and compares with line
+numbers stripped, so a warning that a patch pushes down the file is not a new one; the base
+side is cached per master commit. On the leak fix and on the series every check came out PASS or
+PRE-EXISTING: 45 smatch lines and 95 analyzer lines pre-exist in master, none is ours, and the
+`btdev.c:479` line is reproduced word for word. Two scratch patches, one with a checkpatch error
+and one with a planted array, came out NEW — a check that cannot be seen to fail proves nothing.
+The kernel mode applies an `[x.y.y]` backport to the newest tag of that stable line and reports
+the bluetooth-next failure as expected; on the 6.1.y backport it prints the bot's words, because
+`96d006ae6445` is an ancestor of bluetooth-next master, and the upstream fix itself
+reverse-applies there. Eight other people's stable backports on patchwork got the same reply.
+Why the 6.12.y and 6.6.y mails got no check at all is not established: all three were `new`
+when the bot ran; five hours later the kernel.org automation superseded two of them — three
+mails with one subject are read as three revisions of one patch.
+
+**The VLA.** A one-line removal was prepared, not sent: `send_cmd()` has two callers with at most
+two iovec entries, so the array gets a fixed size. The precedent, a September gatt-server fix
+"for CI VLA warnings", was applied without a human comment. ci-local shows the line FIXED and
+nothing NEW; the emulator testers in QEMU under software emulation — mgmt, l2cap, sco, four
+mgmt rounds a side — change no verdict, and the one case that failed on each side was a
+different LL Privacy accept-list case each time, the family the earlier runs had already seen
+vary. The patch is held until the maintainer answers the two series.
+
+**The pairing test could not be run here.** The functional harness gives each guest its
+emulated controller from a `btvirt` on the host over a virtio console; without KVM that
+controller never answers the kernel's first command, so every run dies in setup, with
+`--vm-timeout` 60 or 300. The harness also always asks QEMU for the host CPU model, which TCG
+refuses; a local change to the installed copy got the guests to boot, no further. So the
+TestFunctional failure stays flaky on the bot's own record — the same test, the same awaited
+line, on an unrelated patch 16 minutes earlier, with a pass in between — and its rate is
+unmeasured. The script for measuring it waits for a machine with `/dev/kvm`.
+
+**Three mistakes, each with a rule.** The first results commit carried the patchwork reads with
+their mail headers, the relays' addresses included; the repository's address scan refused
+them, and the refusal passed through a pipe whose exit status came from `tail`, so the push went
+out. The files were republished through a publisher that drops the headers and runs
+`tools/sanitize-logs.sh`, but the history still held them. On the operator's decision the branch
+was rebuilt, with one rule set first: no force-push without a dated backup of the branch pushed
+to `private` and verified there (BRIEF §7); the backup is
+`ci/upstream-ci-local-backup-20261011-144932-utc`, the rewrite was pushed with a lease, and the
+headers appear in no commit of the branch now. Second, a running shell script must never be
+edited in place — bash reads it as it runs; a copy is edited and renamed over it. Third, a
+process-killing pattern that matches its own command line kills the shell that issued it; kill
+by process id. None of the three touched the evidence; all three are written down so that they
+are not relearned.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
