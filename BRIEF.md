@@ -291,6 +291,13 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   *experiment* (`R2-58`, `EX-042`). A 09-16 fix guarded 2 of 3 files; the 3rd reverted on
   09-18 and was caught in minutes; all 3 skip now. The stamp is not evidence, the files are.
 - **Never lose code, tests or evidence.** Priority 1; keep clutter over any deletion.
+- **Never force-push without a backup branch first.** A rewrite with a mistake deletes
+  work, and mistakes are made all the time. Before any history rewrite: push the branch as
+  it stands to the `private` remote as `<branch>-backup-<YYYYMMDD>-<HHMMSS>-utc`, verify
+  the remote has it, then rewrite, then push with `--force-with-lease` only. Set
+  2026-10-11, when `ci/upstream-ci-local` was rebuilt so that patchwork mail headers (the
+  relays' addresses) never entered its history; the backup is
+  `ci/upstream-ci-local-backup-20261011-144932-utc` on `private`.
 - **Do not send the patches** until the operator says so.
 - **An untreated window is the most valuable state there is.** Do not touch Bluetooth;
   `sysfs` reads are safe, anything through usbfs is not. ⚠️ **`bt-mode` writes
