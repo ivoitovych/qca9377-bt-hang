@@ -1,0 +1,223 @@
+[
+ {
+  "id": 12577221,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577221/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:26:13.233554",
+  "state": "success",
+  "target_url": "",
+  "context": "pre-ci_am",
+  "description": "Success"
+ },
+ {
+  "id": 12577498,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577498/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:27:28.322598",
+  "state": "warning",
+  "target_url": "",
+  "context": "CheckPatch",
+  "description": "WARNING:LONG_LINE: line length of 81 exceeds 80 columns\n#148: FILE: lib/bluetooth/sdp.c:4859:\n+\t\t\t\tlengths[j] = (data->unitSize > sizeof(uint8_t)) ?\n\n/home/runner/work/bluez/bluez/src/patch/14872886.patch total: 0 errors, 1 warnings, 38 lines checked\n\nNOTE: For some of the reported defects, checkpatch may be able to\n      mechanically convert to the typical style using --fix or --fix-inplace.\n\n/home/runner/work/bluez/bluez/src/patch/14872886.patch has style problems, please review.\n\nNOTE: Ignored message types: COMMIT_MESSAGE COMPLEX_MACRO CONST_STRUCT FILE_PATH_CHANGES MISSING_SIGN_OFF PREFER_PACKED SPDX_LICENSE_TAG SPLIT_STRING SSCANF_TO_KSTRTO\n\nNOTE: If any of the errors are false positives, please report\n      them to the maintainer, see CHECKPATCH in MAINTAINERS."
+ },
+ {
+  "id": 12577499,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577499/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:27:31.833216",
+  "state": "success",
+  "target_url": "",
+  "context": "GitLint",
+  "description": "Gitlint PASS"
+ },
+ {
+  "id": 12577502,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577502/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:27:51.976013",
+  "state": "success",
+  "target_url": "",
+  "context": "BuildEll",
+  "description": "Build ELL PASS"
+ },
+ {
+  "id": 12577535,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577535/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:32:40.511884",
+  "state": "fail",
+  "target_url": "",
+  "context": "BluezMake",
+  "description": "BluezMake FAIL: \ntools/mgmt-tester.c: In function ‘main’:\ntools/mgmt-tester.c:13440:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without\n13440 | int main(int argc, char *argv[])\n      |     ^~~~\nunit/test-avdtp.c: In function ‘main’:\nunit/test-avdtp.c:766:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without\n  766 | int main(int argc, char *argv[])\n      |     ^~~~\nunit/test-avrcp.c: In function ‘main’:\nunit/test-avrcp.c:1382:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without\n 1382 | int main(int argc, char *argv[])\n      |     ^~~~\nlib/bluetooth/sdp.c: In function ‘sdp_get_data_size’:\nlib/bluetooth/sdp.c:733:33: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n  733 |                 if (d->unitSize > sizeof(uint8_t))\n      |                                 ^\nlib/bluetooth/sdp.c: In function ‘sdp_data_value’:\nlib/bluetooth/sdp.c:1530:48: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 1530 |                         *len = (data->unitSize > sizeof(uint8_t)) ?\n      |                                                ^\nlib/bluetooth/sdp.c: In function ‘sdp_set_supp_feat’:\nlib/bluetooth/sdp.c:4859:62: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 4859 |                                 lengths[j] = (data->unitSize > sizeof(uint8_t)) ?\n      |                                                              ^\nlib/bluetooth/sdp.c: In function ‘sdp_get_supp_feat’:\nlib/bluetooth/sdp.c:4937:56: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 4937 |                                 length = (dd->unitSize > sizeof(uint8_t)) ?\n      |                                                        ^\ncc1: all warnings being treated as errors\nmake[1]: *** [Makefile:7146: lib/bluetooth/sdp.lo] Error 1\nmake[1]: *** Waiting for unfinished jobs....\nunit/test-rap.c: In function ‘main’:\nunit/test-rap.c:997:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without\n  997 | int main(int argc, char *argv[])\n      |     ^~~~\nmake: *** [Makefile:4246: all] Error 2"
+ },
+ {
+  "id": 12577536,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577536/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:32:45.628920",
+  "state": "fail",
+  "target_url": "",
+  "context": "MakeCheck",
+  "description": "BlueZ Make Check FAIL:"
+ },
+ {
+  "id": 12577538,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577538/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:34:59.183367",
+  "state": "success",
+  "target_url": "",
+  "context": "MakeDistcheck",
+  "description": "Make Distcheck PASS"
+ },
+ {
+  "id": 12577540,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577540/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:36:32.170919",
+  "state": "fail",
+  "target_url": "",
+  "context": "CheckValgrind",
+  "description": "Check Valgrind FAIL: \ntools/mgmt-tester.c: In function ‘main’:\ntools/mgmt-tester.c:13440:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without\n13440 | int main(int argc, char *argv[])\n      |     ^~~~\nlib/bluetooth/sdp.c: In function ‘sdp_get_data_size’:\nlib/bluetooth/sdp.c:733:33: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n  733 |                 if (d->unitSize > sizeof(uint8_t))\n      |                                 ^\nlib/bluetooth/sdp.c: In function ‘sdp_data_value’:\nlib/bluetooth/sdp.c:1530:48: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 1530 |                         *len = (data->unitSize > sizeof(uint8_t)) ?\n      |                                                ^\nlib/bluetooth/sdp.c: In function ‘sdp_set_supp_feat’:\nlib/bluetooth/sdp.c:4859:62: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 4859 |                                 lengths[j] = (data->unitSize > sizeof(uint8_t)) ?\n      |                                                              ^\nlib/bluetooth/sdp.c: In function ‘sdp_get_supp_feat’:\nlib/bluetooth/sdp.c:4937:56: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 4937 |                                 length = (dd->unitSize > sizeof(uint8_t)) ?\n      |                                                        ^\ncc1: all warnings being treated as errors\nmake[1]: *** [Makefile:7146: lib/bluetooth/sdp.lo] Error 1\nmake[1]: *** Waiting for unfinished jobs....\nmake: *** [Makefile:10984: check] Error 2"
+ },
+ {
+  "id": 12577583,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577583/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:39:08.401779",
+  "state": "fail",
+  "target_url": "",
+  "context": "CheckSmatch",
+  "description": "CheckSparse: FAIL: \nsrc/shared/crypto.c:271:21: warning: Variable length array is used.\nsrc/shared/crypto.c:272:23: warning: Variable length array is used.\nsrc/shared/gatt-helpers.c:764:31: warning: Variable length array is used.\nsrc/shared/gatt-helpers.c:842:31: warning: Variable length array is used.\nsrc/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.\nsrc/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.\nsrc/shared/bap.c:318:25: warning: array of flexible structures\nsrc/shared/bap.c: note: in included file:\n./src/shared/ascs.h:88:25: warning: array of flexible structures\nsrc/shared/shell.c: note: in included file (through /usr/include/x86_64-linux-gnu//sys/ioctl.h, /usr/include/x86_64-linux-gnu//sys/epoll.h, src/shared/mainloop.h):\n/usr/include/x86_64-linux-gnu//sys/ttydefaults.h:55:9: warning: preprocessor token CTRL redefined\nsrc/shared/shell.c: note: in included file (through /usr/include/readline/keymaps.h, /usr/include/readline/readline.h):\n/usr/include/readline/chardefs.h:51:9: this was the original definition\nsrc/shared/crypto.c:271:21: warning: Variable length array is used.\nsrc/shared/crypto.c:272:23: warning: Variable length array is used.\nsrc/shared/gatt-helpers.c:764:31: warning: Variable length array is used.\nsrc/shared/gatt-helpers.c:842:31: warning: Variable length array is used.\nsrc/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.\nsrc/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.\nsrc/shared/bap.c:318:25: warning: array of flexible structures\nsrc/shared/bap.c: note: in included file:\n./src/shared/ascs.h:88:25: warning: array of flexible structures\nsrc/shared/shell.c: note: in included file (through /usr/include/x86_64-linux-gnu//sys/ioctl.h, /usr/include/x86_64-linux-gnu//sys/epoll.h, src/shared/mainloop.h):\n/usr/include/x86_64-linux-gnu//sys/ttydefaults.h:55:9: warning: preprocessor token CTRL redefined\nsrc/shared/shell.c: note: in included file (through /usr/include/readline/keymaps.h, /usr/include/readline/readline.h):\n/usr/include/readline/chardefs.h:51:9: this was the original definition\ntools/mesh-cfgtest.c:1453:17: warning: unknown escape sequence: '\\%'\ntools/sco-tester.c: note: in included file:\n./lib/bluetooth/bluetooth.h:232:15: warning: array of flexible structures\n./lib/bluetooth/bluetooth.h:237:31: warning: array of flexible structures\ntools/bneptest.c:634:39: warning: unknown escape sequence: '\\%'\ntools/seq2bseq.c:57:26: warning: Variable length array is used.\nclient/btpclient/gatt.c: note: in included file:\n./src/shared/btp.h:338:41: warning: array of flexible structures\n./src/shared/btp.h:343:55: warning: array of flexible structures\n./src/shared/btp.h:366:47: warning: array of flexible structures\n./src/shared/btp.h:395:42: warning: array of flexible structures\nsrc/advertising.c: note: in included file:\n./src/shared/mgmt.h:95:25: error: redefinition of unsigned int enum mgmt_io_capability\nsrc/agent.c: note: in included file:\nsrc/shared/queue.h:19:20: error: redefinition of struct queue_entry\nsrc/adv_monitor.c: note: in included file:\n./src/shared/mgmt.h:95:25: error: redefinition of unsigned int enum mgmt_io_capability\nunit/avctp.c:505:34: warning: Variable length array is used.\nunit/avctp.c:556:34: warning: Variable length array is used.\nunit/test-avrcp.c:374:26: warning: Variable length array is used.\nunit/test-avrcp.c:399:26: warning: Variable length array is used.\nunit/test-avrcp.c:415:24: warning: Variable length array is used.\nunit/avrcp-lib.c:1085:34: warning: Variable length array is used.\nunit/avrcp-lib.c:1583:34: warning: Variable length array is used.\nunit/avrcp-lib.c:1612:34: warning: Variable length array is used.\nunit/avrcp-lib.c:1638:34: warning: Variable length array is used.\nsrc/advertising.c: note: in included file:\n./src/shared/mgmt.h:95:25: error: redefinition of unsigned int enum mgmt_io_capability\nsrc/agent.c: note: in included file:\nsrc/shared/queue.h:19:20: error: redefinition of struct queue_entry\nsrc/adv_monitor.c: note: in included file:\n./src/shared/mgmt.h:95:25: error: redefinition of unsigned int enum mgmt_io_capability\nsrc/main.c: note: in included file (through src/device.h):\n./src/shared/queue.h:19:20: error: redefinition of struct queue_entry\nmesh/mesh-io-mgmt.c:525:67: warning: Variable length array is used.\nlib/bluetooth/sdp.c: In function ‘sdp_get_data_size’:\nlib/bluetooth/sdp.c:733:33: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n  733 |                 if (d->unitSize > sizeof(uint8_t))\n      |                                 ^\nlib/bluetooth/sdp.c: In function ‘sdp_data_value’:\nlib/bluetooth/sdp.c:1530:48: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 1530 |                         *len = (data->unitSize > sizeof(uint8_t)) ?\n      |                                                ^\nlib/bluetooth/sdp.c: In function ‘sdp_set_supp_feat’:\nlib/bluetooth/sdp.c:4859:62: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 4859 |                                 lengths[j] = (data->unitSize > sizeof(uint8_t)) ?\n      |                                                              ^\nlib/bluetooth/sdp.c: In function ‘sdp_get_supp_feat’:\nlib/bluetooth/sdp.c:4937:56: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 4937 |                                 length = (dd->unitSize > sizeof(uint8_t)) ?\n      |                                                        ^\nsrc/shared/crypto.c:271:21: warning: Variable length array is used.\nsrc/shared/crypto.c:272:23: warning: Variable length array is used.\ncc1: all warnings being treated as errors\nmake[1]: *** [Makefile:7146: lib/bluetooth/sdp.lo] Error 1\nmake[1]: *** Waiting for unfinished jobs....\nmake: *** [Makefile:4246: all] Error 2"
+ },
+ {
+  "id": 12577597,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577597/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:40:10.648692",
+  "state": "fail",
+  "target_url": "",
+  "context": "bluezmakeextell",
+  "description": "Make External ELL FAIL: \nlib/bluetooth/sdp.c: In function ‘sdp_get_data_size’:\nlib/bluetooth/sdp.c:733:33: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n  733 |                 if (d->unitSize > sizeof(uint8_t))\n      |                                 ^\nlib/bluetooth/sdp.c: In function ‘sdp_data_value’:\nlib/bluetooth/sdp.c:1530:48: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 1530 |                         *len = (data->unitSize > sizeof(uint8_t)) ?\n      |                                                ^\nlib/bluetooth/sdp.c: In function ‘sdp_set_supp_feat’:\nlib/bluetooth/sdp.c:4859:62: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 4859 |                                 lengths[j] = (data->unitSize > sizeof(uint8_t)) ?\n      |                                                              ^\nlib/bluetooth/sdp.c: In function ‘sdp_get_supp_feat’:\nlib/bluetooth/sdp.c:4937:56: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 4937 |                                 length = (dd->unitSize > sizeof(uint8_t)) ?\n      |                                                        ^\ncc1: all warnings being treated as errors\nmake[1]: *** [Makefile:7146: lib/bluetooth/sdp.lo] Error 1\nmake[1]: *** Waiting for unfinished jobs....\nmake: *** [Makefile:4246: all] Error 2"
+ },
+ {
+  "id": 12577631,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577631/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:45:03.381064",
+  "state": "pending",
+  "target_url": "",
+  "context": "TestFunctional",
+  "description": "Failed to build BlueZ"
+ },
+ {
+  "id": 12577681,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577681/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:49:47.773463",
+  "state": "fail",
+  "target_url": "",
+  "context": "IncrementalBuild",
+  "description": "sdp: Prevent integer underflow in string attribute length calculation\n\ntools/mgmt-tester.c: In function ‘main’:\ntools/mgmt-tester.c:13440:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without\n13440 | int main(int argc, char *argv[])\n      |     ^~~~\nunit/test-avdtp.c: In function ‘main’:\nunit/test-avdtp.c:766:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without\n  766 | int main(int argc, char *argv[])\n      |     ^~~~\nunit/test-avrcp.c: In function ‘main’:\nunit/test-avrcp.c:1382:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without\n 1382 | int main(int argc, char *argv[])\n      |     ^~~~\nlib/bluetooth/sdp.c: In function ‘sdp_get_data_size’:\nlib/bluetooth/sdp.c:733:33: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n  733 |                 if (d->unitSize > sizeof(uint8_t))\n      |                                 ^\nlib/bluetooth/sdp.c: In function ‘sdp_data_value’:\nlib/bluetooth/sdp.c:1530:48: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 1530 |                         *len = (data->unitSize > sizeof(uint8_t)) ?\n      |                                                ^\nlib/bluetooth/sdp.c: In function ‘sdp_set_supp_feat’:\nlib/bluetooth/sdp.c:4859:62: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 4859 |                                 lengths[j] = (data->unitSize > sizeof(uint8_t)) ?\n      |                                                              ^\nlib/bluetooth/sdp.c: In function ‘sdp_get_supp_feat’:\nlib/bluetooth/sdp.c:4937:56: error: comparison of integer expressions of different signedness: ‘int’ and ‘long unsigned int’ [-Werror=sign-compare]\n 4937 |                                 length = (dd->unitSize > sizeof(uint8_t)) ?\n      |                                                        ^\ncc1: all warnings being treated as errors\nmake[1]: *** [Makefile:7146: lib/bluetooth/sdp.lo] Error 1\nmake[1]: *** Waiting for unfinished jobs....\nunit/test-rap.c: In function ‘main’:\nunit/test-rap.c:997:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without\n  997 | int main(int argc, char *argv[])\n      |     ^~~~\nmake: *** [Makefile:4246: all] Error 2"
+ },
+ {
+  "id": 12577936,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14872886/checks/12577936/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T10:54:17.816582",
+  "state": "fail",
+  "target_url": "",
+  "context": "ScanBuild",
+  "description": "Scan Build FAIL"
+ }
+]
