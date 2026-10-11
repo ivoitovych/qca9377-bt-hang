@@ -3758,9 +3758,15 @@ bot's comments as upstream's, and that reading turned out right — but it was r
 reading, not by checking, and a lone local run would only have repeated the bot's noise. The
 work of these two days was to be able to tell our findings from theirs by measurement: run
 the bot's checks on master and on master plus the patches, and class every line NEW,
-PRE-EXISTING or FIXED. It ran in a build container without Bluetooth hardware and without
-KVM, on the public branch `ci/upstream-ci-local`, with nothing sent anywhere
-(`results/ci-local-2026-10-10.md` holds every claim with its command).
+PRE-EXISTING or FIXED. **Where it ran:** not on the laptop, and not in the laptop's
+sessions. The whole of this chapter's work was done in a separate session in a cloud build
+container — an ephemeral Ubuntu 24.04 machine with four CPUs, no Bluetooth hardware, no
+`/dev/kvm`, and, as it turned out, a kernel without the `AF_ALG` interface — on the public
+branch `ci/upstream-ci-local`, with nothing sent anywhere. The laptop's trial state, journal
+and tooling were untouched throughout; the container's own state (fetched trees, built
+kernel, installed packages) is not part of the repository and dies with it, which is why
+every claim in `results/ci-local-2026-10-10.md` carries its command and its output, and why
+the container-only pieces were saved under `results/ci-local-2026-10-10/container-setup/`.
 
 **The bot's source, pinned.** The BlueZ and kernel bots are one GitHub Action, `bluez/action-ci`,
 run inside a container image whose Dockerfile fetches `checkpatch.pl` from the kernel's master
