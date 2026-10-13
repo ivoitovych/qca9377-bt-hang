@@ -63,14 +63,13 @@ Recent detail may be shortened. Settled state is never dropped.
   - **Since 2026-10-11 16:26 the laptop runs `7.0.0-38` with E3 built for it** (`updates/btusb.ko`, the exact upstream entry; srcversion `D1DEA96A0C95BFAB05CEE01`; the boot log shows `patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded). The build is on private `diag/e3-btusb-for-7.0.0-38-20261010`.
   - `-38`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
   - `-38` also carries the BT-9 fix (`96d006ae6445`). The reboot ended the discovery stuck since 10-04.
-  - Trial E3 #1 was opened on `-34`. Whether it continues on `-38` is the operator's decision.
+  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` (`d5272a6`) is installed — the operator's `install.sh --tools-only` plus `daemon-reload`.
   - Only the operator touches the machine's Bluetooth or kernel.
-  - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer since 2026-10-11 16:14. Restart it after a reboot. Rules: §7, "Evidence".
+  - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer. It has been paused since 2026-10-11 17:23 (free space then; 115 GB free on 10-13); restarting it is the operator's decision, and about nine days of margin remained on 10-13 (`docs/STATUS.md`). Rules: §7, "Evidence".
 - **Open investigation:** `U10`, the Tronsmart T8 silent on SBC-XQ. Waiting on the operator's test-sound check (`docs/issues.md`).
 - **Who works where:**
-  - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`. `main` stays still until the latter fast-forwards.
-  - Reproducing the BlueZ and kernel CI bots locally happens on `ci/upstream-ci-local`.
-  - While `main` is held, newer hand-off material sits on private `postponed/*` branches; check them.
+  - **Active development is on `main`** (operator, 2026-10-13). The held documentation branch, the E3 build branch and `ci/upstream-ci-local` were landed on `main` that day; the held branch as new commits with its privacy fixes, never as a merge.
+  - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
 **Last updated: 2026-10-11 (§0 added; capture archive, evidence and address rules in §7; `U10`) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
