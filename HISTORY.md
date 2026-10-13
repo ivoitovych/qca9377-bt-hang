@@ -3749,6 +3749,28 @@ where Gmail closes the connection mid-login; port 587 answers. A kernel update a
 reboot would have brought the original hang back. That is why an Ubuntu-side request for
 `dc16388d45ec` is now proposed.
 
+## The spinner that never came back, and three sends (2026-10-09 → 10-10)
+
+**A missing spinner was not a dead controller.** On 9 October the Bluetooth panel showed no scanning spinner. The obvious reading, the old hang returning, was wrong: the controller was serving links and calls. What the traces showed was that the kernel itself had refused every scan request with Busy since 4 October at 10:26:11.
+
+The cause came from the captures and the source together:
+- E3 gives this device `BTUSB_QCA_ROME`, and with it `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`.
+- Under that quirk, two code paths can end a discovery cycle. When the controller's Inquiry Complete lands between the LE scan-off command and that command's Command Complete, each path leaves the stop to the other, and nobody stops it.
+- It had happened twice in that boot's traces. On 10-01 at 03:51:27 it lasted 8 h 18 min, until a suspend cleared it unnoticed; on 10-04 at 10:26:11 it was still stuck. A call was up only the second time, so a call is not required.
+- `scripts/discovery-stop-race.py` reads every cycle's ending, and `EX-062` is the exhibit.
+
+It is a race in core code, on any adapter with the quirk, and has nothing to do with the alternate-setting fault.
+
+**Already fixed, but not where it mattered.** Jiajia Liu's `96d006ae6445` (v7.2-rc1) fixes it, and it is in 7.1.5+, 6.18.40+ and Ubuntu's `7.0.0-38`. It is not in 6.12, 6.6 or 6.1, which are exactly the older lines the queued `dc16388d45ec` backport reaches. That backport would hand those users this race along with the fix for their hang. The same evening a reply on BlueZ issue #1554, whose reporter had the same symptom, pointed to the fix; the reporter's own capture showed the same ordering. The rule changed that day too: kernel findings are now recorded on `main` as they are found, and the work held privately since 09-17 is being ported back as new commits.
+
+**Three sends on 10 October.**
+- **The backports.** Each was built on its line and tested with a new `mgmt-tester` case that forces the race in qemu. The case fails on every line without the backport and passes with it. The stable request went out at 04:25 as three mails.
+- **A BlueZ leak fix and test series, at 05:18.** Writing that case exposed a leak in BlueZ's emulator: five mgmt-tester cases and one l2cap-tester case leak a hook. So the BlueZ fix went out with the three-patch test series, which applies with or without it.
+- **The CI marks that came back.** The list's bots answered with three red marks, none of them ours: a smatch warning at upstream `btdev.c:479`, a pairing timeout that failed the same way on an unrelated patch, and the kernel bot's apply step on a stable backport. We were clean by scope, not by checking. The rule that came out of it: before any send, run the receiving project's CI locally on the base and on the base plus ours, and judge only the difference. A failure that is theirs is a candidate fix of its own.
+- **Two near-misses, found by an outside reviewer, not by us.** The stable note had three lines over 72 columns, and the mails nearly went to a maintainer's sign-off address instead of his MAINTAINERS one. `scripts/mail-lint.sh` and `scripts/get-maintainers.sh` existed for both and were not run; BRIEF §8 now lists the tools that were forgotten.
+
+The same morning E3 was built for `7.0.0-38` and placed in its `updates/`, ready for the first boot of the new kernel. A later codec-switch session on 10-10 also showed a SCO connection being reused while the previous one was still being torn down, an extension of `U7`. It is not yet written up.
+
 ## The bot's noise, reproduced (2026-10-10 → 10-11)
 
 **The lesson that started it.** The list's bot answered the two BlueZ series of 10 October
@@ -3836,8 +3858,6 @@ are written down so that they are not relearned.
 
 ## A silent speaker, and the captures that were being deleted (2026-10-11)
 
-*The chapter for 10-09 and 10-10 (the stuck discovery, `BT-9`, and its three sends) is still owed here; `docs/STATUS.md` and `EX-062` carry the facts.*
-
 **The speaker.** Past midnight on 11 October the operator switched the Tronsmart T8 to SBC-XQ, and it went silent; back on SBC, it played. An outside reviewer sent an investigation within the hour. It sorted the possible failures into three cases: a configuration the speaker refuses, a stream that never starts, and valid packets the speaker does not play. It proposed new captures to tell them apart.
 
 No new capture was needed: `bt-trace` had recorded everything. The speaker had accepted both configurations and started both streams:
@@ -3868,6 +3888,22 @@ One T8 capture went from 33 MB to 0.6 MB, ordinary traffic about tenfold. The to
 - Committed evidence is the incident window, complete inside it and nothing outside, because public space serves everyone. Evidence is never deleted, fixed bugs included.
 - The address rule was relaxed: real addresses may go to the private repository. Public files carry pseudonyms from a private table. The manufacturer prefix is kept, the device part is random, and each device keeps one pseudonym for good, so logs stay consistent across files.
 - Building that table showed that a raw capture carries more than addresses. The T8's reconnect hands the stored link key to the controller in clear. A whole raw capture is therefore never published; cut windows are, with the keys blanked.
+
+**Nothing only on this disk, with exceptions.** The operator then asked for everything written to be pushed somewhere, private where not public. A survey of every tree (`scripts/unpushed-survey.py`) found the project branches all on a remote. It also found 31 commits that existed nowhere else, inside eighteen upstream kernel and BlueZ checkouts under `cache/`, where the patches had been built and tested.
+
+Pushing those trees would have copied gigabytes of upstream history. So their commits were exported as patch files with their bases (`scripts/export-local-work.py`, 3.2 MB) to a private branch. The operator added the exceptions the same hour: GitHub space is not for bulk. The capture archive, upstream trees and build outputs stay local on purpose.
+
+**The archive's first numbers corrected the estimate.** Two October captures had compressed 10× and 56×. The archiver, oldest first, began with the 26 September headset sessions behind E1 and E3, and those barely compress at 1.4×: SCO audio is already compressed. The projected total rose from one or two gigabytes to somewhere near the 10 GB budget. The budget stands. If it is reached, the archiver stops and the operator decides; nothing is deleted.
+
+**The reboot.** At 16:26 the laptop restarted into `7.0.0-38`, with E3 in place for it. The boot log shows the QCA firmware loaded, which keeps the original hang away. The kernel also carries the BT-9 fix, and the reboot ended the stuck discovery of 10-04. The archiver's timer had been transient and did not survive. It was found missing and restarted at 17:02.
+
+**A coherence pass over the foundation documents** followed. It found, among other things:
+- README counting "three fixes, two in BlueZ" above a table of four;
+- the issue register's "current state" dated two days before its newest entry;
+- the evidence guide still saying captures averaged 2 MB and that no tool could scrub one;
+- the machine section still telling the reader to boot `-34` from GRUB.
+
+Each was corrected against `STATUS.md`, the one page that says what is current.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 

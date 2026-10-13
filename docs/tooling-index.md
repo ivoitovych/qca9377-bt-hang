@@ -85,7 +85,7 @@ run `bluetoothd -d` — this project ships that on in
 | **Does a capture carry key material?** (link key replies and notifications, LE encryption, SMP) | `scripts/hci-key-records.py <capture.btsnoop>…` — counts and first time per kind, **never the key bytes**. The T8 reconnect of 2026-10-11 00:34:29 carries a Link Key Request Reply: a raw capture is not publishable by address substitution alone |
 | **Publish a log or capture with consistent device addresses** | `addr-pseudonym.py`, kept privately with the table (never in this checkout): `check` (real or unlisted addresses, every form, both byte orders, raw bytes) and `apply` (a substituted copy; the manufacturer prefix is kept for public addresses, the type bits for random ones). The table and the rules are kept with it |
 
-### Desktop audio and UI capture (U1–U9)
+### Desktop audio and UI capture (U1–U10)
 
 | question | tool |
 |---|---|

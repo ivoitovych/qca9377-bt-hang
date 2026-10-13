@@ -1,7 +1,8 @@
 # Issue register
 
 This investigation began as "the Bluetooth controller hangs". It is now clear that is not
-one defect. At least six distinct problems have been observed on this machine, and
+one defect. Over twenty distinct problems have been observed on this machine by 2026-10-11
+(nine `BT`, three `M`, ten `U`, one unexplained `bluetoothd` core), and
 filing them under a single heading has actively slowed the work: evidence for one kept
 being read as evidence for another, and three hypotheses were killed only after being
 mistaken for the main bug.
@@ -11,7 +12,13 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 
 ---
 
-## Current state — 2026-10-08 (what changed since the 2026-10-03 state below)
+## Current state — 2026-10-11 (what changed since the 2026-10-09 state below)
+
+- **BT-9: everything sent 2026-10-10.** Stable backports of `96d006ae6445` went to 6.12, 6.6 and 6.1, each tested with a new deterministic `mgmt-tester` case that fails without the backport. Also sent: the BlueZ test series and the emulator leak fix the testers exposed. The laptop's own stuck discovery ended with the reboot into `7.0.0-38` on 10-11, a kernel that carries the fix.
+- **U10 (new, 2026-10-11):** a speaker silent on SBC-XQ (section below, with the userspace items).
+- **The machine** runs `7.0.0-38` with the upstream entry (E3) since 2026-10-11; QCA firmware loaded.
+
+## Current state — 2026-10-09 (what changed since the 2026-10-03 state below)
 
 - **BT-9 (new, 2026-10-09, kernel)** — when a simultaneous-discovery cycle's Inquiry
   Complete lands inside the LE scan-off, the kernel never stops discovery and refuses every
@@ -706,7 +713,7 @@ specific to this controller.
 
 ---
 
-## U1–U9 — userspace audio problems seen during the E1/E3 tests (2026-09-26 →)
+## U1–U10 — userspace audio problems seen during the E1/E3 tests (2026-09-26 →)
 
 | id | one line | state (`STATUS.md`) |
 |---|---|---|

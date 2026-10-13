@@ -39,7 +39,7 @@ written** · **under review** (outside review before any submission) · **submit
 | `BT-6` | ACL data for an unknown connection handle | kernel / controller | observed once | **observed** | none planned |
 | `BT-7` | `bluetoothd` dereferences NULL at two sites | BlueZ | `EX-032`, `EX-041` (guard fired 4×) | **accepted upstream** (the two BlueZ patches) | release / downstream tracking |
 | `BT-8` | Pending management commands flushed at power-off answered with a status read from the wrong object | kernel MGMT | the zero-length Success reply that crashed `bluetoothd` in BT-7's first site; reproduced with `hci_vhci` | **accepted upstream** (`86ef0f58bdec`) | mainline / stable tracking |
-| `BT-9` | When a simultaneous-discovery cycle's Inquiry Complete arrives between the LE scan-off command and its Command Complete, the kernel never stops discovery and refuses every later scan with Busy, until a suspend or power-off | kernel `hci_sync` / `hci_event` (`HCI_QUIRK_SIMULTANEOUS_DISCOVERY`) | two stuck cycles in this boot's traces, 2026-10-01 03:51:27 (8 h 18 min, cleared by a suspend) and 2026-10-04 10:26:11 (stuck since) (`EX-062`); source reading of both stop paths | **fixed upstream** by another author (`96d006ae6445`, Jiajia Liu, v7.2-rc1; in 7.1.5+, 6.18.40+, Ubuntu `7.0.0-38`); **missing from 6.12, 6.6 and 6.1**, where the `dc16388d45ec` backport gives this device the quirk | backports to 6.12/6.6/6.1 **built and tested** 2026-10-10 with a deterministic qemu reproducer (new `mgmt-tester` case: fails on all three lines, passes with each backport; [`patches/kernel/bt9-stable/`](../patches/kernel/bt9-stable/README.md)); stable request, BlueZ leak fix and BlueZ test series **all sent 2026-10-10** (Submissions above); next: replies |
+| `BT-9` | When a simultaneous-discovery cycle's Inquiry Complete arrives between the LE scan-off command and its Command Complete, the kernel never stops discovery and refuses every later scan with Busy, until a suspend or power-off | kernel `hci_sync` / `hci_event` (`HCI_QUIRK_SIMULTANEOUS_DISCOVERY`) | two stuck cycles in this boot's traces, 2026-10-01 03:51:27 (8 h 18 min, cleared by a suspend) and 2026-10-04 10:26:11 (stuck until the reboot into `7.0.0-38`, which carries the fix, on 2026-10-11) (`EX-062`); source reading of both stop paths | **fixed upstream** by another author (`96d006ae6445`, Jiajia Liu, v7.2-rc1; in 7.1.5+, 6.18.40+, Ubuntu `7.0.0-38`); **missing from 6.12, 6.6 and 6.1**, where the `dc16388d45ec` backport gives this device the quirk | backports to 6.12/6.6/6.1 **built and tested** 2026-10-10 with a deterministic qemu reproducer (new `mgmt-tester` case: fails on all three lines, passes with each backport; [`patches/kernel/bt9-stable/`](../patches/kernel/bt9-stable/README.md)); stable request, BlueZ leak fix and BlueZ test series **all sent 2026-10-10** (Submissions above); next: replies |
 | `M-1` | Mesh transmission never stops advertising: the mesh instance keeps `adv_instances` non-empty; the done path completes the wrong request; a scheduler window starts a packet twice | kernel MGMT | reproduced in qemu with `tools/mesh-tester`; the list's bot fails this tester on every patch since June | **patch written** (v3); being split into separate contributions (Submissions, mesh row) | the power-off fix, after the comparison with another author's patch; weigh `87a49b610708` first |
 | `M-3` | `mgmt_unregister()` from a notification callback leaks the entry, and unregistering the next entry is a use-after-free | BlueZ `src/shared/mgmt.c` | unit reproducer in `unit/test-mgmt` (ASan); testers' leak reports | **accepted upstream** 2026-10-08 (`ae23df052290`, `6f5eeb402d3b`) | release tracking |
 | `M-2` | `u16 duration = adv->timeout * MSEC_PER_SEC` overflows for timeouts above 65 s | kernel hci_sync | source reading; corrected arithmetic note | **hypothesis**, note only | reproducer, then decide on a patch |
@@ -63,24 +63,24 @@ for the next login. `bt-ui-capture stop` and `unstage` undo everything.
 
 ## The investigation machine
 
-E3 (`updates/btusb.ko` carrying the exact upstream entry) is installed; trial E3 #1 is
-open; device discovery has been stuck since 2026-10-04 10:26:11 (`BT-9`) until the adapter is
-powered off; the installed `/usr/local/bin` tools are the 2026-09-18 copies until the operator
-installs the current ones. Nothing is changed on this machine without the operator's word.
+**Since 2026-10-11 16:26 the machine runs `7.0.0-38` with E3 built for it.**
+- E3 is `updates/btusb.ko`, carrying the exact upstream entry: srcversion `D1DEA96A0C95BFAB05CEE01`, from private `diag/e3-btusb-for-7.0.0-38-20261010`.
+- The boot log shows `QCA: patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded.
+- `-38` carries `96d006ae6445`. The reboot ended the stuck discovery of 2026-10-04 10:26:11 (`BT-9`), which had lasted until then.
+- Trial E3 #1 was opened on `-34`. Whether it continues on `-38` is the operator's decision.
+- The installed `/usr/local/bin` tools are the 2026-09-18 copies until the operator installs the current ones.
+- Nothing is changed on this machine without the operator's word.
 
 **Raw HCI captures are archived, not left to rotation (2026-10-11).**
 - `bt-trace` keeps 400 capture files and deletes the oldest at every rotation. On 10-11 it was at that limit, so captures still in use were being deleted.
 - Since 16:14 that day, `scripts/bt-trace-archive.py` compresses every closed capture into `archive/bt-trace/` (git-ignored) and verifies each by SHA-256. It also covers `/root/bt-trace-keep/`.
 - It never deletes anything. Budget: 10 GB; it warns at 80% and stops at 100%.
 - It runs on a transient systemd timer, which does not survive a reboot: restart it, or install real units (the operator's word).
+  - The 16:26 reboot removed it after 99 captures.
+  - It was restarted at 17:02 the same day, so nothing was archived from 16:26 to 17:02.
+  - The early captures compress only about 1.4×, because the 09-26 headset sessions carry compressed audio. So the 10 GB budget may be reached before the October files are done.
 
-⚠️ **Kernel update pending (2026-10-08 17:40):** Ubuntu installed `7.0.0-38-generic`, and
-`/var/run/reboot-required` lists it. The running kernel is `7.0.0-34`. E3 exists only in
-`/lib/modules/7.0.0-34-generic/updates/`; `-38` has no `updates/`. The `-38` stock btusb lacks
-the 13d3:3503 entry: `scripts/btusb-has-device.py` reports ABSENT on the stock btusb of `-34` and
-of `-38`, FOUND on E3, and FOUND on the control `0cf3:e300` in stock `-38`. The `-38` changelog
-has no QCA9377 line. A default boot into `-38` therefore brings BT-1 back. Until E3 is built
-for `-38` and installed, boot `-34` from GRUB's "Advanced options".
+**The kernel update of 2026-10-08, resolved.** Ubuntu's `7.0.0-38` stock btusb lacks the 13d3:3503 entry: `scripts/btusb-has-device.py` reports ABSENT on the stock btusb of `-34` and of `-38`, FOUND on E3, and FOUND on the control `0cf3:e300` in stock `-38`. The `-38` changelog has no QCA9377 line. E3 was built for `-38` and placed in `updates/` on 10-10, before the first boot of `-38`. The same check applies to every later kernel update: until a stock btusb carries the entry, each new kernel needs E3 rebuilt before it boots.
 
 ## Repository health
 

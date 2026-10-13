@@ -59,8 +59,10 @@ Recent detail may be shortened. Settled state is never dropped.
   - a reply on Jiale Yao's power-off patch (patchwork 14864878);
   - the next mesh step.
 - **Machine:**
-  - E3 (`updates/btusb.ko`, the exact upstream entry) runs on `7.0.0-34`.
-  - `7.0.0-38` is installed, and its stock btusb lacks the entry, so a default boot brings BT-1 back until E3 is built for `-38` (private `diag/e3-btusb-for-7.0.0-38-20261010`).
+  - **Since 2026-10-11 16:26 the laptop runs `7.0.0-38` with E3 built for it** (`updates/btusb.ko`, the exact upstream entry; srcversion `D1DEA96A0C95BFAB05CEE01`; the boot log shows `patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded). The build is on private `diag/e3-btusb-for-7.0.0-38-20261010`.
+  - `-38`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
+  - `-38` also carries the BT-9 fix (`96d006ae6445`). The reboot ended the discovery stuck since 10-04.
+  - Trial E3 #1 was opened on `-34`. Whether it continues on `-38` is the operator's decision.
   - Only the operator touches the machine's Bluetooth or kernel.
   - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer since 2026-10-11 16:14. Restart it after a reboot. Rules: §7, "Evidence".
 - **Open investigation:** `U10`, the Tronsmart T8 silent on SBC-XQ. Waiting on the operator's test-sound check (`docs/issues.md`).
@@ -74,7 +76,7 @@ Recent detail may be shortened. Settled state is never dropped.
 `kernel/mgmt-flush-status` the same day; the next exhibit on `main` is EX-063) — no tip hash:
 it rotted within hours (`R2-13`).
 
-> **HAND-OFF (2026-10-08, after the BlueZ series was sent; 2026-10-09 item first).** Current
+> **HAND-OFF (2026-10-08, after the BlueZ series was sent; 2026-10-11 and 2026-10-09 items first).** Current
 > state of every issue and submission: `docs/STATUS.md`. The previous block is at the end of
 > `HISTORY.md`, verbatim.
 >
@@ -101,8 +103,9 @@ it rotted within hours (`R2-13`).
 > watch for Queued/FAILED). **BlueZ leak fix and test series sent 05:18 +0200** to
 > linux-bluetooth (`<20261010031846.2842837-1-…>`, `<20261010031852.2842893-1..4-…>`).
 > **Next:** replies on all three submissions.
-> Reply on BlueZ #1554 posted 2026-10-09. The laptop's discovery stays stuck until a suspend or an adapter
-> power-off (operator's call); traces preserved in `/root/bt-trace-keep/` with `SHA256SUMS`.
+> Reply on BlueZ #1554 posted 2026-10-09. The laptop's discovery stayed stuck until the reboot into
+> `7.0.0-38` on 2026-10-11, a kernel that carries the fix; traces preserved in `/root/bt-trace-keep/` with
+> `SHA256SUMS`, and compressed into `archive/bt-trace/`.
 > Private branches are being ported to `main` (§7 rule change, 2026-10-09).
 >
 > **Upstream, done:** BlueZ `shared/mgmt` series **applied 10-08**, the day it was sent, as
@@ -161,12 +164,13 @@ it rotted within hours (`R2-13`).
 > for now) · `git send-email --dry-run`.
 >
 > **Desktop capture RUNNING** since 10-05 02:37 (`tools/bt-ui-capture`, `docs/ui-capture.md`);
-> undo with `bt-ui-capture stop` and `unstage`. Userspace rows U1–U9 in STATUS. Operator
+> undo with `bt-ui-capture stop` and `unstage`. Userspace rows U1–U10 in STATUS. Operator
 > decisions open: GNOME Settings debug build, btusb debug build for U8 (after trial E3 #1),
 > shellcheck, the U7 PipeWire report, the U6 SRU.
 >
-> **Machine:** E3 installed, trial E3 #1 open (the suite refuses locally — `devtools/ci` after
-> every push); installed `/usr/local/bin` tools are the 09-18 copies (the operator installs).
+> **Machine:** E3 installed, for `-34` and, since the 10-11 reboot, running on `-38`; trial E3 #1
+> open (the suite refuses locally — `devtools/ci` after every push); installed `/usr/local/bin`
+> tools are the 09-18 copies (the operator installs).
 > **Rules:** nothing sent without the operator's word; private branches push to `private` only;
 > attribution is the project author's only; other authors' patches are tested exactly as posted;
 > a kernel finding is recorded on `main` as it is found; maintainer mail carries only what the
@@ -678,6 +682,6 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
 |---|---|
 | evidence, one claim + extraction each | `evidence/exhibits/` (`bt-exhibit index`) |
 | the current snapshot, one dated row per issue and submission | `docs/STATUS.md` |
-| narrative, why things were believed | `HISTORY.md` (37 phases, the dated chapters, and the retired hand-off blocks) |
+| narrative, why things were believed | `HISTORY.md` (37 phases, dated chapters to 2026-10-11, and the retired hand-off blocks) |
 | which tool answers which question | `docs/tooling-index.md` |
 | the patches, their reasoning and BlueZ's measured conventions | `patches/bluez/` |

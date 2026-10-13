@@ -3,13 +3,13 @@
 ### Linux Bluetooth reliability — from a controller hang to upstream fixes
 
 [![Linux kernel: 1 accepted](https://img.shields.io/badge/Linux_kernel-1_accepted-2ea44f)](https://github.com/bluez/bluetooth-next/commit/86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc)
-[![BlueZ: 2 applied](https://img.shields.io/badge/BlueZ-2_applied-2ea44f)](patches/bluez/README.md)
+[![BlueZ: 3 applied](https://img.shields.io/badge/BlueZ-3_applied-2ea44f)](patches/bluez/README.md)
 [![checks](https://github.com/ivoitovych/qca9377-bt-hang/actions/workflows/checks.yml/badge.svg?branch=main&event=push)](https://github.com/ivoitovych/qca9377-bt-hang/actions/workflows/checks.yml)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue)](LICENSE)
 
 An investigation of Bluetooth failures on Linux, with reproducible evidence, diagnostic
-tools, and **three fixes accepted upstream: one in the Linux Bluetooth kernel subsystem and
-two in BlueZ**.
+tools, and **four fixes accepted upstream: one in the Linux Bluetooth kernel subsystem and
+three in BlueZ**.
 
 The work began with a Qualcomm Atheros **QCA9377** controller (USB ID `13d3:3503`) that
 stopped answering during hands-free audio and came back only when power was removed.
@@ -43,6 +43,12 @@ tree; inclusion in a release, stable backports and distribution packages are lat
 milestones, tracked in [`docs/STATUS.md`](docs/STATUS.md). Submission history and every
 link (lore, patchwork, the list's CI bot) are in [`patches/bluez/README.md`](patches/bluez/README.md).
 
+**Submitted, waiting for review (2026-10-10):**
+- a BlueZ fix, `emulator: Free hooks in btdev_destroy`;
+- a three-patch BlueZ `mgmt-tester` series that reproduces the simultaneous-discovery race below, deterministically.
+
+Both are in [`patches/kernel/bt9-stable/`](patches/kernel/bt9-stable/README.md).
+
 ### Backports and testing of others' patches
 
 Not code of this project, but upstream work done here: getting another author's fix to users
@@ -52,6 +58,7 @@ of older kernels, and testing other authors' patches as posted.
 |---|---|---|
 | Linux stable | Backport request for [`dc16388d45ec`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=dc16388d45ec) (the QCA9377 device-table entry, authored by Tibor Harcsa — the fix for this repository's original hang), with the cherry-pick and build verified on every target line (`EX-059`) | requested 2026-10-02 ([lore](https://lore.kernel.org/r/20261002012542.473669-1-yaroslav.voytovych@gmail.com)); **queued for 7.2, 6.18, 6.12, 6.6, 6.1, 5.15 and 5.10** (stable-queue [`007ed56547de`](https://git.kernel.org/pub/scm/linux/kernel/git/stable/stable-queue.git/commit/?id=007ed56547dedc050e1af25976bdfb299aa99b67), `EX-061`) |
 | Linux Bluetooth (MGMT) | `Tested-by` on Hui Peng's "Bluetooth: MGMT: fix mesh_tx leak on hci_cmd_sync_queue() failure" ([patchwork 14831271](https://patchwork.kernel.org/patch/14831271/)), which its author had not reproduced: the leak reproduced without fault injection (a Mesh Send while powered off), the posted patch compared with an unpatched control in QEMU, and requests answered Failed shown to be transmitted later; reproducer, configs and 159 VM logs in [`retest/mesh-tx-leak/`](retest/mesh-tx-leak/REPORT.md) | sent 2026-10-06 ([lore](https://lore.kernel.org/r/20261006201800.3597400-1-yaroslav.voytovych@gmail.com)); the patch is pending |
+| Linux stable | Backports of [`96d006ae6445`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=96d006ae6445) (Jiajia Liu's fix for simultaneous discovery that never stops, which left this laptop unable to scan for days) to 6.12, 6.6 and 6.1 — the lines where the `dc16388d45ec` backport gives this device the quirk that exposes it — each built and tested with a new deterministic `mgmt-tester` case that fails without the backport and passes with it ([`patches/kernel/bt9-stable/`](patches/kernel/bt9-stable/README.md)) | sent 2026-10-10 ([6.12.y](https://lore.kernel.org/r/20261010022523.2789588-1-yaroslav.voytovych@gmail.com), [6.6.y](https://lore.kernel.org/r/20261010022523.2789588-2-yaroslav.voytovych@gmail.com), [6.1.y](https://lore.kernel.org/r/20261010022523.2789588-3-yaroslav.voytovych@gmail.com)); waiting |
 
 ## The QCA9377 result
 
@@ -65,7 +72,7 @@ did not occur in the recorded trials:
 | build | what it tested | result | record |
 |---|---|---|---|
 | E1 — QCA setup only | the firmware-load half of the entry, no reset callback | 58 SCO links, three boots, two headset models, every hang-up answered, 0 command timeouts | `EX-055`, `EX-056`, `EX-058` |
-| E3 — the exact upstream entry | `BTUSB_QCA_ROME \| BTUSB_WIDEBAND_SPEECH`, built for `7.0.0-34` | 16 links, two headsets — including the one that wedged the stock driver in `EX-053` — 0 timeouts, 0 `0x2005` errors | `EX-057` |
+| E3 — the exact upstream entry | `BTUSB_QCA_ROME \| BTUSB_WIDEBAND_SPEECH`, built for `7.0.0-34` (and, since 2026-10-11, running on `7.0.0-38`) | 16 links, two headsets — including the one that wedged the stock driver in `EX-053` — 0 timeouts, 0 `0x2005` errors | `EX-057` |
 
 The entry is upstream commit `dc16388d45ec` ("Bluetooth: btusb: Add IMC Networks QCA9377
 to quirks table"), **authored by Tibor Harcsa** for a BLE scanning fault, in mainline since
@@ -118,10 +125,11 @@ queued. Until your distribution ships one, the entry is a two-line addition to
 `drivers/bluetooth/btusb.c`. Check which `btusb` you run with
 `tools/bt-verify-kernel-mechanism`, not the kernel version — backports move.
 
-## Current direction — 2026-10-08
+## Current direction — 2026-10-11
 
 - **Stable backport of `dc16388d45ec`:** queued by the stable team for 7.2, 6.18, 6.12, 6.6,
   6.1, 5.15 and 5.10 (`EX-061`); next, each line's release and the distribution kernels.
+- **Simultaneous discovery that never stops (2026-10-09, `EX-062`).** With the device-table entry in place, this laptop's device discovery stayed stuck from 2026-10-04 until a reboot on 10-11. The kernel cause was already fixed upstream, but not in 6.12, 6.6 or 6.1, the older lines the `dc16388d45ec` backport reaches. Backports to those three, a BlueZ regression test and a BlueZ leak fix were sent on 2026-10-10 (tables above).
 - **Delivery of the four accepted fixes** into kernel and BlueZ releases and into Ubuntu:
   tracked, nothing owed yet. The newest, the BlueZ `shared/mgmt` notify-leak fix with its unit
   tests, was sent and applied on 2026-10-08
@@ -131,9 +139,7 @@ queued. Until your distribution ships one, the entry is a two-line addition to
   review it is not sent as one series: it goes out as separate contributions in a reviewed
   order. The first two are done — the Tested-by and the BlueZ fix in the tables above; the power-off
   fix is next, after a comparison with another author's patch for the same bug.
-- **Desktop audio issues** seen while testing the fixed driver (codec switches, reconnect
-  policy, a GNOME codec row) are recorded in [`docs/issues.md`](docs/issues.md) as leads
-  with evidence; upstream fixes are checked before anything new is written.
+- **Desktop audio issues** seen while testing the fixed driver are recorded in [`docs/issues.md`](docs/issues.md) as leads with evidence: codec switches, reconnect policy, a GNOME codec row, and since 2026-10-11 a speaker that goes silent on SBC-XQ (`U10`). Upstream fixes are checked before anything new is written.
 
 The dated detail, one row per issue and submission, is [`docs/STATUS.md`](docs/STATUS.md).
 
@@ -141,7 +147,8 @@ The dated detail, one row per issue and submission, is [`docs/STATUS.md`](docs/S
 
 ```
 Distribution : Ubuntu 24.04 LTS (noble)
-Kernels      : 7.0.0-29, -30, -31, -34-generic (the twelve instances); 6.17.0-29/35/40, 7.0.0-28 (earlier phenotype)
+Kernels      : 7.0.0-29, -30, -31, -34-generic (the twelve instances); 6.17.0-29/35/40, 7.0.0-28 (earlier phenotype);
+               7.0.0-38-generic with the upstream entry (E3) since 2026-10-11
 BlueZ        : 5.72 (5.72-0ubuntu5.5; the patched daemon is a rebuild of that source)
 Platform     : AMD Renoir/Cezanne laptop; controller on xhci_hcd, full-speed
 BT device    : usb 13d3:3503 — HCI manufacturer 0x001D (Qualcomm), version 0x07 (4.2)
