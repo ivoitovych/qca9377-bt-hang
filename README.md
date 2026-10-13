@@ -203,6 +203,8 @@ evidence/
   sessions/           one directory per reproduction session, sanitised
   trials/             numbered trials and results.tsv (the denominators)
   baseline/ diagnosis/  the failing boot before any mitigation; the device-table transcripts
+archive/              (git-ignored, local) every raw HCI capture, compressed and verified
+                      (scripts/bt-trace-archive.py); incident windows are cut from here
 ```
 
 **Branches.** `main` is the record. `review/<UTC timestamp>` holds one assessment
@@ -227,7 +229,11 @@ coverage floors and the publish scan on every push; `devtools/ci` reads its verd
   geolocation databases index. Run `./tools/sanitize-logs.sh <log>` before attaching
   anything anywhere; it replaces MACs, BSSIDs and IPv4 addresses with deterministic
   placeholders and verifies none survived. `devtools/repo-scan` refuses to publish
-  otherwise.
+  otherwise. Evidence published from 2026-10-11 on uses **pseudonymous device addresses**
+  instead: the manufacturer prefix is real, the rest random, and the same device has the
+  same pseudonym in every file. Each file says so; the mapping is kept privately. A raw HCI
+  capture also carries pairing keys, so it is published only as cut, key-blanked windows,
+  never whole.
 - **Tests:** [`tests/README.md`](tests/README.md).
   <!-- No invariant count or coverage percentage is spelled here ON PURPOSE.
        Both numbers move with nearly every commit, and this page carried

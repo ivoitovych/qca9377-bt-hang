@@ -3834,6 +3834,41 @@ cause is not the most visible difference, it is what a probe of the failing comp
 and the probe was cheaper than the paragraph. None of the four touched the evidence; all four
 are written down so that they are not relearned.
 
+## A silent speaker, and the captures that were being deleted (2026-10-11)
+
+*The chapter for 10-09 and 10-10 (the stuck discovery, `BT-9`, and its three sends) is still owed here; `docs/STATUS.md` and `EX-062` carry the facts.*
+
+**The speaker.** Past midnight on 11 October the operator switched the Tronsmart T8 to SBC-XQ, and it went silent; back on SBC, it played. An outside reviewer sent an investigation within the hour. It sorted the possible failures into three cases: a configuration the speaker refuses, a stream that never starts, and valid packets the speaker does not play. It proposed new captures to tell them apart.
+
+No new capture was needed: `bt-trace` had recorded everything. The speaker had accepted both configurations and started both streams:
+- SBC-XQ was Dual Channel at bitpool 39, 504 kb/s;
+- plain SBC was joint stereo at bitpool 53, 357 kb/s.
+
+Its own cached record advertises Dual Channel up to bitpool 53, so the host had asked only for what it was offered. The reviewer's suggestion that the speaker also offers AAC did not hold for this unit.
+
+**The scan that changed the question.** A new script read every SBC frame's scale factors (`scripts/sbc-frame-levels.py`).
+- The host had sent real sound on SBC-XQ only for the Settings test sounds.
+- Ten minutes of Chrome "playback" on plain SBC were encoded silence from the first frame to the last.
+- So the comparison the operator had made by ear, Chrome on one codec against Chrome on the other, could not separate the codecs. Only the test sounds can, and whether they were heard is the open question (`U10`).
+
+The project had met this speaker before: the August dropout in `EX-030` was already on the SBC-XQ endpoint.
+
+The operator's position is that the fault, if confirmed, lies in why Linux offers SBC-XQ at all. A speaker that cannot play what it advertises is handled today by a per-device quirk list. The decision path, not a local switch, is what is worth understanding and contributing to.
+
+**The captures.** Looking for the evidence showed that `bt-trace` was at its limit of 400 files and deleting the oldest at every rotation, about every eleven minutes during audio. Captures the investigation still cited were being lost while the project watched. The operator called that unacceptable while the work is active.
+
+The same day `scripts/bt-trace-archive.py` began compressing every closed capture into the git-ignored `archive/bt-trace/`:
+- each archive is verified by decompressing it and matching the SHA-256;
+- it never deletes;
+- the budget is 10 GB.
+
+One T8 capture went from 33 MB to 0.6 MB, ordinary traffic about tenfold. The tool's proof includes a compressor that corrupts its output, caught by the verification and never renamed into place.
+
+**The rules that came with it.**
+- Committed evidence is the incident window, complete inside it and nothing outside, because public space serves everyone. Evidence is never deleted, fixed bugs included.
+- The address rule was relaxed: real addresses may go to the private repository. Public files carry pseudonyms from a private table. The manufacturer prefix is kept, the device part is random, and each device keeps one pseudonym for good, so logs stay consistent across files.
+- Building that table showed that a raw capture carries more than addresses. The T8's reconnect hands the stored link key to the controller in clear. A whole raw capture is therefore never published; cut windows are, with the keys blanked.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`

@@ -80,6 +80,10 @@ run `bluetoothd -d` — this project ships that on in
 | Stage-2 terminator analysis across boots | `tools/bt-stage2` |
 | Compare SCO event windows | `tools/bt-sco --window` |
 | Redact before sharing anything raw | `tools/sanitize-logs.sh` |
+| **Keep every raw HCI capture before rotation deletes it** | `scripts/bt-trace-archive.py`: closed captures from `/var/log/bt-health/trace/` and `/root/bt-trace-keep/` → `archive/bt-trace/*.zst` (git-ignored), each verified by SHA-256 after decompression, rows in `MANIFEST.tsv`; never deletes; 10 GB budget (warns at 80 %, stops at 100 %). Runs on the transient timer `bt-trace-archive.timer` (restart it after a reboot). Proof: `scripts/prove-bt-trace-archive.py` (14 checks, a corrupting compressor among them). Read an archived capture with `zstd -dc <file>.zst` into `tmp/` |
+| **Is an A2DP stream carrying sound or encoded silence?** (per second or bucket: SBC configuration, frames, frames with signal, largest scale factor) | `scripts/sbc-frame-levels.py [--from T] [--to T] [--bucket N] <capture.btsnoop>…`; outgoing ACL (monitor opcode 4); prints "no SBC media frames" and exits 1 when nothing matched. `U10` was read this way |
+| **Does a capture carry key material?** (link key replies and notifications, LE encryption, SMP) | `scripts/hci-key-records.py <capture.btsnoop>…` — counts and first time per kind, **never the key bytes**. The T8 reconnect of 2026-10-11 00:34:29 carries a Link Key Request Reply: a raw capture is not publishable by address substitution alone |
+| **Publish a log or capture with consistent device addresses** | `addr-pseudonym.py`, kept privately with the table (never in this checkout): `check` (real or unlisted addresses, every form, both byte orders, raw bytes) and `apply` (a substituted copy; the manufacturer prefix is kept for public addresses, the type bits for random ones). The table and the rules are kept with it |
 
 ### Desktop audio and UI capture (U1–U9)
 

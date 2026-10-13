@@ -52,6 +52,7 @@ written** · **under review** (outside review before any submission) · **submit
 | `U7` | After an HFP codec switch under a live SCO link the new link is never set up | PipeWire (and the host-side handling of the overlap) | HCI capture, earbuds 3/3 fail, MOMENTUM 0/2 (`EX-060`): the headset's `AT+BCS=` reply and PipeWire's new connect land before the old link's Disconnection Complete on the earbuds (reply +16/+30 ms after the Disconnect, event +177/+205 ms), after it on the MOMENTUM (event +39/+46 ms, reply +67/+75 ms) | **confirmed: a race between the new connect and the old link's teardown**; no PipeWire commit through master fixes it; adjacent open reports on the same switch path: pipewire #5506 (2026-10-03, patch attached), bluez #2562 (2026-09-22) | capture with `bt-ui-capture` (PipeWire acquire/connect and the kernel's SCO socket, now logged); then report to PipeWire citing both; the host-side handling is examined separately before anything is said about it |
 | `U8` | Earbuds silent in mSBC; `corrupted SCO packet` in the log (also seen once on the Shure) | kernel / firmware / earbuds | lead; source reading shows the message comes from the receive (microphone) direction only, so it does not explain silent playback | **observed** | capture a silent link with `bt-ui-capture`; check offline in the HCI capture whether the earbuds get valid frames; a btusb debug patch is written, installable only after trial E3 #1 closes |
 | `U9` | No reconnect after rfkill off/on (BlueZ policy reconnects only after link loss or suspend) | BlueZ policy (`policy.c:disconnect_cb()`, unchanged on master; since kernel v6.9 an rfkill disconnects cleanly, so it no longer looks like link loss) | source + operator marks | **confirmed** (design); upstream: Launchpad #1494242 (Won't Fix), wireplumber #846 (closed) | capture confirms nobody calls `Connect` after power-on; then decide whether to propose a change |
+| `U10` | Tronsmart T8 silent on SBC-XQ (Dual Channel, bitpool 39, 504 kb/s), audible on SBC (joint stereo, bitpool 53, 357 kb/s) | PipeWire's SBC-XQ choice and the speaker's decoder | HCI captures 2026-10-11 00:17 to 00:57 (`archive/bt-trace/`): configuration accepted and streaming in both modes; real signal sent on SBC-XQ only for the Settings test sounds (`scripts/sbc-frame-levels.py`); the speaker advertises Dual Channel up to bitpool 53; SBC-XQ already configured in `EX-030` (08-17); the silence itself is [operator] | **observed** | the operator's test sound per mode with `bt-mark`; then Dual Channel vs bitrate; then PipeWire's decision path for offering SBC-XQ (the contribution, if the speaker cannot play what it advertises) |
 
 **Desktop capture for the next manual test (2026-10-05):** `tools/bt-ui-capture` is running
 (`docs/ui-capture.md` says what to do and which `bt-mark` to type per item). Live: PipeWire
@@ -66,6 +67,12 @@ E3 (`updates/btusb.ko` carrying the exact upstream entry) is installed; trial E3
 open; device discovery has been stuck since 2026-10-04 10:26:11 (`BT-9`) until the adapter is
 powered off; the installed `/usr/local/bin` tools are the 2026-09-18 copies until the operator
 installs the current ones. Nothing is changed on this machine without the operator's word.
+
+**Raw HCI captures are archived, not left to rotation (2026-10-11).**
+- `bt-trace` keeps 400 capture files and deletes the oldest at every rotation. On 10-11 it was at that limit, so captures still in use were being deleted.
+- Since 16:14 that day, `scripts/bt-trace-archive.py` compresses every closed capture into `archive/bt-trace/` (git-ignored) and verifies each by SHA-256. It also covers `/root/bt-trace-keep/`.
+- It never deletes anything. Budget: 10 GB; it warns at 80% and stops at 100%.
+- It runs on a transient systemd timer, which does not survive a reboot: restart it, or install real units (the operator's word).
 
 ⚠️ **Kernel update pending (2026-10-08 17:40):** Ubuntu installed `7.0.0-38-generic`, and
 `/var/run/reboot-required` lists it. The running kernel is `7.0.0-34`. E3 exists only in

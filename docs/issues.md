@@ -719,6 +719,7 @@ specific to this controller.
 | U7 | PipeWire skips the SCO setup after a codec switch under an active link | confirmed on one device |
 | U8 | earbuds silent in mSBC; `corrupted SCO packet` | observed |
 | U9 | no reconnect after rfkill off/on (BlueZ policy) | confirmed, by design |
+| U10 | Tronsmart T8 silent on SBC-XQ, audible on SBC (2026-10-11) | observed; the deciding question is open |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
@@ -957,6 +958,37 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   (03:01:19, `EX-057`), so the message is not earbud-specific either.
   So mSBC audio on this host is fine with the MOMENTUM under the exact upstream entry; U8 is
   earbud-specific unless the earbuds also go silent on E3 — that test is next.
+- **U10 — Tronsmart T8 silent on SBC-XQ, audible on plain SBC** *(observed, 2026-10-11)*.
+
+  **What was seen and sent:**
+  - **[operator]** 2026-10-11 around 00:35: choosing SBC-XQ in GNOME Settings silences the speaker, and switching back to SBC brings sound back.
+  - **[log]** BlueZ's cached endpoint record for the T8 lists three SBC endpoints and no other codec. Each takes every channel mode, Dual Channel included, at bitpool 2 to 53.
+  - **[log]** Both configurations are accepted and stream: Set Configuration, Open and Start are all answered with accept.
+    - Plain SBC: 48 kHz joint stereo at bitpool 53, 119-byte frames, 357 kb/s.
+    - SBC-XQ: 48 kHz Dual Channel at bitpool 39, 168-byte frames, 504 kb/s.
+
+    So the speaker neither refuses the configuration nor fails to start the stream.
+  - **[log]** `scripts/sbc-frame-levels.py` reads each SBC frame's scale factors in the captures. A frame with all of them zero is encoded silence.
+    - Real signal was sent only during the Settings test sounds. On SBC-XQ that includes 00:34:43 to 00:34:47, 00:35:04 to 00:35:08 and 00:38:51 to 00:38:54 (858 Dual Channel frames).
+    - Chrome's playback carried only encoded silence, both on SBC (00:40:19 to 00:50:20) and on SBC-XQ (00:51:56 to 00:52:29).
+
+    So Chrome's audio never reached the link. Only the test sounds can decide the question.
+
+  **Why SBC-XQ is offered at all:**
+  - **[log]** The speaker advertises Dual Channel and bitpool 53, and PipeWire builds SBC-XQ from exactly those two. BlueZ passes the capabilities through, and the desktop shows what PipeWire offers.
+  - **[log]** This is not new to the project. `EX-030` (2026-08-17), an A2DP dropout on the same speaker, has bluetoothd configuring the `sbc_xq` endpoint.
+
+  **Readings:**
+  - **[inference]** If the SBC-XQ test sounds were silent, the speaker accepts a configuration it cannot play. Either Dual Channel or 504 kb/s is the limit; a forum report of a Windows driver going silent above about 354 kb/s (relayed by an outside reviewer, not checked here) points at the rate.
+  - **[inference]** Bluetooth audio has no feedback path, so the host cannot notice either way. PipeWire's per-device quirk list (`no-features = [ sbc-xq ]` in `bluez-hardware.conf`) is how such devices are handled today.
+  - An outside reviewer's investigation (2026-10-11) proposed the same decoder limit. Its claim that the T8 offers AAC is not supported by this unit's cached record.
+
+  **Next:**
+  1. The operator plays only the Settings test sound on each mode, with a `bt-mark` after each.
+  2. Separate Dual Channel from the bitrate: Dual at a low bitpool, joint stereo at a high one.
+  3. Read PipeWire's decision path: when it offers SBC-XQ, who added it and why, and how the quirk entries came in.
+
+  **Evidence:** HCI captures `bt-20261011-001745` to `bt-20261011-004946`, kept in `archive/bt-trace/` (git-ignored; real addresses inside).
 
 ---
 

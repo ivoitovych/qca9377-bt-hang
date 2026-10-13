@@ -62,19 +62,26 @@ Recent detail may be shortened. Settled state is never dropped.
   - E3 (`updates/btusb.ko`, the exact upstream entry) runs on `7.0.0-34`.
   - `7.0.0-38` is installed, and its stock btusb lacks the entry, so a default boot brings BT-1 back until E3 is built for `-38` (private `diag/e3-btusb-for-7.0.0-38-20261010`).
   - Only the operator touches the machine's Bluetooth or kernel.
+  - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer since 2026-10-11 16:14. Restart it after a reboot. Rules: §7, "Evidence".
+- **Open investigation:** `U10`, the Tronsmart T8 silent on SBC-XQ. Waiting on the operator's test-sound check (`docs/issues.md`).
 - **Who works where:**
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`. `main` stays still until the latter fast-forwards.
   - Reproducing the BlueZ and kernel CI bots locally happens on `ci/upstream-ci-local`.
   - While `main` is held, newer hand-off material sits on private `postponed/*` branches; check them.
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-11 (§0 added) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
+**Last updated: 2026-10-11 (§0 added; capture archive, evidence and address rules in §7; `U10`) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
 `kernel/mgmt-flush-status` the same day; the next exhibit on `main` is EX-063) — no tip hash:
 it rotted within hours (`R2-13`).
 
 > **HAND-OFF (2026-10-08, after the BlueZ series was sent; 2026-10-09 item first).** Current
 > state of every issue and submission: `docs/STATUS.md`. The previous block is at the end of
 > `HISTORY.md`, verbatim.
+>
+> **New, 2026-10-11:**
+> - **The capture archive.** The raw HCI captures were being lost to rotation while still in use: `bt-trace` held its limit of 400 files and deleted the oldest at every rotation. Now every closed capture is compressed and verified into `archive/bt-trace/` (`scripts/bt-trace-archive.py`; 33 MB of A2DP compresses to 0.6 MB, ordinary traffic about 10×).
+> - **Device addresses.** Real addresses may go to the private repository. Public files get consistent pseudonyms, from a privately kept table and tool. A raw capture also carries link keys (`scripts/hci-key-records.py`).
+> - **`U10`.** The Tronsmart T8 is silent on SBC-XQ. Read from the captures: accepted and streaming, real signal only in the Settings test sounds. **Next:** the operator's per-mode test sound with `bt-mark`.
 >
 > **New, 2026-10-09 — device discovery stuck since 2026-10-04 10:26:11 (`EX-062`).** The
 > missing Settings spinner was not a dead controller: the controller kept serving links and
@@ -346,6 +353,15 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   2026-10-11, when `ci/upstream-ci-local` was rebuilt so that patchwork mail headers (the
   relays' addresses) never entered its history; the backup is
   `ci/upstream-ci-local-backup-20261011-144932-utc` on `private`.
+- **Evidence, decided 2026-10-11 by the operator.**
+  - **What is committed** is the incident window: complete inside the window (every relevant source, no line filtered out, a margin before and after), and nothing outside it. GitHub space serves everyone, so no bulk history goes into git, public or private.
+  - **Evidence is never deleted,** fixed bugs included: a deletion does not shrink history, and a bug can return.
+  - **Raw captures are never left to rotation.** `scripts/bt-trace-archive.py` keeps them all, compressed, in `archive/bt-trace/` (git-ignored, 10 GB budget, never deletes). Windows are cut from there.
+  - **Device addresses:**
+    - real addresses may be committed to the **private** repository;
+    - public files carry **pseudonyms** from a privately kept table: the manufacturer prefix is real, the rest random, one per device for good, with the statement that says so;
+    - BSSIDs, key material (a raw capture carries link keys) and personal device names are never published.
+  - **Why the address rule changed:** until 2026-10-11 no address went into any commit, private included. That kept the T8 captures out of git altogether.
 - **Do not send the patches** until the operator says so.
 - **An untreated window is the most valuable state there is.** Do not touch Bluetooth;
   `sysfs` reads are safe, anything through usbfs is not. ⚠️ **`bt-mode` writes
