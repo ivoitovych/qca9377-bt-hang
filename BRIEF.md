@@ -20,7 +20,55 @@ series) were moved to the end of `HISTORY.md`; the block below is replaced, not
 topped up. **Sections name their owner**; each owner writes theirs and points at the long form
 (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-10-09 · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
+## 0. Start here, every time the work resumes
+
+**Read in this order before any technical claim:**
+1. this section;
+2. the hand-off block below;
+3. `docs/STATUS.md`;
+4. `docs/tooling-index.md`, before typing any pipeline.
+
+Do it at the start of every working period. A hand-over note or a recollection of earlier work records what happened *recently*. It is not the state of the project.
+
+**Any hand-over note carries forward:**
+- the state block below, as it stands;
+- every open operator decision and every pending send;
+- the instruction to reread this file first.
+
+Recent detail may be shortened. Settled state is never dropped.
+
+**The state at a glance (2026-10-11; `docs/STATUS.md` is authoritative):**
+- **BT-1, the controller hang: solved at the cause.**
+  - `13d3:3503` was missing from btusb's device table, so the controller ran its ROM firmware.
+  - The upstream entry `dc16388d45ec` (Tibor Harcsa) loads the QCA firmware. E1 and E3 ran 74 links with 0 timeouts.
+  - It is **queued for stable 7.2, 6.18, 6.12, 6.6, 6.1, 5.15 and 5.10** (`EX-061`).
+- **Accepted upstream, ours:**
+  - kernel `86ef0f58bdec` (BT-8, bluetooth-next);
+  - BlueZ `a734b06059cb` and `0bed9886cff3` (BT-7);
+  - BlueZ `ae23df052290` and `6f5eeb402d3b` (M-3).
+- **Waiting for replies:**
+  - the Tested-by on Hui Peng's mesh_tx leak patch (10-06);
+  - the BT-9 stable backports of `96d006ae6445` to 6.12, 6.6 and 6.1 (10-10);
+  - BlueZ `emulator: Free hooks in btdev_destroy` (10-10);
+  - the BlueZ mgmt-tester BT-9 test series (10-10).
+- **Operator decisions open:**
+  - the a2dp duplicate-check cleanup;
+  - an Ubuntu SRU for `dc16388d45ec`;
+  - the U6 SRU;
+  - the U7 PipeWire report;
+  - a reply on Jiale Yao's power-off patch (patchwork 14864878);
+  - the next mesh step.
+- **Machine:**
+  - E3 (`updates/btusb.ko`, the exact upstream entry) runs on `7.0.0-34`.
+  - `7.0.0-38` is installed, and its stock btusb lacks the entry, so a default boot brings BT-1 back until E3 is built for `-38` (private `diag/e3-btusb-for-7.0.0-38-20261010`).
+  - Only the operator touches the machine's Bluetooth or kernel.
+- **Who works where:**
+  - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`. `main` stays still until the latter fast-forwards.
+  - Reproducing the BlueZ and kernel CI bots locally happens on `ci/upstream-ci-local`.
+  - While `main` is held, newer hand-off material sits on private `postponed/*` branches; check them.
+- **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
+
+**Last updated: 2026-10-11 (§0 added) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
 `kernel/mgmt-flush-status` the same day; the next exhibit on `main` is EX-063) — no tip hash:
 it rotted within hours (`R2-13`).
 
