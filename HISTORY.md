@@ -3905,6 +3905,18 @@ Pushing those trees would have copied gigabytes of upstream history. So their co
 
 Each was corrected against `STATUS.md`, the one page that says what is current.
 
+**Two weeks of unanswered notes.** The test-suite maintainer had written ten notes since 28 September; the last reply to them was dated 24 September. The work in them was large:
+- a decoy world in which the suite's verdicts no longer come from the machine it runs on. On `main`, 387 calls reached real machine tools, among them 20 that wrote trial lines into the laptop's real journal; on their branch it is 0;
+- mutation testing of the suite itself;
+- an exact trace of every file the suite touches;
+- the suite grown from 831 invariants on `main` to 1028.
+
+Their ready part, 29 commits on `main`'s own `55bcb80`, was green in CI and fast-forwards. A trial merge showed the postponed documentation branch combining with it without a conflict.
+
+**And one of the notes had been right, at cost.** Their "urgent" note of 29 September said the shutdown path of `bt-trial`, as installed, could lose a trial's row: it counts the trial's timeouts with a full kernel-journal read before closing, and a ten-day boot's read can outlast systemd's stop timeout. The fix sat on their branch. The E3 trial on `-34`, ten days from 1 October, ended at the 16:24 shutdown with no row, no closing files and no log line. The same files reopened as "E3 #1" on the new boot, unchanged.
+
+The journal of that boot is retained, so the row can be rebuilt. The lesson is older than the fix: a note that says "urgent" is evidence too, and two weeks unread is how a known defect gets to happen.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
