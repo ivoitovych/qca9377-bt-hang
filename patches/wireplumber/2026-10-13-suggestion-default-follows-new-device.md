@@ -9,6 +9,20 @@ keep them that way when posting. Everything between the two
 Before posting:
 - [ ] The operator has read it and agrees with every sentence, in particular the choice in
       "Open questions" 1 (a new connection also outranks the selected device).
+- [ ] **Not ready to post (2026-10-13, outside review, two rounds).** Round 1 asked for the narrow
+      variant only. Round 2 revised that: keep the broad variant and offer the maintainers both
+      use cases as opt-in modes, default `off`: `off` (today's behaviour), `fallback-only` (a new
+      device replaces an automatic fallback, never an available, explicitly selected device),
+      `prefer-new` (a new device wins until the next manual selection). Names are illustrative.
+      Before rewriting:
+      - outputs only;
+      - Bluetooth only;
+      - define the event identity (device known, link up, usable sink, profile change) and the
+        ordering against asynchronous selections;
+      - reproduce the sequence on 0.5.18 (fetched 2026-10-13; it carries `481ecff`) in an
+        isolated session;
+      - first message: the behaviour contract and the use cases, not the hook design.
+      The variant set is the operator's decision.
 - [ ] Optional: reproduce on 0.5.18 in an isolated session (not on the laptop without
       the operator's word). The maintainers may ask for it; #1036 says 0.5.18 has the same
       fallback rule.
