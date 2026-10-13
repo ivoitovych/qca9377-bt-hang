@@ -11,9 +11,10 @@ per issue and submission, the only page that says what is *current* — and **no
 summary** — a stranger reads `README.md`. Nothing here is derivable from those: this is the
 layer that says which claim holds, which was retracted, and what each rule cost.
 
-⚠️ **Budget: 750 lines** (`devtools/save` warns above it; 200 until 2026-09-19, 500 until
-2026-10-01, the operator's call each time). At 200 every addition cost a *why* somewhere else;
-over 750 it stops being cheaper than the source. Cut the oldest settled item before adding;
+⚠️ **Budget: 1000 lines** (`devtools/save` warns above it; 200 until 2026-09-19, 500 until
+2026-10-01, 750 until 2026-10-11, the operator's call each time). At 200 every addition cost a *why* somewhere else.
+This file is what carries the work from one working period to the next, and the settled foundation (what BT-1 was, what E3 is) is what a reader most needs from it.
+So, when over budget, cut the oldest *finished episode* (a closed experiment's running notes, a superseded block), never the foundation;
 never cut a reason to fit a fact. **One hand-off block, not a stack**: on 2026-10-03 nine
 stacked "RESUME HERE" blocks (205 lines, three of them contradicting each other on the mesh
 series) were moved to the end of `HISTORY.md`; the block below is replaced, not

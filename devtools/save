@@ -105,12 +105,16 @@ if [[ -n "$NEWEST" && -r "$REPO/docs/STATUS.md" ]]; then
 fi
 # And the budget, which is the only reason it is cheaper than reading the source.
 # 750 since 2026-10-01 (operator's decision; was 500 from 09-19, 200 before): at
-# 200 every addition cost a *why* elsewhere — three trims in one day — and the
-# operator's measure, a ~200k-token post-compaction context, makes ~15k tokens
-# for the file that says what holds cheap. The E1/E3 weeks added a resume block
-# per experiment plus the userspace register; at 500 the warning fired on every
-# save. The rule that goes with the number: never cut a reason to fit a fact.
-BRIEF_BUDGET=750
+# 200 every addition cost a *why* elsewhere — three trims in one day — and a
+# file that says what holds is cheap to read next to the sources it summarises.
+# The E1/E3 weeks added a resume block per experiment plus the userspace
+# register; at 500 the warning fired on every save. The rule that goes with the
+# number: never cut a reason to fit a fact.
+# 1000 since 2026-10-11 (operator's decision): BRIEF was at 687 of 750 lines,
+# 55 KB; 1000 lines is about 80 KB. BRIEF stays the file that carries the work
+# from one working period to the next, and what a reader most needs from it is
+# the settled foundation (what BT-1 was, what E3 is), so that is never cut.
+BRIEF_BUDGET=1000
 if [[ -r "$REPO/BRIEF.md" ]]; then
     BL=$(grep -c . "$REPO/BRIEF.md" 2>/dev/null || echo 0)
     if [[ "${BL:-0}" -gt "$BRIEF_BUDGET" ]]; then
