@@ -5,7 +5,11 @@
 # (e.g. E1: QCA ROME setup for 13d3:3503) loaded later via updates/ and a
 # cold boot — never swapped into a live system (EX-046).
 #
-#   scripts/build-btusb-module.sh --ksrc cache/ubuntu-7.0.0-34 [<patch-file>]
+#   scripts/build-btusb-module.sh --ksrc cache/ubuntu-7.0.0-34 [--krel <release>] [<patch-file>]
+#
+# --krel builds against /lib/modules/<release>/build instead of the running
+# kernel's (added 2026-10-10: the E3 entry for an installed but not yet
+# booted kernel); the vermagic is then checked against <release>.
 #
 # Writes only under tmp/btusb-build/. Installs and loads nothing. Prints the
 # resulting module's version, srcversion and vermagic, and checks the vermagic
@@ -18,11 +22,13 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC=""
 if [[ "${1:-}" == "--ksrc" ]]; then SRC="${2:?--ksrc needs a directory}"; shift 2; fi
-[[ -n "$SRC" ]] || { echo "usage: build-btusb-module.sh --ksrc <ubuntu tree> [<patch>]" >&2; exit 2; }
+[[ -n "$SRC" ]] || { echo "usage: build-btusb-module.sh --ksrc <ubuntu tree> [--krel <release>] [<patch>]" >&2; exit 2; }
 [[ "$SRC" = /* ]] || SRC="$HERE/$SRC"
+KREL="$(uname -r)"
+if [[ "${1:-}" == "--krel" ]]; then KREL="${2:?--krel needs a release}"; shift 2; fi
 PATCH="${1:-}"
 OUT="$HERE/tmp/btusb-build"
-KBUILD="/lib/modules/$(uname -r)/build"
+KBUILD="/lib/modules/$KREL/build"
 
 [[ -r "$SRC/drivers/bluetooth/btusb.c" ]] || { echo "no $SRC/drivers/bluetooth/btusb.c" >&2; exit 2; }
 [[ -d "$KBUILD" ]] || { echo "no $KBUILD — kernel headers not installed" >&2; exit 2; }
@@ -52,8 +58,8 @@ modinfo -F srcversion "$KO" | sed 's/^/   srcversion: /'
 vm=$(modinfo -F vermagic "$KO")
 echo "   vermagic:   $vm"
 case "$vm" in
-	"$(uname -r) "*) echo "   ✓ vermagic matches the running kernel" ;;
-	*) echo "   ✗ vermagic does not match $(uname -r)"; rc=1 ;;
+	"$KREL "*) echo "   ✓ vermagic matches $KREL$([[ "$KREL" == "$(uname -r)" ]] && echo ' (the running kernel)')" ;;
+	*) echo "   ✗ vermagic does not match $KREL"; rc=1 ;;
 esac
 sha256sum "$KO" | awk '{print "   sha256:     " $1}'
 exit "$rc"
