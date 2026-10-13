@@ -5,7 +5,9 @@
 #   scripts/copy-tree.sh <source> <destination>
 #
 # The destination must resolve under the project directory (worktrees in
-# cache/ included); the source there or under /usr. The destination must not exist: a copy never merges into or
+# cache/ included); the source there, under /usr, or under /var/log/bt-health
+# (the evidence logs: traces kept out of pruning's reach, 2026-10-10). Copies
+# keep timestamps and modes (cp -a). The destination must not exist: a copy never merges into or
 # overwrites an earlier state (never lose code, tests or evidence). Prints
 # the file count copied.
 set -euo pipefail
@@ -16,8 +18,8 @@ dst=$(realpath -m -- "$2")
 # Sources may also come from /usr (distribution files such as libtool's
 # ltmain.sh); the destination is always inside the project.
 case "$src/" in
-    "$REPO"/*|/usr/*) ;;
-    *) echo "copy-tree: source outside the project and /usr: $src" >&2; exit 2 ;;
+    "$REPO"/*|/usr/*|/var/log/bt-health/*) ;;
+    *) echo "copy-tree: source outside the project, /usr and /var/log/bt-health: $src" >&2; exit 2 ;;
 esac
 case "$dst/" in
     "$REPO"/*) ;;

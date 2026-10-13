@@ -357,6 +357,20 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   replaced 226 recurring pipelines. If a question recurs and no tool answers it, that is the bug.
 - **Check whether the tool already does the step you are prefixing.** `git add -A` was typed
   before `repo-save` for weeks; `repo-save` had always staged on its own.
+- **The tools we forget, and what forgetting cost.** The full list is `docs/tooling-index.md`;
+  these were the ones skipped when they existed:
+  - `scripts/copy-tree.sh` for any copy with a flag (`cp -a`/`-p`/`-r`): forgotten 10-10,
+    three times.
+  - `scripts/pre-send-check.sh` before any BlueZ mail (fetches today's master): BlueZ v2 went
+    out 6.5 h after v1 had been applied, 09-21.
+  - `scripts/mail-lint.sh` on every mail: the 10-10 stable note had three lines of 73-76
+    columns, found by a reviewer, not by us.
+  - `scripts/get-maintainers.sh` plus the previous mail's Cc: the 10-10 stable mails nearly
+    went to Luiz's sign-off address instead of his MAINTAINERS one.
+  - `scripts/stable-queue-check.sh <short stem>` with a positive control, and
+    `scripts/series-backport-check.sh <tag>` (tags, not branch names).
+  - `scripts/patchwork-checks.sh` and `tmp/bt9-repro/ratatoskr-scan.py`: lore refuses fetchers.
+  - `devtools/save <msgfile>` then `devtools/ci --wait <sha>`; `scripts/stop-own-process.sh`.
 - **Trim output inside the script, never with a pipe.** Quiet on success, everything on
   failure — a summary that hides a gate failure is worse than the noise it saved.
 - **Separate what the operator DID from how the controller RESPONDED** (Phase 14). The
