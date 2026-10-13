@@ -76,6 +76,7 @@ run `bluetoothd -d` — this project ships that on in
 | Archive one boot off the rotating journal | `tools/bt-archive <boot-index>` |
 | Archive **every** retained boot | `tools/bt-backup-journal` (also on a daily timer) |
 | Is every archive **complete**, or only present? | `tools/bt-archive --check` (`--repair` fixes them) |
+| **Search the archived boots' journals** (boots the system journal no longer holds) | `scripts/journal-archive-grep.py '<regex>' ~/bt-journal-archive/boot-*.export.zst` — streams each export, prints matching `MESSAGE=` lines with local time and a count per boot; skips `.partial`. Answered 2026-10-11 that the suite never reset USB device 99 (44 bus-3 resets found, none of 99). ⚠️ A boot is archived only when it ends, and journald (`SystemKeepFree=20G`) can discard a long boot's start before then |
 | Timing breakdown of an incident | `tools/bt-postmortem` |
 | Stage-2 terminator analysis across boots | `tools/bt-stage2` |
 | Compare SCO event windows | `tools/bt-sco --window` |
