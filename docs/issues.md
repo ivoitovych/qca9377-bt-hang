@@ -1036,8 +1036,19 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
 
   **Not recorded:** `bt-audio-policy` and `bt-ui-atspi` have been down since the 10-11 reboot. So there is no per-change policy line, and the UI clicks are not on record. WirePlumber's debug log carries the decisions.
 
+  **Update, 2026-10-13, after the outside research** (checked claim by claim in `reviews/2026-10-13T0200Z-u11-outside-research.md`):
+  - **[log]** At 01:11:04 GNOME Settings set the AONIC 50 as the output (`SET_DEFAULT_SINK tag:30`). It is now at the top of the stack, so the next MOMENTUM 4 to AONIC 50 change will not repeat U11. A reproduction starts by copying the state file.
+  - **[source]** A fallback is not saved as a choice. In 0.4.17 the stack changes only when a client writes `default.configured.audio.*`. WirePlumber's own fallback writes `default.audio.sink`, which leaves the stack alone. So the laptop's place above the AONIC 50 comes from an earlier explicit write. What the stack lacks is "this device was just connected".
+  - **[log]** When that earlier write happened cannot be found: `SET_DEFAULT_SINK` has been logged only since the 10-11 reboot, and the 60 archived boots have none. The last archived boot has 4,517 audio-stack lines and no `protocol-pulse` lines, which is the control.
+  - **[source] The upstream record** (official tracker, quotes in `reviews/2026-10-13T0200Z-u11-outside-research-web-sources.md`):
+    - #352 (2022, closed as intended): a maintainer said "wireplumber prefers to stick to your selection", and "We have changed this behaviour back and forth in the past because some people want it this way and some others don't."
+    - #1005, MR !902 and `481ecff`, then #1036: in 0.5.18, "When the current default goes away, it falls back to the most recent one in that list that's still available."
+    - #914 is open, with no maintainer comment: a panel selection "permanently overrides" priorities.
+    - #83, #221, #463, #629 and #840 complain the other way, about unwanted automatic switches.
+  - KDE's "switch on connect by default" (bug 392103) ended RESOLVED WONTFIX in 2025.
+
   **Next:**
-  1. Search WirePlumber's tracker for the existing discussion. The rule is deliberate, so a report must answer its stated reason rather than call it a bug.
+  1. ~~Search WirePlumber's tracker.~~ Done (above). A proposal has to be opt-in, and has to say how it avoids the unwanted-switch cases.
   2. Decide the proposal with the operator, for example: a device that connects ranks first until the user chooses something else after it.
   3. Whether to enable `module-switch-on-connect` on this laptop is the operator's choice. It would make every new non-internal device take over, inputs included.
 
