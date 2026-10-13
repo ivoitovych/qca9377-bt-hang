@@ -71,7 +71,8 @@ for the next login. `bt-ui-capture stop` and `unstage` undo everything.
   - At that shutdown it wrote nothing: no `bt-trial` journal line after the unit's stop, no state-after files, no row in `results.tsv`.
   - `bt-trial-auto` then opened a new "E3 #1" at 16:26 on `-38`, in the same directory. The tracked files there are byte-identical, so nothing tracked was lost.
   - The installed `bt-trial` is the 2026-09-18 copy. The test-suite maintainer's 2026-09-29 note warned that its shutdown path can lose the row, and the fix (`d5272a6`) is on their ready branch, not installed.
-  - The `-34` boot's journal is retained, so the row can be reconstructed. Until the fix is installed, every shutdown risks the same loss.
+  - The row can be reconstructed **only in part**. journald had already discarded that boot's entries before 2026-10-06 20:23, during the boot. The captures show no reboot there: one file runs from 19:45 to 20:31. `bt-backup-journal` archives a boot only once it has ended, so the archive (`boot-c34cfa10`, being written 10-11 17:20) starts at the same point. 10-01 to 10-06 survives only in the HCI captures.
+  - Until the fix is installed, every shutdown risks the same loss.
 - The installed `/usr/local/bin` tools are the 2026-09-18 copies until the operator installs the current ones.
 - Nothing is changed on this machine without the operator's word.
 
@@ -82,7 +83,10 @@ for the next login. `bt-ui-capture stop` and `unstage` undo everything.
 - It runs on a transient systemd timer, which does not survive a reboot: restart it, or install real units (the operator's word).
   - The 16:26 reboot removed it after 99 captures.
   - It was restarted at 17:02 the same day, so nothing was archived from 16:26 to 17:02.
-  - The early captures compress only about 1.4×, because the 09-26 headset sessions carry compressed audio. So the 10 GB budget may be reached before the October files are done.
+  - The 09-26 headset sessions compress only about 1.4×, because they carry compressed audio. Over the first 211 files the ratio is 2.3× (10.8 GB into 4.7 GB), and the projected total is about 8 GB.
+  - ⚠️ **Paused at 17:23:32 on 10-11: free space, not the budget.** journald keeps `SystemKeepFree=20G`, and below that it deletes journal entries, even from the running boot. The disk had 21 GB free. Every gigabyte the archive adds therefore costs journal history that is not archived yet.
+  - The way out is the operator's: delete the raw originals of captures already archived and verified (10.8 GB; `bt-trace` would rotate them away anyway), or lower journald's margin. Either way the archive then resumes.
+  - Paused, nothing is lost for about two days: the rotation deletes oldest first, and the oldest 211 files are archived.
 
 **The kernel update of 2026-10-08, resolved.** Ubuntu's `7.0.0-38` stock btusb lacks the 13d3:3503 entry: `scripts/btusb-has-device.py` reports ABSENT on the stock btusb of `-34` and of `-38`, FOUND on E3, and FOUND on the control `0cf3:e300` in stock `-38`. The `-38` changelog has no QCA9377 line. E3 was built for `-38` and placed in `updates/` on 10-10, before the first boot of `-38`. The same check applies to every later kernel update: until a stock btusb carries the entry, each new kernel needs E3 rebuilt before it boots.
 

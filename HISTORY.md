@@ -3915,7 +3915,9 @@ Their ready part, 29 commits on `main`'s own `55bcb80`, was green in CI and fast
 
 **And one of the notes had been right, at cost.** Their "urgent" note of 29 September said the shutdown path of `bt-trial`, as installed, could lose a trial's row: it counts the trial's timeouts with a full kernel-journal read before closing, and a ten-day boot's read can outlast systemd's stop timeout. The fix sat on their branch. The E3 trial on `-34`, ten days from 1 October, ended at the 16:24 shutdown with no row, no closing files and no log line. The same files reopened as "E3 #1" on the new boot, unchanged.
 
-The journal of that boot is retained, so the row can be rebuilt. The lesson is older than the fix: a note that says "urgent" is evidence too, and two weeks unread is how a known defect gets to happen.
+The row can be rebuilt only in part. The journal of that boot starts at 6 October 20:23. journald had discarded the first five days during the boot itself, to keep its 20 GB of free disk on a disk 95 % full. The journal archiver saves a boot only after it ends. The lesson is older than the fix: a note that says "urgent" is evidence too, and two weeks unread is how a known defect gets to happen.
+
+**Evidence kept can cost evidence lost.** The same arithmetic turned on the capture archive within the hour. Every gigabyte it wrote came out of journald's 20 GB margin, with 21 GB free. Keeping captures would have spent the running boot's unarchived journal. The archive was paused at 17:23. Each store on this disk has its own floor (journald 20 GB, `bt-trace` 15 GB) and none of them knows about the others. Space is freed for real by deleting the raw originals already archived and verified, which `bt-trace` would delete anyway, and that is the operator's call.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
