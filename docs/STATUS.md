@@ -98,6 +98,13 @@ while a trial is open). Fixed on 2026-10-03 (`fix/ci-invariants-2026-10-03`), wi
 defect among them: the trial closer read a `journalctl --grep` no-match exit as an
 unreadable journal. The badge on `README.md` shows the live result.
 
+**The held documentation branch was red on every push, 2026-10-10 to 10-11, unread.** Its CI runs in the private repository, where `devtools/ci` does not look: it reads Actions on `origin` only. An outside reviewer pointed this out on 10-11 (`gh run list -R ivoitovych/qca9377-bt-hang-private -b postponed/brief-forgotten-tools-20261010`: eleven runs, all failed).
+- Two invariants failed. Seven Python scripts added on 10-11 were not executable; that is fixed by this commit.
+- `bt-usbmon --check left 0 file(s) of 5 with KEEP=2` has failed since the branch's first run (10-10 04:13), while `main` was green.
+  - The branch changes no code that test runs. The test reads the runner's real free space against `bt-usbmon`'s 15 GB floor, so a smaller runner disk prunes every file.
+  - That reading is an inference, not yet confirmed. It goes to the test-suite maintainer.
+- Until `devtools/ci` learns the private remote, read held branches' CI with `gh run list -R ivoitovych/qca9377-bt-hang-private`.
+
 ## How to update this page
 
 Change a row when its state changes; date the page at the top; keep the lifecycle words.
