@@ -1046,6 +1046,11 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
     - #914 is open, with no maintainer comment: a panel selection "permanently overrides" priorities.
     - #83, #221, #463, #629 and #840 complain the other way, about unwanted automatic switches.
   - KDE's "switch on connect by default" (bug 392103) ended RESOLVED WONTFIX in 2025.
+  - **[log] BlueZ side, read while drafting** (`journalctl -u bluetooth.service --since "2026-10-13 00:53:00" --until "2026-10-13 01:03:00" -g <both addresses>`):
+    - The AONIC 50 was already connected before 00:53. It disconnected at 00:54:08.852 with reason 3 (remote), i.e. switched off after the MOMENTUM 4 connected at 00:53:44. WirePlumber's `Setting profile a2dp-sink on bluez_card.<AONIC 50>` at 00:54:08.359 belongs to that disconnect.
+    - At 01:01:58.979 the new link dropped with reason 2 (local host), logged twice.
+    - At 01:02:03.395, `connect_profiles() … (all), client :1.347`: a D-Bus client asked for the connection that succeeded at 01:02:04.26. Which client (a click in GNOME's Bluetooth menu, or automatic) is not recorded.
+  - **Draft suggestion** (opt-in "a newly connected device becomes the default"; not posted): `patches/wireplumber/2026-10-13-suggestion-default-follows-new-device.md`.
 
   **Next:**
   1. ~~Search WirePlumber's tracker.~~ Done (above). A proposal has to be opt-in, and has to say how it avoids the unwanted-switch cases.
