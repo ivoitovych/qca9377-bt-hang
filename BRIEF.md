@@ -371,6 +371,14 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
     `scripts/series-backport-check.sh <tag>` (tags, not branch names).
   - `scripts/patchwork-checks.sh` and `tmp/bt9-repro/ratatoskr-scan.py`: lore refuses fetchers.
   - `devtools/save <msgfile>` then `devtools/ci --wait <sha>`; `scripts/stop-own-process.sh`.
+- **Run the receiving project's CI before sending, on base and on base plus ours.** The 10-10
+  BT-9 sends drew three red bot marks, none of them ours
+  ([`ci-bot-2026-10-10.md`](patches/kernel/bt9-stable/results/ci-bot-2026-10-10.md)):
+  smatch's VLA at upstream `btdev.c:479`, a TestFunctional pairing timeout that failed the
+  same way on an unrelated patch, and the kernel bot's apply step on a stable backport. We
+  were clean by scope, not by checking. A lone local run only repeats the bot's noise; the
+  difference against the base is what tells ours from theirs. A failure that is theirs is a
+  candidate fix of its own, once we know it is not already reported.
 - **Trim output inside the script, never with a pipe.** Quiet on success, everything on
   failure — a summary that hides a gate failure is worse than the noise it saved.
 - **Separate what the operator DID from how the controller RESPONDED** (Phase 14). The
