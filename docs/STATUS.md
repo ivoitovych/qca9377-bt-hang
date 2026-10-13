@@ -101,8 +101,10 @@ unreadable journal. The badge on `README.md` shows the live result.
 **The held documentation branch was red on every push, 2026-10-10 to 10-11, unread.** Its CI runs in the private repository, where `devtools/ci` does not look: it reads Actions on `origin` only. An outside reviewer pointed this out on 10-11 (`gh run list -R ivoitovych/qca9377-bt-hang-private -b postponed/brief-forgotten-tools-20261010`: eleven runs, all failed).
 - Two invariants failed. Seven Python scripts added on 10-11 were not executable; that is fixed by this commit.
 - `bt-usbmon --check left 0 file(s) of 5 with KEEP=2` has failed since the branch's first run (10-10 04:13), while `main` was green.
-  - The branch changes no code that test runs. The test reads the runner's real free space against `bt-usbmon`'s 15 GB floor, so a smaller runner disk prunes every file.
-  - That reading is an inference, not yet confirmed. It goes to the test-suite maintainer.
+  - The branch changes no code that test runs: `git diff --stat 55bcb80 HEAD -- tests/run-tests bin/bt-usbmon bin/bt-trace .github` is empty.
+  - **The mechanism, from the source (10-12):** the test (`tests/run-tests` about line 5966) sets `BT_USBMON_KEEP=2` but neither `BT_USBMON_MIN_FREE_GB` nor a `df` stub; its `$CP/stub` holds only `btmon`, `tcpdump` and `modprobe`. `bt-usbmon`'s `prune()` applies the 15 GB floor after the count (`bin/bt-usbmon` lines 109–116), so on a runner with less than 15 GB free it deletes every file. The control is the `bt-trace` test just above it: the same pattern, but `bt-trace --check` runs only the count prune, and it passes on the same runner.
+  - Not measured: the runner's free space, because the suite does not print `bt-usbmon`'s output on failure. A rerun with the floor isolated settles it.
+  - **The fix belongs to the test, not the tool:** `BT_USBMON_MIN_FREE_GB=0` on that one invocation, while the stubbed floor tests (about line 6369) keep proving that the floor overrides the count. The 15 GB floor stays, and the assertion stays at 2. It goes to the test-suite maintainer.
 - Until `devtools/ci` learns the private remote, read held branches' CI with `gh run list -R ivoitovych/qca9377-bt-hang-private`.
 
 ## How to update this page
