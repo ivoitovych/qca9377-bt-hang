@@ -38,23 +38,58 @@ Do it at the start of every working period. A hand-over note or a recollection o
 
 Recent detail may be shortened. Settled state is never dropped.
 
-**The state at a glance (2026-10-11; `docs/STATUS.md` is authoritative):**
-- **BT-1, the controller hang: solved at the cause.**
-  - `13d3:3503` was missing from btusb's device table, so the controller ran its ROM firmware.
-  - The upstream entry `dc16388d45ec` (Tibor Harcsa) loads the QCA firmware. E1 and E3 ran 74 links with 0 timeouts.
-  - It is **queued for stable 7.2, 6.18, 6.12, 6.6, 6.1, 5.15 and 5.10** (`EX-061`).
+### Foundation — settled; what a reader needs first
+
+- **The device.** The laptop's controller is a QCA9377 with USB ID **`13d3:3503`** (IMC Networks).
+  `0cf3:e300` is a *different* QCA device that stock btusb already lists; it is only the
+  positive control of `scripts/btusb-has-device.py`. FOUND on `0cf3:e300` shows that the check
+  works and says nothing about this laptop.
+- **BT-1, solved at the cause.** On a transparent (mSBC) SCO link btusb uses alt setting 1; the
+  first HCI command after the stream starts gets no reply, and only a power-off recovers the
+  controller (12 deaths, `EX-033`…`EX-053`, §2). Cause: `13d3:3503` was missing from btusb's
+  device table, so the controller ran its ROM firmware. The upstream entry **`dc16388d45ec`
+  (Tibor Harcsa, not ours)** gives it `BTUSB_QCA_ROME`, which loads the QCA rampatch and NVM
+  (boot log: `QCA: patch rome 0x302 build 0x3e8`). E1 (that firmware setup only) and E3 (the
+  exact upstream entry) ran 74 links with 0 timeouts (§3). What the ROM firmware does wrong is
+  not known and not claimed (§4).
+- **E3 and kernel updates.** E3 is btusb with that entry, built for one kernel ABI into
+  `/lib/modules/<krel>/updates/`. Before any new kernel boots, run `scripts/btusb-has-device.py`
+  on its **stock** btusb (default ID `13d3:3503`) with the control; if ABSENT, E3 is rebuilt for
+  it first. A changelog or a version number proves nothing (backports).
+- **Dangerous on this machine, and why.**
+  - Never unload, reload, rebind or swap btusb or `bluetooth.ko` on the running system: a
+    reload kills even a *healthy* controller here (`EX-046`, 09-23), and recovery needs a
+    power-off. Module tests go through `updates/` + `depmod` + a cold boot, on the operator's
+    word (§9.9).
+  - Never `install.sh --apply`: its watchdog's USB reset drove a wedged controller off the bus
+    three times (`EX-023`, `EX-026`). After any `--tools-only` deploy run `bt-mode status`: it
+    silently reverted the baseline on 08-19 and 09-01 (§7).
+  - In an untreated window only sysfs reads are safe; `bt-mode` writes live, so check
+    `bt-window` before any mode switch.
+- **BT-9 follows from the fix.** The quirk the entry sets (`HCI_QUIRK_SIMULTANEOUS_DISCOVERY`)
+  exposes a core race in which discovery never stops and every later scan is refused Busy.
+  Fixed upstream by `96d006ae6445` (Jiajia Liu); our backports carry it to 6.12, 6.6 and 6.1.
+- **Separate from BT-1:** the BlueZ crash fixes (BT-7) and the kernel MGMT fix `86ef0f58bdec`
+  (BT-8) are other defects found on the way.
+- **Retracted claims are in §5.** Read them before asserting anything about the signature.
+- **Which record is current:** the submission rows of `docs/STATUS.md` for every upstream state;
+  STATUS's issue rows and the list below follow them.
+
+**The state at a glance (2026-10-14; the submission rows of `docs/STATUS.md` win):**
+- **BT-1's fix in stable:** released in 7.2.10 and 6.18.56; queued for 6.12, 6.6, 6.1, 5.15 and
+  5.10 (`EX-061`). Ubuntu's `7.0.0-38` stock btusb lacks it.
 - **Accepted upstream, ours:**
-  - kernel `86ef0f58bdec` (BT-8, bluetooth-next);
+  - kernel `86ef0f58bdec` (BT-8): mainline since v7.3-rc7, queued for stable 7.2, 6.18, 6.12, 6.6, 6.1;
   - BlueZ `a734b06059cb` and `0bed9886cff3` (BT-7);
-  - BlueZ `ae23df052290` and `6f5eeb402d3b` (M-3).
-- **Waiting for replies:**
-  - the Tested-by on Hui Peng's mesh_tx leak patch (10-06);
-  - the BT-9 stable backports of `96d006ae6445` to 6.12, 6.6 and 6.1 (10-10);
-  - BlueZ `emulator: Free hooks in btdev_destroy` (10-10);
-  - the BlueZ mgmt-tester BT-9 test series (10-10).
+  - BlueZ `ae23df052290` and `6f5eeb402d3b` (M-3);
+  - BlueZ `8da7e648a9fb` (emulator hook leak) and `f3344d20d904`, `2942883d2738`, `49a70562f0bf`
+    (the BT-9 test), applied 10-12; `git range-diff` against what was sent not yet done;
+  - the BT-9 stable backports of `96d006ae6445` to 6.12, 6.6 and 6.1, queued 10-11.
+- **Waiting for replies:** the Tested-by on Hui Peng's mesh_tx leak patch (10-06).
 - **Operator decisions open:**
   - the a2dp duplicate-check cleanup;
   - an Ubuntu SRU for `dc16388d45ec`;
+  - the BlueZ sends A1 and A2 (`patches/bluez/send-2026-10-13/`);
   - the U6 SRU;
   - the U7 PipeWire report;
   - a reply on Jiale Yao's power-off patch (patchwork 14864878);
@@ -62,7 +97,7 @@ Recent detail may be shortened. Settled state is never dropped.
 - **Machine:**
   - **Since 2026-10-11 16:26 the laptop runs `7.0.0-38` with E3 built for it** (`updates/btusb.ko`, the exact upstream entry; srcversion `D1DEA96A0C95BFAB05CEE01`; the boot log shows `patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded). The build is on private `diag/e3-btusb-for-7.0.0-38-20261010`.
   - `-38`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
-  - `-38` also carries the BT-9 fix (`96d006ae6445`). The reboot ended the discovery stuck since 10-04.
+  - `-38` also carries the BT-9 fix (`96d006ae6445`). The discovery stuck since 10-04 had already ended on 10-10 at 15:02, at the operator's adapter power cycle (§5; corrected 2026-10-14).
   - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` (`d5272a6`) is installed — the operator's `install.sh --tools-only` plus `daemon-reload`.
   - Only the operator touches the machine's Bluetooth or kernel.
   - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer. It has been paused since 2026-10-11 17:23 (free space then; 115 GB free on 10-13); restarting it is the operator's decision, and about nine days of margin remained on 10-13 (`docs/STATUS.md`). Rules: §7, "Evidence".
@@ -72,7 +107,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-11 (§0 added; capture archive, evidence and address rules in §7; `U10`) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
+**Last updated: 2026-10-14 (§0 Foundation; state synced with STATUS; BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
 `kernel/mgmt-flush-status` the same day; the next exhibit on `main` is EX-063) — no tip hash:
 it rotted within hours (`R2-13`).
 
@@ -103,8 +138,9 @@ it rotted within hours (`R2-13`).
 > watch for Queued/FAILED). **BlueZ leak fix and test series sent 05:18 +0200** to
 > linux-bluetooth (`<20261010031846.2842837-1-…>`, `<20261010031852.2842893-1..4-…>`).
 > **Next:** replies on all three submissions.
-> Reply on BlueZ #1554 posted 2026-10-09. The laptop's discovery stayed stuck until the reboot into
-> `7.0.0-38` on 2026-10-11, a kernel that carries the fix; traces preserved in `/root/bt-trace-keep/` with
+> Reply on BlueZ #1554 posted 2026-10-09. The laptop's discovery stayed stuck until the operator's
+> adapter power cycle on 2026-10-10 (powered again 15:02:44; ⚠️ corrected 2026-10-14 — this line
+> used to say "until the reboot into `7.0.0-38`", see §5); traces preserved in `/root/bt-trace-keep/` with
 > `SHA256SUMS`, and compressed into `archive/bt-trace/`.
 > Private branches are being ported to `main` (§7 rule change, 2026-10-09).
 >
@@ -288,6 +324,7 @@ fault is not specific to Disconnect.
 | "autosuspend mitigation works (0/4 vs 3/4)" | **FALSE** — `EX-038` wedged under `autosusp=N`. The split is chronological **because `--tools-only` reverted the baseline on 08-19** (`R2-58`): every `autosusp=Y` row is before that deploy, every `autosusp=N` row after. Not a treatment effect — a deployment accident |
 | "the 287-timeout denominator can't be re-derived" | **FALSE** — `evidence/baseline/baseline.tsv` reproduces it |
 | "lore.kernel.org is unreachable" | **FALSE** — UA block fronting a JS challenge; a browser gets 200 |
+| "the discovery stuck since 10-04 lasted until the reboot into `7.0.0-38` (10-11)" | **FALSE** — the operator's adapter power cycle ended it on 10-10: powered again 15:02:44.156, the next Start Discovery answered Success 24 ms later, and no `Status: Busy` in any capture from then to the 10-11 shutdown; the control, 05:10:31 the same day, is refused Busy (`docs/STATUS.md`, BT-9) |
 
 ## 6. The BlueZ patches — status: **APPLIED UPSTREAM 2026-09-21**
 

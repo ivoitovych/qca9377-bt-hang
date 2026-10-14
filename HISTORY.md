@@ -3895,7 +3895,7 @@ Pushing those trees would have copied gigabytes of upstream history. So their co
 
 **The archive's first numbers corrected the estimate.** Two October captures had compressed 10× and 56×. The archiver, oldest first, began with the 26 September headset sessions behind E1 and E3, and those barely compress at 1.4×: SCO audio is already compressed. The projected total rose from one or two gigabytes to somewhere near the 10 GB budget. The budget stands. If it is reached, the archiver stops and the operator decides; nothing is deleted.
 
-**The reboot.** At 16:26 the laptop restarted into `7.0.0-38`, with E3 in place for it. The boot log shows the QCA firmware loaded, which keeps the original hang away. The kernel also carries the BT-9 fix, and the reboot ended the stuck discovery of 10-04. The archiver's timer had been transient and did not survive. It was found missing and restarted at 17:02.
+**The reboot.** At 16:26 the laptop restarted into `7.0.0-38`, with E3 in place for it. The boot log shows the QCA firmware loaded, which keeps the original hang away. The kernel also carries the BT-9 fix. (⚠️ Corrected 2026-10-14: this used to say the reboot ended the stuck discovery of 10-04. The operator's adapter power cycle had already ended it on 10-10 at 15:02; the captures are cited in `docs/STATUS.md`, BT-9.) The archiver's timer had been transient and did not survive. It was found missing and restarted at 17:02.
 
 **A coherence pass over the foundation documents** followed. It found, among other things:
 - README counting "three fixes, two in BlueZ" above a table of four;

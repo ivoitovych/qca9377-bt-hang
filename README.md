@@ -134,7 +134,7 @@ from v7.3, stable 7.2.10 and 6.18.56, and the next stable release of 6.12, 6.6, 
 - **Stable backport of `dc16388d45ec`:** released in 7.2.10 and 6.18.56, queued for 6.12, 6.6,
   6.1, 5.15 and 5.10 (`EX-061`). Ubuntu's current kernel, `7.0.0-38`, still lacks the entry and
   7.0 is no longer maintained upstream, so an Ubuntu request is next.
-- **Simultaneous discovery that never stops (2026-10-09, `EX-062`).** With the device-table entry in place, this laptop's device discovery stayed stuck from 2026-10-04 until a reboot on 10-11. The kernel cause was already fixed upstream, but not in 6.12, 6.6 or 6.1, the older lines the `dc16388d45ec` backport reaches. Backports to those three, a BlueZ regression test and a BlueZ leak fix were sent on 2026-10-10; the backports are queued and the BlueZ commits applied (tables above).
+- **Simultaneous discovery that never stops (2026-10-09, `EX-062`).** With the device-table entry in place, this laptop's device discovery stayed stuck from 2026-10-04 until an adapter power cycle on 10-10. The kernel cause was already fixed upstream, but not in 6.12, 6.6 or 6.1, the older lines the `dc16388d45ec` backport reaches. Backports to those three, a BlueZ regression test and a BlueZ leak fix were sent on 2026-10-10; the backports are queued and the BlueZ commits applied (tables above).
 - **Delivery of the accepted changes** into kernel and BlueZ releases and into Ubuntu:
   tracked, nothing owed yet. No BlueZ release carries them yet (the newest tag is 5.87).
 - **The kernel mesh advertising work** (found while reading why the list's `mesh-tester` fails
