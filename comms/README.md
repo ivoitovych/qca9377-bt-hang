@@ -17,6 +17,7 @@ message points at commits.
 | main branch maintainer | `main`, on the affected machine | `main-branch-maintainer` |
 | test suite maintainer | `tests/unit-testing-introduction`, CI, the devtools | `test-suite-maintainer` |
 | review branch maintainer | `review/*` | `review-branch-maintainer` |
+| ci-local maintainer | `ci/upstream-ci-local`: the list bots reproduced locally, in a cloud build container (no hardware, no KVM) | `ci-local-maintainer` |
 
 ## Naming
 

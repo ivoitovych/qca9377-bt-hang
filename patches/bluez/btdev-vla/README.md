@@ -2,6 +2,13 @@
 
 **State 2026-10-10: a file for the operator's review. Nothing has been mailed.**
 
+**Superseded 2026-10-13.** The version to send is A2 in
+[`patches/bluez/send-2026-10-13/`](../send-2026-10-13/README.md): the same fixed-size
+array, with `assert(iovlen > 0 && iovlen <= SEND_CMD_IOV_MAX)` where this version returned
+silently (an outside review flagged the silent return and the uncovered zero), rebased on
+master `9dc7e4096`. This directory stays as the record of the first version and of the tests
+run on it (`results/ci-local-2026-10-10.md`, §T4).
+
 | path | what |
 |---|---|
 | `0001-emulator-Avoid-variable-length-array-in-send_cmd.patch` | one patch on BlueZ master `7428ca2df9356363079db0f48412c20cbdb9471f` (its `base-commit` line), `git format-patch --subject-prefix="PATCH BlueZ"`; no `Signed-off-by` (BlueZ) |
