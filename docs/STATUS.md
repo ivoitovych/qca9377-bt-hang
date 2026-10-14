@@ -68,7 +68,7 @@ for the next login. `bt-ui-capture stop` and `unstage` undo everything.
 - E3 is `updates/btusb.ko`, carrying the exact upstream entry: srcversion `D1DEA96A0C95BFAB05CEE01`, from private `diag/e3-btusb-for-7.0.0-38-20261010`.
 - The boot log shows `QCA: patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded.
 - `-38` carries `96d006ae6445`. The stuck discovery of 2026-10-04 10:26:11 (`BT-9`) had already ended on 2026-10-10 at 15:02, at the operator's adapter power cycle (corrected 2026-10-14; the evidence is in the BT-9 row).
-- ⚠️ **Trial E3 #1 lost its row.** It ran on `-34` from 2026-10-01 00:13 until the shutdown at 2026-10-11 16:24:45.
+- ⚠️ **Trial E3 #1 lost its row.** It ran on `-34` from 2026-10-01 00:13 until the shutdown at 2026-10-11 16:24:45. Every shutdown risks the same until the fixed `bt-trial` (`d5272a6`) is installed: the operator's `install.sh --tools-only` plus `daemon-reload`.
   - At that shutdown it wrote nothing: no `bt-trial` journal line after the unit's stop, no state-after files, no row in `results.tsv`.
   - `bt-trial-auto` then opened a new "E3 #1" at 16:26 on `-38`, in the same directory. The tracked files there are byte-identical, so nothing tracked was lost.
   - The installed `bt-trial` is the 2026-09-18 copy. The test-suite maintainer's 2026-09-29 note warned that its shutdown path can lose the row, and the fix (`d5272a6`) is on their ready branch, not installed.
