@@ -785,6 +785,28 @@ MSTUB
     done
 }
 
+# THE IDLE `sleep 3600` OF A DAEMON, by the daemon's own children: no scan of
+# /proc, which would read every process on the machine.
+idle_sleep() {   # <pid> — the pid of its child `sleep 3600`, or nothing
+    local c
+    for c in $(cat "/proc/$1/task/$1/children" 2>/dev/null); do
+        [[ "$(tr '\0' ' ' < "/proc/$c/cmdline" 2>/dev/null)" == "sleep 3600 " ]] && echo "$c"
+    done
+    return 0
+}
+# Gone, or dead and not yet reaped: `kill -0` succeeds on a zombie, and an
+# orphan waits for whichever process adopts it to collect its status.
+proc_gone() {   # <pid> — 0 once it is absent or a zombie, within about a second
+    local st
+    for _ in $(seq 1 20); do
+        st=$(awk '{ print $3 }' "/proc/$1/stat" 2>/dev/null)
+        [[ -z "$st" || "$st" == Z ]] && return 0
+        sleep 0.05
+    done
+    return 1
+}
+proc_state() { awk '{ print "state " $3 ", parent " $4 }' "/proc/$1/stat" 2>/dev/null || echo absent; }
+
 # ── STOPPING A DAEMON THE WAY systemctl stop DOES ─────────────────────────
 #
 # Start it as its own process group — `setsid` — and stop it with TERM to the
@@ -7204,6 +7226,18 @@ USGONE=$(timeout 20 env PATH="$CP/stub:$PATH" BT_USBMON_DIR="$CP/usb" \
 (( usgrc == 0 )) && [[ "$USGONE" == *"not present"* ]] \
     && ok "bt-usbmon --check returns when the controller is absent, not idles" \
     || bad "--check hung or failed on an absent controller (rc=$usgrc)"
+# In service mode it idles, and a plain TERM (a stop outside systemd, which
+# kills only the main process) must end the idle `sleep 3600` too.
+env PATH="$CP/stub:$PATH" BT_USBMON_DIR="$CP/usb" BT_USBMON_MIN_FREE_GB=0 \
+    BT_SYSFS_USB="$CP/empty" BT_USBMON_DEBUGFS="$CP/dbg" \
+    "$SETSID" bin/bt-usbmon > "$CP/idle.log" 2>&1 &
+USIPID=$!; usisp=""
+for _ in $(seq 1 50); do usisp=$(idle_sleep "$USIPID"); [[ -n "$usisp" ]] && break; sleep 0.1; done
+kill -TERM "$USIPID" 2>/dev/null; wait "$USIPID" 2>/dev/null
+[[ -n "$usisp" ]] && proc_gone "$usisp" && grep -q 'stopped' "$CP/idle.log" \
+    && ok "an idling bt-usbmon stopped by a plain TERM takes its sleep 3600 with it" \
+    || bad "bt-usbmon idle stop: sleep '${usisp:-never seen}' $([[ -n "$usisp" ]] && proc_state "$usisp"); log: $(tail -1 "$CP/idle.log")"
+kill -TERM -- "-$USIPID" 2>/dev/null   # whatever it left in its group (stop_daemon's second half)
 
 bin/bt-usbmon --bogus >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-usbmon rejects an unknown argument" \
@@ -7855,6 +7889,8 @@ TRPID=$!
 tri=0
 while (( tri < 80 )); do grep -q "systemctl restart bt-trace" "$TR/daemon.log" 2>/dev/null && break
                          sleep 0.1; tri=$((tri + 1)); done
+trsp=""
+for _ in $(seq 1 50); do trsp=$(idle_sleep "$TRPID"); [[ -n "$trsp" ]] && break; sleep 0.1; done
 kill -TERM "$TRPID" 2>/dev/null
 trj=0
 while (( trj < 30 )) && kill -0 "$TRPID" 2>/dev/null; do sleep 0.1; trj=$((trj + 1)); done
@@ -7865,6 +7901,9 @@ else
     ok "a bt-trace idling after the disk floor still stops on SIGTERM"
 fi
 wait "$TRPID" 2>/dev/null
+[[ -n "$trsp" ]] && proc_gone "$trsp" \
+    && ok "a bt-trace idling after the disk floor takes its sleep 3600 with it on a plain TERM" \
+    || bad "bt-trace floor idle stop: sleep '${trsp:-never seen}' $([[ -n "$trsp" ]] && proc_state "$trsp")"
 kill -TERM -- "-$TRPID" 2>/dev/null   # and what it left in its group (stop_daemon's second half)
 TRF=$(cat "$TR/daemon.log")
 [[ "$TRF" == *"only 1GB free"* && "$TRF" == *"pruning captures"* ]] \
