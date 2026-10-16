@@ -26,10 +26,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # The invariants derive the file set from `git ls-files`, so the checkout
-      # must be a real repository. actions/checkout gives one at depth 1, which
-      # is enough — nothing here reads history.
+      # must be a real repository. Full history and every branch, because
+      # devtools/doc-main-hashes checks that a commit id the documents place on
+      # main is on main, or on the branch the line names. At depth 1 it can only
+      # say "inconclusive".
       # gawk, because ubuntu-latest ships mawk as `awk` and mawk 1.3.4 cannot
       # express the redaction patterns in tools/sanitize-logs.sh — it treats an
       # interval on a group as `+`, so `11:22` matches the MAC pattern while a

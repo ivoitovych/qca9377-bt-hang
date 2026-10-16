@@ -12198,6 +12198,38 @@ git -C "$RSM" add -A
     || bad "the repository-derived allowlist let an unrelated address through"
 rm -rf "$RSM"
 
+# ── A COMMIT ID THE DOCUMENTS PLACE ON MAIN MUST BE ON MAIN ───────────────
+#
+# 2026-10-16: STATUS named the test-suite branch's `d5272a6` as the fix landed
+# on main; main had the cherry-pick `4c26c5d`. Every later reader repeated it.
+# A scratch repository with one commit on main and one on a side branch: the
+# side commit named as main's must fail; main's own commit, and the side commit
+# with its branch named, must pass; a shallow clone must say it cannot tell.
+DMH=$(mktemp -d); git -C "$DMH" init -q -b main
+mkdir -p "$DMH/docs"; echo base > "$DMH/f"
+git -C "$DMH" add -A; git -C "$DMH" -c user.name=t -c user.email=t@example.com commit -q -m base
+DMHMAIN=$(git -C "$DMH" rev-parse --short=7 HEAD)
+git -C "$DMH" checkout -q -b side; echo side >> "$DMH/f"
+git -C "$DMH" -c user.name=t -c user.email=t@example.com commit -q -am side
+DMHSIDE=$(git -C "$DMH" rev-parse --short=7 HEAD)
+git -C "$DMH" checkout -q main
+printf -- '- The fix is `%s`, landed on `main`.\n' "$DMHSIDE" > "$DMH/docs/STATUS.md"
+devtools/doc-main-hashes "$DMH" >/dev/null 2>&1; dmhrc=$?
+(( dmhrc == 1 )) \
+    && ok "doc-main-hashes refuses a side branch's commit named as main's" \
+    || bad "a commit not on main, named as main's, passed doc-main-hashes (rc=$dmhrc)"
+printf -- '- On `main` the fix is `%s`; `%s` exists only on `side`.\n' "$DMHMAIN" "$DMHSIDE" > "$DMH/docs/STATUS.md"
+devtools/doc-main-hashes "$DMH" >/dev/null 2>&1; dmhrc=$?
+(( dmhrc == 0 )) \
+    && ok "doc-main-hashes accepts main's own commit, and another branch's when the line names that branch" \
+    || bad "doc-main-hashes refused a correct line (rc=$dmhrc)"
+git clone -q --depth 1 "file://$DMH" "$DMH-shallow" 2>/dev/null
+devtools/doc-main-hashes "$DMH-shallow" >/dev/null 2>&1; dmhrc=$?
+(( dmhrc == 3 )) \
+    && ok "doc-main-hashes calls a shallow clone inconclusive, never clean" \
+    || bad "doc-main-hashes on a shallow clone returned rc=$dmhrc (want 3)"
+rm -rf "$DMH" "$DMH-shallow"
+
 # ── NON-ASCII IN THE LOGS, WHICH THE UPSTREAM REPORT NOW DEPENDS ON ──────
 #
 # The second headset that reproduced the fault is recorded by BlueZ, the kernel
