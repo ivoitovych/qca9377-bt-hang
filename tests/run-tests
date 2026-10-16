@@ -1914,6 +1914,52 @@ else
 fi
 rm -rf "$LC/nolist" "$LC/state-nolist"
 
+# AND WITH THE PROJECT'S OWN TOOLS INSTALLED, AS ON THE LAPTOP. The close runs
+# bt-state (state-after.txt) and bt-mark (the RESULT mark) when they are on the
+# PATH. Nowhere in this file are they, so every close above skipped both; on the
+# laptop both are in /usr/local/bin. bt-state counts the boot's command timeouts
+# over the WHOLE boot's kernel journal, with no budget, and both ask
+# bluetoothctl, which is given 8 s each. They ran ahead of the results row: the
+# slow-journal check above, with the two tools on its PATH, lost the row again
+# (rc=124, no row; 2026-10-16). The row is now written before them, and they
+# still run after it. Here they are the checkout's own copies in install.sh's
+# layout, the libraries in lib/ beside them (bt-state finds them there, by its
+# own path), with stubs for what they ask the machine; the journal is the slow
+# one above.
+mkdir -p "$LC/inst/bin" "$LC/inststop/bin"
+ln -s "$PWD/tools/bt-state" "$PWD/bin/bt-mark" "$PWD/tools/lib" "$LC/inst/bin/"
+printf '#!/bin/sh\necho "$*" >> "%s/inst/logger.log"\n' "$LC" > "$LC/inst/bin/logger"
+printf '#!/bin/sh\nexit 0\n' > "$LC/inst/bin/bluetoothctl"
+cat > "$LC/inststop/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" --until "*) exit 0 ;;
+  *" -k "*) sleep 5; exit 0 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/inst/bin/logger" "$LC/inst/bin/bluetoothctl" "$LC/inststop/bin/journalctl"
+trial_in "$LC/inststop" "$LC/state-inststop" PATH="$LC/inst/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/inststop" "$LC/state-inststop" --timeout 4 PATH="$LC/inststop/bin:$LC/inst/bin:$LC/bin:$PATH" \
+    BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; isrc=$?
+ISROW=$(awk -F'\t' 'NR == 2 { print $8, $13 }' "$LC/inststop/evidence/trials/results.tsv" 2>/dev/null)
+[[ "$ISROW" == "confirmed 1" ]] \
+    && ok "with bt-state and bt-mark installed, a slow journal still cannot cost the row: it is written before them" \
+    || bad "close with the project's tools installed: rc=$isrc (124 = still running at 4 s), row (bt1_status timeouts)='$ISROW'"
+# And the extras are not dropped: on a quick journal the same close writes
+# state-after.txt and the RESULT mark, after the row.
+: > "$LC/inst/logger.log"
+trial_in "$LC/instfast" "$LC/state-instfast" PATH="$LC/inst/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/instfast" "$LC/state-instfast" --timeout 10 PATH="$LC/inst/bin:$LC/bin:$PATH" -- autostop >/dev/null 2>&1; ifrc=$?
+IFAFTER=$(cat "$LC/instfast"/evidence/trials/*/trial-*/state-after.txt 2>/dev/null)
+(( ifrc == 0 )) && [[ -n "$(awk 'NR == 2' "$LC/instfast/evidence/trials/results.tsv" 2>/dev/null)" ]] \
+    && [[ "$IFAFTER" == *"tx timeouts"* ]] && grep -q 'RESULT' "$LC/inst/logger.log" \
+    && ok "the close still writes state-after.txt and the RESULT mark, after the row" \
+    || bad "close extras: rc=$ifrc, state-after '$(head -c 60 <<<"$IFAFTER")', marks: $(tr '\n' '|' < "$LC/inst/logger.log")"
+rm -rf "$LC/inst" "$LC/inststop" "$LC/state-inststop" "$LC/instfast" "$LC/state-instfast"
+
 # THE --grep PROBE, both ways, and against the inversion that hid it. A journal
 # whose --help names --grep must be asked with the filter; one whose help does
 # not, without. The first help text is LONG, as journalctl's is: probed with
