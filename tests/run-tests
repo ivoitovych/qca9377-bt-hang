@@ -4673,6 +4673,38 @@ SVNOREPO=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYS
 [[ "$SVNOREPO" == *"no checkout found"* && "$SVNOREPO" == *"BT_REPO="* ]] \
     && ok "bt-status names the override when it cannot find a checkout" \
     || bad "the no-checkout branch did not name BT_REPO"
+# ── a checkout whose .git is a FILE: a git worktree ───────────────────────
+#
+# bt-trial, bt-verify-install and bt-status find their checkout by a .git
+# beside a marker file, and asked for a DIRECTORY. In a worktree .git is a file
+# naming the main repository's, so the search passed the tool's own checkout
+# and went on, to the laptop's clone or to "no checkout found"; bt-status also
+# left out its checkout section. The main branch maintainer's held branch lived
+# in a worktree (2026-10-11). Here a real `git worktree add`, the real tools
+# linked into its tools/, each run from a directory that is no checkout, with
+# BT_REPO unset, so each finds the worktree by its own search.
+WT=$(mktemp -d); CLEANUP_PATHS+=("$WT")
+git init -q "$WT/main"; : > "$WT/main/install.sh"; git -C "$WT/main" add -A
+git -C "$WT/main" -c user.name=t -c user.email=test@example.com -c commit.gpgsign=false commit -qm init
+git -C "$WT/main" worktree add -q "$WT/wt" 2>/dev/null
+W="$WT/wt"; mkdir -p "$W/tools" "$W/evidence/trials" "$WT/elsewhere"
+ln -s "$PWD"/tools/* "$W/tools/"
+cp "$FIX" "$W/evidence/trials/results.tsv"
+WTT=$(cd "$WT/elsewhere" && env -u BT_REPO "$W/tools/bt-trial" report 2>&1); wttrc=$?
+WTV=$(cd "$WT/elsewhere" && "$W/tools/bt-verify-install" 2>&1)
+WTS=$(cd "$WT/elsewhere" && env -u BT_REPO PATH="$STBIN:$PATH" BT_JOURNAL_FIXTURE="$ST" \
+          BT_SYSFS_USB="$STSYS/usb" BT_SYSFS_BT="$STSYS/bt" "$W/tools/bt-status" 2>&1)
+[[ -f "$W/.git" ]] && (( wttrc == 0 )) && [[ "$WTT" == *"($W/evidence/trials/results.tsv)"* ]] \
+    && ok "bt-trial finds the checkout it sits in when that is a worktree (.git a file)" \
+    || bad "bt-trial in a worktree: .git $([[ -f "$W/.git" ]] && echo file || echo NOT-a-file), rc=$wttrc: $(grep -m1 -E 'Trial results|no checkout' <<<"$WTT")"
+[[ "$WTV" == *"could not parse install_file entries from $W/install.sh"* ]] \
+    && ok "bt-verify-install finds a worktree checkout (and then refuses its empty install.sh)" \
+    || bad "bt-verify-install in a worktree: $(head -1 <<<"$WTV")"
+grep -qE "checkout: +$W\$" <<<"$WTS" \
+    && ok "bt-status finds a worktree checkout and reports its section" \
+    || bad "bt-status in a worktree: $(grep -E 'checkout:|no checkout' <<<"$WTS" | head -2 | tr '\n' '|')"
+rm -rf "$WT"
+
 rm -rf "$STSYS"
 
 # ── bt-context: the tool that reports what nobody thought to look for ─────
@@ -7085,7 +7117,7 @@ USCHK=$(env PATH="$CP/stub:$PATH" BT_USBMON_DIR="$CP/usb" BT_USBMON_KEEP=2 \
 usleft=$(ls -1 "$CP/usb"/usbmon-*.pcap 2>/dev/null | wc -l)
 (( usrc == 0 && ${usleft:-0} == 2 )) && [[ "$USCHK" == *"interface      usbmon3"* ]] \
     && ok "bt-usbmon --check resolves the controller's bus and prunes to KEEP" \
-    || bad "bt-usbmon --check left $usleft file(s) of 5 with KEEP=2 (rc=$usrc)"
+    || bad "bt-usbmon --check left $usleft file(s) of 5 with KEEP=2 (rc=$usrc): $(tail -4 <<<"$USCHK" | tr '\n' '|')"
 
 # usbmon instances are per-bus, so resolving the WRONG bus captures a bus the
 # controller is not on — a capture that looks healthy and contains nothing.
