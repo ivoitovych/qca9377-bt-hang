@@ -1963,6 +1963,36 @@ else
 fi
 rm -rf "$LC/slowstop" "$LC/state-slowstop"
 
+# AND WHEN --list-boots ANSWERS NOTHING. The closer's enumeration check is
+# bounded only through the boot start that --list-boots supplies; without it
+# the read was the unbounded whole-boot scan that lost EX-023's row, and the
+# source check above passes it because the conditional `--until` is on the
+# line. Here --list-boots says nothing and every full -k read is slow. The
+# close must still finish inside 4 s and write its row, and enum_at_boot must
+# say `?` (not measured), never a `no` it did not see.
+mkdir -p "$LC/nolist/bin"
+cat > "$LC/nolist/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" --until "*) exit 0 ;;
+  *" -k "*) sleep 5; exit 0 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/nolist/bin/journalctl"
+trial_in "$LC/nolist" "$LC/state-nolist" PATH="$LC/nolist/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/nolist" "$LC/state-nolist" --timeout 4 PATH="$LC/nolist/bin:$LC/bin:$PATH" \
+    BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; nlrc=$?
+NLROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/nolist/evidence/trials/results.tsv" 2>/dev/null)
+if (( nlrc == 0 )) && [[ "$NLROW" == "confirmed ?" ]]; then
+    ok "with no boot list the enumeration read is budgeted too: the row is written and enum_at_boot says '?'"
+else
+    bad "close with no --list-boots answer: rc=$nlrc (124 = still reading at 4 s), row (bt1_status enum_at_boot)='$NLROW'"
+fi
+rm -rf "$LC/nolist" "$LC/state-nolist"
+
 # THE --grep PROBE, both ways, and against the inversion that hid it. A journal
 # whose --help names --grep must be asked with the filter; one whose help does
 # not, without. The first help text is LONG, as journalctl's is: probed with

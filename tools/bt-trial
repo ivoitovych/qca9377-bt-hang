@@ -1061,10 +1061,19 @@ hang|ok)
         bs=$(date -d "$boot_start" +%s 2>/dev/null) \
             && enum_until=$(date -d "@$(( bs + 180 ))" '+%Y-%m-%d %H:%M:%S')
     fi
-    n_enum=$(journalctl -k -b 0 ${enum_until:+--until "$enum_until"} --no-pager 2>/dev/null \
-             | grep -c "idVendor=${BT_VID:-13d3}, idProduct=${BT_PID:-3503}" || true)
+    # BUT THE BOUND IS CONDITIONAL. If --list-boots answers nothing, enum_until
+    # stays empty and this is the unbounded whole-boot read again. The text
+    # `--until` is still on the line, so the source check for unbounded reads
+    # passes it. So the read also runs under the descriptive scan's budget, and
+    # a read the budget cut short records `?`: not known, rather than a `no`
+    # that was never measured.
+    ejrc=0
+    ej=$(timeout "${BT_TRIAL_SCAN_BUDGET:-20}" journalctl -k -b 0 ${enum_until:+--until "$enum_until"} --no-pager 2>/dev/null) || ejrc=$?
+    n_enum=$(grep -c "idVendor=${BT_VID:-13d3}, idProduct=${BT_PID:-3503}" <<<"$ej" || true)
     if (( ${n_enum:-0} > 0 )); then
         enum_at_boot=yes
+    elif (( ejrc == 124 )); then
+        enum_at_boot="?"
     else
         enum_at_boot=no
     fi
