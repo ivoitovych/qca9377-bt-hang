@@ -1914,6 +1914,34 @@ else
 fi
 rm -rf "$LC/nolist" "$LC/state-nolist"
 
+# AND WHEN THE ENUMERATION READ FAILS FOR ANOTHER REASON. Only the budget's
+# exit 124 used to give `?`; any other failed read (a journal it may not read,
+# a --until it rejects, a timeout that could not start it) fell through to
+# `no`, a claim that nothing was measured. The descriptive scan already treats
+# every such failure as a failed read. Here the boot list answers, so the read
+# is the bounded one, and it fails at once with exit 1 and a reason on stderr.
+mkdir -p "$LC/enumfail/bin"
+cat > "$LC/enumfail/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" -b 0 "*) echo "Failed to open journal: Permission denied" >&2; exit 1 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/enumfail/bin/journalctl"
+trial_in "$LC/enumfail" "$LC/state-enumfail" PATH="$LC/enumfail/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/enumfail" "$LC/state-enumfail" --timeout 4 PATH="$LC/enumfail/bin:$LC/bin:$PATH" \
+    -- autostop >/dev/null 2>&1; efrc=$?
+EFROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/enumfail/evidence/trials/results.tsv" 2>/dev/null)
+if (( efrc == 0 )) && [[ "$EFROW" == "confirmed ?" ]]; then
+    ok "an enumeration read that fails for any reason says '?', not a 'no' it never measured"
+else
+    bad "close with a failing enumeration read: rc=$efrc, row (bt1_status enum_at_boot)='$EFROW' (want 'confirmed ?')"
+fi
+rm -rf "$LC/enumfail" "$LC/state-enumfail"
+
 # THE --grep PROBE, both ways, and against the inversion that hid it. A journal
 # whose --help names --grep must be asked with the filter; one whose help does
 # not, without. The first help text is LONG, as journalctl's is: probed with
