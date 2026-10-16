@@ -11114,13 +11114,18 @@ if (( COWORLD_OK )); then
         || bad "held sync with a dirty tree: $(coxsect dirty-sync | tr '\n' '|')"
 
     # ── devtools/save: refusals, the hand-off warnings, a commit
+    # BRIEF's budget is read from devtools/save, not restated: it rose from 750
+    # to 1000 on 2026-10-11, and the restated number turned this check red.
+    # The world appends that many lines, so BRIEF is over budget whatever its
+    # own length.
+    SBUDGET=$(sed -n 's/^BRIEF_BUDGET=\([0-9][0-9]*\).*/\1/p' devtools/save)
     printf 'save: a world commit\n' > "$COW/save-msg"; : > "$COW/save-empty"
     COS=$(co_world "$COSETUP
         echo '== noarg'; devtools/save >/dev/null 2>&1; echo \"rc=\$?\"
         echo '== missing'; devtools/save '$COW/nope' 2>&1; echo \"rc=\$?\"
         echo '== empty'; devtools/save '$COW/save-empty' 2>&1; echo \"rc=\$?\"
         printf '# EX-999 — a world probe\n\n**Claim.** none.\n' > evidence/exhibits/999-world-probe.md
-        for i in \$(seq 1 800); do echo \"line \$i\"; done >> BRIEF.md
+        for i in \$(seq 1 ${SBUDGET:-0}); do echo \"line \$i\"; done >> BRIEF.md
         echo world > save-world.txt
         echo '== save'; devtools/save '$COW/save-msg' --no-push 2>&1; echo \"rc=\$?\"
         echo \"head=\$(git log -1 --format=%s)\"
@@ -11132,7 +11137,7 @@ if (( COWORLD_OK )); then
         && ok "save refuses no message, an unreadable one and an empty one (2), before anything else" \
         || bad "save refusals: $(cossect noarg | tr '\n' '|') $(cossect missing | tr '\n' '|') $(cossect empty | tr '\n' '|')"
     [[ "$(cossect save)" == *"BRIEF.md does not mention EX-999"* && "$(cossect save)" == *"docs/STATUS.md does not mention EX-999"* \
-       && "$(cossect save)" == *"over its 750-line budget"* ]] \
+       && -n "$SBUDGET" && "$(cossect save)" == *"over its ${SBUDGET}-line budget"* ]] \
         && ok "save warns when BRIEF.md and docs/STATUS.md lag the newest exhibit, and when BRIEF.md is over budget" \
         || bad "save warnings: $(cossect save | grep -E '⚠|budget' | tr '\n' '|')"
     [[ "$(cossect save)" == *"rc=0"* && "$COS" == *"head=save: a world commit"* && "$COS" == *"pushed=0"* ]] \
@@ -13189,13 +13194,14 @@ cat > "$CIS/bin/gh" <<'EOF'
 # stub: record the cwd gh was called from; answer one green run, fail on demand,
 # or fail the first CI_STUB_FAIL_TIMES calls (counted in CI_STUB_COUNTER) and then answer
 echo "$PWD" >> "${CI_STUB_LOG:?}"
+[[ -n "${CI_STUB_ARGS:-}" ]] && echo "$*" >> "$CI_STUB_ARGS"
 [[ -n "${CI_STUB_FAIL:-}" ]] && { echo "failed to determine base repo: not a git repository" >&2; exit 1; }
 if [[ -n "${CI_STUB_FAIL_TIMES:-}" ]]; then
     n=$(cat "${CI_STUB_COUNTER:?}" 2>/dev/null || echo 0); echo $((n + 1)) > "$CI_STUB_COUNTER"
     (( n < CI_STUB_FAIL_TIMES )) && { echo "error connecting to api.github.com" >&2; exit 1; }
 fi
 case "$*" in
-  *"run list"*) printf 'success\tcompleted\t123\tstub run\n' ;;
+  *"run list"*) [[ -n "${CI_STUB_EMPTY:-}" ]] || printf 'success\tcompleted\t123\tstub run\n' ;;
   *) exit 0 ;;
 esac
 EOF
@@ -13223,6 +13229,39 @@ CITR=$(cd "$CIS/elsewhere" && env PATH="$CIS/bin:$PATH" CI_STUB_LOG="$CIS/calls"
 (( citrrc == 0 )) && [[ "$CITR" == *"✓ success"* ]] && (( $(grep -c "error connecting" <<<"$CITR") == 2 )) \
     && ok "devtools/ci --wait rides out two transient gh failures and reads the verdict" \
     || bad "two transient gh failures ended the wait (rc=$citrrc): $(tail -2 <<<"$CITR" | tr '\n' ' ')"
+# WHICH REPOSITORY. gh asks origin's repository unless told otherwise, and the
+# held branches are pushed to `private`, which runs the same workflow: eleven
+# red runs of one held branch went unread while this tool said "no run found"
+# (2026-10-10/11). A scratch checkout with devtools/ci linked in, an origin
+# and a private remote on GitHub, and a branch tracking each.
+CIR="$CIS/co"; git init -q "$CIR"; mkdir -p "$CIR/devtools"; ln -s "$PWD/devtools/ci" "$CIR/devtools/ci"
+git -C "$CIR" -c user.name=t -c user.email=test@example.com -c commit.gpgsign=false commit -q --allow-empty -m one
+git -C "$CIR" remote add origin https://github.com/example-owner/public-repo.git
+# The SCP form of an SSH remote, assembled: written whole it reads to
+# devtools/repo-scan as an email address.
+git -C "$CIR" remote add private "git@""github.com:example-owner/private-repo.git"
+# Branches created with an identity, as the commit: a reflog entry without one
+# makes git guess an address from the host's name (/etc/mailname, /etc/hosts).
+cig() { git -C "$CIR" -c user.name=t -c user.email=test@example.com "$@"; }
+cig checkout -q -b held/x; git -C "$CIR" config branch.held/x.remote private
+cirun() {   # [VAR=value...] — devtools/ci from elsewhere, with CIARGS; gh's arguments land in $CIS/args
+    : > "$CIS/args"
+    (cd "$CIS/elsewhere" && env PATH="$CIS/bin:$PATH" CI_STUB_LOG="$CIS/calls" CI_STUB_ARGS="$CIS/args" "$@" \
+        "$CIR/devtools/ci" "${CIARGS[@]}" 2>&1)
+}
+CIARGS=(); CIP=$(cirun); CIPA=$(cat "$CIS/args")
+CIARGS=(); CIE=$(cirun CI_STUB_EMPTY=1)
+cig checkout -q -b tracks-origin; git -C "$CIR" config branch.tracks-origin.remote origin
+CIARGS=(); CIO=$(cirun); CIOA=$(cat "$CIS/args")
+CIARGS=(--repo other-owner/third HEAD); CIX=$(cirun); CIXA=$(cat "$CIS/args")
+[[ "$CIPA" == *"-R example-owner/private-repo"* && "$CIP" == *"run 123 in example-owner/private-repo"* \
+   && "$CIOA" == *"-R example-owner/public-repo"* && "$CIO" == *"in example-owner/public-repo"* ]] \
+    && ok "devtools/ci asks the repository of the remote the branch tracks, private or origin, and names it" \
+    || bad "devtools/ci's repository: private args '$CIPA', out '$CIP'; origin args '$CIOA'"
+[[ "$CIXA" == *"-R other-owner/third"* && "$CIX" == *"in other-owner/third"* \
+   && "$CIE" == *"no run found for"*"in example-owner/private-repo"* ]] \
+    && ok "devtools/ci --repo overrides the remote, and 'no run found' says which repository it asked" \
+    || bad "devtools/ci --repo / no-run message: '$CIXA' '$(head -1 <<<"$CIX")' '$(head -1 <<<"$CIE")'"
 rm -rf "$CIS"
 
 # ── repo-save, the gate that actually commits ────────────────────────────
