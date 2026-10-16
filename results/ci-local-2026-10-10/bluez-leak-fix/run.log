@@ -1,0 +1,34 @@
+12:32:10 ci-local: space=user tree=/home/user/qca9377-bt-hang/cache/bluez base=origin/master checks=am,checkpatch,gitlint,buildell,make,makeextell,smatch,incremental,scanbuild jobs=4
+12:32:10 ci-local: out=/home/user/qca9377-bt-hang/tmp/ci-local/20261010T123210Z-leak-fix
+12:32:10   patch: patches/kernel/bt9-stable/bluez-mgmt-tester/v2-leak-fix/0001-emulator-Free-hooks-in-btdev_destroy.patch :: [BlueZ] emulator: Free hooks in btdev_destroy
+12:32:10 ci-local: base commit 7428ca2df9356363079db0f48412c20cbdb9471f 2026-10-09 device: Fix LE bearer Connect not replying
+12:32:10   $ (cd src && git -c user.name=Iaroslav Voitovych -c user.email=yaroslav.voytovych@gmail.com -c commit.gpgsign=false am /home/user/qca9377-bt-hang/patches/kernel/bt9-stable/bluez-mgmt-tester/v2-leak-fix/0001-emulator-Free-hooks-in-btdev_destroy.patch)
+12:32:11   $ (cd /home/user/qca9377-bt-hang/cache/ell && ./bootstrap-configure)
+12:32:27   $ (cd /home/user/qca9377-bt-hang/cache/ell && make -j4)
+12:32:43   $ (cd /home/user/qca9377-bt-hang/cache/ell && make install)
+12:32:43 == make: base side
+12:32:43   base side of make reused from /home/user/qca9377-bt-hang/tmp/ci-local/base-cache/user-7428ca2df9356363079db0f48412c20cbdb9471f-make-6e2aee8e.findings (0 finding lines)
+12:32:43 == make: patched side
+12:32:43   $ (cd src && ./bootstrap-configure)
+12:32:58   $ (cd src && make -j4)
+12:37:16 == makeextell: base side
+12:37:16   base side of makeextell reused from /home/user/qca9377-bt-hang/tmp/ci-local/base-cache/user-7428ca2df9356363079db0f48412c20cbdb9471f-makeextell-31ee3a59.findings (0 finding lines)
+12:37:16 == makeextell: patched side
+12:37:16   $ (cd src && ./bootstrap-configure --enable-external-ell --disable-lsan --disable-asan --disable-ubsan)
+12:37:36   $ (cd src && make -j4)
+12:39:22 == smatch: base side
+12:39:22   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+12:39:42   $ (cd src && make -j4 CHECK=/home/user/qca9377-bt-hang/cache/smatch/smatch --full-path CC=/home/user/qca9377-bt-hang/cache/smatch/cgcc)
+12:43:44 == smatch: patched side
+12:43:44   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+12:44:01   $ (cd src && make -j4 CHECK=/home/user/qca9377-bt-hang/cache/smatch/smatch --full-path CC=/home/user/qca9377-bt-hang/cache/smatch/cgcc)
+12:47:33 == incremental
+12:47:33   $ (cd src && ./bootstrap-configure)
+12:47:50   $ (cd src && make -j4)
+12:51:33 == scanbuild: base side
+12:51:33   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+12:51:51   $ (cd src && scan-build-18 -o /home/user/qca9377-bt-hang/tmp/ci-local/20261010T123210Z-leak-fix/scanbuild.base.scan-build-reports make -j4)
+13:00:30 == scanbuild: patched side
+13:00:30   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+13:00:47   $ (cd src && scan-build-18 -o /home/user/qca9377-bt-hang/tmp/ci-local/20261010T123210Z-leak-fix/scanbuild.patched.scan-build-reports make -j4)
+13:09:01 RESULT: no NEW finding

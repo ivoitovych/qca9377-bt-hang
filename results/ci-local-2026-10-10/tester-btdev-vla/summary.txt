@@ -1,0 +1,24 @@
+base 7428ca2df9356363079db0f48412c20cbdb9471f 2026-10-09 device: Fix LE bearer Connect not replying
+kernel /home/user/qca9377-bt-hang/cache/bluetooth-next/arch/x86/boot/bzImage
+patch 0001-emulator-Avoid-variable-length-array-in-send_cmd.patch
+kvm: no (TCG)
+
+mgmt-tester    base     run 1: Total: 506, Passed: 506 (100.0%), Failed: 0, Not Run: 0
+l2cap-tester   base     run 1: Total: 111, Passed: 111 (100.0%), Failed: 0, Not Run: 0
+sco-tester     base     run 1: Total: 30, Passed: 30 (100.0%), Failed: 0, Not Run: 0
+mgmt-tester    patched  run 1: Total: 506, Passed: 505 (99.8%), Failed: 1, Not Run: 0
+l2cap-tester   patched  run 1: Total: 111, Passed: 111 (100.0%), Failed: 0, Not Run: 0
+sco-tester     patched  run 1: Total: 30, Passed: 30 (100.0%), Failed: 0, Not Run: 0
+
+== mgmt-tester: 506 case names; base runs 1, patched runs 1
+   LL Privacy - Add Device 3 (AL is full): base ['Passed'] patched ['Failed']  <-- passes on the base, not with the patches
+   cases with identical verdicts on both sides: 505
+   REGRESSIONS: 1
+== l2cap-tester: 111 case names; base runs 1, patched runs 1
+   cases with identical verdicts on both sides: 111
+   REGRESSIONS: 0
+== sco-tester: 30 case names; base runs 1, patched runs 1
+   cases with identical verdicts on both sides: 30
+   REGRESSIONS: 0
+
+RESULT: regressions found

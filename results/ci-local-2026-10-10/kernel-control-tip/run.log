@@ -1,0 +1,9 @@
+12:33:24 ci-local: space=kernel tree=/home/user/qca9377-bt-hang/cache/bluetooth-next-full base=origin/master~1 checks=am,checkpatch,verifyfixes,verifysignedoff,gitlint,subjectprefix jobs=4
+12:33:24 ci-local: out=/home/user/qca9377-bt-hang/tmp/ci-local/20261010T123324Z-kernel-control-tip
+12:33:24   patch: tmp/ci-local-research/kernel-control/0001-Bluetooth-btintel-load-unlocker.sfi-to-allow-unsigne.patch :: Bluetooth: btintel: load unlocker.sfi to allow unsigned firmware
+12:33:24 ci-local: base commit ac6c98797269b88984c0f033126b540bc3c3bcfc 2026-10-09 Merge branch 'bluetooth' into bluetooth-next
+12:33:24 ci-local: checking out origin/master~1 into a worktree (a partial clone fetches the blobs now)
+12:34:20   $ (cd kernel && git -c user.name=Iaroslav Voitovych -c user.email=yaroslav.voytovych@gmail.com -c commit.gpgsign=false am /home/user/qca9377-bt-hang/tmp/ci-local-research/kernel-control/0001-Bluetooth-btintel-load-unlocker.sfi-to-allow-unsigne.patch)
+12:34:24   $ (cd kernel && /home/user/qca9377-bt-hang/cache/action-ci/scripts/verify_fixes.sh ac6c98797269b88984c0f033126b540bc3c3bcfc..HEAD)
+12:34:24   $ (cd kernel && /home/user/qca9377-bt-hang/cache/action-ci/scripts/verify_signedoff.sh ac6c98797269b88984c0f033126b540bc3c3bcfc..HEAD)
+12:34:24 RESULT: 2 check(s) with a NEW finding — see /home/user/qca9377-bt-hang/tmp/ci-local/20261010T123324Z-kernel-control-tip/summary.txt

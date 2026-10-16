@@ -35,6 +35,13 @@ cache/
 *.btsnoop
 trace/
 
+# Compressed raw HCI captures, kept for the length of the investigation
+# (scripts/bt-trace-archive.py, 2026-10-11): bt-trace rotates the raw files
+# away, so every closed one is archived here first. Same content as trace/:
+# addresses, names, link keys. Never published; incident windows are cut from
+# here and pseudonymised first, with the privately kept mapping.
+/archive/
+
 # capture gap log — host-specific runtime data
 gaps.log
 

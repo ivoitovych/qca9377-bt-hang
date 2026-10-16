@@ -3749,6 +3749,176 @@ where Gmail closes the connection mid-login; port 587 answers. A kernel update a
 reboot would have brought the original hang back. That is why an Ubuntu-side request for
 `dc16388d45ec` is now proposed.
 
+## The spinner that never came back, and three sends (2026-10-09 → 10-10)
+
+**A missing spinner was not a dead controller.** On 9 October the Bluetooth panel showed no scanning spinner. The obvious reading, the old hang returning, was wrong: the controller was serving links and calls. What the traces showed was that the kernel itself had refused every scan request with Busy since 4 October at 10:26:11.
+
+The cause came from the captures and the source together:
+- E3 gives this device `BTUSB_QCA_ROME`, and with it `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`.
+- Under that quirk, two code paths can end a discovery cycle. When the controller's Inquiry Complete lands between the LE scan-off command and that command's Command Complete, each path leaves the stop to the other, and nobody stops it.
+- It had happened twice in that boot's traces. On 10-01 at 03:51:27 it lasted 8 h 18 min, until a suspend cleared it unnoticed; on 10-04 at 10:26:11 it was still stuck. A call was up only the second time, so a call is not required.
+- `scripts/discovery-stop-race.py` reads every cycle's ending, and `EX-062` is the exhibit.
+
+It is a race in core code, on any adapter with the quirk, and has nothing to do with the alternate-setting fault.
+
+**Already fixed, but not where it mattered.** Jiajia Liu's `96d006ae6445` (v7.2-rc1) fixes it, and it is in 7.1.5+, 6.18.40+ and Ubuntu's `7.0.0-38`. It is not in 6.12, 6.6 or 6.1, which are exactly the older lines the queued `dc16388d45ec` backport reaches. That backport would hand those users this race along with the fix for their hang. The same evening a reply on BlueZ issue #1554, whose reporter had the same symptom, pointed to the fix; the reporter's own capture showed the same ordering. The rule changed that day too: kernel findings are now recorded on `main` as they are found, and the work held privately since 09-17 is being ported back as new commits.
+
+**Three sends on 10 October.**
+- **The backports.** Each was built on its line and tested with a new `mgmt-tester` case that forces the race in qemu. The case fails on every line without the backport and passes with it. The stable request went out at 04:25 as three mails.
+- **A BlueZ leak fix and test series, at 05:18.** Writing that case exposed a leak in BlueZ's emulator: five mgmt-tester cases and one l2cap-tester case leak a hook. So the BlueZ fix went out with the three-patch test series, which applies with or without it.
+- **The CI marks that came back.** The list's bots answered with three red marks, none of them ours: a smatch warning at upstream `btdev.c:479`, a pairing timeout that failed the same way on an unrelated patch, and the kernel bot's apply step on a stable backport. We were clean by scope, not by checking. The rule that came out of it: before any send, run the receiving project's CI locally on the base and on the base plus ours, and judge only the difference. A failure that is theirs is a candidate fix of its own.
+- **Two near-misses, found by an outside reviewer, not by us.** The stable note had three lines over 72 columns, and the mails nearly went to a maintainer's sign-off address instead of his MAINTAINERS one. `scripts/mail-lint.sh` and `scripts/get-maintainers.sh` existed for both and were not run; BRIEF §8 now lists the tools that were forgotten.
+
+The same morning E3 was built for `7.0.0-38` and placed in its `updates/`, ready for the first boot of the new kernel. A later codec-switch session on 10-10 also showed a SCO connection being reused while the previous one was still being torn down, an extension of `U7`. It is not yet written up.
+
+## The bot's noise, reproduced (2026-10-10 → 10-11)
+
+**The lesson that started it.** The list's bot answered the two BlueZ series of 10 October
+with three red marks: a smatch warning on `emulator/btdev.c:479` on both, a TestFunctional
+failure on one, and `pre-ci_am fail` on the 6.1.y stable backport. All three were read off the
+bot's comments as upstream's, and that reading turned out right — but it was reached by
+reading, not by checking, and a lone local run would only have repeated the bot's noise. The
+work of these two days was to be able to tell our findings from theirs by measurement: run
+the bot's checks on master and on master plus the patches, and class every line NEW,
+PRE-EXISTING or FIXED. **Where it ran:** not on the laptop, and not in the laptop's
+sessions. The whole of this chapter's work was done in a separate session in a cloud build
+container — an ephemeral Ubuntu 24.04 machine with four CPUs, no Bluetooth hardware, no
+`/dev/kvm`, and, as it turned out, a kernel without the `AF_ALG` interface — on the public
+branch `ci/upstream-ci-local`, with nothing sent anywhere. The laptop's trial state, journal
+and tooling were untouched throughout; the container's own state (fetched trees, built
+kernel, installed packages) is not part of the repository and dies with it, which is why
+every claim in `results/ci-local-2026-10-10.md` carries its command and its output, and why
+the container-only pieces were saved under `results/ci-local-2026-10-10/container-setup/`.
+
+**The bot's source, pinned.** The BlueZ and kernel bots are one GitHub Action, `bluez/action-ci`,
+run inside a container image whose Dockerfile fetches `checkpatch.pl` from the kernel's master
+at build time, pins smatch and sparse to commits, installs `pytest-bluezenv` 0.1.9 and starts
+from Ubuntu 26.04. Two things the code showed that the comments never did: the bot's GitLint
+uses its own configuration, not BlueZ's `.gitlint` (title limit 80, `Fixes:` and URL lines
+ignored), and CheckSmatch posts every smatch line on a file the series touches without looking
+at the base — which is exactly how an upstream line at 479 became our warning. The BlueZ
+`workflow` branch still names the action's old home; the check it posts exists only in the new
+one, so what ran is known by elimination, not by a log.
+
+**The reproduction.** `scripts/ci-local.sh` runs the bot's recipes twice and compares with line
+numbers stripped, so a warning that a patch pushes down the file is not a new one; the base
+side is cached per master commit. On the leak fix and on the series every check came out PASS or
+PRE-EXISTING: 45 smatch lines and 95 analyzer lines pre-exist in master, none is ours, and the
+`btdev.c:479` line is reproduced word for word. Two scratch patches, one with a checkpatch error
+and one with a planted array, came out NEW — a check that cannot be seen to fail proves nothing.
+The kernel mode applies an `[x.y.y]` backport to the newest tag of that stable line and reports
+the bluetooth-next failure as expected; on the 6.1.y backport it prints the bot's words, because
+`96d006ae6445` is an ancestor of bluetooth-next master, and the upstream fix itself
+reverse-applies there. Eight other people's stable backports on patchwork got the same reply.
+Why the 6.12.y and 6.6.y mails got no check at all is not established: all three were `new`
+when the bot ran; five hours later the kernel.org automation superseded two of them — three
+mails with one subject are read as three revisions of one patch.
+
+**The VLA.** A one-line removal was prepared, not sent: `send_cmd()` has two callers with at most
+two iovec entries, so the array gets a fixed size. The precedent, a September gatt-server fix
+"for CI VLA warnings", was applied without a human comment. ci-local shows the line FIXED and
+nothing NEW; the emulator testers in QEMU under software emulation — mgmt, l2cap, sco, four
+mgmt rounds a side, and on the afternoon of the 11th the other eight of the kernel bot's
+eleven — change no verdict, and the one case that failed on each side was a different LL
+Privacy accept-list case each time, the family the earlier runs had already seen vary. The
+patch is held until the maintainer answers the two series.
+
+**The pairing test could not be run here.** The functional harness gives each guest its
+emulated controller from a `btvirt` on the host over a virtio console; that controller never
+answered the kernel's first command, so every run died in setup, with `--vm-timeout` 60 or
+300. The harness also always asks QEMU for the host CPU model, which TCG refuses; a local
+change to the installed copy got the guests to boot, no further. For a day the results file
+blamed software emulation, the visible difference from the bot. It was wrong: on the
+afternoon of the 11th a two-minute probe sent one HCI command to the host `btvirt` by hand,
+and the BR/EDR-only socket answered in a millisecond while the LE-capable one dropped the
+connection on the first byte. The emulator creates an LE-capable controller only with the
+kernel's `AF_ALG` crypto interface, and the container's kernel has none; it closes the
+client without a word. The guest kernel has the interface, which is why the testers' in-guest
+emulator worked all along. So the TestFunctional failure stays flaky on the bot's own record —
+the same test, the same awaited line, on an unrelated patch 16 minutes earlier, with a pass in
+between — and its rate is unmeasured. The script for measuring it waits for a machine with a
+distribution kernel and `/dev/kvm`.
+
+**Four mistakes, each with a rule.** The first results commit carried the patchwork reads with
+their mail headers, the relays' addresses included; the repository's address scan refused
+them, and the refusal passed through a pipe whose exit status came from `tail`, so the push went
+out. The files were republished through a publisher that drops the headers and runs
+`tools/sanitize-logs.sh`, but the history still held them. On the operator's decision the branch
+was rebuilt, with one rule set first: no force-push without a dated backup of the branch pushed
+to `private` and verified there (BRIEF §7); the backup is
+`ci/upstream-ci-local-backup-20261011-144932-utc`, the rewrite was pushed with a lease, and the
+headers appear in no commit of the branch now. Second, a running shell script must never be
+edited in place — bash reads it as it runs; a copy is edited and renamed over it. Third, a
+process-killing pattern that matches its own command line kills the shell that issued it; kill
+by process id. Fourth, the harness failure above was attributed to the one difference that
+could be seen, no KVM, and the attribution was committed and pushed as if it were a finding; a
+cause is not the most visible difference, it is what a probe of the failing component shows,
+and the probe was cheaper than the paragraph. None of the four touched the evidence; all four
+are written down so that they are not relearned.
+
+## A silent speaker, and the captures that were being deleted (2026-10-11)
+
+**The speaker.** Past midnight on 11 October the operator switched the Tronsmart T8 to SBC-XQ, and it went silent; back on SBC, it played. An outside reviewer sent an investigation within the hour. It sorted the possible failures into three cases: a configuration the speaker refuses, a stream that never starts, and valid packets the speaker does not play. It proposed new captures to tell them apart.
+
+No new capture was needed: `bt-trace` had recorded everything. The speaker had accepted both configurations and started both streams:
+- SBC-XQ was Dual Channel at bitpool 39, 504 kb/s;
+- plain SBC was joint stereo at bitpool 53, 357 kb/s.
+
+Its own cached record advertises Dual Channel up to bitpool 53, so the host had asked only for what it was offered. The reviewer's suggestion that the speaker also offers AAC did not hold for this unit.
+
+**The scan that changed the question.** A new script read every SBC frame's scale factors (`scripts/sbc-frame-levels.py`).
+- The host had sent real sound on SBC-XQ only for the Settings test sounds.
+- Ten minutes of Chrome "playback" on plain SBC were encoded silence from the first frame to the last.
+- So the comparison the operator had made by ear, Chrome on one codec against Chrome on the other, could not separate the codecs. Only the test sounds can, and whether they were heard is the open question (`U10`).
+
+The project had met this speaker before: the August dropout in `EX-030` was already on the SBC-XQ endpoint.
+
+The operator's position is that the fault, if confirmed, lies in why Linux offers SBC-XQ at all. A speaker that cannot play what it advertises is handled today by a per-device quirk list. The decision path, not a local switch, is what is worth understanding and contributing to.
+
+**The captures.** Looking for the evidence showed that `bt-trace` was at its limit of 400 files and deleting the oldest at every rotation, about every eleven minutes during audio. Captures the investigation still cited were being lost while the project watched. The operator called that unacceptable while the work is active.
+
+The same day `scripts/bt-trace-archive.py` began compressing every closed capture into the git-ignored `archive/bt-trace/`:
+- each archive is verified by decompressing it and matching the SHA-256;
+- it never deletes;
+- the budget is 10 GB.
+
+One T8 capture went from 33 MB to 0.6 MB, ordinary traffic about tenfold. The tool's proof includes a compressor that corrupts its output, caught by the verification and never renamed into place.
+
+**The rules that came with it.**
+- Committed evidence is the incident window, complete inside it and nothing outside, because public space serves everyone. Evidence is never deleted, fixed bugs included.
+- The address rule was relaxed: real addresses may go to the private repository. Public files carry pseudonyms from a private table. The manufacturer prefix is kept, the device part is random, and each device keeps one pseudonym for good, so logs stay consistent across files.
+- Building that table showed that a raw capture carries more than addresses. The T8's reconnect hands the stored link key to the controller in clear. A whole raw capture is therefore never published; cut windows are, with the keys blanked.
+
+**Nothing only on this disk, with exceptions.** The operator then asked for everything written to be pushed somewhere, private where not public. A survey of every tree (`scripts/unpushed-survey.py`) found the project branches all on a remote. It also found 31 commits that existed nowhere else, inside eighteen upstream kernel and BlueZ checkouts under `cache/`, where the patches had been built and tested.
+
+Pushing those trees would have copied gigabytes of upstream history. So their commits were exported as patch files with their bases (`scripts/export-local-work.py`, 3.2 MB) to a private branch. The operator added the exceptions the same hour: GitHub space is not for bulk. The capture archive, upstream trees and build outputs stay local on purpose.
+
+**The archive's first numbers corrected the estimate.** Two October captures had compressed 10× and 56×. The archiver, oldest first, began with the 26 September headset sessions behind E1 and E3, and those barely compress at 1.4×: SCO audio is already compressed. The projected total rose from one or two gigabytes to somewhere near the 10 GB budget. The budget stands. If it is reached, the archiver stops and the operator decides; nothing is deleted.
+
+**The reboot.** At 16:26 the laptop restarted into `7.0.0-38`, with E3 in place for it. The boot log shows the QCA firmware loaded, which keeps the original hang away. The kernel also carries the BT-9 fix. (⚠️ Corrected 2026-10-14: this used to say the reboot ended the stuck discovery of 10-04. The operator's adapter power cycle had already ended it on 10-10 at 15:02; the captures are cited in `docs/STATUS.md`, BT-9.) The archiver's timer had been transient and did not survive. It was found missing and restarted at 17:02.
+
+**A coherence pass over the foundation documents** followed. It found, among other things:
+- README counting "three fixes, two in BlueZ" above a table of four;
+- the issue register's "current state" dated two days before its newest entry;
+- the evidence guide still saying captures averaged 2 MB and that no tool could scrub one;
+- the machine section still telling the reader to boot `-34` from GRUB.
+
+Each was corrected against `STATUS.md`, the one page that says what is current.
+
+**Two weeks of unanswered notes.** The test-suite maintainer had written ten notes since 28 September; the last reply to them was dated 24 September. The work in them was large:
+- a decoy world in which the suite's verdicts no longer come from the machine it runs on. On `main`, 387 calls reached real machine tools, among them 20 that wrote trial lines into the laptop's real journal; on their branch it is 0;
+- mutation testing of the suite itself;
+- an exact trace of every file the suite touches;
+- the suite grown from 831 invariants on `main` to 1028.
+
+Their ready part, 29 commits on `main`'s own `55bcb80`, was green in CI and fast-forwards. A trial merge showed the postponed documentation branch combining with it without a conflict.
+
+**And one of the notes had been right, at cost.** Their "urgent" note of 29 September said the shutdown path of `bt-trial`, as installed, could lose a trial's row: it counts the trial's timeouts with a full kernel-journal read before closing, and a ten-day boot's read can outlast systemd's stop timeout. The fix sat on their branch. The E3 trial on `-34`, ten days from 1 October, ended at the 16:24 shutdown with no row, no closing files and no log line. The same files reopened as "E3 #1" on the new boot, unchanged.
+
+The row can be rebuilt only in part. The journal of that boot starts at 6 October 20:23. journald had discarded the first five days during the boot itself, to keep its 20 GB of free disk on a disk 95 % full. The journal archiver saves a boot only after it ends. The lesson is older than the fix: a note that says "urgent" is evidence too, and two weeks unread is how a known defect gets to happen.
+
+**Evidence kept can cost evidence lost.** The same arithmetic turned on the capture archive within the hour. Every gigabyte it wrote came out of journald's 20 GB margin, with 21 GB free. Keeping captures would have spent the running boot's unarchived journal. The archive was paused at 17:23. Each store on this disk has its own floor (journald 20 GB, `bt-trace` 15 GB) and none of them knows about the others. Space is freed for real by deleting the raw originals already archived and verified, which `bt-trace` would delete anyway, and that is the operator's call.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`

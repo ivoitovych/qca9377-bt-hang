@@ -1,0 +1,59 @@
+{
+ "id": 14733075,
+ "url": "https://patchwork.kernel.org/api/1.3/patches/14733075/",
+ "web_url": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/",
+ "project": {
+  "id": 395,
+  "url": "https://patchwork.kernel.org/api/1.3/projects/395/",
+  "name": "Bluetooth",
+  "link_name": "bluetooth",
+  "list_id": "linux-bluetooth.vger.kernel.org",
+  "list_email": "linux-bluetooth@vger.kernel.org",
+  "web_url": "",
+  "scm_url": "",
+  "webscm_url": "",
+  "list_archive_url": "",
+  "list_archive_url_format": "https://lore.kernel.org/r/{}",
+  "commit_url_format": ""
+ },
+ "msgid": "<<address elided>>",
+ "list_archive_url": "https://lore.kernel.org/r/<address elided>",
+ "date": "2026-08-05T21:24:34",
+ "name": "[v2,1/2,5.10.y] Bluetooth: SCO: Fix UAF on sco_sock_timeout",
+ "commit_ref": null,
+ "pull_url": null,
+ "state": "new",
+ "archived": true,
+ "hash": "57d4e20f1cca5d12f9641774d8b77615f91af180",
+ "submitter": {
+  "id": 170123,
+  "url": "https://patchwork.kernel.org/api/1.3/people/170123/",
+  "name": "Todd Kjos",
+  "email": "<address elided>"
+ },
+ "delegate": null,
+ "mbox": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/mbox/",
+ "series": [
+  {
+   "id": 1141040,
+   "url": "https://patchwork.kernel.org/api/1.3/series/1141040/",
+   "web_url": "https://patchwork.kernel.org/series/1141040/",
+   "date": "2026-08-05T21:24:34",
+   "name": "[v2,1/2,5.10.y] Bluetooth: SCO: Fix UAF on sco_sock_timeout",
+   "version": 2,
+   "mbox": "https://patchwork.kernel.org/series/1141040/mbox/"
+  }
+ ],
+ "comments": "https://patchwork.kernel.org/api/patches/14733075/comments/",
+ "check": "fail",
+ "checks": "https://patchwork.kernel.org/api/patches/14733075/checks/",
+ "tags": {},
+ "related": [],
+ "content": "From: Luiz Augusto von Dentz <<address elided>>\n\ncommit 1bf4470a3939c678fb822073e9ea77a0560bc6bb upstream.\n\nconn->sk maybe have been unlinked/freed while waiting for sco_conn_lock\nso this checks if the conn->sk is still valid by checking if it part of\nsco_sk_list.\n\nReported-by: <address elided>\nTested-by: <address elided>\nCloses: https://syzkaller.appspot.com/bug?extid=4c0d0c4cde787116d465\nFixes: ba316be1b6a0 (\"Bluetooth: schedule SCO timeouts with delayed_work\")\nSigned-off-by: Luiz Augusto von Dentz <<address elided>>\nSigned-off-by: Xiangyu Chen <<address elided>>\nSigned-off-by: He Zhe <<address elided>>\nSigned-off-by: Greg Kroah-Hartman <<address elided>>\n[ Resolved trivial conflicts in net/bluetooth/sco.c, removed\nextra reference on sk ]\nSigned-off-by: Todd Kjos <<address elided>>\n---\nChanges in v2:\n- Removed redundant reference on struct sock\n- Removed Change-Id tags\n\n include/net/bluetooth/bluetooth.h |  1 +\n net/bluetooth/af_bluetooth.c      | 22 ++++++++++++++++++++++\n net/bluetooth/sco.c               | 17 ++++++++++++-----\n 3 files changed, 35 insertions(+), 5 deletions(-)",
+ "diff": "diff --git a/include/net/bluetooth/bluetooth.h b/include/net/bluetooth/bluetooth.h\nindex 43b4386018e26c41c914f87e050a0fe958700135..85bab90a6921ce1e9b9025647e23fafd97117ece 100644\n--- a/include/net/bluetooth/bluetooth.h\n+++ b/include/net/bluetooth/bluetooth.h\n@@ -317,6 +317,7 @@ void bt_sock_link(struct bt_sock_list *l, struct sock *s);\n void bt_sock_unlink(struct bt_sock_list *l, struct sock *s);\n struct sock *bt_sock_alloc(struct net *net, struct socket *sock,\n \t\t\t   struct proto *prot, int proto, gfp_t prio, int kern);\n+bool bt_sock_linked(struct bt_sock_list *l, struct sock *s);\n int  bt_sock_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,\n \t\t     int flags);\n int  bt_sock_stream_recvmsg(struct socket *sock, struct msghdr *msg,\ndiff --git a/net/bluetooth/af_bluetooth.c b/net/bluetooth/af_bluetooth.c\nindex bef5b6330dd807504292671301c860b96c2ed18e..0af14e3318e7e02173970a1af8e183723bef2c50 100644\n--- a/net/bluetooth/af_bluetooth.c\n+++ b/net/bluetooth/af_bluetooth.c\n@@ -184,6 +184,28 @@ void bt_sock_unlink(struct bt_sock_list *l, struct sock *sk)\n }\n EXPORT_SYMBOL(bt_sock_unlink);\n \n+bool bt_sock_linked(struct bt_sock_list *l, struct sock *s)\n+{\n+\tstruct sock *sk;\n+\n+\tif (!l || !s)\n+\t\treturn false;\n+\n+\tread_lock(&l->lock);\n+\n+\tsk_for_each(sk, &l->head) {\n+\t\tif (s == sk) {\n+\t\t\tread_unlock(&l->lock);\n+\t\t\treturn true;\n+\t\t}\n+\t}\n+\n+\tread_unlock(&l->lock);\n+\n+\treturn false;\n+}\n+EXPORT_SYMBOL(bt_sock_linked);\n+\n void bt_accept_enqueue(struct sock *parent, struct sock *sk, bool bh)\n {\n \tconst struct cred *old_cred;\ndiff --git a/net/bluetooth/sco.c b/net/bluetooth/sco.c\nindex 01a01d6f01c309a6333859784261d97335dda413..2fbd9c93440ce4936d47b3bd47aa1dc28da82c20 100644\n--- a/net/bluetooth/sco.c\n+++ b/net/bluetooth/sco.c\n@@ -76,6 +76,16 @@ struct sco_pinfo {\n #define SCO_CONN_TIMEOUT\t(HZ * 40)\n #define SCO_DISCONN_TIMEOUT\t(HZ * 2)\n \n+static struct sock *sco_sock_hold(struct sco_conn *conn)\n+{\n+\tif (!conn || !bt_sock_linked(&sco_sk_list, conn->sk))\n+\t\treturn NULL;\n+\n+\tsock_hold(conn->sk);\n+\n+\treturn conn->sk;\n+}\n+\n static void sco_sock_timeout(struct work_struct *work)\n {\n \tstruct sco_conn *conn = container_of(work, struct sco_conn,\n@@ -87,9 +97,7 @@ static void sco_sock_timeout(struct work_struct *work)\n \t\tsco_conn_unlock(conn);\n \t\treturn;\n \t}\n-\tsk = conn->sk;\n-\tif (sk)\n-\t\tsock_hold(sk);\n+\tsk = sco_sock_hold(conn);\n \tsco_conn_unlock(conn);\n \n \tif (!sk)\n@@ -192,11 +200,10 @@ static void sco_conn_del(struct hci_conn *hcon, int err)\n \n \t/* Kill socket */\n \tsco_conn_lock(conn);\n-\tsk = conn->sk;\n+\tsk = sco_sock_hold(conn);\n \tsco_conn_unlock(conn);\n \n \tif (sk) {\n-\t\tsock_hold(sk);\n \t\tbh_lock_sock(sk);\n \t\tsco_sock_clear_timer(sk);\n \t\tsco_chan_del(sk, err);\n",
+ "prefixes": [
+  "v2",
+  "1/2",
+  "5.10.y"
+ ]
+}

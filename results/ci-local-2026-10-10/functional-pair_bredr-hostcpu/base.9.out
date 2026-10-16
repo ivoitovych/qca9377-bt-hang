@@ -1,0 +1,87 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T121540Z-pair_bredr/work/src/test
+configfile: pytest.ini
+plugins: xdist-3.4.0
+collecting ... collected 60 items / 59 deselected / 1 selected
+
+test/functional/test_bluetoothctl.py::test_bluetoothctl_pair_bredr[hosts15-vm2] ERROR [100%]
+
+==================================== ERRORS ====================================
+_________ ERROR at setup of test_bluetoothctl_pair_bredr[hosts15-vm2] __________
+
+item = <Function test_bluetoothctl_pair_bredr[hosts15-vm2]>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_runtest_setup(item):
+        _enable_log_filters(item.session.config, logging.root.handlers[-1:])
+>       yield from status_log_stage(item.nodeid, "setup")
+
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:370: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:361: in status_log_stage
+    yield
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:712: in vm
+    yield from _vm_impl(request, kernel, **vm_setup)
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:544: in _vm_impl
+    with env.Environment(
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/env.py:869: in __enter__
+    self.start()
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/env.py:595: in start
+    paths, names = self._start_runners(args)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/env.py:842: in _start_runners
+    utils.wait_files(self.jobs, [log_path])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+jobs = [], paths = ['/tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-log-1']
+timeout = 2
+
+    def wait_files(jobs, paths, timeout=2):
+        """
+        Wait for subprocess.Popen instances until `paths` have been created.
+        """
+        start = time.time()
+    
+        for path in paths:
+            while True:
+                if time.time() > start + timeout:
+                    raise TimeoutError(f"Jobs {jobs} timed out")
+                for job in jobs:
+                    if job.poll() is not None:
+>                       raise RuntimeError("Process exited unexpectedly")
+E                       RuntimeError: Process exited unexpectedly
+
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/utils.py:133: RuntimeError
+------------------------------ Captured log setup ------------------------------
+2026-10-11 12:19:37.211000 INFO   pytest              :  
+
+==== functional/test_bluetoothctl.py::test_bluetoothctl_pair_bredr[hosts15-vm2]: setup ====
+2026-10-11 12:19:37.216000 INFO   env                 :  Starting btvirt: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T121540Z-pair_bredr/work/src/emulator/btvirt --server=/tmp/pytest-bluezenv-81e9yomb
+2026-10-11 12:19:37.468000 INFO   env                 :  Starting host: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T121540Z-pair_bredr/work/src/tools/test-runner --kernel=/home/user/qca9377-bt-hang/cache/bluetooth-next/arch/x86/boot/bzImage -u/tmp/pytest-bluezenv-81e9yomb/bt-server-bredrle -o -chardev -o socket,id=ser0,path=/tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-rpc-0,server=on,wait=off -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser0,name=pytest-bluezenv-rpc -o -chardev -o socket,id=ser1,path=/tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-tty-0,server=on,wait=off -o -device -o pci-serial,chardev=ser1 -o -chardev -o socket,id=ser2,path=/tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-log-0,server=on,wait=on -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser2,name=pytest-bluezenv-log -o -fsdev -o local,id=fsdev-shared,path=/tmp/pytest-bluezenv-81e9yomb/shared-0,readonly=off,security_model=none,multidevs=remap -o -device -o virtio-9p-pci,fsdev=fsdev-shared,mount_tag=/dev/shared -o -m -o 400M -H -- /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py
+2026-10-11 12:19:37.468000 INFO   env                 :  TTY: socat /tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-tty-0 STDIO,rawer
+2026-10-11 12:19:37.470845 OUT    host.0.0            :  /usr/libexec/virtiofsd not available: virtiofs disabled
+2026-10-11 12:19:37.485871 OUT    host.0.0            :  qemu-system-x86_64: -chardev socket,id=ser2,path=/tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-log-0,server=on,wait=on: info: QEMU waiting for connection on: disconnected:unix:/tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-log-0,server=on
+2026-10-11 12:19:37.720979 OUT    host.0.0            :  Could not access KVM kernel module: No such file or directory
+2026-10-11 12:19:37.721035 OUT    host.0.0            :  qemu-system-x86_64: failed to initialize kvm: No such file or directory
+2026-10-11 12:19:37.721664 OUT    host.0.0            :  qemu-system-x86_64: falling back to tcg
+2026-10-11 12:19:37.722000 INFO   env                 :  Starting host: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T121540Z-pair_bredr/work/src/tools/test-runner --kernel=/home/user/qca9377-bt-hang/cache/bluetooth-next/arch/x86/boot/bzImage -u/tmp/pytest-bluezenv-81e9yomb/bt-server-bredrle -o -chardev -o socket,id=ser0,path=/tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-rpc-1,server=on,wait=off -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser0,name=pytest-bluezenv-rpc -o -chardev -o socket,id=ser1,path=/tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-tty-1,server=on,wait=off -o -device -o pci-serial,chardev=ser1 -o -chardev -o socket,id=ser2,path=/tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-log-1,server=on,wait=on -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser2,name=pytest-bluezenv-log -o -fsdev -o local,id=fsdev-shared,path=/tmp/pytest-bluezenv-81e9yomb/shared-1,readonly=off,security_model=none,multidevs=remap -o -device -o virtio-9p-pci,fsdev=fsdev-shared,mount_tag=/dev/shared -o -m -o 400M -H -- /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py
+2026-10-11 12:19:37.722000 INFO   env                 :  TTY: socat /tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-tty-1 STDIO,rawer
+2026-10-11 12:19:37.722728 OUT    host.0.0            :  qemu-system-x86_64: CPU model 'host' requires KVM or HVF
+2026-10-11 12:19:37.724460 OUT    host.0.1            :  /usr/libexec/virtiofsd not available: virtiofs disabled
+2026-10-11 12:19:37.743204 OUT    host.0.1            :  qemu-system-x86_64: -chardev socket,id=ser2,path=/tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-log-1,server=on,wait=on: info: QEMU waiting for connection on: disconnected:unix:/tmp/pytest-bluezenv-81e9yomb/pytest-bluezenv-log-1,server=on
+2026-10-11 12:19:37.974537 OUT    btvirt              :  Bluetooth emulator ver 5.87
+2026-10-11 12:19:37.974537 OUT    btvirt              :  Request for /tmp/pytest-bluezenv-81e9yomb/bt-server-bredrle
+2026-10-11 12:19:37.974537 OUT    btvirt              :  Request for /tmp/pytest-bluezenv-81e9yomb/bt-server-bredrle
+=============================== warnings summary ===============================
+functional/test_bluetoothctl.py::test_bluetoothctl_pair_bredr[hosts15-vm2]
+  /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:523: UserWarning: Executable 'chronyd' not found
+    warnings.warn(msg)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T121540Z-pair_bredr/base.9.xml -
+=========================== short test summary info ============================
+ERROR test/functional/test_bluetoothctl.py::test_bluetoothctl_pair_bredr[hosts15-vm2] - RuntimeError: Process exited unexpectedly
+================== 59 deselected, 1 warning, 1 error in 0.90s ==================
+exit status 1

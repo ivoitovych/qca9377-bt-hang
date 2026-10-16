@@ -1,0 +1,526 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+Could not access KVM kernel module: No such file or directory
+qemu-system-x86_64: failed to initialize kvm: No such file or directory
+qemu-system-x86_64: falling back to tcg
+early console in extract_kernel
+input_data: 0x0000000004ddb2c4
+input_len: 0x0000000000f0bc1c
+output: 0x0000000001000000
+output_len: 0x0000000004c7a1ac
+kernel_total_size: 0x00000000048ed000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000002df2e80).
+Linux version 7.3.0-rc2-g964430c03896 (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 PREEMPT_DYNAMIC Sat Oct 10 12:14:54 UTC 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/qca9377-bt-hang/tmp/tester-compare/20261011T151545Z-btdev-vla-rest/work/src/tools/test-runner TESTHOME=/home/user/qca9377-bt-hang/tmp/tester-compare/20261011T151545Z-btdev-vla-rest/work/src TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/usr/bin/env ASAN_OPTIONS=exitcode=65:detect_leaks=0:print_summary=1 tools/rfcomm-tester'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /usr/bin/env ASAN_OPTIONS=exitcode=65:detect_leaks=0:print_summary=1 tools/rfcomm-tester
+Changing into directory /home/user/qca9377-bt-hang/tmp/tester-compare/20261011T151545Z-btdev-vla-rest/work/src
+New process 35 created
+
+[1;39mBasic RFCOMM Socket - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic RFCOMM Socket - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mBasic RFCOMM Socket - Success[0m - [0;34msetup complete[0m
+[1;39mBasic RFCOMM Socket - Success[0m - [0;30mrun[0m
+[1;39mBasic RFCOMM Socket - Success[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic RFCOMM Socket - Success[0m - [0;35mteardown complete[0m
+[1;39mBasic RFCOMM Socket - Success[0m - [0;30mdone[0m
+
+[1;39mBasic RFCOMM Socket Client - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic RFCOMM Socket Client - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mBasic RFCOMM Socket Client - Success[0m - [0;34msetup complete[0m
+[1;39mBasic RFCOMM Socket Client - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress 13[0m
+random: crng init done
+  [0;37mConnected[0m
+[1;39mBasic RFCOMM Socket Client - Success[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket Client - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic RFCOMM Socket Client - Success[0m - [0;35mteardown complete[0m
+[1;39mBasic RFCOMM Socket Client - Success[0m - [0;30mdone[0m
+
+[1;39mBasic RFCOMM Socket Client - Write Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic RFCOMM Socket Client - Write Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mBasic RFCOMM Socket Client - Write Success[0m - [0;34msetup complete[0m
+[1;39mBasic RFCOMM Socket Client - Write Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress 13[0m
+  [0;37mConnected[0m
+  [0;37mWriting 9 bytes of data[0m
+  [0;37mWritten 9/9 bytes[0m
+  [0;37mbthost received 9 bytes of data[0m
+  [0;37mbthost received progress 9/9[0m
+[1;39mBasic RFCOMM Socket Client - Write Success[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket Client - Write Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic RFCOMM Socket Client - Write Success[0m - [0;35mteardown complete[0m
+[1;39mBasic RFCOMM Socket Client - Write Success[0m - [0;30mdone[0m
+
+[1;39mBasic RFCOMM Socket Client - Write 32k Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic RFCOMM Socket Client - Write 32k Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mBasic RFCOMM Socket Client - Write 32k Success[0m - [0;34msetup complete[0m
+[1;39mBasic RFCOMM Socket Client - Write 32k Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress 13[0m
+  [0;37mConnected[0m
+  [0;37mWriting 32768 bytes of data[0m
+  [0;37mWritten 26680/32768 bytes[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 667/32768[0m
+  [0;37mWriting 6088 bytes of data[0m
+  [0;37mWritten 32768/32768 bytes[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 1334/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 2001/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 2668/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 3335/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 4002/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 4669/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 5336/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 6003/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 6670/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 7337/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 8004/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 8671/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 9338/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 10005/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 10672/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 11339/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 12006/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 12673/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 13340/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 14007/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 14674/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 15341/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 16008/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 16675/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 17342/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 18009/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 18676/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 19343/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 20010/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 20677/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 21344/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 22011/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 22678/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 23345/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 24012/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 24679/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 25346/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 26013/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 26680/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 27347/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 28014/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 28681/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 29348/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 30015/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 30682/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 31349/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 32016/32768[0m
+  [0;37mbthost received 667 bytes of data[0m
+  [0;37mbthost received progress 32683/32768[0m
+  [0;37mbthost received 85 bytes of data[0m
+  [0;37mbthost received progress 32768/32768[0m
+[1;39mBasic RFCOMM Socket Client - Write 32k Success[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket Client - Write 32k Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic RFCOMM Socket Client - Write 32k Success[0m - [0;35mteardown complete[0m
+[1;39mBasic RFCOMM Socket Client - Write 32k Success[0m - [0;30mdone[0m
+
+[1;39mBasic RFCOMM Socket Client - Read Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic RFCOMM Socket Client - Read Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mBasic RFCOMM Socket Client - Read Success[0m - [0;34msetup complete[0m
+[1;39mBasic RFCOMM Socket Client - Read Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress 13[0m
+  [0;37mConnected[0m
+[1;39mBasic RFCOMM Socket Client - Read Success[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket Client - Read Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic RFCOMM Socket Client - Read Success[0m - [0;35mteardown complete[0m
+[1;39mBasic RFCOMM Socket Client - Read Success[0m - [0;30mdone[0m
+
+[1;39mBasic RFCOMM Socket Client - Conn Refused[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic RFCOMM Socket Client - Conn Refused[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mBasic RFCOMM Socket Client - Conn Refused[0m - [0;34msetup complete[0m
+[1;39mBasic RFCOMM Socket Client - Conn Refused[0m - [0;30mrun[0m
+  [0;37mConnect in progress 13[0m
+  [0;37mConnected[0m
+[1;39mBasic RFCOMM Socket Client - Conn Refused[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket Client - Conn Refused[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic RFCOMM Socket Client - Conn Refused[0m - [0;35mteardown complete[0m
+[1;39mBasic RFCOMM Socket Client - Conn Refused[0m - [0;30mdone[0m
+
+[1;39mBasic RFCOMM Socket Client - Close[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic RFCOMM Socket Client - Close[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mBasic RFCOMM Socket Client - Close[0m - [0;34msetup complete[0m
+[1;39mBasic RFCOMM Socket Client - Close[0m - [0;30mrun[0m
+  [0;37mConnect in progress 13[0m
+  [0;37mClose socket 13[0m
+  [0;37mClosed[0m
+[1;39mBasic RFCOMM Socket Client - Close[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket Client - Close[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic RFCOMM Socket Client - Close[0m - [0;35mteardown complete[0m
+[1;39mBasic RFCOMM Socket Client - Close[0m - [0;30mdone[0m
+
+[1;39mBasic RFCOMM Socket Server - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic RFCOMM Socket Server - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mBasic RFCOMM Socket Server - Success[0m - [0;34msetup complete[0m
+[1;39mBasic RFCOMM Socket Server - Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+[1;39mBasic RFCOMM Socket Server - Success[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket Server - Success[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket Server - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic RFCOMM Socket Server - Success[0m - [0;35mteardown complete[0m
+[1;39mBasic RFCOMM Socket Server - Success[0m - [0;30mdone[0m
+
+[1;39mBasic RFCOMM Socket Server - Write Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic RFCOMM Socket Server - Write Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mBasic RFCOMM Socket Server - Write Success[0m - [0;34msetup complete[0m
+[1;39mBasic RFCOMM Socket Server - Write Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+[1;39mBasic RFCOMM Socket Server - Write Success[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket Server - Write Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic RFCOMM Socket Server - Write Success[0m - [0;35mteardown complete[0m
+[1;39mBasic RFCOMM Socket Server - Write Success[0m - [0;30mdone[0m
+
+[1;39mBasic RFCOMM Socket Server - Read Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic RFCOMM Socket Server - Read Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mBasic RFCOMM Socket Server - Read Success[0m - [0;34msetup complete[0m
+[1;39mBasic RFCOMM Socket Server - Read Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+[1;39mBasic RFCOMM Socket Server - Read Success[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket Server - Read Success[0m - [0;35mteardown[0m
+
+(rfcomm-tester:36): GLib-[1;35mCRITICAL[0m **: [34m15:20:57.060[0m: Source ID 177 was not found when attempting to remove it
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic RFCOMM Socket Server - Read Success[0m - [0;35mteardown complete[0m
+[1;39mBasic RFCOMM Socket Server - Read Success[0m - [0;30mdone[0m
+
+[1;39mBasic RFCOMM Socket Server - Conn Refused[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic RFCOMM Socket Server - Conn Refused[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mBasic RFCOMM Socket Server - Conn Refused[0m - [0;34msetup complete[0m
+[1;39mBasic RFCOMM Socket Server - Conn Refused[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+[1;39mBasic RFCOMM Socket Server - Conn Refused[0m - [0;32mtest passed[0m
+[1;39mBasic RFCOMM Socket Server - Conn Refused[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic RFCOMM Socket Server - Conn Refused[0m - [0;35mteardown complete[0m
+[1;39mBasic RFCOMM Socket Server - Conn Refused[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+Basic RFCOMM Socket - Success                        [0;32mPassed    [0m   0.720 seconds
+Basic RFCOMM Socket Client - Success                 [0;32mPassed    [0m   1.440 seconds
+Basic RFCOMM Socket Client - Write Success           [0;32mPassed    [0m   0.304 seconds
+Basic RFCOMM Socket Client - Write 32k Success       [0;32mPassed    [0m   0.948 seconds
+Basic RFCOMM Socket Client - Read Success            [0;32mPassed    [0m   0.296 seconds
+Basic RFCOMM Socket Client - Conn Refused            [0;32mPassed    [0m   0.240 seconds
+Basic RFCOMM Socket Client - Close                   [0;32mPassed    [0m   0.264 seconds
+Basic RFCOMM Socket Server - Success                 [0;32mPassed    [0m   0.292 seconds
+Basic RFCOMM Socket Server - Write Success           [0;32mPassed    [0m   0.296 seconds
+Basic RFCOMM Socket Server - Read Success            [0;32mPassed    [0m   0.644 seconds
+Basic RFCOMM Socket Server - Conn Refused            [0;32mPassed    [0m   0.252 seconds
+Total: 11, [0;32mPassed: 11 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+Overall execution time: 5.8 seconds
+Process 35 exited with status 0
+exit status 0

@@ -1,0 +1,57 @@
+{
+ "id": 14878926,
+ "url": "https://patchwork.kernel.org/api/1.3/patches/14878926/",
+ "web_url": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/",
+ "project": {
+  "id": 395,
+  "url": "https://patchwork.kernel.org/api/1.3/projects/395/",
+  "name": "Bluetooth",
+  "link_name": "bluetooth",
+  "list_id": "linux-bluetooth.vger.kernel.org",
+  "list_email": "linux-bluetooth@vger.kernel.org",
+  "web_url": "",
+  "scm_url": "",
+  "webscm_url": "",
+  "list_archive_url": "",
+  "list_archive_url_format": "https://lore.kernel.org/r/{}",
+  "commit_url_format": ""
+ },
+ "msgid": "<<address elided>>",
+ "list_archive_url": "https://lore.kernel.org/r/<address elided>",
+ "date": "2026-10-10T06:55:49",
+ "name": "[bluez] device: fix loss BREDR info when merge duplicate device",
+ "commit_ref": null,
+ "pull_url": null,
+ "state": "new",
+ "archived": false,
+ "hash": "2ab1f234831231d0702bfdb6c9ed9060951a493e",
+ "submitter": {
+  "id": 217069,
+  "url": "https://patchwork.kernel.org/api/1.3/people/217069/",
+  "name": "Ye He",
+  "email": "<address elided>"
+ },
+ "delegate": null,
+ "mbox": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/mbox/",
+ "series": [
+  {
+   "id": 1182833,
+   "url": "https://patchwork.kernel.org/api/1.3/series/1182833/",
+   "web_url": "https://patchwork.kernel.org/series/1182833/",
+   "date": "2026-10-10T06:55:49",
+   "name": "[bluez] device: fix loss BREDR info when merge duplicate device",
+   "version": 1,
+   "mbox": "https://patchwork.kernel.org/series/1182833/mbox/"
+  }
+ ],
+ "comments": "https://patchwork.kernel.org/api/patches/14878926/comments/",
+ "check": "fail",
+ "checks": "https://patchwork.kernel.org/api/patches/14878926/checks/",
+ "tags": {},
+ "related": [],
+ "content": "Two device objects for the same device in case it has\nfirst been discovered over BREDR and has a private\naddress when discovered over LE for the next time.\nThe merge logic doesn't create a new BREDR bearer.\nMakes the application loss connection info of BREDR.\n\nSigned-off-by: Ye He <<address elided>>\n---\n src/device.c | 17 +++++++++++++++--\n 1 file changed, 15 insertions(+), 2 deletions(-)\n\n\n---\nbase-commit: 7428ca2df9356363079db0f48412c20cbdb9471f\nchange-id: 20260505-device-merge-dd823b9f7dd9\n\nBest regards,",
+ "diff": "diff --git a/src/device.c b/src/device.c\nindex 8fdef14489540e64b95e7e75d153d532811af611..9b36d01d4cb8fa6f866409901bcbd9ae2d86a886 100644\n--- a/src/device.c\n+++ b/src/device.c\n@@ -5456,9 +5456,22 @@ void device_merge_duplicate(struct btd_device *dev, struct btd_device *dup)\n {\n \tGSList *l;\n \n-\tDBG(\"\");\n+\tDBG(\"dev path '%s', dup dev path '%s'\", dev->path, dup->path);\n+\n+\t/* copy state */\n+\tdev->bredr_state = dup->bredr_state;\n+\tdev->bredr = btd_bearer_new(dev, BDADDR_BREDR);\n+\tDBG(\"connected %d, paired %d, bonded %d\",\n+\t\t\tdev->bredr_state.connected, dev->bredr_state.paired,\n+\t\t\tdev->bredr_state.bonded);\n \n-\tdev->bredr = dup->bredr;\n+\t/* emit bearer properties */\n+\tif (dev->bredr_state.connected)\n+\t\tbtd_bearer_connected(dev->bredr, 0);\n+\tif (dev->bredr_state.paired)\n+\t\tbtd_bearer_paired(dev->bredr);\n+\tif (dev->bredr_state.bonded)\n+\t\tbtd_bearer_bonded(dev->bredr);\n \n \tdev->trusted = dup->trusted;\n \tdev->blocked = dup->blocked;\n",
+ "prefixes": [
+  "bluez"
+ ]
+}

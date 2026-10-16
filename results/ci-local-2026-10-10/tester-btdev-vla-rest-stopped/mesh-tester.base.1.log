@@ -1,0 +1,509 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+Could not access KVM kernel module: No such file or directory
+qemu-system-x86_64: failed to initialize kvm: No such file or directory
+qemu-system-x86_64: falling back to tcg
+early console in extract_kernel
+input_data: 0x0000000004ddb2c4
+input_len: 0x0000000000f0bc1c
+output: 0x0000000001000000
+output_len: 0x0000000004c7a1ac
+kernel_total_size: 0x00000000048ed000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000002df2e80).
+Linux version 7.3.0-rc2-g964430c03896 (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 PREEMPT_DYNAMIC Sat Oct 10 12:14:54 UTC 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/qca9377-bt-hang/tmp/tester-compare/20261011T151545Z-btdev-vla-rest/work/src/tools/test-runner TESTHOME=/home/user/qca9377-bt-hang/tmp/tester-compare/20261011T151545Z-btdev-vla-rest/work/src TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/usr/bin/env ASAN_OPTIONS=exitcode=65:detect_leaks=0:print_summary=1 tools/mesh-tester'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /usr/bin/env ASAN_OPTIONS=exitcode=65:detect_leaks=0:print_summary=1 tools/mesh-tester
+New process 35 created
+Changing into directory /home/user/qca9377-bt-hang/tmp/tester-compare/20261011T151545Z-btdev-vla-rest/work/src
+
+[1;39mController setup[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mController setup[0m - [0;34msetup[0m
+[1;39mController setup[0m - [0;34msetup complete[0m
+[1;39mController setup[0m - [0;30mrun[0m
+[1;39mController setup[0m - [0;32mtest passed[0m
+[1;39mController setup[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mController setup[0m - [0;35mteardown complete[0m
+[1;39mController setup[0m - [0;30mdone[0m
+
+[1;39mMesh - Enable 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Enable 1[0m - [0;34msetup[0m
+[1;39mMesh - Enable 1[0m - [0;34msetup complete[0m
+[1;39mMesh - Enable 1[0m - [0;30mrun[0m
+  [0;37mSending Set Experimental Feature (0x004a)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSet Experimental Feature (0x004a): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Enable 1[0m - [0;32mtest passed[0m
+[1;39mMesh - Enable 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Enable 1[0m - [0;35mteardown complete[0m
+[1;39mMesh - Enable 1[0m - [0;30mdone[0m
+
+[1;39mMesh - Enable 2[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Enable 2[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Enable 2[0m - [0;34msetup complete[0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Enable 2[0m - [0;30mrun[0m
+  [0;37mSending Set Mesh Receiver (0x0057)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mSet Mesh Receiver (0x0057): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Enable 2[0m - [0;32mtest passed[0m
+[1;39mMesh - Enable 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Enable 2[0m - [0;35mteardown complete[0m
+[1;39mMesh - Enable 2[0m - [0;30mdone[0m
+
+[1;39mMesh - Read Mesh Features[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Read Mesh Features[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Read Mesh Features[0m - [0;34msetup complete[0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Read Mesh Features[0m - [0;30mrun[0m
+  [0;37mSending Read Mesh Features (0x0058)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRead Mesh Features (0x0058): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Read Mesh Features[0m - [0;32mtest passed[0m
+[1;39mMesh - Read Mesh Features[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Read Mesh Features[0m - [0;35mteardown complete[0m
+[1;39mMesh - Read Mesh Features[0m - [0;30mdone[0m
+
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;34msetup[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;34msetup complete[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;30mrun[0m
+  [0;37mSending Read Mesh Features (0x0058)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRead Mesh Features (0x0058): Success (0x00)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;32mtest passed[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;35mteardown complete[0m
+[1;39mMesh - Read Mesh Features - Disabled[0m - [0;30mdone[0m
+
+[1;39mMesh - Send[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send[0m - [0;34msetup complete[0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send (0x0059)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mMesh Send (0x0059): Success (0x00)[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mHCI Command 0x2008 length 32[0m
+  [0;37mHCI Command 0x2005 length 6[0m
+  [0;37mHCI Command 0x2006 length 15[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mNew Mesh Packet Complete event received[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Send[0m - [0;32mtest passed[0m
+[1;39mMesh - Send[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send[0m - [0;30mdone[0m
+
+[1;39mMesh - Send - too short[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send - too short[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send - too short[0m - [0;34msetup complete[0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send - too short[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send (0x0059)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mMesh Send (0x0059): Invalid Parameters (0x0d)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Send - too short[0m - [0;32mtest passed[0m
+[1;39mMesh - Send - too short[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send - too short[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send - too short[0m - [0;30mdone[0m
+
+[1;39mMesh - Send - too long[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send - too long[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send - too long[0m - [0;34msetup complete[0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send - too long[0m - [0;30mrun[0m
+  [0;37mSending Mesh Send (0x0059)[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mMesh Send (0x0059): Rejected (0x0b)[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Send - too long[0m - [0;32mtest passed[0m
+[1;39mMesh - Send - too long[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send - too long[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send - too long[0m - [0;30mdone[0m
+
+[1;39mMesh - Send cancel - 1[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send cancel - 1[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send cancel - 1[0m - [0;34msetup complete[0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send cancel - 1[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send Cancel (0x005a)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mNew Mesh Packet Complete event received[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mMesh Send Cancel (0x005a): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Send cancel - 1[0m - [0;32mtest passed[0m
+[1;39mMesh - Send cancel - 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send cancel - 1[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send cancel - 1[0m - [0;30mdone[0m
+
+[1;39mMesh - Send cancel - 2[0m - [0;30minit[0m
+  [0;37mRead Version callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Version 1.23[0m
+  [0;37mRead Commands callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mEnable management Mesh interface[0m
+  [0;37mEnabling Mesh feature[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: Success (0x00)[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001beff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send cancel - 2[0m - [0;34msetup[0m
+  [0;37mController powered on[0m
+  [0;37mTest setup condition added, total 1[0m
+  [0;37mClient set connectable: Success (0x00)[0m
+  [0;37mTest setup condition complete, 0 left[0m
+[1;39mMesh - Send cancel - 2[0m - [0;34msetup complete[0m
+  [0;37mMesh feature is enabled[0m
+[1;39mMesh - Send cancel - 2[0m - [0;30mrun[0m
+  [0;37mRegistering Mesh Packet Complete notification[0m
+  [0;37mTest condition added, total 1[0m
+  [0;37mRegistering HCI command callback[0m
+  [0;37mTest condition added, total 2[0m
+  [0;37mSending Mesh Send Cancel (0x005a)[0m
+  [0;37mTest condition added, total 3[0m
+  [0;37mNew Mesh Packet Complete event received[0m
+  [0;37mTest condition complete, 2 left[0m
+  [0;37mMesh Send Cancel (0x005a): Success (0x00)[0m
+  [0;37mTest condition complete, 1 left[0m
+  [0;37mHCI Command 0x200a length 1[0m
+  [0;37mTest condition complete, 0 left[0m
+[1;39mMesh - Send cancel - 2[0m - [0;32mtest passed[0m
+[1;39mMesh - Send cancel - 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mMesh - Send cancel - 2[0m - [0;35mteardown complete[0m
+[1;39mMesh - Send cancel - 2[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+Controller setup                                     [0;32mPassed    [0m   0.916 seconds
+Mesh - Enable 1                                      [0;32mPassed    [0m   0.212 seconds
+Mesh - Enable 2                                      [0;32mPassed    [0m   0.316 seconds
+Mesh - Read Mesh Features                            [0;32mPassed    [0m   0.228 seconds
+Mesh - Read Mesh Features - Disabled                 [0;32mPassed    [0m   0.184 seconds
+Mesh - Send                                          [0;32mPassed    [0m   0.468 seconds
+Mesh - Send - too short                              [0;32mPassed    [0m   0.296 seconds
+Mesh - Send - too long                               [0;32mPassed    [0m   0.216 seconds
+Mesh - Send cancel - 1                               [0;32mPassed    [0m   1.252 seconds
+Mesh - Send cancel - 2                               [0;32mPassed    [0m   1.248 seconds
+Total: 10, [0;32mPassed: 10 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+Overall execution time: 5.47 seconds
+Process 35 exited with status 0
+exit status 0

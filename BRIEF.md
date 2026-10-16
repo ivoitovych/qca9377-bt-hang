@@ -11,22 +11,114 @@ per issue and submission, the only page that says what is *current* — and **no
 summary** — a stranger reads `README.md`. Nothing here is derivable from those: this is the
 layer that says which claim holds, which was retracted, and what each rule cost.
 
-⚠️ **Budget: 750 lines** (`devtools/save` warns above it; 200 until 2026-09-19, 500 until
-2026-10-01, the operator's call each time). At 200 every addition cost a *why* somewhere else;
-over 750 it stops being cheaper than the source. Cut the oldest settled item before adding;
+⚠️ **Budget: 1000 lines** (`devtools/save` warns above it; 200 until 2026-09-19, 500 until
+2026-10-01, 750 until 2026-10-11, the operator's call each time). At 200 every addition cost a *why* somewhere else.
+This file is what carries the work from one working period to the next, and the settled foundation (what BT-1 was, what E3 is) is what a reader most needs from it.
+So, when over budget, cut the oldest *finished episode* (a closed experiment's running notes, a superseded block), never the foundation;
 never cut a reason to fit a fact. **One hand-off block, not a stack**: on 2026-10-03 nine
 stacked "RESUME HERE" blocks (205 lines, three of them contradicting each other on the mesh
 series) were moved to the end of `HISTORY.md`; the block below is replaced, not
 topped up. **Sections name their owner**; each owner writes theirs and points at the long form
 (`lessons/`, `reviews/`) rather than reproducing it.
 
-**Last updated: 2026-10-09 · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
+## 0. Start here, every time the work resumes
+
+**Read in this order before any technical claim:**
+1. this section;
+2. the hand-off block below;
+3. `docs/STATUS.md`;
+4. `docs/tooling-index.md`, before typing any pipeline.
+
+Do it at the start of every working period. A hand-over note or a recollection of earlier work records what happened *recently*. It is not the state of the project.
+
+**Any hand-over note carries forward:**
+- the state block below, as it stands;
+- every open operator decision and every pending send;
+- the instruction to reread this file first.
+
+Recent detail may be shortened. Settled state is never dropped.
+
+### Foundation — settled; what a reader needs first
+
+- **The device.** The laptop's controller is a QCA9377 with USB ID **`13d3:3503`** (IMC Networks).
+  `0cf3:e300` is a *different* QCA device that stock btusb already lists; it is only the
+  positive control of `scripts/btusb-has-device.py`. FOUND on `0cf3:e300` shows that the check
+  works and says nothing about this laptop.
+- **BT-1, solved at the cause.** On a transparent (mSBC) SCO link btusb uses alt setting 1; the
+  first HCI command after the stream starts gets no reply, and only a power-off recovers the
+  controller (12 deaths, `EX-033`…`EX-053`, §2). Cause: `13d3:3503` was missing from btusb's
+  device table, so the controller ran its ROM firmware. The upstream entry **`dc16388d45ec`
+  (Tibor Harcsa, not ours)** gives it `BTUSB_QCA_ROME`, which loads the QCA rampatch and NVM
+  (boot log: `QCA: patch rome 0x302 build 0x3e8`). E1 (that firmware setup only) and E3 (the
+  exact upstream entry) ran 74 links with 0 timeouts (§3). What the ROM firmware does wrong is
+  not known and not claimed (§4).
+- **E3 and kernel updates.** E3 is btusb with that entry, built for one kernel ABI into
+  `/lib/modules/<krel>/updates/`. Before any new kernel boots, run `scripts/btusb-has-device.py`
+  on its **stock** btusb (default ID `13d3:3503`) with the control; if ABSENT, E3 is rebuilt for
+  it first. A changelog or a version number proves nothing (backports).
+- **Dangerous on this machine, and why.**
+  - Never unload, reload, rebind or swap btusb or `bluetooth.ko` on the running system: a
+    reload kills even a *healthy* controller here (`EX-046`, 09-23), and recovery needs a
+    power-off. Module tests go through `updates/` + `depmod` + a cold boot, on the operator's
+    word (§9.9).
+  - Never `install.sh --apply`: its watchdog's USB reset drove a wedged controller off the bus
+    three times (`EX-023`, `EX-026`). After any `--tools-only` deploy run `bt-mode status`: it
+    silently reverted the baseline on 08-19 and 09-01 (§7).
+  - In an untreated window only sysfs reads are safe; `bt-mode` writes live, so check
+    `bt-window` before any mode switch.
+- **BT-9 follows from the fix.** The quirk the entry sets (`HCI_QUIRK_SIMULTANEOUS_DISCOVERY`)
+  exposes a core race in which discovery never stops and every later scan is refused Busy.
+  Fixed upstream by `96d006ae6445` (Jiajia Liu); our backports carry it to 6.12, 6.6 and 6.1.
+- **Separate from BT-1:** the BlueZ crash fixes (BT-7) and the kernel MGMT fix `86ef0f58bdec`
+  (BT-8) are other defects found on the way.
+- **Retracted claims are in §5.** Read them before asserting anything about the signature.
+- **Which record is current:** the submission rows of `docs/STATUS.md` for every upstream state;
+  STATUS's issue rows and the list below follow them.
+
+**The state at a glance (2026-10-14; the submission rows of `docs/STATUS.md` win):**
+- **BT-1's fix in stable:** released in 7.2.10 and 6.18.56; queued for 6.12, 6.6, 6.1, 5.15 and
+  5.10 (`EX-061`). Ubuntu's `7.0.0-38` stock btusb lacks it.
+- **Accepted upstream, ours:**
+  - kernel `86ef0f58bdec` (BT-8): mainline since v7.3-rc7, queued for stable 7.2, 6.18, 6.12, 6.6, 6.1;
+  - BlueZ `a734b06059cb` and `0bed9886cff3` (BT-7);
+  - BlueZ `ae23df052290` and `6f5eeb402d3b` (M-3);
+  - BlueZ `8da7e648a9fb` (emulator hook leak) and `f3344d20d904`, `2942883d2738`, `49a70562f0bf`
+    (the BT-9 test), applied 10-12; `git range-diff` against what was sent not yet done;
+  - the BT-9 stable backports of `96d006ae6445` to 6.12, 6.6 and 6.1, queued 10-11.
+- **Waiting for replies:** the Tested-by on Hui Peng's mesh_tx leak patch (10-06).
+- **Operator decisions open:**
+  - the a2dp duplicate-check cleanup;
+  - an Ubuntu SRU for `dc16388d45ec`;
+  - the BlueZ sends A1 and A2 (`patches/bluez/send-2026-10-13/`);
+  - the U6 SRU;
+  - the U7 PipeWire report;
+  - a reply on Jiale Yao's power-off patch (patchwork 14864878);
+  - the next mesh step.
+- **Machine:**
+  - **Since 2026-10-11 16:26 the laptop runs `7.0.0-38` with E3 built for it** (`updates/btusb.ko`, the exact upstream entry; srcversion `D1DEA96A0C95BFAB05CEE01`; the boot log shows `patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded). The build is on private `diag/e3-btusb-for-7.0.0-38-20261010`.
+  - `-38`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
+  - `-38` also carries the BT-9 fix (`96d006ae6445`). The discovery stuck since 10-04 had already ended on 10-10 at 15:02, at the operator's adapter power cycle (§5; corrected 2026-10-14).
+  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` (`d5272a6`) is installed — the operator's `install.sh --tools-only` plus `daemon-reload`.
+  - Only the operator touches the machine's Bluetooth or kernel.
+  - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer. It has been paused since 2026-10-11 17:23 (free space then; 115 GB free on 10-13); restarting it is the operator's decision, and about nine days of margin remained on 10-13 (`docs/STATUS.md`). Rules: §7, "Evidence".
+- **Open investigation:** `U10`, the Tronsmart T8 silent on SBC-XQ. Waiting on the operator's test-sound check (`docs/issues.md`).
+- **Who works where:**
+  - **Active development is on `main`** (operator, 2026-10-13). The held documentation branch, the E3 build branch and `ci/upstream-ci-local` were landed on `main` that day; the held branch as new commits with its privacy fixes, never as a merge.
+  - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
+- **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
+
+**Last updated: 2026-10-14 (§0 Foundation; state synced with STATUS; BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
 `kernel/mgmt-flush-status` the same day; the next exhibit on `main` is EX-063) — no tip hash:
 it rotted within hours (`R2-13`).
 
-> **HAND-OFF (2026-10-08, after the BlueZ series was sent; 2026-10-09 item first).** Current
+> **HAND-OFF (2026-10-08, after the BlueZ series was sent; 2026-10-11 and 2026-10-09 items first).** Current
 > state of every issue and submission: `docs/STATUS.md`. The previous block is at the end of
 > `HISTORY.md`, verbatim.
+>
+> **New, 2026-10-11:**
+> - **The capture archive.** The raw HCI captures were being lost to rotation while still in use: `bt-trace` held its limit of 400 files and deleted the oldest at every rotation. Now every closed capture is compressed and verified into `archive/bt-trace/` (`scripts/bt-trace-archive.py`; 33 MB of A2DP compresses to 0.6 MB, ordinary traffic about 10×).
+> - **Device addresses.** Real addresses may go to the private repository. Public files get consistent pseudonyms, from a privately kept table and tool. A raw capture also carries link keys (`scripts/hci-key-records.py`).
+> - **`U10`.** The Tronsmart T8 is silent on SBC-XQ. Read from the captures: accepted and streaming, real signal only in the Settings test sounds. **Next:** the operator's per-mode test sound with `bt-mark`.
 >
 > **New, 2026-10-09 — device discovery stuck since 2026-10-04 10:26:11 (`EX-062`).** The
 > missing Settings spinner was not a dead controller: the controller kept serving links and
@@ -46,8 +138,10 @@ it rotted within hours (`R2-13`).
 > watch for Queued/FAILED). **BlueZ leak fix and test series sent 05:18 +0200** to
 > linux-bluetooth (`<20261010031846.2842837-1-…>`, `<20261010031852.2842893-1..4-…>`).
 > **Next:** replies on all three submissions.
-> Reply on BlueZ #1554 posted 2026-10-09. The laptop's discovery stays stuck until a suspend or an adapter
-> power-off (operator's call); traces preserved in `/root/bt-trace-keep/` with `SHA256SUMS`.
+> Reply on BlueZ #1554 posted 2026-10-09. The laptop's discovery stayed stuck until the operator's
+> adapter power cycle on 2026-10-10 (powered again 15:02:44; ⚠️ corrected 2026-10-14 — this line
+> used to say "until the reboot into `7.0.0-38`", see §5); traces preserved in `/root/bt-trace-keep/` with
+> `SHA256SUMS`, and compressed into `archive/bt-trace/`.
 > Private branches are being ported to `main` (§7 rule change, 2026-10-09).
 >
 > **Upstream, done:** BlueZ `shared/mgmt` series **applied 10-08**, the day it was sent, as
@@ -106,12 +200,13 @@ it rotted within hours (`R2-13`).
 > for now) · `git send-email --dry-run`.
 >
 > **Desktop capture RUNNING** since 10-05 02:37 (`tools/bt-ui-capture`, `docs/ui-capture.md`);
-> undo with `bt-ui-capture stop` and `unstage`. Userspace rows U1–U9 in STATUS. Operator
+> undo with `bt-ui-capture stop` and `unstage`. Userspace rows U1–U10 in STATUS. Operator
 > decisions open: GNOME Settings debug build, btusb debug build for U8 (after trial E3 #1),
 > shellcheck, the U7 PipeWire report, the U6 SRU.
 >
-> **Machine:** E3 installed, trial E3 #1 open (the suite refuses locally — `devtools/ci` after
-> every push); installed `/usr/local/bin` tools are the 09-18 copies (the operator installs).
+> **Machine:** E3 installed, for `-34` and, since the 10-11 reboot, running on `-38`; trial E3 #1
+> open (the suite refuses locally — `devtools/ci` after every push); installed `/usr/local/bin`
+> tools are the 09-18 copies (the operator installs).
 > **Rules:** nothing sent without the operator's word; private branches push to `private` only;
 > attribution is the project author's only; other authors' patches are tested exactly as posted;
 > a kernel finding is recorded on `main` as it is found; maintainer mail carries only what the
@@ -229,6 +324,7 @@ fault is not specific to Disconnect.
 | "autosuspend mitigation works (0/4 vs 3/4)" | **FALSE** — `EX-038` wedged under `autosusp=N`. The split is chronological **because `--tools-only` reverted the baseline on 08-19** (`R2-58`): every `autosusp=Y` row is before that deploy, every `autosusp=N` row after. Not a treatment effect — a deployment accident |
 | "the 287-timeout denominator can't be re-derived" | **FALSE** — `evidence/baseline/baseline.tsv` reproduces it |
 | "lore.kernel.org is unreachable" | **FALSE** — UA block fronting a JS challenge; a browser gets 200 |
+| "the discovery stuck since 10-04 lasted until the reboot into `7.0.0-38` (10-11)" | **FALSE** — the operator's adapter power cycle ended it on 10-10: powered again 15:02:44.156, the next Start Discovery answered Success 24 ms later, and no `Status: Busy` in any capture from then to the 10-11 shutdown; the control, 05:10:31 the same day, is refused Busy (`docs/STATUS.md`, BT-9) |
 
 ## 6. The BlueZ patches — status: **APPLIED UPSTREAM 2026-09-21**
 
@@ -291,6 +387,29 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   *experiment* (`R2-58`, `EX-042`). A 09-16 fix guarded 2 of 3 files; the 3rd reverted on
   09-18 and was caught in minutes; all 3 skip now. The stamp is not evidence, the files are.
 - **Never lose code, tests or evidence.** Priority 1; keep clutter over any deletion.
+- **Never force-push without a backup branch first.** A rewrite with a mistake deletes
+  work, and mistakes are made all the time. Before any history rewrite: push the branch as
+  it stands to the `private` remote as `<branch>-backup-<YYYYMMDD>-<HHMMSS>-utc`, verify
+  the remote has it, then rewrite, then push with `--force-with-lease` only. Set
+  2026-10-11, when `ci/upstream-ci-local` was rebuilt so that patchwork mail headers (the
+  relays' addresses) never entered its history; the backup is
+  `ci/upstream-ci-local-backup-20261011-144932-utc` on `private`.
+- **Evidence, decided 2026-10-11 by the operator.**
+  - **What is committed** is the incident window: complete inside the window (every relevant source, no line filtered out, a margin before and after), and nothing outside it. GitHub space serves everyone, so no bulk history goes into git, public or private.
+  - **Evidence is never deleted,** fixed bugs included: a deletion does not shrink history, and a bug can return.
+  - **Raw captures are never left to rotation.** `scripts/bt-trace-archive.py` keeps them all, compressed, in `archive/bt-trace/` (git-ignored, 10 GB budget, never deletes). Windows are cut from there.
+  - **Device addresses:**
+    - real addresses may be committed to the **private** repository;
+    - public files carry **pseudonyms** from a privately kept table: the manufacturer prefix is real, the rest random, one per device for good, with the statement that says so;
+    - BSSIDs, key material (a raw capture carries link keys) and personal device names are never published.
+  - **Why the address rule changed:** until 2026-10-11 no address went into any commit, private included. That kept the T8 captures out of git altogether.
+- **Nothing we write exists only on this disk (operator, 2026-10-11).** Whatever cannot go public goes to the private remote.
+  - **Pushed:** branches, worktrees, notes, and the commits made inside upstream checkouts under `cache/`. Those go as patch exports, never as the trees themselves (`scripts/export-local-work.py` → a branch on the private remote). `scripts/unpushed-survey.py` lists what is still local.
+  - **Exceptions, kept local on purpose:**
+    - **the raw capture archive** (`archive/`, up to 10 GB). It is bulk, not windows, and GitHub space is not for it;
+    - **upstream source trees**, which can be fetched again;
+    - **build outputs and the bulk of `tmp/`**, which can be regenerated.
+  - **The archive's one weakness** is that it lives on one laptop disk. A copy elsewhere (an external disk) is the operator's call.
 - **Do not send the patches** until the operator says so.
 - **An untreated window is the most valuable state there is.** Do not touch Bluetooth;
   `sysfs` reads are safe, anything through usbfs is not. ⚠️ **`bt-mode` writes
@@ -350,6 +469,28 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   replaced 226 recurring pipelines. If a question recurs and no tool answers it, that is the bug.
 - **Check whether the tool already does the step you are prefixing.** `git add -A` was typed
   before `repo-save` for weeks; `repo-save` had always staged on its own.
+- **The tools we forget, and what forgetting cost.** The full list is `docs/tooling-index.md`;
+  these were the ones skipped when they existed:
+  - `scripts/copy-tree.sh` for any copy with a flag (`cp -a`/`-p`/`-r`): forgotten 10-10,
+    three times.
+  - `scripts/pre-send-check.sh` before any BlueZ mail (fetches today's master): BlueZ v2 went
+    out 6.5 h after v1 had been applied, 09-21.
+  - `scripts/mail-lint.sh` on every mail: the 10-10 stable note had three lines of 73-76
+    columns, found by a reviewer, not by us.
+  - `scripts/get-maintainers.sh` plus the previous mail's Cc: the 10-10 stable mails nearly
+    went to Luiz's sign-off address instead of his MAINTAINERS one.
+  - `scripts/stable-queue-check.sh <short stem>` with a positive control, and
+    `scripts/series-backport-check.sh <tag>` (tags, not branch names).
+  - `scripts/patchwork-checks.sh` and `tmp/bt9-repro/ratatoskr-scan.py`: lore refuses fetchers.
+  - `devtools/save <msgfile>` then `devtools/ci --wait <sha>`; `scripts/stop-own-process.sh`.
+- **Run the receiving project's CI before sending, on base and on base plus ours.** The 10-10
+  BT-9 sends drew three red bot marks, none of them ours
+  ([`ci-bot-2026-10-10.md`](patches/kernel/bt9-stable/results/ci-bot-2026-10-10.md)):
+  smatch's VLA at upstream `btdev.c:479`, a TestFunctional pairing timeout that failed the
+  same way on an unrelated patch, and the kernel bot's apply step on a stable backport. We
+  were clean by scope, not by checking. A lone local run only repeats the bot's noise; the
+  difference against the base is what tells ours from theirs. A failure that is theirs is a
+  candidate fix of its own, once we know it is not already reported.
 - **Trim output inside the script, never with a pipe.** Quiet on success, everything on
   failure — a summary that hides a gate failure is worse than the noise it saved.
 - **Separate what the operator DID from how the controller RESPONDED** (Phase 14). The
@@ -594,6 +735,6 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
 |---|---|
 | evidence, one claim + extraction each | `evidence/exhibits/` (`bt-exhibit index`) |
 | the current snapshot, one dated row per issue and submission | `docs/STATUS.md` |
-| narrative, why things were believed | `HISTORY.md` (37 phases, a chapter, and the retired hand-off blocks) |
+| narrative, why things were believed | `HISTORY.md` (37 phases, dated chapters to 2026-10-11, and the retired hand-off blocks) |
 | which tool answers which question | `docs/tooling-index.md` |
 | the patches, their reasoning and BlueZ's measured conventions | `patches/bluez/` |

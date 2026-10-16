@@ -1,0 +1,57 @@
+{
+ "id": 14517366,
+ "url": "https://patchwork.kernel.org/api/1.3/patches/14517366/",
+ "web_url": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/",
+ "project": {
+  "id": 395,
+  "url": "https://patchwork.kernel.org/api/1.3/projects/395/",
+  "name": "Bluetooth",
+  "link_name": "bluetooth",
+  "list_id": "linux-bluetooth.vger.kernel.org",
+  "list_email": "linux-bluetooth@vger.kernel.org",
+  "web_url": "",
+  "scm_url": "",
+  "webscm_url": "",
+  "list_archive_url": "",
+  "list_archive_url_format": "https://lore.kernel.org/r/{}",
+  "commit_url_format": ""
+ },
+ "msgid": "<<address elided>>",
+ "list_archive_url": "https://lore.kernel.org/r/<address elided>",
+ "date": "2026-04-09T07:44:29",
+ "name": "[5.10.y] Bluetooth: SCO: Fix use-after-free in sco_recv_frame() due to missing sock_hold",
+ "commit_ref": null,
+ "pull_url": null,
+ "state": "new",
+ "archived": true,
+ "hash": "1875c4536ea27ee6fee28107840ebcd2b11275ef",
+ "submitter": {
+  "id": 220154,
+  "url": "https://patchwork.kernel.org/api/1.3/people/220154/",
+  "name": "Jianqiang kang",
+  "email": "<address elided>"
+ },
+ "delegate": null,
+ "mbox": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/mbox/",
+ "series": [
+  {
+   "id": 1079066,
+   "url": "https://patchwork.kernel.org/api/1.3/series/1079066/",
+   "web_url": "https://patchwork.kernel.org/series/1079066/",
+   "date": "2026-04-09T07:44:29",
+   "name": "[5.10.y] Bluetooth: SCO: Fix use-after-free in sco_recv_frame() due to missing sock_hold",
+   "version": 1,
+   "mbox": "https://patchwork.kernel.org/series/1079066/mbox/"
+  }
+ ],
+ "comments": "https://patchwork.kernel.org/api/patches/14517366/comments/",
+ "check": "fail",
+ "checks": "https://patchwork.kernel.org/api/patches/14517366/checks/",
+ "tags": {},
+ "related": [],
+ "content": "From: Hyunwoo Kim <<address elided>>\n\n[ Upstream commit 598dbba9919c5e36c54fe1709b557d64120cb94b ]\n\nsco_recv_frame() reads conn->sk under sco_conn_lock() but immediately\nreleases the lock without holding a reference to the socket. A concurrent\nclose() can free the socket between the lock release and the subsequent\nsk->sk_state access, resulting in a use-after-free.\n\nOther functions in the same file (sco_sock_timeout(), sco_conn_del())\ncorrectly use sco_sock_hold() to safely hold a reference under the lock.\n\nFix by using sco_sock_hold() to take a reference before releasing the\nlock, and adding sock_put() on all exit paths.\n\nFixes: 1da177e4c3f4 (\"Linux-2.6.12-rc2\")\nSigned-off-by: Hyunwoo Kim <<address elided>>\nSigned-off-by: Luiz Augusto von Dentz <<address elided>>\nSigned-off-by: Jianqiang kang <<address elided>>\n---\n net/bluetooth/sco.c | 10 +++++++---\n 1 file changed, 7 insertions(+), 3 deletions(-)",
+ "diff": "diff --git a/net/bluetooth/sco.c b/net/bluetooth/sco.c\nindex ce084a184a1c..c441e5225458 100644\n--- a/net/bluetooth/sco.c\n+++ b/net/bluetooth/sco.c\n@@ -305,7 +305,7 @@ static void sco_recv_frame(struct sco_conn *conn, struct sk_buff *skb)\n \tstruct sock *sk;\n \n \tsco_conn_lock(conn);\n-\tsk = conn->sk;\n+\tsk = sco_sock_hold(conn);\n \tsco_conn_unlock(conn);\n \n \tif (!sk)\n@@ -314,11 +314,15 @@ static void sco_recv_frame(struct sco_conn *conn, struct sk_buff *skb)\n \tBT_DBG(\"sk %p len %d\", sk, skb->len);\n \n \tif (sk->sk_state != BT_CONNECTED)\n-\t\tgoto drop;\n+\t\tgoto drop_put;\n \n-\tif (!sock_queue_rcv_skb(sk, skb))\n+\tif (!sock_queue_rcv_skb(sk, skb)) {\n+\t\tsock_put(sk);\n \t\treturn;\n+\t}\n \n+drop_put:\n+\tsock_put(sk);\n drop:\n \tkfree_skb(skb);\n }\n",
+ "prefixes": [
+  "5.10.y"
+ ]
+}

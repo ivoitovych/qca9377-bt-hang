@@ -1,0 +1,36 @@
+13:09:02 ci-local: space=user tree=/home/user/qca9377-bt-hang/cache/bluez base=origin/master checks=am,checkpatch,gitlint,buildell,make,makeextell,smatch,incremental,scanbuild jobs=4
+13:09:02 ci-local: out=/home/user/qca9377-bt-hang/tmp/ci-local/20261010T130902Z-test-series
+13:09:02   patch: patches/kernel/bt9-stable/bluez-mgmt-tester/v2-test-series/0001-emulator-Add-btdev_send_event.patch :: [BlueZ,1/3] emulator: Add btdev_send_event
+13:09:02   patch: patches/kernel/bt9-stable/bluez-mgmt-tester/v2-test-series/0002-emulator-vhci-Add-vhci_set_quirk_simultaneous_discov.patch :: [BlueZ,2/3] emulator/vhci: Add vhci_set_quirk_simultaneous_discovery
+13:09:02   patch: patches/kernel/bt9-stable/bluez-mgmt-tester/v2-test-series/0003-mgmt-tester-Add-simultaneous-discovery-stop-tests.patch :: [BlueZ,3/3] mgmt-tester: Add simultaneous discovery stop tests
+13:09:02 ci-local: base commit 7428ca2df9356363079db0f48412c20cbdb9471f 2026-10-09 device: Fix LE bearer Connect not replying
+13:09:02   $ (cd src && git -c user.name=Iaroslav Voitovych -c user.email=yaroslav.voytovych@gmail.com -c commit.gpgsign=false am /home/user/qca9377-bt-hang/patches/kernel/bt9-stable/bluez-mgmt-tester/v2-test-series/0001-emulator-Add-btdev_send_event.patch /home/user/qca9377-bt-hang/patches/kernel/bt9-stable/bluez-mgmt-tester/v2-test-series/0002-emulator-vhci-Add-vhci_set_quirk_simultaneous_discov.patch /home/user/qca9377-bt-hang/patches/kernel/bt9-stable/bluez-mgmt-tester/v2-test-series/0003-mgmt-tester-Add-simultaneous-discovery-stop-tests.patch)
+13:09:04   $ (cd /home/user/qca9377-bt-hang/cache/ell && ./bootstrap-configure)
+13:09:20   $ (cd /home/user/qca9377-bt-hang/cache/ell && make -j4)
+13:09:32   $ (cd /home/user/qca9377-bt-hang/cache/ell && make install)
+13:09:32 == make: base side
+13:09:32   base side of make reused from /home/user/qca9377-bt-hang/tmp/ci-local/base-cache/user-7428ca2df9356363079db0f48412c20cbdb9471f-make-6e2aee8e.findings (0 finding lines)
+13:09:32 == make: patched side
+13:09:32   $ (cd src && ./bootstrap-configure)
+13:09:45   $ (cd src && make -j4)
+13:13:28 == makeextell: base side
+13:13:28   base side of makeextell reused from /home/user/qca9377-bt-hang/tmp/ci-local/base-cache/user-7428ca2df9356363079db0f48412c20cbdb9471f-makeextell-31ee3a59.findings (0 finding lines)
+13:13:28 == makeextell: patched side
+13:13:28   $ (cd src && ./bootstrap-configure --enable-external-ell --disable-lsan --disable-asan --disable-ubsan)
+13:13:45   $ (cd src && make -j4)
+13:14:57 == smatch: base side
+13:14:57   base side of smatch reused from /home/user/qca9377-bt-hang/tmp/ci-local/base-cache/user-7428ca2df9356363079db0f48412c20cbdb9471f-smatch-7e841f28.findings (117 finding lines)
+13:14:57 == smatch: patched side
+13:14:57   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+13:15:14   $ (cd src && make -j4 CHECK=/home/user/qca9377-bt-hang/cache/smatch/smatch --full-path CC=/home/user/qca9377-bt-hang/cache/smatch/cgcc)
+13:18:37 == incremental
+13:18:37   $ (cd src && ./bootstrap-configure)
+13:18:54   $ (cd src && make -j4)
+13:22:28   $ (cd src && make -j4)
+13:22:46   $ (cd src && make -j4)
+13:23:04 == scanbuild: base side
+13:23:04   base side of scanbuild reused from /home/user/qca9377-bt-hang/tmp/ci-local/base-cache/user-7428ca2df9356363079db0f48412c20cbdb9471f-scanbuild-6ade0170.findings (211 finding lines)
+13:23:04 == scanbuild: patched side
+13:23:04   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+13:23:21   $ (cd src && scan-build-18 -o /home/user/qca9377-bt-hang/tmp/ci-local/20261010T130902Z-test-series/scanbuild.patched.scan-build-reports make -j4)
+13:31:23 RESULT: no NEW finding

@@ -1,0 +1,783 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src/test
+configfile: pytest.ini
+plugins: xdist-3.4.0
+collecting ... collected 60 items / 59 deselected / 1 selected
+
+test/functional/test_bluetoothctl.py::test_bluetoothctl_pair_bredr[hosts15-vm2] ERROR [100%]
+
+==================================== ERRORS ====================================
+_________ ERROR at setup of test_bluetoothctl_pair_bredr[hosts15-vm2] __________
+
+item = <Function test_bluetoothctl_pair_bredr[hosts15-vm2]>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_runtest_setup(item):
+        _enable_log_filters(item.session.config, logging.root.handlers[-1:])
+>       yield from status_log_stage(item.nodeid, "setup")
+
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:370: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:361: in status_log_stage
+    yield
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:731: in hosts
+    yield from _hosts_impl(request, vm, **host_setup)
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:581: in _hosts_impl
+    h.wait_load(timeout=timeout)
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/env.py:140: in wait_load
+    for name, value in self._conn.call("wait_load", timeout=timeout).items():
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pytest_bluezenv.rpc.Connection object at 0x7f50ee7b48c0>
+method = 'wait_load', a = (), kw = {}
+
+    def call(self, method, *a, **kw):
+        timeout = kw.pop("timeout", None)
+    
+        self.log.info(f"client: {method} {a} {kw}")
+    
+        reply = self._send_reply(
+            "call", method=str(method), a=a, kw=kw, timeout=timeout
+        )
+        if reply.get("error"):
+>           raise RemoteError(reply["error"], reply["traceback"])
+E           pytest_bluezenv.rpc.RemoteError: load failed
+E           Remote traceback:
+E               Traceback (most recent call last):
+E                 File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/rpc.py", line 102, in server_stream
+E                   result = method(*msg["a"], **msg["kw"])
+E                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E                 File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/env.py", line 238, in wait_load
+E                   raise RuntimeError("load failed")
+E               RuntimeError: load failed
+
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/rpc.py:363: RemoteError
+------------------------------ Captured log setup ------------------------------
+2026-10-11 12:57:14.921000 INFO   pytest              :  
+
+==== functional/test_bluetoothctl.py::test_bluetoothctl_pair_bredr[hosts15-vm2]: setup ====
+2026-10-11 12:57:14.927000 INFO   env                 :  Starting btvirt: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src/emulator/btvirt --server=/tmp/pytest-bluezenv-dnht6xis
+2026-10-11 12:57:15.180000 INFO   env                 :  Starting host: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src/tools/test-runner --kernel=/home/user/qca9377-bt-hang/cache/bluetooth-next/arch/x86/boot/bzImage -u/tmp/pytest-bluezenv-dnht6xis/bt-server-bredrle -o -chardev -o socket,id=ser0,path=/tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-rpc-0,server=on,wait=off -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser0,name=pytest-bluezenv-rpc -o -chardev -o socket,id=ser1,path=/tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-tty-0,server=on,wait=off -o -device -o pci-serial,chardev=ser1 -o -chardev -o socket,id=ser2,path=/tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-log-0,server=on,wait=on -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser2,name=pytest-bluezenv-log -o -fsdev -o local,id=fsdev-shared,path=/tmp/pytest-bluezenv-dnht6xis/shared-0,readonly=off,security_model=none,multidevs=remap -o -device -o virtio-9p-pci,fsdev=fsdev-shared,mount_tag=/dev/shared -o -m -o 400M -- /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py
+2026-10-11 12:57:15.180000 INFO   env                 :  TTY: socat /tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-tty-0 STDIO,rawer
+2026-10-11 12:57:15.183542 OUT    host.0.0            :  /usr/libexec/virtiofsd not available: virtiofs disabled
+2026-10-11 12:57:15.203946 OUT    host.0.0            :  qemu-system-x86_64: -chardev socket,id=ser2,path=/tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-log-0,server=on,wait=on: info: QEMU waiting for connection on: disconnected:unix:/tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-log-0,server=on
+2026-10-11 12:57:15.432851 OUT    host.0.0            :  Could not access KVM kernel module: No such file or directory
+2026-10-11 12:57:15.432879 OUT    host.0.0            :  qemu-system-x86_64: failed to initialize kvm: No such file or directory
+2026-10-11 12:57:15.434000 INFO   env                 :  Starting host: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src/tools/test-runner --kernel=/home/user/qca9377-bt-hang/cache/bluetooth-next/arch/x86/boot/bzImage -u/tmp/pytest-bluezenv-dnht6xis/bt-server-bredrle -o -chardev -o socket,id=ser0,path=/tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-rpc-1,server=on,wait=off -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser0,name=pytest-bluezenv-rpc -o -chardev -o socket,id=ser1,path=/tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-tty-1,server=on,wait=off -o -device -o pci-serial,chardev=ser1 -o -chardev -o socket,id=ser2,path=/tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-log-1,server=on,wait=on -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser2,name=pytest-bluezenv-log -o -fsdev -o local,id=fsdev-shared,path=/tmp/pytest-bluezenv-dnht6xis/shared-1,readonly=off,security_model=none,multidevs=remap -o -device -o virtio-9p-pci,fsdev=fsdev-shared,mount_tag=/dev/shared -o -m -o 400M -- /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py
+2026-10-11 12:57:15.434000 INFO   env                 :  TTY: socat /tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-tty-1 STDIO,rawer
+2026-10-11 12:57:15.436250 OUT    host.0.1            :  /usr/libexec/virtiofsd not available: virtiofs disabled
+2026-10-11 12:57:15.443201 OUT    host.0.0            :  qemu-system-x86_64: falling back to tcg
+2026-10-11 12:57:15.451441 OUT    host.0.1            :  qemu-system-x86_64: -chardev socket,id=ser2,path=/tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-log-1,server=on,wait=on: info: QEMU waiting for connection on: disconnected:unix:/tmp/pytest-bluezenv-dnht6xis/pytest-bluezenv-log-1,server=on
+2026-10-11 12:57:15.686273 OUT    host.0.1            :  Could not access KVM kernel module: No such file or directory
+2026-10-11 12:57:15.686295 OUT    host.0.1            :  qemu-system-x86_64: failed to initialize kvm: No such file or directory
+2026-10-11 12:57:15.687000 DEBUG  rpc                 :  client: connect
+2026-10-11 12:57:15.696462 OUT    host.0.1            :  qemu-system-x86_64: falling back to tcg
+2026-10-11 12:57:15.779299 OUT    host.0.0            :  early console in extract_kernel
+2026-10-11 12:57:15.779500 OUT    host.0.0            :  input_data: 0x0000000004ddb2c4
+2026-10-11 12:57:15.779637 OUT    host.0.0            :  input_len: 0x0000000000f0bc1c
+2026-10-11 12:57:15.779692 OUT    host.0.0            :  output: 0x0000000001000000
+2026-10-11 12:57:15.779750 OUT    host.0.0            :  output_len: 0x0000000004c7a1ac
+2026-10-11 12:57:15.779805 OUT    host.0.0            :  kernel_total_size: 0x00000000048ed000
+2026-10-11 12:57:15.779864 OUT    host.0.0            :  needed_size: 0x0000000004e00000
+2026-10-11 12:57:15.779915 OUT    host.0.0            :  trampoline_32bit: 0x0000000000000000
+2026-10-11 12:57:15.780848 OUT    host.0.0            :  Physical KASLR using RDTSC...
+2026-10-11 12:57:15.781211 OUT    host.0.0            :  Virtual KASLR using RDTSC...
+2026-10-11 12:57:15.781304 OUT    host.0.0            :  
+2026-10-11 12:57:15.781307 OUT    host.0.0            :  Decompressing Linux... Parsing ELF... Performing relocations... done.
+2026-10-11 12:57:16.028210 OUT    host.0.1            :  early console in extract_kernel
+2026-10-11 12:57:16.028517 OUT    host.0.1            :  input_data: 0x0000000004ddb2c4
+2026-10-11 12:57:16.028753 OUT    host.0.1            :  input_len: 0x0000000000f0bc1c
+2026-10-11 12:57:16.028838 OUT    host.0.1            :  output: 0x0000000001000000
+2026-10-11 12:57:16.028915 OUT    host.0.1            :  output_len: 0x0000000004c7a1ac
+2026-10-11 12:57:16.029003 OUT    host.0.1            :  kernel_total_size: 0x00000000048ed000
+2026-10-11 12:57:16.029102 OUT    host.0.1            :  needed_size: 0x0000000004e00000
+2026-10-11 12:57:16.029230 OUT    host.0.1            :  trampoline_32bit: 0x0000000000000000
+2026-10-11 12:57:16.030531 OUT    host.0.1            :  Physical KASLR using RDTSC...
+2026-10-11 12:57:16.030995 OUT    host.0.1            :  Virtual KASLR using RDTSC...
+2026-10-11 12:57:16.031165 OUT    host.0.1            :  
+2026-10-11 12:57:16.031171 OUT    host.0.1            :  Decompressing Linux... Parsing ELF... Performing relocations... done.
+2026-10-11 12:57:16.188000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:57:16.940000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:57:17.297997 OUT    host.0.0            :  Booting the kernel (entry_offset: 0x0000000002df2e80).
+2026-10-11 12:57:17.347361 OUT    host.0.1            :  Booting the kernel (entry_offset: 0x0000000002df2e80).
+2026-10-11 12:57:17.362188 OUT    host.0.0            :  Linux version 7.3.0-rc2-g964430c03896 (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 PREEMPT_DYNAMIC Sat Oct 10 12:14:54 UTC 2026
+2026-10-11 12:57:17.362832 OUT    host.0.0            :  Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src/tools/test-runner TESTHOME=/home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=1 TESTAUTO=0 TESTAUDIO='' TESTARGS='/home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py'
+2026-10-11 12:57:17.364556 OUT    host.0.0            :  BIOS-provided physical RAM map:
+2026-10-11 12:57:17.364624 OUT    host.0.0            :  BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+2026-10-11 12:57:17.364714 OUT    host.0.0            :  BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+2026-10-11 12:57:17.364822 OUT    host.0.0            :  BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+2026-10-11 12:57:17.364895 OUT    host.0.0            :  BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+2026-10-11 12:57:17.365006 OUT    host.0.0            :  BIOS-e820: [mem 0x0000000000100000-0x0000000018fdffff]  System RAM
+2026-10-11 12:57:17.365101 OUT    host.0.0            :  BIOS-e820: [mem 0x0000000018fe0000-0x0000000018ffffff]  device reserved
+2026-10-11 12:57:17.365237 OUT    host.0.0            :  BIOS-e820: [gap 0x0000000019000000-0x00000000afffffff]
+2026-10-11 12:57:17.365332 OUT    host.0.0            :  BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+2026-10-11 12:57:17.365431 OUT    host.0.0            :  BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+2026-10-11 12:57:17.365502 OUT    host.0.0            :  BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+2026-10-11 12:57:17.365596 OUT    host.0.0            :  BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+2026-10-11 12:57:17.365674 OUT    host.0.0            :  BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+2026-10-11 12:57:17.365768 OUT    host.0.0            :  BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+2026-10-11 12:57:17.365843 OUT    host.0.0            :  BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+2026-10-11 12:57:17.365934 OUT    host.0.0            :  printk: legacy bootconsole [earlyser0] enabled
+2026-10-11 12:57:17.366816 OUT    host.0.0            :  Hash pointers mode set to never.
+2026-10-11 12:57:17.404756 OUT    host.0.1            :  Linux version 7.3.0-rc2-g964430c03896 (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 PREEMPT_DYNAMIC Sat Oct 10 12:14:54 UTC 2026
+2026-10-11 12:57:17.405434 OUT    host.0.1            :  Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src/tools/test-runner TESTHOME=/home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=1 TESTAUTO=0 TESTAUDIO='' TESTARGS='/home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py'
+2026-10-11 12:57:17.406699 OUT    host.0.1            :  BIOS-provided physical RAM map:
+2026-10-11 12:57:17.406757 OUT    host.0.1            :  BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+2026-10-11 12:57:17.406831 OUT    host.0.1            :  BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+2026-10-11 12:57:17.406918 OUT    host.0.1            :  BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+2026-10-11 12:57:17.406991 OUT    host.0.1            :  BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+2026-10-11 12:57:17.407083 OUT    host.0.1            :  BIOS-e820: [mem 0x0000000000100000-0x0000000018fdffff]  System RAM
+2026-10-11 12:57:17.408259 OUT    host.0.1            :  BIOS-e820: [mem 0x0000000018fe0000-0x0000000018ffffff]  device reserved
+2026-10-11 12:57:17.408356 OUT    host.0.1            :  BIOS-e820: [gap 0x0000000019000000-0x00000000afffffff]
+2026-10-11 12:57:17.408435 OUT    host.0.1            :  BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+2026-10-11 12:57:17.408542 OUT    host.0.1            :  BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+2026-10-11 12:57:17.408606 OUT    host.0.1            :  BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+2026-10-11 12:57:17.408712 OUT    host.0.1            :  BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+2026-10-11 12:57:17.408786 OUT    host.0.1            :  BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+2026-10-11 12:57:17.409555 OUT    host.0.1            :  BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+2026-10-11 12:57:17.409632 OUT    host.0.1            :  BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+2026-10-11 12:57:17.409722 OUT    host.0.1            :  printk: legacy bootconsole [earlyser0] enabled
+2026-10-11 12:57:17.410506 OUT    host.0.1            :  Hash pointers mode set to never.
+2026-10-11 12:57:17.986684 OUT    host.0.0            :  Poking KASLR using RDTSC...
+2026-10-11 12:57:18.046714 OUT    host.0.1            :  Poking KASLR using RDTSC...
+2026-10-11 12:57:18.067000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:57:19.757000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:57:22.290000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:57:22.954923 OUT    host.0.1            :  9p: Bad value for 'source'
+2026-10-11 12:57:23.508608 OUT    host.0.0            :  9p: Bad value for 'source'
+2026-10-11 12:57:24.377205 OUT    host.0.1            :  Mounting sysfs to /sys
+2026-10-11 12:57:24.400113 OUT    host.0.1            :  Mounting proc to /proc
+2026-10-11 12:57:24.418303 OUT    host.0.1            :  Mounting devtmpfs to /dev
+2026-10-11 12:57:24.427722 OUT    host.0.1            :  Creating /dev/pts
+2026-10-11 12:57:24.430933 OUT    host.0.1            :  Mounting devpts to /dev/pts
+2026-10-11 12:57:24.435937 OUT    host.0.1            :  Creating /dev/shm
+2026-10-11 12:57:24.437890 OUT    host.0.1            :  Mounting tmpfs to /dev/shm
+2026-10-11 12:57:24.446860 OUT    host.0.1            :  Mounting tmpfs to /run
+2026-10-11 12:57:24.472890 OUT    host.0.1            :  Mounting tmpfs to /tmp
+2026-10-11 12:57:24.487935 OUT    host.0.1            :  Mounting debugfs to /sys/kernel/debug
+2026-10-11 12:57:24.498027 OUT    host.0.1            :  Linking /dev/fd to /proc/self/fd
+2026-10-11 12:57:24.500853 OUT    host.0.1            :  Linking /dev/stdin to /proc/self/fd/0
+2026-10-11 12:57:24.503766 OUT    host.0.1            :  Linking /dev/stdout to /proc/self/fd/1
+2026-10-11 12:57:24.506347 OUT    host.0.1            :  Linking /dev/stderr to /proc/self/fd/2
+2026-10-11 12:57:24.512038 OUT    host.0.1            :  Creating new session group leader
+2026-10-11 12:57:24.517097 OUT    host.0.1            :  Setting controlling terminal
+2026-10-11 12:57:24.522579 OUT    host.0.1            :  Creating /var/lib/bluetooth
+2026-10-11 12:57:24.603870 OUT    host.0.1            :  Failed to create filesystem: No such file or directory
+2026-10-11 12:57:24.612838 OUT    host.0.1            :  Creating /etc/bluetooth
+2026-10-11 12:57:24.627422 OUT    host.0.1            :  Failed to create filesystem: No such file or directory
+2026-10-11 12:57:24.629781 OUT    host.0.1            :  Creating /etc/dbus-1
+2026-10-11 12:57:24.647775 OUT    host.0.1            :  Creating /usr/share/dbus-1
+2026-10-11 12:57:24.695660 OUT    host.0.1            :  Attachment of devices requested
+2026-10-11 12:57:24.711731 OUT    host.0.1            :  Attaching BR/EDR controller to /dev/hvc1
+2026-10-11 12:57:24.731920 OUT    host.0.1            :  Switched line discipline from 0 to 15
+2026-10-11 12:57:24.763886 OUT    host.0.1            :  Device index 0 attached
+2026-10-11 12:57:24.771328 OUT    host.0.1            :  Running command /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py
+2026-10-11 12:57:24.811748 OUT    host.0.1            :  New process 38 created
+2026-10-11 12:57:24.820728 OUT    host.0.1            :  Changing into directory /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src
+2026-10-11 12:57:24.823613 OUT    host.0.0            :  Mounting sysfs to /sys
+2026-10-11 12:57:24.860923 OUT    host.0.0            :  Mounting proc to /proc
+2026-10-11 12:57:24.889112 OUT    host.0.0            :  Mounting devtmpfs to /dev
+2026-10-11 12:57:24.908418 OUT    host.0.0            :  Creating /dev/pts
+2026-10-11 12:57:24.912626 OUT    host.0.0            :  Mounting devpts to /dev/pts
+2026-10-11 12:57:24.920776 OUT    host.0.0            :  Creating /dev/shm
+2026-10-11 12:57:24.923811 OUT    host.0.0            :  Mounting tmpfs to /dev/shm
+2026-10-11 12:57:24.937448 OUT    host.0.0            :  Mounting tmpfs to /run
+2026-10-11 12:57:24.959511 OUT    host.0.0            :  Mounting tmpfs to /tmp
+2026-10-11 12:57:24.974707 OUT    host.0.0            :  Mounting debugfs to /sys/kernel/debug
+2026-10-11 12:57:24.984644 OUT    host.0.0            :  Linking /dev/fd to /proc/self/fd
+2026-10-11 12:57:24.987792 OUT    host.0.0            :  Linking /dev/stdin to /proc/self/fd/0
+2026-10-11 12:57:24.989947 OUT    host.0.0            :  Linking /dev/stdout to /proc/self/fd/1
+2026-10-11 12:57:24.991575 OUT    host.0.0            :  Linking /dev/stderr to /proc/self/fd/2
+2026-10-11 12:57:24.998912 OUT    host.0.0            :  Creating new session group leader
+2026-10-11 12:57:25.007054 OUT    host.0.0            :  Setting controlling terminal
+2026-10-11 12:57:25.015387 OUT    host.0.0            :  Creating /var/lib/bluetooth
+2026-10-11 12:57:25.124798 OUT    host.0.0            :  Failed to create filesystem: No such file or directory
+2026-10-11 12:57:25.132768 OUT    host.0.0            :  Creating /etc/bluetooth
+2026-10-11 12:57:25.143648 OUT    host.0.0            :  Failed to create filesystem: No such file or directory
+2026-10-11 12:57:25.146973 OUT    host.0.0            :  Creating /etc/dbus-1
+2026-10-11 12:57:25.162884 OUT    host.0.0            :  Creating /usr/share/dbus-1
+2026-10-11 12:57:25.211609 OUT    host.0.0            :  Attachment of devices requested
+2026-10-11 12:57:25.227936 OUT    host.0.0            :  Attaching BR/EDR controller to /dev/hvc1
+2026-10-11 12:57:25.246422 OUT    host.0.0            :  Switched line discipline from 0 to 15
+2026-10-11 12:57:25.284497 OUT    host.0.0            :  Device index 0 attached
+2026-10-11 12:57:25.291788 OUT    host.0.0            :  Running command /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py
+2026-10-11 12:57:25.339920 OUT    host.0.0            :  New process 38 created
+2026-10-11 12:57:25.346393 OUT    host.0.0            :  Changing into directory /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src
+2026-10-11 12:57:26.090000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:57:26.823809 OUT    host.0.1            :  Bluetooth: hci0: command 0x1001 tx timeout
+2026-10-11 12:57:26.827885 OUT    host.0.1            :  Bluetooth: hci0: Reading local version information failed (-110)
+2026-10-11 12:57:27.330638 OUT    host.0.0            :  Bluetooth: hci0: command 0x1001 tx timeout
+2026-10-11 12:57:27.335256 OUT    host.0.0            :  Bluetooth: hci0: Reading local version information failed (-110)
+2026-10-11 12:57:27.343517 OUT    host.0.1            :  random: crng init done
+2026-10-11 12:57:27.916767 OUT    host.0.0            :  random: crng init done
+2026-10-11 12:57:31.790000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:57:40.342000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:57:53.166000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:58:12.406000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:58:24.717125 WARNING host.0.1.env        :  agetty not available
+2026-10-11 12:58:25.312272 WARNING host.0.1.env        :  chronyd not available
+2026-10-11 12:58:25.316368 INFO   host.0.1.env        :  Starting test instance
+2026-10-11 12:58:26.686035 WARNING host.0.0.env        :  agetty not available
+2026-10-11 12:58:27.260665 WARNING host.0.0.env        :  chronyd not available
+2026-10-11 12:58:27.264374 INFO   host.0.0.env        :  Starting test instance
+2026-10-11 12:58:31.383483 OUT    host.0.1            :  [0;91mSet Powered for hci0 failed with status 0x11 (Invalid Index)
+2026-10-11 12:58:31.478379 OUT    host.0.1            :  [0m[0;91mSet Powered for hci0 failed with status 0x11 (Invalid Index)
+2026-10-11 12:58:33.311209 OUT    host.0.0            :  [0;91mSet Powered for hci0 failed with status 0x11 (Invalid Index)
+2026-10-11 12:58:33.384926 OUT    host.0.0            :  [0m[0;91mSet Powered for hci0 failed with status 0x11 (Invalid Index)
+2026-10-11 12:58:35.640155 INFO   host.0.1.env        :  Test RPC server on /dev/vport2p1
+2026-10-11 12:58:35.682236 INFO   host.0.1.rpc        :  server: end of input
+2026-10-11 12:58:35.685566 INFO   host.0.1.env        :  Waiting for upper tester...
+2026-10-11 12:58:36.194145 INFO   host.0.1.rpc        :  server: end of input
+2026-10-11 12:58:36.196355 INFO   host.0.1.env        :  Waiting for upper tester...
+2026-10-11 12:58:36.701082 INFO   host.0.1.rpc        :  server: end of input
+2026-10-11 12:58:36.703033 INFO   host.0.1.env        :  Waiting for upper tester...
+2026-10-11 12:58:37.208947 INFO   host.0.1.rpc        :  server: end of input
+2026-10-11 12:58:37.210931 INFO   host.0.1.env        :  Waiting for upper tester...
+2026-10-11 12:58:37.365290 INFO   host.0.0.env        :  Test RPC server on /dev/vport2p1
+2026-10-11 12:58:37.475483 INFO   host.0.0.rpc        :  server: set_instance_name ('hosts15.0',) {}
+2026-10-11 12:58:37.482556 DEBUG  host.0.0.rpc        :  server: reply
+2026-10-11 12:58:37.486515 INFO   host.0.0.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.Rcvbuf object at 0x7f662f338800>,) {}
+2026-10-11 12:58:37.487504 INFO   host.0.0.env        :  Plugin rcvbuf load
+2026-10-11 12:58:37.489970 INFO   host.0.0.rcvbuf     :  Set SO_RCVBUF default = 1048576
+2026-10-11 12:58:37.494836 INFO   host.0.0.env        :  Plugin rcvbuf ready
+2026-10-11 12:58:37.495669 DEBUG  host.0.0.rpc        :  server: reply
+2026-10-11 12:58:37.498179 INFO   host.0.0.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.Call object at 0x7f662f338950>,) {}
+2026-10-11 12:58:37.499396 INFO   host.0.0.env        :  Plugin call load
+2026-10-11 12:58:37.500659 INFO   host.0.0.env        :  Plugin call ready
+2026-10-11 12:58:37.501845 DEBUG  host.0.0.rpc        :  server: reply
+2026-10-11 12:58:37.503595 INFO   host.0.0.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.Bdaddr object at 0x7f662f3389e0>,) {}
+2026-10-11 12:58:37.504595 INFO   host.0.0.env        :  Plugin bdaddr load
+2026-10-11 12:58:37.773398 INFO   host.0.1.rpc        :  server: set_instance_name ('hosts15.1',) {}
+2026-10-11 12:58:37.781786 DEBUG  host.0.1.rpc        :  server: reply
+2026-10-11 12:58:37.787839 INFO   host.0.1.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.Rcvbuf object at 0x7f0f0b8909b0>,) {}
+2026-10-11 12:58:37.789186 INFO   host.0.1.env        :  Plugin rcvbuf load
+2026-10-11 12:58:37.792392 INFO   host.0.1.rcvbuf     :  Set SO_RCVBUF default = 1048576
+2026-10-11 12:58:37.797955 INFO   host.0.1.env        :  Plugin rcvbuf ready
+2026-10-11 12:58:37.799489 DEBUG  host.0.1.rpc        :  server: reply
+2026-10-11 12:58:37.801739 INFO   host.0.1.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.Call object at 0x7f0f0bd00b60>,) {}
+2026-10-11 12:58:37.803448 INFO   host.0.1.env        :  Plugin call load
+2026-10-11 12:58:37.804701 INFO   host.0.1.env        :  Plugin call ready
+2026-10-11 12:58:37.805778 DEBUG  host.0.1.rpc        :  server: reply
+2026-10-11 12:58:37.807761 INFO   host.0.1.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.Bdaddr object at 0x7f0f0b890bf0>,) {}
+2026-10-11 12:58:37.808955 INFO   host.0.1.env        :  Plugin bdaddr load
+2026-10-11 12:58:38.761000 DEBUG  rpc                 :  client: connected
+2026-10-11 12:58:38.761000 INFO   rpc.host.0.0        :  client: (noreply) set_instance_name ('hosts15.0',) {}
+2026-10-11 12:58:38.762000 INFO   rpc.host.0.0        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.Rcvbuf object at 0x7f50eee35160>,) {}
+2026-10-11 12:58:38.762000 INFO   rpc.host.0.0        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.Call object at 0x7f50eee35190>,) {}
+2026-10-11 12:58:38.762000 INFO   rpc.host.0.0        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.Bdaddr object at 0x7f50eee351c0>,) {}
+2026-10-11 12:58:38.762000 INFO   rpc.host.0.0        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.DbusSystem object at 0x7f50ef3e6480>,) {}
+2026-10-11 12:58:38.763000 INFO   rpc.host.0.0        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.Bluetoothd object at 0x7f50eee35130>,) {}
+2026-10-11 12:58:38.763000 INFO   rpc.host.0.0        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.Bluetoothctl object at 0x7f50ee79d670>,) {}
+2026-10-11 12:58:38.763000 DEBUG  rpc                 :  client: connect
+2026-10-11 12:58:39.114000 DEBUG  rpc                 :  client: connected
+2026-10-11 12:58:39.114000 INFO   rpc.host.0.1        :  client: (noreply) set_instance_name ('hosts15.1',) {}
+2026-10-11 12:58:39.114000 INFO   rpc.host.0.1        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.Rcvbuf object at 0x7f50eee35160>,) {}
+2026-10-11 12:58:39.114000 INFO   rpc.host.0.1        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.Call object at 0x7f50eee35190>,) {}
+2026-10-11 12:58:39.115000 INFO   rpc.host.0.1        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.Bdaddr object at 0x7f50eee351c0>,) {}
+2026-10-11 12:58:39.115000 INFO   rpc.host.0.1        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.DbusSystem object at 0x7f50ef3e6480>,) {}
+2026-10-11 12:58:39.115000 INFO   rpc.host.0.1        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.Bluetoothd object at 0x7f50eee35130>,) {}
+2026-10-11 12:58:39.115000 INFO   rpc.host.0.1        :  client: (noreply) start_load (<pytest_bluezenv.host_plugins.Bluetoothctl object at 0x7f50ee79d3a0>,) {}
+2026-10-11 12:58:39.115000 INFO   rpc.host.0.0        :  client: wait_load () {}
+2026-10-11 12:58:44.683366 INFO   host.0.0.env        :  Plugin bdaddr ready
+2026-10-11 12:58:44.685612 DEBUG  host.0.0.rpc        :  server: reply
+2026-10-11 12:58:44.687880 INFO   host.0.0.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.DbusSystem object at 0x7f662f338b60>,) {}
+2026-10-11 12:58:44.689298 INFO   host.0.0.env        :  Plugin dbus-system load
+2026-10-11 12:58:44.771588 DEBUG  host.0.0.dbus-system:  Starting dbus-system @ unix:path=/run/dbus-system.socket: /usr/bin/dbus-daemon --nofork --nopidfile --nosyslog --config-file=/run/dbus-system-u0wkm3h9/config.xml
+2026-10-11 12:58:45.116481 INFO   host.0.1.env        :  Plugin bdaddr ready
+2026-10-11 12:58:45.118136 DEBUG  host.0.1.rpc        :  server: reply
+2026-10-11 12:58:45.120908 INFO   host.0.1.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.DbusSystem object at 0x7f0f0b890d70>,) {}
+2026-10-11 12:58:45.122193 INFO   host.0.1.env        :  Plugin dbus-system load
+2026-10-11 12:58:45.211868 DEBUG  host.0.1.dbus-system:  Starting dbus-system @ unix:path=/run/dbus-system.socket: /usr/bin/dbus-daemon --nofork --nopidfile --nosyslog --config-file=/run/dbus-system-a053163l/config.xml
+2026-10-11 12:58:46.387093 DEBUG  host.0.0.dbus-system:  dbus-system ready
+2026-10-11 12:58:46.390073 INFO   host.0.0.env        :  Plugin dbus-system ready
+2026-10-11 12:58:46.391817 DEBUG  host.0.0.rpc        :  server: reply
+2026-10-11 12:58:46.396880 INFO   host.0.0.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.Bluetoothd object at 0x7f662f338e90>,) {}
+2026-10-11 12:58:46.398533 INFO   host.0.0.env        :  Plugin bluetoothd load
+2026-10-11 12:58:46.486993 INFO   host.0.0.bluetoothd :  Start bluetoothd: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src/src/bluetoothd --nodetach -f /run/bluetoothd-state-8bc__m0o/main.conf -d
+2026-10-11 12:58:46.563608 INFO   host.0.0.bluetoothd :  Wait for bluetoothd...
+2026-10-11 12:58:46.573296 DEBUG  host.0.1.dbus-system:  dbus-system ready
+2026-10-11 12:58:46.582248 INFO   host.0.1.env        :  Plugin dbus-system ready
+2026-10-11 12:58:46.588164 DEBUG  host.0.1.rpc        :  server: reply
+2026-10-11 12:58:46.596799 INFO   host.0.1.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.Bluetoothd object at 0x7f0f0b891010>,) {}
+2026-10-11 12:58:46.598234 INFO   host.0.1.env        :  Plugin bluetoothd load
+2026-10-11 12:58:46.691621 INFO   host.0.1.bluetoothd :  Start bluetoothd: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/work/src/src/bluetoothd --nodetach -f /run/bluetoothd-state-23uz2pbm/main.conf -d
+2026-10-11 12:58:46.762003 INFO   host.0.1.bluetoothd :  Wait for bluetoothd...
+2026-10-11 12:59:02.853092 OUT    host.0.1.bluetoothd :  bluetoothd[52]: Bluetooth daemon 5.87
+2026-10-11 12:59:02.976278 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config() parsing /run/bluetoothd-state-23uz2pbm/main.conf
+2026-10-11 12:59:02.982435 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:02.995887 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.005061 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.018034 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.025802 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.034227 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.041931 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.049080 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.055613 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.061492 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.066886 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.074445 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.081212 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.088776 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.095139 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.102084 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.107737 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.119113 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.126020 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.133081 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.141523 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.149913 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.154257 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.162567 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.166479 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.169674 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.174082 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.180360 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.185540 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.189004 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.192944 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.197633 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.201704 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.205357 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.209623 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.214606 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.217581 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.219912 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.224768 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.229367 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.234654 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.240298 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.244742 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.249805 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.253622 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.258057 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.262722 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.266786 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.271130 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.276554 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.279932 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.286949 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.290008 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.299938 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.303696 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.312559 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.317046 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “GATT”
+2026-10-11 12:59:03.321496 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “GATT”
+2026-10-11 12:59:03.327136 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “GATT”
+2026-10-11 12:59:03.331265 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “GATT”
+2026-10-11 12:59:03.338852 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “GATT”
+2026-10-11 12:59:03.342398 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “GATT”
+2026-10-11 12:59:03.346504 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “CSIS”
+2026-10-11 12:59:03.351022 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “CSIS”
+2026-10-11 12:59:03.356881 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “CSIS”
+2026-10-11 12:59:03.361019 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “CSIS”
+2026-10-11 12:59:03.366276 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “AVDTP”
+2026-10-11 12:59:03.369771 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “AVDTP”
+2026-10-11 12:59:03.377816 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “AVRCP”
+2026-10-11 12:59:03.381451 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “AVRCP”
+2026-10-11 12:59:03.386085 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_cs_role() Key file does not have group “ChannelSounding”
+2026-10-11 12:59:03.394923 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “ChannelSounding”
+2026-10-11 12:59:03.400779 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “ChannelSounding”
+2026-10-11 12:59:03.402825 OUT    host.0.0.bluetoothd :  bluetoothd[52]: Bluetooth daemon 5.87
+2026-10-11 12:59:03.405699 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “AdvMon”
+2026-10-11 12:59:03.513155 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config() parsing /run/bluetoothd-state-8bc__m0o/main.conf
+2026-10-11 12:59:03.522566 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.532297 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.551466 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.564343 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.569111 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.576180 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.582096 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.590454 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.592589 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.599045 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.606884 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.612093 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.616196 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.620768 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.624957 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.629350 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.632137 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.643151 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.646974 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.650899 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.656363 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.658034 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “General”
+2026-10-11 12:59:03.661444 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “General”
+2026-10-11 12:59:03.670680 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.675360 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.679572 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.684109 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.688216 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.692118 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.696234 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.699982 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:adapter_init() sending read version command
+2026-10-11 12:59:03.700462 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.704970 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.707942 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.709309 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “BR”
+2026-10-11 12:59:03.714552 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.717624 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.721414 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.724437 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.728541 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.731545 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.732748 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.736382 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.740348 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.744375 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.746431 OUT    host.0.1.bluetoothd :  bluetoothd[52]: Starting SDP server
+2026-10-11 12:59:03.748728 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.751903 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.753361 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.758221 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.761081 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.764754 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.768473 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.772074 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.775899 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.779823 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.784231 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.787835 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “LE”
+2026-10-11 12:59:03.791441 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “GATT”
+2026-10-11 12:59:03.795876 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “GATT”
+2026-10-11 12:59:03.799599 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “GATT”
+2026-10-11 12:59:03.803975 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “GATT”
+2026-10-11 12:59:03.808303 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “GATT”
+2026-10-11 12:59:03.812451 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “GATT”
+2026-10-11 12:59:03.816320 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “CSIS”
+2026-10-11 12:59:03.827150 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “CSIS”
+2026-10-11 12:59:03.832341 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “CSIS”
+2026-10-11 12:59:03.835473 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “CSIS”
+2026-10-11 12:59:03.837122 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “AVDTP”
+2026-10-11 12:59:03.841162 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “AVDTP”
+2026-10-11 12:59:03.842758 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/sdpd-service.c:register_device_id() Adding device id record for 0002:1d6b:0246:0557
+2026-10-11 12:59:03.850697 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “AVRCP”
+2026-10-11 12:59:03.853241 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “AVRCP”
+2026-10-11 12:59:03.858923 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_cs_role() Key file does not have group “ChannelSounding”
+2026-10-11 12:59:03.864055 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “ChannelSounding”
+2026-10-11 12:59:03.868395 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_bool() Key file does not have group “ChannelSounding”
+2026-10-11 12:59:03.872470 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:parse_config_string() Key file does not have group “AdvMon”
+2026-10-11 12:59:03.888835 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:plugin_init() Loading builtin plugins
+2026-10-11 12:59:03.899031 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading midi plugin
+2026-10-11 12:59:03.917749 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin midi loaded
+2026-10-11 12:59:03.922645 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading hfp plugin
+2026-10-11 12:59:03.933995 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:03.940660 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support hfp plugin
+2026-10-11 12:59:03.948105 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading asha plugin
+2026-10-11 12:59:03.957893 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:03.965708 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support asha plugin
+2026-10-11 12:59:03.970123 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading gmap plugin
+2026-10-11 12:59:03.981508 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:03.988434 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support gmap plugin
+2026-10-11 12:59:03.993732 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading tmap plugin
+2026-10-11 12:59:04.001551 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.006685 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support tmap plugin
+2026-10-11 12:59:04.010057 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading csip plugin
+2026-10-11 12:59:04.017052 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.021531 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support csip plugin
+2026-10-11 12:59:04.027116 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading ccp plugin
+2026-10-11 12:59:04.040987 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus testing not enabled
+2026-10-11 12:59:04.045876 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support ccp plugin
+2026-10-11 12:59:04.051114 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading micp plugin
+2026-10-11 12:59:04.063100 OUT    host.0.1.bluetoothd :  bluetoothd[52]: profiles/audio/micp.c:micp_init() D-Bus experimental not enabled
+2026-10-11 12:59:04.067123 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support micp plugin
+2026-10-11 12:59:04.072089 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading vcp plugin
+2026-10-11 12:59:04.080194 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.082810 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support vcp plugin
+2026-10-11 12:59:04.088697 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading mcp plugin
+2026-10-11 12:59:04.096136 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.100226 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support mcp plugin
+2026-10-11 12:59:04.106667 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading bass plugin
+2026-10-11 12:59:04.117806 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.122838 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support bass plugin
+2026-10-11 12:59:04.132551 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading bap plugin
+2026-10-11 12:59:04.138573 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.141988 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support bap plugin
+2026-10-11 12:59:04.147839 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:adapter_init() sending read version command
+2026-10-11 12:59:04.149783 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading rap plugin
+2026-10-11 12:59:04.157372 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.158872 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support rap plugin
+2026-10-11 12:59:04.162585 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading fastpair plugin
+2026-10-11 12:59:04.169449 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.170766 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support fastpair plugin
+2026-10-11 12:59:04.174041 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading battery plugin
+2026-10-11 12:59:04.180913 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin battery loaded
+2026-10-11 12:59:04.183963 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading deviceinfo plugin
+2026-10-11 12:59:04.190602 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin deviceinfo loaded
+2026-10-11 12:59:04.197406 OUT    host.0.0.bluetoothd :  bluetoothd[52]: Starting SDP server
+2026-10-11 12:59:04.199301 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading scanparam plugin
+2026-10-11 12:59:04.210092 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin scanparam loaded
+2026-10-11 12:59:04.213761 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading gap plugin
+2026-10-11 12:59:04.220741 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin gap loaded
+2026-10-11 12:59:04.222091 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading hog plugin
+2026-10-11 12:59:04.259528 OUT    host.0.1.bluetoothd :  bluetoothd[52]: profiles/input/suspend-none.c:suspend_init() 
+2026-10-11 12:59:04.265572 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin hog loaded
+2026-10-11 12:59:04.269397 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading input plugin
+2026-10-11 12:59:04.281064 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin input loaded
+2026-10-11 12:59:04.285856 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading network plugin
+2026-10-11 12:59:04.298738 OUT    host.0.1.bluetoothd :  bluetoothd[52]: profiles/network/manager.c:read_config() Config options: Security=true
+2026-10-11 12:59:04.310588 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin network loaded
+2026-10-11 12:59:04.315720 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/sdpd-service.c:register_device_id() Adding device id record for 0002:1d6b:0246:0557
+2026-10-11 12:59:04.328510 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading avrcp plugin
+2026-10-11 12:59:04.347210 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:plugin_init() Loading builtin plugins
+2026-10-11 12:59:04.354164 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading midi plugin
+2026-10-11 12:59:04.355018 OUT    host.0.1.bluetoothd :  bluetoothd[52]: profiles/audio/avrcp-player.c:avrcp_player_init() 
+2026-10-11 12:59:04.364394 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin midi loaded
+2026-10-11 12:59:04.367713 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading hfp plugin
+2026-10-11 12:59:04.370903 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin avrcp loaded
+2026-10-11 12:59:04.373373 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.377283 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support hfp plugin
+2026-10-11 12:59:04.379938 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading asha plugin
+2026-10-11 12:59:04.385398 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading a2dp plugin
+2026-10-11 12:59:04.387239 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.391217 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support asha plugin
+2026-10-11 12:59:04.393516 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin a2dp loaded
+2026-10-11 12:59:04.395534 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading gmap plugin
+2026-10-11 12:59:04.398987 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading neard plugin
+2026-10-11 12:59:04.403305 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.406145 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support gmap plugin
+2026-10-11 12:59:04.409206 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading tmap plugin
+2026-10-11 12:59:04.410277 OUT    host.0.1.bluetoothd :  bluetoothd[52]: plugins/neard.c:neard_init() Setup neard plugin
+2026-10-11 12:59:04.412469 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.416097 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support tmap plugin
+2026-10-11 12:59:04.419500 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading csip plugin
+2026-10-11 12:59:04.424376 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.424579 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin neard loaded
+2026-10-11 12:59:04.428142 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support csip plugin
+2026-10-11 12:59:04.429094 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading admin plugin
+2026-10-11 12:59:04.431698 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading ccp plugin
+2026-10-11 12:59:04.437331 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:btd_register_adapter_driver() D-Bus experimental not enabled
+2026-10-11 12:59:04.439680 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus testing not enabled
+2026-10-11 12:59:04.441659 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support admin plugin
+2026-10-11 12:59:04.443465 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support ccp plugin
+2026-10-11 12:59:04.445105 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading policy plugin
+2026-10-11 12:59:04.447265 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading micp plugin
+2026-10-11 12:59:04.454537 OUT    host.0.0.bluetoothd :  bluetoothd[52]: profiles/audio/micp.c:micp_init() D-Bus experimental not enabled
+2026-10-11 12:59:04.455970 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support micp plugin
+2026-10-11 12:59:04.457401 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading vcp plugin
+2026-10-11 12:59:04.458933 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin policy loaded
+2026-10-11 12:59:04.461827 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading autopair plugin
+2026-10-11 12:59:04.464970 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.468672 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support vcp plugin
+2026-10-11 12:59:04.470801 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin autopair loaded
+2026-10-11 12:59:04.472818 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading mcp plugin
+2026-10-11 12:59:04.476739 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading hostname plugin
+2026-10-11 12:59:04.480240 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.484027 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support mcp plugin
+2026-10-11 12:59:04.493176 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading bass plugin
+2026-10-11 12:59:04.493473 OUT    host.0.1.bluetoothd :  bluetoothd[52]: plugins/hostname.c:read_transient_hostname() read transient hostname: 'hosts15.1'
+2026-10-11 12:59:04.504370 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.508940 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support bass plugin
+2026-10-11 12:59:04.520493 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading bap plugin
+2026-10-11 12:59:04.531951 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.536675 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support bap plugin
+2026-10-11 12:59:04.547965 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading rap plugin
+2026-10-11 12:59:04.557743 OUT    host.0.1.bluetoothd :  bluetoothd[52]: [signal] org.freedesktop.DBus.ObjectManager.InterfacesAdded
+2026-10-11 12:59:04.558856 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.565133 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support rap plugin
+2026-10-11 12:59:04.570173 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading fastpair plugin
+2026-10-11 12:59:04.577981 OUT    host.0.1.bluetoothd :  bluetoothd[52]: [org.freedesktop.DBus:method_call] < org.freedesktop.DBus.AddMatch
+2026-10-11 12:59:04.580310 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/profile.c:btd_profile_register() D-Bus experimental not enabled
+2026-10-11 12:59:04.584807 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support fastpair plugin
+2026-10-11 12:59:04.591586 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading battery plugin
+2026-10-11 12:59:04.601449 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin battery loaded
+2026-10-11 12:59:04.605035 OUT    host.0.1.bluetoothd :  bluetoothd[52]: [org.freedesktop.DBus:method_call] < org.freedesktop.DBus.StartServiceByName
+2026-10-11 12:59:04.608953 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading deviceinfo plugin
+2026-10-11 12:59:04.614572 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin hostname loaded
+2026-10-11 12:59:04.620771 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading sixaxis plugin
+2026-10-11 12:59:04.621891 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin deviceinfo loaded
+2026-10-11 12:59:04.627354 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading scanparam plugin
+2026-10-11 12:59:04.628404 OUT    host.0.1.bluetoothd :  bluetoothd[52]: plugins/sixaxis.c:sixaxis_init() 
+2026-10-11 12:59:04.636911 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin scanparam loaded
+2026-10-11 12:59:04.643978 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading gap plugin
+2026-10-11 12:59:04.655586 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin gap loaded
+2026-10-11 12:59:04.662283 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading hog plugin
+2026-10-11 12:59:04.697015 OUT    host.0.0.bluetoothd :  bluetoothd[52]: profiles/input/suspend-none.c:suspend_init() 
+2026-10-11 12:59:04.703865 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin hog loaded
+2026-10-11 12:59:04.709130 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading input plugin
+2026-10-11 12:59:04.739859 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin input loaded
+2026-10-11 12:59:04.745322 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin sixaxis loaded
+2026-10-11 12:59:04.745409 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading network plugin
+2026-10-11 12:59:04.749257 OUT    host.0.1.bluetoothd :  bluetoothd[52]: Using external plugins is not officially supported.
+2026-10-11 12:59:04.750497 OUT    host.0.1.bluetoothd :  bluetoothd[52]: Consider upstreaming your plugins into the BlueZ project.
+2026-10-11 12:59:04.754502 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:external_plugin_init() Loading plugins /usr/lib/bluetooth/plugins
+2026-10-11 12:59:04.763017 OUT    host.0.0.bluetoothd :  bluetoothd[52]: profiles/network/manager.c:read_config() Config options: Security=true
+2026-10-11 12:59:04.776891 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/rfkill.c:rfkill_init() No RFKILL device available at '/dev/rfkill'
+2026-10-11 12:59:04.780357 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin network loaded
+2026-10-11 12:59:04.784390 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/main.c:main() Entering main loop
+2026-10-11 12:59:04.792759 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading avrcp plugin
+2026-10-11 12:59:04.812744 OUT    host.0.0.bluetoothd :  bluetoothd[52]: profiles/audio/avrcp-player.c:avrcp_player_init() 
+2026-10-11 12:59:04.822735 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:send_request() [0xffff] command 0x0001
+2026-10-11 12:59:04.828741 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin avrcp loaded
+2026-10-11 12:59:04.837319 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:can_read_data() [0xffff] command 0x0001 complete: 0x00
+2026-10-11 12:59:04.845626 OUT    host.0.1.bluetoothd :  bluetoothd[52]: Bluetooth management interface 1.23 initialized
+2026-10-11 12:59:04.857283 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_version_complete() sending read supported commands command
+2026-10-11 12:59:04.861861 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_version_complete() sending read index list command
+2026-10-11 12:59:04.865070 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading a2dp plugin
+2026-10-11 12:59:04.867989 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:send_request() [0xffff] command 0x0002
+2026-10-11 12:59:04.870923 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:can_read_data() [0xffff] command 0x0002 complete: 0x00
+2026-10-11 12:59:04.873466 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin a2dp loaded
+2026-10-11 12:59:04.878416 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() Number of commands: 89
+2026-10-11 12:59:04.878495 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading neard plugin
+2026-10-11 12:59:04.881977 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() Number of events: 45
+2026-10-11 12:59:04.885017 OUT    host.0.0.bluetoothd :  bluetoothd[52]: plugins/neard.c:neard_init() Setup neard plugin
+2026-10-11 12:59:04.886579 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() enabling kernel-side connection control
+2026-10-11 12:59:04.889641 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports the set_blocked_keys op
+2026-10-11 12:59:04.890944 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports controller cap command
+2026-10-11 12:59:04.894849 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports exp features
+2026-10-11 12:59:04.898551 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports set system confic
+2026-10-11 12:59:04.900431 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin neard loaded
+2026-10-11 12:59:04.901788 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports ext adv commands
+2026-10-11 12:59:04.903090 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports suspend/resume events
+2026-10-11 12:59:04.903611 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading admin plugin
+2026-10-11 12:59:04.909880 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:send_request() [0xffff] command 0x0003
+2026-10-11 12:59:04.911150 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:btd_register_adapter_driver() D-Bus experimental not enabled
+2026-10-11 12:59:04.913940 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:can_read_data() [0xffff] command 0x0003 complete: 0x00
+2026-10-11 12:59:04.915493 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:init_plugin() System does not support admin plugin
+2026-10-11 12:59:04.920050 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading policy plugin
+2026-10-11 12:59:04.922068 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/adapter.c:read_index_list_complete() Number of controllers: 0
+2026-10-11 12:59:04.933185 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin policy loaded
+2026-10-11 12:59:04.936483 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading autopair plugin
+2026-10-11 12:59:04.944914 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin autopair loaded
+2026-10-11 12:59:04.948075 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading hostname plugin
+2026-10-11 12:59:04.964409 OUT    host.0.0.bluetoothd :  bluetoothd[52]: plugins/hostname.c:read_transient_hostname() read transient hostname: 'hosts15.0'
+2026-10-11 12:59:05.032701 OUT    host.0.0.bluetoothd :  bluetoothd[52]: [signal] org.freedesktop.DBus.ObjectManager.InterfacesAdded
+2026-10-11 12:59:05.045245 OUT    host.0.0.bluetoothd :  bluetoothd[52]: [org.freedesktop.DBus:method_call] < org.freedesktop.DBus.AddMatch
+2026-10-11 12:59:05.079711 OUT    host.0.0.bluetoothd :  bluetoothd[52]: [org.freedesktop.DBus:method_call] < org.freedesktop.DBus.StartServiceByName
+2026-10-11 12:59:05.088993 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin hostname loaded
+2026-10-11 12:59:05.095036 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Loading sixaxis plugin
+2026-10-11 12:59:05.102763 OUT    host.0.0.bluetoothd :  bluetoothd[52]: plugins/sixaxis.c:sixaxis_init() 
+2026-10-11 12:59:05.222344 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:add_plugin() Plugin sixaxis loaded
+2026-10-11 12:59:05.227093 OUT    host.0.0.bluetoothd :  bluetoothd[52]: Using external plugins is not officially supported.
+2026-10-11 12:59:05.231465 OUT    host.0.0.bluetoothd :  bluetoothd[52]: Consider upstreaming your plugins into the BlueZ project.
+2026-10-11 12:59:05.236026 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:external_plugin_init() Loading plugins /usr/lib/bluetooth/plugins
+2026-10-11 12:59:05.255964 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/rfkill.c:rfkill_init() No RFKILL device available at '/dev/rfkill'
+2026-10-11 12:59:05.264031 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/main.c:main() Entering main loop
+2026-10-11 12:59:05.302779 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:send_request() [0xffff] command 0x0001
+2026-10-11 12:59:05.315123 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:can_read_data() [0xffff] command 0x0001 complete: 0x00
+2026-10-11 12:59:05.324149 OUT    host.0.0.bluetoothd :  bluetoothd[52]: Bluetooth management interface 1.23 initialized
+2026-10-11 12:59:05.331624 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_version_complete() sending read supported commands command
+2026-10-11 12:59:05.335752 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_version_complete() sending read index list command
+2026-10-11 12:59:05.341306 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:send_request() [0xffff] command 0x0002
+2026-10-11 12:59:05.344291 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:can_read_data() [0xffff] command 0x0002 complete: 0x00
+2026-10-11 12:59:05.351169 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() Number of commands: 89
+2026-10-11 12:59:05.354798 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() Number of events: 45
+2026-10-11 12:59:05.362139 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() enabling kernel-side connection control
+2026-10-11 12:59:05.367303 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports the set_blocked_keys op
+2026-10-11 12:59:05.373069 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports controller cap command
+2026-10-11 12:59:05.376017 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports exp features
+2026-10-11 12:59:05.377435 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports set system confic
+2026-10-11 12:59:05.382745 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports ext adv commands
+2026-10-11 12:59:05.386177 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_commands_complete() kernel supports suspend/resume events
+2026-10-11 12:59:05.391679 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:send_request() [0xffff] command 0x0003
+2026-10-11 12:59:05.395498 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/shared/mgmt.c:can_read_data() [0xffff] command 0x0003 complete: 0x00
+2026-10-11 12:59:05.403651 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/adapter.c:read_index_list_complete() Number of controllers: 0
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/rpc.py", line 102, in server_stream
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :  Traceback (most recent call last):
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :      result = method(*msg["a"], **msg["kw"])
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/env.py", line 228, in start_load
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :      plugin.setup(self)
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/utils.py", line 243, in wrapper
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :      return mainloop_invoke(func, *a, **kw)
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/utils.py", line 219, in mainloop_invoke
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :      raise result
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/utils.py", line 207, in call
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/host_plugins.py", line 322, in setup
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :      value = func(*a, **kw)
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :              ^^^^^^^^^^^^^^
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :      utils.wait_until(cond)
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/utils.py", line 151, in wait_until
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :      raise TimeoutError("Timeout reached")
+2026-10-11 13:02:41.384066 ERROR  host.0.1.rpc        :  TimeoutError: Timeout reached
+2026-10-11 13:02:41.388696 DEBUG  host.0.1.rpc        :  server: reply
+2026-10-11 13:02:41.392890 INFO   host.0.1.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.Bluetoothctl object at 0x7f0f0bd77410>,) {}
+2026-10-11 13:02:41.394564 INFO   host.0.1.env        :  Plugin bluetoothctl load
+2026-10-11 13:02:41.636359 INFO   host.0.1.env        :  Plugin bluetoothctl ready
+2026-10-11 13:02:41.637657 DEBUG  host.0.1.rpc        :  server: reply
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :  Traceback (most recent call last):
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/rpc.py", line 102, in server_stream
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :      result = method(*msg["a"], **msg["kw"])
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/env.py", line 228, in start_load
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :      plugin.setup(self)
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/utils.py", line 243, in wrapper
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :      return mainloop_invoke(func, *a, **kw)
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/utils.py", line 219, in mainloop_invoke
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :      raise result
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/utils.py", line 207, in call
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :      value = func(*a, **kw)
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :              ^^^^^^^^^^^^^^
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/host_plugins.py", line 322, in setup
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :      utils.wait_until(cond)
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :    File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/utils.py", line 151, in wait_until
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :      raise TimeoutError("Timeout reached")
+2026-10-11 13:02:41.768529 ERROR  host.0.0.rpc        :  TimeoutError: Timeout reached
+2026-10-11 13:02:41.771156 DEBUG  host.0.0.rpc        :  server: reply
+2026-10-11 13:02:41.774167 INFO   host.0.0.rpc        :  server: start_load (<pytest_bluezenv.host_plugins.Bluetoothctl object at 0x7f662f30cf50>,) {}
+2026-10-11 13:02:41.775804 INFO   host.0.0.env        :  Plugin bluetoothctl load
+2026-10-11 13:02:42.045166 INFO   host.0.0.env        :  Plugin bluetoothctl ready
+2026-10-11 13:02:42.051745 DEBUG  host.0.0.rpc        :  server: reply
+2026-10-11 13:02:42.059114 INFO   host.0.0.rpc        :  server: wait_load () {}
+2026-10-11 13:02:42.340955 INFO   host.0.1.env        :  Plugin bluetoothctl teardown
+2026-10-11 13:02:42.370714 INFO   host.0.1.env        :  Plugin bluetoothctl teardown done
+2026-10-11 13:02:42.372685 INFO   host.0.1.env        :  Plugin dbus-system teardown
+2026-10-11 13:02:42.380277 DEBUG  host.0.0.rpc        :  server: reply
+2026-10-11 13:02:42.395456 INFO   host.0.0.env        :  Plugin bluetoothctl teardown
+2026-10-11 13:02:42.413506 INFO   host.0.0.env        :  Plugin bluetoothctl teardown done
+2026-10-11 13:02:42.422059 INFO   host.0.0.env        :  Plugin dbus-system teardown
+2026-10-11 13:02:42.562569 INFO   host.0.1.env        :  Plugin dbus-system teardown done
+2026-10-11 13:02:42.564560 INFO   host.0.1.env        :  Plugin bdaddr teardown
+2026-10-11 13:02:42.575957 OUT    host.0.1.bluetoothd :  bluetoothd[52]: Disconnected from D-Bus. Exiting.
+2026-10-11 13:02:42.592446 INFO   host.0.1.env        :  Plugin bdaddr teardown done
+2026-10-11 13:02:42.597178 INFO   host.0.0.env        :  Plugin dbus-system teardown done
+2026-10-11 13:02:42.601038 INFO   host.0.1.env        :  Plugin call teardown
+2026-10-11 13:02:42.609641 OUT    host.0.0.bluetoothd :  bluetoothd[52]: Disconnected from D-Bus. Exiting.
+2026-10-11 13:02:42.616275 INFO   host.0.0.env        :  Plugin bdaddr teardown
+2026-10-11 13:02:42.616707 INFO   host.0.1.env        :  Plugin call teardown done
+2026-10-11 13:02:42.620041 OUT    host.0.1.bluetoothd :  bluetoothd[52]: src/plugin.c:plugin_cleanup() Cleanup plugins
+2026-10-11 13:02:42.639131 INFO   host.0.0.env        :  Plugin bdaddr teardown done
+2026-10-11 13:02:42.640984 INFO   host.0.1.env        :  Plugin rcvbuf teardown
+2026-10-11 13:02:42.641003 INFO   host.0.0.env        :  Plugin call teardown
+2026-10-11 13:02:42.642406 INFO   host.0.0.env        :  Plugin call teardown done
+2026-10-11 13:02:42.653747 OUT    host.0.0.bluetoothd :  bluetoothd[52]: src/plugin.c:plugin_cleanup() Cleanup plugins
+2026-10-11 13:02:42.659861 OUT    host.0.1.bluetoothd :  bluetoothd[52]: profiles/input/suspend-none.c:suspend_exit() 
+2026-10-11 13:02:42.664993 INFO   host.0.0.env        :  Plugin rcvbuf teardown
+2026-10-11 13:02:42.671673 INFO   host.0.1.env        :  Plugin rcvbuf teardown done
+2026-10-11 13:02:42.678352 INFO   host.0.0.env        :  Plugin rcvbuf teardown done
+2026-10-11 13:02:42.693615 OUT    host.0.0.bluetoothd :  bluetoothd[52]: profiles/input/suspend-none.c:suspend_exit() 
+2026-10-11 13:02:42.701759 OUT    host.0.1.bluetoothd :  bluetoothd[52]: profiles/audio/avrcp-player.c:avrcp_player_exit() 
+2026-10-11 13:02:42.733841 OUT    host.0.0.bluetoothd :  bluetoothd[52]: profiles/audio/avrcp-player.c:avrcp_player_exit() 
+2026-10-11 13:02:42.736307 OUT    host.0.1.bluetoothd :  bluetoothd[52]: plugins/neard.c:neard_exit() Cleanup neard plugin
+2026-10-11 13:02:42.768009 OUT    host.0.0.bluetoothd :  bluetoothd[52]: plugins/neard.c:neard_exit() Cleanup neard plugin
+2026-10-11 13:02:42.834275 OUT    host.0.0.bluetoothd :  bluetoothd[52]: plugins/sixaxis.c:sixaxis_exit() 
+2026-10-11 13:02:42.839853 OUT    host.0.1.bluetoothd :  bluetoothd[52]: plugins/sixaxis.c:sixaxis_exit() 
+2026-10-11 13:02:42.874710 OUT    host.0.1.bluetoothd :  bluetoothd[52]: [signal] org.freedesktop.DBus.ObjectManager.InterfacesRemoved
+2026-10-11 13:02:42.888112 OUT    host.0.1.bluetoothd :  bluetoothd[52]: Stopping SDP server
+2026-10-11 13:02:42.906685 OUT    host.0.1.bluetoothd :  bluetoothd[52]: Exit
+2026-10-11 13:02:42.953760 OUT    host.0.0.bluetoothd :  bluetoothd[52]: [signal] org.freedesktop.DBus.ObjectManager.InterfacesRemoved
+2026-10-11 13:02:43.000334 OUT    host.0.0.bluetoothd :  bluetoothd[52]: Stopping SDP server
+2026-10-11 13:02:43.013299 OUT    host.0.0.bluetoothd :  bluetoothd[52]: Exit
+2026-10-11 13:02:43.674000 INFO   rpc.host.0.0        :  client: quit
+2026-10-11 13:02:43.674000 INFO   rpc.host.0.1        :  client: quit
+2026-10-11 13:02:44.129100 INFO   host.0.1.rpc        :  server: quit
+2026-10-11 13:02:44.131284 INFO   host.0.0.rpc        :  server: quit
+2026-10-11 13:02:44.143885 INFO   host.0.0.env        :  Test RPC server quit
+- generated xml file: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T125340Z-pair_bredr-diag/base.1.xml -
+=========================== short test summary info ============================
+ERROR test/functional/test_bluetoothctl.py::test_bluetoothctl_pair_bredr[hosts15-vm2] - pytest_bluezenv.rpc.RemoteError: load failed
+Remote traceback:
+    Traceback (most recent call last):
+      File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/rpc.py", line 102, in server_stream
+        result = method(*msg["a"], **msg["kw"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "/home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/../pytest_bluezenv/env.py", line 238, in wait_load
+        raise RuntimeError("load failed")
+    RuntimeError: load failed
+================= 59 deselected, 1 error in 330.79s (0:05:30) ==================
+exit status 1

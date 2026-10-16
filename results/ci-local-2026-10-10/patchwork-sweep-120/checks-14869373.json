@@ -1,0 +1,274 @@
+[
+ {
+  "id": 12544062,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544062/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:05:25.364980",
+  "state": "success",
+  "target_url": "",
+  "context": "pre-ci_am",
+  "description": "Success"
+ },
+ {
+  "id": 12544309,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544309/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:17:34.962506",
+  "state": "success",
+  "target_url": "",
+  "context": "CheckPatch",
+  "description": "CheckPatch PASS"
+ },
+ {
+  "id": 12544310,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544310/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:17:46.962316",
+  "state": "success",
+  "target_url": "",
+  "context": "VerifyFixes",
+  "description": "VerifyFixes PASS"
+ },
+ {
+  "id": 12544312,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544312/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:17:51.687093",
+  "state": "success",
+  "target_url": "",
+  "context": "VerifySignedoff",
+  "description": "VerifySignedoff PASS"
+ },
+ {
+  "id": 12544314,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544314/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:17:55.534004",
+  "state": "fail",
+  "target_url": "",
+  "context": "GitLint",
+  "description": "44: B1 Line exceeds max length (131>80): \"    [   45.867526] Oops: general protection fault, probably for non-canonical address 0xfbd59c0000000023: 0000 [#1] SMP KASAN NOPTI\"\n45: B1 Line exceeds max length (99>80): \"    [   45.869489] KASAN: maybe wild-memory-access in range [0xdead000000000118-0xdead00000000011f]\"\n46: B1 Line exceeds max length (112>80): \"    [   45.870981] CPU: 1 UID: 0 PID: 646 Comm: sh Not tainted 7.2.0-rc6-pmb-bt-functional-v1+ #4 PREEMPT(lazy) \"\n46: B2 Line has trailing whitespace: \"    [   45.870981] CPU: 1 UID: 0 PID: 646 Comm: sh Not tainted 7.2.0-rc6-pmb-bt-functional-v1+ #4 PREEMPT(lazy) \"\n47: B1 Line exceeds max length (134>80): \"    [   45.872609] Hardware name: QEMU Ubuntu 24.04 PC v2 (i440FX + PIIX, arch_caps fix, 1996), BIOS 1.16.3-debian-1.16.3-2 04/01/2014\"\n49: B1 Line exceeds max length (218>80): \"    [   45.875067] Code: 48 89 d9 ba 04 00 00 00 4c 89 fe bf a0 06 00 00 e8 2b e8 ad fb e9 56 ff ff ff e8 01 1e c3 fb 49 8d 7f 18 48 89 f8 48 c1 e8 03 <80> 3c 28 00 0f 85 4a 01 00 00 4d 8b 47 18 4c 89 f1 ba 04 00 00 00\"\n51: B1 Line exceeds max length (84>80): \"    [   45.879106] RAX: 1bd5a00000000023 RBX: 0000000000000000 RCX: ffffffff85c1d19f\"\n52: B1 Line exceeds max length (84>80): \"    [   45.880334] RDX: ffff88810dc35700 RSI: 0000000000000000 RDI: dead000000000118\"\n53: B1 Line exceeds max length (84>80): \"    [   45.881455] RBP: dffffc0000000000 R08: 0000000000000001 R09: 0000000000000001\"\n54: B1 Line exceeds max length (84>80): \"    [   45.882546] R10: ffffffff893d3057 R11: ffff88810dc35700 R12: ffff88810a690000\"\n55: B1 Line exceeds max length (84>80): \"    [   45.883839] R13: ffff888115451038 R14: ffff88810a690000 R15: dead000000000100\"\n56: B1 Line exceeds max length (95>80): \"    [   45.885186] FS:  00007fa889bac780(0000) GS:ffff8881fd852000(0000) knlGS:0000000000000000\"\n58: B1 Line exceeds max length (84>80): \"    [   45.887527] CR2: 00007ffe304f2f80 CR3: 0000000104f64005 CR4: 0000000000770ef0\"\n82: B1 Line exceeds max length (218>80): \"    [   45.904359] Code: 48 89 fa 4c 89 df e8 58 b3 00 00 8b 93 08 03 00 00 59 5e 48 83 f8 fc 74 1a 5b c3 0f 1f 84 00 00 00 00 00 48 8b 44 24 10 0f 05 <5b> c3 0f 1f 80 00 00 00 00 83 e2 39 83 fa 08 75 de e8 23 ff ff ff\"\n83: B1 Line exceeds max length (89>80): \"    [   45.906981] RSP: 002b:00007ffd7651b960 EFLAGS: 00000202 ORIG_RAX: 0000000000000001\"\n84: B1 Line exceeds max length (84>80): \"    [   45.908070] RAX: ffffffffffffffda RBX: 00007fa889bac780 RCX: 00007fa889c3e687\"\n85: B1 Line exceeds max length (84>80): \"    [   45.909102] RDX: 000000000000001c RSI: 00005570f25e8d10 RDI: 0000000000000001\"\n86: B1 Line exceeds max length (84>80): \"    [   45.910133] RBP: 00005570f25e8d10 R08: 0000000000000000 R09: 0000000000000000\"\n87: B1 Line exceeds max length (84>80): \"    [   45.911162] R10: 0000000000000000 R11: 0000000000000202 R12: 0000000000000001\"\n88: B1 Line exceeds max length (84>80): \"    [   45.912190] R13: 000000000000001c R14: 0000000000000000 R15: 00005570f25e8a78\"\n93: B1 Line exceeds max length (218>80): \"    [   45.915436] Code: 48 89 d9 ba 04 00 00 00 4c 89 fe bf a0 06 00 00 e8 2b e8 ad fb e9 56 ff ff ff e8 01 1e c3 fb 49 8d 7f 18 48 89 f8 48 c1 e8 03 <80> 3c 28 00 0f 85 4a 01 00 00 4d 8b 47 18 4c 89 f1 ba 04 00 00 00\"\n95: B1 Line exceeds max length (84>80): \"    [   45.920046] RAX: 1bd5a00000000023 RBX: 0000000000000000 RCX: ffffffff85c1d19f\"\n96: B1 Line exceeds max length (84>80): \"    [   45.921129] RDX: ffff88810dc35700 RSI: 0000000000000000 RDI: dead000000000118\"\n97: B1 Line exceeds max length (84>80): \"    [   45.922553] RBP: dffffc0000000000 R08: 0000000000000001 R09: 0000000000000001\"\n98: B1 Line exceeds max length (84>80): \"    [   45.923653] R10: ffffffff893d3057 R11: ffff88810dc35700 R12: ffff88810a690000\"\n99: B1 Line exceeds max length (84>80): \"    [   45.925119] R13: ffff888115451038 R14: ffff88810a690000 R15: dead000000000100\"\n100: B1 Line exceeds max length (95>80): \"    [   45.926180] FS:  00007fa889bac780(0000) GS:ffff8881fd852000(0000) knlGS:0000000000000000\"\n102: B1 Line exceeds max length (84>80): \"    [   45.928726] CR2: 00007ffe304f2f80 CR3: 0000000104f64005 CR4: 0000000000770ef0\""
+ },
+ {
+  "id": 12544316,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544316/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:18:00.232908",
+  "state": "success",
+  "target_url": "",
+  "context": "SubjectPrefix",
+  "description": "Gitlint PASS"
+ },
+ {
+  "id": 12544320,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544320/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:18:26.644820",
+  "state": "success",
+  "target_url": "",
+  "context": "BuildKernel",
+  "description": "BuildKernel PASS"
+ },
+ {
+  "id": 12544327,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544327/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:18:59.348240",
+  "state": "success",
+  "target_url": "",
+  "context": "CheckAllWarning",
+  "description": "CheckAllWarning PASS"
+ },
+ {
+  "id": 12544330,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544330/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:19:33.520979",
+  "state": "success",
+  "target_url": "",
+  "context": "CheckSparse",
+  "description": "CheckSparse PASS"
+ },
+ {
+  "id": 12544362,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544362/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:20:03.900584",
+  "state": "success",
+  "target_url": "",
+  "context": "BuildKernel32",
+  "description": "BuildKernel32 PASS"
+ },
+ {
+  "id": 12544365,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544365/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:20:35.432627",
+  "state": "success",
+  "target_url": "",
+  "context": "CheckKernelLLVM",
+  "description": "CheckKernelLLVM PASS"
+ },
+ {
+  "id": 12544495,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544495/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:30:25.511864",
+  "state": "success",
+  "target_url": "",
+  "context": "TestRunnerSetup",
+  "description": "TestRunnerSetup PASS"
+ },
+ {
+  "id": 12544497,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544497/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:30:36.158665",
+  "state": "success",
+  "target_url": "",
+  "context": "TestRunner_6lowpan-tester",
+  "description": "TestRunner PASS"
+ },
+ {
+  "id": 12544500,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12544500/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-06T19:31:03.311431",
+  "state": "success",
+  "target_url": "",
+  "context": "IncrementalBuild",
+  "description": "Incremental Build PASS"
+ },
+ {
+  "id": 12553820,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12553820/",
+  "user": {
+   "id": 249012,
+   "url": "https://patchwork.kernel.org/api/1.3/users/249012/",
+   "username": "nipa",
+   "first_name": "nipa",
+   "last_name": "reviewer",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-07T06:41:45.976583",
+  "state": "pending",
+  "target_url": "",
+  "context": "sashiko-nipa",
+  "description": "Sashiko review queued"
+ },
+ {
+  "id": 12576026,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14869373/checks/12576026/",
+  "user": {
+   "id": 249012,
+   "url": "https://patchwork.kernel.org/api/1.3/users/249012/",
+   "username": "nipa",
+   "first_name": "nipa",
+   "last_name": "reviewer",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-08T08:17:00.533753",
+  "state": "success",
+  "target_url": "https://netdev-ai.bots.linux.dev/sashiko/#/patchset/pm-bluetooth-objects-candidate-0231-v5-32295fa35099b0d50b92%40gmail.com",
+  "context": "sashiko-nipa",
+  "description": "Sashiko: no issues found"
+ }
+]

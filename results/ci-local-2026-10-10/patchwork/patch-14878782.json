@@ -1,0 +1,58 @@
+{
+ "id": 14878782,
+ "url": "https://patchwork.kernel.org/api/1.3/patches/14878782/",
+ "web_url": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/",
+ "project": {
+  "id": 395,
+  "url": "https://patchwork.kernel.org/api/1.3/projects/395/",
+  "name": "Bluetooth",
+  "link_name": "bluetooth",
+  "list_id": "linux-bluetooth.vger.kernel.org",
+  "list_email": "linux-bluetooth@vger.kernel.org",
+  "web_url": "",
+  "scm_url": "",
+  "webscm_url": "",
+  "list_archive_url": "",
+  "list_archive_url_format": "https://lore.kernel.org/r/{}",
+  "commit_url_format": ""
+ },
+ "msgid": "<<address elided>>",
+ "list_archive_url": "https://lore.kernel.org/r/<address elided>",
+ "date": "2026-10-10T03:18:50",
+ "name": "[BlueZ,2/3] emulator/vhci: Add vhci_set_quirk_simultaneous_discovery",
+ "commit_ref": null,
+ "pull_url": null,
+ "state": "new",
+ "archived": false,
+ "hash": "309881b5e560a9e43c7c1dabc4cc86c894766f44",
+ "submitter": {
+  "id": 225234,
+  "url": "https://patchwork.kernel.org/api/1.3/people/225234/",
+  "name": "Iaroslav Voitovych",
+  "email": "yaroslav.voytovych@gmail.com"
+ },
+ "delegate": null,
+ "mbox": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/mbox/",
+ "series": [
+  {
+   "id": 1182788,
+   "url": "https://patchwork.kernel.org/api/1.3/series/1182788/",
+   "web_url": "https://patchwork.kernel.org/series/1182788/",
+   "date": "2026-10-10T03:18:49",
+   "name": "mgmt-tester: Add simultaneous discovery stop tests",
+   "version": 1,
+   "mbox": "https://patchwork.kernel.org/series/1182788/mbox/"
+  }
+ ],
+ "comments": "https://patchwork.kernel.org/api/patches/14878782/comments/",
+ "check": "success",
+ "checks": "https://patchwork.kernel.org/api/patches/14878782/checks/",
+ "tags": {},
+ "related": [],
+ "content": "Set or clear HCI_QUIRK_SIMULTANEOUS_DISCOVERY through the kernel's\nquirk_simultaneous_discovery debugfs entry, which only accepts writes\nwhile the controller is down.\n\nThis entry name is the longest so far: its path does not fit in the\n64 byte buffer of vhci_debugfs_write() from hci1000 on, so size the\nbuffer with PATH_MAX and use snprintf().\n---\n emulator/vhci.c | 15 +++++++++++++--\n emulator/vhci.h |  1 +\n 2 files changed, 14 insertions(+), 2 deletions(-)",
+ "diff": "diff --git a/emulator/vhci.c b/emulator/vhci.c\nindex 05fcfd0b7..1edba8cfc 100644\n--- a/emulator/vhci.c\n+++ b/emulator/vhci.c\n@@ -220,7 +220,7 @@ struct btdev *vhci_get_btdev(struct vhci *vhci)\n static int vhci_debugfs_write(struct vhci *vhci, char *option, const void *data,\n \t\t\t      size_t len)\n {\n-\tchar path[64];\n+\tchar path[PATH_MAX];\n \tint fd, err;\n \tsize_t n;\n \n@@ -228,7 +228,8 @@ static int vhci_debugfs_write(struct vhci *vhci, char *option, const void *data,\n \t\treturn -EINVAL;\n \n \tmemset(path, 0, sizeof(path));\n-\tsprintf(path, DEBUGFS_PATH \"/hci%d/%s\", vhci->index, option);\n+\tsnprintf(path, sizeof(path), DEBUGFS_PATH \"/hci%d/%s\", vhci->index,\n+\t\t\t\t\t\t\t\toption);\n \n \tfd = open(path, O_RDWR);\n \tif (fd < 0) {\n@@ -307,6 +308,16 @@ int vhci_set_force_static_address(struct vhci *vhci, bool enable)\n \t\t\t\t\t\t\tsizeof(val));\n }\n \n+int vhci_set_quirk_simultaneous_discovery(struct vhci *vhci, bool enable)\n+{\n+\tchar val;\n+\n+\tval = (enable) ? 'Y' : 'N';\n+\n+\treturn vhci_debugfs_write(vhci, \"quirk_simultaneous_discovery\", &val,\n+\t\t\t\t\t\t\tsizeof(val));\n+}\n+\n int vhci_force_devcd(struct vhci *vhci, const void *data, size_t len)\n {\n \treturn vhci_debugfs_write(vhci, \"force_devcoredump\", data, len);\ndiff --git a/emulator/vhci.h b/emulator/vhci.h\nindex 12c4b55a0..1efb52f2e 100644\n--- a/emulator/vhci.h\n+++ b/emulator/vhci.h\n@@ -29,6 +29,7 @@ int vhci_set_msft_opcode(struct vhci *vhci, uint16_t opcode);\n int vhci_set_aosp_capable(struct vhci *vhci, bool enable);\n int vhci_set_emu_opcode(struct vhci *vhci, uint16_t opcode);\n int vhci_set_force_static_address(struct vhci *vhci, bool enable);\n+int vhci_set_quirk_simultaneous_discovery(struct vhci *vhci, bool enable);\n int vhci_force_devcd(struct vhci *vhci, const void *data, size_t len);\n int vhci_read_devcd(struct vhci *vhci, void *buf, size_t size);\n bool vhci_pause_input(struct vhci *vhci, bool paused);\n",
+ "prefixes": [
+  "BlueZ",
+  "2/3"
+ ]
+}
