@@ -1,31 +1,59 @@
 #!/bin/bash
-# doc-main-hashes — a commit a document places on `main` must be on main.
+# doc-main-hashes — a commit a document places on `main` must be on the PUBLIC main.
 #
 #   doc-main-hashes [dir] [file...]
 #
 # Reads BRIEF.md, docs/STATUS.md and docs/tooling-index.md (or the files named).
 # For every line that speaks of `main`, every backticked commit id this
-# repository can resolve must be an ancestor of HEAD, OR the same line must name,
-# in backticks, a branch that contains it ("`d5272a6` exists only on
-# `tests/unit-testing-introduction`"). Ids the repository cannot resolve (kernel
-# and BlueZ commits, private branches not fetched here) are counted, not judged.
+# repository can resolve is judged against the public repository's main branch:
+#
+#   on public main ..................................... fine
+#   not on it, but the same line names an id that IS on
+#   public main with the same patch (its cherry-pick) .. fine: a port's origin
+#   only on this branch, and this branch can still
+#   fast-forward onto public main ...................... PENDING (warning)
+#   anything else ...................................... FAILURE
+#
+# Ids it cannot resolve (kernel and BlueZ commits, branches not fetched here)
+# are counted, not judged.
 #
 # WHY. On 2026-10-16 STATUS said the trial fix was "the test-suite branch's
 # `d5272a6`, landed on `main` with that branch". It was cherry-picked; on main it
-# is `4c26c5d`, and `d5272a6` is on no branch main contains. Every reader after
-# that, including the recovery read after a context reset, repeated the wrong id
-# with full confidence, because the document was the authority. A document that
-# is the authority has to be checked against the history it describes, at the
-# moment it is written, by a machine.
+# is `4c26c5d`. Every reader after that, including the recovery read after a
+# context reset, repeated the wrong id with full confidence, because the
+# document was the authority.
+#
+# WHICH MAIN. The reference is the main branch of a remote whose URL is the
+# public repository (PUBLIC_REPO below), never HEAD and never another remote's
+# main. The first version judged against HEAD, so a feature branch's own commit,
+# documented as already on main, passed (outside review, 2026-10-17). The private
+# repository's main is unrelated history. With no public main reference the
+# answer is "inconclusive" (exit 3), never "clean".
+#
+# WHY "PENDING" AND NOT FAILURE for a commit that is only on this branch: a
+# document written on a branch describes main as it will be once that branch
+# lands. If it lands by fast-forward the commit arrives with the document and
+# the line is true. If it is rewritten on the way (cherry-pick, rebase, squash)
+# the ids change and the line is false. That is caught here when the branch can
+# no longer fast-forward, and on main after landing, where every id must be on
+# main itself. Failing every branch-only id would make no fast-forward branch
+# green before it lands.
+#
+# A NAMED BRANCH IS NOT AN EXCUSE. The first version accepted an id off main when
+# the line named a branch holding it. That also passed "`d5272a6` on
+# `tests/unit-testing-introduction` landed on `main`", the very error it was
+# written for. A port's origin is now accepted only beside its port.
 #
 # Limits, stated: it judges only lines that mention main, and only backticked
 # ids. A wrong id in prose without backticks, or a claim about main phrased
-# without the word, passes. It reads history, so a shallow clone cannot answer:
-# it says so and exits 3 rather than passing.
+# without the word, passes. A shallow clone cannot answer: exit 3.
 #
-# Exit: 0 clean, 1 a misplaced id, 2 usage, 3 shallow clone (inconclusive).
+# Exit: 0 clean, 1 an id wrongly placed on main, 2 usage, 3 inconclusive
+# (shallow clone or no public main reference), 4 clean except PENDING ids.
 
 set -uo pipefail
+
+PUBLIC_REPO="ivoitovych/qca9377-bt-hang"
 
 DIR="."
 FILES=()
@@ -46,38 +74,61 @@ if [[ "$(git rev-parse --is-shallow-repository 2>/dev/null)" == "true" ]]; then
     exit 3
 fi
 
-bad=0 judged=0 unresolved=0
+# The public main: a remote whose URL ends in PUBLIC_REPO (with or without .git,
+# over ssh or https), not PUBLIC_REPO-private or any other name.
+MAIN=""
+while read -r name url _; do
+    if [[ "$url" =~ [/:]${PUBLIC_REPO}(\.git)?/?$ ]] \
+            && git rev-parse -q --verify "refs/remotes/$name/main^{commit}" >/dev/null 2>&1; then
+        MAIN="refs/remotes/$name/main"; break
+    fi
+done < <(git remote -v 2>/dev/null | awk '$3 == "(fetch)"')
+if [[ -z "$MAIN" ]]; then
+    echo "doc-main-hashes: INCONCLUSIVE — no fetched main of a remote for $PUBLIC_REPO"
+    exit 3
+fi
+CAN_FF=0
+git merge-base --is-ancestor "$MAIN" HEAD 2>/dev/null && CAN_FF=1
+
+on_main() { git merge-base --is-ancestor "$1" "$MAIN" 2>/dev/null; }
+patch_of() { git show "$1" 2>/dev/null | git patch-id --stable 2>/dev/null | cut -d' ' -f1; }
+
+bad=0 pending=0 judged=0 unresolved=0
 for f in "${FILES[@]}"; do
     [[ -f "$f" ]] || continue
     # A word `main`, not maintainer/mainline/domain/remain or main-is-active-line.
     while IFS= read -r hit; do
         n=${hit%%:*}; line=${hit#*:}
-        mapfile -t ticks < <(grep -oE '`[^`]+`' <<<"$line" | tr -d '`')
-        for t in "${ticks[@]}"; do
-            [[ "$t" =~ ^[0-9a-f]{7,40}$ ]] || continue
+        mapfile -t ids < <(grep -oE '`[0-9a-f]{7,40}`' <<<"$line" | tr -d '`')
+        for t in "${ids[@]}"; do
             if ! git rev-parse -q --verify "${t}^{commit}" >/dev/null 2>&1; then
                 unresolved=$((unresolved + 1)); continue
             fi
             judged=$((judged + 1))
-            git merge-base --is-ancestor "$t" HEAD 2>/dev/null && continue
-            # Not on main: acceptable only if the line names where it is.
-            named=0
-            while IFS= read -r ref; do
-                for b in "${ticks[@]}"; do
-                    [[ "$b" =~ ^[0-9a-f]{7,40}$ ]] && continue
-                    if [[ "$ref" == "$b" || "$ref" == */"$b" ]]; then named=1; break 2; fi
+            on_main "$t" && continue
+            # A port's origin, beside its port on main.
+            pt=$(patch_of "$t"); ported=""
+            if [[ -n "$pt" ]]; then
+                for u in "${ids[@]}"; do
+                    [[ "$u" == "$t" ]] && continue
+                    git rev-parse -q --verify "${u}^{commit}" >/dev/null 2>&1 || continue
+                    on_main "$u" || continue
+                    [[ "$(patch_of "$u")" == "$pt" ]] && { ported=$u; break; }
                 done
-            done < <(git branch -a --contains "$t" --format='%(refname:short)' 2>/dev/null)
-            if (( ! named )); then
-                echo "  ✗ $f:$n: \`$t\` is not on main and the line names no branch that holds it"
+            fi
+            [[ -n "$ported" ]] && continue
+            if (( CAN_FF )) && git merge-base --is-ancestor "$t" HEAD 2>/dev/null; then
+                echo "  ! $f:$n: \`$t\` is on this branch, not yet on main — true only if the branch lands by fast-forward"
+                pending=1
+            else
+                echo "  ✗ $f:$n: \`$t\` is not on main (${MAIN#refs/remotes/}), and the line names no port of it that is"
                 bad=1
             fi
         done
     done < <(grep -nE '(^|[^[:alnum:]_-])main([^[:alnum:]_/-]|$)' "$f" || true)
 done
 
-if (( bad )); then
-    echo "doc-main-hashes: FAILED ($judged ids judged, $unresolved not resolvable here)"
-    exit 1
-fi
-echo "doc-main-hashes: clean ($judged ids judged, $unresolved not resolvable here)"
+summary="$judged ids judged against ${MAIN#refs/remotes/}, $unresolved not resolvable here"
+if (( bad )); then echo "doc-main-hashes: FAILED ($summary)"; exit 1; fi
+if (( pending )); then echo "doc-main-hashes: clean except PENDING ids ($summary)"; exit 4; fi
+echo "doc-main-hashes: clean ($summary)"

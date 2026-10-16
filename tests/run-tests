@@ -12202,33 +12202,64 @@ rm -rf "$RSM"
 #
 # 2026-10-16: STATUS named the test-suite branch's `d5272a6` as the fix landed
 # on main; main had the cherry-pick `4c26c5d`. Every later reader repeated it.
-# A scratch repository with one commit on main and one on a side branch: the
-# side commit named as main's must fail; main's own commit, and the side commit
-# with its branch named, must pass; a shallow clone must say it cannot tell.
-DMH=$(mktemp -d); git -C "$DMH" init -q -b main
-mkdir -p "$DMH/docs"; echo base > "$DMH/f"
-git -C "$DMH" add -A; git -C "$DMH" -c user.name=t -c user.email=t@example.com commit -q -m base
-DMHMAIN=$(git -C "$DMH" rev-parse --short=7 HEAD)
-git -C "$DMH" checkout -q -b side; echo side >> "$DMH/f"
-git -C "$DMH" -c user.name=t -c user.email=t@example.com commit -q -am side
-DMHSIDE=$(git -C "$DMH" rev-parse --short=7 HEAD)
-git -C "$DMH" checkout -q main
-printf -- '- The fix is `%s`, landed on `main`.\n' "$DMHSIDE" > "$DMH/docs/STATUS.md"
-devtools/doc-main-hashes "$DMH" >/dev/null 2>&1; dmhrc=$?
+# The first version of the check judged against HEAD and accepted any id whose
+# branch the line named, so it passed a feature branch's own commit documented
+# as on main, and "`d5272a6` on `tests/…` landed on `main`" (outside review,
+# 2026-10-17). Here a scratch "public" remote, found by its URL as the real one
+# is, and a working clone of it.
+DMH=$(mktemp -d); mkdir -p "$DMH/ivoitovych"
+git init -q --bare -b main "$DMH/ivoitovych/qca9377-bt-hang.git"
+DMHW="$DMH/work"; git init -q -b main "$DMHW"; mkdir -p "$DMHW/docs"
+dmh_git() { git -C "$DMHW" -c user.name=t -c user.email=t@example.com "$@"; }
+dmh_rc() { devtools/doc-main-hashes "$1" >/dev/null 2>&1; echo $?; }
+echo base > "$DMHW/f"; echo g > "$DMHW/g"
+dmh_git add f g; dmh_git commit -q -m base
+dmh_git remote add origin "$DMH/ivoitovych/qca9377-bt-hang.git"
+dmh_git push -q origin main 2>/dev/null
+
+# The reviewer's case: on a feature branch, its own fix documented as on main.
+dmh_git checkout -q -b feature; echo x >> "$DMHW/f"; dmh_git commit -q -am fix
+DMHX=$(dmh_git rev-parse --short=7 HEAD)
+printf -- '- The fix `%s` has landed on `main`.\n' "$DMHX" > "$DMHW/docs/STATUS.md"
+dmhrc=$(dmh_rc "$DMHW")
+(( dmhrc == 4 )) \
+    && ok "doc-main-hashes: a feature branch's own commit, documented as on main, is PENDING, never clean" \
+    || bad "doc-main-hashes on a branch-only commit claimed for main: rc=$dmhrc (want 4, pending)"
+# Once public main has moved on, the branch cannot fast-forward: the same line fails.
+dmh_git checkout -q main; echo g2 >> "$DMHW/g"; dmh_git commit -q -am moved
+dmh_git push -q origin main 2>/dev/null; dmh_git checkout -q feature
+dmhrc=$(dmh_rc "$DMHW")
 (( dmhrc == 1 )) \
-    && ok "doc-main-hashes refuses a side branch's commit named as main's" \
-    || bad "a commit not on main, named as main's, passed doc-main-hashes (rc=$dmhrc)"
-printf -- '- On `main` the fix is `%s`; `%s` exists only on `side`.\n' "$DMHMAIN" "$DMHSIDE" > "$DMH/docs/STATUS.md"
-devtools/doc-main-hashes "$DMH" >/dev/null 2>&1; dmhrc=$?
+    && ok "doc-main-hashes: the same line FAILS once the branch can no longer fast-forward onto main" \
+    || bad "doc-main-hashes on a branch that cannot fast-forward: rc=$dmhrc (want 1)"
+
+# A cherry-pick: on main the port, on the feature branch the origin.
+dmh_git checkout -q main; dmh_git cherry-pick "$DMHX" >/dev/null 2>&1
+DMHP=$(dmh_git rev-parse --short=7 HEAD); dmh_git push -q origin main 2>/dev/null
+printf -- '- On `main` the fix is `%s`, cherry-picked from `%s` on `feature`.\n' "$DMHP" "$DMHX" > "$DMHW/docs/STATUS.md"
+dmhrc=$(dmh_rc "$DMHW")
 (( dmhrc == 0 )) \
-    && ok "doc-main-hashes accepts main's own commit, and another branch's when the line names that branch" \
-    || bad "doc-main-hashes refused a correct line (rc=$dmhrc)"
-git clone -q --depth 1 "file://$DMH" "$DMH-shallow" 2>/dev/null
-devtools/doc-main-hashes "$DMH-shallow" >/dev/null 2>&1; dmhrc=$?
+    && ok "doc-main-hashes accepts a port's origin beside its port on main (same patch)" \
+    || bad "doc-main-hashes refused a correct cherry-pick line: rc=$dmhrc"
+printf -- '- `%s` on `feature` has landed on `main`.\n' "$DMHX" > "$DMHW/docs/STATUS.md"
+dmhrc=$(dmh_rc "$DMHW")
+(( dmhrc == 1 )) \
+    && ok "doc-main-hashes: naming the branch that holds a commit does not put it on main" \
+    || bad "doc-main-hashes accepted the original of a cherry-pick as main's: rc=$dmhrc (want 1)"
+
+# The private repository's main is not the public main: no reference, no verdict.
+git clone -q --bare "$DMHW" "$DMH/ivoitovych/qca9377-bt-hang-private.git" 2>/dev/null
+git clone -q "$DMH/ivoitovych/qca9377-bt-hang-private.git" "$DMH/privwork" 2>/dev/null
+dmhrc=$(dmh_rc "$DMH/privwork")
+(( dmhrc == 3 )) \
+    && ok "doc-main-hashes will not judge against another repository's main (inconclusive)" \
+    || bad "doc-main-hashes judged against a non-public main: rc=$dmhrc (want 3)"
+git clone -q --depth 1 "file://$DMH/ivoitovych/qca9377-bt-hang.git" "$DMH/shallow" 2>/dev/null
+dmhrc=$(dmh_rc "$DMH/shallow")
 (( dmhrc == 3 )) \
     && ok "doc-main-hashes calls a shallow clone inconclusive, never clean" \
     || bad "doc-main-hashes on a shallow clone returned rc=$dmhrc (want 3)"
-rm -rf "$DMH" "$DMH-shallow"
+rm -rf "$DMH"
 
 # ── NON-ASCII IN THE LOGS, WHICH THE UPSTREAM REPORT NOW DEPENDS ON ──────
 #

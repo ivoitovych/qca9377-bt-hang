@@ -263,6 +263,8 @@ if [[ -x "$ROOT/devtools/doc-main-hashes" ]]; then
     case "$dmhrc" in
         0) printf '  ✓ %s\n' "$(tail -1 <<<"$dmh")" ;;
         3) printf '  • %s\n' "$(tail -1 <<<"$dmh")" ;;
+        # Ids only on this branch: true once it fast-forwards, false if rewritten.
+        4) sed 's/^/  /' <<<"$dmh" ;;
         *) printf '  ✗ %s\n' "commit ids the documents place on main"; fail=1
            sed 's/^/      /' <<<"$dmh" ;;
     esac
