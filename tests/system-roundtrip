@@ -82,8 +82,19 @@ fi
 # reporting that as a FAILED system check would be blaming the installer for
 # the container it was run in. A GitHub ubuntu-latest runner is a VM with a
 # live systemd and does satisfy this; a docker container generally does not.
-if ! systemctl is-system-running >/dev/null 2>&1 || [[ ! -d /etc/udev/rules.d ]]; then
-    echo "  · skipped: no running systemd or no /etc/udev/rules.d — install --apply"
+#
+# LIVE, NOT "running". `systemctl is-system-running` exits non-zero for
+# `degraded` too, which only means some unit somewhere has failed, and a hosted
+# CI VM commonly has one. Asked that way, this step skipped on every CI run and
+# passed: the round trip, the one test of install.sh's apply branch, had never
+# run (2026-10-16). systemd is live when it is PID 1 (/run/systemd/system, as
+# sd_booted() asks) and its state is running or degraded. The skip says which
+# state it saw, so a skip can no longer pass unread.
+SD_STATE=$(systemctl is-system-running 2>/dev/null)
+systemd_live() { [[ -d /run/systemd/system && ( "$SD_STATE" == running || "$SD_STATE" == degraded ) ]]; }
+if ! systemd_live || [[ ! -d /etc/udev/rules.d ]]; then
+    echo "  · skipped: systemd state '${SD_STATE:-none}', /run/systemd/system $([[ -d /run/systemd/system ]] && echo present || echo absent),"
+    echo "    /etc/udev/rules.d $([[ -d /etc/udev/rules.d ]] && echo present || echo absent) — install --apply"
     echo "    cannot complete here, and its failure would describe the host"
     echo
     echo "skipped cleanly; run on a host with a live systemd (a CI VM qualifies)"
@@ -138,7 +149,7 @@ UOUT=$(./uninstall.sh --apply 2>&1); urc=$?
 # bluetooth.service active, dpkg -V bluez clean. A container was never that,
 # so its failures there describe the container, not the uninstall. Where a
 # real bluez and a running systemd exist, it is the authoritative check.
-if command -v hciconfig >/dev/null 2>&1 && systemctl is-system-running >/dev/null 2>&1; then
+if command -v hciconfig >/dev/null 2>&1 && systemd_live; then
     ROUT=$(tools/verify-restored.sh 2>&1); rrc=$?
     (( rrc == 0 )) && ok "verify-restored.sh confirms the machine is back to its prior state" \
                    || { bad "RESIDUE after uninstall — 'complete restoration' is false (rc=$rrc)"; \
