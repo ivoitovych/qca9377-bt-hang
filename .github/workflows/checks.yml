@@ -165,6 +165,26 @@ jobs:
       - name: system round trip (installs for real, then removes itself)
         run: sudo BT_SYSTEM_TEST=1 tests/system-roundtrip
 
+      # THE INVESTIGATION MACHINE'S NEXT DEPLOY, REHEARSED. That machine runs
+      # the 2026-09-18 tools (cccf0fe: its installed bt-trial is that commit's
+      # blob, docs/STATUS.md), has a trial open, and will be upgraded with
+      # --tools-only. The round trip above installs onto a clean machine and
+      # sees none of that. Here the old tree is installed for real, a trial is
+      # opened by the old bt-trial, this checkout is deployed over it with
+      # --tools-only, systemd reloads, the trial unit is stopped as a shutdown
+      # stops it, and the pair is uninstalled — in both modes the machine can
+      # be in. Same gates as the round trip, plus the investigation machine's
+      # checkout path. The old commit is fetched by its full id: it is not in
+      # main's history.
+      - name: deploy rehearsal (the 2026-09-18 tools, a trial open, --tools-only), mitigation mode
+        run: |
+          git fetch --no-tags --depth=1 origin cccf0fe0b7871c1898807c4b25a85adbc27fd9cf
+          mkdir -p "$RUNNER_TEMP/installed-20260918"
+          git archive FETCH_HEAD | tar -x -C "$RUNNER_TEMP/installed-20260918"
+          sudo BT_SYSTEM_TEST=1 tests/system-upgrade "$RUNNER_TEMP/installed-20260918" mitigation
+      - name: deploy rehearsal, experiment mode (bt-mode experiment before the deploy)
+        run: sudo BT_SYSTEM_TEST=1 tests/system-upgrade "$RUNNER_TEMP/installed-20260918" experiment
+
       # The full-tree scan, which this workflow originally had to leave out.
       #
       # It was omitted because `repo-scan` falls back to scanning ALL tracked
