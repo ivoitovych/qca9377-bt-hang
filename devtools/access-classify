@@ -119,6 +119,7 @@ class Proc:
 
 procs = {}
 ns_cover = defaultdict(list)    # namespace id -> what was mounted inside it
+mounts = []                     # (proc, target): each mount run, its world read once the trace is parsed
 ns_count = 0
 pending = {}
 events = []                     # (proc, path, mode, ok, call)
@@ -237,8 +238,13 @@ def handle(pid, name, raw_args, ret):
                 pr.ns, pr.own_ns = ns_count, True
             if base == 'unshare' and any('n' in w for w in flags):
                 pr.net = pr.own_net = True
-            if base == 'mount' and pr.ns is not None and words:
-                ns_cover[pr.ns].append(resolve(words[-1], pr, 'AT_FDCWD'))
+            # Not pr.ns now: a vforked mount can log its whole execve before
+            # its parent's vfork returns, and only then does it learn its world
+            # (the fill-in above). Read then, the world's own mount was a machine
+            # write, and the self-test's clean control failed on that order
+            # alone (2026-10-16).
+            if base == 'mount' and words:
+                mounts.append((pr, words[-1]))
             # the suite's one door to the real machine: env BT_MACHINE_CONTRACT=<check> <tool>
             if base == 'env' and pr.contract is None:
                 tag = next((w for w in words[1:] if w.startswith('BT_MACHINE_CONTRACT=')), None)
@@ -282,6 +288,9 @@ for raw in logf:
     c = CALL.match(rest)
     if c:
         handle(pid, c.group(1), c.group(2), c.group(3))
+for pr, target in mounts:
+    if pr.ns is not None:
+        ns_cover[pr.ns].append(resolve(target, pr, 'AT_FDCWD'))
 
 if not events:
     usage(f'{log} holds no file access — strace did not trace the run')

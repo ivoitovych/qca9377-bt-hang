@@ -13726,6 +13726,38 @@ ACZO=$(devtools/access-classify "$ACZ/trace" --root "$PWD" --scratch "$ACZ" 2>&1
     && ok "access-classify takes zstd's names for its standard streams as streams, and the capability count as a probe" \
     || bad "stream names and the capability count (rc=$aczrc): $(grep -E 'MACHINE|pseudo|probe' <<<"$ACZO" | head -3 | tr '\n' '|')"
 rm -rf "$ACZ"
+# A NAMESPACE WORLD'S OWN MOUNT, IN EITHER ORDER strace may log it. dash runs
+# `mount` by vfork, and the child's whole execve can land in the trace before
+# the parent's vfork returns: the child learns its world only then. Read at
+# the execve, the world's mount was a machine write, and the self-test's clean
+# control failed on that order alone (2026-10-16). The same mount with no
+# namespace around it stays a machine access.
+ACM=$(mktemp -d)
+acmt() {   # <unshare|none> <split|whole>: an unshare'd sh, or a plain one, vforks mount, then writes to /mnt
+    local sh='"sh", "-c", "mount -t tmpfs probe /mnt && echo x > /mnt/x"'
+    [[ "$1" == unshare ]] && echo "1 execve(\"/usr/bin/unshare\", [\"unshare\", \"-Urm\", $sh], 0x7ffc /* 9 vars */) = 0"
+    echo "1 execve(\"/usr/bin/sh\", [$sh], 0x7ffc /* 9 vars */) = 0"
+    echo '1 vfork( <unfinished ...>'
+    if [[ "$2" == split ]]; then
+        echo '2 execve("/usr/bin/mount", ["mount", "-t", "tmpfs", "probe", "/mnt"], 0x7ffc /* 9 vars */ <unfinished ...>'
+        echo '1 <... vfork resumed>)              = 2'
+        echo '2 <... execve resumed>)             = 0'
+    else
+        echo '2 execve("/usr/bin/mount", ["mount", "-t", "tmpfs", "probe", "/mnt"], 0x7ffc /* 9 vars */) = 0'
+        echo '1 <... vfork resumed>)              = 2'
+    fi
+    echo '2 readlink("/mnt", 0x7ffc, 1023) = -1 EINVAL (Invalid argument)'
+    echo '1 openat(AT_FDCWD, "/mnt/x", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3'
+}
+acmr() { acmt "$@" > "$ACM/trace"; devtools/access-classify "$ACM/trace" --root "$PWD" --scratch "$ACM" 2>&1; }
+ACMS=$(acmr unshare split); acmsrc=$?
+ACMW=$(acmr unshare whole); acmwrc=$?
+ACMN=$(acmr none whole); acmnrc=$?
+(( acmsrc == 0 && acmwrc == 0 )) && grep -qE '^  namespaced +write +1$' <<<"$ACMS" && grep -qE '^  namespaced +write +1$' <<<"$ACMW" \
+    && (( acmnrc == 1 )) && grep -qE '^  MACHINE/mnt +write +1$' <<<"$ACMN" \
+    && ok "access-classify keeps a namespace world's own mount inside it, whether mount's execve lands before or after its vfork returns" \
+    || bad "a world's own mount: split rc=$acmsrc, whole rc=$acmwrc ($(grep MACHINE <<<"$ACMW" | head -1)), no world rc=$acmnrc"
+rm -rf "$ACM"
 
 echo
 echo "the tests may not write to the real evidence tree"
