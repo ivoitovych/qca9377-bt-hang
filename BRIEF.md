@@ -98,7 +98,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - **Since 2026-10-11 16:26 the laptop runs `7.0.0-38` with E3 built for it** (`updates/btusb.ko`, the exact upstream entry; srcversion `D1DEA96A0C95BFAB05CEE01`; the boot log shows `patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded). The build is on private `diag/e3-btusb-for-7.0.0-38-20261010`.
   - `-38`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
   - `-38` also carries the BT-9 fix (`96d006ae6445`). The discovery stuck since 10-04 had already ended on 10-10 at 15:02, at the operator's adapter power cycle (§5; corrected 2026-10-14).
-  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` (`d5272a6`) is installed — the operator's `install.sh --tools-only` plus `daemon-reload`.
+  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, the cherry-pick of the test-suite branch's `d5272a6`, plus `25dfc68`) but not on the machine. The route is the operator's open decision: `install.sh --tools-only` plus `daemon-reload`, or `bt-trial` alone (STATUS).
   - Only the operator touches the machine's Bluetooth or kernel.
   - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer. It has been paused since 2026-10-11 17:23 (free space then; 115 GB free on 10-13); restarting it is the operator's decision, and about nine days of margin remained on 10-13 (`docs/STATUS.md`). Rules: §7, "Evidence".
 - **Open investigation:** `U10`, the Tronsmart T8 silent on SBC-XQ. Waiting on the operator's test-sound check (`docs/issues.md`).
@@ -107,7 +107,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-14 (§0 Foundation; state synced with STATUS; BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
+**Last updated: 2026-10-17 (the trial fix's hash on `main`; earlier: 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
 `kernel/mgmt-flush-status` the same day; the next exhibit on `main` is EX-063) — no tip hash:
 it rotted within hours (`R2-13`).
 
@@ -137,7 +137,8 @@ it rotted within hours (`R2-13`).
 > 2026-10-10 04:25 +0200** (three mails, Message-IDs `<20261010022523.2789588-{1,2,3}-…>`;
 > watch for Queued/FAILED). **BlueZ leak fix and test series sent 05:18 +0200** to
 > linux-bluetooth (`<20261010031846.2842837-1-…>`, `<20261010031852.2842893-1..4-…>`).
-> **Next:** replies on all three submissions.
+> **Outcome:** the three stable backports were queued 2026-10-11 and the BlueZ series was applied
+> 2026-10-12 (STATUS submission rows).
 > Reply on BlueZ #1554 posted 2026-10-09. The laptop's discovery stayed stuck until the operator's
 > adapter power cycle on 2026-10-10 (powered again 15:02:44; ⚠️ corrected 2026-10-14 — this line
 > used to say "until the reboot into `7.0.0-38`", see §5); traces preserved in `/root/bt-trace-keep/` with
@@ -281,8 +282,8 @@ fault is not specific to Disconnect.
 - **Every recovery tried on an already-wedged controller failed** (`EX-039`); the one reset
   issued *before* any timeout recovered it, and it failed again 132 s later (`EX-004`).
   `hdev->reset` is NULL on the kernels run here — `13d3:3503` had no quirks entry ⚠️ **until
-  `dc16388d45ec`** (master, 2026-08-07, for a BLE-scan fault; mainline v7.3-rc1, in no stable
-  line as of 2026-10-02) — and that entry's setup/reset path was **untested here** (`DR-01`)
+  `dc16388d45ec`** (master, 2026-08-07, for a BLE-scan fault; mainline v7.3-rc1; in stable 7.2.10 and
+  6.18.56 since 2026-10-11, queued for 6.12, 6.6, 6.1, 5.15, 5.10) — and that entry's setup/reset path was **untested here** (`DR-01`)
   until 2026-09-26. ✅ *Since then:* the setup half alone (E1) ran 58 links / 3 boots /
   2 headsets with 0 timeouts (`EX-055`, `EX-056`, `EX-058`); the exact entry (E3) ran 16 links /
   2 headsets with 0 timeouts (`EX-057`). **The missing entry is the cause**: on ROM firmware the

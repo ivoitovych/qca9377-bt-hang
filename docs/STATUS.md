@@ -1,6 +1,6 @@
 # Status — the dated snapshot
 
-**As of 2026-10-14.** One row per issue and per submission: what it is, how mature the
+**As of 2026-10-17.** One row per issue and per submission: what it is, how mature the
 evidence is, where it stands, what happens next. This page is the one place that says what
 is *current*; the reasoning behind each row lives where the row points. `README.md`
 summarises; `BRIEF.md` is the maintainers' hand-off (machine state, constraints, rules);
@@ -69,7 +69,7 @@ for the next login. `bt-ui-capture stop` and `unstage` undo everything.
 - The boot log shows `QCA: patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded.
 - `-38` carries `96d006ae6445`. The stuck discovery of 2026-10-04 10:26:11 (`BT-9`) had already ended on 2026-10-10 at 15:02, at the operator's adapter power cycle (corrected 2026-10-14; the evidence is in the BT-9 row).
 - ⚠️ **Every shutdown can lose the open trial's row until the fixed `bt-trial` is INSTALLED.** The fix is in `main`'s source, not on the machine. Trial E3 #1 lost its row this way: it ran on `-34` from 2026-10-01 00:13 until the shutdown at 2026-10-11 16:24:45.
-  - The fix: `bt-trial autostop` (the unit's ExecStop) counts timeouts through `journalctl -p err`, so a slow full read cannot outlast the 90 s stop timeout (the test-suite branch's `d5272a6`, landed on `main` 2026-10-16 with that branch). The closer's enumeration read now runs under the same budget when `--list-boots` gives no boot start, and records `enum_at_boot` `?` when cut short.
+  - The fix: `bt-trial autostop` (the unit's ExecStop) counts timeouts through `journalctl -p err`, so a slow full read cannot outlast the 90 s stop timeout. On `main` this is `4c26c5d`, cherry-picked on 2026-10-16 from the test-suite branch's `d5272a6`; that hash exists only on `tests/unit-testing-introduction` and its ready-for-main branch. The closer's enumeration read (`25dfc68`) always runs under `BT_TRIAL_SCAN_BUDGET` (default 20 s); without a boot start from `--list-boots` it would otherwise be a whole-boot read. A read that does not finish cleanly, whether cut by the budget or failed for any other reason, records `enum_at_boot` `?`, never `no` (2026-10-17).
   - Source is not installation. Until the operator deploys it, the machine runs the installed copy (below). How to deploy it is the operator's decision and still open: `install.sh --tools-only` deploys every file (about 75, including unit, modprobe, udev, journald and bluetoothd configuration) and needs a `daemon-reload`; `bt-trial` alone needs no library change. After either, check the installed `/usr/local/bin/bt-trial` for `-p err` in autostop, and run `bt-mode status`.
   - At that shutdown it wrote nothing: no `bt-trial` journal line after the unit's stop, no state-after files, no row in `results.tsv`.
   - `bt-trial-auto` then opened a new "E3 #1" at 16:26 on `-38`, in the same directory. The tracked files there are byte-identical, so nothing tracked was lost.
