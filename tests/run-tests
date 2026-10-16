@@ -4754,7 +4754,10 @@ SVNOREPO=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYS
 WT=$(mktemp -d); CLEANUP_PATHS+=("$WT")
 git init -q "$WT/main"; : > "$WT/main/install.sh"; git -C "$WT/main" add -A
 git -C "$WT/main" -c user.name=t -c user.email=test@example.com -c commit.gpgsign=false commit -qm init
-git -C "$WT/main" worktree add -q "$WT/wt" 2>/dev/null
+# With an identity, as the commit above: creating the worktree's branch writes
+# a reflog, and without one git guesses an address from the host's name,
+# reading /etc/mailname, /etc/hosts and /etc/resolv.conf (the access audit).
+git -C "$WT/main" -c user.name=t -c user.email=test@example.com worktree add -q "$WT/wt" 2>/dev/null
 W="$WT/wt"; mkdir -p "$W/tools" "$W/evidence/trials" "$WT/elsewhere"
 ln -s "$PWD"/tools/* "$W/tools/"
 cp "$FIX" "$W/evidence/trials/results.tsv"
