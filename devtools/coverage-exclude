@@ -52,6 +52,7 @@ reviews/verify.sh           # runs the suite and coverage to check the register
 # watchdog mid-experiment. The gate is the feature; the suite must not defeat
 # it to raise a number.
 tests/system-roundtrip      # CI-gated install/revert; must not run by accident
+tests/system-upgrade        # CI-gated: the investigation machine's deploy, rehearsed; same gate
 
 # devtools/journal-contract WAS excluded whole, on the argument that it is a CI
 # step in its own right and folding it in would double the suite's runtime. That
