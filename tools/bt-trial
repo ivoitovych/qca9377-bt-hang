@@ -818,9 +818,7 @@ hang|ok)
                    echo "${Y}controller responds, but only after intervention${O}" ;;
         failed)    echo "${R}controller does NOT respond${O}" ;;
     esac
-
-    command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-after.txt" 2>&1
-    command -v bt-mark  >/dev/null 2>&1 && bt-mark "TRIAL $build #$n RESULT: $outcome" >/dev/null 2>&1
+    # state-after.txt and the RESULT mark are written AFTER the row, below.
 
     # --- structured SCO record ----------------------------------------------
     # Pass/fail alone cannot distinguish "the stimulus was applied and the
@@ -1087,6 +1085,17 @@ hang|ok)
         "${sco_sent:-?}" "$sco_to_tmo" "${tmo:-?}" "$resp_after" "$usb_present" \
         "${usb_gone:-?}" "${probes:-?}" "$probe_to_tmo" "${aborts:-?}" \
         "$(uname -r)" "$prev_shutdown" "$enum_at_boot" "$perturbed" >> "$RESULTS"
+
+    # THE DESCRIPTIVE EXTRAS COME AFTER THE ROW. bt-state counts the boot's
+    # command timeouts over the WHOLE boot's kernel journal, unbudgeted, and it
+    # and bt-mark each give bluetoothctl 8 s; at shutdown this unit stops after
+    # bluetooth.service. Ahead of the row they could still take the close past
+    # the stop timeout and lose the record that every budget above protects
+    # (2026-10-16: the slow-journal close, with both tools on its PATH as they
+    # are where the project is installed: rc=124, no row). Killed here, they cost
+    # only themselves: the state file lives in /run and goes with the boot.
+    command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-after.txt" 2>&1
+    command -v bt-mark  >/dev/null 2>&1 && bt-mark "TRIAL $build #$n RESULT: $outcome" >/dev/null 2>&1
 
     echo
     echo "  SCO setup requested   : ${sco_sent:-?}"
