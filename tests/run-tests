@@ -1886,8 +1886,9 @@ rm -rf "$LC/slowstop" "$LC/state-slowstop"
 
 # AND WITH THE PROJECT'S OWN TOOLS INSTALLED, AS ON THE LAPTOP. The close runs
 # bt-state (state-after.txt) and bt-mark (the RESULT mark) when they are on the
-# PATH. Nowhere in this file are they, so every close above skipped both; on the
-# laptop both are in /usr/local/bin. bt-state counts the boot's command timeouts
+# PATH. Everywhere else in this file those names reach the PATH guard's
+# recording stubs, which print nothing, so no close above ran the real tools; on
+# the laptop both are in /usr/local/bin. bt-state counts the boot's command timeouts
 # over the WHOLE boot's kernel journal, with no budget, and both ask
 # bluetoothctl, which is given 8 s each. They ran ahead of the results row: the
 # slow-journal check above, with the two tools on its PATH, lost the row again
@@ -11260,6 +11261,31 @@ SRPXU=$(stage_at "$SRPX"); srpxurc=$?
     && ok "uninstall.sh moves the pre-existing file back and counts the restoration" \
     || bad "uninstall did not restore the original (rc=$srpxurc): $(grep -E 'pre-existing|COMPLETE' <<<"$SRPXU" | tr '\n' ' ')"
 rm -rf "$SRPX"
+
+# AN UPGRADE IS NOT A COLLISION. The same differing bt-mark, but under an
+# earlier deploy of this project: its first-install stamp is there. The copy is
+# that deploy's, so it is replaced with no .pre-qca9377-bt-hang copy, the deploy
+# says so, and uninstall removes the file instead of putting the old one back.
+# Before this, an upgrade of the investigation machine, installed with the
+# 2026-09-18 tools, kept 15 of the project's own files as "not ours", and an
+# uninstall would have restored them.
+SRUP=$(mktemp -d); mkdir -p "$SRUP/usr/local/bin" "$SRUP/usr/local/share/qca9377-bt-hang"
+printf 'an older bt-mark of ours\n' > "$SRUP/usr/local/bin/bt-mark"
+echo 1758000000 > "$SRUP/usr/local/share/qca9377-bt-hang/installed-at"
+SRUPI=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$SRUP/no-such-trial" \
+        BT_DESTDIR="$SRUP" ./install.sh --tools-only 2>&1); srupirc=$?
+SRUPN=$(find "$SRUP" -name '*.pre-qca9377-bt-hang' | wc -l)
+(( srupirc == 0 && SRUPN == 0 )) && cmp -s bin/bt-mark "$SRUP/usr/local/bin/bt-mark" \
+   && [[ "$SRUPI" == *"/usr/local/bin/bt-mark updated: the copy there is this project's earlier deploy"* \
+      && "$SRUPI" == *"1 file(s) of this project's earlier deploy replaced in place"* && "$SRUPI" != *"not ours"* ]] \
+   && [[ "$(cat "$SRUP/usr/local/share/qca9377-bt-hang/installed-at")" == 1758000000 ]] \
+    && ok "an upgrade over this project's earlier deploy replaces its copies in place, with no .pre copy" \
+    || bad "upgrade over an earlier deploy (rc=$srupirc): $SRUPN .pre copies; $(grep -E 'bt-mark|earlier deploy|not ours' <<<"$SRUPI" | head -3 | tr '\n' '|')"
+SRUPU=$(stage_at "$SRUP"); srupurc=$?
+(( srupurc == 0 )) && [[ ! -e "$SRUP/usr/local/bin/bt-mark" ]] && [[ "$SRUPU" == *"UNINSTALL COMPLETE"* ]] \
+    && ok "uninstall after an upgrade removes the project's file rather than restoring its older copy" \
+    || bad "uninstall after an upgrade (rc=$srupurc): bt-mark $([[ -e "$SRUP/usr/local/bin/bt-mark" ]] && head -c 40 "$SRUP/usr/local/bin/bt-mark")"
+rm -rf "$SRUP"
 
 # A FAILED STEP must fail the banner. run() accumulates failures on purpose
 # (later removals are independent; a partial revert should remove what it
