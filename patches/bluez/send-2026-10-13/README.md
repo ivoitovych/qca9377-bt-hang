@@ -30,6 +30,14 @@ callers. The positive control shows it aborts for 3 entries and for 0.
 - `scripts/pre-send-check.sh`: both apply, "OK to send".
 - checkpatch with BlueZ's config: 0 errors, 0 warnings for both.
 - gitlint with BlueZ's config: PASS for both.
+- **The list bot's own checks, on base and on base plus each patch** (`scripts/ci-local.sh`,
+  BRIEF §8), 2026-10-16 12:42:33 to 13:41:46 UTC against master `fa6ba5502` (2026-10-14,
+  after the 10-13 change to `emulator/btdev.c`): both apply; CheckPatch, GitLint, BuildEll,
+  BluezMake, bluezmakeextell, IncrementalBuild PASS; CheckSmatch and ScanBuild report
+  nothing NEW for either; A2 turns the `emulator/btdev.c:479` VLA line FIXED (44 smatch
+  and 95 analyzer lines pre-exist on master). Summaries:
+  [`results/ci-local-2026-10-10/send-2026-10-13-a2-vla-sendcheck/`](../../../results/ci-local-2026-10-10/send-2026-10-13-a2-vla-sendcheck/summary.txt),
+  [`…/send-2026-10-13-a1-a2dp-sendcheck/`](../../../results/ci-local-2026-10-10/send-2026-10-13-a1-a2dp-sendcheck/summary.txt).
 
 **Before sending:**
 - rerun `pre-send-check.sh` on the day (master moves);
