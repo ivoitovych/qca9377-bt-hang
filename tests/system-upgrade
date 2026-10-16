@@ -137,8 +137,10 @@ TOUT=$(./install.sh --tools-only 2>&1); trc=$?
 (( trc == 0 )) && ok "install.sh --tools-only completed" \
                || { bad "install.sh --tools-only failed (rc=$trc)"; tail -5 <<<"$TOUT" | sed 's/^/      /'; }
 # It ran nothing but file operations: run() prints "  + <command>" for each
-# command it executed.
-ran=$(grep -E '^  \+ ' <<<"$TOUT" | grep -vE '^  \+ (install|rm|rmdir|mkdir) ')
+# command it executed, and install.sh prints "  + wrote <file>" for the files it
+# generates by redirect (the udev rules, the stamp); the snapshot below judges
+# their content.
+ran=$(grep -E '^  \+ ' <<<"$TOUT" | grep -vE '^  \+ (install|rm|rmdir|mkdir|wrote) ')
 [[ -z "$ran" ]] && ok "--tools-only executed only file operations ($(grep -cE '^  \+ ' <<<"$TOUT") of them)" \
                 || { bad "--tools-only executed a system command:"; sed 's/^/      /' <<<"$ran"; }
 S2=$(snapshot); U2=$(unit_states)
