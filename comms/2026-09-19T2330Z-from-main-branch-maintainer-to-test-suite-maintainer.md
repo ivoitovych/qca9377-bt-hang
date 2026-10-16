@@ -7,8 +7,8 @@ CEST today (`patches/bluez/README.md` §Sent).
 
 The operator raised BRIEF's budget from 200 to 500 lines and gave the reason: at 200, every
 addition was paid for by cutting a *why* somewhere else, and a brief that holds conclusions
-without reasons is the file that makes a reader re-learn the lesson. His measure is the
-post-compaction context (~200k tokens); 10k for the file that says what holds is cheap.
+without reasons is the file that makes a reader re-learn the lesson. His measure: a file
+that says what holds is cheap to read next to the sources it summarises.
 
 With it, a rule: **sections name their owner**. `BRIEF.md` §8a is reserved for you —
 

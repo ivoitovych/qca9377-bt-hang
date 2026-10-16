@@ -1,0 +1,234 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T124720Z-pair_bredr/work/src/test
+configfile: pytest.ini
+plugins: xdist-3.4.0
+collecting ... collected 60 items / 59 deselected / 1 selected
+
+test/functional/test_bluetoothctl.py::test_bluetoothctl_pair_bredr[hosts15-vm2] ERROR [100%]
+
+==================================== ERRORS ====================================
+_________ ERROR at setup of test_bluetoothctl_pair_bredr[hosts15-vm2] __________
+
+item = <Function test_bluetoothctl_pair_bredr[hosts15-vm2]>
+
+    @pytest.hookimpl(wrapper=True)
+    def pytest_runtest_setup(item):
+        _enable_log_filters(item.session.config, logging.root.handlers[-1:])
+>       yield from status_log_stage(item.nodeid, "setup")
+
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:370: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:361: in status_log_stage
+    yield
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:731: in hosts
+    yield from _hosts_impl(request, vm, **host_setup)
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/plugin.py:572: in _hosts_impl
+    h.set_instance_name(f"{name}.{idx}")
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/env.py:121: in set_instance_name
+    self._conn.call_noreply("set_instance_name", name)
+    ^^^^^^^^^^
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/env.py:150: in _conn
+    self._active_conn = rpc.client_unix_socket(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+socket_path = '/tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-rpc-0'
+timeout = 60.0, name = 'host.0.0'
+
+    def client_unix_socket(socket_path, timeout=10, name=None):
+        """
+        Connect client to Unix socket
+    
+        Parameters
+        ----------
+        socket_path : str
+            Path to Unix socket to bind to and listen
+        proxy_cls : type
+            Proxy class to make instance of
+    
+        Returns
+        -------
+        conn : Connection
+            Client connection object
+    
+        """
+        log.debug(f"client: connect")
+    
+        wait = 0.5
+        end = time.time() + timeout
+        while True:
+            dt = end - time.time()
+            if dt <= 0:
+>               raise RemoteTimeoutError("Failed to establish connection")
+E               pytest_bluezenv.rpc.RemoteTimeoutError: Failed to establish connection
+
+../../../../../cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/rpc.py:180: RemoteTimeoutError
+------------------------------ Captured log setup ------------------------------
+2026-10-11 12:50:50.518000 INFO   pytest              :  
+
+==== functional/test_bluetoothctl.py::test_bluetoothctl_pair_bredr[hosts15-vm2]: setup ====
+2026-10-11 12:50:50.522000 INFO   env                 :  Starting btvirt: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T124720Z-pair_bredr/work/src/emulator/btvirt --server=/tmp/pytest-bluezenv-yk2sgmon
+2026-10-11 12:50:50.775000 INFO   env                 :  Starting host: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T124720Z-pair_bredr/work/src/tools/test-runner --kernel=/home/user/qca9377-bt-hang/cache/bluetooth-next/arch/x86/boot/bzImage -u/tmp/pytest-bluezenv-yk2sgmon/bt-server-bredrle -o -chardev -o socket,id=ser0,path=/tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-rpc-0,server=on,wait=off -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser0,name=pytest-bluezenv-rpc -o -chardev -o socket,id=ser1,path=/tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-tty-0,server=on,wait=off -o -device -o pci-serial,chardev=ser1 -o -chardev -o socket,id=ser2,path=/tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-log-0,server=on,wait=on -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser2,name=pytest-bluezenv-log -o -fsdev -o local,id=fsdev-shared,path=/tmp/pytest-bluezenv-yk2sgmon/shared-0,readonly=off,security_model=none,multidevs=remap -o -device -o virtio-9p-pci,fsdev=fsdev-shared,mount_tag=/dev/shared -o -m -o 400M -- /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py
+2026-10-11 12:50:50.775000 INFO   env                 :  TTY: socat /tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-tty-0 STDIO,rawer
+2026-10-11 12:50:50.778449 OUT    host.0.0            :  /usr/libexec/virtiofsd not available: virtiofs disabled
+2026-10-11 12:50:50.799742 OUT    host.0.0            :  qemu-system-x86_64: -chardev socket,id=ser2,path=/tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-log-0,server=on,wait=on: info: QEMU waiting for connection on: disconnected:unix:/tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-log-0,server=on
+2026-10-11 12:50:51.027872 OUT    host.0.0            :  Could not access KVM kernel module: No such file or directory
+2026-10-11 12:50:51.027898 OUT    host.0.0            :  qemu-system-x86_64: failed to initialize kvm: No such file or directory
+2026-10-11 12:50:51.028000 INFO   env                 :  Starting host: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T124720Z-pair_bredr/work/src/tools/test-runner --kernel=/home/user/qca9377-bt-hang/cache/bluetooth-next/arch/x86/boot/bzImage -u/tmp/pytest-bluezenv-yk2sgmon/bt-server-bredrle -o -chardev -o socket,id=ser0,path=/tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-rpc-1,server=on,wait=off -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser0,name=pytest-bluezenv-rpc -o -chardev -o socket,id=ser1,path=/tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-tty-1,server=on,wait=off -o -device -o pci-serial,chardev=ser1 -o -chardev -o socket,id=ser2,path=/tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-log-1,server=on,wait=on -o -device -o virtio-serial -o -device -o virtserialport,chardev=ser2,name=pytest-bluezenv-log -o -fsdev -o local,id=fsdev-shared,path=/tmp/pytest-bluezenv-yk2sgmon/shared-1,readonly=off,security_model=none,multidevs=remap -o -device -o virtio-9p-pci,fsdev=fsdev-shared,mount_tag=/dev/shared -o -m -o 400M -- /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py
+2026-10-11 12:50:51.028000 INFO   env                 :  TTY: socat /tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-tty-1 STDIO,rawer
+2026-10-11 12:50:51.030871 OUT    host.0.1            :  /usr/libexec/virtiofsd not available: virtiofs disabled
+2026-10-11 12:50:51.036652 OUT    host.0.0            :  qemu-system-x86_64: falling back to tcg
+2026-10-11 12:50:51.047824 OUT    host.0.1            :  qemu-system-x86_64: -chardev socket,id=ser2,path=/tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-log-1,server=on,wait=on: info: QEMU waiting for connection on: disconnected:unix:/tmp/pytest-bluezenv-yk2sgmon/pytest-bluezenv-log-1,server=on
+2026-10-11 12:50:51.280781 OUT    host.0.1            :  Could not access KVM kernel module: No such file or directory
+2026-10-11 12:50:51.280799 OUT    host.0.1            :  qemu-system-x86_64: failed to initialize kvm: No such file or directory
+2026-10-11 12:50:51.281000 DEBUG  rpc                 :  client: connect
+2026-10-11 12:50:51.292147 OUT    host.0.1            :  qemu-system-x86_64: falling back to tcg
+2026-10-11 12:50:51.313328 OUT    host.0.0            :  early console in extract_kernel
+2026-10-11 12:50:51.313547 OUT    host.0.0            :  input_data: 0x0000000004ddb2c4
+2026-10-11 12:50:51.313709 OUT    host.0.0            :  input_len: 0x0000000000f0bc1c
+2026-10-11 12:50:51.313759 OUT    host.0.0            :  output: 0x0000000001000000
+2026-10-11 12:50:51.313800 OUT    host.0.0            :  output_len: 0x0000000004c7a1ac
+2026-10-11 12:50:51.313851 OUT    host.0.0            :  kernel_total_size: 0x00000000048ed000
+2026-10-11 12:50:51.313907 OUT    host.0.0            :  needed_size: 0x0000000004e00000
+2026-10-11 12:50:51.313997 OUT    host.0.0            :  trampoline_32bit: 0x0000000000000000
+2026-10-11 12:50:51.314783 OUT    host.0.0            :  Physical KASLR using RDTSC...
+2026-10-11 12:50:51.315073 OUT    host.0.0            :  Virtual KASLR using RDTSC...
+2026-10-11 12:50:51.315157 OUT    host.0.0            :  
+2026-10-11 12:50:51.315159 OUT    host.0.0            :  Decompressing Linux... Parsing ELF... Performing relocations... done.
+2026-10-11 12:50:51.604706 OUT    host.0.1            :  early console in extract_kernel
+2026-10-11 12:50:51.604915 OUT    host.0.1            :  input_data: 0x0000000004ddb2c4
+2026-10-11 12:50:51.605059 OUT    host.0.1            :  input_len: 0x0000000000f0bc1c
+2026-10-11 12:50:51.605117 OUT    host.0.1            :  output: 0x0000000001000000
+2026-10-11 12:50:51.605171 OUT    host.0.1            :  output_len: 0x0000000004c7a1ac
+2026-10-11 12:50:51.605229 OUT    host.0.1            :  kernel_total_size: 0x00000000048ed000
+2026-10-11 12:50:51.605298 OUT    host.0.1            :  needed_size: 0x0000000004e00000
+2026-10-11 12:50:51.605360 OUT    host.0.1            :  trampoline_32bit: 0x0000000000000000
+2026-10-11 12:50:51.606270 OUT    host.0.1            :  Physical KASLR using RDTSC...
+2026-10-11 12:50:51.606580 OUT    host.0.1            :  Virtual KASLR using RDTSC...
+2026-10-11 12:50:51.606683 OUT    host.0.1            :  
+2026-10-11 12:50:51.606696 OUT    host.0.1            :  Decompressing Linux... Parsing ELF... Performing relocations... done.
+2026-10-11 12:50:51.782000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:50:52.534000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:50:52.597667 OUT    host.0.0            :  Booting the kernel (entry_offset: 0x0000000002df2e80).
+2026-10-11 12:50:52.652888 OUT    host.0.0            :  Linux version 7.3.0-rc2-g964430c03896 (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 PREEMPT_DYNAMIC Sat Oct 10 12:14:54 UTC 2026
+2026-10-11 12:50:52.653464 OUT    host.0.0            :  Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T124720Z-pair_bredr/work/src/tools/test-runner TESTHOME=/home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T124720Z-pair_bredr/work/src TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=1 TESTAUTO=0 TESTAUDIO='' TESTARGS='/home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py'
+2026-10-11 12:50:52.654844 OUT    host.0.0            :  BIOS-provided physical RAM map:
+2026-10-11 12:50:52.654909 OUT    host.0.0            :  BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+2026-10-11 12:50:52.655053 OUT    host.0.0            :  BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+2026-10-11 12:50:52.655155 OUT    host.0.0            :  BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+2026-10-11 12:50:52.655233 OUT    host.0.0            :  BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+2026-10-11 12:50:52.655315 OUT    host.0.0            :  BIOS-e820: [mem 0x0000000000100000-0x0000000018fdffff]  System RAM
+2026-10-11 12:50:52.656706 OUT    host.0.0            :  BIOS-e820: [mem 0x0000000018fe0000-0x0000000018ffffff]  device reserved
+2026-10-11 12:50:52.656807 OUT    host.0.0            :  BIOS-e820: [gap 0x0000000019000000-0x00000000afffffff]
+2026-10-11 12:50:52.656880 OUT    host.0.0            :  BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+2026-10-11 12:50:52.656998 OUT    host.0.0            :  BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+2026-10-11 12:50:52.657077 OUT    host.0.0            :  BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+2026-10-11 12:50:52.657170 OUT    host.0.0            :  BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+2026-10-11 12:50:52.657243 OUT    host.0.0            :  BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+2026-10-11 12:50:52.657337 OUT    host.0.0            :  BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+2026-10-11 12:50:52.657408 OUT    host.0.0            :  BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+2026-10-11 12:50:52.657494 OUT    host.0.0            :  printk: legacy bootconsole [earlyser0] enabled
+2026-10-11 12:50:52.658274 OUT    host.0.0            :  Hash pointers mode set to never.
+2026-10-11 12:50:53.248926 OUT    host.0.0            :  Poking KASLR using RDTSC...
+2026-10-11 12:50:53.253864 OUT    host.0.1            :  Booting the kernel (entry_offset: 0x0000000002df2e80).
+2026-10-11 12:50:53.324320 OUT    host.0.1            :  Linux version 7.3.0-rc2-g964430c03896 (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 PREEMPT_DYNAMIC Sat Oct 10 12:14:54 UTC 2026
+2026-10-11 12:50:53.324961 OUT    host.0.1            :  Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T124720Z-pair_bredr/work/src/tools/test-runner TESTHOME=/home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T124720Z-pair_bredr/work/src TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=1 TESTAUTO=0 TESTAUDIO='' TESTARGS='/home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py'
+2026-10-11 12:50:53.326750 OUT    host.0.1            :  BIOS-provided physical RAM map:
+2026-10-11 12:50:53.326834 OUT    host.0.1            :  BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+2026-10-11 12:50:53.326962 OUT    host.0.1            :  BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+2026-10-11 12:50:53.327073 OUT    host.0.1            :  BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+2026-10-11 12:50:53.327197 OUT    host.0.1            :  BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+2026-10-11 12:50:53.327326 OUT    host.0.1            :  BIOS-e820: [mem 0x0000000000100000-0x0000000018fdffff]  System RAM
+2026-10-11 12:50:53.328517 OUT    host.0.1            :  BIOS-e820: [mem 0x0000000018fe0000-0x0000000018ffffff]  device reserved
+2026-10-11 12:50:53.328606 OUT    host.0.1            :  BIOS-e820: [gap 0x0000000019000000-0x00000000afffffff]
+2026-10-11 12:50:53.328687 OUT    host.0.1            :  BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+2026-10-11 12:50:53.328794 OUT    host.0.1            :  BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+2026-10-11 12:50:53.328871 OUT    host.0.1            :  BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+2026-10-11 12:50:53.328993 OUT    host.0.1            :  BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+2026-10-11 12:50:53.329805 OUT    host.0.1            :  BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+2026-10-11 12:50:53.329923 OUT    host.0.1            :  BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+2026-10-11 12:50:53.330025 OUT    host.0.1            :  BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+2026-10-11 12:50:53.330135 OUT    host.0.1            :  printk: legacy bootconsole [earlyser0] enabled
+2026-10-11 12:50:53.331079 OUT    host.0.1            :  Hash pointers mode set to never.
+2026-10-11 12:50:53.660000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:50:53.952691 OUT    host.0.1            :  Poking KASLR using RDTSC...
+2026-10-11 12:50:55.350000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:50:57.886000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:50:58.761017 OUT    host.0.0            :  9p: Bad value for 'source'
+2026-10-11 12:50:58.846356 OUT    host.0.1            :  9p: Bad value for 'source'
+2026-10-11 12:51:00.049609 OUT    host.0.0            :  Mounting sysfs to /sys
+2026-10-11 12:51:00.072879 OUT    host.0.0            :  Mounting proc to /proc
+2026-10-11 12:51:00.090427 OUT    host.0.0            :  Mounting devtmpfs to /dev
+2026-10-11 12:51:00.099896 OUT    host.0.0            :  Creating /dev/pts
+2026-10-11 12:51:00.100484 OUT    host.0.1            :  Mounting sysfs to /sys
+2026-10-11 12:51:00.102577 OUT    host.0.0            :  Mounting devpts to /dev/pts
+2026-10-11 12:51:00.107632 OUT    host.0.0            :  Creating /dev/shm
+2026-10-11 12:51:00.109222 OUT    host.0.0            :  Mounting tmpfs to /dev/shm
+2026-10-11 12:51:00.118546 OUT    host.0.0            :  Mounting tmpfs to /run
+2026-10-11 12:51:00.123054 OUT    host.0.1            :  Mounting proc to /proc
+2026-10-11 12:51:00.134718 OUT    host.0.0            :  Mounting tmpfs to /tmp
+2026-10-11 12:51:00.144274 OUT    host.0.0            :  Mounting debugfs to /sys/kernel/debug
+2026-10-11 12:51:00.151058 OUT    host.0.0            :  Linking /dev/fd to /proc/self/fd
+2026-10-11 12:51:00.151474 OUT    host.0.1            :  Mounting devtmpfs to /dev
+2026-10-11 12:51:00.154500 OUT    host.0.0            :  Linking /dev/stdin to /proc/self/fd/0
+2026-10-11 12:51:00.156300 OUT    host.0.0            :  Linking /dev/stdout to /proc/self/fd/1
+2026-10-11 12:51:00.158346 OUT    host.0.0            :  Linking /dev/stderr to /proc/self/fd/2
+2026-10-11 12:51:00.163495 OUT    host.0.0            :  Creating new session group leader
+2026-10-11 12:51:00.167834 OUT    host.0.1            :  Creating /dev/pts
+2026-10-11 12:51:00.171985 OUT    host.0.1            :  Mounting devpts to /dev/pts
+2026-10-11 12:51:00.178424 OUT    host.0.0            :  Setting controlling terminal
+2026-10-11 12:51:00.180306 OUT    host.0.1            :  Creating /dev/shm
+2026-10-11 12:51:00.183292 OUT    host.0.1            :  Mounting tmpfs to /dev/shm
+2026-10-11 12:51:00.183710 OUT    host.0.0            :  Creating /var/lib/bluetooth
+2026-10-11 12:51:00.199251 OUT    host.0.1            :  Mounting tmpfs to /run
+2026-10-11 12:51:00.223441 OUT    host.0.1            :  Mounting tmpfs to /tmp
+2026-10-11 12:51:00.239210 OUT    host.0.1            :  Mounting debugfs to /sys/kernel/debug
+2026-10-11 12:51:00.249566 OUT    host.0.1            :  Linking /dev/fd to /proc/self/fd
+2026-10-11 12:51:00.253988 OUT    host.0.1            :  Linking /dev/stdin to /proc/self/fd/0
+2026-10-11 12:51:00.256459 OUT    host.0.1            :  Linking /dev/stdout to /proc/self/fd/1
+2026-10-11 12:51:00.258807 OUT    host.0.0            :  Failed to create filesystem: No such file or directory
+2026-10-11 12:51:00.259056 OUT    host.0.1            :  Linking /dev/stderr to /proc/self/fd/2
+2026-10-11 12:51:00.264107 OUT    host.0.0            :  Creating /etc/bluetooth
+2026-10-11 12:51:00.267362 OUT    host.0.1            :  Creating new session group leader
+2026-10-11 12:51:00.274538 OUT    host.0.0            :  Failed to create filesystem: No such file or directory
+2026-10-11 12:51:00.274540 OUT    host.0.1            :  Setting controlling terminal
+2026-10-11 12:51:00.275777 OUT    host.0.0            :  Creating /etc/dbus-1
+2026-10-11 12:51:00.280327 OUT    host.0.1            :  Creating /var/lib/bluetooth
+2026-10-11 12:51:00.288465 OUT    host.0.0            :  Creating /usr/share/dbus-1
+2026-10-11 12:51:00.326898 OUT    host.0.0            :  Attachment of devices requested
+2026-10-11 12:51:00.339235 OUT    host.0.0            :  Attaching BR/EDR controller to /dev/hvc1
+2026-10-11 12:51:00.354605 OUT    host.0.1            :  Failed to create filesystem: No such file or directory
+2026-10-11 12:51:00.359727 OUT    host.0.1            :  Creating /etc/bluetooth
+2026-10-11 12:51:00.360595 OUT    host.0.0            :  Switched line discipline from 0 to 15
+2026-10-11 12:51:00.369126 OUT    host.0.1            :  Failed to create filesystem: No such file or directory
+2026-10-11 12:51:00.370127 OUT    host.0.1            :  Creating /etc/dbus-1
+2026-10-11 12:51:00.380237 OUT    host.0.1            :  Creating /usr/share/dbus-1
+2026-10-11 12:51:00.392385 OUT    host.0.0            :  Device index 0 attached
+2026-10-11 12:51:00.399218 OUT    host.0.0            :  Running command /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py
+2026-10-11 12:51:00.427542 OUT    host.0.1            :  Attachment of devices requested
+2026-10-11 12:51:00.443543 OUT    host.0.0            :  New process 38 created
+2026-10-11 12:51:00.444148 OUT    host.0.1            :  Attaching BR/EDR controller to /dev/hvc1
+2026-10-11 12:51:00.446977 OUT    host.0.0            :  Changing into directory /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T124720Z-pair_bredr/work/src
+2026-10-11 12:51:00.471254 OUT    host.0.1            :  Switched line discipline from 0 to 15
+2026-10-11 12:51:00.509902 OUT    host.0.1            :  Device index 0 attached
+2026-10-11 12:51:00.517733 OUT    host.0.1            :  Running command /home/user/qca9377-bt-hang/cache/bluezenv-venv/bin/python3 -P /home/user/qca9377-bt-hang/cache/bluezenv-venv/lib/python3.12/site-packages/pytest_bluezenv/runner.py
+2026-10-11 12:51:00.565867 OUT    host.0.1            :  New process 37 created
+2026-10-11 12:51:00.569770 OUT    host.0.1            :  Changing into directory /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T124720Z-pair_bredr/work/src
+2026-10-11 12:51:01.686000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:51:02.428430 OUT    host.0.0            :  Bluetooth: hci0: command 0x1001 tx timeout
+2026-10-11 12:51:02.432929 OUT    host.0.0            :  Bluetooth: hci0: Reading local version information failed (-110)
+2026-10-11 12:51:02.558847 OUT    host.0.1            :  Bluetooth: hci0: command 0x1001 tx timeout
+2026-10-11 12:51:02.564282 OUT    host.0.1            :  Bluetooth: hci0: Reading local version information failed (-110)
+2026-10-11 12:51:03.143873 OUT    host.0.0            :  random: crng init done
+2026-10-11 12:51:03.162101 OUT    host.0.1            :  random: crng init done
+2026-10-11 12:51:07.382000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:51:15.934000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:51:28.762000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:51:48.002000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+2026-10-11 12:51:51.284000 DEBUG  rpc                 :  client: retry connect (Connection recv timed out)
+- generated xml file: /home/user/qca9377-bt-hang/tmp/functional-repeat/20261011T124720Z-pair_bredr/base.1.xml -
+=========================== short test summary info ============================
+ERROR test/functional/test_bluetoothctl.py::test_bluetoothctl_pair_bredr[hosts15-vm2] - pytest_bluezenv.rpc.RemoteTimeoutError: Failed to establish connection
+================== 59 deselected, 1 error in 60.94s (0:01:00) ==================
+exit status 1

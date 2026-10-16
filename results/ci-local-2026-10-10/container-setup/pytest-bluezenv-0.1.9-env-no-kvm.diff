@@ -1,0 +1,14 @@
+--- pytest_bluezenv/env.py.orig	2026-10-11 12:21:15.931119305 +0000
++++ pytest_bluezenv/env.py	2026-10-11 12:21:15.945088224 +0000
+@@ -820,7 +820,10 @@
+             for q in qemu_args:
+                 extra_args += ["-o", q]
+ 
+-            extra_args += ["-H"]
++            # local change for a host without /dev/kvm: -H asks test-runner for
++            # "-cpu host", which QEMU refuses under TCG
++            if os.path.exists("/dev/kvm"):
++                extra_args += ["-H"]
+ 
+             cmd = (
+                 [test_runner, f"--kernel={self.kernel}"]

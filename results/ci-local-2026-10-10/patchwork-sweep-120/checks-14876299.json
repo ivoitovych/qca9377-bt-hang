@@ -1,0 +1,70 @@
+[
+ {
+  "id": 12637761,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14876299/checks/12637761/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-10T01:50:17.243034",
+  "state": "success",
+  "target_url": "",
+  "context": "pre-ci_am",
+  "description": "Success"
+ },
+ {
+  "id": 12637777,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14876299/checks/12637777/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-10T01:51:31.987927",
+  "state": "success",
+  "target_url": "",
+  "context": "CheckPatch",
+  "description": "CheckPatch PASS"
+ },
+ {
+  "id": 12637792,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14876299/checks/12637792/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-10T01:51:41.529964",
+  "state": "success",
+  "target_url": "",
+  "context": "GitLint",
+  "description": "Gitlint PASS"
+ },
+ {
+  "id": 12638151,
+  "url": "https://patchwork.kernel.org/api/1.3/patches/14876299/checks/12638151/",
+  "user": {
+   "id": 104215,
+   "url": "https://patchwork.kernel.org/api/1.3/users/104215/",
+   "username": "tedd_an",
+   "first_name": "Tedd",
+   "last_name": "An",
+   "email": "<address elided>"
+  },
+  "date": "2026-10-10T02:39:02.071778",
+  "state": "fail",
+  "target_url": "",
+  "context": "IncrementalBuild",
+  "description": "[v2,02/14] shared/gatt-db: Pass the ATT opcode to the notify callback\n\nunit/test-bap.c: In function ‘test_setup_server’:\nunit/test-bap.c:756:58: error: passing argument 4 of ‘gatt_db_ccc_register’ from incompatible pointer type [-Wincompatible-pointer-types]\n  756 |         gatt_db_ccc_register(db, gatt_ccc_read_cb, NULL, gatt_notify_cb, data);\n      |                                                          ^~~~~~~~~~~~~~\n      |                                                          |\n      |                                                          void (*)(struct gatt_db_attribute *, struct gatt_db_attribute *, const uint8_t *, size_t,  struct bt_att *, void *) {aka void (*)(struct gatt_db_attribute *, struct gatt_db_attribute *, const unsigned char *, long unsigned int,  struct bt_att *, void *)}\nIn file included from unit/test-bap.c:38:\n./src/shared/gatt-db.h:213:58: note: expected ‘gatt_db_notify_t’ {aka ‘void (*)(struct gatt_db_attribute *, struct gatt_db_attribute *, const unsigned char *, long unsigned int,  unsigned char,  struct bt_att *, void *)’} but argument is of type ‘void (*)(struct gatt_db_attribute *, struct gatt_db_attribute *, const uint8_t *, size_t,  struct bt_att *, void *)’ {aka ‘void (*)(struct gatt_db_attribute *, struct gatt_db_attribute *, const unsigned char *, long unsigned int,  struct bt_att *, void *)’}\n  213 |                                         gatt_db_notify_t notify_func,\n      |                                         ~~~~~~~~~~~~~~~~~^~~~~~~~~~~\nunit/test-bap.c:637:13: note: ‘gatt_notify_cb’ declared here\n  637 | static void gatt_notify_cb(struct gatt_db_attribute *attrib,\n      |             ^~~~~~~~~~~~~~\n./src/shared/gatt-db.h:51:16: note: ‘gatt_db_notify_t’ declared here\n   51 | typedef void (*gatt_db_notify_t) (struct gatt_db_attribute *attrib,\n      |                ^~~~~~~~~~~~~~~~\nunit/test-micp.c: In function ‘test_server’:\nunit/test-micp.c:301:41: error: passing argument 4 of ‘gatt_db_ccc_register’ from incompatible pointer type [-Wincompatible-pointer-types]\n  301 |                                         gatt_notify_cb, data);\n      |                                         ^~~~~~~~~~~~~~\n      |                                         |\n      |                                         void (*)(struct gatt_db_attribute *, struct gatt_db_attribute *, const uint8_t *, size_t,  struct bt_att *, void *) {aka void (*)(struct gatt_db_attribute *, struct gatt_db_attribute *, const unsigned char *, long unsigned int,  struct bt_att *, void *)}\nIn file included from unit/test-micp.c:29:\n./src/shared/gatt-db.h:213:58: note: expected ‘gatt_db_notify_t’ {aka ‘void (*)(struct gatt_db_attribute *, struct gatt_db_attribute *, const unsigned char *, long unsigned int,  unsigned char,  struct bt_att *, void *)’} but argument is of type ‘void (*)(struct gatt_db_attribute *, struct gatt_db_attribute *, const uint8_t *, size_t,  struct bt_att *, void *)’ {aka ‘void (*)(struct gatt_db_attribute *, struct gatt_db_attribute *, const unsigned char *, long unsigned int,  struct bt_att *, void *)’}\n  213 |                                         gatt_db_notify_t notify_func,\n      |                                         ~~~~~~~~~~~~~~~~~^~~~~~~~~~~\nunit/test-micp.c:222:13: note: ‘gatt_notify_cb’ declared here\n  222 | static void gatt_notify_cb(struct gatt_db_attribute *attrib,\n      |             ^~~~~~~~~~~~~~\n./src/shared/gatt-db.h:51:16: note: ‘gatt_db_notify_t’ declared here\n   51 | typedef void (*gatt_db_notify_t) (struct gatt_db_attribute *attrib,\n      |                ^~~~~~~~~~~~~~~~\nmake[1]: *** [Makefile:7130: unit/test-micp.o] Error 1\nmake[1]: *** Waiting for unfinished jobs....\nmake[1]: *** [Makefile:7130: unit/test-bap.o] Error 1\nmake: *** [Makefile:4246: all] Error 2"
+ }
+]

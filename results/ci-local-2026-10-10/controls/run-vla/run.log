@@ -1,0 +1,11 @@
+14:02:22 ci-local: space=user tree=/home/user/qca9377-bt-hang/cache/bluez base=origin/master checks=am,smatch jobs=4
+14:02:22 ci-local: out=/home/user/qca9377-bt-hang/tmp/ci-local/controls-20261010T140220Z/run-vla
+14:02:22   patch: tmp/ci-local/controls-20261010T140220Z/control-vla.patch :: [BlueZ] emulator: scratch control with a variable length array
+14:02:22 ci-local: base commit 7428ca2df9356363079db0f48412c20cbdb9471f 2026-10-09 device: Fix LE bearer Connect not replying
+14:02:23   $ (cd src && git -c user.name=Iaroslav Voitovych -c user.email=yaroslav.voytovych@gmail.com -c commit.gpgsign=false am /home/user/qca9377-bt-hang/tmp/ci-local/controls-20261010T140220Z/control-vla.patch)
+14:02:23 == smatch: base side
+14:02:23   base side of smatch reused from /home/user/qca9377-bt-hang/tmp/ci-local/base-cache/user-7428ca2df9356363079db0f48412c20cbdb9471f-smatch-7e841f28.findings (117 finding lines)
+14:02:23 == smatch: patched side
+14:02:23   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+14:02:37   $ (cd src && make -j4 CHECK=/home/user/qca9377-bt-hang/cache/smatch/smatch --full-path CC=/home/user/qca9377-bt-hang/cache/smatch/cgcc)
+14:06:41 RESULT: 1 check(s) with a NEW finding — see /home/user/qca9377-bt-hang/tmp/ci-local/controls-20261010T140220Z/run-vla/summary.txt

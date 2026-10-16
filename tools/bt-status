@@ -35,7 +35,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${BT_REPO:-}"
 if [[ -z "$REPO" ]]; then
     for c in "$HERE/.." /root/exp/qca9377-bt-hang "$HOME/qca9377-bt-hang" "$PWD"; do
-        [[ -d "$c/.git" && -e "$c/tools/bt-status" ]] && { REPO=$(cd "$c" && pwd); break; }
+        [[ -e "$c/.git" && -e "$c/tools/bt-status" ]] && { REPO=$(cd "$c" && pwd); break; }
     done
 fi
 # Journal and sysfs both go through seams so the VERDICT — "controller is down
@@ -177,7 +177,7 @@ fi
 
 echo
 echo "${B}5. Repo${O}"
-if [[ -n "$REPO" && -d "$REPO/.git" ]]; then
+if [[ -n "$REPO" && -e "$REPO/.git" ]]; then
     printf '  %-30s %s\n' "checkout:" "$REPO"
     d=$(cd "$REPO" && git status --porcelain | wc -l)
     l=$(cd "$REPO" && git rev-parse --short HEAD 2>/dev/null)

@@ -1,0 +1,59 @@
+{
+ "id": 14670888,
+ "url": "https://patchwork.kernel.org/api/1.3/patches/14670888/",
+ "web_url": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/",
+ "project": {
+  "id": 395,
+  "url": "https://patchwork.kernel.org/api/1.3/projects/395/",
+  "name": "Bluetooth",
+  "link_name": "bluetooth",
+  "list_id": "linux-bluetooth.vger.kernel.org",
+  "list_email": "linux-bluetooth@vger.kernel.org",
+  "web_url": "",
+  "scm_url": "",
+  "webscm_url": "",
+  "list_archive_url": "",
+  "list_archive_url_format": "https://lore.kernel.org/r/{}",
+  "commit_url_format": ""
+ },
+ "msgid": "<<address elided>>",
+ "list_archive_url": "https://lore.kernel.org/r/<address elided>",
+ "date": "2026-07-07T22:05:25",
+ "name": "[v2,1/2,6.6.y] Bluetooth: ISO: Copy BASE if service data matches EIR_BAA_SERVICE_UUID",
+ "commit_ref": null,
+ "pull_url": null,
+ "state": "new",
+ "archived": true,
+ "hash": "fa2809198078e89851d8d8ed75ad7e0438c3c7c4",
+ "submitter": {
+  "id": 221844,
+  "url": "https://patchwork.kernel.org/api/1.3/people/221844/",
+  "name": "Jeremy Erazo (Devel Group)",
+  "email": "<address elided>"
+ },
+ "delegate": null,
+ "mbox": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/mbox/",
+ "series": [
+  {
+   "id": 1123380,
+   "url": "https://patchwork.kernel.org/api/1.3/series/1123380/",
+   "web_url": "https://patchwork.kernel.org/series/1123380/",
+   "date": "2026-07-07T22:05:24",
+   "name": "Bluetooth: ISO: backport missed OOB write fix to 6.6.y and 6.1.y",
+   "version": 2,
+   "mbox": "https://patchwork.kernel.org/series/1123380/mbox/"
+  }
+ ],
+ "comments": "https://patchwork.kernel.org/api/patches/14670888/comments/",
+ "check": "fail",
+ "checks": "https://patchwork.kernel.org/api/patches/14670888/checks/",
+ "tags": {},
+ "related": [],
+ "content": "From: Jeremy Erazo <<address elided>>\n\ncommit f4da3ee15de9944482382181329bb6d7335ca003 upstream.\n\nCopy the content of a Periodic Advertisement Report to BASE only if\nthe service UUID is Basic Audio Announcement Service UUID.\n\n[Stable backport rationale]\n\nThis fix landed in mainline v6.7 without a Fixes: tag, so the stable\nautoselect bot never picked it up.  linux-6.6.y HEAD (v6.6.143) still\ncarries the pre-fix code at net/bluetooth/iso.c:1935:\n\n\tif (sk) {\n\t\tmemcpy(iso_pi(sk)->base, ev3->data, ev3->length);\n\t\tiso_pi(sk)->base_len = ev3->length;\n\t}\n\nev3->length is __u8 and iso_pi(sk)->base is __u8[BASE_MAX_LENGTH] where\nBASE_MAX_LENGTH is HCI_MAX_PER_AD_LENGTH(252) - EIR_SERVICE_DATA_LENGTH(4)\n= 248.  When an attacker within BLE radio range sends an HCI_EV_LE_PER_ADV_REPORT\nwith ev3->length in [249, 255], the memcpy writes 1 to 7 bytes past the\nbuffer into the trailing fields of struct iso_pinfo, including the low\nbytes of the iso_pi(sk)->conn pointer.  FORTIFY_SOURCE flags the write\nwith \"memcpy: detected field-spanning write\" but does not block it.\n\nThe upstream refactor addresses this by:\n  1. Filtering via eir_get_service_data() so only the BASE portion of\n     the PA payload is copied.\n  2. Bounding the copy with base_len <= sizeof(iso_pi(sk)->base).\n\nBackport notes for 6.6.y:\n  * eir_get_service_data() is already declared in net/bluetooth/eir.h.\n  * The header include for eir.h and the EIR_BAA_SERVICE_UUID define\n    are added here, matching the upstream commit.\n  * The put_user() addition in iso_sock_getsockopt() that was part of\n    the same upstream commit is not included; that hunk is a separate\n    getsockopt correctness fix and is not required for the OOB write\n    fix (getsockopt(BT_ISO_BASE) is a controlled path that already\n    validates optlen against sizeof(iso_pi(sk)->base)).  Applying the\n    getsockopt hunk here would risk a user-visible ABI change on a\n    stable branch.\n\nReachability: any host with an ISO listening socket bound as a\nbroadcast sink (LE Audio / Auracast).  No pairing required.\n\nFixes: 9c0826310bfb (\"Bluetooth: ISO: Add support for periodic adv reports processing\")\nCc: stable@vger.kernel.org # 6.6.y\nSigned-off-by: Claudia Draghicescu <<address elided>>\nSigned-off-by: Luiz Augusto von Dentz <<address elided>>\n[jerazo: backport to 6.6.y; add #include \"eir.h\" and EIR_BAA_SERVICE_UUID define; drop unrelated getsockopt hunk]\nSigned-off-by: Jeremy Erazo <<address elided>>\n---\n net/bluetooth/iso.c | 15 +++++++++++----\n 1 file changed, 11 insertions(+), 4 deletions(-)",
+ "diff": "diff --git a/net/bluetooth/iso.c b/net/bluetooth/iso.c\nindex 011b2187b..3259c9c1e 100644\n--- a/net/bluetooth/iso.c\n+++ b/net/bluetooth/iso.c\n@@ -15,6 +15,8 @@\n #include <net/bluetooth/hci_core.h>\n #include <net/bluetooth/iso.h>\n \n+#include \"eir.h\"\n+\n static const struct proto_ops iso_sock_ops;\n \n static struct bt_sock_list iso_sk_list = {\n@@ -47,6 +49,7 @@ static void iso_sock_kill(struct sock *sk);\n \n #define EIR_SERVICE_DATA_LENGTH 4\n #define BASE_MAX_LENGTH (HCI_MAX_PER_AD_LENGTH - EIR_SERVICE_DATA_LENGTH)\n+#define EIR_BAA_SERVICE_UUID\t0x1851\n \n /* iso_pinfo flags values */\n enum {\n@@ -1928,12 +1931,16 @@ int iso_connect_ind(struct hci_dev *hdev, bdaddr_t *bdaddr, __u8 *flags)\n \n \tev3 = hci_recv_event_data(hdev, HCI_EV_LE_PER_ADV_REPORT);\n \tif (ev3) {\n+\t\tsize_t base_len = ev3->length;\n+\t\tu8 *base;\n+\n \t\tsk = iso_get_sock_listen(&hdev->bdaddr, bdaddr,\n \t\t\t\t\t iso_match_sync_handle_pa_report, ev3);\n-\n-\t\tif (sk) {\n-\t\t\tmemcpy(iso_pi(sk)->base, ev3->data, ev3->length);\n-\t\t\tiso_pi(sk)->base_len = ev3->length;\n+\t\tbase = eir_get_service_data(ev3->data, ev3->length,\n+\t\t\t\t\t    EIR_BAA_SERVICE_UUID, &base_len);\n+\t\tif (base && sk && base_len <= sizeof(iso_pi(sk)->base)) {\n+\t\t\tmemcpy(iso_pi(sk)->base, base, base_len);\n+\t\t\tiso_pi(sk)->base_len = base_len;\n \t\t}\n \t} else {\n \t\tsk = iso_get_sock_listen(&hdev->bdaddr, BDADDR_ANY, NULL, NULL);\n",
+ "prefixes": [
+  "v2",
+  "1/2",
+  "6.6.y"
+ ]
+}

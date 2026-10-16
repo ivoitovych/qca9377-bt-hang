@@ -82,6 +82,34 @@ the srcversion does. This is the build a stable backport request vouches for.
 Pass: 0 timeouts, 0 `0x2005`; the reset callback only fires on a timeout, so a clean boot never
 exercises it — the request must say so.
 
+### E3 for 7.0.0-38 (built and installed 2026-10-10, on the operator's word; not yet booted)
+
+`7.0.0-38.38~24.04.4` is installed (image and headers, `grub.cfg` regenerated 2026-10-09
+06:02) and `GRUB_DEFAULT=0` boots the newest kernel, so the next reboot starts -38. Its stock
+btusb has no `13d3:3503` entry (`grep -c "0x13d3, 0x35"` finds 26 IMC entries in its btusb.c,
+none for 3503), so without E3 the adapter would fall back to the generic setup. -38 already
+has the BT-9 fix `96d006ae6445` in `hci_event.c`.
+
+| built 2026-10-10 | |
+|---|---|
+| source | `scripts/prepare-ubuntu-ksrc.sh 7.0.0-38.38~24.04.4` → `cache/ubuntu-7.0.0-38` (diff.gz sha256 matches the `.dsc`) |
+| script | `scripts/build-btusb-module.sh --ksrc cache/ubuntu-7.0.0-38 --krel 7.0.0-38-generic <patch>` (hunk at offset 1, as for -34) |
+| patch | the same file as for -34; `git patch-id --stable` equals mainline `dc16388d45ec`'s (`2caa69bd…`) |
+| version / srcversion | `0.8` / `D1DEA96A0C95BFAB05CEE01` |
+| vermagic | `7.0.0-38-generic SMP preempt mod_unload modversions` ✓ |
+| CRCs | `scripts/check-modversions.sh /lib/modules/7.0.0-38-generic/build/Module.symvers <ko>`: 134 used, 0 mismatched |
+| sha256 | `351e260e053d9ae4c7abd46115f25409f9330b545c671c98a927ebb96495706b` |
+| kept at | `tmp/runtime-e3-7.0.0-38/btusb.ko` (build tree `tmp/btusb-build-e3-7.0.0-38/`; the -34 one kept as `tmp/btusb-build-e3-7.0.0-34/`) |
+
+**Install** (on the operator's word only; takes effect when -38 is first booted; -34 and its
+E3 stay as they are):
+
+    scripts/module-updates.sh --krel 7.0.0-38-generic --module btusb install tmp/runtime-e3-7.0.0-38/btusb.ko
+
+The -38 initramfs has no btusb, so `updates/` + `depmod` is enough. **Read after the first -38
+boot:** `modinfo -F srcversion btusb` → `D1DEA96A0C95BFAB05CEE01`; the QCA rampatch/NVM lines
+in `journalctl -k -b 0`. Until then, picking -34 under GRUB's "Advanced options" keeps E3.
+
 **What decides it** (reviewer's table, `reviews/2026-09-26-source-review-report.md` on the
 review branch): same alt 1, same `27 → 9+9+9`, sustained stream, and commands keep completing
 → missing QCA setup is the cause, and the fix is the upstream entry (`dc16388d45ec`) as a

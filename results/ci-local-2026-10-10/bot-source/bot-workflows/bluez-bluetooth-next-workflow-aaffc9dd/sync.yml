@@ -1,0 +1,44 @@
+name: Sync
+
+on:
+  schedule:
+  - cron: "*/5 * * * *"
+
+jobs:
+  sync_repo:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        ref: master
+
+    - name: Sync Repo
+      uses: bluez/action-ci@main
+      with:
+        task: sync
+        workflow: workflow
+        upstream_repo: 'https://git.kernel.org/pub/scm/linux/kernel/git/bluetooth/bluetooth-next.git'
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Cleanup PR
+      uses: bluez/action-ci@main
+      with:
+        task: cleanup
+        github_token: ${{ secrets.ACTION_TOKEN }}
+
+  sync_patchwork:
+    needs: sync_repo
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Sync Patchwork
+      uses: bluez/action-ci@main
+      with:
+        task: patchwork
+        workflow: workflow
+        space: kernel
+        github_token: ${{ secrets.ACTION_TOKEN }}
+        email_token: ${{ secrets.EMAIL_TOKEN }}
+        patchwork_token: ${{ secrets.PATCHWORK_TOKEN }}
+        patchwork_user: ${{ secrets.PATCHWORK_USER }}

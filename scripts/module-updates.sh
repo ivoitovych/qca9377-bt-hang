@@ -4,6 +4,7 @@
 # 2026-09-24 (mkdir, install, depmod, lsinitramfs, modversions check), each of
 # which prompted; as one script under the granted scripts/* rule.
 #
+#   scripts/module-updates.sh [--krel <release>] [--module <name>] …  another installed kernel
 #   scripts/module-updates.sh [--module <name>] status               what loads now and next boot
 #   scripts/module-updates.sh [--module <name>] install <module.ko>  (bluetooth: check CRCs against
 #                                                                    every dependant), install + depmod
@@ -15,6 +16,10 @@
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KREL="$(uname -r)"
+# --krel <release>: act on an installed kernel that is not running (added
+# 2026-10-10: E3 for 7.0.0-38 before its first boot). Must come first.
+if [[ "${1:-}" == "--krel" ]]; then KREL="${2:?--krel needs a release}"; shift 2; fi
+[[ -d "/lib/modules/$KREL" ]] || { echo "no /lib/modules/$KREL" >&2; exit 2; }
 UPD="/lib/modules/$KREL/updates"
 MOD=bluetooth
 if [[ "${1:-}" == "--module" ]]; then MOD="${2:?--module needs a name}"; shift 2; fi
@@ -23,10 +28,12 @@ DST="$UPD/$MOD.ko"
 
 status() {
 	echo "module:              $MOD"
-	echo "kernel:              $KREL"
-	echo "loaded srcversion:   $(cat "/sys/module/$MOD/srcversion" 2>/dev/null || echo 'not loaded')"
-	echo "loaded version:      $(cat "/sys/module/$MOD/version" 2>/dev/null || echo '-')"
-	echo "next boot resolves:  $(modinfo -n "$MOD" 2>/dev/null)"
+	echo "kernel:              $KREL$([[ "$KREL" != "$(uname -r)" ]] && echo "  (not the running kernel, $(uname -r))")"
+	if [[ "$KREL" == "$(uname -r)" ]]; then
+		echo "loaded srcversion:   $(cat "/sys/module/$MOD/srcversion" 2>/dev/null || echo 'not loaded')"
+		echo "loaded version:      $(cat "/sys/module/$MOD/version" 2>/dev/null || echo '-')"
+	fi
+	echo "next boot resolves:  $(modinfo -k "$KREL" -n "$MOD" 2>/dev/null)"
 	if [[ -f "$DST" ]]; then
 		echo "updates/ module:     srcversion $(modinfo -F srcversion "$DST")  sha256 $(sha256sum "$DST" | cut -c1-16)…"
 	else
@@ -74,5 +81,5 @@ remove)
 	status
 	echo "the stock module loads at the next boot"
 	;;
-*) sed -n '2,13p' "$0"; exit 2 ;;
+*) sed -n '2,14p' "$0"; exit 2 ;;
 esac

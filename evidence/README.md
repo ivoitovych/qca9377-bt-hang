@@ -133,10 +133,12 @@ meant.
 
 ## ⚠️ HCI captures are deliberately not here
 
-`bt-trace` writes btsnoop captures to `/var/log/bt-health/trace/`. They are **not**
-collected into sessions and are gitignored, because they contain device addresses,
-device names, pairing exchanges and audio payload — and `tools/sanitize-logs.sh` parses
-text, not binary formats.
+`bt-trace` writes btsnoop captures to `/var/log/bt-health/trace/`. Whole captures are **not** collected into sessions and are gitignored. They contain:
+- device addresses and device names;
+- pairing exchanges: a bonded device's reconnect hands its link key to the controller in clear (`scripts/hci-key-records.py` counts such records without printing them);
+- audio payload.
+
+`tools/sanitize-logs.sh` parses text, not binary formats.
 
 Sessions record *which* captures cover their window. Inspect one with:
 
@@ -144,14 +146,18 @@ Sessions record *which* captures cover their window. Inspect one with:
 btmon -r /var/log/bt-health/trace/bt-YYYYmmdd-HHMMSS.btsnoop
 ```
 
-If you attach a capture to a bug report, review it first. There is no automated scrubber
-for btsnoop.
+**Kept, compressed, outside git (since 2026-10-11).**
+- `scripts/bt-trace-archive.py` copies every closed capture into the git-ignored `archive/bt-trace/` before rotation can delete it.
+- Each copy is zstd-compressed and verified against the original's SHA-256, with a manifest.
+- Nothing is deleted. The budget is 10 GB.
+- Read an archived capture with `zstd -dc <file>.zst` into `tmp/`.
 
-**Budget:** rotation 128 MB, retention 400 files, plus a hard floor — capture prunes,
-then stops, rather than let free space fall below 15 GB. (The count is generous on
-purpose: btmon aborts force early rotations, so files average ~2 MB; the floor is the
-real bound. An earlier 30-file/10 GB setting is what rotated away a session under
-investigation.)
+**Published evidence** is the incident window, complete inside it and nothing outside. Device addresses in it are consistent pseudonyms: the manufacturer prefix is real and the rest random, and each published file says so. A capture is published only as a cut window with its key records blanked, never whole.
+
+**Retention in `trace/`:** rotation at 128 MB, retention 400 files, plus a hard floor. Capture prunes, then stops, rather than let free space fall below 15 GB.
+- The count was meant to be generous: btmon aborts force early rotations, and files once averaged about 2 MB.
+- By 2026-10-11, with audio traffic, the 400 files held 17.7 GB and the oldest were being deleted at every rotation. That is why the archive exists.
+- An earlier 30-file / 10 GB setting is what rotated away a session under investigation.
 
 ---
 

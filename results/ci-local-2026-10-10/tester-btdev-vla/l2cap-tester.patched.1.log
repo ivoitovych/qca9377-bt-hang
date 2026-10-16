@@ -1,0 +1,4579 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+Could not access KVM kernel module: No such file or directory
+qemu-system-x86_64: failed to initialize kvm: No such file or directory
+qemu-system-x86_64: falling back to tcg
+early console in extract_kernel
+input_data: 0x0000000004ddb2c4
+input_len: 0x0000000000f0bc1c
+output: 0x0000000001000000
+output_len: 0x0000000004c7a1ac
+kernel_total_size: 0x00000000048ed000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000002df2e80).
+Linux version 7.3.0-rc2-g964430c03896 (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 PREEMPT_DYNAMIC Sat Oct 10 12:14:54 UTC 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/qca9377-bt-hang/tmp/tester-compare/20261011T120002Z-btdev-vla/work/src/tools/test-runner TESTHOME=/home/user/qca9377-bt-hang/tmp/tester-compare/20261011T120002Z-btdev-vla/work/src TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/usr/bin/env ASAN_OPTIONS=exitcode=65:detect_leaks=0:print_summary=1 tools/l2cap-tester'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /usr/bin/env ASAN_OPTIONS=exitcode=65:detect_leaks=0:print_summary=1 tools/l2cap-tester
+New process 35 created
+Changing into directory /home/user/qca9377-bt-hang/tmp/tester-compare/20261011T120002Z-btdev-vla/work/src
+
+[1;39mBasic L2CAP Socket - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mBasic L2CAP Socket - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mBasic L2CAP Socket - Success[0m - [0;34msetup complete[0m
+[1;39mBasic L2CAP Socket - Success[0m - [0;30mrun[0m
+[1;39mBasic L2CAP Socket - Success[0m - [0;32mtest passed[0m
+[1;39mBasic L2CAP Socket - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mBasic L2CAP Socket - Success[0m - [0;35mteardown complete[0m
+[1;39mBasic L2CAP Socket - Success[0m - [0;30mdone[0m
+
+[1;39mNon-connected getpeername - Failure[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mNon-connected getpeername - Failure[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mNon-connected getpeername - Failure[0m - [0;34msetup complete[0m
+[1;39mNon-connected getpeername - Failure[0m - [0;30mrun[0m
+[1;39mNon-connected getpeername - Failure[0m - [0;32mtest passed[0m
+[1;39mNon-connected getpeername - Failure[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mNon-connected getpeername - Failure[0m - [0;35mteardown complete[0m
+[1;39mNon-connected getpeername - Failure[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+random: crng init done
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Close[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Close[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Close[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Close[0m - [0;30mrun[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP BR/EDR Client - Close[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Close[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Close[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Close[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Timeout[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Timeout[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Client - Timeout[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Timeout[0m - [0;30mrun[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP BR/EDR Client - Timeout[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Timeout[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Timeout[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Timeout[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client SSP - Success 1[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client SSP - Success 1[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+  [0;37mClient enable SSP status 0x00[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 1[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 1[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 1[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 1[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 1[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client SSP - Success 2[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client SSP - Success 2[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+  [0;37mClient enable SSP status 0x00[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 2[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 2[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 2[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 2[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client SSP - Success 2[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client PIN Code - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client PIN Code - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client PIN Code - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client PIN Code - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP BR/EDR Client PIN Code - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client PIN Code - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client PIN Code - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client PIN Code - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client PIN Code Change Sec - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client PIN Code Change Sec - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client PIN Code Change Sec - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client PIN Code Change Sec - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChanging security level to 3[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP BR/EDR Client PIN Code Change Sec - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client PIN Code Change Sec - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client PIN Code Change Sec - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client PIN Code Change Sec - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Read Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Read Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Read Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Read Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mread: 8/8[0m
+[1;39mL2CAP BR/EDR Client - Read Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Read Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Read Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Read Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Read 32k Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Read 32k Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Read 32k Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Read 32k Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mread: 672/672[0m
+  [0;37mread: 672/1344[0m
+  [0;37mread: 672/2016[0m
+  [0;37mread: 672/2688[0m
+  [0;37mread: 672/3360[0m
+  [0;37mread: 672/4032[0m
+  [0;37mread: 672/4704[0m
+  [0;37mread: 672/5376[0m
+  [0;37mread: 672/6048[0m
+  [0;37mread: 672/6720[0m
+  [0;37mread: 672/7392[0m
+  [0;37mread: 672/8064[0m
+  [0;37mread: 672/8736[0m
+  [0;37mread: 672/9408[0m
+  [0;37mread: 672/10080[0m
+  [0;37mread: 672/10752[0m
+  [0;37mread: 672/11424[0m
+  [0;37mread: 672/12096[0m
+  [0;37mread: 672/12768[0m
+  [0;37mread: 672/13440[0m
+  [0;37mread: 672/14112[0m
+  [0;37mread: 672/14784[0m
+  [0;37mread: 672/15456[0m
+  [0;37mread: 672/16128[0m
+  [0;37mread: 672/16800[0m
+  [0;37mread: 672/17472[0m
+  [0;37mread: 672/18144[0m
+  [0;37mread: 672/18816[0m
+  [0;37mread: 672/19488[0m
+  [0;37mread: 672/20160[0m
+  [0;37mread: 672/20832[0m
+  [0;37mread: 672/21504[0m
+  [0;37mread: 672/22176[0m
+  [0;37mread: 672/22848[0m
+  [0;37mread: 672/23520[0m
+  [0;37mread: 672/24192[0m
+  [0;37mread: 672/24864[0m
+  [0;37mread: 672/25536[0m
+  [0;37mread: 672/26208[0m
+  [0;37mread: 672/26880[0m
+  [0;37mread: 672/27552[0m
+  [0;37mread: 672/28224[0m
+  [0;37mread: 672/28896[0m
+  [0;37mread: 672/29568[0m
+  [0;37mread: 672/30240[0m
+  [0;37mread: 672/30912[0m
+  [0;37mread: 672/31584[0m
+  [0;37mread: 672/32256[0m
+  [0;37mread: 512/32768[0m
+[1;39mL2CAP BR/EDR Client - Read 32k Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Read 32k Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Read 32k Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Read 32k Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - RX Timestamping[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 8/8[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - RX Timestamping 32k[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping 32k[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping 32k[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping 32k[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/672[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/1344[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/2016[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/2688[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/3360[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/4032[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/4704[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/5376[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/6048[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/6720[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/7392[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/8064[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/8736[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/9408[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/10080[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/10752[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/11424[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/12096[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/12768[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/13440[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/14112[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/14784[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/15456[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/16128[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/16800[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/17472[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/18144[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/18816[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/19488[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/20160[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/20832[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/21504[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/22176[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/22848[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/23520[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/24192[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/24864[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/25536[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/26208[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/26880[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/27552[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/28224[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/28896[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/29568[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/30240[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/30912[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/31584[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 672/32256[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 512/32768[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping 32k[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping 32k[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping 32k[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - RX Timestamping 32k[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Write Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Write Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Write Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Write Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mwrite: 8/8[0m
+  [0;37mread: 8/8[0m
+[1;39mL2CAP BR/EDR Client - Write Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Write Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Write Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Write Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Write 32k Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Write 32k Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Write 32k Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Write 32k Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mwrite: 672/672[0m
+  [0;37mwrite: 672/1344[0m
+  [0;37mwrite: 672/2016[0m
+  [0;37mwrite: 672/2688[0m
+  [0;37mwrite: 672/3360[0m
+  [0;37mwrite: 672/4032[0m
+  [0;37mwrite: 672/4704[0m
+  [0;37mwrite: 672/5376[0m
+  [0;37mwrite: 672/6048[0m
+  [0;37mwrite: 672/6720[0m
+  [0;37mwrite: 672/7392[0m
+  [0;37mwrite: 672/8064[0m
+  [0;37mwrite: 672/8736[0m
+  [0;37mwrite: 672/9408[0m
+  [0;37mwrite: 672/10080[0m
+  [0;37mwrite: 672/10752[0m
+  [0;37mwrite: 672/11424[0m
+  [0;37mwrite: 672/12096[0m
+  [0;37mwrite: 672/12768[0m
+  [0;37mwrite: 672/13440[0m
+  [0;37mwrite: 672/14112[0m
+  [0;37mwrite: 672/14784[0m
+  [0;37mwrite: 672/15456[0m
+  [0;37mwrite: 672/16128[0m
+  [0;37mwrite: 672/16800[0m
+  [0;37mwrite: 672/17472[0m
+  [0;37mwrite: 672/18144[0m
+  [0;37mwrite: 672/18816[0m
+  [0;37mwrite: 672/19488[0m
+  [0;37mwrite: 672/20160[0m
+  [0;37mwrite: 672/20832[0m
+  [0;37mwrite: 672/21504[0m
+  [0;37mwrite: 672/22176[0m
+  [0;37mwrite: 672/22848[0m
+  [0;37mwrite: 672/23520[0m
+  [0;37mwrite: 672/24192[0m
+  [0;37mwrite: 672/24864[0m
+  [0;37mwrite: 672/25536[0m
+  [0;37mwrite: 672/26208[0m
+  [0;37mwrite: 672/26880[0m
+  [0;37mwrite: 672/27552[0m
+  [0;37mwrite: 672/28224[0m
+  [0;37mwrite: 672/28896[0m
+  [0;37mwrite: 672/29568[0m
+  [0;37mwrite: 672/30240[0m
+  [0;37mwrite: 672/30912[0m
+  [0;37mwrite: 672/31584[0m
+  [0;37mwrite: 672/32256[0m
+  [0;37mwrite: 512/32768[0m
+  [0;37mread: 672/672[0m
+  [0;37mread: 672/1344[0m
+  [0;37mread: 672/2016[0m
+  [0;37mread: 672/2688[0m
+  [0;37mread: 672/3360[0m
+  [0;37mread: 672/4032[0m
+  [0;37mread: 672/4704[0m
+  [0;37mread: 672/5376[0m
+  [0;37mread: 672/6048[0m
+  [0;37mread: 672/6720[0m
+  [0;37mread: 672/7392[0m
+  [0;37mread: 672/8064[0m
+  [0;37mread: 672/8736[0m
+  [0;37mread: 672/9408[0m
+  [0;37mread: 672/10080[0m
+  [0;37mread: 672/10752[0m
+  [0;37mread: 672/11424[0m
+  [0;37mread: 672/12096[0m
+  [0;37mread: 672/12768[0m
+  [0;37mread: 672/13440[0m
+  [0;37mread: 672/14112[0m
+  [0;37mread: 672/14784[0m
+  [0;37mread: 672/15456[0m
+  [0;37mread: 672/16128[0m
+  [0;37mread: 672/16800[0m
+  [0;37mread: 672/17472[0m
+  [0;37mread: 672/18144[0m
+  [0;37mread: 672/18816[0m
+  [0;37mread: 672/19488[0m
+  [0;37mread: 672/20160[0m
+  [0;37mread: 672/20832[0m
+  [0;37mread: 672/21504[0m
+  [0;37mread: 672/22176[0m
+  [0;37mread: 672/22848[0m
+  [0;37mread: 672/23520[0m
+  [0;37mread: 672/24192[0m
+  [0;37mread: 672/24864[0m
+  [0;37mread: 672/25536[0m
+  [0;37mread: 672/26208[0m
+  [0;37mread: 672/26880[0m
+  [0;37mread: 672/27552[0m
+  [0;37mread: 672/28224[0m
+  [0;37mread: 672/28896[0m
+  [0;37mread: 672/29568[0m
+  [0;37mread: 672/30240[0m
+  [0;37mread: 672/30912[0m
+  [0;37mread: 672/31584[0m
+  [0;37mread: 672/32256[0m
+  [0;37mread: 512/32768[0m
+[1;39mL2CAP BR/EDR Client - Write 32k Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Write 32k Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Write 32k Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Write 32k Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - TX Timestamping[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - TX Timestamping[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - TX Timestamping[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - TX Timestamping[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mEnabling TX timestamping[0m
+  [0;37mwrite: 8/8[0m
+  [0;37mwrite: 8/8[0m
+  [0;37mwrite: 8/8[0m
+  [0;37mGot valid TX timestamp 0 (type 0, id 0)[0m
+  [0;37mread: 8/8[0m
+  [0;37mGot valid TX timestamp 1 (type 3, id 0)[0m
+  [0;37mread: 8/8[0m
+  [0;37mGot valid TX timestamp 2 (type 0, id 1)[0m
+  [0;37mread: 8/8[0m
+  [0;37mGot valid TX timestamp 3 (type 3, id 1)[0m
+  [0;37mGot valid TX timestamp 4 (type 0, id 2)[0m
+  [0;37mGot valid TX timestamp 5 (type 3, id 2)[0m
+[1;39mL2CAP BR/EDR Client - TX Timestamping[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - TX Timestamping[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - TX Timestamping[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - TX Timestamping[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Stream TX Timestamping[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Stream TX Timestamping[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Stream TX Timestamping[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Stream TX Timestamping[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mEnabling TX timestamping[0m
+  [0;37mwrite: 8/8[0m
+  [0;37mwrite: 8/8[0m
+  [0;37mwrite: 8/8[0m
+  [0;37mGot valid TX timestamp 0 (type 0, id 7)[0m
+  [0;37mread: 8/8[0m
+  [0;37mGot valid TX timestamp 1 (type 3, id 7)[0m
+  [0;37mread: 8/8[0m
+  [0;37mGot valid TX timestamp 2 (type 0, id 15)[0m
+  [0;37mread: 8/8[0m
+  [0;37mGot valid TX timestamp 3 (type 3, id 15)[0m
+  [0;37mGot valid TX timestamp 4 (type 0, id 23)[0m
+  [0;37mGot valid TX timestamp 5 (type 3, id 23)[0m
+[1;39mL2CAP BR/EDR Client - Stream TX Timestamping[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Stream TX Timestamping[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Stream TX Timestamping[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Stream TX Timestamping[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Invalid PSM 1[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 1[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 1[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 1[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mConnect failed: Connection refused (111)[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 1[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 1[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 1[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Invalid PSM 2[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 2[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 2[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 2[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mConnect failed: Connection refused (111)[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 2[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 2[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 2[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Invalid PSM 3[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 3[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+  [0;37mClient enable SSP status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 3[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 3[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mConnect failed: Connection refused (111)[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 3[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 3[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 3[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Invalid PSM 3[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Socket Shut WR Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Socket Shut WR Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Socket Shut WR Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Socket Shut WR Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP BR/EDR Client - Socket Shut WR Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Socket Shut WR Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Socket Shut WR Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Socket Shut WR Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Socket Shut WR Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - PHY[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - PHY[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - PHY[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - PHY[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP BR/EDR Client - PHY[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - PHY[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - PHY[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - PHY[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Set PHY 1M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Set PHY 1M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 1M[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 1M[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 1M[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 1M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 1M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 1M[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Set PHY 2M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Set PHY 2M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 2M[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 2M[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 2M[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 2M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 2M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 2M[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Client - Set PHY 3M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Client - Set PHY 3M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 3M[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 3M[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 3M[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 3M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 3M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Client - Set PHY 3M[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x03[0m
+[1;39mL2CAP BR/EDR Server - Success[0m - [0;32mtest passed[0m
+  [0;37mAccept sk = 14[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP BR/EDR Server - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mL2CAP BR/EDR Server - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Read Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0001[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:02[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Read Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Read Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Read Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x03[0m
+  [0;37mAccept sk = 15[0m
+  [0;37mread: 8/8[0m
+[1;39mL2CAP BR/EDR Server - Read Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Read Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0001[0m
+[1;39mL2CAP BR/EDR Server - Read Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Read Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Read 32k Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0002[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:03[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Read 32k Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Read 32k Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Read 32k Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x03[0m
+  [0;37mAccept sk = 16[0m
+  [0;37mread: 672/672[0m
+  [0;37mread: 672/1344[0m
+  [0;37mread: 672/2016[0m
+  [0;37mread: 672/2688[0m
+  [0;37mread: 672/3360[0m
+  [0;37mread: 672/4032[0m
+  [0;37mread: 672/4704[0m
+  [0;37mread: 672/5376[0m
+  [0;37mread: 672/6048[0m
+  [0;37mread: 672/6720[0m
+  [0;37mread: 672/7392[0m
+  [0;37mread: 672/8064[0m
+  [0;37mread: 672/8736[0m
+  [0;37mread: 672/9408[0m
+  [0;37mread: 672/10080[0m
+  [0;37mread: 672/10752[0m
+  [0;37mread: 672/11424[0m
+  [0;37mread: 672/12096[0m
+  [0;37mread: 672/12768[0m
+  [0;37mread: 672/13440[0m
+  [0;37mread: 672/14112[0m
+  [0;37mread: 672/14784[0m
+  [0;37mread: 672/15456[0m
+  [0;37mread: 672/16128[0m
+  [0;37mread: 672/16800[0m
+  [0;37mread: 672/17472[0m
+  [0;37mread: 672/18144[0m
+  [0;37mread: 672/18816[0m
+  [0;37mread: 672/19488[0m
+  [0;37mread: 672/20160[0m
+  [0;37mread: 672/20832[0m
+  [0;37mread: 672/21504[0m
+  [0;37mread: 672/22176[0m
+  [0;37mread: 672/22848[0m
+  [0;37mread: 672/23520[0m
+  [0;37mread: 672/24192[0m
+  [0;37mread: 672/24864[0m
+  [0;37mread: 672/25536[0m
+  [0;37mread: 672/26208[0m
+  [0;37mread: 672/26880[0m
+  [0;37mread: 672/27552[0m
+  [0;37mread: 672/28224[0m
+  [0;37mread: 672/28896[0m
+  [0;37mread: 672/29568[0m
+  [0;37mread: 672/30240[0m
+  [0;37mread: 672/30912[0m
+  [0;37mread: 672/31584[0m
+  [0;37mread: 672/32256[0m
+  [0;37mread: 512/32768[0m
+[1;39mL2CAP BR/EDR Server - Read 32k Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Read 32k Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0002[0m
+[1;39mL2CAP BR/EDR Server - Read 32k Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Read 32k Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Write Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0003[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:04[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Write Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Write Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Write Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x03[0m
+  [0;37mAccept sk = 17[0m
+  [0;37mwrite: 8/8[0m
+  [0;37mread: 8/8[0m
+[1;39mL2CAP BR/EDR Server - Write Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Write Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0003[0m
+[1;39mL2CAP BR/EDR Server - Write Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Write Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Write 32k Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0004[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:05[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Write 32k Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Write 32k Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Write 32k Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x03[0m
+  [0;37mAccept sk = 18[0m
+  [0;37mwrite: 672/672[0m
+  [0;37mwrite: 672/1344[0m
+  [0;37mwrite: 672/2016[0m
+  [0;37mwrite: 672/2688[0m
+  [0;37mwrite: 672/3360[0m
+  [0;37mwrite: 672/4032[0m
+  [0;37mwrite: 672/4704[0m
+  [0;37mwrite: 672/5376[0m
+  [0;37mwrite: 672/6048[0m
+  [0;37mwrite: 672/6720[0m
+  [0;37mwrite: 672/7392[0m
+  [0;37mwrite: 672/8064[0m
+  [0;37mwrite: 672/8736[0m
+  [0;37mwrite: 672/9408[0m
+  [0;37mwrite: 672/10080[0m
+  [0;37mwrite: 672/10752[0m
+  [0;37mwrite: 672/11424[0m
+  [0;37mwrite: 672/12096[0m
+  [0;37mwrite: 672/12768[0m
+  [0;37mwrite: 672/13440[0m
+  [0;37mwrite: 672/14112[0m
+  [0;37mwrite: 672/14784[0m
+  [0;37mwrite: 672/15456[0m
+  [0;37mwrite: 672/16128[0m
+  [0;37mwrite: 672/16800[0m
+  [0;37mwrite: 672/17472[0m
+  [0;37mwrite: 672/18144[0m
+  [0;37mwrite: 672/18816[0m
+  [0;37mwrite: 672/19488[0m
+  [0;37mwrite: 672/20160[0m
+  [0;37mwrite: 672/20832[0m
+  [0;37mwrite: 672/21504[0m
+  [0;37mwrite: 672/22176[0m
+  [0;37mwrite: 672/22848[0m
+  [0;37mwrite: 672/23520[0m
+  [0;37mwrite: 672/24192[0m
+  [0;37mwrite: 672/24864[0m
+  [0;37mwrite: 672/25536[0m
+  [0;37mwrite: 672/26208[0m
+  [0;37mwrite: 672/26880[0m
+  [0;37mwrite: 672/27552[0m
+  [0;37mwrite: 672/28224[0m
+  [0;37mwrite: 672/28896[0m
+  [0;37mwrite: 672/29568[0m
+  [0;37mwrite: 672/30240[0m
+  [0;37mwrite: 672/30912[0m
+  [0;37mwrite: 672/31584[0m
+  [0;37mwrite: 672/32256[0m
+  [0;37mwrite: 512/32768[0m
+  [0;37mread: 672/672[0m
+  [0;37mread: 672/1344[0m
+  [0;37mread: 672/2016[0m
+  [0;37mread: 672/2688[0m
+  [0;37mread: 672/3360[0m
+  [0;37mread: 672/4032[0m
+  [0;37mread: 672/4704[0m
+  [0;37mread: 672/5376[0m
+  [0;37mread: 672/6048[0m
+  [0;37mread: 672/6720[0m
+  [0;37mread: 672/7392[0m
+  [0;37mread: 672/8064[0m
+  [0;37mread: 672/8736[0m
+  [0;37mread: 672/9408[0m
+  [0;37mread: 672/10080[0m
+  [0;37mread: 672/10752[0m
+  [0;37mread: 672/11424[0m
+  [0;37mread: 672/12096[0m
+  [0;37mread: 672/12768[0m
+  [0;37mread: 672/13440[0m
+  [0;37mread: 672/14112[0m
+  [0;37mread: 672/14784[0m
+  [0;37mread: 672/15456[0m
+  [0;37mread: 672/16128[0m
+  [0;37mread: 672/16800[0m
+  [0;37mread: 672/17472[0m
+  [0;37mread: 672/18144[0m
+  [0;37mread: 672/18816[0m
+  [0;37mread: 672/19488[0m
+  [0;37mread: 672/20160[0m
+  [0;37mread: 672/20832[0m
+  [0;37mread: 672/21504[0m
+  [0;37mread: 672/22176[0m
+  [0;37mread: 672/22848[0m
+  [0;37mread: 672/23520[0m
+  [0;37mread: 672/24192[0m
+  [0;37mread: 672/24864[0m
+  [0;37mread: 672/25536[0m
+  [0;37mread: 672/26208[0m
+  [0;37mread: 672/26880[0m
+  [0;37mread: 672/27552[0m
+  [0;37mread: 672/28224[0m
+  [0;37mread: 672/28896[0m
+  [0;37mread: 672/29568[0m
+  [0;37mread: 672/30240[0m
+  [0;37mread: 672/30912[0m
+  [0;37mread: 672/31584[0m
+  [0;37mread: 672/32256[0m
+  [0;37mread: 512/32768[0m
+[1;39mL2CAP BR/EDR Server - Write 32k Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Write 32k Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0004[0m
+[1;39mL2CAP BR/EDR Server - Write 32k Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Write 32k Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Security Block[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0005[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:06[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Security Block[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mServer enable SSP status 0x00[0m
+[1;39mL2CAP BR/EDR Server - Security Block[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Security Block[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x03[0m
+[1;39mL2CAP BR/EDR Server - Security Block[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Security Block[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0005[0m
+[1;39mL2CAP BR/EDR Server - Security Block[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Security Block[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Invalid PSM[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0005[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:06[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Invalid PSM[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Invalid PSM[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Invalid PSM[0m - [0;30mrun[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x03[0m
+[1;39mL2CAP BR/EDR Server - Invalid PSM[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Invalid PSM[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0005[0m
+[1;39mL2CAP BR/EDR Server - Invalid PSM[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Invalid PSM[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Invalid PDU[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0005[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:06[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Invalid PDU[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Invalid PDU[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Invalid PDU[0m - [0;30mrun[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+Bluetooth: Wrong link type (-71)
+  [0;37mClient received response code 0x01[0m
+[1;39mL2CAP BR/EDR Server - Invalid PDU[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Invalid PDU[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0005[0m
+[1;39mL2CAP BR/EDR Server - Invalid PDU[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Invalid PDU[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Invalid Disconnect CID[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0005[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:06[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Invalid Disconnect CID[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Invalid Disconnect CID[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Invalid Disconnect CID[0m - [0;30mrun[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x01[0m
+[1;39mL2CAP BR/EDR Server - Invalid Disconnect CID[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Invalid Disconnect CID[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0005[0m
+[1;39mL2CAP BR/EDR Server - Invalid Disconnect CID[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Invalid Disconnect CID[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Invalid Config CID[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0005[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:06[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Invalid Config CID[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Invalid Config CID[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Invalid Config CID[0m - [0;30mrun[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x01[0m
+[1;39mL2CAP BR/EDR Server - Invalid Config CID[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Invalid Config CID[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0005[0m
+[1;39mL2CAP BR/EDR Server - Invalid Config CID[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Invalid Config CID[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - PHY[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0005[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:06[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - PHY[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - PHY[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - PHY[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x03[0m
+[1;39mL2CAP BR/EDR Server - PHY[0m - [0;32mtest passed[0m
+  [0;37mAccept sk = 19[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP BR/EDR Server - PHY[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - PHY[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0005[0m
+[1;39mL2CAP BR/EDR Server - PHY[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - PHY[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Set PHY 1M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0006[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:07[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Set PHY 1M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 1M[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 1M[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x03[0m
+  [0;37mAccept sk = 20[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 1M[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 1M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0006[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 1M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 1M[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Set PHY 2M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0007[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:08[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Set PHY 2M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 2M[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 2M[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x03[0m
+  [0;37mAccept sk = 21[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 2M[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 2M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0007[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 2M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 2M[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Server - Set PHY 3M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0008[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:09[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Server - Set PHY 3M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 3M[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 3M[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x03[0m
+  [0;37mAccept sk = 22[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 3M[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 3M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0008[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 3M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Server - Set PHY 3M[0m - [0;30mdone[0m
+
+[1;39mL2CAP BR/EDR Ethtool Get Ts Info - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0009[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:10[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP BR/EDR Ethtool Get Ts Info - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP BR/EDR Ethtool Get Ts Info - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP BR/EDR Ethtool Get Ts Info - Success[0m - [0;30mrun[0m
+[1;39mL2CAP BR/EDR Ethtool Get Ts Info - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP BR/EDR Ethtool Get Ts Info - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0009[0m
+[1;39mL2CAP BR/EDR Ethtool Get Ts Info - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP BR/EDR Ethtool Get Ts Info - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0009[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:10[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP LE Client - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0009[0m
+[1;39mL2CAP LE Client - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - SCI Fast Mode[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0009[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:10[0m
+  [0;37m  Version: 0x0e[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x03fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - SCI Fast Mode[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - SCI Fast Mode[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - SCI Fast Mode[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP LE Client - SCI Fast Mode[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - SCI Fast Mode[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0009[0m
+[1;39mL2CAP LE Client - SCI Fast Mode[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - SCI Fast Mode[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - SCI Default Mode[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0009[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:10[0m
+  [0;37m  Version: 0x0e[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x03fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - SCI Default Mode[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - SCI Default Mode[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - SCI Default Mode[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP LE Client - SCI Default Mode[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - SCI Default Mode[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0009[0m
+[1;39mL2CAP LE Client - SCI Default Mode[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - SCI Default Mode[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - SCI Low Power Mode[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0009[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:10[0m
+  [0;37m  Version: 0x0e[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x03fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - SCI Low Power Mode[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - SCI Low Power Mode[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - SCI Low Power Mode[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP LE Client - SCI Low Power Mode[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - SCI Low Power Mode[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0009[0m
+[1;39mL2CAP LE Client - SCI Low Power Mode[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - SCI Low Power Mode[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - SCI Full Range Mode[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0009[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:10[0m
+  [0;37m  Version: 0x0e[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x03fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - SCI Full Range Mode[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - SCI Full Range Mode[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - SCI Full Range Mode[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP LE Client - SCI Full Range Mode[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - SCI Full Range Mode[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0009[0m
+[1;39mL2CAP LE Client - SCI Full Range Mode[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - SCI Full Range Mode[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Server - SCI Fast Mode[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0009[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:10[0m
+  [0;37m  Version: 0x0e[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x03fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Server - SCI Fast Mode[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Server - SCI Fast Mode[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Server - SCI Fast Mode[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mAccept sk = 23[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP LE Server - SCI Fast Mode[0m - [0;32mtest passed[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending LE Connection Rate Request from client[0m
+[1;39mL2CAP LE Server - SCI Fast Mode[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0009[0m
+[1;39mL2CAP LE Server - SCI Fast Mode[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Server - SCI Fast Mode[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Server - SCI Default Mode[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000a[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:11[0m
+  [0;37m  Version: 0x0e[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x03fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Server - SCI Default Mode[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Server - SCI Default Mode[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Server - SCI Default Mode[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mAccept sk = 24[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP LE Server - SCI Default Mode[0m - [0;32mtest passed[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending LE Connection Rate Request from client[0m
+[1;39mL2CAP LE Server - SCI Default Mode[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000a[0m
+[1;39mL2CAP LE Server - SCI Default Mode[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Server - SCI Default Mode[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Server - SCI Low Power Mode[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000b[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:12[0m
+  [0;37m  Version: 0x0e[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x03fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Server - SCI Low Power Mode[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Server - SCI Low Power Mode[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Server - SCI Low Power Mode[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mAccept sk = 25[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP LE Server - SCI Low Power Mode[0m - [0;32mtest passed[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending LE Connection Rate Request from client[0m
+[1;39mL2CAP LE Server - SCI Low Power Mode[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000b[0m
+[1;39mL2CAP LE Server - SCI Low Power Mode[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Server - SCI Low Power Mode[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Server - SCI Full Range Mode[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000c[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:13[0m
+  [0;37m  Version: 0x0e[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x03fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Server - SCI Full Range Mode[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Server - SCI Full Range Mode[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Server - SCI Full Range Mode[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mAccept sk = 26[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP LE Server - SCI Full Range Mode[0m - [0;32mtest passed[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending LE Connection Rate Request from client[0m
+[1;39mL2CAP LE Server - SCI Full Range Mode[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000c[0m
+[1;39mL2CAP LE Server - SCI Full Range Mode[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Server - SCI Full Range Mode[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Close[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Close[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Close[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Close[0m - [0;30mrun[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP LE Client - Close[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Close[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Close[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Close[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Timeout[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Timeout[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Client - Timeout[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Timeout[0m - [0;30mrun[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP LE Client - Timeout[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Timeout[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Timeout[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Timeout[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Read Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Read Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Read Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Read Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mread: 8/8[0m
+[1;39mL2CAP LE Client - Read Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Read Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Read Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Read Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Read 32k Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Read 32k Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Read 32k Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Read 32k Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mread: 670/670[0m
+  [0;37mread: 670/1340[0m
+  [0;37mread: 670/2010[0m
+  [0;37mread: 670/2680[0m
+  [0;37mread: 670/3350[0m
+  [0;37mread: 670/4020[0m
+  [0;37mread: 670/4690[0m
+  [0;37mread: 670/5360[0m
+  [0;37mread: 670/6030[0m
+  [0;37mread: 670/6700[0m
+  [0;37mread: 670/7370[0m
+  [0;37mread: 670/8040[0m
+  [0;37mread: 670/8710[0m
+  [0;37mread: 670/9380[0m
+  [0;37mread: 670/10050[0m
+  [0;37mread: 670/10720[0m
+  [0;37mread: 670/11390[0m
+  [0;37mread: 670/12060[0m
+  [0;37mread: 670/12730[0m
+  [0;37mread: 670/13400[0m
+  [0;37mread: 670/14070[0m
+  [0;37mread: 670/14740[0m
+  [0;37mread: 670/15410[0m
+  [0;37mread: 670/16080[0m
+  [0;37mread: 670/16750[0m
+  [0;37mread: 670/17420[0m
+  [0;37mread: 670/18090[0m
+  [0;37mread: 670/18760[0m
+  [0;37mread: 670/19430[0m
+  [0;37mread: 670/20100[0m
+  [0;37mread: 670/20770[0m
+  [0;37mread: 670/21440[0m
+  [0;37mread: 670/22110[0m
+  [0;37mread: 670/22780[0m
+  [0;37mread: 670/23450[0m
+  [0;37mread: 670/24120[0m
+  [0;37mread: 670/24790[0m
+  [0;37mread: 670/25460[0m
+  [0;37mread: 670/26130[0m
+  [0;37mread: 670/26800[0m
+  [0;37mread: 670/27470[0m
+  [0;37mread: 670/28140[0m
+  [0;37mread: 670/28810[0m
+  [0;37mread: 670/29480[0m
+  [0;37mread: 670/30150[0m
+  [0;37mread: 670/30820[0m
+  [0;37mread: 670/31490[0m
+  [0;37mread: 670/32160[0m
+  [0;37mread: 608/32768[0m
+[1;39mL2CAP LE Client - Read 32k Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Read 32k Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Read 32k Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Read 32k Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - RX Timestamping[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - RX Timestamping[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - RX Timestamping[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - RX Timestamping[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 8/8[0m
+[1;39mL2CAP LE Client - RX Timestamping[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - RX Timestamping[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - RX Timestamping[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - RX Timestamping[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - RX Timestamping 32k[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - RX Timestamping 32k[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - RX Timestamping 32k[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - RX Timestamping 32k[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/670[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/1340[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/2010[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/2680[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/3350[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/4020[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/4690[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/5360[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/6030[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/6700[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/7370[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/8040[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/8710[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/9380[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/10050[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/10720[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/11390[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/12060[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/12730[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/13400[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/14070[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/14740[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/15410[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/16080[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/16750[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/17420[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/18090[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/18760[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/19430[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/20100[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/20770[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/21440[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/22110[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/22780[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/23450[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/24120[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/24790[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/25460[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/26130[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/26800[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/27470[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/28140[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/28810[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/29480[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/30150[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/30820[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/31490[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 670/32160[0m
+  [0;37mGot valid RX software timestamp[0m
+  [0;37mread: 608/32768[0m
+[1;39mL2CAP LE Client - RX Timestamping 32k[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - RX Timestamping 32k[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - RX Timestamping 32k[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - RX Timestamping 32k[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Write Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Write Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Write Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Write Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mwrite: 8/8[0m
+  [0;37mread: 8/8[0m
+[1;39mL2CAP LE Client - Write Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Write Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Write Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Write Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Write 32k Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Write 32k Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Write 32k Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Write 32k Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mwrite: 670/670[0m
+  [0;37mwrite: 670/1340[0m
+  [0;37mwrite: 670/2010[0m
+  [0;37mwrite: 670/2680[0m
+  [0;37mwrite: 670/3350[0m
+  [0;37mwrite: 670/4020[0m
+  [0;37mwrite: 670/4690[0m
+  [0;37mwrite: 670/5360[0m
+  [0;37mwrite: 670/6030[0m
+  [0;37mwrite: 670/6700[0m
+  [0;37mwrite: 670/7370[0m
+  [0;37mwrite: 670/8040[0m
+  [0;37mwrite: 670/8710[0m
+  [0;37mwrite: 670/9380[0m
+  [0;37mwrite: 670/10050[0m
+  [0;37mwrite: 670/10720[0m
+  [0;37mwrite: 670/11390[0m
+  [0;37mwrite: 670/12060[0m
+  [0;37mwrite: 670/12730[0m
+  [0;37mwrite: 670/13400[0m
+  [0;37mwrite: 670/14070[0m
+  [0;37mwrite: 670/14740[0m
+  [0;37mwrite: 670/15410[0m
+  [0;37mwrite: 670/16080[0m
+  [0;37mwrite: 670/16750[0m
+  [0;37mwrite: 670/17420[0m
+  [0;37mwrite: 670/18090[0m
+  [0;37mwrite: 670/18760[0m
+  [0;37mwrite: 670/19430[0m
+  [0;37mwrite: 670/20100[0m
+  [0;37mwrite: 670/20770[0m
+  [0;37mwrite: 670/21440[0m
+  [0;37mwrite: 670/22110[0m
+  [0;37mwrite: 670/22780[0m
+  [0;37mwrite: 670/23450[0m
+  [0;37mwrite: 670/24120[0m
+  [0;37mwrite: 670/24790[0m
+  [0;37mwrite: 670/25460[0m
+  [0;37mwrite: 670/26130[0m
+  [0;37mwrite: 670/26800[0m
+  [0;37mwrite: 670/27470[0m
+  [0;37mwrite: 670/28140[0m
+  [0;37mwrite: 670/28810[0m
+  [0;37mwrite: 670/29480[0m
+  [0;37mwrite: 670/30150[0m
+  [0;37mwrite: 670/30820[0m
+  [0;37mwrite: 670/31490[0m
+  [0;37mwrite: 670/32160[0m
+  [0;37mwrite: 608/32768[0m
+  [0;37mread: 670/670[0m
+  [0;37mread: 670/1340[0m
+  [0;37mread: 670/2010[0m
+  [0;37mread: 670/2680[0m
+  [0;37mread: 670/3350[0m
+  [0;37mread: 670/4020[0m
+  [0;37mread: 670/4690[0m
+  [0;37mread: 670/5360[0m
+  [0;37mread: 670/6030[0m
+  [0;37mread: 670/6700[0m
+  [0;37mread: 670/7370[0m
+  [0;37mread: 670/8040[0m
+  [0;37mread: 670/8710[0m
+  [0;37mread: 670/9380[0m
+  [0;37mread: 670/10050[0m
+  [0;37mread: 670/10720[0m
+  [0;37mread: 670/11390[0m
+  [0;37mread: 670/12060[0m
+  [0;37mread: 670/12730[0m
+  [0;37mread: 670/13400[0m
+  [0;37mread: 670/14070[0m
+  [0;37mread: 670/14740[0m
+  [0;37mread: 670/15410[0m
+  [0;37mread: 670/16080[0m
+  [0;37mread: 670/16750[0m
+  [0;37mread: 670/17420[0m
+  [0;37mread: 670/18090[0m
+  [0;37mread: 670/18760[0m
+  [0;37mread: 670/19430[0m
+  [0;37mread: 670/20100[0m
+  [0;37mread: 670/20770[0m
+  [0;37mread: 670/21440[0m
+  [0;37mread: 670/22110[0m
+  [0;37mread: 670/22780[0m
+  [0;37mread: 670/23450[0m
+  [0;37mread: 670/24120[0m
+  [0;37mread: 670/24790[0m
+  [0;37mread: 670/25460[0m
+  [0;37mread: 670/26130[0m
+  [0;37mread: 670/26800[0m
+  [0;37mread: 670/27470[0m
+  [0;37mread: 670/28140[0m
+  [0;37mread: 670/28810[0m
+  [0;37mread: 670/29480[0m
+  [0;37mread: 670/30150[0m
+  [0;37mread: 670/30820[0m
+  [0;37mread: 670/31490[0m
+  [0;37mread: 670/32160[0m
+  [0;37mread: 608/32768[0m
+[1;39mL2CAP LE Client - Write 32k Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Write 32k Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Write 32k Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Write 32k Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - TX Timestamping[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - TX Timestamping[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - TX Timestamping[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - TX Timestamping[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mClient connect CID 0x0040 handle 0x0001[0m
+  [0;37mSuccessfully connected to CID 0x0040[0m
+  [0;37mEnabling TX timestamping[0m
+  [0;37mwrite: 8/8[0m
+  [0;37mGot valid TX timestamp 0 (type 0, id 0)[0m
+  [0;37mread: 8/8[0m
+  [0;37mGot valid TX timestamp 1 (type 3, id 0)[0m
+[1;39mL2CAP LE Client - TX Timestamping[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - TX Timestamping[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - TX Timestamping[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - TX Timestamping[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client, Direct Advertising - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client, Direct Advertising - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client, Direct Advertising - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client, Direct Advertising - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mReceived advertising parameters HCI command[0m
+[1;39mL2CAP LE Client, Direct Advertising - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client, Direct Advertising - Success[0m - [0;35mteardown[0m
+Bluetooth: hci13: Opcode 0x200a failed: -19
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client, Direct Advertising - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client, Direct Advertising - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client SMP - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client SMP - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client SMP - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client SMP - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+Bluetooth: hci13: security requested but not available
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP LE Client SMP - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client SMP - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client SMP - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client SMP - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client Change Sec - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client Change Sec - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client Change Sec - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client Change Sec - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChanging security level to 2[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP LE Client Change Sec - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client Change Sec - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client Change Sec - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client Change Sec - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Command Reject[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Command Reject[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Command Reject[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Command Reject[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mNew connection with handle 0x0001[0m
+  [0;37mConnect failed: Connection refused (111)[0m
+[1;39mL2CAP LE Client - Command Reject[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Command Reject[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Command Reject[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Command Reject[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Connection Reject[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Connection Reject[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Connection Reject[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Connection Reject[0m - [0;30mrun[0m
+  [0;37mCan't connect socket: No route to host (113)[0m
+[1;39mL2CAP LE Client - Connection Reject[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Connection Reject[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Connection Reject[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Connection Reject[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - PHY[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - PHY[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - PHY[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - PHY[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP LE Client - PHY[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - PHY[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - PHY[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - PHY[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - PHY 2M/Coded[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - PHY 2M/Coded[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - PHY 2M/Coded[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - PHY 2M/Coded[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP LE Client - PHY 2M/Coded[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - PHY 2M/Coded[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - PHY 2M/Coded[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - PHY 2M/Coded[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Set PHY 1M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Set PHY 1M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Set PHY 1M[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Set PHY 1M[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP LE Client - Set PHY 1M[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Set PHY 1M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Set PHY 1M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Set PHY 1M[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Set PHY 2M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Set PHY 2M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Set PHY 2M[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Set PHY 2M[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP LE Client - Set PHY 2M[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Set PHY 2M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Set PHY 2M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Set PHY 2M[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Set PHY Coded[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Set PHY Coded[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Set PHY Coded[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Set PHY Coded[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP LE Client - Set PHY Coded[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Set PHY Coded[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Set PHY Coded[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Set PHY Coded[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Close socket 1[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Close socket 1[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Close socket 1[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Close socket 1[0m - [0;30mrun[0m
+  [0;37mConnect in progress, sk = 13 [0m
+  [0;37mWill close socket during scan phase...[0m
+  [0;37mChecking whether scan was properly stopped...[0m
+[1;39mL2CAP LE Client - Close socket 1[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Close socket 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Close socket 1[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Close socket 1[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Close socket 2[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Close socket 2[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Client - Close socket 2[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Close socket 2[0m - [0;30mrun[0m
+  [0;37mConnect in progress, sk = 13 [0m
+  [0;37mClient set connectable status 0x00[0m
+  [0;37mClient set connectable status 0x00[0m
+Bluetooth: hci13: Opcode 0x200e failed: -16
+[1;39mL2CAP LE Client - Close socket 2[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Close socket 2[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Close socket 2[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Close socket 2[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Open two sockets[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Open two sockets[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Client - Open two sockets[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Open two sockets[0m - [0;30mrun[0m
+  [0;37mConnect in progress, sk = 13 [0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x200b length 7[0m
+  [0;37mHCI Command 0x200c length 2[0m
+  [0;37mConnect in progress, sk = 27 [0m
+  [0;37mHCI Command 0x200c length 2[0m
+  [0;37mClient set connectable status 0x00[0m
+  [0;37mHCI Command 0x200d length 25[0m
+  [0;37mHCI Command 0x2016 length 2[0m
+  [0;37mSuccessfully connected[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP LE Client - Open two sockets[0m - [0;32mtest passed[0m
+
+(l2cap-tester:36): GLib-[1;33mWARNING[0m **: [34m12:15:02.224[0m: Invalid file descriptor.
+[1;39mL2CAP LE Client - Open two sockets[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Open two sockets[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Open two sockets[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Open two sockets close one[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Open two sockets close one[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Client - Open two sockets close one[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Open two sockets close one[0m - [0;30mrun[0m
+  [0;37mConnect in progress, sk = 13 [0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x200b length 7[0m
+  [0;37mHCI Command 0x200c length 2[0m
+  [0;37mConnect in progress, sk = 27 [0m
+  [0;37mClosing first socket! 13[0m
+  [0;37mHCI Command 0x200c length 2[0m
+  [0;37mClient set connectable status 0x00[0m
+  [0;37mHCI Command 0x200d length 25[0m
+  [0;37mHCI Command 0x2016 length 2[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP LE Client - Open two sockets close one[0m - [0;32mtest passed[0m
+
+(l2cap-tester:36): GLib-[1;33mWARNING[0m **: [34m12:15:02.567[0m: Invalid file descriptor.
+[1;39mL2CAP LE Client - Open two sockets close one[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Open two sockets close one[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Open two sockets close one[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Client - Invalid PSM[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Client - Invalid PSM[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE Client - Invalid PSM[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Client - Invalid PSM[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mConnect failed: Connection refused (111)[0m
+[1;39mL2CAP LE Client - Invalid PSM[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Client - Invalid PSM[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Client - Invalid PSM[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Client - Invalid PSM[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Server - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000d[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:14[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Server - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Server - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Server - Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 27[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP LE Server - Success[0m - [0;32mtest passed[0m
+  [0;37mClient received response code 0x15[0m
+[1;39mL2CAP LE Server - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Server - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000d[0m
+[1;39mL2CAP LE Server - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Server - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Server - Nval SCID[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000e[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:15[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Server - Nval SCID[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Server - Nval SCID[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Server - Nval SCID[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x15[0m
+[1;39mL2CAP LE Server - Nval SCID[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Server - Nval SCID[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000e[0m
+[1;39mL2CAP LE Server - Nval SCID[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Server - Nval SCID[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Server - PHY[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000e[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:15[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Server - PHY[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Server - PHY[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Server - PHY[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 28[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP LE Server - PHY[0m - [0;32mtest passed[0m
+  [0;37mClient received response code 0x15[0m
+[1;39mL2CAP LE Server - PHY[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Server - PHY[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000e[0m
+[1;39mL2CAP LE Server - PHY[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Server - PHY[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Server - PHY 2M/Coded[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x000f[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:16[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Server - PHY 2M/Coded[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Server - PHY 2M/Coded[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Server - PHY 2M/Coded[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 29[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP LE Server - PHY 2M/Coded[0m - [0;32mtest passed[0m
+  [0;37mClient received response code 0x15[0m
+[1;39mL2CAP LE Server - PHY 2M/Coded[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Server - PHY 2M/Coded[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x000f[0m
+[1;39mL2CAP LE Server - PHY 2M/Coded[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Server - PHY 2M/Coded[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Server - Set PHY 1M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0010[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:17[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Server - Set PHY 1M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Server - Set PHY 1M[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Server - Set PHY 1M[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 30[0m
+  [0;37mClient received response code 0x15[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP LE Server - Set PHY 1M[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Server - Set PHY 1M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0010[0m
+[1;39mL2CAP LE Server - Set PHY 1M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Server - Set PHY 1M[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Server - Set PHY 2M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0011[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:18[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Server - Set PHY 2M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Server - Set PHY 2M[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Server - Set PHY 2M[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 31[0m
+  [0;37mClient received response code 0x15[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP LE Server - Set PHY 2M[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Server - Set PHY 2M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0011[0m
+[1;39mL2CAP LE Server - Set PHY 2M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Server - Set PHY 2M[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Server - Set PHY Coded[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0012[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:19[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Server - Set PHY Coded[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Server - Set PHY Coded[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Server - Set PHY Coded[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 32[0m
+  [0;37mClient received response code 0x15[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP LE Server - Set PHY Coded[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Server - Set PHY Coded[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0012[0m
+[1;39mL2CAP LE Server - Set PHY Coded[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Server - Set PHY Coded[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP Ext-Flowctl Client - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP Ext-Flowctl Client - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Client - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - Close[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - Close[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP Ext-Flowctl Client - Close[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Close[0m - [0;30mrun[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP Ext-Flowctl Client - Close[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Client - Close[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - Close[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Close[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - Timeout[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - Timeout[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Client - Timeout[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Timeout[0m - [0;30mrun[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP Ext-Flowctl Client - Timeout[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Client - Timeout[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - Timeout[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Timeout[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client, Direct Advertising - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client, Direct Advertising - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP Ext-Flowctl Client, Direct Advertising - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client, Direct Advertising - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mReceived advertising parameters HCI command[0m
+[1;39mL2CAP Ext-Flowctl Client, Direct Advertising - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Client, Direct Advertising - Success[0m - [0;35mteardown[0m
+Bluetooth: hci19: Opcode 0x200a failed: -19
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client, Direct Advertising - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client, Direct Advertising - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client SMP - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client SMP - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP Ext-Flowctl Client SMP - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client SMP - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+Bluetooth: hci19: security requested but not available
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP Ext-Flowctl Client SMP - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Client SMP - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client SMP - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client SMP - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - Command Reject[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - Command Reject[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP Ext-Flowctl Client - Command Reject[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Command Reject[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mNew connection with handle 0x0001[0m
+  [0;37mConnect failed: Connection refused (111)[0m
+[1;39mL2CAP Ext-Flowctl Client - Command Reject[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Client - Command Reject[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - Command Reject[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Command Reject[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets[0m - [0;30mrun[0m
+  [0;37mConnect in progress, sk = 13 (deferred)[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x200b length 7[0m
+  [0;37mHCI Command 0x200c length 2[0m
+  [0;37mConnect in progress, sk = 33 [0m
+  [0;37mHCI Command 0x200c length 2[0m
+  [0;37mClient set connectable status 0x00[0m
+  [0;37mHCI Command 0x200d length 25[0m
+  [0;37mHCI Command 0x2016 length 2[0m
+  [0;37mSuccessfully connected[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets[0m - [0;32mtest passed[0m
+
+(l2cap-tester:36): GLib-[1;33mWARNING[0m **: [34m12:15:06.828[0m: Invalid file descriptor.
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets close one[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets close one[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets close one[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets close one[0m - [0;30mrun[0m
+  [0;37mConnect in progress, sk = 13 (deferred)[0m
+  [0;37mHCI Command 0x2011 length 7[0m
+  [0;37mHCI Command 0x200b length 7[0m
+  [0;37mHCI Command 0x200c length 2[0m
+  [0;37mConnect in progress, sk = 33 [0m
+  [0;37mClosing first socket! 13[0m
+  [0;37mHCI Command 0x200c length 2[0m
+  [0;37mClient set connectable status 0x00[0m
+  [0;37mHCI Command 0x200d length 25[0m
+  [0;37mHCI Command 0x2016 length 2[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets close one[0m - [0;32mtest passed[0m
+
+(l2cap-tester:36): GLib-[1;33mWARNING[0m **: [34m12:15:07.112[0m: Invalid file descriptor.
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets close one[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets close one[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Open two sockets close one[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - PHY[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - PHY[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - PHY 2M/Coded[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - PHY 2M/Coded[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY 2M/Coded[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY 2M/Coded[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY 2M/Coded[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY 2M/Coded[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY 2M/Coded[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - PHY 2M/Coded[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 1M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 1M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 1M[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 1M[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 1M[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 1M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 1M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 1M[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 2M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 2M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 2M[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 2M[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 2M[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 2M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 2M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY 2M[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - Set PHY Coded[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY Coded[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY Coded[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY Coded[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY Coded[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY Coded[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY Coded[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Set PHY Coded[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Client - Defer limit[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Client - Defer limit[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP Ext-Flowctl Client - Defer limit[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Defer limit[0m - [0;30mrun[0m
+  [0;37mConnect in progress, sk = 13 (deferred)[0m
+  [0;37mConnect in progress, sk = 33 (deferred)[0m
+  [0;37mConnect in progress, sk = 34 (deferred)[0m
+  [0;37mConnect in progress, sk = 35 (deferred)[0m
+  [0;37mConnect in progress, sk = 36 [0m
+  [0;37mCan't connect socket: Protocol error (71)[0m
+[1;39mL2CAP Ext-Flowctl Client - Defer limit[0m - [0;32mtest passed[0m
+  [0;37mReady sk = 13[0m
+  [0;37mReady sk = 33[0m
+  [0;37mReady sk = 34[0m
+  [0;37mReady sk = 35[0m
+  [0;37mReady sk = 36[0m
+[1;39mL2CAP Ext-Flowctl Client - Defer limit[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Client - Defer limit[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Client - Defer limit[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Server - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0013[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:20[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Server - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Server - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 33[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP Ext-Flowctl Server - Success[0m - [0;32mtest passed[0m
+  [0;37mClient received response code 0x18[0m
+[1;39mL2CAP Ext-Flowctl Server - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Server - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0013[0m
+[1;39mL2CAP Ext-Flowctl Server - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Server - Nval SCID[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0014[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:21[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Server - Nval SCID[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval SCID[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval SCID[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mClient received response code 0x18[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval SCID[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval SCID[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0014[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval SCID[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval SCID[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0014[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:21[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept deferred setup sk = 34[0m
+  [0;37mAccept deferred setup sk = 34[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0014[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Accept 2 Close 1[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Server - PHY[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0015[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:22[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Server - PHY[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 34[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY[0m - [0;32mtest passed[0m
+  [0;37mClient received response code 0x18[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0015[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Server - PHY 2M/Coded[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0016[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:23[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Server - PHY 2M/Coded[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY 2M/Coded[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY 2M/Coded[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 35[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY 2M/Coded[0m - [0;32mtest passed[0m
+  [0;37mClient received response code 0x18[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY 2M/Coded[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY 2M/Coded[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0016[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY 2M/Coded[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Server - PHY 2M/Coded[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 1M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0017[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:24[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 1M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 1M[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 1M[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 36[0m
+  [0;37mClient received response code 0x18[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 1M[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 1M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0017[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 1M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 1M[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 2M[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0018[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:25[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 2M[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 2M[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 2M[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 37[0m
+  [0;37mClient received response code 0x18[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 2M[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 2M[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0018[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 2M[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY 2M[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Server - Set PHY Coded[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0019[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:26[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY Coded[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY Coded[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY Coded[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 38[0m
+  [0;37mClient received response code 0x18[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY Coded[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY Coded[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0019[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY Coded[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Set PHY Coded[0m - [0;30mdone[0m
+
+[1;39mL2CAP Ext-Flowctl Server - Nval Conn Req[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x001a[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:27[0m
+  [0;37m  Version: 0x0b[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x01fdbeff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP Ext-Flowctl Server - Nval Conn Req[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval Conn Req[0m - [0;34msetup complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval Conn Req[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending 32 L2CAP_LE_CONN_REQ[0m
+  [0;37mAccept sk = 39[0m
+  [0;37mAccept sk = 40[0m
+  [0;37mAccept sk = 41[0m
+  [0;37mAccept sk = 42[0m
+  [0;37mAccept sk = 43[0m
+  [0;37mAccept sk = 44[0m
+  [0;37mAccept sk = 45[0m
+  [0;37mAccept sk = 46[0m
+  [0;37mAccept sk = 47[0m
+  [0;37mAccept sk = 48[0m
+  [0;37mAccept sk = 49[0m
+  [0;37mAccept sk = 50[0m
+  [0;37mAccept sk = 51[0m
+  [0;37mAccept sk = 52[0m
+  [0;37mAccept sk = 53[0m
+  [0;37mAccept sk = 54[0m
+  [0;37mAccept sk = 55[0m
+  [0;37mAccept sk = 56[0m
+  [0;37mAccept sk = 57[0m
+  [0;37mAccept sk = 58[0m
+  [0;37mAccept sk = 59[0m
+  [0;37mAccept sk = 60[0m
+  [0;37mAccept sk = 61[0m
+  [0;37mAccept sk = 62[0m
+  [0;37mAccept sk = 63[0m
+  [0;37mAccept sk = 64[0m
+  [0;37mAccept sk = 65[0m
+  [0;37mAccept sk = 66[0m
+  [0;37mAccept sk = 67[0m
+  [0;37mAccept sk = 68[0m
+  [0;37mAccept sk = 69[0m
+  [0;37mAccept sk = 70[0m
+  [0;37mAccepting 32 deferred[0m
+  [0;37mAccept deferred setup sk = 39[0m
+  [0;37mAccept deferred setup sk = 40[0m
+  [0;37mAccept deferred setup sk = 41[0m
+  [0;37mAccept deferred setup sk = 42[0m
+  [0;37mAccept deferred setup sk = 43[0m
+  [0;37mAccept deferred setup sk = 44[0m
+  [0;37mAccept deferred setup sk = 45[0m
+  [0;37mAccept deferred setup sk = 46[0m
+  [0;37mAccept deferred setup sk = 47[0m
+  [0;37mAccept deferred setup sk = 48[0m
+  [0;37mAccept deferred setup sk = 49[0m
+  [0;37mAccept deferred setup sk = 50[0m
+  [0;37mAccept deferred setup sk = 51[0m
+  [0;37mAccept deferred setup sk = 52[0m
+  [0;37mAccept deferred setup sk = 53[0m
+  [0;37mAccept deferred setup sk = 54[0m
+  [0;37mAccept deferred setup sk = 55[0m
+  [0;37mAccept deferred setup sk = 56[0m
+  [0;37mAccept deferred setup sk = 57[0m
+  [0;37mAccept deferred setup sk = 58[0m
+  [0;37mAccept deferred setup sk = 59[0m
+  [0;37mAccept deferred setup sk = 60[0m
+  [0;37mAccept deferred setup sk = 61[0m
+  [0;37mAccept deferred setup sk = 62[0m
+  [0;37mAccept deferred setup sk = 63[0m
+  [0;37mAccept deferred setup sk = 64[0m
+  [0;37mAccept deferred setup sk = 65[0m
+  [0;37mAccept deferred setup sk = 66[0m
+  [0;37mAccept deferred setup sk = 67[0m
+  [0;37mAccept deferred setup sk = 68[0m
+  [0;37mAccept deferred setup sk = 69[0m
+  [0;37mAccept deferred setup sk = 70[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval Conn Req[0m - [0;32mtest passed[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval Conn Req[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x001a[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval Conn Req[0m - [0;35mteardown complete[0m
+[1;39mL2CAP Ext-Flowctl Server - Nval Conn Req[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE ATT Client - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x001a[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:27[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE ATT Client - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE ATT Client - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE ATT Client - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP LE ATT Client - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE ATT Client - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x001a[0m
+[1;39mL2CAP LE ATT Client - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE ATT Client - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE ATT Client Change Sec  - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x001a[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:27[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE ATT Client Change Sec  - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE ATT Client Change Sec  - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE ATT Client Change Sec  - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChanging security level to 2[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP LE ATT Client Change Sec  - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE ATT Client Change Sec  - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x001a[0m
+[1;39mL2CAP LE ATT Client Change Sec  - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE ATT Client Change Sec  - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE ATT Server - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x001a[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:27[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE ATT Server - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE ATT Server - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE ATT Server - Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mAccept sk = 39[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP LE ATT Server - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE ATT Server - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x001a[0m
+[1;39mL2CAP LE ATT Server - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE ATT Server - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE EATT Client - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x001b[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:28[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE EATT Client - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE EATT Client - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE EATT Client - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+[1;39mL2CAP LE EATT Client - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE EATT Client - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x001b[0m
+[1;39mL2CAP LE EATT Client - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE EATT Client - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE EATT Client Change Sec - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x001b[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:28[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE EATT Client Change Sec - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mClient set connectable status 0x00[0m
+[1;39mL2CAP LE EATT Client Change Sec - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE EATT Client Change Sec - Success[0m - [0;30mrun[0m
+  [0;37mConnect in progress[0m
+  [0;37mSuccessfully connected to CID 0x0000[0m
+  [0;37mChanging security level to 2[0m
+  [0;37mChecking PHY...[0m
+  [0;37mChecking security level...[0m
+  [0;37mDisconnected[0m
+[1;39mL2CAP LE EATT Client Change Sec - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE EATT Client Change Sec - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x001b[0m
+[1;39mL2CAP LE EATT Client Change Sec - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE EATT Client Change Sec - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE EATT Server - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x001b[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:28[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE EATT Server - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE EATT Server - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE EATT Server - Success[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 40[0m
+  [0;37mAccept deferred setup sk = 40[0m
+  [0;37mSuccessfully connected[0m
+[1;39mL2CAP LE EATT Server - Success[0m - [0;32mtest passed[0m
+  [0;37mClient received response code 0x18[0m
+[1;39mL2CAP LE EATT Server - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE EATT Server - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x001b[0m
+[1;39mL2CAP LE EATT Server - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE EATT Server - Success[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE EATT Server - Reject[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x001b[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:28[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE EATT Server - Reject[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE EATT Server - Reject[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE EATT Server - Reject[0m - [0;30mrun[0m
+  [0;37mListening for connections[0m
+  [0;37mNew client connection with handle 0x0001[0m
+  [0;37mSending L2CAP Request from client[0m
+  [0;37mAccept sk = 40[0m
+  [0;37mClient received response code 0x18[0m
+[1;39mL2CAP LE EATT Server - Reject[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE EATT Server - Reject[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x001b[0m
+[1;39mL2CAP LE EATT Server - Reject[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE EATT Server - Reject[0m - [0;30mdone[0m
+
+[1;39mL2CAP LE Ethtool Get Ts Info - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x001c[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:29[0m
+  [0;37m  Version: 0x09[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x0001be1b[0m
+  [0;37m  Current settings: 0x00000200[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mL2CAP LE Ethtool Get Ts Info - Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mL2CAP LE Ethtool Get Ts Info - Success[0m - [0;34msetup complete[0m
+[1;39mL2CAP LE Ethtool Get Ts Info - Success[0m - [0;30mrun[0m
+[1;39mL2CAP LE Ethtool Get Ts Info - Success[0m - [0;32mtest passed[0m
+[1;39mL2CAP LE Ethtool Get Ts Info - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x001c[0m
+[1;39mL2CAP LE Ethtool Get Ts Info - Success[0m - [0;35mteardown complete[0m
+[1;39mL2CAP LE Ethtool Get Ts Info - Success[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+Basic L2CAP Socket - Success                         [0;32mPassed    [0m   0.766 seconds
+Non-connected getpeername - Failure                  [0;32mPassed    [0m   0.179 seconds
+L2CAP BR/EDR Client - Success                        [0;32mPassed    [0m   1.286 seconds
+L2CAP BR/EDR Client - Close                          [0;32mPassed    [0m   0.237 seconds
+L2CAP BR/EDR Client - Timeout                        [0;32mPassed    [0m   1.179 seconds
+L2CAP BR/EDR Client SSP - Success 1                  [0;32mPassed    [0m   0.266 seconds
+L2CAP BR/EDR Client SSP - Success 2                  [0;32mPassed    [0m   0.344 seconds
+L2CAP BR/EDR Client PIN Code - Success               [0;32mPassed    [0m   0.223 seconds
+L2CAP BR/EDR Client PIN Code Change Sec - Success    [0;32mPassed    [0m   0.277 seconds
+L2CAP BR/EDR Client - Read Success                   [0;32mPassed    [0m   0.229 seconds
+L2CAP BR/EDR Client - Read 32k Success               [0;32mPassed    [0m   0.735 seconds
+L2CAP BR/EDR Client - RX Timestamping                [0;32mPassed    [0m   0.181 seconds
+L2CAP BR/EDR Client - RX Timestamping 32k            [0;32mPassed    [0m   0.623 seconds
+L2CAP BR/EDR Client - Write Success                  [0;32mPassed    [0m   0.181 seconds
+L2CAP BR/EDR Client - Write 32k Success              [0;32mPassed    [0m   0.805 seconds
+L2CAP BR/EDR Client - TX Timestamping                [0;32mPassed    [0m   0.263 seconds
+L2CAP BR/EDR Client - Stream TX Timestamping         [0;32mPassed    [0m   0.221 seconds
+L2CAP BR/EDR Client - Invalid PSM 1                  [0;32mPassed    [0m   0.165 seconds
+L2CAP BR/EDR Client - Invalid PSM 2                  [0;32mPassed    [0m   0.213 seconds
+L2CAP BR/EDR Client - Invalid PSM 3                  [0;32mPassed    [0m   0.218 seconds
+L2CAP BR/EDR Client - Socket Shut WR Success         [0;32mPassed    [0m   0.263 seconds
+L2CAP BR/EDR Client - PHY                            [0;32mPassed    [0m   0.214 seconds
+L2CAP BR/EDR Client - Set PHY 1M                     [0;32mPassed    [0m   0.225 seconds
+L2CAP BR/EDR Client - Set PHY 2M                     [0;32mPassed    [0m   0.242 seconds
+L2CAP BR/EDR Client - Set PHY 3M                     [0;32mPassed    [0m   0.294 seconds
+L2CAP BR/EDR Server - Success                        [0;32mPassed    [0m   0.235 seconds
+L2CAP BR/EDR Server - Read Success                   [0;32mPassed    [0m   0.208 seconds
+L2CAP BR/EDR Server - Read 32k Success               [0;32mPassed    [0m   0.604 seconds
+L2CAP BR/EDR Server - Write Success                  [0;32mPassed    [0m   0.236 seconds
+L2CAP BR/EDR Server - Write 32k Success              [0;32mPassed    [0m   0.695 seconds
+L2CAP BR/EDR Server - Security Block                 [0;32mPassed    [0m   0.197 seconds
+L2CAP BR/EDR Server - Invalid PSM                    [0;32mPassed    [0m   0.190 seconds
+L2CAP BR/EDR Server - Invalid PDU                    [0;32mPassed    [0m   0.183 seconds
+L2CAP BR/EDR Server - Invalid Disconnect CID         [0;32mPassed    [0m   0.178 seconds
+L2CAP BR/EDR Server - Invalid Config CID             [0;32mPassed    [0m   0.172 seconds
+L2CAP BR/EDR Server - PHY                            [0;32mPassed    [0m   0.193 seconds
+L2CAP BR/EDR Server - Set PHY 1M                     [0;32mPassed    [0m   0.260 seconds
+L2CAP BR/EDR Server - Set PHY 2M                     [0;32mPassed    [0m   0.279 seconds
+L2CAP BR/EDR Server - Set PHY 3M                     [0;32mPassed    [0m   0.220 seconds
+L2CAP BR/EDR Ethtool Get Ts Info - Success           [0;32mPassed    [0m   0.150 seconds
+L2CAP LE Client - Success                            [0;32mPassed    [0m   0.251 seconds
+L2CAP LE Client - SCI Fast Mode                      [0;32mPassed    [0m   0.316 seconds
+L2CAP LE Client - SCI Default Mode                   [0;32mPassed    [0m   0.227 seconds
+L2CAP LE Client - SCI Low Power Mode                 [0;32mPassed    [0m   0.276 seconds
+L2CAP LE Client - SCI Full Range Mode                [0;32mPassed    [0m   0.254 seconds
+L2CAP LE Server - SCI Fast Mode                      [0;32mPassed    [0m   0.245 seconds
+L2CAP LE Server - SCI Default Mode                   [0;32mPassed    [0m   0.311 seconds
+L2CAP LE Server - SCI Low Power Mode                 [0;32mPassed    [0m   0.357 seconds
+L2CAP LE Server - SCI Full Range Mode                [0;32mPassed    [0m   0.272 seconds
+L2CAP LE Client - Close                              [0;32mPassed    [0m   0.263 seconds
+L2CAP LE Client - Timeout                            [0;32mPassed    [0m   1.382 seconds
+L2CAP LE Client - Read Success                       [0;32mPassed    [0m   0.174 seconds
+L2CAP LE Client - Read 32k Success                   [0;32mPassed    [0m   0.906 seconds
+L2CAP LE Client - RX Timestamping                    [0;32mPassed    [0m   0.276 seconds
+L2CAP LE Client - RX Timestamping 32k                [0;32mPassed    [0m   1.231 seconds
+L2CAP LE Client - Write Success                      [0;32mPassed    [0m   0.197 seconds
+L2CAP LE Client - Write 32k Success                  [0;32mPassed    [0m   0.934 seconds
+L2CAP LE Client - TX Timestamping                    [0;32mPassed    [0m   0.257 seconds
+L2CAP LE Client, Direct Advertising - Success        [0;32mPassed    [0m   0.158 seconds
+L2CAP LE Client SMP - Success                        [0;32mPassed    [0m   0.265 seconds
+L2CAP LE Client Change Sec - Success                 [0;32mPassed    [0m   0.238 seconds
+L2CAP LE Client - Command Reject                     [0;32mPassed    [0m   0.170 seconds
+L2CAP LE Client - Connection Reject                  [0;32mPassed    [0m   0.149 seconds
+L2CAP LE Client - PHY                                [0;32mPassed    [0m   0.149 seconds
+L2CAP LE Client - PHY 2M/Coded                       [0;32mPassed    [0m   0.270 seconds
+L2CAP LE Client - Set PHY 1M                         [0;32mPassed    [0m   0.354 seconds
+L2CAP LE Client - Set PHY 2M                         [0;32mPassed    [0m   0.306 seconds
+L2CAP LE Client - Set PHY Coded                      [0;32mPassed    [0m   0.260 seconds
+L2CAP LE Client - Close socket 1                     [0;32mPassed    [0m   0.115 seconds
+L2CAP LE Client - Close socket 2                     [0;32mPassed    [0m   0.173 seconds
+L2CAP LE Client - Open two sockets                   [0;32mPassed    [0m   0.570 seconds
+L2CAP LE Client - Open two sockets close one         [0;32mPassed    [0m   0.202 seconds
+L2CAP LE Client - Invalid PSM                        [0;32mPassed    [0m   0.172 seconds
+L2CAP LE Server - Success                            [0;32mPassed    [0m   0.172 seconds
+L2CAP LE Server - Nval SCID                          [0;32mPassed    [0m   0.165 seconds
+L2CAP LE Server - PHY                                [0;32mPassed    [0m   0.189 seconds
+L2CAP LE Server - PHY 2M/Coded                       [0;32mPassed    [0m   0.258 seconds
+L2CAP LE Server - Set PHY 1M                         [0;32mPassed    [0m   0.316 seconds
+L2CAP LE Server - Set PHY 2M                         [0;32mPassed    [0m   0.262 seconds
+L2CAP LE Server - Set PHY Coded                      [0;32mPassed    [0m   0.278 seconds
+L2CAP Ext-Flowctl Client - Success                   [0;32mPassed    [0m   0.170 seconds
+L2CAP Ext-Flowctl Client - Close                     [0;32mPassed    [0m   0.160 seconds
+L2CAP Ext-Flowctl Client - Timeout                   [0;32mPassed    [0m   1.160 seconds
+L2CAP Ext-Flowctl Client, Direct Advertising - Success [0;32mPassed    [0m   0.163 seconds
+L2CAP Ext-Flowctl Client SMP - Success               [0;32mPassed    [0m   0.263 seconds
+L2CAP Ext-Flowctl Client - Command Reject            [0;32mPassed    [0m   0.210 seconds
+L2CAP Ext-Flowctl Client - Open two sockets          [0;32mPassed    [0m   0.277 seconds
+L2CAP Ext-Flowctl Client - Open two sockets close one [0;32mPassed    [0m   0.272 seconds
+L2CAP Ext-Flowctl Client - PHY                       [0;32mPassed    [0m   0.234 seconds
+L2CAP Ext-Flowctl Client - PHY 2M/Coded              [0;32mPassed    [0m   0.213 seconds
+L2CAP Ext-Flowctl Client - Set PHY 1M                [0;32mPassed    [0m   0.273 seconds
+L2CAP Ext-Flowctl Client - Set PHY 2M                [0;32mPassed    [0m   0.297 seconds
+L2CAP Ext-Flowctl Client - Set PHY Coded             [0;32mPassed    [0m   0.281 seconds
+L2CAP Ext-Flowctl Client - Defer limit               [0;32mPassed    [0m   0.147 seconds
+L2CAP Ext-Flowctl Server - Success                   [0;32mPassed    [0m   0.170 seconds
+L2CAP Ext-Flowctl Server - Nval SCID                 [0;32mPassed    [0m   0.193 seconds
+L2CAP Ext-Flowctl Server - Accept 2 Close 1          [0;32mPassed    [0m   0.166 seconds
+L2CAP Ext-Flowctl Server - PHY                       [0;32mPassed    [0m   0.179 seconds
+L2CAP Ext-Flowctl Server - PHY 2M/Coded              [0;32mPassed    [0m   0.287 seconds
+L2CAP Ext-Flowctl Server - Set PHY 1M                [0;32mPassed    [0m   0.261 seconds
+L2CAP Ext-Flowctl Server - Set PHY 2M                [0;32mPassed    [0m   0.253 seconds
+L2CAP Ext-Flowctl Server - Set PHY Coded             [0;32mPassed    [0m   0.296 seconds
+L2CAP Ext-Flowctl Server - Nval Conn Req             [0;32mPassed    [0m   0.771 seconds
+L2CAP LE ATT Client - Success                        [0;32mPassed    [0m   0.158 seconds
+L2CAP LE ATT Client Change Sec  - Success            [0;32mPassed    [0m   0.227 seconds
+L2CAP LE ATT Server - Success                        [0;32mPassed    [0m   0.196 seconds
+L2CAP LE EATT Client - Success                       [0;32mPassed    [0m   0.203 seconds
+L2CAP LE EATT Client Change Sec - Success            [0;32mPassed    [0m   0.225 seconds
+L2CAP LE EATT Server - Success                       [0;32mPassed    [0m   0.176 seconds
+L2CAP LE EATT Server - Reject                        [0;32mPassed    [0m   0.169 seconds
+L2CAP LE Ethtool Get Ts Info - Success               [0;32mPassed    [0m   0.224 seconds
+Total: 111, [0;32mPassed: 111 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+Overall execution time: 36 seconds
+Process 35 exited with status 0
+exit status 0

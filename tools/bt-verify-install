@@ -19,7 +19,7 @@ REPO="${1:-}"
 if [[ -z "$REPO" ]]; then
     HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     for c in "$HERE/.." /root/exp/qca9377-bt-hang "$PWD"; do
-        [[ -d "$c/.git" && -e "$c/install.sh" ]] && { REPO=$(cd "$c" && pwd); break; }
+        [[ -e "$c/.git" && -e "$c/install.sh" ]] && { REPO=$(cd "$c" && pwd); break; }
     done
 fi
 [[ -n "$REPO" && -d "$REPO" ]] || { echo "no checkout found; pass one as an argument" >&2; exit 2; }

@@ -1,7 +1,8 @@
 # Issue register
 
 This investigation began as "the Bluetooth controller hangs". It is now clear that is not
-one defect. At least six distinct problems have been observed on this machine, and
+one defect. Over twenty distinct problems have been observed on this machine by 2026-10-11
+(nine `BT`, three `M`, ten `U`, one unexplained `bluetoothd` core), and
 filing them under a single heading has actively slowed the work: evidence for one kept
 being read as evidence for another, and three hypotheses were killed only after being
 mistaken for the main bug.
@@ -11,7 +12,14 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 
 ---
 
-## Current state — 2026-10-08 (what changed since the 2026-10-03 state below)
+## Current state — 2026-10-11 (what changed since the 2026-10-09 state below)
+
+- **BT-9: everything sent 2026-10-10.** Stable backports of `96d006ae6445` went to 6.12, 6.6 and 6.1, each tested with a new deterministic `mgmt-tester` case that fails without the backport. Also sent: the BlueZ test series and the emulator leak fix the testers exposed. The laptop's own stuck discovery ended with the reboot into `7.0.0-38` on 10-11, a kernel that carries the fix.
+- **U10 (new, 2026-10-11):** a speaker silent on SBC-XQ (section below, with the userspace items).
+- **U11 (new, 2026-10-13):** a headset that has just connected does not get the sound; WirePlumber's history of earlier choices outranks it (section below).
+- **The machine** runs `7.0.0-38` with the upstream entry (E3) since 2026-10-11; QCA firmware loaded.
+
+## Current state — 2026-10-09 (what changed since the 2026-10-03 state below)
 
 - **BT-9 (new, 2026-10-09, kernel)** — when a simultaneous-discovery cycle's Inquiry
   Complete lands inside the LE scan-off, the kernel never stops discovery and refuses every
@@ -706,7 +714,7 @@ specific to this controller.
 
 ---
 
-## U1–U9 — userspace audio problems seen during the E1/E3 tests (2026-09-26 →)
+## U1–U10 — userspace audio problems seen during the E1/E3 tests (2026-09-26 →)
 
 | id | one line | state (`STATUS.md`) |
 |---|---|---|
@@ -719,6 +727,8 @@ specific to this controller.
 | U7 | PipeWire skips the SCO setup after a codec switch under an active link | confirmed on one device |
 | U8 | earbuds silent in mSBC; `corrupted SCO packet` | observed |
 | U9 | no reconnect after rfkill off/on (BlueZ policy) | confirmed, by design |
+| U10 | Tronsmart T8 silent on SBC-XQ, audible on SBC (2026-10-11) | observed; the deciding question is open |
+| U11 | a newly connected headset does not become the output (2026-10-13) | confirmed in the log and the source; by design |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
@@ -957,6 +967,101 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   (03:01:19, `EX-057`), so the message is not earbud-specific either.
   So mSBC audio on this host is fine with the MOMENTUM under the exact upstream entry; U8 is
   earbud-specific unless the earbuds also go silent on E3 — that test is next.
+- **U10 — Tronsmart T8 silent on SBC-XQ, audible on plain SBC** *(observed, 2026-10-11)*.
+
+  **What was seen and sent:**
+  - **[operator]** 2026-10-11 around 00:35: choosing SBC-XQ in GNOME Settings silences the speaker, and switching back to SBC brings sound back.
+  - **[log]** BlueZ's cached endpoint record for the T8 lists three SBC endpoints and no other codec. Each takes every channel mode, Dual Channel included, at bitpool 2 to 53.
+  - **[log]** Both configurations are accepted and stream: Set Configuration, Open and Start are all answered with accept.
+    - Plain SBC: 48 kHz joint stereo at bitpool 53, 119-byte frames, 357 kb/s.
+    - SBC-XQ: 48 kHz Dual Channel at bitpool 39, 168-byte frames, 504 kb/s.
+
+    So the speaker neither refuses the configuration nor fails to start the stream.
+  - **[log]** `scripts/sbc-frame-levels.py` reads each SBC frame's scale factors in the captures. A frame with all of them zero is encoded silence.
+    - Real signal was sent only during the Settings test sounds. On SBC-XQ that includes 00:34:43 to 00:34:47, 00:35:04 to 00:35:08 and 00:38:51 to 00:38:54 (858 Dual Channel frames).
+    - Chrome's playback carried only encoded silence, both on SBC (00:40:19 to 00:50:20) and on SBC-XQ (00:51:56 to 00:52:29).
+
+    So Chrome's audio never reached the link. Only the test sounds can decide the question.
+
+  **Why SBC-XQ is offered at all:**
+  - **[log]** The speaker advertises Dual Channel and bitpool 53, and PipeWire builds SBC-XQ from exactly those two. BlueZ passes the capabilities through, and the desktop shows what PipeWire offers.
+  - **[log]** This is not new to the project. `EX-030` (2026-08-17), an A2DP dropout on the same speaker, has bluetoothd configuring the `sbc_xq` endpoint.
+
+  **Readings:**
+  - **[inference]** If the SBC-XQ test sounds were silent, the speaker accepts a configuration it cannot play. Either Dual Channel or 504 kb/s is the limit; a forum report of a Windows driver going silent above about 354 kb/s (relayed by an outside reviewer, not checked here) points at the rate.
+  - **[inference]** Bluetooth audio has no feedback path, so the host cannot notice either way. PipeWire's per-device quirk list (`no-features = [ sbc-xq ]` in `bluez-hardware.conf`) is how such devices are handled today.
+  - An outside reviewer's investigation (2026-10-11) proposed the same decoder limit. Its claim that the T8 offers AAC is not supported by this unit's cached record.
+
+  **Next:**
+  1. The operator plays only the Settings test sound on each mode, with a `bt-mark` after each.
+  2. Separate Dual Channel from the bitrate: Dual at a low bitpool, joint stereo at a high one.
+  3. Read PipeWire's decision path: when it offers SBC-XQ, who added it and why, and how the quirk entries came in.
+
+  **Evidence:** HCI captures `bt-20261011-001745` to `bt-20261011-004946`, kept in `archive/bt-trace/` (git-ignored; real addresses inside).
+
+- **U11 — a headset that has just connected does not get the sound** *(confirmed in the log and the source, 2026-10-13; by design)*.
+
+  **What happened:**
+  - **[operator]** Shortly before 01:07 on 2026-10-13, the operator switched the MOMENTUM 4 off and the Shure AONIC 50 on. The AONIC 50 connected, but the sound stayed on the laptop. GNOME Settings showed it connected, not selected.
+  - **[operator] The position:** connecting a headset means you want the sound there. You should not need to remember settings for it. Anything else is counterintuitive, whatever its reason. The operator has met this many times, and it is an annoyance every time.
+
+  **[log] The timeline,** from WirePlumber's own debug log in the desktop user's journal (WirePlumber 0.4.17). Node names are written with the device name in place of the address.
+  - **00:53:44:** the MOMENTUM 4 connects. At 00:53:48 it gets `a2dp-sink`. From 00:54:26 every stream gets `default target picked: bluez_output.<MOMENTUM 4>.1`.
+  - **01:01:00.89:** the MOMENTUM 4 disconnects. From 01:01:00.686 the picks read `default target picked: alsa_output.pci-0000_03_00.6.analog-stereo (52)`, the laptop's own output.
+  - **01:01:56:** the AONIC 50 connects. It drops at 01:01:58 and connects again at 01:02:04.26.
+  - **01:02:04.79:** `Setting profile a2dp-sink on bluez_card.<AONIC 50>` (LDAC), and the node `bluez_output.<AONIC 50>.1` is created. So the Bluetooth side worked: the output existed.
+  - **01:02:09 to 01:06:58:** every stream picks the laptop's output: GNOME Settings at 01:02:09 and 01:02:10, Mutter at 01:02:52, Chrome at 01:03:30 and 01:06:53.
+  - **No explicit choice was made tonight.** This boot's journal holds a single `SET_DEFAULT_SINK`: GNOME Settings choosing the MOMENTUM 4 on 10-11 at 16:31:06, 3 s after Settings opened. It has no stream move at all. WirePlumber's state file `~/.local/state/wireplumber/default-nodes` was last written on 10-11 at 16:31:07.
+
+  **[source] The rule.** WirePlumber 0.4.17, `modules/module-default-nodes.c`, `find_best_media_class_node()`. Each available output scores its `priority.session`, plus a bonus:
+  - **+340,000** (`20000 * (N_PREV_CONFIGS + 1)`) if it is the configured default;
+  - otherwise **+(16 − i) × 20,000** if it is at position *i* in the stack of earlier choices (`N_PREV_CONFIGS` 16).
+
+  A newly connected output gets nothing for being new.
+
+  **[log] The stack in the state file:** the configured default and position 0 are the MOMENTUM 4; position 1 is the laptop's output; position 2 is another Bluetooth output; position 3 is the AONIC 50; seven more follow.
+  - With the MOMENTUM 4 gone, the laptop's output scores +300,000 and the AONIC 50 +260,000.
+  - Session priorities are in the low thousands: U3 measured the two sources at 2010 and 2009. The two sinks were not measured tonight. A 40,000 gap decides either way.
+  - **Positive control, in the same log:** the MOMENTUM 4 did become the output at 00:54, because it was the configured default.
+
+  **Whose decision.** WirePlumber's, made on purpose.
+  - Commit `7a1b48b7` (Pauli Virtanen, 2022-07-11), "prioritize previous configured defaults", gives the reason: "The node priorities are difficult to configure for users, and are not necessarily meaningful for them."
+  - Master (local tree of 2026-09-25, `src/scripts/default-nodes/state-default-nodes.lua`) keeps the rule and makes it stricter: "the position in the stack alone decides; priority.session is deliberately left out so that it cannot override the user's history". The setting `node.restore-default-targets` turns the whole history off; it does not make a new device win.
+  - **What the operator expected exists, but is off.** PipeWire's PulseAudio-compatible `module-switch-on-connect` (Pauli Virtanen, 2021-07-23; in 1.0.5) sets every newly connected non-internal output or input as the configured default. Ubuntu ships it commented out: `/usr/share/pipewire/pipewire-pulse.conf` line 65. Its own description calls it a compatibility module, needed "only when some applications try to manage the default sinks/sources themselves".
+
+  **Readings:**
+  - **[inference]** The laptop's output ranks above the AONIC 50 because it was chosen after the AONIC 50's last choice. When that happened, and whether by hand, is before this boot and not on record.
+  - **[inference]** This is U3's rule (the microphone side), now on the output side, with the source and the numbers. U3's proposed report (2026-09-26) is the same position: choosing or connecting a headset should move the sound to it.
+  - **Side observation [log]:** the AONIC 50 connected, dropped after 3 s, and connected again (01:01:56, 01:01:58, 01:02:04). Not read further.
+
+  **Not recorded:** `bt-audio-policy` and `bt-ui-atspi` have been down since the 10-11 reboot. So there is no per-change policy line, and the UI clicks are not on record. WirePlumber's debug log carries the decisions.
+
+  **Update, 2026-10-13, after the outside research** (checked claim by claim in `reviews/2026-10-13T0200Z-u11-outside-research.md`):
+  - **[log]** At 01:11:04 GNOME Settings set the AONIC 50 as the output (`SET_DEFAULT_SINK tag:30`). It is now at the top of the stack, so the next MOMENTUM 4 to AONIC 50 change will not repeat U11. A reproduction starts by copying the state file.
+  - **[source]** A fallback is not saved as a choice. In 0.4.17 the stack changes only when a client writes `default.configured.audio.*`. WirePlumber's own fallback writes `default.audio.sink`, which leaves the stack alone. So the laptop's place above the AONIC 50 comes from an earlier explicit write. What the stack lacks is "this device was just connected".
+  - **[log]** When that earlier write happened cannot be found: `SET_DEFAULT_SINK` has been logged only since the 10-11 reboot, and the 60 archived boots have none. The last archived boot has 4,517 audio-stack lines and no `protocol-pulse` lines, which is the control.
+  - **[source] The upstream record** (official tracker, quotes in `reviews/2026-10-13T0200Z-u11-outside-research-web-sources.md`):
+    - #352 (2022, closed as intended): a maintainer said "wireplumber prefers to stick to your selection", and "We have changed this behaviour back and forth in the past because some people want it this way and some others don't."
+    - #1005, MR !902 and `481ecff`, then #1036: in 0.5.18, "When the current default goes away, it falls back to the most recent one in that list that's still available."
+    - #914 is open, with no maintainer comment: a panel selection "permanently overrides" priorities.
+    - #83, #221, #463, #629 and #840 complain the other way, about unwanted automatic switches.
+  - KDE's "switch on connect by default" (bug 392103) ended RESOLVED WONTFIX in 2025.
+  - **[log] BlueZ side, read while drafting** (`journalctl -u bluetooth.service --since "2026-10-13 00:53:00" --until "2026-10-13 01:03:00" -g <both addresses>`):
+    - The AONIC 50 was already connected before 00:53. It disconnected at 00:54:08.852 with reason 3 (remote), i.e. switched off after the MOMENTUM 4 connected at 00:53:44. WirePlumber's `Setting profile a2dp-sink on bluez_card.<AONIC 50>` at 00:54:08.359 belongs to that disconnect.
+    - At 01:01:58.979 the new link dropped with reason 2 (local host), logged twice.
+    - At 01:02:03.395, `connect_profiles() … (all), client :1.347`: a D-Bus client asked for the connection that succeeded at 01:02:04.26. Which client (a click in GNOME's Bluetooth menu, or automatic) is not recorded.
+  - **Draft suggestion** (opt-in "a newly connected device becomes the default"; not posted): `patches/wireplumber/2026-10-13-suggestion-default-follows-new-device.md`.
+
+  **Next:**
+  1. ~~Search WirePlumber's tracker.~~ Done (above). A proposal has to be opt-in, and has to say how it avoids the unwanted-switch cases.
+  2. Decide the proposal with the operator, for example: a device that connects ranks first until the user chooses something else after it.
+  3. Whether to enable `module-switch-on-connect` on this laptop is the operator's choice. It would make every new non-internal device take over, inputs included.
+
+  **Evidence:** the desktop user's journal for this boot (WirePlumber at debug level), kept by `bt-journal-backup`; the state file read on 2026-10-13. Extraction:
+  - `journalctl _UID=1000 --since "2026-10-13 00:40" --until "2026-10-13 01:08" -o short-iso-precise`, then grep for `default target picked`, `Setting profile` and `Connected=`;
+  - `journalctl _UID=1000 -b --grep "SET_DEFAULT_SINK|SET_DEFAULT_SOURCE|MOVE_SINK_INPUT"`: one line;
+  - `journalctl _UID=1000 -b --grep "changed 'default.configured.audio.sink'"`: one line;
+  - `git show 0.4.17:modules/module-default-nodes.c` and `git show -s 7a1b48b7` in a WirePlumber tree.
 
 ---
 

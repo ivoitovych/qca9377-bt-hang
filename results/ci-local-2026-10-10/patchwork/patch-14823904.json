@@ -1,0 +1,58 @@
+{
+ "id": 14823904,
+ "url": "https://patchwork.kernel.org/api/1.3/patches/14823904/",
+ "web_url": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/",
+ "project": {
+  "id": 395,
+  "url": "https://patchwork.kernel.org/api/1.3/projects/395/",
+  "name": "Bluetooth",
+  "link_name": "bluetooth",
+  "list_id": "linux-bluetooth.vger.kernel.org",
+  "list_email": "linux-bluetooth@vger.kernel.org",
+  "web_url": "",
+  "scm_url": "",
+  "webscm_url": "",
+  "list_archive_url": "",
+  "list_archive_url_format": "https://lore.kernel.org/r/{}",
+  "commit_url_format": ""
+ },
+ "msgid": "<<address elided>>",
+ "list_archive_url": "https://lore.kernel.org/r/<address elided>",
+ "date": "2026-09-17T04:00:03",
+ "name": "[5.15.y,1/2] Bluetooth: L2CAP: Fix deadlock",
+ "commit_ref": null,
+ "pull_url": null,
+ "state": "new",
+ "archived": false,
+ "hash": "537e52b6b49255c928e62948a5d0cb1be7e613ad",
+ "submitter": {
+  "id": 205633,
+  "url": "https://patchwork.kernel.org/api/1.3/people/205633/",
+  "name": "Karl Mehltretter",
+  "email": "<address elided>"
+ },
+ "delegate": null,
+ "mbox": "https://patchwork.kernel.org/project/bluetooth/patch/<address elided>/mbox/",
+ "series": [
+  {
+   "id": 1167056,
+   "url": "https://patchwork.kernel.org/api/1.3/series/1167056/",
+   "web_url": "https://patchwork.kernel.org/series/1167056/",
+   "date": "2026-09-17T04:00:03",
+   "name": "[5.15.y,1/2] Bluetooth: L2CAP: Fix deadlock",
+   "version": 1,
+   "mbox": "https://patchwork.kernel.org/series/1167056/mbox/"
+  }
+ ],
+ "comments": "https://patchwork.kernel.org/api/patches/14823904/comments/",
+ "check": "fail",
+ "checks": "https://patchwork.kernel.org/api/patches/14823904/checks/",
+ "tags": {},
+ "related": [],
+ "content": "From: Luiz Augusto von Dentz <<address elided>>\n\n[ Upstream commit f1a8f402f13f94263cf349216c257b2985100927 ]\n\nThis fixes the following deadlock introduced by 39a92a55be13\n(\"bluetooth/l2cap: sync sock recv cb and release\")\n\n============================================\nWARNING: possible recursive locking detected\n6.10.0-rc3-g4029dba6b6f1 #6823 Not tainted\n--------------------------------------------\nkworker/u5:0/35 is trying to acquire lock:\nffff888002ec2510 (&chan->lock#2/1){+.+.}-{3:3}, at:\nl2cap_sock_recv_cb+0x44/0x1e0\n\nbut task is already holding lock:\nffff888002ec2510 (&chan->lock#2/1){+.+.}-{3:3}, at:\nl2cap_get_chan_by_scid+0xaf/0xd0\n\nother info that might help us debug this:\n Possible unsafe locking scenario:\n\n       CPU0\n       ----\n  lock(&chan->lock#2/1);\n  lock(&chan->lock#2/1);\n\n *** DEADLOCK ***\n\n May be due to missing lock nesting notation\n\n3 locks held by kworker/u5:0/35:\n #0: ffff888002b8a940 ((wq_completion)hci0#2){+.+.}-{0:0}, at:\nprocess_one_work+0x750/0x930\n #1: ffff888002c67dd0 ((work_completion)(&hdev->rx_work)){+.+.}-{0:0},\nat: process_one_work+0x44e/0x930\n #2: ffff888002ec2510 (&chan->lock#2/1){+.+.}-{3:3}, at:\nl2cap_get_chan_by_scid+0xaf/0xd0\n\nTo fix the original problem this introduces l2cap_chan_lock at\nl2cap_conless_channel to ensure that l2cap_sock_recv_cb is called with\nchan->lock held.\n\nFixes: 89e856e124f9 (\"bluetooth/l2cap: sync sock recv cb and release\")\nSigned-off-by: Luiz Augusto von Dentz <<address elided>>\n[ Karl Mehltretter: backport only the l2cap_core.c changes. The HCI\n  changes are from an unrelated patch accidentally squashed into this\n  commit. The l2cap_sock.c change removes locking added by 89e856e124f9,\n  which is absent from 5.15.y, so the quoted deadlock cannot occur. The\n  core changes are needed because c531e63871c0 was backported without\n  the matching lock. ]\nAssisted-by: LLM\nSigned-off-by: Karl Mehltretter <<address elided>>\n---",
+ "diff": "diff --git a/net/bluetooth/l2cap_core.c b/net/bluetooth/l2cap_core.c\nindex 34f89f7f993b..f1d7a6cdd8aa 100644\n--- a/net/bluetooth/l2cap_core.c\n+++ b/net/bluetooth/l2cap_core.c\n@@ -7992,6 +7992,8 @@ static void l2cap_conless_channel(struct l2cap_conn *conn, __le16 psm,\n \n \tBT_DBG(\"chan %p, len %d\", chan, skb->len);\n \n+\tl2cap_chan_lock(chan);\n+\n \tif (chan->state != BT_BOUND && chan->state != BT_CONNECTED)\n \t\tgoto drop;\n \n@@ -8009,6 +8011,7 @@ static void l2cap_conless_channel(struct l2cap_conn *conn, __le16 psm,\n \t}\n \n drop:\n+\tl2cap_chan_unlock(chan);\n \tl2cap_chan_put(chan);\n free_skb:\n \tkfree_skb(skb);\n",
+ "prefixes": [
+  "5.15.y",
+  "1/2"
+ ]
+}

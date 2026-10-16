@@ -1,0 +1,200 @@
+/usr/libexec/virtiofsd not available: virtiofs disabled
+Could not access KVM kernel module: No such file or directory
+qemu-system-x86_64: failed to initialize kvm: No such file or directory
+qemu-system-x86_64: falling back to tcg
+early console in extract_kernel
+input_data: 0x0000000004ddb2c4
+input_len: 0x0000000000f0bc1c
+output: 0x0000000001000000
+output_len: 0x0000000004c7a1ac
+kernel_total_size: 0x00000000048ed000
+needed_size: 0x0000000004e00000
+trampoline_32bit: 0x0000000000000000
+Physical KASLR using RDTSC...
+Virtual KASLR using RDTSC...
+
+Decompressing Linux... Parsing ELF... Performing relocations... done.
+Booting the kernel (entry_offset: 0x0000000002df2e80).
+Linux version 7.3.0-rc2-g964430c03896 (root@vm) (gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #1 PREEMPT_DYNAMIC Sat Oct 10 12:14:54 UTC 2026
+Command line: console=hvc0 earlyprintk=serial no_hash_pointers=1 rootfstype=9p rootflags=trans=virtio,version=9p2000.u acpi=off pci=noacpi noapic quiet ro init=/home/user/qca9377-bt-hang/tmp/tester-compare/20261011T152719Z-btdev-vla-rest2/work/src/tools/test-runner TESTHOME=/home/user/qca9377-bt-hang/tmp/tester-compare/20261011T152719Z-btdev-vla-rest2/work/src TESTDBUS=0 TESTDAEMON=0 TESTDBUSSESSION=0 XDG_RUNTIME_DIR=/run/user/0 TESTMONITOR=0 TESTEMULATOR=0 TESTDEVS=0 TESTAUTO=0 TESTAUDIO='' TESTARGS='/usr/bin/env ASAN_OPTIONS=exitcode=65:detect_leaks=0:print_summary=1 tools/userchan-tester'
+BIOS-provided physical RAM map:
+BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff]  System RAM
+BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff]  device reserved
+BIOS-e820: [gap 0x00000000000a0000-0x00000000000effff]
+BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff]  device reserved
+BIOS-e820: [mem 0x0000000000100000-0x000000000ffdffff]  System RAM
+BIOS-e820: [mem 0x000000000ffe0000-0x000000000fffffff]  device reserved
+BIOS-e820: [gap 0x0000000010000000-0x00000000afffffff]
+BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff]  device reserved
+BIOS-e820: [gap 0x00000000c0000000-0x00000000fed1bfff]
+BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff]  device reserved
+BIOS-e820: [gap 0x00000000fed20000-0x00000000fffbffff]
+BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff]  device reserved
+BIOS-e820: [gap 0x0000000100000000-0x000000fcffffffff]
+BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff]  device reserved
+printk: legacy bootconsole [earlyser0] enabled
+Hash pointers mode set to never.
+Poking KASLR using RDTSC...
+9p: Bad value for 'source'
+Mounting sysfs to /sys
+Mounting proc to /proc
+Mounting devtmpfs to /dev
+Creating /dev/pts
+Mounting devpts to /dev/pts
+Creating /dev/shm
+Mounting tmpfs to /dev/shm
+Mounting tmpfs to /run
+Mounting tmpfs to /tmp
+Mounting debugfs to /sys/kernel/debug
+Linking /dev/fd to /proc/self/fd
+Linking /dev/stdin to /proc/self/fd/0
+Linking /dev/stdout to /proc/self/fd/1
+Linking /dev/stderr to /proc/self/fd/2
+Creating new session group leader
+Setting controlling terminal
+Creating /var/lib/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/bluetooth
+Failed to create filesystem: No such file or directory
+Creating /etc/dbus-1
+Creating /usr/share/dbus-1
+Running command /usr/bin/env ASAN_OPTIONS=exitcode=65:detect_leaks=0:print_summary=1 tools/userchan-tester
+Changing into directory /home/user/qca9377-bt-hang/tmp/tester-compare/20261011T152719Z-btdev-vla-rest2/work/src
+New process 36 created
+
+[1;39mUser channel open - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mUser channel open - Success[0m - [0;34msetup[0m
+[1;39mUser channel open - Success[0m - [0;34msetup complete[0m
+[1;39mUser channel open - Success[0m - [0;30mrun[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mUser channel open - Success[0m - [0;32mtest passed[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mUser channel open - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mUser channel open - Success[0m - [0;35mteardown complete[0m
+[1;39mUser channel open - Success[0m - [0;30mdone[0m
+
+[1;39mUser channel open - Failed[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mUser channel open - Failed[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+[1;39mUser channel open - Failed[0m - [0;34msetup complete[0m
+[1;39mUser channel open - Failed[0m - [0;30mrun[0m
+Unable to create user channel socket: Device or resource busy(-16)
+[1;39mUser channel open - Failed[0m - [0;32mtest passed[0m
+[1;39mUser channel open - Failed[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mUser channel open - Failed[0m - [0;35mteardown complete[0m
+[1;39mUser channel open - Failed[0m - [0;30mdone[0m
+
+[1;39mUser channel open - Power Toggle Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mUser channel open - Power Toggle Success[0m - [0;34msetup[0m
+  [0;37mPowering on controller[0m
+  [0;37mController powered on[0m
+  [0;37mPowering off controller[0m
+  [0;37mController powered off[0m
+[1;39mUser channel open - Power Toggle Success[0m - [0;34msetup complete[0m
+[1;39mUser channel open - Power Toggle Success[0m - [0;30mrun[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mUser channel open - Power Toggle Success[0m - [0;32mtest passed[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mUser channel open - Power Toggle Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mUser channel open - Power Toggle Success[0m - [0;35mteardown complete[0m
+[1;39mUser channel open - Power Toggle Success[0m - [0;30mdone[0m
+
+[1;39mUser channel close - Success[0m - [0;30minit[0m
+  [0;37mRead Index List callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37mNew hciemu instance created[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+  [0;37m  Address: AA:BB:CC:00:00:01[0m
+  [0;37m  Version: 0x05[0m
+  [0;37m  Manufacturer: 0x05f1[0m
+  [0;37m  Supported settings: 0x000110ff[0m
+  [0;37m  Current settings: 0x00000080[0m
+  [0;37m  Class: 0x000000[0m
+  [0;37m  Name: [0m
+  [0;37m  Short name: [0m
+[1;39mUser channel close - Success[0m - [0;34msetup[0m
+  [0;37mUser Channel Opened[0m
+[1;39mUser channel close - Success[0m - [0;34msetup complete[0m
+[1;39mUser channel close - Success[0m - [0;30mrun[0m
+  [0;37mClose User Channel[0m
+  [0;37mIndex Added callback[0m
+  [0;37m  Index: 0x0000[0m
+  [0;37mRead Info callback[0m
+  [0;37m  Status: 0x00[0m
+[1;39mUser channel close - Success[0m - [0;32mtest passed[0m
+[1;39mUser channel close - Success[0m - [0;35mteardown[0m
+  [0;37mIndex Removed callback[0m
+  [0;37m  Index: 0x0000[0m
+[1;39mUser channel close - Success[0m - [0;35mteardown complete[0m
+[1;39mUser channel close - Success[0m - [0;30mdone[0m
+
+[1;39m[0m
+[1;39mTest Summary[0m
+[1;39m------------[0m
+User channel open - Success                          [0;32mPassed    [0m   0.648 seconds
+User channel open - Failed                           [0;32mPassed    [0m   0.160 seconds
+User channel open - Power Toggle Success             [0;32mPassed    [0m   0.188 seconds
+User channel close - Success                         [0;32mPassed    [0m   0.212 seconds
+Total: 4, [0;32mPassed: 4 (100.0%)[0m, [0;31mFailed: 0[0m, [0;33mNot Run: 0[0m
+Overall execution time: 1.29 seconds
+Process 36 exited with status 0
+exit status 0
