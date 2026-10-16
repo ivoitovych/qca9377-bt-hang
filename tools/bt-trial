@@ -31,7 +31,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${BT_REPO:-}"
 if [[ -z "$REPO" ]]; then
     for c in "$HERE/.." /root/exp/qca9377-bt-hang "$PWD"; do
-        [[ -d "$c/.git" && -e "$c/install.sh" ]] && { REPO=$(cd "$c" && pwd); break; }
+        [[ -e "$c/.git" && -e "$c/install.sh" ]] && { REPO=$(cd "$c" && pwd); break; }
     done
 fi
 [[ -n "$REPO" ]] || { echo "no checkout found; set BT_REPO" >&2; exit 2; }
