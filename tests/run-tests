@@ -316,8 +316,13 @@ while IFS= read -r tool; do
 # The ancestry up to the suite: a tool's caller is often another tool.
 p=\$PPID; chain=""
 for _ in 1 2 3 4 5; do
-    c=\$(tr '\\0' ' ' < /proc/\$p/cmdline 2>/dev/null | cut -c1-80)
+    # Newlines too, and matched before cutting: a caller's cmdline can hold a
+    # whole multi-line script, and a checkout under a long path pushed
+    # "tests/run-tests" past the cut, so the walk climbed out of the run and
+    # wrote the callers' scripts into this log line by line (2026-10-17).
+    c=\$(tr '\\0\\n' '  ' < /proc/\$p/cmdline 2>/dev/null)
     case "\$c" in ""|*tests/run-tests*) break ;; esac
+    c=\$(printf '%s' "\$c" | cut -c1-80)
     chain="\$chain < \$c"
     p=\$(sed -n 's/^PPid:[[:space:]]*//p' /proc/\$p/status 2>/dev/null)
     [ -n "\$p" ] || break
@@ -1963,40 +1968,11 @@ else
 fi
 rm -rf "$LC/slowstop" "$LC/state-slowstop"
 
-# AND WHEN --list-boots ANSWERS NOTHING. The closer's enumeration check is
-# bounded only through the boot start that --list-boots supplies; without it
-# the read was the unbounded whole-boot scan that lost EX-023's row, and the
-# source check above passes it because the conditional `--until` is on the
-# line. Here --list-boots says nothing and every full -k read is slow. The
-# close must still finish inside 4 s and write its row, and enum_at_boot must
-# say `?` (not measured), never a `no` it did not see.
-mkdir -p "$LC/nolist/bin"
-cat > "$LC/nolist/bin/journalctl" <<'STUB'
-#!/bin/sh
-case " $* " in
-  *" --list-boots "*) exit 0 ;;
-  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
-  *" --until "*) exit 0 ;;
-  *" -k "*) sleep 5; exit 0 ;;
-esac
-exit 0
-STUB
-chmod +x "$LC/nolist/bin/journalctl"
-trial_in "$LC/nolist" "$LC/state-nolist" PATH="$LC/nolist/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-trial_in "$LC/nolist" "$LC/state-nolist" --timeout 4 PATH="$LC/nolist/bin:$LC/bin:$PATH" \
-    BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; nlrc=$?
-NLROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/nolist/evidence/trials/results.tsv" 2>/dev/null)
-if (( nlrc == 0 )) && [[ "$NLROW" == "confirmed ?" ]]; then
-    ok "with no boot list the enumeration read is budgeted too: the row is written and enum_at_boot says '?'"
-else
-    bad "close with no --list-boots answer: rc=$nlrc (124 = still reading at 4 s), row (bt1_status enum_at_boot)='$NLROW'"
-fi
-rm -rf "$LC/nolist" "$LC/state-nolist"
-
 # AND WITH THE PROJECT'S OWN TOOLS INSTALLED, AS ON THE LAPTOP. The close runs
 # bt-state (state-after.txt) and bt-mark (the RESULT mark) when they are on the
-# PATH. Nowhere in this file are they, so every close above skipped both; on the
-# laptop both are in /usr/local/bin. bt-state counts the boot's command timeouts
+# PATH. Everywhere else in this file those names reach the PATH guard's
+# recording stubs, which print nothing, so no close above ran the real tools; on
+# the laptop both are in /usr/local/bin. bt-state counts the boot's command timeouts
 # over the WHOLE boot's kernel journal, with no budget, and both ask
 # bluetoothctl, which is given 8 s each. They ran ahead of the results row: the
 # slow-journal check above, with the two tools on its PATH, lost the row again
@@ -2038,6 +2014,64 @@ IFAFTER=$(cat "$LC/instfast"/evidence/trials/*/trial-*/state-after.txt 2>/dev/nu
     && ok "the close still writes state-after.txt and the RESULT mark, after the row" \
     || bad "close extras: rc=$ifrc, state-after '$(head -c 60 <<<"$IFAFTER")', marks: $(tr '\n' '|' < "$LC/inst/logger.log")"
 rm -rf "$LC/inst" "$LC/inststop" "$LC/state-inststop" "$LC/instfast" "$LC/state-instfast"
+
+# AND WHEN --list-boots ANSWERS NOTHING. The closer's enumeration check is
+# bounded only through the boot start that --list-boots supplies; without it
+# the read was the unbounded whole-boot scan that lost EX-023's row, and the
+# source check above passes it because the conditional `--until` is on the
+# line. Here --list-boots says nothing and every full -k read is slow. The
+# close must still finish inside 4 s and write its row, and enum_at_boot must
+# say `?` (not measured), never a `no` it did not see.
+mkdir -p "$LC/nolist/bin"
+cat > "$LC/nolist/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" --until "*) exit 0 ;;
+  *" -k "*) sleep 5; exit 0 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/nolist/bin/journalctl"
+trial_in "$LC/nolist" "$LC/state-nolist" PATH="$LC/nolist/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/nolist" "$LC/state-nolist" --timeout 4 PATH="$LC/nolist/bin:$LC/bin:$PATH" \
+    BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; nlrc=$?
+NLROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/nolist/evidence/trials/results.tsv" 2>/dev/null)
+if (( nlrc == 0 )) && [[ "$NLROW" == "confirmed ?" ]]; then
+    ok "with no boot list the enumeration read is budgeted too: the row is written and enum_at_boot says '?'"
+else
+    bad "close with no --list-boots answer: rc=$nlrc (124 = still reading at 4 s), row (bt1_status enum_at_boot)='$NLROW'"
+fi
+rm -rf "$LC/nolist" "$LC/state-nolist"
+
+# AND WHEN THE ENUMERATION READ FAILS FOR ANOTHER REASON. Only the budget's
+# exit 124 used to give `?`; any other failed read (a journal it may not read,
+# a --until it rejects, a timeout that could not start it) fell through to
+# `no`, a claim that nothing was measured. The descriptive scan already treats
+# every such failure as a failed read. Here the boot list answers, so the read
+# is the bounded one, and it fails at once with exit 1 and a reason on stderr.
+mkdir -p "$LC/enumfail/bin"
+cat > "$LC/enumfail/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" -b 0 "*) echo "Failed to open journal: Permission denied" >&2; exit 1 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/enumfail/bin/journalctl"
+trial_in "$LC/enumfail" "$LC/state-enumfail" PATH="$LC/enumfail/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/enumfail" "$LC/state-enumfail" --timeout 4 PATH="$LC/enumfail/bin:$LC/bin:$PATH" \
+    -- autostop >/dev/null 2>&1; efrc=$?
+EFROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/enumfail/evidence/trials/results.tsv" 2>/dev/null)
+if (( efrc == 0 )) && [[ "$EFROW" == "confirmed ?" ]]; then
+    ok "an enumeration read that fails for any reason says '?', not a 'no' it never measured"
+else
+    bad "close with a failing enumeration read: rc=$efrc, row (bt1_status enum_at_boot)='$EFROW' (want 'confirmed ?')"
+fi
+rm -rf "$LC/enumfail" "$LC/state-enumfail"
 
 # THE --grep PROBE, both ways, and against the inversion that hid it. A journal
 # whose --help names --grep must be asked with the filter; one whose help does
@@ -11597,7 +11631,7 @@ SRPXI=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$SRPX
 (( srpxirc == 0 )) && [[ -e "$SRPX/usr/local/bin/bt-mark.pre-qca9377-bt-hang" ]] \
    && grep -q "original bt-mark" "$SRPX/usr/local/bin/bt-mark.pre-qca9377-bt-hang" \
    && ! grep -q "original bt-mark" "$SRPX/usr/local/bin/bt-mark" \
-   && [[ "$SRPXI" == *"not ours"* ]] \
+   && [[ "$SRPXI" == *"not ours"* && "$SRPXI" != *"earlier deploy replaced in place"* ]] \
     && ok "install.sh keeps a colliding pre-existing file as .pre-qca9377-bt-hang and says so" \
     || bad "a pre-existing file was overwritten without a copy (rc=$srpxirc)"
 SRPXU=$(stage_at "$SRPX"); srpxurc=$?
@@ -11607,6 +11641,32 @@ SRPXU=$(stage_at "$SRPX"); srpxurc=$?
     && ok "uninstall.sh moves the pre-existing file back and counts the restoration" \
     || bad "uninstall did not restore the original (rc=$srpxurc): $(grep -E 'pre-existing|COMPLETE' <<<"$SRPXU" | tr '\n' ' ')"
 rm -rf "$SRPX"
+
+# AN UPGRADE IS NOT A COLLISION. The same differing bt-mark, but under an
+# earlier deploy of this project: its first-install stamp is there. The copy is
+# that deploy's, so it is replaced with no .pre-qca9377-bt-hang copy, the deploy
+# says so, and uninstall removes the file instead of putting the old one back.
+# Before this, an upgrade of the investigation machine, installed with the
+# 2026-09-18 tools, kept 15 of the project's own files as "not ours", and an
+# uninstall would have restored them.
+SRUP=$(mktemp -d); mkdir -p "$SRUP/usr/local/bin" "$SRUP/usr/local/share/qca9377-bt-hang"
+printf 'an older bt-mark of ours\n' > "$SRUP/usr/local/bin/bt-mark"
+echo 1758000000 > "$SRUP/usr/local/share/qca9377-bt-hang/installed-at"
+SRUPI=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$SRUP/no-such-trial" \
+        BT_DESTDIR="$SRUP" ./install.sh --tools-only 2>&1); srupirc=$?
+SRUPN=$(find "$SRUP" -name '*.pre-qca9377-bt-hang' | wc -l)
+(( srupirc == 0 && SRUPN == 0 )) && cmp -s bin/bt-mark "$SRUP/usr/local/bin/bt-mark" \
+   && [[ "$SRUPI" == *"/usr/local/bin/bt-mark updated: the copy there is this project's earlier deploy"* \
+      && "$SRUPI" == *"1 file(s) of this project's earlier deploy replaced in place"* && "$SRUPI" != *"not ours"* ]] \
+   && [[ "$(cat "$SRUP/usr/local/share/qca9377-bt-hang/installed-at")" == 1758000000 ]] \
+    && ok "an upgrade over this project's earlier deploy replaces its copies in place, with no .pre copy" \
+    || bad "upgrade over an earlier deploy (rc=$srupirc): $SRUPN .pre copies; $(grep -E 'bt-mark|earlier deploy|not ours' <<<"$SRUPI" | head -3 | tr '\n' '|')"
+SRUPU=$(stage_at "$SRUP"); srupurc=$?
+(( srupurc == 0 )) && [[ ! -e "$SRUP/usr/local/bin/bt-mark" ]] && [[ "$SRUPU" == *"UNINSTALL COMPLETE"* ]] \
+   && [[ "$SRUPU" == *"No pre-existing file had been replaced"* ]] \
+    && ok "uninstall after an upgrade removes the project's file rather than restoring its older copy" \
+    || bad "uninstall after an upgrade (rc=$srupurc): bt-mark $([[ -e "$SRUP/usr/local/bin/bt-mark" ]] && head -c 40 "$SRUP/usr/local/bin/bt-mark")"
+rm -rf "$SRUP"
 
 # A FAILED STEP must fail the banner. run() accumulates failures on purpose
 # (later removals are independent; a partial revert should remove what it
@@ -12626,6 +12686,73 @@ git -C "$RSM" add -A
     || bad "the repository-derived allowlist let an unrelated address through"
 rm -rf "$RSM"
 
+# ── A COMMIT ID THE DOCUMENTS PLACE ON MAIN MUST BE ON MAIN ───────────────
+#
+# 2026-10-16: STATUS named the test-suite branch's `d5272a6` as the fix landed
+# on main; main had the cherry-pick `4c26c5d`. Every later reader repeated it.
+# The first version of the check judged against HEAD and accepted any id whose
+# branch the line named, so it passed a feature branch's own commit documented
+# as on main, and "`d5272a6` on `tests/…` landed on `main`" (outside review,
+# 2026-10-17). Here a scratch "public" remote, found by its URL as the real one
+# is, and a working clone of it.
+DMH=$(mktemp -d); mkdir -p "$DMH/ivoitovych"
+git init -q --bare -b main "$DMH/ivoitovych/qca9377-bt-hang.git"
+DMHW="$DMH/work"; git init -q -b main "$DMHW"; mkdir -p "$DMHW/docs"
+dmh_git() { git -C "$DMHW" -c user.name=t -c user.email=t@example.com "$@"; }
+dmh_rc() { devtools/doc-main-hashes "$1" >/dev/null 2>&1; echo $?; }
+echo base > "$DMHW/f"; echo g > "$DMHW/g"
+dmh_git add f g; dmh_git commit -q -m base
+dmh_git remote add origin "$DMH/ivoitovych/qca9377-bt-hang.git"
+dmh_git push -q origin main 2>/dev/null
+
+# The reviewer's case: on a feature branch, its own fix documented as on main.
+dmh_git checkout -q -b feature; echo x >> "$DMHW/f"; dmh_git commit -q -am fix
+DMHX=$(dmh_git rev-parse --short=7 HEAD)
+printf -- '- The fix `%s` has landed on `main`.\n' "$DMHX" > "$DMHW/docs/STATUS.md"
+dmhrc=$(dmh_rc "$DMHW")
+(( dmhrc == 4 )) \
+    && ok "doc-main-hashes: a feature branch's own commit, documented as on main, is PENDING, never clean" \
+    || bad "doc-main-hashes on a branch-only commit claimed for main: rc=$dmhrc (want 4, pending)"
+# Once public main has moved on, the branch cannot fast-forward: the same line fails.
+dmh_git checkout -q main; echo g2 >> "$DMHW/g"; dmh_git commit -q -am moved
+dmh_git push -q origin main 2>/dev/null; dmh_git checkout -q feature
+dmhrc=$(dmh_rc "$DMHW")
+(( dmhrc == 1 )) \
+    && ok "doc-main-hashes: the same line FAILS once the branch can no longer fast-forward onto main" \
+    || bad "doc-main-hashes on a branch that cannot fast-forward: rc=$dmhrc (want 1)"
+
+# A cherry-pick: on main the port, on the feature branch the origin.
+dmh_git checkout -q main; dmh_git cherry-pick "$DMHX" >/dev/null 2>&1
+DMHP=$(dmh_git rev-parse --short=7 HEAD); dmh_git push -q origin main 2>/dev/null
+printf -- '- On `main` the fix is `%s`, cherry-picked from `%s` on `feature`.\n' "$DMHP" "$DMHX" > "$DMHW/docs/STATUS.md"
+dmhrc=$(dmh_rc "$DMHW")
+(( dmhrc == 0 )) \
+    && ok "doc-main-hashes accepts a port's origin beside its port on main (same patch)" \
+    || bad "doc-main-hashes refused a correct cherry-pick line: rc=$dmhrc"
+printf -- '- `%s` on `feature` has landed on `main`.\n' "$DMHX" > "$DMHW/docs/STATUS.md"
+dmhrc=$(dmh_rc "$DMHW")
+(( dmhrc == 1 )) \
+    && ok "doc-main-hashes: naming the branch that holds a commit does not put it on main" \
+    || bad "doc-main-hashes accepted the original of a cherry-pick as main's: rc=$dmhrc (want 1)"
+
+# The private repository's main is not the public main: no reference, no verdict.
+# The clones with an identity, as dmh_git: a clone writes reflogs, and without
+# one git guesses an address from the host's name, reading /etc/mailname,
+# /etc/hosts and /etc/resolv.conf (the access audit, 2026-10-17).
+dmh_clone() { git -c user.name=t -c user.email=t@example.com clone -q "$@" 2>/dev/null; }
+dmh_clone --bare "$DMHW" "$DMH/ivoitovych/qca9377-bt-hang-private.git"
+dmh_clone "$DMH/ivoitovych/qca9377-bt-hang-private.git" "$DMH/privwork"
+dmhrc=$(dmh_rc "$DMH/privwork")
+(( dmhrc == 3 )) \
+    && ok "doc-main-hashes will not judge against another repository's main (inconclusive)" \
+    || bad "doc-main-hashes judged against a non-public main: rc=$dmhrc (want 3)"
+dmh_clone --depth 1 "file://$DMH/ivoitovych/qca9377-bt-hang.git" "$DMH/shallow"
+dmhrc=$(dmh_rc "$DMH/shallow")
+(( dmhrc == 3 )) \
+    && ok "doc-main-hashes calls a shallow clone inconclusive, never clean" \
+    || bad "doc-main-hashes on a shallow clone returned rc=$dmhrc (want 3)"
+rm -rf "$DMH"
+
 # ── NON-ASCII IN THE LOGS, WHICH THE UPSTREAM REPORT NOW DEPENDS ON ──────
 #
 # The second headset that reproduced the fault is recorded by BlueZ, the kernel
@@ -13200,13 +13327,26 @@ env "${INCENV[@]}" BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER=none tools/bt-inci
 (( incsnrc != 0 )) && grep -q "^sanitised=NO-SANITISER" "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null \
     && ok "bt-incident with no sanitiser available exits non-zero and says NO-SANITISER" \
     || bad "a session with no sanitiser exited $incsnrc"
-printf '#!/bin/sh\nexit 0\n' > "$INCS/bin/ok-sanitiser"; chmod +x "$INCS/bin/ok-sanitiser"
-rm -rf "$INCS/repo"; mkdir -p "$INCS/repo"
+printf '#!/bin/sh\necho "$1" >> "%s/sanitised.log"\nexit 0\n' "$INCS" > "$INCS/bin/ok-sanitiser"; chmod +x "$INCS/bin/ok-sanitiser"
+rm -rf "$INCS/repo"; mkdir -p "$INCS/repo"; : > "$INCS/sanitised.log"
 env "${INCENV[@]}" BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER="$INCS/bin/ok-sanitiser" \
     tools/bt-incident sanitiser-ok-check --since '10 minutes ago' >/dev/null 2>&1; incsokrc=$?
 (( incsokrc == 0 )) && grep -q "^sanitised=yes" "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null \
     && ok "bt-incident still reports sanitised=yes when every file passes" \
     || bad "a passing sanitiser was not reported as yes (rc=$incsokrc)"
+# And `yes` is earned: every non-empty journal or text file of the session was
+# handed to the sanitiser. Checked only through the manifest, a loop that
+# skipped every file also said `yes` (devtools/mutate, 2026-10-17: `|| continue`
+# made `&& continue` survived) — raw text under a manifest that vouched for it.
+# Two files are written after the loop, on purpose: MANIFEST.txt, and
+# hci-captures.txt, which lists capture paths, sizes and gap counters and
+# carries no address.
+INCSFILES=$(find "$INCS"/repo/evidence/sessions/2* -maxdepth 1 -type f -size +0 \( -name '*.log' -o -name '*.txt' \) \
+            ! -name MANIFEST.txt ! -name hci-captures.txt 2>/dev/null | sort)
+INCSMISS=$(comm -23 <(echo "$INCSFILES") <(sort -u "$INCS/sanitised.log"))
+[[ -n "$INCSFILES" && -z "$INCSMISS" ]] \
+    && ok "bt-incident hands every non-empty file of the session to the sanitiser ($(grep -c . <<<"$INCSFILES") of them)" \
+    || bad "files of the session the sanitiser never saw: $(tr '\n' ' ' <<<"${INCSMISS:-(the session has no files)}")"
 rm -rf "$INCS"
 
 # ── bt-audio-policy: a partial metadata update keeps the keys it does not name ─
@@ -14071,11 +14211,25 @@ else
 fi
 
 if [[ -z "$LOOSE" ]] && (( ${TRIALCALLS:-0} > 0 )); then
-    ok "all $TRIALCALLS bt-trial invocations go through the sandboxed trial() helper"
+    ok "no bt-trial lifecycle verb is called outside the wrappers ($TRIALCALLS spelled-out calls, every one a read-only report)"
 else
     bad "bt-trial invoked outside trial() — may write to the real evidence tree:"
     while IFS= read -r l; do echo "        $l"; done <<<"$LOOSE"
 fi
+# AND THE WRAPPERS THEMSELVES. The count above sees spelled-out verbs only.
+# Five functions run `tools/bt-trial "$@"` — trial, trial_in, tl, tlt, tlnh —
+# and each must name BOTH places bt-trial writes: BT_REPO (results.tsv) and
+# BT_EVIDENCE_REPO (bt-incident's sessions), in the lines that build its call.
+# A sixth wrapper that forgot one passed every check here until 2026-10-17.
+TWRAPS=$(suite_cat | grep -cE '^[^#]*tools/bt-trial "\$@"' || true)
+TWBAD=$(suite_cat | awk '{ l[NR] = $0 }
+    /^[^#]*tools\/bt-trial "\$@"/ {
+        ctx = l[NR-3] " " l[NR-2] " " l[NR-1] " " $0
+        if (ctx !~ /BT_REPO=/ || ctx !~ /BT_EVIDENCE_REPO=/) print "line " NR ": " $0
+    }')
+(( ${TWRAPS:-0} >= 5 )) && [[ -z "$TWBAD" ]] \
+    && ok "all $TWRAPS bt-trial wrappers set both BT_REPO and BT_EVIDENCE_REPO" \
+    || bad "a bt-trial wrapper sets only one destination ($TWRAPS wrappers): $(tr '\n' '|' <<<"$TWBAD")"
 
 # The contract tag may be set in ONE place. Anywhere else it would be a way to
 # walk a leak past devtools/sandbox labelled as a contract read.

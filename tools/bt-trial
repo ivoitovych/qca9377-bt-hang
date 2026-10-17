@@ -1062,15 +1062,18 @@ hang|ok)
     # BUT THE BOUND IS CONDITIONAL. If --list-boots answers nothing, enum_until
     # stays empty and this is the unbounded whole-boot read again. The text
     # `--until` is still on the line, so the source check for unbounded reads
-    # passes it. So the read also runs under the descriptive scan's budget, and
-    # a read the budget cut short records `?`: not known, rather than a `no`
-    # that was never measured.
+    # passes it. So the read always runs under the descriptive scan's budget.
+    # A read that did not finish cleanly records `?`: not known, rather than a
+    # `no` that was never measured. That covers the budget's exit 124 and any
+    # other failure (a journal it may not read, a --until it rejects, a timeout
+    # that could not start it). Without --grep, journalctl has no harmless
+    # non-zero exit, which is why the descriptive scan above has to allow one.
     ejrc=0
     ej=$(timeout "${BT_TRIAL_SCAN_BUDGET:-20}" journalctl -k -b 0 ${enum_until:+--until "$enum_until"} --no-pager 2>/dev/null) || ejrc=$?
     n_enum=$(grep -c "idVendor=${BT_VID:-13d3}, idProduct=${BT_PID:-3503}" <<<"$ej" || true)
     if (( ${n_enum:-0} > 0 )); then
         enum_at_boot=yes
-    elif (( ejrc == 124 )); then
+    elif (( ejrc != 0 )); then
         enum_at_boot="?"
     else
         enum_at_boot=no

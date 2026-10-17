@@ -1,0 +1,221 @@
+#!/bin/bash
+# system-upgrade — the investigation machine's deploy, rehearsed on a scratch
+# machine: the tools it runs, a trial open, `install.sh --tools-only` from this
+# checkout, daemon-reload, the shutdown's stop of the trial unit, then uninstall.
+#
+#   BT_SYSTEM_TEST=1 tests/system-upgrade <old-tree> [mitigation|experiment]
+#
+# <old-tree>: the files of the commit the machine was installed from. For the
+# investigation machine that is the 2026-09-18 tools, cccf0fe (docs/STATUS.md:
+# the installed bt-trial is blob 79173bc5, which cccf0fe carries). CI fetches it.
+#
+# WHY THIS EXISTS. tests/system-roundtrip installs onto a clean machine. The
+# investigation machine is not one: it carries the project's own older copies,
+# its units are enabled, and a trial is open. Its next deploy is an UPGRADE,
+# with --tools-only (install.sh: deploy the files, arm nothing), and the trial
+# it interrupts is closed at the next shutdown by the NEW bt-trial, from the
+# state the OLD one wrote. Every one of those steps has its own way to go wrong,
+# and none of them is exercised by a fresh install:
+#   - an upgrade's differing files were taken for foreign ones (.pre copies,
+#     and an uninstall that put the old tools back);
+#   - --tools-only reverted the experiment baseline twice (08-19, 09-01);
+#   - the old trial's state must be closed by the new closer, and its row must
+#     reach results.tsv inside the unit's stop timeout;
+#   - the new report must read the row the new closer writes.
+#
+# WHAT IT CANNOT SHOW. This is a scratch VM: no Bluetooth controller, no btusb
+# with E3, not the investigation machine's kernel. Nothing a tools deploy
+# installs touches those (the modprobe, udev, journald and bluetoothd files are
+# byte-identical between cccf0fe and main), but the controller's behaviour is
+# not under test here.
+#
+# Gated like system-roundtrip, and more: it refuses wherever a deployment, an
+# open trial, an experiment stamp or the investigation machine's checkout path
+# exists. The investigation machine fails all four.
+
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+NEW=$PWD
+
+pass=0; fail=0
+ok()  { echo "  ✓ $*"; pass=$((pass + 1)); }
+bad() { echo "  ✗ $*"; fail=$((fail + 1)); }
+
+OLD="${1:-}"; MODE="${2:-mitigation}"
+echo "system upgrade rehearsal — ${OLD:-?} installed, a trial open, --tools-only from here ($MODE)"
+echo "──────────────────────────────────────────────────────────────────────"
+
+# ── gates ─────────────────────────────────────────────────────────────────
+if [[ "${BT_SYSTEM_TEST:-0}" != "1" ]]; then
+    echo "  · refusing: set BT_SYSTEM_TEST=1 to run (this test INSTALLS, for real)"
+    exit 0
+fi
+[[ -n "$OLD" && -x "$OLD/install.sh" ]] || { echo "  ✗ usage: tests/system-upgrade <old-tree> [mitigation|experiment]" >&2; exit 2; }
+[[ "$MODE" == mitigation || "$MODE" == experiment ]] || { echo "  ✗ unknown mode: $MODE" >&2; exit 2; }
+# The investigation machine's evidence checkout: the installed bt-trial looks
+# there (tools/bt-trial, REPO candidates). Its presence means that machine.
+EVREPO=/root/exp/qca9377-bt-hang
+for p in /usr/local/share/qca9377-bt-hang "${BT_STATE:-/run/bt-trial}/current" "$EVREPO"; do
+    if [[ -e "$p" ]]; then
+        echo "  ✗ refusing: $p exists — this is not a scratch machine." >&2
+        exit 1
+    fi
+done
+if [[ $EUID -ne 0 ]]; then
+    echo "  · refusing: needs root, and this is not root"
+    exit 0
+fi
+SD_STATE=$(systemctl is-system-running 2>/dev/null)
+if ! [[ -d /run/systemd/system && ( "$SD_STATE" == running || "$SD_STATE" == degraded ) && -d /etc/udev/rules.d ]]; then
+    echo "  · skipped: systemd state '${SD_STATE:-none}' — an install cannot complete here"
+    exit 0
+fi
+
+# ── what is watched ───────────────────────────────────────────────────────
+# Every file and link where an install can write: content hashes, and size
+# with mtime for the large third-party binaries a hosted runner keeps in
+# /usr/local/bin (none of ours is near 8 MB).
+WATCH=(/usr/local/bin /usr/local/sbin /usr/local/share/qca9377-bt-hang /etc/systemd/system
+       /etc/modprobe.d /etc/udev/rules.d /etc/systemd/journald.conf.d)
+snapshot() {
+    local d p
+    for d in "${WATCH[@]}"; do [[ -e "$d" ]] && find "$d" \( -type f -o -type l \) -print0 2>/dev/null; done \
+    | sort -z | while IFS= read -r -d '' p; do
+        if [[ -L "$p" ]]; then printf '%s link:%s\n' "$p" "$(readlink "$p")"
+        elif (( $(stat -c %s "$p") > 8000000 )); then printf '%s size:%s\n' "$p" "$(stat -c %s:%Y "$p")"
+        else printf '%s %s\n' "$p" "$(sha256sum < "$p" | cut -c1-16)"; fi
+    done
+}
+# The install_file destinations of a tree, with their sources: "dst src".
+destinations() {
+    awk '{ while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } print }' "$1/install.sh" \
+    | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"[[:space:]]+[^[:space:]]+' \
+    | awk '{ s = $2; gsub(/"/, "", s); sub(/^\$SRC\//, "", s); print $3, s }' | sort -u
+}
+unit_states() {   # "unit enabled-state active-state", for every project unit
+    local u
+    for u in $(systemctl list-unit-files 'bt-*' --no-legend --no-pager 2>/dev/null | awk '{print $1}'); do
+        printf '%s %s %s\n' "$u" "$(systemctl is-enabled "$u" 2>/dev/null)" "$(systemctl is-active "$u" 2>/dev/null)"
+    done
+}
+changed_paths() { diff <(cut -d' ' -f1,2 <<<"$1") <(cut -d' ' -f1,2 <<<"$2") | sed -n 's/^[<>] \([^ ]*\) .*/\1/p' | sort -u; }
+
+S0=$(snapshot)
+
+# ── the machine as it stands: the old install, a checkout, a trial ───────
+mkdir -p "$EVREPO" && git -C "$EVREPO" init -q && cp "$NEW/install.sh" "$EVREPO/"
+OIOUT=$( (cd "$OLD" && ./install.sh --apply) 2>&1 ); oirc=$?
+echo "  · the old tree's install.sh --apply: rc=$oirc (its last line: $(tail -1 <<<"$OIOUT"))"
+OLDDST=$(destinations "$OLD")
+# Some destinations are conditional (install.sh installs the btmon-based ones
+# only where btmon exists), so the old install is judged by what this
+# rehearsal needs: the trial's tool, its library, its unit and bt-mode.
+absent=$(while read -r d s; do [[ -e "$d" || -e "$d.disabled" ]] || echo "$d"; done <<<"$OLDDST")
+need=$(for f in /usr/local/bin/bt-trial /usr/local/bin/lib/trial-summary.awk \
+                /etc/systemd/system/bt-trial-auto.service /usr/local/bin/bt-mode; do [[ -e "$f" ]] || echo "$f"; done)
+[[ -z "$need" ]] && ok "the old tree is installed: $(( $(grep -c . <<<"$OLDDST") - $(grep -c . <<<"$absent") )) of $(grep -c . <<<"$OLDDST") destinations, the trial's tool, library and unit among them" \
+                 || { bad "the old install lacks what the trial needs:"; sed 's/^/      /' <<<"$need"; }
+[[ -n "$absent" ]] && echo "  · not installed by the old tree here (conditional): $(tr '\n' ' ' <<<"$absent")"
+if [[ "$MODE" == experiment ]]; then
+    EMOUT=$(/usr/local/bin/bt-mode experiment 2>&1); emrc=$?
+    echo "  · the old bt-mode experiment: rc=$emrc (its last line: $(tail -1 <<<"$EMOUT"))"
+fi
+systemctl start bt-trial-auto 2>/dev/null
+CUR="${BT_STATE:-/run/bt-trial}/current"
+if [[ -e "$CUR" ]]; then
+    ok "a trial is open, opened by the old bt-trial ($(grep -E '^(build|n)=' "$CUR" | tr '\n' ' '))"
+else
+    bad "the old bt-trial opened no trial: $(journalctl -u bt-trial-auto -b --no-pager -n 5 -o cat 2>/dev/null | tr '\n' '|')"
+fi
+CUR_BEFORE=$(cat "$CUR" 2>/dev/null)
+MODE_BEFORE=$(cat /usr/local/share/qca9377-bt-hang/mode 2>/dev/null)
+DISABLED_BEFORE=$(find /etc -name '*.disabled' 2>/dev/null | sort)
+U1=$(unit_states); S1=$(snapshot)
+
+# ── the deploy: --tools-only from this checkout ───────────────────────────
+TOUT=$(./install.sh --tools-only 2>&1); trc=$?
+(( trc == 0 )) && ok "install.sh --tools-only completed" \
+               || { bad "install.sh --tools-only failed (rc=$trc)"; tail -5 <<<"$TOUT" | sed 's/^/      /'; }
+# It ran nothing but file operations: run() prints "  + <command>" for each
+# command it executed, and install.sh prints "  + wrote <file>" for the files it
+# generates by redirect (the udev rules, the stamp); the snapshot below judges
+# their content.
+ran=$(grep -E '^  \+ ' <<<"$TOUT" | grep -vE '^  \+ (install|rm|rmdir|mkdir|wrote) ')
+[[ -z "$ran" ]] && ok "--tools-only executed only file operations ($(grep -cE '^  \+ ' <<<"$TOUT") of them)" \
+                || { bad "--tools-only executed a system command:"; sed 's/^/      /' <<<"$ran"; }
+S2=$(snapshot); U2=$(unit_states)
+NEWDST=$(destinations "$NEW")
+# A destination absent before and after is a conditional one this machine
+# does not get (btmon); one present before must hold this checkout's file.
+stale=$(while read -r d s; do
+            [[ -e "$d.disabled" ]] && continue
+            [[ ! -e "$d" ]] && ! grep -q "^$d " <<<"$S1" && continue
+            cmp -s "$NEW/$s" "$d" || echo "$d"
+        done <<<"$NEWDST")
+[[ -z "$stale" ]] && ok "every destination now holds this checkout's file" \
+                  || { bad "destinations not updated:"; sed 's/^/      /' <<<"$stale"; }
+# What changed is exactly the destinations whose source changed, and nothing else.
+expected=$(while read -r d s; do
+               [[ -e "$d.disabled" ]] && continue
+               [[ -e "$d" ]] || continue
+               os=$(awk -v d="$d" '$1 == d {print $2}' <<<"$OLDDST")
+               { [[ -n "$os" ]] && cmp -s "$OLD/$os" "$NEW/$s"; } || echo "$d"
+           done <<<"$NEWDST" | sort -u)
+actual=$(changed_paths "$S1" "$S2")
+extra=$(comm -13 <(echo "$expected") <(echo "$actual") | grep .)
+[[ -z "$extra" ]] && ok "nothing changed but the $(grep -c . <<<"$expected") destinations whose source changed" \
+                  || { bad "paths changed that the deploy had no reason to touch:"; sed 's/^/      /' <<<"$extra"; }
+pre=$(find /usr/local /etc -name '*.pre-qca9377-bt-hang' 2>/dev/null)
+[[ -z "$pre" ]] && ok "no .pre-qca9377-bt-hang copy of the project's own earlier files" \
+                || { bad "the upgrade kept the project's own files as foreign:"; sed 's/^/      /' <<<"$pre"; }
+[[ "$U2" == "$U1" ]] && ok "every project unit is as enabled and as active as before" \
+                     || { bad "unit states changed:"; diff <(echo "$U1") <(echo "$U2") | sed 's/^/      /'; }
+[[ "$(cat "$CUR" 2>/dev/null)" == "$CUR_BEFORE" && -n "$CUR_BEFORE" ]] && ok "the open trial's state is untouched" \
+                                                                        || bad "the open trial's state changed or vanished"
+[[ "$(cat /usr/local/share/qca9377-bt-hang/mode 2>/dev/null)" == "$MODE_BEFORE" \
+   && "$(find /etc -name '*.disabled' 2>/dev/null | sort)" == "$DISABLED_BEFORE" ]] \
+    && ok "the mode stamp and every .disabled file are as bt-mode left them (${MODE_BEFORE:-no stamp}; $(grep -c . <<<"$DISABLED_BEFORE") moved aside)" \
+    || bad "the baseline moved: mode '${MODE_BEFORE}' -> '$(cat /usr/local/share/qca9377-bt-hang/mode 2>/dev/null)'"
+
+# ── the operator's next step, and the shutdown ────────────────────────────
+systemctl daemon-reload
+U3=$(unit_states)
+[[ "$U3" == "$U1" ]] && ok "after daemon-reload, still nothing armed and nothing stopped" \
+                     || { bad "daemon-reload changed unit states:"; diff <(echo "$U1") <(echo "$U3") | sed 's/^/      /'; }
+RESULTS="$EVREPO/evidence/trials/results.tsv"
+rows_before=$(grep -c . "$RESULTS" 2>/dev/null)
+t0=$(date +%s); systemctl stop bt-trial-auto; src=$?; t1=$(date +%s)
+LIMIT=$(systemctl show -p TimeoutStopUSec --value bt-trial-auto 2>/dev/null)
+rows_after=$(grep -c . "$RESULTS" 2>/dev/null)
+(( src == 0 )) && [[ ! -e "$CUR" ]] && (( ${rows_after:-0} > ${rows_before:-0} )) \
+    && ok "the shutdown's stop closed the old trial with the new bt-trial in $((t1 - t0)) s (stop timeout $LIMIT), and wrote its row" \
+    || bad "stop of bt-trial-auto: rc=$src, state $([[ -e "$CUR" ]] && echo 'still open' || echo closed), rows ${rows_before:-0} -> ${rows_after:-0}; $(journalctl -u bt-trial-auto -b --no-pager -n 4 -o cat 2>/dev/null | tr '\n' '|')"
+row=$(tail -1 "$RESULTS" 2>/dev/null)
+[[ "$(awk -F'\t' '{print NF}' <<<"$row")" == "$(head -1 "$RESULTS" 2>/dev/null | awk -F'\t' '{print NF}')" ]] \
+    && echo "  · the row: $(awk -F'\t' '{print "trial_result=" $9, "bt1_status=" $8, "enum_at_boot=" $22}' <<<"$row")"
+ROUT=$(/usr/local/bin/bt-trial report 2>&1); rrc=$?
+(( rrc == 0 )) && ok "the installed bt-trial report reads it" \
+               || { bad "bt-trial report failed (rc=$rrc)"; tail -3 <<<"$ROUT" | sed 's/^/      /'; }
+grep -qE 'Stopping timed out|Killing process|State .stop-sigterm. timed out' <(journalctl -u bt-trial-auto -b --no-pager 2>/dev/null) \
+    && bad "systemd killed the close: $(journalctl -u bt-trial-auto -b --no-pager -o cat | grep -E 'timed out|Killing' | head -2 | tr '\n' '|')" \
+    || ok "systemd did not have to kill the close"
+
+# ── and back: uninstall, then compare with the machine before any of it ───
+UOUT=$(./uninstall.sh --apply 2>&1); urc=$?
+(( urc == 0 )) && ok "uninstall.sh --apply completed" \
+               || { bad "uninstall.sh --apply failed (rc=$urc)"; tail -5 <<<"$UOUT" | sed 's/^/      /'; }
+left=$(while read -r d s; do [[ -e "$d" || -e "$d.pre-qca9377-bt-hang" || -e "$d.disabled" ]] && echo "$d"; done <<<"$NEWDST")
+[[ -z "$left" ]] && ok "no destination, .pre or .disabled copy survives the uninstall" \
+                 || { bad "left behind after the uninstall:"; sed 's/^/      /' <<<"$left"; }
+S9=$(snapshot)
+drift=$(changed_paths "$S0" "$S9")
+[[ -z "$drift" ]] && ok "every watched path is as it was before the old install" \
+                  || { bad "paths that differ from the machine before the old install:"; sed 's/^/      /' <<<"$drift" | head -20; }
+rm -rf "$EVREPO"; rmdir /root/exp 2>/dev/null
+
+echo
+if (( fail )); then
+    echo "FAILED: $fail of $((pass + fail)) upgrade checks"
+    exit 1
+fi
+echo "all $pass upgrade checks pass"

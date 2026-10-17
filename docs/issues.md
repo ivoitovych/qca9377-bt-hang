@@ -354,8 +354,13 @@ SCO operation fatal when others succeed.
 
 ## BT-2 — Opening the Bluetooth panel causes a permanent 16.0 s HCI command desync
 
-**Status:** characterised.
-**Reportable:** ✅ **yes, independently, and it is the easiest thing here to report.**
+**Status:** characterised; **covered upstream by `dc16388d45ec`**, whose message says that
+without the entry "BLE scanning fails with HCI unexpected event opcode 0x2005 errors"
+(`git show -s dc16388d45ec`). On E3: none in either `-38` boot
+(`journalctl -k -b 0 --grep "unexpected event for opcode 0x2005"` and `-b -1`: "No entries",
+2026-10-17).
+**Reportable:** no longer separately (2026-10-17). It was rated "yes, independently, the easiest thing
+here to report" before the upstream commit was found to name it.
 
 Opening the GNOME Bluetooth settings panel is followed within 0.06–10 s by
 `unexpected event for opcode 0x2005` (`HCI_LE_Set_Random_Address`), which then repeats at

@@ -75,17 +75,18 @@ Recent detail may be shortened. Settled state is never dropped.
 - **Which record is current:** the submission rows of `docs/STATUS.md` for every upstream state;
   STATUS's issue rows and the list below follow them.
 
-**The state at a glance (2026-10-14; the submission rows of `docs/STATUS.md` win):**
-- **BT-1's fix in stable:** released in 7.2.10 and 6.18.56; queued for 6.12, 6.6, 6.1, 5.15 and
-  5.10 (`EX-061`). Ubuntu's `7.0.0-38` stock btusb lacks it.
+**The state at a glance (2026-10-17; the submission rows of `docs/STATUS.md` win):**
+- **BT-1's fix in stable:** released in 7.2.10 and 6.18.56 (10-11) and 6.12.113 (10-15); queued for
+  6.6, 6.1, 5.15 and 5.10 (`EX-061`). Ubuntu's `7.0.0-38` stock btusb lacks it.
 - **Accepted upstream, ours:**
-  - kernel `86ef0f58bdec` (BT-8): mainline since v7.3-rc7, queued for stable 7.2, 6.18, 6.12, 6.6, 6.1;
+  - kernel `86ef0f58bdec` (BT-8): mainline since v7.3-rc7; released in 7.2.11, 6.18.57 and 6.12.113 (10-15); queued for 6.6, 6.1;
   - BlueZ `a734b06059cb` and `0bed9886cff3` (BT-7);
   - BlueZ `ae23df052290` and `6f5eeb402d3b` (M-3);
   - BlueZ `8da7e648a9fb` (emulator hook leak) and `f3344d20d904`, `2942883d2738`, `49a70562f0bf`
-    (the BT-9 test), applied 10-12; `git range-diff` against what was sent not yet done;
-  - the BT-9 stable backports of `96d006ae6445` to 6.12, 6.6 and 6.1, queued 10-11.
-- **Waiting for replies:** the Tested-by on Hui Peng's mesh_tx leak patch (10-06).
+    (the BT-9 test), applied 10-12, identical to what was sent (same patch-id and message, checked 10-17);
+  - the BT-9 stable backports of `96d006ae6445`: 6.12 released in 6.12.113 (10-15, `9a328ae01489`); 6.6 and 6.1 queued.
+- **Waiting for replies:** the Tested-by on Hui Peng's mesh_tx leak patch (10-06); the #1554
+  reporter's retest (10-14: updated to 6.18.50, "will check").
 - **Operator decisions open:**
   - the a2dp duplicate-check cleanup;
   - an Ubuntu SRU for `dc16388d45ec`;
@@ -98,16 +99,17 @@ Recent detail may be shortened. Settled state is never dropped.
   - **Since 2026-10-11 16:26 the laptop runs `7.0.0-38` with E3 built for it** (`updates/btusb.ko`, the exact upstream entry; srcversion `D1DEA96A0C95BFAB05CEE01`; the boot log shows `patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded). The build is on private `diag/e3-btusb-for-7.0.0-38-20261010`.
   - `-38`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
   - `-38` also carries the BT-9 fix (`96d006ae6445`). The discovery stuck since 10-04 had already ended on 10-10 at 15:02, at the operator's adapter power cycle (§5; corrected 2026-10-14).
-  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` (`d5272a6`) is installed — the operator's `install.sh --tools-only` plus `daemon-reload`.
+  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, cherry-picked from `d5272a6` on `tests/unit-testing-introduction`, plus `25dfc68`) but not on the machine. The route is the operator's open decision: `install.sh --tools-only` plus `daemon-reload`, or `bt-trial` alone (STATUS).
+  - **On 2026-10-13 at 20:26 the laptop stopped abruptly** (no shutdown sequence in the journal; cause not recorded) and rebooted at 20:29. The second "E3 #1" lost its row too, and the fix could not have prevented that: an abrupt stop runs no ExecStop. Its E3 result is whole in the journal: 7 links, 0 timeouts (`scripts/sco-ledger.sh -1`).
   - Only the operator touches the machine's Bluetooth or kernel.
-  - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer. It has been paused since 2026-10-11 17:23 (free space then; 115 GB free on 10-13); restarting it is the operator's decision, and about nine days of margin remained on 10-13 (`docs/STATUS.md`). Rules: §7, "Evidence".
+  - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer. It has been paused since 2026-10-11 17:23 (free space then; 108 GB free on 10-17), and the 10-13 reboot removed the timer. Restarting it is the operator's decision. On 10-17, 159 archived files still stood in front of the first unarchived capture: about three weeks at the current rate (`docs/STATUS.md`). Rules: §7, "Evidence".
 - **Open investigation:** `U10`, the Tronsmart T8 silent on SBC-XQ. Waiting on the operator's test-sound check (`docs/issues.md`).
 - **Who works where:**
   - **Active development is on `main`** (operator, 2026-10-13). The held documentation branch, the E3 build branch and `ci/upstream-ci-local` were landed on `main` that day; the held branch as new commits with its privacy fixes, never as a merge.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-14 (§0 Foundation; state synced with STATUS; BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
+**Last updated: 2026-10-17 (the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; the trial fix's hash on `main`; earlier: 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
 `kernel/mgmt-flush-status` the same day; the next exhibit on `main` is EX-063) — no tip hash:
 it rotted within hours (`R2-13`).
 
@@ -137,7 +139,9 @@ it rotted within hours (`R2-13`).
 > 2026-10-10 04:25 +0200** (three mails, Message-IDs `<20261010022523.2789588-{1,2,3}-…>`;
 > watch for Queued/FAILED). **BlueZ leak fix and test series sent 05:18 +0200** to
 > linux-bluetooth (`<20261010031846.2842837-1-…>`, `<20261010031852.2842893-1..4-…>`).
-> **Next:** replies on all three submissions.
+> **Outcome:** the three stable backports were queued 2026-10-11 (6.12's released in 6.12.113 on
+> 2026-10-15; 6.6 and 6.1 still queued) and the BlueZ series was applied 2026-10-12 (STATUS
+> submission rows).
 > Reply on BlueZ #1554 posted 2026-10-09. The laptop's discovery stayed stuck until the operator's
 > adapter power cycle on 2026-10-10 (powered again 15:02:44; ⚠️ corrected 2026-10-14 — this line
 > used to say "until the reboot into `7.0.0-38`", see §5); traces preserved in `/root/bt-trace-keep/` with
@@ -148,8 +152,9 @@ it rotted within hours (`R2-13`).
 > `ae23df052290` + `6f5eeb402d3b`, identical to what was sent (`git range-diff`: `=`). Luiz then
 > converted `unit/test-mgmt` to the tester framework (`866b0b8b1`), our six cases intact.
 > BlueZ ×2 applied 09-21 (`a734b06059cb`, `0bed9886cff3`); kernel MGMT fix
-> applied to bluetooth-next 09-29 (`86ef0f58bdec`, waiting for mainline); stable backport of
-> `dc16388d45ec` **queued for 7.2, 6.18, 6.12, 6.6, 6.1, 5.15, 5.10** (`EX-061`). Nothing owed.
+> applied to bluetooth-next 09-29 (`86ef0f58bdec`; since then in mainline v7.3-rc7 and released in
+> 7.2.11, 6.18.57 and 6.12.113); stable backport of `dc16388d45ec` **queued for 7.2, 6.18, 6.12,
+> 6.6, 6.1, 5.15, 5.10** (`EX-061`; since then released in 7.2.10, 6.18.56 and 6.12.113). Nothing owed.
 > ⚠️ The redundant a2dp v2 was **also applied**, 10-07, as `d84171e6c` on top of v1: master checks
 > `setup->stream` twice (dead code). Cleanup prepared, **not sent — operator's decision**
 > (`patches/bluez/cleanup/`, SEND.txt item 3).
@@ -281,8 +286,8 @@ fault is not specific to Disconnect.
 - **Every recovery tried on an already-wedged controller failed** (`EX-039`); the one reset
   issued *before* any timeout recovered it, and it failed again 132 s later (`EX-004`).
   `hdev->reset` is NULL on the kernels run here — `13d3:3503` had no quirks entry ⚠️ **until
-  `dc16388d45ec`** (master, 2026-08-07, for a BLE-scan fault; mainline v7.3-rc1, in no stable
-  line as of 2026-10-02) — and that entry's setup/reset path was **untested here** (`DR-01`)
+  `dc16388d45ec`** (master, 2026-08-07, for a BLE-scan fault; mainline v7.3-rc1; in stable 7.2.10 and
+  6.18.56 since 2026-10-11 and 6.12.113 since 2026-10-15, queued for 6.6, 6.1, 5.15, 5.10) — and that entry's setup/reset path was **untested here** (`DR-01`)
   until 2026-09-26. ✅ *Since then:* the setup half alone (E1) ran 58 links / 3 boots /
   2 headsets with 0 timeouts (`EX-055`, `EX-056`, `EX-058`); the exact entry (E3) ran 16 links /
   2 headsets with 0 timeouts (`EX-057`). **The missing entry is the cause**: on ROM firmware the
@@ -331,7 +336,7 @@ fault is not specific to Disconnect.
 **Both v1 patches are in BlueZ master, committed by the maintainer 2026-09-21T10:10-04:00 exactly
 as sent: `a734b0605` (adapter), `0bed9886c` (a2dp).** Thirty-eight days from first crash to tree.
 Every URL — kernel.org commits, lore, patchwork v1/v2, bot PRs — in the status table at the top
-of `patches/bluez/README.md`; no BlueZ release tag carries them yet (267 commits past 5.87).
+of `patches/bluez/README.md`; no BlueZ release tag carries them yet (master is `5.87-397-gfa6ba5502` on 2026-10-17).
 ⚠️ The v2 mails (22:47 CEST the same day) were sent 6.5 h *after* that, checked against a
 month-old cached checkout instead of a fetched `origin/master` — redundant, bot said "does not
 apply" for `0001`, all-PASS for `0002`. Lesson in code: `scripts/pre-send-check.sh` fetches and
@@ -503,17 +508,23 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 
 ## 8a. The test suite — rules the maintainer paid for (owner: the test-suite maintainer)
 
-*Written 2026-09-24, replacing the reservation. Each rule cost something; the instance
+*Written 2026-09-24, replacing the reservation; updated 2026-10-17. Each rule cost something; the instance
 that taught it and what it cost are in
 [`lessons/2026-08-22T1101Z-test-suite-maintainer.md`](lessons/2026-08-22T1101Z-test-suite-maintainer.md)
 and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T1200Z-test-suite-maintainer.md).*
 
 - **A new check must be observed to fail.** Write it, break what it guards, watch it go
-  red, restore. **Eight** checks have reached this suite green that *could not* fail. The
-  seventh was `rg … || true`, where a missing binary made a negative search read as a clean
-  one (`6a7c7a4`); the eighth was written **this week**, in the check policing this very
-  rule — a drift guard that matched its stem in a *comment*, so the code could drift and it
-  stayed green. Strip comments before asserting on source.
+  red, restore. Checks that *could not* fail keep reaching this suite green. The seventh
+  was `rg … || true`, where a missing binary made a negative search read as a clean one;
+  the eighth (2026-09-24) was in the check policing this very rule — a drift guard that
+  matched its stem in a *comment*, so the code could drift and it stayed green. Strip
+  comments before asserting on source. `devtools/mutate` found more on 2026-09-29.
+- **A step that passes when it skips must say why, where someone reads it.** CI's system
+  round trip, the only test of `install.sh`'s apply branch on a real system, printed
+  "skipped" and passed on every run until 2026-10-16: it asked `systemctl
+  is-system-running`, which exits non-zero for `degraded` as well, and a CI VM is
+  commonly degraded. Ask for exactly what is needed (systemd as PID 1), print the state
+  that was seen, and read a green step's log the first time it goes green.
 - **State the premise in code, not in a comment.** An assertion that says "this host has a
   readable journal" and never asks has two meanings and tests one. On a journal-less host
   it accepted `bt1_status=not_observed` — *"we looked and BT-1 did not happen"* — for a
@@ -537,13 +548,34 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
   dangerous outcome and a silent skip would never see it.
 - **Tests never touch the real evidence tree.** Everything reads through a seam
   (`BT_JOURNAL_FIXTURE`, `BT_COREDUMP_FIXTURE`, `BT_CAPTURE_SOURCE`, `BT_SNAPSHOT_DIR`,
-  `BT_REPO`, `BT_DESTDIR`), and fixtures carry placeholders (`AA:BB:CC:…`, `192.0.2.x`,
-  `example.com`) — never real-but-shortened data. The seam is complete **as measured**,
-  not as believed: every machine tool answers from a tripwire unless a test declares it,
-  `/proc`, `/sys` and the install paths resolve to an empty declared machine for the whole
-  run, nothing the run starts may outlive it, and CI runs the suite in `devtools/sandbox`'s
-  decoy world, which fails on any call, read or write that reaches the real machine
-  (tests/README.md, rule 5).
+  `BT_DESTDIR`), and fixtures carry placeholders (`AA:BB:CC:…`, `192.0.2.x`,
+  `example.com`) — never real-but-shortened data. `bt-trial` writes in two places, so two
+  variables guard it: `BT_REPO` (its `results.tsv`) and `BT_EVIDENCE_REPO` (the incident
+  `bt-incident` collects on a failed trial). Every call goes through a wrapper that sets
+  both, a check requires that of each wrapper, and `BT_EVIDENCE_REPO` points at the
+  declared machine for the whole run (tests/README.md, rule 4). The seam is complete **as
+  measured**, not as believed: every machine tool answers from a tripwire unless a test
+  declares it, `/proc`, `/sys` and the install paths resolve to a declared machine for the
+  whole run (empty, but for a fixture `/proc`), nothing the run starts may outlive it, and
+  CI runs the suite in `devtools/sandbox`'s decoy world, which fails on any call, read or
+  write that reaches the real machine (tests/README.md, rule 5).
+- **A stub that answers with silence is not the real neighbour.** The suite's PATH guard
+  answers every name `install.sh` installs with a recording stub that prints nothing, so no
+  test ever ran a tool beside the project's own tools it calls where they are installed.
+  `bt-trial`'s close calls `bt-state` and `bt-mark`, and the real `bt-state` reads the
+  whole boot's kernel journal with no budget: it sat ahead of the results row, and with the
+  real tools on the PATH the slow-journal close was killed with no row written (rc=124,
+  2026-10-16). Where a tool calls a sibling "if installed", run it once with the real
+  sibling, in `install.sh`'s layout.
+- **A deploy is an upgrade.** A fresh-install round trip cannot see what an upgrade does.
+  `install.sh` took the project's own older copies for foreign files (15 of them on the
+  investigation machine) and kept them for an uninstall to put back. Rehearse the
+  transition that will actually happen: the installed version and its state (a trial open,
+  the mode), the new deploy, the shutdown that runs the new code over the old state, and
+  back (`tests/system-upgrade`, CI).
+- **Ids on `main` are `main`'s.** `main` takes work as new commits, so a test-branch
+  commit's id is not on `main` even when its change is. Say where an id is: `main`'s own
+  id for what is on `main`, or the branch, by name, that holds it.
 - **A leak is only visible where the mock and the world disagree.** For weeks the suite
   called the real `journalctl`, `systemctl`, `logger` and `lsmod` — 312 calls a run — and
   every one passed, because on a bare host and in CI the real machine answered *nothing*,

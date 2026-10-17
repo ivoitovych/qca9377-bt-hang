@@ -30,7 +30,7 @@ log.
 | UBSan reports in unit programs | 7 sites | same 7 | same 7 | pre-existing, unchanged |
 | smatch, whole tree | 124 lines incl. VLA at `btdev.c:479:29` | 124 (only a2dp.c line shifts) | 123, VLA gone | as expected |
 | clang analyzer on touched files | btdev.c 2, a2dp.c 4 | a2dp.c the same 4 | btdev.c the same 2 | nothing new |
-| 11 emulator testers in QEMU/KVM, two rounds | 853 of 861 pass | not run (no emulator change) | 853 of 861, the same 8 fail | 0 of 860 case names differ |
+| 11 emulator testers in QEMU/KVM, two rounds | 855 of 861 pass | not run (no emulator change) | 855 of 861, the same 6 fail (4 mgmt, 2 mesh) | 0 of 860 case names differ |
 | A2 positive control | — | — | 3 entries: abort in mgmt-tester's first case; 0 entries: abort in l2cap-tester's first connect | the check fires |
 | `if (!setup->stream)` in `transport_cb()` | 2 | 1 | — | as intended |
 

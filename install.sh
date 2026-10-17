@@ -44,6 +44,7 @@ METRICS=1
 TOOLS_ONLY=0
 SKIPPED_DISABLED=0   # destinations left alone because bt-mode moved them aside (R2-58)
 PRESERVED=0          # pre-existing foreign files copied to <dst>.pre-qca9377-bt-hang (DR-08 F3)
+UPDATED=0            # this project's own earlier copies, replaced in place (an upgrade)
 for a in "$@"; do
     case "$a" in
         --apply)       APPLY=1 ;;
@@ -188,9 +189,26 @@ install_file() {
     # uninstaller moves that copy back. A destination identical to the source
     # (our own earlier deploy) needs no backup; a backup that already exists is
     # never overwritten, so the FIRST foreign file is the one that survives.
+    #
+    # AN UPGRADE IS NOT A COLLISION. A destination that differs from the source
+    # is most often this project's own older copy: every --tools-only deploy
+    # replaces the files the last one installed. Taken for a foreign file, each
+    # was copied to .pre-qca9377-bt-hang and announced "not ours", and
+    # uninstall.sh then moved the OLD copies back — an uninstall that put the
+    # previous deploy's tools and unit back, not the machine as it was. On the
+    # investigation machine, installed with the 2026-09-18 tools, that is 15
+    # files (2026-10-16). The first-install stamp says an earlier deploy is
+    # there: it is written once, after the first install's files, and removed
+    # only by uninstall.sh. With it present, the files at our destinations are
+    # that deploy's, and whatever was there before it was kept (or, before
+    # 2026-09-20, overwritten) by that first install. Without it, a differing
+    # file is foreign and kept, as before.
     if [[ -e "$DESTDIR$dst" ]] && ! cmp -s "$src" "$DESTDIR$dst"; then
         if [[ -e "$DESTDIR$dst.pre-qca9377-bt-hang" ]]; then
             echo "  ! $dst differs from the source — replaced; the earlier pre-install copy is kept"
+        elif [[ -s "$DESTDIR/usr/local/share/qca9377-bt-hang/installed-at" ]]; then
+            echo "  · $dst updated: the copy there is this project's earlier deploy"
+            UPDATED=$((UPDATED + 1))
         else
             echo "  ! $dst exists and is not ours — kept as $dst.pre-qca9377-bt-hang"
             run install -m "$mode" "$DESTDIR$dst" "$DESTDIR$dst.pre-qca9377-bt-hang"
@@ -629,6 +647,11 @@ fi
 if (( SKIPPED_DISABLED > 0 )); then
     echo "  ⚠️  $SKIPPED_DISABLED file(s) left as bt-mode moved them aside (.disabled sibling present)."
     echo "      The experiment baseline is UNCHANGED by this deploy. 'bt-mode status' shows it."
+    echo
+fi
+if (( UPDATED > 0 )); then
+    echo "  · $UPDATED file(s) of this project's earlier deploy replaced in place; no pre-install"
+    echo "    copy was made of them, so uninstall.sh removes them rather than restoring them."
     echo
 fi
 run udevadm control --reload-rules
