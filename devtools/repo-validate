@@ -253,6 +253,23 @@ if git -C "$ROOT" rev-parse HEAD >/dev/null 2>&1; then
     fi
 fi
 
+# --- commit ids the documents place on main -----------------------------------
+# A failure, not an alarm: a wrong id in BRIEF or STATUS is repeated by every
+# later reader, a recovery after a context reset included (devtools/doc-main-hashes).
+# Not in $checked, which counts files, like the suite above. A shallow clone
+# cannot answer and is shown as skipped, never as passed.
+if [[ -x "$ROOT/devtools/doc-main-hashes" ]]; then
+    dmh=$("$ROOT/devtools/doc-main-hashes" "$ROOT" 2>&1); dmhrc=$?
+    case "$dmhrc" in
+        0) printf '  ✓ %s\n' "$(tail -1 <<<"$dmh")" ;;
+        3) printf '  • %s\n' "$(tail -1 <<<"$dmh")" ;;
+        # Ids only on this branch: true once it fast-forwards, false if rewritten.
+        4) sed 's/^/  /' <<<"$dmh" ;;
+        *) printf '  ✗ %s\n' "commit ids the documents place on main"; fail=1
+           sed 's/^/      /' <<<"$dmh" ;;
+    esac
+fi
+
 if (( fail )); then echo "VALIDATION FAILED ($checked checked)"; exit 1; fi
 if (( checked == 0 )); then
     echo "no checkable files ($enumerated tracked/staged, none are scripts, units, rules, json or python)"

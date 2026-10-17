@@ -10,7 +10,8 @@ directory touches Bluetooth.
 |---|---|
 | `check [--quick]` | the one pre-commit command: repo-validate (incl. tests) + a full-tree scan + the journal contract + install state (`--quick` skips the install state) |
 | `repo-scan <dir> [--all]` | Refuse-to-publish scan: MAC addresses, BSSIDs, UUIDs, IPv4, **email addresses**, tool attribution, binary captures |
-| `repo-validate <dir>` | `bash -n`, `systemd-analyze verify`, `udevadm verify`, `jq`, `py_compile` over every tracked file |
+| `repo-validate <dir>` | `bash -n`, `systemd-analyze verify`, `udevadm verify`, `jq`, `py_compile` over every tracked file; then `doc-main-hashes` |
+| `doc-main-hashes [dir] [file...]` | a commit id BRIEF/STATUS/tooling-index place on `main` must be on the PUBLIC main (the remote whose URL is the public repository), or stand beside its cherry-pick there (same patch-id). An id only on this branch is PENDING (exit 4) while the branch can fast-forward, a failure once it cannot. A shallow clone or no public main reference is "inconclusive" (exit 3), never clean |
 | `repo-save <dir> "<msg>"` | stage everything (`git add -A`) → validate → scan → check the identity → commit → push → **verify the remote hash actually matches**; with a trial open it validates without the suite, and says so |
 | `coverage [--min N]` | How much of the shell this repo ships does `tests/run-tests` actually execute |
 | `assert-test-catches <file> <line> <substr>` | prove a suite invariant actually fails when violated |

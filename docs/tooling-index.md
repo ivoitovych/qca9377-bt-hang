@@ -121,6 +121,7 @@ run `bluetoothd -d` — this project ships that on in
 | Did the BlueZ patch guards fire? | `tools/bt-guards` |
 | What did the **kernel** say on the management channel in a window of a capture? | `tools/bt-ctrl-window <btsnoop> <from> <to> [--hci]` — decodes the records `btmon` prints as `Control Event: 0xffff`, drops every address-bearing line (`EX-044`) |
 | Publish-safety scan (MACs, BSSIDs, emails) | `devtools/repo-scan` |
+| Commit ids the documents place on `main` are on main (run by `repo-validate`) | `devtools/doc-main-hashes` |
 | **Which review findings are still open, across every register?** | `devtools/review-open` (`--all`, `--counts`) — reads the status column of `reviews/README.md`; the gate before anything is submitted |
 | Compile-test a kernel patch against the running kernel (no tree needed) | `scripts/build-bluetooth-module.sh [patch]` — `net/bluetooth` from `cache/linux` (or `BT_KSRC=<checkout>`) against `/lib/modules/$(uname -r)/build`; builds only, never installs |
 | **Run a kernel Bluetooth patch on this machine** (module swap, stock daemon, mgmt-channel capture) | `scripts/runtime-mgmt-test.sh status \| stock-daemon \| load unpatched\|patched \| trigger <label> \| restore \| patched-daemon` — refuses while `bt-window` or a trial is open; modules in `tmp/runtime/` from `BT_KSRC=cache/ubuntu-7.0.0-31 scripts/build-bluetooth-module.sh` (Ubuntu's source for the running kernel, not vanilla) |

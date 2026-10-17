@@ -26,10 +26,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # The invariants derive the file set from `git ls-files`, so the checkout
-      # must be a real repository. actions/checkout gives one at depth 1, which
-      # is enough — nothing here reads history.
+      # must be a real repository. Full history and every branch, because
+      # devtools/doc-main-hashes checks that a commit id the documents place on
+      # main is on main. At depth 1 it can only say "inconclusive".
+      #
+      # And the PUBLIC main, fetched by name. In the private repository's CI the
+      # checkout's own main is unrelated history, and judging against it would
+      # be judging against the wrong project. The tool picks the remote whose URL
+      # is the public repository; here that is `public` (in the public CI it is
+      # also `origin`, which is harmless).
+      - name: Fetch the public repository (doc-main-hashes judges against its main)
+        run: |
+          git remote add public https://github.com/ivoitovych/qca9377-bt-hang.git
+          git fetch --quiet --no-tags public
+
       # gawk, because ubuntu-latest ships mawk as `awk` and mawk 1.3.4 cannot
       # express the redaction patterns in tools/sanitize-logs.sh — it treats an
       # interval on a group as `+`, so `11:22` matches the MAC pattern while a
