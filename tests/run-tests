@@ -333,6 +333,11 @@ export BT_DEVFS_USB="$SUITE_MACHINE/devfs-usb"
 # session bus in, before handing it to sudo: none here, so nobody is notified.
 mkdir -p "$SUITE_MACHINE/run-user"
 export BT_RUN_USER_DIR="$SUITE_MACHINE/run-user"
+# And the evidence tree incidents are written into, which defaults to THIS
+# checkout's: rule 4's last check counts evidence/sessions after the run, and
+# this keeps a forgotten seam from writing there in the first place.
+mkdir -p "$SUITE_MACHINE/evidence-repo"
+export BT_EVIDENCE_REPO="$SUITE_MACHINE/evidence-repo"
 # And no bytecode written beside the Python under test: a fresh checkout gained
 # bin/__pycache__/ from every run.
 export PYTHONDONTWRITEBYTECODE=1
@@ -7124,7 +7129,8 @@ rm -rf "$EXF"
 # unreachable by construction.
 INCR=$(mktemp -d); mkdir -p "$INCR/tools"
 cp tools/bt-incident "$INCR/tools/"
-INCROUT=$(cd "$INCR" && ./tools/bt-incident no-evidence-tree 2>&1); increrc=$?
+# Unset, which is the condition under test: the run declares an evidence tree.
+INCROUT=$(cd "$INCR" && env -u BT_EVIDENCE_REPO ./tools/bt-incident no-evidence-tree 2>&1); increrc=$?
 (( increrc == 1 )) && [[ "$INCROUT" == *"has no evidence/ directory"* \
                       && "$INCROUT" == *"set BT_EVIDENCE_REPO"* ]] \
     && ok "bt-incident refuses to collect where there is no evidence tree" \
@@ -11251,7 +11257,7 @@ SRPXI=$(env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$SRPX
 (( srpxirc == 0 )) && [[ -e "$SRPX/usr/local/bin/bt-mark.pre-qca9377-bt-hang" ]] \
    && grep -q "original bt-mark" "$SRPX/usr/local/bin/bt-mark.pre-qca9377-bt-hang" \
    && ! grep -q "original bt-mark" "$SRPX/usr/local/bin/bt-mark" \
-   && [[ "$SRPXI" == *"not ours"* ]] \
+   && [[ "$SRPXI" == *"not ours"* && "$SRPXI" != *"earlier deploy replaced in place"* ]] \
     && ok "install.sh keeps a colliding pre-existing file as .pre-qca9377-bt-hang and says so" \
     || bad "a pre-existing file was overwritten without a copy (rc=$srpxirc)"
 SRPXU=$(stage_at "$SRPX"); srpxurc=$?
@@ -11283,6 +11289,7 @@ SRUPN=$(find "$SRUP" -name '*.pre-qca9377-bt-hang' | wc -l)
     || bad "upgrade over an earlier deploy (rc=$srupirc): $SRUPN .pre copies; $(grep -E 'bt-mark|earlier deploy|not ours' <<<"$SRUPI" | head -3 | tr '\n' '|')"
 SRUPU=$(stage_at "$SRUP"); srupurc=$?
 (( srupurc == 0 )) && [[ ! -e "$SRUP/usr/local/bin/bt-mark" ]] && [[ "$SRUPU" == *"UNINSTALL COMPLETE"* ]] \
+   && [[ "$SRUPU" == *"No pre-existing file had been replaced"* ]] \
     && ok "uninstall after an upgrade removes the project's file rather than restoring its older copy" \
     || bad "uninstall after an upgrade (rc=$srupurc): bt-mark $([[ -e "$SRUP/usr/local/bin/bt-mark" ]] && head -c 40 "$SRUP/usr/local/bin/bt-mark")"
 rm -rf "$SRUP"
@@ -12936,13 +12943,26 @@ env "${INCENV[@]}" BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER=none tools/bt-inci
 (( incsnrc != 0 )) && grep -q "^sanitised=NO-SANITISER" "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null \
     && ok "bt-incident with no sanitiser available exits non-zero and says NO-SANITISER" \
     || bad "a session with no sanitiser exited $incsnrc"
-printf '#!/bin/sh\nexit 0\n' > "$INCS/bin/ok-sanitiser"; chmod +x "$INCS/bin/ok-sanitiser"
-rm -rf "$INCS/repo"; mkdir -p "$INCS/repo"
+printf '#!/bin/sh\necho "$1" >> "%s/sanitised.log"\nexit 0\n' "$INCS" > "$INCS/bin/ok-sanitiser"; chmod +x "$INCS/bin/ok-sanitiser"
+rm -rf "$INCS/repo"; mkdir -p "$INCS/repo"; : > "$INCS/sanitised.log"
 env "${INCENV[@]}" BT_EVIDENCE_REPO="$INCS/repo" BT_SANITIZER="$INCS/bin/ok-sanitiser" \
     tools/bt-incident sanitiser-ok-check --since '10 minutes ago' >/dev/null 2>&1; incsokrc=$?
 (( incsokrc == 0 )) && grep -q "^sanitised=yes" "$INCS"/repo/evidence/sessions/2*/MANIFEST.txt 2>/dev/null \
     && ok "bt-incident still reports sanitised=yes when every file passes" \
     || bad "a passing sanitiser was not reported as yes (rc=$incsokrc)"
+# And `yes` is earned: every non-empty journal or text file of the session was
+# handed to the sanitiser. Checked only through the manifest, a loop that
+# skipped every file also said `yes` (devtools/mutate, 2026-10-17: `|| continue`
+# made `&& continue` survived) — raw text under a manifest that vouched for it.
+# Two files are written after the loop, on purpose: MANIFEST.txt, and
+# hci-captures.txt, which lists capture paths, sizes and gap counters and
+# carries no address.
+INCSFILES=$(find "$INCS"/repo/evidence/sessions/2* -maxdepth 1 -type f -size +0 \( -name '*.log' -o -name '*.txt' \) \
+            ! -name MANIFEST.txt ! -name hci-captures.txt 2>/dev/null | sort)
+INCSMISS=$(comm -23 <(echo "$INCSFILES") <(sort -u "$INCS/sanitised.log"))
+[[ -n "$INCSFILES" && -z "$INCSMISS" ]] \
+    && ok "bt-incident hands every non-empty file of the session to the sanitiser ($(grep -c . <<<"$INCSFILES") of them)" \
+    || bad "files of the session the sanitiser never saw: $(tr '\n' ' ' <<<"${INCSMISS:-(the session has no files)}")"
 rm -rf "$INCS"
 
 # ── bt-audio-policy: a partial metadata update keeps the keys it does not name ─
@@ -13562,11 +13582,25 @@ else
 fi
 
 if [[ -z "$LOOSE" ]] && (( ${TRIALCALLS:-0} > 0 )); then
-    ok "all $TRIALCALLS bt-trial invocations go through the sandboxed trial() helper"
+    ok "no bt-trial lifecycle verb is called outside the wrappers ($TRIALCALLS spelled-out calls, every one a read-only report)"
 else
     bad "bt-trial invoked outside trial() — may write to the real evidence tree:"
     while IFS= read -r l; do echo "        $l"; done <<<"$LOOSE"
 fi
+# AND THE WRAPPERS THEMSELVES. The count above sees spelled-out verbs only.
+# Five functions run `tools/bt-trial "$@"` — trial, trial_in, tl, tlt, tlnh —
+# and each must name BOTH places bt-trial writes: BT_REPO (results.tsv) and
+# BT_EVIDENCE_REPO (bt-incident's sessions), in the lines that build its call.
+# A sixth wrapper that forgot one passed every check here until 2026-10-17.
+TWRAPS=$(suite_cat | grep -cE '^[^#]*tools/bt-trial "\$@"' || true)
+TWBAD=$(suite_cat | awk '{ l[NR] = $0 }
+    /^[^#]*tools\/bt-trial "\$@"/ {
+        ctx = l[NR-3] " " l[NR-2] " " l[NR-1] " " $0
+        if (ctx !~ /BT_REPO=/ || ctx !~ /BT_EVIDENCE_REPO=/) print "line " NR ": " $0
+    }')
+(( ${TWRAPS:-0} >= 5 )) && [[ -z "$TWBAD" ]] \
+    && ok "all $TWRAPS bt-trial wrappers set both BT_REPO and BT_EVIDENCE_REPO" \
+    || bad "a bt-trial wrapper sets only one destination ($TWRAPS wrappers): $(tr '\n' '|' <<<"$TWBAD")"
 
 # The contract tag may be set in ONE place. Anywhere else it would be a way to
 # walk a leak past devtools/sandbox labelled as a contract read.
