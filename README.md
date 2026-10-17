@@ -152,7 +152,7 @@ The dated detail, one row per issue and submission, is [`docs/STATUS.md`](docs/S
 Distribution : Ubuntu 24.04 LTS (noble)
 Kernels      : 7.0.0-29, -30, -31, -34-generic (the twelve instances); 6.17.0-29/35/40, 7.0.0-28 (earlier phenotype);
                7.0.0-38-generic with the upstream entry (E3) since 2026-10-11
-BlueZ        : 5.72 (5.72-0ubuntu5.5; the patched daemon is a rebuild of that source)
+BlueZ        : 5.72 (the running patched daemon is a rebuild of 5.72-0ubuntu5.5; the package is 5.72-0ubuntu5.8 since 2026-10-14)
 Platform     : AMD Renoir/Cezanne laptop; controller on xhci_hcd, full-speed
 BT device    : usb 13d3:3503 — HCI manufacturer 0x001D (Qualcomm), version 0x07 (4.2)
 Companion    : ath10k_pci qca9377 hw1.1 (one combo chip)
