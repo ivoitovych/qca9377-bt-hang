@@ -39,9 +39,10 @@ sentence.
   uninstall (CI-only branch `ci/deploy-rehearsal-red-installer-20261017`).
 - **What it cannot show:** the controller, btusb with E3, and the laptop's kernel. Nor the
   capture daemons at work: on the VM `bt-capture` and `bt-usbmon` exit with status 1 at
-  once and `Restart=` brings them back. The unit check read `bt-capture` between two runs
-  as a changed state, twice in experiment mode; `3bc6bfe` reads `activating`
-  (`auto-restart`) as `active` and logs each loop.
+  once and `Restart=` brings them back. The unit check read one of them in a different
+  phase on each side of a step as a changed state, three times. It now compares each unit
+  as up (running, or systemd bringing it back) or down, from one `systemctl show`, and
+  logs each loop; my first fix looked at `activating` alone and missed a phase.
 
 **`install.sh`: an upgrade over our own deploy is not a collision.**
 - **The bug.** A differing destination was kept as `.pre-qca9377-bt-hang` and announced
