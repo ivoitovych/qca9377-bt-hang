@@ -92,10 +92,28 @@ destinations() {
     | grep -oE 'install_file[[:space:]]+"\$SRC/[^"]+"[[:space:]]+[^[:space:]]+' \
     | awk '{ s = $2; gsub(/"/, "", s); sub(/^\$SRC\//, "", s); print $3, s }' | sort -u
 }
+project_units() { systemctl list-unit-files 'bt-*' --no-legend --no-pager 2>/dev/null | awk '{print $1}'; }
+# A unit that systemd restarts under its own Restart= policy is either in a run
+# (active) or between two (activating, sub-state auto-restart), and which one a
+# snapshot catches is timing. On the CI VM bt-capture loops like that, and on
+# 2026-10-17 one run caught it activating before daemon-reload and active
+# after. Both read as "active" here: the claim is that the DEPLOY started,
+# stopped, enabled or disabled nothing, and a restart policy is not the deploy.
+# A unit that stops, fails or is newly started still differs.
 unit_states() {   # "unit enabled-state active-state", for every project unit
-    local u
-    for u in $(systemctl list-unit-files 'bt-*' --no-legend --no-pager 2>/dev/null | awk '{print $1}'); do
-        printf '%s %s %s\n' "$u" "$(systemctl is-enabled "$u" 2>/dev/null)" "$(systemctl is-active "$u" 2>/dev/null)"
+    local u a
+    for u in $(project_units); do
+        a=$(systemctl show -p ActiveState --value "$u" 2>/dev/null)
+        [[ "$a" == activating && "$(systemctl show -p SubState --value "$u" 2>/dev/null)" == auto-restart* ]] && a=active
+        printf '%s %s %s\n' "$u" "$(systemctl is-enabled "$u" 2>/dev/null)" "${a:-unknown}"
+    done
+}
+# Which units are looping, and why, so a reader of the log sees it was there.
+restart_loops() {
+    local u n
+    for u in $(project_units); do
+        n=$(systemctl show -p NRestarts --value "$u" 2>/dev/null)
+        (( ${n:-0} > 0 )) && echo "  · $u restarts under its own Restart= policy here: $n restarts, last run $(systemctl show -p Result --value "$u" 2>/dev/null), exit status $(systemctl show -p ExecMainStatus --value "$u" 2>/dev/null)"
     done
 }
 changed_paths() { diff <(cut -d' ' -f1,2 <<<"$1") <(cut -d' ' -f1,2 <<<"$2") | sed -n 's/^[<>] \([^ ]*\) .*/\1/p' | sort -u; }
@@ -182,6 +200,7 @@ systemctl daemon-reload
 U3=$(unit_states)
 [[ "$U3" == "$U1" ]] && ok "after daemon-reload, still nothing armed and nothing stopped" \
                      || { bad "daemon-reload changed unit states:"; diff <(echo "$U1") <(echo "$U3") | sed 's/^/      /'; }
+restart_loops
 RESULTS="$EVREPO/evidence/trials/results.tsv"
 rows_before=$(grep -c . "$RESULTS" 2>/dev/null)
 t0=$(date +%s); systemctl stop bt-trial-auto; src=$?; t1=$(date +%s)
