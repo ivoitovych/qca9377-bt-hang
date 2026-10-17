@@ -93,21 +93,33 @@ destinations() {
     | awk '{ s = $2; gsub(/"/, "", s); sub(/^\$SRC\//, "", s); print $3, s }' | sort -u
 }
 project_units() { systemctl list-unit-files 'bt-*' --no-legend --no-pager 2>/dev/null | awk '{print $1}'; }
-# A unit that systemd restarts under its own Restart= policy is either in a run
-# (active) or between two (activating, sub-state auto-restart), and which one a
-# snapshot catches is timing. On the CI VM bt-capture loops like that, and on
-# 2026-10-17 one run caught it activating before daemon-reload and active
-# after. Both read as "active" here: the claim is that the DEPLOY started,
-# stopped, enabled or disabled nothing, and a restart policy is not the deploy.
-# A unit that stops, fails or is newly started still differs.
-unit_states() {   # "unit enabled-state active-state", for every project unit
-    local u a
+# A unit that systemd restarts under its own Restart= policy is in a run
+# (active/running) or between two (activating/auto-restart, and since systemd
+# 254 briefly inactive or failed with a *-before-auto-restart sub-state), and
+# which one a snapshot catches is timing. On the CI VM bt-capture and bt-usbmon
+# loop like that (exit status 1), and on 2026-10-17 three runs caught one of
+# them in a different phase on each side of a check. So the state compared is
+# "up" (running, or systemd is bringing it back) or "down", from ActiveState and
+# SubState read in ONE call: two calls straddled a restart once. The claim is
+# that the DEPLOY started, stopped, enabled or disabled nothing, and a restart
+# policy is not the deploy; a unit that stops, fails for good or is newly
+# started still differs. The fourth field, the raw state, is shown, not compared.
+unit_states() {   # "unit enabled-state up|down active/sub", for every project unit
+    local u a s c kv
     for u in $(project_units); do
-        a=$(systemctl show -p ActiveState --value "$u" 2>/dev/null)
-        [[ "$a" == activating && "$(systemctl show -p SubState --value "$u" 2>/dev/null)" == auto-restart* ]] && a=active
-        printf '%s %s %s\n' "$u" "$(systemctl is-enabled "$u" 2>/dev/null)" "${a:-unknown}"
+        a=""; s=""
+        # By name, not by position: show prints properties in its own order.
+        while IFS= read -r kv; do
+            case "$kv" in ActiveState=*) a=${kv#*=} ;; SubState=*) s=${kv#*=} ;; esac
+        done < <(systemctl show -p ActiveState -p SubState "$u" 2>/dev/null)
+        case "$a/$s" in
+            active/*|activating/*|reloading/*|*/*auto-restart*) c=up ;;
+            *) c=down ;;
+        esac
+        printf '%s %s %s %s\n' "$u" "$(systemctl is-enabled "$u" 2>/dev/null)" "$c" "${a:-?}/${s:-?}"
     done
 }
+same_units() { [[ "$(cut -d' ' -f1-3 <<<"$1")" == "$(cut -d' ' -f1-3 <<<"$2")" ]]; }
 # Which units are looping, and why, so a reader of the log sees it was there.
 restart_loops() {
     local u n
@@ -186,7 +198,7 @@ extra=$(comm -13 <(echo "$expected") <(echo "$actual") | grep .)
 pre=$(find /usr/local /etc -name '*.pre-qca9377-bt-hang' 2>/dev/null)
 [[ -z "$pre" ]] && ok "no .pre-qca9377-bt-hang copy of the project's own earlier files" \
                 || { bad "the upgrade kept the project's own files as foreign:"; sed 's/^/      /' <<<"$pre"; }
-[[ "$U2" == "$U1" ]] && ok "every project unit is as enabled and as active as before" \
+same_units "$U2" "$U1" && ok "every project unit is as enabled and as active as before" \
                      || { bad "unit states changed:"; diff <(echo "$U1") <(echo "$U2") | sed 's/^/      /'; }
 [[ "$(cat "$CUR" 2>/dev/null)" == "$CUR_BEFORE" && -n "$CUR_BEFORE" ]] && ok "the open trial's state is untouched" \
                                                                         || bad "the open trial's state changed or vanished"
@@ -198,7 +210,7 @@ pre=$(find /usr/local /etc -name '*.pre-qca9377-bt-hang' 2>/dev/null)
 # ── the operator's next step, and the shutdown ────────────────────────────
 systemctl daemon-reload
 U3=$(unit_states)
-[[ "$U3" == "$U1" ]] && ok "after daemon-reload, still nothing armed and nothing stopped" \
+same_units "$U3" "$U1" && ok "after daemon-reload, still nothing armed and nothing stopped" \
                      || { bad "daemon-reload changed unit states:"; diff <(echo "$U1") <(echo "$U3") | sed 's/^/      /'; }
 restart_loops
 RESULTS="$EVREPO/evidence/trials/results.tsv"
