@@ -25,7 +25,8 @@ sentence.
   - uninstall.
 
   It runs twice, plain and under the old `bt-mode experiment`.
-- **The result.** All 17 checks pass in both modes (CI run 38988596052):
+- **The result.** All 17 checks pass in both modes (CI run 38988596052, and 38991074817
+  with `main` at `68e5110` merged):
   - the deploy ran only file operations and changed only the 17 files whose source changed;
   - no `.pre` copies;
   - units, the open trial, the mode stamp and the three moved-aside files are untouched,
@@ -60,20 +61,23 @@ on CI for want of bluez.
 - `tests/README.md`: rule 4, the declared machine, the PATH guard, the fixtures table, the
   system tests, coverage's tracing rules, the stale assessment link;
 - BRIEF §8a;
-- `devtools/README.md` (all but the `repo-validate` row, which your next change rewrites);
+- `devtools/README.md` (all but your `repo-validate` and `doc-main-hashes` rows);
 - the `held` row of the tooling index, and a row for the rehearsal;
 - the comments of the CI steps.
 
-**Your next change.** The private branch adding `devtools/doc-main-hashes` merges with this
-branch cleanly: `git merge-tree` with `25dfc68` as base, no conflict. I moved my close checks
-off the line where your enumeration check goes.
+**Your change since, merged.** This branch now contains `main` at `68e5110`
+(`doc-main-hashes`, `8a9acf4`'s `?` for any failed enumeration read, the STATUS and BRIEF
+updates). One conflict, `devtools/README.md`: I took your `repo-validate` and
+`doc-main-hashes` rows as they are, then my `repo-save` row. Your enumeration check sits
+where you put it; my close checks were already off that line. `doc-main-hashes` on this
+branch: clean, 10 ids judged against `main`.
 
 **Gates** on the ready branch, each the command `.github/workflows/checks.yml` runs:
-- `tests/run-tests`: 1006 of 1006 on CI (1003 here, where CI's namespace checks are not
-  asked)
-- `devtools/coverage --quiet --min 80`: 88%
+- `tests/run-tests`: 1013 of 1013 on CI, with `main` merged (1010 here, where CI's
+  namespace checks are not asked)
+- `devtools/coverage --quiet --min 80`: 87.9%
 - `devtools/awk-coverage --min 85`: 90%
-- `devtools/py-coverage --min 80`: 88%
+- `devtools/py-coverage --min 80`: 88.2%
 - `devtools/test-comprehension --min 75`: worst unit 82%
 - `devtools/journal-contract`: 7 claims verified
 - `devtools/sandbox`: no leak
@@ -100,7 +104,10 @@ off the line where your enumeration check goes.
    spend 20 s on the kernel read and 20 s on the enumeration read, when `--list-boots`
    answers nothing (`BT_TRIAL_SCAN_BUDGET` default, both). The unit now stops at 30 s. On
    the laptop `--list-boots` answers, so the enumeration read is the bounded, fast one, but
-   the margin is thinner than the unit's comment says.
+   the margin is thinner than the unit's comment says. And on `main` as it stands,
+   `bt-state` and `bt-mark` still run before the row, inside the same 30 s, where the
+   installed unit gave the close the 90 s default. That is why this note asks for the ready
+   branch on `main` before the deploy.
 4. **STATUS: "`bt-trial` alone needs no library change".** Shown in my 2026-10-16 note: the
    installed `trial-summary.awk` refuses `ended_unprobed`, and the installed `bt-mark`
    probes at every close. The rehearsal's `report` check passes only because the set is
@@ -111,7 +118,7 @@ off the line where your enumeration check goes.
    - The suite-runtime item quotes `checks.yml:8` as "~2 s and hermetic", which it no longer
      says, and counts "the five gates that each re-run the whole suite". CI's check job runs
      it seven times; on the working branch the audit job adds an eighth.
-6. **`devtools/README.md`, the `repo-validate` row** (yours, in your next change): it says
+6. **`devtools/README.md`, the `repo-validate` row** (yours, as on `main`): it says
    `py_compile`; `repo-validate` uses `ast.parse`, on purpose, because `py_compile` writes
    `.pyc` files (`devtools/repo-validate`, about line 130). The row also leaves out the awk
    parse, the suite run and `--no-suite`.
