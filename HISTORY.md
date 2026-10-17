@@ -3919,6 +3919,30 @@ The row can be rebuilt only in part. The journal of that boot starts at 6 Octobe
 
 **Evidence kept can cost evidence lost.** The same arithmetic turned on the capture archive within the hour. Every gigabyte it wrote came out of journald's 20 GB margin, with 21 GB free. Keeping captures would have spent the running boot's unarchived journal. The archive was paused at 17:23. Each store on this disk has its own floor (journald 20 GB, `bt-trace` 15 GB) and none of them knows about the others. Space is freed for real by deleting the raw originals already archived and verified, which `bt-trace` would delete anyway, and that is the operator's call.
 
+## The suite on main, and the laptop's deploy rehearsed (2026-10-16 → 10-17)
+
+**main took the test branch.** On 16 October `main` re-made the test-suite branch's 29 ready commits as its own and added the budget on the closer's enumeration read. The decoy world, the machine tripwire, the watchdog fix that stopped the suite resetting a real USB device, and the shutdown fix to `bt-trial` were on `main` from then on. What `main` still lacked was examined the same day, with one question in mind: is it safe to deploy the current tools on the laptop, which still runs the 2026-09-18 copies?
+
+**The laptop's installed version, found.** The 09-18 tools are the last commit of that day, `cccf0fe`: its `bt-trial` is the blob STATUS found installed. Of the 68 files `install.sh` deploys, 53 were byte-identical to the deploy candidate, among them every configuration file (modprobe, udev, journald, bluetoothd) and every unit but `bt-trial-auto.service`. The deploy changes 15 files from `main` as it stood (17 with the ready branch's two `.git` fixes), and the installer and uninstaller themselves have changed.
+
+**Three things a deploy would have done, that no test had shown.**
+- *The row could still be lost at shutdown.* The close calls `bt-state` and `bt-mark` where they are installed. The suite's PATH guard answers both names with silent stubs, so no test had ever closed a trial beside the real ones. The real `bt-state` counts the whole boot's kernel journal with no budget, and it ran ahead of the results row. With the two tools on the PATH as `install.sh` lays them out, the suite's own slow-journal close was killed at its budget with no row written. The row is now written before them.
+- *Deploying `bt-trial` alone would be a partial fix.* The laptop's `trial-summary.awk` refuses the `ended_unprobed` result the new closer writes, so `bt-trial report` would stop at the first quiet shutdown. The laptop's `bt-mark` still sends an HCI command at every close. The tools go together or not at all.
+- *An upgrade took the project's own files for foreign ones.* `install.sh` keeps a differing file at a destination as `<file>.pre-qca9377-bt-hang`, and the uninstaller puts it back. On an upgrade, every differing file is the project's own older copy: 15 of them on the laptop (17 with the ready branch) would have been kept as "not ours", and an uninstall would have restored the 09-18 tools and unit. With the first-install stamp present, they are now replaced in place.
+
+**The round trip had never run.** CI's system round trip, the only test of the installer's apply branch on a real system, printed "skipped" and passed on every run. It asked `systemctl is-system-running`, which exits non-zero for `degraded`, and a CI VM commonly is. Asked instead whether systemd is PID 1, it ran for the first time on 16 October, and passed.
+
+**The deploy, rehearsed.** `tests/system-upgrade` does on the CI VM what the laptop's deploy will do:
+- it installs `cccf0fe` for real, and the old `bt-trial` opens a trial (once more under the old `bt-mode experiment`);
+- it deploys the candidate over it with `--tools-only`, then runs `daemon-reload`;
+- it stops `bt-trial-auto` as a shutdown does, then uninstalls.
+
+Its 17 checks pass in both modes: the deploy ran only file operations and changed only the 17 files; no `.pre` copies; units, the open trial, the mode stamp and the three moved-aside files untouched; the new closer closed the old trial inside the 30 s stop timeout and wrote its row; and after the uninstall every watched path was as before the old install. With the old installer put back, the rehearsal goes red on exactly the `.pre` copies. What it cannot show is the controller, the E3 module and the laptop's kernel; a tools deploy touches none of them.
+
+**The measurement of the change.** Of the 486 lines the deploy changes in shell, 10 never ran in the suite: seven are artifacts of bash tracing (case labels, a continuation line, a tool run through a symlink), and three are real gaps (`bt-exhibit --boots`, one build-label branch of `bt-trial`, the installer's line for a file that already has a foreign copy). A mutation pass over the same lines (`devtools/mutate --lines`) killed 92 of 110 mutants. Of the 18 survivors, 15 change no output a real run makes or are accepted with a reason, and 3 were decisions nothing checked. One of the 3 was the sanitiser loop in `bt-incident`: changed to skip every file, the manifest still said `sanitised=yes`. Each of the 3 now has a check.
+
+**The documents against the code.** Three readers checked about 495 claims in the test documentation against the code and found about 55 that no longer held. The most consequential: the rule "every `bt-trial` call goes through `trial()`" had stopped being true, though the protection it describes held through five wrappers. A check now requires each wrapper to set both places `bt-trial` writes, and the incident tree is declared for the whole run.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
