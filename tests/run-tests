@@ -12367,13 +12367,17 @@ dmhrc=$(dmh_rc "$DMHW")
     || bad "doc-main-hashes accepted the original of a cherry-pick as main's: rc=$dmhrc (want 1)"
 
 # The private repository's main is not the public main: no reference, no verdict.
-git clone -q --bare "$DMHW" "$DMH/ivoitovych/qca9377-bt-hang-private.git" 2>/dev/null
-git clone -q "$DMH/ivoitovych/qca9377-bt-hang-private.git" "$DMH/privwork" 2>/dev/null
+# The clones with an identity, as dmh_git: a clone writes reflogs, and without
+# one git guesses an address from the host's name, reading /etc/mailname,
+# /etc/hosts and /etc/resolv.conf (the access audit, 2026-10-17).
+dmh_clone() { git -c user.name=t -c user.email=t@example.com clone -q "$@" 2>/dev/null; }
+dmh_clone --bare "$DMHW" "$DMH/ivoitovych/qca9377-bt-hang-private.git"
+dmh_clone "$DMH/ivoitovych/qca9377-bt-hang-private.git" "$DMH/privwork"
 dmhrc=$(dmh_rc "$DMH/privwork")
 (( dmhrc == 3 )) \
     && ok "doc-main-hashes will not judge against another repository's main (inconclusive)" \
     || bad "doc-main-hashes judged against a non-public main: rc=$dmhrc (want 3)"
-git clone -q --depth 1 "file://$DMH/ivoitovych/qca9377-bt-hang.git" "$DMH/shallow" 2>/dev/null
+dmh_clone --depth 1 "file://$DMH/ivoitovych/qca9377-bt-hang.git" "$DMH/shallow"
 dmhrc=$(dmh_rc "$DMH/shallow")
 (( dmhrc == 3 )) \
     && ok "doc-main-hashes calls a shallow clone inconclusive, never clean" \

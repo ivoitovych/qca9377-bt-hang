@@ -72,6 +72,12 @@ updates). One conflict, `devtools/README.md`: I took your `repo-validate` and
 where you put it; my close checks were already off that line. `doc-main-hashes` on this
 branch: clean, 10 ids judged against `main`.
 
+**Your `doc-main-hashes` test, under the access audit.** Its working clones ran with no
+identity, so git guessed an address from the host's name, reading `/etc/mailname`,
+`/etc/hosts` and `/etc/resolv.conf`. The working branch's access audit caught it at the
+merge. The three clones now go through `dmh_clone`, with an identity as `dmh_git` has; the
+worktree test near line 4800 had the same fix.
+
 **Gates** on the ready branch, each the command `.github/workflows/checks.yml` runs:
 - `tests/run-tests`: 1013 of 1013 on CI, with `main` merged (1010 here, where CI's
   namespace checks are not asked)
