@@ -278,8 +278,13 @@ while IFS= read -r tool; do
 # The ancestry up to the suite: a tool's caller is often another tool.
 p=\$PPID; chain=""
 for _ in 1 2 3 4 5; do
-    c=\$(tr '\\0' ' ' < /proc/\$p/cmdline 2>/dev/null | cut -c1-80)
+    # Newlines too, and matched before cutting: a caller's cmdline can hold a
+    # whole multi-line script, and a checkout under a long path pushed
+    # "tests/run-tests" past the cut, so the walk climbed out of the run and
+    # wrote the callers' scripts into this log line by line (2026-10-17).
+    c=\$(tr '\\0\\n' '  ' < /proc/\$p/cmdline 2>/dev/null)
     case "\$c" in ""|*tests/run-tests*) break ;; esac
+    c=\$(printf '%s' "\$c" | cut -c1-80)
     chain="\$chain < \$c"
     p=\$(sed -n 's/^PPid:[[:space:]]*//p' /proc/\$p/status 2>/dev/null)
     [ -n "\$p" ] || break
