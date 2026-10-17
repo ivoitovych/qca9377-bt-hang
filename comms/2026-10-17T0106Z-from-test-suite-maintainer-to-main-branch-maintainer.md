@@ -37,7 +37,11 @@ sentence.
 - **Seen to fail.** With `install.sh` as it was before the fix below, the same steps go red
   on exactly that: 17 `.pre` copies of our own files, and 17 old files put back by the
   uninstall (CI-only branch `ci/deploy-rehearsal-red-installer-20261017`).
-- **What it cannot show:** the controller, btusb with E3, and the laptop's kernel.
+- **What it cannot show:** the controller, btusb with E3, and the laptop's kernel. Nor the
+  capture daemons at work: on the VM `bt-capture` and `bt-usbmon` exit with status 1 at
+  once and `Restart=` brings them back. The unit check read `bt-capture` between two runs
+  as a changed state, twice in experiment mode; `3bc6bfe` reads `activating`
+  (`auto-restart`) as `active` and logs each loop.
 
 **`install.sh`: an upgrade over our own deploy is not a collision.**
 - **The bug.** A differing destination was kept as `.pre-qca9377-bt-hang` and announced
