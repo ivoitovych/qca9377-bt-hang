@@ -8,11 +8,11 @@ directory touches Bluetooth.
 
 | Script | Purpose |
 |---|---|
-| `check [--quick]` | the one pre-commit command: repo-validate (incl. tests) + a full-tree scan + install state |
+| `check [--quick]` | the one pre-commit command: repo-validate (incl. tests) + a full-tree scan + the journal contract + install state (`--quick` skips the install state) |
 | `repo-scan <dir> [--all]` | Refuse-to-publish scan: MAC addresses, BSSIDs, UUIDs, IPv4, **email addresses**, tool attribution, binary captures |
 | `repo-validate <dir>` | `bash -n`, `systemd-analyze verify`, `udevadm verify`, `jq`, `py_compile` over every tracked file; then `doc-main-hashes` |
 | `doc-main-hashes [dir] [file...]` | a commit id BRIEF/STATUS/tooling-index place on `main` must be on the PUBLIC main (the remote whose URL is the public repository), or stand beside its cherry-pick there (same patch-id). An id only on this branch is PENDING (exit 4) while the branch can fast-forward, a failure once it cannot. A shallow clone or no public main reference is "inconclusive" (exit 3), never clean |
-| `repo-save <dir> "<msg>"` | validate → scan → commit → push → **verify the remote hash actually matches** |
+| `repo-save <dir> "<msg>"` | stage everything (`git add -A`) → validate → scan → check the identity → commit → push → **verify the remote hash actually matches**; with a trial open it validates without the suite, and says so |
 | `coverage [--min N]` | How much of the shell this repo ships does `tests/run-tests` actually execute |
 | `assert-test-catches <file> <line> <substr>` | prove a suite invariant actually fails when violated |
 | `journal-contract` | do the journal fixtures still match the shapes the REAL journalctl emits |
@@ -91,9 +91,9 @@ The first full run (2026-09-29) found 312 machine-tool calls per suite run — a
 All fixed the same day (tests/README.md, rule 5); CI now runs the suite in the decoy world
 and fails on any leak.
 
-It needs unprivileged user namespaces: a bare development host and CI have them; Ubuntu 24.04's
-AppArmor refuses them to ordinary users, so on the laptop it exits 3 — nothing measured,
-never a pass.
+It needs unprivileged user namespaces. A bare development host has them; Ubuntu 24.04's
+AppArmor refuses them to ordinary users, so CI lifts that with a sysctl first, and on the
+laptop it exits 3 — nothing measured, never a pass.
 
 ## Knowing whether a decision is checked
 
@@ -135,7 +135,7 @@ at first, and nothing about bt-trial was wrong. The tests were missing:
 - No trial was ever numbered against an existing results file.
 - No fixture held a second device from the same vendor.
 
-149 of 175 are caught now. Of the rest, 25 cannot change any output:
+149 of the 175 mutants listed then were caught (the file has grown: `devtools/mutants tools/bt-trial` lists more today). Of the rest, 25 cannot change any output:
 - 19 `|| true` status guards; bt-trial runs without `set -e`, and `grep -c` prints its count
   either way.
 - 3 sysfs entries with only one of the two id files; a USB device has both or neither.
@@ -165,7 +165,8 @@ Deliberate allowlists, so the gate stays usable rather than being routinely bypa
   written either `AA:BB:CC:…` or `AA-BB-CC-…`.
 - **Email**: the committer's own address (from `git config user.email`), public kernel
   mailing lists, and `example.com` are allowed; anything else fails.
-- **Default mode scans added lines only.** Scanning the whole staged diff meant a commit
+- **Default mode scans added lines only** — of what is staged; with nothing staged it scans
+  every tracked file. Scanning the whole staged diff meant a commit
   that *removed* a leaked secret still matched it on the `-` lines — so the tool blocked
   the one commit it exists to enable.
 
@@ -179,10 +180,18 @@ is the only thing that proves a push actually landed.
 
 ## Notes
 
-- Read-only, with two exceptions: `repo-save` commits and pushes, and
-  `assert-test-catches` temporarily mutates a tracked file and restores it.
+- Most only read. These write:
+  - `repo-save` and `save` commit and push (`save` also regenerates the exhibit index);
+  - `held` switches branches, merges, commits and pushes to `private`, and returns to
+    `main` except where it stops on purpose: `edit` stays on the held branch, and a
+    `sync` that hits a conflict stops there, mid-merge, naming the file;
+  - `assert-test-catches` changes a tracked file and restores it;
+  - `mutate` adds and removes git worktrees;
+  - `ci` writes `tmp/ci-<sha>.log` on a red run;
+  - `sandbox --report` writes the directory it is given.
 - Non-zero exit on failure, so they compose.
-- They take the target directory as an argument — no hardcoded paths.
+- `repo-scan`, `repo-validate` and `repo-save` take the target directory as an argument;
+  the others work on the checkout they sit in.
 - **Not installed** by `install.sh`. They are useless to end users and would only
   clutter `/usr/local/bin`.
 

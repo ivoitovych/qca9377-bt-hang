@@ -508,17 +508,23 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 
 ## 8a. The test suite — rules the maintainer paid for (owner: the test-suite maintainer)
 
-*Written 2026-09-24, replacing the reservation. Each rule cost something; the instance
+*Written 2026-09-24, replacing the reservation; updated 2026-10-17. Each rule cost something; the instance
 that taught it and what it cost are in
 [`lessons/2026-08-22T1101Z-test-suite-maintainer.md`](lessons/2026-08-22T1101Z-test-suite-maintainer.md)
 and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T1200Z-test-suite-maintainer.md).*
 
 - **A new check must be observed to fail.** Write it, break what it guards, watch it go
-  red, restore. **Eight** checks have reached this suite green that *could not* fail. The
-  seventh was `rg … || true`, where a missing binary made a negative search read as a clean
-  one (`6a7c7a4`); the eighth was written **this week**, in the check policing this very
-  rule — a drift guard that matched its stem in a *comment*, so the code could drift and it
-  stayed green. Strip comments before asserting on source.
+  red, restore. Checks that *could not* fail keep reaching this suite green. The seventh
+  was `rg … || true`, where a missing binary made a negative search read as a clean one;
+  the eighth (2026-09-24) was in the check policing this very rule — a drift guard that
+  matched its stem in a *comment*, so the code could drift and it stayed green. Strip
+  comments before asserting on source. `devtools/mutate` found more on 2026-09-29.
+- **A step that passes when it skips must say why, where someone reads it.** CI's system
+  round trip, the only test of `install.sh`'s apply branch on a real system, printed
+  "skipped" and passed on every run until 2026-10-16: it asked `systemctl
+  is-system-running`, which exits non-zero for `degraded` as well, and a CI VM is
+  commonly degraded. Ask for exactly what is needed (systemd as PID 1), print the state
+  that was seen, and read a green step's log the first time it goes green.
 - **State the premise in code, not in a comment.** An assertion that says "this host has a
   readable journal" and never asks has two meanings and tests one. On a journal-less host
   it accepted `bt1_status=not_observed` — *"we looked and BT-1 did not happen"* — for a
@@ -542,13 +548,34 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
   dangerous outcome and a silent skip would never see it.
 - **Tests never touch the real evidence tree.** Everything reads through a seam
   (`BT_JOURNAL_FIXTURE`, `BT_COREDUMP_FIXTURE`, `BT_CAPTURE_SOURCE`, `BT_SNAPSHOT_DIR`,
-  `BT_REPO`, `BT_DESTDIR`), and fixtures carry placeholders (`AA:BB:CC:…`, `192.0.2.x`,
-  `example.com`) — never real-but-shortened data. The seam is complete **as measured**,
-  not as believed: every machine tool answers from a tripwire unless a test declares it,
-  `/proc`, `/sys` and the install paths resolve to an empty declared machine for the whole
-  run, nothing the run starts may outlive it, and CI runs the suite in `devtools/sandbox`'s
-  decoy world, which fails on any call, read or write that reaches the real machine
-  (tests/README.md, rule 5).
+  `BT_DESTDIR`), and fixtures carry placeholders (`AA:BB:CC:…`, `192.0.2.x`,
+  `example.com`) — never real-but-shortened data. `bt-trial` writes in two places, so two
+  variables guard it: `BT_REPO` (its `results.tsv`) and `BT_EVIDENCE_REPO` (the incident
+  `bt-incident` collects on a failed trial). Every call goes through a wrapper that sets
+  both, a check requires that of each wrapper, and `BT_EVIDENCE_REPO` points at the
+  declared machine for the whole run (tests/README.md, rule 4). The seam is complete **as
+  measured**, not as believed: every machine tool answers from a tripwire unless a test
+  declares it, `/proc`, `/sys` and the install paths resolve to a declared machine for the
+  whole run (empty, but for a fixture `/proc`), nothing the run starts may outlive it, and
+  CI runs the suite in `devtools/sandbox`'s decoy world, which fails on any call, read or
+  write that reaches the real machine (tests/README.md, rule 5).
+- **A stub that answers with silence is not the real neighbour.** The suite's PATH guard
+  answers every name `install.sh` installs with a recording stub that prints nothing, so no
+  test ever ran a tool beside the project's own tools it calls where they are installed.
+  `bt-trial`'s close calls `bt-state` and `bt-mark`, and the real `bt-state` reads the
+  whole boot's kernel journal with no budget: it sat ahead of the results row, and with the
+  real tools on the PATH the slow-journal close was killed with no row written (rc=124,
+  2026-10-16). Where a tool calls a sibling "if installed", run it once with the real
+  sibling, in `install.sh`'s layout.
+- **A deploy is an upgrade.** A fresh-install round trip cannot see what an upgrade does.
+  `install.sh` took the project's own older copies for foreign files (15 of them on the
+  investigation machine) and kept them for an uninstall to put back. Rehearse the
+  transition that will actually happen: the installed version and its state (a trial open,
+  the mode), the new deploy, the shutdown that runs the new code over the old state, and
+  back (`tests/system-upgrade`, CI).
+- **Ids on `main` are `main`'s.** `main` takes work as new commits, so a test-branch
+  commit's id is not on `main` even when its change is. Say where an id is: `main`'s own
+  id for what is on `main`, or the branch, by name, that holds it.
 - **A leak is only visible where the mock and the world disagree.** For weeks the suite
   called the real `journalctl`, `systemctl`, `logger` and `lsmod` — 312 calls a run — and
   every one passed, because on a bare host and in CI the real machine answered *nothing*,
