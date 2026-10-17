@@ -101,7 +101,7 @@ run `bluetoothd -d` — this project ships that on in
 |---|---|
 | Validate + scan + drift + install state | `devtools/check` |
 | Commit, push and verify the remote matches | **`devtools/save <msgfile>`** (wraps `repo-save`: validates, scans content and message, refuses a tool author/committer identity, verifies the remote). **On a `kernel/*`, `plan/*`, `diag/*`, `review/*`, `attribution/*`, `postponed/*` or `config/*` branch it pushes to the `private` remote, never `origin`**, and refuses if no `private` remote exists (`scripts/prove-held-branch-guard.sh`) |
-| **The held `kernel/*` branch**: where it stands, merge main into it, commit on it, push it — without git chains | `devtools/held status \| sync \| commit <msgfile> \| edit` — always returns to `main`; pushes only to `private`; regenerates the exhibit index when the merge conflicts there |
+| **The held `kernel/*` branch**: where it stands, merge main into it, commit on it, push it — without git chains | `devtools/held status \| sync \| commit <msgfile> \| edit` — returns to `main`, except `edit` (stays on the held branch on purpose) and a `sync` that stops on a conflict (on the held branch, mid-merge, naming the file); pushes only to `private`; regenerates the exhibit index when the merge conflicts there |
 | **What did CI say about a commit?** | `devtools/ci [sha]`, `--wait`, `--recent N` — never a hand-typed `until gh run list … \| grep` loop; it read as "Parse error" |
 | Did a **green** run hide anything (a missing tool, a swallowed error)? | `scripts/ci-log-search.sh <sha\|run-id> "<pattern>"` — the full log, not the failed step; found `rg: command not found` ×3 in a green run on 2026-09-20 |
 | **Is a BlueZ CI-bot failure ours?** | `scripts/patchwork-checks.sh --failed-functional N` — which functional tests failed on the N most recent bluetooth patches, from the bot's own patchwork comments; `--patch ID` for one patch's check states; **`--rate CONTEXT [N] [BEFORE]`** — one check's fail/success count over the N most recent patches carrying it (e.g. `TestRunner_mesh-tester`: 20 of 20 kernel patches 09-19 → 09-27 fail, ours among them). Settled the 09-19 `TestFunctional` failure in one run (12 unrelated patches, same two tests). `lore` blocks `curl`; patchwork's API does not |
@@ -170,6 +170,7 @@ run `bluetoothd -d` — this project ships that on in
 | Prove the BlueZ patches apply the way a maintainer applies them (`git am` alone/together/either order, BlueZ format rules) | `patches/bluez/git-am-check.sh <bluez-checkout> [<commit>]` |
 | Deploy files, **arm nothing** | `sudo ./install.sh --tools-only` |
 | Deploy and arm everything | `sudo ./install.sh --apply` |
+| **Rehearse the investigation machine's deploy** before doing it: its installed tree, a trial open, `--tools-only` over it, `daemon-reload`, the shutdown's close, uninstall | `tests/system-upgrade <old-tree> [mitigation\|experiment]`, gated like the round trip; CI runs it over `cccf0fe` (the 2026-09-18 tools) in both modes. Clean-machine install and removal: `tests/system-roundtrip` (tests/README.md, "The system tests") |
 
 ⚠️ Use `--tools-only` on the investigation machine. `--apply` enables
 `bt-hang-watchdog`, whose USB reset has three controlled demonstrations of driving

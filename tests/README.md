@@ -55,9 +55,17 @@ investigation. It would also make them unrepeatable.
 `BT_EVIDENCE_REPO` — a *different* variable from the `BT_REPO` the tests
 redirect. One call site missed a stub, and once the machine's own controller
 died, every run of this suite deposited a fabricated incident directory into
-`evidence/sessions/`. Ten accumulated beside one genuine collection. Every
-`bt-trial` call now goes through the sandboxed `trial()` helper, and the last
-check in the file counts `evidence/sessions/` before and after.
+`evidence/sessions/`. Ten accumulated beside one genuine collection. Now:
+- every `bt-trial` call goes through one of five wrappers (`trial`, `trial_in`,
+  `tl`, `tlt`, `tlnh`), and a check requires each to set both `BT_REPO` (where
+  `results.tsv` is written) and `BT_EVIDENCE_REPO` (where `bt-incident` writes);
+- a second check fails on a spelled-out `tools/bt-trial <verb>` call outside
+  them (the read-only `report` calls set `BT_REPO` on their own line);
+- `BT_EVIDENCE_REPO` points at the declared machine for the whole run, so a
+  forgotten seam writes there, not here;
+- and at the end, `final_resource_report` compares `evidence/sessions/`, the
+  real trial state, every tracked file and `/usr/bin` with how they were before
+  the run, from the EXIT trap too.
 
 **5. No verdict may come from the machine.** Rule 3 said it about the journal;
 on 2026-09-29 `devtools/sandbox` measured what it missed. Run in a world whose
@@ -68,7 +76,7 @@ stamp, created `~/bt-journal-archive` beside the real archives, and 12 of its
 verdicts changed with the machine. Here and in CI those answers were empty,
 which is what an empty fixture returns, so every one of them passed.
 
-Three layers now, from cheapest to strictest:
+The layers, from cheapest to strictest:
 
 - **The machine tripwire.** Every command in [`machine-tools`](machine-tools)
   answers from a tripwire for the whole run — nothing, exit 1, one logged line —
@@ -81,8 +89,18 @@ Three layers now, from cheapest to strictest:
 - **The declared machine.** `/proc`, the USB bus, btusb's parameters, the
   Bluetooth class, the install stamp, the unit directory, the health directory
   and the journal archive all resolve through `BT_*` seams, and the suite points
-  every one of them at an empty machine for the whole run. A test that needs a
-  device builds one; a test that forgets meets that empty machine, never this one.
+  every one of them at a declared machine for the whole run: empty, except a
+  fixture `/proc` (a boot id, an uptime, a modules line with btusb loaded). A
+  test that needs a device builds one; a test that forgets meets that machine,
+  never this one.
+- **The PATH guard.** Every name `install.sh` puts in `/usr/local/bin` or
+  `/usr/local/sbin` answers first from a recording stub that prints nothing, so
+  no test can reach an installed copy of a project tool. The cost: a tool that
+  calls a sibling "where installed" meets the stub, never the sibling. Before
+  2026-10-16 no close of a trial had run with the real `bt-state` and `bt-mark`,
+  and the real `bt-state`'s whole-boot journal read, ahead of the results row,
+  could cost the row at shutdown. Where it matters a test puts the real
+  siblings first on the PATH, in install.sh's layout (`lib/` beside them).
 - **The decoy world**, [`devtools/sandbox`](../devtools/README.md), in CI: the
   whole suite in namespaces where every machine answer is marked, every real
   directory is under a throwaway overlay, and four detectors — calls, marked
@@ -95,7 +113,7 @@ keeps the tag they carry inside that function.
 
 **6. A namespace is only worth its proof.** A seam replaces the default it guards,
 so the shipped paths (`/var/log/bt-health/ui`, the kernel's dynamic-debug control
-file, the effective uid) never run under a seam. Where a test needs them, it runs
+file, `/usr/share/applications`, the effective uid) never run under a seam. Where a test needs them, it runs
 the tool inside `unshare -Urm` with a tmpfs over each real path. That's root
 without a seam, on paths only that process tree can see. Before anything runs in
 it, the namespace proves itself:
@@ -123,6 +141,12 @@ nothing ran inside.
 | `journal/snapshot-bluez/` | `bt-snapshot`'s BlueZ section — boot 0 is the `EX-032` shape (clean controller, dead daemon), boot -1 a quiet day ending in an rfkill block |
 | `coredump/held/` | `bt-crash` — a core store with two `bluetoothd` cores, a `btmon` core and an unrelated one, via `BT_COREDUMP_FIXTURE` |
 | `coredump/nonbt/` | `bt-crash` — a store holding cores, none of them Bluetooth's |
+| `fixtures/<library>/` | golden cases for `stage2.awk`, `trial-sco-table.awk` and `trial-summary.awk`: `<case>.in`, `.expected` (stdout and stderr), `.rc` |
+| `btmon/` | decoded `btmon` text for the capture readers ([its README](btmon/README.md)) |
+| `sanitize-invariants.log` | `sanitize-logs.sh` |
+
+`journal/` holds 46 directories in all; the table names the ones a reader meets
+first, and each test names the one it uses.
 
 ### Driving a tool without a journal
 
@@ -166,22 +190,52 @@ them — the header row, the pid being whitespace field 5, and `info` carrying a
 `Stack trace of thread` line — against real `coredumpctl` whenever the host has
 a core to ask about, and says out loud when it could not.
 
-## The system round trip
+## The system tests: the round trip and the upgrade
 
-`tests/system-roundtrip` is the one test that writes to the machine: it runs
-`install.sh --apply`, verifies, runs `uninstall.sh --apply`, and checks that
-nothing survives. It tests the README's front-page claim — *"uninstalling is a
-complete restoration"* — which is a property of the install/uninstall PAIR and
-so cannot be established by reading either script. The pair has already shipped
-out of step, twice.
+`tests/system-roundtrip` and `tests/system-upgrade` are the two tests that write
+to the machine. They are not part of `tests/run-tests`, and CI runs them on its
+ephemeral VM.
 
-It is **not** part of `tests/run-tests`, and it refuses to run unless every
-gate holds:
+The round trip runs `install.sh --apply`, verifies, runs `uninstall.sh --apply`,
+and checks that nothing survives. It tests the claim `install.sh` makes in its
+header, that uninstalling is a complete restoration. That claim is a property of
+the install/uninstall PAIR, so it cannot be established by reading either script.
+The pair has already shipped out of step, twice.
+- **Until 2026-10-16 it never ran.** It asked `systemctl is-system-running`,
+  which exits non-zero for `degraded` too, and a CI VM is commonly degraded. It
+  skipped on every CI run, and the step passed. It now asks that systemd is
+  PID 1 and running or degraded, and a skip names the state it saw.
+- **On CI two of its checks still skip**, for want of bluez: `bt-verify-install`
+  and `verify-restored.sh`. Its direct check covers the `install_file`
+  destinations only, not the files `install.sh` writes by redirect (udev rules,
+  drop-ins, the stamp).
+
+The upgrade rehearsal is what the investigation machine's next deploy does.
+- **The setup.** The tools that machine runs (the 2026-09-18 tree, `cccf0fe`) are
+  installed for real. The old `bt-trial` opens a trial, optionally under
+  `bt-mode experiment`. Then this checkout is deployed over it with
+  `install.sh --tools-only`, followed by `systemctl daemon-reload`.
+- **The shutdown.** `systemctl stop bt-trial-auto`, as a shutdown runs it,
+  closes the old trial with the new `bt-trial`.
+- **The way back.** `uninstall.sh --apply`.
+- **What it asserts** (17 checks):
+  - the deploy ran nothing but file operations;
+  - every destination holds the new file, and nothing else changed (a hash
+    snapshot of every place an install writes, redirect-written files included);
+  - no `.pre-qca9377-bt-hang` copy of the project's own files;
+  - units, the open trial's state, the mode stamp and the `.disabled` files are
+    all as before, also after `daemon-reload`;
+  - the close writes its row inside the stop timeout, and the installed
+    `report` reads it;
+  - after the uninstall, every watched path is as it was before the old install.
+- **What it cannot show:** the controller, btusb with E3, that machine's kernel.
 
 ```bash
-BT_SYSTEM_TEST=1 tests/system-roundtrip     # plus root, and see below
+BT_SYSTEM_TEST=1 tests/system-roundtrip                       # plus root, and see below
+BT_SYSTEM_TEST=1 tests/system-upgrade <old-tree> [mitigation|experiment]
 ```
 
+Both refuse unless every gate holds:
 - `BT_SYSTEM_TEST=1` set explicitly — no default, no flag a shell history could
   replay by accident
 - no existing installation (`/usr/local/share/qca9377-bt-hang` absent)
@@ -189,18 +243,26 @@ BT_SYSTEM_TEST=1 tests/system-roundtrip     # plus root, and see below
   known to destroy a measurement in progress
 - a live systemd, or it skips: without one `install.sh --apply` cannot succeed
   and the failure would describe the host, not the installer
+- for the upgrade, also: no `/root/exp/qca9377-bt-hang` (that machine's checkout)
 
 The investigation machine fails the second gate even if the variable is set.
-CI runs it on an ephemeral VM.
 
 ## Coverage
 
 `devtools/coverage` runs the suite under `xtrace` and records every line bash
-actually executed. It is a **lower bound** — a command spanning several lines is
-traced once, at its first line — so use it to rank files and watch a trend, not
-as an exact figure.
+actually executed. It is a **lower bound**, so use it to rank files and watch a
+trend, not as an exact figure:
+- a command spanning several lines is traced at one of them: a simple command at
+  its first line, a command substitution or a backslash-continued assignment at
+  its last, an array literal at its closing line (`devtools/coverage-exclude`
+  says which ranges this moves);
+- `case` labels are never traced;
+- a tool run through a symlink is counted under the link's path.
 
 Coverage is not a target. "Every test encodes a defect that shipped" is the
 rule; the percentage is a ratchet in CI to stop it falling silently as tools
-grow. See [the unit-testing assessment](../reviews/2026-08-13T1214Z-unit-testing-assessment.md)
-for the measurement and what remains.
+grow. The current figures are CI's: the coverage, awk, python and
+comprehension steps each print theirs and hold a floor (80, 85, 80 and 75 on
+the branch `main` takes). [The 2026-08-13 assessment](../reviews/2026-08-13T1214Z-unit-testing-assessment.md)
+is where the measurement started (65 invariants, 13% of lines), not where it
+stands.
