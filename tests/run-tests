@@ -11162,7 +11162,33 @@ co_snapshot() { git rev-parse HEAD; git for-each-ref --format='%(refname) %(obje
 COMARK="co-world-$SUITE_RUN_ID"
 COWORLD_SKIPPED=''
 COWORLD_OK=0
-if unshare -Urmn true 2>/dev/null; then
+# ONLY A CHECKOUT THAT HOLDS ITS OWN GIT DIRECTORY. The overlay covers this
+# directory and nothing else. In a git worktree `.git` is a file naming the
+# main repository's directory, so a world built there wrote through to it: run
+# from a worktree on 2026-10-18, the proof's commit landed in the shared
+# repository and the world's own `git config user.name/user.email` replaced the
+# shared .git/config identity, which every later commit would have carried. The
+# proof saw the moved refs and went red, after the writes. So both the git
+# directory and the common one must lie inside the checkout before anything
+# is built.
+co_git_inside() {   # <checkout> — 0 when its git directory and common directory are inside it
+    local top gd cd
+    top=$(cd "$1" 2>/dev/null && pwd -P) || return 1
+    gd=$(git -C "$1" rev-parse --absolute-git-dir 2>/dev/null) || return 1
+    cd=$(cd "$1" 2>/dev/null && cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd -P) || return 1
+    gd=$(cd "$gd" && pwd -P)
+    [[ "$gd/" == "$top/"* && "$cd/" == "$top/"* ]]
+}
+CGI=$(mktemp -d)
+git init -q "$CGI/main"; git -C "$CGI/main" -c user.name=t -c user.email=test@example.com commit -q --allow-empty -m base
+git -C "$CGI/main" -c user.name=t -c user.email=test@example.com worktree add -q "$CGI/wt" 2>/dev/null
+co_git_inside "$CGI/main" && ! co_git_inside "$CGI/wt" \
+    && ok "the checkout world is built only where the git directory lies inside the checkout (a worktree's does not)" \
+    || bad "co_git_inside: main=$(co_git_inside "$CGI/main" && echo inside || echo outside) worktree=$(co_git_inside "$CGI/wt" && echo inside || echo outside) (want inside, outside)"
+rm -rf "$CGI"
+if ! co_git_inside .; then
+    COWORLD_SKIPPED="the checkout world (this checkout's git directory lies outside it, as in a git worktree: the overlay cannot hold its writes)"
+elif unshare -Urmn true 2>/dev/null; then
     cobefore=$(co_snapshot)
     coproof=$(co_world "
         echo $COMARK > $COMARK.proof
