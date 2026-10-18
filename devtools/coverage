@@ -178,9 +178,12 @@ printf 'PS4=%s\nBASH_XTRACEFD=9\nset -o xtrace\n' \
 (
     exec 9>"$WORK/trace"
     export BASH_ENV="$WORK/bashenv"
-    # Serially: in a parallel run every section is sourced by a worker from a
-    # pipe, so the trace would put the suite's lines under /dev/fd/63, not here.
-    tests/run-tests --serial
+    # In parallel, as the suite runs by default: every worker inherits fd 9 and
+    # BASH_ENV, and sources its sections from a copy that bears this file's
+    # name and line numbers (tests/run-tests, suite_copy_lines), so the trace
+    # attributes each line as a serial run's does. BT_SUITE_JOBS=1 measures
+    # a serial run.
+    tests/run-tests
 ) >"$WORK/suite.out" 2>"$WORK/suite.err"
 SUITE_RC=$?
 
