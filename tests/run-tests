@@ -1999,6 +1999,53 @@ else
 fi
 rm -rf "$LC/enumfail" "$LC/state-enumfail"
 
+# AND WHEN THE TRIAL SAW A SCO SETUP, WITH CAPTURES ON DISK, AS ON THE LAPTOP.
+# A close whose kernel journal shows a Setup Synchronous Connection writes
+# sco-params.txt: it decodes every btsnoop file in both capture directories
+# with btmon, whole, and keeps the records inside the trial window. On the
+# laptop each directory keeps up to 400 captures, and on 2026-09-24 one btmon
+# pass over the trace directory took over ten minutes. Every check above ran
+# with no SCO setup or no capture, so that decode never ran in a close; it ran
+# ahead of the results row with no budget, and a trial with a call in it could
+# lose its row at shutdown. Here btmon takes 5 s a file and the close gets 4 s.
+mkdir -p "$LC/scostop/bin" "$LC/scostop/cap" "$LC/scostop/trace"
+: > "$LC/scostop/cap/a.btsnoop"; : > "$LC/scostop/trace/a.btsnoop"
+cat > "$LC/scostop/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" --until "*) exit 0 ;;
+  *" -k "*) echo "2026-09-27T09:59:00.000000+02:00 n kernel: Bluetooth: hci0: opcode 0x0428 plen 17"
+            echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+esac
+exit 0
+STUB
+printf '#!/bin/sh\nsleep 5\n' > "$LC/scostop/bin/btmon"
+chmod +x "$LC/scostop/bin/journalctl" "$LC/scostop/bin/btmon"
+trial_in "$LC/scostop" "$LC/state-scostop" PATH="$LC/scostop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/scostop" "$LC/state-scostop" --timeout 4 PATH="$LC/scostop/bin:$LC/bin:$PATH" \
+    BT_CAPTURE_DIR="$LC/scostop/cap" BT_TRACE_DIR="$LC/scostop/trace" -- autostop >/dev/null 2>&1; scrc=$?
+SCROW=$(awk -F'\t' 'NR == 2 { print $8, $11 }' "$LC/scostop/evidence/trials/results.tsv" 2>/dev/null)
+[[ "$SCROW" == "confirmed 1" ]] \
+    && ok "a trial with a SCO setup and captures on disk: a slow btmon decode cannot cost the row" \
+    || bad "close with a SCO setup and a slow btmon: rc=$scrc (124 = still decoding at 4 s), row (bt1_status sco_sent)='$SCROW'"
+# And the decode is not dropped: with a quick btmon the same close still
+# writes the trial's request parameters, after the row.
+cat > "$LC/scostop/bin/btmon" <<'STUB'
+#!/bin/sh
+printf '< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17  #1 [hci0] %s.000000\n' "$(date '+%Y-%m-%d %H:%M:%S')"
+STUB
+trial_in "$LC/scofast" "$LC/state-scofast" PATH="$LC/scostop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/scofast" "$LC/state-scofast" --timeout 10 PATH="$LC/scostop/bin:$LC/bin:$PATH" \
+    BT_CAPTURE_DIR="$LC/scostop/cap" BT_TRACE_DIR="$LC/scostop/trace" -- autostop >/dev/null 2>&1; sfrc=$?
+SFPAR=$(cat "$LC/scofast"/evidence/trials/*/trial-*/sco-params.txt 2>/dev/null)
+(( sfrc == 0 )) && [[ -n "$(awk 'NR == 2' "$LC/scofast/evidence/trials/results.tsv" 2>/dev/null)" ]] \
+    && [[ "$(grep -c '^< HCI Command: Setup Synchronous Connection' <<<"$SFPAR")" == 2 ]] \
+    && ok "the close still decodes the trial's SCO request from both capture paths, after the row" \
+    || bad "close's SCO decode: rc=$sfrc, sco-params.txt '$(head -c 120 <<<"$SFPAR" | tr '\n' '|')'"
+rm -rf "$LC/scostop" "$LC/state-scostop" "$LC/scofast" "$LC/state-scofast"
+
 # THE --grep PROBE, both ways, and against the inversion that hid it. A journal
 # whose --help names --grep must be asked with the filter; one whose help does
 # not, without. The first help text is LONG, as journalctl's is: probed with

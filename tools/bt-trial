@@ -858,59 +858,6 @@ hang|ok)
         sco_to_tmo="none"     # SCO requested and NO timeout followed — survival under stimulus
     fi
 
-    # Full parameters of the request. The reviewer's point: the failure may
-    # depend on a particular parameterisation (voice setting, packet type,
-    # retransmission effort) rather than on synchronous setup as such. The
-    # kernel log gives only the opcode and length; btmon decodes the payload.
-    # SCO parameters, SCOPED TO THIS TRIAL and drawn from BOTH capture paths.
-    #
-    # Two defects fixed here. The previous version grepped every retained
-    # capture with no time bound, so a file named as this trial's request
-    # parameters could contain requests from other trials and other boots — the
-    # precise confusion that makes a five-row parameter comparison worthless.
-    # And it read only the btmon path, which is the one known to lose events
-    # (BT-4); the decode-free capture exists because that path drops data.
-    #
-    # Records are filtered to the trial window by their own decoded timestamp,
-    # and each source is labelled so a discrepancy between the paths is visible
-    # rather than silently merged.
-    : > "$dir/sco-params.txt"
-    t_start=$(date -d "@$start" '+%Y-%m-%d %H:%M:%S')
-    t_end=$(date '+%Y-%m-%d %H:%M:%S')
-    if command -v btmon >/dev/null 2>&1 && [[ "$sco_sent" != "?" ]] && (( sco_sent > 0 )); then
-        {
-            printf '# trial window: %s .. %s\n' "$t_start" "$t_end"
-            printf '# both capture paths are shown; a request present in only one\n'
-            printf '# is an instrumentation finding, not evidence about the controller.\n\n'
-            for src in "${BT_CAPTURE_DIR:-/var/log/bt-health/capture}" \
-                       "${BT_TRACE_DIR:-/var/log/bt-health/trace}"; do
-                printf '===== source: %s =====\n' "$src"
-                for f in "$src"/*.btsnoop; do
-                    [[ -e "$f" ]] || continue
-                    COLUMNS=200 btmon -T -r "$f" 2>/dev/null
-                done | awk -v lo="$t_start" -v hi="$t_end" '
-                    # Carry the last seen full timestamp forward: indented
-                    # parameter lines have none of their own.
-                    match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}/) {
-                        cur = substr($0, RSTART, 19)
-                    }
-                    /HCI Command: Setup Synchronous Connection/ { keep = (cur >= lo && cur <= hi) }
-                    /HCI Event: Synchronous Connect Complete/   { keep = (cur >= lo && cur <= hi) }
-                    /^[<>@=!]/ && !/Setup Synchronous|Synchronous Connect Complete/ { keep = 0 }
-                    keep { print }'
-                echo
-            done
-        } > "$dir/sco-params.txt"
-    fi
-    # The header block above is always written when captures were read, so the
-    # emptiness test must ask "did any RECORD survive the filter?", not "is the
-    # file empty?" — the earlier -s test made this fallback unreachable and a
-    # no-SCO trial shipped a file of bare section headers with no explanation.
-    if ! grep -q 'HCI Command: Setup Synchronous Connection' "$dir/sco-params.txt" 2>/dev/null; then
-        echo "(no Setup Synchronous Connection inside this trial's window in either capture path)" \
-            > "$dir/sco-params.txt"
-    fi
-
     # --- the observer as an experimental intervention -----------------------
     # The liveness probe is not observationally inert. `hciconfig <dev> name`
     # injects an HCI command/response exchange into the same controller whose
@@ -1042,8 +989,9 @@ hang|ok)
     # BOUNDED TO THE FIRST THREE MINUTES, AND THAT IS NOT AN OPTIMISATION.
     #
     # Unbounded, this scans the whole boot's kernel journal. On a long boot with
-    # dynamic debug enabled that is minutes of work, and it sits between the
-    # auxiliary files and the results row. During a shutdown-triggered close,
+    # dynamic debug enabled that is minutes of work, and it sat between the
+    # auxiliary files and the results row (they come after the row since
+    # 2026-10-16 and 10-18). During a shutdown-triggered close,
     # systemd's stop timeout killed bt-trial here: state-after.txt and
     # sco-params.txt survived, and the row — the actual record — did not.
     #
@@ -1096,6 +1044,66 @@ hang|ok)
     # only themselves: the state file lives in /run and goes with the boot.
     command -v bt-state >/dev/null 2>&1 && bt-state > "$dir/state-after.txt" 2>&1
     command -v bt-mark  >/dev/null 2>&1 && bt-mark "TRIAL $build #$n RESULT: $outcome" >/dev/null 2>&1
+
+    # AND THE SCO DECODE LAST. It runs btmon over every capture in both
+    # directories, whole, and on the investigation machine each keeps up to 400
+    # (a btmon pass over the trace directory took over ten minutes on
+    # 2026-09-24). It ran ahead of the row with no budget whenever the trial saw
+    # a SCO setup, so a trial with a call in it could lose its row at shutdown
+    # (2026-10-18: a 5 s btmon, a 4 s close, rc=124 and no row). Nothing in the
+    # row comes from it. Killed here, it costs only sco-params.txt.
+    # Full parameters of the request. The reviewer's point: the failure may
+    # depend on a particular parameterisation (voice setting, packet type,
+    # retransmission effort) rather than on synchronous setup as such. The
+    # kernel log gives only the opcode and length; btmon decodes the payload.
+    # SCO parameters, SCOPED TO THIS TRIAL and drawn from BOTH capture paths.
+    #
+    # Two defects fixed here. The previous version grepped every retained
+    # capture with no time bound, so a file named as this trial's request
+    # parameters could contain requests from other trials and other boots — the
+    # precise confusion that makes a five-row parameter comparison worthless.
+    # And it read only the btmon path, which is the one known to lose events
+    # (BT-4); the decode-free capture exists because that path drops data.
+    #
+    # Records are filtered to the trial window by their own decoded timestamp,
+    # and each source is labelled so a discrepancy between the paths is visible
+    # rather than silently merged.
+    : > "$dir/sco-params.txt"
+    t_start=$(date -d "@$start" '+%Y-%m-%d %H:%M:%S')
+    t_end=$(date '+%Y-%m-%d %H:%M:%S')
+    if command -v btmon >/dev/null 2>&1 && [[ "$sco_sent" != "?" ]] && (( sco_sent > 0 )); then
+        {
+            printf '# trial window: %s .. %s\n' "$t_start" "$t_end"
+            printf '# both capture paths are shown; a request present in only one\n'
+            printf '# is an instrumentation finding, not evidence about the controller.\n\n'
+            for src in "${BT_CAPTURE_DIR:-/var/log/bt-health/capture}" \
+                       "${BT_TRACE_DIR:-/var/log/bt-health/trace}"; do
+                printf '===== source: %s =====\n' "$src"
+                for f in "$src"/*.btsnoop; do
+                    [[ -e "$f" ]] || continue
+                    COLUMNS=200 btmon -T -r "$f" 2>/dev/null
+                done | awk -v lo="$t_start" -v hi="$t_end" '
+                    # Carry the last seen full timestamp forward: indented
+                    # parameter lines have none of their own.
+                    match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}/) {
+                        cur = substr($0, RSTART, 19)
+                    }
+                    /HCI Command: Setup Synchronous Connection/ { keep = (cur >= lo && cur <= hi) }
+                    /HCI Event: Synchronous Connect Complete/   { keep = (cur >= lo && cur <= hi) }
+                    /^[<>@=!]/ && !/Setup Synchronous|Synchronous Connect Complete/ { keep = 0 }
+                    keep { print }'
+                echo
+            done
+        } > "$dir/sco-params.txt"
+    fi
+    # The header block above is always written when captures were read, so the
+    # emptiness test must ask "did any RECORD survive the filter?", not "is the
+    # file empty?" — the earlier -s test made this fallback unreachable and a
+    # no-SCO trial shipped a file of bare section headers with no explanation.
+    if ! grep -q 'HCI Command: Setup Synchronous Connection' "$dir/sco-params.txt" 2>/dev/null; then
+        echo "(no Setup Synchronous Connection inside this trial's window in either capture path)" \
+            > "$dir/sco-params.txt"
+    fi
 
     echo
     echo "  SCO setup requested   : ${sco_sent:-?}"

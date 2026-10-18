@@ -573,6 +573,10 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
   transition that will actually happen: the installed version and its state (a trial open,
   the mode), the new deploy, the shutdown that runs the new code over the old state, and
   back (`tests/system-upgrade`, CI).
+- **Rehearse with the stimulus present.** The rehearsal's trial saw no SCO setup and had no
+  captures, so the close's slowest step never ran in it: a `btmon` decode of every capture,
+  ahead of the row, with no budget (2026-10-18). A close is tested with what a real trial
+  leaves: a call in the kernel journal, captures on disk.
 - **Ids on `main` are `main`'s.** `main` takes work as new commits, so a test-branch
   commit's id is not on `main` even when its change is. Say where an id is: `main`'s own
   id for what is on `main`, or the branch, by name, that holds it.
