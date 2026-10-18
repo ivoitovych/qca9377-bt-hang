@@ -183,6 +183,9 @@ it rotted within hours (`R2-13`).
 > INCONCLUSIVE (Gmail closed the connection during AUTH), so **check on 587**. After the next
 > send, the operator revokes the password and confirms with
 > `BT_SMTP_PASS='…' scripts/smtp-login-check.sh 587 tls`, typed by the operator only.
+> **2026-10-18:** the A1/A2 password, deleted by the operator after the send, gets `535 5.7.8`
+> on 465 (AUTH LOGIN 334, 334, then 535: a verdict). 587 could not be reached from this machine
+> that day (connection timed out), so 465 is the fallback when 587 does not connect.
 >
 > **Mesh work, remaining order** (v3 is never sent as one series): (3) the power-off fix —
 > another author's patch for the same bug (patchwork 14864878) was compared in qemu, results
