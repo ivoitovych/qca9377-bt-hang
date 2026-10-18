@@ -34,8 +34,8 @@ METRICS=1
 # `systemctl enable --now bt-hang-watchdog`. That watchdog's response to an HCI
 # timeout is a USB reset, and a reset has THREE controlled demonstrations of
 # driving an already-wedged controller off the USB bus until power is removed (EX-023, the 2026-08-15 test, EX-026). So the
-# operator was choosing between stale instruments and an armed watchdog on a
-# family laptop, and correctly chose stale — which left BL-08's fix, the one
+# operator was choosing between stale instruments and an armed watchdog on
+# the laptop, and correctly chose stale — which left BL-08's fix, the one
 # that stops our own shutdown hook probing the controller, permanently stuck in
 # the tree.
 #

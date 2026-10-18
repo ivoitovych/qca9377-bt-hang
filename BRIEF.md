@@ -99,7 +99,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - **Since 2026-10-11 16:26 the laptop runs `7.0.0-38` with E3 built for it** (`updates/btusb.ko`, the exact upstream entry; srcversion `D1DEA96A0C95BFAB05CEE01`; the boot log shows `patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded). The build is on private `diag/e3-btusb-for-7.0.0-38-20261010`.
   - `-38`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
   - `-38` also carries the BT-9 fix (`96d006ae6445`). The discovery stuck since 10-04 had already ended on 10-10 at 15:02, at the operator's adapter power cycle (§5; corrected 2026-10-14).
-  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, cherry-picked from `d5272a6` on `tests/unit-testing-introduction`, plus `25dfc68`) but not on the machine. The route is the operator's open decision: `install.sh --tools-only` plus `daemon-reload`, or `bt-trial` alone (STATUS).
+  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, cherry-picked from `d5272a6` on `tests/unit-testing-introduction`, plus `25dfc68`, and since 2026-10-18 the close writes its row before `bt-state` and `bt-mark`) but not on the machine. The only sound route is the whole tool set, `install.sh --tools-only` plus `daemon-reload`; `bt-trial` alone is a partial deploy (STATUS). When is the operator's decision.
   - **On 2026-10-13 at 20:26 the laptop stopped abruptly** (no shutdown sequence in the journal; cause not recorded) and rebooted at 20:29. The second "E3 #1" lost its row too, and the fix could not have prevented that: an abrupt stop runs no ExecStop. Its E3 result is whole in the journal: 7 links, 0 timeouts (`scripts/sco-ledger.sh -1`).
   - Only the operator touches the machine's Bluetooth or kernel.
   - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer. It has been paused since 2026-10-11 17:23 (free space then; 108 GB free on 10-17), and the 10-13 reboot removed the timer. Restarting it is the operator's decision. On 10-17, 159 archived files still stood in front of the first unarchived capture: about three weeks at the current rate (`docs/STATUS.md`). Rules: §7, "Evidence".
@@ -109,7 +109,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-17 (the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; the trial fix's hash on `main`; earlier: 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
+**Last updated: 2026-10-18 (the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
 `kernel/mgmt-flush-status` the same day; the next exhibit on `main` is EX-063) — no tip hash:
 it rotted within hours (`R2-13`).
 
@@ -715,7 +715,8 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
    loaded (now run under `unshare -Ur`, which drops `CAP_NET_RAW` for root too — same refusal
    on every host), and `bt-actions` read the machine's real btsnoop captures in its second pass
    and added 10 MGMT rows to a 46-line fixture — `btmon` aborted on one of those captures on
-   the way, a `BT-4` instance (test now sets `BT_TRACE_DIR` to nothing). Both fixed in the
+   the way, a `BT-4` instance (the test now points `BT_TRACE_DIR` at a directory that does
+   not exist, and the suite declares `BT_HEALTH_DIR` for the whole run). Both fixed in the
    suite with the reason beside them; `BRIEF §8a` remains his.
    **State 2026-09-23 after the power cycle:** controller healthy, all boots archived complete.
    **Three independent external reviews** of the held patch (details on the held branch only,
@@ -750,16 +751,18 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
     --grep`), `systemctl is-active` (106×) and `bluetoothctl devices Connected` (each
     behind `timeout 8`). Those are instant on a journal-less container and expensive on the
     machine — worst exactly when the controller is wedged — so runtime there scales with
-    uptime, not with the tests. `.github/workflows/checks.yml:8` still says *"the suite is
-    ~2 s and hermetic"*; both halves are now false. Also: the five gates that each re-run
-    the whole suite cost **6 min 53 s** here, and four concurrent runs finish in 68 s, so
-    the split (`UT-12`) buys ~3×. **Done 2026-09-29 for the machine half:** every tool in
+    uptime, not with the tests. `.github/workflows/checks.yml:8` said *"the suite is
+    ~2 s and hermetic"* until 2026-09-29; it now says about a minute, hermetic as measured
+    in the decoy world. Also: the five gates that each re-run the whole suite then cost
+    **6 min 53 s** here, and four concurrent runs finish in 68 s, so the split (`UT-12`)
+    buys ~3×. **Done 2026-09-29 for the machine half:** every tool in
     `tests/machine-tools` answers from a tripwire for the whole run, `/proc`, `/sys` and the
     install paths resolve to a declared empty machine, and an invariant fails on any call
     that reached the machine — 274 did on the first run; none now. `devtools/sandbox`
     measured the rest (312 calls, 12 machine-dependent verdicts) and CI runs the suite in its
-    decoy world on every push (tests/README.md, rule 5). **Still open:** the five gates that
-    each re-run the suite, and the split.
+    decoy world on every push (tests/README.md, rule 5). **Still open:** the gates that each
+    re-run the suite (seven in CI's check job on 2026-10-17, an eighth in the audit job of
+    the test-suite branch), and the split.
 
 ## 10. Where detail lives
 
