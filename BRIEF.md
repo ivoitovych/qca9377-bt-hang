@@ -547,6 +547,11 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
   transition that will actually happen: the installed version and its state (a trial open,
   the mode), the new deploy, the shutdown that runs the new code over the old state, and
   back (`tests/system-upgrade`, CI).
+- **A section stands alone.** The suite runs its sections in parallel workers, each with a
+  fresh setup, so a section reads only that setup. Shared fixtures go there; a section that
+  reads another's definitions says so (`# PARALLEL: runs after "<heading>"`). Established by
+  running each section alone and comparing the two modes check by check (2026-10-18;
+  tests/README.md, rule 7).
 - **Rehearse with the stimulus present.** The rehearsal's trial saw no SCO setup and had no
   captures, so the close's slowest step never ran in it: a `btmon` decode of every capture,
   ahead of the row, with no budget (2026-10-18). A close is tested with what a real trial

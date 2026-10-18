@@ -27,7 +27,8 @@
 #     failure mode this suite documents is a pattern written on the machine
 #     where the other half never appears.
 #
-# Usage: tests/run-tests
+# Usage: tests/run-tests [--jobs N | --serial]
+#        tests/run-tests --section <text from a heading>
 
 set -uo pipefail
 
@@ -102,6 +103,31 @@ if [[ -e "$BT_REAL_TRIAL_STATE/current" && "${BT_ALLOW_OPEN_TRIAL:-0}" != 1 ]]; 
     echo "           is stale, e.g. after a crash." >&2
     exit 2
 fi
+
+# ── HOW MANY WORKERS: EVERY CORE, UNLESS TOLD OTHERWISE ───────────────────
+#
+# The sections below run in parallel, in worker processes (see "A PARALLEL
+# RUN", where the first section begins). A single run had grown to 104 s here
+# and the laptop's gated commit spent it on one of sixteen cores.
+#   --jobs N | -j N   N workers at a time        BT_SUITE_JOBS=N does the same
+#   --serial          one process, in file order (the run as it always was)
+# The instruments that measure the suite (devtools/coverage and its siblings)
+# ask for --serial: they read one trace of one process.
+SUITE_JOBS="${BT_SUITE_JOBS:-}"
+case "${1:-}" in
+    --jobs|-j) SUITE_JOBS="${2:-}"; shift; shift ;;
+    --serial)  SUITE_JOBS=1; shift ;;
+esac
+[[ -n "$SUITE_JOBS" ]] || SUITE_JOBS=$(nproc 2>/dev/null || echo 1)
+if ! [[ "$SUITE_JOBS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "run-tests: --jobs takes a whole number of workers, 1 or more (got '$SUITE_JOBS')" >&2
+    exit 2
+fi
+# The environment the caller gave, taken before this file exports anything.
+# A worker starts from it, not from this process's, and builds its own guard,
+# tripwire and declared machine: a worker that inherited this PATH would find
+# this run's tripwire where real_tool looks for the real binary.
+SUITE_CALLER_ENV=$(export -p)
 
 # ── THE PATH GUARD, BEFORE ANYTHING ELSE RUNS ─────────────────────────────
 #
@@ -456,8 +482,12 @@ on_exit() {
         local _o; _o=$(suite_orphans | cut -d' ' -f1)
         [[ -n "$_o" ]] && kill -TERM $_o 2>/dev/null
     fi
+    # A parallel run's workers that are still running, if it ended before they
+    # did: each stops on TERM through its own trap, which reaps what IT started.
+    (( ${#SUITE_PAR_RUNNING[@]} )) && kill -TERM "${!SUITE_PAR_RUNNING[@]}" 2>/dev/null
     (( ${#CLEANUP_PATHS[@]} )) && rm -rf "${CLEANUP_PATHS[@]}"
 }
+declare -A SUITE_PAR_RUNNING=()   # worker pid -> its unit, while it runs
 trap on_exit EXIT
 
 # ── --section: print one block instead of all of them ─────────────────────
@@ -753,6 +783,118 @@ stop_daemon() {   # <pid> — of a daemon started with "$SETSID"
     return 0
 }
 
+# ── THE SYMLINK FARM, SHARED BY THE SECTIONS THAT NEED A TOOL ABSENT ─────
+#
+# A SYMLINK FARM OF /usr/bin MINUS THE TOOL, not /usr/bin ON THE PATH.
+#
+# `PATH="$WDNOP:/usr/bin:/bin"` was the first version and it cannot work:
+# hciconfig and btmgmt LIVE in /usr/bin, and on Ubuntu /bin is a symlink to it,
+# so "no probe tool" was never achieved on any machine with bluez installed.
+# The watchdog found the real hciconfig, probed the real controller, and the
+# branch under test was never reached — passing on a bare checkout, failing on
+# the investigation machine.
+#
+# THIRD INSTANCE of this exact mistake here, and the correction for the second
+# one (bt-state) was already in the tree when these two were written. The farm
+# keeps every other tool the watchdog needs while making the ones under test
+# genuinely absent, and /bin is dropped because it is the same directory.
+# TOOLS THE WATCHDOG NEEDS, MINUS THE ONE UNDER TEST.
+#
+# The first version farmed with `ln -sf /usr/bin/*` and THEN copied the stubs
+# in. `cp` onto a symlink writes THROUGH it, and `>` truncates through it, so
+# copying a stub named systemctl over the symlink `farm/systemctl ->
+# /usr/bin/systemctl` overwrites the REAL BINARY. It did: /usr/bin/systemctl
+# became a 71-byte stub on this container and had to be restored from the
+# package. On the investigation machine the same code would have destroyed
+# /usr/bin/systemctl and /usr/bin/btmgmt.
+#
+# Creating the stubs first and linking only names that do not already exist
+# makes the hazard structurally impossible: no destination in this directory is
+# ever a symlink at the moment something is written to it.
+# TWO DIRECTORIES, AND NOTHING IS EVER WRITTEN INTO THE FARM.
+#
+# The farm holds symlinks to /usr/bin; the stub directory holds real files. The
+# PATH lists the stubs first, so a stub shadows the farm without ever replacing
+# a link. That is what makes this safe, and ordering was not:
+#
+#   `cp stub/systemctl farm/` and `printf ... > farm/timeout` both WRITE
+#   THROUGH the symlink and destroy the real binary at the other end.
+#
+# It happened twice in one hour. On this container /usr/bin/systemctl became a
+# 71-byte stub; on the investigation machine /usr/bin/timeout became `exec
+# /usr/bin/timeout "$@"` — an infinite recursion that hung the suite and every
+# other user of timeout — and /usr/bin/btmgmt became a test stub. Both had to
+# be restored from their packages.
+#
+# The first fix was "create the stubs first, then link only missing names",
+# which works and depends on remembering an order. This does not: a directory
+# is either written to or symlinked into, never both, so there is no ordering
+# to get wrong and no destination that is ever a symlink.
+# Shared: the watchdog and bt-state sections both need "this tool is genuinely
+# absent", and both had it wrong.
+farm_dir() {   # <dir> [tool-to-omit...] — symlinks only; NEVER written into
+    local d="$1"; shift
+    local f b omit
+    local -a keep=()
+    mkdir -p "$d"
+    # A machine tool is linked to its TRIPWIRE, never to the real binary, and on
+    # every host alike: a farm that mirrored the real /usr/bin handed the watchdog
+    # test the real loginctl here, and would have handed it the laptop's.
+    for f in /usr/bin/* "$TRIP"/*; do
+        b=${f##*/}
+        [[ "$f" == /usr/bin/* && -e "$TRIP/$b" ]] && continue
+        omit=0
+        for t in "$@"; do [[ "$b" == "$t" ]] && { omit=1; break; }; done
+        (( omit )) && continue
+        keep+=("$f")
+    done
+    # ONE ln, NOT ONE PER FILE. /usr/bin holds ~1100 entries here, and a
+    # per-file `ln -s` forked ~1100 processes per farm — 2.5 s each, three
+    # farms, 19% of the whole run spent on symlinks. `ln -s -t` takes the whole
+    # list in a single exec and costs about a hundredth of that.
+    #
+    # The omitted tools are filtered OUT OF THE LIST rather than linked and then
+    # removed. Link-everything-then-`rm` would be correct today — rm unlinks the
+    # symlink and never touches its target — but it is the ordering-dependent
+    # shape that destroyed three system binaries here, and "safe until someone
+    # adds a line after it" is exactly what that was.
+    (( ${#keep[@]} )) && ln -s -t "$d" "${keep[@]}" 2>/dev/null
+    return 0
+}
+
+# The results fixture the report, analysis and watchdog sections read.
+FIX=tests/trial-results.tsv
+
+# Empty fixtures more than one section feeds to a tool: a library directory with
+# nothing in it, a journal dump with nothing in it.
+EMPTYLIB=$(mktemp -d)
+EMPTYDUMP=$(mktemp)
+
+# THE MACHINE IT COLLECTS FROM, declared. bt-incident copies the last minutes
+# of the kernel, watchdog and bluetoothd journals and snapshots the device
+# through bt-state and bt-usbstate. Undeclared, every run of these tests copied
+# THIS machine's logs — on the laptop, real unsanitised journal text — into a
+# temp session, and read its real USB tree (devtools/sandbox, 2026-09-29).
+# The kernel stream carries one marked line, so the collection can be shown to
+# have read it and nothing else.
+INCM=$(mktemp -d); mkdir -p "$INCM/usb" "$INCM/mod" "$INCM/bt" "$INCM/jrn"
+machine_stub "$INCM/bin" systemctl bluetoothctl uname
+cat > "$INCM/bin/journalctl" <<'INCJ'
+#!/bin/sh
+case " $* " in *" -k "*) echo "Aug 10 09:10:00 host kernel: Bluetooth: hci0: incident-fixture-line" ;; esac
+exit 0
+INCJ
+chmod +x "$INCM/bin/journalctl"
+INCENV=(PATH="$INCM/bin:$PATH" BT_SYSFS_USB="$INCM/usb" BT_SYSFS_MODULE="$INCM/mod"
+        BT_SYSFS_BT="$INCM/bt" BT_JOURNAL_FIXTURE="$INCM/jrn")
+
+# Whether this awk can express the redaction patterns (sanitize-logs.sh's own
+# gate): positive and negative, because mawk 1.3.4 answers the positive form
+# correctly by accident. sanitize-logs and the publish gates both ask.
+awk_intervals_ok=1
+echo "00:11:22:33:44:55:66:77" | awk '{exit !(match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) && RLENGTH == 23)}' 2>/dev/null || awk_intervals_ok=0
+echo "11:22" | awk '{exit (match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) != 0)}' 2>/dev/null || awk_intervals_ok=0
+
 # ── THE SHELL SCRIPTS THIS REPOSITORY SHIPS ───────────────────────────────
 #
 # Every repo-wide check below scans this set. It is DERIVED, because the
@@ -820,6 +962,148 @@ fi
 # tool does not run. The extraction produced byte-identical output on both the
 # reporting and the refusal path at the commit that moved it.
 PHASEAWK=(-f tools/lib/timestamp.awk -f tools/lib/phase.awk)
+
+# ── A PARALLEL RUN: THE SECTIONS AS UNITS OF WORK ─────────────────────────
+#
+# Everything above is the run's setup; everything below is sections, each a
+# heading and its tests, and the last one the run's own report. Measured on
+# 2026-10-18, every section but three gave the same verdicts run alone, with
+# nothing but the setup above it, as in the full run; those three now say what
+# they read from which earlier section (`# PARALLEL: runs after "<heading>"`),
+# and run after it in the same worker.
+#
+# So a parallel run starts a WORKER per unit (a section, or a section and the
+# ones that run after it): a fresh tests/run-tests from the caller's
+# environment, which builds its own guard, tripwire, declared machine and temp
+# tree as above, runs its sections, and writes what it found where this
+# process collects it. Each section therefore sees exactly what it saw run
+# alone, whatever ran beside it or before it in the same worker. This process
+# took the snapshots above and runs the last section itself, once, over the
+# whole run: the evidence tree, the trial state, /usr/bin and the tracked files
+# are compared after every worker has finished.
+#
+# What a worker hands back: its pass and fail counts, its sections' output
+# (printed here in file order, so the run reads as a serial one), its
+# tripwire log (merged into this run's; each worker must have recorded its own
+# canary), the processes it left (reported at the end, then reaped by it), and
+# the NOT ASKED notes its sections set (*_SKIPPED).
+suite_sections() {   # one line per section, in file order: <first line> <last line> <heading>
+    awk 'prev ~ /^echo "/ && /^echo "─/ { if (n++) print s, NR - 2, h; s = NR - 1; h = substr(prev, 7, length(prev) - 7) }
+         { prev = $0 } END { print s, NR, h }' tests/run-tests
+}
+SUITE_ROOT=$PWD
+if [[ -n "${SUITE_UNIT:-}" ]]; then
+    # A WORKER. Named by a parallel run of this file, and only by one: the
+    # parent wrote its run id into the unit directory it passes.
+    REPORTED=1   # the parent compares the machine, once, for the whole run
+    if [[ -z "${SUITE_UNIT_PARENT:-}" || "$(cat "${SUITE_UNIT_DIR:-/nonexistent}/parent" 2>/dev/null)" != "$SUITE_UNIT_PARENT" ]]; then
+        echo "run-tests: SUITE_UNIT is set, but no parallel run of this suite started this process — refusing." >&2
+        exit 2
+    fi
+    mapfile -t _secs < <(suite_sections)
+    for _k in $SUITE_UNIT; do
+        read -r _a _b _h <<<"${_secs[$_k]}"
+        cd "$SUITE_ROOT" || exit 1
+        { source <(sed -n "${_a},${_b}p" "$SUITE_ROOT/tests/run-tests"); } > "$SUITE_UNIT_DIR/s-$_k.out" 2>&1
+        : > "$SUITE_UNIT_DIR/s-$_k.done"
+    done
+    cd "$SUITE_ROOT" || exit 1
+    _o=$(suite_orphans)
+    printf '%s\n' "$_o" | grep . > "$SUITE_UNIT_DIR/u-$SUITE_UNIT_ID.orphans"
+    [[ -n "$_o" ]] && kill -TERM $(cut -d' ' -f1 <<<"$_o") 2>/dev/null
+    cp "$TRIP_LOG" "$SUITE_UNIT_DIR/u-$SUITE_UNIT_ID.trip"
+    {
+        echo "pass=$pass fail=$fail"
+        _sk=$(compgen -v | grep '_SKIPPED$')
+        [[ -n "$_sk" ]] && declare -p $_sk
+    } > "$SUITE_UNIT_DIR/u-$SUITE_UNIT_ID.res"
+    exit 0
+fi
+SUITE_PAR=''
+if (( SUITE_JOBS > 1 )); then
+    # THE PARENT.
+    SUITE_PAR=$(mktemp -d)   # inside this run's temp tree, so it goes with it
+    echo "$SUITE_RUN_ID" > "$SUITE_PAR/parent"
+    mapfile -t _secs < <(suite_sections)
+    _last=$(( ${#_secs[@]} - 1 ))   # the run's own report: here, after the workers
+    _units=(); _unit_of=(); _weight=(); _long=()
+    for (( _k = 0; _k < _last; _k++ )); do
+        read -r _a _b _h <<<"${_secs[$_k]}"
+        _head=$(sed -n "${_a},$(( _a + 8 ))p" tests/run-tests)
+        _after=$(sed -n 's/^# PARALLEL: runs after "\(.*\)", in the same worker:$/\1/p' <<<"$_head" | head -1)
+        _u=''
+        if [[ -n "$_after" ]]; then
+            for (( _j = 0; _j < _k; _j++ )); do
+                read -r _ja _jb _jh <<<"${_secs[$_j]}"
+                [[ "$_jh" == "$_after" ]] && { _u=${_unit_of[$_j]}; break; }
+            done
+            [[ -n "$_u" ]] || bad "the section \"$_h\" runs after \"$_after\", and no earlier section has that heading — it ran alone"
+        fi
+        if [[ -n "$_u" ]]; then
+            _units[$_u]+=" $_k"; _weight[$_u]=$(( _weight[_u] + _b - _a ))
+        else
+            _u=${#_units[@]}; _units+=("$_k"); _weight+=($(( _b - _a ))); _long+=(0)
+        fi
+        _unit_of[$_k]=$_u
+        grep -q '^# PARALLEL: long' <<<"$_head" && _long[$_u]=1
+    done
+    # Longest first, so the run is not left waiting on one at the end: the ones
+    # marked long, then by length in lines.
+    mapfile -t _order < <(for _u in "${!_units[@]}"; do echo "${_long[$_u]} ${_weight[$_u]} $_u"; done | sort -k1,1nr -k2,2nr | cut -d' ' -f3)
+    _shown=0
+    _flush() {   # print every section whose output is complete, in file order
+        while (( _shown < _last )); do
+            [[ -e "$SUITE_PAR/s-$_shown.done" || -e "$SUITE_PAR/u-${_unit_of[$_shown]}.rc" ]] || break
+            cat "$SUITE_PAR/s-$_shown.out" 2>/dev/null
+            _shown=$(( _shown + 1 ))
+        done
+    }
+    _reap() {   # wait for one worker, and record how it ended
+        local _pid _rc
+        wait -n -p _pid; _rc=$?
+        # Not every child is a worker: bash waits for process substitutions too.
+        [[ -n "${_pid:-}" && -n "${SUITE_PAR_RUNNING[$_pid]+set}" ]] || return 0
+        echo "$_rc" > "$SUITE_PAR/u-${SUITE_PAR_RUNNING[$_pid]}.rc"
+        unset 'SUITE_PAR_RUNNING[$_pid]'
+        _flush
+    }
+    for _u in "${_order[@]}"; do
+        while (( ${#SUITE_PAR_RUNNING[@]} >= SUITE_JOBS )); do _reap; done
+        ( exec -c "$BASH" -c 'eval "$1"; export SUITE_UNIT="$2" SUITE_UNIT_ID="$3" SUITE_UNIT_DIR="$4" SUITE_UNIT_PARENT="$5"
+                             exec "$BASH" tests/run-tests' \
+              worker "$SUITE_CALLER_ENV" "${_units[$_u]}" "$_u" "$SUITE_PAR" "$SUITE_RUN_ID" \
+              > "$SUITE_PAR/u-$_u.log" 2>&1 ) &
+        SUITE_PAR_RUNNING[$!]=$_u
+    done
+    while (( ${#SUITE_PAR_RUNNING[@]} )); do _reap; done
+    _flush
+    # What the workers found, into this run's own account. The NOT ASKED notes
+    # the report reads exist empty first: a worker that died must cost a red
+    # line, not the report.
+    read -r _a _b _h <<<"${_secs[$_last]}"
+    for _v in $(sed -n "${_a},${_b}p" tests/run-tests | grep -oE '\$\{?[A-Z][A-Z0-9_]*_SKIPPED' | tr -d '${' | sort -u); do
+        printf -v "$_v" '%s' ''
+    done
+    : > "$SUITE_PAR/orphans"
+    for _u in "${!_units[@]}"; do
+        _names=$(for _k in ${_units[$_u]}; do read -r _a _b _h <<<"${_secs[$_k]}"; printf '"%s" ' "$_h"; done)
+        if [[ -s "$SUITE_PAR/u-$_u.res" ]]; then
+            read -r _p _f < <(sed -n '1s/^pass=\([0-9]*\) fail=\([0-9]*\)$/\1 \2/p' "$SUITE_PAR/u-$_u.res")
+            pass=$(( pass + ${_p:-0} )); fail=$(( fail + ${_f:-0} ))
+            source <(sed -n '2,$p' "$SUITE_PAR/u-$_u.res")
+            (( $(grep -c $'^journalctl\t--suite-tripwire-canary\t' "$SUITE_PAR/u-$_u.trip" 2>/dev/null) == 1 )) \
+                || bad "the worker for ${_names}did not record its tripwire's canary — its 'no machine tool' half is unproven"
+        else
+            bad "the worker for ${_names}did not finish (rc=$(cat "$SUITE_PAR/u-$_u.rc" 2>/dev/null)): $(tail -3 "$SUITE_PAR/u-$_u.log" 2>/dev/null | tr '\n' '|')"
+        fi
+        grep -v $'^journalctl\t--suite-tripwire-canary\t' "$SUITE_PAR/u-$_u.trip" >> "$TRIP_LOG" 2>/dev/null
+        cat "$SUITE_PAR/u-$_u.orphans" >> "$SUITE_PAR/orphans" 2>/dev/null
+    done
+    SUITE_PAR_NOTE="the sections ran in ${#_units[@]} workers, $SUITE_JOBS at a time (tests/run-tests --serial runs them in one process)"
+    read -r _a _b _h <<<"${_secs[$_last]}"
+    source <(sed -n "${_a},${_b}p" tests/run-tests)
+    exit 0   # the report exits 1 itself when anything failed
+fi
 
 echo "bt-phase invariants"
 echo "──────────────────────────────────────────────────────────────"
@@ -1279,7 +1563,7 @@ echo "────────────────────────�
 # header and asserting the report is byte-identical tests the invariant, and
 # makes positional assumptions mechanically impossible instead of merely
 # discouraged.
-FIX=tests/trial-results.tsv
+# FIX, the fixture these report tests read, is declared with the shared helpers.
 [[ -r "$FIX" ]] || bad "missing $FIX"
 
 RD=$(mktemp -d); CLEANUP_PATHS+=("$RD")
@@ -1550,6 +1834,8 @@ bh00=$(awk -f tools/lib/timestamp.awk -f tools/lib/boot-hours.awk \
 echo
 echo "analysis commands fail loudly"
 echo "──────────────────────────────────────────────────────────────"
+# PARALLEL: runs after "bt-trial report — schema invariants", in the same worker:
+# it reads $RD, the report fixture that section builds.
 
 # THE INVARIANT: if an evidence-producing calculation fails, the enclosing
 # command must exit non-zero.
@@ -3301,7 +3587,7 @@ tools/bt-interval 2026-08-13T05:14:16.715095+02:00 >/dev/null 2>&1
 # The library guard. A tool that silently computes nothing when its shipped awk
 # is missing is exactly the `-f` trap this repository was bitten by: no error,
 # no output, and a caller that reads the empty result as a valid answer.
-EMPTYLIB=$(mktemp -d)
+# $EMPTYLIB, an empty library directory, is declared with the shared helpers.
 iv_out=$(BT_LIBDIR="$EMPTYLIB" tools/bt-interval \
          2026-08-13T05:14:16.715095+02:00 2026-08-13T05:14:30.461003+02:00 2>&1); iv_rc=$?
 if (( iv_rc != 0 )) && [[ "$iv_out" == *"missing"* ]]; then
@@ -3334,7 +3620,7 @@ fi
 # An empty dump must refuse. The cache branch would otherwise reuse a journal
 # read that a reboot truncated to nothing and report on it as if complete —
 # the failure the tool's own header calls out.
-EMPTYDUMP=$(mktemp)
+# $EMPTYDUMP, an empty journal dump, is declared with the shared helpers.
 tools/bt-stage2 --from "$EMPTYDUMP" >/dev/null 2>&1
 (( $? != 0 )) && ok "bt-stage2 refuses an empty journal dump" \
               || bad "bt-stage2 reported on an empty dump"
@@ -3813,82 +4099,9 @@ EOUT=$(wd_run 10 BT_EARLY=1)
 # counting every unconfirmable attempt as a FAILURE, because MAX_FAILS then
 # disables the watchdog on a perfectly healthy machine. So the unverifiable
 # case is a third answer, not a lost coin toss.
-# A SYMLINK FARM OF /usr/bin MINUS THE TOOL, not /usr/bin ON THE PATH.
-#
-# `PATH="$WDNOP:/usr/bin:/bin"` was the first version and it cannot work:
-# hciconfig and btmgmt LIVE in /usr/bin, and on Ubuntu /bin is a symlink to it,
-# so "no probe tool" was never achieved on any machine with bluez installed.
-# The watchdog found the real hciconfig, probed the real controller, and the
-# branch under test was never reached — passing on a bare checkout, failing on
-# the investigation machine.
-#
-# THIRD INSTANCE of this exact mistake here, and the correction for the second
-# one (bt-state) was already in the tree when these two were written. The farm
-# keeps every other tool the watchdog needs while making the ones under test
-# genuinely absent, and /bin is dropped because it is the same directory.
-# TOOLS THE WATCHDOG NEEDS, MINUS THE ONE UNDER TEST.
-#
-# The first version farmed with `ln -sf /usr/bin/*` and THEN copied the stubs
-# in. `cp` onto a symlink writes THROUGH it, and `>` truncates through it, so
-# copying a stub named systemctl over the symlink `farm/systemctl ->
-# /usr/bin/systemctl` overwrites the REAL BINARY. It did: /usr/bin/systemctl
-# became a 71-byte stub on this container and had to be restored from the
-# package. On the investigation machine the same code would have destroyed
-# /usr/bin/systemctl and /usr/bin/btmgmt.
-#
-# Creating the stubs first and linking only names that do not already exist
-# makes the hazard structurally impossible: no destination in this directory is
-# ever a symlink at the moment something is written to it.
-# TWO DIRECTORIES, AND NOTHING IS EVER WRITTEN INTO THE FARM.
-#
-# The farm holds symlinks to /usr/bin; the stub directory holds real files. The
-# PATH lists the stubs first, so a stub shadows the farm without ever replacing
-# a link. That is what makes this safe, and ordering was not:
-#
-#   `cp stub/systemctl farm/` and `printf ... > farm/timeout` both WRITE
-#   THROUGH the symlink and destroy the real binary at the other end.
-#
-# It happened twice in one hour. On this container /usr/bin/systemctl became a
-# 71-byte stub; on the investigation machine /usr/bin/timeout became `exec
-# /usr/bin/timeout "$@"` — an infinite recursion that hung the suite and every
-# other user of timeout — and /usr/bin/btmgmt became a test stub. Both had to
-# be restored from their packages.
-#
-# The first fix was "create the stubs first, then link only missing names",
-# which works and depends on remembering an order. This does not: a directory
-# is either written to or symlinked into, never both, so there is no ordering
-# to get wrong and no destination that is ever a symlink.
-# Defined here and used again by the bt-state section below, because both need
-# "this tool is genuinely absent" and both had it wrong.
-farm_dir() {   # <dir> [tool-to-omit...] — symlinks only; NEVER written into
-    local d="$1"; shift
-    local f b omit
-    local -a keep=()
-    mkdir -p "$d"
-    # A machine tool is linked to its TRIPWIRE, never to the real binary, and on
-    # every host alike: a farm that mirrored the real /usr/bin handed the watchdog
-    # test the real loginctl here, and would have handed it the laptop's.
-    for f in /usr/bin/* "$TRIP"/*; do
-        b=${f##*/}
-        [[ "$f" == /usr/bin/* && -e "$TRIP/$b" ]] && continue
-        omit=0
-        for t in "$@"; do [[ "$b" == "$t" ]] && { omit=1; break; }; done
-        (( omit )) && continue
-        keep+=("$f")
-    done
-    # ONE ln, NOT ONE PER FILE. /usr/bin holds ~1100 entries here, and a
-    # per-file `ln -s` forked ~1100 processes per farm — 2.5 s each, three
-    # farms, 19% of the whole run spent on symlinks. `ln -s -t` takes the whole
-    # list in a single exec and costs about a hundredth of that.
-    #
-    # The omitted tools are filtered OUT OF THE LIST rather than linked and then
-    # removed. Link-everything-then-`rm` would be correct today — rm unlinks the
-    # symlink and never touches its target — but it is the ordering-dependent
-    # shape that destroyed three system binaries here, and "safe until someone
-    # adds a line after it" is exactly what that was.
-    (( ${#keep[@]} )) && ln -s -t "$d" "${keep[@]}" 2>/dev/null
-    return 0
-}
+# farm_dir(), the symlink farm these tests use, is one of the shared helpers at
+# the top of this file: the bt-state section farms too, and a parallel run gives
+# each section its own process.
 # No probe tool at all: neither hciconfig nor btmgmt is linked in, and the
 # stub directory beside it carries the rest.
 WDNOP="$WD/noprobe-stub"; mkdir -p "$WDNOP"
@@ -4920,23 +5133,8 @@ done
 # is correct — a failed trial must not collect during a test run). Stubbing a
 # tool protects the suite from it; it does not test it. This runs the real
 # one, pointed at a temp directory, and asserts the write landed inside.
-# THE MACHINE IT COLLECTS FROM, declared. bt-incident copies the last minutes
-# of the kernel, watchdog and bluetoothd journals and snapshots the device
-# through bt-state and bt-usbstate. Undeclared, every run of these tests copied
-# THIS machine's logs — on the laptop, real unsanitised journal text — into a
-# temp session, and read its real USB tree (devtools/sandbox, 2026-09-29).
-# The kernel stream carries one marked line, so the collection can be shown to
-# have read it and nothing else.
-INCM=$(mktemp -d); mkdir -p "$INCM/usb" "$INCM/mod" "$INCM/bt" "$INCM/jrn"
-machine_stub "$INCM/bin" systemctl bluetoothctl uname
-cat > "$INCM/bin/journalctl" <<'INCJ'
-#!/bin/sh
-case " $* " in *" -k "*) echo "Aug 10 09:10:00 host kernel: Bluetooth: hci0: incident-fixture-line" ;; esac
-exit 0
-INCJ
-chmod +x "$INCM/bin/journalctl"
-INCENV=(PATH="$INCM/bin:$PATH" BT_SYSFS_USB="$INCM/usb" BT_SYSFS_MODULE="$INCM/mod"
-        BT_SYSFS_BT="$INCM/bt" BT_JOURNAL_FIXTURE="$INCM/jrn")
+# $INCENV, the machine bt-incident collects from, is declared with the shared
+# helpers at the top: the publish gates drive bt-incident's sanitiser with it.
 INC=$(mktemp -d)
 mkdir -p "$INC/repo"
 env "${INCENV[@]}" BT_EVIDENCE_REPO="$INC/repo" tools/bt-incident suite-sandbox-check >/dev/null 2>&1
@@ -6936,6 +7134,8 @@ rm -rf "$CW"
 echo
 echo "the parameters that decide the answers, and the refusals nothing drove"
 echo "─────────────────────────────────────────────────────────────────────"
+# PARALLEL: runs after "bt-hang-watchdog — the decisions, never the actuation", in the same worker:
+# it reads cd_run and $CD, the capture-diff fixture built there.
 #
 # Two classes the comprehensiveness pass found together, because they fail the
 # same way: nothing had ever set them to anything but their defaults, and
@@ -7780,6 +7980,8 @@ rm -rf "$UM"
 echo
 echo "bt-trace — the other supervision loop, and the floor that stops it"
 echo "──────────────────────────────────────────────────────────────────"
+# PARALLEL: long — about 12 s, most of it the daemon's own whole-second polls, so
+# a parallel run starts it first rather than judging it by its length.
 #
 # Same shape as bt-usbmon and a different failure history: 67 btmon aborts in
 # one boot lost the SCO parameters this investigation now needs, which is why
@@ -12023,9 +12225,8 @@ SANOUT=$(mktemp)
 # Does this awk implement ERE intervals on groups? Ask the same way the tool
 # does, including the negative probe — a positive-only check is answered
 # correctly by accident on mawk, which is the trap the tool's gate documents.
-awk_intervals_ok=1
-echo "00:11:22:33:44:55:66:77" | awk '{exit !(match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) && RLENGTH == 23)}' 2>/dev/null || awk_intervals_ok=0
-echo "11:22" | awk '{exit (match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) != 0)}' 2>/dev/null || awk_intervals_ok=0
+# $awk_intervals_ok, whether this awk can express the redaction patterns, is
+# probed with the shared helpers: the publish gates ask it too.
 
 if (( awk_intervals_ok )); then
     # The engine can express the patterns, so assert the redaction itself.
@@ -13698,8 +13899,10 @@ else
 fi
 
 # Nothing this run started may still be running (SUITE_RUN_ID, top of file).
-# Reported, then reaped, so a red run does not leave them either.
-ORPHANS=$(suite_orphans)
+# Reported, then reaped, so a red run does not leave them either. In a parallel
+# run each worker has its own run id, and handed back what it left (it reaped
+# them itself, after writing them down).
+ORPHANS=$(suite_orphans; [[ -n "$SUITE_PAR" ]] && cat "$SUITE_PAR/orphans")
 if [[ -z "$ORPHANS" ]]; then
     ok "no process this run started has outlived the test that started it"
 else
@@ -13813,6 +14016,18 @@ if [[ -n "$COREDUMP_SKIPPED" ]]; then
     echo "  NOT ASKED HERE: $COREDUMP_SKIPPED — no core is retained on this host,"
     echo "                  so the fixture's shape was not checked against the"
     echo "                  real tool. Run this suite where a core exists."
+fi
+
+# A PARALLEL RUN ACCOUNTS FOR EVERY SECTION. Each must have finished in exactly
+# one worker (A PARALLEL RUN, above): a section the scheduling lost would leave
+# nothing to read as red. Counted, so the number is on the line.
+if [[ -n "$SUITE_PAR" ]]; then
+    _nsec=$(( $(suite_sections | wc -l) - 1 ))
+    _ran=$(find "$SUITE_PAR" -maxdepth 1 -name 's-*.done' | wc -l)
+    (( _ran == _nsec )) \
+        && ok "every one of the $_nsec sections finished, each in one worker" \
+        || bad "of $_nsec sections, $_ran finished in a worker"
+    echo "  $SUITE_PAR_NOTE"
 fi
 
 echo

@@ -200,7 +200,7 @@ for i in $(seq 1 "$NW"); do
 done
 
 run_suite() {   # <worktree> — the first verdict line the suite prints
-    timeout "$TMO" unshare -Urpfnm --mount-proc sh -c "mount -t tmpfs none /tmp && cd '$1' && exec tests/run-tests" 2>&1 \
+    timeout "$TMO" unshare -Urpfnm --mount-proc sh -c "mount -t tmpfs none /tmp && cd '$1' && exec tests/run-tests --serial" 2>&1 \
         | grep -m1 -E '^  ✗ |^FAILED: |RUN DID NOT FINISH|^all [0-9]+ invariants hold$'
 }
 

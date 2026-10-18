@@ -83,7 +83,8 @@ SHIM
 chmod +x "$WORK/shim/awk"
 
 echo "running tests/run-tests with awk profiling..." >&2
-PATH="$WORK/shim:$PATH" tests/run-tests >"$WORK/suite.out" 2>&1
+# Serially, as devtools/coverage measures: one process, the run as it always was.
+PATH="$WORK/shim:$PATH" tests/run-tests --serial >"$WORK/suite.out" 2>&1
 SUITE_TAIL=$(tail -1 "$WORK/suite.out" 2>/dev/null)
 
 # Excluding the .src sidecars, which would double every count and make the
