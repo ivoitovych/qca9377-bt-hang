@@ -3,9 +3,12 @@
 #
 #   scripts/trial-snapshot.sh      writes <trial dir>/snapshot-<UTC stamp>/
 #
-# Read-only on the machine: nothing is sent to the controller, no unit is
-# started or stopped, nothing is written to the journal, the open trial stays
-# open and evidence/trials/results.tsv is not touched.
+# Nothing is sent to the controller, no unit is started or stopped, the open
+# trial stays open and evidence/trials/results.tsv is not touched. Not quite
+# read-only: bt-state and boot-bt-summary.sh ask bluetoothd over D-Bus
+# (`bluetoothctl devices`), and a bluetoothctl MGMT open can crash the
+# capture's btmon 5.72 (BT-4), which bt-trace logs and restarts within 1 s
+# (2026-10-18: 16:56:11 and 16:59:10, during this script's first two runs).
 #
 # WHY (2026-10-18). Until main's tools are installed, the shutdown close of the
 # installed 09-18 bt-trial decodes every capture before it writes the row, and
@@ -23,9 +26,10 @@
 #                        budget raised from 20 s to 600 s (no shutdown is
 #                        waiting, so sco_sent and usb_lost are counted, not "?"),
 #                        no capture directories (sco-params.txt below does that
-#                        decode right), and a PATH without /usr/local/bin, so
-#                        bt-state, bt-mark and bt-incident cannot run (bt-state
-#                        sends Read Local Name; bt-mark writes to the journal)
+#                        decode right), and a PATH without /usr/local/bin, so the
+#                        installed bt-state, bt-mark and bt-incident cannot run
+#                        (the installed 09-18 bt-mark sends HCI Read Local Name on
+#                        every mark; main's bt-state runs separately below)
 #   close-output.txt     what that close printed
 #   state-now.txt        tools/bt-state, what the close writes as state-after.txt:
 #                        probe-free by default (sysfs, the journal, and
@@ -108,8 +112,10 @@ snapshot, and the rest of the boot is in the journal of boot ${boot:-?}
 error lines). Add a row to results.tsv only by a reviewed commit that says
 where it came from; never edit this snapshot.
 
-Read-only on the machine: nothing was sent to the controller, no unit was
-touched, nothing was written to the journal.
+Nothing was sent to the controller and no unit was touched. bt-state and the
+boot summary ask bluetoothd over D-Bus (bluetoothctl), and a bluetoothctl MGMT
+open can crash the capture's btmon (BT-4): check `journalctl -u bt-trace` for a
+"btmon exited" during the snapshot.
 EOF
 ( cd "$out" && sha256sum README.txt current.txt row.tsv close-output.txt state-now.txt boot-bt-summary.txt sco-params.txt > SHA256SUMS 2>/dev/null )
 echo "done: $out"

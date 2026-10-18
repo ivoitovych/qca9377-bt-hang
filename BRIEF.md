@@ -93,8 +93,11 @@ Recent detail may be shortened. Settled state is never dropped.
   patches A1 (a2dp duplicate check) and A2 (emulator VLA), sent 10-18 06:39 as two mails
   (`patches/bluez/send-2026-10-18/`; judge each on its own, not by the bot closing its PR).
   The bot: A1 passes all 12 checks; A2's CheckSmatch passes (the warning is gone), but
-  TestFunctional failed one case, `test_bluetoothctl_pair_bredr`, the case rated flaky on
-  10-10. Likely flaky, not established: that harness runs the emulator A2 changes (STATUS).
+  TestFunctional failed one case, `test_bluetoothctl_pair_bredr`: a known upstream flake (about
+  7 failures in 26 bot runs, 10-10 to 10-18), and Pauli Virtanen's patchwork 14879847 (10-10,
+  pending) fixes it (STATUS). Re-checked 10-18 15:29 UTC: no reply, no merge, nothing new.
+  Stable: our three patches are 0154, 0460 and 0517 of the 6.6.160-rc1 review, due Mon 19 Oct
+  16:02 UTC, with no reply to them.
 - **Operator decisions open** (the one list; the hand-off block below points here):
   - **deploying `main`'s tool set on the laptop** (a safety review of the deploy is running, 2026-10-18): E3 #1's record is safe since its close by hand on 10-18, but until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
   - restarting the raw-capture archive timer, and the desktop capture's recorders (both stopped by reboots);
@@ -135,8 +138,8 @@ it rotted within hours (`R2-13`).
 >   14897669; Message-IDs `<20261018043903.1756818-1-…>`, `<20261018043911.1756937-1-…>`).
 >   Each is judged on its own, by master, patchwork state and replies. An unchanged v2 only
 >   if it is not in master, is still `new`, has no reply, and not before 2026-11-01. The bot:
->   A1 all PASS; A2 TestFunctional FAIL on `pair_bredr` (STATUS row: likely flaky, not
->   established; nothing to the list meanwhile). The app password, deleted by the operator,
+>   A1 all PASS; A2 TestFunctional FAIL on `pair_bredr`, a known upstream flake that Pauli
+>   Virtanen's pending 14879847 fixes (STATUS row; nothing to the list). The app password, deleted by the operator,
 >   gets 535 on 465.
 > - **The closer's SCO decode never matched.** Written to a pipe, `btmon -r` fits each header
 >   line into 80 columns and shortens the name (`< HCI Comman.. (0x01|0x0028) plen 17`). It
@@ -453,7 +456,10 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
     went to Luiz's sign-off address instead of his MAINTAINERS one.
   - `scripts/stable-queue-check.sh <short stem>` with a positive control, and
     `scripts/series-backport-check.sh <tag>` (tags, not branch names).
-  - `scripts/patchwork-checks.sh` and `tmp/bt9-repro/ratatoskr-scan.py`: lore refuses fetchers.
+  - `scripts/patchwork-checks.sh` and `tmp/bt9-repro/ratatoskr-scan.py`. lore refused fetchers
+    earlier (403); on 2026-10-18 it answered a plain non-browser user agent with an Atom feed
+    (`curl -A "qca9377-bt-hang/check" "https://lore.kernel.org/linux-bluetooth/?q=s:transport_cb&x=A"`
+    → `200 application/atom+xml`).
   - `devtools/save <msgfile>` then `devtools/ci --wait <sha>`; `scripts/stop-own-process.sh`.
 - **Run the receiving project's CI before sending, on base and on base plus ours.** The 10-10
   BT-9 sends drew three red bot marks, none of them ours
@@ -462,7 +468,8 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   same way on an unrelated patch, and the kernel bot's apply step on a stable backport. We
   were clean by scope, not by checking. A lone local run only repeats the bot's noise; the
   difference against the base is what tells ours from theirs. A failure that is theirs is a
-  candidate fix of its own, once we know it is not already reported.
+  candidate fix of its own, once we know it is not already reported. (The pairing timeout
+  was: Pauli Virtanen's patchwork 14879847 of 10-10 fixes it; found 2026-10-18.)
 - **Trim output inside the script, never with a pipe.** Quiet on success, everything on
   failure — a summary that hides a gate failure is worse than the noise it saved.
 - **Separate what the operator DID from how the controller RESPONDED** (Phase 14). The
