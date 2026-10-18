@@ -1,5 +1,9 @@
 # Two BlueZ patches, prepared 2026-10-13. NOT SENT
 
+**Superseded 2026-10-18 by [`../send-2026-10-18/`](../send-2026-10-18/README.md)**: A1 retitled
+without `Fixes:`, A2 rewritten with `newa()`, both re-tested on master `fa6ba5502`. Kept as
+the record of the first version and its tests.
+
 Both are on BlueZ master `9dc7e4096` (fetched 2026-10-13), one mail each, unrelated to each
 other. Sending is the operator's decision; an outside review recommended sending both, A2 after
 the fix below.
