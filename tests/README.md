@@ -132,10 +132,9 @@ nothing ran inside.
 
 **7. A section stands alone.** A run hands its sections to worker processes, as
 many at a time as there are cores (`--jobs N` caps them; `--serial` runs one
-process in file order; the instruments in `devtools/` ask for `--serial`, since
-each reads one trace of one process). Every worker builds the setup at the top
-of `run-tests` afresh: its own guard, tripwire, declared machine and temp tree.
-So a section sees that setup and nothing else, whatever ran before it in the file.
+process in file order). Every worker builds the setup at the top of `run-tests`
+afresh: its own guard, tripwire, declared machine and temp tree. So a section
+sees that setup and nothing else, whatever ran before it in the file.
 - **Shared fixtures and helpers belong in the setup.** `farm_dir`, `$FIX`,
   `$INCENV`, two empty fixtures and the awk interval probe moved there on
   2026-10-18.
@@ -156,13 +155,27 @@ So a section sees that setup and nothing else, whatever ran before it in the fil
   and, by the tripwire, 39 unstubbed `bt-incident` calls (`$INCENV` lived in the
   watchdog section). Then the two modes were compared check by check:
   the same 1012 checks in the same order.
-- **What breaks it.** A section added later that reads another's state passes
-  serially and fails in parallel: an unbound variable, a missing function, or a
-  tripwire hit. CI runs the suite in parallel in its own step and serially under
-  the instruments, so both modes run on every push.
+- **The instruments measure a parallel run.** A worker runs each of its
+  sections from a copy of their lines padded to their own line numbers and named
+  `tests/run-tests` (`suite_copy_lines`), so a trace, an error message and
+  `devtools/coverage` see the real file and line, not `/dev/fd/63`. Bash, awk
+  and Python coverage, comprehensiveness and the decoy world all run the suite
+  in parallel. Compared with serial runs of the same tree (2026-10-18): every
+  line, statement and Python line a serial run covers, a parallel run covers;
+  the only additions are the parallel runner's own lines. `devtools/mutate`
+  runs `--serial`, because it runs its mutants in parallel itself.
+- **What breaks it, both ways.** A section added later that reads another's
+  state passes serially and fails in parallel: an unbound variable, a missing
+  function, or a tripwire hit. A section that leaves state behind (a variable, a
+  stub on `PATH`, a file in a shared temp tree) and so breaks a later one passes
+  in parallel, where the later one gets a fresh process, and fails serially. CI
+  runs the suite in parallel in repo-validate and under every instrument, and
+  serially in a job of its own, so both modes run on every push.
 
 Measured here on 4 cores: 104 s serially, 41 s in parallel. The floor is the
 longest unit, the watchdog section with the one that runs after it (about 23 s).
+Under the instruments, serial against parallel: bash coverage 120 s and 56 s,
+awk 162 s and 97 s, Python 119 s and 45 s, comprehensiveness 118 s and 53 s.
 
 ## Fixtures
 
