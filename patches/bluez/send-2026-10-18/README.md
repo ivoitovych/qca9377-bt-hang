@@ -54,5 +54,9 @@ Run 2026-10-18 by `tmp/bluez-a1a2-20261018/final-mails.sh` (outputs there):
 - send each mail separately to linux-bluetooth@vger.kernel.org, `git send-email`;
 - no `Signed-off-by` (BlueZ), no cover letter, nothing under the `---` cut;
 - no reply on the old a2dp threads;
-- if neither is applied and the bot closes its PR after 14 days, resend unchanged as v2
-  with "v2: resend, no changes" under the cut.
+- after the send, judge each patch on its own. The bot's pull request is no verdict: it
+  closed PR #2559 on 2026-10-07 with "it must be resent", and the maintainer applied that
+  patch later the same day (`d84171e6c`, [`../README.md`](../README.md)). Look at BlueZ
+  master, the patch's patchwork state and any reply on the list. Resend one unchanged as
+  v2, with "v2: resend, no changes" under the cut, only if it is not in master, is still
+  `new` on patchwork and has no reply, and not before 14 days.
