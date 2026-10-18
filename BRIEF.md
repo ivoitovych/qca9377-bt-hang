@@ -75,7 +75,7 @@ Recent detail may be shortened. Settled state is never dropped.
 - **Which record is current:** the submission rows of `docs/STATUS.md` for every upstream state;
   STATUS's issue rows and the list below follow them.
 
-**The state at a glance (2026-10-17; the submission rows of `docs/STATUS.md` win):**
+**The state at a glance (2026-10-18; the submission rows of `docs/STATUS.md` win):**
 - **BT-1's fix in stable:** released in 7.2.10 and 6.18.56 (10-11) and 6.12.113 (10-15); queued for
   6.6, 6.1, 5.15 and 5.10 (`EX-061`). Ubuntu's `7.0.0-38` stock btusb lacks it.
 - **Accepted upstream, ours:**
@@ -86,11 +86,11 @@ Recent detail may be shortened. Settled state is never dropped.
     (the BT-9 test), applied 10-12, identical to what was sent (same patch-id and message, checked 10-17);
   - the BT-9 stable backports of `96d006ae6445`: 6.12 released in 6.12.113 (10-15, `9a328ae01489`); 6.6 and 6.1 queued.
 - **Waiting for replies:** the Tested-by on Hui Peng's mesh_tx leak patch (10-06); the #1554
-  reporter's retest (10-14: updated to 6.18.50, "will check").
+  reporter's retest (10-14: updated to 6.18.50, "will check"); the BlueZ patches A1 (a2dp
+  duplicate check) and A2 (emulator VLA), sent 10-18 06:39 as two mails
+  (`patches/bluez/send-2026-10-18/`; judge each on its own, not by the bot closing its PR).
 - **Operator decisions open:**
-  - the a2dp duplicate-check cleanup;
   - an Ubuntu SRU for `dc16388d45ec`;
-  - the BlueZ sends A1 and A2 (`patches/bluez/send-2026-10-18/`, re-tested on master `fa6ba5502`);
   - the U6 SRU;
   - the U7 PipeWire report;
   - a reply on Jiale Yao's power-off patch (patchwork 14864878);

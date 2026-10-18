@@ -1,8 +1,24 @@
-# Two BlueZ patches, final form of 2026-10-18. NOT SENT
+# Two BlueZ patches, final form of 2026-10-18. SENT 2026-10-18
 
 They replace the 2026-10-13 set in [`../send-2026-10-13/`](../send-2026-10-13/README.md).
 Both are on BlueZ master `fa6ba5502` (2026-10-14; re-fetched 2026-10-18, unmoved), one
-mail each, unrelated to each other. Sending is the operator's decision.
+mail each, unrelated to each other.
+
+## Sent
+
+On the operator's word, 2026-10-18, the two files below as they are, each with
+`git send-email --suppress-cc=all --to=linux-bluetooth@vger.kernel.org`:
+
+| patch | sent (+0200) | Message-ID | server |
+|---|---|---|---|
+| A1 | 06:39:02 | [`<20261018043903.1756818-1-yaroslav.voytovych@gmail.com>`](https://lore.kernel.org/r/20261018043903.1756818-1-yaroslav.voytovych@gmail.com) | 250 |
+| A2 | 06:39:11 | [`<20261018043911.1756937-1-yaroslav.voytovych@gmail.com>`](https://lore.kernel.org/r/20261018043911.1756937-1-yaroslav.voytovych@gmail.com) | 250 |
+
+Checked just before: `scripts/pre-send-check.sh cache/bluez-upstream` fetched master,
+still `fa6ba5502`; A1 then A2 as a series, and A2 alone, "OK to send". Patchwork's
+Bluetooth project had no other pending patch on either change (searched by name for
+`transport_cb`, `send_cmd` and `emulator`). The dry runs showed one recipient, the list,
+and no Cc.
 
 | file | what | commit |
 |---|---|---|
@@ -48,7 +64,7 @@ Run 2026-10-18 by `tmp/bluez-a1a2-20261018/final-mails.sh` (outputs there):
 - The diffs are identical to the commits tested in `TEST-REPORT.md` (`git diff --stat`
   between each final and its tested commit prints nothing); only messages changed.
 
-## Before sending
+## The send rules (followed 2026-10-18), and after
 
 - rerun `pre-send-check.sh` on the day (master moves);
 - send each mail separately to linux-bluetooth@vger.kernel.org, `git send-email`;
