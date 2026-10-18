@@ -9,10 +9,10 @@ mail each, unrelated to each other.
 On the operator's word, 2026-10-18, the two files below as they are, each with
 `git send-email --suppress-cc=all --to=linux-bluetooth@vger.kernel.org`:
 
-| patch | sent (+0200) | Message-ID | server |
-|---|---|---|---|
-| A1 | 06:39:02 | [`<20261018043903.1756818-1-yaroslav.voytovych@gmail.com>`](https://lore.kernel.org/r/20261018043903.1756818-1-yaroslav.voytovych@gmail.com) | 250 |
-| A2 | 06:39:11 | [`<20261018043911.1756937-1-yaroslav.voytovych@gmail.com>`](https://lore.kernel.org/r/20261018043911.1756937-1-yaroslav.voytovych@gmail.com) | 250 |
+| patch | sent (+0200) | Message-ID | server | patchwork |
+|---|---|---|---|---|
+| A1 | 06:39:02 | [`<20261018043903.1756818-1-yaroslav.voytovych@gmail.com>`](https://lore.kernel.org/r/20261018043903.1756818-1-yaroslav.voytovych@gmail.com) | 250 | [14897668](https://patchwork.kernel.org/project/bluetooth/patch/20261018043903.1756818-1-yaroslav.voytovych@gmail.com/) |
+| A2 | 06:39:11 | [`<20261018043911.1756937-1-yaroslav.voytovych@gmail.com>`](https://lore.kernel.org/r/20261018043911.1756937-1-yaroslav.voytovych@gmail.com) | 250 | [14897669](https://patchwork.kernel.org/project/bluetooth/patch/20261018043911.1756937-1-yaroslav.voytovych@gmail.com/) |
 
 Checked just before: `scripts/pre-send-check.sh cache/bluez-upstream` fetched master,
 still `fa6ba5502`; A1 then A2 as a series, and A2 alone, "OK to send". Patchwork's
