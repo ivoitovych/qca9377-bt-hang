@@ -10,7 +10,16 @@ touched. Every tester and unit program ran inside a QEMU guest started by BlueZ'
 
 Labels: verified (command and output in the named log), inferred (reason given), not done.
 Scripts and logs: `/root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/` (`logs/`, 323
-files; `SHA256SUMS`, itself sha256 `5a271ee4…db214`; `REPORT.md`).
+files; `SHA256SUMS`, itself sha256 `5a271ee4…db214`; `REPORT.md`). Kept on the machine
+that ran them, with the raw build and tester logs. The summaries each table row rests on
+are published in [`logs/`](logs/): the tester comparison (`final-compare.log`), unit
+comparison (`unit-compare.txt`), build diagnostics (`build-compare.log`), smatch
+(`smatch-all.log`), clang (`clang-all.log`), `-DNDEBUG` (`ndebug.log`), object code
+(`obj-check.log`), the stream checks (`stream-checks.log`), and the final mails' lint and
+apply checks (`final-mails.log`; its exit 1 is `mail-lint` on a raw `format-patch` file:
+no `To:` header yet, the `@@` hunk header line over 72 columns, and the blank context
+lines and `-- ` signature read as trailing whitespace). This project's own CI does not
+run any BlueZ test; it checks this repository.
 
 ## Sides
 
@@ -36,16 +45,21 @@ in their messages: `git diff --stat` between each pair prints nothing.
 | unit programs in the guest | 41 pass, 1 skip, 1813 cases | identical | identical | identical | 0 of 1852 names differ |
 | smatch, whole tree | 124 lines incl. the VLA | 124 (a2dp.c lines shift) | 123, VLA gone | 123, VLA gone | no new line |
 | clang `--analyze`, touched files | btdev.c 2, a2dp.c 4 | same 4 | same 2 | same 2 | nothing new |
-| 11 emulator testers, two rounds | 845 of 866 pass | not run | identical | identical | 0 of 5196 verdicts differ |
+| 11 emulator testers, two rounds | 843 of 866 case names pass | not run | identical | identical | 0 of 5196 verdicts differ (866 names × 3 sides × 2 rounds) |
 | `if (!setup->stream)` in `transport_cb()` | 2 (lines 2747, 2752) | 1 | — | — | as intended |
 
 The smatch line on base, verbatim (`logs/smatch-base/make.log`):
 `emulator/btdev.c:479:29: warning: Variable length array is used.` Gone on both A2 sides.
 No smatch line mentions `alloca`, `newa` or `assert`.
 
-Per tester, the same on every side and in both rounds: mgmt 501/514, l2cap 103/111, sco
-30/30, iso 141/141, mesh 8/10, smp 8/8, bnep 1/1, rfcomm 11/11, ioctl 28/28 (27 names, one
-registered twice), userchan 4/4, 6lowpan 9/9.
+Per tester, by case name, the same on every side and in both rounds
+([`logs/final-compare.log`](logs/final-compare.log)): mgmt 501/514, l2cap 103/111, sco
+30/30, iso 141/141, mesh 8/10, smp 8/8, bnep 1/1, rfcomm 11/11, ioctl 27/27, userchan
+4/4, 6lowpan 9/9; 843 of 866. The 23 that do not pass are named in that log: 15 killed
+on the 6.2 emulator (7 mgmt, 8 l2cap), 4 mgmt Ext Advertising, 2 mgmt Scan RPA, 2 mesh
+"Send cancel" (observation 2). ioctl-tester registers one name twice, so its own summary
+says "Total: 28, Passed: 28" and the testers' own totals add up to 844 of 867.
+(Corrected 2026-10-18: this report first said 845 of 866 and "ioctl 28/28".)
 
 ## Observations
 

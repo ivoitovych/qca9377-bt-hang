@@ -1,0 +1,396 @@
+# step: smatch-all
+# dir: -
+# command: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/smatch-all.sh
+# start: 2026-10-18 02:17:38
+== base 2026-10-18 02:17:38
+command: aclocal
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-base/aclocal.log
+# command: aclocal
+# start: 2026-10-18 02:17:38
+# end: 2026-10-18 02:17:40 exit 0
+command: libtoolize --copy --force
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-base/libtoolize.log
+libtoolize: and rerunning libtoolize and aclocal.
+libtoolize: Consider adding '-I m4' to ACLOCAL_AMFLAGS in Makefile.am.
+# end: 2026-10-18 02:17:41 exit 0
+command: ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-base/configure.log
+config.status: executing depfiles commands
+config.status: executing libtool commands
+# end: 2026-10-18 02:18:13 exit 0
+command: make -C /root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-smatch-base -j16 CHECK=/root/exp/qca9377-bt-hang/cache/smatch/smatch --full-path CC=/root/exp/qca9377-bt-hang/cache/smatch/cgcc
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-base/make.log
+  CCLD     tools/mgmt-tester
+make: Leaving directory '/root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-smatch-base'
+# end: 2026-10-18 02:21:33 exit 0
+smatch lines (base): 124
+make.log lines naming smatch: 78
+HEAD: fa6ba55020dee3c3183041c854c347b4582448be
+== a2-assert 2026-10-18 02:21:33
+command: aclocal
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a2-assert/aclocal.log
+# command: aclocal
+# start: 2026-10-18 02:21:33
+# end: 2026-10-18 02:21:34 exit 0
+command: libtoolize --copy --force
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a2-assert/libtoolize.log
+libtoolize: and rerunning libtoolize and aclocal.
+libtoolize: Consider adding '-I m4' to ACLOCAL_AMFLAGS in Makefile.am.
+# end: 2026-10-18 02:21:34 exit 0
+command: ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a2-assert/configure.log
+config.status: executing depfiles commands
+config.status: executing libtool commands
+# end: 2026-10-18 02:21:41 exit 0
+command: make -C /root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-smatch-a2-assert -j16 CHECK=/root/exp/qca9377-bt-hang/cache/smatch/smatch --full-path CC=/root/exp/qca9377-bt-hang/cache/smatch/cgcc
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a2-assert/make.log
+  CCLD     tools/mgmt-tester
+make: Leaving directory '/root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-smatch-a2-assert'
+# end: 2026-10-18 02:26:53 exit 0
+smatch lines (a2-assert): 123
+make.log lines naming smatch: 78
+HEAD: 37b76b9be9f627d1b3e3463172118731016d93fa
+== a2-newa 2026-10-18 02:26:53
+command: aclocal
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a2-newa/aclocal.log
+# command: aclocal
+# start: 2026-10-18 02:26:53
+# end: 2026-10-18 02:26:54 exit 0
+command: libtoolize --copy --force
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a2-newa/libtoolize.log
+libtoolize: and rerunning libtoolize and aclocal.
+libtoolize: Consider adding '-I m4' to ACLOCAL_AMFLAGS in Makefile.am.
+# end: 2026-10-18 02:26:54 exit 0
+command: ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a2-newa/configure.log
+config.status: executing depfiles commands
+config.status: executing libtool commands
+# end: 2026-10-18 02:27:02 exit 0
+command: make -C /root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-smatch-a2-newa -j16 CHECK=/root/exp/qca9377-bt-hang/cache/smatch/smatch --full-path CC=/root/exp/qca9377-bt-hang/cache/smatch/cgcc
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a2-newa/make.log
+  CCLD     tools/mgmt-tester
+make: Leaving directory '/root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-smatch-a2-newa'
+# end: 2026-10-18 02:31:18 exit 0
+smatch lines (a2-newa): 123
+make.log lines naming smatch: 78
+HEAD: 3fda3b0f2c22b7e84199ed6bbb16de654015d81d
+== a1 2026-10-18 02:31:18
+command: aclocal
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a1/aclocal.log
+# command: aclocal
+# start: 2026-10-18 02:31:18
+# end: 2026-10-18 02:31:18 exit 0
+command: libtoolize --copy --force
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a1/libtoolize.log
+libtoolize: and rerunning libtoolize and aclocal.
+libtoolize: Consider adding '-I m4' to ACLOCAL_AMFLAGS in Makefile.am.
+# end: 2026-10-18 02:31:18 exit 0
+command: ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a1/configure.log
+config.status: executing depfiles commands
+config.status: executing libtool commands
+# end: 2026-10-18 02:31:26 exit 0
+command: make -C /root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-smatch-a1 -j16 CHECK=/root/exp/qca9377-bt-hang/cache/smatch/smatch --full-path CC=/root/exp/qca9377-bt-hang/cache/smatch/cgcc
+exit: 0
+log: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/smatch-a1/make.log
+  CCLD     tools/mgmt-tester
+make: Leaving directory '/root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-smatch-a1'
+# end: 2026-10-18 02:33:54 exit 0
+smatch lines (a1): 124
+make.log lines naming smatch: 78
+HEAD: 9d0cd5ca3f0acd4fd8d7ca39bd7c8cb47b8882c4
+== smatch base vs a2-assert (line numbers removed): lines only on one side
+36d35
+< emulator/btdev.c: warning: Variable length array is used.
+diff exit 1
+== smatch base vs a2-assert (with line numbers)
+34,36c34,35
+< emulator/btdev.c:479:29: warning: Variable length array is used.
+< emulator/btdev.c:4913 cmd_le_read_supported_states() warn: sizeof(NUMBER)?
+< emulator/btdev.c:8139 set_le_commands() warn: always true condition '(btdev->type >= 0) => (0-u32max >= 0)'
+---
+> emulator/btdev.c:4918 cmd_le_read_supported_states() warn: sizeof(NUMBER)?
+> emulator/btdev.c:8144 set_le_commands() warn: always true condition '(btdev->type >= 0) => (0-u32max >= 0)'
+diff exit 1
+== smatch base vs a2-newa (line numbers removed): lines only on one side
+36d35
+< emulator/btdev.c: warning: Variable length array is used.
+diff exit 1
+== smatch base vs a2-newa (with line numbers)
+34d33
+< emulator/btdev.c:479:29: warning: Variable length array is used.
+diff exit 1
+== smatch base vs a1 (line numbers removed): lines only on one side
+56,57c56,57
+< profiles/audio/a2dp.c a2dp_resume() error: we previously assumed 'stream' could be null (see line 3432)
+< profiles/audio/a2dp.c a2dp_suspend() error: we previously assumed 'stream' could be null (see line 3493)
+---
+> profiles/audio/a2dp.c a2dp_resume() error: we previously assumed 'stream' could be null (see line 3427)
+> profiles/audio/a2dp.c a2dp_suspend() error: we previously assumed 'stream' could be null (see line 3488)
+diff exit 1
+== smatch base vs a1 (with line numbers)
+56,57c56,57
+< profiles/audio/a2dp.c:3445 a2dp_resume() error: we previously assumed 'stream' could be null (see line 3432)
+< profiles/audio/a2dp.c:3508 a2dp_suspend() error: we previously assumed 'stream' could be null (see line 3493)
+---
+> profiles/audio/a2dp.c:3440 a2dp_resume() error: we previously assumed 'stream' could be null (see line 3427)
+> profiles/audio/a2dp.c:3503 a2dp_suspend() error: we previously assumed 'stream' could be null (see line 3488)
+diff exit 1
+== emulator/btdev.c on base: 3 lines
+emulator/btdev.c:479:29: warning: Variable length array is used.
+emulator/btdev.c:4913 cmd_le_read_supported_states() warn: sizeof(NUMBER)?
+emulator/btdev.c:8139 set_le_commands() warn: always true condition '(btdev->type >= 0) => (0-u32max >= 0)'
+== emulator/btdev.c on a2-assert: 2 lines
+emulator/btdev.c:4918 cmd_le_read_supported_states() warn: sizeof(NUMBER)?
+emulator/btdev.c:8144 set_le_commands() warn: always true condition '(btdev->type >= 0) => (0-u32max >= 0)'
+== emulator/btdev.c on a2-newa: 2 lines
+emulator/btdev.c:4913 cmd_le_read_supported_states() warn: sizeof(NUMBER)?
+emulator/btdev.c:8139 set_le_commands() warn: always true condition '(btdev->type >= 0) => (0-u32max >= 0)'
+== emulator/btdev.c on a1: 3 lines
+emulator/btdev.c:479:29: warning: Variable length array is used.
+emulator/btdev.c:4913 cmd_le_read_supported_states() warn: sizeof(NUMBER)?
+emulator/btdev.c:8139 set_le_commands() warn: always true condition '(btdev->type >= 0) => (0-u32max >= 0)'
+== profiles/audio/a2dp.c on base: 2 lines
+profiles/audio/a2dp.c:3445 a2dp_resume() error: we previously assumed 'stream' could be null (see line 3432)
+profiles/audio/a2dp.c:3508 a2dp_suspend() error: we previously assumed 'stream' could be null (see line 3493)
+== profiles/audio/a2dp.c on a2-assert: 2 lines
+profiles/audio/a2dp.c:3445 a2dp_resume() error: we previously assumed 'stream' could be null (see line 3432)
+profiles/audio/a2dp.c:3508 a2dp_suspend() error: we previously assumed 'stream' could be null (see line 3493)
+== profiles/audio/a2dp.c on a2-newa: 2 lines
+profiles/audio/a2dp.c:3445 a2dp_resume() error: we previously assumed 'stream' could be null (see line 3432)
+profiles/audio/a2dp.c:3508 a2dp_suspend() error: we previously assumed 'stream' could be null (see line 3493)
+== profiles/audio/a2dp.c on a1: 2 lines
+profiles/audio/a2dp.c:3440 a2dp_resume() error: we previously assumed 'stream' could be null (see line 3427)
+profiles/audio/a2dp.c:3503 a2dp_suspend() error: we previously assumed 'stream' could be null (see line 3488)
+== every 'Variable length array' line, raw make.log, per side
+-- base
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+tools/seq2bseq.c:57:26: warning: Variable length array is used.
+unit/test-avrcp.c:374:26: warning: Variable length array is used.
+unit/test-avrcp.c:399:26: warning: Variable length array is used.
+unit/test-avrcp.c:415:24: warning: Variable length array is used.
+unit/avctp.c:505:34: warning: Variable length array is used.
+unit/avctp.c:556:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1085:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1583:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1612:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1638:34: warning: Variable length array is used.
+mesh/mesh-io-mgmt.c:525:67: warning: Variable length array is used.
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+monitor/packet.c:2289:26: warning: Variable length array is used.
+tools/hex2hcd.c:136:26: warning: Variable length array is used.
+ell/cert-crypto.c:36:33: warning: Variable length array is used.
+ell/cert-crypto.c:142:36: warning: Variable length array is used.
+ell/cipher.c:519:24: warning: Variable length array is used.
+ell/cert-crypto.c:198:36: warning: Variable length array is used.
+ell/cert-crypto.c:251:31: warning: Variable length array is used.
+ell/key.c:550:25: warning: Variable length array is used.
+ell/dbus-filter.c:233:46: warning: Variable length array is used.
+ell/tls.c:45:25: warning: Variable length array is used.
+ell/tls.c:86:22: warning: Variable length array is used.
+ell/tls.c:86:46: warning: Variable length array is used.
+ell/tls-suites.c:1079:25: warning: Variable length array is used.
+ell/tls-suites.c:1081:34: warning: Variable length array is used.
+ell/tls-suites.c:1084:41: warning: Variable length array is used.
+ell/tls-suites.c:1133:41: warning: Variable length array is used.
+emulator/btdev.c:479:29: warning: Variable length array is used.
+ell/tls.c:1819:26: warning: Variable length array is used.
+emulator/bthost.c:703:28: warning: Variable length array is used.
+emulator/bthost.c:704:32: warning: Variable length array is used.
+emulator/bthost.c:957:28: warning: Variable length array is used.
+emulator/bthost.c:991:28: warning: Variable length array is used.
+emulator/bthost.c:992:32: warning: Variable length array is used.
+-- a2-assert
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+tools/seq2bseq.c:57:26: warning: Variable length array is used.
+unit/avctp.c:505:34: warning: Variable length array is used.
+unit/test-avrcp.c:374:26: warning: Variable length array is used.
+unit/test-avrcp.c:399:26: warning: Variable length array is used.
+unit/test-avrcp.c:415:24: warning: Variable length array is used.
+unit/avctp.c:556:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1085:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1583:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1612:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1638:34: warning: Variable length array is used.
+mesh/mesh-io-mgmt.c:525:67: warning: Variable length array is used.
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+monitor/packet.c:2289:26: warning: Variable length array is used.
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+tools/hex2hcd.c:136:26: warning: Variable length array is used.
+ell/cipher.c:519:24: warning: Variable length array is used.
+ell/cert-crypto.c:36:33: warning: Variable length array is used.
+ell/cert-crypto.c:142:36: warning: Variable length array is used.
+ell/cert-crypto.c:198:36: warning: Variable length array is used.
+ell/cert-crypto.c:251:31: warning: Variable length array is used.
+ell/key.c:550:25: warning: Variable length array is used.
+ell/dbus-filter.c:233:46: warning: Variable length array is used.
+ell/tls.c:45:25: warning: Variable length array is used.
+ell/tls.c:86:22: warning: Variable length array is used.
+ell/tls.c:86:46: warning: Variable length array is used.
+ell/tls-suites.c:1079:25: warning: Variable length array is used.
+ell/tls-suites.c:1081:34: warning: Variable length array is used.
+ell/tls-suites.c:1084:41: warning: Variable length array is used.
+ell/tls-suites.c:1133:41: warning: Variable length array is used.
+emulator/bthost.c:703:28: warning: Variable length array is used.
+emulator/bthost.c:704:32: warning: Variable length array is used.
+ell/tls.c:1819:26: warning: Variable length array is used.
+emulator/bthost.c:957:28: warning: Variable length array is used.
+emulator/bthost.c:991:28: warning: Variable length array is used.
+emulator/bthost.c:992:32: warning: Variable length array is used.
+-- a2-newa
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+tools/seq2bseq.c:57:26: warning: Variable length array is used.
+unit/avctp.c:505:34: warning: Variable length array is used.
+unit/avctp.c:556:34: warning: Variable length array is used.
+unit/test-avrcp.c:374:26: warning: Variable length array is used.
+unit/test-avrcp.c:399:26: warning: Variable length array is used.
+unit/test-avrcp.c:415:24: warning: Variable length array is used.
+unit/avrcp-lib.c:1085:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1583:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1612:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1638:34: warning: Variable length array is used.
+mesh/mesh-io-mgmt.c:525:67: warning: Variable length array is used.
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+monitor/packet.c:2289:26: warning: Variable length array is used.
+tools/hex2hcd.c:136:26: warning: Variable length array is used.
+ell/cipher.c:519:24: warning: Variable length array is used.
+ell/cert-crypto.c:36:33: warning: Variable length array is used.
+ell/cert-crypto.c:142:36: warning: Variable length array is used.
+ell/cert-crypto.c:198:36: warning: Variable length array is used.
+ell/cert-crypto.c:251:31: warning: Variable length array is used.
+ell/key.c:550:25: warning: Variable length array is used.
+ell/dbus-filter.c:233:46: warning: Variable length array is used.
+ell/tls.c:45:25: warning: Variable length array is used.
+ell/tls.c:86:22: warning: Variable length array is used.
+ell/tls.c:86:46: warning: Variable length array is used.
+ell/tls-suites.c:1079:25: warning: Variable length array is used.
+ell/tls-suites.c:1081:34: warning: Variable length array is used.
+ell/tls-suites.c:1084:41: warning: Variable length array is used.
+ell/tls-suites.c:1133:41: warning: Variable length array is used.
+ell/tls.c:1819:26: warning: Variable length array is used.
+emulator/bthost.c:703:28: warning: Variable length array is used.
+emulator/bthost.c:704:32: warning: Variable length array is used.
+emulator/bthost.c:957:28: warning: Variable length array is used.
+emulator/bthost.c:991:28: warning: Variable length array is used.
+emulator/bthost.c:992:32: warning: Variable length array is used.
+-- a1
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+tools/seq2bseq.c:57:26: warning: Variable length array is used.
+unit/avctp.c:505:34: warning: Variable length array is used.
+unit/avctp.c:556:34: warning: Variable length array is used.
+unit/test-avrcp.c:374:26: warning: Variable length array is used.
+unit/test-avrcp.c:399:26: warning: Variable length array is used.
+unit/test-avrcp.c:415:24: warning: Variable length array is used.
+unit/avrcp-lib.c:1085:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1583:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1612:34: warning: Variable length array is used.
+unit/avrcp-lib.c:1638:34: warning: Variable length array is used.
+mesh/mesh-io-mgmt.c:525:67: warning: Variable length array is used.
+src/shared/crypto.c:271:21: warning: Variable length array is used.
+src/shared/crypto.c:272:23: warning: Variable length array is used.
+src/shared/gatt-helpers.c:764:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:842:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1335:31: warning: Variable length array is used.
+src/shared/gatt-helpers.c:1366:23: warning: Variable length array is used.
+monitor/packet.c:2289:26: warning: Variable length array is used.
+tools/hex2hcd.c:136:26: warning: Variable length array is used.
+ell/cert-crypto.c:36:33: warning: Variable length array is used.
+ell/cipher.c:519:24: warning: Variable length array is used.
+ell/cert-crypto.c:142:36: warning: Variable length array is used.
+ell/cert-crypto.c:198:36: warning: Variable length array is used.
+ell/cert-crypto.c:251:31: warning: Variable length array is used.
+ell/key.c:550:25: warning: Variable length array is used.
+ell/dbus-filter.c:233:46: warning: Variable length array is used.
+ell/tls.c:45:25: warning: Variable length array is used.
+ell/tls.c:86:22: warning: Variable length array is used.
+ell/tls.c:86:46: warning: Variable length array is used.
+ell/tls-suites.c:1079:25: warning: Variable length array is used.
+ell/tls-suites.c:1081:34: warning: Variable length array is used.
+ell/tls-suites.c:1084:41: warning: Variable length array is used.
+ell/tls-suites.c:1133:41: warning: Variable length array is used.
+emulator/btdev.c:479:29: warning: Variable length array is used.
+ell/tls.c:1819:26: warning: Variable length array is used.
+emulator/bthost.c:703:28: warning: Variable length array is used.
+emulator/bthost.c:704:32: warning: Variable length array is used.
+emulator/bthost.c:957:28: warning: Variable length array is used.
+emulator/bthost.c:991:28: warning: Variable length array is used.
+emulator/bthost.c:992:32: warning: Variable length array is used.
+== any make.log line naming btdev.c with alloca, newa or assert, per side
+-- base
+-- a2-assert
+-- a2-newa
+-- a1
+# end: 2026-10-18 02:33:55 exit 1

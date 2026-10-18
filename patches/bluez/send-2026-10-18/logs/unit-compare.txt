@@ -1,0 +1,62 @@
+== base: programs 42, exit 0: 41, exit 77 (skip): 1, other: 0; cases 1813, not Passed 0
+   unit/test-mesh-crypto	exit 77
+   sanitizer report lines: 11
+== a1: programs 42, exit 0: 41, exit 77 (skip): 1, other: 0; cases 1813, not Passed 0
+   unit/test-mesh-crypto	exit 77
+   sanitizer report lines: 11
+== a2-assert: programs 42, exit 0: 41, exit 77 (skip): 1, other: 0; cases 1813, not Passed 0
+   unit/test-mesh-crypto	exit 77
+   sanitizer report lines: 11
+== a2-newa: programs 42, exit 0: 41, exit 77 (skip): 1, other: 0; cases 1813, not Passed 0
+   unit/test-mesh-crypto	exit 77
+   sanitizer report lines: 11
+== unit base vs a1: 1852 case names; base 1852, patched 1852
+   Total lines identical on both sides (35):
+   duplicate names: base ['unit/test-avrcp :: /TP/MCN/CB/BV-09-C', 'unit/test-avrcp :: /TP/BGN/BV-01-I', 'unit/test-avrcp :: /TP/BGN/BV-02-I'] patched ['unit/test-avrcp :: /TP/MCN/CB/BV-09-C', 'unit/test-avrcp :: /TP/BGN/BV-01-I', 'unit/test-avrcp :: /TP/BGN/BV-02-I']
+   identical verdicts: 1852 of 1852; differing: 0
+compare exit 0
+== unit base vs a2-assert: 1852 case names; base 1852, patched 1852
+   Total lines identical on both sides (35):
+   duplicate names: base ['unit/test-avrcp :: /TP/MCN/CB/BV-09-C', 'unit/test-avrcp :: /TP/BGN/BV-01-I', 'unit/test-avrcp :: /TP/BGN/BV-02-I'] patched ['unit/test-avrcp :: /TP/MCN/CB/BV-09-C', 'unit/test-avrcp :: /TP/BGN/BV-01-I', 'unit/test-avrcp :: /TP/BGN/BV-02-I']
+   identical verdicts: 1852 of 1852; differing: 0
+compare exit 0
+== unit base vs a2-newa: 1852 case names; base 1852, patched 1852
+   Total lines identical on both sides (35):
+   duplicate names: base ['unit/test-avrcp :: /TP/MCN/CB/BV-09-C', 'unit/test-avrcp :: /TP/BGN/BV-01-I', 'unit/test-avrcp :: /TP/BGN/BV-02-I'] patched ['unit/test-avrcp :: /TP/MCN/CB/BV-09-C', 'unit/test-avrcp :: /TP/BGN/BV-01-I', 'unit/test-avrcp :: /TP/BGN/BV-02-I']
+   identical verdicts: 1852 of 1852; differing: 0
+compare exit 0
+== sanitizer sites, all four sides
+== /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/unit/unit-base.log: 11 lines, 7 distinct
+   2 x gobex/gobex-header.c:72:6: load of misaligned address 0x? for type 'const gunichar2', which requires 2 byte alignment
+   4 x gobex/gobex-header.c:83:14: load of misaligned address 0x? for type 'const gunichar2', which requires 2 byte alignment
+   1 x gobex/gobex-header.c:95:2: null pointer passed as argument 2, which is declared to never be null
+   1 x lib/bluetooth/sdp.c:2866:2: null pointer passed as argument 2, which is declared to never be null
+   1 x src/shared/bap.c:1077:2: null pointer passed as argument 2, which is declared to never be null
+   1 x unit/avdtp.c:480:3: null pointer passed as argument 2, which is declared to never be null
+   1 x unit/util.c:159:6: null pointer passed as argument 2, which is declared to never be null
+== /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/unit/unit-a1.log: 11 lines, 7 distinct
+   2 x gobex/gobex-header.c:72:6: load of misaligned address 0x? for type 'const gunichar2', which requires 2 byte alignment
+   4 x gobex/gobex-header.c:83:14: load of misaligned address 0x? for type 'const gunichar2', which requires 2 byte alignment
+   1 x gobex/gobex-header.c:95:2: null pointer passed as argument 2, which is declared to never be null
+   1 x lib/bluetooth/sdp.c:2866:2: null pointer passed as argument 2, which is declared to never be null
+   1 x src/shared/bap.c:1077:2: null pointer passed as argument 2, which is declared to never be null
+   1 x unit/avdtp.c:480:3: null pointer passed as argument 2, which is declared to never be null
+   1 x unit/util.c:159:6: null pointer passed as argument 2, which is declared to never be null
+== /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/unit/unit-a2-assert.log: 11 lines, 7 distinct
+   2 x gobex/gobex-header.c:72:6: load of misaligned address 0x? for type 'const gunichar2', which requires 2 byte alignment
+   4 x gobex/gobex-header.c:83:14: load of misaligned address 0x? for type 'const gunichar2', which requires 2 byte alignment
+   1 x gobex/gobex-header.c:95:2: null pointer passed as argument 2, which is declared to never be null
+   1 x lib/bluetooth/sdp.c:2866:2: null pointer passed as argument 2, which is declared to never be null
+   1 x src/shared/bap.c:1077:2: null pointer passed as argument 2, which is declared to never be null
+   1 x unit/avdtp.c:480:3: null pointer passed as argument 2, which is declared to never be null
+   1 x unit/util.c:159:6: null pointer passed as argument 2, which is declared to never be null
+== /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/logs/unit/unit-a2-newa.log: 11 lines, 7 distinct
+   2 x gobex/gobex-header.c:72:6: load of misaligned address 0x? for type 'const gunichar2', which requires 2 byte alignment
+   4 x gobex/gobex-header.c:83:14: load of misaligned address 0x? for type 'const gunichar2', which requires 2 byte alignment
+   1 x gobex/gobex-header.c:95:2: null pointer passed as argument 2, which is declared to never be null
+   1 x lib/bluetooth/sdp.c:2866:2: null pointer passed as argument 2, which is declared to never be null
+   1 x src/shared/bap.c:1077:2: null pointer passed as argument 2, which is declared to never be null
+   1 x unit/avdtp.c:480:3: null pointer passed as argument 2, which is declared to never be null
+   1 x unit/util.c:159:6: null pointer passed as argument 2, which is declared to never be null
+identical across the 4 logs: yes
+sanitizer-sites exit 0

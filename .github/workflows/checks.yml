@@ -5,7 +5,9 @@
 # six shipped decisions, and a hand-written path list missed install.sh twice.
 # Both were caught by review, later, after the wrong numbers had been quoted.
 #
-# The suite takes about a minute and runs on every push. It is hermetic, and
+# The suite runs its sections in parallel workers, one per core, and runs on
+# every push: in parallel in repo-validate and in its own step, serially under
+# each instrument below, so both modes run every time. It is hermetic, and
 # that is MEASURED rather than claimed: a step below runs it in a decoy
 # world (devtools/sandbox) and fails on any call of a machine tool, any read of
 # a machine file, any write to a real directory. This line said "~2 s and
@@ -85,7 +87,9 @@ jobs:
 
       # Belt and braces: repo-validate runs the suite and prints its whole output
       # on a failure, inside its own report. Running it directly gives the suite
-      # its own step, so a red one names the suite and not the validator.
+      # its own step, so a red one names the suite and not the validator. Both
+      # run it in parallel (tests/README.md, rule 9); the instruments below ask
+      # for --serial.
       - name: tests/run-tests
         run: tests/run-tests
 

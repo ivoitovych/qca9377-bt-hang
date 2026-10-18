@@ -1,7 +1,9 @@
 # tests
 
 ```bash
-tests/run-tests                       # every invariant, about a minute
+tests/run-tests                       # every invariant, its sections on every core
+tests/run-tests --serial              # the same run in one process, in file order
+tests/run-tests --jobs 4              # at most 4 workers at a time (or BT_SUITE_JOBS=4)
 tests/run-tests --section "stage2"    # one block, without a sed range
 devtools/check                        # what to run before committing
 devtools/coverage                     # how much of the shell these actually run
@@ -209,6 +211,40 @@ Each was closed by a seam or a change in the test, except two kinds:
   one door to the real machine, and the audit classes them as `contract`.
 - **What the AT-SPI test's private `dbus-daemon` asks about its clients.**
   These are allow lines for that command only, tied to that check.
+
+**9. A section stands alone.** A run hands its sections to worker processes, as
+many at a time as there are cores (`--jobs N` caps them; `--serial` runs one
+process in file order; the instruments in `devtools/`, `access-audit` among them, ask for
+`--serial`, since each reads one trace of one process). Every worker builds the setup at the top
+of `run-tests` afresh: its own guard, tripwire, declared machine and temp tree.
+So a section sees that setup and nothing else, whatever ran before it in the file.
+- **Shared fixtures and helpers belong in the setup.** `farm_dir`, `$FIX`,
+  `$INCENV`, two empty fixtures and the awk interval probe moved there on
+  2026-10-18.
+- **A section that reads what an earlier one built says so**, under its heading:
+  `# PARALLEL: runs after "<heading>", in the same worker:` and what it reads. Two
+  do. `# PARALLEL: long` starts a section first when its length in lines
+  understates its time.
+- **The parent process keeps the run's account.** It takes the before-snapshots,
+  merges what the workers hand back (counts, output printed in file order,
+  tripwire logs, each with its worker's canary, the processes they left, the
+  NOT ASKED notes), and runs the last section, the run's own report, once over
+  the whole run. A parallel run adds one check: every section finished in exactly
+  one worker.
+- **How this was established (2026-10-18).** Each section was run alone with only
+  the setup, and gave the serial run's verdicts, except six that read another's
+  definitions. Four of those were fixed by moving fixtures into the setup, two by
+  the marker. The first parallel run found two more: an unbound `$EMPTYLIB`,
+  and, by the tripwire, 39 unstubbed `bt-incident` calls (`$INCENV` lived in the
+  watchdog section). Then the two modes were compared check by check:
+  the same 1012 checks in the same order.
+- **What breaks it.** A section added later that reads another's state passes
+  serially and fails in parallel: an unbound variable, a missing function, or a
+  tripwire hit. CI runs the suite in parallel in its own step and serially under
+  the instruments, so both modes run on every push.
+
+Measured here on 4 cores: 104 s serially, 41 s in parallel. The floor is the
+longest unit, the watchdog section with the one that runs after it (about 23 s).
 
 ## Fixtures
 

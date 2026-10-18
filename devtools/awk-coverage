@@ -100,7 +100,9 @@ SHIM
 chmod +x "$WORK/shim/awk"
 
 echo "running $SUITE with awk profiling..." >&2
-PATH="$WORK/shim:$PATH" "$SUITE" >"$WORK/suite.out" 2>&1
+# Serially, as devtools/coverage measures: one process, the run as it always was.
+PATH="$WORK/shim:$PATH" "$SUITE" --serial >"$WORK/suite.out" 2>&1
+
 SUITE_TAIL=$(tail -1 "$WORK/suite.out" 2>/dev/null)
 
 # Excluding the sidecars, which would double every count and make the

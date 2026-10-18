@@ -153,7 +153,7 @@ echo "running tests/run-tests under trace (${#PYFILES[@]} Python file(s))..." >&
 SUITE_OUT="$WORK/suite.log"
 BT_PYCOV_DIR="$WORK/counts" BT_PYCOV_ROOT="$PWD" \
     PYTHONPATH="$WORK/hook${PYTHONPATH:+:$PYTHONPATH}" \
-    tests/run-tests > "$SUITE_OUT" 2>&1
+    tests/run-tests --serial > "$SUITE_OUT" 2>&1   # serially, as devtools/coverage measures
 SUITE_RC=$?
 SUITE_TAIL=$(tail -1 "$SUITE_OUT")
 

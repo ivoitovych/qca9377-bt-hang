@@ -1,0 +1,46 @@
+# step: final-compare
+# dir: -
+# command: python3 -I /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/final-compare.py
+# start: 2026-10-18 03:32:11
+| tester | base pc1 | a2-assert pc1 | a2-newa pc1 | base pc2 | a2-assert pc2 | a2-newa pc2 |
+|---|---|---|---|---|---|---|
+| mgmt-tester | 501/514 | 501/514 | 501/514 | 501/514 | 501/514 | 501/514 |
+| l2cap-tester | 103/111 | 103/111 | 103/111 | 103/111 | 103/111 | 103/111 |
+| sco-tester | 30/30 | 30/30 | 30/30 | 30/30 | 30/30 | 30/30 |
+| iso-tester | 141/141 | 141/141 | 141/141 | 141/141 | 141/141 | 141/141 |
+| mesh-tester | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 | 8/10 |
+| smp-tester | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 | 8/8 |
+| bnep-tester | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 | 1/1 |
+| rfcomm-tester | 11/11 | 11/11 | 11/11 | 11/11 | 11/11 | 11/11 |
+| ioctl-tester | 27/27 | 27/27 | 27/27 | 27/27 | 27/27 | 27/27 |
+| userchan-tester | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 | 4/4 |
+| 6lowpan-tester | 9/9 | 9/9 | 9/9 | 9/9 | 9/9 | 9/9 |
+
+
+not passed (base pc1; the same names on every side unless DIFF above):
+  mgmt-tester: Set Low Energy on 6.2 - SCI Setting: Killed
+  mgmt-tester: Load Connection Subrate - Invalid Params 1: Killed
+  mgmt-tester: Load Connection Subrate - Success 1: Killed
+  mgmt-tester: Load Connection Subrate - HIDS Fast: Killed
+  mgmt-tester: Load Connection Subrate - HIDS Default: Killed
+  mgmt-tester: Load Connection Subrate - HIDS Low Power: Killed
+  mgmt-tester: Load Connection Subrate - HIDS Full Range: Killed
+  mgmt-tester: Add Ext Advertising - Success 5 (Set Adv off override): Failed
+  mgmt-tester: Add Ext Advertising - Success (Global Adv): Timed out
+  mgmt-tester: Remove Ext Advertising - Success (Global Adv): Failed
+  mgmt-tester: Ext Adv MGMT - AD Data (5.0) Success (Global Adv): Timed out
+  mgmt-tester: Scan RPA - Auto-connect with IRK: Failed
+  mgmt-tester: Scan RPA - Background report with IRK: Failed
+  l2cap-tester: L2CAP LE Client - SCI Fast Mode: Killed
+  l2cap-tester: L2CAP LE Client - SCI Default Mode: Killed
+  l2cap-tester: L2CAP LE Client - SCI Low Power Mode: Killed
+  l2cap-tester: L2CAP LE Client - SCI Full Range Mode: Killed
+  l2cap-tester: L2CAP LE Server - SCI Fast Mode: Killed
+  l2cap-tester: L2CAP LE Server - SCI Default Mode: Killed
+  l2cap-tester: L2CAP LE Server - SCI Low Power Mode: Killed
+  l2cap-tester: L2CAP LE Server - SCI Full Range Mode: Killed
+  mesh-tester: Mesh - Send cancel - 1: Timed out
+  mesh-tester: Mesh - Send cancel - 2: Timed out
+
+case verdicts compared: 5196 (rounds x testers x sides); exit 0
+# end: 2026-10-18 03:32:11 exit 0

@@ -280,7 +280,9 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
-(( ${#CMD[@]} )) || CMD=(tests/run-tests)
+# Serially by default: the decoy world's detectors were proven against one run
+# of one process (--self-test); `-- tests/run-tests --jobs N` asks for workers.
+(( ${#CMD[@]} )) || CMD=(tests/run-tests --serial)
 if (( ${#MACHINE_TOOLS[@]} < 30 )); then
     echo "sandbox: read only ${#MACHINE_TOOLS[@]} machine tool(s) from tests/machine-tools —" >&2
     echo "         refusing to call a world with the machine left in it a decoy" >&2

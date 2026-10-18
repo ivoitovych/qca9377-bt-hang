@@ -1,8 +1,24 @@
-# Two BlueZ patches, final form of 2026-10-18. NOT SENT
+# Two BlueZ patches, final form of 2026-10-18. SENT 2026-10-18
 
 They replace the 2026-10-13 set in [`../send-2026-10-13/`](../send-2026-10-13/README.md).
 Both are on BlueZ master `fa6ba5502` (2026-10-14; re-fetched 2026-10-18, unmoved), one
-mail each, unrelated to each other. Sending is the operator's decision.
+mail each, unrelated to each other.
+
+## Sent
+
+On the operator's word, 2026-10-18, the two files below as they are, each with
+`git send-email --suppress-cc=all --to=linux-bluetooth@vger.kernel.org`:
+
+| patch | sent (+0200) | Message-ID | server | patchwork |
+|---|---|---|---|---|
+| A1 | 06:39:02 | [`<20261018043903.1756818-1-yaroslav.voytovych@gmail.com>`](https://lore.kernel.org/r/20261018043903.1756818-1-yaroslav.voytovych@gmail.com) | 250 | [14897668](https://patchwork.kernel.org/project/bluetooth/patch/20261018043903.1756818-1-yaroslav.voytovych@gmail.com/) |
+| A2 | 06:39:11 | [`<20261018043911.1756937-1-yaroslav.voytovych@gmail.com>`](https://lore.kernel.org/r/20261018043911.1756937-1-yaroslav.voytovych@gmail.com) | 250 | [14897669](https://patchwork.kernel.org/project/bluetooth/patch/20261018043911.1756937-1-yaroslav.voytovych@gmail.com/) |
+
+Checked just before: `scripts/pre-send-check.sh cache/bluez-upstream` fetched master,
+still `fa6ba5502`; A1 then A2 as a series, and A2 alone, "OK to send". Patchwork's
+Bluetooth project had no other pending patch on either change (searched by name for
+`transport_cb`, `send_cmd` and `emulator`). The dry runs showed one recipient, the list,
+and no Cc.
 
 | file | what | commit |
 |---|---|---|
@@ -33,7 +49,7 @@ changes below. Each was checked against BlueZ master before it was made.
 - **A2's subject names the change.** "emulator: Fix smatch warning in send_cmd" drew
   checkpatch's `EMAIL_SUBJECT` warning ("describe the change not the tool that found
   it"), which BlueZ's bot posts.
-- **Both messages quote the exact smatch line**, as `c18e3bf92` does.
+- **A2's message quotes the exact smatch line**, as `c18e3bf92` does.
 - The VLA is from `a7b600b45` (2014), not from our patches; A2's message does not say
   otherwise.
 
@@ -48,11 +64,15 @@ Run 2026-10-18 by `tmp/bluez-a1a2-20261018/final-mails.sh` (outputs there):
 - The diffs are identical to the commits tested in `TEST-REPORT.md` (`git diff --stat`
   between each final and its tested commit prints nothing); only messages changed.
 
-## Before sending
+## The send rules (followed 2026-10-18), and after
 
 - rerun `pre-send-check.sh` on the day (master moves);
 - send each mail separately to linux-bluetooth@vger.kernel.org, `git send-email`;
 - no `Signed-off-by` (BlueZ), no cover letter, nothing under the `---` cut;
 - no reply on the old a2dp threads;
-- if neither is applied and the bot closes its PR after 14 days, resend unchanged as v2
-  with "v2: resend, no changes" under the cut.
+- after the send, judge each patch on its own. The bot's pull request is no verdict: it
+  closed PR #2559 on 2026-10-07 with "it must be resent", and the maintainer applied that
+  patch later the same day (`d84171e6c`, [`../README.md`](../README.md)). Look at BlueZ
+  master, the patch's patchwork state and any reply on the list. Resend one unchanged as
+  v2, with "v2: resend, no changes" under the cut, only if it is not in master, is still
+  `new` on patchwork and has no reply, and not before 14 days.

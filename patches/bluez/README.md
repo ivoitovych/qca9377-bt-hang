@@ -2,7 +2,9 @@
 
 Also in this directory: [`shared-mgmt/`](shared-mgmt/README.md) — the `shared/mgmt` notify
 leak fix and its unit tests, **sent and applied upstream 2026-10-08**; and
-[`cleanup/`](cleanup/) — removal of the duplicate a2dp guard (below), prepared, not sent.
+[`cleanup/`](cleanup/) — removal of the duplicate a2dp guard (below), the 10-07 draft, not
+sent; its final form went out on 2026-10-18 as A1, in
+[`send-2026-10-18/`](send-2026-10-18/README.md).
 
 ## Status and links — 2026-09-22
 
@@ -104,7 +106,9 @@ can never fire), but dead code. A one-line cleanup is prepared, **not sent**:
 [`cleanup/0001-a2dp-Remove-duplicate-stream-check-in-transport_cb.patch`](cleanup/0001-a2dp-Remove-duplicate-stream-check-in-transport_cb.patch)
 (removes the second copy; base `d84171e6c`; after it `a2dp.c` is byte-identical to
 `0bed9886c`'s and `4dc15be8e`'s, which built and passed `make check` here; checkpatch
-and gitlint clean). Sending it is the operator's decision.
+and gitlint clean). Sending it is the operator's decision. **Sent 2026-10-18 in its final
+form** (A1, retitled "a2dp: Remove duplicate check in transport_cb"):
+[`send-2026-10-18/`](send-2026-10-18/README.md).
 
 ## What is kept, and why nothing here is removed
 
