@@ -33,7 +33,7 @@ changes below. Each was checked against BlueZ master before it was made.
 - **A2's subject names the change.** "emulator: Fix smatch warning in send_cmd" drew
   checkpatch's `EMAIL_SUBJECT` warning ("describe the change not the tool that found
   it"), which BlueZ's bot posts.
-- **Both messages quote the exact smatch line**, as `c18e3bf92` does.
+- **A2's message quotes the exact smatch line**, as `c18e3bf92` does.
 - The VLA is from `a7b600b45` (2014), not from our patches; A2's message does not say
   otherwise.
 

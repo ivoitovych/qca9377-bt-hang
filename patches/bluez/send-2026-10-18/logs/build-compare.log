@@ -1,0 +1,55 @@
+# step: build-compare
+# dir: -
+# command: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/build-compare.sh
+# start: 2026-10-18 02:37:13
+== base: make exit exit 0; warning lines 0; error lines 0; note lines 3
+   CFLAGS = -g -O2
+   MISC_CFLAGS =  -fsanitize=address -fsanitize=leak -fsanitize=undefined -g -fPIC -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -ffunction-sections -fdata-sections
+   WARNING_CFLAGS =  -Wall -Werror -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wdeclaration-after-statement -Wmissing-declarations -Wredundant-decls -Wcast-align -Wswitch-enum -Wformat -Wformat-security -Wstringop-overflow -DG_DISABLE_DEPRECATED -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_36 -DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_36
+   tools/mgmt-tester.c:14000:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+   unit/test-avdtp.c:766:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+   unit/test-avrcp.c:1382:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+== a1: make exit exit 0; warning lines 0; error lines 0; note lines 3
+   CFLAGS = -g -O2
+   MISC_CFLAGS =  -fsanitize=address -fsanitize=leak -fsanitize=undefined -g -fPIC -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -ffunction-sections -fdata-sections
+   WARNING_CFLAGS =  -Wall -Werror -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wdeclaration-after-statement -Wmissing-declarations -Wredundant-decls -Wcast-align -Wswitch-enum -Wformat -Wformat-security -Wstringop-overflow -DG_DISABLE_DEPRECATED -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_36 -DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_36
+   tools/mgmt-tester.c:14000:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+   unit/test-avdtp.c:766:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+   unit/test-avrcp.c:1382:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+== a2-assert: make exit exit 0; warning lines 0; error lines 0; note lines 3
+   CFLAGS = -g -O2
+   MISC_CFLAGS =  -fsanitize=address -fsanitize=leak -fsanitize=undefined -g -fPIC -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -ffunction-sections -fdata-sections
+   WARNING_CFLAGS =  -Wall -Werror -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wdeclaration-after-statement -Wmissing-declarations -Wredundant-decls -Wcast-align -Wswitch-enum -Wformat -Wformat-security -Wstringop-overflow -DG_DISABLE_DEPRECATED -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_36 -DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_36
+   tools/mgmt-tester.c:14000:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+   unit/test-avdtp.c:766:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+   unit/test-avrcp.c:1382:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+== a2-newa: make exit exit 0; warning lines 0; error lines 0; note lines 3
+   CFLAGS = -g -O2
+   MISC_CFLAGS =  -fsanitize=address -fsanitize=leak -fsanitize=undefined -g -fPIC -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -ffunction-sections -fdata-sections
+   WARNING_CFLAGS =  -Wall -Werror -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wdeclaration-after-statement -Wmissing-declarations -Wredundant-decls -Wcast-align -Wswitch-enum -Wformat -Wformat-security -Wstringop-overflow -DG_DISABLE_DEPRECATED -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_36 -DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_36
+   tools/mgmt-tester.c:14000:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+   unit/test-avdtp.c:766:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+   unit/test-avrcp.c:1382:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+== a2-assert-ndebug: make exit exit 2; warning lines 0; error lines 1; note lines 0
+   CFLAGS = -g -O2 -DNDEBUG
+   MISC_CFLAGS =  -fsanitize=address -fsanitize=leak -fsanitize=undefined -g -fPIC -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -ffunction-sections -fdata-sections
+   WARNING_CFLAGS =  -Wall -Werror -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wdeclaration-after-statement -Wmissing-declarations -Wredundant-decls -Wcast-align -Wswitch-enum -Wformat -Wformat-security -Wstringop-overflow -DG_DISABLE_DEPRECATED -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_36 -DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_36
+   tools/mesh-cfgclient.c:252:20: error: variable ‘tm’ set but not used [-Werror=unused-but-set-variable]
+== diagnostics base vs a1
+diff exit 0
+== diagnostics base vs a2-assert
+diff exit 0
+== diagnostics base vs a2-newa
+diff exit 0
+== diagnostics base vs a2-assert-ndebug
+1,3c1
+< tools/mgmt-tester.c:14000:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+< unit/test-avdtp.c:766:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+< unit/test-avrcp.c:1382:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+---
+> tools/mesh-cfgclient.c:252:20: error: variable ‘tm’ set but not used [-Werror=unused-but-set-variable]
+diff exit 1
+== NDEBUG build: -DNDEBUG on the btdev.o compile line
+0
+0
+# end: 2026-10-18 02:37:13 exit 1
