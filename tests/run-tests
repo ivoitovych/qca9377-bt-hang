@@ -2318,11 +2318,16 @@ SCROW=$(awk -F'\t' 'NR == 2 { print $8, $11 }' "$LC/scostop/evidence/trials/resu
     || bad "close with a SCO setup and a slow btmon: rc=$scrc (124 = still decoding at 4 s), row (bt1_status sco_sent)='$SCROW'"
 # And the decode is not dropped: with a quick btmon the same close still
 # writes the trial's request parameters, after the row.
-cat > "$LC/scostop/bin/btmon" <<'STUB'
-#!/bin/sh
-printf '< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17  #1 [hci0] %s.000000\n' "$(date '+%Y-%m-%d %H:%M:%S')"
-STUB
 trial_in "$LC/scofast" "$LC/state-scofast" PATH="$LC/scostop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+# The record's time is fixed here, after the trial opened and before its close:
+# inside the window however slowly the close runs. A stub that printed the time
+# it ran put the record a second past the window's end when the close was slow
+# (under strace, 2026-10-18), and the check went red on a correct decode.
+SCOAT=$(date '+%Y-%m-%d %H:%M:%S')
+cat > "$LC/scostop/bin/btmon" <<STUB
+#!/bin/sh
+printf '< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17  #1 [hci0] $SCOAT.000000\n'
+STUB
 trial_in "$LC/scofast" "$LC/state-scofast" --timeout 10 PATH="$LC/scostop/bin:$LC/bin:$PATH" \
     BT_CAPTURE_DIR="$LC/scostop/cap" BT_TRACE_DIR="$LC/scostop/trace" -- autostop >/dev/null 2>&1; sfrc=$?
 SFPAR=$(cat "$LC/scofast"/evidence/trials/*/trial-*/sco-params.txt 2>/dev/null)
