@@ -262,6 +262,9 @@ awk -F'\t' -v showunc="$SHOWUNCOV" '
 
 echo
 echo "suite: $SUITE_TAIL"
+# A red run is measured too, and says so; which checks, from this run
+# (devtools/coverage says why).
+[[ "$SUITE_TAIL" == FAILED* ]] && grep -E '^[[:space:]]*✗|: line [0-9]+: ' "$WORK/suite.out" | head -20 | sed 's/^/  /'
 echo "profiles collected: $nprof"
 
 TOTAL_PCT=$(tr -d '[:space:]' < "$WORK/pct" 2>/dev/null)
