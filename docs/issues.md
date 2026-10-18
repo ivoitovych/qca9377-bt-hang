@@ -52,7 +52,9 @@ register keeps each issue's evidence, reasoning and falsifiers. What changed sin
   links on three headset models closed with every hang-up answered and 0 timeouts
   (`EX-055`–`EX-058`). The entry is upstream (`dc16388d45ec`, Tibor Harcsa, v7.3-rc1); a
   stable backport request was sent 2026-10-02 and queued by the stable team for seven lines
-  (7.2, 6.18, 6.12, 6.6, 6.1, 5.15, 5.10) on 2026-10-03 (`EX-061`). What the ROM firmware does
+  (7.2, 6.18, 6.12, 6.6, 6.1, 5.15, 5.10) on 2026-10-03 (`EX-061`); since released in 7.2.10,
+  6.18.56 and 6.12.113, and in the other four lines' release candidates of 2026-10-17
+  (`docs/STATUS.md`). What the ROM firmware does
   wrong is not claimed.
 - **BT-3 is therefore the cause of BT-1, not only its missing recovery** — the opposite of
   the 09-18 reading below, which is kept as written.

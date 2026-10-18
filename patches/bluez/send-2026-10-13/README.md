@@ -1,4 +1,4 @@
-# Two BlueZ patches, prepared 2026-10-13. NOT SENT
+# Two BlueZ patches, prepared 2026-10-13. NOT SENT in this form (superseded)
 
 **Superseded 2026-10-18 by [`../send-2026-10-18/`](../send-2026-10-18/README.md)**: A1 retitled
 without `Fixes:`, A2 rewritten with `newa()`, both re-tested on master `fa6ba5502`. Kept as

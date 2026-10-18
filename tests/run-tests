@@ -943,6 +943,109 @@ FIX=tests/trial-results.tsv
 # The boots journal the journal-only verdicts read, and the parameters section
 # after them (they were one section until 2026-10-18).
 BJ=tests/journal/boots
+# One exhibit's line off a report: bt-retention's, bt-snapshot's and the crash
+# counts' tests read their verdicts with it (one section until 2026-10-18).
+rt_line() {   # <report> <exhibit-base> -> that exhibit's line, or empty
+    grep -E "^[[:space:]]+$2([[:space:]]|$)" <<<"$1" | head -1
+}
+# The producer sections' fabricated machine, built afresh by each: an evidence
+# root and state in $LC, the stubs and the fake controller, and the only two
+# ways those sections invoke bt-trial, trial() and trial_in(). It was the
+# first lines of "trial lifecycle — the PRODUCER, not just the report" until
+# 2026-10-18, when the slow-read scenarios left that section to run beside it.
+lc_machine() {   # sets LC; defines trial and trial_in over it
+    LC=$(mktemp -d)
+    mkdir -p "$LC/evidence/trials" "$LC/state" "$LC/bin"; touch "$LC/install.sh"
+    git -C "$LC" init -q 2>/dev/null
+
+    # ── THE SANDBOX, BUILT BEFORE THE FIRST INVOCATION ────────────────────────
+    #
+    # These tests drive the REAL bt-trial, which on a failed trial runs the REAL
+    # bt-incident — a tool that copies journals, captures and state into
+    # evidence/sessions/. It resolves its own destination from BT_EVIDENCE_REPO,
+    # not BT_REPO, so redirecting the trial did not redirect the collector.
+    #
+    # For one run that is invisible. It became visible when the machine's own
+    # controller died: `ok` closures started reclassifying to `failed`, the failure
+    # branch fired, and every `tests/run-tests` deposited a fabricated incident
+    # directory into the real evidence tree. Ten accumulated, indistinguishable at
+    # a glance from the one genuine collection beside them.
+    #
+    # The stubs and the fake device therefore exist BEFORE the first bt-trial call,
+    # and every call goes through trial() below. An invocation that forgets one
+    # variable is no longer possible, because there is nowhere to forget it.
+    printf '#!/bin/sh\ntouch "%s/incident-was-called"\n' "$LC" > "$LC/bin/bt-incident"
+    chmod +x "$LC/bin/bt-incident"
+
+    # A fabricated controller, so the classifier is under test and not the radio.
+    # hci_alive() reads the live device tree; before this, every `ok` closure
+    # asserted against whatever the machine's real controller happened to be doing,
+    # and with the radio dead — the state this project exists to study — four
+    # invariants failed for reasons unrelated to the code.
+    mkdir -p "$LC/sysfs/3-3/3-3:1.0/bluetooth/hci0" "$LC/sysfs/3-3/power"
+    echo 13d3 > "$LC/sysfs/3-3/idVendor"
+    echo 3503 > "$LC/sysfs/3-3/idProduct"
+    echo on   > "$LC/sysfs/3-3/power/control"
+    # And, earlier in the tree, a camera from the same vendor — IMC Networks makes
+    # both, and laptops carry both. The controller is the vendor AND the product;
+    # matched on either, the camera came first and its missing hci node read as a
+    # dead controller, and no fixture held a second device to show it
+    # (devtools/mutate, 2026-09-29).
+    mkdir -p "$LC/sysfs/1-5/1-5:1.0" "$LC/sysfs/1-5/power"
+    echo 13d3 > "$LC/sysfs/1-5/idVendor"; echo 56c9 > "$LC/sysfs/1-5/idProduct"
+    echo auto > "$LC/sysfs/1-5/power/control"
+    # btusb's autosuspend parameter, which the treatment fingerprint records: Y,
+    # the value neither the laptop (N) nor a runner without btusb (?) would give.
+    mkdir -p "$LC/mod"; echo Y > "$LC/mod/enable_autosuspend"
+    # Answers unless a test stages a dead controller on purpose.
+    cat > "$LC/bin/hciconfig" <<STUB
+#!/bin/sh
+[ -e "$LC/controller-dead" ] && exit 1
+exit 0
+STUB
+    chmod +x "$LC/bin/hciconfig"
+    # AND A FABRICATED MACHINE AROUND IT, for the same reason, one layer out. The
+    # first closures below ran before any journalctl or systemctl stub existed, so
+    # the evidence bt-trial collected was THIS host's kernel log and THIS host's
+    # watchdog state, and its kernel column was this host's `uname -r` — nothing
+    # here, the laptop's real history there (devtools/sandbox, 2026-09-29). The
+    # default is a quiet, READABLE journal, no unit running, and a kernel release
+    # no machine has; the combinations below replace these one at a time.
+    cat > "$LC/bin/journalctl" <<'STUB'
+#!/bin/sh
+exit 0
+STUB
+    cat > "$LC/bin/systemctl" <<'STUB'
+#!/bin/sh
+case "$*" in *is-active*) exit 3 ;; esac
+exit 0
+STUB
+    cat > "$LC/bin/uname" <<'STUB'
+#!/bin/sh
+case "$1" in -r) echo 0.0.0-suite-fixture ;; *) echo Linux ;; esac
+STUB
+    chmod +x "$LC/bin/journalctl" "$LC/bin/systemctl" "$LC/bin/uname"
+
+    # The ONLY ways these tests may invoke bt-trial.
+    trial() {
+        PATH="$LC/bin:$PATH" \
+        BT_REPO="$LC" BT_EVIDENCE_REPO="$LC" \
+        BT_STATE="$LC/state" BT_SYSFS_USB="$LC/sysfs" BT_SYSFS_MODULE="$LC/mod" \
+        tools/bt-trial "$@"
+    }
+    # trial(), pointed at another evidence root and state directory, for a test that
+    # needs its own. BT_EVIDENCE_REPO is the root by construction — the variable a
+    # hand-written call once forgot (see the invariant at the end of the file).
+    trial_in() {   # <evidence root> <state dir> [--timeout N] [VAR=value...] -- <bt-trial arguments>
+        local root="$1" state="$2"; shift 2
+        local -a extra=() limit=()
+        [[ "${1:-}" == --timeout ]] && { limit=(timeout "$2"); shift 2; }
+        while [[ $# -gt 0 && "$1" != -- ]]; do extra+=("$1"); shift; done
+        shift
+        "${limit[@]}" env PATH="$LC/bin:$PATH" BT_REPO="$root" BT_EVIDENCE_REPO="$root" BT_STATE="$state" \
+            BT_SYSFS_USB="$LC/sysfs" BT_SYSFS_MODULE="$LC/mod" "${extra[@]}" tools/bt-trial "$@"
+    }
+}
 
 # Empty fixtures more than one section feeds to a tool: a library directory with
 # nothing in it, a journal dump with nothing in it.
@@ -2031,98 +2134,9 @@ echo "────────────────────────�
 # and unreachable in production.
 #
 # So this drives the real path: open a trial, close it, and require a row.
-LC=$(mktemp -d)
-mkdir -p "$LC/evidence/trials" "$LC/state" "$LC/bin"; touch "$LC/install.sh"
-git -C "$LC" init -q 2>/dev/null
-
-# ── THE SANDBOX, BUILT BEFORE THE FIRST INVOCATION ────────────────────────
-#
-# These tests drive the REAL bt-trial, which on a failed trial runs the REAL
-# bt-incident — a tool that copies journals, captures and state into
-# evidence/sessions/. It resolves its own destination from BT_EVIDENCE_REPO,
-# not BT_REPO, so redirecting the trial did not redirect the collector.
-#
-# For one run that is invisible. It became visible when the machine's own
-# controller died: `ok` closures started reclassifying to `failed`, the failure
-# branch fired, and every `tests/run-tests` deposited a fabricated incident
-# directory into the real evidence tree. Ten accumulated, indistinguishable at
-# a glance from the one genuine collection beside them.
-#
-# The stubs and the fake device therefore exist BEFORE the first bt-trial call,
-# and every call goes through trial() below. An invocation that forgets one
-# variable is no longer possible, because there is nowhere to forget it.
-printf '#!/bin/sh\ntouch "%s/incident-was-called"\n' "$LC" > "$LC/bin/bt-incident"
-chmod +x "$LC/bin/bt-incident"
-
-# A fabricated controller, so the classifier is under test and not the radio.
-# hci_alive() reads the live device tree; before this, every `ok` closure
-# asserted against whatever the machine's real controller happened to be doing,
-# and with the radio dead — the state this project exists to study — four
-# invariants failed for reasons unrelated to the code.
-mkdir -p "$LC/sysfs/3-3/3-3:1.0/bluetooth/hci0" "$LC/sysfs/3-3/power"
-echo 13d3 > "$LC/sysfs/3-3/idVendor"
-echo 3503 > "$LC/sysfs/3-3/idProduct"
-echo on   > "$LC/sysfs/3-3/power/control"
-# And, earlier in the tree, a camera from the same vendor — IMC Networks makes
-# both, and laptops carry both. The controller is the vendor AND the product;
-# matched on either, the camera came first and its missing hci node read as a
-# dead controller, and no fixture held a second device to show it
-# (devtools/mutate, 2026-09-29).
-mkdir -p "$LC/sysfs/1-5/1-5:1.0" "$LC/sysfs/1-5/power"
-echo 13d3 > "$LC/sysfs/1-5/idVendor"; echo 56c9 > "$LC/sysfs/1-5/idProduct"
-echo auto > "$LC/sysfs/1-5/power/control"
-# btusb's autosuspend parameter, which the treatment fingerprint records: Y,
-# the value neither the laptop (N) nor a runner without btusb (?) would give.
-mkdir -p "$LC/mod"; echo Y > "$LC/mod/enable_autosuspend"
-# Answers unless a test stages a dead controller on purpose.
-cat > "$LC/bin/hciconfig" <<STUB
-#!/bin/sh
-[ -e "$LC/controller-dead" ] && exit 1
-exit 0
-STUB
-chmod +x "$LC/bin/hciconfig"
-# AND A FABRICATED MACHINE AROUND IT, for the same reason, one layer out. The
-# first closures below ran before any journalctl or systemctl stub existed, so
-# the evidence bt-trial collected was THIS host's kernel log and THIS host's
-# watchdog state, and its kernel column was this host's `uname -r` — nothing
-# here, the laptop's real history there (devtools/sandbox, 2026-09-29). The
-# default is a quiet, READABLE journal, no unit running, and a kernel release
-# no machine has; the combinations below replace these one at a time.
-cat > "$LC/bin/journalctl" <<'STUB'
-#!/bin/sh
-exit 0
-STUB
-cat > "$LC/bin/systemctl" <<'STUB'
-#!/bin/sh
-case "$*" in *is-active*) exit 3 ;; esac
-exit 0
-STUB
-cat > "$LC/bin/uname" <<'STUB'
-#!/bin/sh
-case "$1" in -r) echo 0.0.0-suite-fixture ;; *) echo Linux ;; esac
-STUB
-chmod +x "$LC/bin/journalctl" "$LC/bin/systemctl" "$LC/bin/uname"
-
-# The ONLY ways these tests may invoke bt-trial.
-trial() {
-    PATH="$LC/bin:$PATH" \
-    BT_REPO="$LC" BT_EVIDENCE_REPO="$LC" \
-    BT_STATE="$LC/state" BT_SYSFS_USB="$LC/sysfs" BT_SYSFS_MODULE="$LC/mod" \
-    tools/bt-trial "$@"
-}
-# trial(), pointed at another evidence root and state directory, for a test that
-# needs its own. BT_EVIDENCE_REPO is the root by construction — the variable a
-# hand-written call once forgot (see the invariant at the end of the file).
-trial_in() {   # <evidence root> <state dir> [--timeout N] [VAR=value...] -- <bt-trial arguments>
-    local root="$1" state="$2"; shift 2
-    local -a extra=() limit=()
-    [[ "${1:-}" == --timeout ]] && { limit=(timeout "$2"); shift 2; }
-    while [[ $# -gt 0 && "$1" != -- ]]; do extra+=("$1"); shift; done
-    shift
-    "${limit[@]}" env PATH="$LC/bin:$PATH" BT_REPO="$root" BT_EVIDENCE_REPO="$root" BT_STATE="$state" \
-        BT_SYSFS_USB="$LC/sysfs" BT_SYSFS_MODULE="$LC/mod" "${extra[@]}" tools/bt-trial "$@"
-}
-
+# THE SANDBOX AND THE FABRICATED MACHINE: lc_machine, in the setup above, says
+# why each part exists. Built here, before the first bt-trial call.
+lc_machine
 rc=0
 trial autostart stock >/dev/null 2>&1 || rc=$?
 if (( rc == 0 )) && [[ -e "$LC/state/current" ]]; then
@@ -2216,317 +2230,6 @@ REVS=$(awk -F'\t' 'NR > 1 { print $5 }' "$LC/ev-rev/evidence/trials/results.tsv"
     && ok "a row records the tools' revision, and a range when they changed while the trial was open" \
     || bad "measurement_rev: want '$REV1 $REV1..$REV2', got '$REVS'"
 rm -rf "$LC/ev-rev" "$LC/state-rev"
-
-# The closer's verdict comes from an error-priority read and the descriptive
-# scan runs under a budget: a journal too slow for the budget (a day of dynamic
-# debug: 180 s even --grep-filtered) costs the counts, never the row or the
-# verdict. The stub answers the -p read at once and sleeps on the full one.
-mkdir -p "$LC/slow/bin"
-cat > "$LC/slow/bin/journalctl" <<'STUB'
-#!/bin/sh
-fast=0
-for a in "$@"; do [ "$a" = "-p" ] && fast=1; done
-for a in "$@"; do
-  if [ "$a" = "-k" ]; then
-    if [ "$fast" = 1 ]; then
-      printf '2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout\n'
-    else
-      sleep 5
-    fi
-    exit 0
-  fi
-done
-exit 0
-STUB
-chmod +x "$LC/slow/bin/journalctl"
-export BT_TRIAL_SCAN_BUDGET=1
-trial_in "$LC/slow" "$LC/state-slow" PATH="$LC/slow/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-SLOWOUT=$(trial_in "$LC/slow" "$LC/state-slow" PATH="$LC/slow/bin:$LC/bin:$PATH" -- ok 2>&1); slowrc=$?
-unset BT_TRIAL_SCAN_BUDGET
-# And the window it could not finish reading is `unknown`, not `none`: a scan
-# that ran out of budget cannot certify that nothing touched the controller.
-# Nothing checked that column here, and a condition that scanned a partial read
-# as if it were whole passed (devtools/mutate, 2026-09-29).
-SLOWROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }' "$LC/slow/evidence/trials/results.tsv" 2>/dev/null)
-if [[ "$SLOWROW" == "confirmed ? 1 unknown" ]]; then
-    ok "a journal too slow for the budget costs the descriptive counts and the window's certificate, never the row or the verdict"
-else
-    bad "slow-journal close: rc=$slowrc row (bt1_status sco_sent timeouts perturbed)='$SLOWROW'"
-    while IFS= read -r l; do echo "        $l"; done <<<"$SLOWOUT"
-fi
-rm -rf "$LC/slow" "$LC/state-slow"
-
-# AND THE SHUTDOWN PATH ITSELF. autostop — the unit's ExecStop — counted the
-# trial's timeouts with its own full read of the kernel journal before handing
-# over to the closer above, unbudgeted: the 180 s read of an E1 day, ahead of
-# the 90 s stop timeout, so the row could still be lost at shutdown. It now
-# counts through the error-priority index as the closer does. Its stub models
-# what is fast on a real E1 day and what is not: the -p read and a read bounded
-# by --until (the closer's enumeration check, three minutes from boot start,
-# which --list-boots supplies) answer at once; an UNBOUNDED full read sleeps 5 s.
-# autostop gets 4.
-mkdir -p "$LC/slowstop/bin"
-cat > "$LC/slowstop/bin/journalctl" <<'STUB'
-#!/bin/sh
-case " $* " in
-  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
-  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
-  *" --until "*) exit 0 ;;
-  *" -k "*) sleep 5; exit 0 ;;
-esac
-exit 0
-STUB
-chmod +x "$LC/slowstop/bin/journalctl"
-trial_in "$LC/slowstop" "$LC/state-slowstop" PATH="$LC/slowstop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-trial_in "$LC/slowstop" "$LC/state-slowstop" --timeout 4 PATH="$LC/slowstop/bin:$LC/bin:$PATH" \
-    BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; ssrc=$?
-SSROW=$(awk -F'\t' 'NR == 2 { print $8, $13 }' "$LC/slowstop/evidence/trials/results.tsv" 2>/dev/null)
-if (( ssrc == 0 )) && [[ "$SSROW" == "confirmed 1" ]]; then
-    ok "autostop counts through the error-priority index: a slow full journal cannot hold shutdown past its timeout"
-else
-    bad "autostop with a slow full journal: rc=$ssrc (124 = still reading at 4 s), row (bt1_status timeouts)='$SSROW'"
-fi
-rm -rf "$LC/slowstop" "$LC/state-slowstop"
-
-# AND WITH THE PROJECT'S OWN TOOLS INSTALLED, AS ON THE LAPTOP. The close runs
-# bt-state (state-after.txt) and bt-mark (the RESULT mark) when they are on the
-# PATH. Everywhere else in this file those names reach the PATH guard's
-# recording stubs, which print nothing, so no close above ran the real tools; on
-# the laptop both are in /usr/local/bin. bt-state counts the boot's command timeouts
-# over the WHOLE boot's kernel journal, with no budget, and both ask
-# bluetoothctl, which is given 8 s each. They ran ahead of the results row: the
-# slow-journal check above, with the two tools on its PATH, lost the row again
-# (rc=124, no row; 2026-10-16). The row is now written before them, and they
-# still run after it. Here they are the checkout's own copies in install.sh's
-# layout, the libraries in lib/ beside them (bt-state finds them there, by its
-# own path), with stubs for what they ask the machine; the journal is the slow
-# one above.
-mkdir -p "$LC/inst/bin" "$LC/inststop/bin"
-ln -s "$PWD/tools/bt-state" "$PWD/bin/bt-mark" "$PWD/tools/lib" "$LC/inst/bin/"
-printf '#!/bin/sh\necho "$*" >> "%s/inst/logger.log"\n' "$LC" > "$LC/inst/bin/logger"
-printf '#!/bin/sh\nexit 0\n' > "$LC/inst/bin/bluetoothctl"
-cat > "$LC/inststop/bin/journalctl" <<'STUB'
-#!/bin/sh
-case " $* " in
-  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
-  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
-  *" --until "*) exit 0 ;;
-  *" -k "*) sleep 5; exit 0 ;;
-esac
-exit 0
-STUB
-chmod +x "$LC/inst/bin/logger" "$LC/inst/bin/bluetoothctl" "$LC/inststop/bin/journalctl"
-trial_in "$LC/inststop" "$LC/state-inststop" PATH="$LC/inst/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-trial_in "$LC/inststop" "$LC/state-inststop" --timeout 4 PATH="$LC/inststop/bin:$LC/inst/bin:$LC/bin:$PATH" \
-    BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; isrc=$?
-ISROW=$(awk -F'\t' 'NR == 2 { print $8, $13 }' "$LC/inststop/evidence/trials/results.tsv" 2>/dev/null)
-[[ "$ISROW" == "confirmed 1" ]] \
-    && ok "with bt-state and bt-mark installed, a slow journal still cannot cost the row: it is written before them" \
-    || bad "close with the project's tools installed: rc=$isrc (124 = still running at 4 s), row (bt1_status timeouts)='$ISROW'"
-# And the extras are not dropped: on a quick journal the same close writes
-# state-after.txt and the RESULT mark, after the row.
-: > "$LC/inst/logger.log"
-trial_in "$LC/instfast" "$LC/state-instfast" PATH="$LC/inst/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-trial_in "$LC/instfast" "$LC/state-instfast" --timeout 10 PATH="$LC/inst/bin:$LC/bin:$PATH" -- autostop >/dev/null 2>&1; ifrc=$?
-IFAFTER=$(cat "$LC/instfast"/evidence/trials/*/trial-*/state-after.txt 2>/dev/null)
-(( ifrc == 0 )) && [[ -n "$(awk 'NR == 2' "$LC/instfast/evidence/trials/results.tsv" 2>/dev/null)" ]] \
-    && [[ "$IFAFTER" == *"tx timeouts"* ]] && grep -q 'RESULT' "$LC/inst/logger.log" \
-    && ok "the close still writes state-after.txt and the RESULT mark, after the row" \
-    || bad "close extras: rc=$ifrc, state-after '$(head -c 60 <<<"$IFAFTER")', marks: $(tr '\n' '|' < "$LC/inst/logger.log")"
-rm -rf "$LC/inst" "$LC/inststop" "$LC/state-inststop" "$LC/instfast" "$LC/state-instfast"
-
-# AND WHEN --list-boots ANSWERS NOTHING. The closer's enumeration check is
-# bounded only through the boot start that --list-boots supplies; without it
-# the read was the unbounded whole-boot scan that lost EX-023's row, and the
-# source check above passes it because the conditional `--until` is on the
-# line. Here --list-boots says nothing and every full -k read is slow. The
-# close must still finish inside 4 s and write its row, and enum_at_boot must
-# say `?` (not measured), never a `no` it did not see.
-mkdir -p "$LC/nolist/bin"
-cat > "$LC/nolist/bin/journalctl" <<'STUB'
-#!/bin/sh
-case " $* " in
-  *" --list-boots "*) exit 0 ;;
-  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
-  *" --until "*) exit 0 ;;
-  *" -k "*) sleep 5; exit 0 ;;
-esac
-exit 0
-STUB
-chmod +x "$LC/nolist/bin/journalctl"
-trial_in "$LC/nolist" "$LC/state-nolist" PATH="$LC/nolist/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-trial_in "$LC/nolist" "$LC/state-nolist" --timeout 4 PATH="$LC/nolist/bin:$LC/bin:$PATH" \
-    BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; nlrc=$?
-NLROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/nolist/evidence/trials/results.tsv" 2>/dev/null)
-if (( nlrc == 0 )) && [[ "$NLROW" == "confirmed ?" ]]; then
-    ok "with no boot list the enumeration read is budgeted too: the row is written and enum_at_boot says '?'"
-else
-    bad "close with no --list-boots answer: rc=$nlrc (124 = still reading at 4 s), row (bt1_status enum_at_boot)='$NLROW'"
-fi
-rm -rf "$LC/nolist" "$LC/state-nolist"
-
-# AND WHEN THE ENUMERATION READ FAILS FOR ANOTHER REASON. Only the budget's
-# exit 124 used to give `?`; any other failed read (a journal it may not read,
-# a --until it rejects, a timeout that could not start it) fell through to
-# `no`, a claim that nothing was measured. The descriptive scan already treats
-# every such failure as a failed read. Here the boot list answers, so the read
-# is the bounded one, and it fails at once with exit 1 and a reason on stderr.
-mkdir -p "$LC/enumfail/bin"
-cat > "$LC/enumfail/bin/journalctl" <<'STUB'
-#!/bin/sh
-case " $* " in
-  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
-  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
-  *" -b 0 "*) echo "Failed to open journal: Permission denied" >&2; exit 1 ;;
-esac
-exit 0
-STUB
-chmod +x "$LC/enumfail/bin/journalctl"
-trial_in "$LC/enumfail" "$LC/state-enumfail" PATH="$LC/enumfail/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-trial_in "$LC/enumfail" "$LC/state-enumfail" --timeout 4 PATH="$LC/enumfail/bin:$LC/bin:$PATH" \
-    -- autostop >/dev/null 2>&1; efrc=$?
-EFROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/enumfail/evidence/trials/results.tsv" 2>/dev/null)
-if (( efrc == 0 )) && [[ "$EFROW" == "confirmed ?" ]]; then
-    ok "an enumeration read that fails for any reason says '?', not a 'no' it never measured"
-else
-    bad "close with a failing enumeration read: rc=$efrc, row (bt1_status enum_at_boot)='$EFROW' (want 'confirmed ?')"
-fi
-rm -rf "$LC/enumfail" "$LC/state-enumfail"
-
-# AND WHEN THE TRIAL SAW A SCO SETUP, WITH CAPTURES ON DISK, AS ON THE LAPTOP.
-# A close whose kernel journal shows a Setup Synchronous Connection writes
-# sco-params.txt: it decodes every btsnoop file in both capture directories
-# with btmon, whole, and keeps the records inside the trial window. On the
-# laptop each directory keeps up to 400 captures, and on 2026-09-24 one btmon
-# pass over the trace directory took over ten minutes. Every check above ran
-# with no SCO setup or no capture, so that decode never ran in a close; it ran
-# ahead of the results row with no budget, and a trial with a call in it could
-# lose its row at shutdown. Here btmon takes 5 s a file and the close gets 4 s.
-mkdir -p "$LC/scostop/bin" "$LC/scostop/cap" "$LC/scostop/trace"
-: > "$LC/scostop/cap/a.btsnoop"; : > "$LC/scostop/trace/a.btsnoop"
-cat > "$LC/scostop/bin/journalctl" <<'STUB'
-#!/bin/sh
-case " $* " in
-  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
-  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
-  *" --until "*) exit 0 ;;
-  *" -k "*) echo "2026-09-27T09:59:00.000000+02:00 n kernel: Bluetooth: hci0: opcode 0x0428 plen 17"
-            echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
-esac
-exit 0
-STUB
-printf '#!/bin/sh\nsleep 5\n' > "$LC/scostop/bin/btmon"
-chmod +x "$LC/scostop/bin/journalctl" "$LC/scostop/bin/btmon"
-trial_in "$LC/scostop" "$LC/state-scostop" PATH="$LC/scostop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-trial_in "$LC/scostop" "$LC/state-scostop" --timeout 4 PATH="$LC/scostop/bin:$LC/bin:$PATH" \
-    BT_CAPTURE_DIR="$LC/scostop/cap" BT_TRACE_DIR="$LC/scostop/trace" -- autostop >/dev/null 2>&1; scrc=$?
-SCROW=$(awk -F'\t' 'NR == 2 { print $8, $11 }' "$LC/scostop/evidence/trials/results.tsv" 2>/dev/null)
-[[ "$SCROW" == "confirmed 1" ]] \
-    && ok "a trial with a SCO setup and captures on disk: a slow btmon decode cannot cost the row" \
-    || bad "close with a SCO setup and a slow btmon: rc=$scrc (124 = still decoding at 4 s), row (bt1_status sco_sent)='$SCROW'"
-# And the decode is not dropped: with a quick btmon the same close still
-# writes the trial's request parameters, after the row.
-trial_in "$LC/scofast" "$LC/state-scofast" PATH="$LC/scostop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-# The record's time is fixed here, after the trial opened and before its close:
-# inside the window however slowly the close runs. A stub that printed the time
-# it ran put the record a second past the window's end when the close was slow
-# (under strace, 2026-10-18), and the check went red on a correct decode.
-SCOAT=$(date '+%Y-%m-%d %H:%M:%S')
-cat > "$LC/scostop/bin/btmon" <<STUB
-#!/bin/sh
-printf '< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17  #1 [hci0] $SCOAT.000000\n'
-STUB
-trial_in "$LC/scofast" "$LC/state-scofast" --timeout 10 PATH="$LC/scostop/bin:$LC/bin:$PATH" \
-    BT_CAPTURE_DIR="$LC/scostop/cap" BT_TRACE_DIR="$LC/scostop/trace" -- autostop >/dev/null 2>&1; sfrc=$?
-SFPAR=$(cat "$LC/scofast"/evidence/trials/*/trial-*/sco-params.txt 2>/dev/null)
-(( sfrc == 0 )) && [[ -n "$(awk 'NR == 2' "$LC/scofast/evidence/trials/results.tsv" 2>/dev/null)" ]] \
-    && [[ "$(grep -c '^< HCI Command: Setup Synchronous Connection' <<<"$SFPAR")" == 2 ]] \
-    && ok "the close still decodes the trial's SCO request from both capture paths, after the row" \
-    || bad "close's SCO decode: rc=$sfrc, sco-params.txt '$(head -c 120 <<<"$SFPAR" | tr '\n' '|')'"
-rm -rf "$LC/scostop" "$LC/state-scostop" "$LC/scofast" "$LC/state-scofast"
-
-# THE --grep PROBE, both ways, and against the inversion that hid it. A journal
-# whose --help names --grep must be asked with the filter; one whose help does
-# not, without. The first help text is LONG, as journalctl's is: probed with
-# `journalctl --help | grep -q -- --grep` under pipefail, grep leaves at the
-# match, the writer dies of SIGPIPE, and the probe reads "no --grep" on exactly
-# the system that has it — the closer then read the laptop's journal unfiltered.
-mkdir -p "$LC/kg/bin" "$LC/kgn/bin"
-cat > "$LC/kg/bin/journalctl" <<KGSTUB
-#!/bin/sh
-case "\$1" in --help) echo "  --grep=PATTERN"; exec seq 1 200000 ;; esac   # exec: the WRITER must be what dies of SIGPIPE, as journalctl does
-echo "\$*" >> "$LC/kg/args"
-exit 0
-KGSTUB
-cat > "$LC/kgn/bin/journalctl" <<KGSTUB
-#!/bin/sh
-case "\$1" in --help) echo "  -k --dmesg"; exit 0 ;; esac
-echo "\$*" >> "$LC/kgn/args"
-exit 0
-KGSTUB
-chmod +x "$LC/kg/bin/journalctl" "$LC/kgn/bin/journalctl"
-for kg in kg kgn; do
-    trial_in "$LC/$kg" "$LC/$kg/state" PATH="$LC/$kg/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-    trial_in "$LC/$kg" "$LC/$kg/state" PATH="$LC/$kg/bin:$LC/bin:$PATH" -- ok >/dev/null 2>&1
-done
-if grep -qE -- '(^| )-k .*--grep=' "$LC/kg/args" 2>/dev/null && ! grep -q -- '--grep' "$LC/kgn/args" 2>/dev/null \
-   && grep -qE -- '(^| )-k ' "$LC/kgn/args" 2>/dev/null; then
-    ok "the closer filters with --grep where the journal offers it, and only there — probed without the pipefail inversion"
-else
-    bad "the --grep probe: with it offered, $(grep -c -- '--grep' "$LC/kg/args" 2>/dev/null) filtered read(s); without, $(grep -c -- '--grep' "$LC/kgn/args" 2>/dev/null)"
-fi
-rm -rf "$LC/kg" "$LC/kgn"
-
-# A --grep read that matched nothing EXITS 1 (systemd 255, measured 2026-10-03
-# on the investigation machine: `journalctl -k -b 0 --grep=zzz` prints nothing
-# on either stream and returns 1). The closer read that as "journalctl failed",
-# so every clean close — the trial this project hopes for — was `unknown`, and
-# with it perturbed=unknown and the descriptive counts "?". Found by CI, which
-# has a readable journal and no Bluetooth: 30 red runs from 2026-09-28. The
-# stub advertises --grep in --help, as the real one does, so the closer takes
-# the filtered path; it answers every -k read with exit 1 and nothing else.
-mkdir -p "$LC/nomatch/bin"
-cat > "$LC/nomatch/bin/journalctl" <<'STUB'
-#!/bin/sh
-for a in "$@"; do
-  case "$a" in
-    --help) echo '  -g --grep=PATTERN  Show entries with MESSAGE matching PATTERN'; exit 0 ;;
-    -k) exit 1 ;;
-  esac
-done
-exit 0
-STUB
-chmod +x "$LC/nomatch/bin/journalctl"
-trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-NMOUT=$(trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok 2>&1); nmrc=$?
-NMROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
-if [[ "$NMROW" == "not_observed 0 0 none" ]]; then
-    ok "a filtered read that matched nothing is a clean window, not an unreadable journal"
-else
-    bad "no-match close: rc=$nmrc row (bt1_status sco_sent timeouts perturbed)='$NMROW'"
-    while IFS= read -r l; do echo "        $l"; done <<<"$NMOUT"
-fi
-# And exit 1 WITH a complaint on stderr is still a failed read.
-cat > "$LC/nomatch/bin/journalctl" <<'STUB'
-#!/bin/sh
-for a in "$@"; do
-  case "$a" in
-    --help) echo '  -g --grep=PATTERN  Show entries with MESSAGE matching PATTERN'; exit 0 ;;
-    -k) echo 'Failed to open journal: Input/output error' >&2; exit 1 ;;
-  esac
-done
-exit 0
-STUB
-rm -rf "$LC/nomatch/evidence" "$LC/state-nomatch"
-trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
-trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok >/dev/null 2>&1
-NMROW2=$(awk -F'\t' 'NR == 2 { print $8, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
-if [[ "$NMROW2" == "unknown unknown" ]]; then
-    ok "exit 1 with a complaint on stderr is still an unreadable journal -> unknown"
-else
-    bad "failed-read close: row (bt1_status perturbed)='$NMROW2'"
-fi
-rm -rf "$LC/nomatch" "$LC/state-nomatch"
 
 rc=0
 out=$(trial ok 2>&1) || rc=$?
@@ -2872,6 +2575,335 @@ STUB
 done
 
 rm -f "$LC/bin/journalctl" "$LC/bin/systemctl"
+rm -rf "$LC"
+
+echo
+echo "the producer under a slow journal — budgets that keep the row and the verdict"
+echo "──────────────────────────────────────────────────────────────────────"
+# Until 2026-10-18 the middle of "trial lifecycle — the PRODUCER, not just the
+# report"; a section of its own, on a fabricated machine of its own (lc_machine),
+# so that a parallel run can give its slow reads a core.
+lc_machine
+
+# The closer's verdict comes from an error-priority read and the descriptive
+# scan runs under a budget: a journal too slow for the budget (a day of dynamic
+# debug: 180 s even --grep-filtered) costs the counts, never the row or the
+# verdict. The stub answers the -p read at once and sleeps on the full one.
+mkdir -p "$LC/slow/bin"
+cat > "$LC/slow/bin/journalctl" <<'STUB'
+#!/bin/sh
+fast=0
+for a in "$@"; do [ "$a" = "-p" ] && fast=1; done
+for a in "$@"; do
+  if [ "$a" = "-k" ]; then
+    if [ "$fast" = 1 ]; then
+      printf '2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout\n'
+    else
+      sleep 5
+    fi
+    exit 0
+  fi
+done
+exit 0
+STUB
+chmod +x "$LC/slow/bin/journalctl"
+export BT_TRIAL_SCAN_BUDGET=1
+trial_in "$LC/slow" "$LC/state-slow" PATH="$LC/slow/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+SLOWOUT=$(trial_in "$LC/slow" "$LC/state-slow" PATH="$LC/slow/bin:$LC/bin:$PATH" -- ok 2>&1); slowrc=$?
+unset BT_TRIAL_SCAN_BUDGET
+# And the window it could not finish reading is `unknown`, not `none`: a scan
+# that ran out of budget cannot certify that nothing touched the controller.
+# Nothing checked that column here, and a condition that scanned a partial read
+# as if it were whole passed (devtools/mutate, 2026-09-29).
+SLOWROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }' "$LC/slow/evidence/trials/results.tsv" 2>/dev/null)
+if [[ "$SLOWROW" == "confirmed ? 1 unknown" ]]; then
+    ok "a journal too slow for the budget costs the descriptive counts and the window's certificate, never the row or the verdict"
+else
+    bad "slow-journal close: rc=$slowrc row (bt1_status sco_sent timeouts perturbed)='$SLOWROW'"
+    while IFS= read -r l; do echo "        $l"; done <<<"$SLOWOUT"
+fi
+rm -rf "$LC/slow" "$LC/state-slow"
+
+# AND THE SHUTDOWN PATH ITSELF. autostop — the unit's ExecStop — counted the
+# trial's timeouts with its own full read of the kernel journal before handing
+# over to the closer above, unbudgeted: the 180 s read of an E1 day, ahead of
+# the 90 s stop timeout, so the row could still be lost at shutdown. It now
+# counts through the error-priority index as the closer does. Its stub models
+# what is fast on a real E1 day and what is not: the -p read and a read bounded
+# by --until (the closer's enumeration check, three minutes from boot start,
+# which --list-boots supplies) answer at once; an UNBOUNDED full read sleeps 5 s.
+# autostop gets 4.
+mkdir -p "$LC/slowstop/bin"
+cat > "$LC/slowstop/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" --until "*) exit 0 ;;
+  *" -k "*) sleep 5; exit 0 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/slowstop/bin/journalctl"
+trial_in "$LC/slowstop" "$LC/state-slowstop" PATH="$LC/slowstop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/slowstop" "$LC/state-slowstop" --timeout 4 PATH="$LC/slowstop/bin:$LC/bin:$PATH" \
+    BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; ssrc=$?
+SSROW=$(awk -F'\t' 'NR == 2 { print $8, $13 }' "$LC/slowstop/evidence/trials/results.tsv" 2>/dev/null)
+if (( ssrc == 0 )) && [[ "$SSROW" == "confirmed 1" ]]; then
+    ok "autostop counts through the error-priority index: a slow full journal cannot hold shutdown past its timeout"
+else
+    bad "autostop with a slow full journal: rc=$ssrc (124 = still reading at 4 s), row (bt1_status timeouts)='$SSROW'"
+fi
+rm -rf "$LC/slowstop" "$LC/state-slowstop"
+
+# AND WITH THE PROJECT'S OWN TOOLS INSTALLED, AS ON THE LAPTOP. The close runs
+# bt-state (state-after.txt) and bt-mark (the RESULT mark) when they are on the
+# PATH. Everywhere else in this file those names reach the PATH guard's
+# recording stubs, which print nothing, so no close above ran the real tools; on
+# the laptop both are in /usr/local/bin. bt-state counts the boot's command timeouts
+# over the WHOLE boot's kernel journal, with no budget, and both ask
+# bluetoothctl, which is given 8 s each. They ran ahead of the results row: the
+# slow-journal check above, with the two tools on its PATH, lost the row again
+# (rc=124, no row; 2026-10-16). The row is now written before them, and they
+# still run after it. Here they are the checkout's own copies in install.sh's
+# layout, the libraries in lib/ beside them (bt-state finds them there, by its
+# own path), with stubs for what they ask the machine; the journal is the slow
+# one above.
+mkdir -p "$LC/inst/bin" "$LC/inststop/bin"
+ln -s "$PWD/tools/bt-state" "$PWD/bin/bt-mark" "$PWD/tools/lib" "$LC/inst/bin/"
+printf '#!/bin/sh\necho "$*" >> "%s/inst/logger.log"\n' "$LC" > "$LC/inst/bin/logger"
+printf '#!/bin/sh\nexit 0\n' > "$LC/inst/bin/bluetoothctl"
+cat > "$LC/inststop/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" --until "*) exit 0 ;;
+  *" -k "*) sleep 5; exit 0 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/inst/bin/logger" "$LC/inst/bin/bluetoothctl" "$LC/inststop/bin/journalctl"
+trial_in "$LC/inststop" "$LC/state-inststop" PATH="$LC/inst/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/inststop" "$LC/state-inststop" --timeout 4 PATH="$LC/inststop/bin:$LC/inst/bin:$LC/bin:$PATH" \
+    BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; isrc=$?
+ISROW=$(awk -F'\t' 'NR == 2 { print $8, $13 }' "$LC/inststop/evidence/trials/results.tsv" 2>/dev/null)
+[[ "$ISROW" == "confirmed 1" ]] \
+    && ok "with bt-state and bt-mark installed, a slow journal still cannot cost the row: it is written before them" \
+    || bad "close with the project's tools installed: rc=$isrc (124 = still running at 4 s), row (bt1_status timeouts)='$ISROW'"
+# And the extras are not dropped: on a quick journal the same close writes
+# state-after.txt and the RESULT mark, after the row.
+: > "$LC/inst/logger.log"
+trial_in "$LC/instfast" "$LC/state-instfast" PATH="$LC/inst/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/instfast" "$LC/state-instfast" --timeout 10 PATH="$LC/inst/bin:$LC/bin:$PATH" -- autostop >/dev/null 2>&1; ifrc=$?
+IFAFTER=$(cat "$LC/instfast"/evidence/trials/*/trial-*/state-after.txt 2>/dev/null)
+(( ifrc == 0 )) && [[ -n "$(awk 'NR == 2' "$LC/instfast/evidence/trials/results.tsv" 2>/dev/null)" ]] \
+    && [[ "$IFAFTER" == *"tx timeouts"* ]] && grep -q 'RESULT' "$LC/inst/logger.log" \
+    && ok "the close still writes state-after.txt and the RESULT mark, after the row" \
+    || bad "close extras: rc=$ifrc, state-after '$(head -c 60 <<<"$IFAFTER")', marks: $(tr '\n' '|' < "$LC/inst/logger.log")"
+rm -rf "$LC/inst" "$LC/inststop" "$LC/state-inststop" "$LC/instfast" "$LC/state-instfast"
+rm -rf "$LC"
+
+echo
+echo "the producer when the enumeration, the SCO decode or the --grep filter fails"
+echo "──────────────────────────────────────────────────────────────────────"
+# Until 2026-10-18 the middle of "trial lifecycle — the PRODUCER, not just the
+# report"; a section of its own, on a fabricated machine of its own (lc_machine),
+# so that a parallel run can give its slow reads a core.
+lc_machine
+
+# AND WHEN --list-boots ANSWERS NOTHING. The closer's enumeration check is
+# bounded only through the boot start that --list-boots supplies; without it
+# the read was the unbounded whole-boot scan that lost EX-023's row, and the
+# source check above passes it because the conditional `--until` is on the
+# line. Here --list-boots says nothing and every full -k read is slow. The
+# close must still finish inside 4 s and write its row, and enum_at_boot must
+# say `?` (not measured), never a `no` it did not see.
+mkdir -p "$LC/nolist/bin"
+cat > "$LC/nolist/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" --until "*) exit 0 ;;
+  *" -k "*) sleep 5; exit 0 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/nolist/bin/journalctl"
+trial_in "$LC/nolist" "$LC/state-nolist" PATH="$LC/nolist/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/nolist" "$LC/state-nolist" --timeout 4 PATH="$LC/nolist/bin:$LC/bin:$PATH" \
+    BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; nlrc=$?
+NLROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/nolist/evidence/trials/results.tsv" 2>/dev/null)
+if (( nlrc == 0 )) && [[ "$NLROW" == "confirmed ?" ]]; then
+    ok "with no boot list the enumeration read is budgeted too: the row is written and enum_at_boot says '?'"
+else
+    bad "close with no --list-boots answer: rc=$nlrc (124 = still reading at 4 s), row (bt1_status enum_at_boot)='$NLROW'"
+fi
+rm -rf "$LC/nolist" "$LC/state-nolist"
+
+# AND WHEN THE ENUMERATION READ FAILS FOR ANOTHER REASON. Only the budget's
+# exit 124 used to give `?`; any other failed read (a journal it may not read,
+# a --until it rejects, a timeout that could not start it) fell through to
+# `no`, a claim that nothing was measured. The descriptive scan already treats
+# every such failure as a failed read. Here the boot list answers, so the read
+# is the bounded one, and it fails at once with exit 1 and a reason on stderr.
+mkdir -p "$LC/enumfail/bin"
+cat > "$LC/enumfail/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" -b 0 "*) echo "Failed to open journal: Permission denied" >&2; exit 1 ;;
+esac
+exit 0
+STUB
+chmod +x "$LC/enumfail/bin/journalctl"
+trial_in "$LC/enumfail" "$LC/state-enumfail" PATH="$LC/enumfail/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/enumfail" "$LC/state-enumfail" --timeout 4 PATH="$LC/enumfail/bin:$LC/bin:$PATH" \
+    -- autostop >/dev/null 2>&1; efrc=$?
+EFROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/enumfail/evidence/trials/results.tsv" 2>/dev/null)
+if (( efrc == 0 )) && [[ "$EFROW" == "confirmed ?" ]]; then
+    ok "an enumeration read that fails for any reason says '?', not a 'no' it never measured"
+else
+    bad "close with a failing enumeration read: rc=$efrc, row (bt1_status enum_at_boot)='$EFROW' (want 'confirmed ?')"
+fi
+rm -rf "$LC/enumfail" "$LC/state-enumfail"
+
+# AND WHEN THE TRIAL SAW A SCO SETUP, WITH CAPTURES ON DISK, AS ON THE LAPTOP.
+# A close whose kernel journal shows a Setup Synchronous Connection writes
+# sco-params.txt: it decodes every btsnoop file in both capture directories
+# with btmon, whole, and keeps the records inside the trial window. On the
+# laptop each directory keeps up to 400 captures, and on 2026-09-24 one btmon
+# pass over the trace directory took over ten minutes. Every check above ran
+# with no SCO setup or no capture, so that decode never ran in a close; it ran
+# ahead of the results row with no budget, and a trial with a call in it could
+# lose its row at shutdown. Here btmon takes 5 s a file and the close gets 4 s.
+mkdir -p "$LC/scostop/bin" "$LC/scostop/cap" "$LC/scostop/trace"
+: > "$LC/scostop/cap/a.btsnoop"; : > "$LC/scostop/trace/a.btsnoop"
+cat > "$LC/scostop/bin/journalctl" <<'STUB'
+#!/bin/sh
+case " $* " in
+  *" --list-boots "*) echo " 0 5eedf00d Sun 2026-09-27 09:00:00 UTC Sun 2026-09-27 21:00:00 UTC"; exit 0 ;;
+  *" -p "*) echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+  *" --until "*) exit 0 ;;
+  *" -k "*) echo "2026-09-27T09:59:00.000000+02:00 n kernel: Bluetooth: hci0: opcode 0x0428 plen 17"
+            echo "2026-09-27T10:00:00.000000+02:00 n kernel: Bluetooth: hci0: command 0x0406 tx timeout"; exit 0 ;;
+esac
+exit 0
+STUB
+printf '#!/bin/sh\nsleep 5\n' > "$LC/scostop/bin/btmon"
+chmod +x "$LC/scostop/bin/journalctl" "$LC/scostop/bin/btmon"
+trial_in "$LC/scostop" "$LC/state-scostop" PATH="$LC/scostop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/scostop" "$LC/state-scostop" --timeout 4 PATH="$LC/scostop/bin:$LC/bin:$PATH" \
+    BT_CAPTURE_DIR="$LC/scostop/cap" BT_TRACE_DIR="$LC/scostop/trace" -- autostop >/dev/null 2>&1; scrc=$?
+SCROW=$(awk -F'\t' 'NR == 2 { print $8, $11 }' "$LC/scostop/evidence/trials/results.tsv" 2>/dev/null)
+[[ "$SCROW" == "confirmed 1" ]] \
+    && ok "a trial with a SCO setup and captures on disk: a slow btmon decode cannot cost the row" \
+    || bad "close with a SCO setup and a slow btmon: rc=$scrc (124 = still decoding at 4 s), row (bt1_status sco_sent)='$SCROW'"
+# And the decode is not dropped: with a quick btmon the same close still
+# writes the trial's request parameters, after the row.
+trial_in "$LC/scofast" "$LC/state-scofast" PATH="$LC/scostop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+# The record's time is fixed here, after the trial opened and before its close:
+# inside the window however slowly the close runs. A stub that printed the time
+# it ran put the record a second past the window's end when the close was slow
+# (under strace, 2026-10-18), and the check went red on a correct decode.
+SCOAT=$(date '+%Y-%m-%d %H:%M:%S')
+cat > "$LC/scostop/bin/btmon" <<STUB
+#!/bin/sh
+printf '< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17  #1 [hci0] $SCOAT.000000\n'
+STUB
+trial_in "$LC/scofast" "$LC/state-scofast" --timeout 10 PATH="$LC/scostop/bin:$LC/bin:$PATH" \
+    BT_CAPTURE_DIR="$LC/scostop/cap" BT_TRACE_DIR="$LC/scostop/trace" -- autostop >/dev/null 2>&1; sfrc=$?
+SFPAR=$(cat "$LC/scofast"/evidence/trials/*/trial-*/sco-params.txt 2>/dev/null)
+(( sfrc == 0 )) && [[ -n "$(awk 'NR == 2' "$LC/scofast/evidence/trials/results.tsv" 2>/dev/null)" ]] \
+    && [[ "$(grep -c '^< HCI Command: Setup Synchronous Connection' <<<"$SFPAR")" == 2 ]] \
+    && ok "the close still decodes the trial's SCO request from both capture paths, after the row" \
+    || bad "close's SCO decode: rc=$sfrc, sco-params.txt '$(head -c 120 <<<"$SFPAR" | tr '\n' '|')'"
+rm -rf "$LC/scostop" "$LC/state-scostop" "$LC/scofast" "$LC/state-scofast"
+
+# THE --grep PROBE, both ways, and against the inversion that hid it. A journal
+# whose --help names --grep must be asked with the filter; one whose help does
+# not, without. The first help text is LONG, as journalctl's is: probed with
+# `journalctl --help | grep -q -- --grep` under pipefail, grep leaves at the
+# match, the writer dies of SIGPIPE, and the probe reads "no --grep" on exactly
+# the system that has it — the closer then read the laptop's journal unfiltered.
+mkdir -p "$LC/kg/bin" "$LC/kgn/bin"
+cat > "$LC/kg/bin/journalctl" <<KGSTUB
+#!/bin/sh
+case "\$1" in --help) echo "  --grep=PATTERN"; exec seq 1 200000 ;; esac   # exec: the WRITER must be what dies of SIGPIPE, as journalctl does
+echo "\$*" >> "$LC/kg/args"
+exit 0
+KGSTUB
+cat > "$LC/kgn/bin/journalctl" <<KGSTUB
+#!/bin/sh
+case "\$1" in --help) echo "  -k --dmesg"; exit 0 ;; esac
+echo "\$*" >> "$LC/kgn/args"
+exit 0
+KGSTUB
+chmod +x "$LC/kg/bin/journalctl" "$LC/kgn/bin/journalctl"
+for kg in kg kgn; do
+    trial_in "$LC/$kg" "$LC/$kg/state" PATH="$LC/$kg/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+    trial_in "$LC/$kg" "$LC/$kg/state" PATH="$LC/$kg/bin:$LC/bin:$PATH" -- ok >/dev/null 2>&1
+done
+if grep -qE -- '(^| )-k .*--grep=' "$LC/kg/args" 2>/dev/null && ! grep -q -- '--grep' "$LC/kgn/args" 2>/dev/null \
+   && grep -qE -- '(^| )-k ' "$LC/kgn/args" 2>/dev/null; then
+    ok "the closer filters with --grep where the journal offers it, and only there — probed without the pipefail inversion"
+else
+    bad "the --grep probe: with it offered, $(grep -c -- '--grep' "$LC/kg/args" 2>/dev/null) filtered read(s); without, $(grep -c -- '--grep' "$LC/kgn/args" 2>/dev/null)"
+fi
+rm -rf "$LC/kg" "$LC/kgn"
+
+# A --grep read that matched nothing EXITS 1 (systemd 255, measured 2026-10-03
+# on the investigation machine: `journalctl -k -b 0 --grep=zzz` prints nothing
+# on either stream and returns 1). The closer read that as "journalctl failed",
+# so every clean close — the trial this project hopes for — was `unknown`, and
+# with it perturbed=unknown and the descriptive counts "?". Found by CI, which
+# has a readable journal and no Bluetooth: 30 red runs from 2026-09-28. The
+# stub advertises --grep in --help, as the real one does, so the closer takes
+# the filtered path; it answers every -k read with exit 1 and nothing else.
+mkdir -p "$LC/nomatch/bin"
+cat > "$LC/nomatch/bin/journalctl" <<'STUB'
+#!/bin/sh
+for a in "$@"; do
+  case "$a" in
+    --help) echo '  -g --grep=PATTERN  Show entries with MESSAGE matching PATTERN'; exit 0 ;;
+    -k) exit 1 ;;
+  esac
+done
+exit 0
+STUB
+chmod +x "$LC/nomatch/bin/journalctl"
+trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+NMOUT=$(trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok 2>&1); nmrc=$?
+NMROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
+if [[ "$NMROW" == "not_observed 0 0 none" ]]; then
+    ok "a filtered read that matched nothing is a clean window, not an unreadable journal"
+else
+    bad "no-match close: rc=$nmrc row (bt1_status sco_sent timeouts perturbed)='$NMROW'"
+    while IFS= read -r l; do echo "        $l"; done <<<"$NMOUT"
+fi
+# And exit 1 WITH a complaint on stderr is still a failed read.
+cat > "$LC/nomatch/bin/journalctl" <<'STUB'
+#!/bin/sh
+for a in "$@"; do
+  case "$a" in
+    --help) echo '  -g --grep=PATTERN  Show entries with MESSAGE matching PATTERN'; exit 0 ;;
+    -k) echo 'Failed to open journal: Input/output error' >&2; exit 1 ;;
+  esac
+done
+exit 0
+STUB
+rm -rf "$LC/nomatch/evidence" "$LC/state-nomatch"
+trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
+trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok >/dev/null 2>&1
+NMROW2=$(awk -F'\t' 'NR == 2 { print $8, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
+if [[ "$NMROW2" == "unknown unknown" ]]; then
+    ok "exit 1 with a complaint on stderr is still an unreadable journal -> unknown"
+else
+    bad "failed-read close: row (bt1_status perturbed)='$NMROW2'"
+fi
+rm -rf "$LC/nomatch" "$LC/state-nomatch"
 rm -rf "$LC"
 
 echo
@@ -5084,9 +5116,10 @@ BRC=$(PATH="$STBIN:$PATH" BT_REPO="$STREPO" BT_JOURNAL_FIXTURE="$ST" BT_SYSFS_US
 [[ "$SOUT" != *"unbound variable"* ]] \
     && ok "bt-status produces its report without a shell diagnostic on stderr" \
     || bad "bt-status leaked a shell error: $(grep -o '[^ ]*unbound variable' <<<"$SOUT" | head -1)"
-# GREP, NOT rt_line: that helper is defined three thousand lines below this
-# point, and under `set -u` calling it here would abort the run — the same
-# defined-later mistake the archive section already records twice.
+# GREP, NOT rt_line: when this was written that helper was defined three
+# thousand lines below this point, and under `set -u` calling it here would
+# abort the run — the same defined-later mistake the archive section already
+# records twice. It is in the setup since 2026-10-18; the grep stays.
 STLE=$(grep -F "'unexpected event' (LE):" <<<"$SOUT" | head -1)
 [[ "$STLE" =~ [[:space:]]2[[:space:]]*$ ]] \
     && ok "the LE unexpected-event counter reports its number, not a blank" \
@@ -8361,6 +8394,12 @@ echo 999 > "$TR/freegb"
 
 rm -rf "$TR"
 
+echo
+echo "bin/bt-capture — the third capture daemon, and the only Python here"
+echo "──────────────────────────────────────────────────────────────────────"
+# Until 2026-10-18 part of "bt-trace — the other supervision loop, and the floor that stops it";
+# a section of its own so that a parallel run can give it a core.
+
 # ── bin/bt-capture: the third capture daemon, and the only Python here ────
 #
 # TX-04 has been open since 2026-08-15: *`bin/bt-capture` is Python; no
@@ -9171,6 +9210,12 @@ TAPO=$(BT_LIBDIR="$PWD/tools/lib" BT_JOURNAL_FIXTURE="$TAF" BT_EVIDENCE_REPO="$T
     || bad "a broken detector produced a report (rc=$tarc4): $(head -1 <<<"$TAPO")"
 rm -rf "$TAP"
 
+echo
+echo "devtools/journal-contract, bt-retention, bt-archive — what can still be re-derived"
+echo "──────────────────────────────────────────────────────────────────────"
+# Until 2026-10-18 part of "bt-trial — the whole lifecycle, not just the two ends of it";
+# a section of its own so that a parallel run can give it a core.
+
 # ── devtools/journal-contract, which had no test of its own ─────────────
 #
 # It exists to catch journalctl's output shape changing under the fixtures, and
@@ -9260,9 +9305,8 @@ printf '# EX-025\n\n2026-08-15T16:55:59.333858+02:00 fault\n' > "$RT/evidence/ex
 # because a different exhibit further down the listing said "not judgeable" and
 # the glob spanned both lines. Every verdict below is read off that exhibit's
 # own line.
-rt_line() {   # <report> <exhibit-base> -> that exhibit's line, or empty
-    grep -E "^[[:space:]]+$2([[:space:]]|$)" <<<"$1" | head -1
-}
+# rt_line, the helper that reads one exhibit's line off a report, is set up top:
+# the snapshot and crash-count tests read their reports with it too.
 RTOUT=$(BT_JOURNAL_FIXTURE=tests/journal/retention BT_EVIDENCE_REPO="$RT" tools/bt-retention 2>&1); rtrc=$?
 if (( rtrc == 0 )) && [[ "$(rt_line "$RTOUT" 016-gone)"  == *"GONE"*     \
                       && "$(rt_line "$RTOUT" 024-risk)"  == *"AT RISK"*  \
@@ -9729,6 +9773,12 @@ ARPFXL=$(BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARPFX" tools/
 rm -rf "$ARPFX"
 
 rm -rf "$AR" "$ARD" "$ARTRUNC" "$ARREPO"
+
+echo
+echo "bt-backup-journal, bt-snapshot, and the crash counts read off a snapshot"
+echo "──────────────────────────────────────────────────────────────────────"
+# Until 2026-10-18 part of "bt-trial — the whole lifecycle, not just the two ends of it";
+# a section of its own so that a parallel run can give it a core.
 
 # ── bt-backup-journal: the archive that runs without anyone remembering ──
 #
@@ -10494,6 +10544,12 @@ BT_JOURNAL_FIXTURE=tests/journal/archive BT_ARCHIVE_DIR="$ARL/dest" \
     || bad "bt-archive accepted an option it does not implement"
 rm -rf "$ARL"
 
+echo
+echo "bt-crash, and the coredump fixture it reads"
+echo "──────────────────────────────────────────────────────────────────────"
+# Until 2026-10-18 part of "bt-trial — the whole lifecycle, not just the two ends of it";
+# a section of its own so that a parallel run can give it a core.
+
 # ── bt-crash: the tool that decides WHICH of three faults the operator has ─
 #
 # This project has three failure modes that are indistinguishable from the
@@ -10736,6 +10792,13 @@ else
         bad "coredumpctl info printed no stack-trace heading — bt-crash would print nothing"
     fi
 fi
+
+echo
+echo "bt-trial status, and the previous shutdown"
+echo "──────────────────────────────────────────────────────────────────────"
+# PARALLEL: runs after "bt-trial — the whole lifecycle, not just the two ends of it", in the same worker:
+# it reads $TL and tl(), the trial tree that section builds, and removes it.
+# (One section with it until 2026-10-18; the sections between run beside it.)
 
 # ── status: the view that decides whether to abort a trial in progress ───
 #
