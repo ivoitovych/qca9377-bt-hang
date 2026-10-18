@@ -866,6 +866,9 @@ farm_dir() {   # <dir> [tool-to-omit...] — symlinks only; NEVER written into
 
 # The results fixture the report, analysis and watchdog sections read.
 FIX=tests/trial-results.tsv
+# The boots journal the journal-only verdicts read, and the parameters section
+# after them (they were one section until 2026-10-18).
+BJ=tests/journal/boots
 
 # Empty fixtures more than one section feeds to a tool: a library directory with
 # nothing in it, a journal dump with nothing in it.
@@ -892,7 +895,8 @@ INCENV=(PATH="$INCM/bin:$PATH" BT_SYSFS_USB="$INCM/usb" BT_SYSFS_MODULE="$INCM/m
 
 # Whether this awk can express the redaction patterns (sanitize-logs.sh's own
 # gate): positive and negative, because mawk 1.3.4 answers the positive form
-# correctly by accident. sanitize-logs and the publish gates both ask.
+# correctly by accident. sanitize-logs, bt-exhibit, bt-evidence and the publish
+# gates all ask.
 awk_intervals_ok=1
 echo "00:11:22:33:44:55:66:77" | awk '{exit !(match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) && RLENGTH == 23)}' 2>/dev/null || awk_intervals_ok=0
 echo "11:22" | awk '{exit (match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) != 0)}' 2>/dev/null || awk_intervals_ok=0
@@ -1074,12 +1078,17 @@ if (( SUITE_JOBS > 1 )); then
             _shown=$(( _shown + 1 ))
         done
     }
+    # How long each unit took, in tenths of a second, from EPOCHREALTIME with its
+    # decimal mark taken out (a comma in some locales): microseconds as an integer.
+    _t0=(); _took=()
     _reap() {   # wait for one worker, and record how it ended
-        local _pid _rc
+        local _pid _rc _u
         wait -n -p _pid; _rc=$?
         # Not every child is a worker: bash waits for process substitutions too.
         [[ -n "${_pid:-}" && -n "${SUITE_PAR_RUNNING[$_pid]+set}" ]] || return 0
-        echo "$_rc" > "$SUITE_PAR/u-${SUITE_PAR_RUNNING[$_pid]}.rc"
+        _u=${SUITE_PAR_RUNNING[$_pid]}
+        echo "$_rc" > "$SUITE_PAR/u-$_u.rc"
+        _took[_u]=$(( (${EPOCHREALTIME//[.,]/} - _t0[_u]) / 100000 ))
         unset 'SUITE_PAR_RUNNING[$_pid]'
         _flush
     }
@@ -1089,7 +1098,7 @@ if (( SUITE_JOBS > 1 )); then
                              exec "$BASH" tests/run-tests' \
               worker "$SUITE_CALLER_ENV" "${_units[$_u]}" "$_u" "$SUITE_PAR" "$SUITE_RUN_ID" \
               > "$SUITE_PAR/u-$_u.log" 2>&1 ) &
-        SUITE_PAR_RUNNING[$!]=$_u
+        SUITE_PAR_RUNNING[$!]=$_u; _t0[$_u]=${EPOCHREALTIME//[.,]/}
     done
     while (( ${#SUITE_PAR_RUNNING[@]} )); do _reap; done
     _flush
@@ -1116,6 +1125,13 @@ if (( SUITE_JOBS > 1 )); then
         cat "$SUITE_PAR/u-$_u.orphans" >> "$SUITE_PAR/orphans" 2>/dev/null
     done
     SUITE_PAR_NOTE="the sections ran in ${#_units[@]} workers, $SUITE_JOBS at a time (tests/run-tests --serial runs them in one process)"
+    # The longest units bound a run with cores to spare: named, so the next
+    # section to split is the one at the top of this line.
+    _longest=$(for _u in "${!_took[@]}"; do
+                   read -r _a _b _h <<<"${_secs[${_units[$_u]%% *}]}"
+                   printf '%d\t%d.%d s  %s\n' "${_took[$_u]}" $(( _took[_u] / 10 )) $(( _took[_u] % 10 )) "$_h"
+               done | sort -t$'\t' -k1,1nr | head -3 | cut -f2- | paste -sd'|' | sed 's/|/; /g')
+    SUITE_PAR_NOTE+=$'\n'"  the longest units: $_longest"
     read -r _a _b _h <<<"${_secs[$_last]}"
     suite_copy_lines "$_a" "$_b" "$SUITE_PAR/src-report" && cd "$SUITE_PAR/src-report" || {
         echo "run-tests: could not stage the run's report — no verdict" >&2; exit 1; }
@@ -4130,8 +4146,9 @@ EOUT=$(wd_run 10 BT_EARLY=1)
 WDNOP="$WD/noprobe-stub"; mkdir -p "$WDNOP"
 # loginctl too: the watchdog's notify() asks it for the logged-in users and
 # runs `sudo -u <user> notify-send` on each session bus. Left out of this
-# copy, the farmed PATH answered with the machine's real sessions.
-cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WD/stub/loginctl" "$WDNOP/" 2>/dev/null
+# copy, the farmed PATH answered with the machine's real sessions. And the
+# python3 spy, for the same reason: the recovery's USB reset goes through it.
+cp "$WD/stub/systemctl" "$WD/stub/sleep" "$WD/stub/loginctl" "$WD/stub/python3" "$WDNOP/" 2>/dev/null
 farm_dir "$WD/noprobe-farm" hciconfig btmgmt
 # PATH is passed THROUGH wd_until: env applies assignments left to right, so a
 # later PATH= wins over the helper's default. That keeps one waiting mechanism
@@ -4152,6 +4169,15 @@ NOPOUT=$(wd_until "suppressed by cooldown" 60 PATH="$WDNOP:$WD/noprobe-farm" BT_
 [[ "$NOPOUT" == *"recovery attempted; cannot verify"* && "$NOPOUT" == *"suppressed by cooldown"* ]] \
     && ok "with no probe tool a recovery runs, and its answer is 'cannot verify'" \
     || bad "no recovery ran in the no-probe scenario, so the next check would judge nothing: $(tail -3 <<<"$NOPOUT" | tr '\n' '|')"
+# And its USB reset reached the spy, not the real python3: this copy of the
+# stubs left the spy out, and the farm linked the real one in. Nothing showed
+# while the scenario was stopped before its recovery; once it ran to one, the
+# reset program ran for real against the declared usbfs root, failed, and on
+# an Ubuntu runner Python's crash hook read apt and dpkg state
+# (devtools/access-audit in CI, 2026-10-18).
+grep -qxF "python3 - 3 99 $BT_DEVFS_USB" "$WD/spy.log" \
+    && ok "the no-probe scenario's USB reset reaches the spy, not the real python3" \
+    || bad "the no-probe scenario's USB reset did not reach the spy: the real python3 ran it"
 [[ "$NOPOUT" != *"consecutive failed recoveries"* ]] \
     && ok "an unverifiable recovery is not counted as a failure" \
     || bad "unconfirmable recoveries were counted as failures — MAX_FAILS would disable the watchdog"
@@ -4451,13 +4477,18 @@ WDEARLY=$(wd_run 10 BT_EARLY=1 BT_EARLY_THRESHOLD=99 BT_EARLY_WINDOW=1)
     || bad "EARLY fired with a threshold no fixture could reach"
 rm -rf "$WD" "$EMPTYSYS"
 
+echo
+echo "the journal-only verdicts — health report, postmortem, incidents, status"
+echo "──────────────────────────────────────────────────────────────────────"
+# Until 2026-10-18 part of "bt-hang-watchdog — the decisions, never the actuation";
+# a section of its own so that a parallel run can give it a core.
+
 # ── the six journal-only tools (CS-06 / CS-07) ────────────────────────────
 #
 # Small tools, converted together because they share one shape: read the
 # journal, count or tabulate, print. Each assertion below is a NUMBER the
 # fixture determines, not merely "it ran" — a tool that reads the journal and
-# prints an empty table exits 0 too.
-BJ=tests/journal/boots
+# prints an empty table exits 0 too. $BJ, the boots journal, is set up top.
 
 # bt-boots: one row per boot, kernel version and timeout count per row. The
 # counts differ per boot (1 and 2) so a tool that reads the wrong boot's log,
@@ -5118,6 +5149,12 @@ rm -rf "$WT"
 
 rm -rf "$STSYS"
 
+echo
+echo "bt-context, bt-incident, bt-exhibit — what is collected, and what is published"
+echo "──────────────────────────────────────────────────────────────────────"
+# Until 2026-10-18 part of "bt-hang-watchdog — the decisions, never the actuation";
+# a section of its own so that a parallel run can give it a core.
+
 # ── bt-context: the tool that reports what nobody thought to look for ─────
 #
 # Its whole value is inverted filtering — anchor on a demonstrated failure,
@@ -5229,15 +5266,14 @@ cp tools/sanitize-logs.sh "$EXR/tools/sanitize-logs.sh"
 # answers the positive form correctly by accident. An engine that cannot
 # express the redaction patterns makes the sanitiser refuse, which makes
 # bt-exhibit refuse — correctly — so the expectations below split on it.
-ex_awk_ok=1
-echo "00:11:22:33:44:55:66:77" | awk '{exit !(match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) && RLENGTH == 23)}' 2>/dev/null || ex_awk_ok=0
-echo "11:22" | awk '{exit (match($0, /[0-9a-fA-F]{2}([:_-][0-9a-fA-F]{2}){5,}/) != 0)}' 2>/dev/null || ex_awk_ok=0
+# It is $awk_intervals_ok, set up top; this section had a copy of its own,
+# and a later one read the copy (found when they became two sections).
 
 # The exhibit header records `uname -r`: the machine's until declared here.
 EXBIN="$EXR/bin"; machine_stub "$EXBIN" uname
 exhibit() { PATH="$EXBIN:$PATH" BT_REPO="$EXR" tools/bt-exhibit "$@"; }
 
-if (( ex_awk_ok )); then
+if (( awk_intervals_ok )); then
     # THE CENTRAL CLAIM, and the reason the tool exists rather than a template:
     # the command shown and the output shown came from one pass. Assert both
     # halves in the same file — a tool that recorded the command but not the
@@ -5456,7 +5492,7 @@ rm -rf "$EXN"
 # hypothetical: the first version of this section wrote into $EXR and turned six
 # unrelated assertions red, which is the numbering invariant doing its job on
 # the test that broke it.
-if (( ex_awk_ok )); then
+if (( awk_intervals_ok )); then
     EXW=$(mktemp -d); mkdir -p "$EXW/evidence/exhibits" "$EXW/tools"
     cp tools/sanitize-logs.sh "$EXW/tools/sanitize-logs.sh"
     exw_new() { PATH="$EXBIN:$PATH" BT_REPO="$EXW" tools/bt-exhibit "$@" >/dev/null 2>&1; }
@@ -5539,6 +5575,12 @@ exhibit frobnicate >/dev/null 2>&1
     && ok "bt-exhibit wrote nothing into the real evidence tree" \
     || bad "a test exhibit landed in evidence/exhibits/"
 rm -rf "$EXR"
+
+echo
+echo "the install's verifiers, bt-diagnose and bt-mode"
+echo "──────────────────────────────────────────────────────────────────────"
+# Until 2026-10-18 part of "bt-hang-watchdog — the decisions, never the actuation";
+# a section of its own so that a parallel run can give it a core.
 
 # ── bt-verify-install: the tool whose only failure mode is a false all-clear ─
 #
@@ -6097,6 +6139,12 @@ else
     bad "  after:  $(tr '\n' ' ' <<<"$BM_OVERRIDES_AFTER")"
 fi
 rm -rf "$BM"
+
+echo
+echo "bt-verify-kernel-mechanism, bt-state, the snapshot, the transcript, bt-dyndbg"
+echo "──────────────────────────────────────────────────────────────────────"
+# Until 2026-10-18 part of "bt-hang-watchdog — the decisions, never the actuation";
+# a section of its own so that a parallel run can give it a core.
 
 # ── bt-verify-kernel-mechanism: the fact every experiment is read against ─
 #
@@ -6708,7 +6756,7 @@ evman=$(cat "$evdir/MANIFEST.txt")
 
 # Only assert the redaction where the sanitiser can actually run; on an engine
 # that cannot express the patterns it refuses, and the manifest says NO.
-if (( ex_awk_ok )); then
+if (( awk_intervals_ok )); then
     [[ "$(cat "$evdir/commands.log")" != *"de:ad:be:ef:00:23"* ]] \
         && ok "bt-evidence sanitises the transcript before the session is closed" \
         || bad "a MAC survived into a committed session transcript"
@@ -6841,6 +6889,12 @@ DDSTAT=$(dd_run status)
     && ok "bt-dyndbg status counts enabled sites by source path" \
     || bad "site count wrong: $(head -1 <<<"$DDSTAT")"
 rm -rf "$DD"
+
+echo
+echo "reading the captures — bt-sco, bt-capdiff, bt-logvolume, bt-ctrl-window"
+echo "──────────────────────────────────────────────────────────────────────"
+# Until 2026-10-18 part of "bt-hang-watchdog — the decisions, never the actuation";
+# a section of its own so that a parallel run can give it a core.
 
 # ── bt-sco: the parameters of the links that killed the controller ───────
 #
@@ -7167,7 +7221,7 @@ rm -rf "$CW"
 echo
 echo "the parameters that decide the answers, and the refusals nothing drove"
 echo "─────────────────────────────────────────────────────────────────────"
-# PARALLEL: runs after "bt-hang-watchdog — the decisions, never the actuation", in the same worker:
+# PARALLEL: runs after "reading the captures — bt-sco, bt-capdiff, bt-logvolume, bt-ctrl-window", in the same worker:
 # it reads cd_run and $CD, the capture-diff fixture built there.
 #
 # Two classes the comprehensiveness pass found together, because they fail the
@@ -13294,6 +13348,13 @@ fi
 # The second case is the 2026-09-19 review's own host: a Python without
 # socket.AF_BLUETOOTH raised AttributeError through main() instead of the
 # controlled OSError the no-socket contract promises.
+#
+# THE DURATION IS A BOUND, NOT A BUDGET. A capture that rotates and finds the
+# floor not restored stops at once, whatever --duration says; the deadline only
+# ends a broken build, which would read to the end of the frames and wait. It
+# was 5 s, and a parallel run under strace starved the capture short of 1 MB:
+# "rc=0 files=1 prune_calls=1" on a correct build (2026-10-18). On one core
+# shared with eight busy loops, 5 s failed the same way and 30 s passed.
 if command -v python3 >/dev/null 2>&1; then
     BCR=$(mktemp -d); mkdir -p "$BCR/cap"
     BCROUT=$(cd "$BCR" && python3 - "$OLDPWD/bin/bt-capture" "$BCR" <<'PYEOF'
@@ -13313,7 +13374,7 @@ def fake_prune(d, keep, gb):
 m.prune = fake_prune
 os.environ["BT_CAPTURE_SOURCE"] = frames
 os.environ["BT_CAPTURE_DIR"] = os.path.join(tmp, "cap")
-sys.argv = ["bt-capture", "--max-mb", "1", "--min-free-gb", "0", "--duration", "5"]
+sys.argv = ["bt-capture", "--max-mb", "1", "--min-free-gb", "0", "--duration", "30"]
 log = io.StringIO(); m.log = lambda s: log.write(s + "\n")
 rc = m.main()
 files = [f for f in os.listdir(os.path.join(tmp, "cap")) if f.endswith(".btsnoop")]

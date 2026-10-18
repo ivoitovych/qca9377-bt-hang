@@ -172,8 +172,12 @@ sees that setup and nothing else, whatever ran before it in the file.
   runs the suite in parallel in repo-validate and under every instrument, and
   serially in a job of its own, so both modes run on every push.
 
-Measured here on 4 cores: 104 s serially, 41 s in parallel. The floor is the
-longest unit, the watchdog section with the one that runs after it (about 23 s).
+Measured here on 4 cores: 104 s serially, 41 s in parallel. With cores to
+spare the floor is the longest unit, and a parallel run names its three longest
+on its last line, with their times. A section that tops that line is the next to
+split, at a boundary where nothing below reads what was built above: the
+watchdog section, 3232 lines and about 25 tools, became six sections on
+2026-10-18, and its longest part takes about 7 s.
 Under the instruments, serial against parallel: bash coverage 120 s and 56 s,
 awk 162 s and 97 s, Python 119 s and 45 s, comprehensiveness 118 s and 53 s.
 
