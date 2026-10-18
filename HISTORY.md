@@ -3955,6 +3955,8 @@ Its 17 checks pass in both modes: the deploy ran only file operations and change
 
 **What it measured.** Compared check by check, the two modes made the same 1012 checks in the same order; a parallel run adds one, that every section finished in exactly one worker. On 4 cores: 104 s serially, 41 s with 4 workers, 76 s with 2, and 43 s with 16 workers on the same 4 cores (the work is processor-bound). The floor is the longest unit, the watchdog section and the one that runs after it, about 23 s. The laptop is not yet measured.
 
+**In CI.** Every step ran in one job, one after another: about nine minutes, most of it five runs of the suite under five instruments. None is cut, as each reads one trace of one process; the steps were split across six jobs that run at once (suite, coverage, awk coverage, Python coverage, isolation, system), each with the same preamble. The suite step went from 63–75 s to 25 s, and the whole run from about nine minutes to four. The split's first run showed a cost the old order had hidden: the system job started ten seconds after its runner booted, the round trip and both rehearsals met systemd still `starting`, skipped, and passed. They now wait for the boot, and CI runs them with `BT_SYSTEM_TEST=required`, under which a skip is a failure.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
