@@ -90,7 +90,7 @@ Recent detail may be shortened. Settled state is never dropped.
 - **Operator decisions open:**
   - the a2dp duplicate-check cleanup;
   - an Ubuntu SRU for `dc16388d45ec`;
-  - the BlueZ sends A1 and A2 (`patches/bluez/send-2026-10-13/`);
+  - the BlueZ sends A1 and A2 (`patches/bluez/send-2026-10-18/`, re-tested on master `fa6ba5502`);
   - the U6 SRU;
   - the U7 PipeWire report;
   - a reply on Jiale Yao's power-off patch (patchwork 14864878);
