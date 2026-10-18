@@ -139,9 +139,12 @@ sees that setup and nothing else, whatever ran before it in the file.
   `$INCENV`, two empty fixtures and the awk interval probe moved there on
   2026-10-18.
 - **A section that reads what an earlier one built says so**, under its heading:
-  `# PARALLEL: runs after "<heading>", in the same worker:` and what it reads. Two
-  do. `# PARALLEL: long` starts a section first when its length in lines
+  `# PARALLEL: runs after "<heading>", in the same worker:` and what it reads.
+  Three do, each because it reads a fixture its parent builds and removes.
+  `# PARALLEL: long` starts a section first when its length in lines
   understates its time.
+- **A fixture several sections build alike is a setup function**: `lc_machine`
+  builds the producer sections' fabricated machine, once in each.
 - **The parent process keeps the run's account.** It takes the before-snapshots,
   merges what the workers hand back (counts, output printed in file order,
   tripwire logs, each with its worker's canary, the processes they left, the
@@ -172,12 +175,16 @@ sees that setup and nothing else, whatever ran before it in the file.
   runs the suite in parallel in repo-validate and under every instrument, and
   serially in a job of its own, so both modes run on every push.
 
-Measured here on 4 cores: 104 s serially, 41 s in parallel. With cores to
-spare the floor is the longest unit, and a parallel run names its three longest
-on its last line, with their times. A section that tops that line is the next to
-split, at a boundary where nothing below reads what was built above: the
-watchdog section, 3232 lines and about 25 tools, became six sections on
-2026-10-18, and its longest part takes about 7 s.
+Measured here on 4 cores: 97 s serially, 41 s in parallel; the work is
+processor-bound, and 33 s is the bound. With cores to spare the floor is the
+longest unit instead, and a parallel run names its three longest on its last
+line, with their times. A section that tops that line is the next to split, at a
+boundary where nothing below reads what was built above. On 2026-10-18 four
+sections were split that way (the watchdog section, about 25 tools in 3232
+lines, into six; the bt-trial lifecycle, the producer and bt-trace), and the
+longest unit went from about 27 s to 10 s. On 16 cores that predicts about 11 s
+(10 s for the longest unit and 0.9 s for a worker's setup; the processor bound
+there is 8 s). It is a prediction: no 16-core host has run it yet.
 Under the instruments, serial against parallel: bash coverage 120 s and 56 s,
 awk 162 s and 97 s, Python 119 s and 45 s, comprehensiveness 118 s and 53 s.
 
