@@ -3945,6 +3945,18 @@ Its 17 checks pass in both modes: the deploy ran only file operations and change
 
 **And the step the rehearsal could not reach (2026-10-18).** The main maintainer's check of the 10-11 shutdown found the whole journal ending 3 s into the close, and that close writing no trial file at all. Whether the new closer would save the row there depends on what it does before the row. One step had never run in any test of a close: whenever the trial saw a SCO setup, the closer decoded every capture in both capture directories with `btmon`, whole, before writing the row and with no budget. On the laptop each directory keeps up to 400 captures, and a `btmon` pass over the trace directory had taken over ten minutes on 09-24. The rehearsal's trial saw no SCO and had no captures. A trial with a call in it is the trial the investigation needs, and it was the one whose row the close could not keep. A suite check with a slow `btmon` was red first (rc=124, no row); the decode now runs after the row and after `bt-state` and `bt-mark`, where a kill costs only `sco-params.txt`.
 
+## Two cleanups sent, and what the decode had already cost (2026-10-18)
+
+**The two BlueZ cleanups went out.** A1 removes the second copy of the a2dp stream check that the applied v1 and the redundant v2 left in a row. A2 replaces the variable length array in the emulator's `send_cmd()` with `newa()`, which clears the smatch line BlueZ's CI posts on every patch touching `btdev.c`. Four outside reviews of the 10-13 versions changed three things. A1 lost its `Fixes:` tag and got a shorter title. A2 dropped its fixed bound and `assert()`: under `-DNDEBUG` the assert would vanish and leave a future third caller an overflow. A2's subject stopped naming the tool. Both were re-tested on the new master: 0 of 5196 tester verdicts and 0 of 1852 unit case names differ from base. The first count of the testers' totals was wrong (845 of 866), and so was the claim that this repository's CI had checked them: it checks the repository, never BlueZ. Both were corrected and the summary logs published before the send. The mails went at 06:39, each alone, to the list only (patchwork 14897668 and 14897669).
+
+**The resend rule was wrong, and the project's own record showed it.** It said: resend as v2 if neither patch is applied when the bot closes its pull request. On 2026-10-07 the bot closed PR #2559 with "it must be resent", and the maintainer applied that same patch later the same day: it is the second check A1 now removes. Each patch is now judged on its own, by master, its patchwork state and replies on the list.
+
+**The decode's cost, found on the laptop.** The test-suite maintainer's red-first check showed the closer could lose its row inside the SCO decode. The evidence directory showed it already had. The two capture directories held 25 GB and 23 GB. Trial 14's close of 2026-09-26 spent 53 minutes in the decode before its row. Trial 15 has no row: its close of 2026-09-30 stopped inside the decode, after the first directory's header. The 10-18 note to the test-suite maintainer had blamed "other tools" for trial 14's late write; it was this decode. Timed read-only on the open five-day trial, the reads before the row take under 0.3 s each, except the kernel read: about 20 s, at its budget. So with `main`'s tools a close writes its row about 21 s in. The installed 09-18 tools still decode first, and this trial has had calls: the next shutdown before a deploy will very likely lose its row as trial 15's was lost.
+
+**And the decode had never worked.** No trial's `sco-params.txt` had ever held a record. The laptop check the test-suite maintainer proposed, run the same morning, cleared their suspect: `btmon` decoded both captures to the end. It found the cause one layer up. Written to a pipe, `btmon` fits each header line into 80 columns, and the setup comes out as `< HCI Comman.. (0x01|0x0028)`. The tools set `COLUMNS=200`, which `btmon` ignores; its own `--columns=200` gives 4 setups where the closer's way gives 0. Seven tools decode this way. Two can never match what they look for (`bt-trial`, `bt-sco`), three fail in part (`bt-actions`, `bt-capdiff`, `capture-window.sh`), and two match only lines that are never shortened. Every test passed because every `btmon` stub printed the full names. Trial 14's file says "no setup" while its capture holds both, the first answered and the Disconnect after it not; trials 01 to 03 say the same and can no longer be checked. The one conclusion that rested on a "no setup" from these captures, U7's, was re-read at full width and stands.
+
+**Every submission, re-checked upstream the same day.** Most rows only moved forward. The 10-17 stable release candidates carry the BT-8 and BT-9 backports for 6.6 and 6.1 and the QCA9377 entry for all four remaining lines. 5.15 and 5.10 get the entry without the BT-9 fix, and rightly: the code that fix repairs first appeared in v6.1. The bot passed A1 everywhere. It failed A2 on one functional case, the pairing test this project had already rated flaky on 10-10, but that harness runs the very emulator A2 changes, so flaky is the likely reading and not yet an established one. One record was wrong: the 10-14 answer on BlueZ #1554 was written down as the reporter's, and it came from a second affected user; the reporter, whose capture we had analysed, last wrote in 2025. Ubuntu's next kernel, `-39`, has sat in proposed since 10-01 without the entry, and no Launchpad bug asks for it.
+
 ## The suite on every core (2026-10-18)
 
 **Why.** On 09-24 the operator said the suite "takes more and more time every time": a gated commit on the laptop took 10 to 25 minutes. Of the five-item acceleration task that followed, only the first (no verdict from the machine) was done. By 10-18 the suite had grown from 497 checks (08-15) to 1012, and one run took 104 s here. The laptop has 16 cores and used one. The operator asked for parallelism first, and for no run to be cut.
@@ -3973,6 +3985,7 @@ Its 17 checks pass in both modes: the deploy ran only file operations and change
 Measured here, serially and quietly: 97 s of work in 41 units, the longest now bt-trace at 9.5 s. On 4 cores a run stays processor-bound (41 s measured, 33 s the bound). On 16 cores the longest unit decides, which predicts about 11 s against about 27 s before the cuts; no 16-core host has run it yet.
 
 **A deadline that was a budget.** The first parallel run under `devtools/access-audit` failed a correct bt-capture: its rotation check gave the capture `--duration 5` to write 1.2 MB, and strace with four workers starved it short of that ("rc=0 files=1 prune_calls=1"). On one core shared with eight busy loops, 5 s failed the same way and 30 s passed twice. The deadline only ends a broken build, which reads to the end of its frames and waits; a correct one stops at the rotation. It is 30 s now.
+
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
@@ -4329,3 +4342,113 @@ Measured here, serially and quietly: 97 s of work in 41 units, the longest now b
 > laptop's Bluetooth or kernel; clock ranges are written "HH:MM:SS to HH:MM:SS"
 > (`scripts/fix-time-ranges.py`) because the publishing scan reads the hyphenated form as an
 > address.
+
+## BRIEF hand-off block as it stood on 2026-10-18 (moved verbatim; replaced by a fresh block)
+
+> **HAND-OFF (2026-10-08, after the BlueZ series was sent; 2026-10-11 and 2026-10-09 items first).** Current
+> state of every issue and submission: `docs/STATUS.md`. The previous block is at the end of
+> `HISTORY.md`, verbatim.
+>
+> **New, 2026-10-11:**
+> - **The capture archive.** The raw HCI captures were being lost to rotation while still in use: `bt-trace` held its limit of 400 files and deleted the oldest at every rotation. Now every closed capture is compressed and verified into `archive/bt-trace/` (`scripts/bt-trace-archive.py`; 33 MB of A2DP compresses to 0.6 MB, ordinary traffic about 10×).
+> - **Device addresses.** Real addresses may go to the private repository. Public files get consistent pseudonyms, from a privately kept table and tool. A raw capture also carries link keys (`scripts/hci-key-records.py`).
+> - **`U10`.** The Tronsmart T8 is silent on SBC-XQ. Read from the captures: accepted and streaming, real signal only in the Settings test sounds. **Next:** the operator's per-mode test sound with `bt-mark`.
+>
+> **New, 2026-10-09 — device discovery stuck since 2026-10-04 10:26:11 (`EX-062`).** The
+> missing Settings spinner was not a dead controller: the controller kept serving links and
+> calls, but every scan request since that moment is refused Busy by the kernel itself. Cause,
+> from the trace and the source: with `HCI_QUIRK_SIMULTANEOUS_DISCOVERY` (set by
+> `BTUSB_QCA_ROME`, i.e. by E3 / `dc16388d45ec` for this device) the two paths that end a
+> discovery cycle each leave the stop to the other when the Inquiry Complete event lands
+> between the LE timer's scan-off command and its Command Complete — **twice** in this boot's
+> traces: 10-01 03:51:27 (stuck 8 h 18 min, until a suspend cleared it, unnoticed) and 10-04
+> 10:26:11 (stuck since). A call was up only in the second, so it is not required. Core-code
+> race, any adapter with that quirk; not the alt-1 bug. **Already fixed upstream** by Jiajia
+> Liu (`96d006ae6445`, v7.2-rc1; in 7.1.5+, 6.18.40+ and Ubuntu `7.0.0-38`), **but not in
+> 6.12, 6.6 or 6.1** — the lines our `dc16388d45ec` backport reaches. **Backports to those
+> three built and tested 2026-10-10** (`patches/kernel/bt9-stable/`: a new `mgmt-tester` case
+> forces the race; fails on each line, passes with each backport). **Stable request sent
+> 2026-10-10 04:25 +0200** (three mails, Message-IDs `<20261010022523.2789588-{1,2,3}-…>`;
+> watch for Queued/FAILED). **BlueZ leak fix and test series sent 05:18 +0200** to
+> linux-bluetooth (`<20261010031846.2842837-1-…>`, `<20261010031852.2842893-1..4-…>`).
+> **Outcome:** the three stable backports were queued 2026-10-11 (6.12's released in 6.12.113 on
+> 2026-10-15; 6.6 and 6.1 still queued) and the BlueZ series was applied 2026-10-12 (STATUS
+> submission rows).
+> Reply on BlueZ #1554 posted 2026-10-09. The laptop's discovery stayed stuck until the operator's
+> adapter power cycle on 2026-10-10 (powered again 15:02:44; ⚠️ corrected 2026-10-14 — this line
+> used to say "until the reboot into `7.0.0-38`", see §5); traces preserved in `/root/bt-trace-keep/` with
+> `SHA256SUMS`, and compressed into `archive/bt-trace/`.
+> Private branches are being ported to `main` (§7 rule change, 2026-10-09).
+>
+> **Upstream, done:** BlueZ `shared/mgmt` series **applied 10-08**, the day it was sent, as
+> `ae23df052290` + `6f5eeb402d3b`, identical to what was sent (`git range-diff`: `=`). Luiz then
+> converted `unit/test-mgmt` to the tester framework (`866b0b8b1`), our six cases intact.
+> BlueZ ×2 applied 09-21 (`a734b06059cb`, `0bed9886cff3`); kernel MGMT fix
+> applied to bluetooth-next 09-29 (`86ef0f58bdec`; since then in mainline v7.3-rc7 and released in
+> 7.2.11, 6.18.57 and 6.12.113); stable backport of `dc16388d45ec` **queued for 7.2, 6.18, 6.12,
+> 6.6, 6.1, 5.15, 5.10** (`EX-061`; since then released in 7.2.10, 6.18.56 and 6.12.113). Nothing owed.
+> ⚠️ The redundant a2dp v2 was **also applied**, 10-07, as `d84171e6c` on top of v1: master checks
+> `setup->stream` twice (dead code). Cleanup prepared, **not sent — operator's decision**
+> (`patches/bluez/cleanup/`, SEND.txt item 3).
+>
+> **Submitted, waiting:**
+> 1. **Tested-by** on Hui Peng's "Bluetooth: MGMT: fix mesh_tx leak on hci_cmd_sync_queue()
+>    failure" (patchwork 14831271), 10-06 22:18 +0200, Message-ID
+>    `<20261006201800.3597400-1-yaroslav.voytovych@gmail.com>`; kit `retest/mesh-tx-leak/`.
+> 2. ~~Submitted~~ **APPLIED 10-08** (above). **BlueZ `shared/mgmt` series**, 10-08 05:41:01 to 05:41:02 +0200, patchwork 14873331 (1/2)
+>    and 14873330 (2/2), Message-IDs `<20261008034102.707451-1-…>` / `-2-…`; files as mailed in
+>    `patches/bluez/shared-mgmt/`; base `d84171e6c`, commits `9fbc84f5d`/`0722ddc78` in
+>    `cache/bluez-standalone-mgmt-leak` (older states on `keep/shared-mgmt-notify-leak-*`).
+>    Review record: `docs/mesh-tester-ci/review-response-*.md` (ported 2026-10-09).
+>    **CI bot, 10-08 12:41 +0200: all 12 checks PASS, ScanBuild included** (series 1181228, PR
+>    bluez/bluez#2634). That PR's Codacy Security Scan FAILURE is not ours: the tool crashes
+>    (`MalformedInputException`, SARIF formatter), and has failed on every run since 10-07 18:53 UTC,
+>    master included. Details in `patches/bluez/shared-mgmt/README.md`.
+>    **Next:** nothing owed; the next BlueZ tag. Lesson kept: **never a lint-only respin**
+>    (the a2dp v2 shows what happens).
+>
+> **App passwords:** the 10-06 and 10-08 ones were used on one `git send-email` each; the 10-08
+> one was searched for afterwards and found in no settings file, history or git config.
+> **All revoked, verified 2026-10-08:** every app password used since 09-19 (seven, the 10-06
+> and 10-08 ones included) gets `535 5.7.8 Username and Password not accepted` from
+> smtp.gmail.com:587 (STARTTLS, AUTH LOGIN; nothing sent). On 465 the same check only got
+> INCONCLUSIVE (Gmail closed the connection during AUTH), so **check on 587**. After the next
+> send, the operator revokes the password and confirms with
+> `BT_SMTP_PASS='…' scripts/smtp-login-check.sh 587 tls`, typed by the operator only.
+> **2026-10-18:** the A1/A2 password, deleted by the operator after the send, gets `535 5.7.8`
+> on 465 (AUTH LOGIN 334, 334, then 535: a verdict). 587 could not be reached from this machine
+> that day (connection timed out), so 465 is the fallback when 587 does not connect.
+>
+> **Mesh work, remaining order** (v3 is never sent as one series): (3) the power-off fix —
+> another author's patch for the same bug (patchwork 14864878) was compared in qemu, results
+> held on the private branch until the reply is decided (`power-off-compare-2026-10-05.md`);
+> proposal, operator's call: a review reply on his
+> thread, no Tested-by; first weigh Pauli Virtanen's `87a49b610708` ("Send cancel" fix, 10-05);
+> (4) Count as a question to the list; (5) the core ownership patches after four prerequisites
+> (the cleanup, mesh locking of the advertising list, an unregister drain policy, no scheduler
+> hand-over in command-clear callbacks); (6) the duration overflow. The documents —
+> research review, `STATE-MACHINE.md`, `gates-2026-10-05.md`, every phase — are in
+> `docs/mesh-tester-ci/` (ported 2026-10-09; its README gives the reading order). KCSAN only
+> on the 4-CPU wrapper.
+> Also open: a review reply on Jiale Yao's patchwork 14864878 (needs the operator's word);
+> the `MGMT_INDEX_NONE` asymmetry in `mgmt_unregister_index()` (noted, out of the series).
+>
+> **Pre-send gate for BlueZ** (what the 10-08 series passed): `scripts/pre-send-check.sh`
+> (series, in order, today's master) · checkpatch + gitlint with BlueZ's configs · `make check`
+> · unit cases with and without the fix · **clang static analyzer on the touched files, base
+> vs patched** (the bot's ScanBuild posts any new report; `tmp/mesh-tester-ci/clang-analyze.sh`
+> for now) · `git send-email --dry-run`.
+>
+> **Desktop capture RUNNING** since 10-05 02:37 (`tools/bt-ui-capture`, `docs/ui-capture.md`);
+> undo with `bt-ui-capture stop` and `unstage`. Userspace rows U1–U10 in STATUS. Operator
+> decisions open: GNOME Settings debug build, btusb debug build for U8 (after trial E3 #1),
+> shellcheck, the U7 PipeWire report, the U6 SRU.
+>
+> **Machine:** E3 installed, for `-34` and, since the 10-11 reboot, running on `-38`; trial E3 #1
+> open (the suite refuses locally — `devtools/ci` after every push); installed `/usr/local/bin`
+> tools are the 09-18 copies (the operator installs).
+> **Rules:** nothing sent without the operator's word; private branches push to `private` only;
+> attribution is the project author's only; other authors' patches are tested exactly as posted;
+> a kernel finding is recorded on `main` as it is found; maintainer mail carries only what the
+> maintainer needs; only the operator touches the laptop's Bluetooth or kernel; clock ranges are
+> written "HH:MM:SS to HH:MM:SS" (`scripts/fix-time-ranges.py`).

@@ -23,7 +23,7 @@ and no Cc.
 | file | what | commit |
 |---|---|---|
 | `0001-a2dp-Remove-duplicate-check-in-transport_cb.patch` | **A1.** `transport_cb()` checks `setup->stream` twice in a row, because our `0bed9886cff3` and the redundant v2 `d84171e6cd68` were both applied. Removes the second copy (5 lines) | `9963bb547`, branch `send/a1-a2dp-cleanup-20261018` in `cache/bluez-send-20261018` |
-| `0001-emulator-Avoid-variable-length-array-in-send_cmd.patch` | **A2, to send.** `send_cmd()` declares `struct iovec iov2[2 + iovlen]`, which smatch reports on every patch touching `btdev.c` (`emulator/btdev.c:479:29: warning: Variable length array is used.`). One line: `newa()`, BlueZ's `alloca()` wrapper, as `shared/gatt-client` uses it for the same warning (`c18e3bf92`) | `50b231ceb`, branch `send/a2-btdev-vla-newa-20261018` |
+| `0001-emulator-Avoid-variable-length-array-in-send_cmd.patch` | **A2, sent.** `send_cmd()` declares `struct iovec iov2[2 + iovlen]`, which smatch reports on every patch touching `btdev.c` (`emulator/btdev.c:479:29: warning: Variable length array is used.`). One line: `newa()`, BlueZ's `alloca()` wrapper, as `shared/gatt-client` uses it for the same warning (`c18e3bf92`) | `50b231ceb`, branch `send/a2-btdev-vla-newa-20261018` |
 | `alternative-assert/…` | the 10-13 design: a fixed array of `2 + SEND_CMD_IOV_MAX` and `assert(iovlen > 0 && iovlen <= SEND_CMD_IOV_MAX)`. Kept as the record; not to send | `37b76b9be`, branch `send/a2-btdev-vla-assert-20261018` |
 | `TEST-REPORT.md` | the re-test on `fa6ba5502` of all three, against base | — |
 

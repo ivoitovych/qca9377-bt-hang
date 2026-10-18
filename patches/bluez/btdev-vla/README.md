@@ -1,6 +1,9 @@
-# emulator: Avoid variable length array in send_cmd — prepared, NOT sent
+# emulator: Avoid variable length array in send_cmd — the 2026-10-10 draft, superseded
 
 **State 2026-10-10: a file for the operator's review. Nothing has been mailed.**
+**Superseded:** this fixed-bound design was redone as `newa()` and sent on 2026-10-18 as A2
+([`../send-2026-10-18/`](../send-2026-10-18/README.md), patchwork 14897669). This file is kept
+as the record.
 
 | path | what |
 |---|---|
