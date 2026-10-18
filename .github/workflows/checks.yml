@@ -329,12 +329,13 @@ jobs:
       # non-zero for `degraded`.
       #
       # Safe HERE and nowhere else by construction. The runner is an ephemeral
-      # VM with a live systemd; the test refuses unless BT_SYSTEM_TEST=1 is set
+      # VM with a live systemd; the test refuses unless BT_SYSTEM_TEST is set
       # explicitly AND the host carries no existing installation, no open trial
       # and no experiment mode. The investigation machine fails those gates
-      # even if someone sets the variable.
+      # even if someone sets the variable. Here it is `required`: a skip is a
+      # failure, because this runner was chosen to run it.
       - name: system round trip (installs for real, then removes itself)
-        run: sudo BT_SYSTEM_TEST=1 tests/system-roundtrip
+        run: sudo BT_SYSTEM_TEST=required tests/system-roundtrip
 
       # THE INVESTIGATION MACHINE'S NEXT DEPLOY, REHEARSED. That machine runs
       # the 2026-09-18 tools (cccf0fe: its installed bt-trial is that commit's
@@ -352,7 +353,7 @@ jobs:
           git fetch --no-tags --depth=1 origin cccf0fe0b7871c1898807c4b25a85adbc27fd9cf
           mkdir -p "$RUNNER_TEMP/installed-20260918"
           git archive FETCH_HEAD | tar -x -C "$RUNNER_TEMP/installed-20260918"
-          sudo BT_SYSTEM_TEST=1 tests/system-upgrade "$RUNNER_TEMP/installed-20260918" mitigation
+          sudo BT_SYSTEM_TEST=required tests/system-upgrade "$RUNNER_TEMP/installed-20260918" mitigation
 
       - name: deploy rehearsal, experiment mode (bt-mode experiment before the deploy)
-        run: sudo BT_SYSTEM_TEST=1 tests/system-upgrade "$RUNNER_TEMP/installed-20260918" experiment
+        run: sudo BT_SYSTEM_TEST=required tests/system-upgrade "$RUNNER_TEMP/installed-20260918" experiment

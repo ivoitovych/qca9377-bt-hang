@@ -241,6 +241,11 @@ The pair has already shipped out of step, twice.
   which exits non-zero for `degraded` too, and a CI VM is commonly degraded. It
   skipped on every CI run, and the step passed. It now asks that systemd is
   PID 1 and running or degraded, and a skip names the state it saw.
+- **On 2026-10-18 it skipped again, from a new cause.** With CI's checks split
+  into parallel jobs, it ran ten seconds after its runner booted, met systemd
+  still `starting`, and the step passed. Both tests now wait (up to 180 s) for a
+  booting host to finish, and CI runs them with `BT_SYSTEM_TEST=required`: on a
+  host chosen to run them, a skip exits 3, and the step fails.
 - **On CI two of its checks still skip**, for want of bluez: `bt-verify-install`
   and `verify-restored.sh`. Its direct check covers the `install_file`
   destinations only, not the files `install.sh` writes by redirect (udev rules,
@@ -269,16 +274,18 @@ The upgrade rehearsal is what the investigation machine's next deploy does.
 ```bash
 BT_SYSTEM_TEST=1 tests/system-roundtrip                       # plus root, and see below
 BT_SYSTEM_TEST=1 tests/system-upgrade <old-tree> [mitigation|experiment]
+BT_SYSTEM_TEST=required …                                     # as CI runs them: a skip fails
 ```
 
 Both refuse unless every gate holds:
-- `BT_SYSTEM_TEST=1` set explicitly — no default, no flag a shell history could
+- `BT_SYSTEM_TEST=1` (or `required`) set explicitly — no default, no flag a shell history could
   replay by accident
 - no existing installation (`/usr/local/share/qca9377-bt-hang` absent)
 - no open trial, no experiment mode — the two states in which an install is
   known to destroy a measurement in progress
 - a live systemd, or it skips: without one `install.sh --apply` cannot succeed
-  and the failure would describe the host, not the installer
+  and the failure would describe the host, not the installer. Under
+  `required`, that skip and the not-root one are failures instead
 - for the upgrade, also: no `/root/exp/qca9377-bt-hang` (that machine's checkout)
 
 The investigation machine fails the second gate even if the variable is set.

@@ -4,6 +4,7 @@
 # checkout, daemon-reload, the shutdown's stop of the trial unit, then uninstall.
 #
 #   BT_SYSTEM_TEST=1 tests/system-upgrade <old-tree> [mitigation|experiment]
+#   BT_SYSTEM_TEST=required …   (CI: a skip fails)
 #
 # <old-tree>: the files of the commit the machine was installed from. For the
 # investigation machine that is the 2026-09-18 tools, cccf0fe (docs/STATUS.md:
@@ -46,6 +47,21 @@ echo "system upgrade rehearsal — ${OLD:-?} installed, a trial open, --tools-on
 echo "──────────────────────────────────────────────────────────────────────"
 
 # ── gates ─────────────────────────────────────────────────────────────────
+# REQUIRED, WHERE THE HOST WAS CHOSEN TO RUN IT. BT_SYSTEM_TEST=required is
+# =1 plus a promise: this host can run the test, so a skip below means it did
+# not happen, and that is a failure (exit 3), not a pass. CI asks for it. When
+# CI's checks were split into parallel jobs (2026-10-18) this test ran ten
+# seconds after its runner booted, met systemd still 'starting', skipped, and
+# the step passed: the same silent pass as before 2026-10-16, from a new cause.
+SYSTEM_TEST_REQUIRED=0
+[[ "${BT_SYSTEM_TEST:-0}" == required ]] && { BT_SYSTEM_TEST=1; SYSTEM_TEST_REQUIRED=1; }
+not_here() {   # <reason> — skip, unless this host was required to run it
+    if (( SYSTEM_TEST_REQUIRED )); then
+        echo "  ✗ BT_SYSTEM_TEST=required, and this host cannot run it: $1" >&2
+        exit 3
+    fi
+    exit 0
+}
 if [[ "${BT_SYSTEM_TEST:-0}" != "1" ]]; then
     echo "  · refusing: set BT_SYSTEM_TEST=1 to run (this test INSTALLS, for real)"
     exit 0
@@ -63,12 +79,18 @@ for p in /usr/local/share/qca9377-bt-hang "${BT_STATE:-/run/bt-trial}/current" "
 done
 if [[ $EUID -ne 0 ]]; then
     echo "  · refusing: needs root, and this is not root"
-    exit 0
+    not_here "not root"
 fi
+# A host still booting is not a host without systemd: wait for the boot to
+# finish (bounded) before judging it, as a runner that starts a job seconds
+# after boot is still 'starting'.
 SD_STATE=$(systemctl is-system-running 2>/dev/null)
+if [[ "$SD_STATE" == starting || "$SD_STATE" == initializing ]]; then
+    SD_STATE=$(timeout 180 systemctl is-system-running --wait 2>/dev/null)
+fi
 if ! [[ -d /run/systemd/system && ( "$SD_STATE" == running || "$SD_STATE" == degraded ) && -d /etc/udev/rules.d ]]; then
     echo "  · skipped: systemd state '${SD_STATE:-none}' — an install cannot complete here"
-    exit 0
+    not_here "systemd state '${SD_STATE:-none}'"
 fi
 
 # ── what is watched ───────────────────────────────────────────────────────
