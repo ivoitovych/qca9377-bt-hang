@@ -156,9 +156,12 @@ if (( SELFTEST )); then
 fi
 
 stale=0
-# Serially, as the allow list was derived: one process, the run as it always
-# was. `-- tests/run-tests --jobs N` audits a parallel run.
-if (( ${#CMD[@]} == 0 )); then CMD=(tests/run-tests --serial); stale=1; fi
+# In parallel, as the suite runs by default: strace -f follows every worker,
+# and the run's scratch space is still TMPDIR, set here, so the workers' own
+# files are the run's by construction. The allow list was derived from a serial
+# run and holds for both (2026-10-18). `-- tests/run-tests --serial` audits a
+# serial run.
+if (( ${#CMD[@]} == 0 )); then CMD=(tests/run-tests); stale=1; fi
 echo "access-audit: ${CMD[*]} under strace (every file access, made or attempted)..." >&2
 audit "$WORK/run" "$ALLOW" "$stale" "${CMD[@]}"; rc=$?
 if [[ -n "$REPORT" ]]; then

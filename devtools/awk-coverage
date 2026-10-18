@@ -100,8 +100,10 @@ SHIM
 chmod +x "$WORK/shim/awk"
 
 echo "running $SUITE with awk profiling..." >&2
-# Serially, as devtools/coverage measures: one process, the run as it always was.
-PATH="$WORK/shim:$PATH" "$SUITE" --serial >"$WORK/suite.out" 2>&1
+# In parallel, as the suite runs by default: every awk any worker starts finds
+# the shim on the PATH the workers inherit, and writes a profile of its own.
+# BT_SUITE_JOBS=1 measures a serial run.
+PATH="$WORK/shim:$PATH" "$SUITE" >"$WORK/suite.out" 2>&1
 
 SUITE_TAIL=$(tail -1 "$WORK/suite.out" 2>/dev/null)
 

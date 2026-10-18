@@ -6,8 +6,8 @@
 # Both were caught by review, later, after the wrong numbers had been quoted.
 #
 # The suite runs its sections in parallel workers, one per core, and runs on
-# every push: in parallel in repo-validate and in its own step, serially under
-# each instrument below, so both modes run every time. It is hermetic, and
+# every push: in parallel in repo-validate and under each instrument below, and
+# serially in a job of its own, so both modes run every time. It is hermetic, and
 # that is MEASURED rather than claimed: a step below runs it in a decoy
 # world (devtools/sandbox) and fails on any call of a machine tool, any read of
 # a machine file, any write to a real directory. This line said "~2 s and
@@ -23,8 +23,19 @@ on:
 permissions:
   contents: read
 
+# NINE JOBS, ON NINE RUNNERS AT ONCE. Every step below ran in one job until
+# 2026-10-18, one after another, about nine minutes; most of it five serial runs
+# of the suite under five instruments. Each instrument needs a run of its own
+# (it reads its own trace of the run), so none was cut: they are split across
+# jobs instead, and GitHub runs the jobs in parallel. Each job starts from the
+# same preamble (the checkout with full history, the public main, the same
+# packages, the version line), so every step sees what it saw in the single job.
+# The instruments now run the suite in parallel too (tests/README.md, rule 9),
+# and the run that names the suite runs it serially, so one run in one process
+# remains: the serial job.
 jobs:
-  check:
+  # the validator (the suite in parallel), the journal contract and the publish scan
+  suite:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,13 +96,88 @@ jobs:
       - name: repo-validate (syntax, awk parse, invariants, doc drift)
         run: devtools/repo-validate .
 
+      # Phase 1 checks the host journal's shapes, and runs here (this runner has
+      # a journal; it skips only on a host without one). Phase 2 builds a real
+      # journal from text and byte-compares real journalctl output against the
+      # fixture grammar, which is why systemd-journal-remote is installed above.
+      - name: journal contract
+        run: devtools/journal-contract
+
+      # The full-tree scan, which this workflow originally had to leave out.
+      #
+      # It was omitted because `repo-scan` falls back to scanning ALL tracked
+      # files when nothing is staged — the state of a CI checkout — and it then
+      # failed on two items that predated the workflow: a kernel MODULE_AUTHOR
+      # address and a filesystem UUID carried in a sanitised log. Neither was a
+      # leak, but settling them was a publish-safety decision rather than a
+      # testing one, and a step that is red on its first run teaches everyone
+      # to ignore it.
+      #
+      # They have since been settled on main, and `devtools/check` now gates on
+      # `repo-scan . --all` locally. CI enforces the same thing, so a pull
+      # request from a fork is screened before anyone reads it.
+      - name: repo-scan (publish safety, full tree)
+        run: devtools/repo-scan . --all
+
+  # the suite in one process, in file order
+  serial:
+    runs-on: ubuntu-latest
+    steps:
+      # The preamble every job shares; the suite job's comments say why each step is there.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch the public repository (doc-main-hashes judges against its main)
+        run: |
+          git remote add public https://github.com/ivoitovych/qca9377-bt-hang.git
+          git fetch --quiet --no-tags public
+
+      - name: Install gawk, systemd-journal-remote, fakeroot and strace
+        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+
+      - name: Show the tool versions the results depend on
+        run: |
+          bash --version | head -1
+          awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1
+          command -v systemd-analyze >/dev/null && echo "systemd-analyze: present" \
+                                                || echo "systemd-analyze: absent (unit checks will skip)"
+
       # Belt and braces: repo-validate runs the suite and prints its whole output
       # on a failure, inside its own report. Running it directly gives the suite
-      # its own step, so a red one names the suite and not the validator. Both
-      # run it in parallel (tests/README.md, rule 9); the instruments below ask
-      # for --serial.
-      - name: tests/run-tests
-        run: tests/run-tests
+      # its own step, so a red one names the suite and not the validator.
+      #
+      # SERIALLY, because a parallel run cannot show one thing. Each section
+      # there gets a fresh process, so a section that breaks a later one (a
+      # variable it leaves set, a stub it leaves on PATH, a file in a shared
+      # temp tree) passes in parallel; in one process, in file order, the later
+      # section meets it. Every other run of the suite on this push is parallel.
+      - name: tests/run-tests --serial
+        run: tests/run-tests --serial
+
+  # bash line coverage
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      # The preamble every job shares; the suite job's comments say why each step is there.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch the public repository (doc-main-hashes judges against its main)
+        run: |
+          git remote add public https://github.com/ivoitovych/qca9377-bt-hang.git
+          git fetch --quiet --no-tags public
+
+      - name: Install gawk, systemd-journal-remote, fakeroot and strace
+        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+
+      - name: Show the tool versions the results depend on
+        run: |
+          bash --version | head -1
+          awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1
+          command -v systemd-analyze >/dev/null && echo "systemd-analyze: present" \
+                                                || echo "systemd-analyze: absent (unit checks will skip)"
 
       # A RATCHET, NOT A TARGET. The floor sits a little below the current
       # figure so ordinary work cannot trip it, and it rises only when a stage
@@ -100,18 +186,96 @@ jobs:
       - name: coverage floor
         run: devtools/coverage --quiet --min 80
 
+  # the comprehensiveness floor: it runs the suite under devtools/coverage
+  # itself, so it needs nothing from the coverage job and runs beside it
+  comprehension:
+    runs-on: ubuntu-latest
+    steps:
+      # The preamble every job shares; the suite job's comments say why each step is there.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch the public repository (doc-main-hashes judges against its main)
+        run: |
+          git remote add public https://github.com/ivoitovych/qca9377-bt-hang.git
+          git fetch --quiet --no-tags public
+
+      - name: Install gawk, systemd-journal-remote, fakeroot and strace
+        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+
+      - name: Show the tool versions the results depend on
+        run: |
+          bash --version | head -1
+          awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1
+          command -v systemd-analyze >/dev/null && echo "systemd-analyze: present" \
+                                                || echo "systemd-analyze: absent (unit checks will skip)"
+
+      # A RATCHET ON THE OTHER AXIS. Line coverage cannot see a unit that was
+      # never invoked in a mode it has: bt-window sat at 0 of 45 lines while
+      # the suite was green and the total moved by a fraction of a point.
+      # The floor is the WEAKEST dimension of the WORST unit, set a little
+      # below where the tree stands so it catches a regression rather than
+      # blocking ordinary work.
+      - name: comprehensiveness floor
+        run: devtools/test-comprehension --min 75
+
+  # awk statement coverage
+  awk-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      # The preamble every job shares; the suite job's comments say why each step is there.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch the public repository (doc-main-hashes judges against its main)
+        run: |
+          git remote add public https://github.com/ivoitovych/qca9377-bt-hang.git
+          git fetch --quiet --no-tags public
+
+      - name: Install gawk, systemd-journal-remote, fakeroot and strace
+        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+
+      - name: Show the tool versions the results depend on
+        run: |
+          bash --version | head -1
+          awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1
+          command -v systemd-analyze >/dev/null && echo "systemd-analyze: present" \
+                                                || echo "systemd-analyze: absent (unit checks will skip)"
+
       # A SECOND MEASUREMENT, of a different language. devtools/coverage
       # measures bash with xtrace, and bash traces commands — a 180-line awk
       # program is one command, so the awk this project computes its answers in
       # was invisible to it. This reads gawk --profile instead and reports
       # statement coverage. It found that the classifier branches for stage 2
       # of the bug had never executed.
-      # 85 → 95 on 2026-10-08, when the instrument stopped counting one program
-      # once per script that ran it, BEGIN/END headers as statements that never
-      # ran, and repo-validate's parse checks as programs: 89.8% of 1941 became
-      # 97.8% of 1340. The gain is the counting, not new tests.
       - name: awk statement coverage floor
         run: devtools/awk-coverage --min 95
+
+  # Python line coverage
+  python-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      # The preamble every job shares; the suite job's comments say why each step is there.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch the public repository (doc-main-hashes judges against its main)
+        run: |
+          git remote add public https://github.com/ivoitovych/qca9377-bt-hang.git
+          git fetch --quiet --no-tags public
+
+      - name: Install gawk, systemd-journal-remote, fakeroot and strace
+        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+
+      - name: Show the tool versions the results depend on
+        run: |
+          bash --version | head -1
+          awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1
+          command -v systemd-analyze >/dev/null && echo "systemd-analyze: present" \
+                                                || echo "systemd-analyze: absent (unit checks will skip)"
 
       # A THIRD LANGUAGE, AND THE SAME ARGUMENT. bin/bt-capture is Python and
       # neither instrument above could see it — `TX-04`, open from 2026-08-15 to
@@ -124,21 +288,29 @@ jobs:
       - name: python line coverage floor
         run: devtools/py-coverage --min 80
 
-      # A RATCHET ON THE OTHER AXIS. Line coverage cannot see a unit that was
-      # never invoked in a mode it has: bt-window sat at 0 of 45 lines while
-      # the suite was green and the total moved by a fraction of a point.
-      # The floor is the WEAKEST dimension of the WORST unit, set a little
-      # below where the tree stands so it catches a regression rather than
-      # blocking ordinary work.
-      - name: comprehensiveness floor
-        run: devtools/test-comprehension --min 75
+  # the decoy world and its own proof, and the mutation harness's proof
+  isolation:
+    runs-on: ubuntu-latest
+    steps:
+      # The preamble every job shares; the suite job's comments say why each step is there.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # Phase 1 checks the host journal's shapes, and runs here (this runner has
-      # a journal; it skips only on a host without one). Phase 2 builds a real
-      # journal from text and byte-compares real journalctl output against the
-      # fixture grammar, which is why systemd-journal-remote is installed above.
-      - name: journal contract
-        run: devtools/journal-contract
+      - name: Fetch the public repository (doc-main-hashes judges against its main)
+        run: |
+          git remote add public https://github.com/ivoitovych/qca9377-bt-hang.git
+          git fetch --quiet --no-tags public
+
+      - name: Install gawk, systemd-journal-remote, fakeroot and strace
+        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+
+      - name: Show the tool versions the results depend on
+        run: |
+          bash --version | head -1
+          awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1
+          command -v systemd-analyze >/dev/null && echo "systemd-analyze: present" \
+                                                || echo "systemd-analyze: absent (unit checks will skip)"
 
       # THE LEAK DETECTOR'S OWN TEST. devtools/sandbox runs the suite in a decoy
       # world (devtools/README.md) and reports every place it reached for the
@@ -146,8 +318,9 @@ jobs:
       # planted for every detector and every decoy, and each isolation probe
       # must first reach its target from the host. It needs unprivileged user
       # namespaces, which Ubuntu 24.04's AppArmor refuses by default: lifted
-      # HERE, after the steps above have measured the suite the way it runs on
-      # the laptop (fakeroot, no namespaces), so none of their results change.
+      # here, in a job of its own. The jobs that measure the suite run on their
+      # own runners, the way it runs on the laptop (fakeroot, no namespaces), so
+      # none of their results change.
       #
       - name: sandbox self-test (the leak detector catches every planted leak)
         run: |
@@ -173,11 +346,39 @@ jobs:
       # door, real_tool() in the suite, is listed apart and not counted. This
       # runner, unlike a bare development host, has a live
       # systemd, journald and D-Bus: exactly the machine a leak would reach.
+      # The suite runs there in parallel: the detectors read the world (a
+      # decoy's call log, the marker in the output, an access time, an
+      # overlay's upper layer), not one process, so they see every worker.
       - name: suite in the decoy world (no verdict from the machine)
         run: devtools/sandbox
 
+  # the steps that install on the runner: the round trip and the deploy rehearsal
+  system:
+    runs-on: ubuntu-latest
+    steps:
+      # The preamble every job shares; the suite job's comments say why each step is there.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch the public repository (doc-main-hashes judges against its main)
+        run: |
+          git remote add public https://github.com/ivoitovych/qca9377-bt-hang.git
+          git fetch --quiet --no-tags public
+
+      - name: Install gawk, systemd-journal-remote, fakeroot and strace
+        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+
+      - name: Show the tool versions the results depend on
+        run: |
+          bash --version | head -1
+          awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1
+          command -v systemd-analyze >/dev/null && echo "systemd-analyze: present" \
+                                                || echo "systemd-analyze: absent (unit checks will skip)"
+
       # THE SYSTEM ROUND TRIP — with the rehearsal below, the steps that install
-      # on the machine (the package and sysctl steps above change it too).
+      # on the machine (the package step above changes it too). A job of their
+      # own, so nothing they install is on a runner that measures the suite.
       #
       # It installs for real, uninstalls for real, and checks that no
       # install_file destination is left: install.sh's claim that "uninstalling
@@ -190,12 +391,13 @@ jobs:
       # non-zero for `degraded`.
       #
       # Safe HERE and nowhere else by construction. The runner is an ephemeral
-      # VM with a live systemd; the test refuses unless BT_SYSTEM_TEST=1 is set
+      # VM with a live systemd; the test refuses unless BT_SYSTEM_TEST is set
       # explicitly AND the host carries no existing installation, no open trial
       # and no experiment mode. The investigation machine fails those gates
-      # even if someone sets the variable.
+      # even if someone sets the variable. Here it is `required`: a skip is a
+      # failure, because this runner was chosen to run it.
       - name: system round trip (installs for real, then removes itself)
-        run: sudo BT_SYSTEM_TEST=1 tests/system-roundtrip
+        run: sudo BT_SYSTEM_TEST=required tests/system-roundtrip
 
       # THE INVESTIGATION MACHINE'S NEXT DEPLOY, REHEARSED. That machine runs
       # the 2026-09-18 tools (cccf0fe: its installed bt-trial is that commit's
@@ -213,25 +415,10 @@ jobs:
           git fetch --no-tags --depth=1 origin cccf0fe0b7871c1898807c4b25a85adbc27fd9cf
           mkdir -p "$RUNNER_TEMP/installed-20260918"
           git archive FETCH_HEAD | tar -x -C "$RUNNER_TEMP/installed-20260918"
-          sudo BT_SYSTEM_TEST=1 tests/system-upgrade "$RUNNER_TEMP/installed-20260918" mitigation
-      - name: deploy rehearsal, experiment mode (bt-mode experiment before the deploy)
-        run: sudo BT_SYSTEM_TEST=1 tests/system-upgrade "$RUNNER_TEMP/installed-20260918" experiment
+          sudo BT_SYSTEM_TEST=required tests/system-upgrade "$RUNNER_TEMP/installed-20260918" mitigation
 
-      # The full-tree scan, which this workflow originally had to leave out.
-      #
-      # It was omitted because `repo-scan` falls back to scanning ALL tracked
-      # files when nothing is staged — the state of a CI checkout — and it then
-      # failed on two items that predated the workflow: a kernel MODULE_AUTHOR
-      # address and a filesystem UUID carried in a sanitised log. Neither was a
-      # leak, but settling them was a publish-safety decision rather than a
-      # testing one, and a step that is red on its first run teaches everyone
-      # to ignore it.
-      #
-      # They have since been settled on main, and `devtools/check` now gates on
-      # `repo-scan . --all` locally. CI enforces the same thing, so a pull
-      # request from a fork is screened before anyone reads it.
-      - name: repo-scan (publish safety, full tree)
-        run: devtools/repo-scan . --all
+      - name: deploy rehearsal, experiment mode (bt-mode experiment before the deploy)
+        run: sudo BT_SYSTEM_TEST=required tests/system-upgrade "$RUNNER_TEMP/installed-20260918" experiment
 
   # THE ISOLATION ITSELF, MEASURED BY AN EXACT TRACE. The decoy world above
   # watches what the machine ANSWERS; an access that answers nothing — an

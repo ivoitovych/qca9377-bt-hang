@@ -123,7 +123,9 @@ fi
 #   --jobs N | -j N   N workers at a time        BT_SUITE_JOBS=N does the same
 #   --serial          one process, in file order (the run as it always was)
 # The instruments that measure the suite (devtools/coverage and its siblings)
-# ask for --serial: they read one trace of one process.
+# run it in parallel too: a worker's sections are attributed to this file and
+# its line numbers (suite_copy_lines). devtools/mutate asks for --serial, as it
+# runs its mutants in parallel itself; CI runs the suite serially once.
 SUITE_JOBS="${BT_SUITE_JOBS:-}"
 case "${1:-}" in
     --jobs|-j) SUITE_JOBS="${2:-}"; shift; shift ;;
@@ -1065,6 +1067,20 @@ suite_sections() {   # one line per section, in file order: <first line> <last l
     awk 'prev ~ /^echo "/ && /^echo "─/ { if (n++) print s, NR - 2, h; s = NR - 1; h = substr(prev, 7, length(prev) - 7) }
          { prev = $0 } END { print s, NR, h }' tests/run-tests
 }
+# A section runs from a copy of its own lines, padded to their own numbers and
+# named tests/run-tests, so BASH_SOURCE and LINENO say which line of this file
+# ran: in an error message, and in devtools/coverage's trace, which therefore
+# measures a parallel run as it measures a serial one. Sourced from a pipe they
+# said /dev/fd/63 and an offset, and every instrument had to ask for --serial.
+# The copy's first line, where this file has its #! line, goes back to the
+# checkout: the section runs there, as in a serial run.
+suite_copy_lines() {   # <first> <last> <dir> — <dir>/tests/run-tests: those lines, at their own numbers
+    mkdir -p "$3/tests" &&
+    awk -v a="$1" -v b="$2" 'NR == 1 { print "cd \"$SUITE_ROOT\" || exit 1"; next }
+                             NR < a  { print ""; next }
+                             NR <= b { print; next }
+                                     { exit }' "$SUITE_ROOT/tests/run-tests" > "$3/tests/run-tests"
+}
 SUITE_ROOT=$PWD
 if [[ -n "${SUITE_UNIT:-}" ]]; then
     # A WORKER. Named by a parallel run of this file, and only by one: the
@@ -1077,8 +1093,8 @@ if [[ -n "${SUITE_UNIT:-}" ]]; then
     mapfile -t _secs < <(suite_sections)
     for _k in $SUITE_UNIT; do
         read -r _a _b _h <<<"${_secs[$_k]}"
-        cd "$SUITE_ROOT" || exit 1
-        { source <(sed -n "${_a},${_b}p" "$SUITE_ROOT/tests/run-tests"); } > "$SUITE_UNIT_DIR/s-$_k.out" 2>&1
+        suite_copy_lines "$_a" "$_b" "$SUITE_UNIT_DIR/src-$_k" && cd "$SUITE_UNIT_DIR/src-$_k" || exit 1
+        { source tests/run-tests; } > "$SUITE_UNIT_DIR/s-$_k.out" 2>&1
         : > "$SUITE_UNIT_DIR/s-$_k.done"
     done
     cd "$SUITE_ROOT" || exit 1
@@ -1175,7 +1191,9 @@ if (( SUITE_JOBS > 1 )); then
     done
     SUITE_PAR_NOTE="the sections ran in ${#_units[@]} workers, $SUITE_JOBS at a time (tests/run-tests --serial runs them in one process)"
     read -r _a _b _h <<<"${_secs[$_last]}"
-    source <(sed -n "${_a},${_b}p" tests/run-tests)
+    suite_copy_lines "$_a" "$_b" "$SUITE_PAR/src-report" && cd "$SUITE_PAR/src-report" || {
+        echo "run-tests: could not stage the run's report — no verdict" >&2; exit 1; }
+    source tests/run-tests
     exit 0   # the report exits 1 itself when anything failed
 fi
 
@@ -4203,12 +4221,22 @@ farm_dir "$WD/noprobe-farm" hciconfig btmgmt
 # PATH is passed THROUGH wd_until: env applies assignments left to right, so a
 # later PATH= wins over the helper's default. That keeps one waiting mechanism
 # in this section instead of two.
+# STOPPED AT "suppressed by cooldown", the next threshold after the recovery:
+# by then the recovery's answer has been counted, or logged as a failure. It
+# was stopped at "cannot be confirmed", the warning at startup, and in about
+# half the runs that came before any recovery: the second check below then
+# passed with no recovery to judge (2026-10-18, found as coverage of the
+# watchdog's lines 139 and 244 that came and went between identical runs; a
+# watchdog counting the unverifiable answer as a failure passed 1 run in 6).
 : > "$WD/spy.log"; touch "$WD/dead"
-NOPOUT=$(wd_until "cannot be confirmed" 60 PATH="$WDNOP:$WD/noprobe-farm" BT_COOLDOWN=99999)
+NOPOUT=$(wd_until "suppressed by cooldown" 60 PATH="$WDNOP:$WD/noprobe-farm" BT_COOLDOWN=99999)
 [[ "$NOPOUT" == *"neither hciconfig nor btmgmt found"* \
    && "$NOPOUT" == *"cannot be confirmed"* ]] \
     && ok "with no probe tool the watchdog warns that recovery is unconfirmable" \
     || bad "the no-probe warning did not appear"
+[[ "$NOPOUT" == *"recovery attempted; cannot verify"* && "$NOPOUT" == *"suppressed by cooldown"* ]] \
+    && ok "with no probe tool a recovery runs, and its answer is 'cannot verify'" \
+    || bad "no recovery ran in the no-probe scenario, so the next check would judge nothing: $(tail -3 <<<"$NOPOUT" | tr '\n' '|')"
 [[ "$NOPOUT" != *"consecutive failed recoveries"* ]] \
     && ok "an unverifiable recovery is not counted as a failure" \
     || bad "unconfirmable recoveries were counted as failures — MAX_FAILS would disable the watchdog"
@@ -13669,6 +13697,13 @@ fi
 # The second case is the 2026-09-19 review's own host: a Python without
 # socket.AF_BLUETOOTH raised AttributeError through main() instead of the
 # controlled OSError the no-socket contract promises.
+#
+# THE DURATION IS A BOUND, NOT A BUDGET. A capture that rotates and finds the
+# floor not restored stops at once, whatever --duration says; the deadline only
+# ends a broken build, which would read to the end of the frames and wait. It
+# was 5 s, and a parallel run under strace starved the capture short of 1 MB:
+# "rc=0 files=1 prune_calls=1" on a correct build (2026-10-18). On one core
+# shared with eight busy loops, 5 s failed the same way and 30 s passed.
 if command -v python3 >/dev/null 2>&1; then
     BCR=$(mktemp -d); mkdir -p "$BCR/cap"
     BCROUT=$(cd "$BCR" && python3 - "$OLDPWD/bin/bt-capture" "$BCR" <<'PYEOF'
@@ -13688,7 +13723,7 @@ def fake_prune(d, keep, gb):
 m.prune = fake_prune
 os.environ["BT_CAPTURE_SOURCE"] = frames
 os.environ["BT_CAPTURE_DIR"] = os.path.join(tmp, "cap")
-sys.argv = ["bt-capture", "--max-mb", "1", "--min-free-gb", "0", "--duration", "5"]
+sys.argv = ["bt-capture", "--max-mb", "1", "--min-free-gb", "0", "--duration", "30"]
 log = io.StringIO(); m.log = lambda s: log.write(s + "\n")
 rc = m.main()
 files = [f for f in os.listdir(os.path.join(tmp, "cap")) if f.endswith(".btsnoop")]

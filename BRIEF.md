@@ -580,7 +580,8 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
   fresh setup, so a section reads only that setup. Shared fixtures go there; a section that
   reads another's definitions says so (`# PARALLEL: runs after "<heading>"`). Established by
   running each section alone and comparing the two modes check by check (2026-10-18;
-  tests/README.md, rule 9).
+  tests/README.md, rule 9). The instruments measure the parallel run; CI keeps one serial
+  run, the one that shows a section breaking a later one.
 - **Rehearse with the stimulus present.** The rehearsal's trial saw no SCO setup and had no
   captures, so the close's slowest step never ran in it: a `btmon` decode of every capture,
   ahead of the row, with no budget (2026-10-18). A close is tested with what a real trial

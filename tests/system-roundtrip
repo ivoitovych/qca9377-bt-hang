@@ -2,6 +2,7 @@
 # system-roundtrip — install for real, verify, uninstall for real, verify.
 #
 #   BT_SYSTEM_TEST=1 tests/system-roundtrip
+#   BT_SYSTEM_TEST=required tests/system-roundtrip   (CI: a skip fails)
 #
 # THE ONE TEST CLASS THE SUITE WAS MISSING. Everything in tests/run-tests
 # drives tools over fixtures, seams and dry runs. Nothing had ever executed
@@ -53,6 +54,21 @@ echo "system round trip — install --apply, verify, uninstall --apply, verify"
 echo "──────────────────────────────────────────────────────────────────────"
 
 # ── gates ─────────────────────────────────────────────────────────────────
+# REQUIRED, WHERE THE HOST WAS CHOSEN TO RUN IT. BT_SYSTEM_TEST=required is
+# =1 plus a promise: this host can run the test, so a skip below means it did
+# not happen, and that is a failure (exit 3), not a pass. CI asks for it. When
+# CI's checks were split into parallel jobs (2026-10-18) this test ran ten
+# seconds after its runner booted, met systemd still 'starting', skipped, and
+# the step passed: the same silent pass as before 2026-10-16, from a new cause.
+SYSTEM_TEST_REQUIRED=0
+[[ "${BT_SYSTEM_TEST:-0}" == required ]] && { BT_SYSTEM_TEST=1; SYSTEM_TEST_REQUIRED=1; }
+not_here() {   # <reason> — skip, unless this host was required to run it
+    if (( SYSTEM_TEST_REQUIRED )); then
+        echo "  ✗ BT_SYSTEM_TEST=required, and this host cannot run it: $1" >&2
+        exit 3
+    fi
+    exit 0
+}
 if [[ "${BT_SYSTEM_TEST:-0}" != "1" ]]; then
     echo "  · refusing: set BT_SYSTEM_TEST=1 to run (this test INSTALLS, for real)"
     exit 0
@@ -73,7 +89,7 @@ if [[ -r /usr/local/share/qca9377-bt-hang/mode ]]; then
 fi
 if [[ $EUID -ne 0 ]]; then
     echo "  · refusing: --apply needs root, and this is not root"
-    exit 0
+    not_here "not root"
 fi
 
 # ── host capability, not a safety gate ────────────────────────────────────
@@ -90,7 +106,13 @@ fi
 # run (2026-10-16). systemd is live when it is PID 1 (/run/systemd/system, as
 # sd_booted() asks) and its state is running or degraded. The skip says which
 # state it saw, so a skip can no longer pass unread.
+# A host still booting is not a host without systemd: wait for the boot to
+# finish (bounded) before judging it, as a runner that starts a job seconds
+# after boot is still 'starting'.
 SD_STATE=$(systemctl is-system-running 2>/dev/null)
+if [[ "$SD_STATE" == starting || "$SD_STATE" == initializing ]]; then
+    SD_STATE=$(timeout 180 systemctl is-system-running --wait 2>/dev/null)
+fi
 systemd_live() { [[ -d /run/systemd/system && ( "$SD_STATE" == running || "$SD_STATE" == degraded ) ]]; }
 if ! systemd_live || [[ ! -d /etc/udev/rules.d ]]; then
     echo "  · skipped: systemd state '${SD_STATE:-none}', /run/systemd/system $([[ -d /run/systemd/system ]] && echo present || echo absent),"
@@ -98,7 +120,7 @@ if ! systemd_live || [[ ! -d /etc/udev/rules.d ]]; then
     echo "    cannot complete here, and its failure would describe the host"
     echo
     echo "skipped cleanly; run on a host with a live systemd (a CI VM qualifies)"
-    exit 0
+    not_here "systemd state '${SD_STATE:-none}'"
 fi
 
 # ── the round trip ────────────────────────────────────────────────────────
