@@ -59,6 +59,32 @@ rule applies at the next enumeration. The files on disk are current either way.
 `--tools-only` or the manager keeps the old definition until reboot — and check
 with `systemctl show bt-trial-auto -p TimeoutStopUSec`.
 
+**On the investigation machine** (experiment mode, a trial open; the route as reviewed on
+2026-10-18 against `main`, read-only):
+
+1. Before: `bt-window` shows no open window; `journalctl -k -b 0 -p err --grep "tx timeout"`
+   prints `-- No entries --`; no call is up; `printenv BT_VID BT_PID BT_DESTDIR BT_FORCE_INSTALL`
+   prints nothing; note what `bt-mode status` says.
+2. `sudo ./install.sh --tools-only`, typed exactly, with plain `sudo` (not `sudo -E`). Expect the
+   open-trial notice and a 3 s pause, the SKIPPED lines for the files `bt-mode` moved aside, and
+   every system command printed `tools-only: NOT executed`, **including `modprobe -r btusb` and
+   `modprobe btusb`**: with btusb's use count at 0 and no timeout this boot the script reaches that
+   reload, and only this gate stops it (a live reload kills even a healthy controller, `EX-046`).
+   About 20 s of quiet follow while it reads this boot's kernel log. Stop if a command that runs
+   is anything but `install`.
+3. Ignore the advice it prints: `bt-mode mitigation` (writes the power settings live and enables
+   the watchdog), `./install.sh --apply` (printed by `bt-verify-install` on any drift), and the
+   "expect N" / "expect on" lines (mitigation mode's values; experiment mode reads `Y` and `auto`).
+4. `bt-mode status`: unchanged from step 1, and the files it moved aside are still `.disabled`.
+5. `sudo systemctl daemon-reload`, then `systemctl show bt-trial-auto -p TimeoutStopUSec` → `30s`
+   and `systemctl is-enabled bt-hang-watchdog bt-health-snapshot.timer` → `disabled` twice.
+6. `sudo tools/bt-verify-install`: in sync. On drift, stop and report; never `--apply`.
+7. E3 untouched: `cat /sys/module/btusb/srcversion` → `D1DEA96A0C95BFAB05CEE01`, and
+   `modinfo -n btusb` names `…/updates/btusb.ko`.
+
+Write a `bt-trial step` note only after the deploy: before it, the installed `bt-mark` sends HCI
+Read Local Name with every mark.
+
 Uninstall is a restoration: every installed file is new, and where a destination
 already existed and was not ours, `install.sh` kept the original as
 `<file>.pre-qca9377-bt-hang` and `uninstall.sh` moves it back (since 2026-09-20; before

@@ -1,0 +1,32 @@
+13:20:58 ci-local: space=user tree=/home/user/qca9377-bt-hang/cache/bluez base=origin/master checks=am,checkpatch,gitlint,buildell,make,makeextell,smatch,incremental,scanbuild jobs=4
+13:20:58 ci-local: out=/home/user/qca9377-bt-hang/tmp/ci-local/20261016T132058Z-a1-a2dp-sendcheck
+13:20:58   patch: patches/bluez/send-2026-10-13/0001-a2dp-Remove-duplicate-stream-check-in-transport_cb.patch :: [BlueZ] a2dp: Remove duplicate stream check in transport_cb()
+13:20:58 ci-local: base commit fa6ba55020dee3c3183041c854c347b4582448be 2026-10-14 mgmt-tester: Add LL Privacy host-resolved RPA scan checks
+13:20:58   $ (cd src && git -c user.name=Iaroslav Voitovych -c user.email=yaroslav.voytovych@gmail.com -c commit.gpgsign=false am /home/user/qca9377-bt-hang/patches/bluez/send-2026-10-13/0001-a2dp-Remove-duplicate-stream-check-in-transport_cb.patch)
+13:20:59   $ (cd /home/user/qca9377-bt-hang/cache/ell && ./bootstrap-configure)
+13:21:12   $ (cd /home/user/qca9377-bt-hang/cache/ell && make -j4)
+13:21:24   $ (cd /home/user/qca9377-bt-hang/cache/ell && make install)
+13:21:24 == make: base side
+13:21:24   base side of make reused from /home/user/qca9377-bt-hang/tmp/ci-local/base-cache/user-fa6ba55020dee3c3183041c854c347b4582448be-make-6e2aee8e.findings (0 finding lines)
+13:21:24 == make: patched side
+13:21:24   $ (cd src && ./bootstrap-configure)
+13:21:36   $ (cd src && make -j4)
+13:25:09 == makeextell: base side
+13:25:09   base side of makeextell reused from /home/user/qca9377-bt-hang/tmp/ci-local/base-cache/user-fa6ba55020dee3c3183041c854c347b4582448be-makeextell-31ee3a59.findings (0 finding lines)
+13:25:09 == makeextell: patched side
+13:25:09   $ (cd src && ./bootstrap-configure --enable-external-ell --disable-lsan --disable-asan --disable-ubsan)
+13:25:26   $ (cd src && make -j4)
+13:26:38 == smatch: base side
+13:26:38   base side of smatch reused from /home/user/qca9377-bt-hang/tmp/ci-local/base-cache/user-fa6ba55020dee3c3183041c854c347b4582448be-smatch-7e841f28.findings (117 finding lines)
+13:26:38 == smatch: patched side
+13:26:38   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+13:26:53   $ (cd src && make -j4 CHECK=/home/user/qca9377-bt-hang/cache/smatch/smatch --full-path CC=/home/user/qca9377-bt-hang/cache/smatch/cgcc)
+13:30:06 == incremental
+13:30:06   $ (cd src && ./bootstrap-configure)
+13:30:21   $ (cd src && make -j4)
+13:33:52 == scanbuild: base side
+13:33:52   base side of scanbuild reused from /home/user/qca9377-bt-hang/tmp/ci-local/base-cache/user-fa6ba55020dee3c3183041c854c347b4582448be-scanbuild-6ade0170.findings (211 finding lines)
+13:33:52 == scanbuild: patched side
+13:33:52   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+13:34:07   $ (cd src && scan-build-18 -o /home/user/qca9377-bt-hang/tmp/ci-local/20261016T132058Z-a1-a2dp-sendcheck/scanbuild.patched.scan-build-reports make -j4)
+13:41:46 RESULT: no NEW finding

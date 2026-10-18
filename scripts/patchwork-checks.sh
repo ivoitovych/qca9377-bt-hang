@@ -19,8 +19,9 @@
 #       is a failure the bot's standing one, and since when?
 #
 # Output, one line per patch:  <date> <patch-id> <check:state ...>  <name>
-# lore.kernel.org blocks curl by user-agent; patchwork.kernel.org's API does not
-# (docs/source-access.md). Exits 2 when the API cannot be reached.
+# patchwork.kernel.org's API answers curl (lore.kernel.org refused it earlier and
+# answered a plain user agent with Atom feeds on 2026-10-18; docs/source-access.md).
+# Exits 2 when the API cannot be reached.
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 API="https://patchwork.kernel.org/api/1.3"
@@ -75,8 +76,14 @@ for c in json.load(open(sys.argv[1])):
     if "TestFunctional" not in body:
         continue
     print(f'   bot comment {c["date"][:16]} from {c["submitter"]["email"]}')
-    for m in re.finditer(r"^FAIL (functional\.\S+): failed on (\w+) with \"([^:\n]+)", body, re.M):
-        print(f'   FAIL {m.group(1)}  on {m.group(2)}  {m.group(3)}')
+    # Two forms: the older `FAIL functional.<case>: failed on <vm> with "<error>`
+    # and, since about 10-10, `FAIL functional.<case>: pytest_bluezenv.rpc.
+    # RemoteError: ...`. Matching only the first printed no line for A2's
+    # failure and five others (2026-10-18), and the rate read as lower.
+    for m in re.finditer(r"^FAIL (functional\.\S+): (.*)$", body, re.M):
+        old = re.match(r'failed on (\w+) with "([^:\n]+)', m.group(2))
+        detail = f'on {old.group(1)}  {old.group(2)}' if old else m.group(2)[:100]
+        print(f'   FAIL {m.group(1)}  {detail}')
 PYEOF
 	done < "$OUT/patches.tsv"
 	exit 0

@@ -588,6 +588,10 @@ if (( SUITE_RC == 0 )); then
     echo "suite: ${SUITE_TAIL:-passed} (measurement taken from a green run)"
 else
     echo "suite: FAILED (rc=$SUITE_RC) — these figures describe a red run" >&2
+    # WHICH CHECKS, from the run measured: it is gone once this exits, and a red
+    # the next run does not repeat can be named only from here. One went red
+    # under this trace on 2026-10-18, and seven reruns could not say which.
+    grep -E '^[[:space:]]*✗|: line [0-9]+: ' "$WORK/suite.out" | head -20 | sed 's/^/  /' >&2
 fi
 
 if [[ -n "$MIN" ]]; then

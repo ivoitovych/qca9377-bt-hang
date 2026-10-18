@@ -97,8 +97,11 @@ if [[ -n "$DUMP" ]]; then
 else
     COV="$WORK/cov"
     echo "running the suite under trace (devtools/coverage --dump)..." >&2
-    devtools/coverage --quiet --dump "$COV" >/dev/null 2>&1 || {
-        echo "test-comprehension: coverage run failed; cannot measure" >&2; exit 2; }
+    devtools/coverage --quiet --dump "$COV" >/dev/null 2>"$WORK/cov.err" || {
+        echo "test-comprehension: coverage run failed; cannot measure" >&2
+        # What coverage said, the failing checks among it: discarded, a red here
+        # could be named by no one (2026-10-18).
+        tail -25 "$WORK/cov.err" | sed 's/^/  /' >&2; exit 2; }
 fi
 for t in coverable-lines covered-lines; do
     [[ -s "$COV/$t" ]] || { echo "test-comprehension: $COV/$t missing or empty" >&2; exit 2; }

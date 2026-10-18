@@ -1,0 +1,40 @@
+trial ended without a probe: no command timeout observed; liveness not measured
+
+  SCO setup requested   : 13
+  SCO -> first timeout  : none s
+  command timeouts      : 0
+  responds afterwards   : unprobed
+  still on the USB bus  : yes   (bus-loss events: 0)
+  request parameters    : /root/exp/qca9377-bt-hang/tmp/trial-snapshot-20261018T145830Z.uZszPG/trialdir/sco-params.txt
+  liveness probes       : 0   (btmon aborts: 13)
+  last probe -> timeout : ? s
+  previous shutdown     : unknown   (controller enumerated this boot: yes)
+Trial E3 #1: survived (419353s)
+
+Trial results  (/root/exp/qca9377-bt-hang/tmp/trial-snapshot-20261018T145830Z.uZszPG/repo/evidence/trials/results.tsv)
+─────────────────────────────────────────────────────────────
+  TRIAL TYPE         BUILD  UNRECOV  BT-1 INC RESCUED  RATE    CENSORED mean dur
+  observational_boot E3     0/1      0/1      0/0      0%      0/1      419353s
+      treatment: autosusp=Y,power=auto,wd=off,probes=off
+
+  These rows must never be added together. An observational boot
+  and a controlled protocol run are different evidence: the first
+  says the machine did or did not hang during ordinary use, the
+  second says the reproduction protocol was applied and the
+  controller withstood it or did not. Only controlled_* rows can
+  satisfy the A/B/C/D gate.
+
+Was the SCO stimulus actually applied, and did it matter?
+─────────────────────────────────────────────────────────────
+                             hung     survived
+  SCO setup requested           0            1
+  no SCO setup                  0            0
+
+  Every trial provoked SCO setup. The bottom row is empty, so this
+  cannot yet separate the stimulus from the passage of time.
+
+  Gate: stock must reach a high, stable failure rate (target 5/5) before
+  any build is compiled. Compare every build against the SAME protocol.
+
+  A trial that survives WITHOUT provoking SCO setup proves nothing about
+  the build. Check the top row is filling before drawing conclusions.

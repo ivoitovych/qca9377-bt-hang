@@ -164,6 +164,8 @@ SUITE_TAIL=$(tail -1 "$SUITE_OUT")
 if (( SUITE_RC != 0 )); then
     echo "py-coverage: the suite FAILED — coverage from a failing run is not a measurement" >&2
     echo "  $SUITE_TAIL" >&2
+    # Which checks, from this run (devtools/coverage says why).
+    grep -E '^[[:space:]]*✗|: line [0-9]+: ' "$SUITE_OUT" | head -20 | sed 's/^/  /' >&2
     exit 1
 fi
 
