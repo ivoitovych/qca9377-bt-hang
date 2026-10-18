@@ -1,0 +1,46 @@
+# step: obj-check
+# dir: -
+# command: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/obj-check.sh
+# start: 2026-10-18 02:40:45
+== base /root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-base/emulator/btdev.o sha256 4d0e4a6ccd56de0a
+   __assert_fail references: 0
+   alloca symbol references: 2
+   assertion text in object: 0
+   send_cmd symbols: 0000000000000000 t send_cmd 
+   send_cmd: 894 instructions; %rsp changes 5; register subtracted from %rsp: yes
+      rsp: 1d:	sub    $0xf8,%rsp
+      rsp: ed:	sub    $0x1000,%rsp
+      rsp: 107:	sub    %rax,%rsp
+      rsp: 625:	mov    %rbx,%rsp
+      rsp: 677:	lea    -0x28(%rbp),%rsp
+      calls: 72
+== a2-assert /root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-a2-assert/emulator/btdev.o sha256 937374d110be97fc
+   __assert_fail references: 0
+   alloca symbol references: 2
+   assertion text in object: 0
+   send_cmd symbols: 0000000000000000 t send_cmd 
+   send_cmd: 453 instructions; %rsp changes 2; register subtracted from %rsp: no
+      rsp: 16:	sub    $0x108,%rsp
+      rsp: 42e:	add    $0x108,%rsp
+      calls: 40
+== a2-newa /root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-a2-newa/emulator/btdev.o sha256 461f46dbf99f702b
+   __assert_fail references: 0
+   alloca symbol references: 2
+   assertion text in object: 0
+   send_cmd symbols: 0000000000000000 t send_cmd 
+   send_cmd: 875 instructions; %rsp changes 4; register subtracted from %rsp: yes
+      rsp: 1d:	sub    $0xe8,%rsp
+      rsp: d6:	sub    $0x1000,%rsp
+      rsp: f0:	sub    %rax,%rsp
+      rsp: 62c:	lea    -0x28(%rbp),%rsp
+      calls: 65
+== a2-assert-ndebug /root/exp/qca9377-bt-hang/cache/bluez-a1a2-20261018-a2-assert-ndebug/emulator/btdev.o sha256 6e7d8caff9aed547
+   __assert_fail references: 0
+   alloca symbol references: 2
+   assertion text in object: 0
+   send_cmd symbols: 0000000000000000 t send_cmd 
+   send_cmd: 511 instructions; %rsp changes 2; register subtracted from %rsp: no
+      rsp: 16:	sub    $0x108,%rsp
+      rsp: 46f:	add    $0x108,%rsp
+      calls: 44
+# end: 2026-10-18 02:40:46 exit 0

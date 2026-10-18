@@ -1,0 +1,35 @@
+# step: clang-all
+# dir: -
+# command: /root/exp/qca9377-bt-hang/tmp/bluez-a1a2-20261018/clang-all.sh
+# start: 2026-10-18 02:34:17
+btdev-base: 2 warning/error lines; exit: 0
+emulator/btdev.c:6658:20: warning: Access to field 'link' results in a dereference of a null pointer (loaded from variable 'acl') [core.NullDereference]
+emulator/btdev.c:6758:25: warning: Access to field 'link' results in a dereference of a null pointer (loaded from variable 'acl') [core.NullDereference]
+btdev-a2-assert: 2 warning/error lines; exit: 0
+emulator/btdev.c:6663:20: warning: Access to field 'link' results in a dereference of a null pointer (loaded from variable 'acl') [core.NullDereference]
+emulator/btdev.c:6763:25: warning: Access to field 'link' results in a dereference of a null pointer (loaded from variable 'acl') [core.NullDereference]
+btdev-a2-assert-ndebug: 2 warning/error lines; exit: 0
+emulator/btdev.c:6663:20: warning: Access to field 'link' results in a dereference of a null pointer (loaded from variable 'acl') [core.NullDereference]
+emulator/btdev.c:6763:25: warning: Access to field 'link' results in a dereference of a null pointer (loaded from variable 'acl') [core.NullDereference]
+btdev-a2-newa: 2 warning/error lines; exit: 0
+emulator/btdev.c:6658:20: warning: Access to field 'link' results in a dereference of a null pointer (loaded from variable 'acl') [core.NullDereference]
+emulator/btdev.c:6758:25: warning: Access to field 'link' results in a dereference of a null pointer (loaded from variable 'acl') [core.NullDereference]
+a2dp-base: 4 warning/error lines; exit: 0
+profiles/audio/a2dp.c:442:8: warning: Use of memory after it is freed [unix.Malloc]
+profiles/audio/a2dp.c:3445:20: warning: Access to field 'starting' results in a dereference of a null pointer (loaded from variable 'stream') [core.NullDereference]
+profiles/audio/a2dp.c:3448:8: warning: Access to field 'suspending' results in a dereference of a null pointer (loaded from variable 'stream') [core.NullDereference]
+profiles/audio/a2dp.c:3508:22: warning: Access to field 'suspending' results in a dereference of a null pointer (loaded from variable 'stream') [core.NullDereference]
+a2dp-a1: 4 warning/error lines; exit: 0
+profiles/audio/a2dp.c:442:8: warning: Use of memory after it is freed [unix.Malloc]
+profiles/audio/a2dp.c:3440:20: warning: Access to field 'starting' results in a dereference of a null pointer (loaded from variable 'stream') [core.NullDereference]
+profiles/audio/a2dp.c:3443:8: warning: Access to field 'suspending' results in a dereference of a null pointer (loaded from variable 'stream') [core.NullDereference]
+profiles/audio/a2dp.c:3503:22: warning: Access to field 'suspending' results in a dereference of a null pointer (loaded from variable 'stream') [core.NullDereference]
+== btdev.c base vs a2-assert (line numbers removed)
+diff exit 0
+== btdev.c base vs a2-assert-ndebug (line numbers removed)
+diff exit 0
+== btdev.c base vs a2-newa (line numbers removed)
+diff exit 0
+== a2dp.c base vs a1 (line numbers removed)
+diff exit 0
+# end: 2026-10-18 02:37:06 exit 0

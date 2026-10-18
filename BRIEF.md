@@ -75,7 +75,7 @@ Recent detail may be shortened. Settled state is never dropped.
 - **Which record is current:** the submission rows of `docs/STATUS.md` for every upstream state;
   STATUS's issue rows and the list below follow them.
 
-**The state at a glance (2026-10-17; the submission rows of `docs/STATUS.md` win):**
+**The state at a glance (2026-10-18; the submission rows of `docs/STATUS.md` win):**
 - **BT-1's fix in stable:** released in 7.2.10 and 6.18.56 (10-11) and 6.12.113 (10-15); queued for
   6.6, 6.1, 5.15 and 5.10 (`EX-061`). Ubuntu's `7.0.0-38` stock btusb lacks it.
 - **Accepted upstream, ours:**
@@ -86,11 +86,11 @@ Recent detail may be shortened. Settled state is never dropped.
     (the BT-9 test), applied 10-12, identical to what was sent (same patch-id and message, checked 10-17);
   - the BT-9 stable backports of `96d006ae6445`: 6.12 released in 6.12.113 (10-15, `9a328ae01489`); 6.6 and 6.1 queued.
 - **Waiting for replies:** the Tested-by on Hui Peng's mesh_tx leak patch (10-06); the #1554
-  reporter's retest (10-14: updated to 6.18.50, "will check").
+  reporter's retest (10-14: updated to 6.18.50, "will check"); the BlueZ patches A1 (a2dp
+  duplicate check) and A2 (emulator VLA), sent 10-18 06:39 as two mails
+  (`patches/bluez/send-2026-10-18/`; judge each on its own, not by the bot closing its PR).
 - **Operator decisions open:**
-  - the a2dp duplicate-check cleanup;
   - an Ubuntu SRU for `dc16388d45ec`;
-  - the BlueZ sends A1 and A2 (`patches/bluez/send-2026-10-18/`, re-tested on master `fa6ba5502`);
   - the U6 SRU;
   - the U7 PipeWire report;
   - a reply on Jiale Yao's power-off patch (patchwork 14864878);
@@ -99,7 +99,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - **Since 2026-10-11 16:26 the laptop runs `7.0.0-38` with E3 built for it** (`updates/btusb.ko`, the exact upstream entry; srcversion `D1DEA96A0C95BFAB05CEE01`; the boot log shows `patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded). The build is on private `diag/e3-btusb-for-7.0.0-38-20261010`.
   - `-38`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
   - `-38` also carries the BT-9 fix (`96d006ae6445`). The discovery stuck since 10-04 had already ended on 10-10 at 15:02, at the operator's adapter power cycle (§5; corrected 2026-10-14).
-  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, cherry-picked from `d5272a6` on `tests/unit-testing-introduction`, plus `25dfc68`, and since 2026-10-18 the close writes its row before `bt-state` and `bt-mark`) but not on the machine. The only sound route is the whole tool set, `install.sh --tools-only` plus `daemon-reload`; `bt-trial` alone is a partial deploy (STATUS). When is the operator's decision.
+  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, cherry-picked from `d5272a6` on `tests/unit-testing-introduction`, plus `25dfc68`, and since 2026-10-18 the close writes its row before `bt-state`, `bt-mark` and the SCO decode; the decode, `btmon` over 48 GB of captures, took trial 14's close 53 minutes and was running when trial 15's close stopped without a row) but not on the machine. The only sound route is the whole tool set, `install.sh --tools-only` plus `daemon-reload`; `bt-trial` alone is a partial deploy (STATUS). When is the operator's decision.
   - **On 2026-10-13 at 20:26 the laptop stopped abruptly** (no shutdown sequence in the journal; cause not recorded) and rebooted at 20:29. The second "E3 #1" lost its row too, and the fix could not have prevented that: an abrupt stop runs no ExecStop. Its E3 result is whole in the journal: 7 links, 0 timeouts (`scripts/sco-ledger.sh -1`).
   - Only the operator touches the machine's Bluetooth or kernel.
   - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer. It has been paused since 2026-10-11 17:23 (free space then; 108 GB free on 10-17), and the 10-13 reboot removed the timer. Restarting it is the operator's decision. On 10-17, 159 archived files still stood in front of the first unarchived capture: about three weeks at the current rate (`docs/STATUS.md`). Rules: §7, "Evidence".
@@ -183,6 +183,9 @@ it rotted within hours (`R2-13`).
 > INCONCLUSIVE (Gmail closed the connection during AUTH), so **check on 587**. After the next
 > send, the operator revokes the password and confirms with
 > `BT_SMTP_PASS='…' scripts/smtp-login-check.sh 587 tls`, typed by the operator only.
+> **2026-10-18:** the A1/A2 password, deleted by the operator after the send, gets `535 5.7.8`
+> on 465 (AUTH LOGIN 334, 334, then 535: a verdict). 587 could not be reached from this machine
+> that day (connection timed out), so 465 is the fallback when 587 does not connect.
 >
 > **Mesh work, remaining order** (v3 is never sent as one series): (3) the power-off fix —
 > another author's patch for the same bug (patchwork 14864878) was compared in qemu, results
