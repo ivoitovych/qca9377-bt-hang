@@ -93,10 +93,13 @@ Recent detail may be shortened. Settled state is never dropped.
   patches A1 (a2dp duplicate check) and A2 (emulator VLA), sent 10-18 06:39 as two mails
   (`patches/bluez/send-2026-10-18/`; judge each on its own, not by the bot closing its PR).
   The bot: A1 passes all 12 checks; A2's CheckSmatch passes (the warning is gone), but
-  TestFunctional failed one case, `test_bluetoothctl_pair_bredr`, the case rated flaky on
-  10-10. Likely flaky, not established: that harness runs the emulator A2 changes (STATUS).
+  TestFunctional failed one case, `test_bluetoothctl_pair_bredr`: a known upstream flake (about
+  7 failures in 26 bot runs, 10-10 to 10-18), and Pauli Virtanen's patchwork 14879847 (10-10,
+  pending) fixes it (STATUS). Re-checked 10-18 15:29 UTC: no reply, no merge, nothing new.
+  Stable: our three patches are 0154, 0460 and 0517 of the 6.6.160-rc1 review, due Mon 19 Oct
+  16:02 UTC, with no reply to them.
 - **Operator decisions open** (the one list; the hand-off block below points here):
-  - **deploying `main`'s tool set on the laptop**, the urgent one: until then the next shutdown very likely loses the open trial's row (Machine, below);
+  - **deploying `main`'s tool set on the laptop** (a safety review of the deploy is running, 2026-10-18): E3 #1's record is safe since its close by hand on 10-18, but until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
   - restarting the raw-capture archive timer, and the desktop capture's recorders (both stopped by reboots);
   - an Ubuntu SRU for `dc16388d45ec` (the Launchpad pre-check is done, 10-18: `-39` lacks it, no bug exists);
   - the U6 SRU;
@@ -111,7 +114,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - **Since 2026-10-11 16:26 the laptop runs `7.0.0-38` with E3 built for it** (`updates/btusb.ko`, the exact upstream entry; srcversion `D1DEA96A0C95BFAB05CEE01`; the boot log shows `patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded). The build is on private `diag/e3-btusb-for-7.0.0-38-20261010`.
   - `-38`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
   - `-38` also carries the BT-9 fix (`96d006ae6445`). The discovery stuck since 10-04 had already ended on 10-10 at 15:02, at the operator's adapter power cycle (§5; corrected 2026-10-14).
-  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, cherry-picked from `d5272a6` on `tests/unit-testing-introduction`, plus `25dfc68`, and since 2026-10-18 the close writes its row before `bt-state`, `bt-mark` and the SCO decode; the decode, `btmon` over 48 GB of captures, took trial 14's close 53 minutes and was running when trial 15's close stopped without a row) but not on the machine. **Until it is deployed, the next shutdown will very likely lose the open trial's row:** the installed closer decodes the captures before the row, and this trial has had calls (STATUS, the machine's first warning). The only sound route is the whole tool set: `install.sh --tools-only`, `daemon-reload`, `bt-verify-install`, `bt-mode status`. `bt-trial` alone is a partial deploy (STATUS). The stop timeout is 90 s now (systemd's default) and 30 s once `main`'s unit is loaded. When is the operator's decision.
+  - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, cherry-picked from `d5272a6` on `tests/unit-testing-introduction`, plus `25dfc68`, and since 2026-10-18 the close writes its row before `bt-state`, `bt-mark` and the SCO decode; the decode, `btmon` over 48 GB of captures, took trial 14's close 53 minutes and was running when trial 15's close stopped without a row) but not on the machine. **The trial of the 10-13 boot was therefore closed by hand on 2026-10-18 at 17:03** (`scripts/trial-close-now.sh --reopen`: `main`'s closer from the checkout, passive, row first; 13 SCO setups, 0 timeouts; STATUS), and E3 #2 opened at 17:05:04, mid-boot. Until the deploy, a shutdown with a trial open still decodes the captures before the row if the trial saw a call, and the installed `autostop` and `bt-mark` send HCI Read Local Name up to four times (STATUS, the machine's warnings). The only sound route is the whole tool set: `install.sh --tools-only`, `daemon-reload`, `bt-verify-install`, `bt-mode status`. `bt-trial` alone is a partial deploy (STATUS). The stop timeout is 90 s now (systemd's default) and 30 s once `main`'s unit is loaded. When is the operator's decision.
   - **On 2026-10-13 at 20:26 the laptop stopped abruptly** (no shutdown sequence in the journal; cause not recorded) and rebooted at 20:29. The second "E3 #1" lost its row too, and the fix could not have prevented that: an abrupt stop runs no ExecStop. Its E3 result is whole in the journal: 7 links, 0 timeouts (`scripts/sco-ledger.sh -1`).
   - Only the operator touches the machine's Bluetooth or kernel.
   - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer. It has been paused since 2026-10-11 17:23 (free space then; 108 GB free on 10-17), and the 10-13 reboot removed the timer. Restarting it is the operator's decision. On 10-17, 159 archived files still stood in front of the first unarchived capture: about three weeks at the current rate (`docs/STATUS.md`). Rules: §7, "Evidence".
@@ -121,7 +124,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-18 (A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
+**Last updated: 2026-10-18 (trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
 `kernel/mgmt-flush-status` the same day; the next exhibit on `main` is EX-063) — no tip hash:
 it rotted within hours (`R2-13`).
 
@@ -135,8 +138,8 @@ it rotted within hours (`R2-13`).
 >   14897669; Message-IDs `<20261018043903.1756818-1-…>`, `<20261018043911.1756937-1-…>`).
 >   Each is judged on its own, by master, patchwork state and replies. An unchanged v2 only
 >   if it is not in master, is still `new`, has no reply, and not before 2026-11-01. The bot:
->   A1 all PASS; A2 TestFunctional FAIL on `pair_bredr` (STATUS row: likely flaky, not
->   established; nothing to the list meanwhile). The app password, deleted by the operator,
+>   A1 all PASS; A2 TestFunctional FAIL on `pair_bredr`, a known upstream flake that Pauli
+>   Virtanen's pending 14879847 fixes (STATUS row; nothing to the list). The app password, deleted by the operator,
 >   gets 535 on 465.
 > - **The closer's SCO decode never matched.** Written to a pipe, `btmon -r` fits each header
 >   line into 80 columns and shortens the name (`< HCI Comman.. (0x01|0x0028) plen 17`). It
@@ -148,8 +151,12 @@ it rotted within hours (`R2-13`).
 >   with a `btmon` stub that shortens as the real one does, is asked of the test-suite maintainer.
 > - **The decode's cost.** On `main` the close writes its row before the decode (`c1883b4`).
 >   The installed 09-18 closer decodes about 48 GB of captures first, far past the 90 s stop
->   timeout, so **the next shutdown before the deploy very likely loses the open trial's row**
->   (route: "Machine" above; when is the operator's decision).
+>   timeout. So, at the operator's request, **the 10-13 boot's trial (E3 #1) was closed by hand
+>   at 17:03** with `main`'s closer from the checkout (`scripts/trial-close-now.sh --reopen`),
+>   after two read-only snapshots (`scripts/trial-snapshot.sh`). Its row: 13 SCO setups, all
+>   decoded at full width in both paths, 0 timeouts. E3 #2 is open since 17:05:04, mid-boot.
+>   The installed `autostop` and `bt-mark` probe the controller at shutdown; the deploy
+>   (operator's decision) ends that.
 > - **Upstream re-checked.** The 10-17 stable release candidates carry BT-8 and BT-9 (6.6, 6.1)
 >   and the QCA9377 entry (6.6, 6.1, 5.15, 5.10). Ubuntu's `-39`, in proposed, lacks the entry.
 >   #1554's answer came from a second affected user. Two more authors' mesh patches are to be
@@ -449,7 +456,10 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
     went to Luiz's sign-off address instead of his MAINTAINERS one.
   - `scripts/stable-queue-check.sh <short stem>` with a positive control, and
     `scripts/series-backport-check.sh <tag>` (tags, not branch names).
-  - `scripts/patchwork-checks.sh` and `tmp/bt9-repro/ratatoskr-scan.py`: lore refuses fetchers.
+  - `scripts/patchwork-checks.sh` and `tmp/bt9-repro/ratatoskr-scan.py`. lore refused fetchers
+    earlier (403); on 2026-10-18 it answered a plain non-browser user agent with an Atom feed
+    (`curl -A "qca9377-bt-hang/check" "https://lore.kernel.org/linux-bluetooth/?q=s:transport_cb&x=A"`
+    → `200 application/atom+xml`).
   - `devtools/save <msgfile>` then `devtools/ci --wait <sha>`; `scripts/stop-own-process.sh`.
 - **Run the receiving project's CI before sending, on base and on base plus ours.** The 10-10
   BT-9 sends drew three red bot marks, none of them ours
@@ -458,7 +468,8 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   same way on an unrelated patch, and the kernel bot's apply step on a stable backport. We
   were clean by scope, not by checking. A lone local run only repeats the bot's noise; the
   difference against the base is what tells ours from theirs. A failure that is theirs is a
-  candidate fix of its own, once we know it is not already reported.
+  candidate fix of its own, once we know it is not already reported. (The pairing timeout
+  was: Pauli Virtanen's patchwork 14879847 of 10-10 fixes it; found 2026-10-18.)
 - **Trim output inside the script, never with a pipe.** Quiet on success, everything on
   failure — a summary that hides a gate failure is worse than the noise it saved.
 - **Separate what the operator DID from how the controller RESPONDED** (Phase 14). The

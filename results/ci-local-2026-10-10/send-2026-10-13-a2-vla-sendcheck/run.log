@@ -1,0 +1,36 @@
+12:42:33 ci-local: space=user tree=/home/user/qca9377-bt-hang/cache/bluez base=origin/master checks=am,checkpatch,gitlint,buildell,make,makeextell,smatch,incremental,scanbuild jobs=4
+12:42:33 ci-local: out=/home/user/qca9377-bt-hang/tmp/ci-local/20261016T124233Z-a2-vla-sendcheck
+12:42:33   patch: patches/bluez/send-2026-10-13/0001-emulator-Avoid-variable-length-array-in-send_cmd.patch :: [BlueZ] emulator: Avoid variable length array in send_cmd
+12:42:34 ci-local: base commit fa6ba55020dee3c3183041c854c347b4582448be 2026-10-14 mgmt-tester: Add LL Privacy host-resolved RPA scan checks
+12:42:34   $ (cd src && git -c user.name=Iaroslav Voitovych -c user.email=yaroslav.voytovych@gmail.com -c commit.gpgsign=false am /home/user/qca9377-bt-hang/patches/bluez/send-2026-10-13/0001-emulator-Avoid-variable-length-array-in-send_cmd.patch)
+12:42:37   $ (cd /home/user/qca9377-bt-hang/cache/ell && ./bootstrap-configure)
+12:42:53   $ (cd /home/user/qca9377-bt-hang/cache/ell && make -j4)
+12:43:06   $ (cd /home/user/qca9377-bt-hang/cache/ell && make install)
+12:43:07 == make: base side
+12:43:07   $ (cd src && ./bootstrap-configure)
+12:43:20   $ (cd src && make -j4)
+12:47:11 == make: patched side
+12:47:11   $ (cd src && ./bootstrap-configure)
+12:47:27   $ (cd src && make -j4)
+12:51:02 == makeextell: base side
+12:51:02   $ (cd src && ./bootstrap-configure --enable-external-ell --disable-lsan --disable-asan --disable-ubsan)
+12:51:17   $ (cd src && make -j4)
+12:52:29 == makeextell: patched side
+12:52:29   $ (cd src && ./bootstrap-configure --enable-external-ell --disable-lsan --disable-asan --disable-ubsan)
+12:52:45   $ (cd src && make -j4)
+12:54:00 == smatch: base side
+12:54:00   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+12:54:16   $ (cd src && make -j4 CHECK=/home/user/qca9377-bt-hang/cache/smatch/smatch --full-path CC=/home/user/qca9377-bt-hang/cache/smatch/cgcc)
+12:57:51 == smatch: patched side
+12:57:51   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+12:58:07   $ (cd src && make -j4 CHECK=/home/user/qca9377-bt-hang/cache/smatch/smatch --full-path CC=/home/user/qca9377-bt-hang/cache/smatch/cgcc)
+13:01:24 == incremental
+13:01:24   $ (cd src && ./bootstrap-configure)
+13:01:39   $ (cd src && make -j4)
+13:05:14 == scanbuild: base side
+13:05:14   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+13:05:30   $ (cd src && scan-build-18 -o /home/user/qca9377-bt-hang/tmp/ci-local/20261016T124233Z-a2-vla-sendcheck/scanbuild.base.scan-build-reports make -j4)
+13:13:05 == scanbuild: patched side
+13:13:05   $ (cd src && ./bootstrap-configure --disable-asan --disable-lsan --disable-ubsan)
+13:13:20   $ (cd src && scan-build-18 -o /home/user/qca9377-bt-hang/tmp/ci-local/20261016T124233Z-a2-vla-sendcheck/scanbuild.patched.scan-build-reports make -j4)
+13:20:57 RESULT: no NEW finding
