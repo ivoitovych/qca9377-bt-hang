@@ -124,7 +124,7 @@ run `bluetoothd -d` — this project ships that on in
 | Commit ids the documents place on `main` are on main (run by `repo-validate`) | `devtools/doc-main-hashes` |
 | **Which review findings are still open, across every register?** | `devtools/review-open` (`--all`, `--counts`) — reads the status column of `reviews/README.md`; the gate before anything is submitted |
 | Compile-test a kernel patch against the running kernel (no tree needed) | `scripts/build-bluetooth-module.sh [patch]` — `net/bluetooth` from `cache/linux` (or `BT_KSRC=<checkout>`) against `/lib/modules/$(uname -r)/build`; builds only, never installs |
-| **Run a kernel Bluetooth patch on this machine** (module swap, stock daemon, mgmt-channel capture) | `scripts/runtime-mgmt-test.sh status \| stock-daemon \| load unpatched\|patched \| trigger <label> \| restore \| patched-daemon` — refuses while `bt-window` or a trial is open; modules in `tmp/runtime/` from `BT_KSRC=cache/ubuntu-7.0.0-31 scripts/build-bluetooth-module.sh` (Ubuntu's source for the running kernel, not vanilla) |
+| ~~Run a kernel Bluetooth patch on this machine by a live module swap~~ **Retired; never run `load` or `restore`.** | `scripts/runtime-mgmt-test.sh` is kept for the record of 2026-09-23 only. Its first live `btusb` re-probe wedged a healthy controller (`EX-046`), and BRIEF §0 forbids any live unload, reload or swap. A self-built module goes in front of stock through `updates/` and a cold boot: `scripts/module-updates.sh` (below). The patch it was written for, BT-8's `86ef0f58bdec`, is in mainline |
 | **Kernel submission checklist on the patch commit** (checkpatch `--strict` with Fixes resolved, `W=1 -Werror`, sparse new-vs-base) | `BT_SPARSE=cache/sparse/sparse scripts/kernel-preflight.sh cache/full-bt-next` — HEAD must be the patch commit (`git am` it first). ⚠️ Ubuntu's sparse 0.6.4 is too old for 7.x: the kernel silently skips `C=1`; the script refuses without a `CHECK … mgmt.c` line. Current sparse is built in `cache/sparse` |
 | **Regenerate the kernel mail on a tree's tip** (new base, optionally a new message) | `scripts/build-bluetooth-fulltree.sh <ref> <name> <patch>` to prepare `cache/<name>`, then `scripts/kernel-regenerate.sh cache/<name> <patch> [<message-file>]` — `git am` + amend + `format-patch --base`; fails unless the patch-id is unchanged; leaves HEAD at the patch commit for `kernel-preflight.sh`; output in `tmp/kernel-regenerated/` |
 | **Ubuntu's own Bluetooth source for a new kernel release** | `scripts/prepare-ubuntu-ksrc.sh <package-version>` (e.g. `7.0.0-34.34~24.04.1`) → `cache/ubuntu-<abi>`: sparse worktree at `v7.0` + the `linux-hwe-7.0` diff for the Bluetooth paths; refuses a diff that does not match its `.dsc` SHA-256 (the `.dsc` signature is not checked). Fetch the `.dsc`/`.diff.gz` first from `archive.ubuntu.com/ubuntu/pool/main/l/linux-hwe-7.0/` into `cache/ubuntu-src/` |
@@ -169,13 +169,44 @@ run `bluetoothd -d` — this project ships that on in
 | what | command |
 |---|---|
 | Prove the BlueZ patches apply the way a maintainer applies them (`git am` alone/together/either order, BlueZ format rules) | `patches/bluez/git-am-check.sh <bluez-checkout> [<commit>]` |
-| Deploy files, **arm nothing** | `sudo ./install.sh --tools-only` |
+| **What is installed now, file by file, against the commit it came from** (read-only; before a deploy) | `python3 -I scripts/installed-vs-commit.py <checkout> <installed-commit> [<candidate>]` — reads `<installed-commit>:install.sh`, hashes every destination as git does: `identical` / `DIFFERS` / `missing` / `unreadable`; with a candidate, whether a deploy of it changes the file. 2026-10-18 on the laptop with `cccf0fe main`: 67 identical, the modprobe file `missing` because `bt-mode experiment` moved it aside as `.disabled` (identical too), 17 that a deploy changes |
+| Deploy files, **arm nothing** — the whole set, never `bt-trial` alone (its library and `bt-mark` must match it; STATUS) | `sudo ./install.sh --tools-only`, then `sudo systemctl daemon-reload`, `sudo tools/bt-verify-install`, `bt-mode status` |
 | Deploy and arm everything | `sudo ./install.sh --apply` |
 | **Rehearse the investigation machine's deploy** before doing it: its installed tree, a trial open, `--tools-only` over it, `daemon-reload`, the shutdown's close, uninstall | `tests/system-upgrade <old-tree> [mitigation\|experiment]`, gated like the round trip; CI runs it over `cccf0fe` (the 2026-09-18 tools) in both modes. Clean-machine install and removal: `tests/system-roundtrip` (tests/README.md, "The system tests") |
 
 ⚠️ Use `--tools-only` on the investigation machine. `--apply` enables
 `bt-hang-watchdog`, whose USB reset has three controlled demonstrations of driving
 an already-wedged controller off the USB bus until power is removed.
+
+### The other shipped tools
+
+Installed by `install.sh` or run from the checkout, with no question above that names
+them. Each line is the tool's own header; read the file before using it on the laptop.
+
+| tool | what it answers |
+|---|---|
+| `bin/bt-capture` | decode-free HCI capture that survives `btmon` crashing (a daemon, `bt-capture.service`) |
+| `bin/bt-dyndbg` | turn on the kernel's built-in Bluetooth debug statements (`bt-dyndbg.service`) |
+| `bin/bt-evidence` | record a reproduction session as durable, sanitised evidence |
+| `bin/bt-health-snapshot` | append one row of Bluetooth health metrics (timer and event units) |
+| `bin/bt-usbmon` | capture the USB transport under the Bluetooth controller (a daemon) |
+| `tools/bt-actions` | reconstruct what actually happened, from the logs rather than from memory |
+| `tools/bt-boot-provenance` | how did the machine get into each boot |
+| `tools/bt-boot-stats` | one row per boot: did the controller misbehave, and did it hang? |
+| `tools/bt-capdiff` | do the two independent HCI capture paths agree? |
+| `tools/bt-context` | what is next to the failures in the log, not only the failures |
+| `tools/bt-diagnose` | has this machine recorded the HCI command-timeout phenotype? |
+| `tools/bt-env-history` | which workarounds were active during which boot? |
+| `tools/bt-health-report.sh` | are the mitigations working? (installed as `bt-health-report`) |
+| `tools/bt-interval` | seconds between two log timestamps, with the shipped arithmetic |
+| `tools/bt-logvolume` | what is filling the kernel log, and how fast? |
+| `tools/bt-mode` | switch between daily-use mitigation and a clean experiment; `status` only reads. It writes live, so check `bt-window` first (BRIEF §0) |
+| `tools/bt-phase` | did failures cluster near the liveness probe, or only look that way? |
+| `tools/bt-timeline.sh` | every Bluetooth-relevant log stream merged into one chronology (installed as `bt-timeline`) |
+| `tools/bt-trial-audit` | recompute every gating field in `results.tsv` from the journal |
+| `tools/bt-verify-install` | is what is running the same as what is committed? Reads only; run it after a deploy |
+| `tools/bt-verify-kernel-mechanism` | which reset mechanism does this kernel's btusb use? |
+| `tools/verify-restored.sh` | is this machine back to its pre-investigation state? |
 
 ---
 
