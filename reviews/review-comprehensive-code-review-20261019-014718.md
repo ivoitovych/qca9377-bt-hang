@@ -1470,7 +1470,7 @@ boundary that matters.
 ## 49. `devtools/doc-main-hashes`, `devtools/review-open` (read in full)
 
 `doc-main-hashes` is solid:
-- it judges against the main of the remote whose URL is the public repository, never `HEAD`;
+- it judges against `main` on the remote the project publishes to (found by URL), never `HEAD`;
 - a port's origin is accepted only beside its port;
 - a commit only on the current branch is PENDING;
 - a shallow clone or a missing reference is INCONCLUSIVE, never clean.
@@ -1664,67 +1664,122 @@ read beyond this one, so an invariant filed under another heading is possible.
 
 ---
 
-## Consolidated ranked list — all passes (written after §56)
+## Consolidated ranked list — all passes (written after §56, updated after §83)
 
-About 18,500 of ~40,000 lines read line by line, plus pattern sweeps of every tool and script. For
-fixing, by urgency, with the sections that hold the details.
+About 28,000 of ~40,000 lines have been read line by line. That is every file outside the bodies of
+`tests/run-tests`, which were searched for the tests that pin findings (§82). Pattern sweeps covered
+every tool and script. The list is ordered for fixing, by urgency, and each item points to its
+section. Items found in the fifth pass (§57-§83) are folded in.
 
 **1. Act now (operational, the operator's decision)**
 - **CAP1** (§7): the capture daemons will rotate away the unarchived U10 and BT-9 captures. Restart
   the archive or copy them to the keep directory. AR1 (§10) means the decode-free capture
-  directory is never archived even then.
+  directory is never archived even then. Rotation is visibly running: the 2026-09-24 trace files
+  have already left the trace directory (§76; the archive holds those).
 
 **2. Hazards that bypass rules held only in prose (HIGH, latent)**
 - **KR1** (§38): under E3 a real failure would be marked PERTURBED and dropped from the E3 rate. The
-  kernel's own reset is misattributed to the watchdog.
+  kernel's own reset is misattributed to the watchdog. A test asserts the misattribution (§82).
 - **RS1** (§12): `repo-save` pushes every branch not on a short list to `origin`.
-- **MODE1** (§8): `bt-mode mitigation` arms the watchdog; `install.sh` suggests it.
+- **MODE1** (§8): `bt-mode mitigation` arms the watchdog; `install.sh` suggests it. A test requires
+  it (§82).
 - **I1, UN1, RM1** (§4, §5, §32): live btusb reloads in `install.sh --apply`, `uninstall.sh` and
-  `runtime-mgmt-test.sh`, against EX-046.
+  `runtime-mgmt-test.sh`, against EX-046. A test requires UN1's reload branch (§82).
 - **VI1, DS1, SR1** (§16, §50, §36): three places advise `install.sh --apply`. SR1 makes the
   verifier's advice likely on the laptop.
+- **PV1** (§71, §83): six standalone trial harnesses in `scripts/`, one written to run while a trial
+  is open, reach the real `logger` and `bluetoothctl`. On the laptop they would write phantom
+  `TRIAL … START/RESULT` marks into the journal and open MGMT. The fix is to stub every name in
+  `tests/machine-tools`.
 
-**3. Deploy-day traps (MED; small fixes, worth doing before the deploy)**
+**3. The upstream gates can pass on what they did not check (MED; before any send or backport
+request)**
+- **TC1** (§77): a tester that crashes or times out with the patches reads as "no regression".
+- **BF1** (§73): a patch that did not apply builds the unpatched tree, and the "patched" build
+  passes.
+- **STB1** (§74): a revert, or a later commit quoting the subject, reads as the patch being in the
+  rc or already present.
+- **CL3, CL4, CL5** (§79):
+  - sparse that never ran gets PASS;
+  - a crashed checkpatch gets PASS;
+  - the base-side cache ignores the toolchain.
+- **KP1, KP2** (§73): the preflight's sparse step compares only `mgmt.c`, and an interrupted run
+  lets the next one pass unchecked.
+- **CM1** (§73): an unreadable dependant reads as accepting a module bound for `updates/`.
+
+**4. Deploy-day traps (MED; small fixes, worth doing before the deploy)**
 - **I2** (§4): `--tools-only` reads the whole boot's kernel log at its last step.
 - **MODE2** (§8): `bt-mode status` prints "inactive" twice.
 - **CK1** (§50): `devtools/check` always fails on the laptop.
 - **SU1** (§21): extend the rehearsal so CI catches I2, VI1 and MODE2.
 
-**4. Records and evidence (MED)**
+**5. Records and evidence (MED)**
 - **T1** (§1): an interrupted close writes a duplicate row.
 - **AJ1, BJ1** (§24, §23): journal archive gaps.
-- **UN2, SW2** (§5, §31): advice and flags that delete unarchived captures.
-- **SC-1** (§42): `bt-sco` can fill the disk and trigger capture pruning.
-- **EV2, CP1** (§31, §29): unsanitised text left in tracked directories.
+- **UN2, SW2** (§5, §31): advice and flags that delete unarchived captures. A test requires UN2
+  (§82).
+- **SC-1** (§42): `bt-sco` can fill the disk and trigger capture pruning (bounded today by 102 GB
+  free, §58).
+- **EV2, CP1** (§31, §83, §29): unsanitised text left in tracked directories, with a manifest that
+  says `sanitised=yes`.
 - **SC1, SAN1** (§13, §15): raw-byte and IPv6/EUI-64 addresses pass the publishing gate.
+- **HK1** (§70): the key-material counter does not see bluetoothd's key loads, which a capture of
+  the current boot's start does carry.
 - **VR1** (§47): the restoration check is blind to `updates/` modules and the self-built
   bluetoothd.
+- **UC1, FT1, ATC1** (§64, §75, §80):
+  - sanitiser errors listing addresses are kept outside the protected directory;
+  - a rewriting helper would alter an exhibit's verbatim output;
+  - an interrupted `assert-test-catches` leaves a violation for the next save to commit.
 
-**5. Measurement correctness (MED)**
-- **PH1, T9, EH1** (§37), with **JC1** (§51) and the test fixture in §56: the probe counters cannot
-  match this systemd's wording.
-- **AC1** (§43): other boots' commands are shown as operator actions.
+**6. Measurement correctness (MED)**
+- **PH1, T9, EH1** (§37), with **JC1** (§51) and the fixtures in §56 and §82: the probe counters
+  cannot match this systemd's wording.
+- **EH2** (§61): `bt-env-history` has no column for the driver, the treatment that ended the
+  failures.
+- **PM1** (§57): `bt-postmortem` draws its conclusions from the silence of a watchdog that is off.
+- **CD2** (§65): `bt-capdiff`'s key keeps `btmon`'s frame number, so the paths almost never match.
+- **SL1, SL2** (§69): the ledger behind 74/0 opens links on any line with the opcode, and its
+  "timeouts" is not the boot's.
+- **AC1, AX1, AX2** (§43, §67): `bt-actions` shows other boots' commands and any USB device's
+  events as the controller's or the operator's, and leaves the kernel's own reset unattributed.
 - **TA1** (§26): an unreadable window audits as clean.
-- **KM1** (§39): the kernel-mechanism tool reads the stock module, not E3.
-- **T2, SW1** (§1, §31): `COLUMNS=` is ignored by `btmon`.
+- **KM1, DG1** (§39, §62): the kernel-mechanism tool reads the stock module, not E3, and the public
+  entry point sends owners of the device to it.
+- **T2, SW1** (§1, §31): `COLUMNS=` is ignored by `btmon`. The test stub hides it (§82).
 - **M1, EV1, SW3** (§3, §31, §32): tools still open MGMT or send HCI by default.
-- **BS-1, BS-2, BP1, HR1** (§54, §53, §40).
+- **BS-1, BS-2, BP1, HR1, HR2, HR3, PM3, CX1** (§54, §53, §40, §66, §57, §59): whole-boot
+  reads, and any USB device or any adapter standing for the controller.
 - **WD1** (§17): the watchdog's premise no longer holds under E3.
+- **IN1, AWC1** (§80): the coverage instruments leave out `scripts/`, which holds the Foundation's
+  check and the ledger. Awk coverage counts only programs that ran.
 
-**6. Other MED**
+**7. Other MED**
 - **SM1, SM2** (§19): the SMTP check reads a connect failure as REVOKED; the password goes on the
   command line.
 - **SN1** (§18): `bt-snapshot` reads a fixed port and the first adapter of any kind.
-- **CL2** (§45): before `--functional` runs on the laptop, establish where the harness runs
-  `btvirt`.
+- **CL2** (§45, §75): before `--functional` runs on the laptop, establish where the harness runs
+  `btvirt`. It cannot be settled here, because the harness is not installed.
 
-**7. Everything else:** LOW and INFO items in their sections.
+**8. Everything else:** LOW and INFO items in their sections.
 
-**Three recurring patterns** (second- and third-pass summaries). Fixing each once covers many
-findings:
+**Four recurring patterns.** Fixing each once covers many findings:
 1. A fix that reached some sibling tools but not all.
 2. Rules held in prose instead of code.
-3. Fixtures and comments that encode an assumption instead of the machine.
+3. Fixtures, stubs and comments that encode an assumption instead of the machine. The fifth pass
+   found more:
+   - the `btmon` stub and the capdiff fixtures (§82, §65);
+   - the KR1 test (§82);
+   - the relative `Note` timestamps (§72);
+   - a journal fixture's offset form (§76).
+4. **A gate that reports success on what it did not see** (added in the fifth pass). The project
+   states the rule in many headers ("ENUMERATED == 0 IS A REFUSAL"; "a check that cannot be seen to
+   fail proves nothing") and applies it in many places. It is not yet applied in:
+   - TC1, BF1, CL3, CL4 and CM1 among the upstream gates;
+   - TA1, PM2, BB1, BBS1, EH3 and AWC1 among the analysis tools.
+
+   Its mirror image appears on the laptop, where tools blame a test or a register when the suite
+   merely refused to run: ATC1, VS1, CK1.
 
 The suite already pins several tree-wide rules as invariants; the list above names the ones
 missing.
@@ -2381,7 +2436,7 @@ assumed.
 UNVERIFIED (non-zero exit).
 
 **WO1, one more site.** `build-bluetooth-module.sh` 11-12 still uses the older wording for the
-laptop ("the investigation machine and also the family's").
+laptop.
 
 **BV1 — INFO.** `build-v2.sh` and the `--ubuntu` default in `build-bluetooth-module.sh`
 (`cache/ubuntu-7.0.0-31`) are records of one moment, like BM1. Say so in their headers, or drop the
@@ -2721,5 +2776,80 @@ No test asserts the `--apply` advice text (VI1, DS1), so those fixes break nothi
 **One more observation for PV1 (§71).** The suite's own trial harness stubs `logger` (its records
 go to `$TL/bin/logger.log`, read at 10825). The standalone harnesses in `scripts/` copied the
 suite's `hciconfig`, `systemctl` and `journalctl` stubs but not that one.
+
+## 83. `bin/bt-evidence` (lines 140-231; the head was read in §31), `reviews/verify.sh` (105 lines), `tests/machine-tools` (read in full)
+
+**`tests/machine-tools` is the list PV1's fix needs.** It names every command that reads or acts
+on the machine; the suite puts a tripwire in front of each, and the sandbox a decoy. `logger`,
+`bluetoothctl`, `btmgmt`, `hciconfig`, `modprobe` and `rfkill` are all on it. The six standalone
+harnesses of §71 should stub every name in this file, through one shared helper, instead of
+choosing a few by hand.
+
+**EV2, refined. `bt-evidence`'s manifest vouches for files the sanitiser refused.** Line 207 writes
+`sanitised=yes` whenever a sanitiser *exists*, after `sanitize_inplace` (173) has only warned about
+a refusal. This is exactly R2-77/DR-06: `bt-incident`'s header records fixing "the manifest said
+`sanitised=yes` because a sanitiser EXISTED". The session directory is tracked. The fix in §31
+applies: name the failed files in the manifest and exit non-zero.
+
+**EV4 — LOW.** `stop` lists the captures covering the session from the trace directory only (182).
+The decode-free capture directory (`/var/log/bt-health/capture`), the path that exists because
+`btmon` loses data, is not referenced (the shape of AR1).
+
+**VS1 — LOW.** `reviews/verify.sh` checks UT-05 and UT-09 by running `tests/run-tests --section`
+(62, 69). On the laptop the suite refuses while a trial is open, so both checks fail. The script
+then reports "recorded as done, but the check fails" and "the register is stale", exit 1, for a
+register that may be accurate. CK1 and ATC1 have the same shape: say "not measured here" when the
+suite refuses.
+
+`bt-evidence cmd` runs whatever it is given and records its output into the tracked session
+(141-149). The passivity rule rests on the person typing, as with `bt-exhibit` (EXH3), and EXH3's
+refusal list would fit here too.
+
+## Fifth-pass summary (after §57-§83)
+
+**Read in this pass:** about 9,500 lines. Every remaining file in `tools/`, `tools/lib/`, `bin/`,
+`devtools/` and `scripts/` is now read in full, except three `prove-*` harnesses, which were
+searched for PV1 only. The total is about 28,000 of ~40,000 lines.
+
+**Not read line by line:**
+- the bodies of `tests/run-tests` (about 13,900 lines in 169 sections). They were searched for the
+  tests that pin this review's findings (§82) and for systemd wording (§56);
+- the code kept beside its patches and in the published retest kit (`patches/`, `retest/`,
+  `docs/mesh-tester-ci/`). By the project's own scope rules it runs in QEMU elsewhere, never on the
+  laptop.
+
+**Checks run on the laptop in this pass**, all read-only, none touching the controller:
+- `df` and `stat`;
+- directory listings of `/var/log/bt-health`;
+- `journalctl -t bt-mark` (an indexed read) and the archive manifest;
+- the installed kbuild's `Makefile.lib`;
+- two offline `btmon -r` decodes of saved capture files, printing only counts or the first header
+  lines.
+
+**What the fifth pass adds, in short:**
+- **The upstream gates** have false-pass paths (TC1, BF1, STB1, CL3-CL5, KP1, KP2, CM1). These are
+  the tools that stand between a patch and a send, under the rule "run their CI on base and base
+  plus ours, judge only the difference". Each can report success for a check it did not make. None
+  is known to have let anything through: the sends were also checked upstream, and the backports
+  were built and released by the stable team. They are listed as their own group in the
+  consolidated list.
+- **PV1:** the standalone proofs that exist because the suite cannot run on the laptop would, run
+  there, write phantom trial marks into the journal the trials are read from. `tests/machine-tools`
+  already lists every command they should stub.
+- **The instruments behind the main results:**
+  - the SCO ledger behind 74/0 is sound on the recorded evidence but anchored loosely (SL1, SL2);
+  - `bt-capdiff` cannot match real captures (CD2);
+  - `bt-env-history` and `bt-postmortem` predate E3 in what they record and conclude (EH2, PM1);
+  - the coverage instruments leave out the `scripts/` that hold the Foundation's check (IN1).
+- **HK1, a privacy finding:** a capture spanning a bluetoothd start carries every bonded device's
+  key, and the tool offered to answer "does this capture carry key material?" does not see that.
+  Raw captures are never published by rule, so nothing has leaked. The gap matters only for a
+  decision taken on that tool's answer.
+- **§82, a map:** the tests that assert today's behaviour for KR1, T2, T9, PH1, CD2, MODE1, UN1 and
+  UN2. Each fix must change its test in the same commit.
+- **A fourth recurring pattern** (consolidated list): a gate that reports success on what it did not
+  see.
+
+Nothing was fixed. The operator's decision stands: fixes come later, from this file.
 
 
