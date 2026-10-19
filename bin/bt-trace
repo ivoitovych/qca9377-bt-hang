@@ -133,7 +133,10 @@ disk_guard() {
         # SIGTERM arriving here waits up to an hour — `systemctl stop` would
         # hang until TimeoutStopSec expired and the unit would be SIGKILLed.
         # `sleep & wait` is interruptible: the trap runs the moment TERM lands.
-        while :; do sleep 3600 & wait $!; done
+        # cleanup kills this sleep as well as btmon: stopped by a plain kill
+        # rather than by systemd's whole cgroup, the `sleep 3600` outlived the
+        # daemon by the hour (main branch maintainer, 2026-10-11).
+        while :; do sleep 3600 & IDLE=$!; wait "$IDLE"; done
     fi
 }
 
@@ -150,6 +153,7 @@ if (( CHECK )); then
 fi
 
 cleanup() {
+    [[ -n "${IDLE:-}" ]] && kill "$IDLE" 2>/dev/null
     [[ -n "$BTMON_PID" ]] && kill "$BTMON_PID" 2>/dev/null
     wait "$BTMON_PID" 2>/dev/null
     log "stopped"
