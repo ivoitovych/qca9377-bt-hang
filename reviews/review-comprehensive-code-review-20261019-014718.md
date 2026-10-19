@@ -1612,3 +1612,53 @@ USB path learned from its enumeration line; this tool does not.
 before its own sibling (47-50). That is the order `bt-phase` reversed on 2026-09-29, after the
 checkout's tool ran whatever was last deployed. Sibling first.
 
+## 55. `tools/bt-timeline.sh` (116 lines, read in full)
+
+**TL1 — LOW-MED. With no argument, on the laptop's current boot it would run for hours.** The default
+selection is the whole current boot (`-b 0`, line 52). The kernel stream is read unfiltered and
+grepped afterwards (70), and bluetoothd's stream is read whole (it runs with `-d`). Then every
+merged line goes through a `while read` loop that forks `date` once per line (89-90). With dynamic
+debug on, the kernel filter `hci|btusb|bluetooth` keeps hundreds of thousands of lines on a
+multi-day boot, so the default call forks hundreds of thousands of `date` processes. `bt-incident`
+calls it with a 15-minute window and is unaffected.
+*Fix:*
+- default to a recent window (e.g. `-1h`) and say so in the header;
+- pass the kernel filter as `--grep`;
+- format all timestamps in the one `awk` that already tags them (`strftime` under gawk, which CI
+  installs), not with a fork per line.
+
+## 56. `tests/run-tests` — section headings searched, and the section behind T9 read (8855-8885)
+
+The suite has 169 sections. A search of their headings for the subjects of this review's findings
+finds sections on:
+- the watchdog's capability probe and thresholds;
+- `bt-phase`'s incident and probe definitions;
+- `bt-env-history`'s watchdog states;
+- `bt-exhibit`'s and `bt-incident`'s failing sanitiser;
+- the guards on `--apply`;
+- the coredump fixture as a claim;
+- "probes and aborts count events, not lifecycle noise".
+
+**T9, confirmed in the test itself.** The last of these feeds the probe counter this journal:
+
+```
+Starting Snapshot Bluetooth health metrics...
+Finished Snapshot Bluetooth health metrics.
+Starting Snapshot Bluetooth health metrics...
+```
+
+and requires a count of 1. This is the wording of systemd before the unit name was added to these
+messages. This machine's systemd writes `Finished bt-health-snapshot.service - Snapshot Bluetooth
+health metrics.` (§37). The test therefore passes on lines the machine no longer produces, while the
+same counter reads 0 on real input. The fix for T9, PH1 and EH1 must change this fixture (to the
+real line) in the same commit, or the test will start failing on the corrected code.
+
+**What the headings do not show:** no section is named for these classes:
+- "no tool sends an HCI command without `--probe`" (EV1);
+- "every capture daemon is root-only" (UM1);
+- "no `COLUMNS=` before `btmon`" (SW1);
+- "no tool advises `--apply`" (VI1, DS1).
+
+These are the tree-wide invariants proposed in the second-pass summary. Section bodies were not
+read beyond this one, so an invariant filed under another heading is possible.
+
