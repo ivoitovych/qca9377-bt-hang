@@ -38,7 +38,7 @@ STATE="${BT_EVIDENCE_STATE:-/run/bt-evidence}"
 CUR="$STATE/current"
 SYSFS_USB="${BT_SYSFS_USB:-/sys/bus/usb/devices}"
 SYSFS_MOD="${BT_SYSFS_MODULE:-/sys/module/btusb/parameters}"
-TRACE_DIR="${BT_TRACE_DIR:-/var/log/bt-health/trace}"
+TRACE_DIR="${BT_TRACE_DIR:-${BT_HEALTH_DIR:-/var/log/bt-health}/trace}"
 
 SANITIZE=""
 for c in "$REPO/tools/sanitize-logs.sh" /usr/local/bin/bt-sanitize-logs; do

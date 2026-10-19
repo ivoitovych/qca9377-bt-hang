@@ -29,8 +29,11 @@ KREL="${1:-$(uname -r)}"
 # been run against a module whose contents the test controls.
 MODULES_DIR="${BT_MODULES_DIR:-/lib/modules}"
 KO="$MODULES_DIR/$KREL/kernel/drivers/bluetooth/btusb.ko"
-TMP=$(mktemp /tmp/btusb-verify.XXXXXX.ko)
-trap 'rm -f "$TMP"' EXIT
+# Under TMPDIR like every other temporary file here: the name written in put
+# the copy and its .hex beside it in the real /tmp under the suite too (strace
+# over a suite run, 2026-10-09). The trap takes both, whatever the exit path.
+TMP=$(mktemp "${TMPDIR:-/tmp}/btusb-verify.XXXXXX.ko")
+trap 'rm -f "$TMP" "$TMP.hex"' EXIT
 
 G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; B=$'\033[1m'; O=$'\033[0m'
 [[ -t 1 ]] || { G=""; R=""; Y=""; B=""; O=""; }

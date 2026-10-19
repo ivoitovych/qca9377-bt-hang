@@ -19,6 +19,10 @@
 # Exit: 0 success · 1 failure/cancelled · 2 no run found or gh unavailable
 #       3 still running (without --wait)
 #
+# The verdict is the run of .github/workflows/checks.yml. The access audit runs
+# in a workflow of its own and is reported on a line of its own, beside the
+# verdict and never in it.
+#
 # WHY THIS EXISTS. Review 2026-09-16T0420Z, R2-105: "the commit path on the
 # machine never runs the suite and nothing reads CI." main was red for three
 # weeks on two invariants that never passed anywhere; devtools/save printed
@@ -107,7 +111,7 @@ fetch() {   # -> "conclusion<TAB>status<TAB>runId<TAB>title" for the newest run 
     # a broken query is exactly what waited twenty minutes on 2026-09-19.
     local out err rc
     err=$(mktemp)
-    out=$(gh run list "${GHR[@]}" --limit 30 --json conclusion,status,headSha,databaseId,displayTitle \
+    out=$(gh run list "${GHR[@]}" --workflow checks.yml --limit 30 --json conclusion,status,headSha,databaseId,displayTitle \
         --jq ".[] | select(.headSha | startswith(\"$SHORT\")) | \"\\(if .conclusion == null or .conclusion == \"\" then \"-\" else .conclusion end)\\t\\(.status)\\t\\(.databaseId)\\t\\(.displayTitle)\"" \
         2>"$err"); rc=$?
     if (( rc != 0 )); then
@@ -123,7 +127,7 @@ fetch() {   # -> "conclusion<TAB>status<TAB>runId<TAB>title" for the newest run 
 
 if (( RECENT )); then
     printf 'CI — last %s run(s) on main, in %s\n\n' "$N" "$ASKED"
-    gh run list "${GHR[@]}" --limit "$N" --branch main --json conclusion,status,headSha,displayTitle \
+    gh run list "${GHR[@]}" --workflow checks.yml --limit "$N" --branch main --json conclusion,status,headSha,displayTitle \
         --jq '.[] | "\(if .conclusion == null or .conclusion == "" then .status else .conclusion end)\t\(.headSha[0:7])\t\(.displayTitle[0:64])"' 2>/dev/null \
         | awk -F'\t' '{ printf "  %-10s %s  %s\n", $1, $2, $3 }'
     exit 0
@@ -216,10 +220,37 @@ if (( WAIT )); then
     echo
 fi
 
+# THE ACCESS AUDIT, BESIDE THE VERDICT AND NOT IN IT. It runs in a workflow of
+# its own (.github/workflows/access-audit.yml; the main branch maintainer,
+# 2026-10-19): a trace makes the suite about six times slower, and the verdict
+# should not wait for it. Every answer above is checks.yml's run, asked by name:
+# with two workflows a commit has two runs, and the newest of them would have
+# been whichever finished last. This line reports the audit's run and never
+# changes the exit status.
+audit_line() {
+    local a c s id
+    a=$(gh run list "${GHR[@]}" --workflow access-audit.yml --limit 30 --json conclusion,status,headSha,databaseId \
+        --jq ".[] | select(.headSha | startswith(\"$SHORT\")) | \"\\(if .conclusion == null or .conclusion == \"\" then \"-\" else .conclusion end)\\t\\(.status)\\t\\(.databaseId)\"" \
+        2>/dev/null | head -1)
+    if [[ -z "$a" ]]; then
+        echo "  access-audit — no run for $SHORT in $ASKED (its own workflow; not part of the verdict)"; return
+    fi
+    IFS=$'\t' read -r c s id <<<"$a"
+    if [[ "$s" != completed ]]; then
+        echo "  access-audit — running  run $id (its own workflow; not part of the verdict)"
+    elif [[ "$c" == success ]]; then
+        echo "  access-audit — ✓ success  run $id (its own workflow; not part of the verdict)"
+    else
+        echo "  access-audit — ✗ $c  run $id (its own workflow; not part of the verdict)"
+        echo "    its failing lines: gh run view ${GHREPO:+-R $GHREPO }$id --log-failed"
+    fi
+}
+
 IFS=$'\t' read -r concl status runid title <<<"$row"
 if [[ "$status" != "completed" ]]; then
     printf 'ci — %s  %s  run %s in %s  (%s)\n' "$SHORT" "RUNNING" "$runid" "$ASKED" "${title:0:60}"
     echo "  not terminal yet — devtools/ci --wait $SHORT"
+    audit_line
     exit 3
 fi
 
@@ -248,10 +279,12 @@ case "$concl" in
     success)
         printf 'ci — %s  ✓ %s  run %s in %s  (%s)\n' "$SHORT" "$concl" "$runid" "$ASKED" "${title:0:60}"
         (( SHOWFAILED )) && echo "  (green — nothing failed to show)"
+        audit_line
         exit 0 ;;
     failure|cancelled|timed_out|startup_failure)
         printf 'ci — %s  ✗ %s  run %s in %s  (%s)\n' "$SHORT" "$concl" "$runid" "$ASKED" "${title:0:60}"
         show_failed
+        audit_line
         exit 1 ;;
     *)
         printf 'ci — %s  ? %s  run %s\n' "$SHORT" "${concl:-unknown}" "$runid"

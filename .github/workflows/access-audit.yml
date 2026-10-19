@@ -1,0 +1,53 @@
+# The isolation itself, measured by an exact trace, on every push and PR.
+#
+# The decoy world in checks.yml watches what the machine ANSWERS; an access
+# that answers nothing (an existence check of a path absent here, a read of a
+# file no test names) passes it everywhere and reads the real machine on the
+# laptop. This runs the whole suite under strace and classifies every file
+# access, made or attempted, by where it landed; any that reached the machine
+# fails it unless tests/access-allowlist names it, with its reason, and an
+# allow line nothing matched fails it too. Its first run found nine kinds the
+# decoy world had passed (2026-10-09; tests/README.md, rule 7).
+#
+# A WORKFLOW OF ITS OWN, so its verdict is not the CI verdict (the main branch
+# maintainer, 2026-10-19). checks.yml is the gate; devtools/ci reads that
+# workflow's run for its verdict and reports this one on a line of its own. A
+# trace makes the suite about six times slower, so here it adds nothing to the
+# wait for the verdict either.
+
+name: access-audit
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  access-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gawk, systemd-journal-remote, fakeroot and strace
+        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+
+      # Namespaces lifted, so the suite's namespace and checkout worlds run
+      # under the trace too, and their own accesses are classified with them.
+      - name: access-audit self-test (every planted machine access is caught)
+        run: |
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+          devtools/access-audit --self-test
+
+      - name: the suite under an exact access trace (nothing outside the allow list)
+        run: devtools/access-audit --report access-audit-report
+
+      - name: keep the trace when the audit fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: access-audit-report
+          path: access-audit-report/
