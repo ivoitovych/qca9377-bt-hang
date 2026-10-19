@@ -875,3 +875,72 @@ re-archive something that exists.
 report "gone from the ring — archived (complete / prefix)" or "gone", and count AT RISK only for
 unarchived boots.
 
+## 31. Pattern sweep over the tools not yet read line by line, then `bin/bt-evidence` and `tools/bt-diagnose` (first 145 and 110 lines)
+
+The sweep searched every unread tool for controller probes (`hciconfig`, `btmgmt`, `bluetoothctl`),
+live module actions (`modprobe -r`, `unbind`), deletions (`rm -rf`), the `COLUMNS=` width
+defect and the fixed `3-3` path. Hits:
+
+**EV1 — MED (laptop). `bt-evidence` still probes the controller on every start and stop.**
+`snapshot_state` (lines 69-71) runs `hciconfig <hci> name` (HCI Read Local Name) with no opt-in, at
+`start` and at `stop`. Those are the two edges of a reproduction session, the moments being
+recorded. The probe-free reform of 2026-09-18/19 (R2-78, R2-94) reached `bt-state`, `bt-mark`,
+`bt-diagnose` and `bt-status`, but not this file. `bt-evidence` is installed on the laptop. It also
+lists connected devices through `bluetoothctl` (line 87): M1's `btmon` crash.
+*Fix:*
+- make the probe opt-in (`--probe`), as in `bt-state`;
+- use the MGMT-free connection count proposed in M1.
+
+**EV2 — MED (privacy). `bt-evidence` claims its sessions are always sanitised, and they are not.**
+Its header says "Everything written here is passed through the log sanitiser, so sessions are safe
+to commit". But `sanitize_inplace` (90-94):
+- returns success when no sanitiser exists;
+- only warns when the sanitiser refuses, leaving the raw file in `evidence/sessions/`, which is
+  tracked.
+
+`bt-incident` fixed exactly this on 2026-09-19 (DR-06: name the failures in the manifest, exit
+non-zero).
+*Fix:* port that fix here.
+
+**EV3 — LOW. A machine path is still hard-coded.** Line 32 falls back to a hard-coded
+`/root/exp/qca9377-bt-hang`, the pattern `bt-incident`'s header records removing ("shipped one
+machine's home-directory layout").
+
+**SW1 — MED (known, still open). Three tools still set `COLUMNS=200`, which `btmon` ignores.**
+`tools/bt-actions:287`, `tools/bt-sco:69` and `tools/bt-capdiff:86` pipe `btmon` with
+`COLUMNS=200`. This is the same defect as T2. STATUS records the fix as asked of the test-suite
+maintainer. Listed here so the review's ranked list holds every site.
+
+**SW2 — LOW-MED. `verify-restored.sh` advises deleting the capture directory.** It prints
+"`$HEALTH_DIR` still present … — rm -rf to clear" (line 159). That directory holds the raw captures
+as well as the metrics, so the advice deletes unarchived evidence, as UN2 does.
+*Fix:* name the archive check first, or advise deleting `metrics.tsv` only.
+
+`bt-diagnose`'s probe is opt-in (`--probe`, line 125) and documented; no finding.
+
+## 32. Pattern sweep over `devtools/` and the remaining `scripts/`, then `scripts/runtime-mgmt-test.sh` (first 60 lines)
+
+The devtools instruments' `rm -rf` calls are all `trap`s on their own `mktemp -d` work directories.
+The build and check scripts' `rm -rf "$OUT"` calls wipe their own output directories under `tmp/`,
+which the tooling index documents. No pushes or sends outside `devtools/save`, `repo-save` and
+`held`. Two hits matter:
+
+**RM1 — MED (latent, laptop). `runtime-mgmt-test.sh` is retired only in a comment.** Its header
+says `load`/`restore` "WEDGED THE CONTROLLER (EX-046) … Do not run load/restore on a live system
+here". The tooling index says "Retired; never run `load` or `restore`". Yet the code still performs
+the live `modprobe -r` sequence (lines ~100-165). Two things stand between it and the laptop:
+- root;
+- `guard()`, which refuses only while a trial or an untreated window is open.
+
+Between a hand close and a reopen, or on a boot whose trial failed to open, nothing stops it.
+*Fix:* make `load` and `restore` refuse unconditionally with the EX-046 reference. The record
+survives in git history.
+
+**SW3 — LOW. `scripts/sco-ledger.sh` opens MGMT on every run.** It names headsets from
+`bluetoothctl devices` (line 28). Every ledger run, and every `boot-bt-summary.sh` run that calls it
+(including `trial-snapshot.sh`), is therefore M1's `btmon` crash trigger. The names can come from
+bluetoothd's store under `/var/lib/bluetooth/<adapter>/<device>/info` (`Name=`), read as files.
+
+`capture-window.sh` and `supported-commands-survey.sh` use `COLUMNS=160`. The STATUS audit of
+2026-10-18 found the first fails in part and the second works; they belong with SW1.
+
