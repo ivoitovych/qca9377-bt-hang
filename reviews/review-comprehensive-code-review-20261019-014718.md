@@ -1250,3 +1250,61 @@ mitigations at all.
 `/sys/module/btusb/srcversion` per boot from `metrics.tsv` if added). Name E3 boots as their own
 group, or state at the top that the report predates E3 and must not be read for it.
 
+## 41. `tools/bt-capdiff` (first 140 of 290 lines)
+
+Its header is a model of stating what a redundancy does and does not buy (same socket, same offline
+decoder). It drops monitor-session bookkeeping that would only count `btmon`'s restarts, and it
+compares only the overlap of the two paths.
+
+**CD1 — LOW-MED. The time window is applied after decoding everything.** `extract()` (78-110) runs
+`btmon -r` over every file in both directories, about 800 files and 48 GB on the laptop, before the
+`--since/--until` window is applied (135-136). One `btmon` pass over the trace directory alone
+took over ten minutes on 2026-09-24 (`bt-trial`'s comment). On the laptop
+`bt-capdiff --since …` therefore costs a decode of everything retained. It looks hung, and it
+would compete with the machine for an hour.
+*Fix:* choose the files whose name-start/mtime range overlaps the window first, as
+`scripts/trial-sco-decode.py` does, and decode only those. This is SW1 too (`COLUMNS=200`,
+line 86).
+
+## 42. `tools/bt-sco` (142 lines, read in full)
+
+**SC-1 — MED. Run on the laptop, `bt-sco` can set off the deletion of captures.** It decodes every
+retained capture (`btmon -T -r` over all of `/var/log/bt-health/trace/*.btsnoop`, lines 68-70) into
+one temporary file under `/tmp`, on the root filesystem, before filtering anything. The trace
+directory holds about 400 files. `btmon`'s text decode is several times larger than the binary
+capture, and the two capture directories hold 48 GB together. So the temporary file can run to
+tens of gigabytes. As it grows past the capture daemons' free-space floor (15 GB), both daemons
+start deleting the oldest captures (`bt-trace` `disk_guard`, `bt-capture` `prune`), unarchived ones
+included (CAP1). A read-only analysis tool would then destroy evidence by filling the disk. Its
+results are empty anyway while SW1 stands (`COLUMNS=200`: the shortened header never matches
+"HCI Command: Setup Synchronous Connection", so `setup requests 0`).
+*Fix:*
+- stream instead of buffering (pipe the decode straight into the awk filter);
+- decode only the files a window needs;
+- write any buffer under the project's `tmp/` with a size check against the floor;
+- `--columns=200`.
+
+The tool should also refuse to start when free space minus the expected decode would cross the
+capture floor.
+
+**SC-2 — INFO.** The header is honest that the default mode does not pair requests with completions,
+and points to `--window`. Keep it so.
+
+## 43. `tools/bt-actions` (lines 1-100 by search, 276-316 read)
+
+**AC1 — MED. The capture pass puts other boots' MGMT commands into a single boot's timeline.** The
+journal pass is scoped by `-b <boot>` and `--since/--until` (79-81). The HCI-capture pass (283-296)
+is not: it decodes every retained `.btsnoop` in the trace directory, about three weeks of captures,
+and appends every matching `MGMT Command:` to the same stream. All of it is rendered under
+"Reconstructed action timeline — boot N", labelled USER, the label the header calls "the closest
+thing to a record of operator intent". A reader of boot −1's timeline is shown, as operator actions:
+- Set Powered, Disconnect and Pair Device commands from other boots;
+- commands from outside the requested window.
+
+That is a fabricated record in a tool whose header line is "reconstruct what actually happened, from
+the logs rather than from memory". While SW1 stands, the shortened header lines may hide some of
+these lines, which only masks the defect.
+*Fix:* take the boot's first and last timestamps from `--list-boots` (or the window's
+`--since/--until`). Decode only the capture files that overlap that range, and drop records outside
+it before they reach the stream.
+
