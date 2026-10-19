@@ -13909,6 +13909,31 @@ else
 fi
 rm -rf "$SVQ"
 
+# devtools/check, THE SAME CASE (CK1, the review of 2026-10-19). Its first step is
+# repo-validate with the suite, which refuses while a trial is open; on the
+# laptop bt-trial-auto opens one every boot, so check ended NOT READY TO COMMIT
+# there every time. It now does what repo-save does. Its own copy, beside spies
+# for the three validators it calls: the real ones would run this suite inside
+# itself, and what is under test is which arguments check passes and what it says.
+CK=$(mktemp -d); mkdir -p "$CK/devtools" "$CK/trial"
+cp devtools/check "$CK/devtools/"
+for v in repo-validate repo-scan journal-contract; do
+    printf '#!/bin/sh\necho "%s${*:+ $*}" >> "%s/calls"\n' "$v" "$CK" > "$CK/devtools/$v"
+done
+chmod +x "$CK/devtools"/*
+printf 'trial-07 build=stock opened 2026-08-19T18:00:00+02:00\n' > "$CK/trial/current"
+CKO=$(BT_TRIAL_STATE_DIR="$CK/trial" "$CK/devtools/check" --quick 2>&1); ckrc=$?
+(( ckrc == 0 )) && grep -qx 'repo-validate . --no-suite' "$CK/calls" \
+   && [[ "$CKO" == *"A TRIAL IS OPEN"* && "$CKO" == *"trial-07"* && "$CKO" == *"ready, WITHOUT the suite"* ]] \
+    && ok "devtools/check with a trial open passes --no-suite and says so, first and in its verdict" \
+    || bad "devtools/check with a trial open (rc=$ckrc): called $(grep repo-validate "$CK/calls" | tr '\n' ' ')| $(tail -1 <<<"$CKO")"
+: > "$CK/calls"; rm -f "$CK/trial/current"
+CKN=$(BT_TRIAL_STATE_DIR="$CK/trial" "$CK/devtools/check" --quick 2>&1); cknrc=$?
+(( cknrc == 0 )) && grep -qx 'repo-validate' "$CK/calls" && [[ "$CKN" != *"TRIAL"* && "$(tail -1 <<<"$CKN")" == ready ]] \
+    && ok "with no trial open devtools/check runs repo-validate with the suite, unchanged" \
+    || bad "devtools/check without a trial (rc=$cknrc): called $(grep repo-validate "$CK/calls" | tr '\n' ' ')| $(tail -1 <<<"$CKN")"
+rm -rf "$CK"
+
 rm -rf "$SCRATCH"
 
 echo

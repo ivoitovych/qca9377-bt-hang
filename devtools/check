@@ -4,6 +4,9 @@
 #   devtools/check              syntax + invariants + drift + install state
 #   devtools/check --quick      skip the install-state comparison
 #
+# With a trial open (BT_TRIAL_STATE_DIR, default /run/bt-trial) the suite is
+# not run, as in repo-save, and the output says so.
+#
 # WHY THIS EXISTS. There are four separate gates in this repository, and the
 # habit was to reassemble them by hand each time:
 #
@@ -43,10 +46,27 @@ step() {
     fi
 }
 
+# AN OPEN TRIAL CHANGES WHICH VALIDATORS RUN, AS IN repo-save (CK1). The suite
+# refuses while a trial is open, and on the laptop bt-trial-auto opens one every
+# boot, so the first step below failed there every time and this command always
+# ended NOT READY TO COMMIT. With a trial open it runs every validator but the
+# suite, and says so before the first step and in its verdict.
+TRIAL_STATE="${BT_TRIAL_STATE_DIR:-/run/bt-trial}"
+VALIDATE_ARGS=()
+TRIAL_OPEN=0
+if [[ -e "$TRIAL_STATE/current" ]]; then
+    TRIAL_OPEN=1
+    VALIDATE_ARGS=(. --no-suite)
+    printf '%sA TRIAL IS OPEN on this machine — the suite will NOT be run.%s\n' "$R" "$O"
+    awk '{ print "    " $0 }' "$TRIAL_STATE/current" 2>/dev/null
+    echo "  Every other validator runs. CI runs the suite on push."
+    echo
+fi
+
 # repo-validate runs tests/run-tests itself and parses every shell and awk file,
 # so it subsumes both the syntax loop and the test suite.
 step "repo-validate (syntax, awk parse, invariants, doc drift)" \
-     devtools/repo-validate
+     devtools/repo-validate "${VALIDATE_ARGS[@]}"
 
 # Staged-additions scanning (repo-save) lets anything ALREADY committed ride
 # along forever: the tree carried two real device addresses and a leaked
@@ -68,6 +88,8 @@ fi
 
 if (( rc )); then
     printf '%sNOT READY TO COMMIT%s\n' "$R" "$O"
+elif (( TRIAL_OPEN )); then
+    printf '%sready, WITHOUT the suite (a trial is open; CI runs it on push)%s\n' "$G" "$O"
 else
     printf '%sready%s\n' "$G" "$O"
 fi

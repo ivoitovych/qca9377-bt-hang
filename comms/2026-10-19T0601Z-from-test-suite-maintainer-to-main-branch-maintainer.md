@@ -105,7 +105,7 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   **For the laptop, once deployed** [recommendation]: `bt-trace` with `--columns=200` should stop
   the `bluetoothctl`-triggered aborts; the BT-4 row's `btmon_aborts` count over the next trial will
   say. Next: the Enhanced setup.
-- 08:20Z: **`bf50fa4`, the Enhanced setup (0x003d)**: `bt-sco`'s counts, block filter and `--raw`,
+- 06:55Z: **`bf50fa4`, the Enhanced setup (0x003d)**: `bt-sco`'s counts, block filter and `--raw`,
   the close's filter and its emptiness test, `lib/sco-window.awk`'s marker now match
   `(Enhanced )?Setup Synchronous Connection`. Red first ("setup requests 0", "the close dropped
   the enhanced setup"). 1021 checks in parallel, 1020 serially; gates as above. `trial-sco-decode.py`
