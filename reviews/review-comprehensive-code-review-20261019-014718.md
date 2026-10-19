@@ -2681,4 +2681,45 @@ branches" in its header and output.
 
 `devtools/mutate` and `mutants` are in §68.
 
+## 81. `devtools/test-comprehension` (351 lines), `devtools/ci` (lines 118-240), `devtools/coverage-exclude` (read in full)
+
+`test-comprehension` scores each unit by its weakest dimension (modes, refusals, seams, lines), not
+by the average, and a unit with nothing measurable is printed as UNMEASURED rather than 100%. It
+refuses when `devtools/coverage` fails, so it never scores a red run. Its unit list is `install.sh`'s
+files plus the executables under `bin/` and `tools/`, so `scripts/` is outside it too (IN1).
+
+The rest of `devtools/ci` is sound:
+- `--wait` waits for a run to be queued, within a grace budget that network failures do not spend;
+- every terminal state is matched, not only success;
+- the failed-step log is saved whole beside the filtered lines.
+
+`coverage-exclude` holds 34 entries, each with its reason. Most are inline awk programs, which
+`devtools/awk-coverage` measures instead. The rest are the instruments themselves, the gated system
+tests, and failure branches unreachable in a green run. None excludes a path this review found
+hazardous: the live reloads in `install.sh` and `uninstall.sh`, `bt-mode`, or the watchdog. The
+coverage figures do not hide them.
+
+## 82. `tests/run-tests`: the tests that pin this review's findings (targeted reads)
+
+The suite is 14,195 lines in 169 sections; its bodies were not read line by line. They were
+searched for the behaviour behind each major finding. A fix whose test asserts the old behaviour
+must change that test in the same commit, or the suite turns red on the fix. The tests found:
+
+| finding | test | what it asserts today |
+|---|---|---|
+| KR1 (§38) | 8830-8834, with the comment at 8806-8807 | that `host kernel: Bluetooth: hci0: Resetting usb device` is "the watchdog's wording" and records `usb_reset`. The fixture's own transport is the kernel (`host kernel:`), which is what `btusb_reset()` prints; the watchdog writes through its unit. The test and its comment carry KR1's misattribution. |
+| T2, SW1 (§1, §31) | the `btmon` stub at 10785-10803 | full-width headers (`< HCI Command: Setup Synchronous Connection (0x01\|0x0028) plen 17 …`) whatever its arguments. A real `btmon` in a pipe ignores `COLUMNS=200` and shortens the header, so the closer's decode is tested on a shape it never receives. The fix should make the stub print the shortened form unless it is given `--columns=200`; the test then fails on today's code. |
+| T9 (§37, §56) | 8866-8867 | the probe counter fed systemd's old `Finished Snapshot …` wording. |
+| PH1 (§37) | `tests/journal/phase/unit-bt-health-snapshot.service.b0.log` | bare `Snapshot Bluetooth health metrics` lines, a shape systemd does not print. |
+| CD2 (§65) | `tests/btmon/capdiff-a.txt`, `capdiff-b.txt` | the same frame numbers for the same events in both paths. |
+| MODE1 (§8) | 6136-6138 | that `bt-mode mitigation` runs `systemctl enable --now bt-hang-watchdog`; the failure message reads "the machine stays unprotected". The Foundation says arming the watchdog is the hazard. |
+| UN1 (§5) | 11748-11751 | that an idle btusb "takes the reload branch" (`modprobe -r btusb; modprobe btusb`), withheld only because staging withholds every system command. The comment above it says the reload "resets the controller" and must not run where the suite runs. |
+| UN2 (§5) | 11723-11726 | that `--purge-metrics` removes `/var/log/bt-health` whole. The fixture holds only `metrics.tsv`, so the test never shows that captures go with it. |
+
+No test asserts the `--apply` advice text (VI1, DS1), so those fixes break nothing.
+
+**One more observation for PV1 (§71).** The suite's own trial harness stubs `logger` (its records
+go to `$TL/bin/logger.log`, read at 10825). The standalone harnesses in `scripts/` copied the
+suite's `hciconfig`, `systemctl` and `journalctl` stubs but not that one.
+
 
