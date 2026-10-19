@@ -1057,3 +1057,92 @@ removes the stronger of the two remaining guards.
 No defects in the part read. The remaining 311 lines (decoy staging, judging, `--self-test`) are not
 yet read.
 
+**Continued: lines 321-631, read in full.** The staging is careful:
+- decoys are bound over every real copy of each machine tool;
+- the installed set is parsed from `install.sh` (with a refusal if fewer than 40 entries parse);
+- `/proc` entries are bind-mounted decoys;
+- every isolation probe has a positive control run on the host first. A probe the host itself could
+  not reach is "not verifiable here", never "caught".
+
+**SB2 — LOW-MED. If isolation is broken, the self-test damages the real working tree.** Three of
+its WRITE probes act on a real tracked file: `echo probe >> "$REPO/README.md"` and
+`rm "$REPO/README.md"` (528-529), plus the create probe. They depend on the very isolation under
+test. If the overlay is silently absent (the case the self-test exists to catch), the probes append
+to and then delete the real `README.md`. The after-check (564) reports this but restores nothing. A
+README with uncommitted edits would lose them.
+*Fix:* probe against a sentinel created for the purpose (e.g. `$REPO/tmp/.sandbox-sentinel-<nonce>`
+with known content, written before the run). Compare and remove it afterwards. The tracked tree is
+then never the test object.
+
+## 36. `tests/system-roundtrip` (209 lines, read in full)
+
+The gating is good:
+- an explicit variable;
+- refusal on any existing installation, open trial or experiment mode;
+- `required` turns a skip into a failure;
+- a bounded wait for a runner still booting.
+
+The direct "no destination survives" check is derived from `install.sh`, never hand-listed.
+
+**SR1 — LOW-MED, strengthens VI1. `bt-verify-install` reports conditional files as missing.**
+The test records (138-145) that `bt-verify-install` expects every `install_file` destination
+unconditionally. `install.sh` installs the `btmon`- and `tcpdump`-dependent ones only when those
+tools exist. So on a host missing either, the verifier reports correctly-skipped artifacts as "NOT
+INSTALLED". It then ends with VI1's "Run: sudo ./install.sh --apply". The note calls this "worth
+fixing in bt-verify-install, recorded rather than papered over", but it is not on any register.
+*Fix:* apply the same `command -v` conditions as `install.sh`, or have `install.sh` write the list
+of what it actually installed for the verifier to read.
+
+**SR2 — INFO. One refusal check can never run.** The experiment-mode refusal (86-89) reads
+`/usr/local/share/qca9377-bt-hang/mode`, but line 76 already refused if that directory exists at
+all. Harmless; drop it or move it first, so the message names the more specific reason.
+
+## 37. `tools/bt-phase`, `tools/lib/phase.awk` (read in full), checked against systemd's real wording
+
+The analysis is careful:
+- probes classed by provenance (unit name), not by spacing;
+- both gap boundaries exogenous;
+- timeout lines collapsed into clusters, explicitly not called incidents;
+- nothing compared across a reboot;
+- dates through the shared `iso_secs`.
+
+**The wording systemd 255 uses on this machine**, read from the journal (2026-10-19, a oneshot unit
+of this project):
+
+```
+… systemd[1]: Finished bt-journal-backup.service - Archive every retained journal boot, so evidence stops evaporating.
+```
+
+Each oneshot run logs `Starting <unit> - <Description>...` and `Finished <unit> - <Description>.`,
+with the unit name between the verb and the description.
+
+**PH1 — MED (latent). On this systemd, `bt-phase` would skip every boot, giving the wrong reason.**
+`collect()` keeps every line containing "Snapshot Bluetooth health metrics" (103-108). That matches
+both the `Starting` and the `Finished` line of one run, so each timer probe becomes two EXO
+records seconds apart. The provenance self-check (phase.awk 60-62) treats any gap under half the
+timer period as proof of udev contamination. Every boot is then SKIPPED, with the message "Those
+boots predate the split of bt-health-snapshot.service from -event.service", which is false.
+- The fixture (`tests/journal/phase/unit-bt-health-snapshot.service.b0.log`) has one bare
+  `systemd[1]: Snapshot Bluetooth health metrics` line per probe. That is a shape systemd does not
+  print, against the suite's own rule that fixtures come from real log text. So the test passes.
+- `bt-trial` met the same double-count and fixed it for its own counter (`bt-trial` 891-897,
+  review 2026-08-15T1752Z §4.6); the fix did not reach `bt-phase`.
+- No probe-timer data is in the retained journal now (the timer has been off), so no report was
+  wrong today. The next mitigation-mode boot would give one.
+
+*Fix:*
+- take `Finished` lines only, matched on the unit name;
+- regenerate the fixture from a real `journalctl -u bt-health-snapshot.service -o short-iso-precise`;
+- let `devtools/journal-contract` cover this fixture.
+
+**T9 — MED (latent). `bt-trial`'s probe counter can never match on this systemd.** `bt-trial`'s
+`probes` column counts `^Finished Snapshot Bluetooth health metrics` in `-o cat` output (line 902),
+and `probe_to_timeout_s` greps `Finished Snapshot Bluetooth health` (925). On systemd 255 the line
+reads `Finished bt-health-snapshot.service - Snapshot Bluetooth health metrics.`, so neither pattern
+matches: the column is 0 and the interval `?` whatever ran. Every row in `results.tsv` records
+`probes=off` in its treatment and `0` in `probes`. That is probably true for the timer, but the
+udev-driven `-event` unit's runs (counted by the same pattern) would also read 0. The comment at
+896-897 asks for exactly this check after a systemd upgrade.
+*Fix:* match `Finished bt-health-snapshot(-event)?\.service`. Add a fixture built from the real line,
+so the next wording change fails a test instead of zeroing a column.
+
