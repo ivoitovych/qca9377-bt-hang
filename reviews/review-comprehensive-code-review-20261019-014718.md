@@ -2106,3 +2106,92 @@ laptop's current boot that is hours, as with TL1, before AC1's capture pass adds
 capture. Default to a recent window and pass the classifier's anchors as `--grep` where they are
 kernel-only.
 
+## 68. `devtools/mutate` (276 lines), `devtools/mutants` (311 lines) (read in full)
+
+Both are strong:
+- every mutant runs in its own git worktree, so the checkout is never modified;
+- the file under test is copied aside at the start, so edits made during a long run do not leak in;
+- the suite must be green on the unmutated tree before anything is measured;
+- a mutant that cannot be applied where it was listed fails the run (exit 2), not a quiet zero;
+- rows travel between processes separated by `\037`, after a dropped `!` once shifted every field;
+- `--self-test` pins each of these promises on a repository it builds, and every run starts with
+  it.
+
+`mutants` scans shell context (quotes, heredocs, `[[ ]]`, `(( ))`, comments) and the awk programs
+quoted inside shell, so it proposes mutants in decision code rather than in messages.
+
+**MT1 — LOW (latent). "Nothing it writes outlives it" holds for `/tmp` only.** Each mutant gets new
+user, pid, mount and net namespaces and a private `/tmp` (203). The rest of the filesystem is the
+host's, written as the invoking user, and so are `/run` and the D-Bus and systemd sockets under
+it. Run as root, a mutant that reached `systemctl`, `bluetoothctl` or a file under `/var/log` would
+act on the host. Three things prevent that today:
+- the laptop refuses user namespaces, so `mutate` exits 3 there, like the sandbox (SB1);
+- CI runs as an unprivileged user;
+- the suite's PATH tripwire.
+
+The header claims more than the code provides.
+*Fix:* refuse to run as root (or as any user that owns `/var/log/bt-health`). Alternatively, run
+each mutant inside `devtools/sandbox`'s decoy world, which exists for exactly this. Reword the
+header to "a private `/tmp`; the rest of the filesystem is shared".
+
+**MN1 — INFO.** `mutants` line 220, `if frm in ("++", "--") and False: continue`, can never be
+true; remove it or say what it was meant to exclude. Python files are not mutated (shell and awk
+only, as the docstring says), so the decisions in `bin/bt-capture`, `scripts/btusb-has-device.py`
+and `scripts/trial-sco-decode.py` are outside this measure.
+
+## 69. `scripts/sco-ledger.sh`, `sco-ledger-boots.sh`, `boot-bt-summary.sh` (read in full), the ledger behind the 74/0 result
+
+The ledger is the instrument that carries the headline count (E1 and E3: 74 links, 0 timeouts). It
+reads one filtered journal pass (`--grep`) and prints one row per link. The timeout rule uses the
+canonical spelling, and addresses are never printed. Checked against the kernel source
+(`cache/ubuntu-7.0.0-38`) and the recorded evidence.
+
+**SL1 — LOW-MED. A link opens on any line that contains the opcode.** The rule is
+`/opcode 0x0428|opcode 0x043d/` (51). The kernel prints `opcode 0x%4.4x` at several sites:
+- `hci_core.c` 3099, the send line `hci0 opcode 0x0428 plen 17`;
+- `hci_sync.c` 91 and 236;
+- `hci_event.c` 4271 and 4403;
+- `hci_core.c` 3969, `opcode 0x%04x status 0x%02x`.
+
+The ledger's own hang-up rule depends on that last site being enabled (`opcode 0x0406 status`, 60).
+If any second site printed for a setup, each setup would close the link just opened as `open` and
+open another, so every link would be counted twice. In the recorded evidence every `opcode 0x0428`
+line is the send form, and the `status` form appears only for `0x0406` and MGMT opcodes. So no
+recorded count is affected. But the 74 depends on which debug sites are enabled, not on the rule.
+*Fix:* anchor on the send form, `hci0 opcode 0x(0428|043d) plen`.
+
+**SL2 — LOW-MED. The ledger's "timeouts" is not the boot's timeouts.** A timeout is counted only
+when it closes a link the ledger opened (64-66). Two cases fall outside:
+- links the headset initiates are accepted with `0x0429` or `0x043e`, which the rule does not
+  match, so they are neither counted as links nor able to carry a timeout;
+- a timeout outside any link is counted nowhere.
+
+The totals line `links N   hang-ups answered N   timeouts N` reads as the boot's count. The E3
+zero-timeout result does not rest on it alone: the trial rows count every command timeout, and
+`boot-bt-summary.sh` prints the boot's error-level `hci0` lines beside the ledger. But the ledger
+alone would not show such a failure. The record shows no accept-initiated link, though nothing
+looked for one.
+*Fix:* count accepts as links, marked `incoming`. Print the boot's total command timeouts beside
+the ledger's and flag any that fall outside a link.
+
+**SL3 — LOW. A fourth private copy of the date arithmetic.** `secs()` (35) counts from the start of
+the month and ignores the UTC offset. A link that straddles a month boundary, or the clock change
+on 2026-10-25, gets a negative `streamed` time or hang-up latency. Every other awk program was moved
+to `iso_secs()` for this reason (§63).
+
+**SL4 — LOW. A link the remote ends stays "open" until the next setup.** Without a local `0x0406`
+the link is closed only by the next setup, as `open`, and its `streamed` time includes the idle
+period up to that setup. The header defines `open` as "link still up, or log ends". Close the link
+when its disconnection is logged without a local `0x0406` before it (which debug line carries that
+needs checking against the enabled sites), and label it `remote-ended`.
+
+**SL5 — INFO (privacy).** The headset column comes from bluetoothd's stored device names
+(`/var/lib/bluetooth/*/…/info`, 22-27), and `boot-bt-summary.sh` puts the ledger into exhibits. A
+device named after its owner would carry that name into a published file, and the sanitiser does
+not handle names (SC2). Say so in the header. Line 28's `bluetoothctl devices` is SW3.
+
+**BBS1 — LOW.** `boot-bt-summary.sh` prints `(none)` when its firmware or error-level read fails
+(`|| echo "   (none)"`, 20 and 22), the same as a boot with no such lines (TA1's confident zero, in
+an exhibit tool). `journalctl --grep` exits 1 for no match; anything else should print the failure.
+`sco-ledger-boots.sh` line 20 is a statement with no effect.
+
