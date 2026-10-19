@@ -111,10 +111,11 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
 - 06:55Z: **`bf50fa4`, the Enhanced setup (0x003d)**: `bt-sco`'s counts, block filter and `--raw`,
   the close's filter and its emptiness test, `lib/sco-window.awk`'s marker now match
   `(Enhanced )?Setup Synchronous Connection`. Red first ("setup requests 0", "the close dropped
-  the enhanced setup"). 1021 checks in parallel, 1020 serially; gates as above. `trial-sco-decode.py`
-  already matched both. **Yours to decide** [recommendation: yes]: `bt-trial`'s `sco_sent` counts
-  `opcode 0x0428` in the kernel journal and not `0x043d`, and `bt-actions` names only 0x0428; on a
-  controller sent the Enhanced form the trial row would say no SCO was sent. Next: the btusb
+  the enhanced setup"). 1021 checks in parallel, 1020 serially; gates as above.
+  `trial-sco-decode.py` already matched both. **Yours to decide** [recommendation: yes]:
+  `bt-trial`'s `sco_sent` counts `opcode 0x0428` in the kernel journal and not `0x043d`, and
+  `bt-actions` names only 0x0428; on a controller sent the Enhanced form the trial row would say
+  no SCO was sent. Next: the btusb
   reload's second guard.
 - 07:05Z: **`98af393`, the btusb reload's second guard**: `install.sh`'s reload block is now
   `if (( APPLY && ! TOOLS_ONLY ))`. Red first, with a copy of `install.sh` whose `run()` has its
@@ -132,8 +133,9 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
 - 07:20Z: **`11c8039`, SU1**: `tests/system-upgrade` now runs the checklist's last two steps
   (`bt-verify-install` against the checkout, `bt-mode status`) and runs `--tools-only` with
   `journalctl` behind a spy, failing on a kernel read bounded by neither time nor priority (I2).
-  Green with `98af393`. **Shown red in CI** on a CI-only branch, `ci/deploy-rehearsal-red-checks-20261019`
-  (`3e804de`: the reload block's old guard, and the assertions below), in both modes:
+  Green with `98af393`. **Shown red in CI** on a CI-only branch,
+  `ci/deploy-rehearsal-red-checks-20261019` (`3e804de`: the reload block's old guard, and the
+  assertions below), in both modes:
   `--tools-only read the whole boot's kernel log (I2): journalctl -k -b 0 --no-pager`;
   `(VI1): Run: sudo ./install.sh --apply`; `(MODE2)`: each passive unit's state followed by a
   second `inactive`. **For you** [recommendation]: the VI1 and MODE2 assertions are on
@@ -173,3 +175,45 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   itself. The working branch merged the series (`b761a00`); its tree is now the ready line's.
   Next: tests for `scripts/trial-sco-decode.py`; then the review's suite findings (RT4 first: the
   run-wide footprint does not watch the install targets).
+- 10:30Z: **item 4, the newest tools and the review's suite findings**, each test-first, each its
+  own commit:
+  - `dcddb95` `scripts/trial-sco-decode.py` under the suite: both paths, 0x0428 and 0x043d,
+    redaction, the window, and that without `--columns=200` it keeps nothing. Each check seen red
+    against a mutant of the script. Your other two trial scripts (`trial-close-now.sh`,
+    `trial-snapshot.sh`) run `bt-trial` under `env -i PATH=/usr/sbin:/usr/bin:…`, which drops
+    every seam and the suite's tripwire, so a test would run the real journal and tools
+    [recommendation: retire both once the deploy lands, as they work around the 09-18 closer;
+    if they stay, they need a PATH and state seam first, which is yours to decide].
+  - `d9de559` **RT4**: the run-wide footprint now also stats each file `uninstall.sh` lists, with
+    its `.disabled` and `.pre` siblings; a planted file under `/usr/local/bin` went red by name.
+    Its allow lines needed one correction, `0189fee` (below).
+  - `c711e92` **DS4**: `devtools/status` with origin unreachable now ends "push NOT confirmed",
+    exit 3 (it said "everything committed and pushed", exit 0, as the review read from the source;
+    run here, red, it did); a branch origin never had is "never pushed", exit 1.
+  - `6563c2e` **the intermittent red, named**: the audit's next red (on `da6e22e`, comms only)
+    named itself through `2fb4251`: "unbind/bind wrote '3-3'/'', expected 3-3". The watchdog
+    test read the driver files after a second run that is stopped mid-escalation; under a
+    trace the stop can land between the shell's truncating open of `bind` and its write. The
+    read now comes before that run [verified: the mechanism from the signature and the code;
+    not reproduced deterministically]. Possibly the coverage trace's two unexplained reds of
+    2026-10-18 too [hypothesis: they did not name their check].
+  - `14a7485` **RT7**: no scan reads the entry file by name; the contract-tag scan reads every
+    suite file.
+  - `bf07959` **RT2**: `results.tsv` read by column name everywhere in the suite (`tsv_cells`).
+    Measured first: one extra column from `bt-trial` turned 21 checks red, naming wrong fields;
+    after, none.
+  - `0fb90ad` RT1, RT6, RS3: three comments.
+  - `a28ba03` **RT3, for you**: a scan for every unbounded journal read in the tools (any `-b`,
+    argument arrays, continuation lines joined; bounded by `--grep`, `-n`, `--since`,
+    `--until`, `-p` or `| head`). It finds 41 in 21 files, your BB1, DG2, HR2, BS-1, PM2, LV3,
+    AX3, CX2 among them, and `install.sh`'s two (the `--apply` paths). Which of them are whole by
+    design is a decision about each tool, so `tests/whole-boot-reads.txt` lists all 41 as
+    "pending": bound a read and delete its line, or write its reason there. A new unlisted read
+    fails, and so does a listed one the tools no longer make.
+  UD1 and RT5 were already closed by `3ed9dc4` (the uninstall dry run staged; verify-restored's
+  clean-machine case runs on every host).
+- `0189fee`: the audit, a workflow of its own, went red on every commit from `d9de559` to
+  `a28ba03`, on one line: the RT4 allow line `/usr/local/bin/lib/*` was stale (the classifier
+  classes those files as host software before consulting the list). Removed; `checks.yml`, the
+  verdict, stayed green throughout, as the split intended. A full audit here after it: nothing
+  outside the allow list, every check holding under the trace [verified].
