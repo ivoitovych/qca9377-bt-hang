@@ -113,3 +113,16 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   `opcode 0x0428` in the kernel journal and not `0x043d`, and `bt-actions` names only 0x0428; on a
   controller sent the Enhanced form the trial row would say no SCO was sent. Next: the btusb
   reload's second guard.
+- 07:05Z: **`98af393`, the btusb reload's second guard**: `install.sh`'s reload block is now
+  `if (( APPLY && ! TOOLS_ONLY ))`. Red first, with a copy of `install.sh` whose `run()` has its
+  tools-only gate cut out (staging still withholds every command): under `--tools-only` it read
+  the journal and reached `modprobe -r btusb`; a control shows the copy reaches the reload on
+  `--apply`. **`docs/install.md`'s deploy step 2 changed with it** [for your review]: it told the
+  operator to expect `modprobe -r btusb` and `modprobe btusb` as `tools-only: NOT executed` and
+  20 s of quiet; with this commit there is no `modprobe` line and no journal read, and the step
+  says what an older `install.sh` prints. CI green; **the ready line fast-forwarded to `98af393`**
+  (`f5b2508`, `9667943`, `bf50fa4`, `98af393` and the notes), which contains `main` `8f1396f`.
+- 07:12Z: **`30b6f31`, CK1**: `devtools/check` with a trial open runs `repo-validate . --no-suite`,
+  says so before its first step, and ends "ready, WITHOUT the suite"; with none, unchanged. Red
+  first, on a copy of `check` beside spies for the validators it calls. 1026 checks; gates as above.
+  Next: SU1, the rehearsal's checks for I2, VI1 and MODE2, sent to you rather than landed red.
