@@ -2615,4 +2615,70 @@ patch had caused it. For `smatch`, built from `cache/smatch`, an update is a rou
 **CL6 — INFO.** A `--functional-k` expression that selects nothing yields an empty junit result on
 both sides and a PASS. Print the number of test cases each side ran, and refuse zero.
 
+## 80. The measurement instruments: `devtools/coverage` (601 lines), `awk-coverage` (275), `py-coverage` (266), `assert-test-catches` (78), `branch-status` (174) (read in full)
+
+These are the project's most self-critical code. Each header records the ways an earlier version
+produced a confident wrong number, and the code now refuses in each of those cases:
+- an empty trace;
+- an exclusion without a reason;
+- an exclusion that hides executed code;
+- an exclusion that matches nothing;
+- a profile hash that changed with the thing being measured;
+- a Python dump that swallowed its own exception;
+- a numerator that was not an intersection with the denominator.
+
+`py-coverage` refuses to report from a red suite. `branch-status` counts unique work by patch-id
+(`git cherry`), not by "ahead".
+
+**IN1 — LOW-MED. All three coverage instruments put `scripts/` out of scope as "not shipped", but
+`scripts/` now holds operational code the project's main results rest on.** The exclusion
+(`coverage` 139, `py-coverage` 76) rests on `scripts/README.md`: "one-off extractions, glue". The
+same README's rule is "If a script is run more than twice it is promoted to `tools/` or
+`devtools/` with a test". Scripts run far more than twice, and never promoted, include:
+- `btusb-has-device.py`, the Foundation's check before any new kernel boots;
+- `module-updates.sh`, which puts E3 into `updates/`;
+- `bt-trace-archive.py`, which runs on a timer;
+- `sco-ledger.sh`, the instrument behind the 74/0 count;
+- `trial-close-now.sh`, which closes trials.
+
+The README says the exhibit-producing ones "are tracked and tested for that reason". No coverage
+figure, floor or mutation run says anything about them.
+*Fix:* apply the README's promotion rule to these five, or measure `scripts/` by an explicit list
+of operational files, printed with the report.
+
+**AWC1 — LOW-MED. `awk-coverage`'s TOTAL counts only awk programs the suite started.** Statements
+enter the denominator from the profiles gawk writes, so an inline awk program in a tool the suite
+never runs, or a library no test loads, is absent rather than at 0%. The header promises coverage
+for "the awk this repository computes in"; the figure is coverage of the awk that ran at least
+once. `devtools/coverage` lists never-loaded libraries, but not never-run inline programs. Unlike
+its two siblings, it also ignores the suite's exit status (89-90). It prints the suite's last line,
+but reports and passes `--min` from a red run.
+*Fix:* enumerate the awk programs statically (`tools/lib/*.awk`, and `awk '…'` in tracked shell)
+and report never-profiled ones as 0/N. Refuse on a red suite, as `py-coverage` does.
+
+**ATC1 — LOW-MED. On the laptop `assert-test-catches` blames the test for a suite that never
+ran, and it edits a tracked file in place.**
+- The suite refuses while a trial is open (exit 2, always on the laptop). No `✗` line appears, so
+  the tool prints "FAIL: appending to … did not produce a failure matching". That verdict is about
+  the test, when nothing was measured.
+- It appends the violating line to the real tracked file and restores it from a trap (56-57). A
+  SIGKILL or a power loss during the run leaves the violation in the checkout. `repo-save` stages
+  with `git add -A` (repo-save 54), and on the laptop it commits without the suite, so the next
+  `devtools/save` would commit and push the broken line.
+
+*Fix:* refuse at the start when `/run/bt-trial/current` exists (exit 2, "nothing measured"). Run
+the suite in a git worktree, as `devtools/mutate` does, so the checkout is never edited.
+
+**CV1 — LOW. `devtools/coverage` reports a refused suite as "a red run".** On the laptop the suite
+refuses before any section runs, but the trace is not empty (its preamble ran), so the tool prints
+a full table of near-zero figures and then "these figures describe a red run". A refusal measured
+nothing; say so and print no table. The comment at 563-567 says "this machine ships mawk"; the
+laptop's `awk` is gawk (checked 2026-10-19), and `devtools/awk-coverage` exists.
+
+**BRS1 — INFO.** `branch-status` audits `refs/remotes/origin` only. Branches held on `private` (by
+design, work `main` lacks) and local branches not pushed anywhere (UP1) are outside it. Say "origin
+branches" in its header and output.
+
+`devtools/mutate` and `mutants` are in §68.
+
 
