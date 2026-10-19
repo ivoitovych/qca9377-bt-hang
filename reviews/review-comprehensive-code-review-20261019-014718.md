@@ -2935,4 +2935,101 @@ Under E3, a BT-1 recurrence would show timeouts *with* the kernel's own reset (K
 below it test the current, correct behaviour; only the comment carries the old model. The suite's
 own header still says "9,700 lines" (46; RT1).
 
+## 85. `tests/run-tests` lines 7415-14195: the second half of the sections and the closing checks
+
+**Strong parts.** These sections hold the suite's best tests:
+- the `bt-trial` lifecycle: open, close, abort, autostop, probe and no-probe, a missing header;
+- the `bt-archive` symlink guards and the `bt-backup-journal` refusals;
+- `bt-snapshot`'s EX-032 shape;
+- the `bt-guards` check of pattern against patch;
+- the `bt-crash` coredump contract, checked against the real tool where a core exists;
+- the `bt-ui-capture` namespace world, which proves itself before it is trusted;
+- the staged install/uninstall round trip, with tripwires and the `.disabled` siblings;
+- `bt-window`'s reset-wording rule, derived over every tool rather than listed (12136-12168), and
+  its read-cost shape (12170-12215);
+- the sanitiser driven through a pass-through awk, so that the verifier is seen to catch a
+  substituter that changes nothing (12504-12531);
+- the publish gates over scratch repositories, in both directions, including the
+  repository-derived allowlist with no configured identity (12671-12716);
+- `doc-main-hashes` replaying the 2026-10-16 wrong-hash incident (12718-12783);
+- the closing invariants: one EXIT trap, no `/usr/bin` in a test PATH, symlink farms only through
+  `farm_dir`, every `bt-trial` wrapper setting both destinations, the tripwire canary, orphan
+  processes, and the "NOT ASKED HERE" report of what this host could not test.
+
+**DS4 — LOW-MED. `devtools/status` says "everything committed and pushed" when it could not reach
+the remote, and its test passes on that.** Lines 59-60 print `? remote <branch> — could not reach
+origin — cannot confirm` and leave `rc` at 0. With a clean tree, line 133 then prints
+"Repository: everything committed and pushed." and the tool exits 0. That is the false all-clear the
+tool was written against (line 11: "one reported 'all pushed' from a stale tracking ref"). The
+suite's case (13193-13202) runs at a moment when the scratch branch holds an unpushed commit (the
+step before asserts "local is 1 commit(s) ahead"). It asserts only `!= *"pushed"*"=="*`, which
+excludes the ✓ row (`origin/<branch> == <hash>`) and not the summary line. So the test passes while
+the tool reports the unpushed commit as pushed. The same row and summary appear when origin is
+reachable but the branch has never been pushed: `ls-remote` prints nothing in both cases. Read from
+the source; not run.
+*Fix:* make "cannot confirm" set a non-zero exit (a distinct code, e.g. 3) and print "push NOT
+confirmed" in the summary; assert the summary line in the test. Tell an unreachable remote apart
+from an absent branch (`git ls-remote --exit-code`).
+
+**RT7 — LOW. One closing scan reads the entry file by name, outside the rule that every scan covers
+the whole suite.** Line 14022 counts `BT_MACHINE_CONTRACT=` in `tests/run-tests`. Every other scan
+in that group reads `"${SUITE_FILES[@]}"`, and 13865-13881 explains why: after the planned split into
+parts (UT-12), a scan of the entry file alone "would keep passing while covering only what had not
+moved yet". The `$0` counter at 13921 cannot see a literal path. So once the suite is split, a
+contract tag set in a part passes the check that exists to stop it. Pattern 1 (a fix that reached
+some siblings).
+*Fix:* `grep … "${SUITE_FILES[@]}"`, and let the self-scan counter also catch a literal
+`tests/run-tests`.
+
+**UD1 — LOW. The uninstall dry run plans against the real machine.** Line 7908 runs a bare
+`./uninstall.sh`. The install dry run beside it is staged under `BT_DESTDIR` for a stated reason:
+"a bare dry run plans against THIS machine … the laptop's installation in its output, a bare
+checkout's in CI's" (7833-7840). On the laptop the uninstall plan lists the laptop's installation,
+and the assertion reads it. Nothing is written: the dry run is honoured, and the round trip at 11559
+onwards stages uninstall properly. This is the determinism issue the sandbox found for install
+(2026-09-29), left in the sibling.
+*Fix:* stage it the same way.
+
+**RS3 — INFO. Two comments give the held-branch rule a reason that BRIEF §7 says was replaced.**
+`devtools/repo-save` 197 says "A kernel/* branch is held back until its patch is mailed (BRIEF §7)",
+and run-tests 13637-13640 says the branch stays off `origin` "until the mail goes". BRIEF §7
+(393-403) records that rule as replaced on 2026-10-09: kernel findings are recorded on `main` as
+found, and the held-branch machinery stays for work held back for other reasons. The code is right;
+the comments cite a section that now says otherwise.
+*Fix:* reword both comments to BRIEF's current sentence.
+
+**RT2, more sites.** `tl_field` (8557) cuts a `results.tsv` row by field number: fields 4, 6, 8 and
+9, at 8634-8730, 8763, 8779 and 10827. The same section resolves its other columns by header name
+(8792, 8877-8878, 10748, 10762, 10828, 10860, 10887), so both styles sit side by side. Five more
+assertions move silently if a column is inserted.
+
+**RT4, refined.** The installer sections do watch the install targets for their own runs:
+- `real_install_state` (11455-11465) snapshots five targets around the staged install;
+- the install dry run looks for files newer than a stamp under `/usr/local`,
+  `/etc/systemd/system`, `/etc/modprobe.d` and `/etc/udev/rules.d` (7861-7864).
+
+The run-wide footprint still does not watch them, so a write-through from any other section is not
+seen.
+
+**INFO.**
+- Two sections build fixtures from the real `evidence/trials/results.tsv`, its header and first row
+  (8955-8967, 8994-8995; also 3268 and 3282). That keeps them on the live schema, which is the point,
+  but an empty or malformed working copy of that file changes the fixture.
+- Two watchdog fixture lines (6504, 6654, in §84's stretch) read "3 timeouts in 60s —
+  intervening." The watchdog's own line is "Detected $n controller timeouts within ${WINDOW}s —
+  intervening." (`bin/bt-hang-watchdog` 420). The consumers match on the shared tail, so nothing is
+  affected; it is the same kind of drift as T9's fixture.
+
+**More tests that pin findings (additions to §82's and §84's map):**
+
+| finding | test | what it asserts today |
+|---|---|---|
+| CAP1 (§7) | 7568-7573 (`bt-trace --check`), 7599-7606, 8010-8019 and 8029-8035 (`bt-usbmon`), 8386-8396 and 8416-8421 (`bt-capture --prune-only`) | pruning by count and by floor deletes the oldest captures; no fixture has an archive manifest. A manifest-aware prune changes what these count. Note that `--check` itself prunes (7571: "reports its configuration and prunes to KEEP"): running the check deletes captures past KEEP. |
+| KR1 (§38) | 12121-12127, fixture `tests/journal/window-reset` | a bare `reset full-speed USB device` line attributed to tooling. Right for its 2026-08-15 stock-era source; the fix needs a second fixture with `hci0: Resetting usb device.` before the reset, read as the kernel's own. |
+| BJ1 (§23) | 9728-9740 | that boot 0 is skipped, with the premise "A live boot cannot rotate off the ring, so waiting costs nothing" in its comment. The segment export needs its own test, and the premise goes. |
+| AJ1 (§24) | 9752-9765 | that a marked prefix is re-archived with `--replace`. No case where the new export lacks the prefix's start. |
+| T9 (§37) | 10883, a second site beside 8866-8867 | the probe-journal fixture line `Finished Snapshot Bluetooth health metrics.` |
+| SN1 (§18) | 9934-9944 | the adapter taken from the declared class directory with no VID:PID. The fix needs a fixture with a second, non-controller adapter listed first. |
+| DS4 (§85) | 13193-13202 | an unreachable remote passes while the summary says "everything committed and pushed". |
+
 
