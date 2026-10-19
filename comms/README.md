@@ -18,6 +18,7 @@ message points at commits.
 | test suite maintainer | `tests/unit-testing-introduction`, CI, the devtools | `test-suite-maintainer` |
 | review branch maintainer | `review/*` | `review-branch-maintainer` |
 | ci-local maintainer | `ci/upstream-ci-local`: the list bots reproduced locally, in a cloud build container (no hardware, no KVM) | `ci-local-maintainer` |
+| second maintainer | `main`, from a second checkout on the affected machine (since 2026-10-19); reads, reviews, fixes; the installed tools write into the first checkout | `second-maintainer` |
 
 ## Naming
 

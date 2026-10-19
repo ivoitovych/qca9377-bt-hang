@@ -81,10 +81,9 @@ awk floor, an EXIT trap for the system tests, the three machine tools and the
 
 ## 3. HISTORY
 
-An entry for the session, before the moved hand-off blocks (`f6f6ed4`, completed in the commit
-after it).
+An entry for the session, before the moved hand-off blocks (`f6f6ed4`, `f3db7ff`).
 
-## 4. Enforcement added (the commit after this note's tip)
+## 4. Enforcement added (`f3db7ff`)
 
 The operator's rule: a rule not enforced by a hook or a script gets forgotten. So:
 
