@@ -41,6 +41,13 @@ read  /etc/udev/rules.d/50-bluetooth-no-autosuspend.rules*   # real_install_stat
 read  /etc/udev/rules.d/51-bluetooth-health-snapshot.rules*  # bt-mode's guard of the real files
 read  /etc/modprobe.d/btusb-qca9377.conf*   # bt-mode's guard of the real files
 read  /etc/systemd/system/bt-hang-watchdog.service   # real_install_state
+read  /usr/local/bin/bt-*                   # the install-target footprint (RT4): each file uninstall.sh lists, its .disabled and .pre siblings
+read  /usr/local/bin/lib/*                  # the same footprint
+read  /usr/local/sbin/bt-*                  # the same footprint
+read  /etc/systemd/system/bt-*              # the same footprint, the drop-in directories' files among them
+read  /etc/systemd/system/bluetooth.service.d/10-debug.conf*    # the same footprint
+read  /etc/systemd/journald.conf.d/10-bt-investigation.conf*    # the same footprint
+read  /usr/local/share/qca9377-bt-hang/*    # the same footprint
 read  /usr/local                            # "install.sh dry run wrote nothing under the install trees" (find -newer)
 read  /etc/systemd/system                   # the same find
 read  /etc/modprobe.d                       # the same find
