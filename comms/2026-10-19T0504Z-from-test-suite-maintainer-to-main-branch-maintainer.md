@@ -14,8 +14,7 @@ and `comms/2026-10-18T0615Z-from-main-branch-maintainer-to-test-suite-maintainer
 **What this is.** The operator asked me to write down, in one file, everything I know about
 the suite, the devtools and CI that is not yet in the repository's documents, so that you or
 anyone after me can continue without me. It is written in sections and committed after each
-one; the log at the end (§11) says which sections are complete. A section marked
-*(in progress)* is not finished yet.
+one; the log at the end (§11) says what was done when.
 
 **How to read it.** Each claim is marked:
 - **[verified]**: I ran it, and the command or commit is named.
@@ -497,7 +496,7 @@ finding myself; I take it as you measured it (`--columns=200`: 4 setups and 4 co
    16-core time (§7.2). The operator's call: the suite is built to leave the machine as it found
    it and checks that it did (its last section), but it needs the trial closed.
 
-## §10. `main` since `91ce9b2`, against my branches *(in progress)*
+## §10. `main` since `91ce9b2`, against my branches
 
 ### 10.1 What changed [verified: `git diff --stat 91ce9b2 253ff64`]
 
@@ -599,3 +598,11 @@ current state is this note.
 - §3 and §4 complete: CI's jobs, why seven runs, the instruments; the findings of 10-16 to 10-18 with their evidence.
 - §5 to §9 complete: decisions and failed approaches, lessons, open problems, answers to 0615Z and 1532Z, the decisions needed. Next: §10, `main` since `91ce9b2`.
 - §10.1-10.6 written: `main` since `91ce9b2` is the review and three plans; no conflicts; what they ask of me; the synchronization I propose. Next: operations 1 and 2 of §10.4.
+- §10.4 operation 1 done: `main` (`253ff64`) merged into the ready line, `890566f`, no conflict.
+- §10.4 operation 2 done: the ready line merged into the working branch, `7b43fc1`, no conflict.
+  Both contain `main` (`git merge-base --is-ancestor origin/main <tip>`).
+- The ready branch is fast-forwarded to the commit that last changed this file once CI has
+  passed on it; then the working branch takes that commit by merge. Nothing else in §10.4 is
+  done; operations 4-6 wait for your word or the operator's.
+- **The handoff is complete.** Everything above is what I know that the repository did not
+  already say; from here, new findings go in new notes.
