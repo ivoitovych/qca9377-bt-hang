@@ -81,7 +81,7 @@ Recent detail may be shortened. Settled state is never dropped.
   stock btusb lacks it, and so does the source of `-39`, in noble-proposed since 10-01 (checked
   10-18; no Launchpad bug exists). If `-39` reaches updates, E3 is rebuilt for it first (§0).
 - **Accepted upstream, ours:**
-  - kernel `86ef0f58bdec` (BT-8): mainline since v7.3-rc7; released in 7.2.11, 6.18.57 and 6.12.113 (10-15); in 6.6.160-rc1 and 6.1.191-rc1 (10-17);
+  - kernel `86ef0f58bdec` (BT-8): in v7.3 (released 10-18; first in v7.3-rc7); released in 7.2.11, 6.18.57 and 6.12.113 (10-15); in 6.6.160-rc1 and 6.1.191-rc1 (10-17);
   - BlueZ `a734b06059cb` and `0bed9886cff3` (BT-7);
   - BlueZ `ae23df052290` and `6f5eeb402d3b` (M-3);
   - BlueZ `8da7e648a9fb` (emulator hook leak) and `f3344d20d904`, `2942883d2738`, `49a70562f0bf`

@@ -14,7 +14,7 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 
 ## Current state — 2026-10-11 (what changed since the 2026-10-09 state below)
 
-- **BT-9: everything sent 2026-10-10.** Stable backports of `96d006ae6445` went to 6.12, 6.6 and 6.1, each tested with a new deterministic `mgmt-tester` case that fails without the backport. Also sent: the BlueZ test series and the emulator leak fix the testers exposed. The laptop's own stuck discovery ended with the reboot into `7.0.0-38` on 10-11, a kernel that carries the fix.
+- **BT-9: everything sent 2026-10-10.** Stable backports of `96d006ae6445` went to 6.12, 6.6 and 6.1, each tested with a new deterministic `mgmt-tester` case that fails without the backport. Also sent: the BlueZ test series and the emulator leak fix the testers exposed. The laptop's own stuck discovery had already ended on 10-10 at 15:02, at the operator's adapter power cycle (corrected 2026-10-14; `docs/STATUS.md`); the reboot into `7.0.0-38` on 10-11 brought the kernel that carries the fix.
 - **U10 (new, 2026-10-11):** a speaker silent on SBC-XQ (section below, with the userspace items).
 - **U11 (new, 2026-10-13):** a headset that has just connected does not get the sound; WirePlumber's history of earlier choices outranks it (section below).
 - **The machine** runs `7.0.0-38` with the upstream entry (E3) since 2026-10-11; QCA firmware loaded.

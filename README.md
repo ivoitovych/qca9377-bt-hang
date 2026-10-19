@@ -9,7 +9,7 @@
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue)](LICENSE)
 
 An investigation of Bluetooth failures on Linux, with reproducible evidence, diagnostic
-tools, and **upstream contributions: a Linux Bluetooth kernel fix (in mainline since v7.3-rc7),
+tools, and **upstream contributions: a Linux Bluetooth kernel fix (in mainline, released in v7.3),
 eight BlueZ commits (four fixes and four test or emulator changes), and three stable
 backports of another author's kernel fix**.
 
@@ -34,7 +34,7 @@ claim here ships with the command that produced it, so a stranger can re-derive 
 
 | component | fix | upstream commit |
 |---|---|---|
-| Linux Bluetooth (MGMT) | Pending management commands flushed at power-off were answered with a status byte read from the wrong object — a Success for a Start Discovery the adapter never ran. They now carry the status the caller set (Not Powered / Invalid Index). | [`86ef0f58bdec`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=86ef0f58bdec) (bluetooth-next 2026-09-29; mainline since v7.3-rc7; stable 7.2.11, 6.18.57 and 6.12.113; in the 6.6 and 6.1 release candidates of 2026-10-17) |
+| Linux Bluetooth (MGMT) | Pending management commands flushed at power-off were answered with a status byte read from the wrong object — a Success for a Start Discovery the adapter never ran. They now carry the status the caller set (Not Powered / Invalid Index). | [`86ef0f58bdec`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=86ef0f58bdec) (bluetooth-next 2026-09-29; in v7.3, released 2026-10-18, first in v7.3-rc7; stable 7.2.11, 6.18.57 and 6.12.113; in the 6.6 and 6.1 release candidates of 2026-10-17) |
 | BlueZ | `adapter: Fix crash on short start discovery reply` — validate the reply length before the no-clients path reads it. This is the userspace side of the kernel defect above. | [`a734b06059cb`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=a734b06059cbe0d0f00442c901506ef17e960960) (2026-09-21) |
 | BlueZ | `a2dp: Fix crash on NULL stream in transport_cb` — check that the stream still exists when the asynchronous transport acceptance completes. Its guard fired four times in nineteen days of ordinary use (`EX-041`). A redundant v2 was applied on top on 2026-10-07 (`d84171e6cd68`), leaving the check twice in a row; the removal of the second copy was sent on 2026-10-18 (below). | [`0bed9886cff3`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=0bed9886cff317d814f9b1f11c1461459f2b9a00) (2026-09-21) |
 | BlueZ | `shared/mgmt: Fix notify leak in mgmt_unregister()` + `unit/test-mgmt: Test unregistering from callbacks` — unregistering from a notification callback leaked the entry, and unregistering the next entry was a use-after-free (the crash fixed for the sibling function in 2015). The new unit tests fail without the fix; the testers' 233 leaked `mgmt_register()` allocations go to 0 with every verdict unchanged ([`patches/bluez/shared-mgmt/`](patches/bluez/shared-mgmt/README.md)). Sent and applied the same day, unchanged. | [`ae23df052290`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=ae23df052290) + [`6f5eeb402d3b`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=6f5eeb402d3b) (2026-10-08) |

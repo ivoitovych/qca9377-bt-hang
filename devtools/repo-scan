@@ -1,15 +1,20 @@
 #!/bin/bash
 # repo-scan — refuse-to-publish scan for data that must never leave the machine.
 #
-#   repo-scan [dir] [--all] [--quiet]
+#   repo-scan [dir] [--all | --range <base> <head>] [--quiet]
 #
 #   default   scan STAGED ADDITIONS (what this commit would introduce)
 #   --all     scan every tracked file in the whole repository
+#   --range   scan the ADDED LINES between two commits (what a push would
+#             introduce); <base> may be the all-zero id for a new branch
 #
 # Exits non-zero if anything suspicious is found.
 #
 # Checks: MAC addresses / BSSIDs (colon or dash), UUIDs, IPv4 addresses,
-# email addresses, tool attribution, and tracked binary captures.
+# email addresses, tool attribution, and tracked binary captures. New text
+# (staged or --range) is also checked against a word list kept outside the
+# repository (`git config scan.words <file>`); without one, that check is
+# reported as skipped.
 #
 # WHY: this repository publishes logs. Kernel logs contain the Wi-Fi access
 # point BSSID, which public geolocation databases index — publishing one can
@@ -17,10 +22,11 @@
 
 set -uo pipefail
 
-DIR="."; ALL=0; QUIET=0; seen_dir=0
+DIR="."; ALL=0; QUIET=0; seen_dir=0; RANGE_BASE=""; RANGE_HEAD=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --all)   ALL=1 ;;
+        --range) RANGE_BASE="${2:?--range needs <base> <head>}"; RANGE_HEAD="${3:?--range needs <base> <head>}"; shift 2 ;;
         --quiet) QUIET=1 ;;
         -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
         -*) echo "unknown option: $1" >&2; exit 2 ;;
@@ -42,9 +48,24 @@ git rev-parse --git-dir >/dev/null 2>&1 || { echo "not a git repo: $DIR" >&2; ex
 ROOT=$(git rev-parse --show-toplevel) || exit 2
 cd "$ROOT" || exit 2
 
+NEW_TEXT=1   # staged or --range: the wording rules below apply to what is new
 if (( ALL )); then
+    NEW_TEXT=0
     CONTENT=$(git ls-files -z | xargs -0 cat 2>/dev/null)
     SCOPE="all tracked files ($(git ls-files | wc -l) files, from $ROOT)"
+elif [[ -n "$RANGE_HEAD" ]]; then
+    # What a push introduces: the added lines between the remote's tip and the
+    # local one. A branch new to the remote has the all-zero base; its whole
+    # tree is then new, so it is diffed against the empty tree.
+    base="$RANGE_BASE"
+    [[ "$base" =~ ^0+$ ]] && base=$(git hash-object -t tree /dev/null)
+    git rev-parse -q --verify "$RANGE_HEAD^{commit}" >/dev/null \
+        || { echo "  ✗ --range: $RANGE_HEAD is not a commit here" >&2; exit 2; }
+    CONTENT=$(git diff "$base" "$RANGE_HEAD" -- | grep '^+' | grep -v '^+++ ' | sed 's/^+//')
+    SCOPE="pushed additions ${RANGE_BASE:0:12}..${RANGE_HEAD:0:12}"
+    if [[ -z "$CONTENT" ]]; then
+        echo "scan clean ($SCOPE: no added lines)"; exit 0
+    fi
 else
     # ONLY ADDED LINES. Scanning the whole diff meant a commit that REMOVES a
     # leaked secret still contained it on the '-' lines, so the scan failed and
@@ -159,6 +180,30 @@ mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
 _c='cla'; _c+='ude'; _a='anthro'; _a+='pic'
 ta=$(grep -icE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$CONTENT" || true)
 (( ${ta:-0} > 0 )) && report "tool attribution present ($ta match(es))" || pass "no tool attribution"
+
+# --- word list, new text only -----------------------------------------------
+# A list of words and names that must not enter new public text, read from a
+# file outside the repository: `git config scan.words <file>`, one extended
+# regular expression per line, `#` comments, matched case-insensitively at a
+# word boundary. Only what is NEW is checked (staged additions, or the lines a
+# push adds), never the whole tree. Without a configured, readable list the
+# check is reported as skipped, never as passed.
+if (( NEW_TEXT )); then
+    WORDS="${REPO_SCAN_WORDS:-$(git config --get scan.words 2>/dev/null || true)}"
+    if [[ -n "$WORDS" && -r "$WORDS" ]]; then
+        pats=$(grep -vE '^\s*(#|$)' "$WORDS" | paste -sd'|' -)
+        if [[ -n "$pats" ]]; then
+            found=$(grep -oiE "\b($pats)" <<<"$CONTENT" | sort -u | tr '\n' ' ')
+            [[ -n "$found" ]] && report "listed word in new text:" "$found" || pass "word list"
+        else
+            pass "word list (empty)"
+        fi
+    elif [[ -n "$WORDS" ]]; then
+        report "word list configured but unreadable: $WORDS"
+    else
+        (( QUIET )) || echo "  - word list: skipped (no scan.words configured)"
+    fi
+fi
 
 # --- binary captures -------------------------------------------------------
 bins=$(git ls-files | grep -cE '\.(btsnoop|pcap|pcapng)$' || true)
