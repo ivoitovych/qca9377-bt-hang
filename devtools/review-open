@@ -24,6 +24,13 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REG="$HERE/reviews/README.md"
 [[ -r "$REG" ]] || { echo "review-open: no $REG" >&2; exit 2; }
 MODE="${1:-open}"
+case "$MODE" in
+    open|--all|--counts) ;;
+    -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+    # Any other word listed the open rows as if asked for them: a typo of
+    # --all answered a different question without saying so (2026-10-08).
+    *) echo "review-open: unknown option: $MODE (--all | --counts)" >&2; exit 2 ;;
+esac
 awk -v mode="$MODE" '
 BEGIN {
     n = split("fixed done closed no.action recorded refuted superseded answered withdrawn agreed kept n/a not.applicable confirmed verified merged retracted tool.fixed", cl, " ")
