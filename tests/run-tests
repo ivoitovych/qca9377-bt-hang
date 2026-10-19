@@ -43,7 +43,7 @@ cd "$(dirname "$0")/.." || exit 1
 # PATH construction that re-adds /usr/bin. Every one of them read `"$0"`.
 #
 # `"$0"` IS THE ENTRY POINT, NOT THE SUITE. UT-12 splits this file — it is
-# 9,700 lines and the largest in the repository — and the moment any of it moves
+# over 15,000 lines and the largest in the repository — and the moment any of it moves
 # into a sourced part, all eight keep passing while seeing only what is left
 # behind. A guard that stops covering the code it guards, silently, in the
 # checks that exist to stop the suite from overwriting system binaries and
@@ -6145,10 +6145,13 @@ rm -rf "$VR"
 # reading. It has three documented exit codes — 0 not present, 1 present,
 # 2 cannot determine — and none of the three had ever been executed.
 #
-# The distinction it draws is the substance of this project's claim: timeouts
-# WITHOUT resets is the bug (hdev->reset is NULL because the device is missing
-# from btusb's quirks table); timeouts WITH resets is a different problem that
-# this repository does not document. Telling a stranger they have this bug when
+# The distinction it draws is the substance of this project's claim about the
+# stock module, which is what a stranger runs: timeouts WITHOUT resets is the
+# bug (hdev->reset is NULL because the device is missing from btusb's quirks
+# table); timeouts WITH resets is a different problem that this repository does
+# not document. (Under the project's own module, E3, the reset is set, and a
+# BT-1 recurrence there shows timeouts WITH the kernel's reset (KR1); this tool
+# answers for a stock kernel, and the assertions below test that.) Telling a stranger they have this bug when
 # they do not is the worst thing this tool can do, so both sides are asserted,
 # and each fixture also carries the near-miss the counting must reject.
 DG=$(mktemp -d)
@@ -14416,8 +14419,9 @@ svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
 
 # ── a held kernel/* branch never reaches origin through repo-save ─────────
 #
-# A kernel finding travels with its patch (BRIEF §7); until the mail goes the
-# branch lives on the `private` remote only. This block is the one place in
+# Kernel findings are recorded on `main` as they are found (BRIEF §7, since
+# 2026-10-09); the held-branch machinery stays for work held back for other
+# reasons, and a kernel/* branch lives on the `private` remote only. This block is the one place in
 # the suite where repo-save is allowed to push — to two LOCAL bare
 # repositories standing in for origin and private, in the scratch tree.
 mkdir -p "$SCRATCH/held"; scratch_repo "$SCRATCH/held"

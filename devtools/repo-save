@@ -194,8 +194,10 @@ fi
 
 echo "── push ─────────────────────────────────────────────"
 br=$(git branch --show-current)
-# A kernel/* branch is held back until its patch is mailed (BRIEF §7); it lives
-# on the `private` remote and must never reach `origin` through this path. The
+# Kernel findings are recorded on `main` as they are found (BRIEF §7, since
+# 2026-10-09); the held-branch machinery stays for work held back for other
+# reasons. A kernel/* branch lives on the `private` remote and must never
+# reach `origin` through this path. The
 # rule was kept by hand until 2026-09-23; now it is code. The other private-only
 # families (plans, diagnostic builds, reviews, attribution, postponed work) were
 # pushed by hand until 2026-09-26 and are held the same way. config/* (since
