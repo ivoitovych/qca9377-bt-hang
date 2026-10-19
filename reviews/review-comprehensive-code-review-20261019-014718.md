@@ -2852,4 +2852,87 @@ searched for PV1 only. The total is about 28,000 of ~40,000 lines.
 
 Nothing was fixed. The operator's decision stands: fixes come later, from this file.
 
+---
+
+# Addendum — sixth pass: `tests/run-tests` read in full (from 2026-10-19, after `6ac9018`)
+
+The operator asked for the review to be complete before the plans are written. This pass reads the
+suite's 14,195 lines in order. Findings are appended per stretch read.
+
+## 84. `tests/run-tests` lines 1-7415: the harness and the first half of the sections
+
+**The harness is the strongest code in the repository.** Built before any section runs:
+- a PATH guard that stubs every tool `install.sh` puts on PATH, with poisoned decoys behind it so
+  an escape is visible on any machine;
+- a tripwire for every machine tool in `tests/machine-tools`, with a canary that proves it records;
+- a declared machine (empty USB bus, no adapter, a fixture `/proc`, an empty usbfs, an evidence
+  root of its own);
+- one temp root and one EXIT trap;
+- host git configuration replaced;
+- footprints of the evidence tree, the real trial state, `/usr/bin` and every tracked file, compared
+  even after an interrupted run;
+- parallel workers that rebuild all of this each.
+
+Each part records the incident it answers. Line 280-283 records the sandbox finding of 2026-09-29:
+"312 such calls per run, 20 of them `logger` writing 'TRIAL stock #1 START' into the real journal".
+That is PV1's mechanism (§71), closed here for the suite and not for the standalone harnesses.
+
+The sections read so far pin behaviour at boundaries, not only at defaults. Most carry a record of
+the mutation or sandbox run that showed the earlier version could not fail. The issues found:
+
+**RT2 — LOW. The suite reads `results.tsv` columns by position, the thing it forbids every
+consumer.** Lines 1692-1700 state the rule ("no consumer of results.tsv may address a column by
+position") and enforce it on the tools by permuting the header. Eight producer assertions read
+fixed field numbers, `awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }'`: lines 2544, 2577, 2616,
+2663, 2691, 2726, 2805 and 2826 (and `scripts/prove-trial-closer.sh`). A column inserted before
+field 8 silently moves what these assertions compare. They would most likely go red, but for a
+reason that names the wrong field.
+*Fix:* resolve the four columns by name, as `hs_col` does at 6592.
+
+**RT3 — LOW-MED. The whole-boot-read invariant checks one spelling, so the tools this review
+found reading whole boots pass it.** Lines 3248-3257 fail on `bt_journal -k -b 0` without
+`--until`, `--since`, `-n` or `--grep`. They do not see:
+- reads of other boots (`-b "$b"`, `-b "$BOOT"`);
+- reads whose arguments are an array (`"${KSEL[@]}"`, `"${JARGS[@]}"`);
+- reads of every unit, not only the kernel.
+
+So BB1, DG2, HR2, BS-1, PM2, LV3, AX3 and CX2 all sit under a green check whose comment states
+the general rule ("Derived over every tracked shell file rather than a named list, because the
+named list is exactly what let this survive"). The check is a named spelling in place of a named
+list.
+*Fix:* fail on any `bt_journal`/`journalctl` read that has none of `--grep`, `-n`, `--since`,
+`--until`, `-p`, whatever its `-b` value, and require a whole-boot read to carry a marker with its
+reason. Expect it to fail on the eight tools above on first run; that failure is the point.
+
+**RT4 — LOW. The damage footprint watches the system binaries, not the project's install
+targets.** `real_bin_footprint` (570-573) covers `/usr/bin`, `/usr/sbin`, `/bin` and `/sbin`. It
+does not cover where the project installs on the laptop: `/usr/local/bin`, `/usr/local/sbin`,
+`/usr/local/share/qca9377-bt-hang`, `/etc/systemd/system`. The 2026-08-14 escape acted through an
+installed tool, and a test that wrote through to one would change nothing these footprints see.
+(The bt-mode section snapshots three `/etc` overrides for its own run, 5971-5982.)
+*Fix:* add the install targets that `install.sh` names to the footprint.
+
+**RT5 — LOW. A skipped check is counted as a pass.** Line 5799 is
+`ok "verify-restored: clean-machine case skipped (project is installed here)"`. On the laptop the
+restore-success path is never run, and the run counts it as passed. The suite has a mechanism for
+this case: `PRIV_SKIPPED` and the NOT ASKED report (5988, 6160).
+*Fix:* record it there.
+
+**More tests that pin findings (additions to §82's map):**
+
+| finding | test | what it asserts today |
+|---|---|---|
+| PM1 (§57) | 4865-4869 | with a fixture holding only a kernel log (no watchdog journal at all), that the verdict is "watchdog never intervened" — PM1's situation, asserted as correct |
+| BL1 (§44) | 4575-4580 | that an empty enumeration exits **0** with the warning |
+| EH1 (§37) | 7396-7405 and `tests/journal/envhist` | the probes column over systemd's old `Finished Snapshot Bluetooth health metrics.` wording |
+| T2, SW1 | 2738-2741 (the closer's SCO stub) and 3591 (`sco-window`'s marks) | full-width headers, as at 10785 |
+| KM1 (§39) | 6193-6242 | a stock-shaped fake module, with the comment "3503 absent — the repository's central claim"; still valid for a stock module, but the fix's `updates/` path and relabel need a test of their own |
+| EV2 (§31, §83) | 6786-6788 | `sanitised=yes` with a working sanitiser; no test drives a refusing one for `bt-evidence`, as 5221-5250 do for `bt-incident` |
+
+**RT6 — INFO.** The `bt-diagnose` section's comment (5866-5870) states the stock-era model: "timeouts
+WITHOUT resets is the bug (hdev->reset is NULL …); timeouts WITH resets is a different problem".
+Under E3, a BT-1 recurrence would show timeouts *with* the kernel's own reset (KR1). The assertions
+below it test the current, correct behaviour; only the comment carries the old model. The suite's
+own header still says "9,700 lines" (46; RT1).
+
 
