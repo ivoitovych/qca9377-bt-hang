@@ -14933,6 +14933,19 @@ else
     bad "$SELF0N uses of \$0 outside comments; a scan over \$0 stops covering the suite when it splits:"
     while IFS= read -r l; do bad "      $l"; done <<<"$SELF0"
 fi
+# AND NOT BY ITS LITERAL NAME EITHER (RT7, the review of 2026-10-19). The $0
+# counter above cannot see `grep … tests/run-tests`, and the contract-tag scan
+# near the end read the entry file so: after the split into parts it would
+# keep passing over only what had not moved. The parallel runner's two reads
+# of section boundaries are the only scans of the entry file by name.
+SELFN=$(grep -HnE '^[^#]*\b(grep|awk|sed)\b[^|#]*[[:space:]]"?tests/run-tests\b' "${SUITE_FILES[@]}")
+SELFNN=$(grep -c . <<<"$SELFN" || true)
+if (( ${SELFNN:-0} == 2 )); then
+    ok "no invariant scans the entry file by name — only the runner reads its section boundaries there"
+else
+    bad "$SELFNN scans of tests/run-tests by name (2 expected, the runner's); a scan of the entry file stops covering the suite when it splits:"
+    while IFS= read -r l; do bad "      $l"; done <<<"$SELFN"
+fi
 
 EXITT=$(grep -HnE '^[^#]*\btrap\b[^#]*\bEXIT\b' "${SUITE_FILES[@]}" | grep -v 'EXITT=')
 EXITN=$(grep -c . <<<"$EXITT" || true)
@@ -15026,7 +15039,9 @@ TWBAD=$(suite_cat | awk '{ l[NR] = $0 }
 # The contract tag may be set in ONE place. Anywhere else it would be a way to
 # walk a leak past devtools/sandbox labelled as a contract read.
 # (Bracketed patterns, so this line does not match itself.)
-CTAGS=$(grep -n 'BT_MACHINE_CONTRAC[T]=' tests/run-tests | grep -v '^[0-9]*:[[:space:]]*#' \
+# Over every suite file, as every scan here (RT7): read from the entry file by
+# name, it covered only what had not moved into a part.
+CTAGS=$(grep -Hn 'BT_MACHINE_CONTRAC[T]=' "${SUITE_FILES[@]}" | grep -vE ':[0-9]+:[[:space:]]*#' \
         | grep -vc 'CONTRAC[T]="[$]check" "[$]p" "[$]@"' || true)
 (( CTAGS == 0 )) \
     && ok "BT_MACHINE_CONTRACT is set only by real_tool — no test can pass a leak off as a contract read" \
