@@ -2045,3 +2045,64 @@ program (166) does not check `iso_secs()` for -1. An unparseable `--since` there
 "from the beginning". An unparseable `--until` means "nothing", which is refused as an empty overlap.
 Refuse a bound that does not parse.
 
+## 66. `tools/bt-health-report.sh` (lines 121-256 read in full; the head was read in §40)
+
+The watchdog section keeps confirmed recovery, early-action answers and legacy markers apart, and
+live state outranks every counter. The closing advice ("keep four quantities separate") is the
+project's method stated in the report.
+
+**HR2 — LOW-MED. A boot whose start has rotated away is dropped from the per-boot table.** Line 127
+skips any boot without a `Linux version` banner (`continue`). `bt-boots` fixed exactly this: "A boot
+whose 'Linux version' banner rotated away is still a boot; a row of ?s keeps it visible instead of
+silently shrinking the table". The fix did not reach this copy of the loop. The boots most likely to
+lose their start are the long dynamic-debug ones, including the laptop's current boot (BJ1), so the
+table silently omits the boots with the most exposure.
+*Fix:* print the row with `?` for the kernel, as `bt-boots` does. Better, share one per-boot
+counting function between the two tools, since `bt-boots` and this loop are the same code (BB1's
+reads included).
+
+**HR3 — LOW-MED. Live state is checked against any adapter.** "CONTROLLER IS DOWN RIGHT NOW" is
+decided by the first entry of `/sys/class/bluetooth` (180). That makes this the fourth site of the
+any-adapter check (BS1 in `bt-status`, PM3 in `bt-postmortem`, `bt-snapshot`'s SN1). The comment
+above it records the masking flaw being fixed in three tools, but the VID:PID half of the fix
+reached none of them.
+*Fix:* one helper in `tools/lib/` that resolves the hci node under the VID:PID device, used by all
+four.
+
+**HR4 — INFO.** Sections 4 and 5 format TSV with `col` (221, 233), a reverse-line-feed filter that
+passes tabs through. `column -t -s $'\t'` aligns columns, which looks like the intent.
+
+## 67. `tools/bt-actions` (lines 1-275 read in full; the capture pass was read in §43)
+
+One awk program holds every classification rule, so a new signal is one rule. A fixture-driven run
+cannot reach the real captures (64-66, after two incidents recorded in the comment). The watchdog
+patterns match the watchdog's actual messages (checked against `bin/bt-hang-watchdog` 240 and 420).
+The timeout rules are ordered so that `command tx timeout` without an opcode reaches its own rule.
+
+**AX1 — LOW-MED. Every USB-core line about any device is shown as the controller's action.** The
+CTRL class is "what the controller did". It includes:
+- `usb .*: USB disconnect` → "\*\*\* DEVICE LEFT THE USB BUS \*\*\*" (263);
+- `new full-speed USB device number` → "USB re-enumeration attempt" (266). Mice and keyboards are
+  full-speed devices too.
+- descriptor-read and address errors (254-258).
+
+None of these is anchored to the controller's USB path. Plugging in a mouse during a session puts a
+re-enumeration in the controller's timeline. Unplugging a phone puts "DEVICE LEFT THE USB BUS" in
+capitals into a timeline the header offers to a maintainer as the sequence of events. This is
+BS-2's and PM3's defect, in the tool whose output is most likely to be quoted.
+*Fix:* learn the controller's USB path from its enumeration line and match only that path, as
+`stage2.awk` does (one shared helper, with BS-2 and PM3).
+
+**AX2 — LOW-MED. The kernel's own reset appears as an unattributed port reset.** Under E3 the
+kernel's command-timeout reset prints `Resetting usb device.` (KR1), which no rule matches. The USB
+core's following `reset full-speed USB device` is labelled "USB port reset performed" in CTRL, so
+the timeline does not say who reset the controller. On the stock driver the same label stood
+beside the watchdog's WDOG rows, which made the attribution clear. Under E3 nothing does.
+*Fix:* a rule for `hci[0-9]+: Resetting usb device` labelled "kernel command-timeout reset
+(btusb_qca_reset)", from KR1's shared `BT_RE_KERNEL_RESET`.
+
+**AX3 — LOW.** The default is the whole current boot, every unit, unfiltered (79, 92). On the
+laptop's current boot that is hours, as with TL1, before AC1's capture pass adds a decode of every
+capture. Default to a recent window and pass the classifier's anchors as `--grep` where they are
+kernel-only.
+
