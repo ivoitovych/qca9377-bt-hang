@@ -408,6 +408,7 @@ jobs:
       # checkout path. The old commit is fetched by its full id: it is not in
       # main's history.
       - name: deploy rehearsal (the 2026-09-18 tools, a trial open, --tools-only), mitigation mode
+        if: always()
         run: |
           git fetch --no-tags --depth=1 origin cccf0fe0b7871c1898807c4b25a85adbc27fd9cf
           mkdir -p "$RUNNER_TEMP/installed-20260918"
@@ -415,4 +416,5 @@ jobs:
           sudo BT_SYSTEM_TEST=required tests/system-upgrade "$RUNNER_TEMP/installed-20260918" mitigation
 
       - name: deploy rehearsal, experiment mode (bt-mode experiment before the deploy)
+        if: always()
         run: sudo BT_SYSTEM_TEST=required tests/system-upgrade "$RUNNER_TEMP/installed-20260918" experiment

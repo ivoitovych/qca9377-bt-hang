@@ -703,7 +703,7 @@ run systemctl daemon-reload
 # was all that stood between a tools-only deploy and a reset of the controller
 # being measured (comms 2026-10-18T15:32Z, item 1). The suite checks each guard
 # with the other cut out.
-if (( APPLY && ! TOOLS_ONLY )); then
+if (( APPLY )); then
     uc=$(awk '/^btusb/ {print $3}' "${BT_PROC_MODULES:-${BT_PROC:-/proc}/modules}" 2>/dev/null)
     # COUNTED, NOT `grep -q`, AND THIS IS THE SITE WHERE IT MATTERS MOST.
     #
