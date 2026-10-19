@@ -2512,4 +2512,69 @@ A note on fixtures: `prove-ui-capture.sh`'s journal fixture writes offsets as `+
 `journalctl -o short-iso-precise` prints `+02:00`. Nothing in that proof parses the stamp, so no
 check is affected. It is the third pattern again, harmless here.
 
+## 77. `scripts/bluez-tester-compare.sh` (173 lines, read in full)
+
+This is the tool behind the working rule "run upstream CI locally before any send: their CI on base
+and base plus ours, judge only the difference". It runs the emulator testers in QEMU through
+`tools/test-runner`, as the bot does, never on the host. It compares verdicts case by case, not by
+totals, and reports sanitizer output separately.
+
+**TC1 — MED. A tester that crashes or times out with the patches reads as "no regression".**
+Verdicts come only from the tester's `Test Summary` block (`verdicts`, 95-108). A run that ends
+without one leaves an empty verdict file:
+- an AddressSanitizer abort (`exitcode=65`) before the summary;
+- the 7200 s `timeout`;
+- a VM that never boots.
+
+In the comparison (129-157), a case present only on the base side gets the tag `(case removed)` and
+is not counted as a regression. So when the patched tester dies, every one of its cases is
+"removed", `REGRESSIONS: 0` is printed, and the run ends with "RESULT: no case passes on the base
+and fails with the patches", exit 0. The worst regression, a crash, produces the all-clear. The
+exit status is written into each log (`exit status N`, 119) but never read. The sanitizer section
+would print an ASan report if one reached the log, but it does not change the result.
+*Fix:*
+- a side whose log has no `Test Summary` is a failure for that tester (print "NO SUMMARY: crashed
+  or timed out" with the recorded exit status, and exit 1);
+- count a case present on the base and missing with the patches as a regression unless the patch
+  removes it from the source.
+
+## 78. The remaining scripts (read in full)
+
+Files:
+- `ci-local-controls.sh`, `gitlint-check.sh`, `get-maintainers.sh`, `mail-html-to-text.sh`;
+- `ci-log-search.sh`, `git-log-tab-count.sh`;
+- `bluez-accepted-survey.py`, `bluez-human-ci-mentions.py`, `sbc-frame-levels.py`.
+
+With this section every file in `scripts/` has been read in full, except
+`prove-trial-nomatch.sh`, `prove-trial-build-label.sh` and `prove-dr-followup.sh`, which were
+searched for PV1 only.
+
+`ci-local-controls.sh` is the project's rule "a check that cannot be seen to fail proves nothing",
+in code. It writes two scratch patches with one deliberate defect each, and requires `ci-local.sh`
+to report each as NEW while the base's known finding stays PRE-EXISTING. `ci-log-search.sh` moves a
+downloaded log into its cache only on success, after a failed download was once read as the log.
+
+**SF1 — LOW. `sbc-frame-levels.py` misreads scale factors in one SBC mode.** In joint stereo with
+4 subbands, the join field is 4 bits, so the scale factors start half a byte in. The code adds a
+header byte only for 8 subbands (68-69) and starts reading scale factors at byte 4 (73). For
+4-subband joint stereo it reads the join nibble as the first scale factor and drops the last one.
+The `bits += 4` at 71-72 shows the case was seen, but `bits` is never used. A silent frame with any
+join bit set then counts as "signal".
+A2DP's usual configuration is 8 subbands, so most captures are unaffected.
+*Fix:* start the scale factors at nibble 9 (byte 4, low nibble) in that mode.
+
+**SF2 — LOW.** `--bucket` above 60 is silently treated as 60: the bucket is formed by rounding the
+seconds field only (122). Round the epoch time instead.
+
+**GL1 — INFO.** `gitlint-check.sh` installs the current `gitlint` from PyPI into its venv (20),
+unpinned, while the point is to match the bot's verdicts. It prints the version it ran. Pin the
+bot's version once that is known.
+
+**SV1 — INFO.** `bluez-accepted-survey.py`'s docstring says BlueZ series are recognised by a
+`BluezMake` check *or* the name. The code uses only the name (109), so a BlueZ series without
+"BlueZ" in its subject is left out. Its cache never expires, like KS1.
+
+`get-maintainers.sh`, `mail-html-to-text.sh`, `git-log-tab-count.sh` and
+`bluez-human-ci-mentions.py`: no defects.
+
 
