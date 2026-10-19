@@ -2387,4 +2387,46 @@ laptop ("the investigation machine and also the family's").
 (`cache/ubuntu-7.0.0-31`) are records of one moment, like BM1. Say so in their headers, or drop the
 default.
 
+## 74. Upstream-state scripts: `stable-rc-check.sh`, `stable-queue-check.sh`, `stable-tips-check.sh`, `backport-check.sh`, `series-backport-check.sh`, `patchwork-checks.sh`, `kernel-bt-survey.py` (read in full)
+
+These answer the questions STATUS's submission rows record. Their method is right:
+- they read the public record (the stable queue, the rc tree, patchwork), not anyone's account of it;
+- `stable-rc-check.sh` confirms that the rc tip contains the released tip before comparing;
+- `stable-tips-check.sh` turns "is the build exhibit still current?" into a same-minute comparison
+  of tips;
+- the backport checks work on copies of files and never touch a checkout;
+- `patchwork-checks.sh` keeps the raw JSON beside the claim.
+
+**STB1 — LOW-MED. "IN RC" and "PRESENT" also match a revert, or a later commit that quotes the
+subject.** `stable-rc-check.sh` (32) and `backport-check.sh` (34) use `git log -F --grep="$SUBJ"`,
+which matches the subject anywhere in any commit message. Two kinds of commit would therefore be
+reported as the patch itself:
+- a revert (`Revert "Bluetooth: btusb: Add IMC Networks …"`);
+- a follow-up whose `Fixes: dc16388d45ec ("Bluetooth: btusb: Add IMC Networks …")` tag quotes the
+  subject.
+
+This errs in the direction that ends a follow-up: "IN RC" or "PRESENT" closes the question of
+whether a backport landed. `pre-send-check.sh` has the same match, but there it errs toward not
+sending (PS1).
+*Fix:* compare the subject line only (`--format='%h %s'`, then an exact match on `%s`), and name a
+`Revert "…"` hit as a revert.
+
+**BC1 — LOW.** `backport-check.sh`'s `in:` line takes the first of `git tag --contains` in name
+order (27). `v6.10` sorts before `v6.9`, so the line can name a later release than the first one
+that carries the commit. Use `git describe --contains` or `--sort=v:refname`.
+
+**BC2 — LOW.** Both backport checks copy each touched file from the branch, writing an empty file
+when the branch lacks it (`backport-check.sh` 42, `series-backport-check.sh` 32). A patch that
+creates a file then meets an existing empty file, and is reported as FAILS for a reason unrelated
+to the branch. Skip files the patch creates (`--- /dev/null`).
+
+**PW1 — LOW.** `patchwork-checks.sh --rate` prints "over the N most recent patches" with the N it
+asked for (110). The API caps `per_page`, and patches whose checks cannot be fetched are skipped
+(`|| continue`, 104), so the rate's real denominator is unstated. Print the number of patches read
+and the number whose checks were unavailable.
+
+**KS1 — INFO.** `kernel-bt-survey.py` caches every page forever (`get`, 25-28), including page 1 of
+"the most recent". A rerun reports the old survey as current. Its first output line shows the date
+range, which makes the age visible. Name the cache date in that line, or add a `--refresh`.
+
 
