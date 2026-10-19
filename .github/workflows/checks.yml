@@ -30,7 +30,7 @@ permissions:
 # jobs instead, and GitHub runs the jobs in parallel. Each job starts from the
 # same preamble (the checkout with full history, the public main, the same
 # packages, the version line), so every step sees what it saw in the single job.
-# The instruments now run the suite in parallel too (tests/README.md, rule 8),
+# The instruments now run the suite in parallel too (tests/README.md, rule 9),
 # and the run that names the suite runs it serially, so one run in one process
 # remains: the serial job.
 jobs:
@@ -251,7 +251,7 @@ jobs:
       # statement coverage. It found that the classifier branches for stage 2
       # of the bug had never executed.
       - name: awk statement coverage floor
-        run: devtools/awk-coverage --min 85
+        run: devtools/awk-coverage --min 95
 
   # Python line coverage
   python-coverage:

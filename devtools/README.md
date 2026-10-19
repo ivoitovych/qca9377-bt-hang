@@ -132,7 +132,7 @@ An allow line can be narrowed:
 
 The first run (2026-10-09) found nine kinds of access the decoy world had
 passed, from the host's `~/.jq` to `uninstall.sh` planning its dry run against
-the real `/etc`; tests/README.md, rule 7, lists them. `--self-test` plants each
+the real `/etc`; tests/README.md, rule 8, lists them. `--self-test` plants each
 kind of access, and each must be caught:
 - a direct read;
 - another process's `/proc` entry;

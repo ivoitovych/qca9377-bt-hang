@@ -37,7 +37,6 @@
 # child process, never inside it. Measuring them requires a second harness
 # measuring the first, which is a regress, not a test.
 devtools/coverage           # runs the suite under trace; cannot trace itself
-devtools/awk-coverage       # runs the suite under gawk --profile; same regress
 devtools/check              # runs repo-validate and the suite
 devtools/assert-test-catches  # runs the suite once per mutation, by design
 devtools/mutate             # runs the suite once per mutant, in namespaces it builds; tested by its own --self-test (every run, and a CI step); its proposal (devtools/mutants) is tested by the suite
@@ -140,11 +139,15 @@ tests/run-tests:162-167       # inline --section extractor; same (re-derived 202
 # tools/bt-verify-kernel-mechanism at 50% against a floor of 75, permanently and
 # for a reason no amount of testing could remove.
 tools/bt-verify-kernel-mechanism:138-147  # inline byte-aligned device-id matcher; same (+3 on 2026-10-09: the TMPDIR note above it)
+devtools/awk-coverage:210-251  # inline profile reader; same — measured by itself, against the suite's toy suite (2026-10-08; +2 by content on 2026-10-18, the --serial comment; then +2, its parallel note)
+devtools/awk-coverage:292-358  # inline report; same (+2 by content, 2026-10-18; then +2)
 
 # Derived by scanning for quoted programs that open on one line and close on
 # another, NOT read off by eye — the two entries written by hand were both
 # wrong, and the self-check caught both. Whole-file entries above already
-# cover devtools/coverage's and devtools/awk-coverage's own inline programs.
+# cover devtools/coverage's own inline programs. devtools/awk-coverage left
+# section 1 on 2026-10-08: BT_SUITE points it at a toy suite, so it runs
+# inside this one, and only its two inline programs are excluded.
 
 # ── 5. Reachable only from an installed machine, not from a checkout ─────
 #
