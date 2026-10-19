@@ -32,7 +32,9 @@ command -v btmon >/dev/null || { echo "bt-ctrl-window: btmon not found" >&2; exi
 
 # Codes from lib/bluetooth/mgmt.h (BlueZ) — the ones this investigation has met.
 # Anything else prints as its number, which is still more than 0xffff said.
-btmon -T -r "$F" 2>/dev/null | awk -v from="$FROM" -v to="$TO" -v hci="$HCI" '
+# --columns=200: piped, btmon cuts header names to fit 80 columns, and at 80 a
+# privileged MGMT open, common on this channel, aborts it (BT-4).
+btmon --columns=200 -T -r "$F" 2>/dev/null | awk -v from="$FROM" -v to="$TO" -v hci="$HCI" '
 BEGIN {
     ev["0001"]="Command Complete"; ev["0002"]="Command Status";
     ev["0006"]="New Settings"; ev["0007"]="Class Of Device Changed";

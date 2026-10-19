@@ -66,7 +66,7 @@ if (( ${#files[@]} == 0 )); then
 fi
 
 for f in "${files[@]}"; do
-    COLUMNS=200 btmon -T -r "$f" 2>/dev/null
+    btmon --columns=200 -T -r "$f" 2>/dev/null   # --columns: COLUMNS is not read when piped (BT-4 too)
 done > "$TMP"
 
 if (( RAW )); then

@@ -1081,7 +1081,10 @@ hang|ok)
                 printf '===== source: %s =====\n' "$src"
                 for f in "$src"/*.btsnoop; do
                     [[ -e "$f" ]] || continue
-                    COLUMNS=200 btmon -T -r "$f" 2>/dev/null
+                    # --columns, not COLUMNS: piped, btmon reads only the option and
+                    # otherwise fits each header into 80 columns, cutting the names this
+                    # filter matches; and at 80 a privileged MGMT open aborts it (BT-4).
+                    btmon --columns=200 -T -r "$f" 2>/dev/null
                 done | awk -v lo="$t_start" -v hi="$t_end" '
                     # Carry the last seen full timestamp forward: indented
                     # parameter lines have none of their own.
