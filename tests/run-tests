@@ -3526,6 +3526,45 @@ else
     fi
 fi
 
+# AND EVERY OTHER SPELLING OF IT (RT3, the review of 2026-10-19). The check
+# above names one spelling, `bt_journal -k -b 0`, so a read of another boot
+# (`-b "$b"`), of every unit, or through an array of arguments passed it:
+# eight of the review's findings sat under it, green. This one fails on any
+# journal read in the tools (tools/, bin/, install.sh, uninstall.sh) that names
+# a boot or an argument array and is bounded by none of --grep, -n, --since,
+# --until, -p or a `| head`, joined across continuation lines. Some such reads
+# are whole by design (an archive's export, a snapshot of a boot); which, is a
+# decision about each tool. tests/whole-boot-reads.txt lists every one found
+# on 2026-10-19 with its reason, or "pending" until it has one: a read not in
+# the list fails, and so does a listed read the tools no longer make.
+wb_scan() {   # one "<file><TAB><the read>" per unbounded journal read in the tools
+    local f
+    for f in "${SHFILES[@]}"; do
+        case "$f" in tools/*|bin/*|install.sh|uninstall.sh) ;; *) continue ;; esac
+        awk -v f="$f" '
+            { while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } }
+            /^[[:space:]]*#/ { next }
+            !/(^|[^_[:alnum:]])(bt_journal|journalctl)([[:space:]]|$)/ { next }
+            /bt_journal_count/ { next }
+            !(/[[:space:]]-b([[:space:]]|$)/ || /--boot/ || /\$\{[A-Za-z_][A-Za-z0-9_]*\[@\]\}/) { next }
+            /--grep|[[:space:]]-g[[:space:]]|[[:space:]]-n[[:space:]0-9]|--lines|--since|[[:space:]]-S[[:space:]]|--until|[[:space:]]-U[[:space:]]|[[:space:]]-p[[:space:]]|--priority|--list-boots|\|[[:space:]]*head[[:space:]]/ { next }
+            { gsub(/^[[:space:]]+|[[:space:]]+$/, ""); gsub(/[[:space:]]+/, " "); print f "\t" $0 }' "$f"
+    done
+}
+WBFOUND=$(wb_scan | LC_ALL=C sort -u)
+WBLIST=$(grep -v '^#' tests/whole-boot-reads.txt 2>/dev/null | grep . | cut -f1,2 | LC_ALL=C sort -u)
+WBNEW=$(comm -23 <(printf '%s\n' "$WBFOUND") <(printf '%s\n' "$WBLIST") | grep .)
+WBGONE=$(comm -13 <(printf '%s\n' "$WBFOUND") <(printf '%s\n' "$WBLIST") | grep .)
+WBPEND=$(grep -v '^#' tests/whole-boot-reads.txt 2>/dev/null | cut -f3 | grep -c '^pending' || true)
+if [[ -z "$WBNEW" && -z "$WBGONE" ]]; then
+    ok "every unbounded journal read in the tools ($(grep -c . <<<"$WBFOUND" || true)) is listed in tests/whole-boot-reads.txt, $WBPEND still pending a reason or a fix"
+else
+    [[ -n "$WBNEW" ]] && { bad "unbounded journal read(s) in the tools, not in tests/whole-boot-reads.txt (bound it, or list it with its reason):"
+                           while IFS= read -r l; do bad "      $l"; done <<<"$WBNEW"; }
+    [[ -n "$WBGONE" ]] && { bad "listed in tests/whole-boot-reads.txt, no longer in the tools (remove the line):"
+                            while IFS= read -r l; do bad "      $l"; done <<<"$WBGONE"; }
+fi
+
 
 # And the producer's header must carry the columns the producer writes. A row
 # printf and a header printf that drift apart is the same defect arriving by a

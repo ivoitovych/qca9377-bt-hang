@@ -1,0 +1,55 @@
+# tests/whole-boot-reads.txt — every journal read in the tools that names a boot (or passes
+# an argument array) and is bounded by none of --grep, -n, --since, --until, -p or a `| head`.
+#
+# On the laptop a boot runs for days with dynamic debug on, and such a read takes minutes:
+# that is how a close lost EX-023's row, how bt-trial-audit took 7 min, and why a tools-only
+# deploy looked hung (I2). Some reads are whole by design (an export, a snapshot of a boot);
+# which ones is a decision about each tool, and each line here waits for it:
+#   <file> TAB <the read, continuation lines joined, whitespace collapsed> TAB <reason>
+# "pending" until the read is bounded (then delete the line) or given its reason here. The
+# suite (RT3) fails on a read that is not listed, and on a listed read the tools no longer
+# make. The review IDs are the review of 2026-10-19's findings for that tool.
+#
+# Found 2026-10-19 by the scan in tests/run-tests (wb_scan): 41 reads in 21 files.
+
+bin/bt-evidence	echo "wd_interventions=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention")"	pending
+bin/bt-health-snapshot	wd_log=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)	pending
+install.sh	n_tmo=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE 'command( 0x[0-9a-f]+)? tx timeout' || true)	pending (I2: the --apply paths only; --tools-only no longer reaches the reload block (98af393))
+install.sh	n_tmo_warn=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE 'command( 0x[0-9a-f]+)? tx timeout' || true)	pending (I2: the --apply paths only; --tools-only no longer reaches the reload block (98af393))
+tools/bt-actions	bt_journal "${JARGS[@]}" 2>/dev/null | awk -F' ' '	pending (AX3)
+tools/bt-archive	bt_journal -b "$BOOT" -o export --no-pager 2>/dev/null | tee "$FIFO" | $COMP > "$TMP"	pending
+tools/bt-archive	ln=$(bt_journal -b "$idx" -o export --no-pager 2>/dev/null | grep -c '^__CURSOR=' || true)	pending
+tools/bt-boot-provenance	fw=$(bt_journal -b "$off" -t systemd --no-pager 2>/dev/null | grep -m1 -oE '[0-9.]+m?s \(firmware\)' | awk '{print $1}')	pending
+tools/bt-boot-stats	log=$(bt_journal -k -b "$b" --no-pager -o short-iso-precise 2>/dev/null)	pending (BS-1)
+tools/bt-boots	k=$(bt_journal -k -b "$b" 2>/dev/null | grep -m1 -oE "Linux version [0-9][^ ]*" | awk '{print $3}')	pending (BB1)
+tools/bt-boots	t=$(bt_journal -k -b "$b" 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)	pending (BB1)
+tools/bt-boots	u=$(bt_journal -k -b "$b" 2>/dev/null | grep -c "unexpected event for opcode" || true)	pending (BB1)
+tools/bt-boots	w=$(bt_journal -u bt-hang-watchdog -b "$b" 2>/dev/null | grep -cE "intervening|EARLY intervention" || true)	pending (BB1)
+tools/bt-context	bt_journal -b "$BOOT" --no-pager -o short-iso-precise 2>/dev/null > "$LOG"	pending (CX2)
+tools/bt-crash	CRASH=$(bt_journal -b "$BOOT" --no-pager -o short-iso 2>/dev/null | grep -E 'segfault|core-dump|Failed with result' || true)	pending
+tools/bt-diagnose	bt_journal -k -b "$b" >/dev/null 2>&1 || continue	pending (DG2)
+tools/bt-diagnose	f=$(bt_journal -k -b "$b" --no-pager 2>/dev/null | grep -ciE "using rampatch|nvm_usb|Failed to load .*firmware" || true)	pending (DG2)
+tools/bt-diagnose	r=$(bt_journal -k -b "$b" --no-pager 2>/dev/null | grep -ciE "Resetting usb device|Multiple cmd timeouts" || true)	pending (DG2)
+tools/bt-diagnose	t=$(bt_journal -k -b "$b" --no-pager 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout" || true)	pending (DG2)
+tools/bt-env-history	probes=$(bt_journal -u bt-health-snapshot.service -u bt-health-snapshot-event.service -b "$idx" --no-pager -o cat 2>/dev/null | grep -c "^Finished Snapshot Bluetooth health" || true)	pending
+tools/bt-env-history	wd_log=$(bt_journal -u bt-hang-watchdog -b "$idx" --no-pager -o cat 2>/dev/null)	pending
+tools/bt-health-report.sh	k=$(bt_journal -k -b "$b" 2>/dev/null | grep -m1 -oE "Linux version [0-9][^ ]*" | awk '{print $3}')	pending (HR2)
+tools/bt-health-report.sh	t=$(bt_journal -k -b "$b" 2>/dev/null | grep -cE "command( 0x[0-9a-f]+)? tx timeout")	pending (HR2)
+tools/bt-health-report.sh	u=$(bt_journal -k -b "$b" 2>/dev/null | grep -c "unexpected event for opcode")	pending (HR2)
+tools/bt-health-report.sh	w=$(bt_journal -u bt-hang-watchdog -b "$b" 2>/dev/null | grep -cE "intervening|EARLY intervention")	pending (HR2)
+tools/bt-health-report.sh	wd_now=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)	pending (HR2)
+tools/bt-logvolume	bt_journal "${JARGS[@]}" 2>/dev/null > "$TMP"	pending (LV3)
+tools/bt-logvolume	now=$(bt_journal "${RATEARGS[@]}" 2>/dev/null | grep -vc '^-- No entries --')	pending (LV3)
+tools/bt-phase	bt_journal -k -b "$b" --no-pager -o short-iso-precise 2>/dev/null | grep -E "command( 0x[0-9a-f]+)? tx timeout" | cut -d' ' -f1 | while read -r t; do echo "$b TMO $t"; done >> "$DATA"	pending
+tools/bt-phase	bt_journal -u bt-health-snapshot-event.service -b "$b" --no-pager -o short-iso-precise 2>/dev/null | grep "Snapshot Bluetooth health metrics" | cut -d' ' -f1 | while read -r t; do echo "$b ENDO $t"; done >> "$DATA"	pending
+tools/bt-phase	bt_journal -u bt-health-snapshot.service -b "$b" --no-pager -o short-iso-precise 2>/dev/null | grep "Snapshot Bluetooth health metrics" | cut -d' ' -f1 | while read -r t; do echo "$b EXO $t"; done >> "$DATA"	pending
+tools/bt-postmortem	KLOG=$(bt_journal "${KSEL[@]}" -o short-unix --no-pager 2>/dev/null)	pending (PM2)
+tools/bt-postmortem	WLOG=$(bt_journal "${WSEL[@]}" -o short-unix --no-pager 2>/dev/null)	pending (PM2)
+tools/bt-postmortem	mapfile -t TO < <(bt_journal "${KSEL[@]}" -o short-unix --no-pager 2>/dev/null | grep -E "command( 0x[0-9a-f]+)? tx timeout" | awk '{printf "%.2f\n",$1}')	pending (PM2)
+tools/bt-snapshot	bt_journal -b "$BOOT" --no-pager -o short-iso-precise > "$DIR/all.log" 2>/dev/null	pending
+tools/bt-snapshot	bt_journal -k -b "$BOOT" --no-pager -o short-iso-precise > "$DIR/kernel.log" 2>/dev/null	pending
+tools/bt-stage2	if ! journalctl -b all --no-pager -o short-iso-precise _TRANSPORT=kernel + _SYSTEMD_UNIT=bt-hang-watchdog.service > "$TMP" 2>/dev/null; then	pending
+tools/bt-state	wd=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention" || true)	pending
+tools/bt-status	BD=$(bt_journal -u bluetooth -b 0 --no-pager 2>/dev/null || true)	pending
+tools/bt-status	WD=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null || true)	pending
+tools/bt-timeline.sh	bt_journal "${SEL[@]}" -o short-unix --no-pager "$@" 2>/dev/null | grep -v '^-- No entries --' | awk -v t="$tag" '{ ts=$1; $1=""; sub(/^ /,""); printf "%s\t%s\t%s\n", ts, t, $0 }'	pending
