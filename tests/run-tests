@@ -835,6 +835,25 @@ bad()  { echo "  ✗ $*"; fail=$((fail + 1)); SUITE_AT="✗ $*"; }
 #   anything else: silent, exit 0
 #
 # A test that needs a machine in a particular state writes that stub itself.
+# results.tsv BY ITS HEADER (RT2, the review of 2026-10-19). No consumer may
+# address a column by position: the permuted-header checks hold every tool to
+# that, and this file now holds its own assertions to it too. With a column
+# inserted before field 8, twenty of them went red, nearly all naming the
+# wrong field.
+tsv_cells() {   # <file> <row: N | last | all> <column>... — the named cells, space-separated, a line per row
+    awk -F'\t' -v row="$2" -v names="${*:3}" '
+        function cells(   i, o) {
+            o = ""
+            for (i = 1; i <= n; i++) o = o (i > 1 ? " " : "") ((want[i] in col) ? $(col[want[i]]) : "?no-column:" want[i])
+            return o
+        }
+        NR == 1 { n = split(names, want, " "); for (i = 1; i <= NF; i++) col[$i] = i; next }
+        row == "all" { print cells(); next }
+        row == "last" { last = cells(); next }
+        NR == row + 0 { print cells(); exit }
+        END { if (row == "last" && NR > 1) print last }' "$1" 2>/dev/null
+}
+
 machine_stub() {   # <dir> <tool>... — quiet stubs for the named machine tools
     local d="$1" t; shift
     mkdir -p "$d"
@@ -2401,7 +2420,7 @@ trial_in "$LC/ev-rev" "$LC/state-rev" -- ok >/dev/null 2>&1
 trial_in "$LC/ev-rev" "$LC/state-rev" -- autostart stock >/dev/null 2>&1
 REV2=$(mrc two)
 trial_in "$LC/ev-rev" "$LC/state-rev" -- ok >/dev/null 2>&1
-REVS=$(awk -F'\t' 'NR > 1 { print $5 }' "$LC/ev-rev/evidence/trials/results.tsv" 2>/dev/null | tr '\n' ' ')
+REVS=$(tsv_cells "$LC/ev-rev/evidence/trials/results.tsv" all measurement_rev | tr '\n' ' ')
 [[ -n "$REV1" && "$REVS" == "$REV1 $REV1..$REV2 " ]] \
     && ok "a row records the tools' revision, and a range when they changed while the trial was open" \
     || bad "measurement_rev: want '$REV1 $REV1..$REV2', got '$REVS'"
@@ -2791,7 +2810,7 @@ unset BT_TRIAL_SCAN_BUDGET
 # that ran out of budget cannot certify that nothing touched the controller.
 # Nothing checked that column here, and a condition that scanned a partial read
 # as if it were whole passed (devtools/mutate, 2026-09-29).
-SLOWROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }' "$LC/slow/evidence/trials/results.tsv" 2>/dev/null)
+SLOWROW=$(tsv_cells "$LC/slow/evidence/trials/results.tsv" 2 bt1_status sco_sent timeouts perturbed)
 if [[ "$SLOWROW" == "confirmed ? 1 unknown" ]]; then
     ok "a journal too slow for the budget costs the descriptive counts and the window's certificate, never the row or the verdict"
 else
@@ -2824,7 +2843,7 @@ chmod +x "$LC/slowstop/bin/journalctl"
 trial_in "$LC/slowstop" "$LC/state-slowstop" PATH="$LC/slowstop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/slowstop" "$LC/state-slowstop" --timeout 4 PATH="$LC/slowstop/bin:$LC/bin:$PATH" \
     BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; ssrc=$?
-SSROW=$(awk -F'\t' 'NR == 2 { print $8, $13 }' "$LC/slowstop/evidence/trials/results.tsv" 2>/dev/null)
+SSROW=$(tsv_cells "$LC/slowstop/evidence/trials/results.tsv" 2 bt1_status timeouts)
 if (( ssrc == 0 )) && [[ "$SSROW" == "confirmed 1" ]]; then
     ok "autostop counts through the error-priority index: a slow full journal cannot hold shutdown past its timeout"
 else
@@ -2863,7 +2882,7 @@ chmod +x "$LC/inst/bin/logger" "$LC/inst/bin/bluetoothctl" "$LC/inststop/bin/jou
 trial_in "$LC/inststop" "$LC/state-inststop" PATH="$LC/inst/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/inststop" "$LC/state-inststop" --timeout 4 PATH="$LC/inststop/bin:$LC/inst/bin:$LC/bin:$PATH" \
     BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; isrc=$?
-ISROW=$(awk -F'\t' 'NR == 2 { print $8, $13 }' "$LC/inststop/evidence/trials/results.tsv" 2>/dev/null)
+ISROW=$(tsv_cells "$LC/inststop/evidence/trials/results.tsv" 2 bt1_status timeouts)
 [[ "$ISROW" == "confirmed 1" ]] \
     && ok "with bt-state and bt-mark installed, a slow journal still cannot cost the row: it is written before them" \
     || bad "close with the project's tools installed: rc=$isrc (124 = still running at 4 s), row (bt1_status timeouts)='$ISROW'"
@@ -2910,7 +2929,7 @@ chmod +x "$LC/nolist/bin/journalctl"
 trial_in "$LC/nolist" "$LC/state-nolist" PATH="$LC/nolist/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/nolist" "$LC/state-nolist" --timeout 4 PATH="$LC/nolist/bin:$LC/bin:$PATH" \
     BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; nlrc=$?
-NLROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/nolist/evidence/trials/results.tsv" 2>/dev/null)
+NLROW=$(tsv_cells "$LC/nolist/evidence/trials/results.tsv" 2 bt1_status enum_at_boot)
 if (( nlrc == 0 )) && [[ "$NLROW" == "confirmed ?" ]]; then
     ok "with no boot list the enumeration read is budgeted too: the row is written and enum_at_boot says '?'"
 else
@@ -2938,7 +2957,7 @@ chmod +x "$LC/enumfail/bin/journalctl"
 trial_in "$LC/enumfail" "$LC/state-enumfail" PATH="$LC/enumfail/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/enumfail" "$LC/state-enumfail" --timeout 4 PATH="$LC/enumfail/bin:$LC/bin:$PATH" \
     -- autostop >/dev/null 2>&1; efrc=$?
-EFROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/enumfail/evidence/trials/results.tsv" 2>/dev/null)
+EFROW=$(tsv_cells "$LC/enumfail/evidence/trials/results.tsv" 2 bt1_status enum_at_boot)
 if (( efrc == 0 )) && [[ "$EFROW" == "confirmed ?" ]]; then
     ok "an enumeration read that fails for any reason says '?', not a 'no' it never measured"
 else
@@ -2973,7 +2992,7 @@ chmod +x "$LC/scostop/bin/journalctl" "$LC/scostop/bin/btmon"
 trial_in "$LC/scostop" "$LC/state-scostop" PATH="$LC/scostop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/scostop" "$LC/state-scostop" --timeout 4 PATH="$LC/scostop/bin:$LC/bin:$PATH" \
     BT_CAPTURE_DIR="$LC/scostop/cap" BT_TRACE_DIR="$LC/scostop/trace" -- autostop >/dev/null 2>&1; scrc=$?
-SCROW=$(awk -F'\t' 'NR == 2 { print $8, $11 }' "$LC/scostop/evidence/trials/results.tsv" 2>/dev/null)
+SCROW=$(tsv_cells "$LC/scostop/evidence/trials/results.tsv" 2 bt1_status sco_sent)
 [[ "$SCROW" == "confirmed 1" ]] \
     && ok "a trial with a SCO setup and captures on disk: a slow btmon decode cannot cost the row" \
     || bad "close with a SCO setup and a slow btmon: rc=$scrc (124 = still decoding at 4 s), row (bt1_status sco_sent)='$SCROW'"
@@ -3052,7 +3071,7 @@ STUB
 chmod +x "$LC/nomatch/bin/journalctl"
 trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 NMOUT=$(trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok 2>&1); nmrc=$?
-NMROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
+NMROW=$(tsv_cells "$LC/nomatch/evidence/trials/results.tsv" 2 bt1_status sco_sent timeouts perturbed)
 if [[ "$NMROW" == "not_observed 0 0 none" ]]; then
     ok "a filtered read that matched nothing is a clean window, not an unreadable journal"
 else
@@ -3073,7 +3092,7 @@ STUB
 rm -rf "$LC/nomatch/evidence" "$LC/state-nomatch"
 trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok >/dev/null 2>&1
-NMROW2=$(awk -F'\t' 'NR == 2 { print $8, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
+NMROW2=$(tsv_cells "$LC/nomatch/evidence/trials/results.tsv" 2 bt1_status perturbed)
 if [[ "$NMROW2" == "unknown unknown" ]]; then
     ok "exit 1 with a complaint on stderr is still an unreadable journal -> unknown"
 else
@@ -8987,7 +9006,7 @@ tl() {
     tools/bt-trial "$@" 2>&1
 }
 tl_row() { tail -1 "$TL/evidence/trials/results.tsv" 2>/dev/null; }
-tl_field() { tl_row | cut -f"$1"; }
+tl_field() { tsv_cells "$TL/evidence/trials/results.tsv" last "$1"; }   # by name (RT2)
 
 TLP=$(tl protocol); tlprc=$?
 (( tlprc == 0 )) && [[ "$TLP" == *"bt-trial start"* ]] \
@@ -9064,7 +9083,7 @@ tl step >/dev/null 2>&1
 TLA=$(tl abort); tlarc=$?
 TLAKEPT=$(ls -d "$TLDIR".aborted-* 2>/dev/null | head -1)
 (( tlarc == 0 )) && [[ ! -e "$TL/state/current" && ! -d "$TLDIR" && -n "$TLAKEPT" && -e "$TLAKEPT/ABORTED" ]] \
-    && [[ "$TLA" == *"directory kept"* ]] && [[ ! -s "$TL/evidence/trials/results.tsv" || "$(tl_field 9)" != "aborted" ]] \
+    && [[ "$TLA" == *"directory kept"* ]] && [[ ! -s "$TL/evidence/trials/results.tsv" || "$(tl_field trial_result)" != "aborted" ]] \
     && ok "abort keeps the trial directory (renamed, with an ABORTED marker) and writes no results row" \
     || bad "abort did not keep the directory (rc=$tlarc): kept='$TLAKEPT' $TLA"
 rm -rf "$TLAKEPT"
@@ -9111,35 +9130,35 @@ tl autostop >/dev/null 2>&1
 # NOT "survived": nothing asked the controller, so nothing measured liveness. A
 # controller that went silent without a logged timeout would have been recorded
 # alive (follow-up F1). The row says what the journal showed and no more.
-[[ "$(tl_field 9)" == "ended_unprobed" && "$(tl_field 8)" == "not_observed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+[[ "$(tl_field trial_result)" == "ended_unprobed" && "$(tl_field bt1_status)" == "not_observed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
     && ok "autostop with no timeout in the journal closes as ended_unprobed/not_observed and sends no HCI command" \
-    || bad "autostop: result '$(tl_field 9)'/'$(tl_field 8)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
+    || bad "autostop: result '$(tl_field trial_result)'/'$(tl_field bt1_status)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
 
 # A dead controller that logged no timeout must not read as alive either.
 touch "$TL/dead"
 tl autostart stock >/dev/null 2>&1; rm -f "$TL/hciconfig-calls"
 tl autostop >/dev/null 2>&1
-[[ "$(tl_field 9)" == "ended_unprobed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+[[ "$(tl_field trial_result)" == "ended_unprobed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
     && ok "autostop on a silent dead controller (no timeout logged) records ended_unprobed, not survived" \
-    || bad "a silent dead controller was recorded as '$(tl_field 9)'"
+    || bad "a silent dead controller was recorded as '$(tl_field trial_result)'"
 rm -f "$TL/dead"
 
 # An unreadable journal is `unknown` on the evidence axis and still unprobed.
 touch "$TL/journal-unreadable"
 tl autostart stock >/dev/null 2>&1; rm -f "$TL/hciconfig-calls"
 tl autostop >/dev/null 2>&1
-[[ "$(tl_field 8)" == "unknown" && "$(tl_field 9)" == "ended_unprobed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+[[ "$(tl_field bt1_status)" == "unknown" && "$(tl_field trial_result)" == "ended_unprobed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
     && ok "autostop with an unreadable journal records unknown/ended_unprobed and sends no HCI command" \
-    || bad "unreadable journal at autostop recorded '$(tl_field 8)'/'$(tl_field 9)'"
+    || bad "unreadable journal at autostop recorded '$(tl_field bt1_status)'/'$(tl_field trial_result)'"
 rm -f "$TL/journal-unreadable"
 
 # Opt-in means the value 1. BT_TRIAL_PROBE=0 probed until 2026-09-20 (follow-up F2).
 : > "$TL/kjournal"
 tl autostart stock >/dev/null 2>&1; rm -f "$TL/hciconfig-calls"
 BT_TRIAL_PROBE=0 tl autostop >/dev/null 2>&1
-[[ ! -e "$TL/hciconfig-calls" && "$(tl_field 9)" == "ended_unprobed" ]] \
+[[ ! -e "$TL/hciconfig-calls" && "$(tl_field trial_result)" == "ended_unprobed" ]] \
     && ok "BT_TRIAL_PROBE=0 is passive — a zero-valued opt-in does not probe" \
-    || bad "BT_TRIAL_PROBE=0 probed: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l) call(s), result '$(tl_field 9)'"
+    || bad "BT_TRIAL_PROBE=0 probed: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l) call(s), result '$(tl_field trial_result)'"
 
 printf 'Bluetooth: hci0: command 0x0406 tx timeout\n' > "$TL/kjournal"
 tl autostart stock >/dev/null 2>&1
@@ -9149,18 +9168,18 @@ tl autostop >/dev/null 2>&1
 # `failed` is the tool's word for it — the three trial_result values are
 # survived / failed / alive_after_intervention, and `hang` is the VERB that
 # produces the second.
-[[ "$(tl_field 9)" == "failed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+[[ "$(tl_field trial_result)" == "failed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
     && ok "autostop with a timeout in the journal closes through the hang path, still sending no command" \
-    || bad "autostop: result '$(tl_field 9)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
+    || bad "autostop: result '$(tl_field trial_result)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
 
 # The probe survives as a DELIBERATE intervention only: BT_TRIAL_PROBE=1.
 : > "$TL/kjournal"
 tl autostart stock >/dev/null 2>&1
 rm -f "$TL/hciconfig-calls"
 BT_TRIAL_PROBE=1 tl autostop >/dev/null 2>&1
-[[ "$(tl_field 9)" == "failed" ]] && [[ -s "$TL/hciconfig-calls" ]] \
+[[ "$(tl_field trial_result)" == "failed" ]] && [[ -s "$TL/hciconfig-calls" ]] \
     && ok "BT_TRIAL_PROBE=1 restores the probing autostop, on purpose and visibly" \
-    || bad "BT_TRIAL_PROBE=1: result '$(tl_field 9)', calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
+    || bad "BT_TRIAL_PROBE=1: result '$(tl_field trial_result)', calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
 rm -f "$TL/dead" "$TL/hciconfig-calls"; : > "$TL/kjournal"
 
 # ── abort refuses to delete TRACKED evidence (BL-03, R2-64, DR-07) ───────
@@ -9193,7 +9212,7 @@ rm -rf "$TL/.git"
 tl autostart stock >/dev/null 2>&1
 rm -f "$TL/probes-on"                      # the treatment changes mid-trial
 tl ok >/dev/null 2>&1
-TLTR=$(tl_field 4)
+TLTR=$(tl_field treatment)
 [[ "$TLTR" == CHANGED:* && "$TLTR" == *"probes=on"* && "$TLTR" == *"probes=off"* ]] \
     && ok "a treatment that changed mid-trial is recorded as CHANGED, with both ends" \
     || bad "a mid-trial treatment change was recorded as an ordinary row: '$TLTR'"
@@ -9209,7 +9228,7 @@ cat > "$TL/kjournal" <<'TLJRN'
 TLJRN
 tl autostart stock >/dev/null 2>&1
 TLPOUT=$(tl ok)
-TLPR=$(tl_field 4)
+TLPR=$(tl_field treatment)
 [[ "$TLPR" == *"PERTURBED:btusb_reload"* ]] \
     && ok "a btusb reload inside the window makes the treatment unpoolable" \
     || bad "an interior perturbation left the row comparable: '$TLPR'"
@@ -11264,7 +11283,7 @@ cat > "$TL/kjournal" <<'TLSCO'
 TLSCO
 TLSCOLOG=$(wc -l < "$TL/bin/logger.log" 2>/dev/null || echo 0)
 tl_close_sco
-TLSCON=$(tl_field 6); TLSCODIR="$TL/evidence/trials/stock/trial-$(printf '%02d' "$TLSCON")"
+TLSCON=$(tl_field trial); TLSCODIR="$TL/evidence/trials/stock/trial-$(printf '%02d' "$TLSCON")"
 TLSCOCOL=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^sco_to_timeout_s$' | cut -d: -f1)
 TLSCO1=$(tl_row | cut -f"${TLSCOCOL:-1}")
 printf '2026-08-13T09:00:00.000000+0200 host kernel: Bluetooth: hci0 opcode 0x0428 plen 17\n' > "$TL/kjournal"
