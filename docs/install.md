@@ -67,11 +67,12 @@ with `systemctl show bt-trial-auto -p TimeoutStopUSec`.
    prints nothing; note what `bt-mode status` says.
 2. `sudo ./install.sh --tools-only`, typed exactly, with plain `sudo` (not `sudo -E`). Expect the
    open-trial notice and a 3 s pause, the SKIPPED lines for the files `bt-mode` moved aside, and
-   every system command printed `tools-only: NOT executed`, **including `modprobe -r btusb` and
-   `modprobe btusb`**: with btusb's use count at 0 and no timeout this boot the script reaches that
-   reload, and only this gate stops it (a live reload kills even a healthy controller, `EX-046`).
-   About 20 s of quiet follow while it reads this boot's kernel log. Stop if a command that runs
-   is anything but `install`.
+   every system command printed `tools-only: NOT executed`. **No `modprobe` line at all**: since
+   2026-10-19 the btusb reload block is skipped under `--tools-only`, so it neither reads this
+   boot's kernel log (the 20 s of quiet an older `install.sh` showed) nor chooses the reload (a live
+   reload kills even a healthy controller, `EX-046`). An older `install.sh` prints `modprobe -r
+   btusb` and `modprobe btusb` as `tools-only: NOT executed`, which is its one remaining guard
+   holding. Stop if a command that runs is anything but `install`.
 3. Ignore the advice it prints: `bt-mode mitigation` (writes the power settings live and enables
    the watchdog), `./install.sh --apply` (printed by `bt-verify-install` on any drift), and the
    "expect N" / "expect on" lines (mitigation mode's values; experiment mode reads `Y` and `auto`).
