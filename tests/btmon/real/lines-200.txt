@@ -1,0 +1,41 @@
+Bluetooth monitor ver 5.72
+= New Index: AA:BB:CC:DD:EE:FF (Primary,USB,hci0)                                                                                                                     [hci0] 2026-10-17 01:04:57.000000
+@ MGMT Open: bt-state version 1.22                                                                                                                           {0x0002} [hci0] 2026-10-17 01:04:57.000300
+@ MGMT Command: Set Powered (0x0005) plen 1                                                                                                                  {0x0002} [hci0] 2026-10-17 01:04:57.000400
+        Powered: Enabled (0x01)
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                                                                  #1 [hci0] 2026-10-17 01:04:57.001000
+        Handle: 3
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0060
+          Input Coding: Linear
+          Input Data Format: 2's complement
+          Input Sample Size: 16-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: CVSD
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+> HCI Event: Command Status (0x0f) plen 4                                                                                                                          #2 [hci0] 2026-10-17 01:04:57.001100
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                                                                           #3 [hci0] 2026-10-17 01:04:57.050000
+        Status: Success (0x00)
+        Handle: 6
+        Address: AA:BB:CC:DD:EE:FF (OUI AA-BB-CC)
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x06
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: CVSD (0x02)
+< HCI Command: Enhanced Setup Synchronous Connection (0x01|0x003d) plen 59                                                                                         #4 [hci0] 2026-10-17 01:04:57.060000
+        Handle: 0
+        Transmit bandwidth: 0
+        Receive bandwidth: 0
+        Max latency: 0
+        Packet type: 0x0000
+        Retransmission effort: No retransmissions (0x00)
