@@ -1209,3 +1209,44 @@ No E3 trial has had a timeout yet (every row 0), so nothing recorded is wrong. T
 Keep "unknown-origin reset" for a bare `reset … USB device` with no kernel line before it, as
 `stage2.awk` does.
 
+## 39. `tools/bt-verify-kernel-mechanism` (161 lines, read in full)
+
+The tool settles from the binary whether btusb uses `hdev->reset` (first timeout) or the older
+5-timeout `cmd_timeout`. It searches for IDs byte-aligned and falls back from `hexdump` to `od`, and
+it reports UNKNOWN rather than ABSENT when the binary cannot be read. Its supporting-strings check
+already lists "Resetting usb device" as a string inside `btusb.ko`, which is KR1's point from the
+other side.
+
+**KM1 — MED. The tool reports the laptop's device as missing from upstream and from the module.**
+`check_id 3503 "not in upstream  <-- THIS DEVICE"` (154) has been false since `dc16388d45ec` (the
+entry is upstream and in 7.2.10, 6.18.56 and 6.12.113). The tool also reads only
+`/lib/modules/<krel>/kernel/drivers/bluetooth/btusb.ko`, the stock module, never
+`updates/btusb.ko`. That is not the module that loads on the laptop (E3 in `updates/`). On the
+laptop it therefore prints `✗ 13d3:3503 ABSENT … not in upstream <-- THIS DEVICE` about a module
+that is not loaded, under a label that is no longer true.
+*Fix:*
+- resolve the module the way the kernel does (`modinfo -k <krel> -n btusb`, which prefers
+  `updates/`) and print which file was read;
+- relabel 3503 "upstream since `dc16388d45ec` (not in older stock modules)";
+- for the presence question, defer to `scripts/btusb-has-device.py`, which matches the
+  `match_flags` as well.
+
+**KM2 — INFO.** The temporary file goes to `/tmp` (`mktemp /tmp/btusb-verify.XXXXXX.ko`) rather than
+the project's `tmp/`. It is removed on exit, so this is only the house rule.
+
+## 40. `tools/bt-health-report.sh` (first 120 of 256 lines)
+
+The baseline and the change time are found through seams, and the change time comes from the
+install stamp that is written once (a unit file's mtime moves on reinstall).
+
+**HR1 — LOW-MED. The before/after split credits E3's effect to the mitigations.** The report has
+one change point: `installed-at`, when the mitigations (autosuspend off, power pinned, watchdog,
+probes) first went in. Every boot after it is "AFTER". Since 2026-10-01 (E1/E3 on `-34`) and
+2026-10-11 (E3 on `-38`), the AFTER boots run a different driver, the treatment that actually fixed
+BT-1. A reader of "are the mitigations working?" would see the E3 boots' zero timeouts as the
+mitigations working. The installed-at date also predates E3's experiment-mode boots, which have no
+mitigations at all.
+*Fix:* split the AFTER boots by the build actually loaded (the trial rows' `build`, or
+`/sys/module/btusb/srcversion` per boot from `metrics.tsv` if added). Name E3 boots as their own
+group, or state at the top that the report predates E3 and must not be read for it.
+
