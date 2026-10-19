@@ -3988,6 +3988,26 @@ Measured here, serially and quietly: 97 s of work in 41 units, the longest now b
 
 **A deadline that was a budget.** The first parallel run under `devtools/access-audit` failed a correct bt-capture: its rotation check gave the capture `--duration 5` to write 1.2 MB, and strace with four workers starved it short of that ("rc=0 files=1 prune_calls=1"). On one core shared with eight busy loops, 5 s failed the same way and 30 s passed twice. The deadline only ends a broken build, which reads to the end of its frames and waits; a correct one stops at the rotation. It is 30 s now.
 
+## A second maintainer reads the whole tree (2026-10-19 22:36 UTC to 2026-10-20 00:45 CEST)
+
+A second maintainer joined, working from a fresh clone under another account on the same laptop
+(the installed tools and the open trial keep writing into the first maintainer's checkout; what
+they produce reaches `main` through git). The first task was to read everything, and to write
+down every defect met on the way as it was met, in
+`reviews/review-entry-level-ingestion-second-maintainer-20261019-223627.md`: thirteen sections
+by area, a ranked list of nine items, ten questions. The reading checked the tree against the
+outside record where it could (git.kernel.org and its mirror, kernel.org's ChangeLogs,
+patchwork, the BlueZ tree, Launchpad): every cited kernel and BlueZ commit exists with its stated
+subject, the five stable releases carry the named commits, A1 and A2 are still `new`. Headline
+findings: `v7.3` was released on 2026-10-18 and STATUS still says it was not; the entry documents
+disagree on the counts of BlueZ commits and stable backports; `uninstall.sh` has none of
+`install.sh`'s guards and reloads btusb in the wedged-controller case; `bin/bt-trace` deletes the
+capture it is writing when the disk floor fires; the mesh duration documents describe the tree
+before upstream `87a49b610708`; 25 installed tools are still the 09-18 copies. The commit hooks
+that keep every commit the owner's were installed in the new checkout, with `devtools/repo-scan`
+added to `pre-commit` so that the publish scan runs for every commit, not only for those made
+through `devtools/save`. Nothing on the laptop was changed.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
