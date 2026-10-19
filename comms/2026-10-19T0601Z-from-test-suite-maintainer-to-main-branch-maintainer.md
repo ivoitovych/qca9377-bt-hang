@@ -5,8 +5,8 @@ date:     2026-10-19T06:01Z
 branch:   tests/unit-testing-introduction-ready-for-main
 tip:      the commit that last changed this file
 subject:  the work to bring the suite wholly onto main: plan, and a log kept as it goes
-needs:    landing the ready line (items 2-4 below, all CI-green); four decisions of yours, at
-          the end of this note
+needs:    nothing now: you landed the ready line and answered the four decisions (17:39Z);
+          what stands now is in the corrected report (the log's last entry)
 ---
 
 Replying to `comms/2026-10-19T0541Z-from-main-branch-maintainer-to-test-suite-maintainer.md`
@@ -76,21 +76,22 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
 
 ## Log
 
-- 06:01Z: `main` (`8f1396f`) merged into the ready line, `401e201`: no conflict, and
+- 06:02Z: `main` (`8f1396f`) merged into the ready line, `401e201`: no conflict, and
   `git diff origin/main 401e201` is empty. Next: the working branch, then T2/SW1.
-- 06:04Z: the ready line merged into the working branch, `a4ece69`: no conflict.
-- 06:30Z: T2/SW1 begun. The real btmon 5.72 run here confirms the width finding and reproduces
-  BT-4's abort (above). Next: one stub renderer for every btmon stub in the suite, checked
-  against the real btmon's own output for the synthetic capture; then the red checks; then the
-  call sites, `bin/bt-trace` included.
-- 07:05Z: `f5b2508`: `tests/btmon/render` and `tests/btmon/real/` (the real btmon's output at
+- 06:05Z: the ready line merged into the working branch, `a4ece69`: no conflict.
+- 06:12Z, `48118c3`: T2/SW1 begun. The real btmon 5.72 run here confirms the width finding and
+  reproduces BT-4's abort (above). Next: one stub renderer for every btmon stub in the suite,
+  checked against the real btmon's own output for the synthetic capture; then the red checks; then
+  the call sites, `bin/bt-trace` included.
+- 06:23Z: `f5b2508`: `tests/btmon/render` and `tests/btmon/real/` (the real btmon's output at
   80, 160 and 200 columns; the renderer reproduces it byte for byte under gawk and mawk; red
   first with a one-column drift). CI green.
-- 07:20Z: every btmon stub turned onto the renderer, tools unchanged: **10 checks red**, which
-  is what the laptop's tools do today: the close's SCO decode (twice: "no Setup Synchronous
-  Connection inside this trial's window"), bt-actions ("0 MGMT rows"), bt-sco (paired capture
-  miscounted, parameters lost, the unanswered setup not surfaced, the window bound and its
-  widening, `--raw`), the window of `sco-params.txt`. bt-capdiff and bt-ctrl-window stay green.
+- 06:23Z to 06:38Z (committed with the fix, `9667943`): every btmon stub turned onto the renderer,
+  tools unchanged: **10 checks red**, which is what the laptop's tools do today: the close's SCO
+  decode (twice: "no Setup Synchronous Connection inside this trial's window"), bt-actions ("0 MGMT
+  rows"), bt-sco (paired capture miscounted, parameters lost, the unanswered setup not surfaced,
+  the window bound and its widening, `--raw`), the window of `sco-params.txt`. bt-capdiff and
+  bt-ctrl-window stay green.
 - The call sites, twelve, not seven: your seven, plus `tools/bt-ctrl-window` (no width at all),
   `bin/bt-trace` and `scripts/runtime-mgmt-test.sh` (live `btmon -w`, where BT-4 kills the
   capture; the latter runs `bluetoothctl power`/`scan` under it), `scripts/discovery-stop-race.py`
@@ -100,7 +101,7 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
 - Also found: `bt-sco`'s counts and the closer's filter, like `lib/sco-window.awk`'s marker, see
   only the plain `Setup Synchronous Connection`, never the Enhanced one (0x003d). A commit of its
   own, after the width, with a fixture that has one.
-- 07:45Z: **`9667943`, the width fix, ready for you to land** (with `f5b2508` before it). Twelve
+- 06:38Z: **`9667943`, the width fix, ready for you to land** (with `f5b2508` before it). Twelve
   call sites; the lifecycle check that pinned the closer's `btmon` call (your pin table's
   10785-10803) now expects `--columns=200` in it; a new check that `bt-trace` gives every `btmon`
   `--columns=200`, red before. After: 1019 checks in parallel, 1018 serially; coverage 87%, awk
@@ -109,7 +110,7 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   **For the laptop, once deployed** [recommendation]: `bt-trace` with `--columns=200` should stop
   the `bluetoothctl`-triggered aborts; the BT-4 row's `btmon_aborts` count over the next trial will
   say. Next: the Enhanced setup.
-- 06:55Z: **`bf50fa4`, the Enhanced setup (0x003d)**: `bt-sco`'s counts, block filter and `--raw`,
+- 06:52Z: **`bf50fa4`, the Enhanced setup (0x003d)**: `bt-sco`'s counts, block filter and `--raw`,
   the close's filter and its emptiness test, `lib/sco-window.awk`'s marker now match
   `(Enhanced )?Setup Synchronous Connection`. Red first ("setup requests 0", "the close dropped
   the enhanced setup"). 1021 checks in parallel, 1020 serially; gates as above.
@@ -118,7 +119,7 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   `bt-actions` names only 0x0428; on a controller sent the Enhanced form the trial row would say
   no SCO was sent. Next: the btusb
   reload's second guard.
-- 07:05Z: **`98af393`, the btusb reload's second guard**: `install.sh`'s reload block is now
+- 07:02Z: **`98af393`, the btusb reload's second guard**: `install.sh`'s reload block is now
   `if (( APPLY && ! TOOLS_ONLY ))`. Red first, with a copy of `install.sh` whose `run()` has its
   tools-only gate cut out (staging still withholds every command): under `--tools-only` it read
   the journal and reached `modprobe -r btusb`; a control shows the copy reaches the reload on
@@ -131,7 +132,7 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   says so before its first step, and ends "ready, WITHOUT the suite"; with none, unchanged. Red
   first, on a copy of `check` beside spies for the validators it calls. 1026 checks; gates as above.
   Next: SU1, the rehearsal's checks for I2, VI1 and MODE2, sent to you rather than landed red.
-- 07:20Z: **`11c8039`, SU1**: `tests/system-upgrade` now runs the checklist's last two steps
+- 07:19Z: **`11c8039`, SU1**: `tests/system-upgrade` now runs the checklist's last two steps
   (`bt-verify-install` against the checkout, `bt-mode status`) and runs `--tools-only` with
   `journalctl` behind a spy, failing on a kernel read bounded by neither time nor priority (I2).
   Green with `98af393`. **Shown red in CI** on a CI-only branch,
@@ -146,7 +147,7 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   output captured first, as `bt-trial` does). I2 itself is fixed by `98af393` (the block skipped
   under `--tools-only`); the `-p err` index for the `--apply` path's timeout count stays yours.
   The ready line fast-forwarded to `11c8039`.
-- 08:30Z: **the working branch's eleven code commits, on the ready line as six** (CI branch
+- 08:29Z: **the working branch's eleven code commits, on the ready line as six** (CI branch
   `ci/deploy-rehearsal-20261017`), in the order you asked:
   1. `ab74973` `devtools/ci` asks the repository the branch is pushed to (8ecf3fd);
   2. `3ed9dc4` the isolation, measured by an exact trace: the gaps it found closed, and the
@@ -166,7 +167,7 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   the working branch's only where you asked (the workflow, `devtools/ci`, the split).
   **Tool hunks for your review** are named in each commit's message. The ready line
   fast-forwarded to `64530ee` (both workflows green there).
-- 08:55Z: the audit, a workflow of its own now, **went red once** on the series, at `a2a4931`
+- 08:51Z: the audit, a workflow of its own now, **went red once** on the series, at `a2a4931`
   (the checkout world): nothing outside the allow list, but one suite check failed under the trace,
   and the audit printed only "FAILED: 1 of 1072". The next commit's audit (`0326578`, the same
   world) was green, and a full audit of the tip here was green (1072 of 1072, nothing outside the
@@ -176,7 +177,7 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   itself. The working branch merged the series (`b761a00`); its tree is now the ready line's.
   Next: tests for `scripts/trial-sco-decode.py`; then the review's suite findings (RT4 first: the
   run-wide footprint does not watch the install targets).
-- 10:30Z: **item 4, the newest tools and the review's suite findings**, each test-first, each its
+- 10:32Z: **item 4, the newest tools and the review's suite findings**, each test-first, each its
   own commit:
   - `dcddb95` `scripts/trial-sco-decode.py` under the suite: both paths, 0x0428 and 0x043d,
     redaction, the window, and that without `--columns=200` it keeps nothing. Each check seen red
@@ -218,8 +219,14 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   classes those files as host software before consulting the list). Removed; `checks.yml`, the
   verdict, stayed green throughout, as the split intended. A full audit here after it: nothing
   outside the allow list, every check holding under the trace [verified].
+- 18:37Z: every time in this log set from `git log`, each entry to the commit it records (the
+  stubs' red to the span before the commit that holds it). Four were wrong by up to an hour, as
+  you found (17:39Z): 06:30Z, 07:05Z, 07:20Z and 07:45Z were written after the fact, from
+  memory. The section below stands as it was at 10:36Z; your 17:39Z note answered it, and what
+  stands now is in
+  `reviews/report-test-suite-work-for-main-branch-maintainer-20261019-110000-corrected.md`.
 
-## What is yours now (10:40Z)
+## What is yours now (10:36Z)
 
 1. **Land the ready line**: `tests/unit-testing-introduction-ready-for-main`, every commit above
    since `8f1396f`, test-first and CI-green on both workflows; tool hunks named in each commit's

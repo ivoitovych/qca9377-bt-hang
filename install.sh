@@ -171,8 +171,11 @@ install_file() {
     # The file is left exactly as bt-mode left it; the deploy says so and goes
     # on. Overridable only by leaving experiment mode, never by a flag here.
     if [[ -e "$DESTDIR$dst.disabled" ]]; then
+        # No advice to leave the mode (MODE1, the review of 2026-10-19): this
+        # line used to suggest `bt-mode mitigation`, which also arms the
+        # watchdog the investigation machine must never run (EX-023, EX-026).
         echo "  · $dst SKIPPED — a .disabled sibling exists (bt-mode moved it aside);"
-        echo "    leave experiment mode with 'bt-mode mitigation' to reinstall it"
+        echo "    it stays aside while the machine is in experiment mode (bt-mode status)"
         SKIPPED_DISABLED=$((SKIPPED_DISABLED + 1))
         return 0
     fi
@@ -247,9 +250,13 @@ if [[ -r "$MODE_STAMP" ]] && grep -q '^experiment' "$MODE_STAMP" 2>/dev/null && 
         echo "   (a .disabled sibling) exactly where it is, so the mode stands."
         echo "   (Until 2026-09-16 it reinstalled those two files — R2-58.)"
         echo
-        echo "   To install AND arm anyway (reverts the baseline):"
-        echo "       sudo BT_FORCE_INSTALL=1 ./install.sh --apply && sudo bt-mode experiment"
-        echo "   Or leave experiment mode first:  sudo bt-mode mitigation"
+        # Arming is no longer offered (MODE1, the review of 2026-10-19): the
+        # two routes printed here, BT_FORCE_INSTALL=1 with this mode and
+        # `bt-mode mitigation`, both arm the watchdog, and on the investigation
+        # machine its USB reset drove a wedged controller off the bus.
+        echo "   Arming is not offered here: on the investigation machine the"
+        echo "   watchdog's USB reset drove a wedged controller off the bus"
+        echo "   (EX-023, EX-026), and leaving experiment mode arms it too."
         exit 3
     fi
     echo "   BT_FORCE_INSTALL=1 — continuing. Re-apply the mode afterwards:"
