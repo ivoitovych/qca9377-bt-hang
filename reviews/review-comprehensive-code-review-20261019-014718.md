@@ -1146,3 +1146,66 @@ udev-driven `-event` unit's runs (counted by the same pattern) would also read 0
 *Fix:* match `Finished bt-health-snapshot(-event)?\.service`. Add a fixture built from the real line,
 so the next wording change fails a test instead of zeroing a column.
 
+**EH1 — MED (latent). `bt-env-history` reports "none" in its PROBES column for every boot.** A sweep
+for other matchers of systemd's own messages found this third copy at line 104: `grep -c "^Finished
+Snapshot Bluetooth health"` over `-o cat`, with the same comment ("re-verify against the live
+journal after a systemd upgrade"). On systemd 255 it never matches. This tool answers "which
+workarounds were active during which boot", and "none" here claims no HCI probe ran. A boot with the
+timer or the udev unit active would be listed as untouched, which is the treatment-history error the
+tool exists to prevent.
+*Fix:* as T9, with one shared pattern in `tools/lib/journal.sh` (e.g.
+`BT_RE_SNAPSHOT_RUN='Finished bt-health-snapshot(-event)?\.service'`), so three copies cannot drift
+apart again.
+
+The rest of the sweep: `bt-boot-provenance` and `bt-trial` match `Reached target (reboot|poweroff|halt)`,
+which still matches systemd 255's `Reached target reboot.target - System Reboot.`. `bt-actions`
+matches `Started` on GNOME scope units, and systemd still words those that way. `bt-context` lists
+the verbs as background noise only. No other instance.
+
+## 38. `tools/bt-stage2`, `tools/lib/stage2.awk` (read in full), and who says "Resetting usb device"
+
+`bt-stage2` writes its cache under a temporary name and renames it only on success. It reads
+`-b all` explicitly. `stage2.awk` classifies what ended each window by positive provenance, keeps
+unknown-origin resets apart, anchors USB lines to the device's own path, and never averages unlike
+terminators.
+
+**Who prints the message, from the kernel source** (`cache/ubuntu-7.0.0-38/drivers/bluetooth/btusb.c`,
+the kernel running E3):
+- line 4336: `if (id->driver_info & BTUSB_QCA_ROME) { … hdev->reset = btusb_qca_reset;`
+- line 1155: `btusb_qca_reset()` with no reset GPIO (the laptop's case) calls `btusb_reset(hdev);`
+- line 998: `btusb_reset()` prints `bt_dev_err(hdev, "Resetting usb device.");`, then
+  `usb_queue_reset_device(data->intf);`
+
+So `Bluetooth: hci0: Resetting usb device.` is the **kernel's own** command-timeout reset. Under E3,
+and on every kernel with the device-table entry, it is part of the treatment. `bin/bt-hang-watchdog`
+never prints it: its lines are "Recovering Bluetooth controller…", "USBDEVFS_RESET issued" and
+"escalating to USB unbind/bind". `stage2.awk` (153) gets this right and calls it "kernel
+command-timeout reset callback … TREATMENT". Two other places get it wrong.
+
+**KR1 — MED-HIGH (latent, the main experiment's rate). Under E3, a real failure would drop out of
+the E3 failure rate.**
+- `tools/lib/journal.sh:83-84` states "`Resetting usb device`, which is bt-hang-watchdog's wording"
+  and puts it in `BT_RE_INTERVENTION_TOOL` (106).
+- `bt-trial`'s interior scan (697) counts it, and the kernel's following `reset full-speed USB
+  device`, as `usb_reset`.
+
+What follows if BT-1 recurred on E3:
+1. The kernel itself resets the device at the first command timeout.
+2. The row is written `PERTURBED:usb_reset:…`.
+3. `trial-summary.awk` (75) excludes every PERTURBED row from every rate. A confirmed E3 failure
+   then disappears from the E3 denominator, which moves the rate in the direction that makes the
+   build look better, the one direction the summary's own comments say an error must never take.
+4. `bt-window` would also call that window "CENSORED — tooling".
+
+No E3 trial has had a timeout yet (every row 0), so nothing recorded is wrong. The link ledger
+(`sco-ledger.sh`) that carries the 74/0 result is unaffected.
+*Fix:*
+- correct `journal.sh`'s comment;
+- move `hci[0-9]+: Resetting usb device` (and the kernel `reset … USB device` line that follows it
+  within seconds) into a `BT_RE_KERNEL_RESET` class;
+- record it in the row as its own field (e.g. `kernel_reset=N`), not as a perturbation;
+- have the rate count such rows as confirmed failures.
+
+Keep "unknown-origin reset" for a bare `reset … USB device` with no kernel line before it, as
+`stage2.awk` does.
+
