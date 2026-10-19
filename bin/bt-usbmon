@@ -29,7 +29,7 @@
 
 set -uo pipefail
 
-DIR="${BT_USBMON_DIR:-/var/log/bt-health/usbmon}"
+DIR="${BT_USBMON_DIR:-${BT_HEALTH_DIR:-/var/log/bt-health}/usbmon}"
 VID="${BT_VID:-13d3}"
 PID="${BT_PID:-3503}"
 MAX_MB="${BT_USBMON_MAX_MB:-64}"      # rotate at this size

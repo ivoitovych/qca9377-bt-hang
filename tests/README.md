@@ -130,7 +130,60 @@ the tests as **not asked**, never as passed. The proof was seen to fail: with it
 tmpfs over `/var/log` removed, the suite went red on exactly that check, and
 nothing ran inside.
 
-**7. A section stands alone.** A run hands its sections to worker processes, as
+**7. An access that answers nothing is still an access.** The tripwire catches a
+machine *tool*. The decoy world catches a machine *answer*, by its marks and by
+access times. Neither sees these:
+- an existence check of a path that is absent here;
+- a read of a file that is missing in CI and present on the laptop;
+- a lookup of a path no test names.
+
+Each passes everywhere except where it matters. `devtools/access-audit` runs the
+suite under `strace -f` and classifies every file access, made or attempted, by
+where it landed:
+- the run's scratch space;
+- the checkout;
+- system software;
+- a namespace world's own mounts;
+- the machine.
+
+An access to the machine fails the audit unless
+[`access-allowlist`](access-allowlist) names it with a reason, and an allow line
+nothing matched fails it too.
+
+Its first run (2026-10-09) found nine kinds of access the decoy world had passed:
+- jq's `~/.jq`, git's `~/.config/git/ignore` and `/etc/gitattributes`, and
+  Python's user site-packages;
+- the real trial state, read by repo-save's tests;
+- the real `/var/log/bt-health/trace`, read by `bt-status` and `bt-incident`;
+- the real `/etc` and `/usr/local`, read by `uninstall.sh`'s dry run and by
+  `verify-restored.sh`;
+- `/tmp` outside the run.
+
+Each was a seam to declare, not a line to allow. The run now has a home of its
+own, its own trial state, and a health directory every tool derives its trace,
+capture and usbmon directories from. The audit's self-test plants each kind of
+access, and each must be caught. It also runs clean controls: scratch, software,
+a checkout read, a namespace world's own mount and an allowed path, and none
+may be flagged. CI runs the full audit as a job of its own.
+
+CI's first audit found more, from what CI has and this host lacks:
+- the checkout world's network proof resolving github.com through the host's
+  `/etc/resolv.conf`;
+- `id -g` for the bt-ui-capture tests' user, answered by systemd's user
+  database;
+- Ubuntu's crash reporter, run by a Python syntax error `repo-validate` left
+  uncaught;
+- `pkill -f` reading every process on the runner;
+- the coredump contract reading the host's journal;
+- the journal-contract phase that the suite could not use.
+
+Each was closed by a seam or a change in the test, except two kinds:
+- **The coredump contract's reads.** They go through `real_tool`, the suite's
+  one door to the real machine, and the audit classes them as `contract`.
+- **What the AT-SPI test's private `dbus-daemon` asks about its clients.**
+  These are allow lines for that command only, tied to that check.
+
+**8. A section stands alone.** A run hands its sections to worker processes, as
 many at a time as there are cores (`--jobs N` caps them; `--serial` runs one
 process in file order). Every worker builds the setup at the top of `run-tests`
 afresh: its own guard, tripwire, declared machine and temp tree. So a section
@@ -162,8 +215,8 @@ sees that setup and nothing else, whatever ran before it in the file.
   sections from a copy of their lines padded to their own line numbers and named
   `tests/run-tests` (`suite_copy_lines`), so a trace, an error message and
   `devtools/coverage` see the real file and line, not `/dev/fd/63`. Bash, awk
-  and Python coverage, comprehensiveness and the decoy world all run the suite
-  in parallel. Compared with serial runs of the same tree (2026-10-18): every
+  and Python coverage, comprehensiveness, the decoy world and `access-audit`
+  all run the suite in parallel. Compared with serial runs of the same tree (2026-10-18): every
   line, statement and Python line a serial run covers, a parallel run covers;
   the only additions are the parallel runner's own lines. `devtools/mutate`
   runs `--serial`, because it runs its mutants in parallel itself.

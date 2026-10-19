@@ -60,7 +60,7 @@
 # pattern does not apply here.
 #
 # Seams (tests, scripts/prove-ui-capture.sh): BT_UI_BASE, BT_UI_USER,
-# BT_UI_UID, BT_UI_HOME, BT_UI_EUID, BT_UI_REPO, BT_UI_MARK, BT_UI_APPDIR,
+# BT_UI_UID, BT_UI_GID, BT_UI_HOME, BT_UI_EUID, BT_UI_REPO, BT_UI_MARK, BT_UI_APPDIR,
 # BT_DYNDBG_CTL, BT_UI_CAPTURE_DIRS, BT_JOURNAL_FIXTURE, BT_PROC; the commands it runs
 # (runuser, systemd-run, systemctl, pw-metadata, loginctl, dbus-monitor, ...)
 # are taken from PATH, so a stub directory stands in for all of them.
@@ -141,7 +141,7 @@ find_user() {
     fi
     [[ -n "$U" ]] || return 1
     UID_U="${BT_UI_UID:-$(id -u "$U" 2>/dev/null)}"
-    GID_U="$(id -g "$U" 2>/dev/null || echo "$UID_U")"
+    GID_U="${BT_UI_GID:-$(id -g "$U" 2>/dev/null || echo "$UID_U")}"
     [[ -n "$UID_U" ]] || return 1
     if [[ -n "${BT_UI_HOME:-}" ]]; then HOME_U="$BT_UI_HOME"
     else
