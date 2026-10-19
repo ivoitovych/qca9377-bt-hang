@@ -42,7 +42,8 @@ read  /etc/udev/rules.d/51-bluetooth-health-snapshot.rules*  # bt-mode's guard o
 read  /etc/modprobe.d/btusb-qca9377.conf*   # bt-mode's guard of the real files
 read  /etc/systemd/system/bt-hang-watchdog.service   # real_install_state
 read  /usr/local/bin/bt-*                   # the install-target footprint (RT4): each file uninstall.sh lists, its .disabled and .pre siblings
-read  /usr/local/bin/lib/*                  # the same footprint
+#     (its /usr/local/bin/lib/* files need no line: names that are not a project tool's,
+#     under /usr/local/bin, the audit classes as host software)
 read  /usr/local/sbin/bt-*                  # the same footprint
 read  /etc/systemd/system/bt-*              # the same footprint, the drop-in directories' files among them
 read  /etc/systemd/system/bluetooth.service.d/10-debug.conf*    # the same footprint
