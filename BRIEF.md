@@ -590,7 +590,11 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
    As written 09-18: rewritten around `EX-037`–`EX-043`; it leaves only with a kernel patch.
 2. Six tasks delegated to the Test Branch Maintainer (source review, instrumented `btusb`
    logging of the chosen `new_alts`, bug-report audit, `BL-09`, `bt-crash` tests, device
-   survey).
+   survey). **State 2026-10-19** (their handoff, `comms/2026-10-19T0504Z-…` §10.5): the source
+   review, `BL-09` and the `bt-crash` tests are done; the bug-report audit is moot (item 1); the
+   `new_alts` logging was never built and is dropped unless KR1's evaluation needs it; the device
+   survey has no record of its scope on either side, so it stays open until the operator says
+   what it was or drops it.
 3. `bt-trial` does not record which `bluetoothd` is running, so pre- and post-patch trials
    pool under identical labels. Fix changes the results-file fingerprint — operator's call.
 4. ⚠️ **CI was red again on every push from 2026-09-26 to 10-02 — thirty runs** — for the
