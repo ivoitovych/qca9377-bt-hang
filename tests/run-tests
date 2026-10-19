@@ -14322,6 +14322,62 @@ NEST=$(timeout -k 2 20 tests/run-tests 2>&1); nestrc=$?
     && ok "the suite refuses to run inside a run of itself, before doing anything" \
     || bad "a nested tests/run-tests gave rc=$nestrc: $(head -3 <<<"$NEST" | tr '\n' '|')"
 
+# devtools/awk-coverage, MEASURED AGAINST AN ANSWER KNOWN IN ADVANCE. It runs a
+# suite, so it never ran from here, and its counting was trusted unseen. Two
+# defects were in that counting (2026-10-08), both making it say less than the
+# suite does. It keyed programs on caller#hash, so one program run by three
+# scripts was three programs. And it counted gawk's `BEGIN {` / `END {`
+# headers, which never carry a count, as statements that never ran. A third
+# came with the checkout world: repo-validate's parse check of every *.awk file
+# over /dev/null filed each file's statements again, as a program that never
+# saw data. BT_SUITE points it at a toy suite here, small enough to count by
+# hand, and shaped like the tools: a program is two files loaded together.
+#   lib/two.awk +   `/^a/`, `na++`, `/^b/`, `nb++`, `print`, `print` — run by
+#   lib/tail.awk    tools/one twice and tools/other once, never with a `b`
+#                   line: 5 of 6, ONE program, named by the caller that ran it
+#                   most
+#   lib/lonely.awk  `n++`, `print` — only ever parse-checked: counted, at 1 of 2
+#   tools/check     parse-checks all three, twice: four set aside, two counted
+# 6 of 8, 75.0%. Counting the parse checks gives 8 of 14, two.awk filed again
+# at 1 of 5: the same shape as the real fall, measured on this toy.
+if command -v gawk >/dev/null 2>&1; then
+    ACT=$(mktemp -d); mkdir -p "$ACT/tools/lib" "$ACT/tests"
+    printf '/^a/ { na++ }\n/^b/ { nb++ }\nEND { print na + 0, nb + 0 }\n' > "$ACT/tools/lib/two.awk"
+    printf 'END { print "tail" }\n' > "$ACT/tools/lib/tail.awk"
+    printf '{ n++ }\nEND { print n + 0 }\n' > "$ACT/tools/lib/lonely.awk"
+    printf '#!/bin/bash\nl=$(dirname "${BASH_SOURCE[0]}")/lib\nprintf "a\\n" | awk -f "$l/two.awk" -f "$l/tail.awk"\n' > "$ACT/tools/one"
+    printf '#!/bin/bash\nl=$(dirname "${BASH_SOURCE[0]}")/lib\nprintf "a\\na\\n" | awk -f "$l/two.awk" -f "$l/tail.awk"\n' > "$ACT/tools/other"
+    printf '#!/bin/bash\ncd "$(dirname "${BASH_SOURCE[0]}")" && for f in lib/*.awk; do awk -f "$f" /dev/null >/dev/null; done\n' > "$ACT/tools/check"
+    printf '#!/bin/bash\nd=$(dirname "${BASH_SOURCE[0]}")/..\n"$d/tools/one"; "$d/tools/one"; "$d/tools/other"; "$d/tools/check"; "$d/tools/check"\necho "toy: done"\n' > "$ACT/tests/suite"
+    chmod +x "$ACT/tools/one" "$ACT/tools/other" "$ACT/tools/check" "$ACT/tests/suite"
+    ACO=$(BT_SUITE="$ACT/tests/suite" timeout -k 2 60 devtools/awk-coverage --min 75 2>&1); acorc=$?
+    ACU=$(BT_SUITE="$ACT/tests/suite" timeout -k 2 60 devtools/awk-coverage --uncovered 2>&1)
+    ACF=$(BT_SUITE="$ACT/tests/suite" timeout -k 2 60 devtools/awk-coverage --min 76 2>&1); acfrc=$?
+    [[ $(grep -c '% .*prog:' <<<"$ACO") == 2 && "$ACO" == *"83.3%      5/6      prog:tools/one#"*" (+1 other caller)"* ]] \
+        && ok "awk-coverage files one program run by two scripts once, named by the one that ran it most" \
+        || bad "awk-coverage's grouping by program: $(grep -E '%|TOTAL' <<<"$ACO" | tr '\n' '|')"
+    [[ "$ACO" == *"50.0%      1/2      prog:parse-check-only:$ACT/tools/lib/lonely.awk#"* \
+       && "$ACO" == *"parse checks set aside: 4 (their files also ran over data); counted: 2 (their files never did)"* ]] \
+        && ok "awk-coverage sets aside a parse check of a file that ran, and counts the file that never did" \
+        || bad "awk-coverage's parse checks: $(grep -E 'parse|lonely' <<<"$ACO" | tr '\n' '|')"
+    [[ "$ACO" == *"TOTAL: 75.0% (6 of 8 statements)"* && "$ACO" == *"suite: toy: done"* && $acorc == 0 && $acfrc == 1 \
+       && "$ACF" == *"awk statement coverage 75% is below the --min 76% floor"* ]] \
+        && ok "awk-coverage totals 6 of 8 (no parse check twice, no BEGIN/END header), and its floor holds at 75 and fails at 76" \
+        || bad "awk-coverage's total or floor: rc=$acorc/$acfrc $(grep -E 'TOTAL|floor|suite:' <<<"$ACO$ACF" | tr '\n' '|')"
+    [[ "$ACU" == *"    nb++"* && "$ACU" == *"    n++"* && "$ACU" == *"2 of 8 awk statements never ran"* && "$ACU" != *"END {"* ]] \
+        && ok "awk-coverage --uncovered names the two statements that never ran, and nothing else" \
+        || bad "awk-coverage --uncovered: $(tr '\n' '|' <<<"$ACU")"
+    chmod -x "$ACT/tests/suite"
+    BT_SUITE="$ACT/tests/suite" timeout -k 2 20 devtools/awk-coverage >/dev/null 2>&1
+    (( $? == 2 )) \
+        && ok "awk-coverage refuses a suite it cannot run (2), rather than profiling nothing" \
+        || bad "awk-coverage ran with a non-executable BT_SUITE"
+    rm -rf "$ACT"
+    AWKCOV_SKIPPED=''
+else
+    AWKCOV_SKIPPED="devtools/awk-coverage against a toy suite (no gawk here; mawk has no profiler)"
+fi
+
 SELF0=$(grep -HnE '"\$0"' "${SUITE_FILES[@]}" | grep -vE ':[0-9]+:[[:space:]]*#')
 SELF0N=$(grep -c . <<<"$SELF0" || true)
 if (( ${SELF0N:-0} == 3 )); then
@@ -14562,7 +14618,7 @@ fi
 # AT-SPI recorder is proven against a private accessibility bus, which needs
 # dbus-daemon and python3 with GObject; its shipped defaults run inside a user
 # and mount namespace, which some hosts refuse. Either way: not asked, said so.
-for _ns in "$UIATSPI_SKIPPED" "$UINS_SKIPPED" "$AUDIT_SKIPPED"; do
+for _ns in "$UIATSPI_SKIPPED" "$UINS_SKIPPED" "$AWKCOV_SKIPPED" "$AUDIT_SKIPPED"; do
     [[ -n "$_ns" ]] || continue
     echo "  NOT ASKED HERE: $_ns — not available on this host,"
     echo "                  so it was not run. Run this suite where it is."

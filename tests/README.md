@@ -130,7 +130,22 @@ the tests as **not asked**, never as passed. The proof was seen to fail: with it
 tmpfs over `/var/log` removed, the suite went red on exactly that check, and
 nothing ran inside.
 
-**7. An access that answers nothing is still an access.** The tripwire catches a
+**7. An instrument is measured too.** `devtools/awk-coverage` runs the suite,
+so the suite never ran it, and its counting was trusted unseen. `BT_SUITE` now
+points it at a toy suite whose right answer was worked out by hand. Measured
+that way (2026-10-08), it had three counting errors, all making the figure low:
+- one program run by three scripts was filed as three programs;
+- gawk's `BEGIN {` / `END {` headers, which never carry a count, were counted as
+  statements that never ran;
+- repo-validate's parse check of every `*.awk` file over `/dev/null` filed each
+  file a second time.
+
+89.8% of 1941 statements became 97.8% of 1340 (on this line, 2026-10-19: 89.6% of
+2224 became 97.7% of 1447). A suite run inside a suite run is
+refused (`SUITE_RUN_ID`), so an instrument that loses its seam stops at once
+instead of starting the suite inside itself.
+
+**8. An access that answers nothing is still an access.** The tripwire catches a
 machine *tool*. The decoy world catches a machine *answer*, by its marks and by
 access times. Neither sees these:
 - an existence check of a path that is absent here;
@@ -183,7 +198,7 @@ Each was closed by a seam or a change in the test, except two kinds:
 - **What the AT-SPI test's private `dbus-daemon` asks about its clients.**
   These are allow lines for that command only, tied to that check.
 
-**8. A section stands alone.** A run hands its sections to worker processes, as
+**9. A section stands alone.** A run hands its sections to worker processes, as
 many at a time as there are cores (`--jobs N` caps them; `--serial` runs one
 process in file order). Every worker builds the setup at the top of `run-tests`
 afresh: its own guard, tripwire, declared machine and temp tree. So a section
