@@ -83,7 +83,7 @@ extract() {
     (( ${#files[@]} )) || { : > "$out"; return; }
     local f
     for f in "${files[@]}"; do
-        COLUMNS=200 btmon -T -r "$f" 2>/dev/null
+        btmon --columns=200 -T -r "$f" 2>/dev/null   # --columns: COLUMNS is not read when piped
     done | awk '
         # Keep the FULL date and millisecond precision. An earlier version cut
         # the key to HH:MM:SS, which merged records from different days and

@@ -81,7 +81,11 @@ CURRENT=""
 
 start_capture() {
     CURRENT="$DIR/bt-$(date +%Y%m%d-%H%M%S).btsnoop"
-    btmon -w "$CURRENT" >/dev/null 2>&1 &
+    # --columns=200: the decode this throws away still runs, at 80 columns
+    # unless told otherwise, and there a privileged MGMT open (comm[pid] and all)
+    # leaves btmon 5.72's print_packet a negative length: the fortified snprintf
+    # aborts the capture (BT-4; tests/btmon/real/README.md).
+    btmon --columns=200 -w "$CURRENT" >/dev/null 2>&1 &
     BTMON_PID=$!
     chmod 0600 "$CURRENT" 2>/dev/null   # belt and braces; umask already covers it
     log "capturing to $(basename "$CURRENT")"

@@ -1081,14 +1081,17 @@ hang|ok)
                 printf '===== source: %s =====\n' "$src"
                 for f in "$src"/*.btsnoop; do
                     [[ -e "$f" ]] || continue
-                    COLUMNS=200 btmon -T -r "$f" 2>/dev/null
+                    # --columns, not COLUMNS: piped, btmon reads only the option and
+                    # otherwise fits each header into 80 columns, cutting the names this
+                    # filter matches; and at 80 a privileged MGMT open aborts it (BT-4).
+                    btmon --columns=200 -T -r "$f" 2>/dev/null
                 done | awk -v lo="$t_start" -v hi="$t_end" '
                     # Carry the last seen full timestamp forward: indented
                     # parameter lines have none of their own.
                     match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}/) {
                         cur = substr($0, RSTART, 19)
                     }
-                    /HCI Command: Setup Synchronous Connection/ { keep = (cur >= lo && cur <= hi) }
+                    /HCI Command: (Enhanced )?Setup Synchronous Connection/ { keep = (cur >= lo && cur <= hi) }
                     /HCI Event: Synchronous Connect Complete/   { keep = (cur >= lo && cur <= hi) }
                     /^[<>@=!]/ && !/Setup Synchronous|Synchronous Connect Complete/ { keep = 0 }
                     keep { print }'
@@ -1100,7 +1103,7 @@ hang|ok)
     # emptiness test must ask "did any RECORD survive the filter?", not "is the
     # file empty?" — the earlier -s test made this fallback unreachable and a
     # no-SCO trial shipped a file of bare section headers with no explanation.
-    if ! grep -q 'HCI Command: Setup Synchronous Connection' "$dir/sco-params.txt" 2>/dev/null; then
+    if ! grep -qE 'HCI Command: (Enhanced )?Setup Synchronous Connection' "$dir/sco-params.txt" 2>/dev/null; then
         echo "(no Setup Synchronous Connection inside this trial's window in either capture path)" \
             > "$dir/sco-params.txt"
     fi

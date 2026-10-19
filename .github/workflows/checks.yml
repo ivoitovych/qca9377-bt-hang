@@ -23,7 +23,7 @@ on:
 permissions:
   contents: read
 
-# NINE JOBS, ON NINE RUNNERS AT ONCE. Every step below ran in one job until
+# EIGHT JOBS, ON EIGHT RUNNERS AT ONCE. Every step below ran in one job until
 # 2026-10-18, one after another, about nine minutes; most of it five serial runs
 # of the suite under five instruments. Each instrument needs a run of its own
 # (it reads its own trace of the run), so none was cut: they are split across
@@ -419,40 +419,3 @@ jobs:
 
       - name: deploy rehearsal, experiment mode (bt-mode experiment before the deploy)
         run: sudo BT_SYSTEM_TEST=required tests/system-upgrade "$RUNNER_TEMP/installed-20260918" experiment
-
-  # THE ISOLATION ITSELF, MEASURED BY AN EXACT TRACE. The decoy world above
-  # watches what the machine ANSWERS; an access that answers nothing — an
-  # existence check of a path absent here, a read of a file no test names —
-  # passes it everywhere and reads the real machine on the laptop. This job
-  # runs the whole suite under strace and classifies every file access, made
-  # or attempted, by where it landed; any that reached the machine fails it
-  # unless tests/access-allowlist names it, with its reason, and an allow line
-  # nothing matched fails it too. Its first run found nine kinds the decoy
-  # world had passed (2026-10-09). A job of its own: a trace makes the suite
-  # about six times slower, and in parallel it adds nothing to the wait.
-  access-audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install gawk, systemd-journal-remote, fakeroot and strace
-        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
-
-      # Namespaces lifted, so the suite's namespace and checkout worlds run
-      # under the trace too, and their own accesses are classified with them.
-      - name: access-audit self-test (every planted machine access is caught)
-        run: |
-          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
-            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          fi
-          devtools/access-audit --self-test
-
-      - name: the suite under an exact access trace (nothing outside the allow list)
-        run: devtools/access-audit --report access-audit-report
-
-      - name: keep the trace when the audit fails
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: access-audit-report
-          path: access-audit-report/

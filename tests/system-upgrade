@@ -185,7 +185,15 @@ DISABLED_BEFORE=$(find /etc -name '*.disabled' 2>/dev/null | sort)
 U1=$(unit_states); S1=$(snapshot)
 
 # ── the deploy: --tools-only from this checkout ───────────────────────────
-TOUT=$(./install.sh --tools-only 2>&1); trc=$?
+# journalctl through a spy that logs each call and runs the real one: on the
+# laptop the boot is days old with dynamic debug on, and a read of the whole
+# boot's kernel log does not finish in minutes, so the deploy would look hung
+# (I2, the review of 2026-10-19). This VM's journal is seconds old and cannot
+# show the time; the call log can.
+JSPY=$(mktemp -d); REAL_JOURNALCTL=$(command -v journalctl)
+printf '#!/bin/sh\necho "$*" >> "%s/calls"\nexec "%s" "$@"\n' "$JSPY" "$REAL_JOURNALCTL" > "$JSPY/journalctl"
+chmod +x "$JSPY/journalctl"; : > "$JSPY/calls"
+TOUT=$(PATH="$JSPY:$PATH" ./install.sh --tools-only 2>&1); trc=$?
 (( trc == 0 )) && ok "install.sh --tools-only completed" \
                || { bad "install.sh --tools-only failed (rc=$trc)"; tail -5 <<<"$TOUT" | sed 's/^/      /'; }
 # It ran nothing but file operations: run() prints "  + <command>" for each
@@ -195,6 +203,13 @@ TOUT=$(./install.sh --tools-only 2>&1); trc=$?
 ran=$(grep -E '^  \+ ' <<<"$TOUT" | grep -vE '^  \+ (install|rm|rmdir|mkdir|wrote) ')
 [[ -z "$ran" ]] && ok "--tools-only executed only file operations ($(grep -cE '^  \+ ' <<<"$TOUT") of them)" \
                 || { bad "--tools-only executed a system command:"; sed 's/^/      /' <<<"$ran"; }
+# A kernel read bounded by neither time nor priority is a read of the whole boot.
+wholeboot=$(grep -E -- '(^| )(-k|--dmesg)( |$)' "$JSPY/calls" \
+            | grep -vE -- '(^| )(-p|--priority|-S|--since|-n|--lines)( |=|$)')
+[[ -z "$wholeboot" ]] \
+    && ok "--tools-only read no whole boot's kernel log ($(grep -c . "$JSPY/calls") journalctl call(s))" \
+    || { bad "--tools-only read the whole boot's kernel log (I2):"; sed 's/^/      journalctl /' <<<"${wholeboot:-$(cat "$JSPY/calls")}"; }
+rm -rf "$JSPY"
 S2=$(snapshot); U2=$(unit_states)
 NEWDST=$(destinations "$NEW")
 # A destination absent before and after is a conditional one this machine
@@ -234,6 +249,13 @@ systemctl daemon-reload
 U3=$(unit_states)
 same_units "$U3" "$U1" && ok "after daemon-reload, still nothing armed and nothing stopped" \
                      || { bad "daemon-reload changed unit states:"; diff <(echo "$U1") <(echo "$U3") | sed 's/^/      /'; }
+# The checklist's last two steps (SU1; docs/install.md): what the operator reads
+# after the deploy, the verifier run against this checkout as the operator runs
+# it against theirs.
+VOUT=$(/usr/local/bin/bt-verify-install "$NEW" 2>&1); vrc=$?
+MOUT=$(/usr/local/bin/bt-mode status 2>&1); mrc=$?
+echo "  · bt-verify-install: rc=$vrc, $(grep -E 'in sync|drifted' <<<"$VOUT" | tail -1)"
+echo "  · bt-mode status: rc=$mrc, $(awk '/Passive capture/ { f = 1; next } f' <<<"$MOUT" | grep -c .) line(s) for the four passive units"
 restart_loops
 RESULTS="$EVREPO/evidence/trials/results.tsv"
 rows_before=$(grep -c . "$RESULTS" 2>/dev/null)

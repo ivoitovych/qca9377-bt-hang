@@ -15,8 +15,8 @@
 #
 # Output: tmp/supported-commands-survey.tsv, one row per reply:
 #   file  reply-time  entries  enhanced_setup  enhanced_accept
-# Read-only; btmon at COLUMNS=160 (btmon 5.72 overflows a fixed buffer on
-# terminals wider than 255 columns).
+# Read-only; btmon --columns=160 (btmon 5.72 overflows a fixed buffer on
+# terminals wider than 255 columns; COLUMNS is not read when piped).
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIR="${1:-/var/log/bt-health/capture}"
@@ -27,7 +27,7 @@ printf 'file\treply_time\tentries\tenhanced_setup\tenhanced_accept\n' > "$OUT"
 n=0
 for f in "$DIR"/*.btsnoop; do
 	[[ -e "$f" ]] || continue
-	COLUMNS=160 btmon -T -r "$f" 2>/dev/null | awk -v file="$(basename "$f")" '
+	btmon --columns=160 -T -r "$f" 2>/dev/null | awk -v file="$(basename "$f")" '
 		# btmon puts the opcode of a Command Complete on the indented line
 		# below the "> HCI Event:" header, which carries the timestamp.
 		inreply && /^[<>@=]/ { printf "%s\t%s\t%s\t%s\t%s\n", file, ts, entries, es, ea; inreply = 0 }

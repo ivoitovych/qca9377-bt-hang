@@ -66,11 +66,11 @@ if (( ${#files[@]} == 0 )); then
 fi
 
 for f in "${files[@]}"; do
-    COLUMNS=200 btmon -T -r "$f" 2>/dev/null
+    btmon --columns=200 -T -r "$f" 2>/dev/null   # --columns: COLUMNS is not read when piped (BT-4 too)
 done > "$TMP"
 
 if (( RAW )); then
-    grep -A 12 -E "HCI Command: Setup Synchronous|Synchronous Connect Complete" "$TMP"
+    grep -A 12 -E "HCI Command: (Enhanced )?Setup Synchronous|Synchronous Connect Complete" "$TMP"
     exit 0
 fi
 
@@ -111,9 +111,11 @@ echo "════════════════════════�
 # Match on "HCI Command:" / "HCI Event:" specifically. A bare grep for
 # "Setup Synchronous Connection" also matches the supported-commands bitmap
 # that the controller reports at startup, which lists the command name once per
-# adapter and has nothing to do with any actual request.
+# adapter and has nothing to do with any actual request. The Enhanced command
+# (0x003d) is a setup too: a controller with the enhanced command set is sent it
+# instead of 0x0028.
 awk '
-/HCI Command: Setup Synchronous Connection/ { insetup = 1; incompl = 0
+/HCI Command: (Enhanced )?Setup Synchronous Connection/ { insetup = 1; incompl = 0
     print "\n── REQUEST ─────────────────────────────────────────────────"
     print; next }
 /HCI Event: Synchronous Connect Complete/ { incompl = 1; insetup = 0
@@ -123,7 +125,7 @@ awk '
 (insetup || incompl) && /^ / { print }
 ' "$TMP"
 
-req=$(grep -c "HCI Command: Setup Synchronous Connection" "$TMP" || true)
+req=$(grep -cE "HCI Command: (Enhanced )?Setup Synchronous Connection" "$TMP" || true)
 cpl=$(grep -c "HCI Event: Synchronous Connect Complete" "$TMP" || true)
 
 echo

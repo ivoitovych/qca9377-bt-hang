@@ -116,7 +116,7 @@ tests/run-tests:/^(\|\| *)?bad /   # failure branches: unreachable in a green ru
 # opens and closes.
 tools/bt-actions:93-274     # inline classifier; see devtools/awk-coverage (re-derived 2026-09-24: 9373e62 moved the file by +7)
 tools/bt-actions:288-294    # inline MGMT-intent extractor; same (295, its closing line, runs since 2026-09-29: pass 2 is now driven)
-tools/bt-sco:115-123        # inline request/completion block filter; same
+tools/bt-sco:117-125        # inline request/completion block filter; same (re-derived 2026-10-19: +2, the Enhanced comment)
 tools/bt-capdiff:88-108     # inline record extractor; same
 tools/sanitize-logs.sh:142-191  # inline substituter and its verifier; same
 tools/bt-boot-list:69-74    # inline JSON boot-index reader; same
@@ -124,9 +124,9 @@ tools/bt-env-history:82-91  # inline metrics.tsv column reader; same
 tools/bt-logvolume:110-114  # inline message normaliser; same
 tools/bt-logvolume:116-121  # inline share renderer (same pipeline, second program)
 tools/bt-trial:274-278      # inline trial-number counter; same (re-derived 2026-09-29: +3, the btusb seam comment; +21, main's module_build and KJ_RE; main re-derived it 2026-10-03, +15, for its own tree; unmoved by the merge of 2026-10-03's main — the range starts at the `n=$(awk` line and stops before the closing `END …)`, the line bash attributes the command to)
-tools/bt-trial:1086-1094    # inline sco-params window filter; same (re-derived 2026-09-19 (+16), 2026-09-20 (+12, the abort/autostop edits), 2026-09-24 (+37, dbe7123), 2026-09-29 and 2026-10-03 on each branch, by content at the merge, and 2026-10-16 (-2, the close's extras moved after the row), and 2026-10-18 (the decode itself moved after the row, by content) — R2-112; CI's stale-exclusion check caught the old range covering live code each time. The range is btmon-line+2 … +10, the program's body: the `echo` after it runs since a test decodes a capture (2026-09-29))
+tools/bt-trial:1089-1097    # inline sco-params window filter; same (re-derived 2026-09-19 (+16), 2026-09-20 (+12, the abort/autostop edits), 2026-09-24 (+37, dbe7123), 2026-09-29 and 2026-10-03 on each branch, by content at the merge, and 2026-10-16 (-2, the close's extras moved after the row), and 2026-10-18 (the decode itself moved after the row, by content), and 2026-10-19 (+3, the --columns comment) — R2-112; CI's stale-exclusion check caught the old range covering live code each time. The range is btmon-line+2 … +10, the program's body: the `echo` after it runs since a test decodes a capture (2026-09-29))
 tools/bt-verify-install:57-60   # inline install_file parser; same
-tools/bt-ctrl-window:36-75      # inline management-record decoder; same — `btmon … | awk` reports the line the pipeline starts on, so 35 runs (2026-10-10)
+tools/bt-ctrl-window:38-77      # inline management-record decoder; same — `btmon … | awk` reports the line the pipeline starts on, so 37 runs (2026-10-10; +2 on 2026-10-19, the --columns comment)
 tests/run-tests:162-167       # inline --section extractor; same (re-derived 2026-09-28: +27, the git-isolation block above it; 2026-09-29: +126, the machine tripwire, the declared machine and the run marker; then +11, the declared usbfs and runtime-user roots; 2026-10-08: +13, the nested-run refusal; 2026-10-09: moved to the top, before anything is declared; 2026-10-18: +26, by content, the --jobs block above it; then +2, by content, the instruments' note)
 
 # THE ELEVENTH ENTRY WAS MISSING AND COST MORE THAN A PERCENTAGE POINT.

@@ -170,7 +170,7 @@ trigger)
 	stamp=$(date +%Y%m%dT%H%M%S)
 	cap="$RT/$stamp-$label.btsnoop"
 	echo "module: $(which_module)   daemon: $(readlink /proc/$(pidof bluetoothd)/exe)"
-	btmon -w "$cap" >/dev/null 2>&1 &
+	btmon --columns=200 -w "$cap" >/dev/null 2>&1 &   # --columns: BT-4 aborts it at 80 on bluetoothctl's open
 	mon=$!
 	sleep 1
 	bluetoothctl power on >/dev/null
@@ -185,7 +185,7 @@ trigger)
 	kill "$mon"; wait "$mon" 2>/dev/null
 	echo "capture: $cap"
 	echo "── the kernel's answer to Start Discovery (mgmt channel):"
-	btmon -r "$cap" 2>/dev/null | grep -E -A3 "Start Discovery \(0x0023\)" | grep -E "Start Discovery|Status:" | head -8
+	btmon --columns=200 -r "$cap" 2>/dev/null | grep -E -A3 "Start Discovery \(0x0023\)" | grep -E "Start Discovery|Status:" | head -8
 	echo "── daemon log for the same seconds:"
 	journalctl _COMM=bluetoothd --since "-30s" --no-pager -o short-precise 2>/dev/null | grep -E "start_discovery_complete|Wrong size|status: 0x|segfault" | tail -6
 	;;

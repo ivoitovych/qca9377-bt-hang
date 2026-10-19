@@ -859,6 +859,140 @@ stop_daemon() {   # <pid> — of a daemon started with "$SETSID"
     return 0
 }
 
+# ── THE CHECKOUT WORLD, SHARED BY ITS FOUR SECTIONS ───────────────────────
+#
+# devtools/held, devtools/save and devtools/review-open act on the checkout
+# they live in: they switch branches, commit, and push. No test could run them
+# where they are, and a copy elsewhere is a different file to coverage and a
+# different repository to git. So they run in place in a CHECKOUT WORLD:
+# `unshare -Urmn`, an overlay of this checkout mounted over its own path, so
+# every write — the index, objects, refs, the working tree — lands in a
+# throwaway upper layer, and a network namespace, so no push or fetch can leave
+# the machine. Remotes are scratch bare repositories named through GIT_CONFIG_*
+# for the length of one run.
+#
+# It is only worth its proof, as the namespace world is: before anything runs
+# in it, a marker file and a commit made inside must be there inside, absent
+# outside — HEAD, every ref and the working tree's status unchanged — and the
+# real origin unreachable from inside. A world that cannot be built is not
+# asked; one that builds and fails the proof is a red invariant, and nothing
+# runs in it. Each of the four sections proves its own world (co_prove), in
+# its own $COW, so each stands alone and they run in parallel.
+co_world() {   # <script> — run <script> at this checkout's own path, overlaid, offline
+    rm -rf "$COW/up" "$COW/wk"; mkdir -p "$COW/up" "$COW/wk"
+    unshare -Urmn bash -c '
+        mount -t overlay co-world -o lowerdir="$PWD",upperdir="$1",workdir="$2" "$PWD" || exit 97
+        cd "$PWD" || exit 97        # re-enter: the old directory handle is the lower layer
+        # An identity of its own, in the overlay'"'"'s .git/config: a fresh clone
+        # has none, and CI'"'"'s checkout is one (2026-10-08).
+        git config user.name "Checkout World"; git config user.email world@example.com
+        eval "$3"' co-world "$COW/up" "$COW/wk" "$1"
+}
+# --no-optional-locks: a plain `git status` refreshes the index's stat cache and
+# writes .git/index when the cache is stale, as it is in a fresh CI checkout.
+# The decoy world reported that write there (2026-10-08), from the one check
+# meant to prove the real checkout untouched.
+co_snapshot() { git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)'; git --no-optional-locks status --porcelain; }
+# ONLY A CHECKOUT THAT HOLDS ITS OWN GIT DIRECTORY. The overlay covers this
+# directory and nothing else. In a git worktree `.git` is a file naming the
+# main repository's directory, so a world built there wrote through to it: run
+# from a worktree on 2026-10-18, the proof's commit landed in the shared
+# repository and the world's own `git config user.name/user.email` replaced the
+# shared .git/config identity, which every later commit would have carried. The
+# proof saw the moved refs and went red, after the writes. So both the git
+# directory and the common one must lie inside the checkout before anything
+# is built.
+co_git_inside() {   # <checkout> — 0 when its git directory and common directory are inside it
+    local top gd cd
+    top=$(cd "$1" 2>/dev/null && pwd -P) || return 1
+    gd=$(git -C "$1" rev-parse --absolute-git-dir 2>/dev/null) || return 1
+    cd=$(cd "$1" 2>/dev/null && cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd -P) || return 1
+    gd=$(cd "$gd" && pwd -P)
+    [[ "$gd/" == "$top/"* && "$cd/" == "$top/"* ]]
+}
+# The proof, in this section's $COW. Sets COWORLD_OK=1, or COWORLD_SKIPPED with
+# the reason, or reports the failed proof as red; and COBEFORE, the outside as
+# it was, which the section compares with the outside after its runs.
+co_prove() {
+    local mark="co-world-$SUITE_RUN_ID" proof rc
+    COWORLD_OK=0
+    if ! co_git_inside .; then
+        COWORLD_SKIPPED="the checkout world (this checkout's git directory lies outside it, as in a git worktree: the overlay cannot hold its writes)"
+        return
+    fi
+    if ! unshare -Urmn true 2>/dev/null; then
+        COWORLD_SKIPPED="the checkout world (no user, mount and network namespaces here)"
+        return
+    fi
+    COBEFORE=$(co_snapshot)
+    proof=$(co_world "
+        echo $mark > $mark.proof
+        git commit -q --allow-empty -m 'checkout world: proof' || exit 1
+        echo \"file=\$(cat $mark.proof) head=\$(git log -1 --format=%s)\"
+        # No way out: the world's network namespace has no interface but lo, and
+        # a connect to an address literal fails at once. Not \`git ls-remote
+        # origin\`: resolving the name reads the machine's /etc/resolv.conf and
+        # /etc/hosts first, as CI's access audit reported (2026-10-09).
+        ifs=\$(awk 'NR > 2 { sub(\":\", \"\", \$1); printf \"%s \", \$1 }' /proc/self/net/dev)
+        if [[ \"\$ifs\" == 'lo ' ]] && ! (exec 3<>/dev/tcp/192.0.2.1/9) 2>/dev/null; then echo net=none
+        else echo \"net=reached (interfaces: \$ifs)\"; fi
+    " 2>&1); rc=$?
+    if (( rc == 97 )); then
+        COWORLD_SKIPPED="the checkout world (an overlay of this checkout cannot be mounted here)"
+    elif [[ "$proof" == "file=$mark head=checkout world: proof"*"net=none" && ! -e "$mark.proof" \
+            && "$COBEFORE" == "$(co_snapshot)" ]]; then
+        ok "the checkout world proves itself: a commit and a file inside, neither outside, origin unreachable"
+        COWORLD_OK=1
+    else
+        bad "the checkout world did NOT prove itself — nothing was run in it: inside '$(tr '\n' ' ' <<<"$proof")'; outside $([[ -e "$mark.proof" ]] && echo 'the marker exists' || echo 'no marker'), $([[ "$COBEFORE" == "$(co_snapshot)" ]] && echo 'refs unchanged' || echo 'REFS OR STATUS CHANGED')"
+        rm -f "$mark.proof"
+    fi
+}
+# The world's scratch remotes and a held branch, as a script for co_world; and
+# a trial marked open, so repo-save takes its documented no-suite path rather
+# than running this suite inside itself.
+co_setup() {
+    mkdir -p "$COW/trial" "$COW/nohooks"; : > "$COW/trial/current"
+    # repo-save validates the unit files with the machine's systemd-analyze and
+    # udevadm: declared here, as everywhere in this suite.
+    machine_stub "$COW/bin" systemd-analyze udevadm
+    COSETUP="
+        B='$COW/bare'; rm -rf \"\$B\"; mkdir -p \"\$B\"
+        git init -q --bare \"\$B/origin.git\"; git init -q --bare \"\$B/private.git\"
+        # CI checks out at depth 1, and a bare repository refuses a push from a
+        # shallow clone unless told to take one.
+        git -C \"\$B/origin.git\" config receive.shallowUpdate true
+        git -C \"\$B/private.git\" config receive.shallowUpdate true
+        # The real URL, read BEFORE the rewrite exists: a key exported ahead of
+        # its value is an empty insteadOf, and that matches every URL.
+        ORIGIN_URL=\$(git remote get-url origin)
+        export GIT_CONFIG_COUNT=2 PATH='$COW/bin':\"\$PATH\"
+        export GIT_CONFIG_KEY_0=\"url.\$B/origin.git.insteadOf\" GIT_CONFIG_VALUE_0=\"\$ORIGIN_URL\"
+        # No hooks in here: hooks installed in this checkout would run at every
+        # commit and push the world makes, against the world's scratch remotes.
+        export GIT_CONFIG_KEY_1=core.hooksPath GIT_CONFIG_VALUE_1='$COW/nohooks'
+        # The private remote is a real one, in the overlay's .git/config: git
+        # pushes to a remote named only through GIT_CONFIG_*, but \`git remote
+        # get-url\` — repo-save's test for it — does not count one as existing.
+        git remote add private \"\$B/private.git\"
+        export BT_TRIAL_STATE_DIR='$COW/trial'
+        git add -A && git commit -q --allow-empty -m 'checkout world: the tree as it is'
+        git checkout -q -B main      # -B: the checkout may already be on main, as CI's is
+        git push -q origin main 2>/dev/null
+        git checkout -q -b kernel/mgmt-flush-status
+        printf 'held patch\n' > held-world.patch; git add held-world.patch; git commit -q -m 'held: a patch'
+        git checkout -q main
+    "
+}
+co_sect() {   # <name> <<<"<output>" — the lines after "== <name>", to the next "== "
+    awk -v s="== $1" '$0 == s { f = 1; next } /^== / { f = 0 } f'
+}
+co_untouched() {   # the outside after the section's runs, against COBEFORE
+    [[ "$COBEFORE" == "$(co_snapshot)" ]] \
+        && ok "the checkout world's runs left this checkout's HEAD, refs and status as they were" \
+        || bad "the checkout world changed this checkout — HEAD, refs or status differ"
+}
+
 # ── THE SYMLINK FARM, SHARED BY THE SECTIONS THAT NEED A TOOL ABSENT ─────
 #
 # A SYMLINK FARM OF /usr/bin MINUS THE TOOL, not /usr/bin ON THE PATH.
@@ -943,6 +1077,10 @@ FIX=tests/trial-results.tsv
 # The boots journal the journal-only verdicts read, and the parameters section
 # after them (they were one section until 2026-10-18).
 BJ=tests/journal/boots
+# The btmon stubs print through this, as the real btmon prints when not on a
+# terminal (tests/btmon/render; the checks in "reading the captures"). Absolute:
+# a stub runs from wherever its tool runs.
+BTMON_RENDER="$PWD/tests/btmon/render"
 # One exhibit's line off a report: bt-retention's, bt-snapshot's and the crash
 # counts' tests read their verdicts with it (one section until 2026-10-18).
 rt_line() {   # <report> <exhibit-base> -> that exhibit's line, or empty
@@ -2811,7 +2949,7 @@ trial_in "$LC/scofast" "$LC/state-scofast" PATH="$LC/scostop/bin:$LC/bin:$PATH" 
 SCOAT=$(date '+%Y-%m-%d %H:%M:%S')
 cat > "$LC/scostop/bin/btmon" <<STUB
 #!/bin/sh
-printf '< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17  #1 [hci0] $SCOAT.000000\n'
+printf '< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17  #1 [hci0] $SCOAT.000000\n' | "$BTMON_RENDER" "\$@"
 STUB
 trial_in "$LC/scofast" "$LC/state-scofast" --timeout 10 PATH="$LC/scostop/bin:$LC/bin:$PATH" \
     BT_CAPTURE_DIR="$LC/scostop/cap" BT_TRACE_DIR="$LC/scostop/trace" -- autostop >/dev/null 2>&1; sfrc=$?
@@ -4045,7 +4183,7 @@ AAWITHOUT=$(cat "$AASPY/args" 2>/dev/null)
 # A trace directory NAMED explicitly is read even under a fixture (the fixture
 # guard skips only the default). btmon declared: it answers with one MGMT line.
 : > "$AASPY/trace/a.btsnoop"
-printf '#!/bin/sh\necho "@ MGMT Command: Set Powered (0x0005) plen 1   {0x0001} [hci0] 2026-08-13 10:00:30.000000"\n' > "$AASPY/bin/btmon"
+printf '#!/bin/sh\necho "@ MGMT Command: Set Powered (0x0005) plen 1   {0x0001} [hci0] 2026-08-13 10:00:30.000000" | "%s" "$@"\n' "$BTMON_RENDER" > "$AASPY/bin/btmon"
 chmod +x "$AASPY/bin/btmon"
 AATR=$(PATH="$AASPY/bin:$PATH" BT_JOURNAL_FIXTURE="$BA" BT_TRACE_DIR="$AASPY/trace" tools/bt-actions --raw 2>&1)
 [[ "$AATR" == *"MGMT: Set Powered"* ]] \
@@ -7010,6 +7148,52 @@ echo "────────────────────────�
 # Until 2026-10-18 part of "bt-hang-watchdog — the decisions, never the actuation";
 # a section of its own so that a parallel run can give it a core.
 
+# ── the btmon the stubs stand for: what it prints, and where it dies ──────
+#
+# Every btmon stub in this file pipes its text through tests/btmon/render, which
+# prints it as btmon 5.72 does when its output is not a terminal: each header
+# fitted to 80 columns unless --columns=N is given, COLUMNS ignored. Until
+# 2026-10-19 the stubs printed full names, so every tool that matched a name
+# passed here and matched nothing on the laptop: every trial's sco-params.txt
+# was empty (the main branch maintainer, comms 2026-10-18T0615Z). These checks
+# hold the renderer to the real btmon's own output (tests/btmon/real/README.md),
+# so the stubs cannot drift from the tool they stand for.
+BTR=tests/btmon/render; BTRD=tests/btmon/real; btrok=""
+for w in 80 160 200; do
+    btra=(); (( w != 80 )) && btra=(--columns=$w)
+    "$BTR" "${btra[@]}" < "$BTRD/lines-200.txt" | cmp -s - "$BTRD/lines-$w.txt" || btrok+=" $w"
+done
+[[ -z "$btrok" ]] \
+    && ok "the btmon stubs print header lines as the real btmon 5.72 does, at 80, 160 and 200 columns" \
+    || bad "tests/btmon/render differs from the real btmon at:$btrok columns"
+# AND WHERE IT DIES (BT-4). The real btmon aborts on a privileged MGMT Open
+# below 81 columns with -T: print_packet's max_len reaches -2, and the fortified
+# snprintf kills it, buffered output and all. A stub that survived it would let
+# a tool pass here that dies on the laptop at the first bluetoothctl in a capture.
+BTRPO=$("$BTR" < "$BTRD/priv-open-200.txt"); btrpo80=$?
+"$BTR" --columns=81 < "$BTRD/priv-open-200.txt" > /dev/null; btrpo81=$?
+(( btrpo80 == 134 && btrpo81 == 0 )) && [[ -z "$BTRPO" ]] \
+    && ok "the stubs die as the real btmon does on a privileged MGMT Open below 81 columns (BT-4), and print nothing" \
+    || bad "the privileged-open abort: rc at 80 = $btrpo80, at 81 = $btrpo81, output '${BTRPO:0:60}'"
+# The generator of the captures behind those files still builds them: valid
+# btsnoop, monitor format (2001), one record of each shape and the open alone.
+BTRC=$(mktemp -d)
+BTRCOUT=$(python3 tests/btmon/real/mkcap.py "$BTRC" 2>&1 && python3 - "$BTRC" <<'PYEOF'
+import struct, sys, os
+for name, want in (("lines.btsnoop", 7), ("priv-open.btsnoop", 2)):
+    d = open(os.path.join(sys.argv[1], name), "rb").read()
+    magic, ver, link = d[:8], *struct.unpack(">II", d[8:16])
+    n, i = 0, 16
+    while i < len(d):
+        ol, il = struct.unpack(">II", d[i:i + 8]); i += 24 + il; n += 1
+    print(name, magic == b"btsnoop\0", ver, link, n == want and i == len(d))
+PYEOF
+)
+rm -rf "$BTRC"
+[[ "$BTRCOUT" == *"lines.btsnoop True 1 2001 True"*"priv-open.btsnoop True 1 2001 True"* ]] \
+    && ok "tests/btmon/real/mkcap.py builds both captures, valid btsnoop in bt-capture's monitor format" \
+    || bad "mkcap.py: $(tr '\n' '|' <<<"$BTRCOUT")"
+
 # ── bt-sco: the parameters of the links that killed the controller ───────
 #
 # Both instrumented hangs happened during SCO link transitions, and SCO setup
@@ -7029,9 +7213,9 @@ SC=$(mktemp -d); mkdir -p "$SC/stub" "$SC/trace"
 # btmon's real invocation here is `btmon -T -r <file>`; a stub that parsed the
 # arguments would be asserting the call shape, which is not what these tests
 # are about, and would break silently when a flag is added.
-cat > "$SC/stub/btmon" <<'SCSTUB'
+cat > "$SC/stub/btmon" <<SCSTUB
 #!/bin/sh
-cat "$BTMON_FIXTURE"
+cat "\$BTMON_FIXTURE" | "$BTMON_RENDER" "\$@"
 SCSTUB
 chmod +x "$SC/stub/btmon"
 sco_run() { env PATH="$SC/stub:$PATH" BTMON_FIXTURE="tests/btmon/$1.txt" \
@@ -7053,6 +7237,20 @@ SCOUT=$(sco_run sco-paired); scorc=$?
 # THE SIGNATURE OF THE HANG: a setup with no completion. This is the one
 # reading the tool exists to surface, and the count has to be exact — the
 # warning is phrased as "N request(s) received no completion event".
+# THE ENHANCED SETUP (0x003d) IS A SETUP. A controller with the enhanced
+# command set is sent Enhanced Setup Synchronous Connection instead, and the
+# request, its parameters and its window are the same question. Every matcher
+# here named only the plain command, so such a link was counted as no setup and
+# its completion as unanswered-for (the main branch maintainer, 2026-10-18T0615Z;
+# fixture header text as the real btmon prints it, tests/btmon/real/).
+SCENH=$(sco_run sco-enhanced); scenhrc=$?
+SCENHW=$(sco_run sco-enhanced --window 2)
+(( scenhrc == 0 )) && [[ "$SCENH" == *"setup requests      1"* && "$SCENH" == *"completion events   1"* \
+    && "$SCENH" == *"REQUEST"*"Packet type: 0x0380"* && "$SCENH" != *"received no completion"* \
+    && "$SCENHW" == *"Enhanced Setup Synchronous Connection (0x01|0x003d)"*"Synchronous Connect Complete"* ]] \
+    && ok "bt-sco counts, prints and windows an Enhanced Setup Synchronous Connection as a setup" \
+    || bad "the enhanced setup: rc=$scenhrc, $(grep -E 'setup requests|completion events' <<<"$SCENH" | tr -s ' ' | tr '\n' '|') window $(grep -c . <<<"$SCENHW") line(s)"
+
 SCGONE=$(sco_run sco-unanswered)
 [[ "$SCGONE" == *"setup requests      2"* && "$SCGONE" == *"completion events   1"* \
    && "$SCGONE" == *"1 request(s) received no completion event"* ]] \
@@ -7119,10 +7317,11 @@ rm -rf "$SC"
 # The awk matcher has fixtures; the shell around it (extraction, the overlap
 # bound, the verdict) had none, and both defects below live there.
 CD=$(mktemp -d); mkdir -p "$CD/stub" "$CD/trace" "$CD/cap"
-cat > "$CD/stub/btmon" <<'CDSTUB'
+cat > "$CD/stub/btmon" <<CDSTUB
 #!/bin/sh
-while [ $# -gt 0 ]; do case "$1" in -r) f="$2"; shift 2 ;; *) shift ;; esac; done
-cat "$f.txt" 2>/dev/null
+w=""; for a in "\$@"; do case "\$a" in --columns=*|-C?*) w="\$a" ;; esac; done
+while [ \$# -gt 0 ]; do case "\$1" in -r) f="\$2"; shift 2 ;; *) shift ;; esac; done
+cat "\$f.txt" 2>/dev/null | "$BTMON_RENDER" \$w
 CDSTUB
 chmod +x "$CD/stub/btmon"
 : > "$CD/trace/x.btsnoop"; : > "$CD/cap/x.btsnoop"
@@ -7293,7 +7492,7 @@ CDH=$(tools/bt-capdiff --help 2>&1); cdhrc=$?
 # the tool never prints, and a daemon message, which it would print but for
 # the address.
 CW=$(mktemp -d); mkdir -p "$CW/stub"; : > "$CW/cap.btsnoop"
-printf '#!/bin/sh\ncat "$BTMON_FIXTURE"\n' > "$CW/stub/btmon"; chmod +x "$CW/stub/btmon"
+printf '#!/bin/sh\ncat "$BTMON_FIXTURE" | "%s" "$@"\n' "$BTMON_RENDER" > "$CW/stub/btmon"; chmod +x "$CW/stub/btmon"
 cw_run() { env PATH="$CW/stub:$PATH" BTMON_FIXTURE=tests/btmon/ctrl-window.txt \
                tools/bt-ctrl-window "$CW/cap.btsnoop" "$@" 2>&1; }
 CWO=$(cw_run 21:03:25 21:03:30); cwrc=$?
@@ -8215,6 +8414,7 @@ echo "\$(cat "$TR/freegb" 2>/dev/null || echo 999)G"
 TRDF
 cat > "$TR/bin/btmon" <<TRBM
 #!/bin/sh
+echo "\$*" >> "$TR/btmon.args"
 out=""
 while [ \$# -gt 0 ]; do case "\$1" in -w) out="\$2"; shift ;; esac; shift; done
 [ -e "$TR/btmon-dies" ] && exit 5
@@ -8267,6 +8467,16 @@ TRN=$(ls -1 "$TR/cap"/bt-*.btsnoop 2>/dev/null | wc -l)
 (( TRN >= 2 )) && [[ "$TRR" == *"rotating at"* && "$TRR" == *"stopped"* ]] \
     && ok "bt-trace rotates by restarting btmon, leaving $TRN distinct captures" \
     || bad "bt-trace rotation produced $TRN capture file(s)"
+
+# EVERY btmon IT STARTS IS GIVEN A WIDTH (BT-4). The capture's own decode, sent
+# to /dev/null, still runs, at 80 columns unless told otherwise; there a
+# privileged MGMT Open, which carries its sender's comm[pid] in a live capture,
+# leaves btmon 5.72's print_packet a negative length and the fortified snprintf
+# kills the capture (tests/btmon/real/README.md). 200 leaves it positive.
+TRARGS=$(cat "$TR/btmon.args" 2>/dev/null)
+[[ -n "$TRARGS" ]] && ! grep -qv -- '--columns=200 ' <<<"$TRARGS" \
+    && ok "bt-trace starts every btmon with --columns=200, so a privileged MGMT open cannot abort the capture" \
+    || bad "bt-trace started btmon as: $(sort -u <<<"$TRARGS" | tr '\n' '|')"
 
 # THE CAPTURES ARE 0600. They contain the contents of Bluetooth traffic, and
 # this repository publishes from the same tree it captures into.
@@ -10894,7 +11104,7 @@ cat > "$TL/bin/btmon" <<TLBTMON
 echo "\$*" >> "$TL/btmon.calls"
 T=\$(cat "$TL/btmon-time"); Y=\${T%%-*}
 B="\$((Y - 1))\${T#\$Y}"; A="\$((Y + 1))\${T#\$Y}"
-cat <<EOT
+cat <<EOT | "$BTMON_RENDER" "\$@"
 < HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17   #1 [hci0] \$B.000001
         Handle: 1 (a year before)
 < HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17   #2 [hci0] \$T.000001
@@ -10907,6 +11117,8 @@ cat <<EOT
         Handle: 2 (a year after)
 > HCI Event: Synchronous Connect Complete (0x2c) plen 17            #6 [hci0] \$A.000002
         Link type: late
+< HCI Command: Enhanced Setup Synchronous Connection (0x01|0x003d) plen 59   #7 [hci0] \$T.000004
+        Handle: 512 (enhanced, on the window, after a record that is not)
 EOT
 TLBTMON
 REALDATE_TL=$(command -v date)
@@ -10942,9 +11154,14 @@ TLSCO2=$(tl_row | cut -f"${TLSCOCOL:-1}")
     || bad "sco_to_timeout_s: with a timeout '$TLSCO1' (want 2.500), without '$TLSCO2' (want none)"
 TLSP=$(cat "$TLSCODIR/sco-params.txt" 2>/dev/null)
 TLSPC=$(sort -u "$TL/btmon.calls")
-[[ "$TLSP" == "# trial window: "* && "$TLSPC" == "-T -r $TL/cap/x.btsnoop" ]] \
-    && ok "a trial with SCO setups decodes the captures in the declared paths, and nothing else" \
+# --columns=200 is part of the call: without it btmon, piped, cuts the names
+# this decode filters on, and every trial's file came out empty (2026-10-19).
+[[ "$TLSP" == "# trial window: "* && "$TLSPC" == "--columns=200 -T -r $TL/cap/x.btsnoop" ]] \
+    && ok "a trial with SCO setups decodes the captures in the declared paths, at full width, and nothing else" \
     || bad "sco-params.txt: $(head -1 <<<"$TLSP"); btmon was asked for: $(tr '\n' ' ' <<<"$TLSPC")"
+[[ "$TLSP" == *"Enhanced Setup Synchronous Connection (0x01|0x003d)"*"Handle: 512 (enhanced, on the window"* ]] \
+    && ok "the close keeps an Enhanced Setup Synchronous Connection on the window as a request" \
+    || bad "the close dropped the enhanced setup: $(grep -c . <<<"$TLSP") line(s) in sco-params.txt"
 [[ $(grep -cE '^        (Handle: 256|Link type: eSCO \(0x02\))$' <<<"$TLSP") == 2 \
    && "$TLSP" != *"a year"* && "$TLSP" != *"Link type: late"* && "$TLSP" != *"unrelated"* ]] \
     && ok "the SCO parameters are the window's own, bounds included, each with its parameters and nothing else's" \
@@ -11478,61 +11695,12 @@ fi
 rm -rf "$UIT"
 
 echo
-echo "the checkout world — tools that act on their own checkout, run in place"
+echo "the checkout world — devtools/held: status, the origin check, edit, commit"
 echo "──────────────────────────────────────────────────────────────────────────"
-# PARALLEL: long — about 40 s, most of it repo-save validating and scanning the
-# whole checkout inside the world, so a parallel run starts it first.
-# devtools/held and devtools/save act on the checkout they live in: they switch
-# branches, commit, and push. No test could run them where they are, and a copy
-# elsewhere is a different file to coverage and a different repository to git.
-# So they run in place in a CHECKOUT WORLD: `unshare -Urmn`, an overlay of this
-# checkout mounted over its own path, so every write — the index, objects,
-# refs, the working tree — lands in a throwaway upper layer, and a network
-# namespace, so no push or fetch can leave the machine. Remotes are scratch
-# bare repositories named through GIT_CONFIG_* for the length of one run.
-#
-# It is only worth its proof, as the namespace world above: before anything runs
-# in it, a marker file and a commit made inside must be there inside, absent
-# outside — HEAD, every ref and the working tree's status unchanged — and the
-# real origin unreachable from inside. A world that cannot be built is not
-# asked; one that builds and fails the proof is a red invariant, and nothing
-# runs in it.
-COW=$(mktemp -d)
-co_world() {   # <script> — run <script> at this checkout's own path, overlaid, offline
-    rm -rf "$COW/up" "$COW/wk"; mkdir -p "$COW/up" "$COW/wk"
-    unshare -Urmn bash -c '
-        mount -t overlay co-world -o lowerdir="$PWD",upperdir="$1",workdir="$2" "$PWD" || exit 97
-        cd "$PWD" || exit 97        # re-enter: the old directory handle is the lower layer
-        # An identity of its own, in the overlay'"'"'s .git/config: a fresh clone
-        # has none, and CI'"'"'s checkout is one (2026-10-08).
-        git config user.name "Checkout World"; git config user.email world@example.com
-        eval "$3"' co-world "$COW/up" "$COW/wk" "$1"
-}
-# --no-optional-locks: a plain `git status` refreshes the index's stat cache and
-# writes .git/index when the cache is stale, as it is in a fresh CI checkout.
-# The decoy world reported that write there (2026-10-08), from the one check
-# meant to prove the real checkout untouched.
-co_snapshot() { git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)'; git --no-optional-locks status --porcelain; }
-COMARK="co-world-$SUITE_RUN_ID"
-COWORLD_SKIPPED=''
-COWORLD_OK=0
-# ONLY A CHECKOUT THAT HOLDS ITS OWN GIT DIRECTORY. The overlay covers this
-# directory and nothing else. In a git worktree `.git` is a file naming the
-# main repository's directory, so a world built there wrote through to it: run
-# from a worktree on 2026-10-18, the proof's commit landed in the shared
-# repository and the world's own `git config user.name/user.email` replaced the
-# shared .git/config identity, which every later commit would have carried. The
-# proof saw the moved refs and went red, after the writes. So both the git
-# directory and the common one must lie inside the checkout before anything
-# is built.
-co_git_inside() {   # <checkout> — 0 when its git directory and common directory are inside it
-    local top gd cd
-    top=$(cd "$1" 2>/dev/null && pwd -P) || return 1
-    gd=$(git -C "$1" rev-parse --absolute-git-dir 2>/dev/null) || return 1
-    cd=$(cd "$1" 2>/dev/null && cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd -P) || return 1
-    gd=$(cd "$gd" && pwd -P)
-    [[ "$gd/" == "$top/"* && "$cd/" == "$top/"* ]]
-}
+# PARALLEL: long — held commit goes through repo-save, which validates and
+# scans the whole checkout inside the world, so a parallel run starts it first.
+# The world itself is in the setup (co_world, co_prove); this section also
+# checks the guard that keeps it out of a git worktree.
 CGI=$(mktemp -d)
 git init -q "$CGI/main"; git -C "$CGI/main" -c user.name=t -c user.email=test@example.com commit -q --allow-empty -m base
 git -C "$CGI/main" -c user.name=t -c user.email=test@example.com worktree add -q "$CGI/wt" 2>/dev/null
@@ -11540,126 +11708,77 @@ co_git_inside "$CGI/main" && ! co_git_inside "$CGI/wt" \
     && ok "the checkout world is built only where the git directory lies inside the checkout (a worktree's does not)" \
     || bad "co_git_inside: main=$(co_git_inside "$CGI/main" && echo inside || echo outside) worktree=$(co_git_inside "$CGI/wt" && echo inside || echo outside) (want inside, outside)"
 rm -rf "$CGI"
-if ! co_git_inside .; then
-    COWORLD_SKIPPED="the checkout world (this checkout's git directory lies outside it, as in a git worktree: the overlay cannot hold its writes)"
-elif unshare -Urmn true 2>/dev/null; then
-    cobefore=$(co_snapshot)
-    coproof=$(co_world "
-        echo $COMARK > $COMARK.proof
-        git commit -q --allow-empty -m 'checkout world: proof' || exit 1
-        echo \"file=\$(cat $COMARK.proof) head=\$(git log -1 --format=%s)\"
-        # No way out: the world's network namespace has no interface but lo, and
-        # a connect to an address literal fails at once. Not \`git ls-remote
-        # origin\`: resolving the name reads the machine's /etc/resolv.conf and
-        # /etc/hosts first, as CI's access audit reported (2026-10-09).
-        ifs=\$(awk 'NR > 2 { sub(\":\", \"\", \$1); printf \"%s \", \$1 }' /proc/self/net/dev)
-        if [[ \"\$ifs\" == 'lo ' ]] && ! (exec 3<>/dev/tcp/192.0.2.1/9) 2>/dev/null; then echo net=none
-        else echo \"net=reached (interfaces: \$ifs)\"; fi
-    " 2>&1); corc=$?
-    coafter=$(co_snapshot)
-    if (( corc == 97 )); then
-        COWORLD_SKIPPED="the checkout world (an overlay of this checkout cannot be mounted here)"
-    elif [[ "$coproof" == "file=$COMARK head=checkout world: proof"*"net=none" && ! -e "$COMARK.proof" \
-            && "$cobefore" == "$coafter" ]]; then
-        ok "the checkout world proves itself: a commit and a file inside, neither outside, origin unreachable"
-        COWORLD_OK=1
-    else
-        bad "the checkout world did NOT prove itself — nothing was run in it: inside '$(tr '\n' ' ' <<<"$coproof")'; outside $([[ -e "$COMARK.proof" ]] && echo 'the marker exists' || echo 'no marker'), $([[ "$cobefore" == "$coafter" ]] && echo 'refs unchanged' || echo 'REFS OR STATUS CHANGED')"
-        rm -f "$COMARK.proof"
-    fi
-else
-    COWORLD_SKIPPED="the checkout world (no user, mount and network namespaces here)"
-fi
-
+COW=$(mktemp -d)
+co_prove
 if (( COWORLD_OK )); then
-    # The world's scratch remotes, and a trial marked open so repo-save takes
-    # its documented no-suite path rather than running this suite inside itself.
-    mkdir -p "$COW/trial" "$COW/nohooks"; : > "$COW/trial/current"
-    # repo-save validates the unit files with the machine's systemd-analyze and
-    # udevadm: declared here, as everywhere in this suite.
-    machine_stub "$COW/bin" systemd-analyze udevadm
-    COSETUP="
-        B='$COW/bare'; rm -rf \"\$B\"; mkdir -p \"\$B\"
-        git init -q --bare \"\$B/origin.git\"; git init -q --bare \"\$B/private.git\"
-        # CI checks out at depth 1, and a bare repository refuses a push from a
-        # shallow clone unless told to take one.
-        git -C \"\$B/origin.git\" config receive.shallowUpdate true
-        git -C \"\$B/private.git\" config receive.shallowUpdate true
-        # The real URL, read BEFORE the rewrite exists: a key exported ahead of
-        # its value is an empty insteadOf, and that matches every URL.
-        ORIGIN_URL=\$(git remote get-url origin)
-        export GIT_CONFIG_COUNT=2 PATH='$COW/bin':\"\$PATH\"
-        export GIT_CONFIG_KEY_0=\"url.\$B/origin.git.insteadOf\" GIT_CONFIG_VALUE_0=\"\$ORIGIN_URL\"
-        # No hooks in here: hooks installed in this checkout would run at every
-        # commit and push the world makes, against the world's scratch remotes.
-        export GIT_CONFIG_KEY_1=core.hooksPath GIT_CONFIG_VALUE_1='$COW/nohooks'
-        # The private remote is a real one, in the overlay's .git/config: git
-        # pushes to a remote named only through GIT_CONFIG_*, but \`git remote
-        # get-url\` — repo-save's test for it — does not count one as existing.
-        git remote add private \"\$B/private.git\"
-        export BT_TRIAL_STATE_DIR='$COW/trial'
-        git add -A && git commit -q --allow-empty -m 'checkout world: the tree as it is'
-        git checkout -q -B main      # -B: the checkout may already be on main, as CI's is
-        git push -q origin main 2>/dev/null
-        git checkout -q -b kernel/mgmt-flush-status
-        printf 'held patch\n' > held-world.patch; git add held-world.patch; git commit -q -m 'held: a patch'
-        git checkout -q main
-    "
-
-    # ── devtools/held: status, the origin check, sync, edit, commit
+    co_setup
     COH=$(co_world "$COSETUP
         echo '== status'; devtools/held status 2>&1; echo \"rc=\$?\"
         git push -q origin kernel/mgmt-flush-status:refs/heads/kernel/leak 2>/dev/null
         echo '== leak'; devtools/held status 2>&1; echo \"rc=\$?\"
         git push -q origin :refs/heads/kernel/leak 2>/dev/null
-        echo 'main moves' > main-world.txt; git add main-world.txt; git commit -q -m 'main: a change'
-        echo '== sync'; devtools/held sync 2>&1; echo \"rc=\$?\"
-        echo \"branch=\$(git branch --show-current)\"
-        echo \"private-has-main-change=\$(git --git-dir=\$B/private.git log --format=%s kernel/mgmt-flush-status 2>/dev/null | grep -c 'main: a change')\"
         echo '== edit'; devtools/held edit 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
         printf 'edited\n' >> held-world.patch
         printf 'held: an edit\n' > '$COW/held-msg'
         echo '== commit'; devtools/held commit '$COW/held-msg' > '$COW/held-commit.out' 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
         echo \"private-has-edit=\$(git --git-dir=\$B/private.git log --format=%s kernel/mgmt-flush-status 2>/dev/null | grep -c 'held: an edit')\"
         echo \"origin-kernel-heads=\$(git --git-dir=\$B/origin.git for-each-ref refs/heads/kernel | grep -c .)\"
-        echo dirty >> main-world.txt
+        echo dirty >> BRIEF.md
         echo '== dirty'; devtools/held edit 2>&1; echo \"rc=\$?\"
-        git checkout -q -- main-world.txt
+        git checkout -q -- BRIEF.md
         echo '== usage'; devtools/held frobnicate >/dev/null 2>&1; echo \"rc=\$?\"
         # origin rewritten to a repository that does not exist: unreachable
         # without a resolver lookup of the real name (the machine's /etc/hosts).
         echo '== offline'; GIT_CONFIG_KEY_0=\"url.\$B/unreachable.git.insteadOf\" devtools/held status 2>&1; echo \"rc=\$?\"
     " 2>&1)
-    cosect() { awk -v s="== $1" '$0 == s { f = 1; next } /^== / { f = 0 } f' <<<"$COH"; }
-    [[ "$(cosect status)" == *"origin carries no kernel/* branch ✓"* && "$(cosect status)" == *"held branch is 1 commit(s) ahead of main, 0 behind"* \
-       && "$(cosect status)" == *"rc=0"* ]] \
+    [[ "$(co_sect status <<<"$COH")" == *"origin carries no kernel/* branch ✓"* \
+       && "$(co_sect status <<<"$COH")" == *"held branch is 1 commit(s) ahead of main, 0 behind"* \
+       && "$(co_sect status <<<"$COH")" == *"rc=0"* ]] \
         && ok "held status: main and the held branch on every remote, origin clean, 1 ahead" \
-        || bad "held status: $(cosect status | tr '\n' '|')"
-    [[ "$(cosect leak)" == *"✗ origin carries 1 kernel/* branch(es)"* && "$(cosect leak)" == *"rc=1"* ]] \
+        || bad "held status: $(co_sect status <<<"$COH" | tr '\n' '|')"
+    [[ "$(co_sect leak <<<"$COH")" == *"✗ origin carries 1 kernel/* branch(es)"* && "$(co_sect leak <<<"$COH")" == *"rc=1"* ]] \
         && ok "held status refuses when origin carries a kernel/* branch" \
-        || bad "held status with kernel/leak on origin: $(cosect leak | tr '\n' '|')"
-    [[ "$(cosect sync)" == *"rc=0"* && "$COH" == *"branch=main"* && "$COH" == *"private-has-main-change=1"* \
-       && "$(cosect sync)" == *"held branch is 2 commit(s) ahead of main, 0 behind"* ]] \
-        && ok "held sync merges main into the held branch, pushes it to private only, and returns to main" \
-        || bad "held sync: $(cosect sync | tr '\n' '|') $(grep -E '^(branch|private-has-main-change)=' <<<"$COH" | tr '\n' ' ')"
-    [[ "$(cosect edit)" == *"on kernel/mgmt-flush-status"* && "$(cosect edit)" == *"rc=0 branch=kernel/mgmt-flush-status"* ]] \
+        || bad "held status with kernel/leak on origin: $(co_sect leak <<<"$COH" | tr '\n' '|')"
+    [[ "$(co_sect edit <<<"$COH")" == *"on kernel/mgmt-flush-status"* && "$(co_sect edit <<<"$COH")" == *"rc=0 branch=kernel/mgmt-flush-status"* ]] \
         && ok "held edit switches to the held branch and says how to come back" \
-        || bad "held edit: $(cosect edit | tr '\n' '|')"
-    [[ "$(cosect commit)" == *"rc=0 branch=main"* && "$COH" == *"private-has-edit=1"* && "$COH" == *"origin-kernel-heads=0"* ]] \
+        || bad "held edit: $(co_sect edit <<<"$COH" | tr '\n' '|')"
+    [[ "$(co_sect commit <<<"$COH")" == *"rc=0 branch=main"* && "$COH" == *"private-has-edit=1"* && "$COH" == *"origin-kernel-heads=0"* ]] \
         && ok "held commit goes through repo-save to private, never origin, and returns to main" \
-        || bad "held commit: $(cosect commit | tr '\n' '|') $(grep -E '^(private-has-edit|origin-kernel-heads)=' <<<"$COH" | tr '\n' ' ') — repo-save said: $(tail -6 "$COW/held-commit.out" 2>/dev/null | tr '\n' '|')"
-    [[ "$(cosect dirty)" == *"working tree not clean"* && "$(cosect dirty)" == *"rc=1"* && "$(cosect usage)" == *"rc=2"* ]] \
+        || bad "held commit: $(co_sect commit <<<"$COH" | tr '\n' '|') $(grep -E '^(private-has-edit|origin-kernel-heads)=' <<<"$COH" | tr '\n' ' ') — repo-save said: $(tail -6 "$COW/held-commit.out" 2>/dev/null | tr '\n' '|')"
+    [[ "$(co_sect dirty <<<"$COH")" == *"working tree not clean"* && "$(co_sect dirty <<<"$COH")" == *"rc=1"* \
+       && "$(co_sect usage <<<"$COH")" == *"rc=2"* ]] \
         && ok "held edit refuses a dirty tree, and an unknown verb prints usage (2)" \
-        || bad "held dirty/usage: $(cosect dirty | tr '\n' '|') $(cosect usage | tr '\n' '|')"
-    [[ "$(cosect offline)" == *"cannot reach origin"*"NOT checked"* && "$(cosect offline)" == *"rc=1"* \
-       && "$(cosect offline)" != *"no kernel/* branch ✓"* ]] \
+        || bad "held dirty/usage: $(co_sect dirty <<<"$COH" | tr '\n' '|') $(co_sect usage <<<"$COH" | tr '\n' '|')"
+    [[ "$(co_sect offline <<<"$COH")" == *"cannot reach origin"*"NOT checked"* && "$(co_sect offline <<<"$COH")" == *"rc=1"* \
+       && "$(co_sect offline <<<"$COH")" != *"no kernel/* branch ✓"* ]] \
         && ok "held status with origin unreachable says the kernel/* check was not made, and fails" \
-        || bad "held status offline: $(cosect offline | tr '\n' '|')"
+        || bad "held status offline: $(co_sect offline <<<"$COH" | tr '\n' '|')"
+    co_untouched
+fi
+rm -rf "$COW"
 
-    # ── held sync when main and the held branch disagree. The exhibit index is
-    # generated, so both sides adding an exhibit conflict on it every time; sync
-    # regenerates it from the merged exhibits instead of asking. A conflict in
-    # anything else is the operator's, and sync must stop and name it.
+echo
+echo "the checkout world — devtools/held sync: main into the held branch"
+echo "──────────────────────────────────────────────────────────────────"
+# The held branch carries main forward by a merge, pushed to private only. The
+# exhibit index is generated, so both sides adding an exhibit conflict on it
+# every time; sync regenerates it from the merged exhibits instead of asking. A
+# conflict in anything else is the operator's, and sync must stop and name it.
+COW=$(mktemp -d)
+co_prove
+if (( COWORLD_OK )); then
+    co_setup
+    COY=$(co_world "$COSETUP
+        echo 'main moves' > main-world.txt; git add main-world.txt; git commit -q -m 'main: a change'
+        echo '== sync'; devtools/held sync 2>&1; echo \"rc=\$?\"
+        echo \"branch=\$(git branch --show-current)\"
+        echo \"private-has-main-change=\$(git --git-dir=\$B/private.git log --format=%s kernel/mgmt-flush-status 2>/dev/null | grep -c 'main: a change')\"
+        echo \"origin-kernel-heads=\$(git --git-dir=\$B/origin.git for-each-ref refs/heads/kernel | grep -c .)\"
+    " 2>&1)
+    [[ "$(co_sect sync <<<"$COY")" == *"rc=0"* && "$COY" == *"branch=main"* && "$COY" == *"private-has-main-change=1"* \
+       && "$COY" == *"origin-kernel-heads=0"* && "$(co_sect sync <<<"$COY")" == *"held branch is 2 commit(s) ahead of main, 0 behind"* ]] \
+        && ok "held sync merges main into the held branch, pushes it to private only, and returns to main" \
+        || bad "held sync: $(co_sect sync <<<"$COY" | tr '\n' '|') $(grep -E '^(branch|private-has-main-change|origin-kernel-heads)=' <<<"$COY" | tr '\n' ' ')"
     COX=$(co_world "$COSETUP
         exhibit() { printf '# EX-%s — %s\n\n**Claim.** %s.\n' \"\$1\" \"\$2\" \"\$2\" > evidence/exhibits/\$1-\$2.md
                     tools/bt-exhibit index >/dev/null; git add evidence/exhibits; git commit -q -m \"exhibit \$1\"; }
@@ -11675,24 +11794,34 @@ if (( COWORLD_OK )); then
         echo dirty >> BRIEF.md
         echo '== dirty-sync'; devtools/held sync 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
     " 2>&1)
-    coxsect() { awk -v s="== $1" '$0 == s { f = 1; next } /^== / { f = 0 } f' <<<"$COX"; }
-    [[ "$(coxsect index)" == *"rc=0 branch=main"* && "$COX" == *"tip=Merge main into kernel/mgmt-flush-status"* \
+    [[ "$(co_sect index <<<"$COX")" == *"rc=0 branch=main"* && "$COX" == *"tip=Merge main into kernel/mgmt-flush-status"* \
        && "$COX" == *"index-rows=2"* && "$COX" == *"private-tip=Merge main into kernel/mgmt-flush-status"* ]] \
         && ok "held sync regenerates a conflicted exhibit index from both sides' exhibits, commits the merge, pushes it to private" \
-        || bad "held sync over an index conflict: $(coxsect index | tr '\n' '|') $(grep -E '^(tip|index-rows|private-tip)=' <<<"$COX" | tr '\n' ' ')"
+        || bad "held sync over an index conflict: $(co_sect index <<<"$COX" | tr '\n' '|') $(grep -E '^(tip|index-rows|private-tip)=' <<<"$COX" | tr '\n' ' ')"
     # Not the exit status alone: without its `exit 1`, sync goes on to a commit
     # that fails and a checkout of main that fails, and exits 1 anyway — saying
     # "could not return to main" instead of what to do (a surviving mutant).
-    [[ "$(coxsect conflict)" == *"unresolved conflicts:"*"held-world.patch"*"resolve them, then: devtools/held commit"* \
-       && "$(coxsect conflict)" == *"rc=1 branch=kernel/mgmt-flush-status"* \
-       && "$(coxsect conflict)" != *"could not return to main"* ]] \
+    [[ "$(co_sect conflict <<<"$COX")" == *"unresolved conflicts:"*"held-world.patch"*"resolve them, then: devtools/held commit"* \
+       && "$(co_sect conflict <<<"$COX")" == *"rc=1 branch=kernel/mgmt-flush-status"* \
+       && "$(co_sect conflict <<<"$COX")" != *"could not return to main"* ]] \
         && ok "held sync stops on a conflict that is not the index, names the file, and leaves it on the held branch" \
-        || bad "held sync over a patch conflict: $(coxsect conflict | tr '\n' '|')"
-    [[ "$(coxsect dirty-sync)" == *"working tree not clean"* && "$(coxsect dirty-sync)" == *"rc=1 branch=main"* ]] \
+        || bad "held sync over a patch conflict: $(co_sect conflict <<<"$COX" | tr '\n' '|')"
+    [[ "$(co_sect dirty-sync <<<"$COX")" == *"working tree not clean"* && "$(co_sect dirty-sync <<<"$COX")" == *"rc=1 branch=main"* ]] \
         && ok "held sync refuses a dirty tree before switching branches" \
-        || bad "held sync with a dirty tree: $(coxsect dirty-sync | tr '\n' '|')"
+        || bad "held sync with a dirty tree: $(co_sect dirty-sync <<<"$COX" | tr '\n' '|')"
+    co_untouched
+fi
+rm -rf "$COW"
 
-    # ── devtools/save: refusals, the hand-off warnings, a commit
+echo
+echo "the checkout world — devtools/save: refusals, the hand-off warnings, a commit"
+echo "─────────────────────────────────────────────────────────────────────────────"
+# PARALLEL: long — most of it repo-save validating and scanning the whole
+# checkout inside the world, so a parallel run starts it first.
+COW=$(mktemp -d)
+co_prove
+if (( COWORLD_OK )); then
+    co_setup
     # BRIEF's budget is read from devtools/save, not restated: it rose from 750
     # to 1000 on 2026-10-11, and the restated number turned this check red.
     # The world appends that many lines, so BRIEF is over budget whatever its
@@ -11710,23 +11839,30 @@ if (( COWORLD_OK )); then
         echo \"head=\$(git log -1 --format=%s)\"
         echo \"pushed=\$(git --git-dir=\$B/origin.git log --format=%s main 2>/dev/null | grep -c 'save: a world commit')\"
     " 2>&1)
-    cossect() { awk -v s="== $1" '$0 == s { f = 1; next } /^== / { f = 0 } f' <<<"$COS"; }
-    [[ "$(cossect noarg)" == *"rc=2"* && "$(cossect missing)" == *"cannot read message file"*"rc=2"* \
-       && "$(cossect empty)" == *"REFUSING"*"empty"*"rc=2"* ]] \
+    [[ "$(co_sect noarg <<<"$COS")" == *"rc=2"* && "$(co_sect missing <<<"$COS")" == *"cannot read message file"*"rc=2"* \
+       && "$(co_sect empty <<<"$COS")" == *"REFUSING"*"empty"*"rc=2"* ]] \
         && ok "save refuses no message, an unreadable one and an empty one (2), before anything else" \
-        || bad "save refusals: $(cossect noarg | tr '\n' '|') $(cossect missing | tr '\n' '|') $(cossect empty | tr '\n' '|')"
-    [[ "$(cossect save)" == *"BRIEF.md does not mention EX-999"* && "$(cossect save)" == *"docs/STATUS.md does not mention EX-999"* \
-       && -n "$SBUDGET" && "$(cossect save)" == *"over its ${SBUDGET}-line budget"* ]] \
+        || bad "save refusals: $(co_sect noarg <<<"$COS" | tr '\n' '|') $(co_sect missing <<<"$COS" | tr '\n' '|') $(co_sect empty <<<"$COS" | tr '\n' '|')"
+    [[ "$(co_sect save <<<"$COS")" == *"BRIEF.md does not mention EX-999"* && "$(co_sect save <<<"$COS")" == *"docs/STATUS.md does not mention EX-999"* \
+       && -n "$SBUDGET" && "$(co_sect save <<<"$COS")" == *"over its ${SBUDGET}-line budget"* ]] \
         && ok "save warns when BRIEF.md and docs/STATUS.md lag the newest exhibit, and when BRIEF.md is over budget" \
-        || bad "save warnings: $(cossect save | grep -E '⚠|budget' | tr '\n' '|')"
-    [[ "$(cossect save)" == *"rc=0"* && "$COS" == *"head=save: a world commit"* && "$COS" == *"pushed=0"* ]] \
+        || bad "save warnings: $(co_sect save <<<"$COS" | grep -E '⚠|budget' | tr '\n' '|')"
+    [[ "$(co_sect save <<<"$COS")" == *"rc=0"* && "$COS" == *"head=save: a world commit"* && "$COS" == *"pushed=0"* ]] \
         && ok "save --no-push commits through repo-save (no suite: a trial is open) and pushes nothing" \
-        || bad "save --no-push: $(cossect save | tail -4 | tr '\n' '|') $(grep -E '^(head|pushed)=' <<<"$COS" | tr '\n' ' ')"
+        || bad "save --no-push: $(co_sect save <<<"$COS" | tail -4 | tr '\n' '|') $(grep -E '^(head|pushed)=' <<<"$COS" | tr '\n' ' ')"
+    co_untouched
+fi
+rm -rf "$COW"
 
-    # ── devtools/review-open, on a register written for the purpose. The real
-    # one changes with every review; this one holds each case the tool decides:
-    # a prefix with a digit (R2), bold, a two-word closed status, a status word
-    # nobody listed, and a row too short to have a status.
+echo
+echo "the checkout world — devtools/review-open, on a register written for it"
+echo "────────────────────────────────────────────────────────────────────────"
+# The real register changes with every review; this one holds each case the
+# tool decides: a prefix with a digit (R2), bold, a two-word closed status, a
+# status word nobody listed, and a row too short to have a status.
+COW=$(mktemp -d)
+co_prove
+if (( COWORLD_OK )); then
     COR=$(co_world "
         cat > reviews/README.md <<'REG'
 | ID | Item | Status |
@@ -11743,22 +11879,20 @@ REG
         echo '== counts'; devtools/review-open --counts; echo \"rc=\$?\"
         echo '== bad'; devtools/review-open --al 2>&1; echo \"rc=\$?\"
     " 2>&1)
-    corsect() { awk -v s="== $1" '$0 == s { f = 1; next } /^== / { f = 0 } f' <<<"$COR"; }
-    [[ "$(corsect open)" == *"UT: 2 rows, 1 not closed"* && "$(corsect open)" == *"R2: 2 rows, 1 not closed"* \
-       && "$(corsect open)" == *"TX: 1 rows, 1 not closed"* && "$(corsect open)" == *"UT-02"* && "$(corsect open)" == *"R2-07"* \
-       && "$(corsect open)" == *"TX-03   deferred"* && "$(corsect open)" != *"UT-01"* && "$(corsect open)" != *"R2-08"* ]] \
+    [[ "$(co_sect open <<<"$COR")" == *"UT: 2 rows, 1 not closed"* && "$(co_sect open <<<"$COR")" == *"R2: 2 rows, 1 not closed"* \
+       && "$(co_sect open <<<"$COR")" == *"TX: 1 rows, 1 not closed"* && "$(co_sect open <<<"$COR")" == *"UT-02"* \
+       && "$(co_sect open <<<"$COR")" == *"R2-07"* && "$(co_sect open <<<"$COR")" == *"TX-03   deferred"* \
+       && "$(co_sect open <<<"$COR")" != *"UT-01"* && "$(co_sect open <<<"$COR")" != *"R2-08"* ]] \
         && ok "review-open lists what is not closed — an R2 row, an unlisted status word — and not bold or two-word closures" \
-        || bad "review-open: $(corsect open | tr '\n' '|')"
-    [[ $(grep -cE '^(UT|R2|TX)-[0-9]+ ' <<<"$(corsect all)") == 5 && "$(corsect counts)" == *"  no"* \
-       && "$(corsect counts)" == *"   1  done"* ]] \
+        || bad "review-open: $(co_sect open <<<"$COR" | tr '\n' '|')"
+    [[ $(grep -cE '^(UT|R2|TX)-[0-9]+ ' <<<"$(co_sect all <<<"$COR")") == 5 && "$(co_sect counts <<<"$COR")" == *"  no"* \
+       && "$(co_sect counts <<<"$COR")" == *"   1  done"* ]] \
         && ok "review-open --all prints every row with a status, and --counts the words per register" \
-        || bad "review-open --all/--counts: $(corsect all | tr '\n' '|') $(corsect counts | tr '\n' '|')"
-    [[ "$(corsect bad)" == *"unknown option: --al"* && "$(corsect bad)" == *"rc=2"* ]] \
+        || bad "review-open --all/--counts: $(co_sect all <<<"$COR" | tr '\n' '|') $(co_sect counts <<<"$COR" | tr '\n' '|')"
+    [[ "$(co_sect bad <<<"$COR")" == *"unknown option: --al"* && "$(co_sect bad <<<"$COR")" == *"rc=2"* ]] \
         && ok "review-open refuses an unknown option instead of answering another question" \
-        || bad "review-open --al: $(corsect bad | tr '\n' '|')"
-    [[ "$cobefore" == "$(co_snapshot)" ]] \
-        && ok "the checkout world's runs left this checkout's HEAD, refs and status as they were" \
-        || bad "the checkout world changed this checkout — HEAD, refs or status differ"
+        || bad "review-open --al: $(co_sect bad <<<"$COR" | tr '\n' '|')"
+    co_untouched
 fi
 rm -rf "$COW"
 
@@ -12196,6 +12330,40 @@ GTO=$(env PATH="$SS2/bin:$PATH" BT_MODE_STAMP="$SMS" BT_DESTDIR="$SRT" \
 [[ "$GTO" == *"ALREADY LOGGED AN HCI COMMAND TIMEOUT"* && "$GTO" == *"right-censored"* ]] \
     && ok "a forced install warns that it ends a stage-1 observation in progress" \
     || bad "the right-censoring warning did not fire with a timeout in the journal"
+
+# THE btusb RELOAD UNDER --tools-only HAS TWO GUARDS, and each is tested alone
+# (comms 2026-10-18T15:32Z, item 1; the reaction plan's phase 1). run()'s
+# tools-only gate withholds `modprobe -r btusb`; but the reload block was still
+# reached: it read this boot's journal and chose the reload, so one regression
+# in run() — a case added to its allow-list, the gate moved — was all that stood
+# between a tools-only deploy and a reset of the controller being measured. The
+# block now asks TOOLS_ONLY itself. To see THAT guard fire, the install.sh run
+# here is a copy with run()'s tools-only gate cut out, in a tree that links the
+# rest of the checkout. The staging gate stays, so the copy can act no more than
+# the original can.
+RG=$(mktemp -d); RGS=$(mktemp -d); RGM=$(mktemp)
+printf 'btusb 73728 0 - Live 0x0000000000000000\n' > "$RGM"   # idle: the reload branch
+for e in "$PWD"/*; do ln -s "$e" "$RG/"; done; rm -f "$RG/install.sh"
+awk '!done && /^    if \(\( TOOLS_ONLY \)\); then$/ { skip = 1; next }
+     skip { if (/^    fi$/) { skip = 0; done = 1 }; next }
+     { print }' install.sh > "$RG/install.sh"; chmod +x "$RG/install.sh"
+(( $(wc -l < install.sh) - $(wc -l < "$RG/install.sh") == 6 )) \
+   && ! grep -q 'tools-only: NOT executed' "$RG/install.sh" \
+    && ok "the copy of install.sh lacks run()'s tools-only gate, and only it (6 lines)" \
+    || bad "run()'s tools-only gate was not cut out of the copy: $(( $(wc -l < install.sh) - $(wc -l < "$RG/install.sh") )) line(s) removed"
+RGA=$(cd "$RG" && env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$RGS/none" \
+          BT_PROC_MODULES="$RGM" BT_DESTDIR="$RGS" ./install.sh --apply 2>&1)
+[[ "$RGA" == *"staging: NOT executed (system command): modprobe -r btusb"* ]] \
+    && ok "an idle btusb and a quiet journal reach the reload on --apply — the check below can fail" \
+    || bad "the copy's --apply did not reach the btusb reload: $(grep -m1 btusb <<<"$RGA")"
+rgj=$(grep -c '^journalctl -k' "$SS/spy.log" || true)
+RGT=$(cd "$RG" && env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$RGS/none" \
+          BT_PROC_MODULES="$RGM" BT_DESTDIR="$RGS" ./install.sh --tools-only 2>&1); rgtrc=$?
+rgj2=$(grep -c '^journalctl -k' "$SS/spy.log" || true)
+(( rgtrc == 0 && rgj2 == rgj )) && [[ "$RGT" != *"modprobe -r btusb"* && "$RGT" != *"modprobe btusb"* ]] \
+    && ok "--tools-only skips the reload block itself: with run()'s gate cut out, no modprobe and no journal read" \
+    || bad "--tools-only reached the btusb reload without run()'s gate (rc=$rgtrc, $(( rgj2 - rgj )) journal read(s)): $(grep -m1 -E 'modprobe (-r )?btusb' <<<"$RGT")"
+rm -rf "$RG" "$RGS" "$RGM"
 
 # The open-trial guard, which deliberately lives OUTSIDE the experiment branch:
 # in mitigation mode — the default, and the mode in which bt-trial-auto opens a
@@ -13892,6 +14060,7 @@ if [[ -n "${CI_STUB_FAIL_TIMES:-}" ]]; then
     (( n < CI_STUB_FAIL_TIMES )) && { echo "error connecting to api.github.com" >&2; exit 1; }
 fi
 case "$*" in
+  *"run list"*"access-audit.yml"*) [[ -z "${CI_STUB_AUDIT:-}" ]] || printf '%b\n' "$CI_STUB_AUDIT" ;;
   *"run list"*) [[ -n "${CI_STUB_EMPTY:-}" ]] || printf 'success\tcompleted\t123\tstub run\n' ;;
   *) exit 0 ;;
 esac
@@ -13953,6 +14122,23 @@ CIARGS=(--repo other-owner/third HEAD); CIX=$(cirun); CIXA=$(cat "$CIS/args")
    && "$CIE" == *"no run found for"*"in example-owner/private-repo"* ]] \
     && ok "devtools/ci --repo overrides the remote, and 'no run found' says which repository it asked" \
     || bad "devtools/ci --repo / no-run message: '$CIXA' '$(head -1 <<<"$CIX")' '$(head -1 <<<"$CIE")'"
+# THE VERDICT IS checks.yml's, AND THE ACCESS AUDIT IS REPORTED BESIDE IT. The
+# audit runs in a workflow of its own (.github/workflows/access-audit.yml; the
+# main branch maintainer, 2026-10-19), so a commit has two runs: the verdict is
+# read from checks.yml's alone, never from whichever run is newest, and the
+# audit's is shown on a line of its own without deciding the exit status.
+CIARGS=(HEAD); CIA=$(cirun CI_STUB_AUDIT='failure\tcompleted\t456'); ciarc=$?; CIAA=$(cat "$CIS/args")
+CIARGS=(HEAD); CIN=$(cirun); cinrc=$?
+CIARGS=(HEAD); CIG=$(cirun CI_STUB_AUDIT='success\tcompleted\t457')
+CIARGS=(--recent 3); cirun >/dev/null; CIRA=$(cat "$CIS/args")
+(( ciarc == 0 )) && [[ "$CIA" == *"✓ success  run 123"* && "$CIA" == *"access-audit — ✗ failure  run 456"*"not part of the verdict"* ]] \
+   && (( $(grep 'run list' <<<"$CIAA$CIRA" | grep -vc -- '--workflow') == 0 )) \
+   && [[ "$CIAA" == *"--workflow checks.yml"* && "$CIRA" == *"--workflow checks.yml"* ]] \
+    && ok "devtools/ci reads its verdict from checks.yml alone, and reports a red access audit on its own line, exit 0" \
+    || bad "devtools/ci and the audit's workflow (rc=$ciarc): $(tr '\n' '|' <<<"$CIA"); gh asked: $(grep 'run list' <<<"$CIAA$CIRA" | cut -c1-60 | tr '\n' '|')"
+(( cinrc == 0 )) && [[ "$CIN" == *"access-audit — no run for"*"in example-owner/public-repo"* && "$CIG" == *"access-audit — ✓ success  run 457"* ]] \
+    && ok "devtools/ci says when the access audit has no run, and when it is green" \
+    || bad "devtools/ci's audit line: none '$(grep access-audit <<<"$CIN")' green '$(grep access-audit <<<"$CIG")'"
 rm -rf "$CIS"
 
 # ── repo-save, the gate that actually commits ────────────────────────────
@@ -14252,6 +14438,31 @@ else
     bad "repo-validate's summary line did not carry a checked/enumerated pair: $SVCOUNT"
 fi
 rm -rf "$SVQ"
+
+# devtools/check, THE SAME CASE (CK1, the review of 2026-10-19). Its first step is
+# repo-validate with the suite, which refuses while a trial is open; on the
+# laptop bt-trial-auto opens one every boot, so check ended NOT READY TO COMMIT
+# there every time. It now does what repo-save does. Its own copy, beside spies
+# for the three validators it calls: the real ones would run this suite inside
+# itself, and what is under test is which arguments check passes and what it says.
+CK=$(mktemp -d); mkdir -p "$CK/devtools" "$CK/trial"
+cp devtools/check "$CK/devtools/"
+for v in repo-validate repo-scan journal-contract; do
+    printf '#!/bin/sh\necho "%s${*:+ $*}" >> "%s/calls"\n' "$v" "$CK" > "$CK/devtools/$v"
+done
+chmod +x "$CK/devtools"/*
+printf 'trial-07 build=stock opened 2026-08-19T18:00:00+02:00\n' > "$CK/trial/current"
+CKO=$(BT_TRIAL_STATE_DIR="$CK/trial" "$CK/devtools/check" --quick 2>&1); ckrc=$?
+(( ckrc == 0 )) && grep -qx 'repo-validate . --no-suite' "$CK/calls" \
+   && [[ "$CKO" == *"A TRIAL IS OPEN"* && "$CKO" == *"trial-07"* && "$CKO" == *"ready, WITHOUT the suite"* ]] \
+    && ok "devtools/check with a trial open passes --no-suite and says so, first and in its verdict" \
+    || bad "devtools/check with a trial open (rc=$ckrc): called $(grep repo-validate "$CK/calls" | tr '\n' ' ')| $(tail -1 <<<"$CKO")"
+: > "$CK/calls"; rm -f "$CK/trial/current"
+CKN=$(BT_TRIAL_STATE_DIR="$CK/trial" "$CK/devtools/check" --quick 2>&1); cknrc=$?
+(( cknrc == 0 )) && grep -qx 'repo-validate' "$CK/calls" && [[ "$CKN" != *"TRIAL"* && "$(tail -1 <<<"$CKN")" == ready ]] \
+    && ok "with no trial open devtools/check runs repo-validate with the suite, unchanged" \
+    || bad "devtools/check without a trial (rc=$cknrc): called $(grep repo-validate "$CK/calls" | tr '\n' ' ')| $(tail -1 <<<"$CKN")"
+rm -rf "$CK"
 
 rm -rf "$SCRATCH"
 
@@ -14806,7 +15017,7 @@ fi
 # AT-SPI recorder is proven against a private accessibility bus, which needs
 # dbus-daemon and python3 with GObject; its shipped defaults run inside a user
 # and mount namespace, which some hosts refuse. Either way: not asked, said so.
-for _ns in "$UIATSPI_SKIPPED" "$UINS_SKIPPED" "$COWORLD_SKIPPED" "$AWKCOV_SKIPPED" "$AUDIT_SKIPPED"; do
+for _ns in "$UIATSPI_SKIPPED" "$UINS_SKIPPED" "${COWORLD_SKIPPED:-}" "$AWKCOV_SKIPPED" "$AUDIT_SKIPPED"; do
     [[ -n "$_ns" ]] || continue
     echo "  NOT ASKED HERE: $_ns — not available on this host,"
     echo "                  so it was not run. Run this suite where it is."
