@@ -1733,7 +1733,10 @@ missing.
 
 # Addendum — fifth pass (from 2026-10-19, after `74d7338`)
 
-Same method. Findings below the consolidated list are added to it at the end of this pass.
+Same method. Findings below the consolidated list are added to it at the end of this pass. Beyond
+reading, this pass ran read-only checks on the laptop: `df`, `stat` and `ls` of capture and log
+directories, and one offline `btmon -r` decode of a saved capture file with only counts printed
+(§70). Nothing touched the controller, and no project tool was run.
 
 ## 57. `tools/bt-postmortem` (200 lines, read in full), checked against the watchdog's own messages
 
@@ -2194,4 +2197,112 @@ not handle names (SC2). Say so in the header. Line 28's `bluetoothctl devices` i
 (`|| echo "   (none)"`, 20 and 22), the same as a boot with no such lines (TA1's confident zero, in
 an exhibit tool). `journalctl --grep` exits 1 for no match; anything else should print the failure.
 `sco-ledger-boots.sh` line 20 is a statement with no effect.
+
+## 70. `scripts/hci-key-records.py` (57 lines), `scripts/discovery-stop-race.py` (218 lines) (read in full), checked on one capture
+
+`discovery-stop-race.py` is offline only (`btmon -T -r` on saved files). It matches packets by
+direction and numeric code because `btmon` shortens names in a pipe, which makes it immune to SW1.
+It also picks each cycle's own scan-off (the first after its Inquiry), not a background-scan stop.
+No defects found.
+
+**HK1 — MED (privacy). The key-material counter does not see the largest carrier of keys in these
+captures.** The tooling index offers this script as the answer to "Does a capture carry key
+material?". It counts:
+- HCI Link Key Request Reply;
+- Link Key Notification;
+- LE Start Encryption;
+- LE LTK Request Reply;
+- SMP PDUs.
+
+It reads only monitor opcodes 2-5 (HCI commands, events, ACL; lines 36-43). But the monitor channel
+also carries bluetoothd's management commands, and at every bluetoothd start and adapter power-on
+bluetoothd hands the kernel every stored key: `MGMT Load Link Keys`, `Load Long Term Keys`,
+`Load Identity Resolving Keys`. Key-bearing MGMT events (`New Link Key`, `New Long Term Key`) are
+likewise not counted.
+
+Checked on the laptop (2026-10-19), counts only, no key printed. An offline `btmon -r` of
+`/var/log/bt-health/capture/hci-20261013-202917.btsnoop`, the file opened at the current boot's
+start, finds two `MGMT Command: Load … Keys` records, one of them with a non-zero `Keys:` count. So
+a capture that spans a bluetoothd start carries the keys of every bonded device. The script's
+categories cannot report that, and its `none` reads as "no key material". The project's rule (raw
+captures never public) already covers this, and nothing has been published. The risk is a decision
+about sharing a capture taken on this script's answer.
+*Fix:*
+- also count monitor control records (opcode 16, control command; 17, control event) with MGMT
+  opcodes `0x0012`, `0x0013`, `0x0030` and events `0x0009`, `0x000a`;
+- count HCI `Write Stored Link Key` (`0x0c11`) and `Return Link Keys` (event `0x15`);
+- say in the output that `none` covers only the listed kinds.
+
+## 71. The trial harnesses in `scripts/` (`prove-dr-review.sh` read in full; `dbg-autostop-calls.sh`, `prove-dr-followup.sh`, `prove-trial-closer.sh`, `prove-trial-nomatch.sh`, `prove-trial-build-label.sh` searched), and `bin/bt-mark`
+
+`prove-dr-review.sh` says it exists to be "runnable while an open trial keeps tests/run-tests
+closed", that is, on the laptop. It stubs `modprobe`, `systemctl` and `udevadm` before running
+`uninstall.sh --apply` against a `BT_DESTDIR`, so UN1's live reload cannot fire there. It stubs
+`hciconfig`, `systemctl` and `journalctl` before running `bt-trial`. Its other checks write only
+under `mktemp`.
+
+**PV1 — MED (laptop). Six harnesses run `bt-trial` with the real `logger` and `bluetoothctl`, so on
+the laptop they write phantom trial marks into the real journal and open MGMT.** `bt-trial` calls
+`bt-mark` and `bt-state` through `PATH` (`bt-trial` 358-360, 1045-1046). `bt-mark` has no seam: it
+always runs `bluetoothctl devices Connected` and `logger -t bt-mark` (`bin/bt-mark` 44-48). Six
+scripts run the checkout's `bt-trial autostart`/`autostop`/`abort` with spies for some commands but
+none for `logger` or `bluetoothctl` (a search finds neither word in any of them):
+- `prove-dr-review.sh` (four trials);
+- `prove-dr-followup.sh`;
+- `prove-trial-closer.sh`;
+- `prove-trial-nomatch.sh`;
+- `prove-trial-build-label.sh`;
+- `dbg-autostop-calls.sh`.
+
+The two `prove-dr-*` scripts even link the checkout's `bt-mark` and `bt-state` into the spy
+directory, "the checkout's, not the installed". None refuses on the investigation machine.
+
+So each run there writes marks such as `TRIAL stock #1 START` and `TRIAL stock #1 RESULT: failed`
+into the laptop's journal, in the middle of the real E3 trial, and opens MGMT about twice per trial
+operation (M1: the BT-4 trigger that crashes the capture's `btmon`). Those marks are what
+`bt-timeline`, `bt-ui-capture collect` and a reader of the journal take as the trial record.
+
+Checked (2026-10-19): the retained journal holds two `TRIAL` marks, both real (E3 #1 RESULT and
+the hand reopen, 2026-10-18), so no phantom mark is on record. Older boots have rotated away, so
+earlier runs cannot be ruled out.
+*Fix:*
+- give `bt-mark` a seam (`BT_MARK_LOG=<file>`, used instead of `logger` when set) and have every
+  harness set it;
+- or build the harnesses' spy directory in one shared helper that always stubs `logger` and
+  `bluetoothctl`, as the suite's PATH guard does;
+- make each harness refuse when `/run/bt-trial/current` exists unless that seam is in force.
+
+## 72. `scripts/bt-audio-policy.py`, `mgmt-replies.sh`, `journal-archive-grep.py`, `capture-window.sh` (read in full)
+
+`bt-audio-policy.py` follows `pw-dump --monitor` and writes a line only when a fact changes. It
+merges metadata updates instead of replacing them, the fix for a recorded loss of keys
+(2026-09-27). It refuses to run as root without `--user`. `mgmt-replies.sh` matches MGMT replies by
+event code, because `btmon` shortens names in a pipe. It decodes the undecoded `Control Event`
+form a rotated file starts with, and reports a `btmon` abort per file rather than reading it as "no
+replies". `journal-archive-grep.py` streams archives and skips `.partial` files.
+
+**AP1 — LOW (privacy).** `bt-audio-policy.py` masks addresses only in `label()`, which is used for
+the default sink and source. `playback-node[…]` prints `target={target.object}` (100), and for a
+stream aimed at a Bluetooth sink that is the sink's node name, `bluez_output.XX_XX_XX_XX_XX_XX.1`.
+The header says values use the description "where one is known". The underscore form reaches the
+journal, and from there `bt-ui-capture collect`, where the sanitiser handles it. Pass `target.object`
+through `label()`.
+
+**JG1 — LOW.** `journal-archive-grep.py` silently skips a file with any other extension (26-27):
+- an uncompressed `.export`;
+- a `.zstd` typo.
+
+The total then reads `0`. Print "skipped (unknown compression)" as it does for `.partial`.
+
+**CWN1 — LOW.** `capture-window.sh` stops at `ts > to` (26) with string comparison. A `to` given
+as the header shows (`2026-09-29 02:30:40`, no fraction) is less than every record inside that
+second (`02:30:40.123456`), so the window silently loses its last second. Pad a `to` without a
+fraction with `.999999`.
+
+Checked against a real decode (2026-10-19): `btmon -T -r` prints `= Note:` lines with full dates,
+so the relative `0.000000` form in `tests/btmon/capdiff-*.txt` does not occur in real files. With
+that form, `capture-window.sh` would have stopped at the first line. The fixtures again carry a
+shape the machine does not print (CD2's pattern); here it does no harm, because `extract()` drops
+`Note` lines.
+
 
