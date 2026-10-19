@@ -6,6 +6,8 @@
 #   devtools/ci --wait [<sha>]  poll until the run is terminal, then print it
 #   devtools/ci --recent [N]    the last N runs on main (default 6)
 #   devtools/ci --failed [<sha>] print the failing lines of that commit's run
+#   --repo <owner/name>         ask that repository instead of the one the
+#                               current branch is pushed to
 #
 # On a red verdict the failing lines are printed automatically (the failed-step
 # log is saved under tmp/ci-<sha>.log); --failed does the same for a run that
@@ -51,13 +53,14 @@ REPO="$(cd "$HERE/.." && pwd)"
 # afternoon. devtools/status already cds for the same reason.
 cd "$REPO" || { echo "ci: cannot enter $REPO" >&2; exit 2; }
 
-WAIT=0; RECENT=0; N=6; SHA=""; SHOWFAILED=0
+WAIT=0; RECENT=0; N=6; SHA=""; SHOWFAILED=0; GHREPO=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --wait)   WAIT=1 ;;
         --failed) SHOWFAILED=1 ;;
         --recent) RECENT=1; [[ "${2:-}" =~ ^[0-9]+$ ]] && { N="$2"; shift; } ;;
-        -h|--help) sed -n '2,9p' "$0"; exit 0 ;;
+        --repo)   GHREPO="${2:?--repo needs <owner/name>}"; shift ;;
+        -h|--help) sed -n '2,11p' "$0"; exit 0 ;;
         -*) echo "ci: unknown option: $1" >&2; exit 2 ;;
         *)  SHA="$1" ;;
     esac
@@ -74,6 +77,22 @@ fi
 SHA=$(git -C "$REPO" rev-parse --verify --quiet "$SHA^{commit}" 2>/dev/null || echo "$SHA")
 SHORT="${SHA:0:7}"
 
+# WHICH REPOSITORY'S RUNS. Left to itself gh asks the checkout's default
+# repository, origin's. A branch pushed only to another remote has its runs
+# there: the held branches go to `private`, which runs the same workflow, and
+# this tool answered "no run found" while eleven runs of one held branch on
+# 2026-10-10 and 10-11 sat red, until an outside reviewer found them (BRIEF
+# §9.4). The repository is now the one the current branch's remote names, or
+# --repo; every answer, "no run found" included, says which it asked.
+if [[ -z "$GHREPO" ]]; then
+    br=$(git -C "$REPO" symbolic-ref -q --short HEAD 2>/dev/null)
+    rem=""; [[ -n "$br" ]] && rem=$(git -C "$REPO" config --get "branch.$br.remote" 2>/dev/null)
+    url=$(git -C "$REPO" remote get-url "${rem:-origin}" 2>/dev/null)
+    GHREPO=$(sed -nE 's#^(https?://([^/@]*@)?github\.com/|git@github\.com:|ssh://git@github\.com/)([^/]+/[^/]+)$#\3#p' <<<"${url%.git}")
+fi
+GHR=(); [[ -n "$GHREPO" ]] && GHR=(-R "$GHREPO")
+ASKED="${GHREPO:-the default repository of this checkout}"
+
 # gh's --jq runs inside gh; nothing here is piped through the shell. Each field
 # is fetched in one call and split in bash.
 fetch() {   # -> "conclusion<TAB>status<TAB>runId<TAB>title" for the newest run on $SHA, or empty
@@ -88,7 +107,7 @@ fetch() {   # -> "conclusion<TAB>status<TAB>runId<TAB>title" for the newest run 
     # a broken query is exactly what waited twenty minutes on 2026-09-19.
     local out err rc
     err=$(mktemp)
-    out=$(gh run list --limit 30 --json conclusion,status,headSha,databaseId,displayTitle \
+    out=$(gh run list "${GHR[@]}" --limit 30 --json conclusion,status,headSha,databaseId,displayTitle \
         --jq ".[] | select(.headSha | startswith(\"$SHORT\")) | \"\\(if .conclusion == null or .conclusion == \"\" then \"-\" else .conclusion end)\\t\\(.status)\\t\\(.databaseId)\\t\\(.displayTitle)\"" \
         2>"$err"); rc=$?
     if (( rc != 0 )); then
@@ -103,8 +122,8 @@ fetch() {   # -> "conclusion<TAB>status<TAB>runId<TAB>title" for the newest run 
 }
 
 if (( RECENT )); then
-    printf 'CI — last %s run(s) on origin/main\n\n' "$N"
-    gh run list --limit "$N" --branch main --json conclusion,status,headSha,displayTitle \
+    printf 'CI — last %s run(s) on main, in %s\n\n' "$N" "$ASKED"
+    gh run list "${GHR[@]}" --limit "$N" --branch main --json conclusion,status,headSha,displayTitle \
         --jq '.[] | "\(if .conclusion == null or .conclusion == "" then .status else .conclusion end)\t\(.headSha[0:7])\t\(.displayTitle[0:64])"' 2>/dev/null \
         | awk -F'\t' '{ printf "  %-10s %s  %s\n", $1, $2, $3 }'
     exit 0
@@ -146,7 +165,7 @@ fi
 # ever on a sha that was never pushed.
 if [[ -z "$row" ]]; then
     if (( ! WAIT )); then
-        echo "ci: no run found for $SHORT — not pushed, or Actions has not queued it yet" >&2
+        echo "ci: no run found for $SHORT in $ASKED — not pushed there, or Actions has not queued it yet" >&2
         echo "  (a run can take a minute to appear after a push; --wait polls for it)" >&2
         exit 2
     fi
@@ -166,7 +185,7 @@ if [[ -z "$row" ]]; then
         # A retry after a gh failure does not spend the grace budget: the budget
         # measures GitHub not queuing the run, not the network dropping a call.
         if (( gh_fail == 0 )); then
-            (( grace-- > 0 )) || { echo; echo "ci: no run for $SHORT after the grace budget — was it pushed to a branch Actions builds?" >&2; exit 2; }
+            (( grace-- > 0 )) || { echo; echo "ci: no run for $SHORT in $ASKED after the grace budget — was it pushed to a branch Actions builds there?" >&2; exit 2; }
             printf '.'
         fi
         sleep "${BT_CI_POLL:-30}"
@@ -199,7 +218,7 @@ fi
 
 IFS=$'\t' read -r concl status runid title <<<"$row"
 if [[ "$status" != "completed" ]]; then
-    printf 'ci — %s  %s  run %s  (%s)\n' "$SHORT" "RUNNING" "$runid" "${title:0:60}"
+    printf 'ci — %s  %s  run %s in %s  (%s)\n' "$SHORT" "RUNNING" "$runid" "$ASKED" "${title:0:60}"
     echo "  not terminal yet — devtools/ci --wait $SHORT"
     exit 3
 fi
@@ -211,7 +230,7 @@ fi
 show_failed() {
     local log="$REPO/tmp/ci-$SHORT.log"
     mkdir -p "$REPO/tmp"
-    if ! gh run view "$runid" --log-failed > "$log" 2>&1; then
+    if ! gh run view "${GHR[@]}" "$runid" --log-failed > "$log" 2>&1; then
         echo "  (could not fetch the failed-step log: $(tail -1 "$log"))"; return
     fi
     echo "  failing lines (full failed-step log: tmp/ci-$SHORT.log):"
@@ -227,11 +246,11 @@ show_failed() {
 
 case "$concl" in
     success)
-        printf 'ci — %s  ✓ %s  run %s  (%s)\n' "$SHORT" "$concl" "$runid" "${title:0:60}"
+        printf 'ci — %s  ✓ %s  run %s in %s  (%s)\n' "$SHORT" "$concl" "$runid" "$ASKED" "${title:0:60}"
         (( SHOWFAILED )) && echo "  (green — nothing failed to show)"
         exit 0 ;;
     failure|cancelled|timed_out|startup_failure)
-        printf 'ci — %s  ✗ %s  run %s  (%s)\n' "$SHORT" "$concl" "$runid" "${title:0:60}"
+        printf 'ci — %s  ✗ %s  run %s in %s  (%s)\n' "$SHORT" "$concl" "$runid" "$ASKED" "${title:0:60}"
         show_failed
         exit 1 ;;
     *)
