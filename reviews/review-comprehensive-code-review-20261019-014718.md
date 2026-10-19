@@ -1938,3 +1938,65 @@ existence read (`--list-boots` already says the boot exists); count failed reads
 **DG3 — LOW.** With two controllers attached, the VID:PID advice uses whichever enumerated first
 (`DEVS[0]`, 115). Loop the advice over `DEVS`.
 
+## 63. `tools/lib/actions-render.awk`, `boot-hours.awk`, `capdiff-match.awk`, `sco-window.awk` (read in full)
+
+All four are extractions that replaced private copies of the date arithmetic with the shared
+`iso_secs()`. `boot-hours.awk` refuses an unparseable timestamp. `capdiff-match.awk`'s header
+records the `-f` plus inline-program trap that once made the matcher report perfect agreement, and
+its two-pointer pairing consumes matches on both sides. An unparseable time becomes -1 and lands
+unmatched, which errs toward disagreement.
+
+**AW1 — LOW. `actions-render.awk` does not use the guard it was extracted to get.** Its header says
+`iso_secs()` "brings its guards: an unparseable timestamp yields -1". `flush()` (24-25) subtracts
+the two values without checking for -1, so a collapsed run with one unparseable stamp prints a
+cadence that is negative or tens of years long.
+*Fix:* if either value is negative, print the run without a cadence.
+
+**AW2 — LOW. The timeline has no dates.** `disp()` (18) keeps `HH:MM:SS.mmm` only. On a multi-day
+boot, and with AC1's other-boot records mixed in, "x5 until 10:02:11" does not say which day. Print
+the date when it changes, as a separator line.
+
+**`sco-window.awk`** is correct as written, but it is one of the matchers SW1 disables: under
+`COLUMNS=200` the header reads `HCI Comman..`, so `bt-sco --window` collects no marks and prints
+nothing.
+
+## 64. `tools/bt-ui-capture` (lines 255-698, read in full; the head was read in §22)
+
+The design is careful throughout:
+- every file it writes carries a marker, and only marked files are ever removed;
+- runtime changes record their previous value before changing it;
+- monitor output is capped by rotation;
+- `collect` copies raw text into a `0700` directory and publishes only what the sanitiser accepts;
+- nothing is restarted behind the operator's back.
+
+**UC1 — LOW-MED (latent, privacy). The sanitiser's error output, which lists the addresses it could
+not replace, is saved outside the protected directory.** On a refusal `sanitize-logs.sh` prints the
+leftover MAC-like strings, UUIDs and IPv4 addresses themselves to stderr (its lines 200-216).
+`collect` sends that stderr to `$out/sanitize-errors.txt` (662). That file is in the collect
+directory, not in the `0700` `raw/`, and is created with mode `0644` under directories that are
+`0755` down from `/var/log/bt-health`. It is also truncated for every file in the loop, so after a
+refusal it holds only the last file's messages, and "see sanitize-errors.txt" can point at an empty
+file.
+Checked on the laptop (2026-10-19): the only collect run (2026-10-10) published all eight files; its
+error file is empty. Nothing was exposed.
+*Fix:* write the errors inside `raw/`, appending (`2>>`) under a per-file header.
+
+**UC2 — LOW-MED. A bare `collect` covers the whole session, and the open session started on
+2026-10-05.** With no `--since`, the window starts at the session's `started_at` (604). The
+2026-10-05 session is still recorded as active (UI1), so a plain `collect` today reads two weeks of:
+- the kernel log (dynamic debug);
+- `bluetoothd -d`;
+- PipeWire and WirePlumber at debug level.
+
+It writes all of it to `raw/timeline.log` on the root filesystem, then a sanitised copy beside it.
+That is hours of reading and many gigabytes. The one past collect (2026-10-10) wrote about 11 MB of
+raw text; the window it was given is not recorded in its directory, so it does not bound this.
+*Fix:* refuse a window longer than a set limit (e.g. 24 h) unless `--since` is given.
+
+**UC3 — LOW.** `status` counts every PipeWire and GNOME Settings line since `started_at` (585-588)
+to print four numbers: with the 2026-10-05 session still open, each `status` reads two weeks of
+debug logs (T6's and DS2's shape). Count from `-n`-bounded reads, or since the last `status`.
+
+**UC4 — INFO.** The dry-run plan falls back to one machine's account (`U=i`, uid 1000, `/home/i`,
+385 and 466): the hard-coded-layout pattern of EV3, limited to `plan`. Print `<user>` instead.
+
