@@ -2305,4 +2305,86 @@ that form, `capture-window.sh` would have stopped at the first line. The fixture
 shape the machine does not print (CD2's pattern); here it does no harm, because `extract()` drops
 `Note` lines.
 
+## 73. Kernel build and submission scripts (read in full)
+
+Files:
+- `build-btusb-module.sh`, `build-bluetooth-module.sh`, `build-bluetooth-fulltree.sh`;
+- `build-btusb-stable-matrix.sh`, `compile-mgmt-at.sh`, `check-modversions.sh`;
+- `prepare-ubuntu-ksrc.sh`, `kernel-preflight.sh`, `kernel-regenerate.sh`, `build-v2.sh`.
+
+The good parts:
+- They write under `tmp/` or `cache/` and install nothing.
+- `build-btusb-module.sh` checks the module's vermagic against the target release.
+- `prepare-ubuntu-ksrc.sh` verifies the source diff against the `.dsc`, and says the `.dsc`
+  signature is not checked.
+- The stable matrix uses `git cherry-pick` of the commit itself on a freshly fetched tip, with an
+  unpatched control build; `-Werror` is dropped for both builds only when the control cannot take
+  it.
+- `kernel-regenerate.sh` refuses a regenerated mail whose patch-id differs.
+- `kernel-preflight.sh` refuses a zero from sparse unless the `CHECK` step is in the log (the
+  2026-09-23 lesson).
+
+**BF1 — MED. `build-bluetooth-fulltree.sh` reports a patched build as passing when the patch did
+not apply.** Line 46 runs `patch -p1 < "$PATCH" | grep -E "Hunk|FAILED"` and checks nothing. When a
+hunk fails, `patch` leaves the file unpatched (or partly patched, with a `.rej`), and the "patched"
+build compiles that. It prints `patched make rc=0`, and the script exits 0, "both builds succeed".
+The header calls this "the real compile check for a kernel patch at another tree's tip", and its
+own example is a `stable/linux-6.1.y` check. The `Hunk … FAILED` line does reach the terminal, so a
+careful reader would see it. The summary line and exit status say the opposite. Which past checks
+used this script was not traced. The backports in question were also built by the stable team and
+released, so no recorded outcome rests on it alone.
+*Fix:* check `${PIPESTATUS[0]}` and stop on failure. Also confirm that the patched tree differs from
+the control (`git diff --quiet -- net/bluetooth` must fail) before building.
+
+**BF2 — LOW. `compile-mgmt-at.sh` refuses a patch that applies cleanly.** Line 29 is
+`patch … | grep -E "Hunk|FAILED" || { echo "patch did not apply"; exit 1; }`. A clean apply prints
+no `Hunk` line, so `grep` exits 1 and the script says the patch did not apply. It works only when
+the patch applies with an offset. It errs toward refusal. Test `${PIPESTATUS[0]}` instead.
+
+**BM-1 — LOW-MED. "The tree's own headers take precedence" is the reverse of what the build does.**
+`build-btusb-module.sh` (49-51) and `build-bluetooth-module.sh` (40-42) pass `-I$SRC/include`
+through `KCFLAGS`. In the installed kbuild
+(`/lib/modules/7.0.0-38-generic/build/scripts/Makefile.lib` 167-169), `c_flags` puts
+`$(LINUXINCLUDE)` before `$(_c_flags)`, which carries `KBUILD_CFLAGS` and so `KCFLAGS`. The build
+tree's own `include/` is therefore searched first, and `$SRC/include` supplies only headers the
+build tree lacks.
+- For E3 this made no difference: source and headers are the same Ubuntu release.
+- With `--krel` and a source tree of another release, the module is that tree's `btusb.c` compiled
+  against the target's headers, and the output does not say so.
+- `compile-mgmt-at.sh` does this correctly: it puts the tree's `include/` in `NOSTDINC_FLAGS`
+  (33), which comes before `LINUXINCLUDE`.
+
+*Fix:* correct the two comments; print which release's headers were used; warn when the source
+tree's release differs from `--krel`.
+
+**KP1 — LOW-MED. `kernel-preflight.sh`'s sparse comparison looks only at `mgmt.c`, whatever the
+patch touches.** `sparse_mgmt` (37-42) and the base/patched swap (52-54) are fixed to
+`net/bluetooth/mgmt.c`, the file of the first kernel patch. For a patch to `hci_event.c` (the BT-9
+fix) or `hci_sync.c`, it still prints "no new sparse finding introduced by the patch" without
+having compared the patched file.
+*Fix:* compare every `.c` file in `git diff --name-only HEAD~1`.
+
+**KP2 — LOW-MED. An interrupted preflight leaves the base file in place, and the next run then
+passes the patch unchecked.** Lines 52-54 check out `HEAD~1`'s `mgmt.c`, run sparse (minutes), and
+restore `HEAD`'s. Interrupted in between, the worktree keeps the base file. The next run's "patched"
+measurement is then of the base file, equal to the base, so it reports no new finding.
+*Fix:* a trap that restores the file, and a refusal at start when `git status --porcelain` shows
+the file modified.
+
+**CM1 — LOW-MED. `check-modversions.sh` reads an unreadable dependant as accepting.**
+`modprobe --dump-modversions "$m" 2>/dev/null` (27) feeds the loop. When it fails (a compression
+the local `libkmod` cannot read, a wrong path), the module shows `uses 0 mismatched 0`, and the
+summary says "OK — every dependant accepts the new build". This is the gate before a module goes
+into `updates/`. A dependant that uses none of the exports is possible, but should be stated, not
+assumed.
+*Fix:* check `modprobe`'s exit status, and report a module with no readable modversions as
+UNVERIFIED (non-zero exit).
+
+**WO1, one more site.** `build-bluetooth-module.sh` 11-12 still uses the older wording for the
+laptop ("the investigation machine and also the family's").
+
+**BV1 — INFO.** `build-v2.sh` and the `--ubuntu` default in `build-bluetooth-module.sh`
+(`cache/ubuntu-7.0.0-31`) are records of one moment, like BM1. Say so in their headers, or drop the
+default.
+
 
