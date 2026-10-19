@@ -193,8 +193,12 @@ if (( NEW_TEXT )); then
     if [[ -n "$WORDS" && -r "$WORDS" ]]; then
         pats=$(grep -vE '^\s*(#|$)' "$WORDS" | paste -sd'|' -)
         if [[ -n "$pats" ]]; then
-            found=$(grep -oiE "\b($pats)" <<<"$CONTENT" | sort -u | tr '\n' ' ')
-            [[ -n "$found" ]] && report "listed word in new text:" "$found" || pass "word list"
+            # grep exits 2 on a pattern it cannot compile: that is a broken list,
+            # reported as such, never as a pass.
+            found=$(grep -oiE "\b($pats)" <<<"$CONTENT" | sort -u | tr '\n' ' '); rc=${PIPESTATUS[0]}
+            if (( rc == 2 )); then report "word list has a pattern grep cannot compile: $WORDS"
+            elif [[ -n "$found" ]]; then report "listed word in new text:" "$found"
+            else pass "word list"; fi
         else
             pass "word list (empty)"
         fi
