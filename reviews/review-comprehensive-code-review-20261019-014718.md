@@ -2472,4 +2472,44 @@ script refuses at its venv check and CL2 cannot be settled from the code here.
 of 2026-10-18 found working under SW1), `journal-scan-time.sh` and `sco-switch-windows.sh`: no
 defects.
 
+## 76. The other standalone proofs: `prove-ui-capture.sh`, `prove-trial-closer.sh`, `prove-held-branch-guard.sh`, `prove-exhibit-boots.sh`, `prove-neg-search.sh`, `prove-bt-trace-archive.py`, `prove-audio-policy-metadata.py`, `prove-ci-stub.sh`, `prove-ci-cwd.sh` (read in full)
+
+These exist because the suite refuses while a trial is open, so they are run on the laptop.
+
+**`prove-ui-capture.sh` is the model for the others.** Every system command is a stub, every path
+is a seam into a temporary tree, and the AT-SPI check runs against a private `dbus-daemon` it starts
+and stops. It proves `plan` changes nothing, every acting subcommand refuses without root, `stop`
+restores exactly what `start` recorded, and published output holds no address (with a check that
+the raw input did hold one, so the assertion can fail). Its `bt-mark` goes through a seam
+(`BT_UI_MARK`, a stub here), which is the fix PV1 asks for, already present in a sibling tool.
+
+**PV1, confirmed in one more harness.** `prove-trial-closer.sh` stubs `hciconfig`, `bt-incident`
+and `bt-state` (14), but not `bt-mark`, so its `bt-trial autostart` and `ok` reach the real
+`bluetoothctl` and `logger`.
+
+**PB1 — LOW. `prove-bt-trace-archive.py` lost its samples to rotation and now proves less.** It
+copies three 2026-09-24 trace files from `/var/log/bt-health/trace` (18, 47). Those have rotated
+out of the trace directory (checked 2026-10-19; the archive's manifest holds them). The fallback
+copies one file from `tmp/` under all three names, which has two effects:
+- the three "captures" are byte-identical, so checks that should tell files apart, such as the
+  keep copy matched to its own capture, cannot fail for the reason they exist;
+- the proof now rests on an untracked file that exists only on this disk.
+
+*Fix:* ship three small synthetic btsnoop files under `tests/`, with different contents. Failing
+that, take the samples from `archive/bt-trace/` (decompressed).
+
+**HB1 — INFO, ties to RS1.** `prove-held-branch-guard.sh` proves that `kernel/*`, `plan/*` and
+`config/*` go to `private`, the families on the list. A `research/held-test` branch would show RS1
+directly: today it would be pushed to `origin`. Add that case, expecting `private`, when RS1 is
+fixed. It also hard-codes `cd /root/exp/qca9377-bt-hang` (6), EV3's pattern; `prove-bt-trace-archive.py`
+does the same with `PROJECT_TMP` (17).
+
+`prove-exhibit-boots.sh`, `prove-neg-search.sh` (it includes a positive control for its own
+guard), `prove-audio-policy-metadata.py`, `prove-ci-stub.sh` and `prove-ci-cwd.sh` (one read-only
+network call): no defects.
+
+A note on fixtures: `prove-ui-capture.sh`'s journal fixture writes offsets as `+0200`; this machine's
+`journalctl -o short-iso-precise` prints `+02:00`. Nothing in that proof parses the stamp, so no
+check is affected. It is the third pattern again, harmless here.
+
 
