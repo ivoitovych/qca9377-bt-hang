@@ -1729,3 +1729,152 @@ findings:
 The suite already pins several tree-wide rules as invariants; the list above names the ones
 missing.
 
+---
+
+# Addendum — fifth pass (from 2026-10-19, after `74d7338`)
+
+Same method. Findings below the consolidated list are added to it at the end of this pass.
+
+## 57. `tools/bt-postmortem` (200 lines, read in full), checked against the watchdog's own messages
+
+The incident scoping is right: timeouts are clustered by a gap, every event is searched only inside
+the incident's window, and live state is read before log inference. The canonical timeout spelling
+(EX-015) keeps `link tx timeout` out.
+
+**PM1 — MED (latent; the first tool run after a failure). On the laptop its verdict reads the
+watchdog's silence as evidence.** Every interpretive line is taken from the watchdog's journal
+(`-u bt-hang-watchdog`, 96-103). The watchdog is off on the laptop by rule, so after an incident
+there:
+- "**The watchdog never intervened in this incident** despite N timeout(s). Check the
+  threshold/cooldown" (161-167) sends the operator to tune a unit that is off on purpose.
+- "**No early signal at all in this incident** — bluetoothd gave no audio-teardown warning" (191-192)
+  is a claim about bluetoothd taken from the watchdog's log. The watchdog writes `early signal:`
+  only through `vlog` (watchdog line 363), so only with `BT_VERBOSE=1` *and* `BT_EARLY=1`, and both
+  default to 0 (74-75). With the watchdog running in its default configuration the sentence is
+  false as well.
+- The kernel's own reset under E3 (`Resetting usb device.`, KR1) is not on the timeline at all,
+  so the one intervention that does happen on the laptop is missing from the account.
+- "It left the bus after an intervention" (149) is printed whenever the device is off the bus,
+  without checking that any intervention happened.
+
+The header says this tool's output "is a CONCLUSION … and conclusions are what this project must not
+get wrong". The first E3 failure, the most important event the experiment could record, would get
+these conclusions.
+*Fix:*
+- read the early signals from bluetoothd's own journal (`-u bluetooth`), using the watchdog's
+  patterns (342-346) moved into `journal.sh`;
+- add a "kernel reset" row from `BT_RE_KERNEL_RESET` (KR1's fix);
+- when the watchdog unit has no journal in the window, print "watchdog not running" and skip
+  every watchdog-based line.
+
+**PM2 — LOW-MED. Two unfiltered whole-boot reads, and a failed read prints a green all-clear.**
+- The timeout scan (64-65) and `KLOG` (95) each read the boot's whole kernel log, and `KLOG` is held
+  in a shell variable: BS-1's shape, on a tool run at the worst moment.
+- Both reads discard stderr and are unchecked. A failed first read gives "No controller timeouts
+  in range — nothing to analyse." in green and exit 0: TA1's confident zero.
+
+*Fix:* take timeouts from `-p err` (as `bt-trial` does) through a checked read; select `KLOG` with
+`--grep` on the union of the patterns used; refuse on a failed read.
+
+**PM3 — LOW-MED. Any adapter and any USB device stand for the controller.**
+- `hci_now` is the first entry of `/sys/class/bluetooth` (136), so a spare dongle hides "CONTROLLER
+  IS DOWN RIGHT NOW" (BS1's defect, here in the verdict).
+- `t_usb` (`descriptor read`) and `t_gone` (`USB disconnect`) match any USB device (100-101), so a
+  phone unplugged within ten minutes of the first timeout becomes "device left the bus" (BS-2's
+  defect).
+
+*Fix:* resolve the hci node under the VID:PID device; anchor USB lines to the controller's path, as
+`stage2.awk` does.
+
+**PM4 — INFO.** `hm()` prints times without dates (51), so `--all` with a `--since` spanning
+several days lists incidents by clock time only.
+
+## 58. `tools/bt-logvolume` (126 lines, read in full)
+
+The rate split (boot average beside the last 60 s) and the explicit rebuild of the 60-second
+arguments are right; the header's "counting, not reading names" is the method that found
+`NOISY_FUNCS`.
+
+**LV1 — LOW-MED. With `-b -1` the rates describe the current boot.**
+- The boot average divides boot −1's line count by the current boot's uptime (`/proc/uptime`,
+  74).
+- "Last 60 s" reads boot −1 with `--since -60s` (87), which is always empty, so the report prints
+  `0 lines/min` and "Projected at the current rate: 0.00 GB/day".
+
+A reader checking whether a past boot's debug load was under control is told it was silent.
+*Fix:* for any boot but 0, take the span from `--list-boots` (first and last entry) and omit the
+"last 60 s" and projection lines.
+
+**LV2 — LOW. The fix for `-- No entries --` reached the rate line but not the total.** Line 91
+filters it; the total (62-63) counts it, so an empty window reports `total lines 1` and lists one
+shape at 100%, instead of the "no lines" message at 65. The same pattern as the first one in the
+second-pass summary, inside one file.
+*Fix:* filter the total the same way.
+
+**LV3 — LOW. The default reads the whole boot into `/tmp`.** With no `--since`, the boot's whole
+kernel log is written to `mktemp` (59-62) and sorted. On the laptop's current boot, with dynamic
+debug since 2026-10-13, that is minutes of reading and gigabytes in `/tmp`. The free space on the
+root filesystem on 2026-10-19 was 102 GB, so one boot's kernel text cannot reach the capture
+daemons' 15 GB floor today.
+*Fix:* default to `--since -1h` and say so, or warn with the boot's age before a whole-boot read.
+
+**LV4 — INFO.** `/[0-9a-f]{8,}/` (112) needs interval support. The laptop's `awk` is gawk (checked
+2026-10-19) and CI installs gawk; under an old mawk the pattern would never match and pointer-like
+values would not collapse. `sanitize-logs.sh`'s capability gate is the house pattern if this ever
+matters.
+
+**A measurement for SC-1 (§42).** The same `df` reading bounds SC-1: with 102 GB free, `bt-sco`'s
+buffer would have to pass about 87 GB before the floor is reached. Whether a decode of the 48 GB of
+captures reaches that depends on the text-to-binary ratio, which has not been measured. SC-1 stands
+as a possibility on a fuller disk, not as a certainty today.
+
+## 59. `tools/bt-context` (122 lines, read in full)
+
+Inverting the filter (show what is near a failure and *not* already understood) is the right
+complement to the classifying tools.
+
+**CX1 — LOW-MED. Its four anchors can come from four different incidents, or from no incident.**
+Each anchor is the first match in the whole boot, taken independently (68-71):
+- `USB disconnect, device number` and `device descriptor read/64, error` match any USB device, so
+  "device left the USB bus" can be a phone unplugged days before the failure (BS-2's defect);
+- the first timeout, the first USB failure and the first desync are each the boot's first, not the
+  first of one incident.
+
+The windows are then merged into one "unclassified near a failure" list. That is the mixing
+`bt-postmortem`'s header records as a past defect ("Timestamps must come from ONE incident"). A
+shape near an unrelated USB event is presented as a candidate explanation of the failure.
+*Fix:* anchor the USB lines to the controller's path (as `stage2.awk` does), and take the USB and
+desync anchors from inside the first timeout's incident (the gap clustering of `bt-postmortem`).
+
+**CX2 — LOW. It copies the whole boot's journal, every unit, to `/tmp`.** Line 60 has no `-k` and no
+filter. On the laptop's current boot (dynamic debug and `bluetoothd -d` since 2026-10-13) that is
+hours of reading and many gigabytes, before the anchors (which need only four lines) are known.
+*Fix:* find the anchors first with filtered reads (`--grep`, `-n 1`), then read only `±CTX` lines'
+worth of time around each (`--since/--until` around the anchor's instant).
+
+**CX3 — LOW (privacy). Address redaction knows only upper-case colon form.** Lines 90 and 113 replace
+`[0-9A-F]{2}(:…){5}`. Lower-case addresses (NetworkManager and `wpa_supplicant` print them) and
+bluetoothd's `dev_XX_XX_…` object paths pass through, under `--all` and `--full` in particular.
+The output is for the terminal, but it is the kind people paste.
+*Fix:* case-insensitive, plus the underscore form; or pipe through `sanitize-logs.sh`.
+
+The KNOWN list does not contain `Resetting usb device`, so under E3 the kernel's reset (KR1) would
+show up as unclassified, which is the right outcome for this tool.
+
+## 60. `tools/bt-boots` (47 lines), `tools/bt-interval` (72 lines) (read in full)
+
+`bt-interval` is sound: the shared arithmetic, `</dev/null` so awk cannot block on the caller's
+stdin, a refusal on parse failure that names both arguments, and a refusal on a negative interval.
+
+**BB1 — LOW-MED. `bt-boots` reads every boot twice, whole, and an unreadable boot shows zero
+timeouts.** For each boot, the timeout and desync counts (41-42) each read the whole kernel log
+unfiltered, with `|| true`. On the laptop that is two multi-day dynamic-debug reads for the current
+boot alone. A failed read prints `0`, the same as a quiet boot (TA1's confident zero). The banner
+column already shows `?` when it cannot read the kernel version; the counts do not.
+*Fix:* count through `bt_journal_count` with `--grep` (timeouts from `-p err`); print `?` on a failed
+read.
+
+**BB2 — INFO.** `WD-ACTS` counts only watchdog interventions; under E3 the kernel's own reset (KR1)
+has no column. Add `K-RESET` with KR1's fix. Sibling order (the checkout's `bt-boot-list` before
+`/usr/local/bin`) is right here, unlike BS-3.
+
