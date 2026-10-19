@@ -4365,6 +4365,16 @@ WOUT=$(wd_run 10); wrc=$?
 [[ "$WOUT" == *"escalating to USB unbind/bind"* ]] \
     && ok "watchdog escalates when the controller stays dead after reset" \
     || bad "escalation path not taken"
+# Read HERE, before the next run writes the same files. That run (a failed
+# reset) is stopped the moment it logs its escalation, and the log line comes
+# before both writes, three seconds apart: a stop that took longer than that,
+# as under the access audit's trace, landed between the shell's truncating
+# open of bind and its write, and this check read '3-3'/'' (CI, 2026-10-19,
+# da6e22e; the audit named it).
+u=$(cat "$WD/drv/unbind" 2>/dev/null); bnd=$(cat "$WD/drv/bind" 2>/dev/null)
+[[ "$u" == "3-3" && "$bnd" == "3-3" ]] \
+    && ok "escalation unbinds and rebinds the right device (3-3)" \
+    || bad "unbind/bind wrote '$u'/'$bnd', expected 3-3"
 # And a reset that fails is logged as failed, and recovery goes on to the
 # next step rather than stopping there.
 touch "$WD/reset-fails" "$WD/dead-once"
@@ -4384,10 +4394,6 @@ grep -c 'systemctl stop bluetooth' "$WD/spy.log" >/dev/null \
     && grep -c 'systemctl start bluetooth' "$WD/spy.log" >/dev/null \
     && ok "spy log shows the bluetooth service stop/start pair" \
     || bad "spy log missing the systemctl pair"
-u=$(cat "$WD/drv/unbind" 2>/dev/null); bnd=$(cat "$WD/drv/bind" 2>/dev/null)
-[[ "$u" == "3-3" && "$bnd" == "3-3" ]] \
-    && ok "escalation unbinds and rebinds the right device (3-3)" \
-    || bad "unbind/bind wrote '$u'/'$bnd', expected 3-3"
 # The fixture ends; the reader terminating must be loud, never a silent respawn.
 (( wrc == 1 )) && [[ "$WOUT" == *"journal reader terminated unexpectedly"* ]] \
     && ok "watchdog exits loudly when the journal stream ends" \
