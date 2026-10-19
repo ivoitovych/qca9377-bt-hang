@@ -1522,3 +1522,49 @@ reads the whole trial window unfiltered (T6), minutes on a multi-day trial with 
 reports "could not reach origin" or "ahead" for a branch that is fully pushed. Use the same branch
 rule as `repo-save`.
 
+## 51. `devtools/journal-contract` (192 lines, read in full)
+
+Phase 2 is a strong idea: it builds a real journal from export text with
+`systemd-journal-remote`, runs the real `journalctl` over it, and diffs the output byte for byte
+against the fixture grammar. That check already caught the leading boot separator the stage2
+fixtures carry and the real tool does not print.
+
+**JC1 — MED. The contract checks the format of a message it made up itself; that is how PH1, T9
+and EH1 got through.** Phase 2 writes the snapshot unit's record with
+`MESSAGE=Snapshot Bluetooth health metrics` (line 156) and then confirms that `journalctl` prints
+that message back in the fixtures' line grammar. That verifies the timestamp, host and identifier
+layout. It does not verify what systemd actually writes for a unit run, which on systemd 255 is
+`Finished bt-health-snapshot.service - Snapshot Bluetooth health metrics.` (§37). The fixture's
+assumption is copied into the contract, so the contract cannot see it fail.
+*Fix:* add a phase-1 claim against the host journal for every systemd-generated message a tool
+matches. Read the last `Finished`/`Starting` line of any oneshot unit on the host
+(`journalctl -u <unit> -o cat`) and check the shape the tools grep for
+(`Finished <unit> - <Description>.`). Then generate the phase-2 export's `MESSAGE` from that shape
+rather than from the fixture.
+
+## 52. `devtools/ci` (first 120 lines), `scripts/installed-vs-commit.py`, `scripts/unpushed-survey.py` (read in full)
+
+`devtools/ci` is sound:
+- it changes into the checkout so `gh` resolves the right repository;
+- a failing `gh` is not read as "no run";
+- an in-progress run's empty conclusion is handled.
+
+**IV1 — LOW-MED. The pre-deploy comparison can only see files the old commit installed.**
+`installed-vs-commit.py` parses only the *installed* commit's `install.sh`, so its "deploy: changes"
+column covers only those destinations. Files the candidate installs and the old commit did not are
+not listed at all:
+- new tools;
+- new libraries (e.g. anything added to `tools/lib/` since `cccf0fe`).
+
+The 2026-10-18 reading, "a deploy of `main` changes 17 of the 68", is therefore a lower bound on
+what the deploy writes.
+*Fix:* parse the candidate's `install.sh` as well, and list destinations only in the candidate as
+"new" (and only in the old as "no longer installed").
+
+**UP1 — LOW-MED. `unpushed-survey.py` checks only the checked-out branch.** It counts unpushed
+commits with `git rev-list --count HEAD --not --remotes` (38). Local commits on any *other* branch
+that no remote holds are invisible, and on the project checkout several branch families are in
+play. The tool exists to answer "what exists only on this disk?", and it can answer "nothing" while
+a branch holds unpushed work.
+*Fix:* `git rev-list --count --branches --not --remotes`, and list the branches it finds.
+
