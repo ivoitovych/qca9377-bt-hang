@@ -2429,4 +2429,47 @@ and the number whose checks were unavailable.
 "the most recent". A rerun reports the old survey as current. Its first output line shows the date
 range, which makes the age visible. Name the cache date in that line, or add a `--refresh`.
 
+## 75. Document and review helpers, and small readers (read in full)
+
+Files:
+- `fix-time-ranges.py`, `move-lines.sh`, `brief-handoff-to-history.py`;
+- `patch-replace-message.sh`, `export-kernel-review.sh`;
+- `r2-checks.sh`, `r2-checks-2.sh`;
+- `functional-repeat.sh`, `supported-commands-survey.sh`, `journal-scan-time.sh`,
+  `sco-switch-windows.sh`.
+
+`patch-replace-message.sh` refuses an empty diff (after the 2026-09-23 incident) and any change to
+the diff part. `brief-handoff-to-history.py` appends to HISTORY before it cuts from BRIEF, so an
+interruption duplicates rather than loses. `functional-repeat.sh` counts failure *rates* on base
+and patched sides, and treats a missing junit result as a failure, not a pass.
+
+**FT1 — LOW-MED (evidence). `fix-time-ranges.py` rewrites any file it is given, exhibits
+included.** It turns every `HH:MM:SS-HH:MM:SS` into `HH:MM:SS to HH:MM:SS` so that `repo-scan`'s MAC
+detector stops reading clock ranges as addresses. An exhibit's output block is the verbatim output
+of its command (the exhibit discipline). Run over an exhibit, the script changes recorded output,
+and a re-run of the exhibit's command no longer matches it.
+*Fix:* refuse files under `evidence/` and text inside code fences. Better, teach `repo-scan` the
+clock-range shape, which removes the reason for rewriting.
+
+**ML2 — LOW. `move-lines.sh` deletes from the source even if the append failed.** Line 20 appends to
+the destination and line 21 deletes from the source. Without `set -e`, a failed append (disk full, a
+permission change between the check at 15 and the write) is followed by the deletion. The source is
+usually tracked, so git keeps the lines, but the move is not checked.
+*Fix:* compare the destination's last `TO−FROM+1` lines with the range before deleting.
+
+**RC1 — LOW. `r2-checks.sh` prints a broken row for every zero count.** Its helper is
+`c() { grep -cE … || echo 0; }` (9). `grep -c` already prints `0` when nothing matches and then
+exits 1, so the helper prints `0` twice. Every "gone" check, which is the expected outcome, gets a
+two-line value. `bin/bt-mark` (42-43) records fixing exactly this ("An `|| echo 0` here appends a
+SECOND zero"). It is the first recurring pattern, in a review tool. Use `|| true`.
+
+**CL2, still open.** `functional-repeat.sh` boots VMs from `--kernel <bzImage>`, but where the
+harness runs `btvirt` is decided by `pytest-bluezenv`. Neither the harness venv
+(`cache/bluezenv-venv`) nor BlueZ's `test/` exists on the laptop (checked 2026-10-19), so the
+script refuses at its venv check and CL2 cannot be settled from the code here.
+
+`export-kernel-review.sh`, `r2-checks-2.sh`, `supported-commands-survey.sh` (which the STATUS audit
+of 2026-10-18 found working under SW1), `journal-scan-time.sh` and `sco-switch-windows.sh`: no
+defects.
+
 
