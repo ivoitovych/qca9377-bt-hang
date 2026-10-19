@@ -1664,22 +1664,29 @@ read beyond this one, so an invariant filed under another heading is possible.
 
 ---
 
-## Consolidated ranked list — all passes (written after §56, updated after §83)
+## Consolidated ranked list — all passes (written after §56, updated after §86)
 
-About 28,000 of ~40,000 lines have been read line by line. That is every file outside the bodies of
-`tests/run-tests`, which were searched for the tests that pin findings (§82). Pattern sweeps covered
-every tool and script. The list is ordered for fixing, by urgency, and each item points to its
-section. Items found in the fifth pass (§57-§83) are folded in.
+Every tracked code file has been read line by line:
+- passes one to five covered everything outside the bodies of `tests/run-tests`;
+- the sixth pass read `tests/run-tests` in full (§84, §85) and the code under `patches/`, `retest/`
+  and `docs/mesh-tester-ci/` (§86).
+
+The upstream patch files, logs, fixtures and prose were not re-read. The list is ordered for fixing,
+by urgency, and each item points to its section. Items found in the fifth (§57-§83) and sixth
+(§84-§86) passes are folded in.
 
 **1. Act now (operational, the operator's decision)**
 - **CAP1** (§7): the capture daemons will rotate away the unarchived U10 and BT-9 captures. Restart
   the archive or copy them to the keep directory. AR1 (§10) means the decode-free capture
   directory is never archived even then. Rotation is visibly running: the 2026-09-24 trace files
-  have already left the trace directory (§76; the archive holds those).
+  have already left the trace directory (§76; the archive holds those). `bt-trace --check` and
+  `bt-usbmon --check` also prune, so running the check deletes captures past KEEP (§85). Six tests
+  require today's pruning (§85).
 
 **2. Hazards that bypass rules held only in prose (HIGH, latent)**
 - **KR1** (§38): under E3 a real failure would be marked PERTURBED and dropped from the E3 rate. The
-  kernel's own reset is misattributed to the watchdog. A test asserts the misattribution (§82).
+  kernel's own reset is misattributed to the watchdog. Two tests assert the misattribution (§82,
+  §85).
 - **RS1** (§12): `repo-save` pushes every branch not on a short list to `origin`.
 - **MODE1** (§8): `bt-mode mitigation` arms the watchdog; `install.sh` suggests it. A test requires
   it (§82).
@@ -1706,6 +1713,8 @@ request)**
 - **KP1, KP2** (§73): the preflight's sparse step compares only `mgmt.c`, and an interrupted run
   lets the next one pass unchecked.
 - **CM1** (§73): an unreadable dependant reads as accepting a module bound for `updates/`.
+- **CC1** (§86): the BlueZ checkpatch gate in `patches/bluez/` reads a crashed checkpatch as
+  0 errors (CL4 again).
 
 **4. Deploy-day traps (MED; small fixes, worth doing before the deploy)**
 - **I2** (§4): `--tools-only` reads the whole boot's kernel log at its last step.
@@ -1715,7 +1724,7 @@ request)**
 
 **5. Records and evidence (MED)**
 - **T1** (§1): an interrupted close writes a duplicate row.
-- **AJ1, BJ1** (§24, §23): journal archive gaps.
+- **AJ1, BJ1** (§24, §23): journal archive gaps. Tests pin both (§85).
 - **UN2, SW2** (§5, §31): advice and flags that delete unarchived captures. A test requires UN2
   (§82).
 - **SC-1** (§42): `bt-sco` can fill the disk and trigger capture pruning (bounded today by 102 GB
@@ -1753,30 +1762,51 @@ request)**
 - **WD1** (§17): the watchdog's premise no longer holds under E3.
 - **IN1, AWC1** (§80): the coverage instruments leave out `scripts/`, which holds the Foundation's
   check and the ledger. Awk coverage counts only programs that ran.
+- **RT3** (§84): the suite's whole-boot-read invariant checks one spelling. The eight tools above
+  found reading whole boots pass it.
 
-**7. Other MED**
+**7. Other MED, and two lower items that belong beside them**
 - **SM1, SM2** (§19): the SMTP check reads a connect failure as REVOKED; the password goes on the
   command line.
 - **SN1** (§18): `bt-snapshot` reads a fixed port and the first adapter of any kind.
 - **CL2** (§45, §75): before `--functional` runs on the laptop, establish where the harness runs
   `btvirt`. It cannot be settled here, because the harness is not installed.
+- **DS4** (§85, LOW-MED): `devtools/status` says "everything committed and pushed" when it could
+  not reach the remote, or the branch was never pushed. Its test passes on that.
+- **GG1** (§86, LOW): the guest-only tools (`mesh-leak-check`, `guest-kprobe-trace.sh`,
+  `kmemleak-after-exit.sh`) and the BT-8 reproducer would run as root on the laptop. Nothing checks
+  where they are.
 
-**8. Everything else:** LOW and INFO items in their sections.
+**8. Everything else:** LOW and INFO items in their sections. From the sixth pass:
+- the suite: RT2, RT4, RT5, RT6, RT7 and UD1;
+- RS3;
+- QT1, KM2, TR1 and CP2.
 
 **Four recurring patterns.** Fixing each once covers many findings:
-1. A fix that reached some sibling tools but not all.
-2. Rules held in prose instead of code.
+1. A fix that reached some sibling tools but not all. The sixth pass adds:
+   - RT7, a closing scan left on the entry file;
+   - UD1, the staged dry run that did not reach uninstall;
+   - CC1, CL4 again;
+   - the phase-5 scripts repeating STB1 and BF1 (§86).
+2. Rules held in prose instead of code. The sixth pass adds GG1: "runs inside the guest, never on
+   the host", checked nowhere.
 3. Fixtures, stubs and comments that encode an assumption instead of the machine. The fifth pass
    found more:
    - the `btmon` stub and the capdiff fixtures (§82, §65);
    - the KR1 test (§82);
    - the relative `Note` timestamps (§72);
    - a journal fixture's offset form (§76).
+
+   The sixth pass adds:
+   - a second T9 fixture and the watchdog fixture wording (§85);
+   - the BJ1 premise in a test comment (§85);
+   - RS3's comments.
 4. **A gate that reports success on what it did not see** (added in the fifth pass). The project
    states the rule in many headers ("ENUMERATED == 0 IS A REFUSAL"; "a check that cannot be seen to
    fail proves nothing") and applies it in many places. It is not yet applied in:
-   - TC1, BF1, CL3, CL4 and CM1 among the upstream gates;
-   - TA1, PM2, BB1, BBS1, EH3 and AWC1 among the analysis tools.
+   - TC1, BF1, CL3, CL4, CC1 and CM1 among the upstream gates;
+   - TA1, PM2, BB1, BBS1, EH3 and AWC1 among the analysis tools;
+   - DS4, RT5, TR1 and CP2 (sixth pass).
 
    Its mirror image appears on the laptop, where tools blame a test or a register when the suite
    merely refused to run: ATC1, VS1, CK1.
@@ -3031,5 +3061,137 @@ seen.
 | T9 (§37) | 10883, a second site beside 8866-8867 | the probe-journal fixture line `Finished Snapshot Bluetooth health metrics.` |
 | SN1 (§18) | 9934-9944 | the adapter taken from the declared class directory with no VID:PID. The fix needs a fixture with a second, non-controller adapter listed first. |
 | DS4 (§85) | 13193-13202 | an unreachable remote passes while the summary says "everything committed and pushed". |
+
+## 86. The code under `patches/`, `retest/` and `docs/mesh-tester-ci/` (read in full)
+
+Read line by line:
+- `patches/bluez/git-am-check.sh` (115) and `checkpatch-check.sh` (42);
+- `patches/kernel/repro-mgmt-flush-status.py` (650), and its diff against the kept `…original.py`
+  (three transport fixes, all marked in the code);
+- `retest/mesh-tx-leak/`: `mesh-leak-check.c` (1,060), `summarize.py` (147), `tabulate-reps.py`
+  (124), and the eight shell scripts (`run-vm.sh`, `run-matrix.sh`, the two `run-*-reps.sh`,
+  `kmemleak-after-exit.sh`, `audit-logs.sh`, `build-repro.sh`, `kernel/build-kernel.sh`);
+- `docs/mesh-tester-ci/tools-phase5/`: `build.mk` (104), the 29 shell scripts and the 5 config
+  fragments.
+
+Not re-reviewed: the ~90 `.patch` files, which are upstream submissions reviewed on the lists, and
+the logs, checksums and prose beside them.
+
+**Overall.** The retest kit is careful work:
+- `audit-logs.sh` fails closed: an unknown build name is "wrong-kernel", a tester log must carry one
+  result line per case of its Total, and kmemleak rounds must be complete;
+- `summarize.py` pairs rows by what they measure, not by position;
+- `build-kernel.sh` refuses a stale `bzImage`;
+- the saved full configs of all four retest kernels carry `CONFIG_KASAN=y` and
+  `CONFIG_PROVE_LOCKING=y`, and the two `diag-*` builds `CONFIG_DEBUG_KMEMLEAK=y` (checked).
+
+The reproducer's oracle is sound: a Command Status byte taken from the low byte of an aligned
+`struct sock *` cannot be `0x0f` or `0x11`, so neither PATCHED verdict can come from the bug. The
+phase-5 scripts are one-off procedures with fixed paths and commit ids. They are kept as the record
+of what ran, and their logs were read by a person, so their defects matter only if they are reused.
+
+**CC1 — LOW. `patches/bluez/checkpatch-check.sh`: a checkpatch that dies reads as "0 error(s)", exit
+0.** The verdict comes only from `^ERROR:` lines (36, 40), and `perl`'s exit status is dropped (34).
+This is CL4 (§79) in a sibling. It is the BlueZ checkpatch gate the phase-5 gates call
+(`gates-static.sh` 30, `gates-static2.sh` 29, `gates-bluez-final.sh` 14). With no path given it
+takes the last `/usr/src/linux-headers-*` match in glob order (18-20), which is not the newest
+version.
+*Fix:* as CL4, require checkpatch's `total:` line; sort candidates with `sort -V`.
+
+**GG1 — LOW. Tools meant only for a test guest have no guard against the host, and the reproducer
+does not say where to run it.**
+- `guest-kprobe-trace.sh` says "runs INSIDE the test-runner guest (qemu), never on the host" (2).
+- `mesh-leak-check.c` says "Runs inside the BlueZ test-runner guest" (6). It writes failslab and
+  kmemleak controls, installs kprobes, sets a `bluetooth` module parameter, creates emulated
+  controllers and opens MGMT.
+- `kmemleak-after-exit.sh` is "Guest-side" (2).
+- `repro-mgmt-flush-status.py` asks for root, `modprobe hci_vhci` and `systemctl stop bluetooth`
+  (59-61, 521-528), and says nothing about where.
+
+None checks where it is. The project works as root on the laptop, where these actions are exactly
+what BRIEF §0 and BT-4 forbid: a MGMT open, a stopped bluetoothd, debug controls on the live stack.
+Pattern 2 (a rule held in prose).
+*Fix:* refuse to run unless `/proc/cmdline` carries test-runner's `TESTHOME=` (test-runner.c
+825-831 puts it there). The reproducer is not run under test-runner, so it should refuse while
+`/sys/class/bluetooth` lists an adapter on USB, and its docstring should name the environment it
+was run in.
+
+**QT1 — LOW. `qemu-tcg.sh` re-parses its arguments through `eval`.** It wraps each argument in
+double quotes and runs `eval exec … $args` (6-12). An argument containing `"`, `$` or a backtick is
+re-parsed by the host shell; test-runner passes the guest command line through, so a test filter
+containing `$(…)` runs on the host. The inputs are the operator's own.
+*Fix:* rebuild the arguments with `set --` in the loop and `exec qemu-system-x86_64 "$@"`.
+
+**KM2 — LOW. Neither kernel build checks that its config fragment survived.** `build.mk`'s
+`kernel-all` appends the fragment and runs `olddefconfig` (55-56). `build-kernel.sh` uses
+`merge_config.sh -m`, which skips the final check, with its output sent to `/dev/null` (16-17).
+`olddefconfig` drops an option whose dependencies are unmet, without an error. So a "KCSAN" or
+"fault injection" image can lack what it is named for, and a run on it reads clean. The four saved
+KCSAN configs checked do carry `CONFIG_KCSAN=y`, and the retest configs carry KASAN, so nothing
+recorded is affected.
+*Fix:* after the config step, require every `=y` line of the fragments in `.config`.
+
+**TR1 — LOW. `tabulate-reps.py` counts a run that never scanned as "not reported".** A log with no
+`kmemleak round=` lines gives `(0, 0, 0)` (50) and stays in the denominator. A crashed busy-drain run
+likewise reads as every observation false. `audit-logs.sh` flags both cases ("no-scans",
+"scenario-incomplete"), but the table does not consult it. The audit passes all 159 runs
+(REPORT.md 93), so the published tables are unaffected. Pattern 4.
+*Fix:* exclude runs without a complete scan from the table, and print how many were excluded.
+
+**CP2 — LOW.** `copy-phase5-to-cache.sh` exits 0 when a checksum fails. Both `sha256sum -c` calls
+sit in `&&` lists (14, 16), which `set -e` does not stop, and the script ends with `du` (17). A
+mismatch prints its FAILED lines but not the OK line, so the result shows only to someone reading
+the output.
+
+**INFO.**
+- The splat patterns differ between the four scanners:
+  - `run-vm.sh` and `audit-logs.sh` share one list;
+  - `summarize.py` lacks recursive locking and inconsistent lock state;
+  - `splat-check.sh` is the widest.
+
+  None matches an RCU stall report ("rcu: INFO: … detected stalls"). The retest kernels set
+  `CONFIG_RCU_CPU_STALL_TIMEOUT=21`, so the detector is active. One shared pattern file would end
+  the drift.
+- `mesh-leak-check.c` reads the handle at a fixed offset, `+40` on x86_64 (505-516). The logs show
+  that offset agreeing with MGMT's own handles (REPORT S2), so it held for the tested tree. On
+  another tree, check it first (BTF `$arg2->handle`, or `pahole`).
+- `stable-dep-check.sh` finds a commit by `--grep` on its subject (12), so a revert quoting the
+  subject would also match. That is STB1 (§74) in a one-off sibling.
+- `gates-static.sh` (34) and `gates-final.sh` (71) run `git am` with no check, then the preflight
+  on whatever applied. That is BF1's shape, in logs that were read by a person.
+- `wait-gates-final.sh` has no timeout, and with no log it loops on errors.
+- The `msg-000$i.txt` naming in the three export scripts breaks at ten commits.
+- `git-am-check.sh` compares the last body line before `---`. For a subject-only patch that is a
+  header line, so it would report a false truncation (a loud failure, not a silent one).
+
+---
+
+## Sixth-pass summary
+
+The review now covers every tracked code file line by line:
+- `tests/run-tests` in full (§84, §85);
+- the code under `patches/`, `retest/` and `docs/mesh-tester-ci/` (§86).
+
+Not re-read: the upstream patch files, logs, fixtures and prose.
+
+**What the sixth pass adds:**
+- **The suite** is the strongest code in the repository. Its findings are small, but four of them
+  are blind spots in the checks other findings rely on:
+  - RT3: the whole-boot-read invariant cannot see the eight tools found reading whole boots;
+  - RT4: the run-wide footprint does not watch the install targets;
+  - RT7: one closing scan reads the entry file by name;
+  - DS4's test passes on a false "pushed".
+- **More pins (§84, §85):** tests that assert today's behaviour for PM1, BL1, EH1, T2, KM1, EV2,
+  CAP1, KR1, BJ1, AJ1, T9, SN1 and DS4. Each fix changes its test in the same commit. CAP1's tests
+  show that `bt-trace --check` and `bt-usbmon --check` delete captures past KEEP: a "check" run on
+  the laptop is a prune.
+- **Siblings of earlier findings:**
+  - CC1 is CL4 again;
+  - the phase-5 scripts repeat STB1 and BF1;
+  - UD1 is the install dry-run fix that did not reach uninstall.
+- **GG1:** the guest-only tools state their rule in prose and check nothing. The project works as
+  root on the laptop.
+
+Nothing was fixed. The operator's decision stands: fixes come later, from this file.
 
 
