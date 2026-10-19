@@ -171,9 +171,175 @@ setup); the processor bound there is about 8 s. [hypothesis: not run on 16 cores
 They were described to you in `d280064` and the 10-16 note. They are not proposed for landing
 in this round; §9 asks whether they should be.
 
-## §3. CI and the instruments *(in progress)*
+## §3. CI and the instruments
 
-## §4. Findings of 2026-10-16 to 10-18, with evidence *(in progress)*
+### 3.1 The jobs [verified: `.github/workflows/checks.yml` at `704224a`]
+
+Eight jobs on eight runners at once (nine on the working branch). Each starts with the same
+preamble: checkout at full depth, the public repository fetched as `public` (so
+`doc-main-hashes` judges against the public `main`), `apt-get install gawk
+systemd-journal-remote fakeroot` (plus `strace` on the working branch, whose suite runs the
+access-audit self-test), and a version line.
+
+| job | steps | runs the suite |
+|---|---|---|
+| suite | `repo-validate` (syntax, awk parse, invariants, doc drift, **the suite in parallel**); journal contract; `repo-scan . --all` | 1 |
+| serial | `tests/run-tests --serial` | 1 |
+| coverage | `devtools/coverage --quiet --min 80` | 1 |
+| comprehension | `devtools/test-comprehension --min 75` (runs coverage itself) | 1 |
+| awk-coverage | `devtools/awk-coverage --min 85` (95 on the working branch) | 1 |
+| python-coverage | `devtools/py-coverage --min 80` | 1 |
+| isolation | userns sysctl lifted; `devtools/sandbox --self-test`; `devtools/mutate --self-test`; `devtools/sandbox` | 1 |
+| system | `BT_SYSTEM_TEST=required` round trip; the two deploy rehearsals over `cccf0fe` | 0 |
+| access-audit (working only) | self-test; `devtools/access-audit --report`; upload the trace on failure | 1 |
+
+A whole run takes about 2.5 to 3 minutes [measured: runs 39118779312, 39131271277,
+39141552599]; it took about 9 minutes as one job before 10-18. The longest job is now
+`serial` (about 2:20: a serial run on a 4-core runner).
+
+### 3.2 Why the suite runs seven times per push [verified reasoning; recommendation at the end]
+
+The operator asked why, and whether runs can be cut. They should not be, and here is why:
+
+| run | what only it shows |
+|---|---|
+| `repo-validate` | the gate every commit passes; CI repeats it because the laptop's commits skip the suite while a trial is open, so CI is the first run for them |
+| serial | a section that breaks a later one (the only mode where the later one inherits state) |
+| bash coverage | which shell lines ran; a ratchet at 80% |
+| comprehensiveness | per tool: modes, refusals, seams, branches reached; a ratchet on the weakest dimension of the worst unit at 75% |
+| awk coverage | awk statements: bash's trace sees an awk program as one line |
+| Python coverage | `bin/bt-capture` |
+| decoy world | that no verdict depends on what the machine answers |
+| (access audit) | every access, including those that return nothing; working branch only |
+
+**They cannot share a run.** Each changes the run it measures: xtrace through `BASH_ENV` and
+a descriptor in every bash; an `awk` shim; a Python `sitecustomize`; user, mount and pid
+namespaces; `strace -f`, about six times slower and exclusive (ptrace cannot nest). Stacked,
+their overheads add, and timing-sensitive checks fail for the wrong reason (§4.4 is one); and a
+red would no longer say which property failed. The one true duplicate is comprehensiveness
+re-running coverage instead of reading the coverage job's trace (`--dump DIR` exists for
+that); since the jobs now run side by side, removing it would save runner minutes and no wall
+time. [recommendation: keep all seven]
+
+### 3.3 The instruments, briefly [verified]
+
+- **`devtools/coverage`**: a `BASH_ENV` file sets `PS4='+@@C@@${BASH_SOURCE}@@${LINENO}@@'`,
+  `BASH_XTRACEFD=9` and xtrace; every bash the suite starts inherits it. Executed lines are
+  joined with coverable lines. A **lower bound** (a multi-line command is traced at one of its
+  lines; `case` labels never). `devtools/coverage-exclude` lists ranges with a reason each; a
+  range that the trace shows executed fails the run ("the exclusion is stale and is hiding live
+  code"), so **every edit above an excluded range must re-derive it by content**. This bit me
+  three times on 10-18 (§6).
+- **`devtools/awk-coverage`**: an `awk` shim that execs `gawk --profile=<unique>` per process,
+  with the caller's command line beside it; profiles hashed by program, merged.
+- **`devtools/py-coverage`**: a `sitecustomize.py` on `PYTHONPATH` starts `trace.Trace` and
+  writes one counts file per pid at exit.
+- **`devtools/test-comprehension`**: asks coverage for its tables (`coverage --dump`), then
+  scores each unit on asserts, modes, refusals, seams, branches.
+- **`devtools/sandbox`**, **`devtools/mutate`** (applies each listed mutant, runs the suite,
+  lists survivors), **`devtools/journal-contract`**, **`devtools/access-audit`**.
+- **Since `cf9b304` (not yet on `main`)**: when the suite goes red under coverage, awk or
+  Python coverage, the instrument prints the failing checks of the run it measured, and
+  comprehensiveness no longer discards what coverage said. Before, a red under an instrument
+  could not be named (§7.1).
+
+## §4. Findings of 2026-10-16 to 10-18, with evidence
+
+Already sent and not repeated here: the 10-16 notes (`comms/2026-10-16T1528Z…`,
+`…T2022Z…`: the close could lose its row where the tools are installed; `bt-trial` alone is a
+partial deploy; the round trip had never run), the 10-17 note (the deploy rehearsed in CI; an
+upgrade took the project's own files for foreign ones) and the 10-18 note (the SCO decode ran
+before the row; `299a0b3`, on `main` as `c1883b4`).
+
+### 4.1 What crossed between sections, found by splitting [verified]
+
+The setup-only rule (§2.4) was established by running every section alone, then by parallel
+runs, where an unbound variable names what crosses. Found and fixed, in order:
+- run alone (10-18, before the runner): `$FIX`, `farm_dir`, `$RD`, `cd_run`/`$CD`, the awk
+  interval probe, a fixture repository; four moved to the setup, two became chains;
+- the first parallel run: `$EMPTYLIB`, unbound; and **39 calls of `bt-incident` that reached
+  `systemctl` and `journalctl`, caught by the tripwire**, because the publish gates drove
+  `bt-incident` through `$INCENV`, built in the watchdog section;
+- the watchdog section's split (`e57c1bb`): `$BJ` (through the chain), `ex_awk_ok` (a copy of
+  the setup's probe, read by a later block);
+- the bt-trial lifecycle's split (`04f994c`): `rt_line` (a retention helper the snapshot and
+  crash tests used), and the snapshot fixture `$SN`, which outlived the first cut point;
+- my own first timing line: an associative-array lookup inside `$(( ))` is an arithmetic syntax
+  error, and **bash abandoned the whole dispatch block and ran the remaining sections in the
+  parent**; the report's own check went red ("of 36 sections, 5 finished in a worker").
+
+### 4.2 The real `python3` ran the watchdog's USB reset [verified]
+
+- **What.** The watchdog's no-probe scenario copied `systemctl`, `sleep` and `loginctl` into its
+  own stub directory but not the `python3` spy every other scenario uses, and its farm linked
+  the real interpreter. The watchdog's `usbfs_reset` therefore ran its ioctl program in the
+  real `python3` against the declared usbfs root, where it failed (no device node).
+- **Why it showed only now.** The scenario used to be stopped at startup (§4.3); once it ran to a
+  recovery, the reset ran every time.
+- **Who saw it.** Not the decoy world (`python3` is not a machine tool) and not the suite. The
+  working branch's CI access-audit job did, run 39129858672: 30 accesses outside the allow list,
+  all by `python3 - 3 99 …/machine/devfs-usb`: Ubuntu's apport hook, on the uncaught
+  `FileNotFoundError`, read `/etc/default/apport`, apt's configuration, `/var/lib/dpkg/status`,
+  `/etc/os-release`. Locally the same exec showed in the trace as `noprobe-farm/python3` (this
+  container has no apport). Read from `python3-apport` 2.28.3's `apport_python_hook.py`: the hook
+  reads `/etc/default/apport` on **any** uncaught exception, before it decides anything.
+- **Fixed** in `e57c1bb` (on `main` as `6640bb7`): the copy includes the spy, and a check
+  requires the reset in the spy's log. Red before, green 3 of 3 after. The ready line carried the
+  leak for one commit (`fb297d7`); harmless where it ran (the declared root has no device), but a
+  real-tool call.
+
+### 4.3 A watchdog check that judged nothing about half the time [verified]
+
+The no-probe test stopped the watchdog at "cannot be confirmed", the warning it prints at
+startup. In about half the runs no recovery had run yet, and "an unverifiable recovery is not
+counted as a failure" passed with nothing to judge. Seen as coverage of `bin/bt-hang-watchdog`
+lines 139, 244 and 245 coming and going between identical runs. A mutant counting the
+unverifiable answer as a failure passed 1 run in 6. Now it stops at "suppressed by cooldown"
+(logged after the answer is counted), and a new check requires the recovery to have run:
+the mutant fails 6 in 6 (`fb297d7`, on `main` as `6b007df`).
+
+### 4.4 A deadline that was a budget [verified]
+
+The bt-capture rotation check gave the capture `--duration 5` for 1.2 MB of frames. Under
+`strace` with four workers a correct build did not reach 1 MB in time ("rc=0 files=1
+prune_calls=1"). Reproduced on one core shared with eight busy loops: 5 s failed the same way,
+30 s passed twice. The deadline only ends a broken build; it is 30 s (`e57c1bb`).
+
+### 4.5 The checkout world wrote through a git worktree [verified; working branch only]
+
+Run from a `git worktree`, the checkout world's overlay covered the worktree directory, but
+`.git` there is a file naming the main repository's directory, outside the overlay. **The
+world's proof commit landed in the shared repository, and the world's `git config user.name
+"Checkout World"` / `user.email world@example.com` replaced the shared `.git/config` identity.**
+The proof saw the moved refs and went red, but after the writes. I restored the identity and the
+refs by hand. `8a4aef8` adds `co_git_inside`: both the git directory and the common directory
+must lie inside the checkout, or the world is NOT ASKED; a scratch repository and worktree pin
+it. **If you run the working branch's suite from a worktree before `8a4aef8`, check
+`.git/config`'s identity afterwards.**
+
+### 4.6 CI's install tests skipped silently after the split [verified]
+
+In the first run of the six-job layout the system job started ten seconds after its runner
+booted; `systemctl is-system-running` said `starting`; the round trip and both rehearsals
+skipped and their steps passed (run 39114530101, 0 s each). Fixed by `required` mode and a
+bounded wait (`c494f4f`); the next run took 69, 84 and 14 s and passed 5, 17 and 17.
+
+### 4.7 The SCO decode check's record time [verified]
+
+The fast-`btmon` stub printed the time it ran as the record's time; under strace the close was
+slow enough that the record fell a second after the window's end, and a correct decode went red.
+The time is now fixed after the trial opens and before its close (`376b4d1`, on `main` as
+`315437a`).
+
+### 4.8 Host facts that cost time [verified]
+
+- `devtools/sandbox` cannot build its world in this cloud container (rc=99 before any probe, the
+  same on an unchanged tree): its self-test fails here. CI runs it green.
+- In this container's locale a grep bracket expression with `✓`/`✗` matched nothing; compare
+  check lines with Python or a literal sequence.
+- `wait -n` returns process-substitution pids too; the pool ignores pids it did not start.
+- Editing a tracked file while a suite runs in the same checkout makes that run fail its
+  tracked-files check: twice on 10-18 that was me.
 
 ## §5. Decisions, and the approaches that failed *(in progress)*
 
@@ -191,3 +357,4 @@ in this round; §9 asks whether they should be.
 
 - 05:04Z: file created; §1 complete.
 - §2 complete: the suite's structure, isolation layers, parallel runner, numbers, the working branch's extra commits.
+- §3 and §4 complete: CI's jobs, why seven runs, the instruments; the findings of 10-16 to 10-18 with their evidence.
