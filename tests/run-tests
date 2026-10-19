@@ -7022,6 +7022,20 @@ SCOUT=$(sco_run sco-paired); scorc=$?
 # THE SIGNATURE OF THE HANG: a setup with no completion. This is the one
 # reading the tool exists to surface, and the count has to be exact — the
 # warning is phrased as "N request(s) received no completion event".
+# THE ENHANCED SETUP (0x003d) IS A SETUP. A controller with the enhanced
+# command set is sent Enhanced Setup Synchronous Connection instead, and the
+# request, its parameters and its window are the same question. Every matcher
+# here named only the plain command, so such a link was counted as no setup and
+# its completion as unanswered-for (the main branch maintainer, 2026-10-18T0615Z;
+# fixture header text as the real btmon prints it, tests/btmon/real/).
+SCENH=$(sco_run sco-enhanced); scenhrc=$?
+SCENHW=$(sco_run sco-enhanced --window 2)
+(( scenhrc == 0 )) && [[ "$SCENH" == *"setup requests      1"* && "$SCENH" == *"completion events   1"* \
+    && "$SCENH" == *"REQUEST"*"Packet type: 0x0380"* && "$SCENH" != *"received no completion"* \
+    && "$SCENHW" == *"Enhanced Setup Synchronous Connection (0x01|0x003d)"*"Synchronous Connect Complete"* ]] \
+    && ok "bt-sco counts, prints and windows an Enhanced Setup Synchronous Connection as a setup" \
+    || bad "the enhanced setup: rc=$scenhrc, $(grep -E 'setup requests|completion events' <<<"$SCENH" | tr -s ' ' | tr '\n' '|') window $(grep -c . <<<"$SCENHW") line(s)"
+
 SCGONE=$(sco_run sco-unanswered)
 [[ "$SCGONE" == *"setup requests      2"* && "$SCGONE" == *"completion events   1"* \
    && "$SCGONE" == *"1 request(s) received no completion event"* ]] \
@@ -10862,6 +10876,8 @@ cat <<EOT | "$BTMON_RENDER" "\$@"
         Handle: 2 (a year after)
 > HCI Event: Synchronous Connect Complete (0x2c) plen 17            #6 [hci0] \$A.000002
         Link type: late
+< HCI Command: Enhanced Setup Synchronous Connection (0x01|0x003d) plen 59   #7 [hci0] \$T.000004
+        Handle: 512 (enhanced, on the window, after a record that is not)
 EOT
 TLBTMON
 REALDATE_TL=$(command -v date)
@@ -10902,6 +10918,9 @@ TLSPC=$(sort -u "$TL/btmon.calls")
 [[ "$TLSP" == "# trial window: "* && "$TLSPC" == "--columns=200 -T -r $TL/cap/x.btsnoop" ]] \
     && ok "a trial with SCO setups decodes the captures in the declared paths, at full width, and nothing else" \
     || bad "sco-params.txt: $(head -1 <<<"$TLSP"); btmon was asked for: $(tr '\n' ' ' <<<"$TLSPC")"
+[[ "$TLSP" == *"Enhanced Setup Synchronous Connection (0x01|0x003d)"*"Handle: 512 (enhanced, on the window"* ]] \
+    && ok "the close keeps an Enhanced Setup Synchronous Connection on the window as a request" \
+    || bad "the close dropped the enhanced setup: $(grep -c . <<<"$TLSP") line(s) in sco-params.txt"
 [[ $(grep -cE '^        (Handle: 256|Link type: eSCO \(0x02\))$' <<<"$TLSP") == 2 \
    && "$TLSP" != *"a year"* && "$TLSP" != *"Link type: late"* && "$TLSP" != *"unrelated"* ]] \
     && ok "the SCO parameters are the window's own, bounds included, each with its parameters and nothing else's" \
