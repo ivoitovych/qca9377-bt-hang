@@ -2000,3 +2000,48 @@ debug logs (T6's and DS2's shape). Count from `-n`-bounded reads, or since the l
 **UC4 — INFO.** The dry-run plan falls back to one machine's account (`U=i`, uid 1000, `/home/i`,
 385 and 466): the hard-coded-layout pattern of EV3, limited to `plan`. Print `<user>` instead.
 
+## 65. `tools/bt-capdiff` (lines 138-290 read in full; the head was read in §41), checked against real `btmon` output
+
+The rest of the tool is careful:
+- the window is widened by the tolerance, so a pair straddling an edge is not counted as a loss;
+- matching is one-to-one;
+- an empty overlap is refused rather than reported as agreement;
+- one-sided and two-sided loss are reported apart;
+- the disagreement output carries a plain warning against reading it as a statement about the
+  controller.
+
+**CD2 — MED. The match key keeps `btmon`'s frame number, so on real captures the same event almost
+never matches across the two paths.** `extract()` (101-108) removes only the trailing date and time
+from each header line. A real `btmon -T -r` header line carries the frame number and index before
+the time, as in the E3 trial's own decode (`evidence/trials/E3/trial-01/sco-params.txt`):
+
+```
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17   …   #84078 [hci0] 2026-10-14 03:13:31.064881
+```
+
+So the key is `… plen 17   #84078 [hci0]`. `btmon` numbers frames from 1 in each file it reads, and
+`extract()` runs one `btmon` per file. The two paths rotate at different points: `bt-trace` at each
+`btmon` restart (about 74 attaches), `bt-capture` at 64 MB. The same event therefore carries
+different numbers in the two paths, and nearly every record is reported unmatched in both
+directions.
+- The fixtures hide it. `tests/btmon/capdiff-a.txt` and `capdiff-b.txt` give the same event the
+  same frame number in both paths (`#10`, `#11`), which two real captures do not do (the third
+  recurring pattern).
+- The caveat block (265-281) lists three reasons the paths can differ without loss, but not this
+  one, which alone accounts for nearly all of the differences.
+- With SW1 (`COLUMNS=200` ignored at line 86) the event text is also shortened (T2), so what
+  distinguishes one key from another is mostly the frame number.
+
+The "~1400 unmatched" reading quoted in the header (208) may be largely this defect and should not
+be cited as a measurement of capture loss until it is re-run.
+*Fix:*
+- remove `#[0-9]+ \[hci[0-9]+\]` from the key (keep the index as its own field);
+- decode with `--columns=200` (SW1);
+- give `capdiff-b.txt` different frame numbers from `capdiff-a.txt`, so the test fails on the
+  current code and passes on the fix.
+
+**CD3 — LOW.** `--since`/`--until` replace the overlap bounds as given (135-136), and the window
+program (166) does not check `iso_secs()` for -1. An unparseable `--since` therefore silently means
+"from the beginning". An unparseable `--until` means "nothing", which is refused as an empty overlap.
+Refuse a bound that does not parse.
+
