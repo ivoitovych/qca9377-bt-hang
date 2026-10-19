@@ -11883,6 +11883,40 @@ GTO=$(env PATH="$SS2/bin:$PATH" BT_MODE_STAMP="$SMS" BT_DESTDIR="$SRT" \
     && ok "a forced install warns that it ends a stage-1 observation in progress" \
     || bad "the right-censoring warning did not fire with a timeout in the journal"
 
+# THE btusb RELOAD UNDER --tools-only HAS TWO GUARDS, and each is tested alone
+# (comms 2026-10-18T15:32Z, item 1; the reaction plan's phase 1). run()'s
+# tools-only gate withholds `modprobe -r btusb`; but the reload block was still
+# reached: it read this boot's journal and chose the reload, so one regression
+# in run() — a case added to its allow-list, the gate moved — was all that stood
+# between a tools-only deploy and a reset of the controller being measured. The
+# block now asks TOOLS_ONLY itself. To see THAT guard fire, the install.sh run
+# here is a copy with run()'s tools-only gate cut out, in a tree that links the
+# rest of the checkout. The staging gate stays, so the copy can act no more than
+# the original can.
+RG=$(mktemp -d); RGS=$(mktemp -d); RGM=$(mktemp)
+printf 'btusb 73728 0 - Live 0x0000000000000000\n' > "$RGM"   # idle: the reload branch
+for e in "$PWD"/*; do ln -s "$e" "$RG/"; done; rm -f "$RG/install.sh"
+awk '!done && /^    if \(\( TOOLS_ONLY \)\); then$/ { skip = 1; next }
+     skip { if (/^    fi$/) { skip = 0; done = 1 }; next }
+     { print }' install.sh > "$RG/install.sh"; chmod +x "$RG/install.sh"
+(( $(wc -l < install.sh) - $(wc -l < "$RG/install.sh") == 6 )) \
+   && ! grep -q 'tools-only: NOT executed' "$RG/install.sh" \
+    && ok "the copy of install.sh lacks run()'s tools-only gate, and only it (6 lines)" \
+    || bad "run()'s tools-only gate was not cut out of the copy: $(( $(wc -l < install.sh) - $(wc -l < "$RG/install.sh") )) line(s) removed"
+RGA=$(cd "$RG" && env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$RGS/none" \
+          BT_PROC_MODULES="$RGM" BT_DESTDIR="$RGS" ./install.sh --apply 2>&1)
+[[ "$RGA" == *"staging: NOT executed (system command): modprobe -r btusb"* ]] \
+    && ok "an idle btusb and a quiet journal reach the reload on --apply — the check below can fail" \
+    || bad "the copy's --apply did not reach the btusb reload: $(grep -m1 btusb <<<"$RGA")"
+rgj=$(grep -c '^journalctl -k' "$SS/spy.log" || true)
+RGT=$(cd "$RG" && env PATH="$SS/bin:$PATH" BT_MODE_STAMP=/nonexistent/mode BT_STATE="$RGS/none" \
+          BT_PROC_MODULES="$RGM" BT_DESTDIR="$RGS" ./install.sh --tools-only 2>&1); rgtrc=$?
+rgj2=$(grep -c '^journalctl -k' "$SS/spy.log" || true)
+(( rgtrc == 0 && rgj2 == rgj )) && [[ "$RGT" != *"modprobe -r btusb"* && "$RGT" != *"modprobe btusb"* ]] \
+    && ok "--tools-only skips the reload block itself: with run()'s gate cut out, no modprobe and no journal read" \
+    || bad "--tools-only reached the btusb reload without run()'s gate (rc=$rgtrc, $(( rgj2 - rgj )) journal read(s)): $(grep -m1 -E 'modprobe (-r )?btusb' <<<"$RGT")"
+rm -rf "$RG" "$RGS" "$RGM"
+
 # The open-trial guard, which deliberately lives OUTSIDE the experiment branch:
 # in mitigation mode — the default, and the mode in which bt-trial-auto opens a
 # trial every boot — the first version of this guard warned about nothing.
