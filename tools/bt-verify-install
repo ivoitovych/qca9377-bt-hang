@@ -163,7 +163,15 @@ echo
 echo "─────────────────────────────────────────────────────────────"
 if (( drift || missing )); then
     printf '%s%d in sync, %d drifted, %d not installed%s\n' "$R" "$same" "$drift" "$missing" "$O"
-    echo "Run: sudo ./install.sh --apply"
+    # THE ADVICE IS THE DEPLOY CHECKLIST, NEVER THE ARMING INSTALL (VI1, the
+    # review of 2026-10-19). This line used to read "Run: sudo ./install.sh
+    # --apply", the one command the investigation machine must never run (its
+    # watchdog's USB reset drove a wedged controller off the bus, EX-023,
+    # EX-026), and after the deploy it ends with, drift is the rule: a
+    # tools-only deploy enables no unit. Same words as devtools/status and
+    # docs/install.md.
+    echo "To update the files: sudo ./install.sh --tools-only, then systemctl daemon-reload, bt-verify-install, bt-mode status (docs/install.md)."
+    echo "Units marked ✗ above are not started by a tools-only deploy, which enables none."
     exit 1
 fi
 printf '%s%d artifacts in sync; running system matches the checkout%s\n' "$G" "$same" "$O"

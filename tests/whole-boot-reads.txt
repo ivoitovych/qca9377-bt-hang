@@ -14,8 +14,8 @@
 
 bin/bt-evidence	echo "wd_interventions=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null | grep -cE "intervening|EARLY intervention")"	pending
 bin/bt-health-snapshot	wd_log=$(bt_journal -u bt-hang-watchdog -b 0 --no-pager 2>/dev/null)	pending
-install.sh	n_tmo=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE 'command( 0x[0-9a-f]+)? tx timeout' || true)	pending (I2: the --apply paths only; --tools-only no longer reaches the reload block (98af393))
-install.sh	n_tmo_warn=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE 'command( 0x[0-9a-f]+)? tx timeout' || true)	pending (I2: the --apply paths only; --tools-only no longer reaches the reload block (98af393))
+install.sh	n_tmo=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE 'command( 0x[0-9a-f]+)? tx timeout' || true)	pending (I2: the --apply paths only; --tools-only no longer reaches the reload block (c93ad17, from 98af393 on the ready line))
+install.sh	n_tmo_warn=$(journalctl -k -b 0 --no-pager 2>/dev/null | grep -cE 'command( 0x[0-9a-f]+)? tx timeout' || true)	pending (I2: the --apply paths only; --tools-only no longer reaches the reload block (c93ad17, from 98af393 on the ready line))
 tools/bt-actions	bt_journal "${JARGS[@]}" 2>/dev/null | awk -F' ' '	pending (AX3)
 tools/bt-archive	bt_journal -b "$BOOT" -o export --no-pager 2>/dev/null | tee "$FIFO" | $COMP > "$TMP"	pending
 tools/bt-archive	ln=$(bt_journal -b "$idx" -o export --no-pager 2>/dev/null | grep -c '^__CURSOR=' || true)	pending
