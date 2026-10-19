@@ -99,7 +99,7 @@ radio_dir() {
 }
 
 show_status() {
-    local d autos power wd probes
+    local d autos power wd probes st
     autos=$(cat "$SYSFS_MOD/enable_autosuspend" 2>/dev/null || echo '?')
     power='?'; d=$(radio_dir) && power=$(cat "$d/power/control" 2>/dev/null || echo '?')
     if systemctl is-active --quiet bt-hang-watchdog 2>/dev/null; then
@@ -125,8 +125,12 @@ show_status() {
         "$( [[ -e "$UDEV_RULE" ]] && echo 'udev pin ACTIVE' || echo 'udev pin disabled')"
     echo
     echo "  Passive capture is unaffected by mode and should stay on:"
+    # One state per unit (MODE2, the review of 2026-10-19): `is-active` prints
+    # its own "inactive" and exits non-zero, so `|| echo inactive` printed the
+    # word twice. Its output is taken first; the fallback only for no output.
     for u in bt-capture bt-trace bt-usbmon bt-dyndbg; do
-        printf '    %-12s %s\n' "$u" "$(systemctl is-active "$u" 2>/dev/null || echo inactive)"
+        st=$(systemctl is-active "$u" 2>/dev/null)
+        printf '    %-12s %s\n' "$u" "${st:-unknown}"
     done
 }
 

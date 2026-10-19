@@ -117,7 +117,9 @@ if [[ -x tools/bt-verify-install ]]; then
     vi=$(tools/bt-verify-install 2>/dev/null | tail -3 | grep -E 'in sync|drifted' | tail -1)
     if grep -q 'drifted' <<<"$vi"; then
         row "${Y}~${O}" "installed tooling" "${vi# }"
-        printf '        %sthe checkout is AHEAD of what is running%s — sudo ./install.sh --apply\n' "$Y" "$O"
+        # The deploy checklist, as bt-verify-install words it; never the arming
+        # install (DS1, the review of 2026-10-19).
+        printf '        %sthe checkout is AHEAD of what is running%s — sudo ./install.sh --tools-only, then systemctl daemon-reload, bt-verify-install, bt-mode status (docs/install.md)\n' "$Y" "$O"
     else
         row "${G}✓${O}" "installed tooling" "${vi# }"
     fi
