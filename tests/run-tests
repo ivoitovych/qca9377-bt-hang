@@ -8090,6 +8090,83 @@ rm -rf "$JG"
 rm -rf "$EMPTYLIB" "$EMPTYDUMP"
 
 echo
+echo "scripts/trial-sco-decode.py — a trial window's SCO requests, at full width, both paths"
+echo "──────────────────────────────────────────────────────────────────────────────────────"
+# The decode the close could never make (T2/SW1): the kernel journal's setups,
+# opcode 0x0428 and the Enhanced 0x043d, matched against what each capture path
+# holds, decoded with `btmon --columns=200`. The operator ran it by hand on
+# 2026-10-18; nothing had run it here. journalctl and btmon are stubs: the
+# journal prints three setups, and btmon prints, through tests/btmon/render as
+# the real one does, the fixture this test maps to each capture file. The
+# capture path holds both setups' files; the trace path only the first, so its
+# Enhanced setup must be reported NOT FOUND, as an instrumentation finding.
+TSD=$(mktemp -d); mkdir -p "$TSD/stub" "$TSD/capture" "$TSD/trace"
+cat > "$TSD/stub/journalctl" <<TSDJ
+#!/bin/sh
+cat "$TSD/journal"
+TSDJ
+cat > "$TSD/stub/btmon" <<TSDB
+#!/bin/sh
+echo "\$*" >> "$TSD/btmon.args"
+for a in "\$@"; do f=\$a; done
+cat "\$(awk -v p="\$f" '\$1 == p { print \$2 }' "$TSD/map")" | "$BTMON_RENDER" "\$@"
+TSDB
+chmod +x "$TSD/stub"/*
+printf '%s\n' \
+    '2026-08-10T09:14:22.100000+00:00 host kernel: Bluetooth: hci0: hci0 opcode 0x0428 plen 17' \
+    '2026-08-10T09:18:05.499000+00:00 host kernel: Bluetooth: hci0: hci0 opcode 0x0428 plen 17' \
+    '2026-08-10T10:02:11.399000+00:00 host kernel: Bluetooth: hci0: hci0 opcode 0x043d plen 59' > "$TSD/journal"
+tsd_cap() {   # <path> <fixture> <mtime>
+    : > "$1"; touch -d "$3" "$1"; echo "$1 tests/btmon/$2.txt" >> "$TSD/map"
+}
+tsd_cap "$TSD/capture/20260810-090000.btsnoop" sco-paired   '2026-08-10 09:30:00 UTC'
+tsd_cap "$TSD/capture/20260810-093000.btsnoop" sco-enhanced '2026-08-10 10:30:00 UTC'
+tsd_cap "$TSD/trace/20260810-090000.btsnoop"   sco-paired   '2026-08-10 10:30:00 UTC'
+tsd() {   # <script> <start> <end>
+    env PATH="$TSD/stub:$PATH" TZ=UTC BT_CAPTURE_DIR="$TSD/capture" BT_TRACE_DIR="$TSD/trace" \
+        python3 -I "$1" "$(date -u -d "$2" +%s)" "$(date -u -d "$3" +%s)" 2>&1
+}
+TSDO=$(tsd scripts/trial-sco-decode.py '2026-08-10 09:00:00' '2026-08-10 10:30:00'); tsdrc=$?
+tsdsum=$(sed -n '/^===== summary/,$p' <<<"$TSDO")
+(( tsdrc == 0 )) && [[ "$TSDO" == *"# kernel setups in the window: 3"* \
+   && "$tsdsum" == *"09:14:22.100000  0x0428  capture: decoded  trace: decoded"* \
+   && "$tsdsum" == *"09:18:05.499000  0x0428  capture: decoded  trace: decoded"* \
+   && "$tsdsum" == *"10:02:11.399000  0x043d  capture: decoded  trace: NOT FOUND"* \
+   && "$tsdsum" == *"# capture: 3 setup command(s) decoded in the window"* \
+   && "$tsdsum" == *"# trace: 2 setup command(s) decoded in the window"* ]] \
+    && ok "trial-sco-decode matches each kernel setup, 0x0428 and 0x043d, against both paths, and names the one a path lacks" \
+    || bad "trial-sco-decode's summary (rc=$tsdrc): $(tr '\n' '|' <<<"$tsdsum")"
+[[ $(grep -c '^< HCI Command: Setup Synchronous Connection (0x01|0x0028)' <<<"$TSDO") == 4 \
+   && $(grep -c '^< HCI Command: Enhanced Setup Synchronous Connection (0x01|0x003d)' <<<"$TSDO") == 1 \
+   && $(grep -c '^> HCI Event: Command Status' <<<"$TSDO") == 3 \
+   && $(grep -c '^> HCI Event: Synchronous Connect Complete' <<<"$TSDO") == 5 \
+   && "$TSDO" != *"AA:BB:CC"* && "$TSDO" == *"        Address: <addr>"* && "$TSDO" != *"(Test Device)"* ]] \
+    && ok "trial-sco-decode keeps every setup, its Command Status and its completion whole, with addresses and names redacted" \
+    || bad "trial-sco-decode's blocks: $(grep -cE '^[<>] HCI' <<<"$TSDO") record(s), $(grep -c 'AA:BB:CC' <<<"$TSDO") address(es) left"
+[[ $(grep -c . "$TSD/btmon.args") == 3 && $(grep -vc -- '--columns=200' "$TSD/btmon.args") == 0 ]] \
+    && ok "trial-sco-decode decodes each chosen capture once, with btmon --columns=200" \
+    || bad "trial-sco-decode's btmon calls: $(tr '\n' '|' < "$TSD/btmon.args")"
+# THE WIDTH IS WHAT KEEPS THE RECORDS. The same script without --columns=200
+# meets btmon's 80 columns (`< HCI Command: Se.. (0x01|0x0028)`) and keeps
+# nothing: the check above can fail, and this is how the close failed.
+sed 's/"--columns=200", //' scripts/trial-sco-decode.py > "$TSD/narrow.py"
+TSDN=$(tsd "$TSD/narrow.py" '2026-08-10 09:00:00' '2026-08-10 10:30:00')
+[[ $(grep -c '"--columns=200"' "$TSD/narrow.py") == 0 && "$TSDN" == *"# capture: 0 setup command(s) decoded in the window"* ]] \
+    && ok "without --columns=200 the same decode keeps no setup: the width is what the check above depends on" \
+    || bad "the narrow decode: $(grep -E '^# (capture|trace):' <<<"$TSDN" | tr '\n' '|')"
+# THE WINDOW BOUNDS WHAT IS KEPT, not only which files are read: a setup in a
+# decoded file after the window's end is not the trial's.
+: > "$TSD/btmon.args"; : > "$TSD/map"; rm -f "$TSD/capture"/* "$TSD/trace"/*
+printf '%s\n' '2026-08-10T09:14:22.100000+00:00 host kernel: Bluetooth: hci0: hci0 opcode 0x0428 plen 17' > "$TSD/journal"
+tsd_cap "$TSD/capture/20260810-090000.btsnoop" sco-unanswered '2026-08-10 09:40:00 UTC'
+TSDW=$(tsd scripts/trial-sco-decode.py '2026-08-10 09:00:00' '2026-08-10 09:25:00')
+[[ "$TSDW" == *"09:14:22.101234"* && "$TSDW" != *"09:31:44"* && "$TSDW" == *"# capture: 1 setup command(s) decoded in the window"* \
+   && "$TSDW" == *"(no captures)"* ]] \
+    && ok "trial-sco-decode keeps only what lies inside the window, and says when a path holds no captures" \
+    || bad "trial-sco-decode's window: $(grep -E '^< HCI|^# (capture|trace)|no captures' <<<"$TSDW" | tr '\n' '|')"
+rm -rf "$TSD"
+
+echo
 echo "install.sh and uninstall.sh — the dry run is the contract"
 echo "──────────────────────────────────────────────────────────────"
 #
