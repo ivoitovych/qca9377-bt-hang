@@ -701,3 +701,177 @@ Fixing I2, VI1 and MODE2 first is small, and SU1 would make CI catch all three.
    code fix).
 6. **The rest,** by section.
 
+---
+
+# Addendum — second pass (from 2026-10-19, after the first pass was committed as `13fe869`)
+
+Same method: each file is read, and its findings are appended before the next file is opened.
+
+## 24. `tools/bt-archive` (405 lines, read in full)
+
+The read-back design is excellent:
+- the record count comes from the same bytes the compressor received (`tee` into a FIFO, with an
+  explicit `wait`);
+- every pipeline stage's exit status is checked;
+- superseded copies are removed only after the new one is verified.
+
+**AJ1 — MED. Re-archiving a prefix can delete the only copy of a boot's start.**
+`bt-backup-journal` re-archives every boot that carries a `.prefix` marker with `--replace`, and
+`bt-archive` then removes the old file (374-377). Neither compares the old archive with the new
+export. The failure goes like this:
+1. A long boot is archived by hand while live, at a fault (the documented use of `bt-archive 0`).
+2. journald discards that boot's oldest records before the boot ends, as BJ1 shows it does.
+3. At the next run the full re-archive no longer contains the boot's start.
+4. The prefix, the only copy of that start, is deleted.
+
+*Fix:* on `--replace`, keep the old archive unless the new one contains its first cursor and at
+least as many records. Otherwise keep both, renaming the old one to `…superseded-<date>`, and say so.
+
+**AJ2 — INFO.** `--check` decompresses every archive and exports every retained boot in full to
+count records, so on this machine it takes hours. It is operator-run only; print that estimate
+before starting.
+
+## 25. `tools/bt-exhibit` (329 lines, read in full)
+
+Sound design:
+- the command and its output are captured in one pass;
+- a command that did not run (126/127) is refused;
+- a missing sanitiser is treated exactly like a failing one;
+- an address in the claim, relevance or command is refused rather than redacted, because those are
+  published verbatim;
+- the evidence boots are kept apart from the capture boot.
+
+**EXH1 — LOW. Exhibit numbers are allocated per checkout, not per project.** `cmd_new` takes the
+next number from the highest file in the local directory (122-128). Two branches can therefore
+allocate the same number (the held `kernel/*` branch carries its own exhibits; three were ported to
+`main` on 2026-10-18).
+*Fix:* refuse a new number if any remote branch already uses it. Alternatively, reserve the numbers
+in one place (BRIEF already records "the next exhibit on `main` is EX-063").
+
+**EXH2 — LOW. The redaction notice promises more than the sanitiser does.** The notice says "The
+same real value always maps to the same placeholder", but placeholders are numbered per run (SAN3),
+so this holds within one exhibit, not across exhibits. Exhibit output also inherits SAN1's and SAN2's
+gaps (IPv6 addresses carrying a MAC, host names).
+*Fix:* say "within this exhibit" in the notice. The SAN fixes then cover exhibits automatically.
+
+**EXH3 — INFO.** `bash -c "$cmd"` runs whatever it is given, and runs it on the laptop. A command
+that probes the controller (`bt-state --probe`, `hciconfig`, `bluetoothctl`) would run inside
+whatever window is open. The passivity rule lives with the person typing. A refusal list
+(`hciconfig`, `btmgmt`, `bluetoothctl`, `--probe`, `rfkill`, `modprobe`) unless `--allow-active`
+is given would make it mechanical.
+
+## 26. `tools/bt-trial-audit` (311 lines, read in full)
+
+Its independence from `bt-trial`'s detectors and its positive control are the right ideas. Boots
+are resolved by containment from the `--list-boots` index, never by reading them.
+
+**TA1 — MED. An unreadable window reads as clean.** The positive control proves the patterns match.
+It does not prove the journal read worked. `bt_journal_lines` (journal.sh:194) pipes `journalctl …
+2>/dev/null | grep -E`, so any failure behaves exactly like an empty window:
+- a permission error;
+- a boot whose files are present but whose window has rotated;
+- `--grep`'s exit 1.
+
+The result: zero resets and zero timeouts, so `perturbed=none` and `not_observed` rows "agree". That
+is the confident zero the header warns about, arriving through the read instead of the regex.
+*Fix:* check the read the way `bt-trial`'s `jread` does (exit 0, or 1 with an empty stderr). Also
+confirm the window is non-empty with a one-line read (`-n 1` inside `--since/--until`). Either
+failure is UNRESOLVED.
+
+**TA2 — LOW. The audit's window starts five seconds later than the trial's.** The audit uses
+`[close − duration, close]`; `bt-trial` counts from `start − 5`. A reset in those five seconds is in
+the row but not in the audit, so it reports a disagreement that is the audit's own.
+*Fix:* use the same five-second lead.
+
+**TA3 — LOW. A known-unknown row is counted as a disagreement.** `perturbed=unknown` (the closer
+could not read the journal) is compared with the audit's `none` or `usb_reset` and reported as
+DISAGREES. Report it as "unknown at close; journal now says X", a separate count.
+
+## 27. `bin/bt-usbmon` (221 lines, read in full)
+
+Supervise-and-rotate is right, given that `tcpdump -C -W 1` is a ring. The idle loops are
+interruptible (`sleep & wait`), and the gap log survives fractional intervals.
+
+**UM1 — LOW-MED (latent, privacy). Nothing in the code keeps the USB captures root-only.** The
+comment at 170-172 says "the capture directory must stay root-only, because USB traffic to a
+Bluetooth controller carries link keys". But:
+- the script only runs `mkdir -p "$DIR"` (53), with no `chmod 0700` and no `umask 077`;
+- `bt-usbmon.service` sets no `UMask`.
+
+On a fresh install the directory is created with the service's default umask (0755), and each pcap
+is 0644. On the laptop the directory happens to be `drwx------` (checked read-only on 2026-10-19),
+so nothing is exposed today.
+*Fix:* `umask 077` and `chmod 0700 "$DIR"`, as `bin/bt-trace` does (lines 71-77), and `UMask=0077`
+in the unit, as `bt-capture.service` has.
+
+**UM2 — INFO.** USB captures are retained by count (60 files) and are never archived, the same
+retention-without-archive shape as CAP1. They matter only for a stage-2 window, but a rotated-away
+window cannot be re-read.
+
+## 28. `bin/bt-health-snapshot`, `bin/bt-dyndbg` (read in full)
+
+**HS1 — INFO (by design, recorded for completeness). Every snapshot is an intervention.** Each run
+sends HCI Read Local Name (`hciconfig name`, line 90) and, when that answers, opens MGMT through
+`bluetoothctl` (124; M1's `btmon` crash). Its event-driven twin fires on every Bluetooth add and
+remove, that is, at the controller's own transitions (EX-012). All of this is why
+`bt-mode experiment` stops the timer and moves the udev rule aside. MODE1 matters partly because
+`bt-mode mitigation` brings this back as well as the watchdog.
+
+**HS2 — LOW. Each run reads the whole boot's kernel log twice.** Two `bt_journal_count … -k -b 0`
+reads run every 15 minutes, filtered by `--grep` but each traversing the whole boot. That cost grows
+for the life of the boot (`journal.sh` names this shape). Count from the previous row's timestamp
+forward and add, or take timeouts from `-p err`.
+
+**DD1 — LOW. `bt-dyndbg off` silently undoes `bt-ui-capture`'s debug settings.** At shutdown,
+`bt-dyndbg off` disables every site in its `ALL_FILES`, which includes `sco.c`.
+`bt-ui-capture start` enables selected `sco.c` functions and records their previous flags. A
+`bt-dyndbg off` (its unit's `ExecStop`) therefore resets them. `bt-ui-capture`'s manifest then still
+believes they are on, and its `stop` restores flags that are no longer in effect.
+*Fix:* have `bt-dyndbg off` leave alone the functions `bt-ui-capture` owns, or have the two share
+one state file.
+
+The `NOISY_FUNCS` selection is a model of measuring before deciding: the 98% from four functions
+was found by counting, not by reading their names.
+
+## 29. Publishing and mail helpers: `ci-local-publish.sh`, `build-mails.sh`, `mail-lint.sh` (read in full)
+
+**CP1 — MED (privacy). A refused sanitisation still reports success, with the file in a tracked
+directory.** `elide()` writes the address-elided copy straight into the tracked destination, then runs
+`sanitize-logs.sh "$2" "$2"`. When the sanitiser refuses (its awk capability gate, or addresses left
+after substitution), it leaves the file as it was. The script then:
+- prints only a stderr line;
+- leaves that copy in the tracked directory with its MACs, UUIDs and IPv4 addresses intact;
+- counts it as copied and exits 0.
+
+When the sanitiser is missing, the step is skipped without a word. `repo-scan` would stop the
+colon, dash and underscore forms at commit, but nothing else would.
+*Fix:* write to a temporary file; move it into the destination only after the sanitiser succeeds.
+Otherwise delete it, count it as refused and exit non-zero. Treat a missing sanitiser as a refusal,
+as `bt-exhibit` and `bt-incident` do.
+
+**ML1 — LOW. `mail-lint.sh` checks three headers, not four.** Its header says "the four headers
+present" but it checks `From:`, `To:` and `Subject:`. Either add the fourth (presumably `Date:` or
+`Message-ID:`, whichever was meant) or say three.
+
+**BM1 — INFO.** `build-mails.sh` hard-codes the two BlueZ patches of the 2026-09-19 send (`0001`,
+`0002`). It is a record of that send, not a general tool; its header could say so, since the
+tooling index lists it as current.
+
+## 30. `tools/bt-retention` (306 lines, read in full)
+
+It handles time correctly:
+- boot ranges come from the `--list-boots` index, whose first entry moves forward when a boot's
+  start is discarded, so partial rotation is seen;
+- only offset-carrying timestamps are used, ordered by instant;
+- the provenance block is cut off before the scan;
+- a declared evidence window is preferred to the scan.
+
+**RET1 — LOW-MED. GONE and AT RISK ignore the journal archive.** An exhibit whose boot has left the
+ring is reported GONE ("can no longer be re-derived"), even when that boot is archived under
+`~/bt-journal-archive` and replays with `journalctl --file`. AT RISK likewise names exhibits whose
+boot is already archived, and the advice "Archive their source now" then sends the operator to
+re-archive something that exists.
+*Fix:* look each boot id up among the `boot-<id>.export.*` files, as `bt-backup-journal` does. Then
+report "gone from the ring — archived (complete / prefix)" or "gone", and count AT RISK only for
+unarchived boots.
+
