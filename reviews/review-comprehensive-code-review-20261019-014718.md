@@ -1568,3 +1568,47 @@ play. The tool exists to answer "what exists only on this disk?", and it can ans
 a branch holds unpushed work.
 *Fix:* `git rev-list --count --branches --not --remotes`, and list the branches it finds.
 
+## 53. `tools/bt-boot-provenance`, `tools/lib/coredump.sh` (read in full)
+
+`coredump.sh` is a faithful seam: a missing fixture answers like an empty core store (exit 1), and
+the header requires fixtures to carry `coredumpctl list`'s header row. `bt-boot-provenance` takes
+both boundary times from `--list-boots` and bounds its enumeration read to three minutes. It also
+says plainly that a shutdown target is not electrical evidence.
+
+**BP1 — LOW-MED. "Recovered across a reboot target" is printed after every ordinary reboot.** The
+mark (132) is printed whenever the previous boot reached `reboot.target` and the device enumerated
+in this one. A healthy controller enumerates at every boot, so ordinary reboots are marked
+"recovered" too. The column exists to gather evidence on the one open hardware question (EX-017,
+EX-019: can a warm reboot recover a wedged controller?). Marking every reboot as a recovery makes
+that evidence look plentiful when it is not.
+*Fix:* print the mark only when the previous boot ended wedged: an HCI command timeout or a USB
+loss of the device in its last minutes (`stage2.awk` already classifies that), with no recovery
+before it ended.
+
+## 54. `tools/bt-boot-stats` (120 lines, read in full)
+
+The table's purpose is right: it keeps correlations honest by showing false positives and false
+negatives of a signature. It also says plainly that its totals are not the frozen baseline's.
+
+**BS-1 — MED (on the laptop). It holds every boot's whole kernel log in memory.** Line 63 reads
+each boot's entire kernel log into a shell variable (`log=$(bt_journal -k -b "$b" …)`). It then
+copies it into here-strings four times (66-75). With dynamic debug a boot carries millions of
+kernel lines; `journal-contract`'s header records one boot of 1,586,655 lines. Per boot this
+costs hundreds of megabytes of memory and minutes, the exact shape `bt-status` removed
+("held the entire boot's kernel journal in memory … hundreds of megabytes in a shell string").
+*Fix:*
+- count through `bt_journal_lines` with the union of the three patterns (`--grep`), as
+  `bt-trial-audit` does;
+- take the boot's first and last instants from `--list-boots -o json`, as `bt-retention` does.
+
+**BS-2 — LOW-MED. BUSLOST counts every USB device, not the controller.** BUSLOST is documented as
+"controller USB disconnects", the column that means "the controller died and needed a cold boot".
+It counts every `USB disconnect, device number` line in the boot (72), whatever device is named:
+a mouse, a phone, a headset dongle. `stage2.awk` anchors the same line to the controller's own
+USB path learned from its enumeration line; this tool does not.
+*Fix:* reuse that anchoring.
+
+**BS-3 — LOW. It prefers the installed copy of `bt-boot-list`.** It takes `/usr/local/bin`'s copy
+before its own sibling (47-50). That is the order `bt-phase` reversed on 2026-09-29, after the
+checkout's tool ran whatever was last deployed. Sibling first.
+
