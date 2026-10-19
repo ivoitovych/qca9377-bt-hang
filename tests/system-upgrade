@@ -256,6 +256,22 @@ VOUT=$(/usr/local/bin/bt-verify-install "$NEW" 2>&1); vrc=$?
 MOUT=$(/usr/local/bin/bt-mode status 2>&1); mrc=$?
 echo "  · bt-verify-install: rc=$vrc, $(grep -E 'in sync|drifted' <<<"$VOUT" | tail -1)"
 echo "  · bt-mode status: rc=$mrc, $(awk '/Passive capture/ { f = 1; next } f' <<<"$MOUT" | grep -c .) line(s) for the four passive units"
+# VI1: neither may send the operator to a command that arms or reverts what a
+# tools-only deploy left alone. On any drift the verifier printed
+# `Run: sudo ./install.sh --apply`, and after --tools-only drift is the rule:
+# every unit install.sh would enable is expected active, and none was enabled.
+advice=$(grep -E -- '--apply|bt-mode mitigation' <<<"$VOUT"$'\n'"$MOUT")
+[[ -z "$advice" ]] \
+    && ok "after a tools-only deploy neither bt-verify-install nor bt-mode status advises --apply or mitigation" \
+    || { bad "the checklist's last steps advise what the deploy must not do (VI1):"; sed 's/^/      /' <<<"$advice"; }
+# MODE2: one line per passive unit. `systemctl is-active u || echo inactive`
+# printed systemctl's own "inactive" and then the fallback's, for every unit
+# that is not active.
+passive=$(awk '/Passive capture/ { f = 1; next } f' <<<"$MOUT" | grep .)
+stray=$(grep -vE '^    bt-[a-z]+ +[a-z-]+$' <<<"$passive")
+[[ -z "$stray" && "$(grep -c . <<<"$passive")" == 4 ]] \
+    && ok "bt-mode status gives each of the four passive units one line, with its state" \
+    || { bad "bt-mode status's passive units are not one line each (MODE2):"; sed 's/^/      /' <<<"$passive"; }
 restart_loops
 RESULTS="$EVREPO/evidence/trials/results.tsv"
 rows_before=$(grep -c . "$RESULTS" 2>/dev/null)
