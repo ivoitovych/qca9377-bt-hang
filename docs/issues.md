@@ -736,6 +736,7 @@ specific to this controller.
 | U9 | no reconnect after rfkill off/on (BlueZ policy) | confirmed, by design |
 | U10 | Tronsmart T8 silent on SBC-XQ, audible on SBC (2026-10-11) | observed; the deciding question is open |
 | U11 | a newly connected headset does not become the output (2026-10-13) | confirmed in the log and the source; by design |
+| U12 | a microphone opened while A2DP is starting loses A2DP; only Handsfree remains (2026-10-19) | confirmed in the capture, the logs and the source; fixed upstream in BlueZ 5.80 |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
@@ -1069,6 +1070,27 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   - `journalctl _UID=1000 -b --grep "SET_DEFAULT_SINK|SET_DEFAULT_SOURCE|MOVE_SINK_INPUT"`: one line;
   - `journalctl _UID=1000 -b --grep "changed 'default.configured.audio.sink'"`: one line;
   - `git show 0.4.17:modules/module-default-nodes.c` and `git show -s 7a1b48b7` in a WirePlumber tree.
+
+- **U12 — an application opening the microphone while A2DP is starting loses A2DP until the headset reconnects; only Handsfree remains** *(confirmed in the HCI capture, the logs and the source, 2026-10-19; fixed upstream in BlueZ 5.80, not in Ubuntu 24.04)*.
+
+  **What happened** (local time):
+  - **[operator]** At 19:43 GNOME Settings offered only "Handsfree - MOMENTUM 4" as output; the headphones (A2DP) entry was gone. The screenshot is kept with the raw evidence.
+  - **[log] The chain** (`EX-064`): at 19:33:58.577 Google Chrome opens a playback stream, and at .636 bluetoothd resumes the MOMENTUM 4's A2DP transport for it, sending AVDTP Start (`EX-063`). At .674 Chrome opens a microphone stream. At .676 WirePlumber switches the headset from `a2dp-sink` to `headset-head-unit-msbc`, and at .678 it releases the A2DP transport while the Start is pending. bluetoothd's `a2dp_cancel()` aborts the setup: AVDTP Abort at .678, 42 ms after the Start.
+  - **[log] Over the air** (`EX-063`): the headset accepts the Start at .831, which bluetoothd drops ("Transaction label doesn't match"), and never answers the Abort. At 19:34:00.963 the Abort times out, and bluetoothd closes the A2DP signalling channel and two more: A2DP and AVRCP are gone, HFP stays connected.
+  - **[log]** At 19:34:07.109, the microphone stream gone, WirePlumber logs "Failed to restore profile". Nothing reconnected A2DP: at 19:50 PipeWire and bluetoothd still had the headset in Handsfree only.
+  - **[log] Not the controller:** the mSBC eSCO link set up at 19:33:58.815 completed with Success at 19:33:59.028, two more followed at 19:40:56 and 19:41:11, and the kernel log has no error and no command timeout from 18:00 on. The HCI trace is continuous across the failure (`gaps.log`: size rotations only).
+
+  **[source] The cause.** In BlueZ 5.72's `profiles/audio/transport.c`, a `Release()` during a pending `Acquire()` reaches `transport_a2dp_cancel()`, which calls `a2dp_cancel()`: an AVDTP Abort. Upstream `a14d59725` (Pauli Virtanen, 2024-11-02, "transport: don't disconnect A2DP if canceling Acquire() with Release()", first in 5.80) describes the result: "forcing AVDTP state transition to IDLE, and A2DP profile disconnects". Its fix answers the Acquire with an error, waits for the Start to complete, then suspends. Here the headset's silence made the disconnect certain, through the 2 s timeout.
+  - The running bluetoothd is this project's build (`20-patched-bluetoothd.conf`, `/usr/local/libexec/bluetooth/bluetoothd`, built 2026-08-25 from 5.72-0ubuntu5.5's source with the two BT-7 fixes). Its `transport.c` keeps the old path (line 487, no `cancel_resume`).
+  - Ubuntu's changelog through 5.72-0ubuntu5.8 (`/usr/share/doc/bluez/changelog.Debian.gz`) has no entry for it.
+  - **[source] WirePlumber's part is by design:** 0.4.17 moves a Bluetooth headset to its headset profile while an application records, and restores the earlier profile afterwards. The switch only produces the Release at the moment a Start is pending.
+
+  **Next** (the contribution is a backport request):
+  1. Build our bluetoothd from 5.72-0ubuntu5.8's source, which also brings the October security fixes the running build lacks (STATUS, the machine's warnings), with the BT-7 fixes and `a14d59725`.
+  2. The operator installs it and repeats the trigger: an application opening the microphone just as A2DP starts.
+  3. A Launchpad bug for Ubuntu 24.04 with the tested patch, on the operator's word.
+
+  **Evidence:** `EX-063`, `EX-064`. Raw and unfiltered, on this machine only: `archive/incidents/20261019-a2dp-lost/`, which holds the day's HCI and USB captures, every journal file, the live state at 19:50 and the configuration (README there).
 
 ---
 

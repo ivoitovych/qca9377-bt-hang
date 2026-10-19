@@ -28,3 +28,11 @@ function flush() { if (keep && (ere == "" || blk ~ ere)) printf "%s", blk; blk =
 }
 { if (keep) blk = blk $0 "\n" }
 END { flush() }'
+# awk stops at the first packet past <to>, so as not to decode the rest of the
+# capture, and btmon then dies of SIGPIPE: 141 is that early stop, not a
+# failure. Until 2026-10-19 pipefail returned it from every run that reached
+# <to>; any other btmon status, a BT-4 abort's 134 among them, still means the
+# decode is incomplete and is returned.
+st=("${PIPESTATUS[@]}")
+(( st[0] == 0 || st[0] == 141 )) || exit "${st[0]}"
+exit "${st[1]}"
