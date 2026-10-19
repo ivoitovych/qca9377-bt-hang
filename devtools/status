@@ -17,9 +17,10 @@
 # broken, while every report said "everything is pushed" — which was true, and
 # not the question anyone actually meant.
 #
-# Read-only. Exit 0 if repository state is clean and synced; 1 otherwise.
-# Deployment drift is reported but does NOT set the exit status: it is a fact
-# about the machine, not a defect in the commit.
+# Read-only. Exit 0 if repository state is clean and synced; 1 otherwise; 3
+# when the tree is clean but origin could not be asked, so the push is not
+# confirmed. Deployment drift is reported but does NOT set the exit status: it
+# is a fact about the machine, not a defect in the commit.
 
 set -uo pipefail
 
@@ -55,9 +56,21 @@ fi
 # wrong about what the remote holds.
 local_head=$(git rev-parse HEAD 2>/dev/null)
 branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-remote_head=$(git ls-remote --heads origin "$branch" 2>/dev/null | awk '{print $1}')
-if [[ -z "$remote_head" ]]; then
+#
+# --exit-code tells the two empty answers apart (DS4, the review of
+# 2026-10-19): 2 is a remote that answered and has no such branch, which is
+# unpushed work; anything else is a remote that did not answer, which confirms
+# nothing. Both used to print one "cannot confirm" row above a summary of
+# "everything committed and pushed", exit 0.
+ls_out=$(git ls-remote --exit-code --heads origin "$branch" 2>/dev/null); ls_rc=$?
+remote_head=$(awk '{print $1}' <<<"$ls_out")
+unconfirmed=0
+if (( ls_rc == 2 )); then
+    row "${R}✗${O}" "pushed" "origin has no branch $branch — never pushed"
+    rc=1
+elif [[ -z "$remote_head" ]]; then
     row "${Y}?${O}" "remote $branch" "could not reach origin — cannot confirm"
+    unconfirmed=1
 elif [[ "$local_head" == "$remote_head" ]]; then
     row "${G}✓${O}" "pushed" "origin/$branch == ${local_head:0:7}"
 else
@@ -129,6 +142,9 @@ fi
 echo
 if (( rc )); then
     printf '%sNOT everything is committed and pushed%s\n' "$R" "$O"
+elif (( unconfirmed )); then
+    printf '%sRepository: committed; push NOT confirmed (origin could not be asked).%s\n' "$Y" "$O"
+    rc=3
 else
     printf '%sRepository: everything committed and pushed.%s' "$G" "$O"
     echo " Deployment is reported above, separately."

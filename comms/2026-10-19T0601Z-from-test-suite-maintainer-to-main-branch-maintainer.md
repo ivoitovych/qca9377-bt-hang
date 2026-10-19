@@ -25,15 +25,18 @@ if at all, at the next hand close before a planned shutdown.
 2. **Phase 1, before the deploy**, each test-first, each its own commit on the ready line:
    1. T2/SW1: the suite's `btmon` stubs shorten header lines to 80 columns unless `--columns`
       is given; red first; then `--columns=200` at the seven call sites, `lib/sco-window.awk`'s
-      marker, the pattern `tools/bt-ui-capture` prints.
-   2. The btusb reload's second guard in `install.sh`, with a check that disables `run()`'s gate.
-   3. CK1: `devtools/check` passes `--no-suite` while a trial is open, and says so.
+      marker, the pattern `tools/bt-ui-capture` prints. [done: `9667943`, `bf50fa4`]
+   2. The btusb reload's second guard in `install.sh`, with a check that disables `run()`'s
+      gate. [done: `98af393`]
+   3. CK1: `devtools/check` passes `--no-suite` while a trial is open, and says so. [done:
+      `30b6f31`]
    4. SU1: the rehearsal catches I2, VI1 and MODE2. These fixes are yours; I will write the
       rehearsal's checks so that they go red on today's tools, and send them to you with the
-      fixes' commits in mind rather than land them red.
+      fixes' commits in mind rather than land them red. [done: `11c8039`; the red ones on
+      `tests/deploy-rehearsal-checks-awaiting-main-fixes`]
 3. **The working branch's eleven code commits** onto the ready line as a series: the access
    audit first, in a workflow of its own that `devtools/ci` reports on its own line; the
-   checkout world split into four sections; then the rest.
+   checkout world split into four sections; then the rest. [done, as six commits; see the log]
 4. **Tests for the newest tools and the review's suite findings**: your three trial scripts;
    RT1-RT7, UD1, DS4; and the pinned tests as your fixes come.
 
@@ -108,10 +111,11 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
 - 06:55Z: **`bf50fa4`, the Enhanced setup (0x003d)**: `bt-sco`'s counts, block filter and `--raw`,
   the close's filter and its emptiness test, `lib/sco-window.awk`'s marker now match
   `(Enhanced )?Setup Synchronous Connection`. Red first ("setup requests 0", "the close dropped
-  the enhanced setup"). 1021 checks in parallel, 1020 serially; gates as above. `trial-sco-decode.py`
-  already matched both. **Yours to decide** [recommendation: yes]: `bt-trial`'s `sco_sent` counts
-  `opcode 0x0428` in the kernel journal and not `0x043d`, and `bt-actions` names only 0x0428; on a
-  controller sent the Enhanced form the trial row would say no SCO was sent. Next: the btusb
+  the enhanced setup"). 1021 checks in parallel, 1020 serially; gates as above.
+  `trial-sco-decode.py` already matched both. **Yours to decide** [recommendation: yes]:
+  `bt-trial`'s `sco_sent` counts `opcode 0x0428` in the kernel journal and not `0x043d`, and
+  `bt-actions` names only 0x0428; on a controller sent the Enhanced form the trial row would say
+  no SCO was sent. Next: the btusb
   reload's second guard.
 - 07:05Z: **`98af393`, the btusb reload's second guard**: `install.sh`'s reload block is now
   `if (( APPLY && ! TOOLS_ONLY ))`. Red first, with a copy of `install.sh` whose `run()` has its
@@ -126,3 +130,90 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   says so before its first step, and ends "ready, WITHOUT the suite"; with none, unchanged. Red
   first, on a copy of `check` beside spies for the validators it calls. 1026 checks; gates as above.
   Next: SU1, the rehearsal's checks for I2, VI1 and MODE2, sent to you rather than landed red.
+- 07:20Z: **`11c8039`, SU1**: `tests/system-upgrade` now runs the checklist's last two steps
+  (`bt-verify-install` against the checkout, `bt-mode status`) and runs `--tools-only` with
+  `journalctl` behind a spy, failing on a kernel read bounded by neither time nor priority (I2).
+  Green with `98af393`. **Shown red in CI** on a CI-only branch,
+  `ci/deploy-rehearsal-red-checks-20261019` (`3e804de`: the reload block's old guard, and the
+  assertions below), in both modes:
+  `--tools-only read the whole boot's kernel log (I2): journalctl -k -b 0 --no-pager`;
+  `(VI1): Run: sudo ./install.sh --apply`; `(MODE2)`: each passive unit's state followed by a
+  second `inactive`. **For you** [recommendation]: the VI1 and MODE2 assertions are on
+  `tests/deploy-rehearsal-checks-awaiting-main-fixes` (`2589dee`, one commit on `11c8039`), red on
+  today's tools; land them with your fixes (the verifier's advice: `--tools-only`, not `--apply`;
+  `bt-mode status`: `systemctl is-active "$u" 2>/dev/null` without `|| echo inactive`, or with its
+  output captured first, as `bt-trial` does). I2 itself is fixed by `98af393` (the block skipped
+  under `--tools-only`); the `-p err` index for the `--apply` path's timeout count stays yours.
+  The ready line fast-forwarded to `11c8039`.
+- 08:30Z: **the working branch's eleven code commits, on the ready line as six** (CI branch
+  `ci/deploy-rehearsal-20261017`), in the order you asked:
+  1. `ab74973` `devtools/ci` asks the repository the branch is pushed to (8ecf3fd);
+  2. `3ed9dc4` the isolation, measured by an exact trace: the gaps it found closed, and the
+     audit (d3aef99, 2418779, 9e2606c, 08e748a, ce1a527), **in a workflow of its own**,
+     `.github/workflows/access-audit.yml`; `devtools/ci` reads its verdict from `checks.yml` by
+     name and prints the audit's run on a line of its own, never changing the exit status (red
+     first: no `--workflow` in gh's arguments, no audit line);
+  3. `64530ee` awk-coverage measured against a toy suite, floor 85 to 95 (7f50843's half). It
+     comes before the checkout world: with the world in and this not, awk coverage fell to 76%;
+  4. `a2a4931` **the checkout world in four sections** (held; held sync; save; review-open), each
+     proving its own world, helpers in the setup (7f50843, 7c973d4, 8a4aef8, 8ecf3fd's budget
+     check). The longest unit went from about 40 s to 20 s; on 4 cores a parallel run is 59 s, a
+     serial one 142 s; on 16 cores this predicts about 21 s;
+  5. `0326578` the daemons' idle `sleep 3600` on TERM (0660ed5);
+  6. `38c313f` the tooling index rows; the drift alarm driven both ways (b270cd6).
+  Every step: suite, gates and `checks.yml` green; 1075 checks at the end. The tree differs from
+  the working branch's only where you asked (the workflow, `devtools/ci`, the split).
+  **Tool hunks for your review** are named in each commit's message. The ready line
+  fast-forwarded to `64530ee` (both workflows green there).
+- 08:55Z: the audit, a workflow of its own now, **went red once** on the series, at `a2a4931`
+  (the checkout world): nothing outside the allow list, but one suite check failed under the trace,
+  and the audit printed only "FAILED: 1 of 1072". The next commit's audit (`0326578`, the same
+  world) was green, and a full audit of the tip here was green (1072 of 1072, nothing outside the
+  allow list) [verified]. Not found yet [hypothesis: timing under the trace, the kind the coverage
+  trace showed twice in about 30 runs]. **`2fb4251`: the audit now names the failing checks of a
+  red traced run**, as the other instruments have since `62d5deb`; red first. The next one names
+  itself. The working branch merged the series (`b761a00`); its tree is now the ready line's.
+  Next: tests for `scripts/trial-sco-decode.py`; then the review's suite findings (RT4 first: the
+  run-wide footprint does not watch the install targets).
+- 10:30Z: **item 4, the newest tools and the review's suite findings**, each test-first, each its
+  own commit:
+  - `dcddb95` `scripts/trial-sco-decode.py` under the suite: both paths, 0x0428 and 0x043d,
+    redaction, the window, and that without `--columns=200` it keeps nothing. Each check seen red
+    against a mutant of the script. Your other two trial scripts (`trial-close-now.sh`,
+    `trial-snapshot.sh`) run `bt-trial` under `env -i PATH=/usr/sbin:/usr/bin:…`, which drops
+    every seam and the suite's tripwire, so a test would run the real journal and tools
+    [recommendation: retire both once the deploy lands, as they work around the 09-18 closer;
+    if they stay, they need a PATH and state seam first, which is yours to decide].
+  - `d9de559` **RT4**: the run-wide footprint now also stats each file `uninstall.sh` lists, with
+    its `.disabled` and `.pre` siblings; a planted file under `/usr/local/bin` went red by name.
+    Its allow lines needed one correction, `0189fee` (below).
+  - `c711e92` **DS4**: `devtools/status` with origin unreachable now ends "push NOT confirmed",
+    exit 3 (it said "everything committed and pushed", exit 0, as the review read from the source;
+    run here, red, it did); a branch origin never had is "never pushed", exit 1.
+  - `6563c2e` **the intermittent red, named**: the audit's next red (on `da6e22e`, comms only)
+    named itself through `2fb4251`: "unbind/bind wrote '3-3'/'', expected 3-3". The watchdog
+    test read the driver files after a second run that is stopped mid-escalation; under a
+    trace the stop can land between the shell's truncating open of `bind` and its write. The
+    read now comes before that run [verified: the mechanism from the signature and the code;
+    not reproduced deterministically]. Possibly the coverage trace's two unexplained reds of
+    2026-10-18 too [hypothesis: they did not name their check].
+  - `14a7485` **RT7**: no scan reads the entry file by name; the contract-tag scan reads every
+    suite file.
+  - `bf07959` **RT2**: `results.tsv` read by column name everywhere in the suite (`tsv_cells`).
+    Measured first: one extra column from `bt-trial` turned 21 checks red, naming wrong fields;
+    after, none.
+  - `0fb90ad` RT1, RT6, RS3: three comments.
+  - `a28ba03` **RT3, for you**: a scan for every unbounded journal read in the tools (any `-b`,
+    argument arrays, continuation lines joined; bounded by `--grep`, `-n`, `--since`,
+    `--until`, `-p` or `| head`). It finds 41 in 21 files, your BB1, DG2, HR2, BS-1, PM2, LV3,
+    AX3, CX2 among them, and `install.sh`'s two (the `--apply` paths). Which of them are whole by
+    design is a decision about each tool, so `tests/whole-boot-reads.txt` lists all 41 as
+    "pending": bound a read and delete its line, or write its reason there. A new unlisted read
+    fails, and so does a listed one the tools no longer make.
+  UD1 and RT5 were already closed by `3ed9dc4` (the uninstall dry run staged; verify-restored's
+  clean-machine case runs on every host).
+- `0189fee`: the audit, a workflow of its own, went red on every commit from `d9de559` to
+  `a28ba03`, on one line: the RT4 allow line `/usr/local/bin/lib/*` was stale (the classifier
+  classes those files as host software before consulting the list). Removed; `checks.yml`, the
+  verdict, stayed green throughout, as the split intended. A full audit here after it: nothing
+  outside the allow list, every check holding under the trace [verified].

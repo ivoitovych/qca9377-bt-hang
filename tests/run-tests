@@ -43,7 +43,7 @@ cd "$(dirname "$0")/.." || exit 1
 # PATH construction that re-adds /usr/bin. Every one of them read `"$0"`.
 #
 # `"$0"` IS THE ENTRY POINT, NOT THE SUITE. UT-12 splits this file — it is
-# 9,700 lines and the largest in the repository — and the moment any of it moves
+# over 15,000 lines and the largest in the repository — and the moment any of it moves
 # into a sourced part, all eight keep passing while seeing only what is left
 # behind. A guard that stops covering the code it guards, silently, in the
 # checks that exist to stop the suite from overwriting system binaries and
@@ -646,6 +646,25 @@ bin_footprint_diff() {   # <before> <after> — names what changed, and how
 BIN_FOOTPRINT_BEFORE=$(real_bin_footprint)
 BIN_COUNT_BEFORE=$(grep -c . <<<"$BIN_FOOTPRINT_BEFORE" || true)
 
+# ── AND THE PROJECT'S INSTALL TARGETS (RT4, the review of 2026-10-19) ────
+#
+# The footprint above watches the system's binaries. The 2026-08-14 escape
+# acted through an INSTALLED tool, and a test that wrote through to one, or to
+# a unit, a udev rule or the modprobe override, changed nothing it sees. On the
+# laptop those files are the project's own install. These are the files
+# uninstall.sh removes (its FILES list, which an invariant keeps equal to
+# install.sh's destinations), each with the siblings bt-mode and the installer
+# make: size, mtime, ctime and inode wherever one exists. Named files rather
+# than a scan of their directories: each read is one the access audit sees and
+# the allow list names.
+INSTALL_TARGETS=()
+while IFS= read -r _p; do INSTALL_TARGETS+=("$_p" "$_p.disabled" "$_p.pre-qca9377-bt-hang")
+done < <(sed -n '/^FILES=(/,/^)/p' uninstall.sh | grep -oE '/[a-zA-Z0-9._/-]+')
+real_install_footprint() {
+    stat --printf '%n\t%s\t%.9Y\t%.9Z\t%i\n' "${INSTALL_TARGETS[@]}" 2>/dev/null | LC_ALL=C sort
+}
+INSTALL_FOOTPRINT_BEFORE=$(real_install_footprint)
+
 # ── AND THE REPOSITORY'S OWN TRACKED FILES, WHICH NOTHING WATCHED ────────
 #
 # Asked for by the main branch maintainer (comms/2026-08-22T1000Z §3), after an
@@ -774,6 +793,25 @@ final_resource_report() {
             bad "    dpkg -S <path>  then  apt-get install --reinstall <package>"
         fi
     fi
+    # The install targets, named one by one (above). Fewer than one per file
+    # uninstall.sh lists means the list was not derived, and nothing was watched.
+    if (( ${#INSTALL_TARGETS[@]} < 180 )); then
+        bad "could not derive the project's install targets from uninstall.sh (${#INSTALL_TARGETS[@]} paths) — they were not watched"
+    else
+        INSTALL_FOOTPRINT_AFTER=$(real_install_footprint)
+        if [[ "$INSTALL_FOOTPRINT_AFTER" == "$INSTALL_FOOTPRINT_BEFORE" ]]; then
+            ok "no file the project installs changed while the suite ran ($(( ${#INSTALL_TARGETS[@]} / 3 )) targets and their siblings, $(grep -c . <<<"$INSTALL_FOOTPRINT_BEFORE" || true) present here)"
+        else
+            bad "the test run CHANGED files where install.sh installs:"
+            # A machine with none of them installed has an empty footprint, which
+            # the differ reads as one empty path; it is not a file.
+            while IFS= read -r p; do [[ "$p" == "  ("* ]] || bad "      $p"; done < <(
+                bin_footprint_diff "$INSTALL_FOOTPRINT_BEFORE" "$INSTALL_FOOTPRINT_AFTER")
+            bad "  something wrote through to an installed tool, unit, rule or override."
+            bad "  On the laptop, compare with the checkout (bt-verify-install) before"
+            bad "  trusting this machine's next trial."
+        fi
+    fi
 }
 
 
@@ -797,6 +835,25 @@ bad()  { echo "  ✗ $*"; fail=$((fail + 1)); SUITE_AT="✗ $*"; }
 #   anything else: silent, exit 0
 #
 # A test that needs a machine in a particular state writes that stub itself.
+# results.tsv BY ITS HEADER (RT2, the review of 2026-10-19). No consumer may
+# address a column by position: the permuted-header checks hold every tool to
+# that, and this file now holds its own assertions to it too. With a column
+# inserted before field 8, twenty of them went red, nearly all naming the
+# wrong field.
+tsv_cells() {   # <file> <row: N | last | all> <column>... — the named cells, space-separated, a line per row
+    awk -F'\t' -v row="$2" -v names="${*:3}" '
+        function cells(   i, o) {
+            o = ""
+            for (i = 1; i <= n; i++) o = o (i > 1 ? " " : "") ((want[i] in col) ? $(col[want[i]]) : "?no-column:" want[i])
+            return o
+        }
+        NR == 1 { n = split(names, want, " "); for (i = 1; i <= NF; i++) col[$i] = i; next }
+        row == "all" { print cells(); next }
+        row == "last" { last = cells(); next }
+        NR == row + 0 { print cells(); exit }
+        END { if (row == "last" && NR > 1) print last }' "$1" 2>/dev/null
+}
+
 machine_stub() {   # <dir> <tool>... — quiet stubs for the named machine tools
     local d="$1" t; shift
     mkdir -p "$d"
@@ -2363,7 +2420,7 @@ trial_in "$LC/ev-rev" "$LC/state-rev" -- ok >/dev/null 2>&1
 trial_in "$LC/ev-rev" "$LC/state-rev" -- autostart stock >/dev/null 2>&1
 REV2=$(mrc two)
 trial_in "$LC/ev-rev" "$LC/state-rev" -- ok >/dev/null 2>&1
-REVS=$(awk -F'\t' 'NR > 1 { print $5 }' "$LC/ev-rev/evidence/trials/results.tsv" 2>/dev/null | tr '\n' ' ')
+REVS=$(tsv_cells "$LC/ev-rev/evidence/trials/results.tsv" all measurement_rev | tr '\n' ' ')
 [[ -n "$REV1" && "$REVS" == "$REV1 $REV1..$REV2 " ]] \
     && ok "a row records the tools' revision, and a range when they changed while the trial was open" \
     || bad "measurement_rev: want '$REV1 $REV1..$REV2', got '$REVS'"
@@ -2753,7 +2810,7 @@ unset BT_TRIAL_SCAN_BUDGET
 # that ran out of budget cannot certify that nothing touched the controller.
 # Nothing checked that column here, and a condition that scanned a partial read
 # as if it were whole passed (devtools/mutate, 2026-09-29).
-SLOWROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }' "$LC/slow/evidence/trials/results.tsv" 2>/dev/null)
+SLOWROW=$(tsv_cells "$LC/slow/evidence/trials/results.tsv" 2 bt1_status sco_sent timeouts perturbed)
 if [[ "$SLOWROW" == "confirmed ? 1 unknown" ]]; then
     ok "a journal too slow for the budget costs the descriptive counts and the window's certificate, never the row or the verdict"
 else
@@ -2786,7 +2843,7 @@ chmod +x "$LC/slowstop/bin/journalctl"
 trial_in "$LC/slowstop" "$LC/state-slowstop" PATH="$LC/slowstop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/slowstop" "$LC/state-slowstop" --timeout 4 PATH="$LC/slowstop/bin:$LC/bin:$PATH" \
     BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; ssrc=$?
-SSROW=$(awk -F'\t' 'NR == 2 { print $8, $13 }' "$LC/slowstop/evidence/trials/results.tsv" 2>/dev/null)
+SSROW=$(tsv_cells "$LC/slowstop/evidence/trials/results.tsv" 2 bt1_status timeouts)
 if (( ssrc == 0 )) && [[ "$SSROW" == "confirmed 1" ]]; then
     ok "autostop counts through the error-priority index: a slow full journal cannot hold shutdown past its timeout"
 else
@@ -2825,7 +2882,7 @@ chmod +x "$LC/inst/bin/logger" "$LC/inst/bin/bluetoothctl" "$LC/inststop/bin/jou
 trial_in "$LC/inststop" "$LC/state-inststop" PATH="$LC/inst/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/inststop" "$LC/state-inststop" --timeout 4 PATH="$LC/inststop/bin:$LC/inst/bin:$LC/bin:$PATH" \
     BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; isrc=$?
-ISROW=$(awk -F'\t' 'NR == 2 { print $8, $13 }' "$LC/inststop/evidence/trials/results.tsv" 2>/dev/null)
+ISROW=$(tsv_cells "$LC/inststop/evidence/trials/results.tsv" 2 bt1_status timeouts)
 [[ "$ISROW" == "confirmed 1" ]] \
     && ok "with bt-state and bt-mark installed, a slow journal still cannot cost the row: it is written before them" \
     || bad "close with the project's tools installed: rc=$isrc (124 = still running at 4 s), row (bt1_status timeouts)='$ISROW'"
@@ -2872,7 +2929,7 @@ chmod +x "$LC/nolist/bin/journalctl"
 trial_in "$LC/nolist" "$LC/state-nolist" PATH="$LC/nolist/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/nolist" "$LC/state-nolist" --timeout 4 PATH="$LC/nolist/bin:$LC/bin:$PATH" \
     BT_TRIAL_SCAN_BUDGET=1 -- autostop >/dev/null 2>&1; nlrc=$?
-NLROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/nolist/evidence/trials/results.tsv" 2>/dev/null)
+NLROW=$(tsv_cells "$LC/nolist/evidence/trials/results.tsv" 2 bt1_status enum_at_boot)
 if (( nlrc == 0 )) && [[ "$NLROW" == "confirmed ?" ]]; then
     ok "with no boot list the enumeration read is budgeted too: the row is written and enum_at_boot says '?'"
 else
@@ -2900,7 +2957,7 @@ chmod +x "$LC/enumfail/bin/journalctl"
 trial_in "$LC/enumfail" "$LC/state-enumfail" PATH="$LC/enumfail/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/enumfail" "$LC/state-enumfail" --timeout 4 PATH="$LC/enumfail/bin:$LC/bin:$PATH" \
     -- autostop >/dev/null 2>&1; efrc=$?
-EFROW=$(awk -F'\t' 'NR == 2 { print $8, $22 }' "$LC/enumfail/evidence/trials/results.tsv" 2>/dev/null)
+EFROW=$(tsv_cells "$LC/enumfail/evidence/trials/results.tsv" 2 bt1_status enum_at_boot)
 if (( efrc == 0 )) && [[ "$EFROW" == "confirmed ?" ]]; then
     ok "an enumeration read that fails for any reason says '?', not a 'no' it never measured"
 else
@@ -2935,7 +2992,7 @@ chmod +x "$LC/scostop/bin/journalctl" "$LC/scostop/bin/btmon"
 trial_in "$LC/scostop" "$LC/state-scostop" PATH="$LC/scostop/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/scostop" "$LC/state-scostop" --timeout 4 PATH="$LC/scostop/bin:$LC/bin:$PATH" \
     BT_CAPTURE_DIR="$LC/scostop/cap" BT_TRACE_DIR="$LC/scostop/trace" -- autostop >/dev/null 2>&1; scrc=$?
-SCROW=$(awk -F'\t' 'NR == 2 { print $8, $11 }' "$LC/scostop/evidence/trials/results.tsv" 2>/dev/null)
+SCROW=$(tsv_cells "$LC/scostop/evidence/trials/results.tsv" 2 bt1_status sco_sent)
 [[ "$SCROW" == "confirmed 1" ]] \
     && ok "a trial with a SCO setup and captures on disk: a slow btmon decode cannot cost the row" \
     || bad "close with a SCO setup and a slow btmon: rc=$scrc (124 = still decoding at 4 s), row (bt1_status sco_sent)='$SCROW'"
@@ -3014,7 +3071,7 @@ STUB
 chmod +x "$LC/nomatch/bin/journalctl"
 trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 NMOUT=$(trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok 2>&1); nmrc=$?
-NMROW=$(awk -F'\t' 'NR == 2 { print $8, $11, $13, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
+NMROW=$(tsv_cells "$LC/nomatch/evidence/trials/results.tsv" 2 bt1_status sco_sent timeouts perturbed)
 if [[ "$NMROW" == "not_observed 0 0 none" ]]; then
     ok "a filtered read that matched nothing is a clean window, not an unreadable journal"
 else
@@ -3035,7 +3092,7 @@ STUB
 rm -rf "$LC/nomatch/evidence" "$LC/state-nomatch"
 trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- autostart stock >/dev/null 2>&1
 trial_in "$LC/nomatch" "$LC/state-nomatch" PATH="$LC/nomatch/bin:$LC/bin:$PATH" -- ok >/dev/null 2>&1
-NMROW2=$(awk -F'\t' 'NR == 2 { print $8, $23 }' "$LC/nomatch/evidence/trials/results.tsv" 2>/dev/null)
+NMROW2=$(tsv_cells "$LC/nomatch/evidence/trials/results.tsv" 2 bt1_status perturbed)
 if [[ "$NMROW2" == "unknown unknown" ]]; then
     ok "exit 1 with a complaint on stderr is still an unreadable journal -> unknown"
 else
@@ -3467,6 +3524,45 @@ else
         bad "unbounded whole-boot kernel read outside bt_journal_count:"
         while IFS= read -r l; do bad "      $l"; done <<<"$KSCAN"
     fi
+fi
+
+# AND EVERY OTHER SPELLING OF IT (RT3, the review of 2026-10-19). The check
+# above names one spelling, `bt_journal -k -b 0`, so a read of another boot
+# (`-b "$b"`), of every unit, or through an array of arguments passed it:
+# eight of the review's findings sat under it, green. This one fails on any
+# journal read in the tools (tools/, bin/, install.sh, uninstall.sh) that names
+# a boot or an argument array and is bounded by none of --grep, -n, --since,
+# --until, -p or a `| head`, joined across continuation lines. Some such reads
+# are whole by design (an archive's export, a snapshot of a boot); which, is a
+# decision about each tool. tests/whole-boot-reads.txt lists every one found
+# on 2026-10-19 with its reason, or "pending" until it has one: a read not in
+# the list fails, and so does a listed read the tools no longer make.
+wb_scan() {   # one "<file><TAB><the read>" per unbounded journal read in the tools
+    local f
+    for f in "${SHFILES[@]}"; do
+        case "$f" in tools/*|bin/*|install.sh|uninstall.sh) ;; *) continue ;; esac
+        awk -v f="$f" '
+            { while (/\\$/ && (getline nxt) > 0) { sub(/\\$/, "", $0); $0 = $0 nxt } }
+            /^[[:space:]]*#/ { next }
+            !/(^|[^_[:alnum:]])(bt_journal|journalctl)([[:space:]]|$)/ { next }
+            /bt_journal_count/ { next }
+            !(/[[:space:]]-b([[:space:]]|$)/ || /--boot/ || /\$\{[A-Za-z_][A-Za-z0-9_]*\[@\]\}/) { next }
+            /--grep|[[:space:]]-g[[:space:]]|[[:space:]]-n[[:space:]0-9]|--lines|--since|[[:space:]]-S[[:space:]]|--until|[[:space:]]-U[[:space:]]|[[:space:]]-p[[:space:]]|--priority|--list-boots|\|[[:space:]]*head[[:space:]]/ { next }
+            { gsub(/^[[:space:]]+|[[:space:]]+$/, ""); gsub(/[[:space:]]+/, " "); print f "\t" $0 }' "$f"
+    done
+}
+WBFOUND=$(wb_scan | LC_ALL=C sort -u)
+WBLIST=$(grep -v '^#' tests/whole-boot-reads.txt 2>/dev/null | grep . | cut -f1,2 | LC_ALL=C sort -u)
+WBNEW=$(comm -23 <(printf '%s\n' "$WBFOUND") <(printf '%s\n' "$WBLIST") | grep .)
+WBGONE=$(comm -13 <(printf '%s\n' "$WBFOUND") <(printf '%s\n' "$WBLIST") | grep .)
+WBPEND=$(grep -v '^#' tests/whole-boot-reads.txt 2>/dev/null | cut -f3 | grep -c '^pending' || true)
+if [[ -z "$WBNEW" && -z "$WBGONE" ]]; then
+    ok "every unbounded journal read in the tools ($(grep -c . <<<"$WBFOUND" || true)) is listed in tests/whole-boot-reads.txt, $WBPEND still pending a reason or a fix"
+else
+    [[ -n "$WBNEW" ]] && { bad "unbounded journal read(s) in the tools, not in tests/whole-boot-reads.txt (bound it, or list it with its reason):"
+                           while IFS= read -r l; do bad "      $l"; done <<<"$WBNEW"; }
+    [[ -n "$WBGONE" ]] && { bad "listed in tests/whole-boot-reads.txt, no longer in the tools (remove the line):"
+                            while IFS= read -r l; do bad "      $l"; done <<<"$WBGONE"; }
 fi
 
 
@@ -4327,6 +4423,16 @@ WOUT=$(wd_run 10); wrc=$?
 [[ "$WOUT" == *"escalating to USB unbind/bind"* ]] \
     && ok "watchdog escalates when the controller stays dead after reset" \
     || bad "escalation path not taken"
+# Read HERE, before the next run writes the same files. That run (a failed
+# reset) is stopped the moment it logs its escalation, and the log line comes
+# before both writes, three seconds apart: a stop that took longer than that,
+# as under the access audit's trace, landed between the shell's truncating
+# open of bind and its write, and this check read '3-3'/'' (CI, 2026-10-19,
+# da6e22e; the audit named it).
+u=$(cat "$WD/drv/unbind" 2>/dev/null); bnd=$(cat "$WD/drv/bind" 2>/dev/null)
+[[ "$u" == "3-3" && "$bnd" == "3-3" ]] \
+    && ok "escalation unbinds and rebinds the right device (3-3)" \
+    || bad "unbind/bind wrote '$u'/'$bnd', expected 3-3"
 # And a reset that fails is logged as failed, and recovery goes on to the
 # next step rather than stopping there.
 touch "$WD/reset-fails" "$WD/dead-once"
@@ -4346,10 +4452,6 @@ grep -c 'systemctl stop bluetooth' "$WD/spy.log" >/dev/null \
     && grep -c 'systemctl start bluetooth' "$WD/spy.log" >/dev/null \
     && ok "spy log shows the bluetooth service stop/start pair" \
     || bad "spy log missing the systemctl pair"
-u=$(cat "$WD/drv/unbind" 2>/dev/null); bnd=$(cat "$WD/drv/bind" 2>/dev/null)
-[[ "$u" == "3-3" && "$bnd" == "3-3" ]] \
-    && ok "escalation unbinds and rebinds the right device (3-3)" \
-    || bad "unbind/bind wrote '$u'/'$bnd', expected 3-3"
 # The fixture ends; the reader terminating must be loud, never a silent respawn.
 (( wrc == 1 )) && [[ "$WOUT" == *"journal reader terminated unexpectedly"* ]] \
     && ok "watchdog exits loudly when the journal stream ends" \
@@ -6082,10 +6184,13 @@ rm -rf "$VR"
 # reading. It has three documented exit codes — 0 not present, 1 present,
 # 2 cannot determine — and none of the three had ever been executed.
 #
-# The distinction it draws is the substance of this project's claim: timeouts
-# WITHOUT resets is the bug (hdev->reset is NULL because the device is missing
-# from btusb's quirks table); timeouts WITH resets is a different problem that
-# this repository does not document. Telling a stranger they have this bug when
+# The distinction it draws is the substance of this project's claim about the
+# stock module, which is what a stranger runs: timeouts WITHOUT resets is the
+# bug (hdev->reset is NULL because the device is missing from btusb's quirks
+# table); timeouts WITH resets is a different problem that this repository does
+# not document. (Under the project's own module, E3, the reset is set, and a
+# BT-1 recurrence there shows timeouts WITH the kernel's reset (KR1); this tool
+# answers for a stock kernel, and the assertions below test that.) Telling a stranger they have this bug when
 # they do not is the worst thing this tool can do, so both sides are asserted,
 # and each fixture also carries the near-miss the counting must reject.
 DG=$(mktemp -d)
@@ -8090,6 +8195,83 @@ rm -rf "$JG"
 rm -rf "$EMPTYLIB" "$EMPTYDUMP"
 
 echo
+echo "scripts/trial-sco-decode.py — a trial window's SCO requests, at full width, both paths"
+echo "──────────────────────────────────────────────────────────────────────────────────────"
+# The decode the close could never make (T2/SW1): the kernel journal's setups,
+# opcode 0x0428 and the Enhanced 0x043d, matched against what each capture path
+# holds, decoded with `btmon --columns=200`. The operator ran it by hand on
+# 2026-10-18; nothing had run it here. journalctl and btmon are stubs: the
+# journal prints three setups, and btmon prints, through tests/btmon/render as
+# the real one does, the fixture this test maps to each capture file. The
+# capture path holds both setups' files; the trace path only the first, so its
+# Enhanced setup must be reported NOT FOUND, as an instrumentation finding.
+TSD=$(mktemp -d); mkdir -p "$TSD/stub" "$TSD/capture" "$TSD/trace"
+cat > "$TSD/stub/journalctl" <<TSDJ
+#!/bin/sh
+cat "$TSD/journal"
+TSDJ
+cat > "$TSD/stub/btmon" <<TSDB
+#!/bin/sh
+echo "\$*" >> "$TSD/btmon.args"
+for a in "\$@"; do f=\$a; done
+cat "\$(awk -v p="\$f" '\$1 == p { print \$2 }' "$TSD/map")" | "$BTMON_RENDER" "\$@"
+TSDB
+chmod +x "$TSD/stub"/*
+printf '%s\n' \
+    '2026-08-10T09:14:22.100000+00:00 host kernel: Bluetooth: hci0: hci0 opcode 0x0428 plen 17' \
+    '2026-08-10T09:18:05.499000+00:00 host kernel: Bluetooth: hci0: hci0 opcode 0x0428 plen 17' \
+    '2026-08-10T10:02:11.399000+00:00 host kernel: Bluetooth: hci0: hci0 opcode 0x043d plen 59' > "$TSD/journal"
+tsd_cap() {   # <path> <fixture> <mtime>
+    : > "$1"; touch -d "$3" "$1"; echo "$1 tests/btmon/$2.txt" >> "$TSD/map"
+}
+tsd_cap "$TSD/capture/20260810-090000.btsnoop" sco-paired   '2026-08-10 09:30:00 UTC'
+tsd_cap "$TSD/capture/20260810-093000.btsnoop" sco-enhanced '2026-08-10 10:30:00 UTC'
+tsd_cap "$TSD/trace/20260810-090000.btsnoop"   sco-paired   '2026-08-10 10:30:00 UTC'
+tsd() {   # <script> <start> <end>
+    env PATH="$TSD/stub:$PATH" TZ=UTC BT_CAPTURE_DIR="$TSD/capture" BT_TRACE_DIR="$TSD/trace" \
+        python3 -I "$1" "$(date -u -d "$2" +%s)" "$(date -u -d "$3" +%s)" 2>&1
+}
+TSDO=$(tsd scripts/trial-sco-decode.py '2026-08-10 09:00:00' '2026-08-10 10:30:00'); tsdrc=$?
+tsdsum=$(sed -n '/^===== summary/,$p' <<<"$TSDO")
+(( tsdrc == 0 )) && [[ "$TSDO" == *"# kernel setups in the window: 3"* \
+   && "$tsdsum" == *"09:14:22.100000  0x0428  capture: decoded  trace: decoded"* \
+   && "$tsdsum" == *"09:18:05.499000  0x0428  capture: decoded  trace: decoded"* \
+   && "$tsdsum" == *"10:02:11.399000  0x043d  capture: decoded  trace: NOT FOUND"* \
+   && "$tsdsum" == *"# capture: 3 setup command(s) decoded in the window"* \
+   && "$tsdsum" == *"# trace: 2 setup command(s) decoded in the window"* ]] \
+    && ok "trial-sco-decode matches each kernel setup, 0x0428 and 0x043d, against both paths, and names the one a path lacks" \
+    || bad "trial-sco-decode's summary (rc=$tsdrc): $(tr '\n' '|' <<<"$tsdsum")"
+[[ $(grep -c '^< HCI Command: Setup Synchronous Connection (0x01|0x0028)' <<<"$TSDO") == 4 \
+   && $(grep -c '^< HCI Command: Enhanced Setup Synchronous Connection (0x01|0x003d)' <<<"$TSDO") == 1 \
+   && $(grep -c '^> HCI Event: Command Status' <<<"$TSDO") == 3 \
+   && $(grep -c '^> HCI Event: Synchronous Connect Complete' <<<"$TSDO") == 5 \
+   && "$TSDO" != *"AA:BB:CC"* && "$TSDO" == *"        Address: <addr>"* && "$TSDO" != *"(Test Device)"* ]] \
+    && ok "trial-sco-decode keeps every setup, its Command Status and its completion whole, with addresses and names redacted" \
+    || bad "trial-sco-decode's blocks: $(grep -cE '^[<>] HCI' <<<"$TSDO") record(s), $(grep -c 'AA:BB:CC' <<<"$TSDO") address(es) left"
+[[ $(grep -c . "$TSD/btmon.args") == 3 && $(grep -vc -- '--columns=200' "$TSD/btmon.args") == 0 ]] \
+    && ok "trial-sco-decode decodes each chosen capture once, with btmon --columns=200" \
+    || bad "trial-sco-decode's btmon calls: $(tr '\n' '|' < "$TSD/btmon.args")"
+# THE WIDTH IS WHAT KEEPS THE RECORDS. The same script without --columns=200
+# meets btmon's 80 columns (`< HCI Command: Se.. (0x01|0x0028)`) and keeps
+# nothing: the check above can fail, and this is how the close failed.
+sed 's/"--columns=200", //' scripts/trial-sco-decode.py > "$TSD/narrow.py"
+TSDN=$(tsd "$TSD/narrow.py" '2026-08-10 09:00:00' '2026-08-10 10:30:00')
+[[ $(grep -c '"--columns=200"' "$TSD/narrow.py") == 0 && "$TSDN" == *"# capture: 0 setup command(s) decoded in the window"* ]] \
+    && ok "without --columns=200 the same decode keeps no setup: the width is what the check above depends on" \
+    || bad "the narrow decode: $(grep -E '^# (capture|trace):' <<<"$TSDN" | tr '\n' '|')"
+# THE WINDOW BOUNDS WHAT IS KEPT, not only which files are read: a setup in a
+# decoded file after the window's end is not the trial's.
+: > "$TSD/btmon.args"; : > "$TSD/map"; rm -f "$TSD/capture"/* "$TSD/trace"/*
+printf '%s\n' '2026-08-10T09:14:22.100000+00:00 host kernel: Bluetooth: hci0: hci0 opcode 0x0428 plen 17' > "$TSD/journal"
+tsd_cap "$TSD/capture/20260810-090000.btsnoop" sco-unanswered '2026-08-10 09:40:00 UTC'
+TSDW=$(tsd scripts/trial-sco-decode.py '2026-08-10 09:00:00' '2026-08-10 09:25:00')
+[[ "$TSDW" == *"09:14:22.101234"* && "$TSDW" != *"09:31:44"* && "$TSDW" == *"# capture: 1 setup command(s) decoded in the window"* \
+   && "$TSDW" == *"(no captures)"* ]] \
+    && ok "trial-sco-decode keeps only what lies inside the window, and says when a path holds no captures" \
+    || bad "trial-sco-decode's window: $(grep -E '^< HCI|^# (capture|trace)|no captures' <<<"$TSDW" | tr '\n' '|')"
+rm -rf "$TSD"
+
+echo
 echo "install.sh and uninstall.sh — the dry run is the contract"
 echo "──────────────────────────────────────────────────────────────"
 #
@@ -8866,7 +9048,7 @@ tl() {
     tools/bt-trial "$@" 2>&1
 }
 tl_row() { tail -1 "$TL/evidence/trials/results.tsv" 2>/dev/null; }
-tl_field() { tl_row | cut -f"$1"; }
+tl_field() { tsv_cells "$TL/evidence/trials/results.tsv" last "$1"; }   # by name (RT2)
 
 TLP=$(tl protocol); tlprc=$?
 (( tlprc == 0 )) && [[ "$TLP" == *"bt-trial start"* ]] \
@@ -8943,7 +9125,7 @@ tl step >/dev/null 2>&1
 TLA=$(tl abort); tlarc=$?
 TLAKEPT=$(ls -d "$TLDIR".aborted-* 2>/dev/null | head -1)
 (( tlarc == 0 )) && [[ ! -e "$TL/state/current" && ! -d "$TLDIR" && -n "$TLAKEPT" && -e "$TLAKEPT/ABORTED" ]] \
-    && [[ "$TLA" == *"directory kept"* ]] && [[ ! -s "$TL/evidence/trials/results.tsv" || "$(tl_field 9)" != "aborted" ]] \
+    && [[ "$TLA" == *"directory kept"* ]] && [[ ! -s "$TL/evidence/trials/results.tsv" || "$(tl_field trial_result)" != "aborted" ]] \
     && ok "abort keeps the trial directory (renamed, with an ABORTED marker) and writes no results row" \
     || bad "abort did not keep the directory (rc=$tlarc): kept='$TLAKEPT' $TLA"
 rm -rf "$TLAKEPT"
@@ -8990,35 +9172,35 @@ tl autostop >/dev/null 2>&1
 # NOT "survived": nothing asked the controller, so nothing measured liveness. A
 # controller that went silent without a logged timeout would have been recorded
 # alive (follow-up F1). The row says what the journal showed and no more.
-[[ "$(tl_field 9)" == "ended_unprobed" && "$(tl_field 8)" == "not_observed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+[[ "$(tl_field trial_result)" == "ended_unprobed" && "$(tl_field bt1_status)" == "not_observed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
     && ok "autostop with no timeout in the journal closes as ended_unprobed/not_observed and sends no HCI command" \
-    || bad "autostop: result '$(tl_field 9)'/'$(tl_field 8)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
+    || bad "autostop: result '$(tl_field trial_result)'/'$(tl_field bt1_status)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
 
 # A dead controller that logged no timeout must not read as alive either.
 touch "$TL/dead"
 tl autostart stock >/dev/null 2>&1; rm -f "$TL/hciconfig-calls"
 tl autostop >/dev/null 2>&1
-[[ "$(tl_field 9)" == "ended_unprobed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+[[ "$(tl_field trial_result)" == "ended_unprobed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
     && ok "autostop on a silent dead controller (no timeout logged) records ended_unprobed, not survived" \
-    || bad "a silent dead controller was recorded as '$(tl_field 9)'"
+    || bad "a silent dead controller was recorded as '$(tl_field trial_result)'"
 rm -f "$TL/dead"
 
 # An unreadable journal is `unknown` on the evidence axis and still unprobed.
 touch "$TL/journal-unreadable"
 tl autostart stock >/dev/null 2>&1; rm -f "$TL/hciconfig-calls"
 tl autostop >/dev/null 2>&1
-[[ "$(tl_field 8)" == "unknown" && "$(tl_field 9)" == "ended_unprobed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+[[ "$(tl_field bt1_status)" == "unknown" && "$(tl_field trial_result)" == "ended_unprobed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
     && ok "autostop with an unreadable journal records unknown/ended_unprobed and sends no HCI command" \
-    || bad "unreadable journal at autostop recorded '$(tl_field 8)'/'$(tl_field 9)'"
+    || bad "unreadable journal at autostop recorded '$(tl_field bt1_status)'/'$(tl_field trial_result)'"
 rm -f "$TL/journal-unreadable"
 
 # Opt-in means the value 1. BT_TRIAL_PROBE=0 probed until 2026-09-20 (follow-up F2).
 : > "$TL/kjournal"
 tl autostart stock >/dev/null 2>&1; rm -f "$TL/hciconfig-calls"
 BT_TRIAL_PROBE=0 tl autostop >/dev/null 2>&1
-[[ ! -e "$TL/hciconfig-calls" && "$(tl_field 9)" == "ended_unprobed" ]] \
+[[ ! -e "$TL/hciconfig-calls" && "$(tl_field trial_result)" == "ended_unprobed" ]] \
     && ok "BT_TRIAL_PROBE=0 is passive — a zero-valued opt-in does not probe" \
-    || bad "BT_TRIAL_PROBE=0 probed: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l) call(s), result '$(tl_field 9)'"
+    || bad "BT_TRIAL_PROBE=0 probed: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l) call(s), result '$(tl_field trial_result)'"
 
 printf 'Bluetooth: hci0: command 0x0406 tx timeout\n' > "$TL/kjournal"
 tl autostart stock >/dev/null 2>&1
@@ -9028,18 +9210,18 @@ tl autostop >/dev/null 2>&1
 # `failed` is the tool's word for it — the three trial_result values are
 # survived / failed / alive_after_intervention, and `hang` is the VERB that
 # produces the second.
-[[ "$(tl_field 9)" == "failed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
+[[ "$(tl_field trial_result)" == "failed" ]] && [[ ! -e "$TL/hciconfig-calls" ]] \
     && ok "autostop with a timeout in the journal closes through the hang path, still sending no command" \
-    || bad "autostop: result '$(tl_field 9)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
+    || bad "autostop: result '$(tl_field trial_result)', hciconfig calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
 
 # The probe survives as a DELIBERATE intervention only: BT_TRIAL_PROBE=1.
 : > "$TL/kjournal"
 tl autostart stock >/dev/null 2>&1
 rm -f "$TL/hciconfig-calls"
 BT_TRIAL_PROBE=1 tl autostop >/dev/null 2>&1
-[[ "$(tl_field 9)" == "failed" ]] && [[ -s "$TL/hciconfig-calls" ]] \
+[[ "$(tl_field trial_result)" == "failed" ]] && [[ -s "$TL/hciconfig-calls" ]] \
     && ok "BT_TRIAL_PROBE=1 restores the probing autostop, on purpose and visibly" \
-    || bad "BT_TRIAL_PROBE=1: result '$(tl_field 9)', calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
+    || bad "BT_TRIAL_PROBE=1: result '$(tl_field trial_result)', calls: $(cat "$TL/hciconfig-calls" 2>/dev/null | wc -l)"
 rm -f "$TL/dead" "$TL/hciconfig-calls"; : > "$TL/kjournal"
 
 # ── abort refuses to delete TRACKED evidence (BL-03, R2-64, DR-07) ───────
@@ -9072,7 +9254,7 @@ rm -rf "$TL/.git"
 tl autostart stock >/dev/null 2>&1
 rm -f "$TL/probes-on"                      # the treatment changes mid-trial
 tl ok >/dev/null 2>&1
-TLTR=$(tl_field 4)
+TLTR=$(tl_field treatment)
 [[ "$TLTR" == CHANGED:* && "$TLTR" == *"probes=on"* && "$TLTR" == *"probes=off"* ]] \
     && ok "a treatment that changed mid-trial is recorded as CHANGED, with both ends" \
     || bad "a mid-trial treatment change was recorded as an ordinary row: '$TLTR'"
@@ -9088,7 +9270,7 @@ cat > "$TL/kjournal" <<'TLJRN'
 TLJRN
 tl autostart stock >/dev/null 2>&1
 TLPOUT=$(tl ok)
-TLPR=$(tl_field 4)
+TLPR=$(tl_field treatment)
 [[ "$TLPR" == *"PERTURBED:btusb_reload"* ]] \
     && ok "a btusb reload inside the window makes the treatment unpoolable" \
     || bad "an interior perturbation left the row comparable: '$TLPR'"
@@ -11143,7 +11325,7 @@ cat > "$TL/kjournal" <<'TLSCO'
 TLSCO
 TLSCOLOG=$(wc -l < "$TL/bin/logger.log" 2>/dev/null || echo 0)
 tl_close_sco
-TLSCON=$(tl_field 6); TLSCODIR="$TL/evidence/trials/stock/trial-$(printf '%02d' "$TLSCON")"
+TLSCON=$(tl_field trial); TLSCODIR="$TL/evidence/trials/stock/trial-$(printf '%02d' "$TLSCON")"
 TLSCOCOL=$(head -1 "$TL/evidence/trials/results.tsv" | tr '\t' '\n' | grep -n '^sco_to_timeout_s$' | cut -d: -f1)
 TLSCO1=$(tl_row | cut -f"${TLSCOCOL:-1}")
 printf '2026-08-13T09:00:00.000000+0200 host kernel: Bluetooth: hci0 opcode 0x0428 plen 17\n' > "$TL/kjournal"
@@ -13766,13 +13948,32 @@ STAHEAD=$(st_run); stahrc=$?
 # report success. The tracking ref still exists here and still points at the
 # old head, which is exactly the stale state that once answered "all pushed".
 git -C "$ST/repo" remote set-url origin "$ST/no-such-remote.git"
-STNOREM=$(st_run)
+STNOREM=$(st_run); stnrc=$?
 [[ "$STNOREM" == *"could not reach origin — cannot confirm"* \
    && "$STNOREM" != *"pushed"*"=="* ]] \
     && ok "an unreachable remote is reported as unconfirmed, never as pushed" \
     || bad "an unreachable remote produced a pushed verdict from a stale ref"
+# AND THE VERDICT SAYS SO TOO (DS4, the review of 2026-10-19). The row said
+# "cannot confirm" and the summary below it "everything committed and pushed",
+# exit 0: the false all-clear this tool was written against, one line lower.
+# The check above excluded only the ✓ row, so it passed. Not confirmed is its
+# own exit status, 3, and its own last line.
+(( stnrc == 3 )) && [[ "$(tail -1 <<<"$STNOREM")" == *"push NOT confirmed"* \
+   && "$STNOREM" != *"everything committed and pushed"* ]] \
+    && ok "an unreachable remote ends 'push NOT confirmed', exit 3, never 'everything committed and pushed'" \
+    || bad "an unreachable remote's verdict (rc=$stnrc): $(tail -1 <<<"$STNOREM")"
 git -C "$ST/repo" remote set-url origin "$ST/remote.git"
 git -C "$ST/repo" push -q origin HEAD 2>/dev/null
+# A branch the remote never had is not an unreachable remote: ls-remote
+# answers, with nothing. It is unpushed work, and says which.
+git -C "$ST/repo" checkout -q -b never-pushed
+STNEW=$(st_run); stnwrc=$?
+(( stnwrc == 1 )) && [[ "$STNEW" == *"origin has no branch never-pushed"* && "$STNEW" != *"could not reach origin"* \
+   && "$(tail -1 <<<"$STNEW")" == *"NOT everything is committed and pushed"* ]] \
+    && ok "a branch origin never had is reported as not pushed (1), not as an unreachable remote" \
+    || bad "a never-pushed branch (rc=$stnwrc): $(grep -E 'remote|pushed' <<<"$STNEW" | tr '\n' '|')"
+git -C "$ST/repo" checkout -q -
+git -C "$ST/repo" branch -q -D never-pushed
 
 # The all-clear side of the machine section: nothing drifted, and the
 # controller is on the bus. Asserted because the drift row above is only
@@ -14257,8 +14458,9 @@ svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
 
 # ── a held kernel/* branch never reaches origin through repo-save ─────────
 #
-# A kernel finding travels with its patch (BRIEF §7); until the mail goes the
-# branch lives on the `private` remote only. This block is the one place in
+# Kernel findings are recorded on `main` as they are found (BRIEF §7, since
+# 2026-10-09); the held-branch machinery stays for work held back for other
+# reasons, and a kernel/* branch lives on the `private` remote only. This block is the one place in
 # the suite where repo-save is allowed to push — to two LOCAL bare
 # repositories standing in for origin and private, in the scratch tree.
 mkdir -p "$SCRATCH/held"; scratch_repo "$SCRATCH/held"
@@ -14503,6 +14705,14 @@ if [[ "$AAS" != *"strace is not installed"* && "$AAS" != *"cannot trace here"* &
     (( aafrc == 1 )) && [[ "$AAF" == *"the traced command FAILED (rc=7)"* ]] \
         && ok "access-audit fails when the traced command fails, whatever the accesses" \
         || bad "a failing command passed the audit (rc=$aafrc)"
+    # And it names the failing checks, from the run it traced: a red under the
+    # trace that the next run does not repeat can be named only there. On
+    # 2026-10-19 the audit said "FAILED: 1 of 1072" and nothing else.
+    AAX=$(devtools/access-audit -- sh -c 'echo "  ✓ a check that held"; echo "  ✗ a planted failing check"; echo "FAILED: 1 of 2"; exit 1' 2>&1); aaxrc=$?
+    (( aaxrc == 1 )) && [[ "$AAX" == *"its failing checks:"*"✗ a planted failing check"* ]] \
+       && [[ "$(sed -n '/its failing checks:/,$p' <<<"$AAX")" != *"a check that held"* ]] \
+        && ok "access-audit names the failing checks of a red traced run, and only those" \
+        || bad "access-audit on a red traced run (rc=$aaxrc): $(tail -4 <<<"$AAX" | tr '\n' '|')"
     rm -rf "$AAD"
 fi
 # THE CATALOG IS WHOLE, AND EVERY SEAM IN IT IS DECLARED. system-resources.md
@@ -14785,6 +14995,19 @@ else
     bad "$SELF0N uses of \$0 outside comments; a scan over \$0 stops covering the suite when it splits:"
     while IFS= read -r l; do bad "      $l"; done <<<"$SELF0"
 fi
+# AND NOT BY ITS LITERAL NAME EITHER (RT7, the review of 2026-10-19). The $0
+# counter above cannot see `grep … tests/run-tests`, and the contract-tag scan
+# near the end read the entry file so: after the split into parts it would
+# keep passing over only what had not moved. The parallel runner's two reads
+# of section boundaries are the only scans of the entry file by name.
+SELFN=$(grep -HnE '^[^#]*\b(grep|awk|sed)\b[^|#]*[[:space:]]"?tests/run-tests\b' "${SUITE_FILES[@]}")
+SELFNN=$(grep -c . <<<"$SELFN" || true)
+if (( ${SELFNN:-0} == 2 )); then
+    ok "no invariant scans the entry file by name — only the runner reads its section boundaries there"
+else
+    bad "$SELFNN scans of tests/run-tests by name (2 expected, the runner's); a scan of the entry file stops covering the suite when it splits:"
+    while IFS= read -r l; do bad "      $l"; done <<<"$SELFN"
+fi
 
 EXITT=$(grep -HnE '^[^#]*\btrap\b[^#]*\bEXIT\b' "${SUITE_FILES[@]}" | grep -v 'EXITT=')
 EXITN=$(grep -c . <<<"$EXITT" || true)
@@ -14878,7 +15101,9 @@ TWBAD=$(suite_cat | awk '{ l[NR] = $0 }
 # The contract tag may be set in ONE place. Anywhere else it would be a way to
 # walk a leak past devtools/sandbox labelled as a contract read.
 # (Bracketed patterns, so this line does not match itself.)
-CTAGS=$(grep -n 'BT_MACHINE_CONTRAC[T]=' tests/run-tests | grep -v '^[0-9]*:[[:space:]]*#' \
+# Over every suite file, as every scan here (RT7): read from the entry file by
+# name, it covered only what had not moved into a part.
+CTAGS=$(grep -Hn 'BT_MACHINE_CONTRAC[T]=' "${SUITE_FILES[@]}" | grep -vE ':[0-9]+:[[:space:]]*#' \
         | grep -vc 'CONTRAC[T]="[$]check" "[$]p" "[$]@"' || true)
 (( CTAGS == 0 )) \
     && ok "BT_MACHINE_CONTRACT is set only by real_tool — no test can pass a leak off as a contract read" \
