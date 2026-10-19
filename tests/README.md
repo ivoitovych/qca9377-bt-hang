@@ -130,6 +130,24 @@ the tests as **not asked**, never as passed. The proof was seen to fail: with it
 tmpfs over `/var/log` removed, the suite went red on exactly that check, and
 nothing ran inside.
 
+The **checkout world** does the same for tools that act on the checkout they
+live in: `devtools/held`, `devtools/save`, `devtools/review-open`. They switch
+branches, commit and push, so they run in place under `unshare -Urmn`. An
+overlay of the checkout is mounted over its own path, and a network namespace
+cuts it off. Every write lands in a throwaway layer, and every push reaches
+only scratch bare repositories. The world's proof:
+- a file and a commit made inside are there inside, absent outside;
+- HEAD, every ref and the status are unchanged outside;
+- the real origin is unreachable from inside.
+
+It was seen to fail both ways. Without the overlay, the proof commit landed in
+the checkout. Without the network namespace, origin answered. Each time the
+world went red and nothing ran in it. It sets its own git identity and accepts
+a shallow push, because CI's checkout has neither. It is built only where the
+checkout holds its own git directory: in a git worktree the overlay cannot hold
+the writes. Its tests are four sections (held; held sync; save; review-open),
+and each proves its own world before anything runs in it.
+
 **7. An instrument is measured too.** `devtools/awk-coverage` runs the suite,
 so the suite never ran it, and its counting was trusted unseen. `BT_SUITE` now
 points it at a toy suite whose right answer was worked out by hand. Measured
@@ -243,18 +261,22 @@ sees that setup and nothing else, whatever ran before it in the file.
   runs the suite in parallel in repo-validate and under every instrument, and
   serially in a job of its own, so both modes run on every push.
 
-Measured here on 4 cores: 97 s serially, 41 s in parallel; the work is
-processor-bound, and 33 s is the bound. With cores to spare the floor is the
-longest unit instead, and a parallel run names its three longest on its last
-line, with their times. A section that tops that line is the next to split, at a
-boundary where nothing below reads what was built above. On 2026-10-18 four
-sections were split that way (the watchdog section, about 25 tools in 3232
-lines, into six; the bt-trial lifecycle, the producer and bt-trace), and the
-longest unit went from about 27 s to 10 s. On 16 cores that predicts about 11 s
-(10 s for the longest unit and 0.9 s for a worker's setup; the processor bound
-there is 8 s). It is a prediction: no 16-core host has run it yet.
-Under the instruments, serial against parallel: bash coverage 120 s and 56 s,
-awk 162 s and 97 s, Python 119 s and 45 s, comprehensiveness 118 s and 53 s.
+Measured here on 4 cores (2026-10-19): 142 s serially, 59 s in parallel; the
+work is processor-bound. With cores to spare the floor is the longest unit
+instead, and a parallel run names its three longest on its last line, with their
+times. A section that tops that line is the next to split, at a boundary where
+nothing below reads what was built above. On 2026-10-18 four sections were split
+that way (the watchdog section, about 25 tools in 3232 lines, into six; the
+bt-trial lifecycle, the producer and bt-trace), and the longest of those units
+went from about 27 s to 10 s. On 2026-10-19 the checkout world, one section of
+about 40 s, became four, each proving its own world; the longest two are now
+held's and save's, about 20 s each, most of it repo-save validating and scanning
+the whole checkout inside the world. On 16 cores that predicts about 21 s (20 s
+for the longest unit and 0.9 s for a worker's setup; the processor bound there is
+about 9 s). It is a prediction: no 16-core host has run it yet.
+Under the instruments, serial against parallel (2026-10-18, before the access
+audit and the checkout world): bash coverage 120 s and 56 s, awk 162 s and 97 s,
+Python 119 s and 45 s, comprehensiveness 118 s and 53 s.
 
 ## Fixtures
 

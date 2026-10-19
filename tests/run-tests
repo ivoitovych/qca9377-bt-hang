@@ -837,6 +837,140 @@ stop_daemon() {   # <pid> — of a daemon started with "$SETSID"
     return 0
 }
 
+# ── THE CHECKOUT WORLD, SHARED BY ITS FOUR SECTIONS ───────────────────────
+#
+# devtools/held, devtools/save and devtools/review-open act on the checkout
+# they live in: they switch branches, commit, and push. No test could run them
+# where they are, and a copy elsewhere is a different file to coverage and a
+# different repository to git. So they run in place in a CHECKOUT WORLD:
+# `unshare -Urmn`, an overlay of this checkout mounted over its own path, so
+# every write — the index, objects, refs, the working tree — lands in a
+# throwaway upper layer, and a network namespace, so no push or fetch can leave
+# the machine. Remotes are scratch bare repositories named through GIT_CONFIG_*
+# for the length of one run.
+#
+# It is only worth its proof, as the namespace world is: before anything runs
+# in it, a marker file and a commit made inside must be there inside, absent
+# outside — HEAD, every ref and the working tree's status unchanged — and the
+# real origin unreachable from inside. A world that cannot be built is not
+# asked; one that builds and fails the proof is a red invariant, and nothing
+# runs in it. Each of the four sections proves its own world (co_prove), in
+# its own $COW, so each stands alone and they run in parallel.
+co_world() {   # <script> — run <script> at this checkout's own path, overlaid, offline
+    rm -rf "$COW/up" "$COW/wk"; mkdir -p "$COW/up" "$COW/wk"
+    unshare -Urmn bash -c '
+        mount -t overlay co-world -o lowerdir="$PWD",upperdir="$1",workdir="$2" "$PWD" || exit 97
+        cd "$PWD" || exit 97        # re-enter: the old directory handle is the lower layer
+        # An identity of its own, in the overlay'"'"'s .git/config: a fresh clone
+        # has none, and CI'"'"'s checkout is one (2026-10-08).
+        git config user.name "Checkout World"; git config user.email world@example.com
+        eval "$3"' co-world "$COW/up" "$COW/wk" "$1"
+}
+# --no-optional-locks: a plain `git status` refreshes the index's stat cache and
+# writes .git/index when the cache is stale, as it is in a fresh CI checkout.
+# The decoy world reported that write there (2026-10-08), from the one check
+# meant to prove the real checkout untouched.
+co_snapshot() { git rev-parse HEAD; git for-each-ref --format='%(refname) %(objectname)'; git --no-optional-locks status --porcelain; }
+# ONLY A CHECKOUT THAT HOLDS ITS OWN GIT DIRECTORY. The overlay covers this
+# directory and nothing else. In a git worktree `.git` is a file naming the
+# main repository's directory, so a world built there wrote through to it: run
+# from a worktree on 2026-10-18, the proof's commit landed in the shared
+# repository and the world's own `git config user.name/user.email` replaced the
+# shared .git/config identity, which every later commit would have carried. The
+# proof saw the moved refs and went red, after the writes. So both the git
+# directory and the common one must lie inside the checkout before anything
+# is built.
+co_git_inside() {   # <checkout> — 0 when its git directory and common directory are inside it
+    local top gd cd
+    top=$(cd "$1" 2>/dev/null && pwd -P) || return 1
+    gd=$(git -C "$1" rev-parse --absolute-git-dir 2>/dev/null) || return 1
+    cd=$(cd "$1" 2>/dev/null && cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd -P) || return 1
+    gd=$(cd "$gd" && pwd -P)
+    [[ "$gd/" == "$top/"* && "$cd/" == "$top/"* ]]
+}
+# The proof, in this section's $COW. Sets COWORLD_OK=1, or COWORLD_SKIPPED with
+# the reason, or reports the failed proof as red; and COBEFORE, the outside as
+# it was, which the section compares with the outside after its runs.
+co_prove() {
+    local mark="co-world-$SUITE_RUN_ID" proof rc
+    COWORLD_OK=0
+    if ! co_git_inside .; then
+        COWORLD_SKIPPED="the checkout world (this checkout's git directory lies outside it, as in a git worktree: the overlay cannot hold its writes)"
+        return
+    fi
+    if ! unshare -Urmn true 2>/dev/null; then
+        COWORLD_SKIPPED="the checkout world (no user, mount and network namespaces here)"
+        return
+    fi
+    COBEFORE=$(co_snapshot)
+    proof=$(co_world "
+        echo $mark > $mark.proof
+        git commit -q --allow-empty -m 'checkout world: proof' || exit 1
+        echo \"file=\$(cat $mark.proof) head=\$(git log -1 --format=%s)\"
+        # No way out: the world's network namespace has no interface but lo, and
+        # a connect to an address literal fails at once. Not \`git ls-remote
+        # origin\`: resolving the name reads the machine's /etc/resolv.conf and
+        # /etc/hosts first, as CI's access audit reported (2026-10-09).
+        ifs=\$(awk 'NR > 2 { sub(\":\", \"\", \$1); printf \"%s \", \$1 }' /proc/self/net/dev)
+        if [[ \"\$ifs\" == 'lo ' ]] && ! (exec 3<>/dev/tcp/192.0.2.1/9) 2>/dev/null; then echo net=none
+        else echo \"net=reached (interfaces: \$ifs)\"; fi
+    " 2>&1); rc=$?
+    if (( rc == 97 )); then
+        COWORLD_SKIPPED="the checkout world (an overlay of this checkout cannot be mounted here)"
+    elif [[ "$proof" == "file=$mark head=checkout world: proof"*"net=none" && ! -e "$mark.proof" \
+            && "$COBEFORE" == "$(co_snapshot)" ]]; then
+        ok "the checkout world proves itself: a commit and a file inside, neither outside, origin unreachable"
+        COWORLD_OK=1
+    else
+        bad "the checkout world did NOT prove itself — nothing was run in it: inside '$(tr '\n' ' ' <<<"$proof")'; outside $([[ -e "$mark.proof" ]] && echo 'the marker exists' || echo 'no marker'), $([[ "$COBEFORE" == "$(co_snapshot)" ]] && echo 'refs unchanged' || echo 'REFS OR STATUS CHANGED')"
+        rm -f "$mark.proof"
+    fi
+}
+# The world's scratch remotes and a held branch, as a script for co_world; and
+# a trial marked open, so repo-save takes its documented no-suite path rather
+# than running this suite inside itself.
+co_setup() {
+    mkdir -p "$COW/trial" "$COW/nohooks"; : > "$COW/trial/current"
+    # repo-save validates the unit files with the machine's systemd-analyze and
+    # udevadm: declared here, as everywhere in this suite.
+    machine_stub "$COW/bin" systemd-analyze udevadm
+    COSETUP="
+        B='$COW/bare'; rm -rf \"\$B\"; mkdir -p \"\$B\"
+        git init -q --bare \"\$B/origin.git\"; git init -q --bare \"\$B/private.git\"
+        # CI checks out at depth 1, and a bare repository refuses a push from a
+        # shallow clone unless told to take one.
+        git -C \"\$B/origin.git\" config receive.shallowUpdate true
+        git -C \"\$B/private.git\" config receive.shallowUpdate true
+        # The real URL, read BEFORE the rewrite exists: a key exported ahead of
+        # its value is an empty insteadOf, and that matches every URL.
+        ORIGIN_URL=\$(git remote get-url origin)
+        export GIT_CONFIG_COUNT=2 PATH='$COW/bin':\"\$PATH\"
+        export GIT_CONFIG_KEY_0=\"url.\$B/origin.git.insteadOf\" GIT_CONFIG_VALUE_0=\"\$ORIGIN_URL\"
+        # No hooks in here: hooks installed in this checkout would run at every
+        # commit and push the world makes, against the world's scratch remotes.
+        export GIT_CONFIG_KEY_1=core.hooksPath GIT_CONFIG_VALUE_1='$COW/nohooks'
+        # The private remote is a real one, in the overlay's .git/config: git
+        # pushes to a remote named only through GIT_CONFIG_*, but \`git remote
+        # get-url\` — repo-save's test for it — does not count one as existing.
+        git remote add private \"\$B/private.git\"
+        export BT_TRIAL_STATE_DIR='$COW/trial'
+        git add -A && git commit -q --allow-empty -m 'checkout world: the tree as it is'
+        git checkout -q -B main      # -B: the checkout may already be on main, as CI's is
+        git push -q origin main 2>/dev/null
+        git checkout -q -b kernel/mgmt-flush-status
+        printf 'held patch\n' > held-world.patch; git add held-world.patch; git commit -q -m 'held: a patch'
+        git checkout -q main
+    "
+}
+co_sect() {   # <name> <<<"<output>" — the lines after "== <name>", to the next "== "
+    awk -v s="== $1" '$0 == s { f = 1; next } /^== / { f = 0 } f'
+}
+co_untouched() {   # the outside after the section's runs, against COBEFORE
+    [[ "$COBEFORE" == "$(co_snapshot)" ]] \
+        && ok "the checkout world's runs left this checkout's HEAD, refs and status as they were" \
+        || bad "the checkout world changed this checkout — HEAD, refs or status differ"
+}
+
 # ── THE SYMLINK FARM, SHARED BY THE SECTIONS THAT NEED A TOOL ABSENT ─────
 #
 # A SYMLINK FARM OF /usr/bin MINUS THE TOOL, not /usr/bin ON THE PATH.
@@ -11522,6 +11656,208 @@ fi
 rm -rf "$UIT"
 
 echo
+echo "the checkout world — devtools/held: status, the origin check, edit, commit"
+echo "──────────────────────────────────────────────────────────────────────────"
+# PARALLEL: long — held commit goes through repo-save, which validates and
+# scans the whole checkout inside the world, so a parallel run starts it first.
+# The world itself is in the setup (co_world, co_prove); this section also
+# checks the guard that keeps it out of a git worktree.
+CGI=$(mktemp -d)
+git init -q "$CGI/main"; git -C "$CGI/main" -c user.name=t -c user.email=test@example.com commit -q --allow-empty -m base
+git -C "$CGI/main" -c user.name=t -c user.email=test@example.com worktree add -q "$CGI/wt" 2>/dev/null
+co_git_inside "$CGI/main" && ! co_git_inside "$CGI/wt" \
+    && ok "the checkout world is built only where the git directory lies inside the checkout (a worktree's does not)" \
+    || bad "co_git_inside: main=$(co_git_inside "$CGI/main" && echo inside || echo outside) worktree=$(co_git_inside "$CGI/wt" && echo inside || echo outside) (want inside, outside)"
+rm -rf "$CGI"
+COW=$(mktemp -d)
+co_prove
+if (( COWORLD_OK )); then
+    co_setup
+    COH=$(co_world "$COSETUP
+        echo '== status'; devtools/held status 2>&1; echo \"rc=\$?\"
+        git push -q origin kernel/mgmt-flush-status:refs/heads/kernel/leak 2>/dev/null
+        echo '== leak'; devtools/held status 2>&1; echo \"rc=\$?\"
+        git push -q origin :refs/heads/kernel/leak 2>/dev/null
+        echo '== edit'; devtools/held edit 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
+        printf 'edited\n' >> held-world.patch
+        printf 'held: an edit\n' > '$COW/held-msg'
+        echo '== commit'; devtools/held commit '$COW/held-msg' > '$COW/held-commit.out' 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
+        echo \"private-has-edit=\$(git --git-dir=\$B/private.git log --format=%s kernel/mgmt-flush-status 2>/dev/null | grep -c 'held: an edit')\"
+        echo \"origin-kernel-heads=\$(git --git-dir=\$B/origin.git for-each-ref refs/heads/kernel | grep -c .)\"
+        echo dirty >> BRIEF.md
+        echo '== dirty'; devtools/held edit 2>&1; echo \"rc=\$?\"
+        git checkout -q -- BRIEF.md
+        echo '== usage'; devtools/held frobnicate >/dev/null 2>&1; echo \"rc=\$?\"
+        # origin rewritten to a repository that does not exist: unreachable
+        # without a resolver lookup of the real name (the machine's /etc/hosts).
+        echo '== offline'; GIT_CONFIG_KEY_0=\"url.\$B/unreachable.git.insteadOf\" devtools/held status 2>&1; echo \"rc=\$?\"
+    " 2>&1)
+    [[ "$(co_sect status <<<"$COH")" == *"origin carries no kernel/* branch ✓"* \
+       && "$(co_sect status <<<"$COH")" == *"held branch is 1 commit(s) ahead of main, 0 behind"* \
+       && "$(co_sect status <<<"$COH")" == *"rc=0"* ]] \
+        && ok "held status: main and the held branch on every remote, origin clean, 1 ahead" \
+        || bad "held status: $(co_sect status <<<"$COH" | tr '\n' '|')"
+    [[ "$(co_sect leak <<<"$COH")" == *"✗ origin carries 1 kernel/* branch(es)"* && "$(co_sect leak <<<"$COH")" == *"rc=1"* ]] \
+        && ok "held status refuses when origin carries a kernel/* branch" \
+        || bad "held status with kernel/leak on origin: $(co_sect leak <<<"$COH" | tr '\n' '|')"
+    [[ "$(co_sect edit <<<"$COH")" == *"on kernel/mgmt-flush-status"* && "$(co_sect edit <<<"$COH")" == *"rc=0 branch=kernel/mgmt-flush-status"* ]] \
+        && ok "held edit switches to the held branch and says how to come back" \
+        || bad "held edit: $(co_sect edit <<<"$COH" | tr '\n' '|')"
+    [[ "$(co_sect commit <<<"$COH")" == *"rc=0 branch=main"* && "$COH" == *"private-has-edit=1"* && "$COH" == *"origin-kernel-heads=0"* ]] \
+        && ok "held commit goes through repo-save to private, never origin, and returns to main" \
+        || bad "held commit: $(co_sect commit <<<"$COH" | tr '\n' '|') $(grep -E '^(private-has-edit|origin-kernel-heads)=' <<<"$COH" | tr '\n' ' ') — repo-save said: $(tail -6 "$COW/held-commit.out" 2>/dev/null | tr '\n' '|')"
+    [[ "$(co_sect dirty <<<"$COH")" == *"working tree not clean"* && "$(co_sect dirty <<<"$COH")" == *"rc=1"* \
+       && "$(co_sect usage <<<"$COH")" == *"rc=2"* ]] \
+        && ok "held edit refuses a dirty tree, and an unknown verb prints usage (2)" \
+        || bad "held dirty/usage: $(co_sect dirty <<<"$COH" | tr '\n' '|') $(co_sect usage <<<"$COH" | tr '\n' '|')"
+    [[ "$(co_sect offline <<<"$COH")" == *"cannot reach origin"*"NOT checked"* && "$(co_sect offline <<<"$COH")" == *"rc=1"* \
+       && "$(co_sect offline <<<"$COH")" != *"no kernel/* branch ✓"* ]] \
+        && ok "held status with origin unreachable says the kernel/* check was not made, and fails" \
+        || bad "held status offline: $(co_sect offline <<<"$COH" | tr '\n' '|')"
+    co_untouched
+fi
+rm -rf "$COW"
+
+echo
+echo "the checkout world — devtools/held sync: main into the held branch"
+echo "──────────────────────────────────────────────────────────────────"
+# The held branch carries main forward by a merge, pushed to private only. The
+# exhibit index is generated, so both sides adding an exhibit conflict on it
+# every time; sync regenerates it from the merged exhibits instead of asking. A
+# conflict in anything else is the operator's, and sync must stop and name it.
+COW=$(mktemp -d)
+co_prove
+if (( COWORLD_OK )); then
+    co_setup
+    COY=$(co_world "$COSETUP
+        echo 'main moves' > main-world.txt; git add main-world.txt; git commit -q -m 'main: a change'
+        echo '== sync'; devtools/held sync 2>&1; echo \"rc=\$?\"
+        echo \"branch=\$(git branch --show-current)\"
+        echo \"private-has-main-change=\$(git --git-dir=\$B/private.git log --format=%s kernel/mgmt-flush-status 2>/dev/null | grep -c 'main: a change')\"
+        echo \"origin-kernel-heads=\$(git --git-dir=\$B/origin.git for-each-ref refs/heads/kernel | grep -c .)\"
+    " 2>&1)
+    [[ "$(co_sect sync <<<"$COY")" == *"rc=0"* && "$COY" == *"branch=main"* && "$COY" == *"private-has-main-change=1"* \
+       && "$COY" == *"origin-kernel-heads=0"* && "$(co_sect sync <<<"$COY")" == *"held branch is 2 commit(s) ahead of main, 0 behind"* ]] \
+        && ok "held sync merges main into the held branch, pushes it to private only, and returns to main" \
+        || bad "held sync: $(co_sect sync <<<"$COY" | tr '\n' '|') $(grep -E '^(branch|private-has-main-change|origin-kernel-heads)=' <<<"$COY" | tr '\n' ' ')"
+    COX=$(co_world "$COSETUP
+        exhibit() { printf '# EX-%s — %s\n\n**Claim.** %s.\n' \"\$1\" \"\$2\" \"\$2\" > evidence/exhibits/\$1-\$2.md
+                    tools/bt-exhibit index >/dev/null; git add evidence/exhibits; git commit -q -m \"exhibit \$1\"; }
+        git checkout -q kernel/mgmt-flush-status; exhibit 998 held-world; git checkout -q main; exhibit 997 main-world
+        echo '== index'; devtools/held sync 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
+        echo \"tip=\$(git log -1 --format=%s kernel/mgmt-flush-status)\"
+        echo \"index-rows=\$(git show kernel/mgmt-flush-status:evidence/exhibits/README.md | grep -cE '^\\| EX-99[78] ')\"
+        echo \"private-tip=\$(git --git-dir=\$B/private.git log -1 --format=%s kernel/mgmt-flush-status)\"
+        git checkout -q kernel/mgmt-flush-status; echo held-side >> held-world.patch; git commit -qam 'held: a side'
+        git checkout -q main; echo main-side >> held-world.patch; git add held-world.patch; git commit -qm 'main: a side'
+        echo '== conflict'; devtools/held sync 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
+        git merge --abort 2>/dev/null; git checkout -q main
+        echo dirty >> BRIEF.md
+        echo '== dirty-sync'; devtools/held sync 2>&1; echo \"rc=\$? branch=\$(git branch --show-current)\"
+    " 2>&1)
+    [[ "$(co_sect index <<<"$COX")" == *"rc=0 branch=main"* && "$COX" == *"tip=Merge main into kernel/mgmt-flush-status"* \
+       && "$COX" == *"index-rows=2"* && "$COX" == *"private-tip=Merge main into kernel/mgmt-flush-status"* ]] \
+        && ok "held sync regenerates a conflicted exhibit index from both sides' exhibits, commits the merge, pushes it to private" \
+        || bad "held sync over an index conflict: $(co_sect index <<<"$COX" | tr '\n' '|') $(grep -E '^(tip|index-rows|private-tip)=' <<<"$COX" | tr '\n' ' ')"
+    # Not the exit status alone: without its `exit 1`, sync goes on to a commit
+    # that fails and a checkout of main that fails, and exits 1 anyway — saying
+    # "could not return to main" instead of what to do (a surviving mutant).
+    [[ "$(co_sect conflict <<<"$COX")" == *"unresolved conflicts:"*"held-world.patch"*"resolve them, then: devtools/held commit"* \
+       && "$(co_sect conflict <<<"$COX")" == *"rc=1 branch=kernel/mgmt-flush-status"* \
+       && "$(co_sect conflict <<<"$COX")" != *"could not return to main"* ]] \
+        && ok "held sync stops on a conflict that is not the index, names the file, and leaves it on the held branch" \
+        || bad "held sync over a patch conflict: $(co_sect conflict <<<"$COX" | tr '\n' '|')"
+    [[ "$(co_sect dirty-sync <<<"$COX")" == *"working tree not clean"* && "$(co_sect dirty-sync <<<"$COX")" == *"rc=1 branch=main"* ]] \
+        && ok "held sync refuses a dirty tree before switching branches" \
+        || bad "held sync with a dirty tree: $(co_sect dirty-sync <<<"$COX" | tr '\n' '|')"
+    co_untouched
+fi
+rm -rf "$COW"
+
+echo
+echo "the checkout world — devtools/save: refusals, the hand-off warnings, a commit"
+echo "─────────────────────────────────────────────────────────────────────────────"
+# PARALLEL: long — most of it repo-save validating and scanning the whole
+# checkout inside the world, so a parallel run starts it first.
+COW=$(mktemp -d)
+co_prove
+if (( COWORLD_OK )); then
+    co_setup
+    # BRIEF's budget is read from devtools/save, not restated: it rose from 750
+    # to 1000 on 2026-10-11, and the restated number turned this check red.
+    # The world appends that many lines, so BRIEF is over budget whatever its
+    # own length.
+    SBUDGET=$(sed -n 's/^BRIEF_BUDGET=\([0-9][0-9]*\).*/\1/p' devtools/save)
+    printf 'save: a world commit\n' > "$COW/save-msg"; : > "$COW/save-empty"
+    COS=$(co_world "$COSETUP
+        echo '== noarg'; devtools/save >/dev/null 2>&1; echo \"rc=\$?\"
+        echo '== missing'; devtools/save '$COW/nope' 2>&1; echo \"rc=\$?\"
+        echo '== empty'; devtools/save '$COW/save-empty' 2>&1; echo \"rc=\$?\"
+        printf '# EX-999 — a world probe\n\n**Claim.** none.\n' > evidence/exhibits/999-world-probe.md
+        for i in \$(seq 1 ${SBUDGET:-0}); do echo \"line \$i\"; done >> BRIEF.md
+        echo world > save-world.txt
+        echo '== save'; devtools/save '$COW/save-msg' --no-push 2>&1; echo \"rc=\$?\"
+        echo \"head=\$(git log -1 --format=%s)\"
+        echo \"pushed=\$(git --git-dir=\$B/origin.git log --format=%s main 2>/dev/null | grep -c 'save: a world commit')\"
+    " 2>&1)
+    [[ "$(co_sect noarg <<<"$COS")" == *"rc=2"* && "$(co_sect missing <<<"$COS")" == *"cannot read message file"*"rc=2"* \
+       && "$(co_sect empty <<<"$COS")" == *"REFUSING"*"empty"*"rc=2"* ]] \
+        && ok "save refuses no message, an unreadable one and an empty one (2), before anything else" \
+        || bad "save refusals: $(co_sect noarg <<<"$COS" | tr '\n' '|') $(co_sect missing <<<"$COS" | tr '\n' '|') $(co_sect empty <<<"$COS" | tr '\n' '|')"
+    [[ "$(co_sect save <<<"$COS")" == *"BRIEF.md does not mention EX-999"* && "$(co_sect save <<<"$COS")" == *"docs/STATUS.md does not mention EX-999"* \
+       && -n "$SBUDGET" && "$(co_sect save <<<"$COS")" == *"over its ${SBUDGET}-line budget"* ]] \
+        && ok "save warns when BRIEF.md and docs/STATUS.md lag the newest exhibit, and when BRIEF.md is over budget" \
+        || bad "save warnings: $(co_sect save <<<"$COS" | grep -E '⚠|budget' | tr '\n' '|')"
+    [[ "$(co_sect save <<<"$COS")" == *"rc=0"* && "$COS" == *"head=save: a world commit"* && "$COS" == *"pushed=0"* ]] \
+        && ok "save --no-push commits through repo-save (no suite: a trial is open) and pushes nothing" \
+        || bad "save --no-push: $(co_sect save <<<"$COS" | tail -4 | tr '\n' '|') $(grep -E '^(head|pushed)=' <<<"$COS" | tr '\n' ' ')"
+    co_untouched
+fi
+rm -rf "$COW"
+
+echo
+echo "the checkout world — devtools/review-open, on a register written for it"
+echo "────────────────────────────────────────────────────────────────────────"
+# The real register changes with every review; this one holds each case the
+# tool decides: a prefix with a digit (R2), bold, a two-word closed status, a
+# status word nobody listed, and a row too short to have a status.
+COW=$(mktemp -d)
+co_prove
+if (( COWORLD_OK )); then
+    COR=$(co_world "
+        cat > reviews/README.md <<'REG'
+| ID | Item | Status |
+|---|---|---|
+| UT-01 | a test that runs | **done** |
+| UT-02 | a test not yet written | open |
+| R2-07 | a digit in the prefix | partial — half of it |
+| R2-08 | two words, closed | no action: by design |
+| TX-03 | a word nobody listed | deferred to the next review |
+| TX-04 too short to carry a status
+REG
+        echo '== open'; devtools/review-open; echo \"rc=\$?\"
+        echo '== all'; devtools/review-open --all; echo \"rc=\$?\"
+        echo '== counts'; devtools/review-open --counts; echo \"rc=\$?\"
+        echo '== bad'; devtools/review-open --al 2>&1; echo \"rc=\$?\"
+    " 2>&1)
+    [[ "$(co_sect open <<<"$COR")" == *"UT: 2 rows, 1 not closed"* && "$(co_sect open <<<"$COR")" == *"R2: 2 rows, 1 not closed"* \
+       && "$(co_sect open <<<"$COR")" == *"TX: 1 rows, 1 not closed"* && "$(co_sect open <<<"$COR")" == *"UT-02"* \
+       && "$(co_sect open <<<"$COR")" == *"R2-07"* && "$(co_sect open <<<"$COR")" == *"TX-03   deferred"* \
+       && "$(co_sect open <<<"$COR")" != *"UT-01"* && "$(co_sect open <<<"$COR")" != *"R2-08"* ]] \
+        && ok "review-open lists what is not closed — an R2 row, an unlisted status word — and not bold or two-word closures" \
+        || bad "review-open: $(co_sect open <<<"$COR" | tr '\n' '|')"
+    [[ $(grep -cE '^(UT|R2|TX)-[0-9]+ ' <<<"$(co_sect all <<<"$COR")") == 5 && "$(co_sect counts <<<"$COR")" == *"  no"* \
+       && "$(co_sect counts <<<"$COR")" == *"   1  done"* ]] \
+        && ok "review-open --all prints every row with a status, and --counts the words per register" \
+        || bad "review-open --all/--counts: $(co_sect all <<<"$COR" | tr '\n' '|') $(co_sect counts <<<"$COR" | tr '\n' '|')"
+    [[ "$(co_sect bad <<<"$COR")" == *"unknown option: --al"* && "$(co_sect bad <<<"$COR")" == *"rc=2"* ]] \
+        && ok "review-open refuses an unknown option instead of answering another question" \
+        || bad "review-open --al: $(co_sect bad <<<"$COR" | tr '\n' '|')"
+    co_untouched
+fi
+rm -rf "$COW"
+
+echo
 echo "install.sh / uninstall.sh — the APPLY path, for real, into a staging root"
 echo "─────────────────────────────────────────────────────────────────────────"
 #
@@ -14618,7 +14954,7 @@ fi
 # AT-SPI recorder is proven against a private accessibility bus, which needs
 # dbus-daemon and python3 with GObject; its shipped defaults run inside a user
 # and mount namespace, which some hosts refuse. Either way: not asked, said so.
-for _ns in "$UIATSPI_SKIPPED" "$UINS_SKIPPED" "$AWKCOV_SKIPPED" "$AUDIT_SKIPPED"; do
+for _ns in "$UIATSPI_SKIPPED" "$UINS_SKIPPED" "${COWORLD_SKIPPED:-}" "$AWKCOV_SKIPPED" "$AUDIT_SKIPPED"; do
     [[ -n "$_ns" ]] || continue
     echo "  NOT ASKED HERE: $_ns — not available on this host,"
     echo "                  so it was not run. Run this suite where it is."
