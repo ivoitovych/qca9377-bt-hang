@@ -1384,3 +1384,38 @@ scripts have never completed a run, so nothing has happened.
    every fixture that encodes a systemd or kernel message, and citing the kernel source for each
    kernel message the tools classify, turns the next such divergence into a test failure.
 
+---
+
+# Addendum — fourth pass (from 2026-10-19, after `98b3f32`)
+
+## 46. `tools/bt-ctrl-window`, `tools/bt-fault-window` (read in full)
+
+`bt-fault-window`:
+- anchors on the first timeout;
+- counts the alt-1 traffic instead of printing it;
+- refuses an empty window;
+- measures setup to fault from the answered `0x0428`.
+
+`bt-ctrl-window` decodes the management records `btmon` leaves as `Control Event: 0xffff`, which
+is the layer EX-044 needed.
+
+**CW1 — LOW-MED. `bt-ctrl-window`'s time window ignores the date.** It compares bare `HH:MM:SS`
+strings (`t >= from && t <= to`, line 50). A `bt-capture` file rotates at 64 MB and on a quiet
+system spans hours to days. A capture that crosses midnight, or spans several days, matches the same
+clock window on every day it covers. The output is described as fit to go "straight into an
+exhibit", so records from another day would be published as one window.
+*Fix:* accept full `YYYY-MM-DD HH:MM:SS` bounds (as `capture-window.sh` and `trial-sco-decode.py`
+do), or refuse when the capture's first and last records fall on different dates and only times
+were given.
+
+**CW2 — LOW. Its address filter knows only the colon form.** It drops lines with a colon-form
+address (52) and prints `= bluetoothd` lines (72). bluetoothd's monitor log lines carry device
+object paths in the underscore form (`dev_XX_XX_…`), which that filter does not catch. Run through
+`bt-exhibit`, the sanitiser handles them. Used alone, as the header invites, they go out raw.
+*Fix:* drop the underscore form too, or say "run through `bt-exhibit`".
+
+**FW1 — LOW. The anchor read can traverse the whole boot.** The anchor is found by reading the boot
+unfiltered and taking the first match (`bt_journal -k -b … | grep | head -1`, 76-77). On a long
+dynamic-debug boot with no timeout, that reads the whole boot before refusing. `bt_journal_first`
+exists for exactly this, with `--grep` (journal.sh 201), and `bt-window` uses it.
+
