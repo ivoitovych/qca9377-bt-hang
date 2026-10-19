@@ -1308,3 +1308,79 @@ these lines, which only masks the defect.
 `--since/--until`). Decode only the capture files that overlap that range, and drop records outside
 it before they reach the stream.
 
+## 44. `tools/bt-usbstate`, `tools/bt-boot-list` (read in full)
+
+`bt-usbstate` is sound:
+- sysfs reads only;
+- the device found by VID:PID, refusing when two devices match;
+- stage 2 and a configuration error kept apart;
+- the padded `bAlternateSetting` trimmed before comparing;
+- one timestamp for the screen and the saved copy.
+
+**BL1 — LOW-MED. When boot enumeration fails, `bt-boot-list` warns where nobody reads and returns
+success.** If every rung fails, it prints "WARNING: could not enumerate boots; assuming current boot
+only" to stderr and exits 0 with `0` (89-94). Its callers capture stdout and discard stderr
+(`bt-trial-audit` line 107, `bt-phase` line 115, `bt-diagnose`, `bt-health-report`). Each then
+analyses boot 0 alone, reporting on one boot as if it were the whole retained history. The header
+names exactly this as the failure the tool exists to prevent ("a caller that silently assumes more
+history than exists draws false conclusions").
+*Fix:* exit with a distinct status (e.g. 3) on that path and keep the `0` on stdout, so callers can
+refuse or label their output.
+
+## 45. `scripts/ci-local.sh` (first 110 of 743 lines, plus a search of it and its two siblings)
+
+The base-versus-patched classification (PASS / NEW / PRE-EXISTING / FIXED) is the right design: it
+tells our findings from upstream's, which is what the 2026-10-10 smatch episode needed.
+
+**CL1 — LOW. The header overstates its isolation.** It ends "nothing here talks to anything but the
+local trees" (67). `--fetch` runs `git fetch origin`, and the kernel path fetches stable tags from
+`git.kernel.org` (`STABLE_URL`, 95). Both are reads, and nothing is posted. Say "posts nothing; it
+fetches only with --fetch / --kernel".
+
+**CL2 — INFO, to verify before first use on the laptop.** `--functional` (and `functional-repeat.sh`)
+run BlueZ's `test/test-functional` through its pytest harness. The tooling index records that the
+harness needs a *host* kernel with `AF_ALG` because "the host-side `btvirt` creates no LE-capable
+controller without it". If `btvirt` runs on the host, it creates virtual controllers through
+`/dev/vhci` in the laptop's own kernel, where `bluetoothd` and the desktop will see and use them.
+That contradicts the project's practice of running BlueZ testers inside QEMU only. Neither script
+refuses on the investigation machine (no open-trial or device check; a search finds none). These
+scripts have never completed a run, so nothing has happened.
+*Fix:* establish where `btvirt` runs. If on the host, refuse on any machine that has
+`/run/bt-trial/current` or the 13d3:3503 device, as the system tests do.
+
+## Third-pass summary (after §35-§45)
+
+**Read so far:** about 15,500 of ~40,000 lines line by line, plus the pattern sweeps.
+
+**Not read line by line:**
+- `bt-postmortem`, `bt-context`, `bt-fault-window`, `bt-guards`, `bt-logvolume`, `bt-timeline.sh`,
+  `bt-boot-provenance`, `bt-boot-stats`, `bt-boots`, `bt-interval`, `bt-ctrl-window`;
+- `verify-restored.sh` (searched only);
+- the rest of `bt-capdiff`, `bt-health-report.sh`, `bt-ui-capture` and `ci-local.sh`;
+- the small awk libraries;
+- the `devtools/` measurement tools;
+- most upstream-workflow scripts;
+- `tests/run-tests` beyond its head.
+
+**Added to the ranked list by the third pass:**
+
+| id | severity | one line |
+|---|---|---|
+| KR1 | MED-HIGH (latent, E3's rate) | the kernel's own `Resetting usb device.` (E3's `hdev->reset`) is taken for a tool intervention: an E3 failure would be marked PERTURBED and dropped from every rate |
+| SC-1 | MED | `bt-sco` buffers a decode of every capture on the root filesystem; crossing the 15 GB floor makes the capture daemons delete captures |
+| AC1 | MED | `bt-actions` shows other boots' MGMT commands as operator actions in a boot's timeline |
+| PH1, T9, EH1 | MED (latent) | three probe counters cannot match systemd 255's `Finished <unit> - <description>.`; their fixtures use a shape systemd does not print |
+| KM1 | MED | `bt-verify-kernel-mechanism` reads only the stock module and still says 3503 is "not in upstream" |
+| SR1 | LOW-MED | `bt-verify-install` reports conditionally skipped files as missing (then VI1's `--apply` advice) |
+| SB2 | LOW-MED | the sandbox self-test writes to and deletes the real `README.md` if isolation is broken |
+| HR1, CD1, BL1 | LOW-MED | see their sections |
+| CL1, CL2, SR2, KM2 | LOW / INFO | see their sections |
+
+**The third pass adds a third pattern to the two in the second-pass summary:**
+3. **Fixtures that encode an assumption instead of the machine.** PH1 and T9 pass their tests on a
+   journal line systemd does not write. KR1's misattribution sits in a comment that every reset
+   pattern was built on, and the kernel source says otherwise. The suite already has
+   `devtools/journal-contract` to compare fixtures with real `journalctl` output. Extending it to
+   every fixture that encodes a systemd or kernel message, and citing the kernel source for each
+   kernel message the tools classify, turns the next such divergence into a test failure.
+
