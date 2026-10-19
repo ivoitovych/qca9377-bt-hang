@@ -1029,3 +1029,31 @@ actions, deletions, pushes and the `btmon` width defect.
    never reload btusb live (UN1, RM1), never push private families to `origin` (RS1). The tools
    already refuse in many places; these are the places they still do not.
 
+---
+
+# Addendum — third pass (from 2026-10-19, after `a77a11c`)
+
+## 35. `devtools/sandbox` (first 320 of 631 lines)
+
+The decoy world gives the suite strong isolation:
+- fresh user, pid, mount, net and UTS namespaces;
+- every real tree under a throwaway overlay, with `/` read-only;
+- every machine tool replaced by a decoy that logs its calls;
+- decoy `/sys`, `/proc`, `/run`, `/var/log`;
+- a per-run marker that turns a silent leak into a visible one.
+
+Its four detectors (CALL, DATA, READ, WRITE) watch the world rather than a process, so parallel
+workers are covered. It refuses with exit 3 ("NOTHING WAS MEASURED") rather than passing where
+namespaces are unavailable, and `--self-test` proves each detector on planted leaks.
+
+**SB1 — INFO. On the laptop the suite has only one layer of isolation.** The sandbox cannot run
+there (AppArmor's namespace restriction; exit 3 by design), so the suite's PATH tripwire is the
+only isolation layer on the one machine where a leak would cost evidence. That is stated in the
+header and in `tests/run-tests`. Together with the open-trial refusal, the suite never runs on the
+laptop while a trial is open, which is always. Worth keeping in mind whenever someone sets
+`BT_ALLOW_OPEN_TRIAL=1` there: the override exists for a stale state file after a crash, and it
+removes the stronger of the two remaining guards.
+
+No defects in the part read. The remaining 311 lines (decoy staging, judging, `--self-test`) are not
+yet read.
+
