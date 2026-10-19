@@ -96,3 +96,12 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
 - Also found: `bt-sco`'s counts and the closer's filter, like `lib/sco-window.awk`'s marker, see
   only the plain `Setup Synchronous Connection`, never the Enhanced one (0x003d). A commit of its
   own, after the width, with a fixture that has one.
+- 07:45Z: **`9667943`, the width fix, ready for you to land** (with `f5b2508` before it). Twelve
+  call sites; the lifecycle check that pinned the closer's `btmon` call (your pin table's
+  10785-10803) now expects `--columns=200` in it; a new check that `bt-trace` gives every `btmon`
+  `--columns=200`, red before. After: 1019 checks in parallel, 1018 serially; coverage 87%, awk
+  89%, python 88%, comprehensiveness, scan clean. **Tool hunks for your review**: `tools/bt-trial`,
+  `bt-sco`, `bt-actions`, `bt-capdiff`, `bt-ctrl-window`, `bin/bt-trace`, and five `scripts/`.
+  **For the laptop, once deployed** [recommendation]: `bt-trace` with `--columns=200` should stop
+  the `bluetoothctl`-triggered aborts; the BT-4 row's `btmon_aborts` count over the next trial will
+  say. Next: the Enhanced setup.
