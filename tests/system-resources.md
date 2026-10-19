@@ -35,7 +35,7 @@ not report the line as stale.
 | **the run's own host state** | `HOME`, `XDG_CONFIG_HOME`, git's configuration, system attributes, Python's user site, `TMPDIR`, the trial state (§3) | the access audit |
 | **the namespace world** (`unshare -Urm`, tmpfs) | `bt-ui-capture`'s shipped defaults, which no seam may replace | its self-proof (tests/README.md, rule 6) |
 | **the checkout world** (`unshare -Urmn`, overlay) | the checkout, its branches and remotes, and the network, for the tools that commit and push | its self-proof |
-| **end-of-run checks** | the evidence tree, the real trial state, tracked files, `/usr/bin`, orphaned processes | themselves, by snapshot before and after |
+| **end-of-run checks** | the evidence tree, the real trial state, tracked files, `/usr/bin`, the files the project installs (uninstall.sh's list, by stat), orphaned processes | themselves, by snapshot before and after |
 
 ## 1. Paths: every seam whose default is on the machine
 

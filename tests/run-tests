@@ -646,6 +646,25 @@ bin_footprint_diff() {   # <before> <after> — names what changed, and how
 BIN_FOOTPRINT_BEFORE=$(real_bin_footprint)
 BIN_COUNT_BEFORE=$(grep -c . <<<"$BIN_FOOTPRINT_BEFORE" || true)
 
+# ── AND THE PROJECT'S INSTALL TARGETS (RT4, the review of 2026-10-19) ────
+#
+# The footprint above watches the system's binaries. The 2026-08-14 escape
+# acted through an INSTALLED tool, and a test that wrote through to one, or to
+# a unit, a udev rule or the modprobe override, changed nothing it sees. On the
+# laptop those files are the project's own install. These are the files
+# uninstall.sh removes (its FILES list, which an invariant keeps equal to
+# install.sh's destinations), each with the siblings bt-mode and the installer
+# make: size, mtime, ctime and inode wherever one exists. Named files rather
+# than a scan of their directories: each read is one the access audit sees and
+# the allow list names.
+INSTALL_TARGETS=()
+while IFS= read -r _p; do INSTALL_TARGETS+=("$_p" "$_p.disabled" "$_p.pre-qca9377-bt-hang")
+done < <(sed -n '/^FILES=(/,/^)/p' uninstall.sh | grep -oE '/[a-zA-Z0-9._/-]+')
+real_install_footprint() {
+    stat --printf '%n\t%s\t%.9Y\t%.9Z\t%i\n' "${INSTALL_TARGETS[@]}" 2>/dev/null | LC_ALL=C sort
+}
+INSTALL_FOOTPRINT_BEFORE=$(real_install_footprint)
+
 # ── AND THE REPOSITORY'S OWN TRACKED FILES, WHICH NOTHING WATCHED ────────
 #
 # Asked for by the main branch maintainer (comms/2026-08-22T1000Z §3), after an
@@ -772,6 +791,25 @@ final_resource_report() {
             bad "  something wrote THROUGH a symlink farm, or replaced a real tool."
             bad "  Restore from the owning package before running anything else:"
             bad "    dpkg -S <path>  then  apt-get install --reinstall <package>"
+        fi
+    fi
+    # The install targets, named one by one (above). Fewer than one per file
+    # uninstall.sh lists means the list was not derived, and nothing was watched.
+    if (( ${#INSTALL_TARGETS[@]} < 180 )); then
+        bad "could not derive the project's install targets from uninstall.sh (${#INSTALL_TARGETS[@]} paths) — they were not watched"
+    else
+        INSTALL_FOOTPRINT_AFTER=$(real_install_footprint)
+        if [[ "$INSTALL_FOOTPRINT_AFTER" == "$INSTALL_FOOTPRINT_BEFORE" ]]; then
+            ok "no file the project installs changed while the suite ran ($(( ${#INSTALL_TARGETS[@]} / 3 )) targets and their siblings, $(grep -c . <<<"$INSTALL_FOOTPRINT_BEFORE" || true) present here)"
+        else
+            bad "the test run CHANGED files where install.sh installs:"
+            # A machine with none of them installed has an empty footprint, which
+            # the differ reads as one empty path; it is not a file.
+            while IFS= read -r p; do [[ "$p" == "  ("* ]] || bad "      $p"; done < <(
+                bin_footprint_diff "$INSTALL_FOOTPRINT_BEFORE" "$INSTALL_FOOTPRINT_AFTER")
+            bad "  something wrote through to an installed tool, unit, rule or override."
+            bad "  On the laptop, compare with the checkout (bt-verify-install) before"
+            bad "  trusting this machine's next trial."
         fi
     fi
 }
