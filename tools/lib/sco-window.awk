@@ -21,7 +21,7 @@ function ts(line) {
     return iso_secs(substr(line, RSTART, RLENGTH))
 }
 NR == FNR {
-    if ($0 ~ /HCI Command: Setup Synchronous Connection/) {
+    if ($0 ~ /HCI Command: (Enhanced )?Setup Synchronous Connection/) {   # 0x0028 or 0x003d
         t = ts($0); if (t >= 0) marks[++m] = t
     }
     next
