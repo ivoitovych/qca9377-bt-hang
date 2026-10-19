@@ -1878,3 +1878,63 @@ read.
 has no column. Add `K-RESET` with KR1's fix. Sibling order (the checkout's `bt-boot-list` before
 `/usr/local/bin`) is right here, unlike BS-3.
 
+## 61. `tools/bt-env-history` (128 lines, read in full; EH1 in §37)
+
+The method is right: every column comes from what the machine recorded at the time, and what cannot
+be recovered is printed `?`, never guessed.
+
+**EH2 — MED. The treatment that fixed BT-1 has no column.** The tool exists so that "34 boots, 287
+timeouts" is not read as one system, and its footer says "Rows differing in any column are
+DIFFERENT EXPERIMENTS". But it records only the mitigations: watchdog, autosuspend, power control,
+probes. Which btusb ran is not recorded:
+- stock (ROM firmware);
+- E1;
+- E3.
+
+That is the treatment that ended the failures (74 links, 0 timeouts). Today a stock-driver boot and
+an E3 boot, both with the watchdog off and no probes, print identical rows, and the footer reads
+that as "the same experiment". So the tool invites the cross-treatment denominator it was written
+to prevent.
+*Fix:* add a FIRMWARE column from the boot's own kernel log: `using rampatch file:` and
+`QCA: patch rome …` (`btusb.c` 3536 and 3549 in the `-38` source) are positive evidence that the
+QCA setup ran. E1 and E3 both load it; to tell them apart, take `build` from the trial row of that
+boot. The kernel release (from the `Linux version` banner, as `bt-boots` does) belongs beside it.
+
+**EH3 — LOW-MED. A boot whose start has rotated away reads as "watchdog off".** `wd=off` is decided
+by the absence of the startup banner (64), and the header says "No banner at all means it was not
+running". The banner is logged at the start of the boot, which is exactly what journald discards
+first from a long boot (BJ1). Such a boot, and also one whose watchdog read failed (stderr is
+discarded), is shown as `off`, a confident claim in a column the header promises shows `?` when
+unknown.
+*Fix:* treat any watchdog line in the boot as proof it ran (state unknown without the banner). Print
+`?` when the boot's first retained entry is not its start (the `Linux version` banner missing) or
+when the read fails.
+
+**EH4 — INFO.** The AUTOSUSP and POWER sets are joined with `for (k in a)` (89-90), so a boot with
+both values prints `Y/N` or `N/Y` depending on the awk (L2).
+
+## 62. `tools/bt-diagnose` (196 lines, read in full; the probe was noted in §31)
+
+The probe is opt-in, the verdict says plainly that aggregate counts establish no cause, and the
+firmware patterns (`using rampatch`, `nvm_usb`) match the strings in `btusb.c` (3536, 3595).
+
+**DG1 — LOW-MED. The public entry point does not tell a 13d3:3503 owner that the fix exists, and
+sends them to a tool that says it does not.** This is "the tool people clone the repo to run". For
+`13d3:3503` with the phenotype, it ends by sending the reader to `bt-verify-kernel-mechanism`, which
+prints `13d3:3503 ABSENT … not in upstream` (KM1). The cause is settled (BT-1): a kernel without
+`dc16388d45ec` runs the ROM firmware. The useful answer for that reader is:
+- run `scripts/btusb-has-device.py` on the running kernel's btusb;
+- if ABSENT, a kernel carrying `dc16388d45ec` fixes it (in 7.2.10, 6.18.56 and 6.12.113).
+
+*Fix:* print that for `13d3:3503`, and fix KM1 before pointing anyone at that tool.
+
+**DG2 — LOW-MED. Four whole-boot reads per boot, all unchecked.** For each retained boot, line 157
+reads the whole kernel log to `/dev/null` only to see that it exists. Lines 163-165 then read it
+three more times, unfiltered, each with `|| true`. On a stranger's machine that is quick. On the
+laptop it is hours, and a read that fails after the existence check adds `0` to every count.
+*Fix:* one `--grep` read per boot with the union of the three patterns, counted in awk; skip the
+existence read (`--list-boots` already says the boot exists); count failed reads and print them.
+
+**DG3 — LOW.** With two controllers attached, the VID:PID advice uses whichever enumerated first
+(`DEVS[0]`, 115). Loop the advice over `DEVS`.
+
