@@ -499,9 +499,103 @@ finding myself; I take it as you measured it (`--columns=200`: 4 setups and 4 co
 
 ## §10. `main` since `91ce9b2`, against my branches *(in progress)*
 
+### 10.1 What changed [verified: `git diff --stat 91ce9b2 253ff64`]
+
+36 commits, all under `reviews/`, no code: `reviews/review-comprehensive-code-review-20261019-014718.md`
+(3197 lines, six passes, sections 1-86, with a consolidated ranked list) and three plans of
+2026-10-19 04:57:58: `project-completion-plan`, `review-reaction-plan`,
+`test-suite-synchronization-plan`. So nothing on `main` conflicts with my branches' code; what
+follows is about what the review and the plans ask of the test-suite side.
+
+### 10.2 Conflicts and differences [verified, 2026-10-19 after `git fetch`]
+
+- `git merge-tree --write-tree`, each exit 0, no conflict list: `main` (`253ff64`) into the ready
+  line → `f20242b`; `main` into the working branch → `c0b9d92`; the ready line (with this note)
+  into the working branch → `cada859`.
+- `git diff --stat origin/main <ready line> -- tests devtools .github` → the four files of
+  `cf9b304`. **`tests/run-tests` is byte-identical on `main` and the ready line**, so the review's
+  line numbers (taken at `803c142`) are my line numbers today.
+- The working branch's difference from `main` is §2.7 (42 files by the plan's count) and six
+  notes of mine `main` never received (10.6).
+
+### 10.3 What the review and the plans ask of me, and whether anything of mine changes
+
+**Nothing of mine needs to be undone.** [verified by reading §84-§85 and the plans] The review
+calls the harness the strongest code in the repository, and names no defect in the parallel
+runner, the instruments' parallel mode, the CI layout or the section splits. Its findings in the
+suite are small and mine to fix: RT1 (the header's stale "9,700 lines"), RT2 (eight producer
+assertions and `tl_field` read `results.tsv` by field number), RT3 (the whole-boot-read
+invariant checks one spelling), RT4 (the run-wide footprint does not watch the install
+targets), RT5 (line 5799 counts a skip as a pass), RT6 (a stock-era comment), RT7 (line 14022
+scans the entry file by name; fix before UT-12), UD1 (the uninstall dry run plans against the
+real machine), DS4 (`devtools/status` "cannot confirm" is a pass, and test 13193-13202 lets it).
+
+The reaction plan's **phase 1, before the deploy**, gives me four: CK1 (`devtools/check`
+`--no-suite` while a trial is open), the second reload guard (test-first), T2/SW1 (the
+`--columns` fix with a shortening stub; my §8.1), SU1 (the rehearsal catches I2, VI1, MODE2).
+Later phases: PV1, RT3, JC1, IN1/AWC1, DS4, RT1-RT7, UD1, the three cross-cutting invariants, and
+the tests of your pinned fixes (KR1, MODE1, UN1, UN2, CAP1, BJ1, AJ1, PM1, BL1, PH1/T9/EH1, KM1,
+EV2, SN1, CD2).
+
+**Two things to agree before either of us starts**, so the work is not done twice:
+- **T2/SW1**: the stub and the seven call sites must change in one commit (the stub alone turns
+  the suite red; the call sites alone leave the stub lying). [recommendation: I write both on the
+  ready line, test-first, as with `299a0b3`'s change to `bt-trial`, and you land them by
+  cherry-pick. Say if you would rather write the tool side.]
+- **The reload guard**: the same pattern; I would write the red check and the guard together.
+
+**Integration notes for anyone fixing these** [verified, from the runner's code]:
+- A new `*_SKIPPED` note (RT5) must be named in the last section, the report, as the others are:
+  the parent pre-declares the names it finds there, and the report prints only those.
+- A new footprint (RT4) goes in the setup's snapshot block; the parent takes it once and the
+  report compares it once. Workers run the setup too, but do not report.
+- A new shared fixture goes in the setup or a setup function (`lc_machine` is the model), never
+  in one section read by another (rule 7); a parallel run will say so if it is.
+- The pinned tests' line numbers move with every edit; quote the test's text, as the plan says.
+
+### 10.4 The synchronization I propose, and why [recommendation]
+
+1. **Merge `main` into the ready line**, as a merge: conflict-free (10.2), and the plan's step 1.
+   Then CI, then fast-forward the ready branch to that tip (it will contain `main`).
+2. **Merge the ready line into the working branch**, as a merge: conflict-free.
+3. **No rebase, no force-push.** The ready line's commits are the ones you cherry-pick from and
+   cite in notes; rewriting them would break those references (the plan's rule 1, and mine).
+4. **For you: land `cf9b304` and this note by cherry-pick**, and the six older notes (10.6).
+5. **Offer the working branch's finished parts on the ready line, the access audit first** (§9
+   item 3), as a series of its own with its gates, after the operator's word. Expect
+   `tests/run-tests` to need hand merging there (794 lines on the working branch since the split).
+6. **Afterwards, as the plan says**: merge `main` into both branches after every landing.
+
+Operations 1 and 2 are merges of the kind both lines have used since 10-13; I will perform them
+after this section is pushed, and record the result in §11. Nothing else in this list will be
+done without a word from you or the operator.
+
+### 10.5 BRIEF §9 item 2: the six tasks delegated to this side [verified where marked]
+
+| task | state | evidence |
+|---|---|---|
+| source review | **done**, in August | `comms/2026-08-22T1106Z…` (the `new_alts` selection read in the driver, by kernel version), `comms/2026-08-24T0330Z…`, `reviews/2026-08-17T0022Z-source-investigation-…` [verified: the files exist] |
+| instrumented `btusb` logging of the chosen `new_alts` | **not done**; [hypothesis] overtaken by E1/E3 and the upstream entry (`dc16388d45ec`), which settled the cause | proposed in `comms/2026-08-23T0930Z…`; no commit does it [verified: `git log --grep new_alts` is empty] |
+| bug-report audit | **moot** | BRIEF §9 item 1: closed 10-03, `docs/bug-report.md` labelled historical |
+| `BL-09` | **done** | `tests/run-tests`: "BL-09: a DECLARED window beats the scan, and says it did" and "BL-09: a window derived from timestamped output" (9 mentions) [verified] |
+| `bt-crash` tests | **done** | the section "bt-crash, and the coredump fixture it reads"; review §85 lists it among the strongest tests [verified] |
+| device survey | **no record** | nothing in `git log`, `comms/`, `reviews/` or `docs/` [verified]; still wanted? |
+
+[recommendation] BRIEF §9 item 2 can say: four done or moot, the `new_alts` logging dropped
+unless KR1's evaluation needs it, the device survey open or dropped by your word.
+
+### 10.6 The six notes only the working branch has [verified]
+
+`2026-10-08T1828Z`, `2026-10-09T0355Z`, `0628Z`, `2048Z`, `2026-10-10T0421Z`, `2026-10-16T1528Z`:
+all addressed to you, **all meant for `main`**. Three describe states since overtaken: `0355Z`
+(what merging the working branch would bring, with that day's numbers), `2048Z` (the branch
+reordered into a ready part) and `0421Z` (a rebase onto `55bcb80`). Land them as the record; the
+current state is this note.
+
 ## §11. Log of this handoff
 
 - 05:04Z: file created; §1 complete.
 - §2 complete: the suite's structure, isolation layers, parallel runner, numbers, the working branch's extra commits.
 - §3 and §4 complete: CI's jobs, why seven runs, the instruments; the findings of 10-16 to 10-18 with their evidence.
 - §5 to §9 complete: decisions and failed approaches, lessons, open problems, answers to 0615Z and 1532Z, the decisions needed. Next: §10, `main` since `91ce9b2`.
+- §10.1-10.6 written: `main` since `91ce9b2` is the review and three plans; no conflicts; what they ask of me; the synchronization I propose. Next: operations 1 and 2 of §10.4.
