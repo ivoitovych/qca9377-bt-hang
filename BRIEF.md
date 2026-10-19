@@ -99,7 +99,7 @@ Recent detail may be shortened. Settled state is never dropped.
   Stable: our three patches are 0154, 0460 and 0517 of the 6.6.160-rc1 review, due Mon 19 Oct
   16:02 UTC, with no reply to them.
 - **Operator decisions open** (the one list; the hand-off block below points here):
-  - **deploying `main`'s tool set on the laptop** (a safety review of the deploy is running, 2026-10-18): E3 #1's record is safe since its close by hand on 10-18, but until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
+  - **deploying `main`'s tool set on the laptop** (the review is done, `reviews/review-comprehensive-code-review-20261019-014718.md`; phase 1 of its reaction plan comes before the deploy, and of it VI1 with DS1, SR1 and MODE1's hints, MODE2 and T1 are left, 2026-10-19): E3 #1's record is safe since its close by hand on 10-18, but until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
   - restarting the raw-capture archive timer, and the desktop capture's recorders (both stopped by reboots);
   - an Ubuntu SRU for `dc16388d45ec` (the Launchpad pre-check is done, 10-18: `-39` lacks it, no bug exists);
   - the U6 SRU;
@@ -124,7 +124,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-18 (trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
+**Last updated: 2026-10-19 (the test-suite maintainer's work wholly on `main`: the `btmon` width fix at twelve call sites, the reload's second guard, the access audit in a workflow of its own; BT-4's abort reproduced on the laptop's `btmon` build; earlier: 2026-10-18 trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-062** (EX-044/049/050 ported from
 `kernel/mgmt-flush-status` the same day; the next exhibit on `main` is EX-063) — no tip hash:
 it rotted within hours (`R2-13`).
 
@@ -132,6 +132,20 @@ it rotted within hours (`R2-13`).
 > never to have worked).** Current state of every issue and submission: `docs/STATUS.md`. The
 > open decisions: "Operator decisions open" above. The previous block (2026-10-08, with its
 > 10-09 and 10-11 items) is at the end of `HISTORY.md`, verbatim.
+>
+> **New, 2026-10-19:**
+> - **The test-suite work is wholly on `main`** (STATUS, "Repository health"), and with it the
+>   decode fix asked on 10-18: `--columns` at twelve `btmon` call sites, checked against a stub
+>   that prints as the real `btmon` (`2eef340`); the Enhanced setup counted as a setup;
+>   `install.sh`'s reload block skipped under `--tools-only`; the access audit in a workflow of
+>   its own, so CI's verdict stays near 2.5 minutes. None of it is on the laptop yet.
+> - **BT-4's abort reproduced** on the laptop's `bluez` build, off the laptop, on a synthetic
+>   capture: a privileged MGMT open aborts `btmon` at 80 columns or fewer (`fdbfe0018`'s
+>   subject). The live capture decoded at 80, so `bin/bt-trace` now passes `--columns=200`;
+>   whether that ends the live aborts, the first trial after the deploy shows.
+> - **Before the deploy**, of phase 1 of `reviews/review-reaction-plan-20261019-045758.md`:
+>   VI1 with DS1, SR1 and MODE1's hints, MODE2 (the rehearsal's checks for both wait on
+>   `tests/deploy-rehearsal-checks-awaiting-main-fixes`) and T1.
 >
 > **New, 2026-10-18:**
 > - **A1 and A2 sent** 06:39 +0200 to linux-bluetooth only, as two mails (patchwork 14897668 /
