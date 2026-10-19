@@ -71,7 +71,18 @@ audit() {   # <work-dir> <allow-file> <stale:0|1> <cmd...> — trace, classify; 
     devtools/access-classify "$w/trace" --root "$ROOT" --scratch "$w/tmp" --allow "$allow" \
         --path "$PATH" --tsv "$w/violations.tsv" "${extra[@]}"
     local crc=$?
-    (( rc == 0 )) || { echo "the traced command FAILED (rc=$rc); its last lines:"; tail -5 "$w/out" | sed 's/^/    /'; return 1; }
+    if (( rc != 0 )); then
+        echo "the traced command FAILED (rc=$rc); its last lines:"; tail -5 "$w/out" | sed 's/^/    /'
+        # WHICH CHECKS, from the run traced, as devtools/coverage does since
+        # 62d5deb: a red under the trace that the next run does not repeat can be
+        # named only here. One went red so on 2026-10-19 (a2a4931), and the
+        # audit said "FAILED: 1 of 1072" and nothing else.
+        if grep -qE '^[[:space:]]*✗|: line [0-9]+: ' "$w/out"; then
+            echo "its failing checks:"
+            grep -E '^[[:space:]]*✗|: line [0-9]+: ' "$w/out" | head -20 | sed 's/^ */    /'
+        fi
+        return 1
+    fi
     return "$crc"
 }
 

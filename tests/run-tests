@@ -14503,6 +14503,14 @@ if [[ "$AAS" != *"strace is not installed"* && "$AAS" != *"cannot trace here"* &
     (( aafrc == 1 )) && [[ "$AAF" == *"the traced command FAILED (rc=7)"* ]] \
         && ok "access-audit fails when the traced command fails, whatever the accesses" \
         || bad "a failing command passed the audit (rc=$aafrc)"
+    # And it names the failing checks, from the run it traced: a red under the
+    # trace that the next run does not repeat can be named only there. On
+    # 2026-10-19 the audit said "FAILED: 1 of 1072" and nothing else.
+    AAX=$(devtools/access-audit -- sh -c 'echo "  ✓ a check that held"; echo "  ✗ a planted failing check"; echo "FAILED: 1 of 2"; exit 1' 2>&1); aaxrc=$?
+    (( aaxrc == 1 )) && [[ "$AAX" == *"its failing checks:"*"✗ a planted failing check"* ]] \
+       && [[ "$(sed -n '/its failing checks:/,$p' <<<"$AAX")" != *"a check that held"* ]] \
+        && ok "access-audit names the failing checks of a red traced run, and only those" \
+        || bad "access-audit on a red traced run (rc=$aaxrc): $(tail -4 <<<"$AAX" | tr '\n' '|')"
     rm -rf "$AAD"
 fi
 # THE CATALOG IS WHOLE, AND EVERY SEAM IN IT IS DECLARED. system-resources.md
