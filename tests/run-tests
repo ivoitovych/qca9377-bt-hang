@@ -13881,13 +13881,32 @@ STAHEAD=$(st_run); stahrc=$?
 # report success. The tracking ref still exists here and still points at the
 # old head, which is exactly the stale state that once answered "all pushed".
 git -C "$ST/repo" remote set-url origin "$ST/no-such-remote.git"
-STNOREM=$(st_run)
+STNOREM=$(st_run); stnrc=$?
 [[ "$STNOREM" == *"could not reach origin — cannot confirm"* \
    && "$STNOREM" != *"pushed"*"=="* ]] \
     && ok "an unreachable remote is reported as unconfirmed, never as pushed" \
     || bad "an unreachable remote produced a pushed verdict from a stale ref"
+# AND THE VERDICT SAYS SO TOO (DS4, the review of 2026-10-19). The row said
+# "cannot confirm" and the summary below it "everything committed and pushed",
+# exit 0: the false all-clear this tool was written against, one line lower.
+# The check above excluded only the ✓ row, so it passed. Not confirmed is its
+# own exit status, 3, and its own last line.
+(( stnrc == 3 )) && [[ "$(tail -1 <<<"$STNOREM")" == *"push NOT confirmed"* \
+   && "$STNOREM" != *"everything committed and pushed"* ]] \
+    && ok "an unreachable remote ends 'push NOT confirmed', exit 3, never 'everything committed and pushed'" \
+    || bad "an unreachable remote's verdict (rc=$stnrc): $(tail -1 <<<"$STNOREM")"
 git -C "$ST/repo" remote set-url origin "$ST/remote.git"
 git -C "$ST/repo" push -q origin HEAD 2>/dev/null
+# A branch the remote never had is not an unreachable remote: ls-remote
+# answers, with nothing. It is unpushed work, and says which.
+git -C "$ST/repo" checkout -q -b never-pushed
+STNEW=$(st_run); stnwrc=$?
+(( stnwrc == 1 )) && [[ "$STNEW" == *"origin has no branch never-pushed"* && "$STNEW" != *"could not reach origin"* \
+   && "$(tail -1 <<<"$STNEW")" == *"NOT everything is committed and pushed"* ]] \
+    && ok "a branch origin never had is reported as not pushed (1), not as an unreachable remote" \
+    || bad "a never-pushed branch (rc=$stnwrc): $(grep -E 'remote|pushed' <<<"$STNEW" | tr '\n' '|')"
+git -C "$ST/repo" checkout -q -
+git -C "$ST/repo" branch -q -D never-pushed
 
 # The all-clear side of the machine section: nothing drifted, and the
 # controller is on the bus. Asserted because the drift row above is only
