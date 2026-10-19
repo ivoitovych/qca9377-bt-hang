@@ -25,15 +25,18 @@ if at all, at the next hand close before a planned shutdown.
 2. **Phase 1, before the deploy**, each test-first, each its own commit on the ready line:
    1. T2/SW1: the suite's `btmon` stubs shorten header lines to 80 columns unless `--columns`
       is given; red first; then `--columns=200` at the seven call sites, `lib/sco-window.awk`'s
-      marker, the pattern `tools/bt-ui-capture` prints.
-   2. The btusb reload's second guard in `install.sh`, with a check that disables `run()`'s gate.
-   3. CK1: `devtools/check` passes `--no-suite` while a trial is open, and says so.
+      marker, the pattern `tools/bt-ui-capture` prints. [done: `9667943`, `bf50fa4`]
+   2. The btusb reload's second guard in `install.sh`, with a check that disables `run()`'s
+      gate. [done: `98af393`]
+   3. CK1: `devtools/check` passes `--no-suite` while a trial is open, and says so. [done:
+      `30b6f31`]
    4. SU1: the rehearsal catches I2, VI1 and MODE2. These fixes are yours; I will write the
       rehearsal's checks so that they go red on today's tools, and send them to you with the
-      fixes' commits in mind rather than land them red.
+      fixes' commits in mind rather than land them red. [done: `11c8039`; the red ones on
+      `tests/deploy-rehearsal-checks-awaiting-main-fixes`]
 3. **The working branch's eleven code commits** onto the ready line as a series: the access
    audit first, in a workflow of its own that `devtools/ci` reports on its own line; the
-   checkout world split into four sections; then the rest.
+   checkout world split into four sections; then the rest. [done, as six commits; see the log]
 4. **Tests for the newest tools and the review's suite findings**: your three trial scripts;
    RT1-RT7, UD1, DS4; and the pinned tests as your fixes come.
 
@@ -126,3 +129,47 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   says so before its first step, and ends "ready, WITHOUT the suite"; with none, unchanged. Red
   first, on a copy of `check` beside spies for the validators it calls. 1026 checks; gates as above.
   Next: SU1, the rehearsal's checks for I2, VI1 and MODE2, sent to you rather than landed red.
+- 07:20Z: **`11c8039`, SU1**: `tests/system-upgrade` now runs the checklist's last two steps
+  (`bt-verify-install` against the checkout, `bt-mode status`) and runs `--tools-only` with
+  `journalctl` behind a spy, failing on a kernel read bounded by neither time nor priority (I2).
+  Green with `98af393`. **Shown red in CI** on a CI-only branch, `ci/deploy-rehearsal-red-checks-20261019`
+  (`3e804de`: the reload block's old guard, and the assertions below), in both modes:
+  `--tools-only read the whole boot's kernel log (I2): journalctl -k -b 0 --no-pager`;
+  `(VI1): Run: sudo ./install.sh --apply`; `(MODE2)`: each passive unit's state followed by a
+  second `inactive`. **For you** [recommendation]: the VI1 and MODE2 assertions are on
+  `tests/deploy-rehearsal-checks-awaiting-main-fixes` (`2589dee`, one commit on `11c8039`), red on
+  today's tools; land them with your fixes (the verifier's advice: `--tools-only`, not `--apply`;
+  `bt-mode status`: `systemctl is-active "$u" 2>/dev/null` without `|| echo inactive`, or with its
+  output captured first, as `bt-trial` does). I2 itself is fixed by `98af393` (the block skipped
+  under `--tools-only`); the `-p err` index for the `--apply` path's timeout count stays yours.
+  The ready line fast-forwarded to `11c8039`.
+- 08:30Z: **the working branch's eleven code commits, on the ready line as six** (CI branch
+  `ci/deploy-rehearsal-20261017`), in the order you asked:
+  1. `ab74973` `devtools/ci` asks the repository the branch is pushed to (8ecf3fd);
+  2. `3ed9dc4` the isolation, measured by an exact trace: the gaps it found closed, and the
+     audit (d3aef99, 2418779, 9e2606c, 08e748a, ce1a527), **in a workflow of its own**,
+     `.github/workflows/access-audit.yml`; `devtools/ci` reads its verdict from `checks.yml` by
+     name and prints the audit's run on a line of its own, never changing the exit status (red
+     first: no `--workflow` in gh's arguments, no audit line);
+  3. `64530ee` awk-coverage measured against a toy suite, floor 85 to 95 (7f50843's half). It
+     comes before the checkout world: with the world in and this not, awk coverage fell to 76%;
+  4. `a2a4931` **the checkout world in four sections** (held; held sync; save; review-open), each
+     proving its own world, helpers in the setup (7f50843, 7c973d4, 8a4aef8, 8ecf3fd's budget
+     check). The longest unit went from about 40 s to 20 s; on 4 cores a parallel run is 59 s, a
+     serial one 142 s; on 16 cores this predicts about 21 s;
+  5. `0326578` the daemons' idle `sleep 3600` on TERM (0660ed5);
+  6. `38c313f` the tooling index rows; the drift alarm driven both ways (b270cd6).
+  Every step: suite, gates and `checks.yml` green; 1075 checks at the end. The tree differs from
+  the working branch's only where you asked (the workflow, `devtools/ci`, the split).
+  **Tool hunks for your review** are named in each commit's message. The ready line
+  fast-forwarded to `64530ee` (both workflows green there).
+- 08:55Z: the audit, a workflow of its own now, **went red once** on the series, at `a2a4931`
+  (the checkout world): nothing outside the allow list, but one suite check failed under the trace,
+  and the audit printed only "FAILED: 1 of 1072". The next commit's audit (`0326578`, the same
+  world) was green, and a full audit of the tip here was green (1072 of 1072, nothing outside the
+  allow list) [verified]. Not found yet [hypothesis: timing under the trace, the kind the coverage
+  trace showed twice in about 30 runs]. **`2fb4251`: the audit now names the failing checks of a
+  red traced run**, as the other instruments have since `62d5deb`; red first. The next one names
+  itself. The working branch merged the series (`b761a00`); its tree is now the ready line's.
+  Next: tests for `scripts/trial-sco-decode.py`; then the review's suite findings (RT4 first: the
+  run-wide footprint does not watch the install targets).
