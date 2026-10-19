@@ -41,7 +41,9 @@ STOP_WINDOW = 2.0
 
 def packets(path):
     """Yield (header, detail text) for every packet btmon decodes from path."""
-    p = subprocess.Popen(["btmon", "-T", "-r", path], stdout=subprocess.PIPE,
+    # --columns=200: at btmon's default 80 a privileged MGMT open aborts it (BT-4),
+    # and the packets after it never arrive.
+    p = subprocess.Popen(["btmon", "--columns=200", "-T", "-r", path], stdout=subprocess.PIPE,
                          stderr=subprocess.DEVNULL, text=True, errors="replace")
     hdr, body = None, []
     for line in p.stdout:

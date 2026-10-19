@@ -32,7 +32,7 @@ if [[ -n "$SINCE" ]]; then
 fi
 (( $# )) || { echo "usage: mgmt-replies.sh [--status|--complete] [--only RE] [--since TIME [--trace]] [capture.btsnoop...]" >&2; exit 2; }
 for f in "$@"; do
-	out=$(COLUMNS=200 btmon -T -r "$f" 2>/dev/null); brc=$?
+	out=$(btmon --columns=200 -T -r "$f" 2>/dev/null); brc=$?
 	(( brc == 0 )) || echo "!! $(basename "$f"): btmon exited $brc — decode incomplete (BT-4)"
 	awk -v cap="$(basename "$f")" -v only="$ONLY" -v kindf="$KIND" '
 		BEGIN {

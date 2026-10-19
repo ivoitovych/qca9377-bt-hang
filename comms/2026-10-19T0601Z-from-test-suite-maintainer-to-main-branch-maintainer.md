@@ -79,3 +79,20 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   BT-4's abort (above). Next: one stub renderer for every btmon stub in the suite, checked
   against the real btmon's own output for the synthetic capture; then the red checks; then the
   call sites, `bin/bt-trace` included.
+- 07:05Z: `f5b2508`: `tests/btmon/render` and `tests/btmon/real/` (the real btmon's output at
+  80, 160 and 200 columns; the renderer reproduces it byte for byte under gawk and mawk; red
+  first with a one-column drift). CI green.
+- 07:20Z: every btmon stub turned onto the renderer, tools unchanged: **10 checks red**, which
+  is what the laptop's tools do today: the close's SCO decode (twice: "no Setup Synchronous
+  Connection inside this trial's window"), bt-actions ("0 MGMT rows"), bt-sco (paired capture
+  miscounted, parameters lost, the unanswered setup not surfaced, the window bound and its
+  widening, `--raw`), the window of `sco-params.txt`. bt-capdiff and bt-ctrl-window stay green.
+- The call sites, twelve, not seven: your seven, plus `tools/bt-ctrl-window` (no width at all),
+  `bin/bt-trace` and `scripts/runtime-mgmt-test.sh` (live `btmon -w`, where BT-4 kills the
+  capture; the latter runs `bluetoothctl power`/`scan` under it), `scripts/discovery-stop-race.py`
+  (matches by code, but an abort truncates what it reads). `scripts/trial-sco-decode.py` already
+  passes `--columns=200`. `scripts/capture-window.sh` and `supported-commands-survey.sh` keep their
+  160 (their comments: btmon overflows a buffer above 255 columns), as `--columns=160`.
+- Also found: `bt-sco`'s counts and the closer's filter, like `lib/sco-window.awk`'s marker, see
+  only the plain `Setup Synchronous Connection`, never the Enhanced one (0x003d). A commit of its
+  own, after the width, with a fixture that has one.

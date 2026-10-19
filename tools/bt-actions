@@ -284,7 +284,7 @@ if [[ -d "$TRACE_DIR" ]] && command -v btmon >/dev/null 2>&1; then
         [[ -e "$f" ]] || continue
         # btmon abbreviates command names to fit the terminal ("Start Discovery"
         # becomes "S.."), so force a wide one.
-        COLUMNS=200 btmon -T -r "$f" 2>/dev/null | awk '
+        btmon --columns=200 -T -r "$f" 2>/dev/null | awk '   # --columns: COLUMNS is not read when piped
         /MGMT Command: (Pair Device|Remove Device|Unpair|Disconnect|Set Powered|Block Device|Unblock Device|User Confirmation|Set Discoverable|Set Connectable)/ {
             # btmon prints "<date> <time>" as the last two fields.
             ts = $(NF-1) "T" $NF

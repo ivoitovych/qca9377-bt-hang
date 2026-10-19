@@ -869,6 +869,10 @@ FIX=tests/trial-results.tsv
 # The boots journal the journal-only verdicts read, and the parameters section
 # after them (they were one section until 2026-10-18).
 BJ=tests/journal/boots
+# The btmon stubs print through this, as the real btmon prints when not on a
+# terminal (tests/btmon/render; the checks in "reading the captures"). Absolute:
+# a stub runs from wherever its tool runs.
+BTMON_RENDER="$PWD/tests/btmon/render"
 # One exhibit's line off a report: bt-retention's, bt-snapshot's and the crash
 # counts' tests read their verdicts with it (one section until 2026-10-18).
 rt_line() {   # <report> <exhibit-base> -> that exhibit's line, or empty
@@ -2737,7 +2741,7 @@ trial_in "$LC/scofast" "$LC/state-scofast" PATH="$LC/scostop/bin:$LC/bin:$PATH" 
 SCOAT=$(date '+%Y-%m-%d %H:%M:%S')
 cat > "$LC/scostop/bin/btmon" <<STUB
 #!/bin/sh
-printf '< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17  #1 [hci0] $SCOAT.000000\n'
+printf '< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17  #1 [hci0] $SCOAT.000000\n' | "$BTMON_RENDER" "\$@"
 STUB
 trial_in "$LC/scofast" "$LC/state-scofast" --timeout 10 PATH="$LC/scostop/bin:$LC/bin:$PATH" \
     BT_CAPTURE_DIR="$LC/scostop/cap" BT_TRACE_DIR="$LC/scostop/trace" -- autostop >/dev/null 2>&1; sfrc=$?
@@ -3971,7 +3975,7 @@ AAWITHOUT=$(cat "$AASPY/args" 2>/dev/null)
 # A trace directory NAMED explicitly is read even under a fixture (the fixture
 # guard skips only the default). btmon declared: it answers with one MGMT line.
 : > "$AASPY/trace/a.btsnoop"
-printf '#!/bin/sh\necho "@ MGMT Command: Set Powered (0x0005) plen 1   {0x0001} [hci0] 2026-08-13 10:00:30.000000"\n' > "$AASPY/bin/btmon"
+printf '#!/bin/sh\necho "@ MGMT Command: Set Powered (0x0005) plen 1   {0x0001} [hci0] 2026-08-13 10:00:30.000000" | "%s" "$@"\n' "$BTMON_RENDER" > "$AASPY/bin/btmon"
 chmod +x "$AASPY/bin/btmon"
 AATR=$(PATH="$AASPY/bin:$PATH" BT_JOURNAL_FIXTURE="$BA" BT_TRACE_DIR="$AASPY/trace" tools/bt-actions --raw 2>&1)
 [[ "$AATR" == *"MGMT: Set Powered"* ]] \
@@ -6994,9 +6998,9 @@ SC=$(mktemp -d); mkdir -p "$SC/stub" "$SC/trace"
 # btmon's real invocation here is `btmon -T -r <file>`; a stub that parsed the
 # arguments would be asserting the call shape, which is not what these tests
 # are about, and would break silently when a flag is added.
-cat > "$SC/stub/btmon" <<'SCSTUB'
+cat > "$SC/stub/btmon" <<SCSTUB
 #!/bin/sh
-cat "$BTMON_FIXTURE"
+cat "\$BTMON_FIXTURE" | "$BTMON_RENDER" "\$@"
 SCSTUB
 chmod +x "$SC/stub/btmon"
 sco_run() { env PATH="$SC/stub:$PATH" BTMON_FIXTURE="tests/btmon/$1.txt" \
@@ -7084,10 +7088,11 @@ rm -rf "$SC"
 # The awk matcher has fixtures; the shell around it (extraction, the overlap
 # bound, the verdict) had none, and both defects below live there.
 CD=$(mktemp -d); mkdir -p "$CD/stub" "$CD/trace" "$CD/cap"
-cat > "$CD/stub/btmon" <<'CDSTUB'
+cat > "$CD/stub/btmon" <<CDSTUB
 #!/bin/sh
-while [ $# -gt 0 ]; do case "$1" in -r) f="$2"; shift 2 ;; *) shift ;; esac; done
-cat "$f.txt" 2>/dev/null
+w=""; for a in "\$@"; do case "\$a" in --columns=*|-C?*) w="\$a" ;; esac; done
+while [ \$# -gt 0 ]; do case "\$1" in -r) f="\$2"; shift 2 ;; *) shift ;; esac; done
+cat "\$f.txt" 2>/dev/null | "$BTMON_RENDER" \$w
 CDSTUB
 chmod +x "$CD/stub/btmon"
 : > "$CD/trace/x.btsnoop"; : > "$CD/cap/x.btsnoop"
@@ -7258,7 +7263,7 @@ CDH=$(tools/bt-capdiff --help 2>&1); cdhrc=$?
 # the tool never prints, and a daemon message, which it would print but for
 # the address.
 CW=$(mktemp -d); mkdir -p "$CW/stub"; : > "$CW/cap.btsnoop"
-printf '#!/bin/sh\ncat "$BTMON_FIXTURE"\n' > "$CW/stub/btmon"; chmod +x "$CW/stub/btmon"
+printf '#!/bin/sh\ncat "$BTMON_FIXTURE" | "%s" "$@"\n' "$BTMON_RENDER" > "$CW/stub/btmon"; chmod +x "$CW/stub/btmon"
 cw_run() { env PATH="$CW/stub:$PATH" BTMON_FIXTURE=tests/btmon/ctrl-window.txt \
                tools/bt-ctrl-window "$CW/cap.btsnoop" "$@" 2>&1; }
 CWO=$(cw_run 21:03:25 21:03:30); cwrc=$?
@@ -8164,6 +8169,7 @@ echo "\$(cat "$TR/freegb" 2>/dev/null || echo 999)G"
 TRDF
 cat > "$TR/bin/btmon" <<TRBM
 #!/bin/sh
+echo "\$*" >> "$TR/btmon.args"
 out=""
 while [ \$# -gt 0 ]; do case "\$1" in -w) out="\$2"; shift ;; esac; shift; done
 [ -e "$TR/btmon-dies" ] && exit 5
@@ -8216,6 +8222,16 @@ TRN=$(ls -1 "$TR/cap"/bt-*.btsnoop 2>/dev/null | wc -l)
 (( TRN >= 2 )) && [[ "$TRR" == *"rotating at"* && "$TRR" == *"stopped"* ]] \
     && ok "bt-trace rotates by restarting btmon, leaving $TRN distinct captures" \
     || bad "bt-trace rotation produced $TRN capture file(s)"
+
+# EVERY btmon IT STARTS IS GIVEN A WIDTH (BT-4). The capture's own decode, sent
+# to /dev/null, still runs, at 80 columns unless told otherwise; there a
+# privileged MGMT Open, which carries its sender's comm[pid] in a live capture,
+# leaves btmon 5.72's print_packet a negative length and the fortified snprintf
+# kills the capture (tests/btmon/real/README.md). 200 leaves it positive.
+TRARGS=$(cat "$TR/btmon.args" 2>/dev/null)
+[[ -n "$TRARGS" ]] && ! grep -qv -- '--columns=200 ' <<<"$TRARGS" \
+    && ok "bt-trace starts every btmon with --columns=200, so a privileged MGMT open cannot abort the capture" \
+    || bad "bt-trace started btmon as: $(sort -u <<<"$TRARGS" | tr '\n' '|')"
 
 # THE CAPTURES ARE 0600. They contain the contents of Bluetooth traffic, and
 # this repository publishes from the same tree it captures into.
@@ -10833,7 +10849,7 @@ cat > "$TL/bin/btmon" <<TLBTMON
 echo "\$*" >> "$TL/btmon.calls"
 T=\$(cat "$TL/btmon-time"); Y=\${T%%-*}
 B="\$((Y - 1))\${T#\$Y}"; A="\$((Y + 1))\${T#\$Y}"
-cat <<EOT
+cat <<EOT | "$BTMON_RENDER" "\$@"
 < HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17   #1 [hci0] \$B.000001
         Handle: 1 (a year before)
 < HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17   #2 [hci0] \$T.000001
@@ -10881,8 +10897,10 @@ TLSCO2=$(tl_row | cut -f"${TLSCOCOL:-1}")
     || bad "sco_to_timeout_s: with a timeout '$TLSCO1' (want 2.500), without '$TLSCO2' (want none)"
 TLSP=$(cat "$TLSCODIR/sco-params.txt" 2>/dev/null)
 TLSPC=$(sort -u "$TL/btmon.calls")
-[[ "$TLSP" == "# trial window: "* && "$TLSPC" == "-T -r $TL/cap/x.btsnoop" ]] \
-    && ok "a trial with SCO setups decodes the captures in the declared paths, and nothing else" \
+# --columns=200 is part of the call: without it btmon, piped, cuts the names
+# this decode filters on, and every trial's file came out empty (2026-10-19).
+[[ "$TLSP" == "# trial window: "* && "$TLSPC" == "--columns=200 -T -r $TL/cap/x.btsnoop" ]] \
+    && ok "a trial with SCO setups decodes the captures in the declared paths, at full width, and nothing else" \
     || bad "sco-params.txt: $(head -1 <<<"$TLSP"); btmon was asked for: $(tr '\n' ' ' <<<"$TLSPC")"
 [[ $(grep -cE '^        (Handle: 256|Link type: eSCO \(0x02\))$' <<<"$TLSP") == 2 \
    && "$TLSP" != *"a year"* && "$TLSP" != *"Link type: late"* && "$TLSP" != *"unrelated"* ]] \
