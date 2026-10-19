@@ -944,3 +944,88 @@ bluetoothd's store under `/var/lib/bluetooth/<adapter>/<device>/info` (`Name=`),
 `capture-window.sh` and `supported-commands-survey.sh` use `COLUMNS=160`. The STATUS audit of
 2026-10-18 found the first fails in part and the second works; they belong with SW1.
 
+## 33. `tools/lib/trial-sco-table.awk`, `timestamp.awk`, `interval.awk` (read in full)
+
+`timestamp.awk` is correct: proleptic-Gregorian day arithmetic, the ±HH:MM offset applied, and an
+interval-free regex so it parses under mawk. `interval.awk` refuses rather than printing a zero.
+The cross-tab refuses an unknown schema and is careful that the END block cannot print after a
+refusal.
+
+**XT1 — LOW. The cross-tab's "survived" column includes trials whose liveness was never
+measured.** It labels its right column "survived", but every non-confirmed row lands there,
+including `trial_result=ended_unprobed`, the passive shutdown close that "measured nothing about
+liveness" (`bt-trial` 780-786). Since 2026-09-19 that is every observational row. `trial-summary.awk`
+is careful with this word; this table is not.
+*Fix:* label the column "no BT-1" (or "not hung") and add a footnote counting the `ended_unprobed`
+rows in it.
+
+**T5, refined.** `iso_secs` handles the DST change correctly. The `bt-trial` defect is that line
+850 compares the raw timestamp strings (`$1 < lim`) instead of calling `iso_secs`. The fix is to
+use the library that already exists.
+
+## 34. `tools/bt-crash` (150 lines, read in full)
+
+**CR1 — LOW-MED. `bt-crash` can hide the bluetoothd crash it exists to find.** It lists "Crashes in
+the journal" by matching `segfault|core-dump|Failed with result` against the whole boot (70-71). It
+does not scope the match to the Bluetooth stack, and it then prints only the last 12 lines
+(`tail -12`, line 76). On 2026-08-31 `bt-snapshot` learned that `Failed with result` matches every
+unit on a desktop (gnome-keyring, portals, snapd, the project's own backup) and scoped its filter to
+`bluetoothd|bluetooth.service|btmon|bluez|obexd`. Here, a dozen unrelated desktop failures after a
+bluetoothd segfault push the segfault out of the printed lines. The header criticises exactly this:
+"a `tail -4` that CUT OFF THE ANSWER".
+*Fix:* reuse `bt-snapshot`'s two-stage filter (crash-shaped AND about the BT stack). Print the
+Bluetooth lines in full and count the rest. Read through `bt_journal_lines` with `--grep`, as the
+unfiltered whole-boot read is slow on a long boot.
+
+**CR2 — INFO.** The note about mismatched debug symbols names `5.72-0ubuntu5.5`; the installed
+package is now `5.72-0ubuntu5.8` (STATUS, 2026-10-17). Derive the version with `dpkg-query` at run
+time rather than writing it into the text.
+
+## Second-pass summary (after §24-§34)
+
+**Read so far:** about 12,000 of ~40,000 lines, line by line, plus a pattern sweep of every
+remaining file in `tools/`, `bin/`, `devtools/` and `scripts/` for controller probes, live module
+actions, deletions, pushes and the `btmon` width defect.
+
+**Still not read line by line:**
+- the remaining analysis tools: `bt-actions`, `bt-capdiff`, `bt-sco`, `bt-phase`, `bt-stage2`,
+  `bt-postmortem`, `bt-context`, `bt-env-history`, `bt-fault-window`, `bt-guards`,
+  `bt-health-report.sh`, `bt-logvolume`, `bt-timeline.sh`, `bt-usbstate`,
+  `bt-verify-kernel-mechanism`, `bt-boot-*`, `verify-restored.sh`;
+- `tools/lib/stage2.awk`, `phase.awk` and the small awk files;
+- the `devtools/` instruments (coverage, mutate, sandbox, test-comprehension);
+- the upstream-workflow scripts (`ci-local.sh` and siblings);
+- `tests/run-tests` beyond its head.
+
+**Added to the ranked list by the second pass:**
+
+| id | severity | one line |
+|---|---|---|
+| EV1 | MED (laptop) | `bt-evidence` probes the controller at every session start and stop; the probe-free reform missed it |
+| EV2 | MED (privacy) | `bt-evidence` leaves raw text in `evidence/sessions/` when the sanitiser is missing or refuses |
+| CP1 | MED (privacy) | `ci-local-publish.sh` reports success with an unsanitised file left in the tracked directory |
+| AJ1 | MED | re-archiving a prefix can delete the only copy of a long boot's start |
+| TA1 | MED | `bt-trial-audit` reads an unreadable window as clean |
+| RM1 | MED (latent) | `runtime-mgmt-test.sh load/restore` (EX-046) is retired only by comment |
+| SW1 | MED (known) | `bt-actions`, `bt-sco`, `bt-capdiff` still use `COLUMNS=200` |
+| UM1 | LOW-MED (latent) | `bt-usbmon` does not enforce a root-only capture directory |
+| RET1, CR1, SW2, DD1 | LOW-MED | see their sections |
+| EXH1, EXH2, EXH3, TA2, TA3, HS2, ML1, BM1, EV3, SW3, XT1, CR2, AJ2, UM2 | LOW / INFO | see their sections |
+
+**Two patterns across both passes**, each worth fixing once rather than per file:
+1. **A fix that reaches some siblings but not all.** The examples so far:
+   - the probe-free reform skipped `bt-evidence`;
+   - the sanitiser-failure fix (DR-06) skipped `bt-evidence` and `ci-local-publish.sh`;
+   - the BT-scoped crash filter skipped `bt-crash`;
+   - the `sleep & wait` fix skipped the watchdog;
+   - the root-only capture rule skipped `bt-usbmon`;
+   - the `COLUMNS` finding is still open in three tools.
+
+   The suite already pins several such rules as invariants over the whole tree; each of these
+   belongs there too: "no unconditional `hciconfig`/`bluetoothctl` outside `--probe`", "every
+   sanitiser call's failure is fatal or named", "no `COLUMNS=` before `btmon`", "every capture
+   daemon sets `umask 077`".
+2. **Rules held in prose, not code.** Never `--apply` (I1, VI1), never arm the watchdog (MODE1),
+   never reload btusb live (UN1, RM1), never push private families to `origin` (RS1). The tools
+   already refuse in many places; these are the places they still do not.
+
