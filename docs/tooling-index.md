@@ -165,8 +165,11 @@ run `bluetoothd -d` — this project ships that on in
 | How do the branches diverge? | `devtools/branch-status` (`--unique`, `--files`) |
 | **What exists only on this disk?** (every tree: uncommitted, untracked, commits on no remote) | `scripts/unpushed-survey.py <tree or parent dir>…` — e.g. the project and `cache/` (each child taken). The `cache/ubuntu-*` "modified" counts are Ubuntu's diff, reproducible |
 | **Save the local work inside upstream checkouts** (our commits in `cache/` kernel and BlueZ trees, which no remote holds) | `scripts/export-local-work.py <out-dir> <tree>…` — format-patch of commits on no remote, `uncommitted.diff`, untracked files up to 1 MB, `BASE.txt` with how to re-apply; refuses an existing directory. Output goes to a branch on the private remote, one dated directory per export |
-| Coverage / comprehensiveness | `devtools/coverage`, `devtools/test-comprehension` |
+| Coverage / comprehensiveness | `devtools/coverage` (bash lines), `devtools/awk-coverage` (awk statements), `devtools/py-coverage` (Python lines), `devtools/test-comprehension` (modes, refusals, seams, branches per unit); each takes `--min N`, and CI holds 80 / 95 / 80 / 75 |
+| Run the suite, or one block of it | `tests/run-tests`, `tests/run-tests --section "<text from a heading>"`; it refuses while a trial is open, and refuses to run inside a run of itself |
+| **Does any test reach the real machine?** (a call, a read, a write, an answer the machine gave) | `devtools/sandbox` — the suite in a decoy world whose every answer is marked; four detectors must stay silent. `--self-test` plants leaks and proves each one is caught (tests/README.md, rule 5) |
 | **Does any test touch the machine without the machine answering?** (an existence check, a read of an absent file, a lookup no test names) | `devtools/access-audit` — the suite under `strace`, every file access classified; fails on anything outside `tests/access-allowlist`. `--self-test` plants each kind of access and requires each caught (tests/README.md, rule 8) |
+| **Would the suite notice if this decision were wrong?** | `devtools/mutate <file> [--lines A-B]` — each mutant from `devtools/mutants` (a flipped comparison, `&&`↔`\|\|`, a dropped `!`) applied alone in its own namespace, the whole suite run on it; a survivor is a missing test or an equivalent change. `--self-test` checks the harness |
 | Do the fixtures still match real journalctl? | `devtools/journal-contract` |
 
 ### Deploying to the affected machine
