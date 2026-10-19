@@ -341,15 +341,161 @@ The time is now fixed after the trial opens and before its close (`376b4d1`, on 
 - Editing a tracked file while a suite runs in the same checkout makes that run fail its
   tracked-files check: twice on 10-18 that was me.
 
-## §5. Decisions, and the approaches that failed *(in progress)*
+## §5. Decisions, and the approaches that failed
 
-## §6. Lessons that are not yet rules in a document *(in progress)*
+### 5.1 Decisions, with their reasons
 
-## §7. Open problems and hypotheses *(in progress)*
+- **No run cut** (the operator's instruction, and my own reading in §3.2). Speed came from
+  running them at once (jobs) and from running each in parallel (workers).
+- **A worker is a fresh `tests/run-tests`, not a fork of the parent after its setup.** A fork
+  would save the 0.9 s setup per worker, but its sections would share the parent's temp root,
+  tripwire log and declared machine, and could see state the parent built; a fresh process
+  gives each unit exactly the state a section had when run alone, and its own tripwire canary
+  proves its own isolation. [rationale; the fork variant was not built or measured]
+- **The caller's environment is captured before the suite changes anything**
+  (`SUITE_CALLER_ENV=$(export -p)`), so instruments that set `BASH_ENV`, `PATH` or
+  `PYTHONPATH` before starting the suite reach every worker.
+- **The report section runs once, in the parent**, over the whole run: the footprint is the
+  run's, not a worker's.
+- **Instruments first ran `--serial`, then parallel**, each after a comparison against a serial
+  run of the same tree (§3.3). Bash coverage needed the padded copy (§2.3) first.
+- **One CI run stays serial, in a job of its own**, the step that names the suite; nothing
+  else catches a section breaking a later one.
+- **Sections were cut where a sub-block removes its own fixture**, then checked four ways:
+  a parallel run (unbound variables), serial against the serial run before the cut, parallel
+  against serial, coverage of every tool line. The producer's eight slow-read scenarios were
+  moved below it rather than left in the middle, so that its own trial still opens at its top
+  and closes after its own checks; in serial their 11 checks now come later, the set unchanged.
+- **Stopped splitting at about 10 s.** With 41 units the processor bound on 16 cores is about
+  8 s; the publish gates (9 s) and bt-trace (9.5 s) would gain little more.
+- **Not split: the working branch's checkout world** (43 s). It is four independent world runs
+  that could be four sections, each proving its own world; left because only the ready line
+  reaches `main` and the laptop. [recommendation: do it when the working branch lands]
+- **The laptop's open-trial refusal stays.** It is the 2026-08-14 rule, and the auto-trial opens
+  every boot, so the laptop never runs the suite in normal use; CI is the gate for its commits.
+- **Branch discipline**: `main` merged into both branches as merges; the ready branch only
+  fast-forwarded, to a tip CI has passed; no rewrite, no force-push this round.
 
-## §8. Your open requests, and my answers *(in progress)*
+### 5.2 Approaches that failed, so nobody repeats them
 
-## §9. Decisions I need, and recommendations *(in progress)*
+- **A static scan for variables crossing a cut.** My regex matched `$NAME` only, not
+  `(( name ))`, `mapfile`, indented assignments; my awk check used `\b`, which in awk is a
+  backspace, not a word boundary. It missed `ex_awk_ok` and `BJ`. The parallel run found them.
+- **A unit's time computed as `$(( … _t0[SUITE_PAR_RUNNING[$_pid]] … ))`**: an associative
+  array inside an arithmetic subscript is a syntax error, and bash abandoned the whole `if`
+  block. Use a local first.
+- **Downloading CI's audit artifact from here**: the artifact store's host is refused by this
+  container's network policy. Reproduced instead, from the `python3-apport` package's source
+  (`apt-get download`, unpacked, not installed).
+- **Waiting on a flake by looping**: 15 more instrument runs and 7 traced suites after §7.1's
+  reds were all green.
+
+## §6. Lessons that are not yet rules in a document
+
+1. **A marker that stops a daemon must be logged after the event the next check judges**
+   (§4.3). A marker printed at startup lets every later check pass with nothing to judge.
+2. **A stub directory built by copying must copy every spy**, or the real tool fills the gap
+   through the farm (§4.2). [recommendation: one helper that copies the whole stub set except
+   named tools, instead of each scenario listing what it copies]
+3. **In a test, a deadline is a bound for a broken build, never a budget for a correct one**
+   (§4.4). Under parallel load and tracing, budgets fail correct code.
+4. **An instrument must say which check failed in the run it measured** (`cf9b304`); the run is
+   gone once it exits.
+5. **After any structural change, compare serial with parallel check by check, and coverage
+   line by line.** An unbound variable announces itself; a verdict that changes quietly does
+   not.
+6. **Any edit above an excluded range in `devtools/coverage-exclude` moves the range**; re-derive
+   it by content (find the block's first and last lines), never by arithmetic. The coverage gate
+   catches a stale range, but only after a full run.
+7. **Never edit or stage tracked files in a checkout while its suite or an instrument runs**;
+   the run's tracked-files check fails, and the red is yours.
+8. **A parallel CI layout changes timing**: a job can start before its runner has finished
+   booting. A test that may skip must be told when skipping is a failure (`required`).
+
+## §7. Open problems and hypotheses
+
+### 7.1 An intermittent red under the bash trace [verified that it happened; cause unknown]
+
+Twice on 10-18 the suite went red under the bash trace: `devtools/coverage` in the working
+branch's gates, right after a full access audit, and `devtools/test-comprehension` on the ready
+line, right after Python coverage. About 30 runs under the same trace that day were green,
+including 22 run on purpose to catch it. Neither instrument then said which check.
+[hypothesis: a timing-sensitive check under xtrace's overhead, or a process left by the previous
+instrument's run.] Since `cf9b304` the next red names its check; please send me the lines if
+CI on `main` shows one.
+
+### 7.2 The 16-core figure is a prediction [hypothesis]
+
+About 11 s, from per-unit times on 4 cores (§2.6). One run on the laptop with no trial open, or
+on any 16-core host, would settle it.
+
+### 7.3 `main`'s CI has no access audit [verified]
+
+The audit lives on the working branch. It is the one run that saw §4.2. Every change that lands
+on `main` without it can bring back an access the decoy world cannot see.
+[recommendation: land the audit (§2.7)]
+
+### 7.4 The floor on 16 cores is now sleep-heavy tests [hypothesis]
+
+bt-trace's 9.5 s are mostly its supervision loop's waits (CR-47's backoff block alone about 4 s,
+quiet serial run). A time seam could shorten them without weakening them; not tried.
+
+### 7.5 Still open on your side, from my 10-18 note
+
+What ends the 10-11 journal 3 s into the close, and whether the close gets one shared deadline.
+
+## §8. Your open requests, and my answers
+
+### 8.1 From 0615Z: `btmon --columns`, the narrowing, a budget, a marker
+
+**Not started.** On 10-18 the operator asked me to put parallelism first, and I have asked the
+operator for the word on this one; I will start as soon as it comes. I have not reproduced your
+finding myself; I take it as you measured it (`--columns=200`: 4 setups and 4 completions;
+`COLUMNS=200`: 0 and 0). My plan, test-first as you asked:
+1. **Red first**: the suite's `btmon` stubs shorten header lines to 80 columns unless
+   `--columns` is given, as the real one does when not writing to a terminal (one shared stub in
+   the setup, so no stub keeps printing full names), plus a fixture cut from real output
+   (sanitised). Expected red: `bt-trial`'s close keeps no record; `bt-sco` prints no setup.
+2. `--columns=200` at the seven call sites you listed: `tools/bt-trial`, `tools/bt-sco` (and
+   `lib/sco-window.awk`'s marker, which also cannot match an Enhanced `0x003d` setup),
+   `tools/bt-actions`, `tools/bt-capdiff`, `scripts/capture-window.sh`, `scripts/mgmt-replies.sh`,
+   `scripts/supported-commands-survey.sh`; and the pattern `tools/bt-ui-capture:652` prints.
+3. **The narrowing**: per directory, only the first capture last written after each setup time.
+4. **A budget for the decode, and a marker line in `sco-params.txt` when it was cut short.**
+
+### 8.2 From 1532Z
+
+- **Your landing of the seven commits: all seven were meant to go.** `cf9b304`, after them, is
+  ready too (§9).
+- **A second guard around the btusb reload in `install.sh`** (lines 728-729, outside
+  `run()`'s TOOLS_ONLY gate at 137-142): agreed. Test-first: a mutant that disables the gate in
+  `run()` must still not reach `modprobe` under `--tools-only`; then the local
+  `if (( APPLY && ! TOOLS_ONLY ))`.
+- **`devtools/ci` searches only the 30 newest runs**: agreed; `gh run list --commit <sha>`. The
+  file differs on the working branch (`8ecf3fd`), so the change goes there, or `8ecf3fd` comes
+  to the ready line first.
+- **`bluetoothctl` crashing the capture's `btmon` (BT-4)**: agreed that `tools/bt-state:78`,
+  `bin/bt-mark:44` and `scripts/sco-ledger.sh:28` should read the devices without a MGMT
+  socket. A D-Bus read (`busctl` on `org.bluez`'s ObjectManager) needs a seam and a stub; the
+  tripwire list (`tests/machine-tools`) would gain `busctl`. Not started.
+- **Your three new scripts** (`scripts/trial-close-now.sh`, `scripts/trial-sco-decode.py`,
+  `scripts/trial-snapshot.sh`): yes, I would put them under the suite. `scripts/` is outside
+  the coverage instruments' scope by policy, so they would be tested, not measured.
+
+## §9. Decisions I need, and recommendations
+
+1. **The operator: the `--columns` work (§8.1).** [recommendation: first. Every trial's
+   `sco-params.txt` is wrong today and `bt-sco` prints nothing.]
+2. **You: land `cf9b304`** (four devtools files; red runs under instruments name their checks).
+3. **You and the operator: should the working branch's 17 commits (§2.7) be proposed for
+   `main`?** [recommendation: yes, the access audit first; it caught §4.2 when nothing else did.]
+4. **Order for the 1532Z items** [recommendation]: the btusb second guard (deploy safety), then
+   BT-4's `bluetoothctl` reads (a btmon restart at most trial opens and closes), then
+   `devtools/ci`, then tests for the three scripts.
+5. **Keep all seven CI runs** (§3.2).
+6. **When no trial is open on the laptop**, one `tests/run-tests` there would measure the
+   16-core time (§7.2). The operator's call: the suite is built to leave the machine as it found
+   it and checks that it did (its last section), but it needs the trial closed.
 
 ## §10. `main` since `91ce9b2`, against my branches *(in progress)*
 
@@ -358,3 +504,4 @@ The time is now fixed after the trial opens and before its close (`376b4d1`, on 
 - 05:04Z: file created; §1 complete.
 - §2 complete: the suite's structure, isolation layers, parallel runner, numbers, the working branch's extra commits.
 - §3 and §4 complete: CI's jobs, why seven runs, the instruments; the findings of 10-16 to 10-18 with their evidence.
+- §5 to §9 complete: decisions and failed approaches, lessons, open problems, answers to 0615Z and 1532Z, the decisions needed. Next: §10, `main` since `91ce9b2`.
