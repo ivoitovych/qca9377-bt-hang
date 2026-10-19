@@ -2577,4 +2577,42 @@ bot's version once that is known.
 `get-maintainers.sh`, `mail-html-to-text.sh`, `git-log-tab-count.sh` and
 `bluez-human-ci-mentions.py`: no defects.
 
+## 79. `scripts/ci-local.sh` (lines 108-743 read in full; the head was read in §45)
+
+The design matches the rule it serves: judge only the difference.
+- Every two-sided check builds the base and the patched tree and classifies findings as NEW,
+  FIXED or PRE-EXISTING, with line numbers removed from the key, so a patch that only moves an old
+  warning is not blamed for it.
+- A failed build becomes a finding line (`BUILD FAILED: …`) rather than an empty list.
+- Only a base side that built is cached, so a missing package on one day is not compared against
+  forever.
+- A stable backport is aimed at the newest tag of its line, with `bluetooth-next` consulted only
+  to show the expected failure.
+- `VerifyFixes` refuses on a `--depth 1` tag instead of reporting every `Fixes:` as wrong.
+- The summary ends with the checks that did not run, so "no NEW finding" never hides a skipped
+  check.
+
+**CL3 — LOW-MED. In kernel space, sparse that never ran still gets a PASS verdict.** When the
+kernel skips sparse ("not available or not up to date"), both sides have no findings. Line 719
+gives `PASS no finding on either side`, and 720-722 add only a WARNING line beneath it. The summary
+counts it as a check that ran. `kernel-preflight.sh` learned this on 2026-09-23 and refuses (§73);
+the lesson did not reach this copy (the first recurring pattern).
+*Fix:* without a `CHECK` line on both sides, give the verdict `NOT RUN` and add it to `SKIPPED`.
+
+**CL4 — LOW. A checkpatch that crashes reads as PASS.** The verdict comes only from `^ERROR:` and
+`^WARNING:` lines (435-436). A `checkpatch.pl` that dies (a missing Perl module, an unreadable
+patch) prints neither, so the check passes. `ci-local-controls.sh` would catch a broken checkpatch
+when it is run, but each ordinary run does not check.
+*Fix:* require checkpatch's `total:` line for PASS; otherwise `NOT RUN` with its last output line.
+
+**CL5 — LOW-MED. The base-side cache ignores the toolchain.** The cache key is the space, base
+commit, check name and configure arguments (529). A base result computed before a compiler,
+`smatch` or `scan-build` update is reused afterwards. The patched side then runs on the new
+toolchain, and every difference between the two versions is classified as NEW or FIXED, as if the
+patch had caused it. For `smatch`, built from `cache/smatch`, an update is a routine event.
+*Fix:* add `cc --version`, `smatch`'s commit and `scan-build`'s version to the key.
+
+**CL6 — INFO.** A `--functional-k` expression that selects nothing yields an empty junit result on
+both sides and a PASS. Print the number of test cases each side ran, and refuse zero.
+
 
