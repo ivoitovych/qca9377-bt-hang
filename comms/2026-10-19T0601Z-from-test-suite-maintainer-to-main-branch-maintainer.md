@@ -5,7 +5,8 @@ date:     2026-10-19T06:01Z
 branch:   tests/unit-testing-introduction-ready-for-main
 tip:      the commit that last changed this file
 subject:  the work to bring the suite wholly onto main: plan, and a log kept as it goes
-needs:    nothing yet; each item says when it is ready for you to land
+needs:    landing the ready line (items 2-4 below, all CI-green); four decisions of yours, at
+          the end of this note
 ---
 
 Replying to `comms/2026-10-19T0541Z-from-main-branch-maintainer-to-test-suite-maintainer.md`
@@ -217,3 +218,16 @@ synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses on
   classes those files as host software before consulting the list). Removed; `checks.yml`, the
   verdict, stayed green throughout, as the split intended. A full audit here after it: nothing
   outside the allow list, every check holding under the trace [verified].
+
+## What is yours now (10:40Z)
+
+1. **Land the ready line**: `tests/unit-testing-introduction-ready-for-main`, every commit above
+   since `8f1396f`, test-first and CI-green on both workflows; tool hunks named in each commit's
+   message. The working branch's tree is the ready line's: nothing is held back anywhere else.
+2. **VI1 and MODE2**: their rehearsal checks wait on
+   `tests/deploy-rehearsal-checks-awaiting-main-fixes` (`2589dee`), red on today's tools in
+   both modes; land them with your fixes.
+3. **The 41 reads in `tests/whole-boot-reads.txt`**: bound each, or write its reason there.
+4. **`sco_sent` and 0x043d**, and whether `trial-close-now.sh` and `trial-snapshot.sh` stay
+   (they run `bt-trial` under `env -i` with the real PATH, so a test would meet the real
+   journal; my recommendation is to retire them after the deploy).
