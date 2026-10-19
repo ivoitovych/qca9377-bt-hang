@@ -1419,3 +1419,106 @@ unfiltered and taking the first match (`bt_journal -k -b … | grep | head -1`, 
 dynamic-debug boot with no timeout, that reads the whole boot before refusing. `bt_journal_first`
 exists for exactly this, with `--grep` (journal.sh 201), and `bt-window` uses it.
 
+## 47. `tools/verify-restored.sh` (186 lines, read in full)
+
+Its file list is derived from `install.sh` (with a refusal if implausibly short). It catches
+`.disabled` move-asides and checks `dpkg --verify bluez`.
+
+**VR1 — MED. "Pre-investigation state" leaves out two changes made outside `install.sh`.** The tool
+ends "System matches its pre-investigation state" after checking only what `install.sh` installs,
+plus the packaged BlueZ files. Two kinds of change this project made on the laptop outside
+`install.sh` are invisible to it:
+1. **Self-built kernel modules in `updates/`.** These are E3's `btusb.ko` (STATUS: the laptop runs
+   it), and any `bluetooth.ko` placed by `scripts/module-updates.sh`. They are loaded at every boot,
+   in front of the stock modules. `dpkg --verify` does not see them, because they are not package
+   files.
+2. **The self-built `bluetoothd`.** STATUS (2026-10-17) records that "the running `bluetoothd` is
+   still the patched `/usr/local` rebuild". It is started through a drop-in under
+   `/etc/systemd/system/bluetooth.service.d/` (`runtime-mgmt-test.sh` names
+   `20-patched-bluetoothd.conf`). `dpkg --verify bluez` passes because the packaged binary is
+   untouched, and the check's own heading says "Untouched by design — confirming still true".
+
+On the laptop as it stands, after `uninstall.sh` the tool would declare a machine restored while it
+still boots a self-built btusb and a self-built bluetoothd.
+*Fix:*
+- list every `.ko` under `/lib/modules/*/updates/` (with srcversion);
+- list every drop-in under `bluetooth.service.d/`;
+- name `ExecStart`'s binary (`systemctl show -p ExecStart bluetooth`);
+- fail on any of them not packaged.
+
+`uninstall.sh` (UN3) and `docs/restore-original-state.md` should name the same items.
+
+**VR2 — INFO.** Section 6 still says "if this is still the 2026-08-10 boot, 3 of them are synthetic
+test lines". That boot is long gone; drop the line or date it.
+
+## 48. `tools/bt-guards`, `tools/lib/evidence-window.sh` (read in full)
+
+No defects. Both are examples of the project's method at its best:
+- **`bt-guards`** selects on the indexed `_COMM=bluetoothd` field, not a whole-journal grep (the
+  EX-041 lesson). It refuses a zero without a positive control, and it says plainly that a 0001 hit
+  is ambiguous (the same text exists at a pre-existing site).
+- **`evidence-window.sh`** keeps one grammar for writer and reader. It orders by instant rather than
+  by spelling, voids the answer when a stamp does not parse rather than taking the minimum of what
+  survived, and checks `not placeable` before looking for instants in the reason's prose.
+
+One note for later: the BT-7 patches are now upstream (`a734b06059cb`, `0bed9886cff3`). Once a
+distribution BlueZ carries them, the "new text, unique to the patch" in `bt-guards`' header will
+also come from the packaged daemon. The meaning of a hit (a crash prevented) does not change, but
+the default `--since 2026-08-25` ("the patched daemon was first installed") stops being the
+boundary that matters.
+
+## 49. `devtools/doc-main-hashes`, `devtools/review-open` (read in full)
+
+`doc-main-hashes` is solid:
+- it judges against the main of the remote whose URL is the public repository, never `HEAD`;
+- a port's origin is accepted only beside its port;
+- a commit only on the current branch is PENDING;
+- a shallow clone or a missing reference is INCONCLUSIVE, never clean.
+
+**RO1 — LOW-MED. "Confirmed" and "verified" count as closed, but they also mean "real, not yet
+fixed".** `review-open` treats a status beginning with `confirmed` or `verified` as CLOSED (line 29).
+In a findings register those words are as likely to mean the opposite: "confirmed — fix pending",
+"verified on the machine, open". Such a row disappears from the gate the operator uses "before
+anything is submitted".
+*Fix:* count `confirmed`/`verified` as closed only together with a closing word (`fixed`, `done`);
+otherwise list them. Alternatively, list every status word the register uses with its open/closed
+reading, so a new phrasing is a visible decision.
+
+**RO2 — INFO, about this review. Its findings are invisible to `review-open`.** It reads only the
+action registers in `reviews/README.md`, matching ids of the form `AB-12` / `R2-12`. This report's
+ids (`T1`, `RS1`, `CAP1` and the rest) are neither in the register nor in that form. For them to
+count in the gate, they need register rows in the README's format (e.g. a `CR2-nn` prefix). That
+is a separate edit of `reviews/README.md`, not made here.
+
+## 50. `devtools/check`, `devtools/status` (read in full)
+
+**DS1 — MED (VI1 again, a third site).** `devtools/status`, the "is everything updated, deployed,
+committed?" report, prints on any drift: "the checkout is AHEAD of what is running —
+`sudo ./install.sh --apply`" (line 107). That makes three tools that send the operator to the
+forbidden command:
+- `bt-verify-install`, line 166 (VI1);
+- `devtools/status`, line 107;
+- `bt-mode`'s companion hints in `install.sh` (MODE1).
+
+`devtools/check` (line 65) prints the verifier's last three lines, which include VI1's.
+*Fix:* one wording everywhere: "`sudo ./install.sh --tools-only`, then `daemon-reload`,
+`bt-verify-install`, `bt-mode status`" (the checklist in `docs/install.md`).
+
+**CK1 — LOW-MED. On the laptop, `devtools/check` always says NOT READY TO COMMIT.** Its first step
+runs `devtools/repo-validate` with the suite. A trial is open on every boot there, so the suite
+refuses (`run-tests` exit 2), the step fails, and the command always ends NOT READY.
+`repo-save` already handles this case: it passes `--no-suite` and says so.
+*Fix:* do the same here when `/run/bt-trial/current` exists.
+
+**DS2 — LOW-MED. `devtools/status` waits minutes for a line it throws away.** It takes the trial
+line from `tools/bt-trial status | head -1` (119). `bt-trial status` prints "trial OPEN" and then
+reads the whole trial window unfiltered (T6), minutes on a multi-day trial with dynamic debug.
+`head -1` already has its line, but the read runs to completion before the next write fails, so
+`devtools/status` waits on every run.
+*Fix:* read `/run/bt-trial/current` directly for this row, or fix T6.
+
+**DS3 — LOW. `devtools/status` checks only `origin`.** The "pushed?" row uses
+`git ls-remote origin <branch>` (58). On a held branch, which `repo-save` pushes to `private`, it
+reports "could not reach origin" or "ahead" for a branch that is fully pushed. Use the same branch
+rule as `repo-save`.
+
