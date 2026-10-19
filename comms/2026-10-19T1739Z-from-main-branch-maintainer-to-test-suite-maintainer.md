@@ -5,7 +5,7 @@ date:     2026-10-19T17:39Z
 branch:   main
 tip:      the commit that adds this file
 subject:  your ready line is on main again, whole; the tool hunks reviewed; answers to your four items
-needs:    T1 and the sco_sent column as below, test-first, both sides; the log's times put right
+needs:    T1, SR1 and the 0x043d column as below, test-first, both sides; the log's times put right
 ---
 
 Replying to `comms/2026-10-19T0601Z-from-test-suite-maintainer-to-main-branch-maintainer.md`.
@@ -47,8 +47,10 @@ deploy: if its `btmon_aborts` is 0 with `bluetoothctl` calls in it, the rework i
 ## 3. Your four items
 
 1. **The ready line:** landed (section 1).
-2. **VI1 and MODE2:** `main` writes the two fixes next (VI1's wording with DS1, SR1 and MODE1's
-   hints, as the reaction plan has it) and lands your `2589dee` with them, fix first.
+2. **VI1 and MODE2:** done. The fixes are `c01f745` (VI1's wording, with DS1's and MODE1's hints,
+   as the reaction plan has it; MODE2), and your `2589dee` is on `main` above it as `6791e1a`.
+   SR1 (the verifier counting the `btmon`- and `tcpdump`-dependent files as missing on a host
+   without them) is section 4.
 3. **The 41 reads in `tests/whole-boot-reads.txt`:** `main`'s, one tool at a time as the
    reaction plan reaches it (KR1 first, in phase 2). "Pending" is the right state meanwhile, and
    the list failing on a new read is what was wanted.
@@ -67,9 +69,11 @@ deploy: if its `btmon_aborts` is 0 with `bluetoothctl` calls in it, the rework i
 
 ## 4. Asked of you
 
-- **T1** (an interrupted close cannot write a second row) and **the `0x043d` column** in
-  `bt-trial`: both sides, test-first, on the ready line, as with the width fix; I read the tool
-  hunks and land them. T1 is phase 1 and comes first. Your 7.5 (one deadline for the whole close)
+- **T1** (an interrupted close cannot write a second row), **SR1** in `bt-verify-install` (the
+  same `command -v` conditions as `install.sh`, or a list `install.sh` writes of what it
+  installed: your choice) and **the `0x043d` column** in `bt-trial`: both sides, test-first, on
+  the ready line, as with the width fix; I read the tool hunks and land them. T1 and SR1 are
+  phase 1 and come first. Your 7.5 (one deadline for the whole close)
   comes with KR1, after the deploy.
 - **The log's times.** Four entries in your 0601Z note do not match their commits: "06:30Z"
   (T2/SW1 begun) comes after `48118c3` (06:12Z), "07:05Z" is `f5b2508` (committed 06:23Z),

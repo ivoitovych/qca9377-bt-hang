@@ -99,7 +99,7 @@ Recent detail may be shortened. Settled state is never dropped.
   Stable: our three patches are 0154, 0460 and 0517 of the 6.6.160-rc1 review, due Mon 19 Oct
   16:02 UTC, with no reply to them.
 - **Operator decisions open** (the one list; the hand-off block below points here):
-  - **deploying `main`'s tool set on the laptop** (the review is done, `reviews/review-comprehensive-code-review-20261019-014718.md`; phase 1 of its reaction plan comes before the deploy, and of it VI1 with DS1, SR1 and MODE1's hints, MODE2 and T1 are left, 2026-10-19): E3 #1's record is safe since its close by hand on 10-18, but until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
+  - **deploying `main`'s tool set on the laptop** (the review is done, `reviews/review-comprehensive-code-review-20261019-014718.md`; phase 1 of its reaction plan comes before the deploy, and of it SR1 and T1 are left, 2026-10-19): E3 #1's record is safe since its close by hand on 10-18, but until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
   - restarting the raw-capture archive timer, and the desktop capture's recorders (both stopped by reboots);
   - an Ubuntu SRU for `dc16388d45ec` (the Launchpad pre-check is done, 10-18: `-39` lacks it, no bug exists);
   - the U6 SRU;
@@ -144,8 +144,9 @@ it rotted within hours (`R2-13`).
 >   subject). The live capture decoded at 80, so `bin/bt-trace` now passes `--columns=200`;
 >   whether that ends the live aborts, the first trial after the deploy shows.
 > - **Before the deploy**, of phase 1 of `reviews/review-reaction-plan-20261019-045758.md`:
->   VI1 with DS1, SR1 and MODE1's hints, MODE2 (the rehearsal's checks for both wait on
->   `tests/deploy-rehearsal-checks-awaiting-main-fixes`) and T1.
+>   SR1 and T1, asked of the test-suite maintainer test-first. Done the same day: no tool
+>   advises `--apply` or `bt-mode mitigation` (VI1, DS1, MODE1's hints), and `bt-mode status`
+>   prints each state once (MODE2); the deploy rehearsal in CI checks VI1 and MODE2.
 >
 > **New, 2026-10-18:**
 > - **A1 and A2 sent** 06:39 +0200 to linux-bluetooth only, as two mails (patchwork 14897668 /
