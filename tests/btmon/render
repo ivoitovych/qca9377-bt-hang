@@ -1,0 +1,65 @@
+#!/bin/sh
+# tests/btmon/render — print btmon text as btmon 5.72 prints it when its output is not a terminal.
+#
+#   <full-width btmon text> | tests/btmon/render [btmon's own arguments]
+#
+# Every btmon stub in tests/run-tests pipes its fixture through this, so the suite sees what the
+# laptop's tools see. Until 2026-10-19 every stub printed full names, and every tool that matched
+# a name passed here and matched nothing on the laptop: piped, btmon fits each header line into
+# 80 columns, `< HCI Command: Se.. (0x01|0x0028) plen 17`, and COLUMNS is not read. Only
+# `--columns=N` (or `-CN`) widens it.
+#
+# The rule is print_packet()'s in monitor/packet.c (bluez 5.72): a header is
+# `<ident> <label>: <text> <extra>` and a right-hand block (`#frame` or `{channel}`, `[hciN]`, the
+# date and time); only <text> is cut, to col - len(ident label) - len(extra) - len(block) - 3,
+# ending in "..". tests/btmon/real/ holds the real btmon's output for one capture at three widths,
+# and the suite checks this program against it.
+#
+# Where btmon would abort (that length is -2 or less: BT-4), this prints nothing and exits 134,
+# as the real one dies there and its buffered output is lost; a tool that hits it here meets the
+# same failure.
+col=80
+for a in "$@"; do
+    case "$a" in
+        --columns=*) col=${a#--columns=} ;;
+        -C?*)        col=${a#-C} ;;
+    esac
+done
+exec awk -v col="$col" '
+function spaces(n,   s) { s = ""; while (n-- > 0) s = s " "; return s }
+/^[<>@=*] / {
+    line = $0; blk = ""
+    # The right-hand block: frame or channel, index, date, time (as -T prints them).
+    if (match(line, /( #[0-9]+| \{[^}]*\})?( \[hci[0-9]+\])?( [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])? [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\.[0-9][0-9][0-9][0-9][0-9][0-9]$/)) {
+        blk = substr(line, RSTART); line = substr(line, 1, RSTART - 1)
+    }
+    sub(/ +$/, "", line)
+    head = substr(line, 1, 2); rest = substr(line, 3)
+    i = index(rest, ": ")
+    if (i == 0) { o[++n] = $0; next }
+    label = substr(rest, 1, i - 1); body = substr(rest, i + 2)
+    # <extra>: an Open carries "(privileged) version N.M" or "version N.M"; everything else that
+    # has one carries it in parentheses after the name, "(0x01|0x0028) plen 17".
+    extra = ""; text = body
+    if (label ~ / Open$/ && match(body, / (\(privileged\) )?version [0-9.]+$/)) {
+        extra = substr(body, RSTART + 1); text = substr(body, 1, RSTART - 1)
+    } else if (match(body, / \([^()]*\)[^()]*$/)) {
+        extra = substr(body, RSTART + 1); text = substr(body, 1, RSTART - 1)
+    }
+    len = length(head label)
+    max = col - len - length(extra) - length(blk) - 3
+    if (max <= -2) { dead = 1; exit }
+    s = ": " text
+    if (length(s) > max) {
+        s = substr(s, 1, max)
+        if (max >= 2) s = substr(s, 1, max - 2) ".."
+        if (max >= 3 && substr(s, max - 2, 1) == " ") s = substr(s, 1, max - 3) "." substr(s, max - 1)
+    }
+    out = head label s; len += length(s)
+    if (extra != "") { out = out " " extra; len += 1 + length(extra) }
+    if (blk != "") { out = out spaces(col - len - length(blk) - 1) blk }
+    o[++n] = out; next
+}
+{ o[++n] = $0 }
+END { if (dead) exit 134; for (k = 1; k <= n; k++) print o[k] }
+'

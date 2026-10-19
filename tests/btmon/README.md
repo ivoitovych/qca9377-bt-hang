@@ -15,6 +15,15 @@ What is under test is the parsing — which blocks are recognised, how requests 
 completions are counted, how the ±N second window is computed — and that parsing consumes
 text, not btsnoop.
 
+## The width, and the real btmon (2026-10-19)
+
+Every stub pipes its text through `tests/btmon/render`, which prints it as btmon 5.72 does when
+its output is not a terminal: header lines fitted to 80 columns unless `--columns=N` is given.
+Until then the stubs printed full names that the laptop's tools never saw, so every tool that
+matched a name passed here and matched nothing there. The renderer is checked by the suite
+against the real btmon's output for a synthetic capture (`real/`), which also pins BT-4's abort.
+The fixtures below stay full-width; the renderer narrows them.
+
 ## Provenance of the text
 
 Hand-written to the shape of `btmon -T -r` output as the two tools consume it, and kept

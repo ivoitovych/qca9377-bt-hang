@@ -6929,6 +6929,52 @@ echo "────────────────────────�
 # Until 2026-10-18 part of "bt-hang-watchdog — the decisions, never the actuation";
 # a section of its own so that a parallel run can give it a core.
 
+# ── the btmon the stubs stand for: what it prints, and where it dies ──────
+#
+# Every btmon stub in this file pipes its text through tests/btmon/render, which
+# prints it as btmon 5.72 does when its output is not a terminal: each header
+# fitted to 80 columns unless --columns=N is given, COLUMNS ignored. Until
+# 2026-10-19 the stubs printed full names, so every tool that matched a name
+# passed here and matched nothing on the laptop: every trial's sco-params.txt
+# was empty (the main branch maintainer, comms 2026-10-18T0615Z). These checks
+# hold the renderer to the real btmon's own output (tests/btmon/real/README.md),
+# so the stubs cannot drift from the tool they stand for.
+BTR=tests/btmon/render; BTRD=tests/btmon/real; btrok=""
+for w in 80 160 200; do
+    btra=(); (( w != 80 )) && btra=(--columns=$w)
+    "$BTR" "${btra[@]}" < "$BTRD/lines-200.txt" | cmp -s - "$BTRD/lines-$w.txt" || btrok+=" $w"
+done
+[[ -z "$btrok" ]] \
+    && ok "the btmon stubs print header lines as the real btmon 5.72 does, at 80, 160 and 200 columns" \
+    || bad "tests/btmon/render differs from the real btmon at:$btrok columns"
+# AND WHERE IT DIES (BT-4). The real btmon aborts on a privileged MGMT Open
+# below 81 columns with -T: print_packet's max_len reaches -2, and the fortified
+# snprintf kills it, buffered output and all. A stub that survived it would let
+# a tool pass here that dies on the laptop at the first bluetoothctl in a capture.
+BTRPO=$("$BTR" < "$BTRD/priv-open-200.txt"); btrpo80=$?
+"$BTR" --columns=81 < "$BTRD/priv-open-200.txt" > /dev/null; btrpo81=$?
+(( btrpo80 == 134 && btrpo81 == 0 )) && [[ -z "$BTRPO" ]] \
+    && ok "the stubs die as the real btmon does on a privileged MGMT Open below 81 columns (BT-4), and print nothing" \
+    || bad "the privileged-open abort: rc at 80 = $btrpo80, at 81 = $btrpo81, output '${BTRPO:0:60}'"
+# The generator of the captures behind those files still builds them: valid
+# btsnoop, monitor format (2001), one record of each shape and the open alone.
+BTRC=$(mktemp -d)
+BTRCOUT=$(python3 tests/btmon/real/mkcap.py "$BTRC" 2>&1 && python3 - "$BTRC" <<'PYEOF'
+import struct, sys, os
+for name, want in (("lines.btsnoop", 7), ("priv-open.btsnoop", 2)):
+    d = open(os.path.join(sys.argv[1], name), "rb").read()
+    magic, ver, link = d[:8], *struct.unpack(">II", d[8:16])
+    n, i = 0, 16
+    while i < len(d):
+        ol, il = struct.unpack(">II", d[i:i + 8]); i += 24 + il; n += 1
+    print(name, magic == b"btsnoop\0", ver, link, n == want and i == len(d))
+PYEOF
+)
+rm -rf "$BTRC"
+[[ "$BTRCOUT" == *"lines.btsnoop True 1 2001 True"*"priv-open.btsnoop True 1 2001 True"* ]] \
+    && ok "tests/btmon/real/mkcap.py builds both captures, valid btsnoop in bt-capture's monitor format" \
+    || bad "mkcap.py: $(tr '\n' '|' <<<"$BTRCOUT")"
+
 # ── bt-sco: the parameters of the links that killed the controller ───────
 #
 # Both instrumented hangs happened during SCO link transitions, and SCO setup
