@@ -1662,3 +1662,70 @@ real line) in the same commit, or the test will start failing on the corrected c
 These are the tree-wide invariants proposed in the second-pass summary. Section bodies were not
 read beyond this one, so an invariant filed under another heading is possible.
 
+---
+
+## Consolidated ranked list — all passes (written after §56)
+
+About 18,500 of ~40,000 lines read line by line, plus pattern sweeps of every tool and script. For
+fixing, by urgency, with the sections that hold the details.
+
+**1. Act now (operational, the operator's decision)**
+- **CAP1** (§7): the capture daemons will rotate away the unarchived U10 and BT-9 captures. Restart
+  the archive or copy them to the keep directory. AR1 (§10) means the decode-free capture
+  directory is never archived even then.
+
+**2. Hazards that bypass rules held only in prose (HIGH, latent)**
+- **KR1** (§38): under E3 a real failure would be marked PERTURBED and dropped from the E3 rate. The
+  kernel's own reset is misattributed to the watchdog.
+- **RS1** (§12): `repo-save` pushes every branch not on a short list to `origin`.
+- **MODE1** (§8): `bt-mode mitigation` arms the watchdog; `install.sh` suggests it.
+- **I1, UN1, RM1** (§4, §5, §32): live btusb reloads in `install.sh --apply`, `uninstall.sh` and
+  `runtime-mgmt-test.sh`, against EX-046.
+- **VI1, DS1, SR1** (§16, §50, §36): three places advise `install.sh --apply`. SR1 makes the
+  verifier's advice likely on the laptop.
+
+**3. Deploy-day traps (MED; small fixes, worth doing before the deploy)**
+- **I2** (§4): `--tools-only` reads the whole boot's kernel log at its last step.
+- **MODE2** (§8): `bt-mode status` prints "inactive" twice.
+- **CK1** (§50): `devtools/check` always fails on the laptop.
+- **SU1** (§21): extend the rehearsal so CI catches I2, VI1 and MODE2.
+
+**4. Records and evidence (MED)**
+- **T1** (§1): an interrupted close writes a duplicate row.
+- **AJ1, BJ1** (§24, §23): journal archive gaps.
+- **UN2, SW2** (§5, §31): advice and flags that delete unarchived captures.
+- **SC-1** (§42): `bt-sco` can fill the disk and trigger capture pruning.
+- **EV2, CP1** (§31, §29): unsanitised text left in tracked directories.
+- **SC1, SAN1** (§13, §15): raw-byte and IPv6/EUI-64 addresses pass the publishing gate.
+- **VR1** (§47): the restoration check is blind to `updates/` modules and the self-built
+  bluetoothd.
+
+**5. Measurement correctness (MED)**
+- **PH1, T9, EH1** (§37), with **JC1** (§51) and the test fixture in §56: the probe counters cannot
+  match this systemd's wording.
+- **AC1** (§43): other boots' commands are shown as operator actions.
+- **TA1** (§26): an unreadable window audits as clean.
+- **KM1** (§39): the kernel-mechanism tool reads the stock module, not E3.
+- **T2, SW1** (§1, §31): `COLUMNS=` is ignored by `btmon`.
+- **M1, EV1, SW3** (§3, §31, §32): tools still open MGMT or send HCI by default.
+- **BS-1, BS-2, BP1, HR1** (§54, §53, §40).
+- **WD1** (§17): the watchdog's premise no longer holds under E3.
+
+**6. Other MED**
+- **SM1, SM2** (§19): the SMTP check reads a connect failure as REVOKED; the password goes on the
+  command line.
+- **SN1** (§18): `bt-snapshot` reads a fixed port and the first adapter of any kind.
+- **CL2** (§45): before `--functional` runs on the laptop, establish where the harness runs
+  `btvirt`.
+
+**7. Everything else:** LOW and INFO items in their sections.
+
+**Three recurring patterns** (second- and third-pass summaries). Fixing each once covers many
+findings:
+1. A fix that reached some sibling tools but not all.
+2. Rules held in prose instead of code.
+3. Fixtures and comments that encode an assumption instead of the machine.
+
+The suite already pins several tree-wide rules as invariants; the list above names the ones
+missing.
+
