@@ -39,7 +39,43 @@ if at all, at the next hand close before a planned shutdown.
 
 Each item lands on the ready line with its gates and CI green; the log below says when.
 
+## Found on the way: BT-4's mechanism, reproduced on the installed btmon [verified]
+
+Ubuntu's `bluez` 5.72-0ubuntu5.8 (`apt-get download bluez`, unpacked, not installed) run here on a
+synthetic capture in `bin/bt-capture`'s monitor format, placeholder addresses only
+(`tests/btmon/real/mkcap.py` builds it):
+- **Your header-width finding holds**: piped, with no width or with `COLUMNS=200`, the setup is
+  `< HCI Command: Se.. (0x01|0x0028) plen 17`; with `--columns=200`, `Setup Synchronous Connection`.
+- **And `btmon -T -r` aborts** (`*** buffer overflow detected ***: terminated`, exit 134, nothing
+  of its buffered output written) on one record: a privileged MGMT Open,
+  `@ MGMT Open: bluetoothctl (privileged) version 1.22`. A non-privileged open, every HCI command
+  and event, and MGMT commands decode.
+- **The mechanism is `print_packet`'s `max_len`** (monitor/packet.c, 5.72): `col - len(label) -
+  len(extra) - len(timestamp block) - 3`, here `col - 11 - 25 - 43 - 3`. With `max_len <= -2`,
+  `snprintf(line + pos, max_len + 1, …)` gets a size that wraps, and glibc's fortify check aborts.
+  Predicted threshold col 80 aborts, col 81 survives: **measured exactly so** (79 and 80 exit 134;
+  81 decodes, with the label corrupted to `MGMT O..n` by the writes at negative offsets that the
+  code then makes; 82 and 83 clean). This is the upstream fix's subject, `fdbfe0018` "monitor: Fix
+  crash due to negative max_len" (5.80); STATUS's BT-4 row had it as strongly indicated, not proven.
+- **What follows for the live capture** [hypothesis: no Bluetooth here to run it live]: live
+  packets carry the sender's `comm[pid]`, which `print_packet` prepends to the label
+  (`bluetoothctl[12345]: @ MGMT Open`), so at 80 columns a privileged open goes negative even
+  without dates. `bin/bt-trace` runs `btmon -w "$CURRENT" >/dev/null`: the decode it throws away
+  still runs, at 80 columns, and can kill the capture. **`--columns=200` there should stop these
+  aborts** (max_len about +112), whatever opens the socket: `bluetoothctl`, a probe, `btmgmt`.
+  That is an eighth call site, and it may make the D-Bus rework of the `bluetoothctl` reads
+  (your 15:32Z item 3) unnecessary. One trial with it on the laptop would show.
+- **For the decode call sites the same width does two things**: full names, and no abort on a
+  capture that holds a privileged open (`btmon -T -r` today dies on every such capture).
+- `bt-capture`'s timestamps are right (checked: `(unix - UNIX_2000) * 1e6 + 0x00E03AB44A676000`
+  decodes to the right date in the real btmon).
+
 ## Log
 
 - 06:01Z: `main` (`8f1396f`) merged into the ready line, `401e201`: no conflict, and
   `git diff origin/main 401e201` is empty. Next: the working branch, then T2/SW1.
+- 06:04Z: the ready line merged into the working branch, `a4ece69`: no conflict.
+- 06:30Z: T2/SW1 begun. The real btmon 5.72 run here confirms the width finding and reproduces
+  BT-4's abort (above). Next: one stub renderer for every btmon stub in the suite, checked
+  against the real btmon's own output for the synthetic capture; then the red checks; then the
+  call sites, `bin/bt-trace` included.
