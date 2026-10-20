@@ -116,6 +116,12 @@ Recent detail may be shortened. Settled state is never dropped.
   - `-38` also carries the BT-9 fix (`96d006ae6445`). The discovery stuck since 10-04 had already ended on 10-10 at 15:02, at the operator's adapter power cycle (§5; corrected 2026-10-14).
   - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, cherry-picked from `d5272a6` on `tests/unit-testing-introduction`, plus `25dfc68`, and since 2026-10-18 the close writes its row before `bt-state`, `bt-mark` and the SCO decode; the decode, `btmon` over 48 GB of captures, took trial 14's close 53 minutes and was running when trial 15's close stopped without a row) but not on the machine. **The trial of the 10-13 boot was therefore closed by hand on 2026-10-18 at 17:03** (`scripts/trial-close-now.sh --reopen`: `main`'s closer from the checkout, passive, row first; 13 SCO setups, 0 timeouts; STATUS), and E3 #2 opened at 17:05:04, mid-boot. Until the deploy, a shutdown with a trial open still decodes the captures before the row if the trial saw a call, and the installed `autostop` and `bt-mark` send HCI Read Local Name up to four times (STATUS, the machine's warnings). The only sound route is the whole tool set: `install.sh --tools-only`, `daemon-reload`, `bt-verify-install`, `bt-mode status`. `bt-trial` alone is a partial deploy (STATUS). The stop timeout is 90 s now (systemd's default) and 30 s once `main`'s unit is loaded. When is the operator's decision.
   - **On 2026-10-13 at 20:26 the laptop stopped abruptly** (no shutdown sequence in the journal; cause not recorded) and rebooted at 20:29. The second "E3 #1" lost its row too, and the fix could not have prevented that: an abrupt stop runs no ExecStop. Its E3 result is whole in the journal: 7 links, 0 timeouts (`scripts/sco-ledger.sh -1`).
+  - **On 2026-10-19 at 21:52:54 the laptop stopped abruptly again**, in the middle of a
+    call (a wideband link up for 2 h 12 min), with no shutdown sequence and no Bluetooth
+    error. The cause is unknown; the operator thinks a forced power-off by someone at the
+    laptop is possible. E3 #2 lost its row; its result is in the journal: 8 links, 7
+    hang-ups answered, 1 open at the stop, 0 timeouts. A new "E3 #2" opened at 21:53:22 in
+    the same directory (STATUS). The shutdown step's redesign: §9.11.
   - Only the operator touches the machine's Bluetooth or kernel.
   - **Raw HCI captures are archived** into `archive/bt-trace/` (git-ignored) by `scripts/bt-trace-archive.py`, on a transient timer. It has been paused since 2026-10-11 17:23 (free space then; 108 GB free on 10-17), and the 10-13 reboot removed the timer. Restarting it is the operator's decision. On 10-17, 159 archived files still stood in front of the first unarchived capture: about three weeks at the current rate (`docs/STATUS.md`). Rules: §7, "Evidence".
 - **Open investigation:** `U10`, the Tronsmart T8 silent on SBC-XQ. Waiting on the operator's test-sound check (`docs/issues.md`).
@@ -124,7 +130,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-20 (A1 and A2 applied upstream on 10-19, identical to what was sent; 6.6.160-rc2 carries our three stable patches; every other submission re-checked, nothing new; earlier, 2026-10-19: U12 registered: A2DP lost to an AVDTP Abort, fixed upstream, not in Ubuntu; the running bluetoothd found to lack Ubuntu's October CVE fixes; the test-suite maintainer's work wholly on `main`: the `btmon` width fix at twelve call sites, the reload's second guard, the access audit in a workflow of its own; BT-4's abort reproduced on the laptop's `btmon` build; earlier: 2026-10-18 trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-064** (EX-044/049/050 were ported from
+**Last updated: 2026-10-21 (the abrupt stop of 2026-10-19 21:52 found and recorded; E3 #2 lost its row; the shutdown step's redesign registered as §9.11, the operator's direction; earlier, 2026-10-20: A1 and A2 applied upstream on 10-19, identical to what was sent; 6.6.160-rc2 carries our three stable patches; every other submission re-checked, nothing new; earlier, 2026-10-19: U12 registered: A2DP lost to an AVDTP Abort, fixed upstream, not in Ubuntu; the running bluetoothd found to lack Ubuntu's October CVE fixes; the test-suite maintainer's work wholly on `main`: the `btmon` width fix at twelve call sites, the reload's second guard, the access audit in a workflow of its own; BT-4's abort reproduced on the laptop's `btmon` build; earlier: 2026-10-18 trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-064** (EX-044/049/050 were ported from
 `kernel/mgmt-flush-status` on 2026-10-09, `5939d04`; the next exhibit on `main` is EX-065) — no tip hash:
 it rotted within hours (`R2-13`).
 
@@ -776,6 +782,42 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
     decoy world on every push (tests/README.md, rule 5). **Still open:** the gates that each
     re-run the suite (seven in CI's check job on 2026-10-17, an eighth in the audit job of
     the test-suite branch), and the split.
+11. **Trial evidence must not depend on the shutdown (operator, 2026-10-21).**
+    **Trial rows were lost at four stops:**
+    - trial 15 (09-30): the close stopped inside the SCO decode;
+    - E3 #1 on `-34` (10-11), a normal shutdown: the installed closer reads and decodes
+      before it writes the row;
+    - two abrupt stops with no shutdown sequence: 10-13 20:26, and 10-19 21:52 in the
+      middle of a call (STATUS).
+
+    **The operator's direction:** make the shutdown step short. Copy raw evidence without
+    processing it, and process it after the reboot or in the next session. To think through
+    before any code:
+    - **Two failure modes, two remedies.**
+      - A slow close at a normal shutdown is what `main`'s fix shortens: the row first,
+        about 21 s. It is not deployed.
+      - A forced power-off runs no ExecStop at all. Nothing done at shutdown helps there;
+        only what is already on disk counts.
+    - **The raw record already survives.**
+      - The persistent journal and the HCI captures are written continuously, and
+        `scripts/sco-ledger.sh -1` rebuilt both lost rows' call results.
+      - What is lost is the trial's own state. `/run/bt-trial/current` is on tmpfs, and the
+        next boot's `bt-trial-auto` opens a new trial with the same number in the same
+        directory, overwriting `state-before.txt` and `steps.log` (git keeps the tracked
+        versions).
+    - **The likely shape**, to design with the test-suite maintainer, test-first:
+      - the shutdown step writes only a marker (boot id, time, trial directory) and computes
+        nothing;
+      - the trial's state lives on disk, not in `/run`;
+      - at the next boot, `autostart` first closes any trial the previous boot left open,
+        from that boot's journal (`-b -1`) and captures, with no time budget, and only then
+        opens the next trial under a new number;
+      - the SCO decode and every other heavy step run there, never at shutdown.
+    - **Open questions:**
+      - Is a periodic checkpoint during the trial still needed once the next boot closes
+        from the journal?
+      - How much of the last seconds before a power cut reaches the disk (journald's sync
+        interval, the page cache)? That is an inference, not measured.
 
 ## 10. Where detail lives
 
