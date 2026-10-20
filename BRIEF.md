@@ -86,18 +86,17 @@ Recent detail may be shortened. Settled state is never dropped.
   - BlueZ `ae23df052290` and `6f5eeb402d3b` (M-3);
   - BlueZ `8da7e648a9fb` (emulator hook leak) and `f3344d20d904`, `2942883d2738`, `49a70562f0bf`
     (the BT-9 test), applied 10-12, identical to what was sent (same patch-id and message, checked 10-17);
+  - BlueZ `b79d4a887` (A1, the a2dp duplicate check) and `7bc9684dc` (A2, the emulator VLA), applied 10-19, identical to what was sent (same patch-id, checked 10-20);
   - the BT-9 stable backports of `96d006ae6445`: 6.12 released in 6.12.113 (10-15, `9a328ae01489`); 6.6 and 6.1 in their 10-17 release candidates (5.15 and 5.10 rightly get the entry without it: the code it fixes is first in v6.1).
 - **Waiting for replies:** the Tested-by on Hui Peng's mesh_tx leak patch (10-06; another
   author's patchwork 14888791 of 10-14 carries the same hunk); the #1554 retest by a second
-  affected user, not the issue's author (10-14: updated to 6.18.50, "will check"); the BlueZ
-  patches A1 (a2dp duplicate check) and A2 (emulator VLA), sent 10-18 06:39 as two mails
-  (`patches/bluez/send-2026-10-18/`; judge each on its own, not by the bot closing its PR).
-  The bot: A1 passes all 12 checks; A2's CheckSmatch passes (the warning is gone), but
-  TestFunctional failed one case, `test_bluetoothctl_pair_bredr`: a known upstream flake (about
-  7 failures in 26 bot runs, 10-10 to 10-18), and Pauli Virtanen's patchwork 14879847 (10-10,
-  pending) fixes it (STATUS). Re-checked 10-18 15:29 UTC: no reply, no merge, nothing new.
-  Stable: our three patches are 0154, 0460 and 0517 of the 6.6.160-rc1 review, due Mon 19 Oct
-  16:02 UTC, with no reply to them.
+  affected user, not the issue's author (10-14: updated to 6.18.50, "will check"). Re-checked
+  2026-10-20 18:58 UTC: nothing new on either, nor on the other authors' mesh patches (all
+  `new`, `scripts/patchwork-state.py`). A1 and A2 were applied 10-19 (above).
+  Stable: no release since 10-15. 6.6.160 went to an **rc2** on 10-20 (1651 patches; responses
+  due Thu 22 Oct 07:53 UTC) carrying all three of ours; the rc1 boot panic on a Xeon server was
+  bisected to a sysfs patch, which was dropped from the 6.6 and 6.1 queues (STATUS). 6.1, 5.15
+  and 5.10 are still at their 10-17 rc1, with ours in.
 - **Operator decisions open** (the one list; the hand-off block below points here):
   - **deploying `main`'s tool set on the laptop** (the review is done, `reviews/review-comprehensive-code-review-20261019-014718.md`; phase 1 of its reaction plan comes before the deploy, and of it SR1 and T1 are left, 2026-10-19): E3 #1's record is safe since its close by hand on 10-18, but until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
   - installing a rebuilt bluetoothd (5.72-0ubuntu5.8's source, the BT-7 fixes, U12's `a14d59725`): the running build lacks five CVE fixes of 2026-10-07 (STATUS), then the U12 backport request;
@@ -125,7 +124,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-19 (U12 registered: A2DP lost to an AVDTP Abort, fixed upstream, not in Ubuntu; the running bluetoothd found to lack Ubuntu's October CVE fixes; the test-suite maintainer's work wholly on `main`: the `btmon` width fix at twelve call sites, the reload's second guard, the access audit in a workflow of its own; BT-4's abort reproduced on the laptop's `btmon` build; earlier: 2026-10-18 trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-064** (EX-044/049/050 were ported from
+**Last updated: 2026-10-20 (A1 and A2 applied upstream on 10-19, identical to what was sent; 6.6.160-rc2 carries our three stable patches; every other submission re-checked, nothing new; earlier, 2026-10-19: U12 registered: A2DP lost to an AVDTP Abort, fixed upstream, not in Ubuntu; the running bluetoothd found to lack Ubuntu's October CVE fixes; the test-suite maintainer's work wholly on `main`: the `btmon` width fix at twelve call sites, the reload's second guard, the access audit in a workflow of its own; BT-4's abort reproduced on the laptop's `btmon` build; earlier: 2026-10-18 trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-064** (EX-044/049/050 were ported from
 `kernel/mgmt-flush-status` on 2026-10-09, `5939d04`; the next exhibit on `main` is EX-065) — no tip hash:
 it rotted within hours (`R2-13`).
 
