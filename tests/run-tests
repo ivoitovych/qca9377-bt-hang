@@ -14431,13 +14431,12 @@ devtools/repo-save "$SCRATCH/not-a-repo" "msg" --no-push >/dev/null 2>&1
 # field as much as the author's.
 printf 'identity probe\n' > "$SCRATCH/save/ident.log"
 svbefore=$(git -C "$SCRATCH/save" rev-parse HEAD)
-_ae='noreply@anthro'; _ae+='pic.com'
-SVID=$(GIT_AUTHOR_NAME="$_ai" GIT_AUTHOR_EMAIL="$_ae" save "identity probe"); svidrc=$?
+SVID=$(GIT_AUTHOR_NAME="Another Person" GIT_AUTHOR_EMAIL="another@example.com" save "identity probe"); svidrc=$?
 svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
 (( svidrc != 0 )) && [[ "$SVID" == *"author is not this checkout's identity"* && "$svbefore" == "$svafter" ]] \
     && ok "repo-save refuses an author that is not the checkout's identity before any commit exists" \
     || bad "a foreign author identity got through (rc=$svidrc, HEAD moved: $([[ $svbefore != "$svafter" ]] && echo yes || echo no))"
-SVIDC=$(GIT_COMMITTER_NAME="$_ai" GIT_COMMITTER_EMAIL="$_ae" save "identity probe"); svidcrc=$?
+SVIDC=$(GIT_COMMITTER_NAME="Another Person" GIT_COMMITTER_EMAIL="another@example.com" save "identity probe"); svidcrc=$?
 svafter=$(git -C "$SCRATCH/save" rev-parse HEAD)
 (( svidcrc != 0 )) && [[ "$SVIDC" == *"committer is not this checkout's identity"* && "$svbefore" == "$svafter" ]] \
     && ok "repo-save checks the committer field as well as the author" \
