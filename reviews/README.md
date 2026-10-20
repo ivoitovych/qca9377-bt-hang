@@ -76,6 +76,7 @@ wrong turns, which a clean summary loses.
 | 2026-09-19T17:00Z | [Second independent review of the BlueZ patches](2026-09-19T1700Z-second-third-party-bluez-patch-review.md) | `patches/bluez/0001`, `0002` at `f068921`, against BlueZ master `ebbb4ee3` (2026-09-18); formed before reading the first review | **No blocker. One SHOULD FIX, message only** (`0001` attributed the kernel's `segfault` line to the daemon log; it is in the kernel log beside it) — fixed. Disagrees with the first review's index-fallback lead for the same reason our verification did. Both defects still present at `ebbb4ee3`. "After the wording correction, no remaining issue that should delay submission" |
 | 2026-09-19T15:00Z | [Disposition of the R2 review](2026-09-19T1500Z-r2-disposition.md) | all 122 R2 findings against `e4482a5`, each from a check run today (`scripts/r2-checks*.sh`) | **n/a 37 · done 41 · partial 6 · kept 2 · open 36** (HIGH 2: BL-03/BL-08 at the code; MED 15; LOW 19). The register had rows for 14; this is the baseline the rest are measured against, ordered as the review recommended |
 | 2026-09-18T07:00Z | [Third-party review of the BlueZ patches](2026-09-18T0700Z-third-party-bluez-patch-review.md) | `patches/bluez/0001`, `0002` at `cccf0fe`, cross-checked by the reviewer against BlueZ master `2401054` (2026-09-17) | **Accept both; submit independently.** Both defects confirmed at current master. The reviewer read our exhibit's label `START_SERVICE_DISCOVERY` on opcode `0x0023` at face value and built an index-fallback hypothesis on it; **the label was ours and wrong**. Re-reading the archived 08-14 daemon log refuted the hypothesis and **reconstructed the crash line by line** (Command Status `0x00`, same opcode as the request sent 2.05 s earlier, client list empty). Six follow-ups as `TP-nn` |
+| 2026-10-20T23:09Z | [Contribution opportunities](2026-10-20T2309Z-contribution-opportunities.md) | every STATUS issue and submission row, the mesh notes, the userspace items, against patchwork, BlueZ and GitLab trackers, Launchpad and bluetooth-next (lore refused) | **A pending kernel series, "Fix SCO setup failures after an abandoned setup", fits our call-audio area (U7, U8) and leaves btusb's notification untested; mesh `I12` has no fix anywhere; every userspace item is still open in Ubuntu 24.04.** 25 items as `CO-nn`: what we can contribute, what needs work first, what is unexplored (the unknown-handle SCO messages at 6 of 9 hang-ups) |
 
 ---
 
@@ -420,6 +421,23 @@ The per-finding disposition — all 25 `FD` IDs — is the catalogue in
 | CB-03 | TestFunctional FAIL: `test_bap_unicast_set_transport_created` / `_acquire`, ASan coredumps at teardown in BAP/GATT device code; no patched function in any frame | **recorded — not ours, verified**: the same two tests fail on 12 patches from 10 unrelated series, 09-17 → 09-19, one `monitor/`-only | `reviews/2026-09-20T0300Z-…` | `scripts/patchwork-checks.sh --failed-functional 60` |
 | CB-05 | **Both v1 patches applied upstream 2026-09-21T10:10-04:00** (`a734b0605`, `0bed9886c`), as sent; the v2 mails went 6.5 h later, checked against a month-old checkout, not a fetched `origin/master` | **recorded** — method gap fixed: `scripts/pre-send-check.sh` fetches, reports ALREADY APPLIED / does-not-apply; reproduces both bot verdicts on the v2 files. Verified at kernel.org (tip `17e624d1c`); sequence UTC v1 09-19 18:44 → applied 09-21 14:10 → v2 20:47; `0002` v2 "passed" as a duplicate insertion (PR #2559, lines 2697+2702). **No reply sent** (decision 09-22); v2 states watched | `patches/bluez/README.md` §Applied | `scripts/pre-send-check.sh <tree> patches/bluez/v2/*.patch` → `DO NOT SEND` |
 | CB-04 | Everything else — `pre-ci_am`, BuildEll, BluezMake, bluezmakeextell, IncrementalBuild, ScanBuild, CheckSmatch, and for `0002` MakeCheck, MakeDistcheck, CheckValgrind — PASS | **recorded** | `patches/bluez/README.md` | `scripts/patchwork-checks.sh --patch 14831546` / `14831547` |
+
+### CO — contribution opportunities, 2026-10-20T23:09Z
+
+The A-list only; the B, C and D items are tracked by their STATUS rows.
+
+| ID | Item | Status | Where | Check |
+|---|---|---|---|---|
+| CO-01 | Test the call-audio series "Fix SCO setup failures after an abandoned setup" (QEMU; btusb on the laptop only on the operator's word) | open | `docs/STATUS.md` | `grep -c "abandoned setup" docs/STATUS.md` → ≥1 |
+| CO-02 | Re-read `U7` against the kernel's SCO connect path | open | `docs/STATUS.md`, `U7` | the `U7` row names the kernel's part, confirmed or ruled out |
+| CO-03 | Rebuild bluetoothd (5.8 source, BT-7, `a14d59725`); then a Launchpad request for `U12` | open; install and request are the operator's | `docs/STATUS.md`, `U12` | the `U12` row carries a Launchpad bug number |
+| CO-04 | Test Igor Putko's mesh patch 14888791 exactly, the device-removal lockdep case included | open | `docs/STATUS.md`, mesh row | a STATUS row records the run |
+| CO-05 | The `I12` locking patch for `mesh_send_sync()` | open | `docs/STATUS.md` | `grep -c "I12" docs/STATUS.md` → ≥1 |
+| CO-06 | Review reply on Jiale Yao's 14864878 | **blocked** — operator's decision | `docs/STATUS.md`, mesh row | the row records it sent or dropped |
+| CO-07 | `U6` Launchpad request for the GNOME 47 meter fix | open | `docs/STATUS.md`, `U6` | the `U6` row carries a Launchpad bug number |
+| CO-08 | `U10` PipeWire quirk entry | **blocked** — the operator's test sound per mode | `docs/STATUS.md`, `U10` | the `U10` row records the test |
+| CO-09 | The QCA9377 entry in Ubuntu's kernel | open — watch; a request is the operator's | `docs/STATUS.md` | `scripts/btusb-has-device.py` FOUND on a stock Ubuntu btusb |
+| CO-10 | Tested-by on 6.6.160-rc2 | **blocked** — operator's decision; due 2026-10-22 07:53 UTC | — | sent, or the deadline passed |
 
 ## Adding a report
 
