@@ -205,8 +205,11 @@ case "$br" in kernel/*|plan/*|diag/*|review/*|attribution/*|postponed/*|config/*
     remote=private
     echo "  held branch: pushing to '$remote', never to origin" ;;
 esac
-# Every commit about to leave, not only the one just made: author and committer
-# of each commit the remote does not have yet are this checkout's identity. A
+# Every commit about to leave for the first time, not only the one just made:
+# author and committer of each commit that no remote has yet are this
+# checkout's identity. Commits already on some remote were published before
+# and are not this checkout's to judge (a checkout whose identity differs from
+# the history's author, such as a test world, pushes that history untouched). A
 # commit made by hand, with hooks bypassed, or before the hooks existed is
 # caught here, by name.
 id_push_bad=0
@@ -217,7 +220,7 @@ while read -r c; do
         echo "  ✗ ${c:0:12} $(git log -1 --format=%s "$c" | cut -c1-60): author $a, committer $m" >&2
         id_push_bad=1
     fi
-done < <(git rev-list "$br" --not --remotes="$remote" 2>/dev/null)
+done < <(git rev-list "$br" --not --remotes 2>/dev/null)
 if (( id_push_bad )); then
     echo "  ✗ a commit about to be pushed is not authored and committed by this checkout's identity ($want) — not pushed" >&2
     exit 1
