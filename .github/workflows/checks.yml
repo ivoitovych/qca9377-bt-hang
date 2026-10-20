@@ -34,6 +34,43 @@ permissions:
 # and the run that names the suite runs it serially, so one run in one process
 # remains: the serial job.
 jobs:
+  # every pushed commit is authored AND committed by the project author. Hooks in a
+  # checkout can be skipped or absent; this runs wherever the commit came from. A
+  # push to a branch new to the repository, or a forced update, is measured from
+  # the merge base with main.
+  identity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Every pushed commit's author and committer is the project author
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          WANT: "Iaroslav Voitovych <yaroslav.voytovych@gmail.com>"
+        run: |
+          set -u
+          base="$BEFORE"
+          if [[ -z "$base" || "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null \
+             || ! git merge-base --is-ancestor "$base" "$AFTER" 2>/dev/null; then
+            git fetch --quiet --no-tags origin main
+            base=$(git merge-base "$AFTER" origin/main 2>/dev/null || true)
+          fi
+          if [[ -z "$base" ]]; then range="$AFTER"; else range="$base..$AFTER"; fi
+          bad=0; n=0
+          while read -r c; do
+            [[ -n "$c" ]] || continue
+            n=$((n + 1))
+            a=$(git log -1 --format='%an <%ae>' "$c"); m=$(git log -1 --format='%cn <%ce>' "$c")
+            if [[ "$a" != "$WANT" || "$m" != "$WANT" ]]; then
+              echo "::error::${c:0:12} $(git log -1 --format=%s "$c" | cut -c1-70): author '$a', committer '$m'"
+              bad=1
+            fi
+          done < <(git rev-list "$range")
+          echo "$n commit(s) examined in $range"
+          (( bad == 0 )) || exit 1
+
   # the validator (the suite in parallel), the journal contract and the publish scan
   suite:
     runs-on: ubuntu-latest

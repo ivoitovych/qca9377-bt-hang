@@ -270,6 +270,9 @@ coverage floors and the publish scan on every push; `devtools/ci` reads its verd
 
 ## Contributing
 
+Every commit in this repository is authored and committed by the project author;
+`devtools/repo-save` and CI check both fields on every commit.
+
 Most useful, in this order:
 
 - **a QCA9377 (`13d3:3503`) on a kernel that carries `dc16388d45ec`** with an mSBC headset

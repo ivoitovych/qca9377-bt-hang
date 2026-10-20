@@ -11,10 +11,7 @@
 # Exits non-zero if anything suspicious is found.
 #
 # Checks: MAC addresses / BSSIDs (colon or dash), UUIDs, IPv4 addresses,
-# email addresses, tool attribution, and tracked binary captures. New text
-# (staged or --range) is also checked against a word list kept outside the
-# repository (`git config scan.words <file>`); without one, that check is
-# reported as skipped.
+# email addresses, and tracked binary captures.
 #
 # WHY: this repository publishes logs. Kernel logs contain the Wi-Fi access
 # point BSSID, which public geolocation databases index — publishing one can
@@ -48,9 +45,7 @@ git rev-parse --git-dir >/dev/null 2>&1 || { echo "not a git repo: $DIR" >&2; ex
 ROOT=$(git rev-parse --show-toplevel) || exit 2
 cd "$ROOT" || exit 2
 
-NEW_TEXT=1   # staged or --range: the wording rules below apply to what is new
 if (( ALL )); then
-    NEW_TEXT=0
     CONTENT=$(git ls-files -z | xargs -0 cat 2>/dev/null)
     SCOPE="all tracked files ($(git ls-files | wc -l) files, from $ROOT)"
 elif [[ -n "$RANGE_HEAD" ]]; then
@@ -168,46 +163,6 @@ mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
         | grep -viE '^modprobe@|^systemd-' \
         | sort -u)
 [[ -n "$mails" ]] && report "email address found:" $mails || pass "no unexpected emails"
-
-# --- tool attribution --------------------------------------------------------
-# REVIEWED-KEEP 2026-08-15T1752Z §5: keep the fragment assembly below and the
-# refuse-on-empty-read above — the first keeps the scanner out of its own
-# net, the second stops a failed enumeration reading as a clean tree.
-# The pattern strings are assembled from fragments so this file does not itself
-# contain a literal match. The previous approach — excluding lines that looked
-# like grep definitions — worked but broke if the pattern list was ever
-# reformatted, and a false positive here blocks every commit.
-_c='cla'; _c+='ude'; _a='anthro'; _a+='pic'
-ta=$(grep -icE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$CONTENT" || true)
-(( ${ta:-0} > 0 )) && report "tool attribution present ($ta match(es))" || pass "no tool attribution"
-
-# --- word list, new text only -----------------------------------------------
-# A list of words and names that must not enter new public text, read from a
-# file outside the repository: `git config scan.words <file>`, one extended
-# regular expression per line, `#` comments, matched case-insensitively at a
-# word boundary. Only what is NEW is checked (staged additions, or the lines a
-# push adds), never the whole tree. Without a configured, readable list the
-# check is reported as skipped, never as passed.
-if (( NEW_TEXT )); then
-    WORDS="${REPO_SCAN_WORDS:-$(git config --get scan.words 2>/dev/null || true)}"
-    if [[ -n "$WORDS" && -r "$WORDS" ]]; then
-        pats=$(grep -vE '^\s*(#|$)' "$WORDS" | paste -sd'|' -)
-        if [[ -n "$pats" ]]; then
-            # grep exits 2 on a pattern it cannot compile: that is a broken list,
-            # reported as such, never as a pass.
-            found=$(grep -oiE "\b($pats)" <<<"$CONTENT" | sort -u | tr '\n' ' '); rc=${PIPESTATUS[0]}
-            if (( rc == 2 )); then report "word list has a pattern grep cannot compile: $WORDS"
-            elif [[ -n "$found" ]]; then report "listed word in new text:" "$found"
-            else pass "word list"; fi
-        else
-            pass "word list (empty)"
-        fi
-    elif [[ -n "$WORDS" ]]; then
-        report "word list configured but unreadable: $WORDS"
-    else
-        (( QUIET )) || echo "  - word list: skipped (no scan.words configured)"
-    fi
-fi
 
 # --- binary captures -------------------------------------------------------
 bins=$(git ls-files | grep -cE '\.(btsnoop|pcap|pcapng)$' || true)

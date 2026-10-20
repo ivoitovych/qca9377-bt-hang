@@ -4008,8 +4008,11 @@ that keep every commit the owner's were installed in the new checkout, with `dev
 added to `pre-commit` so that the publish scan runs for every commit, not only for those made
 through `devtools/save`, and `pre-push` runs it over the lines each pushed commit adds, measured
 against the remote's `main`; for that, `repo-scan` gained a `--range <base> <head>` mode and a
-check of new text against a word list kept outside the repository. Nothing on the laptop was
-changed.
+check of new text against a word list kept outside the repository. Later the same night the
+checks were cut differently: `repo-scan` keeps the data checks (addresses, BSSIDs, UUIDs, IPv4,
+e-mail addresses, captures) and `--range`; `repo-save` and a CI job on every push check that each
+commit's author and committer is the project author, both fields, since the committer is not
+shown by a plain `git log`. Nothing on the laptop was changed.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 

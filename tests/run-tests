@@ -14344,32 +14344,32 @@ rm -rf "$CIS"
 
 # ── repo-save, the gate that actually commits ────────────────────────────
 #
-# It stages, validates, scans, scans the MESSAGE, commits, and verifies the
+# It stages, validates, scans, checks the identity, commits, and verifies the
 # remote. Everything below runs with --no-push against a scratch repo, so
 # nothing here can reach a remote — the assertion after the group checks that.
 #
-# Its message scan exists because repo-scan reads files and diffs, and a
-# commit-message trailer lives in neither: the single most likely vector for
-# the thing being screened for sat outside the screen entirely.
+# Its identity check exists because repo-scan reads files and diffs, and the
+# author and committer of a commit live in neither; the committer is not even
+# shown by a plain `git log`.
 mkdir -p "$SCRATCH/save"; scratch_repo "$SCRATCH/save"
 printf 'placeholder 11:11:11:22:33:44\n' > "$SCRATCH/save/notes.log"
 
 save() { devtools/repo-save "$SCRATCH/save" "$@" --no-push 2>&1; }
 
-# THE RULE THIS REPOSITORY IS HELD TO, asserted rather than assumed. Assembled
-# from fragments for the same reason repo-scan and repo-save assemble theirs:
-# so this file stays clean under the scan it is testing.
-_ai='cla'; _ai+='ude'
-SVAI=$(save "fix the thing
-
-Co-Authored-By: $_ai <noreply@example.com>"); svairc=$?
-(( svairc != 0 )) && [[ "$SVAI" == *"tool attribution"* ]] \
-    && ok "repo-save refuses a commit message carrying an attribution trailer" \
-    || bad "an attribution trailer was committed (rc=$svairc)"
+# THE RULE THIS REPOSITORY IS HELD TO, asserted rather than assumed: every
+# commit is authored AND committed by the checkout's configured identity. A
+# foreign author and a foreign committer are each refused before the commit
+# exists; the scratch repository's own identity passes (the commits below).
+SVAI=$(GIT_AUTHOR_NAME="Someone Else" GIT_AUTHOR_EMAIL="else@example.com" save "fix the thing"); svairc=$?
+SVCI=$(GIT_COMMITTER_NAME="Someone Else" GIT_COMMITTER_EMAIL="else@example.com" save "fix the thing"); svcirc=$?
+(( svairc != 0 && svcirc != 0 )) && [[ "$SVAI" == *"author is not this checkout's identity"* \
+                                  && "$SVCI" == *"committer is not this checkout's identity"* ]] \
+    && ok "repo-save refuses a foreign author, and a foreign committer, before the commit exists" \
+    || bad "a foreign identity was accepted (author rc=$svairc, committer rc=$svcirc)"
 
 svn=$(git -C "$SCRATCH/save" rev-list --count HEAD 2>/dev/null || echo 0)
 (( ${svn:-0} == 0 )) \
-    && ok "the refused message left no commit behind" \
+    && ok "the refused identities left no commit behind" \
     || bad "repo-save reported a refusal and committed anyway"
 
 # A real address in a message would once have taken the "clean" branch: the

@@ -94,10 +94,9 @@ fi
 echo "── scan ─────────────────────────────────────────────"
 "$HERE/repo-scan" . || { echo "ABORT: scan failed — nothing committed" >&2; exit 1; }
 
-# --- scan the commit message too -------------------------------------------
-# repo-scan reads files and diffs. A Co-Authored-By trailer lives in neither, so
-# the single most likely vector for the thing being screened for sat outside the
-# screen entirely.
+# --- the commit message ------------------------------------------------------
+# Snapshotted once and read from the snapshot, so a streamed source is not
+# consumed twice; an empty message is refused here, before git invents one.
 echo "── message ──────────────────────────────────────────"
 if [[ -n "$MSGFILE" ]]; then
     [[ -r "$MSGFILE" ]] || { echo "ABORT: cannot read message file: $MSGFILE" >&2; exit 2; }
@@ -114,13 +113,6 @@ elif [[ -n "$MSG" ]]; then
     MSGTEXT="$MSG"
 else
     echo "ABORT: no commit message given" >&2; exit 2
-fi
-_c='cla'; _c+='ude'; _a='anthro'; _a+='pic'
-if grep -qiE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$MSGTEXT"; then
-    echo "  ✗ commit message contains tool attribution" >&2
-    grep -inE "co-authored-by: *$_c|generated with .*$_c|$_a" <<<"$MSGTEXT" | sed 's/^/      /' >&2
-    echo "ABORT: nothing committed" >&2
-    exit 1
 fi
 # REVIEWED-KEEP 2026-08-15T1752Z §5: keep the counted form below.
 # COUNTED, NOT `grep -qv`. This is the guard that keeps real MAC addresses and
@@ -141,30 +133,34 @@ fi
 echo "  ✓ message clean"
 
 # ── IDENTITY, CHECKED BEFORE THE COMMIT EXISTS ────────────────────────────
-#
-# The message scan above catches attribution written INTO a commit. It cannot
-# see attribution that git writes ON the commit: the author and committer
-# fields come from git config or GIT_*_NAME/EMAIL, and a reinitialised
-# environment resets them to the tool's own identity. On 2026-09-18 the
-# test-suite maintainer's container did exactly that, and a lessons commit went
-# in authored by a tool identity — repo-scan passed it, because repo-scan reads
-# content. He caught it one commit in and amended. This is the gate that makes
-# that a refusal rather than a catch. Same obfuscated patterns as the message
-# scan, so this file does not match its own check.
-_ai_re="$_c|$_a"
+# Every commit of this repository is authored AND committed by the project
+# author: the identity configured in this checkout (user.name, user.email).
+# Both fields, because the committer is set by whoever runs `git commit` and is
+# not shown by a plain `git log`; a hosted environment or a tool can set it to
+# something else while the author looks right. A checkout without an identity
+# is refused as well: git would invent one. The same two fields are checked
+# again on every commit about to be pushed (below) and by CI on every push.
+want_name="$(git config user.name 2>/dev/null)"; want_mail="$(git config user.email 2>/dev/null)"
+if [[ -z "$want_name" || -z "$want_mail" ]]; then
+    echo "  ✗ no identity configured in this checkout (git config user.name / user.email)" >&2
+    echo "ABORT: nothing committed" >&2
+    exit 1
+fi
+want="$want_name <$want_mail>"
 id_author="$(git var GIT_AUTHOR_IDENT 2>/dev/null)"
 id_committer="$(git var GIT_COMMITTER_IDENT 2>/dev/null)"
 id_bad=0
 for who in "author:$id_author" "committer:$id_committer"; do
     role="${who%%:*}"; ident="${who#*:}"
+    ident="${ident% *}"; ident="${ident% *}"          # strip the timestamp and zone
     if [[ -z "$ident" ]]; then
-        echo "  ✗ no $role identity configured — git would invent one" >&2; id_bad=1
-    elif grep -qiE "$_ai_re" <<<"$ident"; then
-        echo "  ✗ $role identity is a tool identity: ${ident%% <*}" >&2; id_bad=1
+        echo "  ✗ no $role identity — git would invent one" >&2; id_bad=1
+    elif [[ "$ident" != "$want" ]]; then
+        echo "  ✗ $role is not this checkout's identity ($want): $ident" >&2; id_bad=1
     fi
 done
 if (( id_bad )); then
-    echo "     set: git config user.name / user.email to the operator, then retry" >&2
+    echo "     unset GIT_AUTHOR_* / GIT_COMMITTER_*, or set git config user.name / user.email, then retry" >&2
     echo "ABORT: nothing committed" >&2
     exit 1
 fi
@@ -178,9 +174,10 @@ echo "  author: $(git log -1 --format='%an <%ae>')"
 # And the RECORDED fields, not only the configured ones — a hook or a template
 # could still have written something else. A bad commit is undone here, before
 # the push below can publish it.
-recorded="$(git log -1 --format='%an <%ae> %cn <%ce>')"
-if grep -qiE "$_ai_re" <<<"$recorded"; then
-    echo "  ✗ the recorded author/committer carries a tool identity — undoing the commit" >&2
+recorded_a="$(git log -1 --format='%an <%ae>')"; recorded_c="$(git log -1 --format='%cn <%ce>')"
+if [[ "$recorded_a" != "$want" || "$recorded_c" != "$want" ]]; then
+    echo "  ✗ the recorded author or committer is not this checkout's identity — undoing the commit" >&2
+    echo "      author: $recorded_a   committer: $recorded_c" >&2
     git reset -q --soft HEAD~1
     echo "ABORT: commit undone; nothing pushed" >&2
     exit 1
@@ -208,6 +205,23 @@ case "$br" in kernel/*|plan/*|diag/*|review/*|attribution/*|postponed/*|config/*
     remote=private
     echo "  held branch: pushing to '$remote', never to origin" ;;
 esac
+# Every commit about to leave, not only the one just made: author and committer
+# of each commit the remote does not have yet are this checkout's identity. A
+# commit made by hand, with hooks bypassed, or before the hooks existed is
+# caught here, by name.
+id_push_bad=0
+while read -r c; do
+    [[ -n "$c" ]] || continue
+    a="$(git log -1 --format='%an <%ae>' "$c")"; m="$(git log -1 --format='%cn <%ce>' "$c")"
+    if [[ "$a" != "$want" || "$m" != "$want" ]]; then
+        echo "  ✗ ${c:0:12} $(git log -1 --format=%s "$c" | cut -c1-60): author $a, committer $m" >&2
+        id_push_bad=1
+    fi
+done < <(git rev-list "$br" --not --remotes="$remote" 2>/dev/null)
+if (( id_push_bad )); then
+    echo "  ✗ a commit about to be pushed is not authored and committed by this checkout's identity ($want) — not pushed" >&2
+    exit 1
+fi
 git push -q "$remote" "$br" 2>&1 | tail -3
 git fetch -q "$remote" 2>/dev/null
 l=$(git rev-parse "$br"); r=$(git rev-parse "$remote/$br" 2>/dev/null || echo none)

@@ -9,7 +9,7 @@ directory touches Bluetooth.
 | Script | Purpose |
 |---|---|
 | `check [--quick]` | the one pre-commit command: repo-validate (incl. tests) + a full-tree scan + the journal contract + install state (`--quick` skips the install state); with a trial open it validates without the suite, and says so |
-| `repo-scan <dir> [--all]` | Refuse-to-publish scan: MAC addresses, BSSIDs, UUIDs, IPv4, **email addresses**, tool attribution, binary captures |
+| `repo-scan <dir> [--all \| --range <base> <head>]` | Refuse-to-publish scan: MAC addresses, BSSIDs, UUIDs, IPv4, **email addresses**, binary captures |
 | `repo-validate <dir> [--no-suite]` | over every tracked or staged file: `bash -n`, `systemd-analyze verify`, `udevadm verify`, `jq`, a Python parse (`ast.parse`, not `py_compile`, which writes `.pyc` files), an awk parse; then `tests/run-tests` (`--no-suite` skips it and says so), the documentation-drift alarm and `doc-main-hashes`. A checker that is not installed is shown as skipped |
 | `doc-main-hashes [dir] [file...]` | a commit id BRIEF/STATUS/tooling-index place on `main` must be on the PUBLIC main (the remote whose URL is the public repository), or stand beside its cherry-pick there (same patch-id). An id only on this branch is PENDING (exit 4) while the branch can fast-forward, a failure once it cannot. A shallow clone or no public main reference is "inconclusive" (exit 3), never clean |
 | `repo-save <dir> "<msg>"` | stage everything (`git add -A`) → validate → scan → check the identity → commit → push → **verify the remote hash actually matches**; with a trial open it validates without the suite, and says so |
@@ -228,9 +228,11 @@ Deliberate allowlists, so the gate stays usable rather than being routinely bypa
   that *removed* a leaked secret still matched it on the `-` lines — so the tool blocked
   the one commit it exists to enable.
 
-`repo-save` also scans the **commit message**, which `repo-scan` cannot see. A
-`Co-Authored-By` trailer lives in neither a file nor a diff, so the likeliest vector for
-the thing being screened for previously sat outside the screen entirely.
+`repo-save` also scans the **commit message** for addresses, which `repo-scan` cannot
+see, and checks the **identity**: every commit of this repository is authored and
+committed by the project author, the identity configured in the checkout. Both fields
+are checked before the commit exists, on the recorded commit, and on every commit about
+to be pushed; CI checks the same on every push.
 
 `repo-save` refuses to commit if validation or the scan fails, then confirms the remote
 hash equals the local one. That last step is the one most often skipped by hand, and it
