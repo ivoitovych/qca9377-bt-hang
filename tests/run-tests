@@ -13462,36 +13462,46 @@ git -C "$RSM" add -A
     || bad "the repository-derived allowlist let an unrelated address through"
 rm -rf "$RSM"
 
-# PUBLISHED UPSTREAM ADDRESSES PASS; UNLISTED ONES STILL DO NOT (BRIEF §7,
+# PUBLISHED UPSTREAM ADDRESSES PASS; UNPUBLISHED ONES STILL DO NOT (BRIEF §7,
 # operator 2026-10-13, written into the tools 2026-10-21). The scanned
-# repository's devtools/repo-scan-public-addresses lists addresses upstream has
-# already published: an "@domain" line accepts that domain, any other line one
-# address, alone or as the tail of a git send-email Message-ID. Before this, the
-# scan refused such addresses and the maintainer removed a Message-ID, patchwork
-# links and a public recipient list to get past it. Both directions are
-# asserted: the list must not blind the check to a private correspondent.
-# Fragments again, so no literal address lands in this tracked file.
+# repository's devtools/repo-scan-public-addresses lists what upstream has
+# already published: "@host" lines accept a mailing-list host, every other
+# line one token exactly (a person's address, or a whole Message-ID). Before
+# this, the scan refused such addresses and the maintainer removed a
+# Message-ID, patchwork links and a public recipient list to get past it.
+#
+# The first version also accepted organisation domains and any address ENDING
+# in a listed one. Three outside reviews of ccb46dc showed that this passed
+# unpublished addresses, and that the test missed it: its only negative case
+# sat on an unlisted domain. So the negatives below sit on the listed
+# person's own domain, and one ends in a listed address. Two entries of each
+# kind, too: an earlier version joined every entry into one string, which a
+# one-entry list could not show. Fragments, so no literal address lands in
+# this tracked file.
 RSP=$(mktemp -d); git -C "$RSP" init -q; mkdir -p "$RSP/devtools"
 RSLIST="pub${RSAT}${RSDOM}"; RSHOST="lists.${RSDOM}"
-RSLIST2="second${RSAT}${RSDOM}"; RSHOST2="other.${RSDOM}"
-# Two entries of each kind, last ones checked: the first version joined every
-# entry into one string, which a one-entry list could not show.
-printf '# test list\n@%s\n@%s\n%s\n%s\n' "$RSHOST" "$RSHOST2" "$RSLIST" "$RSLIST2" \
+RSLIST2="second${RSAT}${RSDOM}"; RSHOST2="other-lists.${RSDOM}"
+RSMID="20261008.1-1-${RSLIST2}"
+printf '# test list\n@%s\n@%s\n%s\n%s\n%s\n' "$RSHOST" "$RSHOST2" "$RSLIST" "$RSLIST2" "$RSMID" \
     > "$RSP/devtools/repo-scan-public-addresses"
-printf 'Cc: %s, %s\nTo: any%s%s, any%s%s\nIn-Reply-To: <20261008.1-1-%s>\n' \
-    "$RSLIST" "$RSLIST2" "$RSAT" "$RSHOST" "$RSAT" "$RSHOST2" "$RSLIST2" > "$RSP/README.md"
+printf 'Cc: %s, %s\nTo: any%s%s, any%s%s\nIn-Reply-To: <%s>\n' \
+    "$RSLIST" "$RSLIST2" "$RSAT" "$RSHOST" "$RSAT" "$RSHOST2" "$RSMID" > "$RSP/README.md"
 git -C "$RSP" add -A
 git -C "$RSP" -c user.name=t -c user.email="owner${RSAT}${RSDOM}" commit -q -m list
 ( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
 (( $? == 0 )) \
-    && ok "repo-scan lets listed public addresses through: exact, by domain, inside a Message-ID" \
-    || bad "repo-scan refused an address its public list names"
-printf 'From: private%s%s\n' "$RSAT" "$RSDOM" >> "$RSP/README.md"
-git -C "$RSP" add -A
-( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
-(( $? != 0 )) \
-    && ok "an unlisted address is still refused beside the public list" \
-    || bad "the public-address list let an unlisted address through"
+    && ok "repo-scan lets listed public tokens through: exact addresses, list hosts, a whole Message-ID" \
+    || bad "repo-scan refused a token its public list names"
+cp "$RSP/README.md" "$RSP/README.base"
+for rsneg in "private${RSAT}${RSDOM}" "x-${RSLIST}" "20261009.2-1-${RSLIST}"; do
+    cp "$RSP/README.base" "$RSP/README.md"
+    printf 'From: %s\n' "$rsneg" >> "$RSP/README.md"
+    git -C "$RSP" add README.md
+    ( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+    (( $? != 0 )) \
+        && ok "an unpublished token is refused beside the public list: ${rsneg%%${RSAT}*}@…" \
+        || bad "the public-address list let an unpublished token through: ${rsneg%%${RSAT}*}@…"
+done
 rm -rf "$RSP"
 
 # ── A COMMIT ID THE DOCUMENTS PLACE ON MAIN MUST BE ON MAIN ───────────────

@@ -10,7 +10,7 @@ UTC (STATUS).
 ## 2026-10-21 — dossier opened
 No decision yet.
 
-## 2026-10-21 00:5x UTC — the operator: start CO-10
+## 2026-10-21, before 00:52:54 UTC (the build's start) — the operator: start CO-10
 "I would start work on that urgent one … I would try to contribute it if we can." There was
 no draft, so this is the first work on it.
 - **The release candidate:** linux-stable-rc `linux-6.6.y` fetched; tip `c578c158a368`,
@@ -31,7 +31,7 @@ no draft, so this is the first work on it.
   A fetch of today's mainline was still running.
 - **Package for outside reviewers:** `REVIEW-REQUEST.md`. The draft reply is in `drafts/`.
 
-## 2026-10-21 01:1x to 01:4x UTC — every tester compared; draft version 2
+## 2026-10-21 01:02 to 01:36 UTC — every tester compared; draft version 2
 - **iso-, sco-, bnep-, rfcomm-, ioctl-, smp-, userchan- and 6lowpan-tester:** identical
   verdicts on both kernels.
 - **l2cap-tester:** both kernels hang at the same case ("Ext-Flowctl Server - Accept 2
@@ -114,7 +114,30 @@ not be hidden. That has been the rule since 2026-10-13, and it is now written in
 links (`comms/2026-10-21T0204Z-…`).
 
 **Also corrected:** the times of versions 3 and 4 in this log, the draft and the review
-headers. They had been written as "02:xx" and "03:xx" before those hours; the commit times
+headers.
+
+## 2026-10-21 02:2x UTC — the four reviewers recheck version 4; version 5
+The rechecks are in `reviews/2026-10-21-recheck-of-v4.md`.
+
+**Verdicts:**
+- reviewer 1: send as is;
+- reviewer 2: approved, send as v4; the lockdep half-line optional;
+- reviewers 3 and 4: one correction before sending.
+
+| point | who | done |
+|---|---|---|
+| "same verdict" is not literally true: one 6.6.159 run of mesh "Send cancel - 1" Failed where rc2 Timed out | 3, 4 | The mail now says "either pass on both or fail on both" (exact, and shorter than the proposed wordings). The results, README and review request say the same |
+| "No kernel warnings, sanitizer or lockdep reports" | 2 (optional) | taken: the configs and the scan cover lockdep |
+| The results file still says the mesh cases "are not compared" | 4 | now says the isolated runs below close that gap |
+| Approximate times "00:5x", "01:4x" | 4 | replaced by the build's start (00:52:54), the run span (01:02 to 01:36) and the commit time (01:43) |
+| Two review headers still say links with addresses are removed | 2 | corrected |
+| The scanner: an `@domain` entry passes any address at the domain, and the suffix rule passes `private-<listed address>`; the test's negative case sat on another domain | 2, 3, 4 | **Fixed.** Domain entries only for mailing-list hosts. Persons and Message-IDs are exact tokens, with no suffix matching. The list is rebuilt with exact entries (the whole tree scans clean). The suite now refuses three negatives on the listed person's own domain: a private address, `x-<listed>` and an unlisted Message-ID ending in a listed address. All checked by hand on a scratch repository |
+| An app password is not one-time; deleting it locally does not revoke it; never put it in the chat | 3, 4 | README: the operator runs git send-email in their own terminal, git asks for the password there, and the password is revoked in the Google account afterwards; `smtp-login-check.sh` confirms the 535 |
+| CI on `ccb46dc` still queued | 2, 3, 4 | GitHub's queue: runs from 00:37 UTC only now finish (`bd2f3cf` green). Not a gate for the mail, whose body and evidence `ccb46dc` did not change |
+
+**The sendable copy:** `drafts/reply-6.6.160-rc2-v5.eml` (development host copy:
+`tmp/co10-20261021/send/reply-6.6.160-rc2-v5.eml`). `mail-lint.sh` flags only the two
+quoted lines; `reply-headers-check.py` passes 7/7 with 20 of 20 recipients. They had been written as "02:xx" and "03:xx" before those hours; the commit times
 are 01:43 and 01:55 UTC.
 `mail-lint.sh` flags only the two quoted lines of the announcement (73 columns, kept as
 written).

@@ -424,8 +424,14 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
   - **Why this is written here:** the rule lived only in one maintainer's notes. On
     2026-10-20 and 10-21 that maintainer still removed a Message-ID from STATUS, patchwork
     links from outside reviews, and a reply's public recipient list, each time because
-    `devtools/repo-scan` flagged them. The scan was then changed to accept published upstream
-    addresses (`devtools/repo-scan-public-addresses`).
+    `devtools/repo-scan` flagged them. The scan now accepts the tokens listed in
+    `devtools/repo-scan-public-addresses`:
+    - published addresses and whole Message-IDs, matched exactly;
+    - `@host` only for mailing-list hosts.
+
+    A first version also passed whole organisation domains and address suffixes. Outside
+    reviewers found that within hours, and it was fixed with tests. When the scan refuses a
+    published address, add it to the list. Never cut it from the text.
 - **Nothing we write exists only on this disk (operator, 2026-10-11).** Whatever cannot go public goes to the private remote.
   - **Pushed:** branches, worktrees, notes, and the commits made inside upstream checkouts under `cache/`. Those go as patch exports, never as the trees themselves (`scripts/export-local-work.py` → a branch on the private remote). `scripts/unpushed-survey.py` lists what is still local.
   - **Exceptions, kept local on purpose:**

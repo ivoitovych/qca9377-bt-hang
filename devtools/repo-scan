@@ -160,19 +160,24 @@ ALLOW_MAIL="${REPO_SCAN_ALLOW_MAIL:-$(git config user.email 2>/dev/null || echo 
 # patchwork links are mirrored worldwide; refusing them made the maintainer
 # delete a Message-ID from STATUS, patchwork links from outside reviews and a
 # reply's recipient list (2026-10-20/21). The scanned repository's own
-# devtools/repo-scan-public-addresses lists them: "@domain" lines accept every
-# address at that exact domain; other lines accept one address, alone or as the
-# tail of a Message-ID that embeds it after "-" or "." (git send-email writes
-# <date>.<pid>-<n>-<sender>, which the pattern above reads as one address);
-# "#" starts a comment. Only listed addresses pass, so a private correspondent's
-# address is still refused — that is what this check is for.
+# devtools/repo-scan-public-addresses lists them:
+#   "@host"  every address at exactly that host. ONLY for mailing-list hosts,
+#            where every address is a public list; never for an organisation's
+#            or a mail provider's domain, which would pass its unpublished
+#            addresses too (outside reviews of ccb46dc, 2026-10-21).
+#   other    one token, matched exactly: a person's published address, or a
+#            whole Message-ID as the pattern above reads it (git send-email
+#            writes <date>.<pid>-<n>-<sender>, read as one address).
+#   "#"      starts a comment.
+# Nothing else passes, so an unpublished address is refused even at the domain
+# of a listed person, and even when it ends with a listed address.
 PUB_LIST="$ROOT/devtools/repo-scan-public-addresses"
-PUB_ADDRS=""; PUB_DOMS=""
+PUB_EXACT=""; PUB_DOMS=""
 if [[ -r "$PUB_LIST" ]]; then
     # sed, not tr -d '[:space:]': tr also deletes the newlines and joins every
     # entry into one, which a one-entry test list cannot show (found 2026-10-21).
-    PUB_ADDRS=$(grep -vE '^[[:space:]]*(#|$)' "$PUB_LIST" | grep -v '^@' | sed 's/[[:space:]]//g' \
-        | grep -v '^$' | sed 's/[.+]/\\&/g' | paste -sd'|' || true)
+    PUB_EXACT=$(grep -vE '^[[:space:]]*(#|$)' "$PUB_LIST" | grep -v '^@' | sed 's/[[:space:]]//g' \
+        | grep -v '^$' || true)
     PUB_DOMS=$(grep -E '^@' "$PUB_LIST" | sed 's/[[:space:]]//g' | sed 's/\./\\./g' | paste -sd'|' || true)
 fi
 mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
@@ -181,7 +186,7 @@ mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
         | grep -viE '^(noreply|no-reply)@' \
         | { [[ -n "$ALLOW_MAIL" ]] && grep -viF "$ALLOW_MAIL" || cat; } \
         | grep -viE '^modprobe@|^systemd-' \
-        | { [[ -n "$PUB_ADDRS" ]] && grep -viE "(^|[-.])($PUB_ADDRS)\$" || cat; } \
+        | { [[ -n "$PUB_EXACT" ]] && grep -viFx -f <(printf '%s\n' "$PUB_EXACT") || cat; } \
         | { [[ -n "$PUB_DOMS" ]] && grep -viE "($PUB_DOMS)\$" || cat; } \
         | sort -u)
 [[ -n "$mails" ]] && report "email address found:" $mails || pass "no unexpected emails"

@@ -23,11 +23,11 @@ anyone.
 rc2 carries 41 Bluetooth commits, 38 of them by other authors. We ran the BlueZ CI
 TestRunner suites on rc2 and on 6.6.159:
 - four fixes visible: our two, plus two by Pauli Virtanen;
-- every other case that ran on both kernels has the same verdict;
+- every other case that ran on both kernels passes on both or fails on both;
 - one l2cap case hangs identically on both.
 
-The draft is now **version 4**, after four outside reviews (in `reviews/`; how each point
-was handled: `log.md`). If you review now, please read version 4.
+The draft is now **version 5**, after four outside reviews and their recheck (in `reviews/`;
+how each point was handled: `log.md`). If you review now, please read version 5.
 
 ## What to read
 
@@ -63,7 +63,7 @@ The rc2 announcement:
 [lore, `<20261020075535.084584701@linuxfoundation.org>`](https://lore.kernel.org/stable/20261020075535.084584701@linuxfoundation.org/).
 
 The complete mail as it would be sent, with all headers and recipients:
-[`drafts/reply-6.6.160-rc2-v4.eml`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2-v4.eml).
+[`drafts/reply-6.6.160-rc2-v5.eml`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2-v5.eml).
 
 ## What we ask of you
 
