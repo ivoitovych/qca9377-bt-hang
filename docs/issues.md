@@ -737,6 +737,7 @@ specific to this controller.
 | U10 | Tronsmart T8 silent on SBC-XQ, audible on SBC (2026-10-11) | observed; the deciding question is open |
 | U11 | a newly connected headset does not become the output (2026-10-13) | confirmed in the log and the source; by design |
 | U12 | a microphone opened while A2DP is starting loses A2DP; only Handsfree remains (2026-10-19) | confirmed in the capture, the logs and the source; fixed upstream in BlueZ 5.80 |
+| U13 | a headset known only from its LE advertising cannot be set up: every click pairs over LE, the headset refuses, GNOME shows nothing (2026-10-21) | confirmed in the capture, the log and the source; not fixed upstream |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
@@ -1099,6 +1100,31 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   3. A Launchpad bug for Ubuntu 24.04 with the tested patch, on the operator's word.
 
   **Evidence:** `EX-063`, `EX-064`. Raw and unfiltered, on this machine only: `archive/incidents/20261019-a2dp-lost/`, which holds the day's HCI and USB captures, every journal file, the live state at 19:50 and the configuration (README there).
+
+- **U13 — a headset that bluetoothd knows only from its LE advertising cannot be set up from GNOME Settings: every click pairs over LE, the headset refuses, and nothing is shown** *(confirmed in the HCI capture, the log and the source, 2026-10-21; not fixed upstream)*.
+
+  **What happened** (local time, 2026-10-21):
+  - **[operator]** The Shure AONIC 50 (a public address with Shure's prefix, `00:0E:DD`) was listed in GNOME Settings' Bluetooth panel as "Not set up". Each click turned "Not set up" into a spinner for a fraction of a second, then back. About a dozen clicks.
+  - **[log] Thirteen pairing attempts, 06:20:39 to 06:23:10, all over LE:** `grep -c "Requesting bonding for <the Shure>"` on the day's bluetoothd journal → 13. Each is `adapter_bonding_attempt() … type 1` (LE public), then `pair_device_complete() Authentication Failed (0x05)` and `device_bonding_failed() status 5`, in about 0.2 s.
+  - **[capture] The headset refuses LE pairing outright** (`scripts/capture-window.sh` on `bt-20261021-013411.btsnoop`, 06:20:38 to 06:20:40): `MGMT Command: Pair Device … LE Address`, `LE Create Connection`, `LE Enhanced Connection Complete: Success`, our `SMP: Pairing Request` (Bonding, MITM, SC) at 06:20:39.599, the headset's **`SMP: Pairing Failed … Reason: Pairing not supported (0x05)`** at .820, `Pair Device … Status: Authentication Failed (0x05)`, Disconnect. In the saved window 06:20:30 to 06:21:10: 9 Pairing Requests, 9 "Pairing not supported".
+  - **[capture] Its advertising hides its BR/EDR side:** the AONIC 50 sends connectable `ADV_IND` with **`Flags: 0x00`** and its name; the scan response carries TX power and Shure's company data. For comparison, the MOMENTUM 4 in the same second sends `Flags: 0x18` (Simultaneous LE and BR/EDR, Controller and Host).
+  - **[state] bluetoothd knew it as LE only:** its storage `info` file (read about 06:25) said `AddressType=public`, `SupportedTechnologies=LE;`, no `[LinkKey]`; `busctl get-property … Device1` gave no `Class` (that comes only from a BR/EDR inquiry), `Paired false`. The device directory was created at 06:20; the entry expired at 06:30:41.
+  - **[log] The earlier pairing was already gone before 2026-10-20:** the AONIC 50 worked over BR/EDR on 2026-10-13 (`U11`). Its two removals on 2026-10-20 (08:48:53, 17:32:41) are each 30 s after it was last seen, the temporary-device expiry of an unpaired entry. When the bond was lost is not on record here.
+
+  **[source] Why every click goes to LE** (BlueZ 5.72, the running base; same in master):
+  - `Pair()` (`src/device.c:3032-3037`): with neither bearer bonded, the bearer is `select_conn_bearer()`, which returns the LE address type when the device is known on LE only (`:2510-2511`).
+  - The BR/EDR side is learnt from LE advertising only through the Flags: `if (bdaddr_type != BDADDR_BREDR && eir_data.flags && !(eir_data.flags & EIR_BREDR_UNSUP)) device_set_bredr_support(dev)` (`src/adapter.c:7277-7279`). **A Flags field of `0x00` counts as no Flags at all**, because `eir_data` cannot tell the two apart. Yet `0x00` has the "BR/EDR Not Supported" bit clear, i.e. the headset does not deny BR/EDR. Master still reads it this way (`src/adapter.c:7696-7697` at upstream `master`; last changed by Philipp Dunkel, 2026-07-17, to public addresses only; the `flags &&` test from Luiz Augusto von Dentz, 2016).
+  - `PreferredBearer` (Luiz Augusto von Dentz, 2025-02-26, first in BlueZ 5.80) does not help: master exposes it only for a device known on both bearers (`device_prefer_bearer_str()`, `src/device.c:391-393`).
+  - Listing a device whose Flags say "not discoverable" is by design: with a discovery filter set, 5.72 treats every report as discoverable (`device_is_discoverable()`, `src/adapter.c:7141-7142`); GNOME's `Discoverable` filter field makes the adapter discoverable while scanning, it does not filter results.
+
+  **Three parts, three owners:**
+  1. **The headset** advertises connectable LE with Flags `0x00` under its public BR/EDR address, and answers LE pairing with "Pairing not supported". Shure's firmware.
+  2. **BlueZ** reads Flags `0x00` as no information, so it never learns the BR/EDR side from the advertising, and it has no fallback when LE pairing is refused as not supported. A patch candidate: track whether the Flags field was present, and treat a present Flags without "BR/EDR Not Supported" as BR/EDR support (then `select_conn_bearer()` prefers BR/EDR for equal times, `:2513-2516`). The risk to weigh: LE-only devices that send Flags `0x00`.
+  3. **GNOME Settings** shows no error for a failed `Pair()`: the row returns to "Not set up" with nothing said. Not yet read in source (GNOME 46.7 / gnome-bluetooth).
+
+  **Workaround [inference, not yet tried]:** put the headset into its BR/EDR pairing mode, so an inquiry finds it with a Class; or pair over BR/EDR explicitly (`btmgmt pair -c 3 -t 0 <address>`, the operator's command).
+
+  **Evidence:** raw and unfiltered, on this machine only: `archive/incidents/20261021-shure-le-pair/` (the bluetoothd journal 06:00 to 06:40, the whole journal 06:15 to 06:40, the decoded capture 06:20:30 to 06:21:10, a copy of the capture file, BlueZ's cache entry, `SHA256SUMS`; saved by `tmp/incident-20261021-shure/save-raw.sh`; the `info` file had expired by then, its content is quoted above). Dossier: `contributions/CO-27-le-only-pairing-u13/`.
 
 ---
 

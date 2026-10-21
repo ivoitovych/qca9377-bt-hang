@@ -62,6 +62,8 @@ date), **blocked** (on a decision), **dropped** (with the reason in `log.md`).
 | CO-24 | U5: default codec for a headset with no saved choice | WirePlumber | idea | needs a fresh device or the operator's word | the operator |
 | CO-25 | BT-1's ROM-firmware mechanism | — | closed unless the operator wants laptop runs | — | the operator |
 | CO-26 | `mesh_send_sync()` loses a failed add and schedules the missing instance | kernel | confirmed in source (reviews RV5); to go with CO-05 | fault-inject the add in QEMU | the operator, for the send |
+| CO-27 | [U13: a headset known only from LE advertising cannot be set up](CO-27-le-only-pairing-u13/README.md) | BlueZ; GNOME | investigating: confirmed in capture, log and source (2026-10-21) | the operator's retry in pairing mode; an emulator reproducer; search for existing reports | the operator, for any send |
+| CO-28 | Tested-by on the 6.1.191, 5.15.224 and 5.10.273 stable reviews (our backports are in them) | stable kernel | idea; CO-10's tooling applies | watch for the review mails | the operator, for any send |
 
 Items without a link have no dossier yet. One is opened as soon as anything is written about
 the item.
