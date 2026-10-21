@@ -1,12 +1,15 @@
 # Source investigation — the second outside reviewer's answer
 
 *Received 2026-10-21 in answer to `2026-10-20T2332Z-source-investigation-task.md`. The text
-is kept as received, with two changes, made by `scripts/review-text-clean.py`:
-- the reviewer's tooling marks are removed: tracking parameters in links, favicon lines
-  with their site labels, and HTML space entities;
-- one link that carries a mail address is replaced by a note.
+is kept as received, except for the reviewer's tooling marks, which
+`scripts/review-text-clean.py` removes: tracking parameters in links, favicon lines with their
+site labels, and HTML space entities.*
 
-No finding was added or changed. What we checked and what holds:
+*Restored 2026-10-21: the first copy also replaced one patchew link because it carries a mail
+address. That broke the project's rule that what upstream has published is public (BRIEF §7).
+The link is back, as received.*
+
+*No finding was added or changed. What we checked and what holds:
 `2026-10-21T0033Z-source-investigation-reviewers-2-4.md`.*
 
 ---
@@ -197,7 +200,7 @@ U7 — new connect during teardown of an established link
 
 Souza series — old setup is still pending
 
-The series does not, on its face, correct `hci_connect_sco()` returning an already-disconnecting established connection. Its patch 6 is a distinct improvement: it limits notification of SCO air mode to a successfully established connection. Patch 6 diff [link removed: it carries a mail address].
+The series does not, on its face, correct `hci_connect_sco()` returning an already-disconnecting established connection. Its patch 6 is a distinct improvement: it limits notification of SCO air mode to a successfully established connection. [Patch 6 diff](https://patchew.org/linux/20261008222616.2780570-1-enghitalo%40gmail.com/20261008222616.2780570-7-enghitalo%40gmail.com/).
 
 ### Hardware validation for patch 6
 

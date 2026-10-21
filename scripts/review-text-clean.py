@@ -5,15 +5,16 @@ Usage: python3 -I scripts/review-text-clean.py <in.md> <out.md> [<header.md>]
 
 With <header.md>, its text is written first, followed by a "---" line.
 
-Removes what the reviewer's tooling added and what must not be published,
-and nothing else:
+Removes what the reviewer's tooling added, and nothing else:
   - citation markers such as "fileciteturn0file0L1-L2" and
     "citeturn14view0turn14view1";
   - "utm_source" tracking parameters in links;
   - favicon image lines and the site-name line that follows each one;
-  - the HTML space entity "&#x20;";
-  - links whose URL carries a mail address (plain or %40-encoded), which
-    become "[link removed: it carries a mail address]".
+  - the HTML space entity "&#x20;".
+Links that carry mail addresses (lore, patchwork, patchew) are kept: what
+upstream has published is public (BRIEF §7). Until 2026-10-21 this script
+replaced them, against that rule; devtools/repo-scan-public-addresses is
+where a published address goes when the scan refuses it.
 Prints how many of each it removed. Refuses to overwrite <out.md>.
 """
 import os
@@ -36,7 +37,7 @@ def main():
     with open(src, encoding="utf-8") as f:
         lines = f.read().split("\n")
 
-    counts = {"citation": 0, "tracking": 0, "favicon": 0, "entity": 0, "mail-link": 0}
+    counts = {"citation": 0, "tracking": 0, "favicon": 0, "entity": 0}
     out = []
     # After a favicon line the tooling prints up to two short label lines
     # (the site name, then sometimes "+1"); they are skipped with it.
@@ -64,9 +65,6 @@ def main():
         counts["tracking"] += n
         line, n = re.subn(r"&#x20;", "", line)
         counts["entity"] += n
-        line, n = re.subn(r"\[([^\]]*)\]\((https?://[^)\s]*(?:@|%40)[^)\s]*)\)",
-                          r"\1 [link removed: it carries a mail address]", line)
-        counts["mail-link"] += n
         out.append(line)
 
     parent = os.path.dirname(dst)

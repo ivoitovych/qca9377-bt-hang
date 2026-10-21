@@ -1,10 +1,14 @@
 # Source investigation — the fourth outside reviewer's answer
 
 *Received 2026-10-21 as a report file in answer to
-`2026-10-20T2332Z-source-investigation-task.md`. The text is kept as received, except that six
-links that carry mail addresses (patchwork and patch URLs) are replaced by a note, by
-`scripts/review-text-clean.py`. No finding was added or changed. What we checked and what
-holds: `2026-10-21T0033Z-source-investigation-reviewers-2-4.md`.*
+`2026-10-20T2332Z-source-investigation-task.md`. The text is kept as received.*
+
+*Restored 2026-10-21: the first copy replaced six patchwork and patch links because they carry
+mail addresses. That broke the project's rule that what upstream has published is public
+(BRIEF §7). The links are back, as received.*
+
+*No finding was added or changed. What we checked and what holds:
+`2026-10-21T0033Z-source-investigation-reviewers-2-4.md`.*
 
 ---
 
@@ -337,8 +341,8 @@ Primary repositories and patches:
 * [PipeWire 1.0.5](https://github.com/PipeWire/pipewire/tree/a2287be601710eea0d073261223ec34b92384c8a), [PipeWire master snapshot](https://github.com/PipeWire/pipewire/tree/e0ca5ed944df3ec73cd616787b0db3121116429a)
 * [WirePlumber 0.4.17](https://github.com/PipeWire/wireplumber/tree/d3eb77b292655cef333a8f4cab4e861415bc37c2), [WirePlumber master snapshot](https://github.com/PipeWire/wireplumber/tree/9ac17bbcc7da60f10322ccaa07e5a6329dc33abc)
 * [GNOME 46.7](https://github.com/GNOME/gnome-control-center/tree/9417bd3f9bb22473373f4631b2f21eb07c257273), [GNOME main snapshot](https://github.com/GNOME/gnome-control-center/tree/a7e126b2b82c10cabbf347561def01bbec033145)
-* SCO series first patch [link removed: it carries a mail address], patch 6 [link removed: it carries a mail address]
-* Putko [link removed: it carries a mail address], Hui Peng [link removed: it carries a mail address], Jiale Yao [link removed: it carries a mail address], Cen Zhang [link removed: it carries a mail address]
+* [SCO series first patch](https://patchwork.kernel.org/project/bluetooth/patch/20261008222616.2780570-2-enghitalo@gmail.com/), [patch 6](https://patchwork.kernel.org/project/bluetooth/patch/20261008222616.2780570-7-enghitalo@gmail.com/)
+* [Putko](https://patchwork.kernel.org/project/bluetooth/patch/20261014160504.42527-1-igorpetindev@gmail.com/), [Hui Peng](https://patchwork.kernel.org/project/bluetooth/patch/20260919115436.3998954-1-benquike@gmail.com/), [Jiale Yao](https://patchwork.kernel.org/project/bluetooth/patch/20261003081205.433725-1-yaojiale02@163.com/), [Cen Zhang](https://patchwork.kernel.org/project/bluetooth/patch/pm-bluetooth-objects-candidate-0156-v8-fac4256cb2701c21549a@gmail.com/)
 * [BlueZ issue 2562](https://github.com/bluez/bluez/issues/2562)
 
 Access gaps: PipeWire issues #5506, #5476 and #1590 were not retrievable; their equivalence or discussion details are not asserted. The WirePlumber issue history supplied in the brief was not independently exhaustively re-read. Those gaps do not affect the pinned-source findings, but they prevent claiming a complete tracker/history review.

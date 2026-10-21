@@ -59,7 +59,11 @@ All are in the public repository `ivoitovych/qca9377-bt-hang`, branch `main`:
   [`c578c158a368`](https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable-rc.git/commit/?id=c578c158a36845a2b642bd491adaa7e4a479e04f);
 - BlueZ master (the testers).
 
-The rc2 announcement is on lore.kernel.org in the stable list archive, under its subject.
+The rc2 announcement:
+[lore, `<20261020075535.084584701@linuxfoundation.org>`](https://lore.kernel.org/stable/20261020075535.084584701@linuxfoundation.org/).
+
+The complete mail as it would be sent, with all headers and recipients:
+[`drafts/reply-6.6.160-rc2-v4.eml`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2-v4.eml).
 
 ## What we ask of you
 

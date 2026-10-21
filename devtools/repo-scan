@@ -155,12 +155,34 @@ ALLOW_MAIL="${REPO_SCAN_ALLOW_MAIL:-$(git config user.email 2>/dev/null || echo 
 # configure. It widens the allowlist by exactly one address, the same one the
 # local config would have supplied on the maintainer's machine.
 [[ -n "$ALLOW_MAIL" ]] || ALLOW_MAIL=$(git log -1 --format='%ae' 2>/dev/null || echo '')
+# ADDRESSES UPSTREAM HAS ALREADY PUBLISHED ARE PUBLIC (operator, 2026-10-13;
+# BRIEF §7). Sign-offs, maintainers, list addresses, Message-IDs and lore or
+# patchwork links are mirrored worldwide; refusing them made the maintainer
+# delete a Message-ID from STATUS, patchwork links from outside reviews and a
+# reply's recipient list (2026-10-20/21). The scanned repository's own
+# devtools/repo-scan-public-addresses lists them: "@domain" lines accept every
+# address at that exact domain; other lines accept one address, alone or as the
+# tail of a Message-ID that embeds it after "-" or "." (git send-email writes
+# <date>.<pid>-<n>-<sender>, which the pattern above reads as one address);
+# "#" starts a comment. Only listed addresses pass, so a private correspondent's
+# address is still refused — that is what this check is for.
+PUB_LIST="$ROOT/devtools/repo-scan-public-addresses"
+PUB_ADDRS=""; PUB_DOMS=""
+if [[ -r "$PUB_LIST" ]]; then
+    # sed, not tr -d '[:space:]': tr also deletes the newlines and joins every
+    # entry into one, which a one-entry test list cannot show (found 2026-10-21).
+    PUB_ADDRS=$(grep -vE '^[[:space:]]*(#|$)' "$PUB_LIST" | grep -v '^@' | sed 's/[[:space:]]//g' \
+        | grep -v '^$' | sed 's/[.+]/\\&/g' | paste -sd'|' || true)
+    PUB_DOMS=$(grep -E '^@' "$PUB_LIST" | sed 's/[[:space:]]//g' | sed 's/\./\\./g' | paste -sd'|' || true)
+fi
 mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
         | grep -viE '@(vger\.kernel\.org|lists\.linux\.dev|kernel\.org|example\.(com|org))$' \
         | grep -viFx 'giometti@linux.it' \
         | grep -viE '^(noreply|no-reply)@' \
         | { [[ -n "$ALLOW_MAIL" ]] && grep -viF "$ALLOW_MAIL" || cat; } \
         | grep -viE '^modprobe@|^systemd-' \
+        | { [[ -n "$PUB_ADDRS" ]] && grep -viE "(^|[-.])($PUB_ADDRS)\$" || cat; } \
+        | { [[ -n "$PUB_DOMS" ]] && grep -viE "($PUB_DOMS)\$" || cat; } \
         | sort -u)
 [[ -n "$mails" ]] && report "email address found:" $mails || pass "no unexpected emails"
 

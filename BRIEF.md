@@ -409,6 +409,23 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
     - public files carry **pseudonyms** from a privately kept table: the manufacturer prefix is real, the rest random, one per device for good, with the statement that says so;
     - BSSIDs, key material (a raw capture carries link keys) and personal device names are never published.
   - **Why the address rule changed:** until 2026-10-11 no address went into any commit, private included. That kept the T8 captures out of git altogether.
+- **What upstream has already published is public (operator, 2026-10-13; written here 2026-10-21).**
+  - **Never mask, elide, substitute or remove:**
+    - mail addresses in sign-offs and trailers;
+    - the addresses of maintainers, contributors and lists;
+    - Message-IDs;
+    - lore, patchwork and patchew links that contain addresses.
+
+    They are mirrored and indexed worldwide, so hiding them protects no one and costs every
+    reader the link.
+  - **Privacy covers only what is not already public:** private correspondence and its
+    addresses, personal device names, real device addresses (pseudonyms above), keys and
+    BSSIDs, and mail-relay infrastructure in raw headers.
+  - **Why this is written here:** the rule lived only in one maintainer's notes. On
+    2026-10-20 and 10-21 that maintainer still removed a Message-ID from STATUS, patchwork
+    links from outside reviews, and a reply's public recipient list, each time because
+    `devtools/repo-scan` flagged them. The scan was then changed to accept published upstream
+    addresses (`devtools/repo-scan-public-addresses`).
 - **Nothing we write exists only on this disk (operator, 2026-10-11).** Whatever cannot go public goes to the private remote.
   - **Pushed:** branches, worktrees, notes, and the commits made inside upstream checkouts under `cache/`. Those go as patch exports, never as the trees themselves (`scripts/export-local-work.py` → a branch on the private remote). `scripts/unpushed-survey.py` lists what is still local.
   - **Exceptions, kept local on purpose:**

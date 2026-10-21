@@ -49,7 +49,7 @@ no draft, so this is the first work on it.
   in today's mainline (`14c897740388`).
 - **The draft:** version 2 states all four fixes and the regression result. No pending lines.
 
-## 2026-10-21 02:xx UTC — three outside reviews of version 1; version 3
+## 2026-10-21 01:43 UTC — three outside reviews of version 1; version 3
 The reviews are in `reviews/2026-10-21-reviewer-{1,2,3}.md`. A fourth reviewer will answer
 later. All three read version 1, with its [PENDING] line.
 
@@ -78,7 +78,7 @@ later. All three read version 1, with its [PENDING] line.
 
 **The sendable copy:** version 3, `tmp/co10-20261021/send/reply-6.6.160-rc2-v3.eml`.
 
-## 2026-10-21 03:xx UTC — the fourth outside review (of version 3); version 4
+## 2026-10-21 01:55 UTC — the fourth outside review (of version 3); version 4
 The review is in `reviews/2026-10-21-reviewer-4.md`. **Verdict:** "almost ready"; "close the
 one comparison hole and then stop".
 
@@ -92,8 +92,29 @@ one comparison hole and then stop".
 | Freeze what was sent | `README.md` "Next" item 3: record the commit, the file, the time and the server answer after sending |
 | The QCA9377 wording, no reboot, no repository link in the mail | kept as in version 3 |
 
-**The sendable copy:** `tmp/co10-20261021/send/reply-6.6.160-rc2-v4.eml`. `mail-lint.sh`
+**The sendable copy (at version 4):** `tmp/co10-20261021/send/reply-6.6.160-rc2-v4.eml`. `mail-lint.sh`
 flags only the two quoted lines; `reply-headers-check.py` passes 7/7. The v3 file name now
 holds the same text, because it was edited in place before the copy.
+
+## 2026-10-21 02:05 UTC — published addresses restored (the operator)
+**The operator's remark:** addresses that upstream has already published are public and must
+not be hidden. That has been the rule since 2026-10-13, and it is now written in BRIEF §7.
+
+**This dossier had broken it twice:**
+- the sendable reply was kept off the public copy "because it carries mail addresses";
+- CO-10 reviewer 3's patchew link was replaced.
+
+**Now:**
+- the full sendable mail is public, as `drafts/reply-6.6.160-rc2-v4.eml`;
+- the review request links the announcement on lore by its Message-ID;
+- reviewer 3's link is back.
+
+**Behind it:** `devtools/repo-scan` now accepts the addresses listed in
+`devtools/repo-scan-public-addresses`, and `scripts/review-text-clean.py` no longer replaces
+links (`comms/2026-10-21T0204Z-…`).
+
+**Also corrected:** the times of versions 3 and 4 in this log, the draft and the review
+headers. They had been written as "02:xx" and "03:xx" before those hours; the commit times
+are 01:43 and 01:55 UTC.
 `mail-lint.sh` flags only the two quoted lines of the announcement (73 columns, kept as
 written).

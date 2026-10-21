@@ -1,0 +1,49 @@
+# repo-scan-public-addresses — mail addresses and Message-IDs that upstream has
+# already published, which devtools/repo-scan therefore lets through (BRIEF §7,
+# "What upstream has already published is public"; operator, 2026-10-13).
+#
+#   @domain    every address at exactly that domain (lists, list hosts, and the
+#              hosts whose Message-IDs we cite)
+#   address    that address, alone or at the end of a Message-ID that embeds it
+#              after "-" or "." (git send-email IDs)
+#
+# Add an entry when a public upstream record (a lore or patchwork mail, a commit
+# trailer, a stable review) carries the address. Never add a private
+# correspondent: the scan's refusal of unlisted addresses is what keeps those
+# out. The project author's own address is allowed by repo-scan already.
+
+# Lists and list hosts
+@lists.linaro.org
+@kernelci.org
+@lists.linux.dev
+@vger.kernel.org
+
+# Stable and Bluetooth maintainers' hosts (addresses and Message-IDs)
+@linuxfoundation.org
+@linux-foundation.org
+
+# Recipients of the stable review "[PATCH 6.6 0000/1651] 6.6.160-rc2 review"
+# (2026-10-20), on its public To/Cc
+linux@roeck-us.net
+pavel@nabladev.com
+jonathanh@nvidia.com
+f.fainelli@gmail.com
+sudipm.mukherjee@gmail.com
+rwarsow@gmx.de
+hargar@microsoft.com
+achill@achill.org
+sr@sladewatkins.com
+pschneider1968@googlemail.com
+
+# Authors of the upstream patches this project tests or cites (their own
+# patchwork and lore records)
+enghitalo@gmail.com
+igorpetindev@gmail.com
+benquike@gmail.com
+yaojiale02@163.com
+luiz.von.dentz@intel.com
+liujiajia@kylinos.cn
+pav@iki.fi
+pmenzel@molgen.mpg.de
+# Cen Zhang's patchwork 14880941 is filed under this Message-ID
+pm-bluetooth-objects-candidate-0156-v8-fac4256cb2701c21549a@gmail.com
