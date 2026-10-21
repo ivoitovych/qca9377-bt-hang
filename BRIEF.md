@@ -130,7 +130,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-21 (the abrupt stop of 2026-10-19 21:52 found and recorded; E3 #2 lost its row; the shutdown step's redesign registered as §9.11, the operator's direction; earlier, 2026-10-20: A1 and A2 applied upstream on 10-19, identical to what was sent; 6.6.160-rc2 carries our three stable patches; every other submission re-checked, nothing new; earlier, 2026-10-19: U12 registered: A2DP lost to an AVDTP Abort, fixed upstream, not in Ubuntu; the running bluetoothd found to lack Ubuntu's October CVE fixes; the test-suite maintainer's work wholly on `main`: the `btmon` width fix at twelve call sites, the reload's second guard, the access audit in a workflow of its own; BT-4's abort reproduced on the laptop's `btmon` build; earlier: 2026-10-18 trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-064** (EX-044/049/050 were ported from
+**Last updated: 2026-10-21 02:22 UTC (CO-10's Tested-by draft v5 ready, waiting for the operator's send, due 10-22 07:53 UTC; contribution dossiers; source investigation answers checked, U7's kernel mechanism found; published upstream addresses are public, §7, and the scan's exact-token list; earlier the same day: the abrupt stop of 2026-10-19 21:52 found and recorded; E3 #2 lost its row; the shutdown step's redesign registered as §9.11, the operator's direction; earlier, 2026-10-20: A1 and A2 applied upstream on 10-19, identical to what was sent; 6.6.160-rc2 carries our three stable patches; every other submission re-checked, nothing new; earlier, 2026-10-19: U12 registered: A2DP lost to an AVDTP Abort, fixed upstream, not in Ubuntu; the running bluetoothd found to lack Ubuntu's October CVE fixes; the test-suite maintainer's work wholly on `main`: the `btmon` width fix at twelve call sites, the reload's second guard, the access audit in a workflow of its own; BT-4's abort reproduced on the laptop's `btmon` build; earlier: 2026-10-18 trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-064** (EX-044/049/050 were ported from
 `kernel/mgmt-flush-status` on 2026-10-09, `5939d04`; the next exhibit on `main` is EX-065) — no tip hash:
 it rotted within hours (`R2-13`).
 
@@ -138,6 +138,33 @@ it rotted within hours (`R2-13`).
 > never to have worked).** Current state of every issue and submission: `docs/STATUS.md`. The
 > open decisions: "Operator decisions open" above. The previous block (2026-10-08, with its
 > 10-09 and 10-11 items) is at the end of `HISTORY.md`, verbatim.
+>
+> **New, 2026-10-21 (02:22 UTC, the state at hand-off):**
+> - **CO-10 is ready to send and waits for the operator.** The Tested-by reply to the
+>   6.6.160-rc2 review is due **Thu 22 Oct 07:53 UTC**. The file is
+>   `contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2-v5.eml`.
+>   - `scripts/mail-lint.sh` flags only the two quoted lines; `scripts/reply-headers-check.py`
+>     passes 7/7 against `tmp/stable-6.6.160-rc2-cover-20261020.txt`.
+>   - Checked before 02:22: linux-stable-rc `linux-6.6.y` is still `c578c158a368`, and there is no
+>     rc3 on kernel.org.
+>   - **The send:** the operator runs `git send-email --suppress-cc=all` on that file in their
+>     own terminal. The app password is typed only there and **revoked** in Google afterwards;
+>     `smtp-login-check.sh` confirms the 535. Then record the send in the dossier's `log.md`.
+> - **CI:** GitHub has been queueing runs for hours. `757abef` (v5 and the scan fix) is being
+>   watched; `bd2f3cf`, `a7b3ea2` and `784931a` are green; `f509c3d`, `d4c760f`, `7b19bdb`,
+>   `22feea9`, `0cdb319`, `af0b988`, `67e927f`, `a3e4a0d` and `ccb46dc` were still queued.
+>   Check them with `devtools/ci --recent 15`.
+> - **The contribution dossiers** under `contributions/` (index `contributions/README.md`).
+>   Next by the operator's earlier plan: four Sonnet workers W1 to W4 (CO-01, CO-02 with
+>   U7's hci_vhci reproducer first, CO-03, CO-04/05), not started yet, awaiting the
+>   operator's go.
+> - **Done:** the source investigation task and four answers, checked (reviews/
+>   2026-10-21T00*); the U7 kernel mechanism (CO-02); the rule that published upstream
+>   addresses are public, in §7, with the scan's exact-token list (`comms/2026-10-21T0204Z`,
+>   `…T0225Z` to the second maintainer); §9.11 on the shutdown step; the 10-19 abrupt stop in
+>   STATUS.
+> - **Story:** HISTORY.md, "Dossiers, a source review, and the first stable-review
+>   Tested-by".
 >
 > **New, 2026-10-19:**
 > - **The test-suite work is wholly on `main`** (STATUS, "Repository health"), and with it the

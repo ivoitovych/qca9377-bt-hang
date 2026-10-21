@@ -4014,6 +4014,54 @@ e-mail addresses, captures) and `--range`; `repo-save` and a CI job on every pus
 commit's author and committer is the project author, both fields, since the committer is not
 shown by a plain `git log`. Nothing on the laptop was changed.
 
+## Dossiers, a source review, and the first stable-review Tested-by (2026-10-20 → 10-21)
+
+**Contribution survey (10-20 23:09 UTC).** Every STATUS row and the upstream trackers were
+checked, and 25 possible contributions were numbered CO-01 to CO-25
+(`reviews/2026-10-20T2309Z-contribution-opportunities.md`). Since 10-21 each active one has a
+dossier under `contributions/`: README, append-only log, references, experiments and drafts.
+The index is `contributions/README.md`.
+
+**Source investigation (10-20 23:32 → 10-21 00:33).** A task for outside reviewers
+(`reviews/2026-10-20T2332Z-source-investigation-task.md`) brought four answers, each checked
+against bluetooth-next `27731ba09195`, Ubuntu `7.0.0-38`, PipeWire 1.0.5 and BlueZ 5.72.
+- **U7's cause is in the kernel.** `hci_connect_sco()` hands a new SCO connect the old eSCO
+  `hci_conn` while its Disconnect is pending. That connection is still `BT_CONNECTED`, not
+  `BT_DISCONN` as all four reviewers wrote. So `sco_connect()` marks the socket connected with
+  no setup, the Disconnection Complete closes it with `ECONNABORTED`, and PipeWire 1.0.5 does
+  not retry. Hitalo Souza's abandoned-setup series does not cover it. That is CO-02;
+  `docs/issues.md` U7's "not a kernel defect" sentence was corrected.
+- **Also confirmed:**
+  - btusb switches to alt 0 when one of two SCO links goes down (CO-21);
+  - `mesh_send_sync()` loses a failed add (CO-26);
+  - the U12 backport recipe (CO-03);
+  - GNOME 46.7 caches the profile list per device (U4).
+
+**The 10-19 21:52 stop.** Found on the boot list: an abrupt stop in the middle of a call. The
+cause is unknown; the operator thinks someone at the laptop may have held the power button.
+E3 #2 lost its row. BRIEF §9.11 now records the operator's direction: the shutdown step must
+be short, and the trial is closed at the next boot from that boot's journal.
+
+**CO-10, the Tested-by on 6.6.160-rc2.** 6.6.160-rc2 (`c578c158a368`) and 6.6.159 were built
+with BlueZ's `tester.config` and every BlueZ CI TestRunner suite was run in QEMU/KVM (01:02 to
+01:36 UTC). Four fixes show up:
+- our BT-9 and BT-8;
+- Pauli Virtanen's mesh KASAN/GPF fix and his L2CAP ecred fix.
+
+Every other case that ran on both kernels passes on both or fails on both. Four outside
+reviewers read versions 1 and 4, and their points are in the dossier's log. Draft version 5
+waits for the operator's send. The mistakes caught on the way:
+- a multi-word test filter that test-runner splits at spaces;
+- "02:xx"-style times written before those hours;
+- "same verdict" where one control run failed instead of timing out.
+
+**Published upstream addresses are public (operator, 10-21).** The 10-13 rule lived only in
+memory, and `devtools/repo-scan` refused unlisted addresses. A Message-ID, seven review links
+and a reply's recipient list had been removed to get past it. The rule is now in BRIEF §7, and
+the scan reads `devtools/repo-scan-public-addresses`. Its first version passed whole
+organisation domains and address suffixes; outside reviewers found that within hours, and it
+now takes exact tokens, with `@host` only for mailing-list hosts. Tests were added.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
