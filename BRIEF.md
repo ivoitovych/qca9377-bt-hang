@@ -140,6 +140,11 @@ it rotted within hours (`R2-13`).
 > 10-09 and 10-11 items) is at the end of `HISTORY.md`, verbatim.
 >
 > **New, 2026-10-21 (updated 02:55 UTC, the state at hand-off):**
+> - **Workers started 2026-10-21 (the operator's go):** W2 on CO-02 (U7 reproducer in QEMU,
+>   then a candidate fix; raw output in `tmp/co02-w2/`) and W4 on CO-05 + CO-26, then CO-04
+>   (mesh lock patch, the failed-add fix, then a test of 14888791; `tmp/co05-w4/`). QEMU only,
+>   nothing sent, no commits in the main checkout; each reports in its final message, which is
+>   checked before anything enters a dossier. W1 (CO-01) and W3 (CO-03) come after them.
 > - **CO-10 SENT 2026-10-21 03:05:42 UTC** on the operator's word: v6, server 250, all 20
 >   recipients, Message-ID `<20261021030542.1434603-1-yaroslav.voytovych@gmail.com>` (STATUS
 >   row; the dossier's `log.md`). The app password is revoked (535 on 587, all 12 seen in the
