@@ -1,6 +1,10 @@
 # CO-10 — Tested-by on 6.6.160-rc2
 
-**State:** all eleven BlueZ CI TestRunner suites run on both kernels, with l2cap-tester
+**SENT 2026-10-21 03:05:42 UTC** (v6, server 250, 20 recipients; Message-ID
+`<20261021030542.1434603-1-yaroslav.voytovych@gmail.com>`; `log.md`). Next: watch the thread
+and the 6.6.160 release.
+
+**State before the send:** all eleven BlueZ CI TestRunner suites run on both kernels, with l2cap-tester
 stopped where it hangs on both (documented in the results). Draft **version 6** has taken up
 four outside reviews and two rechecks, and its sendable copy
 (`drafts/reply-6.6.160-rc2-v6.eml`) passes the form and threading checks. **It waits for the

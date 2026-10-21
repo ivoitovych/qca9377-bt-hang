@@ -181,3 +181,21 @@ lists `6.6.160-rc1` and `6.6.160-rc2` only. To be repeated just before the send.
 | The public list's header still said kernel.org is allowed | 2 | Corrected |
 | The maintainer's address comes from the local `git config user.email` first, so a private address set there would be exempt | 2 | **Backlog** (reviewer 2: not for CO-10): derive it from data the repository controls, or require a public-list entry |
 | CI still queued | 2, 3, 4 | GitHub's queue; not a gate for the mail |
+
+## 2026-10-21 03:05:42 UTC — SENT
+On the operator's word ("Please send it."), version 6.
+- **Freshness, minutes before:** `git ls-remote` linux-stable-rc `refs/heads/linux-6.6.y` →
+  `c578c158a36845a2b642bd491adaa7e4a479e04f`; the kernel.org stable-review listing has no
+  `6.6.160-rc3` (count 0; `6.6.160-rc2.xz` count 1, the control).
+- **The file:** `drafts/reply-6.6.160-rc2-v6.eml` at `8881e10`; `git hash-object` of the file
+  sent = the committed blob, `e8ab46352a3c`.
+- **The command:** `git send-email --confirm=never --suppress-cc=self --suppress-cc=body` on
+  that file, from the development host, with the app password the operator gave for it.
+- **The server:** `Result: 250` from smtp.gmail.com; 20 `RCPT TO`, the announcement's 20
+  recipients; `In-Reply-To` and `References` `<20261020075535.084584701@linuxfoundation.org>`.
+- **Message-ID:** `<20261021030542.1434603-1-yaroslav.voytovych@gmail.com>`,
+  `Date: Wed, 21 Oct 2026 05:05:42 +0200`.
+- **The password:** in no settings file afterwards (grep). It is to be revoked in the Google
+  account; then `smtp-login-check` should get 535.
+
+**Next:** watch the thread and the 6.6.160 release for the `Tested-by`.

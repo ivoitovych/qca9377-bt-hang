@@ -140,7 +140,12 @@ it rotted within hours (`R2-13`).
 > 10-09 and 10-11 items) is at the end of `HISTORY.md`, verbatim.
 >
 > **New, 2026-10-21 (updated 02:55 UTC, the state at hand-off):**
-> - **CO-10 is ready to send and waits for the operator.** The Tested-by reply to the
+> - **CO-10 SENT 2026-10-21 03:05:42 UTC** on the operator's word: v6, server 250, all 20
+>   recipients, Message-ID `<20261021030542.1434603-1-yaroslav.voytovych@gmail.com>` (STATUS
+>   row; the dossier's `log.md`). Open: the operator revokes the app password, then
+>   `smtp-login-check` should get 535; watch the thread and the 6.6.160 release. The lines
+>   below are the state just before the send.
+> - **CO-10 was ready to send and waited for the operator.** The Tested-by reply to the
 >   6.6.160-rc2 review is due **Thu 22 Oct 07:53 UTC**. The file is
 >   `contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2-v6.eml`; all four
 >   reviewers approved v6 at `1eda14a` (`reviews/2026-10-21-recheck-of-v6.md`).

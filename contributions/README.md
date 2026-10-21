@@ -45,7 +45,7 @@ date), **blocked** (on a decision), **dropped** (with the reason in `log.md`).
 | CO-07 | [U6: GNOME input meter fix for Ubuntu](CO-07-gnome-u6-input-meter/README.md) | Ubuntu (GNOME Settings 46.7) | idea | one recorder reading with the Sound panel open | the operator files |
 | CO-08 | [U10: PipeWire quirk for the Tronsmart T8](CO-08-pipewire-u10-sbc-xq/README.md) | PipeWire | blocked | the operator's marked test sound per mode | the operator |
 | CO-09 | [The QCA9377 entry in Ubuntu's kernel](CO-09-ubuntu-kernel-qca9377-entry/README.md) | Ubuntu (kernel) | waiting | watch Ubuntu's stable updates; rebuild E3 per kernel | the operator, for a request |
-| CO-10 | [Tested-by on 6.6.160-rc2](CO-10-stable-6.6.160-rc2/README.md) | stable kernel | tested; draft under outside review; deadline 2026-10-22 07:53 UTC | the other testers' comparison, reviews, the operator's decision | the operator |
+| CO-10 | [Tested-by on 6.6.160-rc2](CO-10-stable-6.6.160-rc2/README.md) | stable kernel | **sent** 2026-10-21 03:05 UTC (v6, server 250) | watch the thread and the 6.6.160 release | — |
 | CO-11 | [Small items: btmon for Ubuntu, the flaky BlueZ test](CO-11-small-btmon-and-flaky-test/README.md) | Ubuntu; BlueZ | idea, low value | none planned | — |
 | CO-12 | [M-2: extended-advertising duration overflow](CO-12-m2-adv-duration-overflow/README.md) | kernel | investigating: arithmetic confirmed in source | QEMU reproducer | the operator, for the send |
 | CO-13 | Mesh "Count" question to the list | kernel (uAPI) | idea | — | the operator |
