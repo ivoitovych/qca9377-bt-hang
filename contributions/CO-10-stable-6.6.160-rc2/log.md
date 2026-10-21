@@ -77,5 +77,23 @@ later. All three read version 1, with its [PENDING] line.
 | No reboot of the laptop into rc2 | 2, 3 | agreed; not done |
 
 **The sendable copy:** version 3, `tmp/co10-20261021/send/reply-6.6.160-rc2-v3.eml`.
+
+## 2026-10-21 03:xx UTC — the fourth outside review (of version 3); version 4
+The review is in `reviews/2026-10-21-reviewer-4.md`. **Verdict:** "almost ready"; "close the
+one comparison hole and then stop".
+
+| point | done |
+|---|---|
+| The two mesh "Send cancel" timeouts on rc2 have no 6.6.159 verdict (the control crashed first) | **Closed.** Each mesh case after the crash was run alone on both kernels (`repeat-case.sh … cancel 3`, `Features 1`, `Send 1`). Send cancel 1 and 2 do not pass on 6.6.159 either (Timed out or Failed, 4/4), so they are not new. Every other mesh case matches. All ten runs are clean (`kernel-report-scan.py`). mesh-tester joins the same-verdict list |
+| "BlueZ's emulator testers" is ambiguous (BlueZ also builds gap- and hci-tester, not in CI) | now "the BlueZ CI TestRunner suites" |
+| "No new failures in those tests" | now "All other cases that ran on both kernels have the same verdict" |
+| `mail-lint.sh` claims four headers and checks three; nothing checks threading or recipients | Comment corrected. New `scripts/reply-headers-check.py` checks In-Reply-To, References, Subject and reply-all recipients against the original: version 4 passes 7/7 with 20 of 20 recipients. Negative control: against Greg's separate rc2 announcement it fails four checks |
+| `README.md` and `REVIEW-REQUEST.md` still say "Running", "[PENDING]" and "no regressions" | rewritten to the current state |
+| Freeze what was sent | `README.md` "Next" item 3: record the commit, the file, the time and the server answer after sending |
+| The QCA9377 wording, no reboot, no repository link in the mail | kept as in version 3 |
+
+**The sendable copy:** `tmp/co10-20261021/send/reply-6.6.160-rc2-v4.eml`. `mail-lint.sh`
+flags only the two quoted lines; `reply-headers-check.py` passes 7/7. The v3 file name now
+holds the same text, because it was edited in place before the copy.
 `mail-lint.sh` flags only the two quoted lines of the announcement (73 columns, kept as
 written).

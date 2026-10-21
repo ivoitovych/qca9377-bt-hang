@@ -2,15 +2,20 @@ Reply-all to "[PATCH 6.6 0000/1651] 6.6.160-rc2 review" (Greg Kroah-Hartman, sta
 Tue 20 Oct 2026 09:57:46 +0200), with In-Reply-To and References set to that mail's
 Message-ID, keeping its To (stable list) and every Cc. Subject: "Re: [PATCH 6.6 0000/1651]
 6.6.160-rc2 review". The headers are taken from the saved copy of the announcement
-(development host, tmp/stable-6.6.160-rc2-cover-20261020.txt); the sendable file with them
-is kept there too, not in this public copy (it carries mail addresses).
+(development host, tmp/stable-6.6.160-rc2-cover-20261020.txt), and the sendable file
+(tmp/co10-20261021/send/reply-6.6.160-rc2-v4.eml) is checked against it by
+scripts/reply-headers-check.py: 7 of 7 PASS, 20 recipients, the same as the original's.
+It stays there, not in this public copy, because it carries mail addresses.
 Deadline: Thu 22 Oct 2026 07:53:04 UTC. Nothing is sent without the operator's word.
 
-Version 3, 2026-10-21 02:xx UTC, after three outside reviews (changes listed in ../log.md):
-the exact rc2 commit, "no new failures in those tests" instead of "no regressions in
-Bluetooth", mgmt-tester's totals, "emulated controllers, no Bluetooth hardware", and
-"no kernel warnings or sanitizer reports" after a wider scan. Everything below the line is
-the mail body.
+Version 4, 2026-10-21 03:xx UTC, after four outside reviews (what each point led to:
+../log.md):
+- "the BlueZ CI TestRunner suites" instead of "BlueZ's emulator testers";
+- "All other cases that ran on both kernels have the same verdict" instead of "No new
+  failures in those tests";
+- mesh-tester joins that list, because every mesh case now has a 6.6.159 verdict.
+
+Everything below the line is the mail body.
 ------------------------------------------------------------------------------------------
 On Tue, Oct 20, 2026 at 09:57:46AM +0200, Greg Kroah-Hartman wrote:
 > This is the start of the stable review cycle for the 6.6.160 release.
@@ -22,9 +27,9 @@ On Tue, Oct 20, 2026 at 09:57:46AM +0200, Greg Kroah-Hartman wrote:
 > Anything received after that time might be too late.
 
 Built 6.6.160-rc2 (c578c158a368) and 6.6.159 for x86_64 with BlueZ's
-doc/tester.config (KASAN, lockdep) and ran BlueZ's emulator testers on
-both in QEMU/KVM (emulated controllers, no Bluetooth hardware). No new
-failures in those tests, and four of rc2's fixes show up as intended:
+doc/tester.config (KASAN, lockdep) and ran the BlueZ CI TestRunner
+suites on both in QEMU/KVM (emulated controllers, no Bluetooth
+hardware). Four of rc2's fixes show up as intended:
 
 - "Bluetooth: hci_event: fix simultaneous discovery stuck in FINDING":
   mgmt-tester "Start Discovery - Simultaneous Inquiry Late" fails on
@@ -40,11 +45,11 @@ failures in those tests, and four of rc2's fixes show up as intended:
   l2cap-tester "L2CAP Ext-Flowctl Client - Defer limit" fails on 6.6.159
   and passes on rc2, 3 of 3.
 
-Apart from those, every case has the same verdict on both kernels:
+All other cases that ran on both kernels have the same verdict:
 mgmt-tester (rc2 465 passed, 37 failed, 6 timed out; 6.6.159 464, 38,
-6), iso-, sco-, rfcomm-, bnep-, smp-, ioctl-, userchan- and
+6), mesh-, iso-, sco-, rfcomm-, bnep-, smp-, ioctl-, userchan- and
 6lowpan-tester, and l2cap-tester up to "L2CAP Ext-Flowctl Server -
 Accept 2 Close 1", which hangs on both. No kernel warnings or sanitizer
-reports on rc2 in these runs.
+reports were found on rc2 in these runs.
 
 Tested-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>

@@ -20,14 +20,14 @@ The reply says what was built, what was run, and what came out, and ends with a 
 It is the ordinary way to help a stable review. It is short, and it creates no work for
 anyone.
 
-rc2 carries 41 Bluetooth commits, 38 of them by other authors. We compared every BlueZ
-emulator tester on rc2 and on 6.6.159:
-- no regressions;
+rc2 carries 41 Bluetooth commits, 38 of them by other authors. We ran the BlueZ CI
+TestRunner suites on rc2 and on 6.6.159:
 - four fixes visible: our two, plus two by Pauli Virtanen;
-- one l2cap case hangs identically on both kernels.
+- every other case that ran on both kernels has the same verdict;
+- one l2cap case hangs identically on both.
 
-The draft is now **version 3**, after three outside reviews (in `reviews/`; how each point
-was handled: `log.md`). If you review now, please read version 3.
+The draft is now **version 4**, after four outside reviews (in `reviews/`; how each point
+was handled: `log.md`). If you review now, please read version 4.
 
 ## What to read
 

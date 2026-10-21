@@ -1,16 +1,8 @@
 # CO-10 — Tested-by on 6.6.160-rc2
 
-**State:** tested in full. Draft version 3 has taken up three outside reviews
-(`reviews/`, `log.md`); a fourth is expected. Sending is the operator's decision. **The
-deadline is 2026-10-22 07:53:04 UTC.**
-
-**The result, 2026-10-21 01:4x UTC:** every BlueZ tester was compared on rc2 and 6.6.159.
-There are no regressions, and four of rc2's fixes show up as intended:
-- our BT-9 and BT-8;
-- Pauli Virtanen's mesh crash fix: 6.6.159 hits KASAN, then a GPF, in mesh-tester;
-- his L2CAP ecred fix: "Defer limit" fails 3/3 on 6.6.159 and passes 3/3 on rc2.
-
-Details: `experiments/results-2026-10-21.md`.
+**State:** tested in full. Draft **version 4** has taken up four outside reviews, and its
+sendable copy passes the form and threading checks. **It waits for the operator's decision**
+and a one-time app password. **The deadline is 2026-10-22 07:53:04 UTC.**
 
 **Target:** the stable kernel review of "[PATCH 6.6 0000/1651] 6.6.160-rc2 review".
 
@@ -19,26 +11,37 @@ and the BT-8 fix.
 
 **For outside reviewers, start here:** [`REVIEW-REQUEST.md`](REVIEW-REQUEST.md).
 
-## Where it stands (2026-10-21 01:2x UTC)
+## The result
 
-- **Both kernels built** with BlueZ's tester config: 6.6.160-rc2 (`c578c158a368`) and the
-  control 6.6.159.
-- **The two fixes,** tested in QEMU (results in `experiments/results-2026-10-21.md`):
-  - BT-9's race case fails on 6.6.159 (3 of 3 runs) and passes on rc2 (3 of 3);
-  - BT-8's reproducer shows the bug on 6.6.159 (2 of 2) and the fix on rc2 (2 of 2).
-- **No regression in mgmt-tester:** 508 cases with one difference, the race case.
-- **No kernel reports.**
-- **Running:** every other BlueZ tester on both kernels, because rc2 carries 41 Bluetooth
-  commits, 38 of them by other authors.
-- **Follow-ups:** none in mainline, bluetooth or bluetooth-next for the three commits
-  (`git log --grep` on each upstream id, 2026-10-21).
-- **The draft:** `drafts/reply-6.6.160-rc2.txt`. The sendable copy with its headers stays on
-  the development host.
+6.6.160-rc2 (`c578c158a368`) was compared with 6.6.159, both built with BlueZ's
+`tester.config` (KASAN, lockdep), using the BlueZ CI TestRunner suites in QEMU/KVM with
+emulated controllers.
+
+**Four of rc2's fixes show up as intended,** each failing on 6.6.159 and passing on rc2:
+- our BT-9 (3/3);
+- our BT-8 (2/2);
+- Pauli Virtanen's mesh crash fix (KASAN, then a GPF, on 6.6.159);
+- his L2CAP ecred fix (3/3).
+
+**All other cases that ran on both kernels have the same verdict.** Every mesh case now has a
+control verdict. l2cap-tester hangs at the same case on both kernels.
+
+**No kernel report on rc2,** by a 13-kind scan with a positive control. The QCA9377 entry was
+not exercised: there is no hardware on this kernel. It builds.
+
+The details are in `experiments/results-2026-10-21.md`, the draft in
+`drafts/reply-6.6.160-rc2.txt`, the reviews in `reviews/`, and what each review point led to
+in `log.md`.
 
 ## Next
 
-1. Fill in the other testers' result. Update the draft's [PENDING] line, or report a
-   difference.
-2. Outside reviews (`REVIEW-REQUEST.md`).
-3. The operator's decision, then the send: git send-email with `--in-reply-to` and a one-time
-   app password, deleted afterwards.
+1. **The operator's decision.** The send: git send-email with the sendable copy
+   (`tmp/co10-20261021/send/reply-6.6.160-rc2-v4.eml`) and a one-time app password, deleted
+   afterwards.
+2. **Before sending, on the day:**
+   - `scripts/reply-headers-check.py` and `scripts/mail-lint.sh` on the final file;
+   - a check that linux-stable-rc `linux-6.6.y` is still `c578c158a368` (it is rebased
+     often);
+   - a check that no rc3 has been announced.
+3. **After sending:** record in `log.md` the repository commit and the exact file sent, the
+   time and the server's answer. Then watch the release for the `Tested-by`.
