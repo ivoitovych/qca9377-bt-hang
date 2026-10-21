@@ -43,3 +43,15 @@ in `9588c99`); the `tmp/` copy is the working original.
   once, under the lock).
 - **Full record:** `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV4
   and RV5.
+
+## 2026-10-21, worker W4 (QEMU only), about 05:15 to 07:45 local — the series written and tested
+On the operator's go. Two patches on bluetooth-next `27731ba09195` (`patch/`): the lock in
+`mesh_send_sync()`, and CO-26's early return as 2/2 (kept separate: no client-visible change,
+and 1/2 stays small for stable). Mesh-path assertion warnings 3 → 0; `mesh_send_sync()` KCSAN
+reports 5 of 45 boots → 0; mgmt-tester 503 cases and mesh-tester verdicts unchanged; no new
+lockdep report. Full account: `experiments/results-2026-10-21.md`; raw in `tmp/co05-w4/`.
+
+## 2026-10-21 08:00 local — re-checked before entering the dossier
+`tmp/co05-check/recheck.sh assert S-base` and `S-p12`: base 3 warnings from `mesh_send_sync`,
+patched clean, both 8/10 on master mesh-tester. The drafts checked for tool or model names and
+trailers (none).

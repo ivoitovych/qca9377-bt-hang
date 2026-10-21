@@ -1,6 +1,9 @@
 # CO-05 — Mesh I12: advertising list changed without `hdev->lock`
 
-**State:** reproduced in QEMU (2026-10-05). No patch is written yet.
+**State:** **patch written** (2026-10-21), with CO-26 as patch 2/2: `patch/`; results and the
+re-check in `experiments/results-2026-10-21.md`. The mesh-path lock warnings go 3 → 0, the
+`mesh_send_sync()` KCSAN reports 5 → 0 of 45 boots; tester verdicts unchanged. Not sent: the
+operator decides. (Reproduced in QEMU 2026-10-05.)
 
 **Target:** the Linux kernel (`net/bluetooth/mgmt.c`, and separately three other callers).
 

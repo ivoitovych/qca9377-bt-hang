@@ -1,0 +1,88 @@
+From a2a4d2d1fd9364a5cf39f5f5a62bd2963e4f3916 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Wed, 21 Oct 2026 07:43:46 +0200
+Subject: [PATCH 1/2] Bluetooth: MGMT: Take hdev->lock in mesh_send_sync()
+
+mesh_send_sync() runs on the cmd_sync worker, which holds req_lock but
+not hdev->lock. It adds the packet's advertising instance with
+hci_add_adv_instance(), which requires hdev->lock, and it reads
+hdev->adv_instance_cnt, hdev->cur_adv_instance and
+hdev->adv_instance_timeout and walks hdev->adv_instances through
+hci_get_next_instance() without it.
+
+Add Advertising changes the same list and counters under hdev->lock from
+the MGMT socket, so on SMP the two can run at the same time. KCSAN
+reports it, for example:
+
+  BUG: KCSAN: data-race in hci_add_adv_instance / mesh_send_sync
+
+  write to 0xffffa29c413d5dc0 of 4 bytes by task 61 on cpu 1:
+   hci_add_adv_instance+0x463/0x490
+   add_advertising+0x3e7/0x6b0
+   hci_sock_sendmsg+0x924/0xfb0
+  read to 0xffffa29c413d5dc0 of 4 bytes by task 70 on cpu 2:
+   mesh_send_sync+0x3e/0x1c0
+   hci_cmd_sync_work+0x172/0x230
+  value changed: 0x00000001 -> 0x00000002
+
+The reader there is the capacity check, so the check and the add are
+not atomic with respect to Add Advertising either.
+
+Take hdev->lock after the worker has taken req_lock, the order
+hci_clear_adv_sync() and hci_remove_adv_sync() already use, around the
+capacity check, the add and the list walk. Drop it before
+hci_schedule_adv_instance_sync(), which sends HCI commands and must not
+run under hdev->lock; only the instance number is carried across the
+unlock, never the adv_info pointer.
+
+hci_schedule_adv_instance_sync() looks the instance up without the lock
+itself. It is shared with other callers and is not changed here.
+
+Tested on a four CPU qemu guest with lockdep and KCSAN, on
+bluetooth-next 27731ba09195. With lockdep_assert_held(&hdev->lock)
+added to hci_add_adv_instance() (not part of this patch), BlueZ's
+mesh-tester warned three times from mesh_send_sync() before and does
+not with this patch. KCSAN, 45 boots of a test that adds and removes an
+instance on one socket while another socket sends mesh packets: 5 boots
+reported a race in mesh_send_sync() or in hci_add_adv_instance() called
+from it before and none after. The other races KCSAN still reports on
+the list are in hci_schedule_adv_instance_sync() and its callees.
+
+Fixes: b338d91703fa ("Bluetooth: Implement support for Mesh")
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/mgmt.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/net/bluetooth/mgmt.c b/net/bluetooth/mgmt.c
+index 3b9c82bd2f027..d3767d42d80af 100644
+--- a/net/bluetooth/mgmt.c
++++ b/net/bluetooth/mgmt.c
+@@ -2334,8 +2334,12 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
+ 	u16 timeout, duration;
+ 	int err = 0;
+ 
+-	if (hdev->le_num_of_adv_sets <= hdev->adv_instance_cnt)
++	hci_dev_lock(hdev);
++
++	if (hdev->le_num_of_adv_sets <= hdev->adv_instance_cnt) {
++		hci_dev_unlock(hdev);
+ 		return MGMT_STATUS_BUSY;
++	}
+ 
+ 	timeout = 1000;
+ 	duration = send->cnt * INTERVAL_TO_MS(hdev->le_adv_max_interval);
+@@ -2373,6 +2377,8 @@ static int mesh_send_sync(struct hci_dev *hdev, void *data)
+ 		instance = 0;
+ 	}
+ 
++	hci_dev_unlock(hdev);
++
+ 	if (instance)
+ 		return hci_schedule_adv_instance_sync(hdev, instance, true);
+ 
+
+base-commit: 27731ba091954eccddb2657053b590d2113e8d98
+-- 
+2.43.0
+

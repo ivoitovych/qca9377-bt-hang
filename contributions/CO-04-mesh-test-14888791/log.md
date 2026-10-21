@@ -36,3 +36,13 @@ patches "do not appear to conflict textually". That is wrong for 14888791 and 14
   in either order. Cen Zhang's 14880941, this one and Jiale Yao's apply mechanically in that
   order.
 - **Full record:** `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV4.
+
+## 2026-10-21, worker W4 (QEMU only) — tested as posted; no Tested-by
+Applied unchanged with `git am`. It introduces a lockdep circular-locking report (`hdev->lock`
+taken in `mesh_send_start_complete()` / `mesh_next()` under `hci_cmd_sync_clear()`'s
+`cmd_sync_work_lock`): 9 of 12 `-s power` boots, 0 on base. It fixes three failed-start cases.
+The UAF it targets was not reproduced on base. Full account: `experiments/results-2026-10-21.md`.
+
+## 2026-10-21 08:01 local — re-checked
+`tmp/co05-check/recheck.sh power D-igor 1`: the inversion report, quoted in the results file;
+`D-base 1`: clean.
