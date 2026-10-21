@@ -142,9 +142,9 @@ it rotted within hours (`R2-13`).
 > **New, 2026-10-21 (updated 02:55 UTC, the state at hand-off):**
 > - **CO-10 SENT 2026-10-21 03:05:42 UTC** on the operator's word: v6, server 250, all 20
 >   recipients, Message-ID `<20261021030542.1434603-1-yaroslav.voytovych@gmail.com>` (STATUS
->   row; the dossier's `log.md`). Open: the operator revokes the app password, then
->   `smtp-login-check` should get 535; watch the thread and the 6.6.160 release. The lines
->   below are the state just before the send.
+>   row; the dossier's `log.md`). The app password is revoked (535 on 587, all 12 seen in the
+>   session transcript). Open: watch the thread and the 6.6.160 release. The lines below are
+>   the state just before the send.
 > - **CO-10 was ready to send and waited for the operator.** The Tested-by reply to the
 >   6.6.160-rc2 review is due **Thu 22 Oct 07:53 UTC**. The file is
 >   `contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2-v6.eml`; all four

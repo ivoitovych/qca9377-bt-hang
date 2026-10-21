@@ -195,7 +195,10 @@ On the operator's word ("Please send it."), version 6.
   recipients; `In-Reply-To` and `References` `<20261020075535.084584701@linuxfoundation.org>`.
 - **Message-ID:** `<20261021030542.1434603-1-yaroslav.voytovych@gmail.com>`,
   `Date: Wed, 21 Oct 2026 05:05:42 +0200`.
-- **The password:** in no settings file afterwards (grep). It is to be revoked in the Google
-  account; then `smtp-login-check` should get 535.
+- **The password:** in no settings file afterwards (grep). The operator deleted it in the
+  Google account; the login-only check from the session transcript (587 tls) then got
+  `AUTH LOGIN→334 user→334 pass→535` ("5.7.8 Username and Password not accepted") for it
+  (fingerprint `sha256:35ff3945`, first seen 03:05:42 UTC) and for all 11 earlier ones:
+  **revoked**.
 
 **Next:** watch the thread and the 6.6.160 release for the `Tested-by`.
