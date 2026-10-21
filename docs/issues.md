@@ -824,6 +824,14 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   codec variant as a rule. So the mismatch is probably PipeWire's normal representation, not
   the cause; U4 stays "panel does not refresh" until the recorder shows a state that differs
   at the moments the dropdown is missing (mark them with `bt-mark`).
+  **2026-10-21, a new trigger (Shure AONIC 50):** **[operator]** 07:14, no Configuration row
+  for the Shure. **[log]** Since 06:48:03 every profile change was WirePlumber's own (`U14`'s
+  auto-switch and its "restores": 06:48:03, 06:49:37, 07:00:09, 07:08:17), each
+  `setting profile 3 codec:257` (the plain `headset-head-unit` index with mSBC as a codec
+  parameter); earlier, after the operator picked the mSBC entry in GNOME Settings itself, the row
+  showed "mSBC". Consistent with the panel not refreshing when the profile is changed behind it
+  (`cc_profile_combo_box_set_device()` returns early for an unchanged device, GNOME 46.7
+  `cc-profile-combo-box.c:96`, `CO-17`); not yet shown that this is the only cause.
 - **U6 — GNOME Settings' input level meter shows nothing for the internal microphone.**
   **[operator]** 23:10: internal microphone selected in the panel, loud sounds, the input
   level indicator does not move; with the headset's handsfree microphone it does.
