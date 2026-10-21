@@ -13545,6 +13545,15 @@ git -C "$RSP" add -A
 (( $? != 0 )) \
     && ok "a quoted example is refused once another file carries it" \
     || bad "a quoted example passed outside the file that quotes it"
+# --all reads the working tree, so the location check must too: an UNSTAGED
+# copy in another tracked file once passed (outside review of 1eda14a).
+cp "$RSP/README.base" "$RSP/README.md"
+git -C "$RSP" add -A
+printf 'cc: %s\n' "$RSQ" >> "$RSP/README.md"
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "--all refuses a quoted example copied, unstaged, into another tracked file" \
+    || bad "--all missed an unstaged copy of a quoted example"
 rm -rf "$RSP"
 
 # ── A COMMIT ID THE DOCUMENTS PLACE ON MAIN MUST BE ON MAIN ───────────────

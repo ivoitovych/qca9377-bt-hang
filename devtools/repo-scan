@@ -209,10 +209,16 @@ quoted_only_where_listed() {
     [[ -r "$QUOTE_LIST" ]] || return 1
     paths=$(awk -v t="${tok,,}" '!/^[[:space:]]*(#|$)/ && tolower($2) == t { print $1 }' "$QUOTE_LIST")
     [[ -n "$paths" ]] || return 1
+    # Search the same tree the content came from: the pushed commit, the index
+    # for staged additions, and otherwise (--all, or nothing staged) the
+    # working tree, which is what `cat` read. --all once searched the index,
+    # so an unstaged copy elsewhere went unseen (outside review of 1eda14a).
     if [[ -n "$RANGE_HEAD" ]]; then
         found=$(git grep -l -i -F -e "$tok" "$RANGE_HEAD" -- | sed "s|^$RANGE_HEAD:||")
-    else
+    elif [[ "$SCOPE" == "staged additions" ]]; then
         found=$(git grep -l -i -F --cached -e "$tok" --)
+    else
+        found=$(git grep -l -i -F -e "$tok" --)
     fi
     [[ -n "$found" ]] || return 1
     while IFS= read -r f; do

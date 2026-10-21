@@ -158,3 +158,26 @@ Reviewer 2: approved, with one precision edit, then freeze the mail.
 | README "tested in full", though l2cap-tester was stopped where it hangs | 3 | Reworded; and "a one-time app password" is now "an app password, revoked after the send" |
 | This log: "02:2x UTC" and a sentence on old times joined to the v5 paragraph | 3, 4 | The heading gives the commit time; the sentence is back with the paragraph it belongs to |
 | CI still queued | 2, 3, 4 | GitHub's queue. Not a gate for the mail |
+
+## 2026-10-21, 02:50 UTC — the four reviewers recheck version 6; the send command corrected
+They read the frozen commit `1eda14a`; their text is in `reviews/2026-10-21-recheck-of-v6.md`.
+**All four: send version 6**, with no further revision, test or review round; only the
+freshness checks and the operator's word remain.
+
+**The send command was wrong, found by a dry run before any send.** The planned
+`git send-email --suppress-cc=all` also suppresses the `cc` category, the addresses on the
+file's own `Cc:` lines. `--dry-run` of v6 with it (02:50 UTC): one `RCPT TO`, Greg's. With
+`--suppress-cc=self --suppress-cc=body` (02:51 UTC): all 20 `RCPT TO`, the announcement's
+`In-Reply-To` and `References`, and nothing added from the body. The README and BRIEF now give
+that command. Earlier sends used "all" with explicit `--to`/`--cc`, which was right for them.
+
+**Freshness, 02:51 UTC:** `git ls-remote` linux-stable-rc `refs/heads/linux-6.6.y` →
+`c578c158a36845a2b642bd491adaa7e4a479e04f`; `https://www.kernel.org/pub/linux/kernel/v6.x/stable-review/`
+lists `6.6.160-rc1` and `6.6.160-rc2` only. To be repeated just before the send.
+
+| point | who | done |
+|---|---|---|
+| `--all` reads the working tree but looked for a quoted example in the index, so an unstaged copy in another tracked file went unseen | 2 | **Fixed:** the location check searches the tree the content came from (pushed commit, index for staged additions, otherwise the working tree). Test added |
+| The public list's header still said kernel.org is allowed | 2 | Corrected |
+| The maintainer's address comes from the local `git config user.email` first, so a private address set there would be exempt | 2 | **Backlog** (reviewer 2: not for CO-10): derive it from data the repository controls, or require a public-list entry |
+| CI still queued | 2, 3, 4 | GitHub's queue; not a gate for the mail |

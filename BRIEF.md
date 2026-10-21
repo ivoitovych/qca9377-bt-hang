@@ -139,16 +139,21 @@ it rotted within hours (`R2-13`).
 > open decisions: "Operator decisions open" above. The previous block (2026-10-08, with its
 > 10-09 and 10-11 items) is at the end of `HISTORY.md`, verbatim.
 >
-> **New, 2026-10-21 (02:22 UTC, the state at hand-off):**
+> **New, 2026-10-21 (updated 02:55 UTC, the state at hand-off):**
 > - **CO-10 is ready to send and waits for the operator.** The Tested-by reply to the
 >   6.6.160-rc2 review is due **Thu 22 Oct 07:53 UTC**. The file is
->   `contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2-v5.eml`.
+>   `contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2-v6.eml`; all four
+>   reviewers approved v6 at `1eda14a` (`reviews/2026-10-21-recheck-of-v6.md`).
 >   - `scripts/mail-lint.sh` flags only the two quoted lines; `scripts/reply-headers-check.py`
 >     passes 7/7 against `tmp/stable-6.6.160-rc2-cover-20261020.txt`.
->   - Checked before 02:22: linux-stable-rc `linux-6.6.y` is still `c578c158a368`, and there is no
->     rc3 on kernel.org.
->   - **The send:** the operator runs `git send-email --suppress-cc=all` on that file in their
->     own terminal. The app password is typed only there and **revoked** in Google afterwards;
+>   - Checked at 02:51 UTC: linux-stable-rc `linux-6.6.y` is still `c578c158a368`, and
+>     kernel.org's stable-review directory has only rc1 and rc2. Repeat both before the send.
+>   - **The send:** in the operator's own terminal, the command in the dossier README:
+>     `git send-email --suppress-cc=self --suppress-cc=body` on the v6 file, dry run first.
+>     **Not `--suppress-cc=all`:** with a file whose recipients are in its own `Cc:` header,
+>     "all" also drops that header; the dry run of 02:50 UTC showed the reply going to Greg
+>     alone. (Earlier sends named `--to`/`--cc` explicitly, so "all" was right for them.) The
+>     app password is typed only there and **revoked** in Google afterwards;
 >     `smtp-login-check.sh` confirms the 535. Then record the send in the dossier's `log.md`.
 > - **CI:** GitHub has been queueing runs for hours. `757abef` (v5 and the scan fix) is being
 >   watched; `bd2f3cf`, `a7b3ea2` and `784931a` are green; `f509c3d`, `d4c760f`, `7b19bdb`,

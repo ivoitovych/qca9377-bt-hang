@@ -44,8 +44,17 @@ in `log.md`.
 ## Next
 
 1. **The operator's decision, then the send.**
-   - The operator runs git send-email on `drafts/reply-6.6.160-rc2-v6.eml` (or v5, if the
-     operator prefers it) in their own terminal, and git asks for the password there. It is never put into the conversation or
+   - The operator runs, in their own terminal, first with `--dry-run`, then without:
+
+     ```
+     git -C /root/exp/qca9377-bt-hang send-email --suppress-cc=self --suppress-cc=body contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2-v6.eml
+     ```
+
+     git asks for the password there. **Not `--suppress-cc=all`:** it also drops the
+     addresses on the file's own `Cc:` lines, and a dry run (2026-10-21 02:50 UTC) showed the
+     reply going to Greg alone. With the options above the dry run lists all 20 recipients
+     (`RCPT TO`), the `In-Reply-To` and `References` of the announcement, and nothing added
+     from the body. It is never put into the conversation or
      the repository.
    - The password is a Google app password made for this send. It is **revoked** in the
      Google account afterwards: deleting a local copy does not revoke it (reviewer 3 of the
