@@ -1,7 +1,20 @@
 # CO-02 — A new SCO connect reuses the closing link (U7)
 
-**State:** investigating. The mechanism has been read in source and confirmed by four outside
-reviewers; no reproducer exists yet.
+**State:** **reproduced and patch written** (2026-10-21). A BlueZ `sco-tester` case reproduces
+it on bluetooth-next (0 of 20 pass unpatched, every run on UP, SMP and KCSAN kernels); a
+two-patch kernel series fixes it (20 of 20) and a second defect found on the way; a deferral
+prototype also makes PipeWire 1.0.5's retry succeed. Results:
+`experiments/results-2026-10-21.md`; drafts in `patch/`. Not sent: the operator decides, after
+outside review.
+
+**Recommended contribution:** the kernel series (`patch/kernel/`) with the BlueZ test case
+(`patch/bluez/`); the deferral (`patch/kernel-rfc-defer/`) as an RFC question to the
+maintainers, since it changes `connect()` semantics; a PipeWire note later, the operator's
+call.
+
+---
+
+*The section below is the finding as written before the reproducer.*
 
 **Target:** the Linux kernel (`net/bluetooth/hci_conn.c`, `sco.c`). PipeWire's retry
 behaviour may be a second contribution.

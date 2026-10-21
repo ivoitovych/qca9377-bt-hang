@@ -49,3 +49,32 @@ as item 1 of the source investigation task.
   a state.
 - **Full record:** `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV1.
 - **Our own record corrected:** `docs/issues.md` U7's "not a kernel defect" sentence.
+
+## 2026-10-21, worker W2 (QEMU only), about 05:00 to 06:30 local — reproduced, patches drafted
+On the operator's go, a worker built the reproducer and the fixes on bluetooth-next
+`27731ba09195`; the full account is `experiments/results-2026-10-21.md`, raw material in
+`tmp/co02-w2/` on the development host.
+- **Reproduced:** sco-tester "Reconnect During Disconnect" fails on every unpatched run (UP 0/5,
+  SMP 0/10, KCSAN SMP 0/5): the second `connect()` returns 0 with no setup sent, then
+  `SO_ERROR 103`. The control passes in every run.
+- **Fixed by** `patch/kernel/0001` (refuse an aborting connection with `-ECONNABORTED`) and
+  `0002` (a second defect: a second connect to a live SCO link drops the owner's hold and the
+  first link is disconnected; since `06149746e720`, v6.4). During passes 20/20.
+- **Not enough for PipeWire 1.0.5:** its immediate retries still fail on the refusing kernel;
+  the deferral prototype (`patch/kernel-rfc-defer/`) makes them succeed.
+- **The test config is uniprocessor:** BlueZ's `doc/tester.config` sets `# CONFIG_SMP is not
+  set`; the worker's first "4-CPU" runs were UP kernels in a 4-vCPU guest and are not counted
+  as multi-CPU; SMP and KCSAN kernels were rebuilt with an SMP fragment.
+- **Hitalo Souza's series** (14875449 to 14875454) does not fix it (During 0/5 with it alone);
+  ours applies on top without conflict.
+
+## 2026-10-21 04:44 UTC — re-checked before entering the dossier
+The decisive pair re-run independently of the worker's own runs
+(`tmp/co02-w2/run-case.sh <kernel> sco-tester <log> 1 -s Reconnect`, logs in
+`tmp/co02-check/`):
+- unpatched `27731ba09195`: After Passed, **During Failed**; "Second connect() returned 0
+  (Success)", then "SO_ERROR 103 … 1 setup commands";
+- refuse + hold `bfac3f388548`: **both Passed**; "Second connect() refused: Software caused
+  connection abort (103)";
+- `scripts/kernel-report-scan.py`: both logs clean, each the intended kernel.
+The drafts were checked for tool or model names and trailers (none) before being copied in.

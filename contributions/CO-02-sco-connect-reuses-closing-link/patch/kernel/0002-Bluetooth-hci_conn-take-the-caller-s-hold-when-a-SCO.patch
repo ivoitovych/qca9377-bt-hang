@@ -1,0 +1,58 @@
+From bfac3f38854845c93ea14b279792f1da0ed3c518 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Wed, 21 Oct 2026 05:47:33 +0200
+Subject: [PATCH 2/2] Bluetooth: hci_conn: take the caller's hold when a SCO
+ connection is reused
+
+Before commit 06149746e720 ("Bluetooth: hci_conn: Add support for
+linking multiple hcon"), hci_connect_sco() took a hold on the SCO
+connection for its caller on every call. Since then the only hold comes
+from hci_conn_link(), which returns the existing link without taking
+one when the connection is reused. sco_connect() still drops the
+caller's hold after sco_chan_add(), so a second connect() to a device
+with a SCO link that is up drops the hold of the socket that owns the
+link: connect() fails with EBUSY, hci_conn_timeout() then sees no
+holds, and the link of the first socket is disconnected.
+
+Take the hold when the link exists. The ACL hold that hci_connect_acl()
+took is also redundant then, as the existing link owns one, and would
+keep the ACL connection up after the SCO connection is gone, so drop it.
+
+Fixes: 06149746e720 ("Bluetooth: hci_conn: Add support for linking multiple hcon")
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/hci_conn.c | 17 +++++++++++++----
+ 1 file changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index 8a20ccdf618c..51651b3b312b 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1919,11 +1919,20 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 		return ERR_PTR(-ECONNABORTED);
+ 	}
+ 
+-	link = hci_conn_link(acl, sco);
+-	if (!link) {
++	if (sco->link) {
++		/* The existing link already owns the hold on the ACL, and the
++		 * caller needs its own hold on the SCO connection, which
++		 * hci_conn_link() only takes for a new link.
++		 */
+ 		hci_conn_drop(acl);
+-		hci_conn_drop(sco);
+-		return ERR_PTR(-ENOLINK);
++		hci_conn_hold(sco);
++	} else {
++		link = hci_conn_link(acl, sco);
++		if (!link) {
++			hci_conn_drop(acl);
++			hci_conn_drop(sco);
++			return ERR_PTR(-ENOLINK);
++		}
+ 	}
+ 
+ 	sco->setting = setting;
+-- 
+2.43.0
+

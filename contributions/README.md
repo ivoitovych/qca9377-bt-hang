@@ -37,7 +37,7 @@ date), **blocked** (on a decision), **dropped** (with the reason in `log.md`).
 | ID | dossier | target | state | next step | decides |
 |---|---|---|---|---|---|
 | CO-01 | [Test the abandoned-setup SCO series](CO-01-sco-abandoned-setup-series/README.md) | kernel (another author's series) | idea | QEMU run on the exact patches | the operator, for a laptop run and any Tested-by |
-| CO-02 | [A new SCO connect reuses the closing link (U7)](CO-02-sco-connect-reuses-closing-link/README.md) | kernel; maybe PipeWire | investigating: mechanism confirmed in source, by us and four reviewers | `hci_vhci` reproducer in QEMU | the operator, for any send |
+| CO-02 | [A new SCO connect reuses the closing link (U7)](CO-02-sco-connect-reuses-closing-link/README.md) | kernel; BlueZ test; maybe PipeWire | **patch written** (2026-10-21): reproduced in QEMU (sco-tester case), two-patch kernel fix tested, deferral RFC | outside review of the package, then the operator's decision | the operator, for any send |
 | CO-03 | [U12: bluetoothd rebuild and the Ubuntu backport](CO-03-bluez-u12-backport/README.md) | Ubuntu (BlueZ 5.72) | investigating: backport recipe found and checked | backport, build, tests | the operator installs; the operator files |
 | CO-04 | [Test Igor Putko's mesh patch 14888791](CO-04-mesh-test-14888791/README.md) | kernel (another author's patch) | idea | QEMU run, including the lockdep case | the operator, for any reply |
 | CO-05 | [Mesh I12: advertising list changed without `hdev->lock`](CO-05-mesh-adv-list-lock-i12/README.md) | kernel | reproduced (QEMU, 2026-10-05) | write the mesh-path patch | the operator, for the send |

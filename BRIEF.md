@@ -145,6 +145,11 @@ it rotted within hours (`R2-13`).
 >   (mesh lock patch, the failed-add fix, then a test of 14888791; `tmp/co05-w4/`). QEMU only,
 >   nothing sent, no commits in the main checkout; each reports in its final message, which is
 >   checked before anything enters a dossier. W1 (CO-01) and W3 (CO-03) come after them.
+>   **W2 done** (re-checked 04:44 UTC): CO-02 reproduced and a kernel series plus a BlueZ test
+>   drafted, see the dossier; next an outside review package, then the operator. W4 running.
+> - **U13 (new, live 06:20 local):** the Shure AONIC 50 cannot be set up: LE-only pairing,
+>   refused by the headset; BlueZ reads its Flags `0x00` as no Flags; dossier CO-27. Waiting
+>   for the operator's retry in pairing mode.
 > - **CO-10 SENT 2026-10-21 03:05:42 UTC** on the operator's word: v6, server 250, all 20
 >   recipients, Message-ID `<20261021030542.1434603-1-yaroslav.voytovych@gmail.com>` (STATUS
 >   row; the dossier's `log.md`). The app password is revoked (535 on 587, all 12 seen in the
