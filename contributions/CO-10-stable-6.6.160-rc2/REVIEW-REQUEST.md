@@ -26,7 +26,8 @@ emulator tester on rc2 and on 6.6.159:
 - four fixes visible: our two, plus two by Pauli Virtanen;
 - one l2cap case hangs identically on both kernels.
 
-The draft is version 2, complete; there are no pending lines.
+The draft is now **version 3**, after three outside reviews (in `reviews/`; how each point
+was handled: `log.md`). If you review now, please read version 3.
 
 ## What to read
 

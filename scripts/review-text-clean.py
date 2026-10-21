@@ -69,6 +69,9 @@ def main():
         counts["mail-link"] += n
         out.append(line)
 
+    parent = os.path.dirname(dst)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     with open(dst, "x", encoding="utf-8") as f:
         f.write(header + "\n".join(out))
     for key, value in counts.items():

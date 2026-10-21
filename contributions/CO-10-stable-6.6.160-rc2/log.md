@@ -48,3 +48,34 @@ no draft, so this is the first work on it.
   patch-id). The QCA9377 entry adds the same two lines (different context). No follow-up fix
   in today's mainline (`14c897740388`).
 - **The draft:** version 2 states all four fixes and the regression result. No pending lines.
+
+## 2026-10-21 02:xx UTC — three outside reviews of version 1; version 3
+The reviews are in `reviews/2026-10-21-reviewer-{1,2,3}.md`. A fourth reviewer will answer
+later. All three read version 1, with its [PENDING] line.
+
+**Verdicts:**
+- reviewer 1: send once the pending line is filled;
+- reviewer 2: ready after minor fixes;
+- reviewer 3: revise before sending; conditional approval.
+
+**What each point led to:**
+
+| point | who | done |
+|---|---|---|
+| Finish the other testers; check per-case verdicts, not script completion | 1, 2, 3 | done in version 2, by per-case comparison (`compare-tester-verdicts.py`); the one differing case was repeated 3 times per kernel |
+| "No regressions in Bluetooth" is overbroad | 2, 3 | changed to "No new failures in those tests" |
+| Put the exact rc2 commit in the mail | 2, 3 | added: `(c578c158a368)` |
+| Show mgmt-tester's existing failures | 2, 3 | added: rc2 465/37/6, 6.6.159 464/38/6 |
+| Confirm KASAN and lockdep in the generated configs; confirm the booted kernels | 2, 3 | done: 4 options on each config; every log names the intended kernel (results file) |
+| A wider scan for kernel reports | 3 | `scripts/kernel-report-scan.py` (13 kinds): rc2 clean in all 18 logs; positive control found 6.6.159's crash. The mail now says "No kernel warnings or sanitizer reports on rc2 in these runs" |
+| The comparator can hide duplicates and accept empty input | 3 | fixed: exit 2 on duplicate names or no verdicts |
+| The build recipe and QEMU wrapper are not public | 3 | copied into `experiments/` with both configs; decisive lines in the results file |
+| Link the rc2 run to the earlier isolated experiments | 3 | added to the results file |
+| The comment in `all-testers.sh` names the wrong script | 2 | fixed |
+| The QCA9377 entry: omit (1, 2) or one sentence (3) | split | middle course: "(emulated controllers, no Bluetooth hardware)" states the scope without singling out one patch |
+| Check the threading headers against the announcement | 3 | the sendable copy's `In-Reply-To`/`References` match the saved announcement's Message-ID; To/Cc copied from its header |
+| No reboot of the laptop into rc2 | 2, 3 | agreed; not done |
+
+**The sendable copy:** version 3, `tmp/co10-20261021/send/reply-6.6.160-rc2-v3.eml`.
+`mail-lint.sh` flags only the two quoted lines of the announcement (73 columns, kept as
+written).

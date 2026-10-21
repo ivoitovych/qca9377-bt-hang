@@ -1,7 +1,8 @@
 # CO-10 — Tested-by on 6.6.160-rc2
 
-**State:** tested in full, and the draft (version 2) is ready for review. Sending is the
-operator's decision. **The deadline is 2026-10-22 07:53:04 UTC.**
+**State:** tested in full. Draft version 3 has taken up three outside reviews
+(`reviews/`, `log.md`); a fourth is expected. Sending is the operator's decision. **The
+deadline is 2026-10-22 07:53:04 UTC.**
 
 **The result, 2026-10-21 01:4x UTC:** every BlueZ tester was compared on rc2 and 6.6.159.
 There are no regressions, and four of rc2's fixes show up as intended:

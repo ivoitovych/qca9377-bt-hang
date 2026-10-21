@@ -13,21 +13,34 @@ progress_word = {'passed': 'Passed', 'failed': 'Failed',
                  'timed out': 'Timed out', 'not run': 'Not Run'}
 
 def verdicts(path):
-    v, p = {}, {}
+    v, p, dup = {}, {}, set()
     for raw in open(path, errors='replace'):
         line = ansi.sub('', raw.rstrip('\n'))
         m = line_re.match(line)
         if m:
-            v[m.group(1).strip()] = m.group(2)
+            name = m.group(1).strip()
+            if name in v:
+                dup.add(name)
+            v[name] = m.group(2)
             continue
         m = progress_re.match(line)
         if m:
             p[m.group(1).strip()] = progress_word[m.group(2)]
+    if dup:
+        # Two cases with one name would hide one verdict: refuse to compare.
+        print('%s: duplicate case names in the summary: %s' % (path, sorted(dup)))
+        sys.exit(2)
     if not v and p:
         print('%s: no summary table; using %d progress lines' % (path, len(p)))
         return p
+    if not v:
+        print('%s: no verdicts found (missing, truncated or not a tester log)' % path)
+        sys.exit(2)
     return v
 
+if len(sys.argv) != 3:
+    print('usage: compare-tester-verdicts.py <log A> <log B>')
+    sys.exit(2)
 a, b = verdicts(sys.argv[1]), verdicts(sys.argv[2])
 for name, v in (('A', a), ('B', b)):
     counts = {}

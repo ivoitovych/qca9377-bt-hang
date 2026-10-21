@@ -8,7 +8,10 @@
 # Usage: all-testers.sh <out-dir> <kernel-tag>     (the directory must not exist)
 #   kernel-tag: co10-6.6.160-rc2 or co10-6.6.159
 # Each tester runs once (mgmt-tester is in build-and-test.sh); verdicts per test
-# name are compared afterwards with compare-verdicts.py.
+# name are compared afterwards with scripts/compare-tester-verdicts.py, and the
+# logs scanned with scripts/kernel-report-scan.py. A tester's exit status is
+# printed, not judged: several exit nonzero because of known failing cases, so
+# completeness is checked by the comparator (a log with no verdicts is refused).
 set -u
 OUT=${1:?usage: all-testers.sh <out-dir> <kernel-tag>}
 TAG=${2:?usage: all-testers.sh <out-dir> <kernel-tag>}
