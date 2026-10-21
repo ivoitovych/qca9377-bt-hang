@@ -1,0 +1,35 @@
+Reply-all to "[PATCH 6.6 0000/1651] 6.6.160-rc2 review" (Greg Kroah-Hartman, stable list,
+Tue 20 Oct 2026 09:57:46 +0200), with In-Reply-To set to that mail's Message-ID, keeping its
+To (stable list) and every Cc. Subject: "Re: [PATCH 6.6 0000/1651] 6.6.160-rc2 review".
+The sendable file with the headers is kept on the development host, not in this public copy.
+Deadline: Thu 22 Oct 2026 07:53:04 UTC. Nothing is sent without the operator's word.
+
+Everything below the line is the mail body. [PENDING] marks the line that waits for the
+other testers' comparison.
+------------------------------------------------------------------------------------------
+On Tue, Oct 20, 2026 at 09:57:46AM +0200, Greg Kroah-Hartman wrote:
+> This is the start of the stable review cycle for the 6.6.160 release.
+> There are 1651 patches in this series, all will be posted as a response
+> to this one.  If anyone has any issues with these being applied, please
+> let me know.
+>
+> Responses should be made by Thu, 22 Oct 2026 07:53:04 +0000.
+> Anything received after that time might be too late.
+
+Built 6.6.160-rc2 and 6.6.159 for x86_64 with BlueZ's doc/tester.config
+(KASAN, lockdep) and ran BlueZ's emulator testers in QEMU. No regressions
+in Bluetooth:
+
+- mgmt-tester (508 cases): the same verdicts on both kernels, except
+  "Start Discovery - Simultaneous Inquiry Late", which fails on 6.6.159
+  (Start Discovery answered Busy) and passes on rc2, 3 of 3 runs. That
+  is the test for "Bluetooth: hci_event: fix simultaneous discovery
+  stuck in FINDING".
+- A vhci reproducer for "Bluetooth: MGMT: Fix status of pending commands
+  flushed on power off" gets Command Status 0x00 for Start Discovery on
+  6.6.159 and 0x0f (Not Powered) on rc2, 2 of 2 runs.
+- [PENDING] l2cap-, iso-, sco-, rfcomm-, bnep-, smp-, mesh-, ioctl-,
+  userchan- and 6lowpan-tester: the same verdicts on both kernels.
+- No KASAN or lockdep reports.
+
+Tested-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
