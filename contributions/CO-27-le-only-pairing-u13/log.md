@@ -14,3 +14,12 @@
 - Raw evidence saved to `archive/incidents/20261021-shure-le-pair/` at 06:31 (local only, it
   carries real addresses). The storage `info` file had expired at 06:30:41; its content is
   quoted in `U13`, as read at about 06:25.
+
+## 2026-10-21 06:37 to 06:41 — pairing mode works
+- 06:37:49 the headset connected over BR/EDR by itself and dropped after 4 s (reason 3).
+- 06:38:03 to 06:39:10 three more clicks, still LE, still refused: the operator saw the entry
+  listed before the headset announced its pairing mode.
+- 06:40:14 bluetoothd learnt the BR/EDR services; 06:40:44 the click paired over BR/EDR (link
+  key type 4, status 0); HFP, A2DP and AVRCP connected. So the classic side works once an
+  inquiry finds it; the defect stays as described (LE-only knowledge leads to LE pairing).
+- What came next is `U14` (WirePlumber), not this dossier.
