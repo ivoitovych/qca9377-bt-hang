@@ -37,8 +37,8 @@ date), **blocked** (on a decision), **dropped** (with the reason in `log.md`).
 | ID | dossier | target | state | next step | decides |
 |---|---|---|---|---|---|
 | CO-01 | [Test the abandoned-setup SCO series](CO-01-sco-abandoned-setup-series/README.md) | kernel (another author's series) | idea | QEMU run on the exact patches | the operator, for a laptop run and any Tested-by |
-| CO-02 | [A new SCO connect reuses the closing link (U7)](CO-02-sco-connect-reuses-closing-link/README.md) | kernel; maybe PipeWire | investigating: mechanism read in source | `hci_vhci` reproducer in QEMU | the operator, for any send |
-| CO-03 | [U12: bluetoothd rebuild and the Ubuntu backport](CO-03-bluez-u12-backport/README.md) | Ubuntu (BlueZ 5.72) | investigating: the fix does not apply as is | hand backport, build, tests | the operator installs; the operator files |
+| CO-02 | [A new SCO connect reuses the closing link (U7)](CO-02-sco-connect-reuses-closing-link/README.md) | kernel; maybe PipeWire | investigating: mechanism confirmed in source, by us and four reviewers | `hci_vhci` reproducer in QEMU | the operator, for any send |
+| CO-03 | [U12: bluetoothd rebuild and the Ubuntu backport](CO-03-bluez-u12-backport/README.md) | Ubuntu (BlueZ 5.72) | investigating: backport recipe found and checked | backport, build, tests | the operator installs; the operator files |
 | CO-04 | [Test Igor Putko's mesh patch 14888791](CO-04-mesh-test-14888791/README.md) | kernel (another author's patch) | idea | QEMU run, including the lockdep case | the operator, for any reply |
 | CO-05 | [Mesh I12: advertising list changed without `hdev->lock`](CO-05-mesh-adv-list-lock-i12/README.md) | kernel | reproduced (QEMU, 2026-10-05) | write the mesh-path patch | the operator, for the send |
 | CO-06 | [Review reply on Jiale Yao's mesh power-off fix](CO-06-mesh-power-off-review/README.md) | kernel (another author's patch) | blocked | the operator's decision | the operator |
@@ -52,15 +52,16 @@ date), **blocked** (on a decision), **dropped** (with the reason in `log.md`).
 | CO-14 | Mesh at device removal (lock order, drain policy) | kernel | idea | maintainers' direction first | the operator |
 | CO-15 | U11/U3: a new headset becomes the default (opt-in) | WirePlumber | idea; draft in `patches/wireplumber/` | — | the operator |
 | CO-16 | U9: reconnect after Bluetooth off/on (narrow opt-in) | BlueZ | idea | — | the operator |
-| CO-17 | U2, U4: one capture each | PipeWire/WirePlumber; GNOME | idea | captures in a manual test | the operator |
+| CO-17 | U2, U4: one capture each | PipeWire/WirePlumber; GNOME | idea; U4's caching guard confirmed in 46.7 (`cc-profile-combo-box.c:96`) | captures in a manual test | the operator |
 | CO-18 | U8: earbuds silent in mSBC | kernel / btusb | idea; belongs with CO-01 and CO-20 | — | — |
 | CO-19 | U1 | PipeWire | dropped: fixed in 1.2; not worth a stable request | — | — |
 | CO-20 | [SCO error messages at call hang-up](CO-20-sco-unknown-handle-messages/README.md) | kernel / btusb | investigating | read the HCI captures at those hang-ups | — |
-| CO-21 | btusb with two SCO links at once | kernel / btusb | idea | only if CO-01 shows it | — |
+| CO-21 | btusb with two SCO links: one going down switches the other to alt 0 | kernel / btusb | confirmed in source (`btusb_notify()`/`btusb_work()`, reviews RV3) | a test with two SCO links | the operator, for a laptop run |
 | CO-22 | Other QCA ROME USB IDs missing from btusb's table | kernel | idea | a survey of hardware-probe data | — |
 | CO-23 | One-off events (AONIC 50 drop, BT-6, bluetoothd bad `free()`) | — | waiting for a second instance | — | — |
 | CO-24 | U5: default codec for a headset with no saved choice | WirePlumber | idea | needs a fresh device or the operator's word | the operator |
 | CO-25 | BT-1's ROM-firmware mechanism | — | closed unless the operator wants laptop runs | — | the operator |
+| CO-26 | `mesh_send_sync()` loses a failed add and schedules the missing instance | kernel | confirmed in source (reviews RV5); to go with CO-05 | fault-inject the add in QEMU | the operator, for the send |
 
 Items without a link have no dossier yet. One is opened as soon as anything is written about
 the item.

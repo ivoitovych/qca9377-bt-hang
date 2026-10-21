@@ -34,3 +34,18 @@ as item 1 of the source investigation task.
 - **Full record:** `reviews/2026-10-21T0009Z-source-investigation-reviewer-1.md`, SI1.
 
 ## 2026-10-21 — dossier opened
+
+## 2026-10-21 — reviewers 2, 3 and 4: the same mechanism; PipeWire's side read
+- **All three found the reuse independently.** All three, like reviewer 1, called the old
+  state `BT_DISCONN`.
+- **Checked:** no `hci_conn` is ever set `BT_DISCONN` (`git grep` over `net/bluetooth`).
+  `hci_disconnect_sync()` waits for the completion with the state unchanged.
+- **So the new socket is connected at once** (`sco.c:417`). The completion then closes it
+  with `ECONNABORTED` (reason 0x16, `lib.c:128`).
+- **PipeWire 1.0.5, read here:** it retries only an immediate `ECONNABORTED` (`backend-native.c:1447`).
+  On HUP/ERR it closes the socket and sets the transport IDLE, with no new connect
+  (`1653–1669`).
+- **For the patch:** a connection being torn down is marked by `conn->abort_reason`, not by
+  a state.
+- **Full record:** `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV1.
+- **Our own record corrected:** `docs/issues.md` U7's "not a kernel defect" sentence.

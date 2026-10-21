@@ -22,3 +22,17 @@ patches "do not appear to conflict textually". That is wrong for 14888791 and 14
 (`reviews/2026-10-21T0009Z-source-investigation-reviewer-1.md`, SI5).
 
 ## 2026-10-21 — dossier opened
+
+## 2026-10-21 — reviewers 2, 3 and 4
+- **All three:** do not endorse 14888791 unchanged, because of `cmd_sync_work_lock →
+  hdev->lock` from the destroy callback.
+- **Reviewer 4 adds two points,** both confirmed from the diff:
+  - the lock is also taken in `mesh_send_start_complete()`'s error branch, before the
+    `-ECANCELED` test;
+  - `list_empty(&hdev->adv_instances)` in `mesh_send_done_sync()` stays outside the new lock.
+- **Shared rule:** a Tested-by is ruled out if our device-removal lockdep case reports the
+  inversion. The ordinary use-after-free reproducer passing is not enough.
+- **Reviewer 4's `git apply` checks** (not re-run here): Hui Peng's patch and this one conflict
+  in either order. Cen Zhang's 14880941, this one and Jiale Yao's apply mechanically in that
+  order.
+- **Full record:** `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV4.

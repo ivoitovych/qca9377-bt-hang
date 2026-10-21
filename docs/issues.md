@@ -899,7 +899,15 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   existing SCO down first — the disconnect and the negotiation overlap (`Disconnect` completes
   between `+BCS:` and `AT+BCS=`). A later acquire by a stream does not recover it: the test
   stream and the panel's meter both linked and no setup followed. **Not a controller or kernel
-  defect**: no HCI command was issued for it to fail. **To confirm:** with the Sound panel
+  defect**: no HCI command was issued for it to fail.
+  ⚠️ **Corrected 2026-10-21:** the sentence above is wrong about the kernel. The kernel is what
+  issues no command. `hci_connect_sco()` hands a new connect the old eSCO connection while its
+  Disconnect is pending (that connection stays `BT_CONNECTED` until the Disconnection Complete),
+  sends no setup, and `sco_connect()` marks the new socket connected at once; the completion then
+  closes it with `ECONNABORTED`, and PipeWire 1.0.5 does not retry. Source reading by four outside
+  reviewers, checked here: `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV1;
+  the work: `contributions/CO-02-sco-connect-reuses-closing-link/`. Still to be shown by a
+  reproducer. **To confirm:** with the Sound panel
   closed (its meter keeps the SCO up), switch codec by `pactl set-card-profile` once with the
   SCO idle and once while a stream plays; and read PipeWire master's `backend-native.c` codec
   switch path (`rfcomm_hfp_ag_set_codec` and what follows `AT+BCS`) for a fix after 1.0.5.

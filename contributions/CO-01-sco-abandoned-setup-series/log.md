@@ -19,3 +19,17 @@ The series became CO-01.
 - **Full record:** `reviews/2026-10-21T0009Z-source-investigation-reviewer-1.md`.
 
 ## 2026-10-21 — dossier opened
+
+## 2026-10-21 — reviewers 2, 3 and 4 on patch 6 and its test
+- **All three:** the series is not the U7 fix (CO-02). Patch 6 matters on this laptop, which
+  uses the legacy setup.
+- **A meaningful hardware test** (reviewers 3 and 4):
+  - keep SCO link A carrying audio;
+  - make link B's setup fail or be abandoned;
+  - record B's failed completion, the notifications, the SCO count and the chosen USB alt;
+  - A must stay up.
+- **The negative control:** two established links, then one hung up. That is the remaining
+  defect, now confirmed in source (CO-21).
+- **The limit:** if the controller cannot hold two links, the multi-link coverage cannot be
+  claimed.
+- **Full record:** `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV3.

@@ -23,8 +23,12 @@ is starting loses A2DP until the headset reconnects.
 
 ## Next
 
-1. Hand-backport hunk 2 onto `5.72-0ubuntu5.8`'s source, and find which of the 24 commits
-   changed its context.
+1. Backport onto `5.72-0ubuntu5.8`'s source, by reviewer 4's recipe (checked 2026-10-21):
+   - the `transport_a2dp_get_stream()` helper part of `3d9900eb7`;
+   - then `a14d59725` (hunks 1 to 5 apply);
+   - then the `A2DP_OPS` line wired by hand.
+
+   Audit the companions `664a5d3785a1`, `aa118e965b02`, `47da1efdc584` and `87ad4c66b934`.
 2. Build bluetoothd with the two BT-7 fixes and the backport, then run BlueZ's unit tests.
    This is off the laptop: nothing is installed.
 3. Draft the Launchpad bug: the symptom, `EX-063`/`EX-064` in short, the patch, and the test.

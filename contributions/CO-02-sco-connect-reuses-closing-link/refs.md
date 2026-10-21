@@ -10,6 +10,12 @@
 - `reviews/2026-10-20T2332Z-source-investigation-task.md`, item 1.
 - `reviews/2026-10-21T0009Z-source-investigation-reviewer-1.md`, SI1, and its verbatim
   companion.
+- `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV1, and the three
+  verbatim answers.
+- **PipeWire 1.0.5** `spa/plugins/bluez5/backend-native.c`: `sco_do_connect()` 1440–1451,
+  `sco_ready()` 1489–1498, `sco_event()` 1653–1669 (`cache/pipewire-upstream`).
+- **bluetooth-next:** `hci_sync.c:5905` `hci_disconnect_sync()`, `hci_sync.c:6058`
+  `hci_abort_conn_sync()`, `lib.c:128` (0x16 → `ECONNABORTED`).
 
 **Captures** (raw, git-ignored, real addresses):
 - The earbuds' switches, 2026-09-29 02:30:40 to 02:31:45, and the MOMENTUM 4's, 2026-10-01

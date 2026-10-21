@@ -34,3 +34,16 @@ noted in STATUS while reading the abrupt stop. Not followed up.
 - **Full record:** `reviews/2026-10-21T0009Z-source-investigation-reviewer-1.md`, SI2.
 
 ## 2026-10-21 — dossier opened
+
+## 2026-10-21 — reviewers 2, 3 and 4
+- **All agree:** "unknown handle" means the connection existed when btusb took the packet and
+  was gone when it was handled. "Corrupted" also fires for data of a deleted connection.
+  Queued URBs do not explain 4 to 6 s.
+- **Reviewer 3:** the corrupted packets are on the microphone side (controller → host), so
+  they do not by themselves explain silent playback.
+- **Reviewer 4:** PipeWire 1.0.5's `sco_start_source()` waits for the first received packet
+  before sending. Not read here.
+- **The next run, as all suggest:** one hang-up with btusb dynamic debug, usbmon and btmon,
+  timing the Disconnection Complete, btusb's switch to alt 0 and each late packet. This is a
+  laptop run, so it is the operator's decision.
+- **Full record:** `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV2.

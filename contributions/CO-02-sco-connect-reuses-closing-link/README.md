@@ -1,7 +1,7 @@
 # CO-02 — A new SCO connect reuses the closing link (U7)
 
-**State:** investigating. The mechanism has been read in source, and no reproducer exists
-yet.
+**State:** investigating. The mechanism has been read in source and confirmed by four outside
+reviewers; no reproducer exists yet.
 
 **Target:** the Linux kernel (`net/bluetooth/hci_conn.c`, `sco.c`). PipeWire's retry
 behaviour may be a second contribution.
@@ -32,9 +32,16 @@ This matches `EX-060`:
 
 The pending abandoned-setup series (CO-01) does not touch this path.
 
-## Open
+7. PipeWire 1.0.5 takes the socket as ready. Its only retry is for an immediate
+   `ECONNABORTED` from `connect()`. A later HUP or error closes the socket and sets the
+   transport IDLE, with no new connect. The error at the completion is `ECONNABORTED`
+   (reason 0x16).
 
-- Does PipeWire 1.0.5 retry after the error? Reviewer 1 says no; not read here.
+**Marker for a patch:** `conn->abort_reason` is set while the Disconnect is pending. A fix can
+refuse to hand such a connection to a new connect, or defer the connect until the teardown
+completes. Not a second connection to the same address: completions are matched by address.
+
+## Open
 - The behaviour itself needs a reproducer.
 - Where the fix belongs:
   - kernel: do not hand a connection that is being aborted to a new connect; wait for it, or
@@ -48,8 +55,10 @@ An `hci_vhci` reproducer in QEMU:
 1. Bring up an eSCO link.
 2. Close its socket, and hold the Disconnection Complete.
 3. Connect a second socket to the same address.
-4. Expect no setup command, an immediately connected socket, and an error when the completion
-   arrives.
+4. Expect no setup command, an immediately connected socket (`connect()` returns 0), and
+   `ECONNABORTED` when the completion arrives. Record the `connect()` return, `SO_ERROR` and
+   every outgoing command. Run the same case with the abandoned-setup series applied (CO-01):
+   it is expected not to change this.
 5. Control: the same sequence with the completion delivered before the connect.
 
 **Decides:** sending anything is the operator's decision.
