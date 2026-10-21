@@ -4,8 +4,8 @@ To (stable list) and every Cc. Subject: "Re: [PATCH 6.6 0000/1651] 6.6.160-rc2 r
 The sendable file with the headers is kept on the development host, not in this public copy.
 Deadline: Thu 22 Oct 2026 07:53:04 UTC. Nothing is sent without the operator's word.
 
-Everything below the line is the mail body. [PENDING] marks the line that waits for the
-other testers' comparison.
+Everything below the line is the mail body (version 2, 2026-10-21 01:4x UTC, with every
+tester compared; results in experiments/results-2026-10-21.md).
 ------------------------------------------------------------------------------------------
 On Tue, Oct 20, 2026 at 09:57:46AM +0200, Greg Kroah-Hartman wrote:
 > This is the start of the stable review cycle for the 6.6.160 release.
@@ -17,19 +17,26 @@ On Tue, Oct 20, 2026 at 09:57:46AM +0200, Greg Kroah-Hartman wrote:
 > Anything received after that time might be too late.
 
 Built 6.6.160-rc2 and 6.6.159 for x86_64 with BlueZ's doc/tester.config
-(KASAN, lockdep) and ran BlueZ's emulator testers in QEMU. No regressions
-in Bluetooth:
+(KASAN, lockdep) and ran BlueZ's emulator testers on both in QEMU. No
+regressions in Bluetooth, and four of rc2's fixes show up as intended:
 
-- mgmt-tester (508 cases): the same verdicts on both kernels, except
-  "Start Discovery - Simultaneous Inquiry Late", which fails on 6.6.159
-  (Start Discovery answered Busy) and passes on rc2, 3 of 3 runs. That
-  is the test for "Bluetooth: hci_event: fix simultaneous discovery
-  stuck in FINDING".
-- A vhci reproducer for "Bluetooth: MGMT: Fix status of pending commands
-  flushed on power off" gets Command Status 0x00 for Start Discovery on
-  6.6.159 and 0x0f (Not Powered) on rc2, 2 of 2 runs.
-- [PENDING] l2cap-, iso-, sco-, rfcomm-, bnep-, smp-, mesh-, ioctl-,
-  userchan- and 6lowpan-tester: the same verdicts on both kernels.
-- No KASAN or lockdep reports.
+- "Bluetooth: hci_event: fix simultaneous discovery stuck in FINDING":
+  mgmt-tester "Start Discovery - Simultaneous Inquiry Late" fails on
+  6.6.159 (Start Discovery answered Busy) and passes on rc2, 3 of 3.
+- "Bluetooth: MGMT: Fix status of pending commands flushed on power off":
+  a vhci reproducer gets Command Status 0x00 for Start Discovery on
+  6.6.159 and 0x0f (Not Powered) on rc2, 2 of 2.
+- "Bluetooth: MGMT: fix crash in set_mesh_sync and set_mesh_complete":
+  mesh-tester "Mesh - Enable 2" hits KASAN stack-out-of-bounds in
+  set_mesh_sync and then a GPF in mgmt_pending_remove on 6.6.159; on
+  rc2 it passes.
+- "Bluetooth: L2CAP: fix out-of-bounds write in l2cap_ecred_connect":
+  l2cap-tester "L2CAP Ext-Flowctl Client - Defer limit" fails on 6.6.159
+  and passes on rc2, 3 of 3.
+
+Otherwise every case has the same verdict on both kernels in mgmt-, iso-,
+sco-, rfcomm-, bnep-, smp-, ioctl-, userchan- and 6lowpan-tester, and in
+l2cap-tester up to "L2CAP Ext-Flowctl Server - Accept 2 Close 1", which
+hangs on both. No KASAN or lockdep report on rc2.
 
 Tested-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>

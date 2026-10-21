@@ -20,6 +20,14 @@ The reply says what was built, what was run, and what came out, and ends with a 
 It is the ordinary way to help a stable review. It is short, and it creates no work for
 anyone.
 
+rc2 carries 41 Bluetooth commits, 38 of them by other authors. We compared every BlueZ
+emulator tester on rc2 and on 6.6.159:
+- no regressions;
+- four fixes visible: our two, plus two by Pauli Virtanen;
+- one l2cap case hangs identically on both kernels.
+
+The draft is version 2, complete; there are no pending lines.
+
 ## What to read
 
 All are in the public repository `ivoitovych/qca9377-bt-hang`, branch `main`:

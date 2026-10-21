@@ -1,7 +1,15 @@
 # CO-10 — Tested-by on 6.6.160-rc2
 
-**State:** tested, and the draft is ready for review. The other testers' comparison is still
-running, and sending is the operator's decision. **The deadline is 2026-10-22 07:53:04 UTC.**
+**State:** tested in full, and the draft (version 2) is ready for review. Sending is the
+operator's decision. **The deadline is 2026-10-22 07:53:04 UTC.**
+
+**The result, 2026-10-21 01:4x UTC:** every BlueZ tester was compared on rc2 and 6.6.159.
+There are no regressions, and four of rc2's fixes show up as intended:
+- our BT-9 and BT-8;
+- Pauli Virtanen's mesh crash fix: 6.6.159 hits KASAN, then a GPF, in mesh-tester;
+- his L2CAP ecred fix: "Defer limit" fails 3/3 on 6.6.159 and passes 3/3 on rc2.
+
+Details: `experiments/results-2026-10-21.md`.
 
 **Target:** the stable kernel review of "[PATCH 6.6 0000/1651] 6.6.160-rc2 review".
 

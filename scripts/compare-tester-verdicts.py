@@ -6,13 +6,26 @@
 import re, sys
 ansi = re.compile(r'\x1b\[[0-9;]*m')
 line_re = re.compile(r'^(.*?)\s+(Passed|Failed|Timed out|Not Run)\s+[0-9.]+ seconds\s*$')
+# A run that was stopped before its summary table still has one progress
+# line per finished case: "<name> - test passed|failed|timed out|not run".
+progress_re = re.compile(r'^(.*?) - test (passed|failed|timed out|not run)\s*$')
+progress_word = {'passed': 'Passed', 'failed': 'Failed',
+                 'timed out': 'Timed out', 'not run': 'Not Run'}
 
 def verdicts(path):
-    v = {}
+    v, p = {}, {}
     for raw in open(path, errors='replace'):
-        m = line_re.match(ansi.sub('', raw.rstrip('\n')))
+        line = ansi.sub('', raw.rstrip('\n'))
+        m = line_re.match(line)
         if m:
             v[m.group(1).strip()] = m.group(2)
+            continue
+        m = progress_re.match(line)
+        if m:
+            p[m.group(1).strip()] = progress_word[m.group(2)]
+    if not v and p:
+        print('%s: no summary table; using %d progress lines' % (path, len(p)))
+        return p
     return v
 
 a, b = verdicts(sys.argv[1]), verdicts(sys.argv[2])

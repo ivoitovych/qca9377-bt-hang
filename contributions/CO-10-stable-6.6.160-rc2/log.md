@@ -30,3 +30,21 @@ no draft, so this is the first work on it.
   (fetched 2026-10-21), bluetooth (fetched 2026-10-21) or the mainline mirror (to 2026-10-18).
   A fetch of today's mainline was still running.
 - **Package for outside reviewers:** `REVIEW-REQUEST.md`. The draft reply is in `drafts/`.
+
+## 2026-10-21 01:1x to 01:4x UTC — every tester compared; draft version 2
+- **iso-, sco-, bnep-, rfcomm-, ioctl-, smp-, userchan- and 6lowpan-tester:** identical
+  verdicts on both kernels.
+- **l2cap-tester:** both kernels hang at the same case ("Ext-Flowctl Server - Accept 2
+  Close 1"). The guests were stopped. Of the 96 cases before it, one differs: "Ext-Flowctl
+  Client - Defer limit", which failed 3/3 on 6.6.159 and passed 3/3 on rc2 in repeats. That
+  is rc2's `e2910b42115a` (Pauli Virtanen's ecred fix).
+- **mesh-tester:** 6.6.159 crashes in "Mesh - Enable 2" (KASAN stack-out-of-bounds in
+  `set_mesh_sync`, then a GPF in `mgmt_pending_remove`). rc2 runs clean, with "Send cancel 1/2"
+  timing out. The crash is rc2's `78504bca42ab`.
+- **A mistake of ours, fixed:** the first `repeat-case.sh` passed a multi-word `-p` filter.
+  test-runner hands the guest its arguments in one string, split at spaces, so the whole
+  l2cap-tester ran and hung. The script now takes one word with `-s`, and says why.
+- **Identity:** the BT-9 and BT-8 commits in rc2 are the same as sent and as mainline (same
+  patch-id). The QCA9377 entry adds the same two lines (different context). No follow-up fix
+  in today's mainline (`14c897740388`).
+- **The draft:** version 2 states all four fixes and the regression result. No pending lines.
