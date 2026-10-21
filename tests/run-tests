@@ -13460,6 +13460,24 @@ git -C "$RSM" add -A
 (( $? != 0 )) \
     && ok "a third party's address is still refused when the maintainer's is allowed" \
     || bad "the repository-derived allowlist let an unrelated address through"
+
+# THE MAINTAINER'S ADDRESS EXACTLY, NOT AS A SUBSTRING. It was a substring
+# match, which also passed "private-<maintainer's address>" (outside reviews of
+# 05f5aef, 2026-10-21). The maintainer's own git send-email Message-IDs
+# (<14-digit date>.<pid>-<n>-<address>) still pass: the tree cites 15.
+printf 'Reporter contact: %s\nIn-Reply-To: <20261002012542.473669-1-%s>\n' "$RSOWN" "$RSOWN" \
+    > "$RSM/README.md"
+git -C "$RSM" add -A
+( cd "$RSM" && HOME="$RSM/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? == 0 )) \
+    && ok "repo-scan passes the maintainer's own git send-email Message-ID" \
+    || bad "repo-scan refused the maintainer's own Message-ID"
+printf 'cc: private-%s\n' "$RSOWN" >> "$RSM/README.md"
+git -C "$RSM" add -A
+( cd "$RSM" && HOME="$RSM/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "an address that only contains the maintainer's is refused" \
+    || bad "repo-scan let private-<maintainer's address> through as the maintainer's"
 rm -rf "$RSM"
 
 # PUBLISHED UPSTREAM ADDRESSES PASS; UNPUBLISHED ONES STILL DO NOT (BRIEF §7,
@@ -13493,7 +13511,11 @@ git -C "$RSP" -c user.name=t -c user.email="owner${RSAT}${RSDOM}" commit -q -m l
     && ok "repo-scan lets listed public tokens through: exact addresses, list hosts, a whole Message-ID" \
     || bad "repo-scan refused a token its public list names"
 cp "$RSP/README.md" "$RSP/README.base"
-for rsneg in "private${RSAT}${RSDOM}" "x-${RSLIST}" "20261009.2-1-${RSLIST}"; do
+# The last two: a subdomain of a listed list host, and a host that only ends
+# with its name. Already refused (the pattern keeps the "@"); pinned because an
+# outside review of 05f5aef read the filter as unanchored.
+for rsneg in "private${RSAT}${RSDOM}" "x-${RSLIST}" "20261009.2-1-${RSLIST}" \
+        "private${RSAT}evil.${RSHOST}" "private${RSAT}not${RSHOST}"; do
     cp "$RSP/README.base" "$RSP/README.md"
     printf 'From: %s\n' "$rsneg" >> "$RSP/README.md"
     git -C "$RSP" add README.md
@@ -13502,6 +13524,27 @@ for rsneg in "private${RSAT}${RSDOM}" "x-${RSLIST}" "20261009.2-1-${RSLIST}"; do
         && ok "an unpublished token is refused beside the public list: ${rsneg%%${RSAT}*}@…" \
         || bad "the public-address list let an unpublished token through: ${rsneg%%${RSAT}*}@…"
 done
+
+# QUOTED EXAMPLES PASS ONLY WHERE THEY ARE QUOTED. Outside reviews quote made-up
+# addresses; listed as public they passed in every file (outside reviews of
+# 05f5aef, 2026-10-21). devtools/repo-scan-quoted-examples pairs each with the
+# file that quotes it.
+RSQ="made-up${RSAT}${RSDOM}"
+cp "$RSP/README.base" "$RSP/README.md"
+mkdir -p "$RSP/reviews"
+printf 'A reviewer: "%s" would pass.\n' "$RSQ" > "$RSP/reviews/r.md"
+printf 'reviews/r.md %s\n' "$RSQ" > "$RSP/devtools/repo-scan-quoted-examples"
+git -C "$RSP" add -A
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? == 0 )) \
+    && ok "a quoted example passes in the file the quoted-examples list names" \
+    || bad "repo-scan refused a quoted example in its own file"
+printf 'cc: %s\n' "$RSQ" >> "$RSP/README.md"
+git -C "$RSP" add -A
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "a quoted example is refused once another file carries it" \
+    || bad "a quoted example passed outside the file that quotes it"
 rm -rf "$RSP"
 
 # ── A COMMIT ID THE DOCUMENTS PLACE ON MAIN MUST BE ON MAIN ───────────────

@@ -1,0 +1,52 @@
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: stable@vger.kernel.org, patches@lists.linux.dev,
+ linux-kernel@vger.kernel.org, torvalds@linux-foundation.org,
+ akpm@linux-foundation.org, linux@roeck-us.net, shuah@kernel.org,
+ patches@kernelci.org, lkft-triage@lists.linaro.org, pavel@nabladev.com,
+ jonathanh@nvidia.com, f.fainelli@gmail.com, sudipm.mukherjee@gmail.com,
+ rwarsow@gmx.de, conor@kernel.org, hargar@microsoft.com, broonie@kernel.org,
+ achill@achill.org, sr@sladewatkins.com
+Subject: Re: [PATCH 6.6 0000/1651] 6.6.160-rc2 review
+In-Reply-To: <20261020075535.084584701@linuxfoundation.org>
+References: <20261020075535.084584701@linuxfoundation.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+On Tue, Oct 20, 2026 at 09:57:46AM +0200, Greg Kroah-Hartman wrote:
+> This is the start of the stable review cycle for the 6.6.160 release.
+> There are 1651 patches in this series, all will be posted as a response
+> to this one.  If anyone has any issues with these being applied, please
+> let me know.
+>
+> Responses should be made by Thu, 22 Oct 2026 07:53:04 +0000.
+> Anything received after that time might be too late.
+
+Built 6.6.160-rc2 (c578c158a368) and 6.6.159 for x86_64 with BlueZ's
+doc/tester.config (KASAN, lockdep) and ran the BlueZ CI TestRunner
+suites on both in QEMU/KVM (emulated controllers, no Bluetooth
+hardware). Four of rc2's fixes show up as intended:
+
+- "Bluetooth: hci_event: fix simultaneous discovery stuck in FINDING":
+  mgmt-tester "Start Discovery - Simultaneous Inquiry Late" fails on
+  6.6.159 (Start Discovery answered Busy) and passes on rc2, 3 of 3.
+- "Bluetooth: MGMT: Fix status of pending commands flushed on power
+  off": a vhci reproducer gets Command Status 0x00 for Start Discovery
+  on 6.6.159 and 0x0f (Not Powered) on rc2, 2 of 2.
+- "Bluetooth: MGMT: fix crash in set_mesh_sync and set_mesh_complete":
+  mesh-tester "Mesh - Enable 2" hits KASAN stack-out-of-bounds in
+  set_mesh_sync and then a GPF in mgmt_pending_remove on 6.6.159; on
+  rc2 it passes.
+- "Bluetooth: L2CAP: fix out-of-bounds write in l2cap_ecred_connect":
+  l2cap-tester "L2CAP Ext-Flowctl Client - Defer limit" fails on 6.6.159
+  and passes on rc2, 3 of 3.
+
+No other case that ran on both kernels passes on one and not on the
+other: mgmt-tester (rc2 465 passed, 37 failed, 6 timed out; 6.6.159
+464, 38, 6), mesh-, iso-, sco-, rfcomm-, bnep-, smp-, ioctl-, userchan-
+and 6lowpan-tester, and l2cap-tester up to "L2CAP Ext-Flowctl Server -
+Accept 2 Close 1", which hangs on both. No kernel warnings, sanitizer
+or lockdep reports were found on rc2 in these runs.
+
+Tested-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>

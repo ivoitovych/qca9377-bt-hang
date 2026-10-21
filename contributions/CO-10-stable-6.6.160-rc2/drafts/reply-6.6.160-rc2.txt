@@ -6,12 +6,18 @@ Message-ID, keeping its To (stable list) and every Cc. Subject: "Re: [PATCH 6.6 
 (https://lore.kernel.org/stable/20261020075535.084584701@linuxfoundation.org/).
 The headers are taken from the saved copy of the announcement (development host,
 tmp/stable-6.6.160-rc2-cover-20261020.txt). The complete sendable mail, with every header and
-recipient, is beside this file: reply-6.6.160-rc2-v5.eml (v4.eml is kept as the previous
-version). It is checked against the
+recipient, is beside this file: reply-6.6.160-rc2-v6.eml (v5.eml and v4.eml are kept as the
+previous versions). It is checked against the
 announcement by scripts/reply-headers-check.py: 7 of 7 PASS, and the same 20 recipients as
 the original. (Until 2026-10-21 it was kept off this public copy "because it carries mail
 addresses"; they are the public stable-review recipients, so that was wrong, BRIEF §7.)
 Deadline: Thu 22 Oct 2026 07:53:04 UTC. Nothing is sent without the operator's word.
+
+Version 6, 2026-10-21, after the four reviewers' recheck of version 5 (../log.md): "No other
+case that ran on both kernels passes on one and not on the other" instead of "either pass on
+both or fail on both". "Failed" and "Timed out" are distinct tester verdicts, so "fail on
+both" could be read as both runs ending Failed; what was measured is that no case changes
+between passing and not passing. Nothing else changed.
 
 Version 5, 2026-10-21, after the four reviewers' recheck of version 4 (what each point led
 to: ../log.md):
@@ -55,10 +61,10 @@ hardware). Four of rc2's fixes show up as intended:
   l2cap-tester "L2CAP Ext-Flowctl Client - Defer limit" fails on 6.6.159
   and passes on rc2, 3 of 3.
 
-All other cases that ran on both kernels either pass on both or fail on
-both: mgmt-tester (rc2 465 passed, 37 failed, 6 timed out; 6.6.159 464,
-38, 6), mesh-, iso-, sco-, rfcomm-, bnep-, smp-, ioctl-, userchan- and
-6lowpan-tester, and l2cap-tester up to "L2CAP Ext-Flowctl Server -
+No other case that ran on both kernels passes on one and not on the
+other: mgmt-tester (rc2 465 passed, 37 failed, 6 timed out; 6.6.159
+464, 38, 6), mesh-, iso-, sco-, rfcomm-, bnep-, smp-, ioctl-, userchan-
+and 6lowpan-tester, and l2cap-tester up to "L2CAP Ext-Flowctl Server -
 Accept 2 Close 1", which hangs on both. No kernel warnings, sanitizer
 or lockdep reports were found on rc2 in these runs.
 

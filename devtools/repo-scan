@@ -180,15 +180,53 @@ if [[ -r "$PUB_LIST" ]]; then
         | grep -v '^$' || true)
     PUB_DOMS=$(grep -E '^@' "$PUB_LIST" | sed 's/[[:space:]]//g' | sed 's/\./\\./g' | paste -sd'|' || true)
 fi
+# THE MAINTAINER'S OWN ADDRESS, EXACTLY, or one of their own git send-email
+# Message-IDs (<14-digit date>.<pid>-<n>-<address>, read as one address). It was
+# a substring match, which also passed "private-<maintainer's address>" (outside
+# reviews of 05f5aef, 2026-10-21).
+ALLOW_RE=$(sed 's/[][\.*^$()+?{}|]/\\&/g' <<<"$ALLOW_MAIL")
+# Kernel.org is not a list host: its people are listed one by one in
+# devtools/repo-scan-public-addresses (2026-10-21). vger and lists.linux.dev
+# host only lists.
 mails=$(grep -oEi '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' <<<"$CONTENT" \
-        | grep -viE '@(vger\.kernel\.org|lists\.linux\.dev|kernel\.org|example\.(com|org))$' \
+        | grep -viE '@(vger\.kernel\.org|lists\.linux\.dev|example\.(com|org))$' \
         | grep -viFx 'giometti@linux.it' \
         | grep -viE '^(noreply|no-reply)@' \
-        | { [[ -n "$ALLOW_MAIL" ]] && grep -viF "$ALLOW_MAIL" || cat; } \
+        | { [[ -n "$ALLOW_MAIL" ]] && grep -viE "^([0-9]{14}\.[0-9]+-[0-9]+-)?${ALLOW_RE}\$" || cat; } \
         | grep -viE '^modprobe@|^systemd-' \
         | { [[ -n "$PUB_EXACT" ]] && grep -viFx -f <(printf '%s\n' "$PUB_EXACT") || cat; } \
         | { [[ -n "$PUB_DOMS" ]] && grep -viE "($PUB_DOMS)\$" || cat; } \
         | sort -u)
+# QUOTED EXAMPLES, ALLOWED ONLY WHERE THEY ARE QUOTED. Outside reviews quote
+# made-up addresses to show a hole ("anything@<an organisation's domain>").
+# Kept verbatim, they would fail the scan; listed as public, they would pass
+# everywhere, though nobody published them (outside reviews of 05f5aef).
+# devtools/repo-scan-quoted-examples pairs each with the file that quotes it,
+# and the token passes only if no other tracked file contains it.
+QUOTE_LIST="devtools/repo-scan-quoted-examples"
+quoted_only_where_listed() {
+    local tok="$1" paths found f
+    [[ -r "$QUOTE_LIST" ]] || return 1
+    paths=$(awk -v t="${tok,,}" '!/^[[:space:]]*(#|$)/ && tolower($2) == t { print $1 }' "$QUOTE_LIST")
+    [[ -n "$paths" ]] || return 1
+    if [[ -n "$RANGE_HEAD" ]]; then
+        found=$(git grep -l -i -F -e "$tok" "$RANGE_HEAD" -- | sed "s|^$RANGE_HEAD:||")
+    else
+        found=$(git grep -l -i -F --cached -e "$tok" --)
+    fi
+    [[ -n "$found" ]] || return 1
+    while IFS= read -r f; do
+        [[ "$f" == "$QUOTE_LIST" ]] && continue
+        grep -qxF -- "$f" <<<"$paths" || return 1
+    done <<<"$found"
+}
+if [[ -n "$mails" ]]; then
+    unquoted=""
+    while IFS= read -r m; do
+        quoted_only_where_listed "$m" || unquoted+="$m"$'\n'
+    done <<<"$mails"
+    mails=$(printf '%s' "$unquoted")
+fi
 [[ -n "$mails" ]] && report "email address found:" $mails || pass "no unexpected emails"
 
 # --- binary captures -------------------------------------------------------

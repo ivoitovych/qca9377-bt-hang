@@ -1,9 +1,11 @@
 # CO-10 — Tested-by on 6.6.160-rc2
 
-**State:** tested in full. Draft **version 5** has taken up four outside reviews and their
-recheck, and its sendable copy (`drafts/reply-6.6.160-rc2-v5.eml`) passes the form and
-threading checks. **It waits for the operator's decision**
-and a one-time app password. **The deadline is 2026-10-22 07:53:04 UTC.**
+**State:** all eleven BlueZ CI TestRunner suites run on both kernels, with l2cap-tester
+stopped where it hangs on both (documented in the results). Draft **version 6** has taken up
+four outside reviews and two rechecks, and its sendable copy
+(`drafts/reply-6.6.160-rc2-v6.eml`) passes the form and threading checks. **It waits for the
+operator's decision** and an app password, revoked after the send. **The deadline is
+2026-10-22 07:53:04 UTC.**
 
 **Target:** the stable kernel review of "[PATCH 6.6 0000/1651] 6.6.160-rc2 review".
 
@@ -27,10 +29,10 @@ emulated controllers.
 - Pauli Virtanen's mesh crash fix (KASAN, then a GPF, on 6.6.159);
 - his L2CAP ecred fix (3/3).
 
-**All other cases that ran on both kernels either pass on both or fail on both.** Every mesh
+**No other case that ran on both kernels passes on one and not on the other.** Every mesh
 case now has a control verdict. One 6.6.159 run of "Send cancel - 1" failed where rc2 timed
-out, which is why the wording is not "same verdict". l2cap-tester hangs at the same case on
-both kernels.
+out, which is why the wording is not "same verdict", nor "fail on both". l2cap-tester hangs
+at the same case on both kernels.
 
 **No kernel report on rc2,** by a 13-kind scan with a positive control. The QCA9377 entry was
 not exercised: there is no hardware on this kernel. It builds.
@@ -42,8 +44,8 @@ in `log.md`.
 ## Next
 
 1. **The operator's decision, then the send.**
-   - The operator runs git send-email on `drafts/reply-6.6.160-rc2-v5.eml` in their own
-     terminal, and git asks for the password there. It is never put into the conversation or
+   - The operator runs git send-email on `drafts/reply-6.6.160-rc2-v6.eml` (or v5, if the
+     operator prefers it) in their own terminal, and git asks for the password there. It is never put into the conversation or
      the repository.
    - The password is a Google app password made for this send. It is **revoked** in the
      Google account afterwards: deleting a local copy does not revoke it (reviewer 3 of the

@@ -459,6 +459,12 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
     A first version also passed whole organisation domains and address suffixes. Outside
     reviewers found that within hours, and it was fixed with tests. When the scan refuses a
     published address, add it to the list. Never cut it from the text.
+    - The maintainer's own address passes exactly, or as their own git send-email
+      Message-ID; kernel.org addresses are listed one by one (both since 2026-10-21, after
+      the second recheck).
+    - A made-up address that an outside review quotes is nobody's published address. It
+      goes into `devtools/repo-scan-quoted-examples` with the file that quotes it, and passes
+      only there.
 - **Nothing we write exists only on this disk (operator, 2026-10-11).** Whatever cannot go public goes to the private remote.
   - **Pushed:** branches, worktrees, notes, and the commits made inside upstream checkouts under `cache/`. Those go as patch exports, never as the trees themselves (`scripts/export-local-work.py` → a branch on the private remote). `scripts/unpushed-survey.py` lists what is still local.
   - **Exceptions, kept local on purpose:**

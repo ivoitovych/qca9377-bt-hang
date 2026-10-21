@@ -23,36 +23,38 @@ anyone.
 rc2 carries 41 Bluetooth commits, 38 of them by other authors. We ran the BlueZ CI
 TestRunner suites on rc2 and on 6.6.159:
 - four fixes visible: our two, plus two by Pauli Virtanen;
-- every other case that ran on both kernels passes on both or fails on both;
+- no other case that ran on both kernels passes on one and not on the other;
 - one l2cap case hangs identically on both.
 
-The draft is now **version 5**, after four outside reviews and their recheck (in `reviews/`;
-how each point was handled: `log.md`). If you review now, please read version 5.
+The draft is now **version 6**, after four outside reviews and two rechecks (in `reviews/`;
+how each point was handled: `log.md`). If you review now, please read version 6. It differs
+from version 5 in one sentence.
 
 ## What to read
 
-All are in the public repository `ivoitovych/qca9377-bt-hang`, branch `main`:
+All are in the public repository `ivoitovych/qca9377-bt-hang`. The links below are relative,
+so they stay at the commit you opened this file from:
 
-1. **The draft reply:** [`drafts/reply-6.6.160-rc2.txt`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2.txt)
-2. **The results, with every number and command:** [`experiments/results-2026-10-21.md`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/contributions/CO-10-stable-6.6.160-rc2/experiments/results-2026-10-21.md)
+1. **The draft reply:** [`drafts/reply-6.6.160-rc2.txt`](drafts/reply-6.6.160-rc2.txt)
+2. **The results, with every number and command:** [`experiments/results-2026-10-21.md`](experiments/results-2026-10-21.md)
 3. **The scripts that produced them:**
-   - [`experiments/build-and-test.sh`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/contributions/CO-10-stable-6.6.160-rc2/experiments/build-and-test.sh)
-   - [`experiments/all-testers.sh`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/contributions/CO-10-stable-6.6.160-rc2/experiments/all-testers.sh)
-   - [`scripts/compare-tester-verdicts.py`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/scripts/compare-tester-verdicts.py)
+   - [`experiments/build-and-test.sh`](experiments/build-and-test.sh)
+   - [`experiments/all-testers.sh`](experiments/all-testers.sh)
+   - [`scripts/compare-tester-verdicts.py`](../../scripts/compare-tester-verdicts.py)
 4. **The tests behind the two fixes:**
    - BT-9's mgmt-tester cases, which BlueZ applied on 2026-10-12, and how they force the race:
-     [`patches/kernel/bt9-stable/README.md`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/patches/kernel/bt9-stable/README.md)
+     [`patches/kernel/bt9-stable/README.md`](../../patches/kernel/bt9-stable/README.md)
    - BT-8's vhci reproducer:
-     [`patches/kernel/repro-mgmt-flush-status.py`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/patches/kernel/repro-mgmt-flush-status.py),
+     [`patches/kernel/repro-mgmt-flush-status.py`](../../patches/kernel/repro-mgmt-flush-status.py),
      and its exhibits
-     [`EX-049`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/evidence/exhibits/049-vhci-flush-patched-returns-not-powered.md)
-     and [`EX-050`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/evidence/exhibits/050-vhci-flush-stock-returns-wrong-status.md)
-5. **The whole dossier:** [`contributions/CO-10-stable-6.6.160-rc2/`](https://github.com/ivoitovych/qca9377-bt-hang/tree/main/contributions/CO-10-stable-6.6.160-rc2),
+     [`EX-049`](../../evidence/exhibits/049-vhci-flush-patched-returns-not-powered.md)
+     and [`EX-050`](../../evidence/exhibits/050-vhci-flush-stock-returns-wrong-status.md)
+5. **The whole dossier:** [`contributions/CO-10-stable-6.6.160-rc2/`](.),
    with its `log.md`.
 6. **The project's current state,** for context:
-   - [`docs/STATUS.md`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/docs/STATUS.md)
+   - [`docs/STATUS.md`](../../docs/STATUS.md)
      (the three patches' submission rows);
-   - [`BRIEF.md`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/BRIEF.md) §0.
+   - [`BRIEF.md`](../../BRIEF.md) §0.
 
 **Source trees:**
 - linux-stable-rc `linux-6.6.y` at
@@ -63,7 +65,7 @@ The rc2 announcement:
 [lore, `<20261020075535.084584701@linuxfoundation.org>`](https://lore.kernel.org/stable/20261020075535.084584701@linuxfoundation.org/).
 
 The complete mail as it would be sent, with all headers and recipients:
-[`drafts/reply-6.6.160-rc2-v5.eml`](https://github.com/ivoitovych/qca9377-bt-hang/blob/main/contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2-v5.eml).
+[`drafts/reply-6.6.160-rc2-v6.eml`](drafts/reply-6.6.160-rc2-v6.eml).
 
 ## What we ask of you
 

@@ -114,9 +114,10 @@ not be hidden. That has been the rule since 2026-10-13, and it is now written in
 links (`comms/2026-10-21T0204Z-…`).
 
 **Also corrected:** the times of versions 3 and 4 in this log, the draft and the review
-headers.
+headers. They had been written as "02:xx" and "03:xx" before those hours; the commit times
+are 01:43 and 01:55 UTC.
 
-## 2026-10-21 02:2x UTC — the four reviewers recheck version 4; version 5
+## 2026-10-21, committed 02:19 UTC (`757abef`) — the four reviewers recheck version 4; version 5
 The rechecks are in `reviews/2026-10-21-recheck-of-v4.md`.
 
 **Verdicts:**
@@ -137,7 +138,23 @@ The rechecks are in `reviews/2026-10-21-recheck-of-v4.md`.
 
 **The sendable copy:** `drafts/reply-6.6.160-rc2-v5.eml` (development host copy:
 `tmp/co10-20261021/send/reply-6.6.160-rc2-v5.eml`). `mail-lint.sh` flags only the two
-quoted lines; `reply-headers-check.py` passes 7/7 with 20 of 20 recipients. They had been written as "02:xx" and "03:xx" before those hours; the commit times
-are 01:43 and 01:55 UTC.
-`mail-lint.sh` flags only the two quoted lines of the announcement (73 columns, kept as
-written).
+quoted lines of the announcement (73 columns, kept as written); `reply-headers-check.py`
+passes 7/7 with 20 of 20 recipients.
+
+## 2026-10-21, after 02:22 UTC — the four reviewers recheck version 5; version 6
+They read the frozen commit `05f5aef`; their text is in `reviews/2026-10-21-recheck-of-v5.md`.
+
+**Verdicts:** all four approve the mail. Reviewers 1, 3 and 4: send version 5 as it stands.
+Reviewer 2: approved, with one precision edit, then freeze the mail.
+
+| point | who | done |
+|---|---|---|
+| "fail on both" can be read as both runs ending Failed; Failed and Timed out are distinct tester verdicts | 2 (recommended), 3 (preferred, not required) | **Version 6:** "No other case that ran on both kernels passes on one and not on the other", the measured property; reviewer 2's preferred form, in plainer words. The only change to the mail; v5.eml is kept. `mail-lint.sh`: the two quoted lines only; `reply-headers-check.py`: 7/7, 20 of 20 recipients |
+| Scanner A: the list-host filter is not anchored at "@", so subdomains of a list host pass | 3 | **Not so in our code:** the `@host` lines keep their "@" in the pattern, so it is `(@lists\.linaro\.org)$`; the two addresses reviewer 3 quotes are refused (checked by hand; reviewer 3's test likely left out the "@"). A test now pins it: a subdomain of a listed host and a host that only ends with its name are refused |
+| Scanner B: the maintainer's own address is matched as a substring, so "private-<maintainer's address>" passes | 3, 4 | **Fixed.** Exactly the address, or one of the maintainer's own git send-email Message-IDs (`<14-digit date>.<pid>-<n>-<address>`, 15 such in the tree, all of sent patches). Tests: the prefixed address is refused, the Message-ID passes |
+| Scanner C: made-up addresses quoted by reviews are allowed everywhere | 2, 3 | **Fixed.** They left `repo-scan-public-addresses` for a new `devtools/repo-scan-quoted-examples`, which pairs each with the file quoting it; the scan lets it through only while no other tracked file contains it. Tests: allowed in its file, refused once another file carries it |
+| kernel.org was allowed as a whole domain | 2 | **Fixed.** Its five addresses in the tree are listed exactly (three on the rc2 Cc, the patchwork bot, one Message-ID) |
+| The review request links `blob/main`, so a frozen review follows moving files | 4 | Relative links now: they resolve at the commit the reader opened |
+| README "tested in full", though l2cap-tester was stopped where it hangs | 3 | Reworded; and "a one-time app password" is now "an app password, revoked after the send" |
+| This log: "02:2x UTC" and a sentence on old times joined to the v5 paragraph | 3, 4 | The heading gives the commit time; the sentence is back with the paragraph it belongs to |
+| CI still queued | 2, 3, 4 | GitHub's queue. Not a gate for the mail |
