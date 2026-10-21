@@ -147,6 +147,12 @@ it rotted within hours (`R2-13`).
 >   checked before anything enters a dossier. W1 (CO-01) and W3 (CO-03) come after them.
 >   **W2 done** (re-checked 04:44 UTC): CO-02 reproduced and a kernel series plus a BlueZ test
 >   drafted, see the dossier; next an outside review package, then the operator. W4 running.
+> - **Operator, 2026-10-21:** every bug met is registered, fixed upstream or not, so it is not
+>   confused with later ones; an upstream fix makes it an Ubuntu 24.04 backport candidate. The
+>   machine stays on 24.04 (the offered 26.04 upgrade is declined for now: too fresh).
+> - **U14 (new, live 06:40 to 06:49):** WirePlumber 0.4.17's auto-switch forces Handsfree for
+>   Chrome's dictation on the laptop microphone and undoes a manual A2DP choice; fixed by the
+>   0.5 rewrite, not in 24.04; CO-29.
 > - **U13 (new, live 06:20 local):** the Shure AONIC 50 cannot be set up: LE-only pairing,
 >   refused by the headset; BlueZ reads its Flags `0x00` as no Flags; dossier CO-27. Waiting
 >   for the operator's retry in pairing mode.
