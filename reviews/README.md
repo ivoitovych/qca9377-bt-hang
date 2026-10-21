@@ -426,7 +426,9 @@ The per-finding disposition — all 25 `FD` IDs — is the catalogue in
 
 ### CO — contribution opportunities, 2026-10-20T23:09Z
 
-The A-list only; the B, C and D items are tracked by their STATUS rows.
+**Superseded on 2026-10-21 by [`contributions/README.md`](../contributions/README.md):** the
+index there carries every `CO-nn` with its state and next step, and the active items have a
+dossier each. The table below is kept as it stood that day.
 
 | ID | Item | Status | Where | Check |
 |---|---|---|---|---|

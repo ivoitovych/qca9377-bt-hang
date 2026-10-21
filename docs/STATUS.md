@@ -5,6 +5,8 @@ evidence is, where it stands, what happens next. This page is the one place that
 is *current*; the reasoning behind each row lives where the row points. `README.md`
 summarises; `BRIEF.md` is the maintainers' hand-off (machine state, constraints, rules);
 `docs/issues.md` holds each issue's evidence and falsifiers; `HISTORY.md` is the narrative.
+Each possible contribution has a dossier (its findings, experiments, log and references) under
+[`contributions/`](../contributions/README.md), whose index lists them by `CO-nn`.
 
 Lifecycle states used below: **observed** · **hypothesis** · **confirmed** · **patch
 written** · **under review** (outside review before any submission) · **submitted** ·
