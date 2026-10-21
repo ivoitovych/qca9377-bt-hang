@@ -1,0 +1,43 @@
+Subject: [PATCH 0/2] Bluetooth: hci_conn: fix SCO connect to a device whose SCO link is going down
+
+When a SCO socket is closed and a new one connects to the same device
+before the Disconnection Complete of the old link arrives,
+hci_connect_sco() hands the dying connection to the new socket:
+connect() succeeds without a Setup Synchronous Connection being sent,
+and the socket is closed with ECONNABORTED when the event arrives.
+PipeWire does exactly this when the HFP codec is changed during a call,
+and with headsets that answer AT+BCS quickly the new codec never gets a
+link.
+
+Patch 1 fails such a connect with -ECONNABORTED instead.
+
+Patch 2 fixes a related problem found while testing: a second connect()
+to a device whose SCO link is up drops the hold of the socket that owns
+the link, so connect() fails with EBUSY and then the first socket's
+link is disconnected.
+
+Tested on bluetooth-next <TIP> in QEMU with BlueZ's emulator, using
+two new sco-tester cases ("[PATCH BlueZ] tools/sco-tester: Add
+reconnect tests", sent separately): "Reconnect During Disconnect" fails
+without patch 1 and passes with it, on uniprocessor and SMP kernels;
+"Reconnect After Disconnect" passes on both. sco-tester, iso-tester,
+l2cap-tester and mgmt-tester results are otherwise unchanged.
+
+One question: PipeWire retries a connect that fails with ECONNABORTED
+at once, which is still before the old link is gone, so with patch 1
+its retries fail too. Deferring the connect until the old link has been
+torn down (queueing it behind the disconnect, connect() returning
+EINPROGRESS) lets that retry, or the first connect, succeed in the
+same tests. Would you prefer that approach? I can send it as an RFC.
+
+The series applies on top of Hitalo Souza's pending SCO setup series
+and is independent of it.
+
+Iaroslav Voitovych (2):
+  Bluetooth: hci_conn: refuse to reuse a SCO connection that is being aborted
+  Bluetooth: hci_conn: take the caller's hold when a SCO connection is reused
+
+ net/bluetooth/hci_conn.c | 25 +++++++++++++++++++++----
+ 1 file changed, 21 insertions(+), 4 deletions(-)
+
+base-commit: <TIP>
