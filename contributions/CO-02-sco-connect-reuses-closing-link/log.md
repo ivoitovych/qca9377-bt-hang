@@ -112,3 +112,25 @@ private prefix.
 - Final files: `patch/kernel-final/`; the cover letter has its base and shortlog.
 - Next: outside review of the package; the operator's decisions; re-check the base just before
   sending.
+
+## 2026-10-22 — four outside reviews of `4c82e91`
+Text: `reviews/2026-10-22-reviews-of-4c82e91.md`. Reviewer 1: ready. Reviewers 2 and 3: do not send
+unchanged, two technical restrictions. Reviewer 4: strong, conditional.
+
+| point | who | done |
+|---|---|---|
+| BlueZ test oracle passes on any immediate error, the After control on a refusal | 2, 3 | worker W2c reworks the test: After only on a real fresh link; During only on `ECONNABORTED` or a real new link |
+| The test's Disconnect hook skips the emulator's own teardown | 3 | W2c: hold only the Disconnection Complete event, let btdev tear down normally |
+| Assertions on the scenario; timers | 3 | W2c |
+| Patch 2 has no upstream test | 3 | W2c adds a Connect Twice case |
+| `hci_conn_timeout()` reads `refcnt` unlocked, then `hci_abort_conn()` without a re-check: a connect taking its hold in between gets a link that is then aborted | 2, 3 | **confirmed in source** (`hci_conn.c:641-662`, `:3253-3281`, no lock, no re-check); W2c: deterministic proof with a scratch barrier, then a fix analysis |
+| `Fixes:` empirical (parent OK, commit broken) | 4 | W2c builds kernels at the parents and the commits |
+| base + patch 1 alone sane | 4 | W2c |
+| `sco->setting`/`codec` written by a failing duplicate connect | 3 | W2c, source only; a separate follow-up if it matters |
+| Cover-letter subject too long; defer framed as a question; Hitalo's series not linked; patch 2 evidence not visible | 2, 3 | cover letter rewritten (`drafts/kernel-cover-letter.txt`): "fix SCO connection reuse", the deferral as an optional RFC, the series link; the test results line waits for the reworked test |
+| Stale `patch/kernel/` and old `Fixes:` references | 3 | README and results point to `patch/kernel-final/` and the correction |
+| Cc Hitalo Souza | 2, 3 (4: only if relevant) | relevant (same SCO-abort family, tested together): recommended to the operator |
+| `Cc: stable` trailers | 2 | the operator's decision, after the race result |
+| BlueZ test timing | 2: with the series; 3: after acceptance; 4: separate thread right after | recommended: a separate `[PATCH BlueZ]` mail right after the kernel series, stating the dependency |
+| ELL files in `/usr` | 2, 3 | `dpkg -S`: owned by no package; removal is the operator's decision; the tool to use a private prefix |
+| Hardware retest | 3 (recommended), 2 (not a blocker) | the operator's decision (laptop) |

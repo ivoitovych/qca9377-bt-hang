@@ -1,4 +1,4 @@
-Subject: [PATCH 0/2] Bluetooth: hci_conn: fix SCO connect to a device whose SCO link is going down
+Subject: [PATCH 0/2] Bluetooth: hci_conn: fix SCO connection reuse
 
 When a SCO socket is closed and a new one connects to the same device
 before the Disconnection Complete of the old link arrives,
@@ -16,21 +16,22 @@ to a device whose SCO link is up drops the hold of the socket that owns
 the link, so connect() fails with EBUSY and then the first socket's
 link is disconnected.
 
-Tested on bluetooth-next 27731ba09195 in QEMU with BlueZ's emulator, using
-two new sco-tester cases ("[PATCH BlueZ] tools/sco-tester: Add
-reconnect tests", sent separately): "Reconnect During Disconnect" fails
-without patch 1 and passes with it, on uniprocessor and SMP kernels;
-"Reconnect After Disconnect" passes on both. sco-tester, iso-tester,
-l2cap-tester and mgmt-tester results are otherwise unchanged.
+Tested on bluetooth-next 27731ba09195 in QEMU with BlueZ's emulator,
+with new sco-tester cases ("[PATCH BlueZ] tools/sco-tester: Add
+reconnect tests", sent separately): <RESULTS: During / After / Connect
+Twice, without and with the series, to be filled from the reworked
+test>. sco-tester, iso-tester, l2cap-tester and mgmt-tester results are
+otherwise unchanged.
 
-One question: PipeWire retries a connect that fails with ECONNABORTED
-at once, which is still before the old link is gone, so with patch 1
-its retries fail too. Deferring the connect until the old link has been
-torn down (queueing it behind the disconnect, connect() returning
-EINPROGRESS) lets that retry, or the first connect, succeed in the
-same tests. Would you prefer that approach? I can send it as an RFC.
+The series fixes the false success and the lost hold on its own. It
+does not make PipeWire's immediate retry succeed, since the retry
+still comes before the old link is gone; a prototype that instead
+defers the connect until the old link has been torn down does, in the
+same tests, but changes connect() semantics. I can post it as an RFC
+if that approach is preferred.
 
 The series applies on top of Hitalo Souza's pending SCO setup series
+(https://patchwork.kernel.org/project/bluetooth/list/?series=1181908)
 and is independent of it.
 
 Iaroslav Voitovych (2):

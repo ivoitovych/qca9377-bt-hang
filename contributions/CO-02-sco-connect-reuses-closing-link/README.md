@@ -7,8 +7,9 @@ prototype also makes PipeWire 1.0.5's retry succeed. Results:
 `experiments/results-2026-10-21.md`; drafts in `patch/`. Not sent: the operator decides, after
 outside review.
 
-**Recommended contribution:** the kernel series (`patch/kernel/`) with the BlueZ test case
-(`patch/bluez/`); the deferral (`patch/kernel-rfc-defer/`) as an RFC question to the
+**Recommended contribution:** the kernel series (**`patch/kernel-final/`**; `patch/kernel/` is the
+tested draft with superseded messages, same code) with the BlueZ test case (`patch/bluez/`,
+being reworked after the 2026-10-22 reviews); the deferral (`patch/kernel-rfc-defer/`) as an RFC question to the
 maintainers, since it changes `connect()` semantics; a PipeWire note later, the operator's
 call.
 
