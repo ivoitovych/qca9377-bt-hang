@@ -4062,6 +4062,51 @@ the scan reads `devtools/repo-scan-public-addresses`. Its first version passed w
 organisation domains and address suffixes; outside reviewers found that within hours, and it
 now takes exact tokens, with `@host` only for mailing-list hosts. Tests were added.
 
+## The Tested-by sent, workers in QEMU, and a live headset (2026-10-21 → 10-22)
+
+**CO-10 sent.** Two more rounds of outside review (versions 5 and 6) left one change to the mail:
+"No other case that ran on both kernels passes on one and not on the other", since Failed and
+Timed out are distinct verdicts. A dry run before the send caught a wrong command:
+`git send-email --suppress-cc=all` also drops the file's own `Cc:` lines, so the reply would
+have gone to Greg alone; `--suppress-cc=self --suppress-cc=body` keeps all 20. Sent on the
+operator's word on 2026-10-21 at 03:05:42 UTC (server 250); the app password was revoked and the
+login check got 535.
+
+**Workers in QEMU.** On the operator's go, workers built what the dossiers had only described:
+- **CO-02 (U7):** a BlueZ sco-tester case that holds back the old link's Disconnection Complete
+  reproduces the false success on every unpatched bluetooth-next run; two kernel patches fix it
+  and a second defect (a second connect to a live SCO link drops the owner's hold and kills the
+  first link). Refusing alone does not let PipeWire 1.0.5's immediate retry succeed; a
+  deferral prototype does. The pre-send checks found that patch 2's `Fixes:` pointed at the wrong
+  commit: the hold drop on the `sco_chan_add()` error path came with `8a5b0135d4a5`, not
+  `06149746e720`. Six outside reviews followed. They agree the code is right in substance, and
+  found a false-pass hole in the test's check, a test that skips the emulator's own disconnect
+  teardown, no test for patch 2, and an unlocked window in `hci_conn_timeout()`, which the source
+  confirms. Reviewer 6 found the accepted CIS precedent `e06d549fcd4a` and the newer ownership
+  contract of `816fb1590a4c`.
+- **CO-05 + CO-26 (mesh):** `hdev->lock` in `mesh_send_sync()` takes the mesh-path lock warnings
+  from 3 to 0 and its KCSAN reports from 5 of 45 boots to 0; the failed-add early return is
+  patch 2/2. **CO-04:** Igor Putko's pending patch adds a lock inversion (9 of 12 boots), so no
+  Tested-by.
+- Each worker's decisive result was re-run before entering a dossier.
+
+**A live headset.** On 2026-10-21 the operator could not set up the Shure AONIC 50: each click
+paired over LE and the headset refused ("Pairing not supported"). Its LE advertising carries
+Flags `0x00`, which BlueZ reads as no Flags, so it never learns the classic side (U13, CO-27).
+In pairing mode it paired over classic. Then WirePlumber 0.4.17 forced it into Handsfree for
+Chrome's dictation, which was recording from the laptop's own microphone, and undid the
+operator's manual A2DP choice when the dictation ended (U14, CO-29; fixed by WirePlumber 0.5).
+The operator's direction: every bug is registered even if fixed upstream; the machine stays on
+Ubuntu 24.04, and upstream fixes become backport candidates.
+
+**Mistakes and their fixes.**
+- **Permission prompts:** a flood of them. Every prompt came from a command shape that bypasses
+  an existing rule: `bash <script>`, scripts in a temporary scratch directory, `env VAR=` and
+  `sleep`, and, from one worker, `/usr/bin/git` instead of `git`. A PreToolUse guard now refuses
+  these shapes and names the fix.
+- **CI:** red for a day because one new script lacked its executable bit.
+- **A worker's local CI run installed ELL into `/usr`:** inert; removal is the operator's call.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
