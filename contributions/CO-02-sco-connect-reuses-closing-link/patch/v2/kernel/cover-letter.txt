@@ -32,9 +32,7 @@ the remote device set up: with patches 1 and 2 the new socket is still
 reported connected and then aborted, with patch 3 the connect fails
 with ECONNABORTED. sco-tester, iso-tester and l2cap-tester otherwise
 give the same results with and without the series, and so does
-mgmt-tester: all 514 cases pass on uniprocessor; on SMP the same nine
-fail with and without it, and one more LL Privacy case times out now
-and then on both.
+mgmt-tester.
 
 The series makes connect() report what happens, but it does not by
 itself make PipeWire's codec switch succeed: PipeWire retries a connect

@@ -241,3 +241,20 @@ and none asks for another investigation. What each point led to:
 show no difference, all 32 logs are clean, and every mail check passes:
 `experiments/results-2026-10-22-v2.md`. `ci-local`'s BuildEll went to the private prefix, and
 `/usr/lib/pkgconfig/ell.pc` still carries only the 2026-10-21 copy.
+
+## 2026-10-22, evening — round 3 (reviewers 1 and 6 so far) and pre-send checks
+- **Reviewer 1:** patch 3 v2 is correct and the refusal path is balanced; no changes asked.
+- **Reviewer 6:** "v2 is sendable". The refusal path is checked in both branches. Two trims, the
+  author's call:
+  - the cover letter's mgmt sentence: **done**. It now ends "and so does mgmt-tester"; the nine
+    failures and the flaky case stay in the results file;
+  - `Cc: stable` on all three: the operator's decision.
+- **bluetooth-next master** is still `27731ba09195` (`git ls-remote`).
+- **Patchwork since 2026-10-21:** no kernel patch touches `hci_connect_sco()` or SCO. But **Luiz
+  Augusto von Dentz posted a 27-patch BlueZ series at 15:46 UTC that moves the testers off GLib**
+  (`[BlueZ,v1,24/27] tools: Run sco-tester, rfcomm-tester and 6lowpan-tester on the mainloop`,
+  patchwork 14908123; 108 lines of `sco-tester.c`). It replaces `g_io_add_watch` with
+  `tester_io_add_watch` and `g_timeout_add` with `timeout_add`. Our test is written against
+  GLib, so the two patches collide in either order. The kernel series is not affected. Also in
+  it: `03/27 mgmt-tester: Wait for LL Privacy setup to complete`, which matches the LL Privacy
+  cases that fail or time out on SMP. Raw: `tmp/co02-round3/`.
