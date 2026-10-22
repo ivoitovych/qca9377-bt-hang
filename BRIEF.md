@@ -162,6 +162,11 @@ it rotted within hours (`R2-13`).
 >   - the operator's decisions: Cc Hitalo Souza, Aldo Ariel Panzardo, Pauli Virtanen
 >     (recommended); `Cc: stable` on patch 2 (recommended); the BlueZ test the same day after the
 >     kernel series (recommended).
+> - **CO-02 v1 ready for review round 2 (2026-10-22 09:20 UTC):** `patch/v1/`: three kernel
+>   patches (patch 3 closes the timeout race), `Fixes: e6720779ae61` (bisected) for 1 and 3,
+>   `8a5b0135d4a5` for 2; the reworked BlueZ test; the cover letter. 27/27 focused runs, suites
+>   unchanged, 26/26 logs clean. Evidence `experiments/results-2026-10-22.md`. The operator's
+>   decisions (Cc, `Cc: stable`, send timing) still open.
 > - **Worker W2c paused and reported** (state `tmp/co02-w2c/progress.md`; summary in the CO-02
 >   `log.md`; not yet re-checked): BlueZ test v2 done (strict, Connect Twice added; series 3/3/3,
 >   base 3/0/0); **the timeout race is real** (4 of 4 with a parked worker) and a small prototype
