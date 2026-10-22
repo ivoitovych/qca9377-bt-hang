@@ -11,8 +11,8 @@ per issue and submission, the only page that says what is *current* — and **no
 summary** — a stranger reads `README.md`. Nothing here is derivable from those: this is the
 layer that says which claim holds, which was retracted, and what each rule cost.
 
-⚠️ **Budget: 1000 lines** (`devtools/save` warns above it; 200 until 2026-09-19, 500 until
-2026-10-01, 750 until 2026-10-11, the operator's call each time). At 200 every addition cost a *why* somewhere else.
+⚠️ **Budget: 1200 lines** (`devtools/save` warns above it; 200 until 2026-09-19, 500 until
+2026-10-01, 750 until 2026-10-11, 1000 until 2026-10-22, the operator's call each time). At 200 every addition cost a *why* somewhere else.
 This file is what carries the work from one working period to the next, and the settled foundation (what BT-1 was, what E3 is) is what a reader most needs from it.
 So, when over budget, cut the oldest *finished episode* (a closed experiment's running notes, a superseded block), never the foundation;
 never cut a reason to fit a fact. **One hand-off block, not a stack**: on 2026-10-03 nine
@@ -130,7 +130,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-22 about 05:10 local (CO-10 sent and the password revoked; CO-02 patches final in code, six outside reviews, test rework and a residual timeout race open; CO-05/CO-26 mesh series written; CO-04 no Tested-by; U13 and U14 registered; the permission-prompt guard; earlier, 2026-10-21 02:22 UTC: CO-10's Tested-by draft v5 ready, waiting for the operator's send, due 10-22 07:53 UTC; contribution dossiers; source investigation answers checked, U7's kernel mechanism found; published upstream addresses are public, §7, and the scan's exact-token list; earlier the same day: the abrupt stop of 2026-10-19 21:52 found and recorded; E3 #2 lost its row; the shutdown step's redesign registered as §9.11, the operator's direction; earlier, 2026-10-20: A1 and A2 applied upstream on 10-19, identical to what was sent; 6.6.160-rc2 carries our three stable patches; every other submission re-checked, nothing new; earlier, 2026-10-19: U12 registered: A2DP lost to an AVDTP Abort, fixed upstream, not in Ubuntu; the running bluetoothd found to lack Ubuntu's October CVE fixes; the test-suite maintainer's work wholly on `main`: the `btmon` width fix at twelve call sites, the reload's second guard, the access audit in a workflow of its own; BT-4's abort reproduced on the laptop's `btmon` build; earlier: 2026-10-18 trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-064** (EX-044/049/050 were ported from
+**Last updated: 2026-10-22 about 23:45 local (CO-02 v5 is the package to send: reordered hold-first for stable, every affected stable line built and tested, `READ_ONCE`/`WRITE_ONCE` after the from-scratch review, all six reviewers approve; a hardware run on the laptop is next, then the operator's send; the BRIEF budget is 1200 lines; earlier the same day, about 05:10: CO-10 sent and the password revoked; CO-02 patches final in code, six outside reviews, test rework and a residual timeout race open; CO-05/CO-26 mesh series written; CO-04 no Tested-by; U13 and U14 registered; the permission-prompt guard; earlier, 2026-10-21 02:22 UTC: CO-10's Tested-by draft v5 ready, waiting for the operator's send, due 10-22 07:53 UTC; contribution dossiers; source investigation answers checked, U7's kernel mechanism found; published upstream addresses are public, §7, and the scan's exact-token list; earlier the same day: the abrupt stop of 2026-10-19 21:52 found and recorded; E3 #2 lost its row; the shutdown step's redesign registered as §9.11, the operator's direction; earlier, 2026-10-20: A1 and A2 applied upstream on 10-19, identical to what was sent; 6.6.160-rc2 carries our three stable patches; every other submission re-checked, nothing new; earlier, 2026-10-19: U12 registered: A2DP lost to an AVDTP Abort, fixed upstream, not in Ubuntu; the running bluetoothd found to lack Ubuntu's October CVE fixes; the test-suite maintainer's work wholly on `main`: the `btmon` width fix at twelve call sites, the reload's second guard, the access audit in a workflow of its own; BT-4's abort reproduced on the laptop's `btmon` build; earlier: 2026-10-18 trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-064** (EX-044/049/050 were ported from
 `kernel/mgmt-flush-status` on 2026-10-09, `5939d04`; the next exhibit on `main` is EX-065) — no tip hash:
 it rotted within hours (`R2-13`).
 
@@ -142,27 +142,45 @@ it rotted within hours (`R2-13`).
 > **New, 2026-10-22 (about 05:10 local, the state at hand-off; work paused for the usage limit):**
 > - **CO-10 is done:** the Tested-by on 6.6.160-rc2 went out 2026-10-21 03:05:42 UTC (server
 >   250, 20 recipients), the app password is revoked (535). Watch the 6.6.160 release.
-> - **CO-02 (U7's kernel side) is the next send, not ready yet.** Final kernel patches in
->   `contributions/CO-02-…/patch/kernel-final/` (short subjects; patch 2 `Fixes: 8a5b0135d4a5`;
->   code identical to the tested series: tree `5cb23798…`, patch-ids `20f80382…`/`106cab62…`;
->   checkpatch `--strict` 0/0/0 run inside the tree). Six outside reviews
->   (`reviews/2026-10-22-*`); every point and its handling is in the dossier's `log.md`. Open
->   before a send:
->   - the BlueZ test passes on any immediate error and skips btdev's own disconnect teardown;
->     no test yet for patch 2 ("Connect Twice");
->   - a residual race, confirmed in source: `hci_conn_timeout()` reads `refcnt` unlocked and then
->     calls `hci_abort_conn()` with no re-check (`hci_conn.c:641-662`); do NOT widen patch 1 to
->     `refcnt == 0` (incoming SCO sits at 0 in `BT_CONNECT`/`BT_CONNECT2`); documenting it in
->     patch 1's message is acceptable;
->   - message fixes from reviewer 6: patch 2 around the ownership contract (since
->     `816fb1590a4c` `sco_connect()` drops the caller's reference on every path) citing the
->     accepted CIS precedent `e06d549fcd4a`; patch 1 one sentence of history before
->     `a13f316e90fd`; cover letter "independent of Hitalo Souza's series, applies with or
->     without it";
->   - the operator's decisions: Cc Hitalo Souza, Aldo Ariel Panzardo, Pauli Virtanen
->     (recommended); `Cc: stable` on patch 2 (recommended); the BlueZ test the same day after the
->     kernel series (recommended).
-> - **CO-02 v2 is the current package (2026-10-22 12:40 UTC):** `patch/v2/kernel/` and
+> - **CO-02 v5 is the package to send (2026-10-22 ~21:40 UTC; this item supersedes the CO-02
+>   items below it, whose trail is in the dossier's `log.md`).** `contributions/CO-02-…/patch/v5/
+>   send/`: kernel cover + 3 patches, and the BlueZ test as a separate mail. Branch
+>   `co02-send/v5` in `cache/co02-v1`, code tree `cb4e87e621b7`.
+>   1. "hold a reused SCO connection for its caller": `Fixes: 8a5b0135d4a5`,
+>      `Cc: stable@vger.kernel.org # 6.6.x`;
+>   2. "don't reuse an aborting SCO connection": `Fixes: e6720779ae61` (bisected), plain stable
+>      tag, `READ_ONCE()`/`WRITE_ONCE()` on `abort_reason` (the SCO disconnect worker writes it
+>      without `hdev->lock`);
+>   3. "synchronize with SCO disconnect work before reuse": `Fixes: e6720779ae61`, plain stable
+>      tag, `cancel_delayed_work_sync()` after both branches.
+>   - **Evidence:**
+>     - `experiments/results-2026-10-22-v3.md`, the stable check by code and by run: 6.1 needs
+>       nothing; 6.6 and 6.12 need patch 1 only; 6.18 and 7.2 need all three; each was built
+>       and run unpatched and patched;
+>     - `results-2026-10-22-v4.md`: bluetooth-next 27/27, parked race refused 18/18, 59 logs
+>       clean; v5 changed only the messages;
+>     - `race-park-2026-10-22.md`.
+>     The series was first ordered refusal-first; reviewer 6 showed that stopped the hold fix
+>     applying alone on stable, hence hold-first (v3).
+>   - **Reviews:** rounds 1 to 4, rechecks, and a from-scratch round (all six, `reviews/`). All
+>     approve. Every point and its outcome is in `log.md`, with the answers to have ready.
+>   - **Disclosed, not changed:** a connect() before `disc_work` has started still keeps the live
+>     link. A follow-up could use `delayed_work_pending()`. No hardware run yet; the cover says so.
+>   - **The operator decided:**
+>     - Cc Cen Zhang, Aldo Ariel Panzardo, Hitalo Souza and Pauli Virtanen; Pauli also on the
+>       BlueZ mail;
+>     - the stable tags as above;
+>     - kernel first, then the BlueZ test the same day, against master with a rebase offer (Luiz's
+>       sco-tester mainloop patch, patchwork 14908123, is pending);
+>     - the ELL files archived (`archive/ell-usr-install-20261021/`), not removed.
+>     Stable route: tags (Option 1), as is usual in net/bluetooth (log, 2026-10-22 ~20:15).
+>   - **Next:**
+>     1. A hardware run on the laptop, which the operator wants (preparation, then the operator's
+>        boot).
+>     2. The send on the operator's word: `tmp/co02-round3/send-dry-run.sh kernel|bluez`, then
+>        the real send with the app password typed in the operator's terminal.
+>     3. Before it: both heads, 14908123, and Clifton's 14903178.
+> - **CO-02 v2 (2026-10-22 12:40 UTC, superseded):** `patch/v2/kernel/` and
 >   `patch/v2/bluez/`. In round 2 the six reviewers asked for no more investigation. Checking one
 >   suggestion found a gap: patch 3 v1 missed SCO connections the remote device set up, which are
 >   never linked. This was reproduced with the park, and v2 waits after both branches. Focused
@@ -175,12 +193,6 @@ it rotted within hours (`R2-13`).
 >   `8a5b0135d4a5` for 2; the reworked BlueZ test; the cover letter. 27/27 focused runs, suites
 >   unchanged, 26/26 logs clean. Evidence `experiments/results-2026-10-22.md`. The operator's
 >   decisions (Cc, `Cc: stable`, send timing) still open.
-> - **Worker W2c paused and reported** (state `tmp/co02-w2c/progress.md`; summary in the CO-02
->   `log.md`; not yet re-checked): BlueZ test v2 done (strict, Connect Twice added; series 3/3/3,
->   base 3/0/0); **the timeout race is real** (4 of 4 with a parked worker) and a small prototype
->   fix refuses it (3 of 3); **patch 1's `Fixes: a13f316e90fd` is not supported empirically**, a
->   bisect is ~3 steps from the real commit; patch 2 fixes an older hold leak as well as the kill
->   from `8a5b0135d4a5`, so its tags and message need that nuance.
 > - **CO-05 + CO-26** (mesh): two-patch series written and re-checked (`patch/`), next an
 >   outside-review package. **CO-04:** no Tested-by for Igor Putko's 14888791 (it adds a
 >   `hdev->lock` / `cmd_sync_work_lock` inversion, 9 of 12 boots); a review reply is the
@@ -194,7 +206,9 @@ it rotted within hours (`R2-13`).
 > - **Machine side effect, the operator decides:** `scripts/ci-local.sh`'s BuildEll ran
 >   `make install` of ELL into `/usr` (`/usr/lib/libell*`, `/usr/include/ell`, `/usr/lib/
 >   pkgconfig/ell.pc`, 2026-10-21 07:41): owned by no package, not in the linker cache,
->   bluetoothd does not link it. Removal awaits the operator; the tool should use a private prefix.
+>   bluetoothd does not link it. Since 2026-10-22 the tool installs to `tmp/ci-local/ell-prefix`;
+>   the old files are archived (`archive/ell-usr-install-20261021/`) and still in `/usr` until
+>   the operator decides.
 > - **Permission prompts:** every prompt seen came from shapes that bypass existing rules
 >   (`bash <script>`, scratchpad scripts, `env VAR=`, `sleep`, `/usr/bin/<prog>`). A PreToolUse
 >   guard (`/root/exp/private-config/hooks/bash-shape-guard.py`, 22 tested cases, live) now
@@ -203,9 +217,16 @@ it rotted within hours (`R2-13`).
 >   `cache/sparse/sparse`, `clang --analyze` (not `/var/lib/bluetooth`: link keys).
 > - **CI:** green again since `6d17ce2` (the missing executable bit of
 >   `scripts/compare-tester-verdicts.py` had failed every run since `ccb46dc`).
-> - **Next (when the operator resumes):** read W2c's state; finish CO-02 (test rework, race
->   verdict, message fixes, a final review round, the operator's send); then CO-05's review
->   package; CO-28 (Tested-by on the next 6.1/5.15/5.10 stable reviews) when their mails come.
+> - **Next:** CO-02's hardware run and send (above); then CO-05's review package; CO-28
+>   (Tested-by on the next 6.1/5.15/5.10 stable reviews) when their mails come.
+> - **Method lessons of 2026-10-22:**
+>   - `git apply --check` inside this repository's `tmp/` silently skips the paths and says
+>     "applies"; use GNU `patch -p1 -F0 --dry-run -d <dir>`;
+>   - tester verdict lines carry colour codes; strip them before grepping
+>     (`tmp/co02-round5/summarize.sh`);
+>   - checkpatch catches a "commit" and its ID split across lines;
+>   - kernel.org's tag fetch can stall: take the tag from the GitHub stable mirror and compare
+>     blob ids.
 >
 > **New, 2026-10-21 (updated 02:55 UTC, the state at hand-off):**
 > - **Workers started 2026-10-21 (the operator's go):** W2 on CO-02 (U7 reproducer in QEMU,

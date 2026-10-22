@@ -4107,6 +4107,47 @@ Ubuntu 24.04, and upstream fixes become backport candidates.
 - **CI:** red for a day because one new script lacked its executable bit.
 - **A worker's local CI run installed ELL into `/usr`:** inert; removal is the operator's call.
 
+## Five review rounds, a series reordered for stable, and every line tested (2026-10-22)
+
+**The race was real, and so was a gap in its fix.** When the work resumed after the usage limit,
+the worker's finding held. `hci_conn_timeout()` can see no holder, and then abort a connection
+that a new connect() has just taken. A debug-only delay of that worker reproduced it on demand. A
+third patch made the connect wait for a running worker and check again (v1). In round 2,
+checking a reviewer's proposed sentence ("only a linked connection can have pending disconnect
+work") showed it was false. A SCO connection the headset opens is never linked, so the wait
+missed it. A new scratch case reproduced that too, and v2 waits after both branches. The same
+day's bisect moved patches 2 and 3's `Fixes:` to `e6720779ae61` (v6.13), Luiz's kref change:
+before it, the closed socket stayed attached and a second connect got EBUSY.
+
+**The stable homework changed the series' order.** The operator would not tag stable until every
+affected line was built and tested. Reviewer 6 showed that the hold fix carried the refusal's
+lines as context, so stable could not apply it alone where only it is needed. v3 put the hold fix
+first, with identical code. Checked by code, not by commit ids:
+- 6.1 has the CVE fix `8a5b0135d4a5` backported but not the reuse path, so it needs nothing;
+- 6.6 and 6.12 need only the hold fix;
+- 6.18 and 7.2 need all three.
+Each line was built and run unpatched and patched. The bug was there before and gone after, and
+on 6.18 and 7.2 the parked race was refused. The test learned that EBUSY, the honest answer of
+kernels before 6.13, is not a failure. A first apply check reported "applies" everywhere, because
+`git apply` inside this repository's `tmp/` skips the paths; it was redone with `patch -F0`. In
+git, net/bluetooth turned out to use exactly this practice: version-limited stable tags
+(`# 6.6.x`) applied by Luiz, and `816fb1590a4c` stopping at the lines that have its `Fixes:`
+commit. `8a5b0135d4a5` itself reached 6.1 and 6.6 with no stable tag at all, which argued for
+keeping our tags and their limit.
+
+**A from-scratch round.** Six reviewers read the final mails as new.
+- Reviewer 4 asked how the early `abort_reason` read is serialized. For a SCO connection the
+  disconnect worker is the only writer, and it runs without `hdev->lock`, so it was a data race,
+  harmless but real. v4 marks it `READ_ONCE()`/`WRITE_ONCE()`.
+- Two reviewers found that the test left its first socket open when a case failed early, and that
+  it counted failed completions.
+- Reviewer 6 surveyed the list and found Luiz's own model of aborted connections, which matches
+  patch 2. They also found the case the series does not change, a connect() before the disconnect
+  work has even started, and it is now disclosed rather than claimed away (v5).
+- checkpatch caught a line-wrap mistake of mine in a message.
+v5 is the package to send. The operator's next step is a run on the laptop's own kernel and
+headsets before the send.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
