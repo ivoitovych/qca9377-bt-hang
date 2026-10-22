@@ -220,7 +220,7 @@ and none asks for another investigation. What each point led to:
 | Patch 3 changelog: the wait is limited to the existing-link path, because only a linked connection can have pending disconnect work (2) | **The invariant is false, and patch 3 v1 had a gap.** A SCO connection the remote set up is never linked (there is no `hci_conn_link()` in `hci_event.c`); its hold comes from `__sco_chan_add()` (`sco.c:315`), and closing the accepted socket queues `disc_work` on an unlinked connection. A connect then takes the `else` branch, and `hci_conn_link()`'s hold does not wait either. New scratch case "Incoming Race Park" (`cache/co02-w2c-bluez-exp`): series v1 + park, 2 of 2 "connect() returned 0", then `SO_ERROR 103`, no setup. **Patch 3 v2** waits after both branches, so every reused connection is covered (a new one has no queued work). v2 + park: incoming 6 of 6 and linked 3 of 3 refused with `ECONNABORTED`. |
 | Patch 3: say why the wait is safe (3); "an hci_conn_timeout() worker" (2) | v2's message names `hci_proto_disconn_ind()` (a constant) and `hci_abort_conn()` (it only queues the Disconnect), with `hci_conn_del()` as precedent; the cover letter uses the wording. |
 | Patch 1: say why it was EBUSY before `e6720779ae61` (6) | Checked in `e6720779ae61`'s diff: `__sco_sock_close()` kept the closed socket attached in `BT_DISCONN` until the event, so `sco_chan_add()` refused. One clause added. |
-| `READ_ONCE()` on the first `abort_reason` read (4) | Not changed. Every other access in the tree is plain (`hci_abort_conn()` reads and writes it plainly), and patch 3 bases the decision on the value read after the worker is waited for. The answer is ready if asked. |
+| `READ_ONCE()` on the first `abort_reason` read (4) | Not changed. The argument is that patch 3 decides on the value read after the synchronous wait. That every other access in the tree is plain shows only existing practice, not that there is no data race (reviewer 5, round 3). The answer is ready if asked. |
 | Lockdep run (4) | Already done: every final kernel and the park kernels have `PROVE_LOCKING`, `DEBUG_ATOMIC_SLEEP` and `DEBUG_LOCK_ALLOC`. `kernel-report-scan` matches lockdep reports, and all logs are clean. The parked runs make the wait actually block under `hdev->lock`. |
 | BlueZ: the watch callbacks ignore `cond` (3, 5) | `io_connected()`: requires `G_IO_OUT` without ERR or HUP, then `SO_ERROR == 0` and `POLLOUT`; used for the first and the second socket. |
 | BlueZ: check that the second link stays up (3, optional) | `reconnect_stable()`: 500 ms later, the second socket must still be connected, with no further Disconnect. |
@@ -238,7 +238,8 @@ and none asks for another investigation. What each point led to:
 | 20 more mgmt-tester runs (round 1, reviewer 6) | Not done as such. Round-2 reviewers 2 and 5 say identical failure sets settle it. v2's first SMP run had a tenth not-passed case, so three alternating v2/base SMP repeats were run: identical sets each time, and the extra case (`LL Privacy - Remove Device 4 (Disable Adv)`, Timed out) also hit the base. |
 
 **v2 results:** the focused cases pass 27 of 27, the base fails both bug cases, the full suites
-show no difference, all 32 logs are clean, and every mail check passes:
+show no difference, all 32 logs are clean, and every mail check that ran passed (scan-build is
+not installed; VerifyFixes was done by hand):
 `experiments/results-2026-10-22-v2.md`. `ci-local`'s BuildEll went to the private prefix, and
 `/usr/lib/pkgconfig/ell.pc` still carries only the 2026-10-21 copy.
 
@@ -258,3 +259,15 @@ show no difference, all 32 logs are clean, and every mail check passes:
   GLib, so the two patches collide in either order. The kernel series is not affected. Also in
   it: `03/27 mgmt-tester: Wait for LL Privacy setup to complete`, which matches the LL Privacy
   cases that fail or time out on SMP. Raw: `tmp/co02-round3/`.
+- **The texts given as reviewers 2, 3 and 4** were their round-2 reviews of `4ee379d`, word for
+  word (already in `reviews/2026-10-22-round2-reviews-of-4ee379d.md`, every point handled
+  there). They are not recorded again.
+- **Reviewer 5** (`reviews/2026-10-22-round3-review-5-of-482c7b2.md`) would send v2. The refusal
+  path is balanced in both branches, and their earlier assessment had missed the incoming path.
+  Wording points, all **done**:
+  - results: "no additional failures observed; the extra timeout also occurs on the base";
+  - "all checks that ran passed" (scan-build absent, VerifyFixes by hand);
+  - the upstream tests do not drive patch 3's race; only the parked runs do;
+  - the `READ_ONCE` argument rests on the synchronous wait, not on tree-wide practice;
+  - a compact parked-race transcript is now `experiments/race-park-2026-10-22.md`.
+  On stable: present the dependency between the patches if patches 1 and 3 are tagged.
