@@ -271,3 +271,26 @@ not installed; VerifyFixes was done by hand):
   - the `READ_ONCE` argument rests on the synchronous wait, not on tree-wide practice;
   - a compact parked-race transcript is now `experiments/race-park-2026-10-22.md`.
   On stable: present the dependency between the patches if patches 1 and 3 are tagged.
+
+## 2026-10-22 18:00 to 19:00 UTC — rechecks of `0824c49`, v3 reordered, stable check
+Rechecks: `reviews/2026-10-22-rechecks-of-0824c49.md`. All six find no code problem. What each
+point led to:
+
+| Point (reviewer) | Outcome |
+|---|---|
+| The hold fix's context holds the refusal's lines, so stable cannot apply it alone on 6.6/6.12; reorder (6) | **Done: v3.** Hold fix, then refusal, then wait; the final tree is unchanged (`f5424dd92043`). Confirmed: v2's hold patch fails on 6.12.114. In v3 it applies alone on 6.6.160, 6.12.114, 6.18.58 and 7.2.12 (`patch -F0`). |
+| Judge affected lines by code, not commit ids; check `816fb1590a4c` (5); the per-line matrix (2, 4, 6) | Done: `experiments/results-2026-10-22-v3.md`. 6.6/6.12 have patch 1's bug only, 6.18/7.2 all three, and 6.1 none (CVE fix present, no reuse path). The laptop's Ubuntu 7.0.0-38 has a combination of its own (kref, no `816fb1590a4c`), for the later Ubuntu step. |
+| A base-versus-patched proof on 6.12 (4, 6) | Done. Connect Twice fails 3/3 unpatched and passes 3/3 with the hold fix, under the older ownership model. The full sco-tester differs only in that case. |
+| Stable tags | The operator wants every tagged line built and tested first. 6.12 is done; 6.6, 6.18 and 7.2 are running. 6.1 would get a hold-fix attempt that does not apply, hence the proposed `# 6.6.x` on patch 1. |
+| Connect Twice: check the teardown status and that SCO goes before ACL (3) | Done (`sco_gone`). |
+| During fails on 6.12 with EBUSY, the correct pre-6.13 answer | The test now accepts EBUSY as a refusal; "connected at once without a link" still fails. |
+| BlueZ: the rebase line below `---` (1, 3, 4, 6 yes; 2 only for a concrete conflict) | Kept: the conflict is concrete (patchwork 14908123 rewrites `sco-tester.c`). |
+| BlueZ: a converted version in reserve (2, 3, 4 no; 1, 6 yes) | Dropped. Rebase only if that series lands first. |
+| Cc opt-out search (2 searched: none; 3, 4, 6: brief is enough) | Done. **Operator, 2026-10-22: copy all four** (Cen Zhang, Aldo Ariel Panzardo, Hitalo Souza, Pauli Virtanen): they are involved, and none asked to be left out. |
+| ELL (2, 3, 6 remove; 4 later; 5 with a manifest) | **Operator: archive them.** Done: `archive/ell-usr-install-20261021/` holds the exact set from the 10-21 install log, with symlinks, and a README. Not removed. |
+| Ubuntu: 24.04's HWE kernel 7.0 is no longer a kernel.org stable line; check GA 6.8's own tree (2) | For the Ubuntu step after acceptance. |
+
+**Checks on v3:** checkpatch `--strict` 0/0/0 ×3; BlueZ am, checkpatch and gitlint PASS. The
+first patch alone on bluetooth-next: Connect Twice passes, During still fails, as it should.
+Final test (sco-tester v6): 27 of 27 on the series, full sco-tester 33/33 on UP and SMP, and
+unpatched bluetooth-next fails both bug cases.

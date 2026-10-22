@@ -1,28 +1,30 @@
-# Review request, round 3: what changed after round 2 (CO-02)
+# Review request, round 4: v3, the series reordered for stable (CO-02)
 
 Nothing is sent without the project author's word, and there is no external deadline.
 
-In round 2 (six reviews of `4ee379d`, in `reviews/2026-10-22-round2-reviews-of-4ee379d.md`) no
-reviewer asked for more investigation. One suggestion turned up a gap in patch 3, though.
-Reviewer 2 proposed this sentence for its changelog: "only a connection with a link can have
-pending disconnect work". That is not so. A SCO connection the remote device set up never gets a
-link, and closing its accepted socket queues the disconnect work. A new connect to that device
-then takes the `hci_conn_link()` branch, which patch 3 v1 did not cover. A scratch test
-reproduced it (2 of 2). **Patch 3 v2** now waits after both branches.
+The rechecks of `0824c49` (`reviews/2026-10-22-rechecks-of-0824c49.md`) found no code problem.
+Reviewer 6 showed that the hold fix carried the refusal's lines as context, so stable could not
+apply it alone on 6.6 and 6.12, where only it is needed. **v3** puts the hold fix first. The
+final code is unchanged. Strict apply checks on the current stable heads, and a build-and-test
+run on 6.12.114, confirm the reorder.
 
 ## What to read
 Links are relative, so they stay at the commit you opened this file from.
-1. The mails: [`patch/v2/kernel/`](patch/v2/kernel/) (cover letter and three patches) and
-   [`patch/v2/bluez/`](patch/v2/bluez/) (the test, a separate mail).
-2. The evidence: [`experiments/results-2026-10-22-v2.md`](experiments/results-2026-10-22-v2.md).
-3. What each round-2 point led to: the last entry of [`log.md`](log.md).
+1. The mails: [`patch/v3/kernel/`](patch/v3/kernel/) and [`patch/v3/bluez/`](patch/v3/bluez/).
+2. The evidence, with the per-line table and the 6.12 results:
+   [`experiments/results-2026-10-22-v3.md`](experiments/results-2026-10-22-v3.md).
+3. What each recheck point led to: the last entry of [`log.md`](log.md).
 
 ## What we ask
-1. **Patch 3 v2:** it now calls `cancel_delayed_work_sync()` after both branches, and so also for
-   a brand-new connection (a no-op there). Is that right, and is the error path right for the
-   `hci_conn_link()` branch? On refusal it drops the caller's hold and leaves the new link to the
-   ACL in place; the Disconnection Complete removes that link.
-2. **The BlueZ test's new checks:** the watch condition, the stability check and the ACL handle.
-3. **Anything that should stop the send.**
+1. **The order and the cover letter's stable paragraph:** are they right?
+2. **The planned stable tags:** `Cc: stable@vger.kernel.org # 6.6.x` on patch 1 (6.1 has the CVE
+   fix but not the bug, and the hold fix does not apply there); a plain `Cc: stable` on patches 2
+   and 3, which their `Fixes: e6720779ae61` limits to 6.13 and later.
+3. **The BlueZ test changes:** the During case also accepts EBUSY (kernels before 6.13);
+   Connect Twice checks the teardown order and status; the one-line rebase offer below `---`.
+4. **Anything that should stop the send.**
+
+Still running when this was written: build-and-test on 6.6.160 (hold fix), and on 6.18.58 and
+7.2.12 (all three, with the parked race). The results will be added to the evidence file.
 
 Please answer in any form.
