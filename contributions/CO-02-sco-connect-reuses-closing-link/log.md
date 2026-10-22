@@ -134,3 +134,28 @@ unchanged, two technical restrictions. Reviewer 4: strong, conditional.
 | BlueZ test timing | 2: with the series; 3: after acceptance; 4: separate thread right after | recommended: a separate `[PATCH BlueZ]` mail right after the kernel series, stating the dependency |
 | ELL files in `/usr` | 2, 3 | `dpkg -S`: owned by no package; removal is the operator's decision; the tool to use a private prefix |
 | Hardware retest | 3 (recommended), 2 (not a blocker) | the operator's decision (laptop) |
+
+## 2026-10-22 — reviews 5 and 6 (recorded only; no new work started, budget)
+Text: `reviews/2026-10-22-reviews-5-6-of-4c82e91.md`. Reviewer 5: request changes (the same test
+oracle, emulator teardown, Connect Twice test and timeout race as 2 and 3; qualify the testing
+claims; a committed manifest of the failure-path cases; BlueZ comment style M2). Reviewer 6:
+send after message fixes, no code changes. New points, to take up when work resumes:
+- **Patch 2's message:** write it around the contract (`hci_connect_sco()` returns one reference
+  the caller owns; since `816fb1590a4c` `sco_connect()` drops it on every path), keep `Fixes:
+  8a5b0135d4a5`, and cite the accepted CIS precedent `e06d549fcd4a`.
+- **Patch 1's message:** one sentence that before `a13f316e90fd` the dying connection was reused
+  too but the socket went to `BT_CONNECT`; that commit regressed "reports success at once". One
+  sentence on the window between `close()` and the timeout work (refcnt 0, no `abort_reason`);
+  reviewer 6 argues against widening the check to `!refcnt` (incoming SCO connections sit at
+  refcnt 0 in `BT_CONNECT`/`BT_CONNECT2`).
+- **Cover letter:** "independent of his series; applies with or without it" instead of "on top
+  of"; patch 1 stands on its own and a deferral would build on it; "EBUSY" stays, patch 2 stops
+  the collateral disconnect.
+- **Cc:** Aldo Ariel Panzardo (author of `816fb1590a4c`, `e06d549fcd4a`), Pauli Virtanen
+  (PipeWire's bluez5 backend), Hitalo Souza. **`Cc: stable`** on patch 2 (its trigger is a
+  backported fix); patch 1 a judgment call.
+- **BlueZ test:** same day, after the kernel series, the dependency under `---`; say that
+  During accepts two outcomes on purpose.
+- **Before sending:** 20 more mgmt-tester runs; re-check patchwork for `hci_connect_sco()` /
+  `hci_conn_drop()` work (Jeremy Dean Clifton's 10-20 patch).
+- **ELL in `/usr`:** both say remove it and use a private prefix.
