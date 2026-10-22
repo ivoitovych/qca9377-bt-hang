@@ -326,3 +326,29 @@ Reviews: `reviews/2026-10-22-round4-reviews-of-472e898.md` (reviewers 1 to 5) an
   still `new`.
 - **`git send-email --dry-run`:** threading and recipients as decided. `stable@` comes from the
   trailers, which the stable rules expect. Not sent.
+
+## 2026-10-22 ~20:15 UTC — how this subsystem handles stable, checked in git
+Prompted by the operator's question: does tagging create work or risk for the stable maintainers,
+and how do people here handle fixes that apply to some lines only?
+- **Stable rules** (`Documentation/process/stable-kernel-rules.rst`):
+  - Option 1, the tag in the mainline patch, is "**strongly** preferred, the easiest and most
+    common"; once mainlined, the patch is applied "without anything else needing to be done";
+  - Option 3, hand-made backports, is for patches that need adjusting, and every deviation must
+    be documented;
+  - scripts and AUTOSEL also pick up commits that have only a `Fixes:` tag.
+- **net/bluetooth since `e6720779ae61`:**
+  - about 110 fixes carry `Cc: stable`;
+  - version limits are in use and accepted by Luiz: `# 6.6.x`, `# 6.12.x`, `# 6.4`, `# 4.11`
+    (btusb, qca); the prerequisite form appears once (L2CAP, `# 0b58004: …`).
+- **`8a5b0135d4a5` had no stable tag, only `Fixes:`.** Sasha Levin's scripts still applied it
+  unchanged ("[ Upstream commit … ]") to 6.1 (`dabf22269242`) and 6.6 (`adb90cd0f9f7`). That is
+  how 6.6 and 6.12 got patch 1's bug. Leaving our tag out would not keep our patches out of stable;
+  it would only drop the `# 6.6.x` limit.
+- **Aldo's precedents:**
+  - `e06d549fcd4a` (CIS hold on reuse, the model for our patch 1) went to 6.12 as a clean
+    cherry-pick (`072bc8659f22`, "commit … upstream.", no adjustment) and to 6.18
+    (`3ff5a8d949e3`), both by Greg Kroah-Hartman from the plain tag;
+  - `816fb1590a4c` (`Fixes: e6720779ae61`, like our patches 2 and 3) went to 6.18 (`b108ea7ebba1`)
+    but not to 6.12. The `Fixes:` limit worked as we expect for patches 2 and 3.
+- **Conclusion:** our package follows the established practice of this subsystem. The tag and
+  the limit route each patch, and the stable team has nothing to adapt.
