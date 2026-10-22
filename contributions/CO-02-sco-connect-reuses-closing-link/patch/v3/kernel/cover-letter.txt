@@ -48,9 +48,12 @@ The series is independent of Hitalo Souza's pending SCO setup series
 (https://patchwork.kernel.org/project/bluetooth/list/?series=1181908)
 and applies with or without it.
 
-For stable: patch 1 applies on its own to the lines that have
-8a5b0135d4a5 and hci_conn_link() reuse but not e6720779ae61 (6.6.y,
-6.12.y); patches 2 and 3 need patch 1 and e6720779ae61 (6.18.y, 7.2.y).
+For stable, as checked on the current stable heads: patch 1 applies on
+its own to the lines that have a backport of 8a5b0135d4a5 and
+hci_conn_link() reuse but not e6720779ae61 (6.6.y, 6.12.y); on the lines
+that also have e6720779ae61 (6.18.y, 7.2.y), patches 2 and 3 apply on
+top of patch 1. 6.1.y has the 8a5b0135d4a5 backport but not the reuse
+path, so it does not need patch 1, hence the "# 6.6.x" on its tag.
 
 Iaroslav Voitovych (3):
   Bluetooth: hci_conn: hold a reused SCO connection for its caller

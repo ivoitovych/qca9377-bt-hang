@@ -294,3 +294,23 @@ point led to:
 first patch alone on bluetooth-next: Connect Twice passes, During still fails, as it should.
 Final test (sco-tester v6): 27 of 27 on the series, full sco-tester 33/33 on UP and SMP, and
 unpatched bluetooth-next fails both bug cases.
+
+## 2026-10-22 19:00 UTC on — round 4: all six approve v3; stable runs
+Reviews: `reviews/2026-10-22-round4-reviews-of-472e898.md` (reviewers 1 to 5) and
+`reviews/2026-10-22-round4-review-6-of-472e898.md`. No code change is asked.
+- **Stable tags confirmed** (reviewers 2 to 6, against the stable rules):
+  - patch 1: `Cc: stable@vger.kernel.org # 6.6.x`, meaning 6.6 and later, which skips 6.1;
+  - patches 2 and 3: a plain tag, since their `Fixes:` already limits them.
+  The tags go in once the 6.18 and 7.2 runs pass.
+- **Cover letter, stable paragraph:**
+  - "as checked on the current stable heads" (5);
+  - "a backport of 8a5b0135d4a5" (3);
+  - "apply on top of patch 1", since the dependency is textual, not functional (2, 4, 6);
+  - one sentence on why 6.1.y needs nothing, which saves a FAILED mail (6).
+- **Evidence:** it no longer promises what stable automation will do (5).
+- **6.6.160:** Connect Twice fails 3/3 unpatched and passes 3/3 with the hold fix; only that case
+  differs in the full suite; 14 logs clean.
+- **6.18.58:** the tag fetch stalled at 20 MB for 15 minutes and was stopped (19:06 UTC); to be
+  retried after 7.2.
+- **Have ready if asked:** the stable paragraph belongs in per-patch tags, not the cover. Both
+  places are harmless, and the tags are the authoritative part (6).
