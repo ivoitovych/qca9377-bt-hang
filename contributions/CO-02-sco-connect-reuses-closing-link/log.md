@@ -352,3 +352,36 @@ and how do people here handle fixes that apply to some lines only?
     but not to 6.12. The `Fixes:` limit worked as we expect for patches 2 and 3.
 - **Conclusion:** our package follows the established practice of this subsystem. The tag and
   the limit route each patch, and the stable team has nothing to adapt.
+
+## 2026-10-22 ~20:30 to 21:30 UTC — from-scratch review of `d7b011d` (reviewers 1 to 4); v4
+Reviewers 5 and 6 are still to come. Reviewer 1 would send; reviewers 2, 3 and 4 asked for changes
+before sending. Each finding was checked against the code:
+
+| Finding (reviewer) | Checked | Outcome |
+|---|---|---|
+| Patch 2's early `abort_reason` read races with a lockless writer (4: must resolve) | **Valid.** The only writer is `hci_abort_conn()` (`hci_conn.c:3294`). Its callers that can reach an SCO connection are `hci_conn_timeout()` (`disc_work`, no `hdev->lock`) and `hci_disconnect()`; every `hci_disconnect()` caller holds `hdev->lock` and acts on ACL/LE connections (`hci_event.c`, `smp.c`, `hci_link_tx_to()`). So for SCO the early read races with the worker's write. It is harmless (a byte that only goes from 0 to set; patch 3 decides again after the wait), but it is a data race under the memory model. | **v4:** `READ_ONCE()` on that read and `WRITE_ONCE()` on the write; patch 2's message says why. Patch 3's later read is ordered by `cancel_delayed_work_sync()`, and with the caller's hold the work cannot be queued again; this is now in patch 3's message. |
+| Patch 3's lock order needs a full argument (2, 3, 4) | Re-traced. The SCO worker path takes no `hdev->lock`; `hci_abort_conn()` queues the Disconnect; `hci_conn_del()` already waits for `disc_work` under `hdev->lock`. The parked runs blocked under `hdev->lock` with lockdep on, clean. | The message already said this; v4 adds that the work cannot be requeued while the hold is taken. |
+| Refusal after `hci_conn_link()` leaves a link: who releases it? (3) | Every abort ends in `hci_conn_del()`: the Disconnection Complete; `hci_abort_conn_sync()` → `hci_conn_failed()` or `hci_conn_del()`; `hci_conn_hash_flush()` on power-off and unregister. `hci_conn_del()` unlinks and drops the ACL hold. | One sentence in patch 3's message. |
+| "reference" is ambiguous; the code has holds and object references (4) | Valid. | Patch 1 and patch 2 now say "hold". |
+| Patch 3's subject reads like waiting for the controller's disconnect (4) | Valid. | "Bluetooth: hci_conn: synchronize with SCO disconnect work before reuse". |
+| Patch 3 should state its own validation (3) | Reasonable. | A short paragraph on the debug-only delay of `hci_conn_timeout()` and the result. |
+| Cover letter: "PipeWire does exactly this" (4) | Valid. | "This sequence is exercised by PipeWire during an HFP codec change". |
+| BlueZ test leaves the first socket open on early failure (2, 3) | **Valid:** `test_post_teardown()` closes `sk2` only. Existing tests also keep their socket in `data->sk`, closed through their GLib channel, so teardown cannot close it generically. | `reconnect_end()` (reached by every terminal path of the three cases) removes the first socket's watch and closes it. |
+| `sync_complete` counts failed completions (2, 3) | Valid. | Only status-0 Synchronous Connection Complete events are counted; failures are printed. |
+| `setting`/`codec` written before EBUSY (3) | Known and pre-existing (log, 2026-10-21: no practical effect). | Not in this series; no claim made either way. |
+| BlueZ test size (2) | Reviewers 1, 3 and 4 do not ask to shrink it. | Not changed. |
+| Mutation tests (2) | The negative controls on four kernels already fail the bug cases for the intended reasons. | Not added. |
+| Survey of rejected patches (2, 4) | Neither could do it; our git survey covers accepted practice. | Noted. |
+
+checkpatch caught one defect in my own rewrap of patch 1's message ("commit" and its ID split
+across lines); fixed (`co02-send/v4b`, same tree as v4 `cb4e87e621b7`).
+
+**v4 results** (`experiments/results-2026-10-22-v4.md`):
+- bluetooth-next: 27/27 focused on UP, SMP and KCSAN; full sco-tester 33/33;
+- 6.18.58 and 7.2.12 rebuilt with v4: both bugs unpatched, all fixed;
+- parked race refused 18 of 18 on the three kernels;
+- unpatched full runs exercise the test's new early-failure cleanup (the other 31 cases pass);
+- 59 logs clean.
+
+The package is `patch/v4/send/`; the review request now points at it, in the same neutral form.
+Reviews recorded: `reviews/2026-10-22-fresh-reviews-1-4-of-d7b011d.md`.

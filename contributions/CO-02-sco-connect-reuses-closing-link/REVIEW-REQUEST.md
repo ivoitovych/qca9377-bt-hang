@@ -10,20 +10,20 @@ view from the mails and the code before you read the earlier reviews or the log.
 
 ## What would be sent
 To linux-bluetooth, base bluetooth-next `27731ba09195`, the files in
-[`patch/v3/send/kernel/`](patch/v3/send/kernel/):
+[`patch/v4/send/kernel/`](patch/v4/send/kernel/):
 - `0000-cover-letter.patch`: "[PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse".
 - `0001-…`: "Bluetooth: hci_conn: hold a reused SCO connection for its caller"
   (`Fixes: 8a5b0135d4a5`, `Cc: stable@vger.kernel.org # 6.6.x`).
 - `0002-…`: "Bluetooth: hci_conn: don't reuse an aborting SCO connection"
   (`Fixes: e6720779ae61`, `Cc: stable@vger.kernel.org`).
-- `0003-…`: "Bluetooth: hci_conn: wait for a running SCO disconnect before reuse"
+- `0003-…`: "Bluetooth: hci_conn: synchronize with SCO disconnect work before reuse"
   (`Fixes: e6720779ae61`, `Cc: stable@vger.kernel.org`).
 
 Separately, to linux-bluetooth, base BlueZ master `7bc9684dc9e4`:
-[`patch/v3/send/bluez/`](patch/v3/send/bluez/), "[PATCH BlueZ] tools/sco-tester: Add SCO
+[`patch/v4/send/bluez/`](patch/v4/send/bluez/), "[PATCH BlueZ] tools/sco-tester: Add SCO
 reconnect tests".
 
-Recipients and order: [`patch/v3/send/README.md`](patch/v3/send/README.md).
+Recipients and order: [`patch/v4/send/README.md`](patch/v4/send/README.md).
 
 ## Questions you may find useful (not a limit)
 1. **Correctness:** is every path through `hci_connect_sco()` after the series right? Consider
@@ -44,7 +44,8 @@ Recipients and order: [`patch/v3/send/README.md`](patch/v3/send/README.md).
 
 ## Material
 - The evidence for the current mails:
-  [`experiments/results-2026-10-22-v3.md`](experiments/results-2026-10-22-v3.md). Earlier
+  [`experiments/results-2026-10-22-v4.md`](experiments/results-2026-10-22-v4.md), with the
+  stable check in [`results-2026-10-22-v3.md`](experiments/results-2026-10-22-v3.md). Earlier
   evidence: [`results-2026-10-22-v2.md`](experiments/results-2026-10-22-v2.md) and the
   parked-worker race transcript
   [`race-park-2026-10-22.md`](experiments/race-park-2026-10-22.md).
