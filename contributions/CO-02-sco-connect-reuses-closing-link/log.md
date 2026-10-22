@@ -385,3 +385,26 @@ across lines); fixed (`co02-send/v4b`, same tree as v4 `cb4e87e621b7`).
 
 The package is `patch/v4/send/`; the review request now points at it, in the same neutral form.
 Reviews recorded: `reviews/2026-10-22-fresh-reviews-1-4-of-d7b011d.md`.
+
+## 2026-10-22 ~21:30 UTC — reviewer 6's from-scratch review (of `d7b011d`); v5
+Review: `reviews/2026-10-22-fresh-review-6-of-d7b011d.md`. Reviewer 6 found the series correct and
+the test sound, with three items to settle and some wording. v4 had already done "hold" in patch 1
+and patch 3's own validation paragraph.
+
+| Point | Outcome |
+|---|---|
+| The queued-but-not-started window: a connect() before `disc_work` starts still keeps the live link, and the cover's "makes connect() report what happens" is false for it | **Valid.** v5 says so in patch 3 and in the cover; the cover no longer makes the general claim. Closing it with `delayed_work_pending()` is left for a follow-up (it would need the During test and the race experiment rerun). |
+| No hardware run, and the mails don't say so | **Valid.** The cover now says the series has not yet been run on hardware. A run on the laptop (Ubuntu 7.0.0-38, the patches apply there) is the operator's decision, and only the operator handles the laptop's Bluetooth. |
+| Patch 2: "sets up a link" (collides with `struct hci_link`); "only sets abort_reason" | Reworded: "sends a Setup Synchronous Connection only if…"; "sets abort_reason and queues the Disconnect but leaves the state alone". |
+| Patch 3's long first paragraph | Split. |
+| Cover: "the reference…"; "with lockdep enabled"; stable heads were run; shorter stable paragraph | All done. The stable sentence says what was run instead of "the same results", because on 6.6/6.12 only Connect Twice changes. |
+| Clifton's pending `disc_work` patch on the same path | **Checked** on patchwork (14903178: `Closes:` syzbot `5897b3c764f5989ea942`; gates `hci_conn_drop()` in `hci_core.h` on `HCI_CMD_DRAIN_WORKQUEUE`). The cover names it as related and not overlapping. |
+| Copy Pauli on the BlueZ mail | Done (he wrote most of the recent `sco-tester.c`); the operator can remove him. |
+| `W=1` build | `make W=1 net/bluetooth/hci_conn.o` on the series: no warning. |
+| `[PATCH bluetooth 0/3]` marker | Not taken: optional, and the base is bluetooth-next. |
+| Copy Алексей Воронов | Not taken: his report could not be verified from here. |
+| 82-character `Fixes:` line | The bot's gitlint config passes it; kernel rules forbid wrapping it. |
+| Answers to have ready (why 2 and 3 are separate; why not in `hci_conn_hold()`; why a `BT_CONNECTED` SCO is reusable at all) | Kept here: 2 is the rule and 3 the race against the rule's own check (squash if Luiz prefers); `hci_conn_hold()` has callers that cannot sleep; the incoming-request cross-over (`BT_CONNECT`/`BT_CONNECT2`, no holder yet) must keep working, which is also why a refcnt==0 check would be wrong. |
+
+v5: branch `co02-send/v5`, tree `cb4e87e621b7` (the v4 code, so the v4 results stand); mails in
+`patch/v5/send/`. checkpatch 0/0/0 ×3; `ci-local --kernel` PASS; dry run as intended.

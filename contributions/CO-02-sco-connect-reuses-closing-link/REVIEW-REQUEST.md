@@ -10,7 +10,7 @@ view from the mails and the code before you read the earlier reviews or the log.
 
 ## What would be sent
 To linux-bluetooth, base bluetooth-next `27731ba09195`, the files in
-[`patch/v4/send/kernel/`](patch/v4/send/kernel/):
+[`patch/v5/send/kernel/`](patch/v5/send/kernel/):
 - `0000-cover-letter.patch`: "[PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse".
 - `0001-…`: "Bluetooth: hci_conn: hold a reused SCO connection for its caller"
   (`Fixes: 8a5b0135d4a5`, `Cc: stable@vger.kernel.org # 6.6.x`).
@@ -20,10 +20,10 @@ To linux-bluetooth, base bluetooth-next `27731ba09195`, the files in
   (`Fixes: e6720779ae61`, `Cc: stable@vger.kernel.org`).
 
 Separately, to linux-bluetooth, base BlueZ master `7bc9684dc9e4`:
-[`patch/v4/send/bluez/`](patch/v4/send/bluez/), "[PATCH BlueZ] tools/sco-tester: Add SCO
+[`patch/v5/send/bluez/`](patch/v5/send/bluez/), "[PATCH BlueZ] tools/sco-tester: Add SCO
 reconnect tests".
 
-Recipients and order: [`patch/v4/send/README.md`](patch/v4/send/README.md).
+Recipients and order: [`patch/v5/send/README.md`](patch/v5/send/README.md).
 
 ## Questions you may find useful (not a limit)
 1. **Correctness:** is every path through `hci_connect_sco()` after the series right? Consider
