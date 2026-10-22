@@ -4,12 +4,13 @@
 
 | file | what | to |
 |---|---|---|
-| `kernel-cover-letter.txt` | the cover letter of the two-patch kernel series (`../patch/kernel/`) | linux-bluetooth and the maintainers `get_maintainer.pl` names (the pre-send check fills them in) |
-| `../patch/bluez/0001-tools-sco-tester-Add-reconnect-tests.patch` | the BlueZ test case, its own mail, no cover letter | linux-bluetooth |
+| `kernel-cover-letter.txt` | the cover letter of the two-patch kernel series, **final patches in `../patch/kernel-final/`** (2026-10-22: shorter subjects for the bot's 80-column GitLint; patch 2's `Fixes:` corrected to `8a5b0135d4a5`; code identical to the tested series: same tree `5cb23798…`, same patch-ids `20f80382…`, `106cab62…`; checkpatch `--strict` 0/0/0 run inside the tree). `../patch/kernel/` is the tested draft with the old messages, superseded | To: Marcel Holtmann, Luiz Augusto von Dentz; Cc: linux-bluetooth, linux-kernel (`get_maintainer.pl`); optional Cc Pauli Virtanen |
+| `../patch/bluez/0001-tools-sco-tester-Add-reconnect-tests.patch` | the BlueZ test case, its own mail, no cover letter; send with `--subject-prefix="PATCH BlueZ"` | linux-bluetooth |
 | `../patch/kernel-rfc-defer/` | the deferral, **not sent now**: offered in the cover letter as an RFC if the maintainers prefer it | — |
 
-**Placeholders still open:** `<TIP>` (the bluetooth-next commit the series is based on, after the
-fresh-base check); the recipients.
+**Placeholders:** none left. Base bluetooth-next `27731ba09195` (unmoved at the 2026-10-22
+check; re-check just before sending). Still to do before a send: an outside review of the
+package, the operator's three decisions below, and the send itself from the operator's word.
 
 **Open for the operator:**
 1. Send the kernel series and the BlueZ test together (recommended), or the kernel series first.

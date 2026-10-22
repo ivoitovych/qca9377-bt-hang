@@ -16,7 +16,7 @@ to a device whose SCO link is up drops the hold of the socket that owns
 the link, so connect() fails with EBUSY and then the first socket's
 link is disconnected.
 
-Tested on bluetooth-next <TIP> in QEMU with BlueZ's emulator, using
+Tested on bluetooth-next 27731ba09195 in QEMU with BlueZ's emulator, using
 two new sco-tester cases ("[PATCH BlueZ] tools/sco-tester: Add
 reconnect tests", sent separately): "Reconnect During Disconnect" fails
 without patch 1 and passes with it, on uniprocessor and SMP kernels;
@@ -34,10 +34,10 @@ The series applies on top of Hitalo Souza's pending SCO setup series
 and is independent of it.
 
 Iaroslav Voitovych (2):
-  Bluetooth: hci_conn: refuse to reuse a SCO connection that is being aborted
-  Bluetooth: hci_conn: take the caller's hold when a SCO connection is reused
+  Bluetooth: hci_conn: don't reuse an aborting SCO connection
+  Bluetooth: hci_conn: hold a reused SCO connection for its caller
 
  net/bluetooth/hci_conn.c | 25 +++++++++++++++++++++----
  1 file changed, 21 insertions(+), 4 deletions(-)
 
-base-commit: <TIP>
+base-commit: 27731ba091954eccddb2657053b590d2113e8d98

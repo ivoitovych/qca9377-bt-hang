@@ -98,3 +98,17 @@ Also: on base the refused-path ACL hold leaks (R1), worth one sentence; UP mgmt 
 of ELL into `/usr` (`/usr/lib/libell*`, `/usr/include/ell`, 07:41). Inert (not in ld cache, no
 distro libell, bluetoothd does not link it); removal is the operator's call; fix the tool to a
 private prefix.
+
+## 2026-10-22 — the two changes made; package complete
+- Branch `co02-send/final` in `cache/co02-send` (the previous series kept as
+  `co02-send/presend-v0`). Subjects: "Bluetooth: hci_conn: don't reuse an aborting SCO
+  connection", "Bluetooth: hci_conn: hold a reused SCO connection for its caller".
+- Patch 2's message rewritten for the two commits that together make the defect, `Fixes:
+  8a5b0135d4a5`; ids in kernel style (12 characters).
+- Code unchanged: tree `5cb237982c3d` for both the final and the tested series; `patch-id-compare.sh`
+  SAME for both patches (`20f80382…`, `106cab62…`). checkpatch `--strict` inside the tree: 0
+  errors, 0 warnings, 0 checks for both (outside the tree it cannot resolve commit ids:
+  `tmp/co02-send/final/checkpatch-in-tree.sh`).
+- Final files: `patch/kernel-final/`; the cover letter has its base and shortlog.
+- Next: outside review of the package; the operator's decisions; re-check the base just before
+  sending.
