@@ -1,0 +1,55 @@
+Subject: [PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse
+
+When a SCO socket is closed and a new one connects to the same device
+before the Disconnection Complete of the old link arrives,
+hci_connect_sco() hands the dying connection to the new socket:
+connect() succeeds without a Setup Synchronous Connection being sent,
+and the socket is closed with ECONNABORTED when the event arrives.
+PipeWire does exactly this when the HFP codec is changed during a call,
+and with headsets that answer AT+BCS quickly the new codec never gets a
+link.
+
+Patch 1 fails such a connect with -ECONNABORTED instead.
+
+Patch 2 fixes a related problem: a second connect() to a device whose
+SCO link is up fails with EBUSY, as it should, but drops the hold of
+the socket that owns the link, which then gets disconnected. Patch 2
+keeps the EBUSY and stops the disconnect, as e06d549fcd4a did for CIS.
+
+Patch 3 closes the window before abort_reason is set: a
+hci_conn_timeout() that already saw no holder can still abort a
+connection that a new connect() has just taken.
+
+Tested on bluetooth-next 27731ba09195 in QEMU with BlueZ's emulator,
+uniprocessor and SMP, with new sco-tester cases ("[PATCH BlueZ]
+tools/sco-tester: Add reconnect and connect twice tests", sent
+alongside). "Reconnect During Disconnect" and "Connect Twice" fail
+without the series and pass with it, 3 of 3 runs on uniprocessor, SMP
+and KCSAN kernels; "Reconnect After Disconnect" passes on both. The
+window patch 3 closes was reproduced by holding hci_conn_timeout()
+after it saw no holder (a debug-only change): with patches 1 and 2 the
+new socket is still reported connected and then aborted, with patch 3
+the connect fails with ECONNABORTED. sco-tester, iso-tester,
+l2cap-tester and mgmt-tester otherwise give the same results with and
+without the series.
+
+Patch 1 stands on its own, but PipeWire retries a connect that fails
+with ECONNABORTED at once, still before the old link is gone, so its
+retry fails too. A prototype that instead defers such a connect until
+the old link has been torn down lets that retry succeed in the same
+tests; it builds on this series and changes connect() semantics, so I
+can post it as an RFC if that approach is preferred.
+
+The series is independent of Hitalo Souza's pending SCO setup series
+(https://patchwork.kernel.org/project/bluetooth/list/?series=1181908)
+and applies with or without it.
+
+Iaroslav Voitovych (3):
+  Bluetooth: hci_conn: don't reuse an aborting SCO connection
+  Bluetooth: hci_conn: hold a reused SCO connection for its caller
+  Bluetooth: hci_conn: wait for a running SCO disconnect before reuse
+
+ net/bluetooth/hci_conn.c | 36 ++++++++++++++++++++++++++++++++----
+ 1 file changed, 32 insertions(+), 4 deletions(-)
+
+base-commit: 27731ba091954eccddb2657053b590d2113e8d98

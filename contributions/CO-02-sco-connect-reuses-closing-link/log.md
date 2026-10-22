@@ -196,3 +196,17 @@ State: `tmp/co02-w2c/progress.md` (SHA256SUMS, 269 files; `summarize.sh` reprint
   link (read only at setup, completion and cleanup; airmode values 1 and 2 aside).
 - **Side effect:** a `libtoolize` rewrote the git-ignored `ltmain.sh` in the project root (same
   libtool 2.4.7, same size); the build script no longer runs it.
+
+## 2026-10-22 09:00 to 09:20 UTC — resumed; the race re-checked, patch 3, bisect, package v1
+- **Re-checked W2c's race result:** series + park 2/2 killed after "Success"; + prototype 2/2
+  refused with `ECONNABORTED`; unpatched base + park 2/2 killed (no hold: patch 2's bug).
+- **Patch 3 adopted** from the prototype (11 lines); deadlock argument: no `hdev->lock` on the
+  SCO timeout path, and `hci_conn_del()` already waits for `disc_work` under `hdev->lock`.
+- **Bisect finished:** first bad `e6720779ae61` (v6.13); patch 1 and patch 3 carry it.
+- **Messages:** patch 1 with the history sentence; patch 2 around the ownership contract, citing
+  `e06d549fcd4a`, claiming nothing about the pre-`8a5b0135d4a5` behaviour that is not identified;
+  patch 3 new.
+- **BlueZ test:** multi-line comments in BlueZ's style; dependency note below `---`.
+- **Final runs:** 27 of 27 focused, full suites unchanged (SMP mgmt the same nine), 26 of 26 logs
+  clean, base re-checked failing both bug cases. `experiments/results-2026-10-22.md`.
+- **Package:** `patch/v1/`; review request round 2.

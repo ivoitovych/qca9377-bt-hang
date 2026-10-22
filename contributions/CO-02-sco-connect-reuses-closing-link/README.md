@@ -7,9 +7,12 @@ prototype also makes PipeWire 1.0.5's retry succeed. Results:
 `experiments/results-2026-10-21.md`; drafts in `patch/`. Not sent: the operator decides, after
 outside review.
 
-**Recommended contribution:** the kernel series (**`patch/kernel-final/`**; `patch/kernel/` is the
-tested draft with superseded messages, same code) with the BlueZ test case (`patch/bluez/`,
-being reworked after the 2026-10-22 reviews); the deferral (`patch/kernel-rfc-defer/`) as an RFC question to the
+**Current package (2026-10-22): `patch/v1/`**, three kernel patches (the third closes the
+`hci_conn_timeout()` race the reviewers found), the reworked BlueZ test and the cover letter;
+evidence in `experiments/results-2026-10-22.md`. `patch/kernel-final/` and `patch/kernel/` are
+earlier two-patch drafts, superseded.
+
+**Recommended contribution:** the kernel series with the BlueZ test case; the deferral (`patch/kernel-rfc-defer/`) as an RFC question to the
 maintainers, since it changes `connect()` semantics; a PipeWire note later, the operator's
 call.
 
