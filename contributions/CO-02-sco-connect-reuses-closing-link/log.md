@@ -159,3 +159,40 @@ send after message fixes, no code changes. New points, to take up when work resu
 - **Before sending:** 20 more mgmt-tester runs; re-check patchwork for `hci_connect_sco()` /
   `hci_conn_drop()` work (Jeremy Dean Clifton's 10-20 patch).
 - **ELL in `/usr`:** both say remove it and use a private prefix.
+
+## 2026-10-22 — worker W2c, paused at the operator's request (results NOT yet re-checked)
+State: `tmp/co02-w2c/progress.md` (SHA256SUMS, 269 files; `summarize.sh` reprints the counts).
+- **BlueZ test v2** (branch `co02/sco-tester-reconnect-v2-w2c`, commit `693abcbd2` in
+  `cache/co02-w2c-bluez`; patch `tmp/co02-w2c/patch-bluez-t3/`): strict oracle (After only on a
+  real new link; During only on `ECONNABORTED` or a real new link; anything else fails with a
+  message); the Disconnection Complete held with a `POST_EVT` hook so btdev tears down normally;
+  counters assert the scenario; a **Connect Twice** case (exactly `EBUSY`, no Disconnect, first
+  link still up after 500 ms, both sockets' close then disconnects SCO and ACL). ci-local
+  am/checkpatch/gitlint PASS. Distinct handles cannot be asserted: btdev reuses 0x0100 once the
+  first link is gone. Positive control: the deferral kernel passes During through a real new link.
+- **Counts** (3 runs each, After / During / Connect Twice): base 3/0/0 on UP, SMP and KCSAN;
+  patch 1 alone 3/3/0 (UP); the series 3/3/3 on UP, SMP and KCSAN. Full sco-tester: base 31/33,
+  patch 1 alone 32/33, series 33/33. kernel-report-scan: 101 of 104 logs clean, 3 KCSAN reports
+  outside SCO and `hci_conn.c`.
+- **The timeout race is REAL, deterministically:** a scratch module parameter parks
+  `hci_conn_timeout()` after it saw `refcnt == 0`; with the series, a second connect during the
+  park gets "returned 0 (Success)" with no setup, then `SO_ERROR 103` (4 of 4, SMP). A prototype
+  (in patch 2's reuse branch: `cancel_delayed_work_sync(&sco->disc_work)` after the hold, then
+  refuse if `abort_reason` is set) refuses it 3 of 3 and passes the focused cases 9 of 9, no
+  report; branch `w2c/proto-20261022`, patch in `tmp/co02-w2c/patch-kernel-prototype/`. The
+  worker reads it as a pre-existing, separate `hci_conn` lifetime race (`hci_connect_acl` has no
+  `abort_reason` check at all). Not run: the race on the unpatched base (image built).
+- **`Fixes:` check, empirical:**
+  - patch 2: at the parent of `8a5b0135d4a5` the first link survives the second connect but
+    never disconnects after both sockets close (a leaked hold); at `8a5b0135d4a5` it is
+    killed. So patch 2 fixes a leak older than `8a5b0135d4a5` (from `06149746e720`) and the kill
+    from `8a5b0135d4a5`; the message and tags need that nuance (reviewer 5 said as much);
+  - patch 1: **`a13f316e90fd` is not supported**: neither it nor its parent shows the false
+    success (During gets `EBUSY` there). A bisect between `a13f316e90fd` (good) and the parent
+    of `8a5b0135d4a5` (bad), limited to `net/bluetooth`, is about 3 steps from the answer
+    (`dc26097bdb86` bad; five good; step 7 `4a5e0ba68676` was building). Resume:
+    `git -C cache/co02-w2c-hist bisect run tmp/co02-w2c/bisect-step.sh`.
+- **`setting`/`codec`** written by a failing duplicate connect: no practical effect on the live
+  link (read only at setup, completion and cleanup; airmode values 1 and 2 aside).
+- **Side effect:** a `libtoolize` rewrote the git-ignored `ltmain.sh` in the project root (same
+  libtool 2.4.7, same size); the build script no longer runs it.

@@ -162,10 +162,12 @@ it rotted within hours (`R2-13`).
 >   - the operator's decisions: Cc Hitalo Souza, Aldo Ariel Panzardo, Pauli Virtanen
 >     (recommended); `Cc: stable` on patch 2 (recommended); the BlueZ test the same day after the
 >     kernel series (recommended).
-> - **Worker W2c** (CO-02 test rework, race proof, empirical Fixes check) was asked to pause,
->   commit its branches in its own `cache/` worktrees and write its state to
->   `tmp/co02-w2c/progress.md`. Read that before resuming; its report may also arrive as a task
->   notification.
+> - **Worker W2c paused and reported** (state `tmp/co02-w2c/progress.md`; summary in the CO-02
+>   `log.md`; not yet re-checked): BlueZ test v2 done (strict, Connect Twice added; series 3/3/3,
+>   base 3/0/0); **the timeout race is real** (4 of 4 with a parked worker) and a small prototype
+>   fix refuses it (3 of 3); **patch 1's `Fixes: a13f316e90fd` is not supported empirically**, a
+>   bisect is ~3 steps from the real commit; patch 2 fixes an older hold leak as well as the kill
+>   from `8a5b0135d4a5`, so its tags and message need that nuance.
 > - **CO-05 + CO-26** (mesh): two-patch series written and re-checked (`patch/`), next an
 >   outside-review package. **CO-04:** no Tested-by for Igor Putko's 14888791 (it adds a
 >   `hdev->lock` / `cmd_sync_work_lock` inversion, 9 of 12 boots); a review reply is the
