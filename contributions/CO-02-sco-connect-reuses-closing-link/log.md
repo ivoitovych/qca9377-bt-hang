@@ -78,3 +78,23 @@ The decisive pair re-run independently of the worker's own runs
   connection abort (103)";
 - `scripts/kernel-report-scan.py`: both logs clean, each the intended kernel.
 The drafts were checked for tool or model names and trailers (none) before being copied in.
+
+## 2026-10-22 — pre-send checks (worker W2b) done; two changes needed before sending (PAUSED here)
+Full report: the worker's final message, raw in `tmp/co02-send/` (SHA256SUMS, progress.md).
+All checks pass (bases unmoved; testers; preflight; ci-local kernel + BlueZ; failure paths incl.
+races 42/42 fixed; patch-ids SAME). To do before any send:
+1. **Patch 2's `Fixes:` is wrong.** At `06149746e720` the `sco_chan_add()` error path only
+   `return err;` (no hold drop). The drop came with `8a5b0135d4a5d` (Cen Zhang, 2026-03-26,
+   "Bluetooth: SCO: fix race conditions in sco_sock_connect()": "Adding hci_conn_drop() on
+   sco_chan_add failure"). The defect needs both (no hold taken on reuse since 06149746e720,
+   dropped on error since 8a5b0135d4a5d): decide the tag (likely `8a5b0135d4a5d`) and reword
+   "still drops the caller's hold after sco_chan_add()" to the error path.
+2. **GitLint (bot) T1 title > 80 with the patchwork prefix** on both kernel subjects; shorter
+   subjects in `tmp/co02-send/patches-short-subject/` pass (patch-id unchanged).
+Also: on base the refused-path ACL hold leaks (R1), worth one sentence; UP mgmt flakes 1/9 base vs
+3/9 series (LL Privacy, pairing; not SCO code) deserve more runs; Jeremy Dean Clifton's 10-20
+`hci_conn_drop()` patch is adjacent.
+**Side effect to report to the operator:** `scripts/ci-local.sh`'s BuildEll ran `make install`
+of ELL into `/usr` (`/usr/lib/libell*`, `/usr/include/ell`, 07:41). Inert (not in ld cache, no
+distro libell, bluetoothd does not link it); removal is the operator's call; fix the tool to a
+private prefix.
