@@ -162,7 +162,15 @@ it rotted within hours (`R2-13`).
 >   - the operator's decisions: Cc Hitalo Souza, Aldo Ariel Panzardo, Pauli Virtanen
 >     (recommended); `Cc: stable` on patch 2 (recommended); the BlueZ test the same day after the
 >     kernel series (recommended).
-> - **CO-02 v1 ready for review round 2 (2026-10-22 09:20 UTC):** `patch/v1/`: three kernel
+> - **CO-02 v2 is the current package (2026-10-22 12:40 UTC):** `patch/v2/kernel/` and
+>   `patch/v2/bluez/`. In round 2 the six reviewers asked for no more investigation. Checking one
+>   suggestion found a gap: patch 3 v1 missed SCO connections the remote device set up, which are
+>   never linked. This was reproduced with the park, and v2 waits after both branches. Focused
+>   runs 27/27, no difference in the full suites, 32 logs clean.
+>   Evidence: `experiments/results-2026-10-22-v2.md`. Round 3 asked on patch 3 v2. Still the
+>   operator's decisions: Cc (Hitalo Souza, Aldo Ariel Panzardo, Pauli Virtanen, Cen Zhang from
+>   `get_maintainer.pl`), `Cc: stable`, send timing, the ELL files in `/usr`.
+> - **CO-02 v1 ready for review round 2 (2026-10-22 09:20 UTC, superseded by v2):** `patch/v1/`: three kernel
 >   patches (patch 3 closes the timeout race), `Fixes: e6720779ae61` (bisected) for 1 and 3,
 >   `8a5b0135d4a5` for 2; the reworked BlueZ test; the cover letter. 27/27 focused runs, suites
 >   unchanged, 26/26 logs clean. Evidence `experiments/results-2026-10-22.md`. The operator's
