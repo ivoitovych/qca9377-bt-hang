@@ -1,0 +1,59 @@
+From 2261c3113a69f030c15d496c1f882e38bfbf4a91 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Wed, 21 Oct 2026 05:29:28 +0200
+Subject: [PATCH 1/3] Bluetooth: hci_conn: don't reuse an aborting SCO
+ connection
+
+hci_connect_sco() finds an existing connection to the destination by
+type and address only, and sets up a link only if that connection is
+BT_OPEN or BT_CLOSED. A connection that is being disconnected is
+neither: hci_abort_conn() only sets abort_reason, and the connection
+stays BT_CONNECTED until the Disconnection Complete event arrives.
+
+A socket that connects to the same device in that window is therefore
+handed the dying connection. Before commit e6720779ae61 ("Bluetooth:
+SCO: Use kref to track lifetime of sco_conn") the closed socket stayed
+attached to the connection in BT_DISCONN until that event, so
+sco_chan_add() failed such a connect() with EBUSY. Since then the
+closed socket is detached at once and the new socket takes its place:
+no Setup Synchronous Connection is sent, sco_connect() reports the
+socket connected at once, and the Disconnection Complete then closes
+it with ECONNABORTED. Closing a SCO socket and connecting a new one
+right away, as PipeWire does when the HFP codec changes during a call,
+ends with a socket that reported success and never had a link.
+
+Fail the connect with -ECONNABORTED when the connection found has
+abort_reason set, and drop the ACL reference hci_connect_acl() took.
+The caller learns at once, with the error the socket would otherwise
+get later, and can connect again once the link is gone.
+
+Fixes: e6720779ae61 ("Bluetooth: SCO: Use kref to track lifetime of sco_conn")
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/hci_conn.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index 29da3fe2b9538..8a20ccdf618c7 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1909,6 +1909,14 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 			hci_conn_drop(acl);
+ 			return sco;
+ 		}
++	} else if (sco->abort_reason) {
++		/* The connection is being disconnected and stays BT_CONNECTED
++		 * until the Disconnection Complete event, so no setup would
++		 * be sent for it and it would be closed under the new socket
++		 * as soon as the event arrives.
++		 */
++		hci_conn_drop(acl);
++		return ERR_PTR(-ECONNABORTED);
+ 	}
+ 
+ 	link = hci_conn_link(acl, sco);
+
+base-commit: 27731ba091954eccddb2657053b590d2113e8d98
+-- 
+2.43.0
+

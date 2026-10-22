@@ -210,3 +210,34 @@ State: `tmp/co02-w2c/progress.md` (SHA256SUMS, 269 files; `summarize.sh` reprint
 - **Final runs:** 27 of 27 focused, full suites unchanged (SMP mgmt the same nine), 26 of 26 logs
   clean, base re-checked failing both bug cases. `experiments/results-2026-10-22.md`.
 - **Package:** `patch/v1/`; review request round 2.
+
+## 2026-10-22 11:30 to 12:40 UTC — review round 2 (six reviews of `4ee379d`) and package v2
+Reviews: `reviews/2026-10-22-round2-reviews-of-4ee379d.md`. All six find the kernel series sound,
+and none asks for another investigation. What each point led to:
+
+| Point (reviewer) | Outcome |
+|---|---|
+| Patch 3 changelog: the wait is limited to the existing-link path, because only a linked connection can have pending disconnect work (2) | **The invariant is false, and patch 3 v1 had a gap.** A SCO connection the remote set up is never linked (there is no `hci_conn_link()` in `hci_event.c`); its hold comes from `__sco_chan_add()` (`sco.c:315`), and closing the accepted socket queues `disc_work` on an unlinked connection. A connect then takes the `else` branch, and `hci_conn_link()`'s hold does not wait either. New scratch case "Incoming Race Park" (`cache/co02-w2c-bluez-exp`): series v1 + park, 2 of 2 "connect() returned 0", then `SO_ERROR 103`, no setup. **Patch 3 v2** waits after both branches, so every reused connection is covered (a new one has no queued work). v2 + park: incoming 6 of 6 and linked 3 of 3 refused with `ECONNABORTED`. |
+| Patch 3: say why the wait is safe (3); "an hci_conn_timeout() worker" (2) | v2's message names `hci_proto_disconn_ind()` (a constant) and `hci_abort_conn()` (it only queues the Disconnect), with `hci_conn_del()` as precedent; the cover letter uses the wording. |
+| Patch 1: say why it was EBUSY before `e6720779ae61` (6) | Checked in `e6720779ae61`'s diff: `__sco_sock_close()` kept the closed socket attached in `BT_DISCONN` until the event, so `sco_chan_add()` refused. One clause added. |
+| `READ_ONCE()` on the first `abort_reason` read (4) | Not changed. Every other access in the tree is plain (`hci_abort_conn()` reads and writes it plainly), and patch 3 bases the decision on the value read after the worker is waited for. The answer is ready if asked. |
+| Lockdep run (4) | Already done: every final kernel and the park kernels have `PROVE_LOCKING`, `DEBUG_ATOMIC_SLEEP` and `DEBUG_LOCK_ALLOC`. `kernel-report-scan` matches lockdep reports, and all logs are clean. The parked runs make the wait actually block under `hdev->lock`. |
+| BlueZ: the watch callbacks ignore `cond` (3, 5) | `io_connected()`: requires `G_IO_OUT` without ERR or HUP, then `SO_ERROR == 0` and `POLLOUT`; used for the first and the second socket. |
+| BlueZ: check that the second link stays up (3, optional) | `reconnect_stable()`: 500 ms later, the second socket must still be connected, with no further Disconnect. |
+| BlueZ: the ACL teardown is identified as "not the SCO handle" (4) | The ACL handle is now recorded from Connection Complete, and the ACL teardown is matched on it. |
+| BlueZ: 3 s ACL deadline against the 2 s ACL idle timeout (6) | `RECONNECT_ACL_MS` 5000 for that wait (the case timeout is 8 s). |
+| BlueZ: comment openers mixed (6) | Not changed: BlueZ `doc/coding-style.rst` M2 says a multi-line comment starts on the second line, which is what the test does. |
+| BlueZ subject over 50 characters (2) | "tools/sco-tester: Add SCO reconnect tests" (41). |
+| BlueZ diffstat hand-edited (6) | The mail is regenerated with `git format-patch` and the note is re-inserted below `---`. |
+| Two `0001-` files in one directory (3) | `patch/v2/kernel/` and `patch/v2/bluez/`. |
+| README opening stale (3, 4, 5) | Rewritten around `patch/v2/`. |
+| Cover letter: mgmt-tester detail; refusal versus the end-to-end codec switch in one sentence (4) | Both added. |
+| `get_maintainer.pl` on the final mails (2) | Marcel Holtmann, Luiz Augusto von Dentz, **Cen Zhang** (`blamed_fixes`: author of `8a5b0135d4a5`), linux-bluetooth, linux-kernel. |
+| Residual window: the new connect lands before the worker runs and adopts the old link (6) | Not in the mail; the answer is ready if asked (reviewer 6's own advice). The incoming path has the same window. |
+| `Cc: stable`; Cc list; BlueZ timing; ELL in `/usr`; permission clean-ups | The operator's decisions. `scripts/ci-local.sh` now installs ELL to `tmp/ci-local/ell-prefix` and finds it with `PKG_CONFIG_PATH`, never `/usr`. |
+| 20 more mgmt-tester runs (round 1, reviewer 6) | Not done as such. Round-2 reviewers 2 and 5 say identical failure sets settle it. v2's first SMP run had a tenth not-passed case, so three alternating v2/base SMP repeats were run: identical sets each time, and the extra case (`LL Privacy - Remove Device 4 (Disable Adv)`, Timed out) also hit the base. |
+
+**v2 results:** the focused cases pass 27 of 27, the base fails both bug cases, the full suites
+show no difference, all 32 logs are clean, and every mail check passes:
+`experiments/results-2026-10-22-v2.md`. `ci-local`'s BuildEll went to the private prefix, and
+`/usr/lib/pkgconfig/ell.pc` still carries only the 2026-10-21 copy.

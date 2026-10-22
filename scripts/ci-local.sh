@@ -479,13 +479,18 @@ if want subjectprefix; then
 fi
 
 ################################################################################
-# BuildEll — once; not a property of the patches
+# BuildEll — once; not a property of the patches. The bot installs ELL into /usr
+# of its container; here it goes to a private prefix (the last --prefix wins over
+# bootstrap-configure's /usr), never into this machine's /usr (2026-10-21: it did),
+# and makeextell finds it through PKG_CONFIG_PATH.
+ELL_PREFIX="$REPO/tmp/ci-local/ell-prefix"
+export PKG_CONFIG_PATH="$ELL_PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 if want buildell; then
 	if [[ ! -x "$ELL/bootstrap-configure" ]]; then
 		verdict buildell "NOT RUN" "no ELL tree at $ELL"; SKIPPED+=(buildell)
 	else
-		if run_to "$OUT/buildell.out" "$OUT/buildell.err" "$ELL" ./bootstrap-configure && run_to "$OUT/buildell.make.out" "$OUT/buildell.make.err" "$ELL" make -j"$JOBS" && run_to "$OUT/buildell.install.out" "$OUT/buildell.install.err" "$ELL" make install; then
-			verdict buildell PASS "ELL $(git -C "$ELL" log -1 --format=%h) configured, built and installed"
+		if run_to "$OUT/buildell.out" "$OUT/buildell.err" "$ELL" ./bootstrap-configure --prefix="$ELL_PREFIX" && run_to "$OUT/buildell.make.out" "$OUT/buildell.make.err" "$ELL" make -j"$JOBS" && run_to "$OUT/buildell.install.out" "$OUT/buildell.install.err" "$ELL" make install; then
+			verdict buildell PASS "ELL $(git -C "$ELL" log -1 --format=%h) configured, built and installed in $ELL_PREFIX"
 		else
 			verdict buildell PRE-EXISTING "ELL does not build here (independent of the patches); see buildell.*.err"
 			tail -5 "$OUT/buildell.make.err" 2>/dev/null | detail

@@ -1,16 +1,20 @@
 # CO-02 — A new SCO connect reuses the closing link (U7)
 
-**State:** **reproduced and patch written** (2026-10-21). A BlueZ `sco-tester` case reproduces
-it on bluetooth-next (0 of 20 pass unpatched, every run on UP, SMP and KCSAN kernels); a
-two-patch kernel series fixes it (20 of 20) and a second defect found on the way; a deferral
-prototype also makes PipeWire 1.0.5's retry succeed. Results:
-`experiments/results-2026-10-21.md`; drafts in `patch/`. Not sent: the operator decides, after
-outside review.
+**State (2026-10-22): the package to send is `patch/v2/`**: `kernel/` holds the cover letter
+and three kernel patches, and `bluez/` holds the BlueZ test, a separate mail. Evidence is in
+`experiments/results-2026-10-22-v2.md`. Two review rounds are in `reviews/`, and how each point
+was handled is in `log.md`. Not sent: the operator decides.
 
-**Current package (2026-10-22): `patch/v1/`**, three kernel patches (the third closes the
-`hci_conn_timeout()` race the reviewers found), the reworked BlueZ test and the cover letter;
-evidence in `experiments/results-2026-10-22.md`. `patch/kernel-final/` and `patch/kernel/` are
-earlier two-patch drafts, superseded.
+The series:
+1. refuses a SCO connect that would be handed a connection being disconnected;
+2. stops a refused second connect from disconnecting the first socket's link;
+3. waits for a disconnect worker that is already running before it reuses a connection.
+
+Superseded and kept as history:
+- `patch/v1/` (round 2): patch 3 covered only connections with a link.
+- `patch/kernel-final/`, `patch/kernel/`: two-patch drafts, with results in
+  `experiments/results-2026-10-21.md`.
+- `patch/kernel-rfc-defer/`: the deferral prototype, offered as an RFC only.
 
 **Recommended contribution:** the kernel series with the BlueZ test case; the deferral (`patch/kernel-rfc-defer/`) as an RFC question to the
 maintainers, since it changes `connect()` semantics; a PipeWire note later, the operator's
