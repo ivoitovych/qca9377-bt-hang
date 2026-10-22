@@ -314,3 +314,15 @@ Reviews: `reviews/2026-10-22-round4-reviews-of-472e898.md` (reviewers 1 to 5) an
   retried after 7.2.
 - **Have ready if asked:** the stable paragraph belongs in per-patch tags, not the cover. Both
   places are harmless, and the tags are the authoritative part (6).
+
+## 2026-10-22 19:20 to 20:00 UTC — stable check complete; final mails; dry run
+- **6.18.58 and 7.2.12:** both bugs present unpatched; all fixed with the series; parked race
+  refused 3/3; 34 logs clean. The 6.18 tag came from the GitHub mirror; its SCO files are
+  identical to kernel.org's by blob id. All four affected lines are now built and tested, as the
+  operator required before tagging.
+- **Stable tags added** on `co02-send/v3-stable` (tree unchanged): `# 6.6.x` on patch 1, plain on
+  patches 2 and 3.
+- **Final mails** in `patch/v3/send/`. Checks pass. Heads unchanged. Luiz's mainloop patch is
+  still `new`.
+- **`git send-email --dry-run`:** threading and recipients as decided. `stable@` comes from the
+  trailers, which the stable rules expect. Not sent.

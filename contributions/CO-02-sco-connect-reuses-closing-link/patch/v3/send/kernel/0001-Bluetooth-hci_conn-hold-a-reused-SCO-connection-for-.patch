@@ -1,0 +1,66 @@
+From 1f5a3302aacc4c19ac78e636eeba7544722760d6 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Wed, 21 Oct 2026 05:47:33 +0200
+Subject: [PATCH 1/3] Bluetooth: hci_conn: hold a reused SCO connection for its
+ caller
+
+hci_connect_sco() returns the connection with a reference that its
+caller owns, and sco_connect() drops that reference when it is done
+with it. A new connection gets the reference from hci_conn_link().
+Since commit 06149746e720 ("Bluetooth: hci_conn: Add support for
+linking multiple hcon"), a connection whose link already exists is
+returned without one, and the ACL reference that hci_connect_acl() took
+for the link is kept instead.
+
+Since commit 8a5b0135d4a5 ("Bluetooth: SCO: fix race conditions in
+sco_sock_connect()"), sco_connect() drops the reference when
+sco_chan_add() fails, so a second connect() to a device whose SCO link
+is up drops the reference of the socket that owns the link:
+sco_chan_add() fails with EBUSY, hci_conn_timeout() then finds no
+holder, and the first socket's link is disconnected.
+
+Take the reference for the caller when the link exists, and drop the
+ACL reference, which the existing link already owns, as commit
+e06d549fcd4a ("Bluetooth: hci_conn: fix CIS hold ownership on reuse")
+did for CIS. The second connect() still fails with EBUSY; the first
+link is no longer disconnected.
+
+Fixes: 8a5b0135d4a5 ("Bluetooth: SCO: fix race conditions in sco_sock_connect()")
+Cc: stable@vger.kernel.org # 6.6.x
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/hci_conn.c | 17 +++++++++++++----
+ 1 file changed, 13 insertions(+), 4 deletions(-)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index 29da3fe2b9538..603ddb7fe3d0d 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1911,11 +1911,20 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 		}
+ 	}
+ 
+-	link = hci_conn_link(acl, sco);
+-	if (!link) {
++	if (sco->link) {
++		/* The existing link already owns the hold on the ACL, and the
++		 * caller needs its own hold on the SCO connection, which
++		 * hci_conn_link() only takes for a new link.
++		 */
+ 		hci_conn_drop(acl);
+-		hci_conn_drop(sco);
+-		return ERR_PTR(-ENOLINK);
++		hci_conn_hold(sco);
++	} else {
++		link = hci_conn_link(acl, sco);
++		if (!link) {
++			hci_conn_drop(acl);
++			hci_conn_drop(sco);
++			return ERR_PTR(-ENOLINK);
++		}
+ 	}
+ 
+ 	sco->setting = setting;
+-- 
+2.43.0
+
