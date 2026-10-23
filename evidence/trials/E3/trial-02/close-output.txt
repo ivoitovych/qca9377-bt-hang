@@ -1,0 +1,68 @@
+trial ended without a probe: no command timeout observed; liveness not measured
+
+  SCO setup requested   : 55
+  SCO -> first timeout  : none s
+  command timeouts      : 0
+  responds afterwards   : unprobed
+  still on the USB bus  : yes   (bus-loss events: 0)
+  request parameters    : /root/exp/qca9377-bt-hang/evidence/trials/E3/trial-02/sco-params.txt
+  liveness probes       : 0   (btmon aborts: 5)
+  last probe -> timeout : ? s
+  previous shutdown     : unknown   (controller enumerated this boot: no)
+Trial E3 #2: survived (300842s)
+
+Trial results  (/root/exp/qca9377-bt-hang/evidence/trials/results.tsv)
+─────────────────────────────────────────────────────────────
+  TRIAL TYPE         BUILD  UNRECOV  BT-1 INC RESCUED  RATE    CENSORED mean dur
+  observational_boot stock  0/4      0/4      0/0      0%      0/4      59149s
+      treatment: autosusp=N,power=on,wd=off,probes=off
+  observational_boot stock  4/6      4/6      0/4      67%     0/6      64592s
+      treatment: autosusp=Y,power=auto,wd=off,probes=off
+  observational_boot E3     0/2      0/2      0/0      0%      0/2      360250s
+      treatment: autosusp=Y,power=auto,wd=off,probes=off
+  observational_boot stock  0/2      0/2      0/0      0%      0/2      1526s
+      treatment: autosusp=?,power=?,wd=off,probes=off
+
+  These rows must never be added together. An observational boot
+  and a controlled protocol run are different evidence: the first
+  says the machine did or did not hang during ordinary use, the
+  second says the reproduction protocol was applied and the
+  controller withstood it or did not. Only controlled_* rows can
+  satisfy the A/B/C/D gate.
+
+  !! 4 DISTINCT ENVIRONMENTS above.
+     Rows with different env: lines are different EXPERIMENTS and must
+     not be added together. Autosuspend state and watchdog mode change
+     the controller and can change the outcome, so a kernel comparison
+     across them measures the mitigation as much as the kernel.
+     `build` names only the kernel; the treatment is build + env.
+
+  !! 2 trial(s) CHANGED or PERTURBED mid-run.
+     Their treatment string begins CHANGED: or PERTURBED: so it
+     matches no other trial and cannot pool into any denominator.
+     A trial that was reconfigured while running, or whose
+     controller was reset by something other than the protocol,
+     was not conducted under one condition, and no rate computed
+     from it means anything.
+
+  1 row(s) reclassified at read time: recorded as CHANGED by a
+  pre-fix writer when a treatment field merely became unreadable
+  at close. Counted under the treatment the trial ran under.
+  (tools/lib/trial-reclass.awk; the raw TSV is not rewritten.)
+
+Was the SCO stimulus actually applied, and did it matter?
+─────────────────────────────────────────────────────────────
+                             hung     survived
+  SCO setup requested           4            2
+  no SCO setup                  0            8
+  (2 trial(s) whose treatment CHANGED or was PERTURBED mid-run — excluded)
+  (1 pre-fix CHANGED row(s) reclassified at read time — see trial-reclass.awk)
+
+  SCO setup has been survived AND followed by failure. The request
+  alone is therefore not sufficient — look at its parameters.
+
+  Gate: stock must reach a high, stable failure rate (target 5/5) before
+  any build is compiled. Compare every build against the SAME protocol.
+
+  A trial that survives WITHOUT provoking SCO setup proves nothing about
+  the build. Check the top row is filling before drawing conclusions.
