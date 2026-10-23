@@ -739,6 +739,7 @@ specific to this controller.
 | U12 | a microphone opened while A2DP is starting loses A2DP; only Handsfree remains (2026-10-19) | confirmed in the capture, the logs and the source; fixed upstream in BlueZ 5.80 |
 | U13 | a headset known only from its LE advertising cannot be set up: every click pairs over LE, the headset refuses, GNOME shows nothing (2026-10-21) | confirmed in the capture, the log and the source; not fixed upstream |
 | U14 | a Bluetooth headset is forced into Handsfree while an application records from any microphone, and a manual return to A2DP is undone when the recording ends (2026-10-21) | confirmed in the log and the source (WirePlumber 0.4.17); fixed upstream by the 0.5 rewrite |
+| U15 | the MOMENTUM 4 says "mute on" at every hands-free start: it reports a microphone gain of 0 at connect, and PipeWire sends that 0 back as `+VGM: 0` (2026-10-23) | mechanism confirmed in the log, the capture and the state; no upstream quirk entry for this headset |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
@@ -1155,6 +1156,23 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   **Workaround [inference, the operator's choice]:** a user override that empties `media-role.applications` or sets `media-role.use-headset-profile = false` (then a call needs the profile chosen by hand); and clearing the three wrong `a2dp-sink` entries in the state file.
 
   **Evidence:** raw and unfiltered, on this machine only: `archive/incidents/20261021-shure-autoswitch/` (the WirePlumber, bluetoothd and full journals 06:30 to 06:55, the state files, the installed script and config, `SHA256SUMS`; saved by `tmp/incident-20261021-shure/save-raw-autoswitch.sh`).
+
+- **U15 — the MOMENTUM 4 says "mute on" at every hands-free start and "mute off" when it ends, with nothing muted on the desktop** *(mechanism confirmed in the log, the HCI capture and the saved state, 2026-10-23; PipeWire 1.0.5 / WirePlumber 0.4.17; whether the microphone is really silenced in a call is not yet checked)*.
+
+  **What happened** (local time, 2026-10-23; the operator wearing the MOMENTUM 4, dictating into a transcription input; "many times already"):
+  - **[operator]** "mute on" in the headset when dictation starts, "mute off" when it ends; no mute set for the headset or the Handsfree profile in the settings. A manual switch to Handsfree also gave "mute on"; dictation started after that gave nothing.
+  - **[log] Each "mute on" is a hands-free start.** WirePlumber switched the headset from `a2dp-sink` to `headset-head-unit-msbc` at 02:26:18, 02:32:03, 02:35:33 and 02:57:30 (dictation, `U14`'s automatic switch) and back at 02:27:11, 02:32:54, 02:37:04 and 02:57:38; at 02:58:49 `Current profile has input route, not switching` (the manual Handsfree already set).
+  - **[capture] The laptop tells the headset its microphone gain is 0.** About 23 ms after each eSCO link came up (02:26:18.545, 02:32:03.757, 02:35:33.212, 02:57:30.666, and 02:58:22.338 for the manual switch) the laptop sent `+VGS: 9` and `+VGM: 0` on the HFP RFCOMM channel, and both again 1.5 s later (`EX-066`).
+  - **[state]** `~/.local/state/wireplumber/default-routes` holds `channelVolumes=0.0` for both of the MOMENTUM's hands-free inputs (`headset-hf-input`, `bluetooth-hf-input`); `wpctl status` shows its source at `vol: 0.00`, not muted.
+  - **[log] The zero comes from the headset.** At every hands-free connect the MOMENTUM itself reports `AT+VGS=09` (or `12`) and `AT+VGM=00`, and PipeWire logs `volume changed 0`: 32 of 32 connects the journal holds (2026-10-19 to 2026-10-23), never another microphone gain; the Shure AONIC 50 reports `AT+VGM=15` (`EX-065`).
+
+  **[source] Why** (PipeWire master `662fe053a`, `spa/plugins/bluez5/backend-native.c`; 1.0.5's copy not yet compared): the gateway takes a headset's `AT+VGM=<n>` as the microphone volume (`rfcomm_emit_volume_changed(…, SPA_BT_VOLUME_ID_RX, gain)`, l.1380–1383) unless the device lacks the `hw-volume-mic` feature (`broken_mic_hw_volume`, set from the quirk table at l.3584); WirePlumber saves the route volume; at a hands-free start `rfcomm_ag_set_volume()` sends the volume as `+VGM: <n>` when it is marked active (l.3119–3137, called at l.3249–3250 and 3280–3281). The MOMENTUM reports 0 and announces a received `+VGM: 0` as mute. **[inference]** With the quirk the report is ignored; whether the microphone volume then stays inactive, so that no `+VGM` is sent at all, is not traced yet. Upstream has a per-device switch for such headsets: `bluez-hardware.conf` lists one, `{ name = "Air 1 Plus", no-features = [ hw-volume-mic ] }` (`9d38d375d`, 2021: "Some headsets emit AT+VGM even though +VGM commands do not actually adjust the recording volume"); no MOMENTUM 4 entry on master (`662fe053a`, 2026-09-04). Same mechanism as `U2`'s unexplained saved microphone volume.
+
+  **Open:** is the microphone really silenced while "mute on" (a test call or a recording through the MOMENTUM; if so, the other side of every call hears nothing)? Does `+VGM: 15` give "mute off"?
+
+  **Fix options [the operator's choice]:** a local quirk override (WirePlumber's `bluez5.hardware-database` property with the stock table plus `{ name = "MOMENTUM 4", no-features = [ hw-volume-mic ] }`), which stops the stored 0 (and, to be checked, the `+VGM`); a one-off volume reset (undone at the next connect, when the headset reports 0 again); then the same one-line entry upstream in PipeWire. **PipeWire's contributor rules** (`CLAUDE.md` in its tree, read 2026-10-23): no tool-written merge request descriptions, commit messages, issue text or replies to reviewers, and no automated posting; the operator writes and submits it, and evidence gathered with tools (verbatim logs) may be attached. This project gathers the evidence only.
+
+  **Evidence:** `EX-065`, `EX-066`; raw on this machine only: `archive/incidents/20261023-momentum-mic-gain-zero/` (the user journal around the connect and the sessions, every gain line the journal holds, the state files, `wpctl status`, the captures' gain packets, `SHA256SUMS`; saved by `tmp/incident-20261023-momentum/save.sh`).
 
 ---
 

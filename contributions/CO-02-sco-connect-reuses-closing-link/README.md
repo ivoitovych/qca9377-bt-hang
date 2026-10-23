@@ -1,10 +1,17 @@
 # CO-02 — A new SCO connect reuses the closing link (U7)
 
-**State (2026-10-22): the package to send is `patch/v3/`**: `kernel/` holds the cover letter
+**State (2026-10-23): the package to send is `patch/v5/send/`**: `kernel/` holds the cover letter
 and three kernel patches, and `bluez/` holds the BlueZ test, a separate mail. Evidence is in
-`experiments/results-2026-10-22-v3.md` (with v2's and the race transcript before it). The
-review rounds are in `reviews/`, and how each point was handled is in `log.md`. Not sent: the
-operator decides.
+`experiments/results-2026-10-22-v3.md` (the stable lines) and `-v4.md` (bluetooth-next; v5
+changed only the messages). The review rounds are in `reviews/`, and how each point was handled
+is in `log.md`. Not sent: next is the run on the laptop
+(`experiments/hardware-run-plan.md`), then the operator's send.
+
+**The laptop's kernel (2026-10-23):** Ubuntu 7.0.0-38 needs upstream `abd93c85c8667` +
+`816fb1590a4c` under the series, or patch 1 leaves a `sco_conn` reference that keeps the SCO
+link up (`log.md`, "the laptop's kernel"). The module for the laptop is
+`tmp/co02-hw/module/full/` (built by `experiments/build-laptop-module-v2.sh`); the cover letter
+has a paragraph for such trees.
 
 The series:
 1. stops a refused second connect from disconnecting the first socket's link (the hold fix;
@@ -13,6 +20,7 @@ The series:
 3. waits for a disconnect worker that is already running before it reuses a connection.
 
 Superseded and kept as history:
+- `patch/v4/send/`, `patch/v3/`: the same code as v5, earlier messages.
 - `patch/v2/`: the same code, with the refusal first.
 - `patch/v1/` (round 2): patch 3 covered only connections with a link.
 - `patch/kernel-final/`, `patch/kernel/`: two-patch drafts, with results in
