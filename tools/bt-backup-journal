@@ -38,6 +38,13 @@
 # justifies it: a fault has just happened and the machine is about to be power
 # cycled. `bt-archive --check` finds prefixes that are already on disk.
 #
+# ⚠️ CORRECTED 2026-10-23: "a live boot cannot rotate off the ring" is FALSE. journald
+# deletes a running boot's oldest files too: the 10-06 boot lost its start to
+# SystemKeepFree, the 10-19 boot its first ~14 h to the default SystemMaxFiles=100.
+# Both were gone before the boot ended, so this tool never saw them. The protection
+# against rotation is now tools/bt-journal-files (closed files copied every 3 h, at
+# boot and at shutdown); this export stays as a second, per-boot copy.
+#
 # ⚠️ ARCHIVES ARE UNSANITISED. `journalctl -o export` carries MAC addresses and
 # Wi-Fi BSSIDs, and BSSIDs geolocate the machine. `bt-archive` refuses to write
 # inside the repository and verifies every archive by reading it back; this only

@@ -139,6 +139,23 @@ it rotted within hours (`R2-13`).
 > open decisions: "Operator decisions open" above. The previous block (2026-10-08, with its
 > 10-09 and 10-11 items) is at the end of `HISTORY.md`, verbatim.
 >
+> **New, 2026-10-23 ~11:50 local — booted with the CO-02 module; the operator tests by use:**
+> - Boot `257d1599` at 11:04:43 (cold, after a clean shutdown): `bluetooth.ko`
+>   `0D084A056A9EEFB98E8F331` and E3 btusb `D1DEA96A…` loaded; `QCA: patch rome 0x302 build
+>   0x3e8`; no warning, timeout or symbol error. The boot unit opened trial **E3 #3** labelled E3:
+>   it carries the CO-02 module (`evidence/trials/E3/trial-03/NOTE-not-plain-E3.txt`); its row is
+>   kept apart from E3's counts. Evidence window for the hardware run: from 11:04:43.
+> - **Journal retention fixed (the operator's word):** `SystemMaxFiles=1000` (default 100 held
+>   only ~3 days; E3 #2's counts miss its first ~14 h, `trial-02/NOTE-journal-window.txt`).
+> - **Journal backup installed (the operator's word):** `tools/bt-journal-files` copies every
+>   closed journal file, verified, every 3 h, after boot and at shutdown (units in `systemd/`).
+>   First run: 98 files, 1 GB. `bt-backup-journal`'s "a live boot cannot rotate" was false.
+> - **Kernel-journal reads ~100× faster:** `bt_journal -k …` reads the files one by one in
+>   parallel (`tools/lib/journal.sh`); equal to plain journalctl in 10 of 10 cases
+>   (`devtools/test-journal-fast.sh`). Still to convert: `tools/bt-trial`'s direct
+>   `journalctl` reads (needs the suite, which refuses while a trial is open), then the
+>   operator's install of the tools; the fast "close now, analyse later" mode.
+>
 > **New, 2026-10-23 09:40 local — CO-02 module INSTALLED; the operator's cold boot is next:**
 > - On the operator's word: E3 #2 closed by hand first (`scripts/trial-close-now.sh`, 887 s +
 >   664 s SCO decode; row: 300842 s, 55 SCO setups, 0 timeouts, `not_observed`); no trial is
