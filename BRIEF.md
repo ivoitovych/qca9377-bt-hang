@@ -131,13 +131,32 @@ Recent detail may be shortened. Settled state is never dropped.
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
 **Last updated: 2026-10-22 about 23:45 local (CO-02 v5 is the package to send: reordered hold-first for stable, every affected stable line built and tested, `READ_ONCE`/`WRITE_ONCE` after the from-scratch review, all six reviewers approve; a hardware run on the laptop is next, then the operator's send; the BRIEF budget is 1200 lines; earlier the same day, about 05:10: CO-10 sent and the password revoked; CO-02 patches final in code, six outside reviews, test rework and a residual timeout race open; CO-05/CO-26 mesh series written; CO-04 no Tested-by; U13 and U14 registered; the permission-prompt guard; earlier, 2026-10-21 02:22 UTC: CO-10's Tested-by draft v5 ready, waiting for the operator's send, due 10-22 07:53 UTC; contribution dossiers; source investigation answers checked, U7's kernel mechanism found; published upstream addresses are public, §7, and the scan's exact-token list; earlier the same day: the abrupt stop of 2026-10-19 21:52 found and recorded; E3 #2 lost its row; the shutdown step's redesign registered as §9.11, the operator's direction; earlier, 2026-10-20: A1 and A2 applied upstream on 10-19, identical to what was sent; 6.6.160-rc2 carries our three stable patches; every other submission re-checked, nothing new; earlier, 2026-10-19: U12 registered: A2DP lost to an AVDTP Abort, fixed upstream, not in Ubuntu; the running bluetoothd found to lack Ubuntu's October CVE fixes; the test-suite maintainer's work wholly on `main`: the `btmon` width fix at twelve call sites, the reload's second guard, the access audit in a workflow of its own; BT-4's abort reproduced on the laptop's `btmon` build; earlier: 2026-10-18 trial E3 #1 closed by hand at 17:03 with `main`'s passive closer, its record whole, E3 #2 opened; a `bluetoothctl` MGMT open found to crash the capture's `btmon` (BT-4); A1 and A2 sent and the bot's results; every submission re-checked upstream: the 10-17 stable release candidates, Ubuntu `-39`, #1554's answer, new mesh patches; the closer's SCO decode found never to have matched (`btmon` header width); the hand-off block replaced; the deploy urgency; earlier the same day: the test-suite branch's deploy work landed: the close writes its row first, the installer upgrades our own files in place, the deploy rehearsed in CI; the deploy route corrected to the whole tool set; the installed files checked against `cccf0fe`; earlier: 2026-10-17 the 10-15 stable releases, the 10-13 abrupt stop, facts re-checked against git, the stable queue and the machine; 2026-10-14 §0 Foundation, state synced with STATUS, BT-9's end corrected in §5) · newest exhibit on `main`: EX-064** (EX-044/049/050 were ported from
-`kernel/mgmt-flush-status` on 2026-10-09, `5939d04`; the next exhibit on `main` is EX-065) — no tip hash:
+`kernel/mgmt-flush-status` on 2026-10-09, `5939d04`; the next exhibit on `main` is EX-067) — no tip hash:
 it rotted within hours (`R2-13`).
 
 > **HAND-OFF (2026-10-18, after A1 and A2 were sent and the trial closer's decode was found
 > never to have worked).** Current state of every issue and submission: `docs/STATUS.md`. The
 > open decisions: "Operator decisions open" above. The previous block (2026-10-08, with its
 > 10-09 and 10-11 items) is at the end of `HISTORY.md`, verbatim.
+>
+> **New, 2026-10-23 (about 03:30 local):**
+> - **CO-02 is ready for the laptop.** Ubuntu 7.0.0-38 lacks `abd93c85c8667` + `816fb1590a4c`;
+>   the series alone leaks there (Connect Twice 6/6). With them the series fixes both bugs and the
+>   suites are unchanged (`experiments/results-2026-10-23-hw-prep.md`). Install
+>   `tmp/co02-hw/module/full/` (srcversion `0D084A056A9EEFB98E8F331`), **never** `module/series`.
+>   Plan: `experiments/hardware-run-plan.md`; the operator decides E3 #2 first. The cover letter
+>   now has a paragraph for such trees (the operator's decision).
+> - **Install checks fixed:** `module-updates.sh check|install` read every dependant from
+>   `modules.dep` (E3's `updates/btusb.ko` was missed), the module's own `Module.symvers` only;
+>   `check-modversions.sh` no longer passes unreadable modules; `install` refuses with a trial open.
+> - **New issues:** `U15` (the MOMENTUM 4's "mute on": it reports `AT+VGM=00` at connect and is sent
+>   `+VGM: 0` at every hands-free start; EX-065, EX-066; operator decides the quirk override);
+>   `BT-10` (l2cap-tester ECRED "Accept 2 Close 1" hangs on every released kernel, fixed in
+>   bluetooth-next; bisect next); `BT-11` (ISO use-after-free on Ubuntu's code; no ISO on the laptop).
+> - **PipeWire and WirePlumber** forbid tool-written MR, commit and issue text: the operator writes
+>   and submits; we gather evidence (their `CLAUDE.md`).
+> - **Helpers:** `scripts/user-journal.sh` (the desktop user's journal without a prompt per search),
+>   `scripts/hfp-gain-by-device.py`.
 >
 > **New, 2026-10-22 (about 05:10 local, the state at hand-off; work paused for the usage limit):**
 > - **CO-10 is done:** the Tested-by on 6.6.160-rc2 went out 2026-10-21 03:05:42 UTC (server
