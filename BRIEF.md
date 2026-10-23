@@ -139,6 +139,19 @@ it rotted within hours (`R2-13`).
 > open decisions: "Operator decisions open" above. The previous block (2026-10-08, with its
 > 10-09 and 10-11 items) is at the end of `HISTORY.md`, verbatim.
 >
+> **New, 2026-10-23 (afternoon, an upstream check):**
+> - **6.6.160 released 2026-10-21** with all three of ours: the MGMT fix (`44ce36c5789a`), the
+>   QCA9377 entry (`a35160b2c75b`), the BT-9 backport (`80861f424fe5`). 6.1.191, 5.15.224 and
+>   5.10.273 have no review mail yet (CO-28 waits). Ubuntu `-39` still only in proposed.
+> - **bluetooth-next renamed `btusb.c` to `btusb_main.c`** (new `btusb_qcom.c` for QCC2072). The
+>   new `BT_HCIBTUSB_QCOM` (default n since net-next `1a2c35c49cc7`, 2026-10-22) gates only
+>   `BTUSB_QUALCOMM` devices; `13d3:3503` stays `BTUSB_QCA_ROME` in `btusb_main.c`, unaffected.
+>   `scripts/build-btusb-module.sh` and `build-btusb-stable-matrix.sh` name `btusb.c`: fine for
+>   every released kernel, to be adapted when a kernel with the rename is used.
+> - **CO-02's base is still bluetooth-next's tip** (`27731ba091954`); no new commit on `sco.c`,
+>   `hci_conn.c` or `hci_core.h`; 14908123 and 14903178 still `new`. The net-next pull for the
+>   7.4 merge window is imminent.
+>
 > **New, 2026-10-23 (about 03:30 local):**
 > - **CO-02 is ready for the laptop.** Ubuntu 7.0.0-38 lacks `abd93c85c8667` + `816fb1590a4c`;
 >   the series alone leaks there (Connect Twice 6/6). With them the series fixes both bugs and the
