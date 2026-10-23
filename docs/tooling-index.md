@@ -126,6 +126,7 @@ run `bluetoothd -d` — this project ships that on in
 | Did the BlueZ patch guards fire? | `tools/bt-guards` |
 | What did the **kernel** say on the management channel in a window of a capture? | `tools/bt-ctrl-window <btsnoop> <from> <to> [--hci]` — decodes the records `btmon` prints as `Control Event: 0xffff`, drops every address-bearing line (`EX-044`) |
 | Publish-safety scan (MACs, BSSIDs, emails) | `devtools/repo-scan` |
+| **The scan as a gate on every push to the public repository** (since 2026-10-23, after a plain `git push` went out before the scan was run) | `devtools/hooks/pre-push`, linked into `.git/hooks/` by `devtools/hooks/install-hooks.sh` (run it once in a fresh clone); scans each pushed ref's added lines with `repo-scan --range` and refuses the whole push on a finding; pushes to `private` pass with a note. Tests: `devtools/hooks/test-pre-push.sh` (calls the hook directly; nothing is pushed). Never `git push --no-verify` (the shape guard refuses it) |
 | Commit ids the documents place on `main` are on main (run by `repo-validate`) | `devtools/doc-main-hashes` |
 | **Which review findings are still open, across every register?** | `devtools/review-open` (`--all`, `--counts`) — reads the status column of `reviews/README.md`; the gate before anything is submitted |
 | Compile-test a kernel patch against the running kernel (no tree needed) | `scripts/build-bluetooth-module.sh [patch]` — `net/bluetooth` from `cache/linux` (or `BT_KSRC=<checkout>`) against `/lib/modules/$(uname -r)/build`; builds only, never installs |
