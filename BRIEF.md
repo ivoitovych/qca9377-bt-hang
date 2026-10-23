@@ -139,6 +139,22 @@ it rotted within hours (`R2-13`).
 > open decisions: "Operator decisions open" above. The previous block (2026-10-08, with its
 > 10-09 and 10-11 items) is at the end of `HISTORY.md`, verbatim.
 >
+> **New, 2026-10-23 09:40 local — CO-02 module INSTALLED; the operator's cold boot is next:**
+> - On the operator's word: E3 #2 closed by hand first (`scripts/trial-close-now.sh`, 887 s +
+>   664 s SCO decode; row: 300842 s, 55 SCO setups, 0 timeouts, `not_observed`); no trial is
+>   open now. Then `module-updates.sh install tmp/co02-hw/module/full/bluetooth.ko`: `updates/
+>   bluetooth.ko` srcversion `0D084A056A9EEFB98E8F331` (sha256 `702186d9…`) for the next boot;
+>   E3's `updates/btusb.ko` (`D1DEA96A…`) unchanged. Nothing was loaded or unloaded live.
+> - **After the boot:** `module-updates.sh status` must show `loaded srcversion:
+>   0D084A056A9EEFB98E8F331`; the boot log `QCA: patch rome 0x302 build 0x3e8`. Then the runs of
+>   `experiments/hardware-run-plan.md` (operator), the evidence reads, the exhibit, the cover
+>   sentence. A new trial is not opened automatically for a hand close; decide with the operator.
+> - **Rollback:** `module-updates.sh remove` + a cold boot (stock `973EDEC17806658263CB837`).
+> - **Follow-up (the operator's point):** the hand close re-reads the whole boot's kernel journal
+>   per count (3.7 GB journal, minutes each). Only `/run/bt-trial/current` is lost at a reboot (the
+>   journal is persistent): a fast close (save the record, write the row "analysis pending",
+>   count later from `-b -1`) is to be added.
+>
 > **New, 2026-10-23 (afternoon, an upstream check):**
 > - **6.6.160 released 2026-10-21** with all three of ours: the MGMT fix (`44ce36c5789a`), the
 >   QCA9377 entry (`a35160b2c75b`), the BT-9 backport (`80861f424fe5`). 6.1.191, 5.15.224 and
