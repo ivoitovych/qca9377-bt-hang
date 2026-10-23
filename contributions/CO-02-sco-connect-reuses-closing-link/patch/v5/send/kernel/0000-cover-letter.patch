@@ -64,6 +64,18 @@ built and run with sco-tester without and with the patches it needs:
 the cases for its bugs fail without them and pass with them. 6.1.y has
 no reuse path, hence the "# 6.6.x" on patch 1.
 
+Trees with e6720779ae61 but without 816fb1590a4c ("Bluetooth: SCO:
+serialise sco_conn lifetime against sco_recv_scodata()"), such as
+Ubuntu 24.04's 7.0 kernel, need it and its prerequisite abd93c85c8667
+("Bluetooth: SCO: give the socket its own sco_conn reference") first.
+There, sco_connect() does not put the sco_conn reference that
+sco_conn_add() took when sco_chan_add() fails with EBUSY, and that
+reference holds the hci_conn: once patch 1 stops the disconnect, the
+SCO link stays up after both sockets are closed. On Ubuntu 7.0.0-38's
+Bluetooth sources with those two commits, "Reconnect During
+Disconnect" and "Connect Twice" fail without the series and pass with
+it, uniprocessor and SMP.
+
 Iaroslav Voitovych (3):
   Bluetooth: hci_conn: hold a reused SCO connection for its caller
   Bluetooth: hci_conn: don't reuse an aborting SCO connection

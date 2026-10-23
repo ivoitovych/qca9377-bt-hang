@@ -408,3 +408,40 @@ and patch 3's own validation paragraph.
 
 v5: branch `co02-send/v5`, tree `cb4e87e621b7` (the v4 code, so the v4 results stand); mails in
 `patch/v5/send/`. checkpatch 0/0/0 ×3; `ci-local --kernel` PASS; dry run as intended.
+
+## 2026-10-22/23 — the laptop's kernel: Ubuntu 7.0.0-38 needs two upstream commits first
+Preparing the hardware run, the series was built on Ubuntu 7.0.0-38's own Bluetooth sources
+(`cache/co02-ubuntu38`, branch `co02-ubuntu38/base` = v7.0 + Ubuntu's `net/bluetooth`,
+`drivers/bluetooth`, `include/net/bluetooth`) and run in the emulator. That tree has the kref
+change `e6720779ae61` and the CVE fix `8a5b0135d4a5`, but not `abd93c85c8667` ("give the socket
+its own sco_conn reference") or `816fb1590a4c` ("serialise sco_conn lifetime against
+sco_recv_scodata()"). No kernel.org stable line has that combination.
+
+- **Series alone on Ubuntu (`co02-ubuntu38/series`): Connect Twice fails 6 of 6** (3 UP, 3 SMP)
+  with "Timed out waiting for the next link event"; the unpatched base has no such timeout
+  (`grep -c "Timed out waiting for the next link event" -r tmp/co02-hw/runs`: `u38-up-twice-1..3`
+  and `u38-smp-twice-1..3` 1 each, `u38-base-smp-twice-1..3` 0).
+- **Cause, from Ubuntu's `sco.c`:** `sco_conn_add()` takes a `sco_conn` reference for an existing
+  connection (l.197), and `sco_connect()`'s EBUSY path (l.376–380) drops only the `hci_conn`, never
+  that reference; `sco_conn_free()` is what drops the `hci_conn` hold (l.89–92). Before patch 1 the
+  wrongly dropped hold disconnects the link anyway (read from the code; consistent with the base
+  runs, which show no timeout); with patch 1 the leaked reference keeps the SCO
+  link up after both sockets close. `abd93c85c8667` + `816fb1590a4c` rework this ownership.
+- **With the two commits (`co02-ubuntu38/with816`, `96f7336a918f`; 816 alone fails 5 of 10 hunks,
+  the pair applies with `-F0`):**
+  - control (no series), SMP: Reconnect During Disconnect fails 3/3, Connect Twice fails 3/3,
+    Reconnect After passes; full sco-tester 31/33 (the two bug cases);
+  - series (`with816-series`, `ff077afb28e8`): Reconnect 2/2 and Connect Twice 1/1, 3 of 3 on UP
+    and on SMP; full sco-tester 33/33 on UP; the parked race (`with816-park`) refused 3 of 3;
+  - no leak timeout in any of these logs (`tmp/co02-hw/runs/u38w-*`, `tmp/co02-hw/progress-816.txt`).
+  - KCSAN: a KCSAN kernel from this v7.0 tree stops at boot ("9p: Bad value for 'source'"), so the
+    KCSAN coverage stays the bluetooth-next one.
+- **Consequences:**
+  - the laptop module must be Ubuntu + `abd93c85c8667` + `816fb1590a4c` + the series; the earlier
+    `tmp/co02-hw/module/series` build (no prerequisites) must not be installed;
+  - the Ubuntu backport request must carry the two commits under the series;
+  - the upstream series is unaffected: every stable line with `e6720779ae61` has `816fb1590a4c`.
+- **The operator decided (2026-10-23):** the cover letter says so, for distributions that have the
+  kref change without `816fb1590a4c`: a paragraph after the stable one in `patch/v5/send/kernel/
+  0000-cover-letter.patch` (and the send copy). The operator's reason: it tells whoever maintains
+  Ubuntu's kernel that the combination is real, and shows that it was tested there.
