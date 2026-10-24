@@ -743,6 +743,8 @@ specific to this controller.
 | U16 | after a failed Connect from GNOME Settings, its device search stops for good: the "searching" spinner is gone and no new device appears until Bluetooth is switched off and on (2026-10-23; same pattern 2026-10-11) | confirmed in the bluetoothd debug log, the system bus record and the source (BlueZ 5.72); not fixed in BlueZ master, no duplicate found |
 | U17 | after an HFP codec switch whose SCO connect is refused (the CO-02 kernel), the headset is silent for 5 s: PipeWire's retries are immediate and all fail, and only WirePlumber's 5 s idle-suspend of the failed node starts the audio again (2026-10-24) | confirmed in the logs, the HCI capture and the source; not fixed in PipeWire or WirePlumber master, no duplicate found |
 | U18 | a headset paired over LE shows "Connected" in GNOME Settings with no audio: Connect resolves its BR/EDR services, then answers success without connecting any, because a connected LE service (GAP, Battery) counts as "one connected" (2026-10-24, Shure AONIC 50) | confirmed in the bluetoothd debug log, the system bus record, the HCI capture and the source (BlueZ 5.72; master the same) |
+| U19 | after a headset leaves Handsfree for A2DP, GNOME Settings' Sound panel shows the laptop's microphone as the input but its level meter stays dead: no capture stream is opened on the new default source until the input is picked by hand (2026-10-24, Shure AONIC 50, twice) | observed by the operator, confirmed in the audio policy log; owner not yet confirmed in source |
+| U20 | in Handsfree the Shure AONIC 50's input volume slider has no effect on the signal: PipeWire sends `+VGM` 15…0 because the headset announced remote volume control, and the level does not change (2026-10-24) | observed by the operator, the `+VGM` commands confirmed in the HCI capture; headset behaviour inferred |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
@@ -1276,6 +1278,40 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   **Patch candidate:** count only services whose profile bearer is not LE in the two checks (`dev_connect()` and `device_connect_profiles()`), e.g. a bearer argument for `find_service_with_state()`; a test in the emulator (a dual-mode device with a connected LE GATT service, then `Connect`); together with `U13`'s Flags patch. #2037 is worth a comment from the operator once the patch exists.
 
   **Evidence:** raw on this machine only: `archive/incidents/20261024-shure-le-connected-no-audio/` (`journal-bluetoothd-0626-0633.txt`, `system-bus-pair-connect-062733.txt`, `capture-pair-062733.txt`, `capture-toggle-0629.txt`, `capture-pair-063201.txt`, the user journal 06:26–06:38, `SHA256SUMS`; saved by `tmp/incident-20261024-shure/save.sh`; real addresses inside).
+
+- **U19 — after a headset leaves Handsfree for A2DP, the Sound panel's input meter stays dead on the laptop's microphone** *(observed by the operator, confirmed in the audio policy log, 2026-10-24; GNOME Settings 46.7-0ubuntu0.24.04.6, WirePlumber 0.4.17, PipeWire 1.0.5; owner not yet confirmed in source)*.
+
+  **What happened** (local time, 2026-10-24; the Shure AONIC 50; GNOME Settings' Sound panel open):
+  - **[operator]** After the switch from Hands-free to Headset (A2DP) the Input section showed the laptop's internal microphone, but its level meter did not move while the operator spoke or made loud sounds; mute and unmute changed nothing. Back in Hands-free the meter worked on the Shure's microphone; choosing the internal microphone by hand while in Hands-free made its meter work, and it followed the input volume. Back to Headset: dead again ("It appears a bug … Once again").
+  - **[log] The panel opens no capture on the new default source** (`journalctl -u bt-audio-policy`; `capture[GNOME Settings]` lists the sources the panel's streams record from):
+    - 08:04:59 GNOME Settings' capture `Shure AONIC 50` → none; `default audio.source` `Shure AONIC 50` → `bluez_input.<the Shure>.0` (the name of the node just removed) → the laptop's microphone (`Family 17h/19h HD Audio Controller Analog Stereo`); profile `headset-head-unit-msbc` → `a2dp-sink`; 08:05:00 capture → `monitor of Shure AONIC 50` only (the output meter). No capture on the laptop's microphone.
+    - 08:07:07 (in Hands-free, the input picked by hand): capture → `Family …; Family …; monitor of Shure AONIC 50`: the meter is attached.
+    - 08:08:42 the same as 08:04:59: capture → none → `monitor of Shure AONIC 50`, default source → the removed node's name → the laptop's microphone.
+  - **[log] The opposite direction works:** 08:03:51–52, A2DP → Hands-free, default source the laptop's microphone → `Shure AONIC 50`, capture none → `Shure AONIC 50; monitor of Shure AONIC 50`: the meter followed the new default.
+  - **[inference]** The meter follows a change of default source while the old source still exists, and not when the old default disappears and the default passes through the removed node's name first. Which component drops it (the panel or libgvc reacting to the transient default, or WirePlumber publishing it) is not yet read in the source.
+
+  **Impact:** the panel names a working microphone as the input and shows no signal from it, so a user concludes that the microphone is broken. Whether an application recording at that moment gets the laptop's microphone was not tested.
+
+  **Next:** read GNOME Settings 46.7's `cc-sound-panel.c` / `cc-level-bar.c` and libgvc's default-source handling, and WirePlumber 0.4.17's `default-nodes` for the transient value; reproduce with another headset; upstream check (GNOME GitLab, WirePlumber).
+
+  **Evidence:** raw on this machine only: `archive/incidents/20261024-shure-mic-meter-and-vgm/` (`audio-policy-0755-0812.txt`, `atspi-0755-0812.txt`, the user and bluetoothd journals 07:55–08:12, `SHA256SUMS`; saved by `tmp/incident-20261024-shure-mic/save.sh`; real addresses inside).
+
+- **U20 — the Shure AONIC 50's microphone ignores the input volume in Hands-free** *(observed by the operator, the commands confirmed in the HCI capture, 2026-10-24; PipeWire 1.0.5; the headset's behaviour inferred)*. Related to `U15` (the MOMENTUM 4's microphone gain of 0 at connect): the same hardware-volume path.
+
+  **What happened:**
+  - **[operator]** In Hands-free the Input volume slider of the Shure was moved over its whole range; the level meter showed "exactly the same" whatever the level. At 0 the panel showed the muted sign; unmuting brought the meter back.
+  - **[log]** `node[Shure AONIC 50 Audio/Source] volume` 0.87 → 0.36 → 1.0 → 0.07 → 1.0 → 0.0 → 0.25, 08:04:05–08:04:43 (`journalctl -u bt-audio-policy`).
+  - **[capture] Every move went to the headset as hardware gain:** `+VGM: 13` with the link setup (08:03:51.928), then `+VGM: 12` … `5` (08:04:05.27–.67), `6` … `15` (08:04:08.50–.71), `14` … `1` (08:04:16.57–17.06), `2` … `15` (08:04:24.96–25.09), `14` … `0` (08:04:27.89–28.06), `4` (08:04:43.00) (`scripts/capture-window.sh … 'VGM|VGS|…'`).
+  - **[capture] The headset asks for it:** at the service level connection, 06:32:03.463558, the Shure sent `AT+BRSF=955` (binary `11 1011 1011`: bit 4, "remote volume control", is set) and `AT+VGM=15` at .719573.
+  - **[inference]** PipeWire applies no software gain when the headset takes the gain, so the meter shows what the headset sends; with the gain from 15 to 0 the meter did not change, so the Shure does not apply `+VGM` to its microphone. Not ruled out: an automatic gain in the headset that hides it.
+
+  **Owners:** the headset's firmware (it announces remote volume control and ignores the microphone gain); on the laptop, PipeWire's per-device quirk table (`bluez-hardware.conf`) is the place for such a headset (software gain for the Handsfree source). Under PipeWire's rules a report or entry is the operator's to write.
+
+  **Workaround:** set the recording level in the application.
+
+  **Next:** check PipeWire master's `bluez-hardware.conf` and the WirePlumber quirk debug lines of 06:32:03 for this headset; check whether the speaker gain (`+VGS`) is honoured (it is the same feature bit); upstream check.
+
+  **Evidence:** as `U19` (`capture-vgm-0803-0804.txt`, `capture-slc-063203.txt`, `audio-policy-0755-0812.txt`).
 
 ---
 
