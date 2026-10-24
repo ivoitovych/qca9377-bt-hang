@@ -743,7 +743,7 @@ specific to this controller.
 | U16 | after a failed Connect from GNOME Settings, its device search stops for good: the "searching" spinner is gone and no new device appears until Bluetooth is switched off and on (2026-10-23; same pattern 2026-10-11) | confirmed in the bluetoothd debug log, the system bus record and the source (BlueZ 5.72); not fixed in BlueZ master, no duplicate found |
 | U17 | after an HFP codec switch whose SCO connect is refused (the CO-02 kernel), the headset is silent for 5 s: PipeWire's retries are immediate and all fail, and only WirePlumber's 5 s idle-suspend of the failed node starts the audio again (2026-10-24) | confirmed in the logs, the HCI capture and the source; not fixed in PipeWire or WirePlumber master, no duplicate found |
 | U18 | a headset paired over LE shows "Connected" in GNOME Settings with no audio: Connect resolves its BR/EDR services, then answers success without connecting any, because a connected LE service (GAP, Battery) counts as "one connected" (2026-10-24, Shure AONIC 50) | confirmed in the bluetoothd debug log, the system bus record, the HCI capture and the source (BlueZ 5.72; master the same) |
-| U19 | after a headset leaves Handsfree for A2DP, GNOME Settings' Sound panel shows the laptop's microphone as the input but its level meter stays dead: no capture stream is opened on the new default source until the input is picked by hand (2026-10-24, Shure AONIC 50, twice) | observed by the operator, confirmed in the audio policy log; owner not yet confirmed in source |
+| U19 | after a headset leaves Handsfree for A2DP, GNOME Settings' Sound panel shows the laptop's microphone as the input but its level meter stays dead: the meter's new stream is destroyed by Ubuntu's 2-second Bluetooth-transition patch in WirePlumber, and the panel never retries (2026-10-24, Shure AONIC 50, twice) | confirmed in the journal, the audio policy log and the source; Ubuntu-only (LP #2122640's patch), upstream WirePlumber not affected |
 | U20 | in Handsfree the Shure AONIC 50's input volume slider has no effect on the signal: PipeWire sends `+VGM` 15…0 because the headset announced remote volume control, and the level does not change (2026-10-24) | observed by the operator, the `+VGM` commands confirmed in the HCI capture; headset behaviour inferred |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
@@ -1279,20 +1279,47 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
 
   **Evidence:** raw on this machine only: `archive/incidents/20261024-shure-le-connected-no-audio/` (`journal-bluetoothd-0626-0633.txt`, `system-bus-pair-connect-062733.txt`, `capture-pair-062733.txt`, `capture-toggle-0629.txt`, `capture-pair-063201.txt`, the user journal 06:26–06:38, `SHA256SUMS`; saved by `tmp/incident-20261024-shure/save.sh`; real addresses inside).
 
-- **U19 — after a headset leaves Handsfree for A2DP, the Sound panel's input meter stays dead on the laptop's microphone** *(observed by the operator, confirmed in the audio policy log, 2026-10-24; GNOME Settings 46.7-0ubuntu0.24.04.6, WirePlumber 0.4.17, PipeWire 1.0.5; owner not yet confirmed in source)*.
+- **U19 — after a headset leaves Handsfree for A2DP, the Sound panel's input meter stays dead on the laptop's microphone** *(observed by the operator; confirmed in the user journal, the audio policy log and the source, 2026-10-24; caused by Ubuntu's patch `lp-2122640-bluetooth-audio-glitch.patch` in WirePlumber 0.4.17-1ubuntu4.1, not in upstream WirePlumber; GNOME Settings 46.7-0ubuntu0.24.04.6, PipeWire 1.0.5)*.
 
   **What happened** (local time, 2026-10-24; the Shure AONIC 50; GNOME Settings' Sound panel open):
   - **[operator]** After the switch from Hands-free to Headset (A2DP) the Input section showed the laptop's internal microphone, but its level meter did not move while the operator spoke or made loud sounds; mute and unmute changed nothing. Back in Hands-free the meter worked on the Shure's microphone; choosing the internal microphone by hand while in Hands-free made its meter work, and it followed the input volume. Back to Headset: dead again ("It appears a bug … Once again").
   - **[log] The panel opens no capture on the new default source** (`journalctl -u bt-audio-policy`; `capture[GNOME Settings]` lists the sources the panel's streams record from):
-    - 08:04:59 GNOME Settings' capture `Shure AONIC 50` → none; `default audio.source` `Shure AONIC 50` → `bluez_input.<the Shure>.0` (the name of the node just removed) → the laptop's microphone (`Family 17h/19h HD Audio Controller Analog Stereo`); profile `headset-head-unit-msbc` → `a2dp-sink`; 08:05:00 capture → `monitor of Shure AONIC 50` only (the output meter). No capture on the laptop's microphone.
+    - 08:04:59 GNOME Settings' capture `Shure AONIC 50` → none; `default audio.source` `Shure AONIC 50` → `bluez_input.<the Shure>.0` → the laptop's microphone (`Family 17h/19h HD Audio Controller Analog Stereo`); profile `headset-head-unit-msbc` → `a2dp-sink`; 08:05:00 capture → `monitor of Shure AONIC 50` only (the output meter). No capture on the laptop's microphone. (The middle value is the recorder's: `scripts/bt-audio-policy.py:71-74` prints a node's raw name once the node is gone; the default itself did not pass through a removed node.)
     - 08:07:07 (in Hands-free, the input picked by hand): capture → `Family …; Family …; monitor of Shure AONIC 50`: the meter is attached.
-    - 08:08:42 the same as 08:04:59: capture → none → `monitor of Shure AONIC 50`, default source → the removed node's name → the laptop's microphone.
+    - 08:08:42 the same as 08:04:59.
   - **[log] The opposite direction works:** 08:03:51–52, A2DP → Hands-free, default source the laptop's microphone → `Shure AONIC 50`, capture none → `Shure AONIC 50; monitor of Shure AONIC 50`: the meter followed the new default.
-  - **[inference]** The meter follows a change of default source while the old source still exists, and not when the old default disappears and the default passes through the removed node's name first. Which component drops it (the panel or libgvc reacting to the transient default, or WirePlumber publishing it) is not yet read in the source.
+  - **[log] The panel does open the meter; WirePlumber destroys it** (`archive/…/journal-user-0755-0812.txt`, lines 28294–29305):
+    - 08:04:59.044924 `Bluetooth device removed, preventing non-Bluetooth devices from linking for 2 seconds`;
+    - 08:04:59.051861 `[GNOME Settings] CREATE_RECORD_STREAM tag:478 … source-name:53` (53 is the laptop's microphone, the index the hand pick at 08:07 used);
+    - 08:04:59.734–.753 `... target not found, reconnect:false` / `... destroy node`;
+    - 08:04:59.754620 `[GNOME Settings]: ERROR … tag:478 error:25 (Input/output error)`.
+    - 08:08:42 the same (window .030108, the meter as tag 1173, destroyed from .051).
+
+  **[source] Why** (installed `/usr/share/wireplumber/scripts/policy-node.lua`, 0.4.17-1ubuntu4.1):
+  1. When a Bluetooth node is removed, Ubuntu's patch disables linking of non-Bluetooth targets for 2 s (l.1024–1042; changelog: "Prevent bluetooth profile switch to output some sound on another device during the transition (LP: #2122640)").
+  2. A new stream whose target is not Bluetooth gets `skip_this_target = true` (l.755–760): no link, nothing logged.
+  3. `si_flags[si.id].was_handled = true` is still set (l.822), although nothing was linked.
+  4. The level bar opens its stream with `PA_STREAM_DONT_MOVE` (GNOME Settings 46.7 `panels/sound/cc-level-bar.c:197`), which pipewire-pulse makes "don't reconnect"; at the next rescan "dont-reconnect and was already linked" drops the target (l.766–768), and the stream is told "target not found" and destroyed (l.789–816).
+  5. GNOME Settings does not retry: the level bar sets no state or failure callback (`cc-level-bar.c:187-188`); it re-attaches only when the default source changes again (`cc-sound-panel.c:151-169`, `191-209`), which after a switch to A2DP it does not.
+  The opposite switch works because the new target is the Bluetooth source, which the patch lets through; the hand pick works because no Bluetooth removal falls in its 2 s.
+  **[inference]** Any stream opened with "don't move" to a non-Bluetooth device within 2 s of a Bluetooth node's removal is lost the same way (other level meters, some recorders).
+
+  **Owner:** Ubuntu's WirePlumber package (`d/p/lp-2122640-bluetooth-audio-glitch.patch`, Antoine Lassagne, 2025-09-11; LP #2122640, Fix Released for Noble). Upstream WirePlumber is not affected: its master (`src/scripts/linking/rescan.lua`) only pauses the rescan triggers and never marks an unlinked stream as handled [read in master; MR 655, which the patch is said to rewrite, could not be fetched].
 
   **Impact:** the panel names a working microphone as the input and shows no signal from it, so a user concludes that the microphone is broken. Whether an application recording at that moment gets the laptop's microphone was not tested.
 
-  **Next:** read GNOME Settings 46.7's `cc-sound-panel.c` / `cc-level-bar.c` and libgvc's default-source handling, and WirePlumber 0.4.17's `default-nodes` for the transient value; reproduce with another headset; upstream check (GNOME GitLab, WirePlumber).
+  **Patch candidate (an Ubuntu SRU):** set `was_handled` only when a link was made:
+  ```lua
+  if skip_this_target == false then
+    createLink (si, si_target, can_passthrough, exclusive)
+    si_flags[si.id].was_handled = true
+  end
+  ```
+  so that the rescan at the end of the 2 s links the meter [inference, not run]. Optional, GNOME side: the level bar could retry when its stream fails (unchanged on gnome-control-center main).
+
+  **Upstream check, 2026-10-24:** Noble has nothing newer than 0.4.17-1ubuntu4.1; LP #2122640's comments report no such regression; no Launchpad or GNOME report matches. Related, not the same: gnome-control-center #1550 (the panel not refreshed when devices change elsewhere), WirePlumber #682 (a 0.5.4 crash at a profile switch).
+
+  **Next:** a test on the laptop (the patched line in a user override of `policy-node.lua`, then the Hands-free → A2DP switch; the operator's decision); whether a recording application loses its stream the same way; then a Launchpad report with the patch, the operator's.
 
   **Evidence:** raw on this machine only: `archive/incidents/20261024-shure-mic-meter-and-vgm/` (`audio-policy-0755-0812.txt`, `atspi-0755-0812.txt`, the user and bluetoothd journals 07:55–08:12, `SHA256SUMS`; saved by `tmp/incident-20261024-shure-mic/save.sh`; real addresses inside).
 
