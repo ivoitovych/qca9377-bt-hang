@@ -740,6 +740,8 @@ specific to this controller.
 | U13 | a headset known only from its LE advertising cannot be set up: every click pairs over LE, the headset refuses, GNOME shows nothing (2026-10-21) | confirmed in the capture, the log and the source; not fixed upstream |
 | U14 | a Bluetooth headset is forced into Handsfree while an application records from any microphone, and a manual return to A2DP is undone when the recording ends (2026-10-21) | confirmed in the log and the source (WirePlumber 0.4.17); fixed upstream by the 0.5 rewrite |
 | U15 | the MOMENTUM 4 says "mute on" at every hands-free start: it reports a microphone gain of 0 at connect, and PipeWire sends that 0 back as `+VGM: 0` (2026-10-23) | mechanism confirmed in the log, the capture and the state; no upstream quirk entry for this headset |
+| U16 | after a failed Connect from GNOME Settings, its device search stops for good: the "searching" spinner is gone and no new device appears until Bluetooth is switched off and on (2026-10-23; same pattern 2026-10-11) | confirmed in the bluetoothd debug log, the system bus record and the source (BlueZ 5.72); upstream not yet checked |
+| U17 | after an HFP codec switch whose SCO connect is refused (the CO-02 kernel), the headset is silent for 5 s: PipeWire's retries are immediate and all fail, and only WirePlumber's 5 s idle-suspend of the failed node starts the audio again (2026-10-24) | confirmed in the logs, the HCI capture and the source; upstream not yet checked |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
@@ -1177,6 +1179,55 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   **Fix options [the operator's choice]:** a local quirk override (WirePlumber's `bluez5.hardware-database` property with the stock table plus `{ name = "MOMENTUM 4", no-features = [ hw-volume-mic ] }`), which stops the stored 0 (and, to be checked, the `+VGM`); a one-off volume reset (undone at the next connect, when the headset reports 0 again); then the same one-line entry upstream in PipeWire. **PipeWire's contributor rules** (`CLAUDE.md` in its tree, read 2026-10-23): no tool-written merge request descriptions, commit messages, issue text or replies to reviewers, and no automated posting; the operator writes and submits it, and evidence gathered with tools (verbatim logs) may be attached. This project gathers the evidence only.
 
   **Evidence:** `EX-065`, `EX-066`; raw on this machine only: `archive/incidents/20261023-momentum-mic-gain-zero/` (the user journal around the connect and the sessions, every gain line the journal holds, the state files, `wpctl status`, the captures' gain packets, `SHA256SUMS`; saved by `tmp/incident-20261023-momentum/save.sh`).
+
+- **U16 — after a failed Connect from GNOME Settings, its device search stops for good** *(confirmed in the bluetoothd debug log, the system bus record and the source, 2026-10-23; BlueZ 5.72, this project's build; GNOME Settings 46.7; upstream not yet checked)*.
+
+  **What happened** (local time, 2026-10-23; the Lenovo `联想thinkplus-GM2 pro` earbuds were connected to another device, a phone, so they could not answer):
+  - **[operator]** 21:53:32 a click on the earbuds in the Bluetooth panel: a spinner, then nothing; at 21:54:28 no "searching" spinner in the panel any more; Bluetooth off at 21:54:59 and on at 21:55:17 brought the search back.
+  - **[log] The connect and the stop are sent together** (`journalctl -u bluetooth`, debug on): 21:53:32.744031 `stop_discovery() sender :1.207` (GNOME Settings), at once `connect_profiles() …/dev_<earbuds> (all), client :1.207`, and MGMT command `0x0007` (Set Connectable) is sent at .744300. **No `0x0024` (Stop Discovery) is sent yet**: BlueZ's `shared/mgmt.c` sends one command at a time, and the kernel answers Set Connectable only after the connection attempt ends.
+  - **[log] Five seconds later the connect fails, and the client restarts its search into the gap:** 21:53:37.873568 `connect_failed_callback() … status 4` (Page Timeout); `resume_discovery()`, `trigger_start_discovery()`; at .883635 `set_discovery_filter() sender :1.207`, at .884120 `start_discovery() sender :1.207`. Set Connectable completes at .894140.
+  - **[log] Then the stale stop lands and removes the client:** .903192 MGMT `0x0024` sent, .906124 complete, `stop_discovery_complete() status 0x00`, `discovery_remove() owner :1.207`, `discovering_callback() hci0 type 7 discovering 0`. No discovery until the power cycle: 21:55:18.290614 `start_discovery() sender :1.207`, `discovering 1` at .308847.
+  - **[log] The same exchange on 2026-10-11 00:26:54, same earbuds** (the system bus monitor of `bt-ui-capture`, `system-bus.log` lines 70600–70630; that monitor was not running at 21:53 on 10-23): `StopDiscovery` and `Device1.Connect` sent 20 µs apart; `Connect` → `org.bluez.Error.Failed "br-connection-page-timeout"` 5.15 s later; `SetDiscoveryFilter` → ok; **`StartDiscovery` → `org.bluez.Error.InProgress`**; then the pending **`StopDiscovery` → `org.bluez.Error.InProgress`** as well, 22 ms later.
+
+  **[source] Why** (BlueZ 5.72, `src/adapter.c`):
+  1. `discovery_stop()` (l.2423) leaves the client in `discovery_list` while its MGMT Stop Discovery is pending (`adapter->client = client`, `-EINPROGRESS`, l.2453–2459).
+  2. A `StartDiscovery` from that client in the meantime finds itself still listed and is refused (`get_discovery_client()` → `btd_error_busy()`, l.2512–2519; D-Bus `org.bluez.Error.InProgress`).
+  3. When the stale stop completes, `stop_discovery_complete()` (l.2145) removes the client (`discovery_remove()`, l.2153–2155) and marks the adapter not discovering. The client's new request is gone and nothing restarts it.
+  4. The window is as long as the MGMT command ahead of the stop takes: here the 5 s of a paging attempt to a headset that does not answer. A connect to a reachable device ends in well under a second, which is why this is rare.
+
+  **[inference] Three owners, to be confirmed:** BlueZ (a start from the client whose stop is still pending could cancel or follow the stop, instead of being refused and then dropped); GNOME Settings / gnome-bluetooth (it does not wait for the `StopDiscovery` reply before `Connect`, does not retry an `InProgress` start, and shows no message); the kernel only in holding Set Connectable for the length of the page, which is its documented serialisation, not a defect.
+
+  **Workaround:** Bluetooth off and on in the panel.
+
+  **Next:** BlueZ master's `discovery_stop()`/`start_discovery()` for a fix since 5.72; the BlueZ tracker and list for the same report; gnome-bluetooth's discovery restart after a failed connect (`lib/bluetooth-client.c`); a reproducer in the emulator (a connect to an absent address while discovering).
+
+  **Evidence:** raw on this machine only: `archive/incidents/20261024-earbuds-discovery-and-sco-gap/` (`journal-bluetoothd-2152-2156.txt`, `system-bus-20261011-002654.txt`, `system-bus-discovery-calls.txt`, `capture-connect-2153.txt`, the user journal 21:52–21:59, `SHA256SUMS`; saved by `tmp/incident-20261024-earbuds/save.sh`; real addresses inside).
+
+- **U17 — after an HFP codec switch whose SCO connect is refused, the headset is silent for 5 s** *(confirmed in the logs, the HCI capture and the source, 2026-10-24; on the CO-02 kernel; PipeWire 1.0.5 / WirePlumber 0.4.17; upstream not yet checked)*.
+
+  **What happened** (local time; the Lenovo earbuds, A2DP → Handsfree, YouTube playing):
+  - **[operator]** 2026-10-24 06:12:22 mSBC → CVSD: "No sound. Oh, sound appeared at 6:12:31." 06:12:47 CVSD → mSBC: "Big delay. The sound returned in mSBC. About three seconds of delay." A third refusal on 2026-10-23 at 22:00:33 (mSBC → CVSD) with no stream playing: the next link came with the test sound, `Setup Synchronous Connection` at 22:00:46.198849.
+  - **[capture] The headset answers before the old link is gone, which is `U7`'s ordering** (`scripts/sco-switch-windows.sh` on `hci-20261023-233436.btsnoop`):
+
+    | switch | AG `+BCS:` + Disconnect | headset `AT+BCS=` | old link's Disconnect Complete (after `+BCS:`) | new `Setup Synchronous Connection` | new link up |
+    |---|---|---|---|---|---|
+    | 06:12:22 mSBC → CVSD | .298580 / .298592 (handle 5) | .324563 | .491861 (+193 ms) | 06:12:27.350650 | .386887, CVSD, handle 6 |
+    | 06:12:47 CVSD → mSBC | .690751 / .690774 (handle 6) | .714559 | .886915 (+196 ms) | 06:12:52.743599 | .786897, Transparent, handle 7 |
+
+  - **[log] The kernel refuses the connect, PipeWire retries at once, and the node fails** (`scripts/user-journal.sh`, WirePlumber debug): 06:12:22.340902 `sco_do_connect, codec=1`; .340952 `connect(): Software caused connection abort. Remaining retry:1`, .340996 `Remaining retry:0`, .341032 `connect(): Software caused connection abort` — three attempts in 130 µs, all 151 ms before the old link's Disconnection Complete; `state changed 0 -> -1`, `Failure in Bluetooth audio transport`; pipewire: `bluez_output… running -> error (Received error event)`.
+  - **[log] The audio comes back only through the idle timer:** 06:12:27.344984 WirePlumber `was idle for a while; suspending ...` for both nodes; `error -> suspended`; .350496 `sco_acquire_cb`, `sco_do_connect`; .399865 `ready`, `acquire complete`. The same at 06:12:47.735 → 06:12:52.739 → link at .786897. **5.004 s each time.**
+  - **[log] History:** the journal (from 2026-10-20) holds only these three refused connects (22:00:33, 06:12:22, 06:12:47), all on the boot with the CO-02 module (`journal-user-abort-history.txt`).
+
+  **[source] Why:**
+  1. PipeWire's `sco_do_connect()` (`spa/plugins/bluez5/backend-native.c`, master `662fe053a` l.2677–2688) retries a connect that fails with `ECONNABORTED` twice, **immediately**, with no wait. The retry was added for this very situation: `d439b7cdd` (Huang-Huang Bao, 2021-03-22), "When I enforing HFP codec switching between HFP profiles, it has a chance of being aborted by ECONNABORTED. Seems a retry is sufficient for work around it."
+  2. On failure the transport goes to error and the node to `error`. WirePlumber 0.4.17 `suspend-node.lua` starts its idle timer on `idle` **or `error`** (`session.suspend-timeout-seconds`, default 5) and then sends `Suspend`; the suspended node is started again by the stream still linked to it, which acquires and connects afresh, by then after the old link is gone.
+  3. Before the CO-02 series the kernel did not refuse: it handed the connect the closing link and reported success with no link behind it (`U7`, `EX-060`), so the old behaviour was silence until the stream was restarted by hand. The series turns that into a refusal, and PipeWire's existing recovery turns the refusal into a 5 s gap. Shorter needs one of: a retry in PipeWire that waits for the old link's teardown (it knows it has just closed it), or a kernel that queues the new connect until the Disconnection Complete instead of refusing.
+
+  **Why it matters for CO-02:** the cover letter must say that on the earbuds the user gets the audio back after about 5 s rather than never; the maintainers may prefer the kernel to wait. To be weighed before the series is sent.
+
+  **Next:** PipeWire master and the tracker for a delayed retry or a wait on the old link (any report there is the operator's, written by them, verbatim logs attached; `pipewire-contribution-rules`); the kernel side in `hci_connect_sco()`: whether waiting for the Disconnection Complete is feasible; then the same switch on the MOMENTUM 4 as the control (it answers after its old link is gone, so no refusal is expected).
+
+  **Evidence:** raw on this machine only: `archive/incidents/20261024-earbuds-discovery-and-sco-gap/` (`capture-switches-0611-0613.txt`, `capture-switch-2200.txt`, `journal-user-0607-0614.txt`, `journal-user-2200.txt`, `journal-user-abort-history.txt`, `wireplumber-suspend-node.lua.txt`, `SHA256SUMS`; saved by `tmp/incident-20261024-earbuds/save.sh`; real addresses inside).
 
 ---
 
