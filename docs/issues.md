@@ -1309,7 +1309,13 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
 
   **Workaround:** set the recording level in the application.
 
-  **Next:** check PipeWire master's `bluez-hardware.conf` and the WirePlumber quirk debug lines of 06:32:03 for this headset; check whether the speaker gain (`+VGS`) is honoured (it is the same feature bit); upstream check.
+  **Upstream check, 2026-10-24: no quirk entry for this headset, no report found.**
+  - **[source] PipeWire 1.0.5** (master `73974598f` the same logic): `AT+BRSF` bit 4 sets `has_volume` for speaker and microphone together (`spa/plugins/bluez5/backend-native.c:793`; master l.1124); the headset's own `AT+VGM=n` makes the microphone gain active (l.1047–1063 → 401–403), unless the device has the quirk that clears `hw-volume-mic` (`broken_mic_hw_volume`, l.1049, set at l.2271–2277, which logs "microphone HW volume disabled by quirk"); a slider move becomes `+VGM: n` (l.1887–1908, 1854–1885); with the gain active the software volume of the mono source is 1.0 (`bluez5-device.c:2363–2369`).
+  - **[log]** WirePlumber at the connect (06:32:01–03): `device quirks:00000000`, `hw-volume-profiles:000000fc` (Handsfree included); no "disabled by quirk" line (`scripts/user-journal.sh --since "2026-10-24 06:31:50" --until "2026-10-24 06:32:15" -g "quirks:|hw-volume-profiles|AT\+VGM|disabled by quirk"`).
+  - **The table:** the installed `/usr/share/spa-0.2/bluez5/bluez-hardware.conf` has one `hw-volume-mic` entry, `{ name = "Air 1 Plus", no-features = [ hw-volume-mic ] },` (l.30), none for Shure or `00:0e:dd`; master the same. That entry came with `9d38d375d` (2021): "Some headsets emit AT+VGM even though +VGM commands do not actually adjust the recording volume" — this case.
+  - **Trackers (PipeWire GitLab, read only):** no issue names the AONIC 50; #678 (open, "Adjusting Bluetooth microphone hardware volume": "on none of the headsets does the VGM value actually affect the volume of the recorded audio") is the same class, where the quirk came from.
+  - **Candidate entry** (the operator's to submit, under PipeWire's rules): `{ name = "Shure AONIC 50", no-features = [ hw-volume-mic ] },` — matched on the BlueZ `Name`; with it the slider becomes software gain [inference from the code, not run]. A local test is possible through WirePlumber 0.4.17's `bluez5.hardware-database` property, which replaces the whole table (the copy must keep the adapter section: this laptop's adapter has quirk `00000004`). The test would also rule out an automatic gain in the headset.
+  - **Speaker side:** the Shure also reported `AT+VGS=06`, so the Handsfree output volume is hardware volume too; whether it honours `+VGS` needs a listening test.
 
   **Evidence:** as `U19` (`capture-vgm-0803-0804.txt`, `capture-slc-063203.txt`, `audio-policy-0755-0812.txt`).
 
