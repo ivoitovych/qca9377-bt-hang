@@ -445,3 +445,25 @@ sco_recv_scodata()"). No kernel.org stable line has that combination.
   kref change without `816fb1590a4c`: a paragraph after the stable one in `patch/v5/send/kernel/
   0000-cover-letter.patch` (and the send copy). The operator's reason: it tells whoever maintains
   Ubuntu's kernel that the combination is real, and shows that it was tested there.
+
+## 2026-10-23 to 2026-10-25 — the run on the laptop
+Results: `experiments/results-2026-10-24-hardware.md`; exhibits `EX-067` to `EX-073`.
+- **Installed** on the operator's word: `module/full` (srcversion `0D084A056A9EEFB98E8F331`) in
+  `updates/`, cold boot `257d1599…` at 2026-10-23 11:04:40 (`EX-071`).
+- **Patch 2 on hardware:** the earbuds' three codec switches were refused (`ECONNABORTED`, the first
+  connect and PipeWire's two retries), none falsely connected (`EX-067`, `EX-069`).
+- **No regression:** MOMENTUM 4 2/2 and Shure AONIC 50 6/6 switches got a new link (`EX-070`); links
+  closed at hang-up (`EX-073`); kernel log clean for the boot (`EX-072`).
+- **Not reached on hardware:** patch 1 (no second connect with a link up; no `EBUSY` on the boot)
+  and patch 3 (a race the debug park opens); both emulator-covered.
+- **Found on the way, `U17`:** with a stream playing the earbuds were silent 5 s after a refused
+  switch: PipeWire 1.0.5 retries at once and fails, WirePlumber's idle suspend restarts the nodes
+  5.004 s later (`EX-068`). Before the series: silence until a restart (`U7`). The cover letter's
+  PipeWire paragraph said the series "does not by itself make PipeWire's codec switch succeed",
+  which the run refines: it succeeds after 5 s.
+- **Cover letter:** the two paragraphs to change are drafted in `drafts/cover-letter-v6-hardware.txt`
+  (the "not yet run on hardware" sentence and the PipeWire paragraph); not applied, pending the
+  operator's reading. The code does not change, so the review verdicts and test results stand.
+- **The deferral** (`patch/kernel-rfc-defer/`, 2026-10-21, on the old base) stays a separate RFC: a
+  change of `connect()` semantics, never reviewed, never run on hardware; to be registered as its own
+  contribution.

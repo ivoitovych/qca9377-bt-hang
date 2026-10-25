@@ -1,0 +1,31 @@
+Proposed cover-letter changes after the run on the laptop (2026-10-23 to 2026-10-25).
+Not yet applied to patch/v5/send/. The code is unchanged; only these two paragraphs change.
+Numbers to be re-checked against EX-067 to EX-073 before applying.
+
+1. Replace "The series has not yet been run on hardware; the bug was found on a QCA9377 laptop
+   with PipeWire 1.0.5." with:
+
+It was also run on the QCA9377 laptop where the bug was found (Ubuntu
+24.04's 7.0.0-38 Bluetooth with abd93c85c8667, 816fb1590a4c and the
+series; PipeWire 1.0.5) through a day and a half of ordinary use with
+three headsets. On the earbuds that answer AT+BCS before the old link
+is gone, connect() now fails with ECONNABORTED at each codec change (3
+of 3) instead of succeeding without a link; on the two headsets that
+answer after it, each codec change (8 of 8) still gets a new link. Every
+SCO link went down at hang-up and the kernel log has no warning. Patches
+1 and 3 were not reached there: nothing on that desktop connects twice
+to a headset whose link is up, and patch 3's window opens only with the
+debug change above.
+
+2. Replace the paragraph "The series does not by itself make PipeWire's codec switch succeed:
+   ..." with:
+
+The series does not by itself make PipeWire's codec change seamless:
+PipeWire retries a connect that fails with ECONNABORTED at once, still
+before the old link is gone, so its retries fail too. On that laptop
+the audio came back when WirePlumber restarted the failed stream about
+5 seconds later; without the series it did not come back until the
+stream was restarted. A prototype that instead defers such a connect
+until the old link has been torn down lets the retry succeed in the
+same tests; it builds on this series and changes connect() semantics,
+so I can post it as an RFC if that approach is preferred.

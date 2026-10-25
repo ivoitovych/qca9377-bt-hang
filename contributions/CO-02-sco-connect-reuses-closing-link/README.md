@@ -4,8 +4,14 @@
 and three kernel patches, and `bluez/` holds the BlueZ test, a separate mail. Evidence is in
 `experiments/results-2026-10-22-v3.md` (the stable lines) and `-v4.md` (bluetooth-next; v5
 changed only the messages). The review rounds are in `reviews/`, and how each point was handled
-is in `log.md`. Not sent: next is the run on the laptop
-(`experiments/hardware-run-plan.md`), then the operator's send.
+is in `log.md`. Not sent.
+
+**The run on the laptop (2026-10-23 to 2026-10-25):** done, `experiments/results-2026-10-24-hardware.md`
+(`EX-067` to `EX-073`): patch 2 refused 3 of 3 earbuds switches, 8 of 8 switches on two other
+headsets still got a new link, links closed, kernel log clean; patches 1 and 3 not reachable there.
+With a stream playing, the earbuds' audio returns 5 s after a refused switch (PipeWire's immediate
+retries, `U17`). Next: the cover letter's two paragraphs (`drafts/cover-letter-v6-hardware.txt`),
+the operator's reading, then the operator's send.
 
 **The laptop's kernel (2026-10-23):** Ubuntu 7.0.0-38 needs upstream `abd93c85c8667` +
 `816fb1590a4c` under the series, or patch 1 leaves a `sco_conn` reference that keeps the SCO
