@@ -7,11 +7,19 @@ changed only the messages). The review rounds are in `reviews/`, and how each po
 is in `log.md`. Not sent.
 
 **The run on the laptop (2026-10-23 to 2026-10-25):** done, `experiments/results-2026-10-24-hardware.md`
-(`EX-067` to `EX-073`): patch 2 refused 3 of 3 earbuds switches, 8 of 8 switches on two other
-headsets still got a new link, links closed, kernel log clean; patches 1 and 3 not reachable there.
-With a stream playing, the earbuds' audio returns 5 s after a refused switch (PipeWire's immediate
-retries, `U17`). Next: the cover letter's two paragraphs (`drafts/cover-letter-v6-hardware.txt`),
-the operator's reading, then the operator's send.
+(`EX-067` to `EX-074`): patch 2 refused 3 of 3 earbuds switches, and 8 of 8 switches on two other
+headsets still got a new link. All 36 links closed by handle (`EX-074`), and none of the searched
+kernel diagnostics appeared. Patch 1's case and patch 3's race were not exercised there; patch 1's
+case could be, with a two-socket test program (the operator's decision). With a stream playing, the
+earbuds' audio returns 5 s after a refused switch (PipeWire's immediate retries, `U17`); before the
+series no link followed at all (`U7`).
+
+**After the reviews of `ee52148` (2026-10-26):** the kernel code is unchanged. The BlueZ test has
+one fix: v6 closes the first socket in teardown, after a leak shown in a stalled Connect Twice
+(`experiments/results-2026-10-26-bluez-v6.md`; `patch/v6/bluez-commit/`). The cover letter's two
+paragraphs are revision 2 in `drafts/cover-letter-v6-hardware.txt`. Next: the operator reads them
+(and the small BlueZ diff), then the v6 package is generated (cover applied, BlueZ v6, heads
+rechecked, dry run), then the operator's send.
 
 **The laptop's kernel (2026-10-23):** Ubuntu 7.0.0-38 needs upstream `abd93c85c8667` +
 `816fb1590a4c` under the series, or patch 1 leaves a `sco_conn` reference that keeps the SCO

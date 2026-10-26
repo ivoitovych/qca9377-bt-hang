@@ -1,31 +1,59 @@
 Proposed cover-letter changes after the run on the laptop (2026-10-23 to 2026-10-25).
-Not yet applied to patch/v5/send/. The code is unchanged; only these two paragraphs change.
-Numbers to be re-checked against EX-067 to EX-073 before applying.
+Not yet applied to patch/v5/send/. The kernel code is unchanged; only these two paragraphs change.
+
+Revision 2, 2026-10-26, after the reviews of ee52148. Changed from revision 1:
+- patch 3's race exists without the debug change, which only widens it (revision 1 said the window
+  "opens only with the debug change");
+- "not reached" -> "not exercised": patch 1's case can be reached on the laptop with a two-socket
+  test; patch 3's wait runs on every connect, only its race branch was not hit;
+- "the kernel log has no warning" -> the diagnostics searched, and the pre-existing SCO errors named;
+- "every SCO link went down at hang-up" -> closed by handle with status 0 (EX-074, from the capture),
+  and some links were closed by a codec change, not a hang-up;
+- "WirePlumber restarted the failed stream" -> it suspended the failed nodes and the next connect
+  got a new link;
+- "without the series" -> an earlier reproduction without the series, on 7.0.0-34 (historical, not
+  a same-build control);
+- the prototype's result is from the emulator, and it was not run on hardware;
+- (reviewer 6) "without the series it did not come back until the stream was restarted" was not in
+  the record: in U7 new test sounds 3 s (02:30:47), 2 s (02:31:14) and 26 s (02:31:38) after the
+  failed switches got no link, and the next codec change ended the first silence; the module is
+  named as Ubuntu's kernel module rebuilt, not "Ubuntu's Bluetooth".
+Each number maps to an exhibit: 3 of 3 EX-067/068/069; 8 of 8 EX-070; 36 closed EX-074 (and EX-073);
+diagnostics EX-072; module EX-071; 5 s EX-068; the earlier reproduction EX-060.
 
 1. Replace "The series has not yet been run on hardware; the bug was found on a QCA9377 laptop
    with PipeWire 1.0.5." with:
 
-It was also run on the QCA9377 laptop where the bug was found (Ubuntu
-24.04's 7.0.0-38 Bluetooth with abd93c85c8667, 816fb1590a4c and the
-series; PipeWire 1.0.5) through a day and a half of ordinary use with
-three headsets. On the earbuds that answer AT+BCS before the old link
-is gone, connect() now fails with ECONNABORTED at each codec change (3
-of 3) instead of succeeding without a link; on the two headsets that
-answer after it, each codec change (8 of 8) still gets a new link. Every
-SCO link went down at hang-up and the kernel log has no warning. Patches
-1 and 3 were not reached there: nothing on that desktop connects twice
-to a headset whose link is up, and patch 3's window opens only with the
-debug change above.
+It was also run on the QCA9377 laptop where the bug was found, with the
+Bluetooth module of Ubuntu 24.04's 7.0.0-38 kernel rebuilt with
+abd93c85c8667, 816fb1590a4c and this series (see the last paragraph),
+and PipeWire 1.0.5, through more than a day and a half of ordinary use
+with three headsets. On the earbuds whose AT+BCS reply comes before
+the old link's Disconnection Complete, connect() failed with
+ECONNABORTED at each of three codec changes instead of succeeding
+without a link. On the two headsets that reply after it, each of eight
+codec changes got a new link. All 36 SCO links of that boot ended with
+a successful Disconnection Complete for their handle, no command timed
+out, and the kernel log has no WARNING, BUG, refcount or use-after-free
+report; its "SCO packet for unknown connection handle" and "corrupted
+SCO packet" errors also occur without this series. Patch 1's case, a
+second connect while the first socket's link is up, and patch 3's race
+were not exercised on the laptop; both are covered by the emulator
+tests above, the race with the debug change that widens its window.
 
 2. Replace the paragraph "The series does not by itself make PipeWire's codec switch succeed:
    ..." with:
 
-The series does not by itself make PipeWire's codec change seamless:
-PipeWire retries a connect that fails with ECONNABORTED at once, still
-before the old link is gone, so its retries fail too. On that laptop
-the audio came back when WirePlumber restarted the failed stream about
-5 seconds later; without the series it did not come back until the
-stream was restarted. A prototype that instead defers such a connect
-until the old link has been torn down lets the retry succeed in the
-same tests; it builds on this series and changes connect() semantics,
-so I can post it as an RFC if that approach is preferred.
+The series does not by itself make PipeWire's codec change seamless.
+PipeWire 1.0.5 retries a connect that fails with ECONNABORTED at once,
+while the old link is still being disconnected, so its retries fail
+too. On the laptop, with a stream playing, the audio came back about 5
+seconds later, when WirePlumber suspended the failed nodes and the next
+connect got a new link. In an earlier reproduction without the series
+(7.0.0-34), the same codec change left the socket connected without a
+link and no link followed at all: sounds started 3 and 26 seconds later
+were still silent. A prototype that instead defers such a connect until
+the old link has been torn down lets the retry succeed in the emulator
+tests (it has not been run on hardware); it builds on this series and
+changes connect() semantics, so I can post it as an RFC if that approach
+is preferred.

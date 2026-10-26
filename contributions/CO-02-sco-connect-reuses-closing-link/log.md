@@ -453,12 +453,18 @@ Results: `experiments/results-2026-10-24-hardware.md`; exhibits `EX-067` to `EX-
 - **Patch 2 on hardware:** the earbuds' three codec switches were refused (`ECONNABORTED`, the first
   connect and PipeWire's two retries), none falsely connected (`EX-067`, `EX-069`).
 - **No regression:** MOMENTUM 4 2/2 and Shure AONIC 50 6/6 switches got a new link (`EX-070`); links
-  closed at hang-up (`EX-073`); kernel log clean for the boot (`EX-072`).
-- **Not reached on hardware:** patch 1 (no second connect with a link up; no `EBUSY` on the boot)
-  and patch 3 (a race the debug park opens); both emulator-covered.
+  closed (`EX-074`, by handle from the capture; `EX-073` is the kernel's weaker ledger); none of the
+  searched kernel diagnostics on the boot (`EX-072`; the SCO error lines predate the series, `CO-20`).
+- **Not exercised on hardware** (wording corrected 2026-10-26; it said "not reached"): patch 1's case
+  (no second connect with a link up; reachable with a two-socket test program, not done) and patch
+  3's race (it exists without instrumentation; the debug park only widens it). Patch 3's wait ran on
+  every connect. Both are emulator-covered.
 - **Found on the way, `U17`:** with a stream playing the earbuds were silent 5 s after a refused
-  switch: PipeWire 1.0.5 retries at once and fails, WirePlumber's idle suspend restarts the nodes
-  5.004 s later (`EX-068`). Before the series: silence until a restart (`U7`). The cover letter's
+  switch: PipeWire 1.0.5 retries at once and fails, WirePlumber suspends the failed nodes as idle
+  5.004 s later and the stream still linked re-acquires the link (`EX-068`). Before the series no
+  link followed at all: new test sounds 3, 2 and 26 s later were silent, and the next codec change
+  ended it (`U7`; until 2026-10-26 this line said "silence until a restart", which the record does
+  not show). The cover letter's
   PipeWire paragraph said the series "does not by itself make PipeWire's codec switch succeed",
   which the run refines: it succeeds after 5 s.
 - **Cover letter:** the two paragraphs to change are drafted in `drafts/cover-letter-v6-hardware.txt`
@@ -467,3 +473,53 @@ Results: `experiments/results-2026-10-24-hardware.md`; exhibits `EX-067` to `EX-
 - **The deferral** (`patch/kernel-rfc-defer/`, 2026-10-21, on the old base) stays a separate RFC: a
   change of `connect()` semantics, never reviewed, never run on hardware; to be registered as its own
   contribution.
+
+## 2026-10-26 — the reviews of `ee52148` (six reviewers; each point checked, not taken on authority)
+All six agree with the narrow fix, with keeping the deferral separate (`CO-30`), and that a prose-only
+change owes no new hardware run. Points, and what the check found:
+- **The closure count (reviewer 4): right about the method, and the claim holds.** `sco-ledger.sh`
+  counts the kernel's "opcode 0x0406 status" line. `hci_event_packet()` prints that line with status 0
+  for any Disconnection Complete while a Disconnect is pending (`hci_event.c` l.7817–7822, `status`
+  initialised to 0), with no handle. A failed Command Status prints its own status, and the ledger
+  counted that as answered too. New `scripts/sco-link-closure.py` reads the capture by handle:
+  36 links, 36 closed with Disconnection Complete status 0x00, all by the host, no failed setup, no
+  gap (`EX-074`). Fixed in `sco-ledger.sh`: a nonzero status is `DISC-FAILED`, and the header says
+  what the line proves. `EX-073`'s claim is corrected: it said "the HCI capture shows", but it reads
+  the kernel log.
+- **The BlueZ test's first socket on a framework timeout (reviewer 4): right that it can leak, wrong
+  about where.** In the reviewer's example (the first completion withheld), the watch is still
+  armed when teardown removes the controller, so it fires and `reconnect_end()` closes the socket:
+  v5 closed 4/4. A stalled Connect Twice, timed out after the refused second connect, leaves it
+  open: v5 2/2 open. v6 closes it in `test_post_teardown()`: 2/2 closed
+  (`experiments/results-2026-10-26-bluez-v6.md`). Regression as v4: 18/18 focused, full 33/33 UP and
+  SMP, base 31/33.
+- **The 100 ms before "Reconnect After" connects again (reviewer 4): kept.** It is a margin for the
+  host to process the event the emulator has just sent. It passed every run on UP, SMP and KCSAN. If
+  it were too short, the case would fail loudly, not pass falsely. The reviewer did not reproduce a
+  failure.
+- **"Patch 3's window opens only with the debug change" (reviewers 2, 4): wrong, corrected.** The
+  race exists without it; the park only widens it. **"Patches 1 and 3 not reached" (2, 3, 4, 5):
+  corrected to "not exercised".** Patch 3's wait runs on every `hci_connect_sco()` call (36 on the
+  laptop). Patch 1's case can be reached with a two-socket test program; not done, the operator's
+  decision.
+- **"Kernel log clean" / "no warning" (2, 3, 4, 5): narrowed** to the diagnostics searched, with the
+  pre-existing SCO errors named. `EX-072`'s relevance no longer says an unbalanced hold "would show";
+  an extra hold is silent, and `EX-074` covers that instead. "Same way as the unpatched boot" became
+  "predate the series; rates not compared" (3, 4).
+- **"Until the stream was restarted" (reviewer 6): wrong, corrected everywhere** (draft, results file,
+  `EX-068`, `issues.md` U7/U17, this log). U7's record: new test sounds 3, 2 and 26 s after the
+  failed switches got no link, and the next codec change ended the first silence.
+- **Module wording, "with a stream playing", WirePlumber suspends nodes, the earlier run as
+  historical (2, 3, 4, 6): taken** into revision 2 of the draft.
+- **"`[PATCH v6]` must not be the first posting's subject" (5): already so.** The subjects are
+  `[PATCH 0/3]` and `[PATCH BlueZ]`.
+- **"Do not mail stable@vger.kernel.org" (5): not taken.** `stable-kernel-rules.rst` (l.70–77) expects
+  `git send-email` to deliver to it, and warns only for unpublished vulnerabilities.
+- **Upstream freshness (2, 3, 6): checked.** bluetooth-next `47d4d9f67e92` (+18 commits; none in the
+  series' code); the series applies with `git am` at zero offset, `range-diff` identical, checkpatch
+  0/0/0, builds with no warning. BlueZ master `a0580dad5655` (+4, none in sco-tester); the v6 test passes
+  am/checkpatch/gitlint on it. The mainloop series (patchwork 14908123) has not landed.
+  (`tmp/co02-fresh/`.) On the new head with the v6 test: Reconnect and Twice 6/6 runs, full
+  sco-tester 33/33; the head alone 31/33 (During and Twice fail); no kernel report in any guest.
+- **Reviewer 6's correction of their own 10-22 report** (Hitalo's sco-tester commit is not in
+  master): noted; nothing here depended on it.

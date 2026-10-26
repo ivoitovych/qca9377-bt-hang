@@ -1,0 +1,71 @@
+From a453b21dfd3c6251c761af93cd47deb66c605844 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Mon, 26 Oct 2026 03:42:11 +0100
+Subject: [PATCH 2/2] EXPERIMENT (not for submission): Connect Twice stalls
+ until the framework timeout
+
+---
+ tools/sco-tester.c | 19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/tools/sco-tester.c b/tools/sco-tester.c
+index 1508579d4..74c3a918c 100644
+--- a/tools/sco-tester.c
++++ b/tools/sco-tester.c
+@@ -108,6 +108,9 @@ struct sco_client_data {
+ 
+ 	/* EXPERIMENT: the first Synchronous Connection Complete never comes */
+ 	bool exp_withhold_first;
++
++	/* EXPERIMENT: Connect Twice stalls after the refused second connect */
++	bool exp_stall_quiet;
+ };
+ 
+ static void print_debug(const char *str, void *user_data)
+@@ -324,7 +327,7 @@ static void test_data_free(void *test_data)
+ 		g_source_remove(data->io_id);
+ 
+ 	/* EXPERIMENT: is the first socket still open after the teardown? */
+-	if (scodata && scodata->exp_withhold_first) {
++	if (scodata && (scodata->exp_withhold_first || scodata->exp_stall_quiet)) {
+ 		int proto = 0;
+ 		socklen_t plen = sizeof(proto);
+ 
+@@ -415,6 +418,11 @@ static const struct sco_client_data exp_reconnect_withheld = {
+ 	.exp_withhold_first = true,
+ };
+ 
++static const struct sco_client_data exp_twice_stalled = {
++	.reconnect = CONNECT_TWICE,
++	.exp_stall_quiet = true,
++};
++
+ static const struct sco_client_data reconnect_during = {
+ 	.reconnect = RECONNECT_DURING,
+ };
+@@ -1775,6 +1783,11 @@ static gboolean reconnect_connect2(gpointer user_data)
+ 			return FALSE;
+ 		}
+ 
++		if (scodata->exp_stall_quiet) {
++			tester_print("EXP: stalling, the framework timeout ends the case");
++			return FALSE;
++		}
++
+ 		reconnect_arm(data, RECONNECT_QUIET_MS, reconnect_quiet);
+ 		return FALSE;
+ 	}
+@@ -2126,6 +2139,10 @@ int main(int argc, char *argv[])
+ 					&exp_reconnect_withheld, setup_powered,
+ 					test_reconnect, false, false, false, 3);
+ 
++	test_sco_full("eSCO CVSD - EXP Twice Stalled",
++					&exp_twice_stalled, setup_powered,
++					test_reconnect, false, false, false, 3);
++
+ 	test_sco_11("SCO CVSD 1.1 - Success", &connect_success, setup_powered,
+ 							test_connect);
+ 
+-- 
+2.43.0
+
