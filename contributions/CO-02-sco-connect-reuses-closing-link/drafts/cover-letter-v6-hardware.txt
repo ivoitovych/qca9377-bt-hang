@@ -1,5 +1,25 @@
 Proposed cover-letter changes after the run on the laptop (2026-10-23 to 2026-10-25).
-Not yet applied to patch/v5/send/. The kernel code is unchanged; only these two paragraphs change.
+The kernel code is unchanged; only these paragraphs change.
+
+REVISION 3 (2026-10-26, after the second round of reviews) is the text in
+patch/v6/send/kernel/0000-cover-letter.patch; this file keeps revision 2 below for the record.
+Revision 3 changes, each checked before it was taken:
+- "All 36 SCO links of that boot" -> "All 36 SCO links in the HCI capture of that boot" (reviewers
+  3, 4, 5: the capture shows what it recorded, not that it lost nothing);
+- "no command timed out" -> "no HCI command timeout was logged" (3, 5);
+- the log sentence names the search (WARNING, BUG, Oops, Call Trace, refcount, use-after-free) and
+  says its only error-level lines are the two SCO messages this controller also logs without the
+  series (6; `journalctl -k -b 257d1599… -p err` holds only those two kinds, 77 lines). "At hang-up"
+  was left out: some lines come minutes after any hang-up (CO-20);
+- the earlier reproduction says what the capture shows: "produced no Setup Synchronous Connection,
+  and sounds started 2 to 26 seconds later were still silent" (6: the socket's state was not
+  observed on 7.0.0-34, whose SCO debug was off; 4: bounded wording; "3 and 26" mixed two switches,
+  the delays were about 2, 2 and 26 s);
+- the first hardware paragraph is split into results and limits (5);
+- the test paragraph adds: applies unchanged to bluetooth-next 47d4d9f67e92, where sco-tester gives
+  the same results (the new base; only sco-tester was rerun there).
+Not taken: "patch 3's wait ran on every connect" (5). It is true only for connects that reached it
+(4), and it adds length to the cover without changing a maintainer's view.
 
 Revision 2, 2026-10-26, after the reviews of ee52148. Changed from revision 1:
 - patch 3's race exists without the debug change, which only widens it (revision 1 said the window

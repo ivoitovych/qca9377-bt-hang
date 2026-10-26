@@ -1,6 +1,7 @@
 # CO-02 — A new SCO connect reuses the closing link (U7)
 
-**State (2026-10-23): the package to send is `patch/v5/send/`**: `kernel/` holds the cover letter
+**State (2026-10-26): the package to send is `patch/v6/send/` (below); until then it was
+`patch/v5/send/`**: `kernel/` holds the cover letter
 and three kernel patches, and `bluez/` holds the BlueZ test, a separate mail. Evidence is in
 `experiments/results-2026-10-22-v3.md` (the stable lines) and `-v4.md` (bluetooth-next; v5
 changed only the messages). The review rounds are in `reviews/`, and how each point was handled
@@ -17,9 +18,14 @@ series no link followed at all (`U7`).
 **After the reviews of `ee52148` (2026-10-26):** the kernel code is unchanged. The BlueZ test has
 one fix: v6 closes the first socket in teardown, after a leak shown in a stalled Connect Twice
 (`experiments/results-2026-10-26-bluez-v6.md`; `patch/v6/bluez-commit/`). The cover letter's two
-paragraphs are revision 2 in `drafts/cover-letter-v6-hardware.txt`. Next: the operator reads them
-(and the small BlueZ diff), then the v6 package is generated (cover applied, BlueZ v6, heads
-rechecked, dry run), then the operator's send.
+paragraphs are revision 2 in `drafts/cover-letter-v6-hardware.txt`.
+
+**The v6 package (2026-10-26), generated, not sent: `patch/v6/send/`**: the series on today's
+bluetooth-next `47d4d9f67e92`, the cover at revision 3 (after a second review round, all six
+favourable), the BlueZ test v6 on master `a0580dad5655` with v5's notes. checkpatch, the bot's checks
+and the send dry run are clean (`patch/v6/send/README.md`). Next: the operator reads the mails; the
+optional patch 1 test on the laptop (`experiments/hw-connect-twice/`) is the operator's decision;
+then the operator's send. `patch/v5/send/` is superseded.
 
 **The laptop's kernel (2026-10-23):** Ubuntu 7.0.0-38 needs upstream `abd93c85c8667` +
 `816fb1590a4c` under the series, or patch 1 leaves a `sco_conn` reference that keeps the SCO

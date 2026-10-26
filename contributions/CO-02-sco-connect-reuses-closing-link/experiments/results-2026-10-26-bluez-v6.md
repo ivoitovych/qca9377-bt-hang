@@ -46,9 +46,9 @@ it there would close it twice). 15 lines; no other change; the commit message is
 ## Regression, v6 test
 | kernel | result |
 |---|---|
-| bluetooth-next + series (v4 code), UP / SMP / KCSAN SMP | Reconnect (2 cases) and Connect Twice, 3 times each on all three: 18/18 runs pass; full sco-tester 33/33 on UP and on SMP |
+| bluetooth-next + series (v4 code), UP / SMP / KCSAN SMP | Reconnect (2 cases) and Connect Twice, 3 times each on all three: 18/18 runs pass (tester invocations; counted as case results, 27/27, the unit of the v4 results file); full sco-tester 33/33 on UP and on SMP |
 | bluetooth-next base, UP and SMP (negative control) | full sco-tester 31/33: "Reconnect During Disconnect" and "Connect Twice" fail, as with v4/v5 |
-| bluetooth-next **today's head `47d4d9f67e92`** + series (v5 mails, `git am` clean, range-diff identical), SMP | Reconnect and Connect Twice 3 times: 6/6 runs pass; full sco-tester 33/33 |
+| bluetooth-next **today's head `47d4d9f67e92`** + series (v5 mails, `git am` clean, range-diff identical), SMP | Reconnect and Connect Twice 3 times: 6/6 runs pass (9/9 case results); full sco-tester 33/33 |
 | bluetooth-next `47d4d9f67e92` alone, SMP (negative control) | full sco-tester 31/33: "Reconnect During Disconnect" and "Connect Twice" fail |
 
 `scripts/kernel-report-scan.py` on the full runs and the stalled experiment: every guest booted the

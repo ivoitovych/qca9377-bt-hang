@@ -458,7 +458,7 @@ Results: `experiments/results-2026-10-24-hardware.md`; exhibits `EX-067` to `EX-
 - **Not exercised on hardware** (wording corrected 2026-10-26; it said "not reached"): patch 1's case
   (no second connect with a link up; reachable with a two-socket test program, not done) and patch
   3's race (it exists without instrumentation; the debug park only widens it). Patch 3's wait ran on
-  every connect. Both are emulator-covered.
+  each connect that led to a link (not on refused ones). Both are emulator-covered.
 - **Found on the way, `U17`:** with a stream playing the earbuds were silent 5 s after a refused
   switch: PipeWire 1.0.5 retries at once and fails, WirePlumber suspends the failed nodes as idle
   5.004 s later and the stream still linked re-acquires the link (`EX-068`). Before the series no
@@ -493,14 +493,18 @@ change owes no new hardware run. Points, and what the check found:
   open: v5 2/2 open. v6 closes it in `test_post_teardown()`: 2/2 closed
   (`experiments/results-2026-10-26-bluez-v6.md`). Regression as v4: 18/18 focused, full 33/33 UP and
   SMP, base 31/33.
-- **The 100 ms before "Reconnect After" connects again (reviewer 4): kept.** It is a margin for the
-  host to process the event the emulator has just sent. It passed every run on UP, SMP and KCSAN. If
-  it were too short, the case would fail loudly, not pass falsely. The reviewer did not reproduce a
-  failure.
+- **The 100 ms before "Reconnect After" connects again (reviewer 4): kept, and recorded as an
+  unreproduced robustness risk, not dismissed.** It is a margin for the host to process the event
+  the emulator has just sent. It passed every run on UP, SMP and KCSAN. If it were too short, the
+  case would fail loudly, not pass falsely. Reviewer 4 holds, rightly, that a false failure on a
+  correct kernel still costs maintainers time. A deterministic replacement would poll the host's
+  connection list (HCIGETCONNLIST) until the old SCO connection is gone. That is not done: no flake
+  has been seen, and it would add code to an already long test.
 - **"Patch 3's window opens only with the debug change" (reviewers 2, 4): wrong, corrected.** The
   race exists without it; the park only widens it. **"Patches 1 and 3 not reached" (2, 3, 4, 5):
-  corrected to "not exercised".** Patch 3's wait runs on every `hci_connect_sco()` call (36 on the
-  laptop). Patch 1's case can be reached with a two-socket test program; not done, the operator's
+  corrected to "not exercised".** Patch 3's wait runs on every `hci_connect_sco()` call that gets
+  past the earlier returns; on the laptop, on each connect that led to a link, not on the refused
+  ones (first written as "every call"; corrected the same day, reviewer 4). Patch 1's case can be reached with a two-socket test program; not done, the operator's
   decision.
 - **"Kernel log clean" / "no warning" (2, 3, 4, 5): narrowed** to the diagnostics searched, with the
   pre-existing SCO errors named. `EX-072`'s relevance no longer says an unbalanced hold "would show";

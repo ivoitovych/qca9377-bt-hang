@@ -35,6 +35,26 @@
 - For the late lines: a slow receive path, or a controller still sending on the old handle.
   Leftover USB transfers do not explain seconds.
 
+## The CO-02 boot (`257d1599…`, 2026-10-23 to 26): late by minutes, not seconds
+
+Read 2026-10-26 (`journalctl -k -b 257d1599532e4cad941b5bb6178bb630 -p err` and the same boot
+with `--grep "corrupted SCO|handle 0x[0-9a-f]+ reason 0x13|unknown connection handle"`). The
+boot's only error-level kernel lines are these two kinds: 13 "corrupted SCO packet" and 64
+"SCO packet for unknown connection handle N", against 36 links. Most come within about 100 ms of
+the host's Disconnect of that handle, but some come much later:
+- handle 11: Disconnect 13:01:34.795, a line at 13:11:03.971, about 9.5 minutes later. It is
+  0.1 s before the next link's Synchronous Connect Complete (13:11:04.056 in the capture, which
+  got handle 12), so it may belong to that setup;
+- handle 12: Disconnect 13:11:22.700, a line at 13:27:12.852, about 16 minutes later, with no
+  link before 21:10;
+- handle 8: Disconnect 21:11:19.503, a line at 21:11:57.240, 38 s later;
+- handle 5: Disconnect 11:49:42.011, a line at 11:49:44.507, 2.5 s later.
+
+So at least some late lines are not a slow receive path draining the hang-up: handle 12's
+line comes 16 minutes after its Disconnection Complete with no SCO link up (`EX-074` has every one of those links closed
+with status 0x00). The same kinds of line are on the unpatched boot before it, so this predates
+the CO-02 series. Not yet read in the capture.
+
 ## Next
 
 Read the HCI captures at those six hang-ups:

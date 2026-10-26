@@ -37,7 +37,10 @@ does not reach", and it said patch 3's window opens only with the debug park. Bo
   code (`-hw-prep.md` §2). It **can** be reached on the laptop, with a test program that opens two
   SCO sockets to one headset. That was not done; it is the operator's decision.
 - **Patch 3 (the race with a disconnect worker already running):** its wait and second check run
-  on every `hci_connect_sco()` call, so here they ran on all 36 connects with no stall. The race
+  on every `hci_connect_sco()` call that gets past the earlier returns (an ACL or allocation
+  failure, patch 2's refusal, `-ENOLINK`). Here they ran on each connect that led to one of the 36
+  links, and those links were set up; they did not run on the 9 refused attempts. (Corrected
+  2026-10-26, reviewer 4: this said "on every call".) The race
   itself exists in the ordinary kernel: a worker that has seen no holder but not yet set
   `abort_reason`. Its window is too short to hit on demand. The debug-only park lengthens it to make
   it reproducible (`race-park-2026-10-22.md`), so the refusal on that path is shown in the emulator
