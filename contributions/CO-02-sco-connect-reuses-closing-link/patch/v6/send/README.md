@@ -41,6 +41,11 @@ these exact files, 2026-10-26:
   stable@vger.kernel.org on patches 1 to 3, from their trailers. BlueZ: linux-bluetooth, Luiz
   Augusto von Dentz, Pauli Virtanen.
 
+**BlueZ notes, changed 2026-10-26 (the operator's yes):** they ask that the test be applied after
+the kernel series is in bluetooth-next, and they link the series on lore (a placeholder until the
+kernel send). Code unchanged, checked by `scripts/patch-code-compare.py`. The send procedure, the
+same for v6 and the v7 candidate, is in `../../send-tools/README.md`.
+
 **Recipients:** as for v5 (the operator's decision of 2026-10-22).
 
 **Order:** the kernel series first, then the BlueZ test the same day.

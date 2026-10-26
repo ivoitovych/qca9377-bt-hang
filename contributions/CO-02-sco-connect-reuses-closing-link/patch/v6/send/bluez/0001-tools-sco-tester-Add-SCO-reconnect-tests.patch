@@ -25,11 +25,15 @@ link:
 ---
 "Reconnect During Disconnect" and "Connect Twice" fail on current
 bluetooth-next and pass with the kernel series "[PATCH 0/3] Bluetooth:
-hci_conn: fix SCO connection reuse", sent to this list alongside. The
-During case accepts more than one outcome on purpose (an immediate
-ECONNABORTED or EBUSY, or a new link of its own), so that it stays
-valid on kernels before 6.13, which answer EBUSY, and if the kernel
-later defers such a connect instead of refusing it.
+hci_conn: fix SCO connection reuse", sent to this list alongside:
+@KERNEL_SERIES_LINK@
+
+Please apply this after that series is in bluetooth-next; until then
+the two cases fail there. The During case accepts more than one
+outcome on purpose (an immediate ECONNABORTED or EBUSY, or a new link
+of its own), so that it stays valid on kernels before 6.13, which
+answer EBUSY, and if the kernel later defers such a connect instead of
+refusing it.
 
 This is against current master; if the series moving the testers to
 the mainloop lands first, I will rebase it onto that.
