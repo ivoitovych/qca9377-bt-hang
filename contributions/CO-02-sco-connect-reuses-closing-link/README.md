@@ -23,9 +23,11 @@ paragraphs are revision 2 in `drafts/cover-letter-v6-hardware.txt`.
 **The v6 package (2026-10-26), generated, not sent: `patch/v6/send/`**: the series on today's
 bluetooth-next `47d4d9f67e92`, the cover at revision 3 (after a second review round, all six
 favourable), the BlueZ test v6 on master `a0580dad5655` with v5's notes. checkpatch, the bot's checks
-and the send dry run are clean (`patch/v6/send/README.md`). Next: the operator reads the mails; the
-optional patch 1 test on the laptop (`experiments/hw-connect-twice/`) is the operator's decision;
-then the operator's send. `patch/v5/send/` is superseded.
+and the send dry run are clean (`patch/v6/send/README.md`). **Patch 1 on the laptop, 2026-10-26: 3 of
+3** (`experiments/results-2026-10-26-hw-connect-twice.md`, `EX-075` to `EX-077`). A second SCO
+connect during a Shure call got EBUSY, the call's link was kept, and its voice data had no gap; the
+cover says so. Next: the operator reads the mails, then the operator's send. `patch/v5/send/` is
+superseded.
 
 **The laptop's kernel (2026-10-23):** Ubuntu 7.0.0-38 needs upstream `abd93c85c8667` +
 `816fb1590a4c` under the series, or patch 1 leaves a `sco_conn` reference that keeps the SCO

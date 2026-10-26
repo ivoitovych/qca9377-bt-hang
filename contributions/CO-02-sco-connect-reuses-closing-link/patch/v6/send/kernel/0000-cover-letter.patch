@@ -1,6 +1,6 @@
 From 3d71b97faa981143b9dce44242ab567399c2186d Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Mon, 26 Oct 2026 05:06:15 +0100
+Date: Mon, 26 Oct 2026 05:44:38 +0100
 Subject: [PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse
 
 When a SCO socket is closed and a new one connects to the same device
@@ -60,10 +60,12 @@ use-after-free report; its only error-level lines are the "SCO packet
 for unknown connection handle" and "corrupted SCO packet" messages
 this controller also logs without the series.
 
-Patch 1's case, a second connect while the first socket's link is up,
-and patch 3's race were not exercised on the laptop; both are covered
-by the emulator tests above, the race with the debug change that
-widens its window.
+Patch 1's case was also run there: while a headset's eSCO link carried
+audio, a second SCO socket connecting to the same headset failed with
+EBUSY three times out of three, and the link went on carrying audio
+with no gap in the HCI capture. Patch 3's race was not exercised on
+the laptop; it is covered by the emulator tests above, with the debug
+change that widens its window.
 
 The series does not by itself make PipeWire's codec change seamless.
 PipeWire 1.0.5 retries a connect that fails with ECONNABORTED at once,

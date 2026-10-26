@@ -1319,6 +1319,8 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
 
   **Upstream check, 2026-10-24:** Noble has nothing newer than 0.4.17-1ubuntu4.1; LP #2122640's comments report no such regression; no Launchpad or GNOME report matches. Related, not the same: gnome-control-center #1550 (the panel not refreshed when devices change elsewhere), WirePlumber #682 (a 0.5.4 crash at a profile switch).
 
+  **Again, 2026-10-26 [operator]:** Hands-free → Headset with the Shure's microphone as the input: the meter froze at the level it showed at the switch (05:34:04, 05:36:16). At 05:32:25 the input was already the internal microphone before the switch, and the meter kept working. This agrees with the traced cause: only a meter stream attached to the Bluetooth source is destroyed when that source goes. Not yet read in the journal for these times.
+
   **Next:** a test on the laptop (the patched line in a user override of `policy-node.lua`, then the Hands-free → A2DP switch; the operator's decision); whether a recording application loses its stream the same way; then a Launchpad report with the patch, the operator's.
 
   **Evidence:** raw on this machine only: `archive/incidents/20261024-shure-mic-meter-and-vgm/` (`audio-policy-0755-0812.txt`, `atspi-0755-0812.txt`, the user and bluetoothd journals 07:55–08:12, `SHA256SUMS`; saved by `tmp/incident-20261024-shure-mic/save.sh`; real addresses inside).

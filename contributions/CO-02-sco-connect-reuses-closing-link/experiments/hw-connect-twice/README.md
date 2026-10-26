@@ -1,6 +1,9 @@
-# Patch 1 on the laptop: a second SCO connect during a call (prepared 2026-10-26, NOT RUN)
+# Patch 1 on the laptop: a second SCO connect during a call (prepared and run 2026-10-26)
 
-Optional; the operator's decision. Reviewers 5 and 6 recommend it as cheap; 1 to 4 call it optional.
+**Run on the operator's word, 05:40 to 05:43: 3 of 3 PASS, confirmed by the capture**
+(`../results-2026-10-26-hw-connect-twice.md`, `EX-075` to `EX-077`).
+
+Optional; the operator's decision. Reviewers 5 and 6 recommended it as cheap; 1 to 4 called it optional.
 The emulator covers the case 3/3 on bluetooth-next and on Ubuntu's code.
 
 **What it shows:** with patch 1 a `connect()` of a second SCO socket to a headset whose call link
