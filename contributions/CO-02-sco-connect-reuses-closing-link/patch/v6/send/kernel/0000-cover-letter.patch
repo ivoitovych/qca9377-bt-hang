@@ -1,6 +1,6 @@
 From 3d71b97faa981143b9dce44242ab567399c2186d Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Mon, 26 Oct 2026 04:17:03 +0100
+Date: Mon, 26 Oct 2026 05:06:15 +0100
 Subject: [PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse
 
 When a SCO socket is closed and a new one connects to the same device
@@ -40,8 +40,9 @@ is still reported connected and then aborted, with patch 3 the connect
 fails with ECONNABORTED. sco-tester, iso-tester and l2cap-tester
 otherwise give the same results with and without the series, and so
 does mgmt-tester. The series applies unchanged to the current
-bluetooth-next, 47d4d9f67e92, where sco-tester gives the same results
-with and without it.
+bluetooth-next, 47d4d9f67e92; there sco-tester passes all 33 cases
+with the series, and without it only "Reconnect During Disconnect" and
+"Connect Twice" fail.
 
 It was also run on the QCA9377 laptop where the bug was found, with the
 Bluetooth module of Ubuntu 24.04's 7.0.0-38 kernel rebuilt with

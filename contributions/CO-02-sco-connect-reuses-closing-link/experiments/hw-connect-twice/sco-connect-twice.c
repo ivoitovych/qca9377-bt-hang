@@ -7,11 +7,18 @@
  *
  *   sco-connect-twice <hci index> <headset address>
  *
- * Refuses to run unless the kernel lists a connected SCO/eSCO link to that address
- * (HCIGETCONNLIST: a query of the kernel's connection table, no command to the controller), so it
- * can never open a link of its own. Then: one connect(), the socket closed at once, and the link
+ * Refuses to run unless the kernel lists a connected link to that address of the type
+ * sco_connect() will look up: eSCO if the adapter is eSCO-capable and bluetooth.disable_esco is
+ * off, else SCO (HCIGETCONNLIST and HCIGETDEVINFO: queries of the kernel's tables, no command
+ * to the controller). A call link the controller downgraded to plain SCO would not be found by
+ * that lookup, and the connect would set up a new link; this refuses that case. The socket is
+ * bound to the inspected adapter. Then: one connect(), the socket closed at once, and the link
  * table read every second for 10 s. Prints handles and times, never the address.
- * Exit 0 PASS (EBUSY, link kept), 1 FAIL, 2 usage, 3 no call up.
+ *
+ * Limits, which the HCI capture of the window settles: the call's link can still end between the
+ * check and the connect() (the connect would then set up a link of its own), and reading the
+ * table once a second cannot see a short drop that comes back with the same handle.
+ * Exit 0 PASS (EBUSY, link kept), 1 FAIL, 2 usage, 3 no suitable call link.
  *
  * Build: cc -O2 -Wall -I<bluez tree>/lib -o sco-connect-twice sco-connect-twice.c
  */
@@ -52,8 +59,24 @@ static int parse_addr(const char *s, bdaddr_t *ba)
 	return 0;
 }
 
-/* The handle of a connected SCO/eSCO link to dst, or -1 */
-static int sco_handle(int hci, int dev, const bdaddr_t *dst, int *type)
+/* The link type sco_connect() looks up on this adapter (sco.c: eSCO if capable and not disabled) */
+static int wanted_type(const struct hci_dev_info *di)
+{
+	char c = 'N';
+	FILE *f = fopen("/sys/module/bluetooth/parameters/disable_esco", "r");
+
+	if (f) {
+		if (fscanf(f, " %c", &c) != 1)
+			c = 'N';
+		fclose(f);
+	}
+	if ((di->features[3] & LMP_ESCO) && c != 'Y')
+		return ESCO_LINK;
+	return SCO_LINK;
+}
+
+/* The handle of a connected link of the given type to dst, or -1 */
+static int sco_handle(int hci, int dev, const bdaddr_t *dst, int want, int *type)
 {
 	struct hci_conn_list_req *cl;
 	int n = 20, h = -1;
@@ -71,8 +94,7 @@ static int sco_handle(int hci, int dev, const bdaddr_t *dst, int *type)
 	for (int i = 0; i < cl->conn_num; i++) {
 		struct hci_conn_info *ci = &cl->conn_info[i];
 
-		if ((ci->type == SCO_LINK || ci->type == ESCO_LINK) &&
-				ci->state == BT_CONNECTED &&
+		if (ci->type == want && ci->state == BT_CONNECTED &&
 				!memcmp(&ci->bdaddr, dst, sizeof(*dst))) {
 			h = ci->handle;
 			*type = ci->type;
@@ -85,9 +107,10 @@ static int sco_handle(int hci, int dev, const bdaddr_t *dst, int *type)
 int main(int argc, char *argv[])
 {
 	struct sockaddr_sco addr;
+	struct hci_dev_info di;
 	struct timeval tv = { .tv_sec = 5 };
 	bdaddr_t dst;
-	int dev, hci, sk, h0, h, type = -1, ret, err, kept = 1;
+	int dev, hci, sk, h0, h, want, type = -1, ret, err, kept = 1;
 	char line[96];
 
 	if (argc != 3 || parse_addr(argv[2], &dst) < 0) {
@@ -102,9 +125,18 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	h0 = sco_handle(hci, dev, &dst, &type);
+	memset(&di, 0, sizeof(di));
+	di.dev_id = dev;
+	if (ioctl(hci, HCIGETDEVINFO, &di) < 0) {
+		perror("HCIGETDEVINFO");
+		return 1;
+	}
+	want = wanted_type(&di);
+
+	h0 = sco_handle(hci, dev, &dst, want, &type);
 	if (h0 < 0) {
-		printf("no connected SCO/eSCO link to that headset: start a call first\n");
+		printf("no connected %s link to that headset (the type the kernel will look up): "
+			"start a call first\n", want == ESCO_LINK ? "eSCO" : "SCO");
 		return 3;
 	}
 	snprintf(line, sizeof(line), "call's link: handle %d, %s", h0,
@@ -117,6 +149,15 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	setsockopt(sk, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+
+	/* Bound to the inspected adapter, so the connect goes through it */
+	memset(&addr, 0, sizeof(addr));
+	addr.sco_family = AF_BLUETOOTH;
+	bacpy(&addr.sco_bdaddr, &di.bdaddr);
+	if (bind(sk, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+		perror("bind to the adapter");
+		return 1;
+	}
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sco_family = AF_BLUETOOTH;
@@ -133,7 +174,7 @@ int main(int argc, char *argv[])
 
 	for (int s = 1; s <= 10; s++) {
 		sleep(1);
-		h = sco_handle(hci, dev, &dst, &type);
+		h = sco_handle(hci, dev, &dst, want, &type);
 		snprintf(line, sizeof(line), "+%2d s: %s", s,
 				h == h0 ? "call's link still up" :
 				h < 0 ? "NO SCO link to the headset" :
