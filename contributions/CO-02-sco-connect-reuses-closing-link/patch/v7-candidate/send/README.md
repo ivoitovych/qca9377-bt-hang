@@ -4,6 +4,18 @@
 picks this one, after reading it. The code is byte-identical to v6: `git diff` of the trees is
 empty for the kernel commits and the BlueZ commit. Only the five messages changed.
 
+**The code is the tested code, checked by tool (2026-10-26, the operator's request).**
+`scripts/patch-code-compare.py` compares each mail's diff text and `git patch-id`;
+`scripts/change-code-compare.sh` compares a whole change across trees.
+- Positive control: v5 → v6 BlueZ is reported as differing, by exactly the 15-line block (`EX-078`).
+- v6 → v7 kernel: identical (`EX-079`). v6 BlueZ commit (the one built and run) → v7: identical
+  (`EX-080`).
+- v4 → v7 kernel: identical (`EX-081`). v4 is where the emulator matrix ran; v5 to v7 changed only
+  messages.
+- The laptop's module (the series as one commit on Ubuntu 7.0.0-38's sources) → v7: the same
+  change, with the same patch-id and the same 36 changed lines (`EX-082`). The hardware runs,
+  including the patch 1 test, ran this code.
+
 **Why:** the operator asked whether the mails read well for a tired maintainer (2026-10-26). They
 were accurate, but the cover opened with the mechanism and had two 15- to 18-line paragraphs. The
 six reviewers then each proposed a full rewrite. The texts here are a combination of theirs, each
