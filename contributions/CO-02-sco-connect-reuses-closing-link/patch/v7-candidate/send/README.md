@@ -15,6 +15,9 @@ empty for the kernel commits and the BlueZ commit. Only the five messages change
 - The laptop's module (the series as one commit on Ubuntu 7.0.0-38's sources) → v7: the same
   change, with the same patch-id and the same 36 changed lines (`EX-082`). The hardware runs,
   including the patch 1 test, ran this code.
+- v3 → v7 kernel: patches 1 and 3 identical, and patch 2 differs only by the v4 `READ_ONCE()` /
+  `WRITE_ONCE()` lines (`EX-083`). So the 6.6.y and 6.12.y stable runs, which used v3's patch 1,
+  ran today's patch 1; 6.18.y and 7.2.y were rerun with v4.
 
 **Why:** the operator asked whether the mails read well for a tired maintainer (2026-10-26). They
 were accurate, but the cover opened with the mechanism and had two 15- to 18-line paragraphs. The
