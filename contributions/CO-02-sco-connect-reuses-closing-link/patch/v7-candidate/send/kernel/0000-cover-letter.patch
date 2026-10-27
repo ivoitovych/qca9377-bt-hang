@@ -1,6 +1,6 @@
 From 748559b2d64ac9778040e74fc37557b19ea76dab Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Tue, 27 Oct 2026 10:50:32 +0100
+Date: Tue, 27 Oct 2026 17:27:14 +0100
 Subject: [PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse
 
 An HFP codec change can leave a headset silent. The new SCO socket
@@ -34,8 +34,9 @@ running hci_conn_timeout() may already have observed that no holder
 remains when a new connect() takes a hold. Wait for that worker and
 check abort_reason again before using the connection.
 
-A connect() arriving before the worker starts still cancels the
-pending disconnect and keeps the live link, as before.
+A connect() arriving before the worker starts cancels the pending
+disconnect with the hold patch 1 gives it, and keeps the live link.
+Patches 2 and 3 leave that case unchanged.
 
 Testing
 
