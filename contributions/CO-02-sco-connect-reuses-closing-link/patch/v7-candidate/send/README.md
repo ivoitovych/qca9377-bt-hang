@@ -79,3 +79,8 @@ Built by `tmp/co02-v7prose/make.sh` and `redo-kernel.sh`, from v6's commits in n
   makeextell and incremental PASS; smatch has nothing new and nothing on the touched file;
   checkpatch (the kernel tree's copy, version 0.32) PASS. scan-build is not installed here.
   Outputs in `tmp/co02-v7prose/ci-local-bluez-b0bf4927*`.
+
+**2026-10-27, after the Sashiko-rule review** (`../../log.md`, `b809d67`): one cover sentence
+corrected. "A connect() arriving before the worker starts … keeps the live link, as before" was
+wrong for the base. It now credits patch 1's hold. Patches 1 to 3 are byte-identical, and the
+send guards pass.
