@@ -622,3 +622,19 @@ All six: ready to send, no findings on the mails. Reviewer 2 withdrew the regex 
 escaping was right). Reviewer 4 retested the guards in a committed scratch repository. Taken: the
 `chosen-package` status check read a failed `git status` as clean (reviewer 3); it now refuses,
 as the package check already did.
+
+## 2026-10-27 — the list's CI bot, run here on v7 (the operator's request)
+The operator asked to run as much of the receiving side's CI as possible before the send.
+- **The bot's real source** is `bluez/action-ci` main. It was already cloned in
+  `cache/action-ci-bluez`. `cache/action-ci` is the old 2024 fork; I had read it by mistake
+  first, and it had also disabled `ci-local.sh`'s VerifyFixes. A first run built on that fork
+  was stopped and is not evidence.
+- **New tool** (`5fe6eca`): `scripts/bot-ci-local.sh`, which runs the bot's own check code in
+  its own Docker image on the mails.
+- **Results:** `experiments/results-2026-10-27-bot-ci.md`.
+  - Kernel: every check the bot runs passes on v7, the 11 testers included. Tester verdicts are
+    identical to the base, and the kernel logs are clean.
+  - BlueZ: everything passes except CheckSmatch WARNING, which is upstream's (the same on master,
+    and posted on unrelated patches).
+- **Found on the way:** `BT-12`, ioctl-tester's duplicate case name, registered in STATUS.
+- **Not reproducible here:** the `sashiko-nipa` reviewer, which needs a language-model service.

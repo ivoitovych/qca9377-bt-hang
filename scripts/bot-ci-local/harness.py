@@ -120,7 +120,9 @@ def main():
     ap.add_argument('--ell', required=True)
     ap.add_argument('--patch-root', required=True)
     ap.add_argument('--out', required=True)
-    ap.add_argument('--jobs', type=int, default=os.cpu_count())
+    # the bot's real runs: entrypoint.sh's "ci" task passes no -j, so ci.py's default "4" (only its
+    # "localci" task passes "auto"); ELL's certificate generation failed with 16 (2026-10-27)
+    ap.add_argument('--jobs', type=int, default=4)
     ap.add_argument('--only', default='')
     ap.add_argument('mails', nargs='+')
     args = ap.parse_args()
