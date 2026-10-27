@@ -133,7 +133,7 @@ run_side() {   # run_side <side>
 	log "$1: start"
 	docker run --rm --device=/dev/kvm:/dev/kvm --volume "$R:$R" --workdir "$w" \
 		--env PATH=/opt/llvm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-		--env GIT_COMMITTER_NAME=local --env GIT_COMMITTER_EMAIL=local@users.noreply.github.com \
+		--env GIT_COMMITTER_NAME=local --env GIT_COMMITTER_EMAIL=local \
 		--entrypoint python3 "$IMG" "$R/scripts/bot-ci-local/harness.py" \
 		--side "$1" --space "$SPACE" --src "$w/src" --ell "$w/ell" --patch-root "$w/patch" \
 		--out "$o" "${extra[@]}" "${MAILS[@]}" > "$o/harness.log" 2>&1
