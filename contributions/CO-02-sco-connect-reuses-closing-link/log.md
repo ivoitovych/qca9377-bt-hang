@@ -673,3 +673,23 @@ Bluetooth subsystem notes for 7.3.
   cover's diffstat.
 - BlueZ mail: the placeholder is filled by `fill-bluez-link.sh` after the kernel send; the
   setup macro's `malloc` → `calloc` is not named in the message (low, not changed).
+
+## 2026-10-27 — rechecks of `a021fca` (six reviewers)
+All six: ready to send, no findings on the mails. All confirm that the cover correction is right,
+and that patches 1 to 3 and the BlueZ mail are byte-identical to `7768c9f`. Reviewer 6 withdraws
+their first review's reading of the pending-disconnect window: it is not "pre-existing and
+unchanged". Patch 1 changes it from aborted to kept.
+- **Correction to the entry above (reviewer 5):** "hold balance on every return path after each
+  patch" is about the paths the series adds or changes. The `-ENOLINK` path that the series keeps
+  is unbalanced, as that entry's own `BT-13` item says.
+- **An answer ready if the maintainers ask (reviewer 6), not a change:** with the series, a
+  connect() between the close and the start of the disconnect worker keeps the old link, with its
+  old air parameters and no new Setup. The window runs from close() to the start of the worker.
+  The worker is ordered and high-priority and is queued with no delay. PipeWire's gap is tens of
+  milliseconds. Refusing that case too would mean testing `delayed_work_pending()` next to
+  `abort_reason`, which could be offered as a follow-up. The cover already names the case.
+- **Reviewer 4:** the bot's unchanged tester verdicts complement the sco-tester cases that fail
+  without the series and pass with it. They do not replace them.
+- **Tooling (reviewer 3):** `scripts/bot-ci-local.sh` printed the harness's not-PASS count but
+  always exited 0. It is fixed separately (see the commit that follows this entry); the evidence
+  was always read from the verdicts and comparisons, not from the exit status.
