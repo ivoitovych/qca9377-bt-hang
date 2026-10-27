@@ -139,8 +139,13 @@ run_side() {   # run_side <side>
 		--out "$o" "${extra[@]}" "${MAILS[@]}" > "$o/harness.log" 2>&1
 	rc=$?
 	log "$1: done, $rc test(s) not PASS"
+	(( rc == 0 )) || NOT_CLEAN+=("$1: $rc test(s) not PASS (a WARNING counts; compare with the base before judging)")
 	sed -n '/^Test Summary/,$p' "$o/report.txt" | tee -a "$OUT/summary.txt"
 }
+
+# every reason the run is not clean; any of them makes the exit status 1 (reviewer 3, 2026-10-27:
+# the script used to exit 0 whatever the checks said)
+NOT_CLEAN=()
 
 # patched first: its patch-level checks report within minutes
 for s in patched base; do
@@ -154,13 +159,21 @@ if [[ "$SIDE" == both ]]; then
 	for f in "$OUT"/patched/TestRunner_*.log; do
 		[[ -f "$f" ]] || continue
 		t=$(basename "$f" .log)
-		[[ -f "$OUT/base/$t.log" ]] || { log "$t: no base log"; continue; }
+		[[ -f "$OUT/base/$t.log" ]] || { log "$t: no base log"; NOT_CLEAN+=("$t: no base log"); continue; }
 		python3 -I "$R/scripts/compare-tester-verdicts.py" "$OUT/base/$t.log" "$f" > "$OUT/compare-$t.txt" 2>&1
-		log "$t: $(grep -m1 -E '^not-passed sets identical' "$OUT/compare-$t.txt" || echo 'no comparison (see compare file)')"
+		v=$(grep -m1 -E '^not-passed sets identical' "$OUT/compare-$t.txt") || { v='no comparison (see compare file)'; NOT_CLEAN+=("$t: $v"); }
+		log "$t: $v"
 	done
 	if compgen -G "$OUT/*/TestRunner_*.log" > /dev/null; then
 		python3 -I "$R/scripts/kernel-report-scan.py" "$OUT"/*/TestRunner_*.log > "$OUT/kernel-report-scan.txt" 2>&1
-		log "kernel-report-scan exit $? (kernel-report-scan.txt)"
+		rc=$?
+		log "kernel-report-scan exit $rc (kernel-report-scan.txt)"
+		(( rc == 0 )) || NOT_CLEAN+=("kernel-report-scan exit $rc")
 	fi
 fi
-log "ALL DONE"
+if (( ${#NOT_CLEAN[@]} )); then
+	for n in "${NOT_CLEAN[@]}"; do log "NOT CLEAN: $n"; done
+	log "ALL DONE, exit 1"
+	exit 1
+fi
+log "ALL DONE, exit 0"

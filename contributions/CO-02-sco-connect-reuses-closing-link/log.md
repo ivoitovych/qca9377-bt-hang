@@ -710,3 +710,7 @@ unchanged". Patch 1 changes it from aborted to kept.
   `<20261027165059.2402360-1-yaroslav.voytovych@gmail.com>`.
 - The password is in no settings file afterwards (grep of `/root/exp/.claude` and
   `~/.claude/settings.json`, after each send).
+- **Revoked:** the operator deleted all app passwords after the send. The login-only check from
+  the transcript (`tmp/smtp-check-from-transcript.py <transcript> f1eb84e6 465 ssl`) got
+  `AUTH LOGIN→334 user→334 pass→535` ("5.7.8 Username and Password not accepted"). Port 587 could
+  not be reached from this machine (Errno 101), as on 2026-10-18.
