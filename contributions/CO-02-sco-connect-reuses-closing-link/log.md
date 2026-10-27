@@ -598,3 +598,5 @@ found:
 - **The v7 README's "notes … v5's, verbatim" (3): right; corrected.**
 - **Kept:** the 100 ms and 500 ms windows of the test (2), already recorded as an unreproduced
   risk; the test hooks assume one peer (3), and nothing claims more.
+- **The operator chose v7** ("v7 is definitely the choice"): `send-tools/chosen-package` names
+  `patch/v7-candidate/send`. v6 stays in the tree as a record, no longer maintained.
