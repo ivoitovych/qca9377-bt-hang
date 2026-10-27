@@ -10,7 +10,7 @@
 #   control-vla                a used variable length array in btdev_create();
 #                              smatch reports "Variable length array is used."
 #                              on a line that is not in the base, so CheckSmatch
-#                              must be NEW (the base's btdev.c:479 line stays
+#                              must be NEW (the base's own VLA lines stay
 #                              PRE-EXISTING in the same run)
 #
 #   scripts/ci-local-controls.sh [--tree DIR] [--base REF] [--out DIR] [--skip-smatch]
@@ -48,22 +48,27 @@ git -C "$TREE" worktree add --quiet --detach "$W" "$BASE_SHA" || exit 2
 trap 'git -C "$TREE" worktree remove --force "$W" 2>/dev/null' EXIT
 AUTHOR=(-c user.name="scratch control" -c user.email="scratch@example.com")
 
-# Control 1: checkpatch ERROR (space-indented line, "if(" without a space).
-python3 -I - "$W/emulator/btdev.c" <<'PY'
+# Control 1: checkpatch ERROR (space-indented line, "if(" without a space), on the first
+# "if (!btdev)" in btdev_destroy(). (Anchored on the function, not on its first lines: master
+# added a declaration there by 2026-10-27, the old anchor stopped matching, and the script went on
+# to export the base commit as the "control".)
+python3 -I - "$W/emulator/btdev.c" <<'PY' || { echo "control 1: could not write the scratch change"; exit 2; }
 import sys
 p = sys.argv[1]; s = open(p).read()
-old = "void btdev_destroy(struct btdev *btdev)\n{\n\tif (!btdev)\n\t\treturn;\n"
-new = "void btdev_destroy(struct btdev *btdev)\n{\n        if(!btdev)\n\t\treturn;\n"
-assert s.count(old) == 1, "anchor for control 1 not found once"
-open(p, "w").write(s.replace(old, new))
+f = "\nvoid btdev_destroy(struct btdev *btdev)\n{\n"
+assert s.count(f) == 1, "btdev_destroy() not found once"
+i = s.index(f) + len(f)
+j = s.index("\tif (!btdev)\n\t\treturn;\n", i)
+assert s.find("\n}\n", i) > j, "no 'if (!btdev) return;' in btdev_destroy()"
+open(p, "w").write(s[:j] + "        if(!btdev)\n\t\treturn;\n" + s[j + len("\tif (!btdev)\n\t\treturn;\n"):])
 PY
-git -C "$W" "${AUTHOR[@]}" commit --quiet -a -m "emulator: scratch control with a checkpatch error" -m "Deliberate: space indentation and if( without a space. Never to be sent."
+git -C "$W" "${AUTHOR[@]}" commit --quiet -a -m "emulator: scratch control with a checkpatch error" -m "Deliberate: space indentation and if( without a space. Never to be sent." || exit 2
 git -C "$W" format-patch --quiet --subject-prefix="PATCH BlueZ" -1 -o "$OUT" --start-number 1 HEAD
 mv "$OUT"/0001-*.patch "$OUT/control-checkpatch-error.patch"
 git -C "$W" reset --quiet --hard "$BASE_SHA"
 
 # Control 2: a used VLA in btdev_create().
-python3 -I - "$W/emulator/btdev.c" <<'PY'
+python3 -I - "$W/emulator/btdev.c" <<'PY' || { echo "control 2: could not write the scratch change"; exit 2; }
 import sys, re
 p = sys.argv[1]; s = open(p).read()
 # The declaration goes with the other declarations and the use after the first
@@ -73,7 +78,7 @@ new = "\tstruct btdev *btdev;\n\tint index;\n\tuint8_t scratch[id + 1];\n\n\tbtd
 assert s.count(old) == 1, "anchor for control 2 not found once"
 open(p, "w").write(s.replace(old, new))
 PY
-git -C "$W" "${AUTHOR[@]}" commit --quiet -a -m "emulator: scratch control with a variable length array" -m "Deliberate: a used VLA in btdev_create(). Never to be sent."
+git -C "$W" "${AUTHOR[@]}" commit --quiet -a -m "emulator: scratch control with a variable length array" -m "Deliberate: a used VLA in btdev_create(). Never to be sent." || exit 2
 git -C "$W" format-patch --quiet --subject-prefix="PATCH BlueZ" -1 -o "$OUT" --start-number 1 HEAD
 mv "$OUT"/0001-*.patch "$OUT/control-vla.patch"
 git -C "$W" reset --quiet --hard "$BASE_SHA"
@@ -93,8 +98,10 @@ if (( ! SKIP_SMATCH )); then
 	echo "### control 2: VLA must be NEW for smatch, with btdev.c:479 PRE-EXISTING"
 	"$REPO/scripts/ci-local.sh" --tree "$TREE" --base "$BASE" --checks am,smatch --label control-vla --out "$OUT/run-vla" "$OUT/control-vla.patch"
 	cls="$OUT/run-vla/smatch.classified.txt"
-	if grep -qE '^smatch +NEW' "$OUT/run-vla/summary.txt" && grep -q '^NEW: emulator/btdev.c:.*Variable length array' "$cls" && grep -q '^PRE-EXISTING: emulator/btdev.c:479:.*Variable length array' "$cls"; then
-		echo "control 2: OK — the injected VLA is NEW and btdev.c:479 is PRE-EXISTING"
+	# the same kind of warning must stay PRE-EXISTING elsewhere: btdev.c:479 until A2
+	# (7bc9684dc, in master by 2026-10-27) removed it; any other VLA line since
+	if grep -qE '^smatch +NEW' "$OUT/run-vla/summary.txt" && grep -q '^NEW: emulator/btdev.c:.*Variable length array' "$cls" && grep -q '^PRE-EXISTING: .*Variable length array' "$cls"; then
+		echo "control 2: OK — the injected VLA is NEW and the base's VLA lines are PRE-EXISTING"
 	else
 		echo "control 2: FAILED — see $cls"; rc=1
 	fi
