@@ -63,7 +63,8 @@ if [[ -n "$FLAG" ]]; then
 	C=$(cat "$CO/send-tools/chosen-package" 2>/dev/null) || { echo "refusing: no send-tools/chosen-package; the operator has not chosen the package"; exit 2; }
 	# the choice itself must be committed, not a local edit (reviewers 2, 5, 2026-10-27)
 	git -C "$R" ls-files --error-unmatch -- "$CO/send-tools/chosen-package" > /dev/null 2>&1 || { echo "refusing: send-tools/chosen-package is not tracked in git"; exit 2; }
-	[[ -z "$(git -C "$R" status --porcelain -- "$CO/send-tools/chosen-package")" ]] || { echo "refusing: send-tools/chosen-package has uncommitted changes"; exit 2; }
+	cst=$(git -C "$R" status --porcelain -- "$CO/send-tools/chosen-package") || { echo "refusing: git status failed"; exit 2; }
+	[[ -z "$cst" ]] || { echo "refusing: send-tools/chosen-package has uncommitted changes"; exit 2; }
 	[[ "$D" == "$(realpath -e "$CO/$C")" ]] || { echo "refusing: $D is not the chosen package ($C)"; exit 2; }
 	st=$(git -C "$R" status --porcelain -- "$D") || { echo "refusing: git status failed"; exit 2; }
 	[[ -z "$st" ]] || { echo "refusing: the package has uncommitted or untracked files:"; echo "$st"; exit 2; }

@@ -616,3 +616,9 @@ All six approve v7; no change to the mails is asked. Reviewer 6 has no further f
   new finding.
 - Not taken: checking the mails against a frozen manifest instead of the commit (3); the final
   dry run and the lore check cover it, as reviewer 3 says.
+
+## 2026-10-27 — rechecks of `7768c9f` (six reviewers)
+All six: ready to send, no findings on the mails. Reviewer 2 withdrew the regex point (the old
+escaping was right). Reviewer 4 retested the guards in a committed scratch repository. Taken: the
+`chosen-package` status check read a failed `git status` as clean (reviewer 3); it now refuses,
+as the package check already did.
