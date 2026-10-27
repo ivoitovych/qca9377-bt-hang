@@ -33,9 +33,11 @@
 # bluetooth-next result is then reported as expected for a backport, not as a
 # failure), CheckPatch (scripts/checkpatch.pl --ignore UNKNOWN_COMMIT_ID),
 # VerifyFixes, VerifySignedoff, GitLint (+contrib-body-requires-signed-off-by),
-# SubjectPrefix; with --build also BuildKernel, CheckAllWarning (W=1) and
-# CheckSparse (C=1) on net/bluetooth/ and drivers/bluetooth/ with BlueZ's
-# doc/ci.config.
+# SubjectPrefix; with --build also BuildKernel, CheckAllWarning (W=1),
+# CheckSparse (C=1) and BuildKernel32 (CONFIG_64BIT=n appended, as the bot's
+# ci/buildkernel32.py) on net/bluetooth/ and drivers/bluetooth/ with BlueZ's
+# doc/ci.config. Not here: CheckKernelLLVM (LLVM=1 W=1, context analysis,
+# -Werror) and the TestRunner jobs; tmp/co02-v7ci/ runs the bot's own code for those.
 #
 # Options
 #   --tree DIR         source tree (default cache/bluez; --kernel: cache/bluetooth-next-full)
@@ -43,12 +45,14 @@
 #   --ell DIR          ELL tree (default cache/ell; BlueZ wants it at ../ell of the source)
 #   --smatch DIR       smatch build directory (default cache/smatch)
 #   --checkpatch FILE  checkpatch.pl (default cache/checkpatch/checkpatch.pl; --kernel: the tree's)
-#   --gitlint-config F gitlint config (default cache/action-ci/gitlint, the bot's)
+#   --gitlint-config F gitlint config (default <action-ci>/gitlint, the bot's)
+#   --action-ci DIR    clone of github.com/bluez/action-ci (default cache/action-ci-bluez)
 #   --checks LIST      comma-separated subset of the check names above (lower case)
 #   --functional       add TestFunctional (needs --kernel-image, qemu, the harness venv)
 #   --kernel-image F   bzImage for TestFunctional
 #   --functional-k EXP pytest -k expression for TestFunctional (default: the whole suite)
-#   --build            kernel space: add BuildKernel, CheckAllWarning, CheckSparse
+#   --build            kernel space: add BuildKernel, CheckAllWarning, CheckSparse,
+#                      BuildKernel32
 #   --stable-full      kernel space: fetch a stable tag with its history (VerifyFixes
 #                      needs it; default --depth 1, which is enough for the apply check)
 #   --bluez DIR        kernel space: BlueZ tree for doc/ci.config (default cache/bluez)
@@ -77,7 +81,11 @@ FETCH=0
 ELL="$REPO/cache/ell"
 SMATCH="$REPO/cache/smatch"
 CHECKPATCH=""
-GITLINT_CFG="$REPO/cache/action-ci/gitlint"
+# The bot's source. cache/action-ci was found on 2026-10-27 to be a clone of the old fork
+# BluezTestBot/action-ci (2024-11-12), which has no scripts/verify_*.sh and an older gitlint file;
+# bluez/action-ci, the action the kernel workflow runs, is in cache/action-ci-bluez.
+ACTION_CI="$REPO/cache/action-ci-bluez"
+GITLINT_CFG=""
 GITLINT="$REPO/cache/gitlint-venv/bin/gitlint"
 CHECKS=""
 FUNCTIONAL=0
@@ -107,6 +115,7 @@ while (( $# )); do
 	--smatch) SMATCH="$2"; shift ;;
 	--checkpatch) CHECKPATCH="$2"; shift ;;
 	--gitlint-config) GITLINT_CFG="$2"; shift ;;
+	--action-ci) ACTION_CI="$2"; shift ;;
 	--checks) CHECKS="$2"; shift ;;
 	--functional) FUNCTIONAL=1 ;;
 	--kernel-image) KERNEL_IMAGE="$2"; shift ;;
@@ -126,6 +135,12 @@ while (( $# )); do
 	shift
 done
 (( ${#PATCHES[@]} )) || { echo "ci-local: no patches given (see --help)" >&2; exit 2; }
+ACTION_CI="$(readlink -f "$ACTION_CI")"
+case "$(git -C "$ACTION_CI" remote get-url origin 2>/dev/null)" in
+*github.com/bluez/action-ci*) ;;
+*) echo "ci-local: $ACTION_CI is not a clone of github.com/bluez/action-ci (see --action-ci)" >&2; exit 2 ;;
+esac
+[[ -z "$GITLINT_CFG" ]] && GITLINT_CFG="$ACTION_CI/gitlint"
 for p in "${PATCHES[@]}"; do
 	[[ -r "$p" ]] || { echo "ci-local: cannot read $p" >&2; exit 2; }
 done
@@ -141,7 +156,7 @@ fi
 if [[ -z "$CHECKS" ]]; then
 	if [[ "$SPACE" == kernel ]]; then
 		CHECKS="am,checkpatch,verifyfixes,verifysignedoff,gitlint,subjectprefix"
-		(( BUILD )) && CHECKS="$CHECKS,buildkernel,allwarning,sparse"
+		(( BUILD )) && CHECKS="$CHECKS,buildkernel,allwarning,sparse,buildkernel32"
 	else
 		CHECKS="am,checkpatch,gitlint,buildell,make,makeextell,smatch,incremental,scanbuild"
 		(( FUNCTIONAL )) && CHECKS="$CHECKS,functional"
@@ -671,9 +686,9 @@ if [[ "$SPACE" == kernel ]]; then
 			if git_am "$SRC" --quiet "${PATCHES[@]}" >>"$RUNLOG" 2>&1; then
 				range="$TARGET_SHA..HEAD"
 				for s in verifyfixes:verify_fixes.sh verifysignedoff:verify_signedoff.sh; do
-					name="${s%%:*}"; script="$REPO/cache/action-ci/scripts/${s##*:}"
+					name="${s%%:*}"; script="$ACTION_CI/scripts/${s##*:}"
 					want "$name" || continue
-					if [[ ! -x "$script" ]]; then verdict "$name" "NOT RUN" "no $script (clone bluez/action-ci into cache/action-ci)"; SKIPPED+=("$name"); continue; fi
+					if [[ ! -x "$script" ]]; then verdict "$name" "NOT RUN" "no $script (--action-ci: a clone of github.com/bluez/action-ci)"; SKIPPED+=("$name"); continue; fi
 					# A tag fetched with --depth 1 has no parents here: every Fixes:
 					# target then reads as "not an ancestor", which is the fetch
 					# depth speaking, not the patch.
@@ -690,15 +705,17 @@ if [[ "$SPACE" == kernel ]]; then
 			git -C "$SRC" reset --quiet --hard "$TARGET_SHA"
 		fi
 	fi
-	if want buildkernel || want allwarning || want sparse; then
+	if want buildkernel || want allwarning || want sparse || want buildkernel32; then
 		KCONFIG="$BLUEZ/doc/ci.config"
 		if [[ ! -f "$KCONFIG" ]]; then
-			verdict buildkernel "NOT RUN" "no $KCONFIG"; SKIPPED+=(buildkernel allwarning sparse)
+			verdict buildkernel "NOT RUN" "no $KCONFIG"; SKIPPED+=(buildkernel allwarning sparse buildkernel32)
 		else
 			kernel_build() {   # kernel_build <check> <side> <make extra args...>
 				local check="$1" side="$2"; shift 2
 				local o="$OUT/$check.$side"
 				cp "$KCONFIG" "$SRC/.config"
+				# the bot's BuildKernel32 (ci/buildkernel32.py): the same config with CONFIG_64BIT=n appended
+				[[ "$check" == buildkernel32 ]] && echo "CONFIG_64BIT=n" >> "$SRC/.config"
 				run_to "$o.olddefconfig.out" "$o.olddefconfig.err" "$SRC" make olddefconfig "$@" || { echo "olddefconfig failed" >"$o.findings"; return 1; }
 				run_to "$o.make.out" "$o.make.err" "$SRC" make -j"$JOBS" "$@" net/bluetooth/ drivers/bluetooth/
 				local rc=$?
@@ -706,7 +723,8 @@ if [[ "$SPACE" == kernel ]]; then
 				(( rc )) && { echo "BUILD FAILED: make exit status $rc"; grep -E 'error:' "$o.make.err" | head -20; } >>"$o.findings"
 				return $rc
 			}
-			for spec in "buildkernel:" "allwarning:W=1" "sparse:C=1"; do
+			# buildkernel32 last: the bot's 32-bit simple build (CONFIG_64BIT=n, set in kernel_build)
+			for spec in "buildkernel:" "allwarning:W=1" "sparse:C=1" "buildkernel32:"; do
 				check="${spec%%:*}"; extra="${spec#*:}"
 				want "$check" || continue
 				if [[ "$check" == sparse ]] && ! command -v sparse >/dev/null; then verdict sparse "NOT RUN" "no sparse binary"; SKIPPED+=(sparse); continue; fi
