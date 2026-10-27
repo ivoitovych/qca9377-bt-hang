@@ -20,4 +20,11 @@
   output has no entry for that file, so nothing is posted. The `bluetooth.h:232/237` lines appear
   in this run only under `tools/sco-tester.c` (CheckSmatch.log l.2135). That is why CO-02's
   sco-tester mail gets them: they come with sco-tester.c, not with our change.
-- The tester itself is run next, through the kernel-side setup.
+- **The tester itself, in the bot's VM:** `scripts/bot-ci-local.sh --tree cache/co02-v7-kernel
+  --base 47d4d9f67e92 --bluez-commit 1012a6df2 --side base --only TestRunner_ioctl-tester`
+  (`tmp/bt12/bot-ioctl-tester/`). TestRunnerSetup PASS (kernel 7.3.0-rc6-01698-g47d4d9f67e92 with
+  `doc/tester.config`, BlueZ at the patch), TestRunner_ioctl-tester PASS: "Total: 28, Passed: 28".
+  The summary lists "Set Pkt Type - 2-DH" (l.954) and "Set Pkt Type - 3-DH" (l.955) as two cases.
+  On master (`tmp/co02-v7ci/bot-full/base/`) the same 28 cases include two named "2-DH".
+  `kernel-report-scan.py` on the log: clean. The script exited 0 with "ALL DONE, exit 0", which
+  was the first run of its new exit status.

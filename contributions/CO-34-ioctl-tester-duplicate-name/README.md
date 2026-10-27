@@ -34,7 +34,9 @@ none about this (`tmp/co02-v7ci/pw-ioctl-tester.json`, fetched 2026-10-27).
 becomes "Set Pkt Type - 3-DH". Built from the worktree `cache/bt12-ioctl-tester`, branch
 `bt12/ioctl-tester-3dh-name`, on `b0bf49270d44`.
 
-Checks: `log.md`.
+Checks (`log.md`): the list bot's BlueZ checks all PASS. ioctl-tester was built from the patch
+and run in the bot's VM on bluetooth-next `47d4d9f67e92`: 28 of 28 passed, with "2-DH" and
+"3-DH" now listed as separate cases. The kernel log is clean.
 
 ## Next
 
