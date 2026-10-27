@@ -69,6 +69,7 @@ date), **blocked** (on a decision), **dropped** (with the reason in `log.md`).
 | CO-31 | U17: PipeWire retries a refused SCO connect at once, so the audio returns only after WirePlumber's 5 s idle suspend | PipeWire | confirmed (mechanism, `EX-068`); not fixed in master | evidence for the operator's report (a retry that waits for the old link); PipeWire's rules: the operator writes | the operator |
 | CO-32 | U19: Ubuntu's WirePlumber patch for LP #2122640 marks a skipped stream handled, so the Sound panel's input meter dies | Ubuntu (WirePlumber 0.4.17-1ubuntu4.1) | confirmed in journal and source; Ubuntu-only; one-line fix drafted in `docs/issues.md` | a laptop test in a user override (the operator's word); then the operator's Launchpad report with the patch | the operator |
 | CO-33 | U20: a PipeWire quirk entry for the Shure AONIC 50 (`no-features = [ hw-volume-mic ]`) | PipeWire | confirmed (commands); headset behaviour inferred | a local test via `bluez5.hardware-database`; then the operator's entry; PipeWire's rules: the operator writes | the operator |
+| CO-34 | [BT-12: ioctl-tester registers two cases under one name](CO-34-ioctl-tester-duplicate-name/README.md) | BlueZ | **patch written** (2026-10-27), one line | the list bot's checks on it, then the operator's send (alone) | the operator, for the send |
 
 Items without a link have no dossier yet. One is opened as soon as anything is written about
 the item.
