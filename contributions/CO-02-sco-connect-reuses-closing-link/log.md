@@ -600,3 +600,19 @@ found:
   risk; the test hooks assume one peer (3), and nothing claims more.
 - **The operator chose v7** ("v7 is definitely the choice"): `send-tools/chosen-package` names
   `patch/v7-candidate/send`. v6 stays in the tree as a record, no longer maintained.
+
+## 2026-10-27 — rechecks of `f553b9d` (six reviewers)
+All six approve v7; no change to the mails is asked. Reviewer 6 has no further findings. Taken:
+- `send.sh` checked four files in total, not one per number: two `0001` files and no `0002`
+  passed (reviewers 3, 4; reviewer 4 reproduced it). Now one per number; tested.
+- `chosen-package` could be changed locally without a commit (2, 5). Now it must be tracked and
+  committed; tested.
+- The lore-link pattern (2): reviewer 2 said `${AUTHOR//./\\.}` leaves the dots unescaped. On
+  this bash it gives `\.` (checked inside double quotes, as in the script); changed to `[.]`
+  anyway, which needs no escaping on any version.
+- The v7 README and `REVIEW-REQUEST.md` still called v7 a candidate and the choice open (2, 3, 5):
+  updated.
+- The new-base BlueZ CI result (2, 3, 4, 5): recorded in `d27426a`, after their snapshot; no
+  new finding.
+- Not taken: checking the mails against a frozen manifest instead of the commit (3); the final
+  dry run and the lore check cover it, as reviewer 3 says.

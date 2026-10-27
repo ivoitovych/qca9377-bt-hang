@@ -1,7 +1,8 @@
 # CO-02 — v7 candidate: the same code as v6, the prose reworked for tired eyes (2026-10-26)
 
-**A candidate, not the package to send.** `../../v6/send/` stays the package until the operator
-picks this one, after reading it. The code is byte-identical to v6: `git diff` of the trees is
+**The package to send: chosen by the operator on 2026-10-27** (`../../../send-tools/chosen-package`).
+The directory keeps its name "v7-candidate" so earlier links stay valid; `../../v6/send/` is kept as
+a record and no longer maintained. The code is byte-identical to v6: `git diff` of the trees is
 empty for the kernel commits and the BlueZ commit. Only the five messages changed.
 
 **The code is the tested code, checked by tool (2026-10-26, the operator's request).**

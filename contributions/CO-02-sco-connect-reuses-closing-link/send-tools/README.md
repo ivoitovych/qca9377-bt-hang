@@ -35,7 +35,12 @@ is sent, so the mail carries the placeholder `@KERNEL_SERIES_LINK@` until then.
   - Tested 2026-10-27, nothing sent: dry runs of the v7 kernel and BlueZ mails (recipients as
     before); refused: a fifth `.patch` file in `kernel/`, an empty `bluez/`, a misspelt option,
     no `chosen-package`, a package other than the chosen one, a chosen package with uncommitted
-    changes; a dry run whose `git send-email` failed exited 1 with "FAILED".
+    changes; a dry run whose `git send-email` failed exited 1 with "FAILED". Added after the
+    rechecks of `f553b9d`, and tested the same way: one file per number (two `0001` files and no
+    `0002` were refused; reviewers 3, 4), and `chosen-package` itself must be tracked and
+    committed (a local edit to v6 was refused; reviewers 2, 5). The lore-link pattern now matches
+    the address's dots as `[.]` (reviewer 2; the old `\.` escaping was already right on this
+    bash, but `[.]` does not depend on the version).
 - `fill-bluez-link.sh <package send dir> <cover Message-ID>`: puts
   `https://lore.kernel.org/linux-bluetooth/<id>/` in place of the placeholder. It refuses an ID that
   is not this author's cover (the cover's ID has `-1-` before the author's address; a patch's

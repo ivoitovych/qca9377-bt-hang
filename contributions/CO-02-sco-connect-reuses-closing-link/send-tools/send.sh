@@ -41,6 +41,11 @@ if [[ "$WHAT" == kernel ]]; then
 	all=("$D"/kernel/*.patch)
 	MAILS=("$D"/kernel/0000-cover-letter.patch "$D"/kernel/0001-*.patch "$D"/kernel/0002-*.patch "$D"/kernel/0003-*.patch)
 	(( ${#all[@]} == 4 && ${#MAILS[@]} == 4 )) || { echo "refusing: $D/kernel must hold exactly 0000-cover-letter.patch and one each of 0001 to 0003 (found ${#all[@]} .patch files)"; exit 2; }
+	# one per number: four files could still be two 0001s and no 0002 (reviewers 3, 4, 2026-10-27)
+	for i in 0000 0001 0002 0003; do
+		f=("$D"/kernel/$i-*.patch)
+		(( ${#f[@]} == 1 )) || { echo "refusing: $D/kernel must hold exactly one $i-*.patch (found ${#f[@]})"; exit 2; }
+	done
 else
 	MAILS=("$D"/bluez/*.patch)
 	(( ${#MAILS[@]} == 1 )) || { echo "refusing: $D/bluez must hold exactly one .patch file (found ${#MAILS[@]})"; exit 2; }
@@ -56,6 +61,9 @@ done
 
 if [[ -n "$FLAG" ]]; then
 	C=$(cat "$CO/send-tools/chosen-package" 2>/dev/null) || { echo "refusing: no send-tools/chosen-package; the operator has not chosen the package"; exit 2; }
+	# the choice itself must be committed, not a local edit (reviewers 2, 5, 2026-10-27)
+	git -C "$R" ls-files --error-unmatch -- "$CO/send-tools/chosen-package" > /dev/null 2>&1 || { echo "refusing: send-tools/chosen-package is not tracked in git"; exit 2; }
+	[[ -z "$(git -C "$R" status --porcelain -- "$CO/send-tools/chosen-package")" ]] || { echo "refusing: send-tools/chosen-package has uncommitted changes"; exit 2; }
 	[[ "$D" == "$(realpath -e "$CO/$C")" ]] || { echo "refusing: $D is not the chosen package ($C)"; exit 2; }
 	st=$(git -C "$R" status --porcelain -- "$D") || { echo "refusing: git status failed"; exit 2; }
 	[[ -z "$st" ]] || { echo "refusing: the package has uncommitted or untracked files:"; echo "$st"; exit 2; }
@@ -70,7 +78,7 @@ if [[ "$WHAT" == bluez ]]; then
 		[[ -n "$FLAG" ]] && { echo "refusing: the BlueZ mail still has @KERNEL_SERIES_LINK@; send the kernel series and run fill-bluez-link.sh first"; exit 2; }
 		echo "NOTE: dry run with the link placeholder still in the mail (to be filled after the kernel send)"
 	elif [[ -n "$FLAG" ]]; then
-		L=$(grep -c -E "^https://lore\.kernel\.org/linux-bluetooth/[0-9]{14}\.[0-9]+-1-${AUTHOR//./\\.}/$" "$M")
+		L=$(grep -c -E "^https://lore\.kernel\.org/linux-bluetooth/[0-9]{14}\.[0-9]+-1-${AUTHOR//./[.]}/$" "$M")
 		[[ "$L" == 1 ]] || { echo "refusing: expected exactly one lore link to this author's cover letter in $M, found $L"; exit 2; }
 		echo "link: $(grep -E '^https://lore\.kernel\.org/linux-bluetooth/' "$M")"
 		echo "  (open it: it must show [PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse)"

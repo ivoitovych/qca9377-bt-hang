@@ -9,15 +9,14 @@ turns out to be wrong costs little; a defect that reaches the mailing list costs
 form your own view from the mails and the code before you read the earlier reviews or the log.
 
 ## What would be sent
-Two packages hold the same code and differ only in the prose. One of them will be sent; the
-author has not chosen yet.
-- **v7 candidate,** [`patch/v7-candidate/send/`](patch/v7-candidate/send/): the messages
-  reworked to read quickly (symptom first, short paragraphs, headed sections in the cover). Its
-  [`README.md`](patch/v7-candidate/send/README.md) says where each change came from and what was
-  not taken.
-- **v6,** [`patch/v6/send/`](patch/v6/send/): the earlier wording.
+**v7,** [`patch/v7-candidate/send/`](patch/v7-candidate/send/), chosen by the author on
+2026-10-27 ([`send-tools/chosen-package`](send-tools/chosen-package)): the messages reworked to
+read quickly (symptom first, short paragraphs, headed sections in the cover). Its
+[`README.md`](patch/v7-candidate/send/README.md) says where each change came from and what was not
+taken. [`patch/v6/send/`](patch/v6/send/) holds the same code with the earlier wording; it is kept
+as a record and no longer maintained.
 
-Each package has, to linux-bluetooth, on bluetooth-next `47d4d9f67e92`, in `kernel/`:
+It has, to linux-bluetooth, on bluetooth-next `47d4d9f67e92`, in `kernel/`:
 - `0000-cover-letter.patch`: "[PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse".
 - `0001-…`: "Bluetooth: hci_conn: hold a reused SCO connection for its caller"
   (`Fixes: 8a5b0135d4a5`, `Cc: stable@vger.kernel.org # 6.6.x`).
@@ -26,7 +25,7 @@ Each package has, to linux-bluetooth, on bluetooth-next `47d4d9f67e92`, in `kern
 - `0003-…`: "Bluetooth: hci_conn: synchronize with SCO disconnect work before reuse"
   (`Fixes: e6720779ae61`, `Cc: stable@vger.kernel.org`).
 
-And, to linux-bluetooth, on BlueZ master `b0bf49270d44` (v7; v6's is on `a0580dad5655`), in
+And, to linux-bluetooth, on BlueZ master `b0bf49270d44`, in
 `bluez/`: "[PATCH BlueZ]
 tools/sco-tester: Add SCO reconnect tests". Two of its cases fail until the kernel series is
 applied. Its notes below `---` say so, ask that it be applied after the series is in
