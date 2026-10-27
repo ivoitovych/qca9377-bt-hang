@@ -46,6 +46,12 @@ the kernel series is in bluetooth-next, and they link the series on lore (a plac
 kernel send). Code unchanged, checked by `scripts/patch-code-compare.py`. The send procedure, the
 same for v6 and the v7 candidate, is in `../../send-tools/README.md`.
 
+**Not brought up to date on 2026-10-27.** All six reviewers of `a2b6649` prefer the v7 candidate,
+and that day's corrections went into v7 only: the BlueZ message's "until the second socket has
+connected" (the event is released once the second connect() has returned), the test summary's
+unpatched failures (UP and SMP, not KCSAN), the mgmt-tester sentence (two intermittent timeouts),
+and the BlueZ base (master `b0bf49270d44`). If v6 is chosen, these must be applied to it first.
+
 **Recipients:** as for v5 (the operator's decision of 2026-10-22).
 
 **Order:** the kernel series first, then the BlueZ test the same day.

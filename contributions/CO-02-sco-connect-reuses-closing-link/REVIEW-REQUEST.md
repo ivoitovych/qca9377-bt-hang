@@ -26,7 +26,8 @@ Each package has, to linux-bluetooth, on bluetooth-next `47d4d9f67e92`, in `kern
 - `0003-…`: "Bluetooth: hci_conn: synchronize with SCO disconnect work before reuse"
   (`Fixes: e6720779ae61`, `Cc: stable@vger.kernel.org`).
 
-And, to linux-bluetooth, on BlueZ master `a0580dad5655`, in `bluez/`: "[PATCH BlueZ]
+And, to linux-bluetooth, on BlueZ master `b0bf49270d44` (v7; v6's is on `a0580dad5655`), in
+`bluez/`: "[PATCH BlueZ]
 tools/sco-tester: Add SCO reconnect tests". Two of its cases fail until the kernel series is
 applied. Its notes below `---` say so, ask that it be applied after the series is in
 bluetooth-next, and link the series on lore. That link exists only once the series is sent, so
@@ -80,7 +81,7 @@ Recipients: [`patch/v6/send/README.md`](patch/v6/send/README.md).
   [`scripts/sco-data-gaps.py`](../../scripts/sco-data-gaps.py).
 - **The sources at the bases:**
   `https://git.kernel.org/pub/scm/linux/kernel/git/bluetooth/bluetooth-next.git` at
-  `47d4d9f67e92`, and `https://git.kernel.org/pub/scm/bluetooth/bluez.git` at `a0580dad5655`.
+  `47d4d9f67e92`, and `https://git.kernel.org/pub/scm/bluetooth/bluez.git` at `b0bf49270d44`.
 - **For after you have your own view:** earlier reviews ([`reviews/`](reviews/)) and the working
   log ([`log.md`](log.md)); the 26 October rounds are summarised in the log.
 

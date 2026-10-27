@@ -1,6 +1,6 @@
 From 748559b2d64ac9778040e74fc37557b19ea76dab Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
-Date: Mon, 26 Oct 2026 06:34:36 +0100
+Date: Tue, 27 Oct 2026 10:50:32 +0100
 Subject: [PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse
 
 An HFP codec change can leave a headset silent. The new SCO socket
@@ -38,7 +38,6 @@ A connect() arriving before the worker starts still cancels the
 pending disconnect and keeps the live link, as before.
 
 Testing
--------
 
 The series was tested on bluetooth-next 27731ba09195 in QEMU with
 BlueZ's emulator, on uniprocessor, SMP and KCSAN kernels, with
@@ -50,11 +49,13 @@ cases:
   "Connect Twice"
 
 "Reconnect During Disconnect" and "Connect Twice" fail without the
-series and pass with it, in three runs each on the uniprocessor, SMP
-and KCSAN kernels. "Reconnect After Disconnect" passes with and
-without the series. sco-tester, iso-tester, l2cap-tester and
-mgmt-tester otherwise give the same results with and without the
-series.
+series on the uniprocessor and SMP kernels, and pass with it in three
+runs each on the uniprocessor, SMP and KCSAN kernels. "Reconnect
+After Disconnect" passes with and without the series. In the full
+sco-tester, iso-tester, l2cap-tester and mgmt-tester runs, the only
+other differences were two mgmt-tester cases that timed out
+intermittently on SMP. Neither involves SCO, and one also timed out
+without the series.
 
 Patch 3's race was reproduced by a debug-only change that pauses
 hci_conn_timeout() after it observes no holder; the change widens
@@ -70,7 +71,6 @@ Disconnect" and "Connect Twice" fail. The other testers were not
 rerun on this base.
 
 Hardware testing
-----------------
 
 The series was also run on the QCA9377 laptop where the bug was
 found, with PipeWire 1.0.5 and three headsets. The laptop ran
@@ -97,14 +97,12 @@ Patch 1's case was tested separately on 26 October. While a
 headset's eSCO link carried audio, three attempts to connect a
 second SCO socket to the same headset each returned EBUSY at once.
 The HCI capture shows no new setup or disconnect during the
-attempts, and SCO traffic continued in both directions without a
-gap.
+attempts, and SCO packets kept flowing in both directions.
 
 Patch 3's race was not reproduced on hardware; it is covered by the
 emulator test described above.
 
 Remaining codec-switch delay
-----------------------------
 
 The series stops connect() from succeeding on a connection already
 being torn down. It does not, by itself, make PipeWire's codec
@@ -128,7 +126,6 @@ connect() semantics, so I can post it as an RFC if that approach is
 preferred.
 
 Related work
-------------
 
 The series is independent of Hitalo Souza's pending SCO setup
 series and applies with or without it:
@@ -140,7 +137,6 @@ the same path but does not overlap: it changes hci_conn_drop() in
 hci_core.h.
 
 Stable and downstream kernels
------------------------------
 
 For stable, patch 1 applies alone on 6.6.y and 6.12.y, which have
 the 8a5b0135d4a5 backport and the reuse path but not e6720779ae61.

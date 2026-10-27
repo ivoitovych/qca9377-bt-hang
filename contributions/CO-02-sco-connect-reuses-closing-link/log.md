@@ -560,3 +560,41 @@ change owes no new hardware run. Points, and what the check found:
 ## 2026-10-27 — fresh full review requested
 `REVIEW-REQUEST.md` rewritten for the current state: both packages (v7 candidate and v6), the
 BlueZ dependency and the send tools, the laptop evidence and the code-identity proofs.
+
+## 2026-10-27 — the reviews of `a2b6649` (six reviewers; each point checked)
+All six find no kernel-code problem and would send v7 rather than v6. Points, and what the check
+found:
+- **`send.sh` hid a failed send (2, 3, 4, 5): right.** The last `echo` became the exit status.
+  Reviewer 4's reproduction also showed `--check` passing when the BlueZ mail was missing (grep's
+  error read as "no placeholder"): right. Fixed with the other guards they asked for: exact mail
+  set, the package named in `send-tools/chosen-package`, mails tracked and committed, unknown
+  options refused, a failed `git send-email` ends with its status. Tested without sending
+  (`send-tools/README.md`).
+- **The cover ID cannot be proven by the fill script (2, 3, 5): true, and inherent.** The lore
+  check stays manual; both scripts now print what the link must show. Reviewer 6: a declined cover
+  still uses up `-1-`; the procedure now says to quit and check lore if any answer is not `y`.
+- **BlueZ master moved (2, 6):** `b0bf49270d44`, 7 commits, none in `tools/`, `emulator/`,
+  `lib/` or `src/shared/` (what sco-tester is built from). The v7 test was rebased onto it:
+  `change-code-compare.sh` against the tested `f480c93e9` and `patch-code-compare.py` against the
+  previous mail: identical (patch-id `01df21faf4ee72b4`). bluetooth-next is unchanged
+  (`47d4d9f67e92`).
+- **"held back until the second socket has connected" (4): right.** The test releases the event
+  once the second `connect()` has returned, whatever it returned (`sco-tester.c` l.1752–1782).
+  Now "until the second connect() has returned".
+- **The cover's test summary (4): right.** The unpatched base ran on UP and SMP, not KCSAN
+  (`results-2026-10-22-v4.md`). Reworded.
+- **mgmt-tester "otherwise the same results" (2, 4, 5; reviewer 6 on the README): right; my
+  rejection of 26 October is withdrawn.** Two cases timed out intermittently, one also on the
+  unpatched base (`results-2026-10-22-v2.md` l.52–57). The cover names both, briefly.
+- **"without a gap" (4, 5): narrowed** to "SCO packets kept flowing in both directions"; EX-077
+  measures intervals (longest 15.6 ms), not audio.
+- **The cover's dashed underlines (6): right.** checkpatch reports BAD_COMMIT_SEPARATOR for each
+  of the five; removed, the heading words kept. Reviewer 6's "v6's cover is 0/0/0" is not so:
+  both covers draw checkpatch's commit-description error for bare hashes (6 each), a rule for
+  commit messages; left as is.
+- **`results-2026-10-24-hardware.md` (4): right on all four.** Narrowed "no setup failed / no gap"
+  to EX-074's checks, "at hang-ups" to EX-073's, the historical "socket reported connected" to what
+  the hardware record shows, and linked the 26 October patch 1 test.
+- **The v7 README's "notes … v5's, verbatim" (3): right; corrected.**
+- **Kept:** the 100 ms and 500 ms windows of the test (2), already recorded as an unreproduced
+  risk; the test hooks assume one peer (3), and nothing claims more.

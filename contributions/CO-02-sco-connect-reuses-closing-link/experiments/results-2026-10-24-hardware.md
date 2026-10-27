@@ -22,7 +22,7 @@
 | 2–3 | earbuds, mSBC ↔ CVSD | **3 of 3 switches refused, none falsely connected**: the reply before the old link's Disconnection Complete, no setup on the dying link, `connect()` → `ECONNABORTED` (first try and PipeWire's two immediate retries). With a stream playing a new link followed 4.86 s after the Disconnection Complete (06:12:27.350650, 06:12:52.743599); with none, at the next sound (22:00:46) | `EX-067`, `EX-068`, `EX-069` |
 | 4 | MOMENTUM 4, as 3 | 2 of 2 switches: a new link each time, no refusal | `EX-070`, `EX-069` |
 | (extra) | Shure AONIC 50, as 3 | 6 of 6 switches: a new link each time, no refusal | `EX-070`, `EX-069` |
-| 5 | calls and microphone use; links go down after hang-up | 36 SCO links on the boot on three headsets (15 MOMENTUM 4, 9 earbuds, 12 Shure), and every one closed: in the capture, each successful Synchronous Connect Complete is followed by the host's Disconnect and a Disconnection Complete for the same handle with status 0x00, no setup failed and the capture has no gap (`EX-074`, from 2026-10-26). Some of these links were closed by a codec switch rather than a hang-up. The Shure's 81-minute link, held by the Sound panel's meter, is included. The kernel log agrees: 36 Disconnects answered, 0 command timeouts (`EX-073`). That ledger's "answered" line has neither the handle nor the event's status, so until 2026-10-26 this row rested on weaker evidence than it claimed. The "unknown connection handle" / "corrupted SCO packet" lines at hang-ups also appear on the previous, unpatched boot, so they predate the series (`CO-20`); their rates were not compared | `EX-074`, `EX-073` |
+| 5 | calls and microphone use; links go down after hang-up | 36 SCO links on the boot on three headsets (15 MOMENTUM 4, 9 earbuds, 12 Shure), and every one closed: in the capture, each successful Synchronous Connect Complete is followed by the host's Disconnect and a Disconnection Complete for the same handle with status 0x00, no Synchronous Connect Complete carried an error status, and the capture has no gap over 5 s between files (`EX-074`, from 2026-10-26; the Command Status of each setup was not read, and a loss inside a file would not show. *Narrowed 2026-10-27, reviewer 4:* this said "no setup failed and the capture has no gap"). Some of these links were closed by a codec switch rather than a hang-up. The Shure's 81-minute link, held by the Sound panel's meter, is included. The kernel log agrees: 36 Disconnects answered, 0 command timeouts (`EX-073`). That ledger's "answered" line has neither the handle nor the event's status, so until 2026-10-26 this row rested on weaker evidence than it claimed. The "unknown connection handle" / "corrupted SCO packet" lines (most within about 100 ms of a hang-up, not all: one for handle 12 came 16 minutes after its link closed, `EX-073`; this said "at hang-ups" until 2026-10-27) also appear on the previous, unpatched boot, so they predate the series (`CO-20`); their rates were not compared | `EX-074`, `EX-073` |
 | 6 | a day of normal use: no BT-1 symptom, no kernel warning | the whole boot, more than 1.5 days at the time of the search: no `WARNING`, `BUG`, `refcount`, `use-after-free`, `Call Trace`, `tx timeout` or `Oops` line. This is the absence of the searched diagnostics, not a log without errors (the SCO lines of run 5 are error level); and an extra hold would be silent here, which is why run 5's closures matter | `EX-072` |
 
 ## What this run did not exercise, and why
@@ -35,7 +35,9 @@ does not reach", and it said patch 3's window opens only with the debug park. Bo
   no entries). That shows no refusal was seen; it does not prove that no second connect ever came.
   The case is covered in the emulator: 3 of 3 on UP, SMP and KCSAN (bluetooth-next) and on Ubuntu's
   code (`-hw-prep.md` §2). It **can** be reached on the laptop, with a test program that opens two
-  SCO sockets to one headset. That was not done; it is the operator's decision.
+  SCO sockets to one headset. That was not done in this run. *It was done on 2026-10-26, on the
+  operator's word:* 3 of 3 second connects refused with `EBUSY`, the call's link kept
+  (`results-2026-10-26-hw-connect-twice.md`, `EX-075` to `EX-077`).
 - **Patch 3 (the race with a disconnect worker already running):** its wait and second check run
   on every `hci_connect_sco()` call that gets past the earlier returns (an ACL or allocation
   failure, patch 2's refusal, `-ENOLINK`). Here they ran on each connect that led to one of the 36
@@ -53,7 +55,10 @@ suspends them as idle 5.004 s later, and the stream still linked to the sink run
 acquires the transport, and that connect succeeds (`EX-068`). This is with a stream playing; with
 none, the next sound got its link at once (22:00:46). In the earlier reproduction without the series
 (7.0.0-34, 2026-09-29: a historical observation, not a same-build control), the same switch on
-these earbuds gave a socket reported connected with no link. No link followed at all: GNOME's test
+these earbuds got no link: no Setup Synchronous Connection was sent. (That the socket was reported
+connected comes from the source and the emulator; the hardware record did not observe the socket's
+state. *Narrowed 2026-10-27, reviewer 4:* this said "gave a socket reported connected with no
+link".) No link followed at all: GNOME's test
 sounds, new streams started 3, 2 and 26 s after the two failed switches (02:30:47, 02:31:14,
 02:31:38), were silent with no Setup Synchronous Connection. What ended the first silence was the
 next codec change, at 02:30:59; how the second ended is not recorded (`U7` in `docs/issues.md`,

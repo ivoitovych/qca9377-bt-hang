@@ -1,4 +1,4 @@
-From a63618f7fd6762c8b1cf026e8fce07567db5c837 Mon Sep 17 00:00:00 2001
+From d839963d7b1bf47428afdf2f3f509190962854f8 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Thu, 22 Oct 2026 05:06:33 +0200
 Subject: [PATCH BlueZ] tools/sco-tester: Add SCO reconnect tests
@@ -13,7 +13,7 @@ link:
 
 - "eSCO CVSD - Reconnect During Disconnect": the emulator processes the
   Disconnect of the first link as usual, but the Disconnection Complete
-  event is held back until the second socket has connected. The
+  event is held back until the second connect() has returned. The
   connect() shall fail with ECONNABORTED or EBUSY, or the second socket
   shall get a link of its own as above once the event is delivered. A
   socket reported connected without a link fails the test.
