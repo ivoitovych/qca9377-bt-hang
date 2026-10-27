@@ -693,3 +693,20 @@ unchanged". Patch 1 changes it from aborted to kept.
 - **Tooling (reviewer 3):** `scripts/bot-ci-local.sh` printed the harness's not-PASS count but
   always exited 0. It is fixed separately (see the commit that follows this entry); the evidence
   was always read from the verdicts and comparisons, not from the exit status.
+
+## 2026-10-27 — SENT (the operator: "Please send.")
+- Just before: bluetooth-next `47d4d9f67e92`, BlueZ `b0bf49270d44` (`git ls-remote`);
+  `send.sh … kernel --check` passed.
+- **Kernel:** the same `git send-email` arguments as `send.sh`'s dry run, but with
+  `--confirm=never` instead of `--confirm=always` (the prompt cannot be answered from here) and
+  Gmail's SMTP on 465/ssl with the app password the operator gave for it. Sent 17:50:06–17:50:09
+  +0100, `Result: 250` four times, the dry run's recipients (stable@ on patches 1–3). The cover is
+  `<20261027165009.2401154-1-yaroslav.voytovych@gmail.com>`.
+- Lore had the cover first and then all four messages (`t.mbox.gz` of the cover, checked twice;
+  `tmp/co02-v7ci/lore-cover-t.mbox`).
+- `fill-bluez-link.sh` with that ID, the filled mail committed, `send.sh … bluez --check` passed,
+  and the dry run showed three recipients.
+- **BlueZ:** sent 17:50:59 +0100, `Result: 250`, Message-ID
+  `<20261027165059.2402360-1-yaroslav.voytovych@gmail.com>`.
+- The password is in no settings file afterwards (grep of `/root/exp/.claude` and
+  `~/.claude/settings.json`, after each send).
