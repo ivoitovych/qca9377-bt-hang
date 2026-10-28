@@ -1,0 +1,32 @@
+Subject: Please backport 608e0b7a675b and 32d86e048d8e (Bluetooth: L2CAP) to 7.2.y
+
+Hello,
+
+please consider for linux-7.2.y, in this order:
+
+  608e0b7a675b ("Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and
+  locking helpers")
+  32d86e048d8e ("Bluetooth: L2CAP: hold conn->lock for
+  __l2cap_ecred_conn_rsp_defer")
+
+Both are in mainline since the 7.4 merge window and carry no Cc: stable
+tag. The second fixes ab4eedb790ca ("Bluetooth: L2CAP: Fix corrupted
+list in hci_chan_del"), which 7.2.y has; it needs the first for
+l2cap_chan_lock_conn() and l2cap_chan_unlock_conn().
+
+Without them, BlueZ's l2cap-tester case "L2CAP Ext-Flowctl Server -
+Accept 2 Close 1" (a deferred ECRED accept with two channels, the first
+accepted and closed before the second) never finishes on 7.2.12 and
+7.2.13: the test stops after "Accept deferred setup".
+
+With the two commits cherry-picked onto v7.2.13, in QEMU/KVM with
+BlueZ's doc/tester.config, the case passes and the whole l2cap-tester
+passes 111 of 111, with no lockdep, KASAN or hung-task report. A bisect
+of bluetooth-next between v7.2 and the current tree ends at
+32d86e048d8e. 32d86e048d8e alone does not build on 7.2.y.
+
+6.18.y, 6.12.y and 6.6.y hang on the same case, but the pair does not
+apply or build there as it is; I have not prepared backports for them.
+
+Thanks,
+Iaroslav
