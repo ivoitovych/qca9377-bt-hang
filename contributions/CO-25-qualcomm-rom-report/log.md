@@ -136,9 +136,12 @@ August files is on the disk (`find / -xdev -name "hci-202608*"`: none). So revie
 be run. The survey's own output is kept:
 `results/supported-commands-survey-2026-09-26/supported-commands-survey.tsv` (copied from
 `tmp/`, same SHA-256 `b735467d…`; 149 × 197, 6 × 200, 4 × 0, 33 × 202). A safe test remains for
-later: after a Windows session, a warm reboot into Linux with E3; if Windows' patch survives,
-`btusb_setup_qca()` skips the download and the boot shows no "QCA: patch rome" line. The
-operator's call; not needed for the report.
+later, but not the one first written here: a missing "QCA: patch rome" line after a warm reboot
+from Windows would not prove anything (setup may not have run, or failed earlier; reviewer 4,
+round 7). It needs positive readings: a build that logs the status byte and versions before
+setup, as E1 did (`status 0x20` cold; `0xe0` would mean a patch already present), on a warm
+reboot straight from Windows and, as the control, on a cold boot. Even then it shows today's
+behaviour, not what happened in August. The operator's call; not needed for the report.
 
 **The next files to go, archived.** `scripts/bt-trace-archive.py` took only `bt-*` names; it
 now reads `BT_TRACE_PREFIX` (default `bt-`), and its proof has three more checks (hci-* ignored
@@ -147,3 +150,27 @@ by default, archived with the prefix, nothing deleted): 17 of 17 pass. The wrapp
 `hci-20261011-121614` into `archive/hci-capture/`: "archived 40 (2560 MB -> 897.4 MB), skipped
 0, failed 0, pending 345; archive 0.88 GB of 3 GB"; `MANIFEST.tsv` 40 rows; the capture
 directory still holds 386 files. The rest is the operator's decision (STATUS).
+
+## 2026-10-29 — v4 after the seventh review round (`reviews-2026-10-28.md`, round 7)
+
+`drafts/report-v4.txt`; checks for what changed:
+
+| change | check |
+|---|---|
+| "first command after link-up timed out, 34 ms to 9.65 s after it" was wrong: the range is when the command was issued | BRIEF section 2 table ("first cmd after link-up" 34 ms to 9,650 ms); command to timeout 2.018 to 2.053 s where given (EX-045, 047, 051, 052, 053) |
+| summary bounded to the twelve recorded failures; "answers nothing until power is removed" dropped (a reboot recovered it once, EX-017) | C10 |
+| "same alt 1 and 0x0428" only for the 50 mSBC links | CVSD takes another alternate setting |
+| load confirmed by return codes and a later version read, not by the loader's "QCA: patch" line | EX-055 lines 29-35 (`rampatch load returned 0`, `after rampatch: … patch 0x000003e8`, `nvm load returned 0`) |
+| E1's remaining confounders named | `btusb_main.c` 4648-4655: `BTUSB_QCA_ROME` also sets `hdev->shutdown`, `set_bdaddr`, `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`, the reset-resume check; E1 removed only `hdev->reset` |
+| 0b05:1825's July submission | read 2026-10-29 (the thread on a public list archive): Edgard Lopes, 2026-07-21, "[PATCH] Bluetooth: btusb: Add ID 0b05:1825 for ASUS QCA ROME adapter": "leaving the device running its bare ROM firmware. In that state SCO/eSCO audio is broken", "corrupted SCO packet", "HFP/HSP microphone input never works"; the list's bot answered that it no longer applied; no v2. A different symptom from ours, stated as such |
+| opening: stable versions out (they age), "which is worse" out | — |
+| archive sentence narrowed to "check whether its USB ID selects the QCA setup path and whether the files load" | — |
+
+`awk 'length > 72'`: none; no non-ASCII. The evidence link is the only line left to fill.
+
+**Firmware provenance** (reviewers 4, 6), now in `EVIDENCE.md`: `dpkg -S` gives
+`linux-firmware-qualcomm-wireless` `20240318.git3b128b60-0ubuntu3.1`; `/var/log/dpkg.log*`
+shows that package installed 2026-10-01 13:50:58, when `linux-firmware` went from
+`0ubuntu2.29` (installed 08-15) to the split `0ubuntu3.1`. E1 (09-26) and E3 (boot from
+10-01 00:13:20, EX-057) therefore loaded `0ubuntu2.29`'s files; that package is not cached, so
+the hashes recorded are of the files installed now, with that caveat.
