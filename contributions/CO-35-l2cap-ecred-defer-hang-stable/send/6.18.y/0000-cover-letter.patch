@@ -16,11 +16,16 @@ in this order:
 The second fixes ab4eedb790ca ("Bluetooth: L2CAP: Fix corrupted list in
 hci_chan_del"), which 6.18.y has; it needs the first for
 l2cap_chan_lock_conn() and l2cap_chan_unlock_conn(). Neither carries
-Cc: stable.
+Cc: stable. They are patches 2 and 7 of the series "Bluetooth: L2CAP:
+fix and annotate l2cap_conn::chan_l locking"; the other patches are not
+needed for the problem below and were not tested here.
 
 Without them, BlueZ's l2cap-tester case "L2CAP Ext-Flowctl Server -
 Accept 2 Close 1" never finishes on v6.18.59: the test stops after
-"Accept deferred setup".
+"Accept deferred setup". (On v7.3 the hung-task detector shows the
+tester's task holding its socket's lock from l2cap_sock_recvmsg() and
+waiting for the same lock in l2cap_sock_teardown_cb(); patch 2
+releases the socket lock before __l2cap_ecred_conn_rsp_defer().)
 
 The commits do not build on 6.18.y as they are. Deviations:
 - patch 1: the context-analysis annotations 6.18.y lacks are dropped
@@ -52,6 +57,6 @@ Pauli Virtanen (2):
 
 
 base-commit: 1253a6aa5d104312bf0992afacc15220ae35bdf9
---
+-- 
 2.43.0
 
