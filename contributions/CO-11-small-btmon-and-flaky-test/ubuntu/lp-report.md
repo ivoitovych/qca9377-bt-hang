@@ -12,7 +12,7 @@ when it decodes a record whose label makes the width left for the packet text ne
 (privileged)" record, read with `btmon -r file.btsnoop` when its output is not a terminal
 (80 columns) or with `--columns=N`, N <= 80. Because btmon cuts lines at 80 columns when
 piped, scripts that pipe btmon output are affected. Ordinary records abort it as well at
-narrow widths (60 columns and fewer in our test), and any capture aborts it at very wide
+narrow widths (60 columns and fewer in our test), and both tested captures abort it at very wide
 widths (`--columns=3000`). The second upstream fix names the live case too: the `comm[pid]`
 prefix of a live btmon can push `max_len` negative at ordinary widths. The package is built
 with _FORTIFY_SOURCE=3, which turns the bad `snprintf()` size into an abort.
@@ -42,7 +42,8 @@ Upstream fixes:
    1.22` becomes `@ MGMT Open: bluetoothctl`).
 
 Result of this test in a noble container with the stock and the rebuilt package: see
-results-2026-10-28.md.
+results-2026-10-28.md (exit codes) and results-2026-10-28-bytes.md (byte-for-byte output
+comparison, 3000/5000 columns).
 
 [Where problems could occur]
 

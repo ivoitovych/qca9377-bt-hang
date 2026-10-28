@@ -66,3 +66,10 @@ preimage blob hashes with the stable tags). Actions:
 - **BT-14 is known upstream** (reviewer 6; verified): patchwork 14907537, queued for 6.12 by
   Sasha Levin on 2026-10-23. Nothing to send.
 - **7.3.y** (reviewer 6: released 2026-10-18, lacks both): test with and without the pair.
+- Reviewer 4 (later, at `315c588`): applied all six with fuzz disabled on the three tags,
+  clean; code approved; the same two points (sign-off, summary; both done in `ab6ba29`); and
+  suggested matched base controls for the post-hang failures with one-word filters that avoid
+  the hang (`ATT`, `Nval`, `Ethtool`): done, `tmp/l2cap-hang/post-hang-controls.sh`. Every
+  case failing with the backport now fails on the plain base too, by name: 18/18 (6.18), 78/78
+  (6.12), 32/32 (6.6), equal to the tester's own totals (`tmp/l2cap-hang/coverage-check.sh`;
+  results file, "Matched controls for the post-hang failures"). No regression.

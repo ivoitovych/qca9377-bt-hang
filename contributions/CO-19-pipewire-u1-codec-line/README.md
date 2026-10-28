@@ -59,7 +59,9 @@ simulate first with `apt-get -s install ./libspa-0.2-bluetooth_1.0.5-1ubuntu3.4_
 (it must change only those two packages), then install the same way without
 `-s`, then `systemctl --user restart pipewire wireplumber pipewire-pulse`.
 Never `--force-depends`. To go back, reinstall both at `1.0.5-1ubuntu3.3`
-(`apt-get install libspa-0.2-bluetooth=1.0.5-1ubuntu3.3 libspa-0.2-modules=1.0.5-1ubuntu3.3`).
+(`apt-get install --allow-downgrades libspa-0.2-bluetooth=1.0.5-1ubuntu3.3 libspa-0.2-modules=1.0.5-1ubuntu3.3`;
+without `--allow-downgrades` apt refuses). The whole procedure was simulated in a noble container
+(`results-2026-10-28.md` §5b).
 This touches the laptop's audio, so it is the operator's step.
 
 BEFORE (with 3.3 installed), headset connected and switched to Hands-free:

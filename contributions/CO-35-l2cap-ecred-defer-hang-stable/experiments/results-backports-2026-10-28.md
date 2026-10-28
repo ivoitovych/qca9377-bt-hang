@@ -28,11 +28,13 @@ message), `verify-line.sh` (control + backport case + case-log scan + full run +
 No version-specific prerequisite was needed on any line.
 
 The full-suite totals are lower than 7.2's 111/111 on every line. What was compared: the 96 cases the base runs
-before it hangs (by case name: no base pass fails with the backport), and the PHY cases after the hang (PHY-only
-base runs: the same sets fail). The other cases after the hang were not run on the base; their failures are
-attributed by cause only (`Operation not supported (95)`, `SIOCETHTOOL failed`, as related base cases fail before
-the hang), not by a base run. So: no regression observed among the compared cases; not every L2CAP path is shown
-to work on these trees. 6.12.114's 78 failures are mostly BT-14 (L2CAP `getsockopt` → EOPNOTSUPP; fix
+before it hangs (by case name: no base pass fails with the backport), the PHY cases after the hang (PHY-only
+base runs: the same sets fail), and, added after the outside reviews, the remaining post-hang failures in
+filtered base runs (`ATT`, `Nval`, `Ethtool`; section "Matched controls for the post-hang failures" below). With
+those, **every case that fails with the backport fails on the plain base too: 18/18 on 6.18, 78/78 on 6.12,
+32/32 on 6.6** (`tmp/l2cap-hang/coverage-check.sh <618|612|66>`; the counts equal the tester's own "Failed:"
+totals; 6.6's 32 include one timeout, failing on the base the same way). No regression observed; not every L2CAP path is
+shown to work on these trees, since many cases fail on the bases themselves. 6.12.114's 78 failures are mostly BT-14 (L2CAP `getsockopt` → EOPNOTSUPP; fix
 `5bd0dec150f56` queued for 6.12 on 2026-10-23), unrelated to this pair.
 
 ## What was changed
@@ -100,10 +102,62 @@ patched full run (18 on 6.18, 28 on 6.12, 26 on 6.6; "failed in patched but not 
 in patched": none). Reason: `setsockopt(BT_PHY): Protocol not available (92)` (6.18, 6.12, 6.6: BT_PHY and, on 6.6,
 `SO_TIMESTAMPING: Invalid argument (22)` are features these trees lack; 7.2 has them).
 
-The remaining post-hang failures could not be run on the base (they come after the hang) and are not shown to be
-the same on the base by name, only by cause:
+The remaining post-hang failures were first attributed by cause only (as written here, kept); the next section
+gives them matched base controls:
 - 6.12 `LE ATT/EATT ... Success`, `Ext-Flowctl Server - Nval Conn Req`: reason `getsockopt(L2CAP_OPTIONS)` / `getsockopt(BT_RCVMTU): Operation not supported (95)`, the same reason as the 65 failures the base shows before its hang (see finding below).
 - 6.12 and 6.6 `LE Ethtool Get Ts Info - Success`: `SIOCETHTOOL failed`, as `BR/EDR Ethtool Get Ts Info - Success` on the same base.
+
+## Matched controls for the post-hang failures (2026-10-28, after reviewer 4)
+
+`tmp/l2cap-hang/post-hang-controls.sh` → `base-filter.sh <base> <patched full log> <word>`: the base image runs
+only the cases matching one word that does not select the hanging case; the failed set is compared by name with
+the patched full run's cases matching the same word. Logs `tmp/l2cap-hang/logs/filter-<word>-<base>.log`.
+
+```
+[ATT on bt10-612-ctl] base: 1 passed, 6 failed; patched full run: 6 failed matching 'ATT'
+  failed with the backport, passed on the base (regressions):
+  failed with the backport, not run or not concluded on the base:
+  failed on both:
+    L2CAP LE ATT Client Change Sec  - Success
+    L2CAP LE ATT Client - Success
+    L2CAP LE ATT Server - Success
+    L2CAP LE EATT Client Change Sec - Success
+    L2CAP LE EATT Client - Success
+    L2CAP LE EATT Server - Success
+[Nval on bt10-612-ctl] base: 2 passed, 1 failed; patched full run: 1 failed matching 'Nval'
+  failed on both:
+    L2CAP Ext-Flowctl Server - Nval Conn Req
+[Ethtool on bt10-612-ctl] base: 0 passed, 2 failed; patched full run: 2 failed matching 'Ethtool'
+  failed on both:
+    L2CAP BR/EDR Ethtool Get Ts Info - Success
+    L2CAP LE Ethtool Get Ts Info - Success
+[Ethtool on bt10-66-ctl] base: 0 passed, 2 failed; patched full run: 2 failed matching 'Ethtool'
+  failed on both:
+    L2CAP BR/EDR Ethtool Get Ts Info - Success
+    L2CAP LE Ethtool Get Ts Info - Success
+```
+
+(The empty "regressions" and "not concluded" lists of the last three runs are omitted above; all were empty.)
+
+Every patched failure against every base result (`tmp/l2cap-hang/coverage-check.sh`):
+
+```
+618: patched failures 18; failed on the base too: 18
+612: patched failures 78; failed on the base too: 78
+  patched failures passing in some base run (regressions):
+    L2CAP BR/EDR Server - PHY
+    L2CAP BR/EDR Server - Success
+66: patched failures 32; failed on the base too: 32
+```
+
+(Failures here are " - test failed" and " - test timed out" verdicts; a first version of the checker read only
+the former and gave 31 on 6.6. The 32nd is `L2CAP BR/EDR Client PIN Code Change Sec - Success`, "test timed
+out" with the backport and on the base, `full-bt10-66-ctl.log`.)
+
+The two 6.12 lines are not regressions: in the base's own full run each of those cases prints "test passed"
+and then "test failed" (`full-bt10-612-ctl.log` lines 892/895 and 1221/1224), and the checker counts both
+lines; the case's final verdict on the base is failed, as with the backport. Some cases print "test failed"
+twice (6.6 has 35 such lines for 31 names); the checker counts distinct names.
 
 ## Uncertain / side findings
 

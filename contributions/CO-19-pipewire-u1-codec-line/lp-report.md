@@ -12,8 +12,9 @@ pipewire 1.6.8-1ubuntu4), 26.10 (1.6.8-1ubuntu4) and 26.04 (1.6.2) contain both.
 
 ## [Impact]
 
-With a Bluetooth headset connected in Hands-free (HSP/HFP) mode, PipeWire
-1.0.5 offers three profiles for the headset: "Headset Head Unit (HSP/HFP)"
+With an mSBC-capable Bluetooth headset connected in Hands-free (HSP/HFP)
+mode, PipeWire 1.0.5 offers three profiles for the headset (a CVSD-only
+headset: two, the codec-less one and CVSD): "Headset Head Unit (HSP/HFP)"
 without a codec, and "Headset Head Unit (HSP/HFP, codec CVSD)" and
 "... codec mSBC". The codec-less entry is not a real choice: it resolves to
 whichever codec the link happens to use. It is the first line of the
