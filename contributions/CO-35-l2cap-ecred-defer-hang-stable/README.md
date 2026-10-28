@@ -1,7 +1,12 @@
 # CO-35 — BT-10: the L2CAP ECRED deferred-accept hang on the stable lines
 
-**State:** investigating → **fix identified and confirmed on 7.2.13** (2026-10-28). Nothing
-drafted; a stable request is the operator's decision.
+**State (2026-10-28):** **backports ready, request not.** The six backport patches
+(`backports/6.18.y`, `6.12.y`, `6.6.y`) are tested (`experiments/results-backports-2026-10-28.md`)
+and approved by all six outside reviewers in the final go/no-go round at `e2e0e00` (`log.md`).
+Still to do before anything is sent: run v7.3.y with and without the pair; rewrite the request
+(option 2 for 7.3.y and 7.2.y in one mail, then one option-3 series mail per older line); a
+review of those mails; the operator's word. `send/request-v1.txt` (7.2.y only) is superseded.
+The sections below are from before the backports; "Missing before a request" is history.
 
 **Target:** the stable kernel (7.2.y as it is; 6.18.y, 6.12.y and 6.6.y need a hand backport), and
 through it Ubuntu.

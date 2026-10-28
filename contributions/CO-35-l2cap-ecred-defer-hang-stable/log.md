@@ -84,3 +84,11 @@ only the known `[ Upstream commit ]` false positive and upstream's own warning).
   post-hang cases now matched (reviewers 3, 4, 5); conclusion phrased as reviewer 2 proposed.
 Noted, not changed: the raw QEMU logs and comparison scripts are local (`tmp/l2cap-hang/`), so
 reviewers verified the records' consistency, not the raw verdicts (reviewers 2, 3, 4, 5).
+
+### Fifth round, final go/no-go at `e2e0e00` (all six; patches only, blocking defects only)
+
+All six: **GO for the six patches**, no blocking finding; the code diffs byte-identical to
+`197a91a` (reviewers 2, 3, 5, 6 compared), trailers in order with the backporter's sign-off
+last. The request mail was out of scope; reviewer 6: blocking for the *send* (not the patches),
+it must add 7.3.y and 7.2.y before anything goes to stable@. Remaining: v7.3.y with and without
+the pair; the request mails; their review; the operator's word.

@@ -1,6 +1,15 @@
 # CO-11 — Small items: btmon for Ubuntu, the flaky BlueZ test
 
-**State:** idea, low value. Nothing is planned.
+**State (2026-10-28, reopened by the operator):**
+- **(a) btmon for Ubuntu: ready to file.** The Launchpad report `ubuntu/lp-report.md` and the
+  debdiff `ubuntu/bluez_5.72-0ubuntu5.8_5.72-0ubuntu5.9.debdiff`, approved by all six outside
+  reviewers in the final go/no-go round at `e2e0e00` (`ubuntu/reviews-2026-10-28.md`). The
+  operator files the bug (with a task for the development series), attaches the captures and
+  `tests/btmon/real/mkcap.py` with the commands; then `XXXXXX` is replaced with the bug number
+  and the debdiff attached for sponsorship.
+- **(b) the Tested-by for 14879847:** not started on a working harness (below).
+
+The sections below are the original notes (when this was rated low value).
 
 ## btmon's abort in Ubuntu's 5.72 (`BT-4`)
 
