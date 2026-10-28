@@ -69,3 +69,30 @@ later E3 links on `-38` (not exhibits), headset and vendor names, device address
 - Not checked: whether `get_maintainer.pl` on a full tree would list more
   (it would add history-derived names without `--no-git`); the draft's Cc is
   deliberately MAINTAINERS only.
+
+## 2026-10-28 — v2 after the outside reviews (`reviews-2026-10-28.md`)
+
+`drafts/report-v2.txt` (66 lines against v1's 82; `awk 'length > 72'`: none; ASCII only).
+Item by item:
+1. ID sentence: 3491, 3496, 3501 and 3503 listed; 3502/3504 asked about, "we do not know
+   whether … are ROME devices at all" (C19). Moved to question 1.
+2. Cc Zijun Hu (`zijun.hu@oss.qualcomm.com`, published upstream, in the public-address list).
+   This departs from v1's "MAINTAINERS only" Cc on purpose: the questions are firmware ones.
+3. Evidence wording, each checked here:
+   - air modes: `grep -c -E "^2026-.* msbc +[0-9]"` on EX-058 → 43, EX-057 → 7; `cvsd` → 15
+     and 9: 50 mSBC + 24 CVSD (reviewer 4's split, confirmed). "Other air modes not tested"
+     dropped; the counts are stated.
+   - "every Disconnect was answered" → "logged no HCI command timeout" (the ledger's
+     "hang-ups answered 58/16" stays true, but EX-057's rfkill Disconnect answered `-107`
+     makes the shorter claim the safe one).
+   - "the QCA setup path (qca/rampatch_usb_00000302.bin and qca/nvm_usb_00000302.bin)", not
+     "the rampatch".
+4. Inline excerpt: EX-053's five kernel lines (lines 38-46 of the exhibit), host prefix
+   removed, date dropped; "evt 5" glossed as btusb_notify()'s transparent-SCO value
+   (`HCI_NOTIFY_ENABLE_SCO_TRANSP`). The control-transfer timeout is EX-052's (lines 37-38),
+   stated in prose, not in the excerpt: EX-053 has none and `tools/bt-fault-window` printed no
+   setup lines for EX-052's boot.
+5. Shorter: alternate-setting listing gone; "what we do not know" two sentences; 197/202 one
+   sentence; the ID question first.
+6. Signed "Iaroslav Voitovych", as on the kernel commits. Laptop model: not added.
+Not sent; the operator's yes is needed.

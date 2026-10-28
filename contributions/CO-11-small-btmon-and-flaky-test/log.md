@@ -29,3 +29,18 @@ aborts `btmon` at 80 columns or fewer.
   Bluetooth is not touched (except with `--usb`/`--pcie`, never to be used); the harness's
   `pytest-bluezenv` is not on this disk, so its exact flags are unverified. Run it in a container
   given only `/dev/kvm`. Next: the Tested-by runs for 14879847 (master and patched, N each).
+
+### 2026-10-28 — the SRU after the outside reviews (`ubuntu/reviews-2026-10-28.md`)
+
+- **Byte-for-byte run** (`ubuntu/results-2026-10-28-bytes.md`, `tmp/co11-btmon/run-test2.sh`):
+  reviewer 4 reproduced exactly (81 and 82 columns: the privileged-Open label differs); identical
+  elsewhere where both run; stock also aborts at 3000/5000 columns and on ordinary records at
+  10-60; the rebuilt btmon exits 0 at every width. The report's "unchanged at 81 and above" is
+  replaced by those results; [Impact] and [Test Plan] carry them.
+- **The development release** (`scripts/ubuntu-series-versions.py bluez`): 27.04 `tenacious` and
+  26.10 have bluez 5.87-4. dca0f10fd (2026-09-10) is in no BlueZ release (5.87: 2026-07-03), and
+  none of 5.87-4's 19 Debian patches touches `monitor/packet.c`
+  (`scripts/ubuntu-bluez-patches-check.py 5.87-4 tmp/co11-btmon/dev-release`). So the
+  development release needs dca0f10fd too; [Other Info] says the bug should target it.
+- Still open: the live-socket `comm[pid]` path (not run here: it touches the machine's
+  Bluetooth), attaching the captures and `mkcap.py` when filing, the bug number.

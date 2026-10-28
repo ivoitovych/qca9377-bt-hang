@@ -5,8 +5,10 @@ Title: Hands-free mode lists a codec-less "Headset Head Unit (HSP/HFP)" profile;
 
 Fixed upstream in PipeWire 1.1.81 / 1.2.0 by commit
 805e5cf9c115e3d0498f78e9e00e3ae93178e47d ("bluez5: show only codec profiles
-also for HFP/HSP"). Ubuntu 24.04 ships 1.0.5 (1.0.5-1ubuntu3.3 in noble-updates).
-Ubuntu 26.04 already contains the fix (newer upstream).
+also for HFP/HSP"), with its preceding commit f142c0a5b0286bd8975bb67e57e0f06138e05b17
+("bluez5: ensure transport->codec is set also for HSP"). Ubuntu 24.04 ships
+1.0.5 (1.0.5-1ubuntu3.3 in noble-updates). The development release (27.04,
+pipewire 1.6.8-1ubuntu4), 26.10 (1.6.8-1ubuntu4) and 26.04 (1.6.2) contain both.
 
 ## [Impact]
 
@@ -53,18 +55,22 @@ Hardware needed: any Bluetooth headset with a microphone that supports HFP
    again).
 5. `pactl set-card-profile <card> headset-head-unit` still selects the
    headset profile (best codec).
-6. Regression checks: switch A2DP <-> Hands-free several times; the
-   microphone works in Hands-free; the headset survives disconnect and
-   reconnect with Hands-free as the saved profile.
+6. Regression checks: switch A2DP <-> Hands-free several times; CVSD <->
+   mSBC both ways, checking the codec the transport really uses (PipeWire
+   debug log "codec=") and not only the profile label; the microphone works
+   in Hands-free; the headset survives disconnect and reconnect with
+   Hands-free as the saved profile, including a profile saved before the
+   update as `headset-head-unit-msbc`.
 
 (Results of the test on the laptop to be added here before the upload to
 -proposed is requested.)
 
 ## [Where problems could occur]
 
-The change is confined to the profile-list code of the Bluetooth device in
-`libspa-0.2-bluetooth` (`spa/plugins/bluez5/bluez5-device.c`), HSP/HFP
-profiles only; A2DP and BAP handling is unchanged.
+The change is confined to `libspa-0.2-bluetooth`: profile enumeration and
+active-codec/node handling for HSP/HFP in `spa/plugins/bluez5/bluez5-device.c`,
+and the initial codec of native-backend HSP transports in
+`spa/plugins/bluez5/backend-native.c`; A2DP and BAP handling is unchanged.
 
 - The profile named `headset-head-unit` now means "the best supported
   codec" instead of "no codec". Saved user state or scripts that refer to
@@ -72,12 +78,16 @@ profiles only; A2DP and BAP handling is unchanged.
   relied on that name meaning "any/unspecified codec" now gets mSBC where
   the headset supports it.
 - A headset that only supports HSP (no HFP codec negotiation) must still get
-  a profile: CVSD is therefore always listed without asking the backend.
-  If this were wrong such a headset would have no Hands-free profile.
-- The device state keeps the codec of the active transport; if a codec
-  switch fails PipeWire keeps the existing link and shows its codec. A
-  regression would show as a wrong profile line selected in the UI or a
-  headset that stays on A2DP when Hands-free is chosen.
+  a profile: CVSD is therefore always listed without asking the backend, and
+  the first patch (f142c0a5b) gives native-backend HSP transports the CVSD
+  codec, which 1.0.5 left unset. Without it the active profile of such a
+  headset would carry no valid codec. A regression here would show as an
+  HSP-only headset with no Hands-free profile or no audio in it.
+- If a codec switch fails, PipeWire logs "failed to switch codec", stays in
+  Hands-free and shows the codec of the transport present afterwards (CVSD
+  if there is none); this path is the one 1.0.5 already has. A regression
+  would show as a wrong profile line selected in the UI or a headset that
+  stays on A2DP when Hands-free is chosen.
 - Other desktop components (WirePlumber 0.4.x policy, GNOME Settings,
   pavucontrol) read the profile list. WirePlumber 0.4.17 (noble) picks
   profiles by index or by saved name from the list and does not refer to
@@ -92,9 +102,10 @@ profiles only; A2DP and BAP handling is unchanged.
   (searched the history of `bluez5-device.c`, `Fixes:`/revert, up to 1.6.10).
 - The upstream commit does not apply to 1.0.5 as is (7 of 21 hunks fail):
   it depends on the BAP rework (a15416994) and LC3-SWB support (fe412784a).
-  The attached patch is the HFP/HSP part only, adapted by hand (one file,
-  42 insertions and 29 deletions); the A2DP/BAP cleanups of the upstream commit
-  are left out because they are not needed for this behaviour.
+  The second patch is a backport of its HFP/HSP part, adapted for 1.0.5 (one
+  file, 42 insertions and 29 deletions); the A2DP/BAP cleanups of the upstream
+  commit are left out because they are not needed for this behaviour. The
+  first patch is upstream f142c0a5b unchanged (it applies with offsets).
 - Build: the package builds in a clean ubuntu:24.04 container; there is no
   unit test for the bluez5 profile list in PipeWire 1.0.5.
 - Debdiff: `pipewire_1.0.5-1ubuntu3.3_1.0.5-1ubuntu3.4.debdiff` (attached).

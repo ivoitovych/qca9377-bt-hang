@@ -1,25 +1,60 @@
 diff -Nru pipewire-1.0.5/debian/changelog pipewire-1.0.5/debian/changelog
 --- pipewire-1.0.5/debian/changelog	2026-07-08 23:47:47.000000000 +0000
-+++ pipewire-1.0.5/debian/changelog	2026-10-28 04:40:37.000000000 +0000
-@@ -1,3 +1,14 @@
++++ pipewire-1.0.5/debian/changelog	2026-10-28 05:46:17.000000000 +0000
+@@ -1,3 +1,17 @@
 +pipewire (1.0.5-1ubuntu3.4) noble; urgency=medium
 +
++  * d/p/bluez5-ensure-transport-codec-is-set-also-for-HSP.patch:
++    Cherry-pick upstream f142c0a5b "bluez5: ensure transport->codec is
++    set also for HSP", so HSP-only headsets report CVSD; needed by the
++    next patch. (LP: #NNNNNNN)
 +  * d/p/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch:
-+    Cherry-pick (HFP/HSP part) of upstream 805e5cf9c "bluez5: show only
-+    codec profiles also for HFP/HSP". In Hands-free mode the device no
-+    longer offers a codec-less "Headset Head Unit (HSP/HFP)" profile
-+    beside the per-codec ones, so the codec can be seen and selected in
-+    GNOME Settings. (LP: #NNNNNNN)
-+
-+ -- Iaroslav Voitovych <yaroslav.voytovych@gmail.com>  Wed, 28 Oct 2026 04:40:37 +0000
++    Backport of the HFP/HSP part of upstream 805e5cf9c "bluez5: show only
++    codec profiles also for HFP/HSP", adapted for 1.0.5. In Hands-free
++    mode the device no longer offers a codec-less "Headset Head Unit
++    (HSP/HFP)" profile beside the per-codec ones, so the codec can be
++    seen and selected in GNOME Settings. (LP: #NNNNNNN)
++ -- Iaroslav Voitovych <yaroslav.voytovych@gmail.com>  Wed, 28 Oct 2026 05:46:17 +0000
 +
  pipewire (1.0.5-1ubuntu3.3) noble-security; urgency=medium
  
    * SECURITY UPDATE: NULL pointer dereference in RAOP module.
+diff -Nru pipewire-1.0.5/debian/patches/bluez5-ensure-transport-codec-is-set-also-for-HSP.patch pipewire-1.0.5/debian/patches/bluez5-ensure-transport-codec-is-set-also-for-HSP.patch
+--- pipewire-1.0.5/debian/patches/bluez5-ensure-transport-codec-is-set-also-for-HSP.patch	1970-01-01 00:00:00.000000000 +0000
++++ pipewire-1.0.5/debian/patches/bluez5-ensure-transport-codec-is-set-also-for-HSP.patch	2026-10-28 05:46:17.000000000 +0000
+@@ -0,0 +1,28 @@
++From: Pauli Virtanen <pav@iki.fi>
++Date: Sun, 28 Jan 2024 15:33:27 +0200
++Subject: bluez5: ensure transport->codec is set also for HSP
++Origin: upstream, https://gitlab.freedesktop.org/pipewire/pipewire/-/commit/f142c0a5b0286bd8975bb67e57e0f06138e05b17
++Applied-Upstream: 1.1.81
++Bug-Ubuntu: https://launchpad.net/bugs/NNNNNNN
++Last-Update: 2026-10-28
++---
++diff --git a/spa/plugins/bluez5/backend-native.c b/spa/plugins/bluez5/backend-native.c
++index daf97963f..66fcf53e0 100644
++--- a/spa/plugins/bluez5/backend-native.c
+++++ b/spa/plugins/bluez5/backend-native.c
++@@ -223,6 +223,7 @@ static struct spa_bt_transport *_transport_create(struct rfcomm *rfcomm)
++ 	t->backend = &backend->this;
++ 	t->n_channels = 1;
++ 	t->channels[0] = SPA_AUDIO_CHANNEL_MONO;
+++	t->codec = HFP_AUDIO_CODEC_CVSD;
++ 
++ 	td = t->user_data;
++ 	td->rfcomm = rfcomm;
++@@ -2299,6 +2300,7 @@ static DBusHandlerResult profile_new_connection(DBusConnection *conn, DBusMessag
++ 			spa_log_warn(backend->log, "can't create transport: %m");
++ 			goto fail_need_memory;
++ 		}
+++		t->codec = HFP_AUDIO_CODEC_CVSD;
++ 		rfcomm->transport = t;
++ 		rfcomm->has_volume = rfcomm_volume_enabled(rfcomm);
++ 
 diff -Nru pipewire-1.0.5/debian/patches/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch pipewire-1.0.5/debian/patches/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch
 --- pipewire-1.0.5/debian/patches/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch	1970-01-01 00:00:00.000000000 +0000
-+++ pipewire-1.0.5/debian/patches/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch	2026-10-28 04:40:37.000000000 +0000
-@@ -0,0 +1,141 @@
++++ pipewire-1.0.5/debian/patches/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch	2026-10-28 05:46:17.000000000 +0000
+@@ -0,0 +1,143 @@
 +Description: bluez5: show only codec profiles also for HFP/HSP
 + In Hands-free mode the device offered, besides the per-codec profiles
 + ("Headset Head Unit (HSP/HFP, codec CVSD/mSBC)"), a codec-less
@@ -31,6 +66,8 @@ diff -Nru pipewire-1.0.5/debian/patches/bluez5-show-only-codec-profiles-also-for
 + base name "headset-head-unit", as already done for A2DP, so selecting
 + that name from the command line or from saved state still works.
 + CVSD is always listed (HSP-only devices have no codec negotiation).
++ This relies on HSP transports carrying the CVSD codec, which the
++ preceding patch (upstream f142c0a5b) provides.
 + .
 + Backport of the HFP/HSP part of the upstream commit to PipeWire 1.0.5.
 + The upstream commit also removes the codec argument from the A2DP/BAP
@@ -163,9 +200,10 @@ diff -Nru pipewire-1.0.5/debian/patches/bluez5-show-only-codec-profiles-also-for
 + 	default:
 diff -Nru pipewire-1.0.5/debian/patches/series pipewire-1.0.5/debian/patches/series
 --- pipewire-1.0.5/debian/patches/series	2026-07-08 23:47:28.000000000 +0000
-+++ pipewire-1.0.5/debian/patches/series	2026-10-28 04:40:37.000000000 +0000
-@@ -35,3 +35,4 @@
++++ pipewire-1.0.5/debian/patches/series	2026-10-28 05:46:17.000000000 +0000
+@@ -35,3 +35,5 @@
  CVE-2026-14324.patch
  CVE-2026-14330-pre1.patch
  CVE-2026-14330.patch
++bluez5-ensure-transport-codec-is-set-also-for-HSP.patch
 +bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch

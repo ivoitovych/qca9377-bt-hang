@@ -1,6 +1,9 @@
 # CO-19 - PipeWire U1: codec line in Hands-free mode (Ubuntu 24.04 stable update)
 
-State: **prepared, not filed** (2026-10-28). Nothing committed, pushed, uploaded or sent.
+State: **prepared, not filed** (2026-10-28). Nothing filed, uploaded or sent.
+v2 (2026-10-28, after the outside reviews in `reviews-2026-10-28.md`): adds
+upstream f142c0a5b as a first patch (HSP transports get the CVSD codec; without
+it an HSP-only headset's active profile had an invalid codec under our port).
 
 Problem (`docs/issues.md` U1): in Hands-free mode PipeWire 1.0.5 offers a
 codec-less profile "Headset Head Unit (HSP/HFP)" beside the codec profiles; it
@@ -11,13 +14,19 @@ tool-written merge requests and issues).
 
 ## Result in one block
 
-- Backport: HFP/HSP part of 805e5cf9c, hand-adapted, one file
-  (`spa/plugins/bluez5/bluez5-device.c`), 42 insertions, 29 deletions.
+- Patch 1: upstream f142c0a5b ("ensure transport->codec is set also for HSP",
+  `backend-native.c`, 2 lines), unchanged; it precedes 805e5cf9c upstream and
+  was missing from v1.
+- Patch 2: backport of the HFP/HSP part of 805e5cf9c, adapted for 1.0.5, one
+  file (`spa/plugins/bluez5/bluez5-device.c`), 42 insertions, 29 deletions.
   The upstream commit does not apply to 1.0.5 (7 of 21 hunks fail: needs the BAP
-  rework and LC3-SWB commits). No follow-up commit exists upstream.
+  rework and LC3-SWB commits). No later fix of it exists upstream.
 - Package: pipewire `1.0.5-1ubuntu3.3` (current noble-updates/security) ->
-  `1.0.5-1ubuntu3.4`; patch `debian/patches/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch`
+  `1.0.5-1ubuntu3.4`; patches `debian/patches/bluez5-ensure-transport-codec-is-set-also-for-HSP.patch`
+  and `debian/patches/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch`
   (DEP-3, Origin = upstream commit, `Bug-Ubuntu: .../NNNNNNN` placeholder).
+- Ubuntu's development release is 27.04 (pipewire 1.6.8-1ubuntu4): it has both
+  commits (Launchpad query `scripts/ubuntu-series-versions.py`, 2026-10-28).
 - Build in ubuntu:24.04 container: success; meson test 22 ok / 0 fail; the
   plugin binary no longer contains the codec-less description. No unit test
   covers the bluez5 profile list.
@@ -41,11 +50,16 @@ tool-written merge requests and issues).
 
 Needs a headset in Hands-free mode (the Shure AONIC 50 or the MOMENTUM 4 would
 do; one with mSBC shows both lines). The laptop has 1.0.5-1ubuntu3.3.
-Only the plugin changed, so only `libspa-0.2-bluetooth` needs installing
-(`/root/exp/qca9377-bt-hang/tmp/co19-pipewire/out/libspa-0.2-bluetooth_1.0.5-1ubuntu3.4_amd64.deb`),
-then `systemctl --user restart pipewire wireplumber pipewire-pulse`.
-Reinstall 1.0.5-1ubuntu3.3 to go back. This touches the laptop's audio, so
-it is the operator's step.
+Only the plugin changed, but `libspa-0.2-bluetooth` depends on
+`libspa-0.2-modules (= 1.0.5-1ubuntu3.4)` exactly (`dpkg-deb -f … Depends`), so
+both rebuilt packages go in together, from
+`/root/exp/qca9377-bt-hang/tmp/co19-pipewire/out/`:
+simulate first with `apt-get -s install ./libspa-0.2-bluetooth_1.0.5-1ubuntu3.4_amd64.deb ./libspa-0.2-modules_1.0.5-1ubuntu3.4_amd64.deb`
+(it must change only those two packages), then install the same way without
+`-s`, then `systemctl --user restart pipewire wireplumber pipewire-pulse`.
+Never `--force-depends`. To go back, reinstall both at `1.0.5-1ubuntu3.3`
+(`apt-get install libspa-0.2-bluetooth=1.0.5-1ubuntu3.3 libspa-0.2-modules=1.0.5-1ubuntu3.3`).
+This touches the laptop's audio, so it is the operator's step.
 
 BEFORE (with 3.3 installed), headset connected and switched to Hands-free:
 1. `pactl list cards` (card section of the headset), Profiles list. Expect an
@@ -72,9 +86,16 @@ Hands-free selected):
 8. Regression: A2DP -> Hands-free -> A2DP three times; disconnect and reconnect
    in Hands-free; start a recording application while on A2DP (U14 path) and
    see the switch to Hands-free end on a codec line.
+8a. Before the update, save an mSBC selection (`headset-head-unit-msbc`);
+   after it, reconnect and check that the saved profile still resolves.
+   For CVSD <-> mSBC check the codec the transport really uses
+   (`PIPEWIRE_DEBUG=spa.bluez5*:4` journal, "codec="), not only the label.
+   If a codec switch fails, record the log line ("failed to switch codec")
+   and what is shown afterwards, before blaming the port.
 9. Record the outputs as `results-<date>.md` here (commands and outputs).
 
-Not covered even by that test: HSP-only headsets, oFono and hsphfpd backends.
+Not covered even by that test: HSP-only headsets (patch 1 is reasoned from the
+source, not tested on one), oFono and hsphfpd backends.
 
 ## Risks to weigh before filing
 

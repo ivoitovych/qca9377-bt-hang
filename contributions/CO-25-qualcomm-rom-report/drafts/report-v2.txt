@@ -1,0 +1,66 @@
+To: linux-bluetooth@vger.kernel.org
+Cc: Zijun Hu <zijun.hu@oss.qualcomm.com>,
+    Bartosz Golaszewski <brgl@kernel.org>,
+    linux-arm-msm@vger.kernel.org,
+    Marcel Holtmann <marcel@holtmann.org>,
+    Luiz Augusto von Dentz <luiz.dentz@gmail.com>
+Subject: QCA9377 ROME USB IDs without a btusb entry; ROM firmware stops
+ answering HCI after a transparent SCO stream
+
+Hello,
+
+This is a report with two questions, not a patch.
+
+1. btusb lists 13d3:3491, 3496, 3501 and, since dc16388d45ec
+   ("Bluetooth: btusb: Add IMC Networks QCA9377 to quirks table"),
+   3503 as BTUSB_QCA_ROME. Until that entry, 13d3:3503 ran its ROM
+   firmware. Does Qualcomm know of other ROME-based USB IDs that have
+   no entry and so also run the ROM firmware? We do not know whether
+   13d3:3502 or 3504, for example, are ROME devices at all.
+
+2. Is the ROM behaviour below known, and is there an erratum or a
+   ROM version that avoids it?
+
+Device: QCA9377, USB 13d3:3503, ROM "rome 0x302 build 0x111", setup
+status 0x20 before the QCA setup path runs. With that path
+(qca/rampatch_usb_00000302.bin and qca/nvm_usb_00000302.bin) the log
+reads "QCA: patch rome 0x302 build 0x3e8".
+
+On the ROM firmware (stock btusb, Ubuntu 7.0.0-29 to 7.0.0-34), in a
+hands-free call with the transparent (mSBC) air mode, btusb uses
+alternate setting 1 (9-byte endpoint, 27-byte SCO buffers as three
+packets). The SCO setup is answered and the link streams; the first
+HCI command after that is never answered. One instance (kernel log,
+host prefix removed; "evt 5" is btusb_notify()'s transparent-SCO
+value):
+
+  02:09:36.646940 hci0 opcode 0x0428 plen 17
+  02:09:36.718906 hci0 evt 5
+  02:09:44.049893 hci0: handle 0x06 reason 0x13
+  02:09:44.049956 hci0: Opcode 0x0406
+  02:09:46.067797 Bluetooth: hci0: command 0x0406 tx timeout
+
+From then on it answers no HCI command, and USB control transfers to
+it time out (GET_DESCRIPTOR, -110) while it stays enumerated; removing
+power recovered it, a reboot did not always. This happened 12 times
+on four kernel builds with three headset models; the dying command was
+0x0406 Disconnect six times and 0x0c1a Write Scan Enable once, 34 ms
+to 9.65 s after link-up.
+
+With the QCA setup path it has not happened: 74 SCO links (50 mSBC,
+24 CVSD) on two btusb builds, 58 with BTUSB_QCA_ROME only and 16 with
+the exact entry of dc16388d45ec, logged no HCI command timeout. That
+entry is in stable releases, so for this ID users are covered.
+
+We do not know what the ROM firmware does wrong, nor its failure rate
+(we have no count of ROM links that completed). On the ROM firmware,
+Read Local Supported Commands also lists 197 commands against 202
+after the setup path (Enhanced Setup and Enhanced Accept Synchronous
+Connection added); we do not know whether that is related.
+
+If the ROM source or an errata note can be shared, it would help us
+describe the cause correctly; we understand if it cannot. Logs for
+each instance are available on request.
+
+Thank you,
+Iaroslav Voitovych
