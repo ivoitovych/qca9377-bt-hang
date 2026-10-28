@@ -200,6 +200,11 @@ hours (`R2-13`).
 >   CO-11 the false "output unchanged" claim, wider widths, reproducer attached, the development
 >   release's bluez; CO-19 verify the HSP-only `SPA_ID_INVALID` path, fix the install plan (exact
 >   `libspa-0.2-modules` dependency), wording. Still running: CO-35's backports.
+> - **Third review round (`315c588`, five reviewers):** CO-25 v2 approved, send on the
+>   operator's word; CO-11 approved, ready to file (bug with a development-series task); CO-19 v2
+>   code approved (f142c0a5b), v2 build recorded, laptop test is the gate; CO-35 backports
+>   approved, backporter sign-off added to all six; 7.3.y test and the request mails remain.
+>   BT-14 (6.12.114 L2CAP getsockopt) is already queued upstream (patchwork 14907537).
 > - **CI:** red from 10-22 to 10-28, unread (a trial open all week). The install step and the
 >   journal seams are fixed (`deaafab`, `14ae3af`); the suite passes. One floor stays red:
 >   `tools/bt-journal-files` has no suite tests, asked of the test-suite maintainer

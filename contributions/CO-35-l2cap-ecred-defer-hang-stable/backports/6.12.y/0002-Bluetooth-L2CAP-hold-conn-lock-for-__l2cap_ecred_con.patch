@@ -19,9 +19,10 @@ The code should also take l2cap_chan_lock() for sibling channels, but
 that needs separate fix due to lock nesting.
 
 Fixes: ab4eedb790ca ("Bluetooth: L2CAP: Fix corrupted list in hci_chan_del")
-[ backport: 6.12 has no MSG_ERRQUEUE handling in l2cap_sock_recvmsg(), so the hunk is adapted to its context and the new l2cap_sock_defer() call replaces the old inline defer block; no other change ]
 Signed-off-by: Pauli Virtanen <pav@iki.fi>
 Signed-off-by: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+[ backport: 6.12 has no MSG_ERRQUEUE handling in l2cap_sock_recvmsg(), so the hunk is adapted to its context and the new l2cap_sock_defer() call replaces the old inline defer block; no other change ]
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
  net/bluetooth/l2cap_sock.c | 62 +++++++++++++++++++++++++++-----------
  1 file changed, 45 insertions(+), 17 deletions(-)

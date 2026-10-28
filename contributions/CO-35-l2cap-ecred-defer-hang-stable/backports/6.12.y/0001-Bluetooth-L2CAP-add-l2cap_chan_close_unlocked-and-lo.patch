@@ -16,9 +16,10 @@ Add l2cap_chan_close_unlocked() that does not require locks to be held,
 as all callsites do this lock -> close -> unlock pattern.
 
 Link: https://syzkaller.appspot.com/bug?extid=0e4ebcc970728e056324
-[ backport: dropped the context-analysis annotations 6.12 lacks (__must_not_hold, __cond_acquires, __context_unsafe); code unchanged ]
 Signed-off-by: Pauli Virtanen <pav@iki.fi>
 Signed-off-by: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+[ backport: dropped the context-analysis annotations 6.12 lacks (__must_not_hold, __cond_acquires, __context_unsafe); code unchanged ]
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 ---
  include/net/bluetooth/l2cap.h | 16 ++++++++++
  net/bluetooth/l2cap_core.c    | 60 ++++++++++++++++++++++++++++++++---

@@ -48,3 +48,21 @@ All six: the request is valid (option 2, two commits in order). To do before sen
   (whole suite to the hang). The verdicts stand; earlier single-case runs were full runs.
 - Still to do before sending: v7.3.y with and without the pair; then the request (7.3.y, 7.2.y,
   and these backports).
+
+### Outside review of the backports at `315c588` (reviewers 1, 2, 3, 5, 6; 4 unavailable)
+
+All five approve the code: the only differences from upstream are the three annotations and
+the three `MSG_ERRQUEUE` lines (reviewers 3, 5, 6 diffed every patch; reviewer 3 matched the
+preimage blob hashes with the stable tags). Actions:
+- **Backporter sign-off missing** (reviewers 2, 3, 5, 6; blocking): added to all six, with the
+  `[ backport: ]` note moved below the upstream sign-offs (`git diff`: trailer lines only). By
+  sending, the operator certifies the DCO for them, as on every patch sent so far.
+- **Summary too broad** (reviewer 5): `experiments/results-backports-2026-10-28.md` now says
+  "no regression among the compared cases" and names what was not compared.
+- **Packaging** (reviewers 3, 6): option 2 for 7.3.y and 7.2.y (one mail), then each option-3
+  series as its own mail, `[PATCH 6.18.y 1/2]` etc., each naming its tested base and its
+  deviations; the 6.12 series states the BT-14 limit of its suite totals. Optional: a sparse run
+  (reviewer 2).
+- **BT-14 is known upstream** (reviewer 6; verified): patchwork 14907537, queued for 6.12 by
+  Sasha Levin on 2026-10-23. Nothing to send.
+- **7.3.y** (reviewer 6: released 2026-10-18, lacks both): test with and without the pair.

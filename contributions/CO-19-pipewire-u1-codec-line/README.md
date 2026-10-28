@@ -27,7 +27,8 @@ tool-written merge requests and issues).
   (DEP-3, Origin = upstream commit, `Bug-Ubuntu: .../NNNNNNN` placeholder).
 - Ubuntu's development release is 27.04 (pipewire 1.6.8-1ubuntu4): it has both
   commits (Launchpad query `scripts/ubuntu-series-versions.py`, 2026-10-28).
-- Build in ubuntu:24.04 container: success; meson test 22 ok / 0 fail; the
+- Build in ubuntu:24.04 container, v1 and again v2 (both patches applied;
+  `results-2026-10-28.md` §5a): success; meson test 22 ok / 0 fail; the
   plugin binary no longer contains the codec-less description. No unit test
   covers the bluez5 profile list.
 - Still to do: laptop test (below), a Launchpad bug number in 3 places

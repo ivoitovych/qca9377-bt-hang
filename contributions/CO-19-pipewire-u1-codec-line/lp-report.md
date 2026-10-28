@@ -77,15 +77,22 @@ and the initial codec of native-backend HSP transports in
   `headset-head-unit` keep working and select the best codec; a script that
   relied on that name meaning "any/unspecified codec" now gets mSBC where
   the headset supports it.
+- On an mSBC-capable headset the mSBC profile is now named
+  `headset-head-unit`; the name `headset-head-unit-msbc` is no longer
+  generated. A saved setting or script that selects
+  `headset-head-unit-msbc` no longer matches a profile; what the session
+  manager then selects is part of the test plan (step 6).
 - A headset that only supports HSP (no HFP codec negotiation) must still get
   a profile: CVSD is therefore always listed without asking the backend, and
   the first patch (f142c0a5b) gives native-backend HSP transports the CVSD
   codec, which 1.0.5 left unset. Without it the active profile of such a
   headset would carry no valid codec. A regression here would show as an
   HSP-only headset with no Hands-free profile or no audio in it.
-- If a codec switch fails, PipeWire logs "failed to switch codec", stays in
-  Hands-free and shows the codec of the transport present afterwards (CVSD
-  if there is none); this path is the one 1.0.5 already has. A regression
+- If a codec switch fails, PipeWire logs "failed to switch codec" and stays
+  in Hands-free; the profile shows the codec of the transport present
+  afterwards, or falls back to the CVSD label when no transport remains,
+  which does not mean a CVSD link is active. This path is the one 1.0.5
+  already has. A regression
   would show as a wrong profile line selected in the UI or a headset that
   stays on A2DP when Hands-free is chosen.
 - Other desktop components (WirePlumber 0.4.x policy, GNOME Settings,

@@ -806,9 +806,13 @@ options with `getsockopt()` (security level, MTUs), so a 6.12.114 system is like
 beyond the tester. 6.18.59 and 6.6.160 have no `getsockopt_iter` at all (unaffected); 6.1 and
 older not checked. `5bd0dec150f56` applies to v6.12.114 (`git apply --check`: hunks 2 and 3 at
 offset −4); not yet built or run.
-**Reportable:** a stable request for `5bd0dec150f56` in 6.12.y (or a revert of the two), after
-a build and an l2cap-tester run with it, and after checking the stable queue and list for an
-existing report.
+**Already reported and queued (checked 2026-10-28, after an outside reviewer pointed to it):**
+patchwork 14907537, "[6.12.y] net: call getsockopt_iter if available", Emanuele Ghidoli,
+2026-10-22, a clean cherry-pick of `5bd0dec150f56` with the same diagnosis; Sasha Levin replied
+"Queued for 6.12, thanks." on 2026-10-23 (`scripts/patchwork-state.py --files 14907537`; raw
+JSON `tmp/patchwork/patch-14907537.json`). Nothing for us to send. Watch: the next 6.12.y
+release carries it; then 6.12's l2cap-tester totals become meaningful for CO-35. Ubuntu's
+noble kernels (`-38`, `-42`) are not on 6.12.y.
 
 ---
 

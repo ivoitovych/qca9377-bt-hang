@@ -7,7 +7,10 @@ Upstream pair (Pauli Virtanen), kept in this order:
 
 Method: QEMU/KVM, 4 vCPUs, tester.config kernels (`tmp/co02-w2c/build-tree.sh`), BlueZ l2cap-tester as in
 results-2026-10-28.md. Logs in `tmp/l2cap-hang/logs/`. Patches in `backports/<line>/`
-(`git format-patch`, `[ Upstream commit <hash> ]` line, author and original Signed-off-by kept, none of ours added).
+(`git format-patch`, `[ Upstream commit <hash> ]` line, author and original Signed-off-by kept). Added after
+the outside reviews (2026-10-28): the `[ backport: ]` note moved below the upstream sign-offs and the
+backporter's `Signed-off-by` appended (`tmp/l2cap-hang/add-backporter-signoff.py`; `git diff` shows only those
+trailer lines changed, the diffs are untouched).
 
 Scripts (all in `tmp/l2cap-hang/`): `make-618.sh`, `make-612.sh`, `make-66.sh` (build the commits; for 6.12/6.6 the
 `l2cap_sock.c` conflict was resolved by hand, the resulting commit is the record), `commit-backport.sh` (stable-style
@@ -18,14 +21,19 @@ message), `verify-line.sh` (control + backport case + case-log scan + full run +
 
 | line | base | backport commits | case "Accept 2 Close 1" | full l2cap-tester | report scan |
 |---|---|---|---|---|---|
-| 6.18.y | v6.18.59 | `601d1caa6833`, `c953b83a7c8c` | base HANG, backport Passed 0.026 s | 111 total, 93 passed, 18 failed (all BT_PHY set, same on base) | clean |
-| 6.12.y | v6.12.114 | `2140180eb76d`, `c2ce0cd7e717` | base HANG, backport Passed 0.038 s | 111 total, 33 passed, 78 failed (same cases fail on base; see 6.12 notes) | clean |
-| 6.6.y | v6.6.160 | `3e08be30f4fd`, `e9334dba491f` | base HANG, backport Passed 0.050 s | 111 total, 79 passed, 32 failed (same cases fail on base) | clean |
+| 6.18.y | v6.18.59 | `601d1caa6833`, `c953b83a7c8c` | base HANG, backport Passed 0.026 s | 111 total, 93 passed, 18 failed (all BT_PHY set; the same 18 fail on the base in a PHY-only run) | clean |
+| 6.12.y | v6.12.114 | `2140180eb76d`, `c2ce0cd7e717` | base HANG, backport Passed 0.038 s | 111 total, 33 passed, 78 failed (no regression among the cases compared; see 6.12 notes and BT-14) | clean |
+| 6.6.y | v6.6.160 | `3e08be30f4fd`, `e9334dba491f` | base HANG, backport Passed 0.050 s | 111 total, 79 passed, 32 failed (no regression among the cases compared) | clean |
 
 No version-specific prerequisite was needed on any line.
 
-The full-suite totals are lower than 7.2's 111/111 on every line. The failing cases fail the same way on the plain
-base; see the notes per line. The base cannot give totals because it hangs on the case, so the comparison is by case name.
+The full-suite totals are lower than 7.2's 111/111 on every line. What was compared: the 96 cases the base runs
+before it hangs (by case name: no base pass fails with the backport), and the PHY cases after the hang (PHY-only
+base runs: the same sets fail). The other cases after the hang were not run on the base; their failures are
+attributed by cause only (`Operation not supported (95)`, `SIOCETHTOOL failed`, as related base cases fail before
+the hang), not by a base run. So: no regression observed among the compared cases; not every L2CAP path is shown
+to work on these trees. 6.12.114's 78 failures are mostly BT-14 (L2CAP `getsockopt` → EOPNOTSUPP; fix
+`5bd0dec150f56` queued for 6.12 on 2026-10-23), unrelated to this pair.
 
 ## What was changed
 
