@@ -164,6 +164,16 @@ and `unstage` undo everything; stopping it is the operator's decision.
 
 ## Repository health
 
+**CI was red again from 2026-10-22 (`4ee379d`) to 2026-10-28, about 65 pushes, unread** (a trial
+was open all week, so the save step ran no suite). Two causes fixed on 2026-10-28: the install step
+without `apt-get update` (`deaafab`), and the three journal seams of 2026-10-23 neither catalogued
+nor declared, which let the fast journal path read the runner's real journal and broke
+`bt-window`'s bounded-read test (`deaafab`, `14ae3af`); the suite passes again. **Still red on one
+floor:** `devtools/test-comprehension` scores `tools/bt-journal-files` 0%, because its twelve tests
+run outside the suite (`devtools/test-bt-journal-files.sh`); asked of the test-suite maintainer
+(`comms/2026-10-28T0300Z-…`). The lesson of 2026-10-03, again: on days with a trial open,
+`devtools/ci --wait` after every push.
+
 CI (`checks` workflow) was red on every push from 2026-09-26 to 2026-10-02: four suite
 invariants failed in code added that week while the suite could not run locally (it refuses
 while a trial is open). Fixed on 2026-10-03 (`fix/ci-invariants-2026-10-03`), with one real
