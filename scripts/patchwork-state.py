@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """patchwork-state.py — the state of patches on patchwork.kernel.org.
 
-    python3 -I scripts/patchwork-state.py ID [ID ...]
+    python3 -I scripts/patchwork-state.py [--files] ID [ID ...]
 
 One line per patch: id, state, the date it was posted, the submitter, the
 number of comments (the bots' included), the commit it was applied as (when
-patchwork recorded one) and the subject. "Still new, no reply" was checked by
+patchwork recorded one) and the subject. With --files, the files each patch's
+diff touches follow its line ("does another author's patch touch our file?").
+"Still new, no reply" was checked by
 hand on every watch round; this reads the same public API. Read-only; the raw
 JSON is kept under tmp/patchwork/ so the claim ships with its extraction.
 Exits 2 when the API cannot be reached.
@@ -25,7 +27,18 @@ def get(url):
         return json.load(r)
 
 
+def diff_files(diff):
+    files = []
+    for line in (diff or "").splitlines():
+        if line.startswith("+++ ") and line[4:] != "/dev/null":
+            files.append(line[4:].split("/", 1)[-1])
+    return files
+
+
 def main(ids):
+    files = bool(ids) and ids[0] == "--files"
+    if files:
+        ids = ids[1:]
     if not ids:
         print(__doc__.strip().splitlines()[2].strip(), file=sys.stderr)
         return 1
@@ -43,6 +56,9 @@ def main(ids):
         ref = p.get("commit_ref") or "-"
         print(f"{pid}  {p['state']:<12} {p['date'][:16]}  {who}  "
               f"comments={len(comments)}  commit={ref}  {p['name']}")
+        if files:
+            for path in diff_files(p.get("diff")):
+                print(f"    file: {path}")
     return 0
 
 

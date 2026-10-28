@@ -46,3 +46,18 @@ The UAF it targets was not reproduced on base. Full account: `experiments/result
 ## 2026-10-21 08:01 local — re-checked
 `tmp/co05-check/recheck.sh power D-igor 1`: the inversion report, quoted in the results file;
 `D-base 1`: clean.
+
+## 2026-10-28 — freshness walkthrough
+- **His patch:** still `new`, the same two replies (Hillf Danton's `#syz test`, syzbot's
+  Tested-by of 10-15), no newer version, no maintainer reply (`python3 -I
+  scripts/patchwork-state.py 14888791`; `scripts/patchwork-recent.py 2026-09-25 mesh`: no other
+  mesh patch since but Cen Zhang's 14880941 and Jiale Yao's 14864878, both `new`).
+- **The bug is open upstream:** syzbot's page (`tmp/walk-20261028/syz-mesh-uaf.html`) shows
+  "KASAN: slab-use-after-free Read in mesh_send_sync", status "upstream: reported syz repro on
+  2026/10/07", first crash 24 days ago, last 10 days ago, a retest of the reproducer on 10-17.
+- **Our finding stands on today's tree:** the only mesh change in bluetooth-next since the tested
+  base `27731ba09195` is none; the six commits since in `mgmt.c`/`hci_sync.c` (rfkill, accept list,
+  resolving list, CIS, conn-flag bitmap, rx_work drain) do not touch the mesh functions
+  (`git log -G mesh` since 10-01: only `8a8d51eeedeb`, already in the base).
+- **Missing for a reply:** the reply's text (none drafted), one confirming `-s power` run on
+  `47d4d9f67e92`, and the operator's decision.

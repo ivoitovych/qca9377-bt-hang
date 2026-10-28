@@ -55,3 +55,19 @@ lockdep report. Full account: `experiments/results-2026-10-21.md`; raw in `tmp/c
 `tmp/co05-check/recheck.sh assert S-base` and `S-p12`: base 3 warnings from `mesh_send_sync`,
 patched clean, both 8/10 on master mesh-tester. The drafts checked for tool or model names and
 trailers (none).
+
+## 2026-10-28 — freshness walkthrough
+- **Still unfixed upstream; still applies.** Both patches apply to bluetooth-next `47d4d9f67e92`
+  with 2-line offsets (`scripts/series-backport-check.sh bluetooth-next/master patch/*`). The only
+  change to the advertising-list functions since October, `f7f0d0a9eb6e4` (Add Extended
+  Advertising Parameters leak, 10-14), is already in the tested base `27731ba09195`. No pending
+  patch on patchwork touches `mesh_send_sync()`.
+- **A neighbour, not a conflict:** Weihong Guan's 14910392 (10-23, `new`, `hci_sync.c`) makes
+  two ext-adv commands use `adv->handle`; it adds `hci_find_adv_instance()` lookups on the sync
+  worker without `hdev->lock`, the same class as I12, in other functions.
+- **The mesh queue is stalled** (CO-06's log of today): four other mesh fixes wait with no
+  maintainer reply; the maintainers applied only Pauli Virtanen's timeout-units fix in this area.
+- **Missing before a send:** an outside review of the written patches (the reviews of 10-21
+  were on the shape, before they were written); `scripts/kernel-preflight.sh` and
+  `scripts/bot-ci-local.sh` on `47d4d9f67e92`; a test-report paragraph; the operator's decision,
+  including whether to send while the mesh queue is stalled.

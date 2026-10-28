@@ -33,3 +33,30 @@
   off-blocked` at 06:38:35.948, `off` / `off-enabling` at 06:38:50.180, `on` at 06:38:50.501
   (the controller came back normally); the next click, 06:39:09, again paired over LE and was
   refused (`type 1 status 0x5`).
+
+## 2026-10-28 — freshness walkthrough; a sibling report upstream
+- **Upstream unchanged for this:** BlueZ master `b0bf49270d44`; since 10-15 only `b25019027`
+  ("bearer: Promote to stable", the Bearer interfaces out of experimental) and `aa3d6c761`
+  (rfkill) touch `src/adapter.c`/`src/device.c`/`src/bearer.c`. The Flags test and
+  `select_conn_bearer()` are as read on 10-21; `dev_connect()`'s check (U18) as on 10-24.
+- **Duplicate search (step 3, first done today):** `gh search issues --repo bluez/bluez` for
+  headset/LE, BR/EDR pairing and bearer. No report of Flags `0x00` or of U18's "Connected over LE
+  with no audio profile" as such. **The closest is #2700**, open since 2026-10-22, no reply yet:
+  a dual-mode audio headset (CMF Neckband Pro; BlueZ 5.85, Ubuntu's 7.0.0-38) is
+  BR/EDR-connectable but not BR/EDR-discoverable, so GNOME Settings and `bluetoothctl` pair it over
+  LE. The pairing succeeds with a derived BR/EDR key that the headset does not keep, and every
+  later classic connect fails with `br-connection-key-missing`. The reporter has no HCI trace and
+  asks: (1) should BlueZ prefer BR/EDR pairing for a peer advertising classic audio UUIDs or an
+  Audio/Video class; (2) should there be a supported way to pair over a chosen transport. Their
+  workaround makes the BR/EDR object exist first (`sdptool browse` the public address), then
+  pairs it.
+- **How U13 relates:** the same root, "known only from LE, so paired over LE", reached by a
+  different peer. Ours advertises Flags `0x00` from its public address and refuses LE pairing
+  ("Pairing not supported"), so nothing is bonded and the panel shows nothing. U18 is the next
+  step: once paired over LE in pairing mode, `Connect` reports success with only the LE GATT
+  services connected. We have what #2700 lacks: HCI captures, the bluetoothd debug journal and
+  the source lines (`docs/issues.md` U13, U18).
+- **Readiness:** no reproducer and no patch. Missing: the emulator reproducer (Flags `0x00`
+  with a BR/EDR side), a patch candidate for each defect, and the operator's decision. A
+  comment on #2700 with our two cases is a cheaper first contribution. Its text would be the
+  operator's decision, and it must not give real addresses (the pseudonym table).

@@ -708,9 +708,38 @@ unchanged". Patch 1 changes it from aborted to kept.
   and the dry run showed three recipients.
 - **BlueZ:** sent 17:50:59 +0100, `Result: 250`, Message-ID
   `<20261027165059.2402360-1-yaroslav.voytovych@gmail.com>`.
-- The password is in no settings file afterwards (grep of `/root/exp/.claude` and
-  `~/.claude/settings.json`, after each send).
-- **Revoked:** the operator deleted all app passwords after the send. The login-only check from
-  the transcript (`tmp/smtp-check-from-transcript.py <transcript> f1eb84e6 465 ssl`) got
+- The password is in no local settings file afterwards (a grep of each, after each send).
+- **Revoked:** the operator deleted all app passwords after the send. The login-only check
+  (`tmp/smtp-check-from-transcript.py`, fingerprint `f1eb84e6`, port 465 ssl) got
   `AUTH LOGIN→334 user→334 pass→535` ("5.7.8 Username and Password not accepted"). Port 587 could
   not be reached from this machine (Errno 101), as on 2026-10-18.
+
+## 2026-10-28 — the first day after the send
+- **The bot, kernel series:** all 24 checks `success` on patchwork, the same set the local run of
+  10-27 predicted (`python3 -I scripts/patchwork-state.py 14919266`; the bot's mail on patch 1,
+  20:24 UTC 10-27, every line PASS; the check records, `tmp/walk-20261028/co02-p1-checks.json`).
+- **The bot, BlueZ test** (14919269): all PASS except CheckSmatch WARNING, exactly the predicted
+  `bluetooth.h:232/237` "array of flexible structures" lines that come with `tools/sco-tester.c`.
+- **sashiko-nipa:** nothing yet. On Cen Zhang's 14912235 (posted 10-24 15:27 UTC) it showed
+  `pending` 10-25 14:32 and `success` 10-26 15:03 (`tmp/walk-20261028/p14912235-checks.json`), so
+  a day or two is its normal delay.
+- **Replies:** none from a person (patch comments: the bot's only; the cover, patchwork
+  14163716: 0 comments). lore answered the thread feed with 403 from here.
+- **bluetooth-next and BlueZ master unchanged** since the send base (`47d4d9f67e92`,
+  `b0bf49270d44`; fetched 2026-10-28).
+- **Other authors' pending patches near ours:**
+  - Cen Zhang, 14912235 "Bluetooth: hci_conn: Initialize the device before hash insertion"
+    (`hci_conn.c`, `new`): our three patches apply after it with 2-line offsets
+    (`scripts/series-backport-check.sh bluetooth-next/master <it> <ours…>`: APPLIES).
+  - Jeremy Dean Clifton, 14903178 "Bluetooth: hci_core: Fix queuing disc_work while workqueue is
+    drained" (`hci_core.h`, `new`): skips `hci_conn_drop()`'s queueing while
+    `HCI_CMD_DRAIN_WORKQUEUE` is set; its syzbot trace runs through `hci_connect_sco()`. No
+    textual overlap; it does not change what our patches rely on outside device close.
+- **The BlueZ test will need a port.** Luiz Augusto von Dentz's series 1191414 ("Run the testers
+  under User Mode Linux with time travel", 27 patches, 10-22, `new`) moves sco-tester off GLib in
+  24/27: `GIOChannel`/`g_io_add_watch`/`g_timeout_add`/`g_source_remove` become
+  `tester_io_*`/`timeout_add`/`tester_remove_source`, and the build drops GLib. Our test uses
+  the GLib calls (`reconnect_linked()`, `reconnect_first_connected()`, the timer). With only
+  24/27's `sco-tester.c` part applied on master, our patch fails at its include block. The series
+  itself does not apply to today's master (21/27 fails on `mgmt-tester.c`), so a respin of it
+  comes first. If it lands before our test, a v2 of the test on its API is owed.

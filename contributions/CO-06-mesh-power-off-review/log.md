@@ -21,3 +21,17 @@ the device-removal behaviour. Not sent.
 The comparison is kept privately: commit `e69d5dd` on the private branch
 `diag/mesh-tester-ci`, which is pushed. It is published or kept as the operator decides once
 the reply is decided.
+
+## 2026-10-28 — freshness walkthrough
+- **His patch:** 14864878 still `new`, the bot's reply only, no newer version (his later patches
+  14896431/14896432/14899266 are the adv-monitor and msft cancel paths).
+- **The mesh queue is stalled as a whole.** Four other authors' mesh fixes are pending with no
+  maintainer reply: Hui Peng 14831271 (09-19; our Tested-by of 10-06), this one (10-03), Cen
+  Zhang 14880941 (10-12), Igor Putko 14888791 (10-14, CO-04). Meanwhile the maintainers applied
+  only Pauli Virtanen's `87a49b610708` (`8a8d51eeedeb` in bluetooth-next) in this area. The
+  maintainers have not engaged with any mesh fix since 10-05.
+- **The comparison is old.** It ran on 10-05, before `87a49b610708` changed the mesh timeout units
+  and the "Send cancel" behaviour. A reply needs it re-run on bluetooth-next `47d4d9f67e92` first.
+- **Suggestion for the operator's decision:** one message on the mesh transmit path covering CO-04's
+  lock inversion, this patch's unlocked completion and the stranded backlog, instead of separate
+  replies on each thread. Missing: the re-run, the text, the decision.

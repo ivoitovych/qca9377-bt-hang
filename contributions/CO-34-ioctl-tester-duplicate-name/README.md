@@ -1,7 +1,8 @@
 # CO-34 — BT-12: ioctl-tester registers two cases under one name
 
-**State:** patch written (2026-10-27). Not sent; the send is the operator's decision, and it goes
-alone, not with CO-02.
+**State:** ready to send (2026-10-28: still applies to master `b0bf49270d44`, "OK to send"; no
+competing patch). Not sent; the send is the operator's decision, and it goes alone, not with
+CO-02.
 
 **Target:** BlueZ (`tools/ioctl-tester.c`).
 

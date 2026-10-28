@@ -28,3 +28,13 @@
   On master (`tmp/co02-v7ci/bot-full/base/`) the same 28 cases include two named "2-DH".
   `kernel-report-scan.py` on the log: clean. The script exited 0 with "ALL DONE, exit 0", which
   was the first run of its new exit status.
+
+## 2026-10-28 — freshness walkthrough
+- **Still needed, still applies.** BlueZ master is still `b0bf49270d44`; `scripts/pre-send-check.sh
+  cache/bluez-upstream <patch>`: "OK to send". No other patch for it on patchwork since 10-12
+  (`python3 -I scripts/patchwork-recent.py 2026-10-12`, 305 patches, none naming ioctl-tester).
+- **Luiz Augusto von Dentz's pending series 1191414** (27 patches, 10-22, `new`) touches
+  `tools/ioctl-tester.c` in 21/27 (GLib removed: the include, two struct fields, one `g_assert`)
+  but not the duplicate name. With 21/27's `ioctl-tester.c` part applied, ours still applies
+  (offset −2). So the two do not collide in either order.
+- **Ready:** nothing is missing but the operator's yes and an app password.
