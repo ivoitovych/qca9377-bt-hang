@@ -73,3 +73,14 @@ preimage blob hashes with the stable tags). Actions:
   case failing with the backport now fails on the plain base too, by name: 18/18 (6.18), 78/78
   (6.12), 32/32 (6.6), equal to the tester's own totals (`tmp/l2cap-hang/coverage-check.sh`;
   results file, "Matched controls for the post-hang failures"). No regression.
+
+### Fourth review round at `197a91a` (all six reviewers)
+
+All six: code and trailers approved, no defect; reviewers 1 and 6 no findings (6 ran checkpatch:
+only the known `[ Upstream commit ]` false positive and upstream's own warning). Done after it:
+- backport notes wrapped to ≤ 75 columns (reviewers 2, 3); only upstream's `Fixes:` line is
+  longer (76, never wrapped); `git diff --stat`: 5 files, note lines only; patches still apply.
+- the results file's "Uncertain / side findings" items 1 and 2 updated: BT-14 queued upstream,
+  post-hang cases now matched (reviewers 3, 4, 5); conclusion phrased as reviewer 2 proposed.
+Noted, not changed: the raw QEMU logs and comparison scripts are local (`tmp/l2cap-hang/`), so
+reviewers verified the records' consistency, not the raw verdicts (reviewers 2, 3, 4, 5).

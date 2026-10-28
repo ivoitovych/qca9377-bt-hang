@@ -51,8 +51,9 @@ The change touches only `print_packet()` in monitor/packet.c, i.e. how btmon for
 line header and cuts text to the terminal width. A mistake would show as wrongly truncated
 or missing text in btmon output, or a crash in btmon. Nothing in bluetoothd, libbluetooth or
 the kernel is changed. The output also changes at widths where btmon did not abort: at 81
-and 82 columns a long label is shortened differently (byte comparison in our run: identical
-at 79 to 200 columns and piped otherwise). Tools that parse btmon text could see that
+and 82 columns a long label is shortened differently. In our byte comparison, where both
+versions completed, the output matched except for the privileged Open record at 81 and 82
+columns. Tools that parse btmon text could see that
 different truncation, and decoded lines at widths where btmon used to abort.
 
 [Other Info]

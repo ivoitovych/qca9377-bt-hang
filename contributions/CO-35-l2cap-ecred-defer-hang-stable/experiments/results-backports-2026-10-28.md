@@ -166,11 +166,17 @@ twice (6.6 has 35 such lines for 31 names); the checker counts distinct names.
    `22ebe6ab0b679` "Bluetooth: L2CAP: convert to getsockopt_iter", a stable-dep-of backport, is an ancestor of
    v6.12.114), but `net/socket.c` of 6.12.114 has no `getsockopt_iter` dispatch (`grep getsockopt_iter net/socket.c`: no
    match), and `.getsockopt` is gone from the L2CAP ops. Not diagnosed further (no check of the other protocols
-   converted the same way, no run on the laptop's stock kernel). It would need its own report; it reduces how much of
-   the 6.12 full suite is informative for this backport. On 6.6 and 6.18 the tree has no `getsockopt_iter` at all and getsockopt works.
-2. The case itself passes on all three; the base-vs-backport comparison of the other cases is by name only up to the
-   base's hang (96 cases) plus the PHY cases run separately. Cases after the hang other than PHY (listed above) have
-   no base run.
+   converted the same way, no run on the laptop's stock kernel). It reduces how much of the 6.12 full suite is
+   informative for this backport. On 6.6 and 6.18 the tree has no `getsockopt_iter` at all and getsockopt works.
+   **Update (2026-10-28): already reported and queued upstream**, so no report of ours: the missing dispatch is
+   mainline `5bd0dec150f56`, posted for 6.12.y by Emanuele Ghidoli on 2026-10-22 (patchwork 14907537) and "Queued for
+   6.12" by Sasha Levin on 2026-10-23. Registered as BT-14 (`docs/issues.md`).
+2. The case itself passes on all three. *As first written:* the comparison of the other cases was by name up to the
+   base's hang (96 cases) plus the PHY cases, with no base run for the other post-hang cases. **Update
+   (2026-10-28):** those now have matched base runs (`ATT`, `Nval`, `Ethtool`; section "Matched controls for the
+   post-hang failures"). In the recorded QEMU comparisons every test failing with the backport also failed on the
+   corresponding unpatched base; no additional failing case was identified. That is not a proof that every L2CAP
+   path works on these trees.
 3. The control images are built from v6.18.59 / v6.12.114 / v6.6.160 with the same `tester.config` and are not the old
    `bzImage-*-base-smp` images (those are 6.18.58 and older).
 4. Patch 1 adds `l2cap_chan_close_unlocked()` without any caller (as upstream); the unlocked-pattern conversions are

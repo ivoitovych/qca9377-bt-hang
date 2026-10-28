@@ -60,8 +60,10 @@ simulate first with `apt-get -s install ./libspa-0.2-bluetooth_1.0.5-1ubuntu3.4_
 `-s`, then `systemctl --user restart pipewire wireplumber pipewire-pulse`.
 Never `--force-depends`. To go back, reinstall both at `1.0.5-1ubuntu3.3`
 (`apt-get install --allow-downgrades libspa-0.2-bluetooth=1.0.5-1ubuntu3.3 libspa-0.2-modules=1.0.5-1ubuntu3.3`;
-without `--allow-downgrades` apt refuses). The whole procedure was simulated in a noble container
-(`results-2026-10-28.md` §5b).
+without `--allow-downgrades` apt refuses), then the same
+`systemctl --user restart pipewire wireplumber pipewire-pulse` (or log out and in): replacing the
+packages does not replace code already loaded. The procedure was run in a noble container
+(install executed, upgrade and rollback simulated; `results-2026-10-28.md` §5b).
 This touches the laptop's audio, so it is the operator's step.
 
 BEFORE (with 3.3 installed), headset connected and switched to Hands-free:
@@ -90,7 +92,9 @@ Hands-free selected):
    in Hands-free; start a recording application while on A2DP (U14 path) and
    see the switch to Hands-free end on a codec line.
 8a. Before the update, save an mSBC selection (`headset-head-unit-msbc`);
-   after it, reconnect and check that the saved profile still resolves.
+   after it, reconnect and record which profile the session manager selects
+   when restoring that old name (it is no longer generated: the mSBC profile
+   is now `headset-head-unit`), and whether audio and microphone work.
    For CVSD <-> mSBC check the codec the transport really uses
    (`PIPEWIRE_DEBUG=spa.bluez5*:4` journal, "codec="), not only the label.
    If a codec switch fails, record the log line ("failed to switch codec")
