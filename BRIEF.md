@@ -99,7 +99,7 @@ Recent detail may be shortened. Settled state is never dropped.
   mail found for them (lore refuses this machine, 403; CO-28 waits).
 - **Operator decisions open** (the one list; the hand-off block below points here; re-read 2026-10-28):
   - **`7.0.0-42`:** installed 2026-10-28 04:46 by the software updater; E3 for it installed the same day (CO-09; `patches/diag/README.md`); open: whether to port the CO-02 module to it;
-  - **sends:** CO-34 (BT-12, ready); a stable request for BT-10's fix (CO-35; 7.2.y as is, the older lines need backports); CO-04's independent fix when it is ready; CO-05 after its review; any reply to CO-02's reviewers;
+  - **sends:** CO-25 (the Qualcomm report, approved by six reviewers, the operator's own read first); CO-11 (the btmon Launchpad bug, approved, the operator files); CO-35 (the package in `send/`: 7.3.y + 7.2.y request and three backport series, after its outside review); CO-19 after the laptop headset test; CO-04's independent fix when it is ready; CO-05 after its review; any reply to CO-02's reviewers;
   - **the CO-02 module on the laptop:** keep it (it runs since 10-23) or remove it (`module-updates.sh remove` + a cold boot);
   - **deploying `main`'s tool set on the laptop** (the review is done, `reviews/review-comprehensive-code-review-20261019-014718.md`; phase 1 of its reaction plan comes before the deploy, and of it SR1 and T1 are left, 2026-10-19): until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
   - installing a rebuilt bluetoothd (5.72-0ubuntu5.8's source, the BT-7 fixes, U12's `a14d59725`): the running build lacks five CVE fixes of 2026-10-07 (STATUS), then the U12 backport request (CO-03);
@@ -153,9 +153,20 @@ hours (`R2-13`).
 > - **In flight:** CO-02 under review since 10-27 (bot passed; answer reviewers technically; the
 >   BlueZ test may need a port to Luiz Augusto von Dentz's tester series). CO-28 waits for the
 >   6.1/5.15/5.10 review mails.
-> - **Ready or near, each the operator's send:** CO-34 (BT-12, one line, `pre-send-check.sh` OK);
->   CO-35 (BT-10: `32d86e048d8ef` + `608e0b7a675b2`, 7.2.13 passes, 111/111; backports for older
->   lines still to make); CO-05 (needs an outside review of the written patches).
+> - **Ready or near, each the operator's send:** CO-25 and CO-11 (all six reviewers GO at
+>   `e2e0e00`); CO-35 (send package written 2026-10-28 evening, `send/README.md`: the hang is a
+>   socket-lock self-deadlock from v5.7; 7.3.y also needs `5874f8d03268` for BT-15; 6.1/5.15/5.10
+>   affected with ECRED on, not covered; next an outside review of the mails); CO-05 (needs an
+>   outside review of the written patches).
+> - **Long background workers in worktrees (from 2026-10-28 evening):** each in its own worktree
+>   under `/root/exp/agent-work/<task>/` on a `work/…-20261028` branch, ported to main by
+>   cherry-pick after review; a guard hook refuses the workers' host-touching commands (kept
+>   separately with the other hooks; its refusals in `tmp/agent-guard/decisions.log`). CO-35's
+>   worker finished (ported). The mesh worker (CO-05 + CO-04) stopped at CO-04's reproduction
+>   step and waits for the operator's decision (its findings: CO-04's cause in source is a double
+>   queueing of one `mesh_tx` after `HCI_MESH_SENDING` is cleared unlocked; three more pending
+>   mesh patches, one of them, Baul Lee's v2 14736726-8, overlapping ours). CO-23's worker not
+>   started.
 > - **Next work, agreed with the operator on 10-28, in this order:**
 >   1. **finish the wording sweep** (operator's decision of 10-28): "the laptop", never "family"
 >      or "household"; whatever is kept outside this repository is "kept separately", with no
@@ -214,8 +225,16 @@ hours (`R2-13`).
 >   first `-42` boot: check the srcversion and the QCA patch line. The CO-02 module stays `-38`
 >   only: a `-42` boot ends the CO-02 field test unless it is ported (STATUS).
 > - **Method lessons of 2026-10-28:**
->   - a bisect across a range where a second, newer bug gives the same symptom finds that bug's
->     end; apply the newer bug's fix at each step that has it (CO-35, `bisect2-step.sh`);
+>   - a bisect across a range where a second, newer bug stops the run finds that bug's end; apply
+>     the newer bug's fix at each step that has it (CO-35, `bisect2-step.sh`). Corrected in the
+>     evening: the "second bug" was not on the same case; the first bisect's filter ran the whole
+>     suite, which stalled in "SCI Fast Mode" (BT-15);
+>   - test-runner passes the tester's arguments unquoted through `sh -c`: a multi-word case name
+>     needs a wrapper script (CO-35 `tmp/co35/case-accept2close1.sh`);
+>   - a "no X report" claim needs X's detector in the config: the tester images have
+>     `CONFIG_DETECT_HUNG_TASK` off; with it on, BT-10 showed its self-deadlock at once;
+>   - before v6.2, ECRED is off unless `bluetooth.enable_ecred=1`: an old line "passing" an ECRED
+>     case may not have run it;
 >   - "applies" is not "builds": the BT-10 pair applies to 6.18 and fails on its lock
 >     annotations;
 >   - a distribution tree has no shared history: `scripts/commit-in-tree.py` with a base and a

@@ -17,7 +17,7 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 The register's current-state blocks stopped at 2026-10-11 while the issues went on in
 `docs/STATUS.md` and the dossiers; this block closes that gap. `docs/STATUS.md` remains the one
 page for what is current.
-- **New issues:** `U12` (10-19) to `U20` (10-24), in the userspace section; `BT-10` to `BT-14`
+- **New issues:** `U12` (10-19) to `U20` (10-24), in the userspace section; `BT-10` to `BT-15`
   (10-23 to 10-28), each with a section below BT-9.
 - **U7 became a kernel series (CO-02), sent 2026-10-27,** after a QEMU reproduction, every
   affected stable line, and a run on the laptop with three headsets (`EX-067` to `EX-083`).
@@ -752,15 +752,22 @@ not here; these sections were added on 2026-10-28. Each points at where its evid
 
 ## BT-10 — l2cap-tester "L2CAP Ext-Flowctl Server - Accept 2 Close 1" hangs on every released kernel
 
-**Status 2026-10-28: fixed upstream, fix identified, not in any stable line.** The case (deferred
-ECRED accept with two channels, the first accepted and closed before the second) never finishes
-on 7.2.12, 6.18.58, 6.12.114, 6.6.160 and Ubuntu 7.0.0-38's code, and passes on bluetooth-next
-(`results/bt10-l2cap-hang-2026-10-23/`). The fix is Pauli Virtanen's `32d86e048d8ef` ("L2CAP: hold
-conn->lock for __l2cap_ecred_conn_rsp_defer") with its helpers `608e0b7a675b2`, in mainline since
-the 7.4 merge window, without `Cc: stable`; on 7.2.13 the pair turns the hang into a pass and the
-full l2cap-tester runs 111/111 (`contributions/CO-35-l2cap-ecred-defer-hang-stable/`).
-**Reportable:** a stable request with the pair (7.2.y as is; 6.18.y, 6.12.y and 6.6.y need
-backports), the operator's decision. Not specific to this controller.
+**Status 2026-10-28: fixed upstream, fix identified, not in any stable line; send package ready
+for review.** The case (deferred ECRED accept with two channels, the first accepted and closed
+before the second) never finishes on 7.3, 7.2.12, 6.18.58, 6.12.114, 6.6.160 and Ubuntu
+7.0.0-38's code, and passes on bluetooth-next (`results/bt10-l2cap-hang-2026-10-23/`). It is a
+self-deadlock: with the hung-task detector on, v7.3 and v6.1.190 show the tester's task holding
+its socket's lock from `l2cap_sock_recvmsg()` and waiting for the same lock in
+`l2cap_sock_teardown_cb()` (taken nested, so lockdep is silent). The path dates from v5.7
+(`15f02b9105625`): v6.1.190, v5.15.223 and v5.10.272 hang too once ECRED is enabled
+(`enable_ecred=1`; off by default before v6.2). The fix is Pauli Virtanen's `32d86e048d8ef`
+("L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer") with its helpers `608e0b7a675b2`, in
+mainline since the 7.4 merge window, without `Cc: stable`; on 7.2.13, and on v7.3 with BT-15's
+fix, the pair turns the hang into a pass and the full l2cap-tester runs 111/111
+(`contributions/CO-35-l2cap-ecred-defer-hang-stable/`).
+**Reportable:** the CO-35 send package (an option-2 request for 7.3.y and 7.2.y, backport series
+for 6.18.y, 6.12.y and 6.6.y): an outside review, then the operator's decision. 6.1.y, 5.15.y
+and 5.10.y: the pair does not apply; no fix yet (open). Not specific to this controller.
 
 ## BT-11 — KASAN use-after-free in `iso_conn_hold_unless_zero` on Ubuntu 7.0.0-38's code
 
@@ -813,6 +820,22 @@ patchwork 14907537, "[6.12.y] net: call getsockopt_iter if available", Emanuele 
 JSON `tmp/patchwork/patch-14907537.json`). Nothing for us to send. Watch: the next 6.12.y
 release carries it; then 6.12's l2cap-tester totals become meaningful for CO-35. Ubuntu's
 noble kernels (`-38`, `-42`) are not on 6.12.y.
+
+## BT-15 — Linux 7.3: l2cap-tester stalls in its SCI cases
+
+**Status 2026-10-28: cause found; fixed in mainline, not in 7.3.y.** On plain v7.3 under QEMU
+the whole l2cap-tester stalls at "L2CAP LE Client - SCI Fast Mode" (it times out, the kernel logs
+"Invalid response length for 0x20a3", the teardown never ends), with or without CO-35's pair.
+v7.3 has the SCI feature `2f8784cfe8a9` ("Bluetooth: Add support for Shorter Connection Interval
+(SCI) feature", from v7.3-rc1) but not its fix `5874f8d03268` ("Bluetooth: Fix the LE Read
+Connection Interval response layout"; mainline, `Fixes:` tag, no `Cc: stable`, not in queue-7.3
+at 20:47 UTC). With it applied the SCI cases pass and the whole suite passes 111/111
+(`contributions/CO-35-…/experiments/results-7.3-and-older-2026-10-28.md`). The same stall is what
+ended CO-35's first bisect, whose runs ran the whole suite. Ubuntu `7.0.0-42` is not affected (its
+`hci.h` has no `0x20a3`).
+**Reportable:** probably nothing: the `Fixes:` tag should bring it into 7.3.y through the stable
+team's own selection (an inference). Watch queue-7.3 after 7.4-rc1; an option-2 request only if
+7.3.y releases go without it. CO-35's request states the fact.
 
 ---
 
