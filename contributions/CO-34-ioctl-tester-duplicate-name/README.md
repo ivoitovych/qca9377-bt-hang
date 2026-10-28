@@ -1,8 +1,8 @@
 # CO-34 — BT-12: ioctl-tester registers two cases under one name
 
-**State:** ready to send (2026-10-28: still applies to master `b0bf49270d44`, "OK to send"; no
-competing patch). Not sent; the send is the operator's decision, and it goes alone, not with
-CO-02.
+**State: SENT 2026-10-28 06:16:20 +0100** on the operator's word, alone, to linux-bluetooth
+(server 250, Message-ID `<20261028051620.3167775-1-yaroslav.voytovych@gmail.com>`; `log.md`).
+Six outside reviews approved it unchanged. Next: the bot's checks and replies.
 
 **Target:** BlueZ (`tools/ioctl-tester.c`).
 

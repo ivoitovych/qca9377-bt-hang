@@ -44,3 +44,18 @@ All six approve sending it alone, unchanged. Reviewer 6: the duplicate is alread
 (so the `Fixes:` is right) and the patch compiles with `-Wall -Wextra -Werror` on master; reviewer
 4: it and Luiz Augusto von Dentz's pending GLib-removal patch apply in either order to identical
 source. Left: the send-day freshness check, the dry run, the operator's word.
+
+## 2026-10-28 06:16 +0100 — SENT, on the operator's word
+- **Before:** `scripts/pre-send-check.sh`: master still `b0bf49270d44`, applies, not upstream: "OK to
+  send"; `scripts/patchwork-recent.py 2026-10-27 ioctl`: no other patch. Dry run: one recipient,
+  `RCPT TO:<linux-bluetooth@vger.kernel.org>`, subject `[PATCH BlueZ] ioctl-tester: Fix name of the
+  3-DH packet type test`.
+- **The send:** `git send-email --confirm=never --suppress-cc=all
+  --to=linux-bluetooth@vger.kernel.org <the file>` from this repository (smtp.gmail.com:465 ssl),
+  the operator's app password used on that one command: **Result: 250**, Date `Wed, 28 Oct 2026
+  06:16:20 +0100`, **Message-ID `<20261028051620.3167775-1-yaroslav.voytovych@gmail.com>`**.
+  The file sent is the one in `patch/send/` (SHA-256 `c3ac8cee…7567a`; a row in
+  `docs/sent-mails.tsv`).
+- **The password:** in no local settings file afterwards (grep). The operator revokes it; the
+  login-only check follows.
+- **Next:** the bot's checks and replies on patchwork; the patchwork id goes into the inventory.
