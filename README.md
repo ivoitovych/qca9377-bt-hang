@@ -226,7 +226,8 @@ reviews/              assessments of the repository itself; README.md there is t
 comms/  lessons/      messages between the maintainers; what the project cost to learn
 contributions/        one dossier per possible contribution (CO-nn): findings, experiments,
                       log, patches and mails as sent; README.md there is the index
-results/              dated results of runs that belong to no single dossier (CI locally, BT-10)
+results/              dated results of runs that belong to no single dossier (the list's CI run
+                      locally; the L2CAP hang sweep)
 patches/bluez/        the two applied BlueZ patches, their verification script and mail notes;
   shared-mgmt/        the applied shared/mgmt fix and its unit tests, as mailed
   send-2026-10-18/    the two cleanups sent 2026-10-18, as mailed, with their re-test

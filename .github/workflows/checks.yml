@@ -118,7 +118,9 @@ jobs:
       # strace, so the suite's own run of devtools/access-audit --self-test is
       # asked here rather than reported as not asked.
       - name: Install gawk, systemd-journal-remote, fakeroot and strace
-        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+        # update first: the runner image's package index lags Ubuntu's archive, and an
+        # install of a superseded version fails with exit 100 (every run from 2026-10-22).
+        run: sudo apt-get update -q && sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
 
       - name: Show the tool versions the results depend on
         run: |
@@ -171,7 +173,9 @@ jobs:
           git fetch --quiet --no-tags public
 
       - name: Install gawk, systemd-journal-remote, fakeroot and strace
-        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+        # update first: the runner image's package index lags Ubuntu's archive, and an
+        # install of a superseded version fails with exit 100 (every run from 2026-10-22).
+        run: sudo apt-get update -q && sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
 
       - name: Show the tool versions the results depend on
         run: |
@@ -207,7 +211,9 @@ jobs:
           git fetch --quiet --no-tags public
 
       - name: Install gawk, systemd-journal-remote, fakeroot and strace
-        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+        # update first: the runner image's package index lags Ubuntu's archive, and an
+        # install of a superseded version fails with exit 100 (every run from 2026-10-22).
+        run: sudo apt-get update -q && sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
 
       - name: Show the tool versions the results depend on
         run: |
@@ -239,7 +245,9 @@ jobs:
           git fetch --quiet --no-tags public
 
       - name: Install gawk, systemd-journal-remote, fakeroot and strace
-        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+        # update first: the runner image's package index lags Ubuntu's archive, and an
+        # install of a superseded version fails with exit 100 (every run from 2026-10-22).
+        run: sudo apt-get update -q && sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
 
       - name: Show the tool versions the results depend on
         run: |
@@ -272,7 +280,9 @@ jobs:
           git fetch --quiet --no-tags public
 
       - name: Install gawk, systemd-journal-remote, fakeroot and strace
-        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+        # update first: the runner image's package index lags Ubuntu's archive, and an
+        # install of a superseded version fails with exit 100 (every run from 2026-10-22).
+        run: sudo apt-get update -q && sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
 
       - name: Show the tool versions the results depend on
         run: |
@@ -305,7 +315,9 @@ jobs:
           git fetch --quiet --no-tags public
 
       - name: Install gawk, systemd-journal-remote, fakeroot and strace
-        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+        # update first: the runner image's package index lags Ubuntu's archive, and an
+        # install of a superseded version fails with exit 100 (every run from 2026-10-22).
+        run: sudo apt-get update -q && sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
 
       - name: Show the tool versions the results depend on
         run: |
@@ -340,7 +352,9 @@ jobs:
           git fetch --quiet --no-tags public
 
       - name: Install gawk, systemd-journal-remote, fakeroot and strace
-        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+        # update first: the runner image's package index lags Ubuntu's archive, and an
+        # install of a superseded version fails with exit 100 (every run from 2026-10-22).
+        run: sudo apt-get update -q && sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
 
       - name: Show the tool versions the results depend on
         run: |
@@ -404,7 +418,9 @@ jobs:
           git fetch --quiet --no-tags public
 
       - name: Install gawk, systemd-journal-remote, fakeroot and strace
-        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+        # update first: the runner image's package index lags Ubuntu's archive, and an
+        # install of a superseded version fails with exit 100 (every run from 2026-10-22).
+        run: sudo apt-get update -q && sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
 
       - name: Show the tool versions the results depend on
         run: |

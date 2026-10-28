@@ -31,7 +31,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install gawk, systemd-journal-remote, fakeroot and strace
-        run: sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
+        # update first: the runner image's package index lags Ubuntu's archive, and an
+        # install of a superseded version fails with exit 100 (2026-10-22 on).
+        run: sudo apt-get update -q && sudo apt-get install -y gawk systemd-journal-remote fakeroot strace
 
       # Namespaces lifted, so the suite's namespace and checkout worlds run
       # under the trace too, and their own accesses are classified with them.

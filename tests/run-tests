@@ -393,6 +393,16 @@ export BT_SYSFS_USB="$SUITE_MACHINE/usb" BT_SYSFS_MODULE="$SUITE_MACHINE/module"
        BT_SYSFS_BT="$SUITE_MACHINE/class-bluetooth" BT_SHARE_DIR="$SUITE_MACHINE/share" \
        BT_UNIT_DIR="$SUITE_MACHINE/units" BT_HEALTH_DIR="$SUITE_MACHINE/health" \
        BT_METRICS="$SUITE_MACHINE/health/metrics.tsv" BT_ARCHIVE_DIR="$SUITE_MACHINE/journal-archive"
+# The journal tools of 2026-10-23: bt-journal-files' source and copy directories
+# (empty here; a test that needs files builds them), and the directory
+# lib/journal.sh's fast kernel path reads, which must NOT exist: the fast path
+# checks only that it exists and then asks journalctl --list-boots, so on a host
+# with a real /var/log/journal/<machine-id> (the CI runner) it added unbounded
+# reads to every -k read and bt-window's bounded-read test failed. Undeclared
+# until 2026-10-28, which kept CI red from 2026-10-23.
+mkdir -p "$SUITE_MACHINE"/{journal-src,journal-files}
+export BT_JOURNAL_SRC="$SUITE_MACHINE/journal-src" BT_JOURNAL_FILES_DIR="$SUITE_MACHINE/journal-files" \
+       BT_JOURNAL_DIR="$SUITE_MACHINE/journal-dir-absent"
 # The usbfs device nodes too, and this one is an ACTUATOR: the watchdog opens
 # <node>/<bus>/<dev> and issues USBDEVFS_RESET. Its fixture carries bus 3, device
 # 99, and until 2026-09-29 every scenario that reached recovery ran the real

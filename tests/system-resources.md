@@ -77,6 +77,9 @@ one and points the seam at it. A test that forgets meets an empty machine.
 | `BT_MODPROBE_CONF` | `/etc/modprobe.d/btusb-qca9377.conf` (moved aside by bt-mode) | bt-mode |
 | `BT_SNAPSHOT_DIR` | `/var/tmp/bt-snapshots` | bt-snapshot |
 | `BT_ARCHIVE_DIR` | `~/bt-journal-archive` | bt-archive, bt-backup-journal |
+| `BT_JOURNAL_SRC` | `/var/log/journal` (the closed journal files, read) | bt-journal-files |
+| `BT_JOURNAL_FILES_DIR` | `/root/bt-journal-archive/files` (copies written) | bt-journal-files |
+| `BT_JOURNAL_DIR` | `/var/log/journal/<machine-id>` (read by the fast kernel path) | lib/journal.sh |
 | `BT_EVIDENCE_REPO` | this checkout's `evidence/` (incidents written) | bt-evidence, bt-incident, bt-retention, bt-trial-audit |
 
 Until 2026-10-09 the trace, capture and usbmon directories had their own
