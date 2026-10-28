@@ -26,3 +26,25 @@ All six: the request is valid (option 2, two commits in order). To do before sen
    case, a second bisect identified 32d86e048d8e" — or drop that sentence.
 4. Full hashes in the mail (reviewer 5); send promptly (reviewer 6: 7.2.y has few releases left);
    6.18.y (LTS) is the lasting value: the backport series being prepared.
+
+## 2026-10-28 — backports for 6.18.y, 6.12.y and 6.6.y
+
+`backports/<line>/0001-…`, `0002-…` (format-patch); commands and verdicts in
+`experiments/results-backports-2026-10-28.md`; scripts in `tmp/l2cap-hang/`.
+- Patch 1 on all three: only the three lock annotations those trees lack are dropped
+  (`__must_not_hold`, the `__cond_acquires` half on `l2cap_chan_lock_conn()`,
+  `__context_unsafe`); code unchanged; `[ backport: … ]` note.
+- Patch 2: 6.18 unchanged (offsets); 6.12 and 6.6 lack the `MSG_ERRQUEUE` block in
+  `l2cap_sock_recvmsg()`, so those three lines are absent; `l2cap_sock_defer()` and its call as
+  upstream.
+- "L2CAP Ext-Flowctl Server - Accept 2 Close 1": base HANG, backport Passed on v6.18.59, v6.12.114
+  and v6.6.160. Full l2cap-tester with the backport: 93/111, 33/111, 79/111; by case name, no case
+  that passes on the base fails with the backport; the shared failures are features the trees lack
+  (`BT_PHY` everywhere, `SO_TIMESTAMPING` on 6.6; the PHY sets were checked on the base with a
+  PHY-only filter: 18, 28, 26). Report scans clean.
+- 6.12's 78 failures are a separate stable defect: BT-14 (`docs/issues.md`), L2CAP `getsockopt`
+  returns EOPNOTSUPP on 6.12.114.
+- Caveat: `tmp/l2cap-hang/run-one.sh` passes the case name unquoted, so it filtered on "L2CAP"
+  (whole suite to the hang). The verdicts stand; earlier single-case runs were full runs.
+- Still to do before sending: v7.3.y with and without the pair; then the request (7.3.y, 7.2.y,
+  and these backports).

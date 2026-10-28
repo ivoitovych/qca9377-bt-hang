@@ -17,8 +17,8 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 The register's current-state blocks stopped at 2026-10-11 while the issues went on in
 `docs/STATUS.md` and the dossiers; this block closes that gap. `docs/STATUS.md` remains the one
 page for what is current.
-- **New issues:** `U12` (10-19) to `U20` (10-24), in the userspace section; `BT-10` to `BT-13`
-  (10-23 to 10-27), each with a section below BT-9.
+- **New issues:** `U12` (10-19) to `U20` (10-24), in the userspace section; `BT-10` to `BT-14`
+  (10-23 to 10-28), each with a section below BT-9.
 - **U7 became a kernel series (CO-02), sent 2026-10-27,** after a QEMU reproduction, every
   affected stable line, and a run on the laptop with three headsets (`EX-067` to `EX-083`).
 - **Stable:** the QCA9377 entry and our BT-8 and BT-9 work are released in 6.6.160 (10-21) as
@@ -786,6 +786,29 @@ second running the 3-DH test; found when `scripts/compare-tester-verdicts.py` re
 the connection hash (bluetooth-next `hci_conn.c` around l.1914; since `06149746e720`). Found in the
 Sashiko-rule review of CO-02 (`contributions/CO-02-…/log.md`, 2026-10-27).
 **Reportable:** after CO-02 lands: a fault-injection reproducer, then a separate patch.
+
+---
+
+## BT-14 — Linux 6.12.114: every `getsockopt()` on an L2CAP socket fails with EOPNOTSUPP
+
+**Status 2026-10-28: cause found in source; seen in l2cap-tester under QEMU; not yet seen on a
+6.12.114 machine.** 6.12.114 took two of mainline's three getsockopt_iter commits as
+"Stable-dep-of" `ca2c4c264986` ("Bluetooth: L2CAP: access chan->conn safely in get/setsockopt"):
+`41fbf726915b0` (= `67fab22a7adc`, the `getsockopt_iter` field in `include/linux/net.h`) and
+`22ebe6ab0b679` (= `bf01627cc04b`, L2CAP converted to `.getsockopt_iter`), but not
+`5bd0dec150f56` ("net: call getsockopt_iter if available", the `net/socket.c` dispatch). In
+v6.12.114, `git grep getsockopt_iter -- net include` finds only `include/linux/net.h:218` and
+`net/bluetooth/l2cap_sock.c:2070`: nothing calls it, and L2CAP no longer sets `.getsockopt`.
+Found by the CO-35 backport runs: on plain v6.12.114 every L2CAP `getsockopt` in l2cap-tester
+returns `Operation not supported (95)`, 78 of 111 cases fail
+(`contributions/CO-35-…/experiments/results-backports-2026-10-28.md`). bluetoothd reads L2CAP
+options with `getsockopt()` (security level, MTUs), so a 6.12.114 system is likely affected
+beyond the tester. 6.18.59 and 6.6.160 have no `getsockopt_iter` at all (unaffected); 6.1 and
+older not checked. `5bd0dec150f56` applies to v6.12.114 (`git apply --check`: hunks 2 and 3 at
+offset −4); not yet built or run.
+**Reportable:** a stable request for `5bd0dec150f56` in 6.12.y (or a revert of the two), after
+a build and an l2cap-tester run with it, and after checking the stable queue and list for an
+existing report.
 
 ---
 
