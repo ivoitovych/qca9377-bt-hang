@@ -3,7 +3,8 @@
 **State:** tested 2026-10-21 in QEMU, no Tested-by: the patch as posted introduces a lockdep
 circular-locking report (`hdev->lock` under `cmd_sync_work_lock`), 9 of 12 `-s power` boots,
 0 on base; it fixes three failed-start cases (`log.md`, `experiments/results-2026-10-21.md`).
-A review reply on his thread is the operator's decision.
+**New direction (2026-10-28, the operator's decision): an independent fix** for syzbot's
+mesh_send_sync use-after-free, sent as its own patch; no reply on the 14888791 thread (`log.md`).
 
 **Target:** the Linux kernel. This is another author's patch; ours would be a test report.
 

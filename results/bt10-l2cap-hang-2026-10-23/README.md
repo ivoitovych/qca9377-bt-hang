@@ -30,5 +30,7 @@ Each `*.commit` file beside an image names its exact tree. The hanging guests pr
 git). Scripts: `run-one.sh` (one case, a limit) and `sweep-images.sh`, copied here from
 `tmp/l2cap-hang/`.
 
-Next: bisect bluetooth-next for the fixing commit (Pauli Virtanen's L2CAP locking series of
-2026-08/09 is the likely place; `docs/STATUS.md`, `BT-10`).
+Next (as of 2026-10-23): bisect bluetooth-next for the fixing commit (Pauli Virtanen's L2CAP
+locking series of 2026-08/09 is the likely place; `docs/STATUS.md`, `BT-10`). **Done 2026-10-28:**
+`32d86e048d8ef` with its helpers `608e0b7a675b2`
+(`contributions/CO-35-l2cap-ecred-defer-hang-stable/`).

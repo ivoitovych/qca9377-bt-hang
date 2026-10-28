@@ -3,14 +3,14 @@
 ### Linux Bluetooth reliability — from a controller hang to upstream fixes
 
 [![Linux kernel: 1 in mainline](https://img.shields.io/badge/Linux_kernel-1_in_mainline-2ea44f)](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=86ef0f58bdec)
-[![Linux stable: 3 backports, 1 released](https://img.shields.io/badge/Linux_stable-3_backports%2C_1_released-2ea44f)](patches/kernel/bt9-stable/README.md)
-[![BlueZ: 8 applied](https://img.shields.io/badge/BlueZ-8_applied-2ea44f)](#accepted-upstream-contributions)
+[![Linux stable: 3 backports, 2 released](https://img.shields.io/badge/Linux_stable-3_backports%2C_2_released-2ea44f)](patches/kernel/bt9-stable/README.md)
+[![BlueZ: 10 applied](https://img.shields.io/badge/BlueZ-10_applied-2ea44f)](#accepted-upstream-contributions)
 [![checks](https://github.com/ivoitovych/qca9377-bt-hang/actions/workflows/checks.yml/badge.svg?branch=main&event=push)](https://github.com/ivoitovych/qca9377-bt-hang/actions/workflows/checks.yml)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue)](LICENSE)
 
 An investigation of Bluetooth failures on Linux, with reproducible evidence, diagnostic
 tools, and **upstream contributions: a Linux Bluetooth kernel fix (in mainline, released in v7.3),
-eight BlueZ commits (four fixes and four test or emulator changes), and three stable
+ten BlueZ commits (four fixes, two cleanups, and four test or emulator changes), and three stable
 backports of another author's kernel fix**.
 
 The work began with a Qualcomm Atheros **QCA9377** controller (USB ID `13d3:3503`) that
@@ -34,12 +34,13 @@ claim here ships with the command that produced it, so a stranger can re-derive 
 
 | component | fix | upstream commit |
 |---|---|---|
-| Linux Bluetooth (MGMT) | Pending management commands flushed at power-off were answered with a status byte read from the wrong object — a Success for a Start Discovery the adapter never ran. They now carry the status the caller set (Not Powered / Invalid Index). | [`86ef0f58bdec`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=86ef0f58bdec) (bluetooth-next 2026-09-29; in v7.3, released 2026-10-18, first in v7.3-rc7; stable 7.2.11, 6.18.57 and 6.12.113; in the 6.6 and 6.1 release candidates of 2026-10-17) |
+| Linux Bluetooth (MGMT) | Pending management commands flushed at power-off were answered with a status byte read from the wrong object — a Success for a Start Discovery the adapter never ran. They now carry the status the caller set (Not Powered / Invalid Index). | [`86ef0f58bdec`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=86ef0f58bdec) (bluetooth-next 2026-09-29; in v7.3, released 2026-10-18, first in v7.3-rc7; stable 7.2.11, 6.18.57, 6.12.113 and 6.6.160; in the 6.1 release candidate of 2026-10-17) |
 | BlueZ | `adapter: Fix crash on short start discovery reply` — validate the reply length before the no-clients path reads it. This is the userspace side of the kernel defect above. | [`a734b06059cb`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=a734b06059cbe0d0f00442c901506ef17e960960) (2026-09-21) |
-| BlueZ | `a2dp: Fix crash on NULL stream in transport_cb` — check that the stream still exists when the asynchronous transport acceptance completes. Its guard fired four times in nineteen days of ordinary use (`EX-041`). A redundant v2 was applied on top on 2026-10-07 (`d84171e6cd68`), leaving the check twice in a row; the removal of the second copy was sent on 2026-10-18 (below). | [`0bed9886cff3`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=0bed9886cff317d814f9b1f11c1461459f2b9a00) (2026-09-21) |
+| BlueZ | `a2dp: Fix crash on NULL stream in transport_cb` — check that the stream still exists when the asynchronous transport acceptance completes. Its guard fired four times in nineteen days of ordinary use (`EX-041`). A redundant v2 was applied on top on 2026-10-07 (`d84171e6cd68`), leaving the check twice in a row; the second copy was removed by the cleanup below. | [`0bed9886cff3`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=0bed9886cff317d814f9b1f11c1461459f2b9a00) (2026-09-21) |
 | BlueZ | `shared/mgmt: Fix notify leak in mgmt_unregister()` + `unit/test-mgmt: Test unregistering from callbacks` — unregistering from a notification callback leaked the entry, and unregistering the next entry was a use-after-free (the crash fixed for the sibling function in 2015). The new unit tests fail without the fix; the testers' 233 leaked `mgmt_register()` allocations go to 0 with every verdict unchanged ([`patches/bluez/shared-mgmt/`](patches/bluez/shared-mgmt/README.md)). Sent and applied the same day, unchanged. | [`ae23df052290`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=ae23df052290) + [`6f5eeb402d3b`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=6f5eeb402d3b) (2026-10-08) |
 | BlueZ | `emulator: Free hooks in btdev_destroy` — five mgmt-tester cases and one l2cap-tester case leaked a hook; found while writing the test below. | [`8da7e648a9fb`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=8da7e648a9fb) (2026-10-12) |
 | BlueZ | `mgmt-tester: Add simultaneous discovery stop tests`, with `emulator: Add btdev_send_event` and `emulator/vhci: Add vhci_set_quirk_simultaneous_discovery` — a deterministic regression test for the kernel race in which a simultaneous discovery never stops ([`patches/kernel/bt9-stable/`](patches/kernel/bt9-stable/README.md)). | [`f3344d20d904`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=f3344d20d904), [`2942883d2738`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=2942883d2738), [`49a70562f0bf`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=49a70562f0bf) (2026-10-12) |
+| BlueZ | Two cleanups ([`patches/bluez/send-2026-10-18/`](patches/bluez/send-2026-10-18/README.md)): `a2dp: Remove duplicate check in transport_cb` removes the second copy of the check above, and `emulator: Avoid variable length array in send_cmd` clears the smatch warning that BlueZ's CI posted on every patch touching `emulator/btdev.c`. | [`b79d4a887`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=b79d4a887), [`7bc9684dc`](https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=7bc9684dc) (2026-10-19) |
 
 The kernel fix and the four BlueZ fixes are in code every Linux Bluetooth adapter runs;
 nothing in them is conditional on this controller's USB ID. The emulator and `mgmt-tester`
@@ -56,21 +57,21 @@ of older kernels, and testing other authors' patches as posted.
 
 | upstream | contribution | state |
 |---|---|---|
-| Linux stable | Backport request for [`dc16388d45ec`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=dc16388d45ec) (the QCA9377 device-table entry, authored by Tibor Harcsa — the fix for this repository's original hang), with the cherry-pick and build verified on every target line (`EX-059`) | requested 2026-10-02 ([lore](https://lore.kernel.org/r/20261002012542.473669-1-yaroslav.voytovych@gmail.com)); queued for seven lines (stable-queue [`007ed56547de`](https://git.kernel.org/pub/scm/linux/kernel/git/stable/stable-queue.git/commit/?id=007ed56547dedc050e1af25976bdfb299aa99b67), `EX-061`); **released in 7.2.10 and 6.18.56** (2026-10-11) **and 6.12.113** (2026-10-15); in the 6.6, 6.1, 5.15 and 5.10 release candidates of 2026-10-17 |
+| Linux stable | Backport request for [`dc16388d45ec`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=dc16388d45ec) (the QCA9377 device-table entry, authored by Tibor Harcsa — the fix for this repository's original hang), with the cherry-pick and build verified on every target line (`EX-059`) | requested 2026-10-02 ([lore](https://lore.kernel.org/r/20261002012542.473669-1-yaroslav.voytovych@gmail.com)); queued for seven lines (stable-queue [`007ed56547de`](https://git.kernel.org/pub/scm/linux/kernel/git/stable/stable-queue.git/commit/?id=007ed56547dedc050e1af25976bdfb299aa99b67), `EX-061`); **released in 7.2.10 and 6.18.56** (2026-10-11), **6.12.113** (2026-10-15) **and 6.6.160** (2026-10-21); in the 6.1, 5.15 and 5.10 release candidates of 2026-10-17 |
 | Linux Bluetooth (MGMT) | `Tested-by` on Hui Peng's "Bluetooth: MGMT: fix mesh_tx leak on hci_cmd_sync_queue() failure" ([patchwork 14831271](https://patchwork.kernel.org/patch/14831271/)), which its author had not reproduced: the leak reproduced without fault injection (a Mesh Send while powered off), the posted patch compared with an unpatched control in QEMU, and requests answered Failed shown to be transmitted later; reproducer, configs and 159 VM logs in [`retest/mesh-tx-leak/`](retest/mesh-tx-leak/REPORT.md) | sent 2026-10-06 ([lore](https://lore.kernel.org/r/20261006201800.3597400-1-yaroslav.voytovych@gmail.com)); the patch is pending |
-| Linux stable | Backports of [`96d006ae6445`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=96d006ae6445) (Jiajia Liu's fix for simultaneous discovery that never stops, which left this laptop unable to scan for days) to 6.12, 6.6 and 6.1 — the lines where the `dc16388d45ec` backport gives this device the quirk that exposes it — each built and tested with a new deterministic `mgmt-tester` case that fails without the backport and passes with it ([`patches/kernel/bt9-stable/`](patches/kernel/bt9-stable/README.md)) | sent 2026-10-10 ([6.12.y](https://lore.kernel.org/r/20261010022523.2789588-1-yaroslav.voytovych@gmail.com), [6.6.y](https://lore.kernel.org/r/20261010022523.2789588-2-yaroslav.voytovych@gmail.com), [6.1.y](https://lore.kernel.org/r/20261010022523.2789588-3-yaroslav.voytovych@gmail.com)); queued 2026-10-11; **released in 6.12.113** (2026-10-15); in the 6.6 and 6.1 release candidates of 2026-10-17 |
+| Linux stable | Backports of [`96d006ae6445`](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=96d006ae6445) (Jiajia Liu's fix for simultaneous discovery that never stops, which left this laptop unable to scan for days) to 6.12, 6.6 and 6.1 — the lines where the `dc16388d45ec` backport gives this device the quirk that exposes it — each built and tested with a new deterministic `mgmt-tester` case that fails without the backport and passes with it ([`patches/kernel/bt9-stable/`](patches/kernel/bt9-stable/README.md)) | sent 2026-10-10 ([6.12.y](https://lore.kernel.org/r/20261010022523.2789588-1-yaroslav.voytovych@gmail.com), [6.6.y](https://lore.kernel.org/r/20261010022523.2789588-2-yaroslav.voytovych@gmail.com), [6.1.y](https://lore.kernel.org/r/20261010022523.2789588-3-yaroslav.voytovych@gmail.com)); queued 2026-10-11; **released in 6.12.113** (2026-10-15) **and 6.6.160** (2026-10-21); in the 6.1 release candidate of 2026-10-17 |
+| Linux stable | `Tested-by` on the 6.6.160-rc2 stable review: every BlueZ CI tester suite run on the release candidate and on its base in QEMU, compared case by case ([`contributions/CO-10-stable-6.6.160-rc2/`](contributions/CO-10-stable-6.6.160-rc2/README.md)) | sent 2026-10-21 ([lore](https://lore.kernel.org/r/20261021030542.1434603-1-yaroslav.voytovych@gmail.com)); 6.6.160 released the same day |
 
 Also: a reply on [BlueZ issue #1554](https://github.com/bluez/bluez/issues/1554#issuecomment-6089903035)
 (2026-10-09), whose reporter had the same stuck discovery, pointing to the kernel fix; the
 reporter's own capture shows the same event ordering.
 
-**Submitted 2026-10-18, waiting for review** ([`patches/bluez/send-2026-10-18/`](patches/bluez/send-2026-10-18/README.md)):
-`a2dp: Remove duplicate check in transport_cb` (patchwork
-[14897668](https://patchwork.kernel.org/project/bluetooth/patch/20261018043903.1756818-1-yaroslav.voytovych@gmail.com/)),
-which removes the second copy of the check above, and `emulator: Avoid variable length array
-in send_cmd` (patchwork
-[14897669](https://patchwork.kernel.org/project/bluetooth/patch/20261018043911.1756937-1-yaroslav.voytovych@gmail.com/)),
-which clears the smatch warning that BlueZ's CI posts on every patch touching `emulator/btdev.c`.
+**Submitted 2026-10-27, under review** ([`contributions/CO-02-sco-connect-reuses-closing-link/`](contributions/CO-02-sco-connect-reuses-closing-link/README.md)):
+"[PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse" (with `Cc: stable`): a new SCO connect
+could be handed a link that was being torn down, reported connected and then closed; found from a
+headset codec switch on this laptop, reproduced in QEMU, tested on every affected stable line and
+on the laptop with three headsets. With it, a BlueZ `sco-tester` test that fails without the
+series ([lore](https://lore.kernel.org/linux-bluetooth/20261027165009.2401154-1-yaroslav.voytovych@gmail.com/)).
 
 ## The QCA9377 result
 
@@ -93,9 +94,9 @@ firmware, the validation of the entry against it, and the stable backport reques
 commit cherry-picks onto the tip of every live stable line and `btusb` builds with it on
 each (`EX-059`); the request was sent on 2026-10-02, and the stable team **queued it for all
 seven live lines — 7.2, 6.18, 6.12, 6.6, 6.1, 5.15 and 5.10** — confirmed in the public stable
-queue on 2026-10-03 (`EX-061`). It was released in 7.2.10 and 6.18.56 on 2026-10-11 and in
-6.12.113 on 2026-10-15, and is in the release candidates of the other four lines, cut on
-2026-10-17 ([`docs/STATUS.md`](docs/STATUS.md)). What the ROM firmware does wrong
+queue on 2026-10-03 (`EX-061`). It was released in 7.2.10 and 6.18.56 on 2026-10-11, in
+6.12.113 on 2026-10-15 and in 6.6.160 on 2026-10-21, and is in the release candidates of 6.1, 5.15
+and 5.10, cut on 2026-10-17 ([`docs/STATUS.md`](docs/STATUS.md)). What the ROM firmware does wrong
 internally is not established and is not claimed. The full argument, with the September
 text that first read the entry as a recovery issue rather than the cause, is
 [`docs/missing-quirks-entry.md`](docs/missing-quirks-entry.md); the twelve-instance
@@ -133,27 +134,37 @@ fixture instead of a live machine. Specific to this part: the alternate-setting 
 `bt-usbstate` and `bt-fault-window`, the `13d3:3503` defaults, and the exhibits.
 
 **If you have a QCA9377 and the hang:** a kernel carrying `dc16388d45ec` is the fix — mainline
-from v7.3, stable 7.2.10, 6.18.56 and 6.12.113, and the next stable release of 6.6, 6.1, 5.15
-and 5.10 (6.6.160, 6.1.191, 5.15.224, 5.10.273; in release candidate since 2026-10-17). Until
+from v7.3, stable 7.2.10, 6.18.56, 6.12.113 and 6.6.160, and the next stable release of 6.1, 5.15
+and 5.10 (6.1.191, 5.15.224, 5.10.273; in release candidate since 2026-10-17). Ubuntu 24.04's HWE
+kernels do not carry it yet (`7.0.0-38`, and `7.0.0-42` pending in noble-updates). Until
 your distribution ships one, the entry is a two-line addition to
 `drivers/bluetooth/btusb.c`. Check which `btusb` you run with
 `tools/bt-verify-kernel-mechanism`, not the kernel version — backports move.
 
-## Current direction — 2026-10-18
+## Current direction — 2026-10-28
 
-- **Stable backport of `dc16388d45ec`:** released in 7.2.10, 6.18.56 and 6.12.113; in the
-  release candidates of 6.6, 6.1, 5.15 and 5.10 (`EX-061`). Ubuntu's current kernel,
-  `7.0.0-38`, and the one in testing, `7.0.0-39`, lack the entry, and 7.0 is no longer
-  maintained upstream, so an Ubuntu request is next.
-- **Simultaneous discovery that never stops (2026-10-09, `EX-062`).** With the device-table entry in place, this laptop's device discovery stayed stuck from 2026-10-04 until an adapter power cycle on 10-10. The kernel cause was already fixed upstream, but not in 6.12, 6.6 or 6.1, the older lines the `dc16388d45ec` backport reaches. Backports to those three, a BlueZ regression test and a BlueZ leak fix were sent on 2026-10-10; the 6.12 backport is released (6.12.113), the 6.6 and 6.1 ones are in release candidates, and the BlueZ commits are applied (tables above).
+- **SCO connection reuse (`U7`, sent 2026-10-27).** The kernel series and its BlueZ test are
+  under review; the list's CI bot passed both. On the laptop the series has run since 2026-10-23
+  with three headsets ([`contributions/CO-02-…`](contributions/CO-02-sco-connect-reuses-closing-link/README.md)).
+- **Stable backport of `dc16388d45ec`:** released in 7.2.10, 6.18.56, 6.12.113 and 6.6.160; in
+  the release candidates of 6.1, 5.15 and 5.10 (`EX-061`). Ubuntu's `7.0.0-38`, `7.0.0-39`
+  (proposed) and `7.0.0-42` (pending in noble-updates since 2026-10-27) lack it; 7.0 is no longer
+  maintained upstream, and Ubuntu's next stable base should bring it (an inference). Until then
+  the laptop runs the entry as a self-built `btusb`, rebuilt before any new kernel boots.
+- **Simultaneous discovery that never stops (`EX-062`).** Fixed upstream by another author; our
+  backports are released in 6.12.113 and 6.6.160 and in the 6.1 release candidate; the BlueZ
+  regression test and leak fix are applied (tables above).
+- **Next candidates, each in its own dossier under [`contributions/`](contributions/README.md):**
+  a one-line BlueZ tester fix ready to send (`CO-34`); a stable request for an L2CAP hang that
+  every released kernel has, whose fix was identified on 2026-10-28 (`CO-35`); an independent fix
+  for an open mesh use-after-free (`CO-04`); a mesh locking fix (`CO-05`); and BlueZ pairing and
+  discovery defects seen with this laptop's headsets (`U13`, `U16`, `U18`).
 - **Delivery of the accepted changes** into kernel and BlueZ releases and into Ubuntu:
-  tracked, nothing owed yet. No BlueZ release carries them yet (the newest tag is 5.87).
-- **The kernel mesh advertising work** (found while reading why the list's `mesh-tester` fails
-  on every submission since June) is written and tested in qemu, but after an outside research
-  review it is not sent as one series: it goes out as separate contributions in a reviewed
-  order. The first two are done — the Tested-by and the BlueZ fix in the tables above; the power-off
-  fix is next, after a comparison with another author's patch for the same bug.
-- **Desktop audio issues** seen while testing the fixed driver are recorded in [`docs/issues.md`](docs/issues.md) as leads with evidence: codec switches, reconnect policy, a GNOME codec row, since 2026-10-11 a speaker that goes silent on SBC-XQ (`U10`), and since 2026-10-13 a newly connected headset that does not get the sound (`U11`, WirePlumber's default-device policy; a suggestion is drafted, not posted). Upstream fixes are checked before anything new is written.
+  tracked. No BlueZ release carries them yet (the newest tag is 5.87).
+- **Desktop audio issues** seen while testing the fixed driver are recorded in
+  [`docs/issues.md`](docs/issues.md) (`U1` to `U20`) as leads with evidence. Upstream fixes are
+  checked before anything new is written; for PipeWire and WirePlumber the project gathers the
+  evidence and the author writes the report.
 
 The dated detail, one row per issue and submission, is [`docs/STATUS.md`](docs/STATUS.md).
 
@@ -162,7 +173,8 @@ The dated detail, one row per issue and submission, is [`docs/STATUS.md`](docs/S
 ```
 Distribution : Ubuntu 24.04 LTS (noble)
 Kernels      : 7.0.0-29, -30, -31, -34-generic (the twelve instances); 6.17.0-29/35/40, 7.0.0-28 (earlier phenotype);
-               7.0.0-38-generic with the upstream entry (E3) since 2026-10-11
+               7.0.0-38-generic with the upstream entry (E3) since 2026-10-11, and since 2026-10-23
+               also the CO-02 series' bluetooth.ko (EX-071)
 BlueZ        : 5.72 (the running patched daemon is a rebuild of 5.72-0ubuntu5.5; the package is 5.72-0ubuntu5.8 since 2026-10-14)
 Platform     : AMD Renoir/Cezanne laptop; controller on xhci_hcd, full-speed
 BT device    : usb 13d3:3503 — HCI manufacturer 0x001D (Qualcomm), version 0x07 (4.2)
@@ -212,10 +224,17 @@ tests/                run-tests — invariants, each anchored to a real shipped 
 devtools/             contributor tooling (check, scan, validate, coverage, ci, commit+verify)
 reviews/              assessments of the repository itself; README.md there is the live action register
 comms/  lessons/      messages between the maintainers; what the project cost to learn
+contributions/        one dossier per possible contribution (CO-nn): findings, experiments,
+                      log, patches and mails as sent; README.md there is the index
+results/              dated results of runs that belong to no single dossier (CI locally, BT-10)
 patches/bluez/        the two applied BlueZ patches, their verification script and mail notes;
   shared-mgmt/        the applied shared/mgmt fix and its unit tests, as mailed
   send-2026-10-18/    the two cleanups sent 2026-10-18, as mailed, with their re-test
   cleanup/            the first draft (2026-10-07) of the a2dp cleanup, superseded
+patches/kernel/       the MGMT fix (86ef0f58bdec) as sent, and bt9-stable/: the BT-9 backports
+patches/diag/         diagnostic btusb builds (E1, E3) and the stable request for dc16388d45ec
+patches/mesh-tester/  the mesh series v1 to v3 (not sent as one), the shared/mgmt drafts and the
+                      Tested-by reply as sent; patches/wireplumber/: the U11 suggestion, not posted
 retest/mesh-tx-leak/  reproducer, kernel configs and 159 VM logs for the retest of another
                       author's kernel patch (patchwork 14831271); REPORT.md there has the findings
 docs/                 issues.md (issue register) · missing-quirks-entry.md · install.md ·
@@ -227,6 +246,7 @@ evidence/
   baseline/ diagnosis/  the failing boot before any mitigation; the device-table transcripts
 archive/              (git-ignored, local) every raw HCI capture, compressed and verified
                       (scripts/bt-trace-archive.py); incident windows are cut from here
+cache/  tmp/          (git-ignored, local) upstream trees and tools; run outputs
 ```
 
 **Branches.** `main` is the record. `review/<UTC timestamp>` holds one assessment

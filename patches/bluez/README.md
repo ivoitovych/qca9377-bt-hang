@@ -121,9 +121,9 @@ form** (A1, retitled "a2dp: Remove duplicate check in transport_cb"):
 | `mail-notes/` | the text below `---` in every mail |
 
 Both versions stay, with their as-sent forms. The v1s are what is in BlueZ master;
-the v2s are on the list with an open state and whatever the maintainer does with
-them — ignores, marks, or asks about — is answered from these files, not from
-memory. Nothing under `patches/bluez/` is deleted or renamed after a send.
+of the v2s, `0002` was applied as well on 2026-10-07 (`d84171e6c`, above; its duplicate
+check removed by `b79d4a887` on 2026-10-19) and `0001` stays on the list unapplied. Whatever
+the maintainer does with them is answered from these files, not from memory. Nothing under `patches/bluez/` is deleted or renamed after a send.
 
 ## Sent
 

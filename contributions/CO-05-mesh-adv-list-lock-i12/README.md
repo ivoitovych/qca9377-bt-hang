@@ -41,7 +41,10 @@ review).
 
 ## Next
 
-1. Draft the mesh-path patch on bluetooth-next.
-2. Run the same lockdep assertion and KCSAN 4-CPU runs, with and without it, through our
-   kernel pre-send checks (`scripts/kernel-preflight.sh`).
-3. Package it with a test report. Nothing is sent without the operator's word.
+Done on 2026-10-21: the patches drafted (`patch/`) and the lockdep-assertion and KCSAN 4-CPU runs,
+with and without them (`experiments/results-2026-10-21.md`). Still to do (2026-10-28, `log.md`):
+1. an outside review of the written patches (the reviews of 10-21 were on the shape);
+2. `scripts/kernel-preflight.sh` and `scripts/bot-ci-local.sh` on today's bluetooth-next;
+3. a test-report paragraph, then the operator's decision. It now also has to fit the
+   independent fix for the mesh use-after-free planned in CO-04, which touches the same
+   function. Nothing is sent without the operator's word.

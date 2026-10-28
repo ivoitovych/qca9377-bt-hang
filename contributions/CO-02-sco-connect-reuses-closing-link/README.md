@@ -1,6 +1,16 @@
 # CO-02 — A new SCO connect reuses the closing link (U7)
 
-**State (2026-10-26): the package to send is `patch/v6/send/` (below); until then it was
+**State (2026-10-28): SENT 2026-10-27** on the operator's word, from `patch/v7-candidate/send/`:
+the kernel series (cover + 3 patches, `Cc: stable` on 1–3) at 17:50:06–09 +0100, cover
+Message-ID `<20261027165009.2401154-1-yaroslav.voytovych@gmail.com>`; the BlueZ test at 17:50:59
++0100, `<20261027165059.2402360-1-yaroslav.voytovych@gmail.com>` (patchwork 14919266–14919269).
+The list bot passed the kernel series (24 of 24) and the BlueZ test (all PASS but the expected
+CheckSmatch note); no human reply yet on 2026-10-28. Next: replies and the sashiko-nipa review,
+answered on the technical points; a port of the BlueZ test if Luiz Augusto von Dentz's tester
+series (patchwork series 1191414) lands first (`log.md`, 2026-10-28). The paragraphs below are the
+state before the send, kept as written; the send record is in `log.md` (2026-10-27).
+
+**State before the send (2026-10-26): the package to send is `patch/v6/send/` (below); until then it was
 `patch/v5/send/`**: `kernel/` holds the cover letter
 and three kernel patches, and `bluez/` holds the BlueZ test, a separate mail. Evidence is in
 `experiments/results-2026-10-22-v3.md` (the stable lines) and `-v4.md` (bluetooth-next; v5

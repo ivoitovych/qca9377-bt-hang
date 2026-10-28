@@ -1,8 +1,8 @@
 # Issue register
 
 This investigation began as "the Bluetooth controller hangs". It is now clear that is not
-one defect. Over twenty distinct problems have been observed on this machine by 2026-10-11
-(nine `BT`, three `M`, ten `U`, one unexplained `bluetoothd` core), and
+one defect. Over thirty distinct problems have been observed on this machine by 2026-10-28
+(thirteen `BT`, three `M`, twenty `U`, one unexplained `bluetoothd` core), and
 filing them under a single heading has actively slowed the work: evidence for one kept
 being read as evidence for another, and three hypotheses were killed only after being
 mistaken for the main bug.
@@ -11,6 +11,20 @@ Each issue below is tracked separately, with its own evidence and its own report
 They are numbered `BT-n` so exhibits and commits can cite them.
 
 ---
+
+## Current state — 2026-10-28 (what changed since the 2026-10-11 state below)
+
+The register's current-state blocks stopped at 2026-10-11 while the issues went on in
+`docs/STATUS.md` and the dossiers; this block closes that gap. `docs/STATUS.md` remains the one
+page for what is current.
+- **New issues:** `U12` (10-19) to `U20` (10-24), in the userspace section; `BT-10` to `BT-13`
+  (10-23 to 10-27), each with a section below BT-9.
+- **U7 became a kernel series (CO-02), sent 2026-10-27,** after a QEMU reproduction, every
+  affected stable line, and a run on the laptop with three headsets (`EX-067` to `EX-083`).
+- **Stable:** the QCA9377 entry and our BT-8 and BT-9 work are released in 6.6.160 (10-21) as
+  well; 6.1, 5.15 and 5.10 are still at their 10-17 release candidates.
+- **The machine** runs `7.0.0-38` with E3 and, since 2026-10-23, the CO-02 `bluetooth.ko`.
+  Ubuntu's next kernel, `-42`, lacks the entry; E3 is rebuilt before it boots.
 
 ## Current state — 2026-10-11 (what changed since the 2026-10-09 state below)
 
@@ -210,6 +224,9 @@ cannot be executed, and this repository has already shipped one that was false.
 **Independence matters for submission.** A small, deterministic, well-evidenced bug is far
 more likely to be fixed than a large intermittent one, and bundling them means the weakest
 member sets the pace for all. `BT-2` and `BT-4` are reportable *today*; `BT-1` is not.
+*(Written 2026-09-18. Since then: BT-1's cause was found and fixed upstream, BT-2 turned out to
+be fixed by the same entry, and BT-4 matches upstream fixes; neither is reported separately. Each
+issue's section and `docs/STATUS.md` give the current state.)*
 
 ---
 
@@ -391,7 +408,14 @@ the same device shape observed here. A kernel carrying it runs `btusb_setup_qca(
 a reset callback; **neither has been tested on this machine**. Everything below describes
 the kernels that were run.
 
-**Status:** confirmed in upstream source and shipped binary (`EX-001`). **Since 2026-09-18
+**Status (2026-10-28): superseded into BT-1, and the missing entry IS the cause.** E1 (the
+entry's firmware setup alone) and E3 (the exact upstream entry, `dc16388d45ec`) ran 74 SCO links
+with 0 timeouts (`EX-055` to `EX-058`; BT-1; `BRIEF.md` §3), and the stable backport of the
+entry was requested on 2026-10-02 and is released (`docs/STATUS.md`). The two paragraphs below
+are the reading of 2026-09-18 to 2026-09-25, kept as written; they were not updated when E1/E3
+settled it, which left this section contradicting BT-1 until 2026-10-28.
+
+*As written before E1/E3:* confirmed in upstream source and shipped binary (`EX-001`). **Since 2026-09-18
 read as a consequence for recovery, not a candidate cause** — the wedge is located
 elsewhere (see "Current state"), and this entry explains why no software recovers it.
 **Reportable:** ⚠️ the patch is trivial and is **not proposed**: the reset it installs
@@ -685,6 +709,8 @@ lines and on bluetooth-next with the fix reverted, and passes with the fix and w
 backport; the normal-order control passes everywhere. **Stable request sent 2026-10-10 04:25
 +0200** (three mails); the BlueZ emulator leak fix and the BlueZ test series sent to
 linux-bluetooth 05:18 +0200, each its own submission (`docs/STATUS.md`). **Next:** replies.
+**Since (2026-10-28):** the backports are released in 6.12.113 and 6.6.160 and in the 6.1.191
+release candidate; the BlueZ commits are applied. Nothing is owed (`docs/STATUS.md`).
 
 **What it is.** With `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`, a BR/EDR+LE discovery runs LE active
 scanning and a 10.24 s Inquiry together, and arms the `le_scan_disable` timer for the same
@@ -721,7 +747,49 @@ specific to this controller.
 
 ---
 
-## U1–U10 — userspace audio problems seen during the E1/E3 tests (2026-09-26 →)
+*BT-10 to BT-13 were registered in `docs/STATUS.md` and their dossiers from 2026-10-23 on, but
+not here; these sections were added on 2026-10-28. Each points at where its evidence is.*
+
+## BT-10 — l2cap-tester "L2CAP Ext-Flowctl Server - Accept 2 Close 1" hangs on every released kernel
+
+**Status 2026-10-28: fixed upstream, fix identified, not in any stable line.** The case (deferred
+ECRED accept with two channels, the first accepted and closed before the second) never finishes
+on 7.2.12, 6.18.58, 6.12.114, 6.6.160 and Ubuntu 7.0.0-38's code, and passes on bluetooth-next
+(`results/bt10-l2cap-hang-2026-10-23/`). The fix is Pauli Virtanen's `32d86e048d8ef` ("L2CAP: hold
+conn->lock for __l2cap_ecred_conn_rsp_defer") with its helpers `608e0b7a675b2`, in mainline since
+the 7.4 merge window, without `Cc: stable`; on 7.2.13 the pair turns the hang into a pass and the
+full l2cap-tester runs 111/111 (`contributions/CO-35-l2cap-ecred-defer-hang-stable/`).
+**Reportable:** a stable request with the pair (7.2.y as is; 6.18.y, 6.12.y and 6.6.y need
+backports), the operator's decision. Not specific to this controller.
+
+## BT-11 — KASAN use-after-free in `iso_conn_hold_unless_zero` on Ubuntu 7.0.0-38's code
+
+**Status 2026-10-28: resolved for Ubuntu by `7.0.0-42`.** iso-tester "ISO Defer Close - Success"
+reads a freed `iso_conn` on `-38`'s code (reproduced 2026-10-23 and again 2026-10-28). `-38` lacks
+three of Pauli Virtanen's ISO fixes (`0786469ee2429`, `aa9f7cb2bd3a2`, `fdfde532ab1ca`); the pending
+`-42` carries them (`scripts/commit-in-tree.py`, with a positive control). 7.2.12 runs iso-tester
+141/141 clean; 6.12.114 shows no such report, but four timeouts, a lockdep "possible recursive
+locking" warning and a stall, not analysed (`docs/STATUS.md`). The laptop's controller has no ISO.
+**Reportable:** nothing for Ubuntu; for 6.12.y only if that observation proves a defect.
+
+## BT-12 — ioctl-tester registers two cases under one name
+
+**Status 2026-10-28: patch ready to send** (`contributions/CO-34-ioctl-tester-duplicate-name/`).
+"Set Pkt Type - 2-DH" is registered twice in BlueZ `tools/ioctl-tester.c` (l.918 and l.921), the
+second running the 3-DH test; found when `scripts/compare-tester-verdicts.py` refused the pair.
+**Reportable:** the one-line patch is the report; the operator's decision.
+
+## BT-13 — `hci_connect_sco()`'s `-ENOLINK` path drops a hold the caller never got
+
+**Status 2026-10-28: confirmed in source, not reproduced; a cold path.** A new connection starts at
+`refcnt` 0, so a failed link allocation leaves it at −1, with no `disc_work` queued and still in
+the connection hash (bluetooth-next `hci_conn.c` around l.1914; since `06149746e720`). Found in the
+Sashiko-rule review of CO-02 (`contributions/CO-02-…/log.md`, 2026-10-27).
+**Reportable:** after CO-02 lands: a fault-injection reproducer, then a separate patch.
+
+---
+
+## U1–U20 — userspace audio problems seen during the E1/E3 tests (2026-09-26 →)
 
 | id | one line | state (`STATUS.md`) |
 |---|---|---|
@@ -1179,7 +1247,7 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
 
   **Open:** is the microphone really silenced while "mute on" (a test call or a recording through the MOMENTUM; if so, the other side of every call hears nothing)? Does `+VGM: 15` give "mute off"?
 
-  **Fix options [the operator's choice]:** a local quirk override (WirePlumber's `bluez5.hardware-database` property with the stock table plus `{ name = "MOMENTUM 4", no-features = [ hw-volume-mic ] }`), which stops the stored 0 (and, to be checked, the `+VGM`); a one-off volume reset (undone at the next connect, when the headset reports 0 again); then the same one-line entry upstream in PipeWire. **PipeWire's contributor rules** (`CLAUDE.md` in its tree, read 2026-10-23): no tool-written merge request descriptions, commit messages, issue text or replies to reviewers, and no automated posting; the operator writes and submits it, and evidence gathered with tools (verbatim logs) may be attached. This project gathers the evidence only.
+  **Fix options [the operator's choice]:** a local quirk override (WirePlumber's `bluez5.hardware-database` property with the stock table plus `{ name = "MOMENTUM 4", no-features = [ hw-volume-mic ] }`), which stops the stored 0 (and, to be checked, the `+VGM`); a one-off volume reset (undone at the next connect, when the headset reports 0 again); then the same one-line entry upstream in PipeWire. **PipeWire's contributor rules** (the contributor-rules file in its tree, read 2026-10-23): no tool-written merge request descriptions, commit messages, issue text or replies to reviewers, and no automated posting; the operator writes and submits it, and evidence gathered with tools (verbatim logs) may be attached. This project gathers the evidence only.
 
   **Evidence:** `EX-065`, `EX-066`; raw on this machine only: `archive/incidents/20261023-momentum-mic-gain-zero/` (the user journal around the connect and the sessions, every gain line the journal holds, the state files, `wpctl status`, the captures' gain packets, `SHA256SUMS`; saved by `tmp/incident-20261023-momentum/save.sh`).
 
@@ -1235,6 +1303,8 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   3. Before the CO-02 series the kernel did not refuse: it handed the connect the closing link and reported success with no link behind it (`U7`, `EX-060`), and no link followed at all: on 2026-09-29 new test sounds started 3, 2 and 26 s after the failed switches stayed silent, and the next codec change ended the first silence (corrected 2026-10-26: this said "silence until the stream was restarted by hand", which the record does not show). The series turns that into a refusal, and PipeWire's existing recovery turns the refusal into a 5 s gap. Shorter needs one of: a retry in PipeWire that waits for the old link's teardown (it knows it has just closed it), or a kernel that queues the new connect until the Disconnection Complete instead of refusing.
 
   **Why it matters for CO-02:** the cover letter must say that on the earbuds the user gets the audio back after about 5 s rather than never; the maintainers may prefer the kernel to wait. To be weighed before the series is sent.
+  **Done:** the cover letter sent on 2026-10-27 says it, and offers the deferral as a question
+  (`CO-30`); the PipeWire side is `CO-31`.
 
   **Upstream check, 2026-10-24: not fixed, no duplicate found.**
   - **PipeWire master `73974598f` still retries at once:** `sco_do_connect()` has the same `for (int retry = 2;;)` loop with `continue` on `ECONNABORTED` and no wait; 1.0.5 has it at `backend-native.c:1447`. `git log -S ECONNABORTED -- spa/plugins/bluez5` gives only `d439b7cdd` (above) and `5a22d0bfc` (Pauli Virtanen, 2021-01-04, "bluez5: delay SCO transport releases in case they get reacquired").

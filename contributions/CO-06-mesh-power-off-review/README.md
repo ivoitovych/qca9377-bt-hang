@@ -1,6 +1,8 @@
 # CO-06 — Review reply on Jiale Yao's mesh power-off fix
 
-**State:** blocked. The reply's evidence is ready; sending it is the operator's decision.
+**State:** blocked (2026-10-28). The comparison behind the reply dates from 2026-10-05, before
+`87a49b610708` changed the mesh timing; it must be re-run on today's bluetooth-next before any
+reply. Sending is the operator's decision.
 
 **Target:** the Linux kernel. Another author's patch; ours would be a review reply, with no
 Tested-by.
@@ -26,6 +28,7 @@ The comparison itself is held until the reply is decided (STATUS, "Held").
 
 ## Next
 
-The operator decides whether to reply. Before any send:
-1. Re-check 14864878's state, and look for a newer version.
-2. Re-weigh against 14888791 (CO-04) and 14880941, which landed in the same queue since.
+The operator decides whether to reply. Checked 2026-10-28: 14864878 still `new`, no newer
+version; 14888791 and 14880941 still `new` too (`log.md`). Before any send:
+1. re-run the comparison on today's bluetooth-next;
+2. re-check the patch's state on the send day.

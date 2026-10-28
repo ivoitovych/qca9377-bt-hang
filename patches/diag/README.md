@@ -82,7 +82,12 @@ the srcversion does. This is the build a stable backport request vouches for.
 Pass: 0 timeouts, 0 `0x2005`; the reset callback only fires on a timeout, so a clean boot never
 exercises it — the request must say so.
 
-### E3 for 7.0.0-38 (built and installed 2026-10-10, on the operator's word; not yet booted)
+### E3 for 7.0.0-38 (built and installed 2026-10-10, on the operator's word; booted 2026-10-11 16:26)
+
+**Since then** (added 2026-10-28; the section below is kept as written before the boot): `-38`
+has run with this E3 since 2026-10-11 16:26 (`docs/STATUS.md`, the machine's section; the boot log
+shows `QCA: patch rome 0x302 build 0x3e8`). The next kernel, `7.0.0-42`, needs the same recipe
+before its first boot (`contributions/CO-09-ubuntu-kernel-qca9377-entry/log.md`, 2026-10-28).
 
 `7.0.0-38.38~24.04.4` is installed (image and headers, `grub.cfg` regenerated 2026-10-09
 06:02) and `GRUB_DEFAULT=0` boots the newest kernel, so the next reboot starts -38. Its stock

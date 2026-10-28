@@ -61,3 +61,22 @@ The UAF it targets was not reproduced on base. Full account: `experiments/result
   (`git log -G mesh` since 10-01: only `8a8d51eeedeb`, already in the base).
 - **Missing for a reply:** the reply's text (none drafted), one confirming `-s power` run on
   `47d4d9f67e92`, and the operator's decision.
+
+## 2026-10-28, later — new direction: an independent fix (the operator's decision)
+No reply on the 14888791 thread. Instead, our own fix for syzbot's "KASAN: slab-use-after-free
+Read in mesh_send_sync" (still open upstream), sent as a separate patch to the Bluetooth
+maintainers and the list. The technical reasons: the use-after-free is real and unfixed; the one
+posted fix takes `hdev->lock` under `cmd_sync_work_lock`, inverting the existing lock order
+(lockdep, 9 of 12 `-s power` boots, this dossier's results of 2026-10-21).
+- **The patch:** written from the syzbot report and today's source, not from the earlier patch;
+  `Fixes: b338d91703fa`; `Reported-by:` and, once shown to resolve it, `Closes:` for the syzbot
+  report; credit only what it actually reuses (the `mesh_send()` failure-path change, if needed,
+  first came from Hui Peng's 14831271).
+- **Its notes below `---`:** a link to the earlier proposal and one or two technical sentences on
+  the lock order. Nothing else.
+- **Before it is sent:** a reproducer on an unpatched kernel (syzbot's program, or our mesh cases
+  with a widened window); lockdep with the `-s power` cases, KCSAN on 4 CPUs, the full mesh-tester
+  and mgmt-tester; the list bot's CI run here; syzbot's own test requested on the syzbot report's
+  thread; outside reviews; then the operator's word. It must agree with CO-05, which locks the same
+  function.
+- **If anyone comments on our patch**, the points are answered technically on our thread.

@@ -4148,6 +4148,62 @@ keeping our tags and their limit.
 v5 is the package to send. The operator's next step is a run on the laptop's own kernel and
 headsets before the send.
 
+## The series on the laptop, the send, and a walk through everything else (2026-10-23 → 10-28)
+
+*(No chapter covers 2026-10-12 to 10-15: those days are in the BRIEF hand-off block of 2026-10-18
+at the end of this file, and in `docs/STATUS.md`. Noted 2026-10-28.)*
+
+**The laptop's kernel needed two upstream fixes first.** Ubuntu 7.0.0-38 lacks `abd93c85c8667` and
+`816fb1590a4c`, and without them the series leaked a connection in Connect Twice (6 of 6). With
+them it fixed both bugs and left the suites unchanged. The module was installed on the operator's
+word on 10-23 at 09:40, after the open trial was closed by hand, and booted cold at 11:04 (`EX-071`).
+
+**What the headsets showed (10-23 to 10-26).** The earbuds, whose codec-change reply comes before
+the old link is gone, had their three switches refused with `ECONNABORTED` instead of being told
+"connected" and losing the call; the MOMENTUM 4 and the Shure, whose replies come after, got a new
+link every time (`EX-067` to `EX-070`). All 36 links of the boot closed, matched by handle in the
+capture (`EX-074`), after the first count (`EX-073`) was found to read a debug line that names no
+handle. A two-socket test on the Shure's live call got EBUSY three times, with no gap in the
+call's voice data (`EX-075` to `EX-077`). The cost was honest: with a stream playing, the earbuds'
+audio came back 5 s after a refused switch, because PipeWire retries at once (`U17`); before the
+series it did not come back at all. The cover letter says both.
+
+**Reviews, versions, and proving the code had not moved.** v6 fixed the BlueZ test's first-socket
+leak in a stalled case; v7 changed only prose. Before the send, every pair of versions was compared
+by diff and patch-id (`scripts/patch-code-compare.py`, `EX-078` to `EX-083`), so the stable runs on
+v3/v4 code and the laptop's module still describe the mails sent. The list bot's own CI was run here
+with its own code and image (`scripts/bot-ci-local.sh`); it predicted exactly the one smatch note
+the real bot later posted. A review against Sashiko's published rules found BT-13 in code the series
+keeps, recorded for later rather than folded in.
+
+**Sent on 10-27 at 17:50**, the kernel series with `Cc: stable` and the BlueZ test, on the
+operator's word; the app password was revoked afterwards and checked (535). The same day: BT-12, a
+duplicate test name in ioctl-tester found when the verdict comparison refused it, became a one-line
+patch (CO-34).
+
+**10-28: a walk through every possible submission, and two answers found by experiment.** Upstream
+was fetched and each item re-checked. Three things changed the picture:
+- **BT-10's fix.** A bisect of bluetooth-next first ended at a commit that fixes the Shorter
+  Connection Interval feature, which no stable line has. Between that feature's arrival and its fix,
+  bluetooth-next hung on the same case for another reason, so the bisect had found the end of the
+  wrong hang. Applying that fix at every step where it was needed gave the real answer:
+  `32d86e048d8ef` with its helpers `608e0b7a675b2`. On 7.2.13 the pair turns the hang into a pass,
+  111 of 111 (CO-35). On 6.18 the pair applies and does not build.
+- **BT-11 resolves itself for Ubuntu.** Ubuntu's tree has no shared history with upstream, so a new
+  tool compares a commit's new lines with the tree, against a base and with a positive control: `-38`
+  lacks the three ISO fixes, the pending `-42` has them.
+- **`-42` lacks the QCA9377 entry.** Ubuntu's next kernel would bring BT-1 back at its first boot;
+  E3 has to be built for it first, and its source was prepared that night.
+The operator also set the course for the mesh use-after-free (CO-04): an independent fix of our own.
+
+**The documentation had drifted, and why.** The same night every foundation document was checked
+against the re-verified facts (`reviews/2026-10-28T0300Z-documentation-alignment.md`). The causes
+repeated: upstream-state commits scoped to "STATUS, BRIEF" left README untouched for ten days;
+BRIEF's hand-off grew by appended "New" items for ten days instead of being replaced, so its state
+block contradicted its own newest item; the send day updated the log and STATUS but not the dossier's
+front page; the issue register's per-issue "Next" lines were left behind once STATUS became the
+current page; and a restart of the desktop capture on the laptop was never written down.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
@@ -4613,3 +4669,297 @@ headsets before the send.
 > a kernel finding is recorded on `main` as it is found; maintainer mail carries only what the
 > maintainer needs; only the operator touches the laptop's Bluetooth or kernel; clock ranges are
 > written "HH:MM:SS to HH:MM:SS" (`scripts/fix-time-ranges.py`).
+
+## BRIEF hand-off block as it stood on 2026-10-28 (moved verbatim; replaced by a fresh block)
+
+> **HAND-OFF (2026-10-18, after A1 and A2 were sent and the trial closer's decode was found
+> never to have worked).** Current state of every issue and submission: `docs/STATUS.md`. The
+> open decisions: "Operator decisions open" above. The previous block (2026-10-08, with its
+> 10-09 and 10-11 items) is at the end of `HISTORY.md`, verbatim.
+>
+> **New, 2026-10-23 ~11:50 local — booted with the CO-02 module; the operator tests by use:**
+> - Boot `257d1599` at 11:04:43 (cold, after a clean shutdown): `bluetooth.ko`
+>   `0D084A056A9EEFB98E8F331` and E3 btusb `D1DEA96A…` loaded; `QCA: patch rome 0x302 build
+>   0x3e8`; no warning, timeout or symbol error. The boot unit opened trial **E3 #3** labelled E3:
+>   it carries the CO-02 module (`evidence/trials/E3/trial-03/NOTE-not-plain-E3.txt`); its row is
+>   kept apart from E3's counts. Evidence window for the hardware run: from 11:04:43.
+> - **Journal retention fixed (the operator's word):** `SystemMaxFiles=1000` (default 100 held
+>   only ~3 days; E3 #2's counts miss its first ~14 h, `trial-02/NOTE-journal-window.txt`).
+> - **Journal backup installed (the operator's word):** `tools/bt-journal-files` copies every
+>   closed journal file, verified, every 3 h, after boot and at shutdown (units in `systemd/`).
+>   First run: 98 files, 1 GB. `bt-backup-journal`'s "a live boot cannot rotate" was false.
+> - **Kernel-journal reads ~100× faster:** `bt_journal -k …` reads the files one by one in
+>   parallel (`tools/lib/journal.sh`); equal to plain journalctl in 10 of 10 cases
+>   (`devtools/test-journal-fast.sh`). Still to convert: `tools/bt-trial`'s direct
+>   `journalctl` reads (needs the suite, which refuses while a trial is open), then the
+>   operator's install of the tools; the fast "close now, analyse later" mode.
+>
+> **New, 2026-10-23 09:40 local — CO-02 module INSTALLED; the operator's cold boot is next:**
+> - On the operator's word: E3 #2 closed by hand first (`scripts/trial-close-now.sh`, 887 s +
+>   664 s SCO decode; row: 300842 s, 55 SCO setups, 0 timeouts, `not_observed`); no trial is
+>   open now. Then `module-updates.sh install tmp/co02-hw/module/full/bluetooth.ko`: `updates/
+>   bluetooth.ko` srcversion `0D084A056A9EEFB98E8F331` (sha256 `702186d9…`) for the next boot;
+>   E3's `updates/btusb.ko` (`D1DEA96A…`) unchanged. Nothing was loaded or unloaded live.
+> - **After the boot:** `module-updates.sh status` must show `loaded srcversion:
+>   0D084A056A9EEFB98E8F331`; the boot log `QCA: patch rome 0x302 build 0x3e8`. Then the runs of
+>   `experiments/hardware-run-plan.md` (operator), the evidence reads, the exhibit, the cover
+>   sentence. A new trial is not opened automatically for a hand close; decide with the operator.
+> - **Rollback:** `module-updates.sh remove` + a cold boot (stock `973EDEC17806658263CB837`).
+> - **Follow-up (the operator's point):** the hand close re-reads the whole boot's kernel journal
+>   per count (3.7 GB journal, minutes each). Only `/run/bt-trial/current` is lost at a reboot (the
+>   journal is persistent): a fast close (save the record, write the row "analysis pending",
+>   count later from `-b -1`) is to be added.
+>
+> **New, 2026-10-23 (afternoon, an upstream check):**
+> - **6.6.160 released 2026-10-21** with all three of ours: the MGMT fix (`44ce36c5789a`), the
+>   QCA9377 entry (`a35160b2c75b`), the BT-9 backport (`80861f424fe5`). 6.1.191, 5.15.224 and
+>   5.10.273 have no review mail yet (CO-28 waits). Ubuntu `-39` still only in proposed.
+> - **bluetooth-next renamed `btusb.c` to `btusb_main.c`** (new `btusb_qcom.c` for QCC2072). The
+>   new `BT_HCIBTUSB_QCOM` (default n since net-next `1a2c35c49cc7`, 2026-10-22) gates only
+>   `BTUSB_QUALCOMM` devices; `13d3:3503` stays `BTUSB_QCA_ROME` in `btusb_main.c`, unaffected.
+>   `scripts/build-btusb-module.sh` and `build-btusb-stable-matrix.sh` name `btusb.c`: fine for
+>   every released kernel, to be adapted when a kernel with the rename is used.
+> - **CO-02's base is still bluetooth-next's tip** (`27731ba091954`); no new commit on `sco.c`,
+>   `hci_conn.c` or `hci_core.h`; 14908123 and 14903178 still `new`. The net-next pull for the
+>   7.4 merge window is imminent.
+>
+> **New, 2026-10-23 (about 03:30 local):**
+> - **CO-02 is ready for the laptop.** Ubuntu 7.0.0-38 lacks `abd93c85c8667` + `816fb1590a4c`;
+>   the series alone leaks there (Connect Twice 6/6). With them the series fixes both bugs and the
+>   suites are unchanged (`experiments/results-2026-10-23-hw-prep.md`). Install
+>   `tmp/co02-hw/module/full/` (srcversion `0D084A056A9EEFB98E8F331`), **never** `module/series`.
+>   Plan: `experiments/hardware-run-plan.md`; the operator decides E3 #2 first. The cover letter
+>   now has a paragraph for such trees (the operator's decision).
+> - **Install checks fixed:** `module-updates.sh check|install` read every dependant from
+>   `modules.dep` (E3's `updates/btusb.ko` was missed), the module's own `Module.symvers` only;
+>   `check-modversions.sh` no longer passes unreadable modules; `install` refuses with a trial open.
+> - **New issues:** `U15` (the MOMENTUM 4's "mute on": it reports `AT+VGM=00` at connect and is sent
+>   `+VGM: 0` at every hands-free start; EX-065, EX-066; operator decides the quirk override);
+>   `BT-10` (l2cap-tester ECRED "Accept 2 Close 1" hangs on every released kernel, fixed in
+>   bluetooth-next; bisect next); `BT-11` (ISO use-after-free on Ubuntu's code; no ISO on the laptop).
+> - **PipeWire and WirePlumber** forbid tool-written MR, commit and issue text: the operator writes
+>   and submits; we gather evidence (their contributor-rules file).
+> - **Helpers:** `scripts/user-journal.sh` (the desktop user's journal without a prompt per search),
+>   `scripts/hfp-gain-by-device.py`.
+>
+> **New, 2026-10-22 (about 05:10 local, the state at hand-off; work paused for the usage limit):**
+> - **CO-10 is done:** the Tested-by on 6.6.160-rc2 went out 2026-10-21 03:05:42 UTC (server
+>   250, 20 recipients), the app password is revoked (535). Watch the 6.6.160 release.
+> - **CO-02 v5 is the package to send (2026-10-22 ~21:40 UTC; this item supersedes the CO-02
+>   items below it, whose trail is in the dossier's `log.md`).** `contributions/CO-02-…/patch/v5/
+>   send/`: kernel cover + 3 patches, and the BlueZ test as a separate mail. Branch
+>   `co02-send/v5` in `cache/co02-v1`, code tree `cb4e87e621b7`.
+>   1. "hold a reused SCO connection for its caller": `Fixes: 8a5b0135d4a5`,
+>      `Cc: stable@vger.kernel.org # 6.6.x`;
+>   2. "don't reuse an aborting SCO connection": `Fixes: e6720779ae61` (bisected), plain stable
+>      tag, `READ_ONCE()`/`WRITE_ONCE()` on `abort_reason` (the SCO disconnect worker writes it
+>      without `hdev->lock`);
+>   3. "synchronize with SCO disconnect work before reuse": `Fixes: e6720779ae61`, plain stable
+>      tag, `cancel_delayed_work_sync()` after both branches.
+>   - **Evidence:**
+>     - `experiments/results-2026-10-22-v3.md`, the stable check by code and by run: 6.1 needs
+>       nothing; 6.6 and 6.12 need patch 1 only; 6.18 and 7.2 need all three; each was built
+>       and run unpatched and patched;
+>     - `results-2026-10-22-v4.md`: bluetooth-next 27/27, parked race refused 18/18, 59 logs
+>       clean; v5 changed only the messages;
+>     - `race-park-2026-10-22.md`.
+>     The series was first ordered refusal-first; reviewer 6 showed that stopped the hold fix
+>     applying alone on stable, hence hold-first (v3).
+>   - **Reviews:** rounds 1 to 4, rechecks, and a from-scratch round (all six, `reviews/`). All
+>     approve. Every point and its outcome is in `log.md`, with the answers to have ready.
+>   - **Disclosed, not changed:** a connect() before `disc_work` has started still keeps the live
+>     link. A follow-up could use `delayed_work_pending()`. No hardware run yet; the cover says so.
+>   - **The operator decided:**
+>     - Cc Cen Zhang, Aldo Ariel Panzardo, Hitalo Souza and Pauli Virtanen; Pauli also on the
+>       BlueZ mail;
+>     - the stable tags as above;
+>     - kernel first, then the BlueZ test the same day, against master with a rebase offer (Luiz's
+>       sco-tester mainloop patch, patchwork 14908123, is pending);
+>     - the ELL files archived (`archive/ell-usr-install-20261021/`), not removed.
+>     Stable route: tags (Option 1), as is usual in net/bluetooth (log, 2026-10-22 ~20:15).
+>   - **Next:**
+>     1. A hardware run on the laptop, which the operator wants (preparation, then the operator's
+>        boot).
+>     2. The send on the operator's word: `tmp/co02-round3/send-dry-run.sh kernel|bluez`, then
+>        the real send with the app password typed in the operator's terminal.
+>     3. Before it: both heads, 14908123, and Clifton's 14903178.
+> - **CO-02 v2 (2026-10-22 12:40 UTC, superseded):** `patch/v2/kernel/` and
+>   `patch/v2/bluez/`. In round 2 the six reviewers asked for no more investigation. Checking one
+>   suggestion found a gap: patch 3 v1 missed SCO connections the remote device set up, which are
+>   never linked. This was reproduced with the park, and v2 waits after both branches. Focused
+>   runs 27/27, no difference in the full suites, 32 logs clean.
+>   Evidence: `experiments/results-2026-10-22-v2.md`. Round 3 asked on patch 3 v2. Still the
+>   operator's decisions: Cc (Hitalo Souza, Aldo Ariel Panzardo, Pauli Virtanen, Cen Zhang from
+>   `get_maintainer.pl`), `Cc: stable`, send timing, the ELL files in `/usr`.
+> - **CO-02 v1 ready for review round 2 (2026-10-22 09:20 UTC, superseded by v2):** `patch/v1/`: three kernel
+>   patches (patch 3 closes the timeout race), `Fixes: e6720779ae61` (bisected) for 1 and 3,
+>   `8a5b0135d4a5` for 2; the reworked BlueZ test; the cover letter. 27/27 focused runs, suites
+>   unchanged, 26/26 logs clean. Evidence `experiments/results-2026-10-22.md`. The operator's
+>   decisions (Cc, `Cc: stable`, send timing) still open.
+> - **CO-05 + CO-26** (mesh): two-patch series written and re-checked (`patch/`), next an
+>   outside-review package. **CO-04:** no Tested-by for Igor Putko's 14888791 (it adds a
+>   `hdev->lock` / `cmd_sync_work_lock` inversion, 9 of 12 boots); a review reply is the
+>   operator's call.
+> - **New issues 2026-10-21:** `U13` (a headset known only from LE advertising cannot be set up;
+>   Flags `0x00` read as no Flags; BlueZ master too; CO-27), `U14` (WirePlumber 0.4.17's
+>   auto-switch forces Handsfree for any listed recording, undoes a manual A2DP choice and saves
+>   the wrong profile; fixed by the 0.5 rewrite; CO-29), a new `U4` trigger. The operator: every
+>   bug is registered even if fixed upstream; 24.04 stays (26.04 declined); upstream fixes
+>   become 24.04 backport candidates.
+> - **Machine side effect, the operator decides:** `scripts/ci-local.sh`'s BuildEll ran
+>   `make install` of ELL into `/usr` (`/usr/lib/libell*`, `/usr/include/ell`, `/usr/lib/
+>   pkgconfig/ell.pc`, 2026-10-21 07:41): owned by no package, not in the linker cache,
+>   bluetoothd does not link it. Since 2026-10-22 the tool installs to `tmp/ci-local/ell-prefix`;
+>   the old files are archived (`archive/ell-usr-install-20261021/`) and still in `/usr` until
+>   the operator decides.
+> - **Permission prompts:** every prompt seen came from shapes that bypass existing rules
+>   (`bash <script>`, scratchpad scripts, `env VAR=`, `sleep`, `/usr/bin/<prog>`). A PreToolUse
+>   guard (`/root/exp/private-config/hooks/bash-shape-guard.py`, 22 tested cases, live) now
+>   refuses them with the fix. Waiting for the operator: A) remove 42 dead one-off rules from
+>   `settings.local.json`; B) add rules for `contributions/*/experiments/*`,
+>   `cache/sparse/sparse`, `clang --analyze` (not `/var/lib/bluetooth`: link keys).
+> - **CI:** green again since `6d17ce2` (the missing executable bit of
+>   `scripts/compare-tester-verdicts.py` had failed every run since `ccb46dc`).
+> - **Next:** CO-02's hardware run and send (above); then CO-05's review package; CO-28
+>   (Tested-by on the next 6.1/5.15/5.10 stable reviews) when their mails come.
+> - **Method lessons of 2026-10-22:**
+>   - `git apply --check` inside this repository's `tmp/` silently skips the paths and says
+>     "applies"; use GNU `patch -p1 -F0 --dry-run -d <dir>`;
+>   - tester verdict lines carry colour codes; strip them before grepping
+>     (`tmp/co02-round5/summarize.sh`);
+>   - checkpatch catches a "commit" and its ID split across lines;
+>   - kernel.org's tag fetch can stall: take the tag from the GitHub stable mirror and compare
+>     blob ids.
+>
+> **New, 2026-10-21 (updated 02:55 UTC, the state at hand-off):**
+> - **Workers started 2026-10-21 (the operator's go):** W2 on CO-02 (U7 reproducer in QEMU,
+>   then a candidate fix; raw output in `tmp/co02-w2/`) and W4 on CO-05 + CO-26, then CO-04
+>   (mesh lock patch, the failed-add fix, then a test of 14888791; `tmp/co05-w4/`). QEMU only,
+>   nothing sent, no commits in the main checkout; each reports in its final message, which is
+>   checked before anything enters a dossier. W1 (CO-01) and W3 (CO-03) come after them.
+>   **W2 done** (re-checked 04:44 UTC): CO-02 reproduced and a kernel series plus a BlueZ test
+>   drafted, see the dossier; next an outside review package, then the operator. W4 running.
+> - **Operator, 2026-10-21:** every bug met is registered, fixed upstream or not, so it is not
+>   confused with later ones; an upstream fix makes it an Ubuntu 24.04 backport candidate. The
+>   machine stays on 24.04 (the offered 26.04 upgrade is declined for now: too fresh).
+> - **U14 (new, live 06:40 to 06:49):** WirePlumber 0.4.17's auto-switch forces Handsfree for
+>   Chrome's dictation on the laptop microphone and undoes a manual A2DP choice; fixed by the
+>   0.5 rewrite, not in 24.04; CO-29.
+> - **U13 (new, live 06:20 local):** the Shure AONIC 50 cannot be set up: LE-only pairing,
+>   refused by the headset; BlueZ reads its Flags `0x00` as no Flags; dossier CO-27. Waiting
+>   for the operator's retry in pairing mode.
+> - **CO-10 SENT 2026-10-21 03:05:42 UTC** on the operator's word: v6, server 250, all 20
+>   recipients, Message-ID `<20261021030542.1434603-1-yaroslav.voytovych@gmail.com>` (STATUS
+>   row; the dossier's `log.md`). The app password is revoked (535 on 587, all 12 seen in the
+>   session transcript). Open: watch the thread and the 6.6.160 release. The lines below are
+>   the state just before the send.
+> - **CO-10 was ready to send and waited for the operator.** The Tested-by reply to the
+>   6.6.160-rc2 review is due **Thu 22 Oct 07:53 UTC**. The file is
+>   `contributions/CO-10-stable-6.6.160-rc2/drafts/reply-6.6.160-rc2-v6.eml`; all four
+>   reviewers approved v6 at `1eda14a` (`reviews/2026-10-21-recheck-of-v6.md`).
+>   - `scripts/mail-lint.sh` flags only the two quoted lines; `scripts/reply-headers-check.py`
+>     passes 7/7 against `tmp/stable-6.6.160-rc2-cover-20261020.txt`.
+>   - Checked at 02:51 UTC: linux-stable-rc `linux-6.6.y` is still `c578c158a368`, and
+>     kernel.org's stable-review directory has only rc1 and rc2. Repeat both before the send.
+>   - **The send:** in the operator's own terminal, the command in the dossier README:
+>     `git send-email --suppress-cc=self --suppress-cc=body` on the v6 file, dry run first.
+>     **Not `--suppress-cc=all`:** with a file whose recipients are in its own `Cc:` header,
+>     "all" also drops that header; the dry run of 02:50 UTC showed the reply going to Greg
+>     alone. (Earlier sends named `--to`/`--cc` explicitly, so "all" was right for them.) The
+>     app password is typed only there and **revoked** in Google afterwards;
+>     `smtp-login-check.sh` confirms the 535. Then record the send in the dossier's `log.md`.
+> - **CI:** GitHub has been queueing runs for hours. `757abef` (v5 and the scan fix) is being
+>   watched; `bd2f3cf`, `a7b3ea2` and `784931a` are green; `f509c3d`, `d4c760f`, `7b19bdb`,
+>   `22feea9`, `0cdb319`, `af0b988`, `67e927f`, `a3e4a0d` and `ccb46dc` were still queued.
+>   Check them with `devtools/ci --recent 15`.
+> - **The contribution dossiers** under `contributions/` (index `contributions/README.md`).
+>   Next by the operator's earlier plan: four workers W1 to W4 (CO-01, CO-02 with
+>   U7's hci_vhci reproducer first, CO-03, CO-04/05), not started yet, awaiting the
+>   operator's go.
+> - **Done:** the source investigation task and four answers, checked (reviews/
+>   2026-10-21T00*); the U7 kernel mechanism (CO-02); the rule that published upstream
+>   addresses are public, in §7, with the scan's exact-token list (`comms/2026-10-21T0204Z`,
+>   `…T0225Z` to the second maintainer); §9.11 on the shutdown step; the 10-19 abrupt stop in
+>   STATUS.
+> - **Story:** HISTORY.md, "Dossiers, a source review, and the first stable-review
+>   Tested-by".
+>
+> **New, 2026-10-19:**
+> - **The test-suite work is wholly on `main`** (STATUS, "Repository health"), and with it the
+>   decode fix asked on 10-18: `--columns` at twelve `btmon` call sites, checked against a stub
+>   that prints as the real `btmon` (`2eef340`); the Enhanced setup counted as a setup;
+>   `install.sh`'s reload block skipped under `--tools-only`; the access audit in a workflow of
+>   its own, so CI's verdict stays near 2.5 minutes. None of it is on the laptop yet.
+> - **BT-4's abort reproduced** on the laptop's `bluez` build, off the laptop, on a synthetic
+>   capture: a privileged MGMT open aborts `btmon` at 80 columns or fewer (`fdbfe0018`'s
+>   subject). The live capture decoded at 80, so `bin/bt-trace` now passes `--columns=200`;
+>   whether that ends the live aborts, the first trial after the deploy shows.
+> - **Before the deploy**, of phase 1 of `reviews/review-reaction-plan-20261019-045758.md`:
+>   SR1 and T1, asked of the test-suite maintainer test-first. Done the same day: no tool
+>   advises `--apply` or `bt-mode mitigation` (VI1, DS1, MODE1's hints), and `bt-mode status`
+>   prints each state once (MODE2); the deploy rehearsal in CI checks VI1 and MODE2.
+> - **U12, registered the same evening:** at 19:33:58 Chrome opened the microphone while A2DP
+>   was starting; WirePlumber's switch to Handsfree released the transport mid-Start, and
+>   BlueZ 5.72 turned that into an AVDTP Abort the MOMENTUM 4 never answered, so A2DP was
+>   gone until a reconnect (`EX-063`, `EX-064`; raw evidence, unfiltered, in the git-ignored
+>   `archive/incidents/20261019-a2dp-lost/`). Fixed upstream by `a14d59725` (5.80); not in
+>   Ubuntu 24.04. The contribution is a backport request, after a tested build.
+> - **The running bluetoothd is our 08-25 build from 5.72-0ubuntu5.5**, so it lacks the five
+>   CVE fixes Ubuntu shipped in 5.72-0ubuntu5.7 (STATUS, the machine's warnings). The next
+>   build is from 5.8's source with the BT-7 fixes and `a14d59725`; installing it is the
+>   operator's.
+>
+> **New, 2026-10-18:**
+> - **A1 and A2 sent** 06:39 +0200 to linux-bluetooth only, as two mails (patchwork 14897668 /
+>   14897669; Message-IDs `<20261018043903.1756818-1-…>`, `<20261018043911.1756937-1-…>`).
+>   Each is judged on its own, by master, patchwork state and replies. An unchanged v2 only
+>   if it is not in master, is still `new`, has no reply, and not before 2026-11-01. The bot:
+>   A1 all PASS; A2 TestFunctional FAIL on `pair_bredr`, a known upstream flake that Pauli
+>   Virtanen's pending 14879847 fixes (STATUS row; nothing to the list). The app password, deleted by the operator,
+>   gets 535 on 465.
+> - **The closer's SCO decode never matched.** Written to a pipe, `btmon -r` fits each header
+>   line into 80 columns and shortens the name (`< HCI Comman.. (0x01|0x0028) plen 17`). It
+>   ignores `COLUMNS`; only `--columns=<n>` widens it. Seven tools run it that way: two can never
+>   match, three fail in part (the audit:
+>   `comms/2026-10-18T0615Z-from-main-branch-maintainer-to-test-suite-maintainer.md`; STATUS,
+>   "The investigation machine"). Trial 14's `sco-params.txt` is wrong (correction beside it);
+>   trials 01–03 cannot be checked; `EX-060` (U7) was re-read at full width and stands. The fix,
+>   with a `btmon` stub that shortens as the real one does, is asked of the test-suite maintainer.
+> - **The decode's cost.** On `main` the close writes its row before the decode (`c1883b4`).
+>   The installed 09-18 closer decodes about 48 GB of captures first, far past the 90 s stop
+>   timeout. So, at the operator's request, **the 10-13 boot's trial (E3 #1) was closed by hand
+>   at 17:03** with `main`'s closer from the checkout (`scripts/trial-close-now.sh --reopen`),
+>   after two read-only snapshots (`scripts/trial-snapshot.sh`). Its row: 13 SCO setups, all
+>   decoded at full width in both paths, 0 timeouts. E3 #2 is open since 17:05:04, mid-boot.
+>   The installed `autostop` and `bt-mark` probe the controller at shutdown; the deploy
+>   (operator's decision) ends that.
+> - **Upstream re-checked.** The 10-17 stable release candidates carry BT-8 and BT-9 (6.6, 6.1)
+>   and the QCA9377 entry (6.6, 6.1, 5.15, 5.10). Ubuntu's `-39`, in proposed, lacks the entry.
+>   #1554's answer came from a second affected user. Two more authors' mesh patches are to be
+>   weighed (14880941, 14888791). Tools: `scripts/stable-rc-check.sh`,
+>   `scripts/stable-queue-check.sh`, `scripts/patchwork-checks.sh`.
+>
+> **Carried over, still true:**
+> - **Pre-send gate for BlueZ:** `scripts/pre-send-check.sh` (in order, on today's master) ·
+>   checkpatch and gitlint with BlueZ's configs · `make check` · unit cases with and without the
+>   fix · clang static analyzer on the touched files, base vs patched · their CI on base and on
+>   base plus ours (§8) · `git send-email --dry-run`. Never a lint-only respin (the a2dp v2 of
+>   09-21 was applied on top of v1; A1 removes the duplicate).
+> - **App passwords:** one per send, used on one command, deleted by the operator afterwards;
+>   `scripts/smtp-login-check.sh` confirms (587; 465 when 587 does not connect).
+> - **Mesh work, in order** (v3 is never sent as one series): (3) the power-off fix: weigh
+>   `87a49b610708` and the two new patches first, then a review reply on Jiale Yao's 14864878,
+>   no Tested-by (operator's call); (4) Count as a question to the list; (5) the core
+>   ownership patches after four prerequisites; (6) the duration overflow (M-2). Documents in
+>   `docs/mesh-tester-ci/` (its README gives the reading order); KCSAN only on the 4-CPU
+>   wrapper. Noted, out of the series: the `MGMT_INDEX_NONE` asymmetry in
+>   `mgmt_unregister_index()`.
+> - **Machine:** E3 on `-38`; a trial is always open, so `devtools/save` skips the suite
+>   locally and `devtools/ci <sha> --wait` runs after every push. The installed tools are the
+>   09-18 copies (the operator installs). The desktop capture is only partly live since the
+>   reboots (STATUS).
+> - **Rules:** nothing sent without the operator's word; attribution is the project author's
+>   only; other authors' patches are tested exactly as posted; a kernel finding is recorded on
+>   `main` as it is found; maintainer mail carries only what the maintainer needs; only the
+>   operator touches the laptop's Bluetooth or kernel; clock ranges are written
+>   "HH:MM:SS to HH:MM:SS" (`scripts/fix-time-ranges.py`).

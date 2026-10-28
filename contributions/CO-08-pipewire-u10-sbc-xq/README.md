@@ -23,9 +23,10 @@ cannot play SBC-XQ.
 ## Next
 
 1. **The operator:** the Settings test sound on each mode, with a `bt-mark` after each.
-2. If SBC-XQ is silent, separate the channel mode from the bitrate: Dual Channel at a low
-   bitpool, and joint stereo at a high one. Reviewer 1 suggested the same with the exact
-   accepted parameters.
+2. If SBC-XQ is silent, separate the channel mode from the bitrate: Dual 26 against Stereo 52
+   (channel mode at equal bitrate) and Dual 26 against Dual 39 (bitrate). Not a joint-stereo
+   504 kb/s stream: it would exceed the speaker's advertised bitpool 53 (`log.md`, RV8; this item
+   said "joint stereo at a high one" until 2026-10-28).
 3. Read how PipeWire's maintainers took earlier quirk entries, and what evidence they asked
    for.
 4. Then a merge request with the entry and the evidence.

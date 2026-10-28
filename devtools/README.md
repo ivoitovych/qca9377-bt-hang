@@ -20,6 +20,21 @@ directory touches Bluetooth.
 | `access-audit [--self-test] [-- cmd]` | run the suite under **strace** and list every file access, made or attempted, that reached the machine outside `tests/access-allowlist` |
 | `mutate <file> [--lines A-B] \| --self-test` | flip each decision in a file, one at a time, and list the ones the suite does not notice |
 | `mutants <file>` | the list `mutate` works from: every live operator, awk programs inside shell included |
+| `save <message-file> [--no-push]` | index the exhibits, then validate, scan, commit and push: one command, one argument, no shell syntax (the usual way to commit) |
+| `status` | is everything updated, rebuilt, logged, collected, committed and pushed? (git, the install state, `bt-mode`, the open trial) |
+| `ci [<sha>] [--wait] [--recent N] [--failed]` | the CI verdict for a commit, read on the machine |
+| `branch-status [--unique] [--files] [--fetch]` | how every branch stands against `main`, and whether any holds work `main` lacks |
+| `held status \| sync \| commit <msgfile> \| edit` | the held `kernel/*` branch without hand-typed git chains; pushes only to `private` |
+| `review-open [--all] [--counts]` | every action-register row in `reviews/README.md` whose status is not closed |
+| `awk-coverage [--uncovered] [--min N]` | statement coverage for the awk programs |
+| `py-coverage [--uncovered] [--min N]` | line coverage for the Python the repository ships |
+| `test-comprehension [<unit>] [--min N]` | per-unit comprehensiveness (modes, refusals, seams, branches), which line coverage is not |
+| `access-classify <strace-log> --root … --scratch …` | every file access in an strace log, sorted by where it landed (used by `access-audit`) |
+| `coverage-exclude` | not a script: the lines `coverage` must not count, each with its reason |
+| `repo-scan-public-addresses`, `repo-scan-quoted-examples` | not scripts: addresses upstream already published, which the scan lets through; made-up addresses that outside reviews quote, each allowed in its own file only |
+| `hooks/` | `pre-push` (the publish scan on every push), `install-hooks.sh`, `test-pre-push.sh` |
+| `journal-speed/` | the benchmarks behind the fast kernel-journal path (`bench*.sh`) |
+| `test-bt-journal-files.sh`, `test-journal-fast.sh` | tests for `tools/bt-journal-files` (on a fake journal) and for the fast journal path (equal to plain journalctl, on the real journal, read-only) |
 
 ```bash
 ./devtools/check

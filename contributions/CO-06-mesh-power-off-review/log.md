@@ -35,3 +35,9 @@ the reply is decided.
 - **Suggestion for the operator's decision:** one message on the mesh transmit path covering CO-04's
   lock inversion, this patch's unlocked completion and the stranded backlog, instead of separate
   replies on each thread. Missing: the re-run, the text, the decision.
+
+## 2026-10-28, later — the combined message is withdrawn
+The operator chose for CO-04 an independent fix of the mesh use-after-free, sent as its own patch
+(CO-04's `log.md`). CO-04's finding is therefore not part of any reply here; a reply on this patch,
+if the operator wants one, covers only this patch's own points (the unlocked completion, the
+stranded backlog, the device-removal behaviour), after the re-run.

@@ -27,7 +27,8 @@ set->duration = cpu_to_le16(duration / 10);
 - **The design need:** this is why the 2026-10-05 review asked for "a timeout design, not a
   clamp" (for example, a host-side timer for long timeouts).
 - **Pauli Virtanen's `8a8d51eeedeb`** fixed only the mesh case, whose timeout is already in
-  milliseconds. It is not in mainline yet.
+  milliseconds. It reached mainline in the 7.4 merge window (as `8a8d51eeedeb`, found in
+  mainline master on 2026-10-28); no stable line carries it yet.
 
 ## Next
 

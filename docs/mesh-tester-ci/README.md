@@ -26,5 +26,17 @@ mesh submission row) and in `BRIEF.md`. Reading order for the work itself:
 `tools-phase5/` keeps the build and run scripts of the QEMU harness as they were used; they ran
 on the development host, never in this repository's suite.
 
+Also here, not in the reading order above (listed 2026-10-28):
+- the review briefs: `REVIEW-TASK.md`, `REVIEW-TASK-SERIES.md`, `REVIEW-TASK-SERIES-V2.md`,
+  `RESEARCH-AND-REVIEW-TASK-2026-10-05.md`;
+- the retest of another author's patch (Hui Peng's 14831271): `retest-review-2026-10-06.md`, `-2-`
+  and `-3-` (the report itself is `retest/mesh-tx-leak/REPORT.md`);
+- `validation-extra-paths-2026-10-05.md`, beside `validation-2026-10-05.md`;
+- M-2's arithmetic: `duration-overflow-note.md`, `-v2.md`, `-v3.md` (the latest is v3; STATUS's
+  M-2 row and CO-12 carry it on);
+- the logs' checksums: `logs-phase5-SHA256SUMS`, `logs-val2-SHA256SUMS`,
+  `logs-bluez-2026-10-07-SHA256SUMS`, `logs-bluez-d84171e6c-SHA256SUMS`, and the clang analyzer
+  output of 2026-10-08 (`logs-clang-analyze-2026-10-08/`).
+
 One document of that period is not here yet: the comparison of the power-off fix with another
 author's posted patch, which waits until a reply on his thread is decided.

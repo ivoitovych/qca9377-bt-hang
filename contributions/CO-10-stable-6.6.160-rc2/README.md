@@ -47,6 +47,10 @@ in `log.md`.
 
 ## Next
 
+**Done (2026-10-28):** sent 2026-10-21 and recorded in `log.md`; 6.6.160 was released the same
+day; no reply to the report (STATUS). Nothing is owed. The steps below are the procedure as it
+was followed, kept for the next stable-review report (CO-28).
+
 1. **The operator's decision, then the send.**
    - The operator runs, in their own terminal, first with `--dry-run`, then without:
 

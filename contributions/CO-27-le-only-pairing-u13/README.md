@@ -39,11 +39,16 @@ bearers.
 
 ## Next
 
-1. The operator retries with the headset in BR/EDR pairing mode, or with
-   `btmgmt pair -c 3 -t 0 <address>`: does BR/EDR pairing work, and does the headset still hold
-   an old bond?
-2. A reproducer for the BlueZ side: BlueZ's emulator advertising Flags `0x00` with a BR/EDR
-   side; today `SupportedTechnologies` stays `LE`.
-3. Search BlueZ's list and GitHub issues, and GNOME's tracker, for existing reports.
+Done: the retry in pairing mode (2026-10-21 06:40:44, it paired over BR/EDR, `log.md`); a search
+of BlueZ's GitHub issues (2026-10-28): no report of Flags `0x00`, and one sibling, **BlueZ #2700**
+(2026-10-22, open, no reply): a dual-mode headset paired over LE because BlueZ knows only its LE
+side. **U18** (`docs/issues.md`, 2026-10-24) is the next step of the same path: once paired over
+LE, `Connect` succeeds with only the LE GATT services connected.
+
+1. A reproducer for the BlueZ side: BlueZ's emulator advertising Flags `0x00` with a BR/EDR
+   side; today `SupportedTechnologies` stays `LE`. Then one for U18.
+2. A patch candidate for each defect (U13: Flags presence; U18: count only non-LE services).
+3. Possibly first, a comment on #2700 with our two cases and evidence (no real addresses).
+4. The BlueZ mailing list and GNOME's tracker are not searched yet.
 
 **Decides:** sending anything is the operator's decision.
