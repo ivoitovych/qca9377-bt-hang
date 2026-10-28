@@ -166,7 +166,7 @@ directory still holds 386 files. The rest is the operator's decision (STATUS).
 | opening: stable versions out (they age), "which is worse" out | — |
 | archive sentence narrowed to "check whether its USB ID selects the QCA setup path and whether the files load" | — |
 
-`awk 'length > 72'`: none; no non-ASCII. The evidence link is the only line left to fill.
+`awk 'length > 72'`: none; no non-ASCII. The evidence link is pinned to `0632d42052eb` (the commit with the final `EVIDENCE.md`; the URL answers 200); it is the one line over 72 columns.
 
 **Firmware provenance** (reviewers 4, 6), now in `EVIDENCE.md`: `dpkg -S` gives
 `linux-firmware-qualcomm-wireless` `20240318.git3b128b60-0ubuntu3.1`; `/var/log/dpkg.log*`
