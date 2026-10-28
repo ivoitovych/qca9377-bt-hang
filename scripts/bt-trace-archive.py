@@ -20,6 +20,7 @@ Sources:   $BT_TRACE_DIR       (default /var/log/bt-health/trace)
            $BT_TRACE_KEEP_DIR  (default /root/bt-trace-keep; copies kept by hand)
 Archive:   $BT_ARCHIVE_DIR     (default <project>/archive/bt-trace, git-ignored)
 Budget:    $BT_ARCHIVE_BUDGET_GB (default 10)
+Names:     $BT_TRACE_PREFIX    (default "bt-"; the desktop capture's files are "hci-")
 A capture counts as closed when it is not the newest file in its directory and has not
 been modified for $BT_ARCHIVE_SETTLE_SEC seconds (default 120).
 """
@@ -40,6 +41,10 @@ ARCHIVE_DIR = os.environ.get(
     os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "archive", "bt-trace"))
 BUDGET = float(os.environ.get("BT_ARCHIVE_BUDGET_GB", "10")) * 1024 ** 3
 SETTLE = int(os.environ.get("BT_ARCHIVE_SETTLE_SEC", "120"))
+# The desktop capture (bt-capture, /var/log/bt-health/capture) names its files hci-*.btsnoop
+# and prunes beyond 400 files too (2026-10-29: its August files, the sources of EX-055's
+# survey, were gone); the same tool archives it with BT_TRACE_PREFIX=hci-.
+PREFIX = os.environ.get("BT_TRACE_PREFIX", "bt-")
 MANIFEST = os.path.join(ARCHIVE_DIR, "MANIFEST.tsv")
 CHUNK = 1 << 20
 
@@ -67,7 +72,7 @@ def sha256_decompressed(path):
 
 def closed_captures(directory, source):
     try:
-        names = [n for n in os.listdir(directory) if n.startswith("bt-") and n.endswith(".btsnoop")]
+        names = [n for n in os.listdir(directory) if n.startswith(PREFIX) and n.endswith(".btsnoop")]
     except FileNotFoundError:
         return []
     paths = [os.path.join(directory, n) for n in names]

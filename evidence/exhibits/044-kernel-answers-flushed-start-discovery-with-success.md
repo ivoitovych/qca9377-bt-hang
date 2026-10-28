@@ -64,7 +64,8 @@ Verbatim, 37 line(s), exit status 0.
 |---|---|
 | captured | `2026-09-19T16:19:03+02:00` |
 | kernel | `7.0.0-31-generic` |
-| boot id | `a840c7c0` |
+| capture boot id | `a840c7c0` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

@@ -102,7 +102,8 @@ long is evidence the reboot did not complete on its own terms.
 |---|---|
 | captured | `2026-08-14T21:53:43+02:00` |
 | kernel | `7.0.0-28-generic` |
-| boot id | `0343c15d` |
+| capture boot id | `0343c15d` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

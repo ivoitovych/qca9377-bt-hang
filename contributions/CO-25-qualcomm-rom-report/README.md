@@ -1,17 +1,20 @@
 # CO-25 - Report to Qualcomm on the QCA9377 ROM firmware
 
-**State:** **ready to send** (2026-10-28): `drafts/report-v2.txt`, approved by all six
-outside reviewers in the final go/no-go round at `e2e0e00` (`reviews-2026-10-28.md`). Not
-sent; it waits for the operator's own read and word. The sendable `.eml` and a dry run
-(RCPT TO checked) are made on the day, before the send command is given.
+**State (2026-10-29): v3 written, not sent.** A sixth, wider review round (seven reviewers:
+usefulness, list practice, precedents) found v2 sendable in substance but not verbatim:
+13d3:3504 is a Broadcom part, the 197/202 sentence misleads, "users are covered" is too broad,
+the recipients came from the wrong file (`reviews-2026-10-28.md`, round 6). `drafts/report-v3.txt`
+fixes these, each claim checked (`log.md`, 2026-10-29); `EVIDENCE.md` is the page its link
+points to. Next: the operator's read of v3 and the choice of link; then the `.eml`, a dry run
+with RCPT TO checked, and the operator's word. `report-v2.txt` is superseded.
 
 **Comes from:** BT-1 (BRIEF section 0, Foundation). The kernel fix is upstream
 `dc16388d45ec`; this report asks what the ROM firmware does wrong, which is not
 known, and covers CO-22 (are other ROME USB IDs missing from btusb's table).
 
-**The mail:** `drafts/report-v2.txt` (67 lines, ASCII, max 71 columns). To
-linux-bluetooth; Cc Zijun Hu, Bartosz Golaszewski, linux-arm-msm, Marcel Holtmann,
-Luiz Augusto von Dentz. `drafts/report-v1.txt` is the superseded first draft.
+**The mail:** `drafts/report-v3.txt` (ASCII, max 72 columns). To linux-bluetooth; Cc
+Marcel Holtmann, Luiz Augusto von Dentz, Zijun Hu, Shuai Zhang, Bartosz Golaszewski, Tibor
+Harcsa. `drafts/report-v1.txt` and `report-v2.txt` are superseded.
 **Claims with their exhibits (for reviewers):** `log.md`.
 
 The recipients section and the reviewer questions below are from v1; the reviews

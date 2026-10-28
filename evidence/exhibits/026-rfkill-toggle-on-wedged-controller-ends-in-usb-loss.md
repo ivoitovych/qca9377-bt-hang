@@ -162,7 +162,8 @@ the device. It is the third such demonstration and the first not authored by us.
 |---|---|
 | captured | `2026-08-16T15:47:00+02:00` |
 | kernel | `7.0.0-28-generic` |
-| boot id | `60ddb417` |
+| capture boot id | `60ddb417` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

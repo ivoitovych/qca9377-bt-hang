@@ -90,5 +90,22 @@ with tempfile.TemporaryDirectory(dir=PROJECT_TMP, prefix="prove-bt-trace-archive
     code, out = run(env)
     expect(code == 0 and "archived 1" in out, "the next good run archives the pending capture", out)
 
+    # The desktop capture's hci-* files: ignored under the default prefix, archived with
+    # BT_TRACE_PREFIX=hci- (the newest one left open, as for bt-*).
+    desk, darch, dkeep = (os.path.join(tmp, d) for d in ("desk", "desk-archive", "desk-keep"))
+    os.makedirs(desk)
+    os.makedirs(dkeep)
+    hci = ["hci-20261010-193534.btsnoop", "hci-20261010-194953.btsnoop"]
+    for i, name in enumerate(hci):
+        shutil.copy(os.path.join(trace, SAMPLES[i]), os.path.join(desk, name))
+        os.utime(os.path.join(desk, name), (time.time() - 1000 + i, time.time() - 1000 + i))
+    denv = dict(env, BT_TRACE_DIR=desk, BT_TRACE_KEEP_DIR=dkeep, BT_ARCHIVE_DIR=darch)
+    code, out = run(denv)
+    expect(code == 0 and "archived 0" in out, "default prefix: hci-* captures are not picked up", out)
+    code, out = run(dict(denv, BT_TRACE_PREFIX="hci-"))
+    expect(code == 0 and sorted(os.listdir(darch)) == sorted(["MANIFEST.tsv", hci[0] + ".zst"]),
+           "BT_TRACE_PREFIX=hci-: the closed hci-* capture archived, the newest left", out)
+    expect(all(os.path.exists(os.path.join(desk, n)) for n in hci), "prefix run: no capture deleted")
+
 print(f"{failures} failure(s)")
 sys.exit(1 if failures else 0)

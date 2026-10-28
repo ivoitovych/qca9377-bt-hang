@@ -90,6 +90,19 @@ SCO socket debug on (16 of 16 functions); PipeWire log level 3; WirePlumber's an
 pipewire-pulse's debug in effect; the GNOME Settings launcher overrides present. Read 2026-10-18,
 before the restart, the four recorders were inactive and the SCO debug off. `bt-ui-capture stop`
 and `unstage` undo everything; stopping it is the operator's decision.
+⚠️ **The desktop HCI capture deletes its oldest files (found 2026-10-29).** `bt-capture`
+(`/var/log/bt-health/capture/hci-*.btsnoop`, running) keeps the newest 400 (`--keep` default) and
+deletes the oldest at each rotation; the raw-capture archiver covered only `bt-trace`'s `bt-*`
+files and has been stopped since 10-13. The directory now starts at `hci-20261010-193534`: every
+August and September file is gone, among them the sources of EX-055's supported-commands survey
+(its output is kept in `results/supported-commands-survey-2026-09-26/`) and the 10-10 15:02
+captures behind BT-9's correction (its extraction output stays in BRIEF §5). On 10-29, 386 of 400
+were used. `scripts/desktop-capture-archive.sh` (the same archiver with `BT_TRACE_PREFIX=hci-`,
+into `archive/hci-capture/`, 3 GB budget, never deletes) archived the oldest 40 that day,
+`hci-20261010-193534` to `hci-20261011-121614` (2560 MB → 897 MB, each verified, 0 failed,
+`MANIFEST.tsv` 40 rows; all 386 originals still in place). At that ratio the other 346 would take
+about 7.7 GB more. The rest, and whether to run it on a timer, is the operator's decision (CO-25
+`log.md`, 2026-10-29).
 
 ## The investigation machine
 

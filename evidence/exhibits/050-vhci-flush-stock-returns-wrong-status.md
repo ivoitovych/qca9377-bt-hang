@@ -63,7 +63,8 @@ exit=1
 |---|---|
 | captured | `2026-09-24T10:38:53+02:00` |
 | kernel | `7.0.0-31-generic` |
-| boot id | `ef992099` |
+| capture boot id | `ef992099` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

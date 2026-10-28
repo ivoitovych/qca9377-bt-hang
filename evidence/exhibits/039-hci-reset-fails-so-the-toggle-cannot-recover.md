@@ -132,7 +132,8 @@ this exhibit exists partly so the next wedge does not need to be toggled to lear
 | kernel | `7.0.0-30-generic` |
 | bluez | `5.72-0ubuntu5.5` + 31 Ubuntu patches + `patches/bluez/0001`, `0002` |
 | device | `13d3:3503` QCA9377 (ROME) |
-| boot id | `c8342e9b` |
+| capture boot id | `c8342e9b` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | exit status | `0` |
 | redacted | `no` |
 | relates to | `EX-032` (same GUI appearance, different fault), `EX-033`, `EX-036`, `EX-038` |

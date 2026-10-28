@@ -132,7 +132,8 @@ should not be cited for each other. `/sys/fs/pstore` is empty here, as it was th
 |---|---|
 | captured | `2026-08-16T18:55:00+02:00` |
 | kernel | `7.0.0-28-generic` |
-| boot id | `ea26d5d0` |
+| capture boot id | `ea26d5d0` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

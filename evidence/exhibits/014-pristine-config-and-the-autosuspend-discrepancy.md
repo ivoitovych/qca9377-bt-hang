@@ -48,7 +48,8 @@ CONFIG_BT_HCIBTUSB_AUTOSUSPEND=y
 |---|---|
 | captured | `2026-08-13T02:20:08+02:00` |
 | kernel | `7.0.0-28-generic` |
-| boot id | `d28ebac2` |
+| capture boot id | `d28ebac2` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

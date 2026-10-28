@@ -60,7 +60,8 @@ for 4 m 48 s with no watchdog running.
 |---|---|
 | captured | `2026-08-13T05:35:00+02:00` |
 | kernel | `7.0.0-28-generic` |
-| boot id | `e3f66b3e` |
+| capture boot id | `e3f66b3e` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `1` |
 | redacted | `no` |

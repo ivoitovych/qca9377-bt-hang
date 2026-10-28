@@ -96,3 +96,54 @@ Item by item:
    sentence; the ID question first.
 6. Signed "Iaroslav Voitovych", as on the kernel commits. Laptop model: not added.
 Not sent; the operator's yes is needed.
+
+## 2026-10-29 — v3 after the sixth review round (`reviews-2026-10-28.md`, round 6)
+
+`drafts/report-v3.txt`, from reviewer 6's proposed text as the operator relayed it, with the
+other reviewers' corrections; every changed claim checked here:
+
+| claim in v3 | check |
+|---|---|
+| entry in v7.3, 7.2.10, 6.18.56, 6.12.113, 6.6.160; 6.1/5.15/5.10 in release candidates | `curl -s https://www.kernel.org/releases.json` (2026-10-29): 6.1.190, 5.15.223, 5.10.272 newest, all dated 10-15, before the 10-17 candidates; the released versions as in C15 |
+| 0b05:1868 `d54601f21faf`, 0b05:1825 `cfa67a1dbfd9`, both for the `0x2005` BLE-scan errors | `git -C cache/linux show --no-patch --format=%B cfa67a1dbfd9 d54601f21faf` (both messages quote `unexpected event for opcode 0x2005`; 1825 is "QCA6174 … ASUS Z170I PRO GAMING", 1868 "QCA Rome 0x302") |
+| 3502/3504 not mentioned | 3504 is Broadcom BCM4371C2 (public Broadcom firmware list); `git -C cache/linux grep -n "0x13d3, 0xff" origin/master -- drivers/bluetooth/btusb_main.c` → the 13d3 Broadcom vendor match |
+| E1: `BTUSB_QCA_ROME` only, no `BTUSB_WIDEBAND_SPEECH`, no reset callback | `grep -n "^+" patches/diag/btusb-e1-qca-rome-setup-no-reset.patch` |
+| status with neither `QCA_PATCH_UPDATED` nor `QCA_SYSCFG_UPDATED` | EX-055 (`status 0x20: rampatch will load, nvm will load`); `QCA_PATCH_UPDATED 0x80` in `btusb_main.c` |
+| same three headset models | EX-024 + EX-053 (MOMENTUM 4, thinkplus-GM2 pro, AONIC 50); E1 used MOMENTUM 4 and GM2 pro (EX-058), E3 MOMENTUM 4 and AONIC 50 (EX-057) |
+| stream ran about 7.3 s before the Disconnect | EX-053: link up 02:09:36.719, Disconnect 02:09:44.050 |
+| USB probe in one failure | EX-052 (two `GET_DESCRIPTOR`, `-110`) |
+| recipients | `git -C cache/linux grep -n -A8 "^QUALCOMM BLUETOOTH DRIVER" origin/master -- MAINTAINERS`; `btusb_setup_qca()` at `btusb_main.c:3900`, no `btqca.h` include; addresses from `git log` (Harcsa: `dc16388d45ec`; Shuai Zhang: `82855073c108` and four more) |
+
+`awk 'length > 72'`: none; no non-ASCII. The evidence link is a placeholder for
+`EVIDENCE.md` at the commit pinned on the day of the send.
+
+**Exhibit provenance, all exhibits (reviewer 7's EX-052 finding).** 46 exhibits carried the
+pre-2026-10-02 single `| boot id |` row, which `bt-exhibit` filled with the boot at capture time.
+`scripts/exhibit-relabel-boot-id.py --write` turned each into `| capture boot id |`
+plus `| evidence boot ids |`, the latter from the 32-hex ids in the exhibit's own `$` command
+lines, or "none named by the command" when it selects boots by index (`-b -1`), exactly as
+`bt-exhibit` writes them now. Rows with a note after the id (EX-029, 034, 038, 040, 042, 043)
+were written by hand, already say which boot they mean, and were left alone. History check:
+the only earlier changes to such rows are EX-038's hand correction (`92ef01c`) and
+EX-057/058 (`b12144a`). `git diff -U0` shows no other line changed. EX-052 now reads
+capture `e90c9c57`, evidence `5ee9ab78`.
+
+**The desktop captures behind EX-055's survey are gone.** `/var/log/bt-health/capture` now
+starts at `hci-20261010-193534`; the installed `bt-capture` keeps the newest 400 files
+(`--keep`, default 400) and deletes the oldest, and 386 were present on 10-29. No copy of the
+August files is on the disk (`find / -xdev -name "hci-202608*"`: none). So reviewer 6's test
+(Read Local Version Information in a 197-command boot, a 200-command boot and an E1 boot) cannot
+be run. The survey's own output is kept:
+`results/supported-commands-survey-2026-09-26/supported-commands-survey.tsv` (copied from
+`tmp/`, same SHA-256 `b735467d…`; 149 × 197, 6 × 200, 4 × 0, 33 × 202). A safe test remains for
+later: after a Windows session, a warm reboot into Linux with E3; if Windows' patch survives,
+`btusb_setup_qca()` skips the download and the boot shows no "QCA: patch rome" line. The
+operator's call; not needed for the report.
+
+**The next files to go, archived.** `scripts/bt-trace-archive.py` took only `bt-*` names; it
+now reads `BT_TRACE_PREFIX` (default `bt-`), and its proof has three more checks (hci-* ignored
+by default, archived with the prefix, nothing deleted): 17 of 17 pass. The wrapper
+`scripts/desktop-capture-archive.sh --once-limit 40` archived `hci-20261010-193534` to
+`hci-20261011-121614` into `archive/hci-capture/`: "archived 40 (2560 MB -> 897.4 MB), skipped
+0, failed 0, pending 345; archive 0.88 GB of 3 GB"; `MANIFEST.tsv` 40 rows; the capture
+directory still holds 386 files. The rest is the operator's decision (STATUS).

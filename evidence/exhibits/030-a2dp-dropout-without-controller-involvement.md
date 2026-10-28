@@ -124,7 +124,8 @@ recorded so the device list is not read as a list of failures.
 |---|---|
 | captured | `2026-08-17T17:54:14+02:00` |
 | kernel | `7.0.0-28-generic` |
-| boot id | `e9399c8c` |
+| capture boot id | `e9399c8c` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME); peer `Tronsmart T8` |
 | exit status | `0` |
 | redacted | `yes` — peer address replaced with a documented placeholder |

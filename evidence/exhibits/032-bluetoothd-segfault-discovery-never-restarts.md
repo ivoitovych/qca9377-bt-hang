@@ -131,7 +131,8 @@ adapter resumes discovery, which would make this recoverable without a reboot.
 | captured | `2026-08-19T00:57:06+02:00` |
 | kernel | `7.0.0-28-generic` |
 | bluez | `5.72-0ubuntu5.5` |
-| boot id | `e9399c8c` |
+| capture boot id | `e9399c8c` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) — healthy throughout |
 | exit status | `0` |
 | redacted | `no` |

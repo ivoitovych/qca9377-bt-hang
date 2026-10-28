@@ -82,7 +82,8 @@ and that the 45–66 s figure is retired — not replaced.
 |---|---|
 | captured | `2026-08-16T02:49:30+02:00` |
 | kernel | `7.0.0-28-generic` |
-| boot id | `95d14e7a` |
+| capture boot id | `95d14e7a` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

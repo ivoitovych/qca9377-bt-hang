@@ -42,7 +42,8 @@ first USB-level failure:
 |---|---|
 | captured | `2026-08-12T05:25:07+02:00` |
 | kernel | `7.0.0-28-generic` |
-| boot id | `c1315c25` |
+| capture boot id | `c1315c25` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |

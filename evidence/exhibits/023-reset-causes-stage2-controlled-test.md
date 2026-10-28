@@ -122,7 +122,8 @@ complete.
 |---|---|
 | captured | `2026-08-15T05:02:31+02:00` |
 | kernel | `7.0.0-28-generic` |
-| boot id | `30bf5509` |
+| capture boot id | `30bf5509` |
+| evidence boot ids | none named by the command (it selects by index or not by boot) — see the window above |
 | device | `13d3:3503` QCA9377 (ROME) |
 | exit status | `0` |
 | redacted | `no` |
