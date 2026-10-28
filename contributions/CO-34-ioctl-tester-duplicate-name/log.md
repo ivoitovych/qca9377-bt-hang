@@ -56,6 +56,9 @@ source. Left: the send-day freshness check, the dry run, the operator's word.
   06:16:20 +0100`, **Message-ID `<20261028051620.3167775-1-yaroslav.voytovych@gmail.com>`**.
   The file sent is the one in `patch/send/` (SHA-256 `c3ac8cee…7567a`; a row in
   `docs/sent-mails.tsv`).
-- **The password:** in no local settings file afterwards (grep). The operator revokes it; the
-  login-only check follows.
+- **The password:** in no local settings file afterwards (grep). The operator deleted it in the
+  Google account (and saw the mail in the account's Sent folder). Login-only check, fingerprint
+  `2addad34`: on 465 ssl the server closed the connection mid-AUTH (no verdict, as for all 14
+  passwords tried in one burst); on 587 tls `AUTH LOGIN→334 user→334 pass→535` ("5.7.8 Username
+  and Password not accepted"): **revoked**.
 - **Next:** the bot's checks and replies on patchwork; the patchwork id goes into the inventory.
