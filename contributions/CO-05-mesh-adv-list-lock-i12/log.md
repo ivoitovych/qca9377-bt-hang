@@ -71,3 +71,24 @@ trailers (none).
   were on the shape, before they were written); `scripts/kernel-preflight.sh` and
   `scripts/bot-ci-local.sh` on `47d4d9f67e92`; a test-report paragraph; the operator's decision,
   including whether to send while the mesh queue is stalled.
+
+## 2026-10-28 — six outside reviews of `24d76cd` (relayed by the operator; not consent)
+All six: the locking of 1/2 is right for its scope (`req_lock` → `hdev->lock` as in
+`hci_clear_adv_sync()`; no wait under the lock; only the instance number crosses the unlock); keep
+2/2 separate; no damage reproducer needed. Points to act on, each to be verified first:
+1. **Reviewer 6, a pre-existing defect inside our hunk:** `mesh_send_sync()` returns
+   `MGMT_STATUS_BUSY` (0x0a, positive) to `mesh_send_start_complete()` → `mgmt_status(err)`, which
+   reads a positive value as an HCI status index, so the client may get a wrong status. Proposed:
+   a separate one-line patch returning `-EBUSY`, `Fixes: b338d91703fa`. **Verify in source.**
+2. **Reviewers 2 and 5: Hui Peng's earlier proposal** (2026-09-19, "Fix mesh_tx Use-After-Free and
+   leak in mesh_send()", v3) reportedly took `hdev->lock` in `mesh_send_sync()` too; reviewer 2
+   says it was withdrawn as superseded by `71af682ba469`. **Verify** (which version our Tested-by of
+   10-06 was on, whether `71af682ba469` exists, its state) and record the overlap.
+3. **Reviewer 4:** patch 1's testing paragraph should say the 45-boot KCSAN run had both patches.
+4. **Reviewers 2 and 5:** consider `Fixes: b338d91703fa` on 2/2. **Reviewer 6:** 2/2's first
+   sentence could read "When hci_add_adv_instance() fails, mesh_send_sync() keeps the error and
+   carries on".
+5. **Reviewers 3 and 5:** `hci_schedule_adv_instance_sync()` still reads advertising state
+   unlocked, and `mesh_tx` is dereferenced before the lock — both pre-existing; say so, and review
+   CO-05 together with CO-04's coming fix of the same function.
+Then: regenerate on today's base, preflight, the bot's CI, cover letter, recipients.

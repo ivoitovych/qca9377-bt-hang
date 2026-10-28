@@ -170,6 +170,30 @@ hours (`R2-13`).
 >      replies may have no reachable copy), and a hash guard in `devtools/save` and the pre-push
 >      hook so a sent file never changes again; any mismatch recorded with its cause;
 >   3. CO-04: an independent fix for syzbot's mesh_send_sync use-after-free (`log.md` there).
+> - **Running 2026-10-28 ~04:30, six background workers, none commits or sends; review each
+>   result, then commit (do NOT run `devtools/save` while they run: it stages their partial files):**
+>   (1) the sent-mail inventory and comparison (`docs/sent-mails.tsv`, `scripts/sent-mail-check.py`,
+>   `tmp/sent-check/REPORT.md`); (2) CO-35's backports for 6.18.y, 6.12.y, 6.6.y
+>   (`contributions/CO-35-…/backports/`, `experiments/results-backports-2026-10-28.md`); (3) CO-11:
+>   the btmon debdiff for noble and its Launchpad text (`contributions/CO-11-…/ubuntu/`), and whether
+>   the functional harness touches the host's Bluetooth (`harness-check-2026-10-28.md`); (4) CO-19:
+>   PipeWire's U1 fix backported to noble as a debdiff (`contributions/CO-19-pipewire-u1-codec-line/`);
+>   (5) CO-23: the one-off events' root causes from what was kept (`contributions/CO-23-one-off-events/`);
+>   (6) CO-25: the report to Qualcomm, drafted (`contributions/CO-25-qualcomm-rom-report/`).
+>   **Finished and recorded (not yet committed):** (1) 22 identical, 0 differ, 3 without a copy
+>   (`results/sent-mail-check-2026-10-28.md`); (3) both CO-11 halves (`log.md`); (4) CO-19 prepared
+>   as a hand-port, laptop test pending; (6) CO-25 drafted; (5) CO-23: the 09-08 bluetoothd crash is a
+>   use-after-free in BlueZ `a2dp_reconfig()`, still in master (fix drafted, ASan reproduction next);
+>   BT-6 benign, seen 12 times in August (records to correct). Still running: (2) the backports.
+>   **Outside reviews of `24d76cd` (six, relayed 10-28; actions in each `log.md`):** CO-34 approved
+>   by all (send on the operator's word). CO-35: add 7.3.y (`stable/linux-7.3.y` exists; v7.3 lacks
+>   the pair: test it), a plain 7.2.13 control (running), qualify the bisect sentence. CO-05: verify
+>   reviewer 6's `MGMT_STATUS_BUSY`-from-a-cmd_sync-callback defect (a third patch, `-EBUSY`) and
+>   Hui Peng's earlier `mesh_send_sync()` locking proposal; message fixes.
+>   Packages for outside review, pushed `24d76cd`: CO-34, CO-35 (7.2.y request; its draft now says
+>   the older lines' backports follow), CO-05. Reopened on the operator's word: CO-11, CO-19, CO-23,
+>   CO-25 (`ae34a3c`). After these: CO-04's independent fix; the sent-mail hash guard in the save
+>   step and pre-push hook.
 > - **CI:** red from 10-22 to 10-28, unread (a trial open all week). The install step and the
 >   journal seams are fixed (`deaafab`, `14ae3af`); the suite passes. One floor stays red:
 >   `tools/bt-journal-files` has no suite tests, asked of the test-suite maintainer

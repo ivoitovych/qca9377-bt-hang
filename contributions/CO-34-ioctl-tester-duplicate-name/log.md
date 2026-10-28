@@ -38,3 +38,9 @@
   but not the duplicate name. With 21/27's `ioctl-tester.c` part applied, ours still applies
   (offset −2). So the two do not collide in either order.
 - **Ready:** nothing is missing but the operator's yes and an app password.
+
+## 2026-10-28 — six outside reviews of `24d76cd` (relayed by the operator; not consent)
+All six approve sending it alone, unchanged. Reviewer 6: the duplicate is already in `0da759f1a36d`
+(so the `Fixes:` is right) and the patch compiles with `-Wall -Wextra -Werror` on master; reviewer
+4: it and Luiz Augusto von Dentz's pending GLib-removal patch apply in either order to identical
+source. Left: the send-day freshness check, the dry run, the operator's word.

@@ -1,0 +1,171 @@
+diff -Nru pipewire-1.0.5/debian/changelog pipewire-1.0.5/debian/changelog
+--- pipewire-1.0.5/debian/changelog	2026-07-08 23:47:47.000000000 +0000
++++ pipewire-1.0.5/debian/changelog	2026-10-28 04:40:37.000000000 +0000
+@@ -1,3 +1,14 @@
++pipewire (1.0.5-1ubuntu3.4) noble; urgency=medium
++
++  * d/p/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch:
++    Cherry-pick (HFP/HSP part) of upstream 805e5cf9c "bluez5: show only
++    codec profiles also for HFP/HSP". In Hands-free mode the device no
++    longer offers a codec-less "Headset Head Unit (HSP/HFP)" profile
++    beside the per-codec ones, so the codec can be seen and selected in
++    GNOME Settings. (LP: #NNNNNNN)
++
++ -- Iaroslav Voitovych <yaroslav.voytovych@gmail.com>  Wed, 28 Oct 2026 04:40:37 +0000
++
+ pipewire (1.0.5-1ubuntu3.3) noble-security; urgency=medium
+ 
+   * SECURITY UPDATE: NULL pointer dereference in RAOP module.
+diff -Nru pipewire-1.0.5/debian/patches/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch pipewire-1.0.5/debian/patches/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch
+--- pipewire-1.0.5/debian/patches/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch	1970-01-01 00:00:00.000000000 +0000
++++ pipewire-1.0.5/debian/patches/bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch	2026-10-28 04:40:37.000000000 +0000
+@@ -0,0 +1,141 @@
++Description: bluez5: show only codec profiles also for HFP/HSP
++ In Hands-free mode the device offered, besides the per-codec profiles
++ ("Headset Head Unit (HSP/HFP, codec CVSD/mSBC)"), a codec-less
++ "Headset Head Unit (HSP/HFP)" profile. Desktop codec selectors (GNOME
++ Settings) show it as the first line; it resolves to whichever codec the
++ link happens to use, so the codec cannot be seen or chosen from that line.
++ .
++ Do not list the codec-less profile. The best supported codec keeps the
++ base name "headset-head-unit", as already done for A2DP, so selecting
++ that name from the command line or from saved state still works.
++ CVSD is always listed (HSP-only devices have no codec negotiation).
++ .
++ Backport of the HFP/HSP part of the upstream commit to PipeWire 1.0.5.
++ The upstream commit also removes the codec argument from the A2DP/BAP
++ transport lookups and the "fallback profile" handling; that depends on
++ the BAP rework (a15416994) and LC3-SWB (fe412784a) that 1.0.5 does not
++ have, and is not needed for the HFP/HSP behaviour, so it is left out.
++Author: Pauli Virtanen <pav@iki.fi>
++Origin: backport, https://gitlab.freedesktop.org/pipewire/pipewire/-/commit/805e5cf9c115e3d0498f78e9e00e3ae93178e47d
++Bug-Ubuntu: https://launchpad.net/bugs/NNNNNNN
++Forwarded: not-needed
++Last-Update: 2026-10-28
++---
++This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
++--- a/spa/plugins/bluez5/bluez5-device.c
+++++ b/spa/plugins/bluez5/bluez5-device.c
++@@ -1083,22 +1083,22 @@
++ 		}
++ 		break;
++ 	case DEVICE_PROFILE_HSP_HFP:
+++		this->props.codec = 0;
++ 		if (this->bt_dev->connected_profiles & SPA_BT_PROFILE_HEADSET_HEAD_UNIT) {
++-			t = find_transport(this, SPA_BT_PROFILE_HFP_HF, this->props.codec);
+++			/* There is at most one HFP/HSP transport, use its codec */
+++			t = find_transport(this, SPA_BT_PROFILE_HFP_HF, 0);
++ 			if (!t)
++ 				t = find_transport(this, SPA_BT_PROFILE_HSP_HS, 0);
++ 			if (t) {
++-				if (t->profile == SPA_BT_PROFILE_HSP_HS)
++-					this->props.codec = 0;
++-				else
++-					this->props.codec = get_hfp_codec_id(t->codec);
+++				this->props.codec = get_hfp_codec_id(t->codec);
++ 				emit_node(this, t, DEVICE_ID_SOURCE, SPA_NAME_API_BLUEZ5_SCO_SOURCE, false);
++ 				emit_node(this, t, DEVICE_ID_SINK, SPA_NAME_API_BLUEZ5_SCO_SINK, false);
++ 			}
++ 		}
++ 
++-		if (spa_bt_device_supports_hfp_codec(this->bt_dev, get_hfp_codec(this->props.codec)) != 1)
++-			this->props.codec = 0;
+++		/* HFP/HSP profiles are only listed with a codec: never leave it unset */
+++		if (!this->props.codec)
+++			this->props.codec = SPA_BLUETOOTH_AUDIO_CODEC_CVSD;
++ 		break;
++ 	default:
++ 		return -EINVAL;
++@@ -1311,8 +1311,6 @@
++ 			      nodes_changed);
++ 		break;
++ 	case DEVICE_PROFILE_HSP_HFP:
++-		if (spa_bt_device_supports_hfp_codec(this->bt_dev, get_hfp_codec(this->props.codec)) != 1)
++-			this->props.codec = 0;
++ 		nodes_changed = (connected_change & SPA_BT_PROFILE_HEADSET_HEAD_UNIT);
++ 		spa_log_debug(this->log, "profiles changed: HSP/HFP nodes changed: %d",
++ 			      nodes_changed);
++@@ -1497,8 +1495,9 @@
++ 		return codec + DEVICE_PROFILE_LAST;
++ 
++ 	if (profile == DEVICE_PROFILE_HSP_HFP) {
++-		if (codec == 0 || (this->bt_dev->connected_profiles & SPA_BT_PROFILE_HFP_AG))
++-			return profile;
+++		/* HFP/HSP profiles are only listed with a codec */
+++		if (codec == 0)
+++			return SPA_ID_INVALID;
++ 
++ 		return codec + DEVICE_PROFILE_LAST;
++ 	}
++@@ -1764,31 +1763,45 @@
++ 		/* make this device profile visible only if there is a head unit */
++ 		uint32_t profile = device->connected_profiles &
++ 		      SPA_BT_PROFILE_HEADSET_HEAD_UNIT;
+++		unsigned int hfp_codec = get_hfp_codec(codec);
+++		unsigned int idx;
+++
++ 		if (profile == 0) {
++ 			return NULL;
++ 		}
+++
+++		/* HFP/HSP will only enlist codec profiles */
+++		if (hfp_codec == 0) {
+++			errno = EINVAL;
+++			return NULL;
+++		}
+++		if (hfp_codec != HFP_AUDIO_CODEC_CVSD &&
+++				spa_bt_device_supports_hfp_codec(this->bt_dev, hfp_codec) != 1) {
+++			errno = EINVAL;
+++			return NULL;
+++		}
+++
++ 		name = spa_bt_profile_name(profile);
++ 		n_source++;
++ 		n_sink++;
++-		if (codec) {
++-			bool codec_ok = !(profile & SPA_BT_PROFILE_HEADSET_AUDIO_GATEWAY);
++-			unsigned int hfp_codec = get_hfp_codec(codec);
++-			if (spa_bt_device_supports_hfp_codec(this->bt_dev, hfp_codec) != 1)
++-				codec_ok = false;
++-			if (!codec_ok) {
++-				errno = EINVAL;
++-				return NULL;
++-			}
++-			name_and_codec = spa_aprintf("%s-%s", name, get_hfp_codec_name(hfp_codec));
+++
+++		name_and_codec = spa_aprintf("%s-%s", name, get_hfp_codec_name(hfp_codec));
+++
+++		/*
+++		 * Give base name to highest priority profile, so that best codec can be
+++		 * selected at command line with out knowing which codecs are actually
+++		 * supported
+++		 */
+++		for (idx = HFP_AUDIO_CODEC_MSBC; idx > 0; --idx)
+++			if (spa_bt_device_supports_hfp_codec(this->bt_dev, idx) == 1)
+++				break;
+++		if (hfp_codec < idx)
++ 			name = name_and_codec;
++-			desc_and_codec = spa_aprintf(_("Headset Head Unit (HSP/HFP, codec %s)"),
++-						get_hfp_codec_description(hfp_codec));
++-			desc = desc_and_codec;
++-			priority = 1 + hfp_codec;  /* prefer msbc over cvsd */
++-		} else {
++-			desc = _("Headset Head Unit (HSP/HFP)");
++-			priority = 1;
++-		}
+++
+++		desc_and_codec = spa_aprintf(_("Headset Head Unit (HSP/HFP, codec %s)"),
+++				get_hfp_codec_description(hfp_codec));
+++		desc = desc_and_codec;
+++		priority = 1 + hfp_codec;  /* prefer msbc over cvsd */
++ 		break;
++ 	}
++ 	default:
+diff -Nru pipewire-1.0.5/debian/patches/series pipewire-1.0.5/debian/patches/series
+--- pipewire-1.0.5/debian/patches/series	2026-07-08 23:47:28.000000000 +0000
++++ pipewire-1.0.5/debian/patches/series	2026-10-28 04:40:37.000000000 +0000
+@@ -35,3 +35,4 @@
+ CVE-2026-14324.patch
+ CVE-2026-14330-pre1.patch
+ CVE-2026-14330.patch
++bluez5-show-only-codec-profiles-also-for-HFP-HSP.patch

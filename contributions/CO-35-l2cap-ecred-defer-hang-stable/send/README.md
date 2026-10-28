@@ -15,7 +15,9 @@ the request of 2026-10-02, `patches/diag/stable-request-dc16388d45ec.md`).
 ## Why only 7.2.y
 The pair cherry-picks onto 7.2.13 and builds, and there it turns the hang into a pass. On 6.18.59
 it applies but does not build (the helpers use lock annotations 6.18 lacks); 6.12.y and 6.6.y also
-need a reworked hunk. Those lines would be a separate request with backports, if wanted.
+need a reworked hunk. **Backports for 6.18.y, 6.12.y and 6.6.y are being prepared** (2026-10-28),
+each built and run the same way; when they pass, they go as a backport series with this request or
+right after it.
 
 ## Evidence (`../experiments/results-2026-10-28.md`)
 - The case: BlueZ l2cap-tester "L2CAP Ext-Flowctl Server - Accept 2 Close 1" (added by Pauli
