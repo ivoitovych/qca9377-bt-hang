@@ -1,7 +1,6 @@
 # Contribution roadmap (as of 2026-09-26)
 
-*Written on the private branch `plan/contributions` on 2026-09-26 and ported to `main` on
-2026-10-09 unchanged in substance; the current state of every item is `docs/STATUS.md`.*
+*Written on 2026-09-26 and kept separately until 2026-10-09, unchanged in substance; the current state of every item is `docs/STATUS.md`.*
 
 One row per defect this project has found or met: the upstream project, how the defect is
 known, whether current upstream already fixes it, and what the contribution would be.
@@ -78,7 +77,7 @@ stable takes "applies and fixes a real bug"; a note that only 7.0 was run is eno
 
 ## 2. MGMT: flushed commands answered as success
 
-Held branch `kernel/mgmt-flush-status` (private). Sent 2026-09-24 19:11 after four
+Held branch `kernel/mgmt-flush-status`. Sent 2026-09-24 19:11 after four
 external reviews; the list's CI passed 13 of 14 (its standing `mesh-tester` failure).
 No action until about 2026-10-01; then a polite ping on the thread if there is no reply.
 

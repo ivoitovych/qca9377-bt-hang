@@ -149,7 +149,7 @@ files.
   (reproduced with a synthetic trace).
 - **5.2 CONFIRMED.** `devtools/access-classify:375-377` treats non-project executables under
   `/usr/local/bin`, `/usr/local/lib` and `/opt` as benign (reproduced).
-- **5.3 CONFIRMED, handover.** `devtools/held sync` pushes to `private` with no validate, scan or
+- **5.3 CONFIRMED, handover.** `devtools/held sync` pushes to the second remote with no validate, scan or
   identity check; its conflict-path commit uses a hard-coded identity (`held:19`, `held:59`).
 - **5.4 CONFIRMED.** `devtools/repo-scan`'s MAC pattern also matches dash-separated timestamps, so
   a staged file with such a name fails the scan (the tree is clean today).

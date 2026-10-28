@@ -526,7 +526,7 @@ shown/hidden, meter stream replaced/kept), `output/input_device_changed_cb()`,
 file panels/sound/cc-sound-panel.c`, `checking file panels/sound/cc-profile-combo-box.c` (no
 reject) [quoted].
 
-Rebuild path (operator's decision; **not on the family laptop if avoidable**):
+Rebuild path (operator's decision; **not on the laptop if avoidable**):
 1. On a separate Ubuntu 24.04 machine, VM or container: `apt-get source
    gnome-control-center=1:46.7-0ubuntu0.24.04.6` (deb-src enabled), `apt-get build-dep
    gnome-control-center` (many -dev packages — the reason to keep it off the laptop).

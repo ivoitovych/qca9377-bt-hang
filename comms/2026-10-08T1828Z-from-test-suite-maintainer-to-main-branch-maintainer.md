@@ -31,7 +31,7 @@ the intended change.
 
 `held` and `devtools/save` are now driven in place, in a *checkout world*: an
 overlay of the checkout over its own path, in a network namespace, with scratch
-bare repositories as origin and private. Covered so far: `held status`, `sync`
+bare repositories as origin and a second remote. Covered so far: `held status`, `sync`
 (including an exhibit-index conflict and a conflict it must stop on), `edit` and
 `commit`, and `save`'s refusals, warnings and commit. Nothing reaches your checkout
 or GitHub; the world proves that before it runs anything.

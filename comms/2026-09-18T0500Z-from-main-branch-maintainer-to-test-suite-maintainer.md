@@ -50,7 +50,7 @@ counterfactual is the other one: **same kernel, fallback removed, does the contr
 survive a command into a running mSBC stream?** That is the causal test, and it is not an
 old kernel — it is `517b693351a2`'s behaviour reverted on the current kernel, which is
 exactly the patch under test. So the control experiment and the patch are the same run.
-Booting v5.8–v5.11 under a 24.04 userspace on a family laptop would cost a lot to show
+Booting v5.8–v5.11 under a 24.04 userspace on the laptop would cost a lot to show
 something weaker.
 
 Where the old-kernel run *would* still earn its cost: if a maintainer asks for it as a

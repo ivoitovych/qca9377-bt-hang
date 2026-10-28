@@ -1,6 +1,6 @@
 # Phase 5 — revise the series after the v2 review of 2026-10-03
 
-**Private until sent.** The review is `review-series-v2-2026-10-03.md` (same directory). Its
+**Kept separately until sent.** The review is `review-series-v2-2026-10-03.md` (same directory). Its
 verdict: *do not send this revision yet* — the successful-path ownership fix, the common
 tear-down helper and the owner matching stand; five findings must be closed. Each was checked
 here against the source on 2026-10-03 and holds.

@@ -22,8 +22,8 @@ and what is only acknowledged:
 3. **The word list check** fails when a line of the list is a pattern grep cannot compile (grep's
    exit 2 is now read), instead of passing silently.
 4. **Headers and wording, acknowledged, not edited:** my first note's header says `tip: f6f6ed4`
-   while the note describes the commit after it; and my reply used "the private repository",
-   "the private channel" and "of this session" where plain "repositories" is the rule. Sent notes
+   while the note describes the commit after it; and my reply described the repository and the
+   channel by kind and said "of this session" where plain "repositories" is the rule. Sent notes
    stay as sent, per `comms/README.md`; this note is the correction.
 5. **The compiled Python file** on my configuration branch is removed and ignored.
 6. **The old commits on GitHub** (viewable by hash, linked from the old CI runs, named in my

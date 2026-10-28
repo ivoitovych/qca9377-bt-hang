@@ -2,10 +2,9 @@
 
 Everything in this directory, and the patches in [`patches/mesh-tester/`](../../patches/mesh-tester/),
 was written on the branch `diag/mesh-tester-ci` between 2026-09-29 and 2026-10-08, while kernel
-findings were kept off `main` until their patch was sent. The branch lived in the project's
-private repository; its files were ported to `main` on 2026-10-09 as a new commit, under the
-same paths. So banners such as "Private until sent" and links into the private repository
-describe that period, not the files' status now.
+findings were kept off `main` until their patch was sent. The branch was kept separately;
+its files were ported to `main` on 2026-10-09 as a new commit, under the same paths. So
+banners such as "Kept separately until sent" describe that period, not the files' status now.
 
 Where things stand is in [`docs/STATUS.md`](../STATUS.md) (rows `M-1`, `M-2`, `M-3` and the
 mesh submission row) and in `BRIEF.md`. Reading order for the work itself:

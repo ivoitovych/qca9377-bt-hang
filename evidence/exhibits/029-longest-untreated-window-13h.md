@@ -77,7 +77,7 @@ inside it is clean. What happened *after* is not:
 
 This is `BL-08` behaving exactly as predicted the night before, and it was accepted
 knowingly: the operator declined the workaround because it depended on whoever shuts the
-laptop down remembering to say so, and on a family machine that is not a control. The
+laptop down remembering to say so, and on a machine in daily use that is not a control. The
 right conclusion is not that this window is spoiled — the 13 hours before the shutdown are
 untouched and that is the claim — but that **`autostop` must stop probing**, which is now
 the first item of `BL-08`.
@@ -102,7 +102,7 @@ three orders of magnitude, and the claim that has survived every observation sur
 one: **a USB collapse has never begun before something touched the controller.**
 
 **What it does not establish.** It remains a **lower bound**. 47338.1 s is what the window
-reached, not what it would have reached, and the censoring — a family needing the laptop —
+reached, not what it would have reached, and the censoring — the laptop's users needing it —
 is unrelated to the device but still censoring. `n = 5` untreated windows.
 
 **The trigger interval is an outlier again.** `0x0428` at `21:41:49.739021` → first command

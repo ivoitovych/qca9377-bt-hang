@@ -1,6 +1,6 @@
 # Source review task — Bluetooth defects on a QCA9377 (`13d3:3503`) laptop
 
-*(The brief as given on 2026-09-26, when it was kept private until the fixes it led to were
+*(The brief as given on 2026-09-26, when it was kept separately until the fixes it led to were
 sent; ported to `main` on 2026-10-09.)*
 
 ## What is asked
@@ -152,6 +152,6 @@ up (and led to `EX-053`). A PipeWire issue, not kernel; worth a look only if che
    experiment you would run first.
 3. Anything else the code shows that we have not listed.
 
-Constraints: the machine is a family laptop — experiments are short, and a wedge costs the
-household until the next power cycle. Do not propose unloading or rebinding `btusb` on the
+Constraints: the machine is a laptop — experiments are short, and a wedge costs the
+laptop's users until the next power cycle. Do not propose unloading or rebinding `btusb` on the
 live system (`EX-046`); module changes go in via `updates/` and a cold boot.

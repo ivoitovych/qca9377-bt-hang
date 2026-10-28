@@ -5,11 +5,11 @@ markers, which carried no content, were removed when it was ported to `main` on 
 
 ## Executive summary
 
-I reviewed the private task document, its current `BRIEF.md`, the repository’s exhibit index and the most relevant exhibits, then traced the corresponding paths in current Linux Bluetooth/USB/xHCI source and BlueZ. I also reviewed the upstream history around the exact QCA9377 USB ID `13d3:3503`, especially Linux commits `517b693351a2`, `baac6276c0a9`, `55981d354181`, and `dc16388d45ec`. The task’s central requirement is correctly framed: the evidence already establishes the symptoms; the remaining job is to identify which source mechanisms are actually capable of producing them and which hypotheses should be discarded.
+I reviewed the task document, its current `BRIEF.md`, the repository’s exhibit index and the most relevant exhibits, then traced the corresponding paths in current Linux Bluetooth/USB/xHCI source and BlueZ. I also reviewed the upstream history around the exact QCA9377 USB ID `13d3:3503`, especially Linux commits `517b693351a2`, `baac6276c0a9`, `55981d354181`, and `dc16388d45ec`. The task’s central requirement is correctly framed: the evidence already establishes the symptoms; the remaining job is to identify which source mechanisms are actually capable of producing them and which hypotheses should be discarded.
 
 My main conclusion is that **the strongest source-level lead for BT-1 is not a generic Linux alt-1 framing bug, and it is not xHCI bandwidth starvation. It is the fact that this exact QCA9377 USB ID was being driven as a generic Bluetooth USB controller, without the QCA ROME initialization path that current upstream Linux now explicitly assigns to it.** Commit `dc16388d45ecbd3be0d8c9424dbbaa2c81806578` adds exactly `13d3:3503` as `BTUSB_QCA_ROME | BTUSB_WIDEBAND_SPEECH`; its commit message specifically says the device requires Qualcomm ROME firmware handling and wideband-speech support to function properly, and mentions the same `0x2005` BLE failure seen in this repository.
 
-That does **not** yet prove that missing QCA setup causes the fatal SCO/alt-1 wedge. The evidence does prove, however, that several earlier causal stories are too strong. An Enhanced Setup Synchronous Connection was answered and followed by roughly 17 minutes of survival even though the transport still selected alt 1, so neither “that setup command wedges it” nor “entering alt 1 immediately and necessarily wedges it” survives the newer evidence. The private brief explicitly retracts earlier interpretations along those lines.
+That does **not** yet prove that missing QCA setup causes the fatal SCO/alt-1 wedge. The evidence does prove, however, that several earlier causal stories are too strong. An Enhanced Setup Synchronous Connection was answered and followed by roughly 17 minutes of survival even though the transport still selected alt 1, so neither “that setup command wedges it” nor “entering alt 1 immediately and necessarily wedges it” survives the newer evidence. The brief explicitly retracts earlier interpretations along those lines.
 
 The most important source finding around the observed `len 27 mtu 9` pattern is:
 
@@ -240,7 +240,7 @@ Several hypotheses can now be retired or downgraded:
 
 | Hypothesis | Status | Reason |
 |---|---|---|
-| `HCI_NOTIFY_ENABLE_SCO_TRANSP` event 5 is the synchronous connection completion | **Ruled out** | It is a driver notification about transparent SCO handling; the private brief explicitly retracts the former interpretation. |
+| `HCI_NOTIFY_ENABLE_SCO_TRANSP` event 5 is the synchronous connection completion | **Ruled out** | It is a driver notification about transparent SCO handling; the brief explicitly retracts the former interpretation. |
 | The synchronous-connection setup command itself always wedges the controller | **Ruled out** | Enhanced setup was answered and an episode survived ~17 minutes. |
 | Selecting alt 1 alone immediately wedges it | **Ruled out** | Same surviving episode still traversed the alt-1 selection. |
 | 27 bytes → three × 9-byte descriptors violates USB HCI framing | **Ruled out** | That pattern matches generic Linux ISO construction and the USB transport's alt-1 model. |

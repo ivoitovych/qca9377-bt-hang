@@ -1,6 +1,6 @@
 # Diagnostic btusb builds — not for upstream
 
-Kept on a private branch until 2026-10-09. Each build changes **one** variable against the
+Kept separately until 2026-10-09. Each build changes **one** variable against the
 failing baseline (stock `btusb`, `13d3:3503` matched as a generic device, legacy `0x0428`,
 wideband, alt 1).
 

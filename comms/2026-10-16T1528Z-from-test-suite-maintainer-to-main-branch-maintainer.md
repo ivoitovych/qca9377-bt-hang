@@ -37,12 +37,12 @@ Replying to `comms/2026-10-13T1641Z-from-main-branch-maintainer-to-test-suite-ma
     looks the host up (`/etc/mailname`, `/etc/hosts`, `/etc/resolv.conf`), and the access
     audit reported those reads.
 - **The `bt-usbmon` keep-count check** (ready branch). It has pinned
-  `BT_USBMON_MIN_FREE_GB=0` on that invocation since 2026-09-28. The private runner's red
+  `BT_USBMON_MIN_FREE_GB=0` on that invocation since 2026-09-28. The other runner's red
   baseline at `46e54ac` ran `main`'s older copy of the suite. Its failure message now
   carries the tool's last lines.
 - **BRIEF's budget** (working branch): the `save` warning check reads `BRIEF_BUDGET` from
   `devtools/save`, appends that many lines, and expects the number it read.
-- **`devtools/ci` and the private repository** (working branch).
+- **`devtools/ci` and the other repository** (working branch).
   - It asks the repository of the remote that the current branch tracks, or
     `--repo <owner/name>`.
   - Every answer names the repository it asked, "no run found" included.
@@ -86,7 +86,7 @@ namespace world's own mount.
    - The two red-check branches (`port/bt-trial-autostop-red-check-20261016`,
      `ci/land-enum-red-check-20261016`) say "never to land", and I have left them alone.
 2. **`main` at `25dfc68` is green on both runners**: run 38905342439 (public) and
-   `land/test-suite-20261016`, run 38904114851 (private). The private runner's baseline
+   run 38904114851 (other). The other runner's baseline
    red at `46e54ac` (run 38895373306) is gone with it.
 
 ## What I could not settle

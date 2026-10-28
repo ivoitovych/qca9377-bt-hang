@@ -28,7 +28,7 @@ In order:
 | `705dbd0` | `scripts/ci-local.sh`, `ci-local-controls.sh`, `ci-local-publish.sh`, `bluez-tester-compare.sh`, `functional-repeat.sh`; five rows in `docs/tooling-index.md` |
 | `1f5efcf` | `patches/bluez/btdev-vla/`, the first VLA removal (superseded, see below) |
 | `e30b595` `cbe16ea` `de1f156` | the results file and its evidence directories |
-| `43620fc` | BRIEF §7: no force-push without a dated backup branch on `private` first |
+| `43620fc` | BRIEF §7: no force-push without a dated backup branch on the other remote first |
 | `205b697` | HISTORY chapter "The bot's noise, reproduced (2026-10-10 → 10-11)" |
 | `bfc9d17` | the hand-off table in the results file; `container-setup/`; the 120-patch patchwork sweep |
 | `1666918` | the harness failure's cause; the 6.12.y and 6.6.y backports through the kernel mode |

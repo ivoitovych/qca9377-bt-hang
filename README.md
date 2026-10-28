@@ -273,7 +273,7 @@ coverage floors and the publish scan on every push; `devtools/ci` reads its verd
   placeholders and verifies none survived. `devtools/repo-scan` refuses to publish
   otherwise. Evidence published from 2026-10-11 on uses **pseudonymous device addresses**
   instead: the manufacturer prefix is real, the rest random, and the same device has the
-  same pseudonym in every file. Each file says so; the mapping is kept privately. A raw HCI
+  same pseudonym in every file. Each file says so; the mapping is kept separately. A raw HCI
   capture also carries pairing keys, so it is published only as cut, key-blanked windows,
   never whole.
 - **Tests:** [`tests/README.md`](tests/README.md).

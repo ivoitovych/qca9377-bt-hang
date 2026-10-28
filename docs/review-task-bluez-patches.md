@@ -138,7 +138,7 @@ Any form you like, with these properties:
   rather than resolved by you; we will resolve them.
 - If something cannot be settled without the machine, say so and say what would
   settle it; the machine is available on request, within the limits the README
-  describes (it is a family laptop and the controller can be destroyed).
+  describes (it is the laptop in daily use and the controller can be destroyed).
 
 We will store the review verbatim in `reviews/`, verify every claim against the
 tree with the commands recorded beside it, and reply in the same file — as was

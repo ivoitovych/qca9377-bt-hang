@@ -17,7 +17,7 @@
 ## Results against the plan (`hardware-run-plan.md`)
 | # | plan | result | evidence |
 |---|---|---|---|
-| 0 | the same runs on the control module (`module/pre`) | **not run** (optional in the plan): it needs a module swap and a cold boot on the family laptop. The "before" is the unpatched kernel's own record, `EX-060` (7.0.0-34, 2026-09-29: no setup after either earbuds switch), and the emulator control (`results-2026-10-23-hw-prep.md` §2: the two prerequisite commits alone fail both bug cases 3/3) | — |
+| 0 | the same runs on the control module (`module/pre`) | **not run** (optional in the plan): it needs a module swap and a cold boot on the laptop. The "before" is the unpatched kernel's own record, `EX-060` (7.0.0-34, 2026-09-29: no setup after either earbuds switch), and the emulator control (`results-2026-10-23-hw-prep.md` §2: the two prerequisite commits alone fail both bug cases 3/3) | — |
 | 1 | earbuds, A2DP music | plays (2026-10-24 06:07–06:11, operator) | operator's account |
 | 2–3 | earbuds, mSBC ↔ CVSD | **3 of 3 switches refused, none falsely connected**: the reply before the old link's Disconnection Complete, no setup on the dying link, `connect()` → `ECONNABORTED` (first try and PipeWire's two immediate retries). With a stream playing a new link followed 4.86 s after the Disconnection Complete (06:12:27.350650, 06:12:52.743599); with none, at the next sound (22:00:46) | `EX-067`, `EX-068`, `EX-069` |
 | 4 | MOMENTUM 4, as 3 | 2 of 2 switches: a new link each time, no refusal | `EX-070`, `EX-069` |

@@ -270,7 +270,7 @@ Two small points:
 ## 12. `devtools/save`, `devtools/repo-save` (read in full)
 
 **RS1 — HIGH (privacy, fails open). `repo-save` pushes every branch to `origin` unless its name is
-on a short list.** It sends to the `private` remote only for `kernel/*`, `plan/*`, `diag/*`,
+on a short list.** It sends to the second remote only for `kernel/*`, `plan/*`, `diag/*`,
 `review/*`, `attribution/*`, `postponed/*` and `config/*` (line 204); every other branch goes to
 `origin`. Branch families that must never reach `origin` but are missing from the list would be
 pushed there by a `devtools/save` run while checked out here:
@@ -280,7 +280,7 @@ pushed there by a `devtools/save` run while checked out here:
 
 Today that is prevented only by a working rule ("never check those out in the project checkout").
 *Fix:* invert the rule. Push to `origin` only for an allowlist (`main`, `tests/*`, `ci/*`, …) and
-send everything else to `private`. Refuse when no `private` remote exists.
+send everything else to the second remote. Refuse when no second remote exists.
 
 **RS2 — LOW. Pseudonymized addresses look like real ones to the message scan.** The scan for real
 MACs in the commit message (line 133) exempts a fixed prefix list. Addresses rewritten by the
@@ -315,7 +315,7 @@ is.
 **HE1 — LOW. `held sync` does not check that its push landed.** It pushes with `git push -q private
 "$HELD" | tail -1` (line 56) and checks nothing, unlike `repo-save`, which compares the remote with
 the local commit.
-*Fix:* fetch `private` and compare, as `repo-save` does.
+*Fix:* fetch the second remote and compare, as `repo-save` does.
 
 Good:
 - `held status` fails if `origin` carries any `kernel/*` branch;
@@ -1026,7 +1026,7 @@ actions, deletions, pushes and the `btmon` width defect.
    sanitiser call's failure is fatal or named", "no `COLUMNS=` before `btmon`", "every capture
    daemon sets `umask 077`".
 2. **Rules held in prose, not code.** Never `--apply` (I1, VI1), never arm the watchdog (MODE1),
-   never reload btusb live (UN1, RM1), never push private families to `origin` (RS1). The tools
+   never reload btusb live (UN1, RM1), never push held families to `origin` (RS1). The tools
    already refuse in many places; these are the places they still do not.
 
 ---
@@ -1518,7 +1518,7 @@ reads the whole trial window unfiltered (T6), minutes on a multi-day trial with 
 *Fix:* read `/run/bt-trial/current` directly for this row, or fix T6.
 
 **DS3 — LOW. `devtools/status` checks only `origin`.** The "pushed?" row uses
-`git ls-remote origin <branch>` (58). On a held branch, which `repo-save` pushes to `private`, it
+`git ls-remote origin <branch>` (58). On a held branch, which `repo-save` pushes to the second remote, it
 reports "could not reach origin" or "ahead" for a branch that is fully pushed. Use the same branch
 rule as `repo-save`.
 
@@ -2584,8 +2584,8 @@ copies one file from `tmp/` under all three names, which has two effects:
 that, take the samples from `archive/bt-trace/` (decompressed).
 
 **HB1 — INFO, ties to RS1.** `prove-held-branch-guard.sh` proves that `kernel/*`, `plan/*` and
-`config/*` go to `private`, the families on the list. A `research/held-test` branch would show RS1
-directly: today it would be pushed to `origin`. Add that case, expecting `private`, when RS1 is
+`config/*` go to the second remote, the families on the list. A `research/held-test` branch would show RS1
+directly: today it would be pushed to `origin`. Add that case, expecting the second remote, when RS1 is
 fixed. It also hard-codes `cd /root/exp/qca9377-bt-hang` (6), EV3's pattern; `prove-bt-trace-archive.py`
 does the same with `PROJECT_TMP` (17).
 
@@ -2760,7 +2760,7 @@ a full table of near-zero figures and then "these figures describe a red run". A
 nothing; say so and print no table. The comment at 563-567 says "this machine ships mawk"; the
 laptop's `awk` is gawk (checked 2026-10-19), and `devtools/awk-coverage` exists.
 
-**BRS1 — INFO.** `branch-status` audits `refs/remotes/origin` only. Branches held on `private` (by
+**BRS1 — INFO.** `branch-status` audits `refs/remotes/origin` only. Branches held on the second remote (by
 design, work `main` lacks) and local branches not pushed anywhere (UP1) are outside it. Say "origin
 branches" in its header and output.
 

@@ -100,8 +100,8 @@ So the patch carries `Cc: stable@vger.kernel.org`. The message no longer lists t
 
 ## External review before sending — by file, not by branch
 
-Until 2026-10-09 this work lived on the branch `kernel/mgmt-flush-status` in the project's
-private repository: kernel findings were then kept off `main` until their patch was sent.
+Until 2026-10-09 this work lived on the branch `kernel/mgmt-flush-status`, kept
+separately: kernel findings were then kept off `main` until their patch was sent.
 Reviewers got the files as a package (the patch, this README, `REVIEW-TASK.md`, the
 reproducer, exhibits 044/049/050). The files were ported to `main` on 2026-10-09.
 
@@ -228,7 +228,7 @@ day; not a security framing. A new mgmt-tester case remains a natural follow-up.
 
 ### Fifth review, 2026-09-24 — of the outgoing mail only
 
-The fourth reviewer re-read the regenerated patch and this README from the private
+The fourth reviewer re-read the regenerated patch and this README from the separate
 repository, as the mail that reaches the list, with no new brief. **No technical or
 presentation blocker.** ER4-1, ER4-2 and ER4-3 confirmed resolved; ER4-5 … ER4-8 do not
 touch the mail. Confirmed: one inline `[PATCH]`, no cover letter, no attachments or
@@ -238,7 +238,7 @@ the diff exactly; "a good information order now".
 | # | finding | action |
 |---|---|---|
 | ER5-1 | optional: "the status sent is the first byte of the struct, that is of match->sk" reads as if `match->sk` were a byte field; prefer "comes from the first byte of match->sk's representation, not from match->mgmt_status" | ✅ adopted; regenerated (`scripts/kernel-regenerate.sh`) → commit `fe5c2d4297dc`, patch-id `6f4e06d4b60c` unchanged; preflight at `bluetooth` `c9c15d4d8956`: checkpatch `--strict` 0/0/0, `W=1 -Werror` clean, sparse 0 at base / 0 patched, same four recipients |
-| ER5-3 | this README said "This branch is never pushed", but it is pushed to the private repository | ✅ corrected ("External review before sending") |
+| ER5-3 | this README said "This branch is never pushed", but it is pushed to a separate repository | ✅ corrected ("External review before sending") |
 
 ### Sixth review, 2026-09-24 — what the test statement covers
 

@@ -106,7 +106,7 @@ now, and where the evidence is. Neither wants to be told which sections are stal
 - **FD-09 [MED] README sends strangers to BRIEF as "authoritative", and BRIEF is a
   working-memory document addressed to the operator and his collaborators.** Its title is
   "read this first, after any context reset"; §7 says "This section and §8 are the DURABLE
-  copy … only in a local notes store", "Family laptop", "Verify operator
+  copy … only in a local notes store", "Laptop", "Verify operator
   accounts against logs — he asked not to be trusted", "Do not send the patches until the
   operator says so", and the transliteration note on the sign-off. All of that is right
   where it is, and none of it is for **(M)** or **(U)**. Sections 1–4 and 6 are exactly

@@ -8,7 +8,7 @@ The controller has not returned to the bus since.
 
 **Relevance.** Three things this record did not previously have. It is the first stage-2
 progression observed with the watchdog **disabled and not installed**, so the reset
-cannot be ours. It is the first fault reported by a household member rather than
+cannot be ours. It is the first fault reported by someone at the laptop rather than
 instrumented on purpose, and the account was checkable against the journal line by
 line. And it is the shortest SCO-to-timeout interval seen — 4.1 s against a previous
 floor of 7.6 s.
@@ -73,7 +73,7 @@ Still absent at the time of writing: `/sys/bus/usb/devices/3-3` does not exist a
 
 ## The button did not cause the fault — it arrived 6.1 s late
 
-The household account was that pressing the Bluetooth button disabled the controller
+The account from the laptop was that pressing the Bluetooth button disabled the controller
 and pressing it again did not bring it back. The first half is not what happened and
 the second half is exactly what happened.
 

@@ -9,5 +9,4 @@
 - `docs/STATUS.md`: the mesh row, and the held branches.
 - `docs/mesh-tester-ci/research-review-2026-10-05.md`: "The reviewer after the gates": the
   comparison's design.
-- The results: `power-off-compare-2026-10-05.md`, held on the private branch
-  `diag/mesh-tester-ci` (commit `e69d5dd`), with a working copy in `tmp/mesh-tester-ci/`.
+- The results: `power-off-compare-2026-10-05.md`, kept separately, with a working copy in `tmp/mesh-tester-ci/`.

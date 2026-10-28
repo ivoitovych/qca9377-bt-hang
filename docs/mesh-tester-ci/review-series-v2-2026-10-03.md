@@ -1,7 +1,7 @@
-# Private review: mesh advertising series v2
+# Review: mesh advertising series v2
 
-*(An outside review as received on 2026-10-03. Its links point into the project's private
-repository, where branch `diag/mesh-tester-ci` then lived; the files they name are on `main`
+*(An outside review as received on 2026-10-03. Its links pointed into a snapshot kept
+separately; the files they name are on `main`
 since 2026-10-09 under the same paths.)*
 
 Reviewed 3 October 2026. Patch author: Iaroslav Voitovych. Nothing posted, mailed, commented, committed or pushed.
@@ -16,8 +16,8 @@ Source references below use these keys:
 
 | Key | Exact source |
 |---|---|
-| P | [Private repository snapshot 64952dfaa68d2d0784a7a2be8fc1e1c383808aa8](https://github.com/ivoitovych/qca9377-bt-hang-private/tree/64952dfaa68d2d0784a7a2be8fc1e1c383808aa8), branch `diag/mesh-tester-ci` |
-| R | P, [`docs/mesh-tester-ci/phase4-results.md`](https://github.com/ivoitovych/qca9377-bt-hang-private/blob/64952dfaa68d2d0784a7a2be8fc1e1c383808aa8/docs/mesh-tester-ci/phase4-results.md) |
+| P | A snapshot kept separately |
+| R | P, `docs/mesh-tester-ci/phase4-results.md` |
 | K | [Kernel 86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc](https://github.com/torvalds/linux/tree/86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc) |
 | V | K plus the three supplied patches, identifying final commit `988f5c0f7476c2330ad2014a9780e8c092d4e6fb` |
 | B | [BlueZ ae69dcddd](https://github.com/bluez/bluez/tree/ae69dcddd), the tester's stated upstream base |
@@ -25,13 +25,13 @@ Source references below use these keys:
 | T | B plus the supplied tester patch, identifying commit `1ba13eff83fc287713efb1849b168a49b6753db4` |
 | N | [bluetooth-next mirror 036d4119079a757c9d1b4d35205c7c467f0018fb](https://github.com/bluez/bluetooth-next/tree/036d4119079a757c9d1b4d35205c7c467f0018fb), observed during this review |
 
-V and T were reconstructed from source files and patches, not fetched as complete Git commits. Their resulting Git blob hashes match the patch index hashes: V `mgmt.c` = `c4cbb5763bdeb76e6634483222a2dc9d8eebf1f8`, V `hci.h` = `a0294ff050be43a664ccb751f68e3e67ab8ebb80`, T `mesh-tester.c` = `90226bbdf0e3c3989a21649485e15557ab428c6e`. The private input blob hashes were checked against P's tree.
+V and T were reconstructed from source files and patches, not fetched as complete Git commits. Their resulting Git blob hashes match the patch index hashes: V `mgmt.c` = `c4cbb5763bdeb76e6634483222a2dc9d8eebf1f8`, V `hci.h` = `a0294ff050be43a664ccb751f68e3e67ab8ebb80`, T `mesh-tester.c` = `90226bbdf0e3c3989a21649485e15557ab428c6e`. The input blob hashes were checked against P's tree.
 
 I read the complete three kernel patches, cover, tester patch, duration note, phase-4 results, phase-4 task, previous review and previous series review task. I retrieved the kernel's top-level `net/bluetooth/*.c` files, relevant headers, BlueZ tester/emulator/client code, submission documentation, named upstream changes and five stable source snapshots. I did not independently re-audit every earlier project issue or every driver beneath `drivers/bluetooth`.
 
 **Executed independently:** patch application; kernel strict checkpatch with a real codespell dictionary; BlueZ-configured checkpatch; cumulative no-fuzz stable application; exhaustive duration arithmetic over all positive u16 timeouts; and an extracted-function C fault harness, with a cleanup control variant. The harness uses the unchanged V bodies of `mesh_send()`, `mesh_next()`, `mesh_send_done_sync()` and `mesh_send_complete()`, with explicitly stubbed surroundings.
 
-**Not executed here:** a full kernel or BlueZ build, W=1 kernel build, sparse, gitlint executable, QEMU, KVM, real hardware, radio capture or stable-kernel boot. QEMU and `/dev/kvm` were unavailable in this environment. The private tree does not contain the full `run-p4-*.log`, `preflight-v2-*.log` or kernel-build logs: R supplies quoted extracts, not independently inspectable raw runs. Its quoted 25/25, 501/501 and other runtime results remain the author's recorded evidence.
+**Not executed here:** a full kernel or BlueZ build, W=1 kernel build, sparse, gitlint executable, QEMU, KVM, real hardware, radio capture or stable-kernel boot. QEMU and `/dev/kvm` were unavailable in this environment. The snapshot does not contain the full `run-p4-*.log`, `preflight-v2-*.log` or kernel-build logs: R supplies quoted extracts, not independently inspectable raw runs. Its quoted 25/25, 501/501 and other runtime results remain the author's recorded evidence.
 
 **Inferred** identifies a conclusion from source or a described interleaving, not a reproduced kernel failure. A successful stub harness is identified separately and is not presented as a kernel reproduction.
 
@@ -351,7 +351,7 @@ Keep “no stable kernel was built or run” in the cover because it directly qu
 
 Do not describe the entire path as ending after its requested Count until finding 2 is settled. Add the precise testing-scope statement above. Correct the Signed-off-by record and successful-dequeue coverage claim. “Microseconds” is a plausible scale, not a measured upper bound; use “the interval between clearing the flag and handover” unless a measurement is supplied.
 
-The cover is long but understandable. Correctness, dependent fixes and evidence qualifications matter more than aggressively shortening it. Preserve only genuine author/test/review trailers; do not invent Tested-by or Reviewed-by credit. Public-source citations in this private review are evidence, not additions to the patches' authorship.
+The cover is long but understandable. Correctness, dependent fixes and evidence qualifications matter more than aggressively shortening it. Preserve only genuine author/test/review trailers; do not invent Tested-by or Reviewed-by credit. Public-source citations in this review are evidence, not additions to the patches' authorship.
 
 ## Risk map and the tests that would reduce each risk
 

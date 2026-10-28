@@ -9,7 +9,7 @@
 # Writes only under tmp/bt-build/. Does NOT install or load anything: the
 # resulting bluetooth.ko is left in tmp/bt-build/net/bluetooth/ for inspection.
 # Loading it on this machine is a separate, deliberate step — this laptop is the
-# investigation machine and also the family's.
+# investigation machine and also in daily use.
 #
 # Needs: cache/linux with net/bluetooth and include/net/bluetooth checked out
 # (a sparse checkout at the tag matching `uname -r`'s upstream base), and

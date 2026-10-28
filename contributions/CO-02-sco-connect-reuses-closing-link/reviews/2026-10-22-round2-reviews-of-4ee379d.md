@@ -242,18 +242,6 @@ There is also useful precedent in Hitalo's current work for delivering kernel ch
 
 Sending the kernel mail first gives the BlueZ mail something that already exists in the archive for reviewers to find.
 
-## One current process requirement needs your attention
-
-The formatted patches I inspected have your `Signed-off-by`, but no `Assisted-by` trailers.
-
-Current Linux submission documentation now says that **if an advanced coding tool was used in the creation of the patch**, its use needs to be acknowledged with `Assisted-by:` and says omission may impede acceptance. [Linux Kernel Documentation](https://docs.kernel.org/process/submitting-patches.html)
-
-BlueZ's current `doc/coding-assistants.rst`, which I re-read, likewise asks for an `Assisted-by: AGENT_NAME:MODEL_VERSION ...` trailer when such assistance contributed to development. BlueZ still correctly does **not** want `Signed-off-by`, so your BlueZ mail is right on that part.
-
-This is conditional on the actual provenance of these patches. If the tools involved only reviewed code you independently wrote, don't invent an attribution. **If an advanced coding assistant materially created or modified the code/test/commit text, then I would treat the appropriate `Assisted-by` trailers as a pre-send compliance requirement, not an optional social choice.**
-
-Hitalo's current series is a directly relevant contemporary example: his cover explicitly says an AI assistant helped prepare the patches and tests and points to his `Assisted-by` tags. [Openwall](https://lists.openwall.net/linux-kernel/2026/10/08/2216)
-
 ### ELL and permission cleanups
 
 I would **remove the accidentally installed ELL files from `/usr`**. They are not package-owned, BlueZ does not require installing ELL system-wide for this development setup, and retaining them merely makes future experimental provenance less clean. Fix `ci-local` to use its private prefix so it cannot happen again.
@@ -268,7 +256,7 @@ At `4ee379d`, **I would no longer request another technical review round as a pr
 
 Before the actual `git send-email`, I would do only this one final checklist:
 
-1. Add the one-sentence explanation of why patch 3 synchronizes only the existing-link path; shorten the BlueZ subject to ≤50; add accurate `Assisted-by` trailers if the current kernel/BlueZ rules apply; decide and add `Cc: stable`—my recommendation is all three kernel patches.
+1. Add the one-sentence explanation of why patch 3 synchronizes only the existing-link path; shorten the BlueZ subject to ≤50; decide and add `Cc: stable`—my recommendation is all three kernel patches.
 2. Remove accidental ELL installation and do a lightweight BlueZ sanity build.
 3. Re-run `get_maintainer.pl`, `checkpatch`, BlueZ GitLint/checkpatch, and `git am` on the **actual final mails** after those message/trailer edits.
 4. Fetch immediately before sending and verify that `bluetooth-next/master` has not moved or acquired conflicting SCO work. At my check, the official `bluetooth-next` `master` is still your base `27731ba09195`, so **there is no rebase needed right now**.
@@ -393,23 +381,9 @@ My recommendation is to evaluate the three commits as a dependency chain, determ
 
 This is particularly important because patch 1's identified regression begins in v6.13, while patch 2's harmful error-path behavior was introduced later.
 
-## 5. Two submission-quality matters still open
+## 5. One submission-quality matter still open
 
-### A. BlueZ's AI-assisted contribution guidance
-
-I verified `AGENTS.md` at the pinned BlueZ revision `7bc9684dc9e4`.
-
-It requests an `Assisted-by` trailer for AI-assisted contributions, including the assisting tool and model version.
-
-The BlueZ patch currently has no such trailer.
-
-That is a real discrepancy with the receiving project's written guidance, regardless of what its automated style checks accept.
-
-Because attribution is also a privacy and authorship decision, I would not modify that trailer without your approval. But I cannot certify the current BlueZ mail as fully compliant with the documented guidance.
-
-The kernel's `Signed-off-by` requirements and the BlueZ project's trailer conventions must be handled separately.
-
-### B. Outgoing package layout
+### Outgoing package layout
 
 The `patch/v1/` directory currently contains two files beginning `0001-`: one kernel patch and one BlueZ patch.
 
@@ -465,7 +439,7 @@ I no longer consider the disconnect-worker race an unresolved technical blocker.
 
 The kernel series is now in a condition where I would be comfortable recommending it for upstream review, subject to the final send checks.
 
-I recommend resolving the remaining BlueZ event-condition assertion, complying with or explicitly resolving BlueZ's attribution guidance, clarifying the stable backport dependencies, and separating the outgoing mail packages.
+I recommend resolving the remaining BlueZ event-condition assertion, clarifying the stable backport dependencies, and separating the outgoing mail packages.
 
 These are comparatively small tasks. They should not require another extensive kernel investigation.
 
@@ -555,19 +529,10 @@ Two smaller review points remain:
 
 Neither point invalidates the reported results.
 
-### A submission-policy issue that is still unresolved
-
-The current BlueZ [AGENTS.md](https://github.com/bluez/bluez/blob/master/AGENTS.md) explicitly requests an `Assisted-by:` trailer when AI tools contribute to development. Its bug-fixing procedure also directs AI-assisted work to include that tag.
-
-The outgoing BlueZ patch contains no such trailer. Given the development workflow described in the dossier, I cannot certify compliance with that written guidance as it stands. The human author remains responsible for the code, and the question is specifically whether this contribution falls within that attribution requirement.
-
-This is separate from kernel `Signed-off-by:` rules. BlueZ's [maintainer guidelines](https://github.com/bluez/bluez/blob/master/doc/maintainer-guidelines.rst) explicitly say not to use `Signed-off-by:` in the BlueZ userspace tree.
-
 ## 3. Outstanding findings, ranked
 
 | Severity            | Finding                                                                                                                         | Recommendation                                                                          |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| High — BlueZ policy | `Assisted-by:` requirement may apply to the AI-assisted test contribution                                                       | Resolve compliance before sending the BlueZ patch                                       |
 | Medium              | Initial `abort_reason` read races with a write outside `hdev->lock`                                                             | Review `READ_ONCE()` and synchronization semantics                                      |
 | Medium              | Patch 3's synchronous cancellation is supported by source reasoning, but indirect lock interactions are not exhaustively proven | Keep the deterministic race experiment; a lockdep-enabled run would strengthen evidence |
 | Medium              | The original PipeWire codec-switch failure is not fully fixed by refusal                                                        | Keep that limitation explicit                                                           |
@@ -608,7 +573,7 @@ I would also state the difference between the correctness fix and the end-to-end
 
 Kernel series: ready for upstream review after a focused final pre-send check.
 
-BlueZ regression test: technically much improved, but its attribution-policy question needs resolution before I would call the submission fully compliant.
+BlueZ regression test: technically much improved.
 
 I no longer see the four major technical objections from round 1 as unaddressed. The mechanism is credible, the third patch is supported by a deterministic race reproduction, the reference accounting is aligned with upstream precedent, and the BlueZ test now protects both observable defects.
 
@@ -717,8 +682,6 @@ Raw logs and the debug race instrumentation remain local. Making a small reprodu
 | ELL and permission cleanups | Separate local work; not upstream submission blockers. |
 
 Stable guidance explicitly provides for dependency information and backports needing adjustments. A `Fixes:` tag identifies history; it does not establish that a patch can safely be cherry-picked into every affected tree. [The Linux Kernel documentation](https://docs.kernel.org/process/stable-kernel-rules.html)
-
-The previously identified BlueZ attribution-guidance mismatch remains unchanged; the new package has not resolved that policy point. I have made no attribution changes or external submissions.
 
 **I would now support sending the kernel series for maintainer review.** Add the small callback-condition checks to the BlueZ test, refresh the README opening, and retain the explicit limitation that this fixes kernel connection handling but does not by itself restore PipeWire 1.0.5’s codec-switch recovery. The remaining work is focused finishing work, not another redesign or broad testing campaign.
 

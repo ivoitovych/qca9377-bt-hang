@@ -77,7 +77,7 @@ Bring `bluetooth/mesh-tx-leak/` into this repository as its own directory (histo
 reference to `977b3a1`), after: the logs are committed with SHA256SUMS (problem 1), REPORT is
 recast as a standalone retest report with A4 and A5 corrected (3, 4, 6), and the Message-ID is
 elided (5). Leave the three repository-level files behind. Whether A2 stays in the published
-report is the operator's decision (7); if it stays out, keep it in the private record.
+report is the operator's decision (7); if it stays out, keep it in the separate record.
 
 For the reply, at most two additions: one sentence that the leaked entry also holds a
 reference on the MGMT socket, so closing the socket does not free it (within the patch's own

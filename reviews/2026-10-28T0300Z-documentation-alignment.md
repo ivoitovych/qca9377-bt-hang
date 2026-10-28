@@ -34,7 +34,7 @@ was taken from the primary source each time.
 | D11 | `BRIEF.md` §3, §6, §9.7, §10 | 6.6 "release candidates"; "watch the v2 patchwork states" though the a2dp v2 was applied on 10-07 and its duplicate removed on 10-19; HISTORY "dated chapters to 2026-10-18" | §3/§6/§9 are not touched by the per-event updates (D7); the a2dp v2 application was recorded in `patches/bluez/README.md` and STATUS only | corrected, with "since" notes |
 | D12 | `docs/STATUS.md` header "As of 2026-10-21" | rows changed on 10-23 to 10-28 under an old date | the date line was not part of the per-row edits | 2026-10-28, with what was re-checked |
 | D13 | `docs/STATUS.md` machine section | no mention of the CO-02 module (since 10-23), trial E3 #3, or `-42` | the CO-02 hardware run was recorded in the U7 row and the dossier (`ee52148`), the install in BRIEF's hand-off; the machine section is updated only by machine-focused sessions | added from `scripts/module-updates.sh status` and `journalctl --list-boots` |
-| D14 | `docs/STATUS.md` desktop capture paragraph; BRIEF's decision list | "recorders inactive (read 10-18)"; "restarting … the recorders" as an open decision | `bt-ui-capture start` ran on 2026-10-23 at 22:12:30 (`bt-mark`: "ui-capture START session=20261005T003712Z"; `systemctl show`: both units active since that second), during the CO-02 hardware run, and was **never recorded** (`git grep` finds no note) | paragraph rewritten from `bt-ui-capture status` of 10-28; who started it: the operator to confirm |
+| D14 | `docs/STATUS.md` desktop capture paragraph; BRIEF's decision list | "recorders inactive (read 10-18)"; "restarting … the recorders" as an open decision | `bt-ui-capture start` ran on 2026-10-23 at 22:12:30 (`bt-mark`: "ui-capture START session=20261005T003712Z"; `systemctl show`: both units active since that second), during the CO-02 hardware run, and was **never recorded** (`git grep` finds no note) | paragraph rewritten from `bt-ui-capture status` of 10-28 |
 | D15 | `docs/STATUS.md` BT-1, BT-8, BT-9 rows and five "next" cells | 6.6 as release candidate; "watch the 6.6.160 … releases" | as D7/D12: the 10-23 update changed the submission rows only | corrected |
 | D16 | `docs/STATUS.md` U7 row | "Next: the operator reads the mails; then the operator's send" | the send day (`335812f`) updated the submission row only | marked sent |
 | D17 | `contributions/CO-02-…/README.md` | "the package to send is `patch/v6/send/`", "Not sent", "Next: the operator's send" | last changed `34db728` (10-26); the send commit `335812f` (10-27) updated `log.md` and STATUS only | a dated SENT state on top; the old state kept below |
@@ -51,8 +51,8 @@ was taken from the primary source each time.
 | D28 | `devtools/README.md` | 17 scripts and directories without a row (`save`, `status`, `ci`, `held`, `hooks/` …) | added over September and October without a table row; nothing checks the table against the directory | rows added from each script's own header |
 | D29 | `docs/mesh-tester-ci/README.md` | 18 files not named | ported in bulk on 10-09 with a README written for the reading order | listed |
 | D30 | `reviews/README.md` | many reports have no row in its Reports table (e.g. `2026-09-26-source-review-report.md`, `2026-10-13T0200Z-u11-outside-research*.md`); several file names break its own `<UTC timestamp>-<topic>.md` convention | the register is updated when a reaction plan is opened, not when a report file lands | **open** (this report is added; the backfill is a separate pass) |
-| D31 | older lines of `devtools/README.md` (l.14), `reviews/README.md` (l.411), `docs/mesh-tester-ci/README.md` (l.6–7), `BRIEF.md` §9.6 | "PUBLIC main", "private repository", "the family laptop" | written before the neutral-wording rule; the sweep of older text is an open operator decision (BRIEF) | **open**, listed for the operator |
-| D32 | CO-02 verbatim reviews (`contributions/CO-02-…/reviews/`) | outside reviewers' text discussing an attribution trailer | verbatim records | **for the operator** |
+| D31 | about 140 lines in some 60 files (documents, notes, reviews, code comments) | "the family laptop", "household", mentions of a repository, branch or remote kept separately | written before the neutral-wording rule; the sweep of older text waited for the operator's decision | **fixed** on the operator's decision of 2026-10-28: "the laptop", "kept separately"; the tooling's remote keeps its name |
+| D32 | CO-02 verbatim reviews (`contributions/CO-02-…/reviews/`) | outside reviewers' text on matters outside this repository's scope | verbatim records | **fixed** on the operator's decision of 2026-10-28: those passages cut |
 
 ## The causes, and guards that would have caught them
 
@@ -76,5 +76,4 @@ None of the guards is built yet; each is a proposal for the operator and the tes
 
 ## Open after this review
 
-D30 (the reviews register's backfill), D31 (the older-wording sweep, the operator's decision), D32
-(the operator's decision), and D14's question: who started the desktop capture on 10-23 at 22:12.
+D30 (the reviews register's backfill).

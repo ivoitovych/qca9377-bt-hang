@@ -1,7 +1,7 @@
-# Private review — mesh advertising kernel series and BlueZ tests
+# Review — mesh advertising kernel series and BlueZ tests
 
-*(An outside review as received on 2026-10-02. Its links point into the project's private
-repository, where branch `diag/mesh-tester-ci` then lived; the files they name are on `main`
+*(An outside review as received on 2026-10-02. Its links pointed into a snapshot kept
+separately; the files they name are on `main`
 since 2026-10-09 under the same paths.)*
 
 Reviewed: 2 October 2026. Repository snapshot: **14bdcfcd156fd00118fdb863dc4559e315544067**, branch `diag/mesh-tester-ci`. Patch author: Iaroslav Voitovych.
@@ -15,9 +15,9 @@ I read both kernel patches, the cover letter, the complete BlueZ patch, phase 1�
 - **K**: kernel `86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc`, retrieved through the [bluetooth-next mirror](https://github.com/bluez/bluetooth-next/tree/86ef0f58bdecdedb3a1240971c56d71b7e4ce3fc).
 - **N**: kernel `671d566d3c3ba4103b594b85e428bcb89a8482f5`.
 - **B**: BlueZ `8b4a4176063831476bc9244d20f43b552e4b5554`.
-- **P**: [private review snapshot](https://github.com/ivoitovych/qca9377-bt-hang-private/tree/14bdcfcd156fd00118fdb863dc4559e315544067).
+- **P**: a snapshot kept separately.
 - **T**: B plus the supplied BlueZ patch, whose mail identifies commit `51ab024b5eaecc5ce2ddd0c175e1bfc2aaa91721`. T line references are from independently applying that patch to B; that commit was not fetched as a separate upstream commit.
-- **R**: P, [phase3-results.md](https://github.com/ivoitovych/qca9377-bt-hang-private/blob/14bdcfcd156fd00118fdb863dc4559e315544067/docs/mesh-tester-ci/phase3-results.md).
+- **R**: P, `phase3-results.md`.
 
 Independent execution: cumulative `git apply --check` followed by `git apply` on K, N and all five pinned stable snapshots; BlueZ patch application; kernel strict checkpatch and BlueZ-configured checkpatch; duration arithmetic. These were source snapshots, not full kernel Git checkouts: **this was not a cherry-pick, build, or guest-kernel run**.
 
@@ -173,7 +173,7 @@ Useful records actually opened:
 - [Bot PR 547](https://github.com/bluez/bluetooth-next/pull/547) was closed without a GitHub merge; that alone does not prove upstream rejection.
 - [Bot PR 798](https://github.com/bluez/bluetooth-next/pull/798) was open and concerns queue-submission-failure leakage, not this teardown defect.
 
-**Exact note to retain privately:**
+**Exact note to keep separately:**
 
 > Related pending/historical mesh lifetime work must be reconciled before claiming that cmd_sync serialization protects mesh_pending against all callers. The original introducing series already produced the same two cancel timeouts in its 25 June 2025 CI report.
 

@@ -109,9 +109,8 @@ Recent detail may be shortened. Settled state is never dropped.
   - a reply on Jiale Yao's power-off patch (patchwork 14864878; its comparison must be re-run first, CO-06);
   - debug builds: GNOME Settings, and `btusb` for U8;
   - shellcheck; a second copy of the capture archive (§7); recording the running `bluetoothd` in `bt-trial` (§8a);
-  - a sweep of older public text for the neutral wording (new text follows it already; on 10-28 the documentation review found "public/private" and "the family laptop" in older lines of `devtools/README.md`, `reviews/README.md`, `docs/mesh-tester-ci/README.md` and this file's §9.6).
 - **Machine:**
-  - **Since 2026-10-11 16:26 the laptop runs `7.0.0-38` with E3 built for it** (`updates/btusb.ko`, the exact upstream entry; srcversion `D1DEA96A0C95BFAB05CEE01`; the boot log shows `patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded). The build is on private `diag/e3-btusb-for-7.0.0-38-20261010`.
+  - **Since 2026-10-11 16:26 the laptop runs `7.0.0-38` with E3 built for it** (`updates/btusb.ko`, the exact upstream entry; srcversion `D1DEA96A0C95BFAB05CEE01`; the boot log shows `patch rome 0x302 build 0x3e8`, so the QCA firmware is loaded). Its build record is kept separately; the recipe is in `patches/diag/README.md`.
   - `-38`'s **stock** btusb still lacks the entry. A kernel update that does not carry it needs E3 rebuilt before the next boot.
   - `-38` also carries the BT-9 fix (`96d006ae6445`). The discovery stuck since 10-04 had already ended on 10-10 at 15:02, at the operator's adapter power cycle (§5; corrected 2026-10-14).
   - The trial E3 #1 on `-34` **lost its results row** at the 2026-10-11 16:24:45 shutdown; `bt-trial-auto` then opened a new "E3 #1" on `-38` at 16:26 (`docs/STATUS.md`). Every shutdown risks the same until the fixed `bt-trial` is installed. The fix is on `main` (`4c26c5d`, cherry-picked from `d5272a6` on `tests/unit-testing-introduction`, plus `25dfc68`, and since 2026-10-18 the close writes its row before `bt-state`, `bt-mark` and the SCO decode; the decode, `btmon` over 48 GB of captures, took trial 14's close 53 minutes and was running when trial 15's close stopped without a row) but not on the machine. **The trial of the 10-13 boot was therefore closed by hand on 2026-10-18 at 17:03** (`scripts/trial-close-now.sh --reopen`: `main`'s closer from the checkout, passive, row first; 13 SCO setups, 0 timeouts; STATUS), and E3 #2 opened at 17:05:04, mid-boot. Until the deploy, a shutdown with a trial open still decodes the captures before the row if the trial saw a call, and the installed `autostop` and `bt-mark` send HCI Read Local Name up to four times (STATUS, the machine's warnings). The only sound route is the whole tool set: `install.sh --tools-only`, `daemon-reload`, `bt-verify-install`, `bt-mode status`. `bt-trial` alone is a partial deploy (STATUS). The stop timeout is 90 s now (systemd's default) and 30 s once `main`'s unit is loaded. When is the operator's decision.
@@ -157,11 +156,24 @@ hours (`R2-13`).
 > - **Ready or near, each the operator's send:** CO-34 (BT-12, one line, `pre-send-check.sh` OK);
 >   CO-35 (BT-10: `32d86e048d8ef` + `608e0b7a675b2`, 7.2.13 passes, 111/111; backports for older
 >   lines still to make); CO-05 (needs an outside review of the written patches).
-> - **Next work, agreed with the operator on 10-28:**
->   1. the sent-mail check: an inventory of every mail as sent (file, Message-ID, patchwork id,
->      SHA-256), a one-time comparison with the copy upstream received (cached in `cache/`), and
->      a hash guard on every save and push so a sent file never changes again;
->   2. CO-04: an independent fix for syzbot's mesh_send_sync use-after-free (`log.md` there).
+> - **Next work, agreed with the operator on 10-28, in this order:**
+>   1. **finish the wording sweep** (operator's decision of 10-28): "the laptop", never "family"
+>      or "household"; whatever is kept outside this repository is "kept separately", with no
+>      repository name, URL, branch or remote named in prose (the tooling's remote keeps its name
+>      in code); outside reviews' passages on matters outside this repository's scope cut. About
+>      140 lines in some 60 files; documents, notes, reviews and code comments done on 10-28,
+>      the dossiers, `patches/`, `results/` and the rest of `docs/` being finished; then a review
+>      of every changed line and one commit;
+>   2. the sent-mail check: an inventory of every mail as sent (file, Message-ID, patchwork id,
+>      SHA-256), a one-time comparison with the copy upstream received (cached in `cache/`; lore
+>      refuses this machine, patchwork serves every linux-bluetooth mail; the two Tested-by
+>      replies may have no reachable copy), and a hash guard in `devtools/save` and the pre-push
+>      hook so a sent file never changes again; any mismatch recorded with its cause;
+>   3. CO-04: an independent fix for syzbot's mesh_send_sync use-after-free (`log.md` there).
+> - **CI:** red from 10-22 to 10-28, unread (a trial open all week). The install step and the
+>   journal seams are fixed (`deaafab`, `14ae3af`); the suite passes. One floor stays red:
+>   `tools/bt-journal-files` has no suite tests, asked of the test-suite maintainer
+>   (`comms/2026-10-28T0300Z-…`). **On trial days, `devtools/ci --wait` after every push.**
 > - **Before any reboot:** if `7.0.0-42` is installed, E3 for it first (CO-09's recipe).
 > - **Method lessons of 2026-10-28:**
 >   - a bisect across a range where a second, newer bug gives the same symptom finds that bug's
@@ -338,7 +350,7 @@ stay outside; everything that is true regardless of who is working lives here, i
 **Goal.** The endgame is an **upstream kernel patch**, not a local workaround. Three parallel
 streams: evidence, workarounds, the real fix. Workarounds must never be mistaken for it.
 
-- **Family laptop.** A dead controller costs the household. Never request long windows on
+- **The laptop is in daily use.** A dead controller costs its users. Never request long windows on
   spec; capture what is already open.
 - **Never `install.sh --apply`** on the investigation machine — it arms `bt-hang-watchdog`,
   whose USB reset has **3 controlled demonstrations of driving an already-wedged controller
@@ -351,20 +363,19 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **Never lose code, tests or evidence.** Priority 1; keep clutter over any deletion.
 - **Never force-push without a backup branch first.** A rewrite with a mistake deletes
   work, and mistakes are made all the time. Before any history rewrite: push the branch as
-  it stands to the `private` remote as `<branch>-backup-<YYYYMMDD>-<HHMMSS>-utc`, verify
+  it stands as `<branch>-backup-<YYYYMMDD>-<HHMMSS>-utc` to the separate remote, verify
   the remote has it, then rewrite, then push with `--force-with-lease` only. Set
   2026-10-11, when `ci/upstream-ci-local` was rebuilt so that patchwork mail headers (the
-  relays' addresses) never entered its history; the backup is
-  `ci/upstream-ci-local-backup-20261011-144932-utc` on `private`.
+  relays' addresses) never entered its history; its backup is kept separately.
 - **Evidence, decided 2026-10-11 by the operator.**
-  - **What is committed** is the incident window: complete inside the window (every relevant source, no line filtered out, a margin before and after), and nothing outside it. GitHub space serves everyone, so no bulk history goes into git, public or private.
+  - **What is committed** is the incident window: complete inside the window (every relevant source, no line filtered out, a margin before and after), and nothing outside it. GitHub space serves everyone, so no bulk history goes into git, in any repository.
   - **Evidence is never deleted,** fixed bugs included: a deletion does not shrink history, and a bug can return.
   - **Raw captures are never left to rotation.** `scripts/bt-trace-archive.py` keeps them all, compressed, in `archive/bt-trace/` (git-ignored, 10 GB budget, never deletes). Windows are cut from there.
   - **Device addresses:**
-    - real addresses may be committed to the **private** repository;
-    - public files carry **pseudonyms** from a privately kept table: the manufacturer prefix is real, the rest random, one per device for good, with the statement that says so;
+    - real addresses are kept separately, never in this repository;
+    - files here carry **pseudonyms** from a table kept separately: the manufacturer prefix is real, the rest random, one per device for good, with the statement that says so;
     - BSSIDs, key material (a raw capture carries link keys) and personal device names are never published.
-  - **Why the address rule changed:** until 2026-10-11 no address went into any commit, private included. That kept the T8 captures out of git altogether.
+  - **Why the address rule changed:** until 2026-10-11 no address went into any commit anywhere. That kept the T8 captures out of git altogether.
 - **What upstream has already published is public (operator, 2026-10-13; written here 2026-10-21).**
   - **Never mask, elide, substitute or remove:**
     - mail addresses in sign-offs and trailers;
@@ -394,8 +405,8 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
     - A made-up address that an outside review quotes is nobody's published address. It
       goes into `devtools/repo-scan-quoted-examples` with the file that quotes it, and passes
       only there.
-- **Nothing we write exists only on this disk (operator, 2026-10-11).** Whatever cannot go public goes to the private remote.
-  - **Pushed:** branches, worktrees, notes, and the commits made inside upstream checkouts under `cache/`. Those go as patch exports, never as the trees themselves (`scripts/export-local-work.py` → a branch on the private remote). `scripts/unpushed-survey.py` lists what is still local.
+- **Nothing we write exists only on this disk (operator, 2026-10-11).** Whatever does not belong in this repository is kept separately, never only here.
+  - **Pushed:** branches, worktrees, notes, and the commits made inside upstream checkouts under `cache/`. Those go as patch exports, never as the trees themselves (`scripts/export-local-work.py`, kept separately). `scripts/unpushed-survey.py` lists what is still local.
   - **Exceptions, kept local on purpose:**
     - **the raw capture archive** (`archive/`, up to 10 GB). It is bulk, not windows, and GitHub space is not for it;
     - **upstream source trees**, which can be fetched again;
@@ -409,14 +420,13 @@ streams: evidence, workarounds, the real fix. Workarounds must never be mistaken
 - **Kernel findings are recorded on `main` as they are found** (operator's decision,
   2026-10-09; first: `EX-062`). From 2026-09-17 to 2026-10-09 the rule was the opposite —
   a kernel finding stayed off `main` until its patch could follow at once — so the work of
-  that period sits on the `private` remote (`ivoitovych/qca9377-bt-hang-private`):
-  `kernel/mgmt-flush-status`, `diag/*`, `plan/*`, `postponed/*`, `review/*`. It comes back as
+  that period was kept separately, on held branches (`kernel/mgmt-flush-status`, `diag/*`,
+  `plan/*`, `postponed/*`, `review/*`). It comes back as
   **new commits that copy vetted files**, each naming its source branch and commit, never as a
   `git merge`: a merge would publish the branch history, which also holds working-session
   material that is not project content. The held-branch machinery stays: `repo-save` still
-  pushes `kernel/*`, `diag/*`, `plan/*`, `review/*`, `attribution/*`, `postponed/*` and
-  `config/*` to `private` only (tested; `scripts/prove-held-branch-guard.sh`), for work that
-  is private for other reasons.
+  pushes held branches to the separate remote only, never to `origin` (tested;
+  `scripts/prove-held-branch-guard.sh`).
 - **Verify operator accounts against logs** — he asked not to be trusted. Find the record or
   label the claim.
 - **Every claim ships with its extraction command and exact verbatim output**, plus exit
@@ -652,7 +662,7 @@ and [`lessons/2026-08-27T1200Z-test-suite-maintainer.md`](lessons/2026-08-27T120
    `BTUSB_QCA_ROME`, which installs *both* QCA firmware setup and a reset-on-timeout callback.
    Those must be separated ("Build B": setup on, automatic reset off) or a failure and its
    treatment land in one trial. Ladder: A baseline on one fixed tree → B setup only → E setup
-   on, alt-1 blocked for this ID → D as upstream. **A kernel build on the family laptop —
+   on, alt-1 blocked for this ID → D as upstream. **A kernel build on the laptop —
    the operator's decision.** Kernel version alone no longer predicts behaviour (backports):
    check the running `btusb` for the entry (`tools/bt-verify-kernel-mechanism`), never the version.
 7. **BlueZ — CLOSED: both applied upstream 2026-09-21 (§6).** The v2 mails of 22:47 CEST were

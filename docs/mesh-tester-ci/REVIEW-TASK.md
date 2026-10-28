@@ -1,13 +1,13 @@
 # Review task — one kernel patch, `net/bluetooth/mgmt.c`, mesh advertising
 
-**Private until the patch is sent. Do not post, mail or comment anywhere about it.**
+**Kept separately until the patch is sent. Do not post, mail or comment anywhere about it.**
 
 ## What is being reviewed
 
 One patch of 26 added / 4 removed lines, with its commit message:
 
 - Patch: `patches/mesh-tester/0001-Bluetooth-MGMT-stop-advertising-when-a-mesh-transmission-is-done.patch`
-  (this branch, `diag/mesh-tester-ci`, then in the project's private repository; the same
+  (this branch, `diag/mesh-tester-ci`; the same
   path is on `main` since 2026-10-09)
 - The diagnosis it rests on: `docs/mesh-tester-ci/phase1-findings.md` (§4–§7)
 - The test record: `docs/mesh-tester-ci/phase2-results.md` (§3 unpatched, §4 patched, §5 verdict)

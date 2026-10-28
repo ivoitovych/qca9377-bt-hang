@@ -18,7 +18,7 @@ exist on no remote (`docs/second-edit-2026-10-03`, `land/test-suite-20261018-bef
 `verify/investigation-machine-20260815T1504Z`); and no commit hooks are installed, so only
 `devtools/repo-save` enforces the publish rules on that side.
 
-The new checkout has both remotes, `origin` and `private`, and the commit hooks installed, with
+The new checkout has both remotes, `origin` and the second one, and the commit hooks installed, with
 `core.hooksPath` pinned to them (§4).
 
 ## 2. The entry review (`f6f6ed4`)
@@ -93,7 +93,7 @@ The operator's rule: a rule not enforced by a hook or a script gets forgotten. S
   skipped, never as passed.
 - The commit hooks in the new checkout run `repo-scan` on the staged additions at commit, and in
   `--range` mode over what each pushed commit adds, measured against the remote's `main`, when the
-  destination is not the private repository. A commit made with `--no-verify` is therefore still scanned where it would leave.
+  destination is not the other repository. A commit made with `--no-verify` is therefore still scanned where it would leave.
   The hooks' own test has 10 checks. Known gaps: odd trailer punctuation and look-alike letters
   pass the message check; annotated tags are not examined; `git push --no-verify` skips the hook,
   which only a server-side ruleset could stop.
@@ -111,7 +111,7 @@ CI: `f6f6ed4` run 39337267078, green.
 
 - Anything in §2 you know to be wrong or already in hand on your side: say so and it goes into
   the action register as such rather than being touched here.
-- Should the three local-only branches in your checkout go to `private`?
+- Should the three local-only branches in your checkout go to the other remote?
 - Should trial rows and new exhibits keep landing in your checkout and come to `main` through
   git, or should the installed tools be pointed at one checkout (Q5)?
 - Do you want the commit hooks installed in your checkout? The installer is one command.

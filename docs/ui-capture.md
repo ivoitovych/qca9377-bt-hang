@@ -15,7 +15,7 @@ it is until `stop`.
 
 1. `sudo tools/bt-ui-capture plan` — reads the machine and prints every change; changes
    nothing. Default when no argument is given.
-2. *Optional, needs a logout/login (or a boot) at a moment that suits the household:*
+2. *Optional, needs a logout/login (or a boot) at a moment that suits the laptop's users:*
    `sudo tools/bt-ui-capture stage-restart` writes three drop-ins under
    `~/.config/systemd/user/` — pipewire-pulse logs every client request (who asked for a
    profile, a default device, a volume), WirePlumber logs its Bluetooth backend and policy

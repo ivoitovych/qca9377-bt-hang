@@ -1,6 +1,6 @@
 # The kernel CI bot's `mesh-tester` failure — investigation task
 
-**Branch `diag/mesh-tester-ci`, private remote only.** Separate from the QCA9377 work: it
+**Branch `diag/mesh-tester-ci`, kept separately.** Separate from the QCA9377 work: it
 touches neither the laptop's Bluetooth stack nor the held patches.
 
 ## The fact

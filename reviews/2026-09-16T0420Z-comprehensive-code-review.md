@@ -313,7 +313,7 @@ operator; the bug-report rewrite has not started (§4.2).
   unmarked.** Checked on the tip: `BL-03` — `bt-trial abort` still `rm -rf`s with no
   `git ls-files` check (the fix is one line and the incident deleted tracked evidence);
   `BL-08` part 4 — `autostop` still calls `hci_alive`, i.e. **every shutdown of the
-  family laptop still probes the controller**, contaminating every shutdown-terminated
+  laptop still probes the controller**, contaminating every shutdown-terminated
   window by default; its stated prerequisite (`--tools-only`) shipped on 08-19. `BL-09`
   is done (`tools/lib/evidence-window.sh`) and not marked done. The backlog has no
   status column; it needs one, or the register's verify-command form.

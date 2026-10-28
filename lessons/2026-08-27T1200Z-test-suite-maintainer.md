@@ -247,7 +247,7 @@ exchanges of my asserting it could not be done.
 
 ## 7. Preparing patches for a project you are not a member of
 
-Collected because none of it is obvious from inside a private repository, and all
+Collected because none of it is obvious from inside one repository, and all
 of it was learned by having each item corrected.
 
 - **Cite what the project's own history shows you.** The defect's introducing

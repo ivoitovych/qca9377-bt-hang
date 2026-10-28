@@ -9168,7 +9168,7 @@ rm -f "$TL/dead"
 # AUTOSTOP IS PASSIVE (2026-09-19; BL-08, R2-65, DR-07). It classifies from the
 # kernel journal — a command timeout since the trial opened → hang — and sends
 # NOTHING to the controller. Until then it ran hci_alive() at every shutdown of
-# the family laptop, an HCI Read Local Name into the state under study, and the
+# the laptop, an HCI Read Local Name into the state under study, and the
 # two tests that stood here pinned that as the design ("on a responding
 # controller", "on a dead controller"): a test that asserts the defect is what
 # makes the defect survive its own review. The spy in the hciconfig stub above
@@ -13615,7 +13615,7 @@ dmhrc=$(dmh_rc "$DMHW")
     && ok "doc-main-hashes: naming the branch that holds a commit does not put it on main" \
     || bad "doc-main-hashes accepted the original of a cherry-pick as main's: rc=$dmhrc (want 1)"
 
-# The private repository's main is not the public main: no reference, no verdict.
+# Another repository's main is not this repository's main: no reference, no verdict.
 # The clones with an identity, as dmh_git: a clone writes reflogs, and without
 # one git guesses an address from the host's name, reading /etc/mailname,
 # /etc/hosts and /etc/resolv.conf (the access audit, 2026-10-17).

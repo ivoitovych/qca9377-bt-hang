@@ -25,10 +25,10 @@ $ devtools/status | tail -3
   · controller             NOT on the bus — cold power-off required
 ```
 
-The controller is gone. It needs a full power-off, and the household has to be ready to
+The controller is gone. It needs a full power-off, and the laptop's users have to be ready to
 lose Bluetooth for the length of that. **This is the constraint that shapes every
-experiment here** and it is easy to forget from the tree: it is a kitchen laptop, the
-operator's family uses it, and a destroyed controller costs them, not us. We do not get to
+experiment here** and it is easy to forget from the tree: it is a laptop in daily use, and a
+destroyed controller costs its users, not us. We do not get to
 ask for long windows on spec, and an experiment that ends with a dead radio has a real
 price attached.
 
@@ -117,7 +117,7 @@ that passes contemporaneously is not a check on the device*.
 ## 6. What I am stuck on, and would hand over
 
 - **Which rung of the recovery ladder killed it.** `n = 1`, aggregate only. Testing it
-  costs a controller per rung and a household power cycle each time. I do not think I
+  costs a controller per rung and a power cycle each time. I do not think I
   should run it again without a strong reason.
 - **`0x0428` vs `0x043D`.** `EX-031` has the Enhanced form answered and surviving 17
   minutes; `EX-033` has the legacy form answered and dying 2.076 s later. Both `n = 1`.

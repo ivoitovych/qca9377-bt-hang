@@ -4,7 +4,7 @@ to:       main-branch-maintainer
 date:     2026-10-16T13:43Z
 branch:   ci/upstream-ci-local (on main's 46e54ac)
 tip:      the commit that adds this file
-subject:  A1 and A2 pass the list bot's checks against today's BlueZ master; the private runner's red is the usbmon floor
+subject:  A1 and A2 pass the list bot's checks against today's BlueZ master; the other runner's red is the usbmon floor
 needs:    nothing, for information; the send stays the operator's
 ---
 
@@ -26,8 +26,8 @@ Follows `comms/2026-10-14T0224Z-from-ci-local-maintainer-to-everyone.md`.
    IncrementalBuild PASS for both; CheckSmatch and ScanBuild nothing NEW for either; A2
    turns `emulator/btdev.c:479` FIXED. The summaries are in the two directories above. The
    run is to be repeated on the send day, since master moves.
-2. **The private runner's red on the main baseline is the usbmon floor, as STATUS says.**
-   `gh run list -R ivoitovych/qca9377-bt-hang-private`: `ci/main-46e54ac-baseline-20261016`
+2. **The other runner's red on the main baseline is the usbmon floor, as STATUS says.**
+   `gh run list`: `ci/main-46e54ac-baseline-20261016`
    (= `main`) failed at 11:40 UTC today on one invariant, `bt-usbmon --check left 0 file(s)
    of 5 with KEEP=2`, while the same tree is green on the public runner (run 516) and here
    (02:19 UTC on 10-14, 831 invariants). Your CI-only branch with the floor off went green

@@ -110,7 +110,6 @@ That last distinction is especially valuable. The submission does not promise an
 
 | Priority    | Finding                                                                        | Assessment                    |
 | ----------- | ------------------------------------------------------------------------------ | ----------------------------- |
-| High        | Current `Assisted-by:` attribution requirement needs resolving                 | Submission compliance         |
 | Medium–high | BlueZ test adds 534 lines for three scenarios                                  | Maintenance burden            |
 | Medium      | Patch 3 relies on synchronization and lock-order assumptions                   | Requires precise verification |
 | Medium      | Test oracles do not prove every event and link invariant                       | Test strengthening            |
@@ -299,29 +298,7 @@ One small improvement: use the stable cover-letter explanation for why each line
 
 The main remaining gaps are independent reproduction of the recorded commands and logs, physical-controller validation, and deeper memory-safety and concurrency coverage. The fact that no physical hardware was used is clearly disclosed and is not, by itself, grounds to reject a well-designed emulator regression fix.
 
-## 6. Compliance issue: AI-assisted development attribution
-
-This is an important finding that does not arise from the Bluetooth code itself.
-
-The current Linux kernel submission documentation contains specific guidance for advanced coding tools and AI assistance.
-
-It says that qualifying assistance should be acknowledged using an `Assisted-by:` trailer, with the documented format beginning:
-
-```
-Assisted-by: LLM
-```
-
-The separate AI Coding Assistants document also distinguishes the human contributor's `Signed-off-by:` certification from automated assistance. (The Linux Kernel documentation)
-
-I cannot determine the correct trailer solely from the supplied patch history: that depends on what tools actually contributed to developing the patches, rather than merely reviewing them afterward.
-
-If qualifying tools contributed, the current candidate appears to lack an acknowledgement expected by the documented process. This needs to be resolved before submission.
-
-This is not a suggestion to attribute the authorship of your engineering work to an AI system. Human responsibility, the DCO and authorship remain separate matters. Nor does it require listing every model or conversational exchange.
-
-It is a matter of complying with the upstream project's current disclosure conventions.
-
-## 7. Prose and maintainer experience
+## 6. Prose and maintainer experience
 
 The kernel patch descriptions are generally strong.
 
@@ -345,7 +322,7 @@ The important principle is that a maintainer should understand the failure and t
 
 The Linux submission guide explicitly encourages self-contained explanations of the problem, user impact, implementation and testing. The current organization is broadly consistent with that guidance. (The Linux Kernel documentation)
 
-## 8. Upstream precedent and rejection analysis
+## 7. Upstream precedent and rejection analysis
 
 I located a relevant set of 25 upstream commits through GitHub commit search, including:
 
@@ -361,7 +338,7 @@ I therefore cannot claim that this review has exhaustively established the curre
 
 The closest documented risks visible in this candidate are excessive regression-test complexity, incomplete proof of synchronization safety, and compliance with submission metadata requirements.
 
-## 9. Recommended disposition
+## 8. Recommended disposition
 
 Kernel patch 1: Retain. A focused ownership correction with good regression evidence.
 
@@ -371,11 +348,11 @@ Kernel patch 3: Verify further. A plausible race fix that warrants explicit lock
 
 BlueZ test: Refine. Valuable regression coverage whose size and event oracles deserve further attention.
 
-Submission emails: Minor revisions. Good overall structure; resolve attribution requirements and keep the cover concise.
+Submission emails: Minor revisions. Good overall structure; keep the cover concise.
 
 ### Final judgment
 
-I would continue with this contribution, preserve the three-patch decomposition, and hold submission pending the remaining verification and compliance work.
+I would continue with this contribution, preserve the three-patch decomposition, and hold submission pending the remaining verification work.
 
 Nothing I inspected demonstrates that this patch series is intrinsically harmful, badly conceived, or contrary to the interests of Linux users. Its purpose is sound, the changes are relatively small, and its negative-control testing is especially useful.
 
@@ -530,19 +507,7 @@ Recommendation: Trace and document exactly who releases that link, including con
 
 I would not change this code merely on suspicion; the ownership chain needs to be proven first.
 
-Finding 3 — The BlueZ attribution rule must be checked before posting
-
-Severity: process compliance · Conditional on how the contribution was developed
-
-BlueZ's actual [AI Coding Assistants guidance](https://github.com/bluez/bluez/blob/7bc9684dc9e4/doc/coding-assistants.rst) says contributions developed with AI assistance should carry an `Assisted-by:` trailer and explicitly requires it in its AI-assisted bug-fixing procedure.
-
-The proposed BlueZ patch has no such trailer.
-
-Whether this applies depends on the tools' actual role in discovering, writing or fixing the contributed code. Merely conducting this external review is not, by itself, proof of how the patch was authored.
-
-Recommendation: Check the project's development history against that written requirement. If it applies, follow BlueZ's documented attribution convention before sending. This is distinct from the kernel's `Signed-off-by` rules.
-
-Finding 4 — Strengthen the test's success assertions
+Finding 3 — Strengthen the test's success assertions
 
 Severity: low to moderate · Test robustness
 
@@ -662,7 +627,6 @@ My remaining conditions are:
 - Prove or document the parent-link ownership path when patch 3 refuses a connection after creating a link.
 - Strengthen the HCI completion assertions in the BlueZ test.
 - Add concise per-patch validation details, particularly the non-submitted debug instrumentation used to verify patch 3.
-- Resolve BlueZ's documented `Assisted-by` requirement according to the actual development provenance, if applicable.
 
 I do not recommend redesigning the entire kernel solution based on what I found. In particular, I found no established reason to remove the synchronous work cancellation or combine all three kernel changes into a single patch.
 

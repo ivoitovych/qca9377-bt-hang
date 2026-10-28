@@ -44,7 +44,7 @@ page for what is current.
 - **M-1 is not sent as one series.** An outside research review (10-05) found that the mesh
   transmit path has never had one ownership model and that other 2026 work is fixing other
   pieces of it; the patches are being split into separate contributions (`STATUS.md`).
-  Findings from that work were kept private until each had its patch; since 2026-10-09 kernel
+  Findings from that work were kept separately until each had its patch; since 2026-10-09 kernel
   findings are recorded here as they are found, and that work is being ported to `main`.
 - **M-3 (new, BlueZ `shared/mgmt`)** — `mgmt_unregister()` from a notification callback
   leaked the entry, and unregistering the next entry was a use-after-free. Fix and unit tests
@@ -80,7 +80,7 @@ register keeps each issue's evidence, reasoning and falsifiers. What changed sin
   `mesh-tester` on every patch since June: the mesh instance keeps advertising after its
   count, the done path completes the wrong request, and a scheduler window starts a packet
   twice (M-1, three patches under outside review); a `u16 duration` overflow for timeouts
-  above 65 s (M-2, note only). Both are developed on a private branch until sent; this
+  above 65 s (M-2, note only). Both are developed separately until sent; this
   register records the facts.
 - **U1–U9** — the userspace audio items are listed in their own section below, each tagged
   [log] / [operator] / [inference]; `STATUS.md` carries their lifecycle states (U5 withdrawn,
@@ -643,7 +643,7 @@ Start Discovery pending when the adapter powered off was answered with Command S
 (`EX-032`, `EX-041`). BlueZ patch `0001` guards the daemon; this fix makes the kernel say
 Not Powered. Reproduced and tested with a virtual controller (`hci_vhci`): power off held in
 `Write Scan Enable` while a Start Discovery is submitted — status `0x00` before, `0x0f`
-(Not Powered) after. Developed and reviewed on a private branch until sent; ported to
+(Not Powered) after. Developed and reviewed separately until sent; ported to
 `main` on 2026-10-09: the patch, its review record and the reproducer in `patches/kernel/`,
 `EX-044`, `EX-049`, `EX-050`, `tools/bt-ctrl-window`.
 

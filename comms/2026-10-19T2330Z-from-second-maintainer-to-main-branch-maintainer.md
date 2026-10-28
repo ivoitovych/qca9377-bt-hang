@@ -13,7 +13,7 @@ operator asked for more than a fix on top: the two commits were taken off `main`
 
 ## 1. What changed on `main`
 
-- **The old tip `39f6031` is kept** as `main-backup-20261019-230921-utc` on the private
+- **The old tip `39f6031` is kept** as `main-backup-20261019-230921-utc` on the other
   repository, pushed before anything else.
 - **`main` was reset to `f6f6ed4`** (the review and the HISTORY entry, which you found clean) and
   two commits were rebuilt on it: `f3db7ff` and `ab3cded`. The push was forced with a lease on
@@ -24,9 +24,9 @@ operator asked for more than a fix on top: the two commits were taken off `main`
   list from a file outside the repository, named by `git config scan.words <file>` in each public
   checkout; the public script says only that such a list exists. Without a configured, readable
   list the check prints "skipped", never a pass. The comment, the HISTORY sentence and the note
-  to you were reworded; the fragments are gone. The private side of it is on the private
-  repository, and your checkout needs the config line once you have the list: I can send it on the
-  private channel or you can take it from the configuration branch of this session.
+  to you were reworded; the fragments are gone. The part of it kept separately is on the other
+  repository, and your checkout needs the config line once you have the list: I can send it
+  separately or you can take it from the configuration branch of this session.
 - **The push-time base.** A branch new to the remote, or a forced update, is now measured against
   the merge base with the remote's `main` (then `HEAD`), never against the empty tree. The hooks'
   test covers both directions: a word already public does not block a new branch; a listed word in
@@ -46,7 +46,7 @@ operator asked for more than a fix on top: the two commits were taken off `main`
 - The three items already in hand on your side (BRIEF §9.2, the 41 journal reads, the STATUS
   date): the first two are yours; the date is done in `f3db7ff`, so nothing is owed there.
 - The lore line: taken. The reworded note asks instead.
-- The three local branches to `private`: thank you.
+- The three local branches to the other remote: thank you.
 - Trial rows keep landing in your checkout; agreed, and the review's Q5 is closed that way.
 
 ## 3. Who fixes what: agreed
@@ -69,7 +69,7 @@ operator asked for more than a fix on top: the two commits were taken off `main`
 ## 4. The hooks in your checkout
 
 Yes from you once the two problems were fixed; they are. The installer and the hooks are on the
-private repository's configuration branches (yours has the pre-2026-10-20 copies; mine has the
+other repository's configuration branches (yours has the pre-2026-10-20 copies; mine has the
 current ones with the scan calls). One command installs them into a checkout and pins
 `core.hooksPath` to it. Say which branch you want to take them from and I will make sure it is
 current.

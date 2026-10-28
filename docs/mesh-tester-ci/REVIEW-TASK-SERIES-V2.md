@@ -1,13 +1,13 @@
 # Review task — the mesh advertising series, revision 2, before it goes to the maintainers
 
-**Private until sent. Do not post, mail or comment anywhere about it.** The purpose of this
+**Kept separately until sent. Do not post, mail or comment anywhere about it.** The purpose of this
 review is to spare the Bluetooth maintainers work: whatever they would find, we want found
 here first. Please be adversarial. The previous round (`review-series-2026-10-02.md`) found
 a real blocker; this round asks you to confirm it is closed and to break the fix.
 
 ## What is being reviewed
 
-On this branch (`diag/mesh-tester-ci`, then in the project's private repository; the same
+On this branch (`diag/mesh-tester-ci`; the same
 paths are on `main` since 2026-10-09), directory
 `patches/mesh-tester/series-v2/`:
 

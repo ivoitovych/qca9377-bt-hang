@@ -37,8 +37,7 @@ No newer upload than `-39` (proposed).
   `scripts/build-btusb-module.sh --ksrc cache/ubuntu-7.0.0-42 --krel 7.0.0-42-generic <patch>`
   with the patch E3 always used (`git -C cache/linux format-patch -1 dc16388d45ec`,
   `patches/diag/README.md` §E3), then `scripts/module-updates.sh --krel 7.0.0-42-generic --module
-  btusb install <ko>`, both before the first boot into it (the recipe of `-38`'s build, private
-  `diag/e3-btusb-for-7.0.0-38-20261010`).
+  btusb install <ko>`, both before the first boot into it (the recipe of `-38`'s build).
 - **The operator's choice:** hold the HWE metapackages until E3 for `-42` is built, or install
   and build E3 before rebooting. Either way, no reboot into `-42` without E3.
 - **The SRU question** has become less pressing: the next cycle after `-42` should take a base at
