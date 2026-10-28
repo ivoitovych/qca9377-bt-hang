@@ -1,0 +1,57 @@
+From 325741248edeb52c047b1c13adf113bc16f917b6 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Wed, 28 Oct 2026 21:41:40 +0100
+Subject: [PATCH 6.18.y 0/2] Bluetooth: L2CAP: fix the deferred ECRED accept hang
+
+Hello,
+
+this is a backport to 6.18.y of two mainline commits by Pauli Virtanen,
+in this order:
+
+  608e0b7a675b ("Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and
+  locking helpers")
+  32d86e048d8e ("Bluetooth: L2CAP: hold conn->lock for
+  __l2cap_ecred_conn_rsp_defer")
+
+The second fixes ab4eedb790ca ("Bluetooth: L2CAP: Fix corrupted list in
+hci_chan_del"), which 6.18.y has; it needs the first for
+l2cap_chan_lock_conn() and l2cap_chan_unlock_conn(). Neither carries
+Cc: stable.
+
+Without them, BlueZ's l2cap-tester case "L2CAP Ext-Flowctl Server -
+Accept 2 Close 1" never finishes on v6.18.59: the test stops after
+"Accept deferred setup".
+
+The commits do not build on 6.18.y as they are. Deviations:
+- patch 1: the context-analysis annotations 6.18.y lacks are dropped
+  (__must_not_hold, the __cond_acquires on l2cap_chan_lock_conn(),
+  __context_unsafe); the code is unchanged;
+- patch 2: none.
+
+Tested on v6.18.59 in QEMU/KVM (4 vCPUs) with BlueZ's
+doc/tester.config: with the series the case passes, and the whole
+l2cap-tester ends with 93 of 111 passed; each of the 18 failing cases
+(the BT_PHY cases: setsockopt(BT_PHY) fails with ENOPROTOOPT there)
+also fails on plain v6.18.59. Without the series the case never
+finishes. No lockdep or KASAN report in either.
+
+The two commits are requested for 7.3.y and 7.2.y as they are, in a
+separate mail; backports for 6.12.y and 6.6.y are separate series.
+
+Thanks,
+Iaroslav
+
+Pauli Virtanen (2):
+  Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and locking helpers
+  Bluetooth: L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer
+
+ include/net/bluetooth/l2cap.h | 16 +++++++++
+ net/bluetooth/l2cap_core.c    | 60 ++++++++++++++++++++++++++++---
+ net/bluetooth/l2cap_sock.c    | 68 ++++++++++++++++++++++++-----------
+ 3 files changed, 119 insertions(+), 25 deletions(-)
+
+
+base-commit: 1253a6aa5d104312bf0992afacc15220ae35bdf9
+--
+2.43.0
+
