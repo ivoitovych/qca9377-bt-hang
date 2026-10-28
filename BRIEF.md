@@ -194,6 +194,12 @@ hours (`R2-13`).
 >   the older lines' backports follow), CO-05. Reopened on the operator's word: CO-11, CO-19, CO-23,
 >   CO-25 (`ae34a3c`). After these: CO-04's independent fix; the sent-mail hash guard in the save
 >   step and pre-push hook.
+> - **CO-34 SENT 2026-10-28 06:16** (250; password revoked, 535 on 587). **Second review round
+>   (`c6148f9`, six reviewers):** CO-25, CO-11 and CO-19 each got a `reviews-2026-10-28.md` in its
+>   dossier with the v2 actions: CO-25 the ID sentence, Cc Zijun Hu, evidence wording, shorter;
+>   CO-11 the false "output unchanged" claim, wider widths, reproducer attached, the development
+>   release's bluez; CO-19 verify the HSP-only `SPA_ID_INVALID` path, fix the install plan (exact
+>   `libspa-0.2-modules` dependency), wording. Still running: CO-35's backports.
 > - **CI:** red from 10-22 to 10-28, unread (a trial open all week). The install step and the
 >   journal seams are fixed (`deaafab`, `14ae3af`); the suite passes. One floor stays red:
 >   `tools/bt-journal-files` has no suite tests, asked of the test-suite maintainer
