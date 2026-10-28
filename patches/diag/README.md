@@ -115,7 +115,13 @@ The -38 initramfs has no btusb, so `updates/` + `depmod` is enough. **Read after
 boot:** `modinfo -F srcversion btusb` → `D1DEA96A0C95BFAB05CEE01`; the QCA rampatch/NVM lines
 in `journalctl -k -b 0`. Until then, picking -34 under GRUB's "Advanced options" keeps E3.
 
-### E3 for 7.0.0-42 (built 2026-10-28; NOT installed — the operator's word is needed)
+### E3 for 7.0.0-42 (built and installed 2026-10-28, on the operator's word; not yet booted)
+
+**Installed** 2026-10-28 with the command below plus `--trial-open-ok` (trial E3 #3 is open on
+`-38`; nothing it uses changed). Checked after: `modinfo -k 7.0.0-42-generic -F filename btusb` →
+`/lib/modules/7.0.0-42-generic/updates/btusb.ko`; `scripts/btusb-has-device.py` on it → `FOUND
+13d3:3503 x1`; sha256 `7463a56b…750f4b` as built; `-38`'s `updates/` unchanged (`D1DEA96A…`,
+`0D084A05…`). The section below is kept as written before the install.
 
 `7.0.0-42.42~24.04.1` was installed by the desktop's software updater on 2026-10-28 at 04:46
 (`/var/log/apt/history.log`: `aptdaemon role='role-commit-packages'`, image, modules and

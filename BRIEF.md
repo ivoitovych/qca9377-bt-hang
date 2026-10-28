@@ -98,7 +98,7 @@ Recent detail may be shortened. Settled state is never dropped.
   the mesh row). Stable: 6.1, 5.15 and 5.10 are still at their 10-17 rc1, with ours in; no review
   mail found for them (lore refuses this machine, 403; CO-28 waits).
 - **Operator decisions open** (the one list; the hand-off block below points here; re-read 2026-10-28):
-  - **`7.0.0-42`:** installed 2026-10-28 04:46 by the software updater; E3 for it built and checked, not installed: install it before the next reboot (CO-09; `patches/diag/README.md`);
+  - **`7.0.0-42`:** installed 2026-10-28 04:46 by the software updater; E3 for it installed the same day (CO-09; `patches/diag/README.md`); open: whether to port the CO-02 module to it;
   - **sends:** CO-34 (BT-12, ready); a stable request for BT-10's fix (CO-35; 7.2.y as is, the older lines need backports); CO-04's independent fix when it is ready; CO-05 after its review; any reply to CO-02's reviewers;
   - **the CO-02 module on the laptop:** keep it (it runs since 10-23) or remove it (`module-updates.sh remove` + a cold boot);
   - **deploying `main`'s tool set on the laptop** (the review is done, `reviews/review-comprehensive-code-review-20261019-014718.md`; phase 1 of its reaction plan comes before the deploy, and of it SR1 and T1 are left, 2026-10-19): until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
@@ -209,10 +209,10 @@ hours (`R2-13`).
 >   journal seams are fixed (`deaafab`, `14ae3af`); the suite passes. One floor stays red:
 >   `tools/bt-journal-files` has no suite tests, asked of the test-suite maintainer
 >   (`comms/2026-10-28T0300Z-…`). **On trial days, `devtools/ci --wait` after every push.**
-> - **Before any reboot:** `7.0.0-42` IS installed (software updater, 2026-10-28 04:46) and is
->   the next boot; E3 for it is built and checked (`tmp/runtime-e3-7.0.0-42/btusb.ko`,
->   srcversion `DDB92562D1890FC3D262993`), NOT installed: the operator's word, then
->   `scripts/module-updates.sh --krel 7.0.0-42-generic --module btusb install tmp/runtime-e3-7.0.0-42/btusb.ko`.
+> - **`7.0.0-42` is the next boot** (software updater, 2026-10-28 04:46) and **E3 for it is
+>   installed** (2026-10-28, operator's word; srcversion `DDB92562D1890FC3D262993`). After the
+>   first `-42` boot: check the srcversion and the QCA patch line. The CO-02 module stays `-38`
+>   only: a `-42` boot ends the CO-02 field test unless it is ported (STATUS).
 > - **Method lessons of 2026-10-28:**
 >   - a bisect across a range where a second, newer bug gives the same symptom finds that bug's
 >     end; apply the newer bug's fix at each step that has it (CO-35, `bisect2-step.sh`);
