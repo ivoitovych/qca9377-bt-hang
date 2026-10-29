@@ -168,7 +168,10 @@ hours (`R2-13`).
 >   `tmp/agent-guard/watch-new-lines.py` on their `tmp/<task>/progress.md` and the guard's
 >   `tmp/agent-guard/decisions.log`; resume a stopped one with SendMessage to its id, found in the session's
 >   `subagents/*.meta.json`):
->   - **mesh** (CO-05 + CO-04), option (a): no use-after-free reproducer and nothing aimed at CO-04's path
+>   - **mesh** (CO-05 + CO-04): **FINISHED 14:10, ported to main** (`25e8168`, `d02ce84`): both packages
+>     ready for an outside review round (`contributions/CO-05-…/patch/`, `CO-04-…/patch/`, each with a
+>     README of questions); its proposed STATUS/issues edits (mesh row, the syzbot "last crash" date fix,
+>     M-4/M-5 entries) are in its final report and not yet applied. Option (a): no use-after-free reproducer and nothing aimed at CO-04's path
 >     (no hold/delay/fault knob on mesh_send*); CO-05/26 keep their own checks. Results so far: all clean
 >     (KASAN/lockdep/WARNING 0 on base, CO-05, CO-04, both); CO-05's lock warnings 3 → 0; final commits made
 >     (patch-ids equal to the tested ones); **14888791 as posted gives a lockdep circular dependency in
