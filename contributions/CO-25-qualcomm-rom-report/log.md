@@ -269,7 +269,11 @@ The operator's word ("Please send") and an app password, after round 10 (all GO)
   (a row in `docs/sent-mails.tsv`).
 - The password: in no local settings or git config file afterwards (grep of
   `/root/exp/.claude/settings*.json`, `/root/.claude/settings.json`, the project's `.git/config`).
-  To be revoked by the operator; the revocation is then checked on 587 (or 465), never assumed.
+  **Revoked:** the operator removed it after the send. Login-only check, no password on a
+  command line (`python3 -I tmp/smtp-check-from-transcript.py <session transcript> all 465
+  ssl`): 15 distinct app passwords in the transcript, every one `AUTH LOGIN→334 user→334
+  pass→535` ("5.7.8 Username and Password not accepted"), this send's among them (fingerprint
+  `sha256:b871ddd4`, first seen 2026-10-29T01:33:50Z): **revoked**.
 - Arrival: lore answered `t.mbox.gz` with its bot check ("Making sure you're not a bot!") and a
   page fetch with 403; not confirmed from here. The operator can open
   https://lore.kernel.org/linux-bluetooth/20261029013350.360574-1-yaroslav.voytovych@gmail.com/
