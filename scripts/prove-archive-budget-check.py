@@ -2,7 +2,8 @@
 """prove-archive-budget-check.py: controls for archive-budget-check.py and the BUDGET_GB file.
 
 Works in a scratch directory under the project's tmp/; never reads the real archive/.
-Run: python3 -I prove-archive-budget-check.py
+Run: python3 -I prove-archive-budget-check.py, or directly (executable, as every script here
+must be; CI's invariant caught it missing on 85114a8).
 """
 import os
 import subprocess
