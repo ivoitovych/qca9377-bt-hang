@@ -106,6 +106,14 @@ for one run over the whole directory** (`desktop-capture-archive.sh --budget-gb 
 Each archive records its budget in `BUDGET_GB` (bt-trace: 10, the operator's figure of 10-11);
 `scripts/archive-budget-check.py` compares use with it, and the session-start hook prints a ⚠️ at
 80 % and FULL at 100 %, so the warning reaches every session, not only the archiver's own output.
+**Result of the 10 GB run (2026-10-29 ~02:00): FULL at 10.04 GB, 254 files archived**
+(`hci-20261010-193534` to `hci-20261022-174531`, each verified); **131 not archived** (10-22 17:45
+to now, the CO-02 hardware run of 10-23 to 10-25 among them). The estimate was wrong: later files
+compress about 1.57× (10-18 to 10-22: 6.33 GB raw → 4.05 GB), not 2.85× as the first 40 did; the
+remaining ~9.8 GB raw would need about 6.3 GB more (~16.3 GB in all; 47 GB free). Not urgent: the
+archived files are the oldest, so rotation reaches the unarchived ones only after about 254 more
+rotations (one per 64 MB written; none since 10-28 22:25). Raising the budget again is the
+operator's decision.
 
 ## The investigation machine
 

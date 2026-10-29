@@ -246,3 +246,11 @@ read in full the same night.
 Dry run at 02:02 +0100: the guard in `send.sh` refused the first rebuild (two lines over 72 after
 the edit) until they were re-wrapped; then lint clean but the URL line (105), "Dry-OK", the same
 seven RCPT TO once each. Nothing sent.
+
+**Desktop-capture archive, the operator's 10 GB run** (`desktop-capture-archive.sh --budget-gb
+10`, after the 3 GB run stopped at 3.02 GB with 291 pending): "BUDGET REACHED (10.04 GB of 10 GB);
+stopped with 131 capture(s) not archived". `MANIFEST.tsv` 254 rows, the newest
+`hci-20261022-174531`. `archive-budget-check.py` now reports hci-capture FULL (exit 1), which the
+session-start hook prints. My estimate of ~9.4 GB was wrong: it extrapolated the first 40 files'
+2.85× compression, while 10-18 to 10-22 compressed 1.57× (`awk` over `MANIFEST.tsv`). The rest:
+about 9.8 GB raw (`du -cb`), about 6.3 GB compressed at 1.57×. STATUS has the details.
