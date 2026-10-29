@@ -1,0 +1,108 @@
+From 069fcf2d592b4daf7ddf6dd58e17396507c1f55c Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Thu, 29 Oct 2026 12:01:04 +0100
+Subject: [PATCH BlueZ 1/2] a2dp: Fix use-after-free when switching endpoints
+ during Close
+
+If SetConfiguration is called on a remote endpoint while a Close sent by
+the local side is still pending, a2dp_reconfig() gets -EINVAL from
+avdtp_close() and calls avdtp_abort(), which cancels the pending Close
+with cancel_request(). That calls close_cfm() with an error, and
+finalize_config() completes the request and drops the reference held
+by its callback. When the setup was created for this request, that
+was the last reference and the setup is freed, then a2dp_reconfig()
+sets setup->reconfigure on it:
+
+  ERROR: AddressSanitizer: heap-use-after-free
+  WRITE of size 4
+    #0 a2dp_reconfig profiles/audio/a2dp.c:2173
+    #1 set_configuration profiles/audio/a2dp.c:2233
+    #2 process_message gdbus/object.c:293
+  0x7be28ade7570 is located 80 bytes inside of 112-byte region
+  freed by thread T0 here:
+    #1 setup_cb_free profiles/audio/a2dp.c:341
+  previously allocated by thread T0 here:
+    #2 setup_new profiles/audio/a2dp.c:269
+    #3 a2dp_setup_get profiles/audio/a2dp.c:530
+
+Hold a reference to the setup across the calls. If avdtp_abort() then
+fails, which happens when the Abort cannot be sent after the Close was
+canceled, the request may already be completed and replied to, so it
+is neither freed nor failed a second time.
+
+Fixes: 5071fadb97b8 ("a2dp: Try aborting when switching endpoints")
+---
+ profiles/audio/a2dp.c | 32 +++++++++++++++++++++++++++++++-
+ 1 file changed, 31 insertions(+), 1 deletion(-)
+
+diff --git a/profiles/audio/a2dp.c b/profiles/audio/a2dp.c
+index cb1b3a980..3ef191dc2 100644
+--- a/profiles/audio/a2dp.c
++++ b/profiles/audio/a2dp.c
+@@ -330,6 +330,21 @@ static struct a2dp_setup_cb *setup_cb_add(struct a2dp_setup *setup)
+ 	return cb;
+ }
+ 
++static struct a2dp_setup_cb *setup_cb_find(struct a2dp_setup *setup,
++							unsigned int id)
++{
++	GSList *l;
++
++	for (l = setup->cb; l != NULL; l = l->next) {
++		struct a2dp_setup_cb *cb = l->data;
++
++		if (cb->id == id)
++			return cb;
++	}
++
++	return NULL;
++}
++
+ static void setup_cb_free(struct a2dp_setup_cb *cb)
+ {
+ 	struct a2dp_setup *setup = cb->setup;
+@@ -2114,6 +2129,7 @@ static int a2dp_reconfig(struct a2dp_channel *chan, const char *sender,
+ 	struct a2dp_setup *setup;
+ 	struct a2dp_stream *stream;
+ 	struct a2dp_setup_cb *cb_data;
++	unsigned int id;
+ 	GSList *l;
+ 	int err;
+ 
+@@ -2159,6 +2175,13 @@ static int a2dp_reconfig(struct a2dp_channel *chan, const char *sender,
+ 			if (!avdtp_has_stream(chan->session, stream->stream))
+ 				continue;
+ 
++			/* If a Close is pending avdtp_abort() cancels it and
++			 * close_cfm() completes this request, which may drop
++			 * the last reference to setup before returning.
++			 */
++			setup_ref(setup);
++			id = cb_data->id;
++
+ 			err = avdtp_close(chan->session, stream->stream, FALSE);
+ 			if (err < 0) {
+ 				err = avdtp_abort(chan->session,
+@@ -2166,11 +2189,18 @@ static int a2dp_reconfig(struct a2dp_channel *chan, const char *sender,
+ 				if (err < 0) {
+ 					error("avdtp_abort: %s",
+ 							strerror(-err));
+-					goto fail;
++					/* Unless already completed */
++					if (setup_cb_find(setup, id))
++						setup_cb_free(cb_data);
++					else
++						err = 0;
++					setup_unref(setup);
++					return err;
+ 				}
+ 			}
+ 
+ 			setup->reconfigure = TRUE;
++			setup_unref(setup);
+ 
+ 			return 0;
+ 		}
+-- 
+2.43.0
+

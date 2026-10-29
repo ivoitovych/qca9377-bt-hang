@@ -1,0 +1,134 @@
+From b36937c740d4275b3a857fa01b8f7c75b7266de8 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Thu, 29 Oct 2026 12:01:06 +0100
+Subject: [PATCH BlueZ 2/2] test: Cover A2DP endpoint switch while Close is
+ pending
+
+Add test_a2dp_reconfigure_during_close, where the peripheral's
+bluetoothd is stopped so that a Close sent by the source is left
+pending, and the source then switches endpoints with SetConfiguration,
+which aborts the stream and cancels the Close. That call must fail, as
+must a second one made while the Abort is pending, and the stream be
+configured again on reconnection.
+
+Built with AddressSanitizer, bluetoothd on the source reports a
+heap-use-after-free in a2dp_reconfig() without the previous patch.
+---
+ doc/functional-a2dp.rst      | 31 ++++++++++++++++++++
+ test/functional/test_a2dp.py | 57 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 88 insertions(+)
+
+diff --git a/doc/functional-a2dp.rst b/doc/functional-a2dp.rst
+index f38a458bb..eea6d4a84 100644
+--- a/doc/functional-a2dp.rst
++++ b/doc/functional-a2dp.rst
+@@ -134,3 +134,34 @@ test_a2dp_disconnect_during_setconf[accept|reject]
+ 	``auto_config()``. A late ``yes`` used to also leave the stale
+ 	transport registered, failing the next connection with
+ 	``Resource temporarily unavailable``.
++
++test_a2dp_reconfigure_during_close
++----------------------------------
++
++:Setup: As above, with the transport already created.
++
++:Steps:
++	1. Peripheral: stop `bluetoothd` with ``SIGSTOP``, so that it
++	   answers no AVDTP request.
++	2. Central: ``disconnect <peripheral bdaddr> <A2DP Sink UUID>``,
++	   which sends a Close that is left pending.
++	3. Central: ``endpoint.config <remote endpoint>
++	   /local/endpoint/ep0 MQ_STEREO_44_1``.
++	4. Central: the same ``endpoint.config`` again.
++	5. Peripheral: resume `bluetoothd` with ``SIGCONT``.
++	6. Central: ``connect <peripheral bdaddr>``.
++
++:Expected:
++	2. ``Attempting to disconnect``.
++	3. ``Failed to config endpoint: org.bluez.Error.Failed``: switching
++	   endpoints aborts the stream, which cancels the pending Close and
++	   completes the request with an error.
++	4. ``Failed to config endpoint: org.bluez.Error.Failed``: with the
++	   Abort pending the stream can be neither closed nor aborted.
++	5. The transport is removed (``[DEL] Transport``).
++	6. A transport appears again, and ``Connection successful``.
++
++:Notes: Regression test for a use-after-free in `bluetoothd` on the
++	central: completing the request freed its setup before
++	``a2dp_reconfig()`` set ``reconfigure`` on it, which
++	AddressSanitizer reports (`bootstrap-configure` enables it).
+diff --git a/test/functional/test_a2dp.py b/test/functional/test_a2dp.py
+index 12348ea05..7008b7f9b 100644
+--- a/test/functional/test_a2dp.py
++++ b/test/functional/test_a2dp.py
+@@ -4,6 +4,9 @@
+ Tests for A2DP using bluetoothctl in VM instances
+ """
+ 
++import os
++import signal
++
+ import pytest
+ 
+ from pytest_bluezenv import Bluetoothd, Pexpect, find_exe, host_config
+@@ -200,3 +203,57 @@ def test_a2dp_disconnect_during_setconf(hosts, reply):
+     sink.send("yes\n")
+     source.expect("Connection successful")
+     source.expect(TRANSPORT_RE)
++
++
++def signal_bluetoothd(sig):
++    """
++    Send a signal to the bluetoothd of the host this runs on.
++    """
++    for pid in os.listdir("/proc"):
++        if not pid.isdigit():
++            continue
++
++        try:
++            with open(f"/proc/{pid}/comm") as f:
++                comm = f.read().strip()
++        except OSError:
++            continue
++
++        if comm == "bluetoothd":
++            os.kill(int(pid), sig)
++            return True
++
++    return False
++
++
++@a2dp_host_config
++def test_a2dp_reconfigure_during_close(a2dp_hosts):
++    host0, host1, source, sink = a2dp_hosts
++
++    _, m = source.expect(TRANSPORT_RE)
++    transport = m[0].decode("utf-8")
++    remote_sep = transport.rsplit("/", 1)[0]
++
++    # Stop the peripheral so the Close sent next is left pending
++    assert host1.call(signal_bluetoothd, signal.SIGSTOP)
++
++    source.send(f"disconnect {host1.bdaddr} {A2DP_SINK_UUID}\n")
++    source.expect("Attempting to disconnect")
++
++    # Switching endpoints while the Close is pending aborts the stream,
++    # which cancels the Close and completes the request
++    source.send(f"endpoint.config {remote_sep} /local/endpoint/ep0 MQ_STEREO_44_1\n")
++    source.expect("Failed to config endpoint: org.bluez.Error.Failed")
++
++    # Switching again while the Abort is pending can neither close nor
++    # abort the stream
++    source.send(f"endpoint.config {remote_sep} /local/endpoint/ep0 MQ_STEREO_44_1\n")
++    source.expect("Failed to config endpoint: org.bluez.Error.Failed")
++
++    assert host1.call(signal_bluetoothd, signal.SIGCONT)
++
++    # bluetoothd is still alive and the stream can be configured again
++    source.expect(rf"DEL\S*\] Transport {transport}")
++    source.send(f"connect {host1.bdaddr}\n")
++    source.expect(TRANSPORT_RE)
++    source.expect("Connection successful")
+-- 
+2.43.0
+

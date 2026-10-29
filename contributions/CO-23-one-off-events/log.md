@@ -36,3 +36,26 @@ against the controller; nothing was committed or sent.
 - **Written:** `README.md`, this file, `investigation-2026-10-28.md`. Helper scripts in `tmp/co23/`.
 - **Next:** reproduce event 1 under AddressSanitizer in the BlueZ emulator, then write and send the fix.
   Correct the BT-6 entry and the "unrelated crash" wording in the records listed in `README.md`.
+
+## 2026-10-29: event 1 reproduced, fixed, send package written (worktree branch, nothing sent)
+Everything ran in the BlueZ CI bot's Docker image and its QEMU guests; nothing touched the laptop or
+this machine's Bluetooth. Detail and every command: `experiments/results-2026-10-29.md`.
+- **Defect confirmed at BlueZ master `82667d713949`** (`a2dp.c:2162-2173`); introduced by
+  `5071fadb97b8` (5.51). No fix or report on patchwork (since 08-01) or lore (since 09-10).
+- **A second ending of the same chain** found while writing the fix: when the Abort cannot be sent
+  after the Close was canceled, `a2dp_reconfig()` frees the already-freed callback and
+  `set_configuration()` replies a second time.
+- **Fix** (hold a setup reference across close/abort; on a failed abort free and fail the request only
+  if still pending, by callback id) and **test** in BlueZ's functional suite,
+  `test_a2dp_reconfigure_during_close` (peer `bluetoothd` stopped with `SIGSTOP` so the Close stays
+  pending; two endpoint switches; reconnect), with its `doc/functional-a2dp.rst` entry.
+- **Results:** master + test → ASan heap-use-after-free at `a2dp.c:2173`, after the laptop's exact log
+  sequence; master + fix + test → A2DP functional 5/5, new case 5 of 5 runs, `make check` 41/42 (1
+  skip) on both sides, no sanitizer report; both reachable failure branches seen in the log.
+- **Learned:** BlueZ's `bootstrap-configure` enables ASan/LSan/UBSan, so the bot's functional runs are
+  sanitizer builds; the bot fails a CheckPatch *warning* (an 81-column comment, fixed).
+- **CI bot's own checks** on the final mails (`tmp/co23/bot-ci-3`): all PASS on base and base + series,
+  exit 0; TestFunctional 48 → 49 passed. (An earlier run failed CheckPatch on an 81-column comment.)
+- **Package:** `patch/send/` (two mails, `SHA256SUMS`, `send.sh`, README); To the list, Cc Luiz
+  Augusto von Dentz. `send-email`, a dry run included, is the coordinator's (guard, 10-29).
+- `scripts/bot-ci-local.sh` now runs from a worktree (`--cache`; root from its own location).

@@ -2,6 +2,9 @@
 
 **State:** investigated 2026-10-28, read-only. One new root-cause candidate with a code defect
 (event 1), one event reclassified as benign (event 2), one event with no findable cause (event 3).
+**Event 1, 2026-10-29: reproduced under AddressSanitizer in BlueZ's functional suite, fixed, send
+package ready** (`patch/send/README.md`; results `experiments/results-2026-10-29.md`). Sending is the
+operator's decision.
 
 **Target:** BlueZ `profiles/audio/a2dp.c` (event 1); the Linux kernel `net/bluetooth` (event 2, a
 log-level question only); GNOME Settings or BlueZ, undecided (event 3).
@@ -41,14 +44,21 @@ function without the core.
 chunk was handed to the timer source is [inference]: it depends on allocator state that cannot be observed now. The fingerprint (size, offset, value) is specific, and
 `Close: Operation canceled` occurs once in the archive, in this session; the other 24 Abort timeouts did not crash.
 
-**Upstream.** No fix in BlueZ master (`b0bf49270d44`, 2026-10-23); `git log 5.72..origin/master` over the A2DP/AVDTP files has nothing for it.
+**Upstream.** No fix in BlueZ master (`b0bf49270d44`, 2026-10-23; re-checked at `82667d713949`, 2026-10-29, with patchwork since 08-01 and the lore archive since 09-10: no fix, no report); `git log 5.72..origin/master` over the A2DP/AVDTP files has nothing for it. Introduced by `5071fadb97b8` ("a2dp: Try aborting when switching endpoints", 5.51).
 The sibling `a2dp_config()` sets `reconfigure` before the call (`a2dp.c:3054`, `:3084`, BlueZ 5.72).
 
-**Next step.** (1) Reproduce under AddressSanitizer in the BlueZ emulator: `SetConfiguration` on a remote SEP while a Close is pending; the
-report will name `a2dp.c:1899`. No hardware needed. (2) Write the fix (hold a reference across the close/abort, or set the flag first) with that test;
-a draft diff is in the investigation note, section 1.10, **not built or tested**. (3) Send as a BlueZ patch. (4) Correct the records that call this crash
-"unrelated" and "cleared" (`BRIEF.md:341`, `docs/contributions-roadmap.md:25`, `patches/bluez/README.md:260`, exhibit 041): it is cleared of
-being caused by patches `0001`/`0002`, but it has a mechanism now.
+**Done 2026-10-29** (`experiments/results-2026-10-29.md`). (1) Reproduced on BlueZ master `82667d713949` with a new
+ordinary functional test, `test_a2dp_reconfigure_during_close` (two QEMU guests in the CI bot's image; the peer's
+`bluetoothd` stopped so the Close stays pending): ASan `heap-use-after-free … a2dp.c:2173 in a2dp_reconfig`, WRITE of 4
+bytes at offset 80 of the 112-byte setup, after the same log sequence as the laptop's crash. (2) Fix: hold a reference
+across the close/abort, and on a failed abort free and fail the request only if it is still pending (a second ending of
+the same chain, found while writing it: a failed Abort send freed the callback twice and replied twice). With it: A2DP
+functional cases 5/5, the new case 5 of 5 runs, `make check` 41/42 (1 skip) on both sides, no sanitizer report; the
+CI bot's own checks on the exact mails, base and base + series: all PASS (TestFunctional 48 → 49 passed).
+(3) Send package `patch/send/` (two mails, `send.sh`, not run). **Next:** the operator's review and send. Still open:
+(4) correct the records that call this crash "unrelated" and "cleared" (`BRIEF.md:341`, `docs/contributions-roadmap.md:25`,
+`patches/bluez/README.md:260`, exhibit 041): it is cleared of being caused by patches `0001`/`0002`, and has a mechanism
+and a fix now; (5) Ubuntu 24.04's 5.72 carries the defect (since 5.51): a backport candidate once applied upstream.
 
 ## Event 2: BT-6, ACL data for an unknown handle
 
