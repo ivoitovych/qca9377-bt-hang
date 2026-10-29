@@ -1,6 +1,21 @@
 # CO-28 — Tested-by on the 6.1.191, 5.15.224 and 5.10.273 stable reviews
 
-**State:** waiting (on the review mails). Nothing drafted.
+**State (2026-10-29): the review mails are out; nothing run or drafted yet.** Read from lore's
+git archive of the stable list (`cache/lore-stable-2.git`, epoch 2, shallow; lore's web is
+blocked from here, its git is not):
+
+| review | Message-ID | ours in it | responses by |
+|---|---|---|---|
+| 6.1.191-rc1 (2026-10-28 17:34 +0100) | (superseded by rc2) | 0161 QCA9377 entry, 0427 BT-9 fix, 0471 BT-8 fix | — |
+| **6.1.191-rc2** (2026-10-29 08:33 +0100) | `<20261029073135.159947193@linuxfoundation.org>` | the same three (in the rc2 shortlog) | **Sat 31 Oct 2026 07:28:30 UTC** |
+| **5.15.224-rc1** (2026-10-28 17:52 +0100) | `<20261028170008.009143722@linuxfoundation.org>` | 125 QCA9377 entry | **Fri 30 Oct 2026 16:59:22 UTC** |
+| **5.10.273-rc1** (2026-10-28 17:52 +0100) | `<20261028170003.522232767@linuxfoundation.org>` | 129 QCA9377 entry | **Fri 30 Oct 2026 16:59:22 UTC** |
+
+Commands: `git -C cache/lore-stable-2.git log --grep` on the series subjects and on our three
+patch subjects; the deadlines from each cover's "Responses should be made by" line. Starting
+the runs is the operator's call (the plan below); a reply is the operator's send.
+
+**State before (2026-10-28):** waiting (on the review mails). Nothing drafted.
 
 **Target:** the stable kernel's review threads. Ours would be a test report, as CO-10 was for
 6.6.160-rc2.

@@ -743,3 +743,26 @@ unchanged". Patch 1 changes it from aborted to kept.
   24/27's `sco-tester.c` part applied on master, our patch fails at its include block. The series
   itself does not apply to today's master (21/27 fails on `mgmt-tester.c`), so a respin of it
   comes first. If it lands before our test, a v2 of the test on its API is owed.
+
+## 2026-10-29 — the laptop module for Ubuntu 7.0.0-42 (built, not installed)
+
+The operator: "Please build 42" (7.0.0-42 is the next boot; it would end the field test with the
+stock `bluetooth.ko`). `experiments/build-laptop-module-42.sh`, the -38 recipe carried over:
+- tree `cache/co02-ubuntu42` (a worktree of `cache/linux` at v7.0): `co02-ubuntu42/base`
+  `dd75f05a4468c` = Ubuntu 7.0.0-42's `net/bluetooth` and `include/net/bluetooth` (diff -r with
+  `cache/ubuntu-7.0.0-42`: equal); `-42` already has `abd93c85c8667`, so only `816fb1590a4c`
+  follows, in its 6.18.y form `b108ea7ebba14` → `with816` `51139015a40c9`; then the series commit
+  of the -38 tree `ff077afb28e81` → `with816-series` `1a4a560a1d763`.
+- check 1: `with816`'s `sco.c` is byte-identical to -38's `with816` `sco.c`;
+  check 2: the series' patch-id is the same on -42 and -38 (`13fb52c3d619`). So the module carries
+  exactly the code that ran on the laptop since 10-23 (EX-071, EX-082).
+- built with `scripts/build-bluetooth-module.sh --ksrc … --krel 7.0.0-42-generic` (the `--krel`
+  option added for this, with a vermagic check): `tmp/co02-hw/module42/full/bluetooth.ko`,
+  srcversion `D3723B159B2E0A68AC46EB5`, vermagic `7.0.0-42-generic`, SHA-256 `148564f5…c94f3d`;
+  control `module42/pre` srcversion `0711BB032AD7A7BE6B3FDBC`. No compiler diagnostics.
+- E3's btusb for -42 was built against the stock `bluetooth.ko`: the 94 exported symbols' CRCs of
+  the CO-02 build equal the stock module's (`/lib/modules/7.0.0-42-generic/build/Module.symvers`;
+  `diff` of the two sorted lists: empty), so btusb loads with it.
+- Not installed. Installing is the operator's word: `scripts/module-updates.sh` into `-42`'s
+  `updates/` + `depmod`, then the cold boot into -42; after it, `modinfo -F srcversion bluetooth`
+  = `D3723B159B2E0A68AC46EB5` and E3's `QCA: patch rome` line.

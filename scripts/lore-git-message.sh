@@ -33,8 +33,13 @@ fi
 
 OUT="$REPO/tmp/lore-messages/$MSGID.eml"
 mkdir -p "$(dirname "$OUT")"
+# The Message-ID header can be folded onto a second line (the patchwork bot's are), so the
+# headers are parsed, not grepped.
+has_id() {
+	python3 -I -c 'import email, sys; m = email.message_from_binary_file(sys.stdin.buffer); sys.exit(0 if (m.get("Message-ID") or "").split() == ["<" + sys.argv[1] + ">"] else 1)' "$MSGID"
+}
 while read -r c; do
-	if git -C "$GITDIR" cat-file blob "$c:m" 2>/dev/null | grep -q -i -F "Message-ID: <$MSGID>"; then
+	if git -C "$GITDIR" cat-file blob "$c:m" 2>/dev/null | has_id; then
 		git -C "$GITDIR" cat-file blob "$c:m" > "$OUT"
 		echo "found: archive commit $c ($LIST epoch $epoch)"
 		echo "-> $OUT"
