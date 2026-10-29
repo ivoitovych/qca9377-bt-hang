@@ -14,7 +14,7 @@ A report with two questions, mainly for Qualcomm; not a patch. For
 13d3:3503 the kernel side is already fixed: dc16388d45ec ("Bluetooth:
 btusb: Add IMC Networks QCA9377 to quirks table") is in v7.3 and in
 stable releases, so I am not asking for another fix for this ID. The
-entry was sent for BLE-scan errors; it also prevents the
+entry was sent for BLE-scan errors; in my tests it also avoided the
 controller-wide hang below.
 
 Summary
@@ -45,8 +45,8 @@ On the ROM firmware
 -------------------
 The device has isochronous alternate settings 1-5 (wMaxPacketSize
 9/17/25/33/49) and no alt 6, so for transparent air mode btusb uses
-alt 1, and each 27-byte SCO packet from the audio stack goes out as
-three 9-byte USB packets. Setup Synchronous Connection (0x0428) is
+alt 1, and the captures show each 27-byte SCO buffer sent as three
+9-byte USB packets. Setup Synchronous Connection (0x0428) is
 answered and the link streams. One of the twelve failures (kernel
 log, Bluetooth dynamic debug on; "evt 5" is
 HCI_NOTIFY_ENABLE_SCO_TRANSP in btusb_notify()):
@@ -89,9 +89,10 @@ and 24 CVSD. Of these,
      reset could have hidden a timeout;
   16 ran with the exact dc16388d45ec entry.
 
-This does not separate the rampatch from the NVM, or the firmware
-from the other host settings BTUSB_QCA_ROME brings (the shutdown
-handler, the simultaneous-discovery quirk).
+This does not separate the rampatch from the NVM. Nor does it
+separate the firmware from BTUSB_QCA_ROME's other host-side effects,
+which the diagnostic build kept: the shutdown handler, set_bdaddr,
+the simultaneous-discovery quirk and the reset-resume check.
 
 For anyone searching the archive with a similar failure on a QCA
 ROME USB controller: check whether its USB ID selects btusb's QCA

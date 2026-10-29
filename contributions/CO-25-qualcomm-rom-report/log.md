@@ -174,3 +174,21 @@ shows that package installed 2026-10-01 13:50:58, when `linux-firmware` went fro
 `0ubuntu2.29` (installed 08-15) to the split `0ubuntu3.1`. E1 (09-26) and E3 (boot from
 10-01 00:13:20, EX-057) therefore loaded `0ubuntu2.29`'s files; that package is not cached, so
 the hashes recorded are of the files installed now, with that caveat.
+
+## 2026-10-29 — round 8: v4 approved by all six available reviewers; three edits
+
+Reviewers 1-4, 6, 7 (5 unavailable): GO for the `.eml` and the dry run; no further review round,
+no experiment. Edits made to `drafts/report-v4.txt` (in place; `git diff` shows them):
+1. "it also prevents the controller-wide hang below" → "in my tests it also avoided …"
+   (reviewers 2, 6, 7): the one verb not bounded to the evidence.
+2. The E1 confounders listed in full (reviewer 3): `BTUSB_QCA_ROME` sets six things at probe
+   (`setup_on_usb`, `shutdown`, `set_bdaddr`, `reset`, `HCI_QUIRK_SIMULTANEOUS_DISCOVERY`,
+   `btusb_check_needs_reset_resume()`; `cache/ubuntu-7.0.0-42/drivers/bluetooth/btusb.c`
+   4400-4406, the same block as mainline `btusb_main.c` 4648-4655); E1 removed only `reset`.
+   v4 named two of the four kept.
+3. "each 27-byte SCO packet from the audio stack" → "the captures show each 27-byte SCO buffer"
+   (reviewer 3): the framing is observed at the USB boundary (C5), not attributed.
+`EVIDENCE.md`: a section with the other ROME IDs' sources, the July 0b05:1825 thread among them
+(reviewers 3, 7); the mail's link is re-pinned to the commit that carries it.
+Reviewers 2 and 4 could not open that thread themselves; it was read here on 2026-10-29
+(round 7 entry above).

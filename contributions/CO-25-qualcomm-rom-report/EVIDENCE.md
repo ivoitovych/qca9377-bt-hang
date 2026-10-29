@@ -27,6 +27,14 @@ The twelve failures, with kernel, first command and timings, are tabulated in
 | [EX-058](../../evidence/exhibits/058-e1-setup-only-58-links-three-boots.md) | 58 SCO links (43 mSBC, 15 CVSD), three boots, two headset models, on the diagnostic build: `BTUSB_QCA_ROME` only, no `BTUSB_WIDEBAND_SPEECH`, no reset callback ([patch](../../patches/diag/btusb-e1-qca-rome-setup-no-reset.patch)); 0 command timeouts |
 | [EX-057](../../evidence/exhibits/057-e3-upstream-entry-16-links-two-headsets.md) | 16 SCO links (7 mSBC, 9 CVSD) with the exact `dc16388d45ec` entry, including the headset of EX-053; 0 command timeouts |
 
+## The other ROME IDs named in the mail
+
+| ID | source |
+|---|---|
+| `0b05:1868` | mainline `d54601f21faf` (Quentin Strydom, 2026-09-28): no `BTUSB_QCA_ROME`, no rampatch/NVM, `0x2005` BLE-scan errors |
+| `0b05:1825` | mainline `cfa67a1dbfd9` (Konstantin Nazarov, 2026-10-01): the same |
+| `0b05:1825`, earlier | Edgard Lopes, 2026-07-21, "[PATCH] Bluetooth: btusb: Add ID 0b05:1825 for ASUS QCA ROME adapter", not merged (the list's bot answered that it no longer applied): the device on "its bare ROM firmware", "SCO/eSCO audio is broken", "corrupted SCO packet", the HFP/HSP microphone never works. Thread: <https://ratatoskr.run/linux-bluetooth/2026/07/17287224/t> |
+
 ## The firmware files
 
 Both runs loaded `qca/rampatch_usb_00000302.bin` and `qca/nvm_usb_00000302.bin` from Ubuntu's
