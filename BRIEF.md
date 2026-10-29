@@ -177,7 +177,14 @@ hours (`R2-13`).
 >     (patch-ids equal to the tested ones); **14888791 as posted gives a lockdep circular dependency in
 >     8/12 power boots, ours 0/12**: a technical point for our own CO-04 mail only (no contact, nothing on
 >     that thread). KCSAN and bot CI running.
->   - **CO-23** (BlueZ `a2dp_reconfig()` use-after-free): fix written (setup ref held across close/abort;
+>   - **CO-23: FINISHED 14:21, ported** (`b454900` bot-ci-local worktree support, `d941963` dossier):
+>     package `contributions/CO-23-…/patch/send/` (2 mails, To linux-bluetooth, Cc Luiz Augusto von
+>     Dentz; `send.sh` not run: the dry run is the coordinator's, the send the operator's); bot CI all
+>     PASS both sides, TestFunctional 48 → 49; ASan UAF on master at `a2dp.c:2173`, none with the fix.
+>     Open: the route (public list, as earlier a2dp UAF fixes went, or BlueZ's SECURITY.md: the
+>     operator's call); records still calling the 09-08 crash "unrelated" (BRIEF:341,
+>     docs/contributions-roadmap.md:25, patches/bluez/README.md:260, EX-041) and its STATUS row to
+>     update. Earlier notes: fix written (setup ref held across close/abort;
 >     a second double-free path found), functional regression test shows the UAF under ASan on base and
 >     none with the fix; mails in the dossier. `send-email`, even a dry run, is the coordinator's.
 > - **Guard fixes 10-29** (private hook, 57/57 tests): container paths after the image are the
