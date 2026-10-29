@@ -80,3 +80,34 @@ posted fix takes `hdev->lock` under `cmd_sync_work_lock`, inverting the existing
   thread; outside reviews; then the operator's word. It must agree with CO-05, which locks the same
   function.
 - **If anyone comments on our patch**, the points are answered technically on our thread.
+
+## 2026-10-28 — syzbot's bug page read (read only)
+- Saved in the worker's `tmp/mesh/syzbot/` (git-ignored): the page by id and by extid, the crash
+  report, the console log, the kernel config, the 2026-10-17 retest's report and log, the
+  2026-10-15 patch-test log. One crash (2026-10-03, upstream `3b7cab693ba2`,
+  `ci-qemu-upstream-386`), a syz reproducer, no C reproducer; the 2026-10-17 retest on upstream
+  `58161ead29e5` still reports it. The page asks for `Reported-by:
+  syzbot+f20755f37da70df33a16@syzkaller.appspotmail.com` (`grep -n "Reported-by"
+  tmp/mesh/syzbot/bug-extid.html` → `164: Reported-by: syzbot&#43;f20755f37da70df33a16@…`).
+- **Root cause, from today's source:** the analysis is in
+  `experiments/comparison-2026-10-29.md`, "The defect". In short: `HCI_MESH_SENDING` is cleared
+  without `hdev->lock` in `mesh_send_start_complete()` and `mesh_send_done_sync()` before
+  `mesh_next()` queues the list head, so a concurrent `mesh_send()` can queue the same
+  `mgmt_mesh_tx` a second time; when the first start fails the entry is freed and the second
+  start reads it. The read offset, 59 of 96 bytes, is `send->cnt`, the first field
+  `mesh_send_sync()` reads.
+
+## 2026-10-29 — the operator's decision on reproduction, and the fix written
+- **Decision (operator, relayed 2026-10-29):** no use-after-free reproducer in any form, no use of
+  syzbot's reproducer or crash input, no window-widening or fault patch on this fix's path, no
+  `#syz test` (anything posted needs the operator's own word). The fix rests on the source
+  analysis, the syzbot report's own text, lockdep assertions on the paths the fix locks, and the
+  unmodified testers on base vs base+fix.
+- **The fix:** "Bluetooth: MGMT: Fix use-after-free in mesh_send_sync()", `caa2531f276f7` on
+  bluetooth-next `1081a6ef8f1e0`; derived from our own V3 1/5 (`266dda8daee0`, 2026-10-04), not
+  from 14888791. Comparison with V3 1/5, Baul Lee's v2 and the other pending patches:
+  `experiments/comparison-2026-10-29.md`.
+- **Decision: sent independently of CO-05** (not on top of it), because it is the stable-bound fix
+  of a reported use-after-free, the two touch different functions, and they apply in either order
+  to the same tree (`git diff --stat mesh/both-co05-co04-on-1081a6ef8f1e0
+  mesh/co04-then-co05-on-1081a6ef8f1e0` → empty).

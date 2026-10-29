@@ -92,3 +92,30 @@ All six: the locking of 1/2 is right for its scope (`req_lock` → `hdev->lock` 
    unlocked, and `mesh_tx` is dereferenced before the lock — both pre-existing; say so, and review
    CO-05 together with CO-04's coming fix of the same function.
 Then: regenerate on today's base, preflight, the bot's CI, cover letter, recipients.
+
+## 2026-10-28/29 — the review points checked in source (bluetooth-next `1081a6ef8f1e0`)
+- **Point 1, `MGMT_STATUS_BUSY` (reviewer 6): true in the code, no observable effect; no third
+  patch.** `grep -n -A12 "^static u8 mgmt_status(int err)" net/bluetooth/mgmt.c` → `314: static u8
+  mgmt_status(int err)` … `319: if (err < ARRAY_SIZE(mgmt_status_table))` / `320: return
+  mgmt_status_table[err];`. Index 0x0a of the table (`grep -n -A70 "^static const u8
+  mgmt_status_table"`, line 218 is index 0) is line 228: `MGMT_STATUS_NO_RESOURCES, /* Max Number
+  of SCO Connections */` — non-zero. `mesh_send_start_complete()` uses `mgmt_err` only as a
+  condition (`if (mgmt_err) {`), so `MGMT_STATUS_BUSY` takes the same branch as `-EBUSY` would, and
+  the only event sent there, Mesh Packet Complete, carries the handle alone
+  (`mgmt_event(MGMT_EV_MESH_PACKET_CMPLT, hdev, &handle, sizeof(handle), NULL)`, `mgmt.c:1092`). No
+  status reaches user space, so the reviewer's "the client may get a wrong status" does not happen.
+  A patch changing only the internal value would cost a maintainer's time for nothing visible.
+- **Point 2, Hui Peng's earlier proposal (reviewers 2 and 5): confirmed.** Patchwork 14831256,
+  "[v3] Bluetooth: MGMT: Fix mesh_tx Use-After-Free and leak in mesh_send()", 2026-09-19 11:25,
+  took `hci_dev_lock(hdev)` in `mesh_send_sync()` around the add and in
+  `mesh_send_start_complete()`, and re-checked the entry against `mgmt_mesh_next(hdev, NULL)`
+  (`python3 -I tmp/mesh/pw-show.py tmp/patchwork/patch-14831256.json`, its diff). The bot could not
+  apply it (`patch failed: net/bluetooth/mgmt.c:2306`); its author withdrew it at 11:55 the same
+  day ("Please drop this patch … 71af682ba469 … fixed that on 2026-09-15, and fixed it better") and
+  re-sent only the leak half as 14831271, the patch our Tested-by of 2026-10-06 is on (our reply is
+  comment 2 of 14831271). `71af682ba469` exists: Lee Jones, "Bluetooth: mgmt: Dequeue pending
+  mesh_send_sync entries on cancel", patchwork 14818191, `accepted`
+  (`python3 -I scripts/patchwork-state.py --files 14818191` → `accepted … commit=71af682ba469…`).
+  14831256 still shows `new` on patchwork. So the I12 lock was proposed once, inside a withdrawn
+  patch, and never applied; the cover letter credits it by link.
+- **Points 3 to 5** go into the regenerated messages and the cover letter (`patch/`).

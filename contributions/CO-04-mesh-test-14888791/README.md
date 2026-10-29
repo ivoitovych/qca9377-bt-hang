@@ -1,38 +1,40 @@
-# CO-04 — Test Igor Putko's mesh patch 14888791
+# CO-04 — syzbot's mesh_send_sync use-after-free: our independent fix
 
-**State:** tested 2026-10-21 in QEMU, no Tested-by: the patch as posted introduces a lockdep
-circular-locking report (`hdev->lock` under `cmd_sync_work_lock`), 9 of 12 `-s power` boots,
-0 on base; it fixes three failed-start cases (`log.md`, `experiments/results-2026-10-21.md`).
-**New direction (2026-10-28, the operator's decision): an independent fix** for syzbot's
-mesh_send_sync use-after-free, sent as its own patch; no reply on the 14888791 thread (`log.md`).
+**State (2026-10-29):** **fix written and being tested; not sent.** "Bluetooth: MGMT: Fix
+use-after-free in mesh_send_sync()" on bluetooth-next `1081a6ef8f1e0` (`patch/`, once packaged;
+results in `experiments/results-2026-10-29.md`; comparison with our V3 1/5 and the other
+pending patches in `experiments/comparison-2026-10-29.md`). Sending is the operator's decision.
 
-**Target:** the Linux kernel. This is another author's patch; ours would be a test report.
+**History:** opened 2026-10-21 to test another author's patch (14888791). It introduced a lockdep
+circular-locking report (`hdev->lock` under `cmd_sync_work_lock`, 9 of 12 `-s power` boots, 0 on
+base) and got no Tested-by (`experiments/results-2026-10-21.md`). On 2026-10-28 the operator
+chose an independent fix instead, with no reply, review, Tested-by or Cc on that thread
+(`log.md`).
 
-**Comes from:** the mesh work (`M-1`; `docs/mesh-tester-ci/`) and our Tested-by on Hui
-Peng's 14831271 (2026-10-06).
+**Target:** the Linux kernel, `net/bluetooth/mgmt.c`; syzbot's "KASAN: slab-use-after-free Read in
+mesh_send_sync" (open; `Reported-by: syzbot+f20755f37da70df33a16@syzkaller.appspotmail.com`).
 
-## What it is
+## The defect (source analysis; no reproducer, by the operator's decision of 2026-10-29)
 
-"Bluetooth: mgmt: Fix UAF in mesh_send_sync caused by race in mesh queue" (patchwork
-14888791, 2026-10-14, `new`):
-- **What it changes:** it takes `hdev->lock` in `mesh_send_done_sync()`, `mesh_next()` and
-  `mesh_send_start_complete()`, and carries Hui Peng's `mesh_send()` hunk verbatim. So if it
-  lands, our Tested-by on 14831271 is moot, and the two cannot both apply.
-- **Replies:** Hillf Danton put it to syzbot, which answered with a Tested-by (2026-10-15).
-  No maintainer has replied.
+`HCI_MESH_SENDING` is cleared without `hdev->lock` in `mesh_send_start_complete()` (failed start)
+and `mesh_send_done_sync()` before `mesh_next()` queues the start of the list head. A concurrent
+`mesh_send()`, which tests the flag under `hdev->lock`, can queue a start for its new entry in
+that window, and `mesh_next()` then queues a second start for the same `mgmt_mesh_tx`. When the
+first start fails the entry is freed, and the second start reads it (syzbot: 59 bytes into the
+96-byte object, `send->cnt`).
 
-**The question to test:** `mesh_next()` also runs as the destroy callback of
-`hci_cmd_sync_clear()` at device removal, under `cmd_sync_work_lock`. There, our 2026-10-05
-gate already had lockdep report an inversion (`cmd_sync_work_lock` → `unregister_lock`; only
-with a scratch delay keeping the tear-down entry queued). Does the new `hdev->lock` there make
-it worse?
+## The fix
+
+The flag stays set until the next start is queued or nothing is pending, and that decision is
+made under `hdev->lock` (`mesh_next()` asserts it), from `mesh_send_done_sync()`, the start-error
+path and `send_cancel()`. `hdev->lock` is never taken under `cmd_sync_work_lock`: on `-ECANCELED`
+(dequeue, `hci_cmd_sync_clear()`) the callback only completes the request, as before, and
+`mesh_send_done_sync()` has no destroy callback any more. Sent independently of CO-05: the two
+apply in either order to the same tree.
 
 ## Next
 
-1. Run our mesh reproducers on the exact patch (`git am` on bluetooth-next), on a 4-CPU guest
-   with lockdep and KCSAN.
-2. Then the device-removal lockdep case.
-3. Compare with the unpatched control.
-4. Claim nothing before the run.
-
-**Decides:** any reply on the thread is the operator's decision.
+1. Finish the runs (lockdep/KASAN, KCSAN 4-CPU, mesh-tester, preflight, the list bot's CI).
+2. Outside review of the patch.
+3. The operator's decision on sending; a `#syz test` on syzbot's thread also needs the operator's
+   own word.
