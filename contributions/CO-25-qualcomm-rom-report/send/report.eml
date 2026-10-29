@@ -59,11 +59,12 @@ HCI_NOTIFY_ENABLE_SCO_TRANSP in btusb_notify()):
   02:09:46.067797 Bluetooth: hci0: command 0x0406 tx timeout
 
 Here the stream ran about 7.3 s before the Disconnect. In all twelve
-failures the first command after link-up was issued 34 ms to 9.65 s
-after it and timed out about 2 s later: 0x0406 Disconnect in six,
-0x0c1a Write Scan Enable in one, the bare "command tx timeout" in
-five. Whether the command causes the hang or only finds it, I cannot
-tell from the host side.
+failures the first command after link-up timed out about 2 s after
+it was issued; where the delay from link-up is recorded, it was
+34 ms to 9.65 s. The command was 0x0406 Disconnect in six, 0x0c1a
+Write Scan Enable in one, the bare "command tx timeout" in five.
+Whether the command causes the hang or only finds it, I cannot tell
+from the host side.
 
 No later command was answered. In one failure I probed the USB side:
 two GET_DESCRIPTOR transfers timed out with -110 while the device
@@ -100,7 +101,7 @@ ROME USB controller: check whether its USB ID selects btusb's QCA
 setup path and whether the rampatch and NVM load.
 
 Kernel log extracts, with the commands that produced them:
-https://github.com/ivoitovych/qca9377-bt-hang/blob/39e0fce366e1/contributions/CO-25-qualcomm-rom-report/EVIDENCE.md
+https://github.com/ivoitovych/qca9377-bt-hang/blob/4b56813d311d/contributions/CO-25-qualcomm-rom-report/EVIDENCE.md
 
 Thanks,
 Iaroslav Voitovych

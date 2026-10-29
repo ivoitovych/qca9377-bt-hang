@@ -222,5 +222,8 @@ verified here and fixed:
    longer does. A dated correction added to the exhibit under its Claim and Relevance (both
    kept as written, as EX-047's correction was), and a note in the exhibit index; commands,
    output and counts unchanged.
-The evidence link is re-pinned to the commit with the corrected EX-058, and the `.eml` rebuilt
-and dry-run again (entry below).
+The evidence link is re-pinned to `4b56813d311d`, the commit with the corrected EX-058 (that
+exhibit and `EVIDENCE.md` both answer 200 there). `send/send.sh` rebuilt the `.eml` and ran the
+dry run again at 01:41 +0100: lint clean but the URL line (104); "Dry-OK"; RCPT TO once each for
+the same seven; "Result: OK". Nothing sent; the send is `send/send.sh --send`, on the operator's
+word.
