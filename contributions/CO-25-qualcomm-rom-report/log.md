@@ -254,7 +254,9 @@ stopped with 131 capture(s) not archived". `MANIFEST.tsv` 254 rows, the newest
 session-start hook prints. My estimate of ~9.4 GB was wrong: it extrapolated the first 40 files'
 2.85× compression, while 10-18 to 10-22 compressed 1.57× (`awk` over `MANIFEST.tsv`). The rest:
 about 9.8 GB raw (`du -cb`), about 6.3 GB compressed at 1.57×. STATUS has the details.
-The operator raised it to 20 GB the same night (one run, `--budget-gb 20`).
+The operator raised it to 20 GB the same night (one run, `--budget-gb 20`): "archived 131 (8349
+MB -> 4247.3 MB), skipped 254, failed 0, pending 0; archive 14.19 GB of 20 GB"; all 385 closed
+captures archived, 71 % of the budget.
 
 ## 2026-10-29 — SENT
 

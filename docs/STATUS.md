@@ -114,7 +114,12 @@ compress about 1.57× (10-18 to 10-22: 6.33 GB raw → 4.05 GB), not 2.85× as t
 remaining ~9.8 GB raw would need about 6.3 GB more (~16.3 GB in all; 47 GB free). Not urgent: the
 archived files are the oldest, so rotation reaches the unarchived ones only after about 254 more
 rotations (one per 64 MB written; none since 10-28 22:25). **The operator raised the budget to
-20 GB the same night** (one run, `--budget-gb 20`, started 02:2x +0100).
+20 GB the same night** (one run, `--budget-gb 20`): "archived 131 (8349 MB -> 4247.3 MB), skipped
+254, failed 0, pending 0; archive 14.19 GB of 20 GB". **Every closed desktop capture is now
+archived** (`MANIFEST.tsv` 385 rows, the newest `hci-20261028-201028`; the open file is left, and
+all 386 originals are still in place). The archive is at 71 % of its budget. New captures are not
+archived automatically (no timer, the operator's decision): run the same command again, or set a
+timer, before rotation reaches them.
 
 ## The investigation machine
 
