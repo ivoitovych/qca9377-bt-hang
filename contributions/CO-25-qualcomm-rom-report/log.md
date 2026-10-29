@@ -192,3 +192,17 @@ no experiment. Edits made to `drafts/report-v4.txt` (in place; `git diff` shows 
 (reviewers 3, 7); the mail's link is re-pinned to the commit that carries it.
 Reviewers 2 and 4 could not open that thread themselves; it was read here on 2026-10-29
 (round 7 entry above).
+
+**Send package, dry run 2026-10-29 01:22 +0100.** The link in `report-v4.txt` re-pinned to
+`39e0fce366e1` (the commit with the final `EVIDENCE.md`; `curl -w %{http_code}` → 200).
+`send/send.sh` builds `send/report.eml` (the draft with a From header), refuses a placeholder or
+any URL but one pinned `EVIDENCE.md`, runs `scripts/mail-lint.sh` (clean but line 103, the URL,
+by design) and `git send-email --dry-run --suppress-cc=self` with the recipients also given on
+the command line. Output: "Dry-OK"; `MAIL FROM:<yaroslav.voytovych@gmail.com>`; `RCPT TO:` once
+each for linux-bluetooth, marcel@holtmann.org, luiz.dentz@gmail.com,
+zijun.hu@oss.qualcomm.com, shuai.zhang@oss.qualcomm.com, brgl@kernel.org, silurust@gmail.com
+(seven, as intended, no duplicate); the folded Subject unfolded to one line; "Result: OK".
+Nothing sent. The real send is `send/send.sh --send`, on the operator's word only.
+Also checked: the running boot (10-23, `linux-firmware-qualcomm-wireless 0ubuntu3.1`) logs
+`QCA: patch rome 0x302 build 0x3e8` at 11:04:43 (`journalctl -k -b 0 --grep`), as
+`EVIDENCE.md` says of the boots since the package split.

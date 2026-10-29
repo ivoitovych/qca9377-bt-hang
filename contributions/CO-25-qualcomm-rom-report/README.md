@@ -7,8 +7,10 @@ the recipients came from the wrong file (round 6, `reviews-2026-10-28.md`); `rep
 fixed these. A seventh round (six reviewers) judged v3 sendable after small corrections, one of
 them a factual error in the timing sentence; `drafts/report-v4.txt` makes them, each checked
 (`log.md`). `EVIDENCE.md` (with the firmware files' provenance) is the page its link points to,
-pinned to a commit. Next: the operator's read of v4; then the `.eml`, a dry run with RCPT TO
-checked, and the operator's word. `report-v2.txt` and `report-v3.txt` are superseded.
+pinned to a commit. Round 8 (six reviewers): GO, three small edits made. **The send package is
+ready**: `send/send.sh` (dry run passed 2026-10-29, seven RCPT TO as intended; `log.md`). It
+waits only for the operator's word: then `send/send.sh --send`. `report-v2.txt` and
+`report-v3.txt` are superseded.
 
 **Comes from:** BT-1 (BRIEF section 0, Foundation). The kernel fix is upstream
 `dc16388d45ec`; this report asks what the ROM firmware does wrong, which is not
