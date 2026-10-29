@@ -13535,6 +13535,36 @@ for rsneg in "private${RSAT}${RSDOM}" "x-${RSLIST}" "20261009.2-1-${RSLIST}" \
         || bad "the public-address list let an unpublished token through: ${rsneg%%${RSAT}*}@…"
 done
 
+# A LISTED <uuid>@<host> MESSAGE-ID PASSES THE UUID CHECK TOO; OTHER UUIDS DO NOT
+# (2026-10-29: a reply's Thunderbird Message-ID is a UUID at the sender's host). Built
+# from fragments so no literal UUID lands in this tracked file.
+RSU1="1a2b3c4d-5e6f"; RSU1="${RSU1}-4a7b-8c9d-0e1f2a3b4c5d"
+RSU2="9f8e7d6c-5b4a"; RSU2="${RSU2}-4c3d-9e8f-7a6b5c4d3e2f"
+cp "$RSP/devtools/repo-scan-public-addresses" "$RSP/list.base"
+printf '%s%s%s\n' "$RSU1" "$RSAT" "$RSDOM" >> "$RSP/devtools/repo-scan-public-addresses"
+cp "$RSP/README.base" "$RSP/README.md"
+printf 'In-Reply-To: <%s%s%s>\n' "$RSU1" "$RSAT" "$RSDOM" >> "$RSP/README.md"
+git -C "$RSP" add -A
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? == 0 )) \
+    && ok "repo-scan lets a listed <uuid>@<host> Message-ID through (UUID and address checks)" \
+    || bad "repo-scan refused a listed <uuid>@<host> Message-ID"
+printf 'In-Reply-To: <%s%s%s>\n' "$RSU2" "$RSAT" "$RSDOM" >> "$RSP/README.md"
+git -C "$RSP" add -A
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "an unlisted <uuid>@<host> Message-ID is still refused beside a listed one" \
+    || bad "an unlisted UUID Message-ID passed because another one is listed"
+cp "$RSP/README.base" "$RSP/README.md"
+printf 'machine id: %s\n' "$RSU2" >> "$RSP/README.md"
+git -C "$RSP" add -A
+( cd "$RSP" && HOME="$RSP/nohome" "$OLDPWD/devtools/repo-scan" . --all ) >/dev/null 2>&1
+(( $? != 0 )) \
+    && ok "a bare unlisted UUID is still refused when the public list names a UUID Message-ID" \
+    || bad "a bare unlisted UUID passed"
+cp "$RSP/list.base" "$RSP/devtools/repo-scan-public-addresses"; rm -f "$RSP/list.base"
+cp "$RSP/README.base" "$RSP/README.md"; git -C "$RSP" add -A
+
 # QUOTED EXAMPLES PASS ONLY WHERE THEY ARE QUOTED. Outside reviews quote made-up
 # addresses; listed as public they passed in every file (outside reviews of
 # 05f5aef, 2026-10-21). devtools/repo-scan-quoted-examples pairs each with the

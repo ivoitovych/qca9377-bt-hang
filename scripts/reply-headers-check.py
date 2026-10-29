@@ -28,6 +28,11 @@ def addrs(msg, *fields):
     return {a.lower() for _, a in email.utils.getaddresses(values) if a}
 
 
+def expected_subject(original):
+    s = " ".join(original.split())
+    return s if s.lower().startswith("re:") else "Re: " + s
+
+
 def main():
     if len(sys.argv) != 3:
         print(__doc__.strip().splitlines()[2], file=sys.stderr)
@@ -48,9 +53,11 @@ def main():
          (reply.get("In-Reply-To") or "").strip() == mid),
         ("References contains the original's Message-ID",
          bool(mid) and mid in (reply.get("References") or "")),
+        # Unfolded and whitespace-normalised; a reply to a reply keeps one "Re: "
+        # (2026-10-29: the first reply to a reply, CO-25, was failed for not having "Re: Re:").
         ("Subject is Re: + the original's Subject",
-         (reply.get("Subject") or "").strip()
-         == "Re: " + (orig.get("Subject") or "").strip()),
+         " ".join((reply.get("Subject") or "").split())
+         == expected_subject(orig.get("Subject") or "")),
         ("From, To and Subject present",
          all(reply.get(h) for h in ("From", "To", "Subject"))),
         ("body is text/plain", reply.get_content_type() == "text/plain"),

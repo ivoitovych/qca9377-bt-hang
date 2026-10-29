@@ -109,9 +109,17 @@ macs=$(grep -oEi '[0-9a-f]{2}([:_-][0-9a-f]{2}){5,}' <<<"$CONTENT" \
 # those are public constants and appear in every bluetoothd log this project
 # publishes. Flagging them blocked ordinary commits and trained people to
 # bypass the gate. Filesystem/machine UUIDs are still caught.
+# A public Message-ID can itself be <uuid>@<host> (Thunderbird writes them so). A UUID
+# passes this check only when a whole <uuid>@<host> Message-ID with it is listed in
+# devtools/repo-scan-public-addresses (the address check below still needs that whole
+# Message-ID listed); every other UUID is refused as before (CO-25's first reply,
+# 2026-10-29).
+PUB_UUIDS=$(grep -oEi '^[[:space:]]*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}@' \
+        "$ROOT/devtools/repo-scan-public-addresses" 2>/dev/null | tr -d '[:space:]@' || true)
 uuids=$(grep -oEi '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' <<<"$CONTENT" \
         | grep -viE '^0000[0-9a-f]{4}-0000-1000-8000-00805f9b34fb$' \
         | grep -viE '^(00000000-0000-0000-0000-000000000000)$' \
+        | { [[ -n "$PUB_UUIDS" ]] && grep -viFx -f <(printf '%s\n' "$PUB_UUIDS") || cat; } \
         | sort -u)
 [[ -n "$uuids" ]] && report "UUID found (non-SIG):" $uuids || pass "no UUIDs"
 

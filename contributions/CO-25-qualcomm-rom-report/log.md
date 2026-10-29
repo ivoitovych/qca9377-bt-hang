@@ -299,3 +299,31 @@ The operator's word ("Please send") and an app password, after round 10 (all GO)
   `67bc9d86242f47c1d56fbad0b201dc4961358ba5019505d2df6eeab7952da56c`, **identical including the
   trailing newline** (the extra one came from the web `/raw` view, not the archive). Its headers
   show the list server's checks: `dkim=pass`, `spf=pass`, `dmarc=pass`.
+
+## 2026-10-29 — Zijun Hu's reply, and a draft answer (not sent)
+
+**The reply** (read from lore's git archive, `scripts/lore-git-replies.py`; Message-ID
+`<bf27c4e0-31ac-4ee6-b7ba-afc6744e5c0a@oss.qualcomm.com>`, Thu 29 Oct 2026 18:42:36 +0800, to us
+and the list, Cc the rest of our recipients), quoting our two questions, in full:
+"QCA9377 is not ROME(QCA6174A), btusb driver does not support it, linux-firmware repo also does
+not have firmware it. See table @qca_devices_table for supported controllers from ROME."
+
+**Checked against the source and the laptop:**
+- the controller answers `QCA_GET_TARGET_VERSION` with `rom_version 0x00000302` (EX-055), and
+  `qca_devices_table` has `{ 0x00000302, 28, 4, 16 }, /* Rome 3.2 */` (mainline `btusb_main.c`
+  3616);
+- `qca/rampatch_usb_00000302.bin` and `qca/nvm_usb_00000302.bin` come from linux-firmware
+  (Ubuntu's `linux-firmware-qualcomm-wireless`, upstream snapshot 3b128b60) and load with return 0
+  (EX-055);
+- upstream already lists three modules named QCA9377 as `BTUSB_QCA_ROME`: `04ca:3015`
+  (`0a03f98b98c20`), `0cf3:e500` (`0324d19cb9980`), `13d3:3503` (`dc16388d45ec`).
+So the likely reading: "QCA9377" is the module's name, its Bluetooth part a Rome 3.2 (QCA6174A)
+core [inference]; the reply contradicts the device's own report as worded.
+
+**Draft answer** `drafts/reply-1-zijun-hu.eml`: thanks; the module name vs what the controller
+reports (the version, the status, both loads, the patch build); one question: is the Bluetooth
+part a Rome 3.2 core, so question 1 stands, and if not, which setup this device should get.
+`scripts/mail-lint.sh`: clean; `scripts/reply-headers-check.py` against his mail: all PASS
+(In-Reply-To, References, subject, reply-all 7 = 7). The checker failed the subject at first
+because it demanded "Re: Re:" for a reply to a reply; fixed (one "Re:", headers unfolded).
+Not sent; the operator's read and word.
