@@ -292,3 +292,10 @@ The operator's word ("Please send") and an app password, after round 10 (all GO)
   was withheld by the extension's filter as "Base64 encoded data", so the comparison ran in the
   page). The only difference: lore's body ends with `\n\n`, the file with `\n` (the archive's
   message separator).
+- **And from lore's git archive, by script** (no browser): `scripts/lore-git-message.sh
+  linux-bluetooth 20261029013350.360574-1-yaroslav.voytovych@gmail.com` → archive commit
+  `6f1a959cbb7c` (epoch 0), the raw message as the list stored it. `scripts/mail-body-sha.py` on
+  it and on `send/report.eml`: both 4433 bytes, 97 lines, SHA-256
+  `67bc9d86242f47c1d56fbad0b201dc4961358ba5019505d2df6eeab7952da56c`, **identical including the
+  trailing newline** (the extra one came from the web `/raw` view, not the archive). Its headers
+  show the list server's checks: `dkim=pass`, `spf=pass`, `dmarc=pass`.

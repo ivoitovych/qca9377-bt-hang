@@ -96,7 +96,10 @@ Recent detail may be shortened. Settled state is never dropped.
   mesh_tx leak patch (10-06; still `new`); the #1554 retest by a second affected user (nothing
   since 10-14). Every other authors' mesh fix is still `new` with no maintainer reply (STATUS,
   the mesh row). Stable: 6.1, 5.15 and 5.10 are still at their 10-17 rc1, with ours in; no review
-  mail found for them (lore refuses this machine, 403; CO-28 waits).
+  mail found for them (lore's web pages refuse this machine, 403; CO-28 waits). **Since 10-29 lore
+  is readable from here over git**: `scripts/lore-git-message.sh <list> <message-id>` (lore's git
+  archive is not behind the bot check), so the stable list's review mails can be looked up the
+  same way.
 - **Operator decisions open** (the one list; the hand-off block below points here; re-read 2026-10-28):
   - **`7.0.0-42`:** installed 2026-10-28 04:46 by the software updater; E3 for it installed the same day (CO-09; `patches/diag/README.md`); open: whether to port the CO-02 module to it;
   - **sends:** CO-25 was SENT 2026-10-29 02:33 +0100 (the Qualcomm report; STATUS; replies and arrival to watch); CO-11 (the btmon Launchpad bug, approved, the operator files); CO-35 (the package in `send/`: 7.3.y + 7.2.y request and three backport series, after its outside review); CO-19 after the laptop headset test; CO-04's independent fix when it is ready; CO-05 after its review; any reply to CO-02's reviewers;
