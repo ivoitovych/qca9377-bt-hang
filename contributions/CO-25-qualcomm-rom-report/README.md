@@ -1,6 +1,11 @@
 # CO-25 - Report to Qualcomm on the QCA9377 ROM firmware
 
-**State (2026-10-29): v4 written, not sent.** A sixth, wider review round (seven reviewers:
+**SENT 2026-10-29 02:33:50 +0100** on the operator's word: `send/report.eml` as reviewed at
+`cb645f5`, server 250, seven recipients as in the dry run, Message-ID
+`<20261029013350.360574-1-yaroslav.voytovych@gmail.com>` (`log.md`, the send). Next: arrival on
+lore, replies; one reply to the own mail if nothing comes in three weeks.
+
+**State before the send (2026-10-29): v4 written.** A sixth, wider review round (seven reviewers:
 usefulness, list practice, precedents) found v2 sendable in substance but not verbatim:
 13d3:3504 is a Broadcom part, the 197/202 sentence misleads, "users are covered" is too broad,
 the recipients came from the wrong file (round 6, `reviews-2026-10-28.md`); `report-v3.txt`

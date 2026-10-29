@@ -9,7 +9,8 @@
 # file). Compresses, verifies by decompressing, never deletes a capture or an archive.
 # Budget: 3 GB by default, --budget-gb N for one run (BT_ARCHIVE_BUDGET_GB in the environment
 # also works). How much this store may take is the operator's call: 10 GB for a one-time run
-# over the whole directory, 2026-10-29 (no timer).
+# over the whole directory, 2026-10-29 (no timer), raised to 20 GB the same night when 10 GB
+# filled at 254 of 385 files.
 #
 # WHY (2026-10-29): the August captures behind EX-055's supported-commands survey and
 # EX-031's 08-18 survivor were already gone; on 10-29 386 of 400 slots were used, so the

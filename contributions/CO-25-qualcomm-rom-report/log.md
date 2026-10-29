@@ -254,3 +254,23 @@ stopped with 131 capture(s) not archived". `MANIFEST.tsv` 254 rows, the newest
 session-start hook prints. My estimate of ~9.4 GB was wrong: it extrapolated the first 40 files'
 2.85× compression, while 10-18 to 10-22 compressed 1.57× (`awk` over `MANIFEST.tsv`). The rest:
 about 9.8 GB raw (`du -cb`), about 6.3 GB compressed at 1.57×. STATUS has the details.
+The operator raised it to 20 GB the same night (one run, `--budget-gb 20`).
+
+## 2026-10-29 — SENT
+
+The operator's word ("Please send") and an app password, after round 10 (all GO).
+- Just before: `git diff --stat cb645f5 HEAD` over `send/report.eml` and `drafts/report-v4.txt`:
+  empty; no uncommitted change in the dossier.
+- The send: the dry run's `git send-email` arguments with `--confirm=never` (the prompt cannot
+  be answered from here) and the app password on that one command, smtp.gmail.com. Output: the
+  seven `RCPT TO` as in the dry run, **Result: 250**, Date `Thu, 29 Oct 2026 02:33:50 +0100`,
+  **Message-ID `<20261029013350.360574-1-yaroslav.voytovych@gmail.com>`**.
+- The file sent: `send/report.eml`, SHA-256 `1f81392add29e272242ce207c5e2a02b630bc9a2ce25713f87730af5163dcbf7`
+  (a row in `docs/sent-mails.tsv`).
+- The password: in no local settings or git config file afterwards (grep of
+  `/root/exp/.claude/settings*.json`, `/root/.claude/settings.json`, the project's `.git/config`).
+  To be revoked by the operator; the revocation is then checked on 587 (or 465), never assumed.
+- Arrival: lore answered `t.mbox.gz` with its bot check ("Making sure you're not a bot!") and a
+  page fetch with 403; not confirmed from here. The operator can open
+  https://lore.kernel.org/linux-bluetooth/20261029013350.360574-1-yaroslav.voytovych@gmail.com/
+  in a browser.
