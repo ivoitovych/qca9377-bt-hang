@@ -2,8 +2,9 @@
 
 **SENT 2026-10-29 02:33:50 +0100** on the operator's word: `send/report.eml` as reviewed at
 `cb645f5`, server 250, seven recipients as in the dry run, Message-ID
-`<20261029013350.360574-1-yaroslav.voytovych@gmail.com>` (`log.md`, the send). Next: arrival on
-lore, replies; one reply to the own mail if nothing comes in three weeks.
+`<20261029013350.360574-1-yaroslav.voytovych@gmail.com>` (`log.md`, the send); on lore the same
+night, whole, no replies yet. Next: replies; one reply to the own mail if nothing comes in three
+weeks.
 
 **State before the send (2026-10-29): v4 written.** A sixth, wider review round (seven reviewers:
 usefulness, list practice, precedents) found v2 sendable in substance but not verbatim:

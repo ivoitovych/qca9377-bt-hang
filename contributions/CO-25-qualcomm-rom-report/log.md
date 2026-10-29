@@ -277,6 +277,11 @@ The operator's word ("Please send") and an app password, after round 10 (all GO)
   pass→535` ("5.7.8 Username and Password not accepted"), this send's among them (fingerprint
   `sha256:b871ddd4`, first seen 2026-10-29T01:33:50Z): **revoked**.
 - Arrival: lore answered `t.mbox.gz` with its bot check ("Making sure you're not a bot!") and a
-  page fetch with 403; not confirmed from here. The operator can open
+  page fetch with 403. **Confirmed later the same night** in the operator's Chrome through the
+  browser extension (the session restarted with Chrome support): the page
   https://lore.kernel.org/linux-bluetooth/20261029013350.360574-1-yaroslav.voytovych@gmail.com/
-  in a browser.
+  has the title "[REPORT] btusb: QCA9377 13d3:3503 on ROM firmware: HCI hang during mSBC SCO -
+  Iaroslav Voitovych", From, To, the six Cc, Date `Thu, 29 Oct 2026 02:33:50 +0100`, the
+  Message-ID, and the body as in `send/report.eml` with the link to `4b56813d311d`; the thread
+  overview says "[no followups]". (Reading the page's raw HTML through the extension was refused
+  by its filter, "Cookie/query string data"; the page text was read instead.)
