@@ -139,7 +139,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-28** (the documentation review: every foundation document checked
+**Last updated: 2026-10-29** (a hand-off block for 10-29 added above the 10-28 one). Before that, 2026-10-28 (the documentation review: every foundation document checked
 against the facts re-verified that day; the state block above rewritten; the hand-off of
 2026-10-18 to 10-23 moved to `HISTORY.md` verbatim and replaced below). The trail of earlier
 updates is in `HISTORY.md` and `git log -- BRIEF.md`, not here: until 2026-10-28 this line
@@ -147,6 +147,51 @@ carried a running list of every update since 10-14, which grew to about 2,800 ch
 (`reviews/2026-10-28T0300Z-documentation-alignment.md`). **Newest exhibit on `main`: EX-083**
 (EX-067 to EX-083 are CO-02's hardware run and code comparisons). No tip hash: it rotted within
 hours (`R2-13`).
+
+> **HAND-OFF (2026-10-29; read first; the 10-28 block below still holds where this one is silent).**
+> STATUS has every row named here.
+>
+> - **CO-25 SENT** 2026-10-29 02:33 +0100 after ten outside review rounds (`<20261029013350.360574-1-…>`,
+>   250, seven recipients); on lore byte-identical to the file sent; app password revoked (535).
+>   **Zijun Hu (Qualcomm) replied 10:42 UTC**: "QCA9377 is not ROME(QCA6174A) … linux-firmware … does not
+>   have firmware it". Contradicted by the device (rom 0x302 = `qca_devices_table` "Rome 3.2"; the 00000302
+>   files load) and by upstream (three QCA9377 modules are `BTUSB_QCA_ROME`). A clarifying answer is
+>   drafted, `contributions/CO-25-…/drafts/reply-1-zijun-hu.eml`, checks pass, **not sent: the operator's word**.
+> - **CO-34 applied** to BlueZ as `3e5b0da969c2`, identical to what was sent.
+> - **CO-28's review mails are out** (stable list): 5.15.224-rc1 and 5.10.273-rc1 due **Fri 30 Oct 16:59
+>   UTC**, 6.1.191-rc2 due **Sat 31 Oct 07:28 UTC**; our patches are in them. Test runs not started:
+>   the operator's decision, asked.
+> - **CO-02 module for `-42` built, NOT installed** (`tmp/co02-hw/module42/full/bluetooth.ko`,
+>   srcversion `D3723B159B2E0A68AC46EB5`; same code as `-38`'s, CRCs equal to stock). Installing before the
+>   `-42` boot is the operator's word, asked.
+> - **Two agents running** in worktrees under `/root/exp/agent-work/` (Opus, background; watched with
+>   `tmp/agent-guard/watch-new-lines.py` on their `tmp/<task>/progress.md` and the guard's
+>   `tmp/agent-guard/decisions.log`; resume a stopped one with SendMessage to its id, found in the session's
+>   `subagents/*.meta.json`):
+>   - **mesh** (CO-05 + CO-04), option (a): no use-after-free reproducer and nothing aimed at CO-04's path
+>     (no hold/delay/fault knob on mesh_send*); CO-05/26 keep their own checks. Results so far: all clean
+>     (KASAN/lockdep/WARNING 0 on base, CO-05, CO-04, both); CO-05's lock warnings 3 → 0; final commits made
+>     (patch-ids equal to the tested ones); **14888791 as posted gives a lockdep circular dependency in
+>     8/12 power boots, ours 0/12**: a technical point for our own CO-04 mail only (no contact, nothing on
+>     that thread). KCSAN and bot CI running.
+>   - **CO-23** (BlueZ `a2dp_reconfig()` use-after-free): fix written (setup ref held across close/abort;
+>     a second double-free path found), functional regression test shows the UAF under ASan on base and
+>     none with the fix; mails in the dossier. `send-email`, even a dry run, is the coordinator's.
+> - **Guard fixes 10-29** (private hook, 57/57 tests): container paths after the image are the
+>   container's; host-only programs matched as whole tokens.
+> - **Captures:** desktop capture fully archived (`archive/hci-capture`, 20 GB budget, 14.19 GB, one-time,
+>   no timer); `bt-trace` archive timer restarted (20 GB: ~2 weeks; months need another disk); budgets in
+>   `<archive>/BUDGET_GB`, the session-start hook warns at 80 %.
+> - **U21 registered** (Shure in Handsfree, no codec row in GNOME Settings): a Chrome tab recording from the
+>   headset's microphone keeps it in Handsfree (`scripts/user-audio-streams.sh`); why the row is absent is
+>   still open.
+> - **New tools:** lore readable over git (`scripts/lore-git-message.sh`, `lore-git-replies.py`);
+>   `mail-body-sha.py`; `desktop-capture-archive.sh`; `archive-budget-check.py`; `user-audio-streams.sh`;
+>   `build-bluetooth-module.sh --krel`. The browser extension works when the session runs with Chrome
+>   support (it filters raw HTML with query strings/cookies; page text and in-page comparisons work).
+> - **Open, in order:** the operator's three decisions above (Zijun Hu reply, `-42` install, CO-28 runs);
+>   then the agents' results reviewed and ported by cherry-pick; CO-11 is ready to file (the operator);
+>   STATUS's ⚠️ lines are too long for the session-start extract (cut at 9,500 characters): shorten them.
 
 > **HAND-OFF (2026-10-28, after CO-02 was sent, every possible submission was re-checked
 > upstream, and the foundation documents were reviewed).** Current state of every issue and
