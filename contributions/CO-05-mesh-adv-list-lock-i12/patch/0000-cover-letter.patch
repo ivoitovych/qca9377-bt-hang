@@ -1,0 +1,53 @@
+From 0e1fa9ca43d972e9ae92a97a9e79066ac4be2bb1 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Thu, 29 Oct 2026 13:36:21 +0100
+Subject: [PATCH 0/2] Bluetooth: MGMT: mesh_send_sync() and the advertising list
+
+mesh_send_sync() adds the mesh packet's advertising instance with
+hci_add_adv_instance() without hdev->lock, which that function
+requires, and reads the instance count and walks the instance list
+unlocked while Add Advertising changes them under the lock (1/2). When
+the add fails, it carries on and schedules an instance that was never
+added (2/2).
+
+Notes:
+- 1/2 takes hdev->lock after req_lock, as hci_clear_adv_sync() and
+  hci_remove_adv_sync() do, and drops it before
+  hci_schedule_adv_instance_sync(), which sends HCI commands. That
+  function still looks the instance up without the lock; it is shared
+  with other callers and is left alone here.
+- The same lock was part of an earlier patch that was withdrawn:
+  https://lore.kernel.org/all/20260919112517.3871992-1-benquike@gmail.com/
+- Three other callers change the advertising list without hdev->lock
+  (ISO broadcast, Set LE off and the advertising timeout); they are
+  not part of this series.
+- The lifetime of the mgmt_mesh_tx that mesh_send_sync() reads is a
+  separate fix, "Bluetooth: MGMT: Fix use-after-free in
+  mesh_send_sync()"; the two apply in either order.
+
+Tested on bluetooth-next 1081a6ef8f1e0 in a 4 CPU QEMU guest with
+BlueZ's emulated controller, KASAN and lockdep. With
+lockdep_assert_held(&hdev->lock) added to hci_add_adv_instance() for
+the test only, mesh-tester warned three times from mesh_send_sync()
+without the series and not with it. KCSAN, 45 boots each, of a test
+that adds and removes an advertising instance on one socket while
+another socket sends mesh packets: without the series, one boot
+reported races in mesh_send_sync() itself and three in
+hci_schedule_adv_instance_sync() called from it; with the series, none
+in mesh_send_sync(), and one boot reported a race below
+hci_start_adv_sync(), which the series does not change. mgmt-tester
+(515 cases) and mesh-tester (10) pass with the series; no lockdep,
+KASAN or WARNING report.
+
+Iaroslav Voitovych (2):
+  Bluetooth: MGMT: Take hdev->lock in mesh_send_sync()
+  Bluetooth: MGMT: Stop mesh_send_sync() when it cannot add the instance
+
+ net/bluetooth/mgmt.c | 21 ++++++++++++++-------
+ 1 file changed, 14 insertions(+), 7 deletions(-)
+
+
+base-commit: 1081a6ef8f1e0661fd52eb3f878691b0b96cdff9
+-- 
+2.43.0
+

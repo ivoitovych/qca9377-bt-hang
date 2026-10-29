@@ -1,7 +1,9 @@
 # CO-04 — the independent fix compared with our V3 1/5 and with other pending patches, 2026-10-29
 
 By reading the code (no run). The fix is "Bluetooth: MGMT: Fix use-after-free in mesh_send_sync()",
-commit `caa2531f276f7` on bluetooth-next `1081a6ef8f1e0` (`../patch/`).
+commit `caa2531f276f7` (tested; final message `6d7ae083f6165`) on bluetooth-next `1081a6ef8f1e0`
+(`../patch/`). Applicability by `git apply --check` of the posted mboxes on four bases
+(`tmp/mesh/apply-matrix.sh`; the worker's progress file has its output).
 
 ## The defect, from the source of `1081a6ef8f1e0` [quoted lines; the sequence is inferred]
 
@@ -65,7 +67,7 @@ The fix is V3 1/5 brought to today's tree, with four differences:
 | flag on a queued hand-over | left as the caller had it | set explicitly in `mesh_next()` |
 | `hci.h` comment on `HCI_MESH_SENDING` | added | left out (one file, smaller for stable) |
 
-## Compared with other authors' pending patches (as posted; `tmp/mesh/patchwork/*.mbox`, sha256 in progress.md)
+## Compared with other authors' pending patches (as posted; the worker's `tmp/mesh/patchwork/*.mbox`, sha256 in its `tmp/mesh/results/SHA256SUMS`)
 
 - **Baul Lee, v2 1/3–3/3 (14736726–8, 2026-08-07, `new`):**
   - 2/3 takes `hdev->lock` on the worker side and returns early on `-ECANCELED` in both destroy

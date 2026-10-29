@@ -1,9 +1,11 @@
 # CO-05 — Mesh I12: advertising list changed without `hdev->lock`
 
-**State:** **patch written** (2026-10-21), with CO-26 as patch 2/2: `patch/`; results and the
-re-check in `experiments/results-2026-10-21.md`. The mesh-path lock warnings go 3 → 0, the
-`mesh_send_sync()` KCSAN reports 5 → 0 of 45 boots; tester verdicts unchanged. Not sent: the
-operator decides. (Reproduced in QEMU 2026-10-05.)
+**State (2026-10-29):** **send package ready for an outside review round; not sent.** Two patches
+and a cover letter on bluetooth-next `1081a6ef8f1e0` (`patch/`, with CO-26 as 2/2); the 2026-10-21
+set is in `patch/2026-10-21/`. On today's base: mesh-path lock warnings 3 → 0, KCSAN boots with a
+race in `mesh_send_sync()` 1 → 0 of 45, tester verdicts unchanged, preflight clean, the list bot's
+checks pass (`experiments/results-2026-10-29.md`). The operator decides on sending.
+(Reproduced in QEMU 2026-10-05; first written and tested 2026-10-21.)
 
 **Target:** the Linux kernel (`net/bluetooth/mgmt.c`, and separately three other callers).
 
@@ -41,10 +43,10 @@ review).
 
 ## Next
 
-Done on 2026-10-21: the patches drafted (`patch/`) and the lockdep-assertion and KCSAN 4-CPU runs,
-with and without them (`experiments/results-2026-10-21.md`). Still to do (2026-10-28, `log.md`):
-1. an outside review of the written patches (the reviews of 10-21 were on the shape);
-2. `scripts/kernel-preflight.sh` and `scripts/bot-ci-local.sh` on today's bluetooth-next;
-3. a test-report paragraph, then the operator's decision. It now also has to fit the
-   independent fix for the mesh use-after-free planned in CO-04, which touches the same
-   function. Nothing is sent without the operator's word.
+Done on 2026-10-29 (`log.md`): every point of the 2026-10-28 reviews applied or answered; rebased
+and re-tested on `1081a6ef8f1e0`; preflight, pre-send and the list bot's checks; cover letter with
+the test report; recipients. It fits CO-04's fix: the two apply in either order, and their
+combination was tested too.
+1. An outside review round of `patch/` (questions in `patch/README.md`).
+2. The operator's decision on sending (and whether together with CO-04, or after it). Nothing is
+   sent without the operator's word.

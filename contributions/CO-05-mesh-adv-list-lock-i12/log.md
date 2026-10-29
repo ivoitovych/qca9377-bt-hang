@@ -119,3 +119,24 @@ Then: regenerate on today's base, preflight, the bot's CI, cover letter, recipie
   14831256 still shows `new` on patchwork. So the I12 lock was proposed once, inside a withdrawn
   patch, and never applied; the cover letter credits it by link.
 - **Points 3 to 5** go into the regenerated messages and the cover letter (`patch/`).
+
+## 2026-10-29 — refreshed on bluetooth-next `1081a6ef8f1e0`, re-tested, packaged
+- **Rebased:** `git am` of the 2026-10-21 pair on `1081a6ef8f1e0` (fetched that day; one new commit
+  since `47d4d9f67e92`, btintel): clean. Nobody else fixed it meanwhile (pre-send check, `git log
+  -G`, patchwork and lore searches: `experiments/results-2026-10-29.md`).
+- **Review points applied:** 3 — the test numbers left 1/2's message for the cover letter's test
+  paragraph, which says the KCSAN boots had both patches; 4 — `Fixes: b338d91703fa` on 2/2; its
+  first sentence already reads as reviewer 6 proposed; 5 — the cover letter says
+  `hci_schedule_adv_instance_sync()` stays unlocked and that the `mgmt_mesh_tx` lifetime is CO-04's
+  separate fix; 1 and 2 as recorded above.
+- **Re-tested** on 4-CPU guests: lock-assertion warnings 3 → 0; KCSAN 45 boots, races in
+  `mesh_send_sync()` 1 boot → 0; no lockdep/KASAN/WARNING in 48 boots per image; tester verdicts
+  unchanged; CO-26's trace as before. Also tested together with CO-04's fix.
+- **Checks:** preflight clean; pre-send OK; the list bot's checks PASS on the patched side
+  (VerifyFixes first failed on the harness's history depth, then passed with older history); its
+  base side stalled in a clone and was stopped (no patched failure to compare).
+- **Package:** `patch/` (cover letter, 1/2, 2/2, recipients, reviewer questions); the 2026-10-21 set
+  in `patch/2026-10-21/`. Ready for an outside review round; not sent.
+- **Not re-run, with reasons:** the 503-case one-by-one mgmt-tester (the bot's 515-case run with the
+  series replaces it); the `MGMT_STATUS_BUSY` early return of 1/2 (no test fills every advertising
+  set first; the path only unlocks and returns).

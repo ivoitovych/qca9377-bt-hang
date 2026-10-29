@@ -1,9 +1,12 @@
 # CO-04 — syzbot's mesh_send_sync use-after-free: our independent fix
 
-**State (2026-10-29):** **fix written and being tested; not sent.** "Bluetooth: MGMT: Fix
-use-after-free in mesh_send_sync()" on bluetooth-next `1081a6ef8f1e0` (`patch/`, once packaged;
-results in `experiments/results-2026-10-29.md`; comparison with our V3 1/5 and the other
-pending patches in `experiments/comparison-2026-10-29.md`). Sending is the operator's decision.
+**State (2026-10-29):** **send package ready for an outside review round; not sent.** "Bluetooth:
+MGMT: Fix use-after-free in mesh_send_sync()" on bluetooth-next `1081a6ef8f1e0` (`patch/`; results
+in `experiments/results-2026-10-29.md`; comparison with our V3 1/5 and the other pending patches in
+`experiments/comparison-2026-10-29.md`). No lockdep/KASAN report in 48 boots per image, verdicts
+unchanged, preflight clean, the list bot's checks pass; the earlier proposal's lock inversion
+re-shown on today's base (8 of 12 boots). Not reproduced, by the operator's decision. Sending is
+the operator's decision.
 
 **History:** opened 2026-10-21 to test another author's patch (14888791). It introduced a lockdep
 circular-locking report (`hdev->lock` under `cmd_sync_work_lock`, 9 of 12 `-s power` boots, 0 on
@@ -34,7 +37,6 @@ apply in either order to the same tree.
 
 ## Next
 
-1. Finish the runs (lockdep/KASAN, KCSAN 4-CPU, mesh-tester, preflight, the list bot's CI).
-2. Outside review of the patch.
-3. The operator's decision on sending; a `#syz test` on syzbot's thread also needs the operator's
+1. Outside review of `patch/` (questions in `patch/README.md`).
+2. The operator's decision on sending; a `#syz test` on syzbot's thread also needs the operator's
    own word.

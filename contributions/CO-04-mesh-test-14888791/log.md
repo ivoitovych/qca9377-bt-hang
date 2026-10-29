@@ -111,3 +111,18 @@ posted fix takes `hdev->lock` under `cmd_sync_work_lock`, inverting the existing
   of a reported use-after-free, the two touch different functions, and they apply in either order
   to the same tree (`git diff --stat mesh/both-co05-co04-on-1081a6ef8f1e0
   mesh/co04-then-co05-on-1081a6ef8f1e0` → empty).
+
+## 2026-10-29 — tested and packaged
+- **Tests** (`experiments/results-2026-10-29.md`): on 4-CPU KASAN + lockdep guests, base vs fix vs
+  fix + CO-05: no lockdep, KASAN, WARNING or BUG report in 48 boots per image (so the new
+  `lockdep_assert_held()` never fired); tester verdicts unchanged apart from PwrCmp timing cases that
+  vary among base runs too; KCSAN 20 boots: nothing in the changed functions. The list bot's checks
+  PASS (GitLint first failed on an 89-column quoted line, shortened in the final message).
+- **The earlier proposal on today's base:** 14888791 as posted, `-s power` ×12: lockdep circular
+  report in 8 of 12 boots (`hdev->lock` at `mesh_send_start_complete()` under `cmd_sync_work_lock` from
+  `hci_cmd_sync_clear()`); base and our fix 0 of 12. The notes below `---` state this technically.
+- **One run outside the decision, recorded:** the research tester's first full run on the base image
+  (11:58) included its four failslab cases on Mesh Send; found afterwards, not used, excluded since.
+- **Package:** `patch/` (the patch with notes, recipients, reviewer questions). Ready for an outside
+  review round; not sent. Pending patches it conflicts with: 14888791, 14864878 (Jiale Yao), Baul
+  Lee's v2 2/3 (which no longer applies anyway); independent of 14831271, 14880941.
