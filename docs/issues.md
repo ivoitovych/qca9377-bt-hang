@@ -17,7 +17,7 @@ They are numbered `BT-n` so exhibits and commits can cite them.
 The register's current-state blocks stopped at 2026-10-11 while the issues went on in
 `docs/STATUS.md` and the dossiers; this block closes that gap. `docs/STATUS.md` remains the one
 page for what is current.
-- **New issues:** `U12` (10-19) to `U20` (10-24), in the userspace section; `BT-10` to `BT-15`
+- **New issues:** `U12` (10-19) to `U20` (10-24) and `U21` (10-29), in the userspace section; `BT-10` to `BT-15`
   (10-23 to 10-28), each with a section below BT-9.
 - **U7 became a kernel series (CO-02), sent 2026-10-27,** after a QEMU reproduction, every
   affected stable line, and a run on the laptop with three headsets (`EX-067` to `EX-083`).
@@ -863,6 +863,7 @@ team's own selection (an inference). Watch queue-7.3 after 7.4-rc1; an option-2 
 | U18 | a headset paired over LE shows "Connected" in GNOME Settings with no audio: Connect resolves its BR/EDR services, then answers success without connecting any, because a connected LE service (GAP, Battery) counts as "one connected" (2026-10-24, Shure AONIC 50) | confirmed in the bluetoothd debug log, the system bus record, the HCI capture and the source (BlueZ 5.72; master the same) |
 | U19 | after a headset leaves Handsfree for A2DP, GNOME Settings' Sound panel shows the laptop's microphone as the input but its level meter stays dead: the meter's new stream is destroyed by Ubuntu's 2-second Bluetooth-transition patch in WirePlumber, and the panel never retries (2026-10-24, Shure AONIC 50, twice) | confirmed in the journal, the audio policy log and the source; Ubuntu-only (LP #2122640's patch), upstream WirePlumber not affected |
 | U20 | in Handsfree the Shure AONIC 50's input volume slider has no effect on the signal: PipeWire sends `+VGM` 15…0 because the headset announced remote volume control, and the level does not change (2026-10-24) | observed by the operator, the `+VGM` commands confirmed in the HCI capture; headset behaviour inferred |
+| U21 | after forgetting and re-pairing the Shure AONIC 50 it comes up in Handsfree, and GNOME Settings' Sound panel shows **no codec/profile row at all** (not only an unusable first line, as in U1); a disconnect and reconnect gives the same (2026-10-29 ~04:38–04:48) | observed by the operator (screenshot: Output and Input "Handsfree - Shure AONIC 50", no row below); why Handsfree: explained by the logs (below, STATUS); why no row: not known |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
