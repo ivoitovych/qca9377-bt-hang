@@ -33,23 +33,24 @@ Questions
    an affected ROM range, or a rampatch/NVM revision that addresses
    it?
 
-2. Is there a list of ROME-based USB IDs that could be compared with
-   btusb's table? This year three were added one at a time, each after
-   a user ran into the 0x2005 BLE-scan errors: 13d3:3503
-   (dc16388d45ec), 0b05:1868 (d54601f21faf) and 0b05:1825
-   (cfa67a1dbfd9). An earlier, unmerged submission for 0b05:1825
-   (2026-07-21) also reported SCO audio broken on the ROM firmware
-   ("corrupted SCO packet", no HFP microphone).
+2. Is there a list of ROME-based USB IDs, or a reliable way to
+   identify such adapters, that could be compared with btusb's table?
+   This year three were added one at a time, each after a user ran
+   into the 0x2005 BLE-scan errors: 13d3:3503 (dc16388d45ec),
+   0b05:1868 (d54601f21faf) and 0b05:1825 (cfa67a1dbfd9). An
+   earlier, unmerged submission for 0b05:1825 (2026-07-21) also
+   reported SCO audio broken on the ROM firmware ("corrupted SCO
+   packet", no HFP microphone).
 
 On the ROM firmware
 -------------------
 The device has isochronous alternate settings 1-5 (wMaxPacketSize
-9/17/25/33/49) and no alt 6, so for transparent air mode btusb uses
-alt 1, and the captures show each 27-byte SCO buffer sent as three
-9-byte USB packets. Setup Synchronous Connection (0x0428) is
-answered and the link streams. One of the twelve failures (kernel
-log, Bluetooth dynamic debug on; "evt 5" is
-HCI_NOTIFY_ENABLE_SCO_TRANSP in btusb_notify()):
+9/17/25/33/49) and no alt 6. On the transparent links recorded here
+btusb selected alt 1 (read live from sysfs), and the captures show
+each 27-byte SCO buffer sent as three 9-byte USB packets. Setup
+Synchronous Connection (0x0428) is answered and the link streams.
+One of the twelve failures (kernel log, Bluetooth dynamic debug on;
+"evt 5" is HCI_NOTIFY_ENABLE_SCO_TRANSP in btusb_notify()):
 
   02:09:36.646940 hci0 opcode 0x0428 plen 17
   02:09:36.718906 hci0 evt 5

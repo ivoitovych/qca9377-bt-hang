@@ -227,3 +227,22 @@ exhibit and `EVIDENCE.md` both answer 200 there). `send/send.sh` rebuilt the `.e
 dry run again at 01:41 +0100: lint clean but the URL line (104); "Dry-OK"; RCPT TO once each for
 the same seven; "Result: OK". Nothing sent; the send is `send/send.sh --send`, on the operator's
 word.
+
+## 2026-10-29 — an extra independent review (of `39e0fce`): GO
+
+GO, no blocking defect. Its "high" item, the evidence link, was a stale view (it read the link
+as `0632d42`, without the July section); the mail is pinned to `4b56813d311d`, which carries the
+July section, the firmware provenance and the corrected EX-058. Two optional points taken, both
+checked:
+1. "no alt 6, so btusb uses alt 1" compressed the driver's rule: `btusb_main.c` 2631-2635
+   prefers alt 6, then alt 3 when `BTUSB_USE_ALT3_FOR_WBS` is set and `sco_mtu >= 72`, else
+   alt 1. Now: "On the transparent links recorded here btusb selected alt 1 (read live from
+   sysfs)" (C5: EX-045, EX-053, EX-054).
+2. Question 2 also asks for "a reliable way to identify such adapters" (OEM-assigned IDs may not
+   be in one list).
+Not taken: the 17-minute Enhanced-setup survivor (EX-031) stays out of the mail, as the reviewer
+also advises. The July thread answered 429 to a plain request on 10-29 02:00 (rate limit); it was
+read in full the same night.
+Dry run at 02:02 +0100: the guard in `send.sh` refused the first rebuild (two lines over 72 after
+the edit) until they were re-wrapped; then lint clean but the URL line (105), "Dry-OK", the same
+seven RCPT TO once each. Nothing sent.
