@@ -6,7 +6,11 @@
 #                                   --out <dir> [options] <patch mail>...
 #   BlueZ:  scripts/bot-ci-local.sh --space user --base <BlueZ commit> --out <dir>
 #                                   [--kernel-image <bzImage>] [options] <patch mail>...
-#   options: [--side both|patched|base] [--only NAME,...] [--history-since DATE]
+#   options: [--side both|patched|base] [--only NAME,...] [--history-since DATE] [--cache DIR]
+#
+# The project root is the checkout this script is in (a worktree too); --out and --kernel-image must
+# be inside it. --cache (default <root>/cache) is where action-ci-bluez, ell and, by default,
+# bluez-upstream are read; ell is fetched there. A worktree, which has no cache/, passes its own.
 #
 # The bot that posts on linux-bluetooth patchwork runs github.com/bluez/action-ci (main) in a Docker
 # image built FROM ghcr.io/pv/bluez-ci-image:latest. This script:
@@ -32,8 +36,8 @@
 # --kernel-image (BlueZ): TestFunctional boots that bzImage instead of having pytest-bluezenv clone and
 # build bluetooth-next with doc/tester.config; give one built from the same tree with that config.
 set -u
-R=/root/exp/qca9377-bt-hang
-A=$R/cache/action-ci-bluez
+R=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
+C=$R/cache
 usage() { sed -n '4,9p' "$0"; exit 2; }
 SPACE=kernel TREE= BASE= BLUEZC= OUT= SIDE=both ONLY= KIMG=
 HISTORY_SINCE=2023-01-01
@@ -50,16 +54,22 @@ while (( $# )); do
 	--side) SIDE=$2; shift ;;
 	--only) ONLY=$2; shift ;;
 	--history-since) HISTORY_SINCE=$2; shift ;;
+	--cache) C=$(realpath -e "$2") || usage; shift ;;
 	-*) echo "unknown option $1"; usage ;;
 	*) m=$(realpath -e "$1") || usage; MAILS+=("$m") ;;
 	esac
 	shift
 done
+A=$C/action-ci-bluez
 case "$SPACE" in
 kernel) [[ -n "$TREE" && -n "$BLUEZC" && -z "$KIMG" ]] || usage ;;
-user) [[ -z "$BLUEZC" ]] || usage; [[ -n "$TREE" ]] || TREE=$R/cache/bluez-upstream ;;
+user) [[ -z "$BLUEZC" ]] || usage; [[ -n "$TREE" ]] || TREE=$C/bluez-upstream ;;
 *) usage ;;
 esac
+# the container sees the project, the cache and the tree (--shared clones point into it)
+MOUNTS=(--volume "$R:$R")
+[[ "$C" == "$R"/* ]] || MOUNTS+=(--volume "$C:$C")
+[[ "$TREE" == "$R"/* || "$TREE" == "$C"/* ]] || MOUNTS+=(--volume "$TREE:$TREE")
 [[ -n "$BASE" && -n "$OUT" && ${#MAILS[@]} -gt 0 ]] || usage
 case "$SIDE" in both|patched|base) ;; *) usage ;; esac
 mkdir -p "$OUT" || exit 2
@@ -68,7 +78,7 @@ OUT=$(realpath -e "$OUT")
 [[ -z "$KIMG" || "$KIMG" == "$R"/* ]] || { echo "refusing: --kernel-image must be inside $R"; exit 2; }
 BASE=$(git -C "$TREE" rev-parse --verify "$BASE^{commit}") || exit 2
 if [[ "$SPACE" == kernel ]]; then
-	BLUEZC=$(git -C "$R/cache/bluez-upstream" rev-parse --verify "$BLUEZC^{commit}") || exit 2
+	BLUEZC=$(git -C "$C/bluez-upstream" rev-parse --verify "$BLUEZC^{commit}") || exit 2
 fi
 log() { echo "$(date -u '+%F %T') $*" | tee -a "$OUT/summary.txt"; }
 
@@ -82,8 +92,8 @@ if ! docker image inspect "$IMG" > /dev/null 2>&1; then
 	grep -m1 -o -E "FROM ghcr.io/pv/bluez-ci-image:latest@sha256:[0-9a-f]+" "$OUT/docker-build.log" > "$R/tmp/bot-ci-local/$IMG.base"
 fi
 log "image $IMG: action-ci $AC; base $(cat "$R/tmp/bot-ci-local/$IMG.base" 2>/dev/null || echo 'digest not recorded')"
-git -C "$R/cache/ell" fetch --quiet origin || { log "ELL fetch FAILED"; exit 2; }
-ELLC=$(git -C "$R/cache/ell" rev-parse origin/master)
+git -C "$C/ell" fetch --quiet origin || { log "ELL fetch FAILED"; exit 2; }
+ELLC=$(git -C "$C/ell" rev-parse origin/master)
 log "space $SPACE; base $BASE ($(git -C "$TREE" log -1 --format=%s "$BASE")); ${BLUEZC:+BlueZ $BLUEZC; }ELL $ELLC${KIMG:+; kernel image ${KIMG#"$R"/}}"
 for m in "${MAILS[@]}"; do log "mail ${m#"$R"/}"; done
 
@@ -115,10 +125,10 @@ prepare() {   # prepare <side>
 		git -C "$w/src" -c user.name="$an" -c user.email="$ae" merge --quiet --no-ff --no-edit pr || return 1
 	fi
 	if [[ "$SPACE" == kernel ]]; then
-		git clone --quiet --shared --no-checkout "$R/cache/bluez-upstream" "$w/bluez" || return 1
+		git clone --quiet --shared --no-checkout "$C/bluez-upstream" "$w/bluez" || return 1
 		git -C "$w/bluez" checkout --quiet --detach "$BLUEZC" || return 1
 	fi
-	git clone --quiet --shared --no-checkout "$R/cache/ell" "$w/ell" || return 1
+	git clone --quiet --shared --no-checkout "$C/ell" "$w/ell" || return 1
 	git -C "$w/ell" checkout --quiet --detach "$ELLC" || return 1
 }
 
@@ -131,7 +141,7 @@ run_side() {   # run_side <side>
 	[[ -n "$ONLY" ]] && extra+=(--only "$ONLY")
 	mkdir -p "$o"
 	log "$1: start"
-	docker run --rm --device=/dev/kvm:/dev/kvm --volume "$R:$R" --workdir "$w" \
+	docker run --rm --device=/dev/kvm:/dev/kvm "${MOUNTS[@]}" --workdir "$w" \
 		--env PATH=/opt/llvm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
 		--env GIT_COMMITTER_NAME=local --env GIT_COMMITTER_EMAIL=local \
 		--entrypoint python3 "$IMG" "$R/scripts/bot-ci-local/harness.py" \
