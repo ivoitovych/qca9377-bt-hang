@@ -101,8 +101,11 @@ were used. `scripts/desktop-capture-archive.sh` (the same archiver with `BT_TRAC
 into `archive/hci-capture/`, 3 GB budget, never deletes) archived the oldest 40 that day,
 `hci-20261010-193534` to `hci-20261011-121614` (2560 MB → 897 MB, each verified, 0 failed,
 `MANIFEST.tsv` 40 rows; all 386 originals still in place). At that ratio the other 346 would take
-about 7.7 GB more. The rest, and whether to run it on a timer, is the operator's decision (CO-25
-`log.md`, 2026-10-29).
+about 7.7 GB more. **Budget raised by the operator, 2026-10-29: 10 GB for `archive/hci-capture`,
+for one run over the whole directory** (`desktop-capture-archive.sh --budget-gb 10`), no timer.
+Each archive records its budget in `BUDGET_GB` (bt-trace: 10, the operator's figure of 10-11);
+`scripts/archive-budget-check.py` compares use with it, and the session-start hook prints a ⚠️ at
+80 % and FULL at 100 %, so the warning reaches every session, not only the archiver's own output.
 
 ## The investigation machine
 

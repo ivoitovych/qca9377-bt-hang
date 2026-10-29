@@ -109,6 +109,10 @@ def archive_bytes():
 def main(argv):
     limit = int(argv[argv.index("--once-limit") + 1]) if "--once-limit" in argv else None
     os.makedirs(ARCHIVE_DIR, mode=0o700, exist_ok=True)
+    # The budget this store runs under, for scripts/archive-budget-check.py (which the
+    # session-start hook runs): a warning has to reach someone between runs too.
+    with open(os.path.join(ARCHIVE_DIR, "BUDGET_GB"), "w", encoding="utf-8") as f:
+        f.write(f"{BUDGET / 1024 ** 3:g}\n")
     if not os.path.exists(MANIFEST):
         with open(MANIFEST, "w", encoding="utf-8") as f:
             f.write("name\toriginal_bytes\tsha256\tcompressed_bytes\tarchived_at\tsource\n")

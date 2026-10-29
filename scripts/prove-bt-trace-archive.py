@@ -103,7 +103,7 @@ with tempfile.TemporaryDirectory(dir=PROJECT_TMP, prefix="prove-bt-trace-archive
     code, out = run(denv)
     expect(code == 0 and "archived 0" in out, "default prefix: hci-* captures are not picked up", out)
     code, out = run(dict(denv, BT_TRACE_PREFIX="hci-"))
-    expect(code == 0 and sorted(os.listdir(darch)) == sorted(["MANIFEST.tsv", hci[0] + ".zst"]),
+    expect(code == 0 and sorted(os.listdir(darch)) == sorted(["BUDGET_GB", "MANIFEST.tsv", hci[0] + ".zst"]),
            "BT_TRACE_PREFIX=hci-: the closed hci-* capture archived, the newest left", out)
     expect(all(os.path.exists(os.path.join(desk, n)) for n in hci), "prefix run: no capture deleted")
 
