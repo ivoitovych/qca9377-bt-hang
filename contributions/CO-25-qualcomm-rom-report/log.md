@@ -206,3 +206,21 @@ Nothing sent. The real send is `send/send.sh --send`, on the operator's word onl
 Also checked: the running boot (10-23, `linux-firmware-qualcomm-wireless 0ubuntu3.1`) logs
 `QCA: patch rome 0x302 build 0x3e8` at 11:04:43 (`journalctl -k -b 0 --grep`), as
 `EVIDENCE.md` says of the boots since the package split.
+
+## 2026-10-29 — round 9, the final check (reviewers 1-4, 6, 7; 5 unavailable)
+
+Reviewers 1-4: GO, no blocking defect. Reviewers 6 and 7: one blocking item each, both
+verified here and fixed:
+1. **The 34 ms to 9.65 s range is recorded for nine failures, not twelve** (reviewer 6). BRIEF
+   section 2 gives no link-up-to-command delay for EX-045, EX-047 and EX-052 (only command to
+   timeout: 2.018, 2.053, 2.051 s). The nine: EX-033 36 ms, 036 279 ms, 037 39 ms, 038 35 ms,
+   040 34 ms, 042 ~90 ms, 043 9.65 s, 053 7.33 s, and EX-051, where setup to fault (3.672 s)
+   less command to timeout (2.020 s) puts the command 1.65 s after setup. The sentence now
+   reads "timed out about 2 s after it was issued; where the delay from link-up is recorded,
+   it was 34 ms to 9.65 s."
+2. **EX-058 still claimed E1 isolated the firmware setup** (reviewer 7), though the mail no
+   longer does. A dated correction added to the exhibit under its Claim and Relevance (both
+   kept as written, as EX-047's correction was), and a note in the exhibit index; commands,
+   output and counts unchanged.
+The evidence link is re-pinned to the commit with the corrected EX-058, and the `.eml` rebuilt
+and dry-run again (entry below).
