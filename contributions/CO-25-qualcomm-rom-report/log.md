@@ -285,3 +285,10 @@ The operator's word ("Please send") and an app password, after round 10 (all GO)
   Message-ID, and the body as in `send/report.eml` with the link to `4b56813d311d`; the thread
   overview says "[no followups]". (Reading the page's raw HTML through the extension was refused
   by its filter, "Cookie/query string data"; the page text was read instead.)
+- **Byte-identical, proven.** `scripts/mail-body-sha.py send/report.eml`: body 4433 bytes, 97
+  lines; without trailing newlines 4432 bytes, SHA-256 `30416253d6e1bd28…199e672b`. In Chrome, on
+  lore's `/raw` copy: the Message-ID header present; body 4434 bytes, 98 lines; without trailing
+  newlines 4432 bytes, and its SHA-256 computed in the page equals ours (`true`; the hash itself
+  was withheld by the extension's filter as "Base64 encoded data", so the comparison ran in the
+  page). The only difference: lore's body ends with `\n\n`, the file with `\n` (the archive's
+  message separator).
