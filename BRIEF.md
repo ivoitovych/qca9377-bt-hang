@@ -158,8 +158,11 @@ hours (`R2-13`).
 >   `DDB92562D1890FC3D262993`, kernel log `QCA: patch rome 0x302 build 0x3e8`. `bluetooth.ko` is
 >   **stock** (`12120DE84945B5EB6D372FD`), so the **CO-02 field test (trial E3 #3) ended** with that
 >   shutdown. E3 #3 has **no row** in `evidence/trials/results.tsv` (last row E3 #2, 10-23); its results
->   are in the journal of boot `257d1599`, to be recovered. Whether the 10-29 15:20 stop was clean is not
->   yet checked.
+>   are in the journal of boot `257d1599`, to be recovered. The stop was an ordered reboot from the
+>   desktop (15:20:14); the journal ends at 15:20:19 with the trial's close unfinished; next boot 13 h later.
+> - ⚠️ **Disk: 20 GB free (96 %)**, at journald's `SystemKeepFree=20G`; the journal copy refused at the
+>   10-29 shutdown (`REFUSING — only 20 GB free (< 25)`). The archives hold 26.7 GB. Freeing or adding
+>   space is the operator's call (STATUS, the machine). Check that `boot-257d1599.export.zst` completes.
 > - **CO-02 module for `-42` built, NOT installed** (`tmp/co02-hw/module42/full/bluetooth.ko`,
 >   srcversion `D3723B159B2E0A68AC46EB5`; same code as `-38`'s, CRCs equal to stock). "Install before the
 >   `-42` boot" is moot; resuming the field test = into `-42`'s `updates/` + `depmod` + a cold boot, on
