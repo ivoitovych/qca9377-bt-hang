@@ -4965,3 +4965,102 @@ history is not rewritten.
 >   `main` as it is found; maintainer mail carries only what the maintainer needs; only the
 >   operator touches the laptop's Bluetooth or kernel; clock ranges are written
 >   "HH:MM:SS to HH:MM:SS" (`scripts/fix-time-ranges.py`).
+
+
+## Hand-off of 2026-10-28 (moved from BRIEF.md verbatim on 2026-10-30, replaced by the 10-29/10-30 block)
+
+> **HAND-OFF (2026-10-28, after CO-02 was sent, every possible submission was re-checked
+> upstream, and the foundation documents were reviewed).** Current state of every issue and
+> submission: `docs/STATUS.md`. The open decisions: "Operator decisions open" above. The previous
+> block (2026-10-18, with its 10-19 to 10-23 items) is at the end of `HISTORY.md`, verbatim.
+>
+> - **In flight:** CO-02 under review since 10-27 (bot passed; answer reviewers technically; the
+>   BlueZ test may need a port to Luiz Augusto von Dentz's tester series). CO-28 waits for the
+>   6.1/5.15/5.10 review mails.
+> - **Ready or near, each the operator's send:** CO-25 and CO-11 (all six reviewers GO at
+>   `e2e0e00`); CO-35 (send package written 2026-10-28 evening, `send/README.md`: the hang is a
+>   socket-lock self-deadlock from v5.7; 7.3.y also needs `5874f8d03268` for BT-15; 6.1/5.15/5.10
+>   affected with ECRED on, not covered; next an outside review of the mails); CO-05 (needs an
+>   outside review of the written patches).
+> - **Long background workers in worktrees (from 2026-10-28 evening):** each in its own worktree
+>   under `/root/exp/agent-work/<task>/` on a `work/…-20261028` branch, ported to main by
+>   cherry-pick after review; a guard hook refuses the workers' host-touching commands (kept
+>   separately with the other hooks; its refusals in `tmp/agent-guard/decisions.log`). CO-35's
+>   worker finished (ported). The mesh worker (CO-05 + CO-04) stopped at CO-04's reproduction
+>   step and waits for the operator's decision (its findings: CO-04's cause in source is a double
+>   queueing of one `mesh_tx` after `HCI_MESH_SENDING` is cleared unlocked; three more pending
+>   mesh patches, one of them, Baul Lee's v2 14736726-8, overlapping ours). CO-23's worker not
+>   started.
+> - **Next work, agreed with the operator on 10-28, in this order:**
+>   1. **finish the wording sweep** (operator's decision of 10-28): "the laptop", never "family"
+>      or "household"; whatever is kept outside this repository is "kept separately", with no
+>      repository name, URL, branch or remote named in prose (the tooling's remote keeps its name
+>      in code); outside reviews' passages on matters outside this repository's scope cut. About
+>      140 lines in some 60 files; documents, notes, reviews and code comments done on 10-28,
+>      the dossiers, `patches/`, `results/` and the rest of `docs/` being finished; then a review
+>      of every changed line and one commit;
+>   2. the sent-mail check: an inventory of every mail as sent (file, Message-ID, patchwork id,
+>      SHA-256), a one-time comparison with the copy upstream received (cached in `cache/`; lore
+>      refuses this machine, patchwork serves every linux-bluetooth mail; the two Tested-by
+>      replies may have no reachable copy), and a hash guard in `devtools/save` and the pre-push
+>      hook so a sent file never changes again; any mismatch recorded with its cause;
+>   3. CO-04: an independent fix for syzbot's mesh_send_sync use-after-free (`log.md` there).
+> - **Running 2026-10-28 ~04:30, six background workers, none commits or sends; review each
+>   result, then commit (do NOT run `devtools/save` while they run: it stages their partial files):**
+>   (1) the sent-mail inventory and comparison (`docs/sent-mails.tsv`, `scripts/sent-mail-check.py`,
+>   `tmp/sent-check/REPORT.md`); (2) CO-35's backports for 6.18.y, 6.12.y, 6.6.y
+>   (`contributions/CO-35-…/backports/`, `experiments/results-backports-2026-10-28.md`); (3) CO-11:
+>   the btmon debdiff for noble and its Launchpad text (`contributions/CO-11-…/ubuntu/`), and whether
+>   the functional harness touches the host's Bluetooth (`harness-check-2026-10-28.md`); (4) CO-19:
+>   PipeWire's U1 fix backported to noble as a debdiff (`contributions/CO-19-pipewire-u1-codec-line/`);
+>   (5) CO-23: the one-off events' root causes from what was kept (`contributions/CO-23-one-off-events/`);
+>   (6) CO-25: the report to Qualcomm, drafted (`contributions/CO-25-qualcomm-rom-report/`).
+>   **Finished and recorded (not yet committed):** (1) 22 identical, 0 differ, 3 without a copy
+>   (`results/sent-mail-check-2026-10-28.md`); (3) both CO-11 halves (`log.md`); (4) CO-19 prepared
+>   as a hand-port, laptop test pending; (6) CO-25 drafted; (5) CO-23: the 09-08 bluetoothd crash is a
+>   use-after-free in BlueZ `a2dp_reconfig()`, still in master (fix drafted, ASan reproduction next);
+>   BT-6 benign, seen 12 times in August (records to correct). Still running: (2) the backports.
+>   **Outside reviews of `24d76cd` (six, relayed 10-28; actions in each `log.md`):** CO-34 approved
+>   by all (send on the operator's word). CO-35: add 7.3.y (`stable/linux-7.3.y` exists; v7.3 lacks
+>   the pair: test it), a plain 7.2.13 control (running), qualify the bisect sentence. CO-05: verify
+>   reviewer 6's `MGMT_STATUS_BUSY`-from-a-cmd_sync-callback defect (a third patch, `-EBUSY`) and
+>   Hui Peng's earlier `mesh_send_sync()` locking proposal; message fixes.
+>   Packages for outside review, pushed `24d76cd`: CO-34, CO-35 (7.2.y request; its draft now says
+>   the older lines' backports follow), CO-05. Reopened on the operator's word: CO-11, CO-19, CO-23,
+>   CO-25 (`ae34a3c`). After these: CO-04's independent fix; the sent-mail hash guard in the save
+>   step and pre-push hook.
+> - **CO-34 SENT 2026-10-28 06:16** (250; password revoked, 535 on 587). **Second review round
+>   (`c6148f9`, six reviewers):** CO-25, CO-11 and CO-19 each got a `reviews-2026-10-28.md` in its
+>   dossier with the v2 actions: CO-25 the ID sentence, Cc Zijun Hu, evidence wording, shorter;
+>   CO-11 the false "output unchanged" claim, wider widths, reproducer attached, the development
+>   release's bluez; CO-19 verify the HSP-only `SPA_ID_INVALID` path, fix the install plan (exact
+>   `libspa-0.2-modules` dependency), wording. Still running: CO-35's backports.
+> - **Third review round (`315c588`, five reviewers):** CO-25 v2 approved, send on the
+>   operator's word; CO-11 approved, ready to file (bug with a development-series task); CO-19 v2
+>   code approved (f142c0a5b), v2 build recorded, laptop test is the gate; CO-35 backports
+>   approved, backporter sign-off added to all six; 7.3.y test and the request mails remain.
+>   BT-14 (6.12.114 L2CAP getsockopt) is already queued upstream (patchwork 14907537).
+> - **CI:** red from 10-22 to 10-28, unread (a trial open all week). The install step and the
+>   journal seams are fixed (`deaafab`, `14ae3af`); the suite passes. One floor stays red:
+>   `tools/bt-journal-files` has no suite tests, asked of the test-suite maintainer
+>   (`comms/2026-10-28T0300Z-…`). **On trial days, `devtools/ci --wait` after every push.**
+> - **`7.0.0-42` is the next boot** (software updater, 2026-10-28 04:46) and **E3 for it is
+>   installed** (2026-10-28, operator's word; srcversion `DDB92562D1890FC3D262993`). After the
+>   first `-42` boot: check the srcversion and the QCA patch line. The CO-02 module stays `-38`
+>   only: a `-42` boot ends the CO-02 field test unless it is ported (STATUS).
+> - **Method lessons of 2026-10-28:**
+>   - a bisect across a range where a second, newer bug stops the run finds that bug's end; apply
+>     the newer bug's fix at each step that has it (CO-35, `bisect2-step.sh`). Corrected in the
+>     evening: the "second bug" was not on the same case; the first bisect's filter ran the whole
+>     suite, which stalled in "SCI Fast Mode" (BT-15);
+>   - test-runner passes the tester's arguments unquoted through `sh -c`: a multi-word case name
+>     needs a wrapper script (CO-35 `tmp/co35/case-accept2close1.sh`);
+>   - a "no X report" claim needs X's detector in the config: the tester images have
+>     `CONFIG_DETECT_HUNG_TASK` off; with it on, BT-10 showed its self-deadlock at once;
+>   - before v6.2, ECRED is off unless `bluetooth.enable_ecred=1`: an old line "passing" an ECRED
+>     case may not have run it;
+>   - "applies" is not "builds": the BT-10 pair applies to 6.18 and fails on its lock
+>     annotations;
+>   - a distribution tree has no shared history: `scripts/commit-in-tree.py` with a base and a
+>     positive control answers "does it carry this fix";
+>   - the documentation review's causes and guards: `reviews/2026-10-28T0300Z-documentation-alignment.md`.
