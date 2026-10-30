@@ -161,9 +161,11 @@ hours (`R2-13`).
 >   from the journal: **63 links, 63 hang-ups answered, 0 timeouts** (`scripts/sco-ledger.sh -1`;
 >   `evidence/trials/E3/trial-03/RESULT-boot-257d1599-from-journal.md`); the row is still to be written. The stop was an ordered reboot from the
 >   desktop (15:20:14); the journal ends at 15:20:19 with the trial's close unfinished; next boot 13 h later.
-> - ⚠️ **Disk: 20 GB free (96 %)**, at journald's `SystemKeepFree=20G`; the journal copy refused at the
->   10-29 shutdown (`REFUSING — only 20 GB free (< 25)`). The archives hold 26.7 GB. Freeing or adding
->   space is the operator's call (STATUS, the machine). Check that `boot-257d1599.export.zst` completes.
+> - **Disk: 111 GB free (74 %) since 10-30 08:04**, after the operator-approved cleanup (was 19 GB; the
+>   journal copy had refused at the 10-29 shutdown): CI clones, `make clean` in finished kernel/BlueZ/agent
+>   trees (bzImages and test logs kept in `tmp/disk-cleanup/kept/`), and 535 raw captures (40.83 GB) whose
+>   archived copy matched the manifest SHA-256; the archives are now their only copy (STATUS, the machine).
+>   `boot-257d1599.export.zst` completed (770 MB, 05:40).
 > - **CO-02 module for `-42` built, NOT installed** (`tmp/co02-hw/module42/full/bluetooth.ko`,
 >   srcversion `D3723B159B2E0A68AC46EB5`; same code as `-38`'s, CRCs equal to stock). "Install before the
 >   `-42` boot" is moot; resuming the field test = into `-42`'s `updates/` + `depmod` + a cold boot, on
