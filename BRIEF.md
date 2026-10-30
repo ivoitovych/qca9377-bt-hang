@@ -157,8 +157,9 @@ hours (`R2-13`).
 >   `257d1599` ran 10-23 11:04:43 to 10-29 15:20:19). E3 loaded: `modinfo -F srcversion btusb` →
 >   `DDB92562D1890FC3D262993`, kernel log `QCA: patch rome 0x302 build 0x3e8`. `bluetooth.ko` is
 >   **stock** (`12120DE84945B5EB6D372FD`), so the **CO-02 field test (trial E3 #3) ended** with that
->   shutdown. E3 #3 has **no row** in `evidence/trials/results.tsv` (last row E3 #2, 10-23); its results
->   are in the journal of boot `257d1599`, to be recovered. The stop was an ordered reboot from the
+>   shutdown. E3 #3 has **no row** in `evidence/trials/results.tsv` (last row E3 #2, 10-23); its result
+>   from the journal: **63 links, 63 hang-ups answered, 0 timeouts** (`scripts/sco-ledger.sh -1`;
+>   `evidence/trials/E3/trial-03/RESULT-boot-257d1599-from-journal.md`); the row is still to be written. The stop was an ordered reboot from the
 >   desktop (15:20:14); the journal ends at 15:20:19 with the trial's close unfinished; next boot 13 h later.
 > - ⚠️ **Disk: 20 GB free (96 %)**, at journald's `SystemKeepFree=20G`; the journal copy refused at the
 >   10-29 shutdown (`REFUSING — only 20 GB free (< 25)`). The archives hold 26.7 GB. Freeing or adding
