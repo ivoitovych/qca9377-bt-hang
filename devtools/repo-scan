@@ -97,10 +97,13 @@ pass()   { (( QUIET )) || echo "  ✓ $1"; }
 # tools/mgmt-tester.c; 00:aa:01:01:00:00 is the emulated controller's own
 # address, built in emulator/btdev.c (bdaddr[4] = 0xaa). Matched whole, so a
 # real address sharing a prefix is still caught.
+# 00:aa:01:00:00:42 and 00:aa:01:01:00:42: the same get_bdaddr() (printed
+# 00:aa:01:<index>:<id>), index 0 and 1, id 0x42 — the two btvirt controllers of
+# PipeWire's VM tests (contributions/CO-36-*/homework/results/).
 macs=$(grep -oEi '[0-9a-f]{2}([:_-][0-9a-f]{2}){5,}' <<<"$CONTENT" \
        | tr 'A-F_-' 'a-f::' \
        | grep -vE '^(aa:bb:cc|11:11:11|00:00:00|ff:ff:ff|00:11:22|3c:37:12|de:ad:be)' \
-       | grep -vxE '05:04:03:02:01:00|bc:9a:78:56:34:11|00:aa:01:01:00:00' \
+       | grep -vxE '05:04:03:02:01:00|bc:9a:78:56:34:11|00:aa:01:01:00:00|00:aa:01:00:00:42|00:aa:01:01:00:42' \
        | sort -u)
 [[ -n "$macs" ]] && report "real MAC/BSSID found:" $macs || pass "no unexpected MACs"
 

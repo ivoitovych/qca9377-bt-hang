@@ -134,9 +134,10 @@ project's always-on `bt-capture` (btsnoop), decoded with btmon.
   since 2022.
 - Ubuntu's own patches in `1.0.5-1ubuntu3.3` (not compared; the behaviour above is on the
   installed package, so they do not remove it).
-- A run of current master: master was read, not built or run here. PipeWire's Bluetooth issue
-  template asks reporters to try master.
-- The hang-up path (`sco_event()`), above.
+- Current master on real headsets. Master `4cfc4711` was run on 2026-10-31 only in PipeWire's
+  own Bluetooth VM tests (pytest-bluezenv, emulated controllers): there the late `+VGS`/`+VGM`
+  leave after both the AG's release and the headset's hang-up (`sco_event()`), every run, and
+  PipeWire's own 7 tests pass ([`homework/`](homework/README.md)).
 - The HSP path and the hands-free (HF) role: only the HFP audio-gateway role was observed.
 - Whether stopping the timer on release would undo what `d82b3d647` was for. Its stated case is
   the first `+VGS` after a connection being taken only partly; that is the maintainers' call.
@@ -179,3 +180,5 @@ journal export of each boot.
 3. A local test of a fix only on the operator's word, and only as the operator's own patch if
    it goes upstream. A stop in `sco_release_cb()` alone would not cover the `sco_event()`
    hang-up path above.
+4. [`homework/`](homework/README.md): the problem reproduced on master in PipeWire's VM tests
+   (Phase 0, done); fix variants through the same tests next (Phase 1).
