@@ -854,7 +854,7 @@ team's own selection (an inference). Watch queue-7.3 after 7.4-rc1; an option-2 
 | U9 | no reconnect after rfkill off/on (BlueZ policy) | confirmed, by design |
 | U10 | Tronsmart T8 silent on SBC-XQ, audible on SBC (2026-10-11) | observed; the deciding question is open |
 | U11 | a newly connected headset does not become the output (2026-10-13) | confirmed in the log and the source; by design |
-| U12 | a microphone opened while A2DP is starting loses A2DP; only Handsfree remains (2026-10-19) | confirmed in the capture, the logs and the source; fixed upstream in BlueZ 5.80 |
+| U12 | a microphone opened while A2DP is starting loses A2DP; only Handsfree remains (2026-10-19; again 2026-10-31) | confirmed in the capture, the logs and the source; fixed upstream in BlueZ 5.80 |
 | U13 | a headset known only from its LE advertising cannot be set up: every click pairs over LE, the headset refuses, GNOME shows nothing (2026-10-21) | confirmed in the capture, the log and the source; not fixed upstream |
 | U14 | a Bluetooth headset is forced into Handsfree while an application records from any microphone, and a manual return to A2DP is undone when the recording ends (2026-10-21) | confirmed in the log and the source (WirePlumber 0.4.17); fixed upstream by the 0.5 rewrite |
 | U15 | the MOMENTUM 4 says "mute on" at every hands-free start: it reports a microphone gain of 0 at connect, and PipeWire sends that 0 back as `+VGM: 0` (2026-10-23) | mechanism confirmed in the log, the capture and the state; no upstream quirk entry for this headset |
@@ -1223,6 +1223,13 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   - **[log]** At 19:34:07.109, the microphone stream gone, WirePlumber logs "Failed to restore profile". Nothing reconnected A2DP: at 19:50 PipeWire and bluetoothd still had the headset in Handsfree only.
   - **[log] Not the controller:** the mSBC eSCO link set up at 19:33:58.815 completed with Success at 19:33:59.028, two more followed at 19:40:56 and 19:41:11, and the kernel log has no error and no command timeout from 18:00 on. The HCI trace is continuous across the failure (`gaps.log`: size rotations only).
 
+  **Second occurrence, 2026-10-31** (local time; same headset, same chain, `EX-084`, `EX-085`, `EX-087`, `EX-088`):
+  - **[operator]** At about 14:50 GNOME Settings again offered only "Handsfree - MOMENTUM 4" as output (screenshot in this session); the card itself offered no A2DP profile, only `off` and the three hands-free profiles (`scripts/pw-card-routes.py` on the saved graph).
+  - **[log]** At 13:42:16.187 WirePlumber starts acquiring the A2DP transport for a Google Chrome playback stream; at .274 it switches the card to `headset-head-unit-msbc` and releases the transport while the acquire is pending (`EX-087`). bluetoothd cancels the setup (`Start: Operation canceled (125)`), drops the headset's late answer (`Transaction label doesn't match`), and at 18.961 the Abort times out: A2DP disconnected (`EX-085`).
+  - **[capture] Over the air** (`EX-084`): Start (label 8) at 16.187828, Abort (label 9) at 16.275333, 87.5 ms later; the headset's only answer is Start accepted (label 8, `82 07`) at 16.444751; nothing for the Abort until bluetoothd closes three L2CAP channels at 18.962. An mSBC eSCO link completes with Success at 16.464811 meanwhile.
+  - **[log]** No A2DP state change in bluetoothd's log from 13:42:19 to 14:55 (`EX-088`; the same filter matched at 13:42:18 in `EX-085`): 72 minutes and counting on Handsfree only.
+  - Raw: `archive/incidents/20261031-momentum-headphones-missing/` (the HCI capture, both journal cuts, the PipeWire graph at 14:5x).
+
   **[source] The cause.** In BlueZ 5.72's `profiles/audio/transport.c`, a `Release()` during a pending `Acquire()` reaches `transport_a2dp_cancel()`, which calls `a2dp_cancel()`: an AVDTP Abort. Upstream `a14d59725` (Pauli Virtanen, 2024-11-02, "transport: don't disconnect A2DP if canceling Acquire() with Release()", first in 5.80) describes the result: "forcing AVDTP state transition to IDLE, and A2DP profile disconnects". Its fix answers the Acquire with an error, waits for the Start to complete, then suspends. Here the headset's silence made the disconnect certain, through the 2 s timeout.
   - The running bluetoothd is this project's build (`20-patched-bluetoothd.conf`, `/usr/local/libexec/bluetooth/bluetoothd`, built 2026-08-25 from 5.72-0ubuntu5.5's source with the two BT-7 fixes). Its `transport.c` keeps the old path (line 487, no `cancel_resume`).
   - Ubuntu's changelog through 5.72-0ubuntu5.8 (`/usr/share/doc/bluez/changelog.Debian.gz`) has no entry for it.
@@ -1233,7 +1240,7 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
   2. The operator installs it and repeats the trigger: an application opening the microphone just as A2DP starts.
   3. A Launchpad bug for Ubuntu 24.04 with the tested patch, on the operator's word.
 
-  **Evidence:** `EX-063`, `EX-064`. Raw and unfiltered, on this machine only: `archive/incidents/20261019-a2dp-lost/`, which holds the day's HCI and USB captures, every journal file, the live state at 19:50 and the configuration (README there).
+  **Evidence:** `EX-063`, `EX-064`; second occurrence `EX-084`, `EX-085`, `EX-087`, `EX-088` (`EX-086` is a failed extraction, kept). Raw and unfiltered, on this machine only: `archive/incidents/20261019-a2dp-lost/`, which holds the day's HCI and USB captures, every journal file, the live state at 19:50 and the configuration (README there).
 
 - **U13 — a headset that bluetoothd knows only from its LE advertising cannot be set up from GNOME Settings: every click pairs over LE, the headset refuses, and nothing is shown** *(confirmed in the HCI capture, the log and the source, 2026-10-21; not fixed upstream)*.
 
