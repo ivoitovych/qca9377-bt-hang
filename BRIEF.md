@@ -213,7 +213,8 @@ hours (`R2-13`).
 >   `build-bluetooth-module.sh --krel`. The browser extension works when the session runs with Chrome
 >   support (it filters raw HTML with query strings/cookies; page text and in-page comparisons work).
 > - **Open, in order:** the operator's decisions (Zijun Hu reply; CO-28 runs before the deadlines;
->   CO-02 module into `-42`; CO-04/05 send shape; CO-23 route; CO-11 filing, ready); recover E3 #3's
+>   CO-02 module into `-42`; CO-04/05 send shape; CO-23 route; CO-11 filing, ready; CO-03: install the
+  backport and test it on the laptop, then the filing; CO-37 (U23): an outside review, then the send); recover E3 #3's
 >   row from the journal; apply the mesh agent's STATUS/issues edits and the CO-23 "unrelated" fixes;
 >   STATUS's ⚠️ lines are too long for the session-start extract (cut at 9,500 characters): shorten
 >   them; confirm the CI rotation-test failure on `848ff44` is a flake.
