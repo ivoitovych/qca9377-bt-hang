@@ -21,14 +21,45 @@ from pathlib import Path
 
 import pytest
 
-from pytest_bluezenv import host_config
+from pytest_bluezenv import Bluetoothctl, host_config
 
 from .test_streaming import (
     VM_MEM,
+    PipeWire,
     a2dp_hfp_ag_host,
     a2dp_hfp_hf_host,
     check_pipewire_devices_exist,
+    no_profile_autoswitch_config,
 )
+
+
+def ag_host(codecs):
+    """a2dp_hfp_ag_host with only <codecs> enabled (bluez5.codecs also
+    covers the HFP codecs).  Unused: with "sbc msbc" the links were still
+    CVSD (run p0-4, AT+BCS=1), since pw_set_profile's prefix match took
+    headset-head-unit-cvsd.  The tests name the codec profile instead."""
+    return [
+        Bluetoothctl(),
+        PipeWire(
+            roles="a2dp_source hfp_ag",
+            uuids=(
+                "0000110a-0000-1000-8000-00805f9b34fb",
+                "0000111f-0000-1000-8000-00805f9b34fb",
+            ),
+            config=no_profile_autoswitch_config
+            + f"""
+monitor.bluez.properties = {{
+  bluez5.codecs = [ {codecs} ]
+}}
+""",
+        ),
+    ]
+
+
+# With every codec enabled, LC3-SWB has the plain "headset-head-unit" name
+# and the others carry their codec (bluez5-device.c, "Give base name to
+# highest priority profile"), so this prefix is exact
+MSBC = "headset-head-unit-msbc"
 
 RESEND_DELAY_NS = 1_500_000_000
 # An immediate send leaves in the same sco_ready() call as "acquire complete"
@@ -43,6 +74,8 @@ LINK_DOWN = re.compile(
     r"(Transport \S+ released|transport \S+: SCO socket (hangup|error))"
 )
 VOLUME = re.compile(r"RFCOMM >> \+(VGS|VGM)[:=] ?(\d+)")
+# The codec the HF confirmed; 1 CVSD, 2 mSBC, 3 LC3-SWB (HFP codec IDs)
+CODEC = re.compile(r"RFCOMM << AT\+BCS=(\d+)")
 
 
 def host_events(caplog, idx):
@@ -95,7 +128,11 @@ def link_report(caplog, t_up):
         volume_frames(events, t_up, t_down, t_next_up) if t_down is not None else []
     )
 
+    codecs = [CODEC.search(msg) for t, msg in events if t <= t_up]
+    codecs = [int(m.group(1)) for m in codecs if m]
+
     return {
+        "codec": codecs[-1] if codecs else None,
         "down_ms": None if t_down is None else round((t_down - t_up) / 1e6, 1),
         "next_up_ms": None
         if t_next_up is None
@@ -107,7 +144,12 @@ def link_report(caplog, t_up):
             msg
             for t, msg in events
             if t >= t_up
-            and (LINK_UP.search(msg) or LINK_DOWN.search(msg) or VOLUME.search(msg))
+            and (
+                LINK_UP.search(msg)
+                or LINK_DOWN.search(msg)
+                or VOLUME.search(msg)
+                or CODEC.search(msg)
+            )
         ],
     }
 
@@ -119,14 +161,29 @@ def record(name, report):
         f.write(json.dumps(entry) + "\n")
 
 
-def connect_hfp(host0, host1):
+def connect_hfp(host0, host1, profile="headset-head-unit"):
+    """Connect and switch host0 to a hands-free profile.  pw_set_profile()
+    matches by prefix, so the default takes the first listed, CVSD here;
+    each record says which codec was used"""
     host1.bluetoothctl.send(f"trust {host0.bdaddr}\n")
     host0.bluetoothctl.send(f"scan off\n")
     host0.bluetoothctl.send(f"connect {host1.bdaddr}\n")
     check_pipewire_devices_exist(host0, "a2dp-sink")
 
-    host0.pipewire.pw_set_profile("headset-head-unit")
+    host0.pipewire.pw_set_profile(profile)
     check_pipewire_devices_exist(host0, "hfp")
+
+
+def check_short_link(report):
+    """The common verdict of a link meant to end before the resend"""
+    require_immediate_volume(report)
+    if report["down_ms"] is None:
+        pytest.fail(f"link did not end: {report['lines']}")
+    if report["down_ms"] >= RESEND_DELAY_NS / 1e6:
+        pytest.skip(f"link ended at {report['down_ms']} ms, not before the resend")
+
+    late_vgm = [f for f in report["after_down"] if f["frame"] == "VGM"]
+    assert not late_vgm, f"+VGM after the link ended: {report}"
 
 
 def sco_disconnect(dev_id=0):
@@ -194,15 +251,90 @@ def test_co36_short_link(paired_hosts, caplog):
 
     report = link_report(caplog, t_up)
     record("short_link", report)
+    check_short_link(report)
 
-    require_immediate_volume(report)
-    if report["down_ms"] is None:
-        pytest.fail(f"link did not end: {report['lines']}")
-    if report["down_ms"] >= RESEND_DELAY_NS / 1e6:
-        pytest.skip(f"link ended at {report['down_ms']} ms, not before the resend")
 
-    late_vgm = [f for f in report["after_down"] if f["frame"] == "VGM"]
-    assert not late_vgm, f"+VGM after the link ended: {report}"
+@host_config(a2dp_hfp_ag_host, a2dp_hfp_hf_host, mem=VM_MEM)
+def test_co36_short_link_msbc(paired_hosts, caplog):
+    """As test_co36_short_link, on the mSBC profile"""
+    host0, host1 = paired_hosts
+    connect_hfp(host0, host1, MSBC)
+
+    host0.pipewire.pw_play()
+    t_up, _ = poll_event(caplog, 0, LINK_UP)
+
+    host0.pipewire.pw_set_profile("a2dp-sink")
+    time.sleep(WINDOW_S)
+    host0.pipewire.pw_stop_streams()
+
+    report = link_report(caplog, t_up)
+    record("short_link_msbc", report)
+    if report["codec"] != 2:
+        pytest.fail(f"not mSBC: codec {report['codec']}")
+    check_short_link(report)
+
+
+@host_config(a2dp_hfp_ag_host, a2dp_hfp_hf_host, mem=VM_MEM)
+def test_co36_stream_stop(paired_hosts, caplog):
+    """
+    The stream ends at once and the profile stays: the plain "stopped
+    using the headset" case.  Records when the transport is released (run
+    p0-4: not within 4 s; the node is suspended only after it idles, and
+    the generic layer delays an active transport's release by
+    TRANSPORT_RELEASE_TIMEOUT_MSEC) and which frames leave after that.
+    """
+    host0, host1 = paired_hosts
+    connect_hfp(host0, host1, MSBC)
+
+    host0.pipewire.pw_play()
+    t_up, _ = poll_event(caplog, 0, LINK_UP)
+
+    host0.pipewire.pw_stop_streams()
+    poll_event(caplog, 0, LINK_DOWN, after_ns=t_up, timeout=20.0)
+    time.sleep(WINDOW_S)
+
+    report = link_report(caplog, t_up)
+    record("stream_stop", report)
+    check_short_link(report)
+
+
+@host_config(a2dp_hfp_ag_host, a2dp_hfp_hf_host, mem=VM_MEM)
+def test_co36_reacquire(paired_hosts, caplog):
+    """
+    A new link inside 1.5 s of the first: the first link's resend should be
+    replaced by the second's (one timer per RFCOMM link, re-armed by
+    sco_ready), so nothing leaves between the links, and the second link
+    gets its own resend while it is up.  CVSD, the quicker to reconnect
+    here (run p0-4: second link at 1465 ms).
+    """
+    host0, host1 = paired_hosts
+    connect_hfp(host0, host1)
+
+    host0.pipewire.pw_play()
+    t_up, _ = poll_event(caplog, 0, LINK_UP)
+
+    host0.pipewire.pw_set_profile("a2dp-sink")
+    t_down, _ = poll_event(caplog, 0, LINK_DOWN, after_ns=t_up)
+    host0.pipewire.pw_set_profile("headset-head-unit")
+    t_up2, _ = poll_event(caplog, 0, LINK_UP, after_ns=t_down)
+
+    time.sleep(WINDOW_S)
+    host0.pipewire.pw_set_profile("a2dp-sink")
+    poll_event(caplog, 0, LINK_DOWN, after_ns=t_up2)
+    host0.pipewire.pw_stop_streams()
+
+    first = link_report(caplog, t_up)
+    second = link_report(caplog, t_up2)
+    record("reacquire", dict(first=first, second=second))
+
+    require_immediate_volume(first)
+    require_immediate_volume(second)
+    if first["next_up_ms"] is None or first["next_up_ms"] >= RESEND_DELAY_NS / 1e6:
+        pytest.skip(f"second link at {first['next_up_ms']} ms, not before the resend")
+
+    assert not first["after_down"], f"frames between the links: {first}"
+    resent = {f["frame"] for f in second["while_active"]}
+    assert resent == {"VGS", "VGM"}, f"second link's resend missing: {second}"
 
 
 @host_config(a2dp_hfp_ag_host, a2dp_hfp_hf_host, mem=VM_MEM)

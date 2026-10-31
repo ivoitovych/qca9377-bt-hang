@@ -58,6 +58,11 @@ own WirePlumber log, one clock.
   `sco_event()`, not a release. Fails if `+VGM` leaves after it.
 - `test_co36_long_link`: the control. The link lasts 4 s; the resend
   must leave while it is up, and nothing after it ends.
+- `test_co36_short_link_msbc`: the short link on the mSBC profile.
+- `test_co36_stream_stop`: the stream ends at once, the profile stays;
+  waits for the actual release.
+- `test_co36_reacquire`: a second link right after the first; nothing may
+  leave between them, and the second link gets its own resend.
 
 The two short tests skip, never pass, when the link did not end before
 1.5 s, when no immediate `+VGS`/`+VGM` was sent (hardware gain inactive),
@@ -81,6 +86,48 @@ three CO-36 tests. Run 3: the whole `test/bluezenv` suite, as CI runs it.
 | PipeWire's own 7 (`test_streaming.py`) | | | PASSED (run 3; `test_pipewire_bap_bcast` on its rerun, a flake its own comment describes) |
 
 Run 3's summary line: `2 failed, 8 passed, 3 rerun in 274.63s (0:04:34)`.
+
+Every link of runs 1–3 was **CVSD**: `pw_set_profile("headset-head-unit")`
+matches by prefix and took `headset-head-unit-cvsd`, the first listed
+(`RFCOMM << AT+BCS=1` on host0 before each link). The laptop's links were
+mSBC; see runs 4–5.
+
+## Phase 0, more cases on master (runs 4–5)
+
+Same build, same master. Each test records the codec the HF confirmed
+(`AT+BCS=`; 1 CVSD, 2 mSBC).
+
+| Test | Codec | Link ended | Frames after the link ended | Result |
+|---|---|---|---|---|
+| short link (run 4) | CVSD | 667, 534 ms | both, 1501–1504 ms | FAILED |
+| remote hang-up (run 4) | CVSD | 473, 170 ms | both, 1503 ms | FAILED |
+| long link (run 4) | CVSD | 4744 ms | none; resend at 1503 ms while up | PASSED |
+| short link, mSBC (run 5; `headset-head-unit-msbc`) | mSBC | 701, 626 ms | both, 1501–1504 ms | FAILED |
+| stream stop (run 5): the stream ends, the profile stays | mSBC | **6417 ms** | none; resend at 1504 ms while up | SKIPPED (link not short) |
+| new link within 1.5 s (run 4) | CVSD | 539 ms, second link up at 1465 ms | none between the links; second link's resend at 1502 ms while up | PASSED |
+| new link (run 5) | CVSD | 766 ms, second link up at **1649 ms** | **both, at 1503 ms, between the links**; second link's resend at 1503 ms while up | SKIPPED (second link after 1.5 s) |
+
+What these add:
+
+- mSBC leaks exactly as CVSD does.
+- A stream that just stops does not make a short link: the transport is
+  released only after the node is suspended for idling and the generic
+  release delay (`bluez5-dbus.c`, `TRANSPORT_RELEASE_TIMEOUT_MSEC` 1000),
+  6.4 s here. A short link needs something that ends it at once: a profile
+  switch, or the headset hanging up.
+- WirePlumber's own switch back to A2DP after recording stops waits 2000 ms
+  in 0.4.17 (`policy-bluetooth.lua`, `profile_restore_timeout_msec`) and
+  4000 ms in master (`bluetooth.autoswitch-restore-timeout`), so with
+  either, a link shorter than 1.5 s means the audio link opened late in the
+  hands-free period. Whether that is what happened on the laptop is in its
+  journal and not checked here.
+- A new link re-arms the one timer, so a resend pending from the old link
+  is replaced only if the new link is ready before it fires. If the new
+  link comes later than 1.5 s after the old one, the old link's resend
+  leaves in the gap between them (run 5), the same leak.
+- In the AG configuration, `bluez5.codecs = [ sbc msbc ]` did not stop the
+  CVSD profile from being picked (run 4 tried it; the helper is kept,
+  unused, in the test file).
 
 The hang-up run, host0's lines (run 2, second attempt):
 
