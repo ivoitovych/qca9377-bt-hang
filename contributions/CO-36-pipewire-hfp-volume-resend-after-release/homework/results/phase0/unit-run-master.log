@@ -1,0 +1,89 @@
+# 2026-10-31T13:33:18Z tree /root/exp/qca9377-bt-hang/cache/co36-pw-master at 4cfc471123a0
+# file under test: bb5d4c4e1782710d9ced6062e6ea562e13bc008eb50548c3d66006c3853b1597  /src/spa/plugins/bluez5/backend-native.c
+# compiler: cc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)
+In file included from /unit/test-backend-native.c:5:
+/src/spa/plugins/bluez5/backend-native.c: In function 'rfcomm_hfp_hf':
+/src/spa/plugins/bluez5/backend-native.c:2356:42: warning: 'idx' may be used uninitialized [-Wmaybe-uninitialized]
+ 2356 |                         updated_call->id = idx;
+      |                         ~~~~~~~~~~~~~~~~~^~~~~
+/src/spa/plugins/bluez5/backend-native.c:2304:21: note: 'idx' was declared here
+ 2304 |                 int idx;
+      |                     ^~~
+In file included from /src/spa/include/spa/support/log.h:12,
+                 from /src/spa/include/spa/debug/log.h:12,
+                 from /src/spa/plugins/bluez5/backend-native.c:23:
+/src/spa/include/spa/utils/hook.h:169:20: warning: 'status' may be used uninitialized [-Wmaybe-uninitialized]
+  169 |                 (_f->method)((callbacks)->data, ## __VA_ARGS__);                \
+      |                 ~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/src/spa/include/spa/utils/hook.h:238:9: note: in expansion of macro 'spa_callbacks_call'
+  238 |         spa_callbacks_call(&(iface)->cb,method_type,method,vers,##__VA_ARGS__)
+      |         ^~~~~~~~~~~~~~~~~~
+/src/spa/include/spa/support/log.h:255:22: note: in expansion of macro 'spa_interface_call'
+  255 |                 if (!spa_interface_call(_if,                            \
+      |                      ^~~~~~~~~~~~~~~~~~
+/src/spa/include/spa/support/log.h:284:9: note: in expansion of macro 'spa_log_logt'
+  284 |         spa_log_logt(l,lev,t,__FILE__,__LINE__,__func__,__VA_ARGS__)
+      |         ^~~~~~~~~~~~
+/src/spa/include/spa/support/log.h:287:9: note: in expansion of macro 'spa_logt_lev'
+  287 |         spa_logt_lev(l,lev,SPA_LOG_TOPIC_DEFAULT,__VA_ARGS__)
+      |         ^~~~~~~~~~~~
+/src/spa/include/spa/support/log.h:297:33: note: in expansion of macro 'spa_log_lev'
+  297 | #define spa_log_info(l,...)     spa_log_lev(l,SPA_LOG_LEVEL_INFO,__VA_ARGS__)
+      |                                 ^~~~~~~~~~~
+/src/spa/plugins/bluez5/backend-native.c:2386:33: note: in expansion of macro 'spa_log_info'
+ 2386 |                                 spa_log_info(backend->log, "New call, initial state: %u", status);
+      |                                 ^~~~~~~~~~~~
+/src/spa/plugins/bluez5/backend-native.c:2305:30: note: 'status' was declared here
+ 2305 |                 unsigned int status, mpty;
+      |                              ^~~~~~
+T101 PASS up@0 +VGS:6@0 +VGM:15@0; resend armed yes@1500
+T102 PASS up@0 +VGS:6@0
+T103 PASS up@0
+T104 PASS up@0 (to 2000)
+T105 PASS up@0 (to 2000)
+T106 PASS up@0 +VGS=6@0 +VGM=15@0
+T107 PASS td->err=-88 state=-1 resend armed no; up-failed@0 (to 2000)
+T108 PASS up@0 +VGS:6@0 +VGM:15@0 sco_ready@100; resend still @1500
+T110 PASS up@0 +VGS:6@0 +VGM:15@0 (to 1499)
+T111 PASS up@0 +VGS:6@0 +VGM:15@0 +VGS:6@1500 +VGM:15@1500
+T112 PASS up@0 +VGS:6@0 +VGM:15@0 +VGS:6@1500 +VGM:15@1500 (to 10000)
+T113 PASS up@0 +VGS:6@0 +VGM:15@0 user-vgs=10@1000 +VGS:10@1000 +VGS:10@1500 +VGM:15@1500
+T114 PASS up@0 +VGS:6@0 +VGM:15@0 hf-vgs=9@1000 +VGS:9@1500 +VGM:15@1500
+T120 FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 rel@100 +VGS:6@1500! +VGM:15@1500!
+T121 FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 rel@1499 +VGS:6@1500! +VGM:15@1500!
+T122 PASS up@0 +VGS:6@0 +VGM:15@0 +VGS:6@1500 +VGM:15@1500 rel@1500
+T123 PASS up@0 +VGS:6@0 +VGM:15@0 +VGS:6@1500 +VGM:15@1500 rel@1501
+T124 FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 rel@0 +VGS:6@1500! +VGM:15@1500!
+T130 FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 hup@100 +VGS:6@1500! +VGM:15@1500!
+T131 FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 hup@1499 +VGS:6@1500! +VGM:15@1500!
+T132 FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 err@100 +VGS:6@1500! +VGM:15@1500!
+T133 FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 hup@100 rel@200 +VGS:6@1500! +VGM:15@1500!
+T140 PASS up@0 +VGS:6@0 +VGM:15@0 rfcomm-lost@100; timers left after close: 0
+T141 PASS up@0 +VGS:6@0 +VGM:15@0 rfcomm-lost@1499; timers left after close: 0
+T142 PASS up@0 +VGS:6@0 +VGM:15@0 tfree@100; rfcomm->transport NULL
+T150 PASS up@0 +VGS:6@0 +VGM:15@0 rel@100 up@1000 +VGS:6@1000 +VGM:15@1000 +VGS:6@2500 +VGM:15@2500
+T151 FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 rel@100 +VGS:6@1500! +VGM:15@1500! up@1600 +VGS:6@1600 +VGM:15@1600 +VGS:6@3100 +VGM:15@3100
+T152a PASS up@0 +VGS:6@0 +VGM:15@0 rel@100 up@1500 +VGS:6@1500 +VGM:15@1500 +VGS:6@3000 +VGM:15@3000
+T152b FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 rel@100 +VGS:6@1500! +VGM:15@1500! up@1500 +VGS:6@1500 +VGM:15@1500 +VGS:6@3000 +VGM:15@3000
+T153 FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 rel@100 up@1000 +VGS:6@1000 +VGM:15@1000 rel@1100 +VGS:6@2500! +VGM:15@2500!
+T154 FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 rel@100 up@200 +VGS:6@200 +VGM:15@200 rel@300 up@400 +VGS:6@400 +VGM:15@400 rel@500 up@600 +VGS:6@600 +VGM:15@600 rel@700 up@800 +VGS:6@800 +VGM:15@800 rel@900 up@1000 +VGS:6@1000 +VGM:15@1000 rel@1100 up@1200 +VGS:6@1200 +VGM:15@1200 rel@1300 up@1400 +VGS:6@1400 +VGM:15@1400 rel@1500 up@1600 +VGS:6@1600 +VGM:15@1600 rel@1700 up@1800 +VGS:6@1800 +VGM:15@1800 rel@1900 +VGS:6@3300! +VGM:15@3300!
+T160 PASS up@0 +VGS:6@0 +VGM:15@0 hf-bcs=2@100; resend armed after BCS: no
+T161 PASS up@0 +VGS:6@0 +VGM:15@0 rel@50 hf-bcs=2@100; resend armed after BCS: no
+T162 PASS up@0 +VGS:6@0 +VGM:15@0 hf-bcs=2@100 up@200 +VGS:6@200 +VGM:15@200 +VGS:6@1700 +VGM:15@1700; after BCS: new transport state=0 fd=-1 requesting=0 sco-in-loop=0 err=0, old SCO source in loop: no
+T163 PASS +CIEV:2,1@0 up@0 +VGS:6@0 +VGM:15@0 hf-bcs=3@100 ERROR@100; transport kept: yes; resend armed after BCS: no; link still up
+T170 PASS res=0; user-vgs=10@0 +VGS:10@0
+T171 PASS res=0; user-vgm=10@0 +VGM:10@0
+T172 PASS res=0; up@0 +VGS:6@0 +VGM:15@0 user-vgs=10@500 +VGS:10@500
+T173 PASS res=0; up@0 +VGS:6@0 +VGM:15@0 rel@100 user-vgs=10@200 +VGS:10@200
+T174 PASS res=0; user-vgs=6@0
+T175 PASS res=-95; user-vgm=10@0
+T180 PASS OK@0; active=1 hw=7 transport active=1 volume=0.1016
+T181 PASS OK@0; active=1 hw=7 transport active=1 volume=0.1016
+T182 PASS up@0 +VGS:6@0 +VGM:15@0 hf-vgm=9@500 +VGS:6@1500 +VGM:9@1500
+T183 PASS hf-vgs=16@0 ERROR@0 hf-vgs=-1@0 ERROR@0 hf-vgm=16@0 ERROR@0; gains kept vgs=6 vgm=15
+T120c FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 rel@100 +VGS:6@1500! +VGM:15@1500!
+T130c FAIL 2 late: up@0 +VGS:6@0 +VGM:15@0 hup@100 +VGS:6@1500! +VGM:15@1500!
+T120h FAIL 2 late: up@0 +VGS=6@0 +VGM=15@0 rel@100 +VGS=6@1500! +VGM=15@1500!
+T130h FAIL 2 late: up@0 +VGS=6@0 +VGM=15@0 hup@100 +VGS=6@1500! +VGM=15@1500!
+# 49 tests: 34 PASS, 15 FAIL
+# differs from TEST-PLAN.md's master outcome (leak = FAIL, keep = PASS): none

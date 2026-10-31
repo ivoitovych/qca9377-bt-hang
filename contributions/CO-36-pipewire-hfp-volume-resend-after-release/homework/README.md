@@ -4,6 +4,11 @@ Before asking the maintainers which lifetime the delayed volume resend
 should have, reproduce the problem on current master in PipeWire's own
 Bluetooth VM tests, then run every candidate fix through the same tests.
 
+- [`TEST-PLAN.md`](TEST-PLAN.md): the whole suite by layer, the invariants,
+  the variants, and every test's result on master.
+- [`unit/`](unit/README.md): the L1 harness (virtual time).
+- [`tests/`](tests/test_co36_hfp_volume_resend.py): the L2/L3 VM tests.
+
 ## Setup
 
 Everything runs in a local rebuild of PipeWire CI's `bluez_tests` image,
