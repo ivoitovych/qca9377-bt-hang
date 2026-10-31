@@ -145,7 +145,13 @@ project's always-on `bt-capture` (btsnoop), decoded with btmon.
   its comment is the SCO connection; `2bc48e1c1` (Pauli Virtanen, 2023-03-17, "make SCO acquire
   asynchronous") moved the calls to `sco_ready()`. Neither commit says what should happen when
   the SCO connection ends within 1.5 s, and the comment gives a `+VGS` reason only, none for
-  `+VGM`.
+  `+VGM`. That silence proves little either way: as the audio gateway, PipeWire marks a
+  direction active only after the headset reports that gain itself (`AT+VGS=`/`AT+VGM=` →
+  `rfcomm_emit_volume_changed()`, master L681–689), and `rfcomm_ag_set_volume()` sends nothing
+  for an inactive direction, so a headset that never reports a microphone gain never gets
+  `+VGM`. Whether the HD-250BT reports one is not known here. The resend uses one timer per
+  RFCOMM connection: a new `sco_ready()` re-arms it, so a resend pending from an earlier link
+  is replaced, not kept.
 
 ## Files
 
