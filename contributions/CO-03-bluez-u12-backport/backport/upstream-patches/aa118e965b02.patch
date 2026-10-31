@@ -1,0 +1,37 @@
+From aa118e965b02a6b78039c1ed55b9947698c6de59 Mon Sep 17 00:00:00 2001
+From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+Date: Wed, 6 Nov 2024 10:43:29 -0500
+Subject: [PATCH] a2dp: Don't wait to reconfigure
+
+If the stream has been confirmed to be closed it should be safe to
+attempt to send SetConfiguration without having to wait for a period
+since the remote end can assume no new stream would be created it may
+end up disconnecting the session.
+---
+ profiles/audio/a2dp.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/profiles/audio/a2dp.c b/profiles/audio/a2dp.c
+index 37332abca..c97bd6e89 100644
+--- a/profiles/audio/a2dp.c
++++ b/profiles/audio/a2dp.c
+@@ -58,7 +58,6 @@
+ /* The duration that streams without users are allowed to stay in
+  * STREAMING state. */
+ #define SUSPEND_TIMEOUT 5
+-#define RECONFIGURE_TIMEOUT 500
+ 
+ #define AVDTP_PSM 25
+ 
+@@ -1398,7 +1397,7 @@ static bool setup_reconfigure(struct a2dp_setup *setup)
+ 
+ 	DBG("%p", setup);
+ 
+-	setup->id = g_timeout_add(RECONFIGURE_TIMEOUT, a2dp_reconfigure, setup);
++	setup->id = g_idle_add(a2dp_reconfigure, setup);
+ 
+ 	setup->reconfigure = FALSE;
+ 
+-- 
+2.43.0
+

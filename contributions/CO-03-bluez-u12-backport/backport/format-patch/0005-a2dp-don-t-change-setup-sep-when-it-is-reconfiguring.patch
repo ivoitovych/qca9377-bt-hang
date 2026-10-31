@@ -1,0 +1,49 @@
+From 91c526540c0d025659f9fe255e01bcc81e370b94 Mon Sep 17 00:00:00 2001
+From: Pauli Virtanen <pav@iki.fi>
+Date: Sat, 2 Nov 2024 22:29:46 +0200
+Subject: [PATCH 5/5] a2dp: don't change setup sep when it is reconfiguring
+
+If a2dp_resume/a2dp_suspend are called while setup is being
+reconfigured, they make the reconfiguration use wrong SEP.  This occurs
+if transport Acquire/Release are called while reconfiguration is waiting
+for CLOSE_RSP.
+
+Fix by failing a2dp_resume/suspend early without changing the setup, if
+it is reconfiguring.
+
+Such resume/suspend calls would in any case fail, because
+avdtp_close(stream) has been done, so avdtp_suspend/resume would return
+error.
+
+(backported from commit 664a5d3785a1a57989d236b6fd649321a39451f5)
+---
+ profiles/audio/a2dp.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/profiles/audio/a2dp.c b/profiles/audio/a2dp.c
+index 0357a0a..b0e261d 100644
+--- a/profiles/audio/a2dp.c
++++ b/profiles/audio/a2dp.c
+@@ -3129,6 +3129,9 @@ unsigned int a2dp_resume(struct avdtp *session, struct a2dp_sep *sep,
+ 	cb_data->resume_cb = cb;
+ 	cb_data->user_data = user_data;
+ 
++	if (setup->reconfigure)
++		goto failed;
++
+ 	setup->sep = sep;
+ 	setup->stream = sep->stream;
+ 
+@@ -3187,6 +3190,9 @@ unsigned int a2dp_suspend(struct avdtp *session, struct a2dp_sep *sep,
+ 	cb_data->suspend_cb = cb;
+ 	cb_data->user_data = user_data;
+ 
++	if (setup->reconfigure)
++		goto failed;
++
+ 	setup->sep = sep;
+ 	setup->stream = sep->stream;
+ 
+-- 
+2.43.0
+

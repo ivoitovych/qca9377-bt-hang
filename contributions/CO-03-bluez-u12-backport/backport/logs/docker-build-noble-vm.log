@@ -1,0 +1,90 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.29kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/co03-noble-build:1
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/5] FROM docker.io/library/co03-noble-build:1
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 10.53kB done
+#5 DONE 0.0s
+
+#6 [2/5] RUN apt-get update     && apt-get install -y --no-install-recommends          qemu-system-x86 python3-pip python3-dbus python3-gi          python3-pexpect python3-pytest dbus-daemon dbus chrony          util-linux gdb meson ninja-build python3-venv procps          kmod iproute2     && apt-get clean
+#6 CACHED
+
+#7 [3/5] COPY pytest_bluezenv-0.1.9 /src/pytest_bluezenv-0.1.9
+#7 CACHED
+
+#8 [4/5] RUN python3 -m pip install --break-system-packages --ignore-installed          "pytest>=8" pluggy iniconfig pexpect ptyprocess     && python3 -m pip install --break-system-packages --no-deps          /src/pytest_bluezenv-0.1.9     && ls -la /usr/local/lib/python3.12/dist-packages/pytest_bluezenv/bin/
+#8 0.705 Collecting pytest>=8
+#8 0.799   Downloading pytest-9.2.0-py3-none-any.whl.metadata (7.9 kB)
+#8 0.845 Collecting pluggy
+#8 0.863   Downloading pluggy-1.7.0-py3-none-any.whl.metadata (5.0 kB)
+#8 0.909 Collecting iniconfig
+#8 0.927   Downloading iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+#8 0.963 Collecting pexpect
+#8 0.982   Downloading pexpect-4.9.0-py2.py3-none-any.whl.metadata (2.5 kB)
+#8 1.015 Collecting ptyprocess
+#8 1.035   Downloading ptyprocess-0.7.0-py2.py3-none-any.whl.metadata (1.3 kB)
+#8 1.095 Collecting packaging>=24 (from pytest>=8)
+#8 1.113   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+#8 1.165 Collecting pygments>=2.15 (from pytest>=8)
+#8 1.184   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+#8 1.212 Downloading pytest-9.2.0-py3-none-any.whl (411 kB)
+#8 1.348    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 411.8/411.8 kB 3.1 MB/s eta 0:00:00
+#8 1.367 Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+#8 1.394 Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+#8 1.416 Downloading pexpect-4.9.0-py2.py3-none-any.whl (63 kB)
+#8 1.433    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 63.8/63.8 kB 5.2 MB/s eta 0:00:00
+#8 1.452 Downloading ptyprocess-0.7.0-py2.py3-none-any.whl (13 kB)
+#8 1.474 Downloading packaging-26.3-py3-none-any.whl (129 kB)
+#8 1.506    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 130.0/130.0 kB 5.0 MB/s eta 0:00:00
+#8 1.527 Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+#8 1.810    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 4.5 MB/s eta 0:00:00
+#8 1.864 Installing collected packages: ptyprocess, pygments, pluggy, pexpect, packaging, iniconfig, pytest
+#8 2.950 Successfully installed iniconfig-2.3.1 packaging-26.3 pexpect-4.9.0 pluggy-1.7.0 ptyprocess-0.7.0 pygments-2.21.0 pytest-9.2.0
+#8 2.950 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#8 3.347 Processing /src/pytest_bluezenv-0.1.9
+#8 3.349   Installing build dependencies: started
+#8 5.722   Installing build dependencies: finished with status 'done'
+#8 5.724   Getting requirements to build wheel: started
+#8 5.858   Getting requirements to build wheel: finished with status 'done'
+#8 5.861   Installing backend dependencies: started
+#8 6.900   Installing backend dependencies: finished with status 'done'
+#8 6.900   Preparing metadata (pyproject.toml): started
+#8 10.39   Preparing metadata (pyproject.toml): finished with status 'done'
+#8 10.39 Building wheels for collected packages: pytest-bluezenv
+#8 10.39   Building wheel for pytest-bluezenv (pyproject.toml): started
+#8 10.42   Building wheel for pytest-bluezenv (pyproject.toml): finished with status 'done'
+#8 10.43   Created wheel for pytest-bluezenv: filename=pytest_bluezenv-0.1.9-cp312-cp312-linux_x86_64.whl size=268507 sha256=e99bc530c5ddbf7a7822ab7ea00489b4d05691a2cad1d52532deee7481e453ef
+#8 10.43   Stored in directory: /root/.cache/pip/wheels/27/61/a5/bffa5e6a2cf504d840819dc1a6244022577f329652bfaf8a6a
+#8 10.43 Successfully built pytest-bluezenv
+#8 10.43 Installing collected packages: pytest-bluezenv
+#8 10.47 Successfully installed pytest-bluezenv-0.1.9
+#8 10.47 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#8 10.57 total 552
+#8 10.57 drwxr-xr-x 2 root root   4096 Oct 31 14:21 .
+#8 10.57 drwxr-xr-x 5 root root   4096 Oct 31 14:21 ..
+#8 10.57 -rwxr-xr-x 1 root root 504376 Oct 31 14:21 btvirt
+#8 10.57 -rwxr-xr-x 1 root root  45048 Oct 31 14:21 test-runner
+#8 10.57 -rw-r--r-- 1 root root   1834 Oct 31 14:21 tester.config
+#8 DONE 10.6s
+
+#9 [5/5] COPY bzImage /bluez-kernel/bzImage
+#9 DONE 0.0s
+
+#10 exporting to image
+#10 exporting layers
+#10 exporting layers 0.8s done
+#10 writing image sha256:d95e1b7f821db649656051c1ccf7bb956120e8ef2593bd835a62fc030c49717c done
+#10 naming to docker.io/library/co03-noble-vm:1 done
+#10 DONE 0.8s

@@ -1,0 +1,205 @@
+make --no-print-directory check-am
+make --no-print-directory check-TESTS
+depbase=`echo src/eir.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT src/eir.o -MD -MP -MF $depbase.Tpo -c -o src/eir.o src/eir.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/sdpd-database.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT src/sdpd-database.o -MD -MP -MF $depbase.Tpo -c -o src/sdpd-database.o src/sdpd-database.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/sdpd-service.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT src/sdpd-service.o -MD -MP -MF $depbase.Tpo -c -o src/sdpd-service.o src/sdpd-service.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo src/sdpd-request.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT src/sdpd-request.o -MD -MP -MF $depbase.Tpo -c -o src/sdpd-request.o src/sdpd-request.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-avdtp.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-avdtp.o -MD -MP -MF $depbase.Tpo -c -o unit/test-avdtp.o unit/test-avdtp.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-avctp.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-avctp.o -MD -MP -MF $depbase.Tpo -c -o unit/test-avctp.o unit/test-avctp.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-avrcp.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-avrcp.o -MD -MP -MF $depbase.Tpo -c -o unit/test-avrcp.o unit/test-avrcp.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-hfp.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-hfp.o -MD -MP -MF $depbase.Tpo -c -o unit/test-hfp.o unit/test-hfp.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-gdbus-client.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-gdbus-client.o -MD -MP -MF $depbase.Tpo -c -o unit/test-gdbus-client.o unit/test-gdbus-client.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-lib.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-lib.o -MD -MP -MF $depbase.Tpo -c -o unit/test-lib.o unit/test-lib.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-gatt.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-gatt.o -MD -MP -MF $depbase.Tpo -c -o unit/test-gatt.o unit/test-gatt.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-hog.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-hog.o -MD -MP -MF $depbase.Tpo -c -o unit/test-hog.o unit/test-hog.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo profiles/input/hog-lib.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT profiles/input/hog-lib.o -MD -MP -MF $depbase.Tpo -c -o profiles/input/hog-lib.o profiles/input/hog-lib.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo profiles/scanparam/scpp.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT profiles/scanparam/scpp.o -MD -MP -MF $depbase.Tpo -c -o profiles/scanparam/scpp.o profiles/scanparam/scpp.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo profiles/battery/bas.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT profiles/battery/bas.o -MD -MP -MF $depbase.Tpo -c -o profiles/battery/bas.o profiles/battery/bas.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo profiles/deviceinfo/dis.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT profiles/deviceinfo/dis.o -MD -MP -MF $depbase.Tpo -c -o profiles/deviceinfo/dis.o profiles/deviceinfo/dis.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-gattrib.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-gattrib.o -MD -MP -MF $depbase.Tpo -c -o unit/test-gattrib.o unit/test-gattrib.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-bap.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-bap.o -MD -MP -MF $depbase.Tpo -c -o unit/test-bap.o unit/test-bap.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-micp.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-micp.o -MD -MP -MF $depbase.Tpo -c -o unit/test-micp.o unit/test-micp.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-bass.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-bass.o -MD -MP -MF $depbase.Tpo -c -o unit/test-bass.o unit/test-bass.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-vcp.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-vcp.o -MD -MP -MF $depbase.Tpo -c -o unit/test-vcp.o unit/test-vcp.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-tester.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-tester.o -MD -MP -MF $depbase.Tpo -c -o unit/test-tester.o unit/test-tester.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-eir.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-eir.o -MD -MP -MF $depbase.Tpo -c -o unit/test-eir.o unit/test-eir.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-uuid.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-uuid.o -MD -MP -MF $depbase.Tpo -c -o unit/test-uuid.o unit/test-uuid.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-textfile.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-textfile.o -MD -MP -MF $depbase.Tpo -c -o unit/test-textfile.o unit/test-textfile.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-crc.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-crc.o -MD -MP -MF $depbase.Tpo -c -o unit/test-crc.o unit/test-crc.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-crypto.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-crypto.o -MD -MP -MF $depbase.Tpo -c -o unit/test-crypto.o unit/test-crypto.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-ecc.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-ecc.o -MD -MP -MF $depbase.Tpo -c -o unit/test-ecc.o unit/test-ecc.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-ringbuf.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-ringbuf.o -MD -MP -MF $depbase.Tpo -c -o unit/test-ringbuf.o unit/test-ringbuf.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-queue.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-queue.o -MD -MP -MF $depbase.Tpo -c -o unit/test-queue.o unit/test-queue.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-mgmt.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-mgmt.o -MD -MP -MF $depbase.Tpo -c -o unit/test-mgmt.o unit/test-mgmt.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-uhid.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-uhid.o -MD -MP -MF $depbase.Tpo -c -o unit/test-uhid.o unit/test-uhid.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo unit/test-sdp.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT unit/test-sdp.o -MD -MP -MF $depbase.Tpo -c -o unit/test-sdp.o unit/test-sdp.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo android/avdtp.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT android/avdtp.o -MD -MP -MF $depbase.Tpo -c -o android/avdtp.o android/avdtp.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo android/avctp.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT android/avctp.o -MD -MP -MF $depbase.Tpo -c -o android/avctp.o android/avctp.c &&\
+mv -f $depbase.Tpo $depbase.Po
+depbase=`echo android/avrcp-lib.o | sed 's|[^/]*$|.deps/&|;s|\.o$||'`;\
+gcc -DHAVE_CONFIG_H -I.   -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include  -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include  -I./lib  -fsanitize=address -fsanitize=undefined -g      -g -O2 -MT android/avrcp-lib.o -MD -MP -MF $depbase.Tpo -c -o android/avrcp-lib.o android/avrcp-lib.c &&\
+mv -f $depbase.Tpo $depbase.Po
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-hfp unit/test-hfp.o src/libshared-glib.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-hfp unit/test-hfp.o  src/.libs/libshared-glib.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-gdbus-client unit/test-gdbus-client.o gdbus/libgdbus-internal.la src/libshared-glib.la -lglib-2.0  -ldbus-1  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-gdbus-client unit/test-gdbus-client.o  gdbus/.libs/libgdbus-internal.a src/.libs/libshared-glib.a -lglib-2.0 -ldbus-1
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-lib unit/test-lib.o src/libshared-glib.la lib/libbluetooth-internal.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-lib unit/test-lib.o  src/.libs/libshared-glib.a lib/.libs/libbluetooth-internal.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-hog unit/test-hog.o btio/btio.o profiles/input/hog-lib.o profiles/scanparam/scpp.o profiles/battery/bas.o profiles/deviceinfo/dis.o src/log.o attrib/att.o attrib/gatt.o attrib/gattrib.o src/libshared-glib.la lib/libbluetooth-internal.la -lglib-2.0  
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-gattrib unit/test-gattrib.o attrib/gattrib.o btio/btio.o src/log.o src/libshared-glib.la lib/libbluetooth-internal.la -lglib-2.0  -ldbus-1  -ldl -lrt 
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-hog unit/test-hog.o btio/btio.o profiles/input/hog-lib.o profiles/scanparam/scpp.o profiles/battery/bas.o profiles/deviceinfo/dis.o src/log.o attrib/att.o attrib/gatt.o attrib/gattrib.o  src/.libs/libshared-glib.a lib/.libs/libbluetooth-internal.a -lglib-2.0
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-gattrib unit/test-gattrib.o attrib/gattrib.o btio/btio.o src/log.o  src/.libs/libshared-glib.a lib/.libs/libbluetooth-internal.a -lglib-2.0 -ldbus-1 -ldl -lrt
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-micp unit/test-micp.o src/libshared-glib.la lib/libbluetooth-internal.la -lglib-2.0  
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-bass unit/test-bass.o btio/btio.o src/libshared-glib.la lib/libbluetooth-internal.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-micp unit/test-micp.o  src/.libs/libshared-glib.a lib/.libs/libbluetooth-internal.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-tester unit/test-tester.o src/libshared-glib.la lib/libbluetooth-internal.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-bass unit/test-bass.o btio/btio.o  src/.libs/libshared-glib.a lib/.libs/libbluetooth-internal.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-eir unit/test-eir.o src/eir.o src/uuid-helper.o src/libshared-glib.la lib/libbluetooth-internal.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-tester unit/test-tester.o  src/.libs/libshared-glib.a lib/.libs/libbluetooth-internal.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-uuid unit/test-uuid.o src/libshared-glib.la lib/libbluetooth-internal.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-eir unit/test-eir.o src/eir.o src/uuid-helper.o  src/.libs/libshared-glib.a lib/.libs/libbluetooth-internal.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-textfile unit/test-textfile.o src/textfile.o src/libshared-glib.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-uuid unit/test-uuid.o  src/.libs/libshared-glib.a lib/.libs/libbluetooth-internal.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-crc unit/test-crc.o monitor/crc.o src/libshared-glib.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-textfile unit/test-textfile.o src/textfile.o  src/.libs/libshared-glib.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-crypto unit/test-crypto.o src/libshared-glib.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-crc unit/test-crc.o monitor/crc.o  src/.libs/libshared-glib.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-ecc unit/test-ecc.o src/libshared-glib.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-crypto unit/test-crypto.o  src/.libs/libshared-glib.a -lglib-2.0
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-ecc unit/test-ecc.o  src/.libs/libshared-glib.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-ringbuf unit/test-ringbuf.o src/libshared-glib.la -lglib-2.0  
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-queue unit/test-queue.o src/libshared-glib.la -lglib-2.0  
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-mgmt unit/test-mgmt.o src/libshared-glib.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-ringbuf unit/test-ringbuf.o  src/.libs/libshared-glib.a -lglib-2.0
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-queue unit/test-queue.o  src/.libs/libshared-glib.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-uhid unit/test-uhid.o src/libshared-glib.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-mgmt unit/test-mgmt.o  src/.libs/libshared-glib.a -lglib-2.0
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-sdp unit/test-sdp.o src/sdpd-database.o src/log.o src/sdpd-service.o src/sdpd-request.o lib/libbluetooth-internal.la src/libshared-glib.la -lglib-2.0  
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-avctp unit/test-avctp.o src/log.o android/avctp.o src/libshared-glib.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-uhid unit/test-uhid.o  src/.libs/libshared-glib.a -lglib-2.0
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-sdp unit/test-sdp.o src/sdpd-database.o src/log.o src/sdpd-service.o src/sdpd-request.o  lib/.libs/libbluetooth-internal.a src/.libs/libshared-glib.a -lglib-2.0
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-avctp unit/test-avctp.o src/log.o android/avctp.o  src/.libs/libshared-glib.a -lglib-2.0
+PASS: unit/test-hfp
+PASS: unit/test-gdbus-client
+PASS: unit/test-lib
+PASS: unit/test-gattrib
+PASS: unit/test-hog
+PASS: unit/test-micp
+PASS: unit/test-bass
+PASS: unit/test-tester
+PASS: unit/test-eir
+PASS: unit/test-uuid
+PASS: unit/test-crc
+PASS: unit/test-crypto
+PASS: unit/test-textfile
+PASS: unit/test-queue
+PASS: unit/test-mgmt
+PASS: unit/test-uhid
+PASS: unit/test-sdp
+PASS: unit/test-avctp
+PASS: unit/test-ecc
+PASS: unit/test-ringbuf
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-vcp unit/test-vcp.o btio/btio.o src/libshared-glib.la lib/libbluetooth-internal.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-vcp unit/test-vcp.o btio/btio.o  src/.libs/libshared-glib.a lib/.libs/libbluetooth-internal.a -lglib-2.0
+PASS: unit/test-vcp
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-gatt unit/test-gatt.o src/libshared-glib.la lib/libbluetooth-internal.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-gatt unit/test-gatt.o  src/.libs/libshared-glib.a lib/.libs/libbluetooth-internal.a -lglib-2.0
+PASS: unit/test-gatt
+unit/test-avdtp.c: In function 'main':
+unit/test-avdtp.c:766:5: note: variable tracking size limit exceeded with '-fvar-tracking-assignments', retrying without
+  766 | int main(int argc, char *argv[])
+      |     ^~~~
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-avdtp unit/test-avdtp.o src/log.o android/avdtp.o src/libshared-glib.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-avdtp unit/test-avdtp.o src/log.o android/avdtp.o  src/.libs/libshared-glib.a -lglib-2.0
+PASS: unit/test-avdtp
+unit/test-avrcp.c: In function 'main':
+unit/test-avrcp.c:989:5: note: variable tracking size limit exceeded with '-fvar-tracking-assignments', retrying without
+  989 | int main(int argc, char *argv[])
+      |     ^~~~
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-avrcp unit/test-avrcp.o src/log.o android/avctp.o android/avrcp-lib.o lib/libbluetooth-internal.la src/libshared-glib.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-avrcp unit/test-avrcp.o src/log.o android/avctp.o android/avrcp-lib.o  lib/.libs/libbluetooth-internal.a src/.libs/libshared-glib.a -lglib-2.0
+PASS: unit/test-avrcp
+/bin/bash ./libtool  --tag=CC   --mode=link gcc -fsanitize=address -fsanitize=undefined -g      -g -O2 -fsanitize=address -fsanitize=undefined  -o unit/test-bap unit/test-bap.o src/libshared-glib.la lib/libbluetooth-internal.la -lglib-2.0  
+libtool: link: gcc -fsanitize=address -fsanitize=undefined -g -g -O2 -fsanitize=address -fsanitize=undefined -o unit/test-bap unit/test-bap.o  src/.libs/libshared-glib.a lib/.libs/libbluetooth-internal.a -lglib-2.0
+PASS: unit/test-bap
+============================================================================
+Testsuite summary for bluez 5.72
+============================================================================
+# TOTAL: 25
+# PASS:  25
+# SKIP:  0
+# XFAIL: 0
+# FAIL:  0
+# XPASS: 0
+# ERROR: 0
+============================================================================
+make check exit 0

@@ -1,0 +1,89 @@
+gpgv: Signature made Tue Oct 13 11:16:58 2026 UTC
+gpgv:                using RSA key 842F72F577401503C2BD85DC8469974868A49E75
+gpgv:                issuer "allen.huang@canonical.com"
+gpgv: Can't check signature: No public key
+dpkg-source: warning: cannot verify inline signature for /archive/bluez_5.72-0ubuntu5.8.dsc: no acceptable signature found
+dpkg-source: info: extracting bluez in bluez-5.72-0ubuntu5.8
+dpkg-source: info: unpacking bluez_5.72.orig.tar.xz
+dpkg-source: info: unpacking bluez_5.72-0ubuntu5.8.debian.tar.xz
+dpkg-source: info: using patch list from debian/patches/series
+dpkg-source: info: applying work-around-Logitech-diNovo-Edge-keyboard-firmware-i.patch
+dpkg-source: info: applying allow-using-obexd-without-systemd-in-the-user-sessio.patch
+dpkg-source: info: applying obex-Use-GLib-helper-function-to-manipulate-paths.patch
+dpkg-source: info: applying agent-Assert-possible-infinite-loop.patch
+dpkg-source: info: applying bluetooth.conf.patch
+dpkg-source: info: applying main.conf.patch
+dpkg-source: info: applying change_path_of_hogsuspend.patch
+dpkg-source: info: applying org.bluez.obex.service.in.patch
+dpkg-source: info: applying Fix-typo.patch
+dpkg-source: info: applying shared-gatt-client-Fix-segfault-after-PIN-entry.patch
+dpkg-source: info: applying main.conf-Add-more-details-Closes-904212.patch
+dpkg-source: info: applying headers-use-releative-symlinks.patch
+dpkg-source: info: applying Change-shebang-from-usr-bin-python-to-usr-bin-python.patch
+dpkg-source: info: applying Add-HCI_TO_STR-macro-for-FIRMWARE_DIR.patch
+dpkg-source: info: applying lp1759836.patch
+dpkg-source: info: applying 0002-hostname-handle-chassis-type-handset.patch
+dpkg-source: info: applying ubuntu_error_restart.patch
+dpkg-source: info: applying raspi-bcm43xx-load-firmware.patch
+dpkg-source: info: applying raspi-bcm43xx-3wire.patch
+dpkg-source: info: applying raspi-cypress-305-bdaddr.patch
+dpkg-source: info: applying git-reconnect-fix.patch
+dpkg-source: info: applying reconnect-hsp-on-a2dp-reconnect.patch
+dpkg-source: info: applying device-Fix-Pair-method-not-setting-auto_connect.patch
+dpkg-source: info: applying profiles-avdtp-Fix-reply-for-bad-media-transport-for.patch
+dpkg-source: info: applying cleanup-endpoints-when-devices-been-removed.patch
+dpkg-source: info: applying audio-upgrade-versions-to-latest-possible-to-qualify.patch
+dpkg-source: info: applying 0016-advertising-Fix-sending-extra-bytes-with-MGMT_OP_ADD.patch
+dpkg-source: info: applying CVE-2026-19774.patch
+dpkg-source: info: applying CVE-2026-75032_1.patch
+dpkg-source: info: applying CVE-2026-75032_2.patch
+dpkg-source: info: applying CVE-2026-80185.patch
+dpkg-source: info: applying CVE-2026-80186.patch
+dpkg-source: info: applying CVE-2026-85218.patch
+dpkg-source: info: applying regression-a2dp-sep-cache.patch
+libdistro-info-perl is not installed, Debian release names are not known.
+libdistro-info-perl is not installed, Ubuntu release names are not known.
+Applying patch debian/patches/co03-01-adapter-Fix-crash-on-short-start-discovery-reply.patch
+patching file src/adapter.c
+
+Applying patch debian/patches/co03-02-a2dp-Fix-crash-on-NULL-stream-in-transport-cb.patch
+patching file profiles/audio/a2dp.c
+
+Applying patch debian/patches/co03-03-transport-Add-transport-a2dp-get-stream-helper.patch
+patching file profiles/audio/transport.c
+
+Applying patch debian/patches/co03-04-transport-don-t-disconnect-A2DP-if-canceling-Acquire-with-Release.patch
+patching file profiles/audio/transport.c
+
+Applying patch debian/patches/co03-05-a2dp-don-t-change-setup-sep-when-it-is-reconfiguring.patch
+patching file profiles/audio/a2dp.c
+
+Now at patch debian/patches/co03-05-a2dp-don-t-change-setup-sep-when-it-is-reconfiguring.patch
+bluez (5.72-0ubuntu5.9~co03.1) UNRELEASED; urgency=medium
+
+  * d/p/co03-03, co03-04, co03-05: backport upstream fix: Release()
+    during a pending A2DP Acquire() no longer aborts the stream and
+    disconnects A2DP (upstream commits 3d9900eb754d (helper part),
+    a14d59725ef3, 664a5d3785a1)
+  * d/p/co03-01: adapter: Fix crash on short start discovery reply
+    (upstream commit a734b06059cb)
+  * d/p/co03-02: a2dp: Fix crash on NULL stream in transport_cb
+    (upstream commit 0bed9886cff3)
+
+ -- Iaroslav Voitovych <yaroslav.voytovych@gmail.com>  Sat, 31 Oct 2026 14:48:59 +0000
+
+bluez (5.72-0ubuntu5.8) noble-security; urgency=medium
+
+  * SECURITY REGRESSION: loading of cached A2DP remote SEPs broken by the
+    CVE-2026-19774 fix (LP: #2170509)
+    - debian/patches/regression-a2dp-sep-cache.patch: a2dp: Fix loading of
+      remote SEP from cache in profiles/audio/a2dp.c.
+
+regression-a2dp-sep-cache.patch
+
+# CO-03: crash fixes (BT-7) and the A2DP Release()-during-Acquire() fix
+co03-01-adapter-Fix-crash-on-short-start-discovery-reply.patch
+co03-02-a2dp-Fix-crash-on-NULL-stream-in-transport-cb.patch
+co03-03-transport-Add-transport-a2dp-get-stream-helper.patch
+co03-04-transport-don-t-disconnect-A2DP-if-canceling-Acquire-with-Release.patch
+co03-05-a2dp-don-t-change-setup-sep-when-it-is-reconfiguring.patch

@@ -43,3 +43,34 @@ Append-only. Newest last.
 - **Note:** the scratch worktree `tmp/research-20261021/bluez-5.72` now has `3d9900eb7`
   applied, uncommitted.
 - **Full record:** `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV6.
+
+## 2026-10-31 — U12 again; backported, built and tested off the laptop
+- **U12 struck again** at 13:42:16 (EX-084 to EX-088).
+- **Backport:** five commits on `5.72-0ubuntu5.8`:
+  - `a734b06059cb` and `0bed9886cff3` (BT-7);
+  - the `transport_a2dp_get_stream()` part of `3d9900eb754d`;
+  - `a14d59725ef3`, with the `A2DP_OPS` hunk wired by hand;
+  - `664a5d3785a1`.
+
+  Not taken: `aa118e965b02`, `47da1efdc584` and `87ad4c66b934`; the reasons are in
+  `backport/README.md` §1. The package is `5.72-0ubuntu5.9~co03.1`, with the same warnings
+  and `make check` results as base.
+- **Tests:** the plan was written first and run on base, then the same files ran on the
+  backport. Results:
+  - the trigger (T201–T207, ten runs each): A2DP lost 70/70 on base, 0/70 on the backport;
+  - the unit harness: 27 → 35 of 35;
+  - the VM tests: 17 → 31 of 31;
+  - PipeWire master: T310 0/11 → 11/11, and T312 fail → pass.
+
+  Every changed outcome is a leak test.
+- **New facts:**
+  - 5.72 never answers the cancelled `Acquire()`.
+  - A remote that answers ABORT loses A2DP within 5–7 ms. U12 is not limited to headsets
+    that ignore ABORT.
+  - A client exiting with its Acquire pending still sends ABORT on the backport, as it does
+    upstream.
+- **Seen at bluetoothd exit on both builds:** two use-after-free reports from ASan (`media.c:300`,
+  `device.c:6167`), in code the backport does not touch (`backport/runs/asan-exit-reports.txt`).
+  Not investigated.
+- **Remains for the operator:** install on the laptop, repeat the trigger with the
+  MOMENTUM 4 (T320/T321), and decide on filing (draft in `backport/README.md` §7).

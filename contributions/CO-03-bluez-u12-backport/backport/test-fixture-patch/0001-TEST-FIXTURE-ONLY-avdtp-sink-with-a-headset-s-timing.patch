@@ -1,0 +1,220 @@
+From e5326d056785acc916292f51b06977cd3fdd2922 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 31 Oct 2026 15:22:39 +0100
+Subject: [PATCH] TEST FIXTURE ONLY: avdtp: sink with a headset's timing
+ (CO-03)
+
+Never part of a fix. Environment variables make this bluetoothd, as the
+A2DP sink of the VM tests, handle incoming START/SUSPEND late, never
+answer ABORT or START, or reject START; see the comment above
+co03_fixture_cmd() in profiles/audio/avdtp.c.
+---
+ profiles/audio/avdtp.c | 172 +++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 172 insertions(+)
+
+diff --git a/profiles/audio/avdtp.c b/profiles/audio/avdtp.c
+index 52919ae..79fc301 100644
+--- a/profiles/audio/avdtp.c
++++ b/profiles/audio/avdtp.c
+@@ -1117,12 +1117,17 @@ static void remove_disconnect_timer(struct avdtp *session)
+ 	avdtp_unref(session);
+ }
+ 
++static void co03_session_free(struct avdtp *session); /* TEST FIXTURE ONLY */
++
+ static void avdtp_free(void *data)
+ {
+ 	struct avdtp *session = data;
+ 
+ 	DBG("%p", session);
+ 
++	/* TEST FIXTURE ONLY (CO-03) */
++	co03_session_free(session);
++
+ 	g_slist_free_full(session->streams, stream_free);
+ 
+ 	if (session->io) {
+@@ -2216,6 +2221,169 @@ static enum avdtp_parse_result avdtp_parse_data(struct avdtp *session,
+ 	return PARSE_SUCCESS;
+ }
+ 
++/*
++ * TEST FIXTURE ONLY (CO-03), never part of a fix: lets this bluetoothd act
++ * as a sink with a headset's timing, chosen by environment variables read
++ * at the first incoming command:
++ *   CO03_SINK_START_DELAY_MS=N   handle each incoming START N ms late
++ *   CO03_SINK_SUSPEND_DELAY_MS=N handle each incoming SUSPEND N ms late
++ *   CO03_SINK_DROP_ABORT=1       never answer an incoming ABORT
++ *   CO03_SINK_DROP_START=1       never answer an incoming START
++ *   CO03_SINK_REJECT_START=1     answer every incoming START with a reject
++ * Each action is logged with error() under the "CO03 fixture" prefix.
++ */
++struct co03_deferred {
++	struct avdtp *session;
++	uint8_t transaction;
++	uint8_t signal_id;
++	void *buf;
++	size_t size;
++	guint id;
++};
++
++static GSList *co03_deferred_list;
++static int co03_inited;
++static unsigned int co03_start_delay;
++static unsigned int co03_suspend_delay;
++static int co03_drop_abort;
++static int co03_drop_start;
++static int co03_reject_start;
++
++static unsigned int co03_env_uint(const char *name)
++{
++	const char *v = getenv(name);
++
++	return v ? (unsigned int) strtoul(v, NULL, 10) : 0;
++}
++
++static void co03_init(void)
++{
++	if (co03_inited)
++		return;
++
++	co03_inited = 1;
++	co03_start_delay = co03_env_uint("CO03_SINK_START_DELAY_MS");
++	co03_suspend_delay = co03_env_uint("CO03_SINK_SUSPEND_DELAY_MS");
++	co03_drop_abort = co03_env_uint("CO03_SINK_DROP_ABORT");
++	co03_drop_start = co03_env_uint("CO03_SINK_DROP_START");
++	co03_reject_start = co03_env_uint("CO03_SINK_REJECT_START");
++	error("CO03 fixture: start_delay=%u suspend_delay=%u drop_abort=%d "
++		"drop_start=%d reject_start=%d", co03_start_delay,
++		co03_suspend_delay, co03_drop_abort, co03_drop_start,
++		co03_reject_start);
++}
++
++static void co03_deferred_free(struct co03_deferred *d)
++{
++	co03_deferred_list = g_slist_remove(co03_deferred_list, d);
++	g_free(d->buf);
++	g_free(d);
++}
++
++static void co03_session_free(struct avdtp *session)
++{
++	GSList *l, *next;
++
++	for (l = co03_deferred_list; l; l = next) {
++		struct co03_deferred *d = l->data;
++
++		next = l->next;
++		if (d->session != session)
++			continue;
++
++		error("CO03 fixture: dropping deferred signal %u (session freed)",
++								d->signal_id);
++		g_source_remove(d->id);
++		co03_deferred_free(d);
++	}
++}
++
++static void connection_lost(struct avdtp *session, int err);
++
++static gboolean co03_deferred_cb(gpointer user_data)
++{
++	struct co03_deferred *d = user_data;
++	struct avdtp *session = d->session;
++
++	if (session->state != AVDTP_SESSION_STATE_CONNECTED || !session->io) {
++		error("CO03 fixture: deferred signal %u dropped (not connected)",
++								d->signal_id);
++		co03_deferred_free(d);
++		return FALSE;
++	}
++
++	error("CO03 fixture: handling deferred signal %u label %u now",
++					d->signal_id, d->transaction);
++
++	if (!avdtp_parse_cmd(session, d->transaction, d->signal_id, d->buf,
++								d->size)) {
++		co03_deferred_free(d);
++		error("Unable to handle command. Disconnecting");
++		connection_lost(session, EIO);
++		return FALSE;
++	}
++
++	co03_deferred_free(d);
++	return FALSE;
++}
++
++/* Returns TRUE if the fixture consumed the incoming command */
++static gboolean co03_fixture_cmd(struct avdtp *session)
++{
++	uint8_t signal_id = session->in_cmd.signal_id;
++	unsigned int delay = 0;
++	struct co03_deferred *d;
++
++	co03_init();
++
++	if (signal_id == AVDTP_ABORT && co03_drop_abort) {
++		error("CO03 fixture: dropping ABORT label %u",
++					session->in_cmd.transaction);
++		return TRUE;
++	}
++
++	if (signal_id == AVDTP_START && co03_drop_start) {
++		error("CO03 fixture: dropping START label %u",
++					session->in_cmd.transaction);
++		return TRUE;
++	}
++
++	if (signal_id == AVDTP_START && co03_reject_start) {
++		struct stream_rej rej;
++
++		error("CO03 fixture: rejecting START label %u",
++					session->in_cmd.transaction);
++		memset(&rej, 0, sizeof(rej));
++		rej.acp_seid = session->in_cmd.buf[0] >> 2;
++		rej.error = AVDTP_BAD_STATE;
++		avdtp_send(session, session->in_cmd.transaction,
++				AVDTP_MSG_TYPE_REJECT, AVDTP_START,
++				&rej, sizeof(rej));
++		return TRUE;
++	}
++
++	if (signal_id == AVDTP_START)
++		delay = co03_start_delay;
++	else if (signal_id == AVDTP_SUSPEND)
++		delay = co03_suspend_delay;
++
++	if (!delay)
++		return FALSE;
++
++	d = g_new0(struct co03_deferred, 1);
++	d->session = session;
++	d->transaction = session->in_cmd.transaction;
++	d->signal_id = signal_id;
++	d->size = session->in_cmd.data_size;
++	d->buf = g_memdup2(session->in_cmd.buf, d->size);
++	d->id = g_timeout_add(delay, co03_deferred_cb, d);
++	co03_deferred_list = g_slist_append(co03_deferred_list, d);
++
++	error("CO03 fixture: deferring signal %u label %u by %u ms", signal_id,
++						d->transaction, delay);
++	return TRUE;
++}
++
+ static gboolean session_cb(GIOChannel *chan, GIOCondition cond,
+ 				gpointer data)
+ {
+@@ -2256,6 +2424,10 @@ static gboolean session_cb(GIOChannel *chan, GIOCondition cond,
+ 	}
+ 
+ 	if (header->message_type == AVDTP_MSG_TYPE_COMMAND) {
++		/* TEST FIXTURE ONLY (CO-03) */
++		if (co03_fixture_cmd(session))
++			return TRUE;
++
+ 		if (!avdtp_parse_cmd(session, session->in_cmd.transaction,
+ 				     session->in_cmd.signal_id,
+ 				     session->in_cmd.buf,
+-- 
+2.43.0
+

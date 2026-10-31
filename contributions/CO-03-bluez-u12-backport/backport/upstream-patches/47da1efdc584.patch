@@ -1,0 +1,34 @@
+From 47da1efdc5843294cfaf9522624b3876e8ab2972 Mon Sep 17 00:00:00 2001
+From: Iulia Tanasescu <iulia.tanasescu@nxp.com>
+Date: Fri, 25 Oct 2024 15:21:39 +0300
+Subject: [PATCH] transport: Unset transport owner before owner free
+
+This sets the transport owner back to NULL, before the owner object
+is freed.
+---
+ profiles/audio/transport.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/profiles/audio/transport.c b/profiles/audio/transport.c
+index d71013077..dafd1c471 100644
+--- a/profiles/audio/transport.c
++++ b/profiles/audio/transport.c
+@@ -287,10 +287,15 @@ static void media_owner_remove(struct media_owner *owner)
+ 
+ static void media_owner_free(struct media_owner *owner)
+ {
++	struct media_transport *transport = owner->transport;
++
+ 	DBG("Owner %s", owner->name);
+ 
+ 	media_owner_remove(owner);
+ 
++	if (transport)
++		transport->owner = NULL;
++
+ 	g_free(owner->name);
+ 	g_free(owner);
+ }
+-- 
+2.43.0
+

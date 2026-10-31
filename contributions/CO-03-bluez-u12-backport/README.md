@@ -1,6 +1,15 @@
 # CO-03 — U12: bluetoothd rebuild and the Ubuntu backport
 
-**State:** investigating. The upstream fix does not apply to 5.72 as is.
+**State (2026-10-31):** backported, built and tested off the laptop. It is
+waiting for the operator's test on the laptop and decision on filing. The
+work is in [`backport/`](backport/README.md):
+- five commits on `5.72-0ubuntu5.8`: BT-7, the helper part of `3d9900eb754d`,
+  `a14d59725ef3` and `664a5d3785a1`;
+- the package `5.72-0ubuntu5.9~co03.1`;
+- a test plan run on base first: 0/70 → 70/70 on the trigger, and no other
+  test changed.
+
+The facts and steps below are the state before that work.
 
 **Target:** Ubuntu 24.04's `bluez` (5.72), through a Launchpad bug with a tested backport.
 
