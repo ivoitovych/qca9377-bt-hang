@@ -150,6 +150,13 @@ that holds:
 It remains a **third, separate BlueZ defect** on this machine, which neither patch addresses
 and which should not be folded into their submission.
 
+**Update 2026-10-31:** "unrelated" means unrelated to `0001`/`0002`, and that still holds.
+The crash now has a mechanism and a fix (CO-23, `contributions/CO-23-one-off-events/`):
+- a use-after-free in `a2dp_reconfig()`, which sets `setup->reconfigure` after
+  `avdtp_close()`/`avdtp_abort()` has dropped the setup's last reference;
+- reproduced under ASan on BlueZ master `82667d713949` (2026-10-29);
+- fix and send package ready, waiting for the operator's word.
+
 ## ⚠️ A correction, and the method error behind it
 
 An earlier reading of this same question reported **"patch 0002's guard has never fired"**.

@@ -259,7 +259,9 @@ of a crash prevented rather than merely absent (`EX-041`, `tools/bt-guards`):
 
 ⚠️ A third `bluetoothd` crash on the patched binary (09-08, a bad `free()` under
 `g_main_loop_run`) is at neither patched site, occurred in a process that never
-took either guard path, and is **not** part of this submission.
+took either guard path, and is **not** part of this submission. Its mechanism was found on
+2026-10-29: a use-after-free in `a2dp_reconfig()`, present in BlueZ master. The fix is a
+separate contribution, CO-23 (`contributions/CO-23-one-off-events/`).
 
 ⚠️ **`0002` treats the symptom.** It stops the crash without explaining why
 `setup->stream` is cleared while the setup is still on the `setups` list.

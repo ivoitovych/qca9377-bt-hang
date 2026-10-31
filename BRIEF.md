@@ -372,8 +372,10 @@ Patchwork ids `14831546` / `14831547`, series 1169362 / 1169363.
   reconstructed from the daemon log (`EX-041` ⚠️ block): Command Status `0x00` for the Start
   Discovery (`0x0023`, not service discovery) sent 2.05 s earlier, client list empty. Premise 5×.
 - ⚠️ **Neither relates to `BT-1`.** The wedge has occurred **4×** with both installed.
-- ⚠️ **A third, unrelated crash exists**: bad `free()` under `g_main_loop_run`, 09-08, at
-  neither patched site. Cleared of being ours. **Do not fold it into the submission.**
+- ⚠️ **A third crash exists, unrelated to these patches**: bad `free()` under
+  `g_main_loop_run`, 09-08, at neither patched site. Cleared of being ours. **Do not fold it into
+  this submission.** Its mechanism is a use-after-free in `a2dp_reconfig()`, reproduced on master
+  under ASan. The fix is ready as CO-23, waiting for the operator's word (2026-10-29).
 
 ## 7. Operating constraints — non-negotiable
 

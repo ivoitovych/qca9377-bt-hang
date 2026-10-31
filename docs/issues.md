@@ -18,7 +18,10 @@ The register's current-state blocks stopped at 2026-10-11 while the issues went 
 `docs/STATUS.md` and the dossiers; this block closes that gap. `docs/STATUS.md` remains the one
 page for what is current.
 - **New issues:** `U12` (10-19) to `U20` (10-24) and `U21` (10-29), in the userspace section; `BT-10` to `BT-15`
-  (10-23 to 10-28), each with a section below BT-9.
+  (10-23 to 10-28), each with a section below BT-9. Added 2026-10-31, in the userspace table:
+  - `U22`: the 09-08 bluetoothd crash, CO-23's `a2dp_reconfig()` use-after-free. It was in
+    the dossiers but never registered.
+  - `U23` and `U24`: two use-after-frees at bluetoothd exit, found by ASan in CO-03's VM runs.
 - **U7 became a kernel series (CO-02), sent 2026-10-27,** after a QEMU reproduction, every
   affected stable line, and a run on the laptop with three headsets (`EX-067` to `EX-083`).
 - **Stable:** the QCA9377 entry and our BT-8 and BT-9 work are released in 6.6.160 (10-21) as
@@ -839,7 +842,7 @@ team's own selection (an inference). Watch queue-7.3 after 7.4-rc1; an option-2 
 
 ---
 
-## U1–U20 — userspace audio problems seen during the E1/E3 tests (2026-09-26 →)
+## U1–U24 — userspace problems seen during the E1/E3 tests (2026-09-26 →)
 
 | id | one line | state (`STATUS.md`) |
 |---|---|---|
@@ -864,6 +867,9 @@ team's own selection (an inference). Watch queue-7.3 after 7.4-rc1; an option-2 
 | U19 | after a headset leaves Handsfree for A2DP, GNOME Settings' Sound panel shows the laptop's microphone as the input but its level meter stays dead: the meter's new stream is destroyed by Ubuntu's 2-second Bluetooth-transition patch in WirePlumber, and the panel never retries (2026-10-24, Shure AONIC 50, twice) | confirmed in the journal, the audio policy log and the source; Ubuntu-only (LP #2122640's patch), upstream WirePlumber not affected |
 | U20 | in Handsfree the Shure AONIC 50's input volume slider has no effect on the signal: PipeWire sends `+VGM` 15…0 because the headset announced remote volume control, and the level does not change (2026-10-24) | observed by the operator, the `+VGM` commands confirmed in the HCI capture; headset behaviour inferred |
 | U21 | after forgetting and re-pairing the Shure AONIC 50 it comes up in Handsfree, and GNOME Settings' Sound panel shows **no codec/profile row at all** (not only an unusable first line, as in U1); a disconnect and reconnect gives the same (2026-10-29 ~04:38–04:48) | observed by the operator (screenshot: Output and Input "Handsfree - Shure AONIC 50", no row below); why Handsfree: explained by the logs (below, STATUS); why no row: not known |
+| U22 | bluetoothd crashed with a bad `free()` on 2026-09-08 10:23:43, when a codec switch arrived while an AVDTP Close was pending: `a2dp_reconfig()` writes to the setup after `avdtp_close()`/`avdtp_abort()` freed it (registered 2026-10-31; investigated as CO-23 event 1, 2026-10-28) | confirmed in the daemon's debug log and the binary; reproduced under ASan on BlueZ master `82667d713949`; not fixed upstream; our fix ready (CO-23) |
+| U23 | at bluetoothd exit with an A2DP media endpoint registered, `clear_endpoint()` (`profiles/audio/media.c:300`) reads an `a2dp_sep` that `a2dp_unregister_sep()` already freed (2026-10-31) | ASan report in QEMU guests, 3 of 10 runs on 5.72 and 2 of 10 on 5.72 with the CO-03 backport; master not yet checked; not seen on the laptop, whose build has no ASan |
+| U24 | at bluetoothd exit, `discovery_cleanup()` → `invalidate_rssi_and_tx_power()` calls `device_set_rssi_with_delta()` (`src/device.c:6167`) on a device already freed by its D-Bus interface removal (2026-10-31) | ASan report in QEMU guests, twice on 5.72 at the teardown of PipeWire's `test_pipewire_a2dp`; master not yet checked; not seen on the laptop |
 
 The entries below appear in the order they were written (U6 before U5, U9 before U8).
 
