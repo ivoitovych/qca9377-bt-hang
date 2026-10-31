@@ -1,0 +1,1718 @@
+# journalctl --since "2026-10-31 02:58:54.5" --until "2026-10-31 02:58:57" -o short-precise _COMM=wireplumber _COMM=bluetoothd _COMM=pipewire _COMM=pipewire-pulse + _TRANSPORT=kernel
+Oct 31 02:58:54.573055 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome input] FLUSH_RECORD_STREAM tag:754 channel:0
+Oct 31 02:58:54.573195 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome input] CORK_RECORD_STREAM tag:757 channel:0 cork:yes
+Oct 31 02:58:54.573202 n pipewire-pulse[2813]: mod.protocol-pulse: 0x650c7ab35e10: [Google Chrome input] paused because of cork request
+Oct 31 02:58:54.573312 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:node deactivate
+Oct 31 02:58:54.573331 n pipewire[2806]: pw.node: (Google Chrome input-76) -> change driver (alsa_input.pci-0000_03_00.6.analog-stereo-53 -> Google Chrome input-76)
+Oct 31 02:58:54.573448 n pipewire[2806]: pw.link: (53.0.0 -> 76.0.0) deactivated
+Oct 31 02:58:54.573457 n pipewire[2806]: pw.link: (53.0.0 -> 76.0.0) active -> paused (paused-paused)
+Oct 31 02:58:54.573492 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome input] FLUSH_RECORD_STREAM tag:760 channel:0
+Oct 31 02:58:54.573515 n pipewire[2806]: pw.link: (53.1.0 -> 76.1.0) deactivated
+Oct 31 02:58:54.573521 n pipewire[2806]: pw.link: (53.1.0 -> 76.1.0) active -> paused (paused-paused)
+Oct 31 02:58:54.573576 n pipewire[2806]: pw.node: (alsa_input.pci-0000_03_00.6.analog-stereo-53) running -> idle
+Oct 31 02:58:54.573748 n pipewire[2806]: pw.node: (Google Chrome input-76) running -> idle
+Oct 31 02:58:54.573761 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome input] DELETE_STREAM tag:762 channel:0
+Oct 31 02:58:54.575517 n pipewire[2806]: pw.node: (Google Chrome input-76) destroy
+Oct 31 02:58:54.575557 n pipewire[2806]: pw.link: (53.0.0 -> 76.0.0) paused -> init (paused-configure)
+Oct 31 02:58:54.575564 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:link unprepared
+Oct 31 02:58:54.575583 n pipewire[2806]: pw.link: (53.1.0 -> 76.1.0) paused -> init (paused-configure)
+Oct 31 02:58:54.575588 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:link unprepared
+Oct 31 02:58:54.575611 n pipewire[2806]: pw.node: (Google Chrome input-76) idle -> suspended
+Oct 31 02:58:54.575627 n pipewire[2806]: pw.link: (53.0.0 -> 76.0.0) destroy
+Oct 31 02:58:54.575638 n pipewire[2806]: pw.port: port 39: keep input latency 0.000000-0.000000 0-0 0-0
+Oct 31 02:58:54.575652 n pipewire[2806]: pw.port: port 39: 0x58df70e7e0a0 keep input tag (nil)
+Oct 31 02:58:54.575736 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SOURCE_INFO tag:160 index:53 name:(null)
+Oct 31 02:58:54.575747 n pipewire[2806]: pw.link: (53.1.0 -> 76.1.0) destroy
+Oct 31 02:58:54.575754 n pipewire[2806]: pw.port: port 54: keep input latency 0.000000-0.000000 0-0 0-0
+Oct 31 02:58:54.575760 n pipewire[2806]: pw.port: port 54: 0x58df70e7ea20 keep input tag (nil)
+Oct 31 02:58:54.575817 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SOURCE_OUTPUT_INFO tag:161 index:142 name:(null)
+Oct 31 02:58:54.575867 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SOURCE_INFO tag:162 index:53 name:(null)
+Oct 31 02:58:54.575925 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SOURCE_OUTPUT_INFO tag:163 index:142 name:(null)
+Oct 31 02:58:54.576593 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03ac30> unhandling item: Google Chrome input (76)
+Oct 31 02:58:54.576658 n wireplumber[2811]: <WpSiStandardLink:0x5fe8bc0e7990> ... link removed
+Oct 31 02:58:54.576764 n wireplumber[2811]: ... not a bluetooth device, no need to prevent non-bluetooth linking
+Oct 31 02:58:54.577062 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03ac30> item won't be handled by this policy
+Oct 31 02:58:54.577220 n wireplumber[2811]: Disconnected sink 76 does not have any filters to be removed
+Oct 31 02:58:54.577380 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:54.634976 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome input] GET_SINK_INFO_LIST tag:763
+Oct 31 02:58:54.635257 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome input] GET_SERVER_INFO tag:764
+Oct 31 02:58:54.636025 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome input] GET_SERVER_INFO tag:765
+Oct 31 02:58:54.636604 n pipewire-pulse[2813]: mod.protocol-pulse: client:0x650c7ab00c30 AUTH tag:0 version:35
+Oct 31 02:58:54.636776 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] SET_CLIENT_NAME tag:1
+Oct 31 02:58:54.637031 n pipewire[2806]: mod.access: client 0x58df70fd99d0 has trusted pid 2813
+Oct 31 02:58:54.637064 n pipewire[2806]: mod.access: 0x58df70dfb460: client 0x58df70fd99d0 'unrestricted' access granted
+Oct 31 02:58:54.637081 n pipewire[2806]: pw.client: 0x58df70fd99d0: set default permissions 00000000 -> 000001c8
+Oct 31 02:58:54.637852 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_CLIENT_INFO tag:164 index:158 name:(null)
+Oct 31 02:58:54.637889 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_CLIENT_INFO tag:162 index:158 name:(null)
+Oct 31 02:58:54.638903 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] reply tag:1 id:76 index:158
+Oct 31 02:58:54.639078 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] CREATE_PLAYBACK_STREAM tag:2 corked:1 sink-name:(null) sink-index:4294967295
+Oct 31 02:58:54.639097 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] maxlength:4294967295 tlength:12288 minreq:2048 prebuf:4294967295 max:4194304
+Oct 31 02:58:54.639103 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] maxlength:4194304 tlength:8192 minreq:2048/512 prebuf:6148 latency:1024/48000 4
+Oct 31 02:58:54.639754 n pipewire-pulse[2813]: mod.protocol-pulse: stream 0x650c7aab8700: mute changed 0
+Oct 31 02:58:54.639763 n pipewire-pulse[2813]: mod.protocol-pulse: stream 0x650c7aab8700: volume changed 1.000000
+Oct 31 02:58:54.639876 n pipewire[2806]: pw.node: (Google Chrome-0) latency:0/0 -> 1024/48000
+Oct 31 02:58:54.639887 n pipewire[2806]: pw.node: (Google Chrome-0) rate:0/0 -> 1/48000
+Oct 31 02:58:54.640038 n pipewire[2806]: pw.node: (Google Chrome-81) creating -> suspended
+Oct 31 02:58:54.640184 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:node activate
+Oct 31 02:58:54.640435 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INPUT_INFO tag:165 index:159 name:(null)
+Oct 31 02:58:54.640497 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INPUT_INFO tag:163 index:159 name:(null)
+Oct 31 02:58:54.640771 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:54.640914 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> restore values from Output/Audio:application.name:Google Chrome
+Oct 31 02:58:54.640943 n wireplumber[2811]: <WpSpaPod:0x5fe8bc042210> setting props on <WpNode:0x5fe8bc02d900>:
+                                              Object: size 96, type Spa:Pod:Object:Param:Props (262146), id Spa:Enum:ParamId:Props (2)
+                                                Prop: key Spa:Pod:Object:Param:Props:volume (65539), flags 00000000
+                                                  Float 1.000000
+                                                Prop: key Spa:Pod:Object:Param:Props:channelVolumes (65544), flags 00000000
+                                                  Array: child.size 4, child.type Spa:Float
+                                                    Float 1.000000
+                                                    Float 1.000000
+                                                Prop: key Spa:Pod:Object:Param:Props:channelMap (65547), flags 00000000
+                                                  Array: child.size 4, child.type Spa:Id
+                                                    Id 3        (Spa:Enum:AudioChannel:FL)
+                                                    Id 4        (Spa:Enum:AudioChannel:FR)
+Oct 31 02:58:54.641436 n pipewire-pulse[2813]: mod.protocol-pulse: stream 0x650c7aab8700: volume changed 1.000000
+Oct 31 02:58:54.641671 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INPUT_INFO tag:166 index:159 name:(null)
+Oct 31 02:58:54.641701 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INPUT_INFO tag:164 index:159 name:(null)
+Oct 31 02:58:54.641762 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> saving stream props for Google Chrome
+Oct 31 02:58:54.641926 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> activated item for node 81
+Oct 31 02:58:54.641990 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:54.642100 n wireplumber[2811]: ... default target picked: bluez_output.AA:BB:CC:00:00:01.1 (61), can_passthrough:false
+Oct 31 02:58:54.642125 n wireplumber[2811]: link Google Chrome <-> bluez_output.AA:BB:CC:00:00:01.1 passthrough:false, exclusive:nil
+Oct 31 02:58:54.642530 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> item won't be handled by this policy
+Oct 31 02:58:54.642830 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:node flags changed
+Oct 31 02:58:54.643202 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> saving stream props for Google Chrome
+Oct 31 02:58:54.643279 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INPUT_INFO tag:165 index:159 name:(null)
+Oct 31 02:58:54.643326 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INPUT_INFO tag:167 index:159 name:(null)
+Oct 31 02:58:54.643384 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> saving stream props for Google Chrome
+Oct 31 02:58:54.643508 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> saving stream props for Google Chrome
+Oct 31 02:58:54.643813 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:54.644044 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) (Google Chrome) -> (bluez_output.AA:BB:CC:00:00:01.1)
+Oct 31 02:58:54.644058 n pipewire[2806]: pw.port: port 63: set input latency 1.000000-1.000000 0-0 0-0
+Oct 31 02:58:54.644071 n pipewire[2806]: pw.port: port 78: keep output latency 0.000000-0.000000 0-0 0-0
+Oct 31 02:58:54.644079 n pipewire[2806]: pw.port: port 63: 0x58df71055a10 keep input tag (nil)
+Oct 31 02:58:54.644086 n pipewire[2806]: pw.port: port 78: 0x58df710b7f90 set output tag 0x7ffc3abccfe0
+Oct 31 02:58:54.644097 n pipewire[2806]: pw.port: Object: size 168, type Spa:Pod:Object:Param:Tag (262157), id Spa:Enum:ParamId:Tag (17)
+Oct 31 02:58:54.644105 n pipewire[2806]: pw.port:   Prop: key Spa:Pod:Object:Param:Tag:direction (1), flags 00000000
+Oct 31 02:58:54.644111 n pipewire[2806]: pw.port:     Id 1        (Spa:Enum:Direction:Output)
+Oct 31 02:58:54.644118 n pipewire[2806]: pw.port:   Prop: key Spa:Pod:Object:Param:Tag:info (2), flags 00000000
+Oct 31 02:58:54.644124 n pipewire[2806]: pw.port:     Struct: size 120
+Oct 31 02:58:54.644130 n pipewire[2806]: pw.port:       Int 2
+Oct 31 02:58:54.644136 n pipewire[2806]: pw.port:       String "media.name"
+Oct 31 02:58:54.644142 n pipewire[2806]: pw.port:       String "Playback"
+Oct 31 02:58:54.644148 n pipewire[2806]: pw.port:       String "media.class"
+Oct 31 02:58:54.644154 n pipewire[2806]: pw.port:       String "Stream/Output/Audio"
+Oct 31 02:58:54.644246 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) init -> negotiating (configure-configure)
+Oct 31 02:58:54.644578 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) negotiating -> allocating (ready-ready)
+Oct 31 02:58:54.644628 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INPUT_INFO tag:168 index:159 name:(null)
+Oct 31 02:58:54.644643 n wireplumber[2811]: <WpSiStandardLink:0x5fe8bc040290> activated si-standard-link
+Oct 31 02:58:54.644678 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INPUT_INFO tag:166 index:159 name:(null)
+Oct 31 02:58:54.644749 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:54.644848 n wireplumber[2811]: ... default target picked: bluez_output.AA:BB:CC:00:00:01.1 (61), can_passthrough:false
+Oct 31 02:58:54.644857 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... already linked to proper target
+Oct 31 02:58:54.645069 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) allocating -> paused (paused-paused)
+Oct 31 02:58:54.645084 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:link prepared
+Oct 31 02:58:54.645096 n pipewire[2806]: pw.node: (Google Chrome-81) -> change driver (Google Chrome-81 -> bluez_output.AA:BB:CC:00:00:01.1-61)
+Oct 31 02:58:54.645149 n pipewire[2806]: pw.context: (bluez_output.AA:BB:CC:00:00:01.1-61) new quantum:512->1024
+Oct 31 02:58:54.645164 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) activated
+Oct 31 02:58:54.645170 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) paused -> active (paused-paused)
+Oct 31 02:58:54.645306 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] got format:F32LE rate:48000 channels:1
+Oct 31 02:58:54.645315 n pipewire-pulse[2813]: mod.protocol-pulse: 0x650c7aab8700: [Google Chrome] paused because of cork after create
+Oct 31 02:58:54.645634 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] maxlength:4294967295 tlength:12288 minreq:2048 prebuf:4294967295 max:4194304
+Oct 31 02:58:54.645642 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] maxlength:4194304 tlength:8192 minreq:2048/512 prebuf:6148 latency:1024/48000 4
+Oct 31 02:58:54.645680 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] reply CREATE_PLAYBACK_STREAM tag:2 index:159 missing:8192 lat:21333
+Oct 31 02:58:54.645693 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] stride 4 size 32768
+Oct 31 02:58:54.646013 n pipewire-pulse[2813]: mod.protocol-pulse: stream 0x650c7aab8700: volume changed 1.000000
+Oct 31 02:58:54.646065 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:node deactivate
+Oct 31 02:58:54.646077 n pipewire[2806]: pw.node: (Google Chrome-81) -> change driver (bluez_output.AA:BB:CC:00:00:01.1-61 -> Google Chrome-81)
+Oct 31 02:58:54.646155 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) deactivated
+Oct 31 02:58:54.646162 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) active -> paused (paused-paused)
+Oct 31 02:58:54.646319 n pipewire[2806]: pw.node: (Google Chrome-81) running -> suspended
+Oct 31 02:58:54.646367 n pipewire[2806]: pw.node: (bluez_output.AA:BB:CC:00:00:01.1-61) running -> suspended
+Oct 31 02:58:54.646716 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> saving stream props for Google Chrome
+Oct 31 02:58:54.646765 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] CORK_PLAYBACK_STREAM tag:7 channel:0 cork:no
+Oct 31 02:58:54.646772 n pipewire-pulse[2813]: mod.protocol-pulse: 0x650c7aab8700: [Google Chrome] resumed because of cork request
+Oct 31 02:58:54.646797 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INPUT_INFO tag:167 index:159 name:(null)
+Oct 31 02:58:54.646851 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:node activate
+Oct 31 02:58:54.646864 n pipewire[2806]: pw.node: (Google Chrome-81) -> change driver (Google Chrome-81 -> bluez_output.AA:BB:CC:00:00:01.1-61)
+Oct 31 02:58:54.646896 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INPUT_INFO tag:169 index:159 name:(null)
+Oct 31 02:58:54.646930 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) activated
+Oct 31 02:58:54.646938 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) paused -> active (paused-paused)
+Oct 31 02:58:54.646973 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> saving stream props for Google Chrome
+Oct 31 02:58:54.647113 n pipewire[2806]: pw.node: (Google Chrome-81) suspended -> running
+Oct 31 02:58:54.647152 n pipewire[2806]: pw.node: (bluez_output.AA:BB:CC:00:00:01.1-61) suspended -> running
+Oct 31 02:58:54.647429 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INFO tag:168 index:144 name:(null)
+Oct 31 02:58:54.647478 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SOURCE_INFO tag:169 index:144 name:(null)
+Oct 31 02:58:54.647519 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INPUT_INFO tag:170 index:159 name:(null)
+Oct 31 02:58:54.647525 n wireplumber[2811]: selected channelmix_copy_sse delay:0 options:00000005
+Oct 31 02:58:54.647533 n wireplumber[2811]: src-mask:00000004 dst-mask:00000004 options:00000005
+Oct 31 02:58:54.647539 n wireplumber[2811]: matching channels
+Oct 31 02:58:54.647545 n wireplumber[2811]: matched channel 0 (1.000000)
+Oct 31 02:58:54.647551 n wireplumber[2811]: unassigned downmix 00000000 00000000
+Oct 31 02:58:54.647558 n wireplumber[2811]: unassigned upmix 00000000 lfe:0.000000
+Oct 31 02:58:54.647565 n wireplumber[2811]:      MONO  
+Oct 31 02:58:54.647569 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INFO tag:170 index:144 name:(null)
+Oct 31 02:58:54.647571 n wireplumber[2811]: MONO 1.000    1.000000
+Oct 31 02:58:54.647577 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:1
+Oct 31 02:58:54.647583 n wireplumber[2811]: 0: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:54.647590 n wireplumber[2811]: 0 0: 1.000000
+Oct 31 02:58:54.647596 n wireplumber[2811]: flags:0000000e
+Oct 31 02:58:54.647606 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SOURCE_INFO tag:171 index:144 name:(null)
+Oct 31 02:58:54.647644 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INPUT_INFO tag:172 index:159 name:(null)
+Oct 31 02:58:54.648204 n wireplumber[2811]: native 0x5fe8bbfcbc30: q:4 in:48000 out:16000 gcd:16000 n_taps:176 n_phases:256 features:0007cbdb:00010800
+Oct 31 02:58:54.648245 n wireplumber[2811]: transport 0x5fe8bbe03530: enter sco_acquire_cb
+Oct 31 02:58:54.648251 n wireplumber[2811]: transport 0x5fe8bbe03530: enter sco_do_connect, codec=2
+Oct 31 02:58:54.648277 n wireplumber[2811]: msbc=1
+Oct 31 02:58:54.648294 n wireplumber[2811]: transport 0x5fe8bbe03530: doing connect
+Oct 31 02:58:54.648332 n wireplumber[2811]: RFCOMM >> +CIEV: 2,1
+Oct 31 02:58:54.648709 n kernel: AA:BB:CC:00:00:02 -> AA:BB:CC:00:00:03
+Oct 31 02:58:54.648758 n kernel: AA:BB:CC:00:00:02 -> AA:BB:CC:00:00:01
+Oct 31 02:58:54.648779 n kernel: hci0: dst AA:BB:CC:00:00:01
+Oct 31 02:58:54.648810 n kernel: hci0: dst AA:BB:CC:00:00:01 handle 0x0f00
+Oct 31 02:58:54.648826 n kernel: hci0: parent 000000005c1bd36c hcon 00000000c0e86674
+Oct 31 02:58:54.648846 n kernel: hci0 opcode 0x0804 plen 2
+Oct 31 02:58:54.648870 n kernel: hci0: skb len 5
+Oct 31 02:58:54.648887 n kernel: hci0 cmd_cnt 1 cmd queued 1
+Oct 31 02:58:54.648914 n kernel: hci0: skb 000000000b6c2f76
+Oct 31 02:58:54.648736 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SOURCE_INFO tag:171 index:144 name:(null)
+Oct 31 02:58:54.648781 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SOURCE_INFO tag:173 index:144 name:(null)
+Oct 31 02:58:54.883029 n kernel: hcon 000000005c1bd36c
+Oct 31 02:58:54.883144 n kernel: hci0: hcon 00000000c0e86674
+Oct 31 02:58:54.883187 n kernel: hci0 opcode 0x0428 plen 17
+Oct 31 02:58:54.883221 n kernel: hci0: skb len 20
+Oct 31 02:58:54.883238 n kernel: hci0 cmd_cnt 1 cmd queued 1
+Oct 31 02:58:54.883254 n kernel: hci0: skb 0000000059a3b4d1
+Oct 31 02:58:55.054688 n kernel: hci0: hcon 00000000c0e86674 handle 0x0004
+Oct 31 02:58:55.054838 n kernel: hci0 evt 5
+Oct 31 02:58:55.054875 n kernel: Looking for Alt no :6
+Oct 31 02:58:55.054907 n kernel: Looking for Alt no :3
+Oct 31 02:58:55.054932 n kernel: 0
+Oct 31 02:58:55.057669 n kernel: hci0
+Oct 31 02:58:55.057710 n kernel: len 90 mtu 9
+Oct 31 02:58:55.057729 n kernel: hci0
+Oct 31 02:58:55.057745 n kernel: len 90 mtu 9
+Oct 31 02:58:55.067472 n wireplumber[2811]: transport 0x5fe8bbe03530: ready
+Oct 31 02:58:55.067485 n wireplumber[2811]: autodetected mtu = 50
+Oct 31 02:58:55.067494 n wireplumber[2811]: transport 0x5fe8bbe03530: acquire complete, read_mtu=50, write_mtu=50
+Oct 31 02:58:55.067501 n wireplumber[2811]: RFCOMM >> +VGS: 11
+Oct 31 02:58:55.067514 n wireplumber[2811]: RFCOMM >> +VGM: 0
+Oct 31 02:58:55.067535 n wireplumber[2811]: transport 0x5fe8bbe03530: /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd39 state changed 0 -> 2
+Oct 31 02:58:55.067542 n wireplumber[2811]: 0x5fe8bc0db8f8: transport 0x5fe8bbe03530 state 0->2
+Oct 31 02:58:55.067611 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:1
+Oct 31 02:58:55.067617 n wireplumber[2811]: 0: 0.000000 * 1.000000 = 0.000000
+Oct 31 02:58:55.067624 n wireplumber[2811]: flags:0000000f
+Oct 31 02:58:55.067725 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:1
+Oct 31 02:58:55.067731 n wireplumber[2811]: 0: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:55.067737 n wireplumber[2811]: 0 0: 1.000000
+Oct 31 02:58:55.067743 n wireplumber[2811]: flags:0000000e
+Oct 31 02:58:55.068324 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:55.068454 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-hf-input
+Oct 31 02:58:55.068506 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-hf-output
+Oct 31 02:58:55.068924 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:55.069031 n wireplumber[2811]: ... default target picked: bluez_output.AA:BB:CC:00:00:01.1 (61), can_passthrough:false
+Oct 31 02:58:55.069041 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... already linked to proper target
+Oct 31 02:58:55.069163 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:55.069242 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-hf-input
+Oct 31 02:58:55.069280 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-hf-output
+Oct 31 02:58:55.069495 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:55.069577 n wireplumber[2811]: ... default target picked: bluez_output.AA:BB:CC:00:00:01.1 (61), can_passthrough:false
+Oct 31 02:58:55.069589 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... already linked to proper target
+Oct 31 02:58:55.075674 n kernel: len 27 mtu 9
+Oct 31 02:58:55.075805 n kernel: len 27 mtu 9
+Oct 31 02:58:55.082670 n kernel: len 27 mtu 9
+Oct 31 02:58:55.082744 n kernel: len 27 mtu 9
+Oct 31 02:58:55.082760 n kernel: len 27 mtu 9
+Oct 31 02:58:55.096681 n kernel: len 27 mtu 9
+Oct 31 02:58:55.096773 n kernel: len 27 mtu 9
+Oct 31 02:58:55.097657 n kernel: len 27 mtu 9
+Oct 31 02:58:55.097678 n kernel: len 27 mtu 9
+Oct 31 02:58:55.097698 n kernel: len 27 mtu 9
+Oct 31 02:58:55.105663 n kernel: len 27 mtu 9
+Oct 31 02:58:55.105712 n kernel: len 27 mtu 9
+Oct 31 02:58:55.118664 n kernel: len 27 mtu 9
+Oct 31 02:58:55.118713 n kernel: len 27 mtu 9
+Oct 31 02:58:55.118726 n kernel: len 27 mtu 9
+Oct 31 02:58:55.120661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.120700 n kernel: len 27 mtu 9
+Oct 31 02:58:55.127659 n kernel: len 27 mtu 9
+Oct 31 02:58:55.127700 n kernel: len 27 mtu 9
+Oct 31 02:58:55.127717 n kernel: len 27 mtu 9
+Oct 31 02:58:55.139664 n kernel: len 27 mtu 9
+Oct 31 02:58:55.139724 n kernel: len 27 mtu 9
+Oct 31 02:58:55.142655 n kernel: len 27 mtu 9
+Oct 31 02:58:55.142679 n kernel: len 27 mtu 9
+Oct 31 02:58:55.142694 n kernel: len 27 mtu 9
+Oct 31 02:58:55.150657 n kernel: len 27 mtu 9
+Oct 31 02:58:55.150686 n kernel: len 27 mtu 9
+Oct 31 02:58:55.160662 n kernel: len 27 mtu 9
+Oct 31 02:58:55.160722 n kernel: len 27 mtu 9
+Oct 31 02:58:55.160739 n kernel: len 27 mtu 9
+Oct 31 02:58:55.165657 n kernel: len 27 mtu 9
+Oct 31 02:58:55.165686 n kernel: len 27 mtu 9
+Oct 31 02:58:55.172664 n kernel: len 27 mtu 9
+Oct 31 02:58:55.172720 n kernel: len 27 mtu 9
+Oct 31 02:58:55.172732 n kernel: len 27 mtu 9
+Oct 31 02:58:55.182658 n kernel: len 27 mtu 9
+Oct 31 02:58:55.182691 n kernel: len 27 mtu 9
+Oct 31 02:58:55.187665 n kernel: len 27 mtu 9
+Oct 31 02:58:55.187713 n kernel: len 27 mtu 9
+Oct 31 02:58:55.187735 n kernel: len 27 mtu 9
+Oct 31 02:58:55.195659 n kernel: len 27 mtu 9
+Oct 31 02:58:55.195701 n kernel: len 27 mtu 9
+Oct 31 02:58:55.203661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.203707 n kernel: len 27 mtu 9
+Oct 31 02:58:55.203726 n kernel: len 27 mtu 9
+Oct 31 02:58:55.210660 n kernel: len 27 mtu 9
+Oct 31 02:58:55.210710 n kernel: len 27 mtu 9
+Oct 31 02:58:55.224670 n kernel: len 27 mtu 9
+Oct 31 02:58:55.224727 n kernel: len 27 mtu 9
+Oct 31 02:58:55.224752 n kernel: len 27 mtu 9
+Oct 31 02:58:55.225656 n kernel: len 27 mtu 9
+Oct 31 02:58:55.225680 n kernel: len 27 mtu 9
+Oct 31 02:58:55.232681 n kernel: len 27 mtu 9
+Oct 31 02:58:55.232800 n kernel: len 27 mtu 9
+Oct 31 02:58:55.232826 n kernel: len 27 mtu 9
+Oct 31 02:58:55.246712 n kernel: len 27 mtu 9
+Oct 31 02:58:55.246883 n kernel: len 27 mtu 9
+Oct 31 02:58:55.247657 n kernel: len 27 mtu 9
+Oct 31 02:58:55.247688 n kernel: len 27 mtu 9
+Oct 31 02:58:55.247697 n kernel: len 27 mtu 9
+Oct 31 02:58:55.255662 n kernel: len 27 mtu 9
+Oct 31 02:58:55.255707 n kernel: len 27 mtu 9
+Oct 31 02:58:55.267662 n kernel: len 27 mtu 9
+Oct 31 02:58:55.267725 n kernel: len 27 mtu 9
+Oct 31 02:58:55.267741 n kernel: len 27 mtu 9
+Oct 31 02:58:55.270661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.270706 n kernel: len 27 mtu 9
+Oct 31 02:58:55.277659 n kernel: len 27 mtu 9
+Oct 31 02:58:55.277700 n kernel: len 27 mtu 9
+Oct 31 02:58:55.277716 n kernel: len 27 mtu 9
+Oct 31 02:58:55.288686 n kernel: len 27 mtu 9
+Oct 31 02:58:55.288814 n kernel: len 27 mtu 9
+Oct 31 02:58:55.292662 n kernel: len 27 mtu 9
+Oct 31 02:58:55.292704 n kernel: len 27 mtu 9
+Oct 31 02:58:55.292724 n kernel: len 27 mtu 9
+Oct 31 02:58:55.300665 n kernel: len 27 mtu 9
+Oct 31 02:58:55.300703 n kernel: len 27 mtu 9
+Oct 31 02:58:55.310670 n kernel: len 27 mtu 9
+Oct 31 02:58:55.310743 n kernel: len 27 mtu 9
+Oct 31 02:58:55.310764 n kernel: len 27 mtu 9
+Oct 31 02:58:55.315661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.315708 n kernel: len 27 mtu 9
+Oct 31 02:58:55.322671 n kernel: len 27 mtu 9
+Oct 31 02:58:55.322737 n kernel: len 27 mtu 9
+Oct 31 02:58:55.322752 n kernel: len 27 mtu 9
+Oct 31 02:58:55.331658 n kernel: len 27 mtu 9
+Oct 31 02:58:55.331697 n kernel: len 27 mtu 9
+Oct 31 02:58:55.337662 n kernel: len 27 mtu 9
+Oct 31 02:58:55.337704 n kernel: len 27 mtu 9
+Oct 31 02:58:55.337720 n kernel: len 27 mtu 9
+Oct 31 02:58:55.352667 n kernel: len 27 mtu 9
+Oct 31 02:58:55.352738 n kernel: len 27 mtu 9
+Oct 31 02:58:55.352761 n kernel: len 27 mtu 9
+Oct 31 02:58:55.352791 n kernel: len 27 mtu 9
+Oct 31 02:58:55.352824 n kernel: len 27 mtu 9
+Oct 31 02:58:55.360669 n kernel: len 27 mtu 9
+Oct 31 02:58:55.360726 n kernel: len 27 mtu 9
+Oct 31 02:58:55.374666 n kernel: len 27 mtu 9
+Oct 31 02:58:55.374732 n kernel: len 27 mtu 9
+Oct 31 02:58:55.374741 n kernel: len 27 mtu 9
+Oct 31 02:58:55.375656 n kernel: len 27 mtu 9
+Oct 31 02:58:55.375681 n kernel: len 27 mtu 9
+Oct 31 02:58:55.382664 n kernel: len 27 mtu 9
+Oct 31 02:58:55.382713 n kernel: len 27 mtu 9
+Oct 31 02:58:55.382730 n kernel: len 27 mtu 9
+Oct 31 02:58:55.395688 n kernel: len 27 mtu 9
+Oct 31 02:58:55.395799 n kernel: len 27 mtu 9
+Oct 31 02:58:55.397664 n kernel: len 27 mtu 9
+Oct 31 02:58:55.397712 n kernel: len 27 mtu 9
+Oct 31 02:58:55.397729 n kernel: len 27 mtu 9
+Oct 31 02:58:55.405675 n kernel: len 27 mtu 9
+Oct 31 02:58:55.405762 n kernel: len 27 mtu 9
+Oct 31 02:58:55.416674 n kernel: len 27 mtu 9
+Oct 31 02:58:55.416743 n kernel: len 27 mtu 9
+Oct 31 02:58:55.416759 n kernel: len 27 mtu 9
+Oct 31 02:58:55.420664 n kernel: len 27 mtu 9
+Oct 31 02:58:55.420697 n kernel: len 27 mtu 9
+Oct 31 02:58:55.427660 n kernel: len 27 mtu 9
+Oct 31 02:58:55.427706 n kernel: len 27 mtu 9
+Oct 31 02:58:55.427723 n kernel: len 27 mtu 9
+Oct 31 02:58:55.438664 n kernel: len 27 mtu 9
+Oct 31 02:58:55.438724 n kernel: len 27 mtu 9
+Oct 31 02:58:55.442661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.442693 n kernel: len 27 mtu 9
+Oct 31 02:58:55.442709 n kernel: len 27 mtu 9
+Oct 31 02:58:55.450661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.450700 n kernel: len 27 mtu 9
+Oct 31 02:58:55.459664 n kernel: len 27 mtu 9
+Oct 31 02:58:55.459710 n kernel: len 27 mtu 9
+Oct 31 02:58:55.459740 n kernel: len 27 mtu 9
+Oct 31 02:58:55.465661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.465707 n kernel: len 27 mtu 9
+Oct 31 02:58:55.472663 n kernel: len 27 mtu 9
+Oct 31 02:58:55.472718 n kernel: len 27 mtu 9
+Oct 31 02:58:55.472736 n kernel: len 27 mtu 9
+Oct 31 02:58:55.480657 n kernel: len 27 mtu 9
+Oct 31 02:58:55.480687 n kernel: len 27 mtu 9
+Oct 31 02:58:55.487666 n kernel: len 27 mtu 9
+Oct 31 02:58:55.487724 n kernel: len 27 mtu 9
+Oct 31 02:58:55.487742 n kernel: len 27 mtu 9
+Oct 31 02:58:55.502660 n kernel: len 27 mtu 9
+Oct 31 02:58:55.502705 n kernel: len 27 mtu 9
+Oct 31 02:58:55.502724 n kernel: len 27 mtu 9
+Oct 31 02:58:55.502736 n kernel: len 27 mtu 9
+Oct 31 02:58:55.502749 n kernel: len 27 mtu 9
+Oct 31 02:58:55.510665 n kernel: len 27 mtu 9
+Oct 31 02:58:55.510706 n kernel: len 27 mtu 9
+Oct 31 02:58:55.523668 n kernel: len 27 mtu 9
+Oct 31 02:58:55.523733 n kernel: len 27 mtu 9
+Oct 31 02:58:55.523749 n kernel: len 27 mtu 9
+Oct 31 02:58:55.525661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.525683 n kernel: len 27 mtu 9
+Oct 31 02:58:55.532672 n kernel: len 27 mtu 9
+Oct 31 02:58:55.532725 n kernel: len 27 mtu 9
+Oct 31 02:58:55.532751 n kernel: len 27 mtu 9
+Oct 31 02:58:55.544675 n kernel: len 27 mtu 9
+Oct 31 02:58:55.544876 n kernel: len 27 mtu 9
+Oct 31 02:58:55.547666 n kernel: len 27 mtu 9
+Oct 31 02:58:55.547733 n kernel: len 27 mtu 9
+Oct 31 02:58:55.547746 n kernel: len 27 mtu 9
+Oct 31 02:58:55.555679 n kernel: len 27 mtu 9
+Oct 31 02:58:55.555782 n kernel: len 27 mtu 9
+Oct 31 02:58:55.566679 n kernel: len 27 mtu 9
+Oct 31 02:58:55.566788 n kernel: len 27 mtu 9
+Oct 31 02:58:55.566800 n kernel: len 27 mtu 9
+Oct 31 02:58:55.570669 n kernel: len 27 mtu 9
+Oct 31 02:58:55.570721 n kernel: len 27 mtu 9
+Oct 31 02:58:55.577659 n kernel: len 27 mtu 9
+Oct 31 02:58:55.577688 n kernel: len 27 mtu 9
+Oct 31 02:58:55.577697 n kernel: len 27 mtu 9
+Oct 31 02:58:55.587670 n kernel: len 27 mtu 9
+Oct 31 02:58:55.587740 n kernel: len 27 mtu 9
+Oct 31 02:58:55.592664 n kernel: len 27 mtu 9
+Oct 31 02:58:55.592706 n kernel: len 27 mtu 9
+Oct 31 02:58:55.592724 n kernel: len 27 mtu 9
+Oct 31 02:58:55.600667 n kernel: len 27 mtu 9
+Oct 31 02:58:55.600705 n kernel: len 27 mtu 9
+Oct 31 02:58:55.608658 n kernel: len 27 mtu 9
+Oct 31 02:58:55.608689 n kernel: len 27 mtu 9
+Oct 31 02:58:55.608712 n kernel: len 27 mtu 9
+Oct 31 02:58:55.615658 n kernel: len 27 mtu 9
+Oct 31 02:58:55.615683 n kernel: len 27 mtu 9
+Oct 31 02:58:55.630668 n kernel: len 27 mtu 9
+Oct 31 02:58:55.630719 n kernel: len 27 mtu 9
+Oct 31 02:58:55.630741 n kernel: len 27 mtu 9
+Oct 31 02:58:55.630756 n kernel: len 27 mtu 9
+Oct 31 02:58:55.630770 n kernel: len 27 mtu 9
+Oct 31 02:58:55.637661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.637698 n kernel: len 27 mtu 9
+Oct 31 02:58:55.637712 n kernel: len 27 mtu 9
+Oct 31 02:58:55.651661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.651700 n kernel: len 27 mtu 9
+Oct 31 02:58:55.652655 n kernel: len 27 mtu 9
+Oct 31 02:58:55.652694 n kernel: len 27 mtu 9
+Oct 31 02:58:55.652706 n kernel: len 27 mtu 9
+Oct 31 02:58:55.660658 n kernel: len 27 mtu 9
+Oct 31 02:58:55.660693 n kernel: len 27 mtu 9
+Oct 31 02:58:55.672658 n kernel: len 27 mtu 9
+Oct 31 02:58:55.672697 n kernel: len 27 mtu 9
+Oct 31 02:58:55.672711 n kernel: len 27 mtu 9
+Oct 31 02:58:55.675655 n kernel: len 27 mtu 9
+Oct 31 02:58:55.675674 n kernel: len 27 mtu 9
+Oct 31 02:58:55.682659 n kernel: len 27 mtu 9
+Oct 31 02:58:55.682730 n kernel: len 27 mtu 9
+Oct 31 02:58:55.682751 n kernel: len 27 mtu 9
+Oct 31 02:58:55.694660 n kernel: len 27 mtu 9
+Oct 31 02:58:55.694730 n kernel: len 27 mtu 9
+Oct 31 02:58:55.697656 n kernel: len 27 mtu 9
+Oct 31 02:58:55.697694 n kernel: len 27 mtu 9
+Oct 31 02:58:55.697702 n kernel: len 27 mtu 9
+Oct 31 02:58:55.705679 n kernel: len 27 mtu 9
+Oct 31 02:58:55.705760 n kernel: len 27 mtu 9
+Oct 31 02:58:55.715676 n kernel: len 27 mtu 9
+Oct 31 02:58:55.715776 n kernel: len 27 mtu 9
+Oct 31 02:58:55.715797 n kernel: len 27 mtu 9
+Oct 31 02:58:55.720672 n kernel: len 27 mtu 9
+Oct 31 02:58:55.720719 n kernel: len 27 mtu 9
+Oct 31 02:58:55.727662 n kernel: len 27 mtu 9
+Oct 31 02:58:55.727701 n kernel: len 27 mtu 9
+Oct 31 02:58:55.727711 n kernel: len 27 mtu 9
+Oct 31 02:58:55.736657 n kernel: len 27 mtu 9
+Oct 31 02:58:55.736699 n kernel: len 27 mtu 9
+Oct 31 02:58:55.742659 n kernel: len 27 mtu 9
+Oct 31 02:58:55.742714 n kernel: len 27 mtu 9
+Oct 31 02:58:55.742733 n kernel: len 27 mtu 9
+Oct 31 02:58:55.750655 n kernel: len 27 mtu 9
+Oct 31 02:58:55.750691 n kernel: len 27 mtu 9
+Oct 31 02:58:55.758667 n kernel: len 27 mtu 9
+Oct 31 02:58:55.758707 n kernel: len 27 mtu 9
+Oct 31 02:58:55.758727 n kernel: len 27 mtu 9
+Oct 31 02:58:55.765663 n kernel: len 27 mtu 9
+Oct 31 02:58:55.765694 n kernel: len 27 mtu 9
+Oct 31 02:58:55.780666 n kernel: len 27 mtu 9
+Oct 31 02:58:55.780715 n kernel: len 27 mtu 9
+Oct 31 02:58:55.780732 n kernel: len 27 mtu 9
+Oct 31 02:58:55.780745 n kernel: len 27 mtu 9
+Oct 31 02:58:55.780761 n kernel: len 27 mtu 9
+Oct 31 02:58:55.787674 n kernel: len 27 mtu 9
+Oct 31 02:58:55.787699 n kernel: len 27 mtu 9
+Oct 31 02:58:55.787734 n kernel: len 27 mtu 9
+Oct 31 02:58:55.800688 n kernel: len 27 mtu 9
+Oct 31 02:58:55.800736 n kernel: len 27 mtu 9
+Oct 31 02:58:55.802672 n kernel: len 27 mtu 9
+Oct 31 02:58:55.802751 n kernel: len 27 mtu 9
+Oct 31 02:58:55.802781 n kernel: len 27 mtu 9
+Oct 31 02:58:55.810684 n kernel: len 27 mtu 9
+Oct 31 02:58:55.810729 n kernel: len 27 mtu 9
+Oct 31 02:58:55.822683 n kernel: len 27 mtu 9
+Oct 31 02:58:55.822745 n kernel: len 27 mtu 9
+Oct 31 02:58:55.822757 n kernel: len 27 mtu 9
+Oct 31 02:58:55.825668 n kernel: len 27 mtu 9
+Oct 31 02:58:55.825711 n kernel: len 27 mtu 9
+Oct 31 02:58:55.832684 n kernel: len 27 mtu 9
+Oct 31 02:58:55.832736 n kernel: len 27 mtu 9
+Oct 31 02:58:55.832753 n kernel: len 27 mtu 9
+Oct 31 02:58:55.843670 n kernel: len 27 mtu 9
+Oct 31 02:58:55.843723 n kernel: len 27 mtu 9
+Oct 31 02:58:55.847678 n kernel: len 27 mtu 9
+Oct 31 02:58:55.847719 n kernel: len 27 mtu 9
+Oct 31 02:58:55.847736 n kernel: len 27 mtu 9
+Oct 31 02:58:55.855658 n kernel: len 27 mtu 9
+Oct 31 02:58:55.855705 n kernel: len 27 mtu 9
+Oct 31 02:58:55.864667 n kernel: len 27 mtu 9
+Oct 31 02:58:55.864726 n kernel: len 27 mtu 9
+Oct 31 02:58:55.864757 n kernel: len 27 mtu 9
+Oct 31 02:58:55.870694 n kernel: len 27 mtu 9
+Oct 31 02:58:55.870832 n kernel: len 27 mtu 9
+Oct 31 02:58:55.877673 n kernel: len 27 mtu 9
+Oct 31 02:58:55.877734 n kernel: len 27 mtu 9
+Oct 31 02:58:55.877746 n kernel: len 27 mtu 9
+Oct 31 02:58:55.886677 n kernel: len 27 mtu 9
+Oct 31 02:58:55.886751 n kernel: len 27 mtu 9
+Oct 31 02:58:55.892661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.892690 n kernel: len 27 mtu 9
+Oct 31 02:58:55.892713 n kernel: len 27 mtu 9
+Oct 31 02:58:55.907673 n kernel: len 27 mtu 9
+Oct 31 02:58:55.907698 n kernel: len 27 mtu 9
+Oct 31 02:58:55.907729 n kernel: len 27 mtu 9
+Oct 31 02:58:55.907745 n kernel: len 27 mtu 9
+Oct 31 02:58:55.907762 n kernel: len 27 mtu 9
+Oct 31 02:58:55.915678 n kernel: len 27 mtu 9
+Oct 31 02:58:55.915738 n kernel: len 27 mtu 9
+Oct 31 02:58:55.928669 n kernel: len 27 mtu 9
+Oct 31 02:58:55.928710 n kernel: len 27 mtu 9
+Oct 31 02:58:55.928744 n kernel: len 27 mtu 9
+Oct 31 02:58:55.930669 n kernel: len 27 mtu 9
+Oct 31 02:58:55.930698 n kernel: len 27 mtu 9
+Oct 31 02:58:55.937661 n kernel: len 27 mtu 9
+Oct 31 02:58:55.937691 n kernel: len 27 mtu 9
+Oct 31 02:58:55.937722 n kernel: len 27 mtu 9
+Oct 31 02:58:55.950667 n kernel: len 27 mtu 9
+Oct 31 02:58:55.950708 n kernel: len 27 mtu 9
+Oct 31 02:58:55.952664 n kernel: len 27 mtu 9
+Oct 31 02:58:55.952683 n kernel: len 27 mtu 9
+Oct 31 02:58:55.952732 n kernel: len 27 mtu 9
+Oct 31 02:58:55.960678 n kernel: len 27 mtu 9
+Oct 31 02:58:55.960731 n kernel: len 27 mtu 9
+Oct 31 02:58:55.971664 n kernel: len 27 mtu 9
+Oct 31 02:58:55.971737 n kernel: len 27 mtu 9
+Oct 31 02:58:55.971750 n kernel: len 27 mtu 9
+Oct 31 02:58:55.975670 n kernel: len 27 mtu 9
+Oct 31 02:58:55.975715 n kernel: len 27 mtu 9
+Oct 31 02:58:55.982660 n kernel: len 27 mtu 9
+Oct 31 02:58:55.982703 n kernel: len 27 mtu 9
+Oct 31 02:58:55.982723 n kernel: len 27 mtu 9
+Oct 31 02:58:55.992672 n kernel: len 27 mtu 9
+Oct 31 02:58:55.992726 n kernel: len 27 mtu 9
+Oct 31 02:58:55.997659 n kernel: len 27 mtu 9
+Oct 31 02:58:55.997700 n kernel: len 27 mtu 9
+Oct 31 02:58:55.997727 n kernel: len 27 mtu 9
+Oct 31 02:58:56.005663 n kernel: len 27 mtu 9
+Oct 31 02:58:56.005706 n kernel: len 27 mtu 9
+Oct 31 02:58:56.014663 n kernel: len 27 mtu 9
+Oct 31 02:58:56.014699 n kernel: len 27 mtu 9
+Oct 31 02:58:56.014707 n kernel: len 27 mtu 9
+Oct 31 02:58:56.020718 n kernel: len 27 mtu 9
+Oct 31 02:58:56.020798 n kernel: len 27 mtu 9
+Oct 31 02:58:56.027687 n kernel: len 27 mtu 9
+Oct 31 02:58:56.027778 n kernel: len 27 mtu 9
+Oct 31 02:58:56.027790 n kernel: len 27 mtu 9
+Oct 31 02:58:56.035669 n kernel: len 27 mtu 9
+Oct 31 02:58:56.035733 n kernel: len 27 mtu 9
+Oct 31 02:58:56.042663 n kernel: len 27 mtu 9
+Oct 31 02:58:56.042729 n kernel: len 27 mtu 9
+Oct 31 02:58:56.042739 n kernel: len 27 mtu 9
+Oct 31 02:58:56.056666 n kernel: len 27 mtu 9
+Oct 31 02:58:56.056714 n kernel: len 27 mtu 9
+Oct 31 02:58:56.057663 n kernel: len 27 mtu 9
+Oct 31 02:58:56.057699 n kernel: len 27 mtu 9
+Oct 31 02:58:56.057719 n kernel: len 27 mtu 9
+Oct 31 02:58:56.065661 n kernel: len 27 mtu 9
+Oct 31 02:58:56.065740 n kernel: len 27 mtu 9
+Oct 31 02:58:56.078684 n kernel: len 27 mtu 9
+Oct 31 02:58:56.078727 n kernel: len 27 mtu 9
+Oct 31 02:58:56.078739 n kernel: len 27 mtu 9
+Oct 31 02:58:56.080682 n kernel: len 27 mtu 9
+Oct 31 02:58:56.080707 n kernel: len 27 mtu 9
+Oct 31 02:58:56.087683 n kernel: len 27 mtu 9
+Oct 31 02:58:56.087708 n kernel: len 27 mtu 9
+Oct 31 02:58:56.087720 n kernel: len 27 mtu 9
+Oct 31 02:58:56.099677 n kernel: len 27 mtu 9
+Oct 31 02:58:56.099711 n kernel: len 27 mtu 9
+Oct 31 02:58:56.102669 n kernel: len 27 mtu 9
+Oct 31 02:58:56.102706 n kernel: len 27 mtu 9
+Oct 31 02:58:56.102718 n kernel: len 27 mtu 9
+Oct 31 02:58:56.110673 n kernel: len 27 mtu 9
+Oct 31 02:58:56.110710 n kernel: len 27 mtu 9
+Oct 31 02:58:56.120673 n kernel: len 27 mtu 9
+Oct 31 02:58:56.120708 n kernel: len 27 mtu 9
+Oct 31 02:58:56.120722 n kernel: len 27 mtu 9
+Oct 31 02:58:56.125671 n kernel: len 27 mtu 9
+Oct 31 02:58:56.125700 n kernel: len 27 mtu 9
+Oct 31 02:58:56.132669 n kernel: len 27 mtu 9
+Oct 31 02:58:56.132706 n kernel: len 27 mtu 9
+Oct 31 02:58:56.132725 n kernel: len 27 mtu 9
+Oct 31 02:58:56.142671 n kernel: len 27 mtu 9
+Oct 31 02:58:56.142698 n kernel: len 27 mtu 9
+Oct 31 02:58:56.147669 n kernel: len 27 mtu 9
+Oct 31 02:58:56.147703 n kernel: len 27 mtu 9
+Oct 31 02:58:56.147721 n kernel: len 27 mtu 9
+Oct 31 02:58:56.155681 n kernel: len 27 mtu 9
+Oct 31 02:58:56.155717 n kernel: len 27 mtu 9
+Oct 31 02:58:56.163670 n kernel: len 27 mtu 9
+Oct 31 02:58:56.163711 n kernel: len 27 mtu 9
+Oct 31 02:58:56.163728 n kernel: len 27 mtu 9
+Oct 31 02:58:56.170675 n kernel: len 27 mtu 9
+Oct 31 02:58:56.170734 n kernel: len 27 mtu 9
+Oct 31 02:58:56.184702 n kernel: len 27 mtu 9
+Oct 31 02:58:56.184825 n kernel: len 27 mtu 9
+Oct 31 02:58:56.184846 n kernel: len 27 mtu 9
+Oct 31 02:58:56.185663 n kernel: len 27 mtu 9
+Oct 31 02:58:56.185690 n kernel: len 27 mtu 9
+Oct 31 02:58:56.192692 n kernel: len 27 mtu 9
+Oct 31 02:58:56.192762 n kernel: len 27 mtu 9
+Oct 31 02:58:56.192789 n kernel: len 27 mtu 9
+Oct 31 02:58:56.206673 n kernel: len 27 mtu 9
+Oct 31 02:58:56.206741 n kernel: len 27 mtu 9
+Oct 31 02:58:56.207668 n kernel: len 27 mtu 9
+Oct 31 02:58:56.207703 n kernel: len 27 mtu 9
+Oct 31 02:58:56.207715 n kernel: len 27 mtu 9
+Oct 31 02:58:56.215670 n kernel: len 27 mtu 9
+Oct 31 02:58:56.215714 n kernel: len 27 mtu 9
+Oct 31 02:58:56.227676 n kernel: len 27 mtu 9
+Oct 31 02:58:56.227732 n kernel: len 27 mtu 9
+Oct 31 02:58:56.227744 n kernel: len 27 mtu 9
+Oct 31 02:58:56.230669 n kernel: len 27 mtu 9
+Oct 31 02:58:56.230703 n kernel: len 27 mtu 9
+Oct 31 02:58:56.237670 n kernel: len 27 mtu 9
+Oct 31 02:58:56.237705 n kernel: len 27 mtu 9
+Oct 31 02:58:56.237721 n kernel: len 27 mtu 9
+Oct 31 02:58:56.248670 n kernel: len 27 mtu 9
+Oct 31 02:58:56.248694 n kernel: len 27 mtu 9
+Oct 31 02:58:56.252668 n kernel: len 27 mtu 9
+Oct 31 02:58:56.252716 n kernel: len 27 mtu 9
+Oct 31 02:58:56.252735 n kernel: len 27 mtu 9
+Oct 31 02:58:56.260675 n kernel: len 27 mtu 9
+Oct 31 02:58:56.260723 n kernel: len 27 mtu 9
+Oct 31 02:58:56.270672 n kernel: len 27 mtu 9
+Oct 31 02:58:56.270716 n kernel: len 27 mtu 9
+Oct 31 02:58:56.270728 n kernel: len 27 mtu 9
+Oct 31 02:58:56.275670 n kernel: len 27 mtu 9
+Oct 31 02:58:56.275698 n kernel: len 27 mtu 9
+Oct 31 02:58:56.282670 n kernel: len 27 mtu 9
+Oct 31 02:58:56.282693 n kernel: len 27 mtu 9
+Oct 31 02:58:56.282710 n kernel: len 27 mtu 9
+Oct 31 02:58:56.291674 n kernel: len 27 mtu 9
+Oct 31 02:58:56.291745 n kernel: len 27 mtu 9
+Oct 31 02:58:56.297670 n kernel: len 27 mtu 9
+Oct 31 02:58:56.297695 n kernel: len 27 mtu 9
+Oct 31 02:58:56.297726 n kernel: len 27 mtu 9
+Oct 31 02:58:56.312682 n kernel: len 27 mtu 9
+Oct 31 02:58:56.312732 n kernel: len 27 mtu 9
+Oct 31 02:58:56.312757 n kernel: len 27 mtu 9
+Oct 31 02:58:56.312773 n kernel: len 27 mtu 9
+Oct 31 02:58:56.312782 n kernel: len 27 mtu 9
+Oct 31 02:58:56.320676 n kernel: len 27 mtu 9
+Oct 31 02:58:56.320743 n kernel: len 27 mtu 9
+Oct 31 02:58:56.334684 n kernel: len 27 mtu 9
+Oct 31 02:58:56.334804 n kernel: len 27 mtu 9
+Oct 31 02:58:56.334826 n kernel: len 27 mtu 9
+Oct 31 02:58:56.335660 n kernel: len 27 mtu 9
+Oct 31 02:58:56.335690 n kernel: len 27 mtu 9
+Oct 31 02:58:56.342668 n kernel: len 27 mtu 9
+Oct 31 02:58:56.342708 n kernel: len 27 mtu 9
+Oct 31 02:58:56.342741 n kernel: len 27 mtu 9
+Oct 31 02:58:56.355668 n kernel: len 27 mtu 9
+Oct 31 02:58:56.355726 n kernel: len 27 mtu 9
+Oct 31 02:58:56.357659 n kernel: len 27 mtu 9
+Oct 31 02:58:56.357681 n kernel: len 27 mtu 9
+Oct 31 02:58:56.357701 n kernel: len 27 mtu 9
+Oct 31 02:58:56.365656 n kernel: len 27 mtu 9
+Oct 31 02:58:56.365682 n kernel: len 27 mtu 9
+Oct 31 02:58:56.376662 n kernel: len 27 mtu 9
+Oct 31 02:58:56.376703 n kernel: len 27 mtu 9
+Oct 31 02:58:56.376727 n kernel: len 27 mtu 9
+Oct 31 02:58:56.380657 n kernel: len 27 mtu 9
+Oct 31 02:58:56.380683 n kernel: len 27 mtu 9
+Oct 31 02:58:56.387656 n kernel: len 27 mtu 9
+Oct 31 02:58:56.387675 n kernel: len 27 mtu 9
+Oct 31 02:58:56.387682 n kernel: len 27 mtu 9
+Oct 31 02:58:56.398659 n kernel: len 27 mtu 9
+Oct 31 02:58:56.398710 n kernel: len 27 mtu 9
+Oct 31 02:58:56.402658 n kernel: len 27 mtu 9
+Oct 31 02:58:56.402731 n kernel: len 27 mtu 9
+Oct 31 02:58:56.402746 n kernel: len 27 mtu 9
+Oct 31 02:58:56.410671 n kernel: len 27 mtu 9
+Oct 31 02:58:56.410715 n kernel: len 27 mtu 9
+Oct 31 02:58:56.419677 n kernel: len 27 mtu 9
+Oct 31 02:58:56.419722 n kernel: len 27 mtu 9
+Oct 31 02:58:56.419743 n kernel: len 27 mtu 9
+Oct 31 02:58:56.425676 n kernel: len 27 mtu 9
+Oct 31 02:58:56.425720 n kernel: len 27 mtu 9
+Oct 31 02:58:56.432673 n kernel: len 27 mtu 9
+Oct 31 02:58:56.432696 n kernel: len 27 mtu 9
+Oct 31 02:58:56.432719 n kernel: len 27 mtu 9
+Oct 31 02:58:56.440672 n kernel: len 27 mtu 9
+Oct 31 02:58:56.440708 n kernel: len 27 mtu 9
+Oct 31 02:58:56.447672 n kernel: len 27 mtu 9
+Oct 31 02:58:56.447705 n kernel: len 27 mtu 9
+Oct 31 02:58:56.447723 n kernel: len 27 mtu 9
+Oct 31 02:58:56.462679 n kernel: len 27 mtu 9
+Oct 31 02:58:56.462723 n kernel: len 27 mtu 9
+Oct 31 02:58:56.462750 n kernel: len 27 mtu 9
+Oct 31 02:58:56.462763 n kernel: len 27 mtu 9
+Oct 31 02:58:56.462772 n kernel: len 27 mtu 9
+Oct 31 02:58:56.470676 n kernel: len 27 mtu 9
+Oct 31 02:58:56.470707 n kernel: len 27 mtu 9
+Oct 31 02:58:56.483673 n kernel: len 27 mtu 9
+Oct 31 02:58:56.483708 n kernel: len 27 mtu 9
+Oct 31 02:58:56.483719 n kernel: len 27 mtu 9
+Oct 31 02:58:56.485658 n kernel: len 27 mtu 9
+Oct 31 02:58:56.485701 n kernel: len 27 mtu 9
+Oct 31 02:58:56.492680 n kernel: len 27 mtu 9
+Oct 31 02:58:56.492818 n kernel: len 27 mtu 9
+Oct 31 02:58:56.492836 n kernel: len 27 mtu 9
+Oct 31 02:58:56.504677 n kernel: len 27 mtu 9
+Oct 31 02:58:56.504750 n kernel: len 27 mtu 9
+Oct 31 02:58:56.507675 n kernel: len 27 mtu 9
+Oct 31 02:58:56.507713 n kernel: len 27 mtu 9
+Oct 31 02:58:56.507725 n kernel: len 27 mtu 9
+Oct 31 02:58:56.515672 n kernel: len 27 mtu 9
+Oct 31 02:58:56.515695 n kernel: len 27 mtu 9
+Oct 31 02:58:56.526679 n kernel: len 27 mtu 9
+Oct 31 02:58:56.526733 n kernel: len 27 mtu 9
+Oct 31 02:58:56.526744 n kernel: len 27 mtu 9
+Oct 31 02:58:56.530670 n kernel: len 27 mtu 9
+Oct 31 02:58:56.530704 n kernel: len 27 mtu 9
+Oct 31 02:58:56.537673 n kernel: len 27 mtu 9
+Oct 31 02:58:56.537711 n kernel: len 27 mtu 9
+Oct 31 02:58:56.537729 n kernel: len 27 mtu 9
+Oct 31 02:58:56.547671 n kernel: len 27 mtu 9
+Oct 31 02:58:56.547695 n kernel: len 27 mtu 9
+Oct 31 02:58:56.552673 n kernel: len 27 mtu 9
+Oct 31 02:58:56.552749 n kernel: len 27 mtu 9
+Oct 31 02:58:56.552784 n kernel: len 27 mtu 9
+Oct 31 02:58:56.560674 n kernel: len 27 mtu 9
+Oct 31 02:58:56.560712 n kernel: len 27 mtu 9
+Oct 31 02:58:56.567599 n wireplumber[2811]: RFCOMM >> +VGS: 11
+Oct 31 02:58:56.567613 n wireplumber[2811]: RFCOMM >> +VGM: 0
+Oct 31 02:58:56.568671 n kernel: len 27 mtu 9
+Oct 31 02:58:56.568706 n kernel: len 27 mtu 9
+Oct 31 02:58:56.568717 n kernel: len 27 mtu 9
+Oct 31 02:58:56.574864 n wireplumber[2811]: Setting saved headset profile to: headset-head-unit-msbc
+Oct 31 02:58:56.574909 n wireplumber[2811]: Profile name: off, priority: 0, index: 0
+Oct 31 02:58:56.574927 n wireplumber[2811]: Profile name: headset-head-unit, priority: 1, index: 3
+Oct 31 02:58:56.574942 n wireplumber[2811]: Profile name: a2dp-sink-sbc, priority: 18, index: 5
+Oct 31 02:58:56.574955 n wireplumber[2811]: Profile name: a2dp-sink-sbc_xq, priority: 17, index: 6
+Oct 31 02:58:56.574969 n wireplumber[2811]: Profile name: a2dp-sink-aptx, priority: 19, index: 9
+Oct 31 02:58:56.574982 n wireplumber[2811]: Profile name: a2dp-sink, priority: 20, index: 10
+Oct 31 02:58:56.575002 n wireplumber[2811]: Restoring profile of 'MOMENTUM 4' from: headset-head-unit-msbc to: a2dp-sink
+Oct 31 02:58:56.575376 n wireplumber[2811]: 0x5fe8bc0f04f8: setting profile 2 codec:6 save:0
+Oct 31 02:58:56.575402 n wireplumber[2811]: 0x5fe8bc0f04f8: remove nodes
+Oct 31 02:58:56.575668 n kernel: len 27 mtu 9
+Oct 31 02:58:56.575704 n kernel: len 27 mtu 9
+Oct 31 02:58:56.576086 n wireplumber[2811]: native 0x5fe8bbfcbc30: free
+Oct 31 02:58:56.576160 n wireplumber[2811]: Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd39 released
+Oct 31 02:58:56.576167 n wireplumber[2811]: transport 0x5fe8bbe03530: /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd39 state changed 2 -> 0
+Oct 31 02:58:56.576172 n wireplumber[2811]: RFCOMM >> +CIEV: 2,0
+Oct 31 02:58:56.576257 n wireplumber[2811]: codec switched (status 0)
+Oct 31 02:58:56.576262 n wireplumber[2811]: 0x5fe8bc0f04f8: remove nodes
+Oct 31 02:58:56.576269 n wireplumber[2811]: 0x5fe8bc0f04f8: node, transport:0x5fe8bbf38380 id:00000001 factory:api.bluez5.a2dp.sink
+Oct 31 02:58:56.576655 n kernel: hcon 00000000c0e86674 state BT_CONNECTED
+Oct 31 02:58:56.576678 n kernel: hci0: handle 0x04 reason 0x13
+Oct 31 02:58:56.576689 n kernel: hci0: 
+Oct 31 02:58:56.576710 n kernel: hci0: entry 00000000b806987c
+Oct 31 02:58:56.576732 n kernel: hci0: Opcode 0x0406
+Oct 31 02:58:56.576749 n kernel: hci0: opcode 0x0406 plen 3
+Oct 31 02:58:56.576758 n kernel: hci0: skb len 6
+Oct 31 02:58:56.576769 n kernel: hci0: length 1
+Oct 31 02:58:56.576781 n kernel: hci0 cmd_cnt 1 cmd queued 1
+Oct 31 02:58:56.576790 n kernel: hci0: skb 00000000f25b1597
+Oct 31 02:58:56.576664 n wireplumber[2811]: selected channelmix_copy_c delay:0 options:00000005
+Oct 31 02:58:56.576672 n wireplumber[2811]: src-mask:00000000 dst-mask:00000000 options:00000005
+Oct 31 02:58:56.576677 n wireplumber[2811]: pairing UNK channels (1.000000)
+Oct 31 02:58:56.576686 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:0
+Oct 31 02:58:56.576691 n wireplumber[2811]: flags:0000000f
+Oct 31 02:58:56.576891 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:2
+Oct 31 02:58:56.576896 n wireplumber[2811]: 0: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.576901 n wireplumber[2811]: 1: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.576905 n wireplumber[2811]: flags:0000000f
+Oct 31 02:58:56.577009 n pipewire[2806]: pw.node: (bluez_input.AA:BB:CC:00:00:01.0-60) destroy
+Oct 31 02:58:56.577105 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:active node destroy
+Oct 31 02:58:56.577200 n pipewire[2806]: pw.node: (bluez_output.AA:BB:CC:00:00:01.1-61) destroy
+Oct 31 02:58:56.577242 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) deactivated
+Oct 31 02:58:56.577252 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) active -> paused (paused-paused)
+Oct 31 02:58:56.577291 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) paused -> init (paused-configure)
+Oct 31 02:58:56.577296 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:link unprepared
+Oct 31 02:58:56.577308 n pipewire[2806]: pw.node: (Google Chrome-81) -> change driver (bluez_output.AA:BB:CC:00:00:01.1-61 -> Google Chrome-81)
+Oct 31 02:58:56.577381 n pipewire[2806]: pw.node: (bluez_output.AA:BB:CC:00:00:01.1-61) running -> suspended
+Oct 31 02:58:56.577392 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) destroy
+Oct 31 02:58:56.577401 n pipewire[2806]: pw.port: port 63: set input latency 0.000000-0.000000 0-0 0-0
+Oct 31 02:58:56.577409 n pipewire[2806]: pw.port: port 63: 0x58df71055a10 keep input tag (nil)
+Oct 31 02:58:56.577450 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:active node destroy
+Oct 31 02:58:56.577692 n pipewire[2806]: pw.node: (bluez_output.AA:BB:CC:00:00:01.1-61) creating -> suspended
+Oct 31 02:58:56.577728 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc122c70> unhandling item: bluez_input.AA:BB:CC:00:00:01.0 (60)
+Oct 31 02:58:56.577837 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc122c70> unhandling item: bluez_input.AA:BB:CC:00:00:01.0 (60)
+Oct 31 02:58:56.577898 n wireplumber[2811]: Bluetooth device removed, preventing non-Bluetooth devices from linking for 2 seconds
+Oct 31 02:58:56.578186 n wireplumber[2811]: Disconnected sink 60 does not have any filters to be removed
+Oct 31 02:58:56.578249 n pipewire[2806]: pw.node: (Google Chrome-81) running -> idle
+Oct 31 02:58:56.578363 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SERVER_INFO tag:172
+Oct 31 02:58:56.578411 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc0fc010> unhandling item: bluez_output.AA:BB:CC:00:00:01.1 (61)
+Oct 31 02:58:56.578469 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc0fc010> unhandling item: bluez_output.AA:BB:CC:00:00:01.1 (61)
+Oct 31 02:58:56.578488 n wireplumber[2811]: <WpSiStandardLink:0x5fe8bc040290> ... link removed
+Oct 31 02:58:56.578509 n wireplumber[2811]: Bluetooth device removed, preventing non-Bluetooth devices from linking for 2 seconds
+Oct 31 02:58:56.578680 n wireplumber[2811]: Disconnected sink 61 does not have any filters to be removed
+Oct 31 02:58:56.578892 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.578892 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:node activate
+Oct 31 02:58:56.579127 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> item won't be handled by this policy
+Oct 31 02:58:56.579263 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.579328 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-hf-input
+Oct 31 02:58:56.579358 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-hf-output
+Oct 31 02:58:56.579371 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> restore routes for profile a2dp-sink
+Oct 31 02:58:56.579385 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> restoring device 1
+Oct 31 02:58:56.579393 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> found saved route: headset-output
+Oct 31 02:58:56.579437 n wireplumber[2811]: <WpSpaPod:0x5fe8bbfac490> setting route on <WpDevice:0x5fe8bc02c240>:
+                                              Object: size 216, type Spa:Pod:Object:Param:Route (262153), id Spa:Enum:ParamId:Route (13)
+                                                Prop: key Spa:Pod:Object:Param:Route:save (13), flags 00000000
+                                                  Bool true
+                                                Prop: key Spa:Pod:Object:Param:Route:index (1), flags 00000000
+                                                  Int 1
+                                                Prop: key Spa:Pod:Object:Param:Route:props (10), flags 00000000
+                                                  Object: size 120, type Spa:Pod:Object:Param:Props (262146), id Spa:Enum:ParamId:Route (13)
+                                                    Prop: key Spa:Pod:Object:Param:Props:mute (65540), flags 00000000
+                                                      Bool false
+                                                    Prop: key Spa:Pod:Object:Param:Props:channelVolumes (65544), flags 00000000
+                                                      Array: child.size 4, child.type Spa:Float
+                                                        Float 0.332688
+                                                        Float 0.332688
+                                                    Prop: key Spa:Pod:Object:Param:Props:latencyOffsetNsec (65550), flags 00000000
+                                                      Long 0
+                                                    Prop: key Spa:Pod:Object:Param:Props:channelMap (65547), flags 00000000
+                                                      Array: child.size 4, child.type Spa:Id
+                                                        Id 3        (Spa:Enum:AudioChannel:FL)
+                                                        Id 4        (Spa:Enum:AudioChannel:FR)
+                                                Prop: key Spa:Pod:Object:Param:Route:device (3), flags 00000000
+                                                  Int 1
+Oct 31 02:58:56.579569 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SERVER_INFO tag:174
+Oct 31 02:58:56.579599 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:56.579639 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... target not found, reconnect:true
+Oct 31 02:58:56.579655 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... waiting reconnect
+Oct 31 02:58:56.579737 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.579741 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.579745 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.579825 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.579830 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.579834 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.579838 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.579842 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.579848 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.579852 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.579856 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.579904 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.579916 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.579920 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.579925 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.579978 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.579983 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.579987 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.579991 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.579995 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.580001 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.580005 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.580009 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.580054 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.580059 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.580063 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.580067 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.580116 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.580120 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.580124 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.580128 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.580132 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.580137 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.580141 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.580145 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.580188 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.580211 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.580215 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.580219 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.580268 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.580272 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.580275 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.580279 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.580283 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.580288 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.580292 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.580296 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.580339 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.580348 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.580352 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.580356 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.580403 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.580408 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.580412 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.580415 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.580419 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.580424 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.580428 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.580432 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.580476 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.580481 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.580485 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.580489 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.580536 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.580540 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.580544 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.580548 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.580551 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.580556 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.580560 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.580564 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.580608 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.580626 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.580630 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.580634 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.580690 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.580694 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.580698 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.580702 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.580706 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.580711 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.580715 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.580719 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.580765 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.580774 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.580779 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.580783 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.580833 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.580837 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.580841 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.580845 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.580849 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.580854 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.580858 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.580862 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.580907 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.580912 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.580916 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.580920 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.580970 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.580974 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.580978 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.580983 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.580987 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.580992 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.580996 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.581000 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.581046 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.581063 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.581067 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.581071 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.581120 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.581124 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.581128 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.581132 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.581136 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.581141 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.581145 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.581149 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.581194 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.581201 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.581205 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.581209 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.581258 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.581262 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.581266 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.581270 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.581274 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.581279 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.581282 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.581286 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.581331 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.581336 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.581340 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.581344 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.581393 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.581397 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.581401 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.581405 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.581409 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.581414 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.581418 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.581421 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.581467 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.581483 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.581487 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.581491 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.581541 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.581545 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.581549 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.581553 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.581557 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.581561 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.581565 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.581569 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.581615 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.581622 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.581627 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.581630 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.581688 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.581692 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.581696 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.581700 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.581705 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.581709 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.581713 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.581717 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.581763 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.581768 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.581772 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.581776 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.581826 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.581830 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.581834 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.581839 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.581842 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.581847 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.581851 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.581855 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.581899 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.581916 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.581920 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.581924 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.581971 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.581975 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.581978 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.581982 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.581986 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.581991 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.581995 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.581999 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.582043 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.582050 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.582054 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.582058 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.582104 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.582108 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.582112 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.582115 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.582119 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.582124 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.582128 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.582132 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.582175 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.582180 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.582183 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.582187 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.582233 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.582237 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.582241 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.582245 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.582249 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.582253 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.582257 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.582261 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.582304 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.582450 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.582529 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-hf-input
+Oct 31 02:58:56.582562 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-hf-output
+Oct 31 02:58:56.582793 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:56.582834 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... target not found, reconnect:true
+Oct 31 02:58:56.582841 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... waiting reconnect
+Oct 31 02:58:56.582932 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.582936 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.582940 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.583002 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.583006 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.583010 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.583014 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.583018 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.583023 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.583027 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.583031 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.583076 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.583086 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.583090 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.583094 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.583144 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.583148 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.583152 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.583156 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.583160 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.583165 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.587653 n kernel: opcode 0x0406 status 0x00
+Oct 31 02:58:56.587680 n kernel: hci0 hcon 00000000c0e86674 handle 4
+Oct 31 02:58:56.587697 n kernel: hci0: hcon 00000000c0e86674
+Oct 31 02:58:56.583169 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.583173 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.583217 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.583221 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.583225 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.583230 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.583277 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.583281 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.583285 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.583289 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.583293 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.583298 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.583302 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.583306 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.583349 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.583365 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.583369 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.583373 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.583421 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.583425 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.583429 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.583433 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.583436 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.583441 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.583445 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.583449 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.583492 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.583500 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.583504 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.583509 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.583556 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.583560 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.583564 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.583568 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.583572 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.583576 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.583580 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.583584 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.583628 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.583632 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.583637 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.583641 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.583697 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.583701 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.583705 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.583709 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.583713 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.583718 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.583722 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.583726 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.583771 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.583785 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.583789 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.583793 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.583842 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.583846 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.583850 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.583854 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.583858 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.583863 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.583867 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.583877 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.583922 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.583930 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.583934 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.583940 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.583987 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.583992 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.583996 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.584000 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.584004 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.584009 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.584014 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.584017 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.584062 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.584067 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.584071 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.584076 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.584123 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.584127 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.584131 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.584136 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.584140 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.584145 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.584149 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.584154 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.584199 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.584211 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.584215 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.584222 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.584270 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.584274 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.584278 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.584282 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.584286 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.584292 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.584296 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.584300 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.584345 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.584352 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.584357 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.584361 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.584409 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.584413 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.584417 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.584421 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.584425 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.584430 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.584434 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.584439 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.584483 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.584488 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.584492 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.584496 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.584544 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.584548 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.584552 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.584556 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.584560 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.584565 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.584569 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.584573 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.584617 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.584629 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.584633 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.584637 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.584692 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.584696 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.584700 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.584704 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.584708 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.584713 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.584717 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.584721 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.584765 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.584773 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.584777 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.584782 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.584827 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.584831 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.584835 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.584839 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.584843 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.584848 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.584852 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.584858 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.584903 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.584907 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.584911 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.584916 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.584961 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.584966 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.584970 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.584976 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.584980 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.584985 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.584989 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.584992 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.585037 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.585049 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.585053 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.585057 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.585103 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.585107 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.585112 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.585116 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.585120 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.585125 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.585129 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.585133 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.585177 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.585185 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.585188 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.585193 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.585238 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.585242 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.585246 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.585250 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.585254 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.585259 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.585263 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.585267 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.585311 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.585316 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.585320 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.585325 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.585371 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.585375 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.585379 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.591543 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.591560 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.591569 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.591575 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.591580 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.591665 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.591887 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.592014 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> new active route found headset-output
+Oct 31 02:58:56.592089 n wireplumber[2811]: <WpSpaPod:0x5fe8bbfaffb0> setting route on <WpDevice:0x5fe8bc02c240>:
+                                              Object: size 216, type Spa:Pod:Object:Param:Route (262153), id Spa:Enum:ParamId:Route (13)
+                                                Prop: key Spa:Pod:Object:Param:Route:save (13), flags 00000000
+                                                  Bool true
+                                                Prop: key Spa:Pod:Object:Param:Route:index (1), flags 00000000
+                                                  Int 1
+                                                Prop: key Spa:Pod:Object:Param:Route:props (10), flags 00000000
+                                                  Object: size 120, type Spa:Pod:Object:Param:Props (262146), id Spa:Enum:ParamId:Route (13)
+                                                    Prop: key Spa:Pod:Object:Param:Props:mute (65540), flags 00000000
+                                                      Bool false
+                                                    Prop: key Spa:Pod:Object:Param:Props:channelVolumes (65544), flags 00000000
+                                                      Array: child.size 4, child.type Spa:Float
+                                                        Float 0.332688
+                                                        Float 0.332688
+                                                    Prop: key Spa:Pod:Object:Param:Props:latencyOffsetNsec (65550), flags 00000000
+                                                      Long 0
+                                                    Prop: key Spa:Pod:Object:Param:Props:channelMap (65547), flags 00000000
+                                                      Array: child.size 4, child.type Spa:Id
+                                                        Id 3        (Spa:Enum:AudioChannel:FL)
+                                                        Id 4        (Spa:Enum:AudioChannel:FR)
+                                                Prop: key Spa:Pod:Object:Param:Route:device (3), flags 00000000
+                                                  Int 1
+Oct 31 02:58:56.592414 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:56.592468 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... target not found, reconnect:true
+Oct 31 02:58:56.592479 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... waiting reconnect
+Oct 31 02:58:56.592731 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.592802 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-output
+Oct 31 02:58:56.592999 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:56.593032 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... target not found, reconnect:true
+Oct 31 02:58:56.593039 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... waiting reconnect
+Oct 31 02:58:56.593283 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.593389 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-output
+Oct 31 02:58:56.593588 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:56.593590 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_CARD_INFO tag:175 index:89 name:(null)
+Oct 31 02:58:56.593619 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... target not found, reconnect:true
+Oct 31 02:58:56.593624 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INPUT_INFO tag:176 index:159 name:(null)
+Oct 31 02:58:56.593627 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... waiting reconnect
+Oct 31 02:58:56.593653 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INFO tag:177 index:162 name:(null)
+Oct 31 02:58:56.593687 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SOURCE_INFO tag:178 index:162 name:(null)
+Oct 31 02:58:56.593718 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SERVER_INFO tag:179
+Oct 31 02:58:56.593745 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> set default node for Audio/Sink: alsa_output.pci-0000_03_00.6.analog-stereo
+Oct 31 02:58:56.593803 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_CARD_INFO tag:173 index:89 name:(null)
+Oct 31 02:58:56.593846 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INPUT_INFO tag:174 index:159 name:(null)
+Oct 31 02:58:56.593867 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INFO tag:175 index:162 name:(null)
+Oct 31 02:58:56.593899 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SOURCE_INFO tag:176 index:162 name:(null)
+Oct 31 02:58:56.593931 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SERVER_INFO tag:177
+Oct 31 02:58:56.594074 n wireplumber[2811]: node 1 mute 0
+Oct 31 02:58:56.594089 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:2
+Oct 31 02:58:56.594094 n wireplumber[2811]: 0: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.594099 n wireplumber[2811]: 1: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.594103 n wireplumber[2811]: flags:0000000f
+Oct 31 02:58:56.594159 n wireplumber[2811]: node 1 latency offset 0 nsec
+Oct 31 02:58:56.594166 n wireplumber[2811]: node 1 volume 0.332688
+Oct 31 02:58:56.594171 n wireplumber[2811]: node 1 hardware volume 0.332688
+Oct 31 02:58:56.594178 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:2
+Oct 31 02:58:56.594182 n wireplumber[2811]: 0: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.594187 n wireplumber[2811]: 1: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.594191 n wireplumber[2811]: flags:0000000f
+Oct 31 02:58:56.594493 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_CARD_INFO tag:178 index:89 name:(null)
+Oct 31 02:58:56.594501 n wireplumber[2811]: node 1 mute 0
+Oct 31 02:58:56.594510 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:2
+Oct 31 02:58:56.594514 n wireplumber[2811]: 0: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.594519 n wireplumber[2811]: 1: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.594523 n wireplumber[2811]: flags:0000000f
+Oct 31 02:58:56.594554 n wireplumber[2811]: node 1 latency offset 0 nsec
+Oct 31 02:58:56.594561 n wireplumber[2811]: node 1 volume 0.332688
+Oct 31 02:58:56.594565 n wireplumber[2811]: node 1 hardware volume 0.332688
+Oct 31 02:58:56.594571 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:2
+Oct 31 02:58:56.594575 n wireplumber[2811]: 0: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.594580 n wireplumber[2811]: 1: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.594583 n wireplumber[2811]: flags:0000000f
+Oct 31 02:58:56.594895 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SERVER_INFO tag:179
+Oct 31 02:58:56.594991 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:56.595062 n wireplumber[2811]: ... default target picked: alsa_output.pci-0000_03_00.6.analog-stereo (52), can_passthrough:false
+Oct 31 02:58:56.595198 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_CARD_INFO tag:180 index:89 name:(null)
+Oct 31 02:58:56.595219 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SERVER_INFO tag:181
+Oct 31 02:58:56.595323 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.596067 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:node flags changed
+Oct 31 02:58:56.596804 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.596842 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc120800> activated item for node 61
+Oct 31 02:58:56.596915 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:56.596986 n wireplumber[2811]: ... default target picked: alsa_output.pci-0000_03_00.6.analog-stereo (52), can_passthrough:false
+Oct 31 02:58:56.597225 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> set default node for Audio/Sink: bluez_output.AA:BB:CC:00:00:01.1
+Oct 31 02:58:56.597653 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SERVER_INFO tag:180
+Oct 31 02:58:56.597667 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> item won't be handled by this policy
+Oct 31 02:58:56.597824 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SERVER_INFO tag:182
+Oct 31 02:58:56.597848 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:56.597924 n wireplumber[2811]: ... default target picked: bluez_output.AA:BB:CC:00:00:01.1 (61), can_passthrough:false
+Oct 31 02:58:56.597967 n wireplumber[2811]: link Google Chrome <-> bluez_output.AA:BB:CC:00:00:01.1 passthrough:false, exclusive:nil
+Oct 31 02:58:56.598161 n pipewire[2806]: pw.node: (Google Chrome-81) idle -> suspended
+Oct 31 02:58:56.598817 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> saving stream props for Google Chrome
+Oct 31 02:58:56.598844 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INPUT_INFO tag:183 index:159 name:(null)
+Oct 31 02:58:56.598873 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INPUT_INFO tag:181 index:159 name:(null)
+Oct 31 02:58:56.598952 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> saving stream props for Google Chrome
+Oct 31 02:58:56.599067 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> saving stream props for Google Chrome
+Oct 31 02:58:56.599169 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.599537 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.599817 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) (Google Chrome) -> (bluez_output.AA:BB:CC:00:00:01.1)
+Oct 31 02:58:56.599828 n pipewire[2806]: pw.port: port 63: set input latency 1.000000-1.000000 0-0 150000000-150000000
+Oct 31 02:58:56.599836 n pipewire[2806]: pw.port: port 69: set output latency 0.000000-0.000000 0-0 0-0
+Oct 31 02:58:56.599843 n pipewire[2806]: pw.port: port 63: 0x58df71055a10 keep input tag (nil)
+Oct 31 02:58:56.599848 n pipewire[2806]: pw.port: port 69: 0x58df7108be60 set output tag 0x7ffc3abccfe0
+Oct 31 02:58:56.599856 n pipewire[2806]: pw.port: Object: size 168, type Spa:Pod:Object:Param:Tag (262157), id Spa:Enum:ParamId:Tag (17)
+Oct 31 02:58:56.599861 n pipewire[2806]: pw.port:   Prop: key Spa:Pod:Object:Param:Tag:direction (1), flags 00000000
+Oct 31 02:58:56.599867 n pipewire[2806]: pw.port:     Id 1        (Spa:Enum:Direction:Output)
+Oct 31 02:58:56.599872 n pipewire[2806]: pw.port:   Prop: key Spa:Pod:Object:Param:Tag:info (2), flags 00000000
+Oct 31 02:58:56.599877 n pipewire[2806]: pw.port:     Struct: size 120
+Oct 31 02:58:56.599881 n pipewire[2806]: pw.port:       Int 2
+Oct 31 02:58:56.599886 n pipewire[2806]: pw.port:       String "media.name"
+Oct 31 02:58:56.599891 n pipewire[2806]: pw.port:       String "Playback"
+Oct 31 02:58:56.599895 n pipewire[2806]: pw.port:       String "media.class"
+Oct 31 02:58:56.599900 n pipewire[2806]: pw.port:       String "Stream/Output/Audio"
+Oct 31 02:58:56.599999 n pipewire[2806]: pw.link: (81.1.0 -> 61.1.0) (Google Chrome) -> (bluez_output.AA:BB:CC:00:00:01.1)
+Oct 31 02:58:56.600005 n pipewire[2806]: pw.port: port 80: set input latency 1.000000-1.000000 0-0 150000000-150000000
+Oct 31 02:58:56.600011 n pipewire[2806]: pw.port: port 64: set output latency 0.000000-0.000000 0-0 0-0
+Oct 31 02:58:56.600017 n pipewire[2806]: pw.port: port 80: 0x58df71096fd0 keep input tag (nil)
+Oct 31 02:58:56.600022 n pipewire[2806]: pw.port: port 64: 0x58df710b13c0 set output tag 0x7ffc3abccfe0
+Oct 31 02:58:56.600028 n pipewire[2806]: pw.port: Object: size 168, type Spa:Pod:Object:Param:Tag (262157), id Spa:Enum:ParamId:Tag (17)
+Oct 31 02:58:56.600033 n pipewire[2806]: pw.port:   Prop: key Spa:Pod:Object:Param:Tag:direction (1), flags 00000000
+Oct 31 02:58:56.600039 n pipewire[2806]: pw.port:     Id 1        (Spa:Enum:Direction:Output)
+Oct 31 02:58:56.600043 n pipewire[2806]: pw.port:   Prop: key Spa:Pod:Object:Param:Tag:info (2), flags 00000000
+Oct 31 02:58:56.600048 n pipewire[2806]: pw.port:     Struct: size 120
+Oct 31 02:58:56.600052 n pipewire[2806]: pw.port:       Int 2
+Oct 31 02:58:56.600057 n pipewire[2806]: pw.port:       String "media.name"
+Oct 31 02:58:56.600061 n pipewire[2806]: pw.port:       String "Playback"
+Oct 31 02:58:56.600066 n pipewire[2806]: pw.port:       String "media.class"
+Oct 31 02:58:56.600070 n pipewire[2806]: pw.port:       String "Stream/Output/Audio"
+Oct 31 02:58:56.600143 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) init -> negotiating (configure-configure)
+Oct 31 02:58:56.600163 n pipewire[2806]: pw.link: (81.1.0 -> 61.1.0) init -> negotiating (configure-configure)
+Oct 31 02:58:56.600383 n pipewire-pulse[2813]: mod.protocol-pulse: client 0x650c7ab00c30 [Google Chrome]: stream 0x650c7aab8700 PLAYBACK_STREAM_MOVED channel:0
+Oct 31 02:58:56.600405 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INPUT_INFO tag:184 index:159 name:(null)
+Oct 31 02:58:56.600435 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INPUT_INFO tag:182 index:159 name:(null)
+Oct 31 02:58:56.600539 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) negotiating -> allocating (ready-ready)
+Oct 31 02:58:56.600599 n pipewire[2806]: pw.link: (81.1.0 -> 61.1.0) negotiating -> allocating (ready-ready)
+Oct 31 02:58:56.600659 n wireplumber[2811]: <WpSiStandardLink:0x5fe8bbf62b40> activated si-standard-link
+Oct 31 02:58:56.600724 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:56.600839 n wireplumber[2811]: ... default target picked: bluez_output.AA:BB:CC:00:00:01.1 (61), can_passthrough:false
+Oct 31 02:58:56.600853 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... already linked to proper target
+Oct 31 02:58:56.601112 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) allocating -> paused (paused-paused)
+Oct 31 02:58:56.601129 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:link prepared
+Oct 31 02:58:56.601139 n pipewire[2806]: pw.node: (Google Chrome-81) -> change driver (Google Chrome-81 -> bluez_output.AA:BB:CC:00:00:01.1-61)
+Oct 31 02:58:56.601214 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) activated
+Oct 31 02:58:56.601221 n pipewire[2806]: pw.link: (81.0.0 -> 61.0.0) paused -> active (paused-paused)
+Oct 31 02:58:56.601231 n pipewire[2806]: pw.link: (81.1.0 -> 61.1.0) allocating -> paused (paused-paused)
+Oct 31 02:58:56.601238 n pipewire[2806]: pw.context: 0x58df70dc1df0: busy:0 reason:link prepared
+Oct 31 02:58:56.601250 n pipewire[2806]: pw.link: (81.1.0 -> 61.1.0) activated
+Oct 31 02:58:56.601255 n pipewire[2806]: pw.link: (81.1.0 -> 61.1.0) paused -> active (paused-paused)
+Oct 31 02:58:56.601372 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] got format:F32LE rate:48000 channels:1
+Oct 31 02:58:56.601383 n pipewire-pulse[2813]: mod.protocol-pulse: [Google Chrome] stride 4 size 32768
+Oct 31 02:58:56.601833 n pipewire[2806]: pw.node: (Google Chrome-81) suspended -> running
+Oct 31 02:58:56.601873 n pipewire[2806]: pw.node: (bluez_output.AA:BB:CC:00:00:01.1-61) suspended -> running
+Oct 31 02:58:56.602074 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> saving stream props for Google Chrome
+Oct 31 02:58:56.602096 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INPUT_INFO tag:185 index:159 name:(null)
+Oct 31 02:58:56.602126 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INPUT_INFO tag:183 index:159 name:(null)
+Oct 31 02:58:56.602148 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SINK_INFO tag:184 index:162 name:(null)
+Oct 31 02:58:56.602185 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SOURCE_INFO tag:185 index:162 name:(null)
+Oct 31 02:58:56.602203 n wireplumber[2811]: <WpNode:81:0x5fe8bc02d900> saving stream props for Google Chrome
+Oct 31 02:58:56.602229 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SINK_INFO tag:186 index:162 name:(null)
+Oct 31 02:58:56.602262 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SOURCE_INFO tag:187 index:162 name:(null)
+Oct 31 02:58:56.602406 n wireplumber[2811]: selected channelmix_copy_sse delay:0 options:00000005
+Oct 31 02:58:56.602413 n wireplumber[2811]: src-mask:00000018 dst-mask:00000018 options:00000005
+Oct 31 02:58:56.602417 n wireplumber[2811]: matching channels
+Oct 31 02:58:56.602422 n wireplumber[2811]: matched channel 1 (1.000000)
+Oct 31 02:58:56.602426 n wireplumber[2811]: matched channel 2 (1.000000)
+Oct 31 02:58:56.602431 n wireplumber[2811]: unassigned downmix 00000000 00000000
+Oct 31 02:58:56.602435 n wireplumber[2811]: unassigned upmix 00000000 lfe:0.000000
+Oct 31 02:58:56.602440 n wireplumber[2811]:      FL    FR    
+Oct 31 02:58:56.602445 n wireplumber[2811]: FL   1.000          1.000000
+Oct 31 02:58:56.602449 n wireplumber[2811]: FR         1.000    1.000000
+Oct 31 02:58:56.602454 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:2
+Oct 31 02:58:56.602459 n wireplumber[2811]: 0: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.602463 n wireplumber[2811]: 1: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.602467 n wireplumber[2811]: 0 0: 1.000000
+Oct 31 02:58:56.602471 n wireplumber[2811]: 0 1: 0.000000
+Oct 31 02:58:56.602476 n wireplumber[2811]: 1 0: 0.000000
+Oct 31 02:58:56.602480 n wireplumber[2811]: 1 1: 1.000000
+Oct 31 02:58:56.603060 n bluetoothd[2752]: profiles/audio/transport.c:media_owner_create() Owner created: sender=:1.81
+Oct 31 02:58:56.602484 n wireplumber[2811]: flags:0000000a
+Oct 31 02:58:56.603087 n bluetoothd[2752]: profiles/audio/transport.c:media_transport_resume() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd1 Owner :1.81
+Oct 31 02:58:56.602695 n wireplumber[2811]: native 0x5fe8bbfa7f50: q:4 in:48000 out:44100 gcd:300 n_taps:64 n_phases:294 features:0007cbdb:00010800
+Oct 31 02:58:56.603100 n bluetoothd[2752]: profiles/audio/a2dp.c:a2dp_sep_lock() SEP 0x59c4eeb2ed50 locked
+Oct 31 02:58:56.602766 n wireplumber[2811]: Acquiring transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd1
+Oct 31 02:58:56.603113 n bluetoothd[2752]: profiles/audio/avdtp.c:avdtp_ref() 0x59c4eeb5a060: ref=3
+Oct 31 02:58:56.603390 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Shell Volume Control] GET_SOURCE_INFO tag:188 index:162 name:(null)
+Oct 31 02:58:56.603123 n bluetoothd[2752]: profiles/audio/a2dp.c:setup_ref() 0x59c4eeb41420: ref=1
+Oct 31 02:58:56.603462 n pipewire-pulse[2813]: mod.protocol-pulse: [GNOME Volume Control Media Keys] GET_SOURCE_INFO tag:186 index:162 name:(null)
+Oct 31 02:58:56.603156 n bluetoothd[2752]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd1: TRANSPORT_STATE_IDLE -> TRANSPORT_STATE_REQUESTING
+Oct 31 02:58:56.603169 n bluetoothd[2752]: profiles/audio/transport.c:media_request_create() Request created: method=Acquire id=9
+Oct 31 02:58:56.603181 n bluetoothd[2752]: profiles/audio/transport.c:media_owner_add() Owner :1.81 Request Acquire
+Oct 31 02:58:56.603193 n bluetoothd[2752]: profiles/audio/transport.c:media_transport_set_owner() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd1 Owner :1.81
+Oct 31 02:58:56.613668 n kernel: hcon 00000000c0e86674
+Oct 31 02:58:56.613722 n kernel: hci0 evt 6
+Oct 31 02:58:56.613750 n kernel: hci0: result 0x00
+Oct 31 02:58:56.613781 n kernel: hci0: end: err 0
+Oct 31 02:58:56.613808 n kernel: Bluetooth: hci0: SCO packet for unknown connection handle 4
+Oct 31 02:58:56.613834 n kernel: Bluetooth: hci0: SCO packet for unknown connection handle 4
+Oct 31 02:58:56.613852 n kernel: Bluetooth: hci0: SCO packet for unknown connection handle 4
+Oct 31 02:58:56.629834 n bluetoothd[2752]: profiles/audio/avdtp.c:session_cb()
+Oct 31 02:58:56.629869 n bluetoothd[2752]: profiles/audio/avdtp.c:avdtp_parse_resp() START request succeeded
+Oct 31 02:58:56.629884 n bluetoothd[2752]: profiles/audio/a2dp.c:start_cfm() Source 0x59c4eeb2ed50: Start_Cfm
+Oct 31 02:58:56.629956 n bluetoothd[2752]: profiles/audio/transport.c:media_owner_remove() Owner :1.81 Request Acquire
+Oct 31 02:58:56.629970 n bluetoothd[2752]: profiles/audio/transport.c:transport_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd1: TRANSPORT_STATE_REQUESTING -> TRANSPORT_STATE_ACTIVE
+Oct 31 02:58:56.629990 n bluetoothd[2752]: profiles/audio/a2dp.c:setup_unref() 0x59c4eeb41420: ref=0
+Oct 31 02:58:56.630186 n wireplumber[2811]: transport 0x5fe8bbf38380: Acquired /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd1, fd 54 MTU 672:895
+Oct 31 02:58:56.630000 n bluetoothd[2752]: profiles/audio/a2dp.c:setup_free() 0x59c4eeb41420
+Oct 31 02:58:56.630252 n wireplumber[2811]: transport 0x5fe8bbf38380: setting volume to 88
+Oct 31 02:58:56.630012 n bluetoothd[2752]: profiles/audio/avdtp.c:avdtp_unref() 0x59c4eeb5a060: ref=2
+Oct 31 02:58:56.630285 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:2
+Oct 31 02:58:56.630024 n bluetoothd[2752]: profiles/audio/avdtp.c:avdtp_sep_set_state() stream state changed: OPEN -> STREAMING
+Oct 31 02:58:56.630291 n wireplumber[2811]: 0: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.630035 n bluetoothd[2752]: profiles/audio/sink.c:sink_set_state() State changed /org/bluez/hci0/dev_AA:BB:CC:00:00:01: SINK_STATE_CONNECTED -> SINK_STATE_PLAYING
+Oct 31 02:58:56.630297 n wireplumber[2811]: 1: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.630047 n bluetoothd[2752]: profiles/audio/transport.c:transport_update_playing() /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd1 State=TRANSPORT_STATE_ACTIVE Playing=1
+Oct 31 02:58:56.630302 n wireplumber[2811]: 0 0: 1.000000
+Oct 31 02:58:56.630496 n bluetoothd[2752]: profiles/audio/transport.c:media_transport_set_volume() Transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd1 level 88
+Oct 31 02:58:56.630309 n wireplumber[2811]: 0 1: 0.000000
+Oct 31 02:58:56.630314 n wireplumber[2811]: 1 0: 0.000000
+Oct 31 02:58:56.630320 n wireplumber[2811]: 1 1: 1.000000
+Oct 31 02:58:56.630326 n wireplumber[2811]: flags:0000000a
+Oct 31 02:58:56.630443 n wireplumber[2811]: transport 0x5fe8bbf38380: /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd1 state changed 0 -> 2
+Oct 31 02:58:56.630478 n wireplumber[2811]: volume:1.000000 mute:0 n_volumes:2
+Oct 31 02:58:56.630487 n wireplumber[2811]: 0: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.630495 n wireplumber[2811]: 1: 1.000000 * 1.000000 = 1.000000
+Oct 31 02:58:56.630504 n wireplumber[2811]: 0 0: 1.000000
+Oct 31 02:58:56.630512 n wireplumber[2811]: 0 1: 0.000000
+Oct 31 02:58:56.630517 n wireplumber[2811]: 1 0: 0.000000
+Oct 31 02:58:56.630522 n wireplumber[2811]: 1 1: 1.000000
+Oct 31 02:58:56.630527 n wireplumber[2811]: flags:0000000a
+Oct 31 02:58:56.630626 n wireplumber[2811]: Properties changed in transport /org/bluez/hci0/dev_AA:BB:CC:00:00:01/fd1
+Oct 31 02:58:56.630632 n wireplumber[2811]: transport 0x5fe8bbf38380: State=active
+Oct 31 02:58:56.630654 n wireplumber[2811]: transport 0x5fe8bbf38380: set volume complete
+Oct 31 02:58:56.630835 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.630841 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.630847 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.630948 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.630953 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.630957 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.630961 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.630966 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.630971 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.630977 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.630980 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.631039 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.631053 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.631057 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.631061 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.631133 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.631137 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.631141 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.631145 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.631149 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.631155 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.631159 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.631163 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.631220 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.631225 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.631229 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.631232 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.631300 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.631304 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.631308 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.631312 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.631316 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.631321 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.631325 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.631329 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.631386 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.631405 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.631409 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.631413 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.631483 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.631487 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.631491 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.631495 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.631499 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.631504 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.631508 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.631512 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.631569 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.631578 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.631582 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.631586 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.631660 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.631665 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.631669 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.631673 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.631677 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.631682 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.631686 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.631690 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.631747 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.631753 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.631757 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.631760 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.631825 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.631829 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.631833 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.631837 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.631841 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.631847 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.631851 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.631854 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.631911 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.631925 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.631929 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.631933 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.631983 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.631987 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.631991 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.631996 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.632000 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.632004 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.632008 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.632012 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.632057 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.632065 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.632069 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.632073 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.632122 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.632127 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.632131 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.632134 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.632138 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.632144 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.632148 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.632152 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.632196 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.632201 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.632205 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.632209 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.632257 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.632261 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.632265 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.632269 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.632273 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.632278 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.632281 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.632285 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.632330 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.632344 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.632348 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.632352 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.632400 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.632404 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.632407 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.632411 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.632415 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.632420 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.632424 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.632427 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.632472 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.632479 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.632483 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.632487 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.632534 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.632538 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.632542 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.632546 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.632550 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.632554 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.632558 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.632562 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.632606 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.632611 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.632614 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.632619 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.632674 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.632679 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.632683 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.632687 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.632691 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.632696 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.632700 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.632704 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.632749 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.632762 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.632766 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.632770 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.632818 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.632822 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.632827 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.632831 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.632834 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.632839 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.632843 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.632847 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.632891 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.632899 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.632903 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.632907 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.632953 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.632957 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.632960 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.632964 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.632968 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.632973 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.632977 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.632980 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.633024 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.633029 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.633033 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.633037 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.633083 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.633087 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.633090 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.633094 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.633098 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.633103 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.633107 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.633111 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.633155 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.633166 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.633170 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.633174 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.633220 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.633224 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.633228 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.633232 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.633236 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.633241 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.633245 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.633249 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.633293 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.633301 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.633305 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.633309 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.633354 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.633358 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.633362 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.633365 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.633369 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.633374 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.633378 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.633382 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.633426 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.633431 n wireplumber[2811]: quirk property sysname=Linux
+Oct 31 02:58:56.633434 n wireplumber[2811]: quirk property release=7.0.0-42-generic
+Oct 31 02:58:56.633439 n wireplumber[2811]: quirk property version=#42~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Oct 19 14:43:01 UTC 2
+Oct 31 02:58:56.633485 n wireplumber[2811]: kernel quirks:00000000
+Oct 31 02:58:56.633489 n wireplumber[2811]: quirk property vendor-id=usb:13d3
+Oct 31 02:58:56.633493 n wireplumber[2811]: quirk property product-id=3503
+Oct 31 02:58:56.633496 n wireplumber[2811]: quirk property bus-type=usb
+Oct 31 02:58:56.633500 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:02
+Oct 31 02:58:56.633505 n wireplumber[2811]: adapter quirks:00000004
+Oct 31 02:58:56.633509 n wireplumber[2811]: quirk property name=MOMENTUM 4
+Oct 31 02:58:56.633513 n wireplumber[2811]: quirk property address=AA:BB:CC:00:00:01
+Oct 31 02:58:56.633557 n wireplumber[2811]: device quirks:00000000
+Oct 31 02:58:56.633719 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.633825 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-output
+Oct 31 02:58:56.634118 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:56.634205 n wireplumber[2811]: ... default target picked: bluez_output.AA:BB:CC:00:00:01.1 (61), can_passthrough:false
+Oct 31 02:58:56.634212 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... already linked to proper target
+Oct 31 02:58:56.634305 n wireplumber[2811]: <WpDefaultNodes:0x5fe8bbdd6f60> scheduling default nodes rescan
+Oct 31 02:58:56.634365 n wireplumber[2811]: <WpDevice:59:0x5fe8bc02c240> storing route props for headset-output
+Oct 31 02:58:56.634525 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> handling item: Google Chrome (81)
+Oct 31 02:58:56.634590 n wireplumber[2811]: ... default target picked: bluez_output.AA:BB:CC:00:00:01.1 (61), can_passthrough:false
+Oct 31 02:58:56.634597 n wireplumber[2811]: <WpSiAudioAdapter:0x5fe8bc03b990> ... already linked to proper target

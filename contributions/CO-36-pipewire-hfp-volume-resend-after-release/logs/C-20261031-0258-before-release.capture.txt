@@ -1,0 +1,89 @@
+# scripts/capture-window.sh hci-20261030-200531-at-0335.btsnoop "2026-10-31 02:58:54" "2026-10-31 02:58:57" 'Synchronous Conn|[+]CIEV|VG[SM]|Disconnect'
+# (btmon 5.72 decode of the laptop's HCI capture, cut to the window, only packets matching the pattern)
+< ACL Data TX: Handle 2 flags 0x00 dlen 22                                                                             #45580 [hci0] 2026-10-31 02:58:54.648455
+      Channel: 258 len 18 [PSM 3 mode Basic (0x00)] {chan 1}
+      RFCOMM: Unnumbered Info with Header Check (UIH) (0xef)
+         Address: 0x69 cr 0 dlci 0x1a
+         Control: 0xef poll/final 0
+         Length: 14
+         FCS: 0x3e
+        0d 0a 2b 43 49 45 56 3a 20 32 2c 31 0d 0a 3e     ..+CIEV: 2,1..> 
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                      #45584 [hci0] 2026-10-31 02:58:54.882445
+        Handle: 2 Address: AA:BB:CC:00:00:01 (Sonova Consumer Hearing GmbH)
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+> HCI Event: Command Status (0x0f) plen 4                                                                              #45585 [hci0] 2026-10-31 02:58:54.885391
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                               #45588 [hci0] 2026-10-31 02:58:55.054498
+        Status: Success (0x00)
+        Handle: 4
+        Address: AA:BB:CC:00:00:01 (Sonova Consumer Hearing GmbH)
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+< ACL Data TX: Handle 2 flags 0x00 dlen 20                                                                             #45593 [hci0] 2026-10-31 02:58:55.067550
+      Channel: 258 len 16 [PSM 3 mode Basic (0x00)] {chan 1}
+      RFCOMM: Unnumbered Info with Header Check (UIH) (0xef)
+         Address: 0x69 cr 0 dlci 0x1a
+         Control: 0xef poll/final 0
+         Length: 12
+         FCS: 0x3e
+        0d 0a 2b 56 47 53 3a 20 31 31 0d 0a 3e           ..+VGS: 11..>   
+< ACL Data TX: Handle 2 flags 0x00 dlen 19                                                                             #45594 [hci0] 2026-10-31 02:58:55.067559
+      Channel: 258 len 15 [PSM 3 mode Basic (0x00)] {chan 1}
+      RFCOMM: Unnumbered Info with Header Check (UIH) (0xef)
+         Address: 0x69 cr 0 dlci 0x1a
+         Control: 0xef poll/final 0
+         Length: 11
+         FCS: 0x3e
+        0d 0a 2b 56 47 4d 3a 20 30 0d 0a 3e              ..+VGM: 0..>    
+< ACL Data TX: Handle 2 flags 0x00 dlen 20                                                                             #46596 [hci0] 2026-10-31 02:58:56.567669
+      Channel: 258 len 16 [PSM 3 mode Basic (0x00)] {chan 1}
+      RFCOMM: Unnumbered Info with Header Check (UIH) (0xef)
+         Address: 0x69 cr 0 dlci 0x1a
+         Control: 0xef poll/final 0
+         Length: 12
+         FCS: 0x3e
+        0d 0a 2b 56 47 53 3a 20 31 31 0d 0a 3e           ..+VGS: 11..>   
+< ACL Data TX: Handle 2 flags 0x00 dlen 19                                                                             #46597 [hci0] 2026-10-31 02:58:56.567686
+      Channel: 258 len 15 [PSM 3 mode Basic (0x00)] {chan 1}
+      RFCOMM: Unnumbered Info with Header Check (UIH) (0xef)
+         Address: 0x69 cr 0 dlci 0x1a
+         Control: 0xef poll/final 0
+         Length: 11
+         FCS: 0x3e
+        0d 0a 2b 56 47 4d 3a 20 30 0d 0a 3e              ..+VGM: 0..>    
+< ACL Data TX: Handle 2 flags 0x00 dlen 22                                                                             #46606 [hci0] 2026-10-31 02:58:56.576204
+      Channel: 258 len 18 [PSM 3 mode Basic (0x00)] {chan 1}
+      RFCOMM: Unnumbered Info with Header Check (UIH) (0xef)
+         Address: 0x69 cr 0 dlci 0x1a
+         Control: 0xef poll/final 0
+         Length: 14
+         FCS: 0x3e
+        0d 0a 2b 43 49 45 56 3a 20 32 2c 30 0d 0a 3e     ..+CIEV: 2,0..> 
+< HCI Command: Disconnect (0x01|0x0006) plen 3                                                                         #46607 [hci0] 2026-10-31 02:58:56.576259
+        Handle: 4 Address: AA:BB:CC:00:00:01 (Sonova Consumer Hearing GmbH)
+        Reason: Remote User Terminated Connection (0x13)
+> HCI Event: Command Status (0x0f) plen 4                                                                              #46613 [hci0] 2026-10-31 02:58:56.579371
+      Disconnect (0x01|0x0006) ncmd 1
+        Status: Success (0x00)
+> HCI Event: Disconnect Complete (0x05) plen 4                                                                         #46615 [hci0] 2026-10-31 02:58:56.587401
+        Status: Success (0x00)
+        Handle: 4 Address: AA:BB:CC:00:00:01 (Sonova Consumer Hearing GmbH)
+        Reason: Connection Terminated By Local Host (0x16)

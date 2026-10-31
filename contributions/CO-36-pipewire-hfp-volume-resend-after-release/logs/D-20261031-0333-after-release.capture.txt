@@ -1,0 +1,61 @@
+# scripts/capture-window.sh hci-20261031-031927.btsnoop "2026-10-31 03:33:21" "2026-10-31 03:33:25" 'Synchronous Conn|[+]CIEV|VG[SM]|Disconnect'
+# (btmon 5.72 decode of the laptop's HCI capture, cut to the window, only packets matching the pattern)
+< ACL Data TX: Handle 2 flags 0x00 dlen 22                                                                             #40972 [hci0] 2026-10-31 03:33:22.037185
+      Channel: 258 len 18 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 1d 0d 0a 2b 43 49 45 56 3a 20 32 2c 31 0d  i....+CIEV: 2,1.
+        0a 3e                                            .>              
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                      #40976 [hci0] 2026-10-31 03:33:22.271903
+        Handle: 2
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+> HCI Event: Command Status (0x0f) plen 4                                                                              #40977 [hci0] 2026-10-31 03:33:22.274878
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                               #40980 [hci0] 2026-10-31 03:33:22.455943
+        Status: Success (0x00)
+        Handle: 5
+        Address: AA:BB:CC:00:00:01 (Sonova Consumer Hearing GmbH)
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+< ACL Data TX: Handle 2 flags 0x00 dlen 20                                                                             #40984 [hci0] 2026-10-31 03:33:22.469031
+      Channel: 258 len 16 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 19 0d 0a 2b 56 47 53 3a 20 31 31 0d 0a 3e  i....+VGS: 11..>
+< ACL Data TX: Handle 2 flags 0x00 dlen 19                                                                             #40985 [hci0] 2026-10-31 03:33:22.469040
+      Channel: 258 len 15 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 17 0d 0a 2b 56 47 4d 3a 20 30 0d 0a 3e     i....+VGM: 0..> 
+< ACL Data TX: Handle 2 flags 0x00 dlen 22                                                                             #41953 [hci0] 2026-10-31 03:33:23.924619
+      Channel: 258 len 18 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 1d 0d 0a 2b 43 49 45 56 3a 20 32 2c 30 0d  i....+CIEV: 2,0.
+        0a 3e                                            .>              
+< HCI Command: Disconnect (0x01|0x0006) plen 3                                                                         #41954 [hci0] 2026-10-31 03:33:23.924689
+        Handle: 5 Address: AA:BB:CC:00:00:01 (Sonova Consumer Hearing GmbH)
+        Reason: Remote User Terminated Connection (0x13)
+> HCI Event: Command Status (0x0f) plen 4                                                                              #41955 [hci0] 2026-10-31 03:33:23.927064
+      Disconnect (0x01|0x0006) ncmd 1
+        Status: Success (0x00)
+> HCI Event: Disconnect Complete (0x05) plen 4                                                                         #41961 [hci0] 2026-10-31 03:33:23.931042
+        Status: Success (0x00)
+        Handle: 5 Address: AA:BB:CC:00:00:01 (Sonova Consumer Hearing GmbH)
+        Reason: Connection Terminated By Local Host (0x16)
+< ACL Data TX: Handle 2 flags 0x00 dlen 20                                                                             #41963 [hci0] 2026-10-31 03:33:23.969145
+      Channel: 258 len 16 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 19 0d 0a 2b 56 47 53 3a 20 31 31 0d 0a 3e  i....+VGS: 11..>
+< ACL Data TX: Handle 2 flags 0x00 dlen 19                                                                             #41964 [hci0] 2026-10-31 03:33:23.969185
+      Channel: 258 len 15 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 17 0d 0a 2b 56 47 4d 3a 20 30 0d 0a 3e     i....+VGM: 0..> 

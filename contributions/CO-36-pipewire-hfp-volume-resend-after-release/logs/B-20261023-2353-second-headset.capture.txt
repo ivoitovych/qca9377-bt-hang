@@ -1,0 +1,61 @@
+# scripts/capture-window.sh hci-20261023-233436.btsnoop "2026-10-23 23:53:10" "2026-10-23 23:53:14" 'Synchronous Conn|[+]CIEV|VG[SM]|Disconnect'
+# (btmon 5.72 decode of the laptop's HCI capture, cut to the window, only packets matching the pattern)
+< ACL Data TX: Handle 1 flags 0x00 dlen 22                                                                             #68619 [hci0] 2026-10-23 23:53:10.759768
+      Channel: 67 len 18 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 1d 0d 0a 2b 43 49 45 56 3a 20 32 2c 31 0d  i....+CIEV: 2,1.
+        0a 3e                                            .>              
+< HCI Command: Setup Synchronous Connection (0x01|0x0028) plen 17                                                      #68623 [hci0] 2026-10-23 23:53:11.234191
+        Handle: 1
+        Transmit bandwidth: 8000
+        Receive bandwidth: 8000
+        Max latency: 13
+        Setting: 0x0003
+          Input Coding: Linear
+          Input Data Format: 1's complement
+          Input Sample Size: 8-bit
+          # of bits padding at MSB: 0
+          Air Coding Format: Transparent Data
+        Retransmission effort: Optimize for link quality (0x02)
+        Packet type: 0x0380
+          3-EV3 may not be used
+          2-EV5 may not be used
+          3-EV5 may not be used
+> HCI Event: Command Status (0x0f) plen 4                                                                              #68625 [hci0] 2026-10-23 23:53:11.238110
+      Setup Synchronous Connection (0x01|0x0028) ncmd 1
+        Status: Success (0x00)
+> HCI Event: Synchronous Connect Complete (0x2c) plen 17                                                               #68627 [hci0] 2026-10-23 23:53:11.261517
+        Status: Success (0x00)
+        Handle: 5
+        Address: AA:BB:CC:00:00:01 (OUI removed)
+        Link type: eSCO (0x02)
+        Transmission interval: 0x0c
+        Retransmission window: 0x04
+        RX packet length: 60
+        TX packet length: 60
+        Air mode: Transparent (0x03)
+< ACL Data TX: Handle 1 flags 0x00 dlen 20                                                                             #68632 [hci0] 2026-10-23 23:53:11.274258
+      Channel: 67 len 16 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 19 0d 0a 2b 56 47 53 3a 20 31 33 0d 0a 3e  i....+VGS: 13..>
+< ACL Data TX: Handle 1 flags 0x00 dlen 19                                                                             #68633 [hci0] 2026-10-23 23:53:11.274269
+      Channel: 67 len 15 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 17 0d 0a 2b 56 47 4d 3a 20 39 0d 0a 3e     i....+VGM: 9..> 
+< ACL Data TX: Handle 1 flags 0x00 dlen 22                                                                             #69579 [hci0] 2026-10-23 23:53:12.702656
+      Channel: 67 len 18 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 1d 0d 0a 2b 43 49 45 56 3a 20 32 2c 30 0d  i....+CIEV: 2,0.
+        0a 3e                                            .>              
+< HCI Command: Disconnect (0x01|0x0006) plen 3                                                                         #69580 [hci0] 2026-10-23 23:53:12.702735
+        Handle: 5 Address: AA:BB:CC:00:00:01 (OUI removed)
+        Reason: Remote User Terminated Connection (0x13)
+> HCI Event: Command Status (0x0f) plen 4                                                                              #69585 [hci0] 2026-10-23 23:53:12.705111
+      Disconnect (0x01|0x0006) ncmd 1
+        Status: Success (0x00)
+< ACL Data TX: Handle 1 flags 0x00 dlen 20                                                                             #69617 [hci0] 2026-10-23 23:53:12.774321
+      Channel: 67 len 16 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 19 0d 0a 2b 56 47 53 3a 20 31 33 0d 0a 3e  i....+VGS: 13..>
+< ACL Data TX: Handle 1 flags 0x00 dlen 19                                                                             #69618 [hci0] 2026-10-23 23:53:12.774331
+      Channel: 67 len 15 [PSM 0 mode Basic (0x00)] {chan 65535}
+        69 ef 17 0d 0a 2b 56 47 4d 3a 20 39 0d 0a 3e     i....+VGM: 9..> 
+> HCI Event: Disconnect Complete (0x05) plen 4                                                                         #69668 [hci0] 2026-10-23 23:53:12.896109
+        Status: Success (0x00)
+        Handle: 5 Address: AA:BB:CC:00:00:01 (OUI removed)
+        Reason: Connection Terminated By Local Host (0x16)
