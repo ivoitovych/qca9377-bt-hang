@@ -1,0 +1,32 @@
+media: Fix use-after-free releasing endpoints on adapter removal
+
+path_free() frees the applications before releasing the endpoints.
+Freeing an application removes its endpoints, and removing an A2DP
+endpoint whose stream is locked by an acquired transport is deferred
+by a2dp_remove_sep(), so the endpoint stays in the adapter's list.
+release_endpoint() then clears its transports, which unlocks the
+stream; a2dp_sep_unlock() unregisters the SEP as it was removed, and
+its destroy callback releases and frees the endpoint while
+clear_endpoint() is still iterating over its transports:
+
+ ERROR: AddressSanitizer: heap-use-after-free
+ READ of size 8 thread T0
+     #0 clear_endpoint profiles/audio/media.c:412
+     #1 release_endpoint profiles/audio/media.c:661
+     #2 path_free profiles/audio/media.c:3813
+     #3 remove_interface gdbus/object.c:742
+     #4 g_dbus_unregister_interface gdbus/object.c:1499
+     #5 unload_driver src/adapter.c:8027
+     #7 a2dp_exit profiles/audio/a2dp.c:3912
+     #8 plugin_cleanup src/plugin.c:251
+     #9 main src/main.c:1717
+ freed by thread T0 here:
+     #1 media_endpoint_remove profiles/audio/media.c:335
+
+This is reached when bluetoothd exits without powering the adapter off
+first, e.g. on losing the bus, while a sound server streams.
+
+Release the endpoints first, so that their transports are cleared
+while their SEPs are still registered and the removal is not deferred.
+
+Fixes: ee0f3c03fb1d ("media: Fix UnregisterApplication")

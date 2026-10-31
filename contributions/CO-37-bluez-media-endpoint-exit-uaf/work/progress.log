@@ -1,0 +1,74 @@
+22:59:58 start build base-t0 (14bd6ab65 6e43ce7c4)
+23:01:13 start build disc-revert (14bd6ab65 1dbce15de c25d3e5aa)
+23:05:46 end build base-t0 exit 0
+23:05:54 start test base-t0 probe -k 'test_a2dp_exit_with_acquired_transport' x1
+23:06:33 end test base-t0 probe: 1 failures in 1 runs
+23:06:38 end build disc-revert exit 0
+23:08:31 start test base-t0 probe2 -k 'exit_with_acquired_transport' x1
+23:08:31 start test disc-revert probe -k 'test_exit_discovering' x1
+23:09:02 end test disc-revert probe: 1 failures in 1 runs
+23:09:14 start test disc-revert rate -k 'test_exit_discovering and bus' x10
+23:09:50 end test base-t0 probe2: 1 failures in 1 runs
+23:11:07 start build fix1 (14bd6ab65 3c8e880f8 e4694315f)
+23:14:17 end test disc-revert rate: 10 failures in 10 runs
+23:14:24 start test base-t0 disc-rate -k 'test_exit_discovering and bus' x10
+23:14:49 end build fix1 exit 0
+23:14:51 start test fix1 probe -k 'acquired_transport' x1
+23:15:29 end test fix1 probe: 1 failures in 1 runs
+23:15:38 start build fix12 (14bd6ab65 3c8e880f8 9f40136a4 e4694315f 17e1a36cc)
+23:17:17 end test base-t0 disc-rate: 0 failures in 10 runs
+23:17:23 start build v572 (03b684514 )
+23:18:01 end build v572 exit 2
+23:18:24 start remake v572 (CFLAGS=-g -O2 -Wno-error)
+23:20:29 end build fix12 exit 0
+23:20:48 start test fix12 rate -k 'acquired_transport' x10
+23:22:30 end remake v572 exit 0
+23:22:33 start test v572 probe -k 'acquired_transport or (test_exit_discovering and bus)' x1
+23:22:34 end test v572 probe: 1 failures in 1 runs
+23:22:55 start test v572 probe2 -k 'acquired_transport or (test_exit_discovering and bus)' x1
+23:22:56 end test v572 probe2: 1 failures in 1 runs
+23:23:17 start test v572 probe3 -k 'acquired_transport or (test_exit_discovering and bus)' x1
+23:23:18 end test v572 probe3: 1 failures in 1 runs
+23:23:24 start test v572 probe4 -k 'acquired_transport or (test_exit_discovering and bus)' x1
+23:23:26 end test v572 probe4: 1 failures in 1 runs
+23:23:35 start test v572 probe5 -k 'acquired_transport or (test_exit_discovering and bus)' x1
+23:25:03 end test v572 probe5: 1 failures in 1 runs
+23:25:17 end test fix12 rate: 0 failures in 10 runs
+23:25:21 start test v572 probe6 -k 'test_a2dp_exit_with_acquired_transport' x1
+23:25:46 end test v572 probe6: 1 failures in 1 runs
+23:25:57 start test base-t0 rate -k 'acquired_transport' x10
+23:25:57 start build v572fix (03b684514 c72936943 99e56936b 11d09e35b)
+23:26:12 end build v572fix exit 2
+23:26:15 start remake v572fix (CFLAGS=-g -O2 -Wno-error)
+23:30:14 end remake v572fix exit 0
+23:30:26 start test v572 exit-rate -k 'test_a2dp_exit_with_acquired_transport' x10
+23:34:47 end test v572 exit-rate: 10 failures in 10 runs
+23:34:47 start test v572 disc-rate -k 'test_exit_discovering and bus' x10
+23:38:58 end test v572 disc-rate: 10 failures in 10 runs
+23:38:58 start test v572fix exit-rate -k 'test_a2dp_exit_with_acquired_transport' x10
+23:40:29 end test base-t0 rate: 10 failures in 10 runs
+23:40:33 start test fix1 exit-rate -k 'test_a2dp_exit_with_acquired_transport' x10
+23:41:38 end test v572fix exit-rate: 0 failures in 10 runs
+23:41:38 start test v572fix disc-rate -k 'test_exit_discovering and bus' x10
+23:44:05 end test v572fix disc-rate: 0 failures in 10 runs
+23:44:14 start test v572 app-rate -k 'test_a2dp_app_exit_with_acquired_transport' x10
+23:44:47 end test fix1 exit-rate: 10 failures in 10 runs
+23:44:49 start make check base-t0
+23:45:03 end make check base-t0 exit 0
+23:45:03 start make check fix12
+23:45:16 end make check fix12 exit 0
+23:45:16 start suite base-t0 suite
+23:46:50 end test v572 app-rate: 0 failures in 10 runs
+23:46:50 start test v572fix app-rate -k 'test_a2dp_app_exit_with_acquired_transport' x10
+23:49:26 end test v572fix app-rate: 0 failures in 10 runs
+23:53:26 end suite base-t0 suite exit 1
+23:53:26 start suite fix12 suite
+00:00:35 end suite fix12 suite exit 1
+00:01:44 start suite base-t0 suite2
+00:01:45 start suite fix12 suite2
+00:08:58 end suite fix12 suite2 exit 1
+00:09:54 end suite base-t0 suite2 exit 1
+00:10:09 start test base-t0 final-rate -k 'acquired_transport' x10
+00:10:09 start test fix12 final-rate -k 'acquired_transport' x10
+00:14:21 end test fix12 final-rate: 0 failures in 10 runs
+00:23:14 end test base-t0 final-rate: 10 failures in 10 runs

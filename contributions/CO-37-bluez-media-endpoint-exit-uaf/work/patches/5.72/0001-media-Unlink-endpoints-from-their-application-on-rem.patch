@@ -1,0 +1,55 @@
+From c72936943ffe7a71c07fda886d6d87ee3a28fdf0 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sat, 31 Oct 2026 23:11:38 +0100
+Subject: [PATCH BlueZ 5.72 1/2] media: Unlink endpoints from their application
+ on removal
+
+Backport for 5.72 of the endpoint part of upstream commit 7482aceece70
+("profiles/audio: fix UAF on external media service teardown"), with
+the unlinking done before the A2DP SEP is removed, as in "media: Fix
+use-after-free of app when removing a locked A2DP endpoint".
+
+Needed by "media: Fix use-after-free releasing endpoints on adapter
+removal": once path_free() releases the endpoints before freeing the
+applications, app_free() must not find the released endpoints in its
+queue.
+---
+ profiles/audio/media.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/profiles/audio/media.c b/profiles/audio/media.c
+index 1faa1c289..56c6774e1 100644
+--- a/profiles/audio/media.c
++++ b/profiles/audio/media.c
+@@ -105,6 +105,7 @@ struct media_endpoint {
+ 	guint			watch;
+ 	GSList			*requests;
+ 	struct media_adapter	*adapter;
++	struct media_app	*app;
+ 	GSList			*transports;
+ };
+ 
+@@ -221,6 +222,11 @@ static void media_endpoint_remove(void *data)
+ 	struct media_endpoint *endpoint = data;
+ 	struct media_adapter *adapter = endpoint->adapter;
+ 
++	if (endpoint->app) {
++		queue_remove(endpoint->app->endpoints, endpoint);
++		endpoint->app = NULL;
++	}
++
+ 	if (endpoint->sep) {
+ 		a2dp_remove_sep(endpoint->sep);
+ 		return;
+@@ -2853,6 +2859,8 @@ static void app_register_endpoint(void *data, void *user_data)
+ 		return;
+ 	}
+ 
++	endpoint->app = app;
++
+ 	queue_push_tail(app->endpoints, endpoint);
+ 
+ 	return;
+-- 
+2.43.0
+

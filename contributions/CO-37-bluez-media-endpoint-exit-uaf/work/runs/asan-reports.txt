@@ -1,0 +1,185 @@
+==== runs/base-t0/final-rate-1
+ERROR test/functional/test_a2dp.py::test_a2dp_app_exit_with_acquired_transport[hosts1-vm2]
+ERROR test/functional/test_a2dp.py::test_a2dp_exit_with_acquired_transport[hosts1-vm2]
+FAILED test/functional/test_a2dp.py::test_a2dp_app_exit_with_acquired_transport[hosts1-vm2]
+FAILED test/functional/test_a2dp.py::test_a2dp_exit_with_acquired_transport[hosts1-vm2]
+--- report 1, host.0.0
+2026-10-31 23:10:23.445414 ==52==ERROR: AddressSanitizer: heap-use-after-free on address 0x7c065afe5a70 at pc 0x55f89b9a05cd bp 0x7fff703317f0 sp 0x7fff703317e0
+  READ of size 8 at 0x7c065afe5a70 thread T0
+    #0 0x55f89b9a05cc in media_endpoint_remove profiles/audio/media.c:321
+    #1 0x55f89b9e5fc8 in a2dp_unregister_sep profiles/audio/a2dp.c:2893
+    #2 0x55f89b9fd91f in a2dp_sep_unlock profiles/audio/a2dp.c:3588
+    #3 0x55f89b9bd0a4 in transport_a2dp_suspend profiles/audio/transport.c:469
+    #4 0x55f89bc7716a in service_filter gdbus/watch.c:493
+    #5 0x55f89bc7816f in message_filter gdbus/watch.c:566
+    #6 0x7f965cc00d20 in dbus_connection_dispatch (/usr/lib/x86_64-linux-gnu/libdbus-1.so.3+0x18d20) (BuildId: 2fdc230f668d66316c34db81c69962c1339c7037)
+    #7 0x55f89bc73807 in message_dispatch gdbus/mainloop.c:59
+    #10 0x7f965cc9a576 in g_main_loop_run (/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x62576) (BuildId: 2426ee6f828a10bf4da963a4c474752c33742359)
+    #11 0x55f89be07578 in mainloop_run src/shared/mainloop-glib.c:65
+    #12 0x55f89be07eaa in mainloop_run_with_signal src/shared/mainloop-notify.c:196
+    #13 0x55f89b98b0aa in main src/main.c:1713
+    #14 0x7f965c26c600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59
+    #15 0x7f965c26c717 in __libc_start_main_impl ../csu/libc-start.c:360
+    #16 0x55f89b98d4c4 in _start (/root/exp/agent-work/exit-uaf/runs/base-t0/src/src/bluetoothd+0x6734c4) (BuildId: 99e8499e07d4be58366b9bce0e7cff8018c549ae)
+  0x7c065afe5a70 is located 48 bytes inside of 72-byte region [0x7c065afe5a40,0x7c065afe5a88)
+  freed by thread T0 here:
+    #0 0x7f965cf7f3ff in free ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:51
+    #1 0x55f89bc7716a in service_filter gdbus/watch.c:493
+  previously allocated by thread T0 here:
+    #0 0x7f965cf8060f in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:67
+    #1 0x55f89bc962c5 in util_malloc src/shared/util.c:46
+  SUMMARY: AddressSanitizer: heap-use-after-free profiles/audio/media.c:321 in media_endpoint_remove
+--- report 2, host.0.0
+2026-10-31 23:11:19.245865 ==68==ERROR: AddressSanitizer: heap-use-after-free on address 0x7c2e338e58b0 at pc 0x556d135985cd bp 0x7ffe46159f50 sp 0x7ffe46159f40
+  READ of size 8 at 0x7c2e338e58b0 thread T0
+    #0 0x556d135985cc in media_endpoint_remove profiles/audio/media.c:321
+    #1 0x556d135ddfc8 in a2dp_unregister_sep profiles/audio/a2dp.c:2893
+    #2 0x556d135f591f in a2dp_sep_unlock profiles/audio/a2dp.c:3588
+    #3 0x556d135b50a4 in transport_a2dp_suspend profiles/audio/transport.c:469
+    #4 0x556d135af2e4 in media_transport_free profiles/audio/transport.c:1803
+    #5 0x556d13877669 in remove_interface gdbus/object.c:742
+    #6 0x556d1387a22b in g_dbus_unregister_interface gdbus/object.c:1499
+    #7 0x556d135b9374 in media_transport_destroy profiles/audio/transport.c:258
+    #8 0x556d1359eeec in endpoint_remove_transport profiles/audio/media.c:374
+    #9 0x556d1359eeec in clear_configuration profiles/audio/media.c:405
+    #10 0x556d1359f05c in clear_endpoint profiles/audio/media.c:413
+    #11 0x556d1359f197 in release_endpoint profiles/audio/media.c:661
+    #12 0x556d1359f4e6 in path_free profiles/audio/media.c:3813
+    #13 0x556d13877669 in remove_interface gdbus/object.c:742
+    #14 0x556d1387a22b in g_dbus_unregister_interface gdbus/object.c:1499
+    #15 0x556d13760198 in unload_driver src/adapter.c:8027
+    #16 0x7fbe3555bf3f in g_slist_foreach (/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x83f3f) (BuildId: 2426ee6f828a10bf4da963a4c474752c33742359)
+    #17 0x556d135dec43 in a2dp_exit profiles/audio/a2dp.c:3912
+    #18 0x556d1384d28a in plugin_cleanup src/plugin.c:251
+    #19 0x556d135830bb in main src/main.c:1717
+    #20 0x7fbe34b0c600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59
+    #21 0x7fbe34b0c717 in __libc_start_main_impl ../csu/libc-start.c:360
+    #22 0x556d135854c4 in _start (/root/exp/agent-work/exit-uaf/runs/base-t0/src/src/bluetoothd+0x6734c4) (BuildId: 99e8499e07d4be58366b9bce0e7cff8018c549ae)
+  0x7c2e338e58b0 is located 48 bytes inside of 72-byte region [0x7c2e338e5880,0x7c2e338e58c8)
+  freed by thread T0 here:
+    #0 0x7fbe3581f3ff in free ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:51
+    #1 0x556d1388db11 in queue_remove_all src/shared/queue.c:341
+  previously allocated by thread T0 here:
+    #0 0x7fbe3582060f in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:67
+    #1 0x556d1388e2c5 in util_malloc src/shared/util.c:46
+  SUMMARY: AddressSanitizer: heap-use-after-free profiles/audio/media.c:321 in media_endpoint_remove
+reports: 2
+
+==== runs/fix1/exit-rate-1
+ERROR test/functional/test_a2dp.py::test_a2dp_exit_with_acquired_transport[hosts1-vm2]
+FAILED test/functional/test_a2dp.py::test_a2dp_exit_with_acquired_transport[hosts1-vm2]
+--- report 1, host.0.0
+2026-10-31 22:40:48.109574 ==52==ERROR: AddressSanitizer: heap-use-after-free on address 0x7c6e74de12e8 at pc 0x5573e1d8210d bp 0x7ffc1653e410 sp 0x7ffc1653e400
+  READ of size 8 at 0x7c6e74de12e8 thread T0
+    #0 0x5573e1d8210c in clear_endpoint profiles/audio/media.c:412
+    #1 0x5573e1d821f7 in release_endpoint profiles/audio/media.c:661
+    #2 0x5573e1d82546 in path_free profiles/audio/media.c:3813
+    #3 0x5573e205a6c9 in remove_interface gdbus/object.c:742
+    #4 0x5573e205d28b in g_dbus_unregister_interface gdbus/object.c:1499
+    #5 0x5573e1f431f8 in unload_driver src/adapter.c:8027
+    #6 0x7f6e76a5af3f in g_slist_foreach (/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x83f3f) (BuildId: 2426ee6f828a10bf4da963a4c474752c33742359)
+    #7 0x5573e1dc1ca3 in a2dp_exit profiles/audio/a2dp.c:3912
+    #8 0x5573e20302ea in plugin_cleanup src/plugin.c:251
+    #9 0x5573e1d660bb in main src/main.c:1717
+    #10 0x7f6e7600b600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59
+    #11 0x7f6e7600b717 in __libc_start_main_impl ../csu/libc-start.c:360
+    #12 0x5573e1d684c4 in _start (/root/exp/agent-work/exit-uaf/runs/fix1/src/src/bluetoothd+0x6734c4) (BuildId: 83ffaf7a7d369b59b7bb3c0168be0fb71efca614)
+  0x7c6e74de12e8 is located 168 bytes inside of 184-byte region [0x7c6e74de1240,0x7c6e74de12f8)
+  freed by thread T0 here:
+    #0 0x7f6e76d1e3ff in free ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:51
+    #1 0x5573e1d7b404 in media_endpoint_remove profiles/audio/media.c:335
+  previously allocated by thread T0 here:
+    #0 0x7f6e76d1f40f in calloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:74
+    #1 0x7f6e76a3f121 in g_malloc0 (/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x68121) (BuildId: 2426ee6f828a10bf4da963a4c474752c33742359)
+    #2 0x5573e1d7bd21 in media_endpoint_create profiles/audio/media.c:1701
+  SUMMARY: AddressSanitizer: heap-use-after-free profiles/audio/media.c:412 in clear_endpoint
+reports: 1
+
+==== runs/v572/exit-rate-1
+ERROR test/functional/test_a2dp.py::test_a2dp_exit_with_acquired_transport[hosts1-vm2]
+FAILED test/functional/test_a2dp.py::test_a2dp_exit_with_acquired_transport[hosts1-vm2]
+--- report 1, host.0.0
+2026-10-31 22:30:41.653479 ==51==ERROR: AddressSanitizer: heap-use-after-free on address 0x7c89900e0c30 at pc 0x56066ec0e9dd bp 0x7fff94a7ed30 sp 0x7fff94a7ed20
+  READ of size 8 at 0x7c89900e0c30 thread T0
+    #0 0x56066ec0e9dc in clear_endpoint profiles/audio/media.c:300
+    #1 0x56066ec0eacf in release_endpoint profiles/audio/media.c:566
+    #2 0x56066ec0ee16 in path_free profiles/audio/media.c:3276
+    #3 0x56066eea7999 in remove_interface gdbus/object.c:660
+    #4 0x56066eeaad8b in g_dbus_unregister_interface gdbus/object.c:1394
+    #5 0x56066ed86fb8 in unload_driver src/adapter.c:7574
+    #6 0x7fa991d58f3f in g_slist_foreach (/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x83f3f) (BuildId: 2426ee6f828a10bf4da963a4c474752c33742359)
+    #7 0x56066ebcb073 in a2dp_exit profiles/audio/a2dp.c:3568
+    #8 0x56066ed6c9f3 in plugin_cleanup src/plugin.c:217
+    #9 0x56066eba2ef6 in main src/main.c:1456
+    #10 0x7fa991350600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59
+    #11 0x7fa991350717 in __libc_start_main_impl ../csu/libc-start.c:360
+    #12 0x56066eba51f4 in _start (/root/exp/agent-work/exit-uaf/runs/v572/src/src/bluetoothd+0x5581f4) (BuildId: 30c07337e62b7b6d7fe21e645e89c93035b922f3)
+  0x7c89900e0c30 is located 144 bytes inside of 152-byte region [0x7c89900e0ba0,0x7c89900e0c38)
+  freed by thread T0 here:
+    #0 0x7fa99201c3ff in free ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:51
+    #1 0x56066ebca448 in a2dp_unregister_sep profiles/audio/a2dp.c:2611
+  previously allocated by thread T0 here:
+    #0 0x7fa99201d40f in calloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:74
+    #1 0x7fa991d3d121 in g_malloc0 (/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x68121) (BuildId: 2426ee6f828a10bf4da963a4c474752c33742359)
+    #2 0x56066ec0c762 in media_endpoint_create profiles/audio/media.c:1463
+  SUMMARY: AddressSanitizer: heap-use-after-free profiles/audio/media.c:300 in clear_endpoint
+reports: 1
+
+==== runs/v572/app-rate-1
+PASSED test/functional/test_a2dp.py::test_a2dp_app_exit_with_acquired_transport[hosts1-vm2]
+reports: 0
+
+==== runs/disc-revert/rate-1
+ERROR test/functional/test_exit_discovery.py::test_exit_discovering[hosts18-vm2-bus]
+FAILED test/functional/test_exit_discovery.py::test_exit_discovering[hosts18-vm2-bus]
+--- report 1, host.0.0
+2026-10-31 22:09:27.495666 ==52==ERROR: AddressSanitizer: heap-use-after-free on address 0x7d0bfbce033d at pc 0x55cfdcfee782 bp 0x7fff6ea3e920 sp 0x7fff6ea3e910
+  READ of size 1 at 0x7d0bfbce033d thread T0
+    #0 0x55cfdcfee781 in device_set_rssi_with_delta src/device.c:7349
+    #1 0x55cfdcf41573 in invalidate_rssi_and_tx_power src/adapter.c:1743
+    #2 0x7f9bfda13f3f in g_slist_foreach (/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x83f3f) (BuildId: 2426ee6f828a10bf4da963a4c474752c33742359)
+    #3 0x7f9bfda15c66 in g_slist_free_full (/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x85c66) (BuildId: 2426ee6f828a10bf4da963a4c474752c33742359)
+    #4 0x55cfdcf8e9ba in discovery_cleanup src/adapter.c:1758
+    #5 0x55cfdcf91245 in adapter_remove src/adapter.c:7342
+    #6 0x55cfdcf91ca7 in adapter_cleanup src/adapter.c:11331
+    #7 0x55cfdcd620cf in main src/main.c:1723
+    #8 0x7f9bfcfc4600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59
+    #9 0x7f9bfcfc4717 in __libc_start_main_impl ../csu/libc-start.c:360
+    #10 0x55cfdcd644c4 in _start (/root/exp/agent-work/exit-uaf/runs/disc-revert/src/src/bluetoothd+0x6734c4) (BuildId: 1b5973aef7ec85af0b49b4a75b0cb1828f3f3576)
+  0x7d0bfbce033d is located 701 bytes inside of 744-byte region [0x7d0bfbce0080,0x7d0bfbce0368)
+  freed by thread T0 here:
+    #0 0x7f9bfdcd73ff in free ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:51
+    #1 0x55cfdd0565c9 in remove_interface gdbus/object.c:742
+  previously allocated by thread T0 here:
+    #0 0x7f9bfdcd840f in calloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:74
+    #1 0x55cfdcff9192 in device_new src/device.c:5075
+  SUMMARY: AddressSanitizer: heap-use-after-free src/device.c:7349 in device_set_rssi_with_delta
+reports: 1
+
+==== runs/v572/disc-rate-1
+ERROR test/functional/test_exit_discovery.py::test_exit_discovering[hosts19-vm2-bus]
+FAILED test/functional/test_exit_discovery.py::test_exit_discovering[hosts19-vm2-bus]
+--- report 1, host.0.0
+2026-10-31 22:35:01.325584 ==52==ERROR: AddressSanitizer: heap-use-after-free on address 0x7c7b286e0685 at pc 0x55f95988feb2 bp 0x7ffcae9879f0 sp 0x7ffcae9879e0
+  READ of size 1 at 0x7c7b286e0685 thread T0
+    #0 0x55f95988feb1 in device_set_rssi_with_delta src/device.c:6161
+    #1 0x55f9597ec463 in invalidate_rssi_and_tx_power src/adapter.c:1706
+    #2 0x7f0b2a3e5f3f in g_slist_foreach (/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x83f3f) (BuildId: 2426ee6f828a10bf4da963a4c474752c33742359)
+    #3 0x7f0b2a3e7c66 in g_slist_free_full (/usr/lib/x86_64-linux-gnu/libglib-2.0.so.0+0x85c66) (BuildId: 2426ee6f828a10bf4da963a4c474752c33742359)
+    #4 0x55f9598111ba in discovery_cleanup src/adapter.c:1721
+    #5 0x55f9598116bc in adapter_remove src/adapter.c:6962
+    #6 0x55f959825047 in adapter_cleanup src/adapter.c:10829
+    #7 0x55f959605f0a in main src/main.c:1462
+    #8 0x7f0b299dd600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59
+    #9 0x7f0b299dd717 in __libc_start_main_impl ../csu/libc-start.c:360
+    #10 0x55f9596081f4 in _start (/root/exp/agent-work/exit-uaf/runs/v572/src/src/bluetoothd+0x5581f4) (BuildId: 30c07337e62b7b6d7fe21e645e89c93035b922f3)
+  0x7c7b286e0685 is located 645 bytes inside of 680-byte region [0x7c7b286e0400,0x7c7b286e06a8)
+  freed by thread T0 here:
+    #0 0x7f0b2a6a93ff in free ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:51
+    #1 0x55f95990a999 in remove_interface gdbus/object.c:660
+  previously allocated by thread T0 here:
+    #0 0x7f0b2a6aa40f in calloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:74
+    #1 0x55f959895752 in device_new src/device.c:4182
+  SUMMARY: AddressSanitizer: heap-use-after-free src/device.c:6161 in device_set_rssi_with_delta
+reports: 1
+
