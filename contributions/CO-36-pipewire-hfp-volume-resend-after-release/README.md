@@ -40,7 +40,12 @@ functions below do the same in both, though the file as a whole changed a lot; l
   error (for example the headset closes the audio link), `sco_event()` sets the transport idle
   and closes the socket itself, without `sco_release_cb()` or `sco_destroy_cb()`. 1.0.5 logs
   this as `error on SCO socket`, master as `SCO socket hangup` or `SCO socket error`. All four
-  cases below are local releases; this path was not observed in them.
+  cases below are local releases; this path was not observed in them. The journal since
+  2026-10-22 has it twice, neither with a late resend: 2026-10-23 00:51:09, 14 s after that
+  link's `acquire complete` (the resend had gone out at 00:50:56.743), and 2026-10-22 12:05:39,
+  with no `acquire complete` in the 15 minutes before it (no timer armed). (1.0.5 prints
+  `strerror(errno)` there, not the socket's error, so the text after the colon,
+  `Invalid or incomplete multibyte or wide character`, means nothing.)
 - `sco_ready()` sends the first pair *before* it sets the transport active (master L2811–2814,
   1.0.5 L1565–1568), and `rfcomm_ag_set_volume()` also sends the user's volume changes
   (`sco_set_volume_cb()`).
