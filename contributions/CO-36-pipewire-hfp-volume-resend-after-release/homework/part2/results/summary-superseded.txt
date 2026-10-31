@@ -1,0 +1,24 @@
+
+== t308_wp0417_policy (6 records)
+  [r03b-t308-try-results.jsonl rep=0] links=0 
+  [r03c-t308-try-results.jsonl rep=0] links=0 
+  [r03d-t308-try-results.jsonl rep=0] links=2 long:resend-while-up, long:resend-while-up
+      codec=3 down=3153.5 next_up=7570.3 imm=[VGS@0.0 VGM@0.3] active=[VGS@1503.9 VGM@1504.3] after_down=[]
+      codec=3 down=4642.3 next_up=None imm=[VGS@0.0 VGM@0.3] active=[VGS@1501.3 VGM@1501.6] after_down=[]
+  [r06-t308-x5-results.jsonl rep=0] links=1 long:resend-while-up
+      codec=3 down=2453.8 next_up=None imm=[VGS@0.0 VGM@0.2] active=[VGS@1500.5 VGM@1500.7] after_down=[]
+  [r06-t308-x5-results.jsonl rep=1] links=0 
+  [r06-t308-x5-results.jsonl rep=2] links=2 long:resend-while-up, long:resend-while-up
+      codec=3 down=2326.6 next_up=7685.0 imm=[VGS@0.0 VGM@3.6] active=[VGS@1505.5 VGM@1506.1] after_down=[]
+      codec=3 down=3825.4 next_up=None imm=[VGS@0.0 VGM@0.7] active=[VGS@1504.5 VGM@1504.8] after_down=[]
+  counts: {"long:resend-while-up": 5}
+
+== T233 ledger: AG sent vs HF received, per test run
+  same [r03-t308-try-results.jsonl] test_co36_t308_wp0417_policy[0-hosts49-vm2-784M] hf1: sent=0 got=0
+  same [r03b-t308-try-results.jsonl] test_co36_t308_wp0417_policy[0-hosts49-vm2-784M] hf1: sent=0 got=0
+  same [r03c-t308-try-results.jsonl] test_co36_t308_wp0417_policy[0-hosts49-vm2-784M] hf1: sent=1 got=1
+  same [r03d-t308-try-results.jsonl] test_co36_t308_wp0417_policy[0-hosts49-vm2-784M] hf1: sent=9 got=9
+  same [r06-t308-x5-results.jsonl] test_co36_t308_wp0417_policy[0-hosts49-vm2-784M] hf1: sent=5 got=5
+  same [r06-t308-x5-results.jsonl] test_co36_t308_wp0417_policy[1-hosts49-vm2-784M] hf1: sent=1 got=1
+  same [r06-t308-x5-results.jsonl] test_co36_t308_wp0417_policy[2-hosts49-vm2-784M] hf1: sent=9 got=9
+  ledgers=7 mismatches=0

@@ -8,6 +8,17 @@ Bluetooth VM tests, then run every candidate fix through the same tests.
   the variants, and every test's result on master.
 - [`unit/`](unit/README.md): the L1 harness (virtual time).
 - [`tests/`](tests/test_co36_hfp_volume_resend.py): the L2/L3 VM tests.
+- [`part2/`](part2/RESULTS.md): the tests left on master, run 2026-10-31 (22:50:06 to
+  23:50:12). Highlights:
+  - every link that ended before 1.5 s leaked, at each way of ending it;
+  - every keep test passes;
+  - the resend deadline counts from link up;
+  - a `hw-volume-mic` quirk (V5) does not stop the late `+VGS`;
+  - HSP as AG is unreachable on master;
+  - a BlueZ shutdown crash, outside CO-36.
+
+  Its per-run results, scripts and container helpers are in `part2/`. The full pytest logs
+  stay in the work area, `/root/exp/agent-work/co36/`.
 
 ## Setup
 

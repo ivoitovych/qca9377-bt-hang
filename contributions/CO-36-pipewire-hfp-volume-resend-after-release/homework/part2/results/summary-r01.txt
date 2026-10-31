@@ -1,0 +1,22 @@
+
+== t212_long_lc3swb (1 records)
+  [r01-smoke-results.jsonl rep=0] long:resend-while-up codec=3 down=4728.9 next_up=None imm=[VGS@0.0 VGM@0.2] active=[VGS@1501.8 VGM@1502.0] after_down=[] {}
+  counts: {"long:resend-while-up": 1}
+
+== t216_profile_off (1 records)
+  [r01-smoke-results.jsonl rep=0] short:LEAK codec=2 down=692.5 next_up=None imm=[VGS@0.1 VGM@0.1] active=[] after_down=[VGS@1503.3 VGM@1503.4] {}
+  counts: {"short:LEAK": 1}
+
+== t225r_route_volume (1 records)
+  [r01-smoke-results.jsonl rep=0] keys=['routes', 'no_link_speaker', 'no_link_mic', 'during_link_speaker', 'link_ended_before_change', 'hf_volume_changed', 'hf_sent_ag_frames', 'hf_received']
+      no_link_speaker: want={'frame': 'VGS', 'value': 10} first_ms=0.0 first_value=10 rc=0
+      no_link_mic: want={'frame': 'VGM', 'value': 10} first_ms=0.1 first_value=10 rc=0
+      during_link_speaker: want={'frame': 'VGS', 'value': 13} first_ms=0.0 first_value=13 rc=0
+      hf_volume_changed: [10, 10, 10, 10, 10, 10, 13]
+  counts: {}
+
+== T233 ledger: AG sent vs HF received, per test run
+  same [r01-smoke-results.jsonl] test_co36_t225r_route_volume[0-hosts29-vm2-784M] hf1: sent=8 got=8
+  same [r01-smoke-results.jsonl] test_co36_t212_long_link_lc3swb[0-hosts32-vm2-784M] hf1: sent=5 got=5
+  same [r01-smoke-results.jsonl] test_co36_t216_profile_off[0-hosts35-vm2-784M] hf1: sent=5 got=5
+  ledgers=3 mismatches=0

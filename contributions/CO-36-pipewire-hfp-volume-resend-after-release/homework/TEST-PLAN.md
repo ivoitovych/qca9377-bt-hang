@@ -70,7 +70,7 @@ on purpose; L2 shows the real stack; L3 shows what a user meets.
 - T002 Build each variant with the same options, no new warnings. todo
 - T003 Build each variant with clang (`-Werror` where CI uses it). todo
 - T004 Build with `-Dbluez5-backend-hfp-native=disabled` and with `-Dbluez5-backend-hsp-native=disabled` (the timer code sits partly under `HAVE_BLUEZ_5_BACKEND_HFP_NATIVE`; a variant must build in both). todo
-- T005 PipeWire's `meson test` unit suite (CI's `build_on_fedora` options) on master. todo; keep
+- T005 PipeWire's `meson test` unit suite (CI's `build_on_fedora` options) on master. done (co36): 74 of 74 OK; none of them runs `backend-native.c`; keep
 - T006 The same on each variant. todo; keep
 - T007 PipeWire's 7 VM tests on master. done (run 3): pass; keep
 - T008 The same on each variant, 3 runs each (flake rate, not one run). todo; keep
@@ -167,34 +167,34 @@ Existing, run on master (`tests/test_co36_hfp_volume_resend.py`):
 To add:
 - T210 Short link, LC3-SWB (the plain `headset-head-unit` profile with every codec on). todo
 - T211 Long link, mSBC. todo; keep
-- T212 Long link, LC3-SWB. todo; keep
+- T212 Long link, LC3-SWB. done (co36): keep, pass
 - T213 Remote hang-up, mSBC. todo
-- T214 Remote hang-up at 1.4 s (close to the deadline). todo
-- T215 AG release by `pw-cli` node suspend instead of a profile switch. todo
-- T216 Link released by turning the device's profile "off". todo
+- T214 Remote hang-up at 1.4 s (close to the deadline). done (co36): leak, 4 of 4 hang-ups at 1158–1499 ms; the late pair left 7–344 ms after the hang-up
+- T215 AG release by `pw-cli` node suspend instead of a profile switch. done (co36, `t215` and `t215f`): the release comes 1 s after the suspend (`TRANSPORT_RELEASE_TIMEOUT_MSEC`); 3 of 9 links ended before 1.5 s (1344, 1399, 1443 ms) and all 3 leaked; the 6 longer ones (1610–3881 ms) were clean
+- T216 Link released by turning the device's profile "off". done (co36): leak, 6 of 6 links under 1.5 s
 - T217 RFCOMM dropped by the headset (`bluetoothctl disconnect` on the HF) within 1.5 s: no frame, no crash (ASan). todo; keep
 - T218 AG disconnects the device within 1.5 s. todo; keep
-- T219 bluetoothd restart on the AG within 1.5 s (`BluetoothdWithRestart`). todo; keep
+- T219 bluetoothd restart on the AG within 1.5 s (`BluetoothdWithRestart`). done (co36): keep, pass (transport destroyed, nothing written)
 - T220 Codec switch (msbc → cvsd profile) within 1.5 s of link up: the BCS stop, no late frame on master. todo; keep
-- T221 Codec switch after a short link ended, before 1.5 s. todo; keep
+- T221 Codec switch after a short link ended, before 1.5 s. done (co36): keep, pass 5 of 5 (`AT+BCS=1` at 915–1414 ms stopped the timer)
 - T222 Ten short links in a row: count of late frames per link. todo
 - T223 Link durations swept: 100, 300, 600, 900, 1200, 1400, 1600, 2000 ms (sleep then switch; actual duration from the log). todo
-- T224 Each short-link test 10 times: leak rate (expect 10/10 on master). todo
-- T225 User volume change (`pw-cli` on the HFP node) with no link: `+VGS` reaches the HF, the HF's PipeWire applies it. todo; keep
-- T226 User volume change during a link. todo; keep
-- T227 User volume change right after a short link (resend pending): sent at once. todo; keep
-- T228 HF changes its volume (`AT+VGS=`) after a short link: the AG takes it. todo; keep
+- T224 Each short-link test 10 times: leak rate (expect 10/10 on master). done (co36): see results; every link that ended before 1.5 s leaked
+- T225 User volume change (`pw-cli` on the HFP node) with no link: `+VGS` reaches the HF, the HF's PipeWire applies it. done (co36, as `t225r`, through the device's Route param): keep, pass
+- T226 User volume change during a link. done (co36, in `t225r`): keep, pass
+- T227 User volume change right after a short link (resend pending): sent at once. done (co36, as `t227r`, Route param, link ended by the headset): keep, pass 6 of 6
+- T228 HF changes its volume (`AT+VGS=`) after a short link: the AG takes it. done (co36, as `t228r` and `t228w`, through the HF's telephony D-Bus service): keep, pass
 - T229 HSP: AG `hsp_ag`, HS `hsp_hs`, short link: master leaks `+VGS=` too? todo
-- T230 HSP long link: resend while up. todo; keep
+- T230 HSP long link: resend while up. blocked (co36): the HSP device offers only "off" on master (see results)
 - T231 PipeWire as HF (roles swapped): the HF sends no `+VGS`/`+VGM` ever (it sends `AT+` commands). todo; keep
-- T232 AG with hardware volume off (`bluez5.hw-volume` without the HFP profile): nothing sent on any link. todo; keep
-- T233 HF's received gains: the HF PipeWire logs each `+VGS`/`+VGM` it gets; count matches what the AG sent (no loss, no duplicates). todo
-- T234 Two headsets (three VMs), short link on one, long on the other: timers independent. todo
+- T232 AG with hardware volume off (`bluez5.hw-volume` without the HFP profile): nothing sent on any link. done (co36, as `t232p`): keep, pass.  Run p0-6's T232 set `bluez5.enable-hw-volume = false`, which is T239's switch
+- T233 HF's received gains: the HF PipeWire logs each `+VGS`/`+VGM` it gets; count matches what the AG sent (no loss, no duplicates). done (co36): 150 of 150 single-headset test runs, same frames and values in the same order on both sides, late frames included
+- T234 Two headsets (three VMs), short link on one, long on the other: timers independent. blocked (co36): in pytest-bluezenv's emulated controllers the AG kept only one ACL link at a time (the first headset dropped the moment the second connected; HFP to the second then timed out, -110), 3 attempts; independence rests on source (one timer per `struct rfcomm`, L206)
 - T235 A2DP streaming after a short HFP link: unaffected (`test_pipewire_a2dp` style check after T201). todo; keep
-- T236 Every L2 test with UBSan/ASan reports scanned: none. todo; keep
+- T236 Every L2 test with UBSan/ASan reports scanned: none. done (co36): none from PipeWire or WirePlumber in any run; one from bluetoothd (BlueZ `ebbb4ee31ad7`, heap-use-after-free in `media_endpoint_remove`, `profiles/audio/media.c:312`, at shutdown), 1 of about 150 AG shutdowns, not CO-36's code
 - T237 Time from link end to the late frame on master: always resend deadline minus link duration (proves the timer, not chance). done (runs 1–5)
-- T238 Headset without the `hw-volume-mic` feature (a `bluez5.features.device` rule, `bluez-hardware.conf`): its `AT+VGM=` is ignored (`broken_mic_hw_volume`, L733/L1387), so `+VGM` is never active and never sent, on any link. todo; keep
-- T239 Hardware volume off through `bluez5.enable-hw-volume = false` (`quirks.c` L230): nothing sent (same check as T232, the other switch). todo; keep
+- T238 Headset without the `hw-volume-mic` feature (a `bluez5.features.device` rule, `bluez-hardware.conf`): its `AT+VGM=` is ignored (`broken_mic_hw_volume`, L733/L1387), so `+VGM` is never active and never sent, on any link. done (co36): keep, pass; the short link's late `+VGS` still leaves (variant V5's expected result)
+- T239 Hardware volume off through `bluez5.enable-hw-volume = false` (`quirks.c` L230): nothing sent (same check as T232, the other switch). done (co36): keep, pass
 
 ## L3: application (WirePlumber policy)
 
@@ -204,9 +204,9 @@ In the VMs:
 - T303 Capture started and stopped within 500 ms (before the switch delay): no link or a short one; record. todo
 - T304 Capture stopped, restarted within the restore timeout: no restore, one link. todo; keep
 - T305 Restore timeout set to 0 (a user setting): short links, late frames on master. todo
-- T306 A call app's pattern: playback and capture together, end together. todo
-- T307 Several short captures in a row (an app probing the microphone). todo
-- T308 WirePlumber 0.4.17's policy in the VM, if it builds against master (the laptop's policy): restore after 2000 ms. todo
+- T306 A call app's pattern: playback and capture together, end together. done (co36): restore 4 s, 6 links 5905–6092 ms, clean; restore 0, 6 links 1837–2089 ms, clean; the 0.8 s calls made no link (12 of 12)
+- T307 Several short captures in a row (an app probing the microphone). done (co36, 1.0–2.0 s captures, 6 runs each): restore 4 s, one 10.9–12.6 s link per run, clean; restore 0, 24 links of 60–1197 ms, **24 of 24 leak**
+- T308 WirePlumber 0.4.17's policy in the VM, if it builds against master (the laptop's policy): restore after 2000 ms. done (co36): 0.4.17 does not build against master with CI's flags (one `-Wincompatible-pointer-types` error, `wp/node.c:634`); built with that error demoted to a warning, its policy made 8 links in 5 runs, 2134–4614 ms, all clean
 
 On the laptop, only on the operator's word, in short windows, each
 recorded against the open trial:
@@ -259,15 +259,53 @@ L2/L3 (`tests/test_co36_hfp_volume_resend.py`, runs p0-1 to p0-8,
 | T218 AG drops the connection | keep: pass | ended at 64 ms; timer freed with RFCOMM |
 | T220 codec switch within 1.5 s | keep: pass | `AT+BCS=` stops the timer |
 | T222/T223 13 links of set length, 2 attempts | 8 links under 1.5 s: each leaks both frames; 5 over (1528–2640 ms): all clean; same in both attempts | boundary at the 1.5 s deadline, not chance |
-| T229 HSP | blocked | the VM's HSP device offers only `off`; L1 T120h/T130h cover HSP |
-| T232 hardware volume off | keep: pass | `hw-volume-profiles:00000000`, nothing sent |
+| T229 HSP | blocked | the VM's HSP device offers only `off`; L1 T120h/T130h cover HSP; cause found in part 2 (T230) |
+| T232 hardware volume off | keep: pass | `hw-volume-profiles:00000000`, nothing sent. **Correction (part 2):** this run set `bluez5.enable-hw-volume = false`, which is T239's switch; T232 as planned is `t232p` below |
 | T235 A2DP after a short link | keep: pass | |
-| T225/T227 user volume | method invalid | node `Props` never reach hardware volume; L1 T170–T175 cover it |
-| T228 headset changes its volume | method invalid | no HF node at that point |
+| T225/T227 user volume | method invalid (superseded by part 2: `t225r`, `t227r`) | node `Props` never reach hardware volume; L1 T170–T175 cover it |
+| T228 headset changes its volume | method invalid (superseded by part 2: `t228r`, `t228w`) | no HF node at that point |
 | T231 HF sends no AG frames | keep: pass, every L2 test | `hf_sent_ag_frames` 0 throughout |
 | T301/T302/T304 capture through the policy | keep: pass | one 9.5 s link, resend while up |
 | T303/T307 0.2–0.6 s captures | no link at all | the policy's 500 ms switch delay |
 | T305 restore timeout 0 | **leak, 2 of 2** | the policy itself ended the link at 48–54 ms |
+
+### Part 2 (agent-work/co36, 2026-10-31 22:50:06 to 23:50:12 CET)
+
+Same master, same image, same build options; `--reruns 0`, so every
+attempt is one record; `CO36_REPEAT=n` gives n runs on fresh VMs.
+"In window" = the link ended before 1.5 s and no new link came before
+the deadline; runs outside it are counted apart, never as passes.
+Evidence paths are under `agent-work/co36/`; per-run lines in
+`results/summary-all.txt`, ranges in `results/ranges-all.txt`.
+
+| Test | Class | Master | Rate | Evidence |
+|---|---|---|---|---|
+| T005 `meson test`, CI `build_on_fedora` options | keep | pass | 74 of 74 OK; none runs `backend-native.c` | `logs/t005-meson-test.log`, `results/t005-testlog.txt` |
+| T201 short link, CVSD (T224) | leak | leak | 10 of 10; links 452–908 ms, late `+VGM` 1501–1504 ms | `results/r05-t224-x10-results.jsonl` |
+| T202 short link, mSBC (T224) | leak | leak | 10 of 10; links 468–900 ms | same |
+| T203 hang-up, CVSD (T224) | leak | leak | 10 of 10; links 97–743 ms | same |
+| T210 short link, LC3-SWB (T224) | leak | leak | 9 of 9 in window; 1 run ended at 1832 ms, resend while up, clean | same |
+| T213 hang-up, mSBC (T224) | leak | leak | 10 of 10; links 193–532 ms | same |
+| T212 long link, LC3-SWB | keep | pass | 5 of 5; resend at 1500.5–1502.0 ms while up (links 4573–5904 ms) | `results/r01-*`, `r02-*`, `r09-*` |
+| T214 hang-up near the deadline | leak | leak | 4 of 4 in window (hang-up at 1158, 1355, 1424, 1499 ms; late pair 7–345 ms after it); 2 hang-ups at 1579/1586 ms: resend while up, clean | `results/r02-*`, `r04-*` |
+| T215 suspend instead of a profile switch (`t215`, `t215f`) | leak when short | leak | release comes 1 s after the suspend; 3 of 9 links ended before 1.5 s (1344, 1399, 1443 ms): 3 of 3 leak; 6 longer (1610–3881 ms): clean | `results/r02-*`, `r04-*`, `r09-*` |
+| T216 profile "off" | leak | leak | 6 of 6 in window (474–784 ms); 1 at 1606 ms clean | `results/r01-*`, `r02-*`, `r04-*` |
+| T219 bluetoothd restart on the AG within 1.5 s | keep | pass | 4 of 4; transport destroyed 64–439 ms after link up, nothing written after, PipeWire alive | `results/r02-*`, `r09-*` |
+| T221 codec switch after a short link | keep | pass | 5 of 5 in window (`AT+BCS=1` at 915–1414 ms); 1 run outside (link 1639 ms; the test failed on it, design fixed, see RESULTS.md) | `results/r02-*`, `r04-*` |
+| T225/T226 user volume through the Route param (`t225r`) | keep | pass | 5 of 5: no link `+VGS: 10` and `+VGM: 10`, during a link `+VGS: 13`, each 0.0–0.3 ms after `node_set_volume`; the HF took every value | `results/r01-*`, `r02-*`, `r09-*` |
+| T227 user change while the resend is pending (`t227r`) | keep | pass | 6 of 6 in window (change at 734–1443 ms): `+VGS: 10` 0.1 ms after the change; the late resend that follows carries 10 | `results/r02-*`, `r04-*` |
+| T228 headset changes its gain (`t228r`, `t228w`) | keep | pass | 9 of 9: `AT+VGS=9` taken, `OK`, stored; 8 in window: the late `+VGS` carries 9 | `results/r02-*`, `r04-*`, `r09-*` |
+| T230 HSP long link | keep | blocked | HSP connected (profiles `00000020`) but the device offers only `off` | `results/r02-all-once-results.jsonl` (`t230_hsp_long`) |
+| T232 `bluez5.hw-volume = [ a2dp_sink ]` (`t232p`) | keep | pass | 4 of 4: `hw-volume-profiles:00000004`, no `+VGS`/`+VGM` on a short or a long link | `results/r02-*`, `r09-*` |
+| T233 HF received what the AG sent | keep | pass | 150 of 150 single-headset runs: identical sequences with values | `results/summary-all.txt` (ledger) |
+| T234 two headsets | — | blocked | the emulated AG kept one ACL at a time (3 attempts) | `results/r02-*`, `r07-*`, `r07b-*` |
+| T236 sanitizer scan | keep | pass for PipeWire | 0 reports from PipeWire/WirePlumber; 1 bluetoothd heap-use-after-free at shutdown (BlueZ, not CO-36) | `results/t236-scan-all.txt` |
+| T238 headset without `hw-volume-mic` | keep | pass | 4 of 4: `+VGM` never sent; `+VGS` sent as usual, **including late after a short link** | `results/r02-*`, `r09-*` |
+| T239 `bluez5.enable-hw-volume = false` | keep | pass | 4 of 4: `hw-volume-profiles:00000000`, nothing sent | `results/r02-*`, `r09-*` |
+| T306 call app, restore 4 s / restore 0 | record | clean | 6 + 6 links, 5905–6092 / 1837–2089 ms, all clean; 0.8 s calls: no link | `results/r02-*`, `r08-*` |
+| T307 1.0–2.0 s captures, restore 4 s | record | clean | one 10.9–12.6 s link per run, 6 of 6 clean | same |
+| T307 1.0–2.0 s captures, restore 0 | record | **leak** | 24 of 24 links (60–1197 ms) leak | same |
+| T308 WirePlumber 0.4.17 policy | record | clean | builds only with `-Wno-error=incompatible-pointer-types`; 8 links in 5 runs, 2134–4614 ms, all clean | `logs/t308-build*.log`, `results/r06b-*` |
 
 ## Not covered, and why
 
@@ -277,3 +315,17 @@ L2/L3 (`tests/test_co36_hfp_volume_resend.py`, runs p0-1 to p0-8,
   use this timer (`backend-ofono.c`, `backend-hsphfpd.c` have none).
 - Kernel and controller behaviour: the VMs' controllers are emulated; the
   laptop's captures cover the real radio.
+- HSP as AG (T229, T230): on master an HSP-only headset gets no
+  `headset-head-unit` profile in the VMs (log: r02 `t230_hsp_long`,
+  profiles `00000020` connected, EnumProfile only `off`).  Inferred from
+  source: `backend_native_supports_codec()` looks up the RFCOMM by
+  `SPA_BT_PROFILE_HFP_HF` only (`backend-native.c:3205`), so CVSD is
+  "not supported" for an HSP connection, and `bluez5-device.c:2430` lists
+  no HSP/HFP profile without a codec.  The lookup dates from `5f7afe588`
+  (2023-09-24).  L1 T120h/T130h remain the HSP coverage.
+- Two headsets (T234): pytest-bluezenv's emulated AG controller dropped
+  the first headset's ACL link when the second connected (logs r07,
+  r07b), so two simultaneous RFCOMM connections were not reachable.
+- WirePlumber 0.4.17 with master (T308): built with one compiler error
+  demoted to a warning (not CI's flags); its config is Lua, so the
+  harness differs from PipeWire's own (`PipeWire04` in the test file).

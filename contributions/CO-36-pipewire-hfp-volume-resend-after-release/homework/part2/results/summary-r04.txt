@@ -1,0 +1,101 @@
+
+== t214_hangup_near_deadline (5 records)
+  [r04-timing-x5-results.jsonl rep=0] long:resend-while-up codec=2 down=1578.6 next_up=None imm=[VGS@0.0 VGM@0.1] active=[VGS@1501.2 VGM@1501.4] after_down=[] {"sleep_s": 0.95}
+  [r04-timing-x5-results.jsonl rep=1] short:LEAK codec=2 down=1355.4 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1502.4 VGM@1502.4] {"sleep_s": 0.95}
+  [r04-timing-x5-results.jsonl rep=2] short:LEAK codec=2 down=1499.4 next_up=None imm=[VGS@0.1 VGM@0.3] active=[] after_down=[VGS@1506.5 VGM@1506.5] {"sleep_s": 0.95}
+  [r04-timing-x5-results.jsonl rep=3] short:LEAK codec=2 down=1423.9 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1504.0 VGM@1504.0] {"sleep_s": 0.95}
+  [r04-timing-x5-results.jsonl rep=4] short:LEAK codec=2 down=1158.1 next_up=None imm=[VGS@0.0 VGM@0.4] active=[] after_down=[VGS@1502.7 VGM@1502.8] {"sleep_s": 0.95}
+  counts: {"long:resend-while-up": 1, "short:LEAK": 4}
+
+== t215f_node_suspend_fast (5 records)
+  [r04-timing-x5-results.jsonl rep=0] long:resend-while-up codec=2 down=1660.9 next_up=None imm=[VGS@0.0 VGM@0.6] active=[VGS@1504.3 VGM@1504.6] after_down=[] {}
+  [r04-timing-x5-results.jsonl rep=1] long:resend-while-up codec=2 down=1725.3 next_up=None imm=[VGS@0.0 VGM@0.2] active=[VGS@1500.8 VGM@1500.9] after_down=[] {}
+  [r04-timing-x5-results.jsonl rep=2] short:LEAK codec=2 down=1443.0 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1502.5 VGM@1502.7] {}
+  [r04-timing-x5-results.jsonl rep=3] long:resend-while-up codec=2 down=1653.9 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1501.4 VGM@1501.5] after_down=[] {}
+  [r04-timing-x5-results.jsonl rep=4] long:resend-while-up codec=2 down=1630.8 next_up=None imm=[VGS@0.0 VGM@0.4] active=[VGS@1502.4 VGM@1502.5] after_down=[] {}
+  counts: {"long:resend-while-up": 4, "short:LEAK": 1}
+
+== t216_profile_off (5 records)
+  [r04-timing-x5-results.jsonl rep=0] short:LEAK codec=2 down=546.5 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1502.2 VGM@1502.4] {}
+  [r04-timing-x5-results.jsonl rep=1] short:LEAK codec=2 down=784.4 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1500.7 VGM@1501.1] {}
+  [r04-timing-x5-results.jsonl rep=2] short:LEAK codec=2 down=474.0 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1501.9 VGM@1502.0] {}
+  [r04-timing-x5-results.jsonl rep=3] short:LEAK codec=2 down=529.2 next_up=None imm=[VGS@0.0 VGM@0.2] active=[] after_down=[VGS@1502.3 VGM@1502.5] {}
+  [r04-timing-x5-results.jsonl rep=4] short:LEAK codec=2 down=510.5 next_up=None imm=[VGS@0.0 VGM@0.1] active=[] after_down=[VGS@1502.6 VGM@1502.7] {}
+  counts: {"short:LEAK": 5}
+
+== t221_codec_switch_after_short (5 records)
+  [r04-timing-x5-results.jsonl rep=0] short:clean codec=2 down=558.3 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[] {"bcs_ms": 977.3}
+      frames_from_up: VGS@0.0:6 VGM@0.0:15
+  [r04-timing-x5-results.jsonl rep=1] short:clean codec=2 down=714.1 next_up=None imm=[VGS@0.0 VGM@0.1] active=[] after_down=[] {"bcs_ms": 1182.1}
+      frames_from_up: VGS@0.0:6 VGM@0.1:15
+  [r04-timing-x5-results.jsonl rep=2] short:clean codec=2 down=633.0 next_up=None imm=[VGS@0.0 VGM@0.1] active=[] after_down=[] {"bcs_ms": 1031.8}
+      frames_from_up: VGS@0.0:6 VGM@0.1:15
+  [r04-timing-x5-results.jsonl rep=3] short:clean codec=2 down=518.5 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[] {"bcs_ms": 915.0}
+      frames_from_up: VGS@0.0:6 VGM@0.0:15
+  [r04-timing-x5-results.jsonl rep=4] long:resend-while-up codec=2 down=1639.4 next_up=None imm=[VGS@0.1 VGM@1.3] active=[VGS@1505.4 VGM@1505.8] after_down=[] {"bcs_ms": 3274.0}
+      frames_from_up: VGS@0.1:6 VGM@1.3:15 VGS@1505.4:6 VGM@1505.8:15
+  counts: {"short:clean": 4, "long:resend-while-up": 1}
+
+== t227r_route_volume_after_short_link (5 records)
+  [r04-timing-x5-results.jsonl rep=0] short:LEAK codec=2 down=292.7 next_up=None imm=[VGS@0.2 VGM@0.3] active=[] after_down=[VGS@1443.4 VGS@1503.7 VGM@1503.7] {"change_from_up_ms": 1443.4, "valid_window": true}
+      change: want={'frame': 'VGS', 'value': 10} first_ms=0.1 first_value=10
+      frames_from_up: VGS@0.2:6 VGM@0.3:15 VGS@1443.4:10 VGS@1503.7:10 VGM@1503.7:15
+  [r04-timing-x5-results.jsonl rep=1] short:LEAK codec=2 down=271.5 next_up=None imm=[VGS@0.3 VGM@0.4] active=[] after_down=[VGS@1265.2 VGS@1503.9 VGM@1508.7] {"change_from_up_ms": 1265.1, "valid_window": true}
+      change: want={'frame': 'VGS', 'value': 10} first_ms=0.1 first_value=10
+      frames_from_up: VGS@0.3:6 VGM@0.4:15 VGS@1265.2:10 VGS@1503.9:10 VGM@1508.7:15
+  [r04-timing-x5-results.jsonl rep=2] short:LEAK codec=2 down=105.4 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@734.0 VGS@1500.4 VGM@1500.6] {"change_from_up_ms": 733.8, "valid_window": true}
+      change: want={'frame': 'VGS', 'value': 10} first_ms=0.1 first_value=10
+      frames_from_up: VGS@0.0:6 VGM@0.0:15 VGS@734.0:10 VGS@1500.4:10 VGM@1500.6:15
+  [r04-timing-x5-results.jsonl rep=3] short:LEAK codec=2 down=381.8 next_up=None imm=[VGS@0.0 VGM@0.2] active=[] after_down=[VGS@935.9 VGS@1502.3 VGM@1502.6] {"change_from_up_ms": 935.8, "valid_window": true}
+      change: want={'frame': 'VGS', 'value': 10} first_ms=0.1 first_value=10
+      frames_from_up: VGS@0.0:6 VGM@0.2:15 VGS@935.9:10 VGS@1502.3:10 VGM@1502.6:15
+  [r04-timing-x5-results.jsonl rep=4] short:LEAK codec=2 down=454.5 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1031.8 VGS@1501.0 VGM@1501.5] {"change_from_up_ms": 1031.7, "valid_window": true}
+      change: want={'frame': 'VGS', 'value': 10} first_ms=0.1 first_value=10
+      frames_from_up: VGS@0.0:6 VGM@0.0:15 VGS@1031.8:10 VGS@1501.0:10 VGM@1501.5:15
+  counts: {"short:LEAK": 5}
+
+== t228w_hf_volume_change_in_window (5 records)
+  [r04-timing-x5-results.jsonl rep=0] short:LEAK codec=2 down=372.8 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1502.8 VGM@1503.3] {"valid_window": true, "ag_received_ms": 480.6}
+      frames_from_up: VGS@0.0:6 VGM@0.0:15 VGS@1502.8:9 VGM@1503.3:15
+  [r04-timing-x5-results.jsonl rep=1] short:LEAK codec=2 down=439.9 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1503.6 VGM@1504.0] {"valid_window": true, "ag_received_ms": 525.5}
+      frames_from_up: VGS@0.0:6 VGM@0.0:15 VGS@1503.6:9 VGM@1504.0:15
+  [r04-timing-x5-results.jsonl rep=2] short:LEAK codec=2 down=533.5 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1500.8 VGM@1501.0] {"valid_window": true, "ag_received_ms": 1145.4}
+      frames_from_up: VGS@0.0:6 VGM@0.0:15 VGS@1500.8:9 VGM@1501.0:15
+  [r04-timing-x5-results.jsonl rep=3] short:LEAK codec=2 down=365.3 next_up=None imm=[VGS@0.0 VGM@0.5] active=[] after_down=[VGS@1503.1 VGM@1504.0] {"valid_window": true, "ag_received_ms": 1010.2}
+      frames_from_up: VGS@0.0:6 VGM@0.5:15 VGS@1503.1:9 VGM@1504.0:15
+  [r04-timing-x5-results.jsonl rep=4] short:LEAK codec=2 down=312.3 next_up=None imm=[VGS@0.1 VGM@0.3] active=[] after_down=[VGS@1505.1 VGM@1506.9] {"valid_window": true, "ag_received_ms": 1325.2}
+      frames_from_up: VGS@0.1:6 VGM@0.3:15 VGS@1505.1:9 VGM@1506.9:15
+  counts: {"short:LEAK": 5}
+
+== T233 ledger: AG sent vs HF received, per test run
+  same [r04-timing-x5-results.jsonl] test_co36_t227r_route_volume_after_short_link[0-hosts30-vm2-784M] hf1: sent=6 got=6
+  same [r04-timing-x5-results.jsonl] test_co36_t227r_route_volume_after_short_link[1-hosts30-vm2-784M] hf1: sent=6 got=6
+  same [r04-timing-x5-results.jsonl] test_co36_t227r_route_volume_after_short_link[2-hosts30-vm2-784M] hf1: sent=6 got=6
+  same [r04-timing-x5-results.jsonl] test_co36_t227r_route_volume_after_short_link[3-hosts30-vm2-784M] hf1: sent=6 got=6
+  same [r04-timing-x5-results.jsonl] test_co36_t227r_route_volume_after_short_link[4-hosts30-vm2-784M] hf1: sent=6 got=6
+  same [r04-timing-x5-results.jsonl] test_co36_t228w_hf_volume_change_in_window[0-hosts32-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t228w_hf_volume_change_in_window[1-hosts32-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t228w_hf_volume_change_in_window[2-hosts32-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t228w_hf_volume_change_in_window[3-hosts32-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t228w_hf_volume_change_in_window[4-hosts32-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t214_hangup_near_deadline[0-hosts34-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t214_hangup_near_deadline[1-hosts34-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t214_hangup_near_deadline[2-hosts34-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t214_hangup_near_deadline[3-hosts34-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t214_hangup_near_deadline[4-hosts34-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t215f_node_suspend_fast[0-hosts36-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t215f_node_suspend_fast[1-hosts36-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t215f_node_suspend_fast[2-hosts36-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t215f_node_suspend_fast[3-hosts36-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t215f_node_suspend_fast[4-hosts36-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t216_profile_off[0-hosts37-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t216_profile_off[1-hosts37-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t216_profile_off[2-hosts37-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t216_profile_off[3-hosts37-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t216_profile_off[4-hosts37-vm2-784M] hf1: sent=5 got=5
+  same [r04-timing-x5-results.jsonl] test_co36_t221_codec_switch_after_short_link[0-hosts39-vm2-784M] hf1: sent=3 got=3
+  same [r04-timing-x5-results.jsonl] test_co36_t221_codec_switch_after_short_link[1-hosts39-vm2-784M] hf1: sent=3 got=3
+  same [r04-timing-x5-results.jsonl] test_co36_t221_codec_switch_after_short_link[2-hosts39-vm2-784M] hf1: sent=3 got=3
+  same [r04-timing-x5-results.jsonl] test_co36_t221_codec_switch_after_short_link[3-hosts39-vm2-784M] hf1: sent=3 got=3
+  same [r04-timing-x5-results.jsonl] test_co36_t221_codec_switch_after_short_link[4-hosts39-vm2-784M] hf1: sent=5 got=5
+  ledgers=30 mismatches=0
