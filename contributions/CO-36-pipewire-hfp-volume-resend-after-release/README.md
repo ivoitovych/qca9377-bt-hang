@@ -140,6 +140,12 @@ project's always-on `bt-capture` (btsnoop), decoded with btmon.
 - The HSP path and the hands-free (HF) role: only the HFP audio-gateway role was observed.
 - Whether stopping the timer on release would undo what `d82b3d647` was for. Its stated case is
   the first `+VGS` after a connection being taken only partly; that is the maintainers' call.
+  What the history shows: `d82b3d647` armed the resend in `sco_acquire_cb()`, right after
+  waiting up to 500 ms for the new SCO socket (`wait_for_socket(sock)`), so the "connection" in
+  its comment is the SCO connection; `2bc48e1c1` (Pauli Virtanen, 2023-03-17, "make SCO acquire
+  asynchronous") moved the calls to `sco_ready()`. Neither commit says what should happen when
+  the SCO connection ends within 1.5 s, and the comment gives a `+VGS` reason only, none for
+  `+VGM`.
 
 ## Files
 
