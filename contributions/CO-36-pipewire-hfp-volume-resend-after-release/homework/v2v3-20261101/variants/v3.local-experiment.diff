@@ -1,0 +1,28 @@
+# LOCAL EXPERIMENT ONLY (CO-36 variant v3), not a proposed change; base PipeWire 4cfc471123a0e041fcd6fec5887c40dbddd40325
+--- a/spa/plugins/bluez5/backend-native.c
++++ b/spa/plugins/bluez5/backend-native.c
+@@ -2860,6 +2860,8 @@
+ 	struct transport_data *td = t->user_data;
+ 	struct impl *backend = SPA_CONTAINER_OF(t->backend, struct impl, this);
+ 
++	volume_sync_stop_timer(td->rfcomm);
++
+ 	if (t->sco_io) {
+ 		spa_bt_sco_io_destroy(t->sco_io);
+ 		t->sco_io = NULL;
+@@ -2887,6 +2889,7 @@
+ 	spa_log_info(backend->log, "Transport %s released", t->path);
+ 
+ 	spa_bt_transport_set_state(t, SPA_BT_TRANSPORT_STATE_IDLE);
++	volume_sync_stop_timer(td->rfcomm);
+ 
+ #ifdef HAVE_BLUEZ_5_BACKEND_HFP_NATIVE
+ 	if (!td->rfcomm->device->disable_dummy_call)
+@@ -2907,6 +2910,7 @@
+ 	if (source->rmask & (SPA_IO_HUP | SPA_IO_ERR)) {
+ 		/* sco_ready() reads the socket error status in td->err */
+ 		sco_ready(t);
++		volume_sync_stop_timer(td->rfcomm);
+ 
+ 		if (td->err < 0) {
+ 			spa_log_info(backend->log, "transport %p: SCO socket error: %s (%d)",

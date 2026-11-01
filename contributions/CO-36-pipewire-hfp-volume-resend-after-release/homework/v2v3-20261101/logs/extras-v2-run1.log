@@ -1,0 +1,49 @@
+# 2026-11-01T11:42:11Z tree /root/exp/agent-work/co36/pw at 4cfc471123a0e041fcd6fec5887c40dbddd40325, variant v2 file /root/exp/agent-work/co36-v2v3-20261101/variants/v2/backend-native.c
+# test files: 98530e2dc196b6f093d5e23e46885415ecf48a18d975674f29963949fd8fd777  /root/exp/agent-work/co36-v2v3-20261101/unit/test-backend-native.c
+04a94139c2fec46c77abfdb4e42cd9d1824cdee23589d9f819364035cba76e0b  /root/exp/agent-work/co36-v2v3-20261101/extras/test-extras.c
+# file under test: 16137b9a341b3d0a2ac8073333151631db9a315b84d125578ffd01d032e74072  /variant/backend-native.c
+# compiler: cc (GCC) 16.2.1 20260819 (Red Hat 16.2.1-2)
+In file included from /unit/test-backend-native.c:5,
+                 from /extras/test-extras.c:8:
+/variant/backend-native.c: In function 'rfcomm_hfp_hf':
+/variant/backend-native.c:2356:42: warning: 'idx' may be used uninitialized [-Wmaybe-uninitialized]
+ 2356 |                         updated_call->id = idx;
+      |                         ~~~~~~~~~~~~~~~~~^~~~~
+/variant/backend-native.c:2304:21: note: 'idx' was declared here
+ 2304 |                 int idx;
+      |                     ^~~
+In file included from /src/spa/include/spa/support/log.h:12,
+                 from /src/spa/include/spa/debug/log.h:12,
+                 from /variant/backend-native.c:23:
+/src/spa/include/spa/utils/hook.h:169:20: warning: 'status' may be used uninitialized [-Wmaybe-uninitialized]
+  169 |                 (_f->method)((callbacks)->data, ## __VA_ARGS__);                \
+      |                 ~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/src/spa/include/spa/utils/hook.h:238:9: note: in expansion of macro 'spa_callbacks_call'
+  238 |         spa_callbacks_call(&(iface)->cb,method_type,method,vers,##__VA_ARGS__)
+      |         ^~~~~~~~~~~~~~~~~~
+/src/spa/include/spa/support/log.h:255:22: note: in expansion of macro 'spa_interface_call'
+  255 |                 if (!spa_interface_call(_if,                            \
+      |                      ^~~~~~~~~~~~~~~~~~
+/src/spa/include/spa/support/log.h:284:9: note: in expansion of macro 'spa_log_logt'
+  284 |         spa_log_logt(l,lev,t,__FILE__,__LINE__,__func__,__VA_ARGS__)
+      |         ^~~~~~~~~~~~
+/src/spa/include/spa/support/log.h:287:9: note: in expansion of macro 'spa_logt_lev'
+  287 |         spa_logt_lev(l,lev,SPA_LOG_TOPIC_DEFAULT,__VA_ARGS__)
+      |         ^~~~~~~~~~~~
+/src/spa/include/spa/support/log.h:297:33: note: in expansion of macro 'spa_log_lev'
+  297 | #define spa_log_info(l,...)     spa_log_lev(l,SPA_LOG_LEVEL_INFO,__VA_ARGS__)
+      |                                 ^~~~~~~~~~~
+/variant/backend-native.c:2386:33: note: in expansion of macro 'spa_log_info'
+ 2386 |                                 spa_log_info(backend->log, "New call, initial state: %u", status);
+      |                                 ^~~~~~~~~~~~
+/variant/backend-native.c:2305:30: note: 'status' was declared here
+ 2305 |                 unsigned int status, mpty;
+      |                              ^~~~~~
+X01 PASS up@0 +VGS:6@0 +VGM:15@0 rel@100 in-pending@1400 up@1600 +VGS:6@1600 +VGM:15@1600 +VGS:6@3100 +VGM:15@3100
+X02 PASS up@0 +VGS:6@0 +VGM:15@0 rel@100 connecting@1400 up@1600 +VGS:6@1600 +VGM:15@1600 +VGS:6@3100 +VGM:15@3100
+X03 PASS up@0 +VGS:6@0 +VGM:15@0 rel@100 connecting@1000 hup-at-connect@1000 +VGS:6@1000 +VGM:15@1000
+X04 PASS record: timer armed after release: yes deadline 1500; late frames 0; up@0 +VGS:6@0 +VGM:15@0 rel@100
+X05 PASS up@0 +VGS:6@0 +VGM:15@0 +VGS:6@1500 +VGM:15@1500 hup@1600
+X06a PASS up@0 +VGS:6@0 +VGM:15@0 rel@100 in-pending@1400 up@1500 +VGS:6@1500 +VGM:15@1500 +VGS:6@3000 +VGM:15@3000
+X06b PASS up@0 +VGS:6@0 +VGM:15@0 rel@100 in-pending@1400 up@1500 +VGS:6@1500 +VGM:15@1500 +VGS:6@3000 +VGM:15@3000
+# 7 extras: 7 PASS, 0 FAIL

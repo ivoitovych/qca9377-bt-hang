@@ -1,0 +1,99 @@
+
+== long_link (3 records)
+  [l2-v3-x3-results.jsonl rep=0] long:resend-while-up codec=1 down=4624.8 next_up=None imm=[VGS@0.0 VGM@0.2] active=[VGS@1501.7 VGM@1502.1] after_down=[] {}
+  [l2-v3-x3-results.jsonl rep=1] long:resend-while-up codec=1 down=5217.0 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1502.6 VGM@1502.6] after_down=[] {}
+  [l2-v3-x3-results.jsonl rep=2] long:resend-while-up codec=1 down=4466.2 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1502.5 VGM@1502.5] after_down=[] {}
+  counts: {"long:resend-while-up": 3}
+
+== reacquire (3 records)
+  [l2-v3-x3-results.jsonl rep=0] first: re-armed codec=1 down=533.8 next_up=1015.8 imm=[VGS@0.1 VGM@0.1] active=[] after_down=[]
+  [l2-v3-x3-results.jsonl rep=0] second: short:clean codec=1 down=346.5 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[]
+  [l2-v3-x3-results.jsonl rep=1] first: short:clean codec=1 down=823.7 next_up=1525.7 imm=[VGS@0.0 VGM@0.3] active=[] after_down=[]
+  [l2-v3-x3-results.jsonl rep=1] second: long:resend-while-up codec=1 down=4821.1 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1502.3 VGM@1502.4] after_down=[]
+  [l2-v3-x3-results.jsonl rep=2] first: re-armed codec=1 down=485.9 next_up=1327.5 imm=[VGS@0.0 VGM@0.2] active=[] after_down=[]
+  [l2-v3-x3-results.jsonl rep=2] second: long:resend-while-up codec=1 down=4590.5 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1502.9 VGM@1503.1] after_down=[]
+  counts: {"first:re-armed": 2, "second:short:clean": 1, "first:short:clean": 1, "second:long:resend-while-up": 2}
+
+== remote_hangup (3 records)
+  [l2-v3-x3-results.jsonl rep=0] short:clean codec=1 down=481.6 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[] {}
+  [l2-v3-x3-results.jsonl rep=1] short:clean codec=1 down=178.5 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[] {}
+  [l2-v3-x3-results.jsonl rep=2] short:clean codec=1 down=141.7 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[] {}
+  counts: {"short:clean": 3}
+
+== short_link (3 records)
+  [l2-v3-x3-results.jsonl rep=0] short:clean codec=1 down=1089.9 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[] {}
+  [l2-v3-x3-results.jsonl rep=1] short:clean codec=1 down=855.3 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[] {}
+  [l2-v3-x3-results.jsonl rep=2] short:clean codec=1 down=1043.7 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[] {}
+  counts: {"short:clean": 3}
+
+== short_link_msbc (3 records)
+  [l2-v3-x3-results.jsonl rep=0] short:clean codec=2 down=932.7 next_up=None imm=[VGS@0.0 VGM@0.1] active=[] after_down=[] {}
+  [l2-v3-x3-results.jsonl rep=1] short:clean codec=2 down=1128.5 next_up=None imm=[VGS@0.0 VGM@0.3] active=[] after_down=[] {}
+  [l2-v3-x3-results.jsonl rep=2] short:clean codec=2 down=657.4 next_up=None imm=[VGS@0.0 VGM@0.3] active=[] after_down=[] {}
+  counts: {"short:clean": 3}
+
+== t214_hangup_near_deadline (3 records)
+  [l2-v3-x3-results.jsonl rep=0] short:clean codec=2 down=1487.4 next_up=None imm=[VGS@0.1 VGM@3.2] active=[] after_down=[] {"sleep_s": 0.95}
+  [l2-v3-x3-results.jsonl rep=1] short:clean codec=2 down=1439.1 next_up=None imm=[VGS@0.0 VGM@0.1] active=[] after_down=[] {"sleep_s": 0.95}
+  [l2-v3-x3-results.jsonl rep=2] short:clean codec=2 down=1445.1 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[] {"sleep_s": 0.95}
+  counts: {"short:clean": 3}
+
+== t219_bluetoothd_restart (3 records)
+  [l2-v3-x3-results.jsonl rep=0] short:clean codec=2 down=540.4 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[] {"restart_requested_ms": 462.4, "pipewire_running": true, "write_errors": []}
+      frames_from_up: VGS@0.0:6 VGM@0.0:15
+  [l2-v3-x3-results.jsonl rep=1] short:clean codec=2 down=441.0 next_up=None imm=[VGS@0.0 VGM@0.1] active=[] after_down=[] {"restart_requested_ms": 336.0, "pipewire_running": true, "write_errors": []}
+      frames_from_up: VGS@0.0:6 VGM@0.1:15
+  [l2-v3-x3-results.jsonl rep=2] short:clean codec=2 down=276.6 next_up=None imm=[VGS@0.0 VGM@0.1] active=[] after_down=[] {"restart_requested_ms": 172.2, "pipewire_running": true, "write_errors": []}
+      frames_from_up: VGS@0.0:6 VGM@0.1:15
+  counts: {"short:clean": 3}
+
+== t221_codec_switch_after_short (3 records)
+  [l2-v3-x3-results.jsonl rep=0] long:resend-while-up codec=2 down=1941.3 next_up=None imm=[VGS@0.0 VGM@0.1] active=[VGS@1501.2 VGM@1501.2] after_down=[] {"bcs_ms": 3805.8}
+      frames_from_up: VGS@0.0:6 VGM@0.1:15 VGS@1501.2:6 VGM@1501.2:15
+  [l2-v3-x3-results.jsonl rep=1] long:resend-while-up codec=2 down=1997.0 next_up=None imm=[VGS@0.0 VGM@0.1] active=[VGS@1503.9 VGM@1504.0] after_down=[] {"bcs_ms": 3858.3}
+      frames_from_up: VGS@0.0:6 VGM@0.1:15 VGS@1503.9:6 VGM@1504.0:15
+  [l2-v3-x3-results.jsonl rep=2] long:resend-while-up codec=2 down=1785.5 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1501.7 VGM@1501.7] after_down=[] {"bcs_ms": 3589.7}
+      frames_from_up: VGS@0.0:6 VGM@0.0:15 VGS@1501.7:6 VGM@1501.7:15
+  counts: {"long:resend-while-up": 3}
+
+== t227r_route_volume_after_short_link (3 records)
+  [l2-v3-x3-results.jsonl rep=0] short:clean codec=2 down=450.4 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@994.5] {"change_from_up_ms": 994.4, "valid_window": true}
+      change: want={'frame': 'VGS', 'value': 10} first_ms=0.0 first_value=10
+      frames_from_up: VGS@0.0:6 VGM@0.0:15 VGS@994.5:10
+  [l2-v3-x3-results.jsonl rep=1] short:clean codec=2 down=314.9 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@958.2] {"change_from_up_ms": 958.2, "valid_window": true}
+      change: want={'frame': 'VGS', 'value': 10} first_ms=0.0 first_value=10
+      frames_from_up: VGS@0.0:6 VGM@0.0:15 VGS@958.2:10
+  [l2-v3-x3-results.jsonl rep=2] short:clean codec=2 down=569.4 next_up=None imm=[VGS@0.0 VGM@0.5] active=[] after_down=[VGS@1209.2] {"change_from_up_ms": 1208.9, "valid_window": true}
+      change: want={'frame': 'VGS', 'value': 10} first_ms=0.3 first_value=10
+      frames_from_up: VGS@0.0:6 VGM@0.5:15 VGS@1209.2:10
+  counts: {"short:clean": 3}
+
+== T233 ledger: AG sent vs HF received, per test run
+  same [l2-v3-x3-results.jsonl] test_co36_reacquire[0-hosts10-vm2-784M] hf1: sent=5 got=5
+  same [l2-v3-x3-results.jsonl] test_co36_reacquire[1-hosts10-vm2-784M] hf1: sent=7 got=7
+  same [l2-v3-x3-results.jsonl] test_co36_reacquire[2-hosts10-vm2-784M] hf1: sent=7 got=7
+  same [l2-v3-x3-results.jsonl] test_co36_remote_hangup[0-hosts11-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_remote_hangup[1-hosts11-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_remote_hangup[2-hosts11-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_long_link[0-hosts12-vm2-784M] hf1: sent=5 got=5
+  same [l2-v3-x3-results.jsonl] test_co36_long_link[1-hosts12-vm2-784M] hf1: sent=5 got=5
+  same [l2-v3-x3-results.jsonl] test_co36_long_link[2-hosts12-vm2-784M] hf1: sent=5 got=5
+  same [l2-v3-x3-results.jsonl] test_co36_t227r_route_volume_after_short_link[0-hosts30-vm2-784M] hf1: sent=4 got=4
+  same [l2-v3-x3-results.jsonl] test_co36_t227r_route_volume_after_short_link[1-hosts30-vm2-784M] hf1: sent=4 got=4
+  same [l2-v3-x3-results.jsonl] test_co36_t227r_route_volume_after_short_link[2-hosts30-vm2-784M] hf1: sent=4 got=4
+  same [l2-v3-x3-results.jsonl] test_co36_t214_hangup_near_deadline[0-hosts34-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_t214_hangup_near_deadline[1-hosts34-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_t214_hangup_near_deadline[2-hosts34-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_t219_bluetoothd_restart[0-hosts38-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_t219_bluetoothd_restart[1-hosts38-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_t219_bluetoothd_restart[2-hosts38-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_t221_codec_switch_after_short_link[0-hosts39-vm2-784M] hf1: sent=5 got=5
+  same [l2-v3-x3-results.jsonl] test_co36_t221_codec_switch_after_short_link[1-hosts39-vm2-784M] hf1: sent=5 got=5
+  same [l2-v3-x3-results.jsonl] test_co36_t221_codec_switch_after_short_link[2-hosts39-vm2-784M] hf1: sent=5 got=5
+  same [l2-v3-x3-results.jsonl] test_co36_short_link[0-hosts7-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_short_link[1-hosts7-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_short_link[2-hosts7-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_short_link_msbc[0-hosts8-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_short_link_msbc[1-hosts8-vm2-784M] hf1: sent=3 got=3
+  same [l2-v3-x3-results.jsonl] test_co36_short_link_msbc[2-hosts8-vm2-784M] hf1: sent=3 got=3
+  ledgers=27 mismatches=0

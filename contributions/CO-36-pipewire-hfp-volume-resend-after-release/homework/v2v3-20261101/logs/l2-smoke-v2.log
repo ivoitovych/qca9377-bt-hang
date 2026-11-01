@@ -1,0 +1,51 @@
+# l2-smoke-v2 variant v2 tree /root/exp/agent-work/co36-v2v3-20261101/pw-v2 backend-native.c 16137b9a341b3d0a2ac8073333151631db9a315b84d125578ffd01d032e74072  /root/exp/agent-work/co36-v2v3-20261101/pw-v2/spa/plugins/bluez5/backend-native.c
+# test file 98e280cd247e439e5beb82023fdb5ca07c5dd3da799a5132b51457c3ea58d1d7  /root/exp/qca9377-bt-hang/contributions/CO-36-pipewire-hfp-volume-resend-after-release/homework/tests/test_co36_hfp_volume_resend.py
+ninja: Entering directory `/src/build-v0-asan'
+[1/2] Compiling C object spa/plugins/bluez5/libspa-bluez5.so.p/backend-native.c.o
+../spa/plugins/bluez5/backend-native.c: In function ‘rfcomm_hfp_hf’:
+../spa/plugins/bluez5/backend-native.c:2356:42: warning: ‘idx’ may be used uninitialized [-Wmaybe-uninitialized]
+ 2356 |                         updated_call->id = idx;
+      |                         ~~~~~~~~~~~~~~~~~^~~~~
+../spa/plugins/bluez5/backend-native.c:2304:21: note: ‘idx’ was declared here
+ 2304 |                 int idx;
+      |                     ^~~
+In file included from ../spa/include/spa/support/log.h:12,
+                 from ../spa/include/spa/debug/log.h:12,
+                 from ../spa/plugins/bluez5/backend-native.c:23:
+../spa/include/spa/utils/hook.h:169:20: warning: ‘status’ may be used uninitialized [-Wmaybe-uninitialized]
+  169 |                 (_f->method)((callbacks)->data, ## __VA_ARGS__);                \
+      |                 ~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../spa/include/spa/utils/hook.h:238:9: note: in expansion of macro ‘spa_callbacks_call’
+  238 |         spa_callbacks_call(&(iface)->cb,method_type,method,vers,##__VA_ARGS__)
+      |         ^~~~~~~~~~~~~~~~~~
+../spa/include/spa/support/log.h:255:22: note: in expansion of macro ‘spa_interface_call’
+  255 |                 if (!spa_interface_call(_if,                            \
+      |                      ^~~~~~~~~~~~~~~~~~
+../spa/include/spa/support/log.h:284:9: note: in expansion of macro ‘spa_log_logt’
+  284 |         spa_log_logt(l,lev,t,__FILE__,__LINE__,__func__,__VA_ARGS__)
+      |         ^~~~~~~~~~~~
+../spa/include/spa/support/log.h:287:9: note: in expansion of macro ‘spa_logt_lev’
+  287 |         spa_logt_lev(l,lev,SPA_LOG_TOPIC_DEFAULT,__VA_ARGS__)
+      |         ^~~~~~~~~~~~
+../spa/include/spa/support/log.h:297:33: note: in expansion of macro ‘spa_log_lev’
+  297 | #define spa_log_info(l,...)     spa_log_lev(l,SPA_LOG_LEVEL_INFO,__VA_ARGS__)
+      |                                 ^~~~~~~~~~~
+../spa/plugins/bluez5/backend-native.c:2386:33: note: in expansion of macro ‘spa_log_info’
+ 2386 |                                 spa_log_info(backend->log, "New call, initial state: %u", status);
+      |                                 ^~~~~~~~~~~~
+../spa/plugins/bluez5/backend-native.c:2305:30: note: ‘status’ was declared here
+ 2305 |                 unsigned int status, mpty;
+      |                              ^~~~~~
+[2/2] Linking target spa/plugins/bluez5/libspa-bluez5.so
+INFO: autodetecting backend as ninja
+INFO: calculating backend command to run: /usr/bin/ninja -C /src/build-v0-asan
+============================= test session starts ==============================
+platform linux -- Python 3.14.8, pytest-8.4.2, pluggy-1.6.0 -- /usr/bin/python3
+rootdir: /src/test
+configfile: pytest.ini
+plugins: rerunfailures-15.0, xdist-3.7.0
+collecting ... collected 50 items / 49 deselected / 1 selected
+
+test/bluezenv/test_co36_hfp_volume_resend.py::test_co36_long_link[0-hosts12-vm2-784M] PASSED [100%]
+
+====================== 1 passed, 49 deselected in 27.34s =======================

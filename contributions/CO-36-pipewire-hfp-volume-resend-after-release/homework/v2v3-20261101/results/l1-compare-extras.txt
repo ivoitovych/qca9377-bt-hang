@@ -1,0 +1,13 @@
+# inputs: /root/exp/agent-work/co36-v2v3-20261101/logs/extras-v0-run1.log /root/exp/agent-work/co36-v2v3-20261101/logs/extras-v0-run2.log /root/exp/agent-work/co36-v2v3-20261101/logs/extras-v0-run3.log /root/exp/agent-work/co36-v2v3-20261101/logs/extras-v2-run1.log /root/exp/agent-work/co36-v2v3-20261101/logs/extras-v2-run2.log /root/exp/agent-work/co36-v2v3-20261101/logs/extras-v2-run3.log /root/exp/agent-work/co36-v2v3-20261101/logs/extras-v3-run1.log /root/exp/agent-work/co36-v2v3-20261101/logs/extras-v3-run2.log /root/exp/agent-work/co36-v2v3-20261101/logs/extras-v3-run3.log
+# determinism: every run of a variant gives identical test lines
+v0: 3 runs, 7 tests, identical across runs: True
+v2: 3 runs, 7 tests, identical across runs: True
+v3: 3 runs, 7 tests, identical across runs: True
+# per test: verdict per variant; line equal to V0's; V2 line == V3 line
+X01 v0=FAIL v2=PASS v3=PASS v2==v0:False v3==v0:False v2==v3:True
+X02 v0=FAIL v2=PASS v3=PASS v2==v0:False v3==v0:False v2==v3:True
+X03 v0=FAIL v2=PASS v3=PASS v2==v0:False v3==v0:False v2==v3:True
+X04 v0=FAIL v2=PASS v3=PASS v2==v0:False v3==v0:False v2==v3:False
+X05 v0=PASS v2=PASS v3=PASS v2==v0:True v3==v0:True v2==v3:True
+X06a v0=PASS v2=PASS v3=PASS v2==v0:True v3==v0:True v2==v3:True
+X06b v0=FAIL v2=PASS v3=PASS v2==v0:False v3==v0:False v2==v3:True

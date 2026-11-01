@@ -1,0 +1,37 @@
+
+== long_link (1 records)
+  [run-p0-4-results.jsonl rep=None] long:resend-while-up codec=1 down=4743.8 next_up=None imm=[VGS@0.0 VGM@0.1] active=[VGS@1502.7 VGM@1502.8] after_down=[] {}
+  counts: {"long:resend-while-up": 1}
+
+== reacquire (2 records)
+  [run-p0-4-results.jsonl rep=None] first: re-armed codec=1 down=539.3 next_up=1465.1 imm=[VGS@0.0 VGM@0.0] active=[] after_down=[]
+  [run-p0-4-results.jsonl rep=None] second: long:resend-while-up codec=1 down=4507.6 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1502.1 VGM@1502.2] after_down=[]
+  [run-p0-5-results.jsonl rep=None] first: short:LEAK codec=1 down=765.8 next_up=1648.6 imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1503.3 VGM@1503.4]
+  [run-p0-5-results.jsonl rep=None] second: long:resend-while-up codec=1 down=4630.0 next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1502.8 VGM@1503.2] after_down=[]
+  counts: {"first:re-armed": 1, "second:long:resend-while-up": 2, "first:short:LEAK": 1}
+
+== remote_hangup (2 records)
+  [run-p0-4-results.jsonl rep=None] short:LEAK codec=1 down=472.8 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1503.1 VGM@1503.2] {}
+  [run-p0-4-results.jsonl rep=None] short:LEAK codec=1 down=169.7 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1503.1 VGM@1503.1] {}
+  counts: {"short:LEAK": 2}
+
+== short_link (2 records)
+  [run-p0-4-results.jsonl rep=None] short:LEAK codec=1 down=666.9 next_up=None imm=[VGS@0.0 VGM@0.1] active=[] after_down=[VGS@1500.6 VGM@1500.9] {}
+  [run-p0-4-results.jsonl rep=None] short:LEAK codec=1 down=534.1 next_up=None imm=[VGS@0.0 VGM@0.0] active=[] after_down=[VGS@1503.9 VGM@1503.9] {}
+  counts: {"short:LEAK": 2}
+
+== short_link_msbc (4 records)
+  [run-p0-4-results.jsonl rep=None] short:LEAK codec=1 down=631.3 next_up=None imm=[VGS@0.0 VGM@0.5] active=[] after_down=[VGS@1503.1 VGM@1503.2] {}
+  [run-p0-4-results.jsonl rep=None] short:LEAK codec=1 down=712.1 next_up=None imm=[VGS@0.0 VGM@0.3] active=[] after_down=[VGS@1503.5 VGM@1503.7] {}
+  [run-p0-5-results.jsonl rep=None] short:LEAK codec=2 down=700.8 next_up=None imm=[VGS@0.0 VGM@0.3] active=[] after_down=[VGS@1503.4 VGM@1503.5] {}
+  [run-p0-5-results.jsonl rep=None] short:LEAK codec=2 down=625.5 next_up=None imm=[VGS@0.0 VGM@0.3] active=[] after_down=[VGS@1501.3 VGM@1501.3] {}
+  counts: {"short:LEAK": 4}
+
+== stream_stop (3 records)
+  [run-p0-4-results.jsonl rep=None] no-end codec=1 down=None next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1503.6 VGM@1503.7] after_down=[] {}
+  [run-p0-4-results.jsonl rep=None] no-end codec=1 down=None next_up=None imm=[VGS@0.0 VGM@0.0] active=[VGS@1502.1 VGM@1502.4] after_down=[] {}
+  [run-p0-5-results.jsonl rep=None] long:resend-while-up codec=2 down=6416.7 next_up=None imm=[VGS@0.0 VGM@0.3] active=[VGS@1504.4 VGM@1504.9] after_down=[] {}
+  counts: {"no-end": 2, "long:resend-while-up": 1}
+
+== T233 ledger: AG sent vs HF received, per test run
+  ledgers=0 mismatches=0

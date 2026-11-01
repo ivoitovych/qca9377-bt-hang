@@ -170,3 +170,43 @@ Per-test results, with each link's log lines verbatim:
 passes the repository's address scan, but the scan refuses its public
 constants (BlueZ experimental-feature and MIDI UUIDs, library versions
 read as IPv4 addresses, translation file names read as emails).
+
+## V2 against V3 (2026-11-01, 12:39:52 to 13:16:58)
+
+Local experiments only, not proposed changes: under PipeWire's rules any
+change sent upstream is the operator's own. Everything is in
+[`v2v3-20261101/`](v2v3-20261101/); the large pytest logs stay in
+`/root/exp/agent-work/co36-v2v3-20261101/`.
+
+- **Variants** on master `4cfc4711`: V2 sends from the resend timer only
+  when the transport is ACTIVE (one condition); V3 stops the timer in
+  `sco_destroy_cb()`, `sco_release_cb()` and `sco_event()` HUP/ERR (after
+  its `sco_ready()` call). Diffs in `variants/`.
+- **Same tests on every variant (T403):** L1 harness and L2 test file
+  unchanged; each log header records their hashes.
+- **L1, 3 runs each, byte-identical across runs:** V0 34 pass / 15 fail
+  (as recorded for master); V2 and V3 49/49, and V2's line equals V3's
+  for every test. Changed outcomes are exactly the planned leak set
+  (T120, T121, T124, T130–T133, T151, T153, T154), plus T152b; every keep
+  test is byte-identical to V0 (T402). `results/l1-compare-unit.txt`.
+- **T152, the same-loop-turn boundary:** on V0 the order decides (link
+  first clean, timer first leaks); on V2 and V3 both orders give the same
+  timeline.
+- **Extra gap cases** (`extras/`, one file for all variants): incoming link
+  pending across the deadline, outgoing connect in progress, link up and
+  down in one event, link acquired exactly at the deadline: V0 leaks, V2
+  and V3 clean. The only V2/V3 difference anywhere: after a release V2
+  leaves the timer armed (it fires and sends nothing), V3 disarms it.
+- **L2 (VMs), 3 to 6 runs per case:** T201, T202, T203, T214, T206 late,
+  T227r: V0 leaks every run, V2 and V3 clean every run; T206 in time,
+  T204, T219: unchanged; T233 ledger 0 mismatches on all. L1 and L2 agree
+  on every pair (T404). Failures that are not variant effects: WirePlumber
+  ending the second link in some reacquire runs (V0 too, 2 of 6), and
+  T221 links stretched by two VM batches at once (normal when run alone).
+- **Verdict: a tie.** No test distinguishes V2 from V3 on the wire. What
+  remains is a design question for review: V2 holds while every path to
+  ACTIVE goes through `sco_ready()`; V3 holds while every link end passes
+  one of its three stops.
+- **Not run on the variants:** PipeWire's own 7 VM tests (T008), the clang
+  build (T003), builds without a native backend (T004), the 1.0.5
+  backport (T009), real headsets (L3).
