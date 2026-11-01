@@ -106,3 +106,37 @@ Source only, master `14bd6ab65f4a`; nothing built or run. Work area (local):
 - **Settling runs listed** (CO-37 harness): client exit after adapter removal; leak detection on
   (`asan-tree.sh` builds with `--disable-lsan`, so no run so far could show a leak); stream-idle
   while held; the duplicate Release count.
+
+## 2026-11-01 (night) — the settling runs
+QEMU guests, 16:46:53 to 18:49:05; work area (local, raw logs, compressed cores, SHA256SUMS)
+`/root/exp/agent-work/u25-settle-20261101/`. Trees: master `14bd6ab65`, `stk-fix12` (CO-37's
+two fixes), `prop4` (the timer proposal), L1 (prop4 with amendments), L2 (stk-fix12 with the
+transports cleared before the SEP is removed). Nothing sent.
+- **A new bug on master (U26):** endpoint removed while another client holds its transport,
+  adapter removed, then the endpoint's client leaves the bus: heap-use-after-free in
+  `a2dp_remove_sep` (`a2dp.c:3042` on master) reading the A2DP server freed by the adapter
+  removal. 10/10 test calls on master, stk-fix12 and prop4; 0/10 on L1 and L2 (checked: 10
+  matches per debug log on master, `runs/q1-stk-base/`).
+- **The timer proposal is rejected:** besides U26 it never unregisters the SEP in the bus-loss
+  and adapter cases (0/120 in the rate runs) and leaks the endpoint and SEP (LeakSanitizer).
+- **L1 (amended timer) has a use-after-free of its own:** `sep_removed` (`a2dp.c:657`) reads the
+  freed server when the adapter is removed before the connection is lost (2 of 20 and 1 of 220
+  test calls, exactly the runs with that order).
+- **L2 (clear before remove) is clean in every measurement:** no ASan report, no leak, no "still
+  locked" state (the warning is compiled in and appears in no log), the SEP unregistered in every
+  case; the two CO-37 tests pass 10/10; 200/200 adjacent test calls pass once the "transport
+  stays after removal" assertion is relaxed. Its cost is by design: another client's acquired
+  transport is destroyed when the endpoint goes, reversing `1636fb014` (2011). That is a design
+  question for the maintainers.
+- **Duplicate Release, and our series widens it:** on adapter removal with no transport, master
+  sends `MediaEndpoint1.Release` twice to a RegisterEndpoint endpoint and once to an application
+  endpoint (3/3 each); with CO-37's two fixes both kinds get it twice (3/3). The reordered
+  `path_free` in our fix is the inferred cause. To be fixed before CO-37 is sent.
+- **Leaks:** with leak checking actually on, stk-fix12 and prop4 leak the endpoint, the SEP and
+  the AVDTP SEP behind a 16-byte list node (`media_endpoint_create`, `media.c:1759`) in the
+  client-exit-after-adapter-removal case (6/6); L2 leaks nothing.
+- **Correction:** "no run so far could show a leak" was right, but not because of the build flag:
+  the `--enable-lsan` and `--disable-lsan` binaries have identical code; the test harness sets
+  `leak_check_at_exit=0` in the guest. The leak variant turns it on for bluetoothd only.
+- **Stream-idle leak confirmed** (5 runs each): after the peer disconnects while another client
+  holds the transport, master, stk-fix12 and prop4 never unregister the SEP; L1 and L2 do.
