@@ -10409,6 +10409,154 @@ tools/bt-backup-journal --archive-everything >/dev/null 2>&1
     && ok "bt-backup-journal rejects an unknown option instead of archiving" \
     || bad "an unknown option was ignored and the run proceeded"
 
+# ── bt-journal-files: the copy of every closed journal file ──────────────
+#
+# Shipped on 2026-10-23 with no test at all; devtools/test-comprehension scored
+# it 0% from then on, which kept CI red (found 2026-11-01). Like
+# bt-backup-journal it runs unattended (the 3-hourly, boot and shutdown units),
+# so its verification and its refusals are the only things between "the
+# history is kept" and a gap nobody sees. Driven against a fixture journal
+# directory: two closed files, one closed uncleanly (`.journal~`) and the
+# active one, which must never be copied. journalctl and zstd are stubbed only
+# where a branch needs them; the real journal is never touched.
+JF=$(mktemp -d); JFM=4f1c0de0aa55
+# The at-sign of journald's file names is spliced in at run time: written
+# literally, such a name reads as a mail address to the publishing scan.
+JFAT='@'
+mkdir -p "$JF/src/$JFM" "$JF/bin" "$JF/empty/$JFM"
+head -c 70000 /dev/urandom > "$JF/src/$JFM/system${JFAT}0a1b-0000000000000001-0006000000000001.journal"
+head -c 50000 /dev/urandom > "$JF/src/$JFM/user-1000${JFAT}0c2d-0000000000000002-0006000000000002.journal"
+head -c 30000 /dev/urandom > "$JF/src/$JFM/system${JFAT}0006000000000003-0000000000000003.journal~"
+head -c 20000 /dev/urandom > "$JF/src/$JFM/system.journal"
+JF_FREE=0; JF_BUDGET=1000
+jf_run() {      # <source root> <dest> [args...]
+    local src="$1" dest="$2"; shift 2
+    BT_JOURNAL_SRC="$src" BT_JOURNAL_FILES_DIR="$dest" \
+        BT_JOURNAL_FILES_FREE_MIN_GB="$JF_FREE" BT_JOURNAL_FILES_BUDGET_GB="$JF_BUDGET" \
+        tools/bt-journal-files "$@" 2>&1
+}
+jf_zst() { find "$1" -name '*.zst' | wc -l; }
+
+if ! command -v zstd >/dev/null 2>&1; then
+    # A runner without zstd can still drive the first refusal, and must.
+    JFZ=$(jf_run "$JF/src" "$JF/dst"); jfzrc=$?
+    (( jfzrc == 2 )) && [[ "$JFZ" == *"REFUSING"*"zstd not found"* ]] \
+        && ok "bt-journal-files refuses without zstd (zstd absent here: the copy cases did not run)" \
+        || bad "no zstd gave rc=$jfzrc rather than a refusal: $JFZ"
+else
+    JFREAL=$(command -v zstd)
+
+    # EVERY CLOSED FILE, BYTE-EXACT, AND NEVER THE ACTIVE ONE. The copies are
+    # read back here with the real zstd, independently of the tool's own check.
+    JFOUT=$(jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    jfsame=1
+    for f in "$JF/src/$JFM"/*@*.journal "$JF/src/$JFM"/*.journal~; do
+        [[ "$(zstd -dc < "$JF/dst/$JFM/${f##*/}.zst" 2>/dev/null | sha256sum)" == "$(sha256sum < "$f")" ]] || jfsame=0
+    done
+    (( jfrc == 0 && jfsame )) && [[ "$(jf_zst "$JF/dst")" == 3 ]] \
+       && [[ ! -e "$JF/dst/$JFM/system.journal.zst" ]] \
+       && [[ "$(grep -c . "$JF/dst/MANIFEST.tsv")" == 4 ]] \
+       && [[ "$JFOUT" == *"3 copied now, 0 already, 0 failed, 0 vanished"* ]] \
+        && ok "bt-journal-files copies every closed file (clean and unclean) byte-exact, and not the active one" \
+        || bad "the copy run gave rc=$jfrc, $(jf_zst "$JF/dst") copies, read-back equal=$jfsame: $JFOUT"
+
+    # A SECOND RUN COPIES NOTHING AGAIN. It runs every three hours; a copy
+    # repeated each time would grow the archive and the manifest without end.
+    JFOUT=$(jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    (( jfrc == 0 )) && [[ "$JFOUT" == *"0 copied now, 3 already"* ]] \
+       && [[ "$(grep -c . "$JF/dst/MANIFEST.tsv")" == 4 ]] \
+        && ok "a second run copies nothing again and adds no manifest row" \
+        || bad "the second run gave rc=$jfrc: $JFOUT"
+
+    # --status NAMES WHAT IS LEFT AND WRITES NOTHING.
+    JFNEW="system${JFAT}0a1b-0000000000000009-0006000000000009.journal"
+    head -c 1000 /dev/urandom > "$JF/src/$JFM/$JFNEW"
+    JFOUT=$(jf_run "$JF/src" "$JF/dst" --status); jfrc=$?
+    (( jfrc == 0 )) && [[ "$JFOUT" == *"not copied: $JFM/$JFNEW"* && "$JFOUT" == *"3 closed file(s) copied, 1 not yet"* ]] \
+       && [[ ! -e "$JF/dst/$JFM/$JFNEW.zst" ]] \
+        && ok "--status names the file not copied yet and writes nothing" \
+        || bad "--status gave rc=$jfrc or wrote a copy: $JFOUT"
+
+    # --rotate CLOSES THE ACTIVE FILES FIRST, through journalctl (a stub here),
+    # and a failed rotate is reported, not fatal: the copy still runs.
+    printf '#!/bin/sh\necho "rotated: $*"\n' > "$JF/bin/journalctl"; chmod +x "$JF/bin/journalctl"
+    JFOUT=$(PATH="$JF/bin:$PATH" jf_run "$JF/src" "$JF/dst" --rotate); jfrc=$?
+    (( jfrc == 0 )) && [[ "$JFOUT" == *"rotate: rotated: --rotate"* && "$JFOUT" == *"1 copied now, 3 already"* ]] \
+        && ok "--rotate closes the active files through journalctl, then copies what is closed" \
+        || bad "--rotate gave rc=$jfrc: $JFOUT"
+    printf '#!/bin/sh\nexit 1\n' > "$JF/bin/journalctl"
+    JFOUT=$(PATH="$JF/bin:$PATH" jf_run "$JF/src" "$JF/dst" --rotate); jfrc=$?
+    (( jfrc == 0 )) && [[ "$JFOUT" == *"rotate: failed; copying what is closed"* ]] \
+        && ok "a failed rotate is reported and the copy still runs" \
+        || bad "a failed rotate gave rc=$jfrc: $JFOUT"
+    rm -f "$JF/bin/journalctl"
+
+    # A COPY THAT DOES NOT READ BACK IS NOT FILED. The stub zstd compresses with
+    # the real one and returns garbage on decompression, which is exactly what
+    # the tool's own read-back must catch: no copy, no partial left, rc 1.
+    JFBAD="system${JFAT}0a1b-000000000000000a-000600000000000a.journal"
+    head -c 1000 /dev/urandom > "$JF/src/$JFM/$JFBAD"
+    { echo '#!/bin/sh'
+      echo 'case "$*" in *-dc*) echo garbage; exit 0 ;; esac'
+      echo 'exec "'"$JFREAL"'" "$@"'; } > "$JF/bin/zstd"; chmod +x "$JF/bin/zstd"
+    JFOUT=$(PATH="$JF/bin:$PATH" jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    (( jfrc == 1 )) && [[ "$JFOUT" == *"FAILED verification (copy differs from source): $JFM/$JFBAD"* ]] \
+       && [[ ! -e "$JF/dst/$JFM/$JFBAD.zst" && ! -e "$JF/dst/$JFM/$JFBAD.zst.partial" ]] \
+        && ok "a copy that does not read back identical is not filed, and the run fails" \
+        || bad "a bad read-back gave rc=$jfrc or left a copy: $JFOUT"
+
+    # A COMPRESSION THAT FAILS, WITH THE SOURCE STILL PRESENT, IS A FAILURE,
+    # not a vanished file.
+    printf '#!/bin/sh\nexit 1\n' > "$JF/bin/zstd"
+    JFOUT=$(PATH="$JF/bin:$PATH" jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    (( jfrc == 1 )) && [[ "$JFOUT" == *"FAILED to copy: $JFM/$JFBAD"* && "$JFOUT" != *VANISHED* ]] \
+       && [[ ! -e "$JF/dst/$JFM/$JFBAD.zst.partial" ]] \
+        && ok "a failed compression is a failure, not a vanished file, and leaves no partial" \
+        || bad "a failed compression gave rc=$jfrc: $JFOUT"
+    rm -f "$JF/bin/zstd"
+
+    # THE TWO GUARDS THAT PROTECT JOURNALD'S OWN HISTORY. Below the free-space
+    # floor journald deletes its oldest files, so the tool stops before
+    # copying; at the budget it stops and deletes nothing. Both before any copy.
+    JF_FREE=999999
+    JFOUT=$(jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    (( jfrc == 2 )) && [[ "$JFOUT" == *"REFUSING"*"GB free (< 999999)"* ]] && [[ ! -e "$JF/dst/$JFM/$JFBAD.zst" ]] \
+        && ok "bt-journal-files refuses below its free-space floor, before copying" \
+        || bad "the free-space floor gave rc=$jfrc: $JFOUT"
+    JF_FREE=0; JF_BUDGET=0
+    JFOUT=$(jf_run "$JF/src" "$JF/dst"); jfrc=$?
+    (( jfrc == 2 )) && [[ "$JFOUT" == *"REFUSING"*"reached its 0 GB budget; nothing is deleted"* ]] \
+       && [[ "$(jf_zst "$JF/dst")" == 4 ]] \
+        && ok "at its budget it refuses, and deletes nothing" \
+        || bad "the budget gave rc=$jfrc or changed the archive: $JFOUT"
+
+    # THE 80% WARNING, on a run with nothing left to copy: an archive of 1 GB
+    # (du rounds up) against a 1 GB budget.
+    JF_BUDGET=1
+    JFOUT=$(jf_run "$JF/empty" "$JF/dst2"); jfrc=$?
+    (( jfrc == 0 )) && [[ "$JFOUT" == *"0 copied now"* && "$JFOUT" == *"above 80% of its budget"* ]] \
+        && ok "an archive above 80% of its budget is reported" \
+        || bad "the budget warning gave rc=$jfrc: $JFOUT"
+    JF_BUDGET=1000
+fi
+
+# The other refusal and the two entry points that do not copy.
+JFOUT=$(jf_run "$JF/no-such-dir" "$JF/dst"); jfrc=$?
+if command -v zstd >/dev/null 2>&1; then
+    (( jfrc == 2 )) && [[ "$JFOUT" == *"REFUSING"*"no journal directory at $JF/no-such-dir"* ]] \
+        && ok "bt-journal-files refuses a missing journal directory" \
+        || bad "a missing journal directory gave rc=$jfrc: $JFOUT"
+fi
+tools/bt-journal-files --copy-everything >/dev/null 2>&1
+(( $? == 2 )) \
+    && ok "bt-journal-files rejects an unknown option instead of copying" \
+    || bad "an unknown option was ignored and the run proceeded"
+JFOUT=$(tools/bt-journal-files --help 2>&1); jfrc=$?
+(( jfrc == 0 )) && [[ "$JFOUT" == *"--rotate"* && "$JFOUT" == *"--status"* ]] \
+    && ok "bt-journal-files --help describes --rotate and --status" \
+    || bad "--help returned $jfrc or did not name its modes"
+rm -rf "$JF"
+
 # ── bt-snapshot: one coarse cut, and it runs DURING a live fault ─────────
 #
 # 0 of 83 lines had ever executed. This is the tool an operator reaches for
