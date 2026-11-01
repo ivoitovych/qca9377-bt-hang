@@ -847,15 +847,15 @@ team's own selection (an inference). Watch queue-7.3 after 7.4-rc1; an option-2 
 | id | one line | state (`STATUS.md`) |
 |---|---|---|
 | U1 | first codec/profile line unselectable in handsfree mode (GNOME Settings) | observed |
-| U2 | volume display/route oddities after a profile switch | observed |
+| U2 | volume display/route oddities after a profile switch | observed; **the microphone gain values explained 2026-11-01** from the archived capture: 0.00 is the headset's own 0 (U15), 0.27 and 0.08 are laptop-side `+VGM: 4` and `+VGM: 1` (`contributions/research-2026-11-01/`) |
 | U3 | profile priority comparison (WirePlumber, design) | observed, not a defect |
 | U4 | GNOME codec row shows a profile/route mismatch | observed, lead weakened |
-| U5 | handsfree picks CVSD over mSBC | withdrawn by the operator |
-| U6 | input meter reads the headset monitor | confirmed; fixed upstream in GNOME 47 |
+| U5 | handsfree picks CVSD over mSBC | withdrawn by the operator; the open case (no saved choice) answered from source 2026-11-01: every path picks the best codec (CO-24, `contributions/research-2026-11-01/`) |
+| U6 | input meter reads the headset monitor | confirmed; fixed upstream in GNOME 47 (6 commits, apply to 46.7; no Ubuntu SRU). **2026-11-01:** 46.7 does re-target the meter (journal 10-24 08:04:59, 10-29 04:46:01), and Ubuntu's 2-second WirePlumber patch (U19) then destroys it, so on Ubuntu the GNOME fix alone would not help (CO-07 merged with CO-32) |
 | U7 | PipeWire skips the SCO setup after a codec switch under an active link | confirmed on one device |
-| U8 | earbuds silent in mSBC; `corrupted SCO packet` | observed |
+| U8 | earbuds silent in mSBC; `corrupted SCO packet` | observed. **2026-11-01:** not a kernel fault. The laptop sent valid mSBC carrying the test sounds, and the microphone stream was complete. Every `corrupted SCO packet` line of the session came at link teardown, none during a call (CO-20's teardown effect). The earbuds' side stays open (`contributions/research-2026-11-01/`) |
 | U9 | no reconnect after rfkill off/on (BlueZ policy) | confirmed, by design |
-| U10 | Tronsmart T8 silent on SBC-XQ, audible on SBC (2026-10-11) | observed; the deciding question is open |
+| U10 | Tronsmart T8 silent on SBC-XQ, audible on SBC (2026-10-11) | observed; the deciding question is open. **2026-11-01:** the captures are in `archive/hci-capture/hci-20261010-230942` and `-004736` (not `archive/bt-trace`); every SBC-XQ test sound was single-channel, so "silent" cannot tell none from one-sided; a fourth test at 01:40:19; the decisive test is designed (CO-08) |
 | U11 | a newly connected headset does not become the output (2026-10-13) | confirmed in the log and the source; by design |
 | U12 | a microphone opened while A2DP is starting loses A2DP; only Handsfree remains (2026-10-19; again 2026-10-31) | confirmed in the capture, the logs and the source; fixed upstream in BlueZ 5.80 |
 | U13 | a headset known only from its LE advertising cannot be set up: every click pairs over LE, the headset refuses, GNOME shows nothing (2026-10-21) | confirmed in the capture, the log and the source; not fixed upstream |

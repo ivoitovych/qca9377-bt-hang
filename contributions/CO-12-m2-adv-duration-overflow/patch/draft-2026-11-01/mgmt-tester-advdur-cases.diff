@@ -1,0 +1,187 @@
+diff --git a/tools/mgmt-tester.c b/tools/mgmt-tester.c
+index 201bd4396..c5c486b9f 100644
+--- a/tools/mgmt-tester.c
++++ b/tools/mgmt-tester.c
+@@ -20,6 +20,7 @@
+ #include <sys/types.h>
+ #include <fcntl.h>
+ #include <errno.h>
++#include <time.h>
+ #include <unistd.h>
+ 
+ #include <linux/rfkill.h>
+@@ -14253,6 +14254,144 @@ static void test_hci_devcd(const void *test_data)
+ 	tester_wait(test->dump_data->timeout + 1, verify_devcd, NULL);
+ }
+ 
++/* Extended advertising Duration (research cases, not for submission).
++ *
++ * Add Advertising carries a timeout in seconds. On an extended advertising
++ * controller the kernel hands it to the controller as the Duration of
++ * LE Set Extended Advertising Enable (N * 10 ms). Each case adds instance 1
++ * with one timeout and checks (a) the Duration the controller receives and,
++ * for the "no early removal" cases, (b) that MGMT Advertising Removed does
++ * not arrive within ADV_DUR_WINDOW_MS of the add.
++ */
++#define ADV_DUR_WINDOW_MS 3000
++
++#define ADD_ADV_DUR_PARAM(t) { \
++	0x01,				/* adv instance */ \
++	0x00, 0x00, 0x00, 0x00,		/* flags: none */ \
++	0x00, 0x00,			/* duration: default */ \
++	(t) & 0xff, (t) >> 8,		/* timeout, seconds */ \
++	0x07,				/* adv data len */ \
++	0x00,				/* scan rsp len */ \
++	0x06, 0x08, 't', 'e', 's', 't', '1', /* shortened local name */ \
++}
++
++#define EXT_ADV_EN_DUR_PARAM(d) { \
++	0x01,				/* Enable */ \
++	0x01,				/* No of sets */ \
++	0x01,				/* Handle */ \
++	(d) & 0xff, (d) >> 8,		/* Duration, N * 10 ms */ \
++	0x00,				/* Max events */ \
++}
++
++#define ADV_DUR_CASE(name, t, d) \
++static const uint8_t add_adv_dur_param_##name[] = ADD_ADV_DUR_PARAM(t); \
++static const uint8_t ext_adv_en_dur_param_##name[] = \
++						EXT_ADV_EN_DUR_PARAM(d); \
++static const struct generic_data add_ext_adv_dur_##name = { \
++	.setup_settings = settings_powered_le, \
++	.send_opcode = MGMT_OP_ADD_ADVERTISING, \
++	.send_param = add_adv_dur_param_##name, \
++	.send_len = sizeof(add_adv_dur_param_##name), \
++	.expect_param = advertising_instance1_param, \
++	.expect_len = sizeof(advertising_instance1_param), \
++	.expect_status = MGMT_STATUS_SUCCESS, \
++	.expect_hci_command = BT_HCI_CMD_LE_SET_EXT_ADV_ENABLE, \
++	.expect_hci_param = ext_adv_en_dur_param_##name, \
++	.expect_hci_len = sizeof(ext_adv_en_dur_param_##name), \
++}; \
++static const struct generic_data add_ext_adv_dur_obs_##name = { \
++	.setup_settings = settings_powered_le, \
++	.send_opcode = MGMT_OP_ADD_ADVERTISING, \
++	.send_param = add_adv_dur_param_##name, \
++	.send_len = sizeof(add_adv_dur_param_##name), \
++	.expect_param = advertising_instance1_param, \
++	.expect_len = sizeof(advertising_instance1_param), \
++	.expect_status = MGMT_STATUS_SUCCESS, \
++}
++
++/* Expected Duration for a kernel that encodes the timeout exactly where the
++ * 16-bit field allows it (1..655 s) and clamps to 0xffff (655.35 s) above.
++ */
++ADV_DUR_CASE(t1, 1, 100);
++ADV_DUR_CASE(t65, 65, 6500);
++ADV_DUR_CASE(t66, 66, 6600);
++ADV_DUR_CASE(t120, 120, 12000);
++ADV_DUR_CASE(t655, 655, 65500);
++ADV_DUR_CASE(t656, 656, 0xffff);
++ADV_DUR_CASE(t1000, 1000, 0xffff);
++ADV_DUR_CASE(t3600, 3600, 0xffff);
++ADV_DUR_CASE(t6357, 6357, 0xffff);
++ADV_DUR_CASE(t8192, 8192, 0xffff);
++ADV_DUR_CASE(t65535, 65535, 0xffff);
++
++static struct test_data *adv_dur_owner;
++static struct timespec adv_dur_start;
++
++static unsigned long adv_dur_elapsed_ms(void)
++{
++	struct timespec now;
++
++	clock_gettime(CLOCK_MONOTONIC, &now);
++
++	return (now.tv_sec - adv_dur_start.tv_sec) * 1000 +
++		(now.tv_nsec - adv_dur_start.tv_nsec) / 1000000;
++}
++
++static void adv_dur_hci(uint16_t opcode, const void *param, uint8_t length,
++							void *user_data)
++{
++	const uint8_t *p = param;
++
++	if (opcode != BT_HCI_CMD_LE_SET_EXT_ADV_ENABLE || length < 6 || !p[0])
++		return;
++
++	tester_print("ADV-DUR: enable handle %u Duration %u (%u ms) at %lu ms",
++				p[2], get_le16(p + 3), get_le16(p + 3) * 10,
++				adv_dur_elapsed_ms());
++}
++
++static void adv_dur_removed(uint16_t index, uint16_t length,
++					const void *param, void *user_data)
++{
++	tester_warn("ADV-DUR: Advertising Removed after %lu ms",
++						adv_dur_elapsed_ms());
++
++	if (tester_get_data() == adv_dur_owner)
++		tester_test_failed();
++}
++
++static bool adv_dur_window_end(void *user_data)
++{
++	struct test_data *data = tester_get_data();
++
++	if (data != adv_dur_owner)
++		return false;
++
++	tester_print("ADV-DUR: no Advertising Removed within %u ms",
++							ADV_DUR_WINDOW_MS);
++	adv_dur_owner = NULL;
++	test_condition_complete(data);
++
++	return false;
++}
++
++static void test_add_adv_duration(const void *test_data)
++{
++	struct test_data *data = tester_get_data();
++
++	clock_gettime(CLOCK_MONOTONIC, &adv_dur_start);
++	adv_dur_owner = data;
++
++	hciemu_add_central_post_command_hook(data->hciemu, adv_dur_hci, data);
++
++	mgmt_register(data->mgmt_alt, MGMT_EV_ADVERTISING_REMOVED,
++				data->mgmt_index, adv_dur_removed, NULL, NULL);
++	test_add_condition(data);
++	timeout_add(ADV_DUR_WINDOW_MS, adv_dur_window_end, NULL, NULL);
++
++	test_command_generic(test_data);
++}
++
+ int main(int argc, char *argv[])
+ {
+ 	tester_init(&argc, &argv);
+@@ -16486,5 +16625,29 @@ int main(int argc, char *argv[])
+ 	test_bredrle_full("HCI Devcoredump - Dump Timeout", &dump_timeout, NULL,
+ 				test_hci_devcd, 3);
+ 
++	/* Research cases: extended advertising Duration from the MGMT
++	 * timeout. "Duration" cases check the HCI parameter; "Removal"
++	 * cases check only that the instance survives a 3 s window.
++	 */
++#define ADV_DUR_TESTS(name, label) \
++	test_bredrle50_full("AdvDur - Duration " label, \
++				&add_ext_adv_dur_##name, NULL, \
++				test_add_adv_duration, 6); \
++	test_bredrle50_full("AdvDur - Removal " label, \
++				&add_ext_adv_dur_obs_##name, NULL, \
++				test_add_adv_duration, 6)
++
++	ADV_DUR_TESTS(t1, "1 s");
++	ADV_DUR_TESTS(t65, "65 s");
++	ADV_DUR_TESTS(t66, "66 s");
++	ADV_DUR_TESTS(t120, "120 s");
++	ADV_DUR_TESTS(t655, "655 s");
++	ADV_DUR_TESTS(t656, "656 s (clamp)");
++	ADV_DUR_TESTS(t1000, "1000 s (clamp)");
++	ADV_DUR_TESTS(t3600, "3600 s (clamp)");
++	ADV_DUR_TESTS(t6357, "6357 s (clamp)");
++	ADV_DUR_TESTS(t8192, "8192 s (clamp)");
++	ADV_DUR_TESTS(t65535, "65535 s (clamp)");
++
+ 	return tester_run();
+ }

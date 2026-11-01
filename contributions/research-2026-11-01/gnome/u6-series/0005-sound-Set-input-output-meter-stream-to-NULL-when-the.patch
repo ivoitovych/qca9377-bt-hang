@@ -1,0 +1,46 @@
+From 3aeb837cb0936cfa448923b479e658477e7ed512 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jonas=20Dre=C3=9Fler?= <<email>>
+Date: Thu, 7 Mar 2024 13:42:28 +0100
+Subject: [PATCH] sound: Set input/output meter stream to NULL when there's no
+ active device
+
+When there's no active input or output device, the input/output meter shouldn't
+have a stream set, so call set_input_stream() with a NULL stream
+(cc_volume_slider_set_stream() and cc_level_bar_set_stream() are already handling
+NULL as expected) in case there's no active input or output device.
+
+This fixes a bug where the input/output meter doesn't get updated when the active
+input or output device gets unset.
+---
+ panels/sound/cc-sound-panel.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/panels/sound/cc-sound-panel.c b/panels/sound/cc-sound-panel.c
+index 2d4472332..59c752413 100644
+--- a/panels/sound/cc-sound-panel.c
++++ b/panels/sound/cc-sound-panel.c
+@@ -174,8 +174,8 @@ output_device_update_cb (CcSoundPanel *self,
+ 
+   if (device)
+     stream = gvc_mixer_control_get_stream_from_device (self->mixer_control, device);
+-  if (stream != NULL)
+-    set_output_stream (self, stream);
++
++  set_output_stream (self, stream);
+ }
+ 
+ static void
+@@ -202,8 +202,8 @@ input_device_update_cb (CcSoundPanel *self,
+ 
+   if (device)
+     stream = gvc_mixer_control_get_stream_from_device (self->mixer_control, device);
+-  if (stream != NULL)
+-    set_input_stream (self, stream);
++
++  set_input_stream (self, stream);
+ }
+ 
+ static void
+-- 
+2.43.0
+

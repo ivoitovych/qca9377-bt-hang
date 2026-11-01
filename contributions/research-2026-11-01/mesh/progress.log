@@ -1,0 +1,32 @@
+== build base-42b8c2d start 2026-11-01 01:06:53
+== build base-42b8c2d end 2026-11-01 01:06:53 rc=2
+== build base-42b8c2d start 2026-11-01 01:07:37
+== build base-42b8c2d end 2026-11-01 01:12:47 rc=0
+== bluez build start 2026-11-01 01:13:18
+== bluez build end 2026-11-01 01:13:34 rc=0
+== vm advdur-base-1 start 2026-11-01 01:13:52 image base-42b8c2d: /root/exp/agent-work/research-mesh/bin/mgmt-tester-advdur -p AdvDur
+== build fix-clamp start 2026-11-01 01:14:00
+== vm advdur-base-1 end 2026-11-01 01:14:04 rc=0
+== build fix-clamp end 2026-11-01 01:14:32 rc=0
+== vm advdur-fix-clamp-1 start 2026-11-01 01:14:44 image fix-clamp: /root/exp/agent-work/research-mesh/bin/mgmt-tester-advdur -p AdvDur
+== vm advdur-fix-clamp-1 end 2026-11-01 01:15:09 rc=0
+== vm mgmt-adv-base-1 start 2026-11-01 01:15:14 image base-42b8c2d: /root/exp/agent-work/research-mesh/bin/mgmt-tester-advdur -s Advertising
+== vm mgmt-adv-base-1 end 2026-11-01 01:15:36 rc=0
+== vm mgmt-adv-fix-clamp-1 start 2026-11-01 01:15:39 image fix-clamp: /root/exp/agent-work/research-mesh/bin/mgmt-tester-advdur -s Advertising
+== vm mgmt-adv-fix-clamp-1 end 2026-11-01 01:16:02 rc=0
+== vm mesh-base-1 start 2026-11-01 01:16:07 image base-42b8c2d: /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-master-4dc15be8
+== vm mesh-base-1 end 2026-11-01 01:16:19 rc=0
+== vm mesh-fix-clamp-1 start 2026-11-01 01:16:22 image fix-clamp: /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-master-4dc15be8
+== vm mesh-fix-clamp-1 end 2026-11-01 01:16:33 rc=0
+== build b-14864878 start 2026-11-01 01:21:38
+== build b-14864878 end 2026-11-01 01:23:08 rc=0
+== pwrcmp set start 2026-11-01 01:23:21 boots 2
+== vm pwrcmp-base-42b8c2d-1 start 2026-11-01 01:23:21 image base-42b8c2d: /root/exp/qca9377-bt-hang/tmp/mesh-tester-ci/gates-asan.sh /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-gates-ab927447 -s PwrCmp
+== vm pwrcmp-base-42b8c2d-1 end 2026-11-01 01:24:40 rc=0
+== vm pwrcmp-b-14864878-1 start 2026-11-01 01:24:40 image b-14864878: /root/exp/qca9377-bt-hang/tmp/mesh-tester-ci/gates-asan.sh /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-gates-ab927447 -s PwrCmp
+== vm pwrcmp-b-14864878-1 end 2026-11-01 01:25:18 rc=0
+== vm pwrcmp-base-42b8c2d-2 start 2026-11-01 01:25:18 image base-42b8c2d: /root/exp/qca9377-bt-hang/tmp/mesh-tester-ci/gates-asan.sh /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-gates-ab927447 -s PwrCmp
+== vm pwrcmp-base-42b8c2d-2 end 2026-11-01 01:26:06 rc=0
+== vm pwrcmp-b-14864878-2 start 2026-11-01 01:26:06 image b-14864878: /root/exp/qca9377-bt-hang/tmp/mesh-tester-ci/gates-asan.sh /root/exp/qca9377-bt-hang/tmp/co05-w4/bin/mesh-tester-gates-ab927447 -s PwrCmp
+== vm pwrcmp-b-14864878-2 end 2026-11-01 01:26:31 rc=0
+== pwrcmp set end 2026-11-01 01:26:31

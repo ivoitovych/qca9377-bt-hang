@@ -1,0 +1,18 @@
+Bluetooth: hci_sync: Fix extended advertising duration overflow
+
+hci_enable_ext_advertising_sync() computes the advertising set Duration
+from the instance timeout in a u16. The timeout comes from MGMT Add
+Advertising or Add Extended Advertising Parameters in seconds, so any
+timeout above 65 s wraps: 66 s is sent as a Duration of 46 (460 ms) and
+the instance is removed after less than half a second, 655 s becomes
+65.17 s, and timeouts congruent to 0 or 6357 modulo 8192 encode
+Duration 0, which the controller reads as no limit, so such an instance
+is never removed.
+
+Compute the duration in a u32 and limit the encoded value to the
+field's maximum of 0xffff (655.35 s). Timeouts up to 655 s are now
+passed exactly; longer ones end at 655.35 s instead of at an arbitrary
+earlier time or never.
+
+Fixes: 10bbffa3e88e ("Bluetooth: Fix using advertising instance duration as timeout")
+Signed-off-by: (the operator's line; see the format-patch file)

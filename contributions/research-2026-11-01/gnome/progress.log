@@ -1,0 +1,30 @@
+2026-11-01 research CO-07 / CO-17 (U6, U2, U4)
+- created work area; read STATUS U-rows, issues.md U table + U1/U2/U4/U6/U19 entries, tooling index,
+  CO-07 dossier, CO-36 README, docs/userspace-upstream-check-2026-10-03.md
+- source read: 46.7 cc-sound-panel.c, cc-profile-combo-box.c, cc-device-combo-box.c, cc-level-bar.c;
+  gvc 91f3f414 gvc-mixer-control.c, gvc-mixer-ui-device.c; PipeWire 1.0.5 bluez5-device.c build_route /
+  build_profile, backend-native.c supports_codec; gnome-control-center main 60f83317c profile row + panel
+- web (read only): GNOME issues 3710, 3715, search profile/Sound; Launchpad noble publications of
+  gnome-control-center and wireplumber; LP searches input level / microphone meter / microphone level;
+  LP wireplumber bugs since 2025-09; LP 2169803
+- archive: boot-226965f1 export (2026-09-26 evening) via scripts/archive-window.py; incident
+  20261024-shure-mic-meter-and-vgm user journal; 20261031 pw-dump via pw-card-routes.py
+- captures: bt-20260926-203857 and bt-20260926-224246 decompressed into captures/ (sha256 match
+  MANIFEST), decoded with the project's capture-window.sh, AT lines via scripts/at-lines.py
+- key extracts (commands in the report):
+  * 2026-09-26 capture, scripts/at-lines.py on captures/decode-0926-2150-2242.txt: +VGM: 0 with every
+    link start 21:52:50 to 22:03:36; TX +VGM: 1,2,3 22:06:48.836925 to 22:06:49.236942; TX +VGM: 6
+    22:07:20.452867; 5 22:07:47.270493; 4 22:08:07.141751; RX AT+VGM=00 twice 22:34:47.269395/.365414
+  * decode-0926-2242-2336.txt: TX +VGM: 1 alone 22:55:45.330727; reconnects 23:06:43 to 23:07:55 each
+    RX AT+VGM=01
+  * boot-226965f1: 23:10:08.455 GNOME Settings capture -> none, 23:10:09.417 default source -> laptop mic,
+    23:10:09.592 capture -> monitor of MOMENTUM 4 only; no GNOME Settings ERROR 23:10:09 to 23:12:30
+  * 20261024 incident: 08:04:59.051861 CREATE_RECORD_STREAM tag:478 source 53, .052182 tag:479 source 52;
+    destroyed, ERROR tag:478/479 08:04:59.754620/.754736
+  * user journal 2026-10-29: CREATE_RECORD_STREAM tag:285 source 53 / tag:287 source 52 04:46:01.18,
+    ERROR both 04:46:03.18; new GNOME Settings client SET_CLIENT_NAME 04:46:20.453551
+  * 20261031 incident journal-0329-0334: 468 Chrome pulse requests, no SET_SOURCE_VOLUME (polls only)
+- stopped: a git log -S over the blobless PipeWire clone (fetching blobs, not needed) and a whole-journal
+  SET_SOURCE_VOLUME grep (too slow; replaced by the incident-window reads)
+- U6 series: six commits apply cleanly on 46.7 and on 46.7 + Ubuntu's 41-patch series
+  (scripts/apply-ubuntu-then-u6.sh); not built

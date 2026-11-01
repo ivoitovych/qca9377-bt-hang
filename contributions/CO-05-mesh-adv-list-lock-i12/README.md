@@ -1,5 +1,10 @@
 # CO-05 — Mesh I12: advertising list changed without `hdev->lock`
 
+**Update (2026-11-01):** Cen Zhang's patchwork 14927631 (2026-10-30, `new`) takes `hdev->lock`
+around `hci_add_adv_instance()` in `mesh_send_sync()` and the other callers. 1/2 here no longer
+applies on top of it; CO-04 still does. If it lands, 1/2 needs a rebase or becomes redundant
+(`contributions/research-2026-11-01/`).
+
 **State (2026-10-29):** **send package ready for an outside review round; not sent.** Two patches
 and a cover letter on bluetooth-next `1081a6ef8f1e0` (`patch/`, with CO-26 as 2/2); the 2026-10-21
 set is in `patch/2026-10-21/`. On today's base: mesh-path lock warnings 3 → 0, KCSAN boots with a
