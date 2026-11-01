@@ -206,7 +206,12 @@ change sent upstream is the operator's own. Everything is in
 - **Verdict: a tie.** No test distinguishes V2 from V3 on the wire. What
   remains is a design question for review: V2 holds while every path to
   ACTIVE goes through `sco_ready()`; V3 holds while every link end passes
-  one of its three stops.
+  one of its three stops. One untested case could separate them (an
+  outside reviewer's hypothesis, plausible from the V3 diff): the timer
+  belongs to the RFCOMM link, and V3 stops it from an old transport's
+  release, destroy and HUP paths through `td->rfcomm`; if an old
+  transport's teardown runs after a new link has rearmed the timer, V3
+  would cancel the new link's legitimate resend. V2 has no such path.
 - **Not run on the variants:** PipeWire's own 7 VM tests (T008), the clang
   build (T003), builds without a native backend (T004), the 1.0.5
   backport (T009), real headsets (L3).

@@ -69,3 +69,6 @@ first patch. Rechecked the later series (2026-11-01, source markers): 27.04 (5.8
 `dca0f10fd560`. The routing choice is the operator's: the first fix alone for 24.04 (common cases
 fixed, very narrow and very wide terminals still abort), or `dca0f10fd560` into the development
 release first. Work area: `/root/exp/agent-work/co03/review-20261101/co11a/`.
+`dca0f10fd560` is in no BlueZ release yet (`git tag --contains dca0f10fd560` in
+`cache/bluez-upstream`: no tag, 2026-11-01), so either route cites it as an upstream commit, not a
+release.

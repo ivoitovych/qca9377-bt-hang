@@ -857,6 +857,13 @@ Nothing posted on the thread: neither Sashiko instance mailed its review (netdev
 - **Variant (c), experiment** (`kernel-varc-experiment/0004`, not for submission): store only when
   the caller is the connection's only holder; no overwrite in any refused case (3/3), reconnect
   like v7, 33/33 ×3. Decides by reference count; the cleaner fix may belong in `sco.c`.
+- **Correction (same day, an outside reviewer's count, checked against
+  `results/research-table.txt`):** "reconnect like v7" rests on very few successful reuses. In the
+  close/reopen research cases the second socket got a link in 1 of 6 runs on (c) (enhanced 3/3
+  refused with ECONNABORTED; legacy 2 refused, 1 reused with its own parameters), 2 of 6 on the
+  fold and 1 of 8 on v7; the other runs are refusals, which test neither parameter transfer nor
+  its failure. The 33/33 suite totals do not add reuse cases. A deterministic accepted-reuse case,
+  or the reuse denominator stated separately, is needed before any claim about (c) on reuse.
 - Not reproduced: Sashiko's duplicate-setup point (16 runs of the "right after the first connect"
   case). Raw logs (local): `/root/exp/agent-work/co02-review-20261101/` (SHA256SUMS, 163 entries).
   Nothing sent.
