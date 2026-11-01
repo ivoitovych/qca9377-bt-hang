@@ -1,0 +1,37 @@
+research-sco progress log (times local)
+- start: dossiers read; patchwork, lore (fetched to fb9a6f9b, deepened 1500), sashiko API read
+- bluetooth-next fetched: 42b8c2d72926 (2026-10-30); mainline origin/master cbbddb6b08cc (2026-10-31)
+- CO-01 v3 git am on 42b8c2d72926: FAILS at 3/6 (hci_event.c:3217); cherry-pick (3-way) clean -> 10e90a535f9f..cdf54e02b627, + CO-02 v7 am clean -> c35ee72c5e7f
+- CO-01 v3 git am on its base 97a128698d9d: clean -> 79b071b1d3a1; + CO-02 v7 -> 5528bc09a1ad; CO-02 v7 alone on base -> 9ec346626595
+- CO-30 RFC git am on 42b8c2d72926 + CO-02 v7: clean -> 98bc5ffb5088
+- capture scan (bt-trace archive, 350 files 09-24..10-30): 428 setups, 0 failed, 5 cancels all in controller hangs
+- BlueZ testers built 01:15:44 to 01:16:13 (bin/, b0bf49270d44 + each author's test mail)
+- 01:2x kernel builds (up: both, co01, base, co02) started in background
+- note 03:48: the 3-run matrix started 03:2x was stopped by me: its l2cap runs had no -s filter
+  (my error) and stalled in the SCI case (BT-15; base 97a128698d9d lacks 5874f8d03268).
+  logs/run-base-l2cap-cbc-co01-c1-2.log is that unfiltered, cut-off run (kept). Rerun: scripts/run-rest.sh
+start 01:24:46 runs=1 cpus=1 kernels=both testers=sco-tester-co01,sco-tester-co02,l2cap-tester-co01 args=
+end 01:40:00 runs=1 cpus=1 kernels=both testers=sco-tester-co01,sco-tester-co02,l2cap-tester-co01
+start 03:34:11 runs=1 cpus=1 kernels=base,co01,co02,both testers=l2cap-cbc-co01 args=-s Close Before Complete
+end 03:34:29 runs=1 cpus=1 kernels=base,co01,co02,both testers=l2cap-cbc-co01
+start 03:34:39 runs=3 cpus=1 kernels=base,co01,co02,both testers=sco-tester-co01,sco-tester-co02,l2cap-cbc-co01 args=
+start 03:47:53 runs=3 cpus=1 kernels=base,co01,co02,both testers=sco-tester-co01,sco-tester-co02 args=
+end 03:49:07 runs=3 cpus=1 kernels=base,co01,co02,both testers=sco-tester-co01,sco-tester-co02
+start 03:49:07 runs=3 cpus=1 kernels=base,co01,co02,both testers=l2cap-cbcf-co01 args=-s Close Before Complete
+end 03:50:00 runs=3 cpus=1 kernels=base,co01,co02,both testers=l2cap-cbcf-co01
+start 03:50:00 runs=3 cpus=4 kernels=both-smp,co01-smp testers=sco-tester-co01,sco-tester-co02 args=
+end 03:51:14 runs=3 cpus=4 kernels=both-smp,co01-smp testers=sco-tester-co01,sco-tester-co02
+start 03:51:14 runs=3 cpus=1 kernels=tipco02,tiprfc testers=sco-tester-co02 args=
+end 03:51:57 runs=3 cpus=1 kernels=tipco02,tiprfc testers=sco-tester-co02
+start 03:51:57 runs=3 cpus=1 kernels=tipco02,tiprfc testers=sco-tester-exp args=-s Reconnect During Disconnect
+end 03:52:26 runs=3 cpus=1 kernels=tipco02,tiprfc testers=sco-tester-exp
+start 03:52:26 runs=1 cpus=1 kernels=tipco02,tiprfc testers=sco-tester-exp args=-s Exp 
+end 03:52:26 runs=1 cpus=1 kernels=tipco02,tiprfc testers=sco-tester-exp
+start 03:52:36 runs=1 cpus=1 kernels=tipco02,tiprfc testers=sco-tester-expx args=-s Exp 
+end 03:52:44 runs=1 cpus=1 kernels=tipco02,tiprfc testers=sco-tester-expx
+- SMP builds (both-smp, co01-smp) and tip builds (tipco02 03:41:03 to 03:44:52, tiprfc to 03:45:17) done
+- summary: results/run-summary-2026-11-01.txt (68 run logs, no KASAN/lockdep/WARNING/BUG lines;
+  2 logs NO TOTAL = the two full l2cap runs stalled in the SCI case, BT-15)
+- sashiko-nipa (netdev-ai instance) read: tmp/sashiko/nipa-co02-patchset.json, nipa-co01-v3.json;
+  patchwork checks via scripts/pw-checks.py
+- finished; report delivered

@@ -799,3 +799,24 @@ stock `bluetooth.ko`). `experiments/build-laptop-module-42.sh`, the -38 recipe c
     thread that 2 and 3 belong together, or send a v8 that folds 3 into 2.
   - The low note is pre-existing and optional.
 - Nothing sent.
+
+## 2026-11-01 — a second Sashiko instance, and the BlueZ test must be ported
+- **sashiko.dev** (the public instance, patchset 97061, reviews created 2026-10-27 16:52 UTC):
+  - Patches 2 and 3: "No issues found."
+  - **Patch 1: High.** If the second socket connects while the first link is still `BT_OPEN`,
+    falling through overwrites `sco->setting`/`codec` and may queue a duplicate setup. It asks
+    whether the `sco->link` branch should return early, as `hci_connect_cis()` does.
+  - From source (bluetooth-next `42b8c2d72926`): this fall-through predates patch 1. The
+    duplicate setup is possible only on the enhanced-setup path, where the state stays
+    `BT_OPEN` until the queued work runs (`hci_conn.c:484`). It is not possible on the
+    laptop's legacy path, which sets `BT_CONNECT` at once (`:418`).
+  - **The nipa instance lists the same overwrite as pre-existing, Medium.** The patchwork
+    check the maintainers see is nipa's: fail on patch 2 only (entry above).
+- **The BlueZ test no longer applies.** Luiz Augusto von Dentz's tester series landed on
+  BlueZ master as `e37f17751` on 2026-10-29. Our sco-tester mail fails at
+  `tools/sco-tester.c:27` on master `14bd6ab65`. The port to its `tester_io`/`timeout_add`
+  API is owed.
+- **CO-30's RFC** applies cleanly on the tip with v7. In QEMU the PipeWire-style retry fails
+  3/3 with v7 alone (`ECONNABORTED`) and passes 3/3 with the RFC
+  (`contributions/research-2026-11-01/sco/`).
+- Source: `contributions/research-2026-11-01/` (the sco research).
