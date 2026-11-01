@@ -864,6 +864,42 @@ Nothing posted on the thread: neither Sashiko instance mailed its review (netdev
   fold and 1 of 8 on v7; the other runs are refusals, which test neither parameter transfer nor
   its failure. The 33/33 suite totals do not add reuse cases. A deterministic accepted-reuse case,
   or the reuse denominator stated separately, is needed before any claim about (c) on reuse.
+
+## 2026-11-01 (evening) — close-and-reuse made deterministic
+qemu only, no kernel change, no test-only build. Work area (local, raw logs with SHA256SUMS):
+`/root/exp/agent-work/co02-reuse-20261101/`.
+- **The window:** closing a socket queues `disc_work` with zero delay; `hci_conn_timeout()` sets
+  `abort_reason`; `hci_connect_sco()` reuses only while it is still 0. Holding back the
+  Disconnection Complete cannot help (`abort_reason` is set before any HCI traffic). The tester
+  instead limits unbound workqueues to CPU 1 (`/sys/devices/virtual/workqueue/cpumask`), pins
+  itself there as SCHED_FIFO, and does close(sk1) then connect(sk2) back to back. Pin confirmed in
+  160 of 160 pinned runs (`grep -c "ran on CPU 1"`: 4 per log, 40 logs).
+- **Classification:** REUSED = the second socket's handle equals the first link's and no setup
+  follows the swap (live cases), or the same single SCO entry before and after (pending cases);
+  FRESH = a new setup after the swap (0 runs); REFUSED = ECONNABORTED.
+- **Results, 10 runs each** (base / v7 / fold / (c)):
+  - live pinned, same or transparent parameters: REUSED 10/10 on all; base then disconnects the
+    link while the second socket is open, ACL still listed at the end, 50/50 close-and-reuse runs;
+    v7, fold and (c) keep it with balanced holds (150/150; 44/44 guest logs without WARN, refcount
+    or KASAN reports; kmemleak not built in);
+  - pending pinned (enhanced and legacy): REUSED 10/10 on all; on v7, fold and (c) the setup carries
+    the second socket's parameters (0x0003, air mode 0x03); base gets no link;
+  - unpinned live control: base 10/10, v7 8+2 refused, fold 10/10, (c) 7+3 refused, so a plain
+    close-then-connect of a live link mostly reuses it without any pinning;
+  - the unchanged Close Reopen cases: v7 7 refused + 3 link, fold 8 + 2, (c) 10 refused (with
+    btmon running, so not comparable with the earlier counts).
+- **New, all four kernels: a live link is reused with the wrong voice setting.** The second socket
+  asks for BT_VOICE 0x0003 (transparent) and gets the closed socket's CVSD link: "air mode of the
+  second's link 0x02 (want 0x03)", no new setup, 10/10 per kernel (one line in each of the 40
+  `run-main-*.log`). It predates the series, but the series is what keeps that link alive; on base
+  it is dropped. Variant (c) stores 0x0003 into the connection without a new setup, so it does not
+  fix it (inferred from its 0004).
+- Refused sockets never changed the link's parameters (55/55); no setup was sent twice (280/280).
+- Side observation, cause inferred: in every Close Reopen legacy refusal a Setup Synchronous
+  Connection with the first socket's CVSD settings goes out for the connection being aborted and
+  is answered 0x02.
+- Test patch (research, not for submission): `patch/v2/0003-RESEARCH-…` in the work area,
+  checkpatch clean.
 - Not reproduced: Sashiko's duplicate-setup point (16 runs of the "right after the first connect"
   case). Raw logs (local): `/root/exp/agent-work/co02-review-20261101/` (SHA256SUMS, 163 entries).
   Nothing sent.
