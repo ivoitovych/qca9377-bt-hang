@@ -2,11 +2,47 @@
 
 **State (2026-11-01):** confirmed in source and by a model test; a candidate fix compiles and
 passes the model; never loaded, not sent. **Outside review the same day: not ready.** The core
-sends the link-up notification also for a failed setup (`hci_event.c:5129-5146`), so the
-candidate alone puts a surviving CVSD call on the transparent setting after a failed mSBC second
-setup; and it keeps the last link-up's mode with mixed codecs. Next: those scenarios in the
-model, then a status guard (Hitalo Souza's patch 6/6) or a mode derived from the live links
+sends the link-up notification also for a failed setup (`hci_event.c:5257-5278` at
+`42b8c2d72926`), so the candidate alone puts a surviving CVSD call on the transparent setting
+after a failed mSBC second setup; and it keeps the last link-up's mode with mixed codecs
 (`../research-2026-11-01/README.md`, CO-21 revised row).
+
+**Redesign (2026-11-01, evening; local, not sent, never loaded):** the alternate setting is
+derived from the SCO links that are up. Two patches on bluetooth-next `42b8c2d72926`
+(`/root/exp/agent-work/co21-redesign-20261101/patches-v0/`, checkpatch `--strict` clean, W=1
+builds x86_64 and i386 with 0 warnings):
+1. core: a `conn->air_mode` field set from the Synchronous Connection Complete event of a link
+   that came up, and a helper counting the up SCO links per air mode (+33 lines);
+2. btusb: the worker picks the setting from those counts (CVSD only: the existing table; any
+   transparent: the transparent setting; none: stop), notify only schedules it (+16/−10,
+   `Fixes: baac6276c0a9`).
+
+The event's air mode is used, not `conn->setting`: `conn->setting` is written only for
+outgoing setups, not stored on deferred accept, and overwritten by a second `connect()` on a
+live link before it fails with EBUSY (the same path as CO-02's wrong-voice reuse).
+
+**Extended model, 20 scenarios** (failed second setup, mixed codecs either order, coalesced
+notifications, cancel and retry, incoming link, overwritten setting; `out/model2-v1-summary.txt`):
+
+| variant | right |
+|---|---|
+| original | 5/20 |
+| original + Hitalo Souza's 6/6 | 7/20 |
+| candidate | 16/20 |
+| candidate + 6/6 | 17/20 |
+| redesign (with or without 6/6) | 20/20 |
+| redesign keyed on `conn->setting` | 17/20 |
+
+"Any transparent link wins" is a chosen rule, not a measured hardware fact; each failure of the
+candidate also has a wrong step that does not depend on it.
+
+**Upstream state of 6/6** (patchwork API, 2026-11-01): still `new`; the only human reply on the
+series is the maintainer's on the cover letter (2026-10-09: Sashiko flags more problems); no v4;
+nothing of it in bluetooth-next. The redesign does not need it. A short note asking whether it
+will be resent is drafted in the work area; posting it is the operator's decision.
+
+**Laptop test, if wanted:** the new field changes the connection struct, so `bluetooth.ko` and
+`btusb.ko` must be built and installed together (`updates/` + `depmod` + a cold boot).
 
 **Target:** Linux kernel, `drivers/bluetooth/btusb.c` (`btusb_notify()`, `btusb_work()`).
 
