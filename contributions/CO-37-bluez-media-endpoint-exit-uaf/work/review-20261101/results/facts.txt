@@ -1,0 +1,357 @@
+# facts, 2026-11-01 11:44:33 CET
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo log -1 --format=%H %ci %s 14bd6ab65
+14bd6ab65f4a647302edbd6df27f6faa91bee8a8 2026-10-29 14:37:49 -0400 doc/virtio: Update measurements of the testers
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e context="default" -e send_destination 14bd6ab65 5.72 -- src/bluetooth.conf
+14bd6ab65:src/bluetooth.conf:12:    <allow send_destination="org.bluez"/>
+14bd6ab65:src/bluetooth.conf:26:  <policy context="default">
+14bd6ab65:src/bluetooth.conf:27:    <allow send_destination="org.bluez"/>
+5.72:src/bluetooth.conf:12:    <allow send_destination="org.bluez"/>
+5.72:src/bluetooth.conf:26:  <policy context="default">
+5.72:src/bluetooth.conf:27:    <allow send_destination="org.bluez"/>
+[exit 0]
+
+$ grep -n -e policy -e send_destination /usr/share/dbus-1/system.d/bluetooth.conf
+10:  <policy user="root">
+12:    <allow send_destination="org.bluez"/>
+24:  </policy>
+27:  <policy group="bluetooth">
+28:    <allow send_destination="org.bluez"/>
+29:  </policy>
+31:  <policy context="default">
+32:    <allow send_destination="org.bluez"/>
+33:  </policy>
+[exit 0]
+
+$ dpkg-query -W bluez
+bluez	5.72-0ubuntu5.8
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e g_dbus_register_security( 14bd6ab65
+14bd6ab65:gdbus/gdbus.h:253:gboolean g_dbus_register_security(const GDBusSecurityTable *security);
+14bd6ab65:gdbus/object.c:1510:gboolean g_dbus_register_security(const GDBusSecurityTable *security)
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e ^static gboolean check_privilege 14bd6ab65 -- gdbus/object.c
+14bd6ab65:gdbus/object.c:418:static gboolean check_privilege(DBusConnection *conn, DBusMessage *msg,
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e ^static DBusMessage \*register_endpoint -e ^static DBusMessage \*unregister_endpoint -e ^static DBusMessage \*register_app -e ^static DBusMessage \*unregister_app -e GDBUS_METHOD("RegisterEndpoint" -e GDBUS_ASYNC_METHOD("RegisterApplication" 14bd6ab65 5.72 -- profiles/audio/media.c
+14bd6ab65:profiles/audio/media.c:1979:static DBusMessage *register_endpoint(DBusConnection *conn, DBusMessage *msg,
+14bd6ab65:profiles/audio/media.c:2029:static DBusMessage *unregister_endpoint(DBusConnection *conn, DBusMessage *msg,
+14bd6ab65:profiles/audio/media.c:3612:static DBusMessage *register_app(DBusConnection *conn, DBusMessage *msg,
+14bd6ab65:profiles/audio/media.c:3652:static DBusMessage *unregister_app(DBusConnection *conn, DBusMessage *msg,
+14bd6ab65:profiles/audio/media.c:3683:	{ GDBUS_METHOD("RegisterEndpoint",
+14bd6ab65:profiles/audio/media.c:3693:	{ GDBUS_ASYNC_METHOD("RegisterApplication",
+5.72:profiles/audio/media.c:1641:static DBusMessage *register_endpoint(DBusConnection *conn, DBusMessage *msg,
+5.72:profiles/audio/media.c:1690:static DBusMessage *unregister_endpoint(DBusConnection *conn, DBusMessage *msg,
+5.72:profiles/audio/media.c:3145:static DBusMessage *register_app(DBusConnection *conn, DBusMessage *msg,
+5.72:profiles/audio/media.c:3185:static DBusMessage *unregister_app(DBusConnection *conn, DBusMessage *msg,
+5.72:profiles/audio/media.c:3216:	{ GDBUS_METHOD("RegisterEndpoint",
+5.72:profiles/audio/media.c:3226:	{ GDBUS_ASYNC_METHOD("RegisterApplication",
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e Only allow switching sep from the same sender -e ^static struct a2dp_sep \*find_sep( -e ^static DBusMessage \*set_configuration -e lsep = find_sep(chan->server 14bd6ab65 5.72 -- profiles/audio/a2dp.c
+14bd6ab65:profiles/audio/a2dp.c:2049:static struct a2dp_sep *find_sep(struct a2dp_server *server, uint8_t type,
+14bd6ab65:profiles/audio/a2dp.c:2151:			/* Only allow switching sep from the same sender */
+14bd6ab65:profiles/audio/a2dp.c:2195:static DBusMessage *set_configuration(DBusConnection *conn, DBusMessage *msg,
+14bd6ab65:profiles/audio/a2dp.c:2215:	lsep = find_sep(chan->server, avdtp_get_type(rsep->sep), sender, path);
+5.72:profiles/audio/a2dp.c:1777:static struct a2dp_sep *find_sep(struct a2dp_server *server, uint8_t type,
+5.72:profiles/audio/a2dp.c:1878:			/* Only allow switching sep from the same sender */
+5.72:profiles/audio/a2dp.c:1921:static DBusMessage *set_configuration(DBusConnection *conn, DBusMessage *msg,
+5.72:profiles/audio/a2dp.c:1941:	lsep = find_sep(chan->server, avdtp_get_type(rsep->sep), sender, path);
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e ^static DBusMessage \*acquire -e if (transport->owner != NULL) -e g_strcmp0(owner->name, sender) != 0 14bd6ab65 5.72 -- profiles/audio/transport.c
+14bd6ab65:profiles/audio/transport.c:821:static DBusMessage *acquire(DBusConnection *conn, DBusMessage *msg,
+14bd6ab65:profiles/audio/transport.c:829:	if (transport->owner != NULL)
+14bd6ab65:profiles/audio/transport.c:869:	if (transport->owner != NULL)
+14bd6ab65:profiles/audio/transport.c:939:	if (owner == NULL || g_strcmp0(owner->name, sender) != 0)
+14bd6ab65:profiles/audio/transport.c:1095:		if (g_strcmp0(owner->name, sender) != 0) {
+14bd6ab65:profiles/audio/transport.c:1834:				if (transport->owner != NULL)
+14bd6ab65:profiles/audio/transport.c:1853:	if (transport->owner != NULL)
+5.72:profiles/audio/transport.c:625:static DBusMessage *acquire(DBusConnection *conn, DBusMessage *msg,
+5.72:profiles/audio/transport.c:633:	if (transport->owner != NULL)
+5.72:profiles/audio/transport.c:673:	if (transport->owner != NULL)
+5.72:profiles/audio/transport.c:742:	if (owner == NULL || g_strcmp0(owner->name, sender) != 0)
+5.72:profiles/audio/transport.c:1256:			if (transport->owner != NULL)
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e ^static DBusMessage \*disconnect_profile 14bd6ab65 5.72 -- src/device.c
+14bd6ab65:src/device.c:2990:static DBusMessage *disconnect_profile(DBusConnection *conn, DBusMessage *msg,
+5.72:src/device.c:2609:static DBusMessage *disconnect_profile(DBusConnection *conn, DBusMessage *msg,
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e #define REQ_TIMEOUT -e #define ABORT_TIMEOUT -e rejecting since close is already initiated 14bd6ab65 5.72 -- profiles/audio/avdtp.c
+14bd6ab65:profiles/audio/avdtp.c:77:#define REQ_TIMEOUT 6
+14bd6ab65:profiles/audio/avdtp.c:79:#define ABORT_TIMEOUT 2
+14bd6ab65:profiles/audio/avdtp.c:3733:		error("avdtp_close: rejecting since close is already initiated");
+5.72:profiles/audio/avdtp.c:76:#define REQ_TIMEOUT 6
+5.72:profiles/audio/avdtp.c:78:#define ABORT_TIMEOUT 2
+5.72:profiles/audio/avdtp.c:3689:		error("avdtp_close: rejecting since close is already initiated");
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e Disconnected from D-Bus -e plugin_cleanup(); -e adapter_shutdown(); -e #define SHUTDOWN_GRACE_SECONDS 14bd6ab65 5.72 -- src/main.c
+14bd6ab65:src/main.c:65:#define SHUTDOWN_GRACE_SECONDS 10
+14bd6ab65:src/main.c:1485:			adapter_shutdown();
+14bd6ab65:src/main.c:1536:	info("Disconnected from D-Bus. Exiting.");
+14bd6ab65:src/main.c:1717:	plugin_cleanup();
+5.72:src/main.c:64:#define SHUTDOWN_GRACE_SECONDS 10
+5.72:src/main.c:1240:			adapter_shutdown();
+5.72:src/main.c:1289:	info("Disconnected from D-Bus. Exiting.");
+5.72:src/main.c:1456:	plugin_cleanup();
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e ^static void index_removed -e ^static void adapter_remove( -e ^static void unload_drivers 14bd6ab65 5.72 -- src/adapter.c
+14bd6ab65:src/adapter.c:6180:static void unload_drivers(struct btd_adapter *adapter)
+14bd6ab65:src/adapter.c:7318:static void adapter_remove(struct btd_adapter *adapter)
+14bd6ab65:src/adapter.c:11107:static void index_removed(uint16_t index, uint16_t length, const void *param,
+5.72:src/adapter.c:5803:static void unload_drivers(struct btd_adapter *adapter)
+5.72:src/adapter.c:6941:static void adapter_remove(struct btd_adapter *adapter)
+5.72:src/adapter.c:10602:static void index_removed(uint16_t index, uint16_t length, const void *param,
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e ^static void path_free -e ^static void release_endpoint -e ^static void clear_endpoint -e ^static void a2dp_destroy_endpoint -e ^static void media_endpoint_exit -e ^static void client_disconnect_cb 14bd6ab65 5.72 -- profiles/audio/media.c
+14bd6ab65:profiles/audio/media.c:340:static void media_endpoint_exit(DBusConnection *connection, void *user_data)
+14bd6ab65:profiles/audio/media.c:408:static void clear_endpoint(struct media_endpoint *endpoint)
+14bd6ab65:profiles/audio/media.c:651:static void release_endpoint(struct media_endpoint *endpoint)
+14bd6ab65:profiles/audio/media.c:801:static void a2dp_destroy_endpoint(void *user_data)
+14bd6ab65:profiles/audio/media.c:3122:static void client_disconnect_cb(DBusConnection *conn, void *user_data)
+14bd6ab65:profiles/audio/media.c:3801:static void path_free(void *data)
+5.72:profiles/audio/media.c:242:static void media_endpoint_exit(DBusConnection *connection, void *user_data)
+5.72:profiles/audio/media.c:296:static void clear_endpoint(struct media_endpoint *endpoint)
+5.72:profiles/audio/media.c:556:static void release_endpoint(struct media_endpoint *endpoint)
+5.72:profiles/audio/media.c:694:static void a2dp_destroy_endpoint(void *user_data)
+5.72:profiles/audio/media.c:2686:static void client_disconnect_cb(DBusConnection *conn, void *user_data)
+5.72:profiles/audio/media.c:3264:static void path_free(void *data)
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e ^gboolean a2dp_sep_unlock -e Unregister sep if it was removed -e ^static void a2dp_unregister_sep -e ^void a2dp_remove_sep 14bd6ab65 5.72 -- profiles/audio/a2dp.c
+14bd6ab65:profiles/audio/a2dp.c:2888:static void a2dp_unregister_sep(struct a2dp_sep *sep)
+14bd6ab65:profiles/audio/a2dp.c:3037:void a2dp_remove_sep(struct a2dp_sep *sep)
+14bd6ab65:profiles/audio/a2dp.c:3564:gboolean a2dp_sep_unlock(struct a2dp_sep *sep, struct avdtp *session)
+14bd6ab65:profiles/audio/a2dp.c:3586:	/* Unregister sep if it was removed */
+5.72:profiles/audio/a2dp.c:2606:static void a2dp_unregister_sep(struct a2dp_sep *sep)
+5.72:profiles/audio/a2dp.c:2745:void a2dp_remove_sep(struct a2dp_sep *sep)
+5.72:profiles/audio/a2dp.c:3252:gboolean a2dp_sep_unlock(struct a2dp_sep *sep, struct avdtp *session)
+5.72:profiles/audio/a2dp.c:3269:	/* Unregister sep if it was removed */
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e ^static void a2dp_suspend_complete -e ^static guint transport_a2dp_suspend -e ^static void media_transport_free 14bd6ab65 5.72 -- profiles/audio/transport.c
+14bd6ab65:profiles/audio/transport.c:431:static void a2dp_suspend_complete(struct avdtp *session, int err,
+14bd6ab65:profiles/audio/transport.c:451:static guint transport_a2dp_suspend(struct media_transport *transport,
+14bd6ab65:profiles/audio/transport.c:1796:static void media_transport_free(void *data)
+5.72:profiles/audio/transport.c:450:static void a2dp_suspend_complete(struct avdtp *session, int err,
+5.72:profiles/audio/transport.c:470:static guint transport_a2dp_suspend(struct media_transport *transport,
+5.72:profiles/audio/transport.c:1228:static void media_transport_free(void *data)
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo grep -n -e only attempt to acquire if transport is configured with a local 14bd6ab65 -- client/player.c
+14bd6ab65:client/player.c:5226:	/* only attempt to acquire if transport is configured with a local
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo log -1 --format=%h %ad %s --date=short 14bd6ab65 -- SECURITY.md
+79918b87d 2026-08-26 SECURITY: Add top-level security doc
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo show 14bd6ab65:SECURITY.md
+# Security Policy
+
+## How to Report a Potential Vulnerability?
+
+Please report all suspected vulnerabilities by filing a draft security
+advisory at
+[https://github.com/bluez/bluez/security/advisories](https://github.com/bluez/bluez/security/advisories),
+containing as many details as possible, including the version affected, and
+any ways to reproduce or fix the problem.
+
+Do not report suspected vulnerabilities through public channels, such as the
+linux-bluetooth mailing-list or GitHub issues, until they have been disclosed
+as described below.
+
+BlueZ is maintained by volunteers, and reports are handled on a best effort
+basis, with no guaranteed response time. If you have not received any
+acknowledgment after two weeks, please add a comment to the draft advisory
+rather than escalating to a public channel.
+
+## Scope
+
+This policy covers the code shipped by this repository, in particular the
+`bluetoothd` and `obexd` daemons, and the libraries they install.
+
+The test and development utilities in `tools/` and `test/` are not part of
+the attack surface of a normal installation. Problems in those should be
+reported as bugs using the normal process.
+
+## AI usage
+
+AI assistance may be used to find vulnerabilities, but a report which has not
+been understood and verified by a human before being filed costs the BlueZ
+developers more time than it saves. Before reporting, confirm that the issue
+is real, that it is reachable in the way you describe, and that any suggested
+fix makes sense. Do not file machine-generated reports unreviewed.
+
+If AI assistance was used at any point, the report must disclose this,
+including which tool and model version were used, and for what.
+
+## Embargoed vulnerabilities
+
+All security advisories filed through GitHub will be embargoed until
+either a fix is available in the [main BlueZ repository](https://git.kernel.org/pub/scm/bluetooth/bluez.git/)
+([mirror](https://github.com/bluez/bluez/)), or it has been made public
+by a third-party.
+
+GitHub security advisories have discussion fields, and those discussion fields
+will stay private even after the advisory has been made public. Only trusted
+BlueZ developers will have access to those comments, and unpublished advisories.
+In exceptional circumstances, external security researchers or developers might
+get access to advisories if BlueZ developers find it to be necessary for
+assessment, coordination or publication.
+
+## CVE number assignment
+
+All the vulnerabilities reported through GitHub's security advisories feature
+will be assigned a unique GHSA, which can be used to reference the issue
+externally.
+
+BlueZ maintainers will aim to work with either
+[GitHub](https://docs.github.com/en/code-security/concepts/vulnerability-reporting-and-management/repository-security-advisories#cve-identification-numbers)
+or [Red Hat](https://access.redhat.com/articles/red_hat_cve_program) as CNAs
+to get CVE IDs assigned, on a best effort basis.
+
+Vulnerabilities reported publicly through the linux-bluetooth mailing-list,
+or in any other manner, will not be assigned CVE IDs, and BlueZ maintainers
+will not be working with CNA to get a CVE ID assigned to that vulnerability.
+
+## Disclosure
+
+Once an issue has been discussed privately, accepted as a security issue by
+BlueZ developers, a fix created, and if the severity of the issue is
+high enough (usually only for critical/high), BlueZ developers will aim
+to have distributions forewarned about the issue through the private
+[linux-distros@vs.openwall.org](mailto:linux-distros@vs.openwall.org) mailing-list.
+
+Note that we recommend informing BlueZ developers and working on a fix first,
+before involving the `linux-distros`, as this list has a relatively short
+embargo period which might not allow for much time for the BlueZ developers
+to create and test robust fixes.
+
+We will not be doing any coordinated or restricted disclosure for issues that
+are considered of low or moderate severity. The advisory for such an issue
+still stays private until a fix is available, as described above, but no
+distribution pre-notification will be done.
+
+## Severity assessment
+
+Some Bluetooth functionality is gated behind the `--enable-experimental`
+build option, and behind the `-E/--experimental` command-line option.
+
+When security issues exist in such gated functionality, the severity for the
+issue will be considered as `Low`, as the vulnerable code is not built or
+reachable in a default installation. Reporters should not expect the score to
+reflect the impact the same issue would have if the functionality were enabled
+by default.
+
+Reports should take into account the systemd sandboxing features enabled
+in the configuration shipped by BlueZ upstream, if they are applicable
+to the vulnerable portion of the codebase. Issues that only manifest
+themselves when running unsandboxed will have their severity lowered
+as appropriate.
+
+Similarly, Denial-of-Service issues will only be considered as security
+issues if they can be triggered without human intervention, or set up
+on the BlueZ side, otherwise please report those problems as bugs
+using the normal process.
+
+Finally, security issues which are only possible using the root-requiring,
+firmware-stack-and-radio-bypassing vHCI (virtual Bluetooth adapters usually
+used for testing) will not be considered security issues either, just bugs.
+
+## Non-disclosure agreements
+
+The BlueZ developers are not a formal body and are therefore unable to enter
+any non-disclosure agreements.
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo log -1 --format=%H %an %ad %s rfc
+62dd1cc852007a491049d931d0b42f0e59448c8f Bastien Nocera Tue May 12 12:14:16 2026 +0200 media: Fix possible crash on exit/adapter removal
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/fetch/fedora-bluez log --format=%h %ad %an %s --date=iso -n 12 origin/rawhide
+412e89b 2026-09-18 17:28:30 +0100 Peter Robinson b5ed56d8c snapshot, update snapshot naming
+d790bad 2026-09-16 09:31:50 +0100 Peter Robinson Upstream 789f6e154 CVE-2026-19774 (rhbz:2535010)
+86e689e 2026-09-09 14:27:50 +0200 Bastien Nocera Rebase to latest upstream HEAD (Closes: #2528181, #2525293)
+ab19be0 2026-08-26 16:37:24 +0200 Bastien Nocera Fix CVE-2026-80185 (Closes: #2524397)
+de5b307 2026-08-26 14:39:04 +0200 Bastien Nocera Bump version to bluez-5.87-6
+9d68577 2026-08-26 14:36:48 +0200 Bastien Nocera Fix CVE-2026-80186 (Closes: #2524148)
+418434e 2026-08-19 15:37:12 +0200 Bastien Nocera Fix CVE-2026-75032 (Closes: #2517877)
+ab04c8e 2026-07-17 13:54:37 +0200 Bastien Nocera Update to latest upstream HEAD to fix a number of possible crashes
+fadb768 2026-07-15 20:16:56 +0000 Fedora Release Engineering Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
+3c6b5b2 2026-07-08 10:26:14 +0200 Bastien Nocera Add post-release crash fix on disconnection
+4040a8a 2026-07-05 11:55:36 +0100 Peter Robinson 5.87
+80f2d4c 2026-07-05 11:25:56 +0100 Peter Robinson 5.87
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/fetch/fedora-bluez grep -n -e ^Version -e ^Release -e ^Patch fadb768 -- bluez.spec
+fadb768:bluez.spec:8:Version: 5.87
+fadb768:bluez.spec:9:Release: 3%{?dist}
+fadb768:bluez.spec:17:Patch1: 0001-adapter-Fix-crash-on-dev_disconnected.patch
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/fetch/fedora-bluez show ab04c8e -- bluez.spec
+commit ab04c8e31d7a164e3be6cd299fced25313a358a1
+Author: Bastien Nocera <hadess@hadess.net>
+Date:   Fri Jul 17 13:54:37 2026 +0200
+
+    Update to latest upstream HEAD to fix a number of possible crashes
+
+diff --git a/bluez.spec b/bluez.spec
+index 96437f7..5aa0ad5 100644
+--- a/bluez.spec
++++ b/bluez.spec
+@@ -6,15 +6,15 @@
+ 
+ Name:    bluez
+ Version: 5.87
+-Release: 3%{?dist}
++Release: 4%{?dist}
+ Summary: Bluetooth utilities
+ License: GPL-2.0-or-later
+ URL:     http://www.bluez.org/
+ 
+ Source0: https://www.kernel.org/pub/linux/bluetooth/%{name}-%{version}.tar.xz
+ 
+-# https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=5bc6aa79e53700d56fc1f9f9364573ba4c78da65
+-Patch1: 0001-adapter-Fix-crash-on-dev_disconnected.patch
++# git format-patch --stdout 5.87...30db66dc971bd1cd95d4a7b0eea296367ab65b3b
++Patch1: 5.87-bug-fixes-1.patch
+ 
+ BuildRequires: dbus-devel >= 1.6
+ BuildRequires: glib2-devel
+@@ -340,6 +340,9 @@ install emulator/btvirt ${RPM_BUILD_ROOT}/%{_libexecdir}/bluetooth/
+ %{_userunitdir}/obex.service
+ 
+ %changelog
++* Fri Jul 17 2026 Bastien Nocera <bnocera@redhat.com> - 5.87-4
++- Update to latest upstream HEAD to fix a number of possible crashes
++
+ * Wed Jul 15 2026 Fedora Release Engineering <releng@fedoraproject.org> - 5.87-3
+ - Rebuilt for https://fedoraproject.org/wiki/Fedora_45_Mass_Rebuild
+ 
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/fetch/fedora-bluez grep -n -e ^From 7482aceece70 ab04c8e -- 5.87-bug-fixes-1.patch
+ab04c8e:5.87-bug-fixes-1.patch:1114:From 7482aceece7044e688f20f113263b50c21d69fb6 Mon Sep 17 00:00:00 2001
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/repo merge-base --is-ancestor 7482aceece70 30db66dc971bd1cd95d4a7b0eea296367ab65b3b
+[exit 0]
+
+$ git -C /root/exp/agent-work/co23-co37-review-20261101/fetch/fedora-bluez branch -r --contains ab04c8e
+  origin/HEAD -> origin/rawhide
+  origin/f45
+  origin/main
+  origin/rawhide
+[exit 0]
+

@@ -1,0 +1,310 @@
+From 42303644542be5902fcbffdefa6b578c4d03e376 Mon Sep 17 00:00:00 2001
+From: local <local>
+Date: Sun, 1 Nov 2026 10:07:49 +0100
+Subject: [PATCH 1/3] local: test an A2DP endpoint removed while another client
+ holds its transport
+
+Local only, not for submission.
+---
+ test/functional/test_local_adjacent.py | 289 +++++++++++++++++++++++++
+ 1 file changed, 289 insertions(+)
+ create mode 100644 test/functional/test_local_adjacent.py
+
+diff --git a/test/functional/test_local_adjacent.py b/test/functional/test_local_adjacent.py
+new file mode 100644
+index 000000000..4110477eb
+--- /dev/null
++++ b/test/functional/test_local_adjacent.py
+@@ -0,0 +1,289 @@
++# -*- coding: utf-8; mode: python; eval: (blacken-mode); -*-
++# SPDX-License-Identifier: GPL-2.0-or-later
++"""
++Local only, not for submission: an A2DP endpoint removed while another
++client holds its acquired transport, then a teardown.
++
++registration: the endpoint is registered with RegisterEndpoint
++    ("endpoint") or RegisterApplication ("app").
++removal: the registering client unregisters it ("unregister":
++    UnregisterEndpoint or UnregisterApplication) or leaves the bus
++    ("client_exit").
++teardown: bluetoothd loses the bus and exits without powering off
++    ("bus"), is stopped with SIGTERM ("sigterm"), or the adapter is
++    removed under it, then SIGTERM ("adapter").
++"""
++
++import fcntl
++import logging
++import os
++import signal
++import struct
++import subprocess
++import termios
++
++import dbus
++import dbus.service
++import pytest
++
++from pytest_bluezenv import (
++    Bluetoothd,
++    HostPlugin,
++    Pexpect,
++    find_exe,
++    get_dbus,
++    host_config,
++    mainloop_wrap,
++    wait_until,
++)
++
++from .test_a2dp import A2DP_SOURCE_UUID, TRANSPORT_RE, pair, start_bluetoothctl
++
++pytestmark = [pytest.mark.vm]
++
++MEDIA_INTERFACE = "org.bluez.Media1"
++MEDIA_ENDPOINT_INTERFACE = "org.bluez.MediaEndpoint1"
++OBJECT_MANAGER_INTERFACE = "org.freedesktop.DBus.ObjectManager"
++
++APP_PATH = "/local/adjacent_app"
++EP_PATH = APP_PATH + "/ep0"
++
++SBC_CAPABILITIES = [0xFF, 0xFF, 2, 64]
++SBC_CONFIGURATION = [0x21, 0x15, 2, 32]
++
++N_TTY = 0
++
++
++class Endpoint(dbus.service.Object):
++    def __init__(self, bus, path, owner):
++        self.owner = owner
++        self.path = dbus.ObjectPath(path)
++        super().__init__(bus, path)
++
++    def properties(self):
++        return {
++            "UUID": dbus.String(A2DP_SOURCE_UUID),
++            "Codec": dbus.Byte(0x00),
++            "Capabilities": dbus.Array(SBC_CAPABILITIES, signature="y"),
++        }
++
++    @dbus.service.method(
++        MEDIA_ENDPOINT_INTERFACE, in_signature="ay", out_signature="ay"
++    )
++    def SelectConfiguration(self, capabilities):
++        return dbus.Array(SBC_CONFIGURATION, signature="y")
++
++    @dbus.service.method(MEDIA_ENDPOINT_INTERFACE, in_signature="oa{sv}")
++    def SetConfiguration(self, transport, properties):
++        self.owner.log.info(f"SetConfiguration {transport}")
++        self.owner.transport = str(transport)
++
++    @dbus.service.method(MEDIA_ENDPOINT_INTERFACE, in_signature="o")
++    def ClearConfiguration(self, transport):
++        self.owner.log.info(f"ClearConfiguration {transport}")
++
++    @dbus.service.method(MEDIA_ENDPOINT_INTERFACE)
++    def Release(self):
++        self.owner.log.info("Release")
++
++
++class Application(dbus.service.Object):
++    def __init__(self, bus, path, endpoint):
++        self.endpoint = endpoint
++        super().__init__(bus, path)
++
++    @dbus.service.method(OBJECT_MANAGER_INTERFACE, out_signature="a{oa{sa{sv}}}")
++    def GetManagedObjects(self):
++        return {
++            self.endpoint.path: {MEDIA_ENDPOINT_INTERFACE: self.endpoint.properties()}
++        }
++
++
++class EndpointClient(HostPlugin):
++    """
++    A client registering an A2DP Source endpoint on its own bus
++    connection, and the means to end bluetoothd and the adapter.
++    """
++
++    name = "endpoint_client"
++    depends = [Bluetoothd()]
++
++    def setup(self, impl):
++        self.log = logging.getLogger(self.name)
++        self.bluetoothd = impl.plugins["bluetoothd"].job
++        self.dbus_daemon = impl.plugins["dbus-system"].job
++        self.transport = None
++        self.result = None
++        self.bus = None
++
++    def _done(self, *a):
++        self.result = True
++
++    def _error(self, err):
++        self.result = str(err)
++
++    def _wait_result(self):
++        wait_until(lambda: self.result is not None)
++        result, self.result = self.result, None
++        return result
++
++    def _media(self):
++        return dbus.Interface(
++            self.bus.get_object("org.bluez", "/org/bluez/hci0"), MEDIA_INTERFACE
++        )
++
++    def register(self, how):
++        self._register(how)
++        return self._wait_result()
++
++    @mainloop_wrap
++    def _register(self, how):
++        self.bus = get_dbus(private=True)
++        self.endpoint = Endpoint(self.bus, EP_PATH, self)
++        if how == "endpoint":
++            self._media().RegisterEndpoint(
++                self.endpoint.path,
++                dbus.Dictionary(self.endpoint.properties(), signature="sv"),
++                reply_handler=self._done,
++                error_handler=self._error,
++            )
++        else:
++            self.app = Application(self.bus, APP_PATH, self.endpoint)
++            self._media().RegisterApplication(
++                dbus.ObjectPath(APP_PATH),
++                dbus.Dictionary({}, signature="sv"),
++                reply_handler=self._done,
++                error_handler=self._error,
++            )
++
++    def unregister(self, how):
++        self._unregister(how)
++        return self._wait_result()
++
++    @mainloop_wrap
++    def _unregister(self, how):
++        if how == "endpoint":
++            self._media().UnregisterEndpoint(
++                self.endpoint.path,
++                reply_handler=self._done,
++                error_handler=self._error,
++            )
++        else:
++            self._media().UnregisterApplication(
++                dbus.ObjectPath(APP_PATH),
++                reply_handler=self._done,
++                error_handler=self._error,
++            )
++
++    @mainloop_wrap
++    def exit(self):
++        self.log.info("Client leaves the bus")
++        self.bus.close()
++
++    def get_transport(self):
++        return self.transport
++
++    @mainloop_wrap
++    def objects(self):
++        manager = dbus.Interface(
++            get_dbus().get_object("org.bluez", "/"), OBJECT_MANAGER_INTERFACE
++        )
++        return [str(path) for path in manager.GetManagedObjects()]
++
++    def bluetoothd_status(self):
++        return self.bluetoothd.poll()
++
++    def remove_adapter(self):
++        """
++        Detach the controller's line discipline, so that the kernel
++        removes hci0, and wait until bluetoothd has removed the adapter
++        or exited. Return bluetoothd's exit status, or None if running.
++        """
++        self.log.info("Remove the adapter")
++        fd = os.open("/dev/hvc1", os.O_RDWR | os.O_NOCTTY)
++        try:
++            fcntl.ioctl(fd, termios.TIOCSETD, struct.pack("i", N_TTY))
++        finally:
++            os.close(fd)
++
++        wait_until(lambda: not os.path.exists("/sys/class/bluetooth/hci0"))
++
++        def removed():
++            if self.bluetoothd.poll() is not None:
++                return True
++            try:
++                return "/org/bluez/hci0" not in self.objects()
++            except dbus.DBusException:
++                return False
++
++        wait_until(removed)
++        self.log.info("Adapter removed")
++        return self.bluetoothd.poll()
++
++    def stop(self, how):
++        """
++        End bluetoothd with SIGTERM ("sigterm") or by killing the bus
++        daemon ("bus"), and return its exit status.
++        """
++        self.log.info(f"Stop bluetoothd: {how}")
++        if how == "sigterm":
++            self.bluetoothd.send_signal(signal.SIGTERM)
++        else:
++            self.dbus_daemon.send_signal(signal.SIGKILL)
++
++        try:
++            return self.bluetoothd.wait(timeout=30)
++        except subprocess.TimeoutExpired:
++            return "timeout"
++
++
++adjacent_host_config = host_config(
++    [Bluetoothd(), Pexpect(), EndpointClient()],
++    [Bluetoothd(), Pexpect()],
++)
++
++
++@pytest.mark.parametrize("teardown", ["bus", "sigterm", "adapter"])
++@pytest.mark.parametrize("removal", ["unregister", "client_exit"])
++@pytest.mark.parametrize("registration", ["endpoint", "app"])
++@adjacent_host_config
++def test_local_removed_while_held(hosts_once, registration, removal, teardown):
++    host0, host1 = hosts_once
++    client = host0.endpoint_client
++
++    assert client.register(registration) is True
++
++    source = host0.pexpect.spawn([find_exe("client", "bluetoothctl")])
++    source.send("power on\n")
++    source.expect("Changing power on succeeded")
++
++    sink = start_bluetoothctl(host1, "a2dp-sink-sbc.bt")
++
++    pair(host0, source, host1, sink)
++
++    source.send(f"connect {host1.bdaddr}\n")
++    source.expect("Connection successful")
++
++    wait_until(lambda: client.get_transport() is not None)
++    transport = client.get_transport()
++    source.expect(rf"Transport {transport}")
++
++    # Another client, bluetoothctl, acquires the transport, which locks
++    # the stream
++    source.send(f"transport.acquire {transport}\n")
++    source.expect(r"Acquire successful: fd \d+")
++
++    if removal == "unregister":
++        assert client.unregister(registration) is True
++    else:
++        client.exit()
++
++    # The endpoint's removal is deferred: the transport stays
++    assert client.bluetoothd_status() is None
++    assert transport in client.objects()
++
++    if teardown == "adapter":
++        assert client.remove_adapter() is None
++        assert client.stop("sigterm") == 0
++    else:
++        assert client.stop(teardown) == 0
+-- 
+2.43.0
+

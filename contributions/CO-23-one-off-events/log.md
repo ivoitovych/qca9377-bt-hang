@@ -59,3 +59,29 @@ this machine's Bluetooth. Detail and every command: `experiments/results-2026-10
 - **Package:** `patch/send/` (two mails, `SHA256SUMS`, `send.sh`, README); To the list, Cc Luiz
   Augusto von Dentz. `send-email`, a dry run included, is the coordinator's (guard, 10-29).
 - `scripts/bot-ci-local.sh` now runs from a worktree (`--cache`; root from its own location).
+
+## 2026-11-01: review round: test hardened, stacked with CO-37, reachability read (nothing sent)
+Runs in the bot's image and QEMU guests, ASan builds, 10:08 to 12:31; this machine's Bluetooth
+untouched. Results, run totals and source facts: CO-37 `work/review-20261101/` (`results/`).
+- **Test:** a host plugin stops the peer daemon by the PID the framework started and resumes it in
+  a `finally` and at teardown; every wait bounded at 20 s. A reconnect race found: reconnecting while
+  the link was still going down was refused (`br-connection-refused`); the test now waits for
+  `Connected: no`. The first version had the same race (3/5 with the fix, as had the second draft).
+  A forced failure while the peer was stopped left no stopped `bluetoothd`, with either version (the
+  framework also sends SIGTERM, SIGCONT, SIGKILL at teardown).
+- **Results:** master + test 5/5 fail (`a2dp.c:2173 in a2dp_reconfig`); master + fix + test 15/15
+  pass.
+- **New draft** `patch/send-20261101-draft/` on BlueZ `14bd6ab65`, CO-23 first and CO-37 on top;
+  the fix's patch-id unchanged (only the From hash and `base-commit` differ). `patch/send/` kept.
+- **Bot's checks on the exact five mails** (CO-23 + CO-37), base vs patched: all PASS on both
+  sides except GitLint on CO-37 fix 1's 81-column title (retitled, PASS) and one CheckValgrind
+  abort of `unit/test-bap` under load (rerun PASS); TestFunctional 48 → 51 passed, 1 skipped.
+- **Who can reach the write** [source at `14bd6ab65` and 5.72; not run as non-root]: the shipped
+  policy lets any local user send to `org.bluez` (`src/bluetooth.conf:26-27`; installed noble file
+  `:31-33`, also group `bluetooth`); RegisterEndpoint, SetConfiguration and DisconnectProfile have
+  no authorization check (`media.c:1979`, `device.c:2990`; the gdbus privilege hook is never
+  registered). So: register an endpoint, make it the streaming SEP, trigger the Close with
+  DisconnectProfile, and call SetConfiguration again while a paired peer leaves the Close
+  unanswered (`REQ_TIMEOUT` 6 s).
+- **Routing facts:** BlueZ's `SECURITY.md` (`79918b87d`, 2026-08-26) asks for suspected
+  vulnerabilities as private GitHub advisories, not the list. The choice is the operator's.

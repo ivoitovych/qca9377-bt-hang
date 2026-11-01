@@ -1,0 +1,90 @@
+10:08:39 start build stk-base (14bd6ab65 c4af2f061 93b79b0b5 423036445)
+10:08:41 start build co23-before (14bd6ab65 c4af2f061)
+10:08:41 start build co23-after (14bd6ab65 d5456099b c4af2f061)
+10:12:41 start build stk-fix12 (14bd6ab65 d5456099b c4af2f061 2cf0c7770 1f3f75286 93b79b0b5 423036445)
+10:12:42 start build stk-fix1 (14bd6ab65 c4af2f061 2cf0c7770 93b79b0b5 423036445)
+10:33:39 end build co23-before exit 0
+10:33:57 end build co23-after exit 0
+10:34:03 end build stk-base exit 0
+10:34:15 start test co23-before co23 x5: test/functional/test_a2dp.py -k test_a2dp_reconfigure_during_close
+10:34:17 start test stk-base adjprobe x1: test/functional/test_local_adjacent.py -k endpoint-unregister-bus or app-client_exit-adapter
+10:36:38 end build stk-fix1 exit 0
+10:36:41 end test stk-base adjprobe: 1 failures in 1 runs
+10:36:42 end build stk-fix12 exit 0
+10:37:26 start test stk-base adjprobe2 x1: test/functional/test_local_adjacent.py -k endpoint-unregister-bus or app-client_exit-adapter
+10:37:27 start build rfc (14bd6ab65 62dd1cc85 915e984a0 423036445 1cf5c0b17)
+10:37:28 start build rfc-co37 (14bd6ab65 62dd1cc85 33c0a5059 5dc0f5fcb 915e984a0 423036445 1cf5c0b17)
+10:38:58 end test stk-base adjprobe2: 1 failures in 1 runs
+10:39:47 start test stk-base adj x10: test/functional/test_local_adjacent.py
+10:39:48 start test stk-fix1 adj x10: test/functional/test_local_adjacent.py
+10:39:49 start test stk-fix12 adj x10: test/functional/test_local_adjacent.py
+10:40:21 end test co23-before co23: 5 failures in 5 runs
+10:40:21 start test co23-after co23 x5: test/functional/test_a2dp.py -k test_a2dp_reconfigure_during_close
+10:40:44 start test stk-base pair x3: test/functional/test_a2dp.py -k reconfigure_during_close or acquired_transport
+10:44:17 end test co23-after co23: 2 failures in 5 runs
+10:44:17 start test co23-after pause x1: test/functional/test_local_pause.py -k pause_fails or no_stopped
+10:44:53 end test co23-after pause: 1 failures in 1 runs
+10:44:53 start test co23-after orig x1: test/functional/test_local_pause.py -k original_fails or no_stopped
+10:45:28 end test co23-after orig: 1 failures in 1 runs
+10:47:08 start test co23-after control x5: test/functional/test_local_original.py
+10:49:22 end build rfc-co37 exit 0
+10:49:30 end test stk-base pair: 3 failures in 3 runs
+10:49:30 start test stk-fix12 pair x3: test/functional/test_a2dp.py -k reconfigure_during_close or acquired_transport
+10:49:31 end build rfc exit 0
+10:50:16 start test rfc co37 x10: test/functional/test_a2dp.py -k acquired_transport
+10:50:17 start test rfc-co37 co37 x10: test/functional/test_a2dp.py -k acquired_transport
+10:50:30 end test co23-after control: 2 failures in 5 runs
+10:51:23 end test stk-fix12 pair: 0 failures in 3 runs
+10:51:23 start test stk-base a2dpfile x2: test/functional/test_a2dp.py
+10:52:22 start testsrc co23-before (/root/exp/agent-work/co23-co37-review-20261101/srcs/co23) final x5: test/functional/test_a2dp.py -k test_a2dp_reconfigure_during_close
+10:53:39 start testsrc stk-fix12 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) adj2probe x1: test/functional/test_local_adjacent2.py
+10:55:20 end test rfc-co37 co37: 0 failures in 10 runs
+10:57:54 end testsrc co23-before final: 5 failures in 5 runs
+10:57:54 start testsrc co23-after (/root/exp/agent-work/co23-co37-review-20261101/srcs/co23) final x5: test/functional/test_a2dp.py -k test_a2dp_reconfigure_during_close
+10:58:01 end test stk-base a2dpfile: 2 failures in 2 runs
+10:58:01 start test stk-fix12 a2dpfile x2: test/functional/test_a2dp.py
+10:58:29 end testsrc stk-fix12 adj2probe: 1 failures in 1 runs
+10:59:05 start testsrc stk-base (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) adj2 x10: test/functional/test_local_adjacent2.py
+10:59:06 start testsrc stk-fix1 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) adj2 x10: test/functional/test_local_adjacent2.py
+10:59:07 start testsrc stk-fix12 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) adj2 x10: test/functional/test_local_adjacent2.py
+10:59:51 end testsrc co23-after final: 0 failures in 5 runs
+10:59:51 start testsrc stk-base (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) fpair x3: test/functional/test_a2dp.py -k reconfigure_during_close or acquired_transport
+11:00:27 start ext /root/exp/agent-work/exit-uaf/runs/v572/src -> /root/exp/agent-work/co23-co37-review-20261101/runs/ext-v572 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) adj2probe x1: test/functional/test_local_adjacent2.py -k endpoint-unregister-other_release or app-unregister-other_release
+11:00:58 end test stk-fix12 a2dpfile: 0 failures in 2 runs
+11:01:49 start build prop3 (14bd6ab65 d5456099b f006e025f a3c616b9e 14f65520e a1fe74a79 ad36b0e73)
+11:02:29 end ext /root/exp/agent-work/co23-co37-review-20261101/runs/ext-v572 adj2probe: 1 failures in 1 runs
+11:07:40 end test rfc co37: 10 failures in 10 runs
+11:08:37 end testsrc stk-base fpair: 3 failures in 3 runs
+11:08:37 start testsrc stk-fix12 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) fpair x3: test/functional/test_a2dp.py -k reconfigure_during_close or acquired_transport
+11:09:15 end build prop3 exit 0
+11:09:26 start testsrc prop3 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) adj2 x10: test/functional/test_local_adjacent2.py
+11:11:04 end testsrc stk-fix12 fpair: 0 failures in 3 runs
+11:11:04 start testsrc stk-base (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) fa2dp x2: test/functional/test_a2dp.py
+11:15:27 start build prop4 (14bd6ab65 d5456099b f006e025f a3c616b9e 14f65520e a1fe74a79 e91bde9d3)
+11:18:00 end testsrc stk-base fa2dp: 2 failures in 2 runs
+11:18:00 start testsrc stk-fix12 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) fa2dp x2: test/functional/test_a2dp.py
+11:21:41 end testsrc stk-fix12 fa2dp: 0 failures in 2 runs
+11:22:36 end build prop4 exit 0
+11:22:42 start testsrc prop4 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) adj2 x5: test/functional/test_local_adjacent2.py
+11:22:46 start testsrc co23-after (/root/exp/agent-work/co23-co37-review-20261101/srcs/co23) final2 x10: test/functional/test_a2dp.py -k test_a2dp_reconfigure_during_close
+11:27:07 end testsrc co23-after final2: 0 failures in 10 runs
+11:28:19 start testsrc prop3 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) adj x5: test/functional/test_local_adjacent.py
+11:28:19 start testsrc prop3 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) fa2dp x2: test/functional/test_a2dp.py
+11:28:58 start make check stk-fix12
+11:29:15 end make check stk-fix12 exit 0
+11:29:18 start make check stk-base
+11:29:34 end make check stk-base exit 0
+11:29:37 start make check prop4
+11:29:52 end make check prop4 exit 0
+11:33:30 end test stk-fix12 adj: 10 failures in 10 runs
+11:33:45 end test stk-base adj: 10 failures in 10 runs
+11:34:02 end test stk-fix1 adj: 10 failures in 10 runs
+11:36:17 end testsrc prop4 adj2: 0 failures in 5 runs
+11:36:17 start testsrc prop4 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) adj x3: test/functional/test_local_adjacent.py
+11:46:54 end testsrc prop4 adj: 0 failures in 3 runs
+11:46:54 start testsrc prop4 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) fa2dp x2: test/functional/test_a2dp.py
+11:49:39 end testsrc prop4 fa2dp: 0 failures in 2 runs
+11:49:47 start ext /root/exp/agent-work/exit-uaf/runs/v572/src -> /root/exp/agent-work/co23-co37-review-20261101/runs/ext-v572 (/root/exp/agent-work/co23-co37-review-20261101/srcs/stack) rel x4: test/functional/test_local_adjacent2.py -k endpoint-unregister-other_release or app-unregister-other_release
+11:54:29 end ext /root/exp/agent-work/co23-co37-review-20261101/runs/ext-v572 rel: 4 failures in 4 runs
+12:28:37 end of campaign: report written; bot-ci-final base-side ScanBuild still running (started after 11:15 UTC), not waited for
+12:28:50 bot-ci-final finished 11:28:27 UTC: base all PASS; patched GitLint FAIL (title 81>80, fixed in mails/final-co37-retitled, rerun PASS) and CheckValgrind FAIL (unit/test-bap abort, rerun PASS)

@@ -1,0 +1,116 @@
+From 09d7184657226e5d4bc59e0207ea165c3256ef16 Mon Sep 17 00:00:00 2001
+From: local <local>
+Date: Sun, 1 Nov 2026 10:15:00 +0100
+Subject: [PATCH 2/3] local: check that a failing run leaves no stopped
+ bluetoothd
+
+Local only, not for submission.
+---
+ test/functional/test_local_pause.py | 95 +++++++++++++++++++++++++++++
+ 1 file changed, 95 insertions(+)
+ create mode 100644 test/functional/test_local_pause.py
+
+diff --git a/test/functional/test_local_pause.py b/test/functional/test_local_pause.py
+new file mode 100644
+index 000000000..00ef59fd5
+--- /dev/null
++++ b/test/functional/test_local_pause.py
+@@ -0,0 +1,95 @@
++# -*- coding: utf-8; mode: python; eval: (blacken-mode); -*-
++# SPDX-License-Identifier: GPL-2.0-or-later
++"""
++Local only, not for submission: does a test that fails while the peer's
++bluetoothd is stopped leave it stopped for the tests after it?
++
++Run one of the two failing tests together with the check, which comes
++last in this file and shares their host configuration, so it runs after
++it on the same VM instances.
++"""
++
++import os
++import signal
++
++import pytest
++
++from pytest_bluezenv import Bluetoothd, Pexpect, host_config
++
++from .test_a2dp import PausedBluetoothd, a2dp_hosts  # noqa: F401
++
++pytestmark = [pytest.mark.vm]
++
++local_pause_host_config = host_config(
++    [Bluetoothd(), Pexpect()],
++    [Bluetoothd(), Pexpect(), PausedBluetoothd()],
++)
++
++
++def signal_bluetoothd(sig):
++    """
++    The helper of the first version of the test: signal the first
++    bluetoothd found in /proc.
++    """
++    for pid in os.listdir("/proc"):
++        if not pid.isdigit():
++            continue
++
++        try:
++            with open(f"/proc/{pid}/comm") as f:
++                comm = f.read().strip()
++        except OSError:
++            continue
++
++        if comm == "bluetoothd":
++            os.kill(int(pid), sig)
++            return True
++
++    return False
++
++
++def stopped_bluetoothd():
++    """
++    Every bluetoothd of the host this runs on, with its state.
++    """
++    found = []
++    for pid in os.listdir("/proc"):
++        if not pid.isdigit():
++            continue
++
++        try:
++            with open(f"/proc/{pid}/stat") as f:
++                stat = f.read()
++        except OSError:
++            continue
++
++        comm = stat[stat.index("(") + 1 : stat.rindex(")")]
++        state = stat.rsplit(")", 1)[1].split()[0]
++        if comm == "bluetoothd":
++            found.append((int(pid), state))
++
++    return found
++
++
++@local_pause_host_config
++def test_local_pause_fails_while_stopped(a2dp_hosts):
++    host0, host1, source, sink = a2dp_hosts
++
++    host1.paused_bluetoothd.stop()
++    pytest.fail("deliberate failure while the peer is stopped")
++
++
++@local_pause_host_config
++def test_local_original_fails_while_stopped(a2dp_hosts):
++    host0, host1, source, sink = a2dp_hosts
++
++    assert host1.call(signal_bluetoothd, signal.SIGSTOP)
++    pytest.fail("deliberate failure while the peer is stopped")
++
++
++@local_pause_host_config
++def test_local_no_stopped_bluetoothd(hosts):
++    for host in hosts:
++        found = host.call(stopped_bluetoothd)
++        print(f"{host.instance_name}: {found}")
++        assert [p for p in found if p[1] == "T"] == []
+-- 
+2.43.0
+

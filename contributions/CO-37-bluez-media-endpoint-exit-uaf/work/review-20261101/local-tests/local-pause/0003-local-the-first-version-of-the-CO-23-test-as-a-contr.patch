@@ -1,0 +1,70 @@
+From 3e37e2559691fa287b8862d7d0da3ec7884c3f56 Mon Sep 17 00:00:00 2001
+From: local <local>
+Date: Sun, 1 Nov 2026 10:46:42 +0100
+Subject: [PATCH 3/3] local: the first version of the CO-23 test, as a control
+
+Local only, not for submission.
+---
+ test/functional/test_local_original.py | 50 ++++++++++++++++++++++++++
+ 1 file changed, 50 insertions(+)
+ create mode 100644 test/functional/test_local_original.py
+
+diff --git a/test/functional/test_local_original.py b/test/functional/test_local_original.py
+new file mode 100644
+index 000000000..6fc2ca710
+--- /dev/null
++++ b/test/functional/test_local_original.py
+@@ -0,0 +1,50 @@
++# -*- coding: utf-8; mode: python; eval: (blacken-mode); -*-
++# SPDX-License-Identifier: GPL-2.0-or-later
++"""
++Local only, not for submission: the first version of
++test_a2dp_reconfigure_during_close (mail of 2026-10-29), verbatim but
++for its name, as a control for the revised one.
++"""
++
++import signal
++
++import pytest
++
++from .test_a2dp import A2DP_SINK_UUID, TRANSPORT_RE, a2dp_host_config
++from .test_a2dp import a2dp_hosts  # noqa: F401
++from .test_local_pause import signal_bluetoothd
++
++pytestmark = [pytest.mark.vm]
++
++
++@a2dp_host_config
++def test_local_original_reconfigure_during_close(a2dp_hosts):
++    host0, host1, source, sink = a2dp_hosts
++
++    _, m = source.expect(TRANSPORT_RE)
++    transport = m[0].decode("utf-8")
++    remote_sep = transport.rsplit("/", 1)[0]
++
++    # Stop the peripheral so the Close sent next is left pending
++    assert host1.call(signal_bluetoothd, signal.SIGSTOP)
++
++    source.send(f"disconnect {host1.bdaddr} {A2DP_SINK_UUID}\n")
++    source.expect("Attempting to disconnect")
++
++    # Switching endpoints while the Close is pending aborts the stream,
++    # which cancels the Close and completes the request
++    source.send(f"endpoint.config {remote_sep} /local/endpoint/ep0 MQ_STEREO_44_1\n")
++    source.expect("Failed to config endpoint: org.bluez.Error.Failed")
++
++    # Switching again while the Abort is pending can neither close nor
++    # abort the stream
++    source.send(f"endpoint.config {remote_sep} /local/endpoint/ep0 MQ_STEREO_44_1\n")
++    source.expect("Failed to config endpoint: org.bluez.Error.Failed")
++
++    assert host1.call(signal_bluetoothd, signal.SIGCONT)
++
++    # bluetoothd is still alive and the stream can be configured again
++    source.expect(rf"DEL\S*\] Transport {transport}")
++    source.send(f"connect {host1.bdaddr}\n")
++    source.expect(TRANSPORT_RE)
++    source.expect("Connection successful")
+-- 
+2.43.0
+

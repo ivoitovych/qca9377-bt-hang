@@ -1,0 +1,61 @@
+2026-11-01 09:52:35 image bluez-action-ci:60348956fc7b: action-ci 60348956fc7bad52a64e802f3e90f90c03ba8860; base digest not recorded
+2026-11-01 09:52:35 space user; base 14bd6ab65f4a647302edbd6df27f6faa91bee8a8 (doc/virtio: Update measurements of the testers); ELL 002b32d7c091993c5036956bf92d2444aca1c799; kernel image tmp/bzImage-bot-base-47d4d9f67e92
+2026-11-01 09:52:35 mail tmp/mails-final/01-0001-a2dp-Fix-use-after-free-when-switching-endpoints-dur.patch
+2026-11-01 09:52:35 mail tmp/mails-final/02-0002-test-Cover-A2DP-endpoint-switch-while-Close-is-pendi.patch
+2026-11-01 09:52:35 mail tmp/mails-final/03-0001-media-Fix-use-after-free-of-app-when-removing-a-lock.patch
+2026-11-01 09:52:35 mail tmp/mails-final/04-0002-media-Fix-use-after-free-releasing-endpoints-on-adap.patch
+2026-11-01 09:52:35 mail tmp/mails-final/05-0003-test-Cover-A2DP-endpoint-release-with-an-acquired-tr.patch
+2026-11-01 09:52:35 patched: start
+2026-11-01 10:52:19 patched: done, 2 test(s) not PASS
+Test Summary:
+CheckPatch                    PASS      0.81 seconds
+GitLint                       FAIL      3582.42 seconds
+BuildEll                      PASS      24.50 seconds
+BluezMake                     PASS      375.95 seconds
+MakeCheck                     PASS      14.49 seconds
+MakeDistcheck                 PASS      280.97 seconds
+CheckValgrind                 FAIL      367.64 seconds
+CheckSmatch                   PASS      483.36 seconds
+bluezmakeextell               PASS      210.76 seconds
+TestFunctional                PASS      788.38 seconds
+IncrementalBuild              PASS      232.18 seconds
+ScanBuild                     PASS      787.46 seconds
+
+Details
+##############################
+Test: GitLint - FAIL
+Desc: Run gitlint
+Output:
+[BlueZ,1/3] media: Fix use-after-free of app when removing a locked A2DP endpoint
+
+1: T1 Title exceeds max length (81>80): "[BlueZ,1/3] media: Fix use-after-free of app when removing a locked A2DP endpoint"
+##############################
+Test: CheckValgrind - FAIL
+Desc: Run Bluez Make Check with Valgrind
+Output:
+
+tools/mgmt-tester.c: In function ‘main’:
+tools/mgmt-tester.c:14256:5: note: variable tracking size limit exceeded with ‘-fvar-tracking-assignments’, retrying without
+14256 | int main(int argc, char *argv[])
+      |     ^~~~
+make[3]: warning: -j16 forced in submake: resetting jobserver mode.
+./test-driver: line 119: 105694 Aborted                    (core dumped) "$@" >> "$log_file" 2>&1
+make[3]: *** [Makefile:10412: test-suite.log] Error 1
+make[2]: *** [Makefile:10547: check-TESTS] Error 2
+make[1]: *** [Makefile:11050: check-am] Error 2
+make: *** [Makefile:11052: check] Error 2
+2026-11-01 10:52:19 base: start
+2026-11-01 11:28:27 base: done, 0 test(s) not PASS
+Test Summary:
+BuildEll                      PASS      17.34 seconds
+BluezMake                     PASS      222.06 seconds
+MakeCheck                     PASS      13.41 seconds
+MakeDistcheck                 PASS      104.72 seconds
+CheckValgrind                 PASS      172.55 seconds
+CheckSmatch                   PASS      230.82 seconds
+bluezmakeextell               PASS      101.86 seconds
+TestFunctional                PASS      521.99 seconds
+ScanBuild                     PASS      776.25 seconds
+
+2026-11-01 11:28:27 NOT CLEAN: patched: 2 test(s) not PASS (a WARNING counts; compare with the base before judging)
+2026-11-01 11:28:27 ALL DONE, exit 1
