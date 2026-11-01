@@ -761,8 +761,9 @@ before the second) never finishes on 7.3, 7.2.12, 6.18.58, 6.12.114, 6.6.160 and
 7.0.0-38's code, and passes on bluetooth-next (`results/bt10-l2cap-hang-2026-10-23/`). It is a
 self-deadlock: with the hung-task detector on, v7.3 and v6.1.190 show the tester's task holding
 its socket's lock from `l2cap_sock_recvmsg()` and waiting for the same lock in
-`l2cap_sock_teardown_cb()` (taken nested, so lockdep is silent). The path dates from v5.7
-(`15f02b9105625`): v6.1.190, v5.15.223 and v5.10.272 hang too once ECRED is enabled
+`l2cap_sock_teardown_cb()` (taken nested, so lockdep is silent). The path dates from
+`9aa9d9473f15` (v6.3; backported to 6.1.22, 5.15.105 and 5.10.177; corrected 2026-11-01, this
+said v5.7, whose `15f02b9105625` only collects the CIDs): v6.1.190, v5.15.223 and v5.10.272 hang too once ECRED is enabled
 (`enable_ecred=1`; off by default before v6.2). The fix is Pauli Virtanen's `32d86e048d8ef`
 ("L2CAP: hold conn->lock for __l2cap_ecred_conn_rsp_defer") with its helpers `608e0b7a675b2`, in
 mainline since the 7.4 merge window, without `Cc: stable`; on 7.2.13, and on v7.3 with BT-15's

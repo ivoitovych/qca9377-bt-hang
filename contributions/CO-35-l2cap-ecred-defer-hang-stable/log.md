@@ -146,3 +146,22 @@ images and raw logs in the worker's `tmp/co35/` (git-ignored; `logs/SHA256SUMS`)
   checkpatch: only the `[ Upstream commit ]` false positive and upstream's own warning;
   ci-local `--kernel`: `git am` PASS on each tag, the expected GitLint title length and
   VerifyFixes (6.12, 6.6) findings; mail-lint clean. Nothing sent.
+
+## 2026-11-01 — review round: origin corrected, bases stale
+- **The origin was wrong.** This log (2026-10-28) and the README said the self-deadlock path dates
+  from v5.7 (`15f02b9105625`). v5.7's `__l2cap_ecred_conn_rsp_defer()` only collects the CIDs
+  (`git show 15f02b9105625`). The `l2cap_chan_del()` on the caller's own channel comes from
+  `9aa9d9473f15` ("Bluetooth: L2CAP: Fix responding with wrong PDU type", first in v6.3-rc4),
+  backported as `c357e28b01c4c` (v6.1.22), `c35fd1b9b90a2` (v5.15.105) and `fce0e47e9ec5a`
+  (v5.10.177). README, STATUS (BT-10) and issues.md corrected; the dated results file is left
+  as written. The send mails never said v5.7.
+- **The 2026-10-30 releases.** v7.3.1, v7.2.14, v6.18.60, v6.12.115 and v6.6.161 exist now; the
+  mails name the previous tags. All three series and the upstream pair still apply to the new
+  tags (`git apply --check`, offsets only; on v6.12.115 patch 1's hunk at the
+  `l2cap_check_encryption()` site applies at 7680, offset 5; an outside reviewer's report that
+  it fails there is wrong). Upstream `86b55991d3cd6` (patch 16 of the same upstream series) is
+  now on all five lines; BT-14's `getsockopt` fix is released in v6.12.115 (`4b26b1d3a94cc`), so
+  the 6.12 cover's "already queued" sentence and its 33/111 caveat are out of date. The hang
+  case is not yet re-run on the new tags.
+- **Not requested and not named:** `dc1ddc65f06d` (Pauli Virtanen, "take lock for l2cap_chan_del
+  in l2cap_ecred_rsp_defer", in mainline, no `Fixes:`/`Cc: stable`).

@@ -23,9 +23,11 @@ What the evening round established (`experiments/results-7.3-and-older-2026-10-2
 - **What the hang is** (diagnostic, results §5): with the hung-task detector on, plain v7.3
   shows the tester's task holding its socket's lock from `l2cap_sock_recvmsg()` and waiting
   for the same lock in `l2cap_sock_teardown_cb()`; by the source, `__l2cap_ecred_conn_rsp_defer()`
-  is called under that lock and can reach the socket's own teardown. That path dates from v5.7
-  (`15f02b9105625`), which is why the older lines hang too; `32d86e048d8ef` releases the lock
-  first;
+  is called under that lock and can reach the socket's own teardown. That path dates from
+  `9aa9d9473f15` (v6.3, "Fix responding with wrong PDU type"; corrected 2026-11-01, this said
+  v5.7: v5.7's `15f02b9105625` only collects the CIDs), which added the `l2cap_chan_del()` on
+  the caller's own channel and was backported to 6.1.22, 5.15.105 and 5.10.177; that is why the
+  older lines hang too; `32d86e048d8ef` releases the lock first;
 - **Corrections to earlier records:** the first bisect's "second, SCI-caused hang on the same
   case" was a stall in an earlier case, "L2CAP LE Client - SCI Fast Mode", which the split
   case filter ran; the l2cap-tester images are built without `CONFIG_DETECT_HUNG_TASK`, so "no

@@ -21,3 +21,12 @@ Append-only. Newest last.
 - **Checks:** CheckPatch clean; `make check` the same on both sides; the functional suite
   changes only by the new tests.
 - Nothing sent. The full logs are in `/root/exp/agent-work/exit-uaf/`.
+
+## 2026-11-01 — review round: a wrong sha corrected
+- The 5.72 backport of fix 2 (`work/patches/5.72/0002-…`) named `Fixes: ee0f3c03f6fa`, which does
+  not exist (`git cat-file -t ee0f3c03f6fa` → "Not a valid object name"); the commit is
+  `ee0f3c03fb1d` ("media: Fix UnregisterApplication", first in 5.60), as the master patch says.
+  Corrected in the patch file. Found by an outside reviewer, checked here.
+- Also confirmed by the round: CO-23's and CO-37's test patches each apply to BlueZ `14bd6ab65`
+  alone but conflict when stacked, in either order (`test/functional/test_a2dp.py`,
+  `doc/functional-a2dp.rst`); a coordinated rebase is owed before either is sent.
