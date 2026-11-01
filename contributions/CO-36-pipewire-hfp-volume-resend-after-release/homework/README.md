@@ -212,6 +212,16 @@ change sent upstream is the operator's own. Everything is in
   release, destroy and HUP paths through `td->rfcomm`; if an old
   transport's teardown runs after a new link has rearmed the timer, V3
   would cancel the new link's legitimate resend. V2 has no such path.
+  **Checked in source the same day: unreachable.** One rfcomm has at most
+  one transport at a time; `rfcomm_new_transport()` frees the old one
+  synchronously before creating the new (`backend-native.c:381-385` at
+  4cfc4711), and freeing runs all three V3 stop points first. On one
+  transport the timer is armed only in `sco_ready()`, which needs a new
+  acquire, which needs the previous release (V3's stop). A reconnect
+  is a new rfcomm with its own timer. V2's premise also holds: for
+  native HFP/HSP transports `sco_ready()` is the only caller that sets
+  ACTIVE. So no test separates the variants; the choice stays a design
+  question.
 - **Not run on the variants:** PipeWire's own 7 VM tests (T008), the clang
   build (T003), builds without a native backend (T004), the 1.0.5
   backport (T009), real headsets (L3).

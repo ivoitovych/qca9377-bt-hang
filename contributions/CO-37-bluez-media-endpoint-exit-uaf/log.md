@@ -78,3 +78,31 @@ cores).
 - **Disk:** the ASan cores filled the root filesystem's user space at about 11:27; nothing was
   deleted; 233 cores were compressed in place (each verified) and the remaining crashing batches
   were capped. Free space afterwards about 21 GB.
+
+## 2026-11-01 (evening) — who owns an a2dp_sep: source reading of the U25 proposal
+Source only, master `14bd6ab65f4a`; nothing built or run. Work area (local):
+`/root/exp/agent-work/audio-ownership-20261101/`.
+- **The proposal's passes are partly leaks.** Read from the existing debug logs
+  (`adapter-order.py`, read-only): in the proposal's bus-loss runs no "SEP … unregistered" line
+  appears at all, where the stacked tree unregisters and then crashes. In the adapter-removal runs
+  the AVDTP connection is lost before `adapter_remove()` and no SEP is unregistered on either tree,
+  so the 9/10 adapter-removal passes with both fixes were passes because the SEP leaked.
+- **Master leaks a SEP removed while locked** when its client then leaves the bus
+  (`release_endpoint` skips `clear_endpoint`, `media.c:658-659`) or the locked stream goes idle
+  (the unlock returns at `a2dp.c:3571-3573` before the removed-SEP check at 3586). What remains
+  is then destroyed with a NULL destructor in `a2dp_server_unregister()` (`a2dp.c:2916`).
+  Inferred, not run: in the proposal a later bus exit of such a client after adapter removal reads
+  the freed server in `a2dp_remove_sep()`.
+- **Proposal details (source):** a SEP is tracked even when `timeout_add()` fails; SEPs pending at
+  server teardown are never unregistered; on master a zero timeout is an idle source (`3bce4ad01`,
+  2026-10-21), on 5.72 a default-priority timeout, so the re-lock window differs.
+- **Side finding, inferred:** on master, `path_free` appears to send `MediaEndpoint1.Release` twice
+  to an unlocked A2DP endpoint (`media.c:671`, then 674 → `a2dp.c:3064` → 2893 → `media.c:806` →
+  671). Not measured.
+- **Alternatives drafted (local experiments, applied nowhere):** amendments to the timer
+  proposal; and a timer-free rule, clearing the endpoint's transports before removing the SEP,
+  which removes the removed-but-registered state but destroys another client's acquired transport
+  when the endpoint goes, reversing `1636fb014` (2011). Neither has run.
+- **Settling runs listed** (CO-37 harness): client exit after adapter removal; leak detection on
+  (`asan-tree.sh` builds with `--disable-lsan`, so no run so far could show a leak); stream-idle
+  while held; the duplicate Release count.
