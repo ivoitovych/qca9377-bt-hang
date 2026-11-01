@@ -1,0 +1,7 @@
+  * Fix A2DP being disconnected when Release() cancels a pending
+    Acquire(); the cancelled Acquire() is now answered with an error.
+    Cherry-picked from upstream (BlueZ 5.80): 3d9900eb754d (helper part
+    only), a14d59725ef3 and 664a5d3785a1, as
+    d/p/transport-Add-transport_a2dp_get_stream-helper.patch,
+    d/p/transport-don-t-disconnect-A2DP-if-canceling-Acquire-with-Release.patch
+    and d/p/a2dp-don-t-change-setup-sep-when-it-is-reconfiguring.patch.

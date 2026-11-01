@@ -192,9 +192,18 @@ Failure paths that do not change (recorded, both builds alike):
   to 1 s because PipeWire under ASan is slower in the guest.
 - The Ubuntu `.deb` was built and its `make check` run; the `.deb` itself
   was not installed anywhere. The VM tests ran the same source built with
-  ASan/UBSan, not the packaged binary.
+  ASan/UBSan, not the packaged binary. **Superseded 2026-11-01:** the exact
+  three-patch package (`debian-patches-3patch/`, `5.72-0ubuntu5.9~ppa1`)
+  was installed in QEMU guests with Noble's own PipeWire 1.0.5 and
+  WirePlumber 0.4.17 and tested against the stock 5.72-0ubuntu5.8 package
+  (R300, T201, T220, R310; section 9).
 - `664a5d3785a1`'s reconfiguration path (T252) passes on V2, but no build
   of #4 without #5 was run to show the wrong-SEP case it prevents.
+  **Closed 2026-11-01:** R252 (two endpoints, SetConfiguration of the other
+  one while the cancelled START is pending) ends on the old endpoint with
+  the new configuration in 5/5 runs without the companion and on the
+  requested endpoint in 5/5 with it (section 9). T252 cannot show it: it has
+  one endpoint.
 - BT-7 (#1, #2) is in V2 but not exercised by any test here (their crash
   paths need a controller that stops answering); V1 (BT-7 only) was not
   run because V0 → V2 changed nothing outside the leak set.
@@ -277,20 +286,36 @@ Fixed upstream by commit a14d59725ef3 ("transport: don't disconnect A2DP
 if canceling Acquire() with Release()", BlueZ 5.80): the Acquire() is
 answered with an error, START is waited out and followed by SUSPEND.
 
-Attached patches (DEP-3), on top of 5.72-0ubuntu5.8:
-- the transport_a2dp_get_stream() helper from 3d9900eb754d (context only)
+Attached patches (DEP-3), on top of 5.72-0ubuntu5.8 (the three files in
+`debian-patches-3patch/`; debdiff `bluez_5.72-0ubuntu5.8_5.72-0ubuntu5.9.debdiff`):
+- the transport_a2dp_get_stream() helper from 3d9900eb754d, which the fix
+  calls (corrected 2026-11-01: this said "context only")
 - a14d59725ef3 (the A2DP_OPS hunk adapted to 5.72)
 - 664a5d3785a1 ("a2dp: don't change setup sep when it is reconfiguring",
-  same upstream series)
+  same upstream series): without it, a reconfiguration to another endpoint
+  made while the cancelled START is pending ends on the old endpoint
 
-Tests (emulated controllers in QEMU, the patched source built with
-ASan/UBSan): Release() during a pending Acquire(), against remotes that
-answer ABORT and that never do, ten runs each: A2DP lost 70/70 before,
-0/70 after; a new Acquire() and audio work 70/70 after. Normal
-Acquire()/Release() orderings, refusals, disconnects during a pending
-Acquire() and PipeWire's own Bluetooth VM tests give the same results
-before and after. The package builds with dpkg-buildpackage and its unit
-tests are unchanged.
+Tests (corrected 2026-11-01 to the three-patch package; the earlier text
+quoted the five-patch internal build):
+- emulated controllers in QEMU, the candidate's source built with
+  ASan/UBSan: Release() during a pending Acquire() against remotes that
+  answer ABORT and that never do, ten runs each: A2DP kept 70/70 and a new
+  Acquire() with audio works 70/70 (stock 5.72: lost 70/70); the other
+  Acquire()/Release() orderings unchanged; no sanitizer report;
+- the endpoint switch during the cancelled START: correct endpoint 5/5 with
+  the third patch, wrong endpoint 5/5 without it;
+- the binary packages installed in QEMU guests with Ubuntu 24.04's own
+  PipeWire 1.0.5 and WirePlumber 0.4.17, the profile set to "off" during
+  START: A2DP kept 3/3 (stock package: lost 3/3);
+- dpkg-buildpackage; `make check` results identical to 5.72-0ubuntu5.8.
+
+Still to write before filing (Ubuntu's SRU template): [ Impact ],
+[ Test Plan ] executable without this project's harness (a short
+python3-dbus script that calls Acquire() then Release() in the same
+main-loop turn was proposed by an outside reviewer), [ Where problems
+could occur ], [ Other Info ] (the fix is in 5.80 and therefore in every
+supported release after 24.04; checked 2026-11-01: 25.04+ series carry
+5.85/5.87).
 
 ## 8. Files
 
@@ -320,3 +345,70 @@ Superseded or debugging runs, kept: `runs/smoke1`, `runs/smoke2`,
 `runs/base-r1` (pairing bug in the test), `runs/base-r1b` (before the
 guest-clock fix), `runs/l3-smoke1` to `l3-smoke3` (before the L3 timing
 rework); `logs/*superseded-origin-headers*` (first backport package build).
+
+## 9. 2026-11-01: the exact three-patch package, the runner, the companion
+
+After the review round (outside reviewers' findings, each checked here first).
+Work area `/root/exp/agent-work/co03/review-20261101/` (SHA256SUMS, 450
+files; logs local); kept here: `debian-patches-3patch/`, `expected/`,
+`runs-20261101/` (verdicts and per-run JSONL), the new scripts and tests.
+
+**The runner reported success on failures.** The old `scripts/run-l1.sh`
+ended on a `grep`, so it exited 0 when a test printed FAIL and when ASan
+fired (the container's status was printed, not returned). It now has a
+`--verify <expected>` mode (`scripts/verify-l1.py`, `expected/l1-base.txt`,
+`expected/l1-fixed.txt`) that fails on a container or build failure, any
+sanitizer report, missing or malformed RESULT records, an unexpected FAIL
+or PASS, a missing ID and a count mismatch; the container no longer runs
+under `set -e`, always prints the build and harness status, and exits with
+the harness status (90 on a build failure). Proof: 20 stub-docker scenarios,
+0 wrong (`scripts/prove-run-l1.py`). Real runs: base 27/8 as expected, V2,
+the three-patch and the two-patch builds 35/35, base judged against "fixed"
+fails (the negative control). The defaults still point at the local work
+areas; `--harness` overrides them.
+
+**The three-patch candidate** (`debian-patches-3patch/`, named by subject,
+no project labels; proposed versions `5.72-0ubuntu5.9~ppa1` for test
+binaries, `5.72-0ubuntu5.9` for the debdiff): each commit's patch-id equals
+the prepared one; it differs from V2 only by the BT-7 lines; `quilt push -a
+--fuzz=0` clean; the patched source identical to the git tree outside
+`debian/`; `dpkg-buildpackage -b` exit 0; `make check` 30/32 with the same
+list as V0; no new warnings. L2 on its ASan build: T201 to T207 ten each
+70/70 (A2DP kept, later Acquire with media), all other cases as on V2, no
+sanitizer line (`runs-20261101/cand3-l2*`).
+
+**The companion is needed** (`tests/l2/test_rev_companion.py`): host0 has two
+SBC source endpoints; during a pending START it calls Release(), then 50 ms
+later SetConfiguration() for the other endpoint with a different
+configuration. R251 (idle control) 5/5 on both builds. R252: without
+`664a5d3785a1` 0/5, the stream ends on the old endpoint with the new
+configuration, one `a2dp_suspend() avdtp_suspend failed` per run (the failed
+suspend had already put `setup->sep` back, `a2dp.c:3185`); with it 5/5 on the
+requested endpoint (`runs-20261101/ab-cand2`, `ab-cand3`).
+
+**The installed package** (`tests/l2/test_rev_installed.py`): QEMU guests
+built from the binary packages with Noble's pipewire 1.0.5-1ubuntu3.3 and
+wireplumber 0.4.17-1ubuntu4.1 (a one-line drop-in sets `with-logind =
+false`; no logind in the guest). R300: the running executable is the
+packaged file (md5 against dpkg), 3/3 each. T201 (D-Bus client): candidate
+3/3 pass, stock 3/3 fail (ABORT, A2DP lost at 1932 to 2468 ms). T220 3/3 both.
+R310 (Noble's PipeWire/WirePlumber, profile "off" set when PipeWire's
+Acquire() appears on the bus): candidate 3/3 A2DP kept, 226 to 227 packets
+at the remote; stock 3/3 lost (ABORT, at 2932 to 3974 ms). The valid
+candidate R310 runs are `runs-20261101/inst-ppa1-r310` (the R310 rows in
+`inst-ppa1` used an earlier trigger that never landed during START). Not
+possible here: systemd/logind, real hardware, an HFP switch (the fixture
+offers no HFP; "off" stands in).
+
+**Ubuntu's later series** (api.launchpad.net and the source packages,
+checked by code markers): 27.04 tenacious 5.87-4 (5.87-5 in -proposed),
+26.10 stonking 5.87-4, 26.04 resolute 5.85-4ubuntu0.4 carry `a14d59725` and
+`664a5d3785a1` (in 5.80) and `fdbfe0018f6f`; none carries the BT-7 fixes
+`a734b06059cb`/`0bed9886cff3` or `dca0f10fd560` (in no release tag, no
+patch). So for 24.04 the U12 fix meets the "later releases fixed" condition;
+BT-7 does not (it would need the later series first).
+
+**Launchpad 2056196** (noble, New, no comments): the headset itself switches
+A2DP → HSP for a call on another device and is then disconnected; its syslog
+has no debug lines and no Acquire/Release/abort trace. It neither shows nor
+rules out U12.

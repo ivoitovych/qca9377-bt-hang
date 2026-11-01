@@ -44,3 +44,28 @@ aborts `btmon` at 80 columns or fewer.
   development release needs dca0f10fd too; [Other Info] says the bug should target it.
 - Still open: the live-socket `comm[pid]` path (not run here: it touches the machine's
   Bluetooth), attaching the captures and `mkcap.py` when filing, the bug number.
+
+## 2026-11-01 — the first fix alone does not fix the bug
+An outside reviewer proposed shipping `fdbfe0018f6f` alone (it is in 5.80, so the later Ubuntu
+series have it); another asked to test it first. btmon built three ways in a noble container
+with the package's flags (`-D_FORTIFY_SOURCE=3`; the rebuilt stock btmon's output equals the
+archive binary's at 10 of 10 widths where both exit 0), run on the two `mkcap.py` captures
+(`ubuntu/results-2026-11-01-first-fix-only.tsv`; exit status "privileged MGMT Open capture /
+ordinary-records capture"):
+
+| width | stock | + fdbfe0018f6f only | + both |
+|---|---|---|---|
+| 10 | 134 / 134 | **134 / 134** | 0 / 0 |
+| 60 | 134 / 134 | 0 / 0 | 0 / 0 |
+| 80 | 134 / 0 | 0 / 0 | 0 / 0 |
+| 81, 82, 100, 250 | 0 / 0 | 0 / 0 | 0 / 0 |
+| 3000, 5000 | 134 / 134 | **134 / 134** | 0 / 0 |
+| piped | 134 / 0 | 0 / 0 | 0 / 0 |
+
+Every 134 is `*** buffer overflow detected ***`. With the first fix alone the aborts at width 10
+and at 3000/5000 remain, on both captures. The ordinary terminal and piped cases are fixed by the
+first patch. Rechecked the later series (2026-11-01, source markers): 27.04 (5.87-4; 5.87-5 in
+-proposed), 26.10 (5.87-4) and 26.04 (5.85-4ubuntu0.4) carry `fdbfe0018f6f` and not
+`dca0f10fd560`. The routing choice is the operator's: the first fix alone for 24.04 (common cases
+fixed, very narrow and very wide terminals still abort), or `dca0f10fd560` into the development
+release first. Work area: `/root/exp/agent-work/co03/review-20261101/co11a/`.
