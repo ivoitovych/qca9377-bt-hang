@@ -1,0 +1,21 @@
+2026-11-01T00:02:40Z start CO-22 research: QCA ROME USB IDs missing from btusb
+- fetched origin/master to cbbddb6b08cc (2026-10-31), bluetooth-next/master 42b8c2d72926; btusb_main.c identical in both
+- worktree wt-master (sparse drivers/bluetooth) at cbbddb6b08cc
+- rome-entries-master.tsv: 22 BTUSB_QCA_ROME entries with adding commits (scripts/rome-entry-history.py)
+- linux-hardware.org: DNS gives only an IPv6 address; connect fails (no IPv6 route here) -> used linuxhw GitHub data instead
+- Launchpad searchTasks: fetched/launchpad/summary.tsv; bug attachments being fetched
+- id-patch-form-since-2025.tsv: 73 ID-adding btusb commits since 2025-01-01, 62 with a usb/devices dump
+- lore blobless clone (160924 msgs, 2001..2026-10-31): lore-id-patches.tsv; no unmerged QCA ROME ID patch except the July 0b05:1825 one (merged later as cfa67a1dbfd9)
+- 0b05:1825/0b05:1868 in mainline via for-net-next-2026-10-14 (v7.4 merge window); in no stable branch (7.3.1, 7.2.y..6.1.y checked); no Cc: stable
+- linux-hardware.org unreachable also from the web fetch tool; LsUSB/LsPCI GitHub mirrors (snapshot 2023-05) cloned
+- survey-linuxhw running (lsusb-qca-survey.py) -> stopped, replaced by lsusb-fast-bt-ids.py -> linuxhw-bt-ids.tsv
+- candidates found (see PAUSE-STATE.md); 3641:0902 with 0x2005 in dmesg
+2026-11-01 PAUSED on coordinator request; state in PAUSE-STATE.md
+RESUMED (coordinator): steps 1-5 of PAUSE-STATE.md
+- step 1: candidate-dmesg.py -> fetched/linuxhw/dmesg-candidates, controls (04ca:3015, 0cf3:e300, 0cf3:e009) -> dmesg-controls; QCA-setup marker = 'QCA: patch rome' or the enhanced-setup quirk line
+- step 2: lore subjects: no candidate ID; Launchpad per-ID search -> fetched/launchpad-candidates (bug 1815467 0489:e0a3, 2080638 04ca:301c with 0x2005)
+- step 3: launchpad-extract.tsv (170 bugs), launchpad-qca-bt-ids.tsv: only 04ca:301c unlisted among QCA BT IDs
+- step 4: stable-cherry-pick-asus.tsv: d54601f21faf+cfa67a1dbfd9 cherry-pick clean on 7.3.y..6.1.y (no build)
+- dmesg-evidence.tsv (candidates 0/27 enumerating logs with a QCA-setup marker; controls 8/8); candidate-computers.tsv
+- singleton IDs (10ab:9802, 04c5:14de, 0489:e0a4, 13d3:3519) not log-checked: candidate-dmesg run stopped for time
+2026-11-01 end: step 5 = final report in the agent's final message
