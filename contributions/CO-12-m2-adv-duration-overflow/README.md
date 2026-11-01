@@ -1,6 +1,11 @@
 # CO-12 — M-2: extended-advertising duration overflow
 
-**State:** investigating. The arithmetic is confirmed in source; no reproducer exists yet.
+**State (2026-11-01):** reproduced in QEMU (22 mgmt-tester cases) and a clamp drafted
+(`patch/draft-2026-11-01/`); not sent. The outside reviews agree the overflow is real; the clamp
+is a mitigation (above 655 s it ends at 655.35 s, not at the requested time), so the mail names
+the three options (clamp, reject, host deadline). Before a send: the tests reworked (the 1 s
+controls must pass) and a rebase against Cen Zhang's series, which rewrites the same lines
+(`../research-2026-11-01/README.md`, CO-12 revised row). The sections below are older.
 
 **Target:** the Linux kernel (`net/bluetooth/hci_sync.c`).
 

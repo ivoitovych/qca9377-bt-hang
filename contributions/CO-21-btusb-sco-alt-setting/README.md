@@ -1,7 +1,12 @@
 # CO-21: btusb picks USB alternate setting 0 while a SCO link is up
 
 **State (2026-11-01):** confirmed in source and by a model test; a candidate fix compiles and
-passes the model; never loaded, not reviewed, not sent.
+passes the model; never loaded, not sent. **Outside review the same day: not ready.** The core
+sends the link-up notification also for a failed setup (`hci_event.c:5129-5146`), so the
+candidate alone puts a surviving CVSD call on the transparent setting after a failed mSBC second
+setup; and it keeps the last link-up's mode with mixed codecs. Next: those scenarios in the
+model, then a status guard (Hitalo Souza's patch 6/6) or a mode derived from the live links
+(`../research-2026-11-01/README.md`, CO-21 revised row).
 
 **Target:** Linux kernel, `drivers/bluetooth/btusb.c` (`btusb_notify()`, `btusb_work()`).
 
