@@ -766,3 +766,36 @@ stock `bluetooth.ko`). `experiments/build-laptop-module-42.sh`, the -38 recipe c
 - Not installed. Installing is the operator's word: `scripts/module-updates.sh` into `-42`'s
   `updates/` + `depmod`, then the cold boot into -42; after it, `modinfo -F srcversion bluetooth`
   = `D3723B159B2E0A68AC46EB5` and E3's `QCA: patch rome` line.
+
+## 2026-11-01 — status recheck; Sashiko's review found
+- **Replies:** none from a person. All four patches are still `new`, with the bot's comments
+  only (`scripts/patchwork-state.py 14919266 14919267 14919268 14919269`). The list archive
+  through 10-31 22:56 UTC has only the bot's replies (`scripts/lore-git-replies.py`).
+- **bluetooth-next** moved on 10-30 (`42b8c2d72926`, a batch by Luiz Augusto von Dentz) without
+  the series. Since our base `47d4d9f67e92` nothing touched `hci_conn.c`, `sco.c` or
+  `hci_core.h` (`git log 47d4d9f67e92..bluetooth-next/master -- …` is empty), so it applies as
+  sent.
+- **sashiko-nipa** finished on 10-29 at 17:57 UTC (patchwork checks API):
+  - Patch 1: success. Patch 3: success.
+  - **Patch 2: fail, "Sashiko found issues (max severity: high)".** It is on Sashiko's site
+    only, because the patchset record has `smtp_enabled: false`; its API is under
+    `https://netdev-ai.bots.linux.dev/sashiko/api/` (`patchset?id=<message-id>`,
+    `review?id=<n>`). The raw JSON is in `tmp/status-recheck-20261101/`.
+  - **High:** patch 2 reads `abort_reason` before taking its hold. A `hci_conn_timeout()`
+    already running in a kworker can read `refcnt == 0`, and `hci_connect_sco()` can then read
+    `abort_reason == 0`, hold, and return the connection before `hci_abort_conn()` sets the
+    reason. The new socket would then be closed by the Disconnection Complete. Sashiko notes
+    that patch 3 (`cancel_delayed_work_sync()` after the hold, then a second `abort_reason`
+    check) closes exactly this interleaving. It asks whether 3 should be folded into 2, or the
+    two kept together for stable, since 2 carries `Cc: stable`.
+  - **Low:** besides the new `READ_ONCE()`, `abort_reason` is still read plainly in
+    `hci_abort_conn()`'s guard, `hci_conn_set_handle()`, `abort_conn_sync()`, the
+    `hci_conn_cleanup_child()` call site and `iso.c`. KCSAN may report these against the new
+    `WRITE_ONCE()`. It suggests a separate patch.
+- **Reading it** [inference]:
+  - The high finding is about the series' split, not about the series as a whole. With 1 to 3
+    applied, the interleaving is closed by patch 3, as our own v4 to v7 analysis intended.
+  - The concrete risk is stable taking 2 without 3. Options for the operator: answer on the
+    thread that 2 and 3 belong together, or send a v8 that folds 3 into 2.
+  - The low note is pre-existing and optional.
+- Nothing sent.

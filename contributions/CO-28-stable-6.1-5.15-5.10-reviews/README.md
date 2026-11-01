@@ -1,6 +1,11 @@
 # CO-28 — Tested-by on the 6.1.191, 5.15.224 and 5.10.273 stable reviews
 
-**State (2026-10-29): the review mails are out; nothing run or drafted yet.** Read from lore's
+**State (2026-11-01): closed, nothing sent.** The review deadlines (5.15.224-rc1 and
+5.10.273-rc1 on 10-30, 6.1.191-rc2 on 10-31) passed without a test run. All three were released
+on 2026-10-30 (kernel.org `releases.json`), each with our backports: the QCA9377 entry in all three,
+and BT-9's and BT-8's fixes in 6.1.191 (STATUS).
+
+**State before (2026-10-29): the review mails are out; nothing run or drafted yet.** Read from lore's
 git archive of the stable list (`cache/lore-stable-2.git`, epoch 2, shallow; lore's web is
 blocked from here, its git is not):
 
