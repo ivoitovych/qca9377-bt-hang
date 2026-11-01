@@ -1,0 +1,37 @@
+From 69b4fbb3c1de2dbb32ab4e00ee705e3681c756f6 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Sun, 1 Nov 2026 10:34:57 +0100
+Subject: [EXPERIMENT 4/4] EXPERIMENT (not for submission): store SCO
+ parameters only for a sole holder
+
+Research variant c for the CO-02 follow-up, on top of the v7 series:
+hci_connect_sco() stores the caller's voice setting and codec only when,
+after its own hold and the wait for the disconnect work, the caller is
+the connection's only holder (no socket owns it).
+---
+ net/bluetooth/hci_conn.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index c1c8d2b29e3c0..1ed7dfa630627 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1946,8 +1946,13 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 		return ERR_PTR(-ECONNABORTED);
+ 	}
+ 
+-	sco->setting = setting;
+-	sco->codec = *codec;
++	/* EXPERIMENT: only the caller holds the connection, so no other
++	 * socket owns it and its setup may take the caller's parameters.
++	 */
++	if (atomic_read(&sco->refcnt) == 1) {
++		sco->setting = setting;
++		sco->codec = *codec;
++	}
+ 
+ 	if (acl->state == BT_CONNECTED &&
+ 	    (sco->state == BT_OPEN || sco->state == BT_CLOSED)) {
+-- 
+2.43.0
+

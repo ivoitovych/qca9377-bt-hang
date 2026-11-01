@@ -1,0 +1,66 @@
+diff --git a/root/exp/qca9377-bt-hang/contributions/CO-35-l2cap-ecred-defer-hang-stable/send/request-v2.eml b/root/exp/agent-work/co35/refresh-20261101/drafts/request-v3.eml
+index e2dc1aa..bafcb9a 100644
+--- a/root/exp/qca9377-bt-hang/contributions/CO-35-l2cap-ecred-defer-hang-stable/send/request-v2.eml
++++ b/root/exp/agent-work/co35/refresh-20261101/drafts/request-v3.eml
+@@ -20,36 +20,37 @@ order:
+   __l2cap_ecred_conn_rsp_defer")
+ 
+ The second fixes ab4eedb790ca ("Bluetooth: L2CAP: Fix corrupted list in
+-hci_chan_del"), which both lines have; it needs the first for
+-l2cap_chan_lock_conn() and l2cap_chan_unlock_conn(). Both are in
+-mainline since the 7.4 merge window and carry no Cc: stable tag. They
+-are patches 2 and 7 of the series "Bluetooth: L2CAP: fix and annotate
+-l2cap_conn::chan_l locking"; the other patches are not needed for the
+-problem below and were not tested here.
++hci_chan_del"), which both lines have. It calls l2cap_chan_lock_conn()
++and l2cap_chan_unlock_conn(), which only the first adds; the first is
++longer than the 100 lines the stable rules allow, and I am asking for
++it whole as it was merged. Both are in mainline since the 7.4 merge
++window and carry no Cc: stable tag. They are patches 2 and 7 of the
++series "Bluetooth: L2CAP: fix and annotate l2cap_conn::chan_l locking";
++the other patches are not needed for the problem below and were not
++tested here. One of them, dc1ddc65f06d ("Bluetooth: L2CAP: take lock
++for l2cap_chan_del in l2cap_ecred_rsp_defer"), takes the locks of the
++sibling channels; I am not asking for it, because the case below
++passes without it (it also passes with it added on v7.3.1).
+ 
+ Without them, BlueZ's l2cap-tester case "L2CAP Ext-Flowctl Server -
+ Accept 2 Close 1" (a deferred ECRED accept of two channels, the first
+-accepted and closed before the second) never finishes on v7.3 and
+-v7.2.13: the test stops after "Accept deferred setup". With
+-CONFIG_DETECT_HUNG_TASK enabled on v7.3, the tester's task is reported
+-blocked holding its socket's lock from l2cap_sock_recvmsg() while
+-waiting for the same lock in l2cap_sock_teardown_cb() (taken nested,
+-so lockdep stays silent). 32d86e048d8e releases the socket lock before
+-__l2cap_ecred_conn_rsp_defer() is called.
++accepted and closed before the second) never finishes on v7.3.1 and
++v7.2.14: the test stops after "Accept deferred setup". With
++CONFIG_DETECT_HUNG_TASK enabled on v7.3.1, the tester's task is
++reported blocked holding its socket's lock from l2cap_sock_recvmsg()
++while waiting for the same lock in l2cap_sock_teardown_cb() (taken
++nested, so lockdep stays silent). 32d86e048d8e releases the socket
++lock before __l2cap_ecred_conn_rsp_defer() is called.
+ 
+-Both commits cherry-pick cleanly onto v7.3 and v7.2.13. Tested in
++Both commits cherry-pick cleanly onto v7.3.1 and v7.2.14. Tested in
+ QEMU/KVM (4 vCPUs) with BlueZ's doc/tester.config: with the two
+-commits the case passes on both, and the whole l2cap-tester passes 111
+-of 111; without them the case never finishes. No lockdep or KASAN
+-report.
++commits the case passes on both, and on v7.2.14 the whole l2cap-tester
++passes 111 of 111; without them the case never finishes. No lockdep or
++KASAN report.
+ 
+-On v7.3 the whole l2cap-tester stalls earlier, in "L2CAP LE Client -
+-SCI Fast Mode", with or without the two commits ("Invalid response
+-length for 0x20a3"): 7.3.y has 2f8784cfe8a9 ("Bluetooth: Add support
+-for Shorter Connection Interval (SCI) feature") but not its fix
+-5874f8d03268 ("Bluetooth: Fix the LE Read Connection Interval response
+-layout"). With 5874f8d03268 applied as well, the SCI cases pass; the
+-111 of 111 on v7.3 are with it.
++On v7.3.1 the whole l2cap-tester stalls earlier, in an SCI case that
++has nothing to do with these commits; I am asking for its fix in a
++separate mail.
+ 
+ 6.18.y, 6.12.y and 6.6.y hang on the same case and need small
+ adjustments; backports for them follow as separate series.

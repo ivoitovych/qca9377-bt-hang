@@ -820,3 +820,43 @@ stock `bluetooth.ko`). `experiments/build-laptop-module-42.sh`, the -38 recipe c
   3/3 with v7 alone (`ECONNABORTED`) and passes 3/3 with the RFC
   (`contributions/research-2026-11-01/sco/`).
 - Source: `contributions/research-2026-11-01/` (the sco research).
+
+## 2026-11-01 — review round: v8 prepared privately; the parameter overwrite measured
+Nothing posted on the thread: neither Sashiko instance mailed its review (netdev-ai
+`smtp_enabled: false`; sashiko.dev per-patch `Muted`/`Skipped`, `email_to []`). Work in
+`patch/v8-prep-20261101/`; QEMU/KVM, KASAN, lockdep, `DEBUG_ATOMIC_SLEEP`, 4 CPUs (`GUEST nproc:
+4`); kernel base `47d4d9f67e92d`, BlueZ master `14bd6ab65`; every tester log clean
+(`kernel-report-scan.py`, exit 0).
+- **BlueZ test v2** (`bluez-v2/`): ported to the mainloop sco-tester (`e37f17751`); `git am` clean
+  on `14bd6ab65`; ASan/UBSan `-Werror` build; checkpatch 0/0; the bot's gitlint passes; no line over
+  80 columns; v2 note and the `malloc()`→`calloc()` change stated.
+- **Full sco-tester, 3 runs each:** base 31/33 (Reconnect During Disconnect and Connect Twice fail
+  ×3, as recorded); v7, the fold and variants (b) and (c) 33/33 ×3. The parked-worker race case
+  passes 2/2 in 3 runs on v7, the fold and (b).
+- **The fold** (`kernel-fold/`, patches 2 and 3 as one): code equal to v7 except one
+  `READ_ONCE()` on the second `abort_reason` read; checkpatch `--strict` clean.
+- **The parameter overwrite (outside reviewers' point, now measured).** On the reuse branch
+  `sco->setting`/`sco->codec` are written before `sco_chan_add()` refuses the second socket with
+  EBUSY. First socket CVSD, second `BT_VOICE` 0x0003 or `BT_CODEC` mSBC; the emulator advertises
+  enhanced setup, and research cases hide it for the legacy path (`results/research-table.txt`):
+  - first link already up: no effect (4/4 each path);
+  - first link's ACL still being set up: **the setup goes out with the second socket's values**
+    (legacy voice 0x0003, air mode 0x03; enhanced coding 0x03, or 0x05 + 2 Configure Data Path)
+    4/4 each;
+  - first setup answered with a retryable error (0x1f, injected): **the retry carries the second
+    socket's values** 4/4 (enhanced: 2 of 4; in the other 2 the first socket never connected,
+    cause not established);
+  - same-parameter controls: no effect. On base the first link is torn down anyway, but the
+    overwrite also shows in the ACL-pending and retry legacy cases, so it predates the series.
+  - From source only: `BT_VOICE` does not validate its value (`sco.c:1050-1057`); a refused socket
+    with an air mode other than CVSD/transparent would make cleanup skip btusb's disable notify
+    (vhci has no notify, so not measurable here).
+- **Variant (b)**, store only on a new link (`kernel-varb-rejected/`): removes the overwrite but,
+  when the first socket closes and a second connects before the disconnect worker runs, the second
+  can get a link with the closed socket's parameters (2 of 6 runs). Not proposed.
+- **Variant (c), experiment** (`kernel-varc-experiment/0004`, not for submission): store only when
+  the caller is the connection's only holder; no overwrite in any refused case (3/3), reconnect
+  like v7, 33/33 ×3. Decides by reference count; the cleaner fix may belong in `sco.c`.
+- Not reproduced: Sashiko's duplicate-setup point (16 runs of the "right after the first connect"
+  case). Raw logs (local): `/root/exp/agent-work/co02-review-20261101/` (SHA256SUMS, 163 entries).
+  Nothing sent.

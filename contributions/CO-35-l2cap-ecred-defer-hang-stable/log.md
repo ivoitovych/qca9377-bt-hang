@@ -165,3 +165,43 @@ images and raw logs in the worker's `tmp/co35/` (git-ignored; `logs/SHA256SUMS`)
   case is not yet re-run on the new tags.
 - **Not requested and not named:** `dc1ddc65f06d` (Pauli Virtanen, "take lock for l2cap_chan_del
   in l2cap_ecred_rsp_defer", in mainline, no `Fixes:`/`Cc: stable`).
+
+## 2026-11-01 — re-tested on the new tags; refreshed drafts
+QEMU/KVM, 4 vCPUs, BlueZ `doc/tester.config` + `CONFIG_DETECT_HUNG_TASK=y` (20 s); builds
+09:00:50 to 09:48:34 UTC, runs 09:19:17 to 09:51:41 UTC. Case "L2CAP Ext-Flowctl Server - Accept 2
+Close 1" alone (180 s limit):
+
+| tag | base | with the series (7.x: the upstream pair) |
+|---|---|---|
+| v7.3.1 | hang | pass 1.119 s |
+| v7.2.14 | hang | pass 1.068 s |
+| v6.18.60 | hang | pass 1.126 s |
+| v6.12.115 | hang | pass 1.078 s |
+| v6.6.161 | hang | pass 1.402 s |
+
+Every base hang has 5 to 7 hung-task reports: the socket lock held from `l2cap_sock_recvmsg`, its
+`/1` subclass awaited in `l2cap_sock_teardown_cb`. Full l2cap-tester, patched against pooled base
+verdicts (a full base run stops at the hang; one-word reruns fill in, 102 cases per tag): v7.2.14
+111/111; v6.18.60 93/111 (18 PHY failures, ENOPROTOOPT); v6.12.115 79/111 and v6.6.161 79/111 (32
+non-pass each: 26 PHY, 3 TX timestamping, 2 ethtool, 1 PIN timeout); v7.3.1 the pair alone stalls
+in "SCI Fast Mode" as its base does, the pair + `5874f8d03268` 111/111. In every tag no case that
+passes on base fails with the series. 6.12.115 went from 33 to 79 because `4b26b1d3a94cc` (BT-14)
+is released there. v7.3.1 base + `5874f8d03268` still hangs in the case; pair + `dc1ddc65f06d`
+passes it (1.025 s), so `dc1ddc65f06d` is not needed for the hang (tested on v7.3.1 only).
+
+**Stable-size question** (an outside reviewer): no equivalent of the pair within 100 lines with
+the same locking. The two helpers patch 2 needs plus the unchanged `l2cap_sock_defer()` are 118
+changed lines (148 with context). An ECRED-only sketch (`send-20261101-draft/sketch-ecred-only-v7.3.1.diff`,
+~82 changed, 102 with context) leaves the LE and BR/EDR defer branches without `conn->lock`, so
+its locking differs from upstream; on v7.3.1 + `5874f8d03268` it passes the case and 111/111. Not
+proposed: the upstream form stays, with one sentence in the covers on why the prerequisite is
+needed.
+
+**Drafts** in `send-20261101-draft/` (the 10-28 `send/` is kept): `request-v3.eml` (new bases,
+the prerequisite sentence, `dc1ddc65f06d` named and why it is not requested, the SCI paragraph
+reduced to one sentence), `request-sci-7.3.y.eml` (a separate option-2 request for `5874f8d03268`,
+7.3.y only: its fixed commit `2f8784cfe8a9` is in v7.3.1, not in v7.2.14; not in queue-7.3 at
+09:45 UTC), the three series regenerated onto the new tags (patch-ids equal to the originals;
+offsets only), and the cover diffs. mail-lint clean. Not rerun on the new files: checkpatch and
+ci-local. Raw logs (local): `/root/exp/agent-work/co35/refresh-20261101/` with SHA256SUMS. Not
+sent.

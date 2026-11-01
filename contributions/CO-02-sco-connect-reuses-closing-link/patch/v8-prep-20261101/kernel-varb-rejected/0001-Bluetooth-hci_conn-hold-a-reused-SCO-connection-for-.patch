@@ -1,0 +1,86 @@
+From 8a43026f69721ed68e7cba83691fdeaa8b7f5764 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Wed, 21 Oct 2026 05:47:33 +0200
+Subject: [PATCH varb 1/3] Bluetooth: hci_conn: hold a reused SCO connection
+ for its caller
+
+Connecting a second SCO socket to a device whose link is already
+in use correctly fails with EBUSY, but also disconnects the first
+socket's working link.
+
+hci_connect_sco() must return a connection with a hold owned by
+its caller. sco_connect() drops that hold when it no longer needs
+it, including when sco_chan_add() fails.
+
+For a new link, hci_conn_link() takes the required SCO hold.
+Since commit 06149746e720 ("Bluetooth: hci_conn: Add support for
+linking multiple hcon"), a connection whose link already exists
+is returned without one: hci_connect_sco() hands the reused SCO
+connection back without a caller hold, while keeping the extra
+ACL hold that hci_connect_acl() took for the link.
+
+Commit 8a5b0135d4a5 ("Bluetooth: SCO: fix race conditions in
+sco_sock_connect()") added the drop on sco_chan_add() failure.
+When the second socket gets EBUSY, that drop consumes the first
+socket's hold. hci_conn_timeout() then finds no holder and
+disconnects the link.
+
+When the SCO connection already has a link, take a hold for the
+caller and drop the extra ACL hold, which the existing link
+already owns. Keep the hci_conn_link() path for connections that
+do not yet have a link.
+
+Store the caller's voice setting and codec only with a new link.
+The refused second socket otherwise overwrites those of the link
+it shares, and a setup still to be sent for the first socket
+(the ACL link not yet up, the enhanced setup still queued, or a
+retry after a failed Synchronous Connection Complete) then uses
+the second socket's parameters.
+
+This follows the ownership correction made for CIS by
+commit e06d549fcd4a ("Bluetooth: hci_conn: fix CIS hold ownership
+on reuse"). The second connect() still fails with EBUSY, but no
+longer disconnects the first socket's link.
+
+Fixes: 8a5b0135d4a5 ("Bluetooth: SCO: fix race conditions in sco_sock_connect()")
+Cc: stable@vger.kernel.org # 6.6.x
+Signed-off-by: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+---
+ net/bluetooth/hci_conn.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index 7a55aaf197138..ea4afc0c34ecd 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1895,7 +1895,7 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ {
+ 	struct hci_conn *acl;
+ 	struct hci_conn *sco;
+-	struct hci_link *link;
++	struct hci_link *link = NULL;
+ 
+ 	acl = hci_connect_acl(hdev, dst, BT_SECURITY_LOW, HCI_AT_NO_BONDING,
+ 			      CONN_REASON_SCO_CONNECT, timeout);
+@@ -1927,8 +1927,13 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 		}
+ 	}
+ 
+-	sco->setting = setting;
+-	sco->codec = *codec;
++	/* A connection whose link exists is set up with the parameters it
++	 * was created with; the caller's are stored only with a new link.
++	 */
++	if (link) {
++		sco->setting = setting;
++		sco->codec = *codec;
++	}
+ 
+ 	if (acl->state == BT_CONNECTED &&
+ 	    (sco->state == BT_OPEN || sco->state == BT_CLOSED)) {
+
+base-commit: 47d4d9f67e92d56ef3965f2727f9c98a5a611368
+prerequisite-patch-id: 87b77ca498afea44bdaa3a4f76b7162355d71056
+-- 
+2.43.0
+
