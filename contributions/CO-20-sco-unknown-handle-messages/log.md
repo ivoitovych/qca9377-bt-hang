@@ -47,3 +47,42 @@ noted in STATUS while reading the abrupt stop. Not followed up.
   timing the Disconnection Complete, btusb's switch to alt 0 and each late packet. This is a
   laptop run, so it is the operator's decision.
 - **Full record:** `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV2.
+
+## 2026-11-01 — reopened for diagnostics; three prototypes
+Work area (local, raw logs with SHA256SUMS): `/root/exp/agent-work/co20-diag-20261101/`. Nothing
+sent; the laptop not touched.
+- **The newline fix upstream:** after a bluetooth-next rebase it is `f51ee3bb5fbe` ("Bluetooth:
+  Add missing newline to bt_dev_{err,warn}_ratelimited()", Hitalo Souza), in mainline through the
+  net-next 7.4 merge, so in v7.4-rc1 (`git merge-base --is-ancestor f51ee3bb5fbe` against fetched
+  mainline: yes). It has two Fixes: tags and no `Cc: stable`, and no stable branch 5.10 to 7.3
+  carries it: a backport candidate.
+- **Prior work:** a full-text search of the linux-bluetooth archive since 2024 found no patch or
+  discussion reclassifying these messages or `err_rx` at SCO teardown. Related, not competing:
+  the ISO equivalent rate-limited (Pauli Virtanen, `edef6576853e`, 2026-02); kernel bugzilla 80791
+  asks for the ACL equivalent to go behind debug (open, no patch); a 2026-10-21 thread on v7.2
+  with an Intel 9260 shows floods of both messages, which is why real loss must stay an error.
+- **Variants** on bluetooth-next `42b8c2d72926` (checkpatch --strict clean, all three):
+  - A, core: "unknown connection handle" at debug level when no SCO link is up, error otherwise.
+  - B, btusb: separate results for allocation failure, impossible length and a handle not live;
+    "corrupted SCO packet" only for the length case. All three still count in `err_rx`, because
+    the length check is effectively unreachable (`bt_skb_alloc(255)` leaves at least 252 bytes;
+    inferred) so real misalignment shows up as a not-live handle.
+  - C, btusb on B: a not-live handle equal to the last handle that validated is teardown residue
+    (debug, no `err_rx`); any other stays an error. Known limit: a misaligned fragment whose first
+    bytes equal the just-closed handle (about 1 in 4096) is taken for residue.
+- **qemu, core path, base vs A, 10 runs per case, 3 packets injected after the Disconnection
+  Complete** (`results/main-table.txt`, counted from `/dev/kmsg` by level):
+  - residue after the last link closes: base 30 error lines, A 0 (30 debug);
+  - residue for a closed link while another link is up: 30 and 30 (stays an error);
+  - a never-known handle during a live link: 30 and 30 (stays an error);
+  - residue, then the same handle reused by a new link: base 30, A 0; the new link received all
+    3 packets in 10/10 runs on both.
+  - 80 of 80 guest logs without KASAN, lockdep or WARN reports.
+- **btusb B and C:** built for x86_64 and i386 with W=1, no warnings; vhci cannot exercise btusb.
+  A test plan for the laptop (three cold boots: stock, B, B+C; usbmon, btmon and dynamic debug; 10
+  mSBC and 10 CVSD calls; `err_rx` per call; a diagnostic-only frame-skip for a positive control)
+  is in the agent's report; running it is the operator's decision.
+- **Side finding, test tool:** the BlueZ emulator gave the initiator the first link's handle for a
+  second SCO link to another remote device (`SCO_HANDLE` lookup), which made a duplicate sysfs
+  entry; fixed in the test patch by looking up the SCO link by remote device. A candidate BlueZ
+  fix of its own.
