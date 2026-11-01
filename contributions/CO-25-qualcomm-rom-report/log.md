@@ -327,3 +327,20 @@ part a Rome 3.2 core, so question 1 stands, and if not, which setup this device 
 (In-Reply-To, References, subject, reply-all 7 = 7). The checker failed the subject at first
 because it demanded "Re: Re:" for a reply to a reply; fixed (one "Re:", headers unfolded).
 Not sent; the operator's read and word.
+
+## 2026-11-01 — the reply redrafted after the review round
+- **The first draft is wrong where it matters** (an outside reviewer, checked here): it says
+  "QCA9377" is the module's name and cites `dc16388d45ec` for that, but `dc16388d45ec` calls it
+  "the IMC Networks Qualcomm Atheros QCA9377 Bluetooth controller", and `0a03f98b98c20` and
+  `0324d19cb9980` say "(from a QCA9377 board)". The kernel's UART driver maps
+  `qcom,qca9377-bt` (no `.data`) to `QCA_ROME` (`hci_qca.c:2785`, `2423-2426` on mainline).
+  linux-firmware's WHENCE lists `rampatch_usb_00000302.bin` and `nvm_usb_00000302.bin` under
+  "btqca - Qualcomm Atheros Bluetooth support for QCA61x4 USB chips" (lines 5037-5052 at
+  `bda6ecc`). His two sentences are Qualcomm's product view and need not contradict any of it.
+- **The new draft** `drafts/reply-1-zijun-hu-v2.eml` (the first draft is kept): acknowledges his
+  point, states the two kernel facts (three QCA9377 modules carry `BTUSB_QCA_ROME`; on 13d3:3503
+  ROM 0x302 makes btusb load the QCA61x4 USB 3.2 files, patch 0x111 → 0x3e8), asks whether that
+  is acceptable to Qualcomm and what the IDs should get otherwise, and spells out the erratum
+  question instead of "question 1". No identification with QCA6174A.
+- `scripts/mail-lint.sh`: clean; `scripts/reply-headers-check.py` against his mail
+  (`tmp/lore-messages/bf27c4e0-…eml`): all PASS, 7 = 7 recipients. Not sent.
