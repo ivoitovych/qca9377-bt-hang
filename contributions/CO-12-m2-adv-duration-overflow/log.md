@@ -41,3 +41,36 @@ truncation remains for ordinary extended advertising (STATUS, M-2).
 - **The emulator** times out at `duration * 10` (`emulator/btdev.c`, per reviewer 4), so a 66 s
   request shows the 460 ms expiry quickly.
 - **Full record:** `reviews/2026-10-21T0033Z-source-investigation-reviewers-2-4.md`, RV7.
+
+## 2026-11-01 (night) — tests reworked, rebased, stable forms
+QEMU only; work area (local, raw logs, SHA256SUMS) `/root/exp/agent-work/co12-rework-20261101/`;
+branches `co12-rework/*` in the cache repositories, not pushed. Nothing sent.
+- **Tests:** 15 new mgmt-tester cases and 1 mesh-tester case (BlueZ style, no Signed-off-by).
+  Each reads the Duration the emulator receives, checks the instance is still listed at 2 to
+  5.5 s, and where removal is due checks Advertising Removed between Duration×10 ms − 50 ms and
+  +1000 ms. The 1 s controls now pass as tests. Values 0, 65, 66, 655, 656, 6357, 8192, 65535,
+  a replacement while a timeout is pending (the old deadline never fires; the new instance goes
+  3003 ms after its own enable), two instances, and mesh. Base fails every case at 66 s and
+  above (Duration 46, 6517, 64, 0, 0, 6453); the clamp passes all, 3 runs each. The 113 other
+  "Add" cases pass on every kernel. Above 655 s the cases expect 0xffff, i.e. they pin the clamp.
+- **Real expiry, research-only cases (not for submission):** with the clamp, removal at 65001,
+  66001, 655004 and 655354 ms for 65, 66, 655 and 656 s.
+- **A second bug, found by these tests and checked in mainline source:** `read_adv_features()`
+  keeps an instance only if its number is at most `hdev->adv_instance_cnt` (how many instances
+  exist), although its own comment says 1 to `le_num_of_adv_sets` (`mgmt.c:8862-8863` in
+  mainline `cbbddb6b08cc`). So once instance 1 has gone, instance 2 disappears from Read
+  Advertising Features with no Advertising Removed event. From `b338d91703fa` (mesh, 2022), in
+  6.1.y to bluetooth-next. A one-line fix passes 3/3 runs and 128/128 cases, checkpatch
+  `--strict` clean, applies to 7.3.y to 6.1.y. No prior patch found by subject. Registered as
+  CO-38.
+- **Cen Zhang's series 1197214 (14927631 + 14927632):** the clamp conflicts with patch 1/2 on the
+  duration hunk in either order; both resolutions give the same tree, and the tests pass on it.
+  A clamp form for on top of the series is ready.
+- **Stable forms:** the 7.3.y form (no mesh ternary) applies to 7.3.y, 6.18.y, 6.12.y, 6.6.y and
+  6.1.y and builds with W=1 on 7.3.y; on 5.15.y and 5.10.y the code is in
+  `__hci_req_enable_ext_advertising()` (`hci_request.c`), and a separate form applies there and
+  builds on 5.15.y.
+- **Commit message revised:** the 655.35 s limit stated, the history line corrected (the
+  computation since `10bbffa3e88e`; `f16a491c65d9` changed only the guard), the bluetoothd scope
+  stated, and the three options (clamp, reject, per-instance host deadline) named below the
+  `---`. checkpatch `--strict` clean on all forms.

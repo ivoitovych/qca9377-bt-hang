@@ -3,9 +3,10 @@
 **State (2026-11-01):** reproduced in QEMU (22 mgmt-tester cases) and a clamp drafted
 (`patch/draft-2026-11-01/`); not sent. The outside reviews agree the overflow is real; the clamp
 is a mitigation (above 655 s it ends at 655.35 s, not at the requested time), so the mail names
-the three options (clamp, reject, host deadline). Before a send: the tests reworked (the 1 s
-controls must pass) and a rebase against Cen Zhang's series, which rewrites the same lines
-(`../research-2026-11-01/README.md`, CO-12 revised row). The sections below are older.
+the three options (clamp, reject, host deadline). **Same night:** tests reworked (all pass with
+the clamp, every case ≥ 66 s fails on base), rebased on Cen Zhang's series, stable forms for
+7.3.y to 5.10.y, commit message revised (`log.md`, 2026-11-01 night). Ready for an outside
+review and the operator's word. The tests also found CO-38. The sections below are older.
 
 **Target:** the Linux kernel (`net/bluetooth/hci_sync.c`).
 
