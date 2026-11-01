@@ -1,6 +1,18 @@
 # CO-20 — SCO error messages at call hang-up
 
-**State:** investigating. Measured, and the source is read; the captures are not read yet.
+**State (2026-11-01):** the functional question is closed, the diagnostic one is open.
+- **Closed:** no link is left up and the controller does not keep sending. SCO data queued
+  behind a Disconnection Complete, 0–20 ms after it, is dropped (captures read; details in
+  `../research-2026-11-01/README.md`, row CO-20).
+- **The late journal lines:** a kernel defect, fixed upstream by another author.
+  `bt_dev_err_ratelimited()` has no trailing newline, so the record stays unfinished until the
+  next printk ("Bluetooth: Add missing newline to bt_dev_{err,warn}_ratelimited()", Hitalo Souza,
+  applied to bluetooth-next as `f3d041ec63f7`, 2026-10-07). It is a backport candidate.
+- **Open:** a normal hang-up is logged as "corrupted SCO packet" and counted in `err_rx`, through
+  the same path as real corruption and allocation failure. Next step: prototype a classification
+  of teardown residue that keeps real corruption visible.
+
+The sections below are the record as it stood before the captures were read.
 
 **Target:** the Linux kernel (`hci_core.c`, btusb). It may turn out harmless.
 
