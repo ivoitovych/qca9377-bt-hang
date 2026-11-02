@@ -41,6 +41,7 @@ Track 1 played in Totem for 4 min, traced with `scripts/cd-trace/` (run `run3-fi
 - the drive still reads in ~3 s bursts every ~16 s (paranoia's 1200-sector refills, 2.7–3.7 s,
   pauses 12.5–13.7 s), now inside the reader thread, out of the player's path.
 Raw run: `archive/off-topic/X1/cd-gaps-run3-fix-20261102.tar.xz` (local).
+The operator, listening through the run: "It feels like all good" (no gaps heard).
 
 **State on the laptop:** the patched `gvfsd-cdda` is still in place (diverted original at
 `/usr/libexec/gvfsd-cdda.distrib`). To undo: `rm /usr/libexec/gvfsd-cdda`, then
