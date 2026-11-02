@@ -72,3 +72,12 @@ release first. Work area: `/root/exp/agent-work/co03/review-20261101/co11a/`.
 `dca0f10fd560` is in no BlueZ release yet (`git tag --contains dca0f10fd560` in
 `cache/bluez-upstream`: no tag, 2026-11-01), so either route cites it as an upstream commit, not a
 release.
+
+## 2026-11-02 — the second fix's route, corrected (an outside review)
+Ubuntu's stable-update rule wants a fix in every newer supported release before an older one, not
+only in the development release. `fdbfe0018f6f` is already in 26.04 (5.85), 26.10 and 27.04 (5.87),
+so a 24.04 update with it alone can go on its own. `dca0f10fd560` is in none of them, so it must
+land in 27.04, then 26.10 and 26.04 LTS, before 24.04. The update text names the widths that still
+abort with the first fix alone (10 and 3000/5000 columns, see the matrix above); a 10-column
+terminal is rare but real (a narrow pane). Before filing: rerun the 24.04 container on more archived
+captures and ordinary btmon options, not only the two captures.

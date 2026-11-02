@@ -903,3 +903,20 @@ qemu only, no kernel change, no test-only build. Work area (local, raw logs with
 - Not reproduced: Sashiko's duplicate-setup point (16 runs of the "right after the first connect"
   case). Raw logs (local): `/root/exp/agent-work/co02-review-20261101/` (SHA256SUMS, 163 entries).
   Nothing sent.
+
+## 2026-11-02 — the wrong-voice reuse and Hitalo Souza's series
+- **Already known on the list, in another path:** the cover letter of Hitalo Souza's v3 series
+  (v3 0/6, 2026-10-08, patchwork series 1181908; a saved copy read) says that in
+  his cases 1 and 2 the new connection keeps the link of an abandoned setup with that setup's
+  parameters, and that the completion's Air_Mode would show a CVSD/transparent change which the
+  series does not act on. Ours is the reuse of a live link after close; the class is the same.
+- **What v7 changes** (from the 2026-11-01 evening entry): on base the second socket gets the old
+  CVSD link and it is then dropped while the socket is open (a visible failure); with v7 the link
+  stays up in CVSD although the socket asked for transparent (a silent wrong result).
+- **Reachability:** the same letter names PipeWire recreating the HFP transport after a codec
+  negotiation (close, then connect at once; bluez/bluez#2562) as the real trigger of its cases, and
+  our case needs that close-then-connect too. Plausible; not observed.
+- **Fix idea, untested:** compare the completion's Air_Mode with the one the socket asked for;
+  that sees both paths. It must keep a compatible reuse working.
+- **Proposed order (an outside review, adopted in the decisions brief):** a short factual reply on
+  the v7 thread first, on the operator's word; then the fix in v8. Nothing sent.
