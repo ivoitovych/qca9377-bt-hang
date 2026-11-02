@@ -344,3 +344,18 @@ Not sent; the operator's read and word.
   question instead of "question 1". No identification with QCA6174A.
 - `scripts/mail-lint.sh`: clean; `scripts/reply-headers-check.py` against his mail
   (`tmp/lore-messages/bf27c4e0-…eml`): all PASS, 7 = 7 recipients. Not sent.
+
+## 2026-11-02 — v4 after the review round (follow-ups F-01 to F-03)
+- **The headset count in the sent report holds.** "Across the same three headset models" for the
+  74 links: E1 used the MOMENTUM 4 and the thinkplus-GM2 pro (`EX-058`, 46 + 12 links), E3 the
+  MOMENTUM 4 and the AONIC 50 (`EX-057`); the failures were on the same three (`EX-024`,
+  `EX-053`). The union is three, as this log's evidence table already says (line 112). No
+  correction needed (F-02).
+- **`drafts/reply-1-zijun-hu-v4.eml`** (v3 kept): instead of renaming the field ("patch version
+  0x111"), it quotes the kernel's own line once, `QCA: patch rome 0x302 build 0x3e8, firmware
+  rome 0x302 build 0x111` (btusb's field is `patch_version`, printed as "build", `btusb.c:3451`,
+  `3672`), and the erratum question names "rome 0x302 build 0x111" (F-01; three of four reviewers
+  asked for the kernel's wording). Headers, threading and the seven recipients as v3.
+  `scripts/mail-lint.sh`: clean.
+- **No reminder** after silence (F-03, decision D10): dropped from the plan.
+- Not sent: the operator's word, then the dry run, and the operator runs the send.

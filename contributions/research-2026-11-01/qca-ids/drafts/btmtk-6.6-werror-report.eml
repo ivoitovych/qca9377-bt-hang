@@ -1,0 +1,35 @@
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+To: stable@vger.kernel.org
+Cc: Nathan Chancellor <nathan@kernel.org>, Marcel Holtmann <marcel@holtmann.org>, Luiz Augusto von Dentz <luiz.dentz@gmail.com>, linux-bluetooth@vger.kernel.org
+Subject: 6.6.y: btusb fails to build with CONFIG_WERROR=y and BT_MTK off
+
+Hello,
+
+since v6.6.142, drivers/bluetooth/btusb.o fails to build on 6.6.y
+when CONFIG_BT_MTK is off and CONFIG_WERROR=y (x86_64 defconfig,
+BT=m, BT_HCIBTUSB=m; also with W=1):
+
+  drivers/bluetooth/btmtk.h:232:13: error: 'btmtk_fw_get_filename'
+    defined but not used [-Werror=unused-function]
+  drivers/bluetooth/btmtk.h:221:12: error: 'btmtk_register_coredump'
+    defined but not used [-Werror=unused-function]
+  drivers/bluetooth/btmtk.h:211:12: error: 'btmtk_setup_firmware'
+    defined but not used [-Werror=unused-function]
+  drivers/bluetooth/btmtk.h:205:12: error: 'btmtk_setup_firmware_79xx'
+    defined but not used [-Werror=unused-function]
+
+v6.6.141 builds; v6.6.142 does not, and neither does v6.6.161. It
+came with b748250d778e ("Bluetooth: btmtk: add the function to get the
+fw name"), the 6.6.y backport of 00f993fdec06, which adds a
+non-inline static stub for the !CONFIG_BT_MTK case
+(btmtk_fw_get_filename); the other three errors appear from v6.6.145
+on. Mainline fixed the
+stubs with 23e88450bb04 ("Bluetooth: btmtk: Mark all stub functions as
+inline"), which is not in 6.6.y and does not cherry-pick cleanly onto
+v6.6.161 (conflict in drivers/bluetooth/btmtk.h).
+
+Would you take an adapted backport of 23e88450bb04 for 6.6.y? I can
+send one.
+
+Thank you,
+Iaroslav Voitovych
