@@ -4215,6 +4215,54 @@ separately", with no repository, branch or remote named in prose; and outside re
 matters outside this repository's scope are cut. About 140 lines in some 60 files changed;
 history is not rewritten.
 
+## The report sent, a day of research, and six reviews of everything (2026-10-29 → 11-02)
+
+**The Qualcomm report went out (10-29)** after ten review rounds (CO-25). Qualcomm's engineer
+answered the same day that QCA9377 is not a ROME part and that btusb does not support it; the
+device, btusb's own table and the files that load say otherwise. The reply asks what the
+intended initialization is, and was itself reviewed for three days before anything was sent.
+
+**The laptop moved to `7.0.0-42` (10-30)** with E3 built for it before the boot; the CO-02 field
+test ended with the previous boot, its 63 links all answered.
+
+**Research on every parked item (10-31 → 11-01)** turned several "ideas" into findings with
+numbers: the extended-advertising duration overflow reproduced (CO-12) and, through its tests, a
+second bug in the advertising listing (CO-38); the btusb alternate setting wrong with two SCO links,
+and in a single-link race (CO-21, redesigned the next day); two bluetoothd use-after-frees at exit
+(U23, U24; CO-37) and two more while running (U25, U26); the PipeWire volume resend that outlives
+the audio link, reproduced on master in PipeWire's own VM tests (CO-36). Another author's pending
+series made our mesh locking pair (CO-05) mostly redundant, and it was set aside rather than sent.
+
+**A decisions brief, and seven readings of it (11-01 → 11-02).** Eight decisions that only the
+operator can take were written up with the facts and options, and outside reviewers read it in
+turns. Their points were checked one by one; several of ours were withdrawn (that only extreme
+widths still crash btmon with the first fix; that two mesh crash reports were one defect; a wrong
+count of runs). Two upstream rules surfaced while checking: both the kernel's and BlueZ's process
+documents leave every send to the human, and BlueZ takes no `Signed-off-by` at all.
+
+**Three measurements settled three arguments (11-02).** A live btmon in a QEMU guest, reading the
+monitor socket with seven-digit pids, still aborts at 60 columns with only the first upstream fix,
+and never with both (CO-11a). The CO-02 air-mode mismatch check, written as its own patch, turns a
+socket silently given the wrong voice mode into a refusal and a fresh link in every run. And
+CO-37's series turned out to send `MediaEndpoint1.Release` twice to application endpoints, through
+a path from 2011 that master already takes for older endpoints; a small flag fixed it, as a sixth
+mail.
+
+**The review package (11-02).** Every package ready to send or ready for review was written into
+one self-contained document, every patch verbatim, for outside reviewers who open nothing else
+(`contributions/review-2026-11-02/`). Six reviews came back the same day. What they found that
+held: the CO-02 series had gone out unversioned, so the next posting is v2, not "v8"; 7.2.y had
+ended the day before; the stable backports' patch-ids are not identical to upstream, as the
+document had claimed; a further btmon overflow at very wide terminals even with both fixes (U28);
+a gap in the CO-21 redesign for unusual voice settings; and a 5.72-only crash the CO-37 backport
+does not cover (U27). What did not hold was recorded too. Nothing was acted on: the findings went
+into one follow-up list, with the operator's decisions separated from work that needs none, to be
+taken up once the review round is closed.
+
+**The lesson repeated from 10-28:** a document assembled from many work areas drifts within hours
+(five mails in one place, six in another). Regenerating from the stored files, not editing
+copies, is what kept it consistent.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
@@ -5064,3 +5112,74 @@ history is not rewritten.
 >   - a distribution tree has no shared history: `scripts/commit-in-tree.py` with a base and a
 >     positive control answers "does it carry this fix";
 >   - the documentation review's causes and guards: `reviews/2026-10-28T0300Z-documentation-alignment.md`.
+
+## Hand-off of 2026-10-29/30 (moved from BRIEF.md verbatim on 2026-11-02, replaced by the 11-02 block)
+
+> **HAND-OFF (2026-10-29/30; read first; the 10-28 block is now at the end of `HISTORY.md`).**
+> STATUS has every row named here.
+>
+> - **The laptop runs `7.0.0-42` since 2026-10-30 04:31:21 CET** (boot `738e228b`; the previous boot
+>   `257d1599` ran 10-23 11:04:43 to 10-29 15:20:19). E3 loaded: `modinfo -F srcversion btusb` →
+>   `DDB92562D1890FC3D262993`, kernel log `QCA: patch rome 0x302 build 0x3e8`. `bluetooth.ko` is
+>   **stock** (`12120DE84945B5EB6D372FD`), so the **CO-02 field test (trial E3 #3) ended** with that
+>   shutdown. E3 #3 has **no row** in `evidence/trials/results.tsv` (last row E3 #2, 10-23); its result
+>   from the journal: **63 links, 63 hang-ups answered, 0 timeouts** (`scripts/sco-ledger.sh -1`;
+>   `evidence/trials/E3/trial-03/RESULT-boot-257d1599-from-journal.md`); the row is still to be written. The stop was an ordered reboot from the
+>   desktop (15:20:14); the journal ends at 15:20:19 with the trial's close unfinished; next boot 13 h later.
+> - **Disk: 111 GB free (74 %) since 10-30 08:04**, after the operator-approved cleanup (was 19 GB; the
+>   journal copy had refused at the 10-29 shutdown): CI clones, `make clean` in finished kernel/BlueZ/agent
+>   trees (bzImages and test logs kept in `tmp/disk-cleanup/kept/`), and 535 raw captures (40.83 GB) whose
+>   archived copy matched the manifest SHA-256; the archives are now their only copy (STATUS, the machine).
+>   `boot-257d1599.export.zst` completed (770 MB, 05:40).
+> - **CO-02 module for `-42` built, NOT installed** (`tmp/co02-hw/module42/full/bluetooth.ko`,
+>   srcversion `D3723B159B2E0A68AC46EB5`; same code as `-38`'s, CRCs equal to stock). "Install before the
+>   `-42` boot" is moot; resuming the field test = into `-42`'s `updates/` + `depmod` + a cold boot, on
+>   the operator's word.
+> - **CO-25 SENT** 2026-10-29 02:33 +0100 after ten outside review rounds (`<20261029013350.360574-1-…>`,
+>   250, seven recipients); on lore byte-identical to the file sent; app password revoked (535).
+>   **Zijun Hu (Qualcomm) replied 10:42 UTC**: "QCA9377 is not ROME(QCA6174A) … linux-firmware … does not
+>   have firmware it". Contradicted by the device (rom 0x302 = `qca_devices_table` "Rome 3.2"; the 00000302
+>   files load) and by upstream (three QCA9377 modules are `BTUSB_QCA_ROME`). A clarifying answer is
+>   drafted, `contributions/CO-25-…/drafts/reply-1-zijun-hu.eml`, checks pass, **not sent: the operator's word**.
+> - **CO-34 applied** to BlueZ as `3e5b0da969c2`, identical to what was sent.
+> - **CO-28's review mails are out** (stable list): 5.15.224-rc1 and 5.10.273-rc1 due **Fri 30 Oct 16:59
+>   UTC**, 6.1.191-rc2 due **Sat 31 Oct 07:28 UTC**; our patches are in them. Test runs not started:
+>   the operator's decision, asked.
+> - **Both agents FINISHED and ported** (worktrees under `/root/exp/agent-work/`; method: cherry-pick,
+>   conflicts in `contributions/README.md` and `devtools/repo-scan-public-addresses` kept both sides):
+>   - **mesh** (CO-05 + CO-04), `25e8168`, `d02ce84`: both packages ready for an outside review round
+>     (`contributions/CO-05-…/patch/`, `CO-04-…/patch/`, each with a README of questions). KASAN/lockdep/
+>     WARNING 0 on base, CO-05, CO-04, both; CO-05's lock warnings 3 → 0, KCSAN mesh-own races 1/45 → 0;
+>     CO-04 clean in 48 boots; bot CI passes. **14888791 as posted gives a lockdep circular dependency in
+>     8/12 power boots, ours 0/12**: a technical point for our own CO-04 mail only (no contact, nothing on
+>     that thread). Open: send together or separately (agent: CO-04 alone), Cc Brian Gix, keep `Closes:`
+>     before a syzbot test. Its proposed STATUS/issues edits (mesh row, the syzbot "last crash" date fix,
+>     M-4/M-5) are in its final report and **not yet applied**.
+>   - **CO-23**, `b454900` (bot-ci-local worktree support), `d941963` (dossier): package
+>     `contributions/CO-23-…/patch/send/` (2 mails, To linux-bluetooth, Cc Luiz Augusto von Dentz;
+>     `send.sh` not run). Bot CI PASS both sides, TestFunctional 48 → 49; ASan UAF on master at
+>     `a2dp.c:2173`, none with the fix (setup ref held across close/abort; a second double-free path fixed).
+>     Open: the route (public list, as earlier a2dp UAF fixes went, or BlueZ's SECURITY.md: the operator's
+>     call); records still calling the 09-08 crash "unrelated" (BRIEF §, docs/contributions-roadmap.md:25,
+>     patches/bluez/README.md:260, EX-041) and its STATUS row to update. `send-email`, even a dry run, is
+>     the coordinator's.
+> - **Guard fixes 10-29** (private hook, 57/57 tests): container paths after the image are the
+>   container's; host-only programs matched as whole tokens.
+> - **Captures:** desktop capture fully archived (`archive/hci-capture`, 20 GB budget, 14.19 GB, one-time,
+>   no timer). `bt-trace` archive timer: transient, so gone at the -42 reboot; **restarted 2026-10-30**
+>   with the same `systemd-run` command (20 GB: ~2 weeks; months need another disk; command in
+>   `docs/tooling-index.md`). Budgets in `<archive>/BUDGET_GB`, the session-start hook warns at 80 %.
+> - **U21 registered** (Shure in Handsfree, no codec row in GNOME Settings): a Chrome tab recording from the
+>   headset's microphone keeps it in Handsfree (`scripts/user-audio-streams.sh`); why the row is absent is
+>   still open.
+> - **New tools:** lore readable over git (`scripts/lore-git-message.sh`, `lore-git-replies.py`; bare
+>   clones in `cache/`, fetch with `+refs/heads/master:refs/heads/master`); `mail-body-sha.py`;
+>   `desktop-capture-archive.sh`; `archive-budget-check.py`; `user-audio-streams.sh`;
+>   `build-bluetooth-module.sh --krel`. The browser extension works when the session runs with Chrome
+>   support (it filters raw HTML with query strings/cookies; page text and in-page comparisons work).
+> - **Open, in order:** the operator's decisions (Zijun Hu reply; CO-28 runs before the deadlines;
+>   CO-02 module into `-42`; CO-04/05 send shape; CO-23 route; CO-11 filing, ready; CO-03: install the
+  backport and test it on the laptop, then the filing; CO-37 (U23): an outside review, then the send); recover E3 #3's
+>   row from the journal; apply the mesh agent's STATUS/issues edits and the CO-23 "unrelated" fixes;
+>   STATUS's ⚠️ lines are too long for the session-start extract (cut at 9,500 characters): shorten
+>   them; confirm the CI rotation-test failure on `848ff44` is a flake.

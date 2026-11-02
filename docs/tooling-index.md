@@ -198,6 +198,8 @@ run `bluetoothd -d` — this project ships that on in
 | **Does any test touch the machine without the machine answering?** (an existence check, a read of an absent file, a lookup no test names) | `devtools/access-audit` — the suite under `strace`, every file access classified; fails on anything outside `tests/access-allowlist`. `--self-test` plants each kind of access and requires each caught (tests/README.md, rule 8) |
 | **Would the suite notice if this decision were wrong?** | `devtools/mutate <file> [--lines A-B]` — each mutant from `devtools/mutants` (a flipped comparison, `&&`↔`\|\|`, a dropped `!`) applied alone in its own namespace, the whole suite run on it; a survivor is a missing test or an equivalent change. `--self-test` checks the harness |
 | Do the fixtures still match real journalctl? | `devtools/journal-contract` |
+| **Build a self-contained review package** (every ready submission, verbatim, for outside reviewers) | `contributions/review-2026-11-02/build/build.py`: joins per-item section files in the order it lists, scans the result for addresses, links, device addresses, local paths and banned wording (every hit printed, nothing silently fixed), renders HTML with pandoc; `followups-build.py` renders the follow-up list. Regenerate verbatim blocks from the stored patch files, never edit copies (2026-11-02) |
+| **Do a stable backport's patch-ids match upstream?** | `git patch-id --stable` on the backport file and on `git show <upstream sha>`; equal only where nothing was adapted (CO-35, 2026-11-02) |
 
 ### Deploying to the affected machine
 

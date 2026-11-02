@@ -91,7 +91,7 @@ Recent detail may be shortened. Settled state is never dropped.
   - BlueZ `b79d4a887` (A1, the a2dp duplicate check) and `7bc9684dc` (A2, the emulator VLA), applied 10-19, identical to what was sent (same patch-id, checked 10-20);
   - the BT-9 stable backports of `96d006ae6445`: released in 6.12.113 (10-15, `9a328ae01489`) and 6.6.160 (10-21, `80861f424fe5`); 6.1 in its 10-17 release candidate (5.15 and 5.10 rightly get the entry without it: the code it fixes is first in v6.1);
   - the `Tested-by` on 6.6.160-rc2 (CO-10, sent 10-21).
-- **Submitted, under review:** CO-02, "[PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse" (`Cc: stable`) and its BlueZ sco-tester test, sent 2026-10-27 17:50 +0100 (patchwork 14919266–14919269). The list bot passed both (the BlueZ test with its expected smatch note); no human reply on 10-28. If Luiz Augusto von Dentz's pending tester series (patchwork series 1191414, sco-tester off GLib) lands first, the test needs a port.
+- **Submitted, under review:** CO-02, "[PATCH 0/3] Bluetooth: hci_conn: fix SCO connection reuse" (`Cc: stable`) and its BlueZ sco-tester test, sent 2026-10-27 17:50 +0100 (patchwork 14919266–14919269). The list bot passed both (the BlueZ test with its expected smatch note); no human reply on 10-28. If Luiz Augusto von Dentz's pending tester series (patchwork series 1191414, sco-tester off GLib) lands first, the test needs a port. **2026-11-02:** still no human reply; the series went out unversioned, so the next posting is **v2** (the fold of 2 and 3, the BlueZ test port, possibly the mismatch patch); the tester series did land (`e37f17751`), so the port is owed.
 - **Waiting for replies (re-checked 2026-10-28):** CO-02 (above); the Tested-by on Hui Peng's
   mesh_tx leak patch (10-06; still `new`); the #1554 retest by a second affected user (nothing
   since 10-14). Every other authors' mesh fix is still `new` with no maintainer reply (STATUS,
@@ -102,6 +102,7 @@ Recent detail may be shortened. Settled state is never dropped.
   same way.
 - **Operator decisions open** (the one list; the hand-off block below points here; re-read 2026-10-28):
   - **`7.0.0-42`:** installed 2026-10-28 04:46 by the software updater; E3 for it installed the same day (CO-09; `patches/diag/README.md`); booted 2026-10-30 04:31 with the stock `bluetooth.ko`; the CO-02 module for it is built, not installed: whether to install it (`updates/` + `depmod` + a cold boot) and resume the field test;
+  - **2026-11-02: the review round's decisions D1–D14** (`contributions/review-2026-11-02/followups.md`) now gate every send below;
   - **sends:** CO-25 was SENT 2026-10-29 02:33 +0100 (the Qualcomm report; STATUS; replies and arrival to watch); CO-11 (the btmon Launchpad bug, approved, the operator files); CO-35 (the package in `send/`: 7.3.y + 7.2.y request and three backport series, after its outside review); CO-19 after the laptop headset test; CO-04's independent fix when it is ready; CO-05 after its review; any reply to CO-02's reviewers;
   - **the CO-02 module on the laptop:** ran from 10-23 to the 10-29 15:20 shutdown on `-38`; `-42` runs without it (above);
   - **deploying `main`'s tool set on the laptop** (the review is done, `reviews/review-comprehensive-code-review-20261019-014718.md`; phase 1 of its reaction plan comes before the deploy, and of it SR1 and T1 are left, 2026-10-19): until the deploy every shutdown with a trial open probes the controller and can lose a row (Machine, below);
@@ -140,8 +141,9 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-10-30** (the hand-off rewritten for the `-42` boot; the 10-28 hand-off moved
-to the end of `HISTORY.md` verbatim). 2026-10-29: a hand-off block for 10-29 added. Before that, 2026-10-28 (the documentation review: every foundation document checked
+**Last updated: 2026-11-02** (the hand-off rewritten for the review round; the 10-29/30 block
+moved to the end of `HISTORY.md` verbatim; the state block's CO-02 and sends lines amended).
+2026-10-30: the hand-off rewritten for the `-42` boot. 2026-10-29: a hand-off block for 10-29 added. Before that, 2026-10-28 (the documentation review: every foundation document checked
 against the facts re-verified that day; the state block above rewritten; the hand-off of
 2026-10-18 to 10-23 moved to `HISTORY.md` verbatim and replaced below). The trail of earlier
 updates is in `HISTORY.md` and `git log -- BRIEF.md`, not here: until 2026-10-28 this line
@@ -150,74 +152,48 @@ carried a running list of every update since 10-14, which grew to about 2,800 ch
 (EX-067 to EX-083 are CO-02's hardware run and code comparisons). No tip hash: it rotted within
 hours (`R2-13`).
 
-> **HAND-OFF (2026-10-29/30; read first; the 10-28 block is now at the end of `HISTORY.md`).**
-> STATUS has every row named here.
+> **HAND-OFF (2026-11-02; read first; the 10-29/30 block is now at the end of `HISTORY.md`).**
+> STATUS has every row named here; the review round's follow-up list is the work queue.
 >
-> - **The laptop runs `7.0.0-42` since 2026-10-30 04:31:21 CET** (boot `738e228b`; the previous boot
->   `257d1599` ran 10-23 11:04:43 to 10-29 15:20:19). E3 loaded: `modinfo -F srcversion btusb` →
->   `DDB92562D1890FC3D262993`, kernel log `QCA: patch rome 0x302 build 0x3e8`. `bluetooth.ko` is
->   **stock** (`12120DE84945B5EB6D372FD`), so the **CO-02 field test (trial E3 #3) ended** with that
->   shutdown. E3 #3 has **no row** in `evidence/trials/results.tsv` (last row E3 #2, 10-23); its result
->   from the journal: **63 links, 63 hang-ups answered, 0 timeouts** (`scripts/sco-ledger.sh -1`;
->   `evidence/trials/E3/trial-03/RESULT-boot-257d1599-from-journal.md`); the row is still to be written. The stop was an ordered reboot from the
->   desktop (15:20:14); the journal ends at 15:20:19 with the trial's close unfinished; next boot 13 h later.
-> - **Disk: 111 GB free (74 %) since 10-30 08:04**, after the operator-approved cleanup (was 19 GB; the
->   journal copy had refused at the 10-29 shutdown): CI clones, `make clean` in finished kernel/BlueZ/agent
->   trees (bzImages and test logs kept in `tmp/disk-cleanup/kept/`), and 535 raw captures (40.83 GB) whose
->   archived copy matched the manifest SHA-256; the archives are now their only copy (STATUS, the machine).
->   `boot-257d1599.export.zst` completed (770 MB, 05:40).
-> - **CO-02 module for `-42` built, NOT installed** (`tmp/co02-hw/module42/full/bluetooth.ko`,
->   srcversion `D3723B159B2E0A68AC46EB5`; same code as `-38`'s, CRCs equal to stock). "Install before the
->   `-42` boot" is moot; resuming the field test = into `-42`'s `updates/` + `depmod` + a cold boot, on
->   the operator's word.
-> - **CO-25 SENT** 2026-10-29 02:33 +0100 after ten outside review rounds (`<20261029013350.360574-1-…>`,
->   250, seven recipients); on lore byte-identical to the file sent; app password revoked (535).
->   **Zijun Hu (Qualcomm) replied 10:42 UTC**: "QCA9377 is not ROME(QCA6174A) … linux-firmware … does not
->   have firmware it". Contradicted by the device (rom 0x302 = `qca_devices_table` "Rome 3.2"; the 00000302
->   files load) and by upstream (three QCA9377 modules are `BTUSB_QCA_ROME`). A clarifying answer is
->   drafted, `contributions/CO-25-…/drafts/reply-1-zijun-hu.eml`, checks pass, **not sent: the operator's word**.
-> - **CO-34 applied** to BlueZ as `3e5b0da969c2`, identical to what was sent.
-> - **CO-28's review mails are out** (stable list): 5.15.224-rc1 and 5.10.273-rc1 due **Fri 30 Oct 16:59
->   UTC**, 6.1.191-rc2 due **Sat 31 Oct 07:28 UTC**; our patches are in them. Test runs not started:
->   the operator's decision, asked.
-> - **Both agents FINISHED and ported** (worktrees under `/root/exp/agent-work/`; method: cherry-pick,
->   conflicts in `contributions/README.md` and `devtools/repo-scan-public-addresses` kept both sides):
->   - **mesh** (CO-05 + CO-04), `25e8168`, `d02ce84`: both packages ready for an outside review round
->     (`contributions/CO-05-…/patch/`, `CO-04-…/patch/`, each with a README of questions). KASAN/lockdep/
->     WARNING 0 on base, CO-05, CO-04, both; CO-05's lock warnings 3 → 0, KCSAN mesh-own races 1/45 → 0;
->     CO-04 clean in 48 boots; bot CI passes. **14888791 as posted gives a lockdep circular dependency in
->     8/12 power boots, ours 0/12**: a technical point for our own CO-04 mail only (no contact, nothing on
->     that thread). Open: send together or separately (agent: CO-04 alone), Cc Brian Gix, keep `Closes:`
->     before a syzbot test. Its proposed STATUS/issues edits (mesh row, the syzbot "last crash" date fix,
->     M-4/M-5) are in its final report and **not yet applied**.
->   - **CO-23**, `b454900` (bot-ci-local worktree support), `d941963` (dossier): package
->     `contributions/CO-23-…/patch/send/` (2 mails, To linux-bluetooth, Cc Luiz Augusto von Dentz;
->     `send.sh` not run). Bot CI PASS both sides, TestFunctional 48 → 49; ASan UAF on master at
->     `a2dp.c:2173`, none with the fix (setup ref held across close/abort; a second double-free path fixed).
->     Open: the route (public list, as earlier a2dp UAF fixes went, or BlueZ's SECURITY.md: the operator's
->     call); records still calling the 09-08 crash "unrelated" (BRIEF §, docs/contributions-roadmap.md:25,
->     patches/bluez/README.md:260, EX-041) and its STATUS row to update. `send-email`, even a dry run, is
->     the coordinator's.
-> - **Guard fixes 10-29** (private hook, 57/57 tests): container paths after the image are the
->   container's; host-only programs matched as whole tokens.
-> - **Captures:** desktop capture fully archived (`archive/hci-capture`, 20 GB budget, 14.19 GB, one-time,
->   no timer). `bt-trace` archive timer: transient, so gone at the -42 reboot; **restarted 2026-10-30**
->   with the same `systemd-run` command (20 GB: ~2 weeks; months need another disk; command in
->   `docs/tooling-index.md`). Budgets in `<archive>/BUDGET_GB`, the session-start hook warns at 80 %.
-> - **U21 registered** (Shure in Handsfree, no codec row in GNOME Settings): a Chrome tab recording from the
->   headset's microphone keeps it in Handsfree (`scripts/user-audio-streams.sh`); why the row is absent is
->   still open.
-> - **New tools:** lore readable over git (`scripts/lore-git-message.sh`, `lore-git-replies.py`; bare
->   clones in `cache/`, fetch with `+refs/heads/master:refs/heads/master`); `mail-body-sha.py`;
->   `desktop-capture-archive.sh`; `archive-budget-check.py`; `user-audio-streams.sh`;
->   `build-bluetooth-module.sh --krel`. The browser extension works when the session runs with Chrome
->   support (it filters raw HTML with query strings/cookies; page text and in-page comparisons work).
-> - **Open, in order:** the operator's decisions (Zijun Hu reply; CO-28 runs before the deadlines;
->   CO-02 module into `-42`; CO-04/05 send shape; CO-23 route; CO-11 filing, ready; CO-03: install the
-  backport and test it on the laptop, then the filing; CO-37 (U23): an outside review, then the send); recover E3 #3's
->   row from the journal; apply the mesh agent's STATUS/issues edits and the CO-23 "unrelated" fixes;
->   STATUS's ⚠️ lines are too long for the session-start extract (cut at 9,500 characters): shorten
->   them; confirm the CI rotation-test failure on `848ff44` is a flake.
+> - **No agents until Thursday 2026-11-05 09:00** (the operator, 11-02: the weekly limit). Work
+>   inline; an agent only as a special case on the operator's approval. None is running.
+> - **The review round is open; nothing from it is acted on yet.** The package
+>   (`contributions/review-2026-11-02/review-package.md`, every ready package verbatim, for outside
+>   reviewers) was read by six reviewers; their points, each checked, are in
+>   `contributions/review-2026-11-02/followups.md`: **14 decisions for the operator (D1–D14)** and
+>   **92 follow-ups (F-01–F-92)** marked do / decide / you / doc. The operator closes the round,
+>   then the decisions, then the "do" items. One reviewer's input named no item and nothing was
+>   taken from it; the operator is weighing which reviewers to keep. A decisions brief (8 decisions,
+>   2026-11-01/02) is kept separately; its points are folded into the follow-ups.
+> - **Measured 11-02 (each verified, logged, committed):**
+>   - **CO-11a** (`4ecef5b`): 24.04's btmon with the first fix alone still aborts **live** at 60
+>     columns (5/5), and at 80/piped with `-T` and long names; both fixes 0 aborts in 264 live runs.
+>     The SRU carries both. A further overflow with both fixes at ≥2048 columns is **U28** (source
+>     reading; not yet reproduced with the binary).
+>   - **CO-02** (`0d3b5f5`): the air-mode mismatch check as its own patch
+>     (`patch/mismatch-20261102/`): base and v7 connect the socket on the old air mode; with it 10/10
+>     refused then a fresh link, 0 wrong in 315 runs. **The series went out unversioned
+>     (`[PATCH 0/3]`), so the next posting is v2, not "v8".** Reviews: -EBUSY for a live link,
+>     -ECONNABORTED only for a closing one (`refcnt == 0`), and test a setup already in flight first.
+>   - **CO-37** (`dbc75e3`): the series sent `MediaEndpoint1.Release` twice to application endpoints
+>     (a 2011 path master already takes for RegisterEndpoint ones); a `released` flag as a separate
+>     sixth mail fixes it on master and 5.72; bot checks pass both sides (48 → 53). CO-37's fixes apply
+>     without CO-23. **U27** (5.72 only, `clear_endpoint`) is not covered by the 5.72 backport.
+>   - **CO-35** (`f4d80fb`): 7.2.y ended with 7.2.15 (request 7.3.y only); **v7.4-rc1 is tagged**
+>     (`bc71431221f5`); the backports' patch-ids equal upstream only where nothing was adapted.
+> - **Rules confirmed 11-02:** every kernel and BlueZ send is run by the operator himself (both
+>   projects' process documents); proposed, awaiting his word: kernel drafts carry no
+>   `Signed-off-by`, he adds his own; **BlueZ takes none at all** (`HACKING`). BlueZ subjects: HACKING
+>   asks 50 columns, merged practice is often longer (decision D9).
+> - **Machine: not re-read on 11-02.** Last known (10-30): `7.0.0-42` with E3, stock `bluetooth.ko`;
+>   the CO-02 module for `-42` built, not installed. U12 struck again 10-31; the CO-03 backport is
+>   the remedy and waits for the laptop test with the MOMENTUM 4.
+> - **Open, in order:** the operator closes the review round; decisions D1–D14 (the most
+>   consequential: D3 the CO-23/37 route, D1/D2 CO-02 v2 and the mismatch error code, D4/D14 CO-04,
+>   D5 CO-12 as an RFC, D6 one Ubuntu upload for CO-03 + CO-11a); then the follow-ups' "do" items
+>   (mostly inline: regenerating patches on public bases, message edits, read-only source checks);
+>   the heavier QEMU runs (F-19, F-80, F-82) after asking; the laptop tests (CO-18, CO-08, CO-32,
+>   CO-15, CO-03, CO-19) on the operator's word; E3 #3's row still to be written from the journal.
 
 
 ---
