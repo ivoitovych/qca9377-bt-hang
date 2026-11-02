@@ -1,0 +1,240 @@
+diff --git a/daemon/gvfsbackendcdda.c b/daemon/gvfsbackendcdda.c
+index ce01630..fd934cb 100644
+--- a/daemon/gvfsbackendcdda.c
++++ b/daemon/gvfsbackendcdda.c
+@@ -471,7 +471,6 @@ typedef struct {
+ 
+   long first_sector;   /* first sector of raw PCM audio data */
+   long last_sector;    /* last sector of raw PCM audio data */
+-  long sector_cursor;  /* sector we're currently at */
+ 
+   char *header;        /* header payload */
+ 
+@@ -481,11 +480,43 @@ typedef struct {
+   long buf_at_sector_num;                     /* the sector that is cached */
+   char buf_at_sector[CDIO_CD_FRAMESIZE_RAW];  /* the data of the sector */
+ 
++  /* Read-ahead. When paranoia's cache is used up, cdio_paranoia_read()
++   * reads a whole cache model of sectors (1200 by default, 16 s of audio)
++   * before it returns, which takes seconds on a slow or spun-down drive.
++   * A worker thread therefore reads the sectors following the one the
++   * client wants into a ring, so that do_read() does not wait for those
++   * refills. Only the worker calls into paranoia once it is started.
++   */
++  GThread *ra_thread;
++  GMutex ra_lock;
++  GCond ra_cond;
++  char *ra_buf;        /* RA_SECTORS sectors, sector n at n % RA_SECTORS */
++  long ra_start;       /* first sector held in ra_buf */
++  long ra_count;       /* number of sectors held from ra_start on */
++  long ra_want;        /* sector the client wants next */
++  gboolean ra_stop;    /* set when the handle is closed */
++  int ra_errno;        /* set when reading sector ra_start + ra_count failed */
++
+ } ReadHandle;
+ 
++/* 10 s of audio */
++#define RA_SECTORS (10 * CDIO_CD_FRAMES_PER_SEC)
++
+ static void
+ free_read_handle (ReadHandle *read_handle)
+ {
++  if (read_handle->ra_thread != NULL)
++    {
++      g_mutex_lock (&read_handle->ra_lock);
++      read_handle->ra_stop = TRUE;
++      g_cond_broadcast (&read_handle->ra_cond);
++      g_mutex_unlock (&read_handle->ra_lock);
++      g_thread_join (read_handle->ra_thread);
++    }
++  g_mutex_clear (&read_handle->ra_lock);
++  g_cond_clear (&read_handle->ra_cond);
++  g_free (read_handle->ra_buf);
++
+   if (read_handle->paranoia != NULL)
+     cdio_paranoia_free (read_handle->paranoia);
+   g_free (read_handle->header);
+@@ -615,6 +646,8 @@ do_open_for_read (GVfsBackend *backend,
+   //g_warning ("open_for_read (%s)", filename);
+ 
+   read_handle = g_new0 (ReadHandle, 1);
++  g_mutex_init (&read_handle->ra_lock);
++  g_cond_init (&read_handle->ra_cond);
+ 
+   track_num = get_track_num_from_name (job->filename);
+   if (track_num == -1)
+@@ -629,7 +662,6 @@ do_open_for_read (GVfsBackend *backend,
+ 
+   read_handle->first_sector = cdio_cddap_track_firstsector (cdda_backend->drive, track_num);
+   read_handle->last_sector = cdio_cddap_track_lastsector (cdda_backend->drive, track_num);
+-  read_handle->sector_cursor = -1;
+ 
+   read_handle->cursor = 0;
+   read_handle->buf_at_sector_num = -1;
+@@ -649,11 +681,96 @@ do_open_for_read (GVfsBackend *backend,
+ }
+ 
+ /* We have to pass in a callback to paranoia_read, even though we don't use it */
+-static void 
++static void
+ paranoia_callback (long int inpos, paranoia_cb_mode_t function)
+ {
+ }
+ 
++/* Called with ra_lock held: TRUE if @sector is in the read-ahead ring */
++static gboolean
++read_ahead_has (ReadHandle *read_handle, long sector)
++{
++  return sector >= read_handle->ra_start &&
++         sector < read_handle->ra_start + read_handle->ra_count;
++}
++
++static gpointer
++read_ahead_thread (gpointer user_data)
++{
++  ReadHandle *read_handle = user_data;
++  gboolean need_seek = TRUE;
++
++  g_mutex_lock (&read_handle->ra_lock);
++
++  while (!read_handle->ra_stop)
++    {
++      long next;
++      char *readbuf;
++      int errsv;
++
++      /* Start afresh if the client moved outside the ring, and drop the
++       * sectors before the one it wants.
++       */
++      if (read_handle->ra_want < read_handle->ra_start ||
++          read_handle->ra_want > read_handle->ra_start + read_handle->ra_count)
++        {
++          read_handle->ra_start = read_handle->ra_want;
++          read_handle->ra_count = 0;
++          read_handle->ra_errno = 0;
++          need_seek = TRUE;
++        }
++      else if (read_handle->ra_want > read_handle->ra_start)
++        {
++          read_handle->ra_count -= read_handle->ra_want - read_handle->ra_start;
++          read_handle->ra_start = read_handle->ra_want;
++        }
++
++      next = read_handle->ra_start + read_handle->ra_count;
++
++      if (read_handle->ra_errno != 0 ||
++          read_handle->ra_count == RA_SECTORS ||
++          next > read_handle->last_sector)
++        {
++          g_cond_wait (&read_handle->ra_cond, &read_handle->ra_lock);
++          continue;
++        }
++
++      g_mutex_unlock (&read_handle->ra_lock);
++
++      if (need_seek)
++        {
++          cdio_paranoia_seek (read_handle->paranoia, next, SEEK_SET);
++          need_seek = FALSE;
++        }
++
++      /* This may take seconds when paranoia refills its cache */
++      readbuf = (char *) cdio_paranoia_read (read_handle->paranoia, paranoia_callback);
++      errsv = errno;
++
++      g_mutex_lock (&read_handle->ra_lock);
++
++      /* Only this thread moves the ring, so the sector read is still the
++       * next one; a seek of the client is handled at the top of the loop.
++       */
++      if (readbuf == NULL)
++        {
++          read_handle->ra_errno = errsv != 0 ? errsv : EIO;
++        }
++      else
++        {
++          memcpy (read_handle->ra_buf + (next % RA_SECTORS) * CDIO_CD_FRAMESIZE_RAW,
++                  readbuf, CDIO_CD_FRAMESIZE_RAW);
++          read_handle->ra_count++;
++        }
++
++      g_cond_broadcast (&read_handle->ra_cond);
++    }
++
++  g_mutex_unlock (&read_handle->ra_lock);
++
++  return NULL;
++}
++
+ 
+ static void
+ do_read (GVfsBackend *backend,
+@@ -708,24 +825,31 @@ do_read (GVfsBackend *backend,
+     }
+   else
+     {
+-      /* first check that we're at the right sector */
+-      if (desired_sector != read_handle->sector_cursor)
++      g_mutex_lock (&read_handle->ra_lock);
++
++      if (read_handle->ra_thread == NULL)
+         {
+-          cdio_paranoia_seek (read_handle->paranoia, desired_sector, SEEK_SET);
+-          read_handle->sector_cursor = desired_sector;
+-          //g_warning ("seeking cursor to %ld", read_handle->sector_cursor);
++          read_handle->ra_buf = g_malloc (RA_SECTORS * CDIO_CD_FRAMESIZE_RAW);
++          read_handle->ra_start = desired_sector;
++          read_handle->ra_want = desired_sector;
++          read_handle->ra_thread = g_thread_new ("cdda-read-ahead", read_ahead_thread, read_handle);
+         }
+-      
+-      /* skip some bytes */
+-      skip_bytes = cursor_in_stream - (read_handle->sector_cursor - read_handle->first_sector) * CDIO_CD_FRAMESIZE_RAW;
+-      //g_warning ("advanced cursor to %ld", read_handle->sector_cursor);
+-      
+-      readbuf = (char *) cdio_paranoia_read (read_handle->paranoia, paranoia_callback);
+ 
+-      if (readbuf == NULL)
++      read_handle->ra_want = desired_sector;
++      /* Retry a sector that failed before, as each read did without the ring */
++      read_handle->ra_errno = 0;
++      g_cond_broadcast (&read_handle->ra_cond);
++
++      while (!read_ahead_has (read_handle, desired_sector) &&
++             !(read_handle->ra_errno != 0 &&
++               desired_sector == read_handle->ra_start + read_handle->ra_count))
++        g_cond_wait (&read_handle->ra_cond, &read_handle->ra_lock);
++
++      if (!read_ahead_has (read_handle, desired_sector))
+         {
+-          int errsv = errno;
++          int errsv = read_handle->ra_errno;
+ 
++          g_mutex_unlock (&read_handle->ra_lock);
+           g_vfs_job_failed (G_VFS_JOB (job), G_IO_ERROR,
+                             g_io_error_from_errno (errsv),
+                             /* Translators: paranoia is the name of the cd audio reading library */
+@@ -733,15 +857,17 @@ do_read (GVfsBackend *backend,
+           return;
+         }
+ 
+-      read_handle->buf_at_sector_num = read_handle->sector_cursor;
+-      memcpy (read_handle->buf_at_sector, readbuf, CDIO_CD_FRAMESIZE_RAW);
++      memcpy (read_handle->buf_at_sector,
++              read_handle->ra_buf + (desired_sector % RA_SECTORS) * CDIO_CD_FRAMESIZE_RAW,
++              CDIO_CD_FRAMESIZE_RAW);
++      read_handle->buf_at_sector_num = desired_sector;
+ 
+-      read_handle->sector_cursor++;
++      g_mutex_unlock (&read_handle->ra_lock);
+ 
+-      readbuf += skip_bytes;
++      /* skip some bytes */
++      skip_bytes = cursor_in_stream - (desired_sector - read_handle->first_sector) * CDIO_CD_FRAMESIZE_RAW;
++      readbuf = read_handle->buf_at_sector + skip_bytes;
+       bytes_read = CDIO_CD_FRAMESIZE_RAW - skip_bytes;
+-
+-
+     }
+   
+  read_data_done:

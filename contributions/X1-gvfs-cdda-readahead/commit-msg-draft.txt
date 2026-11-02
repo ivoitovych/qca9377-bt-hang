@@ -1,0 +1,15 @@
+cdda: Read ahead so that audio playback does not stall
+
+When paranoia's cache is used up, cdio_paranoia_read() reads a whole
+cache model of sectors (1200 by default, 16 s of audio) before it
+returns. do_read() calls it synchronously for each client read, so
+every 16 s one read waits while the drive reads the next 16 s: about
+3 s on a USB drive that has spun down in the meantime. A player that
+pulls the track through GIO, such as Totem, runs dry, and the audio
+stops for about 3 s every 16 s.
+
+Read ahead in a worker thread that keeps up to 10 s of the sectors
+following the one the client wants in a ring, and serve do_read() from
+it. Only the worker calls into paranoia once it has started; a seek
+outside the ring restarts it there, and a read error is reported to
+the client as before.
