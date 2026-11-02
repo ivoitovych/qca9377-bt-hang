@@ -103,8 +103,63 @@ one-sector read in `gvfsd-cdda` blocks while paranoia reads the whole next 16 s 
 (~3 s on this drive, including spin-up after the 13 s idle). Totem/GStreamer pulls through
 `giosrc` with no read-ahead queue, so that request blocks the playback thread for ~3 s, and the
 PipeWire stream (0.1 s buffer) underflows: about 3 s of silence every 16 s.
+⚠️ *Corrected 2026-11-02 evening:* Totem does not read through `giosrc`. It opens the track
+through gvfsd-fuse, as `/run/user/1000/gvfs/cdda:host=sr0/Track 1.wav` (`ls -l /proc/<totem
+pid>/fd`, 23:38, fd 30), and gst-plugins-base 1.24.2 `gst/gio/gstgioelement.c:119-122` leaves the
+`cdda` scheme out of giosrc (quoted by the simulator work, below). The blocking read and the gap are
+the same; only the path differs: Totem → kernel FUSE (128 KiB reads) → gvfsd-fuse → gvfsd-cdda.
 
 **Candidate fixes (not tried):** gvfs could shrink paranoia's block for streaming
 (`cdio_paranoia_cachemodel_size()`, `p_block.c:395`) or read ahead asynchronously; the player side
 could buffer slow GIO sources (a `queue2`); either removes the gap. Workaround: rip the CD and
 play the files. Upstream (gvfs) not yet searched for an existing report.
+
+## Runs 4–7 (2026-11-02 21:01–21:52): a second disc, drive noise, and a read-ahead defect
+
+The operator played another CD with the read-ahead build (run 3's binary, SHA-256 `07426241…0a7`)
+and reported (1) a loud drive ("taking off airplane"), louder than the music, and (2) two gaps in
+the first track. Raw data: `tmp/cd-gaps/run4-disc2` … `run7-quiet` (strace, usbmon, journal,
+GStreamer log). Sector-level analysis: `scripts/cd-trace/lbas.py <usbmon.txt>` (decodes READ CD
+commands from the USB mass-storage command blocks).
+
+**Run 4 (24×, read-ahead build), measured.** Underflows at 21:10:51.36 and 21:10:55.93
+(`grep UNDERFLOW run4-disc2/journal.txt`), at 41.0 s and 45.6 s of audio. `lbas.py` shows the
+disc read in 1,200-sector blocks every ~16 s, then two blocks of **re-reads** behind the player:
+`21:10:50.213 … 3072 … 4272, 1201 sectors, reread 1201` and `21:10:54.778 … 3072 … 4615, 1201,
+reread 1201`. One thread, one descriptor (`strace`). So the ring reset and the disc was re-read
+while the player waited 1.709 s and 1.586 s (`gstpull.py`).
+
+**Cause of the reset (simulator work, reproduced; trigger not explained).** Through gvfsd-fuse the
+reader is the kernel page cache. It requests 128 KiB windows up to about two windows (≤ 119
+sectors) ahead of the application. In run 4 the strace shows a SEEK request at 21:10:50.2126 and
+21:10:54.7779, each to a page-aligned offset 96 and 81 sectors behind what gvfsd-cdda had served
+(the page holding the player's position). gvfsd-fuse seeks whenever the FUSE offset differs from
+its position (`client/gvfsfusedaemon.c:1272-1283`, 1.54.4). The ring dropped every sector before
+the one wanted, so the backward request fell outside it → reset → re-read. Why the kernel asked
+for that page again (eviction, invalidation, an interrupted read) is **not** shown by these traces.
+A simulator around the verbatim read-ahead code reproduces the reset with an injected page loss
+(18/21, 21/21 and 9/12 runs across scenarios). It was not seen in runs 5–7.
+
+**Fix (in the test build, simulator-verified):** keep the last 2 s (150 sectors) already served
+in the ring (`RA_HISTORY_SECTORS`), ring capacity 900 sectors. With the injected loss: 0 resets,
+0 underflows in all three scenario sets; in the 336-run baseline matrix 18 runs differ by ±1
+underflow or 0.3–0.5 s of silence (jitter sweeps; attributed to timing noise of the 20× time scale,
+not isolated) and none gained a reset; the thread checker finds no new warning. Simulator and reports: `/root/exp/agent-work/x1-cdsim-20261102/`
+(local).
+
+**Drive noise (measured).** Paranoia's default reads 16 s of audio at the drive's full speed
+(24×): ~1.5–2.3 s of loud reading, then ~13 s idle with spin-down, every 16 s. At 8× (`hdparm -E
+8`, run 5) the bursts took ~3.3 s; no mid-track gap. The test build then asks the drive itself for
+4× (`cdio_cddap_speed_set`) and reads 2 s per step (`cdio_paranoia_cachemodel_size(150)`): run 7
+shows a SET CD SPEED command (0xBB, read speed 0x02C4 = 708 KB/s = 4×) although the drive had just
+been set to 24×, and steady reads of 150 sectors with 1.5–2.2 s pauses for the whole track; no
+mid-track underflow, one at 0.6 s into the track (the slow first fill), one at the track end. The
+operator: "it got better". Simulator: step 150 spins the drive up once per track against 18–19
+times at step 1200.
+
+**Other findings.** libcdio-paranoia's `paranoia_cb_mode2str[]` has 13 names
+(`paranoia.c:116-120`), the enum continues to `PARANOIA_CB_CACHEERR` (13) and `WROTE` (14)
+(`paranoia.h:85-86`), so indexing it with every event reads past its end; it affected only our
+diagnostic line (fixed). gvfs's `num_open_files` counter is changed without a lock in
+`do_open_for_read`/`do_close_read`, which is not reachable: the cdda daemon runs one job thread
+(`daemon/meson.build:339`, `MAX_JOB_THREADS=1`).
