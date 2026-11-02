@@ -4263,6 +4263,22 @@ taken up once the review round is closed.
 (five mails in one place, six in another). Regenerating from the stored files, not editing
 copies, is what kept it consistent.
 
+**The evening of 11-02: five packages made ready, and a CD that would not play.** The five items
+the reviews called nearly ready were finished in isolated work areas: the Qualcomm reply, the
+ASUS stable request (plus a separate report on a 6.6.y build break found on the way), the L2CAP
+stable package, the btmon update for four Ubuntu releases, and the advertising-listing fix on
+public bases. One agent was stopped by the service's safety filter the moment its task asked it
+to reproduce an overflow; framed as packaging alone, the same work ran.
+
+Then the operator put an audio CD into an external drive and heard the music stop at regular
+intervals. Bluetooth was the first suspect and was cleared in minutes: PipeWire logged the
+underflows on the *player's* stream, every 16 s. Tracing without rebuilding anything (GStreamer
+debug output, strace on GNOME's CD backend, the drive's USB traffic) found the cause in two
+numbers: libcdio-paranoia refills 1200 sectors at a time, exactly 16.0 s of audio, and gvfs
+waits for that refill (3 s on a spun-down drive) inside the player's read. A read-ahead thread in
+gvfs is the fix; it is drafted and builds cleanly. It became the first entry of a new
+off-topic category, X1.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`

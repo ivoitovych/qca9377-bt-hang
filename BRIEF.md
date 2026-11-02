@@ -141,7 +141,8 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-11-02** (the hand-off rewritten for the review round; the 10-29/30 block
+**Last updated: 2026-11-02, evening** (hand-off extended: the five packages made ready, X1, disk).
+Earlier 2026-11-02: (the hand-off rewritten for the review round; the 10-29/30 block
 moved to the end of `HISTORY.md` verbatim; the state block's CO-02 and sends lines amended).
 2026-10-30: the hand-off rewritten for the `-42` boot. 2026-10-29: a hand-off block for 10-29 added. Before that, 2026-10-28 (the documentation review: every foundation document checked
 against the facts re-verified that day; the state block above rewritten; the hand-off of
@@ -188,6 +189,26 @@ hours (`R2-13`).
 > - **Machine: not re-read on 11-02.** Last known (10-30): `7.0.0-42` with E3, stock `bluetooth.ko`;
 >   the CO-02 module for `-42` built, not installed. U12 struck again 10-31; the CO-03 backport is
 >   the remedy and waits for the laptop test with the MOMENTUM 4.
+> - **Later on 11-02, the "nearly ready" five made ready (agents approved for this; each verified,
+>   committed, nothing sent):** CO-25 reply v4 (`38b496b`; quotes the kernel's `build 0x111` line;
+>   the report's "three headset models" checked true); CO-22 stable request v2 + a separate 6.6.y
+>   `btmtk.h` -Werror report (`38b496b`; drafts in `research-2026-11-01/qca-ids/drafts/`; both ASUS
+>   commits in v7.4-rc1, none queued); CO-35 final (`11a2784`, `send-20261102/`: 7.3.y only, each
+>   line's plain tag hangs and patched passes on the final files); CO-11a filing package for
+>   tenacious/stonking/resolute/noble (`a1618a2`, `ubuntu/ready-20261102/`); CO-38 on public bases
+>   with its own dossier (`cc90614`). Open questions: D6, D12, and whether CO-38's BlueZ series
+>   goes now or only its listing case. An agent asked to reproduce U28 was stopped by the
+>   service's safety filter at its first step; U28 stays a source-reading finding.
+> - **Off-topic X1 (11-02, not Bluetooth): audio CD in Totem stops ~3 s every 16 s.** Root cause
+>   traced (`986a910`): gvfsd-cdda's synchronous `cdio_paranoia_read()` refills libcdio-paranoia's
+>   1200-sector (16 s) block in one ~3 s call; Totem pulls without read-ahead. Tracing kit
+>   `scripts/cd-trace/`; raw runs `archive/off-topic/X1/` (local). Read-ahead fix drafted and built
+>   clean three ways (`7183fad`, `contributions/X1-gvfs-cdda-readahead/`); **the laptop test
+>   (dpkg-divert swap of `/usr/libexec/gvfsd-cdda`, reversible) waits for the operator's word**.
+> - **Disk:** ~34 GB free; a cleanup proposal is open (tier 1 ~67 GB: the 39 GB hardware-probe
+>   mirror in `agent-work/research-qca-ids/fetched/linuxhw`, BlueZ/PipeWire build trees, a tar, the
+>   Docker build cache; tier 2 build objects in finished work areas) — nothing deleted without the
+>   operator's word (four unrelated Docker images were removed on his word).
 > - **Open, in order:** the operator closes the review round; decisions D1–D14 (the most
 >   consequential: D3 the CO-23/37 route, D1/D2 CO-02 v2 and the mismatch error code, D4/D14 CO-04,
 >   D5 CO-12 as an RFC, D6 one Ubuntu upload for CO-03 + CO-11a); then the follow-ups' "do" items

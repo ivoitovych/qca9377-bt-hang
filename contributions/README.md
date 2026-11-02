@@ -75,5 +75,15 @@ date), **blocked** (on a decision), **dropped** (with the reason in `log.md`).
 | CO-38 | [MGMT Read Advertising Features hides advertising instances numbered above the instance count](CO-38-read-adv-features-hidden-instances/README.md) | kernel | **found 2026-11-01 by CO-12's tests, confirmed in mainline source**: `read_adv_features()` compares each instance number with `adv_instance_cnt` instead of `le_num_of_adv_sets` (`mgmt.c:8862-8863`), so instance 2 drops out of the listing once instance 1 is gone; from `b338d91703fa` (2022), in 6.1.y to bluetooth-next; one-line fix passes 128/128 mgmt-tester "Add" cases and a new case (`/root/exp/agent-work/co12-rework-20261101/patches/listfix-on-clamp/`) | an outside review; then a patch with its tester case | the operator, for the send |
 | CO-37 | [BlueZ: use-after-frees at bluetoothd exit with a streaming sound server (U23, U24)](CO-37-bluez-media-endpoint-exit-uaf/README.md) | BlueZ; Ubuntu (5.72) | **reproduced, fix series ready, nothing sent** (2026-11-01). U23 is present on master: two fixes and a functional test, 10/10 → 0/10, on master and on 5.72 (two-patch backport). U24 is fixed upstream by `7e3212fa233e` (not released); its 5.72 backport gives 10/10 → 0/10 | an outside review; the bot's checks on the exact mails; then the operator's word. **2026-11-02:** the duplicate Release fixed by a sixth mail (`work/patches/master-final-6-20261102/`, 5.72: `5.72-3-20261102/`), bot checks pass both sides; U27 (5.72 only) not covered; open: route, one or two series, subjects, fixtures (follow-ups D3, D13, F-46 to F-55) | the operator |
 
+**State of 2026-11-02 evening (supersedes the rows above where they differ):** CO-25 reply v4
+ready (`drafts/reply-1-zijun-hu-v4.eml`); CO-22 stable request v2 and a 6.6.y btmtk report ready
+(`research-2026-11-01/qca-ids/drafts/`); CO-35 final package `send-20261102/` (7.3.y only);
+CO-11a filing package `ubuntu/ready-20261102/` (four series); CO-38 dossier with `send-20261102/`.
+All wait for the operator's word; none sent.
+
+**Off-topic (not Bluetooth):** [X1 — gvfs cdda read-ahead](X1-gvfs-cdda-readahead/README.md):
+audio CDs stall ~3 s every 16 s in Totem; root cause traced, fix drafted and built; the laptop
+test waits for the operator.
+
 Items without a link have no dossier yet. One is opened as soon as anything is written about
 the item.
