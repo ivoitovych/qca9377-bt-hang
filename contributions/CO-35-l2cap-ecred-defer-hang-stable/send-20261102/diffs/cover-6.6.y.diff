@@ -1,0 +1,47 @@
+--- /root/exp/agent-work/co35-ready-20261102/draft-orig/6.6.y/0000-cover-letter.patch	2026-11-02 14:36:44.058745907 +0100
++++ /root/exp/agent-work/co35-ready-20261102/final/6.6.y/0000-cover-letter.patch	2026-11-02 14:42:13.750535617 +0100
+@@ -16,14 +16,19 @@
+ The second fixes ab4eedb790ca ("Bluetooth: L2CAP: Fix corrupted list in
+ hci_chan_del"), which 6.6.y has as efc30877bd4b. It calls
+ l2cap_chan_lock_conn() and l2cap_chan_unlock_conn(), which only the
+-first adds; the first is longer than the 100 lines the stable rules
+-allow, and is sent whole as it was merged. Neither carries Cc: stable.
++first adds; the first is 78 changed lines (a 149-line diff), more than
++the 100 lines the stable rules allow, and is sent whole as it was
++merged because that is the conservative choice compared with a smaller
++locking patch written only for stable. Neither carries Cc: stable.
+ They are patches 2 and 7 of the series "Bluetooth: L2CAP: fix and
+ annotate l2cap_conn::chan_l locking"; the other patches are not needed
+ for the problem below and were not tested here. One of them,
+ dc1ddc65f06d ("Bluetooth: L2CAP: take lock for l2cap_chan_del in
+-l2cap_ecred_rsp_defer"), takes the locks of the sibling channels; it is
+-not requested, because the case below passes without it.
++l2cap_ecred_rsp_defer"), is not requested: in v6.6.161,
++l2cap_ecred_rsp_defer() calls l2cap_chan_del() on the sibling channels
++without their chan->lock only in its refusal branch, which is a lock
++context issue separate from the caller's own socket lock that hangs the
++case below.
+ 
+ Without them, BlueZ's l2cap-tester case "L2CAP Ext-Flowctl Server -
+ Accept 2 Close 1" never finishes on v6.6.161: the test stops after
+@@ -45,14 +50,13 @@
+ 
+ Tested on v6.6.161 in QEMU/KVM (4 vCPUs) with BlueZ's
+ doc/tester.config: with the series the case passes, and the whole
+-l2cap-tester ends with 79 of 111 passed; each of the 32 cases that
+-fail or time out also does so on plain v6.6.161 (26 PHY cases, 3 TX
+-timestamping, 2 ethtool and one BR/EDR PIN code case that times out).
+-Without the series the case never finishes. No lockdep or KASAN report
+-with the series.
++l2cap-tester ends with 79 of 111 passed; all other non-passes are
++pre-existing on plain v6.6.161 (features the tree lacks). Without the
++series the case never finishes. No lockdep or KASAN report with the
++series.
+ 
+-The two commits are requested for 7.3.y and 7.2.y as they are, in a
+-separate mail; backports for 6.18.y and 6.12.y are separate series.
++The two commits are requested for 7.3.y as they are, in a separate
++mail; backports for 6.18.y and 6.12.y are separate series.
+ 
+ Thanks,
+ Iaroslav

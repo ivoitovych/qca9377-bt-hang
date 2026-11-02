@@ -1,0 +1,85 @@
+--- /root/exp/agent-work/co35-ready-20261102/draft-orig/request-v3.eml	2026-11-02 14:36:44.058864630 +0100
++++ /root/exp/agent-work/co35-ready-20261102/final/request-v3.eml	2026-11-02 14:41:40.143402000 +0100
+@@ -4,12 +4,11 @@
+  Marcel Holtmann <marcel@holtmann.org>,
+  Luiz Augusto von Dentz <luiz.dentz@gmail.com>,
+  linux-bluetooth@vger.kernel.org
+-Subject: Please backport 608e0b7a675b and 32d86e048d8e (Bluetooth: L2CAP) to 7.3.y and 7.2.y
++Subject: Please backport 608e0b7a675b and 32d86e048d8e to 7.3.y
+ 
+ Hello,
+ 
+-please apply these two mainline commits to 7.3.y and 7.2.y, in this
+-order:
++please apply these two mainline commits to 7.3.y, in this order:
+ 
+   608e0b7a675b2affbbf38167cad0fa63d8e064f7
+   ("Bluetooth: L2CAP: add l2cap_chan_close_unlocked() and locking
+@@ -20,37 +19,42 @@
+   __l2cap_ecred_conn_rsp_defer")
+ 
+ The second fixes ab4eedb790ca ("Bluetooth: L2CAP: Fix corrupted list in
+-hci_chan_del"), which both lines have. It calls l2cap_chan_lock_conn()
+-and l2cap_chan_unlock_conn(), which only the first adds; the first is
+-longer than the 100 lines the stable rules allow, and I am asking for
+-it whole as it was merged. Both are in mainline since the 7.4 merge
+-window and carry no Cc: stable tag. They are patches 2 and 7 of the
+-series "Bluetooth: L2CAP: fix and annotate l2cap_conn::chan_l locking";
+-the other patches are not needed for the problem below and were not
+-tested here. One of them, dc1ddc65f06d ("Bluetooth: L2CAP: take lock
+-for l2cap_chan_del in l2cap_ecred_rsp_defer"), takes the locks of the
+-sibling channels; I am not asking for it, because the case below
+-passes without it (it also passes with it added on v7.3.1).
++hci_chan_del"), which 7.3.y has. The deadlock path it removes predates
++ab4eedb790ca; it comes from 9aa9d9473f15 (v6.3). The second commit
++calls l2cap_chan_lock_conn() and l2cap_chan_unlock_conn(), which only
++the first adds. The first changes 78 lines (a 149-line diff), more
++than the 100 lines the stable rules allow; I am asking
++for it whole, as merged, because that is the conservative choice
++compared with a smaller locking patch written only for stable. Both are
++in mainline since the 7.4 merge window (v7.4-rc1) and carry no Cc:
++stable tag. They are patches 2 and 7 of the series "Bluetooth: L2CAP:
++fix and annotate l2cap_conn::chan_l locking"; the other patches are not
++needed for the problem below and were not tested here. One of them,
++dc1ddc65f06d ("Bluetooth: L2CAP: take lock for l2cap_chan_del in
++l2cap_ecred_rsp_defer"), is not requested: in v7.3.1,
++l2cap_ecred_rsp_defer() calls l2cap_chan_del() on the sibling channels
++without their chan->lock only in its refusal branch, which is a lock
++context issue separate from the caller's own socket lock that hangs the
++case below; the case passes with and without it.
+ 
+ Without them, BlueZ's l2cap-tester case "L2CAP Ext-Flowctl Server -
+ Accept 2 Close 1" (a deferred ECRED accept of two channels, the first
+-accepted and closed before the second) never finishes on v7.3.1 and
+-v7.2.14: the test stops after "Accept deferred setup". With
+-CONFIG_DETECT_HUNG_TASK enabled on v7.3.1, the tester's task is
+-reported blocked holding its socket's lock from l2cap_sock_recvmsg()
+-while waiting for the same lock in l2cap_sock_teardown_cb() (taken
+-nested, so lockdep stays silent). 32d86e048d8e releases the socket
+-lock before __l2cap_ecred_conn_rsp_defer() is called.
+-
+-Both commits cherry-pick cleanly onto v7.3.1 and v7.2.14. Tested in
+-QEMU/KVM (4 vCPUs) with BlueZ's doc/tester.config: with the two
+-commits the case passes on both, and on v7.2.14 the whole l2cap-tester
+-passes 111 of 111; without them the case never finishes. No lockdep or
+-KASAN report.
++accepted and closed before the second) never finishes on v7.3.1: the
++test stops after "Accept deferred setup". With CONFIG_DETECT_HUNG_TASK
++enabled on v7.3.1, the tester's task is reported blocked holding its
++socket's lock from l2cap_sock_recvmsg() while waiting for the same lock
++in l2cap_sock_teardown_cb() (taken nested, so lockdep stays silent).
++32d86e048d8e releases the socket lock before
++__l2cap_ecred_conn_rsp_defer() is called.
++
++Both commits cherry-pick cleanly onto v7.3.1. Tested in QEMU/KVM
++(4 vCPUs) with BlueZ's doc/tester.config: with the two commits the case
++passes; without them it never finishes. No lockdep or KASAN report.
+ 
+ On v7.3.1 the whole l2cap-tester stalls earlier, in an SCI case that
+ has nothing to do with these commits; I am asking for its fix in a
+-separate mail.
++separate mail. With that fix and these two commits the whole
++l2cap-tester passes 111 of 111 on v7.3.1.
+ 
+ 6.18.y, 6.12.y and 6.6.y hang on the same case and need small
+ adjustments; backports for them follow as separate series.

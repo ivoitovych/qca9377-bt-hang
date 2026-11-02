@@ -217,3 +217,34 @@ sent.
   passing case; and a sentence in the request that the deadlock is older than `ab4eedb790ca` (the
   path dates from `9aa9d9473f15`, v6.3) and that the upstream fix resolves it there too, while the
   upstream `Fixes:` trailer stays unchanged.
+
+## 2026-11-02 — the send package made final (`send-20261102/`; nothing sent)
+- **Facts** (releases.json and git, 11-02): newest tags 7.3.1, 6.18.60, 6.12.115, 6.6.161 (the
+  tested ones); 7.2.15 EOL. All of `608e0b7a675b2`, `32d86e048d8ef`, `5874f8d03268` and CO-22's
+  `d54601f21faf`, `cfa67a1dbfd9` are ancestors of v7.4-rc1 (tag `bc71431221f5`, commit
+  `6628e7d4c6b2`); none is in any stable queue (control stem found on every line) or released tag.
+- **Mails corrected:** 7.2.y gone everywhere; request subject "Please backport 608e0b7a675b and
+  32d86e048d8e to 7.3.y" (63 columns; the SCI request's subject shortened too); covers say "all
+  other non-passes are pre-existing on the plain tag" (breakdown in `results.md`); one sentence on
+  the size (`608e0b7a675b2` changes 78 lines, a 149-line diff, over the 100-line rule; requested
+  whole as the conservative choice); one source sentence on `dc1ddc65f06d` (at v7.3.1
+  `l2cap_ecred_rsp_defer()` calls `l2cap_chan_del()` on sibling channels without their
+  `chan->lock` only in the refusal branch, separate from the socket-lock self-deadlock; the case
+  passes with and without it); one neutral sentence that the path predates `ab4eedb790ca` (from
+  `9aa9d9473f15`, v6.3). `Fixes:` trailers and Pauli Virtanen's patch bodies byte-identical to the
+  drafts (`cmp`). Diffs against the 11-01 drafts in `send-20261102/diffs/`.
+- **Patch-id note (corrects the review document, not this dossier):** this log's "same patch-ids"
+  (lines 143, 204) and `results-send-2026-10-28.md` compare the mails with our own backport
+  commits, and are right. Against upstream only 6.18.y's patch 2 is equal; the review document's
+  wording "same as the upstream hunks" was wrong and is corrected there.
+- **Tests on the final files** (QEMU/KVM, 4 vCPUs, tester.config + hung-task detection, the case
+  alone, 180 s): v6.6.161, v6.12.115, v6.18.60, v7.3.1 plain hang (7 hung-task reports each),
+  patched pass in 1.036 / 1.074 / 1.067 / 1.034 s; v7.3.1 + the pair + `5874f8d03268` also passes
+  (1.040 s). Full l2cap-tester patched: 93/111 (6.18.60), 79/111 (6.12.115, 6.6.161), 111/111
+  (7.3.1 with the SCI fix); 0 regressions against the 11-01 plain verdicts; no lockdep or KASAN.
+- **Checks:** checkpatch: only the expected `[ Upstream commit ]` errors (6) and upstream's own
+  syzkaller-link warning on each patch 1; mail-lint clean on both requests and three covers;
+  ci-local `git am` passes; gitlint title length 82/82/81 and VerifyFixes on 6.12.y/6.6.y as on
+  10-28 (both expected for stable backports).
+- Raw logs, worktree-built bzImages and SHA256SUMS: `/root/exp/agent-work/co35-ready-20261102/`
+  (local). Ready for the operator's word, the dry run, and his send.
