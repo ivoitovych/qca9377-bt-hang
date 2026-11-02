@@ -140,3 +140,45 @@ transports cleared before the SEP is removed). Nothing sent.
   `leak_check_at_exit=0` in the guest. The leak variant turns it on for bluetoothd only.
 - **Stream-idle leak confirmed** (5 runs each): after the peer disconnects while another client
   holds the transport, master, stk-fix12 and prop4 never unregister the SEP; L1 and L2 do.
+
+## 2026-11-02 — the duplicate Release: cause, a separate fix, the six-mail series (nothing sent)
+Work area (local, raw logs, cores, SHA256SUMS, 5008 files): `/root/exp/agent-work/co37-release-20261102/`.
+- **Cause (from source, master `14bd6ab65`):** `release_endpoint()` (`media.c:651-675`) is the only
+  sender of `MediaEndpoint1.Release`. It sends Release, then `media_endpoint_remove()` ->
+  `a2dp_remove_sep()` -> `a2dp_unregister_sep()` -> the SEP's destroy callback
+  `a2dp_destroy_endpoint()` (`media.c:801-806`) -> `release_endpoint()` again, with the watch still
+  set: a second Release. On master `path_free()` reaches this double path only for RegisterEndpoint
+  endpoints (applications are freed first); our fix 2's reorder sends application endpoints down it
+  too. The path is from `bd3ca4fdf463` (2011; inferred from that commit's source, not run). 5.72 has
+  the same structure.
+- **Fix:** a `released` flag in `struct media_endpoint`; `release_endpoint()` skips the clear and the
+  Release once it is set (8 insertions, 2 deletions). Not "drop the watch after Release": that would
+  stop U26's client-exit path from reaching the endpoint (inferred, not run). Placed as a separate
+  patch before fix 2, `Fixes: bd3ca4fdf463`; fixes 1 and 2 keep their patch-ids. A folded variant
+  (fix 2 with the flag) gives an identical end state.
+- **Measured** (ASan+UBSan, QEMU; Releases per endpoint on adapter removal / SIGTERM): master
+  RegisterEndpoint 2/2, application 1/1; master + the five earlier mails 2/2 and 2/2; final six-mail
+  series 1/1 and 1/1; the same pattern on 5.72, 5.72 + backport, and 5.72 + backport + the flag
+  (1/1). Final series: CO-37 tests 0/10 failing, the new Release-count test 0/10, CO-23's test 0/5;
+  U25 and U26 unchanged (3/3 each, same signatures). `make check` unchanged. Leak check on: final
+  series 8/8 cases clean.
+- **The bot's CI, run locally on the six final mails:** every check passes on both sides;
+  TestFunctional 48 on base, 53 with the series (the five new tests).
+- **Final mails** (`work/patches/master-final-6-20261102/`, no Signed-off-by, author address a
+  placeholder): CO-23 fix, CO-23 test, fix 1, the Release fix, fix 2, the test (now also counting
+  Releases: `test_a2dp_release_on_exit[app|endpoint]`). 5.72 backport: `work/patches/5.72-3-20261102/`
+  (applies to `5.72-0ubuntu5.8`).
+- **Independence:** fixes 1 and 2 apply on master without CO-23; the stacked test does not (it
+  needs CO-23's newer test file), the original unstacked test does: CO-37 tests 0/10 failing
+  without CO-23, also with the Release fix.
+- **Message points still to fix:** the test message's "without the first patch ... the second" is
+  wrong with the Release fix inserted (replacement drafted); fix 2's ASan trace skips frame #6; the
+  5.72 backport 0001 cites fix 1's old title. CO-23's `patch/send/` package is stale (the stacked
+  test applies only on `send-20261101-draft/0002`).
+- **New, 5.72 only, not fixed (to register):** an endpoint removed while another client holds its
+  transport, then the stream goes idle (peer disconnect, or the power-off on SIGTERM):
+  heap-use-after-free in `clear_endpoint` (`media.c:300`, the signature of CO-03's original report),
+  2/2 and 3/3 runs on 5.72, 5.72 + backport, and with the flag; master leaks there instead of
+  crashing. The 5.72 backport does not cover this path.
+- **BlueZ and Signed-off-by:** `doc/maintainer-guidelines.rst:59-61` says bluez.git commits "shall not
+  contain Signed-off-by".
