@@ -205,3 +205,15 @@ reduced to one sentence), `request-sci-7.3.y.eml` (a separate option-2 request f
 offsets only), and the cover diffs. mail-lint clean. Not rerun on the new files: checkpatch and
 ci-local. Raw logs (local): `/root/exp/agent-work/co35/refresh-20261101/` with SHA256SUMS. Not
 sent.
+
+## 2026-11-02 — 7.2.y has ended; an outside review's points
+- kernel.org's release list of 2026-11-01 marks 7.2.15 as the last 7.2.y release. The request
+  `request-v3.eml` still asks for 7.2.y: it is to be reworded to 7.3.y alone before any send.
+- v7.4-rc1 is tagged (`git ls-remote` on the mainline tree, 2026-11-02: `bc71431221f5`). The two
+  commits reached mainline in the 7.4 merge window; their presence in the tag is to be checked
+  before the request (and before CO-22's ASUS request).
+- From the same review, to do before sending: one source-level sentence on why `dc1ddc65f06d`
+  (sibling-channel locking in `l2cap_ecred_rsp_defer`) is not needed for this backport, beyond the
+  passing case; and a sentence in the request that the deadlock is older than `ab4eedb790ca` (the
+  path dates from `9aa9d9473f15`, v6.3) and that the upstream fix resolves it there too, while the
+  upstream `Fixes:` trailer stays unchanged.
