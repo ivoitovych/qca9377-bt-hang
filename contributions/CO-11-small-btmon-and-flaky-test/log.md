@@ -116,3 +116,28 @@ kernel to pass credentials to the monitor (`69ae5065061c5`, first in v6.6-rc1). 
 24.04 update with both fixes; the first-only update stays a fallback whose text names 60 columns,
 and `-T` at 80/piped, as still aborting. Raw outputs, scripts and SHA256SUMS:
 `/root/exp/agent-work/co11a-live-20261102/` (local).
+
+## 2026-11-02 — the filing package for all four series (`ubuntu/ready-20261102/`; nothing filed)
+- **Newer releases** (Launchpad, 11-02): tenacious 5.87-5 (Proposed; Release has 5.87-4), stonking
+  5.87-4, resolute 5.85-4ubuntu0.4 (Updates/Security). All carry `fdbfe0018f6f`, none carries
+  `dca0f10fd560` (no clamp line in `monitor/packet.c`, no Debian patch on `print_packet()`).
+- **Debdiffs** adding `dca0f10fd560` unchanged as a DEP-3 patch (its diff byte-identical to
+  upstream's, sha256 `050e04300bba…`): tenacious `5.87-5ubuntu1`, stonking `5.87-4ubuntu0.1`,
+  resolute `5.85-4ubuntu0.5`; applies with offset -2 (5.87) and -52 (5.85), no fuzz. Built stock
+  and patched in a container of each release (`ubuntu:26.04`, `ubuntu:26.10`; no 27.04 image
+  exists, so tenacious was built in 26.10 upgraded to tenacious by apt); `-D_FORTIFY_SOURCE=3` on
+  every compile line; all six builds exit 0. Noble's debdiff unchanged.
+- **Replay matrix** (widths 10/60/80/3000/piped × two synthetic captures × none/`-t`/`-T`, 60 runs
+  per series): stock exit 134 at 10 and 3000 (12 of 30 cells) in every series, patched 0 in all 30.
+  Output identical in 16 of 18 cells where both run; the two differences are where stock's dots
+  overwrote the end of a label (`lines.btsnoop` at 60 with `-t`/`-T`; inferred from source) — named
+  in [Where problems could occur]. Live-socket runs were done on noble only (above).
+- **Launchpad draft** `lp-report.md`: retitled "btmon aborts with "buffer overflow detected" in
+  print_packet()", the live results in [Impact], the four target series and their debdiffs, the
+  captures by file name. The two synthetic captures are not tracked (binary; regenerate with
+  `mkcap.py`); copies to attach are in `/root/exp/agent-work/co11a-ready-20261102/final/`.
+- U28 (≥2048 columns with both fixes) was not worked on: an agent asked to reproduce it was
+  stopped by the service's safety filter at its first step; it stays a source-reading finding
+  until the operator decides how to proceed.
+- Open: one Ubuntu upload with CO-03 or two (decision D6); if tenacious 5.87-5 is superseded before
+  upload, its debdiff is rebased. Then the operator files.
