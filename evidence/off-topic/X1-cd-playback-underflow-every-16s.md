@@ -70,8 +70,10 @@ Recorder outputs of the run (disc-block counters, which do not see audio-CD read
 `GST_DEBUG=3,giosrc:6,basesrc:5,wavparse:5,queue2:5,multiqueue:4,playsink:4,pulsesink:6,audiobasesink:5,audioringbuffer:5,audiosink:5`
 (`GST_DEBUG_FILE=/tmp/cd-gaps-gst.log`); `strace -f -tt -T` attached to the running
 `gvfsd-cdda`; the drive's USB traffic (usbmon text, bus 1 device 5); `pw-top -b`; the journal.
-Collector `tmp/cd-gaps/trace.py`, analysers `slowcalls.py`, `rhythm.py`, `gstpull.py` (all in
-`tmp/cd-gaps/`, outputs in `tmp/cd-gaps/run2/`, local). Track 1 opened as
+Collector `scripts/cd-trace/trace.py`, analysers `slowcalls.py`, `rhythm.py`, `gstpull.py`,
+launcher `totem-debug.sh` (all in `scripts/cd-trace/`, README there). Raw recordings of both runs
+(22 MB: GStreamer log, strace, usbmon, pw-top, journal) in
+`archive/off-topic/X1/cd-gaps-runs-20261102.tar.xz` (local, SHA-256 `92cba5f4…6910`). Track 1 opened as
 `cdda://sr0/Track%201.wav`.
 
 **Measured:**
