@@ -1518,7 +1518,8 @@ operator asks.
 | Measured | four `UNDERFLOW`s on Totem's own playback stream, 16.32 / 15.62 / 16.34 s apart, at 14.8 / 31.1 / 46.7 / 63.0 s of audio; the stream's buffer target 0.11–0.16 s; no error on the Bluetooth output; the drive never runtime-suspended; no kernel read error during playback |
 | Ruled out | Bluetooth discovery (off in this run), the drive's USB autosuspend, kernel I/O errors |
 | Inferred | the disc is read in bursts and the drive idles between them; the next read arrives later than the tiny stream buffer can absorb; no layer (gvfsd-cdda, GIO, Totem/GStreamer, the stream) reads ahead enough. Which one should is not established |
-| State | **observed, mechanism inferred**; not reported anywhere |
+| Root cause (run 2, 19:52–19:55, traced) | **found, measured and from source:** `gvfsd-cdda` (gvfs 1.54.4, `gvfsbackendcdda.c:707`) answers each read with a synchronous `cdio_paranoia_read()`; when libcdio-paranoia's block of `CACHEMODEL_SECTORS` = 1,200 sectors (= 16.0 s of audio; `p_block.h:34`, `paranoia.c:2626`) is used up, that one read blocks while the next 16 s are read (48 reads × 25 sectors, 3.0–3.3 s with spin-up after a 13 s idle). Totem pulls through `giosrc` with no read-ahead, so its request blocks ~3 s and the 0.1 s stream buffer underflows: 11 of 11 underflows at the burst starts |
+| State | **root cause found** (gvfs CD backend + paranoia block size + no player-side buffering); not reported anywhere; upstream not yet searched |
 | Next | the same track through GStreamer's own CD source, bypassing gvfsd-cdda; a passive USB capture of the drive's reads during Totem playback; the same to the laptop's speakers. Workaround meanwhile: rip the CD to files and play those |
 | Evidence | [`evidence/off-topic/X1-cd-playback-underflow-every-16s.md`](../evidence/off-topic/X1-cd-playback-underflow-every-16s.md) (extraction command and exact output); recorder `tmp/cd-gaps/` (local) |
 

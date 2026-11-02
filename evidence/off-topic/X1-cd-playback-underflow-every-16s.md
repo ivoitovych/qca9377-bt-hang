@@ -63,3 +63,46 @@ underflow is on the player's side).
 
 Recorder outputs of the run (disc-block counters, which do not see audio-CD reads; pw-top):
 `tmp/cd-gaps/run1/` (local), made by `tmp/cd-gaps/record.py`.
+
+## Run 2 (2026-11-02 19:52–19:55): traced, root cause found
+
+**Tracing (all passive, no rebuild):** Totem started with
+`GST_DEBUG=3,giosrc:6,basesrc:5,wavparse:5,queue2:5,multiqueue:4,playsink:4,pulsesink:6,audiobasesink:5,audioringbuffer:5,audiosink:5`
+(`GST_DEBUG_FILE=/tmp/cd-gaps-gst.log`); `strace -f -tt -T` attached to the running
+`gvfsd-cdda`; the drive's USB traffic (usbmon text, bus 1 device 5); `pw-top -b`; the journal.
+Collector `tmp/cd-gaps/trace.py`, analysers `slowcalls.py`, `rhythm.py`, `gstpull.py` (all in
+`tmp/cd-gaps/`, outputs in `tmp/cd-gaps/run2/`, local). Track 1 opened as
+`cdda://sr0/Track%201.wav`.
+
+**Measured:**
+- 11 `UNDERFLOW`s on Totem's stream, 19:52:55.57 to 19:55:35.33, spaced 16.32 / 15.59 / … s,
+  at 14.8, 31.1, 46.7, 63.0, 78.6, 95.0, 110.6, 127.0, 142.6, 158.9, 174.5 s of audio.
+- `gvfsd-cdda`'s disc reads (`ioctl CDROM_SEND_PACKET`, 575 in all, 38.3 s total, max 0.168 s)
+  come in bursts of exactly 48 reads lasting 2.9–3.3 s, separated by pauses of 12.5–13.8 s with
+  no read at all. Within a burst the reads start slow and speed up (0.158, 0.145, 0.132, 0.121 …
+  0.080 s): the disc spinning back up. Every underflow falls 1.0–1.1 s into a burst, within 0.07 s
+  of a read (`rhythm.py`).
+- The player's source pulls 7,056 bytes (40 ms of audio) per request, 4,513 such requests;
+  normally answered at once. Eleven requests block for 3.03–3.26 s, at offsets 14.76, 31.08,
+  46.68, 63.04 … s of audio — the burst duration, at the underflow positions (`gstpull.py`).
+
+**From source:**
+- gvfs 1.54.4 `daemon/gvfsbackendcdda.c:643-746` `do_read()`: each client read is answered with at
+  most one sector (2,352 bytes) obtained by a synchronous `cdio_paranoia_read()` (line 707);
+  paranoia is opened with `PARANOIA_MODE_DISABLE` (line 626) and its cache model is left at the
+  default.
+- libcdio-paranoia `lib/paranoia/p_block.h:34` `#define CACHEMODEL_SECTORS 1200`;
+  `p_block.c:373` sets `cdcache_size` to it; `paranoia.c:2626` `i_read_c_block()` reads
+  `totaltoread = p->cdcache_size` sectors in one call, `p->d->nsectors` (25 here) per request.
+  1,200 sectors × 2,352 bytes = 2,822,400 bytes = 16.0 s of audio: 48 requests × 25 sectors.
+
+**Root cause (measured + source):** when paranoia's 1,200-sector block is used up, the next
+one-sector read in `gvfsd-cdda` blocks while paranoia reads the whole next 16 s from the disc
+(~3 s on this drive, including spin-up after the 13 s idle). Totem/GStreamer pulls through
+`giosrc` with no read-ahead queue, so that request blocks the playback thread for ~3 s, and the
+PipeWire stream (0.1 s buffer) underflows: about 3 s of silence every 16 s.
+
+**Candidate fixes (not tried):** gvfs could shrink paranoia's block for streaming
+(`cdio_paranoia_cachemodel_size()`, `p_block.c:395`) or read ahead asynchronously; the player side
+could buffer slow GIO sources (a `queue2`); either removes the gap. Workaround: rip the CD and
+play the files. Upstream (gvfs) not yet searched for an existing report.
