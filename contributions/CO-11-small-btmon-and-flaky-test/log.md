@@ -81,3 +81,14 @@ land in 27.04, then 26.10 and 26.04 LTS, before 24.04. The update text names the
 abort with the first fix alone (10 and 3000/5000 columns, see the matrix above); a 10-column
 terminal is rare but real (a narrow pane). Before filing: rerun the 24.04 container on more archived
 captures and ordinary btmon options, not only the two captures.
+
+## 2026-11-02 — the live-capture case (a second outside review; checked)
+`dca0f10fd560`'s own message (`git show -s dca0f10fd560` in `cache/bluez-upstream`): when btmon
+reads the monitor socket, each record carries a "comm[pid]: " prefix from its credentials, absent
+when replaying a btsnoop file; with a 7-digit pid, a long process name plus a long label makes
+max_len negative at ordinary widths, and a negative max_len also indexes before the start of
+line[]. Our matrix replayed two captures, so it could not exercise this; "the remaining aborts are
+at extreme widths" (decisions brief, 11-01) is withdrawn. Next, local only: run 24.04's btmon with
+`fdbfe0018f6f` alone, live in a QEMU guest with an emulated controller, 80 columns, large
+`kernel.pid_max`, long process names; the replay matrix stays as a separate test. If it aborts,
+the proposed route becomes one 24.04 update with both fixes, with the first-only update as fallback.
