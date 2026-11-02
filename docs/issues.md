@@ -1504,6 +1504,26 @@ Snapshot commands (as the desktop user): `wpctl status`; `wpctl inspect @DEFAULT
 
 ---
 
+## X1 — Off-topic: an audio CD in Totem stops every 16 s (not Bluetooth)
+
+**Tag: off-topic** — outside this project's Bluetooth scope; registered because the operator met it
+on the laptop and it looks like a defect of Ubuntu 24.04's standard CD playback chain. Off-topic
+issues take the prefix `X`; they get the same evidence rules but no contribution work unless the
+operator asks.
+
+| | |
+|---|---|
+| Seen | 2026-11-02 19:36–19:37 (and earlier the same evening), the operator: "regular" interruptions, "impossible to listen" |
+| Setup | ASUS SDRW-08D2S-U external USB DVD writer (0e8d:1887, `usb-storage`); Totem 43.0-2ubuntu4 opened from Nautilus; the CD browsed through `gvfsd-cdda` (gvfs-backends 1.54.4-0ubuntu1~24.04.4); GStreamer 1.24.2; PipeWire 1.0.5; output a Bluetooth speaker (A2DP, SBC) |
+| Measured | four `UNDERFLOW`s on Totem's own playback stream, 16.32 / 15.62 / 16.34 s apart, at 14.8 / 31.1 / 46.7 / 63.0 s of audio; the stream's buffer target 0.11–0.16 s; no error on the Bluetooth output; the drive never runtime-suspended; no kernel read error during playback |
+| Ruled out | Bluetooth discovery (off in this run), the drive's USB autosuspend, kernel I/O errors |
+| Inferred | the disc is read in bursts and the drive idles between them; the next read arrives later than the tiny stream buffer can absorb; no layer (gvfsd-cdda, GIO, Totem/GStreamer, the stream) reads ahead enough. Which one should is not established |
+| State | **observed, mechanism inferred**; not reported anywhere |
+| Next | the same track through GStreamer's own CD source, bypassing gvfsd-cdda; a passive USB capture of the drive's reads during Totem playback; the same to the laptop's speakers. Workaround meanwhile: rip the CD to files and play those |
+| Evidence | [`evidence/off-topic/X1-cd-playback-underflow-every-16s.md`](../evidence/off-topic/X1-cd-playback-underflow-every-16s.md) (extraction command and exact output); recorder `tmp/cd-gaps/` (local) |
+
+---
+
 ## On the wider claim
 
 It is tempting — and this investigation supplies plenty of emotional support for it — to
