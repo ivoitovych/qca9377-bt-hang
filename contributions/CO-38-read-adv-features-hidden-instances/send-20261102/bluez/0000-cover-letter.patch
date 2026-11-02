@@ -1,0 +1,41 @@
+From: Iaroslav Voitovych <AUTHOR-EMAIL>
+Subject: [PATCH BlueZ 0/3] mgmt-tester, mesh-tester: Add advertising timeout tests
+
+This series adds 16 test cases: 15 to mgmt-tester (14 in 1/3, one in
+2/3) and one to mesh-tester (3/3).
+
+On an extended advertising controller the kernel passes the timeout of
+an advertising instance to the controller as the Duration of LE Set
+Extended Advertising Enable (units of 10 ms) and removes the instance
+when the controller ends the set. The new cases check the Duration for
+timeouts from 0 s to 65535 s, that an instance is still present before
+its timeout and removed after it, and that Read Advertising Features
+lists the instances that are left.
+
+Results on bluetooth-next 42b8c2d72926 (BlueZ master 14bd6ab65f4a), in
+QEMU with doc/tester.config, three runs each:
+
+ - "Add Ext Advertising - Instance 2 listed alone" (2/3) fails on
+   current kernels until "Bluetooth: MGMT: Fix Read Advertising Features
+   hiding instances" is applied; it passes with that patch.
+
+ - "Timeout 66 s", "655 s", "656 s (limit)", "6357 s (limit)",
+   "8192 s (limit)", "65535 s (limit)", "66 s (Params)" and
+   "66 s and 1 s" of 1/3 fail on current kernels until the separate fix
+   for the extended advertising duration overflow in hci_sync.c lands.
+
+ - All other new cases, including "Mesh - Send (Ext Adv Duration)", pass
+   on current kernels. No existing case changes its result.
+
+Iaroslav Voitovych (3):
+  mgmt-tester: Add extended advertising timeout tests
+  mgmt-tester: Add test for listing a remaining instance 2
+  mesh-tester: Add Mesh Send test with extended advertising
+
+ tools/mesh-tester.c |  32 +++
+ tools/mgmt-tester.c | 526 ++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 558 insertions(+)
+
+base-commit: 14bd6ab65f4a647302edbd6df27f6faa91bee8a8
+--
+2.43.0
