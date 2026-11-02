@@ -92,3 +92,27 @@ at extreme widths" (decisions brief, 11-01) is withdrawn. Next, local only: run 
 `fdbfe0018f6f` alone, live in a QEMU guest with an emulated controller, 80 columns, large
 `kernel.pid_max`, long process names; the replay matrix stays as a separate test. If it aborts,
 the proposed route becomes one 24.04 update with both fixes, with the first-only update as fallback.
+
+## 2026-11-02 — live capture: the first fix alone still aborts at ordinary widths (measured)
+24.04's btmon rebuilt from `bluez_5.72-0ubuntu5.8` with the package's own flags (`-D_FORTIFY_SOURCE=3
+-O2`, gcc 13.3.0-6ubuntu2~24.04.1) in three variants: stock, + `fdbfe0018f6f` ("fix1"), + both
+fixes; Ubuntu's own btmon as control (0 decode differences against rebuilt stock in 132 replay
+cells). Each ran live on the monitor socket of a QEMU guest (test kernel 7.2.0, one `btvirt`
+controller on the guest's own vhci, `kernel.pid_max` 4194304, pids set to 7 digits), under a pty
+at 60/80/100/120/200 columns and piped, about 6 s per run with bluetoothd, btmgmt and hcitool
+traffic; scenarios with real tool names and with 15-character names. Counts re-tallied from the four
+`results.tsv` files (exit status per run; 134 is `*** buffer overflow detected ***: terminated`):
+- fix1 aborts 5 of 5 at 60 columns without options (real names and long names), 5 of 5 at 60 with
+  `-t` or `-T`, and 5 of 5 at 80 and piped with `-T` and 15-character names. With 5-digit pids
+  (control) fix1 passes at 60 without options and still aborts at 60 with `-T`.
+- A guest clock moved 100000 s forward (a btmon running about 28 hours): fix1 aborts 3 of 3 at 60
+  and, with long names, at 70; stock aborts 3 of 3 at 80 and piped too.
+- Both fixes: 0 aborts in 264 live runs (of 852 live runs over all variants).
+- Replay, extended (3 archived captures, options none/-t/-T/-i hci0/-I, 800 runs): fix1 aborts only
+  at 10 and 3000 columns, as before; replay never shows the live case.
+Inferred from 5.72's `print_packet()`: the space left is `col - len - ts_len - 3`, `len` includes
+`comm[pid]`, and the abort comes at -2 or less; consistent with every cell. The prefix needs the
+kernel to pass credentials to the monitor (`69ae5065061c5`, first in v6.6-rc1). Conclusion: one
+24.04 update with both fixes; the first-only update stays a fallback whose text names 60 columns,
+and `-T` at 80/piped, as still aborting. Raw outputs, scripts and SHA256SUMS:
+`/root/exp/agent-work/co11a-live-20261102/` (local).
