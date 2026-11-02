@@ -920,3 +920,39 @@ qemu only, no kernel change, no test-only build. Work area (local, raw logs with
   that sees both paths. It must keep a compatible reuse working.
 - **Proposed order (an outside review, adopted in the decisions brief):** a short factual reply on
   the v7 thread first, on the operator's word; then the fix in v8. Nothing sent.
+
+## 2026-11-02 — the mismatch check written as its own patch, tested in QEMU (nothing sent)
+Patch `patch/mismatch-20261102/0001-Bluetooth-hci_conn-don-t-reuse-a-SCO-link-with-other.patch`
+(12 lines in `hci_conn.c`, no Signed-off-by): right after the lookup in `hci_connect_sco()`, a
+connection that is `BT_CONNECTED` and whose stored `setting` or `codec` differs from the request is
+refused with -ECONNABORTED, after dropping the ACL hold and before any hold on the SCO connection,
+so the old link's pending disconnect goes ahead and a retry gets a new link with its own
+parameters. `Fixes: 10c62ddc6f03` (per-connect voice setting, v3.12-rc1; the codec came with
+`b2af264ad3af`). It compares the stored request, not the completion's Air_Mode: a reuse sends no
+setup, so no completion arrives to compare; Hitalo Souza's abandoned-setup path is left to a
+separate patch. Applies with the same patch-id (`421871df90b1`) on base `47d4d9f67e92` and on v7;
+also on `42b8c2d72926`. checkpatch `--strict` 0/0/0; W=1 and sparse clean on `hci_conn.o`.
+
+Measured (QEMU, 4-CPU KASAN/lockdep guests, 10 runs per case per kernel; base, v7, base+fix,
+v7+fix; re-read in `results/summary-mm.txt` and `kernel-report-scan-mm.txt`):
+- Mismatch both ways (CVSD to transparent and back), pinned, enhanced and legacy setup: base and v7
+  connect the socket on the old air mode 10/10; with the fix, refused then a fresh link with the
+  requested air mode 10/10. Unpinned: base wrong 10/10, v7 wrong 3 to 5 of 10; with the fix 10/10
+  refused then fresh. 315 mismatched runs on the patched kernels: no socket connected with a wrong
+  air mode.
+- Same mode: reuse unchanged on v7 and v7+fix (link kept, 10/10).
+- Remote-set-up link (stored `setting` 0, codec zeroed): now refused once even for the same mode,
+  then a fresh link (10/10); a behaviour change to state in the message (it is).
+- Retries: every refusal succeeded within 1 or 2 attempts, connected after a median 27 to 36 ms in
+  the emulator (max 186 ms); on hardware the floor is the old link's disconnect (inferred).
+- Connect to a link still in use by an open socket with other parameters: now -ECONNABORTED
+  instead of -EBUSY, and on base it no longer tears the first socket's link down (0/10 to 10/10).
+- sco-tester plus the CO-02 cases, 3 runs each: base and base+fix 31/33 (the same two known
+  failures), v7 and v7+fix 33/33. iso-tester: 141/141 in most runs on both sides; one timeout and
+  one stall per side, not reachable from `hci_connect_sco()` (cause not found).
+- Every guest log: no WARN, BUG, KASAN, lockdep, refcount, UBSAN, RCU stall or hung task. The only
+  call traces are the guest's OOM killer taking the sanitizer btmon (255 MB guests).
+Open: -ECONNABORTED or -EBUSY; whether a remote-set-up link should store the completion's Air_Mode
+instead of a one-time refusal; full setting versus air-mode bits only; a 4th patch in v8 or a
+separate patch. Not tested on the laptop. Raw logs, trees, images and SHA256SUMS:
+`/root/exp/agent-work/co02-mismatch-20261102/` (local).

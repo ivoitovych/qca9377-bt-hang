@@ -1,0 +1,65 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <unset>
+Date: Mon, 2 Nov 2026 07:50:52 +0100
+Subject: [PATCH] Bluetooth: hci_conn: don't reuse a SCO link with other
+ parameters
+
+hci_connect_sco() looks up an existing SCO connection by type and
+address, and sends a setup command only when that connection is
+BT_OPEN or BT_CLOSED. Since commit 10c62ddc6f03 ("Bluetooth:
+Parameters for outgoing SCO connections"), each connect carries its
+own voice setting, and later also a codec, but neither is compared
+with the connection that is found: both are only stored into it.
+
+A connection that is already BT_CONNECTED is not set up again, so a
+socket that asked for other parameters is given a link that keeps
+running with the old ones. This happens when a SCO socket is closed
+and another is connected to the same device before the closed link's
+disconnect work has run, as on an HFP codec change: a socket asking
+for BT_VOICE_TRANSPARENT is reported connected on the closed socket's
+CVSD link, and no setup command is sent.
+
+Refuse a connected link whose voice setting or codec differs from the
+requested ones with -ECONNABORTED, before taking any hold on it, so
+that a disconnect it is waiting for goes ahead. The caller can
+connect again, and gets a new link set up with its own parameters
+once the old one is gone. A connection that is not connected yet is
+still set up with the parameters stored here.
+
+A link set up by the remote device carries no setting from a local
+connect, so it is not reused either. A connect to a device whose link
+is still in use with other parameters now fails here, with
+-ECONNABORTED instead of -EBUSY from sco_chan_add(), and no longer
+overwrites that link's stored parameters.
+
+Fixes: 10c62ddc6f03 ("Bluetooth: Parameters for outgoing SCO connections")
+---
+ net/bluetooth/hci_conn.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index b007f623b..4195e8a50 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -1903,6 +1903,18 @@ struct hci_conn *hci_connect_sco(struct hci_dev *hdev, int type, bdaddr_t *dst,
+ 		return acl;
+ 
+ 	sco = hci_conn_hash_lookup_ba(hdev, type, dst);
++	if (sco && sco->state == BT_CONNECTED &&
++	    (sco->setting != setting ||
++	     memcmp(&sco->codec, codec, sizeof(*codec)))) {
++		/* A connected link keeps the voice setting and codec it was
++		 * set up with: no setup is sent for it here. Do not hand it
++		 * to a caller that asked for other ones; the caller can
++		 * connect again once the link is gone.
++		 */
++		hci_conn_drop(acl);
++		return ERR_PTR(-ECONNABORTED);
++	}
++
+ 	if (!sco) {
+ 		sco = hci_conn_add_unset(hdev, type, dst, 0, HCI_ROLE_MASTER);
+ 		if (IS_ERR(sco)) {
+-- 
+2.43.0
+
