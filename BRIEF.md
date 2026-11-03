@@ -141,8 +141,8 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-11-03, evening** (X1: two final review rounds folded in; both gvfs patches
-final pending the last re-test, see the X1 bullet). Afternoon: hand-off for X1 after the outside
+**Last updated: 2026-11-03, evening** (X1: final review rounds folded in; both gvfs patches
+final and re-tested, `cc8384a`; see the X1 bullet). Afternoon: hand-off for X1 after the outside
 review round; disk cleanup done; agents for X1.
 2026-11-02, evening: hand-off extended (the five packages made ready, X1, disk).
 Earlier 2026-11-02: (the hand-off rewritten for the review round; the 10-29/30 block
