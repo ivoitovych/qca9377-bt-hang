@@ -24,3 +24,30 @@ data up to about 1.5 s behind; see the commit message).
 installed on the laptop, together with the separate speed change and diagnostics, and has not been
 played yet), and this exact patch on hardware (the laptop runs 1.54.4, not master).
 Evidence: `evidence/off-topic/X1-cd-playback-underflow-every-16s.md`.
+
+## Before submission (open; added 2026-11-03)
+
+1. **One listening session with the 2 s history on the laptop.** The installed test build
+   (`/usr/libexec/gvfsd-cdda`, SHA-256 `22179eef…8aff`, built from 1.54.4 + read-ahead + 2 s
+   history + the separate speed change + diagnostics) has not been played yet. Play at least one
+   whole track with `scripts/cd-trace/trace.py` running; pass: no mid-track underflow in the
+   journal, no `cdda-ra: reset` outside seeks, and the operator hears no gap.
+2. **Check against the live gvfs master and run its CI.** This patch is on `2d30ce9b73ba` from a
+   local clone not refreshed since 2026-11-02. Fetch the current master, rebase, confirm it applies
+   and compiles with 0 warnings, and run gvfs's own CI (`.gitlab-ci.yml`) locally on base and
+   base + patch, judging only the difference.
+3. **One sentence on why gvfs's existing read-ahead does not help**, for the commit message or
+   the merge-request description: the request channel already queues one read-ahead job
+   (`daemon/gvfsreadchannel.c:211-248`), but the cdda daemon runs a single job thread
+   (`daemon/meson.build:333`, `MAX_JOB_THREADS=1`), so that job waits on the same blocking
+   paranoia refill and cannot hide it.
+
+The merge-request description also states the hardware and client tested (the drive model, USB,
+Totem through gvfsd-fuse), as in the table above. The operator submits; nothing goes out without
+the operator's word.
+
+Review notes: an outside review (2026-11-03) recommended submitting as is. Its checkable points
+were confirmed or already covered (`git diff --check` clean; the one-thread job model; about
+2.1 MB per open track). Its suggestion to handle a `g_thread_new()` failure was not taken:
+`g_thread_new()` aborts instead of returning an error (`g_thread_try_new()` is the variant that
+returns one).
