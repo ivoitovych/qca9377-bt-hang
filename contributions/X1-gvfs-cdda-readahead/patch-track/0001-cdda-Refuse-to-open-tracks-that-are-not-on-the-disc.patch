@@ -1,13 +1,13 @@
-From 9cf4775f03e95c953c5add4145d1ff003ffb2fee Mon Sep 17 00:00:00 2001
+From 5b306dcf1b34f108fa34f718754c804ca1b15719 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 13:35:55 +0100
 Subject: [PATCH] cdda: Refuse to open tracks that are not on the disc
 
 do_open_for_read() only checks that the file name has the form
-"Track N.wav". For a track that is not on the disc, libcdio returns
-negative error codes as its first and last sector, and the file is
-opened as one sector starting at a negative sector number, which the
-first read then asks paranoia for. Track numbers above 255 wrap in
+"Track N.wav". For a track that is not on the disc, libcdio returns a
+negative error code where a sector number is expected, and the backend
+opens a file that starts or ends at that negative number; the first
+read then sends paranoia there. Track numbers above 255 wrap in
 libcdio's 8-bit track type, so Track 257.wav opens track 1. Track 0
 (the pregap, where a disc has one) and the data tracks of a mixed-mode
 disc can be opened as well, although enumerate does not list them and
