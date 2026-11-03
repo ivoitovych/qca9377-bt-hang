@@ -4279,6 +4279,40 @@ waits for that refill (3 s on a spun-down drive) inside the player's read. A rea
 gvfs is the fix; it is drafted and builds cleanly. It became the first entry of a new
 off-topic category, X1.
 
+## A CD that played, then a second disc, seven reviews, and two lines instead of 160 (2026-11-02 → 11-03)
+
+The read-ahead build played the first disc with no gap, and the operator heard none. A second
+disc gave two gaps and a drive "like a jet taking off". The USB trace answered the gaps: the
+buffer had reset and re-read the disc behind the player. Totem, it turned out, does not read
+through GIO's source element at all but through gvfsd-fuse, so the reader is the kernel's page
+cache, which sometimes asks again for data a second and a half old. Agents built a simulator
+around the patch's own code, copied verbatim, and reproduced the reset with an injected page
+loss; keeping two seconds of served audio fixed it there. The noise was paranoia's 16-second
+bursts at the drive's full speed. A speed policy was explored with a calibrated drive model;
+every simple rule cost something (a fixed low speed made copying four to five times slower), so
+it was set aside.
+
+Then the operator gave the patch alone, exactly as a maintainer would see it, to seven outside
+reviewers. Two said it was ready. Five found what the simulator had hidden: with two tracks
+open, two threads now entered the CD library on one drive at once, where gvfs had always
+serialized every call on a single job thread, and one reviewer's test returned wrong audio from
+it; a failed sector was retried hundreds of times while the player read buffered data; and a
+disc removed mid-read left the thread unowned. Four of them asked the same question: why not
+the one setting GStreamer has used for playback since 2009, a 150-sector cache model? One
+found a separate old bug: gvfs opened tracks that do not exist.
+
+The experiment took an afternoon. With only that setting, no thread, the laptop's drive played
+the same track twice with no gap where the shipped backend had nineteen each time; copying was
+no slower and the audio matched a direct read byte for byte. The track bug reproduced too:
+`Track 99.wav` kept the backend grinding for over five minutes. Both became small patches on
+gvfs master, eight and fourteen lines, and gvfs's own CI, run locally in its image, could not
+tell them from the base.
+
+**The lessons:** a simulator built around one's own design answers the questions one thought
+to ask; the reviewers who saw only the diff asked the others. And the first experiment should
+have been the library's own knob: the two-line fix was in the evidence file's "candidate fixes"
+from the first evening.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`

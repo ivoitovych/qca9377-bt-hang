@@ -141,7 +141,9 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-11-02, evening** (hand-off extended: the five packages made ready, X1, disk).
+**Last updated: 2026-11-03, afternoon** (hand-off: X1 after the outside review round — the small
+patch and the track check ready on gvfs master; disk cleanup done; agents for X1).
+2026-11-02, evening: hand-off extended (the five packages made ready, X1, disk).
 Earlier 2026-11-02: (the hand-off rewritten for the review round; the 10-29/30 block
 moved to the end of `HISTORY.md` verbatim; the state block's CO-02 and sends lines amended).
 2026-10-30: the hand-off rewritten for the `-42` boot. 2026-10-29: a hand-off block for 10-29 added. Before that, 2026-10-28 (the documentation review: every foundation document checked
@@ -157,7 +159,9 @@ hours (`R2-13`).
 > STATUS has every row named here; the review round's follow-up list is the work queue.
 >
 > - **No agents until Thursday 2026-11-05 09:00** (the operator, 11-02: the weekly limit). Work
->   inline; an agent only as a special case on the operator's approval. None is running.
+>   inline; an agent only as a special case on the operator's approval. Approved and run 11-02/03:
+>   three medium-effort agents for X1 (simulator, reset hunt, speed policies), all in containers
+>   under `/root/exp/agent-work/x1-cdsim-20261102/`. None is running.
 > - **The review round is open; nothing from it is acted on yet.** The package
 >   (`contributions/review-2026-11-02/review-package.md`, every ready package verbatim, for outside
 >   reviewers) was read by six reviewers; their points, each checked, are in
@@ -199,16 +203,34 @@ hours (`R2-13`).
 >   with its own dossier (`cc90614`). Open questions: D6, D12, and whether CO-38's BlueZ series
 >   goes now or only its listing case. An agent asked to reproduce U28 was stopped by the
 >   service's safety filter at its first step; U28 stays a source-reading finding.
-> - **Off-topic X1 (11-02, not Bluetooth): audio CD in Totem stops ~3 s every 16 s.** Root cause
->   traced (`986a910`): gvfsd-cdda's synchronous `cdio_paranoia_read()` refills libcdio-paranoia's
->   1200-sector (16 s) block in one ~3 s call; Totem pulls without read-ahead. Tracing kit
->   `scripts/cd-trace/`; raw runs `archive/off-topic/X1/` (local). Read-ahead fix drafted and built
->   clean three ways (`7183fad`, `contributions/X1-gvfs-cdda-readahead/`); **the laptop test
->   (dpkg-divert swap of `/usr/libexec/gvfsd-cdda`, reversible) waits for the operator's word**.
-> - **Disk:** ~34 GB free; a cleanup proposal is open (tier 1 ~67 GB: the 39 GB hardware-probe
->   mirror in `agent-work/research-qca-ids/fetched/linuxhw`, BlueZ/PipeWire build trees, a tar, the
->   Docker build cache; tier 2 build objects in finished work areas) — nothing deleted without the
->   operator's word (four unrelated Docker images were removed on his word).
+> - **Off-topic X1 (not Bluetooth): audio CD in Totem stops ~3 s every 16 s.** Cause (`986a910`):
+>   gvfsd-cdda's synchronous `cdio_paranoia_read()` refills the 1200-sector (16 s) cache model in
+>   one ~3 s call. **Totem reads through gvfsd-fuse** (`/run/user/1000/gvfs/cdda:host=sr0/…`), not
+>   giosrc (corrected 11-02 evening). The first fix, a read-ahead thread (`patch1/`), was held after
+>   **seven outside reviews of the patch alone** (findings and what was verified:
+>   `contributions/X1-gvfs-cdda-readahead/REVIEW-ACTIONS.md`, F1–F39, A1–A11): it lets two open
+>   tracks enter libcdio on one drive at once (one reviewer got wrong data), retries a failed sector
+>   while buffered data is consumed, and is unowned on forced unmount. **The fix now is the
+>   small one**, as GStreamer's cdparanoiasrc does for playback: `cdio_paranoia_cachemodel_size(p,
+>   150)` behind a meson `has_function` check (`patch1-small/`, +8, on gvfs master `2d30ce9b73ba`).
+>   Laptop A/B 11-03 (`tmp/cd-gaps/ab/run-20261103b/summary.tsv`, 2 runs each from a stopped
+>   drive): stock 19/19 mid-track underflows, 150 sectors 0/0, copy 29.8 → 29.0 s, audio identical
+>   to `cd-paranoia` (after a byte swap of cd-paranoia's raw order). **Separate patch** found by
+>   a reviewer (`patch-track/`, +10 −4): `do_open_for_read` accepted tracks not on the disc;
+>   before, `Track 99.wav` kept the backend busy >5 min, `Track 257.wav` gave track 1. gvfs's
+>   `fedora-test` CI run locally in its image: identical on base and with each patch. Downstream:
+>   Launchpad 1967258 (Totem pauses, Rhythmbox doesn't). **Not filed or submitted:** the gvfs issue
+>   draft (`patch1-small/issue-draft.md`) is the operator's to file; then a `Fixes:` line. Laptop
+>   now runs 1.54.4 + both fixes via `dpkg-divert` (undo: `rm /usr/libexec/gvfsd-cdda`,
+>   `dpkg-divert --local --rename --remove /usr/libexec/gvfsd-cdda`, remount). Patch 2 (drive speed)
+>   is on hold: a fixed low speed made copying 4–5× slower in the simulator; the operator judges
+>   whether small reads at full speed are quiet enough. The operator is weighing retiring
+>   reviewers 1 and 5 (recommended: neither brought a verified finding; both made false claims).
+> - **Disk: cleanup done 11-02/03, 144 GB free.** Two runs under `agent-work`; the first crashed
+>   with no log (`tmp/cleanup/cleanup-reconcile-after-crash-20261102.md`: 141 items gone, every
+>   local commit saved as patches) and broke 10 trees' git metadata (shared clones lost their
+>   alternate; contents and patches survive, exact commit objects lost); the second freed 52.6 GB
+>   and kept those trees (`tmp/cleanup/cleanup-executed-20261102.md`).
 > - **Open, in order:** the operator closes the review round; decisions D1–D14 (the most
 >   consequential: D3 the CO-23/37 route, D1/D2 CO-02 v2 and the mismatch error code, D4/D14 CO-04,
 >   D5 CO-12 as an RFC, D6 one Ubuntu upload for CO-03 + CO-11a); then the follow-ups' "do" items
