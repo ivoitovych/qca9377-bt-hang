@@ -1,4 +1,4 @@
-From 5576b0eb15444138f524dcd60910d5f41e213661 Mon Sep 17 00:00:00 2001
+From 9cf4775f03e95c953c5add4145d1ff003ffb2fee Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 13:35:55 +0100
 Subject: [PATCH] cdda: Refuse to open tracks that are not on the disc
@@ -8,9 +8,10 @@ do_open_for_read() only checks that the file name has the form
 negative error codes as its first and last sector, and the file is
 opened as one sector starting at a negative sector number, which the
 first read then asks paranoia for. Track numbers above 255 wrap in
-libcdio's 8-bit track type, so Track 257.wav opens track 1. Data
-tracks of a mixed-mode disc can be opened as well, although enumerate
-does not list them and query_info refuses them.
+libcdio's 8-bit track type, so Track 257.wav opens track 1. Track 0
+(the pregap, where a disc has one) and the data tracks of a mixed-mode
+disc can be opened as well, although enumerate does not list them and
+query_info refuses them, so they are not reachable through gvfsd-fuse.
 
 Open only what enumerate lists: audio tracks 1 to the last one. Also
 refuse a sector range that libcdio reports as an error.

@@ -1,4 +1,4 @@
-From db5367a85836763d5a5436228917c823070a97f5 Mon Sep 17 00:00:00 2001
+From 1a49c71d9a843c1d06077d2500c6040c1d405383 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 12:36:17 +0100
 Subject: [PATCH] cdda: Limit the size of audio read refills
@@ -12,8 +12,7 @@ PARANOIA_MODE_DISABLE used here. The client's read waits until all of
 it has arrived, and a player reading the track in real time runs dry.
 
 Set the cache model to 150 sectors, 2 seconds of audio, as GStreamer's
-cdparanoiasrc does for playback. Each refill then takes a fraction of
-a second; only the size of the refills changes.
+cdparanoiasrc does for playback. Only the size of the refills changes.
 
 Tested with an ASUS SDRW-08D2S-U USB drive and Totem reading through
 gvfsd-fuse, playing a 5:09 track twice per build from a stopped drive:
@@ -25,24 +24,22 @@ direct read with cd-paranoia.
 Builds against a libcdio-paranoia without cdio_paranoia_cachemodel_size()
 keep the current behaviour.
 ---
- daemon/gvfsbackendcdda.c | 7 +++++++
+ daemon/gvfsbackendcdda.c | 5 +++++
  meson.build              | 1 +
- 2 files changed, 8 insertions(+)
+ 2 files changed, 6 insertions(+)
 
 diff --git a/daemon/gvfsbackendcdda.c b/daemon/gvfsbackendcdda.c
-index ce01630..5cfe0af 100644
+index ce01630..cb5f648 100644
 --- a/daemon/gvfsbackendcdda.c
 +++ b/daemon/gvfsbackendcdda.c
-@@ -640,6 +640,13 @@ do_open_for_read (GVfsBackend *backend,
+@@ -640,6 +640,11 @@ do_open_for_read (GVfsBackend *backend,
  
    read_handle->paranoia = cdio_paranoia_init (cdda_backend->drive);
    cdio_paranoia_modeset (read_handle->paranoia, PARANOIA_MODE_DISABLE);
 +#ifdef HAVE_PARANOIA_CACHEMODEL_SIZE
-+  /* The default cache model makes a read wait while 16 s of audio are
-+   * read from the disc, long enough for playback to run dry. Read 2 s at
-+   * a time instead, as GStreamer's cdparanoiasrc does for playback.
-+   */
-+  cdio_paranoia_cachemodel_size (read_handle->paranoia, 2 * CDIO_CD_FRAMES_PER_SEC);
++  /* Use short refills for playback, as GStreamer's cdparanoiasrc does */
++  cdio_paranoia_cachemodel_size (read_handle->paranoia,
++                                 2 * CDIO_CD_FRAMES_PER_SEC);
 +#endif
  
    cdda_backend->num_open_files++;
