@@ -1,0 +1,14 @@
+cdda: Refuse to open tracks that are not on the disc
+
+do_open_for_read() only checks that the file name has the form
+"Track N.wav". For a track that is not on the disc, libcdio returns
+negative error codes as its first and last sector, and the file is
+opened as one sector starting at a negative sector number, which the
+first read then asks paranoia for. query_info already refuses track
+numbers past the last track.
+
+Refuse track numbers outside the disc before passing them to libcdio,
+whose track number type is only 8 bits wide, and refuse a sector range
+that libcdio reports as an error.
+
+[REPRODUCER — gio cat cdda://sr0/Track%2099.wav before and after, to be filled in]

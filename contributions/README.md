@@ -82,8 +82,12 @@ CO-11a filing package `ubuntu/ready-20261102/` (four series); CO-38 dossier with
 All wait for the operator's word; none sent.
 
 **Off-topic (not Bluetooth):** [X1 — gvfs cdda read-ahead](X1-gvfs-cdda-readahead/README.md):
-audio CDs stall ~3 s every 16 s in Totem; root cause traced, fix drafted and built; the laptop
-test waits for the operator.
+audio CDs stall ~3 s every 16 s in Totem; root cause traced. After an outside review round
+(`REVIEW-ACTIONS.md`) the fix is the small one: `patch1-small/` (150-sector paranoia cache
+model, as GStreamer does; laptop A/B 2026-11-03: 19 mid-track underflows → 0, copy speed and
+data unchanged) and a separate `patch-track/` (refuse tracks not on the disc); both on gvfs
+master, CI as base. The threaded read-ahead (`patch1/`) is kept as a fallback. Nothing filed or
+submitted: the gvfs issue draft is in `patch1-small/issue-draft.md`, the operator files it.
 
 Items without a link have no dossier yet. One is opened as soon as anything is written about
 the item.
