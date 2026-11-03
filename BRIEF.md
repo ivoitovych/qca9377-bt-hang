@@ -141,8 +141,9 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-11-03, afternoon** (hand-off: X1 after the outside review round — the small
-patch and the track check ready on gvfs master; disk cleanup done; agents for X1).
+**Last updated: 2026-11-03, evening** (X1: two final review rounds folded in; both gvfs patches
+final pending the last re-test, see the X1 bullet). Afternoon: hand-off for X1 after the outside
+review round; disk cleanup done; agents for X1.
 2026-11-02, evening: hand-off extended (the five packages made ready, X1, disk).
 Earlier 2026-11-02: (the hand-off rewritten for the review round; the 10-29/30 block
 moved to the end of `HISTORY.md` verbatim; the state block's CO-02 and sends lines amended).
@@ -224,7 +225,23 @@ hours (`R2-13`).
 >   now runs 1.54.4 + both fixes via `dpkg-divert` (undo: `rm /usr/libexec/gvfsd-cdda`,
 >   `dpkg-divert --local --rename --remove /usr/libexec/gvfsd-cdda`, remount). Patch 2 (drive speed)
 >   is on hold: a fixed low speed made copying 4–5× slower in the simulator; the operator judges
->   whether small reads at full speed are quiet enough. The operator is weighing retiring
+>   whether small reads at full speed are quiet enough.
+>   **Evening 11-03, final rounds (records G1–G19 in `REVIEW-ACTIONS.md`):** patch 1 is now
+>   "cdda: Limit paranoia read-ahead to avoid playback stalls" (message: paranoia collects the
+>   cache model in several reads; libcdio-paranoia ≤ 10.2+0.90+1 refilled `p->readahead=150`,
+>   the 1200 model and the setter came together in 10.2+0.93+1, 2014 — verified on both tags;
+>   `See:` GStreamer `4e1086f9`, `Related:` Launchpad 1967258, whose log shows underflows 16 s
+>   apart). Patch 2 is "cdda: Refuse to open invalid and non-audio tracks": accepts exactly what
+>   enumerate lists (audio 1..N, checked before libcdio's 8-bit `track_t`), the parser reads at
+>   most three digits (`"Track %3d.wav"`: `Track 4294967297.wav` had overflowed to track 1, found
+>   by reviewer 7 and confirmed on the laptop), an error sector range after the checks fails as
+>   `G_IO_ERROR_FAILED` with the existing "Error from paranoia" string, and the open path no longer
+>   leaks a GError (the same leak in `do_query_info` is pre-existing, left out). Track 0 is refused:
+>   `gio info` and the gvfsd-fuse listing never exposed it. Checks per version: master compile,
+>   gvfs `fedora-test` CI locally (`tmp/cd-gaps/ci/run-ci.sh`), `-Dcdda=false`, laptop test
+>   (`tmp/cd-gaps/patch-track/track-test.py`). Two choices for the operator in
+>   `mr-description-draft.md`: one MR or two, and whether to file a gvfs issue. Reviewers 1 and 5
+>   brought no verified finding in any round. The operator is weighing retiring
 >   reviewers 1 and 5 (recommended: neither brought a verified finding; both made false claims).
 > - **Disk: cleanup done 11-02/03, 144 GB free.** Two runs under `agent-work`; the first crashed
 >   with no log (`tmp/cleanup/cleanup-reconcile-after-crash-20261102.md`: 141 items gone, every

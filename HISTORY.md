@@ -4308,8 +4308,20 @@ no slower and the audio matched a direct read byte for byte. The track bug repro
 gvfs master, eight and fourteen lines, and gvfs's own CI, run locally in its image, could not
 tell them from the base.
 
+The evening went to three more review rounds on the two small patches, each round given the
+exact files. Most changes were in the prose: a subject that said "read 2 s at a time" when gvfs
+still reads one sector per call; "only the refill size changes", too absolute for a cache model;
+a claim that old libraries "already read 150 sectors", which had to be shown in the 2014-era
+source before it could stay. Two reviewers disagreed about track 0; the laptop settled it, since
+`gio info` and the gvfsd-fuse listing had never exposed the track. The last round still found
+real defects in old code the patch touched: a number long enough to overflow `sscanf("%d")`
+opened track 1 again, and the error path leaked a GError. A three-digit field width and a direct
+`g_vfs_job_failed()` fixed both without the strict filename parser that reviewer offered, which
+would have changed behaviour others had asked to leave alone.
+
 **The lessons:** a simulator built around one's own design answers the questions one thought
-to ask; the reviewers who saw only the diff asked the others. And the first experiment should
+to ask; the reviewers who saw only the diff asked the others. Each review round should get the
+current files; three rounds reviewed versions already superseded and had to be mapped back. And the first experiment should
 have been the library's own knob: the two-line fix was in the evidence file's "candidate fixes"
 from the first evening.
 
