@@ -1,4 +1,4 @@
-From 9753e972c692cc9310208180c94c063fa30e033c Mon Sep 17 00:00:00 2001
+From 2cc242349e7981d27bd958cc76f3d74d84190faf Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 12:36:17 +0100
 Subject: [PATCH] cdda: Read 2 s of audio at a time to avoid playback stalls
@@ -15,10 +15,9 @@ read 1200 sectors at a time since 10.2+0.93+1 (2014); before that it
 read 150.
 
 Set the cache model to 150 sectors, 2 seconds of audio, as GStreamer's
-cdparanoiasrc does for playback. Only the size of the refills changes.
-A libcdio-paranoia without cdio_paranoia_cachemodel_size() is older
-than that change and already reads 150 sectors at a time, so builds
-against it stay as they are.
+cdparanoiasrc does for playback. A libcdio-paranoia without
+cdio_paranoia_cachemodel_size() is older than that change and already
+reads 150 sectors at a time, so builds against it stay as they are.
 
 Tested with an ASUS SDRW-08D2S-U USB drive and Totem reading through
 gvfsd-fuse, playing a 5:09 track twice per build from a stopped drive:

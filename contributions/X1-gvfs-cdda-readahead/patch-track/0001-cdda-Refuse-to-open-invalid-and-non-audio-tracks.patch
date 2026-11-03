@@ -1,0 +1,68 @@
+From 2dbc24009c8bbe03947b051e51f3e24546c410e3 Mon Sep 17 00:00:00 2001
+From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
+Date: Tue, 3 Nov 2026 13:35:55 +0100
+Subject: [PATCH] cdda: Refuse to open invalid and non-audio tracks
+
+do_open_for_read() only checks that the file name has the form
+"Track N.wav". For a track that is not on the disc, libcdio returns a
+negative error code where a sector number is expected, and the backend
+opens a file that starts or ends at that negative number; the first
+read then sends paranoia there. Track numbers above 255 wrap in
+libcdio's 8-bit track type, so Track 257.wav opens track 1. Track 0
+(the pregap, where a disc has one) and the data tracks of a mixed-mode
+disc can be opened as well, although enumerate does not list them and
+query_info refuses them, so they are not reachable through gvfsd-fuse.
+
+Accept only the track numbers that enumerate lists: audio tracks 1 to
+the last one. Also refuse a sector range that libcdio reports as an
+error.
+
+With a 13-track audio disc in a USB drive, `gio cat` of Track 99.wav
+kept the backend reading with the drive busy for more than five
+minutes until it was stopped, and Track 257.wav returned the audio of
+track 1. Now Track -2, 0, 14, 99, 255, 256 and 257 fail at once with
+"No such file", and Track 1 and Track 13 still read afterwards.
+---
+ daemon/gvfsbackendcdda.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
+
+diff --git a/daemon/gvfsbackendcdda.c b/daemon/gvfsbackendcdda.c
+index ce01630..19f06b5 100644
+--- a/daemon/gvfsbackendcdda.c
++++ b/daemon/gvfsbackendcdda.c
+@@ -617,7 +617,9 @@ do_open_for_read (GVfsBackend *backend,
+   read_handle = g_new0 (ReadHandle, 1);
+ 
+   track_num = get_track_num_from_name (job->filename);
+-  if (track_num == -1)
++  /* Only the audio tracks that enumerate lists can be opened */
++  if (track_num < 1 || track_num > cdda_backend->drive->tracks ||
++      !cdio_cddap_track_audiop (cdda_backend->drive, track_num))
+     {
+       error = g_error_new (G_IO_ERROR, G_IO_ERROR_NOT_FOUND, 
+                            _("No such file %s on drive %s"), job->filename, cdda_backend->device_path);
+@@ -626,9 +628,20 @@ do_open_for_read (GVfsBackend *backend,
+       return;
+     }
+ 
+-
+   read_handle->first_sector = cdio_cddap_track_firstsector (cdda_backend->drive, track_num);
+   read_handle->last_sector = cdio_cddap_track_lastsector (cdda_backend->drive, track_num);
++
++  /* libcdio returns negative error codes on failure */
++  if (read_handle->first_sector < 0 ||
++      read_handle->last_sector < read_handle->first_sector)
++    {
++      error = g_error_new (G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
++                           _("No such file %s on drive %s"), job->filename, cdda_backend->device_path);
++      g_vfs_job_failed_from_error (G_VFS_JOB (job), error);
++      free_read_handle (read_handle);
++      return;
++    }
++
+   read_handle->sector_cursor = -1;
+ 
+   read_handle->cursor = 0;
+-- 
+2.43.0
+
