@@ -48,6 +48,21 @@ Reviewers are numbered in the order their reviews arrived.
 | F39 | Precedent: SMB !134 (a throughput buffer declined after corruption under concurrent reads) — correctness with two users outranks single-stream throughput | R7 | not verified here | supports preferring F1 |
 | F24 | R5: "no obvious leaks or races", "technically correct"; subject "begins with a lowercase Read"; "Signed-off-by is GNOME policy"; "APIs stable since libcdio 0.83" | R5 | contradicted: F2/F16, F3, F5 found by R2–R4 (F16 executed); the subject is capitalised after `cdda:`; sign-off is for committing on someone else's behalf (R4, GNOME handbook); the libcdio claim is unsupported and misses F8 | rejected; R5 brought no new verified finding |
 
+## Final round (2026-11-03, on `patch1-small/` and `patch-track/`)
+
+| # | Finding | From | Check | Status |
+|---|---|---|---|---|
+| G1 | Both patches ready; suggested message rewrites | R1 | its "good example" !274/`a0538104` was reverted (`297da298`, F-history); its track rewrite says "outside 1..tracks" while the patch then allowed track 0; nothing new | no change from it |
+| G2 | Patch 1's "the sectors read and the data returned are the same" is too strong: the physical read pattern changes by design | R2 | agreed: our tests show the audio identical, not the physical reads | **done:** "only the size of the refills changes" (amended) |
+| G3 | `has_function` alone does not prove the header declares the function | R2 | gvfs's own `smbc_readdirplus2` check is written the same way (`meson.build:416`); libcdio-paranoia ships header and library in one package | kept as is (project convention) |
+| G4 | `open_for_read` still disagrees with `query_info`/enumerate: data tracks of a mixed-mode disc open, and track 0 (pregap) opens | R2 | **confirmed:** enumerate lists audio tracks 1..N (`gvfsbackendcdda.c:964-970`), `query_info` refuses past N and non-audio (`:928-940`); the patch allowed 0 and data tracks | **done:** open accepts only 1..N audio tracks (`cdio_cddap_track_audiop`), then refuses error sector ranges; message amended. Not testable here: no mixed-mode disc |
+| G5 | Two separate MRs; MR summaries suggested; validation matrix (older libcdio build, seek/EOF, 255/256, short track) | R2 | — | 255/256 added to the laptop test; older-libcdio build not done |
+
+Re-test of the revised track check (G4), 2026-11-03: master compile 0 warnings; gvfs CI
+(`tmp/cd-gaps/ci/out-track2/`) all six steps as base; laptop, 1.54.4 + 150 sectors + revised
+check (`/usr/libexec/gvfsd-cdda` SHA-256 `c4f6b665…1e51`): tracks 1 and 13 read; 0, 14, 99, 255,
+256, 257 fail at once with "No such file" (`tmp/cd-gaps/patch-track/track-test-20261103.tsv`).
+
 ## Actions
 
 | # | Action | Depends on | State |

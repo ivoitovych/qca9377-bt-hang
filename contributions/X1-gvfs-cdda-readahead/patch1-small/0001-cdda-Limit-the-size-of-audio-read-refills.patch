@@ -1,4 +1,4 @@
-From e60ddeb52dacae75f883e389400fd8b341ebcaf2 Mon Sep 17 00:00:00 2001
+From db5367a85836763d5a5436228917c823070a97f5 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 12:36:17 +0100
 Subject: [PATCH] cdda: Limit the size of audio read refills
@@ -13,7 +13,7 @@ it has arrived, and a player reading the track in real time runs dry.
 
 Set the cache model to 150 sectors, 2 seconds of audio, as GStreamer's
 cdparanoiasrc does for playback. Each refill then takes a fraction of
-a second. The sectors read and the data returned are the same.
+a second; only the size of the refills changes.
 
 Tested with an ASUS SDRW-08D2S-U USB drive and Totem reading through
 gvfsd-fuse, playing a 5:09 track twice per build from a stopped drive:
