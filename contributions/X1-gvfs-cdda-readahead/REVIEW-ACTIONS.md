@@ -162,7 +162,7 @@ supplied (kept as `tmp/cd-gaps/r7-repro/gvfs-cdda-track-repro.py`). Every point 
 | H30 | Patch 1: "…already reads 150 sectors at a time, and builds against it stay as they are" is awkward | R6 | agreed; R6's "so builds against it are unchanged" would make two "so" clauses | **done (v6):** the 150-sector history moved into the same paragraph: "libcdio-paranoia read 150 sectors at a time until 10.2+0.93+1 (2014). That release brought both the 1200-sector cache model and cdio_paranoia_cachemodel_size(), so builds against older versions are unchanged." Also "even in the PARANOIA_MODE_DISABLE used here", "mid-track underflows", the test sentence split in two |
 | H31 | Patch 2's message is long; lead with the two failures users see; drop the enumerate claim and the list of reasons the sector guard can fire; keep the 4294967297 qualification and one leading-zero example; move the name list to the MR | R6 (trimmed text), R7 | agreed. R6's text not taken as is: it keeps "Accept only what enumerate lists" (wrong after H26) and the reasons sentence | **done (v6):** six short paragraphs: failures, cause, parser, open checks, leaks, result. The name list goes to the MR description |
 | H32 | query_info's parser-failure branch leaks a GError; `Track 1junk.wav` and the like now reach it | R7 ("reasonable local cleanup") | true, and **pre-existing:** master reaches it with any name sscanf cannot read (`Track x.wav`); the other two query_info sites leak the same way | not taken: a separate small MR for all three |
-| H33 | Submission shape | R6: one MR, two commits (the maintainer's habit for one backend: !298, !279). R7: two MRs (independent defects; patch 1 can land while patch 2 changes; !323 on review cost) | R2 and R3 said two MRs | **the operator's choice**; recommendation: two, since patch 2 changed in this round |
+| H33 | Submission shape | R6: one MR, two commits (the maintainer's habit for one backend: !298, !279). R7: two MRs (independent defects; patch 1 can land while patch 2 changes; !323 on review cost) | R2 and R3 said two MRs | **decided (operator, 2026-11-06): two MRs, an issue each**, so that each fix can be taken or held on its own |
 | H34 | Issues | R6: one, for patch 1. R7: one each (GNOME's workflow) | — | the operator's choice |
 | H35 | The README's top still describes the superseded worker-thread design; the MR draft has internal notes: do not link the directory as the description | R7 | true | **done:** a current-state note at the top of `README.md`; the MR description will be written fresh |
 | H36 | `cdio/paranoia/paranoia.h` exists from 10.2+0.90, not only from 0.93+1 as the brief says | R6; R7 adds that the original 0.90 tarball installs a flat header including a missing nested one, fixed in 0.90+1 | brief-only; the patch text says nothing about it | noted |
@@ -176,7 +176,15 @@ both patch files apply alone and in either order (same backend blob `aa376912`),
 -47, -49, -50 (`tmp/cd-gaps/patch-track/stable-apply-check.sh`). Master + both v6 patches:
 built, 0 warnings, probe YES (`tmp/cd-gaps/build/out-both-v6/`). The parser is unchanged, so H22's
 sanitizer run stands. Laptop build (Ubuntu 1.54.4 + both): `tmp/cd-gaps/build/out-ubuntu-small-track6/`,
-SHA-256 `5bd20771…f349`; laptop run pending the operator's word.
+SHA-256 `5bd20771…f349`. **Laptop, on the operator's word (2026-11-06):** installed with
+`install-test-binary.sh` (`/usr/libexec/gvfsd-cdda` `36175938…2f52` after `patchelf`; v5 kept as
+`.prev`, `e60fcf37…ec6e`), CD remounted (`tmp/cd-gaps/build/remount-cd.sh`; backend pid 307670 runs
+`36175938…`). 13-track disc (`tmp/cd-gaps/patch-track/track-test-v6-20261106.tsv`): Track -2, 0,
+14, 99, 100, 255, 256, 257, 4294967297, 1junk, +1, 1.wav.wav fail at once (0.0 s) with "No such
+file"; Track 1 to 13, 01, 0001 and 0011 each read 1 MiB. First MiB hashed
+(`alias-compare-v6-20261106.tsv`): 01 and 0001 equal 1, 0011 equals 11, and every hash equals the v5
+run's. `gio info` (`info-and-list.sh`): `Track 1junk.wav` "No such file"; `Track 0011.wav` the size
+of track 11 (56,960,850). `gio list` and gvfsd-fuse list Track 1–13, unchanged.
 
 v5.2 is message-only too (track tree still `046bc0f2`). The brief for the last reviewers is
 `review-brief-r6-r7.md`.
