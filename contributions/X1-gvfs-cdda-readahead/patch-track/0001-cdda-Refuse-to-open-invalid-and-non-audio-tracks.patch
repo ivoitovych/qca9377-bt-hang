@@ -1,4 +1,4 @@
-From fce94c238c709b7f7a67065452b89a673555ffc1 Mon Sep 17 00:00:00 2001
+From 18e8b95b534e004d9a9f65e84e6b02105383b7d4 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 13:35:55 +0100
 Subject: [PATCH] cdda: Refuse to open invalid and non-audio tracks
@@ -9,7 +9,7 @@ negative error code where a sector number is expected, and the first
 read sends paranoia there. libcdio's track number is 8 bits wide, so
 Track 257.wav opens track 1. The parser's sscanf("%d") cannot represent
 Track 4294967297.wav at all; on the tested build it opened track 1 too.
-Track 0 opens too, and so would the data tracks of a mixed-mode disc,
+Track 0 also opens, and so would the data tracks of a mixed-mode disc,
 although enumerate does not list them and query_info refuses them.
 
 Accept only the track numbers that enumerate lists: audio tracks from
