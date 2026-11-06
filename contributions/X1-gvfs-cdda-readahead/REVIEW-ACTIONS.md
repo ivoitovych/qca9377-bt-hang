@@ -144,6 +144,11 @@ both confirm the code diffs identical to `907e71b` and master unchanged.**
 | H24 | Patch 1: "The first read after opening a track or seeking then also waits …" is absolute: the WAV header is served from memory, and a read inside the one cached sector skips paranoia | R2 (minor), R3 (optional) | **confirmed in source:** `do_read()` serves the header (`gvfsbackendcdda.c:682`), the cached sector (`:703`) | **done:** "A read after opening a track or seeking that needs a refill then also waits for 150 sectors, not 1200." Tree unchanged (`29fc5683`) |
 | H25 | The brief's `g_ascii_string_to_unsigned (number, …)` names a variable the code does not have | R3 | true | **done:** brief reworded |
 
+**Verification of the pinned package (2026-11-06), R2 and R3: both GO, no finding.** Both
+fetched the patch files at `a42b081` and `1999201` (blobs `18f6b180…` and `34b4efee…`, identical);
+R3: the one commit between them changes only the brief. No change taken. gvfs master still
+`2d30ce9b` (rechecked). Next: R6 and R7 on the brief at `1999201`.
+
 v5.2 is message-only too (track tree still `046bc0f2`). The brief for the last reviewers is
 `review-brief-r6-r7.md`.
 
