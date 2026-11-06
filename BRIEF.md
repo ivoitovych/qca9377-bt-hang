@@ -261,7 +261,9 @@ hours (`R2-13`).
   paragraphs). Patch 2 tree `22b5cd0d`, build 0 warnings, CI as base; patch 1 tree unchanged.
   Laptop re-test of v6 passed (operator's word; installed `36175938…`, `.prev` = v5): every
   invalid name refused at once, Track 1–13 and the aliases read, hashes as v5. The operator
-  chose **two MRs, an issue each**.
+  chose **two MRs, an issue each**. 11-07: R6 and R7 rechecked v6 and both say ready (R7
+  withdrew its hold). Their four wording points went into v6.1, which changes the messages only
+  (H39–H44). Next: the issue and MR drafts; the operator submits.
 > - **Disk: cleanup done 11-02/03, 144 GB free.** Two runs under `agent-work`; the first crashed
 >   with no log (`tmp/cleanup/cleanup-reconcile-after-crash-20261102.md`: 141 items gone, every
 >   local commit saved as patches) and broke 10 trees' git metadata (shared clones lost their

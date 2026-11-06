@@ -1,4 +1,4 @@
-From c1776db2cf71a9d8133185bc6f5916676c7fd6c6 Mon Sep 17 00:00:00 2001
+From f5c66fc520d51dc6f813ee042b70ab295fafcb4d Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Fri, 6 Nov 2026 22:29:54 +0100
 Subject: [PATCH] cdda: Refuse to open invalid and non-audio tracks
@@ -10,11 +10,11 @@ Track 257.wav returned track 1.
 do_open_for_read() passes whatever number sscanf() finds in the file
 name to libcdio without checking it. For a track that is not on the
 disc, libcdio returns a negative error code where a sector number is
-expected, and the first read sends paranoia there. libcdio's track
-number is 8 bits wide, so 257 becomes 1. Track 4294967297.wav, which
-sscanf("%d") cannot represent, also opened track 1 on the tested
-build. Track 0 opens too, and so would the data tracks of a mixed-mode
-disc.
+expected, and the first read that needs disc data sends paranoia
+there. libcdio's track number is 8 bits wide, so 257 becomes 1.
+Track 4294967297.wav, which sscanf("%d") cannot represent, also opened
+track 1 on the tested build. Track 0 opens too, and so would the data
+tracks of a mixed-mode disc.
 
 Parse the number with g_ascii_string_to_unsigned(), which rejects
 signs, trailing characters and numbers above 99. Leading zeros still
@@ -23,9 +23,9 @@ name such as Track 1junk.wav, which it treated as track 1, is now
 refused there too.
 
 Open only audio tracks between the disc's first and last track
-numbers; the first need not be 1. If libcdio still reports a bad
-sector range, fail with the existing "paranoia" error instead of
-reading.
+numbers, as libcdio's own lookups do; the first need not be 1. If
+libcdio still reports a bad sector range, fail with the existing
+"paranoia" error instead of reading.
 
 This also fixes two leaks: the failure path allocated a GError it
 never freed, and the parser did not free its copy of the name when the

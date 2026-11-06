@@ -186,6 +186,28 @@ file"; Track 1 to 13, 01, 0001 and 0011 each read 1 MiB. First MiB hashed
 run's. `gio info` (`info-and-list.sh`): `Track 1junk.wav` "No such file"; `Track 0011.wav` the size
 of track 11 (56,960,850). `gio list` and gvfsd-fuse list Track 1–13, unchanged.
 
+**Recheck of v6 at `b949971` (2026-11-07), R6 and R7: both "ready, submit", no code finding.**
+Both matched the brief's SHA-256 values. R6 checked libcdio's Linux driver this time
+(`gnu_linux.c:597-612`: `last + 1` reads the lead-out entry and can report audio), so H27 is now
+reviewer-verified, and v6's order prevents it. R7 withdrew its hold on patch 2. Using its harness
+on the exact v6 files: shifted TOCs read byte for byte, tracks 1 and 5 on a 2–4 TOC and an
+invalid first track or count are refused before the format lookup (instrumented), and on a
+mixed-mode BIN/CUE image the audio tracks read and the data track is refused. These are
+reviewer-run results, not repeated here.
+
+| # | Finding | From | Check | Status |
+|---|---|---|---|---|
+| H39 | Patch 2: say why open's bounds differ from query_info's count | R6 | — | **done (v6.1):** "…track numbers, as libcdio's own lookups do; the first need not be 1." |
+| H40 | Patch 1: "read 150 sectors at a time until 10.2+0.93+1" can be read as including that release | R6 | agreed | **done (v6.1):** "Before 10.2+0.93+1 (2014), libcdio-paranoia read 150 sectors at a time." |
+| H41 | Patch 1: "reads a whole cache model" suggests every refill is 1200 sectors, also at the end of the audio session | R7 | agreed (as H28) | **done (v6.1):** "first refills its cache from the drive … normally 1200 sectors" |
+| H42 | Patch 2: "the first read sends paranoia there": the WAV header is served from memory | R7 | agreed (as H24) | **done (v6.1):** "the first read that needs disc data" |
+| H43 | R6 retracts H29: the maintainer does write `See:` | R6 | — | `See:` kept |
+| H44 | Cross-link the two MRs in their descriptions | R6 | — | for the MR drafts |
+
+v6.1 is message-only: trees `29fc5683` and `22b5cd0d`, as tested in v6. The diff part of each
+exported file is byte-identical to v6's. Both still apply to master and to gnome-46, -47, -49
+and -50.
+
 v5.2 is message-only too (track tree still `046bc0f2`). The brief for the last reviewers is
 `review-brief-r6-r7.md`.
 
