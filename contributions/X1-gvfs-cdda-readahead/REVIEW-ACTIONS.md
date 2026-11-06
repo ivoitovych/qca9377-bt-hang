@@ -100,6 +100,19 @@ program, R3 tested nothing. Each point checked here before it was taken.
 | H11 | A CDDA build against a pre-cache-model libcdio-paranoia | R2, R3 | R7 built against a real 10.2+0.90 (G19) with the define forced off, not with the meson probe | open (optional) |
 | H12 | `g_vfs_job_failed_from_error()` copies the error, so the caller's GError leaked | R3 | as G19 (`gvfsjob.c:272-281`) | done since v4 |
 
+**Re-test of v5, 2026-11-06** (master compile 0 warnings for both; gvfs CI all six steps as base,
+`tmp/cd-gaps/ci/out-small5/`, `out-track5/`; patch 1 `-Dcdda=false` builds, `out-small5-nocdda/`;
+probe "YES" with the prefix, the binary imports `cdio_paranoia_cachemodel_size`; the patches apply
+in either order). Laptop, on the operator's word: Ubuntu 1.54.4 + both v5 patches
+(`tmp/cd-gaps/build/out-ubuntu-small-track5/`, installed `/usr/libexec/gvfsd-cdda` SHA-256
+`e60fcf37…ec6e` after `patchelf`; previous build kept as `.prev`, `0c4255c3…2c96`). 13-track disc
+(`tmp/cd-gaps/patch-track/track-test-20261106.tsv`): Track -2, 0, 14, 99, 100, 255, 256, 257,
+4294967297, 1junk, +1, 1.wav.wav fail at once with "No such file"; Track 1, 01, 0001, 11, 0011, 13
+read. First MiB hashed (`alias-compare-20261106.tsv`, `alias-compare.py`): 01 and 0001 equal track 1,
+0011 equals track 11 (H1 fixed). `gio info`: `Track 1junk.wav` "No such file" (query_info shares the
+parser, as the message says); `Track 0011.wav` the size of track 11. gvfsd-fuse lists Track 1–13,
+unchanged.
+
 **Reversal recorded:** G19 kept parser changes out, partly because R2 and R3 had advised it.
 In this round R2 and R3 themselves propose the parser change, with H1 as the reason.
 

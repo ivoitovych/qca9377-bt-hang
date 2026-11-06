@@ -243,6 +243,14 @@ hours (`R2-13`).
 >   `mr-description-draft.md`: one MR or two, and whether to file a gvfs issue. Reviewers 1 and 5
 >   brought no verified finding in any round. The operator is weighing retiring
 >   reviewers 1 and 5 (recommended: neither brought a verified finding; both made false claims).
+  **2026-11-06, v5 of both (rework round of 11-04, `REVIEW-ACTIONS.md` H1–H12):** v4's
+  `"Track %3d.wav"` opened track 1 for `Track 0011.wav` (master: 11), so the parser is now
+  `g_ascii_string_to_unsigned()` bounded 1..99 (rejects `1junk`, `+1`, `1.wav.wav`; keeps leading
+  zeros; query_info shares it); patch 1's `has_function` names its header (`prefix:`), and its
+  message says the first read after open/seek waits. Reviewer 3's first/last track numbers not
+  taken (all of gvfs assumes 1..N). Re-tested: master builds, CI as base, laptop runs 1.54.4 + both
+  v5 (`e60fcf37…ec6e`), every invalid name refused, `0011` reads track 11's audio. Reviewers 2 and 3
+  favour two MRs with an issue each; R6 one MR: still the operator's choice.
 > - **Disk: cleanup done 11-02/03, 144 GB free.** Two runs under `agent-work`; the first crashed
 >   with no log (`tmp/cleanup/cleanup-reconcile-after-crash-20261102.md`: 141 items gone, every
 >   local commit saved as patches) and broke 10 trees' git metadata (shared clones lost their

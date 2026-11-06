@@ -1,63 +1,77 @@
-From 1c7c6ff1262b8a4e5a183979eb4b6f22cfc33512 Mon Sep 17 00:00:00 2001
+From 685bb202dafc6dcf1c0b2513c658c15f58a2eb62 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 13:35:55 +0100
 Subject: [PATCH] cdda: Refuse to open invalid and non-audio tracks
 
-do_open_for_read() only checks whether get_track_num_from_name()
-returns a track number. For a track that is not on the disc, libcdio
-returns a negative error code where a sector number is expected, and
-the backend opens a file that starts or ends at that negative number;
-the first read then sends paranoia there. Track numbers above 255 wrap
-in libcdio's 8-bit track type, so Track 257.wav opens track 1, and a
-number too long for an int overflows in the parser's sscanf(), so
-Track 4294967297.wav opens track 1 as well. Track 0 (the pregap, where
-a disc has one) and the data tracks of a mixed-mode disc can be opened
-too, although enumerate does not list them and query_info refuses
-them, so they are not reachable through gvfsd-fuse.
+do_open_for_read() passes whatever number it finds in the file name to
+libcdio. For a track that is not on the disc, libcdio returns a
+negative error code where a sector number is expected, and the first
+read sends paranoia there. libcdio's track number is 8 bits wide, so
+Track 257.wav opens track 1, and the parser's sscanf() overflows on
+Track 4294967297.wav, which opens track 1 too. Track 0 and the data
+tracks of a mixed-mode disc also open, although enumerate does not list
+them and query_info refuses them.
 
-Accept only the track numbers that enumerate lists: audio tracks 1 to
-the last one, checked before the number reaches libcdio. Let the
-parser read at most three digits, as a disc has at most 99 tracks, so
-that no number can overflow into a valid one. For an accepted track
-libcdio does not report an error today; should it report one for the
-sector range anyway, fail the open as a paranoia error rather than as
-a missing file, so that a negative sector never reaches paranoia.
-While at it, fail the job without allocating a GError that was never
-freed, and free the parser's basename when the name does not match.
+Accept only the track numbers that enumerate lists: audio tracks from
+1 to the number of tracks, checked before the number reaches libcdio.
+Parse the number with g_ascii_string_to_unsigned(), which rejects
+signs, trailing characters and numbers above 99. Leading zeros still
+work, so Track 01.wav is still track 1. query_info uses the same
+parser, so a name such as Track 1junk.wav, which it treated as
+track 1, no longer exists there either.
 
-With a 13-track audio disc in a USB drive, `gio cat` of Track 99.wav
-kept the backend reading with the drive busy for more than five
-minutes until it was stopped, and Track 257.wav and Track
-4294967297.wav returned the audio of track 1. Now Track -2, 0, 14,
-99, 255, 256, 257 and 4294967297 fail at once with "No such file",
-and Track 1 and Track 13 still read afterwards.
+If libcdio still reports a sector error after these checks, fail with
+the existing "paranoia" error instead of reading. With today's libcdio
+this does not happen.
+
+The failure path now calls g_vfs_job_failed() directly instead of
+allocating a GError it never freed, and the parser frees its copy of
+the name when the name does not match.
+
+With a 13-track disc in a USB drive, `gio cat` of Track 99.wav kept
+the drive busy for more than five minutes until it was stopped, and
+Track 257.wav and Track 4294967297.wav returned track 1. Now
+Track -2, 0, 14, 99, 100, 257, 4294967297, 1junk, +1 and 1.wav.wav
+fail at once with "No such file", and Track 1, 01, 0011 and 13 still
+read, Track 0011.wav with the same audio as Track 11.wav.
 ---
- daemon/gvfsbackendcdda.c | 28 +++++++++++++++++++++-------
- 1 file changed, 21 insertions(+), 7 deletions(-)
+ daemon/gvfsbackendcdda.c | 38 +++++++++++++++++++++++++++-----------
+ 1 file changed, 27 insertions(+), 11 deletions(-)
 
 diff --git a/daemon/gvfsbackendcdda.c b/daemon/gvfsbackendcdda.c
-index ce01630..4482785 100644
+index ce01630..b4f6032 100644
 --- a/daemon/gvfsbackendcdda.c
 +++ b/daemon/gvfsbackendcdda.c
-@@ -450,13 +450,16 @@ get_track_num_from_name (const char *filename)
+@@ -446,18 +446,23 @@ do_unmount (GVfsBackend *backend,
+ static int
+ get_track_num_from_name (const char *filename)
+ {
+-  int n;
++  guint64 n;
    char *basename;
++  int track_num = -1;
  
    basename = g_path_get_basename (filename);
 -  if (sscanf (basename, "Track %d.wav", &n) == 1 &&
-+  /* A disc has at most 99 tracks; reading at most three digits keeps a
-+   * longer number from overflowing into a valid track number */
-+  if (sscanf (basename, "Track %3d.wav", &n) == 1 &&
++  if (g_str_has_prefix (basename, "Track ") &&
        g_str_has_suffix (basename, ".wav"))
      {
-       g_free (basename);
-       return n;
+-      g_free (basename);
+-      return n;
++      /* Parse only the number between "Track " and ".wav" */
++      basename[strlen (basename) - strlen (".wav")] = '\0';
++      if (g_ascii_string_to_unsigned (basename + strlen ("Track "), 10,
++                                      1, CDIO_CD_MAX_TRACKS, &n, NULL))
++        track_num = n;
      }
  
+-  return -1;
 +  g_free (basename);
-   return -1;
++  return track_num;
  }
  
-@@ -608,7 +611,6 @@ do_open_for_read (GVfsBackend *backend,
+ typedef struct {
+@@ -608,7 +613,6 @@ do_open_for_read (GVfsBackend *backend,
                    const char *filename)
  {
    int track_num;
@@ -65,7 +79,7 @@ index ce01630..4482785 100644
    ReadHandle *read_handle;
    GVfsBackendCdda *cdda_backend = G_VFS_BACKEND_CDDA (backend);
  
-@@ -617,18 +619,30 @@ do_open_for_read (GVfsBackend *backend,
+@@ -617,18 +621,30 @@ do_open_for_read (GVfsBackend *backend,
    read_handle = g_new0 (ReadHandle, 1);
  
    track_num = get_track_num_from_name (job->filename);
