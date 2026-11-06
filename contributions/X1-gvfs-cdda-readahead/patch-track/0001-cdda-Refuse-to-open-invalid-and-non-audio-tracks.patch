@@ -1,4 +1,4 @@
-From 4b0bd7f8e2fcaba18885651865f6e3d1ff983aa0 Mon Sep 17 00:00:00 2001
+From fce94c238c709b7f7a67065452b89a673555ffc1 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 13:35:55 +0100
 Subject: [PATCH] cdda: Refuse to open invalid and non-audio tracks
@@ -9,8 +9,8 @@ negative error code where a sector number is expected, and the first
 read sends paranoia there. libcdio's track number is 8 bits wide, so
 Track 257.wav opens track 1. The parser's sscanf("%d") cannot represent
 Track 4294967297.wav at all; on the tested build it opened track 1 too.
-Track 0 and the data tracks of a mixed-mode disc also open, although
-enumerate does not list them and query_info refuses them.
+Track 0 opens too, and so would the data tracks of a mixed-mode disc,
+although enumerate does not list them and query_info refuses them.
 
 Accept only the track numbers that enumerate lists: audio tracks from
 1 to the number of tracks, checked before the number reaches libcdio.
@@ -21,8 +21,9 @@ parser, so a name such as Track 1junk.wav, which it treated as
 track 1, no longer exists there either.
 
 If libcdio still reports a sector error after these checks, fail with
-the existing "paranoia" error instead of reading. With today's libcdio
-this does not happen.
+the existing "paranoia" error instead of reading. The lookups only read
+the TOC in memory, so this needs a drive that is not open or a TOC
+that is inconsistent.
 
 The failure path now calls g_vfs_job_failed() directly instead of
 allocating a GError it never freed, and the parser frees its copy of

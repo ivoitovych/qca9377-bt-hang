@@ -124,6 +124,20 @@ unchanged.
 | H17 | Two MRs, each with an issue | R2, R3 (R3: "follow the maintainer's preference") | — | the operator's choice |
 | H18 | The record should show the operator's approval of the install | R2 | the operator's "Yes" in chat, 2026-11-06, before `install-test-binary.sh` ran; this file says "on the operator's word" | noted |
 
+**Final reviews of v5 at `907e71b` (2026-11-06), R2 and R3, both read from GitHub: both GO,
+two MRs.** R3 now advises leaving H14/H15's wording (already changed in v5.1; kept). R2's three
+precision points:
+
+| # | Finding | From | Check | Status |
+|---|---|---|---|---|
+| H19 | "Track 0011.wav returns the same audio as Track 11.wav" rests on the first MiB only | R2 | **closed by evidence instead of wording:** whole files read to EOF (`alias-compare.py --whole`, `tmp/cd-gaps/patch-track/alias-compare-whole-20261106.tsv`): 11 and 0011 both 56,960,850 bytes, SHA-256 `fc4b5fa4…da95`; 1, 01 and 0001 all 54,503,010 bytes, `1cbb6e71…21cb` | sentence kept, now exact |
+| H20 | "the data tracks of a mixed-mode disc also open" was not tested | R2 | true: source only (G4), no mixed-mode disc; Track 0 opening was seen (G6) | **done (v5.2):** "Track 0 opens too, and so would the data tracks of a mixed-mode disc" |
+| H21 | "With today's libcdio this does not happen" is broader than the tests | R2 | **source:** libcdio-paranoia `toc.c:34-60`, `:92-128`: for a track in range the lookups only read `disc_toc` in memory (no I/O); the errors left are −400 (drive not open) or a last sector before the first (inconsistent TOC). `cdio_cddap_track_audiop` returns only 0 or 1 (`:194-197`), so `!audiop` cannot take an error for audio | **done (v5.2):** "The lookups only read the TOC in memory, so this needs a drive that is not open or a TOC that is inconsistent." |
+| H22 | No sanitizer run of the parser (gvfs's CI image has no libasan) | own | `parser-test-asan.sh`, ubuntu:26.04, gcc 15.2.0, GLib 2.88.0: ASan + UBSan (`-fno-sanitize-recover=all`) + leak check, 29 names, 0 failed, exit 0 (`parser-v5/parser-test-asan.txt`) | done |
+
+v5.2 is message-only too (track tree still `046bc0f2`). The brief for the last reviewers is
+`review-brief-r6-r7.md`.
+
 v5.1 is message-only: the commit trees equal v5's (`046bc0f2` for the track check, `29fc5683`
 for patch 1), so every v5 build, CI and drive result applies unchanged.
 
