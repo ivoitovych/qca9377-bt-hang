@@ -173,7 +173,8 @@ supplied (kept as `tmp/cd-gaps/r7-repro/gvfs-cdda-track-repro.py`). Every point 
 `29fc5683` (message only, commit `272613e`). Patch 2 master compile 0 warnings
 (`tmp/cd-gaps/build/out-track-v6/`); gvfs CI all six steps as base (`tmp/cd-gaps/ci/out-track6/`);
 both patch files apply alone and in either order (same backend blob `aa376912`), and to gnome-46,
--47, -49, -50 (`tmp/cd-gaps/patch-track/stable-apply-check.sh`). The parser is unchanged, so H22's
+-47, -49, -50 (`tmp/cd-gaps/patch-track/stable-apply-check.sh`). Master + both v6 patches:
+built, 0 warnings, probe YES (`tmp/cd-gaps/build/out-both-v6/`). The parser is unchanged, so H22's
 sanitizer run stands. Laptop build (Ubuntu 1.54.4 + both): `tmp/cd-gaps/build/out-ubuntu-small-track6/`,
 SHA-256 `5bd20771…f349`; laptop run pending the operator's word.
 
