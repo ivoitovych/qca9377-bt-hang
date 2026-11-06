@@ -5,9 +5,9 @@ Both apply to gvfs master `2d30ce9b73babfd5e6ca6762ac3af46c1b092337` (still mast
 master line ends in a space, which pastes lose.
 
 - Patch 1, "cdda: Limit paranoia read-ahead to avoid playback stalls":
-  `PATCH1_URL`
+  https://github.com/ivoitovych/qca9377-bt-hang/raw/229deda/contributions/X1-gvfs-cdda-readahead/patch1-small/0001-cdda-Limit-paranoia-read-ahead-to-avoid-playback-sta.patch
 - Patch 2, "cdda: Refuse to open invalid and non-audio tracks":
-  `PATCH2_URL`
+  https://github.com/ivoitovych/qca9377-bt-hang/raw/229deda/contributions/X1-gvfs-cdda-readahead/patch-track/0001-cdda-Refuse-to-open-invalid-and-non-audio-tracks.patch
 
 ## What changed since you last saw them
 
@@ -40,7 +40,7 @@ master line ends in a space, which pastes lose.
 | `-Dcdda=false` | builds | — |
 | Probe result / binary | "YES"; imports `cdio_paranoia_cachemodel_size` | — |
 | Parser alone, 29 names (`-Wall -Wextra -Werror`; ASan + UBSan + leak check) | — | 0 failed |
-| Laptop: Ubuntu 1.54.4 + both patches, 13-track disc, ASUS SDRW-08D2S-U | playback: 19 → 0 mid-track underflows per 5:09 run (2 runs each); copy 29.8 → 29.0 s; PCM = cd-paranoia | -2, 0, 14, 99, 100, 255, 256, 257, 4294967297, 1junk, +1, 1.wav.wav refused at once; 1, 01, 0001, 11, 0011, 13 read; WHOLE_RESULT; `gio info` refuses 1junk; the listing is unchanged |
+| Laptop: Ubuntu 1.54.4 + both patches, 13-track disc, ASUS SDRW-08D2S-U | playback: 19 → 0 mid-track underflows per 5:09 run (2 runs each); copy 29.8 → 29.0 s; PCM = cd-paranoia | -2, 0, 14, 99, 100, 255, 256, 257, 4294967297, 1junk, +1, 1.wav.wav refused at once; 1, 01, 0001, 11, 0011, 13 read; whole files to EOF: 0011 byte-identical to 11, 01 and 0001 to 1; `gio info` refuses 1junk; the listing is unchanged |
 
 Not tested: a mixed-mode disc (no such disc here; the audio check is the one enumerate and
 query_info already use), a non-1-based TOC, a CDDA build against a pre-2014 libcdio-paranoia
