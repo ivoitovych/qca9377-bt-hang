@@ -204,6 +204,19 @@ reviewer-run results, not repeated here.
 | H43 | R6 retracts H29: the maintainer does write `See:` | R6 | — | `See:` kept |
 | H44 | Cross-link the two MRs in their descriptions | R6 | — | for the MR drafts |
 
+**Recheck of v6 at `b949971` (2026-11-07), R2 and R3: both GO on both patches, no code
+finding.** Both matched the SHA-256 values and found master unchanged. They reviewed v6, not v6.1.
+
+| # | Finding | From | Check | Status |
+|---|---|---|---|---|
+| H45 | Patch 1: "reads a whole cache model … 1200 sectors" is absolute; near the session end the refill is clipped | R2 (optional), R3 ("minor but real") | as H41 | already done in v6.1 |
+| H46 | Patch 1: "read 150 sectors at a time" reads as one 150-sector I/O; paranoia reads its read-ahead span in requests of `nsectors` | R3 | agreed | **done (v6.2, patch 1 only):** "Before 10.2+0.93+1 (2014), libcdio-paranoia read ahead 150 sectors." |
+| H47 | Do not add a `first_track == CDIO_INVALID_TRACK` test for symmetry | R2, R3 | as the brief | kept as is |
+
+v6.2 changes patch 1's message only (tree `29fc5683`; diff part byte-identical to v6.1; applies
+to master). Patch 2's v6.1 file is unchanged. All four reviewers (R2, R3, R6, R7) say GO for the
+code, and none has an open wording point.
+
 v6.1 is message-only: trees `29fc5683` and `22b5cd0d`, as tested in v6. The diff part of each
 exported file is byte-identical to v6's. Both still apply to master and to gnome-46, -47, -49
 and -50.
