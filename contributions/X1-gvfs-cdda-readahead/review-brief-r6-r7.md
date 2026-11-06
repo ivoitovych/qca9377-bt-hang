@@ -5,9 +5,9 @@ Both apply to gvfs master `2d30ce9b73babfd5e6ca6762ac3af46c1b092337` (still mast
 master line ends in a space, which pastes lose.
 
 - Patch 1, "cdda: Limit paranoia read-ahead to avoid playback stalls":
-  https://github.com/ivoitovych/qca9377-bt-hang/raw/229deda/contributions/X1-gvfs-cdda-readahead/patch1-small/0001-cdda-Limit-paranoia-read-ahead-to-avoid-playback-sta.patch
+  https://github.com/ivoitovych/qca9377-bt-hang/raw/f3e53c7/contributions/X1-gvfs-cdda-readahead/patch1-small/0001-cdda-Limit-paranoia-read-ahead-to-avoid-playback-sta.patch
 - Patch 2, "cdda: Refuse to open invalid and non-audio tracks":
-  https://github.com/ivoitovych/qca9377-bt-hang/raw/229deda/contributions/X1-gvfs-cdda-readahead/patch-track/0001-cdda-Refuse-to-open-invalid-and-non-audio-tracks.patch
+  https://github.com/ivoitovych/qca9377-bt-hang/raw/f3e53c7/contributions/X1-gvfs-cdda-readahead/patch-track/0001-cdda-Refuse-to-open-invalid-and-non-audio-tracks.patch
 
 ## What changed since you last saw them
 
