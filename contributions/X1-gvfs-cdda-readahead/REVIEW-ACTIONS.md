@@ -135,6 +135,15 @@ precision points:
 | H21 | "With today's libcdio this does not happen" is broader than the tests | R2 | **source:** libcdio-paranoia `toc.c:34-60`, `:92-128`: for a track in range the lookups only read `disc_toc` in memory (no I/O); the errors left are −400 (drive not open) or a last sector before the first (inconsistent TOC). `cdio_cddap_track_audiop` returns only 0 or 1 (`:194-197`), so `!audiop` cannot take an error for audio | **done (v5.2):** "The lookups only read the TOC in memory, so this needs a drive that is not open or a TOC that is inconsistent." |
 | H22 | No sanitizer run of the parser (gvfs's CI image has no libasan) | own | `parser-test-asan.sh`, ubuntu:26.04, gcc 15.2.0, GLib 2.88.0: ASan + UBSan (`-fno-sanitize-recover=all`) + leak check, 29 names, 0 failed, exit 0 (`parser-v5/parser-test-asan.txt`) | done |
 
+**Rechecks at `f3e53c7` (2026-11-06), R2 and R3, read from GitHub: both GO, no code change;
+both confirm the code diffs identical to `907e71b` and master unchanged.**
+
+| # | Finding | From | Check | Status |
+|---|---|---|---|---|
+| H23 | The brief **in** commit `f3e53c7` still links to `229deda`, whose patch 2 differs (message only: "opens too") | R2, R3 | true: the brief's links were updated one commit later (`1edcb63`) | **done:** the package is pinned to one revision; the brief names it at the top |
+| H24 | Patch 1: "The first read after opening a track or seeking then also waits …" is absolute: the WAV header is served from memory, and a read inside the one cached sector skips paranoia | R2 (minor), R3 (optional) | **confirmed in source:** `do_read()` serves the header (`gvfsbackendcdda.c:682`), the cached sector (`:703`) | **done:** "A read after opening a track or seeking that needs a refill then also waits for 150 sectors, not 1200." Tree unchanged (`29fc5683`) |
+| H25 | The brief's `g_ascii_string_to_unsigned (number, …)` names a variable the code does not have | R3 | true | **done:** brief reworded |
+
 v5.2 is message-only too (track tree still `046bc0f2`). The brief for the last reviewers is
 `review-brief-r6-r7.md`.
 
