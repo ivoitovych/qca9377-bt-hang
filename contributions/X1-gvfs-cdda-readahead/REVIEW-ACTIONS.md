@@ -113,6 +113,20 @@ read. First MiB hashed (`alias-compare-20261106.tsv`, `alias-compare.py`): 01 an
 parser, as the message says); `Track 0011.wav` the size of track 11. gvfsd-fuse lists Track 1–13,
 unchanged.
 
+**Recheck of the intermediate v5 (2026-11-06), R2 and R3: both GO; no code change.**
+
+| # | Finding | From | Check | Status |
+|---|---|---|---|---|
+| H13 | R3 withdraws H4: the library point stands, but open must keep enumerate's 1..N namespace; a first track above 1 is a backend-wide issue | R3 | — | H4 closed as not taken, with R3's agreement |
+| H14 | "sscanf() overflows on Track 4294967297.wav, which opens track 1" presents undefined behaviour as a rule: an out-of-range `%d` conversion is undefined in C | R3 | agreed (C11 7.21.6.2p10); 257 → 1 stays as stated, since narrowing to the unsigned `track_t` is defined | **done (v5.1):** "sscanf("%d") cannot represent Track 4294967297.wav at all; on the tested build it opened track 1 too" |
+| H15 | Patch 1: "collects … in several reads" and "has read 1200 sectors at a time" pull against each other | R3 (optional) | agreed | **done (v5.1):** "has used a 1200-sector cache model … before that it read ahead 150 sectors"; "waits for a refill of 150 sectors instead of 1200" |
+| H16 | The test paragraph should state the results briefly, include query_info, and not claim mixed-mode testing | R2, R3 | — | **done (v5.1):** `gio info` refusing 1junk added; 0001 added; no mixed-mode claim |
+| H17 | Two MRs, each with an issue | R2, R3 (R3: "follow the maintainer's preference") | — | the operator's choice |
+| H18 | The record should show the operator's approval of the install | R2 | the operator's "Yes" in chat, 2026-11-06, before `install-test-binary.sh` ran; this file says "on the operator's word" | noted |
+
+v5.1 is message-only: the commit trees equal v5's (`046bc0f2` for the track check, `29fc5683`
+for patch 1), so every v5 build, CI and drive result applies unchanged.
+
 **Reversal recorded:** G19 kept parser changes out, partly because R2 and R3 had advised it.
 In this round R2 and R3 themselves propose the parser change, with H1 as the reason.
 

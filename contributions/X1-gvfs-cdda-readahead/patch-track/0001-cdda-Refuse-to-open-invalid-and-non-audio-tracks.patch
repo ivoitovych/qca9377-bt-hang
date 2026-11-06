@@ -1,4 +1,4 @@
-From 685bb202dafc6dcf1c0b2513c658c15f58a2eb62 Mon Sep 17 00:00:00 2001
+From 4b0bd7f8e2fcaba18885651865f6e3d1ff983aa0 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 13:35:55 +0100
 Subject: [PATCH] cdda: Refuse to open invalid and non-audio tracks
@@ -7,10 +7,10 @@ do_open_for_read() passes whatever number it finds in the file name to
 libcdio. For a track that is not on the disc, libcdio returns a
 negative error code where a sector number is expected, and the first
 read sends paranoia there. libcdio's track number is 8 bits wide, so
-Track 257.wav opens track 1, and the parser's sscanf() overflows on
-Track 4294967297.wav, which opens track 1 too. Track 0 and the data
-tracks of a mixed-mode disc also open, although enumerate does not list
-them and query_info refuses them.
+Track 257.wav opens track 1. The parser's sscanf("%d") cannot represent
+Track 4294967297.wav at all; on the tested build it opened track 1 too.
+Track 0 and the data tracks of a mixed-mode disc also open, although
+enumerate does not list them and query_info refuses them.
 
 Accept only the track numbers that enumerate lists: audio tracks from
 1 to the number of tracks, checked before the number reaches libcdio.
@@ -32,8 +32,9 @@ With a 13-track disc in a USB drive, `gio cat` of Track 99.wav kept
 the drive busy for more than five minutes until it was stopped, and
 Track 257.wav and Track 4294967297.wav returned track 1. Now
 Track -2, 0, 14, 99, 100, 257, 4294967297, 1junk, +1 and 1.wav.wav
-fail at once with "No such file", and Track 1, 01, 0011 and 13 still
-read, Track 0011.wav with the same audio as Track 11.wav.
+fail at once with "No such file", and `gio info` also refuses
+Track 1junk.wav. Track 1, 01, 0001 and 13 still read, and Track
+0011.wav returns the same audio as Track 11.wav.
 ---
  daemon/gvfsbackendcdda.c | 38 +++++++++++++++++++++++++++-----------
  1 file changed, 27 insertions(+), 11 deletions(-)

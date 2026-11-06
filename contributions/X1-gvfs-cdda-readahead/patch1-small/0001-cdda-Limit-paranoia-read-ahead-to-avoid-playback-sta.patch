@@ -1,4 +1,4 @@
-From cd353b24faf4df5280739db626aedd19815ab471 Mon Sep 17 00:00:00 2001
+From 195b6484a1eab701307db87f8f23e7f5212ddc0d Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 12:36:17 +0100
 Subject: [PATCH] cdda: Limit paranoia read-ahead to avoid playback stalls
@@ -11,12 +11,12 @@ paranoia's buffer is empty, that call first collects a whole cache
 model from the drive, in several reads, before it returns: 1200
 sectors, 16 seconds of audio, also in the PARANOIA_MODE_DISABLE used
 here. A player reading in real time runs dry while it waits.
-libcdio-paranoia has read 1200 sectors at a time since 10.2+0.93+1
-(2014); before that it read 150.
+libcdio-paranoia has used a 1200-sector cache model since 10.2+0.93+1
+(2014); before that it read ahead 150 sectors.
 
 Set the cache model to 150 sectors, 2 seconds of audio, as GStreamer's
 cdparanoiasrc does for playback. The first read after opening a track
-or seeking then also waits for 150 sectors instead of 1200.
+or seeking then also waits for a refill of 150 sectors instead of 1200.
 cdio_paranoia_cachemodel_size() came with the change to 1200 sectors,
 so a libcdio-paranoia without it already reads 150 sectors at a time,
 and builds against it stay as they are.
