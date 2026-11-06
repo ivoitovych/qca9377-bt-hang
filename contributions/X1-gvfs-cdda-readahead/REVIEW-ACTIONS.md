@@ -149,6 +149,34 @@ fetched the patch files at `a42b081` and `1999201` (blobs `18f6b180…` and `34b
 R3: the one commit between them changes only the brief. No change taken. gvfs master still
 `2d30ce9b` (rechecked). Next: R6 and R7 on the brief at `1999201`.
 
+**Final reviews of v5.3 at `a42b081` (2026-11-06), R6 and R7.** R6: both correct, one MR,
+cosmetic edits. R7: patch 1 ready; **patch 2 has a regression**, reproduced with a harness R7
+supplied (kept as `tmp/cd-gaps/r7-repro/gvfs-cdda-track-repro.py`). Every point checked here.
+
+| # | Finding | From | Check | Status |
+|---|---|---|---|---|
+| H26 | **Patch 2 compares a track *number* with `drive->tracks`, a *count*.** A disc may number its tracks from above 1: on a 2–4 TOC, master opens `Track 4.wav` directly and reads it correctly; v5.3 refuses it (also track 99 on a 97–99 TOC) | R7 | **confirmed.** Source: libcdio-paranoia's lookups take real numbers from `cdio_get_first_track_num()` to `cdio_get_last_track_num()` (`cache/libcdio-paranoia/lib/cdda_interface/toc.c:40-60`, `:98-127`). Run: R7's harness plus variants (`tmp/cd-gaps/r7-repro/make-variants.py`, `run-repro.sh`; ubuntu:26.04, gcc 15.2.0, libcdio 2.2.0 with its source, libcdio-paranoia 10.2+2.0.2; `out-20261106b/results.tsv`): 2–4 open 4 and 97–99 open 99: master and v6 read all expected PCM to EOF, v5.3 NOT_FOUND; 2–4 open 1 and open 5: master opens a wrong range (assertion), v5.3 and v6 NOT_FOUND; 1–3 with track 3 a data track: master does not refuse (the run times out after 15 s), v5.3 and v6 NOT_FOUND; 1–3 open 3: all read | **done (v6):** bounds from `cdio_get_first_track_num()`/`cdio_get_last_track_num()` on `drive->p_cdio`, `CDIO_INVALID_TRACK` refused, checked before `cdio_cddap_track_audiop()`. **H4/H13's "not taken" reversed:** keeping open equal to enumerate removed a direct open that master serves; nothing needs enumerate to change for this. libcdio 0.78.2 (gvfs's minimum) has `p_cdio`, both functions and `CDIO_INVALID_TRACK` (`cache/libcdio-0.78.2-dl/`, from the kernel.org GNU mirror) |
+| H27 | libcdio's Linux driver accepts track `last + 1` in `get_track_format_linux()` (it reads the lead-out entry, which usually looks like audio), so the range check must come before `audiop()` | R6 | not checked in libcdio's driver source here. libcdio-paranoia's `firstsector()` also accepts `last + 1` (the lead-out), `lastsector()` refuses it (`toc.c:41-42` and `:54`; `:99` and `:110`) | v6 checks the range first (short-circuit `||`); the sector guard would catch `last + 1` too |
+| H28 | Patch 1: delete "A read after opening a track or seeking that needs a refill then also waits for 150 sectors, not 1200": at the end of the audio session the refill is shorter (R7's fixture: 2 sectors in either build) | R7 | agreed; this sentence needed three corrections already (H6, H15, H24) and carries nothing the previous sentence does not | **done (v6):** deleted |
+| H29 | Patch 1: `See:` is not a gvfs trailer; use `Related:` | R6 | **not true:** the maintainer writes `See:` for references (`e0961eb`, `f1bc25c`), so does Philip Withnall (`996c2a9`), and `Related:` for gvfs issues (`bce2cdc`); ours follow that | not taken |
+| H30 | Patch 1: "…already reads 150 sectors at a time, and builds against it stay as they are" is awkward | R6 | agreed; R6's "so builds against it are unchanged" would make two "so" clauses | **done (v6):** the 150-sector history moved into the same paragraph: "libcdio-paranoia read 150 sectors at a time until 10.2+0.93+1 (2014). That release brought both the 1200-sector cache model and cdio_paranoia_cachemodel_size(), so builds against older versions are unchanged." Also "even in the PARANOIA_MODE_DISABLE used here", "mid-track underflows", the test sentence split in two |
+| H31 | Patch 2's message is long; lead with the two failures users see; drop the enumerate claim and the list of reasons the sector guard can fire; keep the 4294967297 qualification and one leading-zero example; move the name list to the MR | R6 (trimmed text), R7 | agreed. R6's text not taken as is: it keeps "Accept only what enumerate lists" (wrong after H26) and the reasons sentence | **done (v6):** six short paragraphs: failures, cause, parser, open checks, leaks, result. The name list goes to the MR description |
+| H32 | query_info's parser-failure branch leaks a GError; `Track 1junk.wav` and the like now reach it | R7 ("reasonable local cleanup") | true, and **pre-existing:** master reaches it with any name sscanf cannot read (`Track x.wav`); the other two query_info sites leak the same way | not taken: a separate small MR for all three |
+| H33 | Submission shape | R6: one MR, two commits (the maintainer's habit for one backend: !298, !279). R7: two MRs (independent defects; patch 1 can land while patch 2 changes; !323 on review cost) | R2 and R3 said two MRs | **the operator's choice**; recommendation: two, since patch 2 changed in this round |
+| H34 | Issues | R6: one, for patch 1. R7: one each (GNOME's workflow) | — | the operator's choice |
+| H35 | The README's top still describes the superseded worker-thread design; the MR draft has internal notes: do not link the directory as the description | R7 | true | **done:** a current-state note at the top of `README.md`; the MR description will be written fresh |
+| H36 | `cdio/paranoia/paranoia.h` exists from 10.2+0.90, not only from 0.93+1 as the brief says | R6; R7 adds that the original 0.90 tarball installs a flat header including a missing nested one, fixed in 0.90+1 | brief-only; the patch text says nothing about it | noted |
+| H37 | H11 closed by R7: against a real libcdio-paranoia 10.2+0.90+1, the unmodified meson probe says NO and the patched backend compiles without the setter; against 10.2+2.0.2 YES | R7 | reviewer-run, not repeated here | H11 closed |
+| H38 | MR text: name the FUSE path, the drive, 19/19 against 0/0; for patch 2 one `gio cat 'cdda://sr0/Track%20257.wav'` command; the shifted-TOC case in the test notes; Launchpad 1967258 is filed against totem | R6, R7 | — | for the MR and issue drafts |
+
+**Re-test of v6 (2026-11-06):** patch 2 tree `22b5cd0d` (commit `c1776db`); patch 1 tree unchanged
+`29fc5683` (message only, commit `272613e`). Patch 2 master compile 0 warnings
+(`tmp/cd-gaps/build/out-track-v6/`); gvfs CI all six steps as base (`tmp/cd-gaps/ci/out-track6/`);
+both patch files apply alone and in either order (same backend blob `aa376912`), and to gnome-46,
+-47, -49, -50 (`tmp/cd-gaps/patch-track/stable-apply-check.sh`). The parser is unchanged, so H22's
+sanitizer run stands. Laptop build (Ubuntu 1.54.4 + both): `tmp/cd-gaps/build/out-ubuntu-small-track6/`,
+SHA-256 `5bd20771…f349`; laptop run pending the operator's word.
+
 v5.2 is message-only too (track tree still `046bc0f2`). The brief for the last reviewers is
 `review-brief-r6-r7.md`.
 

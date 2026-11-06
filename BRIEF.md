@@ -251,6 +251,15 @@ hours (`R2-13`).
   taken (all of gvfs assumes 1..N). Re-tested: master builds, CI as base, laptop runs 1.54.4 + both
   v5 (`e60fcf37…ec6e`), every invalid name refused, `0011` reads track 11's audio. Reviewers 2 and 3
   favour two MRs with an issue each; R6 one MR: still the operator's choice.
+  **2026-11-06 late, v6 (final reviews R6/R7, `REVIEW-ACTIONS.md` H26–H38):** R7 found and we
+  reproduced a **regression in patch 2**: `drive->tracks` is a count, so v5.3 refused the last
+  tracks of a disc numbered from above 1 (Track 4 on 2–4, Track 99 on 97–99), which master opens
+  directly and reads correctly. v6 bounds open by `cdio_get_first_track_num()`/
+  `cdio_get_last_track_num()` (H4's "not taken" reversed; enumerate/query_info unchanged, a
+  separate issue). R6's `See:`→`Related:` rejected (the maintainer writes `See:`). Both messages
+  rewritten for reading (patch 1: refill-wait sentence deleted; patch 2: failures first, six short
+  paragraphs). Patch 2 tree `22b5cd0d`, build 0 warnings, CI as base; patch 1 tree unchanged.
+  Laptop re-test of v6 pending the operator's word.
 > - **Disk: cleanup done 11-02/03, 144 GB free.** Two runs under `agent-work`; the first crashed
 >   with no log (`tmp/cleanup/cleanup-reconcile-after-crash-20261102.md`: 141 items gone, every
 >   local commit saved as patches) and broke 10 trees' git metadata (shared clones lost their

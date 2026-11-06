@@ -1,5 +1,15 @@
 # X1 — gvfs cdda: read ahead so that audio-CD playback does not stall (off-topic)
 
+> **Current state (2026-11-06): two small patches, not the worker thread described below.**
+> - `patch1-small/0001-cdda-Limit-paranoia-read-ahead-to-avoid-playback-sta.patch`: one call,
+>   `cdio_paranoia_cachemodel_size(p, 150)`, behind a meson `has_function` check.
+> - `patch-track/0001-cdda-Refuse-to-open-invalid-and-non-audio-tracks.patch`: open accepts
+>   only audio tracks between the disc's first and last track numbers.
+>
+> Review record: `REVIEW-ACTIONS.md`. Everything from "The fix (draft, 2026-11-02)" on is the
+> first, superseded design (a worker thread per open track), kept for its measurements; it is
+> not what is being submitted.
+
 **The defect** (issue X1, `evidence/off-topic/X1-cd-playback-underflow-every-16s.md`): an audio
 CD played in Totem through GNOME's CD backend stops for about 3 s every 16 s. `gvfsd-cdda`
 answers each client read with a synchronous `cdio_paranoia_read()`; when paranoia's cache of
