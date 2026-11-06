@@ -1,13 +1,19 @@
 # Final review before submission: two gvfs cdda patches
 
-Both apply to gvfs master `2d30ce9b73babfd5e6ca6762ac3af46c1b092337` (still master on
-2026-11-06), alone and in either order. Please review the files, not a chat copy: one removed
-master line ends in a space, which pastes lose.
+**Review target: the two patch files at repository commit
+`a42b08114a5b77dbf9ab1471970a4b70d13d9d66`** (they are byte-identical at every later commit
+that carries this brief). Both apply to gvfs master
+`2d30ce9b73babfd5e6ca6762ac3af46c1b092337` (still master on 2026-11-06), alone and in either
+order. Please review the files, not a chat copy: one removed master line ends in a space, which
+pastes lose.
 
 - Patch 1, "cdda: Limit paranoia read-ahead to avoid playback stalls":
-  https://github.com/ivoitovych/qca9377-bt-hang/raw/f3e53c7/contributions/X1-gvfs-cdda-readahead/patch1-small/0001-cdda-Limit-paranoia-read-ahead-to-avoid-playback-sta.patch
+  https://github.com/ivoitovych/qca9377-bt-hang/raw/a42b08114a5b77dbf9ab1471970a4b70d13d9d66/contributions/X1-gvfs-cdda-readahead/patch1-small/0001-cdda-Limit-paranoia-read-ahead-to-avoid-playback-sta.patch
 - Patch 2, "cdda: Refuse to open invalid and non-audio tracks":
-  https://github.com/ivoitovych/qca9377-bt-hang/raw/f3e53c7/contributions/X1-gvfs-cdda-readahead/patch-track/0001-cdda-Refuse-to-open-invalid-and-non-audio-tracks.patch
+  https://github.com/ivoitovych/qca9377-bt-hang/raw/a42b08114a5b77dbf9ab1471970a4b70d13d9d66/contributions/X1-gvfs-cdda-readahead/patch-track/0001-cdda-Refuse-to-open-invalid-and-non-audio-tracks.patch
+
+The code in both has not changed since it was built and tested (commit trees `29fc5683` and
+`046bc0f2`); the last revisions changed commit-message wording only.
 
 ## What changed since you last saw them
 
@@ -15,15 +21,16 @@ master line ends in a space, which pastes lose.
 - `has_function('cdio_paranoia_cachemodel_size', prefix: '#include <cdio/paranoia/paranoia.h>', …)`.
   The setter exists only in libcdio-paranoia ≥ 10.2+0.93+1, which installs that header; a
   library without it keeps its 150-sector read-ahead, and the probe can only fail closed.
-- Message: the first read after opening or seeking waits for the refill (open itself does not
-  read); "has used a 1200-sector cache model since 10.2+0.93+1 (2014)".
+- Message: a read after opening or seeking that needs a refill waits for 150 sectors (open itself
+  does not read; the WAV header and the one cached sector need no refill); "has used a
+  1200-sector cache model since 10.2+0.93+1 (2014)".
 
 **Patch 2** (the parser was replaced):
 - The previous fix, `"Track %3d.wav"`, had a regression: `Track 0011.wav` read `001` and opened
   track 1 (master: 11), and `Track 0001.wav` was refused. Two reviewers found it; confirmed.
-- The parser is now `g_ascii_string_to_unsigned (number, 10, 1, CDIO_CD_MAX_TRACKS, &n, NULL)` on
-  the text between `"Track "` and `".wav"`: no overflow, no signs, no trailing characters, leading
-  zeros kept. query_info shares the parser, so names such as `Track 1junk.wav` (which master
+- The parser now uses `g_ascii_string_to_unsigned()` on the text between `"Track "` and
+  `".wav"`, bounded to `1..CDIO_CD_MAX_TRACKS`: no overflow, no signs, no trailing characters,
+  leading zeros kept. query_info shares the parser, so names such as `Track 1junk.wav` (which master
   treated as track 1) now fail there too; the message says so.
 - Open still accepts exactly what enumerate lists: audio tracks `1..drive->tracks`.
 - The sector-range guard after those checks is kept. libcdio-paranoia's lookups read only the TOC
