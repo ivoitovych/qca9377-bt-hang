@@ -79,6 +79,30 @@ Re-test of the revised track check (G4), 2026-11-03: master compile 0 warnings; 
 check (`/usr/libexec/gvfsd-cdda` SHA-256 `c4f6b665…1e51`): tracks 1 and 13 read; 0, 14, 99, 255,
 256, 257 fail at once with "No such file" (`tmp/cd-gaps/patch-track/track-test-20261103.tsv`).
 
+## Rework round (2026-11-04 reviews, on `cc8384a`; checked 2026-11-06)
+
+Two reviewers sent reworked versions of both patches (the operator's file "Patch rework, GVfs
+CDDA, 2026-11-04"). Neither built gvfs or ran the drive; R2 tested its parser in a standalone
+program, R3 tested nothing. Each point checked here before it was taken.
+
+| # | Finding | From | Check | Status |
+|---|---|---|---|---|
+| H1 | **`"Track %3d.wav"` (G19's fix) changes which track a leading-zero name opens:** `Track 0011.wav` reads `001` and gives track 1, where master gives 11 | R2, R3 | **confirmed** (`tmp/cd-gaps/patch-track/parser-v5/parser-test-v4.txt`, the v4 parser in gvfs's CI image): `0011` → 1 (wrong audio), `0001` → 0 (refused; master: track 1). Master's `%d` gives 11 and 1. A regression our v4 introduced, for names enumerate never lists | **done (v5):** `g_ascii_string_to_unsigned()` |
+| H2 | `sscanf()` returns 1 once the number converts, whatever follows: `1junk`, `+1`, `1.wav.wav`, `1e6`, ` 1` all give 1 | R2, R3 | **confirmed**, same file; **pre-existing** on master (G19 saw `1junk`, `+1` on the laptop) | **done (v5):** rejected. query_info shares the parser, so these names stop existing there too; said in the message |
+| H3 | Parse with `g_ascii_string_to_unsigned (…, 10, 1, max, &n, NULL)` between the fixed prefix and suffix | R2 (in place, max `G_MAXINT`), R3 (`g_strndup` + `goto`, max `CDIO_CD_MAX_TRACKS`) | GLib ≥ 2.54; gvfs requires 2.83 (`meson.build:237`). Not used elsewhere in gvfs. A name cannot satisfy both prefix and suffix with them overlapping (`"Track "` ends in a space, `".wav"` starts with a dot), so the in-place cut is safe. `CDIO_CD_MAX_TRACKS` = 99 in libcdio 2.3.0 | **done (v5):** R2's in-place form (fewer lines) with R3's bound 99 (the CD's own limit; no value reaching query_info or `track_t` can wrap). `parser-test.c`, 29 names, 0 failed (`parser-v5/parser-test.txt`) |
+| H4 | Use libcdio's first and last track numbers, not `drive->tracks`: that is a count, and a TOC can start above 1 (R3's example: an image with tracks 7–9) | R3 | **true of the library:** libcdio-paranoia's `cdda_track_firstsector`/`lastsector` take real numbers from first to last, −401 outside (`cache/libcdio-paranoia/lib/cdda_interface/toc.c:40-60`, `:98-127`). **But all of gvfs assumes 1..count:** enumerate lists `1..drive->tracks` (`gvfsbackendcdda.c:972`), query_info refuses `> drive->tracks` (`:936`), metadata is indexed by `track_num - 1` (R3 says so itself). On a 7–9 disc enumerate lists nothing, and R3's open would accept 7–9, which nothing lists | **not taken:** open keeps "exactly what enumerate lists", which our message states. A first track above 1 is a pre-existing limitation of the whole backend; a candidate separate issue, not this patch |
+| H5 | `has_function` with the declaring header as `prefix:` | R2 (the third time: G3, G16), R3 | The header is self-contained (`cdio/paranoia/paranoia.h` includes `cdio/paranoia/cdda.h`, `cache/libcdio-paranoia/include/cdio/paranoia/paranoia.h:31`, declaration `:197`). The setter came with libcdio-paranoia 10.2+0.93+1 (G10), whose header is `cdio/paranoia/paranoia.h`; the old `cdio/paranoia.h` layout belongs to libcdio's bundled paranoia, which R3 (A3) found without the symbol (not re-verified here). If that were ever wrong, the probe is false and the old behaviour stays: no build break | **taken, in one statement:** `prefix: '#include <cdio/paranoia/paranoia.h>'`. R2's and R3's 6- and 12-line forms that pick the header by layout not taken: the old layout never has the setter. Probe result: below |
+| H6 | "Opening a track and seeking then also wait for 150 sectors" is inexact: open does not read; the first read after it does | R2, R3 | agreed (`do_open_for_read()` only configures paranoia) | **done (v5):** "The first read after opening a track or seeking then also waits for 150 sectors instead of 1200." |
+| H7 | Patch 1 prose: R2 drops "in several reads"; R3 replaces `See:` by a prose sentence; both reword the code comment | R2, R3 | "in several reads" was G17's correction (R3); `See:`/`Related:` were G11 (R6) | kept ours; the broken line wrap in paragraph 2 fixed |
+| H8 | Two separate issues and two MRs, one commit each; add `Fixes #NNN` once the issues exist | R2, R3 | R6 (G18) and gvfs's habit (!279): one MR with two commits | **the operator's choice** (`mr-description-draft.md`) |
+| H9 | Patch 2 rework messages claim results ("made those requests fail immediately") for a parser never run against a drive | R2 | — | our v5 message carries only what is re-run on the laptop |
+| H10 | R2's diffs have no function names in the hunk headers and were checked against "a reconstructed source-context fixture", not a gvfs tree; R3's have no `From:` line, so neither is `git am`-ready as sent | R2, R3 | — | ours are exported from the real tree |
+| H11 | A CDDA build against a pre-cache-model libcdio-paranoia | R2, R3 | R7 built against a real 10.2+0.90 (G19) with the define forced off, not with the meson probe | open (optional) |
+| H12 | `g_vfs_job_failed_from_error()` copies the error, so the caller's GError leaked | R3 | as G19 (`gvfsjob.c:272-281`) | done since v4 |
+
+**Reversal recorded:** G19 kept parser changes out, partly because R2 and R3 had advised it.
+In this round R2 and R3 themselves propose the parser change, with H1 as the reason.
+
 ## Actions
 
 | # | Action | Depends on | State |

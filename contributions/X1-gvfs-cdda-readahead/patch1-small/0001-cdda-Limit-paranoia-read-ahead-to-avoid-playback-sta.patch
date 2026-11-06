@@ -1,25 +1,25 @@
-From 905d339087899eec9fc6970d230a5b1c803ec6fc Mon Sep 17 00:00:00 2001
+From cd353b24faf4df5280739db626aedd19815ab471 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 12:36:17 +0100
 Subject: [PATCH] cdda: Limit paranoia read-ahead to avoid playback stalls
 
-Playing an audio CD track through gvfs, for example in Totem, stops
-for about 3 seconds every 16 seconds on a USB drive.
+Playing an audio CD through gvfs, for example in Totem, stops for
+about 3 seconds every 16 seconds on a USB drive.
 
 do_read() takes one sector at a time from cdio_paranoia_read(). When
-paranoia runs out of buffered sectors, that call first collects a
-whole cache model of sectors from the drive, in several reads, before
-it returns: 1200 sectors, 16 seconds of audio, also in the
-PARANOIA_MODE_DISABLE used here. A player reading the track in real
-time runs dry while it waits. libcdio-paranoia has
-read 1200 sectors at a time since 10.2+0.93+1 (2014); before that it
-read 150.
+paranoia's buffer is empty, that call first collects a whole cache
+model from the drive, in several reads, before it returns: 1200
+sectors, 16 seconds of audio, also in the PARANOIA_MODE_DISABLE used
+here. A player reading in real time runs dry while it waits.
+libcdio-paranoia has read 1200 sectors at a time since 10.2+0.93+1
+(2014); before that it read 150.
 
 Set the cache model to 150 sectors, 2 seconds of audio, as GStreamer's
-cdparanoiasrc does for playback. Opening a track and seeking then also
-wait for 150 sectors instead of 1200. A libcdio-paranoia without
-cdio_paranoia_cachemodel_size() is older than that change and already
-reads 150 sectors at a time, so builds against it stay as they are.
+cdparanoiasrc does for playback. The first read after opening a track
+or seeking then also waits for 150 sectors instead of 1200.
+cdio_paranoia_cachemodel_size() came with the change to 1200 sectors,
+so a libcdio-paranoia without it already reads 150 sectors at a time,
+and builds against it stay as they are.
 
 Tested with an ASUS SDRW-08D2S-U USB drive and Totem reading through
 gvfsd-fuse, playing a 5:09 track twice per build from a stopped drive:
@@ -52,14 +52,14 @@ index ce01630..cb5f648 100644
    cdda_backend->num_open_files++;
  
 diff --git a/meson.build b/meson.build
-index 1a5b6d4..1a5ac0b 100644
+index 1a5b6d4..312d150 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -429,6 +429,7 @@ if enable_cdda
  
    libcdio_paranoia_dep = dependency('libcdio_paranoia', version: '>= 0.78.2')
    config_h.set('HAVE_PARANOIA_NEW_INCLUDES', cc.has_header('cdio/paranoia/paranoia.h', dependencies: libcdio_paranoia_dep))
-+  config_h.set('HAVE_PARANOIA_CACHEMODEL_SIZE', cc.has_function('cdio_paranoia_cachemodel_size', dependencies: libcdio_paranoia_dep))
++  config_h.set('HAVE_PARANOIA_CACHEMODEL_SIZE', cc.has_function('cdio_paranoia_cachemodel_size', prefix: '#include <cdio/paranoia/paranoia.h>', dependencies: libcdio_paranoia_dep))
  
    config_h.set('HAVE_CDDA', enable_cdda)
  endif

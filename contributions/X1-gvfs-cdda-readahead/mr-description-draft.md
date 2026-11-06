@@ -5,7 +5,8 @@ Two open choices for the operator, on which reviewers differ:
 - **One MR with two commits, or two MRs.** One MR is this project's habit for related cdda
   changes (Bastien Nocera's !279); two MRs let the maintainer take either alone and keep the
   backport question of the playback fix separate. Both patches apply alone and in either order
-  (checked here and by a reviewer on master and gnome-50/49/47/46).
+  (checked here and by a reviewer on master and gnome-50/49/47/46). Count so far: one MR, R6;
+  two MRs (each with its own issue), R2 and R3 (2026-11-04, H8 in `REVIEW-ACTIONS.md`).
 - **File a gvfs issue first, or not.** GNOME's handbook asks for one; in this project only a
   minority of merged contributor fixes reference one, and one reviewer advises against filing
   one only for form, since the Launchpad link and the commit bodies carry the problem. If an

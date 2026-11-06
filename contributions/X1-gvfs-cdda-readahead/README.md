@@ -28,7 +28,10 @@ Commit message draft: `commit-msg-draft.txt`.
   test copy with RUNPATH `/usr/lib/x86_64-linux-gnu/gvfs` (as the installed binary) resolves
   every library against the installed ones. SHA-256 of the test copy `07426241…0a7` (local:
   `tmp/cd-gaps/build/out-ubuntu/gvfsd-cdda.test`); installed `/usr/libexec/gvfsd-cdda`
-  `2710b35c…796`.
+  `2710b35c…796`. ⚠️ *Corrected 2026-11-06:* that value matches none of the files found since.
+  The package's own binary, diverted since 11-02 to `/usr/libexec/gvfsd-cdda.distrib` (mtime
+  2026-10-05, the package install), has SHA-256 `7ccf101e…cc18`, and its md5 `862cd94c…d748`
+  equals the entry in dpkg's `gvfs-backends.md5sums`; so the undo restores the genuine file.
 
 **Tested on the laptop, 2026-11-02 20:27–20:31 (the operator's word):** the installed binary
 diverted (`dpkg-divert --local --divert /usr/libexec/gvfsd-cdda.distrib --rename
