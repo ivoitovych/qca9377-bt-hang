@@ -7,7 +7,9 @@ Lenovo earbuds `AA:BB:CC:00:00:07`.
 
 ## What was being done
 
-The operator opened the Bluetooth panel (11:16:06) to use the MOMENTUM 4.
+The operator opened the Bluetooth panel (11:16:06) to use the MOMENTUM 4. About a minute
+before the pairing attempts the operator switched off the Lenovo earbuds (their own account,
+time not remembered); their link was ended from their side at 11:17:02.19.
 
 ## What happened
 
