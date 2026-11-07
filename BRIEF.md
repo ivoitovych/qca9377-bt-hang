@@ -167,6 +167,10 @@ hours (`R2-13`).
 >   `hci0 blocked 0` lines in the 25 s before (STATUS, machine section). Real hang or the installed
 >   closer probing a powered-down adapter at shutdown (STATUS's standing warning)? Read the two
 >   boots' journals before anything else; sysfs and journal reads only.
+> - **CI has been red since 11-02 13:26 (`83ec2f4`), unread for five days** (a trial open, so no
+>   local suite). The first cause, a script without its executable bit, is fixed (11-07); later
+>   ones (boot-range parser fixture, systemd unit checks, sandbox decoys, the install round trip)
+>   are listed in STATUS "Repository health", not yet examined. `devtools/ci --wait` after pushes.
 > - **Agents:** the weekly limit of 11-02 ended 2026-11-05 09:00. The rule that remains: cheap
 >   agents for per-file reviews, the main context synthesises. Three X1 agents ran 11-02/03 in
 >   containers (`/root/exp/agent-work/x1-cdsim-20261102/`); none is running.
