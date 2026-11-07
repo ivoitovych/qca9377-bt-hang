@@ -234,6 +234,16 @@ Current files (v6.2 both): patch 1 `6de5a6e299da9cab772cc99a33b51d08abcf4e8930f5
 H48 sentence. Both apply to gnome-46, -47, -49 and -50 with `--whitespace=error-all`, and patch 2
 applies on top of patch 1.
 
+**Recheck of `3e6b7d7` (2026-11-07), R2, R3, R6, R7: GO on both, no change asked.** R6 agrees
+with H48 and notes the one question a maintainer may ask: why first/last rather than the count
+query_info uses. The answer is in MR 2's description (`submission-drafts.md`). R7 reran the
+shifted-TOC case once more (pass). R2 mentions the `do_query_info()` GError leaks and failed
+seeks as separate, pre-existing issues (as F33 and G19).
+
+Before the MRs, each commit gets a `Fixes: https://gitlab.gnome.org/GNOME/gvfs/-/issues/N`
+trailer for its issue, the form the maintainer uses (875, 864, 863, 862, 851). Trailer-only;
+the files then need re-exporting.
+
 v6.1 is message-only: trees `29fc5683` and `22b5cd0d`, as tested in v6. The diff part of each
 exported file is byte-identical to v6's. Both still apply to master and to gnome-46, -47, -49
 and -50.
