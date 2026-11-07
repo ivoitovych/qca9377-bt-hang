@@ -77,6 +77,7 @@ The 11:18:52 inquiry answer lists Handsfree, Headset, Audio Sink, A2DP and AVRCP
 4. **Silence 11:18:29.74 → 11:18:49.11 (19.4 s)** while the laptop was scanning (8 reports from
    other devices from 11:18:30 to 11:18:49, an inquiry round ended 11:18:39.74). That fits the
    operator's switch-off; the capture cannot see a power button. The row could go at the
-   earliest 30 s after the last sighting (about 11:19:00, later if the 11:18:31.47 disconnect
-   restarted the timer); the headset was back at 11:18:49. At 11:18:51.887 the headset ended the
+   earliest 30 s after the last sighting. The 11:18:31.47 disconnect restarted the timer
+   again (`device_remove_connection()` → `device_update_last_seen()`, `src/device.c:3380` in
+   the running 5.72-0ubuntu5.5 tree), so about 11:19:01.5. The headset was back at 11:18:49. At 11:18:51.887 the headset ended the
    tenth refused attempt itself and at 11:18:52 it was in pairing mode.
