@@ -244,6 +244,28 @@ Before the MRs, each commit gets a `Fixes: https://gitlab.gnome.org/GNOME/gvfs/-
 trailer for its issue, the form the maintainer uses (875, 864, 863, 862, 851). Trailer-only;
 the files then need re-exporting.
 
+**Review of `submission-drafts.md` at `b1072db` (2026-11-07), R2, R3, R6, R7: GO, small edits.**
+
+| # | Finding | From | Check | Status |
+|---|---|---|---|---|
+| H51 | Issue A: "Play a track in Totem" leaves the read path open; name the mounted WAV | R2, R7 | `scripts/cd-trace/totem-debug.sh` opened `cdda://sr0/Track%201.wav`; Totem turns it into the FUSE path (F27) | **done:** step 2 gives `totem 'cdda://sr0/Track%201.wav'` or the file from Files; device name may differ |
+| H52 | Issue A: "also in" → "even in", as in the commit | R3 | — | **done** |
+| H53 | "The read path is the same on master": say which | R3 (R6: fine) | `git diff 1.54.4 2d30ce9 -- daemon/gvfsbackendcdda.c`: only `fetch_metadata` and `try_mount` changed | **done:** "`do_read()` is the same on master"; issue B likewise for `do_open_for_read()` |
+| H54 | Launchpad: "the same pause" → "a similar pause"; the Rhythmbox remark is its reporter's | R2, R7 | the cause there is not established | **done** |
+| H55 | Issue B: `gio cat … Track%20257.wav` writes binary to the terminal | R2, R7 | — | **done:** `> 257.wav` |
+| H56 | Issue B: the mixed-mode case sits among the observed results | R2, R3 (R7: "would" suffices) | not hardware-tested | **done:** moved to the cause paragraph, as a consequence of the code |
+| H57 | Issue B title: symptom first; "names that are not tracks" is muddled | R2, R6 | — | **done:** "cdda: Opening a track that is not on the disc keeps the drive busy or returns another track" |
+| H58 | Issue B: name libcdio-paranoia too | R6 | 10.2+2.0.1 (`out-ubuntu-small-track6/build-dep.log`) | **done** |
+| H59 | MR 1: "no longer outlasts the player's buffer" is a general guarantee | R3, R7 | — | **done:** "reducing the normal read-ahead from 16 seconds of audio to 2 seconds" |
+| H60 | Both MRs: "the two touch different code" is wrong, both change `do_open_for_read()` | R2, R3, R6 | true | **done:** "either can be merged alone, and they apply in either order"; MR 2 names MR 1 as `!N` |
+| H61 | Both MRs: say they apply to gnome-46, -47, -49 and -50 | R6 | checked at `3e6b7d7`; upstream has no gnome-48 branch | **done** |
+| H62 | MR 2: "strictly" suggests only canonical names | R3 | leading zeros still work | **done:** "Refuse track names whose number has a sign or trailing characters or is above 99" |
+| H63 | MR 2: template `Track%20N.wav` and `1.wav.wav` are ambiguous | R2, R7 | the tested name is `Track 1.wav.wav` | **done:** `<n>`, and the name written in full |
+| H64 | MR 2: is "runs `do_open_for_read()`" literally true of the harness? | R6 | yes: it compiles the backend source from `get_track_num_from_name` to `do_seek_on_read` (`gvfs-cdda-track-repro.py:143-148`) with a fake driver | **done:** "compiles the backend's `do_open_for_read()` and runs it" |
+| H65 | Use the URL GitLab gives: recent gvfs commits use `/-/work_items/N` | R3 | `5524028` (886), `c577ad2` (860) | **done** in the procedure |
+| H66 | The `From:` address must be on the GitLab account | R6 | — | for the operator at re-export |
+| H67 | Not taken: `Closes #N` instead of `Fixes #N` (R3; both close the issue, `Fixes` matches the commits); the old-library build line (R2; reviewer-run, H37, not ours); a separate CI line for MR 2 (R2; the pipeline shows it); attaching the harness (R7; a reviewer's program, the operator's call) | — | — | not taken |
+
 v6.1 is message-only: trees `29fc5683` and `22b5cd0d`, as tested in v6. The diff part of each
 exported file is byte-identical to v6's. Both still apply to master and to gnome-46, -47, -49
 and -50.
