@@ -12,6 +12,10 @@ sends anything to a device or changes a setting; everything records alongside a 
 | `rhythm.py <strace.txt> <HH:MM:SS.ffffff>...` | disc-read bursts and pauses, and where each given underflow falls relative to them |
 | `gstpull.py <gst.log> [s]` | the player source's pull requests: sizes, and every request slower than `s`, with its position in seconds of audio |
 | `analyse.py <rundir>` | `record.py`'s output: read bursts and pw-top error changes |
+| `lbas.py <usbmon.txt> [gap_s]` | which disc sectors the drive was asked for, burst by burst, from `trace.py`'s usbmon text |
+| `totem-quit.sh` | asks the desktop user's Totem to quit over D-Bus and waits up to 10 s; run before `totem-debug.sh` |
+| `cdda-remount.sh` | unmounts and remounts the audio CD in the desktop session so gvfs starts a fresh `gvfsd-cdda` (after installing a test binary); prints its pid and the binary's checksum |
+| `x1-check-submission.py` | **read-only, after submission (2026-11-07):** the live state of gvfs issues #893/#894 and MRs !368/!369 from GNOME GitLab (state, commits, pipeline, description against the frozen drafts, comments by others, the uploaded test program's SHA-256); exit 1 if anything no longer matches. Uses GraphQL for MRs: the REST API answers anonymous MR requests with 406, and the server refuses unknown User-Agent strings |
 
 **A run as done on 2026-11-02:** close Totem; `scripts/cd-trace/totem-debug.sh
 "cdda://sr0/Track%201.wav"`; `python3 -I scripts/cd-trace/trace.py 600 tmp/cd-gaps/runN`
@@ -21,6 +25,9 @@ sends anything to a device or changes a setting; everything records alongside a 
 **Prerequisites present on the laptop:** strace, the GStreamer tools, `usbmon` (debugfs). The
 desktop user is `i` (uid 1000). PipeWire-pulse already logs stream UNDERFLOWs at its current
 log level.
+
+The patches, their review record and the submission (gvfs !368, !369, 2026-11-07):
+`contributions/X1-gvfs-cdda-readahead/`.
 
 Results of 2026-11-02: `evidence/off-topic/X1-cd-playback-underflow-every-16s.md`; the raw
 recordings (22 MB, both runs) in `archive/off-topic/X1/cd-gaps-runs-20261102.tar.xz` (local,

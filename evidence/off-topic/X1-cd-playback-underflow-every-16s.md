@@ -9,6 +9,14 @@ interval held to within 0.7 s across four gaps.
 **Relevance.** Off-topic for the Bluetooth work; registered because the operator heard it and it
 looks like a defect of the standard CD playback chain (no component named yet).
 
+**Outcome (note added 2026-11-07; the record below is unchanged):** the component is gvfs's CD
+backend. The first of the "candidate fixes" below, a 150-sector paranoia cache model, removed
+the mid-track underflows on this laptop (19/19 → 0/0) and was submitted to gvfs on 2026-11-07
+as [!368](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/368) (issue
+[#893](https://gitlab.gnome.org/GNOME/gvfs/-/work_items/893)), with a separate fix for invalid
+track names, [!369](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/369). Patches, tests and
+the review record: `contributions/X1-gvfs-cdda-readahead/`.
+
 **Setup (2026-11-02, the laptop):**
 - Drive: ASUS SDRW-08D2S-U (USB 0e8d:1887, 480 Mbit/s, firmware A814), external, `usb-storage`,
   `/dev/sr0`; USB runtime power management `control=on`, `runtime_suspended_time` 0 (never

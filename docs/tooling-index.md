@@ -88,6 +88,16 @@ run `bluetoothd -d` — this project ships that on in
 | **Does a capture carry key material?** (link key replies and notifications, LE encryption, SMP) | `scripts/hci-key-records.py <capture.btsnoop>…` — counts and first time per kind, **never the key bytes**. The T8 reconnect of 2026-10-11 00:34:29 carries a Link Key Request Reply: a raw capture is not publishable by address substitution alone |
 | **Publish a log or capture with consistent device addresses** | `addr-pseudonym.py`, kept separately with the table (never in this checkout): `check` (real or unlisted addresses, every form, both byte orders, raw bytes) and `apply` (a substituted copy; the manufacturer prefix is kept for public addresses, the type bits for random ones). The table and the rules are kept with it |
 
+### Off-topic: audio-CD playback (X1–X4) and release checks
+
+| question | tool |
+|---|---|
+| Why does a CD played in Totem pause? (gvfsd-cdda syscalls, the drive's USB reads, the player's pulls, underflows) | `scripts/cd-trace/` — its `README.md` lists each tool and the run of 2026-11-02; nothing there sends to a device |
+| What do gvfs issues #893/#894 and MRs !368/!369 look like now; any comments? | `python3 -I scripts/cd-trace/x1-check-submission.py` (read-only; exit 1 if anything no longer matches the submission) |
+| Does a gvfs cdda change still open the right tracks, including discs numbered from above 1 and data tracks? | `contributions/X1-gvfs-cdda-readahead/patch-track/track-test/gvfs-cdda-track-test.py <gvfsbackendcdda.c> <libcdio-src> FIRST TRACK [--data N]`; all seven cases on several sources in a container: `run-track-test.sh <outdir>` beside it |
+| Which BlueZ release carries our applied commits? | `scripts/bluez-release-contains.sh <bluez-clone> <tag>` (fetch the tag first; run it on the previous tag as the control) |
+| Move a superseded BRIEF hand-off block to HISTORY verbatim | `scripts/move-brief-block.py <first> <last> <heading> <replacement-file>` (prints the first and last moved line; check them) |
+
 ### Desktop audio and UI capture (U1–U11)
 
 | question | tool |

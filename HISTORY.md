@@ -10,7 +10,9 @@ mesh series through four phases — "The week the fixes left the machine" · the
 for seven stable lines, CI repaired, the front page rewritten, the mesh work split into separate
 contributions after a research review, the desktop instrumented — "The days the work learned to
 say 'not yet'" · the hand-off blocks BRIEF carried until 2026-10-03 and 2026-10-05, verbatim,
-at the end.
+at the end · the eleven BlueZ commits released in BlueZ 5.88 (2026-11-05), and the first
+contribution outside Bluetooth, two gvfs merge requests for audio-CD playback (2026-11-07) — "A
+count is not a number, two merge requests, and a release nobody announced here".
 
 Chronological record of how this project came about, in the order things were actually
 learned — including the wrong turns, because several of them changed the conclusions.
@@ -4325,6 +4327,56 @@ current files; three rounds reviewed versions already superseded and had to be m
 have been the library's own knob: the two-line fix was in the evidence file's "candidate fixes"
 from the first evening.
 
+## A count is not a number, two merge requests, and a release nobody announced here (2026-11-04 → 11-07)
+
+The rework round of 11-04 found that the previous evening's cure had its own defect: the
+three-digit field width that stopped `Track 4294967297.wav` from overflowing also read
+`Track 0011.wav` as `001`, so a name master opened as track 11 now opened track 1. The parser
+became GLib's own `g_ascii_string_to_unsigned()`, bounded 1 to 99, which rejects signs and
+trailing junk, keeps leading zeros, and is shared with `query_info`, so `Track 1junk.wav`
+stopped being "track 1" there too. Patch 1's build check gained the header that declares the
+function. Version 5 was re-tested on the laptop's drive with every name the reviewers had
+suggested.
+
+The last two reviewers then found what all the earlier ones had passed over. Version 5 bounded
+the track number by `drive->tracks`, and that is a count. A disc may number its tracks from
+above 1; master opened the last track of such a disc directly and read it correctly, and
+version 5 refused it. A reviewer's test program, which compiles the backend's own code against
+a fake drive under the real libraries, showed it, and running it here with variants confirmed
+it: tracks 2 to 4, open track 4, master reads every byte and version 5 says "not found". The
+earlier decision to keep `open` "exactly what enumerate lists" had looked conservative; it had
+added a refusal master never had. Version 6 used the disc's real first and last track numbers,
+passed the laptop test, and the operator chose two merge requests, one issue each, so the
+maintainer could take either alone.
+
+The 7th was prose and procedure. One clause a reviewer had suggested, "as libcdio's own lookups
+do", turned out to claim more than holds: those lookups also accept track 0 and the lead-out,
+which the patch refuses, so it went. The test program was rewritten to take the case on the
+command line and say what it actually opened, and re-run on master and the patch, 14 of 14 as
+expected, because the program a maintainer receives should be the one that produced the table
+in front of them. A reviewer worried that `totem 'cdda://…'` might bypass gvfs entirely; the
+records answered it (Totem's open files showed the FUSE path on 11-02, and swapping only the
+gvfs binary had moved 19 underflows to none), so the tested command stayed, now saying which
+path it takes. Another pointed out that GitLab mails the full description and email does not
+fold a long block, so the program became an attachment.
+
+Filing found one more thing nobody had predicted: a new GNOME GitLab account is "external" and
+cannot fork until an SSH key has been on it for about twenty minutes. Then the issues went in
+as #893 and #894, each commit gained its `Fixes:` line, and the merge requests went up as !368
+and !369 at 03:19 and 03:24 UTC, each exactly the reviewed commit plus that line, both
+pipelines green. Three smaller defects seen on the way were registered as X2 to X4 for later.
+
+The documentation review that morning found two things the records did not know. BlueZ 5.88
+had been tagged on 11-05 and carries every one of the eleven BlueZ commits applied since
+September; nothing here had noticed. And the trial log held two shutdown verdicts of "HANG",
+on 10-30 and 11-06, with no SCO link in either; whether the controller hung or the closer probed
+an adapter already going down is the next question, not yet asked of the journal.
+
+**The lessons:** a variable named like a bound may be a count; check what it counts against a
+case where the two differ. A reviewer's wording is a claim like any other, and is checked
+against the source before it is kept. And a project that waits for releases has to look for
+them: the 5.88 tag sat unnoticed for a day and a half.
+
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
 > **MESH SERIES, PHASE 3 DONE (2026-10-02 04:36):** two patches on `bluetooth/master`
@@ -5245,3 +5297,77 @@ from the first evening.
 >   row from the journal; apply the mesh agent's STATUS/issues edits and the CO-23 "unrelated" fixes;
 >   STATUS's ⚠️ lines are too long for the session-start extract (cut at 9,500 characters): shorten
 >   them; confirm the CI rotation-test failure on `848ff44` is a flake.
+
+## BRIEF hand-off X1 bullet as it stood on 2026-11-07 (moved verbatim; replaced by a compact bullet)
+
+> - **Off-topic X1 (not Bluetooth): audio CD in Totem stops ~3 s every 16 s.** Cause (`986a910`):
+>   gvfsd-cdda's synchronous `cdio_paranoia_read()` refills the 1200-sector (16 s) cache model in
+>   one ~3 s call. **Totem reads through gvfsd-fuse** (`/run/user/1000/gvfs/cdda:host=sr0/…`), not
+>   giosrc (corrected 11-02 evening). The first fix, a read-ahead thread (`patch1/`), was held after
+>   **seven outside reviews of the patch alone** (findings and what was verified:
+>   `contributions/X1-gvfs-cdda-readahead/REVIEW-ACTIONS.md`, F1–F39, A1–A11): it lets two open
+>   tracks enter libcdio on one drive at once (one reviewer got wrong data), retries a failed sector
+>   while buffered data is consumed, and is unowned on forced unmount. **The fix now is the
+>   small one**, as GStreamer's cdparanoiasrc does for playback: `cdio_paranoia_cachemodel_size(p,
+>   150)` behind a meson `has_function` check (`patch1-small/`, +8, on gvfs master `2d30ce9b73ba`).
+>   Laptop A/B 11-03 (`tmp/cd-gaps/ab/run-20261103b/summary.tsv`, 2 runs each from a stopped
+>   drive): stock 19/19 mid-track underflows, 150 sectors 0/0, copy 29.8 → 29.0 s, audio identical
+>   to `cd-paranoia` (after a byte swap of cd-paranoia's raw order). **Separate patch** found by
+>   a reviewer (`patch-track/`, +10 −4): `do_open_for_read` accepted tracks not on the disc;
+>   before, `Track 99.wav` kept the backend busy >5 min, `Track 257.wav` gave track 1. gvfs's
+>   `fedora-test` CI run locally in its image: identical on base and with each patch. Downstream:
+>   Launchpad 1967258 (Totem pauses, Rhythmbox doesn't). **Not filed or submitted:** the gvfs issue
+>   draft (`patch1-small/issue-draft.md`) is the operator's to file; then a `Fixes:` line. Laptop
+>   now runs 1.54.4 + both fixes via `dpkg-divert` (undo: `rm /usr/libexec/gvfsd-cdda`,
+>   `dpkg-divert --local --rename --remove /usr/libexec/gvfsd-cdda`, remount). Patch 2 (drive speed)
+>   is on hold: a fixed low speed made copying 4–5× slower in the simulator; the operator judges
+>   whether small reads at full speed are quiet enough.
+>   **Evening 11-03, final rounds (records G1–G19 in `REVIEW-ACTIONS.md`):** patch 1 is now
+>   "cdda: Limit paranoia read-ahead to avoid playback stalls" (message: paranoia collects the
+>   cache model in several reads; libcdio-paranoia ≤ 10.2+0.90+1 refilled `p->readahead=150`,
+>   the 1200 model and the setter came together in 10.2+0.93+1, 2014 — verified on both tags;
+>   `See:` GStreamer `4e1086f9`, `Related:` Launchpad 1967258, whose log shows underflows 16 s
+>   apart). Patch 2 is "cdda: Refuse to open invalid and non-audio tracks": accepts exactly what
+>   enumerate lists (audio 1..N, checked before libcdio's 8-bit `track_t`), the parser reads at
+>   most three digits (`"Track %3d.wav"`: `Track 4294967297.wav` had overflowed to track 1, found
+>   by reviewer 7 and confirmed on the laptop), an error sector range after the checks fails as
+>   `G_IO_ERROR_FAILED` with the existing "Error from paranoia" string, and the open path no longer
+>   leaks a GError (the same leak in `do_query_info` is pre-existing, left out). Track 0 is refused:
+>   `gio info` and the gvfsd-fuse listing never exposed it. Checks per version: master compile,
+>   gvfs `fedora-test` CI locally (`tmp/cd-gaps/ci/run-ci.sh`), `-Dcdda=false`, laptop test
+>   (`tmp/cd-gaps/patch-track/track-test.py`). Two choices for the operator in
+>   `mr-description-draft.md`: one MR or two, and whether to file a gvfs issue. Reviewers 1 and 5
+>   brought no verified finding in any round. The operator is weighing retiring
+>   reviewers 1 and 5 (recommended: neither brought a verified finding; both made false claims).
+  **2026-11-06, v5 of both (rework round of 11-04, `REVIEW-ACTIONS.md` H1–H12):** v4's
+  `"Track %3d.wav"` opened track 1 for `Track 0011.wav` (master: 11), so the parser is now
+  `g_ascii_string_to_unsigned()` bounded 1..99 (rejects `1junk`, `+1`, `1.wav.wav`; keeps leading
+  zeros; query_info shares it); patch 1's `has_function` names its header (`prefix:`), and its
+  message says the first read after open/seek waits. Reviewer 3's first/last track numbers not
+  taken (all of gvfs assumes 1..N). Re-tested: master builds, CI as base, laptop runs 1.54.4 + both
+  v5 (`e60fcf37…ec6e`), every invalid name refused, `0011` reads track 11's audio. Reviewers 2 and 3
+  favour two MRs with an issue each; R6 one MR: still the operator's choice.
+  **2026-11-06 late, v6 (final reviews R6/R7, `REVIEW-ACTIONS.md` H26–H38):** R7 found and we
+  reproduced a **regression in patch 2**: `drive->tracks` is a count, so v5.3 refused the last
+  tracks of a disc numbered from above 1 (Track 4 on 2–4, Track 99 on 97–99), which master opens
+  directly and reads correctly. v6 bounds open by `cdio_get_first_track_num()`/
+  `cdio_get_last_track_num()` (H4's "not taken" reversed; enumerate/query_info unchanged, a
+  separate issue). R6's `See:`→`Related:` rejected (the maintainer writes `See:`). Both messages
+  rewritten for reading (patch 1: refill-wait sentence deleted; patch 2: failures first, six short
+  paragraphs). Patch 2 tree `22b5cd0d`, build 0 warnings, CI as base; patch 1 tree unchanged.
+  Laptop re-test of v6 passed (operator's word; installed `36175938…`, `.prev` = v5): every
+  invalid name refused at once, Track 1–13 and the aliases read, hashes as v5. The operator
+  chose **two MRs, an issue each**. 11-07: R6 and R7 rechecked v6 and both say ready (R7
+  withdrew its hold). Their four wording points went into v6.1, which changes the messages only
+  (H39–H44). Next: the issue and MR drafts; the operator submits.
+  **2026-11-07, SUBMITTED (H45–H72):** messages v6.2 (patch 2 lost "as libcdio's own lookups
+  do", which overclaimed), drafts reviewed by R2/R3/R6/R7 to GO; MR 2 carries a parameterized
+  simulated-drive test program (`patch-track/track-test/`, 14/14 on master and patch 2). The
+  operator filed issues **#893** (stall) and **#894** (invalid tracks) and opened **!368**
+  (patch 1, `98dc71a`, closes #893) and **!369** (patch 2, `610794d`, closes #894), from the
+  fork `ivoitovych/gvfs` (branches `cdda-paranoia-readahead`, `cdda-refuse-invalid-tracks`, one
+  commit each on `2d30ce9b`). Each commit differs from the reviewed one only by its `Fixes:`
+  work-item URL. GNOME GitLab: new accounts are "external" (no forks) until an SSH key has been
+  on the account ~20 min; this machine's `root@n` key is now on the operator's GNOME account.
+  Next: watch the MRs for maintainer comments; follow-ups as separate issues (query_info GError
+  leaks, enumerate/query_info assuming 1..N, failed-seek handling).

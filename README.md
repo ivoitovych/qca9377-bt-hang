@@ -4,14 +4,14 @@
 
 [![Linux kernel: 1 in mainline](https://img.shields.io/badge/Linux_kernel-1_in_mainline-2ea44f)](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=86ef0f58bdec)
 [![Linux stable: 3 backports, 3 released](https://img.shields.io/badge/Linux_stable-3_backports%2C_3_released-2ea44f)](patches/kernel/bt9-stable/README.md)
-[![BlueZ: 11 applied](https://img.shields.io/badge/BlueZ-11_applied-2ea44f)](#accepted-upstream-contributions)
+[![BlueZ: 11 released in 5.88](https://img.shields.io/badge/BlueZ-11_released_in_5.88-2ea44f)](#accepted-upstream-contributions)
 [![checks](https://github.com/ivoitovych/qca9377-bt-hang/actions/workflows/checks.yml/badge.svg?branch=main&event=push)](https://github.com/ivoitovych/qca9377-bt-hang/actions/workflows/checks.yml)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-blue)](LICENSE)
 
 An investigation of Bluetooth failures on Linux, with reproducible evidence, diagnostic
 tools, and **upstream contributions: a Linux Bluetooth kernel fix (in mainline, released in v7.3),
-eleven BlueZ commits (four fixes, two cleanups, and five test or emulator changes), and three stable
-backports of another author's kernel fix**.
+eleven BlueZ commits (four fixes, two cleanups, and five test or emulator changes; all released in
+BlueZ 5.88), and three stable backports of another author's kernel fix**.
 
 The work began with a Qualcomm Atheros **QCA9377** controller (USB ID `13d3:3503`) that
 stopped answering during hands-free audio and came back only when power was removed.
@@ -48,7 +48,9 @@ nothing in them is conditional on this controller's USB ID. The emulator and `mg
 commits are test infrastructure: they make the discovery race reproducible in BlueZ's own
 test suite. "Accepted" means in the subsystem maintainer's
 tree; inclusion in a release, stable backports and distribution packages are later
-milestones, tracked in [`docs/STATUS.md`](docs/STATUS.md). Submission history and every
+milestones, tracked in [`docs/STATUS.md`](docs/STATUS.md). All eleven BlueZ commits are in
+**BlueZ 5.88** (tagged 2026-11-05; none was in 5.87:
+[`results/bluez-5.88-release-check-2026-11-07/`](results/bluez-5.88-release-check-2026-11-07/README.md)). Submission history and every
 link (lore, patchwork, the list's CI bot) are in [`patches/bluez/README.md`](patches/bluez/README.md).
 
 ### Backports and testing of others' patches
@@ -142,28 +144,39 @@ your distribution ships one, the entry is a two-line addition to
 `drivers/bluetooth/btusb.c`. Check which `btusb` you run with
 `tools/bt-verify-kernel-mechanism`, not the kernel version — backports move.
 
-## Current direction — 2026-10-28
+## Current direction — 2026-11-07
 
 - **SCO connection reuse (`U7`, sent 2026-10-27).** The kernel series and its BlueZ test are
-  under review; the list's CI bot passed both. On the laptop the series has run since 2026-10-23
-  with three headsets ([`contributions/CO-02-…`](contributions/CO-02-sco-connect-reuses-closing-link/README.md)).
-- **Stable backport of `dc16388d45ec`:** released in 7.2.10, 6.18.56, 6.12.113 and 6.6.160; in
-  the release candidates of 6.1, 5.15 and 5.10 (`EX-061`). Ubuntu's `7.0.0-38`, `7.0.0-39`
-  (proposed) and `7.0.0-42` (pending in noble-updates since 2026-10-27) lack it; 7.0 is no longer
-  maintained upstream, and Ubuntu's next stable base should bring it (an inference). Until then
-  the laptop runs the entry as a self-built `btusb`, rebuilt before any new kernel boots.
+  under review; the list's CI bot passed both; an automated review asked that patches 2 and 3 go
+  to stable together, and the next posting will be a v2 (no maintainer reply as of 2026-11-01).
+  On the laptop the series ran from 2026-10-23 to 10-29 with three headsets
+  ([`contributions/CO-02-…`](contributions/CO-02-sco-connect-reuses-closing-link/README.md)).
+- **Stable backport of `dc16388d45ec`:** released in every live stable line: 7.2.10, 6.18.56,
+  6.12.113, 6.6.160, 6.1.191, 5.15.224 and 5.10.273 (`EX-061`). Ubuntu's `7.0.0-42` lacks it; 7.0
+  is no longer maintained upstream, and Ubuntu's next stable base should bring it (an inference).
+  Until then the laptop runs the entry as a self-built `btusb`, rebuilt before any new kernel boots.
 - **Simultaneous discovery that never stops (`EX-062`).** Fixed upstream by another author; our
-  backports are released in 6.12.113 and 6.6.160 and in the 6.1 release candidate; the BlueZ
-  regression test and leak fix are applied (tables above).
-- **Next candidates, each in its own dossier under [`contributions/`](contributions/README.md):**
-  a one-line BlueZ tester fix ready to send (`CO-34`); a stable request for an L2CAP hang that
-  every released kernel has, whose fix was identified on 2026-10-28 (`CO-35`); an independent fix
-  for an open mesh use-after-free (`CO-04`); a mesh locking fix (`CO-05`); and BlueZ pairing and
-  discovery defects seen with this laptop's headsets (`U13`, `U16`, `U18`).
+  backports are released in 6.12.113, 6.6.160 and 6.1.191; the BlueZ regression test and leak fix
+  are released in BlueZ 5.88 (tables above).
+- **A report to Qualcomm on the ROM firmware's hang** (`CO-25`), sent 2026-10-29 to the kernel's
+  Bluetooth list; a Qualcomm engineer replied the same day, and a clarifying answer is drafted.
+- **Next candidates, each in its own dossier under [`contributions/`](contributions/README.md),**
+  with send packages ready and waiting for the author's decision: a stable request for an L2CAP
+  hang that every released kernel has (`CO-35`); an independent fix for an open mesh
+  use-after-free (`CO-04`) and a mesh locking fix (`CO-05`); a stable request for two more QCA
+  device-table entries (`CO-22`); BlueZ use-after-frees at exit (`CO-37`); a hidden advertising
+  instance in the management interface (`CO-38`); and an Ubuntu update for a `btmon` crash
+  (`CO-11`). BlueZ pairing and discovery defects seen with this laptop's headsets (`U13`, `U16`,
+  `U18`) are still being investigated.
+- **Off-topic, outside Bluetooth:** audio CDs played through GNOME's CD backend paused about
+  3 seconds every 16 seconds on this laptop. Two fixes were submitted to gvfs on 2026-11-07
+  ([!368](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/368),
+  [!369](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/369);
+  [`contributions/X1-gvfs-cdda-readahead/`](contributions/X1-gvfs-cdda-readahead/README.md)).
 - **Delivery of the accepted changes** into kernel and BlueZ releases and into Ubuntu:
-  tracked. No BlueZ release carries them yet (the newest tag is 5.87).
+  tracked. BlueZ 5.88 (2026-11-05) carries all eleven BlueZ commits; Ubuntu 24.04 ships 5.72.
 - **Desktop audio issues** seen while testing the fixed driver are recorded in
-  [`docs/issues.md`](docs/issues.md) (`U1` to `U20`) as leads with evidence. Upstream fixes are
+  [`docs/issues.md`](docs/issues.md) (`U1` to `U28`) as leads with evidence. Upstream fixes are
   checked before anything new is written; for PipeWire and WirePlumber the project gathers the
   evidence and the author writes the report.
 
@@ -174,8 +187,9 @@ The dated detail, one row per issue and submission, is [`docs/STATUS.md`](docs/S
 ```
 Distribution : Ubuntu 24.04 LTS (noble)
 Kernels      : 7.0.0-29, -30, -31, -34-generic (the twelve instances); 6.17.0-29/35/40, 7.0.0-28 (earlier phenotype);
-               7.0.0-38-generic with the upstream entry (E3) since 2026-10-11, and since 2026-10-23
-               also the CO-02 series' bluetooth.ko (EX-071)
+               7.0.0-38-generic with the upstream entry (E3) from 2026-10-11, and from 2026-10-23 to
+               10-29 also the CO-02 series' bluetooth.ko (EX-071); 7.0.0-42-generic with E3 and the
+               stock bluetooth.ko since 2026-10-30
 BlueZ        : 5.72 (the running patched daemon is a rebuild of 5.72-0ubuntu5.5; the package is 5.72-0ubuntu5.8 since 2026-10-14)
 Platform     : AMD Renoir/Cezanne laptop; controller on xhci_hcd, full-speed
 BT device    : usb 13d3:3503 — HCI manufacturer 0x001D (Qualcomm), version 0x07 (4.2)

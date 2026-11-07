@@ -141,10 +141,10 @@ Recent detail may be shortened. Settled state is never dropped.
   - The test-suite maintainer works on `tests/unit-testing-introduction` and `tests/unit-testing-introduction-ready-for-main`, and merges `main` into them on their side (`comms/`).
 - **Sending:** nothing is sent without the operator's word. Before any send, run the receiving project's CI on base and on base plus ours (§8).
 
-**Last updated: 2026-11-03, evening** (X1: final review rounds folded in; both gvfs patches
-final and re-tested, `cc8384a`; see the X1 bullet). Afternoon: hand-off for X1 after the outside
-review round; disk cleanup done; agents for X1.
-2026-11-02, evening: hand-off extended (the five packages made ready, X1, disk).
+**Last updated: 2026-11-07, morning** (the documentation review: X1 submitted to gvfs; its long
+hand-off bullet moved to the end of `HISTORY.md` verbatim and replaced; BlueZ 5.88 carries all
+eleven applied commits; the machine re-read, with two unexamined "HANG" trial verdicts; the
+agents bullet ended). 2026-11-03: X1's final review rounds. 2026-11-02, evening: hand-off extended (the five packages made ready, X1, disk).
 Earlier 2026-11-02: (the hand-off rewritten for the review round; the 10-29/30 block
 moved to the end of `HISTORY.md` verbatim; the state block's CO-02 and sends lines amended).
 2026-10-30: the hand-off rewritten for the `-42` boot. 2026-10-29: a hand-off block for 10-29 added. Before that, 2026-10-28 (the documentation review: every foundation document checked
@@ -152,17 +152,24 @@ against the facts re-verified that day; the state block above rewritten; the han
 2026-10-18 to 10-23 moved to `HISTORY.md` verbatim and replaced below). The trail of earlier
 updates is in `HISTORY.md` and `git log -- BRIEF.md`, not here: until 2026-10-28 this line
 carried a running list of every update since 10-14, which grew to about 2,800 characters
-(`reviews/2026-10-28T0300Z-documentation-alignment.md`). **Newest exhibit on `main`: EX-083**
-(EX-067 to EX-083 are CO-02's hardware run and code comparisons). No tip hash: it rotted within
+(`reviews/2026-10-28T0300Z-documentation-alignment.md`). **Newest exhibit on `main`: EX-088**
+(EX-067 to EX-083 are CO-02's hardware run and code comparisons; EX-084 to EX-088, added
+2026-10-31 in `3bd731a`, are U12's A2DP loss of 10-31). No tip hash: it rotted within
 hours (`R2-13`).
 
-> **HAND-OFF (2026-11-02; read first; the 10-29/30 block is now at the end of `HISTORY.md`).**
-> STATUS has every row named here; the review round's follow-up list is the work queue.
+> **HAND-OFF (2026-11-02, brought to 2026-11-07; read first; the 10-29/30 block and the long X1
+> bullet are at the end of `HISTORY.md`).** STATUS has every row named here; the review round's
+> follow-up list is the work queue.
 >
-> - **No agents until Thursday 2026-11-05 09:00** (the operator, 11-02: the weekly limit). Work
->   inline; an agent only as a special case on the operator's approval. Approved and run 11-02/03:
->   three medium-effort agents for X1 (simulator, reset hunt, speed policies), all in containers
->   under `/root/exp/agent-work/x1-cdsim-20261102/`. None is running.
+> - **First, 11-07: two trial rows say HANG, not examined.** E3 #3 (10-30 19:52) and E3 #4 (11-06
+>   15:47) closed with `trial_result failed`, `responds_after no`, 0 SCO links; #4's closer logged
+>   "controller does NOT respond … HANG after 72829s … cold power-off required", 19 rfkill
+>   `hci0 blocked 0` lines in the 25 s before (STATUS, machine section). Real hang or the installed
+>   closer probing a powered-down adapter at shutdown (STATUS's standing warning)? Read the two
+>   boots' journals before anything else; sysfs and journal reads only.
+> - **Agents:** the weekly limit of 11-02 ended 2026-11-05 09:00. The rule that remains: cheap
+>   agents for per-file reviews, the main context synthesises. Three X1 agents ran 11-02/03 in
+>   containers (`/root/exp/agent-work/x1-cdsim-20261102/`); none is running.
 > - **The review round is open; nothing from it is acted on yet.** The package
 >   (`contributions/review-2026-11-02/review-package.md`, every ready package verbatim, for outside
 >   reviewers) was read by six reviewers; their points, each checked, are in
@@ -191,8 +198,10 @@ hours (`R2-13`).
 >   projects' process documents); proposed, awaiting his word: kernel drafts carry no
 >   `Signed-off-by`, he adds his own; **BlueZ takes none at all** (`HACKING`). BlueZ subjects: HACKING
 >   asks 50 columns, merged practice is often longer (decision D9).
-> - **Machine: not re-read on 11-02.** Last known (10-30): `7.0.0-42` with E3, stock `bluetooth.ko`;
->   the CO-02 module for `-42` built, not installed. U12 struck again 10-31; the CO-03 backport is
+> - **Machine, re-read 11-07:** boot `045caff5` since 11-06 15:51, `7.0.0-42` with E3 (srcversion
+>   `DDB92562D1890FC3D262993`), stock `bluetooth.ko`; five boots since 10-30; trial **E3 #5** open
+>   since 11-06 15:51; gvfsd-cdda is X1's v6 build by `dpkg-divert`; 142 GB free. The CO-02 module
+>   for `-42` built, not installed. U12 struck again 10-31; the CO-03 backport is
 >   the remedy and waits for the laptop test with the MOMENTUM 4.
 > - **Later on 11-02, the "nearly ready" five made ready (agents approved for this; each verified,
 >   committed, nothing sent):** CO-25 reply v4 (`38b496b`; quotes the kernel's `build 0x111` line;
@@ -204,77 +213,23 @@ hours (`R2-13`).
 >   with its own dossier (`cc90614`). Open questions: D6, D12, and whether CO-38's BlueZ series
 >   goes now or only its listing case. An agent asked to reproduce U28 was stopped by the
 >   service's safety filter at its first step; U28 stays a source-reading finding.
-> - **Off-topic X1 (not Bluetooth): audio CD in Totem stops ~3 s every 16 s.** Cause (`986a910`):
->   gvfsd-cdda's synchronous `cdio_paranoia_read()` refills the 1200-sector (16 s) cache model in
->   one ~3 s call. **Totem reads through gvfsd-fuse** (`/run/user/1000/gvfs/cdda:host=sr0/…`), not
->   giosrc (corrected 11-02 evening). The first fix, a read-ahead thread (`patch1/`), was held after
->   **seven outside reviews of the patch alone** (findings and what was verified:
->   `contributions/X1-gvfs-cdda-readahead/REVIEW-ACTIONS.md`, F1–F39, A1–A11): it lets two open
->   tracks enter libcdio on one drive at once (one reviewer got wrong data), retries a failed sector
->   while buffered data is consumed, and is unowned on forced unmount. **The fix now is the
->   small one**, as GStreamer's cdparanoiasrc does for playback: `cdio_paranoia_cachemodel_size(p,
->   150)` behind a meson `has_function` check (`patch1-small/`, +8, on gvfs master `2d30ce9b73ba`).
->   Laptop A/B 11-03 (`tmp/cd-gaps/ab/run-20261103b/summary.tsv`, 2 runs each from a stopped
->   drive): stock 19/19 mid-track underflows, 150 sectors 0/0, copy 29.8 → 29.0 s, audio identical
->   to `cd-paranoia` (after a byte swap of cd-paranoia's raw order). **Separate patch** found by
->   a reviewer (`patch-track/`, +10 −4): `do_open_for_read` accepted tracks not on the disc;
->   before, `Track 99.wav` kept the backend busy >5 min, `Track 257.wav` gave track 1. gvfs's
->   `fedora-test` CI run locally in its image: identical on base and with each patch. Downstream:
->   Launchpad 1967258 (Totem pauses, Rhythmbox doesn't). **Not filed or submitted:** the gvfs issue
->   draft (`patch1-small/issue-draft.md`) is the operator's to file; then a `Fixes:` line. Laptop
->   now runs 1.54.4 + both fixes via `dpkg-divert` (undo: `rm /usr/libexec/gvfsd-cdda`,
->   `dpkg-divert --local --rename --remove /usr/libexec/gvfsd-cdda`, remount). Patch 2 (drive speed)
->   is on hold: a fixed low speed made copying 4–5× slower in the simulator; the operator judges
->   whether small reads at full speed are quiet enough.
->   **Evening 11-03, final rounds (records G1–G19 in `REVIEW-ACTIONS.md`):** patch 1 is now
->   "cdda: Limit paranoia read-ahead to avoid playback stalls" (message: paranoia collects the
->   cache model in several reads; libcdio-paranoia ≤ 10.2+0.90+1 refilled `p->readahead=150`,
->   the 1200 model and the setter came together in 10.2+0.93+1, 2014 — verified on both tags;
->   `See:` GStreamer `4e1086f9`, `Related:` Launchpad 1967258, whose log shows underflows 16 s
->   apart). Patch 2 is "cdda: Refuse to open invalid and non-audio tracks": accepts exactly what
->   enumerate lists (audio 1..N, checked before libcdio's 8-bit `track_t`), the parser reads at
->   most three digits (`"Track %3d.wav"`: `Track 4294967297.wav` had overflowed to track 1, found
->   by reviewer 7 and confirmed on the laptop), an error sector range after the checks fails as
->   `G_IO_ERROR_FAILED` with the existing "Error from paranoia" string, and the open path no longer
->   leaks a GError (the same leak in `do_query_info` is pre-existing, left out). Track 0 is refused:
->   `gio info` and the gvfsd-fuse listing never exposed it. Checks per version: master compile,
->   gvfs `fedora-test` CI locally (`tmp/cd-gaps/ci/run-ci.sh`), `-Dcdda=false`, laptop test
->   (`tmp/cd-gaps/patch-track/track-test.py`). Two choices for the operator in
->   `mr-description-draft.md`: one MR or two, and whether to file a gvfs issue. Reviewers 1 and 5
->   brought no verified finding in any round. The operator is weighing retiring
->   reviewers 1 and 5 (recommended: neither brought a verified finding; both made false claims).
-  **2026-11-06, v5 of both (rework round of 11-04, `REVIEW-ACTIONS.md` H1–H12):** v4's
-  `"Track %3d.wav"` opened track 1 for `Track 0011.wav` (master: 11), so the parser is now
-  `g_ascii_string_to_unsigned()` bounded 1..99 (rejects `1junk`, `+1`, `1.wav.wav`; keeps leading
-  zeros; query_info shares it); patch 1's `has_function` names its header (`prefix:`), and its
-  message says the first read after open/seek waits. Reviewer 3's first/last track numbers not
-  taken (all of gvfs assumes 1..N). Re-tested: master builds, CI as base, laptop runs 1.54.4 + both
-  v5 (`e60fcf37…ec6e`), every invalid name refused, `0011` reads track 11's audio. Reviewers 2 and 3
-  favour two MRs with an issue each; R6 one MR: still the operator's choice.
-  **2026-11-06 late, v6 (final reviews R6/R7, `REVIEW-ACTIONS.md` H26–H38):** R7 found and we
-  reproduced a **regression in patch 2**: `drive->tracks` is a count, so v5.3 refused the last
-  tracks of a disc numbered from above 1 (Track 4 on 2–4, Track 99 on 97–99), which master opens
-  directly and reads correctly. v6 bounds open by `cdio_get_first_track_num()`/
-  `cdio_get_last_track_num()` (H4's "not taken" reversed; enumerate/query_info unchanged, a
-  separate issue). R6's `See:`→`Related:` rejected (the maintainer writes `See:`). Both messages
-  rewritten for reading (patch 1: refill-wait sentence deleted; patch 2: failures first, six short
-  paragraphs). Patch 2 tree `22b5cd0d`, build 0 warnings, CI as base; patch 1 tree unchanged.
-  Laptop re-test of v6 passed (operator's word; installed `36175938…`, `.prev` = v5): every
-  invalid name refused at once, Track 1–13 and the aliases read, hashes as v5. The operator
-  chose **two MRs, an issue each**. 11-07: R6 and R7 rechecked v6 and both say ready (R7
-  withdrew its hold). Their four wording points went into v6.1, which changes the messages only
-  (H39–H44). Next: the issue and MR drafts; the operator submits.
-  **2026-11-07, SUBMITTED (H45–H72):** messages v6.2 (patch 2 lost "as libcdio's own lookups
-  do", which overclaimed), drafts reviewed by R2/R3/R6/R7 to GO; MR 2 carries a parameterized
-  simulated-drive test program (`patch-track/track-test/`, 14/14 on master and patch 2). The
-  operator filed issues **#893** (stall) and **#894** (invalid tracks) and opened **!368**
-  (patch 1, `98dc71a`, closes #893) and **!369** (patch 2, `610794d`, closes #894), from the
-  fork `ivoitovych/gvfs` (branches `cdda-paranoia-readahead`, `cdda-refuse-invalid-tracks`, one
-  commit each on `2d30ce9b`). Each commit differs from the reviewed one only by its `Fixes:`
-  work-item URL. GNOME GitLab: new accounts are "external" (no forks) until an SSH key has been
-  on the account ~20 min; this machine's `root@n` key is now on the operator's GNOME account.
-  Next: watch the MRs for maintainer comments; follow-ups as separate issues (query_info GError
-  leaks, enumerate/query_info assuming 1..N, failed-seek handling).
+> - **Off-topic X1 (not Bluetooth): SUBMITTED to gvfs 2026-11-07.** An audio CD in Totem stopped
+>   ~3 s every 16 s: gvfsd-cdda's synchronous `cdio_paranoia_read()` refills paranoia's 1200-sector
+>   (16 s) cache model in one ~3 s call, and Totem (reading through **gvfsd-fuse**, not giosrc)
+>   runs dry. The fix is GStreamer's: a 150-sector cache model behind a meson `has_function` check
+>   (laptop A/B: 19/19 → 0/0 mid-track underflows). A reviewer-found second bug, invalid track names
+>   (`Track 99.wav` busy >5 min, `Track 257.wav` = track 1), became its own patch, bounded by the
+>   disc's real first/last track numbers (a count-based v5.3 regressed discs numbered from above 1).
+>   Filed by the operator: issues **#893**, **#894**; MRs **!368** (`98dc71a`) and **!369**
+>   (`610794d`), fork `ivoitovych/gvfs`, both pipelines passed. Every version, review point and
+>   test: `contributions/X1-gvfs-cdda-readahead/REVIEW-ACTIONS.md` (F1–F39, A1–A11, G1–G19,
+>   H1–H73). Read back with `scripts/cd-trace/x1-check-submission.py`. **Watch for maintainer
+>   comments; replies are drafted here, posted by the operator.** Follow-ups X2–X4 (GError leaks,
+>   1-based numbering, ignored seek) are registered, not reported. The laptop runs 1.54.4 + both
+>   patches by `dpkg-divert` (undo in STATUS); **after any gvfs package update, rebuild or remove
+>   the diversion**. GNOME GitLab: a new account is "external" (no fork) until an SSH key has been on
+>   it ~20 min; this machine's `root@n` key is on the operator's account. The detailed running
+>   notes of 11-02 to 11-07 are at the end of `HISTORY.md`.
 > - **Disk: cleanup done 11-02/03, 144 GB free.** Two runs under `agent-work`; the first crashed
 >   with no log (`tmp/cleanup/cleanup-reconcile-after-crash-20261102.md`: 141 items gone, every
 >   local commit saved as patches) and broke 10 trees' git metadata (shared clones lost their
@@ -286,6 +241,9 @@ hours (`R2-13`).
 >   (mostly inline: regenerating patches on public bases, message edits, read-only source checks);
 >   the heavier QEMU runs (F-19, F-80, F-82) after asking; the laptop tests (CO-18, CO-08, CO-32,
 >   CO-15, CO-03, CO-19) on the operator's word; E3 #3's row still to be written from the journal.
+>   **Added 11-07:** first the two HANG verdicts above; X1's MRs watched for comments; X2–X4 after
+>   them; BlueZ 5.88 carries our eleven commits, so the Ubuntu route for them (an SRU of the fixes
+>   onto 5.72) is now a question of backporting released code.
 
 
 ---
@@ -400,12 +358,13 @@ fault is not specific to Disconnect.
 | "lore.kernel.org is unreachable" | **FALSE** — UA block fronting a JS challenge; a browser gets 200 |
 | "the discovery stuck since 10-04 lasted until the reboot into `7.0.0-38` (10-11)" | **FALSE** — the operator's adapter power cycle ended it on 10-10: powered again 15:02:44.156, the next Start Discovery answered Success 24 ms later, and no `Status: Busy` in any capture from then to the 10-11 shutdown; the control, 05:10:31 the same day, is refused Busy (`docs/STATUS.md`, BT-9) |
 
-## 6. The BlueZ patches — status: **APPLIED UPSTREAM 2026-09-21**
+## 6. The BlueZ patches — status: **APPLIED UPSTREAM 2026-09-21, RELEASED IN 5.88 (2026-11-05)**
 
 **Both v1 patches are in BlueZ master, committed by the maintainer 2026-09-21T10:10-04:00 exactly
 as sent: `a734b0605` (adapter), `0bed9886c` (a2dp).** Thirty-eight days from first crash to tree.
 Every URL — kernel.org commits, lore, patchwork v1/v2, bot PRs — in the status table at the top
-of `patches/bluez/README.md`; no BlueZ release tag carries them yet (master is `5.87-397-gfa6ba5502` on 2026-10-17).
+of `patches/bluez/README.md`. **Released in BlueZ 5.88** (tagged 2026-11-05), with every other
+BlueZ commit of ours; none was in 5.87 (`results/bluez-5.88-release-check-2026-11-07/`).
 ⚠️ The v2 mails (22:47 CEST the same day) were sent 6.5 h *after* that, checked against a
 month-old cached checkout instead of a fetched `origin/master` — redundant, bot said "does not
 apply" for `0001`, all-PASS for `0002`. Lesson in code: `scripts/pre-send-check.sh` fetches and

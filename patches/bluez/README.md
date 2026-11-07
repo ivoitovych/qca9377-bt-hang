@@ -19,7 +19,7 @@ sent; its final form went out on 2026-10-18 as A1, in
 | v2 mail (moot — sent after v1 was applied) | [lore](https://lore.kernel.org/linux-bluetooth/20260921204706.211385-1-yaroslav.voytovych@gmail.com/) | [lore](https://lore.kernel.org/linux-bluetooth/20260921204711.211409-1-yaroslav.voytovych@gmail.com/) |
 | v2 patchwork (state *new*, nobody's hand on it) | [14836499](https://patchwork.kernel.org/project/bluetooth/patch/20260921204706.211385-1-yaroslav.voytovych@gmail.com/), series [1170690](https://patchwork.kernel.org/series/1170690/) | [14836500](https://patchwork.kernel.org/project/bluetooth/patch/20260921204711.211409-1-yaroslav.voytovych@gmail.com/), series [1170691](https://patchwork.kernel.org/series/1170691/) |
 | v2 bot result | does not apply (v1 already in tree); no PR | all PASS; [#2559](https://github.com/bluez/bluez/pull/2559) would add the guard twice; **closed unmerged by the bot 2026-10-07 00:04 UTC** as stale (open > 2 weeks) — expected: v1 is the applied commit |
-| first BlueZ release to carry them | the next tag after `5.87` (none cut as of 2026-09-22) | same |
+| first BlueZ release to carry them | **5.88** (tagged 2026-11-05; checked 2026-11-07, [`results/bluez-5.88-release-check-2026-11-07/`](../../results/bluez-5.88-release-check-2026-11-07/README.md)) | same |
 
 `lore` links open in a browser (its anti-bot page blocks `curl`); the kernel.org
 commit links serve the raw patch with `/patch/?id=`.
