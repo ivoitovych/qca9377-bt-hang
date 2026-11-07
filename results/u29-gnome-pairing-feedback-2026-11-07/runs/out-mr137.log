@@ -1,0 +1,96 @@
+test_control (__main__.PairFailure.test_control) ... 1794079419.583 AddAdapter "hci0" "my-computer"
+1794079419.584 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0" {"org.bluez.Adapter1": {"UUIDs": ["00001200-0000-1000-8000-00805f9b34fb", "00001800-0000-1000-8000-00805f9b34fb", "00001801-0000-1000-8000-00805f9b34fb", "0000110e-0000-1000-8000-00805f9b34fb", "0000110c-0000-1000-8000-00805f9b34fb"], "Discoverable": False, "Discovering": False, "Pairable": True, "Powered": True, "Address": "00:01:02:03:04:05", "AddressType": "public", "Alias": "my-computer", "Modalias": "usb:v1D6Bp0245d050A", "Name": "my-computer", "Class": 268, "DiscoverableTimeout": 180, "PairableTimeout": 0, "Roles": ["central", "peripheral"]}}
+1794079419.584 AddDevice "hci0" "11:22:33:44:55:66" "My Phone"
+1794079419.584 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0/dev_11_22_33_44_55_66" {"org.bluez.Device1": {"Address": "11:22:33:44:55:66", "AddressType": "public", "Name": "My Phone", "Icon": "phone", "Class": 5898764, "Appearance": 0, "UUIDs": [], "Paired": False, "Connected": False, "Trusted": False, "Blocked": False, "WakeAllowed": False, "Alias": "My Phone", "Adapter": "/org/bluez/hci0", "LegacyPairing": False, "Modalias": "bluetooth:v000Fp1200d1436", "RSSI": -79, "TxPower": 0, "ManufacturerData": [], "ServiceData": [], "ServicesResolved": False, "AdvertisingFlags": [], "AdvertisingData": []}}
+1794079419.714 GetManagedObjects
+1794079419.723 RegisterAgent "/org/gnome/bluetooth/settings" "DisplayYesNo"
+1794079419.724 RequestDefaultAgent "/org/gnome/bluetooth/settings"
+1794079419.725 SetDiscoveryFilter {"Discoverable": True}
+1794079419.727 StartDiscovery
+1794079419.727 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+/work/tests/pair-failure-mr137-test.py:57: ResourceWarning: unclosed file <_io.TextIOWrapper name='/out/control-toast.stdout.log' mode='w' encoding='utf-8'>
+  open('%s/%s.stdout.log' % (OUTDIR, tag), 'w').write(out.stdout)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/work/tests/pair-failure-mr137-test.py:58: ResourceWarning: unclosed file <_io.TextIOWrapper name='/out/control-toast.stderr.log' mode='w' encoding='utf-8'>
+  open('%s/%s.stderr.log' % (OUTDIR, tag), 'w').write(out.stderr)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_errors (__main__.PairFailure.test_errors) ... 1794079423.592 AddAdapter "hci0" "my-computer"
+1794079423.592 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0" {"org.bluez.Adapter1": {"UUIDs": ["00001200-0000-1000-8000-00805f9b34fb", "00001800-0000-1000-8000-00805f9b34fb", "00001801-0000-1000-8000-00805f9b34fb", "0000110e-0000-1000-8000-00805f9b34fb", "0000110c-0000-1000-8000-00805f9b34fb"], "Discoverable": False, "Discovering": False, "Pairable": True, "Powered": True, "Address": "00:01:02:03:04:05", "AddressType": "public", "Alias": "my-computer", "Modalias": "usb:v1D6Bp0245d050A", "Name": "my-computer", "Class": 268, "DiscoverableTimeout": 180, "PairableTimeout": 0, "Roles": ["central", "peripheral"]}}
+1794079423.593 AddDevice "hci0" "11:22:33:44:55:66" "My Phone"
+1794079423.593 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0/dev_11_22_33_44_55_66" {"org.bluez.Device1": {"Address": "11:22:33:44:55:66", "AddressType": "public", "Name": "My Phone", "Icon": "phone", "Class": 5898764, "Appearance": 0, "UUIDs": [], "Paired": False, "Connected": False, "Trusted": False, "Blocked": False, "WakeAllowed": False, "Alias": "My Phone", "Adapter": "/org/bluez/hci0", "LegacyPairing": False, "Modalias": "bluetooth:v000Fp1200d1436", "RSSI": -79, "TxPower": 0, "ManufacturerData": [], "ServiceData": [], "ServicesResolved": False, "AdvertisingFlags": [], "AdvertisingData": []}}
+1794079423.595 AddAdapter "hci0" "my-computer"
+1794079423.595 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0" {"org.bluez.Adapter1": {"UUIDs": ["00001200-0000-1000-8000-00805f9b34fb", "00001800-0000-1000-8000-00805f9b34fb", "00001801-0000-1000-8000-00805f9b34fb", "0000110e-0000-1000-8000-00805f9b34fb", "0000110c-0000-1000-8000-00805f9b34fb"], "Discoverable": False, "Discovering": False, "Pairable": True, "Powered": True, "Address": "00:01:02:03:04:05", "AddressType": "public", "Alias": "my-computer", "Modalias": "usb:v1D6Bp0245d050A", "Name": "my-computer", "Class": 268, "DiscoverableTimeout": 180, "PairableTimeout": 0, "Roles": ["central", "peripheral"]}}
+1794079423.595 AddDevice "hci0" "11:22:33:44:55:66" "My Phone"
+1794079423.595 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0/dev_11_22_33_44_55_66" {"org.bluez.Device1": {"Address": "11:22:33:44:55:66", "AddressType": "public", "Name": "My Phone", "Icon": "phone", "Class": 5898764, "Appearance": 0, "UUIDs": [], "Paired": False, "Connected": False, "Trusted": False, "Blocked": False, "WakeAllowed": False, "Alias": "My Phone", "Adapter": "/org/bluez/hci0", "LegacyPairing": False, "Modalias": "bluetooth:v000Fp1200d1436", "RSSI": -79, "TxPower": 0, "ManufacturerData": [], "ServiceData": [], "ServicesResolved": False, "AdvertisingFlags": [], "AdvertisingData": []}}
+1794079423.703 GetManagedObjects
+1794079423.712 RegisterAgent "/org/gnome/bluetooth/settings" "DisplayYesNo"
+1794079423.712 RequestDefaultAgent "/org/gnome/bluetooth/settings"
+1794079423.713 SetDiscoveryFilter {"Discoverable": True}
+1794079423.715 StartDiscovery
+1794079423.715 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+1794079424.330 StopDiscovery
+1794079424.330 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": False, "Discovering": False} []
+1794079424.330 Pair
+1794079424.330 Pair raised: org.bluez.Error.AuthenticationRejected: Authentication Rejected
+1794079424.330 SetDiscoveryFilter {"Discoverable": True}
+1794079424.331 StartDiscovery
+1794079424.331 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+/work/tests/pair-failure-mr137-test.py:57: ResourceWarning: unclosed file <_io.TextIOWrapper name='/out/AuthenticationRejected.stdout.log' mode='w' encoding='utf-8'>
+  open('%s/%s.stdout.log' % (OUTDIR, tag), 'w').write(out.stdout)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/work/tests/pair-failure-mr137-test.py:58: ResourceWarning: unclosed file <_io.TextIOWrapper name='/out/AuthenticationRejected.stderr.log' mode='w' encoding='utf-8'>
+  open('%s/%s.stderr.log' % (OUTDIR, tag), 'w').write(out.stderr)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+1794079427.569 AddAdapter "hci0" "my-computer"
+1794079427.569 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0" {"org.bluez.Adapter1": {"UUIDs": ["00001200-0000-1000-8000-00805f9b34fb", "00001800-0000-1000-8000-00805f9b34fb", "00001801-0000-1000-8000-00805f9b34fb", "0000110e-0000-1000-8000-00805f9b34fb", "0000110c-0000-1000-8000-00805f9b34fb"], "Discoverable": False, "Discovering": False, "Pairable": True, "Powered": True, "Address": "00:01:02:03:04:05", "AddressType": "public", "Alias": "my-computer", "Modalias": "usb:v1D6Bp0245d050A", "Name": "my-computer", "Class": 268, "DiscoverableTimeout": 180, "PairableTimeout": 0, "Roles": ["central", "peripheral"]}}
+1794079427.569 AddDevice "hci0" "11:22:33:44:55:66" "My Phone"
+1794079427.569 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0/dev_11_22_33_44_55_66" {"org.bluez.Device1": {"Address": "11:22:33:44:55:66", "AddressType": "public", "Name": "My Phone", "Icon": "phone", "Class": 5898764, "Appearance": 0, "UUIDs": [], "Paired": False, "Connected": False, "Trusted": False, "Blocked": False, "WakeAllowed": False, "Alias": "My Phone", "Adapter": "/org/bluez/hci0", "LegacyPairing": False, "Modalias": "bluetooth:v000Fp1200d1436", "RSSI": -79, "TxPower": 0, "ManufacturerData": [], "ServiceData": [], "ServicesResolved": False, "AdvertisingFlags": [], "AdvertisingData": []}}
+1794079427.676 GetManagedObjects
+1794079427.684 RegisterAgent "/org/gnome/bluetooth/settings" "DisplayYesNo"
+1794079427.685 RequestDefaultAgent "/org/gnome/bluetooth/settings"
+1794079427.686 SetDiscoveryFilter {"Discoverable": True}
+1794079427.688 StartDiscovery
+1794079427.688 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+1794079428.302 StopDiscovery
+1794079428.302 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": False, "Discovering": False} []
+1794079428.303 Pair
+1794079428.303 Pair raised: org.bluez.Error.AuthenticationFailed: Authentication Failed
+1794079428.304 SetDiscoveryFilter {"Discoverable": True}
+1794079428.305 StartDiscovery
+1794079428.305 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+/work/tests/pair-failure-mr137-test.py:57: ResourceWarning: unclosed file <_io.TextIOWrapper name='/out/AuthenticationFailed.stdout.log' mode='w' encoding='utf-8'>
+  open('%s/%s.stdout.log' % (OUTDIR, tag), 'w').write(out.stdout)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/work/tests/pair-failure-mr137-test.py:58: ResourceWarning: unclosed file <_io.TextIOWrapper name='/out/AuthenticationFailed.stderr.log' mode='w' encoding='utf-8'>
+  open('%s/%s.stderr.log' % (OUTDIR, tag), 'w').write(out.stderr)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+1794079431.548 AddAdapter "hci0" "my-computer"
+1794079431.549 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0" {"org.bluez.Adapter1": {"UUIDs": ["00001200-0000-1000-8000-00805f9b34fb", "00001800-0000-1000-8000-00805f9b34fb", "00001801-0000-1000-8000-00805f9b34fb", "0000110e-0000-1000-8000-00805f9b34fb", "0000110c-0000-1000-8000-00805f9b34fb"], "Discoverable": False, "Discovering": False, "Pairable": True, "Powered": True, "Address": "00:01:02:03:04:05", "AddressType": "public", "Alias": "my-computer", "Modalias": "usb:v1D6Bp0245d050A", "Name": "my-computer", "Class": 268, "DiscoverableTimeout": 180, "PairableTimeout": 0, "Roles": ["central", "peripheral"]}}
+1794079431.549 AddDevice "hci0" "11:22:33:44:55:66" "My Phone"
+1794079431.549 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0/dev_11_22_33_44_55_66" {"org.bluez.Device1": {"Address": "11:22:33:44:55:66", "AddressType": "public", "Name": "My Phone", "Icon": "phone", "Class": 5898764, "Appearance": 0, "UUIDs": [], "Paired": False, "Connected": False, "Trusted": False, "Blocked": False, "WakeAllowed": False, "Alias": "My Phone", "Adapter": "/org/bluez/hci0", "LegacyPairing": False, "Modalias": "bluetooth:v000Fp1200d1436", "RSSI": -79, "TxPower": 0, "ManufacturerData": [], "ServiceData": [], "ServicesResolved": False, "AdvertisingFlags": [], "AdvertisingData": []}}
+1794079431.657 GetManagedObjects
+1794079431.665 RegisterAgent "/org/gnome/bluetooth/settings" "DisplayYesNo"
+1794079431.666 RequestDefaultAgent "/org/gnome/bluetooth/settings"
+1794079431.667 SetDiscoveryFilter {"Discoverable": True}
+1794079431.669 StartDiscovery
+1794079431.669 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+1794079432.283 StopDiscovery
+1794079432.283 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": False, "Discovering": False} []
+1794079432.283 Pair
+1794079432.284 Pair raised: org.bluez.Error.AuthenticationCanceled: Authentication Canceled
+1794079432.285 SetDiscoveryFilter {"Discoverable": True}
+1794079432.286 StartDiscovery
+1794079432.286 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+/work/tests/pair-failure-mr137-test.py:57: ResourceWarning: unclosed file <_io.TextIOWrapper name='/out/AuthenticationCanceled.stdout.log' mode='w' encoding='utf-8'>
+  open('%s/%s.stdout.log' % (OUTDIR, tag), 'w').write(out.stdout)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/work/tests/pair-failure-mr137-test.py:58: ResourceWarning: unclosed file <_io.TextIOWrapper name='/out/AuthenticationCanceled.stderr.log' mode='w' encoding='utf-8'>
+  open('%s/%s.stderr.log' % (OUTDIR, tag), 'w').write(out.stderr)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 16.064s
+
+OK

@@ -13529,6 +13529,21 @@ devtools/repo-scan "$SCRATCH/ip" >/dev/null 2>&1
 (( $? != 0 )) && ok "repo-scan refuses a staged IPv4 address" \
               || bad "repo-scan PASSED a repo with an IPv4 address staged"
 
+# A SPEC SECTION IS NOT AN ADDRESS. A reviewer cited "Vol 3 Part C §5.2.2.3" and
+# the publish gate refused the push (2026-11-07). After a section sign the dotted
+# number is a section; the same digits without it must still be refused.
+mkdir -p "$SCRATCH/ipsec"; scratch_repo "$SCRATCH/ipsec"
+printf 'see the Core spec, Vol 3 Part C %s%s and %s %s\n' '§' "$_i1.$_i2" '§' "$_i1.$_i2" > "$SCRATCH/ipsec/review.md"
+git -C "$SCRATCH/ipsec" add -A
+devtools/repo-scan "$SCRATCH/ipsec" >/dev/null 2>&1
+(( $? == 0 )) && ok "repo-scan passes a dotted section number after a section sign" \
+              || bad "repo-scan refused a spec section number as an IPv4 address"
+printf 'and bare %s\n' "$_i1.$_i2" >> "$SCRATCH/ipsec/review.md"
+git -C "$SCRATCH/ipsec" add -A
+devtools/repo-scan "$SCRATCH/ipsec" >/dev/null 2>&1
+(( $? != 0 )) && ok "repo-scan still refuses the same digits without the section sign" \
+              || bad "the section-sign exclusion let a bare IPv4 address through"
+
 mkdir -p "$SCRATCH/clean"; scratch_repo "$SCRATCH/clean"
 printf 'placeholder device 11:11:11:22:33:44 and loopback 127.0.0.1\n' > "$SCRATCH/clean/ok.log"
 git -C "$SCRATCH/clean" add -A

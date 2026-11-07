@@ -1,0 +1,179 @@
+diff --git a/lib/bluetooth-settings-widget.c b/lib/bluetooth-settings-widget.c
+index 876e4f9caf34e03a88102473192078bb3c954105..261a06335eca507316d108ec295c7a73e167666c 100644
+--- a/lib/bluetooth-settings-widget.c
++++ b/lib/bluetooth-settings-widget.c
+@@ -59,7 +59,7 @@ struct _BluetoothSettingsWidget {
+ 	char                *selected_object_path;
+ 
+ 	/* Device section */
+-        GtkWidget           *page;
++	GtkWidget           *page;
+ 	GtkWidget           *device_list;
+ 	GtkAdjustment       *focus_adjustment;
+ 	GtkSizeGroup        *row_sizegroup;
+@@ -899,6 +899,25 @@ bail:
+ 	g_free (data);
+ }
+ 
++static BluetoothDevice *
++device_from_path (BluetoothClient *bluetooth_client,
++                  const char      *path)
++{
++	g_autoptr (GListStore) list_store;
++	guint length, i;
++	BluetoothDevice *result = NULL;
++	/* Find the device in the list of devices with the given path */
++	list_store = bluetooth_client_get_devices (bluetooth_client);
++	length = g_list_model_get_n_items (G_LIST_MODEL (list_store));
++	for (i = 0; i < length; i++) {
++		g_autoptr(BluetoothDevice) device = g_list_model_get_item (G_LIST_MODEL (list_store), i);
++		if (g_str_equal (path, bluetooth_device_get_object_path (device))) {
++			result = g_object_ref (device);
++		}
++	}
++	return result;
++}
++
+ static void
+ create_callback (GObject      *source_object,
+ 		 GAsyncResult *res,
+@@ -917,6 +936,10 @@ create_callback (GObject      *source_object,
+ 	if (ret == FALSE) {
+ 		//char *text;
+ 		g_autofree char *dbus_error = NULL;
++		AdwToast *toast;
++		g_autoptr (BluetoothDevice) device = NULL;
++		g_autofree char *alias = NULL;
++		g_autofree char *message = NULL;
+ 
+ 		if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+ 			return;
+@@ -924,12 +947,32 @@ create_callback (GObject      *source_object,
+ 		g_clear_pointer (&self->pairing_dialog, adw_dialog_force_close);
+ 
+ 		turn_off_pairing (user_data, path);
++		device = device_from_path (BLUETOOTH_CLIENT (source_object), path);
++		g_object_get (device, "alias", &alias, NULL);
+ 
+ 		dbus_error = g_dbus_error_get_remote_error (error);
+ 		if (g_strcmp0 (dbus_error, "org.bluez.Error.AuthenticationFailed") == 0) {
+-			//FIXME pairing failed because we entered the wrong code
++			/* pairing failed because we entered the wrong code */
++			if (alias != NULL) {
++				message = g_strdup_printf (_("Unable to securely pair with “%s”"), alias);
++			} else {
++				message = g_strdup_printf (_("Unable to securely pair"));
++			}
++			toast = adw_toast_new (message);
++			adw_toast_set_priority (toast, ADW_TOAST_PRIORITY_HIGH);
++			adw_toast_overlay_add_toast (ADW_TOAST_OVERLAY ( WID ("overlay")), toast);
++
+ 		} else if (g_strcmp0 (dbus_error, "org.bluez.Error.AuthenticationCanceled") == 0) {
+-			//FIXME pairing was cancelled
++			/* pairing was cancelled */
++			if (alias != NULL) {
++				message = g_strdup_printf (_("Unable to complete pairing process with “%s”"), alias);
++			} else {
++				message = g_strdup_printf (_("Unable to complete pairing process"));
++			}
++			toast = adw_toast_new (message);
++			adw_toast_set_priority (toast, ADW_TOAST_PRIORITY_HIGH);
++			adw_toast_overlay_add_toast (ADW_TOAST_OVERLAY ( WID ("overlay")), toast);
++
+ 		} else {
+ 			//FIXME show an error?
+ 			/* translators:
+@@ -1233,8 +1276,8 @@ update_visibility (BluetoothSettingsWidget *self)
+ 		description = g_strdup_printf (_("Visible as “%s” and available for Bluetooth file transfers. Transferred files are placed in the <a href=\"%s\">Downloads</a> folder."), name, uri);
+ 		adw_preferences_page_set_description (ADW_PREFERENCES_PAGE (self->page), description);
+ 	} else {
+-                adw_preferences_page_set_description (ADW_PREFERENCES_PAGE (self->page), NULL);
+-        }
++		adw_preferences_page_set_description (ADW_PREFERENCES_PAGE (self->page), NULL);
++	}
+ }
+ 
+ static void
+@@ -1710,7 +1753,7 @@ bluetooth_settings_widget_init (BluetoothSettingsWidget *self)
+ 		return;
+ 	}
+ 
+-	widget = WID ("page");
++	widget = WID ("overlay");
+ 
+ 	self->connecting_devices = g_hash_table_new_full (g_str_hash,
+ 								g_str_equal,
+diff --git a/lib/settings.ui b/lib/settings.ui
+index 16d33ec80a06a8f352396d3606cec7c32492e89d..8dee864bc7b9da10079dd69467aae9c54b493381 100644
+--- a/lib/settings.ui
++++ b/lib/settings.ui
+@@ -140,39 +140,43 @@
+       </object>
+     </property>
+   </object>
+-  <object class="AdwPreferencesPage" id="page">
+-    <child>
+-      <object class="AdwPreferencesGroup" id="devices_group">
+-        <property name="title" translatable="yes">Devices</property>
+-        <property name="header-suffix">
+-          <object class="AdwSpinner" id="device_spinner"/>
+-        </property>
++  <object class="AdwToastOverlay" id="overlay">
++    <property name="child">
++      <object class="AdwPreferencesPage" id="page">
+         <child>
+-          <object class="GtkListBox" id="device_list">
+-            <property name="selection-mode">none</property>
+-            <child type="placeholder">
+-              <object class="GtkLabel">
+-                <property name="margin-start">18</property>
+-                <property name="margin-end">18</property>
+-                <property name="margin-top">18</property>
+-                <property name="margin-bottom">18</property>
+-                <property name="label" translatable="yes">Searching for devices…</property>
+-                <property name="wrap">true</property>
+-                <property name="max-width-chars">50</property>
++          <object class="AdwPreferencesGroup" id="devices_group">
++            <property name="title" translatable="yes">Devices</property>
++            <property name="header-suffix">
++              <object class="AdwSpinner" id="device_spinner"/>
++            </property>
++            <child>
++              <object class="GtkListBox" id="device_list">
++                <property name="selection-mode">none</property>
++                <child type="placeholder">
++                  <object class="GtkLabel">
++                    <property name="margin-start">18</property>
++                    <property name="margin-end">18</property>
++                    <property name="margin-top">18</property>
++                    <property name="margin-bottom">18</property>
++                    <property name="label" translatable="yes">Searching for devices…</property>
++                    <property name="wrap">true</property>
++                    <property name="max-width-chars">50</property>
++                    <style>
++                      <class name="dim-label" />
++                    </style>
++                  </object>
++                </child>
++                <accessibility>
++                  <property name="label" translatable="yes">Devices</property>
++                </accessibility>
+                 <style>
+-                  <class name="dim-label" />
++                  <class name="boxed-list"/>
+                 </style>
+               </object>
+             </child>
+-            <accessibility>
+-              <property name="label" translatable="yes">Devices</property>
+-            </accessibility>
+-            <style>
+-              <class name="boxed-list"/>
+-            </style>
+           </object>
+         </child>
+       </object>
+-    </child>
++    </property>
+   </object>
+ </interface>

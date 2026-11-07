@@ -76,7 +76,10 @@ while IFS= read -r f; do
     # contributions/ likewise: each dossier's experiment and VM test code runs in
     # containers and QEMU guests elsewhere (their READMEs), never in this suite.
     # Added 2026-11-01: CO-36's homework took the total to 49% on 2026-10-31.
-    case "$f" in scripts/*|retest/*|patches/*|contributions/*)
+    # results/ likewise: recorded experiments, kept with the test code that
+    # produced them, which ran in QEMU guests (results/u29-emulator-2026-11-07/).
+    # Added 2026-11-07, when that folder took the total to 49% again.
+    case "$f" in scripts/*|retest/*|patches/*|contributions/*|results/*)
         IFS= read -r shebang < "$f" || continue
         case "$shebang" in '#!'*python*) PYSKIPPED+=("$f") ;; *) case "$f" in *.py) PYSKIPPED+=("$f") ;; esac ;; esac
         continue ;;
@@ -94,7 +97,7 @@ if (( ${#PYFILES[@]} == 0 )); then
     exit 2
 fi
 for f in "${PYSKIPPED[@]+"${PYSKIPPED[@]}"}"; do
-    echo "out of scope (scripts/, retest/, patches/, contributions/, not shipped): $f"
+    echo "out of scope (scripts/, retest/, patches/, contributions/, results/, not shipped): $f"
 done
 
 WORK=$(mktemp -d) || exit 1

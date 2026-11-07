@@ -1,0 +1,32 @@
+From a6ac17f0e3932d6b07ced87e41fe7a108fe55149 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fr=C3=A9d=C3=A9ric=20Danis?= <frederic.danis@collabora.com>
+Date: Wed, 21 Aug 2024 09:57:14 +0200
+Subject: [PATCH] a2dp: Fix connection error message
+
+When trying to connect to a phone which has removed the pairing, the
+DBus error message is:
+- if A2DP only is supported: br-connection-key-missing (EBADE)
+- if HFP only is supported: br-connection-refused (ECONNREFUSED)
+- if both are supported: br-connection-unknown, while the trace shows
+  ECONNREFUSED in avdtp_connect_cb()
+
+This patch allows to return the correct error message.
+---
+ profiles/audio/a2dp.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/profiles/audio/a2dp.c b/profiles/audio/a2dp.c
+index 43da38051..a6489a763 100644
+--- a/profiles/audio/a2dp.c
++++ b/profiles/audio/a2dp.c
+@@ -326,6 +326,7 @@ static int error_to_errno(struct avdtp_error *err)
+ 	case EHOSTDOWN:
+ 	case ECONNABORTED:
+ 	case EBADE:
++	case ECONNREFUSED:
+ 		return -perr;
+ 	default:
+ 		/*
+-- 
+2.43.0
+
