@@ -1,4 +1,4 @@
-From 893576577c750610e49542ca90b2c793ddcb53c1 Mon Sep 17 00:00:00 2001
+From 98dc71aa4a7395f9568c852485ac9371f4490826 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Tue, 3 Nov 2026 12:36:17 +0100
 Subject: [PATCH] cdda: Limit paranoia read-ahead to avoid playback stalls
@@ -27,6 +27,7 @@ direct read with cd-paranoia.
 
 See: https://gitlab.freedesktop.org/gstreamer/gstreamer/-/commit/4e1086f93b509d92529d7af5475e3c9780d201c1
 Related: https://bugs.launchpad.net/bugs/1967258
+Fixes: https://gitlab.gnome.org/GNOME/gvfs/-/work_items/893
 ---
  daemon/gvfsbackendcdda.c | 5 +++++
  meson.build              | 1 +

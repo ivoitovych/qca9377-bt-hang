@@ -1,4 +1,4 @@
-From 05428d923347388a42caca51782b94c18d5773b9 Mon Sep 17 00:00:00 2001
+From 610794dcad68b1ab61ab49d8439663e1cc091cb4 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Fri, 6 Nov 2026 22:29:54 +0100
 Subject: [PATCH] cdda: Refuse to open invalid and non-audio tracks
@@ -33,6 +33,8 @@ name did not match.
 
 With this change, Track 0, 14, 99, 257 and 1junk fail at once with
 "No such file", and Track 1 to 13 still read.
+
+Fixes: https://gitlab.gnome.org/GNOME/gvfs/-/work_items/894
 ---
  daemon/gvfsbackendcdda.c | 43 ++++++++++++++++++++++++++++++----------
  1 file changed, 32 insertions(+), 11 deletions(-)
