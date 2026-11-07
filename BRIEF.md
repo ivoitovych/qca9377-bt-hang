@@ -143,7 +143,7 @@ Recent detail may be shortened. Settled state is never dropped.
 
 **Last updated: 2026-11-07, morning** (the documentation review: X1 submitted to gvfs; its long
 hand-off bullet moved to the end of `HISTORY.md` verbatim and replaced; BlueZ 5.88 carries all
-eleven applied commits; the machine re-read, with two unexamined "HANG" trial verdicts; the
+eleven applied commits; the machine re-read; two "HANG" trial verdicts examined (no hang; BT-16 found); the
 agents bullet ended). 2026-11-03: X1's final review rounds. 2026-11-02, evening: hand-off extended (the five packages made ready, X1, disk).
 Earlier 2026-11-02: (the hand-off rewritten for the review round; the 10-29/30 block
 moved to the end of `HISTORY.md` verbatim; the state block's CO-02 and sends lines amended).
@@ -161,12 +161,15 @@ hours (`R2-13`).
 > bullet are at the end of `HISTORY.md`).** STATUS has every row named here; the review round's
 > follow-up list is the work queue.
 >
-> - **First, 11-07: two trial rows say HANG, not examined.** E3 #3 (10-30 19:52) and E3 #4 (11-06
->   15:47) closed with `trial_result failed`, `responds_after no`, 0 SCO links; #4's closer logged
->   "controller does NOT respond … HANG after 72829s … cold power-off required", 19 rfkill
->   `hci0 blocked 0` lines in the 25 s before (STATUS, machine section). Real hang or the installed
->   closer probing a powered-down adapter at shutdown (STATUS's standing warning)? Read the two
->   boots' journals before anything else; sysfs and journal reads only.
+> - **11-07: the two "HANG" trial rows are not hangs; one hides a new issue, BT-16.** E3 #3
+>   (10-30) and E3 #4 (11-06) were classified by the installed, pre-09-19 closer, which probes
+>   after bluetoothd has powered the adapter off at shutdown. #3's controller answered a minute
+>   before. #4's boot never had Bluetooth: the controller came up reporting its patch already
+>   loaded (no rampatch), failed LE commands 0x2007/0x202f, dropped off USB once, and bluetoothd
+>   saw "Controllers: 0" for 20 h (**BT-16**, once in 7 boots; `docs/issues.md`;
+>   `evidence/trials/E3/hang-verdicts-check-2026-11-07/`). Watch each boot's start-up for the
+>   rampatch line. The machine's trial tools are 29 files behind `main`: deploying them is the
+>   operator's word (`install.sh --tools-only`, then `bt-mode status`).
 > - **CI has been red since 11-02 13:26 (`83ec2f4`), unread for five days** (a trial open, so no
 >   local suite). The first cause, a script without its executable bit, is fixed (11-07); later
 >   ones (boot-range parser fixture, systemd unit checks, sandbox decoys, the install round trip)
@@ -245,7 +248,7 @@ hours (`R2-13`).
 >   (mostly inline: regenerating patches on public bases, message edits, read-only source checks);
 >   the heavier QEMU runs (F-19, F-80, F-82) after asking; the laptop tests (CO-18, CO-08, CO-32,
 >   CO-15, CO-03, CO-19) on the operator's word; E3 #3's row still to be written from the journal.
->   **Added 11-07:** first the two HANG verdicts above; X1's MRs watched for comments; X2–X4 after
+>   **Added 11-07:** BT-16 watched at each boot; the red CI; X1's MRs watched for comments; X2–X4 after
 >   them; BlueZ 5.88 carries our eleven commits, so the Ubuntu route for them (an SRU of the fixes
 >   onto 5.72) is now a question of backporting released code.
 

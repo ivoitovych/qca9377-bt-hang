@@ -1,0 +1,10 @@
+This directory holds two trials (see NOTE-not-plain-E3.txt). The row written 2026-10-30 19:52
+("E3 #3 ... failed ... HANG after 1752s", boot 46cb5188, 10-30 19:22 to 19:52, plain E3 on
+7.0.0-42) is an artefact of the installed closer, checked 2026-11-07:
+
+- A2DP was suspended and released normally at 19:50:58 (the controller answering);
+- power-off at 19:51:44; bluetoothd's adapter_shutdown() and its stop at 19:51:44;
+- the closer's `hciconfig hci0 name` probe at 19:51:45 then failed on the powered-down adapter.
+
+The rampatch had loaded at boot. No SCO link. Not a hang. Detail and commands:
+evidence/trials/E3/hang-verdicts-check-2026-11-07/README.md

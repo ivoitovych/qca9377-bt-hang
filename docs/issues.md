@@ -841,6 +841,40 @@ ended CO-35's first bisect, whose runs ran the whole suite. Ubuntu `7.0.0-42` is
 team's own selection (an inference). Watch queue-7.3 after 7.4-rc1; an option-2 request only if
 7.3.y releases go without it. CO-35's request states the fact.
 
+## BT-16 — At one boot the controller came up "already patched", failed LE commands, and Bluetooth was unavailable for the whole boot
+
+**Status 2026-11-07: observed once (1 of 7 boots since 2026-10-23); cause not established.**
+Found while checking two shutdown verdicts of "HANG"
+([`evidence/trials/E3/hang-verdicts-check-2026-11-07/`](../evidence/trials/E3/hang-verdicts-check-2026-11-07/README.md)).
+
+- **When:** boot `7323fc85`, 2026-11-05 19:33:05 to 11-06 15:47:16 (~20 h), `7.0.0-42` with E3. The
+  boot before ended with a clean power-off on 11-04 13:53:31; the machine was off about 30 h.
+- **Kernel** (`journalctl -b -1 -k`, 19:33:05–07): no `using rampatch file` and no `QCA: patch rome`
+  line; `unexpected cc 0x2007 length: 1 < 2`, `Opcode 0x2007 failed: -38`; **`usb 3-3: USB
+  disconnect, device number 2`**; re-enumerated as device 4; `using NVM file:
+  qca/nvm_usb_00000302.bin`, still no rampatch line; `unexpected cc 0x202f length: 1 < 9`,
+  `Opcode 0x202f failed: -38`. Every other boot since 10-23 logs the rampatch and `patch rome
+  0x302 build 0x3e8` with no disconnect (`boot-setup-scan-output.txt` there).
+- **Source:** `btusb_setup_qca()` downloads the rampatch only when the controller's status lacks
+  `QCA_PATCH_UPDATED` (`drivers/bluetooth/btusb.c:3783`, Ubuntu `7.0.0-42`). So the controller
+  reported its patch **already loaded**, at both enumerations, after a power-off.
+- **Userspace:** the HCI capture of that boot (`hci-20261105-193308.btsnoop`) is 11,599 bytes for
+  20 h (others: 64 MB per 15–20 min); `btmon -r` shows `New Index … hci0` at 19:33:08, then
+  bluetoothd's `Read Controller Index List` at 19:33:17 → **`Controllers: 0`**, and nothing more
+  but one `hciconfig` open at 19:38. Bluetooth was unavailable for the whole boot.
+- **At the end:** GNOME Settings' Bluetooth panel opened 15:45:46; 19 kernel rfkill lines
+  `name hci0 blocked 0` from 15:45:49 to 15:46:14 with `gsd-rfkill` "change all" events; power-off
+  15:46:57. Consistent with the operator trying to switch Bluetooth on (not confirmed).
+- **Not BT-1:** no SCO link, no command timeout. The trial closer called it a "HANG" only because
+  the installed (pre-2026-09-19) closer probes after bluetoothd has powered the adapter off at
+  shutdown; the current passive closer would not flag this boot at all (no timeout).
+
+**Falsifiers / next:** whether it recurs (scan each new boot: rampatch line present, no
+`usb 3-3: USB disconnect` at start-up); whether the laptop powers USB in S5 (a controller keeping
+RAM through power-off would explain "already patched"); whether bluetoothd's empty list means the
+index was still in setup or was registered unconfigured (`btmgmt info`, the unconfigured index
+list, on a recurrence, read-only). **Reportable:** not yet; one occurrence, no mechanism.
+
 ---
 
 ## U1–U28 — userspace problems seen during the E1/E3 tests (2026-09-26 →)

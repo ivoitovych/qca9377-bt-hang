@@ -4366,16 +4366,23 @@ as #893 and #894, each commit gained its `Fixes:` line, and the merge requests w
 and !369 at 03:19 and 03:24 UTC, each exactly the reviewed commit plus that line, both
 pipelines green. Three smaller defects seen on the way were registered as X2 to X4 for later.
 
-The documentation review that morning found two things the records did not know. BlueZ 5.88
+The documentation review that morning found three things the records did not know. BlueZ 5.88
 had been tagged on 11-05 and carries every one of the eleven BlueZ commits applied since
-September; nothing here had noticed. And the trial log held two shutdown verdicts of "HANG",
-on 10-30 and 11-06, with no SCO link in either; whether the controller hung or the closer probed
-an adapter already going down is the next question, not yet asked of the journal.
+September; nothing here had noticed. CI had been red for five days. And the trial log held two
+shutdown verdicts of "HANG", on 10-30 and 11-06, with no SCO link in either. The journal
+answered them within the hour: the closer still installed on the machine, two months older than
+the one in the repository, probes the controller after bluetoothd has already powered it off, so
+both verdicts were its own. But the second one sat on top of something real. That boot's HCI
+capture was eleven kilobytes for twenty hours: the controller had come up claiming its firmware
+patch was already loaded, failed two LE commands, dropped off USB, and bluetoothd never saw an
+adapter. Nobody had noticed a day without Bluetooth, except, perhaps, the nineteen toggles of
+the switch just before the machine was turned off. It became BT-16.
 
 **The lessons:** a variable named like a bound may be a count; check what it counts against a
 case where the two differ. A reviewer's wording is a claim like any other, and is checked
 against the source before it is kept. And a project that waits for releases has to look for
-them: the 5.88 tag sat unnoticed for a day and a half.
+them: the 5.88 tag sat unnoticed for a day and a half. A verdict is only as current as the tool
+that wrote it, and a "HANG" is a reason to read the boot, not to count it.
 
 ## BRIEF hand-off blocks as they stood on 2026-10-03 (moved here from BRIEF.md, newest first; superseded by docs/STATUS.md and the single block that replaced them)
 
