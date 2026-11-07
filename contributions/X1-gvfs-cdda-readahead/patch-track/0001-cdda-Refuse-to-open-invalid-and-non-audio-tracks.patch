@@ -1,4 +1,4 @@
-From f5c66fc520d51dc6f813ee042b70ab295fafcb4d Mon Sep 17 00:00:00 2001
+From 05428d923347388a42caca51782b94c18d5773b9 Mon Sep 17 00:00:00 2001
 From: Iaroslav Voitovych <yaroslav.voytovych@gmail.com>
 Date: Fri, 6 Nov 2026 22:29:54 +0100
 Subject: [PATCH] cdda: Refuse to open invalid and non-audio tracks
@@ -23,9 +23,9 @@ name such as Track 1junk.wav, which it treated as track 1, is now
 refused there too.
 
 Open only audio tracks between the disc's first and last track
-numbers, as libcdio's own lookups do; the first need not be 1. If
-libcdio still reports a bad sector range, fail with the existing
-"paranoia" error instead of reading.
+numbers; the first need not be 1. If libcdio still reports a bad
+sector range, fail with the existing "paranoia" error instead of
+reading.
 
 This also fixes two leaks: the failure path allocated a GError it
 never freed, and the parser did not free its copy of the name when the

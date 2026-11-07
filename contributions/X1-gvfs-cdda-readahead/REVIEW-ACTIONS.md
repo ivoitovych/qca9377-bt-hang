@@ -217,6 +217,23 @@ v6.2 changes patch 1's message only (tree `29fc5683`; diff part byte-identical t
 to master). Patch 2's v6.1 file is unchanged. All four reviewers (R2, R3, R6, R7) say GO for the
 code, and none has an open wording point.
 
+**Recheck of `55b0232` (2026-11-07), R2, R3, R6, R7: GO on both patches, code and message.**
+Each compared the diff parts with v6's and found them byte-identical. R7 reran the shifted-TOC
+case on this patch (TOC 2–4, open 4: all 3,528,000 PCM bytes, then EOF).
+
+| # | Finding | From | Check | Status |
+|---|---|---|---|---|
+| H48 | Patch 2: cut "as libcdio's own lookups do"; the first/last numbers already explain the check, and the lookups' domain is wider | R7 (optional); R3 and R6 judged the phrase fair | `toc.c:40-58`: `firstsector` also accepts track 0 (pregap) and last+1 (lead-out); `:98-109`: `lastsector` accepts 0. Our check refuses both, so "as libcdio does" claims more than holds | **done (v6.2, patch 2):** "Open only audio tracks between the disc's first and last track numbers; the first need not be 1." |
+| H49 | `review-brief-v6-recheck.md` said its files are byte-identical at later commits; only the diff parts are | R2 | true since v6.1 | **fixed:** the claim removed; a note says later versions change the messages only |
+| H50 | No further change to either patch | R2, R3, R6 | — | none made beyond H48 |
+
+Current files (v6.2 both): patch 1 `6de5a6e299da9cab772cc99a33b51d08abcf4e8930f579a023296f541669b369`
+(commit `8935765`, unchanged since `55b0232`), patch 2
+`a41e4475e0b36d210bf533495e59c39b5ea2807e377267af46bf1f25ee0dcbf6` (commit `05428d9`, tree
+`22b5cd0d` as in v6). Patch 2's export differs from v6.1 only in its `From` line and the
+H48 sentence. Both apply to gnome-46, -47, -49 and -50 with `--whitespace=error-all`, and patch 2
+applies on top of patch 1.
+
 v6.1 is message-only: trees `29fc5683` and `22b5cd0d`, as tested in v6. The diff part of each
 exported file is byte-identical to v6's. Both still apply to master and to gnome-46, -47, -49
 and -50.

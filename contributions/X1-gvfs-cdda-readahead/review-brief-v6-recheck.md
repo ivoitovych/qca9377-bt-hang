@@ -1,8 +1,7 @@
 # Recheck before submission: gvfs cdda patches, v6
 
 **Review target: the two patch files at repository commit
-`b94997130c3ac27a53e736244571176858a637ef`** (byte-identical at every later commit that carries
-this brief). Both apply to gvfs master `2d30ce9b73babfd5e6ca6762ac3af46c1b092337` (still master
+`b94997130c3ac27a53e736244571176858a637ef`**. Both apply to gvfs master `2d30ce9b73babfd5e6ca6762ac3af46c1b092337` (still master
 on 2026-11-07), alone and in either order. Please review the files, not a chat copy: one removed
 master line ends in a space, which pastes lose.
 
@@ -10,6 +9,11 @@ master line ends in a space, which pastes lose.
 |---|---|---|
 | 1, "cdda: Limit paranoia read-ahead to avoid playback stalls" | [raw](https://github.com/ivoitovych/qca9377-bt-hang/raw/b94997130c3ac27a53e736244571176858a637ef/contributions/X1-gvfs-cdda-readahead/patch1-small/0001-cdda-Limit-paranoia-read-ahead-to-avoid-playback-sta.patch) | `1ed683bc7f55b0d646a8dc1748ed0197cc8c928a87c4ce4838bdd460cfba0a5a` |
 | 2, "cdda: Refuse to open invalid and non-audio tracks" | [raw](https://github.com/ivoitovych/qca9377-bt-hang/raw/b94997130c3ac27a53e736244571176858a637ef/contributions/X1-gvfs-cdda-readahead/patch-track/0001-cdda-Refuse-to-open-invalid-and-non-audio-tracks.patch) | `120786957f2fa84530b0476ddcaede5f0c786e072164859752c210b76ef94044` |
+
+**Later versions change the messages only.** v6.1 and v6.2 reword both commit messages, so the
+patch files at later commits differ from these, and the hashes above hold for `b949971` only.
+The diff part of each file, the code that was built and tested, is byte-identical to v6's. The
+current files and their hashes are in `REVIEW-ACTIONS.md` (H45 onward).
 
 Previous version, reviewed at `a42b08114a5b77dbf9ab1471970a4b70d13d9d66`. The record of every
 point and what was done with it: `REVIEW-ACTIONS.md`, H26–H38.
