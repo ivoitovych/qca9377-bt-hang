@@ -42,6 +42,23 @@ The row reads "Not Set Up" before and after in every case. No dialog or banner a
 - **[inferred]** A NULL check is missing: `g_object_get()` runs on the result of
   `device_from_path()`, which is NULL if the device vanished.
 
+**Edge cases on !137** (`runs/edge/`, `tests/pair-edge-test.py`, 3 runs each, every run exit 0):
+- **Device removed while `Pair()` is pending.** The mock removes the device, flushes
+  `InterfacesRemoved`, then returns the error.
+  - With !137: `GLib-GObject-CRITICAL **: g_object_get: assertion 'G_IS_OBJECT (object)' failed`
+    in 6 of 6 runs, for both `AuthenticationFailed` and `AuthenticationRejected`. The Failed
+    toast then reads "Unable to securely pair", without the name.
+  - On master: no CRITICAL, 0 of 6. **[checked]**
+  - Not a crash in these runs. gnome-bluetooth's own integration test runs with
+    `fatal_warnings`, where a CRITICAL would fail it [inferred, not run].
+- **User presses Cancel in the pairing dialog.**
+  - The widget answers the agent with `org.bluez.Error.Canceled`, and `Pair()` then returns
+    whatever BlueZ chooses.
+  - With !137, a returned `AuthenticationCanceled` shows "Unable to complete pairing process
+    with “My Phone”" after a deliberate cancel. **[checked]** A returned `AuthenticationFailed`
+    shows "Unable to securely pair with “My Phone”".
+  - Which status real BlueZ returns after a declined confirmation was not checked.
+
 **Upstream state, read 2026-11-07 through GitLab's public API:**
 - gnome-bluetooth #18, "Show error when pairing or connecting fails", has been open since 2009.
 - The two earlier attempts, !37 (2020) and !135 (2022), were reviewed by the maintainer ("Functional

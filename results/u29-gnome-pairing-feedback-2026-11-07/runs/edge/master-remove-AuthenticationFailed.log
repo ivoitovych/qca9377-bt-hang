@@ -1,0 +1,63 @@
+test_scenario (__main__.Edge.test_scenario) ... 1794081526.184 AddAdapter "hci0" "my-computer"
+1794081526.184 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0" {"org.bluez.Adapter1": {"UUIDs": ["00001200-0000-1000-8000-00805f9b34fb", "00001800-0000-1000-8000-00805f9b34fb", "00001801-0000-1000-8000-00805f9b34fb", "0000110e-0000-1000-8000-00805f9b34fb", "0000110c-0000-1000-8000-00805f9b34fb"], "Discoverable": False, "Discovering": False, "Pairable": True, "Powered": True, "Address": "00:01:02:03:04:05", "AddressType": "public", "Alias": "my-computer", "Modalias": "usb:v1D6Bp0245d050A", "Name": "my-computer", "Class": 268, "DiscoverableTimeout": 180, "PairableTimeout": 0, "Roles": ["central", "peripheral"]}}
+1794081526.185 AddDevice "hci0" "11:22:33:44:55:66" "My Phone"
+1794081526.185 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0/dev_11_22_33_44_55_66" {"org.bluez.Device1": {"Address": "11:22:33:44:55:66", "AddressType": "public", "Name": "My Phone", "Icon": "phone", "Class": 5898764, "Appearance": 0, "UUIDs": [], "Paired": False, "Connected": False, "Trusted": False, "Blocked": False, "WakeAllowed": False, "Alias": "My Phone", "Adapter": "/org/bluez/hci0", "LegacyPairing": False, "Modalias": "bluetooth:v000Fp1200d1436", "RSSI": -79, "TxPower": 0, "ManufacturerData": [], "ServiceData": [], "ServicesResolved": False, "AdvertisingFlags": [], "AdvertisingData": []}}
+1794081526.312 GetManagedObjects
+1794081526.322 RegisterAgent "/org/gnome/bluetooth/settings" "DisplayYesNo"
+1794081526.322 RequestDefaultAgent "/org/gnome/bluetooth/settings"
+1794081526.323 SetDiscoveryFilter {"Discoverable": True}
+1794081526.325 StartDiscovery
+1794081526.325 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+1794081526.943 StopDiscovery
+1794081526.943 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": False, "Discovering": False} []
+1794081526.944 Pair
+1794081527.444 emit / org.freedesktop.DBus.ObjectManager.InterfacesRemoved "/org/bluez/hci0/dev_11_22_33_44_55_66" ["org.bluez.Device1"]
+1794081528.444 Pair raised: org.bluez.Error.AuthenticationFailed: Authentication Failed
+1794081528.445 SetDiscoveryFilter {"Discoverable": True}
+1794081528.445 StartDiscovery
+1794081528.445 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+1794081530.190 AddAdapter "hci0" "my-computer"
+1794081530.191 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0" {"org.bluez.Adapter1": {"UUIDs": ["00001200-0000-1000-8000-00805f9b34fb", "00001800-0000-1000-8000-00805f9b34fb", "00001801-0000-1000-8000-00805f9b34fb", "0000110e-0000-1000-8000-00805f9b34fb", "0000110c-0000-1000-8000-00805f9b34fb"], "Discoverable": False, "Discovering": False, "Pairable": True, "Powered": True, "Address": "00:01:02:03:04:05", "AddressType": "public", "Alias": "my-computer", "Modalias": "usb:v1D6Bp0245d050A", "Name": "my-computer", "Class": 268, "DiscoverableTimeout": 180, "PairableTimeout": 0, "Roles": ["central", "peripheral"]}}
+1794081530.192 AddDevice "hci0" "11:22:33:44:55:66" "My Phone"
+1794081530.193 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0/dev_11_22_33_44_55_66" {"org.bluez.Device1": {"Address": "11:22:33:44:55:66", "AddressType": "public", "Name": "My Phone", "Icon": "phone", "Class": 5898764, "Appearance": 0, "UUIDs": [], "Paired": False, "Connected": False, "Trusted": False, "Blocked": False, "WakeAllowed": False, "Alias": "My Phone", "Adapter": "/org/bluez/hci0", "LegacyPairing": False, "Modalias": "bluetooth:v000Fp1200d1436", "RSSI": -79, "TxPower": 0, "ManufacturerData": [], "ServiceData": [], "ServicesResolved": False, "AdvertisingFlags": [], "AdvertisingData": []}}
+1794081530.319 GetManagedObjects
+1794081530.329 RegisterAgent "/org/gnome/bluetooth/settings" "DisplayYesNo"
+1794081530.329 RequestDefaultAgent "/org/gnome/bluetooth/settings"
+1794081530.330 SetDiscoveryFilter {"Discoverable": True}
+1794081530.333 StartDiscovery
+1794081530.333 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+1794081530.945 StopDiscovery
+1794081530.945 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": False, "Discovering": False} []
+1794081530.945 Pair
+1794081531.446 emit / org.freedesktop.DBus.ObjectManager.InterfacesRemoved "/org/bluez/hci0/dev_11_22_33_44_55_66" ["org.bluez.Device1"]
+1794081532.446 Pair raised: org.bluez.Error.AuthenticationFailed: Authentication Failed
+1794081532.447 SetDiscoveryFilter {"Discoverable": True}
+1794081532.447 StartDiscovery
+1794081532.447 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+1794081534.184 AddAdapter "hci0" "my-computer"
+1794081534.184 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0" {"org.bluez.Adapter1": {"UUIDs": ["00001200-0000-1000-8000-00805f9b34fb", "00001800-0000-1000-8000-00805f9b34fb", "00001801-0000-1000-8000-00805f9b34fb", "0000110e-0000-1000-8000-00805f9b34fb", "0000110c-0000-1000-8000-00805f9b34fb"], "Discoverable": False, "Discovering": False, "Pairable": True, "Powered": True, "Address": "00:01:02:03:04:05", "AddressType": "public", "Alias": "my-computer", "Modalias": "usb:v1D6Bp0245d050A", "Name": "my-computer", "Class": 268, "DiscoverableTimeout": 180, "PairableTimeout": 0, "Roles": ["central", "peripheral"]}}
+1794081534.184 AddDevice "hci0" "11:22:33:44:55:66" "My Phone"
+1794081534.185 emit / org.freedesktop.DBus.ObjectManager.InterfacesAdded "/org/bluez/hci0/dev_11_22_33_44_55_66" {"org.bluez.Device1": {"Address": "11:22:33:44:55:66", "AddressType": "public", "Name": "My Phone", "Icon": "phone", "Class": 5898764, "Appearance": 0, "UUIDs": [], "Paired": False, "Connected": False, "Trusted": False, "Blocked": False, "WakeAllowed": False, "Alias": "My Phone", "Adapter": "/org/bluez/hci0", "LegacyPairing": False, "Modalias": "bluetooth:v000Fp1200d1436", "RSSI": -79, "TxPower": 0, "ManufacturerData": [], "ServiceData": [], "ServicesResolved": False, "AdvertisingFlags": [], "AdvertisingData": []}}
+1794081534.290 GetManagedObjects
+1794081534.298 RegisterAgent "/org/gnome/bluetooth/settings" "DisplayYesNo"
+1794081534.299 RequestDefaultAgent "/org/gnome/bluetooth/settings"
+1794081534.300 SetDiscoveryFilter {"Discoverable": True}
+1794081534.302 StartDiscovery
+1794081534.302 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+1794081534.915 StopDiscovery
+1794081534.916 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": False, "Discovering": False} []
+1794081534.916 Pair
+1794081535.416 emit / org.freedesktop.DBus.ObjectManager.InterfacesRemoved "/org/bluez/hci0/dev_11_22_33_44_55_66" ["org.bluez.Device1"]
+1794081536.416 Pair raised: org.bluez.Error.AuthenticationFailed: Authentication Failed
+1794081536.417 SetDiscoveryFilter {"Discoverable": True}
+1794081536.417 StartDiscovery
+1794081536.417 emit /org/bluez/hci0 org.freedesktop.DBus.Properties.PropertiesChanged "org.bluez.Adapter1" {"Discoverable": True, "Discovering": True} []
+ok
+
+----------------------------------------------------------------------
+Ran 1 test in 12.089s
+
+OK
+RUN remove-AuthenticationFailed-1 exit 0
+RUN remove-AuthenticationFailed-2 exit 0
+RUN remove-AuthenticationFailed-3 exit 0

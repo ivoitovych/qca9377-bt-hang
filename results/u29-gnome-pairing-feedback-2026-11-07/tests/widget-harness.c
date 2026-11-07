@@ -192,6 +192,8 @@ main (int argc, char **argv)
 		return 3;
 	}
 	run_for (500);
+	/* keep the row object alive even if the widget drops it (device removed) */
+	g_object_ref (row);
 	g_print ("HARNESS START activating row type=%s\n", G_OBJECT_TYPE_NAME (row));
 	snapshot_state (widget, row, "before");
 
@@ -204,6 +206,26 @@ main (int argc, char **argv)
 	} else {
 		/* what a click on the row does */
 		g_signal_emit_by_name (list, "row-activated", row);
+	}
+
+	if (g_strcmp0 (g_getenv ("HARNESS_PRESS_CANCEL"), "1") == 0) {
+		/* wait for the pairing dialog and press its Cancel button */
+		GtkWidget *btn = NULL;
+		for (i = 0; i < 100 && !btn; i++) {
+			run_for (100);
+			btn = find_by_buildable_id (window, "cancel");
+			if (btn && !gtk_widget_get_mapped (btn))
+				btn = NULL;
+		}
+		if (btn) {
+			g_print ("HARNESS DIALOG cancel button found after %d ms\n", i * 100);
+			run_for (300);
+			snapshot_state (widget, row, "dialog");
+			g_signal_emit_by_name (btn, "clicked");
+			g_print ("HARNESS DIALOG cancel pressed\n");
+		} else {
+			g_print ("HARNESS DIALOG no cancel button appeared\n");
+		}
 	}
 
 	run_for (200);
