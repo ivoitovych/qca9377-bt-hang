@@ -1522,6 +1522,45 @@ operator asks.
 | State | **root cause found** (gvfs CD backend + paranoia block size + no player-side buffering); not reported anywhere; upstream not yet searched |
 | Next | the same track through GStreamer's own CD source, bypassing gvfsd-cdda; a passive USB capture of the drive's reads during Totem playback; the same to the laptop's speakers. Workaround meanwhile: rip the CD to files and play those |
 | Evidence | [`evidence/off-topic/X1-cd-playback-underflow-every-16s.md`](../evidence/off-topic/X1-cd-playback-underflow-every-16s.md) (extraction command and exact output); recorder `tmp/cd-gaps/` (local) |
+| **Submitted 2026-11-07** | gvfs issue [#893](https://gitlab.gnome.org/GNOME/gvfs/-/work_items/893), MR [!368](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/368) (150-sector cache model). The invalid-track defect found on the way went as [#894](https://gitlab.gnome.org/GNOME/gvfs/-/work_items/894) / [!369](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/369). Record: `contributions/X1-gvfs-cdda-readahead/REVIEW-ACTIONS.md`; current state: `docs/STATUS.md` |
+
+## X2 — Off-topic: gvfs cdda leaks a GError on four failure paths
+
+Found during the X1 reviews (R7, G19; `do_unmount` added 2026-11-07). Source only, gvfs master
+`2d30ce9b`: `g_vfs_job_failed_from_error()` takes a `const GError *` and stores a copy
+(`daemon/gvfsjob.c:272-281`), so a caller that does not free its own error leaks it.
+`daemon/gvfsbackendcdda.c` allocates with `g_error_new()` and never frees at
+`do_unmount` `:426-432` (busy, files open) and `do_query_info` `:917-919` ("No such file"),
+`:924-926` ("File doesn't exist"), `:931-933` (not an audio track). The other sites in the file
+free theirs (`:306-308`, `:320-322`, `:338-341`, `:351-354`, `:401-403`). !369 fixes the
+`do_open_for_read` site only. A few bytes per failed request; no user-visible effect.
+**State:** registered, not reported. **Fix:** `g_vfs_job_failed()` directly (no GError), as
+!369 does, or `g_error_free()` after each call; one small MR, after !368/!369 are answered.
+
+## X3 — Off-topic: gvfs cdda lists and describes tracks as if numbered from 1
+
+Found during the X1 reviews (H4, H26). Source, gvfs master `2d30ce9b`, `daemon/gvfsbackendcdda.c`:
+`do_enumerate` lists `Track n.wav` for `n = 1 … drive->tracks` (`:958`), a count, not the disc's
+track numbers; `do_query_info` refuses `track_num > drive->tracks` (`:922`); metadata is looked
+up as list element `track_num - 1` (`:854`), while `fetch_metadata` fills that list from the
+disc's first track (`:189-192`). On a disc whose tracks are numbered 2–4, the listing would show
+Track 1–3 (not 2–4), query_info would refuse Track 4, and Track 3's title and duration would
+come from track 4. Direct open of Track 4 works on master and after !369 (bounded by the real
+first/last numbers; MR 2's simulated-drive table). **Not seen on hardware:** no such disc here;
+inferred from source. **State:** registered, not reported. **Fix:** use
+`cdio_get_first_track_num()`/`cdio_get_last_track_num()` in enumerate and query_info and
+index metadata from the first track; a separate issue and MR.
+
+## X4 — Off-topic: gvfs cdda ignores a failed seek and returns another sector's audio
+
+Found during the X1 reviews (R7, F33). Source, gvfs master `2d30ce9b`,
+`daemon/gvfsbackendcdda.c:714`: `do_read` calls `cdio_paranoia_seek()` and discards its result,
+then sets `sector_cursor` and reads. R7's fault injection (a failing seek at sector 1801)
+returned job success with bytes of another sector (REVIEW-ACTIONS F33: "job error 0, matches
+sector 1801: 0"); reviewer-run, not repeated here. **State:** registered, not reported; not seen
+in normal use. **Fix:** treat a failed seek as a read error; check first what
+`cdio_paranoia_seek()` returns on failure in libcdio-paranoia (R7 notes that a successful seek
+returns the previous cursor), then a test like MR 2's simulated drive.
 
 ---
 

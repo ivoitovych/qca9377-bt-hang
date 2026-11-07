@@ -81,13 +81,16 @@ ready (`drafts/reply-1-zijun-hu-v4.eml`); CO-22 stable request v2 and a 6.6.y bt
 CO-11a filing package `ubuntu/ready-20261102/` (four series); CO-38 dossier with `send-20261102/`.
 All wait for the operator's word; none sent.
 
-**Off-topic (not Bluetooth):** [X1 — gvfs cdda read-ahead](X1-gvfs-cdda-readahead/README.md):
-audio CDs stall ~3 s every 16 s in Totem; root cause traced. After an outside review round
-(`REVIEW-ACTIONS.md`) the fix is the small one: `patch1-small/` (150-sector paranoia cache
-model, as GStreamer does; laptop A/B 2026-11-03: 19 mid-track underflows → 0, copy speed and
-data unchanged) and a separate `patch-track/` (refuse tracks not on the disc); both on gvfs
-master, CI as base. The threaded read-ahead (`patch1/`) is kept as a fallback. Nothing filed or
-submitted: the gvfs issue draft is in `patch1-small/issue-draft.md`, the operator files it.
+**Off-topic (not Bluetooth), gvfs's audio-CD backend.** Issues in `docs/issues.md` (X1–X4).
+
+| ID | item | target | state | next step | decides |
+|---|---|---|---|---|---|
+| X1 | [CD playback stalls ~3 s every 16 s; invalid track names](X1-gvfs-cdda-readahead/README.md) | gvfs | **sent 2026-11-07**: issues [#893](https://gitlab.gnome.org/GNOME/gvfs/-/work_items/893), [#894](https://gitlab.gnome.org/GNOME/gvfs/-/work_items/894); MRs [!368](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/368) (150-sector cache model), [!369](https://gitlab.gnome.org/GNOME/gvfs/-/merge_requests/369) (refuse invalid and non-audio tracks), both pipelines passed; record `REVIEW-ACTIONS.md` H1–H73 | watch for maintainer comments (`scripts/cd-trace/x1-check-submission.py`); after a merge, Launchpad 1967258 and a 24.04 backport | the operator, for any reply |
+| X2 | GError leaked on four failure paths (`do_unmount`, three in `do_query_info`) | gvfs | idea: confirmed in source, no user-visible effect | one small MR, after !368/!369 are answered | the operator |
+| X3 | Listing, file info and metadata assume tracks numbered from 1 | gvfs | idea: inferred from source; no such disc to test | issue + MR; a test with MR 2's simulated drive | the operator |
+| X4 | A failed `cdio_paranoia_seek()` is ignored; another sector's audio is returned | gvfs | idea: reviewer's fault injection; source confirms the result is discarded | check libcdio-paranoia's seek return, then a fix with a simulated-drive test | the operator |
+
+The threaded read-ahead (`X1…/patch1/`) is kept as a fallback, not submitted.
 
 Items without a link have no dossier yet. One is opened as soon as anything is written about
 the item.
