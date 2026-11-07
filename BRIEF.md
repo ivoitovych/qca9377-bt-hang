@@ -248,7 +248,7 @@ hours (`R2-13`).
 >   (mostly inline: regenerating patches on public bases, message edits, read-only source checks);
 >   the heavier QEMU runs (F-19, F-80, F-82) after asking; the laptop tests (CO-18, CO-08, CO-32,
 >   CO-15, CO-03, CO-19) on the operator's word; E3 #3's row still to be written from the journal.
->   **Added 11-07:** BT-16 watched at each boot; the red CI; X1's MRs watched for comments; X2–X4 after
+>   **Added 11-07:** BT-16 watched at each boot; the red CI (green again from `8bbd04a`: `ubuntu-latest` had become 26.04, runners pinned to 24.04); X1's MRs watched for comments; X2–X4 after
 >   them; BlueZ 5.88 carries our eleven commits, so the Ubuntu route for them (an SRU of the fixes
 >   onto 5.72) is now a question of backporting released code.
 

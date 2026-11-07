@@ -252,21 +252,22 @@ also the CO-02 series' `bluetooth.ko` (the two lines below are about that period
 
 ## Repository health
 
-⚠️ **CI red again since 2026-11-02 13:26 UTC (`83ec2f4`), every push to 2026-11-07, unread**
-(found by the documentation review of 11-07: `gh run list --workflow checks`; the last green run
-`f4d80fb`, 11-02 12:52). A trial was open all week, so `devtools/check` ran no suite locally, the
-lesson of 10-03 and 10-28 a third time. Causes, from the failed-step logs:
-- **From the first red run:** `contributions/review-2026-11-02/build/followups-build.py` committed
-  without its executable bit (the only failure on 11-02). **Fixed 11-07** (`chmod +x`).
-- **Appeared later, not yet examined** (as of run `42337101409`, 11-07): "the two boot-range
-  parsers disagree" (`bt-retention`: oldest boot 2026-08-12 against 08-14, and `019-prov-only`
-  judged GONE by one parser; likely date-dependent, the fixture ageing past a retention window);
-  `repo-validate` marks 14 `systemd/*` units ✗; the isolation self-test no longer catches the
-  decoyed binaries and PATH tools (`NOT caught`); the `system` job's `install.sh --apply` fails;
-  coverage calls three exclusions stale (`tests/run-tests:9947`, `tools/bt-sco:117`,
-  `tools/sanitize-logs.sh:142`). The runner image on 11-02 was `ubuntu-24.04` `20261025.353.1`;
-  whether a newer image explains the units, the decoys and the install is the first question.
-- `devtools/ci --wait` after each push while a trial is open, until this is green.
+**CI green again 2026-11-07 from `8bbd04a`** (checks run `42377712229`, every job ✓). It was red
+from 2026-11-02 13:26 UTC (`83ec2f4`) on every push to 11-07, unread (found by the documentation
+review of 11-07; the last green run `f4d80fb`, 11-02 12:52). A trial was open all week, so
+`devtools/check` ran no suite locally, the lesson of 10-03 and 10-28 a third time. Two causes:
+- **The first red run (13:26, still `ubuntu-24.04`):**
+  `contributions/review-2026-11-02/build/followups-build.py` committed without its executable bit.
+  **Fixed 11-07** (`chmod +x`, `68348a4`).
+- **Every run from 13:42 on: `ubuntu-latest` became `ubuntu-26.04`** (`scripts/ci-run-images.sh`:
+  run `41453074494` at 13:26 on `ubuntu-24.04` `20261021.618`, run `41455341002` at 13:42 on
+  `ubuntu-26.04`, and every later run on 26.04). On it the boot-range parsers disagreed, 14
+  `systemd/*` units were marked ✗, the isolation self-test stopped catching the decoys, the
+  `system` job's `install.sh --apply` failed and coverage called three exclusions stale; the same
+  commit's local validators pass. **Fixed 11-07** by pinning both workflows to `ubuntu-24.04`, the
+  laptop's release (`8bbd04a`); not examined one by one, because 26.04 is not a release this
+  project serves (the upgrade was declined).
+- `devtools/ci --wait` after each push while a trial is open.
 
 **CI was red again from 2026-10-22 (`4ee379d`) to 2026-10-28, about 65 pushes, unread** (a trial
 was open all week, so the save step ran no suite). Two causes fixed on 2026-10-28: the install step
