@@ -1,0 +1,121 @@
+
+=== tree: 5.72 ===
+run | disconnect | last beat (peer) | last report | removed | beats | reports | AD flags | rem-disc s | rem-prevrep s | rem-lastrep s | rem-lastbeat s | RSSI (n: values) | re-added | arm-specific | expected?
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+5.72-base-A-0 | 19:49:00.577 | - | - | 19:49:31.080 | 0 | 0 | - | 30.5 | - | - | - | 0: - | 0 | - | ok
+5.72-base-A-1 | 19:49:47.993 | - | - | 19:50:18.172 | 0 | 0 | - | 30.2 | - | - | - | 0: - | 0 | - | ok
+5.72-base-A-2 | 19:50:35.055 | - | - | 19:51:05.132 | 0 | 0 | - | 30.1 | - | - | - | 0: - | 0 | - | ok
+5.72-patched-A-0 | 19:49:00.445 | - | - | 19:49:31.073 | 0 | 0 | - | 30.6 | - | - | - | 0: - | 0 | - | ok
+5.72-patched-A-1 | 19:49:47.849 | - | - | 19:50:18.063 | 0 | 0 | - | 30.2 | - | - | - | 0: - | 0 | - | ok
+5.72-patched-A-2 | 19:50:35.159 | - | - | 19:51:05.245 | 0 | 0 | - | 30.1 | - | - | - | 0: - | 0 | - | ok
+5.72-base-B-0 | 19:49:00.028 | 19:51:02.134 | 19:51:03.446 | 19:51:33.928 | 13 | 9 | 0x18 | 153.9 | 30.5 | 30.5 | 31.8 | 0: - | 0 | removed during adv phase: False | ok
+5.72-base-B-1 | 19:51:51.621 | 19:53:53.748 | 19:53:55.050 | 19:54:25.151 | 13 | 9 | 0x18 | 153.5 | 30.1 | 30.1 | 31.4 | 0: - | 0 | removed during adv phase: False | ok
+5.72-base-B-2 | 19:54:42.752 | 19:56:44.928 | 19:56:46.238 | 19:57:16.271 | 13 | 9 | 0x18 | 153.5 | 30.0 | 30.0 | 31.3 | 0: - | 0 | removed during adv phase: False | ok
+5.72-patched-B-0 | 19:49:00.300 | 19:51:02.324 | 19:50:33.679 | 19:49:30.977 | 13 | 7 | 0x18 | 30.7 | 17.2 | -62.7 | -91.3 | 0: - | 0 | removed during adv phase: True | ok
+5.72-patched-B-1 | 19:51:18.562 | 19:53:20.625 | 19:52:50.697 | 19:51:49.254 | 13 | 6 | 0x18 | 30.7 | 18.5 | -61.4 | -91.4 | 0: - | 0 | removed during adv phase: True | ok
+5.72-patched-B-2 | 19:53:36.699 | 19:55:38.900 | 19:55:08.778 | 19:54:06.539 | 13 | 6 | 0x18 | 29.8 | 17.7 | -62.2 | -92.4 | 0: - | 0 | removed during adv phase: True | ok
+5.72-base-C-0 | 19:49:00.081 | 19:51:02.139 | 19:51:03.445 | 19:51:33.925 | 13 | 9 | 0x1a | 153.8 | 30.5 | 30.5 | 31.8 | 1: int16 127 | 0 | removed during adv phase: False | ok
+5.72-base-C-1 | 19:51:51.687 | 19:53:53.887 | 19:53:55.185 | 19:54:25.183 | 13 | 9 | 0x1a | 153.5 | 30.0 | 30.0 | 31.3 | 1: int16 127 | 0 | removed during adv phase: False | ok
+5.72-base-C-2 | 19:54:42.916 | 19:56:44.934 | 19:56:46.236 | 19:57:16.360 | 13 | 9 | 0x1a | 153.4 | 30.1 | 30.1 | 31.4 | 1: int16 127 | 0 | removed during adv phase: False | ok
+5.72-patched-C-0 | 19:49:00.508 | 19:51:02.608 | 19:51:03.914 | 19:51:34.050 | 13 | 9 | 0x1a | 153.5 | 30.1 | 30.1 | 31.4 | 1: int16 127 | 0 | removed during adv phase: False | ok
+5.72-patched-C-1 | 19:51:51.557 | 19:53:53.748 | 19:53:55.053 | 19:54:25.097 | 13 | 9 | 0x1a | 153.5 | 30.0 | 30.0 | 31.3 | 1: int16 127 | 0 | removed during adv phase: False | ok
+5.72-patched-C-2 | 19:54:42.796 | 19:56:44.931 | 19:56:46.239 | 19:57:16.290 | 13 | 9 | 0x1a | 153.5 | 30.1 | 30.1 | 31.4 | 1: int16 127 | 0 | removed during adv phase: False | ok
+5.72-base-D-0 | 19:57:36.909 | 19:59:38.964 | 19:59:40.267 | 20:00:10.714 | 13 | 9 | 0x18 | 153.8 | 30.4 | 30.4 | 31.7 | 0: - | 0 | removed during adv phase: False | ok
+5.72-base-D-1 | 20:00:29.821 | 20:02:31.938 | 20:02:02.013 | 20:01:42.985 | 13 | 6 | 0x18 | 73.2 | 29.8 | -19.0 | -49.0 | 0: - | 0 | removed during adv phase: True | ok
+5.72-base-D-2 | 20:02:48.036 | 20:04:50.048 | 20:04:51.354 | 20:05:21.849 | 13 | 8 | 0x18 | 153.8 | 30.5 | 30.5 | 31.8 | 0: - | 0 | removed during adv phase: False | ok
+5.72-base-D-3 | 20:11:47.552 | 20:13:49.695 | 20:13:19.773 | 20:13:00.784 | 13 | 6 | 0x18 | 73.2 | 29.8 | -19.0 | -48.9 | 0: - | 0 | removed during adv phase: True | ok
+5.72-patched-D-0 | 19:57:36.694 | 19:59:38.706 | 19:59:08.786 | 19:58:06.678 | 13 | 6 | 0x18 | 30.0 | 17.8 | -62.1 | -92.0 | 0: - | 0 | removed during adv phase: True | ok
+5.72-patched-D-1 | 19:59:55.642 | 20:01:57.837 | 20:01:27.730 | 20:00:25.684 | 13 | 6 | 0x18 | 30.0 | 17.9 | -62.0 | -92.2 | 0: - | 0 | removed during adv phase: True | ok
+5.72-patched-D-2 | 20:02:14.500 | 20:04:16.696 | 20:03:47.861 | 20:02:44.759 | 13 | 7 | 0x18 | 30.3 | 16.8 | -63.1 | -91.9 | 0: - | 0 | removed during adv phase: True | ok
+5.72-base-E-0 | 19:57:36.782 | 19:59:38.950 | 19:59:40.258 | 20:00:10.704 | 13 | 26 | 0x18 | 153.9 | 30.4 | 30.4 | 31.8 | 26: int16 127 | 0 | removed during adv phase: False | ok
+5.72-base-E-1 | 20:00:29.793 | 20:02:31.936 | 20:02:33.244 | 20:03:03.941 | 13 | 26 | 0x18 | 154.1 | 30.7 | 30.7 | 32.0 | 26: int16 127 | 0 | removed during adv phase: False | ok
+5.72-base-E-2 | 20:03:21.104 | 20:05:23.212 | 20:05:24.521 | 20:05:54.974 | 13 | 26 | 0x18 | 153.9 | 30.5 | 30.5 | 31.8 | 26: int16 127 | 0 | removed during adv phase: False | ok
+5.72-patched-E-0 | 19:57:36.774 | 19:59:38.998 | 19:59:40.312 | 20:00:10.679 | 13 | 26 | 0x18 | 153.9 | 30.4 | 30.4 | 31.7 | 26: int16 127 | 0 | removed during adv phase: False | ok
+5.72-patched-E-1 | 20:00:29.309 | 20:02:31.431 | 20:02:32.744 | 20:03:02.705 | 13 | 26 | 0x18 | 153.4 | 30.0 | 30.0 | 31.3 | 26: int16 127 | 0 | removed during adv phase: False | ok
+5.72-patched-E-2 | 20:03:20.162 | 20:05:22.375 | 20:05:23.676 | 20:05:53.964 | 13 | 26 | 0x18 | 153.8 | 30.3 | 30.3 | 31.6 | 26: int16 127 | 0 | removed during adv phase: False | ok
+5.72-base-G-0 | 19:57:36.937 | 19:59:38.959 | 19:59:40.269 | 20:00:10.689 | 13 | 9 | none | 153.8 | 30.4 | 30.4 | 31.7 | 0: - | 0 | removed during adv phase: False | ok
+5.72-base-G-1 | 20:00:29.297 | 20:02:31.399 | 20:02:32.716 | 20:03:02.704 | 13 | 9 | none | 153.4 | 30.0 | 30.0 | 31.3 | 0: - | 0 | removed during adv phase: False | ok
+5.72-base-G-2 | 20:03:20.140 | 20:05:22.344 | 20:05:23.648 | 20:05:53.951 | 13 | 8 | none | 153.8 | 30.3 | 30.3 | 31.6 | 0: - | 0 | removed during adv phase: False | ok
+5.72-patched-G-0 | 19:57:36.810 | 19:59:38.834 | 19:59:08.916 | 19:58:06.699 | 13 | 6 | none | 29.9 | 17.7 | -62.2 | -92.1 | 0: - | 0 | removed during adv phase: True | ok
+5.72-patched-G-1 | 19:59:55.796 | 20:01:57.987 | 20:01:27.877 | 20:00:25.822 | 13 | 6 | none | 30.0 | 17.9 | -62.1 | -92.2 | 0: - | 0 | removed during adv phase: True | ok
+5.72-patched-G-2 | 20:02:14.636 | 20:04:16.832 | 20:03:48.006 | 20:02:44.898 | 13 | 7 | none | 30.3 | 16.8 | -63.1 | -91.9 | 0: - | 0 | removed during adv phase: True | ok
+5.72-base-H-0 | 20:06:20.122 | 20:07:22.323 | 20:07:18.493 | - | 7 | 7 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.0s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794082044.405403 sender=:1.1 -> destination=:1.8 serial=52 reply_serial=2) bearer BR/EDR | ok
+5.72-base-H-1 | 20:07:51.558 | 20:08:53.685 | 20:08:49.848 | - | 7 | 8 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.0s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794082135.778974 sender=:1.1 -> destination=:1.8 serial=51 reply_serial=2) bearer BR/EDR | ok
+5.72-base-H-2 | 20:09:22.883 | 20:10:24.961 | 20:10:21.173 | - | 7 | 8 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.0s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794082227.046279 sender=:1.1 -> destination=:1.8 serial=52 reply_serial=2) bearer BR/EDR | ok
+5.72-patched-H-0 | 20:06:20.093 | 20:07:22.116 | 20:07:18.460 | - | 7 | 7 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.0s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794082044.201074 sender=:1.1 -> destination=:1.8 serial=52 reply_serial=2) bearer BR/EDR | ok
+5.72-patched-H-1 | 20:07:51.337 | 20:08:53.538 | 20:08:49.628 | - | 7 | 8 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.0s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794082135.632374 sender=:1.1 -> destination=:1.8 serial=52 reply_serial=2) bearer BR/EDR | ok
+5.72-patched-H-2 | 20:09:22.783 | 20:10:24.867 | 20:10:21.074 | - | 7 | 8 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.0s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794082226.942124 sender=:1.1 -> destination=:1.8 serial=52 reply_serial=2) bearer BR/EDR | ok
+5.72-base-I-0 | 20:06:15.515 | 20:06:47.777 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.2s; removed during pairing: False; removed-pair_end - | ok
+5.72-base-I-1 | 20:07:19.893 | 20:07:52.095 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.1s; removed during pairing: False; removed-pair_end - | ok
+5.72-base-I-2 | 20:08:24.336 | 20:08:56.563 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.1s; removed during pairing: False; removed-pair_end - | ok
+5.72-patched-I-0 | 20:06:15.637 | 20:06:47.733 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.2s; removed during pairing: False; removed-pair_end - | ok
+5.72-patched-I-1 | 20:07:20.065 | 20:07:52.268 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.1s; removed during pairing: False; removed-pair_end - | ok
+5.72-patched-I-2 | 20:08:24.458 | 20:08:56.698 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.2s; removed during pairing: False; removed-pair_end - | ok
+5.72-base-J-0 | 20:07:15.258 | 20:07:10.081 | - | 20:07:45.100 | 7 | 0 | - | 29.8 | - | - | 35.0 | 0: - | 0 | removed before disconnect: False | ok
+5.72-base-J-1 | 20:09:02.637 | 20:08:57.605 | - | 20:09:32.412 | 7 | 0 | - | 29.8 | - | - | 34.8 | 0: - | 0 | removed before disconnect: False | ok
+5.72-base-J-2 | 20:10:49.468 | 20:10:44.298 | - | 20:11:19.503 | 7 | 0 | - | 30.0 | - | - | 35.2 | 0: - | 0 | removed before disconnect: False | ok
+5.72-patched-J-0 | 20:07:15.274 | 20:07:10.120 | - | 20:07:45.110 | 7 | 0 | - | 29.8 | - | - | 35.0 | 0: - | 0 | removed before disconnect: False | ok
+5.72-patched-J-1 | 20:09:02.548 | 20:08:57.490 | - | 20:09:32.426 | 7 | 0 | - | 29.9 | - | - | 34.9 | 0: - | 0 | removed before disconnect: False | ok
+5.72-patched-J-2 | 20:10:49.342 | 20:10:44.141 | - | 20:11:19.407 | 7 | 0 | - | 30.1 | - | - | 35.3 | 0: - | 0 | removed before disconnect: False | ok
+
+=== tree: master ===
+run | disconnect | last beat (peer) | last report | removed | beats | reports | AD flags | rem-disc s | rem-prevrep s | rem-lastrep s | rem-lastbeat s | RSSI (n: values) | re-added | arm-specific | expected?
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+master-base-A-0 | 19:26:47.874 | - | - | 19:27:18.331 | 0 | 0 | - | 30.5 | - | - | - | 0: - | 0 | - | ok
+master-base-A-1 | 19:27:35.962 | - | - | 19:28:06.539 | 0 | 0 | - | 30.6 | - | - | - | 0: - | 0 | - | ok
+master-base-A-2 | 19:28:23.658 | - | - | 19:28:53.540 | 0 | 0 | - | 29.9 | - | - | - | 0: - | 0 | - | ok
+master-patched-A-0 | 19:26:47.709 | - | - | 19:27:18.233 | 0 | 0 | - | 30.5 | - | - | - | 0: - | 0 | - | ok
+master-patched-A-1 | 19:27:35.742 | - | - | 19:28:06.365 | 0 | 0 | - | 30.6 | - | - | - | 0: - | 0 | - | ok
+master-patched-A-2 | 19:28:23.450 | - | - | 19:28:53.326 | 0 | 0 | - | 29.9 | - | - | - | 0: - | 0 | - | ok
+master-base-B-0 | 19:26:47.983 | 19:28:50.012 | 19:28:51.309 | 19:29:21.348 | 13 | 9 | 0x18 | 153.4 | 30.0 | 30.0 | 31.3 | 0: - | 0 | removed during adv phase: False | ok
+master-base-B-1 | 19:29:39.023 | 19:31:41.040 | 19:31:42.346 | 19:32:12.510 | 13 | 9 | 0x18 | 153.5 | 30.2 | 30.2 | 31.5 | 0: - | 0 | removed during adv phase: False | ok
+master-base-B-2 | 19:32:31.588 | 19:34:33.749 | 19:34:03.817 | 19:33:13.608 | 13 | 6 | 0x18 | 42.0 | 29.9 | -50.2 | -80.1 | 0: - | 0 | removed during adv phase: True | ok
+master-base-B-3 | 20:11:45.385 | 20:13:47.593 | 20:13:18.734 | 20:12:58.626 | 13 | 7 | 0x18 | 73.2 | 29.8 | -20.1 | -49.0 | 0: - | 0 | removed during adv phase: True | ok
+master-patched-B-0 | 19:26:47.978 | 19:28:50.041 | 19:28:21.390 | 19:27:18.323 | 13 | 7 | 0x18 | 30.3 | 16.9 | -63.1 | -91.7 | 0: - | 0 | removed during adv phase: True | ok
+master-patched-B-1 | 19:29:06.385 | 19:31:08.456 | 19:30:39.806 | 19:29:36.990 | 13 | 7 | 0x18 | 30.6 | 17.2 | -62.8 | -91.5 | 0: - | 0 | removed during adv phase: True | ok
+master-patched-B-2 | 19:31:24.762 | 19:33:25.838 | 19:32:57.185 | 19:31:55.398 | 13 | 7 | 0x18 | 30.6 | 17.2 | -61.8 | -90.4 | 0: - | 0 | removed during adv phase: True | ok
+master-base-C-0 | 19:26:48.103 | 19:28:50.136 | 19:28:51.433 | 19:29:21.370 | 13 | 10 | 0x1a | 153.3 | 29.9 | 29.9 | 31.2 | 1: int16 127 | 0 | removed during adv phase: False | ok
+master-base-C-1 | 19:29:38.858 | 19:31:40.886 | 19:31:42.195 | 19:32:12.379 | 13 | 9 | 0x1a | 153.5 | 30.2 | 30.2 | 31.5 | 1: int16 127 | 0 | removed during adv phase: False | ok
+master-base-C-2 | 19:32:31.663 | 19:34:33.789 | 19:34:03.855 | 19:33:13.657 | 13 | 6 | 0x1a | 42.0 | 29.8 | -50.2 | -80.1 | 1: int16 127 | 2 | removed during adv phase: True | ok
+master-base-C-3 | 20:11:46.686 | 20:13:48.881 | 20:13:18.739 | 20:12:28.656 | 13 | 6 | 0x1a | 42.0 | 29.8 | -50.1 | -80.2 | 1: int16 127 | 2 | removed during adv phase: True | ok
+master-patched-C-0 | 19:26:47.906 | 19:28:49.938 | 19:28:51.247 | 19:29:21.309 | 13 | 9 | 0x1a | 153.4 | 30.1 | 30.1 | 31.4 | 1: int16 127 | 0 | removed during adv phase: False | ok
+master-patched-C-1 | 19:29:38.913 | 19:31:41.088 | 19:31:42.396 | 19:32:12.421 | 13 | 9 | 0x1a | 153.5 | 30.0 | 30.0 | 31.3 | 1: int16 127 | 0 | removed during adv phase: False | ok
+master-patched-C-2 | 19:32:31.596 | 19:34:33.744 | 19:34:03.815 | 19:33:13.624 | 13 | 6 | 0x1a | 42.0 | 29.9 | -50.2 | -80.1 | 1: int16 127 | 2 | removed during adv phase: True | ok
+master-patched-C-3 | 20:11:47.180 | 20:13:49.357 | 20:13:19.419 | 20:12:29.233 | 13 | 6 | 0x1a | 42.1 | 29.9 | -50.2 | -80.1 | 1: int16 127 | 2 | removed during adv phase: True | ok
+master-base-D-0 | 19:34:54.330 | 19:36:56.486 | 19:36:57.804 | 19:37:28.000 | 13 | 9 | 0x18 | 153.7 | 30.2 | 30.2 | 31.5 | 0: - | 0 | removed during adv phase: False | ok
+master-base-D-1 | 19:37:46.625 | 19:39:48.776 | 19:39:50.087 | 19:40:20.082 | 13 | 9 | 0x18 | 153.5 | 30.0 | 30.0 | 31.3 | 0: - | 0 | removed during adv phase: False | ok
+master-base-D-2 | 19:40:37.785 | 19:42:39.904 | 19:42:41.217 | 19:43:11.243 | 13 | 9 | 0x18 | 153.5 | 30.0 | 30.0 | 31.3 | 0: - | 0 | removed during adv phase: False | ok
+master-patched-D-0 | 19:34:54.379 | 19:36:56.495 | 19:36:27.828 | 19:35:25.045 | 13 | 7 | 0x18 | 30.7 | 17.2 | -62.8 | -91.5 | 0: - | 0 | removed during adv phase: True | ok
+master-patched-D-1 | 19:37:13.416 | 19:39:15.512 | 19:38:45.584 | 19:37:43.431 | 13 | 6 | 0x18 | 30.0 | 17.8 | -62.2 | -92.1 | 0: - | 0 | removed during adv phase: True | ok
+master-patched-D-2 | 19:39:31.804 | 19:41:33.849 | 19:41:05.219 | 19:40:02.417 | 13 | 7 | 0x18 | 30.6 | 17.2 | -62.8 | -91.4 | 0: - | 0 | removed during adv phase: True | ok
+master-base-E-0 | 19:34:54.383 | 19:36:56.487 | 19:36:57.788 | 19:37:28.049 | 13 | 26 | 0x18 | 153.7 | 30.3 | 30.3 | 31.6 | 1: int16 127 | 0 | removed during adv phase: False | ok
+master-base-E-1 | 19:37:47.051 | 19:39:49.100 | 19:39:50.409 | 19:40:20.262 | 13 | 26 | 0x18 | 153.2 | 29.9 | 29.9 | 31.2 | 1: int16 127 | 0 | removed during adv phase: False | ok
+master-base-E-2 | 19:40:37.944 | 19:42:39.953 | 19:42:41.261 | 19:43:11.346 | 13 | 26 | 0x18 | 153.4 | 30.1 | 30.1 | 31.4 | 1: int16 127 | 0 | removed during adv phase: False | ok
+master-patched-E-0 | 19:34:54.270 | 19:36:56.377 | 19:36:57.692 | 19:37:28.012 | 13 | 26 | 0x18 | 153.7 | 30.3 | 30.3 | 31.6 | 1: int16 127 | 0 | removed during adv phase: False | ok
+master-patched-E-1 | 19:37:47.024 | 19:39:49.066 | 19:39:50.377 | 19:40:20.236 | 13 | 26 | 0x18 | 153.2 | 29.9 | 29.9 | 31.2 | 1: int16 127 | 0 | removed during adv phase: False | ok
+master-patched-E-2 | 19:40:37.879 | 19:42:39.959 | 19:42:41.267 | 19:43:11.316 | 13 | 25 | 0x18 | 153.4 | 30.0 | 30.0 | 31.4 | 1: int16 127 | 0 | removed during adv phase: False | ok
+master-base-G-0 | 19:34:54.439 | 19:36:56.612 | 19:36:57.916 | 19:37:28.050 | 13 | 9 | none | 153.6 | 30.1 | 30.1 | 31.4 | 0: - | 0 | removed during adv phase: False | ok
+master-base-G-1 | 19:37:46.944 | 19:39:49.096 | 19:39:49.126 | 19:39:00.205 | 13 | 7 | none | 73.3 | 29.8 | -48.9 | -48.9 | 0: - | 0 | removed during adv phase: True | ok
+master-base-G-2 | 19:40:05.298 | 19:42:07.329 | 19:42:08.631 | 19:42:39.048 | 13 | 8 | none | 153.7 | 30.4 | 30.4 | 31.7 | 0: - | 0 | removed during adv phase: False | ok
+master-base-G-3 | 20:11:46.028 | 20:13:48.187 | 20:13:48.214 | 20:12:28.063 | 13 | 7 | none | 42.0 | 29.9 | -80.2 | -80.1 | 0: - | 0 | removed during adv phase: True | ok
+master-patched-G-0 | 19:24:20.317 | 19:26:22.375 | 19:26:22.407 | 19:24:50.127 | 13 | 7 | none | 29.8 | 17.6 | -92.3 | -92.2 | 0: - | 0 | removed during adv phase: True | ok
+master-patched-G-1 | 19:34:54.155 | 19:36:56.211 | 19:36:27.561 | 19:35:24.021 | 13 | 7 | none | 29.9 | 16.4 | -63.5 | -92.2 | 0: - | 0 | removed during adv phase: True | ok
+master-patched-G-2 | 19:37:13.071 | 19:39:15.145 | 19:39:15.173 | 19:37:43.137 | 13 | 7 | none | 30.1 | 17.9 | -92.0 | -92.0 | 0: - | 0 | removed during adv phase: True | ok
+master-base-H-0 | 19:43:36.688 | 19:44:38.757 | 19:44:35.056 | - | 7 | 7 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.1s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794080680.852521 sender=:1.1 -> destination=:1.8 serial=65 reply_serial=2) bearer BR/EDR | ok
+master-base-H-1 | 19:45:08.028 | 19:46:10.121 | 19:46:06.303 | - | 7 | 8 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.1s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794080772.207217 sender=:1.1 -> destination=:1.8 serial=65 reply_serial=2) bearer BR/EDR | ok
+master-base-H-2 | 19:46:38.341 | 19:47:40.474 | 19:47:36.608 | - | 7 | 8 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.0s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794080862.563384 sender=:1.1 -> destination=:1.8 serial=64 reply_serial=2) bearer BR/EDR | ok
+master-patched-H-0 | 19:26:19.938 | 19:27:22.021 | 19:27:18.204 | - | 7 | 8 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.0s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794079644.135014 sender=:1.1 -> destination=:1.8 serial=63 reply_serial=2) bearer BR/EDR | ok
+master-patched-H-1 | 19:43:36.747 | 19:44:38.795 | 19:44:35.114 | - | 7 | 7 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.0s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794080680.879456 sender=:1.1 -> destination=:1.8 serial=65 reply_serial=2) bearer BR/EDR | ok
+master-patched-H-2 | 19:45:08.018 | 19:46:10.114 | 19:46:06.309 | - | 7 | 8 | 0x18,none | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 0.0s; removed during pairing: False; removed-pair_end -; Connect reply (method return time=1794080772.205732 sender=:1.1 -> destination=:1.8 serial=65 reply_serial=2) bearer BR/EDR | ok
+master-base-I-0 | 19:43:32.266 | 19:44:04.376 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.2s; removed during pairing: False; removed-pair_end - | ok
+master-base-I-1 | 19:44:36.810 | 19:45:09.065 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.2s; removed during pairing: False; removed-pair_end - | ok
+master-base-I-2 | 19:45:40.702 | 19:46:12.775 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.2s; removed during pairing: False; removed-pair_end - | ok
+master-patched-I-0 | 19:24:21.571 | 19:24:53.810 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.2s; removed during pairing: False; removed-pair_end - | ok
+master-patched-I-1 | 19:43:32.194 | 19:44:04.265 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.2s; removed during pairing: False; removed-pair_end - | ok
+master-patched-I-2 | 19:44:36.753 | 19:45:08.817 | - | - | 4 | 0 | - | - | - | - | - | 1: int16 -60 | 0 | Pair() reply 40.2s; removed during pairing: False; removed-pair_end - | ok
+master-base-J-0 | 19:44:31.968 | 19:44:26.806 | - | 19:45:02.701 | 7 | 0 | - | 30.7 | - | - | 35.9 | 0: - | 0 | removed before disconnect: False | ok
+master-base-J-1 | 19:46:20.072 | 19:46:14.881 | - | 19:46:49.994 | 7 | 0 | - | 29.9 | - | - | 35.1 | 0: - | 0 | removed before disconnect: False | ok
+master-base-J-2 | 19:48:06.355 | 19:48:01.199 | - | 19:48:36.905 | 7 | 0 | - | 30.6 | - | - | 35.7 | 0: - | 0 | removed before disconnect: False | ok
+master-patched-J-0 | 19:25:21.976 | 19:25:16.935 | - | 19:25:52.440 | 7 | 0 | - | 30.5 | - | - | 35.5 | 0: - | 0 | removed before disconnect: False | ok
+master-patched-J-1 | 19:44:32.022 | 19:44:27.005 | - | 19:45:02.718 | 7 | 0 | - | 30.7 | - | - | 35.7 | 0: - | 0 | removed before disconnect: False | ok
+master-patched-J-2 | 19:46:19.828 | 19:46:14.667 | - | 19:46:49.741 | 7 | 0 | - | 29.9 | - | - | 35.1 | 0: - | 0 | removed before disconnect: False | ok

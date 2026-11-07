@@ -127,11 +127,13 @@ macs=$(grep -oEi '[0-9a-f]{2}([:_-][0-9a-f]{2}){5,}' <<<"$CONTENT" \
 # devtools/repo-scan-public-addresses (the address check below still needs that whole
 # Message-ID listed); every other UUID is refused as before (CO-25's first reply,
 # 2026-10-29).
+# 6e2c1d84-7a3b-4f50-9c1e-5b8d2a7f0e14 is a made-up profile UUID, a test constant
+# of the U29 emulator runs (results/u29-lifetime-patch-2026-11-07/tests/u29_plugins.py).
 PUB_UUIDS=$(grep -oEi '^[[:space:]]*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}@' \
         "$ROOT/devtools/repo-scan-public-addresses" 2>/dev/null | tr -d '[:space:]@' || true)
 uuids=$(grep -oEi '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' <<<"$CONTENT" \
         | grep -viE '^0000[0-9a-f]{4}-0000-1000-8000-00805f9b34fb$' \
-        | grep -viE '^(00000000-0000-0000-0000-000000000000)$' \
+        | grep -viE '^(00000000-0000-0000-0000-000000000000|6e2c1d84-7a3b-4f50-9c1e-5b8d2a7f0e14)$' \
         | { [[ -n "$PUB_UUIDS" ]] && grep -viFx -f <(printf '%s\n' "$PUB_UUIDS") || cat; } \
         | sort -u)
 [[ -n "$uuids" ]] && report "UUID found (non-SIG):" $uuids || pass "no UUIDs"

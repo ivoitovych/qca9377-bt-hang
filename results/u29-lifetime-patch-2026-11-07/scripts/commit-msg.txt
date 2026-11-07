@@ -1,0 +1,12 @@
+adapter: Don't keep temporary devices alive with non-discoverable reports
+
+btd_adapter_device_found() calls device_update_last_seen() for an
+existing device before it drops a report that is not discoverable.
+For a temporary device that call also restarts the temporary timer, so
+a peer that keeps advertising with flags 0x18 (and no active discovery
+filter matching it) keeps an unpaired, unconnected device object alive
+for as long as it advertises, instead of the 30 s TemporaryTimeout.
+
+Update last seen only for reports that are not going to be dropped, or
+for devices that are not temporary or are connected, so bearer selection
+for paired devices still sees every report.
