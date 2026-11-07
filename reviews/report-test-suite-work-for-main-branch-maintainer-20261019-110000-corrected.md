@@ -61,10 +61,12 @@ Your four recommendations of this morning, which the operator accepted (0601Z no
    its two and a half minutes (your figure; today's runs of `checks.yml` take three to six);
 4. the 16-core measurement: at the next hand close before a planned shutdown, if at all.
 
-And one standing decision of the operator's, given to me directly and not written in any note
-before this one, that shaped the whole acceleration: **parallelism, not fewer runs.** The
-operator was explicit that cutting runs would cut quality. So no instrument was dropped and none
-runs on a sample: every push still runs the suite under every instrument, and the time was won by
+And one instruction of the operator's, given to me directly on 2026-10-18 and not written in any
+note before this one, that shaped the whole acceleration: "Please focus on the parallelism,
+because the working container has 4 cores and the laptop has 16 cores." With it came a concern,
+not a decision: "if we will cut runs, then we will cut the quality of runs. But I probably need
+some deeper investigation of that." So no instrument was dropped and none runs on a sample:
+every push still runs the suite under every instrument, and the time was won by
 running sections in parallel inside a run (`0660270`) and jobs in parallel inside CI
 (`78cba8f`, "no step dropped").
 
@@ -798,3 +800,6 @@ What changed, by kind:
 - **Added**: what CI does not ask (the namespace worlds outside the isolation job and the audit,
   1062 against 1086 checks), the audit's own timings for the checkout world, `main`'s ids in §9,
   `--tools-only`'s other journal read and why it is never reached.
+- **Corrected on 2026-11-07**: §1 had called "parallelism, not fewer runs" a standing decision of
+  the operator's. Set from their own words of 2026-10-18: an instruction to focus on the
+  parallelism, and a concern about cutting runs that they left for deeper investigation.
