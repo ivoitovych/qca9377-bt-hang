@@ -39,7 +39,7 @@ jobs:
   # push to a branch new to the repository, or a forced update, is measured from
   # the merge base with main.
   identity:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -73,7 +73,7 @@ jobs:
 
   # the validator (the suite in parallel), the journal contract and the publish scan
   suite:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -160,7 +160,7 @@ jobs:
 
   # the suite in one process, in file order
   serial:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # The preamble every job shares; the suite job's comments say why each step is there.
       - uses: actions/checkout@v4
@@ -198,7 +198,7 @@ jobs:
 
   # bash line coverage
   coverage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # The preamble every job shares; the suite job's comments say why each step is there.
       - uses: actions/checkout@v4
@@ -232,7 +232,7 @@ jobs:
   # the comprehensiveness floor: it runs the suite under devtools/coverage
   # itself, so it needs nothing from the coverage job and runs beside it
   comprehension:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # The preamble every job shares; the suite job's comments say why each step is there.
       - uses: actions/checkout@v4
@@ -267,7 +267,7 @@ jobs:
 
   # awk statement coverage
   awk-coverage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # The preamble every job shares; the suite job's comments say why each step is there.
       - uses: actions/checkout@v4
@@ -302,7 +302,7 @@ jobs:
 
   # Python line coverage
   python-coverage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # The preamble every job shares; the suite job's comments say why each step is there.
       - uses: actions/checkout@v4
@@ -339,7 +339,7 @@ jobs:
 
   # the decoy world and its own proof, and the mutation harness's proof
   isolation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # The preamble every job shares; the suite job's comments say why each step is there.
       - uses: actions/checkout@v4
@@ -405,7 +405,7 @@ jobs:
 
   # the steps that install on the runner: the round trip and the deploy rehearsal
   system:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # The preamble every job shares; the suite job's comments say why each step is there.
       - uses: actions/checkout@v4
