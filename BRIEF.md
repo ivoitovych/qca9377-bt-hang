@@ -264,6 +264,17 @@ hours (`R2-13`).
   chose **two MRs, an issue each**. 11-07: R6 and R7 rechecked v6 and both say ready (R7
   withdrew its hold). Their four wording points went into v6.1, which changes the messages only
   (H39–H44). Next: the issue and MR drafts; the operator submits.
+  **2026-11-07, SUBMITTED (H45–H72):** messages v6.2 (patch 2 lost "as libcdio's own lookups
+  do", which overclaimed), drafts reviewed by R2/R3/R6/R7 to GO; MR 2 carries a parameterized
+  simulated-drive test program (`patch-track/track-test/`, 14/14 on master and patch 2). The
+  operator filed issues **#893** (stall) and **#894** (invalid tracks) and opened **!368**
+  (patch 1, `98dc71a`, closes #893) and **!369** (patch 2, `610794d`, closes #894), from the
+  fork `ivoitovych/gvfs` (branches `cdda-paranoia-readahead`, `cdda-refuse-invalid-tracks`, one
+  commit each on `2d30ce9b`). Each commit differs from the reviewed one only by its `Fixes:`
+  work-item URL. GNOME GitLab: new accounts are "external" (no forks) until an SSH key has been
+  on the account ~20 min; this machine's `root@n` key is now on the operator's GNOME account.
+  Next: watch the MRs for maintainer comments; follow-ups as separate issues (query_info GError
+  leaks, enumerate/query_info assuming 1..N, failed-seek handling).
 > - **Disk: cleanup done 11-02/03, 144 GB free.** Two runs under `agent-work`; the first crashed
 >   with no log (`tmp/cleanup/cleanup-reconcile-after-crash-20261102.md`: 141 items gone, every
 >   local commit saved as patches) and broke 10 trees' git metadata (shared clones lost their
