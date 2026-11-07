@@ -1,0 +1,43 @@
+gcc 15.2.0, glib 2.88.0, libcdio 2.2.0, libcdio_paranoia 10.2+2.0.2, source /w/libcdio-2.2.0
+=== tracks-2-4_open-4 master exit 0
+disc: tracks 2 to 4
+Track 4.wav: read all 3528000 PCM bytes, then EOF
+=== tracks-2-4_open-4 patch2 exit 0
+disc: tracks 2 to 4
+Track 4.wav: read all 3528000 PCM bytes, then EOF
+=== tracks-97-99_open-99 master exit 0
+disc: tracks 97 to 99
+Track 99.wav: read all 3528000 PCM bytes, then EOF
+=== tracks-97-99_open-99 patch2 exit 0
+disc: tracks 97 to 99
+Track 99.wav: read all 3528000 PCM bytes, then EOF
+=== tracks-2-4_open-1 master exit 2
+disc: tracks 2 to 4
+Track 1.wav: opened sectors -401 to -401, but it is not an audio track on the disc
+=== tracks-2-4_open-1 patch2 exit 1
+disc: tracks 2 to 4
+Track 1.wav: open refused (not found)
+=== tracks-2-4_open-5 master exit 2
+disc: tracks 2 to 4
+Track 5.wav: opened sectors 4500 to -401, but it is not an audio track on the disc
+=== tracks-2-4_open-5 patch2 exit 1
+disc: tracks 2 to 4
+Track 5.wav: open refused (not found)
+=== tracks-1-3_open-3 master exit 0
+disc: tracks 1 to 3
+Track 3.wav: read all 3528000 PCM bytes, then EOF
+=== tracks-1-3_open-3 patch2 exit 0
+disc: tracks 1 to 3
+Track 3.wav: read all 3528000 PCM bytes, then EOF
+=== tracks-1-3_data-3_open-3 master exit 2
+disc: tracks 1 to 3, one of them a data track
+Track 3.wav: opened sectors 3000 to 4499, but it is not an audio track on the disc
+=== tracks-1-3_data-3_open-3 patch2 exit 1
+disc: tracks 1 to 3, one of them a data track
+Track 3.wav: open refused (not found)
+=== tracks-1-3_data-3_open-2 master exit 0
+disc: tracks 1 to 3, one of them a data track
+Track 2.wav: read all 3528000 PCM bytes, then EOF
+=== tracks-1-3_data-3_open-2 patch2 exit 0
+disc: tracks 1 to 3, one of them a data track
+Track 2.wav: read all 3528000 PCM bytes, then EOF
